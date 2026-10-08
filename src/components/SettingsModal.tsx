@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Download, LogOut, Plus, RefreshCw, Search, Star, Trash2, Upload, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Download, ExternalLink, KeyRound, Loader2, LogOut, Plus, RefreshCw, Search, Star, Trash2, Upload, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { VOICE_LANGS } from '../lib/speech';
 import { saveBlob } from '../lib/util';
@@ -9,6 +9,7 @@ import { Badges } from './ModelPicker';
 
 const TABS = [
   ['general', 'General'],
+  ['keys', 'API keys'],
   ['models', 'Models'],
   ['personalize', 'Personalize'],
   ['data', 'Data'],
@@ -123,7 +124,7 @@ function ModelsTab() {
         <input type="search" placeholder="Search models (e.g. gemini, deepseek, qwen)" value={query} onChange={(e) => setQuery(e.target.value)} />
       </label>
       {(['google', 'openrouter'] as const).map((p) =>
-        catalog?.providers[p] ? (
+        catalog?.providers[p] || !catalog ? (
           <div key={p}>
             <div className="pop-label">{p === 'google' ? 'Google (free tier)' : 'OpenRouter (free models)'}</div>
             <ul className="model-list add">
@@ -142,13 +143,61 @@ function ModelsTab() {
           </div>
         ) : (
           <p key={p} className="muted small">
-            {p === 'google' ? 'Google' : 'OpenRouter'} isn't connected. Add {p === 'google' ? 'GEMINI_API_KEY' : 'OPENROUTER_API_KEY'} in Vercel to use its models.
+            {p === 'google' ? 'Google' : 'OpenRouter'} isn't connected. Add its key under API keys to use its models.
           </p>
         ),
       )}
       <p className="muted small legend">
         Icons: <Badges m={{ vision: true } as ModelInfo} /> reads images · <Badges m={{ search: true } as ModelInfo} /> web search · <Badges m={{ thinking: true } as ModelInfo} /> thinks first
       </p>
+    </div>
+  );
+}
+
+function KeysTab() {
+  const keys = useStore((s) => s.keys);
+  const saveApiKeys = useStore((s) => s.saveApiKeys);
+  const toast = useStore((s) => s.toast);
+  const [gemini, setGemini] = useState(keys.gemini);
+  const [openrouter, setOpenrouter] = useState(keys.openrouter);
+  const [busy, setBusy] = useState(false);
+  const changed = gemini.trim() !== keys.gemini || openrouter.trim() !== keys.openrouter;
+
+  return (
+    <div className="settings-section">
+      <p className="muted">
+        Your keys are saved privately to your Google account in Firebase, so you only enter them once for all your devices. They're used
+        directly from this app to talk to Google and OpenRouter.
+      </p>
+      <label className="field-block">
+        <span className="setting-label"><KeyRound size={15} /> Google AI Studio (Gemini) key</span>
+        <input type="password" autoComplete="off" spellCheck={false} placeholder="AIza…" value={gemini} onChange={(e) => setGemini(e.target.value)} />
+        <a className="small" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Get a free key <ExternalLink size={12} /></a>
+      </label>
+      <label className="field-block">
+        <span className="setting-label"><KeyRound size={15} /> OpenRouter key (optional)</span>
+        <input type="password" autoComplete="off" spellCheck={false} placeholder="sk-or-…" value={openrouter} onChange={(e) => setOpenrouter(e.target.value)} />
+        <a className="small" href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer">Get a free key <ExternalLink size={12} /></a>
+      </label>
+      <div>
+        <button
+          className="btn primary"
+          disabled={busy || !changed || (!gemini.trim() && !openrouter.trim())}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await saveApiKeys({ gemini, openrouter });
+              toast('Keys saved. Your models are loading.', 'success');
+            } catch (e) {
+              toast(`Couldn't save keys: ${(e as Error).message}`, 'error');
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {busy && <Loader2 size={16} className="spin" />} Save keys
+        </button>
+      </div>
     </div>
   );
 }
@@ -253,11 +302,18 @@ export default function SettingsModal() {
                   ))}
                 </select>
               </label>
-              <button className="btn ghost logout" onClick={() => { setUi({ settingsOpen: false }); logout(); }}>
-                <LogOut size={16} /> Sign out
-              </button>
+              <div className="setting-row">
+                <span className="setting-text">
+                  <span className="setting-label">Signed in</span>
+                  <span className="setting-hint">{useStore.getState().user?.email}</span>
+                </span>
+                <button className="btn ghost logout" onClick={() => { setUi({ settingsOpen: false }); logout(); }}>
+                  <LogOut size={16} /> Sign out
+                </button>
+              </div>
             </div>
           )}
+          {tab === 'keys' && <KeysTab />}
           {tab === 'models' && <ModelsTab />}
           {tab === 'personalize' && (
             <div className="settings-section">

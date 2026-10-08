@@ -1,5 +1,7 @@
 import { create } from 'zustand';
-import { ApiError, auth, buildChatBody, fetchCatalog, fetchTitle, login as apiLogin, streamChat, type WireMessage } from './lib/api';
+import { setKeys } from './lib/ai/providers.js';
+import { buildChatBody, fetchCatalog, fetchTitle, streamChat, type WireMessage } from './lib/api';
+import { loadKeys, saveKeys, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { db } from './lib/db';
 import { applyAppearance, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
@@ -18,6 +20,8 @@ export interface PreviewFile {
 
 interface State {
   authed: boolean | null;
+  user: { uid: string; email: string; name: string; photo: string } | null;
+  keys: ApiKeys;
   catalog: Catalog | null;
   catalogError: string | null;
   settings: Settings;
@@ -31,8 +35,9 @@ interface State {
   toasts: Toast[];
 
   init(): Promise<void>;
-  login(password: string): Promise<void>;
+  login(): Promise<void>;
   logout(): void;
+  saveApiKeys(keys: ApiKeys): Promise<void>;
   loadCatalog(): Promise<void>;
   updateSettings(patch: Partial<Settings>): void;
   toast(text: string, kind?: Toast['kind']): void;
@@ -137,10 +142,6 @@ export const useStore = create<State>((set, get) => {
     } catch (e) {
       if ((e as Error).name === 'AbortError') reply.status = 'stopped';
       else {
-        if (e instanceof ApiError && e.status === 401) {
-          get().logout();
-          get().toast('Please sign in again.', 'error');
-        }
         reply.error = (e as Error).message;
         reply.status = 'error';
       }
@@ -170,6 +171,8 @@ export const useStore = create<State>((set, get) => {
 
   return {
     authed: null,
+    user: null,
+    keys: { gemini: '', openrouter: '' },
     catalog: null,
     catalogError: null,
     settings: loadSettings(),
@@ -190,27 +193,48 @@ export const useStore = create<State>((set, get) => {
       } catch {
         get().toast("Couldn't open saved chats on this device.", 'error');
       }
-      if (!auth.token) {
-        set({ authed: false });
-        return;
-      }
-      set({ authed: true });
-      await get().loadCatalog();
+      watchUser(async (user) => {
+        if (!user) {
+          setKeys({ gemini: '', openrouter: '' });
+          set({ authed: false, user: null, catalog: null });
+          return;
+        }
+        set({ authed: true, user: { uid: user.uid, email: user.email || '', name: user.displayName || '', photo: user.photoURL || '' } });
+        try {
+          const keys = await loadKeys(user.uid);
+          setKeys(keys);
+          set({ keys });
+        } catch (e) {
+          get().toast(`Couldn't load your settings: ${(e as Error).message}`, 'error');
+        }
+        await get().loadCatalog();
+      });
     },
 
-    async login(password) {
-      await apiLogin(password);
-      set({ authed: true });
-      await get().loadCatalog();
+    async login() {
+      await signInWithGoogle();
     },
 
     logout() {
       get().stop();
-      auth.token = '';
-      set({ authed: false, catalog: null });
+      void signOutUser();
+    },
+
+    async saveApiKeys(keys) {
+      const uid = get().user?.uid;
+      if (!uid) return;
+      await saveKeys(uid, keys);
+      setKeys(keys);
+      set({ keys: { gemini: keys.gemini.trim(), openrouter: keys.openrouter.trim() } });
+      await get().loadCatalog();
     },
 
     async loadCatalog() {
+      const { keys } = get();
+      if (!keys.gemini && !keys.openrouter) {
+        set({ catalog: null, catalogError: null, settingsOpen: true, settingsTab: 'keys' });
+        return;
+      }
       try {
         const catalog = await fetchCatalog();
         const { settings } = get();
@@ -221,11 +245,6 @@ export const useStore = create<State>((set, get) => {
         set({ catalog, catalogError: catalog.errors.length ? catalog.errors.join(' · ') : null });
         get().updateSettings({ enabledModels: enabled, defaultModel });
       } catch (e) {
-        if (e instanceof ApiError && e.status === 401) {
-          auth.token = '';
-          set({ authed: false });
-          return;
-        }
         set({ catalogError: (e as Error).message });
       }
     },

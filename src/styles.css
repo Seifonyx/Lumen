@@ -529,3 +529,9 @@ table.sheet tr.totals td { font-weight: 700; background: #e8ecf2; border-top: 3p
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+
+.google-btn { padding: 12px; font-size: 1rem; }
+.field-block input { width: 100%; }
+.field-block .setting-label { display: inline-flex; align-items: center; gap: 6px; }
+.field-block a { display: inline-flex; align-items: center; gap: 4px; }
+.logout { margin-top: 0; }

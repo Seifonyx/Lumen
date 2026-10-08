@@ -1,24 +1,9 @@
+// Everything runs in the browser now: model lists, chat streaming (with automatic switching) and titles
+// call Google AI Studio and OpenRouter directly, using the user's own API keys.
+
 import type { Attachment, Catalog } from '../types';
-
-const TOKEN_KEY = 'mr.token';
-
-export const auth = {
-  get token() {
-    try {
-      return localStorage.getItem(TOKEN_KEY) || '';
-    } catch {
-      return '';
-    }
-  },
-  set token(v: string) {
-    try {
-      if (v) localStorage.setItem(TOKEN_KEY, v);
-      else localStorage.removeItem(TOKEN_KEY);
-    } catch {
-      /* private mode */
-    }
-  },
-};
+import { makeTitle, runChat } from './ai/chat.js';
+import { catalog } from './ai/providers.js';
 
 export class ApiError extends Error {
   constructor(message: string, public status: number) {
@@ -26,50 +11,13 @@ export class ApiError extends Error {
   }
 }
 
-async function call(path: string, init: RequestInit = {}): Promise<Response> {
-  let res: Response;
-  try {
-    res = await fetch(path, {
-      ...init,
-      headers: { ...(init.headers || {}), authorization: `Bearer ${auth.token}` },
-    });
-  } catch (e) {
-    if ((e as Error).name === 'AbortError') throw e;
-    throw new ApiError("Can't reach the server. Check your internet connection.", 0);
-  }
-  if (!res.ok) {
-    let msg = `Error ${res.status}`;
-    try {
-      msg = (await res.json()).error || msg;
-    } catch {
-      if (res.status === 413) msg = 'That is too much to send at once. Remove some attachments or start a new chat.';
-    }
-    throw new ApiError(msg, res.status);
-  }
-  return res;
-}
-
-export async function login(password: string): Promise<void> {
-  const res = await call('/api/login', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ password }),
-  });
-  auth.token = (await res.json()).token;
-}
-
 export async function fetchCatalog(): Promise<Catalog> {
-  return (await call('/api/models')).json();
+  return (await catalog()) as Catalog;
 }
 
 export async function fetchTitle(text: string, model?: string): Promise<string | null> {
   try {
-    const res = await call('/api/title', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ text, model }),
-    });
-    return (await res.json()).title || null;
+    return await makeTitle(text, model);
   } catch {
     return null;
   }
@@ -90,10 +38,10 @@ export type StreamEvent =
   | { t: 'error'; text: string }
   | { t: 'done' };
 
-// Vercel rejects request bodies above ~4.5 MB.
-const MAX_BODY = 4_000_000;
+// Google accepts requests up to ~20 MB; stay well below it.
+const MAX_BODY = 15_000_000;
 
-/** Builds the request body, dropping attachments from the oldest messages first if it's too big. */
+/** Builds the request, dropping attachments from the oldest messages first if it's too big. */
 export function buildChatBody(payload: { model: string; fallbacks: string[]; messages: WireMessage[]; options: object }): string {
   const msgs = payload.messages.map((m) => ({ ...m }));
   let body = JSON.stringify({ ...payload, messages: msgs });
@@ -103,25 +51,20 @@ export function buildChatBody(payload: { model: string; fallbacks: string[]; mes
     msgs[i] = { ...msgs[i], files: [], text: `[Earlier attachment(s) no longer included: ${names}]\n${msgs[i].text}` };
     body = JSON.stringify({ ...payload, messages: msgs });
   }
-  if (body.length > MAX_BODY) throw new ApiError('These attachments are too big to send together (about 4 MB max). Remove some or send them one at a time.', 413);
+  if (body.length > MAX_BODY) throw new ApiError('These attachments are too big to send together. Remove some or send them one at a time.', 413);
   return body;
 }
 
 export async function* streamChat(body: string, signal: AbortSignal): AsyncGenerator<StreamEvent> {
-  const res = await call('/api/chat', { method: 'POST', headers: { 'content-type': 'application/json' }, body, signal });
-  const reader = res.body!.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    let nl;
-    while ((nl = buffer.indexOf('\n')) >= 0) {
-      const line = buffer.slice(0, nl);
-      buffer = buffer.slice(nl + 1);
-      if (line.trim()) yield JSON.parse(line) as StreamEvent;
+  try {
+    yield* runChat(JSON.parse(body), signal) as AsyncGenerator<StreamEvent>;
+  } catch (e) {
+    if (signal.aborted) {
+      const err = new Error('Stopped');
+      err.name = 'AbortError';
+      throw err;
     }
+    if (e instanceof TypeError) throw new ApiError("Can't reach the AI service. Check your internet connection.", 0);
+    throw e;
   }
-  if (buffer.trim()) yield JSON.parse(buffer) as StreamEvent;
 }

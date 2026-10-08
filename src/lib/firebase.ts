@@ -2,15 +2,24 @@
 
 import { initializeApp } from 'firebase/app';
 import {
-  GoogleAuthProvider, browserLocalPersistence, getAuth, getRedirectResult, onAuthStateChanged, setPersistence,
-  signInWithPopup, signInWithRedirect, signOut, type User,
+  GoogleAuthProvider, browserLocalPersistence, connectAuthEmulator, getAuth, getRedirectResult, onAuthStateChanged, setPersistence,
+  signInWithCredential, signInWithPopup, signInWithRedirect, signOut, type User,
 } from 'firebase/auth';
-import { doc, getDoc, getFirestore, serverTimestamp, setDoc } from 'firebase/firestore';
+import { connectFirestoreEmulator, doc, getDoc, initializeFirestore, serverTimestamp, setDoc } from 'firebase/firestore';
 import config from '../firebase-config.json';
 
 const app = initializeApp(config);
 export const auth = getAuth(app);
-const db = getFirestore(app);
+export const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
+
+// Local testing only: http://localhost…/?emulator connects to the Firebase emulators instead of the real project.
+if (location.hostname === 'localhost' && new URLSearchParams(location.search).has('emulator')) {
+  connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+  connectFirestoreEmulator(db, 'localhost', 8080);
+  // Lets automated tests sign in without the Google popup (the emulator accepts unsigned test tokens).
+  (window as unknown as Record<string, unknown>).__testSignIn = (email: string) =>
+    signInWithCredential(auth, GoogleAuthProvider.credential(JSON.stringify({ sub: email, email, email_verified: true })));
+}
 void setPersistence(auth, browserLocalPersistence);
 
 export function watchUser(cb: (user: User | null) => void) {
@@ -48,6 +57,16 @@ export async function loadKeys(uid: string): Promise<ApiKeys> {
   const snap = await getDoc(keysDoc(uid));
   const d = snap.data() || {};
   return { gemini: d.geminiKey || '', openrouter: d.openrouterKey || '' };
+}
+
+/** Settings shared across devices (model list, instructions, appearance). */
+export async function loadRemoteSettings(uid: string): Promise<Record<string, unknown> | null> {
+  const snap = await getDoc(keysDoc(uid));
+  return (snap.data()?.settings as Record<string, unknown>) || null;
+}
+
+export async function saveRemoteSettings(uid: string, settings: object): Promise<void> {
+  await setDoc(keysDoc(uid), { settings, updatedAt: serverTimestamp() }, { merge: true });
 }
 
 export async function saveKeys(uid: string, keys: ApiKeys): Promise<void> {

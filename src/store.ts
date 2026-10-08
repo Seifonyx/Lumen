@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { setKeys } from './lib/ai/providers.js';
 import { buildChatBody, fetchCatalog, fetchTitle, streamChat, type WireMessage } from './lib/api';
-import { loadKeys, saveKeys, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
+import { loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
+import { ChatSync } from './lib/sync';
 import { db } from './lib/db';
 import { applyAppearance, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
@@ -61,18 +62,26 @@ interface State {
 }
 
 let controller: AbortController | null = null;
+let sync: ChatSync | null = null;
+let settingsReady = false;
+let settingsTimer: ReturnType<typeof setTimeout> | undefined;
 
 const newChatObject = (): Chat => ({ id: uid(), title: 'New chat', createdAt: Date.now(), updatedAt: Date.now(), messages: [] });
 
 export const useStore = create<State>((set, get) => {
   const replaceChat = (chat: Chat) => set((s) => ({ chats: s.chats.some((c) => c.id === chat.id) ? s.chats.map((c) => (c.id === chat.id ? chat : c)) : [chat, ...s.chats] }));
+  /** Saves a chat on this device and sends the change to your other devices. */
   const persist = async (chat: Chat) => {
     if (!chat.messages.length) return;
+    const stamped = { ...chat, rev: Date.now() };
+    const latest = get().chats.find((c) => c.id === chat.id);
+    if (latest === chat) replaceChat(stamped);
     try {
-      await db.put(chat);
+      await db.put(stamped);
     } catch {
       get().toast("Couldn't save this chat on the device (storage may be full).", 'error');
     }
+    sync?.push(stamped);
   };
   const currentChat = () => get().chats.find((c) => c.id === get().currentId) || null;
 
@@ -97,7 +106,16 @@ export const useStore = create<State>((set, get) => {
     const fallbacks = settings.autoSwitch ? settings.enabledModels.filter((id) => id !== model) : [];
     const wire: WireMessage[] = chat.messages
       .filter((m) => !m.error || m.text)
-      .map((m) => ({ role: m.role, text: m.text, files: m.files?.map(({ kind, name, mime, data, text }) => ({ kind, name, mime, data, text })) }));
+      .map((m) => {
+        // Attachments synced from another device arrive without their contents.
+        const usable = (m.files || []).filter((f) => f.data || f.text);
+        const missing = (m.files || []).filter((f) => !f.data && !f.text).map((f) => f.name);
+        return {
+          role: m.role,
+          text: missing.length ? `[Attached on another device, not available here: ${missing.join(', ')}]\n${m.text}` : m.text,
+          files: usable.map(({ kind, name, mime, data, text }) => ({ kind, name, mime, data, text })),
+        };
+      });
 
     let body: string;
     try {
@@ -194,6 +212,9 @@ export const useStore = create<State>((set, get) => {
         get().toast("Couldn't open saved chats on this device.", 'error');
       }
       watchUser(async (user) => {
+        sync?.stop();
+        sync = null;
+        settingsReady = false;
         if (!user) {
           setKeys({ gemini: '', openrouter: '' });
           set({ authed: false, user: null, catalog: null });
@@ -201,12 +222,30 @@ export const useStore = create<State>((set, get) => {
         }
         set({ authed: true, user: { uid: user.uid, email: user.email || '', name: user.displayName || '', photo: user.photoURL || '' } });
         try {
-          const keys = await loadKeys(user.uid);
+          const [keys, remoteSettings] = await Promise.all([loadKeys(user.uid), loadRemoteSettings(user.uid)]);
           setKeys(keys);
           set({ keys });
+          if (remoteSettings) get().updateSettings({ ...remoteSettings, voiceLang: get().settings.voiceLang } as Partial<Settings>);
+          settingsReady = true;
+          if (!remoteSettings) get().updateSettings({});
         } catch (e) {
           get().toast(`Couldn't load your settings: ${(e as Error).message}`, 'error');
         }
+        sync = new ChatSync(user.uid, {
+          local: (id) => get().chats.find((c) => c.id === id),
+          allLocal: () => get().chats,
+          apply: (chat) => {
+            replaceChat(chat);
+            set((s) => ({ chats: [...s.chats].sort((a, b) => b.updatedAt - a.updatedAt) }));
+            void db.put(chat);
+          },
+          remove: (id) => {
+            set((s) => ({ chats: s.chats.filter((c) => c.id !== id), currentId: s.currentId === id ? null : s.currentId }));
+            void db.remove(id);
+          },
+          error: (msg) => get().toast(msg, 'error'),
+        });
+        sync.start();
         await get().loadCatalog();
       });
     },
@@ -254,6 +293,15 @@ export const useStore = create<State>((set, get) => {
       saveSettings(settings);
       applyAppearance(settings);
       set({ settings });
+      // Share settings with your other devices (voice language stays per device).
+      const uid = get().user?.uid;
+      if (uid && settingsReady) {
+        clearTimeout(settingsTimer);
+        settingsTimer = setTimeout(() => {
+          const { voiceLang: _voice, ...shared } = get().settings;
+          saveRemoteSettings(uid, shared).catch(() => {});
+        }, 800);
+      }
     },
 
     toast(text, kind = 'info') {
@@ -283,8 +331,10 @@ export const useStore = create<State>((set, get) => {
     },
     async deleteChat(id) {
       if (get().streamingChatId === id) get().stop();
+      const had = get().chats.find((c) => c.id === id)?.messages.length;
       set((s) => ({ chats: s.chats.filter((c) => c.id !== id), currentId: s.currentId === id ? null : s.currentId }));
       await db.remove(id);
+      if (had) sync?.remove(id);
     },
     async renameChat(id, title) {
       const chat = get().chats.find((c) => c.id === id);
@@ -311,13 +361,17 @@ export const useStore = create<State>((set, get) => {
     },
     async clearAllChats() {
       get().stop();
+      const ids = get().chats.filter((c) => c.messages.length).map((c) => c.id);
       await db.clear();
       set({ chats: [], currentId: null });
+      ids.forEach((id) => sync?.remove(id));
     },
     async importChats(incoming) {
       const valid = incoming.filter((c) => c && typeof c.id === 'string' && Array.isArray(c.messages));
       await db.bulkPut(valid);
-      set({ chats: await db.all() });
+      const chats = await db.all();
+      set({ chats });
+      for (const c of chats) if (valid.some((v) => v.id === c.id)) sync?.push({ ...c, rev: Date.now() });
       return valid.length;
     },
 

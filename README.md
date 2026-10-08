@@ -21,15 +21,24 @@ Live at **https://themodelrouter.web.app** (Firebase Hosting, project `study-pla
 - **Charts in chat**, LaTeX maths, highlighted code with copy buttons.
 - **Web search** with sources (Gemini models) and collapsible **thinking**.
 - Edit & resend, regenerate, stop, copy, read aloud, voice input, save a reply as Word.
+- **Syncs across devices**: chats (with pins and renames) and settings follow your Google account.
 - Chat history with search, pin, rename, export, plus backup/restore.
 - Custom instructions, light/dark theme, text size, installable on the home screen.
 
 ## How it works
 
 Everything runs in the browser. The app calls Google AI Studio and OpenRouter directly with the
-signed-in user's own keys (`src/lib/ai/`). Firebase provides hosting, Google sign-in and a Firestore
-document per user at `modelRouter/{uid}` for the keys; `firestore.rules` limits each user to their own
-document. Chats are stored on each device in IndexedDB.
+signed-in user's own keys (`src/lib/ai/`). Firebase provides hosting, Google sign-in and Firestore:
+
+- `modelRouter/{uid}`: API keys and shared settings
+- `modelRouter/{uid}/chats/{chatId}`: chat details; `…/messages/{messageId}`: one document per message
+
+`firestore.rules` limits each user to their own `modelRouter/{uid}` section. Chats are also kept on each
+device in IndexedDB (`src/lib/sync.ts` keeps the two in step). Attachment contents stay on the device
+that added them; names, thumbnails and small extracted texts sync.
+
+For local testing against the Firebase emulators (auth on 9099, Firestore on 8080), open the app on
+`http://localhost:…/?emulator`.
 
 ## Development
 

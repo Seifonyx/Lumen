@@ -54,6 +54,7 @@ function normalize(raw: any): Chat {
     updatedAt: raw.updatedAt ?? raw.updated ?? created,
     pinned: Boolean(raw.pinned),
     model: raw.model,
+    rev: raw.rev,
     messages,
   };
 }

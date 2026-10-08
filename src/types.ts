@@ -40,6 +40,8 @@ export interface Chat {
   updatedAt: number;
   pinned?: boolean;
   model?: string;
+  /** last change time on any device, used for syncing (unlike updatedAt it also moves on rename/pin) */
+  rev?: number;
   messages: Message[];
 }
 

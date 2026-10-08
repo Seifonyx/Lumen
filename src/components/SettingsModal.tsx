@@ -210,11 +210,11 @@ function DataTab() {
 
   return (
     <div className="settings-section">
-      <p className="muted">Chats are saved only on this device. Use a backup to move them to another phone or computer.</p>
+      <p className="muted">Chats sync to your Google account, so they show up on all your devices. Attached files stay on the device you added them on.</p>
       <div className="setting-row">
         <span className="setting-text">
           <span className="setting-label">Back up chats</span>
-          <span className="setting-hint">{count} chat{count === 1 ? '' : 's'} with attachments, as one file.</span>
+          <span className="setting-hint">Save {count} chat{count === 1 ? '' : 's'} (with this device's attachments) as one file.</span>
         </span>
         <button className="btn small" onClick={() => saveBlob(new Blob([JSON.stringify({ app: 'model-router', version: 2, chats }, null, 0)], { type: 'application/json' }), `themodelrouter-backup-${new Date().toISOString().slice(0, 10)}.json`)}>
           <Download size={15} /> Back up
@@ -251,9 +251,9 @@ function DataTab() {
       <div className="setting-row danger-row">
         <span className="setting-text">
           <span className="setting-label">Delete all chats</span>
-          <span className="setting-hint">Removes every chat from this device. This can't be undone.</span>
+          <span className="setting-hint">Removes every chat from all your devices. This can't be undone.</span>
         </span>
-        <button className="btn small danger" onClick={() => { if (confirm('Delete all chats on this device?')) void clearAllChats().then(() => toast('All chats deleted.', 'success')); }}>
+        <button className="btn small danger" onClick={() => { if (confirm('Delete all chats on all your devices?')) void clearAllChats().then(() => toast('All chats deleted.', 'success')); }}>
           <Trash2 size={15} /> Delete all
         </button>
       </div>

@@ -32,6 +32,13 @@ openrouter.ai/models. A provider only shows up if its key is set.
 - Vercel limits each request to about 4.5 MB. In long chats with many files, the oldest files are
   dropped from what's sent so new messages still go through.
 
+## Files from the AI
+
+Ask for a file ("make this a Word document", "give me an Excel sheet of…", "export as CSV") and the
+reply shows a file card with a **Save** button. Supported: Word (.docx), Excel (.xlsx), and text
+formats such as .csv, .txt, .md, .html and .json. PDFs aren't supported; ask for Word and save it
+as PDF from there.
+
 ## Download replies as Word or Excel
 
 Every AI reply has a **⬇ Word** button that saves it as a .docx (headings, lists, tables, Arabic

@@ -6,6 +6,33 @@ export const config = { runtime: 'edge' };
 //   { role: 'user' | 'assistant', text: string, files?: [{ kind: 'image' | 'pdf' | 'text', name, mime, data?, text? }] }
 // where `data` is base64 (no data: prefix) for images and PDFs, and `text` holds extracted text.
 
+// Tells every model how to hand the user a downloadable file; the app turns these blocks into file cards.
+const FILE_INSTRUCTIONS = `You are a helpful assistant inside a chat app that can give the user downloadable files.
+To create a file, write a fenced code block whose info string is "file:" followed by the file name, for example:
+\`\`\`file:report.docx
+# Title
+Text, lists and tables in Markdown...
+\`\`\`
+The app shows each such block as a file the user can save. Rules:
+- .docx (Word): write the document in Markdown (headings, bold, lists, tables).
+- .xlsx (Excel): write one Markdown table per sheet, each preceded by a "## Sheet name" heading. Put plain numbers in number cells.
+- Any text format (.csv, .txt, .md, .html, .json, .py, ...): write the exact file contents.
+- You cannot make PDF, PowerPoint or image files. If asked for a PDF, make a .docx and say it can be saved as PDF from Word.
+- If the file itself contains \`\`\` fences, open and close the file block with four backticks instead.
+- Use a short descriptive file name in the user's language. Briefly say what the file contains outside the block.
+Create files when the user asks for a file, document, sheet or export, or when it clearly helps. Never say you cannot create files.`;
+
+// Gemma models reject system instructions, so for them the instructions ride along in the first user message.
+function prependToFirstUser(messages, text) {
+  const i = messages.findIndex((m) => m.role === 'user');
+  if (i < 0) return messages;
+  const copy = [...messages];
+  copy[i] = { ...copy[i], text: `${text}\n\n---\n\n${copy[i].text || ''}` };
+  return copy;
+}
+
+const supportsSystem = (name) => !/gemma/i.test(name);
+
 function textFileBlock(f) {
   return `File: ${f.name}\n\`\`\`\n${f.text}\n\`\`\``;
 }
@@ -54,13 +81,20 @@ async function callGemini(name, messages, signal) {
     method: 'POST',
     signal,
     headers: { 'content-type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
-    body: JSON.stringify({ contents: toGemini(messages) }),
+    body: JSON.stringify(
+      supportsSystem(name)
+        ? { systemInstruction: { parts: [{ text: FILE_INSTRUCTIONS }] }, contents: toGemini(messages) }
+        : { contents: toGemini(prependToFirstUser(messages, FILE_INSTRUCTIONS)) },
+    ),
   });
 }
 
 async function callOpenRouter(name, messages, signal) {
   const hasPdf = messages.some((m) => (m.files || []).some((f) => f.kind === 'pdf'));
-  const body = { model: name, stream: true, messages: toOpenRouter(messages) };
+  const chat = supportsSystem(name)
+    ? [{ role: 'system', content: FILE_INSTRUCTIONS }, ...toOpenRouter(messages)]
+    : toOpenRouter(prependToFirstUser(messages, FILE_INSTRUCTIONS));
+  const body = { model: name, stream: true, messages: chat };
   // Use the free text-extraction engine so PDFs never cost credits.
   if (hasPdf) body.plugins = [{ id: 'file-parser', pdf: { engine: 'pdf-text' } }];
   return fetch('https://openrouter.ai/api/v1/chat/completions', {

@@ -158,3 +158,18 @@ button, select, input, textarea { font: inherit; color: inherit; }
 }
 .send-btn.stop { background: var(--text); color: var(--bg); }
 .send-btn:disabled { opacity: .4; cursor: default; }
+
+/* Files written by the model */
+.file-card {
+  display: flex; align-items: center; gap: 12px; margin: 10px 0; padding: 10px 12px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; max-width: 420px;
+}
+.file-icon { font-size: 26px; line-height: 1; }
+.file-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.file-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-size { font-size: 12px; color: var(--muted); }
+.file-save {
+  flex: none; border: 0; border-radius: 999px; padding: 7px 14px; cursor: pointer;
+  background: var(--accent); color: var(--accent-text); font-weight: 600;
+}
+.file-save:disabled { opacity: .5; }

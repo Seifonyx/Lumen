@@ -88,6 +88,121 @@ function readAs(file, method) {
 
 const stripDataUrl = (url) => url.slice(url.indexOf(',') + 1);
 
+// ---------- Files written by the model ----------
+// The model creates a file by writing a fenced block like ```file:report.docx … ```; we show it as a card.
+const FILE_FENCE = /^file[:\s]\s*(.+?)\s*$/i;
+const TEXT_MIME = {
+  csv: 'text/csv', txt: 'text/plain', md: 'text/markdown', html: 'text/html', htm: 'text/html', json: 'application/json',
+  xml: 'application/xml', js: 'text/javascript', py: 'text/x-python', css: 'text/css', svg: 'image/svg+xml',
+};
+
+function safeFileName(name) {
+  return name.replace(/[\\/:*?"<>|\n\r]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'file.txt';
+}
+
+function escapeHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML.replace(/"/g, '&quot;');
+}
+
+if (window.marked) {
+  marked.use({
+    renderer: {
+      code(code, info) {
+        const match = FILE_FENCE.exec(info || '');
+        if (!match) return false;
+        const name = safeFileName(match[1]);
+        const ext = name.split('.').pop().toLowerCase();
+        const kind = { docx: 'Word document', xlsx: 'Excel spreadsheet', csv: 'CSV spreadsheet', pdf: 'PDF' }[ext] || `${ext.toUpperCase()} file`;
+        return `<div class="file-card" data-file="${escapeHtml(name)}"><span class="file-icon">${fileIcon({ name })}</span>`
+          + `<span class="file-info"><span class="file-name">${escapeHtml(name)}</span><span class="file-size">${escapeHtml(kind)}</span></span>`
+          + `<button type="button" class="file-save">Save</button></div>`;
+      },
+    },
+  });
+}
+
+function findFileBlock(text, name) {
+  let found = null;
+  const walk = (tokens) => {
+    for (const t of tokens || []) {
+      if (found !== null) return;
+      const match = t.type === 'code' && FILE_FENCE.exec(t.lang || '');
+      if (match && safeFileName(match[1]) === name) found = t.text;
+      else if (t.type === 'list') t.items.forEach((i) => walk(i.tokens));
+      else walk(t.tokens);
+    }
+  };
+  walk(marked.lexer(text));
+  return found;
+}
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [''];
+  let quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch === '"' && text[i + 1] === '"') { row[row.length - 1] += '"'; i++; }
+      else if (ch === '"') quoted = false;
+      else row[row.length - 1] += ch;
+    } else if (ch === '"') quoted = true;
+    else if (ch === ',') row.push('');
+    else if (ch === '\n') { rows.push(row); row = ['']; }
+    else if (ch !== '\r') row[row.length - 1] += ch;
+  }
+  if (row.length > 1 || row[0]) rows.push(row);
+  return rows;
+}
+
+function csvToMarkdownTable(text) {
+  const rows = parseCsv(text.trim());
+  if (rows.length === 0) return '';
+  const width = Math.max(...rows.map((r) => r.length));
+  const line = (r) => `| ${Array.from({ length: width }, (_, i) => (r[i] || '').replace(/\|/g, '\\|').replace(/\n/g, ' ')).join(' | ')} |`;
+  return [line(rows[0]), `|${' --- |'.repeat(width)}`, ...rows.slice(1).map(line)].join('\n');
+}
+
+async function buildFile(name, content) {
+  const ext = name.split('.').pop().toLowerCase();
+  await loadScript(JSZIP);
+  if (ext === 'docx') return window.Exporter.docx(content);
+  if (ext === 'xlsx') {
+    const blob = window.Exporter.xlsx(content) || window.Exporter.xlsx(csvToMarkdownTable(content));
+    if (!blob) throw new Error('the model did not include a table to put in the spreadsheet.');
+    return blob;
+  }
+  if (['pdf', 'pptx', 'doc', 'xls', 'png', 'jpg', 'jpeg', 'zip'].includes(ext)) {
+    throw new Error(`.${ext} files can't be created here. Ask for a Word (.docx) or Excel (.xlsx) file instead.`);
+  }
+  // Excel only reads Arabic in CSV files correctly when they start with a byte-order mark.
+  const body = ext === 'csv' ? '﻿' + content : content;
+  return new Blob([body], { type: `${TEXT_MIME[ext] || 'text/plain'};charset=utf-8` });
+}
+
+async function saveFileCard(button) {
+  const card = button.closest('.file-card');
+  const msg = button.closest('.msg')?._msg;
+  if (!card || !msg) return;
+  const name = card.dataset.file;
+  if (controller && msg === current.messages.at(-1)) {
+    alert('Wait for the reply to finish, then save the file.');
+    return;
+  }
+  const content = findFileBlock(msg.text, name);
+  if (content === null) return;
+  button.disabled = true;
+  try {
+    await saveFile(await buildFile(name, content), name);
+  } catch (e) {
+    alert(`Couldn't create ${name}: ${e.message}`);
+  } finally {
+    button.disabled = false;
+  }
+}
+
 function renderMarkdown(text) {
   if (!window.marked || !window.DOMPurify) {
     const div = document.createElement('div');
@@ -383,6 +498,7 @@ function exportButton(label, text, ext) {
 function messageEl(m) {
   const wrap = document.createElement('div');
   wrap.className = `msg ${m.role}`;
+  wrap._msg = m;
   if (m.files?.length) {
     const files = document.createElement('div');
     files.className = 'files';
@@ -650,6 +766,10 @@ els.fileInput.addEventListener('change', () => {
 els.input.addEventListener('paste', (e) => {
   const files = [...(e.clipboardData?.files || [])];
   if (files.length) { e.preventDefault(); addFiles(files); }
+});
+els.messages.addEventListener('click', (e) => {
+  const button = e.target.closest('.file-save');
+  if (button) saveFileCard(button);
 });
 els.messages.addEventListener('dragover', (e) => e.preventDefault());
 els.messages.addEventListener('drop', (e) => { e.preventDefault(); addFiles([...e.dataTransfer.files]); });

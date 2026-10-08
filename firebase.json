@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "the-model-router",
+    "site": "themodelrouter",
     "public": "dist",
     "ignore": ["firebase.json", "**/.*"],
     "rewrites": [{ "source": "**", "destination": "/index.html" }],

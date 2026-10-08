@@ -34,7 +34,7 @@ const db = {
   open() {
     if (this._db) return Promise.resolve(this._db);
     return new Promise((resolve, reject) => {
-      const req = indexedDB.open('my-chat', 1);
+      const req = indexedDB.open('model-router', 1);
       req.onupgradeneeded = () => req.result.createObjectStore('chats', { keyPath: 'id' });
       req.onsuccess = () => resolve((this._db = req.result));
       req.onerror = () => reject(req.error);

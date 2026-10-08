@@ -69,7 +69,7 @@ async function callOpenRouter(name, messages, signal) {
     headers: {
       'content-type': 'application/json',
       authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      'x-title': 'My Chat',
+      'x-title': 'Model Router',
     },
     body: JSON.stringify(body),
   });

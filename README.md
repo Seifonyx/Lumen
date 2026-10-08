@@ -1,4 +1,4 @@
-# My Chat
+# Model Router
 
 A small private chat app for Gemini (Google AI Studio) and OpenRouter models, with file uploads
 (PDF, Word .docx, images, text files). Runs free on Vercel.

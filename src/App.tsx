@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import ChatView from './components/ChatView';
 import Login from './components/Login';
+import NotInvited from './components/NotInvited';
 import PreviewModal from './components/PreviewModal';
 import SettingsModal from './components/SettingsModal';
 import Sidebar from './components/Sidebar';
@@ -12,6 +13,7 @@ export default function App() {
   const init = useStore((s) => s.init);
   const sidebarOpen = useStore((s) => s.sidebarOpen);
   const setUi = useStore((s) => s.setUi);
+  const accessDenied = useStore((s) => s.accessDenied);
 
   useEffect(() => {
     void init();
@@ -46,6 +48,7 @@ export default function App() {
       </>
     );
   }
+  if (accessDenied) return <NotInvited email={accessDenied} />;
   return (
     <div className="app">
       <Sidebar />

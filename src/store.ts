@@ -23,6 +23,8 @@ export interface PreviewFile {
 interface State {
   authed: boolean | null;
   user: { uid: string; email: string; name: string; photo: string } | null;
+  /** set when the signed-in Google account isn't on the invite list */
+  accessDenied: string | null;
   keys: ApiKeys;
   catalog: Catalog | null;
   usage: UsageView | null;
@@ -220,6 +222,7 @@ export const useStore = create<State>((set, get) => {
   return {
     authed: null,
     user: null,
+    accessDenied: null,
     keys: { gemini: '', openrouter: '' },
     catalog: null,
     usage: null,
@@ -250,18 +253,25 @@ export const useStore = create<State>((set, get) => {
         settingsReady = false;
         if (!user) {
           setKeys({ gemini: '', openrouter: '' });
-          set({ authed: false, user: null, catalog: null });
+          set({ authed: false, user: null, catalog: null, accessDenied: null });
           return;
         }
-        set({ authed: true, user: { uid: user.uid, email: user.email || '', name: user.displayName || '', photo: user.photoURL || '' } });
+        // Stay on the loading screen until we know this account is invited.
+        set({ authed: null, accessDenied: null, user: { uid: user.uid, email: user.email || '', name: user.displayName || '', photo: user.photoURL || '' } });
         try {
           const [keys, remoteSettings] = await Promise.all([loadKeys(user.uid), loadRemoteSettings(user.uid)]);
           setKeys(keys);
-          set({ keys });
+          set({ keys, authed: true });
           if (remoteSettings) get().updateSettings({ ...remoteSettings, voiceLang: get().settings.voiceLang } as Partial<Settings>);
           settingsReady = true;
           if (!remoteSettings) get().updateSettings({});
         } catch (e) {
+          // The database refuses accounts that aren't invited.
+          if ((e as { code?: string }).code === 'permission-denied') {
+            set({ authed: true, accessDenied: user.email || 'this account', catalog: null });
+            return;
+          }
+          set({ authed: true });
           get().toast(`Couldn't load your settings: ${(e as Error).message}`, 'error');
         }
         sync = new ChatSync(user.uid, {

@@ -8,6 +8,7 @@ Live at **https://model-router.web.app** (Firebase project `the-model-router`).
 
 ## Features
 
+- **Invite-only**: only the Google accounts listed in `firestore.rules` can use the app; others see a "Not invited" screen.
 - **Google sign-in**; API keys are entered once in Settings → API keys and saved privately in Firestore.
 - **One chat, many models**: pick any model per chat, or retry an answer with a different one.
 - **Automatic switching**: if a model hits its usage limit or fails, the next model in your list answers.

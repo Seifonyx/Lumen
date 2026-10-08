@@ -558,3 +558,4 @@ table.sheet tr.totals td { font-weight: 700; background: #e8ecf2; border-top: 3p
 .limit-tag.low { color: #b7791f; background: var(--warning-soft); }
 .usage-warning { max-width: 780px; margin: 0 auto 6px; padding: 7px 12px; border-radius: 12px; font-size: 0.82rem; background: var(--warning-soft); color: var(--text); }
 .usage-warning.blocked { background: var(--red-soft); }
+.denied-icon { margin: 0 auto; color: var(--danger); }

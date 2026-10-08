@@ -1,75 +1,30 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-  <title>Model Router</title>
-  <meta name="theme-color" content="#f7f7f5" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#18181b" media="(prefers-color-scheme: dark)">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Model Router">
-  <link rel="manifest" href="/manifest.json">
-  <link rel="icon" href="/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/icon-192.png">
-  <link rel="stylesheet" href="/style.css">
-  <script src="/vendor/marked.min.js"></script>
-  <script src="/vendor/purify.min.js"></script>
-  <script src="/export.js"></script>
-</head>
-<body>
-  <!-- Password screen -->
-  <section id="login" class="login" hidden>
-    <form id="login-form" class="login-card">
-      <h1>Model Router</h1>
-      <p>Enter your password to continue.</p>
-      <input id="login-password" type="password" autocomplete="current-password" placeholder="Password" required>
-      <button type="submit" class="btn-primary">Unlock</button>
-      <p id="login-error" class="error" hidden></p>
-    </form>
-  </section>
-
-  <!-- Main app -->
-  <div id="app" class="app" hidden>
-    <aside id="drawer" class="drawer" aria-label="Chats">
-      <div class="drawer-head">
-        <strong>Chats</strong>
-        <button id="close-drawer" class="icon-btn" aria-label="Close">✕</button>
-      </div>
-      <button id="drawer-new" class="btn-primary drawer-new">＋ New chat</button>
-      <ul id="chat-list" class="chat-list"></ul>
-      <button id="logout" class="link-btn">Log out</button>
-    </aside>
-    <div id="scrim" class="scrim" hidden></div>
-
-    <main class="main">
-      <header class="topbar">
-        <button id="open-drawer" class="icon-btn" aria-label="Chats">☰</button>
-        <select id="model" aria-label="Model"></select>
-        <button id="new-chat" class="icon-btn" aria-label="New chat">✎</button>
-      </header>
-
-      <div id="messages" class="messages">
-        <div id="empty" class="empty">
-          <h2>Ask anything</h2>
-          <p>Attach PDFs, Word, Excel, images or text files with 📎. Switch models any time from the menu above.</p>
-        </div>
-      </div>
-
-      <form id="composer" class="composer">
-        <div id="attachments" class="attachments"></div>
-        <div class="composer-row">
-          <label class="icon-btn attach" aria-label="Attach files">
-            📎
-            <input id="file-input" type="file" multiple hidden
-              accept="image/*,application/pdf,.pdf,.docx,.xlsx,.xlsm,.xls,.txt,.md,.csv,.json,.html,.xml,.js,.py,.css,.ts,.tsv,.log,.yaml,.yml">
-          </label>
-          <textarea id="input" rows="1" dir="auto" placeholder="Message…" enterkeyhint="send"></textarea>
-          <button id="send" type="submit" class="send-btn" aria-label="Send">➤</button>
-        </div>
-      </form>
-    </main>
-  </div>
-
-  <script src="/app.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+    <title>Model Router</title>
+    <meta name="description" content="Private chat with free AI models, files, documents, spreadsheets and slides." />
+    <meta name="theme-color" content="#f8f7f4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#151517" media="(prefers-color-scheme: dark)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Model Router" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+      // Apply the saved theme before first paint to avoid a flash.
+      try {
+        var s = JSON.parse(localStorage.getItem('mr.settings') || '{}');
+        if (s.theme === 'light' || s.theme === 'dark') document.documentElement.dataset.theme = s.theme;
+        if (s.fontSize) document.documentElement.dataset.font = s.fontSize;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

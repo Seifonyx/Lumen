@@ -1,0 +1,361 @@
+import { create } from 'zustand';
+import { ApiError, auth, buildChatBody, fetchCatalog, fetchTitle, login as apiLogin, streamChat, type WireMessage } from './lib/api';
+import { db } from './lib/db';
+import { applyAppearance, loadSettings, saveSettings } from './lib/settings';
+import { modelShortName, uid } from './lib/util';
+import type { Attachment, Catalog, Chat, Message, ModelInfo, Settings } from './types';
+
+export interface Toast {
+  id: string;
+  text: string;
+  kind: 'info' | 'error' | 'success';
+}
+
+export interface PreviewFile {
+  name: string;
+  content: string;
+}
+
+interface State {
+  authed: boolean | null;
+  catalog: Catalog | null;
+  catalogError: string | null;
+  settings: Settings;
+  chats: Chat[];
+  currentId: string | null;
+  streamingChatId: string | null;
+  sidebarOpen: boolean;
+  settingsOpen: boolean;
+  settingsTab: string;
+  preview: PreviewFile | null;
+  toasts: Toast[];
+
+  init(): Promise<void>;
+  login(password: string): Promise<void>;
+  logout(): void;
+  loadCatalog(): Promise<void>;
+  updateSettings(patch: Partial<Settings>): void;
+  toast(text: string, kind?: Toast['kind']): void;
+  dismissToast(id: string): void;
+  setUi(patch: Partial<Pick<State, 'sidebarOpen' | 'settingsOpen' | 'settingsTab' | 'preview'>>): void;
+
+  newChat(): void;
+  selectChat(id: string): void;
+  deleteChat(id: string): Promise<void>;
+  renameChat(id: string, title: string): Promise<void>;
+  togglePin(id: string): Promise<void>;
+  setChatModel(model: string): void;
+  clearAllChats(): Promise<void>;
+  importChats(chats: Chat[]): Promise<number>;
+
+  send(text: string, files: Attachment[]): Promise<void>;
+  regenerate(messageId: string, model?: string): Promise<void>;
+  editAndResend(messageId: string, text: string): Promise<void>;
+  continueReply(): Promise<void>;
+  stop(): void;
+}
+
+let controller: AbortController | null = null;
+
+const newChatObject = (): Chat => ({ id: uid(), title: 'New chat', createdAt: Date.now(), updatedAt: Date.now(), messages: [] });
+
+export const useStore = create<State>((set, get) => {
+  const replaceChat = (chat: Chat) => set((s) => ({ chats: s.chats.some((c) => c.id === chat.id) ? s.chats.map((c) => (c.id === chat.id ? chat : c)) : [chat, ...s.chats] }));
+  const persist = async (chat: Chat) => {
+    if (!chat.messages.length) return;
+    try {
+      await db.put(chat);
+    } catch {
+      get().toast("Couldn't save this chat on the device (storage may be full).", 'error');
+    }
+  };
+  const currentChat = () => get().chats.find((c) => c.id === get().currentId) || null;
+
+  /** The model this chat should use, falling back sensibly if it was disabled. */
+  const modelFor = (chat: Chat | null): string => {
+    const { settings, catalog } = get();
+    const enabled = settings.enabledModels.filter((id) => !catalog || catalog.models.some((m) => m.id === id) || !catalog.models.length);
+    const pick = [chat?.model, settings.defaultModel, ...enabled].find((id) => id && enabled.includes(id));
+    return pick || enabled[0] || catalog?.defaults[0] || '';
+  };
+
+  /** Streams an assistant reply for the chat's current messages. */
+  const runAssistant = async (chatId: string, modelOverride?: string) => {
+    let chat = get().chats.find((c) => c.id === chatId);
+    if (!chat) return;
+    const { settings } = get();
+    const model = modelOverride || modelFor(chat);
+    if (!model) {
+      get().toast('No models are enabled. Open Settings → Models.', 'error');
+      return;
+    }
+    const fallbacks = settings.autoSwitch ? settings.enabledModels.filter((id) => id !== model) : [];
+    const wire: WireMessage[] = chat.messages
+      .filter((m) => !m.error || m.text)
+      .map((m) => ({ role: m.role, text: m.text, files: m.files?.map(({ kind, name, mime, data, text }) => ({ kind, name, mime, data, text })) }));
+
+    let body: string;
+    try {
+      body = buildChatBody({ model, fallbacks, messages: wire, options: { search: settings.webSearch, customInstructions: settings.customInstructions } });
+    } catch (e) {
+      get().toast((e as Error).message, 'error');
+      return;
+    }
+
+    const reply: Message = { id: uid(), role: 'assistant', text: '', model, status: 'streaming', createdAt: Date.now() };
+    chat = { ...chat, messages: [...chat.messages, reply], updatedAt: Date.now() };
+    replaceChat(chat);
+    controller = new AbortController();
+    set({ streamingChatId: chatId });
+
+    // Batch UI updates while text streams in.
+    let pending = false;
+    const flush = () => {
+      pending = false;
+      const c = get().chats.find((x) => x.id === chatId);
+      if (!c) return;
+      replaceChat({ ...c, messages: c.messages.map((m) => (m.id === reply.id ? { ...reply } : m)) });
+    };
+    const schedule = () => {
+      if (!pending) {
+        pending = true;
+        setTimeout(flush, 40);
+      }
+    };
+
+    try {
+      for await (const ev of streamChat(body, controller.signal)) {
+        if (ev.t === 'text') reply.text += ev.text;
+        else if (ev.t === 'think') reply.thinking = (reply.thinking || '') + ev.text;
+        else if (ev.t === 'model') reply.model = ev.id;
+        else if (ev.t === 'notice') reply.notices = [...(reply.notices || []), ev.text];
+        else if (ev.t === 'sources') reply.sources = [...(reply.sources || []), ...ev.items];
+        else if (ev.t === 'error') reply.error = ev.text;
+        schedule();
+      }
+      reply.status = reply.error && !reply.text ? 'error' : 'done';
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') reply.status = 'stopped';
+      else {
+        if (e instanceof ApiError && e.status === 401) {
+          get().logout();
+          get().toast('Please sign in again.', 'error');
+        }
+        reply.error = (e as Error).message;
+        reply.status = 'error';
+      }
+    } finally {
+      controller = null;
+    }
+    flush();
+    set({ streamingChatId: null });
+    const finished = get().chats.find((c) => c.id === chatId);
+    if (!finished) return;
+    const updated = { ...finished, updatedAt: Date.now() };
+    replaceChat(updated);
+    await persist(updated);
+
+    // Name the chat after its first exchange.
+    const firstUser = updated.messages.find((m) => m.role === 'user');
+    if (get().settings.autoTitle && updated.messages.length <= 2 && firstUser && reply.status === 'done') {
+      const title = await fetchTitle(firstUser.text || firstUser.files?.map((f) => f.name).join(', ') || '', reply.model);
+      const latest = get().chats.find((c) => c.id === chatId);
+      if (title && latest) {
+        const named = { ...latest, title };
+        replaceChat(named);
+        await persist(named);
+      }
+    }
+  };
+
+  return {
+    authed: null,
+    catalog: null,
+    catalogError: null,
+    settings: loadSettings(),
+    chats: [],
+    currentId: null,
+    streamingChatId: null,
+    sidebarOpen: false,
+    settingsOpen: false,
+    settingsTab: 'general',
+    preview: null,
+    toasts: [],
+
+    async init() {
+      applyAppearance(get().settings);
+      try {
+        const chats = await db.all();
+        set({ chats });
+      } catch {
+        get().toast("Couldn't open saved chats on this device.", 'error');
+      }
+      if (!auth.token) {
+        set({ authed: false });
+        return;
+      }
+      set({ authed: true });
+      await get().loadCatalog();
+    },
+
+    async login(password) {
+      await apiLogin(password);
+      set({ authed: true });
+      await get().loadCatalog();
+    },
+
+    logout() {
+      get().stop();
+      auth.token = '';
+      set({ authed: false, catalog: null });
+    },
+
+    async loadCatalog() {
+      try {
+        const catalog = await fetchCatalog();
+        const { settings } = get();
+        const known = new Set(catalog.models.map((m) => m.id));
+        let enabled = settings.enabledModels.filter((id) => known.has(id) || !catalog.models.length);
+        if (!enabled.length) enabled = catalog.defaults.filter((id) => known.has(id) || !catalog.models.length);
+        const defaultModel = enabled.includes(settings.defaultModel) ? settings.defaultModel : enabled[0] || '';
+        set({ catalog, catalogError: catalog.errors.length ? catalog.errors.join(' · ') : null });
+        get().updateSettings({ enabledModels: enabled, defaultModel });
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 401) {
+          auth.token = '';
+          set({ authed: false });
+          return;
+        }
+        set({ catalogError: (e as Error).message });
+      }
+    },
+
+    updateSettings(patch) {
+      const settings = { ...get().settings, ...patch };
+      saveSettings(settings);
+      applyAppearance(settings);
+      set({ settings });
+    },
+
+    toast(text, kind = 'info') {
+      const id = uid();
+      set((s) => ({ toasts: [...s.toasts.slice(-3), { id, text, kind }] }));
+      setTimeout(() => get().dismissToast(id), kind === 'error' ? 7000 : 3500);
+    },
+    dismissToast(id) {
+      set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
+    },
+    setUi(patch) {
+      set(patch);
+    },
+
+    newChat() {
+      // Reuse an existing empty chat instead of piling them up.
+      const empty = get().chats.find((c) => c.messages.length === 0);
+      if (empty) {
+        set({ currentId: empty.id, sidebarOpen: false });
+        return;
+      }
+      const chat = newChatObject();
+      set((s) => ({ chats: [chat, ...s.chats], currentId: chat.id, sidebarOpen: false }));
+    },
+    selectChat(id) {
+      set({ currentId: id, sidebarOpen: false });
+    },
+    async deleteChat(id) {
+      if (get().streamingChatId === id) get().stop();
+      set((s) => ({ chats: s.chats.filter((c) => c.id !== id), currentId: s.currentId === id ? null : s.currentId }));
+      await db.remove(id);
+    },
+    async renameChat(id, title) {
+      const chat = get().chats.find((c) => c.id === id);
+      if (!chat || !title.trim()) return;
+      const updated = { ...chat, title: title.trim().slice(0, 100) };
+      replaceChat(updated);
+      await persist(updated);
+    },
+    async togglePin(id) {
+      const chat = get().chats.find((c) => c.id === id);
+      if (!chat) return;
+      const updated = { ...chat, pinned: !chat.pinned };
+      replaceChat(updated);
+      await persist(updated);
+    },
+    setChatModel(model) {
+      get().updateSettings({ defaultModel: model });
+      const chat = currentChat();
+      if (chat) {
+        const updated = { ...chat, model };
+        replaceChat(updated);
+        void persist(updated);
+      }
+    },
+    async clearAllChats() {
+      get().stop();
+      await db.clear();
+      set({ chats: [], currentId: null });
+    },
+    async importChats(incoming) {
+      const valid = incoming.filter((c) => c && typeof c.id === 'string' && Array.isArray(c.messages));
+      await db.bulkPut(valid);
+      set({ chats: await db.all() });
+      return valid.length;
+    },
+
+    async send(text, files) {
+      if (get().streamingChatId) return;
+      let chat = currentChat();
+      if (!chat) {
+        chat = newChatObject();
+        set((s) => ({ chats: [chat!, ...s.chats], currentId: chat!.id }));
+      }
+      const msg: Message = { id: uid(), role: 'user', text, files: files.length ? files : undefined, createdAt: Date.now() };
+      const title = chat.messages.length === 0 ? (text || files.map((f) => f.name).join(', ')).replace(/\s+/g, ' ').slice(0, 60) || 'New chat' : chat.title;
+      const updated: Chat = { ...chat, title, model: chat.model || modelFor(chat), messages: [...chat.messages, msg], updatedAt: Date.now() };
+      replaceChat(updated);
+      await persist(updated);
+      await runAssistant(updated.id);
+    },
+
+    async regenerate(messageId, model) {
+      const chat = currentChat();
+      if (!chat || get().streamingChatId) return;
+      const idx = chat.messages.findIndex((m) => m.id === messageId);
+      if (idx < 0) return;
+      const updated = { ...chat, model: model || chat.model, messages: chat.messages.slice(0, idx) };
+      replaceChat(updated);
+      if (model) get().updateSettings({ defaultModel: model });
+      await runAssistant(chat.id, model);
+    },
+
+    async editAndResend(messageId, text) {
+      const chat = currentChat();
+      if (!chat || get().streamingChatId) return;
+      const idx = chat.messages.findIndex((m) => m.id === messageId);
+      if (idx < 0) return;
+      const edited = { ...chat.messages[idx], text };
+      const updated = { ...chat, messages: [...chat.messages.slice(0, idx), edited] };
+      replaceChat(updated);
+      await persist(updated);
+      await runAssistant(chat.id);
+    },
+
+    async continueReply() {
+      await get().send('Continue exactly where you stopped.', []);
+    },
+
+    stop() {
+      controller?.abort();
+    },
+  };
+});
+
+export const selectCurrentChat = (s: State) => s.chats.find((c) => c.id === s.currentId) || null;
+
+export function modelInfo(catalog: Catalog | null, id?: string): ModelInfo | undefined {
+  return catalog?.models.find((m) => m.id === id);
+}
+
+export function modelLabel(catalog: Catalog | null, id?: string): string {
+  return modelInfo(catalog, id)?.label || modelShortName(id);
+}

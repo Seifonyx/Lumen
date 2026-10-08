@@ -1,53 +1,46 @@
 # Model Router
 
-A small private chat app for Gemini (Google AI Studio) and OpenRouter models, with file uploads
-(PDF, Word .docx, Excel .xlsx, images, text files). Runs free on Vercel.
+A private, phone-friendly AI chat that brings free models from **Google AI Studio (Gemini)** and
+**OpenRouter** together in one place, and switches to another model automatically when one hits its
+free limit. It reads your files and creates real Word, Excel, PowerPoint and PDF documents.
 
-## Deploy on Vercel
+## Features
 
-1. In Vercel: **Add New → Project**, import this GitHub repository, and click **Deploy**
-   (no build settings needed).
-2. In the project: **Settings → Environment Variables**, add:
+- **One chat, many models** – pick any model per chat, or retry an answer with a different one.
+- **Automatic switching** – if a model hits its usage limit or fails, the next model in your list answers.
+- **Model manager** – browse every free Gemini and OpenRouter model and choose which appear (Settings → Models).
+- **Attachments** – PDF, Word, Excel, PowerPoint, images (incl. camera), CSV and text files; drag & drop or paste.
+- **Creates files** – ask for a document, spreadsheet or presentation and get a file card with preview + save:
+  - Word: cover page, headers, page numbers, coloured headings, tables, callouts, Arabic right-to-left.
+  - Excel: colours, number/currency/percent/date formats, formulas, totals, conditional formatting, frozen headers, filters, several sheets.
+  - PowerPoint: themes, title/section/bullets/two-column/table/chart/stats/timeline/quote slides, native charts, speaker notes.
+  - PDF (via the print dialog), CSV, HTML (live preview), code and text files.
+- **Charts in chat**, LaTeX maths, highlighted code with copy buttons.
+- **Web search** with sources (Gemini models) and collapsible **thinking**.
+- Edit & resend, regenerate, stop, copy, read aloud, voice input, save a reply as Word.
+- Chat history with search, pin, rename, export, plus backup/restore.
+- Custom instructions, light/dark theme, text size, installable on the home screen.
 
-   | Key | Value |
-   |---|---|
-   | `APP_PASSWORD` | the password you'll type to open the app |
-   | `GEMINI_API_KEY` | your key from aistudio.google.com |
-   | `OPENROUTER_API_KEY` | your `sk-or-...` key from openrouter.ai |
-   | `GEMINI_MODELS` | optional, comma-separated, e.g. `gemini-3.5-flash,gemini-flash-lite-latest,gemma-4-31b-it` |
-   | `OPENROUTER_MODELS` | optional, comma-separated, e.g. `nvidia/nemotron-3-super-120b-a12b:free` |
+## Setup (Vercel)
 
-3. **Deployments → ⋯ → Redeploy** once after saving the variables.
+Environment variables (Settings → Environment Variables), then redeploy:
 
-Model names: copy them exactly from Google AI Studio's model list (without `models/`) and from
-openrouter.ai/models. A provider only shows up if its key is set.
+| Key | Value |
+|---|---|
+| `APP_PASSWORD` | the password for signing in |
+| `GEMINI_API_KEY` | key from aistudio.google.com |
+| `OPENROUTER_API_KEY` | key from openrouter.ai (optional) |
+| `GEMINI_MODELS`, `OPENROUTER_MODELS` | optional, comma-separated starting model list; you can change models in the app |
 
-## Files
+`vercel.json` tells Vercel to build with Vite; the `api/` folder holds the edge functions.
 
-- PDFs up to 2.5 MB are sent as-is (the model reads text and pictures). Bigger PDFs are converted
-  to text in the browser first; scanned PDFs that big need to be sent as screenshots.
-- Word (.docx), Excel (.xlsx, every sheet as CSV) and text files are converted to text in the browser.
-  Old .xls files need to be re-saved as .xlsx first.
-- Images are resized to 1600 px before sending.
-- Vercel limits each request to about 4.5 MB. In long chats with many files, the oldest files are
-  dropped from what's sent so new messages still go through.
+## Development
 
-## Files from the AI
+```bash
+npm ci
+npm run build      # outputs dist/
+npm run typecheck
+```
 
-Ask for a file ("make this a Word document", "give me an Excel sheet of…", "export as CSV") and the
-reply shows a file card with a **Save** button. Supported: Word (.docx), Excel (.xlsx), and text
-formats such as .csv, .txt, .md, .html and .json. PDFs aren't supported; ask for Word and save it
-as PDF from there.
-
-## Download replies as Word or Excel
-
-Every AI reply has a **⬇ Word** button that saves it as a .docx (headings, lists, tables, Arabic
-right-to-left). Replies that contain tables also get **⬇ Excel**, with one sheet per table. On phones
-this opens the share sheet so you can save to Files or send it on.
-
-Chats are saved in the browser on each device (not on the server).
-
-## Privacy
-
-Free tiers may use your conversations to improve the providers' models. Don't send patient data
-or other confidential information.
+Chats are stored in the browser (IndexedDB) on each device. Free tiers may use conversations to improve
+the providers' models, so don't send patient or confidential data.

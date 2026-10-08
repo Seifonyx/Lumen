@@ -119,6 +119,8 @@ function addSheet(wb: ExcelJS.Workbook, s: SheetSpec) {
   if (s.filter && s.rows.length) ws.autoFilter = { from: { row: headerRow, column: 1 }, to: { row: last, column: ncols } };
 
   // Conditional formatting
+  // Excel expects each rule on a sheet to have its own priority.
+  let priority = 0;
   for (const cf of s.conditional) {
     const letter = colLetter(cf.column);
     const ref = `${letter}${first}:${letter}${last}`;
@@ -129,15 +131,15 @@ function addSheet(wb: ExcelJS.Workbook, s: SheetSpec) {
     const v = (x: unknown) => (typeof x === 'number' ? String(x) : `"${String(x ?? '').replace(/"/g, '""')}"`);
     let rule: any = null;
     if (cf.type === 'colorScale') {
-      rule = { type: 'colorScale', priority: 1, cfvo: [{ type: 'min' }, { type: 'percentile', value: 50 }, { type: 'max' }], color: [{ argb: 'FFF8696B' }, { argb: 'FFFFEB84' }, { argb: 'FF63BE7B' }] };
+      rule = { type: 'colorScale', priority: ++priority, cfvo: [{ type: 'min' }, { type: 'percentile', value: 50 }, { type: 'max' }], color: [{ argb: 'FFF8696B' }, { argb: 'FFFFEB84' }, { argb: 'FF63BE7B' }] };
     } else if (cf.type === 'dataBar') {
-      rule = { type: 'dataBar', priority: 1, minLength: 0, maxLength: 100, cfvo: [{ type: 'min' }, { type: 'max' }], color: { argb: argb(cf.fill || cf.color || '5B9BD5') }, gradient: true };
+      rule = { type: 'dataBar', priority: ++priority, minLength: 0, maxLength: 100, cfvo: [{ type: 'min' }, { type: 'max' }], color: { argb: argb(cf.fill || cf.color || '5B9BD5') }, gradient: true };
     } else if (cf.type === 'greaterThan' || cf.type === 'lessThan' || cf.type === 'equals') {
-      rule = { type: 'cellIs', priority: 1, operator: cf.type === 'equals' ? 'equal' : cf.type, formulae: [v(cf.value)], style };
+      rule = { type: 'cellIs', priority: ++priority, operator: cf.type === 'equals' ? 'equal' : cf.type, formulae: [v(cf.value)], style };
     } else if (cf.type === 'between') {
-      rule = { type: 'cellIs', priority: 1, operator: 'between', formulae: [v(cf.value), v(cf.value2)], style };
+      rule = { type: 'cellIs', priority: ++priority, operator: 'between', formulae: [v(cf.value), v(cf.value2)], style };
     } else if (cf.type === 'contains') {
-      rule = { type: 'containsText', priority: 1, operator: 'containsText', text: String(cf.value ?? ''), style };
+      rule = { type: 'containsText', priority: ++priority, operator: 'containsText', text: String(cf.value ?? ''), style };
     }
     if (rule) ws.addConditionalFormatting({ ref, rules: [rule] });
   }
@@ -151,5 +153,22 @@ export async function buildXlsx(spec: WorkbookSpec): Promise<Blob> {
   wb.created = new Date();
   for (const s of spec.sheets) addSheet(wb, s);
   const buf = await wb.xlsx.writeBuffer();
-  return new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  return new Blob([await repairForExcel(buf as ArrayBuffer)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+
+/**
+ * exceljs adds an empty Excel-2010 extension (<x14:id/>) to data-bar rules that points at nothing.
+ * LibreOffice ignores it, but Microsoft Excel reports the file as damaged, so it's removed;
+ * the standard data bar that remains works everywhere.
+ */
+async function repairForExcel(buf: ArrayBuffer): Promise<ArrayBuffer> {
+  const { default: JSZip } = await import('jszip');
+  const zip = await JSZip.loadAsync(buf);
+  const sheets = Object.keys(zip.files).filter((p) => /^xl\/worksheets\/sheet\d+\.xml$/.test(p));
+  for (const path of sheets) {
+    const xml = await zip.file(path)!.async('string');
+    const fixed = xml.replace(/<extLst><ext uri="\{B025F937-C7B1-47D3-B67F-A62EFF666E3E\}"[^>]*><x14:id\s*\/><\/ext><\/extLst>/g, '');
+    if (fixed !== xml) zip.file(path, fixed);
+  }
+  return zip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE' });
 }

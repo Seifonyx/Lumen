@@ -1,5 +1,5 @@
 import { ArrowUp, FileText, Globe, Image as ImageIcon, Loader2, Mic, Paperclip, Square, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ACCEPT, readAttachment } from '../lib/files/read';
 import { canListen, listen } from '../lib/speech';
 import { formatBytes, isTouch } from '../lib/util';
@@ -16,11 +16,12 @@ interface Pending {
 const PREFILL = 'mr:prefill';
 export const prefillComposer = (text: string) => window.dispatchEvent(new CustomEvent(PREFILL, { detail: text }));
 
-export default function Composer({ model }: { model: string }) {
+export default function Composer({ model, meter }: { model: string; meter?: ReactNode }) {
   const send = useStore((s) => s.send);
   const stop = useStore((s) => s.stop);
   const toast = useStore((s) => s.toast);
-  const streaming = useStore((s) => s.streamingChatId !== null);
+  const streaming = useStore((s) => s.streamingChatId !== null || s.compactingChatId !== null);
+  const compact = useStore((s) => s.compact);
   const settings = useStore((s) => s.settings);
   const catalog = useStore((s) => s.catalog);
   const updateSettings = useStore((s) => s.updateSettings);
@@ -140,6 +141,12 @@ export default function Composer({ model }: { model: string }) {
     }
     if (!canSend) return;
     stopListening.current?.();
+    // Commands, like in Claude Code.
+    if (/^\/compact\s*$/i.test(text.trim()) && !pending.length) {
+      setText('');
+      void compact();
+      return;
+    }
     const files = pending.map((p) => p.file!);
     void send(text.trim(), files);
     setText('');
@@ -179,6 +186,7 @@ export default function Composer({ model }: { model: string }) {
           <span>Drop files to attach</span>
         </div>
       )}
+      {meter}
       {usageWarning && (
         <div className={`usage-warning${blockedUntil ? ' blocked' : ''}`} role="status" dir="auto">
           {usageWarning}

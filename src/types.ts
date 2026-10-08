@@ -44,7 +44,24 @@ export interface Chat {
   model?: string;
   /** last change time on any device, used for syncing (unlike updatedAt it also moves on rename/pin) */
   rev?: number;
+  /** a summary that stands in for older messages when the chat gets long */
+  summary?: ChatSummary;
   messages: Message[];
+}
+
+export interface ChatSummary {
+  text: string;
+  /** id of the last message the summary covers; null = it covers an earlier chat (continued from) */
+  upTo: string | null;
+  /** how many messages it replaces */
+  count: number;
+  /** rough tokens saved per message sent */
+  saved: number;
+  createdAt: number;
+  model?: string;
+  /** title of the chat this one continues, if any */
+  from?: string;
+  auto?: boolean;
 }
 
 export interface ModelInfo {
@@ -82,6 +99,8 @@ export interface Settings {
   fontSize: FontSize;
   enterToSend: boolean;
   autoTitle: boolean;
+  /** summarize older messages when a chat gets long */
+  autoCompact: boolean;
   /** set once Auto routing has been made the default */
   autoIntroduced?: boolean;
   voiceLang: string;

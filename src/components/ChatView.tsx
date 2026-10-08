@@ -1,7 +1,9 @@
 import { ArrowDown, FileSpreadsheet, FileText, Languages, LineChart, Menu, Presentation, ScrollText, SquarePen } from 'lucide-react';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { activeSummary, compactLimit, contextTokens } from '../lib/compact';
 import { AUTO } from '../lib/routing';
-import { selectCurrentChat, useStore } from '../store';
+import { modelInfo, selectCurrentChat, useStore } from '../store';
+import { CompactingNote, CompactNote, MemoryMeter } from './CompactNote';
 import Composer, { prefillComposer } from './Composer';
 import MessageItem from './MessageItem';
 import ModelPicker from './ModelPicker';
@@ -20,6 +22,8 @@ export default function ChatView() {
   const catalogError = useStore((s) => s.catalogError);
   const streaming = useStore((s) => s.streamingChatId !== null && s.streamingChatId === s.currentId);
   const defaultModel = useStore((s) => s.settings.defaultModel);
+  const compacting = useStore((s) => s.compactingChatId !== null && s.compactingChatId === s.currentId);
+  const catalog = useStore((s) => s.catalog);
   const { setUi, newChat, setChatModel } = useStore.getState();
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
@@ -27,6 +31,10 @@ export default function ChatView() {
 
   const model = chat?.model && (chat.model === AUTO || useStore.getState().settings.enabledModels.includes(chat.model)) ? chat.model : defaultModel;
   const messages = chat?.messages || [];
+  const summary = chat ? activeSummary(chat) : null;
+  // How full the chat is, compared with the point where it gets compacted.
+  const used = chat ? contextTokens(chat) : 0;
+  const limit = compactLimit(model === AUTO ? undefined : modelInfo(catalog, model));
   const lastText = messages.length ? messages[messages.length - 1].text.length + (messages[messages.length - 1].thinking?.length || 0) : 0;
 
   // Jump to the bottom when switching chats.
@@ -74,7 +82,7 @@ export default function ChatView() {
       )}
 
       <div className="messages" ref={scroller}>
-        {messages.length === 0 ? (
+        {messages.length === 0 && !summary ? (
           <div className="empty">
             <img src="/icon.svg" alt="" width={52} height={52} />
             <h1>What can I help with?</h1>
@@ -90,9 +98,14 @@ export default function ChatView() {
           </div>
         ) : (
           <div className="thread">
+            {summary?.upTo === null && <CompactNote chat={chat!} summary={summary} />}
             {messages.map((m, i) => (
-              <MessageItem key={m.id} message={m} isLast={i === messages.length - 1} busy={streaming} />
+              <Fragment key={m.id}>
+                <MessageItem message={m} isLast={i === messages.length - 1} busy={streaming} />
+                {summary?.upTo === m.id && <CompactNote chat={chat!} summary={summary} />}
+              </Fragment>
             ))}
+            {compacting && <CompactingNote />}
           </div>
         )}
       </div>
@@ -110,7 +123,7 @@ export default function ChatView() {
         </button>
       )}
 
-      <Composer model={model} />
+      <Composer model={model} meter={chat && used > limit * 0.4 ? <MemoryMeter used={used} limit={limit} chatId={chat.id} /> : null} />
     </main>
   );
 }

@@ -1,14 +1,15 @@
 import { create } from 'zustand';
 import { openRouterDailyLimit, setKeys } from './lib/ai/providers.js';
-import { buildChatBody, fetchCatalog, fetchTitle, streamChat, type WireMessage } from './lib/api';
+import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage } from './lib/api';
+import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
 import { loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { ChatSync } from './lib/sync';
-import { AUTO, estimateTokens, planRoute } from './lib/routing';
+import { AUTO, planRoute } from './lib/routing';
 import { formatUntil, remaining, UsageTracker, type LimitInfo, type UsageView } from './lib/usage';
 import { db } from './lib/db';
 import { applyAppearance, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
-import type { Attachment, Catalog, Chat, Message, ModelInfo, Settings } from './types';
+import type { Attachment, Catalog, Chat, ChatSummary, Message, ModelInfo, Settings } from './types';
 
 export interface Toast {
   id: string;
@@ -34,6 +35,8 @@ interface State {
   chats: Chat[];
   currentId: string | null;
   streamingChatId: string | null;
+  /** chat whose older messages are being summarized right now */
+  compactingChatId: string | null;
   sidebarOpen: boolean;
   settingsOpen: boolean;
   settingsTab: string;
@@ -63,10 +66,16 @@ interface State {
   regenerate(messageId: string, model?: string): Promise<void>;
   editAndResend(messageId: string, text: string): Promise<void>;
   continueReply(): Promise<void>;
+  /** summarizes older messages now (the /compact command) */
+  compact(chatId?: string): Promise<void>;
+  undoCompact(chatId: string): Promise<void>;
+  /** starts a new chat that carries a summary of this one */
+  continueInNewChat(chatId: string): Promise<void>;
   stop(): void;
 }
 
 let controller: AbortController | null = null;
+let compactController: AbortController | null = null;
 let sync: ChatSync | null = null;
 let usage: UsageTracker | null = null;
 let settingsReady = false;
@@ -99,6 +108,83 @@ export const useStore = create<State>((set, get) => {
     return pick || enabled[0] || catalog?.defaults[0] || '';
   };
 
+  /** Models to write a summary with: fast Gemini models first, then the user's own models. */
+  const summaryModels = (tokens: number): string[] => {
+    const { settings, catalog } = get();
+    const known = (id: string) => !catalog?.models.length || catalog.models.some((m) => m.id === id);
+    const fits = (id: string) => {
+      const ctx = modelInfo(catalog, id)?.context;
+      return !ctx || ctx > tokens * 1.3 + 9000;
+    };
+    const fast = ['gemini:gemini-flash-latest', 'gemini:gemini-2.5-flash', 'gemini:gemini-flash-lite-latest', 'gemini:gemini-2.5-flash-lite'].filter(known);
+    const ids = [...new Set([...fast, ...settings.enabledModels.filter((id) => id !== AUTO)])].filter(fits);
+    const blocked = (id: string) => (usage?.blockedUntil(id) ?? null) !== null;
+    return [...ids.filter((id) => !blocked(id)), ...ids.filter(blocked)];
+  };
+
+  /**
+   * Summarizes the first `cut` live messages (plus any earlier summary). Returns null if no model managed it.
+   */
+  const writeSummary = async (chat: Chat, cut: number, signal: AbortSignal): Promise<{ summary: ChatSummary; through: Message[] } | null> => {
+    const previous = activeSummary(chat);
+    const older = liveMessages(chat).slice(0, cut);
+    const prompt = summaryPrompt(older, previous);
+    const result = await fetchSummary(prompt, summaryModels(Math.ceil(prompt.length / 4)), {
+      signal,
+      report: (id, info) => {
+        usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 });
+        if (info.limit) usage?.block(id, info.limit);
+      },
+    });
+    if (!result) return null;
+    return {
+      through: older,
+      summary: {
+        text: result.text.slice(0, 60_000),
+        upTo: older[older.length - 1].id,
+        count: (previous?.count || 0) + older.length,
+        saved: 0,
+        createdAt: Date.now(),
+        model: result.model,
+        ...(previous?.from ? { from: previous.from } : {}),
+      },
+    };
+  };
+
+  /** Compacts a chat. Returns 'done', 'skipped' (nothing to do / failed) or 'stopped'. */
+  const compactChat = async (chatId: string, manual: boolean): Promise<'done' | 'skipped' | 'stopped'> => {
+    const chat = get().chats.find((c) => c.id === chatId);
+    if (!chat) return 'skipped';
+    const cut = cutPoint(liveMessages(chat), manual);
+    if (!cut) {
+      if (manual) get().toast('Not enough messages yet to compact this chat.');
+      return 'skipped';
+    }
+    compactController = new AbortController();
+    set({ compactingChatId: chatId });
+    try {
+      const out = await writeSummary(chat, cut, compactController.signal);
+      if (compactController.signal.aborted) return 'stopped';
+      if (!out) {
+        get().toast(manual ? "Couldn't summarize this chat right now. Try again in a minute." : "Couldn't summarize the earlier messages right now — the whole chat was sent instead.", 'error');
+        return 'skipped';
+      }
+      const latest = get().chats.find((c) => c.id === chatId);
+      if (!latest || !latest.messages.some((m) => m.id === out.summary.upTo)) return 'skipped';
+      const before = contextTokens(latest);
+      const updated: Chat = { ...latest, summary: { ...out.summary, auto: !manual } };
+      updated.summary!.saved = Math.max(0, before - contextTokens(updated));
+      replaceChat(updated);
+      await persist(updated);
+      return 'done';
+    } catch {
+      return compactController?.signal.aborted ? 'stopped' : 'skipped';
+    } finally {
+      compactController = null;
+      set({ compactingChatId: null });
+    }
+  };
+
   /** Streams an assistant reply for the chat's current messages. */
   const runAssistant = async (chatId: string, modelOverride?: string) => {
     let chat = get().chats.find((c) => c.id === chatId);
@@ -108,6 +194,12 @@ export const useStore = create<State>((set, get) => {
     if (!model) {
       get().toast('No models are enabled. Open Settings → Models.', 'error');
       return;
+    }
+    // Long chat: summarize the older messages first so the model gets a compact version.
+    if (settings.autoCompact && contextTokens(chat) > compactLimit(model === AUTO ? undefined : modelInfo(get().catalog, model))) {
+      if ((await compactChat(chatId, false)) === 'stopped') return;
+      chat = get().chats.find((c) => c.id === chatId);
+      if (!chat) return;
     }
     // Pick the model: Auto scores every enabled model for this message; a manual choice is kept
     // unless it can't handle the message. Models at their limit go to the back of the line.
@@ -119,7 +211,7 @@ export const useStore = create<State>((set, get) => {
       catalog: get().catalog?.models || [],
       text: lastUser?.text || '',
       files: lastUser?.files || [],
-      conversationTokens: chat.messages.reduce((n, m) => n + estimateTokens(m.text, m.files), 0),
+      conversationTokens: contextTokens(chat),
       search: settings.webSearch,
       blocked,
       left: (id) => remaining(get().usage, id),
@@ -139,7 +231,7 @@ export const useStore = create<State>((set, get) => {
         chosen = next;
       }
     }
-    const wire: WireMessage[] = chat.messages
+    const wire: WireMessage[] = withSummary(activeSummary(chat), liveMessages(chat)
       .filter((m) => !m.error || m.text)
       .map((m) => {
         // Attachments synced from another device arrive without their contents.
@@ -150,7 +242,7 @@ export const useStore = create<State>((set, get) => {
           text: missing.length ? `[Attached on another device, not available here: ${missing.join(', ')}]\n${m.text}` : m.text,
           files: usable.map(({ kind, name, mime, data, text }) => ({ kind, name, mime, data, text })),
         };
-      });
+      }));
 
     let body: string;
     try {
@@ -242,7 +334,7 @@ export const useStore = create<State>((set, get) => {
 
     // Name the chat after its first exchange.
     const firstUser = updated.messages.find((m) => m.role === 'user');
-    if (get().settings.autoTitle && updated.messages.length <= 2 && firstUser && reply.status === 'done') {
+    if (get().settings.autoTitle && !updated.summary?.from && updated.messages.length <= 2 && firstUser && reply.status === 'done') {
       const result = await fetchTitle(firstUser.text || firstUser.files?.map((f) => f.name).join(', ') || '', reply.model, (id) => (usage?.blockedUntil(id) ?? null) !== null);
       if (result) usage?.record(result.model, { requests: 1 });
       const latest = get().chats.find((c) => c.id === chatId);
@@ -266,6 +358,7 @@ export const useStore = create<State>((set, get) => {
     chats: [],
     currentId: null,
     streamingChatId: null,
+    compactingChatId: null,
     sidebarOpen: false,
     settingsOpen: false,
     settingsTab: 'general',
@@ -401,7 +494,7 @@ export const useStore = create<State>((set, get) => {
 
     newChat() {
       // Reuse an existing empty chat instead of piling them up.
-      const empty = get().chats.find((c) => c.messages.length === 0);
+      const empty = get().chats.find((c) => c.messages.length === 0 && !c.summary);
       if (empty) {
         set({ currentId: empty.id, sidebarOpen: false });
         return;
@@ -459,14 +552,14 @@ export const useStore = create<State>((set, get) => {
     },
 
     async send(text, files) {
-      if (get().streamingChatId) return;
+      if (get().streamingChatId || get().compactingChatId) return;
       let chat = currentChat();
       if (!chat) {
         chat = newChatObject();
         set((s) => ({ chats: [chat!, ...s.chats], currentId: chat!.id }));
       }
       const msg: Message = { id: uid(), role: 'user', text, files: files.length ? files : undefined, createdAt: Date.now() };
-      const title = chat.messages.length === 0 ? (text || files.map((f) => f.name).join(', ')).replace(/\s+/g, ' ').slice(0, 60) || 'New chat' : chat.title;
+      const title = chat.messages.length === 0 && !chat.summary ? (text || files.map((f) => f.name).join(', ')).replace(/\s+/g, ' ').slice(0, 60) || 'New chat' : chat.title;
       const updated: Chat = { ...chat, title, model: chat.model || modelFor(chat), messages: [...chat.messages, msg], updatedAt: Date.now() };
       replaceChat(updated);
       await persist(updated);
@@ -478,7 +571,8 @@ export const useStore = create<State>((set, get) => {
       if (!chat || get().streamingChatId) return;
       const idx = chat.messages.findIndex((m) => m.id === messageId);
       if (idx < 0) return;
-      const updated = { ...chat, model: model || chat.model, messages: chat.messages.slice(0, idx) };
+      const kept = chat.messages.slice(0, idx);
+      const updated = { ...chat, model: model || chat.model, messages: kept, summary: dropStale(chat.summary, kept) };
       replaceChat(updated);
       if (model) get().updateSettings({ defaultModel: model });
       await runAssistant(chat.id, model);
@@ -490,7 +584,8 @@ export const useStore = create<State>((set, get) => {
       const idx = chat.messages.findIndex((m) => m.id === messageId);
       if (idx < 0) return;
       const edited = { ...chat.messages[idx], text };
-      const updated = { ...chat, messages: [...chat.messages.slice(0, idx), edited] };
+      // An edited message can't stay inside the summary.
+      const updated = { ...chat, messages: [...chat.messages.slice(0, idx), edited], summary: dropStale(chat.summary, chat.messages.slice(0, idx)) };
       replaceChat(updated);
       await persist(updated);
       await runAssistant(chat.id);
@@ -500,11 +595,62 @@ export const useStore = create<State>((set, get) => {
       await get().send('Continue exactly where you stopped.', []);
     },
 
+    async compact(chatId) {
+      const id = chatId || get().currentId;
+      if (!id || get().streamingChatId || get().compactingChatId) return;
+      if ((await compactChat(id, true)) === 'done') get().toast('Chat compacted. Older messages are now sent as a summary.', 'success');
+    },
+
+    async undoCompact(chatId) {
+      const chat = get().chats.find((c) => c.id === chatId);
+      if (!chat?.summary || get().streamingChatId) return;
+      const updated = { ...chat, summary: undefined };
+      replaceChat(updated);
+      await persist(updated);
+      get().toast('Summary removed — the full chat will be sent again.');
+    },
+
+    async continueInNewChat(chatId) {
+      const chat = get().chats.find((c) => c.id === chatId);
+      if (!chat || get().streamingChatId || get().compactingChatId) return;
+      const live = liveMessages(chat);
+      if (!live.length) return;
+      compactController = new AbortController();
+      set({ compactingChatId: chatId });
+      try {
+        const out = await writeSummary(chat, live.length, compactController.signal);
+        if (compactController.signal.aborted) return;
+        if (!out) {
+          get().toast("Couldn't summarize this chat right now. Try again in a minute.", 'error');
+          return;
+        }
+        const next: Chat = {
+          ...newChatObject(),
+          title: `${chat.title} (continued)`.slice(0, 100),
+          model: chat.model,
+          summary: { ...out.summary, upTo: null, from: chat.title, saved: Math.max(0, contextTokens(chat) - Math.ceil(out.summary.text.length / 4)) },
+        };
+        set((s) => ({ chats: [next, ...s.chats.filter((c) => !(c.messages.length === 0 && !c.summary))], currentId: next.id, sidebarOpen: false }));
+      } catch {
+        if (!compactController?.signal.aborted) get().toast("Couldn't summarize this chat right now.", 'error');
+      } finally {
+        compactController = null;
+        set({ compactingChatId: null });
+      }
+    },
+
     stop() {
       controller?.abort();
+      compactController?.abort();
     },
   };
 });
+
+/** Keeps a summary only if everything it covers is still in the chat. */
+function dropStale(summary: ChatSummary | undefined, kept: Message[]): ChatSummary | undefined {
+  if (!summary || summary.upTo === null) return summary;
+  return kept.some((m) => m.id === summary.upTo) ? summary : undefined;
+}
 
 export const selectCurrentChat = (s: State) => s.chats.find((c) => c.id === s.currentId) || null;
 

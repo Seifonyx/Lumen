@@ -273,24 +273,35 @@ export async function openRouterDailyLimit() {
   }
 }
 
-// One-shot, non-streaming completion (used for chat titles).
-export async function complete({ provider, name }, prompt) {
+// One-shot, non-streaming completion (chat titles, summaries of long chats).
+// Returns the text, or null on failure; `info` (if given) receives { status, input, output, limit }.
+export async function complete({ provider, name }, prompt, { maxTokens = 256, signal, info } = {}) {
   if (provider === 'gemini') {
     const res = await fetch(`${GEMINI_BASE}/models/${encodeURIComponent(name)}:generateContent`, {
       method: 'POST',
+      signal,
       headers: { 'content-type': 'application/json', 'x-goog-api-key': keys.gemini },
-      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 256 } }),
+      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: maxTokens } }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      if (info) Object.assign(info, { status: res.status, ...(await readError(res)) });
+      return null;
+    }
     const d = await res.json();
+    if (info && d.usageMetadata) Object.assign(info, { input: d.usageMetadata.promptTokenCount || 0, output: (d.usageMetadata.candidatesTokenCount || 0) + (d.usageMetadata.thoughtsTokenCount || 0) });
     return (d.candidates?.[0]?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text).join('');
   }
   const res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
     method: 'POST',
+    signal,
     headers: { 'content-type': 'application/json', authorization: `Bearer ${keys.openrouter}` },
-    body: JSON.stringify({ model: name, max_tokens: 256, messages: [{ role: 'user', content: prompt }] }),
+    body: JSON.stringify({ model: name, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }),
   });
-  if (!res.ok) return null;
+  if (!res.ok) {
+    if (info) Object.assign(info, { status: res.status, ...(await readError(res)) });
+    return null;
+  }
   const d = await res.json();
+  if (info && d.usage) Object.assign(info, { input: d.usage.prompt_tokens || 0, output: d.usage.completion_tokens || 0 });
   return d.choices?.[0]?.message?.content || null;
 }

@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS: Settings = {
   fontSize: 'medium',
   enterToSend: true,
   autoTitle: true,
+  autoCompact: true,
   voiceLang: '',
 };
 

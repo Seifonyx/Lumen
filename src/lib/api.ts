@@ -2,7 +2,8 @@
 // call Google AI Studio and OpenRouter directly, using the user's own API keys.
 
 import type { Attachment, Catalog } from '../types';
-import { makeTitle, runChat } from './ai/chat.js';
+import { makeTitle, runChat, summarize } from './ai/chat.js';
+import type { LimitInfo } from './usage';
 import { catalog } from './ai/providers.js';
 
 export class ApiError extends Error {
@@ -21,6 +22,22 @@ export async function fetchTitle(text: string, model?: string, skip?: (id: strin
   } catch {
     return null;
   }
+}
+
+export interface AttemptInfo {
+  status?: number;
+  input?: number;
+  output?: number;
+  limit?: LimitInfo | null;
+}
+
+/** Summarizes a long chat with the first model in `models` that manages it. */
+export async function fetchSummary(
+  prompt: string,
+  models: string[],
+  opts: { signal?: AbortSignal; report?: (id: string, info: AttemptInfo) => void },
+): Promise<{ text: string; model: string } | null> {
+  return (await summarize(prompt, models, opts)) as { text: string; model: string } | null;
 }
 
 export interface WireMessage {

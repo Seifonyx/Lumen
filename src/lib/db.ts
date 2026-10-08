@@ -40,6 +40,7 @@ function normalize(raw: any): Chat {
     text: m.text || '',
     files: (m.files || []).map((f: any) => ({ id: f.id || uid(), size: f.size ?? (f.data?.length ?? f.text?.length ?? 0), mime: f.mime || 'text/plain', ...f })),
     model: m.model,
+    route: m.route,
     thinking: m.thinking,
     sources: m.sources,
     notices: m.notices,
@@ -55,6 +56,7 @@ function normalize(raw: any): Chat {
     pinned: Boolean(raw.pinned),
     model: raw.model,
     rev: raw.rev,
+    summary: raw.summary && typeof raw.summary.text === 'string' ? raw.summary : undefined,
     messages,
   };
 }

@@ -102,6 +102,7 @@ export class ChatSync {
               pinned: Boolean(data.pinned),
               model: data.model || undefined,
               rev: remoteRev,
+              summary: data.summary?.text ? data.summary : undefined,
               messages: mergeMessages(remote, local?.messages),
             });
           }
@@ -175,6 +176,7 @@ export class ChatSync {
       rev: revOf(chat),
       deleted: false,
       count: chat.messages.length,
+      summary: chat.summary ? JSON.parse(JSON.stringify(chat.summary)) : null,
     });
     for (const b of batches) await b.commit();
     this.known.set(chat.id, next);

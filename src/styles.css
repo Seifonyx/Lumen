@@ -566,3 +566,25 @@ table.sheet tr.totals td { font-weight: 700; background: #e8ecf2; border-top: 3p
 .auto-item { border-bottom: 1px solid var(--border); border-radius: 9px 9px 0 0; margin-bottom: 4px; padding-bottom: 10px; }
 .route-tag { color: var(--accent); }
 .model-tag { max-width: 340px; }
+
+/* ============================================================ Long chats (compacting) */
+.compact-note { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 2px 0; }
+.compact-line { width: 100%; display: flex; align-items: center; gap: 10px; color: var(--text-3); font-size: 0.8rem; }
+.compact-line::before, .compact-line::after { content: ''; flex: 1; height: 1px; background: var(--border-strong); }
+.compact-label { display: inline-flex; align-items: center; gap: 6px; text-align: center; max-width: 85%; }
+.compact-note.working .compact-label { color: var(--accent); }
+.compact-actions { display: flex; gap: 14px; }
+.link-btn { display: inline-flex; align-items: center; gap: 4px; background: none; border: 0; padding: 4px 2px; color: var(--accent); font-size: 0.8rem; font-weight: 600; }
+.link-btn:disabled { opacity: 0.5; }
+.link-btn .flip { transform: rotate(180deg); }
+.compact-summary { width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 16px; font-size: 0.92rem; max-height: 50vh; overflow: auto; }
+.memory { position: relative; max-width: 780px; margin: 0 auto 6px; display: flex; justify-content: flex-end; }
+.memory-chip { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); border-radius: 999px; padding: 4px 10px; font-size: 0.76rem; font-weight: 600; }
+.memory-bar { width: 34px; height: 5px; border-radius: 999px; background: var(--surface-3); overflow: hidden; display: inline-block; }
+.memory-bar span { display: block; height: 100%; background: var(--accent); }
+.memory-chip.mid .memory-bar span { background: #d4a72c; }
+.memory-chip.high .memory-bar span { background: var(--danger); }
+.memory-pop { position: absolute; bottom: calc(100% + 6px); right: 0; z-index: 20; width: min(340px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 12px 14px; }
+.memory-pop p { margin: 0 0 10px; color: var(--text-2); }
+.memory-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.memory-btns .btn { padding: 7px 12px; font-size: 0.85rem; }

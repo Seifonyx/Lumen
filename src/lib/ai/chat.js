@@ -38,7 +38,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     yield { t: 'done' };
     return;
   }
-  const instructions = buildInstructions({ custom: options.customInstructions || '' });
+  const instructions = buildInstructions({ custom: options.customInstructions || '', memory: options.memory || '' });
   const failures = [];
   const label = (id) => id.split(':').slice(1).join(':');
 

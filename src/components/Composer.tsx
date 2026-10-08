@@ -22,6 +22,8 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
   const toast = useStore((s) => s.toast);
   const streaming = useStore((s) => s.streamingChatId !== null || s.compactingChatId !== null);
   const compact = useStore((s) => s.compact);
+  const addMemory = useStore((s) => s.addMemory);
+  const setUi = useStore((s) => s.setUi);
   const settings = useStore((s) => s.settings);
   const catalog = useStore((s) => s.catalog);
   const updateSettings = useStore((s) => s.updateSettings);
@@ -145,6 +147,17 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
     if (/^\/compact\s*$/i.test(text.trim()) && !pending.length) {
       setText('');
       void compact();
+      return;
+    }
+    const remember = /^\/remember\s+([\s\S]+)$/i.exec(text.trim());
+    if (remember && !pending.length) {
+      setText('');
+      void addMemory(remember[1]);
+      return;
+    }
+    if (/^\/memory\s*$/i.test(text.trim())) {
+      setText('');
+      setUi({ settingsOpen: true, settingsTab: 'memory' });
       return;
     }
     const files = pending.map((p) => p.file!);

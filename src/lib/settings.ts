@@ -14,6 +14,8 @@ export const DEFAULT_SETTINGS: Settings = {
   enterToSend: true,
   autoTitle: true,
   autoCompact: true,
+  memory: true,
+  memoryAuto: true,
   voiceLang: '',
 };
 

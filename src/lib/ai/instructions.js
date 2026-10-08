@@ -78,7 +78,7 @@ To show a chart directly in your reply, write a fenced block with info string "c
 \`\`\`
 Types: bar, horizontalBar, line, area, pie, doughnut, scatter (scatter values are [x,y] pairs). Only use a chart when it genuinely helps.`;
 
-export function buildInstructions({ custom = '', now = new Date() } = {}) {
+export function buildInstructions({ custom = '', memory = '', now = new Date() } = {}) {
   const date = now.toISOString().slice(0, 10);
   const parts = [
     `You are a helpful, knowledgeable assistant in a private chat app called Model Router. Today's date is ${date}.`,
@@ -88,5 +88,6 @@ export function buildInstructions({ custom = '', now = new Date() } = {}) {
     FILES,
   ];
   if (custom.trim()) parts.push(`# The user's custom instructions (follow them)\n${custom.trim().slice(0, 4000)}`);
+  if (memory) parts.push(memory);
   return parts.join('\n\n');
 }

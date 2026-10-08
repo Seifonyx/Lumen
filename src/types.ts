@@ -31,6 +31,8 @@ export interface Message {
   sources?: Source[];
   notices?: string[];
   error?: string;
+  /** memories this reply saved or removed */
+  memory?: { saved?: { id: string; text: string }[]; forgotten?: string[] };
   status?: 'streaming' | 'done' | 'stopped' | 'error';
   createdAt: number;
 }
@@ -62,6 +64,16 @@ export interface ChatSummary {
   /** title of the chat this one continues, if any */
   from?: string;
   auto?: boolean;
+}
+
+export interface Memory {
+  id: string;
+  text: string;
+  createdAt: number;
+  updatedAt: number;
+  /** 'chat' = saved by a model during a chat; 'manual' = added by you */
+  source: 'chat' | 'manual';
+  chatId?: string;
 }
 
 export interface ModelInfo {
@@ -101,6 +113,10 @@ export interface Settings {
   autoTitle: boolean;
   /** summarize older messages when a chat gets long */
   autoCompact: boolean;
+  /** give models your saved memories */
+  memory: boolean;
+  /** let models save memories on their own (otherwise only when you ask) */
+  memoryAuto: boolean;
   /** set once Auto routing has been made the default */
   autoIntroduced?: boolean;
   voiceLang: string;

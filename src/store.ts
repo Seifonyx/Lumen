@@ -4,12 +4,13 @@ import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type
 import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
 import { loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { ChatSync } from './lib/sync';
+import { extractMemoryOps, findMemory, hideMemoryLines, MAX_MEMORIES, memoryInstructions, MemoryStore } from './lib/memory';
 import { AUTO, planRoute } from './lib/routing';
 import { formatUntil, remaining, UsageTracker, type LimitInfo, type UsageView } from './lib/usage';
 import { db } from './lib/db';
 import { applyAppearance, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
-import type { Attachment, Catalog, Chat, ChatSummary, Message, ModelInfo, Settings } from './types';
+import type { Attachment, Catalog, Chat, ChatSummary, Memory, Message, ModelInfo, Settings } from './types';
 
 export interface Toast {
   id: string;
@@ -30,6 +31,8 @@ interface State {
   keys: ApiKeys;
   catalog: Catalog | null;
   usage: UsageView | null;
+  /** what models remember about you, newest first */
+  memories: Memory[];
   catalogError: string | null;
   settings: Settings;
   chats: Chat[];
@@ -72,12 +75,18 @@ interface State {
   /** starts a new chat that carries a summary of this one */
   continueInNewChat(chatId: string): Promise<void>;
   stop(): void;
+
+  addMemory(text: string): Promise<void>;
+  updateMemory(id: string, text: string): Promise<void>;
+  deleteMemory(id: string): Promise<void>;
+  clearMemories(): Promise<void>;
 }
 
 let controller: AbortController | null = null;
 let compactController: AbortController | null = null;
 let sync: ChatSync | null = null;
 let usage: UsageTracker | null = null;
+let memory: MemoryStore | null = null;
 let settingsReady = false;
 let settingsTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -185,6 +194,33 @@ export const useStore = create<State>((set, get) => {
     }
   };
 
+  /** Takes the memory lines out of a finished reply and saves or removes those memories. */
+  const applyMemoryLines = async (reply: Message, raw: string, chatId: string) => {
+    const ops = extractMemoryOps(raw);
+    reply.text = ops.text;
+    if (!memory || !get().settings.memory || (!ops.remember.length && !ops.forget.length)) return;
+    const saved: { id: string; text: string }[] = [];
+    const forgotten: string[] = [];
+    try {
+      for (const text of ops.forget) {
+        const m = findMemory(get().memories, text);
+        if (!m) continue;
+        await memory.remove(m.id);
+        forgotten.push(m.text);
+        set((s) => ({ memories: s.memories.filter((x) => x.id !== m.id) }));
+      }
+      for (const text of ops.remember) {
+        if (findMemory(get().memories, text) || get().memories.length >= MAX_MEMORIES) continue;
+        const m = await memory.add(text, { source: 'chat', chatId });
+        saved.push({ id: m.id, text: m.text });
+        set((s) => ({ memories: [m, ...s.memories.filter((x) => x.id !== m.id)] }));
+      }
+    } catch (e) {
+      get().toast(`Couldn't update memory: ${(e as Error).message}`, 'error');
+    }
+    if (saved.length || forgotten.length) reply.memory = { ...(saved.length ? { saved } : {}), ...(forgotten.length ? { forgotten } : {}) };
+  };
+
   /** Streams an assistant reply for the chat's current messages. */
   const runAssistant = async (chatId: string, modelOverride?: string) => {
     let chat = get().chats.find((c) => c.id === chatId);
@@ -246,7 +282,8 @@ export const useStore = create<State>((set, get) => {
 
     let body: string;
     try {
-      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: settings.webSearch, customInstructions: settings.customInstructions } });
+      const memoryNote = settings.memory ? memoryInstructions(get().memories, settings.memoryAuto) : '';
+      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: settings.webSearch, customInstructions: settings.customInstructions, memory: memoryNote } });
     } catch (e) {
       get().toast((e as Error).message, 'error');
       return;
@@ -282,6 +319,8 @@ export const useStore = create<State>((set, get) => {
       }
     };
 
+    // The full reply text, including any hidden [[remember: …]] lines.
+    let raw = '';
     try {
       for await (const ev of streamChat(body, controller.signal)) {
         if (ev.t === 'request') {
@@ -302,7 +341,10 @@ export const useStore = create<State>((set, get) => {
           schedule();
           continue;
         }
-        if (ev.t === 'text') reply.text += ev.text;
+        if (ev.t === 'text') {
+          raw += ev.text;
+          reply.text = hideMemoryLines(raw);
+        }
         else if (ev.t === 'think') reply.thinking = (reply.thinking || '') + ev.text;
         else if (ev.t === 'model') {
           // Auto's reason only describes the model it picked, not a stand-in after a failure.
@@ -324,6 +366,7 @@ export const useStore = create<State>((set, get) => {
     } finally {
       controller = null;
     }
+    if (raw) await applyMemoryLines(reply, raw, chatId);
     flush();
     set({ streamingChatId: null });
     const finished = get().chats.find((c) => c.id === chatId);
@@ -353,6 +396,7 @@ export const useStore = create<State>((set, get) => {
     keys: { gemini: '', openrouter: '' },
     catalog: null,
     usage: null,
+    memories: [],
     catalogError: null,
     settings: loadSettings(),
     chats: [],
@@ -378,6 +422,9 @@ export const useStore = create<State>((set, get) => {
         sync = null;
         usage?.stop();
         usage = null;
+        memory?.stop();
+        memory = null;
+        set({ memories: [] });
         settingsReady = false;
         if (!user) {
           setKeys({ gemini: '', openrouter: '' });
@@ -419,6 +466,8 @@ export const useStore = create<State>((set, get) => {
         sync.start();
         usage = new UsageTracker(user.uid, (view) => set({ usage: view }));
         usage.start();
+        memory = new MemoryStore(user.uid, (memories) => set({ memories }), (msg) => get().toast(msg, 'error'));
+        memory.start();
         await get().loadCatalog();
       });
     },
@@ -642,6 +691,40 @@ export const useStore = create<State>((set, get) => {
     stop() {
       controller?.abort();
       compactController?.abort();
+    },
+
+    async addMemory(text) {
+      if (!memory || !text.trim()) return;
+      if (findMemory(get().memories, text)) {
+        get().toast('Already in memory.');
+        return;
+      }
+      if (get().memories.length >= MAX_MEMORIES) {
+        get().toast(`Memory is full (${MAX_MEMORIES}). Delete some in Settings → Memory.`, 'error');
+        return;
+      }
+      try {
+        const m = await memory.add(text);
+        set((s) => ({ memories: [m, ...s.memories.filter((x) => x.id !== m.id)] }));
+        get().toast('Saved to memory.', 'success');
+      } catch (e) {
+        get().toast(`Couldn't save: ${(e as Error).message}`, 'error');
+      }
+    },
+    async updateMemory(id, text) {
+      if (!memory || !text.trim()) return;
+      await memory.update(id, text).catch((e) => get().toast(`Couldn't save: ${(e as Error).message}`, 'error'));
+    },
+    async deleteMemory(id) {
+      if (!memory) return;
+      set((s) => ({ memories: s.memories.filter((m) => m.id !== id) }));
+      await memory.remove(id).catch((e) => get().toast(`Couldn't delete: ${(e as Error).message}`, 'error'));
+    },
+    async clearMemories() {
+      if (!memory) return;
+      const ids = get().memories.map((m) => m.id);
+      set({ memories: [] });
+      await memory.clear(ids).catch((e) => get().toast(`Couldn't clear memory: ${(e as Error).message}`, 'error'));
     },
   };
 });

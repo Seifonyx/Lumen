@@ -588,3 +588,20 @@ table.sheet tr.totals td { font-weight: 700; background: #e8ecf2; border-top: 3p
 .memory-pop p { margin: 0 0 10px; color: var(--text-2); }
 .memory-btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .memory-btns .btn { padding: 7px 12px; font-size: 0.85rem; }
+
+/* ============================================================ Memory */
+.memory-note { margin-top: 8px; }
+.memory-tag { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 3px 10px; font-size: 0.78rem; font-weight: 600; }
+.memory-changes { list-style: none; margin: 6px 0 0; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); font-size: 0.86rem; display: flex; flex-direction: column; gap: 6px; }
+.memory-changes li { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.link-btn.inline { display: inline; padding: 0; font-size: inherit; font-weight: 500; }
+.memory-add { display: flex; gap: 8px; margin: 6px 0 4px; }
+.memory-add input { flex: 1; min-width: 0; }
+.memory-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.small-search { max-width: 200px; margin: 0; }
+.memory-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.memory-row { display: flex; align-items: flex-start; gap: 8px; padding: 9px 10px 9px 12px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.memory-row:last-child { border-bottom: 0; }
+.memory-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+.memory-row.editing textarea { flex: 1; min-width: 0; resize: vertical; }
+.memory-row-actions { display: flex; gap: 2px; flex-shrink: 0; }

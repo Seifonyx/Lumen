@@ -1,4 +1,4 @@
-import { AlertTriangle, Brain, Check, ChevronDown, Copy, FileDown, Info, Pencil, RefreshCw, Square, Volume2 } from 'lucide-react';
+import { AlertTriangle, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, Info, Pencil, RefreshCw, Square, Volume2 } from 'lucide-react';
 import { memo, useState } from 'react';
 import { buildFile } from '../lib/generate';
 import { toPlainText } from '../lib/markdown';
@@ -82,6 +82,48 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
   );
 }
 
+function MemoryChip({ memory }: { memory: NonNullable<Message['memory']> }) {
+  const [open, setOpen] = useState(false);
+  const memories = useStore((s) => s.memories);
+  const deleteMemory = useStore((s) => s.deleteMemory);
+  const setUi = useStore((s) => s.setUi);
+  const saved = (memory.saved || []).filter((m) => memories.some((x) => x.id === m.id));
+  if (!saved.length && !memory.forgotten?.length) return null;
+  return (
+    <div className="memory-note">
+      <button className="memory-tag" onClick={() => setOpen(!open)} aria-expanded={open}>
+        <BookmarkCheck size={14} /> Memory updated
+      </button>
+      {open && (
+        <ul className="memory-changes" dir="auto">
+          {saved.map((m) => (
+            <li key={m.id}>
+              <span>
+                <b>Saved:</b> {m.text}
+              </span>
+              <button className="icon-btn xs" aria-label="Remove from memory" title="Remove from memory" onClick={() => void deleteMemory(m.id)}>
+                <XIcon size={13} />
+              </button>
+            </li>
+          ))}
+          {memory.forgotten?.map((t, i) => (
+            <li key={i}>
+              <span>
+                <b>Removed:</b> {t}
+              </span>
+            </li>
+          ))}
+          <li>
+            <button className="link-btn" onClick={() => setUi({ settingsOpen: true, settingsTab: 'memory' })}>
+              Manage memory
+            </button>
+          </li>
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function AssistantMessage({ message, isLast, busy }: { message: Message; isLast: boolean; busy: boolean }) {
   const catalog = useStore((s) => s.catalog);
   const regenerate = useStore((s) => s.regenerate);
@@ -126,6 +168,8 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
       {message.notices?.map((n, i) => (
         <div key={i} className="notice" dir="auto"><Info size={14} /> {n}</div>
       ))}
+
+      {message.memory && !streaming && <MemoryChip memory={message.memory} />}
 
       {message.error && (
         <div className="error-box" role="alert">

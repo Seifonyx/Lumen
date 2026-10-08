@@ -7,6 +7,7 @@ import type { Chat, FontSize, ModelInfo, Theme } from '../types';
 import Modal from './Modal';
 import { Badges } from './ModelPicker';
 import UsageTab from './UsageTab';
+import MemoryTab from './MemoryTab';
 
 const TABS = [
   ['general', 'General'],
@@ -14,6 +15,7 @@ const TABS = [
   ['models', 'Models'],
   ['usage', 'Usage'],
   ['personalize', 'Personalize'],
+  ['memory', 'Memory'],
   ['data', 'Data'],
 ] as const;
 
@@ -330,6 +332,7 @@ export default function SettingsModal() {
           {tab === 'keys' && <KeysTab />}
           {tab === 'models' && <ModelsTab />}
           {tab === 'usage' && <UsageTab />}
+          {tab === 'memory' && <MemoryTab Toggle={Toggle} />}
           {tab === 'personalize' && (
             <div className="settings-section">
               <label className="field-block">

@@ -334,6 +334,51 @@ function buildBody(model, messages) {
   return body;
 }
 
+// ---------- Word / Excel downloads ----------
+function exportFileName(ext) {
+  const base = (current?.title || 'Model Router').replace(/[\\/:*?"<>|\n\r]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 50);
+  return `${base || 'Model Router'}.${ext}`;
+}
+
+async function saveFile(blob, name) {
+  const file = new File([blob], name, { type: blob.type });
+  // On phones the share sheet is the reliable way to save (e.g. "Save to Files"); desktops just download.
+  if (matchMedia('(pointer: coarse)').matches && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file] });
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+function exportButton(label, text, ext) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = `⬇ ${label}`;
+  btn.onclick = async () => {
+    btn.disabled = true;
+    try {
+      await loadScript(JSZIP);
+      await saveFile(await window.Exporter[ext](text), exportFileName(ext));
+    } catch (e) {
+      alert(`Couldn't create the ${label} file: ${e.message}`);
+    } finally {
+      btn.disabled = false;
+    }
+  };
+  return btn;
+}
+
 // ---------- Rendering ----------
 function messageEl(m) {
   const wrap = document.createElement('div');
@@ -375,6 +420,8 @@ function messageEl(m) {
         setTimeout(() => (copy.textContent = 'Copy'), 1500);
       };
       meta.appendChild(copy);
+      meta.appendChild(exportButton('Word', m.text, 'docx'));
+      if (window.Exporter?.hasTables(m.text)) meta.appendChild(exportButton('Excel', m.text, 'xlsx'));
     }
     wrap.appendChild(meta);
   }

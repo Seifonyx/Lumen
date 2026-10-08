@@ -32,6 +32,12 @@ openrouter.ai/models. A provider only shows up if its key is set.
 - Vercel limits each request to about 4.5 MB. In long chats with many files, the oldest files are
   dropped from what's sent so new messages still go through.
 
+## Download replies as Word or Excel
+
+Every AI reply has a **⬇ Word** button that saves it as a .docx (headings, lists, tables, Arabic
+right-to-left). Replies that contain tables also get **⬇ Excel**, with one sheet per table. On phones
+this opens the share sheet so you can save to Files or send it on.
+
 Chats are saved in the browser on each device (not on the server).
 
 ## Privacy

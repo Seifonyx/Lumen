@@ -2,6 +2,7 @@ import { ArrowDown, FileSpreadsheet, FileText, Languages, LineChart, Menu, Prese
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { activeSummary, compactLimit, contextTokens } from '../lib/compact';
 import { AUTO } from '../lib/routing';
+import { formatUntil } from '../lib/usage';
 import { modelInfo, selectCurrentChat, useStore } from '../store';
 import { CompactingNote, CompactNote, MemoryMeter } from './CompactNote';
 import Composer, { prefillComposer } from './Composer';
@@ -24,6 +25,8 @@ export default function ChatView() {
   const defaultModel = useStore((s) => s.settings.defaultModel);
   const compacting = useStore((s) => s.compactingChatId !== null && s.compactingChatId === s.currentId);
   const catalog = useStore((s) => s.catalog);
+  const syncPaused = useStore((s) => s.firebaseUsage.level === 'paused' && s.authed === true);
+  const resetAt = useStore((s) => s.firebaseUsage.resetAt);
   const { setUi, newChat, setChatModel } = useStore.getState();
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
@@ -74,6 +77,12 @@ export default function ChatView() {
           <SquarePen size={20} />
         </button>
       </header>
+
+      {syncPaused && (
+        <div className="banner info" role="status">
+          Sync is paused to stay within Firebase's free daily limit. Chats are still saved on this device and will sync {formatUntil(resetAt)}.
+        </div>
+      )}
 
       {catalogError && (
         <div className="banner" role="alert" dir="auto">

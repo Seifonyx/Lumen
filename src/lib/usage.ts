@@ -5,6 +5,7 @@
 
 import { doc, increment, onSnapshot, setDoc, type Unsubscribe } from 'firebase/firestore';
 import { db } from './firebase';
+import { quota } from './quota';
 
 export type Provider = 'gemini' | 'openrouter';
 export interface LimitInfo {
@@ -64,6 +65,10 @@ export class UsageTracker {
   private shortBlocks = new Map<string, number>();
   private unsubs: Unsubscribe[] = [];
   private dayTimer: ReturnType<typeof setTimeout> | undefined;
+  /** counts not yet sent (sent in batches when the free-plan guard asks for it) */
+  private pending = new Map<string, { requests: number; input: number; output: number }>();
+  private flushTimer: ReturnType<typeof setTimeout> | undefined;
+  private stopQuota: (() => void) | null = null;
   openrouterDaily: number | null = null;
 
   constructor(private uid: string, private onChange: (v: UsageView) => void) {}
@@ -77,6 +82,7 @@ export class UsageTracker {
     for (const p of ['gemini', 'openrouter'] as Provider[]) {
       this.unsubs.push(
         onSnapshot(this.ref(dayKey(p)), (s) => {
+          if (!s.metadata.fromCache && !s.metadata.hasPendingWrites) quota.count('reads');
           this.days[p] = (s.data() as DayDoc) || {};
           this.emit();
         }, () => {}),
@@ -84,6 +90,7 @@ export class UsageTracker {
     }
     this.unsubs.push(
       onSnapshot(this.ref('quotas'), (s) => {
+        if (!s.metadata.fromCache && !s.metadata.hasPendingWrites) quota.count('reads');
         this.quotas = (s.data() as QuotaDoc) || {};
         this.emit();
       }, () => {}),
@@ -91,20 +98,53 @@ export class UsageTracker {
     // Start fresh counts when a provider's day rolls over.
     const soonest = Math.min(nextReset('gemini'), nextReset('openrouter'));
     this.dayTimer = setTimeout(() => this.start(), soonest - Date.now() + 2000);
+    this.stopQuota = quota.subscribe((v) => {
+      if (v.level !== 'paused' && this.pending.size && !this.flushTimer) this.flush();
+    });
   }
 
   stop() {
+    this.flush();
     this.unsubs.forEach((u) => u());
     this.unsubs = [];
     clearTimeout(this.dayTimer);
+    this.stopQuota?.();
+    this.stopQuota = null;
   }
 
   record(id: string, delta: { requests?: number; input?: number; output?: number }) {
-    const fields: Record<string, unknown> = { id };
-    if (delta.requests) fields.requests = increment(delta.requests);
-    if (delta.input) fields.input = increment(delta.input);
-    if (delta.output) fields.output = increment(delta.output);
-    void setDoc(this.ref(dayKey(providerOf(id))), { m: { [enc(id)]: fields } }, { merge: true }).catch(() => {});
+    const p = this.pending.get(id) || { requests: 0, input: 0, output: 0 };
+    p.requests += delta.requests || 0;
+    p.input += delta.input || 0;
+    p.output += delta.output || 0;
+    this.pending.set(id, p);
+    const level = quota.level();
+    if (level === 'normal') this.flush();
+    else {
+      // Close to Firebase's free limit: send counts once a minute (or after the reset when paused).
+      if (level === 'slow') this.flushTimer ??= setTimeout(() => this.flush(), 60_000);
+      this.emit();
+    }
+  }
+
+  private flush() {
+    clearTimeout(this.flushTimer);
+    this.flushTimer = undefined;
+    if (!this.pending.size || quota.level() === 'paused') return;
+    const byDay = new Map<string, Record<string, unknown>>();
+    for (const [id, d] of this.pending) {
+      const fields: Record<string, unknown> = { id };
+      if (d.requests) fields.requests = increment(d.requests);
+      if (d.input) fields.input = increment(d.input);
+      if (d.output) fields.output = increment(d.output);
+      const key = dayKey(providerOf(id));
+      byDay.set(key, { ...(byDay.get(key) || {}), [enc(id)]: fields });
+    }
+    this.pending.clear();
+    for (const [key, m] of byDay) {
+      quota.count('writes');
+      void setDoc(this.ref(key), { m }, { merge: true }).catch(() => {});
+    }
   }
 
   block(id: string, limit: LimitInfo) {
@@ -112,8 +152,10 @@ export class UsageTracker {
     const now = Date.now();
     if (limit.scope === 'day') {
       const until = limit.resetAt && limit.resetAt > now ? limit.resetAt : nextReset(p);
+      quota.count('writes');
       void setDoc(this.ref(dayKey(p)), { b: { [enc(id)]: { id, until, ...(limit.quota ? { quota: limit.quota } : {}) } } }, { merge: true }).catch(() => {});
       if (limit.quota && !(p === 'openrouter' && id.endsWith(':free'))) {
+        quota.count('writes');
         void setDoc(this.ref('quotas'), { [enc(id)]: { id, quota: limit.quota } }, { merge: true }).catch(() => {});
       }
     } else {
@@ -153,6 +195,14 @@ export class UsageTracker {
         }
         if (b.quota && p === 'gemini') u.quota = b.quota;
       }
+    }
+    // Counts waiting to be sent.
+    for (const [id, d] of this.pending) {
+      const u = (models[id] ??= { id, requests: 0, input: 0, output: 0, quota: null, blockedUntil: null, blockScope: null });
+      u.requests += d.requests;
+      u.input += d.input;
+      u.output += d.output;
+      if (id.startsWith('openrouter:') && id.endsWith(':free')) orUsed += d.requests;
     }
     for (const q of Object.values(this.quotas)) {
       const u = (models[q.id] ??= { id: q.id, requests: 0, input: 0, output: 0, quota: null, blockedUntil: null, blockScope: null });

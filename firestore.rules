@@ -16,5 +16,12 @@ service cloud.firestore {
     match /modelRouter/{uid}/{doc=**} {
       allow read, write: if invited() && request.auth.uid == uid;
     }
+
+    // The shared daily count of Firebase use (for the free-plan guard). Counters only, no chat data.
+    match /modelRouterShared/{id} {
+      allow read: if invited() && id.matches('quota-[0-9-]+');
+      allow write: if invited() && id.matches('quota-[0-9-]+')
+        && request.resource.data.keys().hasOnly(['reads', 'writes', 'deletes', 'day']);
+    }
   }
 }

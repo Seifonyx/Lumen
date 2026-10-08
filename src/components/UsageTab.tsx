@@ -1,4 +1,5 @@
 import { CircleCheck, Clock, OctagonAlert } from 'lucide-react';
+import { FREE_LIMITS, type Op } from '../lib/quota';
 import { formatTokens, formatUntil, remaining, type UsageView } from '../lib/usage';
 import { modelLabel, useStore } from '../store';
 
@@ -27,13 +28,47 @@ function Status({ until }: { until: number | null }) {
   );
 }
 
+const OPS: [Op, string][] = [
+  ['reads', 'Reads'],
+  ['writes', 'Writes'],
+  ['deletes', 'Deletes'],
+];
+
+function FirebaseCard() {
+  const fb = useStore((s) => s.firebaseUsage);
+  const status =
+    fb.level === 'paused'
+      ? `Sync paused to stay free — chats are saved on each device and sync again ${formatUntil(fb.resetAt)}.`
+      : fb.level === 'slow'
+        ? 'Getting close: changes are synced in batches (about once a minute) to save quota.'
+        : 'Well within the free plan.';
+  return (
+    <div className="usage-card firebase-card">
+      <div className="usage-card-head">
+        <span className="setting-label">Firebase free plan (sync)</span>
+        <span className="muted small">resets {formatUntil(fb.resetAt)}</span>
+      </div>
+      {OPS.map(([op, label]) => (
+        <div key={op} className="fb-row">
+          <span className="small">{label}</span>
+          <span className="muted small">
+            {fb.used[op].toLocaleString()} / {FREE_LIMITS[op].toLocaleString()}
+          </span>
+          <Bar used={fb.used[op]} limit={FREE_LIMITS[op]} />
+        </div>
+      ))}
+      <span className={`setting-hint${fb.level === 'normal' ? '' : ' warn'}`}>{status} Shared by everyone invited; counted by the app, so it's approximate.</span>
+    </div>
+  );
+}
+
 export default function UsageTab() {
   const view = useStore((s) => s.usage) as UsageView | null;
   const catalog = useStore((s) => s.catalog);
   const enabled = useStore((s) => s.settings.enabledModels);
   const hasOpenRouter = Boolean(catalog?.providers.openrouter);
 
-  if (!view) return <p className="muted pad">Usage appears once you're signed in and your models have loaded.</p>;
+  if (!view) return <div className="settings-section usage"><p className="muted pad">Usage appears once you're signed in and your models have loaded.</p><FirebaseCard /></div>;
 
   const ids = [...new Set([...enabled, ...Object.keys(view.models).filter((id) => view.models[id].requests > 0)])];
   const rows = ids.map((id) => {
@@ -92,6 +127,8 @@ export default function UsageTab() {
           </li>
         ))}
       </ul>
+
+      <FirebaseCard />
 
       <p className="muted small">
         Google doesn't tell apps their limits in advance, so Model Router learns each model's daily limit the first time it's reached. Models at their

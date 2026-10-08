@@ -1,10 +1,11 @@
 // Memory: short facts about you that every chat can use (your job, preferences, ongoing projects…).
-// Stored at modelRouter/{uid}/memories/{id} so they're shared by your devices.
+// Stored in one document, modelRouter/{uid}/memory/all (one read per app start), shared by your devices.
 // Models save or drop memories by ending a reply with hidden lines:
 //   [[remember: Works as a pharmacist in Cairo]]   [[forget: Prefers English replies]]
 // The app removes these lines from the reply and shows "Memory updated" instead.
 
-import { collection, deleteDoc, doc, onSnapshot, setDoc, writeBatch, type Unsubscribe } from 'firebase/firestore';
+import { collection, deleteField, doc, getDocs, onSnapshot, setDoc, updateDoc, writeBatch, type Unsubscribe } from 'firebase/firestore';
+import { quota } from './quota';
 import type { Memory } from '../types';
 import { db } from './firebase';
 import { uid } from './util';
@@ -14,19 +15,24 @@ export const MAX_MEMORY_CHARS = 500;
 /** Roughly how much memory text goes to the model with each message. */
 const PROMPT_BUDGET = 8_000;
 
-const col = (userId: string) => collection(db, 'modelRouter', userId, 'memories');
+const ref = (userId: string) => doc(db, 'modelRouter', userId, 'memory', 'all');
+/** Where the first version kept memories (one document each); moved into the single document. */
+const oldCol = (userId: string) => collection(db, 'modelRouter', userId, 'memories');
 
 export class MemoryStore {
   private unsub: Unsubscribe | null = null;
+  private moved = false;
   constructor(private userId: string, private onChange: (items: Memory[]) => void, private onError: (msg: string) => void) {}
 
   start() {
     this.unsub = onSnapshot(
-      col(this.userId),
+      ref(this.userId),
       (snap) => {
-        const items = snap.docs
-          .map((d) => ({ ...(d.data() as Omit<Memory, 'id'>), id: d.id }))
-          .filter((m) => typeof m.text === 'string' && m.text.trim())
+        if (!snap.metadata.fromCache && !snap.metadata.hasPendingWrites) quota.count('reads');
+        if (!snap.exists() && !snap.metadata.fromCache && !this.moved && !localStorage.getItem(`mr.memory.moved.${this.userId}`)) void this.moveOld();
+        const raw = (snap.data()?.items || {}) as Record<string, Memory>;
+        const items = Object.values(raw)
+          .filter((m) => m && typeof m.text === 'string' && m.text.trim())
           .sort((a, b) => b.updatedAt - a.updatedAt);
         this.onChange(items);
       },
@@ -39,28 +45,52 @@ export class MemoryStore {
     this.unsub = null;
   }
 
+  private async moveOld() {
+    this.moved = true;
+    try {
+      const snap = await getDocs(oldCol(this.userId));
+      quota.count('reads', Math.max(1, snap.size));
+      if (snap.empty) {
+        localStorage.setItem(`mr.memory.moved.${this.userId}`, '1');
+        return;
+      }
+      const items = Object.fromEntries(snap.docs.map((d) => [d.id, { ...d.data(), id: d.id }]));
+      await setDoc(ref(this.userId), { items }, { merge: true });
+      const b = writeBatch(db);
+      snap.docs.forEach((d) => b.delete(d.ref));
+      await b.commit();
+      quota.count('writes');
+      quota.count('deletes', snap.size);
+      localStorage.setItem(`mr.memory.moved.${this.userId}`, '1');
+    } catch {
+      // Try again next time.
+      this.moved = false;
+    }
+  }
+
+  // Writes aren't awaited: Firestore saves offline and sends them when back online.
+  private send(p: Promise<void>, what: string) {
+    quota.count('writes');
+    p.catch((e) => this.onError(`Couldn't ${what}: ${e.message}`));
+  }
+
   async add(text: string, extra: Partial<Memory> = {}): Promise<Memory> {
     const now = Date.now();
     const m: Memory = { id: uid(), text: clip(text), createdAt: now, updatedAt: now, source: 'manual', ...extra };
-    // Not awaited: Firestore saves offline and sends it when back online.
-    setDoc(doc(col(this.userId), m.id), m).catch((e) => this.onError(`Couldn't save to memory: ${e.message}`));
+    this.send(setDoc(ref(this.userId), { items: { [m.id]: m } }, { merge: true }), 'save to memory');
     return m;
   }
 
   async update(id: string, text: string) {
-    await setDoc(doc(col(this.userId), id), { text: clip(text), updatedAt: Date.now() }, { merge: true });
+    this.send(setDoc(ref(this.userId), { items: { [id]: { text: clip(text), updatedAt: Date.now() } } }, { merge: true }), 'save to memory');
   }
 
   async remove(id: string) {
-    deleteDoc(doc(col(this.userId), id)).catch((e) => this.onError(`Couldn't delete from memory: ${e.message}`));
+    this.send(updateDoc(ref(this.userId), { [`items.${id}`]: deleteField() }), 'delete from memory');
   }
 
-  async clear(ids: string[]) {
-    for (let i = 0; i < ids.length; i += 450) {
-      const b = writeBatch(db);
-      ids.slice(i, i + 450).forEach((id) => b.delete(doc(col(this.userId), id)));
-      await b.commit();
-    }
+  async clear(_ids: string[]) {
+    this.send(setDoc(ref(this.userId), { items: {} }), 'clear memory');
   }
 }
 

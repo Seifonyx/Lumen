@@ -4,6 +4,7 @@ import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type
 import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
 import { loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { ChatSync } from './lib/sync';
+import { quota, type QuotaView } from './lib/quota';
 import { extractMemoryOps, findMemory, hideMemoryLines, MAX_MEMORIES, memoryInstructions, MemoryStore } from './lib/memory';
 import { AUTO, planRoute } from './lib/routing';
 import { formatUntil, remaining, UsageTracker, type LimitInfo, type UsageView } from './lib/usage';
@@ -33,6 +34,8 @@ interface State {
   usage: UsageView | null;
   /** what models remember about you, newest first */
   memories: Memory[];
+  /** this project's use of Firebase's free daily limits */
+  firebaseUsage: QuotaView;
   catalogError: string | null;
   settings: Settings;
   chats: Chat[];
@@ -89,6 +92,8 @@ let usage: UsageTracker | null = null;
 let memory: MemoryStore | null = null;
 let settingsReady = false;
 let settingsTimer: ReturnType<typeof setTimeout> | undefined;
+/** the shared settings as last saved or loaded */
+let lastSharedSettings = '';
 
 const newChatObject = (): Chat => ({ id: uid(), title: 'New chat', createdAt: Date.now(), updatedAt: Date.now(), messages: [] });
 
@@ -397,6 +402,7 @@ export const useStore = create<State>((set, get) => {
     catalog: null,
     usage: null,
     memories: [],
+    firebaseUsage: quota.view(),
     catalogError: null,
     settings: loadSettings(),
     chats: [],
@@ -411,6 +417,7 @@ export const useStore = create<State>((set, get) => {
 
     async init() {
       applyAppearance(get().settings);
+      quota.subscribe((firebaseUsage) => set({ firebaseUsage }));
       try {
         const chats = await db.all();
         set({ chats });
@@ -425,6 +432,8 @@ export const useStore = create<State>((set, get) => {
         memory?.stop();
         memory = null;
         set({ memories: [] });
+        await quota.flush();
+        quota.stop();
         settingsReady = false;
         if (!user) {
           setKeys({ gemini: '', openrouter: '' });
@@ -438,6 +447,10 @@ export const useStore = create<State>((set, get) => {
           setKeys(keys);
           set({ keys, authed: true });
           if (remoteSettings) get().updateSettings({ ...remoteSettings, voiceLang: get().settings.voiceLang } as Partial<Settings>);
+          {
+            const { voiceLang: _voice, ...shared } = get().settings;
+            lastSharedSettings = remoteSettings ? JSON.stringify(shared) : '';
+          }
           settingsReady = true;
           if (!remoteSettings) get().updateSettings({});
         } catch (e) {
@@ -449,6 +462,7 @@ export const useStore = create<State>((set, get) => {
           set({ authed: true });
           get().toast(`Couldn't load your settings: ${(e as Error).message}`, 'error');
         }
+        await quota.start();
         sync = new ChatSync(user.uid, {
           local: (id) => get().chats.find((c) => c.id === id),
           allLocal: () => get().chats,
@@ -524,7 +538,13 @@ export const useStore = create<State>((set, get) => {
         clearTimeout(settingsTimer);
         settingsTimer = setTimeout(() => {
           const { voiceLang: _voice, ...shared } = get().settings;
-          saveRemoteSettings(uid, shared).catch(() => {});
+          // Only write when something actually changed (saves Firebase's free daily writes).
+          const json = JSON.stringify(shared);
+          if (json === lastSharedSettings) return;
+          lastSharedSettings = json;
+          saveRemoteSettings(uid, shared).catch(() => {
+            lastSharedSettings = '';
+          });
         }, 800);
       }
     },

@@ -5,8 +5,9 @@ import {
   GoogleAuthProvider, browserLocalPersistence, connectAuthEmulator, getAuth, getRedirectResult, onAuthStateChanged, setPersistence,
   signInWithCredential, signInWithPopup, signInWithRedirect, signOut, type User,
 } from 'firebase/auth';
-import { connectFirestoreEmulator, doc, getDoc, initializeFirestore, serverTimestamp, setDoc } from 'firebase/firestore';
+import { connectFirestoreEmulator, doc, getDoc, initializeFirestore, serverTimestamp, setDoc, type DocumentSnapshot } from 'firebase/firestore';
 import config from '../firebase-config.json';
+import { quota } from './quota';
 
 const app = initializeApp(config);
 export const auth = getAuth(app);
@@ -53,22 +54,34 @@ export interface ApiKeys {
 
 const keysDoc = (uid: string) => doc(db, 'modelRouter', uid);
 
+// Keys and settings live in the same document: read it once when both are loaded together.
+let accountRead: { uid: string; at: number; snap: Promise<DocumentSnapshot> } | null = null;
+function readAccount(uid: string) {
+  if (!accountRead || accountRead.uid !== uid || Date.now() - accountRead.at > 5000) {
+    accountRead = { uid, at: Date.now(), snap: getDoc(keysDoc(uid)) };
+    quota.count('reads');
+  }
+  return accountRead.snap;
+}
+
 export async function loadKeys(uid: string): Promise<ApiKeys> {
-  const snap = await getDoc(keysDoc(uid));
+  const snap = await readAccount(uid);
   const d = snap.data() || {};
   return { gemini: d.geminiKey || '', openrouter: d.openrouterKey || '' };
 }
 
 /** Settings shared across devices (model list, instructions, appearance). */
 export async function loadRemoteSettings(uid: string): Promise<Record<string, unknown> | null> {
-  const snap = await getDoc(keysDoc(uid));
+  const snap = await readAccount(uid);
   return (snap.data()?.settings as Record<string, unknown>) || null;
 }
 
 export async function saveRemoteSettings(uid: string, settings: object): Promise<void> {
+  quota.count('writes');
   await setDoc(keysDoc(uid), { settings, updatedAt: serverTimestamp() }, { merge: true });
 }
 
 export async function saveKeys(uid: string, keys: ApiKeys): Promise<void> {
+  quota.count('writes');
   await setDoc(keysDoc(uid), { geminiKey: keys.gemini.trim(), openrouterKey: keys.openrouter.trim(), updatedAt: serverTimestamp() }, { merge: true });
 }

@@ -1,4 +1,5 @@
-import { Brain, Check, ChevronDown, Eye, Globe, SlidersHorizontal } from 'lucide-react';
+import { Brain, Check, ChevronDown, Eye, Globe, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { AUTO } from '../lib/routing';
 import { useEffect, useRef, useState } from 'react';
 import { formatUntil, remaining } from '../lib/usage';
 import { modelLabel, useStore } from '../store';
@@ -66,11 +67,34 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
   return (
     <div className={`model-picker${compact ? ' compact' : ''}`} ref={ref}>
       <button className={compact ? 'msg-action' : 'model-button'} onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open}>
-        {label ?? <span className="model-name">{modelLabel(catalog, value) || 'Choose a model'}</span>}
+        {label ?? (
+          <span className="model-name">
+            {value === AUTO && <Sparkles size={16} className="auto-icon" />}
+            {modelLabel(catalog, value) || 'Choose a model'}
+          </span>
+        )}
         {!compact && <ChevronDown size={16} />}
       </button>
       {open && (
         <div className={`popover models-pop ${align}`} role="listbox">
+          {!compact && groups.length > 0 && (
+            <button
+              role="option"
+              aria-selected={value === AUTO}
+              className={`pop-item auto-item${value === AUTO ? ' selected' : ''}`}
+              onClick={() => {
+                onChange(AUTO);
+                setOpen(false);
+              }}
+            >
+              <Sparkles size={18} className="auto-icon" />
+              <span className="pop-main">
+                <span className="pop-title">Auto</span>
+                <span className="pop-sub">Picks the best model for each message</span>
+              </span>
+              {value === AUTO && <Check size={16} className="check" />}
+            </button>
+          )}
           {groups.length === 0 && <p className="muted small pad">No models enabled yet.</p>}
           {groups.map(([name, list]) => (
             <div key={name}>

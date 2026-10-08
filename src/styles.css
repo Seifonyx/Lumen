@@ -559,3 +559,10 @@ table.sheet tr.totals td { font-weight: 700; background: #e8ecf2; border-top: 3p
 .usage-warning { max-width: 780px; margin: 0 auto 6px; padding: 7px 12px; border-radius: 12px; font-size: 0.82rem; background: var(--warning-soft); color: var(--text); }
 .usage-warning.blocked { background: var(--red-soft); }
 .denied-icon { margin: 0 auto; color: var(--danger); }
+
+/* Auto routing */
+.auto-icon { color: var(--accent); flex: none; }
+.model-name .auto-icon { margin-inline-end: 6px; vertical-align: -3px; }
+.auto-item { border-bottom: 1px solid var(--border); border-radius: 9px 9px 0 0; margin-bottom: 4px; padding-bottom: 10px; }
+.route-tag { color: var(--accent); }
+.model-tag { max-width: 340px; }

@@ -1,5 +1,6 @@
 import { ArrowDown, FileSpreadsheet, FileText, Languages, LineChart, Menu, Presentation, ScrollText, SquarePen } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { AUTO } from '../lib/routing';
 import { selectCurrentChat, useStore } from '../store';
 import Composer, { prefillComposer } from './Composer';
 import MessageItem from './MessageItem';
@@ -24,7 +25,7 @@ export default function ChatView() {
   const stick = useRef(true);
   const [showDown, setShowDown] = useState(false);
 
-  const model = chat?.model && useStore.getState().settings.enabledModels.includes(chat.model) ? chat.model : defaultModel;
+  const model = chat?.model && (chat.model === AUTO || useStore.getState().settings.enabledModels.includes(chat.model)) ? chat.model : defaultModel;
   const messages = chat?.messages || [];
   const lastText = messages.length ? messages[messages.length - 1].text.length + (messages[messages.length - 1].thinking?.length || 0) : 0;
 

@@ -143,7 +143,10 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
 
       {!streaming && (
         <div className="msg-actions">
-          <span className="model-tag" title={message.model}>{modelLabel(catalog, message.model)}</span>
+          <span className="model-tag" title={message.route ? `Auto picked this model: ${message.route}` : message.model}>
+            {modelLabel(catalog, message.model)}
+            {message.route && <span className="route-tag"> · Auto: {message.route}</span>}
+          </span>
           {message.text && (
             <>
               <button className="msg-action" aria-label="Copy" title="Copy" onClick={async () => { if (await copyText(message.text)) { setCopied(true); setTimeout(() => setCopied(false), 1500); } }}>

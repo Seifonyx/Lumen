@@ -37,6 +37,7 @@ export type StreamEvent =
   | { t: 'sources'; items: { title: string; url: string }[] }
   | { t: 'error'; text: string }
   | { t: 'done' }
+  | { t: 'discard' }
   | { t: 'request'; id: string }
   | { t: 'usage'; id: string; input: number; output: number }
   | { t: 'limit'; id: string; scope: 'day' | 'minute' | 'unknown'; quota?: number; resetAt?: number; retryAfterSec?: number };

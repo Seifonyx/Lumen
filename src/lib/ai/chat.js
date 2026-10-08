@@ -5,9 +5,19 @@
 import { buildInstructions } from './instructions.js';
 import { complete, hasGemini, hasOpenRouter, openStream, parseModelId } from './providers.js';
 
-const MAX_ATTEMPTS = 4;
+const MAX_ATTEMPTS = 5;
+export const timeouts = {
+  // A model that sends nothing for this long is treated as failed and the next one is tried.
+  firstResponseMs: 45_000,
+  // Once answering, a model that goes silent this long is considered stuck.
+  idleMs: 90_000,
+};
 
 function describe({ status, message = '' }) {
+  if (status === 'timeout') return "didn't respond in time";
+  if (status === 'empty') return 'returned an empty reply';
+  if (status === 'blocked') return 'declined to answer';
+  if (status === 'network') return "couldn't be reached";
   if (status === 429 || /quota|rate.?limit|exhausted/i.test(message)) return 'hit its usage limit';
   if (status === 401 || status === 403) return 'was refused (check the API key)';
   if (status === 404) return 'is not available';
@@ -32,17 +42,50 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
   const failures = [];
   const label = (id) => id.split(':').slice(1).join(':');
 
+  const deadProviders = new Set();
+
   for (const id of queue) {
     if (signal.aborted) return;
+    const target = available(id);
+    // A rejected key fails every model that uses it, so don't try them one by one.
+    if (deadProviders.has(target.provider)) continue;
+
+    // Each attempt gets its own cancel switch, so a stuck model can be abandoned without stopping the reply.
+    const attempt = new AbortController();
+    const stopAttempt = () => attempt.abort();
+    signal.addEventListener('abort', stopAttempt, { once: true });
+    let timedOut = false;
+    let timer = setTimeout(() => {
+      timedOut = true;
+      attempt.abort();
+    }, timeouts.firstResponseMs);
+    const keepAlive = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        timedOut = true;
+        attempt.abort();
+      }, timeouts.idleMs);
+    };
+    const cleanup = () => {
+      clearTimeout(timer);
+      signal.removeEventListener('abort', stopAttempt);
+      attempt.abort(); // closes the connection if we gave up on this model
+    };
+
     let opened;
     try {
-      opened = await openStream(available(id), messages, { instructions, search: Boolean(options.search), signal });
+      opened = await openStream(target, messages, { instructions, search: Boolean(options.search), signal: attempt.signal });
     } catch (e) {
-      if (signal.aborted) return;
-      opened = { ok: false, status: 0, message: e.message };
+      opened = { ok: false, status: timedOut ? 'timeout' : 'network', message: timedOut ? '' : e.message };
+    }
+    if (signal.aborted) {
+      cleanup();
+      return;
     }
     if (!opened.ok) {
+      cleanup();
       failures.push({ id, status: opened.status, message: opened.message });
+      if (opened.status === 401 || opened.status === 403) deadProviders.add(target.provider);
       if (opened.limit) yield { t: 'limit', id, ...opened.limit };
       continue;
     }
@@ -63,10 +106,15 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
       }
     };
 
+    // Until real answer text arrives, notices and sources are held back: if the model ends up
+    // blocked or empty, we move on to the next one without showing them.
     let wrote = false;
+    let thought = false;
+    const held = [];
     let failedEarly = null;
     try {
       for await (const ev of opened.events) {
+        keepAlive();
         if (ev.t === 'error' && !wrote) {
           failedEarly = { id, status: ev.status, message: ev.text };
           if (ev.limit) yield { t: 'limit', id, ...ev.limit };
@@ -76,21 +124,40 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
           yield { ...ev, id };
           continue;
         }
+        if (!wrote && (ev.t === 'notice' || ev.t === 'sources')) {
+          held.push(ev);
+          continue;
+        }
         yield* announce();
-        if (ev.t === 'text' || ev.t === 'think') wrote = true;
+        if (ev.t === 'think') thought = true;
+        if (ev.t === 'text') {
+          if (!wrote) {
+            wrote = true;
+            yield* held.splice(0);
+          }
+        }
         yield ev;
       }
     } catch (e) {
-      if (signal.aborted) return;
-      if (!wrote) failedEarly = { id, status: 0, message: e.message };
-      else yield { t: 'error', text: `Connection to the model dropped: ${e.message}` };
+      if (signal.aborted) {
+        cleanup();
+        return;
+      }
+      if (!wrote) failedEarly = { id, status: timedOut ? 'timeout' : 'network', message: timedOut ? '' : e.message };
+      else yield { t: 'error', text: timedOut ? 'The model stopped responding partway through. Tap Try again or Retry with another model.' : `Connection to the model dropped: ${e.message}` };
+    }
+    cleanup();
+    if (!failedEarly && !wrote) {
+      const blocked = held.find((h) => h.t === 'notice' && /blocked|stopped the reply/i.test(h.text));
+      failedEarly = { id, status: blocked ? 'blocked' : 'empty', message: blocked ? blocked.text : '' };
     }
     if (failedEarly) {
       failures.push(failedEarly);
+      // Throw away the failed model's partial thinking before the next model starts.
+      if (thought) yield { t: 'discard' };
+      if (failedEarly.status === 401 || failedEarly.status === 403) deadProviders.add(target.provider);
       continue;
     }
-    yield* announce();
-    if (!wrote) yield { t: 'notice', text: 'The model returned an empty reply. Try again or pick another model.' };
     yield { t: 'done' };
     return;
   }

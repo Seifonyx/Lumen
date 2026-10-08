@@ -85,9 +85,15 @@ function ModelsTab() {
         checked={settings.autoSwitch}
         onChange={(v) => update({ autoSwitch: v })}
       />
+      <Toggle
+        label="Auto for new chats"
+        hint="Picks the best enabled model for each message: images, long documents, code, maths, web search, files, Arabic or quick replies."
+        checked={settings.defaultModel === 'auto'}
+        onChange={(v) => update({ defaultModel: v ? 'auto' : enabled[0] || '' })}
+      />
       <div className="section-head">
         <h3>Your models</h3>
-        <span className="muted small">Order = switching order. ★ = default for new chats.</span>
+        <span className="muted small">Order = switching order and tie-breaker for Auto. ★ = default for new chats instead of Auto.</span>
       </div>
       <ul className="model-list">
         {enabled.length === 0 && <li className="muted small pad">No models yet. Add some below.</li>}

@@ -3,7 +3,8 @@ import { openRouterDailyLimit, setKeys } from './lib/ai/providers.js';
 import { buildChatBody, fetchCatalog, fetchTitle, streamChat, type WireMessage } from './lib/api';
 import { loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { ChatSync } from './lib/sync';
-import { formatUntil, UsageTracker, type LimitInfo, type UsageView } from './lib/usage';
+import { AUTO, estimateTokens, planRoute } from './lib/routing';
+import { formatUntil, remaining, UsageTracker, type LimitInfo, type UsageView } from './lib/usage';
 import { db } from './lib/db';
 import { applyAppearance, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
@@ -94,7 +95,7 @@ export const useStore = create<State>((set, get) => {
   const modelFor = (chat: Chat | null): string => {
     const { settings, catalog } = get();
     const enabled = settings.enabledModels.filter((id) => !catalog || catalog.models.some((m) => m.id === id) || !catalog.models.length);
-    const pick = [chat?.model, settings.defaultModel, ...enabled].find((id) => id && enabled.includes(id));
+    const pick = [chat?.model, settings.defaultModel, ...enabled].find((id) => id && (id === AUTO || enabled.includes(id)));
     return pick || enabled[0] || catalog?.defaults[0] || '';
   };
 
@@ -108,20 +109,35 @@ export const useStore = create<State>((set, get) => {
       get().toast('No models are enabled. Open Settings → Models.', 'error');
       return;
     }
-    // Models that already hit their limit go to the back of the line until it resets.
+    // Pick the model: Auto scores every enabled model for this message; a manual choice is kept
+    // unless it can't handle the message. Models at their limit go to the back of the line.
     const blocked = (id: string) => (usage?.blockedUntil(id) ?? null) !== null;
-    let chosen = model;
-    let fallbacks = settings.autoSwitch ? settings.enabledModels.filter((id) => id !== model) : [];
-    const preNotices: string[] = [];
-    if (settings.autoSwitch && blocked(model)) {
+    const lastUser = [...chat.messages].reverse().find((m) => m.role === 'user');
+    const plan = planRoute({
+      selected: model,
+      enabled: settings.enabledModels,
+      catalog: get().catalog?.models || [],
+      text: lastUser?.text || '',
+      files: lastUser?.files || [],
+      conversationTokens: chat.messages.reduce((n, m) => n + estimateTokens(m.text, m.files), 0),
+      search: settings.webSearch,
+      blocked,
+      left: (id) => remaining(get().usage, id),
+    });
+    let chosen = plan.model;
+    if (!chosen) {
+      get().toast('No models are enabled. Open Settings → Models.', 'error');
+      return;
+    }
+    let fallbacks = settings.autoSwitch ? plan.fallbacks : [];
+    const preNotices: string[] = plan.notice ? [plan.notice] : [];
+    if (settings.autoSwitch && blocked(chosen)) {
       const next = fallbacks.find((id) => !blocked(id));
       if (next) {
-        preNotices.push(`${modelLabel(get().catalog, model)} reached its limit (available again ${formatUntil(usage!.blockedUntil(model)!)}) — using ${modelLabel(get().catalog, next)}.`);
+        if (model !== AUTO) preNotices.push(`${modelLabel(get().catalog, chosen)} reached its limit (available again ${formatUntil(usage!.blockedUntil(chosen)!)}) — using ${modelLabel(get().catalog, next)}.`);
+        fallbacks = [...fallbacks.filter((id) => id !== next), chosen];
         chosen = next;
-        fallbacks = [...fallbacks.filter((id) => id !== next && !blocked(id)), ...fallbacks.filter((id) => id !== next && blocked(id)), model];
       }
-    } else if (settings.autoSwitch) {
-      fallbacks = [...fallbacks.filter((id) => !blocked(id)), ...fallbacks.filter(blocked)];
     }
     const wire: WireMessage[] = chat.messages
       .filter((m) => !m.error || m.text)
@@ -144,7 +160,16 @@ export const useStore = create<State>((set, get) => {
       return;
     }
 
-    const reply: Message = { id: uid(), role: 'assistant', text: '', model: chosen, status: 'streaming', createdAt: Date.now(), notices: preNotices.length ? preNotices : undefined };
+    const reply: Message = {
+      id: uid(),
+      role: 'assistant',
+      text: '',
+      model: chosen,
+      route: model === AUTO ? plan.reason || undefined : undefined,
+      status: 'streaming',
+      createdAt: Date.now(),
+      notices: preNotices.length ? preNotices : undefined,
+    };
     chat = { ...chat, messages: [...chat.messages, reply], updatedAt: Date.now() };
     replaceChat(chat);
     controller = new AbortController();
@@ -179,9 +204,19 @@ export const useStore = create<State>((set, get) => {
           usage?.block(ev.id, ev as unknown as LimitInfo);
           continue;
         }
+        if (ev.t === 'discard') {
+          // The model that was thinking failed; its half-finished thoughts are dropped.
+          reply.thinking = undefined;
+          schedule();
+          continue;
+        }
         if (ev.t === 'text') reply.text += ev.text;
         else if (ev.t === 'think') reply.thinking = (reply.thinking || '') + ev.text;
-        else if (ev.t === 'model') reply.model = ev.id;
+        else if (ev.t === 'model') {
+          // Auto's reason only describes the model it picked, not a stand-in after a failure.
+          if (ev.id !== reply.model) reply.route = undefined;
+          reply.model = ev.id;
+        }
         else if (ev.t === 'notice') reply.notices = [...(reply.notices || []), ev.text];
         else if (ev.t === 'sources') reply.sources = [...(reply.sources || []), ...ev.items];
         else if (ev.t === 'error') reply.error = ev.text;
@@ -326,9 +361,11 @@ export const useStore = create<State>((set, get) => {
         const known = new Set(catalog.models.map((m) => m.id));
         let enabled = settings.enabledModels.filter((id) => known.has(id) || !catalog.models.length);
         if (!enabled.length) enabled = catalog.defaults.filter((id) => known.has(id) || !catalog.models.length);
-        const defaultModel = enabled.includes(settings.defaultModel) ? settings.defaultModel : enabled[0] || '';
+        // New chats use Auto (introduced once; you can switch back to a fixed model any time).
+        const wanted = settings.autoIntroduced ? settings.defaultModel : AUTO;
+        const defaultModel = wanted === AUTO || enabled.includes(wanted) ? wanted : enabled[0] || '';
         set({ catalog, catalogError: catalog.errors.length ? catalog.errors.join(' · ') : null });
-        get().updateSettings({ enabledModels: enabled, defaultModel });
+        get().updateSettings({ enabledModels: enabled, defaultModel, autoIntroduced: true });
       } catch (e) {
         set({ catalogError: (e as Error).message });
       }
@@ -476,5 +513,6 @@ export function modelInfo(catalog: Catalog | null, id?: string): ModelInfo | und
 }
 
 export function modelLabel(catalog: Catalog | null, id?: string): string {
+  if (id === AUTO) return 'Auto';
   return modelInfo(catalog, id)?.label || modelShortName(id);
 }

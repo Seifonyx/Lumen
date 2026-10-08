@@ -25,6 +25,8 @@ export interface Message {
   text: string;
   files?: Attachment[];
   model?: string;
+  /** why Auto picked this model, e.g. "reads images" */
+  route?: string;
   thinking?: string;
   sources?: Source[];
   notices?: string[];
@@ -80,5 +82,7 @@ export interface Settings {
   fontSize: FontSize;
   enterToSend: boolean;
   autoTitle: boolean;
+  /** set once Auto routing has been made the default */
+  autoIntroduced?: boolean;
   voiceLang: string;
 }

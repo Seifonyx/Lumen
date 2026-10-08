@@ -34,7 +34,9 @@ export default function Composer({ model }: { model: string }) {
     return freeOR && usage?.openrouter.limit && usage.openrouter.used >= usage.openrouter.limit ? usage.openrouter.resetAt : null;
   })();
   const left = remaining(usage, model);
-  const usageWarning = blockedUntil
+  const usageWarning = model === 'auto'
+    ? ''
+    : blockedUntil
     ? `${modelLabel(catalog, model)} reached its limit — back ${formatUntil(blockedUntil)}.${settings.autoSwitch ? ' Your next message will use another model.' : ''}`
     : left !== null && left <= 3
       ? `${modelLabel(catalog, model)}: ${left} message${left === 1 ? '' : 's'} left today.`

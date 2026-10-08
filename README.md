@@ -1,7 +1,7 @@
 # Model Router
 
 A small private chat app for Gemini (Google AI Studio) and OpenRouter models, with file uploads
-(PDF, Word .docx, images, text files). Runs free on Vercel.
+(PDF, Word .docx, Excel .xlsx, images, text files). Runs free on Vercel.
 
 ## Deploy on Vercel
 
@@ -26,7 +26,8 @@ openrouter.ai/models. A provider only shows up if its key is set.
 
 - PDFs up to 2.5 MB are sent as-is (the model reads text and pictures). Bigger PDFs are converted
   to text in the browser first; scanned PDFs that big need to be sent as screenshots.
-- Word (.docx) and text files are converted to text in the browser.
+- Word (.docx), Excel (.xlsx, every sheet as CSV) and text files are converted to text in the browser.
+  Old .xls files need to be re-saved as .xlsx first.
 - Images are resized to 1600 px before sending.
 - Vercel limits each request to about 4.5 MB. In long chats with many files, the oldest files are
   dropped from what's sent so new messages still go through.

@@ -10,6 +10,7 @@ const IMAGE_MAX_SIDE = 1600;
 const PDFJS = '/vendor/pdf.min.js';
 const PDFJS_WORKER = '/vendor/pdf.worker.min.js';
 const MAMMOTH = '/vendor/mammoth.browser.min.js';
+const JSZIP = '/vendor/jszip.min.js';
 const TEXT_EXT = /\.(txt|md|csv|tsv|json|html?|xml|js|ts|py|css|log|ya?ml)$/i;
 
 // ---------- Elements ----------
@@ -129,6 +130,100 @@ async function pdfToText(file) {
   return pages.join('\n\n');
 }
 
+// ---------- Excel (.xlsx) → CSV text, one block per sheet ----------
+const BUILTIN_DATE_FORMATS = new Set([14, 15, 16, 17, 18, 19, 20, 21, 22, 45, 46, 47]);
+const byTag = (node, tag) => [...node.getElementsByTagNameNS('*', tag)];
+const xmlDoc = (text) => new DOMParser().parseFromString(text, 'application/xml');
+
+function isDateFormat(code) {
+  // Drop quoted text, escaped characters and [colour]/[locale] blocks, then look for date/time tokens.
+  const cleaned = code.replace(/"[^"]*"|\\.|\[[^\]]*\]/g, '');
+  return /[dmyhs]/i.test(cleaned) && !/^general$/i.test(cleaned);
+}
+
+function formatExcelDate(serial, date1904) {
+  const days = serial + (date1904 ? 1462 : 0);
+  const d = new Date(Math.round((days - 25569) * 86400000));
+  const iso = d.toISOString();
+  return d.getUTCHours() || d.getUTCMinutes() ? `${iso.slice(0, 10)} ${iso.slice(11, 16)}` : iso.slice(0, 10);
+}
+
+function colIndex(ref) {
+  let n = 0;
+  for (const ch of ref.replace(/[^A-Z]/gi, '').toUpperCase()) n = n * 26 + ch.charCodeAt(0) - 64;
+  return n - 1;
+}
+
+const csvCell = (v) => (/[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+
+async function xlsxToText(file) {
+  await loadScript(JSZIP);
+  const zip = await window.JSZip.loadAsync(await file.arrayBuffer());
+  const read = async (path) => (zip.file(path) ? xmlDoc(await zip.file(path).async('string')) : null);
+
+  const workbook = await read('xl/workbook.xml');
+  if (!workbook) throw new Error(`${file.name} doesn't look like an Excel file.`);
+  const date1904 = byTag(workbook, 'workbookPr').some((n) => ['1', 'true'].includes(n.getAttribute('date1904')));
+
+  const rels = await read('xl/_rels/workbook.xml.rels');
+  const targets = {};
+  for (const r of rels ? byTag(rels, 'Relationship') : []) {
+    const t = r.getAttribute('Target');
+    targets[r.getAttribute('Id')] = t.startsWith('/') ? t.slice(1) : `xl/${t}`;
+  }
+
+  const shared = [];
+  const ss = await read('xl/sharedStrings.xml');
+  for (const si of ss ? byTag(ss, 'si') : []) {
+    // Skip phonetic (rPh) runs so East Asian workbooks don't get duplicated text.
+    shared.push(byTag(si, 't').filter((t) => t.parentNode.localName !== 'rPh').map((t) => t.textContent).join(''));
+  }
+
+  const dateStyles = new Set();
+  const styles = await read('xl/styles.xml');
+  if (styles) {
+    const custom = {};
+    for (const f of byTag(styles, 'numFmt')) custom[f.getAttribute('numFmtId')] = f.getAttribute('formatCode') || '';
+    const xfs = byTag(styles, 'cellXfs')[0];
+    [...(xfs ? xfs.children : [])].forEach((xf, i) => {
+      const id = Number(xf.getAttribute('numFmtId') || 0);
+      if (BUILTIN_DATE_FORMATS.has(id) || (custom[id] && isDateFormat(custom[id]))) dateStyles.add(i);
+    });
+  }
+
+  const blocks = [];
+  for (const sheet of byTag(workbook, 'sheet')) {
+    const relId = sheet.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id') || sheet.getAttribute('r:id');
+    const doc = await read(targets[relId]);
+    if (!doc) continue;
+    const rows = [];
+    for (const row of byTag(doc, 'row')) {
+      const cells = [];
+      let next = 0;
+      for (const c of byTag(row, 'c')) {
+        const ref = c.getAttribute('r');
+        const col = ref ? colIndex(ref) : next;
+        next = col + 1;
+        const type = c.getAttribute('t');
+        const v = byTag(c, 'v')[0]?.textContent ?? '';
+        let value;
+        if (type === 's') value = shared[Number(v)] ?? '';
+        else if (type === 'inlineStr') value = byTag(c, 't').map((t) => t.textContent).join('');
+        else if (type === 'b') value = v === '1' ? 'TRUE' : 'FALSE';
+        else if (v !== '' && (type === null || type === 'n') && dateStyles.has(Number(c.getAttribute('s') || 0))) value = formatExcelDate(Number(v), date1904);
+        else value = v;
+        cells[col] = value;
+      }
+      const rowIndex = Number(row.getAttribute('r') || rows.length + 1) - 1;
+      rows[rowIndex] = Array.from(cells, (x) => csvCell(x ?? '')).join(',').replace(/,+$/, '');
+    }
+    const body = Array.from(rows, (r) => r ?? '').join('\n').replace(/\n+$/, '');
+    blocks.push(`### Sheet: ${sheet.getAttribute('name')}\n${body || '(empty)'}`);
+  }
+  if (blocks.length === 0) throw new Error(`${file.name}: couldn't find any sheets.`);
+  return blocks.join('\n\n');
+}
+
 function clip(text) {
   return text.length > MAX_TEXT_CHARS ? text.slice(0, MAX_TEXT_CHARS) + '\n[…file truncated]' : text;
 }
@@ -153,13 +248,20 @@ async function prepareFile(file) {
     const { value } = await window.mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
     return { kind: 'text', name, text: clip(value) };
   }
+  if (/\.(xlsx|xlsm)$/i.test(name)) {
+    return { kind: 'text', name, text: clip(await xlsxToText(file)) };
+  }
+  if (/\.xls$/i.test(name)) {
+    throw new Error(`${name} is an old Excel format. Open it in Excel or Google Sheets and save it as .xlsx, then attach it again.`);
+  }
   if (file.type.startsWith('text/') || TEXT_EXT.test(name)) {
     return { kind: 'text', name, text: clip(await readAs(file, 'readAsText')) };
   }
-  throw new Error(`${name}: this file type isn't supported. Use PDF, Word (.docx), images or text files.`);
+  throw new Error(`${name}: this file type isn't supported. Use PDF, Word (.docx), Excel (.xlsx), images or text files.`);
 }
 
 function fileIcon(f) {
+  if (/\.xls[xm]?$/i.test(f.name)) return '📊';
   return f.kind === 'image' ? '🖼️' : f.kind === 'pdf' || /\.pdf$/i.test(f.name) ? '📄' : '📝';
 }
 

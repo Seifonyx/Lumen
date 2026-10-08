@@ -1,10 +1,11 @@
 {
-  "projectId": "study-planner-a2291",
-  "appId": "1:1054049409914:web:adaa91225e22efcf6754c3",
-  "storageBucket": "study-planner-a2291.firebasestorage.app",
-  "apiKey": "AIzaSyABlcRz9ALXp2bvoTLF4jNFg0mQ2MxvM2U",
-  "authDomain": "study-planner-a2291.firebaseapp.com",
-  "messagingSenderId": "1054049409914",
-  "projectNumber": "1054049409914",
+  "projectId": "the-model-router",
+  "appId": "1:318861546094:web:45d85795933f1985ae0c7f",
+  "storageBucket": "the-model-router.firebasestorage.app",
+  "apiKey": "AIzaSyA6rgzI585XESdkYGy3_Yz8tdun7rtbJZ8",
+  "authDomain": "the-model-router.firebaseapp.com",
+  "messagingSenderId": "318861546094",
+  "measurementId": "G-E2N6Z05QBT",
+  "projectNumber": "318861546094",
   "version": "2"
 }

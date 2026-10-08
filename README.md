@@ -4,7 +4,7 @@ A private, phone-friendly AI chat that brings free models from **Google AI Studi
 **OpenRouter** together in one place, and switches to another model automatically when one hits its
 free limit. It reads your files and creates real Word, Excel, PowerPoint and PDF documents.
 
-Live at **https://themodelrouter.web.app** (Firebase Hosting, project `study-planner-a2291`).
+Live at **https://the-model-router.web.app** (Firebase project `the-model-router`).
 
 ## Features
 

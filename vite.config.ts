@@ -7,8 +7,4 @@ export default defineConfig({
     target: 'es2020',
     chunkSizeWarningLimit: 2000,
   },
-  server: {
-    // During local development, forward API calls to a separately running API server.
-    proxy: { '/api': 'http://localhost:5174' },
-  },
 });

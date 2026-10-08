@@ -147,7 +147,7 @@ function addSheet(wb: ExcelJS.Workbook, s: SheetSpec) {
 
 export async function buildXlsx(spec: WorkbookSpec): Promise<Blob> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'Model Router';
+  wb.creator = 'TheModelRouter';
   wb.created = new Date();
   for (const s of spec.sheets) addSheet(wb, s);
   const buf = await wb.xlsx.writeBuffer();

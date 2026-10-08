@@ -1,5 +1,5 @@
 {
-  "name": "model-router",
+  "name": "themodelrouter",
   "private": true,
   "version": "2.0.0",
   "type": "module",
@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && python3 scripts/deploy_firebase.py"
   },
   "dependencies": {
     "chart.js": "4.5.1",

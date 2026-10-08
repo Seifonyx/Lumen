@@ -336,7 +336,7 @@ export async function buildDocx(content: string): Promise<Blob> {
     }));
 
   const doc = new Document({
-    creator: config.author || 'Model Router',
+    creator: config.author || 'TheModelRouter',
     title: config.title || 'Document',
     styles: {
       default: {

@@ -3,7 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ACCEPT, readAttachment } from '../lib/files/read';
 import { canListen, listen } from '../lib/speech';
 import { formatBytes, isTouch } from '../lib/util';
-import { modelInfo, useStore } from '../store';
+import { formatUntil, remaining } from '../lib/usage';
+import { modelInfo, modelLabel, useStore } from '../store';
 import type { Attachment } from '../types';
 
 interface Pending {
@@ -25,6 +26,19 @@ export default function Composer({ model }: { model: string }) {
   const updateSettings = useStore((s) => s.updateSettings);
   const currentId = useStore((s) => s.currentId);
   const info = modelInfo(catalog, model);
+  const usage = useStore((s) => s.usage);
+  const blockedUntil = (() => {
+    const u = usage?.models[model];
+    if (u?.blockedUntil && u.blockedUntil > Date.now()) return u.blockedUntil;
+    const freeOR = model.startsWith('openrouter:') && model.endsWith(':free');
+    return freeOR && usage?.openrouter.limit && usage.openrouter.used >= usage.openrouter.limit ? usage.openrouter.resetAt : null;
+  })();
+  const left = remaining(usage, model);
+  const usageWarning = blockedUntil
+    ? `${modelLabel(catalog, model)} reached its limit — back ${formatUntil(blockedUntil)}.${settings.autoSwitch ? ' Your next message will use another model.' : ''}`
+    : left !== null && left <= 3
+      ? `${modelLabel(catalog, model)}: ${left} message${left === 1 ? '' : 's'} left today.`
+      : '';
 
   const [text, setText] = useState('');
   const [pending, setPending] = useState<Pending[]>([]);
@@ -161,6 +175,11 @@ export default function Composer({ model }: { model: string }) {
         <div className="drop-overlay">
           <Paperclip size={28} />
           <span>Drop files to attach</span>
+        </div>
+      )}
+      {usageWarning && (
+        <div className={`usage-warning${blockedUntil ? ' blocked' : ''}`} role="status" dir="auto">
+          {usageWarning}
         </div>
       )}
       <form

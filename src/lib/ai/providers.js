@@ -1,7 +1,7 @@
 // Talks to Google AI Studio (Gemini) and OpenRouter: lists models and streams replies
 // as a common sequence of events: { t: 'text' | 'think' | 'sources' | 'notice' | 'error', ... }.
 
-import { readSSE, upstreamError } from './http.js';
+import { parseLimit, readError, readSSE, upstreamError } from './http.js';
 
 // API keys come from the user's settings (stored in their private Firebase document).
 const keys = { gemini: '', openrouter: '' };
@@ -186,17 +186,20 @@ async function openGemini(name, messages, instructions, search, signal) {
     await res.body?.cancel();
     res = await send(body);
   }
-  if (!res.ok) return { ok: false, status: res.status, message: await upstreamError(res) };
+  if (!res.ok) return { ok: false, status: res.status, ...(await readError(res)) };
   return { ok: true, events: geminiEvents(res.body) };
 }
 
 async function* geminiEvents(body) {
   const seen = new Set();
+  let usage = null;
   for await (const d of readSSE(body)) {
     if (d.error) {
-      yield { t: 'error', text: d.error.message || 'Google returned an error.', status: d.error.code };
+      const text = d.error.message || 'Google returned an error.';
+      yield { t: 'error', text, status: d.error.code, limit: d.error.code === 429 ? parseLimit(d.error, text) : null };
       return;
     }
+    if (d.usageMetadata) usage = d.usageMetadata;
     if (d.promptFeedback?.blockReason) yield { t: 'notice', text: `Google blocked this request (${d.promptFeedback.blockReason}).` };
     const cand = d.candidates?.[0];
     for (const p of cand?.content?.parts || []) {
@@ -213,6 +216,7 @@ async function* geminiEvents(body) {
     if (reason === 'MAX_TOKENS') yield { t: 'notice', text: 'The reply hit the length limit. Say "continue" for the rest.' };
     else if (reason && reason !== 'STOP') yield { t: 'notice', text: `Google stopped the reply (${reason}).` };
   }
+  if (usage) yield { t: 'usage', input: usage.promptTokenCount || 0, output: (usage.candidatesTokenCount || 0) + (usage.thoughtsTokenCount || 0) };
 }
 
 async function openOpenRouter(name, messages, instructions, signal) {
@@ -220,7 +224,7 @@ async function openOpenRouter(name, messages, instructions, signal) {
   const chat = gemma
     ? toOpenRouter(withInstructionsInFirstUser(messages, instructions))
     : [{ role: 'system', content: instructions }, ...toOpenRouter(messages)];
-  const body = { model: name, stream: true, messages: chat };
+  const body = { model: name, stream: true, messages: chat, usage: { include: true } };
   // Free text extraction so PDFs never cost credits.
   if (messages.some((m) => (m.files || []).some((f) => f.kind === 'pdf'))) {
     body.plugins = [{ id: 'file-parser', pdf: { engine: 'pdf-text' } }];
@@ -236,21 +240,36 @@ async function openOpenRouter(name, messages, instructions, signal) {
     },
     body: JSON.stringify(body),
   });
-  if (!res.ok) return { ok: false, status: res.status, message: await upstreamError(res) };
+  if (!res.ok) return { ok: false, status: res.status, ...(await readError(res)) };
   return { ok: true, events: openRouterEvents(res.body) };
 }
 
 async function* openRouterEvents(body) {
   for await (const d of readSSE(body)) {
     if (d.error) {
-      yield { t: 'error', text: d.error.message || 'OpenRouter returned an error.', status: d.error.code };
+      const text = d.error.message || 'OpenRouter returned an error.';
+      yield { t: 'error', text, status: d.error.code, limit: d.error.code === 429 ? parseLimit(d.error, text) : null };
       return;
     }
+    if (d.usage) yield { t: 'usage', input: d.usage.prompt_tokens || 0, output: d.usage.completion_tokens || 0 };
     const choice = d.choices?.[0];
     const delta = choice?.delta || {};
     if (delta.reasoning) yield { t: 'think', text: delta.reasoning };
     if (delta.content) yield { t: 'text', text: delta.content };
     if (choice?.finish_reason === 'length') yield { t: 'notice', text: 'The reply hit the length limit. Say "continue" for the rest.' };
+  }
+}
+
+/** OpenRouter's daily allowance for free models: 50 requests, or 1000 once you've bought credits. */
+export async function openRouterDailyLimit() {
+  if (!keys.openrouter) return null;
+  try {
+    const res = await fetch(`${OPENROUTER_BASE}/key`, { headers: { authorization: `Bearer ${keys.openrouter}` } });
+    if (!res.ok) return null;
+    const { data } = await res.json();
+    return data?.is_free_tier === false ? 1000 : 50;
+  } catch {
+    return null;
   }
 }
 

@@ -1,5 +1,6 @@
 // Runs a chat turn in the browser: tries the chosen model, then the fallbacks, and yields events:
 //   {t:'model', id} {t:'notice', text} {t:'think', text} {t:'text', text} {t:'sources', items} {t:'error', text} {t:'done'}
+// and, for the usage meter: {t:'request', id} {t:'usage', id, input, output} {t:'limit', id, scope, quota?, resetAt?, retryAfterSec?}
 
 import { buildInstructions } from './instructions.js';
 import { complete, hasGemini, hasOpenRouter, openStream, parseModelId } from './providers.js';
@@ -42,8 +43,10 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     }
     if (!opened.ok) {
       failures.push({ id, status: opened.status, message: opened.message });
+      if (opened.limit) yield { t: 'limit', id, ...opened.limit };
       continue;
     }
+    yield { t: 'request', id };
 
     // Announce the model only once it actually starts answering.
     let announced = false;
@@ -66,7 +69,12 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
       for await (const ev of opened.events) {
         if (ev.t === 'error' && !wrote) {
           failedEarly = { id, status: ev.status, message: ev.text };
+          if (ev.limit) yield { t: 'limit', id, ...ev.limit };
           break;
+        }
+        if (ev.t === 'usage') {
+          yield { ...ev, id };
+          continue;
         }
         yield* announce();
         if (ev.t === 'text' || ev.t === 'think') wrote = true;
@@ -94,18 +102,24 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
   }
 }
 
-/** Short chat title from the first message, using a light model so it barely touches limits. */
-export async function makeTitle(text, model) {
+/**
+ * Short chat title from the first message, using a light model so it barely touches limits. Returns { title, model }.
+ * @param {string} text
+ * @param {string | undefined} model
+ * @param {(id: string) => boolean} [skip] models to avoid (e.g. ones at their limit)
+ */
+export async function makeTitle(text, model, skip = () => false) {
   if (!text.trim()) return null;
   const candidates = [];
   if (hasGemini()) candidates.push('gemini:gemini-flash-lite-latest', 'gemini:gemini-2.5-flash-lite');
   if (available(model)) candidates.push(model);
   const prompt = `Write a short title (2 to 6 words) for a chat that starts with the message below. Use the same language as the message. Reply with the title only, no quotes or punctuation at the end.\n\nMessage:\n${text.slice(0, 2000)}`;
   for (const id of candidates) {
+    if (skip(id)) continue;
     try {
       const out = await complete(parseModelId(id), prompt);
       const title = (out || '').split('\n').find((l) => l.trim())?.replace(/^["'#*\s]+|["'*.\s]+$/g, '').slice(0, 80);
-      if (title) return title;
+      if (title) return { title, model: id };
     } catch {
       // Try the next model.
     }

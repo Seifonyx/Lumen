@@ -6,11 +6,13 @@ import { useStore } from '../store';
 import type { Chat, FontSize, ModelInfo, Theme } from '../types';
 import Modal from './Modal';
 import { Badges } from './ModelPicker';
+import UsageTab from './UsageTab';
 
 const TABS = [
   ['general', 'General'],
   ['keys', 'API keys'],
   ['models', 'Models'],
+  ['usage', 'Usage'],
   ['personalize', 'Personalize'],
   ['data', 'Data'],
 ] as const;
@@ -315,6 +317,7 @@ export default function SettingsModal() {
           )}
           {tab === 'keys' && <KeysTab />}
           {tab === 'models' && <ModelsTab />}
+          {tab === 'usage' && <UsageTab />}
           {tab === 'personalize' && (
             <div className="settings-section">
               <label className="field-block">

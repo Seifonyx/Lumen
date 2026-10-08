@@ -1,8 +1,9 @@
 import { create } from 'zustand';
-import { setKeys } from './lib/ai/providers.js';
+import { openRouterDailyLimit, setKeys } from './lib/ai/providers.js';
 import { buildChatBody, fetchCatalog, fetchTitle, streamChat, type WireMessage } from './lib/api';
 import { loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { ChatSync } from './lib/sync';
+import { formatUntil, UsageTracker, type LimitInfo, type UsageView } from './lib/usage';
 import { db } from './lib/db';
 import { applyAppearance, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
@@ -24,6 +25,7 @@ interface State {
   user: { uid: string; email: string; name: string; photo: string } | null;
   keys: ApiKeys;
   catalog: Catalog | null;
+  usage: UsageView | null;
   catalogError: string | null;
   settings: Settings;
   chats: Chat[];
@@ -63,6 +65,7 @@ interface State {
 
 let controller: AbortController | null = null;
 let sync: ChatSync | null = null;
+let usage: UsageTracker | null = null;
 let settingsReady = false;
 let settingsTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -103,7 +106,21 @@ export const useStore = create<State>((set, get) => {
       get().toast('No models are enabled. Open Settings → Models.', 'error');
       return;
     }
-    const fallbacks = settings.autoSwitch ? settings.enabledModels.filter((id) => id !== model) : [];
+    // Models that already hit their limit go to the back of the line until it resets.
+    const blocked = (id: string) => (usage?.blockedUntil(id) ?? null) !== null;
+    let chosen = model;
+    let fallbacks = settings.autoSwitch ? settings.enabledModels.filter((id) => id !== model) : [];
+    const preNotices: string[] = [];
+    if (settings.autoSwitch && blocked(model)) {
+      const next = fallbacks.find((id) => !blocked(id));
+      if (next) {
+        preNotices.push(`${modelLabel(get().catalog, model)} reached its limit (available again ${formatUntil(usage!.blockedUntil(model)!)}) — using ${modelLabel(get().catalog, next)}.`);
+        chosen = next;
+        fallbacks = [...fallbacks.filter((id) => id !== next && !blocked(id)), ...fallbacks.filter((id) => id !== next && blocked(id)), model];
+      }
+    } else if (settings.autoSwitch) {
+      fallbacks = [...fallbacks.filter((id) => !blocked(id)), ...fallbacks.filter(blocked)];
+    }
     const wire: WireMessage[] = chat.messages
       .filter((m) => !m.error || m.text)
       .map((m) => {
@@ -119,13 +136,13 @@ export const useStore = create<State>((set, get) => {
 
     let body: string;
     try {
-      body = buildChatBody({ model, fallbacks, messages: wire, options: { search: settings.webSearch, customInstructions: settings.customInstructions } });
+      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: settings.webSearch, customInstructions: settings.customInstructions } });
     } catch (e) {
       get().toast((e as Error).message, 'error');
       return;
     }
 
-    const reply: Message = { id: uid(), role: 'assistant', text: '', model, status: 'streaming', createdAt: Date.now() };
+    const reply: Message = { id: uid(), role: 'assistant', text: '', model: chosen, status: 'streaming', createdAt: Date.now(), notices: preNotices.length ? preNotices : undefined };
     chat = { ...chat, messages: [...chat.messages, reply], updatedAt: Date.now() };
     replaceChat(chat);
     controller = new AbortController();
@@ -148,6 +165,18 @@ export const useStore = create<State>((set, get) => {
 
     try {
       for await (const ev of streamChat(body, controller.signal)) {
+        if (ev.t === 'request') {
+          usage?.record(ev.id, { requests: 1 });
+          continue;
+        }
+        if (ev.t === 'usage') {
+          usage?.record(ev.id, { input: ev.input, output: ev.output });
+          continue;
+        }
+        if (ev.t === 'limit') {
+          usage?.block(ev.id, ev as unknown as LimitInfo);
+          continue;
+        }
         if (ev.t === 'text') reply.text += ev.text;
         else if (ev.t === 'think') reply.thinking = (reply.thinking || '') + ev.text;
         else if (ev.t === 'model') reply.model = ev.id;
@@ -177,10 +206,11 @@ export const useStore = create<State>((set, get) => {
     // Name the chat after its first exchange.
     const firstUser = updated.messages.find((m) => m.role === 'user');
     if (get().settings.autoTitle && updated.messages.length <= 2 && firstUser && reply.status === 'done') {
-      const title = await fetchTitle(firstUser.text || firstUser.files?.map((f) => f.name).join(', ') || '', reply.model);
+      const result = await fetchTitle(firstUser.text || firstUser.files?.map((f) => f.name).join(', ') || '', reply.model, (id) => (usage?.blockedUntil(id) ?? null) !== null);
+      if (result) usage?.record(result.model, { requests: 1 });
       const latest = get().chats.find((c) => c.id === chatId);
-      if (title && latest) {
-        const named = { ...latest, title };
+      if (result && latest) {
+        const named = { ...latest, title: result.title };
         replaceChat(named);
         await persist(named);
       }
@@ -192,6 +222,7 @@ export const useStore = create<State>((set, get) => {
     user: null,
     keys: { gemini: '', openrouter: '' },
     catalog: null,
+    usage: null,
     catalogError: null,
     settings: loadSettings(),
     chats: [],
@@ -214,6 +245,8 @@ export const useStore = create<State>((set, get) => {
       watchUser(async (user) => {
         sync?.stop();
         sync = null;
+        usage?.stop();
+        usage = null;
         settingsReady = false;
         if (!user) {
           setKeys({ gemini: '', openrouter: '' });
@@ -246,6 +279,8 @@ export const useStore = create<State>((set, get) => {
           error: (msg) => get().toast(msg, 'error'),
         });
         sync.start();
+        usage = new UsageTracker(user.uid, (view) => set({ usage: view }));
+        usage.start();
         await get().loadCatalog();
       });
     },
@@ -276,6 +311,7 @@ export const useStore = create<State>((set, get) => {
       }
       try {
         const catalog = await fetchCatalog();
+        void openRouterDailyLimit().then((n) => usage?.setOpenRouterDaily(n));
         const { settings } = get();
         const known = new Set(catalog.models.map((m) => m.id));
         let enabled = settings.enabledModels.filter((id) => known.has(id) || !catalog.models.length);

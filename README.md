@@ -11,6 +11,7 @@ Live at **https://model-router.web.app** (Firebase project `the-model-router`).
 - **Google sign-in**; API keys are entered once in Settings → API keys and saved privately in Firestore.
 - **One chat, many models**: pick any model per chat, or retry an answer with a different one.
 - **Automatic switching**: if a model hits its usage limit or fails, the next model in your list answers.
+- **Usage meter** (Settings → Usage): requests and tokens per model today, daily limits learned from the providers, and models at their limit skipped until they reset. Shared across devices.
 - **Model manager**: browse every free Gemini and OpenRouter model and choose which appear (Settings → Models).
 - **Attachments**: PDF, Word, Excel, PowerPoint, images (incl. camera), CSV and text files; drag & drop or paste.
 - **Creates files** with preview and save:

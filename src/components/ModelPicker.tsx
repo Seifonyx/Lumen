@@ -1,5 +1,6 @@
 import { Brain, Check, ChevronDown, Eye, Globe, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { formatUntil, remaining } from '../lib/usage';
 import { modelLabel, useStore } from '../store';
 import type { ModelInfo } from '../types';
 
@@ -27,7 +28,17 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
   const catalog = useStore((s) => s.catalog);
   const enabled = useStore((s) => s.settings.enabledModels);
   const setUi = useStore((s) => s.setUi);
+  const usage = useStore((s) => s.usage);
   const [open, setOpen] = useState(false);
+  const statusOf = (id: string) => {
+    const u = usage?.models[id];
+    const freeOR = id.startsWith('openrouter:') && id.endsWith(':free');
+    const until = u?.blockedUntil && u.blockedUntil > Date.now() ? u.blockedUntil : freeOR && usage?.openrouter.limit && usage.openrouter.used >= usage.openrouter.limit ? usage.openrouter.resetAt : null;
+    if (until) return <span className="limit-tag blocked" title={`Available again ${formatUntil(until)}`}>Limit · {formatUntil(until).replace(/^(in|at) /, '')}</span>;
+    const left = remaining(usage, id);
+    if (left !== null && left <= 10) return <span className="limit-tag low">{left} left</span>;
+    return null;
+  };
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -79,6 +90,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
                     <span className="pop-title">{m.label}</span>
                     <span className="pop-sub">{m.name}</span>
                   </span>
+                  {statusOf(m.id)}
                   <Badges m={catalog?.models.find((x) => x.id === m.id)} />
                   {m.id === value && <Check size={16} className="check" />}
                 </button>

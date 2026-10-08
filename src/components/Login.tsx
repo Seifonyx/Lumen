@@ -34,7 +34,7 @@ export default function Login() {
     <main className="login">
       <div className="login-card">
         <img src="/icon.svg" alt="" className="login-logo" width={56} height={56} />
-        <h1>TheModelRouter</h1>
+        <h1>Model Router</h1>
         <p className="muted">Your private chat with free AI models.</p>
         {error && <p className="error-text" role="alert">{error}</p>}
         <button className="btn block google-btn" onClick={submit} disabled={busy}>

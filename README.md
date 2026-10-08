@@ -1,4 +1,4 @@
-# TheModelRouter
+# Model Router
 
 A private, phone-friendly AI chat that brings free models from **Google AI Studio (Gemini)** and
 **OpenRouter** together in one place, and switches to another model automatically when one hits its

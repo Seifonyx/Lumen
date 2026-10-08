@@ -216,7 +216,7 @@ function DataTab() {
           <span className="setting-label">Back up chats</span>
           <span className="setting-hint">Save {count} chat{count === 1 ? '' : 's'} (with this device's attachments) as one file.</span>
         </span>
-        <button className="btn small" onClick={() => saveBlob(new Blob([JSON.stringify({ app: 'model-router', version: 2, chats }, null, 0)], { type: 'application/json' }), `themodelrouter-backup-${new Date().toISOString().slice(0, 10)}.json`)}>
+        <button className="btn small" onClick={() => saveBlob(new Blob([JSON.stringify({ app: 'model-router', version: 2, chats }, null, 0)], { type: 'application/json' }), `model-router-backup-${new Date().toISOString().slice(0, 10)}.json`)}>
           <Download size={15} /> Back up
         </button>
       </div>
@@ -243,7 +243,7 @@ function DataTab() {
               const n = await importChats(list || []);
               toast(`Restored ${n} chat${n === 1 ? '' : 's'}.`, 'success');
             } catch {
-              toast("That file isn't a TheModelRouter backup file.", 'error');
+              toast("That file isn't a Model Router backup.", 'error');
             }
           }}
         />

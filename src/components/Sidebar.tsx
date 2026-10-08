@@ -117,7 +117,7 @@ export default function Sidebar() {
       <div className="sidebar-head">
         <div className="brand">
           <img src="/icon.svg" alt="" width={26} height={26} />
-          <span>TheModelRouter</span>
+          <span>Model Router</span>
         </div>
         <button className="icon-btn close-sidebar" onClick={() => setUi({ sidebarOpen: false })} aria-label="Close menu">
           <X size={20} />

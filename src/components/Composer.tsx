@@ -192,7 +192,7 @@ export default function Composer({ model }: { model: string }) {
           ref={input}
           rows={1}
           dir="auto"
-          placeholder={listening ? 'Listening…' : 'Message TheModelRouter'}
+          placeholder={listening ? 'Listening…' : 'Message Model Router'}
           value={interim ? `${text}${text && !text.endsWith(' ') ? ' ' : ''}${interim}` : text}
           onChange={(e) => {
             setText(e.target.value);

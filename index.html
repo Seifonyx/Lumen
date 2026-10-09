@@ -1,28 +1,10 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Model Router</title>
-    <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <meta name="description" content="Private chat with free AI models, files, documents, spreadsheets and slides." />
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Model Router" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <script>
-      // Apply the saved theme before first paint to avoid a flash.
-      try {
-        var s = JSON.parse(localStorage.getItem('mr.settings') || '{}');
-        if (s.theme === 'light' || s.theme === 'dark') document.documentElement.dataset.theme = s.theme;
-        if (s.fontSize) document.documentElement.dataset.font = s.fontSize;
-      } catch (e) {}
-    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -50,7 +50,7 @@ async function open(browser, mobile) {
   await P.page.click('.sidebar-foot');
   await P.page.waitForSelector('.settings-tabs');
   const rows = await P.page.$$eval('.settings-tabs button', (b) => b.map((x) => x.querySelector('.tab-label').textContent));
-  check(rows.length === 9 && rows[0] === 'General' && rows.includes('Layouts'), `phone: section menu (${rows.join(', ')})`);
+  check(rows.length === 8 && rows[0] === 'General' && !rows.includes('Layouts'), `phone: section menu (${rows.join(', ')})`);
   check(!(await P.page.isVisible('.settings-panel')), 'phone: menu first, no sideways tabs');
   const box = await P.page.locator('.settings-tabs').boundingBox();
   check(box.width <= 390 && (await P.page.evaluate(() => document.querySelector('.settings-tabs').scrollWidth <= document.querySelector('.settings-tabs').clientWidth)), 'phone: nothing scrolls sideways');

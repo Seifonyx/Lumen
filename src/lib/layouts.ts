@@ -18,6 +18,8 @@ export interface Layout {
   /** extra instructions for every model in this layout */
   instructions?: string;
   builtin?: boolean;
+  /** a recommended layout the user changed */
+  edited?: boolean;
 }
 
 export type LayoutIcon = 'code' | 'sun' | 'brain' | 'zap' | 'file' | 'languages' | 'layers' | 'flask' | 'pen' | 'graduation';
@@ -110,14 +112,24 @@ export function recommendedLayouts(catalog: ModelInfo[]): Layout[] {
   });
 }
 
-/** Every layout: recommended first, then the user's own. */
-export function allLayouts(catalog: ModelInfo[], custom: Layout[] = []): Layout[] {
-  return [...recommendedLayouts(catalog), ...custom];
+export const RECOMMENDED_IDS = RECIPES.map((r) => r.id);
+export const isRecommendedId = (id: string) => RECOMMENDED_IDS.includes(id);
+
+/**
+ * Every layout: recommended first, then the user's own. A saved layout with a recommended id is an
+ * edited recommended layout and takes its place; `hidden` lists recommended layouts the user removed.
+ */
+export function allLayouts(catalog: ModelInfo[], custom: Layout[] = [], hidden: string[] = []): Layout[] {
+  const edited = new Map(custom.filter((l) => isRecommendedId(l.id)).map((l) => [l.id, l]));
+  const recommended = recommendedLayouts(catalog)
+    .filter((l) => !hidden.includes(l.id))
+    .map((l) => (edited.has(l.id) ? { ...edited.get(l.id)!, builtin: true, edited: true } : l));
+  return [...recommended, ...custom.filter((l) => !isRecommendedId(l.id))];
 }
 
-export function findLayout(id: string, catalog: ModelInfo[], custom: Layout[] = []): Layout | undefined {
+export function findLayout(id: string, catalog: ModelInfo[], custom: Layout[] = [], hidden: string[] = []): Layout | undefined {
   const key = isLayoutId(id) ? layoutKey(id) : id;
-  return allLayouts(catalog, custom).find((l) => l.id === key);
+  return allLayouts(catalog, custom, hidden).find((l) => l.id === key);
 }
 
 export const newLayoutId = () => `custom-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;

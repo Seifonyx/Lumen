@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowLeft, ArrowUp, Boxes, LayoutGrid, Brain, ChevronRight, Database, Download, ExternalLink, Gauge, KeyRound, Loader2, LogOut, Plus, RefreshCw, Search, Shield, SlidersHorizontal, Star, Trash2, Upload, UserRound, X, type LucideIcon } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, Boxes, Brain, ChevronRight, Database, Download, ExternalLink, Gauge, KeyRound, Loader2, LogOut, Plus, RefreshCw, Search, Shield, SlidersHorizontal, Star, Trash2, Upload, UserRound, X, type LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { VOICE_LANGS } from '../lib/speech';
 import { PROVIDER_NAMES, saveBlob, type ProviderId } from '../lib/util';
@@ -9,14 +9,14 @@ import UsageTab from './UsageTab';
 import MemoryTab from './MemoryTab';
 import KeySafety from './KeySafety';
 import PrivacyTab from './PrivacyTab';
-import LayoutsTab from './LayoutsTab';
+import LayoutsSection, { LayoutEditor } from './LayoutsTab';
+import type { Layout } from '../lib/layouts';
 
 /** Settings sections: id, name, icon, one-line description (shown in the phone menu and as the section intro). */
 const TABS: [string, string, LucideIcon, string][] = [
   ['general', 'General', SlidersHorizontal, 'Appearance, chat behaviour and your account'],
   ['keys', 'API keys', KeyRound, 'Your free Gemini, OpenRouter, Groq and Cerebras keys'],
-  ['models', 'Models', Boxes, 'Which models you use, their order and Auto'],
-  ['layouts', 'Layouts', LayoutGrid, 'Sets of models for coding, everyday, thinking…'],
+  ['models', 'Models', Boxes, 'Your models, Auto and layouts for coding, everyday, thinking…'],
   ['usage', 'Usage', Gauge, "Today's requests, limits and resets"],
   ['personalize', 'Personalization', UserRound, 'Instructions every model follows'],
   ['memory', 'Memory', Brain, 'What models remember about you'],
@@ -61,6 +61,7 @@ function ModelsTab() {
   const catalogError = useStore((s) => s.catalogError);
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [editing, setEditing] = useState<Layout | null>(null);
   const enabled = settings.enabledModels;
   const find = (id: string) => catalog?.models.find((m) => m.id === id);
 
@@ -84,6 +85,7 @@ function ModelsTab() {
 
   const group = (provider: ModelInfo['provider']) => available.filter((m) => m.provider === provider);
 
+  if (editing) return <div className="settings-section"><LayoutEditor start={editing} onDone={() => setEditing(null)} /></div>;
   return (
     <div className="settings-section">
       <Toggle
@@ -126,6 +128,8 @@ function ModelsTab() {
           );
         })}
       </ul>
+
+      <LayoutsSection onEdit={setEditing} />
 
       <div className="section-head">
         <h3>Add models</h3>
@@ -328,7 +332,7 @@ export default function SettingsModal() {
   if (!open) return null;
 
   // An empty tab means "the section list" on phones; computers show General.
-  const current = TABS.find(([id]) => id === tab) || TABS[0];
+  const current = TABS.find(([id]) => id === (tab === 'layouts' ? 'models' : tab)) || TABS[0];
   const [id, label, , blurb] = current;
 
   return (
@@ -401,7 +405,6 @@ export default function SettingsModal() {
             )}
             {id === 'keys' && <KeysTab />}
             {id === 'models' && <ModelsTab />}
-            {id === 'layouts' && <LayoutsTab />}
             {id === 'usage' && <UsageTab />}
             {id === 'memory' && <MemoryTab Toggle={Toggle} />}
             {id === 'privacy' && <PrivacyTab Toggle={Toggle} Choice={Choice} />}

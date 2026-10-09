@@ -1,4 +1,4 @@
-import { findLayout, recommendedLayouts } from '../../src/lib/layouts';
+import { allLayouts, findLayout, recommendedLayouts } from '../../src/lib/layouts';
 let fails = 0;
 const check = (c: boolean, l: string) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) fails++; };
 const m = (id: string, o: any = {}) => ({ id, provider: id.split(':')[0] === 'gemini' ? 'google' : id.split(':')[0], name: id.split(':').slice(1).join(':'), label: id, context: 1e6, vision: false, pdf: true, thinking: false, search: false, ...o });
@@ -19,5 +19,12 @@ const geminiOnly = recommendedLayouts(catalog.filter((x) => x.id.startsWith('gem
 check(geminiOnly.find((l) => l.id === 'coding')!.models[0] === 'gemini:gemini-2.5-pro' && geminiOnly.find((l) => l.id === 'fast')!.models[0] === 'gemini:gemini-flash-lite-latest', 'works with only a Gemini key');
 const custom = [{ id: 'custom-1', name: 'Web apps', icon: 'code', description: '', models: ['groq:llama-3.3-70b-versatile'], mode: 'order' }] as any[];
 check(findLayout('layout:custom-1', catalog, custom)?.name === 'Web apps' && findLayout('layout:coding', catalog, custom)?.builtin === true && !findLayout('layout:nope', catalog, custom), 'finding layouts by id');
+const edited = [...custom, { id: 'coding', name: 'My coding', icon: 'code', description: 'mine', models: ['groq:openai/gpt-oss-120b'], mode: 'auto' }] as any[];
+const all = allLayouts(catalog, edited, ['arabic']);
+const coding = all.find((l) => l.id === 'coding')!;
+check(coding.name === 'My coding' && coding.edited === true && coding.builtin === true && all.indexOf(coding) === 0, 'an edited recommended layout replaces it in place');
+check(all.filter((l) => l.id === 'coding').length === 1 && all.at(-1)!.id === 'custom-1', 'edited recommended layouts are not listed twice');
+check(!all.some((l) => l.id === 'arabic') && !findLayout('layout:arabic', catalog, edited, ['arabic']) && findLayout('layout:arabic', catalog, edited)?.name === 'Arabic', 'removed recommended layouts are hidden');
+check(findLayout('layout:coding', catalog, edited)?.models[0] === 'groq:openai/gpt-oss-120b', 'routing uses the edited models');
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED');
 process.exit(fails ? 1 : 0);

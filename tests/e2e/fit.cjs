@@ -1,0 +1,145 @@
+// Phone layout: at 320 and 390 px wide nothing spills past the screen or out of its box — long model
+// names, chat titles, links, words, tables, code and file names, the model menu and every settings section.
+const { chromium } = require('playwright');
+const path = require('path');
+let failures = 0;
+const check = (c, l) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) failures++; };
+const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
+const F = '````';
+const LONG_TITLE = 'Quarterly emergency department staffing and overtime analysis for the whole hospital';
+const REPLY = [
+  'Here is everything: https://example.com/a/really/long/link/that/does/not/have/any/spaces/in/it/at/all/so/it/must/wrap/somewhere?with=query&and=more',
+  '',
+  'Supercalifragilisticexpialidociouspneumonoultramicroscopicsilicovolcanoconiosisantidisestablishmentarianism and `window.someVeryLongObject.withAChainOfProperties.thatNeverEnds.atAll()`.',
+  '',
+  '| Department | Nurses | Doctors | Overtime hours | Shifts missed | Notes |',
+  '|---|---|---|---|---|---|',
+  '| Emergency | 42 | 18 | 1,240 | 12 | Needs two more senior nurses on nights |',
+  '',
+  '```js',
+  'const result = await fetchEverythingFromTheServer({ department: "emergency", includeOvertime: true, includeShifts: true });',
+  '```',
+  '',
+  '$$\\sum_{i=1}^{n} \\frac{overtime_i \\times rate_i}{shifts_i + missed_i} = total\\ cost\\ of\\ overtime\\ across\\ departments$$',
+  '',
+  `${F}file:Emergency_department_staffing_report_for_the_quarterly_board_meeting.pptx`,
+  JSON.stringify({ title: 'Update', slides: [{ layout: 'title', title: 'Update', subtitle: 'March' }] }),
+  F,
+].join('\n');
+
+async function scan(page) {
+  return page.evaluate(() => {
+    const W = document.documentElement.clientWidth;
+    const out = [];
+    const clips = (el) => ['auto', 'scroll', 'hidden', 'clip'].includes(getComputedStyle(el).overflowX);
+    const name = (el) => `${el.tagName.toLowerCase()}${el.className && typeof el.className === 'string' ? `.${el.className.trim().split(/\s+/).join('.')}` : ''}`;
+    for (const el of document.querySelectorAll('body *')) {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height || getComputedStyle(el).visibility === 'hidden') continue;
+      if (r.right <= 0 || r.left >= W) continue; // off-canvas (the closed sidebar)
+      if (el.closest('svg, .katex, .cm-editor, .sheet-preview, .deck-preview')) continue;
+      // Inside a scroll/clip box that itself fits, being wider is fine (tables, code, diffs scroll).
+      let clipped = false;
+      for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+        if (clips(a)) { const ar = a.getBoundingClientRect(); clipped = ar.right <= W + 1 && ar.left >= -1; break; }
+      }
+      if (!clipped && (r.right > W + 1 || r.left < -1)) out.push(`${name(el)} sticks out (${Math.round(r.left)}–${Math.round(r.right)} of ${W}) "${(el.textContent || '').trim().slice(0, 40)}"`);
+      // Text spilling out of its own box without being clipped or scrollable.
+      const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+      if (own && !clips(el) && el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).display !== 'inline' && !clipped) out.push(`${name(el)} text spills (${el.scrollWidth} > ${el.clientWidth}) "${(el.textContent || '').trim().slice(0, 40)}"`);
+    }
+    if (document.documentElement.scrollWidth > W + 1) out.push(`page scrolls sideways (${document.documentElement.scrollWidth} > ${W})`);
+    return [...new Set(out)].slice(0, 12);
+  });
+}
+
+async function run(browser, width) {
+  const ctx = await browser.newContext({ viewport: { width, height: 720 }, isMobile: true, hasTouch: true });
+  await ctx.route('**/generativelanguage.googleapis.com/**', async (route) => {
+    const url = route.request().url();
+    if (url.includes('/models?')) return route.fulfill({ json: { models: [
+      { name: 'models/gemini-flash-latest', displayName: 'Gemini Flash Latest', inputTokenLimit: 1048576, supportedGenerationMethods: ['generateContent'] },
+      { name: 'models/gemini-3-flash-preview-long-context-experimental-1029', displayName: 'Gemini 3 Flash Preview Long Context Experimental Edition 1029', inputTokenLimit: 1048576, supportedGenerationMethods: ['generateContent'] },
+    ] } });
+    if (url.includes(':generateContent')) return route.fulfill({ json: { candidates: [{ content: { parts: [{ text: LONG_TITLE }] } }] } });
+    return route.fulfill({ headers: { 'content-type': 'text/event-stream' }, body: sse({ candidates: [{ content: { parts: [{ text: REPLY }] }, finishReason: 'STOP' }] }) });
+  });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('dialog', (d) => d.accept());
+  await page.goto('http://localhost:5190/?emulator');
+  await page.waitForFunction(() => typeof window.__testSignIn === 'function');
+  await page.evaluate(() => window.__testSignIn('hebaghoneim8@gmail.com'));
+  await page.waitForSelector('input[placeholder="AIza…"]');
+  const shot = (n) => page.screenshot({ path: path.join(__dirname, 'out', `fit-${width}-${n}.png`) });
+  const look = async (label) => {
+    const bad = await scan(page);
+    check(!bad.length, `${width}px ${label}${bad.length ? `:\n      ${bad.join('\n      ')}` : ''}`);
+  };
+
+  await look('API keys (first sign-in)');
+  await page.fill('input[placeholder="AIza…"]', 'g');
+  await page.click('text=Save keys');
+  await page.waitForTimeout(1200);
+  for (const name of ['General', 'API keys', 'Models', 'Usage', 'Personalization', 'Memory', 'Privacy', 'Data']) {
+    if (await page.isVisible('.settings-back')) await page.click('.settings-back');
+    if (name === 'General') await look('settings menu');
+    await page.click(`.settings-tabs >> text=${name}`);
+    await page.waitForTimeout(200);
+    if (name === 'Models') {
+      await page.click('[aria-label^="Add Gemini 3 Flash Preview"]');
+      await page.waitForTimeout(200);
+    }
+    await look(`settings: ${name}`);
+    await shot(`settings-${name.replace(/\s/g, '')}`);
+  }
+  await page.click('.layout-card:has-text("Everyday") [aria-label="Edit Everyday"]').catch(() => {});
+  if (await page.isVisible('.settings-back')) await page.click('.settings-back');
+  await page.click('.settings-tabs >> text=Models');
+  await page.click('[aria-label="Edit Everyday"]');
+  await page.fill('.layout-editor input[placeholder*="Add a model"]', 'gemini');
+  await look('layout editor');
+  await shot('layout-editor');
+  await page.click('.layout-editor >> text=Cancel');
+  await page.click('.settings-page [aria-label="Close"]');
+
+  await page.waitForSelector('.topbar');
+  await look('new chat');
+  await shot('empty');
+  await page.fill('.composer textarea', 'Please check https://example.com/another/very/long/link/without/any/spaces/that/goes/on/and/on/forever and AVeryLongWordWithoutAnySpacesThatSomeoneMightPasteIntoTheChatBox1234567890');
+  await page.click('.send-btn');
+  await page.waitForSelector('.msg.assistant .model-tag', { timeout: 20000 });
+  await page.waitForTimeout(1500);
+  await look('chat with long content');
+  await shot('chat');
+  await page.click('.model-button');
+  await page.waitForTimeout(200);
+  await look('model menu');
+  await shot('model-menu');
+  await page.click('.models-pop .pop-title:text-is("Gemini 3 Flash Preview Long Context Experimental Edition 1029")');
+  await page.waitForTimeout(200);
+  await look('long model name in the top bar');
+  await page.evaluate(() => document.querySelector('.messages')?.scrollTo({ top: 0 }));
+  await page.waitForTimeout(200);
+  await shot('chat-top');
+  await page.click('.menu-btn');
+  await page.waitForTimeout(300);
+  await look('sidebar with a long chat title');
+  await shot('sidebar');
+  check(!errors.length, `${width}px no page errors ${errors.join(' | ')}`);
+  await ctx.close();
+}
+
+(async () => {
+  await fetch('http://127.0.0.1:8080/emulator/v1/projects/the-model-router/databases/(default)/documents', { method: 'DELETE' });
+  await fetch('http://127.0.0.1:9099/emulator/v1/projects/the-model-router/accounts', { method: 'DELETE' });
+  const browser = await chromium.launch();
+  await run(browser, 390);
+  await fetch('http://127.0.0.1:8080/emulator/v1/projects/the-model-router/databases/(default)/documents', { method: 'DELETE' });
+  await fetch('http://127.0.0.1:9099/emulator/v1/projects/the-model-router/accounts', { method: 'DELETE' });
+  await run(browser, 320);
+  await browser.close();
+  console.log(failures ? `\n${failures} FAILED` : '\nALL PASSED');
+  process.exit(failures ? 1 : 0);
+})().catch((e) => { console.error(e); process.exit(2); });

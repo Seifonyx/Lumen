@@ -153,6 +153,8 @@ export interface Settings {
   privacyRestore: boolean;
   /** your own model layouts (recommended ones are built from your models) */
   layouts?: import('./lib/layouts').Layout[];
+  /** recommended layouts the user removed */
+  hiddenLayouts?: string[];
   /** set once Auto routing has been made the default */
   autoIntroduced?: boolean;
   voiceLang: string;

@@ -1,16 +1,18 @@
-import { ArrowDown, ArrowUp, Copy, Pencil, Plus, Search, Star, Trash2, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { allLayouts, LAYOUT_ICONS, LAYOUT_PREFIX, newLayoutId, recommendedLayouts, type Layout } from '../lib/layouts';
+import { ArrowDown, ArrowUp, Copy, Pencil, Plus, RotateCcw, Search, Star, Trash2, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { allLayouts, LAYOUT_ICONS, LAYOUT_PREFIX, newLayoutId, RECOMMENDED_IDS, type Layout } from '../lib/layouts';
 import { PROVIDER_NAMES } from '../lib/util';
 import { modelLabel, useStore } from '../store';
 import LayoutIcon from './LayoutIcon';
 
-function Editor({ start, onDone }: { start: Layout; onDone: () => void }) {
+export function LayoutEditor({ start, onDone }: { start: Layout; onDone: () => void }) {
   const catalog = useStore((s) => s.catalog);
   const layouts = useStore((s) => s.settings.layouts) || [];
   const update = useStore((s) => s.updateSettings);
-  const [l, setL] = useState<Layout>({ ...start, builtin: undefined });
+  const [l, setL] = useState<Layout>({ ...start, builtin: undefined, edited: undefined });
   const [query, setQuery] = useState('');
+  const top = useRef<HTMLDivElement>(null);
+  useEffect(() => top.current?.scrollIntoView({ block: 'start' }), []);
   const models = catalog?.models || [];
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -28,7 +30,10 @@ function Editor({ start, onDone }: { start: Layout; onDone: () => void }) {
   };
 
   return (
-    <div className="layout-editor">
+    <div className="layout-editor" ref={top}>
+      <div className="section-head">
+        <h3>{layouts.some((x) => x.id === start.id) || start.builtin ? `Edit “${start.name}”` : 'New layout'}</h3>
+      </div>
       <label className="field-block">
         <span className="setting-label">Name</span>
         <input type="text" value={l.name} maxLength={40} onChange={(e) => setL({ ...l, name: e.target.value })} placeholder="e.g. Web apps" />
@@ -108,22 +113,32 @@ function Editor({ start, onDone }: { start: Layout; onDone: () => void }) {
   );
 }
 
-function Card({ l, onEdit, onCopy }: { l: Layout; onEdit?: () => void; onCopy: () => void }) {
+function Card({ l, onEdit, onCopy }: { l: Layout; onEdit: () => void; onCopy: () => void }) {
   const catalog = useStore((s) => s.catalog);
   const settings = useStore((s) => s.settings);
   const update = useStore((s) => s.updateSettings);
   const id = LAYOUT_PREFIX + l.id;
   const available = l.models.filter((m) => catalog?.models.some((x) => x.id === m));
   const isDefault = settings.defaultModel === id;
+  const saved = settings.layouts || [];
+  const remove = () => {
+    if (!confirm(l.builtin ? `Remove the recommended "${l.name}" layout? You can bring it back later.` : `Delete the "${l.name}" layout?`)) return;
+    update({
+      layouts: saved.filter((x) => x.id !== l.id),
+      ...(l.builtin ? { hiddenLayouts: [...new Set([...(settings.hiddenLayouts || []), l.id])] } : {}),
+      ...(isDefault ? { defaultModel: 'auto' } : {}),
+    });
+  };
   return (
     <li className="layout-card">
       <span className="layout-icon"><LayoutIcon icon={l.icon} size={18} /></span>
       <div className="layout-main">
         <div className="layout-title">
-          {l.name}
+          <span className="layout-name">{l.name}</span>
           <span className="tag">{l.mode === 'auto' ? 'best for each' : 'in order'}</span>
+          {l.edited && <span className="tag">edited</span>}
         </div>
-        <div className="setting-hint">{l.description}</div>
+        {l.description && <div className="setting-hint">{l.description}</div>}
         <div className="layout-models">
           {available.length ? available.map((m) => <span key={m} className="chip">{modelLabel(catalog, m)}</span>) : <span className="muted small">No models available with your keys yet.</span>}
         </div>
@@ -132,65 +147,57 @@ function Card({ l, onEdit, onCopy }: { l: Layout; onEdit?: () => void; onCopy: (
         <button className={`icon-btn sm star${isDefault ? ' on' : ''}`} onClick={() => update({ defaultModel: isDefault ? 'auto' : id })} aria-label="Use for new chats" title={isDefault ? 'Default for new chats' : 'Use for new chats'}>
           <Star size={16} fill={isDefault ? 'currentColor' : 'none'} />
         </button>
-        {onEdit ? (
-          <button className="icon-btn sm" onClick={onEdit} aria-label={`Edit ${l.name}`} title="Edit"><Pencil size={15} /></button>
-        ) : null}
-        <button className="icon-btn sm" onClick={onCopy} aria-label={`Copy ${l.name}`} title={onEdit ? 'Duplicate' : 'Customize (makes your own copy)'}><Copy size={15} /></button>
-        {onEdit && (
-          <button
-            className="icon-btn sm"
-            onClick={() => {
-              if (!confirm(`Delete the "${l.name}" layout?`)) return;
-              update({ layouts: (settings.layouts || []).filter((x) => x.id !== l.id), ...(isDefault ? { defaultModel: 'auto' } : {}) });
-            }}
-            aria-label={`Delete ${l.name}`}
-            title="Delete"
-          >
-            <Trash2 size={15} />
+        <button className="icon-btn sm" onClick={onEdit} aria-label={`Edit ${l.name}`} title="Edit"><Pencil size={15} /></button>
+        <button className="icon-btn sm" onClick={onCopy} aria-label={`Copy ${l.name}`} title="Duplicate"><Copy size={15} /></button>
+        {l.edited && (
+          <button className="icon-btn sm" onClick={() => update({ layouts: saved.filter((x) => x.id !== l.id) })} aria-label={`Reset ${l.name}`} title="Reset to recommended">
+            <RotateCcw size={15} />
           </button>
         )}
+        <button className="icon-btn sm" onClick={remove} aria-label={`Delete ${l.name}`} title={l.builtin ? 'Remove' : 'Delete'}>
+          <Trash2 size={15} />
+        </button>
       </div>
     </li>
   );
 }
 
-export default function LayoutsTab() {
+/** Layouts, shown inside the Models section of Settings. The editor is shown by the caller. */
+export default function LayoutsSection({ onEdit }: { onEdit: (l: Layout) => void }) {
   const catalog = useStore((s) => s.catalog);
   const custom = useStore((s) => s.settings.layouts) || [];
-  const [editing, setEditing] = useState<Layout | null>(null);
-  const recommended = recommendedLayouts(catalog?.models || []);
-  const copyOf = (l: Layout): Layout => ({ ...l, id: newLayoutId(), name: `${l.name} (mine)`.slice(0, 40), builtin: undefined });
+  const hidden = useStore((s) => s.settings.hiddenLayouts) || [];
+  const update = useStore((s) => s.updateSettings);
+  const all = allLayouts(catalog?.models || [], custom, hidden);
+  const copyOf = (l: Layout): Layout => ({ ...l, id: newLayoutId(), name: `${l.name} (copy)`.slice(0, 40), builtin: undefined, edited: undefined });
+  const removed = hidden.filter((id) => RECOMMENDED_IDS.includes(id)).length;
 
-  if (editing) return <Editor start={editing} onDone={() => setEditing(null)} />;
   return (
-    <div className="settings-section layouts-tab">
-      <p className="muted small">
-        Pick a layout from the model menu like any model. ★ makes it the default for new chats. Recommended layouts use the best models you have; copy one to change it.
-      </p>
+    <div className="layouts-tab">
       <div className="section-head">
-        <h3>Your layouts</h3>
-        <button className="btn small" onClick={() => setEditing({ id: newLayoutId(), name: '', icon: 'layers', description: '', models: [], mode: 'order' })}>
+        <h3>Layouts</h3>
+        <button className="btn small" onClick={() => onEdit({ id: newLayoutId(), name: '', icon: 'layers', description: '', models: [], mode: 'order' })}>
           <Plus size={15} /> New layout
         </button>
       </div>
-      {custom.length === 0 ? (
-        <p className="muted small">None yet. Create one, or copy a recommended layout below.</p>
+      <p className="muted small">
+        Sets of models for a kind of work. Pick one from the model menu like any model; ★ makes it the default for new chats. Recommended layouts start with the best models you have, and you can edit or remove them.
+      </p>
+      {all.length === 0 ? (
+        <p className="muted small">No layouts. Create one{removed ? ', or bring back the recommended ones' : ''}.</p>
       ) : (
         <ul className="layout-list">
-          {custom.map((l) => (
-            <Card key={l.id} l={l} onEdit={() => setEditing(l)} onCopy={() => setEditing(copyOf(l))} />
+          {all.map((l) => (
+            <Card key={l.id} l={l} onEdit={() => onEdit(l)} onCopy={() => onEdit(copyOf(l))} />
           ))}
         </ul>
       )}
-      <div className="section-head">
-        <h3>Recommended</h3>
-      </div>
-      <ul className="layout-list">
-        {recommended.map((l) => (
-          <Card key={l.id} l={l} onCopy={() => setEditing(copyOf(l))} />
-        ))}
-      </ul>
-      {allLayouts(catalog?.models || [], custom).length > 0 && !catalog?.providers.groq && !catalog?.providers.cerebras && (
+      {removed > 0 && (
+        <button className="btn ghost small" onClick={() => update({ hiddenLayouts: [] })}>
+          <RotateCcw size={14} /> Bring back {removed} removed recommended layout{removed === 1 ? '' : 's'}
+        </button>
+      )}
+      {!catalog?.providers.groq && !catalog?.providers.cerebras && (
         <p className="muted small">Tip: add free Groq and Cerebras keys (API keys) for the Fastest and Max coding layouts.</p>
       )}
     </div>

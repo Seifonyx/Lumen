@@ -76,7 +76,7 @@ const F = '````';
   await page.waitForTimeout(1500);
 
   // ---- Layouts
-  await openTab(page, 'Layouts');
+  await openTab(page, 'Models');
   const lt = await page.textContent('.layouts-tab');
   check(/Max coding/.test(lt) && /Everyday/.test(lt) && /Deep thinking/.test(lt) && /Gemini 2\.5 Pro/.test(lt), 'recommended layouts filled with your models');
   await page.click('.layouts-tab >> text=New layout');
@@ -86,7 +86,23 @@ const F = '````';
   await page.click('.layout-editor >> text=Save layout');
   await page.waitForSelector('.layout-card >> text=Web apps');
   check(true, 'custom layout created');
+  // Recommended layouts can be edited, reset, removed and brought back.
+  await page.click('.layout-card:has-text("Deep thinking") [aria-label="Edit Deep thinking"]');
+  await page.fill('.layout-editor input[placeholder="e.g. Web apps"]', 'Hard problems');
+  await page.click('.layout-editor >> text=Save layout');
+  await page.waitForSelector('.layout-card >> text=Hard problems');
+  const names = await page.$$eval('.layout-card .layout-name', (els) => els.map((e) => e.textContent));
+  check(names.indexOf('Hard problems') === 2 && !names.includes('Deep thinking') && (await page.textContent('.layout-card:has-text("Hard problems")')).includes('edited'), 'recommended layout edited in place');
+  await page.click('[aria-label="Reset Hard problems"]');
+  await page.waitForSelector('.layout-card >> text=Deep thinking');
+  check(true, 'edited recommended layout reset');
+  await page.click('[aria-label="Delete Arabic"]');
+  await page.waitForSelector('text=Bring back 1 removed recommended layout');
+  check(!(await page.$('.layout-card:has-text("Arabic")')), 'recommended layout removed');
   await page.screenshot({ path: path.join(__dirname, 'out', 'layouts.png') });
+  await page.click('text=Bring back 1 removed recommended layout');
+  await page.waitForSelector('.layout-card >> text=Arabic');
+  check(true, 'removed recommended layouts brought back');
   await page.click('.settings-page [aria-label="Close"]');
 
   await page.click('.model-button');
@@ -154,7 +170,7 @@ const F = '````';
 
   // ---- Custom layout as default
   await page.click('.sidebar-foot');
-  await openTab(page, 'Layouts');
+  await openTab(page, 'Models');
   await page.locator('.layout-card', { hasText: 'Web apps' }).locator('[aria-label="Use for new chats"]').click();
   await page.click('.settings-page [aria-label="Close"]');
   await page.click('[aria-label="New chat"]');

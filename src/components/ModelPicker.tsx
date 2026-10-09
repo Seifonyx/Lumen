@@ -1,6 +1,6 @@
 import { Brain, Check, ChevronDown, Eye, Globe, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { AUTO } from '../lib/routing';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { formatUntil, remaining } from '../lib/usage';
 import { PROVIDER_NAMES, providerOfId, type ProviderId } from '../lib/util';
 import { modelLabel, useStore } from '../store';
@@ -44,6 +44,18 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
     return null;
   };
   const ref = useRef<HTMLDivElement>(null);
+  const pop = useRef<HTMLDivElement>(null);
+
+  // Keep the menu on screen: on phones the button can sit far enough right for it to run off the edge.
+  useLayoutEffect(() => {
+    const el = pop.current;
+    if (!open || !el) return;
+    el.style.translate = '';
+    const r = el.getBoundingClientRect();
+    const W = document.documentElement.clientWidth;
+    const shift = r.right > W - 8 ? W - 8 - r.right : r.left < 8 ? 8 - r.left : 0;
+    if (shift) el.style.translate = `${shift}px 0`;
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -63,9 +75,10 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
 
   const models = enabled.map((id) => catalog?.models.find((m) => m.id === id) || ({ id, label: modelLabel(catalog, id), provider: providerOfId(id) } as ModelInfo));
   const customLayouts = useStore((s) => s.settings.layouts);
+  const hiddenLayouts = useStore((s) => s.settings.hiddenLayouts);
   // Layouts with at least one model this account can use.
-  const layouts = allLayouts(catalog?.models || [], customLayouts).filter((l) => l.models.some((id) => catalog?.models.some((m) => m.id === id)));
-  const current = isLayoutId(value) ? findLayout(value, catalog?.models || [], customLayouts) : undefined;
+  const layouts = allLayouts(catalog?.models || [], customLayouts, hiddenLayouts).filter((l) => l.models.some((id) => catalog?.models.some((m) => m.id === id)));
+  const current = isLayoutId(value) ? findLayout(value, catalog?.models || [], customLayouts, hiddenLayouts) : undefined;
   const groups = (Object.keys(PROVIDER_NAMES) as ProviderId[])
     .map((p) => [PROVIDER_NAMES[p], models.filter((m) => m.provider === p)] as [string, ModelInfo[]])
     .filter(([, list]) => list.length);
@@ -83,7 +96,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
         {!compact && <ChevronDown size={16} />}
       </button>
       {open && (
-        <div className={`popover models-pop ${align}`} role="listbox">
+        <div className={`popover models-pop ${align}`} role="listbox" ref={pop}>
           {!compact && groups.length > 0 && (
             <button
               role="option"

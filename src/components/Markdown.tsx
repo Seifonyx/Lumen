@@ -3,9 +3,15 @@ import { segments } from '../lib/markdown';
 import { copyText } from '../lib/util';
 import ChartBlock from './ChartBlock';
 import FileCard from './FileCard';
+import EditCard, { ApplyAll } from './EditCard';
+import { parseEdit } from '../lib/edits';
 
 function Markdown({ text, streaming }: { text: string; streaming: boolean }) {
   const parts = useMemo(() => segments(text, streaming), [text, streaming]);
+  const edits = useMemo(
+    () => (streaming ? [] : parts.flatMap((p) => (p.type === 'edit' && p.complete ? [parseEdit(p.kind, p.path, p.content)] : []))),
+    [parts, streaming],
+  );
 
   const onClick = async (e: React.MouseEvent) => {
     const btn = (e.target as HTMLElement).closest('[data-copy-code]') as HTMLButtonElement | null;
@@ -22,12 +28,15 @@ function Markdown({ text, streaming }: { text: string; streaming: boolean }) {
       {parts.map((p) =>
         p.type === 'html' ? (
           <div key={p.key} dangerouslySetInnerHTML={{ __html: p.html }} />
+        ) : p.type === 'edit' ? (
+          <EditCard key={p.key} kind={p.kind} path={p.path} content={p.content} complete={p.complete} />
         ) : p.type === 'file' ? (
           <FileCard key={p.key} name={p.name} content={p.content} complete={p.complete} />
         ) : (
           <ChartBlock key={p.key} content={p.content} complete={p.complete} />
         ),
       )}
+      {edits.length > 1 && <ApplyAll edits={edits} />}
     </div>
   );
 }

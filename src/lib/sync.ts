@@ -186,6 +186,11 @@ export class ChatSync {
               model: data.model || undefined,
               rev: remoteRev,
               summary: data.summary?.text ? data.summary : undefined,
+              repo: data.repo?.owner ? data.repo : undefined,
+              context: Array.isArray(data.context) ? data.context : undefined,
+              // Uncommitted edits stay on the device that made them.
+              changes: local?.changes,
+              contextSent: local?.contextSent,
               messages,
             });
           }
@@ -327,6 +332,8 @@ export class ChatSync {
       count: chat.messages.length,
       ids: chat.messages.map((m) => m.id),
       summary: chat.summary ? JSON.parse(JSON.stringify(chat.summary)) : null,
+      repo: chat.repo ? { ...chat.repo } : null,
+      context: chat.context?.length ? chat.context.slice(0, 50) : null,
       srv: serverTimestamp(),
     });
     writes++;

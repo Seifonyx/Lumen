@@ -15,6 +15,8 @@ Live at **https://model-router.web.app** (Firebase project `the-model-router`).
 - **Automatic switching**: if a model hits its limit, errors, hangs (no response in 45 s), returns nothing or is blocked, the next model answers; a rejected key skips that provider's other models.
 - **Usage meter** (Settings → Usage): requests and tokens per model today, daily limits learned from the providers, and models at their limit skipped until they reset. Shared across devices.
 - **Model manager**: browse every free Gemini, OpenRouter, Groq and Cerebras model and choose which appear (Settings → Models).
+- **Layouts**: named sets of models for a kind of work — recommended ones (Max coding, Everyday, Deep thinking, Fastest, Documents & files, Arabic) built from your models, plus your own (Settings → Layouts). Pick one like a model.
+- **Coding on GitHub**: connect a repository to a chat (fine-grained token under API keys), browse files with a code editor, let the AI read files and propose edits, review diffs, apply, then commit and push to a new branch with a pull request.
 - **Attachments**: PDF, Word, Excel, PowerPoint, images (incl. camera), CSV and text files; drag & drop or paste.
 - **Creates files** with preview and save:
   - Word: cover page, headers, page numbers, coloured headings, tables, callouts, Arabic right-to-left.

@@ -27,6 +27,7 @@ import yaml from 'highlight.js/lib/languages/yaml';
 import katex from 'katex';
 import { Marked, type Token, type Tokens } from 'marked';
 import { escapeHtml } from './util';
+import { EDIT_FENCE } from './edits';
 
 Object.entries({ bash, c, cpp, csharp, css, go, java, javascript, json, kotlin, markdown, php, python, r, ruby, rust, sql, swift, typescript, xml, yaml }).forEach(
   ([name, lang]) => hljs.registerLanguage(name, lang),
@@ -123,13 +124,16 @@ export function renderMarkdown(text: string): string {
 export type Segment =
   | { type: 'html'; html: string; key: string }
   | { type: 'file'; name: string; content: string; complete: boolean; key: string }
-  | { type: 'chart'; content: string; complete: boolean; key: string };
+  | { type: 'chart'; content: string; complete: boolean; key: string }
+  | { type: 'edit'; kind: 'edit' | 'delete'; path: string; content: string; complete: boolean; key: string };
 
 const FILE_FENCE = /^file[:\s]\s*(.+?)\s*$/i;
 const closed = (raw: string) => /\n\s*(`{3,}|~{3,})\s*$/.test(raw.trimEnd());
 
 /** Splits a reply into Markdown parts and special file/chart blocks. */
 export function segments(text: string, streaming: boolean): Segment[] {
+  // A model asking to read repository files: [[read: src/app.ts]] → "📂 Reading `src/app.ts`"
+  text = text.replace(/\[\[\s*read\s*:\s*([^\]\n]+?)\s*\]\]/gi, (_, p) => `📂 Reading \`${p.trim()}\``);
   const tokens = marked.lexer(text);
   const out: Segment[] = [];
   let buffer: Token[] = [];
@@ -145,6 +149,12 @@ export function segments(text: string, streaming: boolean): Segment[] {
       const lang = (t as Tokens.Code).lang || '';
       const file = FILE_FENCE.exec(lang);
       const complete = !streaming || i < tokens.length - 1 || closed(t.raw);
+      const edit = EDIT_FENCE.exec(lang);
+      if (edit) {
+        flush();
+        out.push({ type: 'edit', kind: edit[1].toLowerCase() as 'edit' | 'delete', path: edit[2], content: (t as Tokens.Code).text, complete, key: `e${n++}` });
+        return;
+      }
       if (file) {
         flush();
         out.push({ type: 'file', name: file[1], content: (t as Tokens.Code).text, complete, key: `f${n++}` });
@@ -165,7 +175,7 @@ export function segments(text: string, streaming: boolean): Segment[] {
 /** Plain text for reading aloud / copying without Markdown syntax. */
 export function toPlainText(text: string): string {
   const div = document.createElement('div');
-  div.innerHTML = renderMarkdown(text.replace(/```file:[^\n]*\n[\s\S]*?```/g, '').replace(/```chart\n[\s\S]*?```/g, ''));
+  div.innerHTML = renderMarkdown(text.replace(/`{3,}(?:file|edit|delete):[^\n]*\n[\s\S]*?`{3,}/g, '').replace(/```chart\n[\s\S]*?```/g, ''));
   div.querySelectorAll('.code-head').forEach((n) => n.remove());
   return (div.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
 }

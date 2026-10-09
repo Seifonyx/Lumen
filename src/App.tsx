@@ -7,6 +7,8 @@ import SettingsModal from './components/SettingsModal';
 import Sidebar from './components/Sidebar';
 import Toasts from './components/Toasts';
 import UpdateBar from './components/UpdateBar';
+import WorkspacePanel from './components/WorkspacePanel';
+import RepoPicker from './components/RepoPicker';
 import { useStore } from './store';
 
 export default function App() {
@@ -16,6 +18,8 @@ export default function App() {
   const setUi = useStore((s) => s.setUi);
   const accessDenied = useStore((s) => s.accessDenied);
   const settingsOpen = useStore((s) => s.settingsOpen);
+  const workspaceOpen = useStore((s) => s.workspaceOpen);
+  const repoPicker = useStore((s) => s.repoPicker);
 
   useEffect(() => {
     void init();
@@ -53,11 +57,13 @@ export default function App() {
   }
   if (accessDenied) return <NotInvited email={accessDenied} />;
   return (
-    <div className={`app${settingsOpen ? ' settings-open' : ''}`}>
+    <div className={`app${settingsOpen ? ' settings-open' : ''}${workspaceOpen ? ' workspace-open' : ''}`}>
       <Sidebar />
       {sidebarOpen && <div className="scrim" onClick={() => setUi({ sidebarOpen: false })} />}
       <ChatView />
+      {!settingsOpen && <WorkspacePanel />}
       <SettingsModal />
+      {repoPicker && <RepoPicker onClose={() => setUi({ repoPicker: false })} />}
       <PreviewModal />
       <Toasts />
       <UpdateBar />

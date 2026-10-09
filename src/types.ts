@@ -27,6 +27,10 @@ export interface Message {
   model?: string;
   /** why Auto picked this model, e.g. "reads images" */
   route?: string;
+  /** the layout that answered, e.g. "Max coding" */
+  via?: string;
+  /** added by the app, not typed by you: repository files a model asked to read */
+  auto?: 'files';
   thinking?: string;
   sources?: Source[];
   notices?: string[];
@@ -50,7 +54,29 @@ export interface Chat {
   rev?: number;
   /** a summary that stands in for older messages when the chat gets long */
   summary?: ChatSummary;
+  /** coding workspace: the GitHub repository this chat works on */
+  repo?: RepoLink;
+  /** files included with every message (repository paths) */
+  context?: string[];
+  /** content fingerprints of context files already sent, so unchanged ones aren't sent again */
+  contextSent?: Record<string, string>;
+  /** edits not committed yet (kept on this device): path → new text (null = deleted) */
+  changes?: Record<string, FileChange>;
   messages: Message[];
+}
+
+export interface RepoLink {
+  owner: string;
+  repo: string;
+  branch: string;
+  defaultBranch?: string;
+}
+
+export interface FileChange {
+  /** new text, or null when the file is deleted */
+  content: string | null;
+  /** the text on GitHub when the change started (null = new file) */
+  original: string | null;
 }
 
 export interface ChatSummary {
@@ -125,6 +151,8 @@ export interface Settings {
   privacyMode: 'ask' | 'auto';
   /** put the real values back into replies */
   privacyRestore: boolean;
+  /** your own model layouts (recommended ones are built from your models) */
+  layouts?: import('./lib/layouts').Layout[];
   /** set once Auto routing has been made the default */
   autoIntroduced?: boolean;
   voiceLang: string;

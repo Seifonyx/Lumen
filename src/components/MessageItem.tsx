@@ -1,4 +1,4 @@
-import { AlertTriangle, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, Info, Pencil, RefreshCw, Square, Volume2 } from 'lucide-react';
+import { AlertTriangle, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, Info, Pencil, RefreshCw, Square, Volume2 } from 'lucide-react';
 import { memo, useState } from 'react';
 import { buildFile } from '../lib/generate';
 import { toPlainText } from '../lib/markdown';
@@ -39,6 +39,20 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(message.text);
   const [copied, setCopied] = useState(false);
+
+  // Files the app loaded because a model asked for them.
+  if (message.auto === 'files') {
+    const names = (message.files || []).map((f) => f.name);
+    return (
+      <div className="msg auto-files" role="note">
+        <FolderOpen size={14} />
+        <span>
+          {names.length ? <>Loaded {names.map((n) => <code key={n}>{n}</code>)}</> : null}
+          {/Couldn't find/.test(message.text) && <span className="muted"> {message.text.split(' — ')[0]}.</span>}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="msg user">
@@ -195,9 +209,13 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
 
       {!streaming && (
         <div className="msg-actions">
-          <span className="model-tag" title={message.route ? `Auto picked this model: ${message.route}` : message.model}>
+          <span className="model-tag" title={message.via ? `${message.via} layout${message.route ? `: ${message.route}` : ''}` : message.route ? `Auto picked this model: ${message.route}` : message.model}>
             {modelLabel(catalog, message.model)}
-            {message.route && <span className="route-tag"> · Auto: {message.route}</span>}
+            {message.via ? (
+              <span className="route-tag"> · {message.via}{message.route ? `: ${message.route}` : ''}</span>
+            ) : (
+              message.route && <span className="route-tag"> · Auto: {message.route}</span>
+            )}
           </span>
           {message.text && (
             <>

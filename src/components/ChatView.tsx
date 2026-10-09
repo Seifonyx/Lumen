@@ -1,7 +1,8 @@
-import { ArrowDown, FileSpreadsheet, FileText, Languages, LineChart, Menu, Presentation, ScrollText, SquarePen } from 'lucide-react';
+import { FolderGit2, GitBranch, ArrowDown, FileSpreadsheet, FileText, Languages, LineChart, Menu, Presentation, ScrollText, SquarePen } from 'lucide-react';
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { activeSummary, compactLimit, contextTokens } from '../lib/compact';
 import { AUTO } from '../lib/routing';
+import { isLayoutId } from '../lib/layouts';
 import { formatUntil } from '../lib/usage';
 import { modelInfo, selectCurrentChat, useStore } from '../store';
 import { CompactingNote, CompactNote, MemoryMeter } from './CompactNote';
@@ -29,13 +30,15 @@ export default function ChatView() {
   const syncPaused = useStore((s) => s.firebaseUsage.level === 'paused' && s.authed === true);
   const resetAt = useStore((s) => s.firebaseUsage.resetAt);
   const online = useStore((s) => s.online);
+  const workspaceOpen = useStore((s) => s.workspaceOpen);
   const { setUi, newChat, setChatModel } = useStore.getState();
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const [showDown, setShowDown] = useState(false);
 
-  const model = chat?.model && (chat.model === AUTO || useStore.getState().settings.enabledModels.includes(chat.model)) ? chat.model : defaultModel;
+  const model = chat?.model && (chat.model === AUTO || isLayoutId(chat.model) || useStore.getState().settings.enabledModels.includes(chat.model)) ? chat.model : defaultModel;
   const messages = chat?.messages || [];
+  const changeCount = Object.keys(chat?.changes || {}).length;
   const summary = chat ? activeSummary(chat) : null;
   // How full the chat is, compared with the point where it gets compacted.
   const used = chat ? contextTokens(chat) : 0;
@@ -75,6 +78,17 @@ export default function ChatView() {
         </button>
         <ModelPicker value={model} onChange={setChatModel} />
         <div className="spacer" />
+        {chat?.repo && (
+          <button
+            className={`icon-btn code-toggle${workspaceOpen ? ' on' : ''}`}
+            onClick={() => setUi({ workspaceOpen: !workspaceOpen })}
+            aria-label={workspaceOpen ? 'Hide repository' : 'Show repository'}
+            title={`${chat.repo.owner}/${chat.repo.repo}`}
+          >
+            <FolderGit2 size={18} />
+            {changeCount > 0 && <span className="badge">{changeCount}</span>}
+          </button>
+        )}
         <button className="icon-btn" onClick={newChat} aria-label="New chat" title="New chat (Ctrl+Shift+O)">
           <SquarePen size={18} />
         </button>
@@ -99,13 +113,17 @@ export default function ChatView() {
       )}
 
       <div className="messages" ref={scroller}>
-        {messages.length === 0 && !summary ? (
+        {messages.length === 0 && !summary && !chat?.repo ? (
           <div className="empty">
             <Logo size={40} />
             <h1>What can I help with?</h1>
             <p className="muted">Ask anything, attach files, or have me make documents, spreadsheets and slides.</p>
             <div className="suggestions">
-              {SUGGESTIONS.map(({ icon: Icon, title, prompt }) => (
+              <button className="suggestion" onClick={() => setUi({ repoPicker: true })}>
+                <GitBranch size={18} />
+                <span>Code on a GitHub repo</span>
+              </button>
+              {SUGGESTIONS.slice(0, 5).map(({ icon: Icon, title, prompt }) => (
                 <button key={title} className="suggestion" onClick={() => prefillComposer(prompt)}>
                   <Icon size={18} />
                   <span>{title}</span>

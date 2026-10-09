@@ -5,15 +5,19 @@ import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, sum
 import { forgetLocalAccount, loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { registerServiceWorker } from './pwa/register';
 import { ChatSync } from './lib/sync';
+import { commitChanges as ghCommit, openPullRequest, setGitHubToken } from './lib/github';
+import { applyEdit, isApplied, readRequests, type Edit } from './lib/edits';
+import { currentFile, filesAsAttachments, fingerprint, forgetRepo, originalFile, repoTree, workspaceInstructions } from './lib/workspace';
 import { Masker, scan } from './lib/privacy';
 import { quota, type QuotaView } from './lib/quota';
 import { extractMemoryOps, findMemory, hideMemoryLines, MAX_MEMORIES, memoryInstructions, MemoryStore } from './lib/memory';
 import { AUTO, planRoute } from './lib/routing';
+import { findLayout, isLayoutId } from './lib/layouts';
 import { formatUntil, remaining, UsageTracker, type LimitInfo, type UsageView } from './lib/usage';
 import { db } from './lib/db';
 import { applyAppearance, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
-import type { Attachment, Catalog, Chat, ChatSummary, Memory, Message, ModelInfo, Settings } from './types';
+import type { Attachment, Catalog, Chat, ChatSummary, FileChange, Memory, Message, ModelInfo, RepoLink, Settings } from './types';
 
 export interface Toast {
   id: string;
@@ -41,6 +45,10 @@ interface State {
   online: boolean;
   /** set when a new version of the app is ready; calling it switches to it */
   updateReady: (() => void) | null;
+  /** the coding workspace panel (files, changes, commit) is open */
+  workspaceOpen: boolean;
+  /** choosing a GitHub repository for the chat */
+  repoPicker: boolean;
   catalogError: string | null;
   settings: Settings;
   chats: Chat[];
@@ -62,7 +70,16 @@ interface State {
   updateSettings(patch: Partial<Settings>): void;
   toast(text: string, kind?: Toast['kind']): void;
   dismissToast(id: string): void;
-  setUi(patch: Partial<Pick<State, 'sidebarOpen' | 'settingsOpen' | 'settingsTab' | 'preview'>>): void;
+  setUi(patch: Partial<Pick<State, 'sidebarOpen' | 'settingsOpen' | 'settingsTab' | 'preview' | 'workspaceOpen' | 'repoPicker'>>): void;
+
+  // Coding workspace (GitHub)
+  connectRepo(link: RepoLink): void;
+  disconnectRepo(): void;
+  setContext(chatId: string, paths: string[]): void;
+  saveChange(chatId: string, path: string, content: string | null): Promise<void>;
+  revertChange(chatId: string, path: string): void;
+  applyEdits(chatId: string, edits: Edit[]): Promise<{ applied: number; failed: string[] }>;
+  commitWork(chatId: string, o: { message: string; target: string; pullRequest: boolean }): Promise<{ url: string; prUrl?: string }>;
 
   newChat(): void;
   selectChat(id: string): void;
@@ -132,7 +149,8 @@ export const useStore = create<State>((set, get) => {
   const modelFor = (chat: Chat | null): string => {
     const { settings, catalog } = get();
     const enabled = settings.enabledModels.filter((id) => !catalog || catalog.models.some((m) => m.id === id) || !catalog.models.length);
-    const pick = [chat?.model, settings.defaultModel, ...enabled].find((id) => id && (id === AUTO || enabled.includes(id)));
+    const layoutOk = (id: string) => isLayoutId(id) && Boolean(findLayout(id, catalog?.models || [], settings.layouts));
+    const pick = [chat?.model, settings.defaultModel, ...enabled].find((id) => id && (id === AUTO || enabled.includes(id) || layoutOk(id)));
     return pick || enabled[0] || catalog?.defaults[0] || '';
   };
 
@@ -247,11 +265,18 @@ export const useStore = create<State>((set, get) => {
     let chat = get().chats.find((c) => c.id === chatId);
     if (!chat) return;
     const { settings } = get();
-    const model = modelOverride || modelFor(chat);
+    let model = modelOverride || modelFor(chat);
     if (!model) {
       get().toast('No models are enabled. Open Settings → Models.', 'error');
       return;
     }
+    // A layout: its models (best first) answer, Auto-style or in order, with its own instructions.
+    const catalogModels = get().catalog?.models || [];
+    const layout = isLayoutId(model) ? findLayout(model, catalogModels, settings.layouts) : undefined;
+    const usable = (id: string) => catalogModels.some((m) => m.id === id);
+    const layoutModels = layout ? layout.models.filter(usable) : [];
+    if (layout) model = layout.mode === 'auto' || !layoutModels.length ? AUTO : layoutModels[0];
+    const routeModels = layoutModels.length ? layoutModels : settings.enabledModels;
     // Long chat: summarize the older messages first so the model gets a compact version.
     if (settings.autoCompact && contextTokens(chat) > compactLimit(model === AUTO ? undefined : modelInfo(get().catalog, model))) {
       if ((await compactChat(chatId, false)) === 'stopped') return;
@@ -264,7 +289,7 @@ export const useStore = create<State>((set, get) => {
     const lastUser = [...chat.messages].reverse().find((m) => m.role === 'user');
     const plan = planRoute({
       selected: model,
-      enabled: settings.enabledModels,
+      enabled: routeModels,
       catalog: get().catalog?.models || [],
       text: lastUser?.text || '',
       files: lastUser?.files || [],
@@ -278,12 +303,15 @@ export const useStore = create<State>((set, get) => {
       get().toast('No models are enabled. Open Settings → Models.', 'error');
       return;
     }
-    let fallbacks = settings.autoSwitch ? plan.fallbacks : [];
+    // After a layout's own models, your other models are the last resort.
+    const rest = layoutModels.length ? settings.enabledModels.filter((id) => !layoutModels.includes(id) && id !== plan.model) : [];
+    let fallbacks = settings.autoSwitch ? [...plan.fallbacks, ...rest] : [];
     const preNotices: string[] = plan.notice ? [plan.notice] : [];
+    if (layout && !layoutModels.length) preNotices.push(`None of the "${layout.name}" models are available with your keys — using your own models.`);
     if (settings.autoSwitch && blocked(chosen)) {
       const next = fallbacks.find((id) => !blocked(id));
       if (next) {
-        if (model !== AUTO) preNotices.push(`${modelLabel(get().catalog, chosen)} reached its limit (available again ${formatUntil(usage!.blockedUntil(chosen)!)}) — using ${modelLabel(get().catalog, next)}.`);
+        if (model !== AUTO && !layout) preNotices.push(`${modelLabel(get().catalog, chosen)} reached its limit (available again ${formatUntil(usage!.blockedUntil(chosen)!)}) — using ${modelLabel(get().catalog, next)}.`);
         fallbacks = [...fallbacks.filter((id) => id !== next), chosen];
         chosen = next;
       }
@@ -313,11 +341,18 @@ export const useStore = create<State>((set, get) => {
     }
     const restore = (t: string) => (masker && settings.privacyRestore ? masker.unmask(t) : t);
 
+    // Coding workspace: the repository's file list and how to read files and propose edits.
+    let workspaceNote = '';
+    if (chat.repo) {
+      const tree = await repoTree(chat.repo).catch(() => null);
+      workspaceNote = workspaceInstructions(chat.repo, tree?.files || [], Boolean(tree?.truncated), chat.context || []);
+    }
+
     let body: string;
     try {
       const rawMemory = settings.memory ? memoryInstructions(get().memories, settings.memoryAuto) : '';
       const memoryNote = masker ? masker.mask(rawMemory).text : rawMemory;
-      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: settings.webSearch, customInstructions: settings.customInstructions, memory: memoryNote } });
+      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: settings.webSearch, customInstructions: [settings.customInstructions, layout?.instructions].filter(Boolean).join('\n\n'), memory: memoryNote, workspace: workspaceNote } });
     } catch (e) {
       get().toast((e as Error).message, 'error');
       return;
@@ -329,6 +364,7 @@ export const useStore = create<State>((set, get) => {
       text: '',
       model: chosen,
       route: model === AUTO ? plan.reason || undefined : undefined,
+      via: layout?.name,
       status: 'streaming',
       createdAt: Date.now(),
       notices: preNotices.length ? preNotices : undefined,
@@ -423,19 +459,49 @@ export const useStore = create<State>((set, get) => {
         await persist(named);
       }
     }
+
+    // Coding workspace: the model asked to read files ([[read: path]]) → load them and let it continue.
+    const now = get().chats.find((c) => c.id === chatId);
+    if (now?.repo && reply.status === 'done' && !/`{3,}\s*(edit|delete)[:\s]/i.test(reply.text)) {
+      const asks = readRequests(reply.text);
+      let rounds = 0;
+      for (let i = now.messages.length - 1; i >= 0 && rounds < 9; i--) {
+        const m = now.messages[i];
+        if (m.role !== 'user') continue;
+        if (m.auto !== 'files') break;
+        rounds++;
+      }
+      if (asks.length && rounds < 3) {
+        const { files, missing } = await filesAsAttachments(now, asks);
+        const msg: Message = {
+          id: uid(),
+          role: 'user',
+          auto: 'files',
+          text: missing.length ? `Couldn't find ${missing.join(', ')} — use exact paths from the file list.${files.length ? ' Here are the others.' : ''}` : 'Here are the files you asked for. Continue.',
+          files: files.length ? files : undefined,
+          createdAt: Date.now(),
+        };
+        const next = { ...now, messages: [...now.messages, msg], updatedAt: Date.now() };
+        replaceChat(next);
+        await persist(next);
+        await runAssistant(chatId);
+      }
+    }
   };
 
   return {
     authed: null,
     user: null,
     accessDenied: null,
-    keys: { gemini: '', openrouter: '', groq: '', cerebras: '' },
+    keys: { gemini: '', openrouter: '', groq: '', cerebras: '', github: '' },
     catalog: null,
     usage: null,
     memories: [],
     firebaseUsage: quota.view(),
     online: navigator.onLine,
     updateReady: null,
+    workspaceOpen: false,
+    repoPicker: false,
     catalogError: null,
     settings: loadSettings(),
     chats: [],
@@ -478,6 +544,7 @@ export const useStore = create<State>((set, get) => {
         settingsReady = false;
         if (!user) {
           setKeys({ gemini: '', openrouter: '', groq: '', cerebras: '' });
+          setGitHubToken('');
           set({ authed: false, user: null, catalog: null, accessDenied: null });
           return;
         }
@@ -486,6 +553,7 @@ export const useStore = create<State>((set, get) => {
         try {
           const [keys, remoteSettings] = await Promise.all([loadKeys(user.uid), loadRemoteSettings(user.uid)]);
           setKeys(keys);
+          setGitHubToken(keys.github);
           set({ keys, authed: true });
           if (remoteSettings) get().updateSettings({ ...remoteSettings, voiceLang: get().settings.voiceLang } as Partial<Settings>);
           {
@@ -544,15 +612,16 @@ export const useStore = create<State>((set, get) => {
       const before = get().keys;
       await saveKeys(uid, keys);
       setKeys(keys);
-      const clean: ApiKeys = { gemini: keys.gemini.trim(), openrouter: keys.openrouter.trim(), groq: keys.groq.trim(), cerebras: keys.cerebras.trim() };
+      const clean: ApiKeys = { gemini: keys.gemini.trim(), openrouter: keys.openrouter.trim(), groq: keys.groq.trim(), cerebras: keys.cerebras.trim(), github: (keys.github || '').trim() };
+      setGitHubToken(clean.github);
       set({ keys: clean });
       await get().loadCatalog();
       // A newly connected provider: switch on its suggested models so they're ready to use.
-      const prefix: Record<keyof ApiKeys, string> = { gemini: 'gemini:', openrouter: 'openrouter:', groq: 'groq:', cerebras: 'cerebras:' };
-      const added = (Object.keys(clean) as (keyof ApiKeys)[]).filter((k) => clean[k] && !before[k]);
+      const prefix: Partial<Record<keyof ApiKeys, string>> = { gemini: 'gemini:', openrouter: 'openrouter:', groq: 'groq:', cerebras: 'cerebras:' };
+      const added = (Object.keys(prefix) as (keyof ApiKeys)[]).filter((k) => clean[k] && !before[k]);
       const catalog = get().catalog;
       if (added.length && catalog) {
-        const extra = catalog.defaults.filter((id) => added.some((k) => id.startsWith(prefix[k])) && !get().settings.enabledModels.includes(id));
+        const extra = catalog.defaults.filter((id) => added.some((k) => id.startsWith(prefix[k]!)) && !get().settings.enabledModels.includes(id));
         if (extra.length) get().updateSettings({ enabledModels: [...get().settings.enabledModels, ...extra] });
       }
     },
@@ -585,7 +654,7 @@ export const useStore = create<State>((set, get) => {
         if (!enabled.length) enabled = catalog.defaults.filter((id) => known.has(id) || !catalog.models.length);
         // New chats use Auto (introduced once; you can switch back to a fixed model any time).
         const wanted = settings.autoIntroduced ? settings.defaultModel : AUTO;
-        const defaultModel = wanted === AUTO || enabled.includes(wanted) ? wanted : enabled[0] || '';
+        const defaultModel = wanted === AUTO || enabled.includes(wanted) || (isLayoutId(wanted) && findLayout(wanted, catalog.models, settings.layouts)) ? wanted : enabled[0] || '';
         set({ catalog, catalogError: catalog.errors.length ? catalog.errors.join(' · ') : null });
         get().updateSettings({ enabledModels: enabled, defaultModel, autoIntroduced: true });
       } catch (e) {
@@ -693,6 +762,24 @@ export const useStore = create<State>((set, get) => {
         chat = newChatObject();
         set((s) => ({ chats: [chat!, ...s.chats], currentId: chat!.id }));
       }
+      // Coding workspace: attached repository files go along when they're new or have changed.
+      let contextSent = chat.contextSent;
+      if (chat.repo && chat.context?.length) {
+        const fresh: string[] = [];
+        const prints: Record<string, string> = { ...(chat.contextSent || {}) };
+        for (const path of chat.context) {
+          const t = await currentFile(chat, path).catch(() => null);
+          if (t === null) continue;
+          const fp = fingerprint(t);
+          if (prints[path] !== fp) fresh.push(path);
+          prints[path] = fp;
+        }
+        if (fresh.length) {
+          const extra = await filesAsAttachments(chat, fresh);
+          files = [...extra.files, ...files];
+        }
+        contextSent = prints;
+      }
       const msg: Message = { id: uid(), role: 'user', text, files: files.length ? files : undefined, createdAt: Date.now() };
       if (get().settings.privacyShield) {
         const found = scan(text).length + files.reduce((n, f) => n + (f.text ? scan(f.text).length : 0), 0);
@@ -700,10 +787,97 @@ export const useStore = create<State>((set, get) => {
         else if (found) msg.privacy = { masked: found };
       }
       const title = chat.messages.length === 0 && !chat.summary ? (text || files.map((f) => f.name).join(', ')).replace(/\s+/g, ' ').slice(0, 60) || 'New chat' : chat.title;
-      const updated: Chat = { ...chat, title, model: chat.model || modelFor(chat), messages: [...chat.messages, msg], updatedAt: Date.now() };
+      const updated: Chat = { ...chat, title, model: chat.model || modelFor(chat), messages: [...chat.messages, msg], updatedAt: Date.now(), ...(contextSent ? { contextSent } : {}) };
       replaceChat(updated);
       await persist(updated);
       await runAssistant(updated.id);
+    },
+
+    connectRepo(link) {
+      let chat = currentChat();
+      // A chat already working on another repo keeps it; start a fresh chat for this one.
+      if (!chat || (chat.repo && (chat.repo.owner !== link.owner || chat.repo.repo !== link.repo))) {
+        chat = newChatObject();
+        set((s) => ({ chats: [chat!, ...s.chats], currentId: chat!.id }));
+      }
+      const switching = chat.repo && chat.repo.branch !== link.branch;
+      const updated: Chat = { ...chat, repo: link, context: switching ? [] : chat.context || [], contextSent: switching ? {} : chat.contextSent, changes: switching ? {} : chat.changes || {}, rev: Date.now() };
+      replaceChat(updated);
+      void persist(updated);
+      set({ workspaceOpen: true });
+    },
+    disconnectRepo() {
+      const chat = currentChat();
+      if (!chat?.repo) return;
+      const updated: Chat = { ...chat, repo: undefined, context: undefined, contextSent: undefined, changes: undefined };
+      replaceChat(updated);
+      void persist(updated);
+      set({ workspaceOpen: false });
+    },
+    setContext(chatId, paths) {
+      const chat = get().chats.find((c) => c.id === chatId);
+      if (!chat) return;
+      const updated = { ...chat, context: [...new Set(paths)].slice(0, 50) };
+      replaceChat(updated);
+      void persist(updated);
+    },
+    async saveChange(chatId, path, content) {
+      const chat = get().chats.find((c) => c.id === chatId);
+      if (!chat?.repo) return;
+      const original = chat.changes?.[path] ? chat.changes[path].original : await originalFile(chat.repo, path).catch(() => null);
+      const latest = get().chats.find((c) => c.id === chatId)!;
+      const changes: Record<string, FileChange> = { ...(latest.changes || {}) };
+      if (content === original) delete changes[path];
+      else changes[path] = { content, original };
+      const updated = { ...latest, changes };
+      replaceChat(updated);
+      void persist(updated);
+    },
+    revertChange(chatId, path) {
+      const chat = get().chats.find((c) => c.id === chatId);
+      if (!chat?.changes?.[path]) return;
+      const changes = { ...chat.changes };
+      delete changes[path];
+      const updated = { ...chat, changes };
+      replaceChat(updated);
+      void persist(updated);
+    },
+    async applyEdits(chatId, edits) {
+      let applied = 0;
+      const failed: string[] = [];
+      for (const edit of edits) {
+        const chat = get().chats.find((c) => c.id === chatId);
+        if (!chat?.repo) break;
+        const before = await currentFile(chat, edit.path).catch(() => null);
+        if (isApplied(before, edit)) continue; // already done (e.g. applied on its own before "Apply all")
+        const result = applyEdit(before, edit);
+        if (!result.ok) {
+          failed.push(edit.path);
+          continue;
+        }
+        await get().saveChange(chatId, edit.path, 'deleted' in result && result.deleted ? null : result.text);
+        applied++;
+      }
+      return { applied, failed };
+    },
+    async commitWork(chatId, o) {
+      const chat = get().chats.find((c) => c.id === chatId);
+      if (!chat?.repo || !chat.changes || !Object.keys(chat.changes).length) throw new Error('There are no changes to commit.');
+      const repo = chat.repo;
+      const changes = Object.entries(chat.changes).map(([path, c]) => ({ path, content: c.content }));
+      const target = o.target.trim() || repo.branch;
+      const { url } = await ghCommit({ owner: repo.owner, repo: repo.repo, base: repo.branch, target, message: o.message.trim() || 'Update from Model Router', changes });
+      let prUrl: string | undefined;
+      if (o.pullRequest && target !== repo.branch) {
+        prUrl = await openPullRequest({ owner: repo.owner, repo: repo.repo, head: target, base: repo.branch, title: o.message.split('\n')[0].slice(0, 120) || 'Changes from Model Router', body: 'Made with Model Router.' });
+      }
+      forgetRepo(repo);
+      const latest = get().chats.find((c) => c.id === chatId)!;
+      // Keep working on the branch that now has these commits.
+      const updated: Chat = { ...latest, changes: {}, repo: { ...repo, branch: target, defaultBranch: repo.defaultBranch || repo.branch } };
+      replaceChat(updated);
+      await persist(updated);
+      return { url, prUrl };
     },
 
     async regenerate(messageId, model) {
@@ -834,5 +1008,6 @@ export function modelInfo(catalog: Catalog | null, id?: string): ModelInfo | und
 
 export function modelLabel(catalog: Catalog | null, id?: string): string {
   if (id === AUTO) return 'Auto';
+  if (isLayoutId(id)) return findLayout(id, catalog?.models || [], useStore.getState().settings.layouts)?.name || 'Layout';
   return modelInfo(catalog, id)?.label || modelShortName(id);
 }

@@ -41,6 +41,8 @@ function normalize(raw: any): Chat {
     files: (m.files || []).map((f: any) => ({ id: f.id || uid(), size: f.size ?? (f.data?.length ?? f.text?.length ?? 0), mime: f.mime || 'text/plain', ...f })),
     model: m.model,
     route: m.route,
+    via: m.via,
+    auto: m.auto,
     thinking: m.thinking,
     sources: m.sources,
     notices: m.notices,
@@ -59,6 +61,10 @@ function normalize(raw: any): Chat {
     model: raw.model,
     rev: raw.rev,
     summary: raw.summary && typeof raw.summary.text === 'string' ? raw.summary : undefined,
+    repo: raw.repo,
+    context: raw.context,
+    contextSent: raw.contextSent,
+    changes: raw.changes,
     messages,
   };
 }

@@ -58,7 +58,7 @@ const sse = (chunks) => chunks.map((o) => `data: ${JSON.stringify(o)}\n\n`).join
   await page.click('.model-button');
   const pop = await page.textContent('.models-pop');
   check(/Groq/.test(pop) && /Cerebras/.test(pop), 'picker groups by provider');
-  await page.click('.models-pop >> text=Llama 3.3 70B Versatile');
+  await page.click('.models-pop .pop-title:text-is("Llama 3.3 70B Versatile")');
   await page.fill('.composer textarea', 'hi groq');
   await page.click('.send-btn');
   await page.waitForSelector('.msg.assistant .model-tag', { timeout: 20000 });
@@ -66,7 +66,7 @@ const sse = (chunks) => chunks.map((o) => `data: ${JSON.stringify(o)}\n\n`).join
   check(Boolean(await page.$('.msg.assistant .thinking')), 'its thinking is shown collapsed');
 
   await page.click('.model-button');
-  await page.click('.models-pop >> text=GPT-OSS 120B');
+  await page.click('.models-pop .pop-title:text-is("GPT-OSS 120B")');
   await page.fill('.composer textarea', 'hi cerebras');
   await page.click('.send-btn');
   await page.waitForSelector('.msg.assistant >> nth=1 >> .model-tag', { timeout: 20000 });

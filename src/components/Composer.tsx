@@ -1,4 +1,4 @@
-import { ShieldCheck, ArrowUp, FileText, Globe, Image as ImageIcon, Loader2, Mic, Paperclip, Square, X } from 'lucide-react';
+import { FileCode2, GitBranch, ShieldCheck, ArrowUp, FileText, Globe, Image as ImageIcon, Loader2, Mic, Paperclip, Square, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ACCEPT, readAttachment } from '../lib/files/read';
 import { canListen, listen } from '../lib/speech';
@@ -30,6 +30,8 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
   const catalog = useStore((s) => s.catalog);
   const updateSettings = useStore((s) => s.updateSettings);
   const currentId = useStore((s) => s.currentId);
+  const chat = useStore((s) => s.chats.find((c) => c.id === s.currentId));
+  const setContext = useStore((s) => s.setContext);
   const info = modelInfo(catalog, model);
   const usage = useStore((s) => s.usage);
   const blockedUntil = (() => {
@@ -233,6 +235,22 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
           submit();
         }}
       >
+        {chat?.repo && (
+          <div className="repo-strip">
+            <button type="button" className="repo-chip" onClick={() => setUi({ workspaceOpen: true })} title="Open the repository panel">
+              <GitBranch size={13} /> {chat.repo.repo} <span className="muted">· {chat.repo.branch}</span>
+              {Object.keys(chat.changes || {}).length > 0 && <span className="badge">{Object.keys(chat.changes || {}).length}</span>}
+            </button>
+            {(chat.context || []).map((p) => (
+              <span key={p} className="ctx-chip" title={p}>
+                <FileCode2 size={12} /> {p.split('/').pop()}
+                <button type="button" className="icon-btn xs" aria-label={`Remove ${p} from the chat`} onClick={() => setContext(chat.id, (chat.context || []).filter((x) => x !== p))}>
+                  <X size={11} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
         {pending.length > 0 && (
           <div className="attachments">
             {pending.map((p) => (
@@ -280,6 +298,9 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
           <input ref={fileInput} type="file" multiple hidden accept={ACCEPT} onChange={(e) => { void addFiles([...(e.target.files || [])]); e.target.value = ''; }} />
           <button type="button" className="tool-btn" onClick={() => fileInput.current?.click()} aria-label="Attach files" title="Attach files (PDF, Word, Excel, PowerPoint, images…)">
             <Paperclip size={19} />
+          </button>
+          <button type="button" className={`tool-btn${chat?.repo ? ' on-repo' : ''}`} onClick={() => setUi(chat?.repo ? { workspaceOpen: true } : { repoPicker: true })} aria-label={chat?.repo ? 'Repository' : 'Work on a GitHub repository'} title={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : 'Work on a GitHub repository'}>
+            <GitBranch size={18} />
           </button>
           {isTouch() && (
             <label className="tool-btn" aria-label="Take a photo" title="Take a photo">

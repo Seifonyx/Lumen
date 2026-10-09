@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { formatUntil, remaining } from '../lib/usage';
 import { PROVIDER_NAMES, providerOfId, type ProviderId } from '../lib/util';
 import { modelLabel, useStore } from '../store';
+import { allLayouts, findLayout, isLayoutId, LAYOUT_PREFIX } from '../lib/layouts';
+import LayoutIcon from './LayoutIcon';
 import type { ModelInfo } from '../types';
 
 export function Badges({ m }: { m?: ModelInfo }) {
@@ -60,6 +62,10 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
   }, [open]);
 
   const models = enabled.map((id) => catalog?.models.find((m) => m.id === id) || ({ id, label: modelLabel(catalog, id), provider: providerOfId(id) } as ModelInfo));
+  const customLayouts = useStore((s) => s.settings.layouts);
+  // Layouts with at least one model this account can use.
+  const layouts = allLayouts(catalog?.models || [], customLayouts).filter((l) => l.models.some((id) => catalog?.models.some((m) => m.id === id)));
+  const current = isLayoutId(value) ? findLayout(value, catalog?.models || [], customLayouts) : undefined;
   const groups = (Object.keys(PROVIDER_NAMES) as ProviderId[])
     .map((p) => [PROVIDER_NAMES[p], models.filter((m) => m.provider === p)] as [string, ModelInfo[]])
     .filter(([, list]) => list.length);
@@ -70,6 +76,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
         {label ?? (
           <span className="model-name">
             {value === AUTO && <Sparkles size={16} className="auto-icon" />}
+            {current && <LayoutIcon icon={current.icon} size={16} className="auto-icon" />}
             {modelLabel(catalog, value) || 'Choose a model'}
           </span>
         )}
@@ -94,6 +101,36 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
               </span>
               {value === AUTO && <Check size={16} className="check" />}
             </button>
+          )}
+          {layouts.length > 0 && (
+            <div className="layout-group">
+              <div className="pop-label">Layouts</div>
+              {layouts.map((l) => {
+                const id = LAYOUT_PREFIX + l.id;
+                return (
+                  <button
+                    key={id}
+                    role="option"
+                    aria-selected={id === value}
+                    className={`pop-item${id === value ? ' selected' : ''}`}
+                    onClick={() => {
+                      onChange(id);
+                      setOpen(false);
+                    }}
+                  >
+                    <LayoutIcon icon={l.icon} size={17} className="auto-icon" />
+                    <span className="pop-main">
+                      <span className="pop-title">{l.name}</span>
+                      <span className="pop-sub">
+                        {l.mode === 'auto' ? 'Best of' : 'In order:'}{' '}
+                        {l.models.filter((m) => catalog?.models.some((x) => x.id === m)).map((m) => modelLabel(catalog, m)).join(', ')}
+                      </span>
+                    </span>
+                    {id === value && <Check size={16} className="check" />}
+                  </button>
+                );
+              })}
+            </div>
           )}
           {groups.length === 0 && <p className="muted small pad">No models enabled yet.</p>}
           {groups.map(([name, list]) => (

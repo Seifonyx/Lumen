@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowLeft, ArrowUp, Boxes, Brain, ChevronRight, Database, Download, ExternalLink, Gauge, KeyRound, Loader2, LogOut, Plus, RefreshCw, Search, Shield, SlidersHorizontal, Star, Trash2, Upload, UserRound, X, type LucideIcon } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, Boxes, LayoutGrid, Brain, ChevronRight, Database, Download, ExternalLink, Gauge, KeyRound, Loader2, LogOut, Plus, RefreshCw, Search, Shield, SlidersHorizontal, Star, Trash2, Upload, UserRound, X, type LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { VOICE_LANGS } from '../lib/speech';
 import { PROVIDER_NAMES, saveBlob, type ProviderId } from '../lib/util';
@@ -9,12 +9,14 @@ import UsageTab from './UsageTab';
 import MemoryTab from './MemoryTab';
 import KeySafety from './KeySafety';
 import PrivacyTab from './PrivacyTab';
+import LayoutsTab from './LayoutsTab';
 
 /** Settings sections: id, name, icon, one-line description (shown in the phone menu and as the section intro). */
 const TABS: [string, string, LucideIcon, string][] = [
   ['general', 'General', SlidersHorizontal, 'Appearance, chat behaviour and your account'],
   ['keys', 'API keys', KeyRound, 'Your free Gemini, OpenRouter, Groq and Cerebras keys'],
   ['models', 'Models', Boxes, 'Which models you use, their order and Auto'],
+  ['layouts', 'Layouts', LayoutGrid, 'Sets of models for coding, everyday, thinking…'],
   ['usage', 'Usage', Gauge, "Today's requests, limits and resets"],
   ['personalize', 'Personalization', UserRound, 'Instructions every model follows'],
   ['memory', 'Memory', Brain, 'What models remember about you'],
@@ -167,11 +169,19 @@ function ModelsTab() {
   );
 }
 
-const KEY_FIELDS: { id: 'gemini' | 'openrouter' | 'groq' | 'cerebras'; label: string; placeholder: string; link: string; hint: string }[] = [
+const KEY_FIELDS: { id: 'gemini' | 'openrouter' | 'groq' | 'cerebras' | 'github'; label: string; placeholder: string; link: string; hint: string; linkText?: string }[] = [
   { id: 'gemini', label: 'Google AI Studio (Gemini)', placeholder: 'AIza…', link: 'https://aistudio.google.com/apikey', hint: 'Best all-rounder: reads images and PDFs, searches the web.' },
   { id: 'openrouter', label: 'OpenRouter', placeholder: 'sk-or-…', link: 'https://openrouter.ai/keys', hint: 'Dozens of free open models (DeepSeek, Qwen, Llama…).' },
   { id: 'groq', label: 'Groq', placeholder: 'gsk_…', link: 'https://console.groq.com/keys', hint: 'Very fast answers (Llama, GPT-OSS, Qwen). Generous free limits.' },
   { id: 'cerebras', label: 'Cerebras', placeholder: 'csk-…', link: 'https://cloud.cerebras.ai/platform', hint: 'The fastest replies; about 1 million free tokens a day.' },
+  {
+    id: 'github',
+    label: 'GitHub (for coding)',
+    placeholder: 'github_pat_…',
+    link: 'https://github.com/settings/personal-access-tokens/new',
+    linkText: 'Create a token',
+    hint: 'Lets chats read your repositories and commit changes. Use a fine-grained token with Contents and Pull requests set to Read and write.',
+  },
 ];
 
 function KeysTab() {
@@ -180,8 +190,8 @@ function KeysTab() {
   const toast = useStore((s) => s.toast);
   const [draft, setDraft] = useState({ ...keys });
   const [busy, setBusy] = useState(false);
-  const changed = KEY_FIELDS.some(({ id }) => draft[id].trim() !== keys[id]);
-  const any = KEY_FIELDS.some(({ id }) => draft[id].trim());
+  const changed = KEY_FIELDS.some(({ id }) => (draft[id] || '').trim() !== (keys[id] || ''));
+  const any = KEY_FIELDS.some(({ id }) => id !== 'github' && (draft[id] || '').trim());
 
   return (
     <div className="settings-section">
@@ -189,16 +199,16 @@ function KeysTab() {
         Your keys are saved privately to your Google account in Firebase, so you only enter them once for all your devices. They're used directly from this app.
         Every key is free; add as many as you like — more providers means more free messages and better switching when one is busy.
       </p>
-      {KEY_FIELDS.map(({ id, label, placeholder, link, hint }, i) => (
+      {KEY_FIELDS.map(({ id, label, placeholder, link, hint, linkText }, i) => (
         <label key={id} className="field-block">
           <span className="setting-label">
             <KeyRound size={15} /> {label} key{i ? ' (optional)' : ''}
           </span>
-          <input type="password" autoComplete="off" spellCheck={false} placeholder={placeholder} value={draft[id]} onChange={(e) => setDraft({ ...draft, [id]: e.target.value })} />
+          <input type="password" autoComplete="off" spellCheck={false} placeholder={placeholder} value={draft[id] || ''} onChange={(e) => setDraft({ ...draft, [id]: e.target.value })} />
           <span className="setting-hint key-hint">
             {hint}{' '}
             <a className="small" href={link} target="_blank" rel="noopener noreferrer">
-              Get a free key <ExternalLink size={12} />
+              {linkText || 'Get a free key'} <ExternalLink size={12} />
             </a>
           </span>
         </label>
@@ -391,6 +401,7 @@ export default function SettingsModal() {
             )}
             {id === 'keys' && <KeysTab />}
             {id === 'models' && <ModelsTab />}
+            {id === 'layouts' && <LayoutsTab />}
             {id === 'usage' && <UsageTab />}
             {id === 'memory' && <MemoryTab Toggle={Toggle} />}
             {id === 'privacy' && <PrivacyTab Toggle={Toggle} Choice={Choice} />}

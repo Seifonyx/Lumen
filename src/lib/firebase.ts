@@ -14,8 +14,10 @@ import { quota } from './quota';
 // A host is listed here only after https://<host>/__/auth/handler was added to the OAuth client's
 // authorized redirect URIs in Google Cloud (otherwise Google refuses the sign-in).
 const SAME_SITE_AUTH_HOSTS: string[] = ['model-router.web.app'];
+// Anywhere else (localhost while developing) signs in through the live site's handler too: it's the
+// one Google allows, and the sign-in popup works across sites.
 const sameSite = SAME_SITE_AUTH_HOSTS.includes(location.hostname);
-const app = initializeApp(sameSite ? { ...config, authDomain: location.hostname } : config);
+const app = initializeApp({ ...config, authDomain: sameSite ? location.hostname : SAME_SITE_AUTH_HOSTS[0] });
 export const auth = getAuth(app);
 export const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
 

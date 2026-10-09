@@ -31,6 +31,8 @@ export interface Message {
   sources?: Source[];
   notices?: string[];
   error?: string;
+  /** privacy shield: how many details were masked, or that it was sent as is */
+  privacy?: { masked: number; unmasked?: boolean };
   /** memories this reply saved or removed */
   memory?: { saved?: { id: string; text: string }[]; forgotten?: string[] };
   status?: 'streaming' | 'done' | 'stopped' | 'error';
@@ -117,6 +119,12 @@ export interface Settings {
   memory: boolean;
   /** let models save memories on their own (otherwise only when you ask) */
   memoryAuto: boolean;
+  /** hide personal details (phones, IDs, names…) from models */
+  privacyShield: boolean;
+  /** 'ask' = show what was found before sending; 'auto' = mask without asking */
+  privacyMode: 'ask' | 'auto';
+  /** put the real values back into replies */
+  privacyRestore: boolean;
   /** set once Auto routing has been made the default */
   autoIntroduced?: boolean;
   voiceLang: string;

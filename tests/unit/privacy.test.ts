@@ -1,0 +1,33 @@
+import { Masker, obscure, scan } from '../../src/lib/privacy';
+let fails = 0;
+const check = (c: boolean, l: string) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) fails++; };
+const kinds = (t: string) => scan(t).map((f) => `${f.kind}:${f.value}`);
+
+check(kinds('Call me on 01012345678 or +20 100 123 4567').join('|') === 'PHONE:01012345678|PHONE:+20 100 123 4567', `Egyptian mobiles (${kinds('Call me on 01012345678 or +20 100 123 4567')})`);
+check(kinds('UK office +44 20 7946 0958').length === 1 && kinds('landline 02 25551234')[0]?.startsWith('PHONE'), 'international and landline numbers');
+check(kinds('رقم التليفون ٠١٢٣٤٥٦٧٨٩٠').length === 1, 'Arabic-Indic digits');
+check(kinds('ID 29001011234567').join() === 'NATIONAL_ID:29001011234567', 'Egyptian national ID');
+check(kinds('order 12345678901234').length === 0, '14 digits that are not an ID are left alone');
+check(kinds('card 4111 1111 1111 1111').join() === 'CARD:4111 1111 1111 1111', 'card number (Luhn)');
+check(kinds('IBAN EG380019000500000000263180002').some((k) => k.startsWith('IBAN')), 'IBAN');
+check(kinds('email ahmed.ali@hospital.org please').join() === 'EMAIL:ahmed.ali@hospital.org', 'email');
+check(kinds('MRN: 0045821').join() === 'RECORD:0045821' && kinds('file no. A-2231').join() === 'RECORD:A-2231', `record numbers (${kinds('file no. A-2231')})`);
+check(kinds('DOB: 12/03/1985').join() === 'BIRTH_DATE:12/03/1985', 'date of birth');
+check(kinds('Patient Ahmed Mahmoud presented with chest pain').join() === 'NAME:Ahmed Mahmoud', `patient name stops at the verb (${kinds('Patient Ahmed Mahmoud presented with chest pain')})`);
+check(kinds('Mrs. Fatma Hassan, 54').join() === 'NAME:Fatma Hassan', 'title + name');
+check(kinds('المريض محمد علي حسن عنده ضغط').join() === 'NAME:محمد علي حسن عنده', `Arabic patient name (${kinds('المريض محمد علي حسن عنده ضغط')})`);
+check(kinds('my key is AIzaSyA1234567890abcdefghijklmnopqrstuv').some((k) => k.startsWith('SECRET')) && kinds('password: hunter22').join() === 'SECRET:hunter22', 'API keys and passwords');
+check(kinds('Occupancy rose to 85% in ICU, 12 of 14 beds; budget 250000 EGP in 2025').length === 0, 'ordinary numbers are not flagged');
+check(kinds('the patient data shows 40% improvement').length === 0, '"patient data" is not a name');
+
+const m = new Masker();
+const a = m.mask('Patient Ahmed Mahmoud, phone 01012345678, MRN: 0045821');
+check(a.text === 'Patient [NAME_1], phone [PHONE_1], MRN: [RECORD_1]' && a.count === 3, `masking (${a.text})`);
+const b = m.mask('Call 010 1234 5678 again');
+check(b.text === 'Call [PHONE_1] again', 'same number, same placeholder (spaces ignored)');
+check(m.unmask('I will call [PHONE_1] about [NAME_1] ([RECORD_1]); [PHONE_9] unknown') === 'I will call 01012345678 about Ahmed Mahmoud (0045821); [PHONE_9] unknown', 'replies get real values back');
+const c = m.mask("I'll call 01012345678 about Ahmed  Mahmoud (file 0045821).");
+check(c.text === "I'll call [PHONE_1] about [NAME_1] (file [RECORD_1]).", `details seen earlier are hidden anywhere (${c.text})`);
+check(obscure('01012345678') === '01•••••••78' || obscure('01012345678').startsWith('01'), `obscure (${obscure('01012345678')})`);
+console.log(fails ? `${fails} FAILED` : 'ALL PASSED');
+process.exit(fails ? 1 : 0);

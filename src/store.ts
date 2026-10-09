@@ -5,6 +5,7 @@ import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, sum
 import { forgetLocalAccount, loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { registerServiceWorker } from './pwa/register';
 import { ChatSync } from './lib/sync';
+import { Masker, scan } from './lib/privacy';
 import { quota, type QuotaView } from './lib/quota';
 import { extractMemoryOps, findMemory, hideMemoryLines, MAX_MEMORIES, memoryInstructions, MemoryStore } from './lib/memory';
 import { AUTO, planRoute } from './lib/routing';
@@ -72,7 +73,8 @@ interface State {
   clearAllChats(): Promise<void>;
   importChats(chats: Chat[]): Promise<number>;
 
-  send(text: string, files: Attachment[]): Promise<void>;
+  /** `privacy`: 'asIs' = you chose to send without masking (privacy shield) */
+  send(text: string, files: Attachment[], opts?: { privacy?: 'asIs' }): Promise<void>;
   regenerate(messageId: string, model?: string): Promise<void>;
   editAndResend(messageId: string, text: string): Promise<void>;
   continueReply(): Promise<void>;
@@ -154,7 +156,9 @@ export const useStore = create<State>((set, get) => {
   const writeSummary = async (chat: Chat, cut: number, signal: AbortSignal): Promise<{ summary: ChatSummary; through: Message[] } | null> => {
     const previous = activeSummary(chat);
     const older = liveMessages(chat).slice(0, cut);
-    const prompt = summaryPrompt(older, previous);
+    // Privacy shield: the model summarizes placeholders; the summary is stored with the real values.
+    const masker = get().settings.privacyShield ? new Masker() : null;
+    const prompt = masker ? masker.mask(summaryPrompt(older, previous)).text : summaryPrompt(older, previous);
     const result = await fetchSummary(prompt, summaryModels(Math.ceil(prompt.length / 4)), {
       signal,
       report: (id, info) => {
@@ -166,7 +170,7 @@ export const useStore = create<State>((set, get) => {
     return {
       through: older,
       summary: {
-        text: result.text.slice(0, 60_000),
+        text: (masker ? masker.unmask(result.text) : result.text).slice(0, 60_000),
         upTo: older[older.length - 1].id,
         count: (previous?.count || 0) + older.length,
         saved: 0,
@@ -212,8 +216,8 @@ export const useStore = create<State>((set, get) => {
   };
 
   /** Takes the memory lines out of a finished reply and saves or removes those memories. */
-  const applyMemoryLines = async (reply: Message, raw: string, chatId: string) => {
-    const ops = extractMemoryOps(raw);
+  const applyMemoryLines = async (reply: Message, raw: string, chatId: string, restore: (t: string) => string = (t) => t) => {
+    const ops = extractMemoryOps(restore(raw));
     reply.text = ops.text;
     if (!memory || !get().settings.memory || (!ops.remember.length && !ops.forget.length)) return;
     const saved: { id: string; text: string }[] = [];
@@ -294,12 +298,25 @@ export const useStore = create<State>((set, get) => {
           role: m.role,
           text: missing.length ? `[Attached on another device, not available here: ${missing.join(', ')}]\n${m.text}` : m.text,
           files: usable.map(({ kind, name, mime, data, text }) => ({ kind, name, mime, data, text })),
-        };
+          asIs: m.privacy?.unmasked,
+        } as WireMessage;
       }));
+    // Privacy shield: models see placeholders like [PHONE_1] instead of personal details (the same
+    // detail gets the same placeholder throughout the chat), and replies get the real values back.
+    const masker = settings.privacyShield ? new Masker() : null;
+    if (masker) {
+      for (let i = 0; i < wire.length; i++) {
+        const w = wire[i];
+        if (w.asIs) continue;
+        wire[i] = { ...w, text: masker.mask(w.text).text, files: w.files?.map((f) => (f.text ? { ...f, text: masker.mask(f.text).text } : f)) };
+      }
+    }
+    const restore = (t: string) => (masker && settings.privacyRestore ? masker.unmask(t) : t);
 
     let body: string;
     try {
-      const memoryNote = settings.memory ? memoryInstructions(get().memories, settings.memoryAuto) : '';
+      const rawMemory = settings.memory ? memoryInstructions(get().memories, settings.memoryAuto) : '';
+      const memoryNote = masker ? masker.mask(rawMemory).text : rawMemory;
       body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: settings.webSearch, customInstructions: settings.customInstructions, memory: memoryNote } });
     } catch (e) {
       get().toast((e as Error).message, 'error');
@@ -360,7 +377,7 @@ export const useStore = create<State>((set, get) => {
         }
         if (ev.t === 'text') {
           raw += ev.text;
-          reply.text = hideMemoryLines(raw);
+          reply.text = restore(hideMemoryLines(raw));
         }
         else if (ev.t === 'think') reply.thinking = (reply.thinking || '') + ev.text;
         else if (ev.t === 'model') {
@@ -383,7 +400,7 @@ export const useStore = create<State>((set, get) => {
     } finally {
       controller = null;
     }
-    if (raw) await applyMemoryLines(reply, raw, chatId);
+    if (raw) await applyMemoryLines(reply, raw, chatId, restore);
     flush();
     set({ streamingChatId: null });
     const finished = get().chats.find((c) => c.id === chatId);
@@ -395,11 +412,13 @@ export const useStore = create<State>((set, get) => {
     // Name the chat after its first exchange.
     const firstUser = updated.messages.find((m) => m.role === 'user');
     if (get().settings.autoTitle && !updated.summary?.from && updated.messages.length <= 2 && firstUser && reply.status === 'done') {
-      const result = await fetchTitle(firstUser.text || firstUser.files?.map((f) => f.name).join(', ') || '', reply.model, (id) => (usage?.blockedUntil(id) ?? null) !== null);
+      const titleMasker = get().settings.privacyShield && !firstUser.privacy?.unmasked ? new Masker() : null;
+      const firstText = firstUser.text || firstUser.files?.map((f) => f.name).join(', ') || '';
+      const result = await fetchTitle(titleMasker ? titleMasker.mask(firstText).text : firstText, reply.model, (id) => (usage?.blockedUntil(id) ?? null) !== null);
       if (result) usage?.record(result.model, { requests: 1 });
       const latest = get().chats.find((c) => c.id === chatId);
       if (result && latest) {
-        const named = { ...latest, title: result.title };
+        const named = { ...latest, title: titleMasker ? titleMasker.unmask(result.title) : result.title };
         replaceChat(named);
         await persist(named);
       }
@@ -656,7 +675,7 @@ export const useStore = create<State>((set, get) => {
       return valid.length;
     },
 
-    async send(text, files) {
+    async send(text, files, opts) {
       if (get().streamingChatId || get().compactingChatId) return;
       let chat = currentChat();
       if (!chat) {
@@ -664,6 +683,11 @@ export const useStore = create<State>((set, get) => {
         set((s) => ({ chats: [chat!, ...s.chats], currentId: chat!.id }));
       }
       const msg: Message = { id: uid(), role: 'user', text, files: files.length ? files : undefined, createdAt: Date.now() };
+      if (get().settings.privacyShield) {
+        const found = scan(text).length + files.reduce((n, f) => n + (f.text ? scan(f.text).length : 0), 0);
+        if (opts?.privacy === 'asIs') msg.privacy = { masked: 0, unmasked: true };
+        else if (found) msg.privacy = { masked: found };
+      }
       const title = chat.messages.length === 0 && !chat.summary ? (text || files.map((f) => f.name).join(', ')).replace(/\s+/g, ' ').slice(0, 60) || 'New chat' : chat.title;
       const updated: Chat = { ...chat, title, model: chat.model || modelFor(chat), messages: [...chat.messages, msg], updatedAt: Date.now() };
       replaceChat(updated);

@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowLeft, ArrowUp, Boxes, Brain, ChevronRight, Database, Download, ExternalLink, Gauge, KeyRound, Loader2, LogOut, Plus, RefreshCw, Search, SlidersHorizontal, Star, Trash2, Upload, UserRound, X, type LucideIcon } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, Boxes, Brain, ChevronRight, Database, Download, ExternalLink, Gauge, KeyRound, Loader2, LogOut, Plus, RefreshCw, Search, Shield, SlidersHorizontal, Star, Trash2, Upload, UserRound, X, type LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { VOICE_LANGS } from '../lib/speech';
 import { saveBlob } from '../lib/util';
@@ -7,6 +7,8 @@ import type { Chat, FontSize, ModelInfo, Theme } from '../types';
 import { Badges } from './ModelPicker';
 import UsageTab from './UsageTab';
 import MemoryTab from './MemoryTab';
+import KeySafety from './KeySafety';
+import PrivacyTab from './PrivacyTab';
 
 /** Settings sections: id, name, icon, one-line description (shown in the phone menu and as the section intro). */
 const TABS: [string, string, LucideIcon, string][] = [
@@ -16,6 +18,7 @@ const TABS: [string, string, LucideIcon, string][] = [
   ['usage', 'Usage', Gauge, "Today's requests, limits and resets"],
   ['personalize', 'Personalization', UserRound, 'Instructions every model follows'],
   ['memory', 'Memory', Brain, 'What models remember about you'],
+  ['privacy', 'Privacy', Shield, 'Hide personal details from AI models'],
   ['data', 'Data', Database, 'Back up, restore or delete your chats'],
 ];
 
@@ -208,6 +211,7 @@ function KeysTab() {
           {busy && <Loader2 size={16} className="spin" />} Save keys
         </button>
       </div>
+      <KeySafety />
     </div>
   );
 }
@@ -378,6 +382,7 @@ export default function SettingsModal() {
             {id === 'models' && <ModelsTab />}
             {id === 'usage' && <UsageTab />}
             {id === 'memory' && <MemoryTab Toggle={Toggle} />}
+            {id === 'privacy' && <PrivacyTab Toggle={Toggle} Choice={Choice} />}
             {id === 'personalize' && (
               <div className="settings-section">
                 <label className="field-block">

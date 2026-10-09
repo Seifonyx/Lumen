@@ -1,4 +1,4 @@
-import { ArrowUp, FileText, Globe, Image as ImageIcon, Loader2, Mic, Paperclip, Square, X } from 'lucide-react';
+import { ShieldCheck, ArrowUp, FileText, Globe, Image as ImageIcon, Loader2, Mic, Paperclip, Square, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ACCEPT, readAttachment } from '../lib/files/read';
 import { canListen, listen } from '../lib/speech';
@@ -6,6 +6,8 @@ import { formatBytes, isTouch } from '../lib/util';
 import { formatUntil, remaining } from '../lib/usage';
 import { modelInfo, modelLabel, useStore } from '../store';
 import type { Attachment } from '../types';
+import { scan, type Finding } from '../lib/privacy';
+import PrivacyCheck from './PrivacyCheck';
 
 interface Pending {
   key: string;
@@ -50,6 +52,7 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
   const [listening, setListening] = useState(false);
   const [interim, setInterim] = useState('');
   const [dragging, setDragging] = useState(false);
+  const [check, setCheck] = useState<{ findings: Finding[]; unchecked: number } | null>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const stopListening = useRef<(() => void) | null>(null);
@@ -165,7 +168,21 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
       return;
     }
     const files = pending.map((p) => p.file!);
-    void send(text.trim(), files);
+    // Privacy shield ("Ask me"): show what was found before anything is sent.
+    if (settings.privacyShield && settings.privacyMode === 'ask') {
+      const findings = [...scan(text), ...files.flatMap((f) => (f.text ? scan(f.text) : []))];
+      if (findings.length) {
+        setCheck({ findings, unchecked: files.filter((f) => !f.text).length });
+        return;
+      }
+    }
+    dispatch();
+  };
+
+  const dispatch = (opts?: { privacy?: 'asIs' }) => {
+    setCheck(null);
+    const files = pending.map((p) => p.file!);
+    void send(text.trim(), files, opts);
     setText('');
     setInterim('');
     setPending([]);
@@ -280,6 +297,17 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
             <Globe size={17} /> <span>Search</span>
           </button>
           <div className="spacer" />
+          {settings.privacyShield && (
+            <button
+              type="button"
+              className="tool-btn shield-on"
+              onClick={() => setUi({ settingsOpen: true, settingsTab: 'privacy' })}
+              aria-label="Privacy shield is on"
+              title={settings.privacyMode === 'ask' ? 'Privacy shield: asks before sending personal details' : 'Privacy shield: masks personal details automatically'}
+            >
+              <ShieldCheck size={17} />
+            </button>
+          )}
           {canListen && (
             <button type="button" className={`tool-btn${listening ? ' recording' : ''}`} onClick={toggleMic} aria-label={listening ? 'Stop voice input' : 'Voice input'} title="Voice input">
               <Mic size={19} />
@@ -290,6 +318,7 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
           </button>
         </div>
       </form>
+      {check && <PrivacyCheck findings={check.findings} unchecked={check.unchecked} onMask={() => dispatch()} onAsIs={() => dispatch({ privacy: 'asIs' })} onEdit={() => setCheck(null)} />}
       <p className="disclaimer">AI can make mistakes. Check important info.</p>
     </div>
   );

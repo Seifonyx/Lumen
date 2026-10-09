@@ -773,3 +773,26 @@ table.sheet td.pending { color: #8f8f8f; font-style: italic; font-family: var(--
   border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-lg); font-size: 0.8125rem;
   animation: pop 0.2s var(--ease);
 }
+
+/* ============================================================ Key safety */
+.key-safety { margin-top: 20px; }
+.key-row { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid var(--border); }
+.key-steps ol { margin: 6px 0 2px; padding-inline-start: 1.3em; font-size: 0.8125rem; color: var(--text-2); display: grid; gap: 6px; line-height: 1.5; }
+.key-steps b { color: var(--text); font-weight: 500; }
+.key-steps a { color: var(--text); display: inline-flex; align-items: center; gap: 3px; }
+.copyable { font-family: var(--mono); font-size: 0.75rem; background: var(--surface-2); border: 1px solid var(--border); padding: 1px 5px; border-radius: 4px; user-select: all; }
+
+/* ============================================================ Privacy shield */
+.tool-btn.shield-on { color: var(--green); }
+.privacy-note { display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--green); }
+.privacy-note.as-is { color: var(--text-3); }
+.privacy-check { padding: 16px 20px 18px; display: flex; flex-direction: column; gap: 12px; }
+.privacy-check p { margin: 0; font-size: 0.875rem; line-height: 1.55; }
+.privacy-check code, .privacy-found code { font-family: var(--mono); font-size: 0.75rem; background: var(--surface-2); border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; }
+.privacy-found { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.privacy-found li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 12px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.privacy-found li:last-child { border-bottom: 0; }
+.privacy-values { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.privacy-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.privacy-preview { padding: 10px 12px; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); background: var(--code-bg); font-size: 0.875rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.privacy-preview mark { background: var(--green-soft); color: var(--green); border-radius: 4px; padding: 0 3px; font-family: var(--mono); font-size: 0.8125rem; }

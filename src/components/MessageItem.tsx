@@ -1,4 +1,4 @@
-import { AlertTriangle, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, Info, Pencil, RefreshCw, Square, Volume2 } from 'lucide-react';
+import { AlertTriangle, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, Info, Pencil, RefreshCw, Square, Volume2 } from 'lucide-react';
 import { memo, useState } from 'react';
 import { buildFile } from '../lib/generate';
 import { toPlainText } from '../lib/markdown';
@@ -65,6 +65,14 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
         </div>
       ) : (
         message.text && <div className="bubble" dir="auto">{message.text}</div>
+      )}
+      {message.privacy && !editing && (
+        <div className={`privacy-note${message.privacy.unmasked ? ' as-is' : ''}`}>
+          {message.privacy.unmasked ? <ShieldOff size={12} /> : <ShieldCheck size={12} />}
+          {message.privacy.unmasked
+            ? 'Sent without masking'
+            : `${message.privacy.masked} personal detail${message.privacy.masked === 1 ? '' : 's'} hidden from the model`}
+        </div>
       )}
       {!editing && (
         <div className="msg-actions user-actions">

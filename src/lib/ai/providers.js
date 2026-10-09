@@ -305,3 +305,44 @@ export async function complete({ provider, name }, prompt, { maxTokens = 256, si
   if (info && d.usage) Object.assign(info, { input: d.usage.prompt_tokens || 0, output: d.usage.completion_tokens || 0 });
   return d.choices?.[0]?.message?.content || null;
 }
+
+// ---------------------------------------------------------------- Key safety
+
+/**
+ * Is the Gemini key locked to this website? A request sent without the site's address must be
+ * refused, while the app's normal requests still work.
+ * Returns { state: 'locked' | 'open' | 'wrong-site' | 'invalid' | 'error', message? }.
+ */
+export async function geminiKeyLock() {
+  if (!keys.gemini) return null;
+  const probe = (referrerPolicy) =>
+    fetch(`${GEMINI_BASE}/models?pageSize=1`, { headers: { 'x-goog-api-key': keys.gemini }, referrerPolicy, cache: 'no-store' });
+  try {
+    const [bare, normal] = await Promise.all([probe('no-referrer'), probe('strict-origin-when-cross-origin')]);
+    const bareErr = bare.ok ? null : await readError(bare);
+    const normalErr = normal.ok ? null : await readError(normal);
+    if (normal.ok && bare.ok) return { state: 'open' };
+    if (normal.ok && /refer/i.test(bareErr?.message || '')) return { state: 'locked' };
+    if (/refer/i.test(normalErr?.message || '')) return { state: 'wrong-site', message: normalErr.message };
+    if (normal.status === 400 || normal.status === 401) return { state: 'invalid', message: normalErr?.message };
+    return { state: 'error', message: (normalErr || bareErr)?.message };
+  } catch {
+    return { state: 'error', message: "Couldn't reach Google." };
+  }
+}
+
+/** OpenRouter key details: spending limit (0 = free models only), credits used, free tier. */
+export async function openRouterKeyInfo() {
+  if (!keys.openrouter) return null;
+  try {
+    const res = await fetch(`${OPENROUTER_BASE}/key`, { headers: { authorization: `Bearer ${keys.openrouter}` }, cache: 'no-store' });
+    if (!res.ok) return { state: 'error', message: (await readError(res)).message };
+    const { data = {} } = await res.json();
+    const limit = data.limit === undefined ? null : data.limit;
+    if (limit === 0) return { state: 'capped' };
+    if (limit === null) return { state: data.is_free_tier ? 'free' : 'open' };
+    return { state: 'limit', limit, used: data.usage ?? 0 };
+  } catch {
+    return { state: 'error', message: "Couldn't reach OpenRouter." };
+  }
+}

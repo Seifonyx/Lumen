@@ -16,6 +16,9 @@ export const DEFAULT_SETTINGS: Settings = {
   autoCompact: true,
   memory: true,
   memoryAuto: true,
+  privacyShield: false,
+  privacyMode: 'ask',
+  privacyRestore: true,
   voiceLang: '',
 };
 

@@ -43,6 +43,8 @@ export async function fetchSummary(
 export interface WireMessage {
   role: 'user' | 'assistant';
   text: string;
+  /** privacy shield: send this one as is (you chose "Send as is") */
+  asIs?: boolean;
   files?: Pick<Attachment, 'kind' | 'name' | 'mime' | 'data' | 'text'>[];
 }
 
@@ -64,7 +66,7 @@ const MAX_BODY = 15_000_000;
 
 /** Builds the request, dropping attachments from the oldest messages first if it's too big. */
 export function buildChatBody(payload: { model: string; fallbacks: string[]; messages: WireMessage[]; options: object }): string {
-  const msgs = payload.messages.map((m) => ({ ...m }));
+  const msgs = payload.messages.map(({ asIs: _asIs, ...m }) => ({ ...m }));
   let body = JSON.stringify({ ...payload, messages: msgs });
   for (let i = 0; body.length > MAX_BODY && i < msgs.length - 1; i++) {
     if (!msgs[i].files?.length) continue;

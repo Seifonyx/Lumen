@@ -45,6 +45,7 @@ function normalize(raw: any): Chat {
     sources: m.sources,
     notices: m.notices,
     memory: m.memory,
+    privacy: m.privacy,
     error: m.error,
     status: m.status === 'streaming' ? 'stopped' : m.status,
     createdAt: m.createdAt ?? created,

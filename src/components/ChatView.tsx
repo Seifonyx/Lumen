@@ -31,7 +31,7 @@ export default function ChatView() {
   const resetAt = useStore((s) => s.firebaseUsage.resetAt);
   const online = useStore((s) => s.online);
   const workspaceOpen = useStore((s) => s.workspaceOpen);
-  const { setUi, newChat, setChatModel } = useStore.getState();
+  const { setUi, setChatModel } = useStore.getState();
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const [showDown, setShowDown] = useState(false);
@@ -89,9 +89,6 @@ export default function ChatView() {
             {changeCount > 0 && <span className="badge">{changeCount}</span>}
           </button>
         )}
-        <button className="icon-btn" onClick={newChat} aria-label="New chat" title="New chat (Ctrl+Shift+O)">
-          <SquarePen size={18} />
-        </button>
       </header>
 
       {!online && (

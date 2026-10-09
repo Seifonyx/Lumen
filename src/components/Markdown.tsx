@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 import { segments } from '../lib/markdown';
 import { copyText } from '../lib/util';
+import { useStore } from '../store';
 import ChartBlock from './ChartBlock';
 import FileCard from './FileCard';
 import EditCard, { ApplyAll } from './EditCard';
@@ -13,7 +14,14 @@ function Markdown({ text, streaming }: { text: string; streaming: boolean }) {
     [parts, streaming],
   );
 
+  const setUi = useStore((s) => s.setUi);
   const onClick = async (e: React.MouseEvent) => {
+    const runBtn = (e.target as HTMLElement).closest('[data-run-code]') as HTMLButtonElement | null;
+    if (runBtn) {
+      const code = runBtn.closest('.code-block')?.querySelector('code')?.textContent || '';
+      setUi({ runner: { lang: runBtn.dataset.runCode || '', code } });
+      return;
+    }
     const btn = (e.target as HTMLElement).closest('[data-copy-code]') as HTMLButtonElement | null;
     if (!btn) return;
     const code = btn.closest('.code-block')?.querySelector('code')?.textContent || '';

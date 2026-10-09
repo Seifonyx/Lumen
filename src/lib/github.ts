@@ -15,7 +15,7 @@ export class GitHubError extends Error {
   }
 }
 
-async function gh<T = any>(path: string, init: RequestInit & { raw?: boolean } = {}): Promise<T> {
+export async function gh<T = any>(path: string, init: RequestInit & { raw?: boolean } = {}): Promise<T> {
   let res: Response;
   try {
     res = await fetch(path.startsWith('http') ? path : `${API}${path}`, {

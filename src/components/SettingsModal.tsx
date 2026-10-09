@@ -184,7 +184,7 @@ const KEY_FIELDS: { id: 'gemini' | 'openrouter' | 'groq' | 'cerebras' | 'github'
     placeholder: 'github_pat_…',
     link: 'https://github.com/settings/personal-access-tokens/new',
     linkText: 'Create a token',
-    hint: 'Lets chats read your repositories and commit changes. Use a fine-grained token with Contents and Pull requests set to Read and write.',
+    hint: 'Lets chats read your repositories and commit changes. Use a fine-grained token with Contents and Pull requests set to Read and write, and Actions set to Read (for test results).',
   },
 ];
 

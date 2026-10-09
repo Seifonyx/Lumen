@@ -61,6 +61,8 @@ interface State {
   settingsOpen: boolean;
   settingsTab: string;
   preview: PreviewFile | null;
+  /** code from a reply being run in the browser */
+  runner: { lang: string; code: string } | null;
   toasts: Toast[];
 
   init(): Promise<void>;
@@ -71,7 +73,7 @@ interface State {
   updateSettings(patch: Partial<Settings>): void;
   toast(text: string, kind?: Toast['kind']): void;
   dismissToast(id: string): void;
-  setUi(patch: Partial<Pick<State, 'sidebarOpen' | 'settingsOpen' | 'settingsTab' | 'preview' | 'workspaceOpen' | 'repoPicker'>>): void;
+  setUi(patch: Partial<Pick<State, 'sidebarOpen' | 'settingsOpen' | 'settingsTab' | 'preview' | 'runner' | 'workspaceOpen' | 'repoPicker'>>): void;
 
   // Coding workspace (GitHub)
   connectRepo(link: RepoLink): void;
@@ -81,6 +83,8 @@ interface State {
   revertChange(chatId: string, path: string): void;
   /** give the model repository files it named and let it continue */
   loadRepoFiles(chatId: string, paths: string[], searches?: string[]): Promise<void>;
+  /** hide the test results of the last commit */
+  dismissChecks(chatId: string): void;
   applyEdits(chatId: string, edits: Edit[]): Promise<{ applied: number; failed: string[] }>;
   commitWork(chatId: string, o: { message: string; target: string; pullRequest: boolean }): Promise<{ url: string; prUrl?: string }>;
 
@@ -509,6 +513,7 @@ export const useStore = create<State>((set, get) => {
     settingsOpen: false,
     settingsTab: '',
     preview: null,
+    runner: null,
     toasts: [],
 
     async init() {
@@ -868,6 +873,14 @@ export const useStore = create<State>((set, get) => {
       await runAssistant(chatId);
     },
 
+    dismissChecks(chatId) {
+      const chat = get().chats.find((c) => c.id === chatId);
+      if (!chat?.lastCommit) return;
+      const updated = { ...chat, lastCommit: { ...chat.lastCommit, dismissed: true } };
+      replaceChat(updated);
+      void persist(updated);
+    },
+
     revertChange(chatId, path) {
       const chat = get().chats.find((c) => c.id === chatId);
       if (!chat?.changes?.[path]) return;
@@ -901,7 +914,7 @@ export const useStore = create<State>((set, get) => {
       const repo = chat.repo;
       const changes = Object.entries(chat.changes).map(([path, c]) => ({ path, content: c.content }));
       const target = o.target.trim() || repo.branch;
-      const { url } = await ghCommit({ owner: repo.owner, repo: repo.repo, base: repo.branch, target, message: o.message.trim() || 'Update from Model Router', changes });
+      const { url, sha } = await ghCommit({ owner: repo.owner, repo: repo.repo, base: repo.branch, target, message: o.message.trim() || 'Update from Model Router', changes });
       let prUrl: string | undefined;
       if (o.pullRequest && target !== repo.branch) {
         prUrl = await openPullRequest({ owner: repo.owner, repo: repo.repo, head: target, base: repo.branch, title: o.message.split('\n')[0].slice(0, 120) || 'Changes from Model Router', body: 'Made with Model Router.' });
@@ -910,7 +923,7 @@ export const useStore = create<State>((set, get) => {
       forgetIndex(repo);
       const latest = get().chats.find((c) => c.id === chatId)!;
       // Keep working on the branch that now has these commits.
-      const updated: Chat = { ...latest, changes: {}, repo: { ...repo, branch: target, defaultBranch: repo.defaultBranch || repo.branch } };
+      const updated: Chat = { ...latest, changes: {}, repo: { ...repo, branch: target, defaultBranch: repo.defaultBranch || repo.branch }, lastCommit: { sha, url, branch: target, prUrl, at: Date.now() } };
       replaceChat(updated);
       await persist(updated);
       return { url, prUrl };

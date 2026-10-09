@@ -69,6 +69,10 @@ const F = '````';
     if (p === '/repos/seif/demo/git/commits' && req.method() === 'POST') { gh.commits.push(JSON.parse(req.postData())); return json({ sha: 'c2', html_url: 'https://github.com/seif/demo/commit/c2' }, 201); }
     if (p === '/repos/seif/demo/git/refs' && req.method() === 'POST') { gh.refs.push(JSON.parse(req.postData())); return json({ ref: 'x' }, 201); }
     if (p === '/repos/seif/demo/pulls' && req.method() === 'POST') { gh.pulls.push(JSON.parse(req.postData())); return json({ html_url: 'https://github.com/seif/demo/pull/7' }, 201); }
+    if (p === '/repos/seif/demo/actions/runs' && u.searchParams.get('head_sha') === 'c2') return json({ workflow_runs: [{ id: 11, name: 'Tests', status: 'completed', conclusion: 'failure', html_url: 'https://github.com/seif/demo/actions/runs/11' }] });
+    if (p === '/repos/seif/demo/commits/c2/status') return json({ statuses: [{ context: 'Vercel', state: 'success', target_url: 'https://vercel.com/x' }] });
+    if (p === '/repos/seif/demo/actions/runs/11/jobs') return json({ jobs: [{ id: 21, name: 'unit', conclusion: 'failure', steps: [{ name: 'Checkout', conclusion: 'success' }, { name: 'npm test', conclusion: 'failure' }] }] });
+    if (p === '/repos/seif/demo/actions/jobs/21/logs') return route.fulfill({ headers: { 'content-type': 'text/plain' }, body: Array.from({ length: 200 }, (_, i) => `2026-10-09T18:00:${String(i % 60).padStart(2, '0')}.0000000Z setup line ${i}`).concat(['2026-10-09T18:01:00.0000000Z > node src/app.test.js', '2026-10-09T18:01:01.0000000Z AssertionError: expected 3 but got "12"', '2026-10-09T18:01:01.0000000Z ##[error]Process completed with exit code 1.']).join('\n') });
     return json({ message: `unexpected ${req.method()} ${p}` }, 404);
   });
 
@@ -179,6 +183,19 @@ const F = '````';
   check(gh.trees[0]?.base_tree === 'tree1' && tree.length === 2 && tree.find((t) => t.path === 'src/app.js')?.content === 'export function add(a, b) {\n  return Number(a) + Number(b);\n}\n', 'commit has the edited files');
   check(gh.commits[0]?.parents?.[0] === 'base1' && gh.refs[0]?.ref.startsWith('refs/heads/model-router/') && gh.pulls[0]?.base === 'main', 'pushed to a new branch and opened a pull request');
   check((await page.textContent('.ws-done')).includes('pull request') && (await page.textContent('.ws-head')).includes('model-router/'), 'links shown; chat continues on the new branch');
+
+  // ---- Test results of the commit, and fixing a failure
+  await page.waitForSelector('.checks-bar.failure', { timeout: 20000 });
+  check((await page.textContent('.checks-bar')).includes('Failed on c2: Tests') && !(await page.textContent('.checks-bar')).includes('Vercel'), 'failed GitHub check shown above the message box');
+  await page.screenshot({ path: path.join(__dirname, 'out', 'coding-checks.png') });
+  const b1 = ai.length;
+  await page.click('.checks-bar >> text=Fix this failure');
+  await page.waitForFunction((n) => document.querySelectorAll('.msg.assistant').length > n, (await page.$$('.msg.assistant')).length, { timeout: 20000 });
+  await page.waitForTimeout(500);
+  const fixMsg = JSON.stringify(ai[b1].body.contents.at(-1));
+  check(fixMsg.includes('job \\"unit\\" failed at step \\"npm test\\"') && fixMsg.includes('AssertionError: expected 3') && fixMsg.includes('github-checks.log') && !fixMsg.includes('setup line 3\\n'), 'failure details and the relevant log lines sent to the model');
+  await page.click('[aria-label="Hide test results"]');
+  check(!(await page.$('.checks-bar')), 'test results can be hidden');
 
   // ---- Models that ask for files in words, or only name them
   const before = ai.length;

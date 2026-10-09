@@ -1,3 +1,4 @@
+import ChecksBar from './ChecksBar';
 import { FileCode2, GitBranch, ShieldCheck, ArrowUp, FileText, Globe, Image as ImageIcon, Loader2, Mic, Paperclip, Square, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ACCEPT, readAttachment } from '../lib/files/read';
@@ -235,6 +236,7 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
           submit();
         }}
       >
+        {chat?.repo && <ChecksBar chat={chat} />}
         {chat?.repo && (
           <div className="repo-strip">
             <button type="button" className="repo-chip" onClick={() => setUi({ workspaceOpen: true })} title="Open the repository panel">

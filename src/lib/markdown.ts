@@ -29,6 +29,7 @@ import { Marked, type Token, type Tokens } from 'marked';
 import { escapeHtml } from './util';
 import { EDIT_FENCE, replaceReadRequests } from './edits';
 import { replaceSearchRequests } from './repoindex';
+import { runLang } from './runner';
 
 Object.entries({ bash, c, cpp, csharp, css, go, java, javascript, json, kotlin, markdown, php, python, r, ruby, rust, sql, swift, typescript, xml, yaml }).forEach(
   ([name, lang]) => hljs.registerLanguage(name, lang),
@@ -87,7 +88,8 @@ marked.use({
           /* keep plain */
         }
       }
-      return `<div class="code-block"><div class="code-head"><span>${escapeHtml(language || 'text')}</span><button type="button" class="code-copy" data-copy-code>Copy</button></div><pre><code class="hljs">${html}</code></pre></div>`;
+      const run = runLang(language || '') ? `<button type="button" class="code-copy code-run" data-run-code="${escapeHtml(language || '')}">▶ Run</button>` : '';
+      return `<div class="code-block"><div class="code-head"><span>${escapeHtml(language || 'text')}</span><span class="code-actions">${run}<button type="button" class="code-copy" data-copy-code>Copy</button></span></div><pre><code class="hljs">${html}</code></pre></div>`;
     },
     link({ href, title, tokens }: Tokens.Link) {
       const text = this.parser.parseInline(tokens);
@@ -117,7 +119,7 @@ const CALLOUT_LABEL: Record<string, string> = { NOTE: 'Note', TIP: 'Tip', IMPORT
 
 export function renderMarkdown(text: string): string {
   const html = marked.parse(text, { async: false }) as string;
-  return DOMPurify.sanitize(html, { ADD_ATTR: ['target', 'data-copy-code'] })
+  return DOMPurify.sanitize(html, { ADD_ATTR: ['target', 'data-copy-code', 'data-run-code'] })
     .replace(CALLOUT, (_, kind: string) => `<blockquote class="callout callout-${kind.toLowerCase()}"><div class="callout-title">${CALLOUT_LABEL[kind.toUpperCase()]}</div><p>`)
     .replace(/<(p|li|h[1-6]|blockquote)( class="[^"]*")?>/g, '<$1$2 dir="auto">');
 }

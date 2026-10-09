@@ -66,6 +66,8 @@ export interface Chat {
   contextSent?: Record<string, string>;
   /** edits not committed yet (kept on this device): path → new text (null = deleted) */
   changes?: Record<string, FileChange>;
+  /** coding workspace: the last commit made from this chat (its test results are shown) */
+  lastCommit?: { sha: string; url: string; branch: string; prUrl?: string; at: number; dismissed?: boolean };
   messages: Message[];
 }
 

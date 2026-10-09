@@ -1,3 +1,24 @@
+/* Mobile Zoom Lock & App Experience */
+html, body {
+  /* Prevents pinch-to-zoom gestures and double-tap zooming */
+  touch-action: manipulation;
+  
+  /* Prevents native pull-to-refresh overscroll bounces on mobile */
+  overscroll-behavior-y: none;
+  
+  /* Disables unwanted text highlighting while tapping buttons */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Re-enables text selection so users can still highlight chat messages, inputs, and code */
+.message-content, 
+.cm-content, 
+input, 
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
 /* Model Router — design system
    Neutral, monochrome UI in the style of Vercel's Geist: hairline borders, black/white primary
    actions, Geist type, quiet colour used only for meaning (status, links, file types). */

@@ -2,6 +2,7 @@ import { Brain, Check, ChevronDown, Eye, Globe, SlidersHorizontal, Sparkles } fr
 import { AUTO } from '../lib/routing';
 import { useEffect, useRef, useState } from 'react';
 import { formatUntil, remaining } from '../lib/usage';
+import { PROVIDER_NAMES, providerOfId, type ProviderId } from '../lib/util';
 import { modelLabel, useStore } from '../store';
 import type { ModelInfo } from '../types';
 
@@ -58,11 +59,10 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
     };
   }, [open]);
 
-  const models = enabled.map((id) => catalog?.models.find((m) => m.id === id) || ({ id, label: modelLabel(catalog, id), provider: id.startsWith('gemini:') ? 'google' : 'openrouter' } as ModelInfo));
-  const groups: [string, ModelInfo[]][] = [
-    ['Google', models.filter((m) => m.provider === 'google')],
-    ['OpenRouter', models.filter((m) => m.provider === 'openrouter')],
-  ].filter(([, list]) => (list as ModelInfo[]).length) as [string, ModelInfo[]][];
+  const models = enabled.map((id) => catalog?.models.find((m) => m.id === id) || ({ id, label: modelLabel(catalog, id), provider: providerOfId(id) } as ModelInfo));
+  const groups = (Object.keys(PROVIDER_NAMES) as ProviderId[])
+    .map((p) => [PROVIDER_NAMES[p], models.filter((m) => m.provider === p)] as [string, ModelInfo[]])
+    .filter(([, list]) => list.length);
 
   return (
     <div className={`model-picker${compact ? ' compact' : ''}`} ref={ref}>

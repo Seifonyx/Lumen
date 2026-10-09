@@ -94,6 +94,12 @@ export default function UsageTab() {
               OpenRouter limits reset {formatUntil(view.openrouter.resetAt)}
             </>
           )}
+          {(catalog?.providers.groq || catalog?.providers.cerebras) && (
+            <>
+              <br />
+              {[catalog?.providers.groq && 'Groq', catalog?.providers.cerebras && 'Cerebras'].filter(Boolean).join(' and ')} limits reset {formatUntil(view.openrouter.resetAt)}
+            </>
+          )}
         </div>
       </div>
 

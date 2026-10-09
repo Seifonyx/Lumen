@@ -3,7 +3,7 @@
 // and, for the usage meter: {t:'request', id} {t:'usage', id, input, output} {t:'limit', id, scope, quota?, resetAt?, retryAfterSec?}
 
 import { buildInstructions } from './instructions.js';
-import { complete, hasGemini, hasOpenRouter, openStream, parseModelId } from './providers.js';
+import { complete, hasGemini, hasKey, openStream, parseModelId } from './providers.js';
 
 const MAX_ATTEMPTS = 5;
 export const timeouts = {
@@ -28,7 +28,7 @@ function describe({ status, message = '' }) {
 
 const available = (id) => {
   const m = parseModelId(id);
-  return m && (m.provider === 'gemini' ? hasGemini() : hasOpenRouter()) ? m : null;
+  return m && hasKey(m.provider) ? m : null;
 };
 
 export async function* runChat({ model, fallbacks = [], messages, options = {} }, signal) {

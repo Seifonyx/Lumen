@@ -80,7 +80,7 @@ export interface Memory {
 
 export interface ModelInfo {
   id: string;
-  provider: 'google' | 'openrouter';
+  provider: 'google' | 'openrouter' | 'groq' | 'cerebras';
   name: string;
   label: string;
   context: number | null;
@@ -92,7 +92,7 @@ export interface ModelInfo {
 }
 
 export interface Catalog {
-  providers: { google: boolean; openrouter: boolean };
+  providers: { google: boolean; openrouter: boolean; groq?: boolean; cerebras?: boolean };
   models: ModelInfo[];
   defaults: string[];
   errors: string[];

@@ -429,7 +429,7 @@ export const useStore = create<State>((set, get) => {
     authed: null,
     user: null,
     accessDenied: null,
-    keys: { gemini: '', openrouter: '' },
+    keys: { gemini: '', openrouter: '', groq: '', cerebras: '' },
     catalog: null,
     usage: null,
     memories: [],
@@ -477,7 +477,7 @@ export const useStore = create<State>((set, get) => {
         quota.stop();
         settingsReady = false;
         if (!user) {
-          setKeys({ gemini: '', openrouter: '' });
+          setKeys({ gemini: '', openrouter: '', groq: '', cerebras: '' });
           set({ authed: false, user: null, catalog: null, accessDenied: null });
           return;
         }
@@ -541,15 +541,25 @@ export const useStore = create<State>((set, get) => {
     async saveApiKeys(keys) {
       const uid = get().user?.uid;
       if (!uid) return;
+      const before = get().keys;
       await saveKeys(uid, keys);
       setKeys(keys);
-      set({ keys: { gemini: keys.gemini.trim(), openrouter: keys.openrouter.trim() } });
+      const clean: ApiKeys = { gemini: keys.gemini.trim(), openrouter: keys.openrouter.trim(), groq: keys.groq.trim(), cerebras: keys.cerebras.trim() };
+      set({ keys: clean });
       await get().loadCatalog();
+      // A newly connected provider: switch on its suggested models so they're ready to use.
+      const prefix: Record<keyof ApiKeys, string> = { gemini: 'gemini:', openrouter: 'openrouter:', groq: 'groq:', cerebras: 'cerebras:' };
+      const added = (Object.keys(clean) as (keyof ApiKeys)[]).filter((k) => clean[k] && !before[k]);
+      const catalog = get().catalog;
+      if (added.length && catalog) {
+        const extra = catalog.defaults.filter((id) => added.some((k) => id.startsWith(prefix[k])) && !get().settings.enabledModels.includes(id));
+        if (extra.length) get().updateSettings({ enabledModels: [...get().settings.enabledModels, ...extra] });
+      }
     },
 
     async loadCatalog() {
       const { keys } = get();
-      if (!keys.gemini && !keys.openrouter) {
+      if (!keys.gemini && !keys.openrouter && !keys.groq && !keys.cerebras) {
         set({ catalog: null, catalogError: null, settingsOpen: true, settingsTab: 'keys' });
         return;
       }
@@ -568,6 +578,7 @@ export const useStore = create<State>((set, get) => {
           }
         }
         void openRouterDailyLimit().then((n) => usage?.setOpenRouterDaily(n));
+        usage?.useProviders((['groq', 'cerebras'] as const).filter((p) => catalog.providers[p]));
         const { settings } = get();
         const known = new Set(catalog.models.map((m) => m.id));
         let enabled = settings.enabledModels.filter((id) => known.has(id) || !catalog.models.length);

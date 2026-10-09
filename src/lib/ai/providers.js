@@ -1,18 +1,26 @@
-// Talks to Google AI Studio (Gemini) and OpenRouter: lists models and streams replies
+// Talks to Google AI Studio (Gemini), OpenRouter, Groq and Cerebras: lists models and streams replies
 // as a common sequence of events: { t: 'text' | 'think' | 'sources' | 'notice' | 'error', ... }.
 
 import { parseLimit, readError, readSSE, upstreamError } from './http.js';
 
 // API keys come from the user's settings (stored in their private Firebase document).
-const keys = { gemini: '', openrouter: '' };
+const keys = { gemini: '', openrouter: '', groq: '', cerebras: '' };
 export function setKeys(next) {
-  if (next.gemini !== keys.gemini || next.openrouter !== keys.openrouter) cache = null;
-  keys.gemini = (next.gemini || '').trim();
-  keys.openrouter = (next.openrouter || '').trim();
+  const clean = Object.fromEntries(Object.keys(keys).map((k) => [k, (next[k] || '').trim()]));
+  if (Object.keys(keys).some((k) => clean[k] !== keys[k])) cache = null;
+  Object.assign(keys, clean);
 }
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const OPENROUTER_BASE = 'https://openrouter.ai/api/v1';
+
+// Groq and Cerebras speak the OpenAI format; both have free plans (no card needed).
+const COMPAT = {
+  groq: { base: 'https://api.groq.com/openai/v1', label: 'Groq' },
+  cerebras: { base: 'https://api.cerebras.ai/v1', label: 'Cerebras' },
+};
+// Speech, safety classifiers and agent systems aren't chat models.
+const COMPAT_SKIP = /(whisper|tts|playai|orpheus|guard|safeguard|distil|compound|embed|rerank)/i;
 
 // Gemini models that aren't chat models (speech, images, video, music, embeddings, agents...).
 const GEMINI_SKIP = /(tts|image|imagen|embedding|aqa|veo|lyria|robotics|computer-use|transcribe|antigravity|deep-research|live|audio|nano-banana|omni)/i;
@@ -23,13 +31,15 @@ const geminiThinks = (name) => /^gemini-(?:[3-9]|2\.5|flash|pro)/i.test(name);
 
 export const hasGemini = () => Boolean(keys.gemini);
 export const hasOpenRouter = () => Boolean(keys.openrouter);
+/** Is there a key for this provider ('gemini' | 'openrouter' | 'groq' | 'cerebras')? */
+export const hasKey = (provider) => Boolean(keys[provider]);
 
 export function parseModelId(id) {
-  const m = /^(gemini|openrouter):(.+)$/.exec(id || '');
+  const m = /^(gemini|openrouter|groq|cerebras):(.+)$/.exec(id || '');
   if (!m) return null;
   const [, provider, name] = m;
   if (provider === 'gemini' && !/^[\w.\-]+$/.test(name)) return null;
-  if (provider === 'openrouter' && !/^[\w.\-\/:~]+$/.test(name)) return null;
+  if (provider !== 'gemini' && !/^[\w.\-\/:~]+$/.test(name)) return null;
   return { provider, name };
 }
 
@@ -87,27 +97,82 @@ async function openRouterCatalog() {
     .sort((a, b) => b.created - a.created);
 }
 
+/** "meta-llama/llama-4-scout-17b-16e-instruct" → "Llama 4 Scout 17B 16E Instruct" */
+export function prettyModelName(id) {
+  const words = id.split('/').pop().replace(/[-_]+/g, ' ').trim().split(/\s+/);
+  const special = { gpt: 'GPT', oss: 'OSS', qwq: 'QwQ', glm: 'GLM', ai: 'AI', it: 'IT' };
+  return words
+    .map((w) => {
+      const lw = w.toLowerCase();
+      if (special[lw]) return special[lw];
+      if (/^\d+(\.\d+)?[bkm]$/i.test(w)) return w.toUpperCase();
+      if (/^\d+e$/i.test(w)) return w.toUpperCase();
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    })
+    .join(' ')
+    .replace(/^GPT OSS/, 'GPT-OSS');
+}
+
+async function compatCatalog(provider) {
+  const { base, label } = COMPAT[provider];
+  let res;
+  try {
+    res = await fetch(`${base}/models`, { headers: { authorization: `Bearer ${keys[provider]}` } });
+  } catch {
+    throw new Error(`${label}: couldn't be reached from this browser`);
+  }
+  if (!res.ok) throw new Error(`${label}: ${await upstreamError(res)}`);
+  const { data = [] } = await res.json();
+  return data
+    .filter((m) => m.id && m.active !== false && !COMPAT_SKIP.test(m.id))
+    .map((m) => ({
+      id: `${provider}:${m.id}`,
+      provider,
+      name: m.id,
+      label: prettyModelName(m.id),
+      context: m.context_window || m.context_length || null,
+      vision: provider === 'groq' && /llama-4|vision|scout|maverick/i.test(m.id),
+      pdf: false, // PDFs reach these models only as extracted text
+      thinking: /gpt-oss|qwen-?3|deepseek-r1|reason|think|qwq|magistral/i.test(m.id),
+      search: false,
+      created: m.created || 0,
+    }))
+    .sort((a, b) => b.created - a.created);
+}
+
 // Picks a sensible starting set when the user hasn't chosen models yet.
-function pickDefaults(google, openrouter) {
+function pickDefaults(google, openrouter, groq = [], cerebras = []) {
   const g = google.filter((m) => !m.preview);
   const pick = (re) => g.find((m) => re.test(m.name))?.id;
   const ids = [pick(/^gemini-flash-latest$/) || pick(/^gemini-[\d.]+-flash$/), pick(/^gemini-flash-lite-latest$/) || pick(/flash-lite$/), pick(/^gemma-.*-it$/)];
   ids.push(...openrouter.slice(0, 2).map((m) => m.id));
+  ids.push(...providerDefaults(groq), ...providerDefaults(cerebras));
   return ids.filter(Boolean);
+}
+
+/** Two good starting models for Groq or Cerebras: a strong general one and a fast one. */
+function providerDefaults(list) {
+  const pick = (re) => list.find((m) => re.test(m.name))?.id;
+  const ids = [pick(/gpt-oss-120b/) || pick(/llama-3\.3-70b/) || pick(/70b|120b|235b/), pick(/llama-?3\.1-8b|8b-instant/) || pick(/scout/)];
+  return [...new Set(ids.filter(Boolean))];
 }
 
 let cache = null;
 
 export async function catalog() {
   if (cache && cache.expires > Date.now()) return cache.value;
-  const [g, o] = await Promise.allSettled([hasGemini() ? geminiCatalog() : [], hasOpenRouter() ? openRouterCatalog() : []]);
-  const google = g.status === 'fulfilled' ? g.value : [];
-  const openrouter = o.status === 'fulfilled' ? o.value : [];
-  const errors = [g, o].filter((r) => r.status === 'rejected').map((r) => r.reason.message);
+  const results = await Promise.allSettled([
+    hasGemini() ? geminiCatalog() : [],
+    hasOpenRouter() ? openRouterCatalog() : [],
+    keys.groq ? compatCatalog('groq') : [],
+    keys.cerebras ? compatCatalog('cerebras') : [],
+  ]);
+  const [google, openrouter, groq, cerebras] = results.map((r) => (r.status === 'fulfilled' ? r.value : []));
+  const errors = results.filter((r) => r.status === 'rejected').map((r) => r.reason.message);
   const value = {
-    providers: { google: hasGemini(), openrouter: hasOpenRouter() },
-    models: [...google, ...openrouter],
-    defaults: pickDefaults(google, openrouter),
+    providers: { google: hasGemini(), openrouter: hasOpenRouter(), groq: hasKey('groq'), cerebras: hasKey('cerebras') },
+    models: [...google, ...openrouter, ...groq, ...cerebras],
+    defaults: pickDefaults(google, openrouter, groq, cerebras),
     errors,
   };
   if (errors.length === 0) cache = { value, expires: Date.now() + 10 * 60 * 1000 };
@@ -160,7 +225,90 @@ function withInstructionsInFirstUser(messages, instructions) {
 
 // Opens a streaming request. Resolves to { ok: true, events } or { ok: false, status, message }.
 export async function openStream({ provider, name }, messages, { instructions, search, signal }) {
-  return provider === 'gemini' ? openGemini(name, messages, instructions, search, signal) : openOpenRouter(name, messages, instructions, signal);
+  if (provider === 'gemini') return openGemini(name, messages, instructions, search, signal);
+  if (COMPAT[provider]) return openCompat(provider, name, messages, instructions, signal);
+  return openOpenRouter(name, messages, instructions, signal);
+}
+
+// Groq / Cerebras: OpenAI-style messages. They can't take PDFs, and Cerebras takes no images, so
+// those become a short note (routing normally sends such messages to a model that can read them).
+function toCompat(messages, vision) {
+  return messages.map((m) => {
+    if (m.role === 'assistant') return { role: 'assistant', content: m.text || ' ' };
+    const files = m.files || [];
+    if (!files.length) return { role: 'user', content: m.text || ' ' };
+    const content = [];
+    for (const f of files) {
+      if (f.kind === 'text' || f.text) content.push({ type: 'text', text: fileBlock({ ...f, text: f.text || '' }) });
+      else if (f.kind === 'image' && vision) content.push({ type: 'image_url', image_url: { url: `data:${f.mime};base64,${f.data}` } });
+      else content.push({ type: 'text', text: `[Attached ${f.kind === 'image' ? 'image' : 'PDF'} "${f.name}" — this model can't read it]` });
+    }
+    content.push({ type: 'text', text: m.text || ' ' });
+    // Text-only models take plain strings.
+    return { role: 'user', content: content.every((c) => c.type === 'text') ? content.map((c) => c.text).join('\n\n') : content };
+  });
+}
+
+async function openCompat(provider, name, messages, instructions, signal) {
+  const { base } = COMPAT[provider];
+  const vision = provider === 'groq' && /llama-4|vision|scout|maverick/i.test(name);
+  const res = await fetch(`${base}/chat/completions`, {
+    method: 'POST',
+    signal,
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${keys[provider]}` },
+    body: JSON.stringify({ model: name, stream: true, messages: [{ role: 'system', content: instructions }, ...toCompat(messages, vision)] }),
+  });
+  if (!res.ok) return { ok: false, status: res.status, ...(await readError(res)) };
+  return { ok: true, events: compatEvents(res.body) };
+}
+
+/** Splits streamed text into thinking and answer when a model writes <think>…</think> inline. */
+function thinkSplitter() {
+  let inThink = false;
+  let buf = '';
+  return (chunk, flush = false) => {
+    buf += chunk;
+    const out = [];
+    for (;;) {
+      const tag = inThink ? '</think>' : '<think>';
+      const i = buf.indexOf(tag);
+      if (i >= 0) {
+        if (i) out.push({ t: inThink ? 'think' : 'text', text: buf.slice(0, i) });
+        buf = buf.slice(i + tag.length);
+        inThink = !inThink;
+        if (!inThink) buf = buf.replace(/^\s+/, '');
+        continue;
+      }
+      // Hold back what could be the start of a tag split across chunks.
+      let keep = 0;
+      if (!flush) for (let k = Math.min(tag.length - 1, buf.length); k > 0; k--) if (tag.startsWith(buf.slice(-k))) { keep = k; break; }
+      const emit = buf.slice(0, buf.length - keep);
+      if (emit) out.push({ t: inThink ? 'think' : 'text', text: emit });
+      buf = buf.slice(buf.length - keep);
+      return out;
+    }
+  };
+}
+
+async function* compatEvents(body) {
+  const split = thinkSplitter();
+  for await (const d of readSSE(body)) {
+    if (d.error) {
+      const text = d.error.message || 'The provider returned an error.';
+      const code = Number(d.error.code) || (/rate|limit|quota/i.test(text) ? 429 : 500);
+      yield { t: 'error', text, status: code, limit: code === 429 ? parseLimit(d.error, text) : null };
+      return;
+    }
+    const usage = d.usage || d.x_groq?.usage;
+    if (usage) yield { t: 'usage', input: usage.prompt_tokens || 0, output: usage.completion_tokens || 0 };
+    const choice = d.choices?.[0];
+    const delta = choice?.delta || {};
+    if (delta.reasoning) yield { t: 'think', text: delta.reasoning };
+    if (delta.reasoning_content) yield { t: 'think', text: delta.reasoning_content };
+    if (delta.content) yield* split(delta.content);
+    if (choice?.finish_reason === 'length') yield { t: 'notice', text: 'The reply hit the length limit. Say "continue" for the rest.' };
+  }
+  yield* split('', true);
 }
 
 async function openGemini(name, messages, instructions, search, signal) {
@@ -291,10 +439,11 @@ export async function complete({ provider, name }, prompt, { maxTokens = 256, si
     if (info && d.usageMetadata) Object.assign(info, { input: d.usageMetadata.promptTokenCount || 0, output: (d.usageMetadata.candidatesTokenCount || 0) + (d.usageMetadata.thoughtsTokenCount || 0) });
     return (d.candidates?.[0]?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text).join('');
   }
-  const res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
+  const compat = COMPAT[provider];
+  const res = await fetch(`${compat ? compat.base : OPENROUTER_BASE}/chat/completions`, {
     method: 'POST',
     signal,
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${keys.openrouter}` },
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${compat ? keys[provider] : keys.openrouter}` },
     body: JSON.stringify({ model: name, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }),
   });
   if (!res.ok) {
@@ -303,7 +452,8 @@ export async function complete({ provider, name }, prompt, { maxTokens = 256, si
   }
   const d = await res.json();
   if (info && d.usage) Object.assign(info, { input: d.usage.prompt_tokens || 0, output: d.usage.completion_tokens || 0 });
-  return d.choices?.[0]?.message?.content || null;
+  // Some models write their thinking inline; only the answer is wanted here.
+  return (d.choices?.[0]?.message?.content || '').replace(/<think>[\s\S]*?(<\/think>|$)/g, '').trim() || null;
 }
 
 // ---------------------------------------------------------------- Key safety

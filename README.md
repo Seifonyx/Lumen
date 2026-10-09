@@ -1,7 +1,7 @@
 # Model Router
 
-A private, phone-friendly AI chat that brings free models from **Google AI Studio (Gemini)** and
-**OpenRouter** together in one place, and switches to another model automatically when one hits its
+A private, phone-friendly AI chat that brings free models from **Google AI Studio (Gemini)**,
+**OpenRouter**, **Groq** and **Cerebras** together in one place, and switches to another model automatically when one hits its
 free limit. It reads your files and creates real Word, Excel, PowerPoint and PDF documents.
 
 Live at **https://model-router.web.app** (Firebase project `the-model-router`).
@@ -14,7 +14,7 @@ Live at **https://model-router.web.app** (Firebase project `the-model-router`).
 - **Auto routing**: picks the best enabled model for each message (images, long documents, code, maths, web search, files, Arabic, quick replies) and saves the scarce Pro limits for heavy work. A manually chosen model is kept unless it can't handle the message.
 - **Automatic switching**: if a model hits its limit, errors, hangs (no response in 45 s), returns nothing or is blocked, the next model answers; a rejected key skips that provider's other models.
 - **Usage meter** (Settings → Usage): requests and tokens per model today, daily limits learned from the providers, and models at their limit skipped until they reset. Shared across devices.
-- **Model manager**: browse every free Gemini and OpenRouter model and choose which appear (Settings → Models).
+- **Model manager**: browse every free Gemini, OpenRouter, Groq and Cerebras model and choose which appear (Settings → Models).
 - **Attachments**: PDF, Word, Excel, PowerPoint, images (incl. camera), CSV and text files; drag & drop or paste.
 - **Creates files** with preview and save:
   - Word: cover page, headers, page numbers, coloured headings, tables, callouts, Arabic right-to-left.
@@ -30,7 +30,7 @@ Live at **https://model-router.web.app** (Firebase project `the-model-router`).
 
 ## How it works
 
-Everything runs in the browser. The app calls Google AI Studio and OpenRouter directly with the
+Everything runs in the browser. The app calls Google AI Studio, OpenRouter, Groq and Cerebras directly with the
 signed-in user's own keys (`src/lib/ai/`). Firebase provides hosting, Google sign-in and Firestore:
 
 - `modelRouter/{uid}`: API keys and shared settings

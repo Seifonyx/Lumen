@@ -84,13 +84,15 @@ export const signOutUser = () => signOut(auth);
 export interface ApiKeys {
   gemini: string;
   openrouter: string;
+  groq: string;
+  cerebras: string;
 }
 
 const keysDoc = (uid: string) => doc(db, 'modelRouter', uid);
 
 // A copy of keys and settings stays on the device so the app also opens without a connection.
 const localKey = (uid: string) => `mr.account.${uid}`;
-type Account = { geminiKey?: string; openrouterKey?: string; settings?: Record<string, unknown> };
+type Account = { geminiKey?: string; openrouterKey?: string; groqKey?: string; cerebrasKey?: string; settings?: Record<string, unknown> };
 function localAccount(uid: string): Account | null {
   try {
     return JSON.parse(localStorage.getItem(localKey(uid)) || 'null');
@@ -132,7 +134,7 @@ async function fetchAccount(uid: string): Promise<Account> {
     const snap = (await Promise.race([getDoc(keysDoc(uid)), timeout])) as DocumentSnapshot;
     quota.count('reads');
     const d = (snap.data() || {}) as Account;
-    keepLocal(uid, { geminiKey: d.geminiKey || '', openrouterKey: d.openrouterKey || '', settings: d.settings });
+    keepLocal(uid, { geminiKey: d.geminiKey || '', openrouterKey: d.openrouterKey || '', groqKey: d.groqKey || '', cerebrasKey: d.cerebrasKey || '', settings: d.settings });
     return d;
   } catch (e) {
     // Not invited: never fall back to the saved copy.
@@ -143,7 +145,7 @@ async function fetchAccount(uid: string): Promise<Account> {
 
 export async function loadKeys(uid: string): Promise<ApiKeys> {
   const d = await readAccount(uid);
-  return { gemini: d.geminiKey || '', openrouter: d.openrouterKey || '' };
+  return { gemini: d.geminiKey || '', openrouter: d.openrouterKey || '', groq: d.groqKey || '', cerebras: d.cerebrasKey || '' };
 }
 
 /** Settings shared across devices (model list, instructions, appearance). */
@@ -159,6 +161,7 @@ export async function saveRemoteSettings(uid: string, settings: object): Promise
 
 export async function saveKeys(uid: string, keys: ApiKeys): Promise<void> {
   quota.count('writes');
-  keepLocal(uid, { geminiKey: keys.gemini.trim(), openrouterKey: keys.openrouter.trim() });
-  await setDoc(keysDoc(uid), { geminiKey: keys.gemini.trim(), openrouterKey: keys.openrouter.trim(), updatedAt: serverTimestamp() }, { merge: true });
+  const fields = { geminiKey: keys.gemini.trim(), openrouterKey: keys.openrouter.trim(), groqKey: keys.groq.trim(), cerebrasKey: keys.cerebras.trim() };
+  keepLocal(uid, fields);
+  await setDoc(keysDoc(uid), { ...fields, updatedAt: serverTimestamp() }, { merge: true });
 }

@@ -37,6 +37,8 @@ export interface RoutePlan {
 export interface Task {
   image: boolean;
   pdf: boolean;
+  /** a PDF that has to be read as a file (no extracted text) */
+  rawPdf: boolean;
   code: boolean;
   reasoning: boolean;
   files: boolean;
@@ -65,12 +67,13 @@ export function analyze(input: Pick<RouteInput, 'text' | 'files' | 'conversation
   const { text, files } = input;
   const image = files.some((f) => f.kind === 'image');
   const pdf = files.some((f) => f.kind === 'pdf');
+  const rawPdf = files.some((f) => f.kind === 'pdf' && !f.text);
   const code = CODE.test(text) || files.some((f) => /\.(js|ts|py|java|c|cpp|cs|go|rs|rb|php|sql|css|html?)$/i.test(f.name));
   const reasoning = REASONING.test(text);
   const wantsFile = FILES.test(text) && /\b(make|create|build|generate|write|export|give me|turn|convert|prepare)\b|اعمل|اعملي|أنشئ|انشئ|حول|جهز|اكتب/i.test(text);
   const long = input.conversationTokens > 30_000;
   const quick = !image && !pdf && !files.length && !code && !reasoning && !wantsFile && !long && text.length < 280;
-  return { image, pdf, code, reasoning, files: wantsFile, arabic: hasRtl(text), long, quick, search: input.search };
+  return { image, pdf, rawPdf, code, reasoning, files: wantsFile, arabic: hasRtl(text), long, quick, search: input.search };
 }
 
 /** Name-based hints about a model's size and specialities. */
@@ -81,6 +84,8 @@ function traits(m: ModelInfo) {
   const light = /(^|[-/:._])(lite|mini|nano|small|tiny|[1-9]b)([-/:._]|$)/.test(n);
   return {
     gemini: m.provider === 'google' && !/gemma/.test(n),
+    // Groq and Cerebras answer in a fraction of a second.
+    fast: m.provider === 'groq' || m.provider === 'cerebras',
     gemma: /gemma/.test(n),
     power: strong ? 3 : light ? 1 : 2,
     coder: /coder|codestral|devstral|code/.test(n),
@@ -110,6 +115,7 @@ function score(m: ModelInfo, task: Task, tokens: number, index: number, total: n
   if (m.preview) s -= 0.5;
   if (task.image) s += m.vision ? 4 : -50;
   if (task.pdf && t.gemini) s += 2;
+  if (task.rawPdf && m.pdf === false) s -= 50;
   if (task.search) s += m.search ? 6 : -2;
   if (task.code) s += (t.coder ? 4 : 0) + (t.gemini ? 1 : 0);
   if (task.reasoning) s += t.reasoner ? 3 : 0;
@@ -117,7 +123,7 @@ function score(m: ModelInfo, task: Task, tokens: number, index: number, total: n
   if (task.arabic) s += t.gemini ? 2 : t.gemma ? 1 : 0;
   if (task.long) s += (m.context || 0) >= 500_000 ? 3 : 0;
   // Save the scarce "Pro" limits for when they matter.
-  if (task.quick) s += t.power === 1 ? 2 : t.power === 2 ? 1.5 : -2;
+  if (task.quick) s += (t.power === 1 ? 2 : t.power === 2 ? 1.5 : -2) + (t.fast ? 1.5 : 0);
   if (m.context && tokens > m.context * 0.85) s -= 100;
   if (left !== null && left <= 3) s -= 3;
   return s;
@@ -127,6 +133,7 @@ function score(m: ModelInfo, task: Task, tokens: number, index: number, total: n
 function capable(m: ModelInfo | undefined, task: Task, tokens: number): string | null {
   if (!m) return null;
   if (task.image && !m.vision) return "can't read images";
+  if (task.rawPdf && m.pdf === false) return "can't read PDFs";
   if (m.context && tokens > m.context * 0.95) return 'is too small for this much text';
   return null;
 }

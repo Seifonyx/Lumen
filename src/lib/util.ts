@@ -98,3 +98,12 @@ export const modelShortName = (id?: string) => (id ? id.split(':').slice(1).join
 /** Apple keyboards show ⌘, others Ctrl. */
 export const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 export const modKey = isMac ? '⌘' : 'Ctrl ';
+
+/** Display names for model providers, in the order they're shown. */
+export const PROVIDER_NAMES = { google: 'Google', openrouter: 'OpenRouter', groq: 'Groq', cerebras: 'Cerebras' } as const;
+export type ProviderId = keyof typeof PROVIDER_NAMES;
+/** Provider of a model id like "groq:llama-3.3-70b-versatile". */
+export const providerOfId = (id: string): ProviderId => {
+  const p = id.split(':')[0];
+  return p === 'gemini' ? 'google' : p === 'groq' || p === 'cerebras' ? p : 'openrouter';
+};

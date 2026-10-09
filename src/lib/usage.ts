@@ -7,7 +7,8 @@ import { doc, increment, onSnapshot, setDoc, type Unsubscribe } from 'firebase/f
 import { db } from './firebase';
 import { quota } from './quota';
 
-export type Provider = 'gemini' | 'openrouter';
+export type Provider = 'gemini' | 'openrouter' | 'groq' | 'cerebras';
+const PROVIDERS: Provider[] = ['gemini', 'openrouter', 'groq', 'cerebras'];
 export interface LimitInfo {
   scope: 'day' | 'minute' | 'unknown';
   quota?: number;
@@ -32,10 +33,13 @@ export interface UsageView {
   geminiResetAt: number;
 }
 
-// Google's free quotas reset at midnight Pacific time; OpenRouter's at midnight UTC.
-const TZ: Record<Provider, string> = { gemini: 'America/Los_Angeles', openrouter: 'UTC' };
+// Google's free quotas reset at midnight Pacific time; OpenRouter's, Groq's and Cerebras's at midnight UTC.
+const TZ: Record<Provider, string> = { gemini: 'America/Los_Angeles', openrouter: 'UTC', groq: 'UTC', cerebras: 'UTC' };
 
-export const providerOf = (id: string): Provider => (id.startsWith('gemini:') ? 'gemini' : 'openrouter');
+export const providerOf = (id: string): Provider => {
+  const p = id.split(':')[0] as Provider;
+  return PROVIDERS.includes(p) ? p : 'openrouter';
+};
 const enc = (id: string) => id.replace(/[^A-Za-z0-9]/g, '_');
 
 export function dayKey(p: Provider, now = new Date()) {
@@ -60,7 +64,7 @@ type DayDoc = {
 type QuotaDoc = Record<string, { id: string; quota: number }>;
 
 export class UsageTracker {
-  private days: Record<Provider, DayDoc> = { gemini: {}, openrouter: {} };
+  private days: Record<Provider, DayDoc> = { gemini: {}, openrouter: {}, groq: {}, cerebras: {} };
   private quotas: QuotaDoc = {};
   private shortBlocks = new Map<string, number>();
   private unsubs: Unsubscribe[] = [];
@@ -77,17 +81,31 @@ export class UsageTracker {
     return doc(db, 'modelRouter', this.uid, 'usage', id);
   }
 
+  /** Providers whose daily counts are watched (each costs a Firebase read when the app opens). */
+  private watched = new Set<Provider>(['gemini', 'openrouter']);
+  private dayUnsubs = new Map<Provider, () => void>();
+
+  private watch(p: Provider) {
+    if (this.dayUnsubs.has(p)) return;
+    const unsub = onSnapshot(this.ref(dayKey(p)), (s) => {
+      if (!s.metadata.fromCache && !s.metadata.hasPendingWrites) quota.count('reads');
+      this.days[p] = (s.data() as DayDoc) || {};
+      this.emit();
+    }, () => {});
+    this.dayUnsubs.set(p, unsub);
+  }
+
+  /** Also watch these providers (called once their keys are known, e.g. Groq or Cerebras). */
+  useProviders(ps: Provider[]) {
+    for (const p of ps) {
+      this.watched.add(p);
+      if (this.unsubs.length) this.watch(p);
+    }
+  }
+
   start() {
     this.stop();
-    for (const p of ['gemini', 'openrouter'] as Provider[]) {
-      this.unsubs.push(
-        onSnapshot(this.ref(dayKey(p)), (s) => {
-          if (!s.metadata.fromCache && !s.metadata.hasPendingWrites) quota.count('reads');
-          this.days[p] = (s.data() as DayDoc) || {};
-          this.emit();
-        }, () => {}),
-      );
-    }
+    for (const p of this.watched) this.watch(p);
     this.unsubs.push(
       onSnapshot(this.ref('quotas'), (s) => {
         if (!s.metadata.fromCache && !s.metadata.hasPendingWrites) quota.count('reads');
@@ -107,6 +125,8 @@ export class UsageTracker {
     this.flush();
     this.unsubs.forEach((u) => u());
     this.unsubs = [];
+    this.dayUnsubs.forEach((u) => u());
+    this.dayUnsubs.clear();
     clearTimeout(this.dayTimer);
     this.stopQuota?.();
     this.stopQuota = null;
@@ -182,7 +202,7 @@ export class UsageTracker {
     const models: Record<string, ModelUsage> = {};
     const now = Date.now();
     let orUsed = 0;
-    for (const p of ['gemini', 'openrouter'] as Provider[]) {
+    for (const p of PROVIDERS) {
       for (const m of Object.values(this.days[p].m || {})) {
         models[m.id] = { id: m.id, requests: m.requests || 0, input: m.input || 0, output: m.output || 0, quota: null, blockedUntil: null, blockScope: null };
         if (p === 'openrouter' && m.id.endsWith(':free')) orUsed += m.requests || 0;

@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowLeft, ArrowUp, Boxes, Brain, ChevronRight, Database, Download, ExternalLink, Gauge, KeyRound, Loader2, LogOut, Plus, RefreshCw, Search, Shield, SlidersHorizontal, Star, Trash2, Upload, UserRound, X, type LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { VOICE_LANGS } from '../lib/speech';
-import { saveBlob } from '../lib/util';
+import { PROVIDER_NAMES, saveBlob, type ProviderId } from '../lib/util';
 import { useStore } from '../store';
 import type { Chat, FontSize, ModelInfo, Theme } from '../types';
 import { Badges } from './ModelPicker';
@@ -13,7 +13,7 @@ import PrivacyTab from './PrivacyTab';
 /** Settings sections: id, name, icon, one-line description (shown in the phone menu and as the section intro). */
 const TABS: [string, string, LucideIcon, string][] = [
   ['general', 'General', SlidersHorizontal, 'Appearance, chat behaviour and your account'],
-  ['keys', 'API keys', KeyRound, 'Your free Google AI Studio and OpenRouter keys'],
+  ['keys', 'API keys', KeyRound, 'Your free Gemini, OpenRouter, Groq and Cerebras keys'],
   ['models', 'Models', Boxes, 'Which models you use, their order and Auto'],
   ['usage', 'Usage', Gauge, "Today's requests, limits and resets"],
   ['personalize', 'Personalization', UserRound, 'Instructions every model follows'],
@@ -112,7 +112,7 @@ function ModelsTab() {
               <span className="model-meta">
                 <span className="model-title">{m?.label || id.split(':').slice(1).join(':')}</span>
                 <span className="model-sub">
-                  {m ? (m.provider === 'google' ? 'Google' : 'OpenRouter') : 'Not available right now'}
+                  {m ? PROVIDER_NAMES[m.provider] : 'Not available right now'}
                   {m?.context ? ` · ${ctx(m.context)} context` : ''}
                 </span>
               </span>
@@ -136,10 +136,10 @@ function ModelsTab() {
         <Search size={16} />
         <input type="search" placeholder="Search models (e.g. gemini, deepseek, qwen)" value={query} onChange={(e) => setQuery(e.target.value)} />
       </label>
-      {(['google', 'openrouter'] as const).map((p) =>
+      {(Object.keys(PROVIDER_NAMES) as ProviderId[]).map((p) =>
         catalog?.providers[p] || !catalog ? (
           <div key={p}>
-            <div className="pop-label">{p === 'google' ? 'Google (free tier)' : 'OpenRouter (free models)'}</div>
+            <div className="pop-label">{{ google: 'Google (free tier)', openrouter: 'OpenRouter (free models)', groq: 'Groq (free plan)', cerebras: 'Cerebras (free plan)' }[p]}</div>
             <ul className="model-list add">
               {group(p).length === 0 && <li className="muted small pad">{query ? 'No matches.' : 'All added.'}</li>}
               {group(p).map((m) => (
@@ -156,7 +156,7 @@ function ModelsTab() {
           </div>
         ) : (
           <p key={p} className="muted small">
-            {p === 'google' ? 'Google' : 'OpenRouter'} isn't connected. Add its key under API keys to use its models.
+            {PROVIDER_NAMES[p]} isn't connected. Add its key under API keys to use its models.
           </p>
         ),
       )}
@@ -167,39 +167,50 @@ function ModelsTab() {
   );
 }
 
+const KEY_FIELDS: { id: 'gemini' | 'openrouter' | 'groq' | 'cerebras'; label: string; placeholder: string; link: string; hint: string }[] = [
+  { id: 'gemini', label: 'Google AI Studio (Gemini)', placeholder: 'AIza…', link: 'https://aistudio.google.com/apikey', hint: 'Best all-rounder: reads images and PDFs, searches the web.' },
+  { id: 'openrouter', label: 'OpenRouter', placeholder: 'sk-or-…', link: 'https://openrouter.ai/keys', hint: 'Dozens of free open models (DeepSeek, Qwen, Llama…).' },
+  { id: 'groq', label: 'Groq', placeholder: 'gsk_…', link: 'https://console.groq.com/keys', hint: 'Very fast answers (Llama, GPT-OSS, Qwen). Generous free limits.' },
+  { id: 'cerebras', label: 'Cerebras', placeholder: 'csk-…', link: 'https://cloud.cerebras.ai/platform', hint: 'The fastest replies; about 1 million free tokens a day.' },
+];
+
 function KeysTab() {
   const keys = useStore((s) => s.keys);
   const saveApiKeys = useStore((s) => s.saveApiKeys);
   const toast = useStore((s) => s.toast);
-  const [gemini, setGemini] = useState(keys.gemini);
-  const [openrouter, setOpenrouter] = useState(keys.openrouter);
+  const [draft, setDraft] = useState({ ...keys });
   const [busy, setBusy] = useState(false);
-  const changed = gemini.trim() !== keys.gemini || openrouter.trim() !== keys.openrouter;
+  const changed = KEY_FIELDS.some(({ id }) => draft[id].trim() !== keys[id]);
+  const any = KEY_FIELDS.some(({ id }) => draft[id].trim());
 
   return (
     <div className="settings-section">
       <p className="muted">
-        Your keys are saved privately to your Google account in Firebase, so you only enter them once for all your devices. They're used
-        directly from this app to talk to Google and OpenRouter.
+        Your keys are saved privately to your Google account in Firebase, so you only enter them once for all your devices. They're used directly from this app.
+        Every key is free; add as many as you like — more providers means more free messages and better switching when one is busy.
       </p>
-      <label className="field-block">
-        <span className="setting-label"><KeyRound size={15} /> Google AI Studio (Gemini) key</span>
-        <input type="password" autoComplete="off" spellCheck={false} placeholder="AIza…" value={gemini} onChange={(e) => setGemini(e.target.value)} />
-        <a className="small" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Get a free key <ExternalLink size={12} /></a>
-      </label>
-      <label className="field-block">
-        <span className="setting-label"><KeyRound size={15} /> OpenRouter key (optional)</span>
-        <input type="password" autoComplete="off" spellCheck={false} placeholder="sk-or-…" value={openrouter} onChange={(e) => setOpenrouter(e.target.value)} />
-        <a className="small" href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer">Get a free key <ExternalLink size={12} /></a>
-      </label>
+      {KEY_FIELDS.map(({ id, label, placeholder, link, hint }, i) => (
+        <label key={id} className="field-block">
+          <span className="setting-label">
+            <KeyRound size={15} /> {label} key{i ? ' (optional)' : ''}
+          </span>
+          <input type="password" autoComplete="off" spellCheck={false} placeholder={placeholder} value={draft[id]} onChange={(e) => setDraft({ ...draft, [id]: e.target.value })} />
+          <span className="setting-hint key-hint">
+            {hint}{' '}
+            <a className="small" href={link} target="_blank" rel="noopener noreferrer">
+              Get a free key <ExternalLink size={12} />
+            </a>
+          </span>
+        </label>
+      ))}
       <div>
         <button
           className="btn primary"
-          disabled={busy || !changed || (!gemini.trim() && !openrouter.trim())}
+          disabled={busy || !changed || !any}
           onClick={async () => {
             setBusy(true);
             try {
-              await saveApiKeys({ gemini, openrouter });
+              await saveApiKeys(draft);
               toast('Keys saved. Your models are loading.', 'success');
             } catch (e) {
               toast(`Couldn't save keys: ${(e as Error).message}`, 'error');

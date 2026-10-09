@@ -34,6 +34,24 @@ t('fallbacks contain every other model', { text: 'hello' }, (p) => p.fallbacks.l
 t('manual text-only model + image → rerouted with notice', { selected: 'openrouter:qwen/qwen3-coder:free', text: 'what is this?', files: img }, (p) => p.model !== 'openrouter:qwen/qwen3-coder:free' && /can't read images/.test(p.notice));
 t('manual model that can handle it → kept', { selected: 'openrouter:deepseek/deepseek-r1:free', text: 'hello' }, (p) => p.model === 'openrouter:deepseek/deepseek-r1:free' && !p.notice);
 t('manual small-context model + huge chat → rerouted', { selected: 'openrouter:meta/llama-3.3-8b:free', text: 'continue', conversationTokens: 60_000 }, (p) => p.model !== 'openrouter:meta/llama-3.3-8b:free' && /too small/.test(p.notice));
+// Groq / Cerebras: fastest for quick replies; never sent PDFs they can't read.
+{
+  const G = (id: string, o: any = {}) => ({ ...M(id), provider: id.split(':')[0], vision: false, pdf: false, search: false, thinking: false, context: 131_072, ...o });
+  const cat2 = [M('gemini:gemini-flash-latest'), G('groq:llama-3.3-70b-versatile'), G('groq:llama-3.1-8b-instant'), G('cerebras:gpt-oss-120b', { thinking: true })] as any[];
+  const en2 = cat2.map((m) => m.id);
+  const plan2 = (o: any) => planRoute({ selected: AUTO, enabled: en2, catalog: cat2, text: '', files: [], conversationTokens: 100, search: false, blocked: () => false, left: () => null, ...o });
+  const check2 = (name: string, ok: boolean, p: any) => { if (!ok) fails++; console.log(`${ok ? 'PASS' : 'FAIL'}  ${name} → ${p.model}${p.notice ? ` [${p.notice}]` : ''}`); };
+  let p = plan2({ text: 'thanks! what time zone is Cairo in?' });
+  check2('quick question → Groq/Cerebras (fastest)', /^(groq|cerebras):/.test(p.model), p);
+  const pdf = [{ id: 'p', kind: 'pdf', name: 'labs.pdf', mime: 'application/pdf', size: 90_000, data: 'x' }];
+  p = plan2({ text: 'summarise this', files: pdf });
+  check2('PDF → a model that reads PDFs', p.model.startsWith('gemini:'), p);
+  p = plan2({ selected: 'groq:llama-3.3-70b-versatile', text: 'summarise this', files: pdf });
+  check2('manual Groq + PDF → rerouted with a note', p.model.startsWith('gemini:') && /can't read PDFs/.test(p.notice), p);
+  const textPdf = [{ ...pdf[0], text: 'extracted text' }];
+  p = plan2({ selected: 'groq:llama-3.3-70b-versatile', text: 'summarise this', files: textPdf });
+  check2('PDF already turned into text → Groq is fine', p.model === 'groq:llama-3.3-70b-versatile' && !p.notice, p);
+}
 // Name checks
 import { analyze as _a } from '../../src/lib/routing';
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED');

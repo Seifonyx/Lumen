@@ -10,6 +10,37 @@ document.addEventListener('gesturestart', noZoom);
 document.addEventListener('gesturechange', noZoom);
 document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 
+// Swipe from the left edge to open the chats sidebar.
+let touchStartX = 0;
+let touchStartY = 0;
+let isTrackingEdgeSwipe = false;
+const EDGE_WIDTH = 32;
+const THRESHOLD = 50;
+
+document.addEventListener('touchstart', (e) => {
+  if (e.touches.length !== 1) return;
+  const t = e.touches[0];
+  touchStartX = t.clientX;
+  touchStartY = t.clientY;
+  isTrackingEdgeSwipe = touchStartX <= EDGE_WIDTH;
+}, { passive: true });
+
+document.addEventListener('touchmove', (e) => {
+  if (!isTrackingEdgeSwipe || e.touches.length !== 1) return;
+  const t = e.touches[0];
+  const dx = t.clientX - touchStartX;
+  const dy = Math.abs(t.clientY - touchStartY);
+
+  if (dx > THRESHOLD && dy < 50) {
+    isTrackingEdgeSwipe = false;
+    window.dispatchEvent(new CustomEvent('model-router:swipe-edge'));
+  }
+}, { passive: true });
+
+document.addEventListener('touchend', () => {
+  isTrackingEdgeSwipe = false;
+}, { passive: true });
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

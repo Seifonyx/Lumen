@@ -30,6 +30,14 @@ export default function App() {
 
   // Global shortcuts: Ctrl/Cmd+Shift+O new chat, Ctrl/Cmd+K focus search, Esc stop/close.
   useEffect(() => {
+    const onSwipeEdge = () => {
+      setUi({ sidebarOpen: true });
+    };
+    window.addEventListener('model-router:swipe-edge', onSwipeEdge);
+    return () => window.removeEventListener('model-router:swipe-edge', onSwipeEdge);
+  }, [setUi]);
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       const s = useStore.getState();
@@ -78,3 +86,4 @@ export default function App() {
     </div>
   );
 }
+>>>>>>> REPLACE

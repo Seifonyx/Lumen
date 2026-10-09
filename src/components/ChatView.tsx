@@ -27,6 +27,7 @@ export default function ChatView() {
   const catalog = useStore((s) => s.catalog);
   const syncPaused = useStore((s) => s.firebaseUsage.level === 'paused' && s.authed === true);
   const resetAt = useStore((s) => s.firebaseUsage.resetAt);
+  const online = useStore((s) => s.online);
   const { setUi, newChat, setChatModel } = useStore.getState();
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
@@ -77,6 +78,12 @@ export default function ChatView() {
           <SquarePen size={20} />
         </button>
       </header>
+
+      {!online && (
+        <div className="banner offline" role="status">
+          You're offline. Your chats are all here; sending messages needs a connection.
+        </div>
+      )}
 
       {syncPaused && (
         <div className="banner info" role="status">

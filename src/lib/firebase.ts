@@ -54,34 +54,77 @@ export interface ApiKeys {
 
 const keysDoc = (uid: string) => doc(db, 'modelRouter', uid);
 
-// Keys and settings live in the same document: read it once when both are loaded together.
-let accountRead: { uid: string; at: number; snap: Promise<DocumentSnapshot> } | null = null;
-function readAccount(uid: string) {
-  if (!accountRead || accountRead.uid !== uid || Date.now() - accountRead.at > 5000) {
-    accountRead = { uid, at: Date.now(), snap: getDoc(keysDoc(uid)) };
-    quota.count('reads');
+// A copy of keys and settings stays on the device so the app also opens without a connection.
+const localKey = (uid: string) => `mr.account.${uid}`;
+type Account = { geminiKey?: string; openrouterKey?: string; settings?: Record<string, unknown> };
+function localAccount(uid: string): Account | null {
+  try {
+    return JSON.parse(localStorage.getItem(localKey(uid)) || 'null');
+  } catch {
+    return null;
   }
-  return accountRead.snap;
+}
+function keepLocal(uid: string, patch: Account) {
+  try {
+    localStorage.setItem(localKey(uid), JSON.stringify({ ...(localAccount(uid) || {}), ...patch }));
+  } catch {
+    /* private mode */
+  }
+}
+
+/** Removes this device's copy (on sign-out). */
+export function forgetLocalAccount(uid: string) {
+  try {
+    localStorage.removeItem(localKey(uid));
+  } catch {
+    /* ignore */
+  }
+}
+
+// Keys and settings live in the same document: read it once when both are loaded together.
+let accountRead: { uid: string; at: number; data: Promise<Account> } | null = null;
+function readAccount(uid: string): Promise<Account> {
+  if (!accountRead || accountRead.uid !== uid || Date.now() - accountRead.at > 5000) {
+    accountRead = { uid, at: Date.now(), data: fetchAccount(uid) };
+  }
+  return accountRead.data;
+}
+
+async function fetchAccount(uid: string): Promise<Account> {
+  const saved = localAccount(uid);
+  if (!navigator.onLine && saved) return saved;
+  try {
+    const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(Object.assign(new Error('offline'), { code: 'unavailable' })), saved ? 8000 : 20000));
+    const snap = (await Promise.race([getDoc(keysDoc(uid)), timeout])) as DocumentSnapshot;
+    quota.count('reads');
+    const d = (snap.data() || {}) as Account;
+    keepLocal(uid, { geminiKey: d.geminiKey || '', openrouterKey: d.openrouterKey || '', settings: d.settings });
+    return d;
+  } catch (e) {
+    // Not invited: never fall back to the saved copy.
+    if ((e as { code?: string }).code === 'permission-denied' || !saved) throw e;
+    return saved;
+  }
 }
 
 export async function loadKeys(uid: string): Promise<ApiKeys> {
-  const snap = await readAccount(uid);
-  const d = snap.data() || {};
+  const d = await readAccount(uid);
   return { gemini: d.geminiKey || '', openrouter: d.openrouterKey || '' };
 }
 
 /** Settings shared across devices (model list, instructions, appearance). */
 export async function loadRemoteSettings(uid: string): Promise<Record<string, unknown> | null> {
-  const snap = await readAccount(uid);
-  return (snap.data()?.settings as Record<string, unknown>) || null;
+  return (await readAccount(uid)).settings || null;
 }
 
 export async function saveRemoteSettings(uid: string, settings: object): Promise<void> {
   quota.count('writes');
+  keepLocal(uid, { settings: settings as Record<string, unknown> });
   await setDoc(keysDoc(uid), { settings, updatedAt: serverTimestamp() }, { merge: true });
 }
 
 export async function saveKeys(uid: string, keys: ApiKeys): Promise<void> {
   quota.count('writes');
+  keepLocal(uid, { geminiKey: keys.gemini.trim(), openrouterKey: keys.openrouter.trim() });
   await setDoc(keysDoc(uid), { geminiKey: keys.gemini.trim(), openrouterKey: keys.openrouter.trim(), updatedAt: serverTimestamp() }, { merge: true });
 }

@@ -160,6 +160,10 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
       setUi({ settingsOpen: true, settingsTab: 'memory' });
       return;
     }
+    if (!navigator.onLine) {
+      toast("You're offline — your message is kept here; send it when you're back online.");
+      return;
+    }
     const files = pending.map((p) => p.file!);
     void send(text.trim(), files);
     setText('');

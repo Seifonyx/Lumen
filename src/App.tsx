@@ -6,6 +6,7 @@ import PreviewModal from './components/PreviewModal';
 import SettingsModal from './components/SettingsModal';
 import Sidebar from './components/Sidebar';
 import Toasts from './components/Toasts';
+import UpdateBar from './components/UpdateBar';
 import { useStore } from './store';
 
 export default function App() {
@@ -45,6 +46,7 @@ export default function App() {
       <>
         <Login />
         <Toasts />
+        <UpdateBar />
       </>
     );
   }
@@ -57,6 +59,7 @@ export default function App() {
       <SettingsModal />
       <PreviewModal />
       <Toasts />
+      <UpdateBar />
     </div>
   );
 }

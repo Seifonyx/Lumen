@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { openRouterDailyLimit, setKeys } from './lib/ai/providers.js';
 import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage } from './lib/api';
 import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
-import { loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
+import { forgetLocalAccount, loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
+import { registerServiceWorker } from './pwa/register';
 import { ChatSync } from './lib/sync';
 import { quota, type QuotaView } from './lib/quota';
 import { extractMemoryOps, findMemory, hideMemoryLines, MAX_MEMORIES, memoryInstructions, MemoryStore } from './lib/memory';
@@ -36,6 +37,9 @@ interface State {
   memories: Memory[];
   /** this project's use of Firebase's free daily limits */
   firebaseUsage: QuotaView;
+  online: boolean;
+  /** set when a new version of the app is ready; calling it switches to it */
+  updateReady: (() => void) | null;
   catalogError: string | null;
   settings: Settings;
   chats: Chat[];
@@ -94,6 +98,14 @@ let settingsReady = false;
 let settingsTimer: ReturnType<typeof setTimeout> | undefined;
 /** the shared settings as last saved or loaded */
 let lastSharedSettings = '';
+
+function savedCatalog(): Catalog | null {
+  try {
+    return JSON.parse(localStorage.getItem('mr.catalog') || 'null');
+  } catch {
+    return null;
+  }
+}
 
 const newChatObject = (): Chat => ({ id: uid(), title: 'New chat', createdAt: Date.now(), updatedAt: Date.now(), messages: [] });
 
@@ -403,6 +415,8 @@ export const useStore = create<State>((set, get) => {
     usage: null,
     memories: [],
     firebaseUsage: quota.view(),
+    online: navigator.onLine,
+    updateReady: null,
     catalogError: null,
     settings: loadSettings(),
     chats: [],
@@ -418,6 +432,14 @@ export const useStore = create<State>((set, get) => {
     async init() {
       applyAppearance(get().settings);
       quota.subscribe((firebaseUsage) => set({ firebaseUsage }));
+      registerServiceWorker((apply) => set({ updateReady: apply }));
+      const onNet = () => {
+        set({ online: navigator.onLine });
+        // Back online: refresh the model list if it couldn't load.
+        if (navigator.onLine && get().authed && get().catalogError) void get().loadCatalog();
+      };
+      window.addEventListener('online', onNet);
+      window.addEventListener('offline', onNet);
       try {
         const chats = await db.all();
         set({ chats });
@@ -462,7 +484,7 @@ export const useStore = create<State>((set, get) => {
           set({ authed: true });
           get().toast(`Couldn't load your settings: ${(e as Error).message}`, 'error');
         }
-        await quota.start();
+        void quota.start();
         sync = new ChatSync(user.uid, {
           local: (id) => get().chats.find((c) => c.id === id),
           allLocal: () => get().chats,
@@ -492,6 +514,8 @@ export const useStore = create<State>((set, get) => {
 
     logout() {
       get().stop();
+      const id = get().user?.uid;
+      if (id) forgetLocalAccount(id);
       void signOutUser();
     },
 
@@ -511,7 +535,19 @@ export const useStore = create<State>((set, get) => {
         return;
       }
       try {
-        const catalog = await fetchCatalog();
+        let catalog = await fetchCatalog().catch((e) => {
+          if (navigator.onLine || !savedCatalog()) throw e;
+          return savedCatalog()!;
+        });
+        // Offline: use the list from last time so the app stays usable.
+        if (catalog.errors.length && !navigator.onLine && savedCatalog()) catalog = savedCatalog()!;
+        if (navigator.onLine && !catalog.errors.length) {
+          try {
+            localStorage.setItem('mr.catalog', JSON.stringify(catalog));
+          } catch {
+            /* storage full */
+          }
+        }
         void openRouterDailyLimit().then((n) => usage?.setOpenRouterDaily(n));
         const { settings } = get();
         const known = new Set(catalog.models.map((m) => m.id));

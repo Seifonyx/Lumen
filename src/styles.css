@@ -611,3 +611,7 @@ table.sheet tr.totals td { font-weight: 700; background: #e8ecf2; border-top: 3p
 .fb-row .meter { grid-column: 1 / -1; }
 .setting-hint.warn { color: var(--orange); }
 .banner.info { background: var(--warning-soft); color: var(--text); }
+
+/* ============================================================ Offline & updates */
+.banner.offline { background: var(--gray-soft); }
+.update-bar { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 62px); transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 10px; width: max-content; max-width: calc(100vw - 32px); padding: 8px 8px 8px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-lg); font-size: 0.88rem; }

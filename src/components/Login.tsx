@@ -23,10 +23,16 @@ export default function Login() {
   useEffect(() => {
     const t = setTimeout(() => {
       const e = takeRedirectError();
-      if (e) setError(e);
+      if (e) setError(explain(e));
     }, 300);
     return () => clearTimeout(t);
   }, []);
+
+  // Google's key restriction blocks sign-in from addresses not on its website list (e.g. localhost).
+  const explain = (msg: string) =>
+    /requests-from-referer/.test(msg)
+      ? `Sign-in is blocked from ${location.host}: the Firebase key only allows certain websites. Add ${location.origin}/* to its website list in Google Cloud → Credentials (Browser key), then try again in a few minutes.`
+      : msg;
 
   const submit = async () => {
     setBusy(true);
@@ -34,7 +40,7 @@ export default function Login() {
     try {
       await login();
     } catch (err) {
-      setError((err as Error).message);
+      setError(explain((err as Error).message));
     } finally {
       setBusy(false);
     }

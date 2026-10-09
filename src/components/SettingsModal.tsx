@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowLeft, ArrowUp, Boxes, LayoutGrid, Brain, ChevronRight, Database, Download, ExternalLink, Gauge, KeyRound, Loader2, LogOut, Plus, RefreshCw, Search, Shield, SlidersHorizontal, Star, Trash2, Upload, UserRound, X, type LucideIcon } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, Boxes, Brain, ChevronRight, Database, Download, ExternalLink, Gauge, KeyRound, Loader2, LogOut, Plus, RefreshCw, Search, Shield, SlidersHorizontal, Star, Trash2, Upload, UserRound, X, type LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { VOICE_LANGS } from '../lib/speech';
 import { PROVIDER_NAMES, saveBlob, type ProviderId } from '../lib/util';
@@ -15,8 +15,7 @@ import LayoutsTab from './LayoutsTab';
 const TABS: [string, string, LucideIcon, string][] = [
   ['general', 'General', SlidersHorizontal, 'Appearance, chat behaviour and your account'],
   ['keys', 'API keys', KeyRound, 'Your free Gemini, OpenRouter, Groq and Cerebras keys'],
-  ['models', 'Models', Boxes, 'Which models you use, their order and Auto'],
-  ['layouts', 'Layouts', LayoutGrid, 'Sets of models for coding, everyday, thinking…'],
+  ['models', 'Models', Boxes, 'Your models, their order, Auto and layouts'],
   ['usage', 'Usage', Gauge, "Today's requests, limits and resets"],
   ['personalize', 'Personalization', UserRound, 'Instructions every model follows'],
   ['memory', 'Memory', Brain, 'What models remember about you'],
@@ -165,6 +164,12 @@ function ModelsTab() {
       <p className="muted small legend">
         Icons: <Badges m={{ vision: true } as ModelInfo} /> reads images · <Badges m={{ search: true } as ModelInfo} /> web search · <Badges m={{ thinking: true } as ModelInfo} /> thinks first
       </p>
+
+      <div className="section-head">
+        <h2>Layouts</h2>
+        <span className="muted small">Sets of models for coding, everyday, thinking…</span>
+      </div>
+      <LayoutsTab />
     </div>
   );
 }
@@ -401,7 +406,6 @@ export default function SettingsModal() {
             )}
             {id === 'keys' && <KeysTab />}
             {id === 'models' && <ModelsTab />}
-            {id === 'layouts' && <LayoutsTab />}
             {id === 'usage' && <UsageTab />}
             {id === 'memory' && <MemoryTab Toggle={Toggle} />}
             {id === 'privacy' && <PrivacyTab Toggle={Toggle} Choice={Choice} />}

@@ -4,6 +4,8 @@
 Uses the hosting settings from firebase.json. Auth: an access token in FIREBASE_ACCESS_TOKEN, or
 `gcloud auth print-access-token`, or a proxy that adds credentials for googleapis.com.
 Equivalent CLI command: firebase deploy --only hosting
+With --channel NAME it deploys to a preview channel instead (a separate test address that lasts
+30 days from the last deploy): firebase hosting:channel:deploy NAME
 """
 import gzip, hashlib, json, os, subprocess, sys, urllib.request
 
@@ -25,7 +27,7 @@ def token():
 TOKEN = token()
 
 
-def call(method, url, body=None, data=None, ctype='application/json'):
+def call(method, url, body=None, data=None, ctype='application/json', ok404=False):
     headers = {'content-type': ctype}
     if TOKEN:
         headers['authorization'] = f'Bearer {TOKEN}'
@@ -36,6 +38,8 @@ def call(method, url, body=None, data=None, ctype='application/json'):
             raw = r.read()
             return json.loads(raw) if raw else {}
     except urllib.error.HTTPError as e:
+        if ok404 and e.code == 404:
+            return None
         sys.exit(f'{method} {url} failed: {e.code} {e.read().decode()[:500]}')
 
 
@@ -61,5 +65,13 @@ for i, h in enumerate(sorted(need), 1):
     call('POST', f"{pop['uploadUrl']}/{h}", data=files[by_hash[h]], ctype='application/octet-stream')
 print(f'uploaded {len(need)} of {len(files)} files')
 call('PATCH', f'{API}/{version}?update_mask=status', {'status': 'FINALIZED'})
-rel = call('POST', f'{API}/sites/{SITE}/releases?versionName={version}', {})
-print('released', rel.get('name'), '->', f'https://{SITE}.web.app')
+channel = sys.argv[sys.argv.index('--channel') + 1] if '--channel' in sys.argv else None
+if channel:
+    ttl = {'ttl': f'{30 * 24 * 3600}s'}
+    ch = call('GET', f'{API}/sites/{SITE}/channels/{channel}', ok404=True)
+    ch = call('PATCH', f'{API}/sites/{SITE}/channels/{channel}?update_mask=ttl', ttl) if ch else call('POST', f'{API}/sites/{SITE}/channels?channelId={channel}', ttl)
+    rel = call('POST', f'{API}/sites/{SITE}/channels/{channel}/releases?versionName={version}', {})
+    print('released', rel.get('name'), '->', ch.get('url'))
+else:
+    rel = call('POST', f'{API}/sites/{SITE}/releases?versionName={version}', {})
+    print('released', rel.get('name'), '->', f'https://{SITE}.web.app')

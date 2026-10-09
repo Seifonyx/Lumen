@@ -238,12 +238,12 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
         {chat?.repo && (
           <div className="repo-strip">
             <button type="button" className="repo-chip" onClick={() => setUi({ workspaceOpen: true })} title="Open the repository panel">
-              <GitBranch size={13} /> {chat.repo.repo} <span className="muted">· {chat.repo.branch}</span>
+              <GitBranch size={13} /> <span className="repo-chip-name">{chat.repo.repo}</span> <span className="repo-chip-branch muted">· {chat.repo.branch}</span>
               {Object.keys(chat.changes || {}).length > 0 && <span className="badge">{Object.keys(chat.changes || {}).length}</span>}
             </button>
             {(chat.context || []).map((p) => (
               <span key={p} className="ctx-chip" title={p}>
-                <FileCode2 size={12} /> {p.split('/').pop()}
+                <FileCode2 size={12} /> <span className="ctx-chip-name">{p.split('/').pop()}</span>
                 <button type="button" className="icon-btn xs" aria-label={`Remove ${p} from the chat`} onClick={() => setContext(chat.id, (chat.context || []).filter((x) => x !== p))}>
                   <X size={11} />
                 </button>

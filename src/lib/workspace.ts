@@ -74,6 +74,40 @@ export async function filesAsAttachments(chat: Chat, paths: string[]): Promise<{
 // Files that only cost tokens in the overview.
 const NOISE = /(^|\/)(\.git|node_modules|dist|build|\.next|coverage|vendor)\/|\.(png|jpe?g|gif|webp|ico|svg|woff2?|ttf|eot|otf|mp[34]|mov|zip|gz|pdf|lock)$|(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$/i;
 
+/** Repository files the model has already been given in this chat (attached, loaded or kept in context). */
+export function seenPaths(chat: Chat): Set<string> {
+  const seen = new Set(chat.context || []);
+  for (const m of chat.messages) if (m.role === 'user') for (const f of m.files || []) seen.add(f.name);
+  return seen;
+}
+
+/**
+ * Repository files a reply names, e.g. "please share `src/App.tsx` and store.ts". Matches exact paths,
+ * paths ending in what was written (components/App.tsx) and file names that only one file has.
+ */
+export function mentionedPaths(text: string, all: TreeEntry[]): string[] {
+  const paths = all.map((f) => f.path).filter((p) => !NOISE.test(p));
+  const set = new Set(paths);
+  const out: string[] = [];
+  const prose = text.replace(/(`{3,}|~{3,})[\s\S]*?\1/g, ' '); // not inside code blocks
+  for (const m of prose.matchAll(/[\w@~.\-/]*[\w-]\.[A-Za-z][A-Za-z0-9]{0,7}\b/g)) {
+    const t = m[0].replace(/^\.?\//, '').replace(/[.,:;]+$/, '');
+    if (!t || /^https?:|^www\./i.test(t) || t.length < 3) continue;
+    let hit = set.has(t) ? t : '';
+    if (!hit) {
+      const ends = paths.filter((p) => p.endsWith(`/${t}`));
+      if (ends.length === 1) hit = ends[0];
+    }
+    if (hit && !out.includes(hit)) out.push(hit);
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
+/** A reply that asks the user for code or files instead of reading them itself. */
+export const asksForFiles = (text: string) =>
+  /\b(please|could you|can you|kindly)\s+(share|provide|send|paste|upload|show)|\b(need|want|have) to (see|look at|read|check)|\b(contents?|code) of\b|\bshare (the|your)\b|\bpaste (the|your)\b|\bwhich file/i.test(text);
+
 /** Instructions for a chat that works on a repository. */
 export function workspaceInstructions(r: RepoLink, all: TreeEntry[], truncated: boolean, context: string[]): string {
   const listed = all.filter((f) => !NOISE.test(f.path));
@@ -91,7 +125,8 @@ export function workspaceInstructions(r: RepoLink, all: TreeEntry[], truncated: 
     `<repository_files>\n${list}${more > 0 ? `…and ${more} more\n` : ''}</repository_files>`,
     context.length ? `The user keeps these files attached: ${context.join(', ')}.` : '',
     'Attached files appear inside <file name="path"> tags and are the current versions (including edits not committed yet).',
-    "To see a file that isn't attached, end your reply with one line per file like [[read: path/to/file]] (up to 8, exact paths from the list) and write nothing after them; the app loads them and you continue. Read a file before editing it — never guess its contents.",
+    "## Reading files\nYou can read any file in the list yourself — never ask the user to paste or share code. To read files that aren't attached, end your reply with one line per file, exactly like this, and write nothing after them:\n[[read: src/App.tsx]]\n[[read: package.json]]\nUse exact paths from the list (up to 8 at a time). The app loads them and you continue. Read a file before editing it — never guess its contents.",
+    '## Changing files',
     'To change code, use edit blocks fenced with four backticks:',
     '````edit:path/to/file.ext\n<<<<<<< SEARCH\nexact lines copied from the current file\n=======\nthe new lines\n>>>>>>> REPLACE\n````',
     '- SEARCH must match the current file exactly, including indentation, and be unique: a few lines around the change, not the whole file. Several SEARCH/REPLACE pairs can go in one block.',

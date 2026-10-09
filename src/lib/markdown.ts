@@ -27,7 +27,7 @@ import yaml from 'highlight.js/lib/languages/yaml';
 import katex from 'katex';
 import { Marked, type Token, type Tokens } from 'marked';
 import { escapeHtml } from './util';
-import { EDIT_FENCE } from './edits';
+import { EDIT_FENCE, replaceReadRequests } from './edits';
 
 Object.entries({ bash, c, cpp, csharp, css, go, java, javascript, json, kotlin, markdown, php, python, r, ruby, rust, sql, swift, typescript, xml, yaml }).forEach(
   ([name, lang]) => hljs.registerLanguage(name, lang),
@@ -133,7 +133,7 @@ const closed = (raw: string) => /\n\s*(`{3,}|~{3,})\s*$/.test(raw.trimEnd());
 /** Splits a reply into Markdown parts and special file/chart blocks. */
 export function segments(text: string, streaming: boolean): Segment[] {
   // A model asking to read repository files: [[read: src/app.ts]] → "📂 Reading `src/app.ts`"
-  text = text.replace(/\[\[\s*read\s*:\s*([^\]\n]+?)\s*\]\]/gi, (_, p) => `📂 Reading \`${p.trim()}\``);
+  text = replaceReadRequests(text, (p) => `📂 Reading \`${p}\``);
   const tokens = marked.lexer(text);
   const out: Segment[] = [];
   let buffer: Token[] = [];

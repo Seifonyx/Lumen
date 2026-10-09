@@ -76,7 +76,7 @@ async function device(browser, mobile) {
 
   // 1st message: 3.5 is at its daily limit -> switches, learns limit 20, blocks it.
   await A.page.click('.model-button');
-  await A.page.click('.models-pop .pop-title:text-is("gemini-3.5-flash")');
+  await A.page.click('.models-pop .mp-title:text-is("gemini-3.5-flash")');
   await A.page.fill('.composer textarea', 'first');
   await A.page.click('.send-btn');
   await A.page.waitForSelector('.msg.assistant .model-tag', { timeout: 15000 });
@@ -94,7 +94,7 @@ async function device(browser, mobile) {
 
   // OpenRouter request counts toward the shared pool.
   await A.page.click('.model-button');
-  await A.page.click('.models-pop .pop-title:text-is("DeepSeek")');
+  await A.page.click('.models-pop .mp-title:text-is("DeepSeek")');
   await A.page.fill('.composer textarea', 'third');
   await A.page.click('.send-btn');
   await A.page.waitForSelector('.msg.assistant >> nth=2 >> .model-tag', { timeout: 15000 });

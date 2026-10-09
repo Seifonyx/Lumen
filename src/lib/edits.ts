@@ -162,9 +162,28 @@ export function unifiedDiff(before: string, after: string, context = 3): DiffLin
   return out;
 }
 
-/** "Please read this" requests in a reply: [[read: src/app.ts]] */
+// Ways models ask to read a file: [[read: a.ts]] (the one we ask for), and the variants free models
+// write instead: [read: a.ts], [[read a.ts]], <read>a.ts</read>, read_file("a.ts"), READ: `a.ts`.
+const READ_PATTERNS = [
+  /\[\[?\s*read(?:_?file)?\s*(?::\s*|\s+)([^\]\n]+?)\s*\]\]?/gi,
+  /<read(?:_file)?>\s*([^<\n]+?)\s*<\/read(?:_file)?>/gi,
+  /\bread_?file\(\s*["'`]([^"'`\n]+)["'`]\s*\)/gi,
+  /^\s*READ\s*:\s*`?([^`\n]+?)`?\s*$/gm,
+];
+// A file path: no spaces, and a folder or an extension ("[read more]" is not one).
+const looksLikePath = (p: string) => Boolean(p) && !/\s/.test(p) && /[./]/.test(p);
+
+/** "Please read this" requests in a reply: [[read: src/app.ts]] and common variants. */
 export function readRequests(text: string): string[] {
   const out = new Set<string>();
-  for (const m of text.matchAll(/\[\[\s*read\s*:\s*([^\]\n]+?)\s*\]\]/gi)) out.add(cleanPath(m[1]));
+  for (const re of READ_PATTERNS) for (const m of text.matchAll(re)) {
+    const p = cleanPath(m[1]);
+    if (looksLikePath(p)) out.add(p);
+  }
   return [...out].slice(0, 8);
+}
+
+/** The same requests, for display: the text with each one replaced. */
+export function replaceReadRequests(text: string, fn: (path: string) => string): string {
+  return READ_PATTERNS.reduce((t, re) => t.replace(re, (all, p) => (looksLikePath(cleanPath(p)) ? fn(cleanPath(p)) : all)), text);
 }

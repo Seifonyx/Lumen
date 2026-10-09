@@ -7,7 +7,7 @@ import { registerServiceWorker } from './pwa/register';
 import { ChatSync } from './lib/sync';
 import { commitChanges as ghCommit, openPullRequest, setGitHubToken } from './lib/github';
 import { applyEdit, isApplied, readRequests, type Edit } from './lib/edits';
-import { currentFile, filesAsAttachments, fingerprint, forgetRepo, originalFile, repoTree, workspaceInstructions } from './lib/workspace';
+import { asksForFiles, currentFile, filesAsAttachments, fingerprint, forgetRepo, mentionedPaths, originalFile, repoTree, seenPaths, workspaceInstructions } from './lib/workspace';
 import { Masker, scan } from './lib/privacy';
 import { quota, type QuotaView } from './lib/quota';
 import { extractMemoryOps, findMemory, hideMemoryLines, MAX_MEMORIES, memoryInstructions, MemoryStore } from './lib/memory';
@@ -78,6 +78,8 @@ interface State {
   setContext(chatId: string, paths: string[]): void;
   saveChange(chatId: string, path: string, content: string | null): Promise<void>;
   revertChange(chatId: string, path: string): void;
+  /** give the model repository files it named and let it continue */
+  loadRepoFiles(chatId: string, paths: string[]): Promise<void>;
   applyEdits(chatId: string, edits: Edit[]): Promise<{ applied: number; failed: string[] }>;
   commitWork(chatId: string, o: { message: string; target: string; pullRequest: boolean }): Promise<{ url: string; prUrl?: string }>;
 
@@ -461,9 +463,15 @@ export const useStore = create<State>((set, get) => {
     }
 
     // Coding workspace: the model asked to read files ([[read: path]]) → load them and let it continue.
+    // Models that ask for files in words instead ("please share src/App.tsx") get them loaded too.
     const now = get().chats.find((c) => c.id === chatId);
     if (now?.repo && reply.status === 'done' && !/`{3,}\s*(edit|delete)[:\s]/i.test(reply.text)) {
-      const asks = readRequests(reply.text);
+      let asks = readRequests(reply.text);
+      if (!asks.length && asksForFiles(reply.text)) {
+        const tree = await repoTree(now.repo).catch(() => null);
+        const seen = seenPaths(now);
+        if (tree) asks = mentionedPaths(reply.text, tree.files).filter((p) => !seen.has(p));
+      }
       let rounds = 0;
       for (let i = now.messages.length - 1; i >= 0 && rounds < 9; i--) {
         const m = now.messages[i];
@@ -471,21 +479,7 @@ export const useStore = create<State>((set, get) => {
         if (m.auto !== 'files') break;
         rounds++;
       }
-      if (asks.length && rounds < 3) {
-        const { files, missing } = await filesAsAttachments(now, asks);
-        const msg: Message = {
-          id: uid(),
-          role: 'user',
-          auto: 'files',
-          text: missing.length ? `Couldn't find ${missing.join(', ')} — use exact paths from the file list.${files.length ? ' Here are the others.' : ''}` : 'Here are the files you asked for. Continue.',
-          files: files.length ? files : undefined,
-          createdAt: Date.now(),
-        };
-        const next = { ...now, messages: [...now.messages, msg], updatedAt: Date.now() };
-        replaceChat(next);
-        await persist(next);
-        await runAssistant(chatId);
-      }
+      if (asks.length && rounds < 4) await get().loadRepoFiles(chatId, asks);
     }
   };
 
@@ -833,6 +827,25 @@ export const useStore = create<State>((set, get) => {
       replaceChat(updated);
       void persist(updated);
     },
+    async loadRepoFiles(chatId, paths) {
+      const chat = get().chats.find((c) => c.id === chatId);
+      if (!chat?.repo || !paths.length || get().streamingChatId) return;
+      const { files, missing } = await filesAsAttachments(chat, paths);
+      const msg: Message = {
+        id: uid(),
+        role: 'user',
+        auto: 'files',
+        text: missing.length ? `Couldn't find ${missing.join(', ')} — use exact paths from the file list.${files.length ? ' Here are the others.' : ''}` : 'Here are the files you asked for. Continue.',
+        files: files.length ? files : undefined,
+        createdAt: Date.now(),
+      };
+      const latest = get().chats.find((c) => c.id === chatId) || chat;
+      const next = { ...latest, messages: [...latest.messages, msg], updatedAt: Date.now() };
+      replaceChat(next);
+      await persist(next);
+      await runAssistant(chatId);
+    },
+
     revertChange(chatId, path) {
       const chat = get().chats.find((c) => c.id === chatId);
       if (!chat?.changes?.[path]) return;

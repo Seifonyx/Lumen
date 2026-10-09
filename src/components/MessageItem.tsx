@@ -1,5 +1,6 @@
 import { AlertTriangle, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, Info, Pencil, RefreshCw, Square, Volume2 } from 'lucide-react';
-import { memo, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
+import { mentionedPaths, repoTree, seenPaths } from '../lib/workspace';
 import { buildFile } from '../lib/generate';
 import { toPlainText } from '../lib/markdown';
 import { canSpeak, speak, stopSpeaking } from '../lib/speech';
@@ -29,6 +30,41 @@ function Thinking({ text, active }: { text: string; active: boolean }) {
         <ChevronDown size={15} className="chev" />
       </button>
       {open && <div className="thinking-body" dir="auto">{text}</div>}
+    </div>
+  );
+}
+
+/** Under the last reply in a coding chat: files it names that the model hasn't seen, one tap to load them. */
+function LoadMentioned({ message }: { message: Message }) {
+  const chat = useStore((s) => s.chats.find((c) => c.id === s.currentId));
+  const loadRepoFiles = useStore((s) => s.loadRepoFiles);
+  const busy = useStore((s) => Boolean(s.streamingChatId));
+  const [paths, setPaths] = useState<string[]>([]);
+  const repo = chat?.repo;
+  useEffect(() => {
+    setPaths([]);
+    if (!repo || !chat || /`{3,}\s*(edit|delete)[:\s]/i.test(message.text)) return;
+    let live = true;
+    repoTree(repo).then(
+      (t) => {
+        const seen = seenPaths(chat);
+        if (live) setPaths(mentionedPaths(message.text, t.files).filter((p) => !seen.has(p)));
+      },
+      () => {},
+    );
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [message.text, repo?.owner, repo?.repo, repo?.branch, chat?.messages.length]);
+  if (!chat || !paths.length) return null;
+  return (
+    <div className="load-mentioned">
+      <FolderOpen size={15} />
+      <span className="load-mentioned-files">
+        {paths.map((p) => <code key={p} title={p}>{p.split('/').pop()}</code>)}
+      </span>
+      <button className="btn small" disabled={busy} onClick={() => void loadRepoFiles(chat.id, paths)}>
+        Load {paths.length === 1 ? 'file' : `${paths.length} files`} &amp; continue
+      </button>
     </div>
   );
 }
@@ -192,6 +228,8 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
       ))}
 
       {message.memory && !streaming && <MemoryChip memory={message.memory} />}
+
+      {isLast && !streaming && message.text && <LoadMentioned message={message} />}
 
       {message.error && (
         <div className="error-box" role="alert">

@@ -117,7 +117,7 @@ async function run(browser, width) {
   await page.waitForTimeout(200);
   await look('model menu');
   await shot('model-menu');
-  await page.click('.models-pop .pop-title:text-is("Gemini 3 Flash Preview Long Context Experimental Edition 1029")');
+  await page.click('.models-pop .mp-title:text-is("Gemini 3 Flash Preview Long Context Experimental Edition 1029")');
   await page.waitForTimeout(200);
   await look('long model name in the top bar');
   await page.evaluate(() => document.querySelector('.messages')?.scrollTo({ top: 0 }));

@@ -31,7 +31,13 @@ const F = '````';
     ai.push({ model: /models\/([^:]+):/.exec(url)[1], body });
     const all = JSON.stringify(body.contents);
     let reply = 'Hi.';
-    if (all.includes('handle strings') && !all.includes('file name=\\"src/app.js\\"')) reply = 'Let me look at the code first.\n[[read: src/app.js]]';
+    const last = JSON.stringify(body.contents.at(-1));
+    const prior = JSON.stringify(body.contents.slice(0, -1));
+    if (last.includes('what is this project')) reply = 'I need to see it first. Could you share the contents of `README.md`?';
+    else if (last.includes('Here are the files') && last.includes('# Demo') && prior.includes('what is this project')) reply = 'It is a small demo. Its scripts live in package.json.';
+    else if (last.includes('Here are the files') && last.includes('package.json')) reply = 'The package is called demo.';
+    else if (all.includes('what is this project')) reply = 'Hm.';
+    else if (all.includes('handle strings') && !all.includes('file name=\\"src/app.js\\"')) reply = 'Let me look at the code first.\n[[read: src/app.js]]';
     else if (all.includes('handle strings')) reply = `Here is the change:\n\n${F}edit:src/app.js\n<<<<<<< SEARCH\n  return a + b;\n=======\n  return Number(a) + Number(b);\n>>>>>>> REPLACE\n${F}\n\nAnd a test:\n\n${F}edit:src/app.test.js\nimport { add } from './app.js';\nconsole.assert(add('1', 2) === 3);\n${F}`;
     return route.fulfill({ headers: { 'content-type': 'text/event-stream' }, body: sse({ candidates: [{ content: { parts: [{ text: reply }] }, finishReason: 'STOP' }] }) });
   });
@@ -43,14 +49,14 @@ const F = '````';
     if (req.headers().authorization !== 'Bearer github_pat_test') return json({ message: 'Bad credentials' }, 401);
     if (p === '/user/repos') return json([{ owner: { login: 'seif' }, name: 'demo', full_name: 'seif/demo', default_branch: 'main', private: true, pushed_at: '2026-10-01T00:00:00Z', description: 'Demo app' }, { owner: { login: 'seif' }, name: 'other', full_name: 'seif/other', default_branch: 'main', private: false, pushed_at: '2026-09-01T00:00:00Z', description: '' }]);
     if (p === '/repos/seif/demo/branches') return json([{ name: 'main' }, { name: 'dev' }]);
-    if (p === '/repos/seif/demo/git/trees/main') return json({ sha: 't1', truncated: false, tree: [
+    if (p.startsWith('/repos/seif/demo/git/trees/') && req.method() === 'GET') return json({ sha: 't1', truncated: false, tree: [
       { path: 'README.md', type: 'blob', size: 10 }, { path: 'package.json', type: 'blob', size: 20 }, { path: 'src', type: 'tree' },
       { path: 'src/app.js', type: 'blob', size: APP.length }, { path: 'src/util.js', type: 'blob', size: UTIL.length }, { path: 'assets/logo.png', type: 'blob', size: 999 },
     ] });
     if (p.startsWith('/repos/seif/demo/contents/')) {
       const file = decodeURIComponent(p.slice('/repos/seif/demo/contents/'.length));
       gh.reads.push(file);
-      const files = { 'src/app.js': APP, 'src/util.js': UTIL, 'README.md': '# Demo\n' };
+      const files = { 'src/app.js': APP, 'src/util.js': UTIL, 'README.md': '# Demo\n', 'package.json': '{ "name": "demo" }\n' };
       return files[file] !== undefined ? route.fulfill({ body: files[file], headers: { 'content-type': 'text/plain' } }) : json({ message: 'Not Found' }, 404);
     }
     if (p === '/repos/seif/demo/git/ref/heads/main') return json({ object: { sha: 'base1' } });
@@ -107,6 +113,7 @@ const F = '````';
 
   await page.click('.model-button');
   check((await page.textContent('.models-pop')).includes('Max coding') && (await page.textContent('.models-pop')).includes('Web apps'), 'layouts in the model menu');
+  await page.screenshot({ path: path.join(__dirname, 'out', 'model-menu-desktop.png'), clip: { x: 260, y: 0, width: 700, height: 720 } });
   await page.click('.models-pop >> text=Max coding');
   check((await page.textContent('.model-button')).includes('Max coding'), 'layout chosen');
 
@@ -167,6 +174,19 @@ const F = '````';
   check(gh.trees[0]?.base_tree === 'tree1' && tree.length === 2 && tree.find((t) => t.path === 'src/app.js')?.content === 'export function add(a, b) {\n  return Number(a) + Number(b);\n}\n', 'commit has the edited files');
   check(gh.commits[0]?.parents?.[0] === 'base1' && gh.refs[0]?.ref.startsWith('refs/heads/model-router/') && gh.pulls[0]?.base === 'main', 'pushed to a new branch and opened a pull request');
   check((await page.textContent('.ws-done')).includes('pull request') && (await page.textContent('.ws-head')).includes('model-router/'), 'links shown; chat continues on the new branch');
+
+  // ---- Models that ask for files in words, or only name them
+  const before = ai.length;
+  await page.fill('.composer textarea', 'what is this project');
+  await page.click('.send-btn');
+  await page.waitForFunction(() => document.body.textContent.includes('Its scripts live in package.json'), null, { timeout: 20000 });
+  check(ai.length === before + 2 && JSON.stringify(ai[before + 1].body.contents.at(-1)).includes('# Demo'), 'asked for README.md in words → loaded automatically');
+  await page.waitForSelector('.load-mentioned');
+  check((await page.textContent('.load-mentioned')).includes('package.json'), '"Load file & continue" offered for a file the reply names');
+  await page.screenshot({ path: path.join(__dirname, 'out', 'coding-load-mentioned.png') });
+  await page.click('.load-mentioned >> text=Load file');
+  await page.waitForFunction(() => document.body.textContent.includes('The package is called demo'), null, { timeout: 20000 });
+  check(ai.length === before + 3 && !(await page.$('.load-mentioned')), 'loaded and continued; offer gone once the file was given');
 
   // ---- Custom layout as default
   await page.click('.sidebar-foot');

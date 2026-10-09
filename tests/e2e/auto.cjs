@@ -80,7 +80,7 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
 
   // Manual pick of a text-only model + image -> rerouted with a note.
   await page.click('.model-button');
-  await page.click('.models-pop .pop-title:text-is("Qwen3 Coder")');
+  await page.click('.models-pop .mp-title:text-is("Qwen3 Coder")');
   await page.setInputFiles('.composer input[type=file][multiple]', path.join(__dirname, 'fixtures', 'photo.png'));
   await page.waitForFunction(() => document.querySelectorAll('.attachment').length === 1 && !document.querySelector('.attachment.loading'));
   await page.fill('.composer textarea', 'and this one?');

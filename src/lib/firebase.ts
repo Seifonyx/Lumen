@@ -13,7 +13,7 @@ import { quota } from './quota';
 // apps) block the cross-site storage that sign-in through the-model-router.firebaseapp.com needs.
 // A host is listed here only after https://<host>/__/auth/handler was added to the OAuth client's
 // authorized redirect URIs in Google Cloud (otherwise Google refuses the sign-in).
-const SAME_SITE_AUTH_HOSTS: string[] = [];
+const SAME_SITE_AUTH_HOSTS: string[] = ['model-router.web.app'];
 const sameSite = SAME_SITE_AUTH_HOSTS.includes(location.hostname);
 const app = initializeApp(sameSite ? { ...config, authDomain: location.hostname } : config);
 export const auth = getAuth(app);

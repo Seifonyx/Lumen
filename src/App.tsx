@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import ChatView from './components/ChatView';
 import Login from './components/Login';
 import NotInvited from './components/NotInvited';
@@ -11,6 +11,8 @@ import WorkspacePanel from './components/WorkspacePanel';
 import RepoPicker from './components/RepoPicker';
 import { useStore } from './store';
 
+const RunPanel = lazy(() => import('./components/RunPanel'));
+
 export default function App() {
   const authed = useStore((s) => s.authed);
   const init = useStore((s) => s.init);
@@ -19,19 +21,12 @@ export default function App() {
   const accessDenied = useStore((s) => s.accessDenied);
   const settingsOpen = useStore((s) => s.settingsOpen);
   const workspaceOpen = useStore((s) => s.workspaceOpen);
+  const runner = useStore((s) => s.runner);
   const repoPicker = useStore((s) => s.repoPicker);
-  const user = useStore((s) => s.user);
 
   useEffect(() => {
     void init();
   }, [init]);
-
-  // Listen for a right-swipe from the left edge (dismissed on phones where the menu button may not exist).
-  useEffect(() => {
-    const onSwipe = () => setUi({ sidebarOpen: true });
-    window.addEventListener('model-router:swipe-edge', onSwipe);
-    return () => window.removeEventListener('model-router:swipe-edge', onSwipe);
-  }, [setUi]);
 
   // Global shortcuts: Ctrl/Cmd+Shift+O new chat, Ctrl/Cmd+K focus search, Esc stop/close.
   useEffect(() => {
@@ -45,7 +40,7 @@ export default function App() {
         e.preventDefault();
         setUi({ sidebarOpen: true });
         setTimeout(() => document.getElementById('chat-search')?.focus(), 50);
-      } else if (e.key === 'Escape' && s.streamingChatId && !s.preview && !s.settingsOpen) {
+      } else if (e.key === 'Escape' && s.streamingChatId && !s.preview && !s.runner && !s.settingsOpen) {
         s.stop();
       }
     };
@@ -73,8 +68,14 @@ export default function App() {
       <SettingsModal />
       {repoPicker && <RepoPicker onClose={() => setUi({ repoPicker: false })} />}
       <PreviewModal />
+      {runner && (
+        <Suspense fallback={null}>
+          <RunPanel />
+        </Suspense>
+      )}
       <Toasts />
       <UpdateBar />
     </div>
   );
 }
+>>>>>>> REPLACE

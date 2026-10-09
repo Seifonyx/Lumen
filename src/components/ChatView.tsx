@@ -35,6 +35,8 @@ export default function ChatView() {
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const [showDown, setShowDown] = useState(false);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
 
   const model = chat?.model && (chat.model === AUTO || isLayoutId(chat.model) || useStore.getState().settings.enabledModels.includes(chat.model)) ? chat.model : defaultModel;
   const messages = chat?.messages || [];
@@ -70,8 +72,26 @@ export default function ChatView() {
     return () => el.removeEventListener('scroll', onScroll);
   }, []);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (e.changedTouches.length === 1) {
+      const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+      const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+      // If started near the left edge (< 40px) and swiped right significantly (> 60px horizontally and more horizontal than vertical)
+      if (touchStartX.current < 40 && deltaX > 60 && Math.abs(deltaX) > Math.abs(deltaY)) {
+        setUi({ sidebarOpen: true });
+      }
+    }
+  };
+
   return (
-    <main className="main">
+    <main className="main" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <header className="topbar">
         <button className="icon-btn menu-btn" onClick={() => setUi({ sidebarOpen: true })} aria-label="Open chats">
           <Menu size={20} />

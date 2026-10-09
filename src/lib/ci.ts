@@ -155,8 +155,15 @@ export async function failureReport(owner: string, repo: string, checks: Check[]
     for (const j of failed.slice(0, 3)) {
       const steps = (j.steps || []).filter((s: any) => s.conclusion === 'failure').map((s: any) => s.name);
       parts.push(`Workflow "${c.name}", job "${j.name}" failed${steps.length ? ` at step "${steps.join('", "')}"` : ''}`);
-      const log = await gh<string>(`/repos/${owner}/${repo}/actions/jobs/${j.id}/logs`, { raw: true }).catch(() => '');
-      if (log) logs.push(`===== ${c.name} / ${j.name} =====\n${logExcerpt(log, 6000)}`);
+      let log = await gh<string>(`/repos/${owner}/${repo}/actions/jobs/${j.id}/logs`, { raw: true }).catch(() => '');
+      if (log) log = logExcerpt(log, 6000);
+      else {
+        // The full log lives on another site that a browser may not be allowed to read; GitHub's
+        // error notes for the job (its check run) usually still say what broke.
+        const notes = await gh<any[]>(`/repos/${owner}/${repo}/check-runs/${j.id}/annotations?per_page=50`).catch(() => []);
+        log = (notes || []).map((a: any) => `${a.path && a.path !== '.github' ? `${a.path}:${a.start_line}: ` : ''}${a.annotation_level}: ${a.message}`).join('\n');
+      }
+      if (log) logs.push(`===== ${c.name} / ${j.name} =====\n${log}`);
     }
   }
   return { summary: parts.join('\n'), log: logs.join('\n\n') };

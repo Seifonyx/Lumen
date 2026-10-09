@@ -72,7 +72,8 @@ const F = '````';
     if (p === '/repos/seif/demo/actions/runs' && u.searchParams.get('head_sha') === 'c2') return json({ workflow_runs: [{ id: 11, name: 'Tests', status: 'completed', conclusion: 'failure', html_url: 'https://github.com/seif/demo/actions/runs/11' }] });
     if (p === '/repos/seif/demo/commits/c2/status') return json({ statuses: [{ context: 'Vercel', state: 'success', target_url: 'https://vercel.com/x' }] });
     if (p === '/repos/seif/demo/actions/runs/11/jobs') return json({ jobs: [{ id: 21, name: 'unit', conclusion: 'failure', steps: [{ name: 'Checkout', conclusion: 'success' }, { name: 'npm test', conclusion: 'failure' }] }] });
-    if (p === '/repos/seif/demo/actions/jobs/21/logs') return route.fulfill({ headers: { 'content-type': 'text/plain' }, body: Array.from({ length: 200 }, (_, i) => `2026-10-09T18:00:${String(i % 60).padStart(2, '0')}.0000000Z setup line ${i}`).concat(['2026-10-09T18:01:00.0000000Z > node src/app.test.js', '2026-10-09T18:01:01.0000000Z AssertionError: expected 3 but got "12"', '2026-10-09T18:01:01.0000000Z ##[error]Process completed with exit code 1.']).join('\n') });
+    if (p === '/repos/seif/demo/check-runs/21/annotations') return json([{ path: 'src/app.test.js', start_line: 2, annotation_level: 'failure', message: 'AssertionError: expected 3' }]);
+    if (p === '/repos/seif/demo/actions/jobs/21/logs') return gh.logsBlocked ? json({ message: 'blocked' }, 500) : route.fulfill({ headers: { 'content-type': 'text/plain' }, body: Array.from({ length: 200 }, (_, i) => `2026-10-09T18:00:${String(i % 60).padStart(2, '0')}.0000000Z setup line ${i}`).concat(['2026-10-09T18:01:00.0000000Z > node src/app.test.js', '2026-10-09T18:01:01.0000000Z AssertionError: expected 3 but got "12"', '2026-10-09T18:01:01.0000000Z ##[error]Process completed with exit code 1.']).join('\n') });
     return json({ message: `unexpected ${req.method()} ${p}` }, 404);
   });
 
@@ -194,6 +195,14 @@ const F = '````';
   await page.waitForTimeout(500);
   const fixMsg = JSON.stringify(ai[b1].body.contents.at(-1));
   check(fixMsg.includes('job \\"unit\\" failed at step \\"npm test\\"') && fixMsg.includes('AssertionError: expected 3') && fixMsg.includes('github-checks.log') && !fixMsg.includes('setup line 3\\n'), 'failure details and the relevant log lines sent to the model');
+  // When the browser can't read the full log, GitHub's error notes are sent instead.
+  gh.logsBlocked = true;
+  const b1b = ai.length;
+  await page.waitForFunction(() => !document.querySelector('.checks-bar button[disabled]'));
+  await page.click('.checks-bar >> text=Fix this failure');
+  await page.waitForFunction((n) => document.querySelectorAll('.msg.assistant').length > n, (await page.$$('.msg.assistant')).length, { timeout: 20000 });
+  await page.waitForTimeout(500);
+  check(JSON.stringify(ai[b1b].body.contents.at(-1)).includes('src/app.test.js:2: failure: AssertionError: expected 3'), "log unreadable → GitHub's error notes sent instead");
   await page.click('[aria-label="Hide test results"]');
   check(!(await page.$('.checks-bar')), 'test results can be hidden');
 

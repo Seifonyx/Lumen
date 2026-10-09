@@ -1,4 +1,4 @@
-import { FolderGit2, GitBranch, ArrowDown, FileSpreadsheet, FileText, Languages, LineChart, Menu, Presentation, ScrollText, SquarePen } from 'lucide-react';
+import { FolderGit2, GitBranch, ArrowDown, FileSpreadsheet, FileText, Languages, LineChart, Menu, Presentation, ScrollText } from 'lucide-react';
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { activeSummary, compactLimit, contextTokens } from '../lib/compact';
 import { AUTO } from '../lib/routing';

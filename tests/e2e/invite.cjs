@@ -15,7 +15,7 @@ const check = (c, l) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) f
     await page.goto('http://localhost:5190/?emulator');
     await page.waitForFunction(() => typeof window.__testSignIn === 'function');
     await page.evaluate((e) => window.__testSignIn(e), email);
-    await page.waitForSelector('.topbar, .denied-icon', { timeout: 15000 });
+    await page.waitForSelector('.topbar:visible, .settings-page, .denied-icon', { timeout: 15000 });
     return { page, errors };
   };
   const ok = await run('HebaGhoneim8@gmail.com');

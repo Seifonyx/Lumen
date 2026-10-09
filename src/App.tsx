@@ -15,6 +15,7 @@ export default function App() {
   const sidebarOpen = useStore((s) => s.sidebarOpen);
   const setUi = useStore((s) => s.setUi);
   const accessDenied = useStore((s) => s.accessDenied);
+  const settingsOpen = useStore((s) => s.settingsOpen);
 
   useEffect(() => {
     void init();
@@ -52,7 +53,7 @@ export default function App() {
   }
   if (accessDenied) return <NotInvited email={accessDenied} />;
   return (
-    <div className="app">
+    <div className={`app${settingsOpen ? ' settings-open' : ''}`}>
       <Sidebar />
       {sidebarOpen && <div className="scrim" onClick={() => setUi({ sidebarOpen: false })} />}
       <ChatView />

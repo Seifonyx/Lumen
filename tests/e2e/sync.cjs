@@ -1,5 +1,10 @@
 // Two "devices" signed in as the same user (Firebase emulators), checking chats and settings sync.
 const { chromium } = require('playwright');
+// Settings is a page: on phones the section list shows first, and a section has a back arrow.
+async function openTab(page, name) {
+  if (await page.isVisible('.settings-back')) await page.click('.settings-back');
+  await page.click(`.settings-tabs >> text=${name}`);
+}
 const path = require('path');
 const OUT = path.join(__dirname, 'out');
 require('fs').mkdirSync(OUT, { recursive: true });
@@ -35,7 +40,7 @@ async function device(browser, name, email, mobile) {
   await page.waitForSelector('.google-btn');
   await page.waitForFunction(() => typeof window.__testSignIn === 'function');
   await page.evaluate((e) => window.__testSignIn(e), email);
-  await page.waitForSelector('.topbar');
+  await page.waitForSelector('.topbar:visible, .settings-page');
   return { ctx, page, errors, log, name };
 }
 
@@ -46,16 +51,16 @@ async function device(browser, name, email, mobile) {
 
   // ---- Phone: first sign-in, enter keys
   const A = await device(browser, 'phone', 'hebaghoneim8@gmail.com', true);
-  await A.page.waitForSelector('.settings-tabs [aria-selected="true"]');
-  check((await A.page.textContent('.settings-tabs [aria-selected="true"]')) === 'API keys', 'first sign-in opens API keys');
+  await A.page.waitForSelector('.settings-heading h2');
+  check((await A.page.textContent('.settings-heading h2')) === 'API keys', 'first sign-in opens API keys');
   await A.page.screenshot({ path: path.join(OUT, 'a1-keys.png') });
   await A.page.fill('input[placeholder="AIza…"]', 'test-gemini-key');
   await A.page.click('text=Save keys');
   await A.page.waitForTimeout(1500);
   check(true, 'keys saved and models loaded');
-  await A.page.click('.settings-tabs >> text=Personalize');
+  await openTab(A.page, 'Personalization');
   await A.page.fill('.field-block textarea', 'Use metric units.');
-  await A.page.click('.modal [aria-label="Close"]');
+  await A.page.click('.settings-page [aria-label="Close"]');
 
   // ---- Phone: chat with an image, rename + pin
   await A.page.setInputFiles('.composer input[type=file][multiple]', path.join(__dirname, 'fixtures', 'photo.png'));
@@ -75,7 +80,7 @@ async function device(browser, name, email, mobile) {
   // ---- Laptop: same account
   const B = await device(browser, 'laptop', 'hebaghoneim8@gmail.com', false);
   await B.page.waitForSelector('.model-button', { timeout: 15000 }); await B.page.waitForTimeout(1500);
-  check(!(await B.page.$('.modal')), 'keys loaded automatically on laptop (no prompt)');
+  check(!(await B.page.$('.settings-page')), 'keys loaded automatically on laptop (no prompt)');
   await B.page.waitForFunction(() => document.querySelector('.chat-list')?.textContent.includes('Synced Chat Title'), null, { timeout: 15000 });
   check((await B.page.textContent('.chat-list section:first-child .group-label')) === 'Pinned', 'pin synced');
   await B.page.click('text=Synced Chat Title');
@@ -83,9 +88,9 @@ async function device(browser, name, email, mobile) {
   check((await B.page.textContent('.msg.user .bubble')) === 'Hello from phone', 'messages synced');
   check(await B.page.$('.msg.user .msg-thumb'), 'image thumbnail synced');
   await B.page.click('.sidebar-foot');
-  await B.page.click('.settings-tabs >> text=Personalize');
+  await openTab(B.page, 'Personalization');
   check((await B.page.inputValue('.field-block textarea')) === 'Use metric units.', 'custom instructions synced');
-  await B.page.click('.modal [aria-label="Close"]');
+  await B.page.click('.settings-page [aria-label="Close"]');
 
   // ---- Laptop replies in the same chat; phone sees it live
   await B.page.fill('.composer textarea', 'Follow-up from laptop');

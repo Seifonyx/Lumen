@@ -1,4 +1,9 @@
 const { chromium } = require('playwright');
+// Settings is a page: on phones the section list shows first, and a section has a back arrow.
+async function openTab(page, name) {
+  if (await page.isVisible('.settings-back')) await page.click('.settings-back');
+  await page.click(`.settings-tabs >> text=${name}`);
+}
 const path = require('path');
 let failures = 0;
 const check = (c, l) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) failures++; };
@@ -40,7 +45,7 @@ const sys = (log) => log.at(-1).systemInstruction.parts[0].text;
 async function openMemory(page) {
   await page.click('.menu-btn');
   await page.click('.sidebar-foot');
-  await page.click('.settings-tabs >> text=Memory');
+  await openTab(page, 'Memory');
   await page.waitForSelector('.memory-tab');
 }
 
@@ -54,7 +59,7 @@ async function openMemory(page) {
   await page.fill('input[placeholder="AIza…"]', 'g');
   await page.click('text=Save keys');
   await page.waitForTimeout(1500);
-  await page.click('.modal [aria-label="Close"]');
+  await page.click('.settings-page [aria-label="Close"]');
 
   await send(page, 'hello', 0);
   check(sys(log).includes('# Memory') && sys(log).includes('no saved memories'), 'memory instructions sent (empty)');
@@ -107,7 +112,7 @@ async function openMemory(page) {
   // Turn memory off.
   await openMemory(page);
   await page.locator('.setting-row', { hasText: 'Use memory' }).locator('input').click();
-  await page.click('.modal [aria-label="Close"]');
+  await page.click('.settings-page [aria-label="Close"]');
   await send(page, 'and now?', 3);
   check(!sys(log).includes('# Memory'), 'memory off: nothing sent');
   await openMemory(page);
@@ -116,7 +121,7 @@ async function openMemory(page) {
   await page.click('text=Delete all memories');
   await page.waitForTimeout(800);
   check((await page.textContent('.memory-tab')).includes('0 memories') && (await page.textContent('.memory-tab')).includes('Nothing saved yet'), 'delete all');
-  await page.click('.modal [aria-label="Close"]');
+  await page.click('.settings-page [aria-label="Close"]');
 
   // Reload: replies stay clean.
   await page.reload();

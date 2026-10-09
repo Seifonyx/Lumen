@@ -34,7 +34,7 @@ const REPLY = [
   await page.fill('input[placeholder="AIza…"]', 'g');
   await page.click('text=Save keys');
   await page.waitForTimeout(1500);
-  await page.click('.modal [aria-label="Close"]');
+  await page.click('.settings-page [aria-label="Close"]');
   await page.fill('.composer textarea', 'make me a report, a tracker and a deck');
   await page.click('.send-btn');
   await page.waitForSelector('.msg.assistant .model-tag', { timeout: 20000 });

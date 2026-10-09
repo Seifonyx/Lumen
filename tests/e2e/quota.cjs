@@ -1,5 +1,10 @@
 // Free-plan guard: incremental sync keeps reads low; slow + paused modes; catch-up after reset.
 const { chromium } = require('playwright');
+// Settings is a page: on phones the section list shows first, and a section has a back arrow.
+async function openTab(page, name) {
+  if (await page.isVisible('.settings-back')) await page.click('.settings-back');
+  await page.click(`.settings-tabs >> text=${name}`);
+}
 const path = require('path');
 let failures = 0;
 const check = (c, l) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) failures++; };
@@ -29,7 +34,7 @@ async function device(browser, ctx) {
   await page.goto('http://localhost:5190/?emulator');
   await page.waitForFunction(() => typeof window.__testSignIn === 'function');
   await page.evaluate(() => window.__testSignIn('hebaghoneim8@gmail.com'));
-  await page.waitForSelector('.topbar');
+  await page.waitForSelector('.topbar:visible, .settings-page');
   return { ctx, page, errors };
 }
 const reads = (page) => page.evaluate(() => window.__quota.local().reads);
@@ -49,7 +54,7 @@ async function send(page, text) {
   await A.page.fill('input[placeholder="AIza…"]', 'g');
   await A.page.click('text=Save keys');
   await A.page.waitForTimeout(1500);
-  await A.page.click('.modal [aria-label="Close"]');
+  await A.page.click('.settings-page [aria-label="Close"]');
   // 6 chats x 4 messages.
   for (let c = 0; c < 6; c++) {
     if (c) await A.page.click('[aria-label="New chat"]');
@@ -123,12 +128,12 @@ async function send(page, text) {
   check(!(await B.page.textContent('.chat-list')).includes('brand new') && !(await B.page.textContent('.thread')).includes('offline-ish'), 'nothing synced while paused');
   // Usage tab card.
   await A.page.click('.sidebar-foot');
-  await A.page.click('.settings-tabs >> text=Usage');
+  await openTab(A.page, 'Usage');
   const card = await A.page.textContent('.firebase-card');
   check(/Reads46,\d{3} \/ 50,000/.test(card.replace(/\s+/g, '')) || /46,\d{3}/.test(card), `usage card shows counts (${card.slice(0, 90)})`);
   check(card.includes('Sync paused'), 'usage card explains the pause');
   await A.page.screenshot({ path: path.join(__dirname, 'out', 'firebase-card.png') });
-  await A.page.click('.modal [aria-label="Close"]');
+  await A.page.click('.settings-page [aria-label="Close"]');
 
   // Reset → catches up.
   await setShared(0);

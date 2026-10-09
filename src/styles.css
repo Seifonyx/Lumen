@@ -517,16 +517,56 @@ input[type='search']::-webkit-search-cancel-button { -webkit-appearance: none; }
 }
 @keyframes sheet-up { from { transform: translateY(24px); opacity: 0; } }
 
-/* Settings */
-.settings { display: flex; height: 100%; }
-.settings-tabs { width: 196px; flex: none; display: flex; flex-direction: column; gap: 1px; padding: 12px 10px; border-inline-end: 1px solid var(--border); background: var(--code-bg); }
-.settings-tabs button { border: 0; background: none; text-align: start; height: 32px; padding: 0 10px; border-radius: 6px; color: var(--text-2); font-size: 0.875rem; transition: background 0.12s, color 0.12s; }
+/* Settings: a full page like Claude's — section list on the left (phones: a menu you tap into) */
+.app.settings-open .main { display: none; }
+.settings-page { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; background: var(--bg); animation: fade 0.15s; }
+.settings-top {
+  display: flex; align-items: center; gap: 6px; min-height: 52px;
+  padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left));
+  border-bottom: 1px solid var(--border);
+}
+.settings-title { margin: 0; font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.015em; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.settings-title-section { display: none; }
+.settings-back { display: none; margin-inline-start: -8px; }
+.settings-scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+.settings-inner { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; padding: 36px 32px 64px; }
+.settings-tabs { position: sticky; top: 0; align-self: start; display: flex; flex-direction: column; gap: 2px; }
+.settings-tabs button { display: flex; align-items: center; gap: 10px; border: 0; background: none; text-align: start; height: 36px; padding: 0 10px; border-radius: var(--radius-sm); color: var(--text-2); font-size: 0.875rem; transition: background 0.12s, color 0.12s; }
 .settings-tabs button:hover { color: var(--text); background: var(--surface-2); }
 .settings-tabs button.active { background: var(--surface-3); color: var(--text); font-weight: 500; }
-.settings-panel { flex: 1; min-width: 0; overflow-y: auto; padding: 8px 24px 24px; }
+.tab-icon { display: grid; place-items: center; flex: none; color: inherit; }
+.tab-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.tab-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tab-blurb, .tab-chev { display: none; }
+.settings-panel { min-width: 0; max-width: 680px; }
+.settings-heading { padding-bottom: 18px; margin-bottom: 4px; border-bottom: 1px solid var(--border); }
+.settings-heading h2 { margin: 0; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.035em; line-height: 1.2; }
+.settings-heading p { margin: 6px 0 0; color: var(--text-2); font-size: 0.875rem; }
+
+@media (max-width: 720px) {
+  .settings-inner { grid-template-columns: 1fr; gap: 0; padding: 0 0 48px; }
+  .settings-tabs { position: static; gap: 0; margin: 16px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+  .settings-tabs button { height: auto; min-height: 60px; padding: 10px 14px; gap: 12px; border-radius: 0; border-bottom: 1px solid var(--border); color: var(--text); }
+  .settings-tabs button:last-child { border-bottom: 0; }
+  .settings-tabs button.active { background: none; font-weight: 400; }
+  .settings-tabs button:active { background: var(--surface-2); }
+  .tab-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--code-bg); color: var(--text-2); }
+  .tab-label { font-weight: 500; font-size: 0.9375rem; }
+  .tab-blurb { display: block; font-size: 0.8125rem; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tab-chev { display: block; color: var(--text-3); flex: none; }
+  /* Menu first; tapping a section opens it with a back arrow. */
+  .settings-page:not(.has-section) .settings-panel { display: none; }
+  .settings-page.has-section .settings-tabs { display: none; }
+  .settings-page.has-section .settings-back { display: inline-grid; }
+  .settings-page.has-section .settings-title-main { display: none; }
+  .settings-page.has-section .settings-title-section { display: inline; }
+  .settings-panel { padding: 20px 16px 0; animation: rise 0.2s var(--ease); }
+  .settings-heading h2 { font-size: 1.25rem; }
+  .setting-row { gap: 14px; }
+}
 .settings-section { display: flex; flex-direction: column; gap: 4px; }
 .setting-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--border); }
-.setting-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.setting-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .setting-label { font-weight: 500; font-size: 0.875rem; letter-spacing: -0.005em; }
 .setting-hint { font-size: 0.8125rem; color: var(--text-2); line-height: 1.5; }
 .setting-row select { max-width: 55%; }
@@ -556,14 +596,6 @@ input[type='search']::-webkit-search-cancel-button { -webkit-appearance: none; }
 .legend { margin-top: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .logout { align-self: flex-start; color: var(--danger); }
 .danger-row .setting-label { color: var(--danger); }
-@media (max-width: 640px) {
-  .settings { flex-direction: column; }
-  .settings-tabs { width: auto; flex-direction: row; overflow-x: auto; border-inline-end: 0; border-bottom: 1px solid var(--border); padding: 8px 10px; gap: 2px; scrollbar-width: none; }
-  .settings-tabs::-webkit-scrollbar { display: none; }
-  .settings-tabs button { white-space: nowrap; flex: none; }
-  .settings-panel { padding: 4px 16px 28px; }
-  .setting-row { flex-wrap: wrap; }
-}
 
 .sheet-preview { display: flex; flex-direction: column; height: 100%; background: var(--surface); }
 .sheet-scroll { flex: 1; overflow: auto; padding: 12px; }

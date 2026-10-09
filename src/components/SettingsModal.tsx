@@ -1,23 +1,23 @@
-import { ArrowDown, ArrowUp, Download, ExternalLink, KeyRound, Loader2, LogOut, Plus, RefreshCw, Search, Star, Trash2, Upload, X } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, Boxes, Brain, ChevronRight, Database, Download, ExternalLink, Gauge, KeyRound, Loader2, LogOut, Plus, RefreshCw, Search, SlidersHorizontal, Star, Trash2, Upload, UserRound, X, type LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { VOICE_LANGS } from '../lib/speech';
 import { saveBlob } from '../lib/util';
 import { useStore } from '../store';
 import type { Chat, FontSize, ModelInfo, Theme } from '../types';
-import Modal from './Modal';
 import { Badges } from './ModelPicker';
 import UsageTab from './UsageTab';
 import MemoryTab from './MemoryTab';
 
-const TABS = [
-  ['general', 'General'],
-  ['keys', 'API keys'],
-  ['models', 'Models'],
-  ['usage', 'Usage'],
-  ['personalize', 'Personalize'],
-  ['memory', 'Memory'],
-  ['data', 'Data'],
-] as const;
+/** Settings sections: id, name, icon, one-line description (shown in the phone menu and as the section intro). */
+const TABS: [string, string, LucideIcon, string][] = [
+  ['general', 'General', SlidersHorizontal, 'Appearance, chat behaviour and your account'],
+  ['keys', 'API keys', KeyRound, 'Your free Google AI Studio and OpenRouter keys'],
+  ['models', 'Models', Boxes, 'Which models you use, their order and Auto'],
+  ['usage', 'Usage', Gauge, "Today's requests, limits and resets"],
+  ['personalize', 'Personalization', UserRound, 'Instructions every model follows'],
+  ['memory', 'Memory', Brain, 'What models remember about you'],
+  ['data', 'Data', Database, 'Back up, restore or delete your chats'],
+];
 
 function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange: (v: boolean) => void; label: string; hint?: string }) {
   return (
@@ -277,83 +277,129 @@ export default function SettingsModal() {
   const settings = useStore((s) => s.settings);
   const { updateSettings: update, setUi, logout } = useStore.getState();
   const [instructions, setInstructions] = useState(settings.customInstructions);
+  const panel = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (open) setInstructions(useStore.getState().settings.customInstructions);
   }, [open]);
-  if (!open) return null;
   const close = () => {
-    if (instructions !== settings.customInstructions) update({ customInstructions: instructions });
+    const now = useStore.getState().settings.customInstructions;
+    if (instructions !== now) update({ customInstructions: instructions });
     setUi({ settingsOpen: false });
   };
+  // Esc: back to the section list on phones, otherwise close.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || useStore.getState().preview) return;
+      if (tab && window.matchMedia('(max-width: 720px)').matches) setUi({ settingsTab: '' });
+      else close();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+  useEffect(() => {
+    panel.current?.scrollTo({ top: 0 });
+  }, [tab]);
+  if (!open) return null;
+
+  // An empty tab means "the section list" on phones; computers show General.
+  const current = TABS.find(([id]) => id === tab) || TABS[0];
+  const [id, label, , blurb] = current;
 
   return (
-    <Modal title="Settings" onClose={close} wide>
-      <div className="settings">
-        <nav className="settings-tabs" role="tablist">
-          {TABS.map(([id, label]) => (
-            <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? 'active' : ''} onClick={() => setUi({ settingsTab: id })}>
-              {label}
-            </button>
-          ))}
-        </nav>
-        <div className="settings-panel">
-          {tab === 'general' && (
-            <div className="settings-section">
-              <Choice<Theme> label="Theme" value={settings.theme} onChange={(v) => update({ theme: v })} options={[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]} />
-              <Choice<FontSize> label="Text size" value={settings.fontSize} onChange={(v) => update({ fontSize: v })} options={[['small', 'S'], ['medium', 'M'], ['large', 'L']]} />
-              <Toggle label="Show thinking" hint="Show the model's reasoning (collapsed) when it thinks before answering." checked={settings.showThinking} onChange={(v) => update({ showThinking: v })} />
-              <Toggle label="Name chats automatically" hint="Uses a light model to write a short title after the first reply." checked={settings.autoTitle} onChange={(v) => update({ autoTitle: v })} />
-              <Toggle
-                label="Compact long chats automatically"
-                hint="When a chat gets long, older messages are summarized and the summary is sent instead — faster replies and fewer limits. You can also type /compact."
-                checked={settings.autoCompact}
-                onChange={(v) => update({ autoCompact: v })}
-              />
-              <Toggle label="Enter sends the message" hint="On computers. Shift+Enter adds a new line. On phones, use the send button." checked={settings.enterToSend} onChange={(v) => update({ enterToSend: v })} />
-              <label className="setting-row">
-                <span className="setting-label">Voice input language</span>
-                <select value={settings.voiceLang} onChange={(e) => update({ voiceLang: e.target.value })}>
-                  {VOICE_LANGS.map(([v, l]) => (
-                    <option key={v} value={v}>{l}</option>
-                  ))}
-                </select>
-              </label>
-              <div className="setting-row">
-                <span className="setting-text">
-                  <span className="setting-label">Signed in</span>
-                  <span className="setting-hint">{useStore.getState().user?.email}</span>
+    <section className={`settings-page${tab ? ' has-section' : ''}`} aria-label="Settings">
+      <header className="settings-top">
+        {tab ? (
+          <button className="icon-btn settings-back" onClick={() => setUi({ settingsTab: '' })} aria-label="All settings">
+            <ArrowLeft size={18} />
+          </button>
+        ) : null}
+        <h1 className="settings-title">
+          <span className="settings-title-main">Settings</span>
+          {tab && <span className="settings-title-section">{label}</span>}
+        </h1>
+        <div className="spacer" />
+        <button className="icon-btn" onClick={close} aria-label="Close" title="Close (Esc)">
+          <X size={18} />
+        </button>
+      </header>
+      <div className="settings-scroll" ref={panel}>
+        <div className="settings-inner">
+          <nav className="settings-tabs" aria-label="Settings sections">
+            {TABS.map(([tid, tlabel, Icon, tblurb]) => (
+              <button key={tid} aria-current={id === tid ? 'page' : undefined} className={id === tid ? 'active' : ''} onClick={() => setUi({ settingsTab: tid })}>
+                <span className="tab-icon"><Icon size={16} /></span>
+                <span className="tab-text">
+                  <span className="tab-label">{tlabel}</span>
+                  <span className="tab-blurb">{tblurb}</span>
                 </span>
-                <button className="btn ghost logout" onClick={() => { setUi({ settingsOpen: false }); logout(); }}>
-                  <LogOut size={16} /> Sign out
-                </button>
-              </div>
+                <ChevronRight size={16} className="tab-chev" />
+              </button>
+            ))}
+          </nav>
+          <div className="settings-panel">
+            <div className="settings-heading">
+              <h2>{label}</h2>
+              <p>{blurb}</p>
             </div>
-          )}
-          {tab === 'keys' && <KeysTab />}
-          {tab === 'models' && <ModelsTab />}
-          {tab === 'usage' && <UsageTab />}
-          {tab === 'memory' && <MemoryTab Toggle={Toggle} />}
-          {tab === 'personalize' && (
-            <div className="settings-section">
-              <label className="field-block">
-                <span className="setting-label">Custom instructions</span>
-                <span className="setting-hint">Tell every model about you and how to answer — e.g. your job, language preferences, tone, or formats you like.</span>
-                <textarea
-                  dir="auto"
-                  rows={9}
-                  maxLength={4000}
-                  placeholder={'Examples:\n• I work in a hospital in Egypt; use metric units and EGP.\n• Answer in Egyptian Arabic unless I write in English.\n• Keep answers short unless I ask for detail.'}
-                  value={instructions}
-                  onChange={(e) => setInstructions(e.target.value)}
-                  onBlur={() => update({ customInstructions: instructions })}
+            {id === 'general' && (
+              <div className="settings-section">
+                <Choice<Theme> label="Theme" value={settings.theme} onChange={(v) => update({ theme: v })} options={[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]} />
+                <Choice<FontSize> label="Text size" value={settings.fontSize} onChange={(v) => update({ fontSize: v })} options={[['small', 'S'], ['medium', 'M'], ['large', 'L']]} />
+                <Toggle label="Show thinking" hint="Show the model's reasoning (collapsed) when it thinks before answering." checked={settings.showThinking} onChange={(v) => update({ showThinking: v })} />
+                <Toggle label="Name chats automatically" hint="Uses a light model to write a short title after the first reply." checked={settings.autoTitle} onChange={(v) => update({ autoTitle: v })} />
+                <Toggle
+                  label="Compact long chats automatically"
+                  hint="When a chat gets long, older messages are summarized and the summary is sent instead — faster replies and fewer limits. You can also type /compact."
+                  checked={settings.autoCompact}
+                  onChange={(v) => update({ autoCompact: v })}
                 />
-                <span className="muted small">{instructions.length}/4000</span>
-              </label>
-            </div>
-          )}
-          {tab === 'data' && <DataTab />}
+                <Toggle label="Enter sends the message" hint="On computers. Shift+Enter adds a new line. On phones, use the send button." checked={settings.enterToSend} onChange={(v) => update({ enterToSend: v })} />
+                <label className="setting-row">
+                  <span className="setting-label">Voice input language</span>
+                  <select value={settings.voiceLang} onChange={(e) => update({ voiceLang: e.target.value })}>
+                    {VOICE_LANGS.map(([v, l]) => (
+                      <option key={v} value={v}>{l}</option>
+                    ))}
+                  </select>
+                </label>
+                <div className="setting-row">
+                  <span className="setting-text">
+                    <span className="setting-label">Signed in</span>
+                    <span className="setting-hint">{useStore.getState().user?.email}</span>
+                  </span>
+                  <button className="btn small logout" onClick={() => { setUi({ settingsOpen: false }); logout(); }}>
+                    <LogOut size={15} /> Sign out
+                  </button>
+                </div>
+              </div>
+            )}
+            {id === 'keys' && <KeysTab />}
+            {id === 'models' && <ModelsTab />}
+            {id === 'usage' && <UsageTab />}
+            {id === 'memory' && <MemoryTab Toggle={Toggle} />}
+            {id === 'personalize' && (
+              <div className="settings-section">
+                <label className="field-block">
+                  <span className="setting-label">Custom instructions</span>
+                  <span className="setting-hint">Tell every model about you and how to answer — e.g. your job, language preferences, tone, or formats you like.</span>
+                  <textarea
+                    dir="auto"
+                    rows={9}
+                    maxLength={4000}
+                    placeholder={'Examples:\n• I work in a hospital in Egypt; use metric units and EGP.\n• Answer in Egyptian Arabic unless I write in English.\n• Keep answers short unless I ask for detail.'}
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    onBlur={() => update({ customInstructions: instructions })}
+                  />
+                  <span className="muted small">{instructions.length}/4000</span>
+                </label>
+              </div>
+            )}
+            {id === 'data' && <DataTab />}
+          </div>
         </div>
       </div>
-    </Modal>
+    </section>
   );
 }

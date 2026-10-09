@@ -1,6 +1,7 @@
 import { Loader2, Lock } from 'lucide-react';
 import Logo from './Logo';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { takeRedirectError } from '../lib/firebase';
 import { useStore } from '../store';
 
 function GoogleLogo() {
@@ -18,6 +19,14 @@ export default function Login() {
   const login = useStore((s) => s.login);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // A sign-in that went through a full-page redirect reports its problem here.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const e = takeRedirectError();
+      if (e) setError(e);
+    }, 300);
+    return () => clearTimeout(t);
+  }, []);
 
   const submit = async () => {
     setBusy(true);

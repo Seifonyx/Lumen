@@ -9,7 +9,13 @@ import { connectFirestoreEmulator, doc, getDoc, initializeFirestore, serverTimes
 import config from '../firebase-config.json';
 import { quota } from './quota';
 
-const app = initializeApp(config);
+// Sign-in runs through the app's own address where Google allows it. Phones (Safari, home-screen
+// apps) block the cross-site storage that sign-in through the-model-router.firebaseapp.com needs.
+// A host is listed here only after https://<host>/__/auth/handler was added to the OAuth client's
+// authorized redirect URIs in Google Cloud (otherwise Google refuses the sign-in).
+const SAME_SITE_AUTH_HOSTS: string[] = [];
+const sameSite = SAME_SITE_AUTH_HOSTS.includes(location.hostname);
+const app = initializeApp(sameSite ? { ...config, authDomain: location.hostname } : config);
 export const auth = getAuth(app);
 export const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
 
@@ -25,13 +31,42 @@ void setPersistence(auth, browserLocalPersistence);
 
 export function watchUser(cb: (user: User | null) => void) {
   // Finishes a redirect sign-in if one was in progress (used when popups are blocked).
-  getRedirectResult(auth).catch(() => {});
+  getRedirectResult(auth).catch((e) => {
+    redirectError = friendly(e);
+  });
   return onAuthStateChanged(auth, cb);
+}
+
+let redirectError = '';
+/** An error from a sign-in that came back through a redirect (shown on the sign-in page). */
+export function takeRedirectError() {
+  const e = redirectError;
+  redirectError = '';
+  return e;
+}
+
+/** Installed to the home screen (or another app-like window), where pop-ups don't work well. */
+const standalone = () =>
+  window.matchMedia?.('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true;
+const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+function friendly(e: unknown): string {
+  const code = (e as { code?: string }).code || '';
+  if (code === 'auth/popup-closed-by-user' || code === 'auth/redirect-cancelled-by-user') return 'Sign-in was closed before it finished.';
+  if (code === 'auth/network-request-failed') return "Couldn't reach Google. Check your connection and try again.";
+  if (code === 'auth/unauthorized-domain') return "This address isn't allowed to sign in yet.";
+  return (e as Error).message.replace(/^Firebase:\s*/, '');
 }
 
 export async function signInWithGoogle() {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
+  // Home-screen apps and iPhones: full-page redirect (pop-ups open in a separate browser there and
+  // often never report back). It needs same-site sign-in, so only where that's switched on.
+  if (sameSite && (standalone() || isIOS())) {
+    await signInWithRedirect(auth, provider);
+    return;
+  }
   try {
     await signInWithPopup(auth, provider);
   } catch (e) {
@@ -40,8 +75,7 @@ export async function signInWithGoogle() {
       await signInWithRedirect(auth, provider);
       return;
     }
-    if (code === 'auth/popup-closed-by-user') throw new Error('Sign-in was closed before it finished.');
-    throw new Error((e as Error).message.replace(/^Firebase:\s*/, ''));
+    throw new Error(friendly(e));
   }
 }
 

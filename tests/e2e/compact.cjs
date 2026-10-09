@@ -1,5 +1,10 @@
 // Long chats: auto-compacting, what gets sent, divider, /compact, undo, new chat with summary, sync.
 const { chromium } = require('playwright');
+// Settings is a page: on phones the section list shows first, and a section has a back arrow.
+async function openTab(page, name) {
+  if (await page.isVisible('.settings-back')) await page.click('.settings-back');
+  await page.click(`.settings-tabs >> text=${name}`);
+}
 const path = require('path');
 let failures = 0;
 const check = (c, l) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) failures++; };
@@ -58,9 +63,9 @@ async function send(page, text, n) {
   await page.fill('input[placeholder="AIza…"]', 'g');
   await page.click('text=Save keys');
   await page.waitForTimeout(1500);
-  await page.click('.settings-tabs >> text=General');
-  check((await page.textContent('.modal')).includes('Compact long chats automatically'), 'setting is there');
-  await page.click('.modal [aria-label="Close"]');
+  await openTab(page, 'General');
+  check((await page.textContent('.settings-page')).includes('Compact long chats automatically'), 'setting is there');
+  await page.click('.settings-page [aria-label="Close"]');
 
   await send(page, big('OLD-1'), 0);
   check(!(await page.$('.memory-chip')), 'no memory meter on a short chat');
@@ -114,9 +119,9 @@ async function send(page, text, n) {
   // Turning auto off: full chat is sent.
   await page.click('.menu-btn');
   await page.click('.sidebar-foot');
-  await page.click('.settings-tabs >> text=General');
+  await openTab(page, 'General');
   await page.locator('.setting-row', { hasText: 'Compact long chats automatically' }).locator('input').click();
-  await page.click('.modal [aria-label="Close"]');
+  await page.click('.settings-page [aria-label="Close"]');
   const nBefore = (await page.$$('.msg.assistant')).length;
   await send(page, 'one more', nBefore);
   check(log.summaries.length === 2 && allText(log.chats.at(-1)).includes('OLD-1'), 'with auto off, the full chat is sent');

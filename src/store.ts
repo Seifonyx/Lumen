@@ -425,7 +425,7 @@ export const useStore = create<State>((set, get) => {
     compactingChatId: null,
     sidebarOpen: false,
     settingsOpen: false,
-    settingsTab: 'general',
+    settingsTab: '',
     preview: null,
     toasts: [],
 
@@ -601,14 +601,14 @@ export const useStore = create<State>((set, get) => {
       // Reuse an existing empty chat instead of piling them up.
       const empty = get().chats.find((c) => c.messages.length === 0 && !c.summary);
       if (empty) {
-        set({ currentId: empty.id, sidebarOpen: false });
+        set({ currentId: empty.id, sidebarOpen: false, settingsOpen: false });
         return;
       }
       const chat = newChatObject();
-      set((s) => ({ chats: [chat, ...s.chats], currentId: chat.id, sidebarOpen: false }));
+      set((s) => ({ chats: [chat, ...s.chats], currentId: chat.id, sidebarOpen: false, settingsOpen: false }));
     },
     selectChat(id) {
-      set({ currentId: id, sidebarOpen: false });
+      set({ currentId: id, sidebarOpen: false, settingsOpen: false });
     },
     async deleteChat(id) {
       if (get().streamingChatId === id) get().stop();

@@ -290,7 +290,7 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
           </button>
         </div>
       </form>
-      <p className="disclaimer">AI can make mistakes. Don't share patient or confidential data.</p>
+      <p className="disclaimer">AI can make mistakes. Check important info.</p>
     </div>
   );
 }

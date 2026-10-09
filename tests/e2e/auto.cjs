@@ -1,5 +1,10 @@
 // In-app check: Auto option, "why" note, a hanging model replaced, manual text-only model + image rerouted.
 const { chromium } = require('playwright');
+// Settings is a page: on phones the section list shows first, and a section has a back arrow.
+async function openTab(page, name) {
+  if (await page.isVisible('.settings-back')) await page.click('.settings-back');
+  await page.click(`.settings-tabs >> text=${name}`);
+}
 const path = require('path');
 let failures = 0;
 const check = (c, l) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) failures++; };
@@ -40,13 +45,13 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   await page.fill('input[placeholder="sk-or-…"]', 'o');
   await page.click('text=Save keys');
   await page.waitForTimeout(1500);
-  await page.click('.settings-tabs >> text=Models');
+  await openTab(page, 'Models');
   for (const label of ['Gemini Flash Latest', 'Gemini 2.5 Pro', 'Qwen3 Coder']) {
     const b = page.locator('.model-list.add .model-row', { hasText: label }).locator('button');
     if (await b.count()) await b.first().click();
   }
   check(await page.isChecked('.settings-section .switch >> nth=1'), 'Auto is on for new chats by default');
-  await page.click('.modal [aria-label="Close"]');
+  await page.click('.settings-page [aria-label="Close"]');
   check((await page.textContent('.model-button')).includes('Auto'), 'picker shows Auto');
 
   // Image question in Auto -> a model that reads images, with the reason shown.

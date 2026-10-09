@@ -147,7 +147,7 @@ export default function Sidebar() {
           </section>
         ))}
       </nav>
-      <button className="sidebar-foot" onClick={() => setUi({ settingsOpen: true, settingsTab: 'general', sidebarOpen: false })} aria-label="Settings">
+      <button className="sidebar-foot" onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })} aria-label="Settings">
         {user?.photo ? <img className="avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
         <span className="account">
           <span className="account-name">{user?.name || user?.email?.split('@')[0] || 'Account'}</span>

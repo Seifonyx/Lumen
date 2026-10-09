@@ -1,5 +1,10 @@
 // Usage meter test: counts, learned limits, skipping limited models, OpenRouter pool, sync to a 2nd device.
 const { chromium } = require('playwright');
+// Settings is a page: on phones the section list shows first, and a section has a back arrow.
+async function openTab(page, name) {
+  if (await page.isVisible('.settings-back')) await page.click('.settings-back');
+  await page.click(`.settings-tabs >> text=${name}`);
+}
 const path = require('path');
 const OUT = path.join(__dirname, 'out');
 require('fs').mkdirSync(OUT, { recursive: true });
@@ -46,7 +51,7 @@ async function device(browser, mobile) {
   await page.goto('http://localhost:5190/?emulator');
   await page.waitForFunction(() => typeof window.__testSignIn === 'function');
   await page.evaluate(() => window.__testSignIn('hebaghoneim8@gmail.com'));
-  await page.waitForSelector('.topbar');
+  await page.waitForSelector('.topbar:visible, .settings-page');
   return { ctx, page, calls, errors };
 }
 
@@ -61,13 +66,13 @@ async function device(browser, mobile) {
   await A.page.click('text=Save keys');
   await A.page.waitForTimeout(1500);
   // Enable both Gemini models (3.5 first) + the OpenRouter one, default = 3.5.
-  await A.page.click('.settings-tabs >> text=Models');
+  await openTab(A.page, 'Models');
   for (const label of ['gemini-3.5-flash', 'gemini-flash-latest', 'DeepSeek']) {
     const btn = A.page.locator('.model-list.add .model-row', { hasText: label }).locator('button');
     if (await btn.count()) await btn.first().click();
   }
   await A.page.locator('.model-row', { hasText: 'gemini-3.5-flash' }).locator('.star').first().click();
-  await A.page.click('.modal [aria-label="Close"]');
+  await A.page.click('.settings-page [aria-label="Close"]');
 
   // 1st message: 3.5 is at its daily limit -> switches, learns limit 20, blocks it.
   await A.page.click('.model-button');
@@ -103,7 +108,7 @@ async function device(browser, mobile) {
   // Usage tab.
   await A.page.click('.menu-btn');
   await A.page.click('.sidebar-foot');
-  await A.page.click('.settings-tabs >> text=Usage');
+  await openTab(A.page, 'Usage');
   await A.page.waitForSelector('.usage-row');
   const text = await A.page.textContent('.usage');
   console.log('      usage tab:', text.replace(/\s+/g, ' ').slice(0, 400));
@@ -116,7 +121,7 @@ async function device(browser, mobile) {
   const B = await device(browser, false);
   await B.page.waitForTimeout(2000);
   await B.page.click('.sidebar-foot');
-  await B.page.click('.settings-tabs >> text=Usage');
+  await openTab(B.page, 'Usage');
   await B.page.waitForSelector('.usage-row');
   const textB = await B.page.textContent('.usage');
   check(/Limit reached/.test(textB) && /1 of 50 today/.test(textB), 'usage + block synced to second device');

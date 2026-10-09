@@ -6,6 +6,7 @@ import { formatUntil } from '../lib/usage';
 import { modelInfo, selectCurrentChat, useStore } from '../store';
 import { CompactingNote, CompactNote, MemoryMeter } from './CompactNote';
 import Composer, { prefillComposer } from './Composer';
+import Logo from './Logo';
 import MessageItem from './MessageItem';
 import ModelPicker from './ModelPicker';
 
@@ -70,12 +71,12 @@ export default function ChatView() {
     <main className="main">
       <header className="topbar">
         <button className="icon-btn menu-btn" onClick={() => setUi({ sidebarOpen: true })} aria-label="Open chats">
-          <Menu size={22} />
+          <Menu size={20} />
         </button>
         <ModelPicker value={model} onChange={setChatModel} />
         <div className="spacer" />
         <button className="icon-btn" onClick={newChat} aria-label="New chat" title="New chat (Ctrl+Shift+O)">
-          <SquarePen size={20} />
+          <SquarePen size={18} />
         </button>
       </header>
 
@@ -100,7 +101,7 @@ export default function ChatView() {
       <div className="messages" ref={scroller}>
         {messages.length === 0 && !summary ? (
           <div className="empty">
-            <img src="/icon.svg" alt="" width={52} height={52} />
+            <Logo size={40} />
             <h1>What can I help with?</h1>
             <p className="muted">Ask anything, attach files, or have me make documents, spreadsheets and slides.</p>
             <div className="suggestions">

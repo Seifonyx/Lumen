@@ -94,3 +94,7 @@ export function dayGroup(ts: number, now = Date.now()): string {
 }
 
 export const modelShortName = (id?: string) => (id ? id.split(':').slice(1).join(':') : '');
+
+/** Apple keyboards show ⌘, others Ctrl. */
+export const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+export const modKey = isMac ? '⌘' : 'Ctrl ';

@@ -8,10 +8,10 @@ export default function Toasts() {
     <div className="toasts" role="status" aria-live="polite">
       {toasts.map((t) => (
         <div key={t.id} className={`toast toast-${t.kind}`}>
-          {t.kind === 'error' ? <TriangleAlert size={18} /> : t.kind === 'success' ? <CheckCircle2 size={18} /> : <Info size={18} />}
+          {t.kind === 'error' ? <TriangleAlert size={16} /> : t.kind === 'success' ? <CheckCircle2 size={16} /> : <Info size={16} />}
           <span dir="auto">{t.text}</span>
           <button className="icon-btn sm" onClick={() => dismiss(t.id)} aria-label="Dismiss">
-            <X size={16} />
+            <X size={14} />
           </button>
         </div>
       ))}

@@ -1,6 +1,7 @@
 import { Download, MoreHorizontal, Pencil, Pin, PinOff, Search, Settings, SquarePen, Trash2, X } from 'lucide-react';
+import Logo from './Logo';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { dayGroup, modelShortName, safeFileName, saveBlob } from '../lib/util';
+import { dayGroup, modKey, modelShortName, safeFileName, saveBlob } from '../lib/util';
 import { useStore } from '../store';
 import type { Chat } from '../types';
 
@@ -88,6 +89,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
 }
 
 export default function Sidebar() {
+  const user = useStore((st) => st.user);
   const chats = useStore((s) => s.chats);
   const currentId = useStore((s) => s.currentId);
   const open = useStore((s) => s.sidebarOpen);
@@ -116,19 +118,21 @@ export default function Sidebar() {
     <aside className={`sidebar${open ? ' open' : ''}`} aria-label="Chats">
       <div className="sidebar-head">
         <div className="brand">
-          <img src="/icon.svg" alt="" width={26} height={26} />
+          <Logo size={24} />
           <span>Model Router</span>
         </div>
         <button className="icon-btn close-sidebar" onClick={() => setUi({ sidebarOpen: false })} aria-label="Close menu">
-          <X size={20} />
+          <X size={18} />
         </button>
       </div>
-      <button className="btn primary block new-chat" onClick={newChat}>
-        <SquarePen size={17} /> New chat
+      <button className="btn block new-chat" onClick={newChat}>
+        <SquarePen size={15} /> New chat
+        <span className="kbd">{modKey}⇧O</span>
       </button>
       <label className="search">
         <Search size={16} />
         <input id="chat-search" type="search" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" />
+        {!query && <span className="kbd">{modKey}K</span>}
       </label>
       <nav className="chat-list">
         {groups.length === 0 && <p className="muted small empty-list">{query ? 'No chats match.' : 'Your chats will appear here.'}</p>}
@@ -143,8 +147,13 @@ export default function Sidebar() {
           </section>
         ))}
       </nav>
-      <button className="sidebar-foot" onClick={() => setUi({ settingsOpen: true, settingsTab: 'general', sidebarOpen: false })}>
-        <Settings size={18} /> Settings
+      <button className="sidebar-foot" onClick={() => setUi({ settingsOpen: true, settingsTab: 'general', sidebarOpen: false })} aria-label="Settings">
+        {user?.photo ? <img className="avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
+        <span className="account">
+          <span className="account-name">{user?.name || user?.email?.split('@')[0] || 'Account'}</span>
+          {user?.email && <span className="account-mail">{user.email}</span>}
+        </span>
+        <Settings size={16} />
       </button>
     </aside>
   );

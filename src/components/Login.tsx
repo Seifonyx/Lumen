@@ -1,4 +1,5 @@
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lock } from 'lucide-react';
+import Logo from './Logo';
 import { useState } from 'react';
 import { useStore } from '../store';
 
@@ -33,13 +34,16 @@ export default function Login() {
   return (
     <main className="login">
       <div className="login-card">
-        <img src="/icon.svg" alt="" className="login-logo" width={56} height={56} />
-        <h1>Model Router</h1>
-        <p className="muted">Your private chat with free AI models.</p>
+        <Logo size={44} />
+        <h1>Sign in to Model Router</h1>
+        <p className="muted">Every free AI model in one private chat.</p>
         {error && <p className="error-text" role="alert">{error}</p>}
         <button className="btn block google-btn" onClick={submit} disabled={busy}>
           {busy ? <Loader2 className="spin" size={18} /> : <GoogleLogo />} Continue with Google
         </button>
+        <p className="login-foot">
+          <Lock size={12} /> Private · invite only
+        </p>
       </div>
     </main>
   );

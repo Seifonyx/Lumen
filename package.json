@@ -8,7 +8,11 @@
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "deploy": "npm run build && python3 scripts/deploy_firebase.py"
+    "deploy": "npm run build && python3 scripts/deploy_firebase.py",
+    "test": "npm run typecheck && npm run test:unit",
+    "test:unit": "node scripts/test-unit.mjs",
+    "test:e2e": "node scripts/test-e2e.mjs",
+    "test:e2e:ci": "npx --yes firebase-tools@15.30.2 emulators:exec --only auth,firestore --project the-model-router \"node scripts/test-e2e.mjs\""
   },
   "dependencies": {
     "chart.js": "4.5.1",
@@ -33,7 +37,9 @@
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
     "typescript": "7.0.2",
-    "vite": "8.3.0"
+    "vite": "8.3.0",
+    "rolldown": "1.2.13",
+    "playwright": "1.56.1"
   },
   "engines": {
     "node": "22.x"

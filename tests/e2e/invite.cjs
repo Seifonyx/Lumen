@@ -1,0 +1,38 @@
+const { chromium } = require('playwright');
+let failures = 0;
+const check = (c, l) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) failures++; };
+(async () => {
+  await fetch('http://127.0.0.1:8080/emulator/v1/projects/the-model-router/databases/(default)/documents', { method: 'DELETE' });
+  await fetch('http://127.0.0.1:9099/emulator/v1/projects/the-model-router/accounts', { method: 'DELETE' });
+  const browser = await chromium.launch();
+  const run = async (email) => {
+    const ctx = await browser.newContext();
+    await ctx.route('**/generativelanguage.googleapis.com/**', (r) => r.fulfill({ json: { models: [] } }));
+    await ctx.route('**/openrouter.ai/**', (r) => r.fulfill({ json: { data: [] } }));
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    await page.goto('http://localhost:5190/?emulator');
+    await page.waitForFunction(() => typeof window.__testSignIn === 'function');
+    await page.evaluate((e) => window.__testSignIn(e), email);
+    await page.waitForSelector('.topbar, .denied-icon', { timeout: 15000 });
+    return { page, errors };
+  };
+  const ok = await run('HebaGhoneim8@gmail.com');
+  check(await ok.page.$('.topbar'), 'invited account (any capitalisation) gets in');
+  await ok.page.waitForSelector('input[placeholder="AIza…"]');
+  await ok.page.fill('input[placeholder="AIza…"]', 'k');
+  await ok.page.click('text=Save keys');
+  await ok.page.waitForTimeout(1500);
+  check(!(await ok.page.textContent('body')).includes("Couldn't save keys"), 'invited account can save keys');
+  const other = await run('stranger@gmail.com');
+  check(await other.page.$('.denied-icon'), 'uninvited account sees "Not invited"');
+  check((await other.page.textContent('body')).includes('stranger@gmail.com'), 'screen names the account');
+  await other.page.click('text=Use a different account');
+  await other.page.waitForSelector('.google-btn');
+  check(true, '"Use a different account" signs out');
+  const errs = [...ok.errors, ...other.errors];
+  check(!errs.length, `no page errors ${errs.join(' | ')}`);
+  await browser.close();
+  console.log(failures ? `${failures} FAILED` : 'ALL PASSED');
+})();

@@ -55,5 +55,22 @@ npm run deploy      # build + upload to Firebase Hosting (needs Google credentia
 `scripts/deploy_firebase.py` deploys through the Firebase Hosting REST API using the settings in
 `firebase.json`; with the Firebase CLI you can use `firebase deploy --only hosting` instead.
 
+## Tests
+
+GitHub runs every test on each push (see the **Actions** tab, workflow `Tests`).
+
+```bash
+npm test                 # type check + unit tests (routing, rerouting, compacting, memory)
+npm run build
+npx firebase-tools@15.30.2 emulators:start --only auth,firestore --project the-model-router
+npm run test:e2e         # in-app tests in Chromium against the emulators (another terminal)
+npm run test:e2e -- memory offline   # just some of them
+```
+
+The in-app tests (`tests/e2e`) sign in through the Firebase emulators, fake the AI providers, and
+check sync between two devices, invite-only access, Auto routing and switching, usage limits,
+long-chat compacting, memory, generated Word/Excel/PowerPoint files, the free-plan guard, and
+offline mode with the update prompt. Screenshots land in `tests/e2e/out`.
+
 Free tiers may use conversations to improve the providers' models, so don't send patient or
 confidential data.

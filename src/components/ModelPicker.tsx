@@ -63,9 +63,10 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
 
   const models = enabled.map((id) => catalog?.models.find((m) => m.id === id) || ({ id, label: modelLabel(catalog, id), provider: providerOfId(id) } as ModelInfo));
   const customLayouts = useStore((s) => s.settings.layouts);
+  const hiddenLayouts = useStore((s) => s.settings.hiddenLayouts) || [];
   // Layouts with at least one model this account can use.
-  const layouts = allLayouts(catalog?.models || [], customLayouts).filter((l) => l.models.some((id) => catalog?.models.some((m) => m.id === id)));
-  const current = isLayoutId(value) ? findLayout(value, catalog?.models || [], customLayouts) : undefined;
+  const layouts = allLayouts(catalog?.models || [], customLayouts, hiddenLayouts).filter((l) => l.models.some((id) => catalog?.models.some((m) => m.id === id)));
+  const current = isLayoutId(value) ? findLayout(value, catalog?.models || [], customLayouts, hiddenLayouts) : undefined;
   const groups = (Object.keys(PROVIDER_NAMES) as ProviderId[])
     .map((p) => [PROVIDER_NAMES[p], models.filter((m) => m.provider === p)] as [string, ModelInfo[]])
     .filter(([, list]) => list.length);

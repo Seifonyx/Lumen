@@ -155,5 +155,7 @@ export interface Settings {
   layouts?: import('./lib/layouts').Layout[];
   /** set once Auto routing has been made the default */
   autoIntroduced?: boolean;
+  /** Recommended layouts the user has hidden */
+  hiddenLayouts?: string[];
   voiceLang: string;
 }

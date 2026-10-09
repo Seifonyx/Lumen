@@ -108,7 +108,7 @@ function Editor({ start, onDone }: { start: Layout; onDone: () => void }) {
   );
 }
 
-function Card({ l, onEdit, onCopy }: { l: Layout; onEdit?: () => void; onCopy: () => void }) {
+function Card({ l, onEdit, onCopy, onDelete, showDelete }: { l: Layout; onEdit?: () => void; onCopy: () => void; onDelete?: () => void; showDelete?: boolean }) {
   const catalog = useStore((s) => s.catalog);
   const settings = useStore((s) => s.settings);
   const update = useStore((s) => s.updateSettings);
@@ -122,6 +122,7 @@ function Card({ l, onEdit, onCopy }: { l: Layout; onEdit?: () => void; onCopy: (
         <div className="layout-title">
           {l.name}
           <span className="tag">{l.mode === 'auto' ? 'best for each' : 'in order'}</span>
+          {l.builtin && <span className="tag small">Recommended</span>}
         </div>
         <div className="setting-hint">{l.description}</div>
         <div className="layout-models">
@@ -134,17 +135,18 @@ function Card({ l, onEdit, onCopy }: { l: Layout; onEdit?: () => void; onCopy: (
         </button>
         {onEdit ? (
           <button className="icon-btn sm" onClick={onEdit} aria-label={`Edit ${l.name}`} title="Edit"><Pencil size={15} /></button>
-        ) : null}
-        <button className="icon-btn sm" onClick={onCopy} aria-label={`Copy ${l.name}`} title={onEdit ? 'Duplicate' : 'Customize (makes your own copy)'}><Copy size={15} /></button>
-        {onEdit && (
+        ) : (
+          <button className="icon-btn sm" onClick={onCopy} aria-label={`Customize ${l.name}`} title="Customize (makes your own copy)"><Pencil size={15} /></button>
+        )}
+        {!l.builtin && (
+          <button className="icon-btn sm" onClick={onCopy} aria-label={`Copy ${l.name}`} title="Duplicate"><Copy size={15} /></button>
+        )}
+        {showDelete && (
           <button
             className="icon-btn sm"
-            onClick={() => {
-              if (!confirm(`Delete the "${l.name}" layout?`)) return;
-              update({ layouts: (settings.layouts || []).filter((x) => x.id !== l.id), ...(isDefault ? { defaultModel: 'auto' } : {}) });
-            }}
-            aria-label={`Delete ${l.name}`}
-            title="Delete"
+            onClick={onDelete}
+            aria-label={l.builtin ? `Hide ${l.name}` : `Delete ${l.name}`}
+            title={l.builtin ? "Remove this recommended layout" : "Delete this layout"}
           >
             <Trash2 size={15} />
           </button>
@@ -157,28 +159,44 @@ function Card({ l, onEdit, onCopy }: { l: Layout; onEdit?: () => void; onCopy: (
 export default function LayoutsTab() {
   const catalog = useStore((s) => s.catalog);
   const custom = useStore((s) => s.settings.layouts) || [];
+  const hiddenLayouts = useStore((s) => s.settings.hiddenLayouts) || [];
+  const update = useStore((s) => s.updateSettings);
   const [editing, setEditing] = useState<Layout | null>(null);
-  const recommended = recommendedLayouts(catalog?.models || []);
+  const recommended = recommendedLayouts(catalog?.models || [], hiddenLayouts);
   const copyOf = (l: Layout): Layout => ({ ...l, id: newLayoutId(), name: `${l.name} (mine)`.slice(0, 40), builtin: undefined });
 
   if (editing) return <Editor start={editing} onDone={() => setEditing(null)} />;
   return (
-    <div className="settings-section layouts-tab">
-      <p className="muted small">
-        Pick a layout from the model menu like any model. ★ makes it the default for new chats. Recommended layouts use the best models you have; copy one to change it.
-      </p>
+    <div className="settings-section layouts-tab" style={{ padding: 0 }}>
       <div className="section-head">
         <h3>Your layouts</h3>
         <button className="btn small" onClick={() => setEditing({ id: newLayoutId(), name: '', icon: 'layers', description: '', models: [], mode: 'order' })}>
           <Plus size={15} /> New layout
         </button>
       </div>
+      <p className="muted small" style={{ marginBottom: '1rem' }}>
+        Pick a layout from the model menu like any model. ★ makes it the default for new chats. Recommended layouts use the best models you have; customize one to make your own editable copy.
+      </p>
       {custom.length === 0 ? (
-        <p className="muted small">None yet. Create one, or copy a recommended layout below.</p>
+        <p className="muted small" style={{ marginBottom: '1.5rem' }}>None yet. Create one, or customize a recommended layout below.</p>
       ) : (
-        <ul className="layout-list">
+        <ul className="layout-list" style={{ marginBottom: '1.5rem' }}>
           {custom.map((l) => (
-            <Card key={l.id} l={l} onEdit={() => setEditing(l)} onCopy={() => setEditing(copyOf(l))} />
+            <Card 
+              key={l.id} 
+              l={l} 
+              showDelete 
+              onEdit={() => setEditing(l)} 
+              onCopy={() => setEditing(copyOf(l))} 
+              onDelete={() => {
+                if (!confirm(`Delete the "${l.name}" layout?`)) return;
+                const isDefault = useStore.getState().settings.defaultModel === LAYOUT_PREFIX + l.id;
+                update({ 
+                  layouts: (useStore.getState().settings.layouts || []).filter((x) => x.id !== l.id), 
+                  ...(isDefault ? { defaultModel: 'auto' } : {}) 
+                });
+              }} 
+            />
           ))}
         </ul>
       )}
@@ -187,11 +205,30 @@ export default function LayoutsTab() {
       </div>
       <ul className="layout-list">
         {recommended.map((l) => (
-          <Card key={l.id} l={l} onCopy={() => setEditing(copyOf(l))} />
+          <Card 
+            key={l.id} 
+            l={l} 
+            showDelete 
+            onCopy={() => setEditing(copyOf(l))}
+            onDelete={() => {
+              if (!confirm(`Hide the "${l.name}" recommended layout?`)) return;
+              update({ hiddenLayouts: [...new Set([...hiddenLayouts, l.id])] });
+            }} 
+          />
         ))}
       </ul>
-      {allLayouts(catalog?.models || [], custom).length > 0 && !catalog?.providers.groq && !catalog?.providers.cerebras && (
-        <p className="muted small">Tip: add free Groq and Cerebras keys (API keys) for the Fastest and Max coding layouts.</p>
+      {hiddenLayouts.length > 0 && (
+        <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-start' }}>
+          <button 
+            className="btn small ghost" 
+            onClick={() => update({ hiddenLayouts: [] })}
+          >
+            Reset recommended layouts
+          </button>
+        </div>
+      )}
+      {allLayouts(catalog?.models || [], custom, hiddenLayouts).length > 0 && !catalog?.providers.groq && !catalog?.providers.cerebras && (
+        <p className="muted small" style={{ marginTop: '1rem' }}>Tip: add free Groq and Cerebras keys (API keys) for the Fastest and Max coding layouts.</p>
       )}
     </div>
   );

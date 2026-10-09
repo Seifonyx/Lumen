@@ -98,26 +98,28 @@ const RECIPES: Recipe[] = [
 ];
 
 /** Recommended layouts, filled with the best matching models from this account's catalog. */
-export function recommendedLayouts(catalog: ModelInfo[]): Layout[] {
-  return RECIPES.map((r) => {
-    const models: string[] = [];
-    for (const want of r.wants) {
-      const hits = catalog.filter((m) => !m.preview && want.test(m.id) && !models.includes(m.id)).slice(0, r.per ?? 1);
-      models.push(...hits.map((m) => m.id));
-      if (models.length >= 8) break;
-    }
-    return { id: r.id, name: r.name, icon: r.icon, description: r.description, models, mode: r.mode, instructions: r.instructions, builtin: true };
-  });
+export function recommendedLayouts(catalog: ModelInfo[], hidden: string[] = []): Layout[] {
+  return RECIPES
+    .filter((r) => !hidden.includes(r.id))
+    .map((r) => {
+      const models: string[] = [];
+      for (const want of r.wants) {
+        const hits = catalog.filter((m) => !m.preview && want.test(m.id) && !models.includes(m.id)).slice(0, r.per ?? 1);
+        models.push(...hits.map((m) => m.id));
+        if (models.length >= 8) break;
+      }
+      return { id: r.id, name: r.name, icon: r.icon, description: r.description, models, mode: r.mode, instructions: r.instructions, builtin: true };
+    });
 }
 
 /** Every layout: recommended first, then the user's own. */
-export function allLayouts(catalog: ModelInfo[], custom: Layout[] = []): Layout[] {
-  return [...recommendedLayouts(catalog), ...custom];
+export function allLayouts(catalog: ModelInfo[], custom: Layout[] = [], hidden: string[] = []): Layout[] {
+  return [...recommendedLayouts(catalog, hidden), ...custom];
 }
 
-export function findLayout(id: string, catalog: ModelInfo[], custom: Layout[] = []): Layout | undefined {
+export function findLayout(id: string, catalog: ModelInfo[], custom: Layout[] = [], hidden: string[] = []): Layout | undefined {
   const key = isLayoutId(id) ? layoutKey(id) : id;
-  return allLayouts(catalog, custom).find((l) => l.id === key);
+  return allLayouts(catalog, custom, hidden).find((l) => l.id === key);
 }
 
 export const newLayoutId = () => `custom-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;

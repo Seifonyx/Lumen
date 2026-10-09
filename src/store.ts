@@ -149,7 +149,7 @@ export const useStore = create<State>((set, get) => {
   const modelFor = (chat: Chat | null): string => {
     const { settings, catalog } = get();
     const enabled = settings.enabledModels.filter((id) => !catalog || catalog.models.some((m) => m.id === id) || !catalog.models.length);
-    const layoutOk = (id: string) => isLayoutId(id) && Boolean(findLayout(id, catalog?.models || [], settings.layouts));
+    const layoutOk = (id: string) => isLayoutId(id) && Boolean(findLayout(id, catalog?.models || [], settings.layouts, settings.hiddenLayouts || []));
     const pick = [chat?.model, settings.defaultModel, ...enabled].find((id) => id && (id === AUTO || enabled.includes(id) || layoutOk(id)));
     return pick || enabled[0] || catalog?.defaults[0] || '';
   };
@@ -272,7 +272,7 @@ export const useStore = create<State>((set, get) => {
     }
     // A layout: its models (best first) answer, Auto-style or in order, with its own instructions.
     const catalogModels = get().catalog?.models || [];
-    const layout = isLayoutId(model) ? findLayout(model, catalogModels, settings.layouts) : undefined;
+    const layout = isLayoutId(model) ? findLayout(model, catalogModels, settings.layouts, settings.hiddenLayouts || []) : undefined;
     const usable = (id: string) => catalogModels.some((m) => m.id === id);
     const layoutModels = layout ? layout.models.filter(usable) : [];
     if (layout) model = layout.mode === 'auto' || !layoutModels.length ? AUTO : layoutModels[0];
@@ -654,7 +654,7 @@ export const useStore = create<State>((set, get) => {
         if (!enabled.length) enabled = catalog.defaults.filter((id) => known.has(id) || !catalog.models.length);
         // New chats use Auto (introduced once; you can switch back to a fixed model any time).
         const wanted = settings.autoIntroduced ? settings.defaultModel : AUTO;
-        const defaultModel = wanted === AUTO || enabled.includes(wanted) || (isLayoutId(wanted) && findLayout(wanted, catalog.models, settings.layouts)) ? wanted : enabled[0] || '';
+        const defaultModel = wanted === AUTO || enabled.includes(wanted) || (isLayoutId(wanted) && findLayout(wanted, catalog.models, settings.layouts, settings.hiddenLayouts || [])) ? wanted : enabled[0] || '';
         set({ catalog, catalogError: catalog.errors.length ? catalog.errors.join(' · ') : null });
         get().updateSettings({ enabledModels: enabled, defaultModel, autoIntroduced: true });
       } catch (e) {
@@ -1008,6 +1008,6 @@ export function modelInfo(catalog: Catalog | null, id?: string): ModelInfo | und
 
 export function modelLabel(catalog: Catalog | null, id?: string): string {
   if (id === AUTO) return 'Auto';
-  if (isLayoutId(id)) return findLayout(id, catalog?.models || [], useStore.getState().settings.layouts)?.name || 'Layout';
+  if (isLayoutId(id)) return findLayout(id, catalog?.models || [], useStore.getState().settings.layouts, useStore.getState().settings.hiddenLayouts || [])?.name || 'Layout';
   return modelInfo(catalog, id)?.label || modelShortName(id);
 }

@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowLeft, ArrowUp, Boxes, LayoutGrid, Brain, ChevronRight, Database, Download, ExternalLink, Gauge, KeyRound, Loader2, LogOut, Plus, RefreshCw, Search, Shield, SlidersHorizontal, Star, Trash2, Upload, UserRound, X, type LucideIcon } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, Boxes, Brain, ChevronRight, Database, Download, ExternalLink, Gauge, KeyRound, Loader2, LogOut, Plus, RefreshCw, Search, Shield, SlidersHorizontal, Star, Trash2, Upload, UserRound, X, type LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { VOICE_LANGS } from '../lib/speech';
 import { PROVIDER_NAMES, saveBlob, type ProviderId } from '../lib/util';
@@ -16,7 +16,6 @@ const TABS: [string, string, LucideIcon, string][] = [
   ['general', 'General', SlidersHorizontal, 'Appearance, chat behaviour and your account'],
   ['keys', 'API keys', KeyRound, 'Your free Gemini, OpenRouter, Groq and Cerebras keys'],
   ['models', 'Models', Boxes, 'Which models you use, their order and Auto'],
-  ['layouts', 'Layouts', LayoutGrid, 'Sets of models for coding, everyday, thinking…'],
   ['usage', 'Usage', Gauge, "Today's requests, limits and resets"],
   ['personalize', 'Personalization', UserRound, 'Instructions every model follows'],
   ['memory', 'Memory', Brain, 'What models remember about you'],
@@ -400,8 +399,14 @@ export default function SettingsModal() {
               </div>
             )}
             {id === 'keys' && <KeysTab />}
-            {id === 'models' && <ModelsTab />}
-            {id === 'layouts' && <LayoutsTab />}
+            {id === 'models' && (
+              <>
+                <ModelsTab />
+                <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border)', paddingTop: '2rem' }}>
+                  <LayoutsTab />
+                </div>
+              </>
+            )}
             {id === 'usage' && <UsageTab />}
             {id === 'memory' && <MemoryTab Toggle={Toggle} />}
             {id === 'privacy' && <PrivacyTab Toggle={Toggle} Choice={Choice} />}

@@ -1,6 +1,7 @@
 // Workbook spec → real Excel file with colours, number formats, formulas, totals and conditional formatting.
 
 import ExcelJS from 'exceljs';
+import { FormulaError, formulaResult, Workbook } from './formula';
 import { colLetter, fillFormula, layout, numFmt, parseNumber, type SheetSpec, type WorkbookSpec } from './sheet-spec';
 
 const argb = (hex: string) => `FF${hex}`;
@@ -23,7 +24,15 @@ function cellValue(raw: unknown, type: string, row: number, first: number, last:
   return raw as ExcelJS.CellValue;
 }
 
-function addSheet(wb: ExcelJS.Workbook, s: SheetSpec) {
+/** Adds the worked-out result to a formula cell, so viewers that don't recalculate still show values. */
+function withResult(value: ExcelJS.CellValue, book: Workbook, sheet: SheetSpec, raw: unknown, row: number): ExcelJS.CellValue {
+  if (!value || typeof value !== 'object' || !('formula' in value) || typeof raw !== 'string') return value;
+  const result = formulaResult(book, sheet, raw.trim(), row);
+  if (result === undefined || result === null) return value;
+  return { ...value, result: result instanceof FormulaError ? { error: result.code } : result } as ExcelJS.CellFormulaValue;
+}
+
+function addSheet(wb: ExcelJS.Workbook, s: SheetSpec, book: Workbook) {
   const { headerRow, first, last, totalsRow } = layout(s);
   const ncols = Math.max(s.columns.length, 1);
   const ws = wb.addWorksheet(s.name, {
@@ -65,7 +74,7 @@ function addSheet(wb: ExcelJS.Workbook, s: SheetSpec) {
     s.columns.forEach((col, ci) => {
       const spec = row[ci] || { value: null };
       const c = r.getCell(ci + 1);
-      c.value = cellValue(spec.value, col.type, first + ri, first, last);
+      c.value = withResult(cellValue(spec.value, col.type, first + ri, first, last), book, s, spec.value, first + ri);
       const fmt = numFmt(col);
       if (fmt) c.numFmt = fmt;
       const fill = spec.fill || (s.zebra && ri % 2 === 1 ? s.zebra : null);
@@ -89,7 +98,7 @@ function addSheet(wb: ExcelJS.Workbook, s: SheetSpec) {
       const letter = colLetter(ci);
       if (fn) {
         const name = { sum: 'SUM', average: 'AVERAGE', min: 'MIN', max: 'MAX', count: 'COUNTA' }[fn];
-        c.value = { formula: `${name}(${letter}${first}:${letter}${last})` } as ExcelJS.CellFormulaValue;
+        c.value = withResult({ formula: `${name}(${letter}${first}:${letter}${last})` } as ExcelJS.CellFormulaValue, book, s, `=${name}(${letter}${first}:${letter}${last})`, totalsRow);
         const fmt = numFmt(col);
         if (fmt) c.numFmt = fmt;
       } else if (!labelled) {
@@ -151,7 +160,8 @@ export async function buildXlsx(spec: WorkbookSpec): Promise<Blob> {
   const wb = new ExcelJS.Workbook();
   wb.creator = 'Model Router';
   wb.created = new Date();
-  for (const s of spec.sheets) addSheet(wb, s);
+  const book = new Workbook(spec.sheets);
+  for (const s of spec.sheets) addSheet(wb, s, book);
   const buf = await wb.xlsx.writeBuffer();
   return new Blob([await repairForExcel(buf as ArrayBuffer)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 }

@@ -1,9 +1,13 @@
 import { useMemo, useState } from 'react';
-import { colLetter, fillFormula, layout, parseWorkbook, type CellSpec, type ColumnSpec, type SheetSpec } from '../lib/generate/sheet-spec';
+import { FormulaError, formulaResult, Workbook } from '../lib/generate/formula';
+import { colLetter, layout, parseWorkbook, type CellSpec, type ColumnSpec, type SheetSpec } from '../lib/generate/sheet-spec';
 
-function format(v: CellSpec['value'], col: ColumnSpec): string {
-  if (v === null || v === undefined || v === '') return '';
-  if (typeof v === 'string' && v.startsWith('=')) return v;
+/** Shown for a formula the preview can't work out (Excel calculates it when the file opens). */
+const PENDING = Symbol('pending');
+
+function format(v: CellSpec['value'] | FormulaError | typeof PENDING, col: ColumnSpec): string {
+  if (v === null || v === undefined || v === '' || v === PENDING) return '';
+  if (v instanceof FormulaError) return v.code;
   if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
   if (typeof v === 'number') {
     if (col.type === 'percent') return `${(v * 100).toLocaleString(undefined, { maximumFractionDigits: 1 })}%`;
@@ -14,59 +18,17 @@ function format(v: CellSpec['value'], col: ColumnSpec): string {
   return String(v);
 }
 
-/** Tiny evaluator so totals and simple formulas show a value in the preview. */
-function evaluate(sheet: SheetSpec, formula: string, row: number): number | null {
-  const { first, last } = layout(sheet);
-  const f = fillFormula(formula.slice(1), row, first, last).toUpperCase().replace(/\s+/g, '');
-  const cellVal = (ref: string): number => {
-    const m = /^([A-Z]+)(\d+)$/.exec(ref);
-    if (!m) return NaN;
-    const col = m[1].split('').reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0) - 1;
-    const v = sheet.rows[Number(m[2]) - first]?.[col]?.value;
-    return typeof v === 'number' ? v : typeof v === 'string' && v.startsWith('=') ? evaluate(sheet, v, Number(m[2])) ?? NaN : Number(v);
-  };
-  const range = (a: string, b: string): number[] => {
-    const ma = /^([A-Z]+)(\d+)$/.exec(a);
-    const mb = /^([A-Z]+)(\d+)$/.exec(b);
-    if (!ma || !mb || ma[1] !== mb[1]) return [];
-    const out: number[] = [];
-    for (let r = Number(ma[2]); r <= Number(mb[2]); r++) out.push(cellVal(`${ma[1]}${r}`));
-    return out.filter((n) => !Number.isNaN(n));
-  };
-  const fn = /^(SUM|AVERAGE|MIN|MAX|COUNT|COUNTA)\(([A-Z]+\d+):([A-Z]+\d+)\)$/.exec(f);
-  if (fn) {
-    const vals = range(fn[2], fn[3]);
-    if (!vals.length) return null;
-    switch (fn[1]) {
-      case 'SUM': return vals.reduce((a, b) => a + b, 0);
-      case 'AVERAGE': return vals.reduce((a, b) => a + b, 0) / vals.length;
-      case 'MIN': return Math.min(...vals);
-      case 'MAX': return Math.max(...vals);
-      default: return vals.length;
-    }
-  }
-  if (/^[A-Z0-9+\-*/().]+$/.test(f)) {
-    const expr = f.replace(/[A-Z]+\d+/g, (ref) => String(cellVal(ref)));
-    if (/^[0-9+\-*/().eE]+$/.test(expr)) {
-      try {
-        const v = Function(`"use strict";return (${expr})`)();
-        return typeof v === 'number' && Number.isFinite(v) ? v : null;
-      } catch {
-        return null;
-      }
-    }
-  }
-  return null;
-}
-
-function Sheet({ sheet }: { sheet: SheetSpec }) {
+function Sheet({ sheet, book }: { sheet: SheetSpec; book: Workbook }) {
   const { first } = layout(sheet);
   const numericCols = sheet.columns.map((c) => ['number', 'integer', 'currency', 'percent'].includes(c.type));
 
   const values = sheet.rows.map((r, ri) =>
     sheet.columns.map((_, ci) => {
       const v = r[ci]?.value;
-      if (typeof v === 'string' && v.startsWith('=')) return evaluate(sheet, v, first + ri) ?? v;
+      if (typeof v === 'string' && v.trim().startsWith('=')) {
+        const result = formulaResult(book, sheet, v.trim(), first + ri);
+        return result === undefined ? PENDING : result;
+      }
       return v ?? null;
     }),
   );
@@ -142,8 +104,8 @@ function Sheet({ sheet }: { sheet: SheetSpec }) {
                   ...condStyle(ci, v),
                 };
                 return (
-                  <td key={ci} style={style} title={cell.note || (typeof cell.value === 'string' && cell.value.startsWith('=') ? cell.value : undefined)}>
-                    {format(v as CellSpec['value'], col)}
+                  <td key={ci} style={style} className={v === PENDING ? 'pending' : undefined} title={cell.note || (typeof cell.value === 'string' && cell.value.startsWith('=') ? (v === PENDING ? `Calculated by Excel: ${cell.value}` : cell.value) : undefined)}>
+                    {v === PENDING ? 'ƒx' : format(v as CellSpec['value'], col)}
                     {cell.note && <span className="note-mark" />}
                   </td>
                 );
@@ -168,12 +130,13 @@ function Sheet({ sheet }: { sheet: SheetSpec }) {
 
 export default function SheetPreview({ content }: { content: string }) {
   const wb = useMemo(() => parseWorkbook(content), [content]);
+  const book = useMemo(() => new Workbook(wb?.sheets || []), [wb]);
   const [tab, setTab] = useState(0);
   if (!wb) return <p className="pad muted">This spreadsheet's data couldn't be read.</p>;
   const sheet = wb.sheets[Math.min(tab, wb.sheets.length - 1)];
   return (
     <div className="sheet-preview">
-      <Sheet sheet={sheet} />
+      <Sheet key={tab} sheet={sheet} book={book} />
       {wb.sheets.length > 1 && (
         <div className="sheet-tabs" role="tablist">
           {wb.sheets.map((s, i) => (

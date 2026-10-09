@@ -8,7 +8,7 @@ const F = '````';
 const REPLY = [
   'Here are your files.',
   `${F}file:Ward report.docx\n<!-- {"title":"Ward Report","cover":true,"footer":true} -->\n# Summary\nOccupancy rose to **85%**.\n> [!WARNING]\n> ICU is close to capacity.\n| Ward | Patients |\n|---|---|\n| ICU | 12 |\n${F}`,
-  `${F}file:Tracker.xlsx\n${JSON.stringify({ sheets: [{ name: 'Wards', title: 'Ward tracker', columns: [{ header: 'Ward', type: 'text' }, { header: 'Patients', type: 'integer', total: 'sum' }, { header: 'Occupancy', type: 'percent' }], rows: [['ICU', 12, 0.85], ['ER', 30, 0.95], ['Peds', 8, 0.4]], zebra: true, totals: true, conditional: [{ column: 'Occupancy', type: 'colorScale' }, { column: 'Patients', type: 'dataBar' }, { column: 'Occupancy', type: 'greaterThan', value: 0.9, fill: '#F8CBAD' }] }] })}\n${F}`,
+  `${F}file:Tracker.xlsx\n${JSON.stringify({ sheets: [{ name: 'Wards', title: 'Ward tracker', columns: [{ header: 'Ward', type: 'text' }, { header: 'Patients', type: 'integer', total: 'sum' }, { header: 'Occupancy', type: 'percent' }, { header: 'Status' }], rows: [['ICU', 12, 0.85, '=IF(C{row}>=0.9,"FULL","OK")'], ['ER', 30, 0.95, '=IF(C{row}>=0.9,"FULL","OK")'], ['Peds', 8, 0.4, '=IF(C{row}>=0.9,"FULL","OK")']], zebra: true, totals: true, conditional: [{ column: 'Occupancy', type: 'colorScale' }, { column: 'Patients', type: 'dataBar' }, { column: 'Occupancy', type: 'greaterThan', value: 0.9, fill: '#F8CBAD' }] }] })}\n${F}`,
   `${F}file:Deck.pptx\n${JSON.stringify({ title: 'Update', theme: { preset: 'ocean' }, slides: [{ layout: 'title', title: 'Update', subtitle: 'March' }, { layout: 'chart', title: 'Patients', chart: { type: 'bar', labels: ['ICU', 'ER'], series: [{ name: 'Patients', values: [12, 30] }] } }, { layout: 'bullets', title: 'Next', bullets: ['Hire', 'Train'] }] })}\n${F}`,
 ].join('\n\n');
 
@@ -57,6 +57,7 @@ const REPLY = [
   const priorities = [...sheet.matchAll(/<cfRule[^>]*priority="(\d+)"/g)].map((m) => m[1]);
   check(priorities.length >= 3 && new Set(priorities).size === priorities.length, `conditional rules have unique priorities (${priorities.join(',')})`);
   check(sheet.includes('SUM('), 'totals row uses a formula');
+  check(/<f>IF\(C5&gt;=0\.9,&quot;FULL&quot;,&quot;OK&quot;\)<\/f><v>FULL<\/v>/.test(sheet) && /<f>SUM\(B\d:B\d\)<\/f><v>50<\/v>/.test(sheet), 'formulas carry their results (phone viewers show values)');
 
   const pptx = await download('Deck.pptx');
   const slides = Object.keys(pptx.zip.files).filter((f) => /^ppt\/slides\/slide\d+\.xml$/.test(f));
@@ -66,6 +67,8 @@ const REPLY = [
   await page.click('[aria-label="Preview Tracker.xlsx"]');
   const shown = await page.waitForFunction(() => [...document.querySelectorAll('.modal td, .modal th, .modal')].some((e) => /Peds/.test(e.textContent || '')), null, { timeout: 15000 }).then(() => true, () => false);
   check(shown, 'Excel preview shows the data');
+  const cells = await page.$$eval('.modal td', (tds) => tds.map((t) => t.textContent));
+  check(cells.includes('FULL') && cells.includes('OK') && !cells.some((t) => t.includes('=IF') || t.includes('{row}')), 'preview shows formula results, not code');
 
   check(!errors.length, `no page errors ${errors.join(' | ')}`);
   await browser.close();

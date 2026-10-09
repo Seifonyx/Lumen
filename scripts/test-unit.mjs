@@ -12,7 +12,7 @@ for (const file of readdirSync(dir).filter((f) => /\.test\.(ts|mjs)$/.test(f)).s
   let target = join(dir, file);
   if (file.endsWith('.ts')) {
     target = join(out, file.replace(/\.ts$/, '.mjs'));
-    await build({ input: join(dir, file), output: { file: target, format: 'esm' }, logLevel: 'silent' });
+    await build({ input: join(dir, file), output: { file: target, format: 'esm', codeSplitting: false }, logLevel: 'silent' });
   }
   console.log(`\n▶ ${file}`);
   const run = spawnSync(process.execPath, ['--import', './tests/unit/setup.mjs', target], { stdio: 'inherit' });

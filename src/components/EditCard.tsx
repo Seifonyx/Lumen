@@ -60,7 +60,7 @@ export default function EditCard({ kind, path, content, complete }: { kind: 'edi
           ) : applied ? (
             'Applied'
           ) : result && !result.ok ? (
-            <span className="edit-warn"><AlertTriangle size={12} /> The code it changes isn't in the file — ask the AI to read it again</span>
+            <span className="edit-warn"><AlertTriangle size={12} /> {('reason' in result && result.reason) || "The code it changes isn't in the file — ask the AI to read it again"}</span>
           ) : (
             <>
               {edit.kind === 'delete' ? 'Delete file' : current === null ? 'New file' : 'Edit'}

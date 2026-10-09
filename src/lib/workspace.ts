@@ -135,6 +135,8 @@ export function workspaceInstructions(r: RepoLink, all: TreeEntry[], truncated: 
     '- For a new file, or to rewrite a short file completely, put the whole content in an edit block with no SEARCH/REPLACE markers.',
     '- To delete a file: ````delete:path/to/file```` with nothing inside.',
     "- Don't use file:… blocks for repository files. Keep changes focused, then briefly say what you changed and why. The user reviews and applies each edit, then commits from the app.",
+    "## No terminal\nThe user works only in this app (often on a phone): there is no terminal, and they can't run commands, install packages or run git. Never tell them to run anything. Fix every problem yourself with edit blocks (to add a dependency, edit package.json). GitHub runs the project's checks after each commit, and the app sends you the results if they fail.",
+    '- Each edit block must have complete marker lines (<<<<<<< SEARCH, =======, >>>>>>> REPLACE) and nothing else from these markers may end up in the code.',
   ]
     .filter(Boolean)
     .join('\n');

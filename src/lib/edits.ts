@@ -20,6 +20,12 @@ export type Edit =
   | { kind: 'write'; path: string; content: string }
   | { kind: 'delete'; path: string };
 
+/** A SEARCH/=======/REPLACE marker line on its own (left behind by a malformed edit). */
+export const MARKER_LINE = /^[ \t]*(<{7} ?SEARCH|={7}|>{7} ?REPLACE|<{7}( .*)?|>{7}( .*)?)[ \t]*$/m;
+const MARKER_LINES = new RegExp(MARKER_LINE.source, 'gm');
+// "old\n=======\nnew\n>>>>>>> REPLACE" with the opening <<<<<<< SEARCH line missing.
+const HALF_HUNK = /^([\s\S]*?)\n?={5,9}[^\n]*\n([\s\S]*?)\n?>{5,9} ?REPLACE[^\n]*/;
+
 const HUNK = /<{5,9} ?SEARCH[^\n]*\n([\s\S]*?)\n?={5,9}[^\n]*\n([\s\S]*?)\n?>{5,9} ?REPLACE[^\n]*/g;
 
 export const EDIT_FENCE = /^(edit|delete)[:\s]\s*(.+?)\s*$/i;
@@ -36,7 +42,12 @@ export function parseEdit(kind: 'edit' | 'delete', rawPath: string, body: string
   HUNK.lastIndex = 0;
   for (let m: RegExpExecArray | null; (m = HUNK.exec(body)); ) hunks.push({ search: m[1], replace: m[2] });
   if (hunks.length) return { kind: 'patch', path, hunks };
-  return { kind: 'write', path, content: body.endsWith('\n') ? body : `${body}\n` };
+  // Models sometimes drop the opening marker; the rest still says what to replace.
+  const half = !/<{5,9} ?SEARCH/.test(body) && HALF_HUNK.exec(body);
+  if (half && half[1].trim()) return { kind: 'patch', path, hunks: [{ search: half[1], replace: half[2] }] };
+  // A whole new file. Stray marker lines would break it (and the build), so they're dropped.
+  const content = /<{5,9} ?SEARCH|>{5,9} ?REPLACE/.test(body) ? body.replace(MARKER_LINES, '').replace(/\n{3,}$/, '\n') : body;
+  return { kind: 'write', path, content: content.endsWith('\n') ? content : `${content}\n` };
 }
 
 /** Finds `search` in `text`: exactly, or line by line ignoring indentation and trailing spaces. */
@@ -85,12 +96,21 @@ function reindent(found: string, search: string, replace: string): string {
   return out.join('\n');
 }
 
-export type ApplyResult = { ok: true; text: string } | { ok: false; failed: number; text: string };
+export type ApplyResult = { ok: true; text: string } | { ok: false; failed: number; text: string; reason?: string };
 
 /** Applies an edit to a file's current text (null = the file doesn't exist). */
 export function applyEdit(current: string | null, edit: Edit): ApplyResult & { deleted?: boolean } {
   if (edit.kind === 'delete') return current === null ? { ok: false, failed: 1, text: '' } : { ok: true, text: '', deleted: true };
-  if (edit.kind === 'write') return { ok: true, text: edit.content };
+  if (edit.kind === 'write') {
+    // A "whole file" much shorter than the file it replaces is usually only the changed part:
+    // writing it would delete the rest of the file.
+    const before = current?.split('\n').length ?? 0;
+    const after = edit.content.split('\n').length;
+    if (current !== null && before > 40 && after < before * 0.5) {
+      return { ok: false, failed: 1, text: current, reason: `This would replace all ${before} lines of the file with ${after} — ask the AI for a SEARCH/REPLACE edit instead` };
+    }
+    return { ok: true, text: edit.content };
+  }
   let text = current ?? '';
   let failed = 0;
   for (const h of edit.hunks) {

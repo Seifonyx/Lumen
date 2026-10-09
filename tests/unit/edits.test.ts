@@ -35,5 +35,15 @@ const tree = ['src/App.tsx', 'src/store.ts', 'src/components/ChatView.tsx', 'src
 const asked = "To fix it I need to see the code. Could you share `src/App.tsx`, ChatView.tsx, components/Composer.tsx and package.json? Also index.ts. See https://react.dev/learn.html\n```ts\nimport x from './store.ts'\n```";
 check(mentionedPaths(asked, tree).join() === 'src/App.tsx,src/components/ChatView.tsx,src/components/Composer.tsx,package.json', `paths named in a reply (${mentionedPaths(asked, tree).join()})`);
 check(asksForFiles(asked) && asksForFiles('Please provide the contents of store.ts') && !asksForFiles('I changed store.ts to fix the bug.'), 'replies asking for files');
+// Malformed edits must never leave markers in the code.
+const stray = parseEdit('edit', 'src/App.tsx', 'export default function App() {\n  return null;\n}\n>>>>>>> REPLACE');
+check(stray.kind === 'write' && !(stray as any).content.includes('>>>>>>>'), 'stray REPLACE marker dropped from a whole-file edit');
+const half = parseEdit('edit', 'src/app.js', '  return a + b;\n=======\n  return a - b;\n>>>>>>> REPLACE');
+check(half.kind === 'patch' && applyEdit(file, half).text.includes('return a - b;') && !applyEdit(file, half).text.includes('====='), 'edit with the SEARCH line missing still applies');
+const md = parseEdit('edit', 'README.md', 'Title\n=======\n\ntext');
+check(md.kind === 'write' && (md as any).content.includes('======='), 'markdown underline headings left alone');
+const big = Array.from({ length: 100 }, (_, i) => `line ${i}`).join('\n');
+const partial = applyEdit(big, parseEdit('edit', 'x.ts', 'line 5\nline 6 changed'));
+check(!partial.ok && 'reason' in partial && /replace all 100 lines/.test(partial.reason || '') && partial.text === big, 'a partial "whole file" edit is refused instead of wiping the file');
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED');
 process.exit(fails ? 1 : 0);

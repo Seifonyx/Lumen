@@ -177,6 +177,8 @@ const F = '````';
   await page.click('.ws-tabs >> text=Changes');
   const changes = await page.textContent('.ws-change-list');
   check(/src\/app\.js\+1−1/.test(changes.replace(/\s/g, '')) && /src\/app\.test\.js/.test(changes), 'changes listed');
+  await page.waitForTimeout(500);
+  check(!(await page.$('.ws-problems')) && (await page.textContent('.ws-commit')).includes('Commit 2 files'), 'changed files checked before committing: no problems');
   check((await page.inputValue('.ws-commit input[type="text"]')).includes('make add() handle strings') && (await page.inputValue('input[aria-label="New branch name"]')).startsWith('model-router/make-add-handle-strings'), 'commit message and branch suggested');
   await page.click('.ws-commit >> text=& push');
   await page.waitForSelector('.ws-done', { timeout: 15000 });

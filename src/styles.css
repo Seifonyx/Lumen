@@ -1043,3 +1043,7 @@ table.sheet td.pending { color: #8f8f8f; font-style: italic; font-family: var(--
 .run-note { margin: 0; }
 .run-toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .run-status { margin-inline-end: auto; display: inline-flex; align-items: center; gap: 6px; }
+.ws-problems { margin: 4px 0 14px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--red-soft); border: 1px solid color-mix(in srgb, var(--red) 28%, var(--border)); font-size: 0.8125rem; }
+.ws-problems .setting-label { display: flex; align-items: center; gap: 6px; color: var(--red); margin: 0 0 6px; }
+.ws-problems ul { margin: 0 0 10px; padding-inline-start: 18px; display: flex; flex-direction: column; gap: 4px; overflow-wrap: anywhere; }
+.ws-problems code { font: 0.75rem var(--mono); }

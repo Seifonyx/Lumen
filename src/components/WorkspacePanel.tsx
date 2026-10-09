@@ -1,3 +1,5 @@
+import { AlertTriangle, Wrench } from 'lucide-react';
+import { checkChanges, problemsMessage, type Problem } from '../lib/precommit';
 import { ArrowLeft, Check, ChevronDown, ChevronRight, ExternalLink, File, FileDiff, Folder, GitBranch, GitCommitHorizontal, Loader2, MessageSquarePlus, RefreshCw, RotateCcw, Search, Unplug, X } from 'lucide-react';
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { lineStats } from '../lib/edits';
@@ -183,6 +185,18 @@ function Changes({ chat }: { chat: Chat }) {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ url: string; prUrl?: string } | null>(null);
   const [diff, setDiff] = useState<string | null>(null);
+  const send = useStore((s) => s.send);
+  const streaming = useStore((s) => Boolean(s.streamingChatId));
+  const [problems, setProblems] = useState<Problem[] | null>(null);
+  // Check the changed files whenever they change.
+  useEffect(() => {
+    let live = true;
+    setProblems(null);
+    void checkChanges(chat.changes || {}).then((p) => live && setProblems(p));
+    return () => {
+      live = false;
+    };
+  }, [chat.changes]);
 
   if (done && !entries.length) {
     return (
@@ -216,6 +230,19 @@ function Changes({ chat }: { chat: Chat }) {
           );
         })}
       </ul>
+      {problems && problems.length > 0 && (
+        <div className="ws-problems" role="alert">
+          <p className="setting-label"><AlertTriangle size={15} /> {problems.length} problem{problems.length === 1 ? '' : 's'} would break the build</p>
+          <ul>
+            {problems.map((p, i) => (
+              <li key={i}><code>{p.path}{p.line ? `:${p.line}` : ''}</code> {p.message}</li>
+            ))}
+          </ul>
+          <button className="btn small primary" disabled={streaming} onClick={() => void send(problemsMessage(problems), [])}>
+            <Wrench size={14} /> Ask the AI to fix
+          </button>
+        </div>
+      )}
       <div className="ws-commit">
         <label className="field-block">
           <span className="setting-label">Commit message</span>
@@ -234,7 +261,7 @@ function Changes({ chat }: { chat: Chat }) {
           </>
         )}
         <button
-          className="btn primary block"
+          className={`btn block${problems?.length ? '' : ' primary'}`}
           disabled={busy || !message.trim() || (target === 'new' && !branch.trim())}
           onClick={async () => {
             setBusy(true);
@@ -249,7 +276,7 @@ function Changes({ chat }: { chat: Chat }) {
             }
           }}
         >
-          {busy ? <Loader2 size={15} className="spin" /> : <GitCommitHorizontal size={15} />} Commit {entries.length} file{entries.length === 1 ? '' : 's'} & push
+          {busy ? <Loader2 size={15} className="spin" /> : <GitCommitHorizontal size={15} />} {problems?.length ? 'Commit anyway' : `Commit ${entries.length} file${entries.length === 1 ? '' : 's'} & push`}
         </button>
       </div>
       {diff && chat.changes?.[diff] && (

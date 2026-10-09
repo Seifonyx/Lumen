@@ -98,26 +98,120 @@ const RECIPES: Recipe[] = [
 ];
 
 /** Recommended layouts, filled with the best matching models from this account's catalog. */
-export function recommendedLayouts(catalog: ModelInfo[]): Layout[] {
-  return RECIPES.map((r) => {
-    const models: string[] = [];
-    for (const want of r.wants) {
-      const hits = catalog.filter((m) => !m.preview && want.test(m.id) && !models.includes(m.id)).slice(0, r.per ?? 1);
-      models.push(...hits.map((m) => m.id));
-      if (models.length >= 8) break;
-    }
-    return { id: r.id, name: r.name, icon: r.icon, description: r.description, models, mode: r.mode, instructions: r.instructions, builtin: true };
+/** Changes the user made to recommended layouts: edited copies and removed ids. */
+export interface LayoutOverrides {
+  edits?: Record<string, Layout>;
+  hidden?: string[];
+}
+
+/** Recommended layouts, filled with the best matching models from this account's catalog. */
+export function recommendedLayouts(catalog: ModelInfo[], overrides: LayoutOverrides = {}): Layout[] {
+  const hidden = overrides.hidden ?? [];
+  return RECIPES.filter((r) => !hidden.includes(r.id)).map((r) => {
+    const edited = overrides.edits?.[r.id];
+    if (edited) return { ...edited, id: r.id, builtin: true };
+    return { id: r.id, name: r.name, icon: r.icon, description: r.description, models: pickModels(catalog, r.wants, r.per), mode: r.mode, instructions: r.instructions, builtin: true };
   });
 }
 
+function pickModels(catalog: ModelInfo[], wants: RegExp[], per = 1): string[] {
+  const models: string[] = [];
+  for (const want of wants) {
+    const hits = catalog.filter((m) => !m.preview && want.test(m.id) && !models.includes(m.id)).slice(0, per);
+    models.push(...hits.map((m) => m.id));
+    if (models.length >= 8) break;
+  }
+  return models;
+}
+
 /** Every layout: recommended first, then the user's own. */
-export function allLayouts(catalog: ModelInfo[], custom: Layout[] = []): Layout[] {
-  return [...recommendedLayouts(catalog), ...custom];
+export function allLayouts(catalog: ModelInfo[], custom: Layout[] = [], overrides: LayoutOverrides = {}): Layout[] {
+  return [...recommendedLayouts(catalog, overrides), ...custom];
 }
 
-export function findLayout(id: string, catalog: ModelInfo[], custom: Layout[] = []): Layout | undefined {
+export function findLayout(id: string, catalog: ModelInfo[], custom: Layout[] = [], overrides: LayoutOverrides = {}): Layout | undefined {
   const key = isLayoutId(id) ? layoutKey(id) : id;
-  return allLayouts(catalog, custom).find((l) => l.id === key);
+  return allLayouts(catalog, custom, overrides).find((l) => l.id === key);
 }
 
+/** Result of an edit/delete/restore: the new settings values to save. */
+export interface LayoutState {
+  custom: Layout[];
+  overrides: LayoutOverrides;
+}
+
+const isRecommendedId = (id: string) => RECIPES.some((r) => r.id === id);
+
+/** Save an edited layout. Recommended ones are stored as an edit; custom ones are replaced or added. */
+export function saveLayout(layout: Layout, state: LayoutState): LayoutState {
+  if (isRecommendedId(layout.id)) {
+    return { ...state, overrides: { ...state.overrides, edits: { ...state.overrides.edits, [layout.id]: { ...layout, builtin: true } } } };
+  }
+  const exists = state.custom.some((l) => l.id === layout.id);
+  const custom = exists ? state.custom.map((l) => (l.id === layout.id ? layout : l)) : [...state.custom, layout];
+  return { ...state, custom };
+}
+
+/** Delete a layout. Recommended ones are hidden (and can be restored); custom ones are removed. */
+export function deleteLayout(id: string, state: LayoutState): LayoutState {
+  if (isRecommendedId(id)) {
+    const edits = { ...state.overrides.edits };
+    delete edits[id];
+    return { ...state, overrides: { edits, hidden: [...new Set([...(state.overrides.hidden ?? []), id])] } };
+  }
+  return { ...state, custom: state.custom.filter((l) => l.id !== id) };
+}
+
+/** Bring back every recommended layout and undo edits to them. Custom layouts are untouched. */
+export function restoreRecommended(state: LayoutState): LayoutState {
+  return { ...state, overrides: {} };
+}
+
+/** Undo the edits to one recommended layout only. */
+export function resetLayout(id: string, state: LayoutState): LayoutState {
+  const edits = { ...state.overrides.edits };
+  delete edits[id];
+  return { ...state, overrides: { ...state.overrides, edits } };
+}
+
+export type Need = 'coding' | 'thinking' | 'fast' | 'documents' | 'arabic' | 'everyday';
+export const NEEDS: { id: Need; label: string }[] = [
+  { id: 'coding', label: 'Coding' },
+  { id: 'thinking', label: 'Hard thinking & maths' },
+  { id: 'documents', label: 'Documents & files' },
+  { id: 'arabic', label: 'Arabic' },
+  { id: 'fast', label: 'Speed' },
+  { id: 'everyday', label: 'Everyday questions' },
+];
+
+/** Build a layout for the chosen needs from the models this account has. No AI call, no quota used. */
+export function generateLayout(catalog: ModelInfo[], needs: Need[], name?: string): Layout | null {
+  const recipes = needs.map((n) => RECIPES.find((r) => r.id === n)).filter((r): r is Recipe => Boolean(r));
+  if (!recipes.length) return null;
+
+  // Take each need's best pick first, then their second picks, and so on, so every need is covered.
+  const depth = Math.max(...recipes.map((r) => r.wants.length));
+  const models: string[] = [];
+  for (let i = 0; i < depth && models.length < 8; i++) {
+    for (const r of recipes) {
+      if (!r.wants[i]) continue;
+      const hits = catalog.filter((m) => !m.preview && r.wants[i].test(m.id) && !models.includes(m.id)).slice(0, r.per ?? 1);
+      models.push(...hits.map((m) => m.id));
+    }
+  }
+  if (!models.length) return null;
+
+  const onlyLight = recipes.every((r) => r.id === 'everyday' || r.id === 'fast');
+  const instructions = recipes.map((r) => r.instructions).filter(Boolean).join(' ') || undefined;
+  const label = recipes.map((r) => r.name).join(' + ');
+  return {
+    id: newLayoutId(),
+    name: name?.trim() || label,
+    icon: recipes.length === 1 ? recipes[0].icon : 'layers',
+    description: `Built for: ${label}.`,
+    models: models.slice(0, 8),
+    mode: onlyLight ? 'auto' : 'order',
+    instructions,
+  };
+}
 export const newLayoutId = () => `custom-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;

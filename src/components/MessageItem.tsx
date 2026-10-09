@@ -1,6 +1,7 @@
 import { AlertTriangle, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, Info, Pencil, RefreshCw, Square, Volume2 } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 import { mentionedPaths, repoTree, seenPaths } from '../lib/workspace';
+import { normalizeEdits } from '../lib/edits';
 import { buildFile } from '../lib/generate';
 import { toPlainText } from '../lib/markdown';
 import { canSpeak, speak, stopSpeaking } from '../lib/speech';
@@ -43,7 +44,7 @@ function LoadMentioned({ message }: { message: Message }) {
   const repo = chat?.repo;
   useEffect(() => {
     setPaths([]);
-    if (!repo || !chat || /`{3,}\s*(edit|delete)[:\s]/i.test(message.text)) return;
+    if (!repo || !chat || /`{3,}\s*(edit|delete)[:\s]/i.test(normalizeEdits(message.text))) return;
     let live = true;
     repoTree(repo).then(
       (t) => {

@@ -1,4 +1,4 @@
-import { applyEdit, cleanPath, isApplied, lineStats, parseEdit, readRequests, replaceReadRequests, unifiedDiff } from '../../src/lib/edits';
+import { applyEdit, cleanPath, isApplied, lineStats, normalizeEdits, parseEdit, readRequests, replaceReadRequests, unifiedDiff } from '../../src/lib/edits';
 import { asksForFiles, mentionedPaths } from '../../src/lib/workspace';
 let fails = 0;
 const check = (c: boolean, l: string) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) fails++; };
@@ -45,5 +45,20 @@ check(md.kind === 'write' && (md as any).content.includes('======='), 'markdown 
 const big = Array.from({ length: 100 }, (_, i) => `line ${i}`).join('\n');
 const partial = applyEdit(big, parseEdit('edit', 'x.ts', 'line 5\nline 6 changed'));
 check(!partial.ok && 'reason' in partial && /replace all 100 lines/.test(partial.reason || '') && partial.text === big, 'a partial "whole file" edit is refused instead of wiping the file');
+// Edit formats free models use instead of ours.
+const toolCall = "I'll remove the button, the now-unused import.\n<tool_call>edit path=\"src/components/ChatView.tsx\"\n<<<<<<< SEARCH\nimport { A, B } from 'lucide-react';\n=======\nimport { A } from 'lucide-react';\n>>>>>>> REPLACE\n<<<<<<< SEARCH\n  <B />\n=======\n>>>>>>> REPLACE\n</tool_call>\nDone.";
+const n1 = normalizeEdits(toolCall);
+check(n1 === "I'll remove the button, the now-unused import.\n````edit:src/components/ChatView.tsx\n<<<<<<< SEARCH\nimport { A, B } from 'lucide-react';\n=======\nimport { A } from 'lucide-react';\n>>>>>>> REPLACE\n<<<<<<< SEARCH\n  <B />\n=======\n>>>>>>> REPLACE\n````\nDone.", `<tool_call> edit → edit block\n${n1}`);
+const pe = parseEdit('edit', 'src/components/ChatView.tsx', n1.split('````edit:src/components/ChatView.tsx\n')[1].split('\n````')[0]);
+check(pe.kind === 'patch' && pe.hunks.length === 2 && pe.hunks[1].replace === '', 'both changes found, including a deletion');
+const named = normalizeEdits('In **src/app.js**:\n\n```js\n<<<<<<< SEARCH\n  return a + b;\n=======\n  return a - b;\n>>>>>>> REPLACE\n```');
+check(named.includes('````edit:src/app.js\n<<<<<<< SEARCH') && !named.includes('```js'), `code block with markers labelled by the line before (${named.replace(/\n/g, '⏎')})`);
+const info = normalizeEdits('```tsx src/App.tsx\n<<<<<<< SEARCH\na\n=======\nb\n>>>>>>> REPLACE\n```');
+check(info.startsWith('````edit:src/App.tsx\n'), 'path in the code block label');
+const ours = '````edit:src/a.ts\n<<<<<<< SEARCH\na\n=======\nb\n>>>>>>> REPLACE\n````';
+check(normalizeEdits(ours) === ours && normalizeEdits('no edits here') === 'no edits here', 'our own format and plain text untouched');
+const streaming = normalizeEdits('`src/a.ts`\n<<<<<<< SEARCH\nold');
+check(streaming === '````edit:src/a.ts\n<<<<<<< SEARCH\nold', 'an edit still being written becomes an open edit block');
+check(readRequests('<tool_call>read path="src/App.tsx"</tool_call>').join() === 'src/App.tsx', '<tool_call> read requests');
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED');
 process.exit(fails ? 1 : 0);

@@ -6,7 +6,7 @@ import { forgetLocalAccount, loadKeys, loadRemoteSettings, saveKeys, saveRemoteS
 import { registerServiceWorker } from './pwa/register';
 import { ChatSync } from './lib/sync';
 import { commitChanges as ghCommit, openPullRequest, setGitHubToken } from './lib/github';
-import { applyEdit, isApplied, readRequests, type Edit } from './lib/edits';
+import { applyEdit, isApplied, normalizeEdits, readRequests, type Edit } from './lib/edits';
 import { forgetIndex, indexSoon, projectMap, relevantFiles, repoIndex, searchCode, searchRequests } from './lib/repoindex';
 import { asksForFiles, currentFile, filesAsAttachments, fingerprint, forgetRepo, mentionedPaths, originalFile, repoTree, seenPaths, workspaceInstructions } from './lib/workspace';
 import { Masker, scan } from './lib/privacy';
@@ -471,7 +471,7 @@ export const useStore = create<State>((set, get) => {
     // Coding workspace: the model asked to read files ([[read: path]]) → load them and let it continue.
     // Models that ask for files in words instead ("please share src/App.tsx") get them loaded too.
     const now = get().chats.find((c) => c.id === chatId);
-    if (now?.repo && reply.status === 'done' && !/`{3,}\s*(edit|delete)[:\s]/i.test(reply.text)) {
+    if (now?.repo && reply.status === 'done' && !/`{3,}\s*(edit|delete)[:\s]/i.test(normalizeEdits(reply.text))) {
       let asks = readRequests(reply.text);
       const searches = searchRequests(reply.text);
       if (!asks.length && !searches.length && asksForFiles(reply.text)) {

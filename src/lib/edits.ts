@@ -185,6 +185,7 @@ export function unifiedDiff(before: string, after: string, context = 3): DiffLin
 // Ways models ask to read a file: [[read: a.ts]] (the one we ask for), and the variants free models
 // write instead: [read: a.ts], [[read a.ts]], <read>a.ts</read>, read_file("a.ts"), READ: `a.ts`.
 const READ_PATTERNS = [
+  /<tool_call>\s*read(?:_?file)?\s+(?:path\s*=\s*)?["']?([^"'\s<]+)["']?/gi,
   /\[\[?\s*read(?:_?file)?\s*(?::\s*|\s+)([^\]\n]+?)\s*\]\]?/gi,
   /<read(?:_file)?>\s*([^<\n]+?)\s*<\/read(?:_file)?>/gi,
   /\bread_?file\(\s*["'`]([^"'`\n]+)["'`]\s*\)/gi,
@@ -206,4 +207,91 @@ export function readRequests(text: string): string[] {
 /** The same requests, for display: the text with each one replaced. */
 export function replaceReadRequests(text: string, fn: (path: string) => string): string {
   return READ_PATTERNS.reduce((t, re) => t.replace(re, (all, p) => (looksLikePath(cleanPath(p)) ? fn(cleanPath(p)) : all)), text);
+}
+
+// ---------------------------------------------------------------- loose edit formats
+
+const SEARCH_LINE = /^\s*<{5,9} ?SEARCH\b/;
+const REPLACE_LINE = /^\s*>{5,9} ?REPLACE\b/;
+const FENCE_LINE = /^\s*(`{3,}|~{3,})(.*)$/;
+const PATH_IN = /(?:path\s*[=:]\s*["'`]?|edit[:\s]\s*|file[:\s]\s*)?([\w@~.-]+(?:\/[\w@~.-]+)*\.[A-Za-z0-9]{1,10})\b/gi;
+
+/** The file path a line names, e.g. `src/App.tsx`, path="src/App.tsx", **src/App.tsx**, File: src/App.tsx. */
+function pathIn(line: string): string | null {
+  const hits = [...line.matchAll(PATH_IN)].map((m) => cleanPath(m[1])).filter((p) => !/^https?:/.test(p) && !/^\d+(\.\d+)+$/.test(p));
+  return hits.find((p) => p.includes('/')) || hits[0] || null;
+}
+
+/** A line that only names a file or opens a tool call (so it can be replaced by the edit block). */
+const onlyPath = (line: string) => /^\s*(<tool_call>\s*)?(edit|patch|update|file|path)?\s*[:=]?\s*(path\s*=\s*)?["'`*]*[\w@~./-]+["'`*]*\s*:?\s*$/i.test(line) || /^\s*<tool_call>/i.test(line);
+
+/**
+ * Turns the edit formats free models write instead of ours into ````edit:path blocks:
+ * SEARCH/REPLACE markers outside any code block (often after `<tool_call>edit path="…"` or a line
+ * naming the file), and code blocks that contain the markers but aren't labelled edit:path.
+ */
+export function normalizeEdits(text: string): string {
+  if (!/<{5,9} ?SEARCH/.test(text)) return text;
+  const lines = text.split('\n');
+  const out: string[] = [];
+  const findPath = (from: number, info = '') => {
+    const own = pathIn(info);
+    if (own) return { path: own, drop: 0 };
+    for (let j = out.length - 1, seen = 0; j >= 0 && seen < 4; j--) {
+      if (!out[j].trim()) continue;
+      seen++;
+      const p = pathIn(out[j]);
+      if (p) return { path: p, drop: onlyPath(out[j]) ? out.length - j : 0 };
+    }
+    void from;
+    return null;
+  };
+  for (let i = 0; i < lines.length; i++) {
+    const fence = FENCE_LINE.exec(lines[i]);
+    if (fence) {
+      const mark = fence[1];
+      let end = i + 1;
+      while (end < lines.length && !new RegExp(`^\\s*${mark[0] === '`' ? '`' : '~'}{${mark.length},}\\s*$`).test(lines[end])) end++;
+      const body = lines.slice(i + 1, end);
+      const info = fence[2].trim();
+      const isOurs = EDIT_FENCE.test(info) || /^file[:\s]/i.test(info);
+      const hasHunk = body.some((l) => SEARCH_LINE.test(l)) && body.some((l) => REPLACE_LINE.test(l));
+      const target = !isOurs && hasHunk ? findPath(i, info) : null;
+      if (target) {
+        out.splice(out.length - target.drop, target.drop);
+        out.push(`\`\`\`\`edit:${target.path}`, ...body, ...(end < lines.length ? ['````'] : []));
+      } else out.push(...lines.slice(i, Math.min(end + 1, lines.length)));
+      i = end;
+      continue;
+    }
+    if (SEARCH_LINE.test(lines[i])) {
+      // Collect this hunk and any that follow it directly.
+      let end = i;
+      let closed = false;
+      for (let j = i; j < lines.length; j++) {
+        if (REPLACE_LINE.test(lines[j])) {
+          end = j;
+          closed = true;
+          let k = j + 1;
+          while (k < lines.length && !lines[k].trim()) k++;
+          if (k < lines.length && SEARCH_LINE.test(lines[k])) {
+            j = k - 1;
+            continue;
+          }
+          break;
+        }
+        if (j === lines.length - 1) end = j;
+      }
+      const target = findPath(i);
+      if (target) {
+        out.splice(out.length - target.drop, target.drop);
+        out.push(`\`\`\`\`edit:${target.path}`, ...lines.slice(i, end + 1), ...(closed ? ['````'] : []));
+        i = end;
+        if (closed && /^\s*<\/tool_call>\s*$/i.test(lines[i + 1] || '')) i++;
+        continue;
+      }
+    }
+    out.push(lines[i]);
+  }
+  return out.join('\n');
 }

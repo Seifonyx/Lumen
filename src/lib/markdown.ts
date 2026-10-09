@@ -27,7 +27,7 @@ import yaml from 'highlight.js/lib/languages/yaml';
 import katex from 'katex';
 import { Marked, type Token, type Tokens } from 'marked';
 import { escapeHtml } from './util';
-import { EDIT_FENCE, replaceReadRequests } from './edits';
+import { EDIT_FENCE, normalizeEdits, replaceReadRequests } from './edits';
 import { replaceSearchRequests } from './repoindex';
 import { runLang } from './runner';
 
@@ -136,6 +136,7 @@ const closed = (raw: string) => /\n\s*(`{3,}|~{3,})\s*$/.test(raw.trimEnd());
 /** Splits a reply into Markdown parts and special file/chart blocks. */
 export function segments(text: string, streaming: boolean): Segment[] {
   // A model asking to read repository files: [[read: src/app.ts]] → "📂 Reading `src/app.ts`"
+  text = normalizeEdits(text);
   text = replaceReadRequests(text, (p) => `📂 Reading \`${p}\``);
   text = replaceSearchRequests(text, (q) => `🔎 Searching the code for \`${q.replace(/`/g, '')}\``);
   const tokens = marked.lexer(text);

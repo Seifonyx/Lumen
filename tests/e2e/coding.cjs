@@ -34,7 +34,8 @@ const F = '````';
     let reply = 'Hi.';
     const last = JSON.stringify(body.contents.at(-1));
     const prior = JSON.stringify(body.contents.slice(0, -1));
-    if (last.includes('where is VERSION used')) reply = 'Let me find it.\n[[search: VERSION]]';
+    if (last.includes('bump the version')) reply = 'Sure.\n<tool_call>edit path="src/util.js"\n<<<<<<< SEARCH\nexport const VERSION = 1;\n=======\nexport const VERSION = 2;\n>>>>>>> REPLACE\n</tool_call>';
+    else if (last.includes('where is VERSION used')) reply = 'Let me find it.\n[[search: VERSION]]';
     else if (last.includes('Search for \\"VERSION\\"')) reply = 'VERSION is defined in src/util.js on line 1.';
     else if (last.includes('multiply gives wrong')) reply = last.includes('file name=\\"src/math/calc.js\\"') ? 'calc.js looks right to me.' : 'No file.';
     else if (last.includes('what is this project')) reply = 'I need to see it first. Could you share the contents of `README.md`?';
@@ -237,6 +238,13 @@ const F = '````';
   await page.waitForFunction(() => document.body.textContent.includes('calc.js looks right'), null, { timeout: 20000 });
   check(ai.length === b3 + 1 && (await page.textContent('.msg.user >> nth=-1')).includes('calc.js'), 'calc.js (defines multiply) attached automatically');
   check(await page.isVisible('.msg.user >> nth=-1 >> .chip-note'), 'marked as attached automatically');
+
+  // ---- A model writing edits in its own format still gets an Apply card
+  await page.fill('.composer textarea', 'bump the version');
+  await page.click('.send-btn');
+  await page.waitForFunction(() => [...document.querySelectorAll('.edit-card')].some((c) => c.textContent.includes('src/util.js')), null, { timeout: 20000 });
+  const lastReply = await page.textContent('.msg.assistant >> nth=-1');
+  check(!lastReply.includes('<<<<<<<') && !lastReply.includes('tool_call') && (await page.isVisible('.msg.assistant >> nth=-1 >> .edit-card >> text=Apply')), '<tool_call> edit shown as an edit card');
 
   // ---- Custom layout as default
   await page.click('.sidebar-foot');

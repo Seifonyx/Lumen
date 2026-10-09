@@ -19,6 +19,8 @@ export const DEFAULT_SETTINGS: Settings = {
   privacyShield: false,
   privacyMode: 'ask',
   privacyRestore: true,
+    layoutEdits: {},
+  layoutHidden: [],
   voiceLang: '',
 };
 

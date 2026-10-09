@@ -2,6 +2,7 @@
 // file, AI asks to read a file, applies edits, diff, commit to a new branch with a pull request.
 const { chromium } = require('playwright');
 const path = require('path');
+const { scan } = require('./helpers/fitscan.cjs');
 async function openTab(page, name) {
   if (await page.isVisible('.settings-back')) await page.click('.settings-back');
   await page.click(`.settings-tabs >> text=${name}`);
@@ -33,7 +34,10 @@ const F = '````';
     let reply = 'Hi.';
     const last = JSON.stringify(body.contents.at(-1));
     const prior = JSON.stringify(body.contents.slice(0, -1));
-    if (last.includes('what is this project')) reply = 'I need to see it first. Could you share the contents of `README.md`?';
+    if (last.includes('where is VERSION used')) reply = 'Let me find it.\n[[search: VERSION]]';
+    else if (last.includes('Search for \\"VERSION\\"')) reply = 'VERSION is defined in src/util.js on line 1.';
+    else if (last.includes('multiply gives wrong')) reply = last.includes('file name=\\"src/math/calc.js\\"') ? 'calc.js looks right to me.' : 'No file.';
+    else if (last.includes('what is this project')) reply = 'I need to see it first. Could you share the contents of `README.md`?';
     else if (last.includes('Here are the files') && last.includes('# Demo') && prior.includes('what is this project')) reply = 'It is a small demo. Its scripts live in package.json.';
     else if (last.includes('Here are the files') && last.includes('package.json')) reply = 'The package is called demo.';
     else if (all.includes('what is this project')) reply = 'Hm.';
@@ -51,12 +55,12 @@ const F = '````';
     if (p === '/repos/seif/demo/branches') return json([{ name: 'main' }, { name: 'dev' }]);
     if (p.startsWith('/repos/seif/demo/git/trees/') && req.method() === 'GET') return json({ sha: 't1', truncated: false, tree: [
       { path: 'README.md', type: 'blob', size: 10 }, { path: 'package.json', type: 'blob', size: 20 }, { path: 'src', type: 'tree' },
-      { path: 'src/app.js', type: 'blob', size: APP.length }, { path: 'src/util.js', type: 'blob', size: UTIL.length }, { path: 'assets/logo.png', type: 'blob', size: 999 },
+      { path: 'src/app.js', type: 'blob', size: APP.length }, { path: 'src/math', type: 'tree' }, { path: 'src/math/calc.js', type: 'blob', size: 50 }, { path: 'src/util.js', type: 'blob', size: UTIL.length }, { path: 'assets/logo.png', type: 'blob', size: 999 },
     ] });
     if (p.startsWith('/repos/seif/demo/contents/')) {
       const file = decodeURIComponent(p.slice('/repos/seif/demo/contents/'.length));
       gh.reads.push(file);
-      const files = { 'src/app.js': APP, 'src/util.js': UTIL, 'README.md': '# Demo\n', 'package.json': '{ "name": "demo" }\n' };
+      const files = { 'src/app.js': APP, 'src/util.js': UTIL, 'README.md': '# Demo\n', 'package.json': '{ "name": "demo" }\n', 'src/math/calc.js': 'export function multiply(a, b) {\n  return a * b;\n}\n' };
       return files[file] !== undefined ? route.fulfill({ body: files[file], headers: { 'content-type': 'text/plain' } }) : json({ message: 'Not Found' }, 404);
     }
     if (p === '/repos/seif/demo/git/ref/heads/main') return json({ object: { sha: 'base1' } });
@@ -143,6 +147,7 @@ const F = '````';
   const first = ai[0];
   const sys = first.body.systemInstruction.parts[0].text;
   check(first.model === 'gemini-2.5-pro' && /expert software engineer/.test(sys), 'Max coding used the strongest model with its instructions');
+  check(/<project_map>[\s\S]*src\/app\.js: add[\s\S]*src\/math\/calc\.js: multiply/.test(sys) && /\[\[search:/.test(sys), 'model got a map of what each file defines, and can search');
   check(/seif\/demo/.test(sys) && /repository_files>[\s\S]*src\/app\.js/.test(sys) && !/logo\.png/.test(sys) && /\[\[read:/.test(sys), 'model got the repo file list and the editing rules');
   check(JSON.stringify(first.body.contents).includes('export const VERSION'), 'attached file sent with the message');
   check(ai.length === 2 && JSON.stringify(ai[1].body.contents).includes('return a + b;') && !JSON.stringify(ai[1].body.contents.at(-1)).includes('VERSION'), 'AI asked for src/app.js → loaded and it continued (unchanged attached file not re-sent)');
@@ -188,6 +193,23 @@ const F = '````';
   await page.waitForFunction(() => document.body.textContent.includes('The package is called demo'), null, { timeout: 20000 });
   check(ai.length === before + 3 && !(await page.$('.load-mentioned')), 'loaded and continued; offer gone once the file was given');
 
+  // ---- Searching the code
+  const b2 = ai.length;
+  await page.fill('.composer textarea', 'where is VERSION used');
+  await page.click('.send-btn');
+  await page.waitForFunction(() => document.body.textContent.includes('VERSION is defined in src/util.js'), null, { timeout: 20000 });
+  const found = JSON.stringify(ai[b2 + 1].body.contents.at(-1));
+  check(found.includes('src/util.js:1: export const VERSION = 1;'), 'model searched the code and got path:line matches');
+  check((await page.textContent('.msg.auto-files >> nth=-1')).includes('Searched VERSION · 1 match') && (await page.textContent('.thread')).includes('Searching the code for VERSION'), 'search shown in the chat');
+
+  // ---- Files a request is about are attached automatically
+  const b3 = ai.length;
+  await page.fill('.composer textarea', 'multiply gives wrong results');
+  await page.click('.send-btn');
+  await page.waitForFunction(() => document.body.textContent.includes('calc.js looks right'), null, { timeout: 20000 });
+  check(ai.length === b3 + 1 && (await page.textContent('.msg.user >> nth=-1')).includes('calc.js'), 'calc.js (defines multiply) attached automatically');
+  check(await page.isVisible('.msg.user >> nth=-1 >> .chip-note'), 'marked as attached automatically');
+
   // ---- Custom layout as default
   await page.click('.sidebar-foot');
   await openTab(page, 'Models');
@@ -195,6 +217,32 @@ const F = '````';
   await page.click('.settings-page [aria-label="Close"]');
   await page.click('[aria-label="New chat"]');
   check((await page.textContent('.model-button')).includes('Web apps'), 'custom layout is the default for new chats');
+
+  // ---- The coding panel on a phone
+  await page.click('.sidebar >> text=Coding Test');
+  await page.waitForSelector('.code-toggle');
+  await page.setViewportSize({ width: 360, height: 760 });
+  await page.waitForTimeout(300);
+  if (!(await page.isVisible('.workspace'))) await page.click('.code-toggle');
+  await page.waitForSelector('.workspace');
+  await page.click('.ws-tabs >> text=Files');
+  await page.waitForTimeout(300);
+  let bad = await scan(page);
+  check(!bad.length, `phone: files panel fits${bad.length ? `:\n      ${bad.join('\n      ')}` : ''}`);
+  await page.screenshot({ path: path.join(__dirname, 'out', 'coding-phone-files.png') });
+  await page.click('.ws-dir >> text=src');
+  await page.click('.ws-dir >> text=math');
+  await page.click('.ws-open >> text=calc.js');
+  await page.waitForSelector('.cm-content', { timeout: 15000 });
+  bad = await scan(page);
+  check(!bad.length, `phone: file view fits${bad.length ? `:\n      ${bad.join('\n      ')}` : ''}`);
+  await page.screenshot({ path: path.join(__dirname, 'out', 'coding-phone-file.png') });
+  await page.click('[aria-label="Back to files"]');
+  await page.click('.ws-tabs >> text=Changes');
+  await page.waitForTimeout(300);
+  bad = await scan(page);
+  check(!bad.length, `phone: changes panel fits${bad.length ? `:\n      ${bad.join('\n      ')}` : ''}`);
+  await page.screenshot({ path: path.join(__dirname, 'out', 'coding-phone-changes.png') });
 
   check(!errors.length, `no page errors ${errors.join(' | ')}`);
   await browser.close();

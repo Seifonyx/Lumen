@@ -1008,3 +1008,5 @@ table.sheet td.pending { color: #8f8f8f; font-style: italic; font-family: var(--
 .load-mentioned > svg { flex: none; }
 .load-mentioned-files { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 4px; }
 .load-mentioned-files code { font: 0.75rem var(--mono); background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auto-search { display: inline-flex; align-items: center; gap: 4px; margin-inline-end: 10px; }
+.file-chip .chip-note { font-size: 0.625rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; flex: none; }

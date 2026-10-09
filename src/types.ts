@@ -12,6 +12,8 @@ export interface Attachment {
   text?: string;
   /** small data: URL thumbnail for images */
   thumb?: string;
+  /** a repository file the app attached because the request is about it */
+  auto?: boolean;
 }
 
 export interface Source {
@@ -31,6 +33,8 @@ export interface Message {
   via?: string;
   /** added by the app, not typed by you: repository files a model asked to read */
   auto?: 'files';
+  /** code searches the app ran for the model (shown on the auto message) */
+  searches?: { query: string; count: number }[];
   thinking?: string;
   sources?: Source[];
   notices?: string[];

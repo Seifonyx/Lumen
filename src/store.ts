@@ -7,6 +7,7 @@ import { registerServiceWorker } from './pwa/register';
 import { ChatSync } from './lib/sync';
 import { commitChanges as ghCommit, openPullRequest, setGitHubToken } from './lib/github';
 import { applyEdit, isApplied, readRequests, type Edit } from './lib/edits';
+import { forgetIndex, indexSoon, projectMap, relevantFiles, repoIndex, searchCode, searchRequests } from './lib/repoindex';
 import { asksForFiles, currentFile, filesAsAttachments, fingerprint, forgetRepo, mentionedPaths, originalFile, repoTree, seenPaths, workspaceInstructions } from './lib/workspace';
 import { Masker, scan } from './lib/privacy';
 import { quota, type QuotaView } from './lib/quota';
@@ -79,7 +80,7 @@ interface State {
   saveChange(chatId: string, path: string, content: string | null): Promise<void>;
   revertChange(chatId: string, path: string): void;
   /** give the model repository files it named and let it continue */
-  loadRepoFiles(chatId: string, paths: string[]): Promise<void>;
+  loadRepoFiles(chatId: string, paths: string[], searches?: string[]): Promise<void>;
   applyEdits(chatId: string, edits: Edit[]): Promise<{ applied: number; failed: string[] }>;
   commitWork(chatId: string, o: { message: string; target: string; pullRequest: boolean }): Promise<{ url: string; prUrl?: string }>;
 
@@ -347,7 +348,8 @@ export const useStore = create<State>((set, get) => {
     let workspaceNote = '';
     if (chat.repo) {
       const tree = await repoTree(chat.repo).catch(() => null);
-      workspaceNote = workspaceInstructions(chat.repo, tree?.files || [], Boolean(tree?.truncated), chat.context || []);
+      const index = await indexSoon(chat.repo, 6000);
+      workspaceNote = workspaceInstructions(chat.repo, tree?.files || [], Boolean(tree?.truncated), chat.context || [], index ? projectMap(chat, index) : '');
     }
 
     let body: string;
@@ -467,7 +469,8 @@ export const useStore = create<State>((set, get) => {
     const now = get().chats.find((c) => c.id === chatId);
     if (now?.repo && reply.status === 'done' && !/`{3,}\s*(edit|delete)[:\s]/i.test(reply.text)) {
       let asks = readRequests(reply.text);
-      if (!asks.length && asksForFiles(reply.text)) {
+      const searches = searchRequests(reply.text);
+      if (!asks.length && !searches.length && asksForFiles(reply.text)) {
         const tree = await repoTree(now.repo).catch(() => null);
         const seen = seenPaths(now);
         if (tree) asks = mentionedPaths(reply.text, tree.files).filter((p) => !seen.has(p));
@@ -479,7 +482,7 @@ export const useStore = create<State>((set, get) => {
         if (m.auto !== 'files') break;
         rounds++;
       }
-      if (asks.length && rounds < 4) await get().loadRepoFiles(chatId, asks);
+      if ((asks.length || searches.length) && rounds < 6) await get().loadRepoFiles(chatId, asks, searches);
     }
   };
 
@@ -756,6 +759,7 @@ export const useStore = create<State>((set, get) => {
         chat = newChatObject();
         set((s) => ({ chats: [chat!, ...s.chats], currentId: chat!.id }));
       }
+      const ownFiles = files.some((f) => f.kind === 'text');
       // Coding workspace: attached repository files go along when they're new or have changed.
       let contextSent = chat.contextSent;
       if (chat.repo && chat.context?.length) {
@@ -773,6 +777,15 @@ export const useStore = create<State>((set, get) => {
           files = [...extra.files, ...files];
         }
         contextSent = prints;
+      }
+      // Coding workspace: files this request is clearly about go along, so the model starts informed.
+      if (chat.repo && text.trim() && !ownFiles && !text.trim().startsWith('/')) {
+        const tree = await repoTree(chat.repo).catch(() => null);
+        if (tree) {
+          const seen = seenPaths(chat);
+          const paths = relevantFiles(text, tree.files, await indexSoon(chat.repo, 3000)).filter((p) => !seen.has(p));
+          if (paths.length) files = [...(await filesAsAttachments(chat, paths)).files.map((f) => ({ ...f, auto: true })), ...files];
+        }
       }
       const msg: Message = { id: uid(), role: 'user', text, files: files.length ? files : undefined, createdAt: Date.now() };
       if (get().settings.privacyShield) {
@@ -798,6 +811,7 @@ export const useStore = create<State>((set, get) => {
       const updated: Chat = { ...chat, repo: link, context: switching ? [] : chat.context || [], contextSent: switching ? {} : chat.contextSent, changes: switching ? {} : chat.changes || {}, rev: Date.now() };
       replaceChat(updated);
       void persist(updated);
+      void repoIndex(link).catch(() => {});
       set({ workspaceOpen: true });
     },
     disconnectRepo() {
@@ -827,16 +841,24 @@ export const useStore = create<State>((set, get) => {
       replaceChat(updated);
       void persist(updated);
     },
-    async loadRepoFiles(chatId, paths) {
+    async loadRepoFiles(chatId, paths, searches = []) {
       const chat = get().chats.find((c) => c.id === chatId);
-      if (!chat?.repo || !paths.length || get().streamingChatId) return;
+      if (!chat?.repo || (!paths.length && !searches.length) || get().streamingChatId) return;
       const { files, missing } = await filesAsAttachments(chat, paths);
+      const results = searches.length ? await repoIndex(chat.repo).then((index) => searches.map((q) => searchCode(chat, index, q)), () => []) : [];
+      const parts = [
+        ...results.map((r) => r.text),
+        missing.length ? `Couldn't find ${missing.join(', ')} — use exact paths from the file list.${files.length ? ' Here are the others.' : ''}` : '',
+        searches.length && !results.length ? "The code couldn't be searched right now." : '',
+        files.length || results.length ? (files.length ? 'Here are the files you asked for. Continue.' : 'Continue: read the files you need, or make the change.') : '',
+      ];
       const msg: Message = {
         id: uid(),
         role: 'user',
         auto: 'files',
-        text: missing.length ? `Couldn't find ${missing.join(', ')} — use exact paths from the file list.${files.length ? ' Here are the others.' : ''}` : 'Here are the files you asked for. Continue.',
+        text: parts.filter(Boolean).join('\n\n'),
         files: files.length ? files : undefined,
+        ...(results.length ? { searches: results.map((r) => ({ query: r.query, count: r.count })) } : {}),
         createdAt: Date.now(),
       };
       const latest = get().chats.find((c) => c.id === chatId) || chat;
@@ -885,6 +907,7 @@ export const useStore = create<State>((set, get) => {
         prUrl = await openPullRequest({ owner: repo.owner, repo: repo.repo, head: target, base: repo.branch, title: o.message.split('\n')[0].slice(0, 120) || 'Changes from Model Router', body: 'Made with Model Router.' });
       }
       forgetRepo(repo);
+      forgetIndex(repo);
       const latest = get().chats.find((c) => c.id === chatId)!;
       // Keep working on the branch that now has these commits.
       const updated: Chat = { ...latest, changes: {}, repo: { ...repo, branch: target, defaultBranch: repo.defaultBranch || repo.branch } };

@@ -83,6 +83,11 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
       <div className="msg auto-files" role="note">
         <FolderOpen size={14} />
         <span>
+          {message.searches?.map((q) => (
+            <span key={q.query} className="auto-search">
+              Searched <code>{q.query}</code> · {q.count ? `${q.count} match${q.count === 1 ? '' : 'es'}` : 'no matches'}
+            </span>
+          ))}
           {names.length ? <>Loaded {names.map((n) => <code key={n}>{n}</code>)}</> : null}
           {/Couldn't find/.test(message.text) && <span className="muted"> {message.text.split(' — ')[0]}.</span>}
         </span>
@@ -98,8 +103,9 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
             f.thumb ? (
               <img key={f.id} src={f.thumb} alt={f.name} className="msg-thumb" title={f.name} />
             ) : (
-              <button key={f.id} className="file-chip" title={f.name} onClick={() => f.text && setUi({ preview: { name: `${f.name}.txt`, content: f.text } })}>
+              <button key={f.id} className={`file-chip${f.auto ? ' auto' : ''}`} title={f.auto ? `${f.name} — attached automatically: your message is about it` : f.name} onClick={() => f.text && setUi({ preview: { name: `${f.name}.txt`, content: f.text } })}>
                 <FileDown size={15} /> <span>{f.name}</span>
+                {f.auto && <span className="chip-note">auto</span>}
               </button>
             ),
           )}

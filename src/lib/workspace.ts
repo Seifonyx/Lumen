@@ -72,7 +72,7 @@ export async function filesAsAttachments(chat: Chat, paths: string[]): Promise<{
 }
 
 // Files that only cost tokens in the overview.
-const NOISE = /(^|\/)(\.git|node_modules|dist|build|\.next|coverage|vendor)\/|\.(png|jpe?g|gif|webp|ico|svg|woff2?|ttf|eot|otf|mp[34]|mov|zip|gz|pdf|lock)$|(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$/i;
+export const NOISE = /(^|\/)(\.git|node_modules|dist|build|\.next|coverage|vendor)\/|\.(png|jpe?g|gif|webp|ico|svg|woff2?|ttf|eot|otf|mp[34]|mov|zip|gz|pdf|lock)$|(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$/i;
 
 /** Repository files the model has already been given in this chat (attached, loaded or kept in context). */
 export function seenPaths(chat: Chat): Set<string> {
@@ -109,7 +109,7 @@ export const asksForFiles = (text: string) =>
   /\b(please|could you|can you|kindly)\s+(share|provide|send|paste|upload|show)|\b(need|want|have) to (see|look at|read|check)|\b(contents?|code) of\b|\bshare (the|your)\b|\bpaste (the|your)\b|\bwhich file/i.test(text);
 
 /** Instructions for a chat that works on a repository. */
-export function workspaceInstructions(r: RepoLink, all: TreeEntry[], truncated: boolean, context: string[]): string {
+export function workspaceInstructions(r: RepoLink, all: TreeEntry[], truncated: boolean, context: string[], map = ''): string {
   const listed = all.filter((f) => !NOISE.test(f.path));
   let list = '';
   let shown = 0;
@@ -123,9 +123,11 @@ export function workspaceInstructions(r: RepoLink, all: TreeEntry[], truncated: 
     `# Coding workspace: ${r.owner}/${r.repo} (branch ${r.branch})`,
     "You're helping the user change this GitHub repository. Its files:",
     `<repository_files>\n${list}${more > 0 ? `…and ${more} more\n` : ''}</repository_files>`,
+    map ? `What each source file defines (top-level functions, classes, components, types):\n<project_map>\n${map}</project_map>` : '',
     context.length ? `The user keeps these files attached: ${context.join(', ')}.` : '',
     'Attached files appear inside <file name="path"> tags and are the current versions (including edits not committed yet).',
     "## Reading files\nYou can read any file in the list yourself — never ask the user to paste or share code. To read files that aren't attached, end your reply with one line per file, exactly like this, and write nothing after them:\n[[read: src/App.tsx]]\n[[read: package.json]]\nUse exact paths from the list (up to 8 at a time). The app loads them and you continue. Read a file before editing it — never guess its contents.",
+    "## Searching the code\nTo find where something is defined or used, end your reply with [[search: text]] (case-insensitive; /regex/ also works; up to 4 searches). You get matching lines as path:line, then read the files you need. Search instead of guessing which file to change.",
     '## Changing files',
     'To change code, use edit blocks fenced with four backticks:',
     '````edit:path/to/file.ext\n<<<<<<< SEARCH\nexact lines copied from the current file\n=======\nthe new lines\n>>>>>>> REPLACE\n````',

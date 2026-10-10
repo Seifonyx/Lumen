@@ -62,6 +62,18 @@
 .chat-open { height: 39px; padding-inline: 12px; font-size: 13px; }
 .empty-list { padding: 18px 12px; line-height: 1.6; max-width: 190px; }
 .sidebar-foot { border-radius: 12px; padding: 10px; margin-top: 8px; border-top: 1px solid var(--border); }
+.sidebar .new-chat { background: transparent; justify-content: flex-start; padding-inline: 12px; color: var(--text); }
+.sidebar .new-chat:hover { background: var(--surface-2); }
+.sidebar .search { margin-bottom: 6px; }
+.sidebar-section-label { padding: 10px 12px 0; color: var(--text-3); font-size: 11px; font-weight: 550; }
+.sidebar-section-heading { display: flex; align-items: center; justify-content: space-between; padding-inline: 12px 4px; margin-top: 4px; }
+.sidebar-section-heading .sidebar-section-label { padding: 0; }
+.sidebar .history-label { padding-top: 18px; }
+.sidebar .group-label { padding-top: 10px; font-size: 10px; }
+.sidebar .project-switcher { background: var(--surface); border-radius: 10px; margin: 2px 4px; padding-inline: 10px 4px; }
+.sidebar .chat-row { margin-block: 2px; }
+.sidebar .chat-row.active { background: color-mix(in srgb, var(--accent) 12%, var(--sidebar)); }
+.sidebar .sidebar-foot { border: 0; background: var(--surface); margin-inline: 4px; }
 .account-name { font-size: 13px; }
 .account-mail { font-size: 11px; margin-top: 3px; }
 .avatar { background: var(--accent); color: var(--accent-text); width: 32px; height: 32px; }
@@ -74,6 +86,13 @@
 @media (max-width: 899px) {
   .collapse-sidebar { display: none; }
   .sidebar { background: var(--sidebar); }
+  .sidebar { width: min(320px, 86vw); border-start-end-radius: 20px; border-end-end-radius: 20px; box-shadow: none; transform: translateX(-100%); }
+  [dir='rtl'] .sidebar { transform: translateX(100%); }
+  .sidebar.open { box-shadow: var(--shadow-lg); transform: none; }
+  .scrim { opacity: 0; pointer-events: none; animation: none; transition: opacity .25s var(--ease); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .scrim.visible { opacity: 1; pointer-events: auto; }
+  :root[data-sidebar-dragging] .sidebar, :root[data-sidebar-dragging] .scrim { transition: none; }
+  :root[data-sidebar-dragging] .scrim { pointer-events: auto; }
 }
 
 /* A calm header and a readable, consistent chat column. */

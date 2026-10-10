@@ -114,7 +114,40 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
   const { newChat, setUi, selectProject } = useStore.getState();
   const [query, setQuery] = useState('');
   const [projectManager, setProjectManager] = useState(false);
-  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const [phone, setPhone] = useState(() => window.matchMedia('(max-width: 899px)').matches);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 899px)');
+    const change = () => setPhone(media.matches);
+    media.addEventListener('change', change);
+    return () => media.removeEventListener('change', change);
+  }, []);
+  useEffect(() => {
+    if (phone) {
+      if (open) sidebarRef.current?.querySelector<HTMLButtonElement>('.close-sidebar')?.focus({ preventScroll: true });
+      else if (wasOpen.current && !useStore.getState().settingsOpen) document.querySelector<HTMLButtonElement>('.menu-btn')?.focus({ preventScroll: true });
+    }
+    wasOpen.current = open;
+  }, [open, phone]);
+  useEffect(() => {
+    if (!phone || !open) return;
+    const main = document.querySelector<HTMLElement>('.main');
+    const previouslyInert = main?.inert;
+    if (main) main.inert = true;
+    const trap = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab' || document.querySelector('.modal-backdrop, .sheet-backdrop')) return;
+      const items = [...(sidebarRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input, select, a[href]') || [])].filter(el => el.getClientRects().length > 0);
+      const first = items[0], last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener('keydown', trap);
+    return () => {
+      if (main) main.inert = previouslyInert || false;
+      document.removeEventListener('keydown', trap);
+    };
+  }, [open, phone]);
 
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -137,21 +170,13 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
   return (
     <>
     <aside
+      ref={sidebarRef}
       className={`sidebar${open ? ' open' : ''}`}
       aria-label="Chats"
-      // Swipe the chats list back to the edge to close it (the mirror of the edge swipe that opens it).
-      onTouchStart={(e) => {
-        swipeStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      }}
-      onTouchEnd={(e) => {
-        const start = swipeStart.current;
-        swipeStart.current = null;
-        if (!start || !open) return;
-        const dx = e.changedTouches[0].clientX - start.x;
-        const dy = Math.abs(e.changedTouches[0].clientY - start.y);
-        const rtl = getComputedStyle(e.currentTarget).direction === 'rtl';
-        if (dy < 40 && (rtl ? dx > 70 : dx < -70)) setUi({ sidebarOpen: false });
-      }}
+      role={phone ? 'dialog' : undefined}
+      aria-modal={phone && open || undefined}
+      aria-hidden={phone && !open || undefined}
+      inert={phone && !open}
     >
       <div className="sidebar-head">
         <div className="brand">
@@ -169,18 +194,19 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
         <SquarePen size={15} /> New chat
         <span className="kbd">{modKey}⇧O</span>
       </button>
+      <label className="search">
+        <Search size={16} />
+        <input id="chat-search" type="search" aria-label="Search chats" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" />
+      </label>
+      <div className="sidebar-section-heading"><div className="sidebar-section-label">Projects</div><button className="icon-btn sm" onClick={() => setProjectManager(true)} aria-label="Manage projects" title="Manage projects"><Plus size={16} /></button></div>
       <div className="project-switcher">
         <FolderKanban size={16} />
         <select aria-label="Choose project" value={selectedProjectId || ''} onChange={(e) => selectProject(e.target.value || null)}>
           <option value="">All chats</option>
           {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
         </select>
-        <button className="icon-btn sm" onClick={() => setProjectManager(true)} aria-label="Manage projects"><Plus size={16} /></button>
       </div>
-      <label className="search">
-        <Search size={16} />
-        <input id="chat-search" type="search" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" />
-      </label>
+      <div className="sidebar-section-label history-label">{query ? 'Search results' : 'Chats'}</div>
       <nav className="chat-list" aria-label="Chat history">
         {groups.length === 0 && <p className="muted small empty-list">{query ? 'No chats match.' : 'Your chats will appear here.'}</p>}
         {groups.map(([label, list]) => (
@@ -198,7 +224,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
         {user?.photo ? <img className="avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
         <span className="account">
           <span className="account-name">{user?.name || user?.email?.split('@')[0] || 'Account'}</span>
-          {user?.email && <span className="account-mail">{user.email}</span>}
+          <span className="account-mail">Settings & preferences</span>
         </span>
         <Settings size={16} />
       </button>

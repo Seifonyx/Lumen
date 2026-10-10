@@ -13,6 +13,7 @@ import CommandPalette from './components/CommandPalette';
 import ComparisonResultsModal from './components/ComparisonResultsModal';
 import { useStore } from './store';
 import { keepScreenAwake } from './lib/wakelock';
+import { installSidebarGestures } from './lib/sidebar-gesture';
 
 const RunPanel = lazy(() => import('./components/RunPanel'));
 
@@ -44,15 +45,11 @@ export default function App() {
     return () => keepScreenAwake(false);
   }, [working]);
 
-  // Global shortcuts: Ctrl/Cmd+Shift+O new chat, Ctrl/Cmd+K command palette, Esc stop/close.
   useEffect(() => {
-    const onSwipeEdge = () => {
-      setUi({ sidebarOpen: true });
-    };
-    window.addEventListener('model-router:swipe-edge', onSwipeEdge);
-    return () => window.removeEventListener('model-router:swipe-edge', onSwipeEdge);
-  }, [setUi]);
+    if (authed) return installSidebarGestures();
+  }, [authed]);
 
+  // Global shortcuts: Ctrl/Cmd+Shift+O new chat, Ctrl/Cmd+K command palette, Esc stop/close.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
@@ -67,6 +64,8 @@ export default function App() {
       } else if (mod && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setCommandPaletteOpen(true);
+      } else if (e.key === 'Escape' && s.sidebarOpen && !s.settingsOpen && !document.querySelector('.modal-backdrop, .sheet-backdrop, .models-pop, .usage-pop')) {
+        s.setUi({ sidebarOpen: false });
       } else if (e.key === 'Escape' && s.streamingChatId && !s.preview && !s.runner && !s.settingsOpen && !commandPaletteOpen) {
         s.stop();
       }
@@ -89,7 +88,7 @@ export default function App() {
   return (
     <div className={`app${settingsOpen ? ' settings-open' : ''}${workspaceOpen ? ' workspace-open' : ''}${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
       <Sidebar onCollapse={toggleSidebar} />
-      {sidebarOpen && <div className="scrim" onClick={() => setUi({ sidebarOpen: false })} />}
+      <div className={`scrim${sidebarOpen ? ' visible' : ''}`} aria-hidden="true" onClick={() => setUi({ sidebarOpen: false })} />
       <ChatView onExpandSidebar={toggleSidebar} />
       {!settingsOpen && <WorkspacePanel />}
       <SettingsModal />

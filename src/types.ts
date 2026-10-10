@@ -167,6 +167,8 @@ export type Theme = 'system' | 'light' | 'dark' | 'black';
 export type FontSize = 'small' | 'medium' | 'large';
 
 export interface Settings {
+  /** Models explicitly refused by the provider for this account; reset when its key changes. */
+  unavailableModels?: string[];
   /** User workspaces shared across devices with the rest of account settings. */
   projects?: Project[];
   /** ordered: earlier = preferred when switching after a limit */

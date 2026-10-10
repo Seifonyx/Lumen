@@ -12,8 +12,8 @@ export class ApiError extends Error {
   }
 }
 
-export async function fetchCatalog(): Promise<Catalog> {
-  return (await catalog()) as Catalog;
+export async function fetchCatalog(refresh = false): Promise<Catalog> {
+  return (await catalog({ refresh })) as Catalog;
 }
 
 export async function fetchTitle(text: string, model?: string, skip?: (id: string) => boolean): Promise<{ title: string; model: string } | null> {
@@ -57,6 +57,7 @@ export type StreamEvent =
   | { t: 'error'; text: string }
   | { t: 'done' }
   | { t: 'discard' }
+  | { t: 'unavailable'; id: string }
   | { t: 'request'; id: string }
   | { t: 'usage'; id: string; input: number; output: number }
   | { t: 'limit'; id: string; scope: 'day' | 'minute' | 'unknown'; quota?: number; resetAt?: number; retryAfterSec?: number };

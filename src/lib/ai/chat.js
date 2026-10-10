@@ -4,6 +4,7 @@
 
 import { buildInstructions } from './instructions.js';
 import { complete, hasGemini, hasKey, openStream, parseModelId } from './providers.js';
+import { isUnavailableFailure } from './model-status.js';
 
 const MAX_ATTEMPTS = 5;
 export const timeouts = {
@@ -85,6 +86,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     if (!opened.ok) {
       cleanup();
       failures.push({ id, status: opened.status, message: opened.message });
+      if (isUnavailableFailure(opened.status, opened.message)) yield { t: 'unavailable', id };
       if (opened.status === 401 || opened.status === 403) deadProviders.add(target.provider);
       if (opened.limit) yield { t: 'limit', id, ...opened.limit };
       continue;
@@ -153,6 +155,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     }
     if (failedEarly) {
       failures.push(failedEarly);
+      if (isUnavailableFailure(failedEarly.status, failedEarly.message)) yield { t: 'unavailable', id };
       // Throw away the failed model's partial thinking before the next model starts.
       if (thought) yield { t: 'discard' };
       if (failedEarly.status === 401 || failedEarly.status === 403) deadProviders.add(target.provider);

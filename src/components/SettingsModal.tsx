@@ -215,6 +215,7 @@ function ModelsTab() {
         </div>
         <div className="settings-card pad-card">
           {catalogError && <p className="error-text small" dir="auto">{catalogError}</p>}
+          {!!settings.unavailableModels?.length && <p className="muted small">{settings.unavailableModels.length} unavailable model{settings.unavailableModels.length === 1 ? '' : 's'} hidden. <button className="link-btn small" disabled={refreshing} onClick={async () => { setRefreshing(true); update({ unavailableModels: [] }); await loadCatalog(); setRefreshing(false); }}>Restore hidden models</button></p>}
           <label className="search" style={{ margin: 0 }}>
             <Search size={16} />
             <input type="search" aria-label="Search available models" placeholder="Search models" value={query} onChange={(e) => { setQuery(e.target.value); setVisibleModels(24); }} />

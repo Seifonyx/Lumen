@@ -2,7 +2,7 @@
 // as a common sequence of events: { t: 'text' | 'think' | 'sources' | 'notice' | 'error', ... }.
 
 import { parseLimit, readError, readSSE, upstreamError } from './http.js';
-import { isActiveModel, isRetiredModel } from './model-status.js';
+import { isActiveModel, isExcludedModel } from './model-status.js';
 
 // API keys come from the user's settings (stored in their private Firebase document).
 const keys = { gemini: '', openrouter: '', groq: '', cerebras: '' };
@@ -67,14 +67,14 @@ async function geminiCatalog() {
   return models
     .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
     .map((m) => ({ ...m, short: m.name.replace(/^models\//, '') }))
-    .filter((m) => !GEMINI_SKIP.test(m.short) && isActiveModel(m) && !isRetiredModel(`gemini:${m.short}`))
+    .filter((m) => !GEMINI_SKIP.test(m.short) && isActiveModel(m) && !isExcludedModel(`gemini:${m.short}`))
     .map((m) => ({
       id: `gemini:${m.short}`,
       provider: 'google',
       name: m.short,
       label: prettyGemini(m),
       context: m.inputTokenLimit || null,
-      vision: true,
+      vision: !/^gemma-?(?:2|3-(?:1b|270m)(?:-|$))/i.test(m.short),
       pdf: !isGemma(m.short),
       thinking: geminiThinks(m.short),
       search: !isGemma(m.short) && geminiThinks(m.short),
@@ -137,7 +137,7 @@ async function compatCatalog(provider) {
   const { data } = await res.json();
   if (!Array.isArray(data)) throw new Error(`${label}: invalid model catalogue`);
   return data
-    .filter((m) => m.id && isActiveModel(m) && !isRetiredModel(`${provider}:${m.id}`) && !COMPAT_SKIP.test(m.id))
+    .filter((m) => m.id && isActiveModel(m) && !isExcludedModel(`${provider}:${m.id}`) && !COMPAT_SKIP.test(m.id))
     .map((m) => ({
       id: `${provider}:${m.id}`,
       provider,
@@ -172,7 +172,8 @@ function providerDefaults(list) {
 
 let cache = null;
 
-export async function catalog() {
+export async function catalog({ refresh = false } = {}) {
+  if (refresh) cache = null;
   if (cache && cache.expires > Date.now()) return cache.value;
   const results = await Promise.allSettled([
     hasGemini() ? geminiCatalog() : [],

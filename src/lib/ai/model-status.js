@@ -29,6 +29,20 @@ export function isRetiredModel(id) {
   return retired[provider]?.has(name) || (provider === 'gemini' && /^gemini-(?:1\.|2\.0)/.test(name));
 }
 
+// API catalogue membership does not imply free-tier access. Reviewed against Google pricing.
+// https://ai.google.dev/gemini-api/docs/pricing
+export function isExcludedModel(id) {
+  return isRetiredModel(id) || /^gemini:(?:gemini-3\.1-pro-preview(?:-|$)|gemini-pro-latest$)/.test(id);
+}
+
+/** Only explicit model-level failures qualify, never key errors, overload or ordinary quota. */
+export function isUnavailableFailure(status, message = '') {
+  if (status === 404 && /model|no endpoints/i.test(message)) return true;
+  if ([400, 403, 410].includes(status) && /model/i.test(message)
+    && /decommissioned|retired|does not exist|not (?:found|available|accessible)|no longer (?:available|supported)|not supported for (?:your|this) (?:account|project|api key)|requires? (?:a )?paid/i.test(message)) return true;
+  return status === 429 && /free.?tier/i.test(message) && /(?:limit|quota(?:value)?)\s*[:=]\s*0\b/i.test(message);
+}
+
 export function isActiveModel(model) {
   const expiry = model.expiration_date && Date.parse(`${model.expiration_date}T00:00:00Z`);
   return model.active !== false && model.disabled !== true && !['disabled', 'retired', 'deprecated', 'unavailable'].includes(model.status)
@@ -37,7 +51,7 @@ export function isActiveModel(model) {
 
 // An unavailable provider must not erase saved choices. A successful empty list must prune them.
 export function keepModelChoice(id, catalog) {
-  if (isRetiredModel(id)) return false;
+  if (isExcludedModel(id)) return false;
   if (catalog.models.some((model) => model.id === id)) return true;
   const provider = id.split(':')[0];
   return Boolean(catalog.failedProviders?.includes(provider));

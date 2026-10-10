@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { openRouterDailyLimit, setKeys } from './lib/ai/providers.js';
 import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage } from './lib/api';
-import { keepModelChoice, isRetiredModel } from './lib/ai/model-status.js';
+import { keepModelChoice, isExcludedModel } from './lib/ai/model-status.js';
 import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
 import { forgetLocalAccount, isPreviewUser, loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInPreview, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { registerServiceWorker } from './pwa/register';
@@ -169,6 +169,16 @@ export const useStore = create<State>((set, get) => {
   };
   const currentChat = () => get().chats.find((c) => c.id === get().currentId) || null;
   const currentProjectId = () => get().settings.projects?.some((p) => p.id === get().activeProjectId) ? get().activeProjectId : null;
+  const hideUnavailableModel = (id: string) => {
+    const { settings, catalog } = get();
+    if (settings.unavailableModels?.includes(id)) return;
+    if (catalog) set({ catalog: { ...catalog, models: catalog.models.filter((m) => m.id !== id), defaults: catalog.defaults.filter((model) => model !== id) } });
+    get().updateSettings({
+      unavailableModels: [...(settings.unavailableModels || []), id],
+      enabledModels: settings.enabledModels.filter((model) => model !== id),
+      ...(settings.defaultModel === id ? { defaultModel: AUTO } : {}),
+    });
+  };
 
   /** The model this chat should use, falling back sensibly if it was disabled. */
   const modelFor = (chat: Chat | null): string => {
@@ -431,6 +441,7 @@ export const useStore = create<State>((set, get) => {
     let raw = '';
     try {
       for await (const ev of streamChat(body, controller.signal)) {
+        if (ev.t === 'unavailable') { hideUnavailableModel(ev.id); continue; }
         if (ev.t === 'request') {
           usage?.record(ev.id, { requests: 1 });
           continue;
@@ -590,7 +601,8 @@ export const useStore = create<State>((set, get) => {
           setKeys(keys);
           setGitHubToken(keys.github);
           set({ keys, authed: true });
-          if (remoteSettings) get().updateSettings({ ...remoteSettings, voiceLang: get().settings.voiceLang } as Partial<Settings>);
+          if (remoteSettings) get().updateSettings({ ...remoteSettings, unavailableModels: remoteSettings.unavailableModels || [], voiceLang: get().settings.voiceLang } as Partial<Settings>);
+          else get().updateSettings({ unavailableModels: [] });
           {
             const { voiceLang: _voice, ...shared } = get().settings;
             lastSharedSettings = remoteSettings ? JSON.stringify(shared) : '';
@@ -656,6 +668,8 @@ export const useStore = create<State>((set, get) => {
       setKeys(keys);
       const clean: ApiKeys = { gemini: keys.gemini.trim(), openrouter: keys.openrouter.trim(), groq: keys.groq.trim(), cerebras: keys.cerebras.trim(), github: (keys.github || '').trim() };
       setGitHubToken(clean.github);
+      const changed = (['gemini', 'openrouter', 'groq', 'cerebras'] as const).filter((provider) => clean[provider] !== before[provider]);
+      if (changed.length) get().updateSettings({ unavailableModels: (get().settings.unavailableModels || []).filter((id) => !changed.some((provider) => id.startsWith(`${provider}:`))) });
       set({ keys: clean });
       await get().loadCatalog();
       // A newly connected provider: switch on its suggested models so they're ready to use.
@@ -675,7 +689,7 @@ export const useStore = create<State>((set, get) => {
         return;
       }
       try {
-        let catalog = await fetchCatalog().catch((e) => {
+        let catalog = await fetchCatalog(true).catch((e) => {
           if (navigator.onLine || !savedCatalog()) throw e;
           return savedCatalog()!;
         });
@@ -692,12 +706,13 @@ export const useStore = create<State>((set, get) => {
         usage?.useProviders((['groq', 'cerebras'] as const).filter((p) => catalog.providers[p]));
         const previous = get().catalog || savedCatalog();
         if (catalog.failedProviders?.length && previous) {
-          catalog = { ...catalog, models: [...catalog.models, ...previous.models.filter((m) => catalog.failedProviders!.includes(m.id.split(':')[0]) && !isRetiredModel(m.id))] };
+          catalog = { ...catalog, models: [...catalog.models, ...previous.models.filter((m) => catalog.failedProviders!.includes(m.id.split(':')[0]) && !isExcludedModel(m.id))] };
         }
-        catalog = { ...catalog, models: catalog.models.filter((m) => !isRetiredModel(m.id)) };
+        const unavailable = new Set(get().settings.unavailableModels || []);
+        catalog = { ...catalog, models: catalog.models.filter((m) => !isExcludedModel(m.id) && !unavailable.has(m.id)) };
         const { settings } = get();
         const known = new Set(catalog.models.map((m) => m.id));
-        let enabled = settings.enabledModels.filter((id) => keepModelChoice(id, catalog));
+        let enabled = settings.enabledModels.filter((id) => !unavailable.has(id) && keepModelChoice(id, catalog));
         if (!enabled.length) enabled = catalog.defaults.filter((id) => known.has(id));
         // New chats use Auto (introduced once; you can switch back to a fixed model any time).
         const wanted = settings.autoIntroduced ? settings.defaultModel : AUTO;
@@ -948,7 +963,8 @@ export const useStore = create<State>((set, get) => {
           let sources: NonNullable<ComparisonState['answers'][number]['sources']> = [];
           try {
             for await (const ev of streamChat(bodyFor(model), aborter.signal)) {
-              if (ev.t === 'request') usage?.record(ev.id, { requests: 1 });
+              if (ev.t === 'unavailable') hideUnavailableModel(ev.id);
+              else if (ev.t === 'request') usage?.record(ev.id, { requests: 1 });
               else if (ev.t === 'usage') usage?.record(ev.id, { input: ev.input, output: ev.output });
               else if (ev.t === 'limit') usage?.block(ev.id, ev as unknown as LimitInfo);
               else if (ev.t === 'text') textOut += ev.text;

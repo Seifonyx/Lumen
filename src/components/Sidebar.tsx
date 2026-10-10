@@ -1,4 +1,4 @@
-import { Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings, SquarePen, Tag, Trash2, X } from 'lucide-react';
+import { Download, FolderKanban, MessageSquare, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings, SquarePen, Tag, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey, modelShortName, safeFileName, saveBlob } from '../lib/util';
 import { useStore } from '../store';
@@ -195,7 +195,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
         <input ref={searchInput} id="chat-search" type="search" aria-label="Search chats" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setSearchOpen(false); setQuery(''); searchButton.current?.focus(); } }} dir="auto" />
         <button className="icon-btn sm" aria-label="Close search" onClick={() => { setSearchOpen(false); setQuery(''); searchButton.current?.focus(); }}><X size={15} /></button>
       </label>}
-      <div className="sidebar-section-heading"><div className="sidebar-section-label">Projects</div><button className="icon-btn sm" onClick={() => setProjectManager(true)} aria-label="Manage projects" title="Manage projects"><Plus size={16} /></button></div>
+      <div className="sidebar-section-heading"><h2 className="sidebar-section-label"><FolderKanban size={15} aria-hidden="true" />Projects</h2><button className="icon-btn sm" onClick={() => setProjectManager(true)} aria-label="Manage projects" title="Manage projects"><Plus size={16} /></button></div>
       <div className="project-switcher">
         <FolderKanban size={16} />
         <select aria-label="Choose project" value={selectedProjectId || ''} onChange={(e) => selectProject(e.target.value || null)}>
@@ -203,7 +203,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
           {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
         </select>
       </div>
-      <div className="sidebar-section-label history-label">{query ? 'Search results' : 'Chats'}</div>
+      <h2 className="sidebar-section-label history-label"><MessageSquare size={15} aria-hidden="true" />{query ? 'Search results' : 'Chats'}</h2>
       <nav className="chat-list" aria-label="Chat history">
         {groups.length === 0 && <p className="muted small empty-list">{query ? 'No chats match.' : 'Your chats will appear here.'}</p>}
         {groups.map(([label, list]) => (

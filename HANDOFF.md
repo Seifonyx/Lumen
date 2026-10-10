@@ -18,6 +18,9 @@
 
 ## Features and release
 
+- Ongoing user goal: implement as much of the roadmap as possible in tested, sequential deployments; continue when execution limits allow. `ROADMAP.md` tracks the audited gaps and next phases. Broken-model names were requested; incorporate any later user reply.
+- Explicit model rejection emits `unavailable`; account settings hide that ID across reloads/devices. Ordinary 429/key/network errors never retire a model. Changed provider keys clear only their exclusions; Models → Browse → Restore hidden models permits retry. Refresh bypasses the catalogue cache. Known paid-only Gemini 3.1 Pro variants are excluded.
+
 - Implemented: smart routing, memory, projects (instructions/default model/reference files), comparisons, tags/branching, Ctrl+K, attachments/document generation and GitHub coding workspace. Audit the app before claiming remaining roadmap features exist.
 - Preserve project context before a chat exists, drafts/attachments during offline and privacy-confirmation flows, and local restoration of comparison answers.
 - Run `npm test`, `npm run build`, `npm run test:e2e:ci` (Node 22, Java 21, Firebase emulators, Chromium). `design.cjs`, `regressions.cjs` and `sidebar.cjs` cover desktop/phone UX using isolated data and mocked AI; support `MR_TEST_URL` for deployed checks.

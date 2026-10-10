@@ -4,7 +4,6 @@ import {
   ArrowUp,
   Boxes,
   Brain,
-  CheckCircle2,
   ChevronRight,
   Database,
   Download,
@@ -42,9 +41,9 @@ import type { Layout } from '../lib/layouts';
 
 /** Settings sections: id, name, icon, one-line description */
 const TABS: [string, string, LucideIcon, string][] = [
-  ['general', 'General', SlidersHorizontal, 'Appearance, chat behaviour and your account'],
+  ['general', 'General', SlidersHorizontal, 'Account, appearance and chat behaviour'],
   ['keys', 'API keys', KeyRound, 'Your free Gemini, OpenRouter, Groq and Cerebras keys'],
-  ['models', 'Models', Boxes, 'Your models, Auto and layouts for coding, everyday, thinking…'],
+  ['models', 'Models', Boxes, 'Your models, Auto routing and layouts'],
   ['usage', 'Usage', Gauge, "Today's requests, limits and resets"],
   ['personalize', 'Personalization', UserRound, 'Instructions every model follows'],
   ['memory', 'Memory', Brain, 'What models remember about you'],
@@ -109,6 +108,7 @@ function ModelsTab() {
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [editing, setEditing] = useState<Layout | null>(null);
+  const [filter, setFilter] = useState<'all' | ProviderId>('all');
   const enabled = settings.enabledModels;
   const find = (id: string) => catalog?.models.find((m) => m.id === id);
 
@@ -130,13 +130,16 @@ function ModelsTab() {
   };
   const add = (id: string) => update({ enabledModels: [...enabled, id], defaultModel: settings.defaultModel || id });
 
-  const group = (provider: ModelInfo['provider']) => available.filter((m) => m.provider === provider);
+  const providers = Object.keys(PROVIDER_NAMES) as ProviderId[];
+  const connected = providers.filter((p) => catalog?.providers[p]);
+  const missing = catalog ? providers.filter((p) => !catalog.providers[p]) : [];
+  const shown = available.filter((m) => filter === 'all' || m.provider === filter);
 
   if (editing) return <div className="settings-section"><LayoutEditor start={editing} onDone={() => setEditing(null)} /></div>;
   return (
     <div className="settings-section">
       <div className="settings-group">
-        <span className="settings-group-title">Smart Routing & Behavior</span>
+        <span className="settings-group-title">Routing</span>
         <div className="settings-card">
           <Toggle
             label="Switch models automatically"
@@ -156,7 +159,7 @@ function ModelsTab() {
       <div className="settings-group">
         <div className="settings-group-title">
           <span>Your models</span>
-          <span className="muted" style={{ fontWeight: 400, textTransform: 'none' }}>Order = switching order. ★ = default for new chats.</span>
+          <span className="count-pill">{enabled.length}</span>
         </div>
         <div className="settings-card">
           <ul className="model-list" style={{ border: 0, margin: 0, borderRadius: 0 }}>
@@ -183,13 +186,11 @@ function ModelsTab() {
               );
             })}
           </ul>
+          <p className="card-note">The order is the switching order. ★ marks the default for new chats.</p>
         </div>
       </div>
 
-      <div className="settings-group">
-        <span className="settings-group-title">Workspace Layouts</span>
-        <LayoutsSection onEdit={setEditing} />
-      </div>
+      <LayoutsSection onEdit={setEditing} />
 
       <div className="settings-group">
         <div className="settings-group-title">
@@ -198,37 +199,40 @@ function ModelsTab() {
             <RefreshCw size={13} className={refreshing ? 'spin' : ''} /> Refresh
           </button>
         </div>
-        <div className="settings-card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="settings-card pad-card">
           {catalogError && <p className="error-text small" dir="auto">{catalogError}</p>}
           <label className="search" style={{ margin: 0 }}>
             <Search size={16} />
             <input type="search" placeholder="Search models (e.g. gemini, deepseek, qwen)" value={query} onChange={(e) => setQuery(e.target.value)} />
           </label>
-          {(Object.keys(PROVIDER_NAMES) as ProviderId[]).map((p) =>
-            catalog?.providers[p] || !catalog ? (
-              <div key={p}>
-                <div className="pop-label" style={{ marginBottom: 6 }}>{{ google: 'Google (free tier)', openrouter: 'OpenRouter (free models)', groq: 'Groq (free plan)', cerebras: 'Cerebras (free plan)' }[p]}</div>
-                <ul className="model-list add" style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>
-                  {group(p).length === 0 && <li className="muted small pad">{query ? 'No matches.' : 'All added.'}</li>}
-                  {group(p).map((m) => (
-                    <li key={m.id} className="model-row">
-                      <span className="model-meta">
-                        <span className="model-title">{m.label}{m.preview && <span className="tag">preview</span>}</span>
-                        <span className="model-sub">{m.name}{m.context ? ` · ${ctx(m.context)} context` : ''}</span>
-                      </span>
-                      <Badges m={m} />
-                      <button className="icon-btn sm" onClick={() => add(m.id)} aria-label={`Add ${m.label}`}><Plus size={17} /></button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
-              <p key={p} className="muted small" style={{ margin: '4px 0' }}>
-                {PROVIDER_NAMES[p]} isn't connected. Add its key under API keys to use its models.
-              </p>
-            ),
+          {connected.length > 1 && (
+            <div className="filter-chips" role="group" aria-label="Provider">
+              {(['all', ...connected] as ('all' | ProviderId)[]).map((p) => (
+                <button key={p} type="button" className={`preset-chip${filter === p ? ' active' : ''}`} aria-pressed={filter === p} onClick={() => setFilter(p)}>
+                  {p === 'all' ? 'All' : PROVIDER_NAMES[p]}
+                </button>
+              ))}
+            </div>
           )}
-          <p className="muted small legend" style={{ margin: '8px 0 0' }}>
+          <ul className="model-list add">
+            {shown.length === 0 && <li className="muted small pad">{query || filter !== 'all' ? 'No matches.' : 'All added.'}</li>}
+            {shown.map((m) => (
+              <li key={m.id} className="model-row">
+                <span className="model-meta">
+                  <span className="model-title">{m.label}{m.preview && <span className="tag">preview</span>}</span>
+                  <span className="model-sub">{PROVIDER_NAMES[m.provider]} · {m.name}{m.context ? ` · ${ctx(m.context)} context` : ''}</span>
+                </span>
+                <Badges m={m} />
+                <button className="icon-btn sm" onClick={() => add(m.id)} aria-label={`Add ${m.label}`}><Plus size={17} /></button>
+              </li>
+            ))}
+          </ul>
+          {missing.length > 0 && (
+            <p className="muted small" style={{ margin: 0 }}>
+              Not connected: {missing.map((p) => PROVIDER_NAMES[p]).join(', ')}. Add a key under API keys to use {missing.length === 1 ? 'its' : 'their'} models.
+            </p>
+          )}
+          <p className="muted small legend" style={{ margin: 0 }}>
             Icons: <Badges m={{ vision: true } as ModelInfo} /> reads images · <Badges m={{ search: true } as ModelInfo} /> web search · <Badges m={{ thinking: true } as ModelInfo} /> thinks first
           </p>
         </div>
@@ -266,52 +270,48 @@ function KeysTab() {
 
   return (
     <div className="settings-section">
-      <div className="settings-group">
-        <span className="settings-group-title">Provider Keys</span>
-        <div className="settings-card">
-          {KEY_FIELDS.map(({ id, label, placeholder, link, hint, linkText }) => {
-            const val = draft[id] || '';
-            const isConfigured = Boolean(val.trim());
-            const visible = Boolean(showKey[id]);
-            return (
-              <div key={id} className="key-provider-card">
-                <div className="key-provider-head">
-                  <span className="key-provider-title">
-                    <KeyRound size={15} /> {label}
-                    <span className={`key-status-pill ${isConfigured ? 'configured' : 'empty'}`}>
-                      {isConfigured ? '● Active' : '○ Not set'}
-                    </span>
-                  </span>
-                  <a className="link-btn small inline" href={link} target="_blank" rel="noopener noreferrer">
-                    {linkText || 'Get a free key'} <ExternalLink size={12} />
-                  </a>
-                </div>
-                <span className="key-provider-desc">{hint}</span>
-                <div className="key-input-wrap">
-                  <input
-                    type={visible ? 'text' : 'password'}
-                    autoComplete="off"
-                    spellCheck={false}
-                    placeholder={placeholder}
-                    value={val}
-                    onChange={(e) => setDraft({ ...draft, [id]: e.target.value })}
-                  />
-                  {val && (
-                    <button className="icon-btn sm" onClick={() => setDraft({ ...draft, [id]: '' })} aria-label="Clear key" title="Clear">
-                      <X size={14} />
-                    </button>
-                  )}
-                  <button className="icon-btn sm" onClick={() => toggleShow(id)} aria-label={visible ? 'Hide' : 'Reveal'} title={visible ? 'Hide' : 'Reveal'}>
-                    {visible ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
-                </div>
+      <div className="settings-card">
+        {KEY_FIELDS.map(({ id, label, placeholder, link, hint, linkText }) => {
+          const val = draft[id] || '';
+          const isConfigured = Boolean(val.trim());
+          const visible = Boolean(showKey[id]);
+          return (
+            <div key={id} className="key-provider-card">
+              <div className="key-provider-head">
+                <span className="key-provider-title">
+                  <KeyRound size={15} /> {label}
+                  <span className={`key-status-pill ${isConfigured ? 'configured' : 'empty'}`}>{isConfigured ? 'Connected' : 'Not set'}</span>
+                </span>
+                <a className="link-btn small inline" href={link} target="_blank" rel="noopener noreferrer">
+                  {linkText || 'Get a free key'} <ExternalLink size={12} />
+                </a>
               </div>
-            );
-          })}
-        </div>
+              <span className="key-provider-desc">{hint}</span>
+              <div className="key-input-wrap">
+                <input
+                  type={visible ? 'text' : 'password'}
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder={placeholder}
+                  value={val}
+                  onChange={(e) => setDraft({ ...draft, [id]: e.target.value })}
+                />
+                {val && (
+                  <button className="icon-btn sm" onClick={() => setDraft({ ...draft, [id]: '' })} aria-label="Clear key" title="Clear">
+                    <X size={14} />
+                  </button>
+                )}
+                <button className="icon-btn sm" onClick={() => toggleShow(id)} aria-label={visible ? 'Hide' : 'Reveal'} title={visible ? 'Hide' : 'Reveal'}>
+                  {visible ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 12 }}>
+      <div className="settings-actions">
+        <span className="muted small">Saved privately to your Google account and shared across your devices.</span>
         <button
           className="btn primary"
           disabled={busy || !changed || !any}
@@ -331,10 +331,7 @@ function KeysTab() {
         </button>
       </div>
 
-      <div className="settings-group" style={{ marginTop: 8 }}>
-        <span className="settings-group-title">Key Safety</span>
-        <KeySafety />
-      </div>
+      <KeySafety />
     </div>
   );
 }
@@ -347,53 +344,56 @@ function DataTab() {
 
   return (
     <div className="settings-section">
+      <div className="settings-card">
+        <div className="setting-row">
+          <span className="setting-text">
+            <span className="setting-label">Back up chats</span>
+            <span className="setting-hint">Save {count} chat{count === 1 ? '' : 's'} (with this device's attachments) as one file.</span>
+          </span>
+          <span className="setting-ctrl">
+            <button className="btn small" onClick={() => saveBlob(new Blob([JSON.stringify({ app: 'model-router', version: 2, chats }, null, 0)], { type: 'application/json' }), `model-router-backup-${new Date().toISOString().slice(0, 10)}.json`)}>
+              <Download size={14} /> Back up
+            </button>
+          </span>
+        </div>
+        <div className="setting-row">
+          <span className="setting-text">
+            <span className="setting-label">Restore a backup</span>
+            <span className="setting-hint">Adds the chats from a backup file. Existing chats are kept.</span>
+          </span>
+          <span className="setting-ctrl">
+            <button className="btn small" onClick={() => fileRef.current?.click()}>
+              <Upload size={14} /> Restore
+            </button>
+          </span>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            hidden
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              e.target.value = '';
+              if (!file) return;
+              try {
+                const data = JSON.parse(await file.text());
+                const list: Chat[] = Array.isArray(data) ? data : data.chats;
+                const n = await importChats(list || []);
+                toast(`Restored ${n} chat${n === 1 ? '' : 's'}.`, 'success');
+              } catch {
+                toast("That file isn't a Model Router backup.", 'error');
+              }
+            }}
+          />
+        </div>
+      </div>
+
       <div className="settings-group">
-        <span className="settings-group-title">Chat Data & Storage</span>
-        <div className="settings-card">
-          <div className="setting-row">
-            <span className="setting-text">
-              <span className="setting-label">Back up chats</span>
-              <span className="setting-hint">Save {count} chat{count === 1 ? '' : 's'} (with this device's attachments) as one file.</span>
-            </span>
-            <span className="setting-ctrl">
-              <button className="btn small" onClick={() => saveBlob(new Blob([JSON.stringify({ app: 'model-router', version: 2, chats }, null, 0)], { type: 'application/json' }), `model-router-backup-${new Date().toISOString().slice(0, 10)}.json`)}>
-                <Download size={14} /> Back up
-              </button>
-            </span>
-          </div>
-          <div className="setting-row">
-            <span className="setting-text">
-              <span className="setting-label">Restore a backup</span>
-              <span className="setting-hint">Adds the chats from a backup file. Existing chats are kept.</span>
-            </span>
-            <span className="setting-ctrl">
-              <button className="btn small" onClick={() => fileRef.current?.click()}>
-                <Upload size={14} /> Restore
-              </button>
-            </span>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/json,.json"
-              hidden
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                e.target.value = '';
-                if (!file) return;
-                try {
-                  const data = JSON.parse(await file.text());
-                  const list: Chat[] = Array.isArray(data) ? data : data.chats;
-                  const n = await importChats(list || []);
-                  toast(`Restored ${n} chat${n === 1 ? '' : 's'}.`, 'success');
-                } catch {
-                  toast("That file isn't a Model Router backup.", 'error');
-                }
-              }}
-            />
-          </div>
+        <span className="settings-group-title danger">Danger zone</span>
+        <div className="settings-card danger">
           <div className="setting-row danger-row">
             <span className="setting-text">
-              <span className="setting-label" style={{ color: 'var(--danger)' }}>Delete all chats</span>
+              <span className="setting-label">Delete all chats</span>
               <span className="setting-hint">Removes every chat from all your devices. This can't be undone.</span>
             </span>
             <span className="setting-ctrl">
@@ -408,71 +408,24 @@ function DataTab() {
   );
 }
 
-function UpdatesSection() {
+function AboutSection() {
   const updateReady = useStore((s) => s.updateReady);
-  const [checking, setChecking] = useState(false);
-  const [checkedAt, setCheckedAt] = useState<string | null>(null);
-
-  const checkUpdates = () => {
-    setChecking(true);
-    setTimeout(() => {
-      setChecking(false);
-      setCheckedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    }, 600);
-  };
-
   return (
     <div className="settings-group">
-      <span className="settings-group-title">Updates & System</span>
-      <div className="settings-card updates-card">
-        <div className="version-card">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span className="version-badge">v2.0.0</span>
-              <span className="version-status"><CheckCircle2 size={13} /> {updateReady ? 'Update ready' : 'Up to date'}</span>
-            </div>
-            <span className="setting-hint">
-              {updateReady ? 'A new version has downloaded.' : checkedAt ? `Last checked today at ${checkedAt}` : 'Model Router is running the latest build.'}
+      <span className="settings-group-title">About</span>
+      <div className="settings-card">
+        <div className="setting-row">
+          <span className="setting-text">
+            <span className="setting-label">Model Router <span className="tag" style={{ textTransform: 'none' }}>v2.0.0</span></span>
+            <span className="setting-hint">{updateReady ? 'A new version is ready to install.' : "You're on the latest version."}</span>
+          </span>
+          {updateReady && (
+            <span className="setting-ctrl">
+              <button className="btn small primary" onClick={updateReady}>
+                <RefreshCw size={14} /> Update now
+              </button>
             </span>
-          </div>
-          {updateReady ? (
-            <button className="btn small primary" onClick={updateReady}>
-              <RefreshCw size={14} /> Reload
-            </button>
-          ) : (
-            <button className="btn small" onClick={checkUpdates} disabled={checking}>
-              <RefreshCw size={13} className={checking ? 'spin' : ''} /> {checking ? 'Checking…' : 'Check for updates'}
-            </button>
           )}
-        </div>
-
-        <div className="changelog-wrap">
-          <div className="changelog-entry">
-            <div className="changelog-head">
-              <span className="changelog-tag">v2.0.0 — Unified Router & Workspaces</span>
-              <span className="changelog-date">Latest Release</span>
-            </div>
-            <ul className="changelog-list">
-              <li><strong>Multi-Model Engine:</strong> Smart routing between Gemini 2.5 Flash / Pro, OpenRouter free models, Groq, and Cerebras with auto-failover.</li>
-              <li><strong>Symmetrical Settings Architecture:</strong> Consolidated, unified card layout with clean alignments and balanced sections.</li>
-              <li><strong>Responsive Error & Prompt Viewports:</strong> Error messages, rate limit notices, and warnings wrap properly on both phone screens and desktop displays.</li>
-              <li><strong>Document & Slide Generation:</strong> Build presentation decks (.pptx), spreadsheet trackers (.xlsx), and Word reports (.docx) directly from chat.</li>
-              <li><strong>Privacy Shield:</strong> Real-time regex and NLP masking for personal identities, phone numbers, and keys before transmission to AI models.</li>
-              <li><strong>Coding Workspace:</strong> Connect GitHub repos, view diffs, run in-browser tests, and commit pull requests right from your chats.</li>
-            </ul>
-          </div>
-
-          <div className="changelog-entry">
-            <div className="changelog-head">
-              <span className="changelog-tag">v1.9.0 — Voice & Sync</span>
-              <span className="changelog-date">Previous</span>
-            </div>
-            <ul className="changelog-list">
-              <li><strong>Voice Input:</strong> Dictate prompts using built-in speech recognition with language selection.</li>
-              <li><strong>Cross-Device Sync:</strong> Lightweight real-time Firestore sync with local IndexedDB offline storage.</li>
-              <li><strong>Model Memory:</strong> Persistent user facts and preference memories automatically referenced in chats.</li>
-            </ul>
-          </div>
         </div>
       </div>
     </div>
@@ -500,8 +453,7 @@ function PersonalizeTab() {
   return (
     <div className="settings-section">
       <div className="settings-group">
-        <span className="settings-group-title">Instructions</span>
-        <div className="settings-card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="settings-card pad-card">
           <label className="field-block" style={{ paddingTop: 0 }}>
             <span className="setting-label">Custom instructions</span>
             <span className="setting-hint">Tell every model about you and how to answer — e.g. your job, language preferences, tone, or formats you like.</span>
@@ -536,6 +488,7 @@ export default function SettingsModal() {
   const open = useStore((s) => s.settingsOpen);
   const tab = useStore((s) => s.settingsTab);
   const settings = useStore((s) => s.settings);
+  const user = useStore((s) => s.user);
   const { updateSettings: update, setUi, logout } = useStore.getState();
   const panel = useRef<HTMLDivElement>(null);
 
@@ -604,8 +557,25 @@ export default function SettingsModal() {
 
             {id === 'general' && (
               <div className="settings-section">
+                <div className="settings-card">
+                  <div className="account-row">
+                    <span className="avatar" aria-hidden="true">
+                      {user?.photo ? <img src={user.photo} alt="" referrerPolicy="no-referrer" /> : (user?.name || user?.email || '?').charAt(0).toUpperCase()}
+                    </span>
+                    <span className="setting-text">
+                      <span className="setting-label">{user?.name || user?.email}</span>
+                      {user?.name && <span className="setting-hint">{user.email}</span>}
+                    </span>
+                    <span className="setting-ctrl">
+                      <button className="btn small logout" onClick={() => { setUi({ settingsOpen: false }); logout(); }}>
+                        <LogOut size={15} /> Sign out
+                      </button>
+                    </span>
+                  </div>
+                </div>
+
                 <div className="settings-group">
-                  <span className="settings-group-title">Appearance & Display</span>
+                  <span className="settings-group-title">Appearance</span>
                   <div className="settings-card">
                     <Choice<Theme> label="Theme" value={settings.theme} onChange={(v) => update({ theme: v })} options={[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]} />
                     <Choice<FontSize> label="Text size" value={settings.fontSize} onChange={(v) => update({ fontSize: v })} options={[['small', 'S'], ['medium', 'M'], ['large', 'L']]} />
@@ -613,7 +583,7 @@ export default function SettingsModal() {
                 </div>
 
                 <div className="settings-group">
-                  <span className="settings-group-title">Chat Preferences</span>
+                  <span className="settings-group-title">Chat</span>
                   <div className="settings-card">
                     <Toggle label="Enter sends the message" hint="On computers. Shift+Enter adds a new line. On phones, use the send button." checked={settings.enterToSend} onChange={(v) => update({ enterToSend: v })} />
                     <Toggle label="Show thinking" hint="Show the model's reasoning (collapsed) when it thinks before answering." checked={settings.showThinking} onChange={(v) => update({ showThinking: v })} />
@@ -639,24 +609,7 @@ export default function SettingsModal() {
                   </div>
                 </div>
 
-                <div className="settings-group">
-                  <span className="settings-group-title">Account & Session</span>
-                  <div className="settings-card">
-                    <div className="setting-row">
-                      <span className="setting-text">
-                        <span className="setting-label">Signed in</span>
-                        <span className="setting-hint">{useStore.getState().user?.email}</span>
-                      </span>
-                      <span className="setting-ctrl">
-                        <button className="btn small logout" onClick={() => { setUi({ settingsOpen: false }); logout(); }}>
-                          <LogOut size={15} /> Sign out
-                        </button>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <UpdatesSection />
+                <AboutSection />
               </div>
             )}
 

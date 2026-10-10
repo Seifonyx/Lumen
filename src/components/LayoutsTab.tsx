@@ -140,7 +140,12 @@ function Card({ l, onEdit, onCopy }: { l: Layout; onEdit: () => void; onCopy: ()
         </div>
         {l.description && <div className="setting-hint">{l.description}</div>}
         <div className="layout-models">
-          {available.length ? available.map((m) => <span key={m} className="chip">{modelLabel(catalog, m)}</span>) : <span className="muted small">No models available with your keys yet.</span>}
+          {available.length ? (
+            <>
+              {available.slice(0, 4).map((m) => <span key={m} className="chip">{modelLabel(catalog, m)}</span>)}
+              {available.length > 4 && <span className="chip more" title={available.slice(4).map((m) => modelLabel(catalog, m)).join(', ')}>+{available.length - 4}</span>}
+            </>
+          ) : <span className="muted small">No models available with your keys yet.</span>}
         </div>
       </div>
       <div className="layout-actions">
@@ -173,32 +178,34 @@ export default function LayoutsSection({ onEdit }: { onEdit: (l: Layout) => void
   const removed = hidden.filter((id) => RECOMMENDED_IDS.includes(id)).length;
 
   return (
-    <div className="layouts-tab">
-      <div className="section-head">
-        <h3>Layouts</h3>
-        <button className="btn small" onClick={() => onEdit({ id: newLayoutId(), name: '', icon: 'layers', description: '', models: [], mode: 'order' })}>
-          <Plus size={15} /> New layout
+    <div className="settings-group layouts-tab">
+      <div className="settings-group-title">
+        <span>Layouts</span>
+        <button className="link-btn small" onClick={() => onEdit({ id: newLayoutId(), name: '', icon: 'layers', description: '', models: [], mode: 'order' })}>
+          <Plus size={14} /> New layout
         </button>
       </div>
-      <p className="muted small">
-        Sets of models for a kind of work. Pick one from the model menu like any model; ★ makes it the default for new chats. Recommended layouts start with the best models you have, and you can edit or remove them.
-      </p>
       {all.length === 0 ? (
-        <p className="muted small">No layouts. Create one{removed ? ', or bring back the recommended ones' : ''}.</p>
+        <div className="settings-card pad-card">
+          <p className="muted small" style={{ margin: 0 }}>No layouts. Create one{removed ? ', or bring back the recommended ones' : ''}.</p>
+        </div>
       ) : (
-        <ul className="layout-list">
-          {all.map((l) => (
-            <Card key={l.id} l={l} onEdit={() => onEdit(l)} onCopy={() => onEdit(copyOf(l))} />
-          ))}
-        </ul>
+        <div className="settings-card">
+          <ul className="layout-list">
+            {all.map((l) => (
+              <Card key={l.id} l={l} onEdit={() => onEdit(l)} onCopy={() => onEdit(copyOf(l))} />
+            ))}
+          </ul>
+        </div>
       )}
+      <p className="card-note outside">
+        A layout is a set of models for one kind of work. Pick it from the model menu; ★ makes it the default for new chats.
+        {!catalog?.providers.groq && !catalog?.providers.cerebras ? ' Add free Groq and Cerebras keys for the Fastest and Max coding layouts.' : ''}
+      </p>
       {removed > 0 && (
-        <button className="btn ghost small" onClick={() => update({ hiddenLayouts: [] })}>
+        <button className="btn ghost small restore-btn" onClick={() => update({ hiddenLayouts: [] })}>
           <RotateCcw size={14} /> Bring back {removed} removed recommended layout{removed === 1 ? '' : 's'}
         </button>
-      )}
-      {!catalog?.providers.groq && !catalog?.providers.cerebras && (
-        <p className="muted small">Tip: add free Groq and Cerebras keys (API keys) for the Fastest and Max coding layouts.</p>
       )}
     </div>
   );

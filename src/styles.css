@@ -1380,3 +1380,42 @@ table.sheet td.pending { color: #8f8f8f; font-style: italic; font-family: var(--
     width: auto;
   }
 }
+
+
+/* Portrait phones: keep the complete Settings column at the viewport width. */
+@media screen and (max-width: 720px) and (orientation: portrait) {
+  .settings-page {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  .settings-scroll {
+    width: 100%;
+    min-width: 0;
+  }
+  .settings-inner {
+    display: grid;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: 0;
+  }
+  .settings-tabs {
+    width: auto;
+    min-width: 0;
+    justify-self: stretch;
+    margin-inline: 16px;
+  }
+  .settings-panel,
+  .settings-section,
+  .settings-group,
+  .settings-card {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    box-sizing: border-box;
+  }
+  .settings-panel { padding-inline: 16px; }
+}

@@ -514,7 +514,7 @@ export default function SettingsModal() {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || useStore.getState().preview) return;
-      if (tab && window.matchMedia('(max-width: 720px)').matches) setUi({ settingsTab: '' });
+      if (tab && window.matchMedia('(max-width: 720px), (pointer: coarse) and (max-width: 1100px)').matches) setUi({ settingsTab: '' });
       else close();
     };
     window.addEventListener('keydown', onKey);

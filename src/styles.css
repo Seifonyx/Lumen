@@ -1140,88 +1140,68 @@ table.sheet td.pending { color: #8f8f8f; font-style: italic; font-family: var(--
 .ws-problems ul { margin: 0 0 10px; padding-inline-start: 18px; display: flex; flex-direction: column; gap: 4px; overflow-wrap: anywhere; }
 .ws-problems code { font: 0.75rem var(--mono); }
 
-/* ============================================================ Version & Updates */
-.updates-card {
-  padding: 0;
-  display: flex;
-  flex-direction: column;
+/* ============================================================ Settings polish
+   One rhythm, one card style, controls lined up on the same right edge. */
+.settings-section { gap: 28px; }
+.settings-group { margin-bottom: 0; }
+.settings-group-title {
+  font-size: 0.75rem; letter-spacing: 0.05em; margin: 0 4px 10px; min-height: 22px; gap: 12px;
 }
-.version-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 18px;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 0;
+.settings-group-title .link-btn { text-transform: none; letter-spacing: 0; font-size: 0.8125rem; font-weight: 500; color: var(--text-2); }
+.settings-group-title .link-btn:hover:not(:disabled) { color: var(--text); }
+.settings-group-title.danger { color: var(--danger); }
+.count-pill { text-transform: none; letter-spacing: 0; font-size: 0.75rem; font-weight: 600; min-width: 22px; height: 22px; padding: 0 7px; display: inline-grid; place-items: center; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); }
+
+.settings-card { border-radius: 14px; box-shadow: none; }
+.settings-card.danger { border-color: color-mix(in srgb, var(--danger) 32%, var(--border)); }
+.settings-card .setting-row { min-height: 62px; padding: 12px 18px; }
+.settings-card .setting-row:hover { background: none; }
+.settings-card label.setting-row { cursor: pointer; }
+.settings-card label.setting-row:hover { background: color-mix(in srgb, var(--surface-2) 45%, transparent); }
+.setting-ctrl { min-width: 0; }
+.setting-ctrl select { width: 168px; min-width: 0; max-width: 100%; }
+.pad-card { padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+.card-note { margin: 0; padding: 12px 18px; border-top: 1px solid var(--border); font-size: 0.8125rem; line-height: 1.5; color: var(--text-2); }
+.card-note.outside { border: 0; padding: 10px 4px 0; color: var(--text-3); }
+.restore-btn { align-self: flex-start; margin-top: 8px; }
+.settings-actions { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.settings-actions .btn { margin-inline-start: auto; }
+
+/* Account */
+.account-row { display: flex; align-items: center; gap: 14px; padding: 16px 18px; }
+.avatar { width: 44px; height: 44px; flex: none; border-radius: 50%; display: grid; place-items: center; overflow: hidden; background: var(--accent); color: var(--accent-text); font-size: 1.0625rem; font-weight: 600; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.account-row .setting-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.logout { color: var(--text); }
+
+/* API keys */
+.key-provider-card { padding: 18px; gap: 10px; }
+.key-provider-card:hover { background: none; }
+.key-status-pill { text-transform: none; letter-spacing: 0; font-size: 0.75rem; padding: 2px 9px 2px 8px; gap: 6px; }
+.key-status-pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.key-provider-head { min-height: 24px; }
+
+/* Models */
+.filter-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.preset-chip.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.pad-card .model-list.add { margin: 0; max-height: 360px; }
+.layout-list { margin: 0; gap: 0; }
+.settings-card .layout-card { border: 0; border-radius: 0; background: none; border-bottom: 1px solid var(--border); padding: 14px 12px 14px 18px; }
+.settings-card .layout-card:last-child { border-bottom: 0; }
+.chip.more { background: var(--surface-2); color: var(--text-3); cursor: default; }
+@media (max-width: 720px) {
+  .settings-card .layout-card { flex-wrap: wrap; padding-inline-end: 14px; }
+  .settings-card .layout-main { flex-basis: calc(100% - 50px); }
+  .layout-actions { flex-direction: row; flex-basis: 100%; justify-content: flex-end; margin-top: 2px; }
 }
-.version-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--text);
-  font-family: var(--mono);
-}
-.version-status {
-  font-size: 0.75rem;
-  color: var(--green);
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-weight: 600;
-}
-.changelog-wrap {
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  background: color-mix(in srgb, var(--surface-2) 25%, transparent);
-}
-.changelog-entry {
-  padding: 0;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 14px;
-}
-.changelog-entry:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
-}
-.changelog-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-.changelog-tag {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  font-family: var(--mono);
-  color: var(--text);
-}
-.changelog-date {
-  font-size: 0.72rem;
-  color: var(--text-3);
-  font-weight: 500;
-}
-.changelog-list {
-  margin: 0;
-  padding-inline-start: 18px;
-  font-size: 0.8125rem;
-  color: var(--text-2);
-  line-height: 1.55;
-}
-.changelog-list li {
-  margin-bottom: 5px;
-}
-.changelog-list strong {
-  color: var(--text);
+
+/* Desktop section list: light, no box, clear active state */
+@media (min-width: 721px) {
+  .settings-tabs { background: none; border: 0; box-shadow: none; padding: 0; gap: 2px; }
+  .settings-tabs button { height: 40px; padding: 0 12px; border-radius: 10px; }
+  .settings-tabs button.active { background: var(--surface-2); box-shadow: none; }
+  .settings-tabs .tab-icon { color: var(--text-3); }
+  .settings-tabs button.active .tab-icon, .settings-tabs button:hover .tab-icon { color: var(--text); }
+  .settings-heading { border-bottom: 0; padding-bottom: 4px; margin-bottom: 24px; }
+  .settings-heading h2 { font-size: 1.75rem; }
 }

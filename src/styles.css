@@ -1366,3 +1366,17 @@ table.sheet td.pending { color: #8f8f8f; font-style: italic; font-family: var(--
     box-sizing: border-box;
   }
 }
+
+
+/* Keep the phone Settings grid full-width inside its flex scroll container. */
+@media (max-width: 720px) {
+  .settings-inner {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+  }
+  .settings-tabs {
+    justify-self: stretch;
+    width: auto;
+  }
+}

@@ -57,11 +57,11 @@ export function initViewport(): void {
     if (!frame) frame = requestAnimationFrame(apply);
   };
 
-  // Permit normal scrolling inside the chat history, but don't let drags on surrounding chrome
-  // scroll/pan the page while the keyboard is open.
-  const preventChromeScroll = (event: TouchEvent) => {
+  // While the keyboard is open, allow vertical scrolling only inside chat history.
+  // In particular, don't let dragging on the composer textarea pan Safari's page behind the app.
+  const preventPageScroll = (event: TouchEvent) => {
     if (!keyboardOpen || !(event.target instanceof Element)) return;
-    if (event.target.closest('.messages, textarea, input, select, [contenteditable="true"]')) return;
+    if (event.target.closest('.messages')) return;
     event.preventDefault();
   };
 
@@ -79,5 +79,5 @@ export function initViewport(): void {
     schedule();
     window.setTimeout(schedule, 350);
   });
-  document.addEventListener('touchmove', preventChromeScroll, { passive: false });
+  document.addEventListener('touchmove', preventPageScroll, { passive: false });
 }

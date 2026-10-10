@@ -1318,3 +1318,40 @@ table.sheet td.pending { color: #8f8f8f; font-style: italic; font-family: var(--
 @media (prefers-reduced-motion: reduce) {
   .settings-tabs button, .settings-tabs .tab-icon { transition: none; }
 }
+
+
+/* Phone spacing correction for Settings. */
+@media (max-width: 720px) {
+  .settings-tabs button {
+    min-height: 58px;
+    padding: 10px 14px;
+  }
+  .settings-tabs .tab-blurb { display: none; }
+  .settings-tabs .tab-icon { width: 34px; height: 34px; }
+  .settings-card .setting-row {
+    min-height: 0;
+    padding: 14px;
+    gap: 12px;
+  }
+  .setting-text { flex: 1 1 auto; min-width: 0; }
+  .setting-ctrl {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 48%;
+  }
+  .setting-ctrl select {
+    width: clamp(112px, 40vw, 156px);
+    min-width: 0;
+    max-width: 100%;
+  }
+  .setting-ctrl .segmented {
+    flex: 0 1 auto;
+    max-width: 100%;
+  }
+  .setting-ctrl .segmented button {
+    padding-inline: clamp(6px, 2vw, 10px);
+  }
+  .key-provider-head { align-items: flex-start; flex-wrap: wrap; }
+  .key-provider-title { min-width: 0; flex-wrap: wrap; }
+  .key-provider-head .link-btn { margin-inline-start: auto; }
+}

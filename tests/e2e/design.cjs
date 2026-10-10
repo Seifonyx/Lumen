@@ -58,6 +58,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         check(!(await page.locator('.sheet').isVisible()) && await page.locator(add).evaluate((el) => el === document.activeElement), `${label}: Escape returns focus to add button`);
         await page.click(add);
         await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+        if (!mobile) await page.locator('.sheet').waitFor({ state: 'hidden' });
         check(await page.locator('.sheet').isVisible() === mobile, `${label}: resize dismisses desktop popover but preserves phone sheet`);
         if (mobile) await page.keyboard.press('Escape');
         await page.click(add);

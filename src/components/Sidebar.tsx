@@ -125,7 +125,7 @@ export default function Sidebar() {
           <X size={18} />
         </button>
       </div>
-      <button className="btn block new-chat" onClick={newChat}>
+      <button className="btn block new-chat" onClick={newChat} aria-label="New chat">
         <SquarePen size={15} /> New chat
         <span className="kbd">{modKey}⇧O</span>
       </button>

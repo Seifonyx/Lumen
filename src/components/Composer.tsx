@@ -1,5 +1,5 @@
 import ChecksBar from './ChecksBar';
-import { FileCode2, GitBranch, ShieldCheck, ArrowUp, FileText, Globe, Image as ImageIcon, Loader2, Mic, Paperclip, Square, X } from 'lucide-react';
+import { FileCode2, GitBranch, ShieldCheck, ArrowUp, FileText, Globe, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ACCEPT, readAttachment } from '../lib/files/read';
 import { canListen, listen } from '../lib/speech';
@@ -9,6 +9,7 @@ import { modelInfo, modelLabel, useStore } from '../store';
 import type { Attachment } from '../types';
 import { scan, type Finding } from '../lib/privacy';
 import PrivacyCheck from './PrivacyCheck';
+import AttachSheet from './AttachSheet';
 
 interface Pending {
   key: string;
@@ -60,6 +61,34 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
   const fileInput = useRef<HTMLInputElement>(null);
   const stopListening = useRef<(() => void) | null>(null);
   const baseText = useRef('');
+  const cameraInput = useRef<HTMLInputElement>(null);
+  const [sheet, setSheet] = useState(false);
+  const touch = isTouch();
+
+  // Unsent text is kept per chat, so it survives switching chats, a reload, or the phone closing the page in the background.
+  const draftKey = `mr.draft.${currentId ?? 'new'}`;
+  const draftKeyRef = useRef(draftKey);
+  const saveDraft = useCallback((value: string) => {
+    try {
+      if (value) localStorage.setItem(draftKeyRef.current, value);
+      else localStorage.removeItem(draftKeyRef.current);
+    } catch {
+      // Storage unavailable: the draft just isn't kept.
+    }
+  }, []);
+  const clearText = () => {
+    setText('');
+    setInterim('');
+    saveDraft('');
+  };
+  useEffect(() => {
+    draftKeyRef.current = draftKey;
+    try {
+      setText(localStorage.getItem(draftKey) ?? '');
+    } catch {
+      // Storage unavailable.
+    }
+  }, [draftKey]);
 
   const autosize = useCallback(() => {
     const el = input.current;
@@ -76,7 +105,9 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
 
   useEffect(() => {
     const onPrefill = (e: Event) => {
-      setText((e as CustomEvent<string>).detail);
+      const prefill = (e as CustomEvent<string>).detail;
+      setText(prefill);
+      saveDraft(prefill);
       requestAnimationFrame(() => {
         const el = input.current;
         if (!el) return;
@@ -151,18 +182,18 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
     stopListening.current?.();
     // Commands, like in Claude Code.
     if (/^\/compact\s*$/i.test(text.trim()) && !pending.length) {
-      setText('');
+      clearText();
       void compact();
       return;
     }
     const remember = /^\/remember\s+([\s\S]+)$/i.exec(text.trim());
     if (remember && !pending.length) {
-      setText('');
+      clearText();
       void addMemory(remember[1]);
       return;
     }
     if (/^\/memory\s*$/i.test(text.trim())) {
-      setText('');
+      clearText();
       setUi({ settingsOpen: true, settingsTab: 'memory' });
       return;
     }
@@ -185,9 +216,8 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
   const dispatch = (opts?: { privacy?: 'asIs' }) => {
     setCheck(null);
     const files = pending.map((p) => p.file!);
+    clearText();
     void send(text.trim(), files, opts);
-    setText('');
-    setInterim('');
     setPending([]);
   };
 
@@ -202,6 +232,7 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
       settings.voiceLang,
       (finalText, partial) => {
         setText(baseText.current + finalText);
+        saveDraft(baseText.current + finalText);
         setInterim(partial);
       },
       (error) => {
@@ -279,6 +310,7 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
           value={interim ? `${text}${text && !text.endsWith(' ') ? ' ' : ''}${interim}` : text}
           onChange={(e) => {
             setText(e.target.value);
+            saveDraft(e.target.value);
             setInterim('');
           }}
           onKeyDown={(e) => {
@@ -298,17 +330,22 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
         />
         <div className="composer-bar">
           <input ref={fileInput} type="file" multiple hidden accept={ACCEPT} onChange={(e) => { void addFiles([...(e.target.files || [])]); e.target.value = ''; }} />
-          <button type="button" className="tool-btn" onClick={() => fileInput.current?.click()} aria-label="Attach files" title="Attach files (PDF, Word, Excel, PowerPoint, images…)">
-            <Paperclip size={19} />
-          </button>
-          <button type="button" className={`tool-btn${chat?.repo ? ' on-repo' : ''}`} onClick={() => setUi(chat?.repo ? { workspaceOpen: true } : { repoPicker: true })} aria-label={chat?.repo ? 'Repository' : 'Work on a GitHub repository'} title={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : 'Work on a GitHub repository'}>
-            <GitBranch size={18} />
-          </button>
-          {isTouch() && (
-            <label className="tool-btn" aria-label="Take a photo" title="Take a photo">
-              <ImageIcon size={19} />
-              <input type="file" accept="image/*" capture="environment" hidden onChange={(e) => { void addFiles([...(e.target.files || [])]); e.target.value = ''; }} />
-            </label>
+          {touch ? (
+            <>
+              <button type="button" className={`tool-btn${chat?.repo ? ' on-repo' : ''}`} onClick={() => setSheet(true)} aria-label="Add photos, files or a repository" aria-haspopup="dialog">
+                <Plus size={22} />
+              </button>
+              <input ref={cameraInput} type="file" accept="image/*" capture="environment" hidden onChange={(e) => { void addFiles([...(e.target.files || [])]); e.target.value = ''; }} />
+            </>
+          ) : (
+            <>
+              <button type="button" className="tool-btn" onClick={() => fileInput.current?.click()} aria-label="Attach files" title="Attach files (PDF, Word, Excel, PowerPoint, images…)">
+                <Paperclip size={19} />
+              </button>
+              <button type="button" className={`tool-btn${chat?.repo ? ' on-repo' : ''}`} onClick={() => setUi(chat?.repo ? { workspaceOpen: true } : { repoPicker: true })} aria-label={chat?.repo ? 'Repository' : 'Work on a GitHub repository'} title={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : 'Work on a GitHub repository'}>
+                <GitBranch size={18} />
+              </button>
+            </>
           )}
           <button
             type="button"
@@ -341,6 +378,15 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
           </button>
         </div>
       </form>
+      {sheet && (
+        <AttachSheet
+          onClose={() => setSheet(false)}
+          onFiles={() => fileInput.current?.click()}
+          onCamera={() => cameraInput.current?.click()}
+          onRepo={() => setUi(chat?.repo ? { workspaceOpen: true } : { repoPicker: true })}
+          repoName={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : undefined}
+        />
+      )}
       {check && <PrivacyCheck findings={check.findings} unchecked={check.unchecked} onMask={() => dispatch()} onAsIs={() => dispatch({ privacy: 'asIs' })} onEdit={() => setCheck(null)} />}
       <p className="disclaimer">AI can make mistakes. Check important info.</p>
     </div>

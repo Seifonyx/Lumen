@@ -95,6 +95,7 @@ export default function Sidebar() {
   const open = useStore((s) => s.sidebarOpen);
   const { newChat, setUi } = useStore.getState();
   const [query, setQuery] = useState('');
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
 
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -115,7 +116,23 @@ export default function Sidebar() {
   }, [chats, query, currentId]);
 
   return (
-    <aside className={`sidebar${open ? ' open' : ''}`} aria-label="Chats">
+    <aside
+      className={`sidebar${open ? ' open' : ''}`}
+      aria-label="Chats"
+      // Swipe the chats list back to the edge to close it (the mirror of the edge swipe that opens it).
+      onTouchStart={(e) => {
+        swipeStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }}
+      onTouchEnd={(e) => {
+        const start = swipeStart.current;
+        swipeStart.current = null;
+        if (!start || !open) return;
+        const dx = e.changedTouches[0].clientX - start.x;
+        const dy = Math.abs(e.changedTouches[0].clientY - start.y);
+        const rtl = getComputedStyle(e.currentTarget).direction === 'rtl';
+        if (dy < 40 && (rtl ? dx > 70 : dx < -70)) setUi({ sidebarOpen: false });
+      }}
+    >
       <div className="sidebar-head">
         <div className="brand">
           <Logo size={24} />

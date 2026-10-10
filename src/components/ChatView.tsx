@@ -7,6 +7,7 @@ import { formatUntil } from '../lib/usage';
 import { selectCurrentChat, useStore } from '../store';
 import { CompactingNote, CompactNote, UsageMeter } from './CompactNote';
 import Composer, { prefillComposer } from './Composer';
+import InstallHint from './InstallHint';
 import Logo from './Logo';
 import MessageItem from './MessageItem';
 import ModelPicker from './ModelPicker';
@@ -126,6 +127,7 @@ export default function ChatView() {
                 </button>
               ))}
             </div>
+            <InstallHint />
           </div>
         ) : (
           <div className="thread">

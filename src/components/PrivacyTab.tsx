@@ -14,9 +14,9 @@ export default function PrivacyTab({ Toggle, Choice }: { Toggle: (p: ToggleProps
   const preview = useMemo(() => new Masker().mask(sample), [sample]);
 
   return (
-    <div className="privacy-tab" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="privacy-tab settings-section">
       <div className="settings-group">
-        <span className="settings-group-title">Privacy Protection</span>
+        <span className="settings-group-title">Personal details</span>
         <div className="settings-card">
           <Toggle
             label="Privacy shield"
@@ -43,14 +43,10 @@ export default function PrivacyTab({ Toggle, Choice }: { Toggle: (p: ToggleProps
         </div>
       </div>
 
-      <div className="settings-group">
-        <span className="settings-group-title">Live Testing Sandbox</span>
-        <div className="settings-card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div>
-            <span className="setting-label">Interactive tester</span>
-            <span className="setting-hint">Type sample text below to preview what AI models will see. Processed on-device only.</span>
-          </div>
-          <textarea dir="auto" rows={3} value={sample} onChange={(e) => setSample(e.target.value)} style={{ minHeight: 0 }} />
+      <details className="settings-card privacy-tester">
+        <summary><span className="setting-label">Preview masking</span><span className="setting-hint">Try sample text locally, before sending it to a model.</span></summary>
+        <div className="privacy-tester-body">
+          <textarea aria-label="Sample text to mask" dir="auto" rows={3} value={sample} onChange={(e) => setSample(e.target.value)} style={{ minHeight: 0 }} />
           <div className="privacy-preview" dir="auto">
             {preview.text.split(/(\[[A-Z_]+_\d+\])/).map((part, i) => (/^\[[A-Z_]+_\d+\]$/.test(part) ? <mark key={i}>{part}</mark> : <span key={i}>{part}</span>))}
           </div>
@@ -61,7 +57,7 @@ export default function PrivacyTab({ Toggle, Choice }: { Toggle: (p: ToggleProps
             </span>
           </div>
         </div>
-      </div>
+      </details>
     </div>
   );
 }

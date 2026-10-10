@@ -5,7 +5,6 @@ import {
   Boxes,
   Brain,
   ChevronRight,
-  Database,
   Download,
   ExternalLink,
   Eye,
@@ -48,8 +47,7 @@ const TABS: [string, string, LucideIcon, string][] = [
   ['usage', 'Usage', Gauge, "Today's requests, limits and resets"],
   ['personalize', 'Personalization', UserRound, 'Instructions every model follows'],
   ['memory', 'Memory', Brain, 'What models remember about you'],
-  ['privacy', 'Privacy', Shield, 'Hide personal details from AI models'],
-  ['data', 'Data', Database, 'Back up, restore or delete your chats'],
+  ['privacy', 'Privacy & data', Shield, 'Protect personal details and manage chat backups'],
 ];
 
 function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange: (v: boolean) => void; label: string; hint?: string }) {
@@ -345,52 +343,54 @@ function DataTab() {
 
   return (
     <div className="settings-section">
-      <div className="settings-card">
-        <div className="setting-row">
-          <span className="setting-text">
-            <span className="setting-label">Back up chats</span>
-            <span className="setting-hint">Save {count} chat{count === 1 ? '' : 's'} (with this device's attachments) as one file.</span>
-          </span>
-          <span className="setting-ctrl">
-            <button className="btn small" onClick={() => saveBlob(new Blob([JSON.stringify({ app: 'model-router', version: 2, chats }, null, 0)], { type: 'application/json' }), `model-router-backup-${new Date().toISOString().slice(0, 10)}.json`)}>
-              <Download size={14} /> Back up
-            </button>
-          </span>
-        </div>
-        <div className="setting-row">
-          <span className="setting-text">
-            <span className="setting-label">Restore a backup</span>
-            <span className="setting-hint">Adds the chats from a backup file. Existing chats are kept.</span>
-          </span>
-          <span className="setting-ctrl">
-            <button className="btn small" onClick={() => fileRef.current?.click()}>
-              <Upload size={14} /> Restore
-            </button>
-          </span>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="application/json,.json"
-            hidden
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              e.target.value = '';
-              if (!file) return;
-              try {
-                const data = JSON.parse(await file.text());
-                const list: Chat[] = Array.isArray(data) ? data : data.chats;
-                const n = await importChats(list || []);
-                toast(`Restored ${n} chat${n === 1 ? '' : 's'}.`, 'success');
-              } catch {
-                toast("That file isn't a Model Router backup.", 'error');
-              }
-            }}
-          />
+      <div className="settings-group">
+        <span className="settings-group-title">Chat backups</span>
+        <div className="settings-card">
+          <div className="setting-row">
+            <span className="setting-text">
+              <span className="setting-label">Back up chats</span>
+              <span className="setting-hint">Save {count} chat{count === 1 ? '' : 's'} (with this device's attachments) as one file.</span>
+            </span>
+            <span className="setting-ctrl">
+              <button className="btn small" onClick={() => saveBlob(new Blob([JSON.stringify({ app: 'model-router', version: 2, chats }, null, 0)], { type: 'application/json' }), `model-router-backup-${new Date().toISOString().slice(0, 10)}.json`)}>
+                <Download size={14} /> Back up
+              </button>
+            </span>
+          </div>
+          <div className="setting-row">
+            <span className="setting-text">
+              <span className="setting-label">Restore a backup</span>
+              <span className="setting-hint">Adds the chats from a backup file. Existing chats are kept.</span>
+            </span>
+            <span className="setting-ctrl">
+              <button className="btn small" onClick={() => fileRef.current?.click()}>
+                <Upload size={14} /> Restore
+              </button>
+            </span>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json,.json"
+              hidden
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                e.target.value = '';
+                if (!file) return;
+                try {
+                  const data = JSON.parse(await file.text());
+                  const list: Chat[] = Array.isArray(data) ? data : data.chats;
+                  const n = await importChats(list || []);
+                  toast(`Restored ${n} chat${n === 1 ? '' : 's'}.`, 'success');
+                } catch {
+                  toast("That file isn't a Model Router backup.", 'error');
+                }
+              }}
+            />
+          </div>
         </div>
       </div>
-
       <div className="settings-group">
-        <span className="settings-group-title danger">Danger zone</span>
+        <span className="settings-group-title">Delete chats</span>
         <div className="settings-card danger">
           <div className="setting-row danger-row">
             <span className="setting-text">
@@ -527,7 +527,7 @@ export default function SettingsModal() {
 
   if (!open) return null;
 
-  const current = TABS.find(([id]) => id === (tab === 'layouts' ? 'models' : tab)) || TABS[0];
+  const current = TABS.find(([id]) => id === (tab === 'layouts' ? 'models' : tab === 'data' ? 'privacy' : tab)) || TABS[0];
   const [id, label, , blurb] = current;
 
   return (
@@ -591,7 +591,7 @@ export default function SettingsModal() {
                 <div className="settings-group">
                   <span className="settings-group-title">Appearance</span>
                   <div className="settings-card">
-                    <Choice<Theme> label="Theme" value={settings.theme} onChange={(v) => update({ theme: v })} options={[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]} />
+                    <Choice<Theme> label="Theme" value={settings.theme} onChange={(v) => update({ theme: v })} options={[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark'], ['black', 'True black']]} />
                     <Choice<FontSize> label="Text size" value={settings.fontSize} onChange={(v) => update({ fontSize: v })} options={[['small', 'S'], ['medium', 'M'], ['large', 'L']]} />
                   </div>
                 </div>
@@ -632,8 +632,7 @@ export default function SettingsModal() {
             {id === 'usage' && <UsageTab />}
             {id === 'personalize' && <PersonalizeTab />}
             {id === 'memory' && <MemoryTab Toggle={Toggle} />}
-            {id === 'privacy' && <PrivacyTab Toggle={Toggle} Choice={Choice} />}
-            {id === 'data' && <DataTab />}
+            {id === 'privacy' && <div className="settings-section privacy-data"><PrivacyTab Toggle={Toggle} Choice={Choice} /><DataTab /></div>}
           </div>
         </div>
       </div>

@@ -57,7 +57,7 @@ async function run(browser, width) {
   await page.fill('input[placeholder="AIza…"]', 'g');
   await page.click('text=Save keys');
   await page.waitForTimeout(1200);
-  for (const name of ['General', 'API keys', 'Models', 'Usage', 'Personalization', 'Memory', 'Privacy', 'Data']) {
+  for (const name of ['General', 'API keys', 'Models', 'Usage', 'Personalization', 'Memory', 'Privacy & data']) {
     if (await page.isVisible('.settings-back')) await page.click('.settings-back');
     if (name === 'General') await look('settings menu');
     await page.click(`.settings-tabs >> text=${name}`);

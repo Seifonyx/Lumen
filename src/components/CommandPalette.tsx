@@ -11,7 +11,7 @@ type Item = { id: string; label: string; detail: string; Icon: typeof Search; ru
 
 const sections = [
   ['general', 'General'], ['keys', 'API keys'], ['models', 'Models'], ['usage', 'Usage'],
-  ['personalize', 'Personalization'], ['memory', 'Memory'], ['privacy', 'Privacy'], ['data', 'Data'],
+  ['personalize', 'Personalization'], ['memory', 'Memory'], ['privacy', 'Privacy & data'],
 ] as const;
 
 export default function CommandPalette({ onClose }: { onClose: () => void }) {

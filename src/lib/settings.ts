@@ -41,6 +41,8 @@ export function saveSettings(s: Settings) {
 export function applyAppearance(s: Settings) {
   const root = document.documentElement;
   if (s.theme === 'system') delete root.dataset.theme;
-  else root.dataset.theme = s.theme;
+  else root.dataset.theme = s.theme === 'black' ? 'dark' : s.theme;
+  if (s.theme === 'black') root.dataset.appearance = 'black';
+  else delete root.dataset.appearance;
   root.dataset.font = s.fontSize;
 }

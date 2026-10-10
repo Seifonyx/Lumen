@@ -9,7 +9,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
   const browser = await chromium.launch();
   try {
     for (const [width, height, mobile] of [[1280, 820, false], [390, 844, true], [320, 720, true]]) {
-      for (const theme of ['light', 'dark']) {
+      for (const theme of ['light', 'dark', 'black']) {
         const label = `${width}px ${theme}`;
         const ctx = await browser.newContext({ viewport: { width, height }, isMobile: mobile, hasTouch: mobile,
           ...(mobile ? { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1' } : {}) });
@@ -32,6 +32,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         page.on('pageerror', (e) => errors.push(e.message));
         await page.goto(process.env.MR_TEST_URL || 'http://localhost:5190/?emulator');
         await page.waitForSelector('.main.is-empty');
+        if (theme === 'black') check(await page.evaluate(() => document.documentElement.dataset.appearance === 'black' && getComputedStyle(document.body).backgroundColor === 'rgb(0, 0, 0)'), `${label}: true black background survives reload`);
         check(inside(await page.locator('.composer').boundingBox(), width, height) && (await scan(page)).length === 0, `${label}: welcome screen and composer fit`);
         check(await page.locator('.suggestion').count() === 4 && await page.locator('.suggestion svg').first().evaluate((el) => getComputedStyle(el).padding === '0px'), `${label}: four readable starter actions with visible icons`);
         if (!mobile) {
@@ -73,11 +74,24 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         if (mobile) await page.click('.menu-btn');
         await page.click('.sidebar-foot');
         if (mobile) await page.waitForFunction(() => document.querySelector('.sidebar').getBoundingClientRect().right <= 0);
-        for (const name of ['General', 'API keys', 'Models', 'Usage', 'Personalization', 'Memory', 'Privacy', 'Data']) {
+        for (const name of ['General', 'API keys', 'Models', 'Usage', 'Personalization', 'Memory', 'Privacy & data']) {
           if (await page.locator('.settings-back').isVisible()) await page.click('.settings-back');
           await page.locator('.settings-tabs button').filter({ hasText: name }).first().click();
           const issues = await scan(page);
           check(issues.length === 0, `${label}: ${name} settings fit${issues.length ? ' ' + JSON.stringify(issues) : ''}`);
+          if (name === 'General') {
+            await page.getByRole('radio', { name: 'True black', exact: true }).click();
+            check(await page.evaluate(() => document.documentElement.dataset.appearance === 'black' && JSON.parse(localStorage.getItem('mr.settings')).theme === 'black'), `${label}: True black saves the appearance choice`);
+            await page.getByRole('radio', { name: theme === 'black' ? 'True black' : theme === 'dark' ? 'Dark' : 'Light', exact: true }).click();
+          }
+          if (name === 'Privacy & data') {
+            check(await page.getByRole('button', { name: 'Back up', exact: true }).isVisible() && await page.getByRole('button', { name: 'Restore', exact: true }).isVisible(), `${label}: merged tab keeps backup controls`);
+            check(!(await page.getByLabel('Sample text to mask').isVisible()), `${label}: privacy preview starts collapsed`);
+            await page.locator('.privacy-tester summary').click();
+            await page.getByLabel('Sample text to mask').fill('Contact me at test@example.com');
+            check((await page.locator('.privacy-preview').textContent()).includes('[EMAIL_1]'), `${label}: expandable privacy preview masks details locally`);
+            await page.screenshot({ path: path.join(__dirname, 'out', `privacy-data-${width}-${theme}.png`) });
+          }
         }
         check(errors.length === 0, `${label}: no browser errors (${errors.join(' | ')})`);
         await ctx.close();

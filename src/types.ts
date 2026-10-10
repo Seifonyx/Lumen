@@ -162,7 +162,7 @@ export interface Catalog {
   errors: string[];
 }
 
-export type Theme = 'system' | 'light' | 'dark';
+export type Theme = 'system' | 'light' | 'dark' | 'black';
 export type FontSize = 'small' | 'medium' | 'large';
 
 export interface Settings {

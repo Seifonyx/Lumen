@@ -16,7 +16,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         await ctx.route('**/firestore.googleapis.com/**', (r) => r.abort());
         await ctx.route('**/generativelanguage.googleapis.com/**', (r) => {
           const url = r.request().url();
-          if (url.includes('/models?')) return r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash Latest', supportedGenerationMethods: ['generateContent'], inputTokenLimit: 1048576 }] } });
+          if (url.includes('/models?')) return r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash Latest', supportedGenerationMethods: ['generateContent'], inputTokenLimit: 1048576 }, { name: 'models/gemini-pro-test', displayName: 'Gemini Pro Test', supportedGenerationMethods: ['generateContent'], inputTokenLimit: 1048576 }] } });
           return r.fulfill({ headers: { 'content-type': 'text/event-stream' }, body: 'data: ' + JSON.stringify({ candidates: [{ content: { parts: [{ text: '## A clearer summary\n\n- Review the actions.\n- Share progress with the team.' }] }, finishReason: 'STOP' }] }) + '\n\n' });
         });
         await ctx.addInitScript(({ theme }) => {
@@ -30,7 +30,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         }, { theme });
         const page = await ctx.newPage(), errors = [];
         page.on('pageerror', (e) => errors.push(e.message));
-        await page.goto(process.env.MR_TEST_URL || 'http://localhost:5190/?emulator');
+        await page.goto(process.env.MR_TEST_URL || 'http://localhost:5190/?emulator', { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForSelector('.main.is-empty');
         if (theme === 'black') check(await page.evaluate(() => document.documentElement.dataset.appearance === 'black' && getComputedStyle(document.body).backgroundColor === 'rgb(0, 0, 0)'), `${label}: true black background survives reload`);
         check(inside(await page.locator('.composer').boundingBox(), width, height) && (await scan(page)).length === 0, `${label}: welcome screen and composer fit`);
@@ -83,6 +83,26 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
             await page.getByRole('radio', { name: 'True black', exact: true }).click();
             check(await page.evaluate(() => document.documentElement.dataset.appearance === 'black' && JSON.parse(localStorage.getItem('mr.settings')).theme === 'black'), `${label}: True black saves the appearance choice`);
             await page.getByRole('radio', { name: theme === 'black' ? 'True black' : theme === 'dark' ? 'Dark' : 'Light', exact: true }).click();
+          }
+          if (name === 'Models') {
+            check(!(await page.locator('.model-list.add').isVisible()) && !(await page.locator('.layouts-tab').isVisible()), `${label}: models starts with a focused saved list`);
+            await page.locator('.models-nav button').filter({ hasText: 'Browse models' }).click();
+            await page.getByLabel('Search available models').fill('Pro Test');
+            check(await page.locator('.model-list.add .model-row').count() === 1 && (await scan(page)).length === 0, `${label}: model catalogue search fits`);
+            await page.getByRole('button', { name: 'Add Gemini Pro Test', exact: true }).click();
+            await page.locator('.models-nav button').filter({ hasText: 'Your models' }).click();
+            const pro = page.locator('.saved-model', { hasText: 'Gemini Pro Test' });
+            await pro.getByRole('button', { name: 'Options for Gemini Pro Test', exact: true }).click();
+            await pro.getByRole('button', { name: 'Move up', exact: true }).click();
+            check((await page.locator('.saved-model').first().textContent()).includes('Gemini Pro Test') && (await scan(page)).length === 0, `${label}: model options reorder without crowding`);
+            await pro.locator('.star').click();
+            check(await pro.locator('.star').evaluate(el => el.classList.contains('on')), `${label}: saved model can become the default`);
+            await page.screenshot({ path: path.join(__dirname, 'out', `models-${width}-${theme}.png`) });
+            await pro.getByRole('button', { name: 'Remove', exact: true }).click();
+            check(await page.locator('.saved-model').count() === 1, `${label}: model removal retains the other saved model`);
+            await page.locator('.models-nav button').filter({ hasText: 'Layouts' }).click();
+            check(await page.locator('.layouts-tab').isVisible() && (await scan(page)).length === 0, `${label}: layouts remain accessible in a dedicated view`);
+            await page.locator('.models-nav button').filter({ hasText: 'Your models' }).click();
           }
           if (name === 'Privacy & data') {
             check(await page.getByRole('button', { name: 'Back up', exact: true }).isVisible() && await page.getByRole('button', { name: 'Restore', exact: true }).isVisible(), `${label}: merged tab keeps backup controls`);

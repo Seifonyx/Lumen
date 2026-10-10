@@ -12,6 +12,7 @@ import {
   Gauge,
   KeyRound,
   Loader2,
+  MoreHorizontal,
   LogOut,
   Plus,
   RefreshCw,
@@ -108,6 +109,9 @@ function ModelsTab() {
   const [refreshing, setRefreshing] = useState(false);
   const [editing, setEditing] = useState<Layout | null>(null);
   const [filter, setFilter] = useState<'all' | ProviderId>('all');
+  const [view, setView] = useState<'saved' | 'browse' | 'layouts'>(() => useStore.getState().settingsTab === 'layouts' ? 'layouts' : 'saved');
+  const [actions, setActions] = useState<string | null>(null);
+  const [visibleModels, setVisibleModels] = useState(24);
   const enabled = settings.enabledModels;
   const find = (id: string) => catalog?.models.find((m) => m.id === id);
 
@@ -136,19 +140,25 @@ function ModelsTab() {
 
   if (editing) return <div className="settings-section"><LayoutEditor start={editing} onDone={() => setEditing(null)} /></div>;
   return (
-    <div className="settings-section">
+    <div className="settings-section models-settings">
+      <div className="models-nav" role="group" aria-label="Model settings">
+        {([['saved', 'Your models'], ['browse', 'Browse models'], ['layouts', 'Layouts']] as const).map(([value, label]) => (
+          <button key={value} aria-pressed={view === value} className={view === value ? 'active' : ''} onClick={() => { setView(value); setActions(null); }}>{label}</button>
+        ))}
+      </div>
+      {view === 'saved' && <>
       <div className="settings-group">
         <span className="settings-group-title">Routing</span>
         <div className="settings-card">
           <Toggle
             label="Switch models automatically"
-            hint="When a model hits its free limit or fails, the next model in your list answers instead."
+            hint="Use the next model if a request fails or reaches its limit."
             checked={settings.autoSwitch}
             onChange={(v) => update({ autoSwitch: v })}
           />
           <Toggle
             label="Auto for new chats"
-            hint="Picks the best enabled model for each message: images, long documents, code, maths, web search, files, Arabic or quick replies."
+            hint="Choose the best saved model for each message."
             checked={settings.defaultModel === 'auto'}
             onChange={(v) => update({ defaultModel: v ? 'auto' : enabled[0] || '' })}
           />
@@ -162,11 +172,11 @@ function ModelsTab() {
         </div>
         <div className="settings-card">
           <ul className="model-list" style={{ border: 0, margin: 0, borderRadius: 0 }}>
-            {enabled.length === 0 && <li className="muted small pad" style={{ padding: '16px 18px' }}>No models yet. Add some below.</li>}
+            {enabled.length === 0 && <li className="models-empty"><span>No models saved yet</span><p>Browse models from your connected providers to get started.</p><button className="btn small" onClick={() => setView('browse')}><Plus size={14} /> Browse models</button></li>}
             {enabled.map((id, i) => {
               const m = find(id);
               return (
-                <li key={id} className="model-row">
+                <li key={id} className="model-row saved-model">
                   <button className={`icon-btn sm star${settings.defaultModel === id ? ' on' : ''}`} onClick={() => update({ defaultModel: id })} aria-label="Make default" title="Default for new chats">
                     <Star size={16} fill={settings.defaultModel === id ? 'currentColor' : 'none'} />
                   </button>
@@ -177,20 +187,25 @@ function ModelsTab() {
                       {m?.context ? ` · ${ctx(m.context)} context` : ''}
                     </span>
                   </span>
-                  <Badges m={m} />
-                  <button className="icon-btn sm" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up"><ArrowUp size={16} /></button>
-                  <button className="icon-btn sm" onClick={() => move(i, 1)} disabled={i === enabled.length - 1} aria-label="Move down"><ArrowDown size={16} /></button>
-                  <button className="icon-btn sm" onClick={() => remove(id)} aria-label="Remove"><X size={16} /></button>
+                  <button className="icon-btn sm model-options" aria-label={`Options for ${m?.label || id}`} aria-expanded={actions === id} aria-controls={`model-actions-${i}`} onClick={() => setActions(actions === id ? null : id)}><MoreHorizontal size={18} /></button>
+                  {actions === id && <div className="model-row-actions" id={`model-actions-${i}`}>
+                    <button className="btn ghost small" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up"><ArrowUp size={14} /> Up</button>
+                    <button className="btn ghost small" onClick={() => move(i, 1)} disabled={i === enabled.length - 1} aria-label="Move down"><ArrowDown size={14} /> Down</button>
+                    <button className="btn ghost small danger" onClick={() => { remove(id); setActions(null); }} aria-label="Remove"><X size={14} /> Remove</button>
+                  </div>}
                 </li>
               );
             })}
           </ul>
-          <p className="card-note">The order is the switching order. ★ marks the default for new chats.</p>
+          <p className="card-note">★ sets the default. Reorder models from their options to change the fallback order.</p>
         </div>
+        <button className="btn ghost small models-browse-link" onClick={() => setView('browse')}><Plus size={14} /> Add a model</button>
       </div>
+      </>}
 
-      <LayoutsSection onEdit={setEditing} />
+      {view === 'layouts' && <LayoutsSection onEdit={setEditing} />}
 
+      {view === 'browse' &&
       <div className="settings-group">
         <div className="settings-group-title">
           <span>Add models</span>
@@ -202,12 +217,12 @@ function ModelsTab() {
           {catalogError && <p className="error-text small" dir="auto">{catalogError}</p>}
           <label className="search" style={{ margin: 0 }}>
             <Search size={16} />
-            <input type="search" placeholder="Search models (e.g. gemini, deepseek, qwen)" value={query} onChange={(e) => setQuery(e.target.value)} />
+            <input type="search" aria-label="Search available models" placeholder="Search models" value={query} onChange={(e) => { setQuery(e.target.value); setVisibleModels(24); }} />
           </label>
           {connected.length > 1 && (
             <div className="filter-chips" role="group" aria-label="Provider">
               {(['all', ...connected] as ('all' | ProviderId)[]).map((p) => (
-                <button key={p} type="button" className={`preset-chip${filter === p ? ' active' : ''}`} aria-pressed={filter === p} onClick={() => setFilter(p)}>
+                <button key={p} type="button" className={`preset-chip${filter === p ? ' active' : ''}`} aria-pressed={filter === p} onClick={() => { setFilter(p); setVisibleModels(24); }}>
                   {p === 'all' ? 'All' : PROVIDER_NAMES[p]}
                 </button>
               ))}
@@ -215,17 +230,18 @@ function ModelsTab() {
           )}
           <ul className="model-list add">
             {shown.length === 0 && <li className="muted small pad">{query || filter !== 'all' ? 'No matches.' : 'All added.'}</li>}
-            {shown.map((m) => (
+            {shown.slice(0, visibleModels).map((m) => (
               <li key={m.id} className="model-row">
                 <span className="model-meta">
                   <span className="model-title">{m.label}{m.preview && <span className="tag">preview</span>}</span>
-                  <span className="model-sub">{PROVIDER_NAMES[m.provider]} · {m.name}{m.context ? ` · ${ctx(m.context)} context` : ''}</span>
+                  <span className="model-sub">{PROVIDER_NAMES[m.provider]}{m.context ? ` · ${ctx(m.context)} context` : ''}</span>
                 </span>
                 <Badges m={m} />
                 <button className="icon-btn sm" onClick={() => add(m.id)} aria-label={`Add ${m.label}`}><Plus size={17} /></button>
               </li>
             ))}
           </ul>
+          {shown.length > visibleModels && <button className="btn ghost small" onClick={() => setVisibleModels((n) => n + 24)}>Show more models ({shown.length - visibleModels})</button>}
           {missing.length > 0 && (
             <p className="muted small" style={{ margin: 0 }}>
               Not connected: {missing.map((p) => PROVIDER_NAMES[p]).join(', ')}. Add a key under API keys to use {missing.length === 1 ? 'its' : 'their'} models.
@@ -235,7 +251,7 @@ function ModelsTab() {
             Icons: <Badges m={{ vision: true } as ModelInfo} /> reads images · <Badges m={{ search: true } as ModelInfo} /> web search · <Badges m={{ thinking: true } as ModelInfo} /> thinks first
           </p>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

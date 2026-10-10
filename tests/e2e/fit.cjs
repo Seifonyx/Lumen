@@ -63,6 +63,7 @@ async function run(browser, width) {
     await page.click(`.settings-tabs >> text=${name}`);
     await page.waitForTimeout(200);
     if (name === 'Models') {
+      await page.locator('.models-nav button').filter({ hasText: 'Browse models' }).click();
       await page.click('[aria-label^="Add Gemini 3 Flash Preview"]');
       await page.waitForTimeout(200);
     }
@@ -72,6 +73,7 @@ async function run(browser, width) {
   await page.click('.layout-card:has-text("Everyday") [aria-label="Edit Everyday"]').catch(() => {});
   if (await page.isVisible('.settings-back')) await page.click('.settings-back');
   await page.click('.settings-tabs >> text=Models');
+  await page.locator('.models-nav button').filter({ hasText: 'Layouts' }).click();
   await page.click('[aria-label="Edit Everyday"]');
   await page.fill('.layout-editor input[placeholder*="Add a model"]', 'gemini');
   await look('layout editor');

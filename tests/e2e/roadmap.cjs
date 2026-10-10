@@ -34,7 +34,9 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   await page.waitForTimeout(1200);
 
   await page.click('.settings-tabs >> text=Models');
+  await page.locator('.models-nav button').filter({ hasText: 'Browse models' }).click();
   for (const label of ['Gemini Flash Latest', 'Gemini 2.5 Pro']) {
+    await page.getByLabel('Search available models').fill(label);
     const add = page.locator('.model-list.add .model-row', { hasText: label }).locator('button').first();
     if (await add.count()) await add.click();
   }

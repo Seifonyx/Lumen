@@ -67,10 +67,13 @@ async function device(browser, mobile) {
   await A.page.waitForTimeout(1500);
   // Enable both Gemini models (3.5 first) + the OpenRouter one, default = 3.5.
   await openTab(A.page, 'Models');
+  await A.page.locator('.models-nav button').filter({ hasText: 'Browse models' }).click();
   for (const label of ['gemini-3.5-flash', 'gemini-flash-latest', 'DeepSeek']) {
+    await A.page.getByLabel('Search available models').fill(label);
     const btn = A.page.locator('.model-list.add .model-row', { hasText: label }).locator('button');
     if (await btn.count()) await btn.first().click();
   }
+  await A.page.locator('.models-nav button').filter({ hasText: 'Your models' }).click();
   await A.page.locator('.model-row', { hasText: 'gemini-3.5-flash' }).locator('.star').first().click();
   await A.page.click('.settings-page [aria-label="Close"]');
 

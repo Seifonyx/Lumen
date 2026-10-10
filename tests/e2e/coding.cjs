@@ -93,6 +93,7 @@ const F = '````';
 
   // ---- Layouts
   await openTab(page, 'Models');
+  await page.locator('.models-nav button').filter({ hasText: 'Layouts' }).click();
   const lt = await page.textContent('.layouts-tab');
   check(/Max coding/.test(lt) && /Everyday/.test(lt) && /Deep thinking/.test(lt) && /Gemini 2\.5 Pro/.test(lt), 'recommended layouts filled with your models');
   await page.click('.layouts-tab >> text=New layout');
@@ -249,6 +250,7 @@ const F = '````';
   // ---- Custom layout as default
   await page.click('.sidebar-foot');
   await openTab(page, 'Models');
+  await page.locator('.models-nav button').filter({ hasText: 'Layouts' }).click();
   await page.locator('.layout-card', { hasText: 'Web apps' }).locator('[aria-label="Use for new chats"]').click();
   await page.click('.settings-page [aria-label="Close"]');
   await page.click('[aria-label="New chat"]');

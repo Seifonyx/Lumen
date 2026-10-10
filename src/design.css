@@ -180,6 +180,26 @@
 .privacy-tester summary:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; border-radius: 12px; }
 .privacy-tester-body { padding: 0 18px 18px; display: flex; flex-direction: column; gap: 12px; }
 .privacy-data .settings-card.danger { border-color: var(--border); }
+.models-nav { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); }
+.models-nav button { flex: 1; min-width: 0; border: 0; background: transparent; padding: 9px 6px; border-radius: 8px; color: var(--text-2); font-size: 12px; font-weight: 500; }
+.models-nav button.active { color: var(--text); background: var(--surface); box-shadow: 0 1px 3px rgb(0 0 0 / .06); }
+.models-nav button:hover { color: var(--text); }
+.models-settings .model-row { padding: 14px 12px; gap: 10px; }
+.models-settings .saved-model { display: grid; grid-template-columns: 32px minmax(0, 1fr) 32px; }
+.models-settings .model-title { font-weight: 550; line-height: 1.4; white-space: normal; overflow-wrap: anywhere; }
+.models-settings .model-sub { font-size: 11px; margin-top: 4px; }
+.models-settings .star { color: var(--text-3); }
+.models-settings .star.on { color: var(--accent); }
+.model-row-actions { grid-column: 1 / -1; display: flex; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border); }
+.model-row-actions button { flex: 1; }
+.models-browse-link { align-self: flex-start; margin-top: 10px; color: var(--accent); }
+.models-empty { padding: 24px 18px; text-align: center; }
+.models-empty > span { font-weight: 550; }
+.models-empty p { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+.models-empty button { margin: 8px auto 0; }
+.models-settings .model-list.add { max-height: 460px; overflow-y: auto; overscroll-behavior: contain; }
+.models-settings .filter-chips { flex-wrap: wrap; }
+.models-settings .legend { line-height: 1.8; font-size: 11px; }
 @media (max-width: 599px) {
   .setting-ctrl .segmented { height: auto; flex-wrap: wrap; gap: 2px; }
   .setting-ctrl .segmented button { min-height: 30px; flex: 1 1 auto; white-space: nowrap; }

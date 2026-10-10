@@ -46,10 +46,13 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   await page.click('text=Save keys');
   await page.waitForTimeout(1500);
   await openTab(page, 'Models');
+  await page.locator('.models-nav button').filter({ hasText: 'Browse models' }).click();
   for (const label of ['Gemini Flash Latest', 'Gemini 2.5 Pro', 'Qwen3 Coder']) {
+    await page.getByLabel('Search available models').fill(label);
     const b = page.locator('.model-list.add .model-row', { hasText: label }).locator('button');
     if (await b.count()) await b.first().click();
   }
+  await page.locator('.models-nav button').filter({ hasText: 'Your models' }).click();
   check(await page.isChecked('.settings-section .switch >> nth=1'), 'Auto is on for new chats by default');
   await page.click('.settings-page [aria-label="Close"]');
   check((await page.textContent('.model-button')).includes('Auto'), 'picker shows Auto');

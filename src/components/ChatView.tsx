@@ -25,7 +25,7 @@ export default function ChatView() {
   const chat = useStore(selectCurrentChat);
   const catalogError = useStore((s) => s.catalogError);
   const streaming = useStore((s) => s.streamingChatId !== null && s.streamingChatId === s.currentId);
-  const defaultModel = useStore((s) => s.settings.defaultModel);
+  const defaultModel = useStore((s) => s.settings.projects?.find((p) => p.id === chat?.projectId)?.defaultModel || s.settings.defaultModel);
   const compacting = useStore((s) => s.compactingChatId !== null && s.compactingChatId === s.currentId);
   const syncPaused = useStore((s) => s.firebaseUsage.level === 'paused' && s.authed === true);
   const resetAt = useStore((s) => s.firebaseUsage.resetAt);

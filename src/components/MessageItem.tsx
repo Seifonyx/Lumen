@@ -1,4 +1,4 @@
-import { AlertTriangle, Share, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, Info, Pencil, RefreshCw, Square, Volume2 } from 'lucide-react';
+import { AlertTriangle, Share, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, GitBranch, Info, Pencil, RefreshCw, Square, Volume2 } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 import { mentionedPaths, repoTree, seenPaths } from '../lib/workspace';
 import { normalizeEdits } from '../lib/edits';
@@ -73,6 +73,8 @@ function LoadMentioned({ message }: { message: Message }) {
 function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
   const editAndResend = useStore((s) => s.editAndResend);
   const setUi = useStore((s) => s.setUi);
+  const chatId = useStore((s) => s.currentId);
+  const branchChatFrom = useStore((s) => s.branchChatFrom);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(message.text);
   const [copied, setCopied] = useState(false);
@@ -137,9 +139,10 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
             {copied ? <Check size={15} /> : <Copy size={15} />}
           </button>
           {!busy && (
-            <button className="msg-action" onClick={() => setEditing(true)} aria-label="Edit" title="Edit and resend">
-              <Pencil size={15} />
-            </button>
+            <>
+              <button className="msg-action" onClick={() => setEditing(true)} aria-label="Edit" title="Edit and resend"><Pencil size={15} /></button>
+              {chatId && <button className="msg-action" onClick={() => branchChatFrom(chatId, message.id)} aria-label="Branch from this message" title="Branch from here"><GitBranch size={15} /></button>}
+            </>
           )}
         </div>
       )}

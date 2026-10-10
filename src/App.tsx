@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import ChatView from './components/ChatView';
 import Login from './components/Login';
 import NotInvited from './components/NotInvited';
@@ -9,6 +9,8 @@ import Toasts from './components/Toasts';
 import UpdateBar from './components/UpdateBar';
 import WorkspacePanel from './components/WorkspacePanel';
 import RepoPicker from './components/RepoPicker';
+import CommandPalette from './components/CommandPalette';
+import ComparisonResultsModal from './components/ComparisonResultsModal';
 import { useStore } from './store';
 import { keepScreenAwake } from './lib/wakelock';
 
@@ -24,19 +26,20 @@ export default function App() {
   const workspaceOpen = useStore((s) => s.workspaceOpen);
   const runner = useStore((s) => s.runner);
   const repoPicker = useStore((s) => s.repoPicker);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   useEffect(() => {
     void init();
   }, [init]);
 
   // Keep the phone awake while a reply is being written, so locking the screen doesn't cut it off.
-  const working = useStore((s) => s.streamingChatId !== null || s.compactingChatId !== null);
+  const working = useStore((s) => s.streamingChatId !== null || s.compactingChatId !== null || s.comparing);
   useEffect(() => {
     keepScreenAwake(working);
     return () => keepScreenAwake(false);
   }, [working]);
 
-  // Global shortcuts: Ctrl/Cmd+Shift+O new chat, Ctrl/Cmd+K focus search, Esc stop/close.
+  // Global shortcuts: Ctrl/Cmd+Shift+O new chat, Ctrl/Cmd+K command palette, Esc stop/close.
   useEffect(() => {
     const onSwipeEdge = () => {
       setUi({ sidebarOpen: true });
@@ -49,20 +52,23 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       const s = useStore.getState();
-      if (mod && e.shiftKey && e.key.toLowerCase() === 'o') {
+      if (commandPaletteOpen && e.key === 'Escape') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        setCommandPaletteOpen(false);
+      } else if (mod && e.shiftKey && e.key.toLowerCase() === 'o') {
         e.preventDefault();
         s.newChat();
       } else if (mod && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setUi({ sidebarOpen: true });
-        setTimeout(() => document.getElementById('chat-search')?.focus(), 50);
-      } else if (e.key === 'Escape' && s.streamingChatId && !s.preview && !s.runner && !s.settingsOpen) {
+        setCommandPaletteOpen(true);
+      } else if (e.key === 'Escape' && s.streamingChatId && !s.preview && !s.runner && !s.settingsOpen && !commandPaletteOpen) {
         s.stop();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [setUi]);
+  }, [setUi, commandPaletteOpen]);
 
   if (authed === null) return <div className="splash" aria-busy="true" />;
   if (!authed) {
@@ -82,6 +88,8 @@ export default function App() {
       <ChatView />
       {!settingsOpen && <WorkspacePanel />}
       <SettingsModal />
+      {commandPaletteOpen && <CommandPalette onClose={() => setCommandPaletteOpen(false)} />}
+      <ComparisonResultsModal />
       {repoPicker && <RepoPicker onClose={() => setUi({ repoPicker: false })} />}
       <PreviewModal />
       {runner && (

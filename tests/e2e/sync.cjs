@@ -51,7 +51,7 @@ async function device(browser, name, email, mobile) {
 
   // ---- Phone: first sign-in, enter keys
   const A = await device(browser, 'phone', 'hebaghoneim8@gmail.com', true);
-  await A.page.waitForSelector('.settings-heading h2');
+  await A.page.waitForSelector('input[placeholder="AIza…"]');
   check((await A.page.textContent('.settings-heading h2')) === 'API keys', 'first sign-in opens API keys');
   await A.page.screenshot({ path: path.join(OUT, 'a1-keys.png') });
   await A.page.fill('input[placeholder="AIza…"]', 'test-gemini-key');

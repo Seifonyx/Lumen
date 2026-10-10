@@ -1,9 +1,12 @@
-import { Download, MoreHorizontal, Pencil, Pin, PinOff, Search, Settings, SquarePen, Trash2, X } from 'lucide-react';
+import { Download, FolderKanban, MoreHorizontal, Pencil, Pin, PinOff, Plus, Search, Settings, SquarePen, Tag, Trash2, X } from 'lucide-react';
 import Logo from './Logo';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey, modelShortName, safeFileName, saveBlob } from '../lib/util';
 import { useStore } from '../store';
-import type { Chat } from '../types';
+import type { Chat, Project } from '../types';
+import ProjectManager from './ProjectManager';
+
+const EMPTY_PROJECTS: Project[] = [];
 
 function chatToMarkdown(chat: Chat): string {
   const lines = [`# ${chat.title}`, ''];
@@ -16,9 +19,13 @@ function chatToMarkdown(chat: Chat): string {
 }
 
 function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
-  const { selectChat, deleteChat, renameChat, togglePin } = useStore.getState();
+  const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
+  const { selectChat, deleteChat, renameChat, togglePin, moveChatToProject, setChatTags } = useStore.getState();
   const streaming = useStore((s) => s.streamingChatId === chat.id);
   const [menu, setMenu] = useState(false);
+  const [moving, setMoving] = useState(false);
+  const [tagging, setTagging] = useState(false);
+  const [tags, setTags] = useState((chat.tags || []).join(', '));
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(chat.title);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -61,6 +68,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
       <button className="chat-open" onClick={() => selectChat(chat.id)} dir="auto" title={chat.title}>
         {chat.pinned && <Pin size={13} className="pin-mark" />}
         <span className="chat-title">{chat.title}</span>
+        {!!chat.tags?.length && <span className="chat-tag-count" title={chat.tags.join(', ')}>{chat.tags.length}</span>}
         {streaming && <span className="dot-pulse" aria-label="Replying" />}
       </button>
       <div className="row-menu" ref={menuRef}>
@@ -75,6 +83,13 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
             <button role="menuitem" onClick={() => { setMenu(false); void togglePin(chat.id); }}>
               {chat.pinned ? <PinOff size={15} /> : <Pin size={15} />} {chat.pinned ? 'Unpin' : 'Pin'}
             </button>
+            <button role="menuitem" onClick={() => setMoving(!moving)}><FolderKanban size={15} /> Move to project</button>
+            {moving && <div className="chat-move-list">
+              <button role="menuitem" onClick={() => { setMenu(false); moveChatToProject(chat.id, null); }}>All chats</button>
+              {projects.map((project) => <button key={project.id} role="menuitem" onClick={() => { setMenu(false); moveChatToProject(chat.id, project.id); }}>{project.name}</button>)}
+            </div>}
+            <button role="menuitem" onClick={() => setTagging(!tagging)}><Tag size={15} /> Edit tags</button>
+            {tagging && <div className="chat-tag-editor"><input autoFocus value={tags} maxLength={140} onChange={(e) => setTags(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setMenu(false); setChatTags(chat.id, tags.split(',')); } }} placeholder="tag1, tag2" aria-label="Chat tags" /><button onClick={() => { setMenu(false); setChatTags(chat.id, tags.split(',')); }}>Save</button><small>Up to 5 tags; search finds them.</small></div>}
             <button role="menuitem" onClick={() => { setMenu(false); void saveBlob(new Blob([chatToMarkdown(chat)], { type: 'text/markdown' }), `${safeFileName(chat.title, 'chat')}.md`); }}>
               <Download size={15} /> Export
             </button>
@@ -92,16 +107,20 @@ export default function Sidebar() {
   const user = useStore((st) => st.user);
   const chats = useStore((s) => s.chats);
   const currentId = useStore((s) => s.currentId);
+  const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
+  const activeProjectId = useStore((s) => s.activeProjectId);
+  const selectedProjectId = projects.some((p) => p.id === activeProjectId) ? activeProjectId : null;
   const open = useStore((s) => s.sidebarOpen);
-  const { newChat, setUi } = useStore.getState();
+  const { newChat, setUi, selectProject } = useStore.getState();
   const [query, setQuery] = useState('');
+  const [projectManager, setProjectManager] = useState(false);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
 
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const visible = chats.filter((c) => c.messages.length > 0 || c.id === currentId);
+    const visible = chats.filter((c) => (c.messages.length > 0 || c.id === currentId) && (!selectedProjectId || c.projectId === selectedProjectId));
     const matches = q
-      ? visible.filter((c) => c.title.toLowerCase().includes(q) || c.messages.some((m) => m.text.toLowerCase().includes(q)))
+      ? visible.filter((c) => c.title.toLowerCase().includes(q) || c.tags?.some((t) => t.toLowerCase().includes(q)) || c.messages.some((m) => m.text.toLowerCase().includes(q)))
       : visible;
     const out: [string, Chat[]][] = [];
     const pinned = matches.filter((c) => c.pinned);
@@ -113,9 +132,10 @@ export default function Sidebar() {
       else out.push([g, [c]]);
     }
     return out;
-  }, [chats, query, currentId]);
+  }, [chats, query, currentId, selectedProjectId]);
 
   return (
+    <>
     <aside
       className={`sidebar${open ? ' open' : ''}`}
       aria-label="Chats"
@@ -146,10 +166,17 @@ export default function Sidebar() {
         <SquarePen size={15} /> New chat
         <span className="kbd">{modKey}⇧O</span>
       </button>
+      <div className="project-switcher">
+        <FolderKanban size={16} />
+        <select aria-label="Choose project" value={selectedProjectId || ''} onChange={(e) => selectProject(e.target.value || null)}>
+          <option value="">All chats</option>
+          {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+        </select>
+        <button className="icon-btn sm" onClick={() => setProjectManager(true)} aria-label="Manage projects"><Plus size={16} /></button>
+      </div>
       <label className="search">
         <Search size={16} />
         <input id="chat-search" type="search" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" />
-        {!query && <span className="kbd">{modKey}K</span>}
       </label>
       <nav className="chat-list">
         {groups.length === 0 && <p className="muted small empty-list">{query ? 'No chats match.' : 'Your chats will appear here.'}</p>}
@@ -173,5 +200,7 @@ export default function Sidebar() {
         <Settings size={16} />
       </button>
     </aside>
+    {projectManager && <ProjectManager onClose={() => setProjectManager(false)} />}
+    </>
   );
 }

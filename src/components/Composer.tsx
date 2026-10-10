@@ -1,5 +1,5 @@
 import ChecksBar from './ChecksBar';
-import { FileCode2, GitBranch, ShieldCheck, ArrowUp, FileText, Globe, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
+import { Columns2, FileCode2, GitBranch, ShieldCheck, ArrowUp, FileText, Globe, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ACCEPT, readAttachment } from '../lib/files/read';
 import { canListen, listen } from '../lib/speech';
@@ -10,6 +10,7 @@ import type { Attachment } from '../types';
 import { scan, type Finding } from '../lib/privacy';
 import PrivacyCheck from './PrivacyCheck';
 import AttachSheet from './AttachSheet';
+import CompareModelsModal from './CompareModelsModal';
 
 interface Pending {
   key: string;
@@ -22,9 +23,10 @@ export const prefillComposer = (text: string) => window.dispatchEvent(new Custom
 
 export default function Composer({ model, meter }: { model: string; meter?: ReactNode }) {
   const send = useStore((s) => s.send);
+  const runComparison = useStore((s) => s.runComparison);
   const stop = useStore((s) => s.stop);
   const toast = useStore((s) => s.toast);
-  const streaming = useStore((s) => s.streamingChatId !== null || s.compactingChatId !== null);
+  const streaming = useStore((s) => s.streamingChatId !== null || s.compactingChatId !== null || s.comparing);
   const compact = useStore((s) => s.compact);
   const addMemory = useStore((s) => s.addMemory);
   const setUi = useStore((s) => s.setUi);
@@ -33,6 +35,8 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
   const updateSettings = useStore((s) => s.updateSettings);
   const currentId = useStore((s) => s.currentId);
   const chat = useStore((s) => s.chats.find((c) => c.id === s.currentId));
+  const project = settings.projects?.find((p) => p.id === chat?.projectId);
+  const projectFiles = project?.files || [];
   const setContext = useStore((s) => s.setContext);
   const info = modelInfo(catalog, model);
   const usage = useStore((s) => s.usage);
@@ -56,7 +60,8 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
   const [listening, setListening] = useState(false);
   const [interim, setInterim] = useState('');
   const [dragging, setDragging] = useState(false);
-  const [check, setCheck] = useState<{ findings: Finding[]; unchecked: number } | null>(null);
+  const [check, setCheck] = useState<{ findings: Finding[]; unchecked: number; compareModels?: string[] } | null>(null);
+  const [compareOpen, setCompareOpen] = useState(false);
   const input = useRef<HTMLTextAreaElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const stopListening = useRef<(() => void) | null>(null);
@@ -204,7 +209,7 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
     const files = pending.map((p) => p.file!);
     // Privacy shield ("Ask me"): show what was found before anything is sent.
     if (settings.privacyShield && settings.privacyMode === 'ask') {
-      const findings = [...scan(text), ...files.flatMap((f) => (f.text ? scan(f.text) : []))];
+      const findings = [...scan(text), ...files.flatMap((f) => (f.text ? scan(f.text) : [])), ...scan(project?.instructions || ''), ...projectFiles.flatMap((f) => (f.text ? scan(f.text) : []))];
       if (findings.length) {
         setCheck({ findings, unchecked: files.filter((f) => !f.text).length });
         return;
@@ -214,10 +219,33 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
   };
 
   const dispatch = (opts?: { privacy?: 'asIs' }) => {
+    const compareWith = check?.compareModels;
     setCheck(null);
     const files = pending.map((p) => p.file!);
+    const message = text.trim();
     clearText();
-    void send(text.trim(), files, opts);
+    if (compareWith) void runComparison(message, files, compareWith, opts);
+    else void send(message, files, opts);
+    setPending([]);
+  };
+
+  const compare = (models: string[]) => {
+    setCompareOpen(false);
+    const files = pending.map((p) => p.file!);
+    if (settings.privacyShield && settings.privacyMode === 'ask') {
+      const findings = [...scan(text), ...files.flatMap((f) => (f.text ? scan(f.text) : [])), ...scan(project?.instructions || ''), ...projectFiles.flatMap((f) => (f.text ? scan(f.text) : []))];
+      if (findings.length) {
+        setCheck({ findings, unchecked: files.filter((f) => !f.text).length, compareModels: models });
+        return;
+      }
+    }
+    dispatchCompare(models);
+  };
+  const dispatchCompare = (models: string[], opts?: { privacy?: 'asIs' }) => {
+    const files = pending.map((p) => p.file!);
+    const message = text.trim();
+    clearText();
+    void runComparison(message, files, models, opts);
     setPending([]);
   };
 
@@ -356,6 +384,9 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
           >
             <Globe size={17} /> <span>Search</span>
           </button>
+          <button type="button" className="tool-btn pill compare-trigger" disabled={!canSend} onClick={() => setCompareOpen(true)} aria-label="Compare models" title="Compare this question with two or three models">
+            <Columns2 size={16} /> <span>Compare</span>
+          </button>
           <div className="spacer" />
           {settings.privacyShield && (
             <button
@@ -387,6 +418,7 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
           repoName={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : undefined}
         />
       )}
+      {compareOpen && <CompareModelsModal prompt={text.trim()} files={pending.flatMap((p) => p.file ? [p.file] : [])} onClose={() => setCompareOpen(false)} onCompare={compare} />}
       {check && <PrivacyCheck findings={check.findings} unchecked={check.unchecked} onMask={() => dispatch()} onAsIs={() => dispatch({ privacy: 'asIs' })} onEdit={() => setCheck(null)} />}
       <p className="disclaimer">AI can make mistakes. Check important info.</p>
     </div>

@@ -103,18 +103,18 @@ async function send(page, text, n) {
   // Second device sees the summary (synced).
   const log2 = { chats: [], summaries: [] };
   const B = await device(browser, log2);
-  await B.page.waitForTimeout(2500);
   await B.page.click('.menu-btn');
   await B.page.click('.chat-row .chat-open >> nth=0');
-  await B.page.waitForSelector('.compact-note', { timeout: 10000 });
+  await B.page.waitForFunction(() => document.querySelector('.compact-note')?.textContent.includes('8 earlier'), null, { timeout: 10000 });
   check((await B.page.textContent('.compact-note')).includes('8 earlier'), 'summary synced to another device');
   await send(B.page, 'from my laptop', 5);
   check(log2.summaries.length === 0 && allText(log2.chats.at(-1)).includes('SUMMARY-2') && !allText(log2.chats.at(-1)).includes('OLD-1'), 'other device uses the synced summary');
 
   // Undo.
-  await page.waitForTimeout(1500);
+  await page.waitForFunction(() => [...document.querySelectorAll('.msg.user')].some((m) => m.textContent.includes('from my laptop')), null, { timeout: 10000 });
   await page.click('.compact-note >> text=Undo');
-  await page.waitForTimeout(300);
+  await page.waitForFunction(() => !document.querySelector('.compact-note'), null, { timeout: 10000 });
+  await B.page.waitForFunction(() => !document.querySelector('.compact-note'), null, { timeout: 10000 });
   check(!(await page.$('.compact-note')), 'undo removes the divider');
   // Turning auto off: full chat is sent.
   await page.click('.menu-btn');

@@ -53,7 +53,10 @@ export interface Chat {
   createdAt: number;
   updatedAt: number;
   pinned?: boolean;
+  tags?: string[];
   model?: string;
+  /** Project workspace this chat belongs to. */
+  projectId?: string;
   /** last change time on any device, used for syncing (unlike updatedAt it also moves on rename/pin) */
   rev?: number;
   /** a summary that stands in for older messages when the chat gets long */
@@ -69,6 +72,35 @@ export interface Chat {
   /** coding workspace: the last commit made from this chat (its test results are shown) */
   lastCommit?: { sha: string; url: string; branch: string; prUrl?: string; at: number; dismissed?: boolean };
   messages: Message[];
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  instructions: string;
+  defaultModel?: string;
+  /** Text-extracted references included with every message in the project. */
+  files?: Attachment[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ComparedAnswer {
+  model: string;
+  text: string;
+  status: 'loading' | 'done' | 'error' | 'stopped';
+  error?: string;
+  sources?: Source[];
+}
+
+export interface ComparisonState {
+  id: string;
+  chatId: string | null;
+  projectId?: string;
+  prompt: string;
+  files?: Attachment[];
+  privacyAsIs?: boolean;
+  answers: ComparedAnswer[];
 }
 
 export interface RepoLink {
@@ -134,6 +166,8 @@ export type Theme = 'system' | 'light' | 'dark';
 export type FontSize = 'small' | 'medium' | 'large';
 
 export interface Settings {
+  /** User workspaces shared across devices with the rest of account settings. */
+  projects?: Project[];
   /** ordered: earlier = preferred when switching after a limit */
   enabledModels: string[];
   defaultModel: string;

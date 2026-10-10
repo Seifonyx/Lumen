@@ -3,6 +3,9 @@ import { Boxes, FolderKanban, MessageSquare, Plus, Search, Settings } from 'luci
 import { modKey } from '../lib/util';
 import { modelLabel, useStore } from '../store';
 import Modal from './Modal';
+import type { Project } from '../types';
+
+const EMPTY_PROJECTS: Project[] = [];
 
 type Item = { id: string; label: string; detail: string; Icon: typeof Search; run: () => void };
 
@@ -13,7 +16,7 @@ const sections = [
 
 export default function CommandPalette({ onClose }: { onClose: () => void }) {
   const chats = useStore((s) => s.chats);
-  const projects = useStore((s) => s.settings.projects || []);
+  const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
   const enabled = useStore((s) => s.settings.enabledModels);
   const catalog = useStore((s) => s.catalog);
   const [query, setQuery] = useState('');

@@ -6,8 +6,10 @@ import { readAttachment } from '../lib/files/read';
 import type { Attachment, Project } from '../types';
 import { uid } from '../lib/util';
 
+const EMPTY_PROJECTS: Project[] = [];
+
 export default function ProjectManager({ onClose }: { onClose: () => void }) {
-  const projects = useStore((s) => s.settings.projects || []);
+  const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
   const catalog = useStore((s) => s.catalog);
   const enabledModels = useStore((s) => s.settings.enabledModels);
   const { saveProject, deleteProject, selectProject, toast } = useStore.getState();

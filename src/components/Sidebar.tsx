@@ -3,8 +3,10 @@ import Logo from './Logo';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey, modelShortName, safeFileName, saveBlob } from '../lib/util';
 import { useStore } from '../store';
-import type { Chat } from '../types';
+import type { Chat, Project } from '../types';
 import ProjectManager from './ProjectManager';
+
+const EMPTY_PROJECTS: Project[] = [];
 
 function chatToMarkdown(chat: Chat): string {
   const lines = [`# ${chat.title}`, ''];
@@ -17,7 +19,7 @@ function chatToMarkdown(chat: Chat): string {
 }
 
 function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
-  const projects = useStore((s) => s.settings.projects || []);
+  const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
   const { selectChat, deleteChat, renameChat, togglePin, moveChatToProject, setChatTags } = useStore.getState();
   const streaming = useStore((s) => s.streamingChatId === chat.id);
   const [menu, setMenu] = useState(false);
@@ -105,7 +107,7 @@ export default function Sidebar() {
   const user = useStore((st) => st.user);
   const chats = useStore((s) => s.chats);
   const currentId = useStore((s) => s.currentId);
-  const projects = useStore((s) => s.settings.projects || []);
+  const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
   const activeProjectId = useStore((s) => s.activeProjectId);
   const selectedProjectId = projects.some((p) => p.id === activeProjectId) ? activeProjectId : null;
   const open = useStore((s) => s.sidebarOpen);

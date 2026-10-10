@@ -57,7 +57,11 @@ async function send(page, text) {
   await A.page.click('.settings-page [aria-label="Close"]');
   // 6 chats x 4 messages.
   for (let c = 0; c < 6; c++) {
-    if (c) await A.page.click('[aria-label="New chat"]');
+    if (c) {
+      await A.page.click('.menu-btn');
+      await A.page.click('.menu-btn');
+  await A.page.click('[aria-label="New chat"]');
+    }
     await send(A.page, `chat${c} one`);
     await send(A.page, `chat${c} two`);
   }

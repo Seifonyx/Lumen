@@ -251,6 +251,7 @@ const F = '````';
   await openTab(page, 'Models');
   await page.locator('.layout-card', { hasText: 'Web apps' }).locator('[aria-label="Use for new chats"]').click();
   await page.click('.settings-page [aria-label="Close"]');
+  await page.click('.menu-btn');
   await page.click('[aria-label="New chat"]');
   check((await page.textContent('.model-button')).includes('Web apps'), 'custom layout is the default for new chats');
 

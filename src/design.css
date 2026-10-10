@@ -88,8 +88,7 @@
 .markdown pre { border-radius: 14px; }
 .msg-actions { gap: 2px; margin-top: 10px; }
 .model-tag { font-size: 11px; }
-.route-tag { display: none; }
-.msg-actions .model-tag:hover .route-tag { display: inline; }
+.route-tag { font-size: 11px; color: var(--text-3); }
 .file-card { border-radius: 14px; padding: 12px; box-shadow: none; }
 .chart-card { border-radius: 16px; padding: 18px; }
 .notice, .compact-note { border-radius: 12px; }
@@ -147,6 +146,9 @@
   .sheet { align-self: center; margin: 0; padding: 12px; max-width: 380px; }
   .sheet-grab { display: none; }
 }
+.sheet-popover-backdrop { background: transparent; }
+.sheet-popover-backdrop .sheet { position: fixed; width: min(360px, calc(100vw - 32px)); max-width: 360px; margin: 0; padding: 8px; border: 1px solid var(--border); border-radius: 16px; animation: pop 0.14s var(--ease); }
+.sheet-popover-backdrop .sheet-grab { display: none; }
 
 /* Settings keep the proven phone navigation and use the same quiet design language. */
 .settings-page { background: var(--bg); }

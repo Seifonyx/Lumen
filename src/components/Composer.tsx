@@ -69,6 +69,7 @@ export default function Composer({ model, meter, starterActions }: { model: stri
   const baseText = useRef('');
   const cameraInput = useRef<HTMLInputElement>(null);
   const [sheet, setSheet] = useState(false);
+  const [sheetAnchor, setSheetAnchor] = useState<{ left: number; bottom: number } | undefined>();
   const touch = isTouch();
 
   // Unsent text is kept per chat, so it survives switching chats, a reload, or the phone closing the page in the background.
@@ -373,7 +374,11 @@ export default function Composer({ model, meter, starterActions }: { model: stri
               <input ref={cameraInput} type="file" accept="image/*" capture="environment" hidden onChange={(e) => { void addFiles([...(e.target.files || [])]); e.target.value = ''; }} />
             </>
           ) : (
-            <button type="button" className={`tool-btn add-tool${chat?.repo ? ' on-repo' : ''}`} onClick={() => setSheet(true)} aria-label="Add files or a repository" aria-haspopup="dialog" title="Add files or a repository">
+            <button type="button" className={`tool-btn add-tool${chat?.repo ? ' on-repo' : ''}`} onClick={(e) => {
+              const box = e.currentTarget.getBoundingClientRect();
+              setSheetAnchor({ left: Math.max(16, Math.min(box.left, window.innerWidth - 376)), bottom: window.innerHeight - box.top + 8 });
+              setSheet(true);
+            }} aria-label="Add files or a repository" aria-haspopup="dialog" title="Add files or a repository">
               <Plus size={21} />
             </button>
           )}
@@ -419,6 +424,7 @@ export default function Composer({ model, meter, starterActions }: { model: stri
           onRepo={() => setUi(chat?.repo ? { workspaceOpen: true } : { repoPicker: true })}
           repoName={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : undefined}
           showCamera={touch}
+          anchor={touch ? undefined : sheetAnchor}
         />
       )}
       {compareOpen && <CompareModelsModal prompt={text.trim()} files={pending.flatMap((p) => p.file ? [p.file] : [])} onClose={() => setCompareOpen(false)} onCompare={compare} />}

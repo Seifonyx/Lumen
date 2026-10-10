@@ -9,10 +9,11 @@ interface Props {
   onRepo: () => void;
   repoName?: string;
   showCamera?: boolean;
+  anchor?: { left: number; bottom: number };
 }
 
 /** Phone-style "+" menu: one place for photos, files, the camera and a GitHub repository. */
-export default function AttachSheet({ onClose, onFiles, onCamera, onRepo, repoName, showCamera = true }: Props) {
+export default function AttachSheet({ onClose, onFiles, onCamera, onRepo, repoName, showCamera = true, anchor }: Props) {
   const startY = useRef<number | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
@@ -31,9 +32,12 @@ export default function AttachSheet({ onClose, onFiles, onCamera, onRepo, repoNa
         else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       }
     };
+    const onResize = () => close.current();
     window.addEventListener('keydown', onKey);
+    window.addEventListener('resize', onResize);
     return () => {
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', onResize);
       if (previous?.isConnected) previous.focus();
     };
   }, []);
@@ -45,10 +49,11 @@ export default function AttachSheet({ onClose, onFiles, onCamera, onRepo, repoNa
   };
 
   return (
-    <div className="sheet-backdrop" onClick={onClose}>
+    <div className={`sheet-backdrop${anchor ? ' sheet-popover-backdrop' : ''}`} onClick={onClose}>
       <div
         ref={ref}
         className="sheet"
+        style={anchor ? { left: anchor.left, bottom: anchor.bottom } : undefined}
         role="dialog"
         aria-modal="true"
         aria-label="Add to your message"
@@ -65,7 +70,7 @@ export default function AttachSheet({ onClose, onFiles, onCamera, onRepo, repoNa
           <span className="sheet-icon"><Images size={19} /></span>
           <span className="sheet-text">
             <span className="sheet-title">Photos &amp; files</span>
-            <span className="sheet-hint">From your library or the Files app</span>
+            <span className="sheet-hint">Images, documents and spreadsheets</span>
           </span>
         </button>
         {showCamera && <button type="button" className="sheet-row" onClick={pick(onCamera)}>

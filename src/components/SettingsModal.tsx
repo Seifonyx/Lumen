@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { VOICE_LANGS } from '../lib/speech';
+import { PreviewTools } from './PreviewTools';
 import { PROVIDER_NAMES, saveBlob, type ProviderId } from '../lib/util';
 import { useStore } from '../store';
 import type { Chat, FontSize, ModelInfo, Theme } from '../types';
@@ -410,6 +411,7 @@ function DataTab() {
 
 function AboutSection() {
   const updateReady = useStore((s) => s.updateReady);
+  const [devOpen, setDevOpen] = useState(false);
   return (
     <div className="settings-group">
       <span className="settings-group-title">About</span>
@@ -427,7 +429,19 @@ function AboutSection() {
             </span>
           )}
         </div>
+        <div className="setting-row">
+          <span className="setting-text">
+            <span className="setting-label">Developer options</span>
+            <span className="setting-hint">For developers and testing only.</span>
+          </span>
+          <span className="setting-ctrl">
+            <button className="btn small ghost" onClick={() => setDevOpen(!devOpen)} aria-expanded={devOpen}>
+              {devOpen ? 'Hide' : 'Show'}
+            </button>
+          </span>
+        </div>
       </div>
+      {devOpen && <PreviewTools />}
     </div>
   );
 }

@@ -1205,3 +1205,116 @@ table.sheet td.pending { color: #8f8f8f; font-style: italic; font-family: var(--
   .settings-heading { border-bottom: 0; padding-bottom: 4px; margin-bottom: 24px; }
   .settings-heading h2 { font-size: 1.75rem; }
 }
+
+
+/* Settings refresh: balanced navigation, calmer surfaces, and consistent spacing. */
+.settings-inner {
+  max-width: 1160px;
+  grid-template-columns: 248px minmax(0, 1fr);
+  gap: clamp(36px, 5vw, 64px);
+  padding-inline: 36px;
+}
+.settings-panel { max-width: 760px; }
+.settings-tabs { gap: 4px; }
+.settings-tabs button {
+  min-height: 44px;
+  height: auto;
+  padding: 6px 10px;
+  gap: 11px;
+  border: 1px solid transparent;
+  border-inline-start: 3px solid transparent;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+.settings-tabs button.active {
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-inline-start-color: var(--accent);
+  color: var(--text);
+  box-shadow: none;
+}
+.settings-tabs button.active .tab-icon { color: var(--accent); }
+.settings-tabs .tab-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  transition: color 0.16s ease, background 0.16s ease;
+}
+.settings-tabs button.active .tab-icon { background: color-mix(in srgb, var(--accent) 13%, var(--surface)); }
+.settings-tabs .tab-label { font-size: 0.875rem; font-weight: 550; }
+.settings-tabs .tab-blurb { display: none; }
+.settings-tabs .tab-chev { opacity: 0.55; }
+.settings-heading { padding-bottom: 20px; margin-bottom: 24px; }
+.settings-heading h2 { font-size: clamp(1.65rem, 2.3vw, 2rem); letter-spacing: -0.04em; }
+.settings-heading p { max-width: 58ch; font-size: 0.9375rem; }
+.settings-section { gap: 24px; }
+.settings-group { gap: 0; }
+.settings-group-title {
+  margin-inline: 2px;
+  margin-bottom: 9px;
+  min-height: 24px;
+  font-size: 0.6875rem;
+  letter-spacing: 0.09em;
+}
+.settings-card {
+  border-radius: 16px;
+  border-color: color-mix(in srgb, var(--border) 88%, var(--text-3));
+  background: var(--surface);
+  box-shadow: 0 2px 10px rgb(20 28 45 / 0.035);
+}
+.settings-card .setting-row { min-height: 66px; padding: 14px 20px; }
+.settings-card label.setting-row:hover { background: color-mix(in srgb, var(--surface-2) 65%, transparent); }
+.setting-label { font-size: 0.9rem; }
+.setting-hint { max-width: 62ch; line-height: 1.5; }
+.setting-ctrl { flex: none; }
+.setting-ctrl select { min-height: 40px; }
+.account-row { min-height: 78px; padding: 16px 20px; }
+.key-provider-card { padding: 18px 20px; }
+.key-provider-card + .key-provider-card { border-top-color: var(--border); }
+.pad-card { padding: 18px 20px; gap: 16px; }
+.settings-actions { padding-top: 2px; }
+.settings-card.danger {
+  background: color-mix(in srgb, var(--danger) 2.5%, var(--surface));
+  border-color: color-mix(in srgb, var(--danger) 25%, var(--border));
+}
+.settings-group-title.danger { color: var(--danger); }
+
+@media (min-width: 721px) and (max-width: 1020px) {
+  .settings-inner {
+    grid-template-columns: 212px minmax(0, 1fr);
+    gap: 30px;
+    padding-inline: 24px;
+  }
+}
+@media (max-width: 720px) {
+  .settings-inner { padding-inline: 0; }
+  .settings-panel { max-width: none; }
+  .settings-tabs { margin: 14px 16px 18px; border-radius: 16px; }
+  .settings-tabs button {
+    min-height: 68px;
+    padding: 11px 14px;
+    border-inline-start: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .settings-tabs button.active {
+    background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+    border-color: var(--border);
+    border-bottom-color: var(--border);
+  }
+  .settings-tabs .tab-blurb { display: block; font-size: 0.75rem; line-height: 1.35; }
+  .settings-tabs .tab-icon { width: 36px; height: 36px; }
+  .settings-panel { padding: 18px 16px 0; }
+  .settings-heading { padding-bottom: 16px; margin-bottom: 20px; }
+  .settings-heading h2 { font-size: 1.5rem; }
+  .settings-section { gap: 22px; }
+  .settings-card { border-radius: 14px; }
+  .settings-card .setting-row { min-height: 64px; padding: 12px 15px; }
+  .account-row { padding: 15px; }
+  .key-provider-card { padding: 16px 15px; }
+  .pad-card { padding: 15px; }
+  .settings-actions { align-items: stretch; flex-direction: column; }
+  .settings-actions .btn { align-self: stretch; justify-content: center; margin-inline-start: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-tabs button, .settings-tabs .tab-icon { transition: none; }
+}

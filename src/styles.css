@@ -1419,3 +1419,58 @@ table.sheet td.pending { color: #8f8f8f; font-style: italic; font-family: var(--
   }
   .settings-panel { padding-inline: 16px; }
 }
+
+
+/* ============================================================ Phone & touch Settings layout
+   Used on portrait phones, sideways phones, tablets and "desktop site" mode on a touch screen:
+   a menu first, then one section at a time. Written last so it replaces the older phone patches. */
+@media (max-width: 720px), (pointer: coarse) and (max-width: 1100px) {
+  .settings-page, .settings-scroll { width: 100%; min-width: 0; }
+  .settings-inner {
+    display: grid; grid-template-columns: minmax(0, 1fr); gap: 0;
+    width: 100%; max-width: 640px; margin-inline: auto; padding: 0 0 48px; box-sizing: border-box;
+  }
+  .settings-tabs {
+    position: static; display: flex; flex-direction: column; gap: 0;
+    width: auto; max-width: none; justify-self: stretch; align-self: stretch; box-sizing: border-box;
+    margin: 16px 16px 18px; padding: 0; overflow: hidden;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: none;
+  }
+  .settings-tabs button,
+  .settings-tabs button.active {
+    height: auto; min-height: 58px; padding: 10px 14px; gap: 12px;
+    border: 0; border-inline-start: 0; border-bottom: 1px solid var(--border); border-radius: 0;
+    background: none; color: var(--text); box-shadow: none;
+  }
+  .settings-tabs button:last-child { border-bottom: 0; }
+  .settings-tabs button:active { background: var(--surface-2); }
+  .settings-tabs .tab-icon,
+  .settings-tabs button.active .tab-icon {
+    width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--code-bg); color: var(--text-2);
+  }
+  .settings-tabs .tab-label { font-size: 0.9375rem; font-weight: 500; }
+  .settings-tabs .tab-blurb { display: none; }
+  .settings-tabs .tab-chev { display: block; color: var(--text-3); flex: none; }
+
+  /* Menu first; tapping a section opens it with a back arrow. */
+  .settings-page:not(.has-section) .settings-panel { display: none; }
+  .settings-page.has-section .settings-tabs { display: none; }
+  .settings-page.has-section .settings-back { display: inline-grid; }
+  .settings-page.has-section .settings-title-main { display: none; }
+  .settings-page.has-section .settings-title-section { display: inline; }
+
+  /* The top bar already names the section, so the page only needs the one-line description. */
+  .settings-panel { width: 100%; max-width: none; min-width: 0; padding: 16px 16px 0; box-sizing: border-box; }
+  .settings-heading { padding-bottom: 0; margin-bottom: 18px; border-bottom: 0; }
+  .settings-heading h2 { display: none; }
+  .settings-heading p { margin: 0; font-size: 0.875rem; }
+  .settings-section { gap: 22px; }
+
+  /* Rows: text on the left, its control on the right. Never drop the control onto a new line. */
+  .settings-card .setting-row { flex-wrap: nowrap; align-items: center; gap: 14px; min-height: 0; padding: 14px; }
+  .setting-text { flex: 1 1 0; min-width: 0; }
+  .setting-ctrl { flex: none; min-width: 0; max-width: 58%; }
+  .setting-ctrl select { width: clamp(124px, 44vw, 172px); min-width: 0; max-width: 100%; min-height: 36px; }
+  .setting-ctrl .segmented { max-width: 100%; }
+}

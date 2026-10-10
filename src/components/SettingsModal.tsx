@@ -4,9 +4,9 @@ import {
   ArrowUp,
   Boxes,
   Brain,
-  Check,
   CheckCircle2,
   ChevronRight,
+  Database,
   Download,
   ExternalLink,
   Eye,
@@ -17,13 +17,13 @@ import {
   LogOut,
   Plus,
   RefreshCw,
-  RotateCcw,
   Search,
   Shield,
   SlidersHorizontal,
   Star,
   Trash2,
   Upload,
+  UserRound,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -42,20 +42,15 @@ import type { Layout } from '../lib/layouts';
 
 /** Settings sections: id, name, icon, one-line description */
 const TABS: [string, string, LucideIcon, string][] = [
-  ['general', 'General', SlidersHorizontal, 'Appearance, chat preferences, account & updates'],
-  ['keys', 'API Keys', KeyRound, 'Free Gemini, OpenRouter, Groq & Cerebras keys'],
-  ['models', 'Models', Boxes, 'Smart routing, layouts & model catalog'],
-  ['personalize', 'Personalization', Brain, 'Custom instructions & saved memory context'],
-  ['usage', 'Usage', Gauge, "Daily limits, quotas & database sync"],
-  ['privacy', 'Privacy & Data', Shield, 'Privacy shield, backups & data control'],
+  ['general', 'General', SlidersHorizontal, 'Appearance, chat behaviour and your account'],
+  ['keys', 'API keys', KeyRound, 'Your free Gemini, OpenRouter, Groq and Cerebras keys'],
+  ['models', 'Models', Boxes, 'Your models, Auto and layouts for coding, everyday, thinking…'],
+  ['usage', 'Usage', Gauge, "Today's requests, limits and resets"],
+  ['personalize', 'Personalization', UserRound, 'Instructions every model follows'],
+  ['memory', 'Memory', Brain, 'What models remember about you'],
+  ['privacy', 'Privacy', Shield, 'Hide personal details from AI models'],
+  ['data', 'Data', Database, 'Back up, restore or delete your chats'],
 ];
-
-/** Backward-compatible tab alias mapping */
-const TAB_ALIASES: Record<string, string> = {
-  memory: 'personalize',
-  data: 'privacy',
-  layouts: 'models',
-};
 
 function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange: (v: boolean) => void; label: string; hint?: string }) {
   return (
@@ -145,13 +140,13 @@ function ModelsTab() {
         <div className="settings-card">
           <Toggle
             label="Switch models automatically"
-            hint="When an active model hits its free rate limit or encounters an error, the next model answers instead."
+            hint="When a model hits its free limit or fails, the next model in your list answers instead."
             checked={settings.autoSwitch}
             onChange={(v) => update({ autoSwitch: v })}
           />
           <Toggle
-            label="Auto-routing for new chats"
-            hint="Dynamically picks the best model for each message: images, long documents, code, mathematics, web search, or fast replies."
+            label="Auto for new chats"
+            hint="Picks the best enabled model for each message: images, long documents, code, maths, web search, files, Arabic or quick replies."
             checked={settings.defaultModel === 'auto'}
             onChange={(v) => update({ defaultModel: v ? 'auto' : enabled[0] || '' })}
           />
@@ -160,12 +155,12 @@ function ModelsTab() {
 
       <div className="settings-group">
         <div className="settings-group-title">
-          <span>Active Models ({enabled.length})</span>
-          <span className="muted" style={{ fontWeight: 400, textTransform: 'none' }}>★ = default for new chats</span>
+          <span>Your models</span>
+          <span className="muted" style={{ fontWeight: 400, textTransform: 'none' }}>Order = switching order. ★ = default for new chats.</span>
         </div>
         <div className="settings-card">
           <ul className="model-list" style={{ border: 0, margin: 0, borderRadius: 0 }}>
-            {enabled.length === 0 && <li className="muted small pad" style={{ padding: '16px 18px' }}>No models active. Add models from the catalog below.</li>}
+            {enabled.length === 0 && <li className="muted small pad" style={{ padding: '16px 18px' }}>No models yet. Add some below.</li>}
             {enabled.map((id, i) => {
               const m = find(id);
               return (
@@ -192,29 +187,29 @@ function ModelsTab() {
       </div>
 
       <div className="settings-group">
-        <span className="settings-group-title">Workspace Presets</span>
+        <span className="settings-group-title">Workspace Layouts</span>
         <LayoutsSection onEdit={setEditing} />
       </div>
 
       <div className="settings-group">
         <div className="settings-group-title">
-          <span>Available Model Catalog</span>
+          <span>Add models</span>
           <button className="link-btn small" disabled={refreshing} onClick={async () => { setRefreshing(true); await loadCatalog(); setRefreshing(false); }}>
-            <RefreshCw size={13} className={refreshing ? 'spin' : ''} /> Refresh catalog
+            <RefreshCw size={13} className={refreshing ? 'spin' : ''} /> Refresh
           </button>
         </div>
         <div className="settings-card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           {catalogError && <p className="error-text small" dir="auto">{catalogError}</p>}
           <label className="search" style={{ margin: 0 }}>
             <Search size={16} />
-            <input type="search" placeholder="Search models (e.g. gemini, deepseek, qwen, llama)" value={query} onChange={(e) => setQuery(e.target.value)} />
+            <input type="search" placeholder="Search models (e.g. gemini, deepseek, qwen)" value={query} onChange={(e) => setQuery(e.target.value)} />
           </label>
           {(Object.keys(PROVIDER_NAMES) as ProviderId[]).map((p) =>
             catalog?.providers[p] || !catalog ? (
               <div key={p}>
-                <div className="pop-label" style={{ marginBottom: 6 }}>{{ google: 'Google AI Studio (free tier)', openrouter: 'OpenRouter (free open models)', groq: 'Groq (free high-speed plan)', cerebras: 'Cerebras (ultra-fast free tier)' }[p]}</div>
+                <div className="pop-label" style={{ marginBottom: 6 }}>{{ google: 'Google (free tier)', openrouter: 'OpenRouter (free models)', groq: 'Groq (free plan)', cerebras: 'Cerebras (free plan)' }[p]}</div>
                 <ul className="model-list add" style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>
-                  {group(p).length === 0 && <li className="muted small pad">{query ? 'No matches found.' : 'All models added to active list.'}</li>}
+                  {group(p).length === 0 && <li className="muted small pad">{query ? 'No matches.' : 'All added.'}</li>}
                   {group(p).map((m) => (
                     <li key={m.id} className="model-row">
                       <span className="model-meta">
@@ -229,12 +224,12 @@ function ModelsTab() {
               </div>
             ) : (
               <p key={p} className="muted small" style={{ margin: '4px 0' }}>
-                {PROVIDER_NAMES[p]} isn't connected. Add its key under API Keys to load its models.
+                {PROVIDER_NAMES[p]} isn't connected. Add its key under API keys to use its models.
               </p>
             ),
           )}
           <p className="muted small legend" style={{ margin: '8px 0 0' }}>
-            Capabilities: <Badges m={{ vision: true } as ModelInfo} /> Vision & Images · <Badges m={{ search: true } as ModelInfo} /> Live Web Search · <Badges m={{ thinking: true } as ModelInfo} /> Reasoning & Thinking
+            Icons: <Badges m={{ vision: true } as ModelInfo} /> reads images · <Badges m={{ search: true } as ModelInfo} /> web search · <Badges m={{ thinking: true } as ModelInfo} /> thinks first
           </p>
         </div>
       </div>
@@ -243,17 +238,17 @@ function ModelsTab() {
 }
 
 const KEY_FIELDS: { id: 'gemini' | 'openrouter' | 'groq' | 'cerebras' | 'github'; label: string; placeholder: string; link: string; hint: string; linkText?: string }[] = [
-  { id: 'gemini', label: 'Google AI Studio (Gemini)', placeholder: 'AIza…', link: 'https://aistudio.google.com/apikey', hint: 'Best all-rounder: reads images & documents, performs live web search.' },
-  { id: 'openrouter', label: 'OpenRouter', placeholder: 'sk-or-…', link: 'https://openrouter.ai/keys', hint: 'Dozens of free open models including DeepSeek, Qwen, and Llama.' },
-  { id: 'groq', label: 'Groq', placeholder: 'gsk_…', link: 'https://console.groq.com/keys', hint: 'Ultra-fast inference (Llama, GPT-OSS, Qwen) with generous daily free limits.' },
-  { id: 'cerebras', label: 'Cerebras', placeholder: 'csk-…', link: 'https://cloud.cerebras.ai/platform', hint: 'The fastest replies in the world; ~1 million free tokens per day.' },
+  { id: 'gemini', label: 'Google AI Studio (Gemini)', placeholder: 'AIza…', link: 'https://aistudio.google.com/apikey', hint: 'Best all-rounder: reads images and PDFs, searches the web.' },
+  { id: 'openrouter', label: 'OpenRouter', placeholder: 'sk-or-…', link: 'https://openrouter.ai/keys', hint: 'Dozens of free open models (DeepSeek, Qwen, Llama…).' },
+  { id: 'groq', label: 'Groq', placeholder: 'gsk_…', link: 'https://console.groq.com/keys', hint: 'Very fast answers (Llama, GPT-OSS, Qwen). Generous free limits.' },
+  { id: 'cerebras', label: 'Cerebras', placeholder: 'csk-…', link: 'https://cloud.cerebras.ai/platform', hint: 'The fastest replies; about 1 million free tokens a day.' },
   {
     id: 'github',
-    label: 'GitHub Personal Token (Coding)',
+    label: 'GitHub (for coding)',
     placeholder: 'github_pat_…',
     link: 'https://github.com/settings/personal-access-tokens/new',
-    linkText: 'Generate token',
-    hint: 'Enables chat to inspect repositories, run tests, and commit pull requests. Fine-grained with Contents: Read & write.',
+    linkText: 'Create a token',
+    hint: 'Lets chats read your repositories and commit changes. Use a fine-grained token with Contents and Pull requests set to Read and write, and Actions set to Read (for test results).',
   },
 ];
 
@@ -272,7 +267,7 @@ function KeysTab() {
   return (
     <div className="settings-section">
       <div className="settings-group">
-        <span className="settings-group-title">Configured Providers</span>
+        <span className="settings-group-title">Provider Keys</span>
         <div className="settings-card">
           {KEY_FIELDS.map(({ id, label, placeholder, link, hint, linkText }) => {
             const val = draft[id] || '';
@@ -288,7 +283,7 @@ function KeysTab() {
                     </span>
                   </span>
                   <a className="link-btn small inline" href={link} target="_blank" rel="noopener noreferrer">
-                    {linkText || 'Get free key'} <ExternalLink size={12} />
+                    {linkText || 'Get a free key'} <ExternalLink size={12} />
                   </a>
                 </div>
                 <span className="key-provider-desc">{hint}</span>
@@ -316,7 +311,7 @@ function KeysTab() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 12 }}>
         <button
           className="btn primary"
           disabled={busy || !changed || !any}
@@ -324,7 +319,7 @@ function KeysTab() {
             setBusy(true);
             try {
               await saveApiKeys(draft);
-              toast('API keys saved successfully. Models are syncing.', 'success');
+              toast('Keys saved. Your models are loading.', 'success');
             } catch (e) {
               toast(`Couldn't save keys: ${(e as Error).message}`, 'error');
             } finally {
@@ -332,17 +327,12 @@ function KeysTab() {
             }
           }}
         >
-          {busy ? <Loader2 size={16} className="spin" /> : <Check size={16} />} Save API keys
+          {busy && <Loader2 size={16} className="spin" />} Save keys
         </button>
-        {changed && (
-          <button className="btn ghost small" onClick={() => setDraft({ ...keys })}>
-            <RotateCcw size={14} /> Revert changes
-          </button>
-        )}
       </div>
 
       <div className="settings-group" style={{ marginTop: 8 }}>
-        <span className="settings-group-title">Key Security & Origin Lock</span>
+        <span className="settings-group-title">Key Safety</span>
         <KeySafety />
       </div>
     </div>
@@ -356,60 +346,62 @@ function DataTab() {
   const count = chats.filter((c) => c.messages.length).length;
 
   return (
-    <div className="settings-group">
-      <span className="settings-group-title">Chat History & Backups</span>
-      <div className="settings-card">
-        <div className="setting-row">
-          <span className="setting-text">
-            <span className="setting-label">Export chat backup</span>
-            <span className="setting-hint">Download all {count} conversation{count === 1 ? '' : 's'} as a structured JSON archive.</span>
-          </span>
-          <span className="setting-ctrl">
-            <button className="btn small" onClick={() => saveBlob(new Blob([JSON.stringify({ app: 'model-router', version: 2, chats }, null, 0)], { type: 'application/json' }), `model-router-backup-${new Date().toISOString().slice(0, 10)}.json`)}>
-              <Download size={14} /> Export
-            </button>
-          </span>
-        </div>
-        <div className="setting-row">
-          <span className="setting-text">
-            <span className="setting-label">Restore chat backup</span>
-            <span className="setting-hint">Import conversations from an exported Model Router backup file without replacing existing chats.</span>
-          </span>
-          <span className="setting-ctrl">
-            <button className="btn small" onClick={() => fileRef.current?.click()}>
-              <Upload size={14} /> Import
-            </button>
-          </span>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="application/json,.json"
-            hidden
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              e.target.value = '';
-              if (!file) return;
-              try {
-                const data = JSON.parse(await file.text());
-                const list: Chat[] = Array.isArray(data) ? data : data.chats;
-                const n = await importChats(list || []);
-                toast(`Restored ${n} chat${n === 1 ? '' : 's'}.`, 'success');
-              } catch {
-                toast("That file isn't a Model Router backup.", 'error');
-              }
-            }}
-          />
-        </div>
-        <div className="setting-row danger-row">
-          <span className="setting-text">
-            <span className="setting-label" style={{ color: 'var(--danger)' }}>Delete all chats</span>
-            <span className="setting-hint">Permanently erase every conversation from all your connected devices.</span>
-          </span>
-          <span className="setting-ctrl">
-            <button className="btn small danger" onClick={() => { if (confirm('Delete all chats on all your devices permanently?')) void clearAllChats().then(() => toast('All chats deleted.', 'success')); }}>
-              <Trash2 size={14} /> Delete all
-            </button>
-          </span>
+    <div className="settings-section">
+      <div className="settings-group">
+        <span className="settings-group-title">Chat Data & Storage</span>
+        <div className="settings-card">
+          <div className="setting-row">
+            <span className="setting-text">
+              <span className="setting-label">Back up chats</span>
+              <span className="setting-hint">Save {count} chat{count === 1 ? '' : 's'} (with this device's attachments) as one file.</span>
+            </span>
+            <span className="setting-ctrl">
+              <button className="btn small" onClick={() => saveBlob(new Blob([JSON.stringify({ app: 'model-router', version: 2, chats }, null, 0)], { type: 'application/json' }), `model-router-backup-${new Date().toISOString().slice(0, 10)}.json`)}>
+                <Download size={14} /> Back up
+              </button>
+            </span>
+          </div>
+          <div className="setting-row">
+            <span className="setting-text">
+              <span className="setting-label">Restore a backup</span>
+              <span className="setting-hint">Adds the chats from a backup file. Existing chats are kept.</span>
+            </span>
+            <span className="setting-ctrl">
+              <button className="btn small" onClick={() => fileRef.current?.click()}>
+                <Upload size={14} /> Restore
+              </button>
+            </span>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json,.json"
+              hidden
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                e.target.value = '';
+                if (!file) return;
+                try {
+                  const data = JSON.parse(await file.text());
+                  const list: Chat[] = Array.isArray(data) ? data : data.chats;
+                  const n = await importChats(list || []);
+                  toast(`Restored ${n} chat${n === 1 ? '' : 's'}.`, 'success');
+                } catch {
+                  toast("That file isn't a Model Router backup.", 'error');
+                }
+              }}
+            />
+          </div>
+          <div className="setting-row danger-row">
+            <span className="setting-text">
+              <span className="setting-label" style={{ color: 'var(--danger)' }}>Delete all chats</span>
+              <span className="setting-hint">Removes every chat from all your devices. This can't be undone.</span>
+            </span>
+            <span className="setting-ctrl">
+              <button className="btn small danger" onClick={() => { if (confirm('Delete all chats on all your devices?')) void clearAllChats().then(() => toast('All chats deleted.', 'success')); }}>
+                <Trash2 size={14} /> Delete all
+              </button>
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -440,7 +432,7 @@ function UpdatesSection() {
               <span className="version-status"><CheckCircle2 size={13} /> {updateReady ? 'Update ready' : 'Up to date'}</span>
             </div>
             <span className="setting-hint">
-              {updateReady ? 'A newer release has been downloaded and is ready.' : checkedAt ? `Last verified today at ${checkedAt}` : 'Model Router is running the latest production release.'}
+              {updateReady ? 'A new version has downloaded.' : checkedAt ? `Last checked today at ${checkedAt}` : 'Model Router is running the latest build.'}
             </span>
           </div>
           {updateReady ? (
@@ -461,11 +453,11 @@ function UpdatesSection() {
               <span className="changelog-date">Latest Release</span>
             </div>
             <ul className="changelog-list">
-              <li><strong>Multi-Model Engine:</strong> Smart routing between Gemini 2.5, OpenRouter free models, Groq, and Cerebras with auto-failover.</li>
-              <li><strong>Symmetrical Settings Architecture:</strong> Consolidated, unified card layout with clean alignments and merged preferences.</li>
-              <li><strong>Responsive Error & Prompt Viewports:</strong> Error messages, rate limit notices, and warnings wrap cleanly on all screens.</li>
-              <li><strong>Document & Slide Generation:</strong> Generate presentations (.pptx), spreadsheets (.xlsx), and reports (.docx) directly from chat.</li>
-              <li><strong>Privacy Shield:</strong> Real-time regex and NLP masking for personal identities and credentials before transmission.</li>
+              <li><strong>Multi-Model Engine:</strong> Smart routing between Gemini 2.5 Flash / Pro, OpenRouter free models, Groq, and Cerebras with auto-failover.</li>
+              <li><strong>Symmetrical Settings Architecture:</strong> Consolidated, unified card layout with clean alignments and balanced sections.</li>
+              <li><strong>Responsive Error & Prompt Viewports:</strong> Error messages, rate limit notices, and warnings wrap properly on both phone screens and desktop displays.</li>
+              <li><strong>Document & Slide Generation:</strong> Build presentation decks (.pptx), spreadsheet trackers (.xlsx), and Word reports (.docx) directly from chat.</li>
+              <li><strong>Privacy Shield:</strong> Real-time regex and NLP masking for personal identities, phone numbers, and keys before transmission to AI models.</li>
               <li><strong>Coding Workspace:</strong> Connect GitHub repos, view diffs, run in-browser tests, and commit pull requests right from your chats.</li>
             </ul>
           </div>
@@ -477,7 +469,7 @@ function UpdatesSection() {
             </div>
             <ul className="changelog-list">
               <li><strong>Voice Input:</strong> Dictate prompts using built-in speech recognition with language selection.</li>
-              <li><strong>Cross-Device Sync:</strong> Real-time Firestore sync with local IndexedDB offline storage.</li>
+              <li><strong>Cross-Device Sync:</strong> Lightweight real-time Firestore sync with local IndexedDB offline storage.</li>
               <li><strong>Model Memory:</strong> Persistent user facts and preference memories automatically referenced in chats.</li>
             </ul>
           </div>
@@ -494,7 +486,7 @@ const PRESET_INSTRUCTIONS = [
   { label: '+ Egyptian Arabic', text: 'Answer in Egyptian Arabic unless I write in English. Use familiar everyday professional expressions.' },
 ];
 
-function PersonalizeSection() {
+function PersonalizeTab() {
   const settings = useStore((s) => s.settings);
   const update = useStore((s) => s.updateSettings);
   const [instructions, setInstructions] = useState(settings.customInstructions);
@@ -508,45 +500,34 @@ function PersonalizeSection() {
   return (
     <div className="settings-section">
       <div className="settings-group">
-        <span className="settings-group-title">Custom Instructions</span>
+        <span className="settings-group-title">Instructions</span>
         <div className="settings-card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div>
-            <span className="setting-label">Persona & Behavioral Guidelines</span>
-            <span className="setting-hint">Instructions provided to every model with each message (your role, language preferences, formatting, or tone).</span>
-          </div>
-          <div className="preset-chips">
-            {PRESET_INSTRUCTIONS.map(({ label, text }) => (
-              <button key={label} type="button" className="preset-chip" onClick={() => appendPreset(text)}>
-                {label}
-              </button>
-            ))}
-          </div>
-          <textarea
-            dir="auto"
-            rows={7}
-            maxLength={4000}
-            placeholder={'Examples:\n• I work in a hospital in Egypt; use metric units and EGP.\n• Answer in Egyptian Arabic unless I write in English.\n• Keep answers short unless I ask for detail.'}
-            value={instructions}
-            onChange={(e) => setInstructions(e.target.value)}
-            onBlur={() => update({ customInstructions: instructions })}
-            style={{ width: '100%', resize: 'vertical', minHeight: 140, lineHeight: 1.55 }}
-          />
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <span className="muted small">{instructions.length}/4000</span>
-          </div>
+          <label className="field-block" style={{ paddingTop: 0 }}>
+            <span className="setting-label">Custom instructions</span>
+            <span className="setting-hint">Tell every model about you and how to answer — e.g. your job, language preferences, tone, or formats you like.</span>
+            <div className="preset-chips">
+              {PRESET_INSTRUCTIONS.map(({ label, text }) => (
+                <button key={label} type="button" className="preset-chip" onClick={() => appendPreset(text)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <textarea
+              dir="auto"
+              rows={8}
+              maxLength={4000}
+              placeholder={'Examples:\n• I work in a hospital in Egypt; use metric units and EGP.\n• Answer in Egyptian Arabic unless I write in English.\n• Keep answers short unless I ask for detail.'}
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              onBlur={() => update({ customInstructions: instructions })}
+              style={{ width: '100%', resize: 'vertical', minHeight: 160, lineHeight: 1.55 }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+              <span className="muted small">{instructions.length}/4000</span>
+            </div>
+          </label>
         </div>
       </div>
-
-      <MemoryTab Toggle={Toggle} />
-    </div>
-  );
-}
-
-function PrivacyAndDataSection() {
-  return (
-    <div className="settings-section">
-      <PrivacyTab Toggle={Toggle} Choice={Choice} />
-      <DataTab />
     </div>
   );
 }
@@ -579,9 +560,7 @@ export default function SettingsModal() {
 
   if (!open) return null;
 
-  // Resolve active tab using alias mapping
-  const resolvedTabId = TAB_ALIASES[tab] || tab || 'general';
-  const current = TABS.find(([id]) => id === resolvedTabId) || TABS[0];
+  const current = TABS.find(([id]) => id === (tab === 'layouts' ? 'models' : tab)) || TABS[0];
   const [id, label, , blurb] = current;
 
   return (
@@ -628,27 +607,26 @@ export default function SettingsModal() {
                 <div className="settings-group">
                   <span className="settings-group-title">Appearance & Display</span>
                   <div className="settings-card">
-                    <Choice<Theme> label="Interface theme" value={settings.theme} onChange={(v) => update({ theme: v })} options={[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]} />
-                    <Choice<FontSize> label="Text size" value={settings.fontSize} onChange={(v) => update({ fontSize: v })} options={[['small', 'Small'], ['medium', 'Medium'], ['large', 'Large']]} />
+                    <Choice<Theme> label="Theme" value={settings.theme} onChange={(v) => update({ theme: v })} options={[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]} />
+                    <Choice<FontSize> label="Text size" value={settings.fontSize} onChange={(v) => update({ fontSize: v })} options={[['small', 'S'], ['medium', 'M'], ['large', 'L']]} />
                   </div>
                 </div>
 
                 <div className="settings-group">
                   <span className="settings-group-title">Chat Preferences</span>
                   <div className="settings-card">
-                    <Toggle label="Enter sends the message" hint="On desktop. Shift+Enter creates a new line. On mobile, use the send button." checked={settings.enterToSend} onChange={(v) => update({ enterToSend: v })} />
-                    <Toggle label="Show reasoning process" hint="Displays collapsible thinking traces when models reason before answering." checked={settings.showThinking} onChange={(v) => update({ showThinking: v })} />
-                    <Toggle label="Automatic conversation titles" hint="Uses a fast model to name new chats automatically after the first message." checked={settings.autoTitle} onChange={(v) => update({ autoTitle: v })} />
+                    <Toggle label="Enter sends the message" hint="On computers. Shift+Enter adds a new line. On phones, use the send button." checked={settings.enterToSend} onChange={(v) => update({ enterToSend: v })} />
+                    <Toggle label="Show thinking" hint="Show the model's reasoning (collapsed) when it thinks before answering." checked={settings.showThinking} onChange={(v) => update({ showThinking: v })} />
+                    <Toggle label="Name chats automatically" hint="Uses a light model to write a short title after the first reply." checked={settings.autoTitle} onChange={(v) => update({ autoTitle: v })} />
                     <Toggle
-                      label="Compact long conversations"
-                      hint="Condenses earlier messages in lengthy threads to maintain fast replies and prevent token limit issues."
+                      label="Compact long chats automatically"
+                      hint="When a chat gets long, older messages are summarized and the summary is sent instead — faster replies and fewer limits. You can also type /compact."
                       checked={settings.autoCompact}
                       onChange={(v) => update({ autoCompact: v })}
                     />
                     <div className="setting-row">
                       <span className="setting-text">
-                        <span className="setting-label">Voice dictation language</span>
-                        <span className="setting-hint">Language used for browser speech recognition.</span>
+                        <span className="setting-label">Voice input language</span>
                       </span>
                       <span className="setting-ctrl">
                         <select value={settings.voiceLang} onChange={(e) => update({ voiceLang: e.target.value })}>
@@ -666,12 +644,12 @@ export default function SettingsModal() {
                   <div className="settings-card">
                     <div className="setting-row">
                       <span className="setting-text">
-                        <span className="setting-label">Signed in with Google</span>
-                        <span className="setting-hint">{useStore.getState().user?.email || 'Preview User'}</span>
+                        <span className="setting-label">Signed in</span>
+                        <span className="setting-hint">{useStore.getState().user?.email}</span>
                       </span>
                       <span className="setting-ctrl">
                         <button className="btn small logout" onClick={() => { setUi({ settingsOpen: false }); logout(); }}>
-                          <LogOut size={14} /> Sign out
+                          <LogOut size={15} /> Sign out
                         </button>
                       </span>
                     </div>
@@ -684,9 +662,11 @@ export default function SettingsModal() {
 
             {id === 'keys' && <KeysTab />}
             {id === 'models' && <ModelsTab />}
-            {id === 'personalize' && <PersonalizeSection />}
             {id === 'usage' && <UsageTab />}
-            {id === 'privacy' && <PrivacyAndDataSection />}
+            {id === 'personalize' && <PersonalizeTab />}
+            {id === 'memory' && <MemoryTab Toggle={Toggle} />}
+            {id === 'privacy' && <PrivacyTab Toggle={Toggle} Choice={Choice} />}
+            {id === 'data' && <DataTab />}
           </div>
         </div>
       </div>

@@ -76,14 +76,14 @@ export default function MemoryTab({ Toggle }: { Toggle: (p: { checked: boolean; 
         <span className="settings-group-title">Memory Preferences</span>
         <div className="settings-card">
           <Toggle
-            label="Use memory across chats"
-            hint="Models receive these remembered facts with every message, avoiding repetitive explanations. Works across all models."
+            label="Use memory"
+            hint="Models get the facts below with every message, so you don't have to repeat yourself. Works with every model and syncs to your devices."
             checked={settings.memory}
             onChange={(v) => update({ memory: v })}
           />
           <Toggle
-            label="Allow models to save memories"
-            hint="Models may automatically remember lasting preferences, projects, or context you share. Off = only when you ask."
+            label="Let models save memories"
+            hint="Models may save lasting facts you share (your job, projects, preferences). Off = only when you ask them to remember something."
             checked={settings.memoryAuto}
             onChange={(v) => update({ memoryAuto: v })}
           />
@@ -92,12 +92,10 @@ export default function MemoryTab({ Toggle }: { Toggle: (p: { checked: boolean; 
 
       <div className="settings-group">
         <div className="settings-group-title">
-          <span>Remembered Facts ({memories.length}/{MAX_MEMORIES})</span>
-          {memories.length > 0 && (
-            <button className="link-btn small danger" onClick={() => { if (confirm('Delete all saved memories?')) void clearMemories(); }}>
-              <Trash2 size={13} /> Clear all
-            </button>
-          )}
+          <span>
+            {memories.length} memor{memories.length === 1 ? 'y' : 'ies'}
+            <span className="muted small" style={{ fontWeight: 400, textTransform: 'none' }}> (up to {MAX_MEMORIES})</span>
+          </span>
         </div>
         <div className="settings-card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <form
@@ -119,25 +117,34 @@ export default function MemoryTab({ Toggle }: { Toggle: (p: { checked: boolean; 
           {memories.length > 4 && (
             <label className="search small-search" style={{ margin: 0 }}>
               <Search size={14} />
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search saved memories..." />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search memory" />
             </label>
           )}
 
           {memories.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '16px 8px' }}>
               <p className="muted small" style={{ margin: 0 }}>
-                No memories saved yet. Add a fact above, tell any model “remember that…”, or type <code>/remember …</code> in chat.
+                Nothing saved yet. Tell any model “remember that …”, type <code>/remember …</code> in the message box, or add one above.
               </p>
             </div>
           ) : (
-            <ul className="memory-list" style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>
+            <ul className="memory-list" style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', margin: 0 }}>
               {shown.map((m) => (
                 <Row key={m.id} m={m} />
               ))}
             </ul>
           )}
+
+          {memories.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <button className="btn danger small" onClick={() => { if (confirm('Delete everything in memory?')) void clearMemories(); }}>
+                <Trash2 size={14} /> Delete all memories
+              </button>
+            </div>
+          )}
+
           <span className="setting-hint" style={{ fontSize: '0.75rem' }}>
-            Memories are sent to whichever AI model answers. Models are instructed never to store passwords, health numbers, or confidential credentials.
+            Memories are sent to whichever free model answers, so models are told never to store patient details, health information, passwords or confidential figures.
           </span>
         </div>
       </div>

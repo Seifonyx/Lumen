@@ -68,9 +68,9 @@ async function send(page, text, n) {
   await page.click('.settings-page [aria-label="Close"]');
 
   await send(page, big('OLD-1'), 0);
-  check(!(await page.$('.memory-chip')), 'no memory meter on a short chat');
+  check(Boolean(await page.$('.usage-chip')), 'usage meter is there from the first message');
   await send(page, big('OLD-2'), 1);
-  check(Boolean(await page.$('.memory-chip')), `memory meter appears as the chat grows (${(await page.textContent('.memory-chip').catch(() => '')).trim()})`);
+  check(Boolean(await page.$('.usage-chip')), `usage meter shows the chat filling up (${(await page.textContent('.usage-chip').catch(() => '')).trim()})`);
   await send(page, big('OLD-3'), 2);
   check(log.summaries.length === 0, 'no compacting below the limit');
 
@@ -128,14 +128,14 @@ async function send(page, text, n) {
 
   // Failed summary: still answers with the full chat.
   log.failSummary = true;
-  await page.click('.memory-chip');
+  await page.click('.usage-chip');
   await page.click('text=Compact now');
   await page.waitForTimeout(1500);
   check(!(await page.$('.compact-note')), 'failed compaction leaves the chat as it was');
   log.failSummary = false;
 
   // New chat with summary.
-  await page.click('.memory-chip');
+  await page.click('.usage-chip');
   await page.click('text=New chat with summary');
   await page.waitForSelector('.compact-note', { timeout: 15000 });
   const cont = await page.textContent('.compact-note');

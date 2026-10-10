@@ -1,9 +1,14 @@
 import { ChevronDown, Loader2, MessageSquarePlus, Shrink, Undo2 } from 'lucide-react';
-import { useState } from 'react';
-import { formatTokens } from '../lib/usage';
-import { modelLabel, useStore } from '../store';
+import { useEffect, useRef, useState } from 'react';
+import { activeSummary, compactLimit, contextTokens } from '../lib/compact';
+import { isLayoutId } from '../lib/layouts';
+import { memoryInstructions } from '../lib/memory';
+import { AUTO } from '../lib/routing';
+import { formatTokens, formatUntil, nextReset, providerOf, remaining } from '../lib/usage';
+import { modelInfo, modelLabel, useStore } from '../store';
 import type { Chat, ChatSummary } from '../types';
 import Markdown from './Markdown';
+import './usage-meter.css';
 
 /** The line in a chat where older messages were replaced by a summary. */
 export function CompactNote({ chat, summary }: { chat: Chat; summary: ChatSummary }) {
@@ -59,34 +64,152 @@ export function CompactingNote() {
   );
 }
 
-/** Small meter above the message box once a chat gets long. */
-export function MemoryMeter({ used, limit, chatId }: { used: number; limit: number; chatId: string }) {
+/**
+ * The usage meter above the message box (like the context meter in Claude Code):
+ *  - how full this chat is, and what else is sent with every message (saved memories, your instructions)
+ *  - today's usage of the current model
+ *  - compact options
+ */
+export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
   const [open, setOpen] = useState(false);
-  const compact = useStore((s) => s.compact);
-  const continueInNewChat = useStore((s) => s.continueInNewChat);
-  const auto = useStore((s) => s.settings.autoCompact);
+  const box = useRef<HTMLDivElement>(null);
+  const catalog = useStore((s) => s.catalog);
+  const usage = useStore((s) => s.usage);
+  const settings = useStore((s) => s.settings);
+  const memories = useStore((s) => s.memories);
   const busy = useStore((s) => s.streamingChatId !== null || s.compactingChatId !== null);
+  const compact = useStore((s) => s.compact);
+  const undoCompact = useStore((s) => s.undoCompact);
+  const continueInNewChat = useStore((s) => s.continueInNewChat);
+  const updateSettings = useStore((s) => s.updateSettings);
+
+  // Close when clicking outside or pressing Esc.
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  // This chat: how full it is compared with the point where it gets compacted.
+  const used = contextTokens(chat);
+  const limit = compactLimit(model === AUTO ? undefined : modelInfo(catalog, model));
   const pct = Math.min(100, Math.round((used / limit) * 100));
+  const level = pct >= 85 ? ' high' : pct >= 65 ? ' mid' : '';
+  const summary = activeSummary(chat);
+  const canUndo = Boolean(summary && summary.upTo !== null);
+
+  // Also sent with every message (these don't count toward the compact point).
+  const memoryTokens = settings.memory ? Math.ceil(memoryInstructions(memories, settings.memoryAuto).length / 4) : 0;
+  const instructionTokens = Math.ceil(settings.customInstructions.length / 4);
+
+  // The model whose usage is shown: your pick, or (for Auto and layouts) the one that answered last.
+  const picked = model === AUTO || isLayoutId(model);
+  const current = picked ? [...chat.messages].reverse().find((m) => m.role === 'assistant' && m.model)?.model : model;
+  const u = current ? usage?.models[current] : undefined;
+  const freeOR = Boolean(current && current.startsWith('openrouter:') && current.endsWith(':free'));
+  const left = current ? remaining(usage, current) : null;
+  const blockedUntil = (() => {
+    if (!usage) return null;
+    if (u?.blockedUntil && u.blockedUntil > Date.now()) return u.blockedUntil;
+    return freeOR && usage.openrouter.limit && usage.openrouter.used >= usage.openrouter.limit ? usage.openrouter.resetAt : null;
+  })();
+  const requests = freeOR ? usage?.openrouter.used || 0 : u?.requests || 0;
+  const dailyLimit = freeOR ? usage?.openrouter.limit || null : u?.quota || null;
+  const resetAt = current ? (freeOR && usage ? usage.openrouter.resetAt : nextReset(providerOf(current))) : 0;
+  const status = blockedUntil ? 'limit reached' : left !== null ? `${left} left` : '';
+
   return (
-    <div className="memory">
-      <button className={`memory-chip${pct >= 85 ? ' high' : pct >= 65 ? ' mid' : ''}`} onClick={() => setOpen(!open)} aria-expanded={open} title="How full this chat's memory is">
-        <span className="memory-bar" aria-hidden>
+    <div className="usage-meter" ref={box}>
+      <button className={`usage-chip${level}`} onClick={() => setOpen(!open)} aria-expanded={open} title="Chat size, today's usage and compact options">
+        <span className="usage-bar" aria-hidden>
           <span style={{ width: `${pct}%` }} />
         </span>
-        Chat memory {pct}%
+        Context {pct}%{status && <span className="usage-status"> · {status}</span>}
       </button>
       {open && (
-        <div className="memory-pop" role="dialog" aria-label="Chat memory">
-          <p className="small">
-            This chat is about {formatTokens(used)} tokens long. {auto ? 'At 100% older messages are summarized automatically' : 'Automatic summarizing is off (Settings → General)'} — like compacting in Claude Code. The full chat stays on screen.
-          </p>
-          <div className="memory-btns">
-            <button className="btn" disabled={busy} onClick={() => { setOpen(false); void compact(chatId); }}>
-              <Shrink size={15} /> Compact now
-            </button>
-            <button className="btn ghost" disabled={busy} onClick={() => { setOpen(false); void continueInNewChat(chatId); }}>
-              <MessageSquarePlus size={15} /> New chat with summary
-            </button>
+        <div className="usage-pop" role="dialog" aria-label="Usage">
+          <div className="um-section">
+            <div className="um-title">This chat</div>
+            <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="How full this chat is">
+              <div className={`meter-fill${level}`} style={{ width: `${pct}%` }} />
+            </div>
+            <div className="um-row">
+              <span>Messages</span>
+              <span className="muted">~{formatTokens(used)} of {formatTokens(limit)} · {pct}%</span>
+            </div>
+            <div className="um-row">
+              <span>Saved memories</span>
+              <span className="muted">{settings.memory ? `~${formatTokens(memoryTokens)} · ${memories.length} saved` : 'Off'}</span>
+            </div>
+            <div className="um-row">
+              <span>Your instructions</span>
+              <span className="muted">{instructionTokens ? `~${formatTokens(instructionTokens)}` : 'None'}</span>
+            </div>
+            <p className="um-note">At 100% older messages are summarized, like compacting in Claude Code. Memories and instructions are sent with every message but don't count toward that.</p>
+          </div>
+
+          <div className="um-section">
+            <div className="um-title">{current ? `${modelLabel(catalog, current)} today` : 'Today'}</div>
+            {!usage ? (
+              <p className="um-note">Usage appears once you're signed in.</p>
+            ) : !current ? (
+              <p className="um-note">Auto picks a model for each message. Usage shows here after the first reply.</p>
+            ) : (
+              <>
+                {picked && <p className="um-note">Last answered by this model.</p>}
+                {dailyLimit && (
+                  <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={dailyLimit} aria-valuenow={requests} aria-label="Requests used today">
+                    <div className={`meter-fill${requests / dailyLimit >= 0.9 ? ' high' : requests / dailyLimit >= 0.7 ? ' mid' : ''}`} style={{ width: `${Math.min(100, Math.round((requests / dailyLimit) * 100))}%` }} />
+                  </div>
+                )}
+                <div className="um-row">
+                  <span>Requests</span>
+                  <span className="muted">{requests}{dailyLimit ? ` of ${dailyLimit}` : ''}{left !== null ? ` · ${left} left` : ''}</span>
+                </div>
+                {!freeOR && (
+                  <div className="um-row">
+                    <span>Tokens</span>
+                    <span className="muted">{formatTokens(u?.input || 0)} in · {formatTokens(u?.output || 0)} out</span>
+                  </div>
+                )}
+                <div className="um-row">
+                  <span>Status</span>
+                  <span className={blockedUntil ? 'um-bad' : 'muted'}>{blockedUntil ? `Limit reached · back ${formatUntil(blockedUntil)}` : `Available · resets ${formatUntil(resetAt)}`}</span>
+                </div>
+                {!dailyLimit && <p className="um-note">This model's daily limit isn't known yet; it's learned when the provider reports it.</p>}
+              </>
+            )}
+          </div>
+
+          <div className="um-section">
+            <div className="um-title">Compact</div>
+            <div className="um-actions">
+              <button className="btn" disabled={busy} onClick={() => { setOpen(false); void compact(chat.id); }}>
+                <Shrink size={15} /> Compact now
+              </button>
+              <button className="btn ghost" disabled={busy} onClick={() => { setOpen(false); void continueInNewChat(chat.id); }}>
+                <MessageSquarePlus size={15} /> New chat with summary
+              </button>
+              {canUndo && (
+                <button className="btn ghost" disabled={busy} onClick={() => { setOpen(false); void undoCompact(chat.id); }}>
+                  <Undo2 size={15} /> Undo last compact
+                </button>
+              )}
+            </div>
+            <label className="um-toggle">
+              <input type="checkbox" checked={settings.autoCompact} onChange={(e) => updateSettings({ autoCompact: e.target.checked })} />
+              <span>Compact automatically at 100%</span>
+            </label>
           </div>
         </div>
       )}

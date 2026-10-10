@@ -1,11 +1,11 @@
 import { FolderGit2, GitBranch, ArrowDown, FileSpreadsheet, FileText, Languages, LineChart, Menu, Presentation, ScrollText, SquarePen } from 'lucide-react';
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { activeSummary, compactLimit, contextTokens } from '../lib/compact';
+import { activeSummary } from '../lib/compact';
 import { AUTO } from '../lib/routing';
 import { isLayoutId } from '../lib/layouts';
 import { formatUntil } from '../lib/usage';
-import { modelInfo, selectCurrentChat, useStore } from '../store';
-import { CompactingNote, CompactNote, MemoryMeter } from './CompactNote';
+import { selectCurrentChat, useStore } from '../store';
+import { CompactingNote, CompactNote, UsageMeter } from './CompactNote';
 import Composer, { prefillComposer } from './Composer';
 import Logo from './Logo';
 import MessageItem from './MessageItem';
@@ -26,7 +26,6 @@ export default function ChatView() {
   const streaming = useStore((s) => s.streamingChatId !== null && s.streamingChatId === s.currentId);
   const defaultModel = useStore((s) => s.settings.defaultModel);
   const compacting = useStore((s) => s.compactingChatId !== null && s.compactingChatId === s.currentId);
-  const catalog = useStore((s) => s.catalog);
   const syncPaused = useStore((s) => s.firebaseUsage.level === 'paused' && s.authed === true);
   const resetAt = useStore((s) => s.firebaseUsage.resetAt);
   const online = useStore((s) => s.online);
@@ -40,9 +39,6 @@ export default function ChatView() {
   const messages = chat?.messages || [];
   const changeCount = Object.keys(chat?.changes || {}).length;
   const summary = chat ? activeSummary(chat) : null;
-  // How full the chat is, compared with the point where it gets compacted.
-  const used = chat ? contextTokens(chat) : 0;
-  const limit = compactLimit(model === AUTO ? undefined : modelInfo(catalog, model));
   const lastText = messages.length ? messages[messages.length - 1].text.length + (messages[messages.length - 1].thinking?.length || 0) : 0;
 
   // Jump to the bottom when switching chats.
@@ -158,7 +154,7 @@ export default function ChatView() {
         </button>
       )}
 
-      <Composer model={model} meter={chat && used > limit * 0.4 ? <MemoryMeter used={used} limit={limit} chatId={chat.id} /> : null} />
+      <Composer model={model} meter={chat && (messages.length > 0 || summary) ? <UsageMeter chat={chat} model={model} /> : null} />
     </main>
   );
 }

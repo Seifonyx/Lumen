@@ -1,4 +1,4 @@
-import { ChevronDown, Loader2, MessageSquarePlus, Shrink, Undo2 } from 'lucide-react';
+import { ChevronDown, Loader2, MessageSquarePlus, Shrink, Undo2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { activeSummary, compactLimit, contextTokens } from '../lib/compact';
 import { isLayoutId } from '../lib/layouts';
@@ -73,6 +73,8 @@ export function CompactingNote() {
 export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const close = useRef<HTMLButtonElement>(null);
   const catalog = useStore((s) => s.catalog);
   const usage = useStore((s) => s.usage);
   const settings = useStore((s) => s.settings);
@@ -86,17 +88,40 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
   // Close when clicking outside or pressing Esc.
   useEffect(() => {
     if (!open) return;
+    const fit = () => {
+      const panel = box.current?.querySelector<HTMLElement>('.usage-pop');
+      if (panel && trigger.current) panel.style.maxHeight = `${Math.max(0, Math.min(600, trigger.current.getBoundingClientRect().top - 12))}px`;
+    };
+    let frame = 0;
+    const scheduleFit = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(fit);
+    };
+    fit();
+    window.addEventListener('resize', scheduleFit);
+    window.visualViewport?.addEventListener('resize', scheduleFit);
+    const observer = new ResizeObserver(scheduleFit);
+    if (box.current?.parentElement) observer.observe(box.current.parentElement);
+    close.current?.focus({ preventScroll: true });
     const onDown = (e: MouseEvent) => {
       if (!box.current?.contains(e.target as Node)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        setOpen(false);
+        trigger.current?.focus({ preventScroll: true });
+      }
     };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', scheduleFit);
+      window.visualViewport?.removeEventListener('resize', scheduleFit);
+      cancelAnimationFrame(frame);
+      observer.disconnect();
     };
   }, [open]);
 
@@ -126,27 +151,25 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
   const requests = freeOR ? usage?.openrouter.used || 0 : u?.requests || 0;
   const dailyLimit = freeOR ? usage?.openrouter.limit || null : u?.quota || null;
   const resetAt = current ? (freeOR && usage ? usage.openrouter.resetAt : nextReset(providerOf(current))) : 0;
-  const status = blockedUntil ? 'limit reached' : left !== null ? `${left} left` : '';
 
   return (
     <div className="usage-meter" ref={box}>
-      <button className={`usage-chip${level}`} onClick={() => setOpen(!open)} aria-expanded={open} title="Chat size, today's usage and compact options">
-        <span className="usage-bar" aria-hidden>
-          <span style={{ width: `${pct}%` }} />
-        </span>
-        Context {pct}%{status && <span className="usage-status"> · {status}</span>}
+      <button ref={trigger} className={`usage-chip${level}`} onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="dialog" aria-controls="usage-panel" title="Conversation capacity and daily usage">
+        <svg className="usage-ring" viewBox="0 0 20 20" aria-hidden="true"><circle className="usage-ring-track" cx="10" cy="10" r="7" /><circle className="usage-ring-fill" cx="10" cy="10" r="7" strokeDasharray="43.98" strokeDashoffset={43.98 * (1 - pct / 100)} /></svg>
+        Context {pct}%{blockedUntil && <span className="usage-status"> · limit reached</span>}
+        <ChevronDown size={12} aria-hidden="true" />
       </button>
       {open && (
-        <div className="usage-pop" role="dialog" aria-label="Usage">
+        <div className="usage-pop" id="usage-panel" role="dialog" aria-label="Usage">
+          <header className="um-head"><span>Usage</span><button ref={close} className="icon-btn sm" aria-label="Close usage" onClick={() => { setOpen(false); trigger.current?.focus({ preventScroll: true }); }}><X size={16} /></button></header>
           <div className="um-section">
-            <div className="um-title">This chat</div>
+            <div className="um-heading"><span className="um-title">Conversation capacity</span><strong>{pct}% used</strong></div>
             <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="How full this chat is">
               <div className={`meter-fill${level}`} style={{ width: `${pct}%` }} />
             </div>
-            <div className="um-row">
-              <span>Messages</span>
-              <span className="muted">~{formatTokens(used)} of {formatTokens(limit)} · {pct}%</span>
-            </div>
+            <p className="um-note">~{formatTokens(used)} of {formatTokens(limit)} tokens before compaction.</p>
+            <details className="um-details"><summary>What counts toward context?</summary>
+            <p className="um-note">This is an estimate of the chat's messages and attachments. Memories and instructions are sent alongside them, outside this compaction threshold.</p>
             <div className="um-row">
               <span>Saved memories</span>
               <span className="muted">{settings.memory ? `~${formatTokens(memoryTokens)} · ${memories.length} saved` : 'Off'}</span>
@@ -155,44 +178,34 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
               <span>Your instructions</span>
               <span className="muted">{instructionTokens ? `~${formatTokens(instructionTokens)}` : 'None'}</span>
             </div>
-            <p className="um-note">At 100% older messages are summarized, like compacting in Claude Code. Memories and instructions are sent with every message but don't count toward that.</p>
+            </details>
+            {pct >= 85 && <p className="um-note um-warning">This conversation is nearly full. Compact it to make room for your next messages.</p>}
           </div>
 
           <div className="um-section">
-            <div className="um-title">{current ? `${modelLabel(catalog, current)} today` : 'Today'}</div>
+            <div className="um-title">Daily requests</div>
             {!usage ? (
               <p className="um-note">Usage appears once you're signed in.</p>
             ) : !current ? (
               <p className="um-note">Auto picks a model for each message. Usage shows here after the first reply.</p>
             ) : (
               <>
-                {picked && <p className="um-note">Last answered by this model.</p>}
+                <div className="um-model">{modelLabel(catalog, current)}{picked && <span className="um-note">Last used in this conversation</span>}</div>
+                <div className="um-heading"><span className="um-note">{freeOR ? 'Shared free allowance' : 'Requests today'}</span><strong>{requests}{dailyLimit ? ` / ${dailyLimit}` : ''}</strong></div>
                 {dailyLimit && (
-                  <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={dailyLimit} aria-valuenow={requests} aria-label="Requests used today">
+                  <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={dailyLimit} aria-valuenow={Math.min(requests, dailyLimit)} aria-valuetext={`${requests} of ${dailyLimit} requests used today`} aria-label="Requests used today">
                     <div className={`meter-fill${requests / dailyLimit >= 0.9 ? ' high' : requests / dailyLimit >= 0.7 ? ' mid' : ''}`} style={{ width: `${Math.min(100, Math.round((requests / dailyLimit) * 100))}%` }} />
                   </div>
                 )}
-                <div className="um-row">
-                  <span>Requests</span>
-                  <span className="muted">{requests}{dailyLimit ? ` of ${dailyLimit}` : ''}{left !== null ? ` · ${left} left` : ''}</span>
-                </div>
-                {!freeOR && (
-                  <div className="um-row">
-                    <span>Tokens</span>
-                    <span className="muted">{formatTokens(u?.input || 0)} in · {formatTokens(u?.output || 0)} out</span>
-                  </div>
-                )}
-                <div className="um-row">
-                  <span>Status</span>
-                  <span className={blockedUntil ? 'um-bad' : 'muted'}>{blockedUntil ? `Limit reached · back ${formatUntil(blockedUntil)}` : `Available · resets ${formatUntil(resetAt)}`}</span>
-                </div>
-                {!dailyLimit && <p className="um-note">This model's daily limit isn't known yet; it's learned when the provider reports it.</p>}
+                <p className={`um-note${blockedUntil ? ' um-bad' : ''}`}>{blockedUntil ? `Limit reached · back ${formatUntil(blockedUntil)}` : `${left !== null ? `${left} remaining · ` : ''}Resets ${formatUntil(resetAt)}`}</p>
+                {!dailyLimit && <p className="um-note">Daily allowance unknown. A percentage will appear when the provider reports a limit.</p>}
+                {!freeOR && <details className="um-details"><summary>Token details</summary><p className="um-note">{formatTokens(u?.input || 0)} input · {formatTokens(u?.output || 0)} output</p></details>}
               </>
             )}
           </div>
 
           <div className="um-section">
-            <div className="um-title">Compact</div>
+            <div className="um-title">Manage conversation</div>
             <div className="um-actions">
               <button className="btn" disabled={busy} onClick={() => { setOpen(false); void compact(chat.id); }}>
                 <Shrink size={15} /> Compact now

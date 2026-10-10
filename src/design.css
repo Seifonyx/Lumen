@@ -200,6 +200,33 @@
 .models-settings .model-list.add { max-height: 460px; overflow-y: auto; overscroll-behavior: contain; }
 .models-settings .filter-chips { flex-wrap: wrap; }
 .models-settings .legend { line-height: 1.8; font-size: 11px; }
+.usage .usage-overview { padding: 18px; display: flex; flex-direction: column; gap: 20px; }
+.usage .usage-summary { padding: 0; margin: 0; border: 0; align-items: center; }
+.usage .usage-big { font-size: 32px; font-weight: 550; letter-spacing: -.04em; line-height: 1.2; }
+.usage .usage-summary .small { font-size: 11px; line-height: 1.6; }
+.usage .usage-reset-details { font-size: 12px; color: var(--text-2); }
+.usage-reset-details summary { cursor: pointer; }
+.usage-reset-details .usage-resets { margin-top: 8px; text-align: start; }
+.usage .usage-pool { margin: 0; padding: 16px; background: var(--surface-2); border: 0; border-radius: 12px; }
+.usage .usage-card-head { line-height: 1.5; }
+.usage .usage-card-head .setting-label { font-size: 12px; }
+.usage .meter { height: 6px; }
+.usage .meter-fill { background: var(--accent); }
+.usage .meter-fill.mid { background: #ce9635; }
+.usage .meter-fill.high { background: var(--red); }
+.usage .usage-list { border: 0; border-radius: 0; }
+.usage .usage-list .usage-row { padding: 16px 0; gap: 10px; }
+.usage .usage-list .usage-row:first-child { padding-top: 0; }
+.usage .usage-list .usage-row:last-child { padding-bottom: 0; }
+.usage .usage-row-head { flex-wrap: wrap; gap: 6px 12px; }
+.usage .usage-row-head .model-title { font-size: 13px; font-weight: 550; }
+.usage .usage-row .model-sub { font-size: 11px; line-height: 1.8; white-space: normal; }
+.usage .status { font-size: 10px; }
+.usage-sync summary { padding: 18px; cursor: pointer; list-style: none; position: relative; padding-inline-end: 40px; }
+.usage-sync summary::-webkit-details-marker { display: none; }
+.usage-sync summary::after { content: '+'; position: absolute; inset-inline-end: 18px; top: 20px; color: var(--text-2); }
+.usage-sync[open] summary::after { content: '−'; }
+.usage .usage-sync .firebase-card { border: 0; border-top: 1px solid var(--border); border-radius: 0; margin: 0; padding: 18px; }
 @media (max-width: 599px) {
   .setting-ctrl .segmented { height: auto; flex-wrap: wrap; gap: 2px; }
   .setting-ctrl .segmented button { min-height: 30px; flex: 1 1 auto; white-space: nowrap; }

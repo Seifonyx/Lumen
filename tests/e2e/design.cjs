@@ -70,7 +70,23 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         check(await page.locator('.attachment').count() === 1 && !(await page.locator('.sheet').isVisible()), `${label}: merged menu attaches files`);
         await page.fill('.composer textarea', 'Summarize the weekly notes.');
         await page.click('.send-btn'); await page.waitForSelector('.msg.assistant .markdown');
+        await page.locator('.send-btn.stop').waitFor({ state: 'hidden' });
         check(!(await page.locator('.starter-actions').isVisible()) && (await scan(page)).length === 0, `${label}: conversation replaces welcome and stays readable`);
+        await page.locator('.usage-chip').click();
+        await page.waitForTimeout(180);
+        check(await page.locator('.usage-ring').isVisible() && inside(await page.locator('.usage-pop').boundingBox(), width, height) && (await scan(page)).length === 0, `${label}: compact usage panel fits the screen`);
+        check(await page.getByRole('meter', { name: 'How full this chat is' }).count() === 1 && (await page.locator('.usage-pop').textContent()).includes('Daily allowance unknown'), `${label}: usage distinguishes estimated context and unknown daily allowance`);
+        await page.screenshot({ path: path.join(__dirname, 'out', `usage-meter-${width}-${theme}.png`) });
+        if (mobile) {
+          await page.evaluate(() => { Object.defineProperty(window.visualViewport, 'height', { configurable: true, value: 460 }); window.visualViewport.dispatchEvent(new Event('resize')); });
+          await page.waitForFunction(() => document.documentElement.classList.contains('kb-open'));
+          await page.waitForTimeout(100);
+          check(inside(await page.locator('.usage-pop').boundingBox(), width, 460), `${label}: usage popup fits above the simulated phone keyboard`);
+          await page.evaluate((height) => { Object.defineProperty(window.visualViewport, 'height', { configurable: true, value: height }); window.visualViewport.dispatchEvent(new Event('resize')); }, height);
+          await page.waitForFunction(() => !document.documentElement.classList.contains('kb-open'));
+        }
+        await page.keyboard.press('Escape');
+        check(!(await page.locator('.usage-pop').isVisible()) && await page.locator('.usage-chip').evaluate(el => el === document.activeElement), `${label}: usage Escape restores keyboard focus`);
         if (mobile) await page.click('.menu-btn');
         await page.click('.sidebar-foot');
         if (mobile) await page.waitForFunction(() => document.querySelector('.sidebar').getBoundingClientRect().right <= 0);

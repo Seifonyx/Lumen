@@ -108,6 +108,12 @@ async function device(browser, mobile) {
   check((await A.page.textContent('.models-pop')).includes('Limit'), 'picker marks the limited model');
   await A.page.keyboard.press('Escape');
 
+  await A.page.locator('.usage-chip').click();
+  const dailyMeter = A.page.getByRole('meter', { name: 'Requests used today' });
+  check(await dailyMeter.getAttribute('aria-valuemax') === '50' && await dailyMeter.getAttribute('aria-valuenow') === '1', 'usage popup shows the real shared OpenRouter allowance');
+  check((await A.page.locator('.usage-pop').textContent()).includes('49 remaining'), 'usage popup shows the remaining daily requests');
+  await A.page.getByRole('button', { name: 'Close usage', exact: true }).click();
+
   // Usage tab.
   await A.page.click('.menu-btn');
   await A.page.click('.sidebar-foot');

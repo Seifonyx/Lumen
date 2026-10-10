@@ -70,7 +70,6 @@ async function run(browser, width) {
     await look(`settings: ${name}`);
     await shot(`settings-${name.replace(/\s/g, '')}`);
   }
-  await page.click('.layout-card:has-text("Everyday") [aria-label="Edit Everyday"]').catch(() => {});
   if (await page.isVisible('.settings-back')) await page.click('.settings-back');
   await page.click('.settings-tabs >> text=Models');
   await page.locator('.models-nav button').filter({ hasText: 'Layouts' }).click();

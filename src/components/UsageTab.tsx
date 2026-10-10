@@ -6,7 +6,7 @@ import { modelLabel, useStore } from '../store';
 function Bar({ used, limit }: { used: number; limit: number }) {
   const pct = Math.min(100, Math.round((used / Math.max(1, limit)) * 100));
   return (
-    <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={limit} aria-valuenow={used} aria-label={`${used} of ${limit} used`}>
+    <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={limit} aria-valuenow={Math.min(used, limit)} aria-valuetext={`${used} of ${limit} used`} aria-label={`${used} of ${limit} used`}>
       <div className={`meter-fill${pct >= 90 ? ' high' : pct >= 70 ? ' mid' : ''}`} style={{ width: `${pct}%` }} />
     </div>
   );
@@ -67,6 +67,7 @@ export default function UsageTab() {
   const catalog = useStore((s) => s.catalog);
   const enabled = useStore((s) => s.settings.enabledModels);
   const hasOpenRouter = Boolean(catalog?.providers.openrouter);
+  const firebaseLevel = useStore((s) => s.firebaseUsage.level);
 
   if (!view) return <div className="settings-section usage"><p className="muted pad">Usage appears once you're signed in and your models have loaded.</p><FirebaseCard /></div>;
 
@@ -82,14 +83,14 @@ export default function UsageTab() {
   return (
     <div className="settings-section usage">
       <div className="settings-group">
-        <span className="settings-group-title">Today's Usage & Quotas</span>
-        <div className="settings-card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div className="usage-summary" style={{ margin: 0, padding: 0, border: 0 }}>
+        <span className="settings-group-title">Daily usage</span>
+        <div className="settings-card usage-overview">
+          <div className="usage-summary">
             <div>
               <div className="usage-big">{total}</div>
               <div className="muted small">total requests today</div>
             </div>
-            <div className="muted small usage-resets">
+            <details className="usage-reset-details"><summary>Daily resets</summary><div className="muted small usage-resets">
               Google limits reset {formatUntil(view.geminiResetAt)}
               {hasOpenRouter && (
                 <>
@@ -103,11 +104,11 @@ export default function UsageTab() {
                   {[catalog?.providers.groq && 'Groq', catalog?.providers.cerebras && 'Cerebras'].filter(Boolean).join(' and ')} limits reset {formatUntil(view.openrouter.resetAt)}
                 </>
               )}
-            </div>
+            </div></details>
           </div>
 
           {hasOpenRouter && view.openrouter.limit && (
-            <div className="usage-card" style={{ margin: 0 }}>
+            <div className="usage-card usage-pool">
               <div className="usage-card-head">
                 <span className="setting-label">OpenRouter free models allowance</span>
                 <span className="muted small">
@@ -139,13 +140,13 @@ export default function UsageTab() {
         </div>
       </div>
 
-      <div className="settings-group">
-        <span className="settings-group-title">Cloud Sync Storage</span>
+      <details className="settings-card usage-sync" open={firebaseLevel !== 'normal' || undefined}>
+        <summary><span className="setting-label">Cloud sync allowance</span><span className="setting-hint">Free plan usage shared across invited accounts.</span></summary>
         <FirebaseCard />
-      </div>
+      </details>
 
       <p className="muted small">
-        Google doesn't publish fixed limits in advance; Model Router tracks model quotas dynamically as you chat. Models hitting rate limits are bypassed automatically until reset.
+        Counts follow your provider's daily reset. Limits appear when the provider reports them; unknown allowances are shown without a percentage.
       </p>
     </div>
   );

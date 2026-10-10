@@ -13,6 +13,8 @@
 - Model availability: provider lists are authoritative; Gemini pagination is complete. `lib/ai/model-status.js` records retired IDs reviewed 2026-10-11 and filters disabled/expired entries. Successful lists prune missing saved models; provider outages preserve their previous catalogue/choices. Keep historical chat model labels intact. OpenRouter remains free-only.
 - Usage distinguishes estimated conversation capacity (relative to compaction threshold) from daily provider allowances. Unknown limits have no fabricated percentage. Context/token and sync details expand on demand.
 - `src/lib/sidebar-gesture.ts` handles continuous phone swipes in either layout direction, intent, velocity, cancellation and click suppression. Inputs, selected text, code and horizontal scrollers are excluded; vertical scrolling remains native. Closed mobile drawer is inert; open drawer manages keyboard focus. Physical iPhone keyboard and Safari gesture behavior still need user verification.
+- Sidebar: no brand header; top-right search icon reveals search on demand. New chat sits above the bottom account row. Repository search autofocus is desktop-only. + offers Photos & files and GitHub repository; the native file picker includes camera access.
+- `TextSelection.tsx` provides a focused message reading/selection view with Select all and Copy selected. Chat text keeps native selection; app controls do not join selections. Test selection and gestures together when changing phone interactions.
 
 ## Features and release
 

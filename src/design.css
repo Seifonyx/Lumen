@@ -74,6 +74,33 @@
 .sidebar .chat-row { margin-block: 2px; }
 .sidebar .chat-row.active { background: color-mix(in srgb, var(--accent) 12%, var(--sidebar)); }
 .sidebar .sidebar-foot { border: 0; background: var(--surface); margin-inline: 4px; }
+.sidebar-head { direction: ltr; flex-shrink: 0; }
+.sidebar-search-button { margin-left: auto; }
+.sidebar-search-button.active { color: var(--accent); background: var(--accent-soft); }
+.sidebar .sidebar-search-field { background: var(--surface); border-color: var(--input-border); padding-inline: 10px 4px; }
+.sidebar-search-field input { min-width: 0; }
+.sidebar-bottom-actions { display: flex; justify-content: flex-start; padding: 10px 4px 0; border-top: 1px solid var(--border); flex-shrink: 0; }
+.sidebar-bottom-actions .new-chat { display: inline-flex; gap: 10px; min-height: 44px; background: var(--surface); padding-inline: 14px; }
+.sidebar-bottom-actions .new-chat:hover { background: var(--accent-soft); }
+.sidebar .sidebar-foot { margin-top: 0; }
+
+/* App chrome never joins a text selection; message content keeps native selection handles. */
+#root { -webkit-user-select: none; user-select: none; }
+input, textarea, [contenteditable='true'], .markdown, .bubble, .thinking-body, .error-msg, .selectable-text, pre {
+  -webkit-user-select: text; user-select: text;
+}
+button, .msg-actions, .code-head, .sidebar, .topbar { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); color: var(--text); }
+.text-selection-view { padding: 0 24px 28px; }
+.text-selection-tools { position: sticky; top: 0; z-index: 1; background: var(--surface); padding-block: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.text-selection-tools > div { display: flex; gap: 8px; flex-shrink: 0; }
+.selectable-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 16px; line-height: 1.8; max-width: 760px; margin-inline: auto; outline: none; }
+.selectable-text:focus-visible { outline: 2px solid var(--focus); outline-offset: 6px; border-radius: 4px; }
+@media (max-width: 599px) {
+  .text-selection-view { padding-inline: 18px; }
+  .text-selection-tools { align-items: flex-start; flex-direction: column; }
+  .text-selection-tools > div { width: 100%; justify-content: flex-end; }
+}
 .account-name { font-size: 13px; }
 .account-mail { font-size: 11px; margin-top: 3px; }
 .avatar { background: var(--accent); color: var(--accent-text); width: 32px; height: 32px; }

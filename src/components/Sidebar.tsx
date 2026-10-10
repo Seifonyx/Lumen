@@ -1,5 +1,4 @@
 import { Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings, SquarePen, Tag, Trash2, X } from 'lucide-react';
-import Logo from './Logo';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey, modelShortName, safeFileName, saveBlob } from '../lib/util';
 import { useStore } from '../store';
@@ -113,6 +112,10 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
   const open = useStore((s) => s.sidebarOpen);
   const { newChat, setUi, selectProject } = useStore.getState();
   const [query, setQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInput = useRef<HTMLInputElement>(null);
+  const searchButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => { if (searchOpen) searchInput.current?.focus({ preventScroll: true }); }, [searchOpen]);
   const [projectManager, setProjectManager] = useState(false);
   const [phone, setPhone] = useState(() => window.matchMedia('(max-width: 899px)').matches);
   const sidebarRef = useRef<HTMLElement>(null);
@@ -179,25 +182,19 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
       inert={phone && !open}
     >
       <div className="sidebar-head">
-        <div className="brand">
-          <Logo size={24} />
-          <span>Model Router</span>
-        </div>
         <button className="icon-btn collapse-sidebar" onClick={onCollapse} aria-label="Collapse sidebar" title="Collapse sidebar">
           <PanelLeftClose size={18} />
         </button>
         <button className="icon-btn close-sidebar" onClick={() => setUi({ sidebarOpen: false })} aria-label="Close menu">
           <X size={18} />
         </button>
+        <button ref={searchButton} className={`icon-btn sidebar-search-button${searchOpen ? ' active' : ''}`} aria-label="Search chats" title="Search chats" aria-expanded={searchOpen} aria-controls="chat-search" onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) setQuery(''); }}><Search size={19} /></button>
       </div>
-      <button className="btn block new-chat" onClick={newChat}>
-        <SquarePen size={15} /> New chat
-        <span className="kbd">{modKey}⇧O</span>
-      </button>
-      <label className="search">
+      {searchOpen && <label className="search sidebar-search-field">
         <Search size={16} />
-        <input id="chat-search" type="search" aria-label="Search chats" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" />
-      </label>
+        <input ref={searchInput} id="chat-search" type="search" aria-label="Search chats" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setSearchOpen(false); setQuery(''); searchButton.current?.focus(); } }} dir="auto" />
+        <button className="icon-btn sm" aria-label="Close search" onClick={() => { setSearchOpen(false); setQuery(''); searchButton.current?.focus(); }}><X size={15} /></button>
+      </label>}
       <div className="sidebar-section-heading"><div className="sidebar-section-label">Projects</div><button className="icon-btn sm" onClick={() => setProjectManager(true)} aria-label="Manage projects" title="Manage projects"><Plus size={16} /></button></div>
       <div className="project-switcher">
         <FolderKanban size={16} />
@@ -220,6 +217,11 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
           </section>
         ))}
       </nav>
+      <div className="sidebar-bottom-actions">
+        <button className="btn new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}>
+          <SquarePen size={18} /> New chat
+        </button>
+      </div>
       <button className="sidebar-foot" onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })} aria-label="Settings">
         {user?.photo ? <img className="avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
         <span className="account">

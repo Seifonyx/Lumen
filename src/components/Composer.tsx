@@ -67,7 +67,6 @@ export default function Composer({ model, meter, starterActions }: { model: stri
   const fileInput = useRef<HTMLInputElement>(null);
   const stopListening = useRef<(() => void) | null>(null);
   const baseText = useRef('');
-  const cameraInput = useRef<HTMLInputElement>(null);
   const [sheet, setSheet] = useState(false);
   const [sheetAnchor, setSheetAnchor] = useState<{ left: number; bottom: number } | undefined>();
   const touch = isTouch();
@@ -371,7 +370,6 @@ export default function Composer({ model, meter, starterActions }: { model: stri
               <button type="button" className={`tool-btn${chat?.repo ? ' on-repo' : ''}`} onClick={() => setSheet(true)} aria-label="Add photos, files or a repository" aria-haspopup="dialog">
                 <Plus size={22} />
               </button>
-              <input ref={cameraInput} type="file" accept="image/*" capture="environment" hidden onChange={(e) => { void addFiles([...(e.target.files || [])]); e.target.value = ''; }} />
             </>
           ) : (
             <button type="button" className={`tool-btn add-tool${chat?.repo ? ' on-repo' : ''}`} onClick={(e) => {
@@ -420,10 +418,8 @@ export default function Composer({ model, meter, starterActions }: { model: stri
         <AttachSheet
           onClose={() => setSheet(false)}
           onFiles={() => fileInput.current?.click()}
-          onCamera={() => cameraInput.current?.click()}
           onRepo={() => setUi(chat?.repo ? { workspaceOpen: true } : { repoPicker: true })}
           repoName={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : undefined}
-          showCamera={touch}
           anchor={touch ? undefined : sheetAnchor}
         />
       )}

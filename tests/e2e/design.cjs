@@ -14,17 +14,19 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         const ctx = await browser.newContext({ viewport: { width, height }, isMobile: mobile, hasTouch: mobile,
           ...(mobile ? { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1' } : {}) });
         await ctx.route('**/firestore.googleapis.com/**', (r) => r.abort());
+        await ctx.route('**/api.github.com/**', (r) => r.fulfill({ json: [] }));
         await ctx.route('**/generativelanguage.googleapis.com/**', (r) => {
           const url = r.request().url();
           if (url.includes('/models?')) return r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash Latest', supportedGenerationMethods: ['generateContent'], inputTokenLimit: 1048576 }, { name: 'models/gemini-pro-test', displayName: 'Gemini Pro Test', supportedGenerationMethods: ['generateContent'], inputTokenLimit: 1048576 }] } });
           return r.fulfill({ headers: { 'content-type': 'text/event-stream' }, body: 'data: ' + JSON.stringify({ candidates: [{ content: { parts: [{ text: '## A clearer summary\n\n- Review the actions.\n- Share progress with the team.' }] }, finishReason: 'STOP' }] }) + '\n\n' });
         });
+        await ctx.addInitScript(() => { Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { window.__lastCopied = text; } } }); });
         await ctx.addInitScript(({ theme }) => {
           if (window.top !== window || localStorage.getItem('mr.preview_user')) return;
           const uid = 'preview-design_test';
           const settings = { theme, autoIntroduced: true, autoTitle: false, enabledModels: ['gemini:gemini-flash-latest'], defaultModel: 'gemini:gemini-flash-latest' };
           localStorage.setItem('mr.preview_user', JSON.stringify({ uid, email: 'design@local.invalid', displayName: 'Design', photoURL: '' }));
-          localStorage.setItem(`mr.account.${uid}`, JSON.stringify({ geminiKey: 'test-key', settings }));
+          localStorage.setItem(`mr.account.${uid}`, JSON.stringify({ geminiKey: 'test-key', githubKey: 'fixture-github', settings }));
           localStorage.setItem('mr.settings', JSON.stringify(settings));
           localStorage.setItem('mr.installHint', '1');
         }, { theme });
@@ -49,9 +51,26 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
           await page.waitForFunction(() => !document.documentElement.classList.contains('kb-open'));
         }
         await page.screenshot({ path: path.join(__dirname, 'out', `design-home-${width}-${theme}.png`) });
+        await page.locator('.suggestion').filter({ hasText: 'Code on a GitHub repo' }).click();
+        await page.locator('input[placeholder="Search your repositories"]').waitFor();
+        check(await page.locator('input[placeholder="Search your repositories"]').evaluate(el => (el === document.activeElement) === !matchMedia('(pointer: coarse)').matches), label + ': repository starter keeps phone keyboard closed');
+        await page.locator('.modal [aria-label="Close"]').click();
+        if (mobile) await page.click('.menu-btn');
+        check(await page.locator('.sidebar .brand').count() === 0 && await page.locator('#chat-search').count() === 0, label + ': sidebar header is clean with search hidden');
+        const sidebarBox = await page.locator('.sidebar').boundingBox();
+        const searchBox = await page.locator('.sidebar-search-button').boundingBox();
+        const newChatBox = await page.locator('.sidebar .new-chat').boundingBox();
+        const historyBox = await page.locator('.chat-list').boundingBox();
+        check(searchBox.x > sidebarBox.x + sidebarBox.width / 2 && newChatBox.y >= historyBox.y + historyBox.height, label + ': search top right and New chat at bottom');
+        await page.locator('.sidebar-search-button').click();
+        await page.locator('#chat-search').fill('no-match');
+        check(await page.locator('.empty-list').textContent() === 'No chats match.' && await page.locator('#chat-search').evaluate(el => el === document.activeElement), label + ': search opens explicitly and filters');
+        await page.keyboard.press('Escape');
+        check(await page.locator('#chat-search').count() === 0 && await page.locator('.sidebar-search-button').evaluate(el => el === document.activeElement), label + ': search dismisses and restores focus');
+        if (mobile) await page.click('[aria-label="Close menu"]');
         const add = mobile ? '[aria-label="Add photos, files or a repository"]' : '[aria-label="Add files or a repository"]';
         await page.click(add);
-        check(await page.locator('.sheet-row').count() === (mobile ? 3 : 2) && await page.locator('.sheet').evaluate((el) => el.contains(document.activeElement)), `${label}: unified add menu has correct actions and keyboard focus`);
+        check(await page.locator('.sheet-row').count() === 2 && await page.locator('.sheet').evaluate((el) => el.contains(document.activeElement)), `${label}: unified add menu has correct actions and keyboard focus`);
         if (!mobile) check(await page.locator('.sheet-popover-backdrop').isVisible() && inside(await page.locator('.sheet').boundingBox(), width, height), `${label}: add menu opens beside the composer and fits on screen`);
         await page.keyboard.press('Shift+Tab');
         check(await page.locator('.sheet-row').last().evaluate((el) => el === document.activeElement), `${label}: add menu traps keyboard focus`);
@@ -72,6 +91,16 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         await page.click('.send-btn'); await page.waitForSelector('.msg.assistant .markdown');
         await page.locator('.send-btn.stop').waitFor({ state: 'hidden' });
         check(!(await page.locator('.starter-actions').isVisible()) && (await scan(page)).length === 0, `${label}: conversation replaces welcome and stays readable`);
+        await page.locator('.msg.assistant [aria-label="Select text"]').click();
+        check(inside(await page.locator('.modal.full').boundingBox(), width, height) && await page.locator('.selectable-text').evaluate(el => getComputedStyle(el).userSelect === 'text'), label + ': focused text selection fits and allows selection');
+        await page.getByRole('button', { name: 'Select all', exact: true }).click();
+        await page.waitForFunction(() => !!window.getSelection()?.toString());
+        check(await page.evaluate(() => window.getSelection().toString().includes('Review the actions') && !window.getSelection().toString().includes('Copy selected')), label + ': selection contains reply only');
+        const selectedReply = await page.evaluate(() => window.getSelection().toString());
+        await page.getByRole('button', { name: 'Copy selected', exact: true }).click();
+        check(await page.evaluate(text => window.__lastCopied === text, selectedReply), label + ': copies only the selected reply text');
+        await page.locator('.modal [aria-label="Close"]').click();
+        check(await page.evaluate(() => !window.getSelection()?.toString()), label + ': selection clears on closing');
         await page.locator('.usage-chip').click();
         await page.waitForTimeout(180);
         check(await page.locator('.usage-ring').isVisible() && inside(await page.locator('.usage-pop').boundingBox(), width, height) && (await scan(page)).length === 0, `${label}: compact usage panel fits the screen`);

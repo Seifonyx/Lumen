@@ -10,6 +10,7 @@ import { modelLabel, useStore } from '../store';
 import type { Message } from '../types';
 import Markdown from './Markdown';
 import ModelPicker from './ModelPicker';
+import TextSelection from './TextSelection';
 
 function hostOf(url: string) {
   try {
@@ -135,6 +136,7 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
       )}
       {!editing && (
         <div className="msg-actions user-actions">
+          {message.text && <TextSelection text={message.text} />}
           <button className="msg-action" onClick={async () => { if (await copyText(message.text)) { setCopied(true); setTimeout(() => setCopied(false), 1500); } }} aria-label="Copy" title="Copy">
             {copied ? <Check size={15} /> : <Copy size={15} />}
           </button>
@@ -277,6 +279,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
           </span>
           {message.text && (
             <>
+              <TextSelection text={toPlainText(message.text)} />
               <button className="msg-action" aria-label="Copy" title="Copy" onClick={async () => { if (await copyText(message.text)) { setCopied(true); setTimeout(() => setCopied(false), 1500); } }}>
                 {copied ? <Check size={15} /> : <Copy size={15} />}
               </button>

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { hasGitHub, listBranches, listRepos, type RepoInfo } from '../lib/github';
 import { useStore } from '../store';
 import Modal from './Modal';
+import { isTouch } from '../lib/util';
 
 /** Choose a GitHub repository and branch for the current chat. */
 export default function RepoPicker({ onClose }: { onClose: () => void }) {
@@ -61,7 +62,7 @@ export default function RepoPicker({ onClose }: { onClose: () => void }) {
           <>
             <label className="search">
               <Search size={16} />
-              <input type="search" autoFocus placeholder="Search your repositories" value={query} onChange={(e) => setQuery(e.target.value)} />
+              <input type="search" autoFocus={!isTouch()} placeholder="Search your repositories" value={query} onChange={(e) => setQuery(e.target.value)} />
             </label>
             {error && <p className="error-text">{error}</p>}
             {!repos && !error && (

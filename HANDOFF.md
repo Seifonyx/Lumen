@@ -17,6 +17,8 @@
 
 ## Validation and release
 
+- Visual refresh: `src/design.css` defines warm light / soft dark surfaces, sage accents, typography and spacing. Existing `styles.css` retains functional layouts and phone fixes. New-chat composer is centred; starter actions are below it. Desktop files/repositories share the + menu; desktop sidebar can collapse (saved locally). Useful features remain available.
+
 - Regression coverage: `tests/e2e/regressions.cjs` (desktop + phone, drafts, projects, privacy, focus, narrow buttons, simulated iOS scrolling).
 - The regression script can check deployed builds with `MR_TEST_URL` set to live or preview; it uses isolated local data and mocked model requests.
 - Run `npm test`, `npm run build`, and `npm run test:e2e:ci` (Java 21, Firebase emulators, Chromium). Existing CI runs on main pushes and PRs.

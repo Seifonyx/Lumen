@@ -1,4 +1,4 @@
-import { Download, FolderKanban, MoreHorizontal, Pencil, Pin, PinOff, Plus, Search, Settings, SquarePen, Tag, Trash2, X } from 'lucide-react';
+import { Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings, SquarePen, Tag, Trash2, X } from 'lucide-react';
 import Logo from './Logo';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey, modelShortName, safeFileName, saveBlob } from '../lib/util';
@@ -103,7 +103,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
   const user = useStore((st) => st.user);
   const chats = useStore((s) => s.chats);
   const currentId = useStore((s) => s.currentId);
@@ -158,6 +158,9 @@ export default function Sidebar() {
           <Logo size={24} />
           <span>Model Router</span>
         </div>
+        <button className="icon-btn collapse-sidebar" onClick={onCollapse} aria-label="Collapse sidebar" title="Collapse sidebar">
+          <PanelLeftClose size={18} />
+        </button>
         <button className="icon-btn close-sidebar" onClick={() => setUi({ sidebarOpen: false })} aria-label="Close menu">
           <X size={18} />
         </button>
@@ -178,7 +181,7 @@ export default function Sidebar() {
         <Search size={16} />
         <input id="chat-search" type="search" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" />
       </label>
-      <nav className="chat-list">
+      <nav className="chat-list" aria-label="Chat history">
         {groups.length === 0 && <p className="muted small empty-list">{query ? 'No chats match.' : 'Your chats will appear here.'}</p>}
         {groups.map(([label, list]) => (
           <section key={label}>

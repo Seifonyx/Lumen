@@ -1,4 +1,4 @@
-import { FolderGit2, GitBranch, ArrowDown, FileSpreadsheet, FileText, Languages, LineChart, Menu, Presentation, ScrollText, SquarePen } from 'lucide-react';
+import { FolderGit2, GitBranch, ArrowDown, FileSpreadsheet, FileText, Menu, PanelLeftOpen, ScrollText, SquarePen } from 'lucide-react';
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { activeSummary } from '../lib/compact';
 import { AUTO } from '../lib/routing';
@@ -8,20 +8,16 @@ import { selectCurrentChat, useStore } from '../store';
 import { CompactingNote, CompactNote, UsageMeter } from './CompactNote';
 import Composer, { prefillComposer } from './Composer';
 import InstallHint from './InstallHint';
-import Logo from './Logo';
 import MessageItem from './MessageItem';
 import ModelPicker from './ModelPicker';
 
 const SUGGESTIONS = [
-  { icon: Presentation, title: 'Make a presentation', prompt: 'Make a 8-slide PowerPoint presentation about ' },
   { icon: FileSpreadsheet, title: 'Build an Excel tracker', prompt: 'Create an Excel workbook to track ' },
   { icon: FileText, title: 'Write a Word report', prompt: 'Write a well-formatted Word report about ' },
   { icon: ScrollText, title: 'Summarize a file', prompt: 'Summarize the attached file in clear bullet points, then list the key numbers.' },
-  { icon: LineChart, title: 'Chart some data', prompt: 'Show this data as a chart: ' },
-  { icon: Languages, title: 'Translate', prompt: 'Translate the following into Arabic, keeping the tone natural:\n\n' },
 ];
 
-export default function ChatView() {
+export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => void }) {
   const chat = useStore(selectCurrentChat);
   const catalogError = useStore((s) => s.catalogError);
   const streaming = useStore((s) => s.streamingChatId !== null && s.streamingChatId === s.currentId);
@@ -40,6 +36,7 @@ export default function ChatView() {
   const messages = chat?.messages || [];
   const changeCount = Object.keys(chat?.changes || {}).length;
   const summary = chat ? activeSummary(chat) : null;
+  const empty = messages.length === 0 && !summary && !chat?.repo;
   const lastText = messages.length ? messages[messages.length - 1].text.length + (messages[messages.length - 1].thinking?.length || 0) : 0;
 
   // Jump to the bottom when switching chats.
@@ -68,10 +65,13 @@ export default function ChatView() {
   }, []);
 
   return (
-    <main className="main">
+    <main className={`main${empty ? ' is-empty' : ''}`}>
       <header className="topbar">
         <button className="icon-btn menu-btn" onClick={() => setUi({ sidebarOpen: true })} aria-label="Open chats">
           <Menu size={20} />
+        </button>
+        <button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title="Expand sidebar">
+          <PanelLeftOpen size={20} />
         </button>
         <ModelPicker value={model} onChange={setChatModel} />
         <div className="spacer" />
@@ -86,7 +86,7 @@ export default function ChatView() {
             {changeCount > 0 && <span className="badge">{changeCount}</span>}
           </button>
         )}
-        <button className="icon-btn" onClick={newChat} aria-label="New chat" title="New chat (Ctrl+Shift+O)">
+        <button className="icon-btn new-chat-shortcut" onClick={newChat} aria-label="New chat" title="New chat (Ctrl+Shift+O)">
           <SquarePen size={18} />
         </button>
       </header>
@@ -110,24 +110,11 @@ export default function ChatView() {
       )}
 
       <div className="messages" ref={scroller}>
-        {messages.length === 0 && !summary && !chat?.repo ? (
+        {empty ? (
           <div className="empty">
-            <Logo size={40} />
-            <h1>What can I help with?</h1>
-            <p className="muted">Ask anything, attach files, or have me make documents, spreadsheets and slides.</p>
-            <div className="suggestions">
-              <button className="suggestion" onClick={() => setUi({ repoPicker: true })}>
-                <GitBranch size={18} />
-                <span>Code on a GitHub repo</span>
-              </button>
-              {SUGGESTIONS.slice(0, 5).map(({ icon: Icon, title, prompt }) => (
-                <button key={title} className="suggestion" onClick={() => prefillComposer(prompt)}>
-                  <Icon size={18} />
-                  <span>{title}</span>
-                </button>
-              ))}
-            </div>
-            <InstallHint />
+            <span className="welcome-eyebrow">Your space to think and create</span>
+            <h1>What would you like to create?</h1>
+            <p className="muted">Ask a question, explore an idea, or work with your files.</p>
           </div>
         ) : (
           <div className="thread">
@@ -156,7 +143,27 @@ export default function ChatView() {
         </button>
       )}
 
-      <Composer model={model} meter={chat && (messages.length > 0 || summary) ? <UsageMeter chat={chat} model={model} /> : null} />
+      <Composer
+        model={model}
+        meter={chat && (messages.length > 0 || summary) ? <UsageMeter chat={chat} model={model} /> : null}
+        starterActions={empty ? (
+          <>
+            <div className="suggestions" aria-label="Ideas to get started">
+              <button className="suggestion" onClick={() => setUi({ repoPicker: true })}>
+                <GitBranch size={18} />
+                <span>Code on a GitHub repo</span>
+              </button>
+              {SUGGESTIONS.map(({ icon: Icon, title, prompt }) => (
+                <button key={title} className="suggestion" onClick={() => prefillComposer(prompt)}>
+                  <Icon size={18} />
+                  <span>{title}</span>
+                </button>
+              ))}
+            </div>
+            <InstallHint />
+          </>
+        ) : undefined}
+      />
     </main>
   );
 }

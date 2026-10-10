@@ -27,6 +27,11 @@ export default function App() {
   const runner = useStore((s) => s.runner);
   const repoPicker = useStore((s) => s.repoPicker);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('mr.sidebarCollapsed') === 'true');
+  const toggleSidebar = () => setSidebarCollapsed((collapsed) => {
+    localStorage.setItem('mr.sidebarCollapsed', String(!collapsed));
+    return !collapsed;
+  });
 
   useEffect(() => {
     void init();
@@ -82,10 +87,10 @@ export default function App() {
   }
   if (accessDenied) return <NotInvited email={accessDenied} />;
   return (
-    <div className={`app${settingsOpen ? ' settings-open' : ''}${workspaceOpen ? ' workspace-open' : ''}`}>
-      <Sidebar />
+    <div className={`app${settingsOpen ? ' settings-open' : ''}${workspaceOpen ? ' workspace-open' : ''}${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
+      <Sidebar onCollapse={toggleSidebar} />
       {sidebarOpen && <div className="scrim" onClick={() => setUi({ sidebarOpen: false })} />}
-      <ChatView />
+      <ChatView onExpandSidebar={toggleSidebar} />
       {!settingsOpen && <WorkspacePanel />}
       <SettingsModal />
       {commandPaletteOpen && <CommandPalette onClose={() => setCommandPaletteOpen(false)} />}

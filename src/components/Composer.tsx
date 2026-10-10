@@ -21,7 +21,7 @@ interface Pending {
 const PREFILL = 'mr:prefill';
 export const prefillComposer = (text: string) => window.dispatchEvent(new CustomEvent(PREFILL, { detail: text }));
 
-export default function Composer({ model, meter }: { model: string; meter?: ReactNode }) {
+export default function Composer({ model, meter, starterActions }: { model: string; meter?: ReactNode; starterActions?: ReactNode }) {
   const send = useStore((s) => s.send);
   const runComparison = useStore((s) => s.runComparison);
   const stop = useStore((s) => s.stop);
@@ -373,14 +373,9 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
               <input ref={cameraInput} type="file" accept="image/*" capture="environment" hidden onChange={(e) => { void addFiles([...(e.target.files || [])]); e.target.value = ''; }} />
             </>
           ) : (
-            <>
-              <button type="button" className="tool-btn" onClick={() => fileInput.current?.click()} aria-label="Attach files" title="Attach files (PDF, Word, Excel, PowerPoint, images…)">
-                <Paperclip size={19} />
-              </button>
-              <button type="button" className={`tool-btn${chat?.repo ? ' on-repo' : ''}`} onClick={() => setUi(chat?.repo ? { workspaceOpen: true } : { repoPicker: true })} aria-label={chat?.repo ? 'Repository' : 'Work on a GitHub repository'} title={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : 'Work on a GitHub repository'}>
-                <GitBranch size={18} />
-              </button>
-            </>
+            <button type="button" className={`tool-btn add-tool${chat?.repo ? ' on-repo' : ''}`} onClick={() => setSheet(true)} aria-label="Add files or a repository" aria-haspopup="dialog" title="Add files or a repository">
+              <Plus size={21} />
+            </button>
           )}
           <button
             type="button"
@@ -423,11 +418,13 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
           onCamera={() => cameraInput.current?.click()}
           onRepo={() => setUi(chat?.repo ? { workspaceOpen: true } : { repoPicker: true })}
           repoName={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : undefined}
+          showCamera={touch}
         />
       )}
       {compareOpen && <CompareModelsModal prompt={text.trim()} files={pending.flatMap((p) => p.file ? [p.file] : [])} onClose={() => setCompareOpen(false)} onCompare={compare} />}
       {check && <PrivacyCheck findings={check.findings} unchecked={check.unchecked} onMask={() => dispatch()} onAsIs={() => dispatch({ privacy: 'asIs' })} onEdit={() => setCheck(null)} />}
       <p className="disclaimer">AI can make mistakes. Check important info.</p>
+      {starterActions && <div className="starter-actions">{starterActions}</div>}
     </div>
   );
 }

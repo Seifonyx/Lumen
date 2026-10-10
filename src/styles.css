@@ -1355,3 +1355,14 @@ table.sheet td.pending { color: #8f8f8f; font-style: italic; font-family: var(--
   .key-provider-title { min-width: 0; flex-wrap: wrap; }
   .key-provider-head .link-btn { margin-inline-start: auto; }
 }
+
+
+/* The desktop sidebar is content-sized; the phone section menu must fill its column. */
+@media (max-width: 720px) {
+  .settings-tabs {
+    align-self: stretch;
+    width: auto;
+    max-width: none;
+    box-sizing: border-box;
+  }
+}

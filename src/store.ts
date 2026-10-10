@@ -867,6 +867,10 @@ export const useStore = create<State>((set, get) => {
 
     async runComparison(text, files, models, opts) {
       if (get().comparing || get().streamingChatId || get().compactingChatId) return;
+      if (!navigator.onLine) {
+        get().toast("You're offline — your message is kept here; send it when you're back online.");
+        return;
+      }
       const selected = [...new Set(models)].filter((id) => get().settings.enabledModels.includes(id)).slice(0, 3);
       if (selected.length < 2) {
         get().toast('Choose two or three enabled models to compare.', 'error');
@@ -874,7 +878,7 @@ export const useStore = create<State>((set, get) => {
       }
       const chat = currentChat();
       const settings = get().settings;
-      const projectId = chat?.projectId || currentProjectId();
+      const projectId = chat ? chat.projectId : currentProjectId();
       const project = settings.projects?.find((p) => p.id === projectId);
       const projectFiles = project?.files?.filter((f) => Boolean(f.text)) || [];
       const inputWire: WireMessage = {
@@ -912,6 +916,7 @@ export const useStore = create<State>((set, get) => {
       }
       const rawMemory = settings.memory ? memoryInstructions(get().memories, settings.memoryAuto) : '';
       const custom = [settings.customInstructions, project?.instructions].filter(Boolean).join('\n\n');
+      const restore = (value: string) => masker && settings.privacyRestore ? masker.unmask(value) : value;
       const bodyFor = (model: string) => buildChatBody({
         model, fallbacks: [], messages: wire,
         options: {
@@ -943,7 +948,7 @@ export const useStore = create<State>((set, get) => {
               else if (ev.t === 'text') textOut += ev.text;
               else if (ev.t === 'sources') sources = [...sources, ...ev.items];
               else if (ev.t === 'error') error = ev.text;
-              updateAnswer(model, { text: hideMemoryLines(textOut), ...(sources.length ? { sources } : {}) });
+              updateAnswer(model, { text: restore(hideMemoryLines(textOut)), ...(sources.length ? { sources } : {}) });
             }
             updateAnswer(model, { status: textOut ? 'done' : aborter.signal.aborted ? 'stopped' : 'error', ...(error && !textOut ? { error } : !textOut ? { error: 'No answer was returned.' } : {}) });
           } catch (e) {
@@ -988,7 +993,7 @@ export const useStore = create<State>((set, get) => {
       if (get().streamingChatId || get().compactingChatId || get().comparing) return;
       let chat = currentChat();
       if (!chat) {
-        chat = newChatObject();
+        chat = { ...newChatObject(), projectId: currentProjectId() || undefined };
         set((s) => ({ chats: [chat!, ...s.chats], currentId: chat!.id }));
       }
       const ownFiles = files.some((f) => f.kind === 'text');
@@ -1036,7 +1041,7 @@ export const useStore = create<State>((set, get) => {
       let chat = currentChat();
       // A chat already working on another repo keeps it; start a fresh chat for this one.
       if (!chat || (chat.repo && (chat.repo.owner !== link.owner || chat.repo.repo !== link.repo))) {
-        chat = newChatObject();
+        chat = { ...newChatObject(), projectId: currentProjectId() || undefined };
         set((s) => ({ chats: [chat!, ...s.chats], currentId: chat!.id }));
       }
       const switching = chat.repo && chat.repo.branch !== link.branch;

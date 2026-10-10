@@ -12,18 +12,21 @@ interface Props {
 
 export default function Modal({ title, onClose, children, actions, wide, full }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const close = useRef(onClose);
+  const previousFocus = useRef(document.activeElement instanceof HTMLElement ? document.activeElement : null);
+  useEffect(() => { close.current = onClose; }, [onClose]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') close.current();
     };
     window.addEventListener('keydown', onKey);
-    const prev = document.activeElement as HTMLElement | null;
-    ref.current?.focus();
+    // Keep an input's autofocus, and don't reset focus when the modal re-renders.
+    if (!ref.current?.contains(document.activeElement)) ref.current?.focus();
     return () => {
       window.removeEventListener('keydown', onKey);
-      prev?.focus?.();
+      if (previousFocus.current?.isConnected) previousFocus.current.focus();
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>

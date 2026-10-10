@@ -35,7 +35,8 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
   const updateSettings = useStore((s) => s.updateSettings);
   const currentId = useStore((s) => s.currentId);
   const chat = useStore((s) => s.chats.find((c) => c.id === s.currentId));
-  const project = settings.projects?.find((p) => p.id === chat?.projectId);
+  const activeProjectId = useStore((s) => s.activeProjectId);
+  const project = settings.projects?.find((p) => p.id === (chat ? chat.projectId : activeProjectId));
   const projectFiles = project?.files || [];
   const setContext = useStore((s) => s.setContext);
   const info = modelInfo(catalog, model);
@@ -178,6 +179,12 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
   const ready = pending.every((p) => p.file);
   const canSend = !streaming && ready && (text.trim() || pending.length > 0);
 
+  const ensureOnline = () => {
+    if (navigator.onLine) return true;
+    toast("You're offline — your message is kept here; send it when you're back online.");
+    return false;
+  };
+
   const submit = () => {
     if (streaming) {
       stop();
@@ -202,10 +209,7 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
       setUi({ settingsOpen: true, settingsTab: 'memory' });
       return;
     }
-    if (!navigator.onLine) {
-      toast("You're offline — your message is kept here; send it when you're back online.");
-      return;
-    }
+    if (!ensureOnline()) return;
     const files = pending.map((p) => p.file!);
     // Privacy shield ("Ask me"): show what was found before anything is sent.
     if (settings.privacyShield && settings.privacyMode === 'ask') {
@@ -219,6 +223,7 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
   };
 
   const dispatch = (opts?: { privacy?: 'asIs' }) => {
+    if (!ensureOnline()) return;
     const compareWith = check?.compareModels;
     setCheck(null);
     const files = pending.map((p) => p.file!);
@@ -230,6 +235,7 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
   };
 
   const compare = (models: string[]) => {
+    if (!ensureOnline()) return;
     setCompareOpen(false);
     const files = pending.map((p) => p.file!);
     if (settings.privacyShield && settings.privacyMode === 'ask') {
@@ -242,6 +248,7 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
     dispatchCompare(models);
   };
   const dispatchCompare = (models: string[], opts?: { privacy?: 'asIs' }) => {
+    if (!ensureOnline()) return;
     const files = pending.map((p) => p.file!);
     const message = text.trim();
     clearText();

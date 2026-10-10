@@ -57,11 +57,19 @@ export function initViewport(): void {
     if (!frame) frame = requestAnimationFrame(apply);
   };
 
-  // While the keyboard is open, allow vertical scrolling only inside chat history.
-  // In particular, don't let dragging on the composer textarea pan Safari's page behind the app.
+  // Keep the composer from panning Safari's page, while allowing settings, dialogs and other
+  // scrollable panels to scroll with the keyboard open.
   const preventPageScroll = (event: TouchEvent) => {
     if (!keyboardOpen || !(event.target instanceof Element)) return;
     if (event.target.closest('.messages')) return;
+    if (!event.target.closest('.composer')) {
+      for (let element: Element | null = event.target; element && element !== document.body; element = element.parentElement) {
+        if (element.matches('textarea, [contenteditable="true"]')) return;
+        const style = getComputedStyle(element);
+        if ((/^(auto|scroll)$/.test(style.overflowY) && element.scrollHeight > element.clientHeight) ||
+            (/^(auto|scroll)$/.test(style.overflowX) && element.scrollWidth > element.clientWidth)) return;
+      }
+    }
     event.preventDefault();
   };
 

@@ -16,9 +16,10 @@ import { AUTO, planRoute } from './lib/routing';
 import { findLayout, isLayoutId } from './lib/layouts';
 import { formatUntil, remaining, UsageTracker, type LimitInfo, type UsageView } from './lib/usage';
 import { db } from './lib/db';
+import { branchChat, normalizeChatTags } from './lib/chat-tools';
 import { applyAppearance, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
-import type { Attachment, Catalog, Chat, ChatSummary, FileChange, Memory, Message, ModelInfo, RepoLink, Settings } from './types';
+import type { Attachment, Catalog, Chat, ChatSummary, ComparisonState, FileChange, Memory, Message, ModelInfo, Project, RepoLink, Settings } from './types';
 
 export interface Toast {
   id: string;
@@ -54,6 +55,9 @@ interface State {
   settings: Settings;
   chats: Chat[];
   currentId: string | null;
+  activeProjectId: string | null;
+  comparing: boolean;
+  comparison: ComparisonState | null;
   streamingChatId: string | null;
   /** chat whose older messages are being summarized right now */
   compactingChatId: string | null;
@@ -94,6 +98,16 @@ interface State {
   deleteChat(id: string): Promise<void>;
   renameChat(id: string, title: string): Promise<void>;
   togglePin(id: string): Promise<void>;
+  selectProject(id: string | null): void;
+  saveProject(project: Project): boolean;
+  deleteProject(id: string): void;
+  moveChatToProject(chatId: string, projectId: string | null): void;
+  branchChatFrom(chatId: string, messageId: string): void;
+  setChatTags(chatId: string, tags: string[]): void;
+  runComparison(text: string, files: Attachment[], models: string[], opts?: { privacy?: 'asIs' }): Promise<void>;
+  cancelComparison(): void;
+  clearComparison(): void;
+  saveComparisonAnswer(model: string): void;
   setChatModel(model: string): void;
   clearAllChats(): Promise<void>;
   importChats(chats: Chat[]): Promise<number>;
@@ -117,6 +131,7 @@ interface State {
 }
 
 let controller: AbortController | null = null;
+let compareController: AbortController | null = null;
 let compactController: AbortController | null = null;
 let sync: ChatSync | null = null;
 let usage: UsageTracker | null = null;
@@ -152,13 +167,15 @@ export const useStore = create<State>((set, get) => {
     sync?.push(stamped);
   };
   const currentChat = () => get().chats.find((c) => c.id === get().currentId) || null;
+  const currentProjectId = () => get().settings.projects?.some((p) => p.id === get().activeProjectId) ? get().activeProjectId : null;
 
   /** The model this chat should use, falling back sensibly if it was disabled. */
   const modelFor = (chat: Chat | null): string => {
     const { settings, catalog } = get();
     const enabled = settings.enabledModels.filter((id) => !catalog || catalog.models.some((m) => m.id === id) || !catalog.models.length);
     const layoutOk = (id: string) => isLayoutId(id) && Boolean(findLayout(id, catalog?.models || [], settings.layouts, settings.hiddenLayouts));
-    const pick = [chat?.model, settings.defaultModel, ...enabled].find((id) => id && (id === AUTO || enabled.includes(id) || layoutOk(id)));
+    const project = settings.projects?.find((p) => p.id === chat?.projectId);
+    const pick = [chat?.model, project?.defaultModel, settings.defaultModel, ...enabled].find((id) => id && (id === AUTO || enabled.includes(id) || layoutOk(id)));
     return pick || enabled[0] || catalog?.defaults[0] || '';
   };
 
@@ -273,6 +290,8 @@ export const useStore = create<State>((set, get) => {
     let chat = get().chats.find((c) => c.id === chatId);
     if (!chat) return;
     const { settings } = get();
+    const projectFiles = settings.projects?.find((p) => p.id === chat!.projectId)?.files?.filter((f) => Boolean(f.text)) || [];
+    const projectTokens = projectFiles.reduce((n, f) => n + Math.ceil((f.text?.length || 0) / 4), 0);
     let model = modelOverride || modelFor(chat);
     if (!model) {
       get().toast('No models are enabled. Open Settings → Models.', 'error');
@@ -286,7 +305,7 @@ export const useStore = create<State>((set, get) => {
     if (layout) model = layout.mode === 'auto' || !layoutModels.length ? AUTO : layoutModels[0];
     const routeModels = layoutModels.length ? layoutModels : settings.enabledModels;
     // Long chat: summarize the older messages first so the model gets a compact version.
-    if (settings.autoCompact && contextTokens(chat) > compactLimit(model === AUTO ? undefined : modelInfo(get().catalog, model))) {
+    if (settings.autoCompact && contextTokens(chat) + projectTokens > compactLimit(model === AUTO ? undefined : modelInfo(get().catalog, model))) {
       if ((await compactChat(chatId, false)) === 'stopped') return;
       chat = get().chats.find((c) => c.id === chatId);
       if (!chat) return;
@@ -300,8 +319,8 @@ export const useStore = create<State>((set, get) => {
       enabled: routeModels,
       catalog: get().catalog?.models || [],
       text: lastUser?.text || '',
-      files: lastUser?.files || [],
-      conversationTokens: contextTokens(chat),
+      files: [...(lastUser?.files || []), ...projectFiles],
+      conversationTokens: contextTokens(chat) + projectTokens,
       search: settings.webSearch,
       blocked,
       left: (id) => remaining(get().usage, id),
@@ -337,6 +356,13 @@ export const useStore = create<State>((set, get) => {
           asIs: m.privacy?.unmasked,
         } as WireMessage;
       }));
+    if (projectFiles.length) {
+      const lastUserIndex = wire.findLastIndex((m) => m.role === 'user');
+      if (lastUserIndex >= 0) {
+        const projectAttachments = projectFiles.map(({ kind, name, mime, text }) => ({ kind, name, mime, text }));
+        wire[lastUserIndex] = { ...wire[lastUserIndex], files: [...(wire[lastUserIndex].files || []), ...projectAttachments] };
+      }
+    }
     // Privacy shield: models see placeholders like [PHONE_1] instead of personal details (the same
     // detail gets the same placeholder throughout the chat), and replies get the real values back.
     const masker = settings.privacyShield ? new Masker() : null;
@@ -361,7 +387,9 @@ export const useStore = create<State>((set, get) => {
     try {
       const rawMemory = settings.memory ? memoryInstructions(get().memories, settings.memoryAuto) : '';
       const memoryNote = masker ? masker.mask(rawMemory).text : rawMemory;
-      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: settings.webSearch, customInstructions: [settings.customInstructions, layout?.instructions].filter(Boolean).join('\n\n'), memory: memoryNote, workspace: workspaceNote } });
+      const projectInstructions = settings.projects?.find((p) => p.id === chat?.projectId)?.instructions || '';
+      const instructions = [settings.customInstructions, projectInstructions, layout?.instructions].filter(Boolean).join('\n\n');
+      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: settings.webSearch, customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: workspaceNote } });
     } catch (e) {
       get().toast((e as Error).message, 'error');
       return;
@@ -508,6 +536,9 @@ export const useStore = create<State>((set, get) => {
     settings: loadSettings(),
     chats: [],
     currentId: null,
+    activeProjectId: (() => { try { return localStorage.getItem('mr.activeProject') || null; } catch { return null; } })(),
+    comparing: false,
+    comparison: null,
     streamingChatId: null,
     compactingChatId: null,
     sidebarOpen: false,
@@ -676,7 +707,13 @@ export const useStore = create<State>((set, get) => {
       const settings = { ...get().settings, ...patch };
       saveSettings(settings);
       applyAppearance(settings);
-      set({ settings });
+      const activeProjectId = settings.projects && get().activeProjectId && !settings.projects.some((p) => p.id === get().activeProjectId)
+        ? null
+        : get().activeProjectId;
+      if (activeProjectId !== get().activeProjectId) {
+        try { localStorage.removeItem('mr.activeProject'); } catch { /* private mode */ }
+      }
+      set({ settings, activeProjectId });
       // Share settings with your other devices (voice language stays per device).
       const uid = get().user?.uid;
       if (uid && settingsReady) {
@@ -706,14 +743,77 @@ export const useStore = create<State>((set, get) => {
       set(patch);
     },
 
+    selectProject(id) {
+      const valid = id && get().settings.projects?.some((p) => p.id === id) ? id : null;
+      try { if (valid) localStorage.setItem('mr.activeProject', valid); else localStorage.removeItem('mr.activeProject'); } catch { /* private mode */ }
+      set({ activeProjectId: valid, sidebarOpen: false });
+      if (valid) {
+        const existing = get().chats.find((c) => c.projectId === valid);
+        if (existing) set({ currentId: existing.id });
+        else get().newChat();
+      }
+    },
+    saveProject(project) {
+      const projects = get().settings.projects || [];
+      if (!projects.some((p) => p.id === project.id) && projects.length >= 25) {
+        get().toast('You can create up to 25 projects.', 'error');
+        return false;
+      }
+      const now = Date.now();
+      const files = (project.files || []).filter((f) => f.kind === 'text' && typeof f.text === 'string').slice(0, 5).map((f) => ({ ...f, text: f.text!.slice(0, 20000) }));
+      const next = { ...project, files, name: project.name.trim().slice(0, 60), instructions: project.instructions.slice(0, 12000), updatedAt: now };
+      if (!next.name) return false;
+      const totalText = [...projects.filter((p) => p.id !== project.id), next].reduce((sum, p) => sum + p.instructions.length + (p.files || []).reduce((n, f) => n + (f.text?.length || 0), 0), 0);
+      if (totalText > 150_000) {
+        get().toast('Project instructions and reference files are limited to 150,000 characters total to keep settings sync small.', 'error');
+        return false;
+      }
+      const updated = projects.some((p) => p.id === next.id) ? projects.map((p) => p.id === next.id ? next : p) : [...projects, { ...next, createdAt: project.createdAt || now }];
+      get().updateSettings({ projects: updated });
+      return true;
+    },
+    deleteProject(id) {
+      get().updateSettings({ projects: (get().settings.projects || []).filter((p) => p.id !== id) });
+      if (get().activeProjectId === id) get().selectProject(null);
+      for (const chat of get().chats.filter((c) => c.projectId === id)) {
+        const updated = { ...chat, projectId: undefined };
+        replaceChat(updated);
+        void persist(updated);
+      }
+    },
+    moveChatToProject(chatId, projectId) {
+      const chat = get().chats.find((c) => c.id === chatId);
+      if (!chat || (projectId && !get().settings.projects?.some((p) => p.id === projectId))) return;
+      const updated = { ...chat, projectId: projectId || undefined };
+      replaceChat(updated);
+      void persist(updated);
+    },
+    branchChatFrom(chatId, messageId) {
+      const chat = get().chats.find((c) => c.id === chatId);
+      if (!chat) return;
+      const branch = branchChat(chat, messageId, uid());
+      if (!branch) return;
+      set((s) => ({ chats: [branch, ...s.chats], currentId: branch.id, sidebarOpen: false }));
+      void persist(branch);
+    },
+    setChatTags(chatId, tags) {
+      const chat = get().chats.find((c) => c.id === chatId);
+      if (!chat) return;
+      const unique = normalizeChatTags(tags);
+      const updated = { ...chat, tags: unique.length ? unique : undefined };
+      replaceChat(updated);
+      void persist(updated);
+    },
+
     newChat() {
       // Reuse an existing empty chat instead of piling them up.
-      const empty = get().chats.find((c) => c.messages.length === 0 && !c.summary);
+      const projectId = currentProjectId();
+      const empty = get().chats.find((c) => c.messages.length === 0 && !c.summary && c.projectId === projectId);
       if (empty) {
         set({ currentId: empty.id, sidebarOpen: false, settingsOpen: false });
         return;
       }
-      const chat = newChatObject();
+      const chat = { ...newChatObject(), projectId: projectId || undefined };
       set((s) => ({ chats: [chat, ...s.chats], currentId: chat.id, sidebarOpen: false, settingsOpen: false }));
     },
     selectChat(id) {
@@ -765,8 +865,127 @@ export const useStore = create<State>((set, get) => {
       return valid.length;
     },
 
+    async runComparison(text, files, models, opts) {
+      if (get().comparing || get().streamingChatId || get().compactingChatId) return;
+      const selected = [...new Set(models)].filter((id) => get().settings.enabledModels.includes(id)).slice(0, 3);
+      if (selected.length < 2) {
+        get().toast('Choose two or three enabled models to compare.', 'error');
+        return;
+      }
+      const chat = currentChat();
+      const settings = get().settings;
+      const projectId = chat?.projectId || currentProjectId();
+      const project = settings.projects?.find((p) => p.id === projectId);
+      const projectFiles = project?.files?.filter((f) => Boolean(f.text)) || [];
+      const inputWire: WireMessage = {
+        role: 'user', text,
+        files: files.filter((f) => f.data || f.text).map(({ kind, name, mime, data, text: fileText }) => ({ kind, name, mime, data, text: fileText })),
+        asIs: opts?.privacy === 'asIs',
+      };
+      const wire: WireMessage[] = [
+        ...withSummary(chat ? activeSummary(chat) : null, (chat ? liveMessages(chat) : []).filter((m) => !m.error || m.text).map((m) => {
+          const usable = (m.files || []).filter((f) => f.data || f.text);
+          const missing = (m.files || []).filter((f) => !f.data && !f.text).map((f) => f.name);
+          return {
+            role: m.role,
+            text: missing.length ? `[Attached on another device, not available here: ${missing.join(', ')}]\n${m.text}` : m.text,
+            files: usable.map(({ kind, name, mime, data, text: fileText }) => ({ kind, name, mime, data, text: fileText })),
+            asIs: m.privacy?.unmasked,
+          } as WireMessage;
+        })),
+        inputWire,
+      ];
+      const projectTokens = projectFiles.reduce((n, f) => n + Math.ceil((f.text?.length || 0) / 4), 0);
+      const lastInput = wire[wire.length - 1];
+      if (projectFiles.length) lastInput.files = [...(lastInput.files || []), ...projectFiles.map(({ kind, name, mime, text: fileText }) => ({ kind, name, mime, text: fileText }))];
+      const masker = settings.privacyShield ? new Masker() : null;
+      if (masker) {
+        for (let i = 0; i < wire.length; i++) {
+          if (wire[i].asIs) continue;
+          wire[i] = { ...wire[i], text: masker.mask(wire[i].text).text, files: wire[i].files?.map((f) => (f.text ? { ...f, text: masker.mask(f.text).text } : f)) };
+        }
+      }
+      let workspace = '';
+      if (chat?.repo) {
+        const tree = await repoTree(chat.repo).catch(() => null);
+        workspace = workspaceInstructions(chat.repo, tree?.files || [], Boolean(tree?.truncated), chat.context || [], '');
+      }
+      const rawMemory = settings.memory ? memoryInstructions(get().memories, settings.memoryAuto) : '';
+      const custom = [settings.customInstructions, project?.instructions].filter(Boolean).join('\n\n');
+      const bodyFor = (model: string) => buildChatBody({
+        model, fallbacks: [], messages: wire,
+        options: {
+          search: settings.webSearch,
+          customInstructions: masker ? masker.mask(custom).text : custom,
+          memory: masker ? masker.mask(rawMemory).text : rawMemory,
+          workspace,
+          conversationTokens: (chat ? contextTokens(chat) : 0) + projectTokens,
+        },
+      });
+      const comparisonId = uid();
+      set({
+        comparing: true,
+        comparison: { id: comparisonId, chatId: chat?.id || null, projectId: projectId || undefined, prompt: text, files: files.length ? files : undefined, privacyAsIs: opts?.privacy === 'asIs', answers: selected.map((model) => ({ model, text: '', status: 'loading' })) },
+      });
+      const aborter = new AbortController();
+      compareController = aborter;
+      const updateAnswer = (model: string, patch: Partial<ComparisonState['answers'][number]>) => set((s) => s.comparison?.id === comparisonId ? ({ comparison: { ...s.comparison, answers: s.comparison.answers.map((a) => a.model === model ? { ...a, ...patch } : a) } }) : {});
+      try {
+        await Promise.all(selected.map(async (model) => {
+          let textOut = '';
+          let error = '';
+          let sources: NonNullable<ComparisonState['answers'][number]['sources']> = [];
+          try {
+            for await (const ev of streamChat(bodyFor(model), aborter.signal)) {
+              if (ev.t === 'request') usage?.record(ev.id, { requests: 1 });
+              else if (ev.t === 'usage') usage?.record(ev.id, { input: ev.input, output: ev.output });
+              else if (ev.t === 'limit') usage?.block(ev.id, ev as unknown as LimitInfo);
+              else if (ev.t === 'text') textOut += ev.text;
+              else if (ev.t === 'sources') sources = [...sources, ...ev.items];
+              else if (ev.t === 'error') error = ev.text;
+              updateAnswer(model, { text: hideMemoryLines(textOut), ...(sources.length ? { sources } : {}) });
+            }
+            updateAnswer(model, { status: textOut ? 'done' : aborter.signal.aborted ? 'stopped' : 'error', ...(error && !textOut ? { error } : !textOut ? { error: 'No answer was returned.' } : {}) });
+          } catch (e) {
+            updateAnswer(model, { status: (e as Error).name === 'AbortError' ? 'stopped' : 'error', error: (e as Error).name === 'AbortError' ? undefined : (e as Error).message });
+          }
+        }));
+      } finally {
+        if (compareController === aborter) compareController = null;
+        if (get().comparison?.id === comparisonId) set({ comparing: false });
+      }
+    },
+    cancelComparison() {
+      compareController?.abort();
+      set((s) => ({ comparing: false, comparison: s.comparison ? { ...s.comparison, answers: s.comparison.answers.map((a) => a.status === 'loading' ? { ...a, status: 'stopped' } : a) } : null }));
+    },
+    clearComparison() {
+      compareController?.abort();
+      compareController = null;
+      set({ comparing: false, comparison: null });
+    },
+    saveComparisonAnswer(model) {
+      const comparison = get().comparison;
+      const answer = comparison?.answers.find((a) => a.model === model && a.status === 'done');
+      if (!comparison || !answer) return;
+      const original = comparison.chatId ? get().chats.find((c) => c.id === comparison.chatId) : undefined;
+      const chat = original || { ...newChatObject(), projectId: comparison.projectId };
+      const userMessage: Message = { id: uid(), role: 'user', text: comparison.prompt, files: comparison.files, createdAt: Date.now(), ...(comparison.privacyAsIs ? { privacy: { masked: 0, unmasked: true } } : {}) };
+      if (!comparison.privacyAsIs && get().settings.privacyShield) {
+        const count = scan(comparison.prompt).length + (comparison.files || []).reduce((n, f) => n + (f.text ? scan(f.text).length : 0), 0);
+        if (count) userMessage.privacy = { masked: count };
+      }
+      const assistant: Message = { id: uid(), role: 'assistant', text: answer.text, model: answer.model, status: 'done', sources: answer.sources, createdAt: Date.now() };
+      const title = chat.messages.length ? chat.title : comparison.prompt.replace(/\s+/g, ' ').slice(0, 60) || 'Model comparison';
+      const updated = { ...chat, title, model: answer.model, messages: [...chat.messages, userMessage, assistant], updatedAt: Date.now() };
+      replaceChat(updated);
+      set({ currentId: updated.id });
+      void persist(updated);
+      get().clearComparison();
+    },
+
     async send(text, files, opts) {
-      if (get().streamingChatId || get().compactingChatId) return;
+      if (get().streamingChatId || get().compactingChatId || get().comparing) return;
       let chat = currentChat();
       if (!chat) {
         chat = newChatObject();
@@ -1013,6 +1232,7 @@ export const useStore = create<State>((set, get) => {
     stop() {
       controller?.abort();
       compactController?.abort();
+      get().cancelComparison();
     },
 
     async addMemory(text) {

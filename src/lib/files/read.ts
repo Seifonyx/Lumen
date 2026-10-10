@@ -259,10 +259,18 @@ async function readPptx(file: File): Promise<Attachment> {
   return { id: uid(), kind: 'text', name: file.name, mime: file.type, size: file.size, text: clip(out.join('\n\n')) };
 }
 
-export async function readAttachment(file: File): Promise<Attachment> {
+export async function readAttachment(file: File, options: { textOnly?: boolean } = {}): Promise<Attachment> {
   const ext = extOf(file.name);
-  if (file.type.startsWith('image/') && !/svg/.test(file.type)) return readImage(file);
-  if (file.type === 'application/pdf' || ext === 'pdf') return readPdf(file);
+  if (file.type.startsWith('image/') && !/svg/.test(file.type)) {
+    if (options.textOnly) throw new Error(`${file.name}: project files must contain selectable text. Images can still be attached in a chat.`);
+    return readImage(file);
+  }
+  if (file.type === 'application/pdf' || ext === 'pdf') {
+    if (!options.textOnly) return readPdf(file);
+    const text = await pdfText(file);
+    if (text.replace(/--- Page \d+ ---|\s/g, '').length < 50) throw new Error(`${file.name}: couldn't extract enough text. Scanned PDFs aren't supported as project files.`);
+    return { id: uid(), kind: 'text', name: file.name, mime: 'application/pdf', size: file.size, text: clip(text) };
+  }
   if (ext === 'docx') return readDocx(file);
   if (ext === 'xlsx' || ext === 'xlsm') return readXlsx(file);
   if (ext === 'pptx') return readPptx(file);

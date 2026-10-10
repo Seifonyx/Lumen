@@ -2,6 +2,7 @@
 // as a common sequence of events: { t: 'text' | 'think' | 'sources' | 'notice' | 'error', ... }.
 
 import { parseLimit, readError, readSSE, upstreamError } from './http.js';
+import { isActiveModel, isRetiredModel } from './model-status.js';
 
 // API keys come from the user's settings (stored in their private Firebase document).
 const keys = { gemini: '', openrouter: '', groq: '', cerebras: '' };
@@ -50,13 +51,23 @@ function prettyGemini(m) {
 }
 
 async function geminiCatalog() {
-  const res = await fetch(`${GEMINI_BASE}/models?pageSize=1000`, { headers: { 'x-goog-api-key': keys.gemini } });
-  if (!res.ok) throw new Error(`Google: ${await upstreamError(res)}`);
-  const { models = [] } = await res.json();
+  const models = [];
+  let pageToken = '';
+  const seen = new Set();
+  do {
+    const res = await fetch(`${GEMINI_BASE}/models?pageSize=1000${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`, { headers: { 'x-goog-api-key': keys.gemini } });
+    if (!res.ok) throw new Error(`Google: ${await upstreamError(res)}`);
+    const page = await res.json();
+    if (!Array.isArray(page.models)) throw new Error('Google: invalid model catalogue');
+    models.push(...page.models);
+    pageToken = page.nextPageToken || '';
+    if (pageToken && seen.has(pageToken)) throw new Error('Google: repeated catalogue page');
+    seen.add(pageToken);
+  } while (pageToken);
   return models
     .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
     .map((m) => ({ ...m, short: m.name.replace(/^models\//, '') }))
-    .filter((m) => !GEMINI_SKIP.test(m.short))
+    .filter((m) => !GEMINI_SKIP.test(m.short) && isActiveModel(m) && !isRetiredModel(`gemini:${m.short}`))
     .map((m) => ({
       id: `gemini:${m.short}`,
       provider: 'google',
@@ -74,11 +85,12 @@ async function geminiCatalog() {
 async function openRouterCatalog() {
   const res = await fetch(`${OPENROUTER_BASE}/models`, { headers: { authorization: `Bearer ${keys.openrouter}` } });
   if (!res.ok) throw new Error(`OpenRouter: ${await upstreamError(res)}`);
-  const { data = [] } = await res.json();
+  const { data } = await res.json();
+  if (!Array.isArray(data)) throw new Error('OpenRouter: invalid model catalogue');
   return data
-    .filter((m) => Number(m.pricing?.prompt) === 0 && Number(m.pricing?.completion) === 0)
+    .filter((m) => isActiveModel(m) && m.pricing?.prompt != null && m.pricing?.completion != null && Number(m.pricing.prompt) === 0 && Number(m.pricing.completion) === 0)
     .filter((m) => (m.architecture?.output_modalities || ['text']).includes('text'))
-    .filter((m) => !/embed|guard|moderation|tts|whisper/i.test(m.id))
+    .filter((m) => !/embed|guard|moderation|content-safety|tts|whisper/i.test(m.id))
     .map((m) => {
       const input = m.architecture?.input_modalities || ['text'];
       return {
@@ -122,16 +134,17 @@ async function compatCatalog(provider) {
     throw new Error(`${label}: couldn't be reached from this browser`);
   }
   if (!res.ok) throw new Error(`${label}: ${await upstreamError(res)}`);
-  const { data = [] } = await res.json();
+  const { data } = await res.json();
+  if (!Array.isArray(data)) throw new Error(`${label}: invalid model catalogue`);
   return data
-    .filter((m) => m.id && m.active !== false && !COMPAT_SKIP.test(m.id))
+    .filter((m) => m.id && isActiveModel(m) && !isRetiredModel(`${provider}:${m.id}`) && !COMPAT_SKIP.test(m.id))
     .map((m) => ({
       id: `${provider}:${m.id}`,
       provider,
       name: m.id,
       label: prettyModelName(m.id),
       context: m.context_window || m.context_length || null,
-      vision: provider === 'groq' && /llama-4|vision|scout|maverick/i.test(m.id),
+      vision: provider === 'groq' && /llama-4|vision|scout|maverick|qwen3\.[68]-27b/i.test(m.id),
       pdf: false, // PDFs reach these models only as extracted text
       thinking: /gpt-oss|qwen-?3|deepseek-r1|reason|think|qwq|magistral/i.test(m.id),
       search: false,
@@ -153,7 +166,7 @@ function pickDefaults(google, openrouter, groq = [], cerebras = []) {
 /** Two good starting models for Groq or Cerebras: a strong general one and a fast one. */
 function providerDefaults(list) {
   const pick = (re) => list.find((m) => re.test(m.name))?.id;
-  const ids = [pick(/gpt-oss-120b/) || pick(/llama-3\.3-70b/) || pick(/70b|120b|235b/), pick(/llama-?3\.1-8b|8b-instant/) || pick(/scout/)];
+  const ids = [pick(/gpt-oss-120b/) || pick(/70b|120b|235b/) || list[0]?.id, pick(/gpt-oss-20b/) || pick(/qwen.*27b/)];
   return [...new Set(ids.filter(Boolean))];
 }
 
@@ -174,6 +187,7 @@ export async function catalog() {
     models: [...google, ...openrouter, ...groq, ...cerebras],
     defaults: pickDefaults(google, openrouter, groq, cerebras),
     errors,
+    failedProviders: results.flatMap((r, i) => r.status === 'rejected' ? [['gemini', 'openrouter', 'groq', 'cerebras'][i]] : []),
   };
   if (errors.length === 0) cache = { value, expires: Date.now() + 10 * 60 * 1000 };
   return value;
@@ -251,7 +265,7 @@ function toCompat(messages, vision) {
 
 async function openCompat(provider, name, messages, instructions, signal) {
   const { base } = COMPAT[provider];
-  const vision = provider === 'groq' && /llama-4|vision|scout|maverick/i.test(name);
+  const vision = provider === 'groq' && /llama-4|vision|scout|maverick|qwen3\.[68]-27b/i.test(name);
   const res = await fetch(`${base}/chat/completions`, {
     method: 'POST',
     signal,

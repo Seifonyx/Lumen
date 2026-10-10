@@ -10,6 +10,7 @@
 - True black persists `theme: 'black'`; `applyAppearance` applies `data-theme="dark"` for editor compatibility plus `data-appearance="black"` for black surfaces. Other themes clear that attribute.
 - Privacy & data uses tab ID `privacy`; legacy `data` links resolve to it. Masking preview is expandable. Backup, restore and confirmed deletion remain available.
 - Models separates Your models, Browse models and Layouts. Catalogue initially shows 24 results, with search, provider filters and Show more. Saved-row options preserve reorder/removal; stars select defaults.
+- Model availability: provider lists are authoritative; Gemini pagination is complete. `lib/ai/model-status.js` records retired IDs reviewed 2026-10-11 and filters disabled/expired entries. Successful lists prune missing saved models; provider outages preserve their previous catalogue/choices. Keep historical chat model labels intact. OpenRouter remains free-only.
 - Usage distinguishes estimated conversation capacity (relative to compaction threshold) from daily provider allowances. Unknown limits have no fabricated percentage. Context/token and sync details expand on demand.
 - `src/lib/sidebar-gesture.ts` handles continuous phone swipes in either layout direction, intent, velocity, cancellation and click suppression. Inputs, selected text, code and horizontal scrollers are excluded; vertical scrolling remains native. Closed mobile drawer is inert; open drawer manages keyboard focus. Physical iPhone keyboard and Safari gesture behavior still need user verification.
 

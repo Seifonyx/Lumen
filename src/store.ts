@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { openRouterDailyLimit, setKeys } from './lib/ai/providers.js';
 import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage } from './lib/api';
+import { keepModelChoice, isRetiredModel } from './lib/ai/model-status.js';
 import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
 import { forgetLocalAccount, isPreviewUser, loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInPreview, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { registerServiceWorker } from './pwa/register';
@@ -689,10 +690,15 @@ export const useStore = create<State>((set, get) => {
         }
         void openRouterDailyLimit().then((n) => usage?.setOpenRouterDaily(n));
         usage?.useProviders((['groq', 'cerebras'] as const).filter((p) => catalog.providers[p]));
+        const previous = get().catalog || savedCatalog();
+        if (catalog.failedProviders?.length && previous) {
+          catalog = { ...catalog, models: [...catalog.models, ...previous.models.filter((m) => catalog.failedProviders!.includes(m.id.split(':')[0]) && !isRetiredModel(m.id))] };
+        }
+        catalog = { ...catalog, models: catalog.models.filter((m) => !isRetiredModel(m.id)) };
         const { settings } = get();
         const known = new Set(catalog.models.map((m) => m.id));
-        let enabled = settings.enabledModels.filter((id) => known.has(id) || !catalog.models.length);
-        if (!enabled.length) enabled = catalog.defaults.filter((id) => known.has(id) || !catalog.models.length);
+        let enabled = settings.enabledModels.filter((id) => keepModelChoice(id, catalog));
+        if (!enabled.length) enabled = catalog.defaults.filter((id) => known.has(id));
         // New chats use Auto (introduced once; you can switch back to a fixed model any time).
         const wanted = settings.autoIntroduced ? settings.defaultModel : AUTO;
         const defaultModel = wanted === AUTO || enabled.includes(wanted) || (isLayoutId(wanted) && findLayout(wanted, catalog.models, settings.layouts, settings.hiddenLayouts)) ? wanted : enabled[0] || '';

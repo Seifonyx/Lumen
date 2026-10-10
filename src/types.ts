@@ -156,6 +156,7 @@ export interface ModelInfo {
 }
 
 export interface Catalog {
+  failedProviders?: string[];
   providers: { google: boolean; openrouter: boolean; groq?: boolean; cerebras?: boolean };
   models: ModelInfo[];
   defaults: string[];

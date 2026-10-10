@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import { isActiveModel, isRetiredModel, keepModelChoice } from '../../src/lib/ai/model-status.js';
+assert.ok(isRetiredModel('gemini:gemini-2.0-flash'));
+assert.ok(isRetiredModel('gemini:gemini-3-pro-preview'));
+assert.ok(isRetiredModel('groq:llama-3.3-70b-versatile'));
+assert.ok(!isRetiredModel('gemini:gemini-2.5-flash'));
+assert.ok(!isRetiredModel('openrouter:meta-llama/llama-3.3-70b:free'));
+assert.ok(!isActiveModel({ active: false }));
+assert.ok(!isActiveModel({ disabled: true }));
+assert.ok(!isActiveModel({ expiration_date: '2025-01-01' }));
+assert.ok(isActiveModel({ expiration_date: '2099-01-01' }));
+const catalog = { models: [{ id: 'gemini:gemini-flash-latest' }], failedProviders: ['groq'] };
+assert.ok(keepModelChoice('groq:openai/gpt-oss-120b', catalog));
+assert.ok(!keepModelChoice('groq:llama-3.3-70b-versatile', catalog));
+assert.ok(!keepModelChoice('gemini:missing', catalog));
+assert.ok(!keepModelChoice('groq:missing', { models: [], failedProviders: [] }));
+console.log('PASS retired, disabled, expired and missing models; outage preserves choices; successful empty list prunes');

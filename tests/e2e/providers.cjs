@@ -23,13 +23,13 @@ const sse = (chunks) => chunks.map((o) => `data: ${JSON.stringify(o)}\n\n`).join
   await ctx.route('**/api.groq.com/**', (route) => {
     const req = route.request();
     seen.push({ url: req.url(), auth: req.headers().authorization });
-    if (req.url().endsWith('/models')) return route.fulfill({ json: { data: [{ id: 'llama-3.3-70b-versatile', context_window: 131072, active: true }, { id: 'llama-3.1-8b-instant', context_window: 131072, active: true }, { id: 'whisper-large-v3', active: true }] } });
+    if (req.url().endsWith('/models')) return route.fulfill({ json: { data: [{ id: 'openai/gpt-oss-120b', context_window: 131072, active: true }, { id: 'openai/gpt-oss-20b', context_window: 131072, active: true }, { id: 'whisper-large-v3', active: true }] } });
     return route.fulfill({ headers: { 'content-type': 'text/event-stream' }, body: sse([{ choices: [{ delta: { content: '<think>quick check</think>Hello from Groq' } }] }, { choices: [{ delta: {}, finish_reason: 'stop' }], x_groq: { usage: { prompt_tokens: 40, completion_tokens: 4 } } }]) });
   });
   await ctx.route('**/api.cerebras.ai/**', (route) => {
     const req = route.request();
     seen.push({ url: req.url(), auth: req.headers().authorization });
-    if (req.url().endsWith('/models')) return route.fulfill({ json: { data: [{ id: 'gpt-oss-120b' }, { id: 'llama3.1-8b' }] } });
+    if (req.url().endsWith('/models')) return route.fulfill({ json: { data: [{ id: 'gpt-oss-120b' }, { id: 'qwen-3.8-27b' }] } });
     return route.fulfill({ headers: { 'content-type': 'text/event-stream' }, body: sse([{ choices: [{ delta: { content: 'Hello from Cerebras' } }] }, { choices: [{ delta: {}, finish_reason: 'stop' }], usage: { prompt_tokens: 30, completion_tokens: 3 } }]) });
   });
   const page = await ctx.newPage();
@@ -51,22 +51,22 @@ const sse = (chunks) => chunks.map((o) => `data: ${JSON.stringify(o)}\n\n`).join
   check(seen.some((s) => s.url.endsWith('/openai/v1/models') && s.auth === 'Bearer gsk_test') && seen.some((s) => s.url.endsWith('/v1/models') && s.auth === 'Bearer csk-test'), 'model lists fetched with the keys');
   await openTab(page, 'Models');
   const yours = await page.textContent('.model-list:not(.add)');
-  check(/Llama 3\.3 70B Versatile/.test(yours) && /GPT-OSS 120B/.test(yours) && /Groq/.test(yours) && /Cerebras/.test(yours), 'new providers\' suggested models switched on');
+  check(/GPT-OSS 20B/.test(yours) && /GPT-OSS 120B/.test(yours) && /Groq/.test(yours) && /Cerebras/.test(yours), 'new providers\' suggested models switched on');
   check(!(await page.textContent('.settings-panel')).includes('Whisper'), 'speech models not offered');
   await page.click('.settings-page [aria-label="Close"]');
 
   await page.click('.model-button');
   const pop = await page.textContent('.models-pop');
   check(/Groq/.test(pop) && /Cerebras/.test(pop), 'picker groups by provider');
-  await page.click('.models-pop .mp-title:text-is("Llama 3.3 70B Versatile")');
+  await page.click('.models-pop .mp-title:text-is("GPT-OSS 20B")');
   await page.fill('.composer textarea', 'hi groq');
   await page.click('.send-btn');
   await page.waitForSelector('.msg.assistant .model-tag', { timeout: 20000 });
-  check((await page.textContent('.msg.assistant .markdown')).trim() === 'Hello from Groq' && (await page.textContent('.msg.assistant .model-tag')).includes('Llama 3.3 70B'), 'Groq replies (thinking kept separate)');
+  check((await page.textContent('.msg.assistant .markdown')).trim() === 'Hello from Groq' && (await page.textContent('.msg.assistant .model-tag')).includes('GPT-OSS 20B'), 'Groq replies (thinking kept separate)');
   check(Boolean(await page.$('.msg.assistant .thinking')), 'its thinking is shown collapsed');
 
   await page.click('.model-button');
-  await page.click('.models-pop .mp-title:text-is("GPT-OSS 120B")');
+  await page.locator('.models-pop .mp-title:text-is("GPT-OSS 120B")').last().click();
   await page.fill('.composer textarea', 'hi cerebras');
   await page.click('.send-btn');
   await page.waitForSelector('.msg.assistant >> nth=1 >> .model-tag', { timeout: 20000 });
@@ -77,7 +77,7 @@ const sse = (chunks) => chunks.map((o) => `data: ${JSON.stringify(o)}\n\n`).join
   await page.click('.sidebar-foot');
   await openTab(page, 'Usage');
   const u = await page.textContent('.usage');
-  check(/Llama 3\.3 70B Versatile.*1 request · 40 in/.test(u.replace(/\s+/g, ' ')) && /GPT-OSS 120B.*1 request · 30 in/.test(u.replace(/\s+/g, ' ')) && /Groq and Cerebras limits reset/.test(u), 'usage counted per model');
+  check(/GPT-OSS 20B.*1 request · 40 in/.test(u.replace(/\s+/g, ' ')) && /GPT-OSS 120B.*1 request · 30 in/.test(u.replace(/\s+/g, ' ')) && /Groq and Cerebras limits reset/.test(u), 'usage counted per model');
   await page.screenshot({ path: require('path').join(__dirname, 'out', 'providers-usage.png') });
 
   check(!errors.length, `no page errors ${errors.join(' | ')}`);

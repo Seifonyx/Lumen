@@ -32,12 +32,64 @@ if (location.hostname === 'localhost' && new URLSearchParams(location.search).ha
 }
 void setPersistence(auth, browserLocalPersistence);
 
-export function watchUser(cb: (user: User | null) => void) {
+export interface PreviewUser {
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL: string;
+}
+
+const PREVIEW_KEY = 'mr.preview_user';
+
+export function isPreviewUser(uid?: string | null): boolean {
+  return Boolean(uid && uid.startsWith('preview-'));
+}
+
+export function getStoredPreviewUser(): PreviewUser | null {
+  try {
+    const raw = localStorage.getItem(PREVIEW_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+let previewListeners: Array<(user: User | PreviewUser | null) => void> = [];
+
+export function signInPreview(email = 'preview@local.user', name = 'Guest'): PreviewUser {
+  const user: PreviewUser = {
+    uid: `preview-${email.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+    email,
+    displayName: name,
+    photoURL: '',
+  };
+  try {
+    localStorage.setItem(PREVIEW_KEY, JSON.stringify(user));
+  } catch {
+    /* ignore */
+  }
+  previewListeners.forEach((fn) => fn(user));
+  return user;
+}
+
+export function watchUser(cb: (user: User | PreviewUser | null) => void) {
   // Finishes a redirect sign-in if one was in progress (used when popups are blocked).
   getRedirectResult(auth).catch((e) => {
     redirectError = friendly(e);
   });
-  return onAuthStateChanged(auth, cb);
+  previewListeners.push(cb);
+  const stored = getStoredPreviewUser();
+  if (stored) {
+    setTimeout(() => cb(stored), 0);
+  }
+  const unsub = onAuthStateChanged(auth, (user) => {
+    if (getStoredPreviewUser()) return;
+    cb(user);
+  });
+  return () => {
+    previewListeners = previewListeners.filter((l) => l !== cb);
+    unsub();
+  };
 }
 
 let redirectError = '';
@@ -82,7 +134,15 @@ export async function signInWithGoogle() {
   }
 }
 
-export const signOutUser = () => signOut(auth);
+export const signOutUser = async () => {
+  try {
+    localStorage.removeItem(PREVIEW_KEY);
+  } catch {
+    /* ignore */
+  }
+  previewListeners.forEach((fn) => fn(null));
+  await signOut(auth);
+};
 
 export interface ApiKeys {
   gemini: string;
@@ -133,6 +193,9 @@ function readAccount(uid: string): Promise<Account> {
 
 async function fetchAccount(uid: string): Promise<Account> {
   const saved = localAccount(uid);
+  if (isPreviewUser(uid)) {
+    return saved || { geminiKey: '', openrouterKey: '', groqKey: '', cerebrasKey: '', githubKey: '', settings: {} };
+  }
   if (!navigator.onLine && saved) return saved;
   try {
     const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(Object.assign(new Error('offline'), { code: 'unavailable' })), saved ? 8000 : 20000));
@@ -142,6 +205,8 @@ async function fetchAccount(uid: string): Promise<Account> {
     keepLocal(uid, { geminiKey: d.geminiKey || '', openrouterKey: d.openrouterKey || '', groqKey: d.groqKey || '', cerebrasKey: d.cerebrasKey || '', githubKey: d.githubKey || '', settings: d.settings });
     return d;
   } catch (e) {
+    if (saved) return saved;
+    if (isPreviewUser(uid)) return { geminiKey: '', openrouterKey: '', groqKey: '', cerebrasKey: '', githubKey: '', settings: {} };
     // Not invited: never fall back to the saved copy.
     if ((e as { code?: string }).code === 'permission-denied' || !saved) throw e;
     return saved;
@@ -161,12 +226,22 @@ export async function loadRemoteSettings(uid: string): Promise<Record<string, un
 export async function saveRemoteSettings(uid: string, settings: object): Promise<void> {
   quota.count('writes');
   keepLocal(uid, { settings: settings as Record<string, unknown> });
-  await setDoc(keysDoc(uid), { settings, updatedAt: serverTimestamp() }, { merge: true });
+  if (isPreviewUser(uid)) return;
+  try {
+    await setDoc(keysDoc(uid), { settings, updatedAt: serverTimestamp() }, { merge: true });
+  } catch {
+    /* ignore Firestore errors in preview/offline */
+  }
 }
 
 export async function saveKeys(uid: string, keys: ApiKeys): Promise<void> {
   quota.count('writes');
   const fields = { geminiKey: keys.gemini.trim(), openrouterKey: keys.openrouter.trim(), groqKey: keys.groq.trim(), cerebrasKey: keys.cerebras.trim(), githubKey: (keys.github || '').trim() };
   keepLocal(uid, fields);
-  await setDoc(keysDoc(uid), { ...fields, updatedAt: serverTimestamp() }, { merge: true });
+  if (isPreviewUser(uid)) return;
+  try {
+    await setDoc(keysDoc(uid), { ...fields, updatedAt: serverTimestamp() }, { merge: true });
+  } catch {
+    /* ignore Firestore errors in preview/offline */
+  }
 }

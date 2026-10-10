@@ -17,6 +17,7 @@ function GoogleLogo() {
 
 export default function Login() {
   const login = useStore((s) => s.login);
+  const loginPreview = useStore((s) => s.loginPreview);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   // A sign-in that went through a full-page redirect reports its problem here.
@@ -46,6 +47,8 @@ export default function Login() {
     }
   };
 
+  const isNonProd = location.hostname !== 'model-router.web.app' && location.hostname !== 'model-router--dev-82jv5mm2.web.app';
+
   return (
     <main className="login">
       <div className="login-card">
@@ -56,6 +59,17 @@ export default function Login() {
         <button className="btn block google-btn" onClick={submit} disabled={busy}>
           {busy ? <Loader2 className="spin" size={18} /> : <GoogleLogo />} Continue with Google
         </button>
+        {(isNonProd || Boolean(error)) && (
+          <button
+            type="button"
+            className="btn ghost small"
+            style={{ margin: '2px auto 0', color: 'var(--text-2)', fontWeight: 400 }}
+            onClick={() => void loginPreview()}
+            disabled={busy}
+          >
+            Enter preview sandbox
+          </button>
+        )}
         <p className="login-foot">
           <Lock size={12} /> Private · invite only
         </p>

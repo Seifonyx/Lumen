@@ -105,6 +105,10 @@ export class UsageTracker {
 
   start() {
     this.stop();
+    if (this.uid.startsWith('preview-')) {
+      this.emit();
+      return;
+    }
     for (const p of this.watched) this.watch(p);
     this.unsubs.push(
       onSnapshot(this.ref('quotas'), (s) => {
@@ -150,6 +154,10 @@ export class UsageTracker {
   private flush() {
     clearTimeout(this.flushTimer);
     this.flushTimer = undefined;
+    if (this.uid.startsWith('preview-')) {
+      this.pending.clear();
+      return;
+    }
     if (!this.pending.size || quota.level() === 'paused') return;
     const byDay = new Map<string, Record<string, unknown>>();
     for (const [id, d] of this.pending) {
@@ -172,11 +180,13 @@ export class UsageTracker {
     const now = Date.now();
     if (limit.scope === 'day') {
       const until = limit.resetAt && limit.resetAt > now ? limit.resetAt : nextReset(p);
-      quota.count('writes');
-      void setDoc(this.ref(dayKey(p)), { b: { [enc(id)]: { id, until, ...(limit.quota ? { quota: limit.quota } : {}) } } }, { merge: true }).catch(() => {});
-      if (limit.quota && !(p === 'openrouter' && id.endsWith(':free'))) {
+      if (!this.uid.startsWith('preview-')) {
         quota.count('writes');
-        void setDoc(this.ref('quotas'), { [enc(id)]: { id, quota: limit.quota } }, { merge: true }).catch(() => {});
+        void setDoc(this.ref(dayKey(p)), { b: { [enc(id)]: { id, until, ...(limit.quota ? { quota: limit.quota } : {}) } } }, { merge: true }).catch(() => {});
+        if (limit.quota && !(p === 'openrouter' && id.endsWith(':free'))) {
+          quota.count('writes');
+          void setDoc(this.ref('quotas'), { [enc(id)]: { id, quota: limit.quota } }, { merge: true }).catch(() => {});
+        }
       }
     } else {
       // Per-minute (or unspecified) limits clear quickly, so they stay on this device only.

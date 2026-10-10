@@ -104,6 +104,7 @@ export class ChatSync {
   }
 
   start() {
+    if (this.uid.startsWith('preview-')) return;
     this.level = quota.level();
     this.stopQuota = quota.subscribe((v) => this.onLevel(v.level));
     if (this.level !== 'paused') {
@@ -229,6 +230,7 @@ export class ChatSync {
   }
 
   push(chat: Chat) {
+    if (this.uid.startsWith('preview-')) return;
     if (!chat.messages.length) return;
     if (this.level === 'normal') {
       this.serial(() => this.write(chat));
@@ -251,6 +253,7 @@ export class ChatSync {
   }
 
   remove(id: string) {
+    if (this.uid.startsWith('preview-')) return;
     const w = this.waiting.get(id);
     if (w) clearTimeout(w.timer);
     this.waiting.delete(id);

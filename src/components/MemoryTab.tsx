@@ -71,63 +71,76 @@ export default function MemoryTab({ Toggle }: { Toggle: (p: { checked: boolean; 
   }, [memories, query]);
 
   return (
-    <div className="settings-section memory-tab">
-      <Toggle
-        label="Use memory"
-        hint="Models get the facts below with every message, so you don't have to repeat yourself. Works with every model and syncs to your devices."
-        checked={settings.memory}
-        onChange={(v) => update({ memory: v })}
-      />
-      <Toggle
-        label="Let models save memories"
-        hint="Models may save lasting facts you share (your job, projects, preferences). Off = only when you ask them to remember something."
-        checked={settings.memoryAuto}
-        onChange={(v) => update({ memoryAuto: v })}
-      />
-      <form
-        className="memory-add"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void addMemory(text);
-          setText('');
-        }}
-      >
-        <input dir="auto" value={text} maxLength={MAX_MEMORY_CHARS} onChange={(e) => setText(e.target.value)} placeholder="Add a memory, e.g. I work as a clinical pharmacist" />
-        <button className="btn" type="submit" disabled={!text.trim()}>
-          <Plus size={16} /> Add
-        </button>
-      </form>
-      <div className="memory-head">
-        <span className="setting-label">
-          {memories.length} memor{memories.length === 1 ? 'y' : 'ies'}
-          <span className="muted small"> (up to {MAX_MEMORIES})</span>
-        </span>
-        {memories.length > 5 && (
-          <label className="search small-search">
-            <Search size={14} />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search memory" />
-          </label>
-        )}
+    <div className="memory-tab" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="settings-group">
+        <span className="settings-group-title">Memory Preferences</span>
+        <div className="settings-card">
+          <Toggle
+            label="Use memory across chats"
+            hint="Models receive these remembered facts with every message, avoiding repetitive explanations. Works across all models."
+            checked={settings.memory}
+            onChange={(v) => update({ memory: v })}
+          />
+          <Toggle
+            label="Allow models to save memories"
+            hint="Models may automatically remember lasting preferences, projects, or context you share. Off = only when you ask."
+            checked={settings.memoryAuto}
+            onChange={(v) => update({ memoryAuto: v })}
+          />
+        </div>
       </div>
-      {memories.length === 0 ? (
-        <p className="muted small">
-          Nothing saved yet. Tell any model “remember that …”, type <code>/remember …</code> in the message box, or add one above.
-        </p>
-      ) : (
-        <ul className="memory-list">
-          {shown.map((m) => (
-            <Row key={m.id} m={m} />
-          ))}
-        </ul>
-      )}
-      {memories.length > 0 && (
-        <button className="btn danger small" onClick={() => { if (confirm('Delete everything in memory?')) void clearMemories(); }}>
-          <Trash2 size={14} /> Delete all memories
-        </button>
-      )}
-      <p className="muted small">
-        Memories are sent to whichever free model answers, so models are told never to store patient details, health information, passwords or confidential figures.
-      </p>
+
+      <div className="settings-group">
+        <div className="settings-group-title">
+          <span>Remembered Facts ({memories.length}/{MAX_MEMORIES})</span>
+          {memories.length > 0 && (
+            <button className="link-btn small danger" onClick={() => { if (confirm('Delete all saved memories?')) void clearMemories(); }}>
+              <Trash2 size={13} /> Clear all
+            </button>
+          )}
+        </div>
+        <div className="settings-card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <form
+            className="memory-add"
+            style={{ margin: 0 }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!text.trim()) return;
+              void addMemory(text);
+              setText('');
+            }}
+          >
+            <input dir="auto" value={text} maxLength={MAX_MEMORY_CHARS} onChange={(e) => setText(e.target.value)} placeholder="Add a memory, e.g. I work as a clinical pharmacist" />
+            <button className="btn primary small" type="submit" disabled={!text.trim()}>
+              <Plus size={15} /> Add
+            </button>
+          </form>
+
+          {memories.length > 4 && (
+            <label className="search small-search" style={{ margin: 0 }}>
+              <Search size={14} />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search saved memories..." />
+            </label>
+          )}
+
+          {memories.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '16px 8px' }}>
+              <p className="muted small" style={{ margin: 0 }}>
+                No memories saved yet. Add a fact above, tell any model “remember that…”, or type <code>/remember …</code> in chat.
+              </p>
+            </div>
+          ) : (
+            <ul className="memory-list" style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>
+              {shown.map((m) => (
+                <Row key={m.id} m={m} />
+              ))}
+            </ul>
+          )}
+          <span className="setting-hint" style={{ fontSize: '0.75rem' }}>
+            Memories are sent to whichever AI model answers. Models are instructed never to store passwords, health numbers, or confidential credentials.
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

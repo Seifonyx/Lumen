@@ -24,7 +24,29 @@ export class MemoryStore {
   private moved = false;
   constructor(private userId: string, private onChange: (items: Memory[]) => void, private onError: (msg: string) => void) {}
 
+  private readPreview(): Memory[] {
+    try {
+      const raw = localStorage.getItem(`mr.memory.${this.userId}`);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private writePreview(items: Memory[]) {
+    try {
+      localStorage.setItem(`mr.memory.${this.userId}`, JSON.stringify(items));
+    } catch {
+      /* ignore */
+    }
+    this.onChange(items);
+  }
+
   start() {
+    if (this.userId.startsWith('preview-')) {
+      this.onChange(this.readPreview());
+      return;
+    }
     this.unsub = onSnapshot(
       ref(this.userId),
       (snap) => {
@@ -77,19 +99,38 @@ export class MemoryStore {
   async add(text: string, extra: Partial<Memory> = {}): Promise<Memory> {
     const now = Date.now();
     const m: Memory = { id: uid(), text: clip(text), createdAt: now, updatedAt: now, source: 'manual', ...extra };
+    if (this.userId.startsWith('preview-')) {
+      const items = [m, ...this.readPreview().filter((x) => x.id !== m.id)];
+      this.writePreview(items);
+      return m;
+    }
     this.send(setDoc(ref(this.userId), { items: { [m.id]: m } }, { merge: true }), 'save to memory');
     return m;
   }
 
   async update(id: string, text: string) {
+    if (this.userId.startsWith('preview-')) {
+      const items = this.readPreview().map((m) => (m.id === id ? { ...m, text: clip(text), updatedAt: Date.now() } : m));
+      this.writePreview(items);
+      return;
+    }
     this.send(setDoc(ref(this.userId), { items: { [id]: { text: clip(text), updatedAt: Date.now() } } }, { merge: true }), 'save to memory');
   }
 
   async remove(id: string) {
+    if (this.userId.startsWith('preview-')) {
+      const items = this.readPreview().filter((m) => m.id !== id);
+      this.writePreview(items);
+      return;
+    }
     this.send(updateDoc(ref(this.userId), { [`items.${id}`]: deleteField() }), 'delete from memory');
   }
 
   async clear(_ids: string[]) {
+    if (this.userId.startsWith('preview-')) {
+      this.writePreview([]);
+      return;
+    }
     this.send(setDoc(ref(this.userId), { items: {} }), 'clear memory');
   }
 }

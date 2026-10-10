@@ -81,64 +81,71 @@ export default function UsageTab() {
 
   return (
     <div className="settings-section usage">
-      <div className="usage-summary">
-        <div>
-          <div className="usage-big">{total}</div>
-          <div className="muted small">requests today</div>
-        </div>
-        <div className="muted small usage-resets">
-          Google limits reset {formatUntil(view.geminiResetAt)}
-          {hasOpenRouter && (
-            <>
-              <br />
-              OpenRouter limits reset {formatUntil(view.openrouter.resetAt)}
-            </>
+      <div className="settings-group">
+        <span className="settings-group-title">Today's Usage & Quotas</span>
+        <div className="settings-card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="usage-summary" style={{ margin: 0, padding: 0, border: 0 }}>
+            <div>
+              <div className="usage-big">{total}</div>
+              <div className="muted small">total requests today</div>
+            </div>
+            <div className="muted small usage-resets">
+              Google limits reset {formatUntil(view.geminiResetAt)}
+              {hasOpenRouter && (
+                <>
+                  <br />
+                  OpenRouter limits reset {formatUntil(view.openrouter.resetAt)}
+                </>
+              )}
+              {(catalog?.providers.groq || catalog?.providers.cerebras) && (
+                <>
+                  <br />
+                  {[catalog?.providers.groq && 'Groq', catalog?.providers.cerebras && 'Cerebras'].filter(Boolean).join(' and ')} limits reset {formatUntil(view.openrouter.resetAt)}
+                </>
+              )}
+            </div>
+          </div>
+
+          {hasOpenRouter && view.openrouter.limit && (
+            <div className="usage-card" style={{ margin: 0 }}>
+              <div className="usage-card-head">
+                <span className="setting-label">OpenRouter free models allowance</span>
+                <span className="muted small">
+                  {view.openrouter.used} of {view.openrouter.limit} today
+                </span>
+              </div>
+              <Bar used={view.openrouter.used} limit={view.openrouter.limit} />
+              <span className="setting-hint">All free OpenRouter models share this daily pool.</span>
+            </div>
           )}
-          {(catalog?.providers.groq || catalog?.providers.cerebras) && (
-            <>
-              <br />
-              {[catalog?.providers.groq && 'Groq', catalog?.providers.cerebras && 'Cerebras'].filter(Boolean).join(' and ')} limits reset {formatUntil(view.openrouter.resetAt)}
-            </>
-          )}
+
+          <ul className="model-list usage-list" style={{ margin: 0 }}>
+            {rows.map(({ id, u, blocked, left, isFreeOR }) => (
+              <li key={id} className="usage-row">
+                <div className="usage-row-head">
+                  <span className="model-title">{modelLabel(catalog, id)}</span>
+                  <Status until={blocked} />
+                </div>
+                <div className="model-sub">
+                  {u?.requests || 0} request{u?.requests === 1 ? '' : 's'}
+                  {u && u.input + u.output > 0 && ` · ${formatTokens(u.input)} in / ${formatTokens(u.output)} out tokens`}
+                  {left !== null && !isFreeOR && (blocked ? ` · daily limit ${u?.quota}` : ` · ${left} left today`)}
+                  {left === null && !isFreeOR && (blocked ? '' : ' · daily limit not known yet')}
+                </div>
+                {u?.quota && !isFreeOR && <Bar used={u.requests} limit={u.quota} />}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
-      {hasOpenRouter && view.openrouter.limit && (
-        <div className="usage-card">
-          <div className="usage-card-head">
-            <span className="setting-label">OpenRouter free models</span>
-            <span className="muted small">
-              {view.openrouter.used} of {view.openrouter.limit} today
-            </span>
-          </div>
-          <Bar used={view.openrouter.used} limit={view.openrouter.limit} />
-          <span className="setting-hint">All free OpenRouter models share this daily allowance.</span>
-        </div>
-      )}
-
-      <ul className="model-list usage-list">
-        {rows.map(({ id, u, blocked, left, isFreeOR }) => (
-          <li key={id} className="usage-row">
-            <div className="usage-row-head">
-              <span className="model-title">{modelLabel(catalog, id)}</span>
-              <Status until={blocked} />
-            </div>
-            <div className="model-sub">
-              {u?.requests || 0} request{u?.requests === 1 ? '' : 's'}
-              {u && u.input + u.output > 0 && ` · ${formatTokens(u.input)} in / ${formatTokens(u.output)} out tokens`}
-              {left !== null && !isFreeOR && (blocked ? ` · daily limit ${u?.quota}` : ` · ${left} left today`)}
-              {left === null && !isFreeOR && (blocked ? '' : ' · daily limit not known yet')}
-            </div>
-            {u?.quota && !isFreeOR && <Bar used={u.requests} limit={u.quota} />}
-          </li>
-        ))}
-      </ul>
-
-      <FirebaseCard />
+      <div className="settings-group">
+        <span className="settings-group-title">Cloud Sync Storage</span>
+        <FirebaseCard />
+      </div>
 
       <p className="muted small">
-        Google doesn't tell apps their limits in advance, so Model Router learns each model's daily limit the first time it's reached. Models at their
-        limit are skipped automatically until they reset. Counts are shared across your devices.
+        Google doesn't publish fixed limits in advance; Model Router tracks model quotas dynamically as you chat. Models hitting rate limits are bypassed automatically until reset.
       </p>
     </div>
   );

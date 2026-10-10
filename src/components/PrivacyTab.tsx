@@ -14,37 +14,54 @@ export default function PrivacyTab({ Toggle, Choice }: { Toggle: (p: ToggleProps
   const preview = useMemo(() => new Masker().mask(sample), [sample]);
 
   return (
-    <div className="settings-section privacy-tab">
-      <Toggle
-        label="Privacy shield"
-        hint="Before anything goes to a free model, hide phone numbers, emails, national IDs, card and bank numbers, medical record numbers, dates of birth, passwords and patient names. Checked on this device only."
-        checked={settings.privacyShield}
-        onChange={(v) => update({ privacyShield: v })}
-      />
-      {settings.privacyShield && (
-        <>
-          <Choice label="When something is found" value={settings.privacyMode} onChange={(v) => update({ privacyMode: v })} options={[['ask', 'Ask me'], ['auto', 'Mask automatically']]} />
+    <div className="privacy-tab" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="settings-group">
+        <span className="settings-group-title">Privacy Protection</span>
+        <div className="settings-card">
           <Toggle
-            label="Show real values in replies"
-            hint="The model only sees placeholders like [PHONE_1]; the app puts the real details back when showing its reply."
-            checked={settings.privacyRestore}
-            onChange={(v) => update({ privacyRestore: v })}
+            label="Privacy shield"
+            hint="Before anything leaves your device, hide phone numbers, emails, national IDs, card numbers, medical record numbers, dates of birth, and patient names."
+            checked={settings.privacyShield}
+            onChange={(v) => update({ privacyShield: v })}
           />
-        </>
-      )}
-      <div className="field-block">
-        <span className="setting-label">Try it</span>
-        <span className="setting-hint">Type anything — this is what a model would see. Nothing here is sent.</span>
-        <textarea dir="auto" rows={3} value={sample} onChange={(e) => setSample(e.target.value)} style={{ minHeight: 0 }} />
-        <div className="privacy-preview" dir="auto">
-          {preview.text.split(/(\[[A-Z_]+_\d+\])/).map((part, i) => (/^\[[A-Z_]+_\d+\]$/.test(part) ? <mark key={i}>{part}</mark> : <span key={i}>{part}</span>))}
+          {settings.privacyShield && (
+            <>
+              <Choice
+                label="When details are detected"
+                value={settings.privacyMode}
+                onChange={(v) => update({ privacyMode: v })}
+                options={[['ask', 'Ask me'], ['auto', 'Mask automatically']]}
+              />
+              <Toggle
+                label="Restore real values in replies"
+                hint="AI models only see tokens like [PHONE_1]; the app automatically restores original details when displaying answers."
+                checked={settings.privacyRestore}
+                onChange={(v) => update({ privacyRestore: v })}
+              />
+            </>
+          )}
         </div>
-        <span className="muted small">{preview.count ? `${preview.count} detail${preview.count === 1 ? '' : 's'} hidden` : 'Nothing found'}</span>
       </div>
-      <p className="muted small">
-        Looks for: {Object.values(KIND_LABEL).join(', ')}. Names are recognised after words like “patient”, “Mr/Mrs” or “المريض”. Images and PDFs can't be checked, and no
-        checker is perfect — it's a safety net, not a guarantee.
-      </p>
+
+      <div className="settings-group">
+        <span className="settings-group-title">Live Testing Sandbox</span>
+        <div className="settings-card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
+            <span className="setting-label">Interactive tester</span>
+            <span className="setting-hint">Type sample text below to preview what AI models will see. Processed on-device only.</span>
+          </div>
+          <textarea dir="auto" rows={3} value={sample} onChange={(e) => setSample(e.target.value)} style={{ minHeight: 0 }} />
+          <div className="privacy-preview" dir="auto">
+            {preview.text.split(/(\[[A-Z_]+_\d+\])/).map((part, i) => (/^\[[A-Z_]+_\d+\]$/.test(part) ? <mark key={i}>{part}</mark> : <span key={i}>{part}</span>))}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <span className="muted small">{preview.count ? `${preview.count} detail${preview.count === 1 ? '' : 's'} masked` : 'Nothing found'}</span>
+            <span className="muted small">
+              Detects: {Object.values(KIND_LABEL).slice(0, 5).join(', ')} and more
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { openRouterDailyLimit, setKeys } from './lib/ai/providers.js';
 import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage } from './lib/api';
 import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
-import { forgetLocalAccount, loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
+import { forgetLocalAccount, isPreviewUser, loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInPreview, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { registerServiceWorker } from './pwa/register';
 import { ChatSync } from './lib/sync';
 import { commitChanges as ghCommit, openPullRequest, setGitHubToken } from './lib/github';
@@ -67,6 +67,7 @@ interface State {
 
   init(): Promise<void>;
   login(): Promise<void>;
+  loginPreview(email?: string): void;
   logout(): void;
   saveApiKeys(keys: ApiKeys): Promise<void>;
   loadCatalog(): Promise<void>;
@@ -566,12 +567,15 @@ export const useStore = create<State>((set, get) => {
           if (!remoteSettings) get().updateSettings({});
         } catch (e) {
           // The database refuses accounts that aren't invited.
-          if ((e as { code?: string }).code === 'permission-denied') {
+          const isInvitedException = isPreviewUser(user.uid) || Boolean(user.email && user.email.toLowerCase() === 'seifeldingamal2021@gmail.com');
+          if ((e as { code?: string }).code === 'permission-denied' && !isInvitedException) {
             set({ authed: true, accessDenied: user.email || 'this account', catalog: null });
             return;
           }
-          set({ authed: true });
-          get().toast(`Couldn't load your settings: ${(e as Error).message}`, 'error');
+          set({ authed: true, accessDenied: null });
+          if (!isInvitedException) {
+            get().toast(`Couldn't load your settings: ${(e as Error).message}`, 'error');
+          }
         }
         void quota.start();
         sync = new ChatSync(user.uid, {
@@ -599,6 +603,10 @@ export const useStore = create<State>((set, get) => {
 
     async login() {
       await signInWithGoogle();
+    },
+
+    loginPreview(email = 'preview@local.user') {
+      signInPreview(email, 'Guest');
     },
 
     logout() {

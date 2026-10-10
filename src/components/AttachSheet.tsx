@@ -34,7 +34,7 @@ export default function AttachSheet({ onClose, onFiles, onCamera, onRepo, repoNa
     };
     const onResize = () => close.current();
     window.addEventListener('keydown', onKey);
-    window.addEventListener('resize', onResize);
+    if (anchor) window.addEventListener('resize', onResize);
     return () => {
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('resize', onResize);

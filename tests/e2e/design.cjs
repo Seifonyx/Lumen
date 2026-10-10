@@ -57,6 +57,10 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         await page.keyboard.press('Escape');
         check(!(await page.locator('.sheet').isVisible()) && await page.locator(add).evaluate((el) => el === document.activeElement), `${label}: Escape returns focus to add button`);
         await page.click(add);
+        await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+        check(await page.locator('.sheet').isVisible() === mobile, `${label}: resize dismisses desktop popover but preserves phone sheet`);
+        if (mobile) await page.keyboard.press('Escape');
+        await page.click(add);
         const chooser = page.waitForEvent('filechooser');
         await page.getByRole('button', { name: /Photos & files/ }).click();
         await (await chooser).setFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('Weekly review notes') });

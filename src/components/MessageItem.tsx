@@ -1,11 +1,11 @@
-import { AlertTriangle, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, Info, Pencil, RefreshCw, Square, Volume2 } from 'lucide-react';
+import { AlertTriangle, Share, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, Info, Pencil, RefreshCw, Square, Volume2 } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 import { mentionedPaths, repoTree, seenPaths } from '../lib/workspace';
 import { normalizeEdits } from '../lib/edits';
 import { buildFile } from '../lib/generate';
 import { toPlainText } from '../lib/markdown';
 import { canSpeak, speak, stopSpeaking } from '../lib/speech';
-import { copyText, isRtl, safeFileName, saveBlob } from '../lib/util';
+import { copyText, isRtl, isTouch, safeFileName, saveBlob } from '../lib/util';
 import { modelLabel, useStore } from '../store';
 import type { Message } from '../types';
 import Markdown from './Markdown';
@@ -200,6 +200,16 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
   const streaming = message.status === 'streaming';
   const truncated = message.notices?.some((n) => /length limit/.test(n));
 
+  // Phones: the native share sheet (Messages, Mail, Notes, WhatsApp…).
+  const canShare = typeof navigator.share === 'function' && isTouch();
+  const shareReply = async () => {
+    try {
+      await navigator.share({ title: chatTitle, text: message.text });
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') toast("Couldn't open the share sheet.", 'error');
+    }
+  };
+
   const saveWord = async () => {
     try {
       await saveBlob(await buildFile('reply.docx', message.text), `${safeFileName(chatTitle, 'Reply')}.docx`);
@@ -267,6 +277,11 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
               <button className="msg-action" aria-label="Copy" title="Copy" onClick={async () => { if (await copyText(message.text)) { setCopied(true); setTimeout(() => setCopied(false), 1500); } }}>
                 {copied ? <Check size={15} /> : <Copy size={15} />}
               </button>
+              {canShare && (
+                <button className="msg-action" aria-label="Share" title="Share" onClick={() => void shareReply()}>
+                  <Share size={15} />
+                </button>
+              )}
               {canSpeak && (
                 <button
                   className="msg-action"

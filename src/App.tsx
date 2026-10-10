@@ -10,6 +10,7 @@ import UpdateBar from './components/UpdateBar';
 import WorkspacePanel from './components/WorkspacePanel';
 import RepoPicker from './components/RepoPicker';
 import { useStore } from './store';
+import { keepScreenAwake } from './lib/wakelock';
 
 const RunPanel = lazy(() => import('./components/RunPanel'));
 
@@ -27,6 +28,13 @@ export default function App() {
   useEffect(() => {
     void init();
   }, [init]);
+
+  // Keep the phone awake while a reply is being written, so locking the screen doesn't cut it off.
+  const working = useStore((s) => s.streamingChatId !== null || s.compactingChatId !== null);
+  useEffect(() => {
+    keepScreenAwake(working);
+    return () => keepScreenAwake(false);
+  }, [working]);
 
   // Global shortcuts: Ctrl/Cmd+Shift+O new chat, Ctrl/Cmd+K focus search, Esc stop/close.
   useEffect(() => {

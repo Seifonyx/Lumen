@@ -77,7 +77,7 @@ async function device(browser, mobile) {
   await A.page.locator('.model-row', { hasText: 'gemini-3.5-flash' }).locator('.star').first().click();
   await A.page.click('.settings-page [aria-label="Close"]');
 
-  // 1st message: 3.5 is at its daily limit -> switches, learns limit 20, blocks it.
+  // 1st message: 3.5 is limited -> switches across providers to OpenRouter and learns limit 20.
   await A.page.click('.model-button');
   await A.page.click('.models-pop .mp-title:text-is("gemini-3.5-flash")');
   await A.page.fill('.composer textarea', 'first');
@@ -110,8 +110,9 @@ async function device(browser, mobile) {
 
   await A.page.locator('.usage-chip').click();
   const dailyMeter = A.page.getByRole('meter', { name: 'Requests used today' });
-  check(await dailyMeter.getAttribute('aria-valuemax') === '50' && await dailyMeter.getAttribute('aria-valuenow') === '1', 'usage popup shows the real shared OpenRouter allowance');
-  check((await A.page.locator('.usage-pop').textContent()).includes('49 remaining'), 'usage popup shows the remaining daily requests');
+  check(A.calls.filter(c => c === 'openrouter').length === 2 && A.calls.filter(c => c === 'gemini-flash-latest').length === 1, 'provider-diverse fallback and manual requests are counted exactly');
+  check(await dailyMeter.getAttribute('aria-valuemax') === '50' && await dailyMeter.getAttribute('aria-valuenow') === '2', 'usage popup shows the real shared OpenRouter allowance');
+  check((await A.page.locator('.usage-pop').textContent()).includes('48 remaining'), 'usage popup shows the remaining daily requests');
   await A.page.getByRole('button', { name: 'Close usage', exact: true }).click();
 
   // Usage tab.
@@ -121,9 +122,9 @@ async function device(browser, mobile) {
   await A.page.waitForSelector('.usage-row');
   const text = await A.page.textContent('.usage');
   console.log('      usage tab:', text.replace(/\s+/g, ' ').slice(0, 400));
-  check(/1 of 50 today/.test(text), 'OpenRouter pool: 1 of 50');
+  check(/2 of 50 today/.test(text), 'OpenRouter pool: fallback plus manual request, 2 of 50');
   check(/Limit reached/.test(text), 'limited model shown');
-  check(/2 requests · 2K in \/ 1K out tokens/.test(text) || /2 requests · 2K in/.test(text), 'gemini-flash-latest counts + tokens');
+  check(/1 request · 1K in \/ 300 out tokens/.test(text), 'gemini-flash-latest counts + tokens');
   await A.page.screenshot({ path: path.join(OUT, 'usage-tab.png') });
 
   // Second device sees the same counts and block.
@@ -133,7 +134,7 @@ async function device(browser, mobile) {
   await openTab(B.page, 'Usage');
   await B.page.waitForSelector('.usage-row');
   const textB = await B.page.textContent('.usage');
-  check(/Limit reached/.test(textB) && /1 of 50 today/.test(textB), 'usage + block synced to second device');
+  check(/Limit reached/.test(textB) && /2 of 50 today/.test(textB), 'usage + block synced to second device');
   check(/0 left today|0 requests/.test(textB) || /left today/.test(textB) || true, 'limit learned (quota 20)');
   const learned = await B.page.textContent('.usage'); console.log('      B usage:', learned.replace(/\s+/g, ' ').slice(0, 500));
   check(/daily limit 20/.test(learned), 'learned daily limit shown');

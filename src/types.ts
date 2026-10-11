@@ -48,6 +48,8 @@ export interface Message {
 }
 
 export interface Chat {
+  /** Snapshot: editing/deleting a saved helper never changes this chat's instructions. */
+  assistant?: SavedAssistant;
   id: string;
   title: string;
   createdAt: number;
@@ -83,6 +85,20 @@ export interface Project {
   files?: Attachment[];
   createdAt: number;
   updatedAt: number;
+}
+
+export interface SavedAssistant {
+  id: string;
+  name: string;
+  description: string;
+  instructions: string;
+  model: string;
+}
+
+export interface SavedPrompt {
+  id: string;
+  title: string;
+  text: string;
 }
 
 export interface ComparedAnswer {
@@ -167,6 +183,8 @@ export type Theme = 'system' | 'light' | 'dark' | 'black';
 export type FontSize = 'small' | 'medium' | 'large';
 
 export interface Settings {
+  assistants?: SavedAssistant[];
+  prompts?: SavedPrompt[];
   /** Models explicitly refused by the provider for this account; reset when its key changes. */
   unavailableModels?: string[];
   /** User workspaces shared across devices with the rest of account settings. */

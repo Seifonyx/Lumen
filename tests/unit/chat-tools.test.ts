@@ -10,7 +10,9 @@ const chat: any = {
   messages: ['m1', 'm2', 'm3'].map((id, i) => ({ id, role: i % 2 ? 'assistant' : 'user', text: id, createdAt: i })),
 };
 chat.summary = { text: 'Earlier summary', upTo: 'm1', count: 1, saved: 1, createdAt: 1 };
+chat.assistant = { id: 'helper', name: 'Helper', instructions: 'Preserve context', description: '', model: 'auto' };
 const branch = branchChat(chat, 'm2', 'branch-id', 99)!;
+check(branch.assistant?.instructions === 'Preserve context', 'branch keeps saved helper instructions');
 check(branch.id === 'branch-id' && branch.title === 'Report (branch)' && branch.messages.map((m) => m.id).join(',') === 'm1,m2', 'branch copies the conversation through the selected message');
 check(branch.projectId === 'p1' && branch.model === chat.model && branch.context?.[0] === 'README.md' && branch.summary === chat.summary, 'branch preserves project, model, context and applicable summary');
 check(branchChat(chat, 'missing', 'bad') === null, 'unknown branch point is rejected');

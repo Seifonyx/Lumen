@@ -219,6 +219,10 @@ export async function loadKeys(uid: string): Promise<ApiKeys> {
 }
 
 /** Settings shared across devices (model list, instructions, appearance). */
+export function cacheAccountSettings(uid: string, settings: object): void {
+  keepLocal(uid, { settings: settings as Record<string, unknown> });
+}
+
 export async function loadRemoteSettings(uid: string): Promise<Record<string, unknown> | null> {
   return (await readAccount(uid)).settings || null;
 }

@@ -75,6 +75,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
         </button>
         <ModelPicker value={model} onChange={setChatModel} />
         <div className="spacer" />
+        {chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}
         {chat?.repo && (
           <button
             className={`icon-btn code-toggle${workspaceOpen ? ' on' : ''}`}

@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import { BUILTIN_ASSISTANTS, BUILTIN_PROMPTS, normalizeAssistant, normalizePrompt, libraryFits } from '../../src/lib/assistants';
+assert.equal(BUILTIN_ASSISTANTS.length, 4);
+assert.equal(BUILTIN_PROMPTS.length, 4);
+assert.equal(normalizeAssistant({ id:'x', name:' ', description:'', instructions:'test', model:'auto' }), null);
+assert.equal(normalizePrompt({ id:'x', title:'test', text:' ' }), null);
+const helper = normalizeAssistant({id:'x',name:' Helper ',description:'desc',instructions:'a'.repeat(9000),model:'auto'})!;
+assert.equal(helper.name,'Helper');
+assert.equal(helper.instructions.length,8000);
+assert.ok(libraryFits([helper], []));
+assert.ok(!libraryFits(Array(26).fill(helper), []));
+assert.ok(!libraryFits([], Array(51).fill(BUILTIN_PROMPTS[0])));
+assert.ok(!libraryFits(Array(20).fill(helper), []));
+console.log('PASS helpers: normalization, builtins and account size limits');

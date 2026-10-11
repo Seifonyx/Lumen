@@ -3,6 +3,7 @@
 
 import type { Chat, Message } from '../types';
 import { uid } from './util';
+import { normalizeAssistant } from './assistants';
 
 const DB_NAME = 'model-router';
 const STORE = 'chats';
@@ -61,6 +62,7 @@ function normalize(raw: any): Chat {
     tags: Array.isArray(raw.tags) ? raw.tags.filter((t: unknown): t is string => typeof t === 'string').slice(0, 5) : undefined,
     model: raw.model,
     projectId: raw.projectId,
+    assistant: raw.assistant ? normalizeAssistant(raw.assistant) || undefined : undefined,
     rev: raw.rev,
     summary: raw.summary && typeof raw.summary.text === 'string' ? raw.summary : undefined,
     repo: raw.repo,

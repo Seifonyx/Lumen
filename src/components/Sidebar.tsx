@@ -1,4 +1,4 @@
-import { Download, FolderKanban, MessageSquare, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings, SquarePen, Tag, Trash2, X } from 'lucide-react';
+import { BookOpen, Download, FolderKanban, MessageSquare, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings, SquarePen, Tag, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey, modelShortName, safeFileName, saveBlob } from '../lib/util';
 import { useStore } from '../store';
@@ -102,7 +102,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   );
 }
 
-export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
+export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () => void; onOpenLibrary: () => void }) {
   const user = useStore((st) => st.user);
   const chats = useStore((s) => s.chats);
   const currentId = useStore((s) => s.currentId);
@@ -221,6 +221,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
         <button className="btn new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}>
           <SquarePen size={18} /> New chat
         </button>
+        <button className="icon-btn library-button" aria-label="Saved helpers and prompts" title="Saved helpers and prompts" onClick={() => { setUi({ sidebarOpen: false }); onOpenLibrary(); }}><BookOpen size={19} /></button>
       </div>
       <button className="sidebar-foot" onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })} aria-label="Settings">
         {user?.photo ? <img className="avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}

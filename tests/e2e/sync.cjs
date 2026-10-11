@@ -125,6 +125,32 @@ async function device(browser, name, email, mobile) {
   await B.page.waitForTimeout(1500);
   check(!(await B.page.textContent('.chat-list')).includes('Renamed on laptop'), 'deleted chat stays deleted after reload');
 
+  // Saved helpers and their immutable chat instructions cross devices.
+  await B.page.getByRole('button', { name: 'Saved helpers and prompts', exact: true }).click();
+  await B.page.getByRole('button', { name: 'New assistant', exact: true }).click();
+  await B.page.getByLabel('Library item name').fill('Synced helper');
+  await B.page.getByLabel('Library instructions').fill('Use HELPER_SYNC_MARKER in your reply.');
+  await B.page.getByRole('button', { name: 'Save', exact: true }).click();
+  await B.page.locator('.library-card').filter({ has: B.page.getByRole('heading', { name: 'Synced helper', exact: true }) }).getByRole('button', { name: 'Start chat', exact: true }).click();
+  await B.page.fill('.composer textarea', 'Test helper sync');
+  await B.page.click('.send-btn');
+  await B.page.waitForSelector('.msg.assistant .model-tag');
+  await B.page.waitForTimeout(1800);
+  await A.page.reload();
+  await A.page.waitForSelector('.topbar');
+  await A.page.click('.menu-btn');
+  await A.page.getByRole('button', { name: 'Saved helpers and prompts', exact: true }).click();
+  await A.page.getByRole('heading', { name: 'Synced helper', exact: true }).waitFor();
+  check(true, 'saved assistant library synced to phone');
+  await A.page.getByRole('button', { name: 'Close', exact: true }).click();
+  await A.page.click('.menu-btn');
+  await A.page.getByRole('button', { name: 'Synced Chat Title', exact: true }).click();
+  await A.page.waitForSelector('.assistant-badge');
+  await A.page.fill('.composer textarea', 'Continue synced helper');
+  await A.page.click('.send-btn');
+  await A.page.waitForSelector('.msg.assistant >> nth=1 >> .model-tag');
+  check(JSON.stringify(A.log.at(-1)).includes('HELPER_SYNC_MARKER'), 'chat helper instructions synced and used on phone');
+
   await B.page.screenshot({ path: path.join(OUT, 'b-final.png') });
   const errs = [...A.errors, ...B.errors];
   console.log('errors:', errs);

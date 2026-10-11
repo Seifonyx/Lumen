@@ -3,7 +3,7 @@ import { openRouterDailyLimit, setKeys } from './lib/ai/providers.js';
 import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage } from './lib/api';
 import { keepModelChoice, isExcludedModel } from './lib/ai/model-status.js';
 import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
-import { forgetLocalAccount, isPreviewUser, loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInPreview, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
+import { cacheAccountSettings, forgetLocalAccount, isPreviewUser, loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInPreview, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { registerServiceWorker } from './pwa/register';
 import { ChatSync } from './lib/sync';
 import { commitChanges as ghCommit, openPullRequest, setGitHubToken } from './lib/github';
@@ -18,9 +18,10 @@ import { findLayout, isLayoutId } from './lib/layouts';
 import { formatUntil, remaining, UsageTracker, type LimitInfo, type UsageView } from './lib/usage';
 import { db } from './lib/db';
 import { branchChat, normalizeChatTags } from './lib/chat-tools';
+import { normalizeAssistant } from './lib/assistants';
 import { applyAppearance, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
-import type { Attachment, Catalog, Chat, ChatSummary, ComparisonState, FileChange, Memory, Message, ModelInfo, Project, RepoLink, Settings } from './types';
+import type { Attachment, Catalog, Chat, ChatSummary, ComparisonState, FileChange, Memory, Message, ModelInfo, Project, RepoLink, SavedAssistant, Settings } from './types';
 
 export interface Toast {
   id: string;
@@ -95,6 +96,7 @@ interface State {
   commitWork(chatId: string, o: { message: string; target: string; pullRequest: boolean }): Promise<{ url: string; prUrl?: string }>;
 
   newChat(): void;
+  startAssistant(assistant: SavedAssistant): void;
   selectChat(id: string): void;
   deleteChat(id: string): Promise<void>;
   renameChat(id: string, title: string): Promise<void>;
@@ -168,6 +170,7 @@ export const useStore = create<State>((set, get) => {
     sync?.push(stamped);
   };
   const currentChat = () => get().chats.find((c) => c.id === get().currentId) || null;
+  const clearAssistantDraft = () => { try { localStorage.removeItem(`mr.assistantDraft.${get().user?.uid}`); } catch { /* private mode */ } };
   const currentProjectId = () => get().settings.projects?.some((p) => p.id === get().activeProjectId) ? get().activeProjectId : null;
   const hideUnavailableModel = (id: string) => {
     const { settings, catalog } = get();
@@ -399,7 +402,7 @@ export const useStore = create<State>((set, get) => {
       const rawMemory = settings.memory ? memoryInstructions(get().memories, settings.memoryAuto) : '';
       const memoryNote = masker ? masker.mask(rawMemory).text : rawMemory;
       const projectInstructions = settings.projects?.find((p) => p.id === chat?.projectId)?.instructions || '';
-      const instructions = [settings.customInstructions, projectInstructions, layout?.instructions].filter(Boolean).join('\n\n');
+      const instructions = [settings.customInstructions, projectInstructions, chat.assistant?.instructions, layout?.instructions].filter(Boolean).join('\n\n');
       body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: settings.webSearch, customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: workspaceNote } });
     } catch (e) {
       get().toast((e as Error).message, 'error');
@@ -601,8 +604,12 @@ export const useStore = create<State>((set, get) => {
           setKeys(keys);
           setGitHubToken(keys.github);
           set({ keys, authed: true });
-          if (remoteSettings) get().updateSettings({ ...remoteSettings, unavailableModels: remoteSettings.unavailableModels || [], voiceLang: get().settings.voiceLang } as Partial<Settings>);
-          else get().updateSettings({ unavailableModels: [] });
+          if (remoteSettings) get().updateSettings({ ...remoteSettings, unavailableModels: remoteSettings.unavailableModels || [], assistants: remoteSettings.assistants || [], prompts: remoteSettings.prompts || [], voiceLang: get().settings.voiceLang } as Partial<Settings>);
+          else get().updateSettings({ unavailableModels: [], assistants: [], prompts: [] });
+          try {
+            const draftId = localStorage.getItem(`mr.assistantDraft.${user.uid}`);
+            if (draftId && get().chats.some((chat) => chat.id === draftId && chat.assistant && !chat.messages.length)) set({ currentId: draftId });
+          } catch { /* private mode */ }
           {
             const { voiceLang: _voice, ...shared } = get().settings;
             lastSharedSettings = remoteSettings ? JSON.stringify(shared) : '';
@@ -738,6 +745,8 @@ export const useStore = create<State>((set, get) => {
       // Share settings with your other devices (voice language stays per device).
       const uid = get().user?.uid;
       if (uid && settingsReady) {
+        const { voiceLang: _localVoice, ...localShared } = settings;
+        cacheAccountSettings(uid, localShared);
         clearTimeout(settingsTimer);
         settingsTimer = setTimeout(() => {
           const { voiceLang: _voice, ...shared } = get().settings;
@@ -765,6 +774,7 @@ export const useStore = create<State>((set, get) => {
     },
 
     selectProject(id) {
+      clearAssistantDraft();
       const valid = id && get().settings.projects?.some((p) => p.id === id) ? id : null;
       try { if (valid) localStorage.setItem('mr.activeProject', valid); else localStorage.removeItem('mr.activeProject'); } catch { /* private mode */ }
       set({ activeProjectId: valid, sidebarOpen: false });
@@ -827,9 +837,10 @@ export const useStore = create<State>((set, get) => {
     },
 
     newChat() {
+      clearAssistantDraft();
       // Reuse an existing empty chat instead of piling them up.
       const projectId = currentProjectId();
-      const empty = get().chats.find((c) => c.messages.length === 0 && !c.summary && c.projectId === projectId);
+      const empty = get().chats.find((c) => c.messages.length === 0 && !c.summary && !c.assistant && c.projectId === projectId);
       if (empty) {
         set({ currentId: empty.id, sidebarOpen: false, settingsOpen: false });
         return;
@@ -837,7 +848,18 @@ export const useStore = create<State>((set, get) => {
       const chat = { ...newChatObject(), projectId: projectId || undefined };
       set((s) => ({ chats: [chat, ...s.chats], currentId: chat.id, sidebarOpen: false, settingsOpen: false }));
     },
+    startAssistant(value) {
+      const assistant = normalizeAssistant(value);
+      if (!assistant) return;
+      const { settings, catalog } = get();
+      const allowed = assistant.model === AUTO || settings.enabledModels.includes(assistant.model) || (isLayoutId(assistant.model) && findLayout(assistant.model, catalog?.models || [], settings.layouts, settings.hiddenLayouts));
+      const chat: Chat = { ...newChatObject(), title: assistant.name, assistant: { ...assistant }, model: allowed ? assistant.model : AUTO, projectId: currentProjectId() || undefined };
+      set((state) => ({ chats: [chat, ...state.chats], currentId: chat.id, sidebarOpen: false, settingsOpen: false }));
+      void db.put(chat).catch(() => get().toast("Couldn't save the helper chat on this device.", 'error'));
+      try { localStorage.setItem(`mr.assistantDraft.${get().user?.uid}`, chat.id); } catch { /* private mode */ }
+    },
     selectChat(id) {
+      clearAssistantDraft();
       set({ currentId: id, sidebarOpen: false, settingsOpen: false });
     },
     async deleteChat(id) {
@@ -936,7 +958,7 @@ export const useStore = create<State>((set, get) => {
         workspace = workspaceInstructions(chat.repo, tree?.files || [], Boolean(tree?.truncated), chat.context || [], '');
       }
       const rawMemory = settings.memory ? memoryInstructions(get().memories, settings.memoryAuto) : '';
-      const custom = [settings.customInstructions, project?.instructions].filter(Boolean).join('\n\n');
+      const custom = [settings.customInstructions, project?.instructions, chat?.assistant?.instructions].filter(Boolean).join('\n\n');
       const restore = (value: string) => masker && settings.privacyRestore ? masker.unmask(value) : value;
       const bodyFor = (model: string) => buildChatBody({
         model, fallbacks: [], messages: wire,
@@ -1245,6 +1267,8 @@ export const useStore = create<State>((set, get) => {
           ...newChatObject(),
           title: `${chat.title} (continued)`.slice(0, 100),
           model: chat.model,
+          assistant: chat.assistant,
+          projectId: chat.projectId,
           summary: { ...out.summary, upTo: null, from: chat.title, saved: Math.max(0, contextTokens(chat) - Math.ceil(out.summary.text.length / 4)) },
         };
         set((s) => ({ chats: [next, ...s.chats.filter((c) => !(c.messages.length === 0 && !c.summary))], currentId: next.id, sidebarOpen: false }));
@@ -1315,3 +1339,4 @@ export function modelLabel(catalog: Catalog | null, id?: string): string {
   if (isLayoutId(id)) return findLayout(id, catalog?.models || [], useStore.getState().settings.layouts, useStore.getState().settings.hiddenLayouts)?.name || 'Layout';
   return modelInfo(catalog, id)?.label || modelShortName(id);
 }
+

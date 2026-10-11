@@ -20,6 +20,7 @@ interface Pending {
 
 const PREFILL = 'mr:prefill';
 export const prefillComposer = (text: string) => window.dispatchEvent(new CustomEvent(PREFILL, { detail: text }));
+export const insertPrompt = (text: string) => window.dispatchEvent(new CustomEvent(PREFILL, { detail: { text, append: true } }));
 
 export default function Composer({ model, meter, starterActions }: { model: string; meter?: ReactNode; starterActions?: ReactNode }) {
   const send = useStore((s) => s.send);
@@ -111,7 +112,9 @@ export default function Composer({ model, meter, starterActions }: { model: stri
 
   useEffect(() => {
     const onPrefill = (e: Event) => {
-      const prefill = (e as CustomEvent<string>).detail;
+      const detail = (e as CustomEvent<string | { text: string; append: boolean }>).detail;
+      const current = input.current?.value || '';
+      const prefill = typeof detail === 'string' ? detail : `${detail.append && current ? current + '\n\n' : ''}${detail.text}`;
       setText(prefill);
       saveDraft(prefill);
       requestAnimationFrame(() => {

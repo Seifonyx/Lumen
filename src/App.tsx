@@ -16,6 +16,7 @@ import { keepScreenAwake } from './lib/wakelock';
 import { installSidebarGestures } from './lib/sidebar-gesture';
 
 const RunPanel = lazy(() => import('./components/RunPanel'));
+const AssistantLibrary = lazy(() => import('./components/AssistantLibrary'));
 
 export default function App() {
   const authed = useStore((s) => s.authed);
@@ -28,6 +29,12 @@ export default function App() {
   const runner = useStore((s) => s.runner);
   const repoPicker = useStore((s) => s.repoPicker);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  useEffect(() => {
+    const open = () => { setUi({ sidebarOpen: false }); setLibraryOpen(true); };
+    window.addEventListener('mr:library', open);
+    return () => window.removeEventListener('mr:library', open);
+  }, [setUi]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('mr.sidebarCollapsed') === 'true');
   const toggleSidebar = () => setSidebarCollapsed((collapsed) => {
     localStorage.setItem('mr.sidebarCollapsed', String(!collapsed));
@@ -87,12 +94,13 @@ export default function App() {
   if (accessDenied) return <NotInvited email={accessDenied} />;
   return (
     <div className={`app${settingsOpen ? ' settings-open' : ''}${workspaceOpen ? ' workspace-open' : ''}${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
-      <Sidebar onCollapse={toggleSidebar} />
+      <Sidebar onCollapse={toggleSidebar} onOpenLibrary={() => setLibraryOpen(true)} />
       <div className={`scrim${sidebarOpen ? ' visible' : ''}`} aria-hidden="true" onClick={() => setUi({ sidebarOpen: false })} />
       <ChatView onExpandSidebar={toggleSidebar} />
       {!settingsOpen && <WorkspacePanel />}
       <SettingsModal />
       {commandPaletteOpen && <CommandPalette onClose={() => setCommandPaletteOpen(false)} />}
+      {libraryOpen && <Suspense fallback={null}><AssistantLibrary onClose={() => setLibraryOpen(false)} /></Suspense>}
       <ComparisonResultsModal />
       {repoPicker && <RepoPicker onClose={() => setUi({ repoPicker: false })} />}
       <PreviewModal />

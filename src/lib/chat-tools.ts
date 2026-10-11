@@ -14,6 +14,7 @@ export function branchChat(chat: Chat, messageId: string, id: string, now = Date
     createdAt: now,
     updatedAt: now,
     projectId: chat.projectId,
+    assistant: chat.assistant,
     model: chat.model,
     repo: chat.repo,
     context: chat.context,

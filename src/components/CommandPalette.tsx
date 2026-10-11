@@ -27,6 +27,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
   const items = useMemo(() => {
     const all: Item[] = [
       { id: 'new-chat', label: 'New chat', detail: `${modKey}⇧O`, Icon: Plus, run: newChat },
+      { id: 'library', label: 'Saved helpers and prompts', detail: 'Library', Icon: Boxes, run: () => window.dispatchEvent(new Event('mr:library')) },
       ...sections.map(([id, label]) => ({ id: `settings-${id}`, label: `Settings · ${label}`, detail: 'Settings', Icon: Settings, run: () => setUi({ settingsOpen: true, settingsTab: id, sidebarOpen: false }) })),
       ...projects.map((project) => ({ id: `project-${project.id}`, label: project.name, detail: 'Project', Icon: FolderKanban, run: () => selectProject(project.id) })),
       ...enabled.map((id) => ({ id: `model-${id}`, label: modelLabel(catalog, id), detail: 'Set default model', Icon: Boxes, run: () => updateSettings({ defaultModel: id }) })),

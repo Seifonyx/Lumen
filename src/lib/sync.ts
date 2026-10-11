@@ -15,6 +15,7 @@ import {
 import type { Attachment, Chat, Message } from '../types';
 import { db } from './firebase';
 import { quota, type GuardLevel } from './quota';
+import { normalizeAssistant } from './assistants';
 
 const MAX_SYNCED_TEXT = 100_000;
 const MAX_DOC_CHARS = 900_000;
@@ -187,6 +188,7 @@ export class ChatSync {
               tags: Array.isArray(data.tags) ? data.tags.filter((t: unknown): t is string => typeof t === 'string').slice(0, 5) : undefined,
               model: data.model || undefined,
               projectId: typeof data.projectId === 'string' ? data.projectId : undefined,
+              assistant: data.assistant ? normalizeAssistant(data.assistant) || undefined : undefined,
               rev: remoteRev,
               summary: data.summary?.text ? data.summary : undefined,
               repo: data.repo?.owner ? data.repo : undefined,
@@ -334,6 +336,7 @@ export class ChatSync {
       tags: chat.tags?.length ? chat.tags.slice(0, 5) : null,
       model: chat.model || null,
       projectId: chat.projectId || null,
+      assistant: chat.assistant ? { ...chat.assistant } : null,
       rev: revOf(chat),
       deleted: false,
       count: chat.messages.length,

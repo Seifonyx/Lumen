@@ -20,6 +20,7 @@
 
 - Ongoing user goal: implement as much of the roadmap as possible in tested, sequential deployments; continue when execution limits allow. `ROADMAP.md` tracks the audited gaps and next phases. Broken-model names were requested; incorporate any later user reply.
 - Explicit model rejection emits `unavailable`; account settings hide that ID across reloads/devices. Ordinary 429/key/network errors never retire a model. Changed provider keys clear only their exclusions; Models → Browse → Restore hidden models permits retry. Refresh bypasses the catalogue cache. Known paid-only Gemini 3.1 Pro variants are excluded.
+- Helpers & prompts: sidebar book icon or Ctrl+K. Saved helpers snapshot instructions/model into each chat; editing/deleting the library item does not change existing chats. Include snapshots in IndexedDB, Firestore, branches, compaction and comparisons. Prompts append to drafts without sending. Library preferences sync privately; limits: 25 helpers, 50 prompts, 100,000 characters combined. `assistants.cjs` and `sync.cjs` cover persistence and cross-device behavior.
 
 - Implemented: smart routing, memory, projects (instructions/default model/reference files), comparisons, tags/branching, Ctrl+K, attachments/document generation and GitHub coding workspace. Audit the app before claiming remaining roadmap features exist.
 - Preserve project context before a chat exists, drafts/attachments during offline and privacy-confirmation flows, and local restoration of comparison answers.

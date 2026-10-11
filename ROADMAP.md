@@ -14,7 +14,7 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 | 16 Free tools | Partial: Gemini search exists; explicit YouTube processing, code execution and disclosed URL reader remain. |
 | 17 Images | Conditional: current Google pricing lists image models without free API access; verify key eligibility before adding. |
 | 18 Arabic interface | Missing: full translation and RTL app navigation (Arabic content already works). |
-| 19 Assistants / prompts | Missing. Next feature phase. |
+| 19 Assistants / prompts | Implemented in phase 2: saved helpers with instructions/model, starter helpers, reusable editable prompts and private account sync. Check Actions for deployment status. |
 | 20 Compare | Implemented, two/three models with per-model usage. |
 | 21 Organization | Projects, tags and branching implemented; separate folders remain. |
 | 22 Command palette | Implemented with chats/models/projects/settings. |

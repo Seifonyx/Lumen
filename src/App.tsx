@@ -18,6 +18,7 @@ import { installSidebarGestures } from './lib/sidebar-gesture';
 const RunPanel = lazy(() => import('./components/RunPanel'));
 const AssistantLibrary = lazy(() => import('./components/AssistantLibrary'));
 const CanvasPanel = lazy(() => import('./components/CanvasPanel'));
+const ChatExportModal = lazy(() => import('./components/ChatExportModal'));
 
 export default function App() {
   const authed = useStore((s) => s.authed);
@@ -29,6 +30,7 @@ export default function App() {
   const workspaceOpen = useStore((s) => s.workspaceOpen);
   const canvasOpen = useStore((s) => s.canvasOpen);
   const runner = useStore((s) => s.runner);
+  const exportChatId = useStore((s) => s.exportChatId);
   const repoPicker = useStore((s) => s.repoPicker);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
@@ -107,6 +109,7 @@ export default function App() {
       <ComparisonResultsModal />
       {repoPicker && <RepoPicker onClose={() => setUi({ repoPicker: false })} />}
       <PreviewModal />
+      {exportChatId && <Suspense fallback={null}><ChatExportModal /></Suspense>}
       {runner && (
         <Suspense fallback={null}>
           <RunPanel />

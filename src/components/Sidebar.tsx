@@ -1,22 +1,11 @@
 import { BookOpen, Download, FolderKanban, MessageSquare, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings, SquarePen, Tag, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { dayGroup, modKey, modelShortName, safeFileName, saveBlob } from '../lib/util';
+import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
 import type { Chat, Project } from '../types';
 import ProjectManager from './ProjectManager';
 
 const EMPTY_PROJECTS: Project[] = [];
-
-function chatToMarkdown(chat: Chat): string {
-  const lines = [`# ${chat.title}`, ''];
-  for (const m of chat.messages) {
-    lines.push(m.role === 'user' ? '## You' : `## Assistant${m.model ? ` (${modelShortName(m.model)})` : ''}`);
-    if (m.files?.length) lines.push(`_Attachments: ${m.files.map((f) => f.name).join(', ')}_`);
-    lines.push(m.text || m.error || '', '');
-  }
-  for (const doc of chat.documents || []) lines.push(`## Canvas: ${doc.name}`, '', doc.content, '');
-  return lines.join('\n');
-}
 
 function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
@@ -90,7 +79,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
             </div>}
             <button role="menuitem" onClick={() => setTagging(!tagging)}><Tag size={15} /> Edit tags</button>
             {tagging && <div className="chat-tag-editor"><input autoFocus value={tags} maxLength={140} onChange={(e) => setTags(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setMenu(false); setChatTags(chat.id, tags.split(',')); } }} placeholder="tag1, tag2" aria-label="Chat tags" /><button onClick={() => { setMenu(false); setChatTags(chat.id, tags.split(',')); }}>Save</button><small>Up to 5 tags; search finds them.</small></div>}
-            <button role="menuitem" onClick={() => { setMenu(false); void saveBlob(new Blob([chatToMarkdown(chat)], { type: 'text/markdown' }), `${safeFileName(chat.title, 'chat')}.md`); }}>
+            <button role="menuitem" onClick={() => { setMenu(false); useStore.getState().setUi({ exportChatId: chat.id, sidebarOpen: false }); }}>
               <Download size={15} /> Export
             </button>
             <button role="menuitem" className="danger" onClick={() => { setMenu(false); if (confirm(`Delete "${chat.title}"?`)) void deleteChat(chat.id); }}>

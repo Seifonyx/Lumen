@@ -20,7 +20,7 @@ import { db } from './lib/db';
 import { branchChat, normalizeChatTags } from './lib/chat-tools';
 import { normalizeAssistant } from './lib/assistants';
 import { canvasFits, canvasEditPrompt, cleanCanvasReply } from './lib/canvas';
-import { applyAppearance, loadSettings, saveSettings } from './lib/settings';
+import { applyAppearance, DEFAULT_SETTINGS, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
 import type { Attachment, Catalog, Chat, ChatSummary, ComparisonState, FileChange, Memory, Message, ModelInfo, Project, RepoLink, SavedAssistant, Settings } from './types';
 
@@ -71,6 +71,7 @@ interface State {
   settingsOpen: boolean;
   settingsTab: string;
   preview: PreviewFile | null;
+  exportChatId: string | null;
   /** code from a reply being run in the browser */
   runner: { lang: string; code: string; analysis?: boolean } | null;
   toasts: Toast[];
@@ -84,7 +85,7 @@ interface State {
   updateSettings(patch: Partial<Settings>): void;
   toast(text: string, kind?: Toast['kind']): void;
   dismissToast(id: string): void;
-  setUi(patch: Partial<Pick<State, 'sidebarOpen' | 'settingsOpen' | 'settingsTab' | 'preview' | 'runner' | 'workspaceOpen' | 'repoPicker' | 'canvasOpen' | 'canvasDocumentId'>>): void;
+  setUi(patch: Partial<Pick<State, 'sidebarOpen' | 'settingsOpen' | 'settingsTab' | 'preview' | 'runner' | 'workspaceOpen' | 'repoPicker' | 'canvasOpen' | 'canvasDocumentId' | 'exportChatId'>>): void;
   openCanvas(name?: string, content?: string): void;
   saveCanvasDocument(chatId: string, id: string, patch: { name?: string; content?: string }, expectedContent?: string): Promise<boolean>;
   deleteCanvasDocument(chatId: string, id: string): void;
@@ -150,6 +151,7 @@ let sync: ChatSync | null = null;
 let usage: UsageTracker | null = null;
 let memory: MemoryStore | null = null;
 let settingsReady = false;
+let accountGeneration = 0;
 let settingsTimer: ReturnType<typeof setTimeout> | undefined;
 /** the shared settings as last saved or loaded */
 let lastSharedSettings = '';
@@ -169,15 +171,17 @@ export const useStore = create<State>((set, get) => {
   /** Saves a chat on this device and sends the change to your other devices. */
   const persist = async (chat: Chat) => {
     if (!chat.messages.length && !chat.documents?.length) return;
+    const owner = get().user?.uid;
+    if (!owner || !get().chats.some(item => item.id === chat.id)) return;
     const stamped = { ...chat, rev: Date.now() };
     const latest = get().chats.find((c) => c.id === chat.id);
     if (latest === chat) replaceChat(stamped);
     try {
-      await db.put(stamped);
+      await db.put(stamped, owner);
     } catch {
       get().toast("Couldn't save this chat on the device (storage may be full).", 'error');
     }
-    sync?.push(stamped);
+    if (get().user?.uid === owner) sync?.push(stamped);
   };
   const currentChat = () => get().chats.find((c) => c.id === get().currentId) || null;
   const clearAssistantDraft = () => { try { localStorage.removeItem(`mr.assistantDraft.${get().user?.uid}`); } catch { /* private mode */ } };
@@ -221,6 +225,7 @@ export const useStore = create<State>((set, get) => {
    * Summarizes the first `cut` live messages (plus any earlier summary). Returns null if no model managed it.
    */
   const writeSummary = async (chat: Chat, cut: number, signal: AbortSignal): Promise<{ summary: ChatSummary; through: Message[] } | null> => {
+    const generation = accountGeneration;
     const previous = activeSummary(chat);
     const older = liveMessages(chat).slice(0, cut);
     // Privacy shield: the model summarizes placeholders; the summary is stored with the real values.
@@ -229,6 +234,7 @@ export const useStore = create<State>((set, get) => {
     const result = await fetchSummary(prompt, summaryModels(Math.ceil(prompt.length / 4)), {
       signal,
       report: (id, info) => {
+        if (generation !== accountGeneration) return;
         usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 });
         if (info.limit) usage?.block(id, info.limit);
       },
@@ -250,6 +256,7 @@ export const useStore = create<State>((set, get) => {
 
   /** Compacts a chat. Returns 'done', 'skipped' (nothing to do / failed) or 'stopped'. */
   const compactChat = async (chatId: string, manual: boolean): Promise<'done' | 'skipped' | 'stopped'> => {
+    const generation = accountGeneration;
     const chat = get().chats.find((c) => c.id === chatId);
     if (!chat) return 'skipped';
     const cut = cutPoint(liveMessages(chat), manual);
@@ -261,6 +268,7 @@ export const useStore = create<State>((set, get) => {
     set({ compactingChatId: chatId });
     try {
       const out = await writeSummary(chat, cut, compactController.signal);
+      if (generation !== accountGeneration) return 'stopped';
       if (compactController.signal.aborted) return 'stopped';
       if (!out) {
         get().toast(manual ? "Couldn't summarize this chat right now. Try again in a minute." : "Couldn't summarize the earlier messages right now — the whole chat was sent instead.", 'error');
@@ -277,13 +285,14 @@ export const useStore = create<State>((set, get) => {
     } catch {
       return compactController?.signal.aborted ? 'stopped' : 'skipped';
     } finally {
-      compactController = null;
-      set({ compactingChatId: null });
+      if (generation === accountGeneration) { compactController = null; set({ compactingChatId: null }); }
     }
   };
 
   /** Takes the memory lines out of a finished reply and saves or removes those memories. */
   const applyMemoryLines = async (reply: Message, raw: string, chatId: string, restore: (t: string) => string = (t) => t) => {
+    const generation = accountGeneration;
+    const accountMemory = memory;
     const ops = extractMemoryOps(restore(raw));
     reply.text = ops.text;
     if (!memory || !get().settings.memory || (!ops.remember.length && !ops.forget.length)) return;
@@ -293,13 +302,17 @@ export const useStore = create<State>((set, get) => {
       for (const text of ops.forget) {
         const m = findMemory(get().memories, text);
         if (!m) continue;
-        await memory.remove(m.id);
+        if (generation !== accountGeneration) return;
+        await accountMemory!.remove(m.id);
+        if (generation !== accountGeneration) return;
         forgotten.push(m.text);
         set((s) => ({ memories: s.memories.filter((x) => x.id !== m.id) }));
       }
       for (const text of ops.remember) {
         if (findMemory(get().memories, text) || get().memories.length >= MAX_MEMORIES) continue;
-        const m = await memory.add(text, { source: 'chat', chatId });
+        if (generation !== accountGeneration) return;
+        const m = await accountMemory!.add(text, { source: 'chat', chatId });
+        if (generation !== accountGeneration) return;
         saved.push({ id: m.id, text: m.text });
         set((s) => ({ memories: [m, ...s.memories.filter((x) => x.id !== m.id)] }));
       }
@@ -311,6 +324,7 @@ export const useStore = create<State>((set, get) => {
 
   /** Streams an assistant reply for the chat's current messages. */
   const runAssistant = async (chatId: string, modelOverride?: string) => {
+    const generation = accountGeneration;
     let chat = get().chats.find((c) => c.id === chatId);
     if (!chat) return;
     const { settings } = get();
@@ -331,6 +345,7 @@ export const useStore = create<State>((set, get) => {
     // Long chat: summarize the older messages first so the model gets a compact version.
     if (settings.autoCompact && contextTokens(chat) + projectTokens > compactLimit(model === AUTO ? undefined : modelInfo(get().catalog, model))) {
       if ((await compactChat(chatId, false)) === 'stopped') return;
+      if (generation !== accountGeneration) return;
       chat = get().chats.find((c) => c.id === chatId);
       if (!chat) return;
     }
@@ -419,6 +434,7 @@ export const useStore = create<State>((set, get) => {
       return;
     }
 
+    if (generation !== accountGeneration) return;
     const reply: Message = {
       id: uid(),
       role: 'assistant',
@@ -438,6 +454,7 @@ export const useStore = create<State>((set, get) => {
     // Batch UI updates while text streams in.
     let pending = false;
     const flush = () => {
+      if (generation !== accountGeneration) return;
       pending = false;
       const c = get().chats.find((x) => x.id === chatId);
       if (!c) return;
@@ -454,6 +471,7 @@ export const useStore = create<State>((set, get) => {
     let raw = '';
     try {
       for await (const ev of streamChat(body, controller.signal)) {
+        if (generation !== accountGeneration) return;
         if (ev.t === 'unavailable') { hideUnavailableModel(ev.id); continue; }
         if (ev.t === 'request') {
           usage?.record(ev.id, { requests: 1 });
@@ -496,9 +514,11 @@ export const useStore = create<State>((set, get) => {
         reply.status = 'error';
       }
     } finally {
-      controller = null;
+      if (generation === accountGeneration) controller = null;
     }
+    if (generation !== accountGeneration) return;
     if (raw) await applyMemoryLines(reply, raw, chatId, restore);
+    if (generation !== accountGeneration) return;
     flush();
     set({ streamingChatId: null });
     const finished = get().chats.find((c) => c.id === chatId);
@@ -508,11 +528,13 @@ export const useStore = create<State>((set, get) => {
     await persist(updated);
 
     // Name the chat after its first exchange.
+    if (generation !== accountGeneration) return;
     const firstUser = updated.messages.find((m) => m.role === 'user');
     if (get().settings.autoTitle && !updated.summary?.from && updated.messages.length <= 2 && firstUser && reply.status === 'done') {
       const titleMasker = get().settings.privacyShield && !firstUser.privacy?.unmasked ? new Masker() : null;
       const firstText = firstUser.text || firstUser.files?.map((f) => f.name).join(', ') || '';
       const result = await fetchTitle(titleMasker ? titleMasker.mask(firstText).text : firstText, reply.model, (id) => (usage?.blockedUntil(id) ?? null) !== null);
+      if (generation !== accountGeneration) return;
       if (result) usage?.record(result.model, { requests: 1 });
       const latest = get().chats.find((c) => c.id === chatId);
       if (result && latest) {
@@ -573,6 +595,7 @@ export const useStore = create<State>((set, get) => {
     settingsOpen: false,
     settingsTab: '',
     preview: null,
+    exportChatId: null,
     runner: null,
     toasts: [],
 
@@ -587,13 +610,18 @@ export const useStore = create<State>((set, get) => {
       };
       window.addEventListener('online', onNet);
       window.addEventListener('offline', onNet);
-      try {
-        const chats = await db.all();
-        set({ chats });
-      } catch {
-        get().toast("Couldn't open saved chats on this device.", 'error');
-      }
       watchUser(async (user) => {
+        const generation = ++accountGeneration;
+        get().stop();
+        controller = null; compactController = null; compareController = null; canvasController = null;
+        settingsReady = false;
+        clearTimeout(settingsTimer);
+        canvasSyncTimers.forEach(timer => clearTimeout(timer));
+        canvasSyncTimers.clear();
+        set({ authed: user ? null : false, chats: [], currentId: null, memories: [], usage: null, catalog: null, preview: null, exportChatId: null, runner: null, comparison: null, streamingChatId: null, compactingChatId: null, comparing: false, canvasEditingChatId: null, workspaceOpen: false, canvasOpen: false, canvasDocumentId: null, repoPicker: false, settingsOpen: false, sidebarOpen: false });
+        setKeys({ gemini: '', openrouter: '', groq: '', cerebras: '' });
+        setGitHubToken('');
+        set({ keys: { gemini: '', openrouter: '', groq: '', cerebras: '', github: '' } });
         sync?.stop();
         sync = null;
         usage?.stop();
@@ -602,9 +630,11 @@ export const useStore = create<State>((set, get) => {
         memory = null;
         set({ memories: [] });
         await quota.flush();
+        if (generation !== accountGeneration) return;
         quota.stop();
         settingsReady = false;
         if (!user) {
+          void db.useAccount(null);
           setKeys({ gemini: '', openrouter: '', groq: '', cerebras: '' });
           setGitHubToken('');
           set({ authed: false, user: null, catalog: null, accessDenied: null });
@@ -614,11 +644,15 @@ export const useStore = create<State>((set, get) => {
         set({ authed: null, accessDenied: null, user: { uid: user.uid, email: user.email || '', name: user.displayName || '', photo: user.photoURL || '' } });
         try {
           const [keys, remoteSettings] = await Promise.all([loadKeys(user.uid), loadRemoteSettings(user.uid)]);
+          if (generation !== accountGeneration) return;
+          const chats = await db.useAccount(user.uid);
+          if (generation !== accountGeneration) return;
+          set({ chats });
           setKeys(keys);
           setGitHubToken(keys.github);
           set({ keys, authed: true });
-          if (remoteSettings) get().updateSettings({ ...remoteSettings, unavailableModels: remoteSettings.unavailableModels || [], assistants: remoteSettings.assistants || [], prompts: remoteSettings.prompts || [], voiceLang: get().settings.voiceLang } as Partial<Settings>);
-          else get().updateSettings({ unavailableModels: [], assistants: [], prompts: [] });
+          set({ settings: { ...DEFAULT_SETTINGS, ...(remoteSettings || {}), voiceLang: get().settings.voiceLang } as Settings });
+          get().updateSettings({});
           try {
             const draftId = localStorage.getItem(`mr.assistantDraft.${user.uid}`);
             if (draftId && get().chats.some((chat) => chat.id === draftId && chat.assistant && !chat.messages.length)) set({ currentId: draftId });
@@ -630,6 +664,7 @@ export const useStore = create<State>((set, get) => {
           settingsReady = true;
           if (!remoteSettings) get().updateSettings({});
         } catch (e) {
+          if (generation !== accountGeneration) return;
           // The database refuses accounts that aren't invited.
           const isInvitedException = isPreviewUser(user.uid) || Boolean(user.email && user.email.toLowerCase() === 'seifeldingamal2021@gmail.com');
           if ((e as { code?: string }).code === 'permission-denied' && !isInvitedException) {
@@ -640,26 +675,34 @@ export const useStore = create<State>((set, get) => {
           if (!isInvitedException) {
             get().toast(`Couldn't load your settings: ${(e as Error).message}`, 'error');
           }
+          // Keep failed account loads isolated; never reuse the previous account's settings/chats.
+          set({ settings: { ...DEFAULT_SETTINGS, voiceLang: get().settings.voiceLang } });
+          get().updateSettings({});
+          const chats = await db.useAccount(user.uid).catch(() => []);
+          if (generation !== accountGeneration) return;
+          set({ chats });
         }
         void quota.start();
         sync = new ChatSync(user.uid, {
-          local: (id) => get().chats.find((c) => c.id === id),
-          allLocal: () => get().chats,
+          local: (id) => generation === accountGeneration ? get().chats.find((c) => c.id === id) : undefined,
+          allLocal: () => generation === accountGeneration ? get().chats : [],
           apply: (chat) => {
+            if (generation !== accountGeneration) return;
             replaceChat(chat);
             set((s) => ({ chats: [...s.chats].sort((a, b) => b.updatedAt - a.updatedAt) }));
             void db.put(chat);
           },
           remove: (id) => {
+            if (generation !== accountGeneration) return;
             set((s) => ({ chats: s.chats.filter((c) => c.id !== id), currentId: s.currentId === id ? null : s.currentId }));
             void db.remove(id);
           },
-          error: (msg) => get().toast(msg, 'error'),
+          error: (msg) => { if (generation === accountGeneration) get().toast(msg, 'error'); },
         });
         sync.start();
-        usage = new UsageTracker(user.uid, (view) => set({ usage: view }));
+        usage = new UsageTracker(user.uid, (view) => { if (generation === accountGeneration) set({ usage: view }); });
         usage.start();
-        memory = new MemoryStore(user.uid, (memories) => set({ memories }), (msg) => get().toast(msg, 'error'));
+        memory = new MemoryStore(user.uid, (memories) => { if (generation === accountGeneration) set({ memories }); }, (msg) => { if (generation === accountGeneration) get().toast(msg, 'error'); });
         memory.start();
         await get().loadCatalog();
       });
@@ -685,6 +728,7 @@ export const useStore = create<State>((set, get) => {
       if (!uid) return;
       const before = get().keys;
       await saveKeys(uid, keys);
+      if (get().user?.uid !== uid) return;
       setKeys(keys);
       const clean: ApiKeys = { gemini: keys.gemini.trim(), openrouter: keys.openrouter.trim(), groq: keys.groq.trim(), cerebras: keys.cerebras.trim(), github: (keys.github || '').trim() };
       setGitHubToken(clean.github);
@@ -703,6 +747,7 @@ export const useStore = create<State>((set, get) => {
     },
 
     async loadCatalog() {
+      const generation = accountGeneration;
       const { keys } = get();
       if (!keys.gemini && !keys.openrouter && !keys.groq && !keys.cerebras) {
         set({ catalog: null, catalogError: null, settingsOpen: true, settingsTab: 'keys' });
@@ -713,6 +758,7 @@ export const useStore = create<State>((set, get) => {
           if (navigator.onLine || !savedCatalog()) throw e;
           return savedCatalog()!;
         });
+        if (generation !== accountGeneration) return;
         // Offline: use the list from last time so the app stays usable.
         if (catalog.errors.length && !navigator.onLine && savedCatalog()) catalog = savedCatalog()!;
         if (navigator.onLine && !catalog.errors.length) {
@@ -762,6 +808,7 @@ export const useStore = create<State>((set, get) => {
         cacheAccountSettings(uid, localShared);
         clearTimeout(settingsTimer);
         settingsTimer = setTimeout(() => {
+          if (get().user?.uid !== uid || !settingsReady) return;
           const { voiceLang: _voice, ...shared } = get().settings;
           // Only write when something actually changed (saves Firebase's free daily writes).
           const json = JSON.stringify(shared);
@@ -831,6 +878,7 @@ export const useStore = create<State>((set, get) => {
       set({ canvasDocumentId: updated.documents[0]?.id || null, canvasOpen: Boolean(updated.documents.length) });
     },
     async requestCanvasEdit(chatId, id, instruction, start, end, signal, asIs) {
+      const generation = accountGeneration;
       if (get().streamingChatId || get().compactingChatId || get().comparing || get().canvasEditingChatId) throw new Error('Wait for the current reply to finish.');
       if (!navigator.onLine) throw new Error("You're offline. Your canvas stays saved here.");
       const chat = get().chats.find(c => c.id === chatId);
@@ -857,6 +905,7 @@ export const useStore = create<State>((set, get) => {
       let text = '', error = '', model = plan.model;
       try {
         for await (const ev of streamChat(body, aborter.signal)) {
+          if (generation !== accountGeneration) throw new DOMException('Account changed', 'AbortError');
           if (ev.t === 'unavailable') hideUnavailableModel(ev.id);
           else if (ev.t === 'request') usage?.record(ev.id, { requests: 1 });
           else if (ev.t === 'usage') usage?.record(ev.id, { input: ev.input, output: ev.output });
@@ -970,11 +1019,13 @@ export const useStore = create<State>((set, get) => {
       set({ currentId: id, sidebarOpen: false, settingsOpen: false, canvasOpen: false, canvasDocumentId: null });
     },
     async deleteChat(id) {
+      const generation = accountGeneration;
       if (get().streamingChatId === id) get().stop();
       const removed = get().chats.find((c) => c.id === id);
       const had = removed?.messages.length || removed?.documents?.length;
       set((s) => ({ chats: s.chats.filter((c) => c.id !== id), currentId: s.currentId === id ? null : s.currentId }));
       await db.remove(id);
+      if (generation !== accountGeneration) return;
       if (had) sync?.remove(id);
     },
     async renameChat(id, title) {
@@ -1001,22 +1052,28 @@ export const useStore = create<State>((set, get) => {
       }
     },
     async clearAllChats() {
+      const generation = accountGeneration;
       get().stop();
       const ids = get().chats.filter((c) => c.messages.length || c.documents?.length).map((c) => c.id);
       await db.clear();
+      if (generation !== accountGeneration) return;
       set({ chats: [], currentId: null });
       ids.forEach((id) => sync?.remove(id));
     },
     async importChats(incoming) {
+      const generation = accountGeneration;
       const valid = incoming.filter((c) => c && typeof c.id === 'string' && Array.isArray(c.messages));
       await db.bulkPut(valid);
+      if (generation !== accountGeneration) return 0;
       const chats = await db.all();
+      if (generation !== accountGeneration) return 0;
       set({ chats });
       for (const c of chats) if (valid.some((v) => v.id === c.id)) sync?.push({ ...c, rev: Date.now() });
       return valid.length;
     },
 
     async runComparison(text, files, models, opts) {
+      const generation = accountGeneration;
       if (get().comparing || get().streamingChatId || get().compactingChatId || get().canvasEditingChatId) return;
       if (!navigator.onLine) {
         get().toast("You're offline — your message is kept here; send it when you're back online.");
@@ -1093,6 +1150,7 @@ export const useStore = create<State>((set, get) => {
           let sources: NonNullable<ComparisonState['answers'][number]['sources']> = [];
           try {
             for await (const ev of streamChat(bodyFor(model), aborter.signal)) {
+              if (generation !== accountGeneration) return;
               if (ev.t === 'unavailable') hideUnavailableModel(ev.id);
               else if (ev.t === 'request') usage?.record(ev.id, { requests: 1 });
               else if (ev.t === 'usage') usage?.record(ev.id, { input: ev.input, output: ev.output });
@@ -1142,6 +1200,7 @@ export const useStore = create<State>((set, get) => {
     },
 
     async send(text, files, opts) {
+      const generation = accountGeneration;
       if (get().streamingChatId || get().compactingChatId || get().comparing || get().canvasEditingChatId) return;
       let chat = currentChat();
       if (!chat) {
@@ -1176,6 +1235,7 @@ export const useStore = create<State>((set, get) => {
           if (paths.length) files = [...(await filesAsAttachments(chat, paths)).files.map((f) => ({ ...f, auto: true })), ...files];
         }
       }
+      if (generation !== accountGeneration) return;
       const msg: Message = { id: uid(), role: 'user', text, files: files.length ? files : undefined, createdAt: Date.now() };
       if (get().settings.privacyShield) {
         const found = scan(text).length + files.reduce((n, f) => n + (f.text ? scan(f.text).length : 0), 0);
@@ -1186,6 +1246,7 @@ export const useStore = create<State>((set, get) => {
       const updated: Chat = { ...chat, title, model: chat.model || modelFor(chat), messages: [...chat.messages, msg], updatedAt: Date.now(), ...(contextSent ? { contextSent } : {}) };
       replaceChat(updated);
       await persist(updated);
+      if (generation !== accountGeneration) return;
       await runAssistant(updated.id);
     },
 
@@ -1220,9 +1281,11 @@ export const useStore = create<State>((set, get) => {
       void persist(updated);
     },
     async saveChange(chatId, path, content) {
+      const generation = accountGeneration;
       const chat = get().chats.find((c) => c.id === chatId);
       if (!chat?.repo) return;
       const original = chat.changes?.[path] ? chat.changes[path].original : await originalFile(chat.repo, path).catch(() => null);
+      if (generation !== accountGeneration) return;
       const latest = get().chats.find((c) => c.id === chatId)!;
       const changes: Record<string, FileChange> = { ...(latest.changes || {}) };
       if (content === original) delete changes[path];
@@ -1232,6 +1295,7 @@ export const useStore = create<State>((set, get) => {
       void persist(updated);
     },
     async loadRepoFiles(chatId, paths, searches = []) {
+      const generation = accountGeneration;
       const chat = get().chats.find((c) => c.id === chatId);
       if (!chat?.repo || (!paths.length && !searches.length) || get().streamingChatId) return;
       const { files, missing } = await filesAsAttachments(chat, paths);
@@ -1251,6 +1315,7 @@ export const useStore = create<State>((set, get) => {
         ...(results.length ? { searches: results.map((r) => ({ query: r.query, count: r.count })) } : {}),
         createdAt: Date.now(),
       };
+      if (generation !== accountGeneration) return;
       const latest = get().chats.find((c) => c.id === chatId) || chat;
       const next = { ...latest, messages: [...latest.messages, msg], updatedAt: Date.now() };
       replaceChat(next);
@@ -1294,17 +1359,20 @@ export const useStore = create<State>((set, get) => {
       return { applied, failed };
     },
     async commitWork(chatId, o) {
+      const generation = accountGeneration;
       const chat = get().chats.find((c) => c.id === chatId);
       if (!chat?.repo || !chat.changes || !Object.keys(chat.changes).length) throw new Error('There are no changes to commit.');
       const repo = chat.repo;
       const changes = Object.entries(chat.changes).map(([path, c]) => ({ path, content: c.content }));
       const target = o.target.trim() || repo.branch;
       const { url, sha } = await ghCommit({ owner: repo.owner, repo: repo.repo, base: repo.branch, target, message: o.message.trim() || 'Update from Model Router', changes });
+      if (generation !== accountGeneration) throw new Error('Account changed while committing. Check the original repository for the commit.');
       let prUrl: string | undefined;
       if (o.pullRequest && target !== repo.branch) {
         prUrl = await openPullRequest({ owner: repo.owner, repo: repo.repo, head: target, base: repo.branch, title: o.message.split('\n')[0].slice(0, 120) || 'Changes from Model Router', body: 'Made with Model Router.' });
       }
       forgetRepo(repo);
+      if (generation !== accountGeneration) throw new Error('Account changed while committing. Check the original repository for the result.');
       forgetIndex(repo);
       const latest = get().chats.find((c) => c.id === chatId)!;
       // Keep working on the branch that now has these commits.
@@ -1359,6 +1427,7 @@ export const useStore = create<State>((set, get) => {
     },
 
     async continueInNewChat(chatId) {
+      const generation = accountGeneration;
       const chat = get().chats.find((c) => c.id === chatId);
       if (!chat || get().streamingChatId || get().compactingChatId) return;
       const live = liveMessages(chat);
@@ -1367,6 +1436,7 @@ export const useStore = create<State>((set, get) => {
       set({ compactingChatId: chatId });
       try {
         const out = await writeSummary(chat, live.length, compactController.signal);
+        if (generation !== accountGeneration) return;
         if (compactController.signal.aborted) return;
         if (!out) {
           get().toast("Couldn't summarize this chat right now. Try again in a minute.", 'error');
@@ -1383,10 +1453,9 @@ export const useStore = create<State>((set, get) => {
         };
         set((s) => ({ chats: [next, ...s.chats.filter((c) => !(c.messages.length === 0 && !c.summary && !c.documents?.length))], currentId: next.id, sidebarOpen: false }));
       } catch {
-        if (!compactController?.signal.aborted) get().toast("Couldn't summarize this chat right now.", 'error');
+        if (generation === accountGeneration && !compactController?.signal.aborted) get().toast("Couldn't summarize this chat right now.", 'error');
       } finally {
-        compactController = null;
-        set({ compactingChatId: null });
+        if (generation === accountGeneration) { compactController = null; set({ compactingChatId: null }); }
       }
     },
 
@@ -1398,6 +1467,7 @@ export const useStore = create<State>((set, get) => {
     },
 
     async addMemory(text) {
+      const generation = accountGeneration;
       if (!memory || !text.trim()) return;
       if (findMemory(get().memories, text)) {
         get().toast('Already in memory.');
@@ -1409,6 +1479,7 @@ export const useStore = create<State>((set, get) => {
       }
       try {
         const m = await memory.add(text);
+        if (generation !== accountGeneration) return;
         set((s) => ({ memories: [m, ...s.memories.filter((x) => x.id !== m.id)] }));
         get().toast('Saved to memory.', 'success');
       } catch (e) {

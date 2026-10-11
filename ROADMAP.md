@@ -8,7 +8,7 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 | 10 Projects | Implemented: instructions, model and small reference files. |
 | 11 Knowledge search | Missing: large-library indexing, retrieval and page citations. |
 | 12 Memory | Implemented with inspection/deletion. |
-| 13 Data analysis | Phase 4 implementation ready: local CSV/TSV/Excel uploads, editable pandas calculations/cleaning, Matplotlib charts, CSV/XLSX/PNG downloads and cached offline Python. Full regression/release checks pending. |
+| 13 Data analysis | Implemented in phase 4: local CSV/TSV/Excel uploads, editable pandas calculations/cleaning, Matplotlib charts, CSV/XLSX/PNG downloads and cached offline Python. CI and all 23 local browser suites passed; live and preview verified. |
 | 14 Edit uploaded Office files | Partial: reads files and creates new documents; template-preserving editing remains. |
 | 15 Canvas | Implemented in phase 3: document/code drafts, manual edits, selected-text AI proposals with accept/reject/undo, previews, downloads and private sync. Office/PDF imports extract text; template-preserving editing remains under item 14. Check Actions for deployment status. |
 | 16 Free tools | Partial: Gemini search exists; explicit YouTube processing, code execution and disclosed URL reader remain. |
@@ -19,7 +19,7 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 | 21 Organization | Projects, tags and branching implemented; separate folders remain. |
 | 22 Command palette | Implemented with chats/models/projects/settings. |
 | 23 Voice | Partial: dictation/read-aloud; continuous conversation remains. |
-| 24 Sharing / chat export | Partial: Markdown chat export and Word reply export; whole-chat Word/PDF and opt-in public links remain. |
+| 24 Sharing / chat export | Phase 5a adds whole-chat Word/Markdown and PDF preview/system print, with sources and Canvas; release checks pending. Opt-in public links remain. |
 | 25 Attachment sync | Partial: thumbnails/small extracted text sync; small original binaries remain. |
 | 26 Open-time tasks | Missing: schedules/reminders checked on app open. |
 | 27 Desktop polish | Partial: installable PWA; desktop controls/shortcuts need audit. |
@@ -32,7 +32,7 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 2. Custom assistants and reusable prompts.
 3. Document canvas and selected-text editing.
 4. Uploaded data analysis and artifact downloads.
-5. Free tools, chat exports and open-time tasks.
+5. Phase 5a: whole-chat exports and a confirmed shared-device account isolation fix. Phase 5b: free tools and open-time tasks.
 6. Larger remaining features, each in a separately verified release.
 
 Keep user-visible controls compact. Preserve free-only operation, account privacy, drafts and safe confirmations for external changes. Deploy each phase to live and preview before starting the next.

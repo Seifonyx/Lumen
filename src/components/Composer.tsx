@@ -12,6 +12,7 @@ import PrivacyCheck from './PrivacyCheck';
 import AttachSheet from './AttachSheet';
 import CompareModelsModal from './CompareModelsModal';
 import { ANALYSIS_TEMPLATES } from '../lib/analysis';
+import { db } from '../lib/db';
 
 interface Pending {
   key: string;
@@ -74,7 +75,8 @@ export default function Composer({ model, meter, starterActions }: { model: stri
   const touch = isTouch();
 
   // Unsent text is kept per chat, so it survives switching chats, a reload, or the phone closing the page in the background.
-  const draftKey = `mr.draft.${currentId ?? 'new'}`;
+  const accountId = useStore(state => state.user?.uid);
+  const draftKey = `mr.draft.${accountId}.${currentId ?? 'new'}`;
   const draftKeyRef = useRef(draftKey);
   const saveDraft = useCallback((value: string) => {
     try {
@@ -92,11 +94,17 @@ export default function Composer({ model, meter, starterActions }: { model: stri
   useEffect(() => {
     draftKeyRef.current = draftKey;
     try {
-      setText(localStorage.getItem(draftKey) ?? '');
+      let value = localStorage.getItem(draftKey);
+      if (value === null && accountId && db.legacyOwner === accountId) {
+        const oldKey = `mr.draft.${currentId ?? 'new'}`;
+        value = localStorage.getItem(oldKey);
+        if (value !== null) { localStorage.setItem(draftKey, value); localStorage.removeItem(oldKey); }
+      }
+      setText(value ?? '');
     } catch {
       // Storage unavailable.
     }
-  }, [draftKey]);
+  }, [draftKey, accountId, currentId]);
 
   const autosize = useCallback(() => {
     const el = input.current;

@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { chatDocumentContent, chatExportName, chatToMarkdown } from '../../src/lib/chat-export';
+import { splitDocConfig } from '../../src/lib/generate/spec';
+import type { Chat } from '../../src/types';
+const chat: Chat = { id:'chat', title:'Report } --> <script>bad</script>', createdAt:0, updatedAt:0, assistant:{id:'helper',name:'Helper',description:'',instructions:'PRIVATE_INSTRUCTIONS',model:'auto'}, documents:[{id:'doc',name:'Draft',content:'CANVAS_CONTENT',updatedAt:0}], messages:[{id:'one',role:'user',text:'مرحبا',files:[{id:'file',kind:'text',name:'Source.csv',mime:'text/csv',size:1,text:'PRIVATE_ATTACHMENT'}],createdAt:0},{id:'two',role:'assistant',model:'gemini:flash',text:'**Reply**',thinking:'PRIVATE_THINKING',status:'stopped',sources:[{title:'Source',url:'https://example.com/page'},{title:'Unsafe',url:'javascript:alert(1)'}],createdAt:1}] };
+const markdown = chatToMarkdown(chat);
+assert.ok(markdown.includes('مرحبا') && markdown.includes('**Reply**') && markdown.includes('CANVAS_CONTENT') && markdown.includes('Source.csv'));
+assert.ok(markdown.includes('Reply incomplete') && markdown.includes('https://example.com/page'));
+assert.ok(!markdown.includes('PRIVATE_') && !markdown.includes('javascript:'));
+assert.equal(splitDocConfig(chatDocumentContent(chat)).config.title,chat.title);
+assert.ok(!/[\\/:*?"<>|]/.test(chatExportName(chat,'docx')));
+console.log('PASS whole-chat content, source links, incomplete replies, safe metadata and excluded private internals');

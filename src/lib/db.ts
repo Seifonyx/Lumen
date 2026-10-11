@@ -1,5 +1,5 @@
 // Chats are kept in IndexedDB on the device (attachments are too big for localStorage).
-// Database name matches the first version of the app, so its chats carry over.
+// Account databases keep shared-device sign-ins separate. The legacy database is adopted once.
 
 import type { Chat, Message } from '../types';
 import { uid } from './util';
@@ -8,28 +8,51 @@ import { normalizeDocuments } from './canvas';
 
 const DB_NAME = 'model-router';
 const STORE = 'chats';
-let dbPromise: Promise<IDBDatabase> | null = null;
+let activeName = 'model-router-unassigned';
+let legacyOwner: string | null = null;
+const databases = new Map<string, Promise<IDBDatabase>>();
+const accountName = (id: string) => `model-router-account-${id}`;
 
-function open(): Promise<IDBDatabase> {
-  dbPromise ??= new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 2);
+function open(name = activeName): Promise<IDBDatabase> {
+  if (!databases.has(name)) databases.set(name, new Promise((resolve, reject) => {
+    const req = indexedDB.open(name, 2);
     req.onupgradeneeded = () => {
       if (!req.result.objectStoreNames.contains(STORE)) req.result.createObjectStore(STORE, { keyPath: 'id' });
     };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-  return dbPromise;
+    req.onsuccess = () => { req.result.onversionchange = () => { req.result.close(); databases.delete(name); }; resolve(req.result); };
+    req.onerror = () => { databases.delete(name); reject(req.error); };
+  }));
+  return databases.get(name)!;
 }
 
-async function tx<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest<T> | void): Promise<T | undefined> {
-  const db = await open();
+async function tx<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest<T> | void, name = activeName): Promise<T | undefined> {
+  const db = await open(name);
   return new Promise((resolve, reject) => {
     const t = db.transaction(STORE, mode);
     const req = fn(t.objectStore(STORE));
     t.oncomplete = () => resolve(req ? req.result : undefined);
     t.onerror = () => reject(t.error);
     t.onabort = () => reject(t.error);
+  });
+}
+
+let metaPromise: Promise<IDBDatabase> | null = null;
+async function meta<T>(key: string, update?: (previous: T | undefined) => T): Promise<T | undefined> {
+  metaPromise ??= new Promise((resolve, reject) => {
+    const request = indexedDB.open('model-router-account-migration', 1);
+    request.onupgradeneeded = () => request.result.createObjectStore('meta');
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => { metaPromise = null; reject(request.error); };
+  });
+  const database = await metaPromise;
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction('meta', update ? 'readwrite' : 'readonly');
+    const store = transaction.objectStore('meta');
+    const request = store.get(key); let result: T | undefined;
+    request.onsuccess = () => { result = update ? update(request.result) : request.result; if (update) store.put(result, key); };
+    transaction.oncomplete = () => resolve(result);
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
   });
 }
 
@@ -76,18 +99,50 @@ function normalize(raw: any): Chat {
 }
 
 export const db = {
+  get legacyOwner() { return legacyOwner; },
+  /** First verified account claims legacy local chats atomically, including across open tabs. */
+  async useAccount(id: string | null): Promise<Chat[]> {
+    const name = id ? accountName(id) : 'model-router-unassigned';
+    activeName = name;
+    if (!id) return [];
+    const owner = await meta<string>('legacyOwner', previous => previous || id);
+    legacyOwner = owner || null;
+    const migrated = await meta<boolean>(`migrated:${id}`);
+    if (!migrated) {
+      if (owner === id) {
+        const old = (await tx<any[]>('readonly', store => store.getAll(), DB_NAME)) || [];
+        const existing = (await tx<any[]>('readonly', store => store.getAll(), name)) || [];
+        const latest = new Map(existing.map(chat => [chat.id, chat]));
+        await tx('readwrite', store => {
+          for (const chat of old) {
+            const saved = latest.get(chat.id);
+            if (!saved || Number(chat.rev ?? chat.updatedAt ?? 0) > Number(saved.rev ?? saved.updatedAt ?? 0)) store.put(normalize(chat));
+          }
+        }, name);
+      }
+      // The new account database must pull its full remote history, even if the old shared cache did not.
+      try { localStorage.removeItem(`mr.sync.seen.${id}`); localStorage.removeItem(`mr.sync.revs.${id}`); } catch { /* private mode */ }
+      await meta<boolean>(`migrated:${id}`, () => true);
+    }
+    const rows = (await tx<any[]>('readonly', store => store.getAll(), name)) || [];
+    return rows.map(normalize).sort((a, b) => b.updatedAt - a.updatedAt);
+  },
   async all(): Promise<Chat[]> {
     const rows = (await tx<any[]>('readonly', (s) => s.getAll())) || [];
     return rows.map(normalize).sort((a, b) => b.updatedAt - a.updatedAt);
   },
-  async put(chat: Chat): Promise<void> {
-    await tx('readwrite', (s) => s.put(chat));
+  async put(chat: Chat, accountId?: string): Promise<void> {
+    await tx('readwrite', (s) => s.put(chat), accountId ? accountName(accountId) : activeName);
   },
   async remove(id: string): Promise<void> {
-    await tx('readwrite', (s) => s.delete(id));
+    const name = activeName;
+    await tx('readwrite', (s) => s.delete(id), name);
+    if (legacyOwner && name === accountName(legacyOwner)) await tx('readwrite', store => store.delete(id), DB_NAME);
   },
   async clear(): Promise<void> {
-    await tx('readwrite', (s) => s.clear());
+    const name = activeName;
+    await tx('readwrite', (s) => s.clear(), name);
+    if (legacyOwner && name === accountName(legacyOwner)) await tx('readwrite', store => store.clear(), DB_NAME);
   },
   async bulkPut(chats: Chat[]): Promise<void> {
     await tx('readwrite', (s) => {

@@ -49,6 +49,7 @@ export interface WireMessage {
 }
 
 export type StreamEvent =
+  | { t: 'attempt'; id: string; number: number }
   | { t: 'model'; id: string }
   | { t: 'notice'; text: string }
   | { t: 'think'; text: string }

@@ -50,6 +50,7 @@ function tex(src: string, display: boolean): string {
   }
 }
 
+function createMarkdown(highlight: boolean) {
 const marked = new Marked({ gfm: true, breaks: true });
 
 marked.use({
@@ -81,7 +82,7 @@ marked.use({
     code({ text, lang }: Tokens.Code) {
       const language = (lang || '').trim().split(/\s+/)[0].toLowerCase();
       let html = escapeHtml(text);
-      if (language && hljs.getLanguage(language)) {
+      if (highlight && language && hljs.getLanguage(language)) {
         try {
           html = hljs.highlight(text, { language, ignoreIllegals: true }).value;
         } catch {
@@ -106,6 +107,10 @@ marked.use({
     },
   },
 });
+return marked;
+}
+const marked = createMarkdown(true);
+const streamingMarked = createMarkdown(false);
 
 DOMPurify.addHook('afterSanitizeAttributes', (node) => {
   if (node.tagName === 'A') {
@@ -117,8 +122,8 @@ DOMPurify.addHook('afterSanitizeAttributes', (node) => {
 const CALLOUT = /<blockquote>\s*<p>\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*(?:<br>)?\s*/gi;
 const CALLOUT_LABEL: Record<string, string> = { NOTE: 'Note', TIP: 'Tip', IMPORTANT: 'Important', WARNING: 'Warning', CAUTION: 'Caution' };
 
-export function renderMarkdown(text: string): string {
-  const html = marked.parse(text, { async: false }) as string;
+export function renderMarkdown(text: string, highlight = true): string {
+  const html = (highlight ? marked : streamingMarked).parse(text, { async: false }) as string;
   return DOMPurify.sanitize(html, { ADD_ATTR: ['target', 'data-copy-code', 'data-run-code'] })
     .replace(CALLOUT, (_, kind: string) => `<blockquote class="callout callout-${kind.toLowerCase()}"><div class="callout-title">${CALLOUT_LABEL[kind.toUpperCase()]}</div><p>`)
     .replace(/<(p|li|h[1-6]|blockquote)( class="[^"]*")?>/g, '<$1$2 dir="auto">');
@@ -146,7 +151,7 @@ export function segments(text: string, streaming: boolean): Segment[] {
   const flush = () => {
     if (!buffer.length) return;
     const raw = buffer.map((t) => t.raw).join('');
-    if (raw.trim()) out.push({ type: 'html', html: renderMarkdown(raw), key: `h${n++}` });
+    if (raw.trim()) out.push({ type: 'html', html: renderMarkdown(raw, !streaming), key: `h${n++}` });
     buffer = [];
   };
   tokens.forEach((t, i) => {
@@ -180,7 +185,7 @@ export function segments(text: string, streaming: boolean): Segment[] {
 /** Plain text for reading aloud / copying without Markdown syntax. */
 export function toPlainText(text: string): string {
   const div = document.createElement('div');
-  div.innerHTML = renderMarkdown(text.replace(/`{3,}(?:file|edit|delete):[^\n]*\n[\s\S]*?`{3,}/g, '').replace(/```chart\n[\s\S]*?```/g, ''));
+  div.innerHTML = renderMarkdown(text.replace(/`{3,}(?:file|edit|delete):[^\n]*\n[\s\S]*?`{3,}/g, '').replace(/```chart\n[\s\S]*?```/g, ''), false);
   div.querySelectorAll('.code-head').forEach((n) => n.remove());
   return (div.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
 }

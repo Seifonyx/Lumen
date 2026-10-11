@@ -6,12 +6,14 @@ import { buildInstructions } from './instructions.js';
 import { complete, hasGemini, hasKey, openStream, parseModelId } from './providers.js';
 import { isUnavailableFailure } from './model-status.js';
 import { hasVideo, toolModel } from './tool-inputs.js';
-import { isCoolingDown, noteFailure, noteSuccess } from './health.js';
+import { isCoolingDown, noteFailure, noteSuccess, noteReplyLatency, replyLatency } from './health.js';
 
 const MAX_ATTEMPTS = 5;
 export const timeouts = {
   // A model that sends nothing for this long is treated as failed and the next one is tried.
   firstResponseMs: 25_000,
+  quickResponseMs: 8_000,
+  quickAnswerMs: 20_000,
   // Once answering, a model that goes silent this long is considered stuck.
   idleMs: 45_000,
   firstAnswerMs: 60_000,
@@ -94,6 +96,14 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     // A rejected key fails every model that uses it, so don't try them one by one.
     if (deadProviders.has(target.provider)) continue;
     if (attempts++ >= MAX_ATTEMPTS || Date.now() - started >= (answered ? timeouts.totalMs : timeouts.noAnswerMs)) break;
+    yield { t: 'attempt', id, number: attempts };
+    if (signal.aborted) return;
+    const attemptStarted = Date.now();
+    let firstAnswerMs = null;
+    // Speed mode is explicitly limited to Auto's simple short-context questions.
+    const quick = options.quickReply === true && !needsGemini && !options.thinkingModels?.includes(id);
+    const learned = quick ? replyLatency(id) : null;
+    const startWait = quick ? Math.min(timeouts.firstResponseMs, Math.max(timeouts.quickResponseMs, learned === null ? 0 : learned * 3 + 1500)) : timeouts.firstResponseMs;
 
     // Each attempt gets its own cancel switch, so a stuck model can be abandoned without stopping the reply.
     const attempt = new AbortController();
@@ -103,8 +113,8 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     let timer = setTimeout(() => {
       timedOut = true;
       attempt.abort();
-    }, timeouts.firstResponseMs);
-    let answerTimer = setTimeout(() => { timedOut = true; attempt.abort(); }, timeouts.firstAnswerMs);
+    }, startWait);
+    let answerTimer = setTimeout(() => { timedOut = true; attempt.abort(); }, quick ? Math.min(timeouts.firstAnswerMs, Math.max(timeouts.quickAnswerMs, startWait)) : timeouts.firstAnswerMs);
     let deadline = setTimeout(() => { timedOut = true; attempt.abort(); }, Math.max(1, (answered ? timeouts.totalMs : timeouts.noAnswerMs) - (Date.now() - started)));
     const setTotalDeadline = () => {
       deadline = setTimeout(() => { timedOut = true; attempt.abort(); }, Math.max(1, timeouts.totalMs - (Date.now() - started)));
@@ -126,7 +136,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
 
     let opened;
     try {
-      opened = await waitFor(openStream(target, messages, { instructions, search: Boolean(options.search), requireSearch: Boolean(options.requireSearch), codeExecution: Boolean(options.codeExecution), signal: attempt.signal }), attempt.signal);
+      opened = await waitFor(openStream(target, messages, { instructions, quickReply: quick, search: Boolean(options.search), requireSearch: Boolean(options.requireSearch), codeExecution: Boolean(options.codeExecution), signal: attempt.signal }), attempt.signal);
     } catch (e) {
       opened = { ok: false, status: timedOut ? 'timeout' : 'network', message: timedOut ? '' : e.message };
     }
@@ -198,6 +208,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
         if (ev.t === 'text') {
           if (!wrote) {
             wrote = true;
+            firstAnswerMs = Date.now() - attemptStarted;
             answered = true;
             clearTimeout(answerTimer);
             // A useful answer can stream longer, but still has a hard overall deadline.
@@ -235,7 +246,10 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
       if (failedEarly.status === 401 || (failedEarly.status === 403 && !isUnavailableFailure(failedEarly.status, failedEarly.message))) deadProviders.add(target.provider);
       continue;
     }
-    if (!failedLate) noteSuccess(id);
+    if (!failedLate) {
+      noteSuccess(id);
+      if (quick && firstAnswerMs !== null) noteReplyLatency(id, firstAnswerMs);
+    }
     yield { t: 'done' };
     return;
   }

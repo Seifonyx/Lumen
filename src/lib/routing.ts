@@ -4,7 +4,7 @@
 
 import type { Attachment, ModelInfo } from '../types';
 import { hasRtl } from './util';
-import { isCoolingDown } from './ai/health.js';
+import { isCoolingDown, replyLatency } from './ai/health.js';
 
 export const AUTO = 'auto';
 
@@ -125,6 +125,13 @@ function score(m: ModelInfo, task: Task, tokens: number, index: number, total: n
   if (task.long) s += (m.context || 0) >= 500_000 ? 3 : 0;
   // Save the scarce "Pro" limits for when they matter.
   if (task.quick) s += (t.power === 1 ? 2 : t.power === 2 ? 1.5 : -2) + (t.fast ? 1.5 : 0);
+  // A name or provider is only a hint: use recent first-answer timings as a bounded
+  // tie-breaker. Heavy tasks retain their capability and quality ranking.
+  if (task.quick) {
+    if (t.reasoner && !t.gemini) s -= 2;
+    const ms = replyLatency(m.id);
+    if (ms !== null) s += Math.max(-1.5, Math.min(1.5, (4000 - ms) / 3000));
+  }
   if (m.context && tokens > m.context * 0.85) s -= 100;
   if (left !== null && left <= 3) s -= 3;
   return s;

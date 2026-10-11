@@ -1,4 +1,5 @@
 import { planRoute, AUTO } from '../../src/lib/routing';
+import { clearHealth, noteReplyLatency } from '../../src/lib/ai/health.js';
 const M = (id: string, o: any = {}) => ({ id, provider: id.startsWith('gemini:') ? 'google' : 'openrouter', name: id.split(':').slice(1).join(':'), label: id, context: 1_000_000, vision: true, pdf: true, thinking: true, search: true, ...o });
 const catalog = [
   M('gemini:gemini-2.5-pro'),
@@ -66,3 +67,14 @@ const crowded = [...Array.from({length: 80}, (_, i) => M('openrouter:vendor/mode
 const routed = planRoute({selected: AUTO, enabled: crowded.map(m => m.id), catalog: crowded as any[], text: 'Fix this python code bug', files: [], conversationTokens: 100, search: false, blocked: () => false, left: () => null});
 if (!routed.model.includes('special-coder')) throw new Error('Crowded catalogue overwhelmed task score');
 console.log('PASS adding all models keeps task suitability ahead of list order');
+
+const peers = ['gemini:gemini-2.5-flash-a', 'gemini:gemini-2.5-flash-b'].map(id => M(id));
+const peerPlan = (selected = AUTO, text = 'hello') => planRoute({selected, enabled: peers.map(m => m.id), catalog: peers as any[], text, files: [], conversationTokens: 100, search: false, blocked: () => false, left: () => null});
+clearHealth();
+noteReplyLatency(peers[0].id, 12000); noteReplyLatency(peers[0].id, 12000);
+noteReplyLatency(peers[1].id, 700); noteReplyLatency(peers[1].id, 700);
+if (peerPlan().model !== peers[1].id) throw new Error('Quick Auto route ignored observed speed');
+if (peerPlan(peers[0].id).model !== peers[0].id) throw new Error('Speed routing replaced manual selection');
+if (peerPlan(AUTO, 'Fix this Python bug').model !== peers[0].id) throw new Error('Speed samples changed a heavy task ranking');
+clearHealth();
+console.log('PASS measured reply speed improves quick Auto choices without changing manual or heavy-task ranking');

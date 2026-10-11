@@ -13,7 +13,7 @@ import { asksForFiles, currentFile, filesAsAttachments, fingerprint, forgetRepo,
 import { Masker, scan } from './lib/privacy';
 import { quota, type QuotaView } from './lib/quota';
 import { extractMemoryOps, findMemory, hideMemoryLines, MAX_MEMORIES, memoryInstructions, MemoryStore } from './lib/memory';
-import { AUTO, planRoute } from './lib/routing';
+import { AUTO, analyze, planRoute } from './lib/routing';
 import { hasVideo, toolModel } from './lib/ai/tool-inputs.js';
 import { findLayout, isLayoutId } from './lib/layouts';
 import { formatUntil, remaining, UsageTracker, type LimitInfo, type UsageView } from './lib/usage';
@@ -77,6 +77,7 @@ interface State {
   comparing: boolean;
   comparison: ComparisonState | null;
   streamingChatId: string | null;
+  replyProgress: { chatId: string; label: string } | null;
   /** chat whose older messages are being summarized right now */
   compactingChatId: string | null;
   sidebarOpen: boolean;
@@ -377,6 +378,11 @@ export const useStore = create<State>((set, get) => {
     // unless it can't handle the message. Models at their limit go to the back of the line.
     const blocked = (id: string) => (usage?.blockedUntil(id) ?? null) !== null;
     const lastUser = [...chat.messages].reverse().find((m) => m.role === 'user');
+    const task = analyze({ text: lastUser?.text || '', files: [...(lastUser?.files || []), ...projectFiles], conversationTokens: contextTokens(chat) + projectTokens, search: settings.webSearch });
+    const quickReply = model === AUTO && task.quick && !task.search && !chat.repo && !chat.assistant && !layout && !toolRequest && contextTokens(chat) + projectTokens < 4000
+      // Short follow-ups can continue a complex job. Keep the model's normal reasoning.
+      && !/^(?:yes|ok(?:ay)?|go ahead|do it|continue|proceed|sure)\b/i.test(lastUser?.text.trim() || '');
+    const thinkingModels = catalogModels.filter(m => m.thinking && !/^gemini:gemini-2\.5-flash(?:-|$)/i.test(m.id)).map(m => m.id);
     const plan = planRoute({
       selected: model,
       enabled: routeModels,
@@ -453,7 +459,7 @@ export const useStore = create<State>((set, get) => {
       const memoryNote = masker ? masker.mask(rawMemory).text : rawMemory;
       const projectInstructions = settings.projects?.find((p) => p.id === chat?.projectId)?.instructions || '';
       const instructions = [settings.customInstructions, projectInstructions, chat.assistant?.instructions, layout?.instructions].filter(Boolean).join('\n\n');
-      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { preferredModels: layoutModels, search: chat.task ? chat.task.search : settings.webSearch, requireSearch: Boolean(chat.task?.search), codeExecution: Boolean(lastUser?.codeExecution), customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: masker ? masker.mask(workspaceNote).text : workspaceNote } });
+      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { quickReply, thinkingModels, preferredModels: layoutModels, search: chat.task ? chat.task.search : settings.webSearch, requireSearch: Boolean(chat.task?.search), codeExecution: Boolean(lastUser?.codeExecution), customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: masker ? masker.mask(workspaceNote).text : workspaceNote } });
     } catch (e) {
       get().toast((e as Error).message, 'error');
       return;
@@ -480,29 +486,35 @@ export const useStore = create<State>((set, get) => {
     replaceChat(chat);
     const replyController = new AbortController();
     controller = replyController;
-    set({ streamingChatId: chatId });
+    set({ streamingChatId: chatId, replyProgress: { chatId, label: 'Connecting…' } });
 
     // Batch UI updates while text streams in.
-    let pending = false;
+    let flushTimer: ReturnType<typeof setTimeout> | undefined;
+    let raw = '';
+    let textDirty = false;
+    let firstVisible = false;
+    let firstText = false;
     const flush = () => {
+      clearTimeout(flushTimer);
+      flushTimer = undefined;
       if (generation !== accountGeneration) return;
-      pending = false;
       const c = get().chats.find((x) => x.id === chatId);
       if (!c || planRepo(c.repo) !== repoScope) return;
+      // Restore privacy placeholders and strip memory commands once per paint,
+      // rather than re-scanning the entire reply for every individual token.
+      if (textDirty) { reply.text = restore(hideMemoryLines(raw)); textDirty = false; }
       replaceChat({ ...c, messages: c.messages.map((m) => (m.id === reply.id ? { ...reply } : m)) });
     };
-    const schedule = () => {
-      if (!pending) {
-        pending = true;
-        setTimeout(flush, 40);
-      }
+    const schedule = (immediate = false) => {
+      if (immediate) flush();
+      else if (flushTimer === undefined) flushTimer = setTimeout(flush, raw.length > 60_000 ? 100 : raw.length > 20_000 ? 60 : 32);
     };
 
     // The full reply text, including any hidden [[remember: …]] lines.
-    let raw = '';
     try {
       for await (const ev of streamChat(body, replyController.signal)) {
         if (generation !== accountGeneration) return;
+        if (ev.t === 'attempt') { set({ replyProgress: { chatId, label: ev.number > 1 ? 'Trying another model…' : 'Connecting…' } }); continue; }
         if (ev.t === 'unavailable') { hideUnavailableModel(ev.id); continue; }
         if (ev.t === 'request') {
           usage?.record(ev.id, { requests: 1 });
@@ -524,7 +536,7 @@ export const useStore = create<State>((set, get) => {
         }
         if (ev.t === 'text') {
           raw += ev.text;
-          reply.text = restore(hideMemoryLines(raw));
+          textDirty = true;
         }
         else if (ev.t === 'think') reply.thinking = (reply.thinking || '') + ev.text;
         else if (ev.t === 'model') {
@@ -535,7 +547,10 @@ export const useStore = create<State>((set, get) => {
         else if (ev.t === 'notice') reply.notices = [...(reply.notices || []), ev.text];
         else if (ev.t === 'sources') reply.sources = [...(reply.sources || []), ...ev.items];
         else if (ev.t === 'error') reply.error = ev.text;
-        schedule();
+        const immediate = (ev.t === 'text' && !firstText || ev.t === 'think' && !firstVisible) && Boolean(ev.text.trim());
+        if (ev.t === 'text' && ev.text.trim()) firstText = true;
+        if (immediate) firstVisible = true;
+        schedule(immediate);
       }
       reply.status = replyController.signal.aborted ? 'stopped' : reply.error && !reply.text ? 'error' : 'done';
     } catch (e) {
@@ -545,14 +560,17 @@ export const useStore = create<State>((set, get) => {
         reply.status = 'error';
       }
     } finally {
+      clearTimeout(flushTimer);
+      flushTimer = undefined;
       if (generation === accountGeneration && controller === replyController) controller = null;
     }
     if (generation !== accountGeneration) return;
     if (planRepo(get().chats.find(c => c.id === chatId)?.repo) !== repoScope) { if (get().streamingChatId === chatId) set({ streamingChatId: null }); return; }
     if (raw) await applyMemoryLines(reply, raw, chatId, restore);
+    textDirty = false;
     if (generation !== accountGeneration) return;
     flush();
-    set({ streamingChatId: null });
+    set({ streamingChatId: null, replyProgress: null });
     const finished = get().chats.find((c) => c.id === chatId);
     if (!finished) return;
     if (coding && coding.repo !== planRepo(finished.repo)) return;
@@ -574,15 +592,19 @@ export const useStore = create<State>((set, get) => {
     if (get().settings.autoTitle && !updated.task && !updated.summary?.from && updated.messages.length <= 2 && firstUser && reply.status === 'done') {
       const titleMasker = get().settings.privacyShield && !firstUser.privacy?.unmasked ? new Masker() : null;
       const firstText = firstUser.text || firstUser.files?.map((f) => f.name).join(', ') || '';
-      const result = await fetchTitle(titleMasker ? titleMasker.mask(firstText).text : firstText, reply.model, (id) => (usage?.blockedUntil(id) ?? null) !== null);
-      if (generation !== accountGeneration) return;
-      if (result) usage?.record(result.model, { requests: 1 });
-      const latest = get().chats.find((c) => c.id === chatId);
-      if (result && latest) {
-        const named = { ...latest, title: titleMasker ? titleMasker.unmask(result.title) : result.title };
-        replaceChat(named);
-        await persist(named);
-      }
+      // Naming is background work: repository file requests and the next turn
+      // should never wait for a separate title completion.
+      void (async () => {
+        const result = await fetchTitle(titleMasker ? titleMasker.mask(firstText).text : firstText, reply.model, (id) => (usage?.blockedUntil(id) ?? null) !== null);
+        if (generation !== accountGeneration) return;
+        if (result) usage?.record(result.model, { requests: 1 });
+        const latest = get().chats.find((c) => c.id === chatId);
+        if (result && latest && latest.title === updated.title) {
+          const named = { ...latest, title: titleMasker ? titleMasker.unmask(result.title) : result.title };
+          replaceChat(named);
+          await persist(named);
+        }
+      })().catch(() => {});
     }
 
     // Coding workspace: the model asked to read files ([[read: path]]) → load them and let it continue.
@@ -642,6 +664,7 @@ export const useStore = create<State>((set, get) => {
     comparing: false,
     comparison: null,
     streamingChatId: null,
+    replyProgress: null,
     compactingChatId: null,
     sidebarOpen: false,
     settingsOpen: false,
@@ -1591,6 +1614,7 @@ export const useStore = create<State>((set, get) => {
     },
 
     stop() {
+      set({ replyProgress: null });
       canvasController?.abort();
       controller?.abort();
       compactController?.abort();

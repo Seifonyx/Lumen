@@ -243,8 +243,8 @@ function withInstructionsInFirstUser(messages, instructions) {
 // ---------------------------------------------------------------- Streaming
 
 // Opens a streaming request. Resolves to { ok: true, events } or { ok: false, status, message }.
-export async function openStream({ provider, name }, messages, { instructions, search, requireSearch, codeExecution, signal }) {
-  if (provider === 'gemini') return openGemini(name, messages, instructions, search, signal, codeExecution, requireSearch);
+export async function openStream({ provider, name }, messages, { instructions, search, requireSearch, codeExecution, quickReply, signal }) {
+  if (provider === 'gemini') return openGemini(name, messages, instructions, search, signal, codeExecution, requireSearch, quickReply);
   if (COMPAT[provider]) return openCompat(provider, name, messages, instructions, signal);
   return openOpenRouter(name, messages, instructions, signal);
 }
@@ -330,7 +330,7 @@ async function* compatEvents(body) {
   yield* split('', true);
 }
 
-async function openGemini(name, messages, instructions, search, signal, codeExecution = false, requireSearch = false) {
+async function openGemini(name, messages, instructions, search, signal, codeExecution = false, requireSearch = false, quickReply = false) {
   const gemma = isGemma(name);
   if(requireSearch && (!search || gemma || !geminiThinks(name)))return {ok:false,status:400,message:'This model cannot search the web for this task.'};
   const body = gemma
@@ -338,6 +338,11 @@ async function openGemini(name, messages, instructions, search, signal, codeExec
     : { systemInstruction: { parts: [{ text: instructions }] }, contents: toGemini(messages) };
   const extras = {};
   if (geminiThinks(name)) extras.generationConfig = { thinkingConfig: { includeThoughts: true } };
+  // Only explicit 2.5 Flash IDs support a zero thinking budget. Keep defaults for
+  // Pro, newer versions and moving aliases instead of sending unsupported options.
+  if (quickReply && /^gemini-2\.5-flash(?:-|$)/i.test(name) && !search && !codeExecution) {
+    extras.generationConfig = { thinkingConfig: { thinkingBudget: 0 } };
+  }
   if (search && !gemma && geminiThinks(name)) extras.tools = [{ google_search: {} }];
   if (codeExecution) extras.tools = [...(extras.tools || []), { codeExecution: {} }];
 

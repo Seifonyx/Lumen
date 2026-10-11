@@ -38,6 +38,11 @@ function Thinking({ text, active }: { text: string; active: boolean }) {
   );
 }
 
+function WaitingForReply() {
+  const label = useStore(s => s.replyProgress?.chatId === s.currentId ? s.replyProgress.label : 'Connecting…');
+  return <div className="reply-wait" role="status"><div className="typing" aria-hidden="true"><span /><span /><span /></div><span>{label}</span></div>;
+}
+
 /** Under the last reply in a coding chat: files it names that the model hasn't seen, one tap to load them. */
 function LoadMentioned({ message }: { message: Message }) {
   const chat = useStore((s) => s.chats.find((c) => c.id === s.currentId));
@@ -231,7 +236,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
       {message.text ? (
         <Markdown text={message.coding?.phase === 'plan' && !streaming && parsePlan(message.text) ? message.text.replace(/`{3,}plan\s*\n[\s\S]*?\n`{3,}/i, '') : message.text} streaming={streaming} messageId={message.id} />
       ) : streaming && !message.thinking ? (
-        <div className="typing" aria-label="Writing"><span /><span /><span /></div>
+        <WaitingForReply />
       ) : null}
       {streaming && message.text && <span className="caret" />}
       {message.coding && <CodingPlanCard message={message} />}

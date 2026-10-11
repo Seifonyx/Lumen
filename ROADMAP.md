@@ -4,7 +4,7 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 
 | Item | Status / remaining work |
 | --- | --- |
-| 9 Smart routing | Implemented; maintain model access and capabilities. Provider-diverse fallback, transient cooldowns and bounded streams are deployed. Manual live availability checks are deployed: context-free probes hide confirmed disabled models and preserve inconclusive/quota failures. |
+| 9 Smart routing | Implemented; maintain model access and capabilities. Recent response timings improve simple Auto choices; eligible stalled starts switch after 8s. Provider-diverse fallback, transient cooldowns and bounded streams are deployed. Manual live availability checks use context-free probes, hide confirmed disabled models and preserve inconclusive/quota failures. |
 | 10 Projects | Implemented: instructions, model and small reference files. |
 | 11 Knowledge search | Missing: large-library indexing, retrieval and page citations. |
 | 12 Memory | Implemented with inspection/deletion. |
@@ -22,7 +22,7 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 | 25 Attachment sync | Partial: thumbnails/small extracted text sync; small original binaries remain. |
 | 26 Open-time tasks | Implemented and deployed in phase 5c: one-off/daily reminders and AI requests, private schedule sync, atomic occurrence claims, time zones/DST, privacy review, separate result chats and manual retry. Runs only with the app open, visible and online. All 29 local browser suites and CI passed; live/preview desktop and phone checks passed. |
 | 27 Desktop polish | Partial: installable PWA; desktop controls/shortcuts need audit. |
-| 28 Performance / accessibility | Partial: responsive UI, font sizes, focus and gestures; long-history virtualization/full accessibility audit remain. |
+| 28 Performance / accessibility | Partial: immediate first text, batched long replies, deferred syntax highlighting, background chat naming, responsive UI, font sizes, focus and gestures. Long-history virtualization/full accessibility audit remain. |
 | 29 Bigger jobs | Partial: repository reads/edits/diffs/commits/PR creation; PR review implemented and deployed in phase 6: snapshot diff preview, source/SHA attachment, AI review request, privacy checks and explicit incomplete coverage. All 30 local browser suites and release CI passed; live/preview desktop and phone checks passed. Plan approval implemented and deployed in phase 7: ordered steps/files, approve/revise/reject, implementation draft with privacy checks, proposal gates, workspace/device binding and explicit user review checklist. All 31 final-source local browser suites and release CI passed; live/preview desktop and phone plan/account checks passed. Finer edit acceptance and whole-commit undo remain. |
 
 ## Release sequence

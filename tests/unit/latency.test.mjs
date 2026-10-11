@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { clearHealth, noteReplyLatency, replyLatency } from '../../src/lib/ai/health.js';
-import { runChat, timeouts } from '../../src/lib/ai/chat.js';
+import { makeTitle, runChat, timeouts } from '../../src/lib/ai/chat.js';
 import { setKeys, openStream } from '../../src/lib/ai/providers.js';
 
 const A = 'gemini:gemini-2.5-flash', B = 'gemini:gemini-2.5-pro';
@@ -57,5 +57,12 @@ try {
   calls = []; payloads = [];
   const opened = await openStream({ provider: 'gemini', name: 'gemini-flash-latest' }, [{ role: 'user', text: 'hello' }], { instructions: '', quickReply: true, signal: new AbortController().signal });
   assert.ok(opened.ok); assert.equal(payloads[0].generationConfig.thinkingConfig.thinkingBudget, undefined, 'moving aliases keep supported defaults');
+  let titleCalls = 0;
+  globalThis.fetch = async () => {
+    titleCalls++; setKeys({ gemini: 'different-account' });
+    return new Response('{}', { status: 503 });
+  };
+  assert.equal(await makeTitle('Private first message', A), null);
+  assert.equal(titleCalls, 1, 'background title cannot retry an old message using newly changed keys');
   console.log('PASS: adaptive samples, faster simple-chat failover, preserved reasoning/tools and safe Gemini options');
 } finally { Object.assign(timeouts, saved); clearHealth(); }

@@ -3,7 +3,7 @@
 // and, for the usage meter: {t:'request', id} {t:'usage', id, input, output} {t:'limit', id, scope, quota?, resetAt?, retryAfterSec?}
 
 import { buildInstructions } from './instructions.js';
-import { complete, hasGemini, hasKey, openStream, parseModelId } from './providers.js';
+import { complete, hasGemini, hasKey, keyVersion, openStream, parseModelId } from './providers.js';
 import { isUnavailableFailure } from './model-status.js';
 import { hasVideo, toolModel } from './tool-inputs.js';
 import { isCoolingDown, noteFailure, noteSuccess, noteReplyLatency, replyLatency } from './health.js';
@@ -269,15 +269,18 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
  */
 export async function makeTitle(text, model, skip = () => false) {
   if (!text.trim()) return null;
+  const generation = keyVersion();
   const candidates = [];
   if (hasGemini()) candidates.push('gemini:gemini-flash-lite-latest', 'gemini:gemini-2.5-flash-lite');
   if (available(model)) candidates.push(model);
   const prompt = `Write a short title (2 to 6 words) for a chat that starts with the message below. Use the same language as the message. Reply with the title only, no quotes or punctuation at the end.\n\nMessage:\n${text.slice(0, 2000)}`;
   for (const id of candidates) {
+    if (keyVersion() !== generation) return null;
     if (skip(id) || isCoolingDown(id)) continue;
     try {
       const timeout = AbortSignal.timeout(10_000);
       const out = await waitFor(complete(parseModelId(id), prompt, { signal: timeout }), timeout);
+      if (keyVersion() !== generation) return null;
       const title = (out || '').split('\n').find((l) => l.trim())?.replace(/^["'#*\s]+|["'*.\s]+$/g, '').slice(0, 80);
       if (title) return { title, model: id };
     } catch {

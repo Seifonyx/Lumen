@@ -8,9 +8,11 @@ import { clearHealth } from './health.js';
 
 // API keys come from the user's settings (stored in their private Firebase document).
 const keys = { gemini: '', openrouter: '', groq: '', cerebras: '' };
+let keyGeneration = 0;
+export const keyVersion = () => keyGeneration;
 export function setKeys(next) {
   const clean = Object.fromEntries(Object.keys(keys).map((k) => [k, (next[k] || '').trim()]));
-  if (Object.keys(keys).some((k) => clean[k] !== keys[k])) { cache = null; clearHealth(); }
+  if (Object.keys(keys).some((k) => clean[k] !== keys[k])) { cache = null; clearHealth(); keyGeneration++; }
   Object.assign(keys, clean);
 }
 

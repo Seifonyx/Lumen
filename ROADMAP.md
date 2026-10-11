@@ -4,7 +4,7 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 
 | Item | Status / remaining work |
 | --- | --- |
-| 9 Smart routing | Implemented; maintain model access and capabilities. Manual live availability checks are deployed: context-free probes hide confirmed disabled models and preserve inconclusive/quota failures. |
+| 9 Smart routing | Implemented; maintain model access and capabilities. Provider-diverse fallback, transient cooldowns and bounded streams are deployed. Manual live availability checks are deployed: context-free probes hide confirmed disabled models and preserve inconclusive/quota failures. |
 | 10 Projects | Implemented: instructions, model and small reference files. |
 | 11 Knowledge search | Missing: large-library indexing, retrieval and page citations. |
 | 12 Memory | Implemented with inspection/deletion. |

@@ -36,7 +36,7 @@ export interface Message {
   /** the layout that answered, e.g. "Max coding" */
   via?: string;
   /** added by the app, not typed by you: repository files a model asked to read */
-  auto?: 'files';
+  auto?: 'files' | 'repository';
   /** code searches the app ran for the model (shown on the auto message) */
   searches?: { query: string; count: number }[];
   thinking?: string;

@@ -88,6 +88,7 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
   const [copied, setCopied] = useState(false);
 
   // Files the app loaded because a model asked for them.
+  if (message.auto === 'repository') return <div className="msg auto-files" role="note"><GitBranch size={14}/><span>{message.text.split('\n')[0]}</span></div>;
   if (message.auto === 'files') {
     const names = (message.files || []).map((f) => f.name);
     return (

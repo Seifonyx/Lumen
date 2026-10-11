@@ -1550,3 +1550,15 @@ table.sheet td.pending { color: #8f8f8f; font-style: italic; font-family: var(--
 .edit-part header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
 .edit-part .diff-wrap { overflow: auto; height: auto; max-height: 280px; }
 .edit-part-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.ws-review-action { display: flex; flex-wrap: wrap; gap: 8px; }
+.commit-undo-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 24px; }
+.commit-undo-summary strong { overflow-wrap: anywhere; }
+.commit-undo-summary a { flex: none; }
+.commit-undo-files { display: grid; gap: 8px; margin-block: 20px; }
+.commit-undo-files summary { display: flex; justify-content: space-between; gap: 12px; cursor: pointer; padding-block: 8px; }
+.commit-undo-files summary span:nth-child(2) { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.commit-undo-files summary svg { flex: none; margin-top: 2px; }
+.commit-undo-files details[open] summary svg { transform: rotate(90deg); }
+.commit-undo a { color: var(--link); text-underline-offset: 3px; }
+.commit-undo-files pre { overflow: auto; max-height: 260px; font: 0.75rem/1.6 var(--mono); }
+.commit-undo-result { margin-block: 24px; }

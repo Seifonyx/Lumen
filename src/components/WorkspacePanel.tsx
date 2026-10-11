@@ -9,6 +9,7 @@ import { selectCurrentChat, useStore } from '../store';
 import type { Chat } from '../types';
 import DiffView from './DiffView';
 import PullReviewModal from './PullReviewModal';
+import CommitUndoModal from './CommitUndoModal';
 
 const CodeEditor = lazy(() => import('./CodeEditor'));
 
@@ -305,6 +306,7 @@ export default function WorkspacePanel() {
   const disconnectRepo = useStore((s) => s.disconnectRepo);
   const [tab, setTab] = useState<'files' | 'changes'>('files');
   const [reviewOpen,setReviewOpen]=useState(false);
+  const [undoOpen,setUndoOpen]=useState(false);
   const accountId=useStore(state=>state.user?.uid);
   const [file, setFile] = useState<string | null>(null);
   // Expanded folders survive opening a file and coming back.
@@ -313,6 +315,7 @@ export default function WorkspacePanel() {
     setFile(null);
     setOpenDirs(new Set());
     setReviewOpen(false);
+    setUndoOpen(false);
   }, [chat?.id, chat?.repo?.branch]);
   if (!open || !chat?.repo) return null;
   const count = Object.keys(chat.changes || {}).length;
@@ -336,10 +339,11 @@ export default function WorkspacePanel() {
         <button className={tab === 'changes' ? 'active' : ''} onClick={() => setTab('changes')}>Changes{count ? ` (${count})` : ''}</button>
       </div>
       <div className="ws-body">
-        {!file && <div className="ws-review-action"><button className="btn small" onClick={()=>setReviewOpen(true)}>Review pull request</button></div>}
-        {tab === 'files' ? (file ? <FileView chat={chat} path={file} onBack={() => setFile(null)} /> : <FileTree chat={chat} onOpen={setFile} open={openDirs} setOpen={setOpenDirs} />) : <Changes chat={chat} />}
+        {!file && <div className="ws-review-action"><button className="btn small" onClick={()=>setReviewOpen(true)}>Review pull request</button><button className="btn ghost small" onClick={()=>setUndoOpen(true)}><RotateCcw size={14}/> Undo last commit</button></div>}
+        {tab === 'files' ? (file ? <FileView key={`${file}:${chat.lastCommit?.sha}`} chat={chat} path={file} onBack={() => setFile(null)} /> : <FileTree key={chat.lastCommit?.sha} chat={chat} onOpen={setFile} open={openDirs} setOpen={setOpenDirs} />) : <Changes chat={chat} />}
       </div>
       {reviewOpen && <PullReviewModal key={`${accountId}:${chat.id}:${repo.owner}/${repo.repo}@${repo.branch}`} chat={chat} onClose={()=>setReviewOpen(false)} />}
+      {undoOpen && <CommitUndoModal key={`${accountId}:${chat.id}:${repo.owner}/${repo.repo}@${repo.branch}`} chat={chat} onClose={()=>setUndoOpen(false)} />}
     </aside>
   );
 }

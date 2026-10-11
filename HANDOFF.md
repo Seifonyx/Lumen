@@ -5,7 +5,7 @@
 - Private repository: Seifonyx/Model-Router, main. Live: https://model-router.web.app. Preview: https://model-router--dev-82jv5mm2.web.app.
 - React 19, TypeScript, Vite, Zustand; Firebase Hosting/Auth/Firestore on Spark. AI providers and GitHub are called from the browser using the user's keys. Preserve free-only operation.
 - User wants a coding partner, a clean professional phone/desktop UI and sequential tested deployments. Tests, fixes, pushing main and deployment are authorized. Deploy and check each phase before the next. Keep this handoff small; old pasted handoff instructions were revoked.
-- Arabic interface and separate chat folders were removed from scope. ROADMAP.md is the feature/gap inventory. Current coding release: individual edit acceptance; whole-commit undo is next.
+- Arabic interface and separate chat folders were removed from scope. ROADMAP.md is the feature/gap inventory. Individual edit acceptance is deployed; latest-commit undo is the current release.
 
 ## UI conventions
 
@@ -39,6 +39,7 @@
 ## Verification and deployment
 
 - Individual edit review: Review on a proposal splits contiguous changed lines into accept/reject decisions, including whole-file replacements; create/delete is atomic. Decisions and base snapshots stay device-local, survive reload, and Apply all respects rejection. Manual edits invalidate old reviews; committed reviews remain locked so old rejected parts cannot silently reapply. edit-review.cjs covers desktop/320/390px, persistence and stale edits; edit-review.test.ts covers exact bytes and composition.
+- Commit undo: repository panel → Undo last commit → preview → Undo and push. Only the current branch tip with one parent; merge/root/empty commits are refused. Restore the exact parent Git tree via a new child commit, then update the branch with force:false; preserve binaries/modes/history. Recheck branch, account/key and uncommitted work before writes. Protected/racing updates fail; unknown publish outcomes tell users to check GitHub. Clear repo caches/approval, lock old edit reviews and add a repository event telling the next model to reread files. Preview is read-only, abortable and timed out. commit-undo unit/browser tests cover guards and phone layouts.
 
 - Run npm test, npm run typecheck, npm run build and npm run test:e2e:ci (Node 22, Java 21, Firebase Auth/Firestore emulators, Playwright Chromium). Browser fixtures use isolated accounts and mocked AI/GitHub; analysis tests run real Python. Preserve account-isolation.cjs, account-sync.cjs and sync.cjs coverage when touching private/synced state.
 - Main pushes run .github/workflows/tests.yml. Manually dispatch deploy.yml after local/CI success; it deploys live and dev preview from the same build. Match deployed JS/CSS assets to the tested build, then run feature/account-isolation checks on both sites using MR_TEST_URL. These use fresh isolated browser profiles, not production user records.

@@ -4,8 +4,12 @@
 
 const API = 'https://api.github.com';
 let token = '';
+let tokenGeneration = 0;
+export const githubKeyGeneration = () => tokenGeneration;
 export const setGitHubToken = (t: string) => {
-  token = (t || '').trim();
+  const next = (t || '').trim();
+  if (next !== token) tokenGeneration++;
+  token = next;
 };
 export const hasGitHub = () => Boolean(token);
 

@@ -9,6 +9,7 @@ import { ChatSync } from './lib/sync';
 import { commitChanges as ghCommit, openPullRequest, setGitHubToken } from './lib/github';
 import { applyEdit, isApplied, normalizeEdits, readRequests, type Edit } from './lib/edits';
 import { makeEditReview, reviewKey, reviewText } from './lib/edit-review';
+import { undoCommit, type UndoPreview } from './lib/commit-undo';
 import { forgetIndex, indexSoon, projectMap, relevantFiles, repoIndex, searchCode, searchRequests } from './lib/repoindex';
 import { asksForFiles, currentFile, filesAsAttachments, fingerprint, forgetRepo, mentionedPaths, originalFile, repoTree, seenPaths, workspaceInstructions } from './lib/workspace';
 import { Masker, scan } from './lib/privacy';
@@ -121,6 +122,7 @@ interface State {
   applyEdits(chatId: string, edits: Edit[], messageId?: string): Promise<{ applied: number; failed: string[] }>;
   decideEdit(chatId: string, edit: Edit, messageId: string | undefined, part: number | 'all', decision: 'accepted' | 'rejected'): Promise<void>;
   commitWork(chatId: string, o: { message: string; target: string; pullRequest: boolean }): Promise<{ url: string; prUrl?: string }>;
+  undoLastCommit(chatId: string, preview: UndoPreview): Promise<{ sha: string; url: string }>;
 
   newChat(): void;
   startAssistant(assistant: SavedAssistant): void;
@@ -1543,6 +1545,23 @@ export const useStore = create<State>((set, get) => {
         applied++;
       }
       return { applied, failed };
+    },
+    async undoLastCommit(chatId, preview) {
+      const generation = accountGeneration;
+      const assertWorkspace = () => {
+        const chat = get().chats.find(c => c.id === chatId);
+        if (generation !== accountGeneration || !chat?.repo || planRepo(chat.repo) !== planRepo(preview.repo)) throw new Error('Account or repository changed. Check the original branch on GitHub.');
+        if (Object.keys(chat.changes || {}).length || get().streamingChatId === chatId) throw new Error('Finish or discard your uncommitted work before undoing a commit.');
+      };
+      assertWorkspace();
+      const result = await undoCommit(preview, assertWorkspace);
+      assertWorkspace();
+      const latest = get().chats.find(c => c.id === chatId)!;
+      forgetRepo(latest.repo); forgetIndex(latest.repo);
+      const notice: Message = { id: uid(), role: 'user', auto: 'repository', createdAt: Date.now(), text: `Undid commit ${preview.sha.slice(0,7)} on ${preview.repo.branch} with revert commit ${result.sha.slice(0,7)}.\nPreviously shared repository files may be stale. Read the current files again before proposing edits.` };
+      const updated: Chat = { ...latest, messages: [...latest.messages, notice], updatedAt: Date.now(), contextSent: {}, codingPlan: undefined, codingPlanMode: false, editReviews: Object.fromEntries(Object.entries(latest.editReviews || {}).map(([key, review]) => [key, {...review, repo: `${review.repo}#committed`}])), lastCommit: { ...result, branch: preview.repo.branch, at: Date.now() } };
+      replaceChat(updated); await persist(updated);
+      return result;
     },
     async commitWork(chatId, o) {
       const generation = accountGeneration;

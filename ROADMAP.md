@@ -10,10 +10,10 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 | 12 Memory | Implemented with inspection/deletion. |
 | 13 Data analysis | Implemented in phase 4: local CSV/TSV/Excel uploads, editable pandas calculations/cleaning, Matplotlib charts, CSV/XLSX/PNG downloads and cached offline Python. CI and all 23 local browser suites passed; live and preview verified. |
 | 14 Edit uploaded Office files | Partial: reads files and creates new documents; template-preserving editing remains. |
-| 15 Canvas | Implemented in phase 3: document/code drafts, manual edits, selected-text AI proposals with accept/reject/undo, previews, downloads and private sync. Office/PDF imports extract text; template-preserving editing remains under item 14. Check Actions for deployment status. |
+| 15 Canvas | Implemented in phase 3: document/code drafts, manual edits, selected-text AI proposals with accept/reject/undo, previews, downloads and private sync. Office/PDF imports extract text; template-preserving editing remains under item 14. Deployed and verified on live and preview. |
 | 16 Free tools | Implemented and deployed in phase 5b: explicit YouTube video input, Gemini Python execution with visible code/results, and a disclosed keyless Jina web reader with draft review. All 27 browser suites and CI passed; live/preview phone and desktop checks passed. Gemini search already exists. |
 | 17 Images | Conditional: current Google pricing lists image models without free API access; verify key eligibility before adding. |
-| 19 Assistants / prompts | Implemented in phase 2: saved helpers with instructions/model, starter helpers, reusable editable prompts and private account sync. Check Actions for deployment status. |
+| 19 Assistants / prompts | Implemented in phase 2: saved helpers with instructions/model, starter helpers, reusable editable prompts and private account sync. Deployed and verified on live and preview. |
 | 20 Compare | Implemented, two/three models with per-model usage. |
 | 21 Organization | Projects, tags and branching implemented; separate folders remain. |
 | 22 Command palette | Implemented with chats/models/projects/settings. |
@@ -23,7 +23,7 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 | 26 Open-time tasks | Implemented and deployed in phase 5c: one-off/daily reminders and AI requests, private schedule sync, atomic occurrence claims, time zones/DST, privacy review, separate result chats and manual retry. Runs only with the app open, visible and online. All 29 local browser suites and CI passed; live/preview desktop and phone checks passed. |
 | 27 Desktop polish | Partial: installable PWA; desktop controls/shortcuts need audit. |
 | 28 Performance / accessibility | Partial: responsive UI, font sizes, focus and gestures; long-history virtualization/full accessibility audit remain. |
-| 29 Bigger jobs | Partial: repository reads/edits/diffs/commits/PR creation; plan approval, finer acceptance, commit undo need audit/implementation. PR review is implemented in phase 6; release checks are in progress. |
+| 29 Bigger jobs | Partial: repository reads/edits/diffs/commits/PR creation; PR review implemented and deployed in phase 6: snapshot diff preview, source/SHA attachment, AI review request, privacy checks and explicit incomplete coverage. All 30 local browser suites and release CI passed; live/preview desktop and phone checks passed. Plan approval, finer edit acceptance and commit undo remain. |
 
 ## Release sequence
 

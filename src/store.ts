@@ -604,6 +604,15 @@ export const useStore = create<State>((set, get) => {
       }
       if ((asks.length || searches.length) && rounds < 6) await get().loadRepoFiles(chatId, asks, searches);
     }
+    // No continuation occurred (or its read budget was exhausted). Don't leave an idle plan
+    // looking active. A recursive continuation changes messageId, so its result is preserved.
+    if (coding && reading && generation === accountGeneration) {
+      const latest = get().chats.find(c => c.id === chatId), p = latest?.codingPlan;
+      if (latest && p?.id === coding.id && p.messageId === reply.id && p.status === (coding.phase === 'plan' ? 'planning' : 'approved')) {
+        const settled = { ...latest, codingPlan: { ...p, status: coding.phase === 'plan' ? 'failed' as const : 'review' as const } };
+        replaceChat(settled); await persist(settled);
+      }
+    }
   };
 
   return {

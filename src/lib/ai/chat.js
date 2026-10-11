@@ -34,10 +34,10 @@ const available = (id) => {
 };
 
 export async function* runChat({ model, fallbacks = [], messages, options = {} }, signal) {
-  const needsGemini = Boolean(options.codeExecution) || hasVideo(messages);
+  const needsGemini = Boolean(options.codeExecution) || Boolean(options.requireSearch) || hasVideo(messages);
   const queue = [model, ...fallbacks].filter((id, i, all) => id && all.indexOf(id) === i && available(id) && (!needsGemini || toolModel(id))).slice(0, MAX_ATTEMPTS);
   if (queue.length === 0) {
-    yield { t: 'error', text: needsGemini ? 'YouTube and built-in calculations require an enabled Gemini model and a Google API key. Check Settings → Models and API keys.' : `No API key for ${model}. Add your keys in Settings → API keys.` };
+    yield { t: 'error', text: needsGemini ? 'This tool request requires an enabled Gemini model and a Google API key. Check Settings → Models and API keys.' : `No API key for ${model}. Add your keys in Settings → API keys.` };
     yield { t: 'done' };
     return;
   }
@@ -77,7 +77,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
 
     let opened;
     try {
-      opened = await openStream(target, messages, { instructions, search: Boolean(options.search), codeExecution: Boolean(options.codeExecution), signal: attempt.signal });
+      opened = await openStream(target, messages, { instructions, search: Boolean(options.search), requireSearch: Boolean(options.requireSearch), codeExecution: Boolean(options.codeExecution), signal: attempt.signal });
     } catch (e) {
       opened = { ok: false, status: timedOut ? 'timeout' : 'network', message: timedOut ? '' : e.message };
     }

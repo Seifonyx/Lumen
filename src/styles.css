@@ -163,11 +163,11 @@ kbd, .kbd {
 .icon-btn.sm { width: 30px; height: 30px; border-radius: 6px; }
 .icon-btn.xs { width: 22px; height: 22px; border-radius: 5px; }
 
-input[type='text'], input[type='password'], input[type='search'], input[type='email'], input[type='url'], input:not([type]), select, textarea {
+input[type='text'], input[type='password'], input[type='search'], input[type='email'], input[type='url'], input[type='time'], input[type='datetime-local'], input:not([type]), select, textarea {
   background: var(--surface); border: 1px solid var(--input-border); border-radius: var(--radius-sm); padding: 8px 12px; outline: none;
   font-size: 0.875rem; transition: border-color 0.15s, box-shadow 0.15s;
 }
-input[type='text'], input[type='password'], input[type='search'], input[type='email'], input[type='url'], select { height: 38px; }
+input[type='text'], input[type='password'], input[type='search'], input[type='email'], input[type='url'], input[type='time'], input[type='datetime-local'], select { height: 38px; }
 input:hover:not(:focus), select:hover:not(:focus), textarea:hover:not(:focus) { border-color: var(--border-strong); }
 input:focus, select:focus, textarea:focus { border-color: var(--text-3); box-shadow: 0 0 0 3px var(--ring); }
 ::placeholder { color: var(--text-3); opacity: 1; }

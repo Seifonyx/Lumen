@@ -464,3 +464,28 @@ html.kb-open .main.is-empty .starter-actions { display: none; }
   .analysis-file-list, .analysis-artifacts { grid-template-columns: minmax(0, 1fr); }
   .analysis-panel .run-code { height: 230px; }
 }
+
+/* Open-time tasks share the Library's quiet card layout. */
+.task-toolbar, .task-card-actions, .task-running { display:flex; align-items:center; gap:8px; }
+.task-toolbar { justify-content:space-between; margin:18px 0; }
+.task-editor { display:grid; gap:16px; max-width:660px; margin:20px auto; }
+.task-editor h3 { margin:0; }
+.task-editor .field-block { padding:0; min-width:0; }
+.task-schedule-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.task-toggle { display:flex; align-items:flex-start; gap:10px; font-size:13px; line-height:1.5; }
+.task-toggle input { flex:none; margin-top:3px; accent-color:var(--accent); }
+.task-schedule { overflow-wrap:anywhere; margin-bottom:16px; }
+.task-card-actions { flex-wrap:wrap; margin-top:auto; }
+.task-last-run { display:flex; flex-direction:column; align-items:flex-start; gap:6px; margin-bottom:16px; padding:12px; border:1px solid var(--border); border-radius:10px; overflow-wrap:anywhere; }
+.task-last-run strong { font-size:12px; }
+.task-running { padding:10px 12px; margin-bottom:8px; border:1px solid var(--border); border-radius:12px; font-size:12px; }
+.task-running span { flex:1; min-width:0; overflow-wrap:anywhere; }
+.library-tabs button { min-width:0; }
+@media(max-width:600px) {
+ .library-tabs button svg { display:none; }
+ .library-tabs button { padding:10px 3px; }
+ .task-schedule-grid { grid-template-columns:1fr; }
+ .task-card { padding:14px; }
+ .task-card-actions { gap:4px; }
+ .task-editor input[type="time"], .task-editor input[type="datetime-local"] { min-width:0; width:100%; max-width:100%; }
+}

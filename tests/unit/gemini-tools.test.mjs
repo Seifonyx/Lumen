@@ -19,6 +19,8 @@ assert.ok(answer.includes('print(2 + 2)') && answer.includes('OUTCOME_OK') && an
 calls = []; rejected = true;
 events = await collect({ model: 'gemini:gemini-flash-latest', fallbacks: ['groq:some-model'], messages, options: { codeExecution: true } });
 assert.equal(calls.length, 1); assert.ok(events.some(e => e.t === 'error')); assert.ok(calls[0].body.tools.some(t => t.codeExecution));
+calls = []; events = await collect({ model: 'gemini:gemini-flash-latest', fallbacks: ['groq:some-model'], messages, options: { search: true, requireSearch: true } });
+assert.equal(calls.length, 1); assert.ok(events.some(e => e.t === 'error')); assert.ok(calls[0].body.tools.some(t => t.google_search));
 rejected = false; calls = [];
 const video = [{ role: 'user', text: 'Watch', files: [{ kind: 'text', name: 'Video', videoUri: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }] }];
 await collect({ model: 'groq:some-model', fallbacks: ['gemini:gemini-flash-latest'], messages: video });

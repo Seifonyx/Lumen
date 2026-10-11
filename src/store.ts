@@ -21,9 +21,11 @@ import { db } from './lib/db';
 import { branchChat, normalizeChatTags } from './lib/chat-tools';
 import { normalizeAssistant } from './lib/assistants';
 import { canvasFits, canvasEditPrompt, cleanCanvasReply } from './lib/canvas';
+import { TaskStore } from './lib/task-store';
+import { TASK_RUN_MS } from './lib/tasks';
 import { applyAppearance, DEFAULT_SETTINGS, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
-import type { Attachment, Catalog, Chat, ChatSummary, ComparisonState, FileChange, Memory, Message, ModelInfo, Project, RepoLink, SavedAssistant, Settings } from './types';
+import type { Attachment, Catalog, Chat, ChatSummary, ComparisonState, FileChange, Memory, Message, ModelInfo, Project, RepoLink, SavedAssistant, ScheduledTask, Settings } from './types';
 
 export interface Toast {
   id: string;
@@ -37,6 +39,14 @@ export interface PreviewFile {
 }
 
 interface State {
+  tasks: ScheduledTask[];
+  tasksReady: boolean;
+  runningTaskId: string | null;
+  saveTask(task: ScheduledTask): Promise<void>;
+  deleteTask(id: string): Promise<void>;
+  taskReviewKey(task: ScheduledTask): string;
+  runTask(id: string, options?: { manual?: boolean; privacy?: 'masked'|'asIs'; reviewKey?: string }): Promise<void>;
+  interruptStaleTask(id: string): Promise<void>;
   authed: boolean | null;
   user: { uid: string; email: string; name: string; photo: string } | null;
   /** set when the signed-in Google account isn't on the invite list */
@@ -151,6 +161,7 @@ const canvasSyncTimers = new Map<string, ReturnType<typeof setTimeout>>();
 let sync: ChatSync | null = null;
 let usage: UsageTracker | null = null;
 let memory: MemoryStore | null = null;
+let taskStorage: TaskStore | null = null;
 let settingsReady = false;
 let accountGeneration = 0;
 let settingsTimer: ReturnType<typeof setTimeout> | undefined;
@@ -342,7 +353,7 @@ export const useStore = create<State>((set, get) => {
     const usable = (id: string) => catalogModels.some((m) => m.id === id);
     const layoutModels = layout ? layout.models.filter(usable) : [];
     if (layout) model = layout.mode === 'auto' || !layoutModels.length ? AUTO : layoutModels[0];
-    const toolRequest = Boolean([...chat.messages].reverse().find(m => m.role === 'user')?.codeExecution) || hasVideo(liveMessages(chat));
+    const toolRequest = Boolean([...chat.messages].reverse().find(m => m.role === 'user')?.codeExecution) || hasVideo(liveMessages(chat)) || Boolean(chat.task?.search);
     let routeModels = (layoutModels.length ? layoutModels : settings.enabledModels).filter(id => !toolRequest || toolModel(id));
     if (toolRequest && !routeModels.length) routeModels = settings.enabledModels.filter(toolModel);
     if (toolRequest && model !== AUTO && !toolModel(model)) model = AUTO;
@@ -364,7 +375,7 @@ export const useStore = create<State>((set, get) => {
       text: lastUser?.text || '',
       files: [...(lastUser?.files || []), ...projectFiles],
       conversationTokens: contextTokens(chat) + projectTokens,
-      search: settings.webSearch,
+      search: chat.task ? chat.task.search : settings.webSearch,
       blocked,
       left: (id) => remaining(get().usage, id),
     });
@@ -432,7 +443,7 @@ export const useStore = create<State>((set, get) => {
       const memoryNote = masker ? masker.mask(rawMemory).text : rawMemory;
       const projectInstructions = settings.projects?.find((p) => p.id === chat?.projectId)?.instructions || '';
       const instructions = [settings.customInstructions, projectInstructions, chat.assistant?.instructions, layout?.instructions].filter(Boolean).join('\n\n');
-      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: settings.webSearch, codeExecution: Boolean(lastUser?.codeExecution), customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: workspaceNote } });
+      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: chat.task ? chat.task.search : settings.webSearch, requireSearch: Boolean(chat.task?.search), codeExecution: Boolean(lastUser?.codeExecution), customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: workspaceNote } });
     } catch (e) {
       get().toast((e as Error).message, 'error');
       return;
@@ -452,7 +463,8 @@ export const useStore = create<State>((set, get) => {
     };
     chat = { ...chat, messages: [...chat.messages, reply], updatedAt: Date.now() };
     replaceChat(chat);
-    controller = new AbortController();
+    const replyController = new AbortController();
+    controller = replyController;
     set({ streamingChatId: chatId });
 
     // Batch UI updates while text streams in.
@@ -474,7 +486,7 @@ export const useStore = create<State>((set, get) => {
     // The full reply text, including any hidden [[remember: …]] lines.
     let raw = '';
     try {
-      for await (const ev of streamChat(body, controller.signal)) {
+      for await (const ev of streamChat(body, replyController.signal)) {
         if (generation !== accountGeneration) return;
         if (ev.t === 'unavailable') { hideUnavailableModel(ev.id); continue; }
         if (ev.t === 'request') {
@@ -510,7 +522,7 @@ export const useStore = create<State>((set, get) => {
         else if (ev.t === 'error') reply.error = ev.text;
         schedule();
       }
-      reply.status = reply.error && !reply.text ? 'error' : 'done';
+      reply.status = replyController.signal.aborted ? 'stopped' : reply.error && !reply.text ? 'error' : 'done';
     } catch (e) {
       if ((e as Error).name === 'AbortError') reply.status = 'stopped';
       else {
@@ -518,7 +530,7 @@ export const useStore = create<State>((set, get) => {
         reply.status = 'error';
       }
     } finally {
-      if (generation === accountGeneration) controller = null;
+      if (generation === accountGeneration && controller === replyController) controller = null;
     }
     if (generation !== accountGeneration) return;
     if (raw) await applyMemoryLines(reply, raw, chatId, restore);
@@ -534,7 +546,7 @@ export const useStore = create<State>((set, get) => {
     // Name the chat after its first exchange.
     if (generation !== accountGeneration) return;
     const firstUser = updated.messages.find((m) => m.role === 'user');
-    if (get().settings.autoTitle && !updated.summary?.from && updated.messages.length <= 2 && firstUser && reply.status === 'done') {
+    if (get().settings.autoTitle && !updated.task && !updated.summary?.from && updated.messages.length <= 2 && firstUser && reply.status === 'done') {
       const titleMasker = get().settings.privacyShield && !firstUser.privacy?.unmasked ? new Masker() : null;
       const firstText = firstUser.text || firstUser.files?.map((f) => f.name).join(', ') || '';
       const result = await fetchTitle(titleMasker ? titleMasker.mask(firstText).text : firstText, reply.model, (id) => (usage?.blockedUntil(id) ?? null) !== null);
@@ -590,6 +602,7 @@ export const useStore = create<State>((set, get) => {
     settings: loadSettings(),
     chats: [],
     currentId: null,
+    tasks: [], tasksReady: false, runningTaskId: null,
     activeProjectId: (() => { try { return localStorage.getItem('mr.activeProject') || null; } catch { return null; } })(),
     comparing: false,
     comparison: null,
@@ -632,6 +645,8 @@ export const useStore = create<State>((set, get) => {
         usage = null;
         memory?.stop();
         memory = null;
+        taskStorage?.stop(); taskStorage = null;
+        set({ tasks: [], tasksReady: false, runningTaskId: null });
         set({ memories: [] });
         await quota.flush();
         if (generation !== accountGeneration) return;
@@ -708,6 +723,8 @@ export const useStore = create<State>((set, get) => {
         usage.start();
         memory = new MemoryStore(user.uid, (memories) => { if (generation === accountGeneration) set({ memories }); }, (msg) => { if (generation === accountGeneration) get().toast(msg, 'error'); });
         memory.start();
+        taskStorage = new TaskStore(user.uid, (items, ready) => { if(generation===accountGeneration)set({tasks:items,tasksReady:ready}); }, message => { if(generation===accountGeneration)get().toast(message,'error'); });
+        taskStorage.start();
         await get().loadCatalog();
       });
     },
@@ -1468,6 +1485,84 @@ export const useStore = create<State>((set, get) => {
       controller?.abort();
       compactController?.abort();
       get().cancelComparison();
+    },
+
+    async saveTask(task) {
+      if(!taskStorage)throw new Error('Sign in before saving tasks.');
+      await taskStorage.save(task);
+    },
+    async deleteTask(id) {
+      if(!taskStorage)return;
+      await taskStorage.remove(id);
+    },
+    taskReviewKey(task) {
+      const state=get();
+      return `${task.updatedAt}:${state.settings.privacyShield}:${state.settings.privacyMode}:${fingerprint([task.prompt,state.settings.customInstructions,state.settings.memory ? state.memories.map(memory=>memory.text).join('\n') : ''].join('\n'))}`;
+    },
+    async interruptStaleTask(id) { await taskStorage?.interruptStale(id); },
+    async runTask(id, options = {}) {
+      const generation=accountGeneration, source=taskStorage;
+      if(!source || !get().authed || !get().online || !get().tasksReady || get().runningTaskId || get().streamingChatId || get().compactingChatId || get().comparing || get().canvasEditingChatId)return;
+      const reservation=new AbortController(), pending=`task:${id}:${uid()}`;
+      controller=reservation;
+      set({streamingChatId:pending,runningTaskId:id});
+      let claimed:ScheduledTask|null=null, chatId:string|null=null, timedOut=false;
+      const expire=()=>{
+        timedOut=true;reservation.abort();
+        if(generation===accountGeneration && (get().streamingChatId===pending || get().streamingChatId===chatId))get().stop();
+      };
+      let timer=setTimeout(expire,30_000);
+      try {
+        const claimWork=source.claim(id,Boolean(options.manual),reservation.signal);
+        const stopped=new Promise<null>(resolve=>reservation.signal.addEventListener('abort',()=>resolve(null),{once:true}));
+        void claimWork.then(late=>{if(late && reservation.signal.aborted && generation===accountGeneration)void source.finish(id,late.lastRun!.token,'interrupted',{error:'Stopped before sending a model request.'}).catch(()=>{});}).catch(()=>{});
+        claimed=await Promise.race([claimWork,stopped]);
+        clearTimeout(timer);timer=setTimeout(expire,TASK_RUN_MS);
+        if(!claimed)return;
+        const token=claimed.lastRun!.token;
+        if(generation!==accountGeneration || reservation.signal.aborted) {
+          if(generation===accountGeneration)await source.finish(id,token,'interrupted',{error:'Stopped before sending a model request.'});
+          return;
+        }
+        const settings=get().settings;
+        const privacyText=[claimed.prompt,settings.customInstructions,settings.memory ? get().memories.map(memory=>memory.text).join('\n') : ''].join('\n');
+        if(claimed.kind==='assistant' && settings.privacyShield && settings.privacyMode==='ask' && scan(privacyText).length && (!options.privacy || options.reviewKey!==get().taskReviewKey(claimed))) {
+          await source.finish(id,token,'review',{error:'Personal details were found. Review this task before sending.'});
+          get().toast(`Task needs review: ${claimed.name}`);return;
+        }
+        if(claimed.kind==='assistant' && (!get().catalog || !settings.enabledModels.length || (claimed.search && !settings.enabledModels.some(toolModel)))) {
+          await source.finish(id,token,'error',{error:claimed.search ? 'Enable a Gemini model for this search task.' : 'Enable a model before running this task.'});return;
+        }
+        const now=Date.now();
+        const message:Message={id:uid(),role:'user',text:claimed.prompt,createdAt:now,...(options.privacy==='asIs' ? {privacy:{masked:0,unmasked:true}} : {})};
+        if(settings.privacyShield && options.privacy!=='asIs') {const count=scan(claimed.prompt).length;if(count)message.privacy={masked:count};}
+        const chat:Chat={...newChatObject(),title:`Task · ${claimed.name}`,model:claimed.model,task:{id:claimed.id,name:claimed.name,occurrence:claimed.lastRun!.key,search:claimed.search},messages:[message]};
+        chatId=chat.id;
+        if(claimed.kind==='reminder')chat.messages.push({id:uid(),role:'assistant',text:`Reminder\n\n${claimed.prompt}`,notices:['Saved reminder · no AI request or model message used.'],status:'done',createdAt:now});
+        replaceChat(chat);await persist(chat);
+        if(generation!==accountGeneration)return;
+        if(reservation.signal.aborted) {await source.finish(id,token,'interrupted',{chatId:chat.id,error:'Stopped before sending a model request.'});return;}
+        if(claimed.kind==='assistant')await runAssistant(chat.id);
+        clearTimeout(timer);
+        if(generation!==accountGeneration)return;
+        const reply=get().chats.find(item=>item.id===chat.id)?.messages.findLast(message=>message.role==='assistant');
+        const status=reply?.status==='done' && !reply.error ? 'done' : reply?.status==='stopped' ? 'interrupted' : 'error';
+        await source.finish(id,token,status,{chatId:chat.id,...(status!=='done' ? {error:timedOut ? 'Task stopped after five minutes. Retry manually when ready.' : reply?.error || 'The task was stopped or could not finish.'} : {})});
+        if(generation===accountGeneration)get().toast(claimed.kind==='reminder' ? `Reminder: ${claimed.name}` : status==='done' ? `Task finished: ${claimed.name}` : `Task needs attention: ${claimed.name}`);
+      } catch(error) {
+        if(generation===accountGeneration) {
+          if(chatId && get().streamingChatId===chatId)get().stop();
+          if(claimed)await source.finish(id,claimed.lastRun!.token,'error',{...(chatId ? {chatId} : {}),error:(error as Error).message}).catch(()=>{});
+          get().toast(`Task paused: ${(error as Error).message}`,'error');
+        }
+      } finally {
+        clearTimeout(timer);
+        if(generation===accountGeneration) {
+          if(controller===reservation)controller=null;
+          if(get().streamingChatId===pending)set({streamingChatId:null});
+          set({runningTaskId:null});
+        }
+      }
     },
 
     async addMemory(text) {

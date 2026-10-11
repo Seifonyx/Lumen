@@ -87,6 +87,7 @@ function normalize(raw: any): Chat {
     tags: Array.isArray(raw.tags) ? raw.tags.filter((t: unknown): t is string => typeof t === 'string').slice(0, 5) : undefined,
     model: raw.model,
     projectId: raw.projectId,
+    task: raw.task && typeof raw.task.id==='string' && typeof raw.task.name==='string' ? { id:raw.task.id, name:raw.task.name, occurrence:String(raw.task.occurrence||''), search:Boolean(raw.task.search) } : undefined,
     assistant: raw.assistant ? normalizeAssistant(raw.assistant) || undefined : undefined,
     documents: normalizeDocuments(raw.documents),
     rev: raw.rev,

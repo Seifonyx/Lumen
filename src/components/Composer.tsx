@@ -31,6 +31,7 @@ export default function Composer({ model, meter, starterActions }: { model: stri
   const runComparison = useStore((s) => s.runComparison);
   const stop = useStore((s) => s.stop);
   const toast = useStore((s) => s.toast);
+  const runningTask = useStore(s => s.tasks.find(task => task.id === s.runningTaskId));
   const streaming = useStore((s) => s.streamingChatId !== null || s.compactingChatId !== null || s.comparing || s.canvasEditingChatId !== null);
   const compact = useStore((s) => s.compact);
   const addMemory = useStore((s) => s.addMemory);
@@ -319,6 +320,7 @@ export default function Composer({ model, meter, starterActions }: { model: stri
           <span>Drop files to attach</span>
         </div>
       )}
+      {runningTask && <div className="task-running" role="status"><Loader2 size={15} /><span>Running {runningTask.name} · your draft stays here</span><button className="btn small" onClick={stop}>Stop task</button></div>}
       {meter}
       {usageWarning && (
         <div className={`usage-warning${blockedUntil ? ' blocked' : ''}`} role="status" dir="auto">

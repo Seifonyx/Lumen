@@ -51,6 +51,7 @@ export interface Message {
 }
 
 export interface Chat {
+  task?: { id: string; name: string; occurrence: string; search: boolean };
   documents?: CanvasDocument[];
   /** Snapshot: editing/deleting a saved helper never changes this chat's instructions. */
   assistant?: SavedAssistant;
@@ -110,6 +111,21 @@ export interface SavedPrompt {
   id: string;
   title: string;
   text: string;
+}
+
+export interface ScheduledTask {
+  id: string;
+  name: string;
+  prompt: string;
+  kind: 'reminder' | 'assistant';
+  model: string;
+  search: boolean;
+  enabled: boolean;
+  schedule: { kind: 'once'; at: number } | { kind: 'daily'; time: string; timeZone: string };
+  createdAt: number;
+  updatedAt: number;
+  lastOccurrence?: string;
+  lastRun?: { key: string; token: string; at: number; status: 'running' | 'done' | 'error' | 'review' | 'interrupted'; chatId?: string; error?: string };
 }
 
 export interface ComparedAnswer {

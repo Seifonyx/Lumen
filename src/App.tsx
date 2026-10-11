@@ -14,6 +14,7 @@ import ComparisonResultsModal from './components/ComparisonResultsModal';
 import { useStore } from './store';
 import { keepScreenAwake } from './lib/wakelock';
 import { installSidebarGestures } from './lib/sidebar-gesture';
+import TaskEngine from './components/TaskEngine';
 
 const RunPanel = lazy(() => import('./components/RunPanel'));
 const AssistantLibrary = lazy(() => import('./components/AssistantLibrary'));
@@ -34,10 +35,11 @@ export default function App() {
   const repoPicker = useStore((s) => s.repoPicker);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
-  const [libraryTab, setLibraryTab] = useState<'assistants' | 'prompts' | 'tools'>('assistants');
+  const [libraryTab, setLibraryTab] = useState<'assistants' | 'prompts' | 'tools' | 'tasks'>('assistants');
   const accountId = useStore(s => s.user?.uid);
+  useEffect(() => { setLibraryOpen(false); setCommandPaletteOpen(false); }, [accountId]);
   useEffect(() => {
-    const open = (event: Event) => { setLibraryTab((event as CustomEvent).detail === 'tools' ? 'tools' : 'assistants'); setUi({ sidebarOpen: false }); setLibraryOpen(true); };
+    const open = (event: Event) => { setLibraryTab((event as CustomEvent).detail === 'tasks' ? 'tasks' : (event as CustomEvent).detail === 'tools' ? 'tools' : 'assistants'); setUi({ sidebarOpen: false }); setLibraryOpen(true); };
     window.addEventListener('mr:library', open);
     return () => window.removeEventListener('mr:library', open);
   }, [setUi]);
@@ -100,6 +102,7 @@ export default function App() {
   if (accessDenied) return <NotInvited email={accessDenied} />;
   return (
     <div className={`app${settingsOpen ? ' settings-open' : ''}${workspaceOpen ? ' workspace-open' : ''}${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
+      <TaskEngine />
       <Sidebar onCollapse={toggleSidebar} onOpenLibrary={() => setLibraryOpen(true)} />
       <div className={`scrim${sidebarOpen ? ' visible' : ''}`} aria-hidden="true" onClick={() => setUi({ sidebarOpen: false })} />
       <ChatView onExpandSidebar={toggleSidebar} />

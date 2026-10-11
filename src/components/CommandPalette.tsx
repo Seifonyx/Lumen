@@ -29,6 +29,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
     const all: Item[] = [
       { id: 'new-chat', label: 'New chat', detail: `${modKey}⇧O`, Icon: Plus, run: newChat },
       { id: 'library', label: 'Saved helpers and prompts', detail: 'Library', Icon: Boxes, run: () => window.dispatchEvent(new Event('mr:library')) },
+      { id: 'tasks', label: 'Tasks & reminders', detail: 'Scheduled help while the app is open', Icon: Boxes, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tasks' })) },
       { id: 'free-tools', label: 'Free tools', detail: 'YouTube · calculations · web reader', Icon: Boxes, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tools' })) },
       { id: 'canvas', label: 'Open document canvas', detail: 'Write and edit', Icon: Plus, run: () => useStore.getState().openCanvas() },
       { id: 'analysis', label: 'Data analysis', detail: 'Python · CSV · Excel · charts', Icon: Boxes, run: () => setUi({ runner: { lang: 'python', code: ANALYSIS_TEMPLATES.overview.code, analysis: true }, sidebarOpen: false }) },

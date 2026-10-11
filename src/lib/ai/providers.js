@@ -241,8 +241,8 @@ function withInstructionsInFirstUser(messages, instructions) {
 // ---------------------------------------------------------------- Streaming
 
 // Opens a streaming request. Resolves to { ok: true, events } or { ok: false, status, message }.
-export async function openStream({ provider, name }, messages, { instructions, search, codeExecution, signal }) {
-  if (provider === 'gemini') return openGemini(name, messages, instructions, search, signal, codeExecution);
+export async function openStream({ provider, name }, messages, { instructions, search, requireSearch, codeExecution, signal }) {
+  if (provider === 'gemini') return openGemini(name, messages, instructions, search, signal, codeExecution, requireSearch);
   if (COMPAT[provider]) return openCompat(provider, name, messages, instructions, signal);
   return openOpenRouter(name, messages, instructions, signal);
 }
@@ -328,8 +328,9 @@ async function* compatEvents(body) {
   yield* split('', true);
 }
 
-async function openGemini(name, messages, instructions, search, signal, codeExecution = false) {
+async function openGemini(name, messages, instructions, search, signal, codeExecution = false, requireSearch = false) {
   const gemma = isGemma(name);
+  if(requireSearch && (!search || gemma || !geminiThinks(name)))return {ok:false,status:400,message:'This model cannot search the web for this task.'};
   const body = gemma
     ? { contents: toGemini(withInstructionsInFirstUser(messages, instructions)) }
     : { systemInstruction: { parts: [{ text: instructions }] }, contents: toGemini(messages) };
@@ -348,7 +349,7 @@ async function openGemini(name, messages, instructions, search, signal, codeExec
 
   let res = await send({ ...body, ...extras });
   // If thinking or search options are what the model refused, try once more without them.
-  if (res.status === 400 && Object.keys(extras).length && !codeExecution) {
+  if (res.status === 400 && Object.keys(extras).length && !codeExecution && !requireSearch) {
     await res.body?.cancel();
     res = await send(body);
   }

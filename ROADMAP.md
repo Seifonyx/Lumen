@@ -23,7 +23,7 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 | 26 Open-time tasks | Implemented and deployed in phase 5c: one-off/daily reminders and AI requests, private schedule sync, atomic occurrence claims, time zones/DST, privacy review, separate result chats and manual retry. Runs only with the app open, visible and online. All 29 local browser suites and CI passed; live/preview desktop and phone checks passed. |
 | 27 Desktop polish | Partial: installable PWA; desktop controls/shortcuts need audit. |
 | 28 Performance / accessibility | Partial: responsive UI, font sizes, focus and gestures; long-history virtualization/full accessibility audit remain. |
-| 29 Bigger jobs | Partial: repository reads/edits/diffs/commits/PR creation; PR review implemented and deployed in phase 6: snapshot diff preview, source/SHA attachment, AI review request, privacy checks and explicit incomplete coverage. All 30 local browser suites and release CI passed; live/preview desktop and phone checks passed. Plan approval, finer edit acceptance and commit undo remain. |
+| 29 Bigger jobs | Partial: repository reads/edits/diffs/commits/PR creation; PR review implemented and deployed in phase 6: snapshot diff preview, source/SHA attachment, AI review request, privacy checks and explicit incomplete coverage. All 30 local browser suites and release CI passed; live/preview desktop and phone checks passed. Plan approval implemented and deployed in phase 7: ordered steps/files, approve/revise/reject, implementation draft with privacy checks, proposal gates, workspace/device binding and explicit user review checklist. All 31 final-source local browser suites and release CI passed; live/preview desktop and phone plan/account checks passed. Finer edit acceptance and whole-commit undo remain. |
 
 ## Release sequence
 
@@ -32,7 +32,7 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 3. Document canvas and selected-text editing.
 4. Uploaded data analysis and artifact downloads.
 5. Phase 5a: whole-chat exports and a confirmed shared-device account isolation fix. Phase 5b: free tools. Phase 5c: open-time tasks.
-6. Coding improvements: pull-request review first, then plan approval, finer edit acceptance and commit undo. Each ships in a separately verified release.
+6. Coding improvements: phase 6 pull-request review and phase 7 plan approval deployed and verified. Next: finer edit acceptance, then whole-commit undo. Each ships in a separately verified release.
 
 Arabic interface support was removed from scope at the user’s request.
 

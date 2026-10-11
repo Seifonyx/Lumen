@@ -11,6 +11,7 @@ import { scan, type Finding } from '../lib/privacy';
 import PrivacyCheck from './PrivacyCheck';
 import AttachSheet from './AttachSheet';
 import CompareModelsModal from './CompareModelsModal';
+import { ANALYSIS_TEMPLATES } from '../lib/analysis';
 
 interface Pending {
   key: string;
@@ -422,6 +423,7 @@ export default function Composer({ model, meter, starterActions }: { model: stri
           onClose={() => setSheet(false)}
           onFiles={() => fileInput.current?.click()}
           onCanvas={() => useStore.getState().openCanvas()}
+          onAnalysis={() => useStore.getState().setUi({ runner: { lang: 'python', code: ANALYSIS_TEMPLATES.overview.code, analysis: true } })}
           onRepo={() => setUi(chat?.repo ? { workspaceOpen: true } : { repoPicker: true })}
           repoName={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : undefined}
           anchor={touch ? undefined : sheetAnchor}

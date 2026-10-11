@@ -12,6 +12,7 @@ function serviceWorker(): Plugin {
       // Fonts: browsers that run service workers all use .woff2, so the older formats aren't stored.
       const built = Object.keys(bundle).filter((f) => !/\.(map|ttf|woff)$/.test(f) && f !== 'index.html');
       const extras = readdirSync('public').filter((f) => /\.(png|svg|webmanifest)$/.test(f));
+      extras.push(...readdirSync('public/python').filter((f) => f.endsWith('.whl')).map((f) => `python/${f}`));
       const files = ['/', ...built.map((f) => `/${f}`), ...extras.map((f) => `/${f}`)];
       const html = bundle['index.html'];
       const version = createHash('sha256')

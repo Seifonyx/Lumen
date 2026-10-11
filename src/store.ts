@@ -72,7 +72,7 @@ interface State {
   settingsTab: string;
   preview: PreviewFile | null;
   /** code from a reply being run in the browser */
-  runner: { lang: string; code: string } | null;
+  runner: { lang: string; code: string; analysis?: boolean } | null;
   toasts: Toast[];
 
   init(): Promise<void>;

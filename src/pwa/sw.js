@@ -5,6 +5,7 @@
 const VERSION = '__VERSION__';
 const PRECACHE = __PRECACHE__;
 const CACHE = `model-router-${VERSION}`;
+const PYTHON_CACHE = 'model-router-python-0.26.4';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -16,7 +17,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      for (const key of await caches.keys()) if (key.startsWith('model-router-') && key !== CACHE) await caches.delete(key);
+      for (const key of await caches.keys()) if (key.startsWith('model-router-') && key !== CACHE && key !== PYTHON_CACHE) await caches.delete(key);
       await self.clients.claim();
     })(),
   );
@@ -30,6 +31,20 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  if (url.origin === 'https://cdn.jsdelivr.net' && url.pathname.startsWith('/pyodide/v0.26.4/full/')) {
+    event.respondWith((async () => {
+      const cache = await caches.open(PYTHON_CACHE);
+      const hit = await cache.match(req);
+      if (hit) return hit;
+      const response = await fetch(req);
+      if (response.ok || response.type === 'opaque') {
+        // Cache failure (for example device storage pressure) must not prevent an online run.
+        await cache.put(req, response.clone()).catch(() => {});
+      }
+      return response;
+    })());
+    return;
+  }
   // Only the app's own files; AI providers, Firebase and Google sign-in go straight to the network.
   if (url.origin !== self.location.origin || url.pathname.startsWith('/__/')) return;
   if (req.mode === 'navigate') {

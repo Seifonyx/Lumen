@@ -4,6 +4,10 @@
 html.kb-open, html.kb-open body { overflow: hidden; }
 html.kb-open .app { position: fixed; left: 0; right: 0; top: var(--vv-top, 0px); height: var(--vv-h, 100%); }
 html.kb-open .composer-wrap { padding-bottom: 8px; }
+@media (max-width: 640px) {
+  html.kb-open .modal-backdrop { top: var(--vv-top, 0px); bottom: auto; height: var(--vv-h, 100%); }
+  html.kb-open .modal, html.kb-open .modal.wide, html.kb-open .modal.full { max-height: 100%; }
+}
 
 /* Fingers need bigger targets than a mouse (Apple recommends at least 44pt). */
 @media (pointer: coarse) {

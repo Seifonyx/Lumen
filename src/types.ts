@@ -24,6 +24,7 @@ export interface Source {
 }
 
 export interface Message {
+  coding?: { id: string; phase: 'plan' | 'work'; repo: string };
   codeExecution?: boolean;
   id: string;
   role: Role;
@@ -51,6 +52,9 @@ export interface Message {
 }
 
 export interface Chat {
+  /** Device-local approval, like uncommitted repository changes. */
+  codingPlan?: CodingPlan;
+  codingPlanMode?: boolean;
   task?: { id: string; name: string; occurrence: string; search: boolean };
   documents?: CanvasDocument[];
   /** Snapshot: editing/deleting a saved helper never changes this chat's instructions. */
@@ -79,6 +83,16 @@ export interface Chat {
   /** coding workspace: the last commit made from this chat (its test results are shown) */
   lastCommit?: { sha: string; url: string; branch: string; prUrl?: string; at: number; dismissed?: boolean };
   messages: Message[];
+}
+
+export interface CodingPlan {
+  id: string;
+  repo: string;
+  baseline: string;
+  messageId?: string;
+  status: 'planning' | 'awaiting' | 'approved' | 'review' | 'stopped' | 'failed' | 'rejected' | 'completed';
+  steps: { title: string; files: string[] }[];
+  checked: number[];
 }
 
 export interface Project {

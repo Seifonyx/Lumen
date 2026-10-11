@@ -198,6 +198,8 @@ export class ChatSync {
               context: Array.isArray(data.context) ? data.context : undefined,
               // Uncommitted edits stay on the device that made them.
               changes: local?.changes,
+              codingPlan: local?.codingPlan,
+              codingPlanMode: local?.codingPlanMode,
               contextSent: local?.contextSent,
               messages,
             });

@@ -40,7 +40,8 @@ export async function currentFile(chat: Chat, path: string): Promise<string | nu
 }
 
 /** Forget cached files after a commit or branch switch. */
-export function forgetRepo(r: RepoLink) {
+export function forgetRepo(r?: RepoLink) {
+  if (!r) { trees.clear(); files.clear(); return; }
   const prefix = key(r);
   trees.delete(prefix);
   for (const k of [...files.keys()]) if (k.startsWith(`${prefix}:`)) files.delete(k);

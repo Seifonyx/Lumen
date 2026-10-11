@@ -1,5 +1,5 @@
 import ChecksBar from './ChecksBar';
-import { Columns2, FileCode2, GitBranch, ShieldCheck, ArrowUp, FileText, Globe, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
+import { Columns2, ListChecks, FileCode2, GitBranch, ShieldCheck, ArrowUp, FileText, Globe, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ACCEPT, readAttachment } from '../lib/files/read';
 import { canListen, listen } from '../lib/speech';
@@ -342,7 +342,9 @@ export default function Composer({ model, meter, starterActions }: { model: stri
               <GitBranch size={13} /> <span className="repo-chip-name">{chat.repo.repo}</span> <span className="repo-chip-branch muted">· {chat.repo.branch}</span>
               {Object.keys(chat.changes || {}).length > 0 && <span className="badge">{Object.keys(chat.changes || {}).length}</span>}
             </button>
+            <button type="button" className="btn ghost small plan-toggle" aria-pressed={Boolean(chat.codingPlanMode)} disabled={streaming} onClick={() => useStore.getState().setPlanMode(chat.id, !chat.codingPlanMode)} title="Plan changes before implementation"><ListChecks size={14} />Plan</button>
             {(chat.context || []).map((p) => (
+
               <span key={p} className="ctx-chip" title={p}>
                 <FileCode2 size={12} /> <span className="ctx-chip-name">{p.split('/').pop()}</span>
                 <button type="button" className="icon-btn xs" aria-label={`Remove ${p} from the chat`} onClick={() => setContext(chat.id, (chat.context || []).filter((x) => x !== p))}>

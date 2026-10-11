@@ -58,7 +58,8 @@ export function repoIndex(r: RepoLink): Promise<RepoIndex> {
   return indexes.get(k)!;
 }
 
-export function forgetIndex(r: RepoLink) {
+export function forgetIndex(r?: RepoLink) {
+  if (!r) { indexes.clear(); return; }
   indexes.delete(key(r));
 }
 

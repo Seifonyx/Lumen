@@ -1,3 +1,4 @@
+import { normalizePlan } from './coding-plan';
 // Chats are kept in IndexedDB on the device (attachments are too big for localStorage).
 // Account databases keep shared-device sign-ins separate. The legacy database is adopted once.
 
@@ -63,6 +64,7 @@ function normalize(raw: any): Chat {
     id: m.id || uid() + i,
     role: m.role,
     codeExecution: Boolean(m.codeExecution),
+    coding: m.coding && typeof m.coding.id === 'string' && ['plan','work'].includes(m.coding.phase) && typeof m.coding.repo === 'string' ? m.coding : undefined,
     text: m.text || '',
     files: (m.files || []).map((f: any) => ({ id: f.id || uid(), size: f.size ?? (f.data?.length ?? f.text?.length ?? 0), mime: f.mime || 'text/plain', ...f })),
     model: m.model,
@@ -96,6 +98,8 @@ function normalize(raw: any): Chat {
     context: raw.context,
     contextSent: raw.contextSent,
     changes: raw.changes,
+    codingPlanMode: Boolean(raw.codingPlanMode),
+    codingPlan: normalizePlan(raw.codingPlan),
     messages,
   };
 }

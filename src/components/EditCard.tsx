@@ -1,3 +1,4 @@
+import { canApplyCoding } from '../lib/coding-plan';
 import { AlertTriangle, Check, FileCode2, FileMinus2, FilePlus2, Loader2, RotateCcw } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { applyEdit, isApplied, lineStats, parseEdit, type Edit } from '../lib/edits';
@@ -17,12 +18,12 @@ function useCurrent(path: string) {
     return () => {
       live = false;
     };
-  }, [path, version, chat?.repo?.branch]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [path, version, chat?.id, chat?.repo?.owner, chat?.repo?.repo, chat?.repo?.branch]); // eslint-disable-line react-hooks/exhaustive-deps
   return { chat, current };
 }
 
 /** A change a model proposed to a repository file: review, apply, undo. */
-export default function EditCard({ kind, path, content, complete }: { kind: 'edit' | 'delete'; path: string; content: string; complete: boolean }) {
+export default function EditCard({ kind, path, content, complete, messageId }: { messageId?: string; kind: 'edit' | 'delete'; path: string; content: string; complete: boolean }) {
   const edit = useMemo(() => parseEdit(kind, path, content), [kind, path, content]);
   const { chat, current } = useCurrent(edit.path);
   const applyEdits = useStore((s) => s.applyEdits);
@@ -31,6 +32,7 @@ export default function EditCard({ kind, path, content, complete }: { kind: 'edi
   const [review, setReview] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  const allowed = Boolean(chat && canApplyCoding(chat, messageId));
   const result = current === undefined ? null : applyEdit(current, edit);
   const applied = current !== undefined && isApplied(current, edit);
   const after = edit.kind === 'delete' ? null : result?.text ?? null;
@@ -40,7 +42,7 @@ export default function EditCard({ kind, path, content, complete }: { kind: 'edi
   const apply = async () => {
     if (!chat) return;
     setBusy(true);
-    const r = await applyEdits(chat.id, [edit]);
+    const r = await applyEdits(chat.id, [edit], messageId);
     setBusy(false);
     if (r.failed.length) toast(`Couldn't apply the change to ${edit.path}.`, 'error');
   };
@@ -59,6 +61,8 @@ export default function EditCard({ kind, path, content, complete }: { kind: 'edi
             <span className="writing"><Loader2 size={12} className="spin" /> Checking…</span>
           ) : applied ? (
             'Applied'
+          ) : !allowed ? (
+            'Plan approval required · request implementation after approval'
           ) : result && !result.ok ? (
             <span className="edit-warn"><AlertTriangle size={12} /> {('reason' in result && result.reason) || "The code it changes isn't in the file — ask the AI to read it again"}</span>
           ) : (
@@ -84,7 +88,7 @@ export default function EditCard({ kind, path, content, complete }: { kind: 'edi
             </button>
           ) : (
             result?.ok && (
-              <button className="btn primary small" disabled={busy} onClick={() => void apply()}>
+              <button className="btn primary small" disabled={busy || !allowed} title={!allowed ? 'This proposal is not from an approved plan in this workspace' : undefined} onClick={() => void apply()}>
                 {busy ? <Loader2 size={14} className="spin" /> : <Check size={14} />} Apply
               </button>
             )
@@ -98,7 +102,7 @@ export default function EditCard({ kind, path, content, complete }: { kind: 'edi
           after={after}
           onClose={() => setReview(false)}
           footer={
-            <button className="btn primary small" onClick={() => { setReview(false); void apply(); }}>
+            <button className="btn primary small" disabled={busy || !allowed} onClick={() => { setReview(false); void apply(); }}>
               <Check size={14} /> Apply this change
             </button>
           }
@@ -109,7 +113,7 @@ export default function EditCard({ kind, path, content, complete }: { kind: 'edi
 }
 
 /** "Apply all" for replies with several edits. */
-export function ApplyAll({ edits }: { edits: Edit[] }) {
+export function ApplyAll({ edits, messageId }: { edits: Edit[]; messageId?: string }) {
   const chat = useStore(selectCurrentChat);
   const applyEdits = useStore((s) => s.applyEdits);
   const setUi = useStore((s) => s.setUi);
@@ -124,7 +128,7 @@ export function ApplyAll({ edits }: { edits: Edit[] }) {
         disabled={busy}
         onClick={async () => {
           setBusy(true);
-          const r = await applyEdits(chat.id, edits);
+          const r = await applyEdits(chat.id, edits, messageId);
           setBusy(false);
           toast(
             r.failed.length

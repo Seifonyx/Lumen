@@ -1,3 +1,5 @@
+import CodingPlanCard from './CodingPlanCard';
+import { parsePlan } from '../lib/coding-plan';
 import { AlertTriangle, Share, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, GitBranch, Info, Pencil, RefreshCw, Square, Volume2 } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 import { mentionedPaths, repoTree, seenPaths } from '../lib/workspace';
@@ -227,11 +229,12 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
     <div className="msg assistant">
       {message.thinking && <Thinking text={message.thinking} active={streaming && !message.text} />}
       {message.text ? (
-        <Markdown text={message.text} streaming={streaming} />
+        <Markdown text={message.coding?.phase === 'plan' && !streaming && parsePlan(message.text) ? message.text.replace(/`{3,}plan\s*\n[\s\S]*?\n`{3,}/i, '') : message.text} streaming={streaming} messageId={message.id} />
       ) : streaming && !message.thinking ? (
         <div className="typing" aria-label="Writing"><span /><span /><span /></div>
       ) : null}
       {streaming && message.text && <span className="caret" />}
+      {message.coding && <CodingPlanCard message={message} />}
 
       {message.sources && message.sources.length > 0 && (
         <div className="sources">

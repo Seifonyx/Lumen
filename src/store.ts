@@ -23,6 +23,7 @@ import { normalizeAssistant } from './lib/assistants';
 import { canvasFits, canvasEditPrompt, cleanCanvasReply } from './lib/canvas';
 import { TaskStore } from './lib/task-store';
 import { TASK_RUN_MS } from './lib/tasks';
+import { canApplyCoding, codingInstructions, parsePlan, planBaseline, planRepo } from './lib/coding-plan';
 import { applyAppearance, DEFAULT_SETTINGS, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
 import type { Attachment, Catalog, Chat, ChatSummary, ComparisonState, FileChange, Memory, Message, ModelInfo, Project, RepoLink, SavedAssistant, ScheduledTask, Settings } from './types';
@@ -103,6 +104,8 @@ interface State {
   requestCanvasEdit(chatId: string, id: string, instruction: string, start: number, end: number, signal: AbortSignal, asIs?: boolean): Promise<{ text: string; model: string }>;
 
   // Coding workspace (GitHub)
+  setPlanMode(chatId: string, enabled: boolean): void;
+  decidePlan(chatId: string, id: string, action: 'approve' | 'reject' | 'complete' | number): boolean;
   connectRepo(link: RepoLink): void;
   disconnectRepo(): void;
   setContext(chatId: string, paths: string[]): void;
@@ -112,7 +115,7 @@ interface State {
   loadRepoFiles(chatId: string, paths: string[], searches?: string[]): Promise<void>;
   /** hide the test results of the last commit */
   dismissChecks(chatId: string): void;
-  applyEdits(chatId: string, edits: Edit[]): Promise<{ applied: number; failed: string[] }>;
+  applyEdits(chatId: string, edits: Edit[], messageId?: string): Promise<{ applied: number; failed: string[] }>;
   commitWork(chatId: string, o: { message: string; target: string; pullRequest: boolean }): Promise<{ url: string; prUrl?: string }>;
 
   newChat(): void;
@@ -339,6 +342,9 @@ export const useStore = create<State>((set, get) => {
     const generation = accountGeneration;
     let chat = get().chats.find((c) => c.id === chatId);
     if (!chat) return;
+    const coding = chat.codingPlan && ['planning', 'approved'].includes(chat.codingPlan.status) && chat.codingPlan.repo === planRepo(chat.repo)
+      ? { id: chat.codingPlan.id, phase: chat.codingPlan.status === 'planning' ? 'plan' as const : 'work' as const, repo: planRepo(chat.repo) } : undefined;
+    const repoScope = planRepo(chat.repo);
     const { settings } = get();
     const projectFiles = settings.projects?.find((p) => p.id === chat!.projectId)?.files?.filter((f) => Boolean(f.text)) || [];
     const projectTokens = projectFiles.reduce((n, f) => n + Math.ceil((f.text?.length || 0) / 4), 0);
@@ -435,6 +441,7 @@ export const useStore = create<State>((set, get) => {
       const tree = await repoTree(chat.repo).catch(() => null);
       const index = await indexSoon(chat.repo, 6000);
       workspaceNote = workspaceInstructions(chat.repo, tree?.files || [], Boolean(tree?.truncated), chat.context || [], index ? projectMap(chat, index) : '');
+      workspaceNote += '\n\n' + codingInstructions(chat);
     }
 
     let body: string;
@@ -443,16 +450,17 @@ export const useStore = create<State>((set, get) => {
       const memoryNote = masker ? masker.mask(rawMemory).text : rawMemory;
       const projectInstructions = settings.projects?.find((p) => p.id === chat?.projectId)?.instructions || '';
       const instructions = [settings.customInstructions, projectInstructions, chat.assistant?.instructions, layout?.instructions].filter(Boolean).join('\n\n');
-      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: chat.task ? chat.task.search : settings.webSearch, requireSearch: Boolean(chat.task?.search), codeExecution: Boolean(lastUser?.codeExecution), customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: workspaceNote } });
+      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: chat.task ? chat.task.search : settings.webSearch, requireSearch: Boolean(chat.task?.search), codeExecution: Boolean(lastUser?.codeExecution), customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: masker ? masker.mask(workspaceNote).text : workspaceNote } });
     } catch (e) {
       get().toast((e as Error).message, 'error');
       return;
     }
 
-    if (generation !== accountGeneration) return;
+    if (generation !== accountGeneration || planRepo(get().chats.find(c => c.id === chatId)?.repo) !== repoScope) return;
     const reply: Message = {
       id: uid(),
       role: 'assistant',
+      coding,
       text: '',
       model: chosen,
       route: model === AUTO ? plan.reason || undefined : undefined,
@@ -473,7 +481,7 @@ export const useStore = create<State>((set, get) => {
       if (generation !== accountGeneration) return;
       pending = false;
       const c = get().chats.find((x) => x.id === chatId);
-      if (!c) return;
+      if (!c || planRepo(c.repo) !== repoScope) return;
       replaceChat({ ...c, messages: c.messages.map((m) => (m.id === reply.id ? { ...reply } : m)) });
     };
     const schedule = () => {
@@ -533,13 +541,23 @@ export const useStore = create<State>((set, get) => {
       if (generation === accountGeneration && controller === replyController) controller = null;
     }
     if (generation !== accountGeneration) return;
+    if (planRepo(get().chats.find(c => c.id === chatId)?.repo) !== repoScope) { if (get().streamingChatId === chatId) set({ streamingChatId: null }); return; }
     if (raw) await applyMemoryLines(reply, raw, chatId, restore);
     if (generation !== accountGeneration) return;
     flush();
     set({ streamingChatId: null });
     const finished = get().chats.find((c) => c.id === chatId);
     if (!finished) return;
-    const updated = { ...finished, updatedAt: Date.now() };
+    if (coding && coding.repo !== planRepo(finished.repo)) return;
+    const reading = readRequests(reply.text).length > 0 || searchRequests(reply.text).length > 0 || asksForFiles(reply.text);
+    const steps = coding?.phase === 'plan' && reply.status === 'done' && !reply.error ? parsePlan(reply.text) : null;
+    const planState = coding && finished.codingPlan?.id === coding.id ? { ...finished.codingPlan,
+      messageId: reply.id,
+      ...(coding.phase === 'plan' && steps ? { steps, status: 'awaiting' as const } :
+        reply.status !== 'done' || reply.error ? { status: reply.status === 'stopped' ? 'stopped' as const : 'failed' as const } :
+        reading ? {} : { status: coding.phase === 'plan' ? 'failed' as const : 'review' as const }),
+    } : finished.codingPlan;
+    const updated = { ...finished, codingPlan: planState, updatedAt: Date.now() };
     replaceChat(updated);
     await persist(updated);
 
@@ -563,7 +581,7 @@ export const useStore = create<State>((set, get) => {
     // Coding workspace: the model asked to read files ([[read: path]]) → load them and let it continue.
     // Models that ask for files in words instead ("please share src/App.tsx") get them loaded too.
     const now = get().chats.find((c) => c.id === chatId);
-    if (now?.repo && reply.status === 'done' && !/`{3,}\s*(edit|delete)[:\s]/i.test(normalizeEdits(reply.text))) {
+    if (now?.repo && reply.status === 'done' && !(coding?.phase === 'plan' && steps) && !/`{3,}\s*(edit|delete)[:\s]/i.test(normalizeEdits(reply.text))) {
       let asks = readRequests(reply.text);
       const searches = searchRequests(reply.text);
       if (!asks.length && !searches.length && asksForFiles(reply.text)) {
@@ -638,6 +656,7 @@ export const useStore = create<State>((set, get) => {
         set({ authed: user ? null : false, chats: [], currentId: null, memories: [], usage: null, catalog: null, preview: null, exportChatId: null, runner: null, comparison: null, streamingChatId: null, compactingChatId: null, comparing: false, canvasEditingChatId: null, workspaceOpen: false, canvasOpen: false, canvasDocumentId: null, repoPicker: false, settingsOpen: false, sidebarOpen: false });
         setKeys({ gemini: '', openrouter: '', groq: '', cerebras: '' });
         setGitHubToken('');
+        forgetRepo(); forgetIndex();
         set({ keys: { gemini: '', openrouter: '', groq: '', cerebras: '', github: '' } });
         sync?.stop();
         sync = null;
@@ -1220,6 +1239,23 @@ export const useStore = create<State>((set, get) => {
       get().clearComparison();
     },
 
+    setPlanMode(chatId, enabled) {
+      const chat = get().chats.find(c => c.id === chatId);
+      if (!chat?.repo || get().streamingChatId || get().compactingChatId || get().comparing || get().canvasEditingChatId) return;
+      const updated = { ...chat, codingPlanMode: enabled, codingPlan: chat.codingPlan && !enabled && ['planning','awaiting','approved'].includes(chat.codingPlan.status) ? { ...chat.codingPlan, status: 'rejected' as const } : chat.codingPlan };
+      replaceChat(updated); void persist(updated);
+    },
+    decidePlan(chatId, id, action) {
+      const chat = get().chats.find(c => c.id === chatId), p = chat?.codingPlan;
+      if (!chat?.repo || !p || p.id !== id || get().currentId !== chatId || get().streamingChatId || get().compactingChatId || get().comparing || get().canvasEditingChatId || p.repo !== planRepo(chat.repo)) return false;
+      if (action === 'approve' && (p.status !== 'awaiting' || !p.steps.length || p.baseline !== planBaseline(chat) || chat.messages.at(-1)?.id !== p.messageId)) {
+        get().toast('The workspace changed. Request a fresh plan before approving.', 'error'); return false;
+      }
+      if (typeof action === 'number' && (!['review','completed'].includes(p.status) || action < 0 || action >= p.steps.length)) return false;
+      if (action === 'complete' && (p.status !== 'review' || p.checked.length !== p.steps.length)) return false;
+      const next = { ...p, ...(typeof action === 'number' ? { checked: p.checked.includes(action) ? p.checked.filter(i => i !== action) : [...p.checked, action], status: 'review' as const } : { status: action === 'approve' ? 'approved' as const : action === 'reject' ? 'rejected' as const : 'completed' as const }) };
+      const updated = { ...chat, codingPlan: next }; replaceChat(updated); void persist(updated); return true;
+    },
     async send(text, files, opts) {
       const generation = accountGeneration;
       if (get().streamingChatId || get().compactingChatId || get().comparing || get().canvasEditingChatId) return;
@@ -1227,6 +1263,14 @@ export const useStore = create<State>((set, get) => {
       if (!chat) {
         chat = { ...newChatObject(), projectId: currentProjectId() || undefined };
         set((s) => ({ chats: [chat!, ...s.chats], currentId: chat!.id }));
+      }
+      if (chat.repo && chat.codingPlanMode) {
+        const previous = chat.codingPlan;
+        if (previous?.status === 'approved' && (previous.repo !== planRepo(chat.repo) || previous.baseline !== planBaseline(chat) || chat.messages.at(-1)?.id !== previous.messageId)) {
+          get().toast('The workspace changed. Request a fresh plan before implementation.', 'error');
+          chat = { ...chat, codingPlan: { ...previous, status: 'rejected' } };
+        }
+        if (chat.codingPlan?.status !== 'approved') chat = { ...chat, codingPlan: { id: uid(), repo: planRepo(chat.repo), baseline: planBaseline(chat), status: 'planning', steps: [], checked: [] } };
       }
       const ownFiles = files.some((f) => f.kind === 'text');
       // Coding workspace: attached repository files go along when they're new or have changed.
@@ -1256,7 +1300,7 @@ export const useStore = create<State>((set, get) => {
           if (paths.length) files = [...(await filesAsAttachments(chat, paths)).files.map((f) => ({ ...f, auto: true })), ...files];
         }
       }
-      if (generation !== accountGeneration) return;
+      if (generation !== accountGeneration || planRepo(get().chats.find(c => c.id === chat!.id)?.repo) !== planRepo(chat.repo)) return;
       const msg: Message = { id: uid(), role: 'user', text, files: files.length ? files : undefined, codeExecution: opts?.codeExecution || undefined, createdAt: Date.now() };
       if (get().settings.privacyShield) {
         const found = scan(text).length + files.reduce((n, f) => n + (f.text ? scan(f.text).length : 0), 0);
@@ -1279,7 +1323,8 @@ export const useStore = create<State>((set, get) => {
         set((s) => ({ chats: [chat!, ...s.chats], currentId: chat!.id }));
       }
       const switching = chat.repo && chat.repo.branch !== link.branch;
-      const updated: Chat = { ...chat, repo: link, context: switching ? [] : chat.context || [], contextSent: switching ? {} : chat.contextSent, changes: switching ? {} : chat.changes || {}, rev: Date.now() };
+      if (switching && get().streamingChatId === chat.id) get().stop();
+      const updated: Chat = { ...chat, repo: link, codingPlan: switching ? undefined : chat.codingPlan, context: switching ? [] : chat.context || [], contextSent: switching ? {} : chat.contextSent, changes: switching ? {} : chat.changes || {}, rev: Date.now() };
       replaceChat(updated);
       void persist(updated);
       void repoIndex(link).catch(() => {});
@@ -1289,7 +1334,8 @@ export const useStore = create<State>((set, get) => {
     disconnectRepo() {
       const chat = currentChat();
       if (!chat?.repo) return;
-      const updated: Chat = { ...chat, repo: undefined, context: undefined, contextSent: undefined, changes: undefined };
+      if (get().streamingChatId === chat.id) get().stop();
+      const updated: Chat = { ...chat, repo: undefined, codingPlan: undefined, codingPlanMode: false, context: undefined, contextSent: undefined, changes: undefined };
       replaceChat(updated);
       void persist(updated);
       set({ workspaceOpen: false });
@@ -1307,7 +1353,8 @@ export const useStore = create<State>((set, get) => {
       if (!chat?.repo) return;
       const original = chat.changes?.[path] ? chat.changes[path].original : await originalFile(chat.repo, path).catch(() => null);
       if (generation !== accountGeneration) return;
-      const latest = get().chats.find((c) => c.id === chatId)!;
+      const latest = get().chats.find((c) => c.id === chatId);
+      if (!latest || planRepo(latest.repo) !== planRepo(chat.repo)) return;
       const changes: Record<string, FileChange> = { ...(latest.changes || {}) };
       if (content === original) delete changes[path];
       else changes[path] = { content, original };
@@ -1338,9 +1385,11 @@ export const useStore = create<State>((set, get) => {
       };
       if (generation !== accountGeneration) return;
       const latest = get().chats.find((c) => c.id === chatId) || chat;
+      if (planRepo(latest.repo) !== planRepo(chat.repo)) return;
       const next = { ...latest, messages: [...latest.messages, msg], updatedAt: Date.now() };
       replaceChat(next);
       await persist(next);
+      if (generation !== accountGeneration) return;
       await runAssistant(chatId);
     },
 
@@ -1361,13 +1410,18 @@ export const useStore = create<State>((set, get) => {
       replaceChat(updated);
       void persist(updated);
     },
-    async applyEdits(chatId, edits) {
+    async applyEdits(chatId, edits, messageId) {
+      const generation = accountGeneration;
+      const scope = planRepo(get().chats.find(c => c.id === chatId)?.repo);
       let applied = 0;
       const failed: string[] = [];
       for (const edit of edits) {
         const chat = get().chats.find((c) => c.id === chatId);
-        if (!chat?.repo) break;
-        const before = await currentFile(chat, edit.path).catch(() => null);
+        if (!chat?.repo || generation !== accountGeneration || planRepo(chat.repo) !== scope || !canApplyCoding(chat, messageId)) { failed.push(edit.path); break; }
+        let before: string | null;
+        try { before = await currentFile(chat, edit.path); } catch { failed.push(edit.path); continue; }
+        const latest = get().chats.find(c => c.id === chatId);
+        if (generation !== accountGeneration || !latest || planRepo(latest.repo) !== scope || !canApplyCoding(latest, messageId)) { failed.push(edit.path); break; }
         if (isApplied(before, edit)) continue; // already done (e.g. applied on its own before "Apply all")
         const result = applyEdit(before, edit);
         if (!result.ok) {
@@ -1409,7 +1463,7 @@ export const useStore = create<State>((set, get) => {
       const idx = chat.messages.findIndex((m) => m.id === messageId);
       if (idx < 0) return;
       const kept = chat.messages.slice(0, idx);
-      const updated = { ...chat, model: model || chat.model, messages: kept, summary: dropStale(chat.summary, kept) };
+      const updated: Chat = { ...chat, model: model || chat.model, messages: kept, summary: dropStale(chat.summary, kept), ...(chat.repo && (chat.codingPlanMode || chat.messages[idx].coding) ? { codingPlanMode: true, codingPlan: { id: uid(), repo: planRepo(chat.repo), baseline: planBaseline(chat), status: 'planning', steps: [], checked: [] } } : {}) };
       replaceChat(updated);
       if (model) get().updateSettings({ defaultModel: model });
       await runAssistant(chat.id, model);
@@ -1422,7 +1476,7 @@ export const useStore = create<State>((set, get) => {
       if (idx < 0) return;
       const edited = { ...chat.messages[idx], text };
       // An edited message can't stay inside the summary.
-      const updated = { ...chat, messages: [...chat.messages.slice(0, idx), edited], summary: dropStale(chat.summary, chat.messages.slice(0, idx)) };
+      const updated: Chat = { ...chat, messages: [...chat.messages.slice(0, idx), edited], summary: dropStale(chat.summary, chat.messages.slice(0, idx)), ...(chat.repo && chat.codingPlanMode ? { codingPlan: { id: uid(), repo: planRepo(chat.repo), baseline: planBaseline(chat), status: 'planning', steps: [], checked: [] } } : {}) };
       replaceChat(updated);
       await persist(updated);
       await runAssistant(chat.id);

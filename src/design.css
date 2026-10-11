@@ -1,4 +1,25 @@
 /* Shared product presentation. Functional layouts and phone keyboard rules live in styles.css. */
+.plan-toggle[aria-pressed='true'] { background: var(--accent-soft); color: var(--accent); }
+.coding-plan { margin: 20px 0; padding: 20px; border: 1px solid var(--border-strong); border-radius: 14px; background: var(--surface); color: var(--text); min-width: 0; }
+.coding-plan header { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.coding-plan h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.coding-plan header > span { margin-left: auto; font-size: 12px; color: var(--text-2); }
+.coding-plan ol { list-style: none; padding: 0; margin: 18px 0; }
+.coding-plan li { display: flex; gap: 12px; padding: 12px 0; align-items: baseline; }
+.coding-plan li + li { border-top: 1px solid var(--border); }
+.coding-plan li > div { min-width: 0; flex: 1; }
+.coding-plan li p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
+.plan-step-number { color: var(--text-2); font-size: 13px; font-variant-numeric: tabular-nums; min-width: 16px; }
+.coding-plan input { accent-color: var(--accent); width: 18px; height: 18px; flex-shrink: 0; }
+.plan-files { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; }
+.plan-files code { font-size: 12px; color: var(--text-2); overflow-wrap: anywhere; min-width: 0; }
+.plan-note { font-size: 13px; line-height: 1.5; color: var(--text-2); margin: 12px 0; }
+.plan-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+@media (max-width: 600px) {
+  .coding-plan { padding: 16px; }
+  .coding-plan header > span { flex-basis: 100%; margin-left: 26px; }
+  .plan-actions .btn { min-height: 40px; }
+}
 :root {
   --bg: #faf9f6;
   --surface: #ffffff;

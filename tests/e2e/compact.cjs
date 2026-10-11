@@ -24,6 +24,7 @@ async function mock(ctx, log) {
       if (body.includes('You are compacting')) {
         log.summaries.push(body);
         if (log.failSummary) return route.fulfill({ status: 503, json: { error: { code: 503, message: 'overloaded' } } });
+        if (log.delaySummary) await new Promise(resolve => setTimeout(resolve, log.delaySummary));
         return route.fulfill({ json: { candidates: [{ content: { parts: [{ text: `## Goal\n- SUMMARY-${log.summaries.length}: user is reviewing quarterly figures\n## Key facts\n- figures went up` }] } }], usageMetadata: { promptTokenCount: 40000, candidatesTokenCount: 120 } } });
       }
       return route.fulfill({ json: { candidates: [{ content: { parts: [{ text: 'Compact Test' }] } }] } });
@@ -130,15 +131,17 @@ async function send(page, text, n) {
   log.failSummary = true;
   await page.click('.usage-chip');
   await page.click('text=Compact now');
-  await page.waitForTimeout(1500);
+  await page.waitForSelector('.compact-note.working', { state: 'detached', timeout: 15000 });
   check(!(await page.$('.compact-note')), 'failed compaction leaves the chat as it was');
   log.failSummary = false;
 
   // New chat with summary.
+  log.delaySummary = 1000; // Exercise the loading indicator before the completed continuation.
   await page.click('.usage-chip');
   await page.click('text=New chat with summary');
-  await page.waitForSelector('.compact-note', { timeout: 15000 });
-  const cont = await page.textContent('.compact-note');
+  await page.getByRole('note').filter({ hasText: 'Continues “' }).waitFor({ timeout: 15000 });
+  await page.waitForSelector('.compact-note.working', { state: 'detached', timeout: 15000 });
+  const cont = await page.getByRole('note').filter({ hasText: 'Continues “' }).textContent();
   check(/Continues “.*” · \d+ messages summarized/.test(cont) && (await page.$$('.msg')).length === 0, `new chat carries the summary (${cont.trim()})`);
   await send(page, 'continue from there', 0);
   const first = allText(log.chats.at(-1));

@@ -15,7 +15,7 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 | 17 Images | Conditional: current Google pricing lists image models without free API access; verify key eligibility before adding. |
 | 19 Assistants / prompts | Implemented in phase 2: saved helpers with instructions/model, starter helpers, reusable editable prompts and private account sync. Deployed and verified on live and preview. |
 | 20 Compare | Implemented, two/three models with per-model usage. |
-| 21 Organization | Projects, tags and branching implemented; separate folders remain. |
+| 21 Organization | Projects, tags and branching implemented. Separate chat folders removed from scope at the user's request. |
 | 22 Command palette | Implemented with chats/models/projects/settings. |
 | 23 Voice | Partial: dictation/read-aloud; continuous conversation remains. |
 | 24 Sharing / chat export | Whole-chat Word/Markdown and PDF preview/system print implemented and deployed in phase 5a, including sources and Canvas. Desktop/phone checks passed on live and preview. Opt-in public links remain. |

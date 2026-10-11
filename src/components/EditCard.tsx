@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { applyEdit, isApplied, lineStats, parseEdit, type Edit } from '../lib/edits';
 import { currentFile } from '../lib/workspace';
 import { selectCurrentChat, useStore } from '../store';
-import DiffView from './DiffView';
+import EditReview from './EditReview';
+import { reviewKey } from '../lib/edit-review';
 
 /** Loads the file the edit changes (with this chat's uncommitted changes). */
 function useCurrent(path: string) {
@@ -12,6 +13,7 @@ function useCurrent(path: string) {
   const version = chat?.changes?.[path]?.content;
   const [current, setCurrent] = useState<string | null | undefined>(undefined);
   useEffect(() => {
+    setCurrent(undefined);
     if (!chat?.repo) return;
     let live = true;
     currentFile(chat, path).then((t) => live && setCurrent(t), () => live && setCurrent(null));
@@ -33,6 +35,7 @@ export default function EditCard({ kind, path, content, complete, messageId }: {
   const [busy, setBusy] = useState(false);
 
   const allowed = Boolean(chat && canApplyCoding(chat, messageId));
+  const savedReview = chat?.editReviews?.[reviewKey(messageId, edit.path)];
   const result = current === undefined ? null : applyEdit(current, edit);
   const applied = current !== undefined && isApplied(current, edit);
   const after = edit.kind === 'delete' ? null : result?.text ?? null;
@@ -59,6 +62,8 @@ export default function EditCard({ kind, path, content, complete, messageId }: {
             'Connect a repository to apply this'
           ) : current === undefined ? (
             <span className="writing"><Loader2 size={12} className="spin" /> Checking…</span>
+          ) : savedReview ? (
+            `${savedReview.decisions.filter(d => d === 'accepted').length} accepted · ${savedReview.decisions.filter(d => d === 'rejected').length} rejected`
           ) : applied ? (
             'Applied'
           ) : !allowed ? (
@@ -79,7 +84,7 @@ export default function EditCard({ kind, path, content, complete, messageId }: {
       </div>
       {complete && chat?.repo && current !== undefined && (
         <div className="file-actions">
-          {result?.ok && !applied && (
+          {(savedReview || (result?.ok && !applied)) && (
             <button className="btn ghost small" onClick={() => setReview(true)}>Review</button>
           )}
           {applied ? (
@@ -95,17 +100,13 @@ export default function EditCard({ kind, path, content, complete, messageId }: {
           )}
         </div>
       )}
-      {review && result?.ok && (
-        <DiffView
-          path={edit.path}
-          before={current ?? null}
-          after={after}
+      {review && current !== undefined && (savedReview || result?.ok) && (
+        <EditReview
+          edit={edit}
+          current={current}
+          messageId={messageId}
+          allowed={allowed}
           onClose={() => setReview(false)}
-          footer={
-            <button className="btn primary small" disabled={busy || !allowed} onClick={() => { setReview(false); void apply(); }}>
-              <Check size={14} /> Apply this change
-            </button>
-          }
         />
       )}
     </div>

@@ -52,6 +52,8 @@ export interface Message {
 }
 
 export interface Chat {
+  /** Device-local individual proposal decisions, never uploaded. */
+  editReviews?: Record<string, import('./lib/edit-review').EditReview>;
   /** Device-local approval, like uncommitted repository changes. */
   codingPlan?: CodingPlan;
   codingPlanMode?: boolean;

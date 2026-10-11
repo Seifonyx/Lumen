@@ -8,6 +8,7 @@ import { registerServiceWorker } from './pwa/register';
 import { ChatSync } from './lib/sync';
 import { commitChanges as ghCommit, openPullRequest, setGitHubToken } from './lib/github';
 import { applyEdit, isApplied, normalizeEdits, readRequests, type Edit } from './lib/edits';
+import { makeEditReview, reviewKey, reviewText } from './lib/edit-review';
 import { forgetIndex, indexSoon, projectMap, relevantFiles, repoIndex, searchCode, searchRequests } from './lib/repoindex';
 import { asksForFiles, currentFile, filesAsAttachments, fingerprint, forgetRepo, mentionedPaths, originalFile, repoTree, seenPaths, workspaceInstructions } from './lib/workspace';
 import { Masker, scan } from './lib/privacy';
@@ -118,6 +119,7 @@ interface State {
   /** hide the test results of the last commit */
   dismissChecks(chatId: string): void;
   applyEdits(chatId: string, edits: Edit[], messageId?: string): Promise<{ applied: number; failed: string[] }>;
+  decideEdit(chatId: string, edit: Edit, messageId: string | undefined, part: number | 'all', decision: 'accepted' | 'rejected'): Promise<void>;
   commitWork(chatId: string, o: { message: string; target: string; pullRequest: boolean }): Promise<{ url: string; prUrl?: string }>;
 
   newChat(): void;
@@ -1400,7 +1402,7 @@ export const useStore = create<State>((set, get) => {
       }
       const switching = chat.repo && chat.repo.branch !== link.branch;
       if (switching && get().streamingChatId === chat.id) get().stop();
-      const updated: Chat = { ...chat, repo: link, codingPlan: switching ? undefined : chat.codingPlan, context: switching ? [] : chat.context || [], contextSent: switching ? {} : chat.contextSent, changes: switching ? {} : chat.changes || {}, rev: Date.now() };
+      const updated: Chat = { ...chat, repo: link, editReviews: switching ? undefined : chat.editReviews, codingPlan: switching ? undefined : chat.codingPlan, context: switching ? [] : chat.context || [], contextSent: switching ? {} : chat.contextSent, changes: switching ? {} : chat.changes || {}, rev: Date.now() };
       replaceChat(updated);
       void persist(updated);
       void repoIndex(link).catch(() => {});
@@ -1411,7 +1413,7 @@ export const useStore = create<State>((set, get) => {
       const chat = currentChat();
       if (!chat?.repo) return;
       if (get().streamingChatId === chat.id) get().stop();
-      const updated: Chat = { ...chat, repo: undefined, codingPlan: undefined, codingPlanMode: false, context: undefined, contextSent: undefined, changes: undefined };
+      const updated: Chat = { ...chat, repo: undefined, editReviews: undefined, codingPlan: undefined, codingPlanMode: false, context: undefined, contextSent: undefined, changes: undefined };
       replaceChat(updated);
       void persist(updated);
       set({ workspaceOpen: false });
@@ -1489,6 +1491,31 @@ export const useStore = create<State>((set, get) => {
       replaceChat(updated);
       void persist(updated);
     },
+    async decideEdit(chatId, edit, messageId, part, decision) {
+      const generation = accountGeneration;
+      const chat = get().chats.find(c => c.id === chatId);
+      if (!chat?.repo || !canApplyCoding(chat, messageId)) throw new Error('Plan approval is required for this proposal.');
+      const scope = planRepo(chat.repo);
+      const key = reviewKey(messageId, edit.path);
+      const previous = chat.editReviews?.[key];
+      const before = await currentFile(chat, edit.path);
+      const original = chat.changes?.[edit.path] ? chat.changes[edit.path].original : await originalFile(chat.repo, edit.path);
+      const latest = get().chats.find(c => c.id === chatId);
+      if (generation !== accountGeneration || !latest || planRepo(latest.repo) !== scope || !canApplyCoding(latest, messageId)) throw new Error('Workspace changed. Reopen the proposal.');
+      if (latest.editReviews?.[key] !== previous || JSON.stringify(latest.changes?.[edit.path]) !== JSON.stringify(chat.changes?.[edit.path])) throw new Error('The file changed while reviewing. Reopen the proposal.');
+      const review = previous || makeEditReview(before, edit, scope, original);
+      if (review.repo !== scope || review.proposal !== JSON.stringify(edit) || before !== review.expected) throw new Error('This review is stale. The file changed; request a fresh proposal.');
+      if (part !== 'all' && (!Number.isInteger(part) || part < 0 || part >= review.parts.length)) throw new Error('Unknown edit part.');
+      const decisions = review.decisions.map((d, i) => part === i || (part === 'all' && d === 'pending') ? decision : d);
+      const next = { ...review, decisions };
+      next.expected = reviewText(next);
+      const changes = { ...latest.changes };
+      if (next.expected === review.original) delete changes[edit.path];
+      else changes[edit.path] = { original: review.original, content: next.expected };
+      const updated = { ...latest, changes, editReviews: { ...latest.editReviews, [key]: next } };
+      replaceChat(updated);
+      await persist(updated);
+    },
     async applyEdits(chatId, edits, messageId) {
       const generation = accountGeneration;
       const scope = planRepo(get().chats.find(c => c.id === chatId)?.repo);
@@ -1497,6 +1524,11 @@ export const useStore = create<State>((set, get) => {
       for (const edit of edits) {
         const chat = get().chats.find((c) => c.id === chatId);
         if (!chat?.repo || generation !== accountGeneration || planRepo(chat.repo) !== scope || !canApplyCoding(chat, messageId)) { failed.push(edit.path); break; }
+        if (chat.editReviews?.[reviewKey(messageId, edit.path)]) {
+          try { const pending = chat.editReviews[reviewKey(messageId, edit.path)].decisions.includes('pending'); await get().decideEdit(chatId, edit, messageId, 'all', 'accepted'); if (pending) applied++; }
+          catch { failed.push(edit.path); }
+          continue;
+        }
         let before: string | null;
         try { before = await currentFile(chat, edit.path); } catch { failed.push(edit.path); continue; }
         const latest = get().chats.find(c => c.id === chatId);
@@ -1530,7 +1562,7 @@ export const useStore = create<State>((set, get) => {
       forgetIndex(repo);
       const latest = get().chats.find((c) => c.id === chatId)!;
       // Keep working on the branch that now has these commits.
-      const updated: Chat = { ...latest, changes: {}, repo: { ...repo, branch: target, defaultBranch: repo.defaultBranch || repo.branch }, lastCommit: { sha, url, branch: target, prUrl, at: Date.now() } };
+      const updated: Chat = { ...latest, changes: {}, editReviews: Object.fromEntries(Object.entries(latest.editReviews || {}).map(([key, review]) => [key, { ...review, repo: `${review.repo}#committed` }])), repo: { ...repo, branch: target, defaultBranch: repo.defaultBranch || repo.branch }, lastCommit: { sha, url, branch: target, prUrl, at: Date.now() } };
       replaceChat(updated);
       await persist(updated);
       return { url, prUrl };

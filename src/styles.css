@@ -1543,3 +1543,10 @@ table.sheet td.pending { color: #8f8f8f; font-style: italic; font-family: var(--
   .setting-ctrl select { width: clamp(124px, 44vw, 172px); min-width: 0; max-width: 100%; min-height: 36px; }
   .setting-ctrl .segmented { max-width: 100%; }
 }
+/* Individual repository edit review. */
+.edit-review-body { padding: 16px; }
+.edit-parts { display: grid; gap: 20px; margin-block: 20px; min-width: 0; }
+.edit-part { min-width: 0; }
+.edit-part header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.edit-part .diff-wrap { overflow: auto; height: auto; max-height: 280px; }
+.edit-part-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 10px; }

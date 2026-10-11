@@ -98,6 +98,7 @@ function normalize(raw: any): Chat {
     context: raw.context,
     contextSent: raw.contextSent,
     changes: raw.changes,
+    editReviews: raw.editReviews,
     codingPlanMode: Boolean(raw.codingPlanMode),
     codingPlan: normalizePlan(raw.codingPlan),
     messages,

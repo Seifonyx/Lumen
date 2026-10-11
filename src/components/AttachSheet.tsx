@@ -15,7 +15,7 @@ interface Props {
 }
 
 /** Phone-style "+" menu: one place for photos, files and a GitHub repository. */
-export default function AttachSheet({ onClose, onFiles, onRepo, onCanvas, onAnalysis, repoName, anchor }: Props) {
+export default function AttachSheet({ onClose, onFiles, onRepo, onCanvas, onAnalysis, onProject, projectName, repoName, anchor }: Props) {
   const startY = useRef<number | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { makeEditReview, reviewKey } from '../lib/edit-review';
+import { makeEditReview, reviewText } from '../lib/edit-review';
 import type { Edit } from '../lib/edits';
 import { planRepo } from '../lib/coding-plan';
 import { selectCurrentChat, useStore } from '../store';
@@ -8,16 +8,29 @@ import Modal from './Modal';
 
 export default function EditReview({ edit, current, messageId, allowed, onClose }: { edit: Edit; current: string | null; messageId?: string; allowed: boolean; onClose(): void }) {
   const chat = useStore(selectCurrentChat);
-  const decide = useStore(s => s.decideEdit);
+  const saveChange = useStore((s) => s.saveChange);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [initial] = useState(() => chat?.editReviews?.[reviewKey(messageId, edit.path)] || makeEditReview(current, edit, planRepo(chat?.repo), chat?.changes?.[edit.path] ? chat.changes[edit.path].original : current));
+  const [initial] = useState(() => makeEditReview(current, edit, planRepo(chat?.repo), chat?.changes?.[edit.path] ? chat.changes[edit.path].original : current));
   if (!chat) return null;
-  const review = chat.editReviews?.[reviewKey(messageId, edit.path)] || initial;
+  const review = initial;
   const stale = review.expected !== current || review.repo !== planRepo(chat.repo) || review.proposal !== JSON.stringify(edit);
   const choose = async (part: number | 'all', decision: 'accepted' | 'rejected') => {
     setBusy(true); setError('');
-    try { await decide(chat.id, edit, messageId, part, decision); }
+    try {
+      const nextDecisions = [...review.decisions];
+      if (part === 'all') {
+        for (let i = 0; i < nextDecisions.length; i++) {
+          if (nextDecisions[i] === 'pending') nextDecisions[i] = decision;
+        }
+      } else {
+        nextDecisions[part] = decision;
+      }
+      const updated = { ...review, decisions: nextDecisions };
+      const text = reviewText(updated);
+      await saveChange(chat.id, edit.path, text);
+      onClose();
+    }
     catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
   };

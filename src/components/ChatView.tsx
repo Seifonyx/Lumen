@@ -89,7 +89,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
           >
             <FolderKanban size={14} />
             <span className="project-topbar-name">{project.name}</span>
-            {Boolean(project.files?.length) && <span className="project-topbar-count">{project.files.length}</span>}
+            {Boolean(project.files?.length) && <span className="project-topbar-count">{project.files?.length}</span>}
           </button>
         )}
         {Boolean(chat?.documents?.length) && <button className="icon-btn" aria-label="Open canvas" title="Open canvas" onClick={() => useStore.getState().openCanvas()}><FileText size={18} /></button>}

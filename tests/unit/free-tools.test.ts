@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import { pageAttachment, publicPageUrl, readWebPage, READER_LIMIT, videoAttachment, youtubeUrl } from '../../src/lib/free-tools';
+for (const url of ['https://youtu.be/dQw4w9WgXcQ?si=tracking', 'https://m.youtube.com/watch?v=dQw4w9WgXcQ&t=5', 'https://www.youtube.com/shorts/dQw4w9WgXcQ']) assert.equal(youtubeUrl(url), 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+for (const url of ['https://youtube.com.evil.com/watch?v=dQw4w9WgXcQ', 'https://www.youtube.com/playlist?list=x', 'https://youtu.be/short', 'javascript:alert(1)', 'https://user:secret@example.com', 'http://127.0.0.1', 'http://192.168.1.2', 'https://[::1]', 'http://host.local', 'https://example.com:444']) assert.throws(() => youtubeUrl(url));
+assert.equal(publicPageUrl('https://example.com/article#part'), 'https://example.com/article');
+assert.equal(videoAttachment('https://youtu.be/dQw4w9WgXcQ').videoUri, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+let calls: any[] = [];
+globalThis.fetch = (async (url: string, options: object) => { calls.push([url, options]); return new Response('Readable page'); }) as typeof fetch;
+const page = await readWebPage('https://example.com/article', new AbortController().signal);
+assert.equal(calls[0][0], 'https://r.jina.ai/https://example.com/article');
+assert.equal(calls[0][1].credentials, 'omit');
+assert.equal(calls[0][1].referrerPolicy, 'no-referrer');
+assert.ok(pageAttachment(page).text!.includes('Source: https://example.com/article'));
+globalThis.fetch = (async () => new Response('x'.repeat(READER_LIMIT + 1))) as typeof fetch;
+await assert.rejects(readWebPage('https://example.com', new AbortController().signal), /too large/);
+globalThis.fetch = (async () => new Response('', { status: 429 })) as typeof fetch;
+await assert.rejects(readWebPage('https://example.com', new AbortController().signal), /free limit/);
+console.log('PASS canonical video links, public reader validation, explicit reader call, source attachment and limits');

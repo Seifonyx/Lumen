@@ -14,6 +14,8 @@ export interface Attachment {
   thumb?: string;
   /** a repository file the app attached because the request is about it */
   auto?: boolean;
+  /** Public YouTube URL passed as video input to Gemini, never a text-only fallback. */
+  videoUri?: string;
 }
 
 export interface Source {
@@ -22,6 +24,7 @@ export interface Source {
 }
 
 export interface Message {
+  codeExecution?: boolean;
   id: string;
   role: Role;
   text: string;

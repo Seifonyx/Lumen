@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { BookOpen, Pencil, Plus, Search, Sparkles, Trash2 } from 'lucide-react';
+import { BookOpen, Pencil, Plus, Search, Sparkles, Trash2, Wrench } from 'lucide-react';
+import FreeTools from './FreeTools';
 import Modal from './Modal';
 import { modelLabel, useStore } from '../store';
 import { BUILTIN_ASSISTANTS, BUILTIN_PROMPTS, libraryFits, normalizeAssistant, normalizePrompt } from '../lib/assistants';
@@ -8,13 +9,13 @@ import { uid } from '../lib/util';
 import type { SavedAssistant, SavedPrompt } from '../types';
 import { insertPrompt } from './Composer';
 
-export default function AssistantLibrary({ onClose }: { onClose: () => void }) {
+export default function AssistantLibrary({ onClose, initialTab = 'assistants' }: { onClose: () => void; initialTab?: 'assistants' | 'prompts' | 'tools' }) {
   const settings = useStore(s => s.settings);
   const catalog = useStore(s => s.catalog);
   const { updateSettings, startAssistant, toast } = useStore.getState();
   const assistants = settings.assistants || [];
   const prompts = settings.prompts || [];
-  const [tab, setTab] = useState<'assistants' | 'prompts'>('assistants');
+  const [tab, setTab] = useState<'assistants' | 'prompts' | 'tools'>(initialTab);
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<SavedAssistant | SavedPrompt | null>(null);
   const isAssistant = (value: SavedAssistant | SavedPrompt): value is SavedAssistant => 'instructions' in value;
@@ -35,7 +36,7 @@ export default function AssistantLibrary({ onClose }: { onClose: () => void }) {
   };
   const items = tab === 'assistants' ? [...assistants, ...BUILTIN_ASSISTANTS] : [...prompts, ...BUILTIN_PROMPTS];
   const matches = items.filter(item => JSON.stringify(item).toLowerCase().includes(query.trim().toLowerCase()));
-  return <Modal title="Helpers & prompts" onClose={onClose} wide>
+  return <Modal title="Library" onClose={onClose} wide>
     <div className="assistant-library">
       {editing ? <div className="library-editor">
         <h3>{isAssistant(editing) ? 'Assistant details' : 'Prompt details'}</h3>
@@ -47,7 +48,8 @@ export default function AssistantLibrary({ onClose }: { onClose: () => void }) {
         <label className="field-block"><span className="setting-label">{isAssistant(editing) ? 'Instructions' : 'Prompt text'}</span><textarea aria-label="Library instructions" rows={8} maxLength={8000} value={isAssistant(editing) ? editing.instructions : editing.text} onChange={e => setEditing(isAssistant(editing) ? { ...editing, instructions: e.target.value } : { ...editing, text: e.target.value })} /></label>
         <div className="library-form-actions"><button className="btn" onClick={() => setEditing(null)}>Back</button><button className="btn primary" disabled={isAssistant(editing) ? !editing.name.trim() || !editing.instructions.trim() : !editing.title.trim() || !editing.text.trim()} onClick={save}>Save</button></div>
       </div> : <>
-        <div className="library-tabs" role="tablist" aria-label="Library sections">{(['assistants', 'prompts'] as const).map(value => <button key={value} role="tab" aria-selected={tab === value} className={tab === value ? 'active' : ''} onClick={() => { setTab(value); setQuery(''); }}>{value === 'assistants' ? <Sparkles size={16} /> : <BookOpen size={16} />}{value === 'assistants' ? 'Assistants' : 'Prompts'}</button>)}</div>
+        <div className="library-tabs" role="tablist" aria-label="Library sections">{(['assistants', 'prompts', 'tools'] as const).map(value => <button key={value} role="tab" aria-selected={tab === value} className={tab === value ? 'active' : ''} onClick={() => { setTab(value); setQuery(''); }}>{value === 'assistants' ? <Sparkles size={16} /> : value === 'tools' ? <Wrench size={16} /> : <BookOpen size={16} />}{value === 'assistants' ? 'Assistants' : value === 'tools' ? 'Tools' : 'Prompts'}</button>)}</div>
+        {tab === 'tools' ? <FreeTools onClose={onClose} /> : <>
         <p className="muted small">{tab === 'assistants' ? 'Start a chat with a saved helper’s instructions and model. You can change its model anytime.' : 'Reusable starting points. Insert a prompt, add your details, then send when ready.'}</p>
         <div className="library-toolbar"><label className="library-search"><Search size={16} /><input type="search" aria-label="Search library" placeholder="Search library" value={query} onChange={e => setQuery(e.target.value)} /></label><button className="btn" onClick={() => setEditing(tab === 'assistants' ? { id: uid(), name: '', description: '', instructions: '', model: AUTO } : { id: uid(), title: '', text: '' })}><Plus size={16} />{tab === 'assistants' ? 'New assistant' : 'New prompt'}</button></div>
         <div className="library-grid">{matches.map(item => {
@@ -60,6 +62,7 @@ export default function AssistantLibrary({ onClose }: { onClose: () => void }) {
           </article>;
         })}</div>
         {!matches.length && <p className="muted library-empty">No matching items.</p>}
+        </>}
       </>}
     </div>
   </Modal>;

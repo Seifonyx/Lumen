@@ -211,7 +211,7 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
         <button className="btn new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}>
           <SquarePen size={18} /> New chat
         </button>
-        <button className="icon-btn library-button" aria-label="Saved helpers and prompts" title="Saved helpers and prompts" onClick={() => { setUi({ sidebarOpen: false }); onOpenLibrary(); }}><BookOpen size={19} /></button>
+        <button className="icon-btn library-button" aria-label="Saved helpers and prompts" title="Library · helpers, prompts and tools" onClick={() => { setUi({ sidebarOpen: false }); onOpenLibrary(); }}><BookOpen size={19} /></button>
       </div>
       <button className="sidebar-foot" onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })} aria-label="Settings">
         {user?.photo ? <img className="avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}

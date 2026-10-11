@@ -14,6 +14,7 @@ import { Masker, scan } from './lib/privacy';
 import { quota, type QuotaView } from './lib/quota';
 import { extractMemoryOps, findMemory, hideMemoryLines, MAX_MEMORIES, memoryInstructions, MemoryStore } from './lib/memory';
 import { AUTO, planRoute } from './lib/routing';
+import { hasVideo, toolModel } from './lib/ai/tool-inputs.js';
 import { findLayout, isLayoutId } from './lib/layouts';
 import { formatUntil, remaining, UsageTracker, type LimitInfo, type UsageView } from './lib/usage';
 import { db } from './lib/db';
@@ -125,7 +126,7 @@ interface State {
   importChats(chats: Chat[]): Promise<number>;
 
   /** `privacy`: 'asIs' = you chose to send without masking (privacy shield) */
-  send(text: string, files: Attachment[], opts?: { privacy?: 'asIs' }): Promise<void>;
+  send(text: string, files: Attachment[], opts?: { privacy?: 'asIs'; codeExecution?: boolean }): Promise<void>;
   regenerate(messageId: string, model?: string): Promise<void>;
   editAndResend(messageId: string, text: string): Promise<void>;
   continueReply(): Promise<void>;
@@ -341,7 +342,10 @@ export const useStore = create<State>((set, get) => {
     const usable = (id: string) => catalogModels.some((m) => m.id === id);
     const layoutModels = layout ? layout.models.filter(usable) : [];
     if (layout) model = layout.mode === 'auto' || !layoutModels.length ? AUTO : layoutModels[0];
-    const routeModels = layoutModels.length ? layoutModels : settings.enabledModels;
+    const toolRequest = Boolean([...chat.messages].reverse().find(m => m.role === 'user')?.codeExecution) || hasVideo(liveMessages(chat));
+    let routeModels = (layoutModels.length ? layoutModels : settings.enabledModels).filter(id => !toolRequest || toolModel(id));
+    if (toolRequest && !routeModels.length) routeModels = settings.enabledModels.filter(toolModel);
+    if (toolRequest && model !== AUTO && !toolModel(model)) model = AUTO;
     // Long chat: summarize the older messages first so the model gets a compact version.
     if (settings.autoCompact && contextTokens(chat) + projectTokens > compactLimit(model === AUTO ? undefined : modelInfo(get().catalog, model))) {
       if ((await compactChat(chatId, false)) === 'stopped') return;
@@ -366,11 +370,11 @@ export const useStore = create<State>((set, get) => {
     });
     let chosen = plan.model;
     if (!chosen) {
-      get().toast('No models are enabled. Open Settings → Models.', 'error');
+      get().toast(toolRequest ? 'Enable a Gemini model for this tool in Settings → Models.' : 'No models are enabled. Open Settings → Models.', 'error');
       return;
     }
     // After a layout's own models, your other models are the last resort.
-    const rest = layoutModels.length ? settings.enabledModels.filter((id) => !layoutModels.includes(id) && id !== plan.model) : [];
+    const rest = layoutModels.length ? settings.enabledModels.filter((id) => !layoutModels.includes(id) && id !== plan.model && (!toolRequest || toolModel(id))) : [];
     let fallbacks = settings.autoSwitch ? [...plan.fallbacks, ...rest] : [];
     const preNotices: string[] = plan.notice ? [plan.notice] : [];
     if (layout && !layoutModels.length) preNotices.push(`None of the "${layout.name}" models are available with your keys — using your own models.`);
@@ -391,7 +395,7 @@ export const useStore = create<State>((set, get) => {
         return {
           role: m.role,
           text: missing.length ? `[Attached on another device, not available here: ${missing.join(', ')}]\n${m.text}` : m.text,
-          files: usable.map(({ kind, name, mime, data, text }) => ({ kind, name, mime, data, text })),
+          files: usable.map(({ kind, name, mime, data, text, videoUri }) => ({ kind, name, mime, data, text, videoUri })),
           asIs: m.privacy?.unmasked,
         } as WireMessage;
       }));
@@ -428,7 +432,7 @@ export const useStore = create<State>((set, get) => {
       const memoryNote = masker ? masker.mask(rawMemory).text : rawMemory;
       const projectInstructions = settings.projects?.find((p) => p.id === chat?.projectId)?.instructions || '';
       const instructions = [settings.customInstructions, projectInstructions, chat.assistant?.instructions, layout?.instructions].filter(Boolean).join('\n\n');
-      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: settings.webSearch, customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: workspaceNote } });
+      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: settings.webSearch, codeExecution: Boolean(lastUser?.codeExecution), customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: workspaceNote } });
     } catch (e) {
       get().toast((e as Error).message, 'error');
       return;
@@ -1091,7 +1095,7 @@ export const useStore = create<State>((set, get) => {
       const projectFiles = project?.files?.filter((f) => Boolean(f.text)) || [];
       const inputWire: WireMessage = {
         role: 'user', text,
-        files: files.filter((f) => f.data || f.text).map(({ kind, name, mime, data, text: fileText }) => ({ kind, name, mime, data, text: fileText })),
+        files: files.filter((f) => f.data || f.text || f.videoUri).map(({ kind, name, mime, data, text: fileText, videoUri }) => ({ kind, name, mime, data, text: fileText, videoUri })),
         asIs: opts?.privacy === 'asIs',
       };
       const wire: WireMessage[] = [
@@ -1101,7 +1105,7 @@ export const useStore = create<State>((set, get) => {
           return {
             role: m.role,
             text: missing.length ? `[Attached on another device, not available here: ${missing.join(', ')}]\n${m.text}` : m.text,
-            files: usable.map(({ kind, name, mime, data, text: fileText }) => ({ kind, name, mime, data, text: fileText })),
+            files: usable.map(({ kind, name, mime, data, text: fileText, videoUri }) => ({ kind, name, mime, data, text: fileText, videoUri })),
             asIs: m.privacy?.unmasked,
           } as WireMessage;
         })),
@@ -1236,7 +1240,7 @@ export const useStore = create<State>((set, get) => {
         }
       }
       if (generation !== accountGeneration) return;
-      const msg: Message = { id: uid(), role: 'user', text, files: files.length ? files : undefined, createdAt: Date.now() };
+      const msg: Message = { id: uid(), role: 'user', text, files: files.length ? files : undefined, codeExecution: opts?.codeExecution || undefined, createdAt: Date.now() };
       if (get().settings.privacyShield) {
         const found = scan(text).length + files.reduce((n, f) => n + (f.text ? scan(f.text).length : 0), 0);
         if (opts?.privacy === 'asIs') msg.privacy = { masked: 0, unmasked: true };

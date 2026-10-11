@@ -356,6 +356,18 @@ html.kb-open .main.is-empty .starter-actions { display: none; }
 .library-tabs { display:flex; gap:4px; padding:4px; background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:16px; }
 .library-tabs button { flex:1; display:flex; justify-content:center; align-items:center; gap:8px; padding:10px; border:0; border-radius:8px; background:transparent; color:var(--text-2); font:inherit; cursor:pointer; }
 .library-tabs button.active { color:var(--text); background:var(--bg); box-shadow:0 1px 4px #0002; }
+.free-tool-picker { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:18px 0; }
+.free-tool-picker button { display:flex; flex-direction:column; align-items:flex-start; gap:8px; padding:16px; text-align:start; background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:12px; cursor:pointer; min-width:0; font:inherit; }
+.free-tool-picker button.active { border-color:var(--text-2); background:var(--bg); }
+.free-tool-picker button span { color:var(--text-2); font-size:12px; line-height:1.5; }
+.free-tool-form { padding:18px; border:1px solid var(--border); border-radius:14px; }
+.free-tool-form .field-block { padding-top:0; }
+.free-tool-disclosure { line-height:1.7; }
+.free-tool-error { color:var(--danger,#e26464); font-size:13px; }
+.reader-preview { display:flex; flex-direction:column; gap:10px; margin:18px 0; min-width:0; }
+.reader-preview textarea { resize:vertical; width:100%; font-size:12px; }
+.reader-preview span { overflow-wrap:anywhere; }
+@media(max-width:600px) { .library-tabs button { padding:9px 6px; gap:5px; font-size:12px; } .free-tool-picker { gap:6px; } .free-tool-picker button { padding:12px 8px; gap:7px; font-size:12px; } .free-tool-picker button span { display:none; } .free-tool-form { padding:14px; } }
 .library-toolbar { display:flex; gap:12px; margin:20px 0; align-items:center; }
 .library-search { display:flex; gap:8px; align-items:center; min-width:0; flex:1; color:var(--text-2); }
 .library-search input { min-width:0; width:100%; }

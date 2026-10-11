@@ -45,7 +45,7 @@ export interface WireMessage {
   text: string;
   /** privacy shield: send this one as is (you chose "Send as is") */
   asIs?: boolean;
-  files?: Pick<Attachment, 'kind' | 'name' | 'mime' | 'data' | 'text'>[];
+  files?: Pick<Attachment, 'kind' | 'name' | 'mime' | 'data' | 'text' | 'videoUri'>[];
 }
 
 export type StreamEvent =

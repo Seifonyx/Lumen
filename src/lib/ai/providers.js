@@ -3,6 +3,7 @@
 
 import { parseLimit, readError, readSSE, upstreamError } from './http.js';
 import { isActiveModel, isExcludedModel } from './model-status.js';
+import { safeVideoUri, toolBlock } from './tool-inputs.js';
 
 // API keys come from the user's settings (stored in their private Firebase document).
 const keys = { gemini: '', openrouter: '', groq: '', cerebras: '' };
@@ -203,7 +204,8 @@ function toGemini(messages) {
   return messages.map((m) => {
     const parts = [];
     for (const f of m.files || []) {
-      if (f.kind === 'text') parts.push({ text: fileBlock(f) });
+      if (f.videoUri) parts.push({ fileData: { mimeType: 'video/mp4', fileUri: safeVideoUri(f.videoUri) } });
+      else if (f.kind === 'text') parts.push({ text: fileBlock(f) });
       else parts.push({ inline_data: { mime_type: f.mime, data: f.data } });
     }
     if (m.text) parts.push({ text: m.text });
@@ -239,8 +241,8 @@ function withInstructionsInFirstUser(messages, instructions) {
 // ---------------------------------------------------------------- Streaming
 
 // Opens a streaming request. Resolves to { ok: true, events } or { ok: false, status, message }.
-export async function openStream({ provider, name }, messages, { instructions, search, signal }) {
-  if (provider === 'gemini') return openGemini(name, messages, instructions, search, signal);
+export async function openStream({ provider, name }, messages, { instructions, search, codeExecution, signal }) {
+  if (provider === 'gemini') return openGemini(name, messages, instructions, search, signal, codeExecution);
   if (COMPAT[provider]) return openCompat(provider, name, messages, instructions, signal);
   return openOpenRouter(name, messages, instructions, signal);
 }
@@ -326,7 +328,7 @@ async function* compatEvents(body) {
   yield* split('', true);
 }
 
-async function openGemini(name, messages, instructions, search, signal) {
+async function openGemini(name, messages, instructions, search, signal, codeExecution = false) {
   const gemma = isGemma(name);
   const body = gemma
     ? { contents: toGemini(withInstructionsInFirstUser(messages, instructions)) }
@@ -334,6 +336,7 @@ async function openGemini(name, messages, instructions, search, signal) {
   const extras = {};
   if (geminiThinks(name)) extras.generationConfig = { thinkingConfig: { includeThoughts: true } };
   if (search && !gemma && geminiThinks(name)) extras.tools = [{ google_search: {} }];
+  if (codeExecution) extras.tools = [...(extras.tools || []), { codeExecution: {} }];
 
   const send = (payload) =>
     fetch(`${GEMINI_BASE}/models/${encodeURIComponent(name)}:streamGenerateContent?alt=sse`, {
@@ -345,7 +348,7 @@ async function openGemini(name, messages, instructions, search, signal) {
 
   let res = await send({ ...body, ...extras });
   // If thinking or search options are what the model refused, try once more without them.
-  if (res.status === 400 && Object.keys(extras).length) {
+  if (res.status === 400 && Object.keys(extras).length && !codeExecution) {
     await res.body?.cancel();
     res = await send(body);
   }
@@ -366,6 +369,8 @@ async function* geminiEvents(body) {
     if (d.promptFeedback?.blockReason) yield { t: 'notice', text: `Google blocked this request (${d.promptFeedback.blockReason}).` };
     const cand = d.candidates?.[0];
     for (const p of cand?.content?.parts || []) {
+      if (p.executableCode?.code) yield { t: 'text', text: '\n\n**Gemini executed Python**' + toolBlock('python', p.executableCode.code) };
+      if (p.codeExecutionResult) yield { t: 'text', text: `\n\n**Execution result · ${p.codeExecutionResult.outcome || 'unknown'}**` + toolBlock('text', p.codeExecutionResult.output || '(No output)') };
       if (!p.text) continue;
       yield p.thought ? { t: 'think', text: p.text } : { t: 'text', text: p.text };
     }

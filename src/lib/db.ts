@@ -62,6 +62,7 @@ function normalize(raw: any): Chat {
   const messages: Message[] = (raw.messages || []).map((m: any, i: number) => ({
     id: m.id || uid() + i,
     role: m.role,
+    codeExecution: Boolean(m.codeExecution),
     text: m.text || '',
     files: (m.files || []).map((f: any) => ({ id: f.id || uid(), size: f.size ?? (f.data?.length ?? f.text?.length ?? 0), mime: f.mime || 'text/plain', ...f })),
     model: m.model,

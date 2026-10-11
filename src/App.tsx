@@ -34,8 +34,10 @@ export default function App() {
   const repoPicker = useStore((s) => s.repoPicker);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [libraryTab, setLibraryTab] = useState<'assistants' | 'prompts' | 'tools'>('assistants');
+  const accountId = useStore(s => s.user?.uid);
   useEffect(() => {
-    const open = () => { setUi({ sidebarOpen: false }); setLibraryOpen(true); };
+    const open = (event: Event) => { setLibraryTab((event as CustomEvent).detail === 'tools' ? 'tools' : 'assistants'); setUi({ sidebarOpen: false }); setLibraryOpen(true); };
     window.addEventListener('mr:library', open);
     return () => window.removeEventListener('mr:library', open);
   }, [setUi]);
@@ -105,7 +107,7 @@ export default function App() {
       {!settingsOpen && canvasOpen && <Suspense fallback={null}><CanvasPanel /></Suspense>}
       <SettingsModal />
       {commandPaletteOpen && <CommandPalette onClose={() => setCommandPaletteOpen(false)} />}
-      {libraryOpen && <Suspense fallback={null}><AssistantLibrary onClose={() => setLibraryOpen(false)} /></Suspense>}
+      {libraryOpen && <Suspense fallback={null}><AssistantLibrary key={accountId} initialTab={libraryTab} onClose={() => setLibraryOpen(false)} /></Suspense>}
       <ComparisonResultsModal />
       {repoPicker && <RepoPicker onClose={() => setUi({ repoPicker: false })} />}
       <PreviewModal />

@@ -12,6 +12,7 @@ import PrivacyCheck from './PrivacyCheck';
 import AttachSheet from './AttachSheet';
 import CompareModelsModal from './CompareModelsModal';
 import { ANALYSIS_TEMPLATES } from '../lib/analysis';
+import { toolModel } from '../lib/ai/tool-inputs.js';
 import { db } from '../lib/db';
 
 interface Pending {
@@ -23,6 +24,7 @@ interface Pending {
 const PREFILL = 'mr:prefill';
 export const prefillComposer = (text: string) => window.dispatchEvent(new CustomEvent(PREFILL, { detail: text }));
 export const insertPrompt = (text: string) => window.dispatchEvent(new CustomEvent(PREFILL, { detail: { text, append: true } }));
+export const prepareTool = (text: string, files: Attachment[] = [], codeExecution = false) => window.dispatchEvent(new CustomEvent(PREFILL, { detail: { text, append: true, files, codeExecution } }));
 
 export default function Composer({ model, meter, starterActions }: { model: string; meter?: ReactNode; starterActions?: ReactNode }) {
   const send = useStore((s) => s.send);
@@ -61,6 +63,7 @@ export default function Composer({ model, meter, starterActions }: { model: stri
 
   const [text, setText] = useState('');
   const [pending, setPending] = useState<Pending[]>([]);
+  const [codeExecution, setCodeExecution] = useState(false);
   const [listening, setListening] = useState(false);
   const [interim, setInterim] = useState('');
   const [dragging, setDragging] = useState(false);
@@ -121,11 +124,15 @@ export default function Composer({ model, meter, starterActions }: { model: stri
 
   useEffect(() => {
     const onPrefill = (e: Event) => {
-      const detail = (e as CustomEvent<string | { text: string; append: boolean }>).detail;
+      const detail = (e as CustomEvent<string | { text: string; append: boolean; files?: Attachment[]; codeExecution?: boolean }>).detail;
       const current = input.current?.value || '';
       const prefill = typeof detail === 'string' ? detail : `${detail.append && current ? current + '\n\n' : ''}${detail.text}`;
       setText(prefill);
       saveDraft(prefill);
+      if (typeof detail !== 'string') {
+        if (detail.files?.length) setPending(previous => [...previous, ...detail.files!.map(file => ({ key: file.id, name: file.name, file }))]);
+        if (detail.codeExecution) setCodeExecution(true);
+      }
       requestAnimationFrame(() => {
         const el = input.current;
         if (!el) return;
@@ -137,15 +144,24 @@ export default function Composer({ model, meter, starterActions }: { model: stri
     return () => window.removeEventListener(PREFILL, onPrefill);
   }, []);
 
+  useEffect(() => { setCodeExecution(false); setCheck(null); setCompareOpen(false); }, [currentId]);
+  useEffect(() => { setCodeExecution(false); setPending([]); setCheck(null); setCompareOpen(false); }, [accountId]);
+  const attachmentAccount = useRef(accountId);
+  attachmentAccount.current = accountId;
+
   const addFiles = useCallback(
     async (files: File[]) => {
+      const owner = attachmentAccount.current;
       for (const file of files) {
+        if (owner !== attachmentAccount.current) return;
         const key = `${file.name}-${file.size}-${Math.random()}`;
         setPending((p) => [...p, { key, name: file.name }]);
         try {
           const att = await readAttachment(file);
+          if (owner !== attachmentAccount.current) return;
           setPending((p) => p.map((x) => (x.key === key ? { ...x, file: att } : x)));
         } catch (e) {
+          if (owner !== attachmentAccount.current) return;
           setPending((p) => p.filter((x) => x.key !== key));
           toast((e as Error).message, 'error');
         }
@@ -236,14 +252,16 @@ export default function Composer({ model, meter, starterActions }: { model: stri
 
   const dispatch = (opts?: { privacy?: 'asIs' }) => {
     if (!ensureOnline()) return;
+    if ((codeExecution || pending.some(p => p.file?.videoUri)) && !settings.enabledModels.some(toolModel)) { toast('Enable a Gemini model in Settings → Models first.', 'error'); return; }
     const compareWith = check?.compareModels;
     setCheck(null);
     const files = pending.map((p) => p.file!);
     const message = text.trim();
     clearText();
     if (compareWith) void runComparison(message, files, compareWith, opts);
-    else void send(message, files, opts);
+    else void send(message, files, { ...opts, codeExecution });
     setPending([]);
+    setCodeExecution(false);
   };
 
   const compare = (models: string[]) => {
@@ -315,6 +333,7 @@ export default function Composer({ model, meter, starterActions }: { model: stri
         }}
       >
         {chat?.repo && <ChecksBar chat={chat} />}
+        {codeExecution && <div className="repo-strip"><span className="ctx-chip">Gemini calculation · runs on Google<button type="button" className="icon-btn xs" aria-label="Remove calculation tool" onClick={() => setCodeExecution(false)}><X size={12} /></button></span></div>}
         {chat?.repo && (
           <div className="repo-strip">
             <button type="button" className="repo-chip" onClick={() => setUi({ workspaceOpen: true })} title="Open the repository panel">
@@ -401,7 +420,7 @@ export default function Composer({ model, meter, starterActions }: { model: stri
           >
             <Globe size={17} /> <span>Search</span>
           </button>
-          <button type="button" className="tool-btn pill compare-trigger" disabled={!canSend} onClick={() => setCompareOpen(true)} aria-label="Compare models" title="Compare this question with two or three models">
+          <button type="button" className="tool-btn pill compare-trigger" disabled={!canSend || codeExecution || pending.some(p => p.file?.videoUri)} onClick={() => setCompareOpen(true)} aria-label="Compare models" title="Compare this question with two or three models">
             <Columns2 size={16} /> <span>Compare</span>
           </button>
           <div className="spacer" />

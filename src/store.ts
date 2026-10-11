@@ -345,6 +345,7 @@ export const useStore = create<State>((set, get) => {
     const coding = chat.codingPlan && ['planning', 'approved'].includes(chat.codingPlan.status) && chat.codingPlan.repo === planRepo(chat.repo)
       ? { id: chat.codingPlan.id, phase: chat.codingPlan.status === 'planning' ? 'plan' as const : 'work' as const, repo: planRepo(chat.repo) } : undefined;
     const repoScope = planRepo(chat.repo);
+    if (chat.repo && chat.codingPlanMode && !coding) return;
     const { settings } = get();
     const projectFiles = settings.projects?.find((p) => p.id === chat!.projectId)?.files?.filter((f) => Boolean(f.text)) || [];
     const projectTokens = projectFiles.reduce((n, f) => n + Math.ceil((f.text?.length || 0) / 4), 0);
@@ -457,6 +458,10 @@ export const useStore = create<State>((set, get) => {
     }
 
     if (generation !== accountGeneration || planRepo(get().chats.find(c => c.id === chatId)?.repo) !== repoScope) return;
+    if (coding) {
+      const latestPlan = get().chats.find(c => c.id === chatId)?.codingPlan;
+      if (latestPlan?.id !== coding.id || latestPlan.status !== (coding.phase === 'plan' ? 'planning' : 'approved')) return;
+    }
     const reply: Message = {
       id: uid(),
       role: 'assistant',
@@ -581,6 +586,7 @@ export const useStore = create<State>((set, get) => {
     // Coding workspace: the model asked to read files ([[read: path]]) → load them and let it continue.
     // Models that ask for files in words instead ("please share src/App.tsx") get them loaded too.
     const now = get().chats.find((c) => c.id === chatId);
+    if (coding && (now?.codingPlan?.id !== coding.id || !['planning','approved'].includes(now.codingPlan.status))) return;
     if (now?.repo && reply.status === 'done' && !(coding?.phase === 'plan' && steps) && !/`{3,}\s*(edit|delete)[:\s]/i.test(normalizeEdits(reply.text))) {
       let asks = readRequests(reply.text);
       const searches = searchRequests(reply.text);
@@ -1366,6 +1372,8 @@ export const useStore = create<State>((set, get) => {
       const generation = accountGeneration;
       const chat = get().chats.find((c) => c.id === chatId);
       if (!chat?.repo || (!paths.length && !searches.length) || get().streamingChatId) return;
+      const expectedPlan = chat.codingPlanMode ? chat.codingPlan : undefined;
+      if (chat.codingPlanMode && (!expectedPlan || !['planning','approved'].includes(expectedPlan.status))) return;
       const { files, missing } = await filesAsAttachments(chat, paths);
       const results = searches.length ? await repoIndex(chat.repo).then((index) => searches.map((q) => searchCode(chat, index, q)), () => []) : [];
       const parts = [
@@ -1386,6 +1394,7 @@ export const useStore = create<State>((set, get) => {
       if (generation !== accountGeneration) return;
       const latest = get().chats.find((c) => c.id === chatId) || chat;
       if (planRepo(latest.repo) !== planRepo(chat.repo)) return;
+      if (expectedPlan && (latest.codingPlan?.id !== expectedPlan.id || latest.codingPlan.status !== expectedPlan.status || !latest.codingPlanMode)) return;
       const next = { ...latest, messages: [...latest.messages, msg], updatedAt: Date.now() };
       replaceChat(next);
       await persist(next);

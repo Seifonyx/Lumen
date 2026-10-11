@@ -16,6 +16,7 @@ import type { Attachment, Chat, Message } from '../types';
 import { db } from './firebase';
 import { quota, type GuardLevel } from './quota';
 import { normalizeAssistant } from './assistants';
+import { normalizeDocuments } from './canvas';
 
 const MAX_SYNCED_TEXT = 100_000;
 const MAX_DOC_CHARS = 900_000;
@@ -189,6 +190,7 @@ export class ChatSync {
               model: data.model || undefined,
               projectId: typeof data.projectId === 'string' ? data.projectId : undefined,
               assistant: data.assistant ? normalizeAssistant(data.assistant) || undefined : undefined,
+              documents: normalizeDocuments(data.documents),
               rev: remoteRev,
               summary: data.summary?.text ? data.summary : undefined,
               repo: data.repo?.owner ? data.repo : undefined,
@@ -202,7 +204,7 @@ export class ChatSync {
           // First look on this device (or after a pause): send chats the server doesn't have yet.
           if (isFirst) {
             for (const chat of this.h.allLocal()) {
-              if (!chat.messages.length) continue;
+              if (!chat.messages.length && !chat.documents?.length) continue;
               const remote = remoteRevs.get(chat.id) ?? (full ? -1 : this.synced[chat.id] ?? -1);
               if (revOf(chat) > remote) await this.write(chat);
             }
@@ -235,7 +237,7 @@ export class ChatSync {
 
   push(chat: Chat) {
     if (this.uid.startsWith('preview-')) return;
-    if (!chat.messages.length) return;
+    if (!chat.messages.length && !chat.documents?.length) return;
     if (this.level === 'normal') {
       this.serial(() => this.write(chat));
       return;
@@ -337,6 +339,7 @@ export class ChatSync {
       model: chat.model || null,
       projectId: chat.projectId || null,
       assistant: chat.assistant ? { ...chat.assistant } : null,
+      documents: chat.documents?.length ? chat.documents.map(doc => ({ ...doc })) : null,
       rev: revOf(chat),
       deleted: false,
       count: chat.messages.length,

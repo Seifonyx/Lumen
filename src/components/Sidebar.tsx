@@ -14,6 +14,7 @@ function chatToMarkdown(chat: Chat): string {
     if (m.files?.length) lines.push(`_Attachments: ${m.files.map((f) => f.name).join(', ')}_`);
     lines.push(m.text || m.error || '', '');
   }
+  for (const doc of chat.documents || []) lines.push(`## Canvas: ${doc.name}`, '', doc.content, '');
   return lines.join('\n');
 }
 
@@ -154,7 +155,7 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
 
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const visible = chats.filter((c) => (c.messages.length > 0 || c.id === currentId) && (!selectedProjectId || c.projectId === selectedProjectId));
+    const visible = chats.filter((c) => (c.messages.length > 0 || Boolean(c.documents?.length) || c.id === currentId) && (!selectedProjectId || c.projectId === selectedProjectId));
     const matches = q
       ? visible.filter((c) => c.title.toLowerCase().includes(q) || c.tags?.some((t) => t.toLowerCase().includes(q)) || c.messages.some((m) => m.text.toLowerCase().includes(q)))
       : visible;

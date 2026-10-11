@@ -15,6 +15,7 @@ export function branchChat(chat: Chat, messageId: string, id: string, now = Date
     updatedAt: now,
     projectId: chat.projectId,
     assistant: chat.assistant,
+    documents: chat.documents?.map(doc => ({ ...doc })),
     model: chat.model,
     repo: chat.repo,
     context: chat.context,

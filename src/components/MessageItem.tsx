@@ -309,6 +309,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
               <button className="msg-action" aria-label="Save as Word" title="Save reply as Word" onClick={saveWord}>
                 <FileDown size={15} />
               </button>
+              <button className="msg-action" aria-label="Edit in canvas" title="Edit reply in canvas" onClick={() => useStore.getState().openCanvas(`${safeFileName(chatTitle, 'Reply')}.md`, message.text)}><Pencil size={15} /></button>
             </>
           )}
           {!busy && (

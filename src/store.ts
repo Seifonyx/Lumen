@@ -19,6 +19,7 @@ import { formatUntil, remaining, UsageTracker, type LimitInfo, type UsageView } 
 import { db } from './lib/db';
 import { branchChat, normalizeChatTags } from './lib/chat-tools';
 import { normalizeAssistant } from './lib/assistants';
+import { canvasFits, canvasEditPrompt, cleanCanvasReply } from './lib/canvas';
 import { applyAppearance, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
 import type { Attachment, Catalog, Chat, ChatSummary, ComparisonState, FileChange, Memory, Message, ModelInfo, Project, RepoLink, SavedAssistant, Settings } from './types';
@@ -51,6 +52,9 @@ interface State {
   updateReady: (() => void) | null;
   /** the coding workspace panel (files, changes, commit) is open */
   workspaceOpen: boolean;
+  canvasOpen: boolean;
+  canvasDocumentId: string | null;
+  canvasEditingChatId: string | null;
   /** choosing a GitHub repository for the chat */
   repoPicker: boolean;
   catalogError: string | null;
@@ -80,7 +84,11 @@ interface State {
   updateSettings(patch: Partial<Settings>): void;
   toast(text: string, kind?: Toast['kind']): void;
   dismissToast(id: string): void;
-  setUi(patch: Partial<Pick<State, 'sidebarOpen' | 'settingsOpen' | 'settingsTab' | 'preview' | 'runner' | 'workspaceOpen' | 'repoPicker'>>): void;
+  setUi(patch: Partial<Pick<State, 'sidebarOpen' | 'settingsOpen' | 'settingsTab' | 'preview' | 'runner' | 'workspaceOpen' | 'repoPicker' | 'canvasOpen' | 'canvasDocumentId'>>): void;
+  openCanvas(name?: string, content?: string): void;
+  saveCanvasDocument(chatId: string, id: string, patch: { name?: string; content?: string }, expectedContent?: string): Promise<boolean>;
+  deleteCanvasDocument(chatId: string, id: string): void;
+  requestCanvasEdit(chatId: string, id: string, instruction: string, start: number, end: number, signal: AbortSignal, asIs?: boolean): Promise<{ text: string; model: string }>;
 
   // Coding workspace (GitHub)
   connectRepo(link: RepoLink): void;
@@ -136,6 +144,8 @@ interface State {
 let controller: AbortController | null = null;
 let compareController: AbortController | null = null;
 let compactController: AbortController | null = null;
+let canvasController: AbortController | null = null;
+const canvasSyncTimers = new Map<string, ReturnType<typeof setTimeout>>();
 let sync: ChatSync | null = null;
 let usage: UsageTracker | null = null;
 let memory: MemoryStore | null = null;
@@ -158,7 +168,7 @@ export const useStore = create<State>((set, get) => {
   const replaceChat = (chat: Chat) => set((s) => ({ chats: s.chats.some((c) => c.id === chat.id) ? s.chats.map((c) => (c.id === chat.id ? chat : c)) : [chat, ...s.chats] }));
   /** Saves a chat on this device and sends the change to your other devices. */
   const persist = async (chat: Chat) => {
-    if (!chat.messages.length) return;
+    if (!chat.messages.length && !chat.documents?.length) return;
     const stamped = { ...chat, rev: Date.now() };
     const latest = get().chats.find((c) => c.id === chat.id);
     if (latest === chat) replaceChat(stamped);
@@ -546,6 +556,9 @@ export const useStore = create<State>((set, get) => {
     online: navigator.onLine,
     updateReady: null,
     workspaceOpen: false,
+    canvasOpen: false,
+    canvasDocumentId: null,
+    canvasEditingChatId: null,
     repoPicker: false,
     catalogError: null,
     settings: loadSettings(),
@@ -770,11 +783,103 @@ export const useStore = create<State>((set, get) => {
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
     },
     setUi(patch) {
-      set(patch);
+      set({ ...patch, ...(patch.workspaceOpen ? { canvasOpen: false } : {}), ...(patch.canvasOpen ? { workspaceOpen: false } : {}) });
+    },
+
+    openCanvas(name, content = '') {
+      let chat = currentChat();
+      if (!chat) { chat = { ...newChatObject(), projectId: currentProjectId() || undefined }; replaceChat(chat); set({ currentId: chat.id }); }
+      const documents = chat.documents || [];
+      const existing = name ? documents.find(doc => doc.name === name && doc.content === content) : documents[0];
+      if (existing) { set({ canvasOpen: true, canvasDocumentId: existing.id, workspaceOpen: false, sidebarOpen: false }); return; }
+      const doc = { id: uid(), name: name || 'Document.md', content, updatedAt: Date.now() };
+      if (!canvasFits([...documents, doc])) { get().toast('A chat can keep 5 canvas documents and 100,000 characters total.', 'error'); return; }
+      const updated = { ...chat, title: !chat.messages.length && !documents.length ? doc.name : chat.title, documents: [...documents, doc], updatedAt: Date.now() };
+      replaceChat(updated); void persist(updated);
+      set({ canvasOpen: true, canvasDocumentId: doc.id, workspaceOpen: false, sidebarOpen: false });
+    },
+    async saveCanvasDocument(chatId, id, patch, expectedContent) {
+      const chat = get().chats.find(c => c.id === chatId);
+      const doc = chat?.documents?.find(d => d.id === id);
+      if (!chat || !doc) return false;
+      if (expectedContent !== undefined && doc.content !== expectedContent) { get().toast('The document changed. Review a fresh edit before applying it.', 'error'); return false; }
+      if ((patch.name === undefined || patch.name === doc.name) && (patch.content === undefined || patch.content === doc.content)) return true;
+      const documents = chat.documents!.map(d => d.id === id ? { ...d, ...patch, name: (patch.name ?? d.name).slice(0,120), updatedAt: Date.now() } : d);
+      if (!canvasFits(documents)) { get().toast('Canvas documents are limited to 100,000 characters per chat.', 'error'); return false; }
+      const updated = { ...chat, documents, rev: Date.now(), updatedAt: Date.now() };
+      replaceChat(updated);
+      // Save locally immediately; coalesce typing before spending a Firebase write.
+      try { await db.put(updated); } catch { get().toast("Couldn't save this canvas on the device.", 'error'); return false; }
+      clearTimeout(canvasSyncTimers.get(chatId));
+      const accountUid = get().user?.uid;
+      canvasSyncTimers.set(chatId, setTimeout(() => {
+        canvasSyncTimers.delete(chatId);
+        const latest = get().chats.find(c => c.id === chatId);
+        if (latest && get().user?.uid === accountUid) sync?.push(latest);
+      }, 1200));
+      return true;
+    },
+    deleteCanvasDocument(chatId, id) {
+      const chat = get().chats.find(c => c.id === chatId);
+      if (!chat) return;
+      const updated = { ...chat, documents: (chat.documents || []).filter(doc => doc.id !== id), updatedAt: Date.now() };
+      replaceChat(updated);
+      // Persist deletion of the final document even when the chat has no messages.
+      void db.put({ ...updated, rev: Date.now() });
+      if (updated.messages.length || updated.documents.length) void persist(updated);
+      else sync?.remove(chatId);
+      set({ canvasDocumentId: updated.documents[0]?.id || null, canvasOpen: Boolean(updated.documents.length) });
+    },
+    async requestCanvasEdit(chatId, id, instruction, start, end, signal, asIs) {
+      if (get().streamingChatId || get().compactingChatId || get().comparing || get().canvasEditingChatId) throw new Error('Wait for the current reply to finish.');
+      if (!navigator.onLine) throw new Error("You're offline. Your canvas stays saved here.");
+      const chat = get().chats.find(c => c.id === chatId);
+      const doc = chat?.documents?.find(d => d.id === id);
+      if (!chat || !doc) throw new Error('This document is no longer available.');
+      const { settings, catalog } = get();
+      const prompt = canvasEditPrompt(doc, instruction, start, end);
+      let selected = modelFor(chat);
+      const layout = isLayoutId(selected) ? findLayout(selected, catalog?.models || [], settings.layouts, settings.hiddenLayouts) : undefined;
+      const enabled = layout?.models.length ? layout.models : settings.enabledModels;
+      if (layout) selected = layout.mode === 'auto' ? AUTO : enabled[0] || AUTO;
+      const plan = planRoute({ selected, enabled, catalog: catalog?.models || [], text: prompt, files: [], conversationTokens: Math.ceil(prompt.length / 4), search: false, blocked: id => (usage?.blockedUntil(id) ?? null) !== null, left: id => remaining(get().usage, id) });
+      if (!plan.model) throw new Error('No models are enabled. Open Settings → Models.');
+      const project = settings.projects?.find(p => p.id === chat.projectId);
+      const instructions = [settings.customInstructions, project?.instructions, chat.assistant?.instructions, layout?.instructions, 'You are editing a canvas selection. Return only the replacement text. Do not add memory commands or explanations.'].filter(Boolean).join('\n\n');
+      const memoryNote = settings.memory ? memoryInstructions(get().memories, false) : '';
+      const masker = settings.privacyShield && !asIs ? new Masker() : null;
+      const body = buildChatBody({ model: plan.model, fallbacks: settings.autoSwitch ? plan.fallbacks : [], messages: [{ role: 'user', text: masker ? masker.mask(prompt).text : prompt }], options: { search: false, customInstructions: masker ? masker.mask(instructions).text : instructions, memory: masker ? masker.mask(memoryNote).text : memoryNote } });
+      const aborter = new AbortController();
+      const abort = () => aborter.abort();
+      signal.addEventListener('abort', abort, { once: true });
+      if (signal.aborted) abort();
+      canvasController = aborter; set({ canvasEditingChatId: chatId });
+      let text = '', error = '', model = plan.model;
+      try {
+        for await (const ev of streamChat(body, aborter.signal)) {
+          if (ev.t === 'unavailable') hideUnavailableModel(ev.id);
+          else if (ev.t === 'request') usage?.record(ev.id, { requests: 1 });
+          else if (ev.t === 'usage') usage?.record(ev.id, { input: ev.input, output: ev.output });
+          else if (ev.t === 'limit') usage?.block(ev.id, ev as unknown as LimitInfo);
+          else if (ev.t === 'model') model = ev.id;
+          else if (ev.t === 'text') text += ev.text;
+          else if (ev.t === 'discard') { text = ''; error = ''; }
+          else if (ev.t === 'error') error = ev.text;
+          else if (ev.t === 'notice' && /length limit/i.test(ev.text)) error = 'The edit reached the model’s length limit. Select a smaller section.';
+        }
+        if (aborter.signal.aborted) throw new DOMException('Stopped', 'AbortError');
+        if (error || !text.trim()) throw new Error(error || 'No edit was returned. Try another model.');
+        const restored = masker && settings.privacyRestore ? masker.unmask(text) : text;
+        return { text: cleanCanvasReply(restored), model };
+      } finally {
+        signal.removeEventListener('abort', abort);
+        if (canvasController === aborter) { canvasController = null; set({ canvasEditingChatId: null }); }
+      }
     },
 
     selectProject(id) {
       clearAssistantDraft();
+      set({ canvasOpen: false, canvasDocumentId: null });
       const valid = id && get().settings.projects?.some((p) => p.id === id) ? id : null;
       try { if (valid) localStorage.setItem('mr.activeProject', valid); else localStorage.removeItem('mr.activeProject'); } catch { /* private mode */ }
       set({ activeProjectId: valid, sidebarOpen: false });
@@ -838,9 +943,10 @@ export const useStore = create<State>((set, get) => {
 
     newChat() {
       clearAssistantDraft();
+      set({ canvasOpen: false, canvasDocumentId: null });
       // Reuse an existing empty chat instead of piling them up.
       const projectId = currentProjectId();
-      const empty = get().chats.find((c) => c.messages.length === 0 && !c.summary && !c.assistant && c.projectId === projectId);
+      const empty = get().chats.find((c) => c.messages.length === 0 && !c.summary && !c.assistant && !c.documents?.length && c.projectId === projectId);
       if (empty) {
         set({ currentId: empty.id, sidebarOpen: false, settingsOpen: false });
         return;
@@ -849,6 +955,7 @@ export const useStore = create<State>((set, get) => {
       set((s) => ({ chats: [chat, ...s.chats], currentId: chat.id, sidebarOpen: false, settingsOpen: false }));
     },
     startAssistant(value) {
+      set({ canvasOpen: false, canvasDocumentId: null });
       const assistant = normalizeAssistant(value);
       if (!assistant) return;
       const { settings, catalog } = get();
@@ -860,11 +967,12 @@ export const useStore = create<State>((set, get) => {
     },
     selectChat(id) {
       clearAssistantDraft();
-      set({ currentId: id, sidebarOpen: false, settingsOpen: false });
+      set({ currentId: id, sidebarOpen: false, settingsOpen: false, canvasOpen: false, canvasDocumentId: null });
     },
     async deleteChat(id) {
       if (get().streamingChatId === id) get().stop();
-      const had = get().chats.find((c) => c.id === id)?.messages.length;
+      const removed = get().chats.find((c) => c.id === id);
+      const had = removed?.messages.length || removed?.documents?.length;
       set((s) => ({ chats: s.chats.filter((c) => c.id !== id), currentId: s.currentId === id ? null : s.currentId }));
       await db.remove(id);
       if (had) sync?.remove(id);
@@ -894,7 +1002,7 @@ export const useStore = create<State>((set, get) => {
     },
     async clearAllChats() {
       get().stop();
-      const ids = get().chats.filter((c) => c.messages.length).map((c) => c.id);
+      const ids = get().chats.filter((c) => c.messages.length || c.documents?.length).map((c) => c.id);
       await db.clear();
       set({ chats: [], currentId: null });
       ids.forEach((id) => sync?.remove(id));
@@ -909,7 +1017,7 @@ export const useStore = create<State>((set, get) => {
     },
 
     async runComparison(text, files, models, opts) {
-      if (get().comparing || get().streamingChatId || get().compactingChatId) return;
+      if (get().comparing || get().streamingChatId || get().compactingChatId || get().canvasEditingChatId) return;
       if (!navigator.onLine) {
         get().toast("You're offline — your message is kept here; send it when you're back online.");
         return;
@@ -1034,7 +1142,7 @@ export const useStore = create<State>((set, get) => {
     },
 
     async send(text, files, opts) {
-      if (get().streamingChatId || get().compactingChatId || get().comparing) return;
+      if (get().streamingChatId || get().compactingChatId || get().comparing || get().canvasEditingChatId) return;
       let chat = currentChat();
       if (!chat) {
         chat = { ...newChatObject(), projectId: currentProjectId() || undefined };
@@ -1094,6 +1202,7 @@ export const useStore = create<State>((set, get) => {
       void persist(updated);
       void repoIndex(link).catch(() => {});
       set({ workspaceOpen: true });
+      set({ canvasOpen: false });
     },
     disconnectRepo() {
       const chat = currentChat();
@@ -1207,7 +1316,7 @@ export const useStore = create<State>((set, get) => {
 
     async regenerate(messageId, model) {
       const chat = currentChat();
-      if (!chat || get().streamingChatId) return;
+      if (!chat || get().streamingChatId || get().canvasEditingChatId) return;
       const idx = chat.messages.findIndex((m) => m.id === messageId);
       if (idx < 0) return;
       const kept = chat.messages.slice(0, idx);
@@ -1219,7 +1328,7 @@ export const useStore = create<State>((set, get) => {
 
     async editAndResend(messageId, text) {
       const chat = currentChat();
-      if (!chat || get().streamingChatId) return;
+      if (!chat || get().streamingChatId || get().canvasEditingChatId) return;
       const idx = chat.messages.findIndex((m) => m.id === messageId);
       if (idx < 0) return;
       const edited = { ...chat.messages[idx], text };
@@ -1269,9 +1378,10 @@ export const useStore = create<State>((set, get) => {
           model: chat.model,
           assistant: chat.assistant,
           projectId: chat.projectId,
+          documents: chat.documents?.map(doc => ({ ...doc })),
           summary: { ...out.summary, upTo: null, from: chat.title, saved: Math.max(0, contextTokens(chat) - Math.ceil(out.summary.text.length / 4)) },
         };
-        set((s) => ({ chats: [next, ...s.chats.filter((c) => !(c.messages.length === 0 && !c.summary))], currentId: next.id, sidebarOpen: false }));
+        set((s) => ({ chats: [next, ...s.chats.filter((c) => !(c.messages.length === 0 && !c.summary && !c.documents?.length))], currentId: next.id, sidebarOpen: false }));
       } catch {
         if (!compactController?.signal.aborted) get().toast("Couldn't summarize this chat right now.", 'error');
       } finally {
@@ -1281,6 +1391,7 @@ export const useStore = create<State>((set, get) => {
     },
 
     stop() {
+      canvasController?.abort();
       controller?.abort();
       compactController?.abort();
       get().cancelComparison();

@@ -48,6 +48,7 @@ export interface Message {
 }
 
 export interface Chat {
+  documents?: CanvasDocument[];
   /** Snapshot: editing/deleting a saved helper never changes this chat's instructions. */
   assistant?: SavedAssistant;
   id: string;
@@ -93,6 +94,13 @@ export interface SavedAssistant {
   description: string;
   instructions: string;
   model: string;
+}
+
+export interface CanvasDocument {
+  id: string;
+  name: string;
+  content: string;
+  updatedAt: number;
 }
 
 export interface SavedPrompt {

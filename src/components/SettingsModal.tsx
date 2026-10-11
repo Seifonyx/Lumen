@@ -356,7 +356,7 @@ function DataTab() {
   const chats = useStore((s) => s.chats);
   const { clearAllChats, importChats, toast } = useStore.getState();
   const fileRef = useRef<HTMLInputElement>(null);
-  const count = chats.filter((c) => c.messages.length).length;
+  const count = chats.filter((c) => c.messages.length || c.documents?.length).length;
 
   return (
     <div className="settings-section">

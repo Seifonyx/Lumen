@@ -21,6 +21,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   const chat = useStore(selectCurrentChat);
   const catalogError = useStore((s) => s.catalogError);
   const streaming = useStore((s) => s.streamingChatId !== null && s.streamingChatId === s.currentId);
+  const canvasEditing = useStore(s => s.canvasEditingChatId !== null);
   const defaultModel = useStore((s) => s.settings.projects?.find((p) => p.id === (chat ? chat.projectId : s.activeProjectId))?.defaultModel || s.settings.defaultModel);
   const compacting = useStore((s) => s.compactingChatId !== null && s.compactingChatId === s.currentId);
   const syncPaused = useStore((s) => s.firebaseUsage.level === 'paused' && s.authed === true);
@@ -75,6 +76,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
         </button>
         <ModelPicker value={model} onChange={setChatModel} />
         <div className="spacer" />
+        {Boolean(chat?.documents?.length) && <button className="icon-btn" aria-label="Open canvas" title="Open canvas" onClick={() => useStore.getState().openCanvas()}><FileText size={18} /></button>}
         {chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}
         {chat?.repo && (
           <button
@@ -122,7 +124,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
             {summary?.upTo === null && <CompactNote chat={chat!} summary={summary} />}
             {messages.map((m, i) => (
               <Fragment key={m.id}>
-                <MessageItem message={m} isLast={i === messages.length - 1} busy={streaming} />
+                <MessageItem message={m} isLast={i === messages.length - 1} busy={streaming || canvasEditing} />
                 {summary?.upTo === m.id && <CompactNote chat={chat!} summary={summary} />}
               </Fragment>
             ))}

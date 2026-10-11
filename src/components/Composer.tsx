@@ -27,7 +27,7 @@ export default function Composer({ model, meter, starterActions }: { model: stri
   const runComparison = useStore((s) => s.runComparison);
   const stop = useStore((s) => s.stop);
   const toast = useStore((s) => s.toast);
-  const streaming = useStore((s) => s.streamingChatId !== null || s.compactingChatId !== null || s.comparing);
+  const streaming = useStore((s) => s.streamingChatId !== null || s.compactingChatId !== null || s.comparing || s.canvasEditingChatId !== null);
   const compact = useStore((s) => s.compact);
   const addMemory = useStore((s) => s.addMemory);
   const setUi = useStore((s) => s.setUi);
@@ -421,6 +421,7 @@ export default function Composer({ model, meter, starterActions }: { model: stri
         <AttachSheet
           onClose={() => setSheet(false)}
           onFiles={() => fileInput.current?.click()}
+          onCanvas={() => useStore.getState().openCanvas()}
           onRepo={() => setUi(chat?.repo ? { workspaceOpen: true } : { repoPicker: true })}
           repoName={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : undefined}
           anchor={touch ? undefined : sheetAnchor}

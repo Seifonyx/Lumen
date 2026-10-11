@@ -131,6 +131,19 @@ async function device(browser, name, email, mobile) {
   await B.page.getByLabel('Library item name').fill('Synced helper');
   await B.page.getByLabel('Library instructions').fill('Use HELPER_SYNC_MARKER in your reply.');
   await B.page.getByRole('button', { name: 'Save', exact: true }).click();
+  // Observe the cloud write before reloading the other device (settings writes are debounced).
+  const accountUid = await B.page.evaluate(() => Object.keys(localStorage).find(key => key.startsWith('mr.account.'))?.slice('mr.account.'.length));
+  const settingsDeadline = Date.now() + 15000;
+  let helperSaved = false;
+  while (Date.now() < settingsDeadline) {
+    const response = await fetch(`http://127.0.0.1:8080/v1/projects/the-model-router/databases/(default)/documents/modelRouter/${accountUid}`, { headers: { Authorization: 'Bearer owner' } });
+    const account = await response.json();
+    const helpers = account.fields?.settings?.mapValue?.fields?.assistants?.arrayValue?.values || [];
+    helperSaved = helpers.some(item => item.mapValue?.fields?.name?.stringValue === 'Synced helper');
+    if (helperSaved) break;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  if (!helperSaved) throw new Error('The saved helper did not reach Firestore within 15 seconds.');
   await B.page.locator('.library-card').filter({ has: B.page.getByRole('heading', { name: 'Synced helper', exact: true }) }).getByRole('button', { name: 'Start chat', exact: true }).click();
   await B.page.fill('.composer textarea', 'Test helper sync');
   await B.page.click('.send-btn');
@@ -151,6 +164,32 @@ async function device(browser, name, email, mobile) {
   await A.page.waitForSelector('.msg.assistant >> nth=1 >> .model-tag');
   check(JSON.stringify(A.log.at(-1)).includes('HELPER_SYNC_MARKER'), 'chat helper instructions synced and used on phone');
 
+  // Canvas text and edits sync even when a chat has no messages.
+  await B.page.getByRole('button', { name: 'Edit in canvas', exact: true }).first().click();
+  await B.page.fill('.canvas-text', 'CANVAS_FROM_LAPTOP');
+  await B.page.waitForTimeout(2000);
+  await A.page.getByRole('button', { name: 'Open canvas', exact: true }).click();
+  await A.page.waitForFunction(() => document.querySelector('.canvas-text')?.value === 'CANVAS_FROM_LAPTOP');
+  check(true, 'canvas document synced to phone');
+  await A.page.fill('.canvas-text', 'CANVAS_FROM_PHONE');
+  await B.page.waitForFunction(() => document.querySelector('.canvas-text')?.value === 'CANVAS_FROM_PHONE');
+  check(true, 'canvas edits synced live back to laptop');
+  await A.page.getByRole('button', { name: 'Close canvas', exact: true }).click();
+  await B.page.getByRole('button', { name: 'Close canvas', exact: true }).click();
+  await B.page.click('.new-chat-shortcut');
+  await B.page.keyboard.press('Control+k');
+  await B.page.getByLabel('Search commands').fill('Open document canvas');
+  await B.page.keyboard.press('Enter');
+  await B.page.fill('.canvas-text', 'CANVAS_WITHOUT_MESSAGES');
+  await B.page.getByLabel('Canvas filename').fill('Standalone.md');
+  await B.page.waitForTimeout(2200);
+  await A.page.reload();
+  await A.page.waitForSelector('.topbar');
+  await A.page.click('.menu-btn');
+  await A.page.getByRole('button', { name: 'Document.md', exact: true }).click();
+  await A.page.getByRole('button', { name: 'Open canvas', exact: true }).click();
+  await A.page.waitForFunction(() => document.querySelector('.canvas-text')?.value === 'CANVAS_WITHOUT_MESSAGES');
+  check(true, 'standalone canvas chat without messages synced');
   await B.page.screenshot({ path: path.join(OUT, 'b-final.png') });
   const errs = [...A.errors, ...B.errors];
   console.log('errors:', errs);

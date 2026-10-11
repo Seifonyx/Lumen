@@ -1,4 +1,4 @@
-import { Download, Eye, FileCode2, FileSpreadsheet, FileText, FileType2, Globe, Loader2, Presentation, Printer } from 'lucide-react';
+import { Download, Eye, FileCode2, FileSpreadsheet, FileText, FileType2, Globe, Loader2, Pencil, Presentation, Printer } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { parseDeck } from '../lib/generate/deck-spec';
 import { printDocument } from '../lib/generate/doc-html';
@@ -76,6 +76,7 @@ export default function FileCard({ name: rawName, content, complete }: { name: s
       </div>
       {complete && kind !== 'unsupported' && (
         <div className="file-actions">
+          <button className="icon-btn sm" onClick={() => useStore.getState().openCanvas(name, content)} aria-label={`Edit ${name} in canvas`} title="Edit in canvas"><Pencil size={16} /></button>
           <button className="btn ghost small" onClick={() => setUi({ preview: { name, content } })} aria-label={`Preview ${name}`}>
             <Eye size={16} /> <span className="hide-xs">Preview</span>
           </button>

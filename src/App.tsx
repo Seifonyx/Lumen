@@ -17,6 +17,7 @@ import { installSidebarGestures } from './lib/sidebar-gesture';
 
 const RunPanel = lazy(() => import('./components/RunPanel'));
 const AssistantLibrary = lazy(() => import('./components/AssistantLibrary'));
+const CanvasPanel = lazy(() => import('./components/CanvasPanel'));
 
 export default function App() {
   const authed = useStore((s) => s.authed);
@@ -26,6 +27,7 @@ export default function App() {
   const accessDenied = useStore((s) => s.accessDenied);
   const settingsOpen = useStore((s) => s.settingsOpen);
   const workspaceOpen = useStore((s) => s.workspaceOpen);
+  const canvasOpen = useStore((s) => s.canvasOpen);
   const runner = useStore((s) => s.runner);
   const repoPicker = useStore((s) => s.repoPicker);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -46,7 +48,7 @@ export default function App() {
   }, [init]);
 
   // Keep the phone awake while a reply is being written, so locking the screen doesn't cut it off.
-  const working = useStore((s) => s.streamingChatId !== null || s.compactingChatId !== null || s.comparing);
+  const working = useStore((s) => s.streamingChatId !== null || s.compactingChatId !== null || s.comparing || s.canvasEditingChatId !== null);
   useEffect(() => {
     keepScreenAwake(working);
     return () => keepScreenAwake(false);
@@ -98,6 +100,7 @@ export default function App() {
       <div className={`scrim${sidebarOpen ? ' visible' : ''}`} aria-hidden="true" onClick={() => setUi({ sidebarOpen: false })} />
       <ChatView onExpandSidebar={toggleSidebar} />
       {!settingsOpen && <WorkspacePanel />}
+      {!settingsOpen && canvasOpen && <Suspense fallback={null}><CanvasPanel /></Suspense>}
       <SettingsModal />
       {commandPaletteOpen && <CommandPalette onClose={() => setCommandPaletteOpen(false)} />}
       {libraryOpen && <Suspense fallback={null}><AssistantLibrary onClose={() => setLibraryOpen(false)} /></Suspense>}

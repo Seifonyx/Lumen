@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import { canvasFits, normalizeDocuments, replaceCanvasRange, canvasEditPrompt, cleanCanvasReply } from '../../src/lib/canvas';
+const doc={id:'d',name:'Report.md',content:'Before selected after',updatedAt:1};
+assert.equal(replaceCanvasRange(doc.content,doc.content,7,15,'new'),'Before new after');
+assert.equal(replaceCanvasRange('changed',doc.content,7,15,'new'),null);
+for(const [a,b] of [[-1,3],[1,0],[0,100],[0.2,2],[2,2]]) assert.equal(replaceCanvasRange(doc.content,doc.content,a,b,'new'),null);
+assert.ok(canvasEditPrompt(doc,'Shorten',7,15).includes('Selected text:\nselected'));
+assert.throws(()=>canvasEditPrompt(doc,'',7,15));
+assert.equal(cleanCanvasReply('```python\n  x = 1\n```'),'  x = 1');
+assert.equal(cleanCanvasReply('  x = 1\n'),'  x = 1\n');
+assert.equal(normalizeDocuments([doc,doc,null,{...doc,id:'b',content:5}]).length,1);
+assert.equal(normalizeDocuments([{...doc,id:'x'.repeat(100)+'1'},{...doc,id:'x'.repeat(100)+'2'}]).length,1);
+assert.equal(normalizeDocuments([{...doc,content:'a'.repeat(100001)}]).length,0);
+assert.ok(!canvasFits(Array(6).fill(doc)));
+assert.ok(!canvasFits([{...doc,content:'a'.repeat(100001)}]));
+console.log('PASS canvas range isolation, stale edit refusal, normalization, size caps and code indentation');

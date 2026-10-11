@@ -1,4 +1,4 @@
-import { FolderGit2, Images } from 'lucide-react';
+import { FolderGit2, Images, Pencil } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import './touch.css';
 
@@ -6,12 +6,13 @@ interface Props {
   onClose: () => void;
   onFiles: () => void;
   onRepo: () => void;
+  onCanvas: () => void;
   repoName?: string;
   anchor?: { left: number; bottom: number };
 }
 
 /** Phone-style "+" menu: one place for photos, files and a GitHub repository. */
-export default function AttachSheet({ onClose, onFiles, onRepo, repoName, anchor }: Props) {
+export default function AttachSheet({ onClose, onFiles, onRepo, onCanvas, repoName, anchor }: Props) {
   const startY = useRef<number | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
@@ -64,6 +65,7 @@ export default function AttachSheet({ onClose, onFiles, onRepo, repoName, anchor
         }}
       >
         <div className="sheet-grab" aria-hidden="true" />
+        <button type="button" className="sheet-row" onClick={pick(onCanvas)}><span className="sheet-icon"><Pencil size={19} /></span><span className="sheet-text"><span className="sheet-title">Document canvas</span><span className="sheet-hint">Write, import and edit a draft</span></span></button>
         <button type="button" className="sheet-row" onClick={pick(onFiles)}>
           <span className="sheet-icon"><Images size={19} /></span>
           <span className="sheet-text">

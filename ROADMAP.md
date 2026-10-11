@@ -10,7 +10,7 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 | 12 Memory | Implemented with inspection/deletion. |
 | 13 Data analysis | Partial: Python code runner exists; needs uploaded data, pandas, charts and downloads. |
 | 14 Edit uploaded Office files | Partial: reads files and creates new documents; template-preserving editing remains. |
-| 15 Canvas | Partial: repository editor exists; document canvas and selected-text AI edits remain. |
+| 15 Canvas | Implemented in phase 3: document/code drafts, manual edits, selected-text AI proposals with accept/reject/undo, previews, downloads and private sync. Office/PDF imports extract text; template-preserving editing remains under item 14. Check Actions for deployment status. |
 | 16 Free tools | Partial: Gemini search exists; explicit YouTube processing, code execution and disclosed URL reader remain. |
 | 17 Images | Conditional: current Google pricing lists image models without free API access; verify key eligibility before adding. |
 | 18 Arabic interface | Missing: full translation and RTL app navigation (Arabic content already works). |

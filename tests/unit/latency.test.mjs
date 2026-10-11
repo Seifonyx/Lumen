@@ -54,6 +54,11 @@ try {
   // A second actual successful reply creates a usable latency sample.
   for await (const e of runChat({ model: A, messages: [{ role: 'user', text: 'hello' }], options: { quickReply: true } }, new AbortController().signal)) {}
   assert.ok(replyLatency(A) !== null);
+  clearHealth();
+  for (let i = 0; i < 2; i++) {
+    for await (const e of runChat({ model: B, messages: [{ role: 'user', text: 'hello' }], options: { quickReply: true, thinkingModels: [B] } }, new AbortController().signal)) {}
+  }
+  assert.ok(replyLatency(B) !== null, 'reasoning-capable models are measured on simple Auto questions while keeping normal budgets');
   calls = []; payloads = [];
   const opened = await openStream({ provider: 'gemini', name: 'gemini-flash-latest' }, [{ role: 'user', text: 'hello' }], { instructions: '', quickReply: true, signal: new AbortController().signal });
   assert.ok(opened.ok); assert.equal(payloads[0].generationConfig.thinkingConfig.thinkingBudget, undefined, 'moving aliases keep supported defaults');

@@ -128,7 +128,7 @@ function score(m: ModelInfo, task: Task, tokens: number, index: number, total: n
   // A name or provider is only a hint: use recent first-answer timings as a bounded
   // tie-breaker. Heavy tasks retain their capability and quality ranking.
   if (task.quick) {
-    if (t.reasoner && !t.gemini) s -= 2;
+    if (t.reasoner && !t.gemini && !t.fast) s -= 2;
     const ms = replyLatency(m.id);
     if (ms !== null) s += Math.max(-1.5, Math.min(1.5, (4000 - ms) / 3000));
   }

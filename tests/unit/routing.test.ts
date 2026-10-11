@@ -78,3 +78,7 @@ if (peerPlan(peers[0].id).model !== peers[0].id) throw new Error('Speed routing 
 if (peerPlan(AUTO, 'Fix this Python bug').model !== peers[0].id) throw new Error('Speed samples changed a heavy task ranking');
 clearHealth();
 console.log('PASS measured reply speed improves quick Auto choices without changing manual or heavy-task ranking');
+const fastReasoners = [M('gemini:gemini-flash-latest'), M('groq:openai/gpt-oss-20b', {provider: 'groq', search: false, thinking: true})];
+const fastPlan = planRoute({selected: AUTO, enabled: fastReasoners.map(m => m.id), catalog: fastReasoners as any[], text: 'hello', files: [], conversationTokens: 100, search: false, blocked: () => false, left: () => null});
+if (!fastPlan.model.startsWith('groq:')) throw new Error('Quick route penalized a fast reasoning-capable provider');
+console.log('PASS fast reasoning-capable providers remain eligible for quick replies');

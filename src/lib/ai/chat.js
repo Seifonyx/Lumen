@@ -248,7 +248,9 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     }
     if (!failedLate) {
       noteSuccess(id);
-      if (quick && firstAnswerMs !== null) noteReplyLatency(id, firstAnswerMs);
+      // Reasoning-capable models still provide useful speed observations on a
+      // simple Auto question, even when we retain their longer startup budget.
+      if (options.quickReply === true && !needsGemini && firstAnswerMs !== null) noteReplyLatency(id, firstAnswerMs);
     }
     yield { t: 'done' };
     return;

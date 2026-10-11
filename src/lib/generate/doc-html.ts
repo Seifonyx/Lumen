@@ -49,7 +49,7 @@ export function documentHtml(content: string): { body: string; css: string; titl
   }
 
   const css = `
-    .doc{font:11pt/1.55 Calibri,"Segoe UI",Arial,"Noto Sans Arabic",sans-serif;color:#1f1f1f;max-width:780px;margin:0 auto;padding:40px 48px;background:#fff}
+    .doc{font:11pt/1.55 Calibri,"Segoe UI",Arial,"Noto Sans Arabic",sans-serif;color:#1f1f1f;max-width:780px;margin:0 auto;padding:40px 48px;background:#fff;overflow-wrap:anywhere}
     .doc h1,.doc h2{color:${theme};line-height:1.25}
     .doc h1{font-size:20pt;margin:1.2em 0 .4em}.doc h2{font-size:16pt;margin:1.1em 0 .4em}.doc h3{font-size:13pt;margin:1em 0 .3em}
     .doc .doc-title{font-size:26pt;margin:0 0 .2em}.doc .doc-sub{color:#666;font-size:13pt;margin:0 0 1.2em}
@@ -60,7 +60,7 @@ export function documentHtml(content: string): { body: string; css: string; titl
     .doc blockquote{margin:.8em 0;padding:.2em 1em;border-inline-start:3px solid #bbb;color:#555;font-style:italic}
     .doc .callout{font-style:normal;color:#1f1f1f;border-inline-start:5px solid;border-radius:4px;padding:.6em 1em}
     .doc .callout-title{font-weight:700;margin-bottom:.2em}
-    .doc pre{background:#F4F4F2;padding:10px 12px;border-radius:6px;overflow-x:auto;font-size:9.5pt}
+    .doc pre{background:#F4F4F2;padding:10px 12px;border-radius:6px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:9.5pt}
     .doc code{font-family:Consolas,Menlo,monospace}.doc :not(pre)>code{background:#EFEFEC;padding:0 4px;border-radius:3px}
     .doc mark{background:#FFF2A8}.doc a{color:#1F6FB2}
     .doc hr{border:0;border-top:1px solid #bbb;margin:1.2em 0}

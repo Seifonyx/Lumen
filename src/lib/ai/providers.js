@@ -2,7 +2,7 @@
 // as a common sequence of events: { t: 'text' | 'think' | 'sources' | 'notice' | 'error', ... }.
 
 import { parseLimit, readError, readSSE, upstreamError } from './http.js';
-import { isActiveModel, isExcludedModel } from './model-status.js';
+import { isActiveModel, isExcludedModel, isUnavailableFailure } from './model-status.js';
 import { safeVideoUri, toolBlock } from './tool-inputs.js';
 
 // API keys come from the user's settings (stored in their private Firebase document).
@@ -457,6 +457,7 @@ export async function complete({ provider, name }, prompt, { maxTokens = 256, si
       return null;
     }
     const d = await res.json();
+    if (info) info.status = 200;
     if (info && d.usageMetadata) Object.assign(info, { input: d.usageMetadata.promptTokenCount || 0, output: (d.usageMetadata.candidatesTokenCount || 0) + (d.usageMetadata.thoughtsTokenCount || 0) });
     return (d.candidates?.[0]?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text).join('');
   }
@@ -472,9 +473,36 @@ export async function complete({ provider, name }, prompt, { maxTokens = 256, si
     return null;
   }
   const d = await res.json();
+  if (info) info.status = 200;
   if (info && d.usage) Object.assign(info, { input: d.usage.prompt_tokens || 0, output: d.usage.completion_tokens || 0 });
   // Some models write their thinking inline; only the answer is wanted here.
   return (d.choices?.[0]?.message?.content || '').replace(/<think>[\s\S]*?(<\/think>|$)/g, '').trim() || null;
+}
+
+/** One bounded, context-free request. Only an explicit model failure can hide a model.
+ * @returns {Promise<{state: string, status?: number, input?: number, output?: number, limit?: object}>}
+ */
+export async function probeModel(id, signal) {
+  const target = parseModelId(id);
+  if (!target || !hasKey(target.provider) || isExcludedModel(id)) return { state: 'unchecked' };
+  const attempt = new AbortController();
+  const abort = () => attempt.abort();
+  signal.addEventListener('abort', abort, { once: true });
+  if (signal.aborted) abort();
+  const timer = setTimeout(abort, 20_000);
+  const info = {};
+  try {
+    if (attempt.signal.aborted) return { state: 'unchecked' };
+    await complete(target, 'Reply OK.', { maxTokens: 16, signal: attempt.signal, info });
+    if (signal.aborted) return { state: 'unchecked' };
+    return { ...info, state: info.status === 200 ? 'available' : isUnavailableFailure(info.status, info.message) ? 'unavailable' : 'unchecked' };
+  } catch {
+    return { state: 'unchecked' };
+  } finally {
+    clearTimeout(timer);
+    signal.removeEventListener('abort', abort);
+    attempt.abort();
+  }
 }
 
 // ---------------------------------------------------------------- Key safety

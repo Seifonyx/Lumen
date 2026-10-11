@@ -167,6 +167,22 @@ async function run(browser, mobile) {
       window.visualViewport.dispatchEvent(new Event('resize'));
     });
     await page.waitForFunction(() => document.documentElement.classList.contains('kb-open'));
+    await page.evaluate(() => {
+      Object.defineProperty(window.visualViewport, 'offsetTop', { configurable: true, value: 130 });
+      window.visualViewport.dispatchEvent(new Event('scroll'));
+    });
+    await page.waitForFunction(() => document.documentElement.style.getPropertyValue('--vv-top') === '130px');
+    check(await page.locator('.app').evaluate(el => Math.abs(el.getBoundingClientRect().top - 130) < 1), 'iOS simulation: late keyboard pan realigns app instead of leaving a blank strip');
+    await page.evaluate(() => {
+      document.dispatchEvent(new TouchEvent('touchstart', { touches: [new Touch({ identifier: 2, target: document.body })] }));
+      Object.defineProperty(window.visualViewport, 'offsetTop', { configurable: true, value: 160 });
+      window.visualViewport.dispatchEvent(new Event('scroll'));
+    });
+    await page.waitForTimeout(70);
+    check(await page.evaluate(() => document.documentElement.style.getPropertyValue('--vv-top') === '130px'), 'iOS simulation: drag keeps app position stable');
+    await page.evaluate(() => document.dispatchEvent(new TouchEvent('touchend', { touches: [] })));
+    await page.waitForFunction(() => document.documentElement.style.getPropertyValue('--vv-top') === '160px');
+    check(true, 'iOS simulation: gesture end reconciles viewport offset');
     const touch = async (selector) => page.locator(selector).evaluate((target) => {
       const point = new Touch({ identifier: 1, target, clientX: 30, clientY: 100 });
       const event = new TouchEvent('touchmove', { bubbles: true, cancelable: true, touches: [point], targetTouches: [point], changedTouches: [point] });
@@ -184,6 +200,36 @@ async function run(browser, mobile) {
     const modalScrollable = await page.locator('.modal-body').evaluate((body) => { body.style.maxHeight = '100px'; return body.scrollHeight > body.clientHeight; });
     check(modalScrollable && !(await touch('.modal-body')), 'iOS simulation: scrollable dialogs stay usable with the keyboard open');
     await page.keyboard.press('Escape');
+    for (const offset of [0, 95, 0]) {
+      await page.evaluate(() => {
+        document.activeElement?.blur();
+        Object.defineProperty(window.visualViewport, 'height', { configurable: true, value: 844 });
+        Object.defineProperty(window.visualViewport, 'offsetTop', { configurable: true, value: 0 });
+        window.visualViewport.dispatchEvent(new Event('resize'));
+      });
+      await page.waitForFunction(() => !document.documentElement.classList.contains('kb-open'));
+      await page.locator('.composer textarea').focus();
+      await page.evaluate(offset => {
+        Object.defineProperty(window.visualViewport, 'height', { configurable: true, value: 460 });
+        Object.defineProperty(window.visualViewport, 'offsetTop', { configurable: true, value: offset });
+        window.visualViewport.dispatchEvent(new Event('resize'));
+      }, offset);
+      await page.waitForFunction(offset => document.documentElement.classList.contains('kb-open') && document.documentElement.style.getPropertyValue('--vv-top') === `${offset}px`, offset);
+      check(await page.locator('.composer').evaluate((el, offset) => el.getBoundingClientRect().bottom <= offset + 460 + 1, offset), `iOS simulation: composer fits after keyboard reopens at offset ${offset}`);
+    }
+    await page.click('.menu-btn');
+    await page.click('.sidebar .new-chat');
+    await page.waitForSelector('.main.is-empty');
+    await page.click('.menu-btn');
+    await page.locator('.chat-open').first().click();
+    await page.waitForSelector('.msg.assistant .markdown');
+    await page.locator('.composer textarea').focus();
+    await page.evaluate(() => {
+      Object.defineProperty(window.visualViewport, 'offsetTop', { configurable: true, value: 95 });
+      window.visualViewport.dispatchEvent(new Event('scroll'));
+    });
+    await page.waitForFunction(() => document.documentElement.style.getPropertyValue('--vv-top') === '95px');
+    check(await page.locator('.messages').evaluate(el => el.clientHeight > 0) && await page.locator('.composer').evaluate(el => el.getBoundingClientRect().bottom <= 555 + 1), 'iOS simulation: opening a saved chat keeps history and composer visible above keyboard');
   }
   check(errors.length === 0, `${label}: no browser errors (${errors.join(' | ')})`);
   await ctx.close();

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { openRouterDailyLimit, setKeys } from './lib/ai/providers.js';
+import { openRouterDailyLimit, probeModel, setKeys } from './lib/ai/providers.js';
 import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage } from './lib/api';
 import { keepModelChoice, isExcludedModel } from './lib/ai/model-status.js';
 import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
@@ -94,6 +94,7 @@ interface State {
   logout(): void;
   saveApiKeys(keys: ApiKeys): Promise<void>;
   loadCatalog(): Promise<void>;
+  checkModels(signal: AbortSignal, progress: (text: string) => void): Promise<void>;
   updateSettings(patch: Partial<Settings>): void;
   toast(text: string, kind?: Toast['kind']): void;
   dismissToast(id: string): void;
@@ -160,6 +161,7 @@ let controller: AbortController | null = null;
 let compareController: AbortController | null = null;
 let compactController: AbortController | null = null;
 let canvasController: AbortController | null = null;
+let modelCheckController: AbortController | null = null;
 const canvasSyncTimers = new Map<string, ReturnType<typeof setTimeout>>();
 let sync: ChatSync | null = null;
 let usage: UsageTracker | null = null;
@@ -661,6 +663,7 @@ export const useStore = create<State>((set, get) => {
       window.addEventListener('online', onNet);
       window.addEventListener('offline', onNet);
       watchUser(async (user) => {
+        modelCheckController?.abort();
         const generation = ++accountGeneration;
         get().stop();
         controller = null; compactController = null; compareController = null; canvasController = null;
@@ -779,6 +782,7 @@ export const useStore = create<State>((set, get) => {
     },
 
     async saveApiKeys(keys) {
+      modelCheckController?.abort();
       const uid = get().user?.uid;
       if (!uid) return;
       const before = get().keys;
@@ -798,6 +802,40 @@ export const useStore = create<State>((set, get) => {
       if (added.length && catalog) {
         const extra = catalog.defaults.filter((id) => added.some((k) => id.startsWith(prefix[k]!)) && !get().settings.enabledModels.includes(id));
         if (extra.length) get().updateSettings({ enabledModels: [...get().settings.enabledModels, ...extra] });
+      }
+    },
+
+    async checkModels(signal, progress) {
+      modelCheckController?.abort();
+      const check = new AbortController();
+      modelCheckController = check;
+      const abort = () => check.abort();
+      signal.addEventListener('abort', abort, { once: true });
+      if (signal.aborted) abort();
+      const generation = accountGeneration;
+      const models = [...(get().catalog?.models || [])];
+      const paused = new Set<string>();
+      let available = 0, removed = 0, unchecked = 0;
+      try {
+        for (const [index, model] of models.entries()) {
+          if (check.signal.aborted || generation !== accountGeneration) return;
+          progress(`Checking ${index + 1} of ${models.length}: ${model.label}`);
+          const provider = model.id.split(':')[0];
+          if (paused.has(provider)) { unchecked++; continue; }
+          const result = await probeModel(model.id, check.signal);
+          if (check.signal.aborted || generation !== accountGeneration) return;
+          if (result.status === 200) usage?.record(model.id, { requests: 1, input: result.input || 0, output: result.output || 0 });
+          if (result.limit) usage?.block(model.id, result.limit as LimitInfo);
+          if (result.state === 'unavailable') { hideUnavailableModel(model.id); removed++; }
+          else if (result.state === 'available') available++;
+          else unchecked++;
+          // A bad key or quota shouldn't trigger requests for every remaining model.
+          if ([401, 403, 429].includes(result.status || 0) && result.state !== 'unavailable') paused.add(provider);
+        }
+        progress(`${available} available · ${removed} hidden · ${unchecked} inconclusive. Inconclusive models are kept.`);
+      } finally {
+        signal.removeEventListener('abort', abort);
+        if (modelCheckController === check) modelCheckController = null;
       }
     },
 

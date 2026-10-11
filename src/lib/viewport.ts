@@ -2,8 +2,8 @@ import { isIOS } from './device';
 
 /**
  * iOS Safari can pan the visual viewport to keep a focused input visible while the keyboard opens.
- * Keep the app aligned to the visible viewport without following every scroll-offset change: updating
- * the app's top position during a finger drag makes the whole interface jitter.
+ * Follow late keyboard pans as well as resizes. Defer offset changes during a finger drag to
+ * keep scrolling stable, then reconcile when the gesture finishes.
  */
 export function initViewport(): void {
   const vv = window.visualViewport;
@@ -15,6 +15,7 @@ export function initViewport(): void {
   let layoutHeight = root.clientHeight;
   let keyboardOpen = false;
   let frame = 0;
+  let touching = false;
 
   const isEditableFocused = (): boolean => {
     const active = document.activeElement;
@@ -25,13 +26,13 @@ export function initViewport(): void {
 
   const apply = () => {
     frame = 0;
+    // Pinch zoom also shrinks visualViewport; it isn't a keyboard.
+    if (Math.abs(vv.scale - 1) > 0.05) return;
     const keyboard = layoutHeight - vv.height > 120;
 
     if (keyboard) {
-      // The height follows keyboard animation, but freeze top offset once open. iOS changes
-      // offsetTop during touch drags; following it makes the topbar flicker under the finger.
       root.style.setProperty('--vv-h', `${vv.height}px`);
-      if (!keyboardOpen) root.style.setProperty('--vv-top', `${vv.offsetTop}px`);
+      if (!touching || !keyboardOpen) root.style.setProperty('--vv-top', `${vv.offsetTop}px`);
     }
 
     if (keyboard !== keyboardOpen) {
@@ -74,7 +75,16 @@ export function initViewport(): void {
   };
 
   vv.addEventListener('resize', schedule);
-  // Deliberately don't follow visualViewport scroll events: they are often caused by finger drags.
+  vv.addEventListener('scroll', schedule);
+  document.addEventListener('touchstart', () => { touching = true; }, { passive: true });
+  const endTouch = (event: TouchEvent) => {
+    touching = event.touches.length > 0;
+    if (!touching) schedule();
+  };
+  document.addEventListener('touchend', endTouch, { passive: true });
+  document.addEventListener('touchcancel', endTouch, { passive: true });
+  window.addEventListener('pageshow', schedule);
+  document.addEventListener('visibilitychange', schedule);
   window.addEventListener('resize', schedule);
   window.addEventListener('orientationchange', () => {
     window.setTimeout(() => {

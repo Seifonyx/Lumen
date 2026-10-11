@@ -107,6 +107,11 @@ function ModelsTab() {
   const catalogError = useStore((s) => s.catalogError);
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const checkModels = useStore((s) => s.checkModels);
+  const modelCheck = useRef<AbortController | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [checkResult, setCheckResult] = useState('');
+  useEffect(() => () => { modelCheck.current?.abort(); }, []);
   const [editing, setEditing] = useState<Layout | null>(null);
   const [filter, setFilter] = useState<'all' | ProviderId>('all');
   const [view, setView] = useState<'saved' | 'browse' | 'layouts'>(() => useStore.getState().settingsTab === 'layouts' ? 'layouts' : 'saved');
@@ -209,13 +214,22 @@ function ModelsTab() {
       <div className="settings-group">
         <div className="settings-group-title">
           <span>Add models</span>
-          <button className="link-btn small" disabled={refreshing} onClick={async () => { setRefreshing(true); await loadCatalog(); setRefreshing(false); }}>
+          <button className="link-btn small" disabled={refreshing || checking} onClick={async () => { setRefreshing(true); await loadCatalog(); setRefreshing(false); }}>
             <RefreshCw size={13} className={refreshing ? 'spin' : ''} /> Refresh
           </button>
         </div>
         <div className="settings-card pad-card">
           {catalogError && <p className="error-text small" dir="auto">{catalogError}</p>}
-          {!!settings.unavailableModels?.length && <p className="muted small">{settings.unavailableModels.length} unavailable model{settings.unavailableModels.length === 1 ? '' : 's'} hidden. <button className="link-btn small" disabled={refreshing} onClick={async () => { setRefreshing(true); update({ unavailableModels: [] }); await loadCatalog(); setRefreshing(false); }}>Restore hidden models</button></p>}
+          <p className="muted small">Check access with one tiny request per model using your keys. Uses your provider allowance; no chats or files are sent.</p>
+          <button className="btn ghost small" disabled={!checking && (refreshing || !catalog?.models.length)} onClick={async () => {
+            if (checking) { modelCheck.current?.abort(); setCheckResult('Stopped. Models already confirmed unavailable stay hidden.'); setChecking(false); return; }
+            const controller = new AbortController(); modelCheck.current = controller; setChecking(true);
+            try { await checkModels(controller.signal, setCheckResult); }
+            catch { if (!controller.signal.aborted) setCheckResult('Check interrupted. Unconfirmed models are kept.'); }
+            finally { if (!controller.signal.aborted) setChecking(false); }
+          }}>{checking ? 'Stop checking' : 'Check model availability'}</button>
+          {checkResult && <p className="muted small" role="status">{checkResult}</p>}
+          {!!settings.unavailableModels?.length && <p className="muted small">{settings.unavailableModels.length} unavailable model{settings.unavailableModels.length === 1 ? '' : 's'} hidden. <button className="link-btn small" disabled={refreshing || checking} onClick={async () => { setRefreshing(true); update({ unavailableModels: [] }); await loadCatalog(); setRefreshing(false); }}>Restore hidden models</button></p>}
           <label className="search" style={{ margin: 0 }}>
             <Search size={16} />
             <input type="search" aria-label="Search available models" placeholder="Search models" value={query} onChange={(e) => { setQuery(e.target.value); setVisibleModels(24); }} />

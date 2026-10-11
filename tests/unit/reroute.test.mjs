@@ -75,7 +75,7 @@ timeouts.idleMs = 600;
 
 const A = 'gemini:model-a', B = 'gemini:model-b', C = 'openrouter:vendor/c:free';
 let failures = 0;
-async function scenario(name, setup, expect, { abortAfter } = {}) {
+async function scenario(name, setup, expect, { abortAfter, options = {} } = {}) {
   clearHealth();
   behaviour = setup;
   calls.length = 0;
@@ -83,7 +83,7 @@ async function scenario(name, setup, expect, { abortAfter } = {}) {
   if (abortAfter) setTimeout(() => ctrl.abort(), abortAfter);
   const events = [];
   const t0 = Date.now();
-  for await (const ev of runChat({ model: A, fallbacks: [B, C], messages: [{ role: 'user', text: 'hi' }] }, ctrl.signal)) events.push(ev);
+  for await (const ev of runChat({ model: A, fallbacks: [B, C], messages: [{ role: 'user', text: 'hi' }], options }, ctrl.signal)) events.push(ev);
   const text = events.filter((e) => e.t === 'text').map((e) => e.text).join('');
   const model = events.filter((e) => e.t === 'model').map((e) => e.id).at(-1);
   const notices = events.filter((e) => e.t === 'notice').map((e) => e.text);
@@ -136,5 +136,6 @@ await scenario('transient overload cools down without permanent exclusion', {'mo
 setKeys({gemini: 'replacement', openrouter: 'o'});
 if(isCoolingDown(A)) { failures++; console.log('FAIL key change must clear health'); }
 else console.log('PASS transient health clears on key/account changes');
+await scenario('explicit layout priority is kept before general fallback pool', {'model-a': '503'}, r => r.model === B, {options: {preferredModels: [A,B]}});
 console.log(failures ? `\n${failures} FAILED` : '\nALL PASSED');
 process.exit(failures ? 1 : 0);

@@ -453,7 +453,7 @@ export const useStore = create<State>((set, get) => {
       const memoryNote = masker ? masker.mask(rawMemory).text : rawMemory;
       const projectInstructions = settings.projects?.find((p) => p.id === chat?.projectId)?.instructions || '';
       const instructions = [settings.customInstructions, projectInstructions, chat.assistant?.instructions, layout?.instructions].filter(Boolean).join('\n\n');
-      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { search: chat.task ? chat.task.search : settings.webSearch, requireSearch: Boolean(chat.task?.search), codeExecution: Boolean(lastUser?.codeExecution), customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: masker ? masker.mask(workspaceNote).text : workspaceNote } });
+      body = buildChatBody({ model: chosen, fallbacks, messages: wire, options: { preferredModels: layoutModels, search: chat.task ? chat.task.search : settings.webSearch, requireSearch: Boolean(chat.task?.search), codeExecution: Boolean(lastUser?.codeExecution), customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: masker ? masker.mask(workspaceNote).text : workspaceNote } });
     } catch (e) {
       get().toast((e as Error).message, 'error');
       return;

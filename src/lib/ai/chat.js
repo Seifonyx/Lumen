@@ -69,7 +69,11 @@ const available = (id) => {
 
 export async function* runChat({ model, fallbacks = [], messages, options = {} }, signal) {
   const needsGemini = Boolean(options.codeExecution) || Boolean(options.requireSearch) || hasVideo(messages);
-  const queue = attemptQueue([model, ...fallbacks].filter((id, i, all) => id && all.indexOf(id) === i && available(id) && (!needsGemini || toolModel(id))));
+  const candidates = [model, ...fallbacks].filter((id, i, all) => id && all.indexOf(id) === i && available(id) && (!needsGemini || toolModel(id)));
+  const preferred = options.preferredModels?.length ? new Set([model, ...options.preferredModels]) : null;
+  const queue = preferred
+    ? [...attemptQueue(candidates.filter(id => preferred.has(id))), ...attemptQueue(candidates.filter(id => !preferred.has(id)))]
+    : attemptQueue(candidates);
   if (queue.length === 0) {
     yield { t: 'error', text: needsGemini ? 'This tool request requires an enabled Gemini model and a Google API key. Check Settings → Models and API keys.' : `No API key for ${model}. Add your keys in Settings → API keys.` };
     yield { t: 'done' };

@@ -365,7 +365,8 @@ async function* geminiEvents(body) {
   for await (const d of readSSE(body)) {
     if (d.error) {
       const text = d.error.message || 'Google returned an error.';
-      yield { t: 'error', text, status: d.error.code, limit: d.error.code === 429 ? parseLimit(d.error, text) : null };
+      const code = Number(d.error.code) || 500;
+      yield { t: 'error', text, status: code, limit: code === 429 ? parseLimit(d.error, text) : null };
       return;
     }
     if (d.usageMetadata) usage = d.usageMetadata;
@@ -419,7 +420,8 @@ async function* openRouterEvents(body) {
   for await (const d of readSSE(body)) {
     if (d.error) {
       const text = d.error.message || 'OpenRouter returned an error.';
-      yield { t: 'error', text, status: d.error.code, limit: d.error.code === 429 ? parseLimit(d.error, text) : null };
+      const code = Number(d.error.code) || 500;
+      yield { t: 'error', text, status: code, limit: code === 429 ? parseLimit(d.error, text) : null };
       return;
     }
     if (d.usage) yield { t: 'usage', input: d.usage.prompt_tokens || 0, output: d.usage.completion_tokens || 0 };

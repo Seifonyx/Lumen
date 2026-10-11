@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {buildPullReview,loadPullReview,pullNumber,reviewDraft,REVIEW_LIMIT} from '../../src/lib/pull-review';
+const repo={owner:'demo',repo:'app'};
+assert.equal(pullNumber('#42',repo),42);assert.equal(pullNumber('https://github.com/DEMO/app/pull/42/files',repo),42);
+for(const input of ['0','-1','1.5','https://github.com.evil.com/demo/app/pull/42','https://github.com/other/app/pull/42','https://user@github.com/demo/app/pull/42','http://github.com/demo/app/pull/42'])assert.throws(()=>pullNumber(input,repo));
+const meta={title:'Fix parser',body:'Description',changed_files:2,head:{sha:'a'.repeat(40),label:'demo:fix'},base:{sha:'b'.repeat(40),label:'demo:main'},updated_at:'2026-10-11T12:00:00Z'};
+const rows=[{filename:'src/parser.ts',status:'renamed',previous_filename:'old.ts',additions:1,deletions:1,patch:'@@ -1 +1 @@\n-return null;\n+return result;'},{filename:'image.png',status:'added',additions:0,deletions:0}];
+let review=buildPullReview(repo,42,meta,rows);assert.equal(review.files[0].previous,'old.ts');assert.equal(review.warnings.length,1);assert.ok(review.text.includes('previous path: old.ts'));assert.ok(reviewDraft(review).prompt.includes('Do not claim tests were run'));assert.ok(reviewDraft(review).file.text?.includes(meta.head.sha));
+review=buildPullReview(repo,42,{...meta,changed_files:101},[{...rows[0],patch:'x'.repeat(200_000)}]);assert.ok(review.text.length<=REVIEW_LIMIT);assert.ok(review.files[0].omitted);assert.equal(review.warnings.length,2);
+let urls:string[]=[];globalThis.fetch=async(url:any)=>{urls.push(String(url));return Response.json(String(url).includes('/files?')?rows:meta);};
+await loadPullReview(repo,'42',new AbortController().signal);assert.equal(urls.length,3);assert.ok(urls[1].endsWith('/files?per_page=100&page=1'));
+let call=0;globalThis.fetch=async()=>Response.json(++call===2?rows:call===3?{...meta,head:{...meta.head,sha:'c'.repeat(40)}}:meta);
+await assert.rejects(()=>loadPullReview(repo,'42',new AbortController().signal),/changed while loading/);
+console.log('PASS PR input validation, rename/missing/shortened patches, bounded review context, source SHA and changed-snapshot refusal');

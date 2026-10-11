@@ -8,6 +8,7 @@ import { currentFile, repoTree, suggestBranch } from '../lib/workspace';
 import { selectCurrentChat, useStore } from '../store';
 import type { Chat } from '../types';
 import DiffView from './DiffView';
+import PullReviewModal from './PullReviewModal';
 
 const CodeEditor = lazy(() => import('./CodeEditor'));
 
@@ -303,12 +304,15 @@ export default function WorkspacePanel() {
   const setUi = useStore((s) => s.setUi);
   const disconnectRepo = useStore((s) => s.disconnectRepo);
   const [tab, setTab] = useState<'files' | 'changes'>('files');
+  const [reviewOpen,setReviewOpen]=useState(false);
+  const accountId=useStore(state=>state.user?.uid);
   const [file, setFile] = useState<string | null>(null);
   // Expanded folders survive opening a file and coming back.
   const [openDirs, setOpenDirs] = useState<Set<string>>(new Set());
   useEffect(() => {
     setFile(null);
     setOpenDirs(new Set());
+    setReviewOpen(false);
   }, [chat?.id, chat?.repo?.branch]);
   if (!open || !chat?.repo) return null;
   const count = Object.keys(chat.changes || {}).length;
@@ -332,8 +336,10 @@ export default function WorkspacePanel() {
         <button className={tab === 'changes' ? 'active' : ''} onClick={() => setTab('changes')}>Changes{count ? ` (${count})` : ''}</button>
       </div>
       <div className="ws-body">
+        {!file && <div className="ws-review-action"><button className="btn small" onClick={()=>setReviewOpen(true)}>Review pull request</button></div>}
         {tab === 'files' ? (file ? <FileView chat={chat} path={file} onBack={() => setFile(null)} /> : <FileTree chat={chat} onOpen={setFile} open={openDirs} setOpen={setOpenDirs} />) : <Changes chat={chat} />}
       </div>
+      {reviewOpen && <PullReviewModal key={`${accountId}:${chat.id}:${repo.owner}/${repo.repo}@${repo.branch}`} chat={chat} onClose={()=>setReviewOpen(false)} />}
     </aside>
   );
 }

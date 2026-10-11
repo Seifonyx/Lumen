@@ -13,7 +13,6 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 | 15 Canvas | Implemented in phase 3: document/code drafts, manual edits, selected-text AI proposals with accept/reject/undo, previews, downloads and private sync. Office/PDF imports extract text; template-preserving editing remains under item 14. Check Actions for deployment status. |
 | 16 Free tools | Implemented and deployed in phase 5b: explicit YouTube video input, Gemini Python execution with visible code/results, and a disclosed keyless Jina web reader with draft review. All 27 browser suites and CI passed; live/preview phone and desktop checks passed. Gemini search already exists. |
 | 17 Images | Conditional: current Google pricing lists image models without free API access; verify key eligibility before adding. |
-| 18 Arabic interface | Missing: full translation and RTL app navigation (Arabic content already works). |
 | 19 Assistants / prompts | Implemented in phase 2: saved helpers with instructions/model, starter helpers, reusable editable prompts and private account sync. Check Actions for deployment status. |
 | 20 Compare | Implemented, two/three models with per-model usage. |
 | 21 Organization | Projects, tags and branching implemented; separate folders remain. |
@@ -24,7 +23,7 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 | 26 Open-time tasks | Implemented and deployed in phase 5c: one-off/daily reminders and AI requests, private schedule sync, atomic occurrence claims, time zones/DST, privacy review, separate result chats and manual retry. Runs only with the app open, visible and online. All 29 local browser suites and CI passed; live/preview desktop and phone checks passed. |
 | 27 Desktop polish | Partial: installable PWA; desktop controls/shortcuts need audit. |
 | 28 Performance / accessibility | Partial: responsive UI, font sizes, focus and gestures; long-history virtualization/full accessibility audit remain. |
-| 29 Bigger jobs | Partial: repository reads/edits/diffs/commits/PR creation; plan approval, finer acceptance, PR review and commit undo need audit/implementation. |
+| 29 Bigger jobs | Partial: repository reads/edits/diffs/commits/PR creation; plan approval, finer acceptance, commit undo need audit/implementation. PR review is implemented in phase 6; release checks are in progress. |
 
 ## Release sequence
 
@@ -33,6 +32,8 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 3. Document canvas and selected-text editing.
 4. Uploaded data analysis and artifact downloads.
 5. Phase 5a: whole-chat exports and a confirmed shared-device account isolation fix. Phase 5b: free tools. Phase 5c: open-time tasks.
-6. Larger remaining features, each in a separately verified release.
+6. Coding improvements: pull-request review first, then plan approval, finer edit acceptance and commit undo. Each ships in a separately verified release.
+
+Arabic interface support was removed from scope at the user’s request.
 
 Keep user-visible controls compact. Preserve free-only operation, account privacy, drafts and safe confirmations for external changes. Deploy each phase to live and preview before starting the next.

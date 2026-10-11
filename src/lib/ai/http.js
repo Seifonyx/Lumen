@@ -16,7 +16,8 @@ export async function* readSSE(body) {
         buffer = buffer.slice(nl + 1);
         if (!line.startsWith('data:')) continue;
         const data = line.slice(5).trim();
-        if (!data || data === '[DONE]') continue;
+        if (data === '[DONE]') return;
+        if (!data) continue;
         try {
           yield JSON.parse(data);
         } catch {
@@ -25,6 +26,8 @@ export async function* readSSE(body) {
       }
     }
   } finally {
+    // End markers and early fallback must close the body, not leave a live connection behind.
+    void reader.cancel().catch(() => {});
     reader.releaseLock();
   }
 }

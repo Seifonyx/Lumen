@@ -1,4 +1,4 @@
-import { FolderGit2, Images, Pencil, ChartNoAxesCombined } from 'lucide-react';
+import { FolderGit2, FolderKanban, Images, Pencil, ChartNoAxesCombined } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import './touch.css';
 
@@ -8,6 +8,8 @@ interface Props {
   onRepo: () => void;
   onCanvas: () => void;
   onAnalysis: () => void;
+  onProject?: () => void;
+  projectName?: string;
   repoName?: string;
   anchor?: { left: number; bottom: number };
 }
@@ -68,6 +70,15 @@ export default function AttachSheet({ onClose, onFiles, onRepo, onCanvas, onAnal
         <div className="sheet-grab" aria-hidden="true" />
         <button type="button" className="sheet-row" onClick={pick(onCanvas)}><span className="sheet-icon"><Pencil size={19} /></span><span className="sheet-text"><span className="sheet-title">Document canvas</span><span className="sheet-hint">Write, import and edit a draft</span></span></button>
         <button type="button" className="sheet-row" onClick={pick(onAnalysis)}><span className="sheet-icon"><ChartNoAxesCombined size={19} /></span><span className="sheet-text"><span className="sheet-title">Data analysis</span><span className="sheet-hint">Calculate, clean and chart locally</span></span></button>
+        {onProject && (
+          <button type="button" className="sheet-row" onClick={pick(onProject)}>
+            <span className="sheet-icon"><FolderKanban size={19} /></span>
+            <span className="sheet-text">
+              <span className="sheet-title">{projectName ? `Project (${projectName})` : 'Project settings'}</span>
+              <span className="sheet-hint">Instructions, reference files &amp; model</span>
+            </span>
+          </button>
+        )}
         <button type="button" className="sheet-row" onClick={pick(onFiles)}>
           <span className="sheet-icon"><Images size={19} /></span>
           <span className="sheet-text">

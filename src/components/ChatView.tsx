@@ -1,4 +1,4 @@
-import { FolderGit2, GitBranch, ArrowDown, FileSpreadsheet, FileText, Menu, PanelLeftOpen, ScrollText, SquarePen } from 'lucide-react';
+import { FolderGit2, FolderKanban, GitBranch, ArrowDown, FileSpreadsheet, FileText, Menu, PanelLeftOpen, ScrollText, SquarePen } from 'lucide-react';
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { activeSummary } from '../lib/compact';
 import { AUTO } from '../lib/routing';
@@ -22,13 +22,16 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   const catalogError = useStore((s) => s.catalogError);
   const streaming = useStore((s) => s.streamingChatId !== null && s.streamingChatId === s.currentId);
   const canvasEditing = useStore(s => s.canvasEditingChatId !== null);
-  const defaultModel = useStore((s) => s.settings.projects?.find((p) => p.id === (chat ? chat.projectId : s.activeProjectId))?.defaultModel || s.settings.defaultModel);
+  const activeProjectId = useStore((s) => s.activeProjectId);
+  const projects = useStore((s) => s.settings.projects) || [];
+  const project = projects.find((p) => p.id === (chat ? chat.projectId : activeProjectId));
+  const defaultModel = project?.defaultModel || useStore((s) => s.settings.defaultModel);
   const compacting = useStore((s) => s.compactingChatId !== null && s.compactingChatId === s.currentId);
   const syncPaused = useStore((s) => s.firebaseUsage.level === 'paused' && s.authed === true);
   const resetAt = useStore((s) => s.firebaseUsage.resetAt);
   const online = useStore((s) => s.online);
   const workspaceOpen = useStore((s) => s.workspaceOpen);
-  const { setUi, newChat, setChatModel } = useStore.getState();
+  const { setUi, newChat, setChatModel, openProjectManager } = useStore.getState();
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const [showDown, setShowDown] = useState(false);
@@ -76,6 +79,19 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
         </button>
         <ModelPicker value={model} onChange={setChatModel} />
         <div className="spacer" />
+        {project && (
+          <button
+            type="button"
+            className="project-topbar-pill"
+            onClick={() => openProjectManager(project.id)}
+            title={`Project: ${project.name} · Click to configure`}
+            aria-label={`Project: ${project.name}`}
+          >
+            <FolderKanban size={14} />
+            <span className="project-topbar-name">{project.name}</span>
+            {Boolean(project.files?.length) && <span className="project-topbar-count">{project.files.length}</span>}
+          </button>
+        )}
         {Boolean(chat?.documents?.length) && <button className="icon-btn" aria-label="Open canvas" title="Open canvas" onClick={() => useStore.getState().openCanvas()}><FileText size={18} /></button>}
         {chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}
         {chat?.repo && (
@@ -115,9 +131,54 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
       <div className="messages" ref={scroller}>
         {empty ? (
           <div className="empty">
-            <span className="welcome-eyebrow">Your space to think and create</span>
-            <h1>What would you like to create?</h1>
-            <p className="muted">Ask a question, explore an idea, or work with your files.</p>
+            {project ? (
+              <div className="project-landing">
+                <div className="project-landing-header">
+                  <div className="project-landing-icon">
+                    <FolderKanban size={26} />
+                  </div>
+                  <div className="project-landing-meta">
+                    <span className="welcome-eyebrow">Project workspace</span>
+                    <h1>{project.name}</h1>
+                  </div>
+                </div>
+                {project.instructions && (
+                  <div className="project-landing-instructions">
+                    <span className="project-landing-label">Instructions</span>
+                    <p className="project-instructions-text">{project.instructions}</p>
+                  </div>
+                )}
+                <div className="project-landing-knowledge">
+                  <div className="project-knowledge-head">
+                    <span className="project-landing-label">Project knowledge</span>
+                    <span className="badge-pill">{project.files?.length || 0} / 5 files</span>
+                  </div>
+                  {project.files && project.files.length > 0 ? (
+                    <div className="project-knowledge-chips">
+                      {project.files.map((f) => (
+                        <div key={f.id || f.name} className="project-knowledge-chip" title={f.name}>
+                          <FileText size={14} />
+                          <span>{f.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="muted small">No reference files yet. Upload reference documents or style guides to ground conversations.</p>
+                  )}
+                  <div className="project-landing-actions">
+                    <button type="button" className="btn small" onClick={() => openProjectManager(project.id)}>
+                      <FolderKanban size={14} /> Manage project & files
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <span className="welcome-eyebrow">Your space to think and create</span>
+                <h1>What would you like to create?</h1>
+                <p className="muted">Ask a question, explore an idea, or work with your files.</p>
+              </>
+            )}
           </div>
         ) : (
           <div className="thread">
@@ -152,18 +213,37 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
         starterActions={empty ? (
           <>
             <div className="suggestions" aria-label="Ideas to get started">
-              <button className="suggestion" onClick={() => setUi({ repoPicker: true })}>
-                <GitBranch size={18} />
-                <span>Code on a GitHub repo</span>
-              </button>
-              {SUGGESTIONS.map(({ icon: Icon, title, prompt }) => (
-                <button key={title} className="suggestion" onClick={() => prefillComposer(prompt)}>
-                  <Icon size={18} />
-                  <span>{title}</span>
-                </button>
-              ))}
+              {project ? (
+                <>
+                  <button className="suggestion" onClick={() => prefillComposer(`Summarize the key information and goals of ${project.name} based on the attached files and instructions.`)}>
+                    <ScrollText size={18} />
+                    <span>Summarize project</span>
+                  </button>
+                  <button className="suggestion" onClick={() => prefillComposer(`What are the key points in the reference files of this project, and how should we proceed?`)}>
+                    <FileText size={18} />
+                    <span>Review knowledge files</span>
+                  </button>
+                  <button className="suggestion" onClick={() => prefillComposer(`Help me plan the next tasks and milestones for ${project.name}.`)}>
+                    <FileSpreadsheet size={18} />
+                    <span>Plan next tasks</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="suggestion" onClick={() => setUi({ repoPicker: true })}>
+                    <GitBranch size={18} />
+                    <span>Code on a GitHub repo</span>
+                  </button>
+                  {SUGGESTIONS.map(({ icon: Icon, title, prompt }) => (
+                    <button key={title} className="suggestion" onClick={() => prefillComposer(prompt)}>
+                      <Icon size={18} />
+                      <span>{title}</span>
+                    </button>
+                  ))}
+                </>
+              )}
             </div>
-            <InstallHint />
+            {!project && <InstallHint />}
           </>
         ) : undefined}
       />

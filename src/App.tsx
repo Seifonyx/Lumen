@@ -11,6 +11,7 @@ import WorkspacePanel from './components/WorkspacePanel';
 import RepoPicker from './components/RepoPicker';
 import CommandPalette from './components/CommandPalette';
 import ComparisonResultsModal from './components/ComparisonResultsModal';
+import ProjectManager from './components/ProjectManager';
 import { useStore } from './store';
 import { keepScreenAwake } from './lib/wakelock';
 import { installSidebarGestures } from './lib/sidebar-gesture';
@@ -33,6 +34,8 @@ export default function App() {
   const runner = useStore((s) => s.runner);
   const exportChatId = useStore((s) => s.exportChatId);
   const repoPicker = useStore((s) => s.repoPicker);
+  const projectManagerOpen = useStore((s) => s.projectManagerOpen);
+  const closeProjectManager = useStore((s) => s.closeProjectManager);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [libraryTab, setLibraryTab] = useState<'assistants' | 'prompts' | 'tools' | 'tasks'>('assistants');
@@ -113,6 +116,7 @@ export default function App() {
       {libraryOpen && <Suspense fallback={null}><AssistantLibrary key={accountId} initialTab={libraryTab} onClose={() => setLibraryOpen(false)} /></Suspense>}
       <ComparisonResultsModal />
       {repoPicker && <RepoPicker onClose={() => setUi({ repoPicker: false })} />}
+      {projectManagerOpen && <ProjectManager onClose={closeProjectManager} />}
       <PreviewModal />
       {exportChatId && <Suspense fallback={null}><ChatExportModal /></Suspense>}
       {runner && (

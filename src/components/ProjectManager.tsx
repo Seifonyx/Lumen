@@ -12,13 +12,21 @@ export default function ProjectManager({ onClose }: { onClose: () => void }) {
   const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
   const catalog = useStore((s) => s.catalog);
   const enabledModels = useStore((s) => s.settings.enabledModels);
+  const editingProjectId = useStore((s) => s.editingProjectId);
   const { saveProject, deleteProject, selectProject, toast } = useStore.getState();
-  const [selected, setSelected] = useState<Project | null>(null);
+  const [selected, setSelected] = useState<Project | null>(() => projects.find((p) => p.id === editingProjectId) || null);
   const [name, setName] = useState('');
   const [instructions, setInstructions] = useState('');
   const [defaultModel, setDefaultModel] = useState('');
   const [files, setFiles] = useState<Attachment[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingProjectId) {
+      const found = projects.find((p) => p.id === editingProjectId);
+      if (found) setSelected(found);
+    }
+  }, [editingProjectId, projects]);
 
   useEffect(() => {
     if (!selected) return;

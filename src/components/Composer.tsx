@@ -1,5 +1,5 @@
 import ChecksBar from './ChecksBar';
-import { Columns2, ListChecks, FileCode2, GitBranch, ShieldCheck, ArrowUp, FileText, Globe, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
+import { Columns2, ListChecks, FileCode2, FolderKanban, GitBranch, ShieldCheck, ArrowUp, FileText, Globe, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ACCEPT, readAttachment } from '../lib/files/read';
 import { canListen, listen } from '../lib/speech';
@@ -336,6 +336,30 @@ export default function Composer({ model, meter, starterActions }: { model: stri
       >
         {chat?.repo && <ChecksBar chat={chat} />}
         {codeExecution && <div className="repo-strip"><span className="ctx-chip">Gemini calculation · runs on Google<button type="button" className="icon-btn xs" aria-label="Remove calculation tool" onClick={() => setCodeExecution(false)}><X size={12} /></button></span></div>}
+        {project && (
+          <div className="project-strip">
+            <button
+              type="button"
+              className="project-chip"
+              onClick={() => useStore.getState().openProjectManager(project.id)}
+              title="Project instructions and knowledge are active in this chat. Click to configure."
+            >
+              <FolderKanban size={13} />
+              <span className="project-chip-name">{project.name}</span>
+              {projectFiles.length > 0 && (
+                <span className="badge" title={`${projectFiles.length} reference file${projectFiles.length === 1 ? '' : 's'}`}>
+                  {projectFiles.length}
+                </span>
+              )}
+            </button>
+            {projectFiles.map((file) => (
+              <span key={file.id || file.name} className="ctx-chip" title={`${file.name} (${formatBytes(file.size)})`}>
+                <FileText size={12} />
+                <span className="ctx-chip-name">{file.name}</span>
+              </span>
+            ))}
+          </div>
+        )}
         {chat?.repo && (
           <div className="repo-strip">
             <button type="button" className="repo-chip" onClick={() => setUi({ workspaceOpen: true })} title="Open the repository panel">
@@ -458,6 +482,8 @@ export default function Composer({ model, meter, starterActions }: { model: stri
           onRepo={() => setUi(chat?.repo ? { workspaceOpen: true } : { repoPicker: true })}
           repoName={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : undefined}
           anchor={touch ? undefined : sheetAnchor}
+          onProject={() => useStore.getState().openProjectManager(project?.id)}
+          projectName={project?.name}
         />
       )}
       {compareOpen && <CompareModelsModal prompt={text.trim()} files={pending.flatMap((p) => p.file ? [p.file] : [])} onClose={() => setCompareOpen(false)} onCompare={compare} />}

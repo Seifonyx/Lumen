@@ -58,6 +58,7 @@ globalThis.fetch = async (url, init = {}) => {
     case 'think-then-error': return stream([g('Let me think…', true), { error: { code: 500, message: 'boom' } }], {}, init.signal);
     case 'think-then-hang': return stream([g('thinking…', true)], { hangAfter: true }, init.signal);
     case 'drop-mid': return stream([g('Partial answer '), g('more'), g('never')], { dropAfter: 2 }, init.signal);
+    case 'finished-open': return stream([g('Finished answer'), {...gEnd, usageMetadata: {promptTokenCount: 2, candidatesTokenCount: 3}}], {hangAfter: true}, init.signal);
     case 'leading-spaces': return stream([g('  '), g('answer'), gEnd], {}, init.signal);
     case 'slow': return stream([g('a'), g('b'), g('c'), gEnd], { delay: 300 }, init.signal);
     default:
@@ -137,5 +138,6 @@ setKeys({gemini: 'replacement', openrouter: 'o'});
 if(isCoolingDown(A)) { failures++; console.log('FAIL key change must clear health'); }
 else console.log('PASS transient health clears on key/account changes');
 await scenario('explicit layout priority is kept before general fallback pool', {'model-a': '503'}, r => r.model === B, {options: {preferredModels: [A,B]}});
+await scenario('Gemini final packet finishes even if the socket stays open', {'model-a': 'finished-open'}, r => r.model === A && r.text === 'Finished answer' && !r.error && r.ms < 300 && r.events.some(e => e.t === 'usage' && e.output === 3));
 console.log(failures ? `\n${failures} FAILED` : '\nALL PASSED');
 process.exit(failures ? 1 : 0);

@@ -387,6 +387,8 @@ async function* geminiEvents(body) {
     const reason = cand?.finishReason;
     if (reason === 'MAX_TOKENS') yield { t: 'notice', text: 'The reply hit the length limit. Say "continue" for the rest.' };
     else if (reason && reason !== 'STOP') yield { t: 'notice', text: `Google stopped the reply (${reason}).` };
+    // Google's final packet includes a finish reason and usage; don't wait on a lingering socket.
+    if (reason && d.usageMetadata) break;
   }
   if (usage) yield { t: 'usage', input: usage.promptTokenCount || 0, output: (usage.candidatesTokenCount || 0) + (usage.thoughtsTokenCount || 0) };
 }

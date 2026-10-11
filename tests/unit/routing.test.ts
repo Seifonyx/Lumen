@@ -60,3 +60,9 @@ const q = pick(['vendor/model-70b:free', 'google/gemini-x', 'vendor/tiny-8b:free
 console.log(`${!/70b/.test(q) ? 'PASS' : 'FAIL'}  quick chat avoids the 70B model → ${q}`);
 const h = pick(['vendor/model-8b:free', 'vendor/model-70b:free', 'vendor/model-mini:free'], 'Write a detailed technical report as a Word document');
 console.log(`${/70b/.test(h) ? 'PASS' : 'FAIL'}  heavy task picks the 70B model → ${h}`);
+
+// A long saved-model list must not drown task suitability in ordering bonuses.
+const crowded = [...Array.from({length: 80}, (_, i) => M('openrouter:vendor/model-70b-'+i+':free', {vision: false, thinking: false})), M('openrouter:vendor/special-coder:free', {vision: false, thinking: false})];
+const routed = planRoute({selected: AUTO, enabled: crowded.map(m => m.id), catalog: crowded as any[], text: 'Fix this python code bug', files: [], conversationTokens: 100, search: false, blocked: () => false, left: () => null});
+if (!routed.model.includes('special-coder')) throw new Error('Crowded catalogue overwhelmed task score');
+console.log('PASS adding all models keeps task suitability ahead of list order');

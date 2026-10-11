@@ -4,6 +4,7 @@
 
 import type { Attachment, ModelInfo } from '../types';
 import { hasRtl } from './util';
+import { isCoolingDown } from './ai/health.js';
 
 export const AUTO = 'auto';
 
@@ -107,7 +108,7 @@ const REASONS: [keyof Task, string][] = [
 
 function score(m: ModelInfo, task: Task, tokens: number, index: number, total: number, left: number | null): number {
   const t = traits(m);
-  let s = (total - index) * 0.4; // respect the user's order as a tie-breaker
+  let s = total ? ((total - index) / total) * 1.6 : 0; // bounded tie-breaker even with hundreds of models
   // Big "Pro" models have the smallest free limits, so they only get an edge on heavy work.
   const heavy = task.code || task.reasoning || task.files || task.long;
   s += t.power === 1 ? 1 : 2;
@@ -142,13 +143,14 @@ export function planRoute(input: RouteInput): RoutePlan {
   const info = new Map(input.catalog.map((m) => [m.id, m]));
   const tokens = input.conversationTokens;
   const task = analyze(input);
-  const known = input.enabled.filter((id) => info.has(id));
+  const known = input.enabled.filter((id) => info.has(id) && !capable(info.get(id), task, tokens));
   const ranked = known
     .map((id, i) => ({ id, s: score(info.get(id)!, task, tokens, i, known.length, input.left(id)) }))
     .sort((a, b) => b.s - a.s)
     .map((x) => x.id);
   // Models at their limit go last; they're kept only as a final resort.
-  const order = [...ranked.filter((id) => !input.blocked(id)), ...ranked.filter((id) => input.blocked(id))];
+  const blocked = (id: string) => input.blocked(id) || isCoolingDown(id);
+  const order = [...ranked.filter((id) => !blocked(id)), ...ranked.filter(blocked)];
   const unknown = input.enabled.filter((id) => !info.has(id));
   const all = [...order, ...unknown];
   const name = (id: string) => info.get(id)?.label || id.split(':').slice(1).join(':');

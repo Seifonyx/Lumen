@@ -4,12 +4,13 @@
 import { parseLimit, readError, readSSE, upstreamError } from './http.js';
 import { isActiveModel, isExcludedModel, isUnavailableFailure } from './model-status.js';
 import { safeVideoUri, toolBlock } from './tool-inputs.js';
+import { clearHealth } from './health.js';
 
 // API keys come from the user's settings (stored in their private Firebase document).
 const keys = { gemini: '', openrouter: '', groq: '', cerebras: '' };
 export function setKeys(next) {
   const clean = Object.fromEntries(Object.keys(keys).map((k) => [k, (next[k] || '').trim()]));
-  if (Object.keys(keys).some((k) => clean[k] !== keys[k])) cache = null;
+  if (Object.keys(keys).some((k) => clean[k] !== keys[k])) { cache = null; clearHealth(); }
   Object.assign(keys, clean);
 }
 
@@ -52,11 +53,12 @@ function prettyGemini(m) {
 }
 
 async function geminiCatalog() {
+  const signal = AbortSignal.timeout(15_000);
   const models = [];
   let pageToken = '';
   const seen = new Set();
   do {
-    const res = await fetch(`${GEMINI_BASE}/models?pageSize=1000${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`, { headers: { 'x-goog-api-key': keys.gemini } });
+    const res = await fetch(`${GEMINI_BASE}/models?pageSize=1000${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`, { signal, headers: { 'x-goog-api-key': keys.gemini } });
     if (!res.ok) throw new Error(`Google: ${await upstreamError(res)}`);
     const page = await res.json();
     if (!Array.isArray(page.models)) throw new Error('Google: invalid model catalogue');
@@ -84,7 +86,7 @@ async function geminiCatalog() {
 }
 
 async function openRouterCatalog() {
-  const res = await fetch(`${OPENROUTER_BASE}/models`, { headers: { authorization: `Bearer ${keys.openrouter}` } });
+  const res = await fetch(`${OPENROUTER_BASE}/models`, { signal: AbortSignal.timeout(15_000), headers: { authorization: `Bearer ${keys.openrouter}` } });
   if (!res.ok) throw new Error(`OpenRouter: ${await upstreamError(res)}`);
   const { data } = await res.json();
   if (!Array.isArray(data)) throw new Error('OpenRouter: invalid model catalogue');
@@ -130,7 +132,7 @@ async function compatCatalog(provider) {
   const { base, label } = COMPAT[provider];
   let res;
   try {
-    res = await fetch(`${base}/models`, { headers: { authorization: `Bearer ${keys[provider]}` } });
+    res = await fetch(`${base}/models`, { signal: AbortSignal.timeout(15_000), headers: { authorization: `Bearer ${keys[provider]}` } });
   } catch {
     throw new Error(`${label}: couldn't be reached from this browser`);
   }

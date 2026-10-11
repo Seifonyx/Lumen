@@ -6,14 +6,48 @@ import { buildInstructions } from './instructions.js';
 import { complete, hasGemini, hasKey, openStream, parseModelId } from './providers.js';
 import { isUnavailableFailure } from './model-status.js';
 import { hasVideo, toolModel } from './tool-inputs.js';
+import { isCoolingDown, noteFailure, noteSuccess } from './health.js';
 
 const MAX_ATTEMPTS = 5;
 export const timeouts = {
   // A model that sends nothing for this long is treated as failed and the next one is tried.
-  firstResponseMs: 45_000,
+  firstResponseMs: 25_000,
   // Once answering, a model that goes silent this long is considered stuck.
-  idleMs: 90_000,
+  idleMs: 45_000,
+  firstAnswerMs: 60_000,
+  noAnswerMs: 120_000,
+  totalMs: 600_000,
 };
+
+// Keep the chosen model first, then try another provider before more models from the same one.
+// This gives every connected provider a chance within the five actual requests.
+export function attemptQueue(ids) {
+  const remaining = [...ids];
+  const queue = [];
+  const counts = new Map();
+  while (remaining.length) {
+    const healthy = remaining.filter(id => !isCoolingDown(id));
+    const pool = healthy.length ? healthy : remaining;
+    const fewest = Math.min(...pool.map(id => counts.get(id.split(':')[0]) || 0));
+    const index = queue.length ? remaining.findIndex(id => pool.includes(id) && (counts.get(id.split(':')[0]) || 0) === fewest) : 0;
+    const [id] = remaining.splice(index, 1);
+    queue.push(id);
+    const provider = id.split(':')[0];
+    counts.set(provider, (counts.get(provider) || 0) + 1);
+  }
+  return queue;
+}
+
+// Race the wait itself, not just fetch's abort handling (some stalled streams don't settle).
+function waitFor(promise, signal) {
+  return new Promise((resolve, reject) => {
+    const abort = () => { cleanup(); reject(Object.assign(new Error('Stopped'), { name: 'AbortError' })); };
+    const cleanup = () => signal.removeEventListener('abort', abort);
+    signal.addEventListener('abort', abort, { once: true });
+    Promise.resolve(promise).then(value => { cleanup(); resolve(value); }, error => { cleanup(); reject(error); });
+    if (signal.aborted) abort();
+  });
+}
 
 function describe({ status, message = '' }) {
   if (status === 'timeout') return "didn't respond in time";
@@ -35,7 +69,7 @@ const available = (id) => {
 
 export async function* runChat({ model, fallbacks = [], messages, options = {} }, signal) {
   const needsGemini = Boolean(options.codeExecution) || Boolean(options.requireSearch) || hasVideo(messages);
-  const queue = [model, ...fallbacks].filter((id, i, all) => id && all.indexOf(id) === i && available(id) && (!needsGemini || toolModel(id))).slice(0, MAX_ATTEMPTS);
+  const queue = attemptQueue([model, ...fallbacks].filter((id, i, all) => id && all.indexOf(id) === i && available(id) && (!needsGemini || toolModel(id))));
   if (queue.length === 0) {
     yield { t: 'error', text: needsGemini ? 'This tool request requires an enabled Gemini model and a Google API key. Check Settings → Models and API keys.' : `No API key for ${model}. Add your keys in Settings → API keys.` };
     yield { t: 'done' };
@@ -46,12 +80,16 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
   const label = (id) => id.split(':').slice(1).join(':');
 
   const deadProviders = new Set();
+  const started = Date.now();
+  let answered = false;
+  let attempts = 0;
 
   for (const id of queue) {
     if (signal.aborted) return;
     const target = available(id);
     // A rejected key fails every model that uses it, so don't try them one by one.
     if (deadProviders.has(target.provider)) continue;
+    if (attempts++ >= MAX_ATTEMPTS || Date.now() - started >= (answered ? timeouts.totalMs : timeouts.noAnswerMs)) break;
 
     // Each attempt gets its own cancel switch, so a stuck model can be abandoned without stopping the reply.
     const attempt = new AbortController();
@@ -62,6 +100,11 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
       timedOut = true;
       attempt.abort();
     }, timeouts.firstResponseMs);
+    let answerTimer = setTimeout(() => { timedOut = true; attempt.abort(); }, timeouts.firstAnswerMs);
+    let deadline = setTimeout(() => { timedOut = true; attempt.abort(); }, Math.max(1, (answered ? timeouts.totalMs : timeouts.noAnswerMs) - (Date.now() - started)));
+    const setTotalDeadline = () => {
+      deadline = setTimeout(() => { timedOut = true; attempt.abort(); }, Math.max(1, timeouts.totalMs - (Date.now() - started)));
+    };
     const keepAlive = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
@@ -71,13 +114,15 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     };
     const cleanup = () => {
       clearTimeout(timer);
+      clearTimeout(answerTimer);
+      clearTimeout(deadline);
       signal.removeEventListener('abort', stopAttempt);
       attempt.abort(); // closes the connection if we gave up on this model
     };
 
     let opened;
     try {
-      opened = await openStream(target, messages, { instructions, search: Boolean(options.search), requireSearch: Boolean(options.requireSearch), codeExecution: Boolean(options.codeExecution), signal: attempt.signal });
+      opened = await waitFor(openStream(target, messages, { instructions, search: Boolean(options.search), requireSearch: Boolean(options.requireSearch), codeExecution: Boolean(options.codeExecution), signal: attempt.signal }), attempt.signal);
     } catch (e) {
       opened = { ok: false, status: timedOut ? 'timeout' : 'network', message: timedOut ? '' : e.message };
     }
@@ -88,8 +133,9 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     if (!opened.ok) {
       cleanup();
       failures.push({ id, status: opened.status, message: opened.message });
+      noteFailure(id, opened.status);
       if (isUnavailableFailure(opened.status, opened.message)) yield { t: 'unavailable', id };
-      if (opened.status === 401 || opened.status === 403) deadProviders.add(target.provider);
+      if (opened.status === 401 || (opened.status === 403 && !isUnavailableFailure(opened.status, opened.message))) deadProviders.add(target.provider);
       if (opened.limit) yield { t: 'limit', id, ...opened.limit };
       continue;
     }
@@ -116,14 +162,21 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     let thought = false;
     const held = [];
     let failedEarly = null;
+    let failedLate = false;
+    const iterator = opened.events[Symbol.asyncIterator]();
     try {
-      for await (const ev of opened.events) {
-        keepAlive();
+      for (;;) {
+        const next = await waitFor(iterator.next(), attempt.signal);
+        if (next.done) break;
+        const ev = next.value;
+        // Metadata must not extend the wait for a real response indefinitely.
+        if ((ev.t === 'text' || ev.t === 'think') && ev.text?.trim()) keepAlive();
         if (ev.t === 'error' && !wrote) {
           failedEarly = { id, status: ev.status, message: ev.text };
           if (ev.limit) yield { t: 'limit', id, ...ev.limit };
           break;
         }
+        if (ev.t === 'error') { failedLate = true; noteFailure(id, ev.status || 500); }
         if (ev.t === 'usage') {
           yield { ...ev, id };
           continue;
@@ -132,11 +185,20 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
           held.push(ev);
           continue;
         }
+        if (!wrote && ev.t === 'text' && !ev.text?.trim()) {
+          held.push(ev); // retain leading whitespace, but don't treat it as a useful answer
+          continue;
+        }
         yield* announce();
         if (ev.t === 'think') thought = true;
         if (ev.t === 'text') {
           if (!wrote) {
             wrote = true;
+            answered = true;
+            clearTimeout(answerTimer);
+            // A useful answer can stream longer, but still has a hard overall deadline.
+            clearTimeout(deadline);
+            setTotalDeadline();
             yield* held.splice(0);
           }
         }
@@ -148,21 +210,28 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
         return;
       }
       if (!wrote) failedEarly = { id, status: timedOut ? 'timeout' : 'network', message: timedOut ? '' : e.message };
-      else yield { t: 'error', text: timedOut ? 'The model stopped responding partway through. Tap Try again or Retry with another model.' : `Connection to the model dropped: ${e.message}` };
+      else {
+        failedLate = true;
+        noteFailure(id, timedOut ? 'timeout' : 'network');
+        yield { t: 'error', text: timedOut ? 'The model stopped responding partway through. Tap Try again or Retry with another model.' : `Connection to the model dropped: ${e.message}` };
+      }
     }
     cleanup();
+    void iterator.return?.().catch(() => {});
     if (!failedEarly && !wrote) {
       const blocked = held.find((h) => h.t === 'notice' && /blocked|stopped the reply/i.test(h.text));
       failedEarly = { id, status: blocked ? 'blocked' : 'empty', message: blocked ? blocked.text : '' };
     }
     if (failedEarly) {
       failures.push(failedEarly);
+      noteFailure(id, failedEarly.status);
       if (isUnavailableFailure(failedEarly.status, failedEarly.message)) yield { t: 'unavailable', id };
       // Throw away the failed model's partial thinking before the next model starts.
       if (thought) yield { t: 'discard' };
-      if (failedEarly.status === 401 || failedEarly.status === 403) deadProviders.add(target.provider);
+      if (failedEarly.status === 401 || (failedEarly.status === 403 && !isUnavailableFailure(failedEarly.status, failedEarly.message))) deadProviders.add(target.provider);
       continue;
     }
+    if (!failedLate) noteSuccess(id);
     yield { t: 'done' };
     return;
   }
@@ -187,9 +256,10 @@ export async function makeTitle(text, model, skip = () => false) {
   if (available(model)) candidates.push(model);
   const prompt = `Write a short title (2 to 6 words) for a chat that starts with the message below. Use the same language as the message. Reply with the title only, no quotes or punctuation at the end.\n\nMessage:\n${text.slice(0, 2000)}`;
   for (const id of candidates) {
-    if (skip(id)) continue;
+    if (skip(id) || isCoolingDown(id)) continue;
     try {
-      const out = await complete(parseModelId(id), prompt);
+      const timeout = AbortSignal.timeout(10_000);
+      const out = await waitFor(complete(parseModelId(id), prompt, { signal: timeout }), timeout);
       const title = (out || '').split('\n').find((l) => l.trim())?.replace(/^["'#*\s]+|["'*.\s]+$/g, '').slice(0, 80);
       if (title) return { title, model: id };
     } catch {

@@ -21,7 +21,7 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 | 23 Voice | Partial: dictation/read-aloud; continuous conversation remains. |
 | 24 Sharing / chat export | Whole-chat Word/Markdown and PDF preview/system print implemented and deployed in phase 5a, including sources and Canvas. Desktop/phone checks passed on live and preview. Opt-in public links remain. |
 | 25 Attachment sync | Partial: thumbnails/small extracted text sync; small original binaries remain. |
-| 26 Open-time tasks | Phase 5c implemented, release checks in progress: one-off/daily reminders and AI requests, private schedule sync, atomic occurrence claims, time zones/DST, privacy review, separate result chats and manual retry. Runs only with the app open, visible and online. |
+| 26 Open-time tasks | Implemented and deployed in phase 5c: one-off/daily reminders and AI requests, private schedule sync, atomic occurrence claims, time zones/DST, privacy review, separate result chats and manual retry. Runs only with the app open, visible and online. All 29 local browser suites and CI passed; live/preview desktop and phone checks passed. |
 | 27 Desktop polish | Partial: installable PWA; desktop controls/shortcuts need audit. |
 | 28 Performance / accessibility | Partial: responsive UI, font sizes, focus and gestures; long-history virtualization/full accessibility audit remain. |
 | 29 Bigger jobs | Partial: repository reads/edits/diffs/commits/PR creation; plan approval, finer acceptance, PR review and commit undo need audit/implementation. |

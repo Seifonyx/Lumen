@@ -40,7 +40,7 @@ Arabic interface support and separate chat folders were removed from scope at th
 
 ## New enhancement sequence
 
-1. Multi-provider integration: Mistral, Cohere, NVIDIA NIM, Hugging Face, DeepSeek, Alibaba Cloud, Cloudflare Workers AI and Aion Labs. Implemented candidate; release checks pending. Additional APIs require explicit billing opt-in; NVIDIA/Cloudflare require a user-controlled relay. GitHub Models was retired July 30, 2026 and is explained as unavailable.
+1. Multi-provider integration: Mistral, Cohere, NVIDIA NIM, Hugging Face, DeepSeek, Alibaba Cloud, Cloudflare Workers AI and Aion Labs. Integration code deployed and hosted-verified on 2026-10-12 at desktop/320/390/430px and phone landscape; local Chromium/WebKit checks passed. Additional APIs require explicit billing opt-in. NVIDIA/Cloudflare relay implementation and setup guide are included; relay deployment awaits the user's choice. GitHub Models was retired July 30, 2026 and is explained as unavailable. Stopped before Task 2, awaiting confirmation.
 2. Visual/mobile redesign, especially Projects: awaiting confirmation after Task 1.
 3. Sent-message navigation timeline: awaiting confirmation after Task 2.
 

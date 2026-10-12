@@ -5,7 +5,7 @@
 - Private repository: Seifonyx/Model-Router, main. Live: https://model-router.web.app. Preview: https://model-router--dev-82jv5mm2.web.app.
 - React 19, TypeScript, Vite, Zustand; Firebase Hosting/Auth/Firestore on Spark. AI providers and GitHub are called from the browser using the user's keys. Preserve free-only operation.
 - User wants a coding partner, a clean professional phone/desktop UI and sequential tested deployments. Tests, fixes, pushing main and deployment are authorized. Deploy and check each phase before the next. Keep this handoff small; old pasted handoff instructions were revoked.
-- Arabic interface and separate chat folders were removed from scope. ROADMAP.md is the feature/gap inventory. Individual edit acceptance is deployed; latest-commit undo is the current release.
+- Arabic interface and separate chat folders were removed from scope. ROADMAP.md is the feature/gap inventory. Individual edit acceptance and latest-commit undo are deployed and verified.
 
 ## UI conventions
 
@@ -43,4 +43,4 @@
 
 - Run npm test, npm run typecheck, npm run build and npm run test:e2e:ci (Node 22, Java 21, Firebase Auth/Firestore emulators, Playwright Chromium). Browser fixtures use isolated accounts and mocked AI/GitHub; analysis tests run real Python. Preserve account-isolation.cjs, account-sync.cjs and sync.cjs coverage when touching private/synced state.
 - Main pushes run .github/workflows/tests.yml. Manually dispatch deploy.yml after local/CI success; it deploys live and dev preview from the same build. Match deployed JS/CSS assets to the tested build, then run feature/account-isolation checks on both sites using MR_TEST_URL. These use fresh isolated browser profiles, not production user records.
-- Latest verified release: chat performance 8a79445 (CI 38157597317, deployment 38158747120). Unit/type/build and all 34 browser suites passed in CI and locally; three local download suites required rerunning browser/server/emulators together with approved permissions. Live/preview assets matched index-BBofTlqS.js and index-B4m8w136.css. fast-route, smooth-chat, reliability and account-isolation passed on both sites at desktop/320/390px. Provider replies are mocked in tests; real availability is checked in-app. Long-code fixture rendering tasks over 50ms fell from 38–48 to 4.
+- Latest verified release: coding phases 8/9, code 6556824 (CI 38161980621; deployment 38202174083, 2026-10-12). Unit/type/build and all 36 browser suites passed locally and in CI. Live/preview match index-BQZm06XK.js and index-WwVdWNKZ.css; commit-undo, edit-review and account-isolation passed on both sites at desktop/320/390px. Phase 8 was separately deployed as 15e788b (deployment 38161169963) and hosted-checked before phase 9 began. Tests mock GitHub/AI and use isolated profiles; no real GitHub repositories or user keys are exercised. PR invalid-link tests count PR requests only, excluding background indexing.

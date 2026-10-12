@@ -1,6 +1,6 @@
 # Roadmap status
 
-Audit: 2026-10-11. Only mark a feature complete after its working implementation is deployed and checked.
+Audit: 2026-10-12. Only mark a feature complete after its working implementation is deployed and checked.
 
 | Item | Status / remaining work |
 | --- | --- |
@@ -23,7 +23,7 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 | 26 Open-time tasks | Implemented and deployed in phase 5c: one-off/daily reminders and AI requests, private schedule sync, atomic occurrence claims, time zones/DST, privacy review, separate result chats and manual retry. Runs only with the app open, visible and online. All 29 local browser suites and CI passed; live/preview desktop and phone checks passed. |
 | 27 Desktop polish | Partial: installable PWA; desktop controls/shortcuts need audit. |
 | 28 Performance / accessibility | Partial: immediate first text, batched long replies, deferred syntax highlighting, background chat naming, responsive UI, font sizes, focus and gestures. Long-history virtualization/full accessibility audit remain. |
-| 29 Bigger jobs | Partial: repository reads/edits/diffs/commits/PR creation; PR review implemented and deployed in phase 6: snapshot diff preview, source/SHA attachment, AI review request, privacy checks and explicit incomplete coverage. All 30 local browser suites and release CI passed; live/preview desktop and phone checks passed. Plan approval implemented and deployed in phase 7: ordered steps/files, approve/revise/reject, implementation draft with privacy checks, proposal gates, workspace/device binding and explicit user review checklist. All 31 final-source local browser suites and release CI passed; live/preview desktop and phone plan/account checks passed. Finer edit acceptance and whole-commit undo remain. |
+| 29 Bigger jobs | Implemented: repository reads/edits/diffs/commits/PR creation, pull-request review (phase 6), plan approval (phase 7), individual changed-block acceptance/rejection (phase 8), and latest-commit undo (phase 9). Undo creates a revert commit preserving history and the exact previous file tree; only latest single-parent commits are supported. Stale reviews, changed branches/accounts/keys and uncommitted work are guarded. Both new phases deployed and checked on live/preview at desktop/320/390px; all 36 browser suites, unit/type/build checks and final CI passed. |
 
 ## Release sequence
 
@@ -32,8 +32,8 @@ Audit: 2026-10-11. Only mark a feature complete after its working implementation
 3. Document canvas and selected-text editing.
 4. Uploaded data analysis and artifact downloads.
 5. Phase 5a: whole-chat exports and a confirmed shared-device account isolation fix. Phase 5b: free tools. Phase 5c: open-time tasks.
-6. Coding improvements: phase 6 pull-request review and phase 7 plan approval deployed and verified. Next: finer edit acceptance, then whole-commit undo. Each ships in a separately verified release.
+6. Coding improvements: phases 6 (PR review), 7 (plan approval), 8 (individual edit acceptance) and 9 (latest-commit undo) deployed and verified. Phases 8 and 9 shipped sequentially, with live/preview checks before starting the next.
 
-Arabic interface support was removed from scope at the user’s request.
+Arabic interface support and separate chat folders were removed from scope at the request of the user.
 
 Keep user-visible controls compact. Preserve free-only operation, account privacy, drafts and safe confirmations for external changes. Deploy each phase to live and preview before starting the next.

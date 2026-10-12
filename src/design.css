@@ -1,73 +1,404 @@
-/* Refined design system: typography, spacing, color palette adjustments, and mobile/iPhone safe-area improvements.\n   Goals:\n   - Slightly larger base font and improved font stacks for clarity.\n   - Consistent rhythm and reduced clutter in chat column.\n   - Bigger touch targets for mobile (44px minimum) and improved safe-area handling for iPhones.\n   - Subtle shadows and stronger component hierarchy for better visual polish.\n*/\n:root{\n  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;\n  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;\n  --base-size: 16px; /* used to derive scalable sizes */\n  --fs: 1rem; /* base font size */\n  --line: 1.55;\n}\n\n/* Theme variables (kept from original but slightly tuned) */\n:root{\n  --bg: #fbfbfa;\n  --surface: #ffffff;\n  --surface-2: #f6f6f4;\n  --surface-3: #efefec;\n  --sidebar: #f3f3ef;\n  --text: #232623;\n  --text-2: #616a61;\n  --text-3: #7a8076;\n  --border: #e7e8e2;\n  --border-strong: #d7dbd3;\n  --input-border: #dee1d8;\n  --accent: #2f6b58; /* slightly greener, keeps brand identity */\n  --accent-hover: #254f43;\n  --accent-soft: #e9f1ec;\n  --accent-text: #ffffff;\n  --user-bubble: #f4f4ef;\n  --code-bg: #f6f6f4;\n  --focus: #3b8169;\n  --ring: rgb(47 107 88 / 0.10);\n  --radius: 16px;\n  --radius-sm: 10px;\n  --sidebar-w: 260px;\n  --shadow: 0 4px 16px rgb(26 30 26 / 0.06), 0 12px 36px rgb(26 30 26 / 0.04);\n  --shadow-lg: 0 12px 48px rgb(26 30 26 / 0.10), 0 32px 80px rgb(26 30 26 / 0.06);\n}\n\n:root[data-theme='dark']{\n  --bg:#151915; --surface:#1e241f; --surface-2:#262c26; --surface-3:#343a33;\n  --sidebar:#121512; --text:#f4f7f2; --text-2:#bdc6ba; --text-3:#98a192;\n  --border:#2e352e; --border-strong:#394338; --input-border:#394338;\n  --accent:#bfe0c6; --accent-hover:#d6ead6; --accent-soft:#1c2c22; --accent-text:#173223;\n  --user-bubble:#222826; --code-bg:#151815; --focus:#bfe0c6; --ring: rgb(191 224 198 / 0.12);\n  --shadow: 0 6px 28px rgb(0 0 0 / 0.28);\n  --shadow-lg: 0 20px 64px rgb(0 0 0 / 0.36);\n}\n\n/* Global readability and rhythm */\nhtml,body,#root{height:100%;}
-body{font-family:var(--font-sans);font-size:var(--base-size);line-height:var(--line);-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text);}
-#root{user-select:none;-webkit-user-select:none;}
 
-/* Topbar improvements: safe-area handling and clearer visual hierarchy */
-.topbar{min-height:64px;padding-inline:max(16px, env(safe-area-inset-left));padding-top:env(safe-area-inset-top);padding-bottom:8px;border-bottom:0;background:var(--bg);display:flex;align-items:center;gap:12px}
-.topbar .icon-btn{display:inline-grid;place-items:center;border-radius:12px;border:0;background:transparent;padding:6px;min-width:44px;min-height:44px}
-.topbar .icon-btn svg{width:20px;height:20px}
-.topbar .expand-sidebar{display:inline-grid}
-
-/* Composer and writing area: center alignment, readable width, safe area bottom inset */
-.messages{flex:1 1 auto;overflow:auto}
-.thread{max-width:880px;padding: clamp(18px, 3.5vw, 36px) 24px 64px;margin-inline:auto}
-.composer-wrap{padding-inline:max(20px, env(safe-area-inset-left));padding-bottom:max(16px, env(safe-area-inset-bottom));}
-.composer{max-width:760px;border-radius:22px;padding:16px;background:var(--surface);box-shadow:var(--shadow);margin-inline:auto}
-.composer textarea{font-size:clamp(15px,1.0rem,18px);line-height:1.6;padding:8px 10px;border-radius:10px}
-
-/* Message bubbles and spacing: tighter vertical rhythm and clearer hierarchy */
-.msg{margin-bottom:20px}
-.msg.user .bubble{border-radius:20px;padding:12px 16px;background:var(--user-bubble);color:var(--text)}
-.msg.assistant .bubble{padding:10px 14px}
-.markdown{font-size:clamp(15px,1rem,17px);line-height:1.7}
-
-/* Make code blocks more distinct */
-.markdown pre{background:var(--code-bg);padding:12px;border-radius:12px;overflow:auto}
-
-/* Touch targets: ensure >=44px touch area on interactive elements */
-.icon-btn, .btn, .tool-btn, .send-btn{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center}
-.tool-btn{border-radius:10px;padding:8px}
-.send-btn{width:44px;height:44px;border-radius:44px}
-
-/* Thread container responsiveness */
-@media (max-width:899px){
-  .topbar{min-height:56px;padding-inline:max(12px, env(safe-area-inset-left));}
-  .thread{padding:18px 16px 90px}
-  .composer{border-radius:20px;padding:12px}
+:root {
+  --font-sans: Inter, "SF Pro Display", "Segoe UI", sans-serif;
+  --font-mono: "SFMono-Regular", "SFMono", ui-monospace, monospace;
+  --font-size-base: 16px;
+  --shadow-soft: 0 6px 28px rgb(17 24 39 / 0.08);
+  --shadow-card: 0 10px 28px rgb(17 24 39 / 0.08);
 }
 
-/* Phone-specific: ensure safe-area insets on full-screen panels (iPhone notch, home indicator) */
-@media (max-width:720px){
-  .canvas-panel, .modal, .sheet-popover-backdrop .sheet{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
-  .main{padding-bottom:env(safe-area-inset-bottom)}
+html, body, #root {
+  height: 100%;
 }
 
-/* Buttons and interactive affordances: focus and hover */
-.button, .btn, .icon-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:12px}
-.icon-btn:hover{background:var(--surface-2)}
-
-/* Sidebar: keep distinct but slightly softer */
-.sidebar{gap:8px;padding-inline:14px;background:var(--sidebar)}
-.sidebar .chat-row{border-radius:12px}
-
-/* Thread visual polish: spacing and max width */
-.thread { background: transparent }
-.msg { transition: transform .12s ease, box-shadow .12s ease }
-.msg:hover{transform:translateY(-1px)}
-
-/* Accessibility: improved contrast for small text */
-.muted, .small{color:var(--text-2)}
-
-/* Ensure selection handles remain usable on mobile */
-select,input,textarea{font-family:var(--font-sans)}
-
-/* Preserve existing utility overrides for very small screens */
-@media (max-width:420px){
-  .thread{padding:16px 12px 74px}
-  .composer textarea{font-size:15px}
+body {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Subtle elevated cards */
-.card{background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow)}
+button, input, textarea, select {
+  font: inherit;
+}
 
-/* End of refined styles */
+button, .icon-btn, .tool-btn, .btn, .send-btn, .chat-open, .model-button, .new-chat, .suggestion {
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.topbar {
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  min-height: 62px;
+  padding-inline: max(14px, env(safe-area-inset-left));
+  padding-top: max(8px, env(safe-area-inset-top));
+  padding-bottom: 8px;
+  gap: 10px;
+}
+
+.main {
+  min-height: 100%;
+}
+
+.messages {
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--accent-soft) 30%, transparent), transparent 30%),
+    var(--bg);
+}
+
+.thread {
+  max-width: 860px;
+  padding: 28px 24px 56px;
+  margin: 0 auto;
+}
+
+.msg {
+  margin-bottom: 20px;
+}
+
+.msg.user .bubble {
+  background: var(--user-bubble);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 20px 20px 8px 20px;
+  box-shadow: none;
+}
+
+.msg.assistant .bubble {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.markdown {
+  line-height: 1.7;
+  font-size: clamp(15px, 1vw + 0.75rem, 17px);
+}
+
+.markdown h1, .markdown h2, .markdown h3,
+.markdown h4, .markdown h5, .markdown h6 {
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+}
+
+.markdown p, .markdown ul, .markdown ol, .markdown blockquote {
+  margin-top: 0.7em;
+  margin-bottom: 0.7em;
+}
+
+.markdown pre {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+}
+
+.markdown code {
+  font-family: var(--font-mono);
+}
+
+.composer-wrap {
+  padding-inline: max(16px, env(safe-area-inset-left));
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+}
+
+.composer {
+  max-width: 760px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 26px;
+  box-shadow: var(--shadow-soft);
+  margin-inline: auto;
+  padding: 14px 14px 10px;
+}
+
+.composer:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+  box-shadow: var(--shadow-card), 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.composer textarea {
+  min-height: 42px;
+  font-size: max(16px, var(--fs));
+  line-height: 1.6;
+  padding: 4px 8px 8px;
+  color: var(--text);
+}
+
+.composer-bar {
+  padding-top: 6px;
+  align-items: center;
+  gap: 6px;
+}
+
+.tool-btn, .btn, .icon-btn {
+  border: 1px solid transparent;
+}
+
+.tool-btn {
+  min-height: 40px;
+  min-width: 40px;
+  border-radius: 12px;
+}
+
+.tool-btn.pill {
+  padding-inline: 12px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+
+.tool-btn.on {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  color: var(--accent);
+}
+
+.send-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.send-btn:hover {
+  background: var(--accent-hover);
+}
+
+.icon-btn {
+  min-height: 42px;
+  min-width: 42px;
+  border-radius: 12px;
+}
+
+.icon-btn:hover, .btn:hover, .tool-btn:hover, .suggestion:hover, .chat-open:hover {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+
+.new-chat, .project-switcher, .chat-open, .model-button {
+  min-height: 42px;
+  border-radius: 12px;
+}
+
+.suggestion {
+  min-height: 38px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+
+.empty {
+  max-width: 760px;
+  padding: 26px 24px 32px;
+  margin: 0 auto;
+}
+
+.empty h1 {
+  font-size: clamp(32px, 4vw, 52px);
+  line-height: 1.08;
+  letter-spacing: -0.05em;
+  font-weight: 550;
+  margin: 12px 0 10px;
+}
+
+.empty p {
+  font-size: 15px;
+  color: var(--text-2);
+  max-width: 560px;
+}
+
+.welcome-eyebrow {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.sidebar {
+  gap: 8px;
+  padding-inline: 12px;
+  background: color-mix(in srgb, var(--sidebar) 96%, transparent);
+}
+
+.sidebar .search, .sidebar .sidebar-search-field {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  min-height: 42px;
+}
+
+.chat-row {
+  border-radius: 12px;
+  margin-block: 2px;
+}
+
+.chat-row.active {
+  background: color-mix(in srgb, var(--accent) 12%, var(--sidebar));
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--border));
+}
+
+.sidebar-head {
+  min-height: 52px;
+}
+
+.brand {
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.modal {
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-head {
+  min-height: 62px;
+  padding-inline: 20px 14px;
+}
+
+.modal-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.settings-card, .settings-tabs, .usage .usage-pool, .models-nav {
+  border-radius: 16px;
+}
+
+.settings-card {
+  box-shadow: none;
+}
+
+.settings-card .setting-row {
+  padding: 16px 18px;
+}
+
+.assistant-badge {
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  color: var(--text-2);
+}
+
+.badge, .project-topbar-badge {
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Mobile and iPhone responsiveness */
+@media (max-width: 899px) {
+  .topbar {
+    min-height: 58px;
+    padding-inline: max(10px, env(safe-area-inset-left));
+    gap: 8px;
+  }
+
+  .thread {
+    padding: 18px 14px 64px;
+  }
+
+  .composer {
+    border-radius: 22px;
+    padding: 12px 10px 8px;
+  }
+
+  .composer-wrap {
+    padding-inline: max(10px, env(safe-area-inset-left));
+  }
+
+  .suggestions {
+    gap: 8px;
+  }
+
+  .suggestion {
+    min-height: 40px;
+    padding-inline: 10px;
+  }
+}
+
+@media (max-width: 720px), (pointer: coarse) and (max-width: 1100px) {
+  .settings-tabs {
+    border-radius: 18px;
+  }
+
+  .settings-tabs button {
+    min-height: 52px;
+  }
+}
+
+@media (pointer: coarse) {
+  .tool-btn, .tool-btn.pill, .send-btn, .icon-btn, .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .new-chat, .chat-open, .model-button {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 420px) {
+  .thread {
+    padding-inline: 10px;
+  }
+
+  .composer textarea {
+    font-size: 16px;
+  }
+
+  .empty {
+    padding-inline: 12px;
+  }
+
+  .welcome-eyebrow {
+    font-size: 10px;
+  }
+}
+
+@media (max-height: 600px) {
+  .empty { padding-block: 10px 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Slight improvement for iPhone safe-area + keyboard overlays */
+@supports (padding: max(0px)) {
+  .main, .composer-wrap {
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Subtle improvement for dark mode surfaces */
+:root[data-theme='dark'] .composer,
+:root[data-theme='dark'] .sidebar .search,
+:root[data-theme='dark'] .sidebar .sidebar-search-field,
+:root[data-theme='dark'] .suggestion,
+:root[data-theme='dark'] .assistant-badge {
+  border-color: var(--border);
+}
+
+/* End of design polish */

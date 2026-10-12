@@ -1,12 +1,13 @@
 // Official endpoints checked 2026-10-12. Never accept an arbitrary upstream host.
+export const DEFAULT_PROVIDER_RELAY_URL = 'https://model-router-provider-relay.model-router.workers.dev';
 export const EXTRA_PROVIDERS = {
   mistral: { label: 'Mistral', base: 'https://api.mistral.ai/v1', link: 'https://console.mistral.ai/api-keys', hint: 'Mistral chat and coding models. Access and billing depend on your plan.' },
   cohere: { label: 'Cohere', base: 'https://api.cohere.ai/compatibility/v1', link: 'https://dashboard.cohere.com/api-keys', hint: 'Command models. Evaluation keys have limited, non-production access.' },
-  nvidia: { label: 'NVIDIA NIM', base: 'https://integrate.api.nvidia.com/v1', relay: true, link: 'https://build.nvidia.com', hint: 'Hosted NIM models. Requires your relay because NVIDIA blocks browser requests.' },
+  nvidia: { label: 'NVIDIA NIM', base: 'https://integrate.api.nvidia.com/v1', relay: true, link: 'https://build.nvidia.com', hint: 'Hosted NIM models. Uses this app’s relay to connect from your browser.' },
   huggingface: { label: 'Hugging Face', base: 'https://router.huggingface.co/v1', link: 'https://huggingface.co/settings/tokens', hint: 'Inference Providers gateway. Use a token with inference permission; credits are limited.' },
   deepseek: { label: 'DeepSeek', base: 'https://api.deepseek.com', link: 'https://platform.deepseek.com/api_keys', hint: 'DeepSeek chat and reasoning models. Calls use your account balance.' },
   alibaba: { label: 'Alibaba Cloud', base: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1', link: 'https://modelstudio.console.alibabacloud.com', hint: 'Qwen through Model Studio. Match the endpoint to your key’s region/workspace.' },
-  cloudflare: { label: 'Cloudflare Workers AI', relay: true, link: 'https://dash.cloudflare.com/profile/api-tokens', hint: 'Use an account-scoped Workers AI token, your account ID and your relay.' },
+  cloudflare: { label: 'Cloudflare Workers AI', relay: true, link: 'https://dash.cloudflare.com/profile/api-tokens', hint: 'Use an account-scoped Workers AI token and its account ID. Connects through this app’s relay.' },
   aion: { label: 'Aion Labs', base: 'https://api.aionlabs.ai/v1', link: 'https://www.aionlabs.ai', hint: 'Aion chat and reasoning models. Check your dashboard for credits and billing.' },
 };
 export const AI_PROVIDERS = ['gemini', 'openrouter', 'groq', 'cerebras', ...Object.keys(EXTRA_PROVIDERS)];

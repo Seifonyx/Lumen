@@ -54,7 +54,11 @@ export default {
       } catch { return error('Invalid JSON', 400); }
     }
     try {
-      const upstream = await fetch(target, { method: request.method, headers: { authorization: auth, ...(body ? { 'content-type': 'application/json' } : {}) }, body, signal: request.signal, redirect: 'error' });
+      const upstream = await fetch(target, { method: request.method, headers: { authorization: auth, ...(body ? { 'content-type': 'application/json' } : {}) }, body, signal: request.signal, redirect: 'manual' });
+      if (upstream.status >= 300 && upstream.status < 400) {
+        await upstream.body?.cancel();
+        return error('The provider redirected the request. Check its official endpoint.', 502);
+      }
       const headers = new Headers(cors);
       for (const name of ['content-type', 'retry-after', 'x-ratelimit-limit', 'x-ratelimit-reset']) {
         if (upstream.headers.has(name)) headers.set(name, upstream.headers.get(name));

@@ -1,14 +1,16 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import * as P from '../../src/lib/ai/providers.js';
-import { EXTRA_PROVIDERS, normalizeKeys, validAlibabaBase, validRelayUrl } from '../../src/lib/ai/provider-config.js';
+import { DEFAULT_PROVIDER_RELAY_URL, EXTRA_PROVIDERS, normalizeKeys, validAlibabaBase, validRelayUrl } from '../../src/lib/ai/provider-config.js';
 import relay from '../../server/provider-relay/worker.mjs';
+assert(JSON.parse(readFileSync(new URL('../../server/provider-relay/wrangler.jsonc', import.meta.url))).compatibility_flags.includes('enable_request_signal'), 'Workers incoming cancellation requires enable_request_signal');
 const ids = Object.keys(EXTRA_PROVIDERS), calls = [];
 const config = { ...Object.fromEntries(ids.map(id => [id, `synthetic-${id}`])), providerAccess: Object.fromEntries(ids.map(id => [id, true])), providerRelayUrl: 'https://relay.example', cloudflareAccountId: 'a'.repeat(32) };
 const model = id => id === 'cloudflare' ? '@cf/meta/current-chat' : id === 'aion' ? 'aion-labs/current-chat' : `${id}-current-chat`;
 const stream = body => new Response(`data: ${JSON.stringify(body)}\n\ndata: [DONE]\n\n`, { headers: { 'content-type': 'text/event-stream' } });
 let failure = null;
 globalThis.fetch = async (url, opts = {}) => {
-  const p = ids.find(id => String(url).includes(id === 'nvidia' || id === 'cloudflare' ? `relay.example/${id}` : EXTRA_PROVIDERS[id].base.replace('/compatibility/v1', ''))) || 'cohere';
+  const p = ids.find(id => id === 'nvidia' || id === 'cloudflare' ? String(url).includes(`relay.example/${id}`) || String(url).startsWith(`${DEFAULT_PROVIDER_RELAY_URL}/${id}/`) : String(url).includes(EXTRA_PROVIDERS[id].base.replace('/compatibility/v1', ''))) || 'cohere';
   calls.push({ url: String(url), p, opts });
   if (failure?.provider === p) return Response.json({ error: { message: failure.message } }, { status: failure.status, headers: { 'retry-after': '4' } });
   if (String(url).includes('/models')) {
@@ -43,6 +45,10 @@ for (const id of ids) {
 }
 assert(calls.some(c => c.url === 'https://api.cohere.ai/v1/models?endpoint=chat'));
 assert(calls.some(c => c.url.startsWith('https://relay.example/cloudflare/models') && new Headers(c.opts.headers).get('x-mr-account-id') === 'a'.repeat(32)));
+P.setKeys({ ...config, providerRelayUrl: '' });
+assert.equal((await P.catalog({ refresh: true })).models.length, 8);
+assert(calls.some(c => c.url.startsWith(`${DEFAULT_PROVIDER_RELAY_URL}/nvidia/models`)));
+assert(calls.some(c => c.url.startsWith(`${DEFAULT_PROVIDER_RELAY_URL}/cloudflare/models`)));
 P.setKeys({ ...config, providerAccess: {} });
 const before = calls.length;
 assert.equal((await P.catalog({ refresh: true })).models.length, 0);
@@ -110,4 +116,7 @@ assert.equal((await relay.fetch(req('/cloudflare/models?page=evil'))).status, 40
 assert.equal((await relay.fetch(req('/nvidia/models', { headers: { origin: 'https://evil.example' } }))).status, 403);
 assert.equal((await relay.fetch(req('/nvidia/models', { headers: { origin: 'https://model-router.web.app' } }))).status, 401);
 assert.equal((await relay.fetch(req('/nvidia/chat/completions', { method: 'POST', body: 'invalid' }))).status, 400);
+assert.equal(relayCall.opts.redirect, 'manual');
+globalThis.fetch = async () => new Response(null, { status: 302, headers: { location: 'https://untrusted.example' } });
+assert.equal((await relay.fetch(req('/nvidia/models'))).status, 502, 'Relay refuses redirects without forwarding credentials');
 console.log('PASS all eight provider adapters, opt-ins, usage, limits, model safety and relay forwarding');

@@ -5,7 +5,7 @@ import { parseLimit, readError, readSSE, upstreamError } from './http.js';
 import { isActiveModel, isExcludedModel, isUnavailableFailure } from './model-status.js';
 import { safeVideoUri, toolBlock } from './tool-inputs.js';
 import { clearHealth } from './health.js';
-import { AI_PROVIDERS, EXTRA_PROVIDERS, normalizeKeys, providerEnabled, validAlibabaBase, validRelayUrl } from './provider-config.js';
+import { AI_PROVIDERS, DEFAULT_PROVIDER_RELAY_URL, EXTRA_PROVIDERS, normalizeKeys, providerEnabled, validAlibabaBase, validRelayUrl } from './provider-config.js';
 
 // API keys come from the user's settings (stored in their private Firebase document).
 let keys = normalizeKeys();
@@ -166,8 +166,9 @@ async function compatFetch(provider, path, options = {}, catalogue = false) {
     if (!validAlibabaBase(base)) throw new Error('Alibaba Cloud: choose an official Model Studio endpoint.');
   }
   if (config.relay) {
-    if (!validRelayUrl(keys.providerRelayUrl)) throw new Error(`${config.label}: add your HTTPS provider relay in API keys settings.`);
-    base = `${keys.providerRelayUrl}/${provider}`;
+    const relayUrl = keys.providerRelayUrl || DEFAULT_PROVIDER_RELAY_URL;
+    if (!validRelayUrl(relayUrl)) throw new Error(`${config.label}: use a valid HTTPS relay in API keys settings.`);
+    base = `${relayUrl}/${provider}`;
     if (provider === 'cloudflare') {
       if (!/^[a-f0-9]{32}$/i.test(keys.cloudflareAccountId)) throw new Error('Cloudflare: enter the 32-character account ID.');
       headers.set('x-mr-account-id', keys.cloudflareAccountId);

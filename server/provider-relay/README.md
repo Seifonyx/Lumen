@@ -4,9 +4,13 @@ The app runs on static Firebase Hosting. NVIDIA NIM and Cloudflare's account API
 
 ## Deploy to your own Cloudflare account
 
+The app's relay is deployed at `https://model-router-provider-relay.model-router.workers.dev`. Leave the custom relay URL blank to use it. You still supply your own NVIDIA/Cloudflare credentials and explicitly enable the provider; the relay has no stored provider keys. For a different relay, deploy the Worker below and enter its URL in settings.
+
 From this directory, run `npx wrangler deploy`. Wrangler asks you to sign in to your Cloudflare account. Review the Workers plan and quotas first; a paid Workers account can incur usage charges. No provider keys or Firebase service credentials belong in Wrangler configuration.
 
-Copy the resulting HTTPS Worker URL into **Settings → API keys → Relay for NVIDIA & Cloudflare**. Add your provider key, and for Cloudflare, your 32-character account ID. Use a Cloudflare API token scoped to Workers AI on that account. Enable that provider's credit/charge checkbox and save keys. Models load from its live catalogue; model membership does not guarantee your account has inference access.
+Copy the resulting HTTPS Worker URL into **Settings → API keys → NVIDIA & Cloudflare relay → Custom relay URL** to override the app default. Add your provider key, and for Cloudflare, your 32-character account ID. Use a Cloudflare API token scoped to Workers AI on that account. Enable that provider's credit/charge checkbox and save keys. Models load from its live catalogue; model membership does not guarantee your account has inference access.
+
+Keep `enable_request_signal` in Wrangler's compatibility flags: forwarding uses the incoming request's abort signal. Upstream requests use manual redirect handling and explicitly reject 3xx responses, preventing credentials from following another host. Verify actual Workers runtime forwarding after deployment; a Node mock or dry run alone cannot establish it.
 
 ## Data and security
 

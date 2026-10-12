@@ -4,6 +4,7 @@ const AxeBuilder = require('@axe-core/playwright').default;
 const { profile } = require('./helpers/preview-profile.cjs');
 const { scan } = require('./helpers/fitscan.cjs');
 const fs = require('node:fs');
+const DEFAULT_RELAY = 'https://model-router-provider-relay.model-router.workers.dev';
 const providers = {
   mistral: ['Mistral', 'https://api.mistral.ai/v1'],
   cohere: ['Cohere', 'https://api.cohere.ai'],
@@ -27,6 +28,7 @@ const sse = item => `data: ${JSON.stringify(item)}\n\ndata: [DONE]\n\n`;
   try {
     const cases = [[1280, 844, 'light'], [320, 740, 'light'], [390, 844, 'dark'], [430, 932, 'black'], [844, 390, 'dark']];
     for (const [width, height, theme] of cases) {
+      const useDefaultRelay = width === 1280 || width === 320;
       const uid = `preview-multi-provider-${width}-${theme}`;
       const ctx = await browser.newContext({ viewport: { width, height }, isMobile: width < 900, hasTouch: width < 900, serviceWorkers: 'block' });
       // Windows WebKit's blocked-worker shim resolves register() with undefined.
@@ -47,7 +49,8 @@ const sse = item => `data: ${JSON.stringify(item)}\n\ndata: [DONE]\n\n`;
       }));
       const calls = [], errors = [], blockedFixtureErrors = [];
       for (const [id, [label, base]] of Object.entries(providers)) {
-        await ctx.route(`${base}/**`, route => {
+        const routedBase = useDefaultRelay && ['nvidia', 'cloudflare'].includes(id) ? `${DEFAULT_RELAY}/${id}` : base;
+        await ctx.route(`${routedBase}/**`, route => {
           const request = route.request();
           calls.push({ id, url: request.url(), auth: request.headers().authorization, body: request.postDataJSON() });
           if (request.url().includes('/models')) {
@@ -80,7 +83,8 @@ const sse = item => `data: ${JSON.stringify(item)}\n\ndata: [DONE]\n\n`;
       assert.equal(calls.length, 0, 'Saving disabled connections does not fetch catalogues');
       const relay = page.locator('.provider-relay');
       await relay.locator('summary').click();
-      await page.getByRole('textbox', { name: 'Provider relay URL' }).fill('https://relay.fixture');
+      if (!useDefaultRelay) await page.getByRole('textbox', { name: 'Provider relay URL' }).fill('https://relay.fixture');
+      else assert.equal(await page.getByRole('textbox', { name: 'Provider relay URL' }).inputValue(), '');
       await page.getByRole('textbox', { name: 'Cloudflare account ID' }).fill('a'.repeat(32));
       for (const [id] of Object.entries(providers)) await page.locator(`[data-provider="${id}"]`).getByRole('checkbox').check();
       await page.getByRole('button', { name: 'Save keys', exact: true }).click();
@@ -98,6 +102,9 @@ const sse = item => `data: ${JSON.stringify(item)}\n\ndata: [DONE]\n\n`;
       while (await page.locator('.toast button').count()) await page.locator('.toast button').first().click();
       await page.locator('[data-provider="mistral"] summary').scrollIntoViewIfNeeded();
       await page.screenshot({ path: `tests/e2e/out/multi-provider-${width}-${theme}.png` });
+      await relay.scrollIntoViewIfNeeded();
+      assert.deepEqual(await scan(page), [], 'Relay details fit the viewport');
+      await page.screenshot({ path: `tests/e2e/out/multi-provider-relay-${width}-${theme}.png` });
       await closeSettings(page);
       // Use every provider through the actual picker, composer and rendered response.
       for (const [id, [label]] of Object.entries(providers)) {

@@ -306,7 +306,7 @@ function KeysTab() {
   const validation = draft.alibabaBaseUrl && !validAlibabaBase(draft.alibabaBaseUrl) ? 'Use an official Alibaba Cloud Model Studio base URL.'
     : draft.providerRelayUrl && !validRelayUrl(draft.providerRelayUrl) ? 'Your relay must use HTTPS without a username, password or query.'
     : draft.providerAccess?.cloudflare && draft.cloudflare && !/^[a-f0-9]{32}$/i.test(draft.cloudflareAccountId?.trim() || '') ? 'Enter the 32-character Cloudflare account ID.'
-    : ((draft.providerAccess?.cloudflare && draft.cloudflare) || (draft.providerAccess?.nvidia && draft.nvidia)) && !draft.providerRelayUrl?.trim() ? 'Add your relay URL before enabling NVIDIA or Cloudflare.' : '';
+    : '';
 
   const toggleShow = (id: string) => setShowKey((prev) => ({ ...prev, [id]: !prev[id] }));
 

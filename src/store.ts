@@ -89,6 +89,7 @@ interface State {
   settingsTab: string;
   preview: PreviewFile | null;
   exportChatId: string | null;
+  projectWorkspaceOpen: boolean;
   /** code from a reply being run in the browser */
   runner: { lang: string; code: string; analysis?: boolean } | null;
   toasts: Toast[];
@@ -103,7 +104,7 @@ interface State {
   updateSettings(patch: Partial<Settings>): void;
   toast(text: string, kind?: Toast['kind']): void;
   dismissToast(id: string): void;
-  setUi(patch: Partial<Pick<State, 'sidebarOpen' | 'settingsOpen' | 'settingsTab' | 'preview' | 'runner' | 'workspaceOpen' | 'repoPicker' | 'canvasOpen' | 'canvasDocumentId' | 'exportChatId'>>): void;
+  setUi(patch: Partial<Pick<State, 'sidebarOpen' | 'settingsOpen' | 'settingsTab' | 'preview' | 'runner' | 'workspaceOpen' | 'repoPicker' | 'canvasOpen' | 'canvasDocumentId' | 'exportChatId' | 'projectWorkspaceOpen'>>): void;
   openCanvas(name?: string, content?: string): void;
   saveCanvasDocument(chatId: string, id: string, patch: { name?: string; content?: string }, expectedContent?: string): Promise<boolean>;
   deleteCanvasDocument(chatId: string, id: string): void;
@@ -678,6 +679,7 @@ export const useStore = create<State>((set, get) => {
     settingsTab: '',
     preview: null,
     exportChatId: null,
+    projectWorkspaceOpen: false,
     runner: null,
     toasts: [],
 
@@ -1055,12 +1057,7 @@ export const useStore = create<State>((set, get) => {
       set({ canvasOpen: false, canvasDocumentId: null });
       const valid = id && get().settings.projects?.some((p) => p.id === id) ? id : null;
       try { if (valid) localStorage.setItem('mr.activeProject', valid); else localStorage.removeItem('mr.activeProject'); } catch { /* private mode */ }
-      set({ activeProjectId: valid, sidebarOpen: false });
-      if (valid) {
-        const existing = get().chats.find((c) => c.projectId === valid);
-        if (existing) set({ currentId: existing.id });
-        else get().newChat();
-      }
+      set({ activeProjectId: valid, projectWorkspaceOpen: Boolean(valid), sidebarOpen: false });
     },
     saveProject(project) {
       const projects = get().settings.projects || [];
@@ -1070,7 +1067,15 @@ export const useStore = create<State>((set, get) => {
       }
       const now = Date.now();
       const files = (project.files || []).filter((f) => f.kind === 'text' && typeof f.text === 'string').slice(0, 5).map((f) => ({ ...f, text: f.text!.slice(0, 20000) }));
-      const next = { ...project, files, name: project.name.trim().slice(0, 60), instructions: project.instructions.slice(0, 12000), updatedAt: now };
+      const next = {
+        ...project,
+        files,
+        name: project.name.trim().slice(0, 60),
+        description: project.description?.trim().slice(0, 160) || undefined,
+        color: project.color || undefined,
+        instructions: project.instructions.slice(0, 12000),
+        updatedAt: now,
+      };
       if (!next.name) return false;
       const totalText = [...projects.filter((p) => p.id !== project.id), next].reduce((sum, p) => sum + p.instructions.length + (p.files || []).reduce((n, f) => n + (f.text?.length || 0), 0), 0);
       if (totalText > 150_000) {
@@ -1121,11 +1126,11 @@ export const useStore = create<State>((set, get) => {
       const projectId = currentProjectId();
       const empty = get().chats.find((c) => c.messages.length === 0 && !c.summary && !c.assistant && !c.documents?.length && c.projectId === projectId);
       if (empty) {
-        set({ currentId: empty.id, sidebarOpen: false, settingsOpen: false });
+        set({ currentId: empty.id, projectWorkspaceOpen: false, sidebarOpen: false, settingsOpen: false });
         return;
       }
       const chat = { ...newChatObject(), projectId: projectId || undefined };
-      set((s) => ({ chats: [chat, ...s.chats], currentId: chat.id, sidebarOpen: false, settingsOpen: false }));
+      set((s) => ({ chats: [chat, ...s.chats], currentId: chat.id, projectWorkspaceOpen: false, sidebarOpen: false, settingsOpen: false }));
     },
     startAssistant(value) {
       set({ canvasOpen: false, canvasDocumentId: null });
@@ -1134,13 +1139,13 @@ export const useStore = create<State>((set, get) => {
       const { settings, catalog } = get();
       const allowed = assistant.model === AUTO || settings.enabledModels.includes(assistant.model) || (isLayoutId(assistant.model) && findLayout(assistant.model, catalog?.models || [], settings.layouts, settings.hiddenLayouts));
       const chat: Chat = { ...newChatObject(), title: assistant.name, assistant: { ...assistant }, model: allowed ? assistant.model : AUTO, projectId: currentProjectId() || undefined };
-      set((state) => ({ chats: [chat, ...state.chats], currentId: chat.id, sidebarOpen: false, settingsOpen: false }));
+      set((state) => ({ chats: [chat, ...state.chats], currentId: chat.id, projectWorkspaceOpen: false, sidebarOpen: false, settingsOpen: false }));
       void db.put(chat).catch(() => get().toast("Couldn't save the helper chat on this device.", 'error'));
       try { localStorage.setItem(`mr.assistantDraft.${get().user?.uid}`, chat.id); } catch { /* private mode */ }
     },
     selectChat(id) {
       clearAssistantDraft();
-      set({ currentId: id, sidebarOpen: false, settingsOpen: false, canvasOpen: false, canvasDocumentId: null });
+      set({ currentId: id, projectWorkspaceOpen: false, sidebarOpen: false, settingsOpen: false, canvasOpen: false, canvasDocumentId: null });
     },
     async deleteChat(id) {
       const generation = accountGeneration;

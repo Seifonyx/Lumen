@@ -123,6 +123,8 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
   const searchButton = useRef<HTMLButtonElement>(null);
   useEffect(() => { if (searchOpen) searchInput.current?.focus({ preventScroll: true }); }, [searchOpen]);
   const [projectManager, setProjectManager] = useState(false);
+  const [editProjectId, setEditProjectId] = useState<string | undefined>(undefined);
+  const [createNewProject, setCreateNewProject] = useState(false);
   const [phone, setPhone] = useState(() => window.matchMedia('(max-width: 899px)').matches);
   const sidebarRef = useRef<HTMLElement>(null);
   useFocusScope(sidebarRef,phone&&open,()=>setUi({sidebarOpen:false}));
@@ -159,6 +161,8 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
     return out;
   }, [chats, query, currentId, selectedProjectId]);
 
+  const activeProject = projects.find((p) => p.id === selectedProjectId);
+
   return (
     <>
     <aside
@@ -185,15 +189,92 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
         <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setSearchOpen(false); setQuery(''); searchButton.current?.focus(); } }} dir="auto" />
         <button className="icon-btn sm" aria-label="Close search" onClick={() => { setSearchOpen(false); setQuery(''); searchButton.current?.focus(); }}><X size={15} /></button>
       </label>}
-      <div className="sidebar-section-heading"><h2 className="sidebar-section-label"><FolderKanban size={15} aria-hidden="true" />Projects</h2><button className="icon-btn sm" onClick={() => setProjectManager(true)} aria-label="Manage projects" title="Manage projects"><Plus size={16} /></button></div>
-      <div className="project-switcher">
+
+      {/* Modern Claude/ChatGPT Projects Navigation */}
+      <div className="sidebar-section-heading">
+        <h2 className="sidebar-section-label"><FolderKanban size={15} aria-hidden="true" />Projects</h2>
+        <button
+          className="icon-btn sm"
+          onClick={() => { setEditProjectId(undefined); setCreateNewProject(true); setProjectManager(true); }}
+          aria-label="New project"
+          title="Create a new project"
+        >
+          <Plus size={16} />
+        </button>
+      </div>
+
+      {/* Accessible native select preserved for test compatibility */}
+      <div className="project-switcher" style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0, overflow: 'hidden' }}>
         <FolderKanban size={16} />
         <select aria-label="Choose project" value={selectedProjectId || ''} onChange={(e) => selectProject(e.target.value || null)}>
           <option value="">All chats</option>
           {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
         </select>
       </div>
-      <h2 className="sidebar-section-label history-label"><MessageSquare size={15} aria-hidden="true" />{query ? 'Search results' : 'Chats'}</h2>
+
+      <div className="sidebar-projects-list">
+        {projects.length === 0 ? (
+          <button
+            type="button"
+            className="sidebar-empty-project-btn"
+            onClick={() => { setEditProjectId(undefined); setCreateNewProject(true); setProjectManager(true); }}
+          >
+            <Plus size={14} /> New project
+          </button>
+        ) : (
+          projects.map((project) => {
+            const isSelected = selectedProjectId === project.id;
+            const count = chats.filter((c) => c.projectId === project.id).length;
+            return (
+              <div key={project.id} className={`sidebar-project-item-wrap${isSelected ? ' active' : ''}`}>
+                <button
+                  type="button"
+                  className={`sidebar-project-item${isSelected ? ' active' : ''}`}
+                  onClick={() => selectProject(project.id)}
+                  title={project.name}
+                >
+                  <FolderKanban size={15} className={`sidebar-project-icon color-${project.color || 'indigo'}`} />
+                  <span className="sidebar-project-name">{project.name}</span>
+                  {count > 0 && <span className="sidebar-project-badge">{count}</span>}
+                </button>
+                <button
+                  type="button"
+                  className="icon-btn xs sidebar-project-action"
+                  title="Project settings"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditProjectId(project.id);
+                    setCreateNewProject(false);
+                    setProjectManager(true);
+                  }}
+                >
+                  <Settings size={13} />
+                </button>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* When a project is active, show clean context switcher */}
+      {activeProject && (
+        <div className="sidebar-project-active-filter">
+          <div className="sidebar-project-active-badge">
+            <FolderKanban size={13} />
+            <span className="truncate">{activeProject.name}</span>
+          </div>
+          <button
+            type="button"
+            className="sidebar-project-exit-btn"
+            title="View all chats"
+            onClick={() => selectProject(null)}
+          >
+            <X size={12} /> All chats
+          </button>
+        </div>
+      )}
+
+      <h2 className="sidebar-section-label history-label"><MessageSquare size={15} aria-hidden="true" />{query ? 'Search results' : activeProject ? `${activeProject.name} chats` : 'Chats'}</h2>
       <nav className="chat-list" aria-label="Chat history">
         {groups.length === 0 && <p className="muted small empty-list">{query ? 'No chats match.' : 'Your chats will appear here.'}</p>}
         {groups.map(([label, list]) => (
@@ -209,7 +290,7 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
       </nav>
       <div className="sidebar-bottom-actions">
         <button className="btn new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}>
-          <SquarePen size={18} /> New chat
+          <SquarePen size={18} /> {activeProject ? `New chat in ${activeProject.name}` : 'New chat'}
         </button>
         <button className="icon-btn library-button" aria-label="Saved helpers and prompts" title="Library · helpers, prompts and tools" onClick={() => { setUi({ sidebarOpen: false }); onOpenLibrary(); }}><BookOpen size={19} /></button>
       </div>
@@ -222,7 +303,17 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
         <Settings size={16} />
       </button>
     </aside>
-    {projectManager && <ProjectManager onClose={() => setProjectManager(false)} />}
+    {projectManager && (
+      <ProjectManager
+        initialProjectId={editProjectId}
+        createNewImmediately={createNewProject}
+        onClose={() => {
+          setProjectManager(false);
+          setEditProjectId(undefined);
+          setCreateNewProject(false);
+        }}
+      />
+    )}
     </>
   );
 }

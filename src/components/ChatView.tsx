@@ -1,4 +1,4 @@
-import { FolderGit2, GitBranch, ArrowDown, FileSpreadsheet, FileText, Menu, PanelLeftOpen, ScrollText, SquarePen } from 'lucide-react';
+import { FolderGit2, FolderKanban, GitBranch, ArrowDown, FileSpreadsheet, FileText, Menu, PanelLeftOpen, ScrollText, SquarePen } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { activeSummary } from '../lib/compact';
 import { AUTO } from '../lib/routing';
@@ -10,6 +10,8 @@ import Composer, { prefillComposer } from './Composer';
 import InstallHint from './InstallHint';
 import MessageThread from './MessageThread';
 import ModelPicker from './ModelPicker';
+import ProjectManager from './ProjectManager';
+import ProjectWorkspace from './ProjectWorkspace';
 
 const SUGGESTIONS = [
   { icon: FileSpreadsheet, title: 'Build an Excel tracker', prompt: 'Create an Excel workbook to track ' },
@@ -22,16 +24,21 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   const catalogError = useStore((s) => s.catalogError);
   const streaming = useStore((s) => s.streamingChatId !== null && s.streamingChatId === s.currentId);
   const canvasEditing = useStore(s => s.canvasEditingChatId !== null);
-  const defaultModel = useStore((s) => s.settings.projects?.find((p) => p.id === (chat ? chat.projectId : s.activeProjectId))?.defaultModel || s.settings.defaultModel);
+  const activeProjectId = useStore((s) => s.activeProjectId);
+  const projects = useStore((s) => s.settings.projects) || [];
+  const currentProject = projects.find((p) => p.id === (chat ? chat.projectId : activeProjectId));
+  const defaultModel = useStore((s) => currentProject?.defaultModel || s.settings.defaultModel);
   const compacting = useStore((s) => s.compactingChatId !== null && s.compactingChatId === s.currentId);
   const syncPaused = useStore((s) => s.firebaseUsage.level === 'paused' && s.authed === true);
   const resetAt = useStore((s) => s.firebaseUsage.resetAt);
   const online = useStore((s) => s.online);
   const workspaceOpen = useStore((s) => s.workspaceOpen);
+  const projectWorkspaceOpen = useStore((s) => s.projectWorkspaceOpen);
   const { setUi, newChat, setChatModel } = useStore.getState();
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const [showDown, setShowDown] = useState(false);
+  const [projectModalId, setProjectModalId] = useState<string | null>(null);
   const [announcement,setAnnouncement]=useState('');
   const previousReply=useRef<{id?:string;streaming:boolean}>({streaming:false});
 
@@ -74,6 +81,41 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
     return () => el.removeEventListener('scroll', onScroll);
   }, []);
 
+  if (currentProject && (projectWorkspaceOpen || empty)) {
+    return (
+      <main className="main project-workspace-main">
+        <header className="topbar">
+          <button className="icon-btn menu-btn" onClick={() => setUi({ sidebarOpen: true })} aria-label="Open chats">
+            <Menu size={20} />
+          </button>
+          <button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title="Expand sidebar">
+            <PanelLeftOpen size={20} />
+          </button>
+          <ModelPicker value={model} onChange={setChatModel} />
+          <div className="project-topbar-pill static">
+            <FolderKanban size={13} className={`color-${currentProject.color || 'indigo'}`} />
+            <span className="project-topbar-name">{currentProject.name}</span>
+            <span className="project-topbar-badge">Workspace</span>
+          </div>
+          <div className="spacer" />
+          <button className="icon-btn new-chat-shortcut" onClick={newChat} aria-label="New chat" title="New chat (Ctrl+Shift+O)">
+            <SquarePen size={18} />
+          </button>
+        </header>
+        <ProjectWorkspace
+          project={currentProject}
+          onOpenSettings={() => setProjectModalId(currentProject.id)}
+        />
+        {projectModalId && (
+          <ProjectManager
+            initialProjectId={projectModalId}
+            onClose={() => setProjectModalId(null)}
+          />
+        )}
+      </main>
+    );
+  }
+
   return (
     <main className={`main${empty ? ' is-empty' : ''}`}>
       <header className="topbar">
@@ -84,6 +126,20 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
           <PanelLeftOpen size={20} />
         </button>
         <ModelPicker value={model} onChange={setChatModel} />
+        {currentProject && (
+          <button
+            type="button"
+            className="project-topbar-pill"
+            onClick={() => setUi({ projectWorkspaceOpen: true })}
+            title={`Project: ${currentProject.name} — Click to view Project Workspace`}
+          >
+            <FolderKanban size={13} className={`color-${currentProject.color || 'indigo'}`} />
+            <span className="project-topbar-name">{currentProject.name}</span>
+            {Boolean(currentProject.files?.length) && (
+              <span className="project-topbar-badge">{currentProject.files!.length} doc{currentProject.files!.length === 1 ? '' : 's'}</span>
+            )}
+          </button>
+        )}
         <div className="spacer" />
         {Boolean(chat?.documents?.length) && <button className="icon-btn" aria-label="Open canvas" title="Open canvas" onClick={() => useStore.getState().openCanvas()}><FileText size={18} /></button>}
         {chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}
@@ -168,6 +224,12 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
           </>
         ) : undefined}
       />
+      {projectModalId && (
+        <ProjectManager
+          initialProjectId={projectModalId}
+          onClose={() => setProjectModalId(null)}
+        />
+      )}
     </main>
   );
 }

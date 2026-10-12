@@ -104,8 +104,10 @@ export interface CodingPlan {
 export interface Project {
   id: string;
   name: string;
+  description?: string;
   instructions: string;
   defaultModel?: string;
+  color?: string;
   /** Text-extracted references included with every message in the project. */
   files?: Attachment[];
   createdAt: number;

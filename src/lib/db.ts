@@ -1,4 +1,5 @@
 import { normalizePlan } from './coding-plan';
+import { normalizeKnowledgeSources } from './knowledge/core';
 // Chats are kept in IndexedDB on the device (attachments are too big for localStorage).
 // Account databases keep shared-device sign-ins separate. The legacy database is adopted once.
 
@@ -73,6 +74,7 @@ function normalize(raw: any): Chat {
     auto: m.auto,
     thinking: m.thinking,
     sources: m.sources,
+    knowledgeSources: normalizeKnowledgeSources(m.knowledgeSources),
     notices: m.notices,
     memory: m.memory,
     privacy: m.privacy,

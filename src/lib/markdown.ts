@@ -50,11 +50,12 @@ function tex(src: string, display: boolean): string {
   }
 }
 
-function createMarkdown(highlight: boolean) {
+function createMarkdown(highlight: boolean, sourceCount=0) {
 const marked = new Marked({ gfm: true, breaks: true });
 
 marked.use({
   extensions: [
+    ...(sourceCount?[{name:'knowledgeCitation',level:'inline' as const,start:(src:string)=>src.indexOf('[D'),tokenizer(src:string){const match=/^\[D(\d{1,2})\](?![\[(])/.exec(src);if(match&&Number(match[1])>=1&&Number(match[1])<=sourceCount)return {type:'knowledgeCitation',raw:match[0],number:match[1]};return undefined;},renderer:(token:any)=>`<a href="#document-source-${token.number}" data-knowledge-citation="${token.number}" class="knowledge-inline-source" aria-label="Document source D${token.number}">[D${token.number}]</a>`}]:[]),
     {
       name: 'mathBlock',
       level: 'block',
@@ -111,6 +112,7 @@ return marked;
 }
 const marked = createMarkdown(true);
 const streamingMarked = createMarkdown(false);
+const citationParsers=new Map<string,Marked>();
 
 DOMPurify.addHook('afterSanitizeAttributes', (node) => {
   if (node.tagName === 'A') {
@@ -122,9 +124,11 @@ DOMPurify.addHook('afterSanitizeAttributes', (node) => {
 const CALLOUT = /<blockquote>\s*<p>\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*(?:<br>)?\s*/gi;
 const CALLOUT_LABEL: Record<string, string> = { NOTE: 'Note', TIP: 'Tip', IMPORTANT: 'Important', WARNING: 'Warning', CAUTION: 'Caution' };
 
-export function renderMarkdown(text: string, highlight = true): string {
-  const html = (highlight ? marked : streamingMarked).parse(text, { async: false }) as string;
-  return DOMPurify.sanitize(html, { ADD_ATTR: ['target', 'data-copy-code', 'data-run-code'] })
+export function renderMarkdown(text: string, highlight = true,sourceCount=0): string {
+  sourceCount=Math.max(0,Math.min(6,Math.floor(sourceCount)));let parser=highlight?marked:streamingMarked;
+  if(sourceCount){const key=`${highlight}:${sourceCount}`;if(!citationParsers.has(key))citationParsers.set(key,createMarkdown(highlight,sourceCount));parser=citationParsers.get(key)!;}
+  const html = parser.parse(text, { async: false }) as string;
+  return DOMPurify.sanitize(html, { ADD_ATTR: ['target', 'data-copy-code', 'data-run-code','data-knowledge-citation'] })
     .replace(CALLOUT, (_, kind: string) => `<blockquote class="callout callout-${kind.toLowerCase()}"><div class="callout-title">${CALLOUT_LABEL[kind.toUpperCase()]}</div><p>`)
     .replace(/<(p|li|h[1-6]|blockquote)( class="[^"]*")?>/g, '<$1$2 dir="auto">');
 }
@@ -139,7 +143,7 @@ const FILE_FENCE = /^file[:\s]\s*(.+?)\s*$/i;
 const closed = (raw: string) => /\n\s*(`{3,}|~{3,})\s*$/.test(raw.trimEnd());
 
 /** Splits a reply into Markdown parts and special file/chart blocks. */
-export function segments(text: string, streaming: boolean): Segment[] {
+export function segments(text: string, streaming: boolean,sourceCount=0): Segment[] {
   // A model asking to read repository files: [[read: src/app.ts]] → "📂 Reading `src/app.ts`"
   text = normalizeEdits(text);
   text = replaceReadRequests(text, (p) => `📂 Reading \`${p}\``);
@@ -151,7 +155,7 @@ export function segments(text: string, streaming: boolean): Segment[] {
   const flush = () => {
     if (!buffer.length) return;
     const raw = buffer.map((t) => t.raw).join('');
-    if (raw.trim()) out.push({ type: 'html', html: renderMarkdown(raw, !streaming), key: `h${n++}` });
+    if (raw.trim()) out.push({ type: 'html', html: renderMarkdown(raw, !streaming,sourceCount), key: `h${n++}` });
     buffer = [];
   };
   tokens.forEach((t, i) => {

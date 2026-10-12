@@ -131,7 +131,7 @@ export default function Composer({ model, meter, starterActions }: { model: stri
       setText(prefill);
       saveDraft(prefill);
       if (typeof detail !== 'string') {
-        if (detail.files?.length) setPending(previous => [...previous, ...detail.files!.map(file => ({ key: file.id, name: file.name, file }))]);
+        if (detail.files?.length) setPending(previous => [...previous.filter(item=>!detail.files!.some(file=>file.knowledgeSources?.length)||!item.file?.knowledgeSources?.length), ...detail.files!.map(file => ({ key: file.id, name: file.name, file }))]);
         if (detail.codeExecution) setCodeExecution(true);
       }
       requestAnimationFrame(() => {

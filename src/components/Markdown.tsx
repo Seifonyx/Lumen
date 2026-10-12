@@ -6,9 +6,11 @@ import ChartBlock from './ChartBlock';
 import FileCard from './FileCard';
 import EditCard, { ApplyAll } from './EditCard';
 import { parseEdit } from '../lib/edits';
+import type { KnowledgeSource } from '../types';
 
-function Markdown({ text, streaming, messageId }: { text: string; streaming: boolean; messageId?: string }) {
-  const parts = useMemo(() => segments(text, streaming), [text, streaming]);
+function Markdown({ text, streaming, messageId,knowledgeSources,onSource }: { text: string; streaming: boolean; messageId?: string; knowledgeSources?:KnowledgeSource[]; onSource?:(source:KnowledgeSource)=>void }) {
+  const count=knowledgeSources?.length||0;
+  const parts = useMemo(() => segments(text, streaming,count), [text, streaming,count]);
   const edits = useMemo(
     () => (streaming ? [] : parts.flatMap((p) => (p.type === 'edit' && p.complete ? [parseEdit(p.kind, p.path, p.content)] : []))),
     [parts, streaming],
@@ -16,6 +18,8 @@ function Markdown({ text, streaming, messageId }: { text: string; streaming: boo
 
   const setUi = useStore((s) => s.setUi);
   const onClick = async (e: React.MouseEvent) => {
+    const citation=(e.target as HTMLElement).closest('[data-knowledge-citation]') as HTMLElement|null;
+    if(citation){e.preventDefault();const source=knowledgeSources?.[Number(citation.dataset.knowledgeCitation)-1];if(source)onSource?.(source);return;}
     const runBtn = (e.target as HTMLElement).closest('[data-run-code]') as HTMLButtonElement | null;
     if (runBtn) {
       const code = runBtn.closest('.code-block')?.querySelector('code')?.textContent || '';

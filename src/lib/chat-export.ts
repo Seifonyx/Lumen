@@ -11,6 +11,7 @@ export function chatToMarkdown(chat: Chat): string {
     if (message.text) lines.push(message.text, '');
     if (message.error) lines.push(`Error: ${inline(message.error)}`, '');
     if (message.status === 'stopped' || message.status === 'streaming') lines.push('_Reply incomplete._', '');
+    if (message.knowledgeSources?.length) lines.push('Document sources:',...message.knowledgeSources.map((source,i)=>`- [D${i+1}] ${inline(source.title)} · ${/\.pdf$/i.test(source.title)?'PDF page':'Text section'} ${source.page}`),'');
     if (message.sources?.length) {
       lines.push('Sources:', ...message.sources.filter(source => /^https?:\/\//i.test(source.url)).map(source => `- [${inline(source.title)}](<${source.url.replace(/[<>\r\n]/g, '')}>)`), '');
     }

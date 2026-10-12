@@ -1,5 +1,7 @@
 import CodingPlanCard from './CodingPlanCard';
 import { parsePlan } from '../lib/coding-plan';
+import KnowledgeSourceView from './KnowledgeSourceView';
+import type { KnowledgeSource } from '../types';
 import { AlertTriangle, Share, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, GitBranch, Info, Pencil, RefreshCw, Square, Volume2 } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 import { mentionedPaths, repoTree, seenPaths } from '../lib/workspace';
@@ -203,6 +205,7 @@ function MemoryChip({ memory }: { memory: NonNullable<Message['memory']> }) {
 }
 
 function AssistantMessage({ message, isLast, busy }: { message: Message; isLast: boolean; busy: boolean }) {
+  const [source,setSource]=useState<KnowledgeSource|null>(null);
   const catalog = useStore((s) => s.catalog);
   const regenerate = useStore((s) => s.regenerate);
   const continueReply = useStore((s) => s.continueReply);
@@ -235,12 +238,14 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
     <div className="msg assistant">
       {message.thinking && <Thinking text={message.thinking} active={streaming && !message.text} />}
       {message.text ? (
-        <Markdown text={message.coding?.phase === 'plan' && !streaming && parsePlan(message.text) ? message.text.replace(/`{3,}plan\s*\n[\s\S]*?\n`{3,}/i, '') : message.text} streaming={streaming} messageId={message.id} />
+        <Markdown text={message.coding?.phase === 'plan' && !streaming && parsePlan(message.text) ? message.text.replace(/`{3,}plan\s*\n[\s\S]*?\n`{3,}/i, '') : message.text} streaming={streaming} messageId={message.id} knowledgeSources={message.knowledgeSources} onSource={setSource}/>
       ) : streaming && !message.thinking ? (
         <WaitingForReply />
       ) : null}
       {streaming && message.text && <span className="caret" />}
       {message.coding && <CodingPlanCard message={message} />}
+      {message.knowledgeSources?.length? <div className="knowledge-citations" aria-label="Document sources">{message.knowledgeSources.map((item,i)=><button className="source btn ghost small" key={`${item.docId}:${item.page}`} onClick={()=>setSource(item)}><span className="source-n">D{i+1}</span><span>{item.title} · {/\.pdf$/i.test(item.title)?'PDF page':'Section'} {item.page}</span></button>)}</div>:null}
+      {source&&<KnowledgeSourceView source={source} onClose={()=>setSource(null)}/>}
 
       {message.sources && message.sources.length > 0 && (
         <div className="sources">

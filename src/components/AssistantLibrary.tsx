@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useLayoutEffect,useRef,useState } from 'react';
 import { BookOpen, Clock, Pencil, Plus, Search, Sparkles, Trash2, Wrench } from 'lucide-react';
 import FreeTools from './FreeTools';
 import TaskLibrary from './TaskLibrary';
+import KnowledgeLibrary from './KnowledgeLibrary';
 import Modal from './Modal';
 import { modelLabel, useStore } from '../store';
 import { BUILTIN_ASSISTANTS, BUILTIN_PROMPTS, libraryFits, normalizeAssistant, normalizePrompt } from '../lib/assistants';
@@ -10,14 +11,16 @@ import { uid } from '../lib/util';
 import type { SavedAssistant, SavedPrompt } from '../types';
 import { insertPrompt } from './Composer';
 
-export default function AssistantLibrary({ onClose, initialTab = 'assistants' }: { onClose: () => void; initialTab?: 'assistants' | 'prompts' | 'tools' | 'tasks' }) {
+export default function AssistantLibrary({ onClose, initialTab = 'assistants' }: { onClose: () => void; initialTab?: 'assistants' | 'prompts' | 'tools' | 'tasks' | 'knowledge' }) {
   const settings = useStore(s => s.settings);
   const catalog = useStore(s => s.catalog);
   const { updateSettings, startAssistant, toast } = useStore.getState();
   const assistants = settings.assistants || [];
   const prompts = settings.prompts || [];
-  const [tab, setTab] = useState<'assistants' | 'prompts' | 'tools' | 'tasks'>(initialTab);
+  const [tab, setTab] = useState<'assistants' | 'prompts' | 'tools' | 'tasks' | 'knowledge'>(initialTab);
   const [query, setQuery] = useState('');
+  const tabStrip=useRef<HTMLDivElement>(null);
+  useLayoutEffect(()=>{tabStrip.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.scrollIntoView({block:'nearest',inline:'nearest'});},[tab]);
   const [editing, setEditing] = useState<SavedAssistant | SavedPrompt | null>(null);
   const isAssistant = (value: SavedAssistant | SavedPrompt): value is SavedAssistant => 'instructions' in value;
   const save = () => {
@@ -49,8 +52,8 @@ export default function AssistantLibrary({ onClose, initialTab = 'assistants' }:
         <label className="field-block"><span className="setting-label">{isAssistant(editing) ? 'Instructions' : 'Prompt text'}</span><textarea aria-label="Library instructions" rows={8} maxLength={8000} value={isAssistant(editing) ? editing.instructions : editing.text} onChange={e => setEditing(isAssistant(editing) ? { ...editing, instructions: e.target.value } : { ...editing, text: e.target.value })} /></label>
         <div className="library-form-actions"><button className="btn" onClick={() => setEditing(null)}>Back</button><button className="btn primary" disabled={isAssistant(editing) ? !editing.name.trim() || !editing.instructions.trim() : !editing.title.trim() || !editing.text.trim()} onClick={save}>Save</button></div>
       </div> : <>
-        <div className="library-tabs" role="tablist" aria-label="Library sections">{(['assistants', 'prompts', 'tools', 'tasks'] as const).map(value => <button key={value} role="tab" tabIndex={tab === value ? 0 : -1} aria-selected={tab === value} className={tab === value ? 'active' : ''} onKeyDown={e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const tabs=['assistants','prompts','tools','tasks'] as const;const index=tabs.indexOf(value);const next=e.key==='Home'?0:e.key==='End'?3:(index+(e.key==='ArrowLeft'?-1:1)+4)%4;setTab(tabs[next]);setQuery('');e.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role=tab]')[next]?.focus();}} onClick={() => { setTab(value); setQuery(''); }}>{value === 'assistants' ? <Sparkles size={16} /> : value === 'tasks' ? <Clock size={16} /> : value === 'tools' ? <Wrench size={16} /> : <BookOpen size={16} />}{value === 'assistants' ? 'Assistants' : value === 'tasks' ? 'Tasks' : value === 'tools' ? 'Tools' : 'Prompts'}</button>)}</div>
-        {tab === 'tools' ? <FreeTools onClose={onClose} /> : tab === 'tasks' ? <TaskLibrary onClose={onClose} /> : <>
+        <div className="library-tabs" ref={tabStrip} role="tablist" aria-label="Library sections">{(['assistants', 'prompts', 'tools', 'tasks', 'knowledge'] as const).map(value => <button key={value} role="tab" tabIndex={tab === value ? 0 : -1} aria-selected={tab === value} className={tab === value ? 'active' : ''} onKeyDown={e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const tabs=['assistants','prompts','tools','tasks','knowledge'] as const;const index=tabs.indexOf(value);const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(index+(e.key==='ArrowLeft'?-1:1)+tabs.length)%tabs.length;setTab(tabs[next]);setQuery('');e.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role=tab]')[next]?.focus();}} onClick={() => { setTab(value); setQuery(''); }}>{value === 'assistants' ? <Sparkles size={16} /> : value === 'tasks' ? <Clock size={16} /> : value === 'tools' ? <Wrench size={16} /> : <BookOpen size={16} />}{value === 'assistants' ? 'Assistants' : value === 'tasks' ? 'Tasks' : value === 'tools' ? 'Tools' : value === 'knowledge' ? 'Knowledge' : 'Prompts'}</button>)}</div>
+        {tab === 'knowledge' ? <KnowledgeLibrary onClose={onClose} /> : tab === 'tools' ? <FreeTools onClose={onClose} /> : tab === 'tasks' ? <TaskLibrary onClose={onClose} /> : <>
         <p className="muted small">{tab === 'assistants' ? 'Start a chat with a saved helper’s instructions and model. You can change its model anytime.' : 'Reusable starting points. Insert a prompt, add your details, then send when ready.'}</p>
         <div className="library-toolbar"><label className="library-search"><Search size={16} /><input type="search" aria-label="Search library" placeholder="Search library" value={query} onChange={e => setQuery(e.target.value)} /></label><button className="btn" onClick={() => setEditing(tab === 'assistants' ? { id: uid(), name: '', description: '', instructions: '', model: AUTO } : { id: uid(), title: '', text: '' })}><Plus size={16} />{tab === 'assistants' ? 'New assistant' : 'New prompt'}</button></div>
         <div className="library-grid">{matches.map(item => {

@@ -15,6 +15,7 @@ import { useStore } from './store';
 import { keepScreenAwake } from './lib/wakelock';
 import { installSidebarGestures } from './lib/sidebar-gesture';
 import TaskEngine from './components/TaskEngine';
+import { cancelKnowledge } from './lib/knowledge/engine';
 
 const RunPanel = lazy(() => import('./components/RunPanel'));
 const AssistantLibrary = lazy(() => import('./components/AssistantLibrary'));
@@ -35,11 +36,12 @@ export default function App() {
   const repoPicker = useStore((s) => s.repoPicker);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
-  const [libraryTab, setLibraryTab] = useState<'assistants' | 'prompts' | 'tools' | 'tasks'>('assistants');
+  const [libraryTab, setLibraryTab] = useState<'assistants' | 'prompts' | 'tools' | 'tasks' | 'knowledge'>('assistants');
   const accountId = useStore(s => s.user?.uid);
+  useEffect(()=>useStore.subscribe((next,previous)=>{if(next.user?.uid!==previous.user?.uid||next.keys.gemini!==previous.keys.gemini||next.settings.privacyShield!==previous.settings.privacyShield||next.settings.privacyMode!==previous.settings.privacyMode)cancelKnowledge()}),[]);
   useEffect(() => { setLibraryOpen(false); setCommandPaletteOpen(false); }, [accountId]);
   useEffect(() => {
-    const open = (event: Event) => { setLibraryTab((event as CustomEvent).detail === 'tasks' ? 'tasks' : (event as CustomEvent).detail === 'tools' ? 'tools' : 'assistants'); setUi({ sidebarOpen: false }); setLibraryOpen(true); };
+    const open = (event: Event) => { const requested=(event as CustomEvent).detail; setLibraryTab(requested === 'knowledge' ? 'knowledge' : requested === 'tasks' ? 'tasks' : requested === 'tools' ? 'tools' : 'assistants'); setUi({ sidebarOpen: false }); setLibraryOpen(true); };
     window.addEventListener('mr:library', open);
     return () => window.removeEventListener('mr:library', open);
   }, [setUi]);

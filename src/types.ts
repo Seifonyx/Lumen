@@ -1,6 +1,7 @@
 export type Role = 'user' | 'assistant';
 
 export interface Attachment {
+  knowledgeSources?: KnowledgeSource[];
   id: string;
   kind: 'image' | 'pdf' | 'text';
   name: string;
@@ -23,7 +24,10 @@ export interface Source {
   url: string;
 }
 
+export interface KnowledgeSource { docId:string; page:number; title:string; excerpt:string; }
+
 export interface Message {
+  knowledgeSources?: KnowledgeSource[];
   coding?: { id: string; phase: 'plan' | 'work'; repo: string };
   codeExecution?: boolean;
   id: string;

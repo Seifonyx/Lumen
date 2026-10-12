@@ -17,6 +17,7 @@ import { db } from './firebase';
 import { quota, type GuardLevel } from './quota';
 import { normalizeAssistant } from './assistants';
 import { normalizeDocuments } from './canvas';
+import { normalizeKnowledgeSources } from './knowledge/core';
 
 const MAX_SYNCED_TEXT = 100_000;
 const MAX_DOC_CHARS = 900_000;
@@ -49,6 +50,7 @@ function toRemoteMessage(m: Message, index: number): RemoteMessage {
 /** Uses the remote version but keeps attachment contents this device still has. */
 function mergeMessage(remote: RemoteMessage, mine: Message | undefined): Message {
   const { index: _index, srv: _srv, ...m } = remote;
+  m.knowledgeSources=normalizeKnowledgeSources(m.knowledgeSources);
   if (!m.files?.length) return m as Message;
   return {
     ...m,

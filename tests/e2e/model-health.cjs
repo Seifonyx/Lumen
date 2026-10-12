@@ -49,7 +49,7 @@ const assert = require('node:assert/strict');
       assert.ok(!(await page.locator('.model-list.add').textContent()).includes('gemini-3.1-pro-preview'));
       assert.ok(await page.getByRole('button', { name: 'Restore hidden models' }).isVisible());
       await page.getByRole('button', { name: 'Check model availability', exact: true }).click();
-      await page.waitForFunction(() => document.querySelector('[role="status"]')?.textContent.includes('inconclusive'));
+      await page.waitForFunction(() => document.querySelector('.settings-panel [role="status"]')?.textContent.includes('inconclusive'));
       assert.match(await page.locator('.settings-panel [role="status"]').textContent(), /1 available · 1 hidden · 2 inconclusive/);
       assert.equal(probes.length, 3, 'quota pauses remaining models for that provider');
       assert.ok(probes.every(body => JSON.stringify(body.contents) === JSON.stringify([{ role: 'user', parts: [{ text: 'Reply OK.' }] }]) && body.generationConfig.maxOutputTokens === 16));

@@ -1,5 +1,6 @@
 import { ChevronDown, Loader2, MessageSquarePlus, Shrink, Undo2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useFocusScope } from '../lib/focus-scope';
 import { activeSummary, compactLimit, contextTokens } from '../lib/compact';
 import { isLayoutId } from '../lib/layouts';
 import { memoryInstructions } from '../lib/memory';
@@ -75,6 +76,8 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
   const box = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const close = useRef<HTMLButtonElement>(null);
+  const dialog = useRef<HTMLDivElement>(null);
+  useFocusScope(dialog,open,()=>{setOpen(false);trigger.current?.focus({preventScroll:true})});
   const catalog = useStore((s) => s.catalog);
   const usage = useStore((s) => s.usage);
   const settings = useStore((s) => s.settings);
@@ -160,7 +163,7 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
         <ChevronDown size={12} aria-hidden="true" />
       </button>
       {open && (
-        <div className="usage-pop" id="usage-panel" role="dialog" aria-label="Usage">
+        <div ref={dialog} className="usage-pop" id="usage-panel" role="dialog" aria-modal="true" tabIndex={-1} aria-label="Usage">
           <header className="um-head"><span>Usage</span><button ref={close} className="icon-btn sm" aria-label="Close usage" onClick={() => { setOpen(false); trigger.current?.focus({ preventScroll: true }); }}><X size={16} /></button></header>
           <div className="um-section">
             <div className="um-heading"><span className="um-title">Conversation capacity</span><strong>{pct}% used</strong></div>

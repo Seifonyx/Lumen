@@ -1,5 +1,6 @@
 import { Check, Download, Eye, FilePlus2, Loader2, Pencil, Plus, RotateCcw, Sparkles, Square, Trash2, Upload, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useFocusScope } from '../lib/focus-scope';
 import { selectCurrentChat, useStore } from '../store';
 import type { CanvasDocument, Chat } from '../types';
 import { replaceCanvasRange } from '../lib/canvas';
@@ -109,23 +110,16 @@ export default function CanvasPanel() {
     return () => query.removeEventListener('change', changed);
   }, []);
   const close = () => setUi({ canvasOpen: false });
+  useFocusScope(root,phone,close);
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const main = document.querySelector<HTMLElement>('.main'), sidebar = document.querySelector<HTMLElement>('.sidebar');
-    const oldMain = main?.inert, oldSidebar = sidebar?.inert;
-    if (phone) { if (main) main.inert = true; if (sidebar) sidebar.inert = true; }
     root.current?.querySelector<HTMLButtonElement>('[aria-label="Close canvas"]')?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (document.querySelector('.modal-backdrop')) return;
       if (event.key === 'Escape') { event.preventDefault(); setUi({ canvasOpen: false }); }
-      if (event.key !== 'Tab' || !phone) return;
-      const items = [...(root.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not([hidden]), select, textarea, [tabindex="0"]') || [])].filter(el => el.getClientRects().length);
-      const first = items[0], last = items.at(-1);
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
     };
     window.addEventListener('keydown', onKey);
-    return () => { window.removeEventListener('keydown', onKey); if (main) main.inert = oldMain || false; if (sidebar) sidebar.inert = oldSidebar || false; if (previous?.isConnected) previous.focus(); };
+    return () => { window.removeEventListener('keydown', onKey); if(!phone && previous?.isConnected)previous.focus(); };
   }, [setUi, phone]);
   const download = async () => {
     if (!doc) return;
@@ -146,7 +140,7 @@ export default function CanvasPanel() {
     } catch (e) { toast((e as Error).message, 'error'); }
     finally { setImporting(false); }
   };
-  return <aside ref={root} className="canvas-panel" aria-label="Document canvas" role={phone ? 'dialog' : 'complementary'} aria-modal={phone || undefined}>
+  return <aside ref={root} className="canvas-panel" aria-label="Document canvas" role={phone ? 'dialog' : 'complementary'} aria-modal={phone || undefined} tabIndex={-1}>
     <header className="canvas-head"><span><Pencil size={17} /><strong>Canvas</strong></span><button className="icon-btn" aria-label="Close canvas" onClick={close}><X size={18} /></button></header>
     <div className="canvas-document-toolbar"><select aria-label="Choose canvas document" value={doc?.id || ''} onChange={e => setUi({ canvasDocumentId: e.target.value })}>{chat?.documents?.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><button className="icon-btn sm" title="New document" aria-label="New canvas document" onClick={() => openCanvas(`Document ${1 + (chat?.documents?.length || 0)}.md`, '')}><Plus size={17} /></button><button className="icon-btn sm" disabled={importing} title="Import text draft" aria-label="Import canvas document" onClick={() => input.current?.click()}>{importing ? <Loader2 size={16} className="spin" /> : <Upload size={16} />}</button><button className="icon-btn sm" disabled={!doc || downloading} aria-label="Download canvas document" title="Download document" onClick={() => void download()}>{downloading ? <Loader2 size={16} className="spin" /> : <Download size={16} />}</button><button className="icon-btn sm" disabled={!doc} aria-label="Delete canvas document" title="Delete document" onClick={() => { if (chat && doc && confirm(`Delete ${doc.name}?`)) deleteCanvasDocument(chat.id, doc.id); }}><Trash2 size={16} /></button></div>
     <input ref={input} type="file" hidden accept=".txt,.md,.csv,.tsv,.json,.html,.xml,.js,.ts,.tsx,.jsx,.py,.css,.sql,.yaml,.yml,.docx,.pdf,.pptx,.xlsx,.xlsm" onChange={e => { const file = e.target.files?.[0]; if (file) void importFile(file); e.target.value = ''; }} />

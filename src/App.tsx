@@ -103,6 +103,7 @@ export default function App() {
   return (
     <div className={`app${settingsOpen ? ' settings-open' : ''}${workspaceOpen ? ' workspace-open' : ''}${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
       <TaskEngine />
+      <a className="skip-link" href="#message-input">Skip to message</a>
       <Sidebar onCollapse={toggleSidebar} onOpenLibrary={() => setLibraryOpen(true)} />
       <div className={`scrim${sidebarOpen ? ' visible' : ''}`} aria-hidden="true" onClick={() => setUi({ sidebarOpen: false })} />
       <ChatView onExpandSidebar={toggleSidebar} />

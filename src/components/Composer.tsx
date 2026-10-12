@@ -373,6 +373,8 @@ export default function Composer({ model, meter, starterActions }: { model: stri
           </div>
         )}
         <textarea
+          id="message-input"
+          aria-label="Message"
           ref={input}
           rows={1}
           dir="auto"

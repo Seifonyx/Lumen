@@ -1,14 +1,14 @@
 import { FolderGit2, GitBranch, ArrowDown, FileSpreadsheet, FileText, Menu, PanelLeftOpen, ScrollText, SquarePen } from 'lucide-react';
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { activeSummary } from '../lib/compact';
 import { AUTO } from '../lib/routing';
 import { isLayoutId } from '../lib/layouts';
 import { formatUntil } from '../lib/usage';
 import { selectCurrentChat, useStore } from '../store';
-import { CompactingNote, CompactNote, UsageMeter } from './CompactNote';
+import { UsageMeter } from './CompactNote';
 import Composer, { prefillComposer } from './Composer';
 import InstallHint from './InstallHint';
-import MessageItem from './MessageItem';
+import MessageThread from './MessageThread';
 import ModelPicker from './ModelPicker';
 
 const SUGGESTIONS = [
@@ -32,6 +32,8 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const [showDown, setShowDown] = useState(false);
+  const [announcement,setAnnouncement]=useState('');
+  const previousReply=useRef<{id?:string;streaming:boolean}>({streaming:false});
 
   const model = chat?.model && (chat.model === AUTO || isLayoutId(chat.model) || useStore.getState().settings.enabledModels.includes(chat.model)) ? chat.model : defaultModel;
   const messages = chat?.messages || [];
@@ -39,6 +41,13 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   const summary = chat ? activeSummary(chat) : null;
   const empty = messages.length === 0 && !summary && !chat?.repo;
   const lastText = messages.length ? messages[messages.length - 1].text.length + (messages[messages.length - 1].thinking?.length || 0) : 0;
+  useEffect(()=>{
+    const previous=previousReply.current;
+    if(previous.id!==chat?.id)setAnnouncement('');
+    else if(!previous.streaming && streaming)setAnnouncement('Reply started.');
+    else if(previous.streaming && !streaming)setAnnouncement(messages.at(-1)?.status==='stopped'?'Reply stopped.':messages.at(-1)?.status==='error'?'Reply failed. Check the message for details.':'Reply complete.');
+    previousReply.current={id:chat?.id,streaming};
+  },[streaming,chat?.id,messages]);
 
   // Jump to the bottom when switching chats.
   useLayoutEffect(() => {
@@ -93,6 +102,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
           <SquarePen size={18} />
         </button>
       </header>
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</div>
 
       {!online && (
         <div className="banner offline" role="status">
@@ -112,7 +122,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
         </div>
       )}
 
-      <div className="messages" ref={scroller}>
+      <div className="messages" ref={scroller} role="region" tabIndex={0} aria-label="Chat messages">
         {empty ? (
           <div className="empty">
             <span className="welcome-eyebrow">Your space to think and create</span>
@@ -120,16 +130,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
             <p className="muted">Ask a question, explore an idea, or work with your files.</p>
           </div>
         ) : (
-          <div className="thread">
-            {summary?.upTo === null && <CompactNote chat={chat!} summary={summary} />}
-            {messages.map((m, i) => (
-              <Fragment key={m.id}>
-                <MessageItem message={m} isLast={i === messages.length - 1} busy={streaming || canvasEditing} />
-                {summary?.upTo === m.id && <CompactNote chat={chat!} summary={summary} />}
-              </Fragment>
-            ))}
-            {compacting && <CompactingNote />}
-          </div>
+          chat && <MessageThread key={chat.id} chat={chat} summary={summary} busy={streaming||canvasEditing} compacting={compacting} scroller={scroller} stick={stick}/>
         )}
       </div>
 
@@ -139,7 +140,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
           aria-label="Scroll to latest"
           onClick={() => {
             stick.current = true;
-            scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: 'smooth' });
+            scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth' });
           }}
         >
           <ArrowDown size={18} />

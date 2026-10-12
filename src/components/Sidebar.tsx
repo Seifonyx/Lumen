@@ -4,6 +4,8 @@ import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
 import type { Chat, Project } from '../types';
 import ProjectManager from './ProjectManager';
+import Modal from './Modal';
+import { useFocusScope } from '../lib/focus-scope';
 
 const EMPTY_PROJECTS: Project[] = [];
 
@@ -21,6 +23,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
 
   useEffect(() => {
     if (!menu) return;
+    menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
     const close = (e: MouseEvent) => {
       if (!menuRef.current?.contains(e.target as Node)) setMenu(false);
     };
@@ -32,6 +35,8 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
     return (
       <li className="chat-row editing">
         <input
+          aria-label="Chat name"
+          data-local-escape
           autoFocus
           dir="auto"
           value={title}
@@ -43,6 +48,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
           onKeyDown={(e) => {
             if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
             if (e.key === 'Escape') {
+              e.preventDefault();e.stopPropagation();
               setTitle(chat.title);
               setEditing(false);
             }
@@ -61,11 +67,16 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
         {streaming && <span className="dot-pulse" aria-label="Replying" />}
       </button>
       <div className="row-menu" ref={menuRef}>
-        <button className="icon-btn sm" aria-label="Chat options" onClick={() => setMenu(!menu)}>
+        <button className="icon-btn sm" aria-label="Chat options" aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu(!menu)} onKeyDown={e=>{if(e.key==='ArrowDown'){e.preventDefault();setMenu(true)}}}>
           <MoreHorizontal size={16} />
         </button>
         {menu && (
-          <div className="menu" role="menu">
+          <div className="menu" role="menu" aria-label="Chat options" onKeyDown={e=>{
+            if(e.key==='Escape'){e.stopPropagation();setMenu(false);menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();return}
+            if(!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
+            e.preventDefault();const items=[...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')];const index=items.indexOf(document.activeElement as HTMLButtonElement);
+            items[e.key==='Home'?0:e.key==='End'?items.length-1:(index+(e.key==='ArrowUp'?-1:1)+items.length)%items.length]?.focus();
+          }}>
             <button role="menuitem" onClick={() => { setMenu(false); setTitle(chat.title); setEditing(true); }}>
               <Pencil size={15} /> Rename
             </button>
@@ -77,8 +88,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
               <button role="menuitem" onClick={() => { setMenu(false); moveChatToProject(chat.id, null); }}>All chats</button>
               {projects.map((project) => <button key={project.id} role="menuitem" onClick={() => { setMenu(false); moveChatToProject(chat.id, project.id); }}>{project.name}</button>)}
             </div>}
-            <button role="menuitem" onClick={() => setTagging(!tagging)}><Tag size={15} /> Edit tags</button>
-            {tagging && <div className="chat-tag-editor"><input autoFocus value={tags} maxLength={140} onChange={(e) => setTags(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setMenu(false); setChatTags(chat.id, tags.split(',')); } }} placeholder="tag1, tag2" aria-label="Chat tags" /><button onClick={() => { setMenu(false); setChatTags(chat.id, tags.split(',')); }}>Save</button><small>Up to 5 tags; search finds them.</small></div>}
+            <button role="menuitem" onClick={() => {setMenu(false);setTagging(true)}}><Tag size={15} /> Edit tags</button>
             <button role="menuitem" onClick={() => { setMenu(false); useStore.getState().setUi({ exportChatId: chat.id, sidebarOpen: false }); }}>
               <Download size={15} /> Export
             </button>
@@ -88,6 +98,12 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
           </div>
         )}
       </div>
+      {tagging && <Modal title="Chat tags" onClose={()=>setTagging(false)}><div className="chat-tag-editor">
+        <input autoFocus value={tags} maxLength={140} onChange={e=>setTags(e.target.value)} onKeyDown={e=>{
+          if(e.key==='Enter'){e.preventDefault();setTagging(false);setChatTags(chat.id,tags.split(','));}
+        }} placeholder="tag1, tag2" aria-label="Chat tags"/>
+        <button onClick={()=>{setTagging(false);setChatTags(chat.id,tags.split(','));}}>Save</button><small>Up to 5 tags; search finds them.</small>
+      </div></Modal>}
     </li>
   );
 }
@@ -109,6 +125,7 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
   const [projectManager, setProjectManager] = useState(false);
   const [phone, setPhone] = useState(() => window.matchMedia('(max-width: 899px)').matches);
   const sidebarRef = useRef<HTMLElement>(null);
+  useFocusScope(sidebarRef,phone&&open,()=>setUi({sidebarOpen:false}));
   const wasOpen = useRef(false);
   useEffect(() => {
     const media = window.matchMedia('(max-width: 899px)');
@@ -122,24 +139,6 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
       else if (wasOpen.current && !useStore.getState().settingsOpen) document.querySelector<HTMLButtonElement>('.menu-btn')?.focus({ preventScroll: true });
     }
     wasOpen.current = open;
-  }, [open, phone]);
-  useEffect(() => {
-    if (!phone || !open) return;
-    const main = document.querySelector<HTMLElement>('.main');
-    const previouslyInert = main?.inert;
-    if (main) main.inert = true;
-    const trap = (event: KeyboardEvent) => {
-      if (event.key !== 'Tab' || document.querySelector('.modal-backdrop, .sheet-backdrop')) return;
-      const items = [...(sidebarRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input, select, a[href]') || [])].filter(el => el.getClientRects().length > 0);
-      const first = items[0], last = items[items.length - 1];
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
-    };
-    document.addEventListener('keydown', trap);
-    return () => {
-      if (main) main.inert = previouslyInert || false;
-      document.removeEventListener('keydown', trap);
-    };
   }, [open, phone]);
 
   const groups = useMemo(() => {
@@ -167,6 +166,7 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
       className={`sidebar${open ? ' open' : ''}`}
       aria-label="Chats"
       role={phone ? 'dialog' : undefined}
+      tabIndex={-1}
       aria-modal={phone && open || undefined}
       aria-hidden={phone && !open || undefined}
       inert={phone && !open}
@@ -182,7 +182,7 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
       </div>
       {searchOpen && <label className="search sidebar-search-field">
         <Search size={16} />
-        <input ref={searchInput} id="chat-search" type="search" aria-label="Search chats" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setSearchOpen(false); setQuery(''); searchButton.current?.focus(); } }} dir="auto" />
+        <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setSearchOpen(false); setQuery(''); searchButton.current?.focus(); } }} dir="auto" />
         <button className="icon-btn sm" aria-label="Close search" onClick={() => { setSearchOpen(false); setQuery(''); searchButton.current?.focus(); }}><X size={15} /></button>
       </label>}
       <div className="sidebar-section-heading"><h2 className="sidebar-section-label"><FolderKanban size={15} aria-hidden="true" />Projects</h2><button className="icon-btn sm" onClick={() => setProjectManager(true)} aria-label="Manage projects" title="Manage projects"><Plus size={16} /></button></div>

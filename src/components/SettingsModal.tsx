@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { VOICE_LANGS } from '../lib/speech';
+import { useFocusScope } from '../lib/focus-scope';
 import { PreviewTools } from './PreviewTools';
 import { PROVIDER_NAMES, saveBlob, type ProviderId } from '../lib/util';
 import { useStore } from '../store';
@@ -87,7 +88,12 @@ function Choice<T extends string>({
       <span className="setting-ctrl">
         <div className="segmented" role="radiogroup" aria-label={label}>
           {options.map(([v, text]) => (
-            <button key={v} role="radio" aria-checked={value === v} className={value === v ? 'active' : ''} onClick={() => onChange(v)}>
+            <button key={v} role="radio" aria-label={label==='Text size'?v==='small'?'Small':v==='medium'?'Medium':'Large':undefined} aria-checked={value === v} tabIndex={value===v?0:-1} className={value === v ? 'active' : ''} onClick={() => onChange(v)} onKeyDown={e=>{
+              if(!['ArrowLeft','ArrowUp','ArrowRight','ArrowDown','Home','End'].includes(e.key))return;
+              e.preventDefault();const index=options.findIndex(([key])=>key===v);
+              const next=e.key==='Home'?0:e.key==='End'?options.length-1:(index+(e.key==='ArrowLeft'||e.key==='ArrowUp'?-1:1)+options.length)%options.length;
+              onChange(options[next][0]);e.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('button')[next]?.focus();
+            }}>
               {text}
             </button>
           ))}
@@ -536,10 +542,14 @@ export default function SettingsModal() {
   const user = useStore((s) => s.user);
   const { updateSettings: update, setUi, logout } = useStore.getState();
   const panel = useRef<HTMLDivElement>(null);
+  const dialog = useRef<HTMLElement>(null);
 
   const close = () => {
     setUi({ settingsOpen: false });
   };
+  useFocusScope(dialog,open,()=>{
+    if(tab && window.matchMedia('(max-width:720px), (pointer:coarse) and (max-width:1100px)').matches)setUi({settingsTab:''});else close();
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -562,7 +572,7 @@ export default function SettingsModal() {
   const [id, label, , blurb] = current;
 
   return (
-    <section className={`settings-page${tab ? ' has-section' : ''}`} aria-label="Settings">
+    <section className={`settings-page${tab ? ' has-section' : ''}`} aria-label="Settings" role="dialog" aria-modal="true" tabIndex={-1} ref={dialog}>
       <header className="settings-top">
         {tab ? (
           <button className="icon-btn settings-back" onClick={() => setUi({ settingsTab: '' })} aria-label="All settings">
@@ -644,7 +654,7 @@ export default function SettingsModal() {
                         <span className="setting-label">Voice input language</span>
                       </span>
                       <span className="setting-ctrl">
-                        <select value={settings.voiceLang} onChange={(e) => update({ voiceLang: e.target.value })}>
+                        <select aria-label="Voice input language" value={settings.voiceLang} onChange={(e) => update({ voiceLang: e.target.value })}>
                           {VOICE_LANGS.map(([v, l]) => (
                             <option key={v} value={v}>{l}</option>
                           ))}

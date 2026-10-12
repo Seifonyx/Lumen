@@ -1,5 +1,7 @@
 import { X } from 'lucide-react';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useId, useRef, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { useFocusScope } from '../lib/focus-scope';
 
 interface Props {
   title: ReactNode;
@@ -12,27 +14,14 @@ interface Props {
 
 export default function Modal({ title, onClose, children, actions, wide, full }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const close = useRef(onClose);
-  const previousFocus = useRef(document.activeElement instanceof HTMLElement ? document.activeElement : null);
-  useEffect(() => { close.current = onClose; }, [onClose]);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close.current();
-    };
-    window.addEventListener('keydown', onKey);
-    // Keep an input's autofocus, and don't reset focus when the modal re-renders.
-    if (!ref.current?.contains(document.activeElement)) ref.current?.focus();
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      if (previousFocus.current?.isConnected) previousFocus.current.focus();
-    };
-  }, []);
+  const titleId=useId();
+  useFocusScope(ref,true,onClose);
 
-  return (
+  return createPortal(
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={`modal${wide ? ' wide' : ''}${full ? ' full' : ''}`} role="dialog" aria-modal="true" tabIndex={-1} ref={ref}>
+      <div className={`modal${wide ? ' wide' : ''}${full ? ' full' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} ref={ref}>
         <header className="modal-head">
-          <h2 className="modal-title">{title}</h2>
+          <h2 className="modal-title" id={titleId}>{title}</h2>
           <div className="modal-actions">
             {actions}
             <button className="icon-btn" onClick={onClose} aria-label="Close">
@@ -42,6 +31,6 @@ export default function Modal({ title, onClose, children, actions, wide, full }:
         </header>
         <div className="modal-body">{children}</div>
       </div>
-    </div>
+    </div>,document.body
   );
 }

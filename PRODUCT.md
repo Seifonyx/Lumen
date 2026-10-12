@@ -16,6 +16,12 @@ Keep the interface clean, professional and compact, consistent with the current 
 
 Planning replies cannot authorize edits. Approval belongs to a particular plan, repository/branch, conversation, local workspace snapshot and device. Reloading an approved but unsent plan requires renewed approval. Incomplete, failed or stopped plans require a fresh proposal. Earlier plans and plans from another device remain readable without transferring approval.
 
+## Long conversations and keyboard access
+
+Conversations above 120 messages render a small visible window while keeping focused controls and selected text mounted. **Show full conversation** restores every message for continuous reading; Ctrl/Cmd+F also enables it for browser search. This changes rendering only, not stored messages, AI context or exports. Jump-to-latest respects reduced motion.
+
+Dialogs share nested focus handling, background isolation and focus restoration. Local Escape actions dismiss search, menus or edits before their enclosing dialog. Phone dialogs avoid restoring focus to text inputs and reopening the keyboard. Native page zoom is enabled; keyboard users can skip directly to the message input. Automated accessibility checks cover the three appearances and desktop/phone layouts, with keyboard and semantic checks; they do not replace testing on physical devices or with assistive technology.
+
 ## Scope
 
 The repository panel can preview and undo the latest non-merge commit with an explicit Undo and push action. It creates a revert commit restoring the previous tree; history is preserved. Uncommitted work blocks undo, and branch/account/key changes require a fresh preview. Merge, first and empty commits are not supported. Separate chat folders are excluded at the user's request.

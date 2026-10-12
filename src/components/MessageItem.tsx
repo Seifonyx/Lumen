@@ -125,7 +125,7 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
       )}
       {editing ? (
         <div className="edit-box">
-          <textarea dir="auto" value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus rows={Math.min(10, draft.split('\n').length + 1)} />
+          <textarea aria-label="Edit message" dir="auto" value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus rows={Math.min(10, draft.split('\n').length + 1)} />
           <div className="edit-actions">
             <button className="btn ghost" onClick={() => { setEditing(false); setDraft(message.text); }}>Cancel</button>
             <button className="btn primary" disabled={!draft.trim() || busy} onClick={() => { setEditing(false); void editAndResend(message.id, draft.trim()); }}>Send</button>

@@ -122,6 +122,7 @@ async function run(browser, mobile) {
   await settings(page, 'Privacy');
   await page.locator('.setting-row').filter({ hasText: 'Restore real values in replies' }).locator('input.switch').uncheck();
   await page.locator('.settings-page [aria-label="Close"]').click();
+  check(await page.locator('.main').evaluate(el=>!el.inert), `${label}: chat is interactive after settings closes`);
   await page.fill('.composer textarea', `My email is ${EMAIL}; compare again.`);
   await page.click('.compare-trigger');
   await page.click('.compare-picker-actions .primary');

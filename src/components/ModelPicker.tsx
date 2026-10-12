@@ -2,6 +2,7 @@ import { Brain, Check, ChevronDown, Cpu, Eye, Globe, Search, SlidersHorizontal, 
 import { AUTO } from '../lib/routing';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
+import { useFocusScope } from '../lib/focus-scope';
 import { formatUntil, remaining } from '../lib/usage';
 import { PROVIDER_NAMES, providerOfId, type ProviderId } from '../lib/util';
 import { modelLabel, useStore } from '../store';
@@ -64,6 +65,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
   const ref = useRef<HTMLDivElement>(null);
   const pop = useRef<HTMLDivElement>(null);
   const search = useRef<HTMLInputElement>(null);
+  useFocusScope(pop,open,()=>setOpen(false));
 
   const statusOf = (id: string) => {
     const u = usage?.models[id];
@@ -154,7 +156,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
   };
 
   const menu = (
-    <div className={`popover models-pop ${align}${sheet ? ' sheet' : ''}`} role="listbox" aria-label="Choose a model" ref={pop} onKeyDown={onKeys}>
+    <div className={`popover models-pop ${align}${sheet ? ' sheet' : ''}`} role="dialog" aria-modal="true" aria-label="Choose a model" tabIndex={-1} ref={pop} onKeyDown={onKeys}>
       {sheet && <div className="sheet-grip" aria-hidden="true" />}
       {searchable && (
         <div className="mp-search">
@@ -162,7 +164,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
           <input ref={search} type="search" placeholder="Search models and layouts" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={onSearchKeys} aria-label="Search models" />
         </div>
       )}
-      <div className="mp-body">
+      <div className="mp-body" role="listbox" aria-label="Models and layouts">
         {showAuto && (
           <button role="option" aria-selected={value === AUTO} className={`mp-item mp-auto${value === AUTO ? ' selected' : ''}`} onClick={() => pick(AUTO)}>
             <span className="mp-tile auto"><Sparkles size={15} /></span>
@@ -245,7 +247,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
 
   return (
     <div className={`model-picker${compact ? ' compact' : ''}`} ref={ref}>
-      <button className={compact ? 'msg-action' : 'model-button'} onClick={toggle} aria-haspopup="listbox" aria-expanded={open}>
+      <button className={compact ? 'msg-action' : 'model-button'} onClick={toggle} aria-haspopup="dialog" aria-expanded={open}>
         {label ?? (
           <span className="model-name">
             {value === AUTO && <Sparkles size={16} className="auto-icon" />}

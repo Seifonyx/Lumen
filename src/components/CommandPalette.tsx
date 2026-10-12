@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Boxes, FolderKanban, MessageSquare, Plus, Search, Settings } from 'lucide-react';
 import { modKey } from '../lib/util';
 import { modelLabel, useStore } from '../store';
@@ -23,6 +23,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
   const list = useRef<HTMLDivElement>(null);
+  const resultsId=useId();
   const { newChat, selectChat, setUi, updateSettings, selectProject } = useStore.getState();
   const norm = query.trim().toLowerCase();
   const items = useMemo(() => {
@@ -50,14 +51,14 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
   return (
     <Modal title="Jump to" onClose={onClose}>
       <div className="command-palette">
-        <label className="command-search"><Search size={17} /><input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => {
+        <label className="command-search"><Search size={17} /><input autoFocus role="combobox" aria-expanded="true" aria-autocomplete="list" aria-controls={resultsId} aria-activedescendant={items[active]?`${resultsId}-${active}`:undefined} value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => {
           if (e.key === 'ArrowDown') { e.preventDefault(); setActive((i) => Math.min(i + 1, items.length - 1)); }
           else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((i) => Math.max(0, i - 1)); }
           else if (e.key === 'Enter' && items[active]) { e.preventDefault(); run(items[active]); }
         }} placeholder="Search chats, models, projects, settings…" aria-label="Search commands" /></label>
-        <div className="command-results" ref={list} role="listbox" aria-label="Command results">
+        <div className="command-results" id={resultsId} ref={list} role="listbox" aria-label="Command results">
           {items.length ? items.map(({ id, label, detail, Icon, run: action }, index) => (
-            <button key={id} data-index={index} role="option" aria-selected={active === index} className={`command-item${active === index ? ' active' : ''}`} onMouseEnter={() => setActive(index)} onClick={() => run({ id, label, detail, Icon, run: action })}>
+            <button key={id} id={`${resultsId}-${index}`} data-index={index} role="option" tabIndex={-1} aria-selected={active === index} className={`command-item${active === index ? ' active' : ''}`} onMouseEnter={() => setActive(index)} onClick={() => run({ id, label, detail, Icon, run: action })}>
               <Icon size={16} /><span>{label}</span><small>{detail}</small>
             </button>
           )) : <p className="muted small command-empty">No matching chats, models, projects or settings.</p>}

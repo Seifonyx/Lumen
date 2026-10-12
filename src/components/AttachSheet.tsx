@@ -1,5 +1,6 @@
 import { FolderGit2, Images, Pencil, ChartNoAxesCombined } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { useFocusScope } from '../lib/focus-scope';
 import './touch.css';
 
 interface Props {
@@ -17,28 +18,15 @@ export default function AttachSheet({ onClose, onFiles, onRepo, onCanvas, onAnal
   const startY = useRef<number | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
+  useFocusScope(ref,true,onClose);
   useEffect(() => { close.current = onClose; }, [onClose]);
 
   useEffect(() => {
-    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     ref.current?.querySelector<HTMLButtonElement>('button')?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close.current();
-      if (e.key === 'Tab') {
-        const buttons = ref.current?.querySelectorAll<HTMLButtonElement>('button');
-        if (!buttons?.length) return;
-        const first = buttons[0], last = buttons[buttons.length - 1];
-        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-      }
-    };
     const onResize = () => close.current();
-    window.addEventListener('keydown', onKey);
     if (anchor) window.addEventListener('resize', onResize);
     return () => {
-      window.removeEventListener('keydown', onKey);
       window.removeEventListener('resize', onResize);
-      if (previous?.isConnected) previous.focus();
     };
   }, []);
 
@@ -56,6 +44,7 @@ export default function AttachSheet({ onClose, onFiles, onRepo, onCanvas, onAnal
         style={anchor ? { left: anchor.left, bottom: anchor.bottom } : undefined}
         role="dialog"
         aria-modal="true"
+        tabIndex={-1}
         aria-label="Add to your message"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={(e) => { startY.current = e.touches[0].clientY; }}

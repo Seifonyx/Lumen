@@ -38,4 +38,10 @@ Audit: 2026-10-12. Only mark a feature complete after its working implementation
 
 Arabic interface support and separate chat folders were removed from scope at the request of the user.
 
-Keep user-visible controls compact. Preserve free-only operation, account privacy, drafts and safe confirmations for external changes. Deploy each phase to live and preview before starting the next.
+## New enhancement sequence
+
+1. Multi-provider integration: Mistral, Cohere, NVIDIA NIM, Hugging Face, DeepSeek, Alibaba Cloud, Cloudflare Workers AI and Aion Labs. Implemented candidate; release checks pending. Additional APIs require explicit billing opt-in; NVIDIA/Cloudflare require a user-controlled relay. GitHub Models was retired July 30, 2026 and is explained as unavailable.
+2. Visual/mobile redesign, especially Projects: awaiting confirmation after Task 1.
+3. Sent-message navigation timeline: awaiting confirmation after Task 2.
+
+Keep controls compact. Preserve original free-model filtering, explicit additional-provider billing consent, account privacy, drafts and confirmations for external changes. Implement, test, deploy and verify each task individually; stop and ask the user before beginning the next.

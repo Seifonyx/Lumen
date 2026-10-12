@@ -6,9 +6,10 @@
 import { doc, increment, onSnapshot, setDoc, type Unsubscribe } from 'firebase/firestore';
 import { db } from './firebase';
 import { quota } from './quota';
+import { AI_PROVIDERS } from './ai/provider-config.js';
 
-export type Provider = 'gemini' | 'openrouter' | 'groq' | 'cerebras';
-const PROVIDERS: Provider[] = ['gemini', 'openrouter', 'groq', 'cerebras'];
+export type Provider = 'gemini' | 'openrouter' | 'groq' | 'cerebras' | 'mistral' | 'cohere' | 'nvidia' | 'huggingface' | 'deepseek' | 'alibaba' | 'cloudflare' | 'aion';
+const PROVIDERS = AI_PROVIDERS as Provider[];
 export interface LimitInfo {
   scope: 'day' | 'minute' | 'unknown';
   quota?: number;
@@ -34,7 +35,7 @@ export interface UsageView {
 }
 
 // Google's free quotas reset at midnight Pacific time; OpenRouter's, Groq's and Cerebras's at midnight UTC.
-const TZ: Record<Provider, string> = { gemini: 'America/Los_Angeles', openrouter: 'UTC', groq: 'UTC', cerebras: 'UTC' };
+const TZ = Object.fromEntries(PROVIDERS.map(p => [p, p === 'gemini' ? 'America/Los_Angeles' : 'UTC'])) as Record<Provider, string>;
 
 export const providerOf = (id: string): Provider => {
   const p = id.split(':')[0] as Provider;
@@ -64,7 +65,7 @@ type DayDoc = {
 type QuotaDoc = Record<string, { id: string; quota: number }>;
 
 export class UsageTracker {
-  private days: Record<Provider, DayDoc> = { gemini: {}, openrouter: {}, groq: {}, cerebras: {} };
+  private days = Object.fromEntries(PROVIDERS.map(p => [p, {}])) as Record<Provider, DayDoc>;
   private quotas: QuotaDoc = {};
   private shortBlocks = new Map<string, number>();
   private unsubs: Unsubscribe[] = [];

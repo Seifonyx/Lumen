@@ -8,6 +8,7 @@ import {
 import { connectFirestoreEmulator, doc, getDoc, initializeFirestore, serverTimestamp, setDoc, type DocumentSnapshot } from 'firebase/firestore';
 import config from '../firebase-config.json';
 import { quota } from './quota';
+import { EXTRA_PROVIDERS, normalizeKeys } from './ai/provider-config.js';
 
 // Sign-in runs through the app's own address where Google allows it. Phones (Safari, home-screen
 // apps) block the cross-site storage that sign-in through the-model-router.firebaseapp.com needs.
@@ -151,13 +152,26 @@ export interface ApiKeys {
   cerebras: string;
   /** GitHub token for the coding workspace */
   github: string;
+  mistral?: string;
+  cohere?: string;
+  nvidia?: string;
+  huggingface?: string;
+  deepseek?: string;
+  alibaba?: string;
+  cloudflare?: string;
+  aion?: string;
+  /** Explicit consent to credit-consuming or billable APIs; disabled by default. */
+  providerAccess?: Partial<Record<keyof typeof EXTRA_PROVIDERS, boolean>>;
+  cloudflareAccountId?: string;
+  alibabaBaseUrl?: string;
+  providerRelayUrl?: string;
 }
 
 const keysDoc = (uid: string) => doc(db, 'modelRouter', uid);
 
 // A copy of keys and settings stays on the device so the app also opens without a connection.
 const localKey = (uid: string) => `mr.account.${uid}`;
-type Account = { geminiKey?: string; openrouterKey?: string; groqKey?: string; cerebrasKey?: string; githubKey?: string; settings?: Record<string, unknown> };
+type Account = { geminiKey?: string; openrouterKey?: string; groqKey?: string; cerebrasKey?: string; githubKey?: string; providerConnections?: Partial<ApiKeys>; settings?: Record<string, unknown> };
 function localAccount(uid: string): Account | null {
   try {
     return JSON.parse(localStorage.getItem(localKey(uid)) || 'null');
@@ -202,7 +216,7 @@ async function fetchAccount(uid: string): Promise<Account> {
     const snap = (await Promise.race([getDoc(keysDoc(uid)), timeout])) as DocumentSnapshot;
     quota.count('reads');
     const d = (snap.data() || {}) as Account;
-    keepLocal(uid, { geminiKey: d.geminiKey || '', openrouterKey: d.openrouterKey || '', groqKey: d.groqKey || '', cerebrasKey: d.cerebrasKey || '', githubKey: d.githubKey || '', settings: d.settings });
+    keepLocal(uid, { geminiKey: d.geminiKey || '', openrouterKey: d.openrouterKey || '', groqKey: d.groqKey || '', cerebrasKey: d.cerebrasKey || '', githubKey: d.githubKey || '', providerConnections: d.providerConnections || {}, settings: d.settings });
     return d;
   } catch (e) {
     if (saved) return saved;
@@ -215,7 +229,7 @@ async function fetchAccount(uid: string): Promise<Account> {
 
 export async function loadKeys(uid: string): Promise<ApiKeys> {
   const d = await readAccount(uid);
-  return { gemini: d.geminiKey || '', openrouter: d.openrouterKey || '', groq: d.groqKey || '', cerebras: d.cerebrasKey || '', github: d.githubKey || '' };
+  return normalizeKeys({ ...d.providerConnections, gemini: d.geminiKey || '', openrouter: d.openrouterKey || '', groq: d.groqKey || '', cerebras: d.cerebrasKey || '', github: d.githubKey || '' }) as unknown as ApiKeys;
 }
 
 /** Settings shared across devices (model list, instructions, appearance). */
@@ -239,8 +253,15 @@ export async function saveRemoteSettings(uid: string, settings: object): Promise
 }
 
 export async function saveKeys(uid: string, keys: ApiKeys): Promise<void> {
+  accountRead = null;
   quota.count('writes');
-  const fields = { geminiKey: keys.gemini.trim(), openrouterKey: keys.openrouter.trim(), groqKey: keys.groq.trim(), cerebrasKey: keys.cerebras.trim(), githubKey: (keys.github || '').trim() };
+  const clean = normalizeKeys(keys) as unknown as ApiKeys;
+  const providerConnections: Partial<ApiKeys> = {
+    ...Object.fromEntries(Object.keys(EXTRA_PROVIDERS).map(id => [id, clean[id as keyof typeof EXTRA_PROVIDERS]])),
+    providerAccess: clean.providerAccess, cloudflareAccountId: clean.cloudflareAccountId,
+    alibabaBaseUrl: clean.alibabaBaseUrl, providerRelayUrl: clean.providerRelayUrl,
+  };
+  const fields = { geminiKey: clean.gemini, openrouterKey: clean.openrouter, groqKey: clean.groq, cerebrasKey: clean.cerebras, githubKey: clean.github, providerConnections };
   keepLocal(uid, fields);
   if (isPreviewUser(uid)) return;
   try {

@@ -93,6 +93,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
   for (const id of queue) {
     if (signal.aborted) return;
     const target = available(id);
+    if (!target) continue;
     // A rejected key fails every model that uses it, so don't try them one by one.
     if (deadProviders.has(target.provider)) continue;
     if (attempts++ >= MAX_ATTEMPTS || Date.now() - started >= (answered ? timeouts.totalMs : timeouts.noAnswerMs)) break;

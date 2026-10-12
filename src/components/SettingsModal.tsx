@@ -37,6 +37,9 @@ import { Badges } from './ModelPicker';
 import UsageTab from './UsageTab';
 import MemoryTab from './MemoryTab';
 import KeySafety from './KeySafety';
+import ProviderConnections from './ProviderConnections';
+import { normalizeKeys, validAlibabaBase, validRelayUrl } from '../lib/ai/provider-config.js';
+import type { ApiKeys } from '../lib/firebase';
 import PrivacyTab from './PrivacyTab';
 import LayoutsSection, { LayoutEditor } from './LayoutsTab';
 import type { Layout } from '../lib/layouts';
@@ -44,7 +47,7 @@ import type { Layout } from '../lib/layouts';
 /** Settings sections: id, name, icon, one-line description */
 const TABS: [string, string, LucideIcon, string][] = [
   ['general', 'General', SlidersHorizontal, 'Account, appearance and chat behaviour'],
-  ['keys', 'API keys', KeyRound, 'Your free Gemini, OpenRouter, Groq and Cerebras keys'],
+  ['keys', 'API keys', KeyRound, 'Provider connections, access and billing controls'],
   ['models', 'Models', Boxes, 'Your models, Auto routing and layouts'],
   ['usage', 'Usage', Gauge, "Today's requests, limits and resets"],
   ['personalize', 'Personalization', UserRound, 'Instructions every model follows'],
@@ -296,11 +299,14 @@ function KeysTab() {
   const keys = useStore((s) => s.keys);
   const saveApiKeys = useStore((s) => s.saveApiKeys);
   const toast = useStore((s) => s.toast);
-  const [draft, setDraft] = useState({ ...keys });
+  const [draft, setDraft] = useState<ApiKeys>(() => normalizeKeys(keys) as unknown as ApiKeys);
   const [showKey, setShowKey] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
-  const changed = KEY_FIELDS.some(({ id }) => (draft[id] || '').trim() !== (keys[id] || ''));
-  const any = KEY_FIELDS.some(({ id }) => id !== 'github' && (draft[id] || '').trim());
+  const changed = JSON.stringify(normalizeKeys(draft)) !== JSON.stringify(normalizeKeys(keys));
+  const validation = draft.alibabaBaseUrl && !validAlibabaBase(draft.alibabaBaseUrl) ? 'Use an official Alibaba Cloud Model Studio base URL.'
+    : draft.providerRelayUrl && !validRelayUrl(draft.providerRelayUrl) ? 'Your relay must use HTTPS without a username, password or query.'
+    : draft.providerAccess?.cloudflare && draft.cloudflare && !/^[a-f0-9]{32}$/i.test(draft.cloudflareAccountId?.trim() || '') ? 'Enter the 32-character Cloudflare account ID.'
+    : ((draft.providerAccess?.cloudflare && draft.cloudflare) || (draft.providerAccess?.nvidia && draft.nvidia)) && !draft.providerRelayUrl?.trim() ? 'Add your relay URL before enabling NVIDIA or Cloudflare.' : '';
 
   const toggleShow = (id: string) => setShowKey((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -316,7 +322,7 @@ function KeysTab() {
               <div className="key-provider-head">
                 <span className="key-provider-title">
                   <KeyRound size={15} /> {label}
-                  <span className={`key-status-pill ${isConfigured ? 'configured' : 'empty'}`}>{isConfigured ? 'Connected' : 'Not set'}</span>
+                  <span className={`key-status-pill ${isConfigured ? 'configured' : 'empty'}`}>{isConfigured ? 'Key entered' : 'Not set'}</span>
                 </span>
                 <a className="link-btn small inline" href={link} target="_blank" rel="noopener noreferrer">
                   {linkText || 'Get a free key'} <ExternalLink size={12} />
@@ -329,6 +335,8 @@ function KeysTab() {
                   autoComplete="off"
                   spellCheck={false}
                   placeholder={placeholder}
+                  aria-label={`${label} API key`}
+                  autoCapitalize="none"
                   value={val}
                   onChange={(e) => setDraft({ ...draft, [id]: e.target.value })}
                 />
@@ -346,11 +354,13 @@ function KeysTab() {
         })}
       </div>
 
+      <ProviderConnections draft={draft} setDraft={setDraft}/>
+      {validation && <p className="error-text" role="alert">{validation}</p>}
       <div className="settings-actions">
         <span className="muted small">Saved privately to your Google account and shared across your devices.</span>
         <button
           className="btn primary"
-          disabled={busy || !changed || !any}
+          disabled={busy || !changed || Boolean(validation)}
           onClick={async () => {
             setBusy(true);
             try {

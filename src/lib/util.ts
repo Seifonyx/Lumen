@@ -100,10 +100,10 @@ export const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(
 export const modKey = isMac ? '⌘' : 'Ctrl ';
 
 /** Display names for model providers, in the order they're shown. */
-export const PROVIDER_NAMES = { google: 'Google', openrouter: 'OpenRouter', groq: 'Groq', cerebras: 'Cerebras' } as const;
+export const PROVIDER_NAMES = { google: 'Google', openrouter: 'OpenRouter', groq: 'Groq', cerebras: 'Cerebras', mistral: 'Mistral', cohere: 'Cohere', nvidia: 'NVIDIA NIM', huggingface: 'Hugging Face', deepseek: 'DeepSeek', alibaba: 'Alibaba Cloud', cloudflare: 'Cloudflare Workers AI', aion: 'Aion Labs' } as const;
 export type ProviderId = keyof typeof PROVIDER_NAMES;
 /** Provider of a model id like "groq:llama-3.3-70b-versatile". */
 export const providerOfId = (id: string): ProviderId => {
   const p = id.split(':')[0];
-  return p === 'gemini' ? 'google' : p === 'groq' || p === 'cerebras' ? p : 'openrouter';
+  return p === 'gemini' ? 'google' : Object.hasOwn(PROVIDER_NAMES, p) ? p as ProviderId : 'openrouter';
 };

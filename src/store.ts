@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { openRouterDailyLimit, probeModel, setKeys } from './lib/ai/providers.js';
+import { keyVersion, openRouterDailyLimit, probeModel, setKeys } from './lib/ai/providers.js';
+import { AI_PROVIDERS, normalizeKeys, providerEnabled } from './lib/ai/provider-config.js';
 import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage } from './lib/api';
 import { keepModelChoice, isExcludedModel } from './lib/ai/model-status.js';
 import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
@@ -816,24 +817,27 @@ export const useStore = create<State>((set, get) => {
 
     async saveApiKeys(keys) {
       modelCheckController?.abort();
+      get().stop();
+      compactController?.abort();
+      canvasController?.abort();
       const uid = get().user?.uid;
       if (!uid) return;
       const before = get().keys;
       await saveKeys(uid, keys);
       if (get().user?.uid !== uid) return;
       setKeys(keys);
-      const clean: ApiKeys = { gemini: keys.gemini.trim(), openrouter: keys.openrouter.trim(), groq: keys.groq.trim(), cerebras: keys.cerebras.trim(), github: (keys.github || '').trim() };
+      const clean = normalizeKeys(keys) as unknown as ApiKeys;
       setGitHubToken(clean.github);
-      const changed = (['gemini', 'openrouter', 'groq', 'cerebras'] as const).filter((provider) => clean[provider] !== before[provider]);
+      const changed = AI_PROVIDERS.filter((provider) => clean[provider as keyof ApiKeys] !== before[provider as keyof ApiKeys] || providerEnabled(provider, clean) !== providerEnabled(provider, before) || (provider === 'alibaba' && clean.alibabaBaseUrl !== before.alibabaBaseUrl) || (['cloudflare', 'nvidia'].includes(provider) && (clean.providerRelayUrl !== before.providerRelayUrl || clean.cloudflareAccountId !== before.cloudflareAccountId)));
       if (changed.length) get().updateSettings({ unavailableModels: (get().settings.unavailableModels || []).filter((id) => !changed.some((provider) => id.startsWith(`${provider}:`))) });
       set({ keys: clean });
       await get().loadCatalog();
+      if (get().user?.uid !== uid) return;
       // A newly connected provider: switch on its suggested models so they're ready to use.
-      const prefix: Partial<Record<keyof ApiKeys, string>> = { gemini: 'gemini:', openrouter: 'openrouter:', groq: 'groq:', cerebras: 'cerebras:' };
-      const added = (Object.keys(prefix) as (keyof ApiKeys)[]).filter((k) => clean[k] && !before[k]);
+      const added = AI_PROVIDERS.filter(k => providerEnabled(k, clean) && !providerEnabled(k, before));
       const catalog = get().catalog;
       if (added.length && catalog) {
-        const extra = catalog.defaults.filter((id) => added.some((k) => id.startsWith(prefix[k]!)) && !get().settings.enabledModels.includes(id));
+        const extra = catalog.defaults.filter((id) => added.some((k) => id.startsWith(`${k}:`)) && !get().settings.enabledModels.includes(id));
         if (extra.length) get().updateSettings({ enabledModels: [...get().settings.enabledModels, ...extra] });
       }
     },
@@ -874,9 +878,11 @@ export const useStore = create<State>((set, get) => {
 
     async loadCatalog() {
       const generation = accountGeneration;
+      const version = keyVersion();
       const { keys } = get();
-      if (!keys.gemini && !keys.openrouter && !keys.groq && !keys.cerebras) {
+      if (!AI_PROVIDERS.some(p => providerEnabled(p, keys))) {
         set({ catalog: null, catalogError: null, settingsOpen: true, settingsTab: 'keys' });
+        get().updateSettings({ enabledModels: [], defaultModel: AUTO });
         return;
       }
       try {
@@ -884,7 +890,7 @@ export const useStore = create<State>((set, get) => {
           if (navigator.onLine || !savedCatalog()) throw e;
           return savedCatalog()!;
         });
-        if (generation !== accountGeneration) return;
+        if (generation !== accountGeneration || version !== keyVersion()) return;
         // Offline: use the list from last time so the app stays usable.
         if (catalog.errors.length && !navigator.onLine && savedCatalog()) catalog = savedCatalog()!;
         if (navigator.onLine && !catalog.errors.length) {
@@ -895,13 +901,13 @@ export const useStore = create<State>((set, get) => {
           }
         }
         void openRouterDailyLimit().then((n) => usage?.setOpenRouterDaily(n));
-        usage?.useProviders((['groq', 'cerebras'] as const).filter((p) => catalog.providers[p]));
+        usage?.useProviders(AI_PROVIDERS.filter(p => catalog.providers[p === 'gemini' ? 'google' : p as ModelInfo['provider']]) as import('./lib/usage').Provider[]);
         const previous = get().catalog || savedCatalog();
         if (catalog.failedProviders?.length && previous) {
           catalog = { ...catalog, models: [...catalog.models, ...previous.models.filter((m) => catalog.failedProviders!.includes(m.id.split(':')[0]) && !isExcludedModel(m.id))] };
         }
         const unavailable = new Set(get().settings.unavailableModels || []);
-        catalog = { ...catalog, models: catalog.models.filter((m) => !isExcludedModel(m.id) && !unavailable.has(m.id)) };
+        catalog = { ...catalog, models: catalog.models.filter((m) => providerEnabled(m.id.split(':')[0], get().keys) && !isExcludedModel(m.id) && !unavailable.has(m.id)) };
         const { settings } = get();
         const known = new Set(catalog.models.map((m) => m.id));
         let enabled = settings.enabledModels.filter((id) => !unavailable.has(id) && keepModelChoice(id, catalog));
@@ -912,6 +918,7 @@ export const useStore = create<State>((set, get) => {
         set({ catalog, catalogError: catalog.errors.length ? catalog.errors.join(' · ') : null });
         get().updateSettings({ enabledModels: enabled, defaultModel, autoIntroduced: true });
       } catch (e) {
+        if (generation !== accountGeneration || version !== keyVersion()) return;
         set({ catalogError: (e as Error).message });
       }
     },

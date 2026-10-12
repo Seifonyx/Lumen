@@ -2,6 +2,8 @@ import { CircleCheck, Clock, OctagonAlert } from 'lucide-react';
 import { FREE_LIMITS, type Op } from '../lib/quota';
 import { formatTokens, formatUntil, remaining, type UsageView } from '../lib/usage';
 import { modelLabel, useStore } from '../store';
+import { PROVIDER_NAMES, providerOfId } from '../lib/util';
+import { EXTRA_PROVIDERS } from '../lib/ai/provider-config.js';
 
 function Bar({ used, limit }: { used: number; limit: number }) {
   const pct = Math.min(100, Math.round((used / Math.max(1, limit)) * 100));
@@ -124,14 +126,14 @@ export default function UsageTab() {
             {rows.map(({ id, u, blocked, left, isFreeOR }) => (
               <li key={id} className="usage-row">
                 <div className="usage-row-head">
-                  <span className="model-title">{modelLabel(catalog, id)}</span>
+                  <span className="model-title">{modelLabel(catalog, id)}{Object.hasOwn(EXTRA_PROVIDERS, id.split(':')[0]) && <span className="muted small"> · {PROVIDER_NAMES[providerOfId(id)]}</span>}</span>
                   <Status until={blocked} />
                 </div>
                 <div className="model-sub">
                   {u?.requests || 0} request{u?.requests === 1 ? '' : 's'}
                   {u && u.input + u.output > 0 && ` · ${formatTokens(u.input)} in / ${formatTokens(u.output)} out tokens`}
                   {left !== null && !isFreeOR && (blocked ? ` · daily limit ${u?.quota}` : ` · ${left} left today`)}
-                  {left === null && !isFreeOR && (blocked ? '' : ' · daily limit not known yet')}
+                  {left === null && !isFreeOR && (blocked ? '' : Object.hasOwn(EXTRA_PROVIDERS, id.split(':')[0]) ? ' · allowance depends on your plan' : ' · daily limit not known yet')}
                 </div>
                 {u?.quota && !isFreeOR && <Bar used={u.requests} limit={u.quota} />}
               </li>

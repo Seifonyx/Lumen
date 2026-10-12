@@ -1,19 +1,21 @@
-// Talks to Google AI Studio (Gemini), OpenRouter, Groq and Cerebras: lists models and streams replies
+// Provider adapters discover live models and stream replies
 // as a common sequence of events: { t: 'text' | 'think' | 'sources' | 'notice' | 'error', ... }.
 
 import { parseLimit, readError, readSSE, upstreamError } from './http.js';
 import { isActiveModel, isExcludedModel, isUnavailableFailure } from './model-status.js';
 import { safeVideoUri, toolBlock } from './tool-inputs.js';
 import { clearHealth } from './health.js';
+import { AI_PROVIDERS, EXTRA_PROVIDERS, normalizeKeys, providerEnabled, validAlibabaBase, validRelayUrl } from './provider-config.js';
 
 // API keys come from the user's settings (stored in their private Firebase document).
-const keys = { gemini: '', openrouter: '', groq: '', cerebras: '' };
+let keys = normalizeKeys();
+let capabilities = new Map();
 let keyGeneration = 0;
 export const keyVersion = () => keyGeneration;
 export function setKeys(next) {
-  const clean = Object.fromEntries(Object.keys(keys).map((k) => [k, (next[k] || '').trim()]));
-  if (Object.keys(keys).some((k) => clean[k] !== keys[k])) { cache = null; clearHealth(); keyGeneration++; }
-  Object.assign(keys, clean);
+  const clean = normalizeKeys(next);
+  if (JSON.stringify(clean) !== JSON.stringify(keys)) { cache = null; capabilities.clear(); clearHealth(); keyGeneration++; }
+  keys = clean;
 }
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
@@ -23,9 +25,12 @@ const OPENROUTER_BASE = 'https://openrouter.ai/api/v1';
 const COMPAT = {
   groq: { base: 'https://api.groq.com/openai/v1', label: 'Groq' },
   cerebras: { base: 'https://api.cerebras.ai/v1', label: 'Cerebras' },
+  ...EXTRA_PROVIDERS,
 };
 // Speech, safety classifiers and agent systems aren't chat models.
 const COMPAT_SKIP = /(whisper|tts|playai|orpheus|guard|safeguard|distil|compound|embed|rerank)/i;
+// NVIDIA's shared /models list also includes specialist endpoints that cannot chat.
+const NVIDIA_SKIP = /(?:content-safety|video-detector|ising-calibration|nemotron-parse|nvclip|deplot|(?:^|\/)riva-|(?:^|[-/])reward(?:-|$))/i;
 
 // Gemini models that aren't chat models (speech, images, video, music, embeddings, agents...).
 const GEMINI_SKIP = /(tts|image|imagen|embedding|aqa|veo|lyria|robotics|computer-use|transcribe|antigravity|deep-research|live|audio|nano-banana|omni)/i;
@@ -36,15 +41,16 @@ const geminiThinks = (name) => /^gemini-(?:[3-9]|2\.5|flash|pro)/i.test(name);
 
 export const hasGemini = () => Boolean(keys.gemini);
 export const hasOpenRouter = () => Boolean(keys.openrouter);
-/** Is there a key for this provider ('gemini' | 'openrouter' | 'groq' | 'cerebras')? */
-export const hasKey = (provider) => Boolean(keys[provider]);
+/** A saved key is usable only when any required billing opt-in is also enabled. */
+export const hasKey = (provider) => AI_PROVIDERS.includes(provider) && providerEnabled(provider, keys);
 
 export function parseModelId(id) {
-  const m = /^(gemini|openrouter|groq|cerebras):(.+)$/.exec(id || '');
+  const m = /^([a-z]+):(.+)$/.exec(id || '');
   if (!m) return null;
   const [, provider, name] = m;
+  if (!AI_PROVIDERS.includes(provider)) return null;
   if (provider === 'gemini' && !/^[\w.\-]+$/.test(name)) return null;
-  if (provider !== 'gemini' && !/^[\w.\-\/:~]+$/.test(name)) return null;
+  if (provider !== 'gemini' && (!/^[\w.@\-\/:~]+$/.test(name) || name.split('/').some(p => p === '..' || p === '.'))) return null;
   return { provider, name };
 }
 
@@ -130,28 +136,92 @@ export function prettyModelName(id) {
     .replace(/^GPT OSS/, 'GPT-OSS');
 }
 
-async function compatCatalog(provider) {
-  const { base, label } = COMPAT[provider];
-  let res;
-  try {
-    res = await fetch(`${base}/models`, { signal: AbortSignal.timeout(15_000), headers: { authorization: `Bearer ${keys[provider]}` } });
-  } catch {
-    throw new Error(`${label}: couldn't be reached from this browser`);
+function modelContext(metadata) {
+  const explicit = metadata.max_context_length || metadata.context_window || metadata.context_length;
+  if (Number.isFinite(explicit) && explicit > 0) return explicit;
+  const limits = (metadata.providers || []).filter(p => p.status === 'live').map(p => p.context_length).filter(n => Number.isFinite(n) && n > 0);
+  // Gateway backends differ: use the smallest advertised live window, not the largest.
+  return limits.length ? Math.min(...limits) : null;
+}
+
+function modelVision(provider, name, metadata = {}) {
+  if (metadata.input_modalities) return metadata.input_modalities.includes('image');
+  if (metadata.capabilities?.vision != null) return metadata.capabilities.vision === true;
+  if (metadata.architecture?.input_modalities) return metadata.architecture.input_modalities.includes('image');
+  if (provider === 'groq') return /llama-4|vision|scout|maverick|qwen3\.[68]-27b/i.test(name);
+  if (provider === 'cerebras' || provider === 'aion') return false;
+  return /(?:vision|pixtral|qwen.*(?:vl|vision)|llama-(?:3\.2-(?:11b|90b)|4)|nemotron.*vl)/i.test(name);
+}
+
+async function compatFetch(provider, path, options = {}, catalogue = false) {
+  const config = COMPAT[provider];
+  if (!config || !hasKey(provider)) throw new Error('This provider is not enabled.');
+  let base = config.base;
+  const headers = new Headers(options.headers);
+  headers.set('authorization', `Bearer ${keys[provider]}`);
+  if (options.body) headers.set('content-type', 'application/json');
+  if (provider === 'cohere' && catalogue) base = 'https://api.cohere.ai/v1';
+  if (provider === 'alibaba') {
+    base = keys.alibabaBaseUrl || config.base;
+    if (!validAlibabaBase(base)) throw new Error('Alibaba Cloud: choose an official Model Studio endpoint.');
   }
-  if (!res.ok) throw new Error(`${label}: ${await upstreamError(res)}`);
-  const { data } = await res.json();
+  if (config.relay) {
+    if (!validRelayUrl(keys.providerRelayUrl)) throw new Error(`${config.label}: add your HTTPS provider relay in API keys settings.`);
+    base = `${keys.providerRelayUrl}/${provider}`;
+    if (provider === 'cloudflare') {
+      if (!/^[a-f0-9]{32}$/i.test(keys.cloudflareAccountId)) throw new Error('Cloudflare: enter the 32-character account ID.');
+      headers.set('x-mr-account-id', keys.cloudflareAccountId);
+    }
+  }
+  try {
+    return await fetch(`${base}${path}`, { ...options, headers: Object.fromEntries(headers), credentials: 'omit', referrerPolicy: 'no-referrer' });
+  } catch (error) {
+    if (options.signal?.aborted) throw error;
+    throw new Error(`${config.label}: connection failed. Check the key, endpoint and browser access${config.relay ? ' to your relay' : ''}.`);
+  }
+}
+
+async function compatCatalog(provider) {
+  const { label } = COMPAT[provider];
+  const signal = AbortSignal.timeout(15_000);
+  let data = [], pageToken = '', page = 1;
+  const seen = new Set();
+  do {
+    const path = provider === 'cohere' ? `/models?endpoint=chat${pageToken ? `&page_token=${encodeURIComponent(pageToken)}` : ''}`
+      : provider === 'cloudflare' ? `/models?per_page=100&page=${page}` : '/models';
+    const res = await compatFetch(provider, path, { signal }, true);
+    if (!res.ok) throw new Error(`${label}: ${await upstreamError(res)}`);
+    const json = await res.json();
+    const items = provider === 'cohere' ? json.models : provider === 'cloudflare' ? json.result : json.data;
+    if (!Array.isArray(items) || json.success === false) throw new Error(`${label}: invalid model catalogue`);
+    data.push(...items);
+    pageToken = json.next_page_token || '';
+    if (pageToken && seen.has(pageToken)) throw new Error(`${label}: repeated catalogue page`);
+    seen.add(pageToken);
+    if (provider === 'cloudflare' && page < (json.result_info?.total_pages || 1)) { page++; continue; }
+    if (!pageToken) break;
+    page++;
+  } while (page <= 100);
+  if (page > 100) throw new Error(`${label}: catalogue exceeded page limit`);
   if (!Array.isArray(data)) throw new Error(`${label}: invalid model catalogue`);
   return data
-    .filter((m) => m.id && isActiveModel(m) && !isExcludedModel(`${provider}:${m.id}`) && !COMPAT_SKIP.test(m.id))
+    .map(m => ({ ...m, id: provider === 'cohere' || provider === 'cloudflare' ? m.name : m.id }))
+    .filter((m) => typeof m.id === 'string' && m.id && parseModelId(`${provider}:${m.id}`) && isActiveModel(m) && !m.is_deprecated && !m.archived && !isExcludedModel(`${provider}:${m.id}`) && !COMPAT_SKIP.test(m.id))
+    .filter(m => provider !== 'mistral' || m.capabilities?.completion_chat === true)
+    .filter(m => provider !== 'nvidia' || !NVIDIA_SKIP.test(m.id))
+    .filter(m => provider !== 'cohere' || m.endpoints?.includes('chat'))
+    .filter(m => provider !== 'cloudflare' || /text generation/i.test(m.task?.name || ''))
+    .filter(m => provider !== 'huggingface' || (!m.providers?.length || m.providers.some(p => p.status === 'live')))
+    .filter(m => !m.architecture?.output_modalities || m.architecture.output_modalities.includes('text'))
     .map((m) => ({
       id: `${provider}:${m.id}`,
       provider,
       name: m.id,
-      label: prettyModelName(m.id),
-      context: m.context_window || m.context_length || null,
-      vision: provider === 'groq' && /llama-4|vision|scout|maverick|qwen3\.[68]-27b/i.test(m.id),
+      label: m.display_name || m.displayName || (provider === 'deepseek' || provider === 'aion' ? m.name : '') || prettyModelName(m.id),
+      context: modelContext(m),
+      vision: modelVision(provider, m.id, m),
       pdf: false, // PDFs reach these models only as extracted text
-      thinking: /gpt-oss|qwen-?3|deepseek-r1|reason|think|qwq|magistral/i.test(m.id),
+      thinking: m.reasoning === true || m.reasoning_effort?.supported === true || /gpt-oss|qwen-?3|deepseek.*(?:r1|reasoner|v4|flash)|reason|think|qwq|magistral/i.test(m.id),
       search: false,
       created: m.created || 0,
     }))
@@ -180,21 +250,19 @@ let cache = null;
 export async function catalog({ refresh = false } = {}) {
   if (refresh) cache = null;
   if (cache && cache.expires > Date.now()) return cache.value;
-  const results = await Promise.allSettled([
-    hasGemini() ? geminiCatalog() : [],
-    hasOpenRouter() ? openRouterCatalog() : [],
-    keys.groq ? compatCatalog('groq') : [],
-    keys.cerebras ? compatCatalog('cerebras') : [],
-  ]);
+  const version = keyGeneration;
+  const results = await Promise.allSettled(AI_PROVIDERS.map(p => !hasKey(p) ? [] : p === 'gemini' ? geminiCatalog() : p === 'openrouter' ? openRouterCatalog() : compatCatalog(p)));
+  if (version !== keyGeneration) throw new Error('Provider settings changed. Refresh models again.');
   const [google, openrouter, groq, cerebras] = results.map((r) => (r.status === 'fulfilled' ? r.value : []));
   const errors = results.filter((r) => r.status === 'rejected').map((r) => r.reason.message);
   const value = {
-    providers: { google: hasGemini(), openrouter: hasOpenRouter(), groq: hasKey('groq'), cerebras: hasKey('cerebras') },
-    models: [...google, ...openrouter, ...groq, ...cerebras],
-    defaults: pickDefaults(google, openrouter, groq, cerebras),
+    providers: Object.fromEntries(AI_PROVIDERS.map(p => [p === 'gemini' ? 'google' : p, hasKey(p)])),
+    models: results.flatMap(r => r.status === 'fulfilled' ? r.value : []),
+    defaults: [...pickDefaults(google, openrouter, groq, cerebras), ...results.slice(4).flatMap(r => r.status === 'fulfilled' ? providerDefaults(r.value) : [])],
     errors,
-    failedProviders: results.flatMap((r, i) => r.status === 'rejected' ? [['gemini', 'openrouter', 'groq', 'cerebras'][i]] : []),
+    failedProviders: results.flatMap((r, i) => r.status === 'rejected' ? [AI_PROVIDERS[i]] : []),
   };
+  capabilities = new Map(value.models.map(m => [m.id, m]));
   if (errors.length === 0) cache = { value, expires: Date.now() + 10 * 60 * 1000 };
   return value;
 }
@@ -246,6 +314,7 @@ function withInstructionsInFirstUser(messages, instructions) {
 
 // Opens a streaming request. Resolves to { ok: true, events } or { ok: false, status, message }.
 export async function openStream({ provider, name }, messages, { instructions, search, requireSearch, codeExecution, quickReply, signal }) {
+  if (!parseModelId(`${provider}:${name}`) || !hasKey(provider)) return { ok: false, status: 403, message: 'This provider is not enabled. Review API keys settings.' };
   if (provider === 'gemini') return openGemini(name, messages, instructions, search, signal, codeExecution, requireSearch, quickReply);
   if (COMPAT[provider]) return openCompat(provider, name, messages, instructions, signal);
   return openOpenRouter(name, messages, instructions, signal);
@@ -271,13 +340,12 @@ function toCompat(messages, vision) {
 }
 
 async function openCompat(provider, name, messages, instructions, signal) {
-  const { base } = COMPAT[provider];
-  const vision = provider === 'groq' && /llama-4|vision|scout|maverick|qwen3\.[68]-27b/i.test(name);
-  const res = await fetch(`${base}/chat/completions`, {
+  const model = capabilities.get(`${provider}:${name}`);
+  const vision = model?.vision ?? modelVision(provider, name);
+  const res = await compatFetch(provider, '/chat/completions', {
     method: 'POST',
     signal,
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${keys[provider]}` },
-    body: JSON.stringify({ model: name, stream: true, messages: [{ role: 'system', content: instructions }, ...toCompat(messages, vision)] }),
+    body: JSON.stringify({ model: name, stream: true, messages: [{ role: 'system', content: instructions }, ...toCompat(messages, vision)], ...(provider === 'cloudflare' ? { options: { rejectIfBusy: true } } : {}) }),
   });
   if (!res.ok) return { ok: false, status: res.status, ...(await readError(res)) };
   return { ok: true, events: compatEvents(res.body) };
@@ -458,6 +526,10 @@ export async function openRouterDailyLimit() {
 // One-shot, non-streaming completion (chat titles, summaries of long chats).
 // Returns the text, or null on failure; `info` (if given) receives { status, input, output, limit }.
 export async function complete({ provider, name }, prompt, { maxTokens = 256, signal, info } = {}) {
+  if (!parseModelId(`${provider}:${name}`) || !hasKey(provider)) {
+    if (info) Object.assign(info, { status: 403, message: 'This provider is not enabled.' });
+    return null;
+  }
   if (provider === 'gemini') {
     const res = await fetch(`${GEMINI_BASE}/models/${encodeURIComponent(name)}:generateContent`, {
       method: 'POST',
@@ -475,7 +547,8 @@ export async function complete({ provider, name }, prompt, { maxTokens = 256, si
     return (d.candidates?.[0]?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text).join('');
   }
   const compat = COMPAT[provider];
-  const res = await fetch(`${compat ? compat.base : OPENROUTER_BASE}/chat/completions`, {
+  const send = compat ? options => compatFetch(provider, '/chat/completions', options) : options => fetch(`${OPENROUTER_BASE}/chat/completions`, options);
+  const res = await send({
     method: 'POST',
     signal,
     headers: { 'content-type': 'application/json', authorization: `Bearer ${compat ? keys[provider] : keys.openrouter}` },

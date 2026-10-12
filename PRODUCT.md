@@ -1,10 +1,20 @@
 # Model Router
 
-A private, free-tier AI workspace for chat, documents, data analysis and GitHub coding. Users supply their own provider and GitHub keys. The product serves phone and desktop use; preserve drafts, account isolation, privacy review and explicit actions for external writes.
+A private AI workspace for chat, documents, data analysis and GitHub coding. Users supply their own provider and GitHub keys. Existing free-tier providers remain available; additional providers may consume credits or incur charges only after explicit per-provider opt-in. The product serves phone and desktop use; preserve drafts, account isolation, privacy review and explicit actions for external writes.
 
 ## Product direction
 
 Keep the interface clean, professional and compact, consistent with the current app. Existing light, dark and true-black themes are authoritative. Extend the palette and component conventions in `src/design.css`; functional responsive layouts remain in `styles.css`. App controls should explain useful decisions without exposing unnecessary implementation details.
+
+## Provider connections
+
+Settings → API keys supports the existing Google AI Studio, OpenRouter, Groq and Cerebras connections plus Mistral, Cohere, NVIDIA NIM, Hugging Face Inference Providers, DeepSeek, Alibaba Cloud Model Studio, Cloudflare Workers AI and Aion Labs. Additional connections start disabled. A saved key alone never authorizes a catalogue or inference request: users must enable that provider's credit/charge checkbox and save. Enabled models can participate in Auto, fallbacks, comparisons, titles and open-time tasks. The app cannot distinguish free credits from paid balances; users should configure provider-side spending caps.
+
+Live catalogues determine available chat models, supported modalities and context where supplied. Deprecated/non-chat models are excluded; key, quota and network failures do not count as model retirement. New providers have separate usage counters and preserve the normal privacy, attachment extraction and account-isolation flows. Original providers retain their free-model catalogue policy.
+
+NVIDIA/Cloudflare require a user-controlled HTTPS relay because their APIs block browser requests. `server/provider-relay` provides a BYOK Cloudflare Worker and deployment instructions; the app does not send keys or prompts through a public proxy. Cloudflare also needs a 32-character account ID. Alibaba's endpoint must match the key's official region/workspace URL. Credentials and connection options save privately with the account and remain isolated across account changes.
+
+GitHub Models was retired on July 30, 2026; its inference API is unavailable and settings explain this. GitHub repository coding remains separate. Provider tests use synthetic keys and mocked inference; WebKit checks validate Safari-engine behavior, not physical iPhone devices or actual paid account access.
 
 ## Repository plan flow
 
@@ -36,4 +46,4 @@ Embedding access, limits and answer quality depend on the user's provider key. A
 
 The repository panel can preview and undo the latest non-merge commit with an explicit Undo and push action. It creates a revert commit restoring the previous tree; history is preserved. Uncommitted work blocks undo, and branch/account/key changes require a fresh preview. Merge, first and empty commits are not supported. Separate chat folders are excluded at the user's request.
 
-`ROADMAP.md` tracks implemented features and remaining phases. Arabic interface support is excluded at the user's request. Deliver coding improvements in separately tested and verified deployments; keep existing free-only operation and account privacy intact. `HANDOFF.md` records operational context and the latest verified release.
+`ROADMAP.md` tracks implemented features and remaining phases. Arabic interface support is excluded at the user's request. Deliver enhancements one task at a time, test and verify, then stop for user confirmation before the next task. Preserve existing free-provider behavior, explicit billing consent and account privacy. `HANDOFF.md` records operational context and the latest verified release.

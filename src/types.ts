@@ -209,7 +209,7 @@ export interface Memory {
 
 export interface ModelInfo {
   id: string;
-  provider: 'google' | 'openrouter' | 'groq' | 'cerebras';
+  provider: 'google' | 'openrouter' | 'groq' | 'cerebras' | 'mistral' | 'cohere' | 'nvidia' | 'huggingface' | 'deepseek' | 'alibaba' | 'cloudflare' | 'aion';
   name: string;
   label: string;
   context: number | null;
@@ -222,7 +222,7 @@ export interface ModelInfo {
 
 export interface Catalog {
   failedProviders?: string[];
-  providers: { google: boolean; openrouter: boolean; groq?: boolean; cerebras?: boolean };
+  providers: Partial<Record<ModelInfo['provider'], boolean>>;
   models: ModelInfo[];
   defaults: string[];
   errors: string[];

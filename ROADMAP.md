@@ -6,7 +6,7 @@ Audit: 2026-10-12. Only mark a feature complete after its working implementation
 | --- | --- |
 | 9 Smart routing | Implemented; maintain model access and capabilities. Recent response timings improve simple Auto choices; eligible stalled starts switch after 8s. Provider-diverse fallback, transient cooldowns and bounded streams are deployed. Manual live availability checks use context-free probes, hide confirmed disabled models and preserve inconclusive/quota failures. |
 | 10 Projects | Implemented: instructions, model and small reference files. |
-| 11 Knowledge search | Missing: large-library indexing, retrieval and page citations. |
+| 11 Knowledge search | Implemented and deployed in phase 11: Library → Knowledge imports PDF/text/Markdown locally, searches with keywords or optional Gemini embeddings, resumes indexing after quota pauses, and prepares chat drafts with clickable physical-page citations. Originals/vectors stay on the device; scanned PDFs need OCR. Live and preview desktop/phone checks passed. |
 | 12 Memory | Implemented with inspection/deletion. |
 | 13 Data analysis | Implemented in phase 4: local CSV/TSV/Excel uploads, editable pandas calculations/cleaning, Matplotlib charts, CSV/XLSX/PNG downloads and cached offline Python. CI and all 23 local browser suites passed; live and preview verified. |
 | 14 Edit uploaded Office files | Partial: reads files and creates new documents; template-preserving editing remains. |
@@ -34,6 +34,7 @@ Audit: 2026-10-12. Only mark a feature complete after its working implementation
 5. Phase 5a: whole-chat exports and a confirmed shared-device account isolation fix. Phase 5b: free tools. Phase 5c: open-time tasks.
 6. Coding improvements: phases 6 (PR review), 7 (plan approval), 8 (individual edit acceptance) and 9 (latest-commit undo) deployed and verified. Phases 8 and 9 shipped sequentially, with live/preview checks before starting the next.
 7. Phase 10: long-chat performance and accessibility, deployed and verified on live and preview before knowledge search.
+8. Phase 11: knowledge search deployed and checked on live and preview. Work paused after completion at the user's request, pending their improvements.
 
 Arabic interface support and separate chat folders were removed from scope at the request of the user.
 

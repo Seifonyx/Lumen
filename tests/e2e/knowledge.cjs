@@ -56,7 +56,19 @@ const upload = async (page, file) => {
   const chooser = page.waitForEvent("filechooser");
   await page.getByRole("button", { name: "Import", exact: true }).click();
   await (await chooser).setFiles(file);
-  await page.getByText("0 of 2 passages indexed", { exact: true }).waitFor();
+  try {
+    await page.getByText("0 of 2 passages indexed", { exact: true }).waitFor();
+  } catch (error) {
+    console.error("IMPORT DIAGNOSTICS", JSON.stringify({
+      errors: await page.locator(".knowledge-error").allTextContents(),
+      documents: await page.locator(".knowledge-document").allTextContents(),
+      progress: await page.locator(".knowledge-import-progress").allTextContents(),
+    }));
+    await page.screenshot({
+      path: `tests/e2e/out/knowledge-import-error-${Date.now()}.png`,
+    });
+    throw error;
+  }
 };
 const settings = async (page) =>
   page.evaluate(() => {
@@ -81,7 +93,10 @@ const settings = async (page) =>
       [390, "dark"],
       [1280, "black"],
       [390, "black"],
-    ]) {
+    ].filter(([width, theme]) =>
+      (!process.env.MR_KNOWLEDGE_WIDTH || Number(process.env.MR_KNOWLEDGE_WIDTH) === width) &&
+      (!process.env.MR_KNOWLEDGE_THEME || process.env.MR_KNOWLEDGE_THEME === theme)
+    )) {
       const account = `preview-knowledge-${width}-${theme}`,
         ctx = await browser.newContext({
           viewport: { width, height: 844 },

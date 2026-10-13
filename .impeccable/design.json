@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-13T08:29:10.799Z",
+  "generatedAt": "2026-10-13T16:32:41.431Z",
   "title": "Design System: Model Router",
   "extensions": {
     "colorMeta": {
@@ -209,6 +209,14 @@
       "mono": {
         "displayName": "Technical text",
         "purpose": "Code, paths and technical excerpts."
+      },
+      "welcome-title": {
+        "purpose": "Single-line Georgia greeting above 899px.",
+        "displayName": "Desktop welcome"
+      },
+      "welcome-title-phone": {
+        "purpose": "Single-line Georgia greeting at 899px and below.",
+        "displayName": "Phone welcome"
       }
     },
     "shadows": [
@@ -231,6 +239,11 @@
         "name": "dark-shadow-lg",
         "value": "0 12px 48px rgb(0 0 0 / .3)",
         "purpose": "Floating menus and dialogs."
+      },
+      {
+        "name": "claude-composer",
+        "value": "none",
+        "purpose": "Final conversation composer is flat."
       }
     ],
     "motion": [
@@ -266,6 +279,14 @@
       {
         "name": "phone",
         "value": "599px"
+      },
+      {
+        "name": "claude-desktop",
+        "value": "min-width: 900px"
+      },
+      {
+        "name": "claude-phone",
+        "value": "max-width: 899px"
       }
     ],
     "provenance": {
@@ -281,22 +302,103 @@
         "src/lib/settings.ts",
         "index.html",
         "src/components/Sidebar.tsx",
-        "src/components/ChatView.tsx"
+        "src/components/ChatView.tsx",
+        ".impeccable/claude-layout.md",
+        "src/claude-layout.css",
+        "src/components/Composer.tsx",
+        "src/components/ModelPicker.tsx",
+        "src/components/AttachSheet.tsx",
+        "src/components/ConnectorsTab.tsx",
+        "src/lib/temporary-chat.ts"
       ],
       "tonalRamps": "Omitted: no implemented accent ramp; synthesized values would invent tokens.",
-      "review": "Parent reports finish reviewer ship after header/editor fixes and broader surface review. Documentation does not certify physical-device or assistive-technology validation.",
+      "review": "Five layout matrices and expanded incognito checks previously passed both engines, with fresh reviewer KEEP. Latest dark selected-state contrast tint and shared sidebar scrolling require fresh reruns. Expanded checks now cover light/dark desktop, dark/black phone and disabled-memory/editable-GitHub accessibility. Broader 45-suite regression and release checks remain pending. Physical iPhone unverified.",
       "engine": "Concept engine unavailable; no detector result or generated comp."
     },
     "navigation": {
-      "scrollRegion": ".sidebar-navigation { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }",
+      "scrollRegion": ".sidebar-scroll { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }",
+      "navigation": ".sidebar-scroll .sidebar-navigation { flex: none; overflow: visible; }",
       "chatList": ".sidebar-navigation .chat-list { overflow: visible; flex: none; }",
       "footer": ".sidebar .sidebar-foot { flex-shrink: 0; }",
-      "purpose": "Project and history navigation scroll together; account/settings footer stays reachable in short landscape viewports."
+      "purpose": "Navigation actions and project/history share one scroll region; header, search and account footer remain outside and reachable in short landscape."
     },
     "projectHeader": {
       "identity": "The workspace reflects activeProjectId; conversation headers use the conversation project.",
       "navigation": "Conversation project button explicitly selects its project and opens its workspace.",
       "modelControls": "Model choices remain in project settings and conversations; the workspace header has no model picker."
+    },
+    "claudeLayout": {
+      "stylesheetOrder": [
+        "styles.css",
+        "design.css",
+        "feature-surfaces.css",
+        "workspace.css",
+        "claude-layout.css"
+      ],
+      "desktop": {
+        "minWidth": "900px",
+        "writingWidth": "800px",
+        "composerPadding": "18px 16px 12px",
+        "textareaMinHeight": "70px",
+        "addPopoverWidth": "320px",
+        "addRowMinHeight": "44px"
+      },
+      "phone": {
+        "maxWidth": "899px",
+        "composerPadding": "16px 12px 10px",
+        "composerRadius": "24px",
+        "composerControlMinHeight": "44px",
+        "toolAndSendMinWidth": "44px",
+        "addRowMinHeight": "52px",
+        "sheetMaxHeight": "calc(var(--vv-h,100dvh) - 12px)"
+      },
+      "modelPicker": {
+        "opening": "upward",
+        "desktopPosition": "below composer, right",
+        "phonePosition": "inside composer, beside plus",
+        "desktopMaxWidth": "300px",
+        "phoneMaxWidth": "min(190px,calc(100vw - 182px))"
+      },
+      "navigation": {
+        "desktopWidth": "288px",
+        "search": "full desktop field",
+        "topActions": [
+          "New",
+          "Projects",
+          "Artifacts",
+          "Scheduled",
+          "Customize",
+          "More"
+        ],
+        "footer": "account/settings"
+      },
+      "addGroups": [
+        [
+          "Add files",
+          "Add to project"
+        ],
+        [
+          "Connectors",
+          "Memory"
+        ],
+        [
+          "Tools",
+          "GitHub repository / Open repository"
+        ]
+      ],
+      "nativePhotos": "Native pickers; no fabricated gallery",
+      "incognito": "Ephemeral chat with history, draft, sync, backup and memory guards; providers still receive content",
+      "verification": "Fresh reviewer KEEP. Chromium/WebKit passed five responsive targets plus the supplied 1918px desktop size. Incognito storage, memory, canvas, summarized continuation, draft restoration, reload and GitHub checks passed light/dark/black desktop and phone cases in both engines. All 156 accessibility scans and native sidebar gesture checks passed. All 45 browser suites are covered across the full run and corrected reruns; type/build/unit passed. CI/deployment/hosted verification pending. Detector unavailable; physical iPhone unverified.",
+      "theme": "Explicit and automatic dark use warm-dark neutrals and contrast-correct orange action tokens. Both override rules exclude black, preserving its neutral and green accent tokens. Welcome mark remains orange in every theme.",
+      "darkColors": {
+        "dark-accent-text": "#171715",
+        "dark-accent-hover": "#df8866",
+        "dark-accent-soft": "#27201c",
+        "dark-focus": "#e18e69",
+        "dark-border": "#33332f",
+        "dark-border-strong": "#4a4a45",
+        "dark-input-border": "#484842"
+      }
     }
   },
   "components": [
@@ -365,7 +467,7 @@
   ],
   "narrative": {
     "northStar": "A clear conversation workspace",
-    "overview": "The user-pinned reference is the clean, professional craft of ChatGPT and Claude. Model Router gives writing the clearest column, with quiet navigation and useful project context. Geist type, neutral surfaces, restrained green and subtle separators provide clear grouping across day, night and phone use.",
+    "overview": "The user-pinned reference is the clean, professional craft of ChatGPT and Claude. Model Router gives writing the clearest column, with quiet navigation and useful project context. Geist interface type, a Georgia welcome on both device classes, warm dark surfaces and restrained orange and subtle separators provide clear grouping across day, night and phone use.",
     "keyCharacteristics": [
       "Generous writing space and compact supporting navigation.",
       "White, charcoal and true-black appearances.",
@@ -374,7 +476,7 @@
     ],
     "rules": [],
     "dos": [
-      "Do use effective theme variables and Geist typography.",
+      "Do use effective theme variables, Geist interface typography and the recorded Georgia welcome typography.",
       "Do preserve the desktop writing/context split and phone context disclosure.",
       "Do retain visible focus, native text selection, pinch zoom and wrapping phone controls.",
       "Do keep privacy, billing and external write approvals explicit."

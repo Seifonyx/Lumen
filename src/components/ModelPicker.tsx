@@ -49,9 +49,10 @@ interface Props {
   label?: string;
   compact?: boolean;
   align?: 'left' | 'right';
+  opensUp?: boolean;
 }
 
-export default function ModelPicker({ value, onChange, label, compact, align = 'left' }: Props) {
+export default function ModelPicker({ value, onChange, label, compact, align = 'left', opensUp = false }: Props) {
   const catalog = useStore((s) => s.catalog);
   const enabled = useStore((s) => s.settings.enabledModels);
   const customLayouts = useStore((s) => s.settings.layouts);
@@ -79,7 +80,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
 
   const toggle = () => {
     if (!open) {
-      setSheet(window.matchMedia('(max-width: 720px)').matches);
+      setSheet(window.matchMedia('(max-width: 720px), (pointer: coarse)').matches);
       setQuery('');
     }
     setOpen(!open);
@@ -94,11 +95,12 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
     const el = pop.current;
     if (!open || !el || sheet) return;
     el.style.translate = '';
+    if (opensUp && ref.current) el.style.maxHeight = `${Math.max(80, Math.min(560, ref.current.getBoundingClientRect().top - (window.visualViewport?.offsetTop||0) - 16))}px`;
     const r = el.getBoundingClientRect();
     const W = document.documentElement.clientWidth;
     const shift = r.right > W - 8 ? W - 8 - r.right : r.left < 8 ? 8 - r.left : 0;
     if (shift) el.style.translate = `${shift}px 0`;
-  }, [open, sheet]);
+  }, [open, sheet, opensUp]);
 
   useEffect(() => {
     if (!open) return;
@@ -137,6 +139,11 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
 
   // Arrow keys move between options; Enter picks (buttons do that themselves).
   const onKeys = (e: ReactKeyboardEvent) => {
+    if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+      e.preventDefault();
+      pop.current?.querySelector<HTMLButtonElement>('[role="option"]')?.click();
+      return;
+    }
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
     const options = [...(pop.current?.querySelectorAll<HTMLElement>('[role="option"]') || [])];
     if (!options.length) return;
@@ -166,7 +173,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
       )}
       <div className="mp-body" role="listbox" aria-label="Models and layouts">
         {showAuto && (
-          <button role="option" aria-selected={value === AUTO} className={`mp-item mp-auto${value === AUTO ? ' selected' : ''}`} onClick={() => pick(AUTO)}>
+          <button type="button" role="option" aria-selected={value === AUTO} className={`mp-item mp-auto${value === AUTO ? ' selected' : ''}`} onClick={() => pick(AUTO)}>
             <span className="mp-tile auto"><Sparkles size={15} /></span>
             <span className="mp-text">
               <span className="mp-title">Auto <span className="mp-pill">Recommended</span></span>
@@ -184,7 +191,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
                 const id = LAYOUT_PREFIX + l.id;
                 const usable = l.models.filter((m) => catalog?.models.some((x) => x.id === m));
                 return (
-                  <button
+                  <button type="button"
                     key={id}
                     role="option"
                     aria-selected={id === value}
@@ -212,7 +219,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
               const info = catalog?.models.find((x) => x.id === m.id);
               const sub = [info?.context ? `${ctx(info.context)} context` : '', info?.preview ? 'preview' : '', !info ? 'Not available right now' : ''].filter(Boolean).join(' · ') || m.name;
               return (
-                <button key={m.id} role="option" aria-selected={m.id === value} className={`mp-item${m.id === value ? ' selected' : ''}${info ? '' : ' unavailable'}`} onClick={() => pick(m.id)}>
+                <button type="button" key={m.id} role="option" aria-selected={m.id === value} className={`mp-item${m.id === value ? ' selected' : ''}${info ? '' : ' unavailable'}`} onClick={() => pick(m.id)}>
                   <ProviderMark provider={p} />
                   <span className="mp-text">
                     <span className="mp-title">{m.label}</span>
@@ -231,7 +238,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
         {models.length > 0 && nothing && <p className="mp-empty">Nothing matches “{query}”.</p>}
       </div>
       <div className="mp-foot">
-        <button
+        <button type="button"
           className="mp-manage"
           onClick={() => {
             setOpen(false);
@@ -246,8 +253,8 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
   );
 
   return (
-    <div className={`model-picker${compact ? ' compact' : ''}`} ref={ref}>
-      <button className={compact ? 'msg-action' : 'model-button'} onClick={toggle} aria-haspopup="dialog" aria-expanded={open}>
+    <div className={`model-picker${compact ? ' compact' : ''}${opensUp ? ' opens-up' : ''}`} ref={ref}>
+      <button type="button" className={compact ? 'msg-action' : 'model-button'} onClick={toggle} aria-haspopup="dialog" aria-expanded={open}>
         {label ?? (
           <span className="model-name">
             {value === AUTO && <Sparkles size={16} className="auto-icon" />}

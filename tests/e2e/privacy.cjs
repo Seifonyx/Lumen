@@ -85,7 +85,7 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   await page.click('.settings-page [aria-label="Close"]');
   check(Boolean(await page.$('.shield-on')), 'shield icon in the message box');
 
-  await page.click('[aria-label="New chat"]');
+  await page.evaluate(()=>document.querySelector('.sidebar .new-chat').click());
   await send('Patient Ahmed Mahmoud, phone 01012345678, needs a follow-up call');
   await page.waitForSelector('.privacy-check');
   const found = await page.textContent('.privacy-found');

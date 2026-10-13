@@ -70,7 +70,7 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   await page.keyboard.press('Escape');
 
   await page.fill('.composer textarea', 'Compare the two models.');
-  await page.click('.compare-trigger');
+  await page.getByRole('button',{name:/^Add (?:photos, )?files or a repository$/}).click();await page.getByRole('button',{name:'Tools',exact:true}).click();await page.getByRole('button',{name:'Compare models',exact:true}).click();
   check(await page.locator('.compare-model-row').count() >= 2, 'model comparison offers enabled models');
   await page.click('.compare-picker-actions >> text=Compare');
   await page.waitForSelector('.comparison-card', { timeout: 20000 });

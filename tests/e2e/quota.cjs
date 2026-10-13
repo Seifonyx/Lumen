@@ -57,7 +57,7 @@ async function send(page, text) {
   await A.page.click('.settings-page [aria-label="Close"]');
   // 6 chats x 4 messages.
   for (let c = 0; c < 6; c++) {
-    if (c) await A.page.click('[aria-label="New chat"]');
+    if (c) await A.page.evaluate(()=>document.querySelector('.sidebar .new-chat').click());
     await send(A.page, `chat${c} one`);
     await send(A.page, `chat${c} two`);
   }
@@ -122,7 +122,7 @@ async function send(page, text) {
   check((await A.page.textContent('.banner.info')).includes('Sync is paused'), 'paused banner shown');
   await send(A.page, 'offline-ish message');
   check((await A.page.textContent('.thread')).includes('Re: offline-ish message'), 'chat still works while paused');
-  await A.page.click('[aria-label="New chat"]');
+  await A.page.evaluate(()=>document.querySelector('.sidebar .new-chat').click());
   await send(A.page, 'brand new chat while paused');
   await B.page.waitForTimeout(3000);
   check(!(await B.page.textContent('.chat-list')).includes('brand new') && !(await B.page.textContent('.thread')).includes('offline-ish'), 'nothing synced while paused');

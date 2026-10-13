@@ -47,7 +47,7 @@ const matrix = [[1280,844,'light'],[320,740,'light'],[390,844,'dark'],[430,932,'
   await page.locator('.composer textarea').fill('Summarize our protocol.');await page.locator('.send-btn').click();await page.locator('.msg.assistant .model-tag').waitFor();
   assert.equal(requests.length,1);assert.match(JSON.stringify(requests[0]),/PROJECT_DESIGN_REFERENCE/);assert.match(JSON.stringify(requests[0]),/PROJECT_DESIGN_INSTRUCTIONS/);
   await fits();await capture('conversation');await scan('conversation');
-  assert.ok(await page.locator('.topbar .model-name-text').evaluate(e=>e.scrollWidth<=e.clientWidth+1),'Short model name must be readable');
+  assert.ok(await page.locator('.composer .model-name-text').evaluate(e=>e.scrollWidth<=e.clientWidth+1),'Short model name must be readable');
   await page.locator('.project-topbar-pill').click();await page.locator('.claude-chat-row-title').waitFor();await capture('project-populated');
   const title=page.locator('.claude-chat-row-title').first();await title.focus();await page.keyboard.press('Enter');await page.locator('.composer textarea').waitFor();
   await page.locator('.project-topbar-pill').click();

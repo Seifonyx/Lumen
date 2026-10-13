@@ -12,6 +12,7 @@ import {
   collection, doc, getDocs, onSnapshot, orderBy, query, serverTimestamp, Timestamp, where, writeBatch,
   type DocumentData, type Query, type Unsubscribe,
 } from 'firebase/firestore';
+import { isTemporaryChat } from './temporary-chat';
 import type { Attachment, Chat, Message } from '../types';
 import { db } from './firebase';
 import { quota, type GuardLevel } from './quota';
@@ -242,6 +243,7 @@ export class ChatSync {
   }
 
   push(chat: Chat) {
+    if(isTemporaryChat(chat))return;
     if (this.uid.startsWith('preview-')) return;
     if (!chat.messages.length && !chat.documents?.length) return;
     if (this.level === 'normal') {

@@ -21,7 +21,7 @@ const csv = { name: 'data.csv', mimeType: 'text/csv', buffer: Buffer.from('value
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(process.env.MR_TEST_URL || 'http://localhost:5190/?emulator');await page.waitForSelector('.composer textarea');
   await page.evaluate(async()=>{await navigator.serviceWorker.ready;if(!navigator.serviceWorker.controller)await new Promise(resolve=>navigator.serviceWorker.addEventListener('controllerchange',resolve,{once:true}));});
-  const open = async () => { await page.getByRole('button',{name:/^Add .*repository$/}).click();await page.getByRole('button',{name:/Data analysis/}).click();await page.waitForSelector('.analysis-panel'); };
+  const open = async () => { await page.getByRole('button',{name:/^Add .*repository$/}).click();await page.getByRole('button',{name:'Tools',exact:true}).click();await page.getByRole('button',{name:/Data analysis/}).click();await page.waitForSelector('.analysis-panel'); };
   const close = async () => { await page.locator('.modal [aria-label="Close"]').click();await page.waitForSelector('.analysis-panel',{state:'detached'}); };
   const upload = async files => { await page.getByLabel('Upload analysis files').setInputFiles(files);await page.waitForFunction(()=>!document.querySelector('.analysis-upload .spin')); };
   const code = async text => {await page.locator('.run-code .cm-content').click();await page.keyboard.press('Control+a');await page.keyboard.insertText(text);};

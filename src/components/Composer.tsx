@@ -1,5 +1,6 @@
+import { isTemporaryChat } from '../lib/temporary-chat';
 import ChecksBar from './ChecksBar';
-import { Columns2, ListChecks, FileCode2, GitBranch, ShieldCheck, ArrowUp, FileText, Globe, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
+import { ListChecks, FileCode2, GitBranch, ShieldCheck, ArrowUp, FileText, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ACCEPT, readAttachment } from '../lib/files/read';
 import { canListen, listen } from '../lib/speech';
@@ -26,7 +27,7 @@ export const prefillComposer = (text: string) => window.dispatchEvent(new Custom
 export const insertPrompt = (text: string) => window.dispatchEvent(new CustomEvent(PREFILL, { detail: { text, append: true } }));
 export const prepareTool = (text: string, files: Attachment[] = [], codeExecution = false) => window.dispatchEvent(new CustomEvent(PREFILL, { detail: { text, append: true, files, codeExecution } }));
 
-export default function Composer({ model, meter }: { model: string; meter?: ReactNode }) {
+export default function Composer({ model, meter, modelPicker }: { model: string; meter?: ReactNode; modelPicker?: ReactNode }) {
   const send = useStore((s) => s.send);
   const runComparison = useStore((s) => s.runComparison);
   const stop = useStore((s) => s.stop);
@@ -71,6 +72,10 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
   const [check, setCheck] = useState<{ findings: Finding[]; unchecked: number; compareModels?: string[] } | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
   const input = useRef<HTMLTextAreaElement>(null);
+  const photoInput = useRef<HTMLInputElement>(null);
+  const cameraInput = useRef<HTMLInputElement>(null);
+  const temporaryRef=useRef(false);temporaryRef.current=isTemporaryChat(chat);
+  const [projectMenu,setProjectMenu]=useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const stopListening = useRef<(() => void) | null>(null);
   const baseText = useRef('');
@@ -83,6 +88,7 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
   const draftKey = `mr.draft.${accountId}.${currentId ?? 'new'}`;
   const draftKeyRef = useRef(draftKey);
   const saveDraft = useCallback((value: string) => {
+    if(temporaryRef.current)return;
     try {
       if (value) localStorage.setItem(draftKeyRef.current, value);
       else localStorage.removeItem(draftKeyRef.current);
@@ -97,6 +103,8 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
   };
   useEffect(() => {
     draftKeyRef.current = draftKey;
+    setPending([]);setInterim('');stopListening.current?.();setListening(false);
+    if(temporaryRef.current){setText('');return;}
     try {
       let value = localStorage.getItem(draftKey);
       if (value === null && accountId && db.legacyOwner === accountId) {
@@ -145,7 +153,7 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
     return () => window.removeEventListener(PREFILL, onPrefill);
   }, []);
 
-  useEffect(() => { setCodeExecution(false); setCheck(null); setCompareOpen(false); }, [currentId]);
+  useEffect(() => { setCodeExecution(false); setCheck(null); setCompareOpen(false); setProjectMenu(false); }, [currentId]);
   useEffect(() => { setCodeExecution(false); setPending([]); setCheck(null); setCompareOpen(false); }, [accountId]);
   const attachmentAccount = useRef(accountId);
   attachmentAccount.current = accountId;
@@ -401,6 +409,8 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
           enterKeyHint={settings.enterToSend && !isTouch() ? 'send' : 'enter'}
         />
         <div className="composer-bar">
+          <input ref={photoInput} type="file" multiple hidden accept="image/*" onChange={e=>{void addFiles([...(e.target.files||[])]);e.target.value='';}} />
+          <input ref={cameraInput} type="file" hidden accept="image/*" capture="environment" onChange={e=>{void addFiles([...(e.target.files||[])]);e.target.value='';}} />
           <input ref={fileInput} type="file" multiple hidden accept={ACCEPT} onChange={(e) => { void addFiles([...(e.target.files || [])]); e.target.value = ''; }} />
           {touch ? (
             <>
@@ -411,24 +421,13 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
           ) : (
             <button type="button" className={`tool-btn add-tool${chat?.repo ? ' on-repo' : ''}`} onClick={(e) => {
               const box = e.currentTarget.getBoundingClientRect();
-              setSheetAnchor({ left: Math.max(16, Math.min(box.left, window.innerWidth - 376)), bottom: window.innerHeight - box.top + 8 });
+              setSheetAnchor({ left: Math.max(12, Math.min(box.left, window.innerWidth - 300)), bottom: window.innerHeight - box.top + 8 });
               setSheet(true);
             }} aria-label="Add files or a repository" aria-haspopup="dialog" title="Add files or a repository">
               <Plus size={21} />
             </button>
           )}
-          <button
-            type="button"
-            className={`tool-btn pill${settings.webSearch ? ' on' : ''}${searchAvailable ? '' : ' unavailable'}`}
-            onClick={() => updateSettings({ webSearch: !settings.webSearch })}
-            aria-pressed={settings.webSearch}
-            title={searchAvailable ? 'Search the web for up-to-date answers' : 'Web search works with Gemini models only'}
-          >
-            <Globe size={17} /> <span>Search</span>
-          </button>
-          <button type="button" className="tool-btn pill compare-trigger" disabled={!canSend || codeExecution || pending.some(p => p.file?.videoUri)} onClick={() => setCompareOpen(true)} aria-label="Compare models" title="Compare this question with two or three models">
-            <Columns2 size={16} /> <span>Compare</span>
-          </button>
+          {modelPicker}
           <div className="spacer" />
           {settings.privacyShield && (
             <button
@@ -451,14 +450,33 @@ export default function Composer({ model, meter }: { model: string; meter?: Reac
           </button>
         </div>
       </form>
+      <div className="composer-options"><button type="button" className="composer-project" disabled={isTemporaryChat(chat)} onClick={()=>setProjectMenu(!projectMenu)}>{project?.name||'Project'} <span aria-hidden="true">⌄</span></button>
+        {projectMenu&&<div className="composer-project-menu" role="group" aria-label="Choose project" onKeyDown={e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();setProjectMenu(false);}}}>{[{id:'',name:'None'},...(settings.projects||[])].map(p=><button type="button" key={p.id} onClick={()=>{useStore.getState().setComposerProject(p.id||null);setProjectMenu(false);}}>{p.name}</button>)}</div>}
+      </div>
       {sheet && (
         <AttachSheet
           onClose={() => setSheet(false)}
+          onPhotos={()=>photoInput.current?.click()}
+          onCamera={()=>cameraInput.current?.click()}
+          onProject={()=>{setSheet(false);setProjectMenu(true);}}
+          projectName={project?.name}
+          temporary={isTemporaryChat(chat)}
+          memoryEnabled={Boolean(settings.memory)&&!isTemporaryChat(chat)}
+          onMemory={()=>updateSettings({memory:!settings.memory})}
+          onConnectors={()=>setUi({settingsOpen:true,settingsTab:'connectors'})}
+
           onFiles={() => fileInput.current?.click()}
           onCanvas={() => useStore.getState().openCanvas()}
           onAnalysis={() => useStore.getState().setUi({ runner: { lang: 'python', code: ANALYSIS_TEMPLATES.overview.code, analysis: true } })}
           onRepo={() => setUi(chat?.repo ? { workspaceOpen: true } : { repoPicker: true })}
           repoName={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : undefined}
+          onCompare={() => setCompareOpen(true)}
+          compareDisabled={!canSend || codeExecution || pending.some(p => p.file?.videoUri)}
+          onSearch={() => updateSettings({ webSearch: !settings.webSearch })}
+          searchEnabled={Boolean(settings.webSearch)}
+          searchAvailable={searchAvailable}
+          onPrivacy={() => setUi({ settingsOpen: true, settingsTab: 'privacy' })}
+          privacyEnabled={Boolean(settings.privacyShield)}
           anchor={touch ? undefined : sheetAnchor}
         />
       )}

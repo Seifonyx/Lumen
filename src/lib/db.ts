@@ -3,6 +3,7 @@ import { normalizeKnowledgeSources } from './knowledge/core';
 // Chats are kept in IndexedDB on the device (attachments are too big for localStorage).
 // Account databases keep shared-device sign-ins separate. The legacy database is adopted once.
 
+import { isTemporaryChat } from './temporary-chat';
 import type { Chat, Message } from '../types';
 import { uid } from './util';
 import { normalizeAssistant } from './assistants';
@@ -124,6 +125,7 @@ export const db = {
         const latest = new Map(existing.map(chat => [chat.id, chat]));
         await tx('readwrite', store => {
           for (const chat of old) {
+            if(isTemporaryChat(chat))continue;
             const saved = latest.get(chat.id);
             if (!saved || Number(chat.rev ?? chat.updatedAt ?? 0) > Number(saved.rev ?? saved.updatedAt ?? 0)) store.put(normalize(chat));
           }
@@ -134,13 +136,14 @@ export const db = {
       await meta<boolean>(`migrated:${id}`, () => true);
     }
     const rows = (await tx<any[]>('readonly', store => store.getAll(), name)) || [];
-    return rows.map(normalize).sort((a, b) => b.updatedAt - a.updatedAt);
+    return rows.filter(chat=>!isTemporaryChat(chat)).map(normalize).sort((a, b) => b.updatedAt - a.updatedAt);
   },
   async all(): Promise<Chat[]> {
     const rows = (await tx<any[]>('readonly', (s) => s.getAll())) || [];
-    return rows.map(normalize).sort((a, b) => b.updatedAt - a.updatedAt);
+    return rows.filter(chat=>!isTemporaryChat(chat)).map(normalize).sort((a, b) => b.updatedAt - a.updatedAt);
   },
   async put(chat: Chat, accountId?: string): Promise<void> {
+    if(isTemporaryChat(chat))return;
     await tx('readwrite', (s) => s.put(chat), accountId ? accountName(accountId) : activeName);
   },
   async remove(id: string): Promise<void> {
@@ -155,7 +158,7 @@ export const db = {
   },
   async bulkPut(chats: Chat[]): Promise<void> {
     await tx('readwrite', (s) => {
-      for (const c of chats) s.put(normalize(c));
+      for (const c of chats) if(!isTemporaryChat(c))s.put(normalize(c));
     });
   },
 };

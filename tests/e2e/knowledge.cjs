@@ -70,18 +70,15 @@ const upload = async (page, file) => {
     throw error;
   }
 };
-const settings = async (page) =>
-  page.evaluate(() => {
-    const uid = JSON.parse(localStorage.getItem("mr.preview_user")).uid;
-    const account = JSON.parse(localStorage.getItem("mr.account." + uid));
-    account.settings = {
-      ...account.settings,
-      privacyShield: true,
-      privacyMode: "ask",
-    };
-    localStorage.setItem("mr.account." + uid, JSON.stringify(account));
-    localStorage.setItem("mr.settings", JSON.stringify(account.settings));
-  });
+const settings = async (page) => {
+  await page.getByRole('button', {name:/^Add (?:photos, )?files or a repository$/}).click();
+  await page.getByRole('button',{name:'Tools',exact:true}).click();await page.getByRole('button', {name:/Privacy settings/}).click();
+  const dialog=page.getByRole('dialog',{name:'Settings',exact:true});
+  await dialog.getByRole('checkbox',{name:/^Privacy shield/}).check();
+  await dialog.getByRole('radio',{name:'Ask me',exact:true}).click();
+  assert.equal(await dialog.getByRole('radio',{name:'Ask me',exact:true}).getAttribute('aria-checked'),'true');
+  await dialog.getByRole('button',{name:'Close',exact:true}).click();
+};
 (async () => {
   const browser = await chromium.launch();
   try {
@@ -199,7 +196,6 @@ const settings = async (page) =>
       );
       await page.locator(".composer textarea").waitFor();
       await settings(page);
-      await page.reload();
       await page.locator(".composer textarea").waitFor();
       await open(page);
       const tab = await page

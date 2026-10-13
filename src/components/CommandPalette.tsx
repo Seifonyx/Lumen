@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Boxes, FolderKanban, MessageSquare, Plus, Search, Settings } from 'lucide-react';
 import { modKey } from '../lib/util';
 import { modelLabel, useStore } from '../store';
+import { savedChats } from '../lib/temporary-chat';
 import Modal from './Modal';
 import type { Project } from '../types';
 import { ANALYSIS_TEMPLATES } from '../lib/analysis';
@@ -11,7 +12,7 @@ const EMPTY_PROJECTS: Project[] = [];
 type Item = { id: string; label: string; detail: string; Icon: typeof Search; run: () => void };
 
 const sections = [
-  ['general', 'General'], ['keys', 'API keys'], ['models', 'Models'], ['usage', 'Usage'],
+  ['connectors', 'Connectors'], ['general', 'General'], ['keys', 'API keys'], ['models', 'Models'], ['usage', 'Usage'],
   ['personalize', 'Personalization'], ['memory', 'Memory'], ['privacy', 'Privacy & data'],
 ] as const;
 
@@ -38,7 +39,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
       ...sections.map(([id, label]) => ({ id: `settings-${id}`, label: `Settings · ${label}`, detail: 'Settings', Icon: Settings, run: () => setUi({ settingsOpen: true, settingsTab: id, sidebarOpen: false }) })),
       ...projects.map((project) => ({ id: `project-${project.id}`, label: project.name, detail: 'Project', Icon: FolderKanban, run: () => selectProject(project.id) })),
       ...enabled.map((id) => ({ id: `model-${id}`, label: modelLabel(catalog, id), detail: 'Set default model', Icon: Boxes, run: () => updateSettings({ defaultModel: id }) })),
-      ...chats.slice(0, 100).map((chat) => ({ id: `chat-${chat.id}`, label: chat.title, detail: 'Chat', Icon: MessageSquare, run: () => selectChat(chat.id) })),
+      ...savedChats(chats).slice(0, 100).map((chat) => ({ id: `chat-${chat.id}`, label: chat.title, detail: 'Chat', Icon: MessageSquare, run: () => selectChat(chat.id) })),
     ];
     return all.filter((x) => !norm || `${x.label} ${x.detail}`.toLowerCase().includes(norm)).slice(0, 50);
   }, [norm, projects, enabled, catalog, chats, newChat, selectChat, setUi, updateSettings, selectProject]);

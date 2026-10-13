@@ -52,4 +52,14 @@ The repository panel can preview and undo the latest non-merge commit with an ex
 
 ## New-chat welcome
 
-The empty chat shows one short, single-line greeting above the composer, with no recommendation cards or gray subtitle. Five greetings rotate on New chat, including reuse of an existing empty chat; typing does not change the greeting. The session-only greeting counter is not synced or persisted. Repository, file, Canvas and analysis tools remain in the + menu. Empty chats without projects normalize their project identity before reuse, preserving the draft instead of creating duplicate empty chats.
+The empty chat shows one short, single-line greeting above the composer, with no recommendation cards or gray subtitle. Short greetings rotate on New chat, including reuse of an existing empty chat, with a time/name greeting for signed-in users; typing does not change the greeting. The session-only greeting counter is not synced or persisted. Repository, file, Canvas and analysis tools remain in the + menu. Empty chats without projects normalize their project identity before reuse, preserving the draft instead of creating duplicate empty chats.
+
+## Chat layout and connectors
+
+The desktop sidebar has Search, New chat, Projects, saved canvas Artifacts, Scheduled (open-time tasks), Customize (helpers), More and the account footer. Navigation and history scroll together in short windows. Desktop project/model controls sit below the composer; phones use a bottom-anchored composer with the model beside +. The Add to Chat sheet offers native Camera/Photos pickers, files, project assignment, Connectors, Memory and a Tools view for existing capabilities. Device gallery thumbnails are not accessible to this web app.
+
+Settings → Connectors owns the GitHub repository token, connection test, disconnect and repository picker. A saved token is labelled saved; a successful test verifies repository access. AI provider credentials and billing consent remain in API keys.
+
+## Incognito chat
+
+The top-right ghost starts/ends an incognito session. Messages, attachments, canvas documents and draft text remain in memory only, excluded from history/search, IndexedDB, backups and cloud chat sync. Memory is neither read nor written, including automatic reply markers and /remember. Project assignment is disabled. Leaving or reloading discards the session; the previous normal text draft is restored on exit. Model requests and quota usage still occur, and the selected provider receives the messages. Explicit downloads, repository actions and account settings retain their normal effects and review gates.

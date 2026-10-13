@@ -87,9 +87,13 @@ const F = '````';
   await page.evaluate(() => window.__testSignIn('hebaghoneim8@gmail.com'));
   await page.waitForSelector('input[placeholder="AIza…"]');
   await page.fill('input[placeholder="AIza…"]', 'g');
-  await page.fill('input[placeholder="github_pat_…"]', 'github_pat_test');
   await page.click('text=Save keys');
   await page.waitForTimeout(1500);
+
+  await openTab(page, 'Connectors');
+  await page.fill('#github-token', 'github_pat_test');
+  await page.getByRole('button',{name:'Save connection',exact:true}).click();
+  await page.getByText('Token saved.',{exact:true}).waitFor();
 
   // ---- Layouts
   await openTab(page, 'Models');
@@ -254,7 +258,7 @@ const F = '````';
   await page.locator('.models-nav button').filter({ hasText: 'Layouts' }).click();
   await page.locator('.layout-card', { hasText: 'Web apps' }).locator('[aria-label="Use for new chats"]').click();
   await page.click('.settings-page [aria-label="Close"]');
-  await page.click('[aria-label="New chat"]');
+  await page.evaluate(()=>document.querySelector('.sidebar .new-chat').click());
   check((await page.textContent('.model-button')).includes('Web apps'), 'custom layout is the default for new chats');
 
   // ---- The coding panel on a phone

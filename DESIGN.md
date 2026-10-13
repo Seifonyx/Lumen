@@ -20,24 +20,24 @@ colors:
   light-user-bubble: "#efefed"
   light-code-bg: "#f4f4f2"
   light-focus: "#366e50"
-  dark-bg: "#202120"
-  dark-surface: "#292b29"
-  dark-sidebar: "#181a18"
-  dark-surface-2: "#30332f"
-  dark-surface-3: "#3d413b"
+  dark-bg: "#171715"
+  dark-surface: "#232321"
+  dark-sidebar: "#121210"
+  dark-surface-2: "#2b2b29"
+  dark-surface-3: "#343432"
   dark-text: "#f0f1ed"
   dark-text-2: "#b8bdb3"
   dark-text-3: "#a0a898"
-  dark-border: "#363b33"
-  dark-border-strong: "#4c5546"
-  dark-input-border: "#485041"
-  dark-accent: "#c0d6c1"
-  dark-accent-hover: "#d7e7d7"
-  dark-accent-soft: "#313e32"
-  dark-accent-text: "#223026"
+  dark-border: "#33332f"
+  dark-border-strong: "#4a4a45"
+  dark-input-border: "#484842"
+  dark-accent: "#ce714e"
+  dark-accent-hover: "#df8866"
+  dark-accent-soft: "#27201c"
+  dark-accent-text: "#171715"
   dark-user-bubble: "#32362f"
   dark-code-bg: "#191c18"
-  dark-focus: "#c0d6c1"
+  dark-focus: "#e18e69"
   black-bg: "#000"
   black-sidebar: "#000"
   black-surface: "#0c0c0c"
@@ -63,11 +63,17 @@ typography:
     lineHeight: 1.25
     letterSpacing: "-.03em"
   welcome-title:
-    fontFamily: "Geist Variable, Noto Sans Arabic, Geeza Pro, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
-    fontSize: "clamp(28px, 3.2vw, 40px)"
-    fontWeight: 550
+    fontFamily: "Georgia, Times New Roman, serif"
+    fontSize: "clamp(26px, 3.4vw, 44px)"
+    fontWeight: 400
     lineHeight: 1.15
-    letterSpacing: "-.035em"
+    letterSpacing: "-.04em"
+  welcome-title-phone:
+    fontFamily: "Georgia, Times New Roman, serif"
+    fontSize: "clamp(27px, 7vw, 38px)"
+    fontWeight: 400
+    lineHeight: 1.15
+    letterSpacing: "-.04em"
   navigation:
     fontFamily: "Geist Variable, Noto Sans Arabic, Geeza Pro, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "13px"
@@ -81,7 +87,8 @@ rounded:
   button: "10px"
   field: "10px"
   panel: "12px"
-  composer: "16px"
+  composer: "20px"
+  composer-phone: "24px"
   modal: "20px"
   bubble: "22px"
   pill: "999px"
@@ -129,7 +136,7 @@ components:
 
 **Creative North Star: "A clear conversation workspace"**
 
-The user-pinned reference is the clean, professional craft of ChatGPT and Claude. Model Router gives writing the clearest column, with quiet navigation and useful project context. Geist type, neutral surfaces, restrained green and subtle separators provide clear grouping across day, night and phone use.
+The user-pinned reference is the clean, professional craft of ChatGPT and Claude. Model Router gives writing the clearest column, with quiet navigation and useful project context. Geist interface type, a Georgia welcome on both device classes, warm dark surfaces and restrained orange and subtle separators provide clear grouping across day, night and phone use.
 
 **Key Characteristics:**
 
@@ -140,21 +147,21 @@ The user-pinned reference is the clean, professional craft of ChatGPT and Claude
 
 ## Colors
 
-The frontmatter records effective light, explicit dark and black workspace colors. CSS variables remain the implementation source of truth. Primary actions use accent, accent-hover and accent-text; selected tools use accent-soft. The three text levels separate reading, labels and metadata. Neutral surfaces and borders create grouping.
+The frontmatter records effective light, explicit dark and black workspace colors. CSS variables remain the implementation source of truth. Explicit dark conversation overrides use warm canvas/sidebar/surface tones and orange accent from claude-layout.css. Light retains green; true-black neutral overrides remain intact. The welcome mark uses orange #ce714e in every theme. Primary actions use accent, accent-hover and accent-text; selected tools use accent-soft. The three text levels separate reading, labels and metadata. Neutral surfaces and borders create grouping.
 
-Black appearance sets data-theme to dark and overrides neutral colors; accent, focus and shadows inherit explicit dark. Existing link, warning, danger, success and syntax colors retain their semantic roles from styles.css. Automatic system dark currently uses design.css's more specific :root:not([data-theme='light']) media rule for shared variables; its charcoal values differ from explicit dark.
+Black appearance sets data-theme to dark and overrides neutral colors; the final warm-dark override excludes black, preserving its existing green accent, focus and shadows. Existing link, warning, danger, success and syntax colors retain their semantic roles from styles.css. Automatic system dark uses the same warm neutral palette as explicit dark; the final media override excludes true-black appearance.
 
 ## Typography
 
 Geist Variable serves the interface and headings; Geist Mono Variable serves code and paths. Existing mixed-script fallbacks do not imply an Arabic interface. Default body size is 15px/1.6; saved small and large settings change the size to 14px and 17px. Assistant prose retains 1.8 line height. Project description is 14px/1.6; context titles are 14px at weight 600; navigation is 13px.
 
-Project titles use the recorded clamp and become 26px on phones. Welcome headings also use Geist, weight 550 and their recorded clamp. Composer text uses max(16px, var(--fs)); instructions, project fields and activity search use 16px. Modest negative heading tracking and weight establish hierarchy.
+Project titles use the recorded clamp and become 26px on phones. The desktop welcome size applies above 899px; the phone size applies at 899px and below. Both use Georgia at weight 400 and tracking -.04em, retaining the single-line greeting. Composer text is 16px on desktop and 18px on phones; instructions, project fields and activity search use 16px. Modest negative heading tracking and weight establish hierarchy.
 
 ## Layout
 
-Final presentation order is styles.css, design.css, feature-surfaces.css, workspace.css. The feature stylesheet preserves implemented secondary surfaces; workspace.css owns the final workspace overrides. Selector specificity still applies.
+Final presentation order is styles.css, design.css, feature-surfaces.css, workspace.css, claude-layout.css. The feature stylesheet preserves implemented secondary surfaces; workspace.css supplies shared workspace styling and claude-layout.css supplies the final conversation composition overrides. Selector specificity still applies.
 
-Desktop navigation is 260px wide. Its project/history area is a single flexible scroll region (flex: 1, min-height: 0, overflow-y: auto, overflow-x: hidden, overscroll-behavior: contain), with an unshrinking account/settings footer. The nested chat list stays overflow-visible and flex: none so short landscape viewports retain access to footer actions. The chat thread is capped at 820px and its composer at 740px. Project bodies are capped at 1200px, with minmax(0, 1fr) 300px columns, 44px gap and 32px inline padding. Context has a thin inline separator and 24px inset. Project and context section gaps are 28px; adjacent context sections add a separator and 24px top padding.
+Desktop navigation is 288px wide, with full search and New, Projects, Artifacts, Scheduled, Customize and More actions. Account/settings remains at the bottom. At min-width 900px greeting and composer cap at 800px; project/model controls sit below the composer, left/right respectively. At max-width 899px the greeting stacks mark above text and the composer anchors at the bottom with its model pill beside +. Its navigation actions and project/history area share a single flexible scroll region (flex: 1, min-height: 0, overflow-y: auto, overflow-x: hidden, overscroll-behavior: contain), while header, search and account/settings footer remain outside. The nested chat list stays overflow-visible and flex: none so short landscape viewports retain access to footer actions. The chat thread retains its 820px cap; final desktop composer cap is 800px. Project bodies are capped at 1200px, with minmax(0, 1fr) 300px columns, 44px gap and 32px inline padding. Context has a thin inline separator and 24px inset. Project and context section gaps are 28px; adjacent context sections add a separator and 24px top padding.
 
 At max-width 1100px, context becomes 260px, column gap 28px, inline padding 24px and context inset 20px. At max-width 960px, the project becomes one column; context appears before writing as a disclosure of at least 56px height, with content hidden until expanded. Navigation separately becomes a sliding drawer at max-width 899px, sized min(320px, 86vw).
 
@@ -162,11 +169,11 @@ At max-width 599px, project inline padding is max(16px, env(safe-area-inset-left
 
 ## Elevation & Depth
 
-Tonal surfaces and separators provide most grouping. The exact ambient composer and floating dialog/menu shadows are recorded in the sidecar. Project context cards, file rows and activity lists are open surfaces without added shadow. Composer focus keeps ambient shadow and changes the border; ordinary fields retain their existing --ring treatment. Modal backdrop blur is 5px.
+Tonal surfaces and separators provide most grouping. The exact ambient composer and floating dialog/menu shadows are recorded in the sidecar. Project context cards, file rows and activity lists are open surfaces without added shadow. The final conversation composer has no shadow; focus changes its border; ordinary fields retain their existing --ring treatment. Modal backdrop blur is 5px.
 
 ## Shapes
 
-Buttons and general fields use 10px corners, settings cards and disclosures 12px, composers 16px, menus 14px, modals and drawer end corners 20px, user bubbles 22px and preset chips pill corners. Borders are generally 1px. Phone color choices use 8px corners with minimum 36px width and 44px height.
+Buttons and general fields use 10px corners, settings cards and disclosures 12px, composers use the recorded composer radius, general menus 14px and the desktop add popover 12px, phone add-sheet top corners 30px and grouped rows 18px, modals and drawer end corners 20px, user bubbles 22px and preset chips pill corners. Borders are generally 1px. Phone color choices use 8px corners with minimum 36px width and 44px height.
 
 ## Components
 
@@ -176,7 +183,7 @@ The workspace header identifies the actively selected project. Its model choices
 
 The context disclosure is the signature responsive interaction: a native button with expanded state and rotating chevron, followed by file and instruction sections. Conversation titles are native buttons with 36px minimum height and underline on hover. Navigation selection is tonal; section titles use sentence case.
 
-Project composer padding is 18px on desktop with 84px textarea minimum height. Instructions have 144px minimum height and 1.6 line height. Settings rows have 18px vertical padding. Library tabs use a bottom separator and tonal active state.
+The composer uses 18px 16px 12px desktop padding and 16px 12px 10px phone padding, with 20px/24px desktop/phone corners. Desktop textarea minimum height is 70px; phone text is 18px to avoid iPhone focus zoom. Model selection opens upward, below the desktop composer on the right and inside the phone composer beside +. The lower-left + opens Add to Chat, a 320px desktop popover or a visible-viewport phone sheet. Close/back and Photos actions head the sheet. Camera and Photos invoke native device pickers; no device gallery thumbnails are fabricated. Primary groups contain Add files/Add to project, Connectors/Memory, and Tools/GitHub repository. Tools reveals existing canvas, analysis, comparison, search, privacy and library actions. Desktop rows are at least 44px tall, phone rows 52px. Phone composer controls remain at least 44px tall. Settings Connectors manages GitHub credentials and repository access with actual status. The round top-right ghost toggles ephemeral incognito chat; history, drafts, sync, backups and memory must respect this state. Providers still receive message content. Project assignment and memory are disabled in incognito. Instructions have 144px minimum height and 1.6 line height. Settings rows have 18px vertical padding. Library tabs use a bottom separator and tonal active state.
 
 Keyboard controls retain a 2px --focus outline with 2px offset; ordinary fields use their border and ring focus. The skip link reaches the message input. Existing nested-dialog focus, local Escape and restoration logic remains in effect. Inputs and content support native selection; chrome suppresses selection and touch callouts.
 
@@ -186,7 +193,7 @@ Project header, file and phone row actions use 44px targets. Coarse pointers giv
 
 ### Do:
 
-- Do use effective theme variables and Geist typography.
+- Do use effective theme variables, Geist interface typography and the recorded Georgia welcome typography.
 - Do preserve the desktop writing/context split and phone context disclosure.
 - Do retain visible focus, native text selection, pinch zoom and wrapping phone controls.
 - Do keep privacy, billing and external write approvals explicit.

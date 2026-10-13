@@ -126,7 +126,7 @@ async function device(browser, name, email, mobile) {
   check(!(await B.page.textContent('.chat-list')).includes('Renamed on laptop'), 'deleted chat stays deleted after reload');
 
   // Saved helpers and their immutable chat instructions cross devices.
-  await B.page.getByRole('button', { name: 'Saved helpers and prompts', exact: true }).click();
+  await B.page.getByRole('button', { name: 'Customize', exact: true }).click();
   await B.page.getByRole('button', { name: 'New assistant', exact: true }).click();
   await B.page.getByLabel('Library item name').fill('Synced helper');
   await B.page.getByLabel('Library instructions').fill('Use HELPER_SYNC_MARKER in your reply.');
@@ -152,7 +152,7 @@ async function device(browser, name, email, mobile) {
   await A.page.reload();
   await A.page.waitForSelector('.topbar');
   await A.page.click('.menu-btn');
-  await A.page.getByRole('button', { name: 'Saved helpers and prompts', exact: true }).click();
+  await A.page.getByRole('button', { name: 'Customize', exact: true }).click();
   await A.page.getByRole('heading', { name: 'Synced helper', exact: true }).waitFor();
   check(true, 'saved assistant library synced to phone');
   await A.page.getByRole('button', { name: 'Close', exact: true }).click();
@@ -176,7 +176,7 @@ async function device(browser, name, email, mobile) {
   check(true, 'canvas edits synced live back to laptop');
   await A.page.getByRole('button', { name: 'Close canvas', exact: true }).click();
   await B.page.getByRole('button', { name: 'Close canvas', exact: true }).click();
-  await B.page.click('.new-chat-shortcut');
+  await B.page.evaluate(()=>document.querySelector('.sidebar .new-chat').click());
   await B.page.keyboard.press('Control+k');
   await B.page.getByLabel('Search commands').fill('Open document canvas');
   await B.page.keyboard.press('Enter');

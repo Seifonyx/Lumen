@@ -139,6 +139,7 @@ const settled = page => page.waitForTimeout(320);
         for (let i = 1; i <= 5; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: start + sign * i * 32, y: nativeY }] }); await page.waitForTimeout(16); }
         await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await settled(page);
         check(await isOpen(), `${label}: native horizontal touch opens the drawer`);
+        await page.locator('.chat-list').scrollIntoViewIfNeeded();
         const listBox = await page.locator('.chat-list').boundingBox(), listY = listBox.y + listBox.height / 2;
         await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: closeX, y: listY }] });
         for (let i = 1; i <= 5; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: closeX - sign * i * 32, y: listY }] }); await page.waitForTimeout(16); }

@@ -73,7 +73,7 @@ async function openMemory(page) {
   await page.screenshot({ path: path.join(__dirname, 'out', 'memory-chip.png') });
 
   // New chat uses it.
-  await page.click('[aria-label="New chat"]');
+  await page.evaluate(()=>document.querySelector('.sidebar .new-chat').click());
   await send(page, 'what is my job?', 0);
   check(sys(log).includes('- Works as a clinical pharmacist in Cairo'), 'new chat gets the memory');
   check(!JSON.stringify(log.at(-1).contents).includes('[['), 'no markers in what models see');

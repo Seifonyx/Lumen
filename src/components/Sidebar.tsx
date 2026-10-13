@@ -1,4 +1,5 @@
-import { BookOpen, Download, FolderKanban, MessageSquare, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings, SquarePen, Tag, Trash2, X } from 'lucide-react';
+import { isTemporaryChat } from '../lib/temporary-chat';
+import { Clock, Code2, FileText, SlidersHorizontal, BookOpen, Download, FolderKanban, MessageSquare, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings, Tag, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
@@ -117,6 +118,10 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
   const selectedProjectId = projects.some((p) => p.id === activeProjectId) ? activeProjectId : null;
   const open = useStore((s) => s.sidebarOpen);
   const { newChat, setUi, selectProject } = useStore.getState();
+  const [artifacts,setArtifacts]=useState(false);
+  const [more,setMore]=useState(false);
+  const [pinnedOnly,setPinnedOnly]=useState(false);
+  const library=(section:string)=>{setUi({sidebarOpen:false});window.dispatchEvent(new CustomEvent('mr:library',{detail:section}));};
   const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const searchInput = useRef<HTMLInputElement>(null);
@@ -145,10 +150,11 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
 
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const visible = chats.filter((c) => (c.messages.length > 0 || Boolean(c.documents?.length) || c.id === currentId) && (!selectedProjectId || c.projectId === selectedProjectId));
+    const visible = chats.filter((c) => !isTemporaryChat(c) && (c.messages.length > 0 || Boolean(c.documents?.length) || c.id === currentId) && (!selectedProjectId || c.projectId === selectedProjectId));
+    const filtered=visible.filter(c=>!pinnedOnly||c.pinned);
     const matches = q
-      ? visible.filter((c) => c.title.toLowerCase().includes(q) || c.tags?.some((t) => t.toLowerCase().includes(q)) || c.messages.some((m) => m.text.toLowerCase().includes(q)))
-      : visible;
+      ? filtered.filter((c) => c.title.toLowerCase().includes(q) || c.tags?.some((t) => t.toLowerCase().includes(q)) || c.messages.some((m) => m.text.toLowerCase().includes(q)))
+      : filtered;
     const out: [string, Chat[]][] = [];
     const pinned = matches.filter((c) => c.pinned);
     if (pinned.length) out.push(['Pinned', pinned]);
@@ -159,7 +165,7 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
       else out.push([g, [c]]);
     }
     return out;
-  }, [chats, query, currentId, selectedProjectId]);
+  }, [chats, query, currentId, selectedProjectId,pinnedOnly]);
 
   const activeProject = projects.find((p) => p.id === selectedProjectId);
 
@@ -182,13 +188,28 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
         <button className="icon-btn close-sidebar" onClick={() => setUi({ sidebarOpen: false })} aria-label="Close menu">
           <X size={18} />
         </button>
+        <span className="sidebar-brand">Model Router</span><div className="sidebar-modes"><button className="icon-btn" aria-label="Chat" onClick={newChat}><MessageSquare size={19}/></button><button className="icon-btn" aria-label="Code a repository" onClick={()=>setUi({repoPicker:true,sidebarOpen:false})}><Code2 size={19}/></button></div>
         <button ref={searchButton} className={`icon-btn sidebar-search-button${searchOpen ? ' active' : ''}`} aria-label="Search chats" title="Search chats" aria-expanded={searchOpen} aria-controls="chat-search" onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) setQuery(''); }}><Search size={19} /></button>
       </div>
-      {searchOpen && <label className="search sidebar-search-field">
+      {(searchOpen||!phone) && <label className="search sidebar-search-field">
         <Search size={16} />
         <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setSearchOpen(false); setQuery(''); searchButton.current?.focus(); } }} dir="auto" />
         <button className="icon-btn sm" aria-label="Close search" onClick={() => { setSearchOpen(false); setQuery(''); searchButton.current?.focus(); }}><X size={15} /></button>
       </label>}
+
+      <div className="sidebar-scroll">
+      <div className="sidebar-bottom-actions">
+        <button className="btn new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}>
+          <Plus size={20} /> <span>{activeProject ? `New chat in ${activeProject.name}` : 'New chat'}</span>
+        </button>
+        <button className="library-button" onClick={()=>{setProjectManager(true);setEditProjectId(undefined);setCreateNewProject(false);}}><FolderKanban size={20}/><span>Projects</span></button>
+        <button className="library-button" onClick={()=>setArtifacts(true)}><FileText size={20}/><span>Artifacts</span></button>
+        <button className="library-button" onClick={()=>library('tasks')}><Clock size={20}/><span>Scheduled</span></button>
+        <button className="library-button" onClick={()=>library('assistants')}><SlidersHorizontal size={20}/><span>Customize</span></button>
+        <button className="library-button" aria-expanded={more} onClick={()=>setMore(!more)}><MoreHorizontal size={20}/><span>More</span></button>
+        {more&&<div className="sidebar-more"><button onClick={()=>library('knowledge')}>Knowledge</button><button onClick={()=>library('tools')}>Free tools</button>
+        <button className="icon-btn library-button" aria-label="Saved helpers and prompts" title="Library · helpers, prompts and tools" onClick={() => { setUi({ sidebarOpen: false }); onOpenLibrary(); }}><BookOpen size={19} /><span>Library</span></button></div>}
+      </div>
 
       <div className="sidebar-navigation">
       {/* Modern Claude/ChatGPT Projects Navigation */}
@@ -267,7 +288,7 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
         </div>
       )}
 
-      <h2 className="sidebar-section-label history-label"><MessageSquare size={15} aria-hidden="true" />{query ? 'Search results' : activeProject ? `${activeProject.name} chats` : 'Chats'}</h2>
+      <h2 className="sidebar-section-label history-label"><MessageSquare size={15} aria-hidden="true" />{query ? 'Search results' : activeProject ? `${activeProject.name} chats` : 'Recents'}</h2><button className="recents-filter icon-btn" aria-label="Show pinned chats only" aria-pressed={pinnedOnly} onClick={()=>setPinnedOnly(!pinnedOnly)}><SlidersHorizontal size={16}/></button>
       <nav className="chat-list" aria-label="Chat history">
         {groups.length === 0 && <p className="muted small empty-list">{query ? 'No chats match.' : 'Your chats will appear here.'}</p>}
         {groups.map(([label, list]) => (
@@ -282,11 +303,6 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
         ))}
       </nav>
       </div>
-      <div className="sidebar-bottom-actions">
-        <button className="btn new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}>
-          <SquarePen size={18} /> <span>{activeProject ? `New chat in ${activeProject.name}` : 'New chat'}</span>
-        </button>
-        <button className="icon-btn library-button" aria-label="Saved helpers and prompts" title="Library · helpers, prompts and tools" onClick={() => { setUi({ sidebarOpen: false }); onOpenLibrary(); }}><BookOpen size={19} /></button>
       </div>
       <button className="sidebar-foot" onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })} aria-label="Settings">
         {user?.photo ? <img className="avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
@@ -297,6 +313,7 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
         <Settings size={16} />
       </button>
     </aside>
+    {artifacts&&<Modal title="Artifacts" onClose={()=>setArtifacts(false)}><div className="artifact-list">{chats.filter(c=>!isTemporaryChat(c)).flatMap(c=>(c.documents||[]).map(doc=><button className="btn" key={`${c.id}-${doc.id}`} onClick={()=>{useStore.getState().selectChat(c.id);setUi({canvasOpen:true,canvasDocumentId:doc.id});setArtifacts(false);}}><FileText size={18}/><span>{doc.name}<small>{c.title}</small></span></button>))}{!chats.some(c=>!isTemporaryChat(c)&&c.documents?.length)&&<p className="muted">Documents created in canvas will appear here.</p>}</div></Modal>}
     {projectManager && (
       <ProjectManager
         initialProjectId={editProjectId}

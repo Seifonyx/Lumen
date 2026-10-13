@@ -2,6 +2,7 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowUp,
+  Blocks,
   Boxes,
   Brain,
   ChevronRight,
@@ -34,6 +35,8 @@ import { PROVIDER_NAMES, saveBlob, type ProviderId } from '../lib/util';
 import { useStore } from '../store';
 import type { Chat, FontSize, ModelInfo, Theme } from '../types';
 import { Badges } from './ModelPicker';
+import ConnectorsTab from './ConnectorsTab';
+import { savedChats } from '../lib/temporary-chat';
 import UsageTab from './UsageTab';
 import MemoryTab from './MemoryTab';
 import KeySafety from './KeySafety';
@@ -48,6 +51,7 @@ import type { Layout } from '../lib/layouts';
 const TABS: [string, string, LucideIcon, string][] = [
   ['general', 'General', SlidersHorizontal, 'Account, appearance and chat behaviour'],
   ['keys', 'API keys', KeyRound, 'Provider connections, access and billing controls'],
+  ['connectors', 'Connectors', Blocks, 'GitHub repositories and connected services'],
   ['models', 'Models', Boxes, 'Your models, Auto routing and layouts'],
   ['usage', 'Usage', Gauge, "Today's requests, limits and resets"],
   ['personalize', 'Personalization', UserRound, 'Instructions every model follows'],
@@ -313,7 +317,7 @@ function KeysTab() {
   return (
     <div className="settings-section">
       <div className="settings-card">
-        {KEY_FIELDS.map(({ id, label, placeholder, link, hint, linkText }) => {
+        {KEY_FIELDS.filter(field=>field.id!=='github').map(({ id, label, placeholder, link, hint, linkText }) => {
           const val = draft[id] || '';
           const isConfigured = Boolean(val.trim());
           const visible = Boolean(showKey[id]);
@@ -399,7 +403,7 @@ function DataTab() {
               <span className="setting-hint">Save {count} chat{count === 1 ? '' : 's'} (with this device's attachments) as one file.</span>
             </span>
             <span className="setting-ctrl">
-              <button className="btn small" onClick={() => saveBlob(new Blob([JSON.stringify({ app: 'model-router', version: 2, chats }, null, 0)], { type: 'application/json' }), `model-router-backup-${new Date().toISOString().slice(0, 10)}.json`)}>
+              <button className="btn small" onClick={() => saveBlob(new Blob([JSON.stringify({ app: 'model-router', version: 2, chats: savedChats(chats) }, null, 0)], { type: 'application/json' }), `model-router-backup-${new Date().toISOString().slice(0, 10)}.json`)}>
                 <Download size={14} /> Back up
               </button>
             </span>
@@ -679,6 +683,7 @@ export default function SettingsModal() {
             )}
 
             {id === 'keys' && <KeysTab />}
+            {id === 'connectors' && <ConnectorsTab />}
             {id === 'models' && <ModelsTab />}
             {id === 'usage' && <UsageTab />}
             {id === 'personalize' && <PersonalizeTab />}

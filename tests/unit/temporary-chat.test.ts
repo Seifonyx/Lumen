@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { isTemporaryChat, savedChats } from '../../src/lib/temporary-chat';
+import type { Chat } from '../../src/types';
+const regular:Chat={id:'normal',title:'Temporary discussion',createdAt:1,updatedAt:1,messages:[]};
+const temporary:Chat={...regular,id:'temporary-fixture',title:'Normal looking title'};
+assert.equal(isTemporaryChat(regular),false);
+assert.equal(isTemporaryChat(temporary),true);
+assert.equal(isTemporaryChat(null),false);
+assert.equal(isTemporaryChat(undefined),false);
+assert.deepEqual(savedChats([temporary,regular]),[regular]);
+assert.equal(temporary.title,'Normal looking title');
+console.log('PASS temporary identity is independent of title; saved exports exclude ephemeral chats without mutating them');

@@ -45,3 +45,7 @@ Arabic interface support and separate chat folders were removed from scope at th
 3. Sent-message navigation timeline: completed, deployed and hosted-verified on 2026-10-13. Clickable line overview on desktop and phones, exact older-turn jumps through the virtualizer. The message-list icon/count and dialog were subsequently removed at the user's request. Auto-added context is excluded; drafts and streaming reading position are preserved. Local and hosted Chromium/WebKit passed all five target viewports on both sites; final CI passed all 42 browser suites plus type/build/unit checks. Stop after this task; no additional roadmap work is authorized.
 
 Keep controls compact. Preserve original free-model filtering, explicit additional-provider billing consent, account privacy, drafts and confirmations for external changes. Implement, test, deploy and verify each task individually; stop and ask the user before beginning the next.
+
+## Current requested layout update
+
+Claude screenshot composition adapted for desktop and phone; native Add to Chat sheet, GitHub Settings Connectors, saved canvas Artifacts navigation and real incognito implemented. Local verification complete; release/hosted checks pending. This is the authorized task; do not start another roadmap feature without confirmation.

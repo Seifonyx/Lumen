@@ -48,4 +48,4 @@ Keep controls compact. Preserve original free-model filtering, explicit addition
 
 ## Current requested layout update
 
-Claude screenshot composition adapted for desktop and phone; native Add to Chat sheet, GitHub Settings Connectors, saved canvas Artifacts navigation and real incognito implemented. Local verification complete; release/hosted checks pending. This is the authorized task; do not start another roadmap feature without confirmation.
+Claude screenshot composition adapted for desktop and phone; native Add to Chat sheet, GitHub Settings Connectors, saved canvas Artifacts navigation and real incognito implemented. Deployed live/preview as 15fc559; hosted Chromium/WebKit layout, incognito/Connectors and native safe-area checks passed. Latest full CI remains in progress. This is the authorized task; do not start another roadmap feature without confirmation.

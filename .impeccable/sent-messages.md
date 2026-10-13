@@ -21,3 +21,11 @@ Fresh finish review: ship, with no fixes requested, across `.impeccable/review/r
 The implemented rail preserves the incumbent neutral surfaces, restrained accent, rounded controls and visible focus treatment. Desktop and phone both use compact horizontal lines with a wider accent current-position marker, immediate jumps and preview labels. Each line has a 44px square target. Height-based sampling bounds the rail to eight stops, preserves first/latest stops where capacity permits, and hides the rail below 44px of conversation height. A reserved 56px end gutter protects regular and virtualized conversation text. The list/count button and searchable dialog are removed as requested.
 
 Comparison against PRODUCT.md, DESIGN.md and the sidecar found an ordinary component correction within the existing visual system. Preserve DESIGN.md and `.impeccable/design.json`; no identity, palette, typography or system-wide rule refresh is required. The concept detector was unavailable after a cache failure, so no detector result is claimed. Physical iPhone behavior remains unverified.
+
+## Timeline outline correction
+
+Current user direction: “Don’t outline the message when i click on a timeline”. Pointer clicks and touch taps jump to the original message without an added bubble outline. Keyboard activation retains visible destination focus: navigation passes an explicit keyboard flag from the activation event, and the thread applies its keyboard-only destination marker alongside the existing focus-visible treatment. Existing jump, draft and reading-position behavior is preserved.
+
+Fresh finish review: ship, with no material fixes requested; the second scoped review of Safari keyboard tracking also returned ship. Parent-supplied desktop (1280px) and phone (320px) pointer-jump captures are `.impeccable/review/rail-chromium-1280-light-jump.png` and `.impeccable/review/rail-chromium-320-light-jump.png`. Test and deployment proof remains pending at this record.
+
+Comparison against PRODUCT.md, DESIGN.md, `.impeccable/design.json` and the navigation/thread/CSS implementation confirms an ordinary interaction correction within the existing visual system. Preserve DESIGN.md and the sidecar; no system refresh or raster assets are required. The concept detector remains unavailable after its cache failure. Physical phone behavior remains unverified.

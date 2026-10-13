@@ -13,6 +13,7 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
   const [focus,setFocus] = useState<string|null>(null);
   const [jumpTarget,setJumpTarget] = useState<string|null>(null);
   const [lastJump,setLastJump] = useState<string|null>(null);
+  const [jumpKeyboard,setJumpKeyboard] = useState(false);
   const [activeStop,setActiveStop] = useState<string|null>(null);
   const [announcement,setAnnouncement] = useState('');
   const [navigationRoot,setNavigationRoot] = useState<HTMLDivElement|null>(null);
@@ -111,11 +112,11 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
   </>;
   return <>
     <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</div>
-    {navigationRoot && stops.length>1 && createPortal(<MessageNavigation stops={stops} activeId={activeStop} height={bounds.height} onJump={id=>{stick.current=false;setJumpTarget(id)}}/>,navigationRoot)}
+    {navigationRoot && stops.length>1 && createPortal(<MessageNavigation stops={stops} activeId={activeStop} height={bounds.height} onJump={(id,keyboard)=>{stick.current=false;setJumpKeyboard(keyboard);setJumpTarget(id)}}/>,navigationRoot)}
     {count>120 && <div className="history-controls"><span className="muted small">{count.toLocaleString()} messages</span><button className="btn ghost small" aria-pressed={full} title="Show all messages for browser search and screen-reader reading" onClick={()=>setFull(!full)}>{full?'Use faster scrolling':'Show full conversation'}</button></div>}
     {summary?.upTo===null && <div className="thread-summary"><CompactNote chat={chat} summary={summary}/></div>}
     <div ref={host} className={`thread${enabled?' virtual-thread':''}`} role={count?'feed':'region'} aria-label="Conversation" aria-busy={busy} aria-live="off" style={enabled?{height:virtual.getTotalSize()}:undefined}>
-      {(enabled?virtual.getVirtualItems().map(item=>({index:item.index,start:item.start})):messages.map((_,index)=>({index,start:0}))).map(({index,start})=><article key={messages[index].id} data-index={index} data-message-index={index} data-message-id={messages[index].id} tabIndex={-1} ref={enabled?virtual.measureElement:undefined} className={`message-row${lastJump===messages[index].id?' message-jump-target':''}`} aria-label={`${messages[index].role==='user'?'You':'Assistant'}, message ${index+1}`} aria-posinset={index+1} aria-setsize={count}
+      {(enabled?virtual.getVirtualItems().map(item=>({index:item.index,start:item.start})):messages.map((_,index)=>({index,start:0}))).map(({index,start})=><article key={messages[index].id} data-index={index} data-message-index={index} data-message-id={messages[index].id} data-jump-keyboard={lastJump===messages[index].id && jumpKeyboard || undefined} tabIndex={-1} ref={enabled?virtual.measureElement:undefined} className={`message-row${lastJump===messages[index].id?' message-jump-target':''}`} aria-label={`${messages[index].role==='user'?'You':'Assistant'}, message ${index+1}`} aria-posinset={index+1} aria-setsize={count}
         onFocusCapture={()=>setFocus(messages[index].id)} onBlurCapture={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node))setFocus(null)}} style={enabled?{position:'absolute',top:start-margin,left:0,width:'100%'}:undefined}>
         {render(index)}
       </article>)}

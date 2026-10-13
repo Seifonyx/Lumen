@@ -713,6 +713,7 @@ export const useStore = create<State>((set, get) => {
         modelCheckController?.abort();
         const generation = ++accountGeneration;
         get().stop();
+        stopSpeaking();
         controller = null; compactController = null; compareController = null; canvasController = null;
         settingsReady = false;
         clearTimeout(settingsTimer);

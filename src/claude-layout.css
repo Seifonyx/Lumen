@@ -141,3 +141,17 @@ html.kb-open .mp-scrim {top:var(--vv-top,0px);height:var(--vv-h,100dvh);bottom:a
 .sidebar-scroll .sidebar-navigation{flex:none;overflow:visible;}
 
 .topbar .new-chat-shortcut[aria-pressed='true']{color:var(--accent);border-color:var(--accent);}
+/* Keep native iPhone insets when adapting the reference spacing. */
+.main .topbar { padding-inline-start:max(22px,env(safe-area-inset-left)); padding-inline-end:max(22px,env(safe-area-inset-right)); padding-top:max(8px,env(safe-area-inset-top)); }
+.composer-wrap { padding-inline-start:max(28px,env(safe-area-inset-left)); padding-inline-end:max(28px,env(safe-area-inset-right)); }
+.models-pop.sheet { padding-inline-start:env(safe-area-inset-left); padding-inline-end:env(safe-area-inset-right); }
+@media(max-width:899px){
+ .main .topbar { padding-inline-start:max(16px,env(safe-area-inset-left)); padding-inline-end:max(16px,env(safe-area-inset-right)); padding-top:max(12px,env(safe-area-inset-top)); }
+ .composer-wrap { padding-inline-start:max(12px,env(safe-area-inset-left)); padding-inline-end:max(12px,env(safe-area-inset-right)); }
+}
+@media(max-width:899px){
+ .sidebar-head .icon-btn, .recents-filter, .connector-card .btn {min-width:44px;min-height:44px;}
+}
+.recents-filter[aria-pressed='true']{color:var(--accent);background:var(--accent-soft);}
+.sidebar-modes .icon-btn[aria-pressed='true']{background:var(--surface-3);}
+.artifact-list .btn{min-width:0;}.artifact-list .btn > span{min-width:0;white-space:normal;overflow-wrap:anywhere;}

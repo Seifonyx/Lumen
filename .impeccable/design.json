@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-13T16:32:41.431Z",
+  "generatedAt": "2026-10-13T18:05:03.065Z",
   "title": "Design System: Model Router",
   "extensions": {
     "colorMeta": {
@@ -312,7 +312,7 @@
         "src/lib/temporary-chat.ts"
       ],
       "tonalRamps": "Omitted: no implemented accent ramp; synthesized values would invent tokens.",
-      "review": "Five layout matrices and expanded incognito checks previously passed both engines, with fresh reviewer KEEP. Latest dark selected-state contrast tint and shared sidebar scrolling require fresh reruns. Expanded checks now cover light/dark desktop, dark/black phone and disabled-memory/editable-GitHub accessibility. Broader 45-suite regression and release checks remain pending. Physical iPhone unverified.",
+      "review": "Baseline CI 38432567075 passed all 45 browser suites. File/voice cleanup passed unit tests, eight incognito cases in both engines and five normal regression cases. Native safe-insets CDP checks passed portrait top44/bottom34 and landscape left/right44/bottom21. Browser suite count is now 46. Final mode/safe-area six-layout rerun and latest release checks remain pending. Fresh reviewer KEEP recorded; physical iPhone unverified.",
       "engine": "Concept engine unavailable; no detector result or generated comp."
     },
     "navigation": {
@@ -350,7 +350,8 @@
         "composerControlMinHeight": "44px",
         "toolAndSendMinWidth": "44px",
         "addRowMinHeight": "52px",
-        "sheetMaxHeight": "calc(var(--vv-h,100dvh) - 12px)"
+        "sheetMaxHeight": "calc(var(--vv-h,100dvh) - 12px)",
+        "sidebarAndConnectorTarget": "44px minimum width and height"
       },
       "modelPicker": {
         "opening": "upward",
@@ -370,7 +371,8 @@
           "Customize",
           "More"
         ],
-        "footer": "account/settings"
+        "footer": "account/settings",
+        "modes": "Chat/Code switch views, preserving current chat and draft; pressed states visible."
       },
       "addGroups": [
         [
@@ -388,7 +390,7 @@
       ],
       "nativePhotos": "Native pickers; no fabricated gallery",
       "incognito": "Ephemeral chat with history, draft, sync, backup and memory guards; providers still receive content",
-      "verification": "Layout revision ffe24c2 passed full CI 38432567075 (45 browser suites plus type/build/unit) and deploy 38432608298. Both hosted sites matched tested assets and passed six layouts plus incognito/Connectors in Chromium/WebKit. Final cleanup additionally binds file/voice callbacks to their originating chat, stops private speech playback, and blocks temporary sync tombstones. Its unit/type/build, eight incognito cases across both engines, and five file/account/canvas/privacy/sync regression suites passed locally. Cleanup deployment/full-CI status pending. Physical iPhone unverified; detector unavailable.",
+      "verification": "Baseline CI 38432567075 passed all 45 browser suites. File/voice cleanup passed unit tests, eight incognito cases in both engines and five normal regression cases. Native safe-insets CDP checks passed portrait top44/bottom34 and landscape left/right44/bottom21. Browser suite count is now 46. Final mode/safe-area six-layout rerun and latest release checks remain pending. Fresh reviewer KEEP recorded; physical iPhone unverified.",
       "theme": "Explicit and automatic dark use warm-dark neutrals and contrast-correct orange action tokens. Both override rules exclude black, preserving its neutral and green accent tokens. Welcome mark remains orange in every theme.",
       "darkColors": {
         "dark-accent-text": "#171715",
@@ -398,7 +400,16 @@
         "dark-border": "#33332f",
         "dark-border-strong": "#4a4a45",
         "dark-input-border": "#484842"
-      }
+      },
+      "safeAreas": {
+        "headerInlineDesktop": "max(22px, env(safe-area-inset-left/right))",
+        "headerInlinePhone": "max(16px, env(safe-area-inset-left/right))",
+        "composerInlineDesktop": "max(28px, env(safe-area-inset-left/right))",
+        "composerInlinePhone": "max(12px, env(safe-area-inset-left/right))",
+        "headerTop": "max(8px desktop / 12px phone, env(safe-area-inset-top))",
+        "modelSheetInline": "env(safe-area-inset-left/right)"
+      },
+      "artifacts": "Long names wrap with overflow-wrap:anywhere."
     }
   },
   "components": [

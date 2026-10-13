@@ -12,7 +12,7 @@ Mode: Operate. The user supplied exact desktop and phone Claude references; matc
 
 Desktop: 288px sidebar, full search, New/Projects/Artifacts/Scheduled/Customize/More and account footer. Navigation actions and project/history scroll together; header, search and account footer remain fixed outside this region. Centered 800px writing area, orange mark beside single-line Georgia greeting. Project/model controls sit below the composer. Existing artifacts/tasks/helpers use real app data and behavior.
 
-Phone through 899px: round hamburger and incognito controls, centered mark above Georgia time/name greeting; bottom anchored 24px-radius composer with model pill next to +, mic and send. Safe areas, native input zoom and visible keyboard viewport remain supported.
+Phone through 899px: round hamburger and incognito controls, centered mark above Georgia time/name greeting; bottom anchored 24px-radius composer with model pill next to +, mic and send. Native header/composer/model-sheet safe-area insets, native input zoom and visible keyboard viewport remain supported. Phone sidebar/filter/Connector controls have 44px minimum targets. Chat/Code switch views while preserving drafts; selected states are visible and long artifact names wrap.
 
 Add to Chat: close/back, Photos, native Camera/Photos picker actions; grouped files/project, connectors/memory and tools/repository. Browser cannot display the user's device-gallery thumbnails. Tools retains existing app capabilities. Settings Connectors owns GitHub credentials and honest saved/verified status.
 
@@ -22,4 +22,4 @@ Effective tokens are recorded in DESIGN.md and its sidecar. Dark canvas/sidebar/
 
 ## Verification
 
-Layout revision ffe24c2 passed full CI 38432567075 (45 browser suites plus type/build/unit) and deploy 38432608298. Both hosted sites matched tested assets and passed six layouts plus incognito/Connectors in Chromium/WebKit. Final cleanup additionally binds file/voice callbacks to their originating chat, stops private speech playback, and blocks temporary sync tombstones. Its unit/type/build, eight incognito cases across both engines, and five file/account/canvas/privacy/sync regression suites passed locally. Cleanup deployment/full-CI status pending. Physical iPhone unverified; detector unavailable. No shipping raster assets.
+Baseline CI 38432567075 passed all 45 browser suites. File/voice cleanup passed unit tests, eight incognito cases in both engines and five normal regression cases. Native safe-insets CDP checks passed portrait top44/bottom34 and landscape left/right44/bottom21. Browser suite count is now 46. Final mode/safe-area six-layout rerun and latest release checks remain pending. Fresh reviewer KEEP recorded; physical iPhone unverified. Detector unavailable after cached-runtime failure. No shipping raster assets.

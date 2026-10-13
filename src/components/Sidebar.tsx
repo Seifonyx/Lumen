@@ -113,6 +113,8 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
   const user = useStore((st) => st.user);
   const chats = useStore((s) => s.chats);
   const currentId = useStore((s) => s.currentId);
+  const workspaceOpen = useStore(s=>s.workspaceOpen);
+  const currentRepo=chats.find(chat=>chat.id===currentId)?.repo;
   const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
   const activeProjectId = useStore((s) => s.activeProjectId);
   const selectedProjectId = projects.some((p) => p.id === activeProjectId) ? activeProjectId : null;
@@ -188,7 +190,7 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
         <button className="icon-btn close-sidebar" onClick={() => setUi({ sidebarOpen: false })} aria-label="Close menu">
           <X size={18} />
         </button>
-        <span className="sidebar-brand">Model Router</span><div className="sidebar-modes"><button className="icon-btn" aria-label="Chat" onClick={newChat}><MessageSquare size={19}/></button><button className="icon-btn" aria-label="Code a repository" onClick={()=>setUi({repoPicker:true,sidebarOpen:false})}><Code2 size={19}/></button></div>
+        <span className="sidebar-brand">Model Router</span><div className="sidebar-modes"><button className="icon-btn" aria-label="Chat" aria-pressed={!workspaceOpen||!currentRepo} onClick={()=>setUi({workspaceOpen:false,projectWorkspaceOpen:false})}><MessageSquare size={19}/></button><button className="icon-btn" aria-label="Code a repository" aria-pressed={workspaceOpen&&Boolean(currentRepo)} onClick={()=>setUi({workspaceOpen:Boolean(currentRepo),repoPicker:!currentRepo,projectWorkspaceOpen:false,sidebarOpen:false})}><Code2 size={19}/></button></div>
         <button ref={searchButton} className={`icon-btn sidebar-search-button${searchOpen ? ' active' : ''}`} aria-label="Search chats" title="Search chats" aria-expanded={searchOpen} aria-controls="chat-search" onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) setQuery(''); }}><Search size={19} /></button>
       </div>
       {(searchOpen||!phone) && <label className="search sidebar-search-field">

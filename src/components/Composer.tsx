@@ -157,6 +157,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
   useEffect(() => { setCodeExecution(false); setCheck(null); setCompareOpen(false); setProjectMenu(false); }, [currentId]);
   useEffect(() => { setCodeExecution(false); setPending([]); setCheck(null); setCompareOpen(false); }, [accountId]);
   const speechGeneration = useRef(0);
+  useEffect(() => () => { speechGeneration.current++; stopListening.current?.(); }, []);
 
   const addFiles = useCallback(
     async (files: File[]) => {

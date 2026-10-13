@@ -23,6 +23,7 @@ import { hasVideo, toolModel } from './lib/ai/tool-inputs.js';
 import { findLayout, isLayoutId } from './lib/layouts';
 import { formatUntil, remaining, UsageTracker, type LimitInfo, type UsageView } from './lib/usage';
 import { db } from './lib/db';
+import { stopSpeaking } from './lib/speech';
 import { isTemporaryChat } from './lib/temporary-chat';
 import { branchChat, normalizeChatTags } from './lib/chat-tools';
 import { normalizeAssistant } from './lib/assistants';
@@ -201,7 +202,7 @@ export const useStore = create<State>((set, get) => {
   let returnProjectId: string | null = null;
   const discardTemporary = () => {
     const state=get();
-    if (isTemporaryChat(currentChat())) { state.stop(); state.clearComparison(); }
+    if (isTemporaryChat(currentChat())) { state.stop(); stopSpeaking(); state.clearComparison(); }
     set(s=>({chats:s.chats.filter(c=>!isTemporaryChat(c))}));
   };
   const replaceChat = (chat: Chat) => { if(isTemporaryChat(chat)&&!get().chats.some(c=>c.id===chat.id))return; set((s) => ({ chats: s.chats.some((c) => c.id === chat.id) ? s.chats.map((c) => (c.id === chat.id ? chat : c)) : [chat, ...s.chats] })); };

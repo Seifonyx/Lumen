@@ -22,6 +22,7 @@ interface Pending {
   file?: Attachment;
 }
 
+const getComposerScope = () => { const state=useStore.getState(); return JSON.stringify([state.user?.uid, state.currentId]); };
 const PREFILL = 'mr:prefill';
 export const prefillComposer = (text: string) => window.dispatchEvent(new CustomEvent(PREFILL, { detail: text }));
 export const insertPrompt = (text: string) => window.dispatchEvent(new CustomEvent(PREFILL, { detail: { text, append: true } }));
@@ -155,22 +156,21 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
 
   useEffect(() => { setCodeExecution(false); setCheck(null); setCompareOpen(false); setProjectMenu(false); }, [currentId]);
   useEffect(() => { setCodeExecution(false); setPending([]); setCheck(null); setCompareOpen(false); }, [accountId]);
-  const attachmentAccount = useRef(accountId);
-  attachmentAccount.current = accountId;
+  const speechGeneration = useRef(0);
 
   const addFiles = useCallback(
     async (files: File[]) => {
-      const owner = attachmentAccount.current;
+      const owner = getComposerScope();
       for (const file of files) {
-        if (owner !== attachmentAccount.current) return;
+        if (owner !== getComposerScope()) return;
         const key = `${file.name}-${file.size}-${Math.random()}`;
         setPending((p) => [...p, { key, name: file.name }]);
         try {
           const att = await readAttachment(file);
-          if (owner !== attachmentAccount.current) return;
+          if (owner !== getComposerScope()) return;
           setPending((p) => p.map((x) => (x.key === key ? { ...x, file: att } : x)));
         } catch (e) {
-          if (owner !== attachmentAccount.current) return;
+          if (owner !== getComposerScope()) return;
           setPending((p) => p.filter((x) => x.key !== key));
           toast((e as Error).message, 'error');
         }
@@ -300,16 +300,19 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
       stopListening.current?.();
       return;
     }
+    const owner=getComposerScope(), generation=++speechGeneration.current;
     baseText.current = text ? `${text.trimEnd()} ` : '';
     setListening(true);
     stopListening.current = listen(
       settings.voiceLang,
       (finalText, partial) => {
+        if(owner!==getComposerScope() || generation!==speechGeneration.current)return;
         setText(baseText.current + finalText);
         saveDraft(baseText.current + finalText);
         setInterim(partial);
       },
       (error) => {
+        if(owner!==getComposerScope() || generation!==speechGeneration.current)return;
         setListening(false);
         setInterim('');
         stopListening.current = null;

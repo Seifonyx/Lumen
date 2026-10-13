@@ -267,6 +267,7 @@ export class ChatSync {
   }
 
   remove(id: string) {
+    if(isTemporaryChat({id}))return;
     if (this.uid.startsWith('preview-')) return;
     const w = this.waiting.get(id);
     if (w) clearTimeout(w.timer);
@@ -289,6 +290,7 @@ export class ChatSync {
   }
 
   private async removeNow(id: string) {
+    if(isTemporaryChat({id}))return;
     const ids = await this.remoteIds(id);
     const batches = [writeBatch(db)];
     let ops = 0;

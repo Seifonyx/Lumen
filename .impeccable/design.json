@@ -388,7 +388,7 @@
       ],
       "nativePhotos": "Native pickers; no fabricated gallery",
       "incognito": "Ephemeral chat with history, draft, sync, backup and memory guards; providers still receive content",
-      "verification": "Fresh reviewer KEEP. Chromium/WebKit passed five responsive targets plus the supplied 1918px desktop size. Incognito storage, memory, canvas, summarized continuation, draft restoration, reload and GitHub checks passed light/dark/black desktop and phone cases in both engines. All 156 accessibility scans and native sidebar gesture checks passed. All 45 browser suites are covered across the full run and corrected reruns; type/build/unit passed. CI/deployment/hosted verification pending. Detector unavailable; physical iPhone unverified.",
+      "verification": "Layout revision ffe24c2 passed full CI 38432567075 (45 browser suites plus type/build/unit) and deploy 38432608298. Both hosted sites matched tested assets and passed six layouts plus incognito/Connectors in Chromium/WebKit. Final cleanup additionally binds file/voice callbacks to their originating chat, stops private speech playback, and blocks temporary sync tombstones. Its unit/type/build, eight incognito cases across both engines, and five file/account/canvas/privacy/sync regression suites passed locally. Cleanup deployment/full-CI status pending. Physical iPhone unverified; detector unavailable.",
       "theme": "Explicit and automatic dark use warm-dark neutrals and contrast-correct orange action tokens. Both override rules exclude black, preserving its neutral and green accent tokens. Welcome mark remains orange in every theme.",
       "darkColors": {
         "dark-accent-text": "#171715",

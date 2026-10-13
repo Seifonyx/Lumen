@@ -81,7 +81,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
     return () => el.removeEventListener('scroll', onScroll);
   }, []);
 
-  if (currentProject && (projectWorkspaceOpen || empty)) {
+  if (currentProject && projectWorkspaceOpen) {
     return (
       <main className="main project-workspace-main">
         <header className="topbar">
@@ -181,7 +181,6 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
       <div className="messages" ref={scroller} role="region" tabIndex={0} aria-label="Chat messages">
         {empty ? (
           <div className="empty">
-            <span className="welcome-eyebrow">Your space to think and create</span>
             <h1>What would you like to create?</h1>
             <p className="muted">Ask a question, explore an idea, or work with your files.</p>
           </div>

@@ -41,7 +41,7 @@ Arabic interface support and separate chat folders were removed from scope at th
 ## New enhancement sequence
 
 1. Multi-provider integration: Mistral, Cohere, NVIDIA NIM, Hugging Face, DeepSeek, Alibaba Cloud, Cloudflare Workers AI and Aion Labs. Complete: code and app-owned default relay deployed and hosted-verified on 2026-10-12 at desktop/320/390/430px and phone landscape; local Chromium/WebKit checks passed. Real NVIDIA catalogue discovery through the default relay passed in phone-sized Chromium/WebKit on both sites. Additional APIs require explicit billing opt-in and user-supplied keys; custom relay remains optional. GitHub Models was retired July 30, 2026 and is explained as unavailable. Stopped before Task 2, awaiting confirmation.
-2. Visual/mobile redesign, especially Projects: awaiting confirmation after Task 1.
+2. Visual/mobile redesign, especially Projects: authorized and implemented on 2026-10-13; final verification and release in progress. Quiet navigation, consistent Geist typography and surfaces, desktop project context/phone disclosure, full-width project forms, readable phone chat headers, native zoom and accessible project actions. Task 3 remains pending user confirmation after this release.
 3. Sent-message navigation timeline: awaiting confirmation after Task 2.
 
 Keep controls compact. Preserve original free-model filtering, explicit additional-provider billing consent, account privacy, drafts and confirmations for external changes. Implement, test, deploy and verify each task individually; stop and ask the user before beginning the next.

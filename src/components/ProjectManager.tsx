@@ -146,8 +146,8 @@ export default function ProjectManager({
       title={
         selected
           ? isEditingExisting
-            ? `Project Settings: ${selected.name}`
-            : 'Create New Project'
+            ? `Project settings: ${selected.name}`
+            : 'New project'
           : 'Projects'
       }
       onClose={onClose}
@@ -158,7 +158,7 @@ export default function ProjectManager({
             <div className="project-modal-top-bar">
               <div>
                 <p className="muted small" style={{ margin: 0 }}>
-                  Organize chats, reference files, and tailored guidelines into dedicated workspaces like Claude and ChatGPT.
+                  Keep related conversations, reference files and instructions together.
                 </p>
               </div>
               <button
@@ -268,7 +268,7 @@ export default function ProjectManager({
                   </div>
                   <div className="setting-ctrl">
                     <input
-                      autoFocus
+                      aria-label="Project name"
                       value={name}
                       maxLength={60}
                       style={{ width: 280 }}
@@ -285,6 +285,7 @@ export default function ProjectManager({
                   </div>
                   <div className="setting-ctrl">
                     <input
+                      aria-label="Project description"
                       value={description}
                       maxLength={160}
                       style={{ width: 280 }}
@@ -300,7 +301,7 @@ export default function ProjectManager({
                     <span className="setting-hint">Badge color in navigation</span>
                   </div>
                   <div className="setting-ctrl">
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div className="project-color-choices" style={{ display: 'flex', gap: 8 }}>
                       {COLOR_OPTIONS.map((c) => (
                         <button
                           key={c.id}
@@ -308,6 +309,7 @@ export default function ProjectManager({
                           className={`project-color-dot${color === c.id ? ' active' : ''}`}
                           style={{ background: c.bg }}
                           title={c.label}
+                          aria-pressed={color === c.id}
                           onClick={() => setColor(c.id)}
                         />
                       ))}
@@ -322,6 +324,7 @@ export default function ProjectManager({
                   </div>
                   <div className="setting-ctrl">
                     <select
+                      aria-label="Default project model"
                       value={defaultModel}
                       onChange={(e) => setDefaultModel(e.target.value)}
                       style={{ width: 250 }}
@@ -425,6 +428,7 @@ export default function ProjectManager({
                 </div>
 
                 <textarea
+                  aria-label="Project instructions"
                   value={instructions}
                   maxLength={12000}
                   rows={4}

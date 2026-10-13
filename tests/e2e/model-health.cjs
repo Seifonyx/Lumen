@@ -31,7 +31,10 @@ const assert = require('node:assert/strict');
       await page.goto(process.env.MR_TEST_URL || 'http://localhost:5190/?emulator');
       await page.waitForSelector('.composer textarea');
       assert.equal(await page.locator('.sidebar h2').count(), 2);
-      assert.ok(await page.locator('.sidebar h2').first().evaluate(el => Number(getComputedStyle(el).fontWeight) >= 700));
+      assert.ok(await page.locator('.sidebar h2').first().evaluate(el => {
+        const heading = getComputedStyle(el);
+        return Number(heading.fontWeight) >= 600 && parseFloat(heading.fontSize) >= 13;
+      }), 'Section headings retain a distinct semibold hierarchy');
       await page.fill('.composer textarea', 'Hello');
       await page.click('.send-btn');
       await page.waitForSelector('.msg.assistant .markdown');

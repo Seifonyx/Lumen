@@ -4,7 +4,9 @@ A private AI workspace for chat, documents, data analysis and GitHub coding. Use
 
 ## Product direction
 
-Keep the interface clean, professional and compact, consistent with the current app. Existing light, dark and true-black themes are authoritative. Extend the palette and component conventions in `src/design.css`; functional responsive layouts remain in `styles.css`. App controls should explain useful decisions without exposing unnecessary implementation details.
+Keep a clean, professional conversation workspace at the craft level of ChatGPT/Claude: clear groups, restrained decoration and a spacious writing area. Preserve light, dark and true-black appearances. `DESIGN.md` records the implemented system; `src/workspace.css` supplies the final presentation overrides after `styles.css` and `design.css`. Functional phone keyboard rules remain in `lib/viewport.ts` and `touch.css`. App controls should explain useful decisions without exposing unnecessary implementation details.
+
+Projects have a writing/conversation column and adjacent reference files/instructions on desktop. On phones, project context is expandable; project forms use full-width fields and wrapping color choices. New chat opens the regular composer, preserving project instructions, model and files. Conversation titles are native buttons. Narrow chat headers put project context on a separate row so model selection remains readable. Native pinch zoom is enabled; no automatic keyboard opening is required when creating a project.
 
 ## Provider connections
 

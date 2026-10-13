@@ -79,7 +79,7 @@ async function run(browser, mobile) {
   await page.reload();
   await page.waitForSelector('.topbar');
   if (mobile) await page.click('.menu-btn');
-  check(await page.locator('.project-switcher select').inputValue() === PROJECT, `${label}: project selection survives reload`);
+  check(await page.locator('.sidebar-project-item[aria-current="page"]').textContent().then(t=>t.includes('Study')), `${label}: project selection survives reload`);
   if (mobile) await page.locator('.sidebar [aria-label="Close menu"]').click();
   check((await page.locator('.model-button').textContent()).includes('Gemini 2.5 Pro'), `${label}: project default model is shown before the first message`);
   await page.fill('.composer textarea', 'Use the project references after reload.');
@@ -148,8 +148,7 @@ async function run(browser, mobile) {
   if (mobile) {
     await page.setViewportSize({ width: 320, height: 720 });
     await page.click('.menu-btn');
-    await page.click('[aria-label="Manage projects"]');
-    await page.locator('.project-manage-row').first().click();
+    await page.locator('.sidebar-project-action').first().click();
     const fits = await page.locator('.project-form-actions').evaluate((row) => {
       const bounds = row.getBoundingClientRect();
       return row.scrollWidth <= row.clientWidth + 1 && [...row.querySelectorAll('button')].every((button) => {

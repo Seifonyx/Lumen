@@ -203,15 +203,6 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
         </button>
       </div>
 
-      {/* Accessible native select preserved for test compatibility */}
-      <div className="project-switcher" style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0, overflow: 'hidden' }}>
-        <FolderKanban size={16} />
-        <select aria-label="Choose project" value={selectedProjectId || ''} onChange={(e) => selectProject(e.target.value || null)}>
-          <option value="">All chats</option>
-          {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
-        </select>
-      </div>
-
       <div className="sidebar-projects-list">
         {projects.length === 0 ? (
           <button
@@ -232,6 +223,7 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
                   className={`sidebar-project-item${isSelected ? ' active' : ''}`}
                   onClick={() => selectProject(project.id)}
                   title={project.name}
+                  aria-current={isSelected ? 'page' : undefined}
                 >
                   <FolderKanban size={15} className={`sidebar-project-icon color-${project.color || 'indigo'}`} />
                   <span className="sidebar-project-name">{project.name}</span>
@@ -290,7 +282,7 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
       </nav>
       <div className="sidebar-bottom-actions">
         <button className="btn new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}>
-          <SquarePen size={18} /> {activeProject ? `New chat in ${activeProject.name}` : 'New chat'}
+          <SquarePen size={18} /> <span>{activeProject ? `New chat in ${activeProject.name}` : 'New chat'}</span>
         </button>
         <button className="icon-btn library-button" aria-label="Saved helpers and prompts" title="Library · helpers, prompts and tools" onClick={() => { setUi({ sidebarOpen: false }); onOpenLibrary(); }}><BookOpen size={19} /></button>
       </div>

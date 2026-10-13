@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   ArrowUp,
   Check,
+  ChevronDown,
   Clock,
   ExternalLink,
   Eye,
@@ -34,15 +35,6 @@ const PRESET_TEMPLATES = [
   { label: '+ Egyptian Arabic', text: 'Respond in professional Egyptian Arabic unless prompted in English.' },
 ];
 
-const COLOR_OPTIONS = [
-  { id: 'indigo', label: 'Indigo', bg: 'var(--accent)' },
-  { id: 'emerald', label: 'Emerald', bg: '#10b981' },
-  { id: 'amber', label: 'Amber', bg: '#f59e0b' },
-  { id: 'rose', label: 'Rose', bg: '#f43f5e' },
-  { id: 'cyan', label: 'Cyan', bg: '#06b6d4' },
-  { id: 'purple', label: 'Purple', bg: '#8b5cf6' },
-];
-
 export default function ProjectWorkspace({
   project,
   onOpenSettings,
@@ -55,7 +47,6 @@ export default function ProjectWorkspace({
   const enabledModels = useStore((s) => s.settings.enabledModels);
   const {
     saveProject,
-    deleteProject,
     selectProject,
     selectChat,
     newChat,
@@ -67,6 +58,7 @@ export default function ProjectWorkspace({
   } = useStore.getState();
 
   const [quickPrompt, setQuickPrompt] = useState('');
+  const [contextOpen, setContextOpen] = useState(false);
   const [searchChats, setSearchChats] = useState('');
   const [previewDoc, setPreviewDoc] = useState<{ name: string; text: string } | null>(null);
   const [renamingChatId, setRenamingChatId] = useState<string | null>(null);
@@ -171,9 +163,7 @@ export default function ProjectWorkspace({
     const text = quickPrompt.trim();
     if (!text) return;
     newChat();
-    setTimeout(() => {
-      void send(text, []);
-    }, 40);
+    void send(text, []);
   };
 
   // Chats in this project
@@ -308,12 +298,13 @@ export default function ProjectWorkspace({
           {/* Central Claude Prompt Composer */}
           <div className="claude-composer-box">
             <textarea
+              aria-label="Start a project conversation"
               rows={3}
               value={quickPrompt}
               placeholder={`Send a message to start a new chat in ${project.name}...`}
               onChange={(e) => setQuickPrompt(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && window.matchMedia('(pointer: fine)').matches) {
                   e.preventDefault();
                   handleStartChatFromPrompt();
                 }
@@ -327,7 +318,7 @@ export default function ProjectWorkspace({
                   </span>
                 ) : (
                   <span className="claude-composer-pill muted">
-                    <Sparkles size={12} /> Using project instructions
+                    <Sparkles size={12} /> {instructions.trim() ? 'Project instructions included' : 'Project conversation'}
                   </span>
                 )}
                 {project.defaultModel && (
@@ -359,6 +350,7 @@ export default function ProjectWorkspace({
                   <Search size={14} />
                   <input
                     type="search"
+                    aria-label="Search project conversations"
                     placeholder="Search chats..."
                     value={searchChats}
                     onChange={(e) => setSearchChats(e.target.value)}
@@ -401,7 +393,6 @@ export default function ProjectWorkspace({
                     <div
                       key={c.id}
                       className="claude-chat-row"
-                      onClick={() => selectChat(c.id)}
                     >
                       <div className="claude-chat-row-icon">
                         <MessageSquare size={16} />
@@ -429,9 +420,9 @@ export default function ProjectWorkspace({
                             }}
                           />
                         ) : (
-                          <span className="claude-chat-row-title" title={c.title}>
+                          <button type="button" className="claude-chat-row-title" title={c.title} onClick={() => selectChat(c.id)}>
                             {c.title}
-                          </span>
+                          </button>
                         )}
                         <p className="claude-chat-row-snippet">{previewText}</p>
                       </div>
@@ -447,13 +438,20 @@ export default function ProjectWorkspace({
                           <button
                             type="button"
                             className="icon-btn xs"
-                            aria-label="Options"
+                            aria-label={`Options for ${c.title}`}
+                            aria-expanded={chatMenuId === c.id}
+                            aria-haspopup="menu"
                             onClick={() => setChatMenuId(chatMenuId === c.id ? null : c.id)}
                           >
                             <MoreHorizontal size={14} />
                           </button>
                           {chatMenuId === c.id && (
-                            <div className="menu claude-chat-dropdown" role="menu">
+                            <div className="menu claude-chat-dropdown" role="menu" onKeyDown={e => {
+                              if (e.key === 'Escape') { e.stopPropagation(); setChatMenuId(null); e.currentTarget.parentElement?.querySelector<HTMLButtonElement>('button')?.focus(); }
+                              if (!['ArrowDown','ArrowUp','Home','End'].includes(e.key)) return;
+                              e.preventDefault(); const items = [...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')]; const index = items.indexOf(document.activeElement as HTMLButtonElement);
+                              items[e.key === 'Home' ? 0 : e.key === 'End' ? items.length-1 : (index + (e.key === 'ArrowUp' ? -1 : 1) + items.length)%items.length]?.focus();
+                            }}>
                               <button
                                 type="button"
                                 role="menuitem"
@@ -500,12 +498,16 @@ export default function ProjectWorkspace({
         </main>
 
         {/* ===================== RIGHT SIDEBAR (PROJECT CONTEXT) ===================== */}
-        <aside className="claude-project-sidebar">
+        <aside className={`claude-project-sidebar${contextOpen ? ' context-open' : ''}`} aria-label="Project context">
+          <button type="button" className="project-context-toggle" aria-expanded={contextOpen} aria-controls="project-context-content" onClick={() => setContextOpen(!contextOpen)}>
+            <span><FolderKanban size={18} /> Project context <small>{files.length} files · {instructions.trim() ? 'Instructions added' : 'No instructions'}</small></span><ChevronDown size={18} />
+          </button>
+          <div id="project-context-content" className="project-context-content">
           {/* 1. Project Knowledge Card */}
           <div className="claude-side-card">
             <div className="claude-side-card-head">
               <div>
-                <h3 className="claude-side-card-title">Project Knowledge</h3>
+                <h3 className="claude-side-card-title">Reference files</h3>
                 <span className="muted small">
                   {totalChars.toLocaleString()} / 150,000 chars ({quotaPct}%)
                 </span>
@@ -545,7 +547,7 @@ export default function ProjectWorkspace({
             />
 
             {files.length === 0 ? (
-              <div
+              <button type="button"
                 className="claude-side-dropzone"
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -561,7 +563,7 @@ export default function ProjectWorkspace({
                 <Upload size={18} style={{ color: 'var(--text-3)' }} />
                 <span>Upload PDF, Word, Code or CSV</span>
                 <small className="muted">Attached to all chats in this project</small>
-              </div>
+              </button>
             ) : (
               <div className="claude-side-files-list">
                 {files.map((file) => {
@@ -612,13 +614,13 @@ export default function ProjectWorkspace({
           <div className="claude-side-card">
             <div className="claude-side-card-head">
               <div>
-                <h3 className="claude-side-card-title">Custom Instructions</h3>
+                <h3 className="claude-side-card-title">Instructions</h3>
                 <span className="muted small">Model persona & guidelines</span>
               </div>
               <button
                 type="button"
                 className="btn ghost xs"
-                onClick={() => handleSaveEdits()}
+                onClick={() => handleSaveEdits({ instructions })}
                 title="Save instructions"
               >
                 {savedInstructionsNotice ? (
@@ -646,76 +648,19 @@ export default function ProjectWorkspace({
 
             <textarea
               rows={4}
+              aria-label="Project instructions"
               className="claude-side-instructions-input"
               value={instructions}
               maxLength={12000}
               placeholder="How should models respond in this project? (e.g., tone, style, constraints)..."
               onChange={(e) => setInstructions(e.target.value)}
-              onBlur={() => handleSaveEdits()}
+              onBlur={() => handleSaveEdits({ instructions })}
             />
             <div className="claude-side-char-count">
               <span className="muted small">{instructions.length}/12,000 chars</span>
             </div>
           </div>
 
-          {/* 3. Project Settings & Details */}
-          <div className="claude-side-card">
-            <h3 className="claude-side-card-title" style={{ marginBottom: 10 }}>
-              Project Settings
-            </h3>
-
-            <div className="claude-side-setting-row">
-              <span className="setting-label">Default Model</span>
-              <select
-                className="claude-side-select"
-                value={defaultModel}
-                onChange={(e) => {
-                  setDefaultModel(e.target.value);
-                  handleSaveEdits({ defaultModel: e.target.value });
-                }}
-              >
-                <option value="">Auto (Default)</option>
-                {enabledModels.map((id) => (
-                  <option key={id} value={id}>
-                    {modelLabel(catalog, id)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="claude-side-setting-row" style={{ marginTop: 10 }}>
-              <span className="setting-label">Color Theme</span>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {COLOR_OPTIONS.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    className={`project-color-dot${color === c.id ? ' active' : ''}`}
-                    style={{ background: c.bg, width: 18, height: 18 }}
-                    title={c.label}
-                    onClick={() => {
-                      setColor(c.id);
-                      handleSaveEdits({ color: c.id });
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="claude-side-danger-action">
-              <button
-                type="button"
-                className="btn danger xs"
-                onClick={() => {
-                  if (confirm(`Delete project "${project.name}"? Existing chats will remain in All chats.`)) {
-                    deleteProject(project.id);
-                    selectProject(null);
-                  }
-                }}
-              >
-                <Trash2 size={13} /> Delete project
-              </button>
-            </div>
           </div>
         </aside>
       </div>

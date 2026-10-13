@@ -111,7 +111,7 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
   </>;
   return <>
     <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</div>
-    {navigationRoot && stops.length>1 && createPortal(<MessageNavigation stops={stops} activeId={activeStop} height={bounds.height} width={bounds.width} onJump={id=>{stick.current=false;setJumpTarget(id)}}/>,navigationRoot)}
+    {navigationRoot && stops.length>1 && createPortal(<MessageNavigation stops={stops} activeId={activeStop} height={bounds.height} onJump={id=>{stick.current=false;setJumpTarget(id)}}/>,navigationRoot)}
     {count>120 && <div className="history-controls"><span className="muted small">{count.toLocaleString()} messages</span><button className="btn ghost small" aria-pressed={full} title="Show all messages for browser search and screen-reader reading" onClick={()=>setFull(!full)}>{full?'Use faster scrolling':'Show full conversation'}</button></div>}
     {summary?.upTo===null && <div className="thread-summary"><CompactNote chat={chat} summary={summary}/></div>}
     <div ref={host} className={`thread${enabled?' virtual-thread':''}`} role={count?'feed':'region'} aria-label="Conversation" aria-busy={busy} aria-live="off" style={enabled?{height:virtual.getTotalSize()}:undefined}>

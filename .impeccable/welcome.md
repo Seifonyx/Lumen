@@ -15,3 +15,7 @@ Local targeted welcome checks passed in Chromium and WebKit across all five view
 Compared PRODUCT.md, DESIGN.md and `.impeccable/design.json` with ChatView, welcome copy, store behavior and final workspace CSS. The incumbent Geist typography, neutral theme colors, restrained green, composer shape/depth and responsive navigation remain coherent with the documented world. The local welcome exception uses `clamp(22px, 3.2vw, 40px)` with nowrap to keep all five greetings on one line; DESIGN.md's incumbent welcome token still records a 28px minimum. This is recorded surface-local drift, not authorization to refresh DESIGN.md or its sidecar. Both are preserved. No new visual identity or raster asset was introduced.
 
 Physical phone behavior remains unverified; WebKit and simulated viewport changes are engine checks. The concept detector was unavailable because of its cache failure, so no detector score or generated comparison is claimed.
+
+## Release proof
+
+9c23272 deployed to live and preview (38384534237); both serve tested assets. All ten affected local browser suites and unit/type/build passed. Welcome and navigation passed all five layouts in Chromium/WebKit locally and on both sites, including all greetings, draft reuse, keyboard fit and outline behavior. Full CI 38384213657 is still running; no 43-suite pass is claimed. No further phase started.

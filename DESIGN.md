@@ -154,7 +154,7 @@ Project titles use the recorded clamp and become 26px on phones. Welcome heading
 
 Final presentation order is styles.css, design.css, feature-surfaces.css, workspace.css. The feature stylesheet preserves implemented secondary surfaces; workspace.css owns the final workspace overrides. Selector specificity still applies.
 
-Desktop navigation is 260px wide. The chat thread is capped at 820px and its composer at 740px. Project bodies are capped at 1200px, with minmax(0, 1fr) 300px columns, 44px gap and 32px inline padding. Context has a thin inline separator and 24px inset. Project and context section gaps are 28px; adjacent context sections add a separator and 24px top padding.
+Desktop navigation is 260px wide. Its project/history area is a single flexible scroll region (flex: 1, min-height: 0, overflow-y: auto, overflow-x: hidden, overscroll-behavior: contain), with an unshrinking account/settings footer. The nested chat list stays overflow-visible and flex: none so short landscape viewports retain access to footer actions. The chat thread is capped at 820px and its composer at 740px. Project bodies are capped at 1200px, with minmax(0, 1fr) 300px columns, 44px gap and 32px inline padding. Context has a thin inline separator and 24px inset. Project and context section gaps are 28px; adjacent context sections add a separator and 24px top padding.
 
 At max-width 1100px, context becomes 260px, column gap 28px, inline padding 24px and context inset 20px. At max-width 960px, the project becomes one column; context appears before writing as a disclosure of at least 56px height, with content hidden until expanded. Navigation separately becomes a sliding drawer at max-width 899px, sized min(320px, 86vw).
 
@@ -171,6 +171,8 @@ Buttons and general fields use 10px corners, settings cards and disclosures 12px
 ## Components
 
 Base buttons are 36px high, with 14px inline padding and weight 500. Primary, secondary, ghost and destructive variants retain distinct roles. Hover changes tone/border, active scales to .98 and disabled opacity is .45. Base buttons are not universally 44px targets.
+
+The workspace header identifies the actively selected project. Its model choices remain in project settings and actual conversations; the workspace header has no model picker. A conversation header project button explicitly selects that project and opens its workspace.
 
 The context disclosure is the signature responsive interaction: a native button with expanded state and rotating chevron, followed by file and instruction sections. Conversation titles are native buttons with 36px minimum height and underline on hover. Navigation selection is tonal; section titles use sentence case.
 

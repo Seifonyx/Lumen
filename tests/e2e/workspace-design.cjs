@@ -53,7 +53,14 @@ const matrix = [[1280,844,'light'],[320,740,'light'],[390,844,'dark'],[430,932,'
   await page.locator('.project-topbar-pill').click();
   // Prompt path must retain context and send exactly once.
   await page.getByLabel('Start a project conversation',{exact:true}).fill('Write another brief report.');await page.getByRole('button',{name:'Send message (Enter)',exact:true}).click();await page.locator('.msg.assistant .model-tag').waitFor();assert.equal(requests.length,2);
-  if(width<900)await page.locator('.menu-btn').click();await capture('sidebar');await page.getByRole('button',{name:'Settings',exact:true}).click();
+  // Switching/creating projects must use the selected workspace, even with a different chat still selected.
+  if(width<900)await page.locator('.menu-btn').click();await page.getByRole('button',{name:'New project',exact:true}).first().click();
+  await page.getByLabel('Project name',{exact:true}).fill('Coding practice');await page.getByLabel('Project instructions',{exact:true}).fill('SECOND_PROJECT_ONLY: Explain the code.');await page.getByRole('button',{name:'Create workspace',exact:true}).click();
+  assert.equal(await page.locator('.claude-project-title').textContent(),'Coding practice');
+  await page.getByLabel('Start a project conversation',{exact:true}).fill('Write a function.');await page.getByRole('button',{name:'Send message (Enter)',exact:true}).click();await page.locator('.msg.assistant .model-tag').waitFor();assert.equal(requests.length,3);assert.match(JSON.stringify(requests[2]),/SECOND_PROJECT_ONLY/);assert.doesNotMatch(JSON.stringify(requests[2]),/PROJECT_DESIGN_REFERENCE|PROJECT_DESIGN_INSTRUCTIONS/);
+  if(width<900)await page.locator('.menu-btn').click();await page.locator('.sidebar-project-item').filter({hasText:'Hospital reports & study'}).click();assert.equal(await page.locator('.claude-project-title').textContent(),'Hospital reports & study');
+  assert.equal(await page.locator('.claude-chat-row-title').count(),2,'Original project conversations preserved');
+  if(width<900)await page.locator('.menu-btn').click();await capture('sidebar');assert.ok(await page.locator('.sidebar-foot').evaluate(e=>{const r=e.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight+1}),'Account control must remain inside the viewport');await page.locator('.sidebar').getByRole('button',{name:'Settings',exact:true}).click();
   await capture('settings');await fits();await scan('settings');
   assert.deepEqual(errors,[],'Unexpected app errors');console.log(`PASS workspace ${engine.name()} ${width}x${height} ${theme}`);await ctx.close();
  }}finally{await browser.close()}

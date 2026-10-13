@@ -39,6 +39,9 @@ a { text-underline-offset: .18em; }
 .composer:focus-within { box-shadow: var(--shadow); }
 .composer-wrap .disclaimer { line-height: 1.5; }
 .sidebar { padding-inline: 12px; gap: 6px; }
+.sidebar-navigation { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
+.sidebar-navigation .chat-list { overflow: visible; flex: none; }
+.sidebar .sidebar-foot { flex-shrink: 0; }
 .sidebar h2.sidebar-section-label { font-size: 13px; text-transform: none; letter-spacing: 0; font-weight: 650; }
 .sidebar h2.sidebar-section-label svg { color: var(--text-2); }
 .sidebar .history-label { border-top: 0; padding-top: 12px; margin-top: 12px; }

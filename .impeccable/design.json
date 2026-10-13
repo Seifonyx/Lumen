@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-13T08:05:21.881Z",
+  "generatedAt": "2026-10-13T08:29:10.799Z",
   "title": "Design System: Model Router",
   "extensions": {
     "colorMeta": {
@@ -279,11 +279,24 @@
         "src/feature-surfaces.css",
         "src/workspace.css",
         "src/lib/settings.ts",
-        "index.html"
+        "index.html",
+        "src/components/Sidebar.tsx",
+        "src/components/ChatView.tsx"
       ],
       "tonalRamps": "Omitted: no implemented accent ramp; synthesized values would invent tokens.",
       "review": "Parent reports finish reviewer ship after header/editor fixes and broader surface review. Documentation does not certify physical-device or assistive-technology validation.",
       "engine": "Concept engine unavailable; no detector result or generated comp."
+    },
+    "navigation": {
+      "scrollRegion": ".sidebar-navigation { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }",
+      "chatList": ".sidebar-navigation .chat-list { overflow: visible; flex: none; }",
+      "footer": ".sidebar .sidebar-foot { flex-shrink: 0; }",
+      "purpose": "Project and history navigation scroll together; account/settings footer stays reachable in short landscape viewports."
+    },
+    "projectHeader": {
+      "identity": "The workspace reflects activeProjectId; conversation headers use the conversation project.",
+      "navigation": "Conversation project button explicitly selects its project and opens its workspace.",
+      "modelControls": "Model choices remain in project settings and conversations; the workspace header has no model picker."
     }
   },
   "components": [
@@ -338,7 +351,7 @@
     {
       "name": "Conversation navigation",
       "kind": "nav",
-      "description": "Selected row uses existing tonal selection.",
+      "description": "Existing conversation rows within the shared project/history scroll region; the sidebar account/settings footer sits outside that region.",
       "html": "<nav class=\"ds-nav\" aria-label=\"Conversations\"><div class=\"ds-row ds-selected\"><button class=\"ds-chat\">Project conversation</button></div><div class=\"ds-row\"><button class=\"ds-chat\">Another conversation</button></div></nav>",
       "css": ".ds-nav{padding:12px;background:var(--sidebar)}.ds-row{border-radius:10px;margin-block:2px}.ds-row:hover{background:var(--surface-2)}.ds-selected{background:color-mix(in srgb,var(--accent) 12%,var(--sidebar))}.ds-chat{height:39px;width:100%;padding-inline:12px;border:0;background:transparent;color:var(--text);text-align:start;font:13px var(--font);cursor:pointer}.ds-chat:focus-visible{outline:2px solid var(--focus);outline-offset:2px}"
     },

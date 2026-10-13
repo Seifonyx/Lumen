@@ -190,6 +190,7 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
         <button className="icon-btn sm" aria-label="Close search" onClick={() => { setSearchOpen(false); setQuery(''); searchButton.current?.focus(); }}><X size={15} /></button>
       </label>}
 
+      <div className="sidebar-navigation">
       {/* Modern Claude/ChatGPT Projects Navigation */}
       <div className="sidebar-section-heading">
         <h2 className="sidebar-section-label"><FolderKanban size={15} aria-hidden="true" />Projects</h2>
@@ -280,6 +281,7 @@ export default function Sidebar({ onCollapse, onOpenLibrary }: { onCollapse: () 
           </section>
         ))}
       </nav>
+      </div>
       <div className="sidebar-bottom-actions">
         <button className="btn new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}>
           <SquarePen size={18} /> <span>{activeProject ? `New chat in ${activeProject.name}` : 'New chat'}</span>

@@ -26,14 +26,14 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   const canvasEditing = useStore(s => s.canvasEditingChatId !== null);
   const activeProjectId = useStore((s) => s.activeProjectId);
   const projects = useStore((s) => s.settings.projects) || [];
-  const currentProject = projects.find((p) => p.id === (chat ? chat.projectId : activeProjectId));
+  const projectWorkspaceOpen = useStore((s) => s.projectWorkspaceOpen);
+  const currentProject = projects.find((p) => p.id === (projectWorkspaceOpen ? activeProjectId : chat ? chat.projectId : activeProjectId));
   const defaultModel = useStore((s) => currentProject?.defaultModel || s.settings.defaultModel);
   const compacting = useStore((s) => s.compactingChatId !== null && s.compactingChatId === s.currentId);
   const syncPaused = useStore((s) => s.firebaseUsage.level === 'paused' && s.authed === true);
   const resetAt = useStore((s) => s.firebaseUsage.resetAt);
   const online = useStore((s) => s.online);
   const workspaceOpen = useStore((s) => s.workspaceOpen);
-  const projectWorkspaceOpen = useStore((s) => s.projectWorkspaceOpen);
   const { setUi, newChat, setChatModel } = useStore.getState();
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
@@ -91,7 +91,6 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
           <button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title="Expand sidebar">
             <PanelLeftOpen size={20} />
           </button>
-          <ModelPicker value={model} onChange={setChatModel} />
           <div className="project-topbar-pill static">
             <FolderKanban size={13} className={`color-${currentProject.color || 'indigo'}`} />
             <span className="project-topbar-name">{currentProject.name}</span>
@@ -130,7 +129,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
           <button
             type="button"
             className="project-topbar-pill"
-            onClick={() => setUi({ projectWorkspaceOpen: true })}
+            onClick={() => useStore.getState().selectProject(currentProject.id)}
             title={`Project: ${currentProject.name} — Click to view Project Workspace`}
           >
             <FolderKanban size={13} className={`color-${currentProject.color || 'indigo'}`} />

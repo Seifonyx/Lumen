@@ -91,6 +91,7 @@ interface State {
   preview: PreviewFile | null;
   exportChatId: string | null;
   projectWorkspaceOpen: boolean;
+  welcomeSequence: number;
   /** code from a reply being run in the browser */
   runner: { lang: string; code: string; analysis?: boolean } | null;
   toasts: Toast[];
@@ -681,6 +682,7 @@ export const useStore = create<State>((set, get) => {
     preview: null,
     exportChatId: null,
     projectWorkspaceOpen: false,
+    welcomeSequence: 0,
     runner: null,
     toasts: [],
 
@@ -1128,10 +1130,10 @@ export const useStore = create<State>((set, get) => {
 
     newChat() {
       clearAssistantDraft();
-      set({ canvasOpen: false, canvasDocumentId: null });
+      set(s => ({ canvasOpen: false, canvasDocumentId: null, welcomeSequence: s.welcomeSequence + 1 }));
       // Reuse an existing empty chat instead of piling them up.
       const projectId = currentProjectId();
-      const empty = get().chats.find((c) => c.messages.length === 0 && !c.summary && !c.assistant && !c.documents?.length && c.projectId === projectId);
+      const empty = get().chats.find((c) => c.messages.length === 0 && !c.summary && !c.assistant && !c.documents?.length && (c.projectId || null) === projectId);
       if (empty) {
         set({ currentId: empty.id, projectWorkspaceOpen: false, sidebarOpen: false, settingsOpen: false });
         return;

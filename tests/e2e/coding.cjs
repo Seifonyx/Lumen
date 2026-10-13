@@ -129,7 +129,7 @@ const F = '````';
   check((await page.textContent('.model-button')).includes('Max coding'), 'layout chosen');
 
   // ---- Connect a repository
-  await page.click('.suggestion >> text=Code on a GitHub repo');
+  await page.getByRole('button',{name:/^Add (?:photos, )?files or a repository$/}).click();await page.getByRole('button',{name:/GitHub repository/}).click();
   await page.waitForSelector('.repo-row');
   check((await page.textContent('.repo-list')).includes('seif/demo'), 'your repositories listed');
   await page.click('.repo-row >> text=seif/demo');

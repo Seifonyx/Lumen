@@ -49,3 +49,7 @@ Embedding access, limits and answer quality depend on the user's provider key. A
 The repository panel can preview and undo the latest non-merge commit with an explicit Undo and push action. It creates a revert commit restoring the previous tree; history is preserved. Uncommitted work blocks undo, and branch/account/key changes require a fresh preview. Merge, first and empty commits are not supported. Separate chat folders are excluded at the user's request.
 
 `ROADMAP.md` tracks implemented features and remaining phases. Arabic interface support is excluded at the user's request. Deliver enhancements one task at a time, test and verify, then stop for user confirmation before the next task. Preserve existing free-provider behavior, explicit billing consent and account privacy. `HANDOFF.md` records operational context and the latest verified release.
+
+## New-chat welcome
+
+The empty chat shows one short, single-line greeting above the composer, with no recommendation cards or gray subtitle. Five greetings rotate on New chat, including reuse of an existing empty chat; typing does not change the greeting. The session-only greeting counter is not synced or persisted. Repository, file, Canvas and analysis tools remain in the + menu. Empty chats without projects normalize their project identity before reuse, preserving the draft instead of creating duplicate empty chats.

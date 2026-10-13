@@ -29,7 +29,7 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
 * { scrollbar-color: var(--border-strong) transparent; }
 a { text-underline-offset: .18em; }
 .empty h1, .login-card h1 { font-family: var(--font); font-weight: 550; letter-spacing: -.035em; }
-.empty h1 { font-size: clamp(28px, 3.2vw, 40px); }
+.main.is-empty .empty h1 { font-size: clamp(22px, 3.2vw, 40px); white-space: nowrap; text-wrap: nowrap; }
 .main.is-empty .empty { padding-bottom: 22px; }
 .thread { max-width: 820px; }
 .markdown { overflow-wrap: anywhere; }

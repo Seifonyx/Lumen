@@ -1,4 +1,4 @@
-import { FolderGit2, FolderKanban, GitBranch, ArrowDown, FileSpreadsheet, FileText, Menu, PanelLeftOpen, ScrollText, SquarePen } from 'lucide-react';
+import { FolderGit2, FolderKanban, ArrowDown, FileText, Menu, PanelLeftOpen, SquarePen } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { activeSummary } from '../lib/compact';
 import { AUTO } from '../lib/routing';
@@ -6,20 +6,15 @@ import { isLayoutId } from '../lib/layouts';
 import { formatUntil } from '../lib/usage';
 import { selectCurrentChat, useStore } from '../store';
 import { UsageMeter } from './CompactNote';
-import Composer, { prefillComposer } from './Composer';
-import InstallHint from './InstallHint';
+import Composer from './Composer';
+import { WELCOME_GREETINGS } from '../lib/welcome';
 import MessageThread from './MessageThread';
 import ModelPicker from './ModelPicker';
 import ProjectManager from './ProjectManager';
 import ProjectWorkspace from './ProjectWorkspace';
 
-const SUGGESTIONS = [
-  { icon: FileSpreadsheet, title: 'Build an Excel tracker', prompt: 'Create an Excel workbook to track ' },
-  { icon: FileText, title: 'Write a Word report', prompt: 'Write a well-formatted Word report about ' },
-  { icon: ScrollText, title: 'Summarize a file', prompt: 'Summarize the attached file in clear bullet points, then list the key numbers.' },
-];
-
 export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => void }) {
+  const welcomeSequence = useStore(s => s.welcomeSequence);
   const chat = useStore(selectCurrentChat);
   const catalogError = useStore((s) => s.catalogError);
   const streaming = useStore((s) => s.streamingChatId !== null && s.streamingChatId === s.currentId);
@@ -182,8 +177,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
       <div className="messages" ref={scroller} role="region" tabIndex={0} aria-label="Chat messages">
         {empty ? (
           <div className="empty">
-            <h1>What would you like to create?</h1>
-            <p className="muted">Ask a question, explore an idea, or work with your files.</p>
+            <h1>{WELCOME_GREETINGS[welcomeSequence % WELCOME_GREETINGS.length]}</h1>
           </div>
         ) : (
           chat && <MessageThread key={chat.id} chat={chat} summary={summary} busy={streaming||canvasEditing} compacting={compacting} scroller={scroller} stick={stick} navigationHost={navigationHost}/>
@@ -208,23 +202,6 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
       <Composer
         model={model}
         meter={chat && (messages.length > 0 || summary) ? <UsageMeter chat={chat} model={model} /> : null}
-        starterActions={empty ? (
-          <>
-            <div className="suggestions" aria-label="Ideas to get started">
-              <button className="suggestion" onClick={() => setUi({ repoPicker: true })}>
-                <GitBranch size={18} />
-                <span>Code on a GitHub repo</span>
-              </button>
-              {SUGGESTIONS.map(({ icon: Icon, title, prompt }) => (
-                <button key={title} className="suggestion" onClick={() => prefillComposer(prompt)}>
-                  <Icon size={18} />
-                  <span>{title}</span>
-                </button>
-              ))}
-            </div>
-            <InstallHint />
-          </>
-        ) : undefined}
       />
       {projectModalId && (
         <ProjectManager

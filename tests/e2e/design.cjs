@@ -36,7 +36,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         await page.waitForSelector('.main.is-empty');
         if (theme === 'black') check(await page.evaluate(() => document.documentElement.dataset.appearance === 'black' && getComputedStyle(document.body).backgroundColor === 'rgb(0, 0, 0)'), `${label}: true black background survives reload`);
         check(inside(await page.locator('.composer').boundingBox(), width, height) && (await scan(page)).length === 0, `${label}: welcome screen and composer fit`);
-        check(await page.locator('.suggestion').count() === 4 && await page.locator('.suggestion svg').first().evaluate((el) => getComputedStyle(el).padding === '0px'), `${label}: four readable starter actions with visible icons`);
+        check(await page.locator('.suggestion,.starter-actions,.empty p').count() === 0 && await page.locator('.empty h1').evaluate(el=>el.scrollWidth<=el.clientWidth), `${label}: short single-line greeting without recommendations or subtitle`);
         if (!mobile) {
           await page.click('[aria-label="Collapse sidebar"]');
           check(!(await page.locator('.sidebar').isVisible()), `${label}: sidebar collapses`);
@@ -51,7 +51,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
           await page.waitForFunction(() => !document.documentElement.classList.contains('kb-open'));
         }
         await page.screenshot({ path: path.join(__dirname, 'out', `design-home-${width}-${theme}.png`) });
-        await page.locator('.suggestion').filter({ hasText: 'Code on a GitHub repo' }).click();
+        await page.getByRole('button',{name:/^Add (?:photos, )?files or a repository$/}).click();await page.getByRole('button',{name:/GitHub repository/}).click();
         await page.locator('input[placeholder="Search your repositories"]').waitFor();
         check(await page.locator('input[placeholder="Search your repositories"]').evaluate(el => (el === document.activeElement) === !matchMedia('(pointer: coarse)').matches), label + ': repository starter keeps phone keyboard closed');
         await page.locator('.modal [aria-label="Close"]').click();

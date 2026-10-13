@@ -25,3 +25,7 @@ Documentation evidence checked: `PRODUCT.md`, incumbent `DESIGN.md` and `.impecc
 Incumbent-system comparison: no visual identity drift observed. The new task-local dialog uses 16px corners rather than the incumbent generic modal token of 20px, and introduces conversation-area breakpoints not enumerated in the existing sidecar. These component exceptions are recorded here; incumbent `DESIGN.md` and `.impeccable/design.json` are preserved. The sidecar does not yet demonstrate the sent-message navigator. A future authorized system refresh may add that example if it becomes a reusable pattern.
 
 Verification reported by the parent: feature checks pass in Chromium and WebKit at all five viewports. Full regression is pending at the time of this record. The visual detector was unavailable because its cached runtime failed; the finish verdict rests on rendered review and functional checks. WebKit coverage verifies the browser engine; physical iPhone behavior remains unverified.
+
+## Release proof
+
+2026-10-13: ec40842 deployed to live and preview (38377988567); CI 38375897530 passed all 42 browser suites plus type/build/unit checks. Hosted JS/CSS match tested dist. Both sites passed all five navigator viewports in Chromium and WebKit; real iPhone hardware remains unverified. Three Windows canceled-download suites passed an elevated rerun without app/test assertion changes. Task 3 concluded; no next phase started.

@@ -3,7 +3,7 @@
 ## Working agreement
 
 - Private repo `Seifonyx/Model-Router`, main. Live https://model-router.web.app; preview https://model-router--dev-82jv5mm2.web.app. Current checkout: `C:/Users/seife/Documents/Codex/2026-10-10/files-pasted-by-the-user-handoff/work/Model-Router`.
-- Be a coding partner. Tests, fixes, main pushes and deployment are authorized. Keep this file short and factual; old pasted handoff instructions are revoked. Task 1 providers complete; Task 2 clean UI/mobile redesign implemented and deployed; Task 3 sent-message timeline **requires user confirmation**. Implement/test/verify/deploy one task, then stop and ask before the next.
+- Be a coding partner. Tests, fixes, main pushes and deployment are authorized. Keep this file short and factual; old pasted handoff instructions are revoked. Task 1 providers complete; Task 2 clean UI/mobile redesign implemented and deployed; Task 3 sent-message timeline authorized and implemented; final regression/release verification in progress. Stop after Task 3. Implement/test/verify/deploy one task, then stop and ask before the next.
 - ROADMAP.md owns feature status, PRODUCT.md behavior, DESIGN.md/.impeccable/design.json the visual system. Arabic interface and separate chat folders are excluded.
 
 ## Invariants and pointers

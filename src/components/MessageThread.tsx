@@ -3,14 +3,24 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject }
 import type { Chat, ChatSummary } from '../types';
 import MessageItem from './MessageItem';
 import { CompactingNote, CompactNote } from './CompactNote';
+import { createPortal } from 'react-dom';
+import MessageNavigation from './MessageNavigation';
+import { messageStops, stopAtIndex } from '../lib/message-navigation';
 
-export default function MessageThread({chat,summary,busy,compacting,scroller,stick}: {chat:Chat;summary:ChatSummary|null;busy:boolean;compacting:boolean;scroller:RefObject<HTMLDivElement|null>;stick:RefObject<boolean>}) {
+export default function MessageThread({chat,summary,busy,compacting,scroller,stick,navigationHost}: {chat:Chat;summary:ChatSummary|null;busy:boolean;compacting:boolean;scroller:RefObject<HTMLDivElement|null>;stick:RefObject<boolean>;navigationHost:RefObject<HTMLDivElement|null>}) {
   const [full,setFull] = useState(false);
   const [pinned,setPinned] = useState<string[]>([]);
   const [focus,setFocus] = useState<string|null>(null);
+  const [jumpTarget,setJumpTarget] = useState<string|null>(null);
+  const [lastJump,setLastJump] = useState<string|null>(null);
+  const [activeStop,setActiveStop] = useState<string|null>(null);
+  const [announcement,setAnnouncement] = useState('');
+  const [navigationRoot,setNavigationRoot] = useState<HTMLDivElement|null>(null);
+  const [bounds,setBounds] = useState({width:0,height:0});
   const messages = chat.messages;
   const messageData=useRef(messages);messageData.current=messages;
-  const pinnedKeys=useMemo(()=>new Set([...pinned,...(focus?[focus]:[])]),[pinned,focus]);
+  const stops=useMemo(()=>messageStops(messages),[messages]);
+  const pinnedKeys=useMemo(()=>new Set([...pinned,...(focus?[focus]:[]),...(jumpTarget?[jumpTarget]:[])]),[pinned,focus,jumpTarget]);
   const enabled = messages.length > 120 && !full;
   const count = messages.length;
   const host=useRef<HTMLDivElement>(null);
@@ -22,6 +32,56 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
   });
   const lastLength = messages.at(-1)?.text.length || 0;
   const lastThought = messages.at(-1)?.thinking?.length || 0;
+  useLayoutEffect(()=>{setNavigationRoot(navigationHost.current)},[navigationHost]);
+  useEffect(()=>{
+    const parent=scroller.current;if(!parent)return;
+    let frame=0;
+    const update=()=>{
+      frame=0;
+      const threshold=parent.scrollTop+Math.min(80,parent.clientHeight*.2);
+      let index=0;
+      if(enabled){
+        const items=virtual.getVirtualItems();
+        const visible=items.find(item=>item.start<=threshold&&item.end>=threshold) || items.find(item=>item.end>=threshold);
+        index=visible?.index ?? count-1;
+      }else{
+        const top=parent.getBoundingClientRect().top;
+        const rows=host.current?.querySelectorAll<HTMLElement>('[data-message-index]') || [];
+        for(const row of rows){if(row.getBoundingClientRect().top-top<=Math.min(80,parent.clientHeight*.2))index=Number(row.dataset.messageIndex);else break}
+      }
+      setActiveStop(stopAtIndex(stops,index));
+    };
+    const schedule=()=>{if(!frame)frame=requestAnimationFrame(update)};
+    const measure=()=>{setBounds({width:parent.clientWidth,height:parent.clientHeight});schedule()};
+    measure();const observer=new ResizeObserver(measure);observer.observe(parent);
+    parent.addEventListener('scroll',schedule,{passive:true});
+    return()=>{observer.disconnect();parent.removeEventListener('scroll',schedule);cancelAnimationFrame(frame)};
+  },[scroller,enabled,count,stops,virtual]);
+  useLayoutEffect(()=>{
+    if(!jumpTarget)return;
+    const index=messages.findIndex(message=>message.id===jumpTarget);
+    const parent=scroller.current;
+    if(index<0||!parent){setJumpTarget(null);return}
+    stick.current=false;
+    if(enabled)virtual.scrollToIndex(index,{align:'start',behavior:'auto'});
+    let frame=0,attempt=0,stable=0;
+    const settle=()=>{
+      const row=[...(host.current?.querySelectorAll<HTMLElement>('[data-message-id]')||[])].find(el=>el.dataset.messageId===jumpTarget);
+      if(row){
+        const target=Math.max(0,Math.min(parent.scrollHeight-parent.clientHeight,parent.scrollTop+row.getBoundingClientRect().top-parent.getBoundingClientRect().top-12));
+        const delta=Math.abs(parent.scrollTop-target);
+        parent.scrollTop=target;stable=delta<2?stable+1:0;
+        if(stable>=2||attempt>=11){
+          row.focus({preventScroll:true});setLastJump(jumpTarget);setActiveStop(jumpTarget);
+          setAnnouncement(`Jumped to sent message ${stops.find(stop=>stop.id===jumpTarget)?.ordinal || ''}.`);
+          setJumpTarget(null);return;
+        }
+      }
+      if(attempt++<12)frame=requestAnimationFrame(settle);else setJumpTarget(null);
+    };
+    frame=requestAnimationFrame(settle);
+    return()=>cancelAnimationFrame(frame);
+  },[jumpTarget,enabled,scroller,stick,virtual,messages,stops]);
   const wasEnabled = useRef(enabled);
   useLayoutEffect(()=>{
     const parent=scroller.current,el=host.current;if(!enabled||!parent||!el)return;
@@ -50,10 +110,12 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
     {summary?.upTo===messages[index].id && <CompactNote chat={chat} summary={summary}/>}
   </>;
   return <>
+    <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</div>
+    {navigationRoot && stops.length>1 && createPortal(<MessageNavigation stops={stops} activeId={activeStop} height={bounds.height} width={bounds.width} onJump={id=>{stick.current=false;setJumpTarget(id)}}/>,navigationRoot)}
     {count>120 && <div className="history-controls"><span className="muted small">{count.toLocaleString()} messages</span><button className="btn ghost small" aria-pressed={full} title="Show all messages for browser search and screen-reader reading" onClick={()=>setFull(!full)}>{full?'Use faster scrolling':'Show full conversation'}</button></div>}
     {summary?.upTo===null && <div className="thread-summary"><CompactNote chat={chat} summary={summary}/></div>}
     <div ref={host} className={`thread${enabled?' virtual-thread':''}`} role={count?'feed':'region'} aria-label="Conversation" aria-busy={busy} aria-live="off" style={enabled?{height:virtual.getTotalSize()}:undefined}>
-      {(enabled?virtual.getVirtualItems().map(item=>({index:item.index,start:item.start})):messages.map((_,index)=>({index,start:0}))).map(({index,start})=><article key={messages[index].id} data-index={index} data-message-index={index} ref={enabled?virtual.measureElement:undefined} className="message-row" aria-label={`${messages[index].role==='user'?'You':'Assistant'}, message ${index+1}`} aria-posinset={index+1} aria-setsize={count}
+      {(enabled?virtual.getVirtualItems().map(item=>({index:item.index,start:item.start})):messages.map((_,index)=>({index,start:0}))).map(({index,start})=><article key={messages[index].id} data-index={index} data-message-index={index} data-message-id={messages[index].id} tabIndex={-1} ref={enabled?virtual.measureElement:undefined} className={`message-row${lastJump===messages[index].id?' message-jump-target':''}`} aria-label={`${messages[index].role==='user'?'You':'Assistant'}, message ${index+1}`} aria-posinset={index+1} aria-setsize={count}
         onFocusCapture={()=>setFocus(messages[index].id)} onBlurCapture={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node))setFocus(null)}} style={enabled?{position:'absolute',top:start-margin,left:0,width:'100%'}:undefined}>
         {render(index)}
       </article>)}

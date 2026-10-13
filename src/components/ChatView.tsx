@@ -36,6 +36,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   const workspaceOpen = useStore((s) => s.workspaceOpen);
   const { setUi, newChat, setChatModel } = useStore.getState();
   const scroller = useRef<HTMLDivElement>(null);
+  const navigationHost = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const [showDown, setShowDown] = useState(false);
   const [projectModalId, setProjectModalId] = useState<string | null>(null);
@@ -79,7 +80,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [chat?.id, projectWorkspaceOpen, empty]);
 
   if (currentProject && projectWorkspaceOpen) {
     return (
@@ -177,6 +178,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
         </div>
       )}
 
+      <div className="conversation-area">
       <div className="messages" ref={scroller} role="region" tabIndex={0} aria-label="Chat messages">
         {empty ? (
           <div className="empty">
@@ -184,8 +186,10 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
             <p className="muted">Ask a question, explore an idea, or work with your files.</p>
           </div>
         ) : (
-          chat && <MessageThread key={chat.id} chat={chat} summary={summary} busy={streaming||canvasEditing} compacting={compacting} scroller={scroller} stick={stick}/>
+          chat && <MessageThread key={chat.id} chat={chat} summary={summary} busy={streaming||canvasEditing} compacting={compacting} scroller={scroller} stick={stick} navigationHost={navigationHost}/>
         )}
+      </div>
+      <div className="message-navigation-host" ref={navigationHost} />
       </div>
 
       {showDown && (

@@ -12,11 +12,11 @@ Task 3 ec40842 was deployed and verified on both sites; CI 38375897530 passed 42
 
 ## Correction verification
 
-In progress: targeted Chromium/WebKit viewport checks, fresh finish review and deployment. Preserve incumbent visual-system files.
+Complete: 1a1f828 deployed to live/preview (38379955887). Tested assets match both sites. Local and hosted line-only checks pass all five layouts in Chromium/WebKit, including virtual/normal jumps, drafts, streaming and keyboard geometry. Type/build/unit, long-history, project and native sidebar checks pass. Full CI 38379920137 remains running at this record; no new full-suite pass claimed. Preserve incumbent visual-system files.
 
 ## Correction review and documentation comparison
 
-Fresh finish review: ship, with no fixes requested, across `.impeccable/review/rail-chromium-1280-light-lines.png`, `rail-chromium-320-light-lines.png`, `rail-chromium-390-dark-lines.png`, `rail-chromium-430-black-lines.png` and `rail-chromium-844-dark-lines.png`. This is the parent-supplied review disposition; the full test and deployment summary is pending.
+Fresh finish review: ship, with no fixes requested, across `.impeccable/review/rail-chromium-1280-light-lines.png`, `rail-chromium-320-light-lines.png`, `rail-chromium-390-dark-lines.png`, `rail-chromium-430-black-lines.png` and `rail-chromium-844-dark-lines.png`. This is the parent-supplied review disposition; the targeted test and deployment proof is recorded above.
 
 The implemented rail preserves the incumbent neutral surfaces, restrained accent, rounded controls and visible focus treatment. Desktop and phone both use compact horizontal lines with a wider accent current-position marker, immediate jumps and preview labels. Each line has a 44px square target. Height-based sampling bounds the rail to eight stops, preserves first/latest stops where capacity permits, and hides the rail below 44px of conversation height. A reserved 56px end gutter protects regular and virtualized conversation text. The list/count button and searchable dialog are removed as requested.
 

@@ -1,5 +1,6 @@
 // Design review screenshots of Projects (not a test): node tests/e2e/helpers/project-shots.cjs <outDir> [url]
-const { chromium } = require('playwright');
+// BROWSER=webkit runs the same screens in Safari's engine.
+const engine = require('playwright')[process.env.BROWSER || 'chromium'];
 const path = require('path');
 const { profile, seed } = require('./preview-profile.cjs');
 const out = process.argv[2];
@@ -16,7 +17,7 @@ const chats = [
   { id: 'c4', title: 'Fix login on Safari', createdAt: now - 4e8, updatedAt: now - 4e8, messages: [{ id: 'z', role: 'user', text: 'hi', createdAt: now - 4e8 }] },
 ];
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await engine.launch();
   for (const theme of ['light', 'dark']) for (const [w, h] of [[1280, 820], [390, 844]]) {
     const phone = w < 900;
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: phone, hasTouch: phone, reducedMotion: 'reduce' });

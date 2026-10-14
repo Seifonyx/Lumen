@@ -1,6 +1,7 @@
 // Design check (not a test): finds text that spills out of its own box or out of the button, pill or card around it.
 // node tests/e2e/helpers/textfit.cjs [url]
-const { chromium } = require('playwright');
+// BROWSER=webkit runs the same screens in Safari's engine.
+const engine = require('playwright')[process.env.BROWSER || 'chromium'];
 const { profile, seed } = require('./preview-profile.cjs');
 const url = process.argv[2] || 'http://localhost:5191/';
 const now = Date.now();
@@ -39,7 +40,7 @@ function check(BOXES) {
   return [...new Set(out)];
 }
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await engine.launch();
   const all = [];
   for (const [w, h] of [[1280, 820], [390, 844], [320, 640]]) for (const big of [false, true]) {
     const theme = 'light';

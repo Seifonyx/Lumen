@@ -1,0 +1,38 @@
+name: Safari visual check
+
+# Manual only (Actions tab → Run workflow), so it costs no minutes unless you run it.
+# Takes the design-review screenshots in WebKit, Safari's engine, and checks for text spilling out of
+# its buttons and cards. Screenshots are attached to the run as "safari-screenshots".
+on:
+  workflow_dispatch:
+
+jobs:
+  webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps webkit
+      - run: npm run build
+      - name: Screenshots
+        run: |
+          npx vite preview --port 5191 --strictPort &
+          for i in $(seq 1 30); do curl -sf http://localhost:5191/ >/dev/null && break; sleep 1; done
+          mkdir -p shots
+          export BROWSER=webkit
+          node tests/e2e/helpers/shots.cjs shots
+          node tests/e2e/helpers/settings-shots.cjs shots
+          node tests/e2e/helpers/project-shots.cjs shots
+          node tests/e2e/helpers/more-shots.cjs shots
+          node tests/e2e/helpers/textfit.cjs | tee shots/text-fit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safari-screenshots
+          path: shots
+          retention-days: 7

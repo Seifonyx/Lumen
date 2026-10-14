@@ -1,5 +1,6 @@
 // Design review screenshots of the secondary screens (not a test): node tests/e2e/helpers/more-shots.cjs <outDir> [url] [light|dark] [width]
-const { chromium } = require('playwright');
+// BROWSER=webkit runs the same screens in Safari's engine.
+const engine = require('playwright')[process.env.BROWSER || 'chromium'];
 const path = require('path');
 const { profile, seed } = require('./preview-profile.cjs');
 const out = process.argv[2];
@@ -13,7 +14,7 @@ const chats = [
   { id: 'code', title: 'Fix login on Safari', createdAt: now - 9e6, updatedAt: now - 5e5, repo: { owner: 'demo', repo: 'app', branch: 'main', defaultBranch: 'main' }, messages: [{ id: 'c', role: 'user', text: 'Why does login fail on Safari?', createdAt: now - 9e6 }] },
 ];
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await engine.launch();
   for (const theme of themes) for (const w of widths) {
     const phone = w < 900;
     const ctx = await browser.newContext({ viewport: { width: w, height: phone ? 844 : 820 }, isMobile: phone, hasTouch: phone, reducedMotion: 'reduce' });

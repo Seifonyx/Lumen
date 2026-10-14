@@ -49,3 +49,20 @@ Keep controls compact. Preserve original free-model filtering, explicit addition
 ## Current requested layout update
 
 Claude screenshot composition adapted for desktop and phone; native Add to Chat sheet, GitHub Settings Connectors, saved canvas Artifacts navigation and real incognito implemented. Deployed live/preview as 15fc559; hosted Chromium/WebKit layout, incognito/Connectors and native safe-area checks passed. Latest full CI remains in progress. This is the authorized task; do not start another roadmap feature without confirmation.
+
+## Design and quality pass (2026-10-14)
+
+Done before new roadmap work, at the user's request; deployed live.
+
+- Own identity ("Switchboard"): cool neutrals, one lime signal colour, new app icon, lime sparkles on new
+  chats, routing chip in the top bar, routing line while a reply loads, reading layout, motion, dark depth.
+- Cleaner sidebar (avatar opens Settings; phone New chat bottom-right) and Projects (one page, one form).
+- Settings redesigned tab by tab; one provider list with search and a filter dropdown; new Usage tab.
+- Secondary screens: Library, Knowledge, Documents, command palette, Canvas.
+- Engineering: ten stylesheets merged into src/app.css (dead/overridden rules removed, pixel-checked);
+  startup JavaScript ~534 KB → ~399 KB gzipped (KaTeX, highlight.js and rarely opened screens load on
+  demand); CI about 12 minutes; manual Safari (WebKit) screenshot workflow.
+
+Still open from the table above: 14 (template-preserving Office edits), 17 (images, waiting on free
+access), 23 (continuous voice), 24 (public share links), 25 (original attachment sync), 27 (desktop
+shortcut audit). First-run guidance for invited users was suggested and deferred by the user.

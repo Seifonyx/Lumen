@@ -73,6 +73,8 @@ async function run(browser, mobile) {
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('ArrowUp');
   await page.keyboard.press('Enter');
+  // Settings loads its code the first time it opens.
+  await page.locator('.settings-page').waitFor({ timeout: 5000 }).catch(() => {});
   check(await page.locator('.settings-page').isVisible() && (await page.locator('.settings-title').textContent()).includes(mobile ? 'Memory' : 'Settings'), `${label}: command can open Memory using the keyboard`);
   await page.locator('.settings-page [aria-label="Close"]').click();
 

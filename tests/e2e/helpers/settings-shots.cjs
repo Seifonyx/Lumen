@@ -1,5 +1,6 @@
 // Design review screenshots of every Settings tab (not a test): node tests/e2e/helpers/settings-shots.cjs <outDir> [url] [light|dark] [width]
-const { chromium } = require('playwright');
+// BROWSER=webkit runs the same screens in Safari's engine.
+const engine = require('playwright')[process.env.BROWSER || 'chromium'];
 const path = require('path');
 const { profile } = require('./preview-profile.cjs');
 const out = process.argv[2];
@@ -8,7 +9,7 @@ const themes = process.argv[4] ? [process.argv[4]] : ['light', 'dark'];
 const widths = process.argv[5] ? [Number(process.argv[5])] : [1280, 390];
 const TABS = ['General', 'API keys', 'Connectors', 'Models', 'Usage', 'Personalization', 'Memory', 'Privacy & data'];
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await engine.launch();
   for (const theme of themes) for (const w of widths) {
     const phone = w < 900;
     const ctx = await browser.newContext({ viewport: { width: w, height: phone ? 844 : 820 }, isMobile: phone, hasTouch: phone, reducedMotion: 'reduce' });

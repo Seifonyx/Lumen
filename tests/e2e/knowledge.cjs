@@ -485,6 +485,8 @@ const settings = async (page) => {
       await page.reload();
       await page.locator(".composer textarea").waitFor();
       await open(page);
+      // The library loads asynchronously: wait for the empty state rather than counting too early.
+      await page.locator(".knowledge-empty").waitFor();
       assert.equal(
         await page.locator(".knowledge-document").count(),
         0,
@@ -512,6 +514,7 @@ const settings = async (page) => {
         .click();
       await page.locator(".knowledge-citations").waitFor();
       await open(page);
+      await page.locator(".knowledge-document").first().waitFor();
       assert.equal(
         await page.locator(".knowledge-document").count(),
         1,

@@ -12,15 +12,15 @@ Content is Markdown: headings, **bold**, *italic*, lists, tables, links, > quote
 - Coloured text: <span style="color:#C00000">text</span>; highlight: <mark>text</mark>.
 - Page break: a line with <!-- pagebreak -->.
 Example:
-\`\`\`file:Ward report.docx
-<!-- {"title":"Ward Report","subtitle":"March 2026","cover":true,"theme":"#1F4E79","footer":true} -->
+\`\`\`file:Sales report.docx
+<!-- {"title":"Sales Report","subtitle":"March 2026","cover":true,"theme":"#1F4E79","footer":true} -->
 # Summary
-Occupancy rose to **85%**.
+Sales reached **85%** of the monthly target.
 > [!WARNING]
-> ICU is close to capacity.
-| Ward | Patients |
+> Cairo stock is running low.
+| Region | Orders |
 |---|---|
-| ICU | 12 |
+| Cairo | 120 |
 \`\`\`
 
 ## Excel workbook (.xlsx)
@@ -28,18 +28,18 @@ Content is JSON:
 {"theme":"#1F4E79","sheets":[{
   "name":"Summary",                       // ≤ 31 characters
   "title":"Optional title row", "subtitle":"Optional",
-  "columns":[{"header":"Ward","type":"text","width":18},
-             {"header":"Patients","type":"integer","total":"sum"},
-             {"header":"Occupancy","type":"percent"},
+  "columns":[{"header":"Region","type":"text","width":18},
+             {"header":"Orders","type":"integer","total":"sum"},
+             {"header":"Target","type":"percent"},
              {"header":"Cost","type":"currency","currency":"EGP"},
-             {"header":"Admitted","type":"date"}],
-  "rows":[["ICU",12,0.85,1500,"2026-03-01"]],
+             {"header":"Updated","type":"date"}],
+  "rows":[["Cairo",120,0.85,1500,"2026-03-01"]],
   "zebra":true, "freeze":true, "filter":true, "totals":true, "rtl":false,
   "headerFill":"#1F4E79", "headerColor":"#FFFFFF",
-  "conditional":[{"column":"Occupancy","type":"colorScale"},
-                 {"column":"Patients","type":"dataBar","color":"#5B9BD5"},
-                 {"column":"Occupancy","type":"greaterThan","value":0.9,"fill":"#F8CBAD","color":"#9C0006"},
-                 {"column":"Ward","type":"equals","value":"ICU","fill":"#FFF2CC"}]
+  "conditional":[{"column":"Target","type":"colorScale"},
+                 {"column":"Orders","type":"dataBar","color":"#5B9BD5"},
+                 {"column":"Target","type":"greaterThan","value":0.9,"fill":"#F8CBAD","color":"#9C0006"},
+                 {"column":"Region","type":"equals","value":"Cairo","fill":"#FFF2CC"}]
 }]}
 - Column types: text, number, integer, currency, percent (0.85 = 85%), date ("YYYY-MM-DD").
 - A cell can be an object for styling: {"value":12,"fill":"#C6EFCE","color":"#006100","bold":true,"italic":true,"note":"comment"}.
@@ -50,7 +50,7 @@ Content is JSON:
 
 ## PowerPoint (.pptx)
 Content is JSON:
-{"title":"Deck title","theme":{"preset":"ocean"},   // presets: ocean, forest, sunset, berry, midnight, slate, medical; or {"primary":"#1F4E79","accent":"#F4B183","dark":false}
+{"title":"Deck title","theme":{"preset":"ocean"},   // presets: ocean, forest, sunset, berry, midnight, slate, teal; or {"primary":"#1F4E79","accent":"#F4B183","dark":false}
  "slides":[
   {"layout":"title","title":"…","subtitle":"…"},
   {"layout":"section","title":"…","subtitle":"…"},
@@ -74,7 +74,7 @@ You cannot make images, audio, video, or .doc/.xls/.ppt files.
 # Charts in the chat
 To show a chart directly in your reply, write a fenced block with info string "chart" containing JSON:
 \`\`\`chart
-{"type":"bar","title":"Patients by ward","labels":["ICU","ER"],"series":[{"name":"Patients","values":[12,30]}]}
+{"type":"bar","title":"Orders by region","labels":["Cairo","Alexandria"],"series":[{"name":"Orders","values":[120,80]}]}
 \`\`\`
 Types: bar, horizontalBar, line, area, pie, doughnut, scatter (scatter values are [x,y] pairs). Only use a chart when it genuinely helps.`;
 

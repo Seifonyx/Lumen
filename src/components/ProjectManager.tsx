@@ -17,7 +17,7 @@ const EMPTY_PROJECTS: Project[] = [];
 
 const PRESET_TEMPLATES = [
   { label: '+ Technical & Code', text: 'Focus on production-grade, typed, modular code with clean architectural explanations.' },
-  { label: '+ Clinical & Healthcare', text: 'Use metric units and clinical terminology. Ground answers in verified medical sources.' },
+  { label: '+ Research & Sources', text: 'Ground answers in reliable sources and cite them. Say clearly when something is uncertain.' },
   { label: '+ Direct & Concise', text: 'Keep responses concise, direct, and structured. Avoid conversational preamble.' },
   { label: '+ Structured Markdown', text: 'Use structured markdown with headers, bullet points, and syntax-highlighted code blocks.' },
   { label: '+ Egyptian Arabic', text: 'Respond in professional Egyptian Arabic unless prompted in English.' },
@@ -132,7 +132,7 @@ export default function ProjectManager({
       <div className="project-edit-form">
         <label className="pf-field">
           <span className="pf-label">Name</span>
-          <input aria-label="Project name" value={name} maxLength={60} autoFocus={!isEditingExisting} placeholder="e.g. Hospital reports" onChange={(e) => setName(e.target.value)} />
+          <input aria-label="Project name" value={name} maxLength={60} autoFocus={!isEditingExisting} placeholder="e.g. Monthly reports" onChange={(e) => setName(e.target.value)} />
         </label>
         <label className="pf-field">
           <span className="pf-label">Description <em>optional</em></span>
@@ -149,7 +149,7 @@ export default function ProjectManager({
         <label className="pf-field">
           <span className="pf-label">Instructions <em>optional</em></span>
           <span className="pf-hint">How models should work here: tone, language, what to focus on.</span>
-          <textarea aria-label="Project instructions" value={instructions} maxLength={12000} rows={5} onChange={(e) => setInstructions(e.target.value)} placeholder="e.g. Write formal reports for the hospital board. Use metric units." />
+          <textarea aria-label="Project instructions" value={instructions} maxLength={12000} rows={5} onChange={(e) => setInstructions(e.target.value)} placeholder="e.g. Write formal reports for the management team. Use metric units." />
           <span className="pf-presets">
             <span className="pf-hint">Add:</span>
             {PRESET_TEMPLATES.map((t) => (

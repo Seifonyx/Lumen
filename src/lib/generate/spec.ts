@@ -75,7 +75,8 @@ const PRESETS: Record<string, Omit<DeckTheme, 'palette'> & { palette?: string[] 
   berry: { primary: '6C3483', accent: 'E84393', background: 'FFFFFF', surface: 'F5EEF8', text: '2A1A33', muted: '6E5A78', dark: false },
   midnight: { primary: '38BDF8', accent: 'F472B6', background: '0F172A', surface: '1E293B', text: 'E2E8F0', muted: '94A3B8', dark: true },
   slate: { primary: '334155', accent: '0EA5E9', background: 'FFFFFF', surface: 'F1F5F9', text: '0F172A', muted: '64748B', dark: false },
-  medical: { primary: '0E7C86', accent: 'E63946', background: 'FFFFFF', surface: 'E8F6F7', text: '12343B', muted: '587A80', dark: false },
+  teal: { primary: '0E7C86', accent: 'E63946', background: 'FFFFFF', surface: 'E8F6F7', text: '12343B', muted: '587A80', dark: false },
+  medical: { primary: '0E7C86', accent: 'E63946', background: 'FFFFFF', surface: 'E8F6F7', text: '12343B', muted: '587A80', dark: false }, // older decks call the teal theme "medical"
 };
 
 export function deckTheme(input: any): DeckTheme {

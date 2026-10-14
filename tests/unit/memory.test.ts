@@ -15,7 +15,7 @@ check(!sameMemory('Works in Cairo', 'Lives in Alexandria'), 'different memories 
 const items: any = [{ id: '1', text: 'Prefers replies in English', updatedAt: 1 }];
 check(findMemory(items, 'prefers replies in english')?.id === '1', 'forget finds the memory');
 const ins = memoryInstructions(items, true);
-check(ins.includes('- Prefers replies in English') && ins.includes('[[remember:') && ins.includes('lasting fact') && ins.includes('patients'), 'instructions list memories + rules');
+check(ins.includes('- Prefers replies in English') && ins.includes('[[remember:') && ins.includes('lasting fact') && ins.includes('other people'), 'instructions list memories + rules');
 check(memoryInstructions([], false).includes('only when the user explicitly asks') && memoryInstructions([], false).includes('no saved memories'), 'ask-only mode');
 const many: any = Array.from({ length: 100 }, (_, i) => ({ id: String(i), text: 'x'.repeat(400), updatedAt: i }));
 check(memoryInstructions(many, true).length < 11000, 'prompt budget respected');

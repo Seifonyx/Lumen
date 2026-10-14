@@ -481,7 +481,7 @@ function AboutSection() {
 }
 
 const PRESET_INSTRUCTIONS = [
-  { label: '+ Healthcare / Medical', text: 'I work in healthcare; use metric units and clinical terminology. Provide concise, grounded explanations.' },
+  { label: '+ Student', text: 'I am a student; explain things step by step with simple examples, and check my understanding.' },
   { label: '+ Software Engineer', text: 'I am a software engineer; write clean, modular, typed code with minimal boilerplate and clear explanations.' },
   { label: '+ Concise & Direct', text: 'Keep answers short, direct, and factual. Avoid conversational filler, intros, or summaries.' },
   { label: '+ Egyptian Arabic', text: 'Answer in Egyptian Arabic unless I write in English. Use familiar everyday professional expressions.' },
@@ -516,7 +516,7 @@ function PersonalizeTab() {
               dir="auto"
               rows={8}
               maxLength={4000}
-              placeholder={'Examples:\n• I work in a hospital in Egypt; use metric units and EGP.\n• Answer in Egyptian Arabic unless I write in English.\n• Keep answers short unless I ask for detail.'}
+              placeholder={'Examples:\n• I live in Egypt; use metric units and EGP.\n• Answer in Egyptian Arabic unless I write in English.\n• Keep answers short unless I ask for detail.'}
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
               onBlur={() => update({ customInstructions: instructions })}

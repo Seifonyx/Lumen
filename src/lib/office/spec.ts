@@ -1,6 +1,6 @@
 // Edit lists for existing Word or Excel files (applied in place by edit.ts), so its fonts, tables, headers, logos and styles stay as
 // they were. Models describe changes as JSON in a ```office-edit:Name.docx``` block:
-//   Word:  {"edits":[{"find":"[Patient name]","replace":"Mona Adel"},
+//   Word:  {"edits":[{"find":"[Customer name]","replace":"Mona Adel"},
 //                    {"after":"Findings","insert":["First new paragraph","Second"]},
 //                    {"delete":"Draft – do not circulate"}]}
 //   Excel: {"edits":[{"sheet":"Summary","cell":"B4","value":12},{"cell":"C2","value":"Done"}]}

@@ -5,7 +5,7 @@ import { useStore } from '../store';
 type ToggleProps = { checked: boolean; onChange: (v: boolean) => void; label: string; hint?: string };
 type ChoiceProps = { value: 'ask' | 'auto'; onChange: (v: 'ask' | 'auto') => void; label: string; options: ['ask' | 'auto', string][] };
 
-const SAMPLE = 'Patient Ahmed Mahmoud, MRN: 0045821, DOB: 12/03/1985, phone 01012345678 — summarize his labs.';
+const SAMPLE = 'Mr. Ahmed Mahmoud, file number 0045821, born 12/03/1985, phone 01012345678 — draft a reply to his complaint.';
 
 export default function PrivacyTab({ Toggle, Choice }: { Toggle: (p: ToggleProps) => React.ReactElement; Choice: (p: ChoiceProps) => React.ReactElement }) {
   const settings = useStore((s) => s.settings);
@@ -20,7 +20,7 @@ export default function PrivacyTab({ Toggle, Choice }: { Toggle: (p: ToggleProps
         <div className="settings-card">
           <Toggle
             label="Privacy shield"
-            hint="Before anything leaves your device, hide phone numbers, emails, national IDs, card numbers, medical record numbers, dates of birth, and patient names."
+            hint="Before anything leaves your device, hide phone numbers, emails, national IDs, card numbers, account and file numbers, dates of birth, and people’s names."
             checked={settings.privacyShield}
             onChange={(v) => update({ privacyShield: v })}
           />

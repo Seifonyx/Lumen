@@ -74,5 +74,5 @@ check sync between two devices, invite-only access, Auto routing and switching, 
 long-chat compacting, memory, generated Word/Excel/PowerPoint files, the free-plan guard, and
 offline mode with the update prompt. Screenshots land in `tests/e2e/out`.
 
-Free tiers may use conversations to improve the providers' models, so don't send patient or
+Free tiers may use conversations to improve the providers' models, so don't send personal or
 confidential data.

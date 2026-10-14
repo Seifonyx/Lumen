@@ -31,7 +31,8 @@ const chats = [
       }
     }, projects);
     const page = await ctx.newPage();
-    page.on('pageerror', (e) => console.log('pageerror', e.message));
+    // Sync is blocked on purpose here; WebKit reports those blocked requests as page errors.
+    page.on('pageerror', (e) => { if (!/firestore\.googleapis\.com/.test(e.message)) console.log('pageerror', e.message); });
     await page.goto(url);
     await page.waitForSelector('.composer textarea');
     await seed(page, 'shots-projects', chats);

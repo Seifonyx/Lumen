@@ -3448,8 +3448,8 @@ input, textarea { caret-color: var(--text); }
 .all-chats { padding: 14px 22px 20px; }
 @media (max-width: 600px) { .all-chats { padding: 12px 16px calc(16px + env(safe-area-inset-bottom)); } }
 
-/* The "+" in New project / New chat: lime with a soft, steady glow (only the plus; the chip stays as is). */
-.sidebar .sidebar-chip svg { --plus: var(--signal-strong); color: var(--plus); filter: drop-shadow(0 0 2px color-mix(in srgb, var(--signal) 55%, transparent)); }
+/* The "+" in New project / New chat: plain lime (only the plus; the chip stays as is). */
+.sidebar .sidebar-chip svg { --plus: var(--signal-strong); color: var(--plus); filter: none; }
 :root[data-theme='dark'] .sidebar .sidebar-chip svg, :root[data-appearance='black'] .sidebar .sidebar-chip svg { --plus: var(--signal); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .sidebar .sidebar-chip svg { --plus: var(--signal); } }
 .sidebar .sidebar-chip svg { stroke-width: 2.8; }
@@ -3464,3 +3464,16 @@ input, textarea { caret-color: var(--text); }
 .sidebar .view-all-chats { display: inline-flex; align-items: center; gap: 4px; width: auto; margin-top: 8px; padding: 6px var(--sb-inset); font-size: 12.5px; font-weight: 500; color: var(--text-3); }
 .sidebar .view-all-chats svg { width: 14px; height: 14px; }
 .sidebar .view-all-chats:hover { color: var(--text); }
+
+/* Usage on phones: a bottom sheet with a grab bar, dragged down to close. */
+.um-scrim { position: fixed; inset: 0; z-index: 90; background: var(--overlay); animation: fade .18s; }
+.usage-pop.sheet { position: fixed; left: 0; right: 0; bottom: 0; top: auto; inset-inline-end: 0; z-index: 91; width: 100%; max-width: none; max-height: 88dvh; border-radius: 20px 20px 0 0; border-bottom: 0; padding: 0 16px calc(16px + env(safe-area-inset-bottom)); animation: sheet-up .25s var(--ease); overscroll-behavior: contain; }
+.usage-pop.sheet .sheet-grip { margin: 8px auto 0; }
+.usage-pop.sheet .um-head { min-height: 44px; margin-bottom: 12px; }
+/* Grab bars: a bigger touch target than the bar itself. */
+.sheet-grip, .sheet-grab { position: relative; cursor: grab; touch-action: none; }
+.sheet-grip::after, .sheet-grab::after { content: ''; position: absolute; inset: -12px -40px; }
+.modal > .sheet-grip { margin: 8px auto 0; }
+/* With the keyboard up, the usage sheet sits on top of it, inside the visible area. */
+html.kb-open .usage-pop.sheet { bottom: max(0px, calc(100% - var(--vv-top, 0px) - var(--vv-h, 100%))); max-height: calc(var(--vv-h, 100dvh) - 12px); padding-bottom: 16px; }
+html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv-h, 100%); }

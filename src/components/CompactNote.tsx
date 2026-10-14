@@ -1,5 +1,7 @@
 import { ChevronDown, Loader2, MessageSquarePlus, Shrink, Undo2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { isSheetScreen, useSheetDrag } from '../lib/sheet-drag';
 import { useFocusScope } from '../lib/focus-scope';
 import { activeSummary, compactLimit, contextTokens } from '../lib/compact';
 import { isLayoutId } from '../lib/layouts';
@@ -77,6 +79,10 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
   const close = useRef<HTMLButtonElement>(null);
   const dialog = useRef<HTMLDivElement>(null);
   useFocusScope(dialog,open,()=>{setOpen(false);trigger.current?.focus({preventScroll:true})});
+  // Phones: usage slides up from the bottom as a sheet you can drag down to close.
+  const [sheet, setSheet] = useState(false);
+  const scrim = useRef<HTMLDivElement>(null);
+  useSheetDrag(dialog, () => setOpen(false), open && sheet, scrim);
   const catalog = useStore((s) => s.catalog);
   const usage = useStore((s) => s.usage);
   const settings = useStore((s) => s.settings);
@@ -91,6 +97,7 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
   useEffect(() => {
     if (!open) return;
     const fit = () => {
+      if (sheet) return;
       const panel = box.current?.querySelector<HTMLElement>('.usage-pop');
       // The panel opens above the message box, so the space is what's above the box.
       if (panel && trigger.current) panel.style.maxHeight = `${Math.max(0, Math.min(600, (trigger.current.closest('.composer') || trigger.current).getBoundingClientRect().top - 20 - (window.visualViewport?.offsetTop || 0)))}px`;
@@ -107,7 +114,7 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
     if (box.current?.parentElement) observer.observe(box.current.parentElement);
     close.current?.focus({ preventScroll: true });
     const onDown = (e: MouseEvent) => {
-      if (!box.current?.contains(e.target as Node)) setOpen(false);
+      if (!box.current?.contains(e.target as Node) && !dialog.current?.contains(e.target as Node)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -126,7 +133,7 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
       cancelAnimationFrame(frame);
       observer.disconnect();
     };
-  }, [open]);
+  }, [open, sheet]);
 
   // This chat: how full it is compared with the point where it gets compacted.
   const used = contextTokens(chat);
@@ -157,13 +164,15 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
 
   return (
     <div className="usage-meter" ref={box}>
-      <button ref={trigger} className={`usage-chip${level}${pct < 50 && !blockedUntil ? ' quiet' : ''}`} onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="dialog" aria-controls="usage-panel" title="Conversation capacity and daily usage">
+      <button ref={trigger} className={`usage-chip${level}${pct < 50 && !blockedUntil ? ' quiet' : ''}`} onClick={() => { setSheet(isSheetScreen()); setOpen(!open); }} aria-expanded={open} aria-haspopup="dialog" aria-controls="usage-panel" title="Conversation capacity and daily usage">
         <svg className="usage-ring" viewBox="0 0 20 20" aria-hidden="true"><circle className="usage-ring-track" cx="10" cy="10" r="7" /><circle className="usage-ring-fill" cx="10" cy="10" r="7" strokeDasharray="43.98" strokeDashoffset={43.98 * (1 - pct / 100)} /></svg>
         <span className="usage-chip-pct" aria-hidden="true">{pct}%</span><span className="usage-chip-label">Context {pct}%</span>{blockedUntil && <span className="usage-status"> · limit reached</span>}
         <ChevronDown size={12} aria-hidden="true" />
       </button>
-      {open && (
-        <div ref={dialog} className="usage-pop" id="usage-panel" role="dialog" aria-modal="true" tabIndex={-1} aria-label="Usage">
+      {open && (() => {
+        const panel = (
+        <div ref={dialog} className={`usage-pop${sheet ? ' sheet' : ''}`} id="usage-panel" role="dialog" aria-modal="true" tabIndex={-1} aria-label="Usage">
+          {sheet && <div className="sheet-grip" aria-hidden="true" />}
           <header className="um-head"><span>Usage</span><button ref={close} className="icon-btn sm" aria-label="Close usage" onClick={() => { setOpen(false); trigger.current?.focus({ preventScroll: true }); }}><X size={16} /></button></header>
           <div className="um-tiles">
             <section className="um-tile" aria-label="This chat">
@@ -203,7 +212,9 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
             <input type="checkbox" role="switch" checked={settings.autoCompact} onChange={(e) => updateSettings({ autoCompact: e.target.checked })} />
           </label>
         </div>
-      )}
+        );
+        return sheet ? createPortal(<><div ref={scrim} className="um-scrim" onClick={() => setOpen(false)} aria-hidden="true" />{panel}</>, document.body) : panel;
+      })()}
     </div>
   );
 }

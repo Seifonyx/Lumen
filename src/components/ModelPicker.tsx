@@ -1,3 +1,4 @@
+import { useSheetDrag } from '../lib/sheet-drag';
 import { Brain, Check, ChevronDown, Cpu, Eye, Globe, Search, SlidersHorizontal, Sparkles, Waypoints, Zap } from 'lucide-react';
 import { AUTO } from '../lib/routing';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
@@ -67,6 +68,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
   const pop = useRef<HTMLDivElement>(null);
   const search = useRef<HTMLInputElement>(null);
   useFocusScope(pop,open,()=>setOpen(false));
+  useSheetDrag(pop, () => setOpen(false), open && sheet);
 
   const statusOf = (id: string) => {
     const u = usage?.models[id];

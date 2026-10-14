@@ -1,6 +1,7 @@
 import { FolderGit2, Images, Image as ImageIcon, Camera, Pencil, ChartNoAxesCombined, Columns2, Globe, Check, X, FolderKanban, ChevronRight, Paperclip } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useFocusScope } from '../lib/focus-scope';
+import { useSheetDrag } from '../lib/sheet-drag';
 interface Props {
  onClose():void;onFiles():void;onPhotos():void;onCamera():void;onProject():void;projectName?:string;
  onConnectors():void;onMemory():void;memoryEnabled:boolean;temporary:boolean;
@@ -9,15 +10,16 @@ interface Props {
  repoName?:string;anchor?:{left:number;bottom:number};
 }
 export default function AttachSheet(p:Props){
- const ref=useRef<HTMLDivElement>(null),startY=useRef<number|null>(null);
+ const ref=useRef<HTMLDivElement>(null);
  useFocusScope(ref,true,p.onClose);
+ useSheetDrag(ref,p.onClose,!p.anchor);
  useEffect(()=>{ref.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();},[]);
  useEffect(()=>{if(!p.anchor)return;const close=()=>p.onClose();window.addEventListener('resize',close);return()=>window.removeEventListener('resize',close);},[p.anchor,p.onClose]);
  const pick=(action:()=>void)=>()=>{action();p.onClose();};
  return <div className={`sheet-backdrop${p.anchor?' sheet-popover-backdrop':''}`} onClick={p.onClose}>
  <div ref={ref} className="sheet attach-menu" style={p.anchor?{left:p.anchor.left,bottom:p.anchor.bottom,maxHeight:Math.max(80,window.innerHeight-p.anchor.bottom-12)}:undefined} role="dialog" aria-modal="true" tabIndex={-1} aria-label="Add to your message" onClick={e=>e.stopPropagation()}
  onKeyDown={e=>{if(!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;const buttons=[...e.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')].filter(button=>button.getClientRects().length>0);const i=buttons.indexOf(document.activeElement as HTMLButtonElement);e.preventDefault();buttons[e.key==='Home'?0:e.key==='End'?buttons.length-1:(i+(e.key==='ArrowUp'?-1:1)+buttons.length)%buttons.length]?.focus();}}
- onTouchStart={e=>{startY.current=e.touches[0].clientY;}} onTouchEnd={e=>{if(startY.current!==null&&ref.current?.scrollTop===0&&e.changedTouches[0].clientY-startY.current>70)p.onClose();startY.current=null;}}>
+>
  <div className="sheet-grab" aria-hidden="true"/>
  {!p.anchor&&<header className="add-sheet-header"><h2>Add</h2><button type="button" className="icon-btn" aria-label="Close" onClick={p.onClose}><X size={20}/></button></header>}
  {!p.anchor&&<div className="photo-actions"><button type="button" onClick={pick(p.onCamera)}><Camera size={24}/><span>Camera</span></button><button type="button" onClick={pick(p.onPhotos)}><Images size={24}/><span>Photos</span></button></div>}

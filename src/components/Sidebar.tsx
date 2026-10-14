@@ -176,6 +176,11 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
       aria-modal={phone && open || undefined}
       aria-hidden={phone && !open || undefined}
       inert={phone && !open}
+      onClickCapture={(e) => {
+        // Using the sidebar while Settings is open (computers) leaves Settings, except the Settings button itself.
+        const target = (e.target as HTMLElement).closest('button, a, [role="button"]');
+        if (target && !target.closest('.sidebar-foot, .row-menu, .chat-menu, [role="menu"]') && useStore.getState().settingsOpen) setUi({ settingsOpen: false });
+      }}
     >
       <div className="sidebar-head">
         <span className="sidebar-brand"><Logo size={24} />Model Router</span>

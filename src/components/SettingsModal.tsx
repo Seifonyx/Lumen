@@ -552,7 +552,8 @@ export default function SettingsModal() {
   const [id, label, , blurb] = current;
 
   return (
-    <section className={`settings-page${tab ? ' has-section' : ''}`} aria-label="Settings" role="dialog" aria-modal="true" tabIndex={-1} ref={dialog}>
+    // On computers the sidebar stays usable next to Settings; on phones Settings covers the screen.
+    <section className={`settings-page${tab ? ' has-section' : ''}`} aria-label="Settings" role="dialog" aria-modal={window.matchMedia('(max-width: 899px)').matches || undefined} data-keep-sidebar="true" tabIndex={-1} ref={dialog}>
       <header className="settings-top">
         {tab ? (
           <button className="icon-btn settings-back" onClick={() => setUi({ settingsTab: '' })} aria-label="All settings">

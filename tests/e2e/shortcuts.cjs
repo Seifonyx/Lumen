@@ -41,6 +41,13 @@ const { profile, seed } = require('./helpers/preview-profile.cjs');
     await page.keyboard.press('Escape');
     await page.locator('.settings-page').waitFor({ state: 'detached' });
 
+    // On computers the sidebar stays usable while Settings is open; using it leaves Settings.
+    await page.keyboard.press('Control+,');
+    await page.locator('.settings-page').waitFor();
+    await page.locator('.chat-row').filter({ hasText: 'Shortcut chat' }).click();
+    await page.locator('.settings-page').waitFor({ state: 'detached' });
+    await page.locator('.msg.assistant').filter({ hasText: 'LAST_REPLY_MARKER' }).waitFor();
+
     await page.keyboard.press('Control+Shift+L');
     await page.getByRole('tab', { name: 'Assistants' }).waitFor();
     await page.keyboard.press('Escape');

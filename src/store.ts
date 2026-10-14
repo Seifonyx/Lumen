@@ -420,6 +420,8 @@ export const useStore = create<State>((set, get) => {
       search: chat.task ? chat.task.search : settings.webSearch,
       blocked,
       left: (id) => remaining(get().usage, id),
+      // The model that last answered in this chat (Auto stays with it unless the task needs another).
+      previous: [...chat.messages].reverse().find((m) => m.role === 'assistant' && m.status === 'done' && !m.error && m.model && m.text)?.model,
     });
     let chosen = plan.model;
     if (!chosen) {

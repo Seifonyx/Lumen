@@ -2,7 +2,7 @@
 const cooldowns = new Map();
 const timings = new Map();
 const MAX_TIMINGS = 128;
-const TIMING_TTL = 30 * 60_000;
+const TIMING_TTL = 6 * 3600_000;
 // Only compare ordinary, short-context chats. Document and reasoning latency is different.
 export function replyLatency(id) {
   const sample = timings.get(id);
@@ -22,8 +22,42 @@ export function isCoolingDown(id) {
   if (until <= Date.now()) { cooldowns.delete(id); return false; }
   return true;
 }
+
+// Track record: how often each model actually answered, remembered on this device across visits.
+// Older results fade (half weight after about a week), so a model that improves recovers.
+const RECORD_KEY = 'mr.modelRecord';
+const HALF_LIFE = 7 * 24 * 3600_000;
+let record = null;
+const loadRecord = () => {
+  if (record) return record;
+  try { record = JSON.parse(globalThis.localStorage?.getItem(RECORD_KEY) || '{}') || {}; } catch { record = {}; }
+  return record;
+};
+const saveRecord = () => { try { globalThis.localStorage?.setItem(RECORD_KEY, JSON.stringify(record)); } catch { /* storage full or blocked */ } };
+function noteOutcome(id, ok) {
+  const all = loadRecord();
+  const now = Date.now(), old = all[id];
+  const fade = old ? Math.pow(0.5, (now - old.at) / HALF_LIFE) : 0;
+  all[id] = { ok: (old ? old.ok * fade : 0) + (ok ? 1 : 0), n: (old ? old.n * fade : 0) + 1, at: now };
+  const ids = Object.keys(all);
+  if (ids.length > 400) ids.sort((a, b) => all[a].at - all[b].at).slice(0, ids.length - 400).forEach((k) => delete all[k]);
+  saveRecord();
+}
+/** Share of recent attempts that answered (0–1), or null with too little history to judge. */
+export function reliability(id) {
+  const r = loadRecord()[id];
+  if (!r) return null;
+  const fade = Math.pow(0.5, (Date.now() - r.at) / HALF_LIFE);
+  const n = r.n * fade;
+  return n >= 2 ? (r.ok * fade + 1) / (n + 2) : null; // gently pulled toward 50% until there's history
+}
+
 export function noteFailure(id, status) {
   if (status >= 500 || ['timeout', 'network', 'empty'].includes(status)) cooldowns.set(id, Date.now() + 90_000);
+  // Rate limits say nothing about quality; anything else counts against the model.
+  if (status !== 429) noteOutcome(id, false);
 }
-export function noteSuccess(id) { cooldowns.delete(id); }
+export function noteSuccess(id) { cooldowns.delete(id); noteOutcome(id, true); }
 export function clearHealth() { cooldowns.clear(); timings.clear(); }
+/** Forgets the track record (tests). */
+export function clearRecord() { record = {}; saveRecord(); }

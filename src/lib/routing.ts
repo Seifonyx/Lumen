@@ -4,7 +4,7 @@
 
 import type { Attachment, ModelInfo } from '../types';
 import { hasRtl } from './util';
-import { isCoolingDown, replyLatency } from './ai/health.js';
+import { isCoolingDown, reliability, replyLatency } from './ai/health.js';
 
 export const AUTO = 'auto';
 
@@ -23,6 +23,8 @@ export interface RouteInput {
   blocked: (id: string) => boolean;
   /** requests left today, if known */
   left: (id: string) => number | null;
+  /** the model that answered the previous message in this chat, if it worked */
+  previous?: string;
 }
 
 export interface RoutePlan {
@@ -47,10 +49,13 @@ export interface Task {
   long: boolean;
   quick: boolean;
   search: boolean;
+  /** writing, rewriting, translating or summarising prose */
+  writing: boolean;
 }
 
 const CODE = /```|\b(function|class|def|const|import|return|stack ?trace|exception|traceback|bug|debug|compile|syntax|regex|sql|python|javascript|typescript|java|c\+\+|html|css|api|json|code|script)\b|كود|برمج/i;
 const REASONING = /\b(prove|proof|solve|calculate|compute|equation|integral|derivative|probability|statistics|optimi[sz]e|step[- ]by[- ]step|why does|explain why|logic|puzzle)\b|[=^√∑∫]\s*\d|\d\s*[+\-*/^]\s*\d|احسب|معادلة|برهن|حل المسألة/i;
+const WRITING = /\b(write|rewrite|draft|compose|essay|email|e-mail|letter|cover letter|article|blog|story|poem|summar(?:y|ise|ize)|paraphrase|proofread|translate|translation|tone|formal|polish)\b|اكتب|أعد صياغة|لخص|ترجم|رسالة|مقال/i;
 const FILES = /\b(word|docx|excel|xlsx|spreadsheet|sheet|workbook|powerpoint|pptx|slides?|presentation|deck|pdf|report|csv|table|chart)\b|ملف|عرض تقديمي|تقرير|جدول|إكسل|اكسل|وورد|باوربوينت/i;
 
 /** Rough token estimate: ~4 characters per token, fixed costs for images and PDF pages. */
@@ -73,16 +78,19 @@ export function analyze(input: Pick<RouteInput, 'text' | 'files' | 'conversation
   const reasoning = REASONING.test(text);
   const wantsFile = FILES.test(text) && /\b(make|create|build|generate|write|export|give me|turn|convert|prepare)\b|اعمل|اعملي|أنشئ|انشئ|حول|جهز|اكتب/i.test(text);
   const long = input.conversationTokens > 30_000;
-  const quick = !image && !pdf && !files.length && !code && !reasoning && !wantsFile && !long && text.length < 280;
-  return { image, pdf, rawPdf, code, reasoning, files: wantsFile, arabic: hasRtl(text), long, quick, search: input.search };
+  const writing = WRITING.test(text) || text.length > 600;
+  const quick = !image && !pdf && !files.length && !code && !reasoning && !wantsFile && !long && !writing && text.length < 280;
+  return { image, pdf, rawPdf, code, reasoning, files: wantsFile, arabic: hasRtl(text), long, quick, search: input.search, writing };
 }
 
 /** Name-based hints about a model's size and specialities. */
 function traits(m: ModelInfo) {
   const n = m.name.toLowerCase();
-  const strong = /(^|[-/:])(pro|ultra|large|max)([-.:]|$)|405b|235b|120b|671b|72b|70b|\b480b/.test(n);
+  // Parameter count from names like "llama-3.3-70b" or "qwen3-235b-a22b" (the first, total size).
+  const params = Number(/(?:^|[-/:._])(\d{1,4}(?:\.\d)?)b(?=[-/:._]|$)/.exec(n)?.[1]) || 0;
+  const strong = /(^|[-/:])(pro|ultra|large|max|opus)([-.:]|$)/.test(n) || params >= 65;
   // Whole name parts only: "gemini" must not count as "mini".
-  const light = /(^|[-/:._])(lite|mini|nano|small|tiny|[1-9]b)([-/:._]|$)/.test(n);
+  const light = /(^|[-/:._])(lite|mini|nano|small|tiny|haiku)([-/:._]|$)/.test(n) || (params > 0 && params < 20);
   return {
     gemini: m.provider === 'google' && !/gemma/.test(n),
     // Groq and Cerebras answer in a fraction of a second.
@@ -94,6 +102,14 @@ function traits(m: ModelInfo) {
   };
 }
 
+/** A model's family (name without version/size) and version, to prefer the newest of a family. */
+function family(m: ModelInfo): { key: string; version: number } {
+  const n = m.name.toLowerCase().replace(/:free$/, '');
+  const version = Number(/(\d+(?:\.\d+)?)/.exec(n.replace(/\d{1,4}b\b/g, ''))?.[1]) || 0;
+  const key = `${m.provider}:${n.replace(/\d+(?:\.\d+)?b?/g, '#').replace(/-?(latest|preview|exp|\d{2,})/g, '')}`;
+  return { key, version };
+}
+
 const REASONS: [keyof Task, string][] = [
   ['image', 'reads images'],
   ['search', 'can search the web'],
@@ -103,10 +119,11 @@ const REASONS: [keyof Task, string][] = [
   ['code', 'good at code'],
   ['reasoning', 'thinks step by step'],
   ['arabic', 'strong in Arabic'],
+  ['writing', 'strong writer'],
   ['quick', 'fast for quick replies'],
 ];
 
-function score(m: ModelInfo, task: Task, tokens: number, index: number, total: number, left: number | null): number {
+function score(m: ModelInfo, task: Task, tokens: number, index: number, total: number, left: number | null, extra: { newest: boolean; previous: boolean }): number {
   const t = traits(m);
   let s = total ? ((total - index) / total) * 1.6 : 0; // bounded tie-breaker even with hundreds of models
   // Big "Pro" models have the smallest free limits, so they only get an edge on heavy work.
@@ -132,8 +149,17 @@ function score(m: ModelInfo, task: Task, tokens: number, index: number, total: n
     const ms = replyLatency(m.id);
     if (ms !== null) s += Math.max(-1.5, Math.min(1.5, (4000 - ms) / 3000));
   }
+  if (task.writing) s += (t.power >= 2 ? 1 : 0) + (t.gemini ? 1 : 0) + (task.arabic && t.gemini ? 1 : 0);
+  // Newest version within a family (e.g. 2.5 over 2.0) gets a small edge.
+  if (extra.newest) s += 1;
+  // Proven track record on this device: models that keep failing sink, reliable ones rise.
+  const rel = reliability(m.id);
+  if (rel !== null) s += Math.max(-5, Math.min(2, (rel - 0.75) * 8));
+  // Stay with the model that answered the last message: steadier tone, and it already knows the chat.
+  if (extra.previous && (rel === null || rel >= 0.5)) s += 2.5;
   if (m.context && tokens > m.context * 0.85) s -= 100;
-  if (left !== null && left <= 3) s -= 3;
+  // Save models that are almost out of today's free requests.
+  if (left !== null) s -= left <= 3 ? 3 : left <= 10 ? 1 : 0;
   return s;
 }
 
@@ -151,10 +177,22 @@ export function planRoute(input: RouteInput): RoutePlan {
   const tokens = input.conversationTokens;
   const task = analyze(input);
   const known = input.enabled.filter((id) => info.has(id) && !capable(info.get(id), task, tokens));
-  const ranked = known
-    .map((id, i) => ({ id, s: score(info.get(id)!, task, tokens, i, known.length, input.left(id)) }))
-    .sort((a, b) => b.s - a.s)
-    .map((x) => x.id);
+  // The newest version of each family among the candidates.
+  const newestOf = new Map<string, number>();
+  for (const id of known) { const f = family(info.get(id)!); newestOf.set(f.key, Math.max(newestOf.get(f.key) || 0, f.version)); }
+  const scored = known
+    .map((id, i) => { const f = family(info.get(id)!); return { id, s: score(info.get(id)!, task, tokens, i, known.length, input.left(id), { newest: f.version > 0 && f.version === newestOf.get(f.key) && [...known].some((o) => o !== id && family(info.get(o)!).key === f.key), previous: id === input.previous }) }; })
+    .sort((a, b) => b.s - a.s);
+  // Backups alternate providers when they're close in score, so one provider's outage or rate
+  // limit doesn't take out the next few attempts too.
+  const provider = (id: string) => id.split(':')[0];
+  const ranked: string[] = [];
+  const rest = [...scored];
+  while (rest.length) {
+    const last = ranked.length ? provider(ranked[ranked.length - 1]) : '';
+    const i = ranked.length && rest[0] && provider(rest[0].id) === last ? rest.findIndex((x) => provider(x.id) !== last && x.s >= rest[0].s - 2.5) : 0;
+    ranked.push(rest.splice(i < 0 ? 0 : i, 1)[0].id);
+  }
   // Models at their limit go last; they're kept only as a final resort.
   const blocked = (id: string) => input.blocked(id) || isCoolingDown(id);
   const order = [...ranked.filter((id) => !blocked(id)), ...ranked.filter(blocked)];
@@ -176,6 +214,7 @@ export function planRoute(input: RouteInput): RoutePlan {
         if (k === 'reasoning') return t.reasoner;
         if (k === 'arabic') return t.gemini || t.gemma;
         if (k === 'long') return (m.context || 0) >= 500_000;
+        if (k === 'writing') return t.power >= 2;
         return true;
       })?.[1] || 'best available';
     return { model, fallbacks: all.slice(1), reason, notice: null };

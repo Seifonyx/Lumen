@@ -11,7 +11,7 @@ try {
   noteReplyLatency(A, 1000); assert.equal(replyLatency(A), null, 'one sample cannot change routing');
   noteReplyLatency(A, 2000); assert.equal(replyLatency(A), 1350, 'recent successes use a moving average');
   noteReplyLatency(A, NaN); noteReplyLatency(A, -1); assert.equal(replyLatency(A), 1350);
-  now += 30 * 60_000 + 1; assert.equal(replyLatency(A), null, 'stale speed observations expire');
+  now += 6 * 3600_000 + 1; assert.equal(replyLatency(A), null, 'stale speed observations expire');
   noteReplyLatency(A, 500); noteReplyLatency(A, 500);
   setKeys({ gemini: 'new-key' }); assert.equal(replyLatency(A), null, 'key/account change discards observations');
 } finally { Date.now = clock; clearHealth(); }

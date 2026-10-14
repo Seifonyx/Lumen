@@ -82,3 +82,33 @@ const fastReasoners = [M('gemini:gemini-flash-latest'), M('groq:openai/gpt-oss-2
 const fastPlan = planRoute({selected: AUTO, enabled: fastReasoners.map(m => m.id), catalog: fastReasoners as any[], text: 'hello', files: [], conversationTokens: 100, search: false, blocked: () => false, left: () => null});
 if (!fastPlan.model.startsWith('groq:')) throw new Error('Quick route penalized a fast reasoning-capable provider');
 console.log('PASS fast reasoning-capable providers remain eligible for quick replies');
+
+// Track record, staying with the working model, newest versions, writing and provider-diverse backups.
+{
+  const { clearRecord, noteFailure, noteSuccess } = await import('../../src/lib/ai/health.js');
+  const two = ['gemini:gemini-2.5-flash-a', 'gemini:gemini-2.5-flash-b'].map((id) => M(id));
+  const route = (o: any = {}) => planRoute({ selected: AUTO, enabled: two.map((m) => m.id), catalog: two as any[], text: 'Write a short email to my manager about leave', files: [], conversationTokens: 100, search: false, blocked: () => false, left: () => null, ...o });
+  clearHealth(); clearRecord();
+  for (let i = 0; i < 6; i++) { noteFailure(two[0].id, 404); noteSuccess(two[1].id); }
+  if (route().model !== two[1].id) throw new Error('A model that keeps failing should sink below a reliable one');
+  clearRecord();
+  if (route({ previous: two[1].id }).model !== two[1].id) throw new Error('Auto should stay with the model that answered last');
+  if (route({ previous: two[0].id }).model !== two[0].id) throw new Error('Auto should stay with the model that answered last');
+  clearHealth(); clearRecord();
+  console.log('PASS Auto learns from failures and stays with the model that answered last');
+
+  const versions = ['gemini:gemini-2.0-flash', 'gemini:gemini-2.5-flash'].map((id) => M(id));
+  const v = planRoute({ selected: AUTO, enabled: versions.map((m) => m.id), catalog: versions as any[], text: 'hello', files: [], conversationTokens: 100, search: false, blocked: () => false, left: () => null });
+  if (v.model !== 'gemini:gemini-2.5-flash') throw new Error('Newest version of a family should win ties');
+  console.log('PASS newest version of a model family is preferred');
+
+  const mixed = [M('gemini:gemini-flash-a'), M('gemini:gemini-flash-b'), M('gemini:gemini-flash-c'), M('openrouter:vendor/model-x:free', { vision: false, thinking: false })];
+  const mp = planRoute({ selected: AUTO, enabled: mixed.map((m) => m.id), catalog: mixed as any[], text: 'hello', files: [], conversationTokens: 100, search: false, blocked: () => false, left: () => null });
+  const firstTwo = [mp.model, mp.fallbacks[0]].map((id) => id.split(':')[0]);
+  if (firstTwo[0] === firstTwo[1]) throw new Error('The first backup should come from another provider when scores are close');
+  console.log('PASS backups alternate providers');
+
+  const w = planRoute({ selected: AUTO, enabled, catalog, text: 'Please rewrite this paragraph in a formal tone for the hospital board', files: [], conversationTokens: 100, search: false, blocked: () => false, left: () => null });
+  if (w.reason !== 'strong writer' || /lite|8b/.test(w.model)) throw new Error(`Writing should use a strong writer, got ${w.model} (${w.reason})`);
+  console.log('PASS writing tasks go to a strong writer');
+}

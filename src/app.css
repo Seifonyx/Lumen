@@ -3312,3 +3312,61 @@ input, textarea { caret-color: var(--text); }
 .bulk-move button:hover, .bulk-move button:focus-visible { background: var(--hover, var(--surface-2)); }
 .bulk-actions .btn { padding-inline: 6px; gap: 5px; }
 .bulk-actions .btn svg { flex: none; width: 15px; height: 15px; }
+
+/* ============================================================ Sidebar refinement
+   One left edge for everything (12px gutter + 10px row inset), one row height (36px),
+   quieter New chat and search, an account footer that reads as a button. */
+.sidebar { --sb-gutter: 12px; --sb-inset: 10px; --sb-row: 36px; }
+.sidebar .sidebar-head { padding: 14px var(--sb-gutter) 10px calc(var(--sb-gutter) + var(--sb-inset) - 2px); min-height: 0; }
+.sidebar .sidebar-brand { gap: 10px; font-size: 15px; font-weight: 650; letter-spacing: -0.01em; }
+.sidebar .sidebar-scroll { padding: 0 var(--sb-gutter); }
+.sidebar .sidebar-bottom-actions { display: grid; gap: 2px; padding: 4px 0 6px; margin: 0; }
+.sidebar .btn.new-chat:not(.sidebar-footer .new-chat) {
+  height: 40px; margin: 0 0 8px; padding: 0 10px 0 6px; gap: 10px; justify-content: flex-start;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: var(--shadow-sm); font-size: 14px; font-weight: 600;
+}
+.sidebar .btn.new-chat:not(.sidebar-footer .new-chat):hover { border-color: var(--border-strong); background: var(--surface); }
+.new-chat-plus { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: var(--signal); color: var(--signal-ink, #10130b); flex: none; }
+.sidebar .btn.new-chat .kbd { margin-inline-start: auto; color: var(--text-3); font-size: 11px; background: none; border: 0; padding: 0; }
+.sidebar .sidebar-search-field { height: var(--sb-row); margin: 0 0 4px; padding: 0 var(--sb-inset); gap: 10px; border: 0; border-radius: 10px; background: var(--surface-2); box-shadow: none; }
+.sidebar .sidebar-search-field input { font-size: 14px; }
+.sidebar .sidebar-search-field svg { color: var(--text-3); width: 16px; height: 16px; }
+.sidebar .library-button, .sidebar .sidebar-empty-project-btn {
+  height: var(--sb-row); padding: 0 var(--sb-inset); gap: 10px; margin: 0; border-radius: 10px; font-size: 14px; color: var(--text-2);
+  display: flex; align-items: center; width: 100%; justify-content: flex-start;
+}
+.sidebar .library-button svg, .sidebar .sidebar-empty-project-btn svg { width: 16px; height: 16px; flex: none; color: var(--text-3); }
+.sidebar .library-button:hover, .sidebar .sidebar-empty-project-btn:hover { background: var(--surface-2); color: var(--text); }
+.sidebar .sidebar-navigation { padding: 0; }
+.sidebar .sidebar-section-heading, .sidebar .history-heading { padding: 18px 2px 6px var(--sb-inset); margin: 0; min-height: 0; }
+.sidebar h2.sidebar-section-label, .sidebar .sidebar-section-heading h2.sidebar-section-label, .sidebar .history-heading h2.history-label { padding: 0; margin: 0; border: 0; font-size: 13px; font-weight: 600; color: var(--text-3); letter-spacing: 0; }
+.sidebar .sidebar-projects-list { padding: 0; margin: 0; }
+.sidebar .sidebar-project-item { height: var(--sb-row); padding: 0 var(--sb-inset); gap: 10px; border-radius: 10px; }
+.sidebar .chat-list { padding: 0; margin: 0; }
+.sidebar .chat-list section + section { margin-top: 6px; }
+.sidebar .group-label { padding: 8px var(--sb-inset) 4px; margin: 0; font-size: 11.5px; font-weight: 500; color: var(--text-3); }
+.sidebar .chat-row { min-height: 0; height: 34px; margin: 0; border-radius: 10px; }
+.sidebar .chat-row .chat-open { height: 34px; padding: 0 4px 0 var(--sb-inset); font-size: 14px; }
+.sidebar .chat-row .pin-mark { margin-inline-start: -2px; color: var(--text-3); }
+.sidebar .empty-list { padding: 6px var(--sb-inset); }
+.sidebar .sidebar-footer { padding: 8px var(--sb-gutter) calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); gap: 8px; }
+.sidebar .sidebar-foot { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 6px; height: auto; border-radius: 12px; text-align: start; }
+.sidebar .sidebar-foot:hover { background: var(--surface-2); }
+.sidebar .sidebar-foot .avatar { width: 32px; height: 32px; font-size: 13px; flex: none; }
+.account-text { display: grid; min-width: 0; flex: 1; line-height: 1.25; }
+.account-text .account-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.account-sub { font-size: 12px; color: var(--text-2); }
+.account-gear { color: var(--text-3); flex: none; }
+.sidebar .sidebar-foot:hover .account-gear { color: var(--text); }
+/* Phones: the footer also holds New chat, so the account shows the avatar and name only. */
+@media (max-width: 899px) {
+  .sidebar .sidebar-footer .account-sub, .sidebar .sidebar-footer .account-gear { display: none; }
+}
+.sidebar .sidebar-foot { width: 100%; }
+.sidebar .chat-list section:first-child .group-label { padding-top: 2px; }
+.sidebar { --sb-fill: color-mix(in srgb, var(--text) 6%, transparent); --sb-fill-hover: color-mix(in srgb, var(--text) 8%, transparent); }
+.sidebar .sidebar-search-field { background: var(--sb-fill); }
+.sidebar .library-button:hover, .sidebar .sidebar-empty-project-btn:hover, .sidebar .sidebar-foot:hover { background: var(--sb-fill-hover); }
+.sidebar .sidebar-footer .new-chat { gap: 10px; padding-inline: 8px 18px; }
+.sidebar .sidebar-footer .new-chat-plus { width: 28px; height: 28px; border-radius: 50%; }

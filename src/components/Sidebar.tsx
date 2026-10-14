@@ -1,5 +1,5 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
-import { FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Tag, Trash2, X } from 'lucide-react';
+import { FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey, saveBlob, safeFileName } from '../lib/util';
 import { chatExportName, chatToMarkdown } from '../lib/chat-export';
@@ -214,7 +214,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
       <div className="sidebar-bottom-actions">
         {!phone && (
           <button className="btn new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}>
-            <Plus size={18} /> <span>New chat</span>
+            <span className="new-chat-plus" aria-hidden="true"><Plus size={15} strokeWidth={2.4} /></span> <span>New chat</span>
             <span className="kbd">{modKey}⇧O</span>
           </button>
         )}
@@ -351,10 +351,14 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
       })()}
       <div className="sidebar-footer">
         {/* On phones New chat sits at the inline end of the footer; it comes first in the DOM so the account button stays last. */}
-        {phone && <button className="btn new-chat" onClick={newChat}><Plus size={18} /> <span>New chat</span></button>}
+        {phone && <button className="btn new-chat" onClick={newChat}><span className="new-chat-plus" aria-hidden="true"><Plus size={15} strokeWidth={2.4} /></span> <span>New chat</span></button>}
         <button className="sidebar-foot" onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })} aria-label="Settings" title={`Settings (${modKey},)`}>
           {user?.photo ? <img className="avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
-          <span className="account-name">{user?.name || user?.email?.split('@')[0] || 'Account'}</span>
+          <span className="account-text">
+            <span className="account-name">{user?.name || user?.email?.split('@')[0] || 'Account'}</span>
+            <span className="account-sub">Settings &amp; keys</span>
+          </span>
+          <Settings2 size={16} className="account-gear" aria-hidden="true" />
         </button>
       </div>
     </aside>

@@ -7,11 +7,7 @@ import {
   Brain,
   ChevronRight,
   Download,
-  ExternalLink,
-  Eye,
-  EyeOff,
   Gauge,
-  ChevronDown,
   KeyRound,
   Loader2,
   MoreHorizontal,
@@ -41,7 +37,7 @@ import { savedChats } from '../lib/temporary-chat';
 import UsageTab from './UsageTab';
 import MemoryTab from './MemoryTab';
 import KeySafety from './KeySafety';
-import ProviderConnections from './ProviderConnections';
+import ProviderConnections, { type MainProvider } from './ProviderConnections';
 import { normalizeKeys, validAlibabaBase, validRelayUrl } from '../lib/ai/provider-config.js';
 import type { ApiKeys } from '../lib/firebase';
 import PrivacyTab from './PrivacyTab';
@@ -305,7 +301,6 @@ function KeysTab() {
   const saveApiKeys = useStore((s) => s.saveApiKeys);
   const toast = useStore((s) => s.toast);
   const [draft, setDraft] = useState<ApiKeys>(() => normalizeKeys(keys) as unknown as ApiKeys);
-  const [showKey, setShowKey] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
   const changed = JSON.stringify(normalizeKeys(draft)) !== JSON.stringify(normalizeKeys(keys));
   const validation = draft.alibabaBaseUrl && !validAlibabaBase(draft.alibabaBaseUrl) ? 'Use an official Alibaba Cloud Model Studio base URL.'
@@ -313,52 +308,10 @@ function KeysTab() {
     : draft.providerAccess?.cloudflare && draft.cloudflare && !/^[a-f0-9]{32}$/i.test(draft.cloudflareAccountId?.trim() || '') ? 'Enter the 32-character Cloudflare account ID.'
     : '';
 
-  const toggleShow = (id: string) => setShowKey((prev) => ({ ...prev, [id]: !prev[id] }));
 
   return (
     <div className="settings-section">
-      <section className="provider-connections" aria-labelledby="free-providers">
-        <h3 id="free-providers">Free providers</h3>
-        <p className="muted small">Add at least one key. Each has a free tier; nothing here can charge you.</p>
-        <div className="settings-card">
-          {KEY_FIELDS.filter(field=>field.id!=='github').map(({ id, label, placeholder, link, hint, linkText }) => {
-            const val = draft[id] || '';
-            const isConfigured = Boolean((keys[id] || '').trim());
-            const visible = Boolean(showKey[id]);
-            const noKeys = !KEY_FIELDS.some((f) => f.id !== 'github' && (keys[f.id] || '').trim());
-            return (
-              <details key={id} className="provider-connection key-provider-card" data-provider={id} open={noKeys || undefined}>
-                <summary><span>{label}</span><span className={`key-status-pill ${isConfigured ? 'configured' : 'unset'}`}>{isConfigured ? 'Key entered' : 'Not set'}</span><ChevronDown size={16} aria-hidden="true" /></summary>
-                <div className="provider-connection-body">
-                  <p className="muted small">{hint} <a className="link-btn small inline" href={link} target="_blank" rel="noopener noreferrer">{linkText || 'Get a free key'} <ExternalLink size={12} /></a></p>
-                  <div className="key-input-wrap">
-                    <input
-                      type={visible ? 'text' : 'password'}
-                      autoComplete="off"
-                      spellCheck={false}
-                      placeholder={placeholder}
-                      aria-label={`${label} API key`}
-                      autoCapitalize="none"
-                      value={val}
-                      onChange={(e) => setDraft({ ...draft, [id]: e.target.value })}
-                    />
-                    {val && (
-                      <button className="icon-btn sm" onClick={() => setDraft({ ...draft, [id]: '' })} aria-label="Clear key" title="Clear">
-                        <X size={14} />
-                      </button>
-                    )}
-                    <button className="icon-btn sm" onClick={() => toggleShow(id)} aria-label={visible ? 'Hide' : 'Reveal'} title={visible ? 'Hide' : 'Reveal'}>
-                      {visible ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
-                  </div>
-                </div>
-              </details>
-            );
-          })}
-        </div>
-      </section>
-
-      <ProviderConnections draft={draft} setDraft={setDraft}/>
+      <ProviderConnections main={KEY_FIELDS.filter((field): field is MainProvider => field.id !== 'github')} draft={draft} setDraft={setDraft} saved={keys} />
       {validation && <p className="error-text" role="alert">{validation}</p>}
       <div className="settings-actions">
         <span className="muted small">Saved privately to your Google account and shared across your devices.</span>

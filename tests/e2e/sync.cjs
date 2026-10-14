@@ -56,7 +56,7 @@ async function device(browser, name, email, mobile) {
   check((await A.page.textContent('.settings-heading h2')) === 'API keys', 'first sign-in opens API keys');
   await A.page.screenshot({ path: path.join(OUT, 'a1-keys.png') });
   await A.page.fill('input[placeholder="AIza…"]', 'test-gemini-key');
-  await A.page.click('text=Save keys');
+  await A.page.click('button:has-text("Save keys")');
   await A.page.waitForTimeout(1500);
   check(true, 'keys saved and models loaded');
   await openTab(A.page, 'Personalization');

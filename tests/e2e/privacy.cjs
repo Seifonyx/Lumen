@@ -47,7 +47,7 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   await page.waitForSelector('input[placeholder="AIza…"]');
   await page.fill('input[placeholder="AIza…"]', 'g');
   await page.fill('input[placeholder="sk-or-…"]', 'o');
-  await page.click('text=Save keys');
+  await page.click('button:has-text("Save keys")');
 
   // ---- Key safety
   await page.waitForSelector('.key-safety .status:not(.wait), .key-safety .status.blocked', { timeout: 10000 });

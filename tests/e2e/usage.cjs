@@ -63,7 +63,7 @@ async function device(browser, mobile) {
   await A.page.waitForSelector('input[placeholder="AIza…"]');
   await A.page.fill('input[placeholder="AIza…"]', 'g-key');
   await A.page.fill('input[placeholder="sk-or-…"]', 'or-key');
-  await A.page.click('text=Save keys');
+  await A.page.click('button:has-text("Save keys")');
   await A.page.waitForTimeout(1500);
   // Enable both Gemini models (3.5 first) + the OpenRouter one, default = 3.5.
   await openTab(A.page, 'Models');

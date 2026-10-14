@@ -54,7 +54,7 @@ async function send(page, text) {
   const A = await device(browser);
   await A.page.waitForSelector('input[placeholder="AIza…"]');
   await A.page.fill('input[placeholder="AIza…"]', 'g');
-  await A.page.click('text=Save keys');
+  await A.page.click('button:has-text("Save keys")');
   await A.page.waitForTimeout(1500);
   await A.page.click('.settings-page [aria-label="Close"]');
   // 6 chats x 4 messages.

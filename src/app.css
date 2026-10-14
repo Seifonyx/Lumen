@@ -3275,3 +3275,10 @@ input, textarea { caret-color: var(--text); }
 .rw-toggle { display: flex; gap: 8px; align-items: flex-start; padding-top: 8px; border-top: 1px solid var(--border); cursor: pointer; }
 .rw-toggle input { margin-top: 3px; }
 .rw-toggle small { display: block; font-size: 11.5px; color: var(--text-3); }
+
+/* ---------- First-run guide ---------- */
+.welcome-guide { display: grid; gap: 8px; padding: 16px 18px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--signal-strong) 40%, var(--border)); background: var(--signal-soft); }
+.welcome-guide strong { font-size: 15px; }
+.welcome-guide p { margin: 0; font-size: 13.5px; line-height: 1.55; }
+.welcome-guide ol { margin: 0; padding-inline-start: 20px; display: grid; gap: 4px; font-size: 13.5px; line-height: 1.5; }
+.welcome-guide .btn { justify-self: start; text-decoration: none; }

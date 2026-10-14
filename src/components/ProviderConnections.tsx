@@ -48,6 +48,19 @@ export default function ProviderConnections({ main, draft, setDraft, saved }: { 
   return (
     <section className="provider-connections" aria-labelledby="providers-heading">
       <h3 id="providers-heading" className="sr-only">Providers</h3>
+      {firstRun && (
+        <div className="welcome-guide" role="note" aria-label="Getting started">
+          <strong>Welcome to Model Router</strong>
+          <p>It talks to free AI models using your own keys, which stay private to your account. One free key is enough to start:</p>
+          <ol>
+            <li>Open Google AI Studio and sign in with your Google account.</li>
+            <li>Tap <b>Create API key</b> and copy it.</li>
+            <li>Paste it into <b>Google AI Studio (Gemini)</b> below, then <b>Save keys</b>.</li>
+          </ol>
+          <a className="btn primary small" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer"><ExternalLink size={14} /> Get a free Gemini key</a>
+          <p className="muted small">Groq, Cerebras and OpenRouter are free too and add more models; you can add them any time.</p>
+        </div>
+      )}
       <div className="provider-toolbar">
         <label className="search provider-search">
           <Search size={14} />

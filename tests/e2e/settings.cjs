@@ -28,7 +28,7 @@ async function open(browser, mobile) {
   check(await D.page.isVisible('.sidebar') && await D.page.isVisible('.settings-tabs'), 'desktop: sidebar and section list stay visible');
   check(!(await D.page.isVisible('.main')), 'desktop: chat hidden while settings is open');
   await D.page.fill('input[placeholder="AIza…"]', 'g');
-  await D.page.click('text=Save keys');
+  await D.page.click('button:has-text("Save keys")');
   await D.page.waitForTimeout(1200);
   await D.page.click('.settings-tabs >> text=Memory');
   check((await D.page.textContent('.settings-heading h2')) === 'Memory' && await D.page.isVisible('.memory-tab'), 'desktop: switching sections');

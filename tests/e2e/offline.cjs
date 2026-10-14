@@ -28,7 +28,7 @@ const original = fs.readFileSync(SW, 'utf8');
     await page.evaluate(() => window.__testSignIn('hebaghoneim8@gmail.com'));
     await page.waitForSelector('input[placeholder="AIza…"]');
     await page.fill('input[placeholder="AIza…"]', 'g');
-    await page.click('text=Save keys');
+    await page.click('button:has-text("Save keys")');
     await page.waitForTimeout(1500);
     await page.click('.settings-page [aria-label="Close"]');
     await page.fill('.composer textarea', 'hi');

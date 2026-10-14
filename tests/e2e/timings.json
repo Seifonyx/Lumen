@@ -30,7 +30,7 @@
  "privacy.cjs": 6,
  "providers.cjs": 8,
  "pull-review.cjs": 11,
- "quota.cjs": 150,
+ "quota.cjs": 91,
  "regressions.cjs": 32,
  "reliability.cjs": 28,
  "roadmap.cjs": 34,

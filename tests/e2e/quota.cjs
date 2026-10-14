@@ -27,6 +27,8 @@ async function mock(ctx) {
 async function device(browser, ctx) {
   ctx = ctx || (await browser.newContext({ viewport: { width: 1200, height: 800 } }));
   await mock(ctx);
+  // A 4-second sync margin instead of a minute, so the "only what changed" check needn't wait a minute.
+  await ctx.addInitScript(() => { window.__mrSyncMarginMs = 4000; });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -72,7 +74,7 @@ async function send(page, text) {
   check(first >= 30, 'first open downloads everything (6 chats + 24 messages)');
 
   // One more change on A (B gets it live), then re-open B a bit later: only what changed.
-  await B.page.waitForTimeout(65_000);
+  await B.page.waitForTimeout(6000);
   await send(A.page, 'one more');
   await B.page.waitForTimeout(3000);
   await B.page.reload();

@@ -22,8 +22,8 @@ import { normalizeKnowledgeSources } from './knowledge/core';
 
 const MAX_SYNCED_TEXT = 100_000;
 const MAX_DOC_CHARS = 900_000;
-/** Allowance for writes that were still in flight when we last looked. */
-const MARGIN_MS = 60_000;
+/** Allowance for writes that were still in flight when we last looked (in-app tests may shorten it). */
+const MARGIN_MS = Number((globalThis as { __mrSyncMarginMs?: number }).__mrSyncMarginMs) || 60_000;
 /** In "slow" mode, changes to a chat are sent at most this often. */
 const SLOW_DELAY_MS = 60_000;
 

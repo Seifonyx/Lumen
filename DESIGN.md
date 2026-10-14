@@ -44,8 +44,8 @@ Never use it for large areas, body text on white, or decoration.
 - Depth comes from tone and 1px lines; shadows only on floating things (message box, menus, dialogs).
 
 ## Layout and what goes where (one place for each thing)
-- **Sidebar**: logo + name · **New chat** (primary) · search · **Library** (assistants, prompts, tools,
-  knowledge, scheduled tasks; one window with tabs) · **Documents** · Projects (with +) · Recents (Select → a bar above the account: Move, Export, Delete) · account.
+- **Sidebar**: logo + name · search · **Library** (assistants, prompts, tools,
+  knowledge, scheduled tasks; one window with tabs) · **Documents** · Projects (+ New project chip on the heading row) · Recents (+ New chat chip on the heading row; phones: New chat floats bottom-right) · View all chats (select several → Move, Export, Delete) · account. Chips are small outlined pills.
 - **Top bar**: chat title, project pill, repository toggle, canvas. On a new chat the title spot shows the
   routing chip (`● Auto · 3 models`, `● Routing to Gemini Flash`, `● Incognito · not saved`). Incognito
   (eye-off) only on a new chat or while incognito.

@@ -1,18 +1,18 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { dayGroup, modKey, saveBlob, safeFileName } from '../lib/util';
-import { chatExportName, chatToMarkdown } from '../lib/chat-export';
+import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
 import type { Chat, Project } from '../types';
 import ProjectManager from './ProjectManager';
+import AllChats from './AllChats';
 import Logo from './Logo';
 import Modal from './Modal';
 import { useFocusScope } from '../lib/focus-scope';
 
 const EMPTY_PROJECTS: Project[] = [];
 
-function ChatRow({ chat, active, selecting, checked, onToggle }: { chat: Chat; active: boolean; selecting?: boolean; checked?: boolean; onToggle?: (id: string) => void }) {
+function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
   const { selectChat, deleteChat, renameChat, togglePin, moveChatToProject, setChatTags } = useStore.getState();
   const streaming = useStore((s) => s.streamingChatId === chat.id);
@@ -33,18 +33,6 @@ function ChatRow({ chat, active, selecting, checked, onToggle }: { chat: Chat; a
     document.addEventListener('mousedown', close);
     return () => document.removeEventListener('mousedown', close);
   }, [menu]);
-
-  if (selecting) {
-    if (!chat.messages.length && !chat.documents?.length) return null;
-    return (
-      <li className={`chat-row selecting${checked ? ' checked' : ''}`}>
-        <label className="chat-open chat-select" dir="auto" title={chat.title}>
-          <input type="checkbox" checked={Boolean(checked)} onChange={() => onToggle?.(chat.id)} aria-label={`Select ${chat.title}`} />
-          <span className="chat-title">{chat.title}</span>
-        </label>
-      </li>
-    );
-  }
 
   if (editing) {
     return (
@@ -131,15 +119,11 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
   const activeProjectId = useStore((s) => s.activeProjectId);
   const selectedProjectId = projects.some((p) => p.id === activeProjectId) ? activeProjectId : null;
   const open = useStore((s) => s.sidebarOpen);
-  const { newChat, setUi, selectProject, moveChatToProject } = useStore.getState();
+  const { newChat, setUi, selectProject } = useStore.getState();
   const [artifacts,setArtifacts]=useState(false);
   const library=(section:string)=>{setUi({sidebarOpen:false});window.dispatchEvent(new CustomEvent('mr:library',{detail:section}));};
   const [query, setQuery] = useState('');
-  const [selecting, setSelecting] = useState(false);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [bulkMove, setBulkMove] = useState(false);
-  const toggleSelected = (id: string) => setSelected((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
-  const endSelecting = () => { setSelecting(false); setSelected(new Set()); setBulkMove(false); };
+  const [allChats, setAllChats] = useState(false);
   const searchInput = useRef<HTMLInputElement>(null);
   const [projectManager, setProjectManager] = useState(false);
   const [editProjectId, setEditProjectId] = useState<string | undefined>(undefined);
@@ -212,12 +196,6 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
 
       <div className="sidebar-scroll">
       <div className="sidebar-bottom-actions">
-        {!phone && (
-          <button className="btn new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}>
-            <span className="new-chat-plus" aria-hidden="true"><Plus size={15} strokeWidth={2.4} /></span> <span>New chat</span>
-            <span className="kbd">{modKey}⇧O</span>
-          </button>
-        )}
         <label className="search sidebar-search-field">
           <Search size={16} />
           <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape' && query) { e.stopPropagation(); setQuery(''); } }} dir="auto" />
@@ -229,28 +207,11 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
       <div className="sidebar-navigation">
       <div className="sidebar-section-heading">
         <h2 className="sidebar-section-label">Projects</h2>
-        {projects.length > 0 && (
-          <button
-            className="icon-btn sm"
-            onClick={() => { setEditProjectId(undefined); setCreateNewProject(true); setProjectManager(true); }}
-            aria-label="New project"
-            title="Create a new project"
-          >
-            <Plus size={16} />
-          </button>
-        )}
+        <button type="button" className="sidebar-chip" onClick={() => { setEditProjectId(undefined); setCreateNewProject(true); setProjectManager(true); }} title="Create a new project"><Plus size={13} strokeWidth={2.2} /> New project</button>
       </div>
 
       <div className="sidebar-projects-list">
-        {projects.length === 0 ? (
-          <button
-            type="button"
-            className="sidebar-empty-project-btn"
-            onClick={() => { setEditProjectId(undefined); setCreateNewProject(true); setProjectManager(true); }}
-          >
-            <Plus size={14} /> New project
-          </button>
-        ) : (
+        {(
           projects.map((project) => {
             const isSelected = selectedProjectId === project.id;
             const count = chats.filter((c) => c.projectId === project.id).length;
@@ -289,7 +250,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
 
       <div className="sidebar-section-heading history-heading">
         <h2 className="sidebar-section-label history-label">{query ? 'Search results' : 'Recents'}</h2>
-        {groups.length > 0 && <button type="button" className="history-select" aria-pressed={selecting} onClick={() => (selecting ? endSelecting() : setSelecting(true))}>{selecting ? 'Cancel' : 'Select'}</button>}
+        {!phone && <button type="button" className="sidebar-chip new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}><Plus size={13} strokeWidth={2.2} /> New chat</button>}
       </div>
       <nav className="chat-list" aria-label="Chat history">
         {groups.length === 0 && <p className="muted small empty-list">{query ? 'No chats match.' : 'Your chats will appear here.'}</p>}
@@ -298,60 +259,18 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
             <h3 className="group-label">{label}</h3>
             <ul>
               {list.map((c) => (
-                <ChatRow key={c.id} chat={c} active={c.id === currentId} selecting={selecting} checked={selected.has(c.id)} onToggle={toggleSelected} />
+                <ChatRow key={c.id} chat={c} active={c.id === currentId} />
               ))}
             </ul>
           </section>
         ))}
       </nav>
+      {groups.length > 0 && <button type="button" className="view-all-chats" onClick={() => setAllChats(true)}>View all chats</button>}
       </div>
       </div>
-      {selecting && (() => {
-        const visibleIds = groups.flatMap(([, list]) => list.filter((c) => c.messages.length || c.documents?.length).map((c) => c.id));
-        const picked = chats.filter((c) => selected.has(c.id));
-        const n = picked.length;
-        const exportAll = async () => {
-          try {
-            const { default: JSZip } = await import('jszip');
-            const zip = new JSZip(), used = new Set<string>();
-            for (const chat of picked) {
-              let name = chatExportName(chat, 'md');
-              for (let i = 2; used.has(name.toLowerCase()); i++) name = `${safeFileName(chat.title, 'Chat')} (${i}).md`;
-              used.add(name.toLowerCase());
-              zip.file(name, chatToMarkdown(chat));
-            }
-            await saveBlob(await zip.generateAsync({ type: 'blob' }), `Model Router chats (${n}).zip`);
-          } catch (e) { useStore.getState().toast(`Couldn't export: ${(e as Error).message}`, 'error'); }
-        };
-        const removeAll = async () => {
-          if (!confirm(`Delete ${n} chat${n === 1 ? '' : 's'}? This can't be undone.`)) return;
-          for (const chat of picked) await useStore.getState().deleteChat(chat.id);
-          useStore.getState().toast(`Deleted ${n} chat${n === 1 ? '' : 's'}`);
-          endSelecting();
-        };
-        return (
-          <div className="bulk-bar" role="toolbar" aria-label="Selected chats" onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); endSelecting(); } }}>
-            <div className="bulk-count">
-              <span aria-live="polite">{n} selected</span>
-              <button type="button" className="history-select" onClick={() => setSelected(n === visibleIds.length ? new Set() : new Set(visibleIds))}>{n === visibleIds.length ? 'Select none' : 'Select all'}</button>
-            </div>
-            {bulkMove && (
-              <div className="bulk-move" role="menu" aria-label="Move to project">
-                <button role="menuitem" onClick={() => { picked.forEach((c) => moveChatToProject(c.id, null)); useStore.getState().toast(`Moved ${n} to All chats`); endSelecting(); }}>All chats · no project</button>
-                {projects.map((p) => <button key={p.id} role="menuitem" onClick={() => { picked.forEach((c) => moveChatToProject(c.id, p.id)); useStore.getState().toast(`Moved ${n} to ${p.name}`); endSelecting(); }}><span className={`sidebar-project-dot color-${p.color || 'indigo'}`} aria-hidden="true" />{p.name}</button>)}
-              </div>
-            )}
-            <div className="bulk-actions">
-              <button type="button" className="btn small" disabled={!n || !projects.length} aria-expanded={bulkMove} title={projects.length ? undefined : 'Create a project first'} onClick={() => setBulkMove(!bulkMove)}><FolderKanban size={15} /> Move</button>
-              <button type="button" className="btn small" disabled={!n} onClick={() => void exportAll()}><Download size={15} /> Export</button>
-              <button type="button" className="btn small danger" disabled={!n} onClick={() => void removeAll()}><Trash2 size={15} /> Delete</button>
-            </div>
-          </div>
-        );
-      })()}
       <div className="sidebar-footer">
         {/* On phones New chat sits at the inline end of the footer; it comes first in the DOM so the account button stays last. */}
-        {phone && <button className="btn new-chat" onClick={newChat}><span className="new-chat-plus" aria-hidden="true"><Plus size={15} strokeWidth={2.4} /></span> <span>New chat</span></button>}
+        {phone && <button className="sidebar-chip new-chat floating" onClick={newChat}><Plus size={16} strokeWidth={2.2} /> New chat</button>}
         <button className="sidebar-foot" onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })} aria-label="Settings" title={`Settings (${modKey},)`}>
           {user?.photo ? <img className="avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
           <span className="account-text">
@@ -384,6 +303,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
         </Modal>
       );
     })()}
+    {allChats && <AllChats onClose={() => setAllChats(false)} />}
     {projectManager && (
       <ProjectManager
         initialProjectId={editProjectId}

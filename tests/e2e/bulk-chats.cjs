@@ -1,4 +1,4 @@
-// Select several chats in the sidebar, export them as one zip, then delete them together.
+// Sidebar → View all chats: select several, export them as one zip, then delete them together.
 const { chromium } = require('playwright'), assert = require('node:assert/strict');
 (async () => {
   const browser = await chromium.launch();
@@ -21,7 +21,6 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
       });
       const page = await ctx.newPage(), errors = [];
       page.on('pageerror', (e) => errors.push(e.message));
-      page.on('dialog', (d) => d.accept());
       await page.goto(process.env.MR_TEST_URL || 'http://localhost:5190/?emulator');
       for (const text of ['first chat', 'second chat', 'third chat']) {
         await page.locator('.composer textarea').waitFor();
@@ -33,18 +32,23 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
       }
       const openMenu = async () => { if (width < 900) { await page.click('.menu-btn'); await page.locator('.sidebar.open').waitFor(); } };
       await openMenu();
-      await page.click('.history-select:text("Select")');
-      await page.click('.bulk-bar .history-select:text("Select all")');
-      assert.match(await page.textContent('.bulk-count'), /3 selected/);
-      const [download] = await Promise.all([page.waitForEvent('download'), page.click('.bulk-actions button:has-text("Export")')]);
+      await page.click('.view-all-chats');
+      const dialog = page.getByRole('dialog', { name: 'All chats' });
+      await dialog.waitFor();
+      await dialog.getByLabel('Select all chats').check();
+      assert.match(await dialog.locator('.all-chats-head').textContent(), /3 selected/);
+      const [download] = await Promise.all([page.waitForEvent('download'), dialog.getByRole('button', { name: 'Export' }).click()]);
       assert.match(download.suggestedFilename(), /Model Router chats \(3\)\.zip/);
-      await page.click('.bulk-bar .history-select:text("Select none")');
-      await page.getByLabel('Select first chat').check();
-      await page.getByLabel('Select second chat').check();
+      await dialog.getByLabel('Select all chats').uncheck();
+      await dialog.getByLabel('Select first chat').check();
+      await dialog.getByLabel('Select second chat').check();
       if (process.env.SHOT) await page.screenshot({ path: `${process.env.SHOT}-${width}.png` });
-      assert.ok(await page.locator('.bulk-bar').evaluate((el) => el.scrollWidth <= el.clientWidth + 1), 'bar fits');
-      await page.click('.bulk-actions button:has-text("Delete")');
-      await page.locator('.bulk-bar').waitFor({ state: 'detached' });
+      assert.ok(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), 'window fits');
+      await dialog.getByRole('button', { name: 'Delete' }).click();
+      await dialog.getByRole('alert').getByRole('button', { name: 'Delete' }).click();
+      await dialog.locator('.all-chats-list li').nth(1).waitFor({ state: 'detached' });
+      assert.deepEqual(await dialog.locator('.all-chats-title').allTextContents(), ['third chat']);
+      await page.keyboard.press('Escape');
       const titles = await page.locator('.chat-list .chat-title').allTextContents();
       assert.deepEqual(titles.filter((t) => t !== 'New chat'), ['third chat'], titles.join('|'));
       assert.deepEqual(errors, []);

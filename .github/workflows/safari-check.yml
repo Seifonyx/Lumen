@@ -8,11 +8,11 @@ on:
 
 jobs:
   webkit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -35,7 +35,7 @@ jobs:
           while read -r line; do [ "$line" = "no spills" ] && echo "::notice title=text fit::no text spills in WebKit" || echo "::warning title=text fit::$line"; done < shots/text-fit.txt
           echo "::notice title=screenshots::$(ls shots/*.png 2>/dev/null | wc -l) screenshots taken"
           exit $failed
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: safari-screenshots

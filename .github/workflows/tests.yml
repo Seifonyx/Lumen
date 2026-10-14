@@ -18,11 +18,11 @@ concurrency:
 jobs:
   checks:
     name: Type check, build, unit tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -33,11 +33,11 @@ jobs:
 
   in-app:
     name: In-app tests (Chromium + Firebase emulators)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -63,7 +63,7 @@ jobs:
       - run: npm run test:e2e:ci
       - name: Keep screenshots
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: screenshots
           path: tests/e2e/out

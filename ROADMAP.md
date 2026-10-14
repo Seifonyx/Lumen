@@ -21,7 +21,7 @@ Audit: 2026-10-12. Only mark a feature complete after its working implementation
 | 24 Sharing / chat export | Whole-chat Word/Markdown and PDF preview/system print implemented and deployed in phase 5a, including sources and Canvas. Desktop/phone checks passed on live and preview. Opt-in public links remain. |
 | 25 Attachment sync | Partial: thumbnails/small extracted text sync; small original binaries remain. |
 | 26 Open-time tasks | Implemented and deployed in phase 5c: one-off/daily reminders and AI requests, private schedule sync, atomic occurrence claims, time zones/DST, privacy review, separate result chats and manual retry. Runs only with the app open, visible and online. All 29 local browser suites and CI passed; live/preview desktop and phone checks passed. |
-| 27 Desktop polish | Partial: installable PWA; desktop controls/shortcuts need audit. |
+| 27 Desktop polish | Implemented 2026-10-14: installable PWA; shortcuts for new chat, palette, sidebar, Library, Settings, copy last reply, delete chat, focus message box, stop; cheat sheet (Ctrl/⌘ + / or ?); shortcut hints in tooltips. |
 | 28 Performance / accessibility | Phase 10 deployed and checked: long histories render a visible window while preserving focused/selected rows; full-conversation reading and browser Find remain available. Shared nested-dialog focus/isolation, keyboard navigation, labels, contrast, reduced motion and native zoom improved. All 38 browser suites and CI passed; 144 automated accessibility scans per site passed in light/dark/black at desktop/phone widths. Physical-device and assistive-technology testing remain ongoing quality work. |
 | 29 Bigger jobs | Implemented: repository reads/edits/diffs/commits/PR creation, pull-request review (phase 6), plan approval (phase 7), individual changed-block acceptance/rejection (phase 8), and latest-commit undo (phase 9). Undo creates a revert commit preserving history and the exact previous file tree; only latest single-parent commits are supported. Stale reviews, changed branches/accounts/keys and uncommitted work are guarded. Both new phases deployed and checked on live/preview at desktop/320/390px; all 36 browser suites, unit/type/build checks and final CI passed. |
 
@@ -64,5 +64,4 @@ Done before new roadmap work, at the user's request; deployed live.
   demand); CI about 12 minutes; manual Safari (WebKit) screenshot workflow.
 
 Still open from the table above: 14 (template-preserving Office edits), 17 (images, waiting on free
-access), 23 (continuous voice), 24 (public share links), 25 (original attachment sync), 27 (desktop
-shortcut audit). First-run guidance for invited users was suggested and deferred by the user.
+access), 23 (continuous voice), 24 (public share links), 25 (original attachment sync), First-run guidance for invited users was suggested and deferred by the user.

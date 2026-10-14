@@ -179,7 +179,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
     >
       <div className="sidebar-head">
         <span className="sidebar-brand"><Logo size={24} />Model Router</span>
-        <button className="icon-btn collapse-sidebar" onClick={onCollapse} aria-label="Collapse sidebar" title="Collapse sidebar">
+        <button className="icon-btn collapse-sidebar" onClick={onCollapse} aria-label="Collapse sidebar" title={`Collapse sidebar (${modKey}⇧S)`}>
           <PanelLeftClose size={18} />
         </button>
         <button className="icon-btn close-sidebar" onClick={() => setUi({ sidebarOpen: false })} aria-label="Close menu">
@@ -199,7 +199,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
           <Search size={16} />
           <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape' && query) { e.stopPropagation(); setQuery(''); } }} dir="auto" />
         </label>
-        <button className="library-button" onClick={() => library('assistants')} title="Assistants, prompts, knowledge, tools and scheduled tasks"><BookOpen size={18} /><span>Library</span></button>
+        <button className="library-button" onClick={() => library('assistants')} title={`Assistants, prompts, knowledge, tools and scheduled tasks (${modKey}⇧L)`}><BookOpen size={18} /><span>Library</span></button>
         <button className="library-button" onClick={() => setArtifacts(true)}><FileText size={18} /><span>Documents</span></button>
       </div>
 
@@ -283,7 +283,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
       <div className="sidebar-footer">
         {/* On phones New chat sits at the inline end of the footer; it comes first in the DOM so the account button stays last. */}
         {phone && <button className="btn new-chat" onClick={newChat}><Plus size={18} /> <span>New chat</span></button>}
-        <button className="sidebar-foot" onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })} aria-label="Settings" title="Settings">
+        <button className="sidebar-foot" onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })} aria-label="Settings" title={`Settings (${modKey},)`}>
           {user?.photo ? <img className="avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
           <span className="account-name">{user?.name || user?.email?.split('@')[0] || 'Account'}</span>
         </button>

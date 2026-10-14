@@ -7,12 +7,15 @@ import Toasts from './components/Toasts';
 import UpdateBar from './components/UpdateBar';
 import WorkspacePanel from './components/WorkspacePanel';
 import { useStore } from './store';
+import { matchShortcut } from './lib/shortcuts';
+import { copyText } from './lib/util';
 import { keepScreenAwake } from './lib/wakelock';
 import { installSidebarGestures } from './lib/sidebar-gesture';
 import TaskEngine from './components/TaskEngine';
 import { cancelKnowledge } from './lib/knowledge/engine';
 
 const RunPanel = lazy(() => import('./components/RunPanel'));
+const ShortcutsModal = lazy(() => import('./components/ShortcutsModal'));
 // Screens opened on demand load their code the first time they open.
 const SettingsModal = lazy(() => import('./components/SettingsModal'));
 const CommandPalette = lazy(() => import('./components/CommandPalette'));
@@ -38,6 +41,7 @@ export default function App() {
   const previewOpen = useStore((s) => Boolean(s.preview));
   const comparisonOpen = useStore((s) => Boolean(s.comparison));
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [libraryTab, setLibraryTab] = useState<'assistants' | 'prompts' | 'tools' | 'tasks' | 'knowledge'>('assistants');
   const accountId = useStore(s => s.user?.uid);
@@ -46,7 +50,9 @@ export default function App() {
   useEffect(() => {
     const open = (event: Event) => { const requested=(event as CustomEvent).detail; setLibraryTab(requested === 'knowledge' ? 'knowledge' : requested === 'tasks' ? 'tasks' : requested === 'tools' ? 'tools' : 'assistants'); setUi({ sidebarOpen: false }); setLibraryOpen(true); };
     window.addEventListener('mr:library', open);
-    return () => window.removeEventListener('mr:library', open);
+    const help = () => setShortcutsOpen(true);
+    window.addEventListener('mr:shortcuts', help);
+    return () => { window.removeEventListener('mr:library', open); window.removeEventListener('mr:shortcuts', help); };
   }, [setUi]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('mr.sidebarCollapsed') === 'true');
   const toggleSidebar = () => setSidebarCollapsed((collapsed) => {
@@ -69,26 +75,38 @@ export default function App() {
     if (authed) return installSidebarGestures();
   }, [authed]);
 
-  // Global shortcuts: Ctrl/Cmd+Shift+O new chat, Ctrl/Cmd+K command palette, Esc stop/close.
+  // Global shortcuts (see src/lib/shortcuts.ts and the cheat sheet). Esc closes the palette or the phone menu,
+  // otherwise stops a reply.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const mod = e.metaKey || e.ctrlKey;
       const s = useStore.getState();
       if (commandPaletteOpen && e.key === 'Escape') {
         e.preventDefault();
         e.stopImmediatePropagation();
         setCommandPaletteOpen(false);
-      } else if (mod && e.shiftKey && e.key.toLowerCase() === 'o') {
-        e.preventDefault();
-        s.newChat();
-      } else if (mod && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setCommandPaletteOpen(true);
-      } else if (e.key === 'Escape' && s.sidebarOpen && !s.settingsOpen && !document.querySelector('.modal-backdrop, .sheet-backdrop, .models-pop, .usage-pop')) {
-        s.setUi({ sidebarOpen: false });
-      } else if (e.key === 'Escape' && s.streamingChatId && !s.preview && !s.runner && !s.settingsOpen && !commandPaletteOpen) {
-        s.stop();
+        return;
       }
+      if (e.key === 'Escape') {
+        if (s.sidebarOpen && !s.settingsOpen && !document.querySelector('.modal-backdrop, .sheet-backdrop, .models-pop, .usage-pop')) s.setUi({ sidebarOpen: false });
+        else if (s.streamingChatId && !s.preview && !s.runner && !s.settingsOpen) s.stop();
+        return;
+      }
+      const shortcut = matchShortcut(e);
+      if (!shortcut) return;
+      e.preventDefault();
+      const chat = s.chats.find((c) => c.id === s.currentId);
+      if (shortcut === 'new-chat') s.newChat();
+      else if (shortcut === 'palette') setCommandPaletteOpen(true);
+      else if (shortcut === 'help') setShortcutsOpen(true);
+      else if (shortcut === 'settings') s.setUi({ settingsOpen: true, sidebarOpen: false });
+      else if (shortcut === 'library') window.dispatchEvent(new Event('mr:library'));
+      else if (shortcut === 'sidebar') { if (window.matchMedia('(max-width: 899px)').matches) s.setUi({ sidebarOpen: !s.sidebarOpen }); else toggleSidebar(); }
+      else if (shortcut === 'focus') document.querySelector<HTMLTextAreaElement>('.composer textarea')?.focus();
+      else if (shortcut === 'copy-last') {
+        const last = chat?.messages.filter((m) => m.role === 'assistant' && m.text).at(-1);
+        if (!last) s.toast('No reply to copy yet.', 'info');
+        else void copyText(last.text).then((ok) => s.toast(ok ? 'Copied the last reply' : 'Couldn’t copy', ok ? 'success' : 'error'));
+      } else if (shortcut === 'delete-chat' && chat?.messages.length && confirm(`Delete "${chat.title}"?`)) void s.deleteChat(chat.id);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -118,6 +136,7 @@ export default function App() {
       {commandPaletteOpen && <Suspense fallback={null}><CommandPalette onClose={() => setCommandPaletteOpen(false)} /></Suspense>}
       {libraryOpen && <Suspense fallback={null}><AssistantLibrary key={accountId} initialTab={libraryTab} onClose={() => setLibraryOpen(false)} /></Suspense>}
       {comparisonOpen && <Suspense fallback={null}><ComparisonResultsModal /></Suspense>}
+      {shortcutsOpen && <Suspense fallback={null}><ShortcutsModal onClose={() => setShortcutsOpen(false)} /></Suspense>}
       {repoPicker && <Suspense fallback={null}><RepoPicker onClose={() => setUi({ repoPicker: false })} /></Suspense>}
       {previewOpen && <Suspense fallback={null}><PreviewModal /></Suspense>}
       {exportChatId && <Suspense fallback={null}><ChatExportModal /></Suspense>}

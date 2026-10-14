@@ -1,5 +1,6 @@
 import { FolderGit2, FolderKanban, ArrowDown, FileText, Menu, PanelLeftOpen, EyeOff } from 'lucide-react';
 import WelcomeStars from './WelcomeStars';
+import { modKey } from '../lib/util';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { activeSummary } from '../lib/compact';
@@ -91,7 +92,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
           <button className="icon-btn menu-btn" onClick={() => setUi({ sidebarOpen: true })} aria-label="Open chats">
             <Menu size={20} />
           </button>
-          <button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title="Expand sidebar">
+          <button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title={`Expand sidebar (${modKey}⇧S)`}>
             <PanelLeftOpen size={20} />
           </button>
           <span className="chat-heading project-crumb">Projects</span>
@@ -116,7 +117,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
         <button className="icon-btn menu-btn" onClick={() => setUi({ sidebarOpen: true })} aria-label="Open chats">
           <Menu size={20} />
         </button>
-        <button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title="Expand sidebar">
+        <button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title={`Expand sidebar (${modKey}⇧S)`}>
           <PanelLeftOpen size={20} />
         </button>
         {empty ? (

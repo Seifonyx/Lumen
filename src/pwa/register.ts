@@ -12,6 +12,7 @@ export function registerServiceWorker(onUpdate: (apply: () => void) => void) {
     } catch {
       return; // e.g. private browsing; the app still works online
     }
+    if (!reg) return; // some browsers resolve without a registration when workers are blocked
     const offer = (worker: ServiceWorker) =>
       onUpdate(() => {
         applying = true;

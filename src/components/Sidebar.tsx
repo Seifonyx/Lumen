@@ -1,5 +1,5 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
-import { FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
+import { ChevronRight, FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
@@ -265,7 +265,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
           </section>
         ))}
       </nav>
-      {groups.length > 0 && <button type="button" className="view-all-chats" onClick={() => setAllChats(true)}>View all chats</button>}
+      {groups.length > 0 && <button type="button" className="view-all-chats" onClick={() => setAllChats(true)}>View all chats <ChevronRight size={14} aria-hidden="true" /></button>}
       </div>
       </div>
       <div className="sidebar-footer">

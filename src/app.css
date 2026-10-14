@@ -3448,13 +3448,19 @@ input, textarea { caret-color: var(--text); }
 .all-chats { padding: 14px 22px 20px; }
 @media (max-width: 600px) { .all-chats { padding: 12px 16px calc(16px + env(safe-area-inset-bottom)); } }
 
-/* The "+" in New project / New chat: glowing lime that gently shimmers (only the plus; the chip stays as is). */
-.sidebar .sidebar-chip svg { --plus: var(--signal-strong); color: var(--plus); filter: drop-shadow(0 0 3px color-mix(in srgb, var(--signal) 70%, transparent)); animation: plus-shimmer 2.6s ease-in-out infinite; }
+/* The "+" in New project / New chat: lime with a soft, steady glow (only the plus; the chip stays as is). */
+.sidebar .sidebar-chip svg { --plus: var(--signal-strong); color: var(--plus); filter: drop-shadow(0 0 2px color-mix(in srgb, var(--signal) 55%, transparent)); }
 :root[data-theme='dark'] .sidebar .sidebar-chip svg, :root[data-appearance='black'] .sidebar .sidebar-chip svg { --plus: var(--signal); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .sidebar .sidebar-chip svg { --plus: var(--signal); } }
-@keyframes plus-shimmer {
-  0%, 100% { filter: drop-shadow(0 0 2px color-mix(in srgb, var(--signal) 55%, transparent)) brightness(1); }
-  50% { filter: drop-shadow(0 0 7px var(--signal)) drop-shadow(0 0 2px var(--signal)) brightness(1.25); }
-}
-@media (prefers-reduced-motion: reduce) { .sidebar .sidebar-chip svg { animation: none; } }
 .sidebar .sidebar-chip svg { stroke-width: 2.8; }
+
+/* Sidebar text levels, so each kind of text is recognisable at a glance:
+   section headings (bright, bold) · day labels (small caps, quiet) · chats (regular) · View all (small link with arrow). */
+.sidebar h2.sidebar-section-label, .sidebar .sidebar-section-heading h2.sidebar-section-label, .sidebar .history-heading h2.history-label { color: var(--text); font-size: 13px; font-weight: 650; letter-spacing: -0.005em; }
+.sidebar .group-label { font-size: 10.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--text-3); padding-top: 10px; }
+.sidebar .chat-list section:first-child .group-label { padding-top: 4px; }
+.sidebar .chat-row .chat-open { color: var(--text-2); font-weight: 400; }
+.sidebar .chat-row.active .chat-open { color: var(--text); font-weight: 500; }
+.sidebar .view-all-chats { display: inline-flex; align-items: center; gap: 4px; width: auto; margin-top: 8px; padding: 6px var(--sb-inset); font-size: 12.5px; font-weight: 500; color: var(--text-3); }
+.sidebar .view-all-chats svg { width: 14px; height: 14px; }
+.sidebar .view-all-chats:hover { color: var(--text); }

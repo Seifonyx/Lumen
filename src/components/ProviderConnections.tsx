@@ -111,7 +111,7 @@ export default function ProviderConnections({ main, draft, setDraft, saved }: { 
         <div className="provider-connection-body">
           <p className="muted small">Your key and prompt pass through this app’s relay to NVIDIA or Cloudflare. The relay stores neither. Leave the URL blank to use it, or enter a relay you control.</p>
           <label className="provider-field"><span>Custom relay URL (optional)</span><input type="url" aria-label="Provider relay URL" placeholder={DEFAULT_PROVIDER_RELAY_URL} autoCapitalize="none" spellCheck={false} value={draft.providerRelayUrl || ''} onChange={(e) => setDraft({ ...draft, providerRelayUrl: e.target.value })} /></label>
-          <a className="link-btn small inline" href="https://github.com/Seifonyx/Model-Router/blob/main/server/provider-relay/README.md" target="_blank" rel="noopener noreferrer">Relay setup <ExternalLink size={12} /></a>
+          <a className="link-btn small inline" href="https://github.com/Seifonyx/lumen/blob/main/server/provider-relay/README.md" target="_blank" rel="noopener noreferrer">Relay setup <ExternalLink size={12} /></a>
         </div>
       </details>
       <p className="muted small provider-retired">GitHub Models was retired on July 30, 2026; your GitHub coding connection still works. <a className="link-btn small inline" href="https://docs.github.com/en/github-models" target="_blank" rel="noopener noreferrer">Notice <ExternalLink size={12} /></a></p>

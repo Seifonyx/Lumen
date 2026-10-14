@@ -8,7 +8,7 @@ import { useStore } from '../store';
 // branch; it deploys to the `dev` channel.
 
 const OWNER = 'Seifonyx';
-const REPO = 'Model-Router';
+const REPO = 'lumen';
 const WORKFLOW = 'preview.yml';
 /** The preview channel's address (its sign-in is already set up in src/lib/firebase.ts). */
 export const PREVIEW_URL = 'https://model-router--dev-82jv5mm2.web.app';

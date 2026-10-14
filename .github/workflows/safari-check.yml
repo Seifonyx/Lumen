@@ -20,16 +20,21 @@ jobs:
       - run: npx playwright install --with-deps webkit
       - run: npm run build
       - name: Screenshots
+        # Every finding is also posted as a note on the run, so it can be read without downloading anything.
         run: |
           npx vite preview --port 5191 --strictPort &
           for i in $(seq 1 30); do curl -sf http://localhost:5191/ >/dev/null && break; sleep 1; done
           mkdir -p shots
           export BROWSER=webkit
-          node tests/e2e/helpers/shots.cjs shots
-          node tests/e2e/helpers/settings-shots.cjs shots
-          node tests/e2e/helpers/project-shots.cjs shots
-          node tests/e2e/helpers/more-shots.cjs shots
-          node tests/e2e/helpers/textfit.cjs | tee shots/text-fit.txt
+          failed=0
+          for script in shots settings-shots project-shots more-shots; do
+            node tests/e2e/helpers/$script.cjs shots > shots/$script.log 2>&1 || { failed=1; echo "::error title=$script crashed::$(tail -c 900 shots/$script.log | tr '\n' ' ')"; }
+            grep -E "pageerror|Timeout|Error" shots/$script.log | head -20 | while read -r line; do echo "::warning title=$script::$line"; done
+          done
+          node tests/e2e/helpers/textfit.cjs > shots/text-fit.txt 2>&1 || failed=1
+          while read -r line; do [ "$line" = "no spills" ] && echo "::notice title=text fit::no text spills in WebKit" || echo "::warning title=text fit::$line"; done < shots/text-fit.txt
+          echo "::notice title=screenshots::$(ls shots/*.png 2>/dev/null | wc -l) screenshots taken"
+          exit $failed
       - uses: actions/upload-artifact@v4
         if: always()
         with:

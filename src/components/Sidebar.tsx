@@ -289,7 +289,28 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
         </button>
       </div>
     </aside>
-    {artifacts&&<Modal title="Documents" onClose={()=>setArtifacts(false)}><div className="artifact-list">{chats.filter(c=>!isTemporaryChat(c)).flatMap(c=>(c.documents||[]).map(doc=><button className="btn" key={`${c.id}-${doc.id}`} onClick={()=>{useStore.getState().selectChat(c.id);setUi({canvasOpen:true,canvasDocumentId:doc.id});setArtifacts(false);}}><FileText size={18}/><span>{doc.name}<small>{c.title}</small></span></button>))}{!chats.some(c=>!isTemporaryChat(c)&&c.documents?.length)&&<p className="muted">Documents created in canvas will appear here.</p>}</div></Modal>}
+    {artifacts && (() => {
+      const docs = chats.filter((c) => !isTemporaryChat(c)).flatMap((c) => (c.documents || []).map((doc) => ({ doc, chat: c }))).sort((x, y) => y.doc.updatedAt - x.doc.updatedAt);
+      return (
+        <Modal title="Documents" onClose={() => setArtifacts(false)}>
+          {docs.length ? (
+            <ul className="doc-list">
+              {docs.map(({ doc, chat }) => (
+                <li key={`${chat.id}-${doc.id}`}>
+                  <button type="button" className="doc-row" onClick={() => { useStore.getState().selectChat(chat.id); setUi({ canvasOpen: true, canvasDocumentId: doc.id }); setArtifacts(false); }}>
+                    <span className="doc-icon" aria-hidden="true"><FileText size={17} /></span>
+                    <span className="doc-text"><span className="doc-name">{doc.name}</span><span className="doc-chat">{chat.title}</span></span>
+                    <span className="doc-time">{new Date(doc.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="doc-empty"><FileText size={22} aria-hidden="true" /><p>Documents you write in Canvas appear here.</p></div>
+          )}
+        </Modal>
+      );
+    })()}
     {projectManager && (
       <ProjectManager
         initialProjectId={editProjectId}

@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Boxes, FolderKanban, MessageSquare, Plus, Search, Settings } from 'lucide-react';
+import { BarChart3, BookOpen, Boxes, Clock, FileText, FolderKanban, MessageSquare, Plus, Search, Settings, Sparkles, Wrench } from 'lucide-react';
 import { modKey } from '../lib/util';
 import { modelLabel, useStore } from '../store';
 import { savedChats } from '../lib/temporary-chat';
@@ -30,12 +30,12 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
   const items = useMemo(() => {
     const all: Item[] = [
       { id: 'new-chat', label: 'New chat', detail: `${modKey}⇧O`, Icon: Plus, run: newChat },
-      { id: 'library', label: 'Saved helpers and prompts', detail: 'Library', Icon: Boxes, run: () => window.dispatchEvent(new Event('mr:library')) },
-      { id: 'knowledge', label: 'Search knowledge', detail: 'Documents and page citations', Icon: Boxes, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'knowledge' })) },
-      { id: 'tasks', label: 'Tasks & reminders', detail: 'Scheduled help while the app is open', Icon: Boxes, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tasks' })) },
-      { id: 'free-tools', label: 'Free tools', detail: 'YouTube · calculations · web reader', Icon: Boxes, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tools' })) },
-      { id: 'canvas', label: 'Open document canvas', detail: 'Write and edit', Icon: Plus, run: () => useStore.getState().openCanvas() },
-      { id: 'analysis', label: 'Data analysis', detail: 'Python · CSV · Excel · charts', Icon: Boxes, run: () => setUi({ runner: { lang: 'python', code: ANALYSIS_TEMPLATES.overview.code, analysis: true }, sidebarOpen: false }) },
+      { id: 'library', label: 'Saved helpers and prompts', detail: 'Library', Icon: Sparkles, run: () => window.dispatchEvent(new Event('mr:library')) },
+      { id: 'knowledge', label: 'Search knowledge', detail: 'Documents and page citations', Icon: BookOpen, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'knowledge' })) },
+      { id: 'tasks', label: 'Tasks & reminders', detail: 'Scheduled help while the app is open', Icon: Clock, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tasks' })) },
+      { id: 'free-tools', label: 'Free tools', detail: 'YouTube · calculations · web reader', Icon: Wrench, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tools' })) },
+      { id: 'canvas', label: 'Open document canvas', detail: 'Write and edit', Icon: FileText, run: () => useStore.getState().openCanvas() },
+      { id: 'analysis', label: 'Data analysis', detail: 'Python · CSV · Excel · charts', Icon: BarChart3, run: () => setUi({ runner: { lang: 'python', code: ANALYSIS_TEMPLATES.overview.code, analysis: true }, sidebarOpen: false }) },
       ...sections.map(([id, label]) => ({ id: `settings-${id}`, label: `Settings · ${label}`, detail: 'Settings', Icon: Settings, run: () => setUi({ settingsOpen: true, settingsTab: id, sidebarOpen: false }) })),
       ...projects.map((project) => ({ id: `project-${project.id}`, label: project.name, detail: 'Project', Icon: FolderKanban, run: () => selectProject(project.id) })),
       ...enabled.map((id) => ({ id: `model-${id}`, label: modelLabel(catalog, id), detail: 'Set default model', Icon: Boxes, run: () => updateSettings({ defaultModel: id }) })),

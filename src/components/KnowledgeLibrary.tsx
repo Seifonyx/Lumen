@@ -274,7 +274,7 @@ export default function KnowledgeLibrary({ onClose }: { onClose: () => void }) {
         Search your PDFs and notes, then ask with page references. Documents
         stay in this device’s library.
       </p>
-      <form
+      {(loadingLibrary || docs.length > 0 || Boolean(importing)) && <form
         className="knowledge-search"
         onSubmit={(e) => {
           e.preventDefault();
@@ -311,7 +311,7 @@ export default function KnowledgeLibrary({ onClose }: { onClose: () => void }) {
           {busy ? <Loader2 size={16} className="spin" /> : <Search size={16} />}
           Search
         </button>
-      </form>
+      </form>}
       {mode && (
         <p role="status" className="knowledge-search-mode muted small">
           {mode}

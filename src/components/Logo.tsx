@@ -1,14 +1,25 @@
-/** The Lumen mark: two inputs routed to one model. Drawn in the current text colour; the chosen route lights up in the signal colour. */
+import { useId } from 'react';
+
+/** The Lumen mark: an eclipse, a dark moon ringed by lime light with one bright flare. Same tile in every theme (it's the app icon). */
 export default function Logo({ size = 24, className = "" }: { size?: number; className?: string }) {
+  const id = useId().replace(/:/g, '');
   return (
-    <svg className={`logo ${className}`} width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="currentColor" />
-      <g stroke="var(--logo-ink, #fff)" strokeWidth="2.2" strokeLinecap="round" fill="none">
-        <path d="M11.5 11 L19.5 15.2 M11.5 21 L19.5 16.8" />
+    <svg className={`logo ${className}`} width={size} height={size} viewBox="0 0 512 512" aria-hidden="true">
+      <defs>
+        <clipPath id={`${id}c`}><rect width="512" height="512" rx="120" /></clipPath>
+        <radialGradient id={`${id}bg`} cx=".5" cy=".45" r=".7"><stop offset="0" stopColor="#18200f" /><stop offset="1" stopColor="#060708" /></radialGradient>
+        <linearGradient id={`${id}ring`} x1="0" y1="1" x2="1" y2="0"><stop offset="0" stopColor="#f6ffc8" /><stop offset=".45" stopColor="#c2ef3a" /><stop offset="1" stopColor="#6f9e00" /></linearGradient>
+        <filter id={`${id}b1`} x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="30" /></filter>
+        <filter id={`${id}b2`} x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="9" /></filter>
+      </defs>
+      <g clipPath={`url(#${id}c)`}>
+        <rect width="512" height="512" fill={`url(#${id}bg)`} />
+        <circle cx="256" cy="256" r="150" fill="#c2ef3a" opacity=".75" filter={`url(#${id}b1)`} />
+        <circle cx="256" cy="256" r="134" fill="none" stroke={`url(#${id}ring)`} strokeWidth="14" />
+        <circle cx="268" cy="246" r="132" fill="#060708" />
+        <circle cx="166" cy="344" r="34" fill="#fff" opacity=".9" filter={`url(#${id}b2)`} />
+        <path d="M166 298Q170.6 339.4 212 344Q170.6 348.6 166 390Q161.4 348.6 120 344Q161.4 339.4 166 298Z" fill="#fff" />
       </g>
-      <circle cx="10" cy="10.5" r="2.6" fill="var(--logo-ink, #fff)" />
-      <circle cx="10" cy="21.5" r="2.6" fill="var(--logo-ink, #fff)" />
-      <circle cx="22" cy="16" r="3.4" fill="var(--logo-out, var(--logo-ink, #fff))" />
     </svg>
   );
 }

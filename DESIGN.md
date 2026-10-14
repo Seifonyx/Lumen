@@ -7,6 +7,9 @@ up wherever something is live, like the status light on a router.
 It is its own app. Don't copy another product's look (no serif "greeting" headings, no terracotta/orange
 accent, no warm-brown dark mode, no ghost icon). When in doubt, remove.
 
+## Mark
+Lumen's mark is the **Eclipse**: a dark moon ringed by lime light with one white flare (src/components/Logo.tsx, public/icon.svg; PNGs rendered from the same drawing). It is always a dark tile, in every theme.
+
 ## Tokens (the Identity section of src/app.css is the source of truth)
 
 | Role | Light | Dark | True black |

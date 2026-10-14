@@ -17,6 +17,19 @@ service cloud.firestore {
       allow read, write: if invited() && request.auth.uid == uid;
     }
 
+    // Public share links: a copy of one chat's text under an unguessable id. Anyone with the link can open
+    // that one document; nobody can list links except their owner. Only the owner can update or remove it.
+    match /modelRouterShares/{id} {
+      allow get: if id.size() >= 20;
+      allow list: if invited() && resource.data.owner == request.auth.uid;
+      allow create, update: if invited() && id.size() >= 20
+        && request.resource.data.owner == request.auth.uid
+        && (resource == null || resource.data.owner == request.auth.uid)
+        && request.resource.data.keys().hasOnly(['owner', 'chatId', 'title', 'messages', 'masked', 'createdAt', 'updatedAt', 'v'])
+        && request.resource.data.messages is list && request.resource.data.messages.size() <= 400;
+      allow delete: if invited() && resource.data.owner == request.auth.uid;
+    }
+
     // The shared daily count of Firebase use (for the free-plan guard). Counters only, no chat data.
     match /modelRouterShared/{id} {
       allow read: if invited() && id.matches('quota-[0-9-]+');

@@ -3182,3 +3182,35 @@ input, textarea { caret-color: var(--text); }
 .voice-text { margin: 0; max-height: 34vh; overflow-y: auto; font-size: 17px; line-height: 1.55; color: var(--text-2); white-space: pre-wrap; }
 .voice-foot { margin: 0; max-width: 520px; text-align: center; font-size: 12.5px; color: var(--text-3); line-height: 1.5; }
 @media (prefers-reduced-motion: reduce) { .voice-orb, .voice-orb .voice-ring { animation: none !important; } }
+
+/* ---------- Public share links ---------- */
+.share-panel { display: grid; gap: 10px; margin: 18px 0 8px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.share-head { display: flex; align-items: center; gap: 8px; }
+.share-head svg { color: var(--text-2); }
+.share-panel p { margin: 0; }
+.share-link { display: flex; gap: 8px; }
+.share-link input { flex: 1; min-width: 0; font: 13px var(--mono); }
+.share-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.share-mask { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; background: var(--signal-soft); font-size: 13px; line-height: 1.5; }
+.share-mask input { margin-top: 3px; }
+.share-panel > .btn.primary { justify-self: start; }
+.share-row-actions { display: flex; gap: 4px; }
+.shared-page { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); }
+.shared-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+.shared-brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text); text-decoration: none; }
+.shared-badge { font-size: 12px; color: var(--text-3); padding: 4px 10px; border: 1px solid var(--border); border-radius: 999px; white-space: nowrap; }
+.shared-main { flex: 1; width: 100%; max-width: 760px; margin: 0 auto; padding: 28px 20px 40px; }
+.shared-title { margin: 0 0 6px; font-size: clamp(22px, 3vw, 30px); letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.shared-note { margin: 0 0 18px; font-size: 13px; color: var(--text-3); }
+.shared-thread { display: grid; gap: 22px; margin-top: 18px; }
+.shared-msg { display: grid; gap: 6px; min-width: 0; }
+.shared-msg.user { justify-items: end; }
+.shared-bubble { margin: 0; max-width: 85%; padding: 10px 14px; border-radius: 16px 16px 4px 16px; background: var(--surface-2); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
+.shared-model { font: 12px var(--mono); color: var(--text-3); }
+.shared-model::before { content: '● '; color: var(--signal); }
+.shared-files { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.shared-files span { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border: 1px solid var(--border); border-radius: 8px; font-size: 12.5px; color: var(--text-2); }
+.shared-state { display: grid; justify-items: center; gap: 8px; padding: 80px 0; text-align: center; color: var(--text-2); }
+.shared-state h1 { margin: 0; font-size: 20px; color: var(--text); }
+.shared-state p { margin: 0; }
+.shared-foot { padding: 18px 20px 28px; text-align: center; font-size: 12px; color: var(--text-3); border-top: 1px solid var(--border); }

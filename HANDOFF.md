@@ -22,6 +22,7 @@
 ## Verification and release
 
 - Windows: npm.cmd. `npm test`, `npm run build`, `npm run test:e2e:ci`. Java 21/Firebase emulators and Playwright Chromium required; browser cache `C:/Users/seife/AppData/Local/ms-playwright`. Do not rebuild dist while browser tests consume it.
+- Firestore rules: `npm run deploy:rules` (scripts/deploy_rules.py, Rules REST API). Public share links live in modelRouterShares (public get, owner-only list/write).
 - Main push runs tests.yml. Dispatch deploy.yml to release live/dev from one build; relay deploys separately via Wrangler. Match hosted JS/CSS to tested dist; hosted checks use isolated MR_TEST_URL fixtures, fake AI/GitHub and real browser Python for analysis.
 - Release 15fc559 deployed live and preview successfully (38444336132). Hosted Chromium and WebKit passed all six layouts and four incognito/Connectors cases on each site; native safe-area checks passed three cases per site. Local type/build/unit, account/sync regressions and 156 accessibility scans passed. Latest 46-suite CI 38444319901 remains in progress; baseline 45-suite CI 38432567075 passed. Physical iPhone remains unverified.
 - Hosted assets: index-DXd8MkMR.js / index-DADYABdN.css. Actual paid inference remains unverified. No next roadmap task is authorized.

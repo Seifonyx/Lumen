@@ -39,6 +39,7 @@ import MemoryTab from './MemoryTab';
 import KeySafety from './KeySafety';
 import ProviderConnections, { type MainProvider } from './ProviderConnections';
 import FilterMenu from './FilterMenu';
+import SharedLinks from './SharedLinks';
 import { normalizeKeys, validAlibabaBase, validRelayUrl } from '../lib/ai/provider-config.js';
 import type { ApiKeys } from '../lib/firebase';
 import PrivacyTab from './PrivacyTab';
@@ -393,6 +394,7 @@ function DataTab() {
           </div>
         </div>
       </div>
+      <SharedLinks />
       <div className="settings-group">
         <span className="settings-group-title">Delete chats</span>
         <div className="settings-card danger">

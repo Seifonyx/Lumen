@@ -92,7 +92,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
             </div>}
             <button role="menuitem" onClick={() => {setMenu(false);setTagging(true)}}><Tag size={15} /> Edit tags</button>
             <button role="menuitem" onClick={() => { setMenu(false); useStore.getState().setUi({ exportChatId: chat.id, sidebarOpen: false }); }}>
-              <Download size={15} /> Export
+              <Download size={15} /> Share or export
             </button>
             <button role="menuitem" className="danger" onClick={() => { setMenu(false); if (confirm(`Delete "${chat.title}"?`)) void deleteChat(chat.id); }}>
               <Trash2 size={15} /> Delete

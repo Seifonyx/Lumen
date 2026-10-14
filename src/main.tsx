@@ -1,9 +1,12 @@
-import { StrictMode } from 'react';
+import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import './app.css';
 import App from './App';
 import { initViewport } from './lib/viewport';
 import { loadMarkdownExtras } from './lib/markdown';
+import { shareIdFromPath } from './lib/share';
+const SharedChatPage = lazy(() => import('./components/SharedChatPage'));
+const sharedId = shareIdFromPath();
 
 // iPhone: keep the app on the visible area while the keyboard is open.
 initViewport();
@@ -17,7 +20,8 @@ document.addEventListener('gesturechange', noZoom);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    {/* A public share link shows only that chat; everything else is the app. */}
+    {sharedId ? <Suspense fallback={null}><SharedChatPage id={sharedId} /></Suspense> : <App />}
   </StrictMode>,
 );
 

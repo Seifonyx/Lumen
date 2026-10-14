@@ -185,7 +185,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
       }}
     >
       <div className="sidebar-head">
-        <span className="sidebar-brand"><Logo size={24} />Model Router</span>
+        <span className="sidebar-brand"><Logo size={24} />Lumen</span>
         <button className="icon-btn collapse-sidebar" onClick={onCollapse} aria-label="Collapse sidebar" title={`Collapse sidebar (${modKey}⇧S)`}>
           <PanelLeftClose size={18} />
         </button>

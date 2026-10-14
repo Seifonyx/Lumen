@@ -415,7 +415,7 @@ function DataTab() {
                   const n = await importChats(list || []);
                   toast(`Restored ${n} chat${n === 1 ? '' : 's'}.`, 'success');
                 } catch {
-                  toast("That file isn't a Model Router backup.", 'error');
+                  toast("That file isn't a Lumen backup.", 'error');
                 }
               }}
             />
@@ -452,7 +452,7 @@ function AboutSection() {
       <div className="settings-card">
         <div className="setting-row">
           <span className="setting-text">
-            <span className="setting-label">Model Router <span className="tag" style={{ textTransform: 'none' }}>v2.0.0</span></span>
+            <span className="setting-label">Lumen <span className="tag" style={{ textTransform: 'none' }}>v2.0.0</span></span>
             <span className="setting-hint">{updateReady ? 'A new version is ready to install.' : "You're on the latest version."}</span>
           </span>
           {updateReady && (

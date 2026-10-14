@@ -39,7 +39,7 @@ export default function RepoPicker({ onClose }: { onClose: () => void }) {
       <Modal title="Work on a GitHub repository" onClose={onClose}>
         <div className="repo-picker pad">
           <p className="muted">
-            To read your code and commit changes, Model Router needs a GitHub token (free). Create a <b>fine-grained token</b> for the repositories you want, with
+            To read your code and commit changes, Lumen needs a GitHub token (free). Create a <b>fine-grained token</b> for the repositories you want, with
             <b> Contents</b> and <b>Pull requests</b> set to <b>Read and write</b> (and <b>Actions: Read</b> to see test results), then paste it under API keys.
           </p>
           <div className="editor-actions">

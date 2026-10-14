@@ -485,7 +485,7 @@ async function openOpenRouter(name, messages, instructions, signal) {
     headers: {
       'content-type': 'application/json',
       authorization: `Bearer ${keys.openrouter}`,
-      'x-title': 'Model Router',
+      'x-title': 'Lumen',
       'http-referer': location.origin,
     },
     body: JSON.stringify(body),

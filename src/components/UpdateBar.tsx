@@ -10,7 +10,7 @@ export default function UpdateBar() {
   if (!apply || hidden) return null;
   return (
     <div className="update-bar" role="status">
-      <span>A new version of Model Router is ready.</span>
+      <span>A new version of Lumen is ready.</span>
       <button className="btn small primary" disabled={busy} title={busy ? 'Available when the reply finishes' : undefined} onClick={apply}>
         <RefreshCw size={14} /> Reload
       </button>

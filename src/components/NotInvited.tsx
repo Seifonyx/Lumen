@@ -9,7 +9,7 @@ export default function NotInvited({ email }: { email: string }) {
         <ShieldAlert size={40} className="denied-icon" aria-hidden="true" />
         <h1>Not invited</h1>
         <p className="muted">
-          <strong dir="auto">{email}</strong> doesn't have access to Model Router. It's a private app; ask its owner to invite this Google account.
+          <strong dir="auto">{email}</strong> doesn't have access to Lumen. It's a private app; ask its owner to invite this Google account.
         </p>
         <button className="btn block google-btn" onClick={logout}>
           <LogOut size={16} /> Use a different account

@@ -1,11 +1,11 @@
 /*
- * Model Router styles: one file, read top to bottom. Later sections win over earlier ones.
+ * Lumen styles: one file, read top to bottom. Later sections win over earlier ones.
  * Colours and type tokens live in :root near the top of the Identity section; put new
  * look-and-feel rules at the end of that section. See DESIGN.md.
  */
 
 /* ################ Base: tokens, reset and core components ################ */
-/* Model Router — design system
+/* Lumen — design system
    Neutral, monochrome UI in the style of Vercel's Geist: hairline borders, black/white primary
    actions, Geist type, quiet colour used only for meaning (status, links, file types). */
 
@@ -2445,7 +2445,7 @@ html.kb-open .mp-scrim {top:var(--vv-top,0px);height:var(--vv-h,100dvh);bottom:a
 
 /* ################ Identity: colours, type, motion and screen polish (wins over everything above) ################ */
 
-/* Model Router identity — "Switchboard".
+/* Lumen identity — "Switchboard".
    Cool ink and paper neutrals, Geist throughout, and one signal colour (lime, like a router's
    status light) used only where something is live: send, Auto, the active route, focus.
    Loaded last: these tokens and touches win over the older layers. */

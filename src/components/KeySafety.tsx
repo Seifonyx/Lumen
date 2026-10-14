@@ -77,7 +77,7 @@ export default function KeySafety() {
               <Status ok={false} warn>Couldn't check</Status>
             )}
           </div>
-          {gemini?.state === 'locked' && <span className="setting-hint">Only Model Router can use this key. Nothing else to do.</span>}
+          {gemini?.state === 'locked' && <span className="setting-hint">Only Lumen can use this key. Nothing else to do.</span>}
           {gemini && gemini.state !== 'locked' && (
             <Steps title={gemini.state === 'wrong-site' ? 'Fix the website list' : 'Lock it (2 minutes, free)'} open={gemini.state === 'wrong-site'}>
               <li>

@@ -1,6 +1,6 @@
 {
-  "name": "Model Router",
-  "short_name": "Model Router",
+  "name": "Lumen",
+  "short_name": "Lumen",
   "description": "Private chat with free AI models.",
   "start_url": "/",
   "scope": "/",

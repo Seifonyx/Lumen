@@ -143,8 +143,8 @@ export function workspaceInstructions(r: RepoLink, all: TreeEntry[], truncated: 
     .join('\n');
 }
 
-/** A branch name for committing, e.g. "model-router/fix-login-button". */
+/** A branch name for committing, e.g. "lumen/fix-login-button". */
 export function suggestBranch(text: string): string {
   const slug = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40).replace(/-+$/, '');
-  return `model-router/${slug || new Date().toISOString().slice(0, 10)}`;
+  return `lumen/${slug || new Date().toISOString().slice(0, 10)}`;
 }

@@ -1,4 +1,4 @@
-# Model Router
+# Lumen
 
 A private, phone-friendly AI chat that brings free models from **Google AI Studio (Gemini)**,
 **OpenRouter**, **Groq** and **Cerebras** together in one place, and switches to another model automatically when one hits its

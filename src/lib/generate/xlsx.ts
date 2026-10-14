@@ -158,7 +158,7 @@ function addSheet(wb: ExcelJS.Workbook, s: SheetSpec, book: Workbook) {
 
 export async function buildXlsx(spec: WorkbookSpec): Promise<Blob> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'Model Router';
+  wb.creator = 'Lumen';
   wb.created = new Date();
   const book = new Workbook(spec.sheets);
   for (const s of spec.sheets) addSheet(wb, s, book);

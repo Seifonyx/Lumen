@@ -12,14 +12,14 @@ export default function SharedChatPage({ id }: { id: string }) {
     const robots = document.createElement('meta');
     robots.name = 'robots'; robots.content = 'noindex, nofollow';
     document.head.appendChild(robots);
-    readShare(id).then((c) => { setChat(c); if (c) document.title = `${c.title} · Model Router`; }).catch(() => setError('This link couldn’t be opened. Check your connection and try again.'));
+    readShare(id).then((c) => { setChat(c); if (c) document.title = `${c.title} · Lumen`; }).catch(() => setError('This link couldn’t be opened. Check your connection and try again.'));
     return () => robots.remove();
   }, [id]);
 
   return (
     <div className="shared-page">
       <header className="shared-top">
-        <a className="shared-brand" href="/"><Logo size={22} /> Model Router</a>
+        <a className="shared-brand" href="/"><Logo size={22} /> Lumen</a>
         <span className="shared-badge">Shared chat · read-only</span>
       </header>
       <main className="shared-main">
@@ -42,7 +42,7 @@ export default function SharedChatPage({ id }: { id: string }) {
             </div>
           </>}
       </main>
-      <footer className="shared-foot">Shared from Model Router. The person who shared this can turn the link off at any time.</footer>
+      <footer className="shared-foot">Shared from Lumen. The person who shared this can turn the link off at any time.</footer>
     </div>
   );
 }

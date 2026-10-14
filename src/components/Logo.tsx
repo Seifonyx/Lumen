@@ -1,4 +1,4 @@
-/** The Model Router mark: two inputs routed to one model. Drawn in the current text colour; the chosen route lights up in the signal colour. */
+/** The Lumen mark: two inputs routed to one model. Drawn in the current text colour; the chosen route lights up in the signal colour. */
 export default function Logo({ size = 24, className = "" }: { size?: number; className?: string }) {
   return (
     <svg className={`logo ${className}`} width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">

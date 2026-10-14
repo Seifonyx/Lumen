@@ -38,7 +38,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
       await dialog.getByLabel('Select all chats').check();
       assert.match(await dialog.locator('.all-chats-head').textContent(), /3 selected/);
       const [download] = await Promise.all([page.waitForEvent('download'), dialog.getByRole('button', { name: 'Export' }).click()]);
-      assert.match(download.suggestedFilename(), /Model Router chats \(3\)\.zip/);
+      assert.match(download.suggestedFilename(), /Lumen chats \(3\)\.zip/);
       await dialog.getByLabel('Select all chats').uncheck();
       await dialog.getByLabel('Select first chat').check();
       await dialog.getByLabel('Select second chat').check();

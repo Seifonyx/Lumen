@@ -14,7 +14,7 @@ export async function buildPptx(deck: Deck): Promise<Blob> {
   const pptx = new PptxGenJS();
   pptx.layout = 'LAYOUT_WIDE';
   pptx.title = deck.title;
-  pptx.author = 'Model Router';
+  pptx.author = 'Lumen';
   const t = deck.theme;
   const font = 'Calibri';
 

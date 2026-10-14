@@ -186,13 +186,13 @@ const F = '````';
   check(/src\/app\.js\+1−1/.test(changes.replace(/\s/g, '')) && /src\/app\.test\.js/.test(changes), 'changes listed');
   await page.waitForTimeout(500);
   check(!(await page.$('.ws-problems')) && (await page.textContent('.ws-commit')).includes('Commit 2 files'), 'changed files checked before committing: no problems');
-  check((await page.inputValue('.ws-commit input[type="text"]')).includes('make add() handle strings') && (await page.inputValue('input[aria-label="New branch name"]')).startsWith('model-router/make-add-handle-strings'), 'commit message and branch suggested');
+  check((await page.inputValue('.ws-commit input[type="text"]')).includes('make add() handle strings') && (await page.inputValue('input[aria-label="New branch name"]')).startsWith('lumen/make-add-handle-strings'), 'commit message and branch suggested');
   await page.click('.ws-commit >> text=& push');
   await page.waitForSelector('.ws-done', { timeout: 15000 });
   const tree = gh.trees[0]?.tree || [];
   check(gh.trees[0]?.base_tree === 'tree1' && tree.length === 2 && tree.find((t) => t.path === 'src/app.js')?.content === 'export function add(a, b) {\n  return Number(a) + Number(b);\n}\n', 'commit has the edited files');
-  check(gh.commits[0]?.parents?.[0] === 'base1' && gh.refs[0]?.ref.startsWith('refs/heads/model-router/') && gh.pulls[0]?.base === 'main', 'pushed to a new branch and opened a pull request');
-  check((await page.textContent('.ws-done')).includes('pull request') && (await page.textContent('.ws-head')).includes('model-router/'), 'links shown; chat continues on the new branch');
+  check(gh.commits[0]?.parents?.[0] === 'base1' && gh.refs[0]?.ref.startsWith('refs/heads/lumen/') && gh.pulls[0]?.base === 'main', 'pushed to a new branch and opened a pull request');
+  check((await page.textContent('.ws-done')).includes('pull request') && (await page.textContent('.ws-head')).includes('lumen/'), 'links shown; chat continues on the new branch');
 
   // ---- Test results of the commit, and fixing a failure
   await page.waitForSelector('.checks-bar.failure', { timeout: 20000 });

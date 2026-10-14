@@ -1,4 +1,4 @@
-# Model Router — essential handoff
+# Lumen — essential handoff
 
 ## Working agreement
 

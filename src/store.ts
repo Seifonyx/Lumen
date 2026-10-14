@@ -1712,11 +1712,11 @@ export const useStore = create<State>((set, get) => {
       const repo = chat.repo;
       const changes = Object.entries(chat.changes).map(([path, c]) => ({ path, content: c.content }));
       const target = o.target.trim() || repo.branch;
-      const { url, sha } = await ghCommit({ owner: repo.owner, repo: repo.repo, base: repo.branch, target, message: o.message.trim() || 'Update from Model Router', changes });
+      const { url, sha } = await ghCommit({ owner: repo.owner, repo: repo.repo, base: repo.branch, target, message: o.message.trim() || 'Update from Lumen', changes });
       if (generation !== accountGeneration) throw new Error('Account changed while committing. Check the original repository for the commit.');
       let prUrl: string | undefined;
       if (o.pullRequest && target !== repo.branch) {
-        prUrl = await openPullRequest({ owner: repo.owner, repo: repo.repo, head: target, base: repo.branch, title: o.message.split('\n')[0].slice(0, 120) || 'Changes from Model Router', body: 'Made with Model Router.' });
+        prUrl = await openPullRequest({ owner: repo.owner, repo: repo.repo, head: target, base: repo.branch, title: o.message.split('\n')[0].slice(0, 120) || 'Changes from Lumen', body: 'Made with Lumen.' });
       }
       forgetRepo(repo);
       if (generation !== accountGeneration) throw new Error('Account changed while committing. Check the original repository for the result.');

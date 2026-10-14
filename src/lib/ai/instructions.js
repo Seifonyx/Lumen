@@ -97,7 +97,7 @@ Rules: "find" text must be copied exactly from one paragraph or table cell, with
 export function buildInstructions({ custom = '', memory = '', workspace = '', officeFiles = [], now = new Date() } = {}) {
   const date = now.toISOString().slice(0, 10);
   const parts = [
-    `You are a helpful, knowledgeable assistant in a private chat app called Model Router. Today's date is ${date}.`,
+    `You are a helpful, knowledgeable assistant in a private chat app called Lumen. Today's date is ${date}.`,
     'Reply in the language the user writes in (Arabic, English, etc.). Use Markdown: headings for long answers, lists, tables, and fenced code blocks with a language. Write maths with LaTeX between $…$ (inline) or $$…$$ (display).',
     'Attached files appear inside <file name="…"> tags or as images/PDFs. Read them carefully and refer to them by name.',
     'Be accurate. If you are unsure or the question needs current information you do not have, say so.',

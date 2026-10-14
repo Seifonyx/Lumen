@@ -1,4 +1,4 @@
-# Model Router
+# Lumen
 
 A private AI workspace for chat, documents, data analysis and GitHub coding. Users supply their own provider and GitHub keys. Existing free-tier providers remain available; additional providers may consume credits or incur charges only after explicit per-provider opt-in. The product serves phone and desktop use; preserve drafts, account isolation, privacy review and explicit actions for external writes.
 

@@ -53,7 +53,7 @@ export default function Login() {
     <main className="login">
       <div className="login-card">
         <Logo size={44} />
-        <h1>Sign in to Model Router</h1>
+        <h1>Sign in to Lumen</h1>
         <p className="muted">Every free AI model in one private chat.</p>
         {error && <p className="error-text" role="alert">{error}</p>}
         <button className="btn block google-btn" onClick={submit} disabled={busy}>

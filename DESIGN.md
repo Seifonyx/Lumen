@@ -1,6 +1,6 @@
-# Model Router design: "Switchboard"
+# Lumen design: "Switchboard"
 
-Model Router is a switchboard for free AI models: one place to talk, and the app routes each message to
+Lumen is a switchboard for free AI models: one place to talk, and the app routes each message to
 the right model. The design says that: calm ink-and-paper neutrals, and one **signal colour** that lights
 up wherever something is live, like the status light on a router.
 

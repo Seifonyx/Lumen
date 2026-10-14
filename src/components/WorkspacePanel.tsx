@@ -180,7 +180,7 @@ function Changes({ chat }: { chat: Chat }) {
   const toast = useStore((s) => s.toast);
   const entries = Object.entries(chat.changes || {});
   const lastAsk = [...chat.messages].reverse().find((m) => m.role === 'user' && !m.auto)?.text || '';
-  const [message, setMessage] = useState(lastAsk.split('\n')[0].slice(0, 72) || 'Update from Model Router');
+  const [message, setMessage] = useState(lastAsk.split('\n')[0].slice(0, 72) || 'Update from Lumen');
   const [target, setTarget] = useState<'new' | 'same'>('new');
   const [branch, setBranch] = useState(suggestBranch(lastAsk));
   const [pr, setPr] = useState(true);

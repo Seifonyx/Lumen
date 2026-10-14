@@ -53,7 +53,7 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
         used.add(name.toLowerCase());
         zip.file(name, chatToMarkdown(chat));
       }
-      await saveBlob(await zip.generateAsync({ type: 'blob' }), `Model Router chats (${n}).zip`);
+      await saveBlob(await zip.generateAsync({ type: 'blob' }), `Lumen chats (${n}).zip`);
     } catch (e) { toast(`Couldn't export: ${(e as Error).message}`, 'error'); }
   };
 

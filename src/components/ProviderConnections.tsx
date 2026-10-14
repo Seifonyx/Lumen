@@ -50,7 +50,7 @@ export default function ProviderConnections({ main, draft, setDraft, saved }: { 
       <h3 id="providers-heading" className="sr-only">Providers</h3>
       {firstRun && (
         <div className="welcome-guide" role="note" aria-label="Getting started">
-          <strong>Welcome to Model Router</strong>
+          <strong>Welcome to Lumen</strong>
           <p>It talks to free AI models using your own keys, which stay private to your account. One free key is enough to start:</p>
           <ol>
             <li>Open Google AI Studio and sign in with your Google account.</li>

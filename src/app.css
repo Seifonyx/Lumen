@@ -3144,3 +3144,20 @@ input, textarea { caret-color: var(--text); }
 .shortcut-row dd { margin: 0; display: flex; gap: 4px; flex: none; }
 .shortcut-row kbd { min-width: 24px; height: 24px; padding: 0 7px; display: inline-grid; place-items: center; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 6px; background: var(--surface-2); font: 500 12px var(--mono); color: var(--text); }
 .shortcuts-note { margin: 0; }
+
+/* ---------- Edits to an attached Word/Excel file ---------- */
+.office-edit-card { display: block; padding: 0; }
+.office-edit-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+.office-edit-head .file-info { flex: 1; min-width: 0; }
+.office-edit-list { list-style: none; margin: 0; padding: 8px 14px 12px; border-top: 1px solid var(--border); display: grid; gap: 4px; font-size: 13px; color: var(--text-2); }
+.office-edit-list li { display: flex; align-items: baseline; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
+.office-edit-list li::before { content: '•'; color: var(--text-3); }
+.office-edit-list li.ok::before, .office-edit-list li.miss::before { content: none; }
+.office-edit-list li.ok svg { color: var(--green); flex: none; }
+.office-edit-list li.miss { color: var(--text-3); }
+.office-edit-list li.miss span { text-decoration: line-through; }
+.office-edit-list li.miss svg { color: var(--red); flex: none; }
+.office-edit-list small { color: var(--text-3); font-size: 11.5px; text-decoration: none; }
+.office-edit-list .more { color: var(--text-3); }
+.office-edit-note { margin: 0; padding: 0 14px 12px; font-size: 12.5px; color: var(--text-3); }
+@media (max-width: 600px) { .office-edit-head { flex-wrap: wrap; } .office-edit-head .file-actions { width: 100%; } .office-edit-head .file-actions .btn { width: 100%; justify-content: center; } }

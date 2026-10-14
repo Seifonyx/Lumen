@@ -78,7 +78,23 @@ To show a chart directly in your reply, write a fenced block with info string "c
 \`\`\`
 Types: bar, horizontalBar, line, area, pie, doughnut, scatter (scatter values are [x,y] pairs). Only use a chart when it genuinely helps.`;
 
-export function buildInstructions({ custom = '', memory = '', workspace = '', now = new Date() } = {}) {
+// Added only when the chat has a Word or Excel attachment.
+const officeEditing = (names) => String.raw`
+# Editing an attached Word or Excel file
+The user attached: ${names.join(', ')}. When they ask you to change, fill in, correct or update one of these files, edit the original instead of writing a new file, so its formatting, tables, headers and logos are kept. Write a fenced block whose info string is "office-edit:" plus the exact attached file name, containing JSON:
+\`\`\`office-edit:${names[0]}
+{"edits":[
+  {"find":"exact text from the file","replace":"new text"},
+  {"find":"[Date]","replace":"14 October 2026","all":true},
+  {"after":"text in an existing paragraph","insert":["a new paragraph","another"]},
+  {"before":"text in an existing paragraph","insert":"a new paragraph"},
+  {"delete":"text in the paragraph to remove"}
+]}
+\`\`\`
+For Excel use cell edits instead: {"edits":[{"sheet":"Summary","cell":"B4","value":12},{"sheet":"Summary","cell":"C4","value":"=B4*2"}]}. In the attached CSV text, line 1 is row 1 and the first value is column A.
+Rules: "find" text must be copied exactly from one paragraph or table cell, without Markdown symbols (no **, #, | or list markers). Keep each find short but unique. Use "all":true for placeholders that repeat. One block per file. Outside the block, briefly list what you changed. Only write a new file (file: block) if the user asks for a new document.`;
+
+export function buildInstructions({ custom = '', memory = '', workspace = '', officeFiles = [], now = new Date() } = {}) {
   const date = now.toISOString().slice(0, 10);
   const parts = [
     `You are a helpful, knowledgeable assistant in a private chat app called Model Router. Today's date is ${date}.`,
@@ -87,6 +103,7 @@ export function buildInstructions({ custom = '', memory = '', workspace = '', no
     'Be accurate. If you are unsure or the question needs current information you do not have, say so.',
     FILES,
   ];
+  if (officeFiles.length) parts.push(officeEditing(officeFiles.slice(0, 5)));
   if (custom.trim()) parts.push(`# The user's custom instructions (follow them)\n${custom.trim().slice(0, 4000)}`);
   if (memory) parts.push(memory);
   if (workspace) parts.push(workspace);

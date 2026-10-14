@@ -120,9 +120,11 @@ export type Segment =
   | { type: 'html'; html: string; key: string }
   | { type: 'file'; name: string; content: string; complete: boolean; key: string }
   | { type: 'chart'; content: string; complete: boolean; key: string }
+  | { type: 'office'; name: string; content: string; complete: boolean; key: string }
   | { type: 'edit'; kind: 'edit' | 'delete'; path: string; content: string; complete: boolean; key: string };
 
 const FILE_FENCE = /^file[:\s]\s*(.+?)\s*$/i;
+const OFFICE_FENCE = /^office-edit[:\s]\s*(.+?)\s*$/i;
 const closed = (raw: string) => /\n\s*(`{3,}|~{3,})\s*$/.test(raw.trimEnd());
 
 /** Splits a reply into Markdown parts and special file/chart blocks. */
@@ -150,6 +152,12 @@ export function segments(text: string, streaming: boolean,sourceCount=0): Segmen
       if (edit) {
         flush();
         out.push({ type: 'edit', kind: edit[1].toLowerCase() as 'edit' | 'delete', path: edit[2], content: (t as Tokens.Code).text, complete, key: `e${n++}` });
+        return;
+      }
+      const office = OFFICE_FENCE.exec(lang);
+      if (office) {
+        flush();
+        out.push({ type: 'office', name: office[1], content: (t as Tokens.Code).text, complete, key: `o${n++}` });
         return;
       }
       if (file) {

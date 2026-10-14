@@ -9,7 +9,7 @@ Audit: 2026-10-12. Only mark a feature complete after its working implementation
 | 11 Knowledge search | Implemented and deployed in phase 11: Library → Knowledge imports PDF/text/Markdown locally, searches with keywords or optional Gemini embeddings, resumes indexing after quota pauses, and prepares chat drafts with clickable physical-page citations. Originals/vectors stay on the device; scanned PDFs need OCR. Live and preview desktop/phone checks passed. |
 | 12 Memory | Implemented with inspection/deletion. |
 | 13 Data analysis | Implemented in phase 4: local CSV/TSV/Excel uploads, editable pandas calculations/cleaning, Matplotlib charts, CSV/XLSX/PNG downloads and cached offline Python. CI and all 23 local browser suites passed; live and preview verified. |
-| 14 Edit uploaded Office files | Partial: reads files and creates new documents; template-preserving editing remains. |
+| 14 Edit uploaded Office files | Implemented 2026-10-14: attached .docx/.xlsx originals stay on the device; models reply with an office-edit list (find/replace, insert/delete paragraphs, Excel cell values/formulas) that is applied inside the original, keeping fonts, tables, headers, styles and number formats. Each edit shows whether it matched; the edited copy downloads. PowerPoint editing is not included. |
 | 15 Canvas | Implemented in phase 3: document/code drafts, manual edits, selected-text AI proposals with accept/reject/undo, previews, downloads and private sync. Office/PDF imports extract text; template-preserving editing remains under item 14. Deployed and verified on live and preview. |
 | 16 Free tools | Implemented and deployed in phase 5b: explicit YouTube video input, Gemini Python execution with visible code/results, and a disclosed keyless Jina web reader with draft review. All 27 browser suites and CI passed; live/preview phone and desktop checks passed. Gemini search already exists. |
 | 17 Images | Conditional: current Google pricing lists image models without free API access; verify key eligibility before adding. |
@@ -63,5 +63,5 @@ Done before new roadmap work, at the user's request; deployed live.
   startup JavaScript ~534 KB → ~399 KB gzipped (KaTeX, highlight.js and rarely opened screens load on
   demand); CI about 12 minutes; manual Safari (WebKit) screenshot workflow.
 
-Still open from the table above: 14 (template-preserving Office edits), 17 (images, waiting on free
+Still open from the table above: 17 (images, waiting on free
 access), 23 (continuous voice), 24 (public share links), 25 (original attachment sync), First-run guidance for invited users was suggested and deferred by the user.

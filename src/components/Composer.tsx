@@ -12,6 +12,7 @@ import { scan, type Finding } from '../lib/privacy';
 import PrivacyCheck from './PrivacyCheck';
 import AttachSheet from './AttachSheet';
 import CompareModelsModal from './CompareModelsModal';
+import { isEditableOffice, saveOriginal } from '../lib/office/originals';
 import { ANALYSIS_TEMPLATES } from '../lib/analysis';
 import { toolModel } from '../lib/ai/tool-inputs.js';
 import { db } from '../lib/db';
@@ -169,6 +170,8 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
         try {
           const att = await readAttachment(file);
           if (owner !== getComposerScope()) return;
+          // Keep the original Word/Excel file on this device so a reply can edit it in place.
+          if (isEditableOffice(file.name)) void saveOriginal(useStore.getState().user?.uid, att.id, file);
           setPending((p) => p.map((x) => (x.key === key ? { ...x, file: att } : x)));
         } catch (e) {
           if (owner !== getComposerScope()) return;

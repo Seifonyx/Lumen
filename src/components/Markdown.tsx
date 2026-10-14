@@ -4,6 +4,7 @@ import { copyText } from '../lib/util';
 import { useStore } from '../store';
 import ChartBlock from './ChartBlock';
 import FileCard from './FileCard';
+import OfficeEditCard from './OfficeEditCard';
 import EditCard, { ApplyAll } from './EditCard';
 import { parseEdit } from '../lib/edits';
 import type { KnowledgeSource } from '../types';
@@ -44,6 +45,8 @@ function Markdown({ text, streaming, messageId,knowledgeSources,onSource }: { te
           <div key={p.key} dangerouslySetInnerHTML={{ __html: p.html }} />
         ) : p.type === 'edit' ? (
           <EditCard key={p.key} kind={p.kind} path={p.path} content={p.content} complete={p.complete} messageId={messageId} />
+        ) : p.type === 'office' ? (
+          <OfficeEditCard key={p.key} name={p.name} content={p.content} complete={p.complete} />
         ) : p.type === 'file' ? (
           <FileCard key={p.key} name={p.name} content={p.content} complete={p.complete} />
         ) : (

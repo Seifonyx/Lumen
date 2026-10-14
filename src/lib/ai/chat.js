@@ -81,7 +81,8 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     yield { t: 'done' };
     return;
   }
-  const instructions = buildInstructions({ custom: options.customInstructions || '', memory: options.memory || '', workspace: options.workspace || '' });
+  const officeFiles = [...new Set(messages.flatMap((m) => (m.files || []).map((f) => f.name)).filter((n) => /\.(docx|xlsx|xlsm)$/i.test(n || '')))];
+  const instructions = buildInstructions({ custom: options.customInstructions || '', memory: options.memory || '', workspace: options.workspace || '', officeFiles });
   const failures = [];
   const label = (id) => id.split(':').slice(1).join(':');
 

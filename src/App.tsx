@@ -2,15 +2,10 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import ChatView from './components/ChatView';
 import Login from './components/Login';
 import NotInvited from './components/NotInvited';
-import PreviewModal from './components/PreviewModal';
-import SettingsModal from './components/SettingsModal';
 import Sidebar from './components/Sidebar';
 import Toasts from './components/Toasts';
 import UpdateBar from './components/UpdateBar';
 import WorkspacePanel from './components/WorkspacePanel';
-import RepoPicker from './components/RepoPicker';
-import CommandPalette from './components/CommandPalette';
-import ComparisonResultsModal from './components/ComparisonResultsModal';
 import { useStore } from './store';
 import { keepScreenAwake } from './lib/wakelock';
 import { installSidebarGestures } from './lib/sidebar-gesture';
@@ -18,6 +13,12 @@ import TaskEngine from './components/TaskEngine';
 import { cancelKnowledge } from './lib/knowledge/engine';
 
 const RunPanel = lazy(() => import('./components/RunPanel'));
+// Screens opened on demand load their code the first time they open.
+const SettingsModal = lazy(() => import('./components/SettingsModal'));
+const CommandPalette = lazy(() => import('./components/CommandPalette'));
+const RepoPicker = lazy(() => import('./components/RepoPicker'));
+const PreviewModal = lazy(() => import('./components/PreviewModal'));
+const ComparisonResultsModal = lazy(() => import('./components/ComparisonResultsModal'));
 const AssistantLibrary = lazy(() => import('./components/AssistantLibrary'));
 const CanvasPanel = lazy(() => import('./components/CanvasPanel'));
 const ChatExportModal = lazy(() => import('./components/ChatExportModal'));
@@ -34,6 +35,8 @@ export default function App() {
   const runner = useStore((s) => s.runner);
   const exportChatId = useStore((s) => s.exportChatId);
   const repoPicker = useStore((s) => s.repoPicker);
+  const previewOpen = useStore((s) => Boolean(s.preview));
+  const comparisonOpen = useStore((s) => Boolean(s.comparison));
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [libraryTab, setLibraryTab] = useState<'assistants' | 'prompts' | 'tools' | 'tasks' | 'knowledge'>('assistants');
@@ -111,12 +114,12 @@ export default function App() {
       <ChatView onExpandSidebar={toggleSidebar} />
       {!settingsOpen && <WorkspacePanel />}
       {!settingsOpen && canvasOpen && <Suspense fallback={null}><CanvasPanel /></Suspense>}
-      <SettingsModal />
-      {commandPaletteOpen && <CommandPalette onClose={() => setCommandPaletteOpen(false)} />}
+      {settingsOpen && <Suspense fallback={null}><SettingsModal /></Suspense>}
+      {commandPaletteOpen && <Suspense fallback={null}><CommandPalette onClose={() => setCommandPaletteOpen(false)} /></Suspense>}
       {libraryOpen && <Suspense fallback={null}><AssistantLibrary key={accountId} initialTab={libraryTab} onClose={() => setLibraryOpen(false)} /></Suspense>}
-      <ComparisonResultsModal />
-      {repoPicker && <RepoPicker onClose={() => setUi({ repoPicker: false })} />}
-      <PreviewModal />
+      {comparisonOpen && <Suspense fallback={null}><ComparisonResultsModal /></Suspense>}
+      {repoPicker && <Suspense fallback={null}><RepoPicker onClose={() => setUi({ repoPicker: false })} /></Suspense>}
+      {previewOpen && <Suspense fallback={null}><PreviewModal /></Suspense>}
       {exportChatId && <Suspense fallback={null}><ChatExportModal /></Suspense>}
       {runner && (
         <Suspense fallback={null}>

@@ -1,15 +1,15 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import 'katex/dist/katex.min.css';
 import './app.css';
 import App from './App';
 import { initViewport } from './lib/viewport';
+import { loadMarkdownExtras } from './lib/markdown';
 
 // iPhone: keep the app on the visible area while the keyboard is open.
 initViewport();
 
 // No zooming on phones: pinch is blocked here for iPhone (Safari's gesture events) and by
-// `touch-action: pan-x pan-y` elsewhere (styles.css), which also stops double-tap zoom; fields use 16px+
+// `touch-action: pan-x pan-y` elsewhere (app.css), which also stops double-tap zoom; fields use 16px+
 // text so iPhones don't zoom in on focus. Not done in the viewport tag, which zoom tools rely on.
 const noZoom = (e: Event) => e.preventDefault();
 document.addEventListener('gesturestart', noZoom);
@@ -20,3 +20,7 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 );
+
+// Maths and code colouring load once the app is idle, so they're ready before most replies need them.
+const idle = (fn: () => void) => ('requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 5000 }) : setTimeout(fn, 2500));
+window.addEventListener('load', () => idle(() => void loadMarkdownExtras()), { once: true });

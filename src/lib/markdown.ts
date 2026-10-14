@@ -2,49 +2,31 @@
 // so they can be shown as interactive components.
 
 import DOMPurify from 'dompurify';
-import hljs from 'highlight.js/lib/core';
-import bash from 'highlight.js/lib/languages/bash';
-import c from 'highlight.js/lib/languages/c';
-import cpp from 'highlight.js/lib/languages/cpp';
-import csharp from 'highlight.js/lib/languages/csharp';
-import css from 'highlight.js/lib/languages/css';
-import go from 'highlight.js/lib/languages/go';
-import java from 'highlight.js/lib/languages/java';
-import javascript from 'highlight.js/lib/languages/javascript';
-import json from 'highlight.js/lib/languages/json';
-import kotlin from 'highlight.js/lib/languages/kotlin';
-import markdown from 'highlight.js/lib/languages/markdown';
-import php from 'highlight.js/lib/languages/php';
-import python from 'highlight.js/lib/languages/python';
-import r from 'highlight.js/lib/languages/r';
-import ruby from 'highlight.js/lib/languages/ruby';
-import rust from 'highlight.js/lib/languages/rust';
-import sql from 'highlight.js/lib/languages/sql';
-import swift from 'highlight.js/lib/languages/swift';
-import typescript from 'highlight.js/lib/languages/typescript';
-import xml from 'highlight.js/lib/languages/xml';
-import yaml from 'highlight.js/lib/languages/yaml';
-import katex from 'katex';
 import { Marked, type Token, type Tokens } from 'marked';
 import { escapeHtml } from './util';
 import { EDIT_FENCE, normalizeEdits, replaceReadRequests } from './edits';
 import { replaceSearchRequests } from './repoindex';
 import { runLang } from './runner';
 
-Object.entries({ bash, c, cpp, csharp, css, go, java, javascript, json, kotlin, markdown, php, python, r, ruby, rust, sql, swift, typescript, xml, yaml }).forEach(
-  ([name, lang]) => hljs.registerLanguage(name, lang),
-);
-hljs.registerAliases(['sh', 'shell', 'zsh'], { languageName: 'bash' });
-hljs.registerAliases(['js', 'jsx'], { languageName: 'javascript' });
-hljs.registerAliases(['ts', 'tsx'], { languageName: 'typescript' });
-hljs.registerAliases(['py'], { languageName: 'python' });
-hljs.registerAliases(['html', 'svg'], { languageName: 'xml' });
-hljs.registerAliases(['yml'], { languageName: 'yaml' });
-hljs.registerAliases(['cs'], { languageName: 'csharp' });
+// Maths (KaTeX) and code colouring (highlight.js) are large and most replies don't need them, so they load on
+// first use (or when the browser is idle). Until then maths shows as its source and code as plain text; once they
+// arrive, every Markdown view re-renders.
+type Extras = typeof import('./markdown-extras');
+let extras: Extras | null = null;
+let extrasLoading: Promise<void> | null = null;
+let extrasVersion = 0;
+const extrasListeners = new Set<() => void>();
+export function loadMarkdownExtras(): Promise<void> {
+  extrasLoading ||= import('./markdown-extras').then((m) => { extras = m; extrasVersion++; extrasListeners.forEach((fn) => fn()); });
+  return extrasLoading;
+}
+export const subscribeMarkdownExtras = (fn: () => void) => { extrasListeners.add(fn); return () => { extrasListeners.delete(fn); }; };
+export const markdownExtrasVersion = () => extrasVersion;
 
 function tex(src: string, display: boolean): string {
+  if (!extras) { void loadMarkdownExtras(); return `<code class="math-pending">${escapeHtml(src)}</code>`; }
   try {
-    return katex.renderToString(src, { displayMode: display, throwOnError: false, output: 'html', strict: 'ignore' });
+    return extras.katex.renderToString(src, { displayMode: display, throwOnError: false, output: 'html', strict: 'ignore' });
   } catch {
     return escapeHtml(src);
   }
@@ -83,9 +65,10 @@ marked.use({
     code({ text, lang }: Tokens.Code) {
       const language = (lang || '').trim().split(/\s+/)[0].toLowerCase();
       let html = escapeHtml(text);
-      if (highlight && language && hljs.getLanguage(language)) {
+      if (highlight && language && !extras) void loadMarkdownExtras();
+      if (highlight && language && extras?.hljs.getLanguage(language)) {
         try {
-          html = hljs.highlight(text, { language, ignoreIllegals: true }).value;
+          html = extras.hljs.highlight(text, { language, ignoreIllegals: true }).value;
         } catch {
           /* keep plain */
         }

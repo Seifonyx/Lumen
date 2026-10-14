@@ -609,7 +609,7 @@ input[type='search']::-webkit-search-cancel-button { -webkit-appearance: none; }
 .code-block pre { margin: 0; padding: 14px 16px; overflow-x: auto; font-size: 0.8125rem; line-height: 1.65; }
 .code-block code { font-family: var(--mono); font-variant-ligatures: none; }
 .math-block { overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
-.katex { font-size: 1.08em; }
+.markdown .katex { font-size: 1.08em; }
 .code-preview .code-block { border-radius: 0; border: 0; min-height: 100%; }
 
 /* Syntax colours (Geist-like) */
@@ -1173,7 +1173,7 @@ table.sheet td.pending { color: #8f8f8f; font-style: italic; font-family: var(--
 
 /* ============================================================ Fitting small screens */
 /* Wide equations scroll instead of being cut off. */
-.katex-display { overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+.markdown .katex-display { overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
 /* A label with a control beside it: the control drops below when there isn't room. */
 .setting-row { flex-wrap: wrap; row-gap: 10px; }
 .setting-text { flex: 1 1 190px; }

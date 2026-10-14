@@ -1,5 +1,5 @@
-import { memo, useMemo } from 'react';
-import { segments } from '../lib/markdown';
+import { memo, useMemo, useSyncExternalStore } from 'react';
+import { markdownExtrasVersion, segments, subscribeMarkdownExtras } from '../lib/markdown';
 import { copyText } from '../lib/util';
 import { useStore } from '../store';
 import ChartBlock from './ChartBlock';
@@ -10,7 +10,9 @@ import type { KnowledgeSource } from '../types';
 
 function Markdown({ text, streaming, messageId,knowledgeSources,onSource }: { text: string; streaming: boolean; messageId?: string; knowledgeSources?:KnowledgeSource[]; onSource?:(source:KnowledgeSource)=>void }) {
   const count=knowledgeSources?.length||0;
-  const parts = useMemo(() => segments(text, streaming,count), [text, streaming,count]);
+  // Re-render once maths and code colouring have loaded.
+  const extras = useSyncExternalStore(subscribeMarkdownExtras, markdownExtrasVersion);
+  const parts = useMemo(() => segments(text, streaming,count), [text, streaming,count, extras]);
   const edits = useMemo(
     () => (streaming ? [] : parts.flatMap((p) => (p.type === 'edit' && p.complete ? [parseEdit(p.kind, p.path, p.content)] : []))),
     [parts, streaming],

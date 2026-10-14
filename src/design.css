@@ -1,6 +1,6 @@
 /* Shared product presentation. Functional layouts and phone keyboard rules live in styles.css. */
-.mp-item.selected .mp-sub, .mp-layout.selected .mp-sub, .mp-keys, .command-item.active small, .key-status-pill.empty { color: var(--text-2); }
-.key-status-pill.empty { animation: none; margin: 0; }
+.mp-item.selected .mp-sub, .mp-layout.selected .mp-sub, .mp-keys, .command-item.active small, .key-status-pill.unset { color: var(--text-2); }
+.key-status-pill.unset { animation: none; margin: 0; }
 .setting-row select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 :root[data-theme='dark'] .danger-row .setting-label { color: #ff8589; }
 .plan-toggle[aria-pressed='true'] { background: var(--accent-soft); color: var(--accent); }

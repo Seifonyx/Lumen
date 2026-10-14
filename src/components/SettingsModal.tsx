@@ -87,7 +87,7 @@ function Choice<T extends string>({
   hint?: string;
 }) {
   return (
-    <div className="setting-row">
+    <div className={`setting-row${options.length > 3 ? ' choice-wide' : ''}`}>
       <span className="setting-text">
         <span className="setting-label">{label}</span>
         {hint && <span className="setting-hint">{hint}</span>}
@@ -326,7 +326,7 @@ function KeysTab() {
               <div className="key-provider-head">
                 <span className="key-provider-title">
                   <KeyRound size={15} /> {label}
-                  <span className={`key-status-pill ${isConfigured ? 'configured' : 'empty'}`}>{isConfigured ? 'Key entered' : 'Not set'}</span>
+                  <span className={`key-status-pill ${isConfigured ? 'configured' : 'unset'}`}>{isConfigured ? 'Key entered' : 'Not set'}</span>
                 </span>
                 <a className="link-btn small inline" href={link} target="_blank" rel="noopener noreferrer">
                   {linkText || 'Get a free key'} <ExternalLink size={12} />
@@ -486,7 +486,7 @@ function AboutSection() {
             <span className="setting-hint">For developers and testing only.</span>
           </span>
           <span className="setting-ctrl">
-            <button className="btn small ghost" onClick={() => setDevOpen(!devOpen)} aria-expanded={devOpen}>
+            <button className="btn small" onClick={() => setDevOpen(!devOpen)} aria-expanded={devOpen}>
               {devOpen ? 'Hide' : 'Show'}
             </button>
           </span>

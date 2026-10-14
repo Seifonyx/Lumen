@@ -1491,7 +1491,7 @@ input[type='search']::-webkit-search-cancel-button { -webkit-appearance: none; }
   padding: 2px 8px; border-radius: 999px; letter-spacing: 0.02em; text-transform: uppercase;
 }
 .key-status-pill.configured { background: var(--green-soft); color: var(--green); border: 1px solid color-mix(in srgb, var(--green) 25%, transparent); }
-.key-status-pill.empty { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border); }
+.key-status-pill.unset { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border); }
 .key-provider-desc { font-size: 0.8125rem; color: var(--text-2); line-height: 1.45; }
 .provider-connections { display: grid; gap: 12px; min-width: 0; }
 .provider-connections h3, .provider-connections p { margin: 0; }

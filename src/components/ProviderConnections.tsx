@@ -24,15 +24,15 @@ export default function ProviderConnections({ draft, setDraft }: { draft: ApiKey
           </div>
         </details>;
       })}
-      <div className="provider-retired"><strong>GitHub Models</strong><p className="muted small">Retired July 30, 2026. Its catalog and inference API are no longer available. Your GitHub coding connection still works.</p><a className="link-btn small inline" href="https://docs.github.com/en/github-models" target="_blank" rel="noopener noreferrer">Retirement notice <ExternalLink size={12}/></a></div>
     </div>
     <details className="settings-card provider-relay">
-      <summary>NVIDIA & Cloudflare relay</summary>
+      <summary><span>NVIDIA & Cloudflare relay</span><span className="muted small">{draft.providerRelayUrl ? 'Your relay' : 'Built-in'}</span><ChevronDown size={16} aria-hidden="true"/></summary>
       <div className="provider-connection-body">
         <p className="muted small">Your key and prompt pass through this app’s relay to NVIDIA or Cloudflare. The relay stores neither. Leave the URL blank to use it, or enter a relay you control.</p>
         <label className="provider-field"><span>Custom relay URL (optional)</span><input type="url" aria-label="Provider relay URL" placeholder={DEFAULT_PROVIDER_RELAY_URL} autoCapitalize="none" spellCheck={false} value={draft.providerRelayUrl || ''} onChange={e => setDraft({ ...draft, providerRelayUrl: e.target.value })}/></label>
         <a className="link-btn small inline" href="https://github.com/Seifonyx/Model-Router/blob/main/server/provider-relay/README.md" target="_blank" rel="noopener noreferrer">Relay setup <ExternalLink size={12}/></a>
       </div>
     </details>
+    <p className="muted small provider-retired">GitHub Models was retired on July 30, 2026; your GitHub coding connection still works. <a className="link-btn small inline" href="https://docs.github.com/en/github-models" target="_blank" rel="noopener noreferrer">Notice <ExternalLink size={12}/></a></p>
   </section>;
 }

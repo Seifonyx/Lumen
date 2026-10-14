@@ -73,7 +73,7 @@ export default function MemoryTab({ Toggle }: { Toggle: (p: { checked: boolean; 
   return (
     <div className="memory-tab" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div className="settings-group">
-        <span className="settings-group-title">Memory Preferences</span>
+        <span className="settings-group-title">Memory preferences</span>
         <div className="settings-card">
           <Toggle
             label="Use memory across chats"
@@ -92,7 +92,7 @@ export default function MemoryTab({ Toggle }: { Toggle: (p: { checked: boolean; 
 
       <div className="settings-group">
         <div className="settings-group-title">
-          <span>Remembered Facts ({memories.length}/{MAX_MEMORIES})</span>
+          <span>Remembered facts ({memories.length}/{MAX_MEMORIES})</span>
           {memories.length > 0 && (
             <button className="link-btn small danger" onClick={() => { if (confirm('Delete all saved memories?')) void clearMemories(); }}>
               <Trash2 size={13} /> Clear all
@@ -124,11 +124,9 @@ export default function MemoryTab({ Toggle }: { Toggle: (p: { checked: boolean; 
           )}
 
           {memories.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '16px 8px' }}>
-              <p className="muted small" style={{ margin: 0 }}>
-                No memories saved yet. Add a fact above, tell any model “remember that…”, or type <code>/remember …</code> in chat.
-              </p>
-            </div>
+            <p className="muted small memory-empty">
+              No memories saved yet. Add a fact above, tell any model “remember that…”, or type <code>/remember</code> in chat.
+            </p>
           ) : (
             <ul className="memory-list" style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>
               {shown.map((m) => (

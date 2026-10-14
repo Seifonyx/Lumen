@@ -91,7 +91,7 @@ async function openMemory(page) {
   await openMemory(B.page);
   const listB = await B.page.textContent('.memory-list');
   check(listB.includes('Works as a clinical pharmacist in Cairo') && listB.includes('Prefers short answers'), 'memories synced to other device');
-  check((await B.page.textContent('.memory-tab')).includes('Remembered Facts (2/200)'), 'count shown');
+  check((await B.page.textContent('.memory-tab')).includes('Remembered facts (2/200)'), 'count shown');
   // Edit on device B.
   await B.page.locator('.memory-row', { hasText: 'Prefers short answers' }).locator('[aria-label="Edit"]').click();
   await B.page.fill('.memory-row.editing textarea', 'Prefers short answers in Arabic');
@@ -120,7 +120,7 @@ async function openMemory(page) {
   // Delete all.
   await page.getByRole('button',{name:'Clear all',exact:true}).click();
   await page.waitForTimeout(800);
-  check((await page.textContent('.memory-tab')).includes('Remembered Facts (0/200)') && (await page.textContent('.memory-tab')).includes('No memories saved yet'), 'delete all');
+  check((await page.textContent('.memory-tab')).includes('Remembered facts (0/200)') && (await page.textContent('.memory-tab')).includes('No memories saved yet'), 'delete all');
   await page.click('.settings-page [aria-label="Close"]');
 
   // Reload: replies stay clean.

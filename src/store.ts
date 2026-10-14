@@ -1,3 +1,4 @@
+import { notify } from './lib/notify';
 import { create } from 'zustand';
 import { keyVersion, openRouterDailyLimit, probeModel, setKeys } from './lib/ai/providers.js';
 import { checkModels as runModelCheck, clearCut, type CheckResult } from './lib/ai/model-check';
@@ -1913,7 +1914,11 @@ export const useStore = create<State>((set, get) => {
         const reply=get().chats.find(item=>item.id===chat.id)?.messages.findLast(message=>message.role==='assistant');
         const status=reply?.status==='done' && !reply.error ? 'done' : reply?.status==='stopped' ? 'interrupted' : 'error';
         await source.finish(id,token,status,{chatId:chat.id,...(status!=='done' ? {error:timedOut ? 'Task stopped after five minutes. Retry manually when ready.' : reply?.error || 'The task was stopped or could not finish.'} : {})});
-        if(generation===accountGeneration)get().toast(claimed.kind==='reminder' ? `Reminder: ${claimed.name}` : status==='done' ? `Task finished: ${claimed.name}` : `Task needs attention: ${claimed.name}`);
+        if(generation===accountGeneration) {
+          const title=claimed.kind==='reminder' ? `Reminder: ${claimed.name}` : status==='done' ? `Task finished: ${claimed.name}` : `Task needs attention: ${claimed.name}`;
+          get().toast(title);
+          void notify(title,claimed.kind==='reminder' ? claimed.prompt : status==='done' ? 'Tap to read the result.' : 'Tap to see what happened.',chat.id);
+        }
       } catch(error) {
         if(generation===accountGeneration) {
           if(chatId && get().streamingChatId===chatId)get().stop();

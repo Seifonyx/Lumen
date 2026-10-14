@@ -3285,3 +3285,10 @@ input, textarea { caret-color: var(--text); }
 
 /* Waiting indicator: elapsed time on long replies */
 .route-elapsed { color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+/* Tasks: notification opt-in */
+.task-notify { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 0 0 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2, var(--elevated)); color: var(--text-2); font-size: 13px; line-height: 1.4; }
+.task-notify > svg { flex: none; color: var(--text-3); }
+.task-notify[data-state="on"] > svg { color: var(--signal-strong); }
+.task-notify > span { flex: 1; min-width: 0; }
+.task-notify .btn { flex: none; }

@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar';
 import Toasts from './components/Toasts';
 import UpdateBar from './components/UpdateBar';
 import WorkspacePanel from './components/WorkspacePanel';
+import { listenForNotificationTaps } from './lib/notify';
 import { useStore } from './store';
 import { matchShortcut } from './lib/shortcuts';
 import { copyText } from './lib/util';
@@ -73,6 +74,21 @@ export default function App() {
 
   useEffect(() => {
     if (authed) return installSidebarGestures();
+  }, [authed]);
+
+  // A tapped task notification opens that task's chat (once the chats have loaded).
+  useEffect(() => {
+    if (!authed) return;
+    let stopWaiting = () => {};
+    const cleanup = listenForNotificationTaps((id) => {
+      const tryOpen = () => { const s = useStore.getState(); if (!s.chats.some((c) => c.id === id)) return false; s.selectChat(id); return true; };
+      if (tryOpen()) return;
+      stopWaiting();
+      const unsub = useStore.subscribe(() => { if (tryOpen()) unsub(); });
+      const timer = setTimeout(unsub, 15_000);
+      stopWaiting = () => { unsub(); clearTimeout(timer); };
+    });
+    return () => { cleanup(); stopWaiting(); };
   }, [authed]);
 
   // Weekly quiet model check, once the app has settled (not in the test setup, which counts requests).

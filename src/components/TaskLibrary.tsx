@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Bell, Clock, Pencil, Play, Plus, Trash2 } from 'lucide-react';
+import { Bell, BellOff, BellRing, Clock, Pencil, Play, Plus, Trash2 } from 'lucide-react';
 import { modelLabel, useStore } from '../store';
 import { MAX_TASKS, normalizeTask, scheduleLabel } from '../lib/tasks';
 import { AUTO } from '../lib/routing';
 import { uid } from '../lib/util';
 import { scan, type Finding } from '../lib/privacy';
 import PrivacyCheck from './PrivacyCheck';
+import { enableNotifications, notifyState, type NotifyState } from '../lib/notify';
 import type { ScheduledTask } from '../types';
 
 const localDateTime=(at:number)=>new Date(at-new Date(at).getTimezoneOffset()*60_000).toISOString().slice(0,16);
@@ -15,6 +16,7 @@ export default function TaskLibrary({ onClose }: { onClose:()=>void }) {
   const busy=useStore(state=>Boolean(state.runningTaskId || state.streamingChatId || state.compactingChatId || state.comparing || state.canvasEditingChatId));
   const [editing,setEditing]=useState<ScheduledTask|null>(null),[error,setError]=useState(''),[saving,setSaving]=useState(false);
   const [check,setCheck]=useState<{task:ScheduledTask;findings:Finding[];reviewKey:string}|null>(null);
+  const [notifications,setNotifications]=useState<NotifyState>(notifyState);
   const zone=Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC';
   const newTask=()=>{const now=Date.now();setError('');setEditing({id:uid(),name:'',prompt:'',kind:'reminder',model:AUTO,search:false,enabled:true,schedule:{kind:'once',at:now+5*60_000},createdAt:now,updatedAt:now});};
   const save=async()=>{
@@ -51,6 +53,12 @@ export default function TaskLibrary({ onClose }: { onClose:()=>void }) {
       {error && <p className="free-tool-error" role="alert">{error}</p>}
       <div className="library-form-actions"><button type="button" className="btn" disabled={saving} onClick={()=>{setEditing(null);setError('');}}>Back</button><button type="submit" className="btn primary" disabled={saving}>{saving?'Saving…':'Save task'}</button></div>
     </form> : <>
+      <div className="task-notify" data-state={notifications}>
+        {notifications==='on' ? <><BellRing size={16}/><span>Notifications on · you’ll be told when a task finishes while the app is in the background.</span></>
+          : notifications==='blocked' ? <><BellOff size={16}/><span>Notifications are blocked for this site. Allow them in your browser settings to hear when tasks finish.</span></>
+          : notifications==='unsupported' ? <><BellOff size={16}/><span>To get notifications on iPhone, add the app to your Home Screen (Share → Add to Home Screen) and open it from there.</span></>
+          : <><Bell size={16}/><span>Get a notification when a task finishes while the app is in the background.</span><button className="btn small" onClick={()=>void enableNotifications().then(setNotifications)}>Turn on</button></>}
+      </div>
       <div className="task-toolbar"><span className="muted small">{tasks.length} / {MAX_TASKS} saved{!ready?' · loading schedules…':''}</span><button className="btn" disabled={tasks.length>=MAX_TASKS} onClick={newTask}><Plus size={16} />New task</button></div>
       <div className="library-grid">{tasks.map(task=><article className="library-card task-card" key={task.id}>
         <div className="library-card-heading"><span className="library-card-icon">{task.kind==='reminder'?<Bell size={18}/>:<Clock size={18}/>}</span><span className="muted small">{task.enabled?'Enabled':'Paused'} · {task.kind==='reminder'?'Reminder':'AI'}</span></div>

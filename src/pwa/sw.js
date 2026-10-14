@@ -27,6 +27,17 @@ self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
+// A tapped task notification brings the app forward on that task's chat.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const chatId = event.notification.data?.chatId;
+  event.waitUntil((async () => {
+    const open = (await self.clients.matchAll({ type: 'window', includeUncontrolled: true })).find((c) => new URL(c.url).origin === self.location.origin);
+    if (open) { await open.focus(); if (chatId) open.postMessage({ type: 'open-chat', chatId }); return; }
+    await self.clients.openWindow(chatId ? `/?openChat=${encodeURIComponent(chatId)}` : '/');
+  })());
+});
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;

@@ -28,8 +28,8 @@ export default function OfficeEditCard({ name, content, complete }: { name: stri
     if (!parsed || !source) return;
     setBusy(true);
     try {
-      const original = await loadOriginal(useStore.getState().user?.uid, source.id);
-      if (!original) throw new Error(`The original ${name} isn’t on this device. Attach it again here, then ask for the edits.`);
+      const original = await loadOriginal(useStore.getState().user?.uid, source.id, Boolean(source.stored));
+      if (!original) throw new Error(`The original ${name} isn’t available on this device (files over about 600 KB stay where they were attached). Attach it again here, then ask for the edits.`);
       const { applyOfficeEdits } = await import('../lib/office/edit');
       const { blob, results } = await applyOfficeEdits(original, name, parsed.edits);
       setResults(results);

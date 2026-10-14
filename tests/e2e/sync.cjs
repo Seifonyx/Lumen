@@ -98,7 +98,8 @@ async function device(browser, name, email, mobile) {
   await B.page.click('.send-btn');
   await B.page.waitForSelector('.msg.assistant >> nth=1 >> .model-tag', { timeout: 15000 });
   const sent = JSON.stringify(B.log.filter((b) => b.systemInstruction).at(-1).contents);
-  check(sent.includes('Attached on another device, not available here: photo.png') && !sent.includes('inline_data'), 'missing attachment replaced by a note');
+  // Small originals sync, so the laptop can still send the phone's photo.
+  check(!sent.includes('Attached on another device') && sent.includes('inline_data'), 'small photo from the other device is sent with the chat');
   await A.page.click('.menu-btn');
   await A.page.click('.chat-row .chat-open');
   await A.page.waitForFunction(() => [...document.querySelectorAll('.msg.user .bubble')].some((b) => b.textContent === 'Follow-up from laptop'), null, { timeout: 15000 });

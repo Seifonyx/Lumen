@@ -433,10 +433,21 @@ export const useStore = create<State>((set, get) => {
         chosen = next;
       }
     }
+    // Small originals saved from another device (images, PDFs) are fetched once and kept on this device.
+    const hydrated = new Map<string, string>();
+    const owner = get().user?.uid;
+    const needed = owner ? liveMessages(chat).flatMap((m) => m.files || []).filter((f) => f.stored && !f.data && (f.kind === 'image' || f.kind === 'pdf')) : [];
+    if (needed.length) {
+      const { fetchOriginal } = await import('./lib/sync');
+      await Promise.all(needed.slice(0, 10).map(async (f) => { const o = await fetchOriginal(owner!, f.id); if (o) hydrated.set(f.id, o.data); }));
+      const hydrateId = chat.id;
+      if (hydrated.size) set((s) => ({ chats: s.chats.map((c) => c.id !== hydrateId ? c : { ...c, messages: c.messages.map((m) => m.files?.some((f) => hydrated.has(f.id)) ? { ...m, files: m.files.map((f) => hydrated.has(f.id) ? { ...f, data: hydrated.get(f.id) } : f) } : m) }) }));
+    }
     const wire: WireMessage[] = withSummary(activeSummary(chat), liveMessages(chat)
       .filter((m) => !m.error || m.text)
       .map((m) => {
-        // Attachments synced from another device arrive without their contents.
+        // Attachments synced from another device arrive without their contents (unless fetched above).
+        if (hydrated.size && m.files?.some((f) => hydrated.has(f.id))) m = { ...m, files: m.files.map((f) => hydrated.has(f.id) ? { ...f, data: hydrated.get(f.id) } : f) };
         const usable = (m.files || []).filter((f) => f.data || f.text);
         const missing = (m.files || []).filter((f) => !f.data && !f.text).map((f) => f.name);
         return {

@@ -27,7 +27,18 @@ export async function saveOriginal(account: string | undefined, id: string, file
   try { await run(account, 'readwrite', (s) => s.put(file, id)); } catch { /* storage full or blocked */ }
 }
 
-export async function loadOriginal(account: string | undefined, id: string): Promise<Blob | null> {
+export async function loadOriginal(account: string | undefined, id: string, remote = false): Promise<Blob | null> {
   if (!account) return null;
-  try { return (await run<Blob | undefined>(account, 'readonly', (s) => s.get(id))) || null; } catch { return null; }
+  try {
+    const local = await run<Blob | undefined>(account, 'readonly', (s) => s.get(id));
+    if (local || !remote) return local || null;
+  } catch { if (!remote) return null; }
+  // Saved from another device: fetch the synced copy once and keep it here.
+  const { fetchOriginal } = await import('../sync');
+  const synced = await fetchOriginal(account, id);
+  if (!synced) return null;
+  const bytes = Uint8Array.from(atob(synced.data), (c) => c.charCodeAt(0));
+  const blob = new Blob([bytes], { type: synced.mime });
+  await saveOriginal(account, id, blob);
+  return blob;
 }

@@ -1,15 +1,17 @@
 // Keeps chats in step across devices through Firestore:
 //   modelRouter/{uid}/chats/{chatId}                 chat details (title, pinned, updatedAt, deleted, ids…)
 //   modelRouter/{uid}/chats/{chatId}/messages/{id}   one document per message
-// Attachment contents stay on the device that added them (Firestore documents are limited to 1 MB);
-// names, thumbnails and small extracted texts are synced.
+//   modelRouter/{uid}/files/{fileId}                 original of a small attachment (≤ ~600 KB)
+// Names, thumbnails and small extracted texts sync with the message. Small originals (images, PDFs and
+// Word/Excel files kept for in-place editing) are saved once to files/ and fetched only when another
+// device needs them; larger ones stay on the device that added them (Firestore documents hold 1 MB).
 //
 // To stay inside Firebase's free daily reads, every write carries a server time (`srv`). After the
 // first full sync a device only asks for chats changed since it last looked, and for those chats
 // only the messages that changed (the chat's `ids` list gives the order and shows deletions).
 
 import {
-  collection, doc, getDocs, onSnapshot, orderBy, query, serverTimestamp, Timestamp, where, writeBatch,
+  collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, setDoc, orderBy, query, serverTimestamp, Timestamp, where, writeBatch,
   type DocumentData, type Query, type Unsubscribe,
 } from 'firebase/firestore';
 import { isTemporaryChat } from './temporary-chat';
@@ -19,9 +21,13 @@ import { quota, type GuardLevel } from './quota';
 import { normalizeAssistant } from './assistants';
 import { normalizeDocuments } from './canvas';
 import { normalizeKnowledgeSources } from './knowledge/core';
+import { isEditableOffice, loadOriginal } from './office/originals';
 
 const MAX_SYNCED_TEXT = 100_000;
 const MAX_DOC_CHARS = 900_000;
+/** Base64 size limit for a synced original (about 600 KB of file). */
+const MAX_FILE_B64 = 820_000;
+const storable = (f: Attachment) => !f.auto && !f.videoUri && (f.data ? f.data.length <= MAX_FILE_B64 : isEditableOffice(f.name) && f.size > 0 && f.size * 1.37 <= MAX_FILE_B64);
 /** Allowance for writes that were still in flight when we last looked (in-app tests may shorten it). */
 const MARGIN_MS = Number((globalThis as { __mrSyncMarginMs?: number }).__mrSyncMarginMs) || 60_000;
 /** In "slow" mode, changes to a chat are sent at most this often. */
@@ -31,12 +37,31 @@ type RemoteMessage = Omit<Message, 'files'> & { index: number; files?: Attachmen
 
 const chatsCol = (uid: string) => collection(db, 'modelRouter', uid, 'chats');
 const messagesCol = (uid: string, chatId: string) => collection(db, 'modelRouter', uid, 'chats', chatId, 'messages');
+const filesCol = (uid: string) => collection(db, 'modelRouter', uid, 'files');
+
+const toBase64 = async (blob: Blob) => {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+};
+
+/** The synced original of an attachment, if one was saved (null when it wasn't or can't be read). */
+export async function fetchOriginal(uid: string, fileId: string): Promise<{ data: string; mime: string; name: string } | null> {
+  try {
+    const snap = await getDoc(doc(filesCol(uid), fileId));
+    quota.count('reads', 1);
+    if (!snap.exists()) return null;
+    const x = snap.data();
+    return typeof x.data === 'string' ? { data: x.data, mime: String(x.mime || ''), name: String(x.name || '') } : null;
+  } catch { return null; }
+}
 
 function toRemoteMessage(m: Message, index: number): RemoteMessage {
   const out: RemoteMessage = { ...m, index };
   if (m.status === 'streaming') out.status = 'stopped';
   if (m.files?.length) {
-    out.files = m.files.map(({ data: _data, text, ...f }) => ({ ...f, ...(text && text.length <= MAX_SYNCED_TEXT ? { text } : {}) }));
+    out.files = m.files.map(({ data, text, ...f }) => ({ ...f, ...(text && text.length <= MAX_SYNCED_TEXT ? { text } : {}), ...(f.stored || storable({ ...f, data }) ? { stored: true } : {}) }));
   }
   let json = JSON.stringify(out);
   // Very long replies are trimmed rather than failing to sync.
@@ -303,9 +328,38 @@ export class ChatSync {
     for (const b of batches) await b.commit();
     quota.count('deletes', ids.size);
     quota.count('writes', 1);
+    await this.removeOriginals(id);
     this.known.delete(id);
     this.synced[id] = rev;
     save(`mr.sync.revs.${this.uid}`, this.synced);
+  }
+
+  /** Saves small attachment originals once, so other devices can fetch them when needed. */
+  private async uploadOriginals(chat: Chat) {
+    if (quota.level() === 'paused') return;
+    const key = `mr.sync.files.${this.uid}`;
+    const done = new Set(load<string[]>(key, []));
+    for (const m of chat.messages) for (const f of m.files || []) {
+      if (done.has(f.id) || !storable(f)) continue;
+      let data = f.data;
+      if (!data && isEditableOffice(f.name)) { const original = await loadOriginal(this.uid, f.id); if (original) data = await toBase64(original); }
+      if (!data || data.length > MAX_FILE_B64) continue;
+      try {
+        await setDoc(doc(filesCol(this.uid), f.id), { chatId: chat.id, name: f.name, mime: f.mime, kind: f.kind, data, srv: serverTimestamp() });
+        quota.count('writes', 1);
+        done.add(f.id);
+      } catch { /* try again on the next sync */ }
+    }
+    save(key, [...done].slice(-2000));
+  }
+
+  private async removeOriginals(chatId: string) {
+    try {
+      const snap = await getDocs(query(filesCol(this.uid), where('chatId', '==', chatId)));
+      quota.count('reads', Math.max(1, snap.size));
+      await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
+      quota.count('deletes', snap.size);
+    } catch { /* leftovers are harmless; they're only readable by this account */ }
   }
 
   private async remoteIds(chatId: string): Promise<Set<string>> {
@@ -364,6 +418,7 @@ export class ChatSync {
     for (const b of batches) await b.commit();
     quota.count('writes', writes);
     quota.count('deletes', deletes);
+    await this.uploadOriginals(chat);
     this.known.set(chat.id, next);
     this.synced[chat.id] = revOf(chat);
     save(`mr.sync.revs.${this.uid}`, this.synced);

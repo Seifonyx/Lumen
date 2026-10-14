@@ -17,6 +17,8 @@ export interface Attachment {
   auto?: boolean;
   /** Public YouTube URL passed as video input to Gemini, never a text-only fallback. */
   videoUri?: string;
+  /** The original file (small ones only) is also saved to the account, so other devices can use it. */
+  stored?: boolean;
 }
 
 export interface Source {

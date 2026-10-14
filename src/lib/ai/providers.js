@@ -566,25 +566,27 @@ export async function complete({ provider, name }, prompt, { maxTokens = 256, si
   return (d.choices?.[0]?.message?.content || '').replace(/<think>[\s\S]*?(<\/think>|$)/g, '').trim() || null;
 }
 
-/** One bounded, context-free request. Only an explicit model failure can hide a model.
- * @returns {Promise<{state: string, status?: number, input?: number, output?: number, limit?: object}>}
+/**
+ * One tiny, context-free request ("Reply with OK") to a model. Reports what happened; the model check
+ * (lib/ai/model-check.ts) decides what it means. Returns { status, message, text, ms, limit, input, output };
+ * status 0 means no answer (network error or timeout).
  */
-export async function probeModel(id, signal) {
+export async function probeModel(id, signal, { maxTokens = 48, timeoutMs = 25_000 } = {}) {
   const target = parseModelId(id);
-  if (!target || !hasKey(target.provider) || isExcludedModel(id)) return { state: 'unchecked' };
+  if (!target || !hasKey(target.provider) || isExcludedModel(id)) return { status: -1, message: 'Not connected', text: '', ms: 0 };
   const attempt = new AbortController();
   const abort = () => attempt.abort();
   signal.addEventListener('abort', abort, { once: true });
   if (signal.aborted) abort();
-  const timer = setTimeout(abort, 20_000);
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; attempt.abort(); }, timeoutMs);
   const info = {};
+  const started = Date.now();
   try {
-    if (attempt.signal.aborted) return { state: 'unchecked' };
-    await complete(target, 'Reply OK.', { maxTokens: 16, signal: attempt.signal, info });
-    if (signal.aborted) return { state: 'unchecked' };
-    return { ...info, state: info.status === 200 ? 'available' : isUnavailableFailure(info.status, info.message) ? 'unavailable' : 'unchecked' };
-  } catch {
-    return { state: 'unchecked' };
+    const text = await complete(target, 'Reply with the single word OK.', { maxTokens, signal: attempt.signal, info });
+    return { ...info, status: info.status ?? 0, text: text || '', ms: Date.now() - started };
+  } catch (e) {
+    return { status: 0, message: timedOut ? 'No answer within 25 seconds' : signal.aborted ? 'Stopped' : (e && e.message) || 'Network error', text: '', ms: Date.now() - started };
   } finally {
     clearTimeout(timer);
     signal.removeEventListener('abort', abort);

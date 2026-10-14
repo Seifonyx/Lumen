@@ -40,6 +40,7 @@ import KeySafety from './KeySafety';
 import ProviderConnections, { type MainProvider } from './ProviderConnections';
 import FilterMenu from './FilterMenu';
 import SharedLinks from './SharedLinks';
+import ModelCheck, { LAST_CHECK_KEY } from './ModelCheck';
 import { normalizeKeys, validAlibabaBase, validRelayUrl } from '../lib/ai/provider-config.js';
 import type { ApiKeys } from '../lib/firebase';
 import PrivacyTab from './PrivacyTab';
@@ -119,11 +120,8 @@ function ModelsTab() {
   const catalogError = useStore((s) => s.catalogError);
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const checkModels = useStore((s) => s.checkModels);
-  const modelCheck = useRef<AbortController | null>(null);
-  const [checking, setChecking] = useState(false);
-  const [checkResult, setCheckResult] = useState('');
-  useEffect(() => () => { modelCheck.current?.abort(); }, []);
+  const [checkOpen, setCheckOpen] = useState(false);
+  const lastCheck = Number((() => { try { return localStorage.getItem(LAST_CHECK_KEY); } catch { return 0; } })()) || 0;
   const [editing, setEditing] = useState<Layout | null>(null);
   const [filter, setFilter] = useState<'all' | ProviderId>('all');
   const [view, setView] = useState<'saved' | 'browse' | 'layouts'>(() => useStore.getState().settingsTab === 'layouts' ? 'layouts' : 'saved');
@@ -183,6 +181,28 @@ function ModelsTab() {
       </div>
 
       <div className="settings-group">
+        <span className="settings-group-title">Model health</span>
+        <div className="settings-card model-health">
+          <div className="setting-row">
+            <span className="setting-text">
+              <span className="setting-label">Check your models</span>
+              <span className="setting-hint">{lastCheck ? `Last checked ${new Date(lastCheck).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}. ` : ''}Removes models that can’t answer, like retired ones or ones that need payment.</span>
+            </span>
+            <span className="setting-ctrl"><button className="btn small" disabled={!catalog?.models.length} onClick={() => setCheckOpen(true)}>Check models</button></span>
+          </div>
+          {!!settings.unavailableModels?.length && (
+            <div className="setting-row">
+              <span className="setting-text">
+                <span className="setting-label">{settings.unavailableModels.length} model{settings.unavailableModels.length === 1 ? '' : 's'} removed</span>
+                <span className="setting-hint">Hidden from your lists and from Auto.</span>
+              </span>
+              <span className="setting-ctrl"><button className="btn ghost small" disabled={refreshing} onClick={async () => { setRefreshing(true); update({ unavailableModels: [] }); await loadCatalog(); setRefreshing(false); }}>Restore all</button></span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="settings-group">
         <div className="settings-group-title">
           <span>Your models</span>
           <span className="count-pill">{enabled.length}</span>
@@ -220,28 +240,19 @@ function ModelsTab() {
       </div>
       </>}
 
+      {checkOpen && <ModelCheck onClose={() => setCheckOpen(false)} />}
       {view === 'layouts' && <LayoutsSection onEdit={setEditing} />}
 
       {view === 'browse' &&
       <div className="settings-group">
         <div className="settings-group-title">
           <span>Add models</span>
-          <button className="link-btn small" disabled={refreshing || checking} onClick={async () => { setRefreshing(true); await loadCatalog(); setRefreshing(false); }}>
+          <button className="link-btn small" disabled={refreshing} onClick={async () => { setRefreshing(true); await loadCatalog(); setRefreshing(false); }}>
             <RefreshCw size={13} className={refreshing ? 'spin' : ''} /> Refresh
           </button>
         </div>
         <div className="settings-card pad-card">
           {catalogError && <p className="error-text small" dir="auto">{catalogError}</p>}
-          <p className="muted small">Check access with one tiny request per model using your keys. Uses your provider allowance; no chats or files are sent.</p>
-          <button className="btn ghost small" disabled={!checking && (refreshing || !catalog?.models.length)} onClick={async () => {
-            if (checking) { modelCheck.current?.abort(); setCheckResult('Stopped. Models already confirmed unavailable stay hidden.'); setChecking(false); return; }
-            const controller = new AbortController(); modelCheck.current = controller; setChecking(true);
-            try { await checkModels(controller.signal, setCheckResult); }
-            catch { if (!controller.signal.aborted) setCheckResult('Check interrupted. Unconfirmed models are kept.'); }
-            finally { if (!controller.signal.aborted) setChecking(false); }
-          }}>{checking ? 'Stop checking' : 'Check model availability'}</button>
-          {checkResult && <p className="muted small" role="status">{checkResult}</p>}
-          {!!settings.unavailableModels?.length && <p className="muted small">{settings.unavailableModels.length} unavailable model{settings.unavailableModels.length === 1 ? '' : 's'} hidden. <button className="link-btn small" disabled={refreshing || checking} onClick={async () => { setRefreshing(true); update({ unavailableModels: [] }); await loadCatalog(); setRefreshing(false); }}>Restore hidden models</button></p>}
           <div className="list-toolbar">
             <label className="search">
               <Search size={16} />

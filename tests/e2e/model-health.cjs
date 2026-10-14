@@ -50,17 +50,28 @@ const assert = require('node:assert/strict');
       await page.getByRole('button', { name: 'Browse models', exact: true }).click();
       assert.ok(!(await page.locator('.model-list.add').textContent()).includes('gemini-missing-fixture'));
       assert.ok(!(await page.locator('.model-list.add').textContent()).includes('gemini-3.1-pro-preview'));
-      assert.ok(await page.getByRole('button', { name: 'Restore hidden models' }).isVisible());
-      await page.getByRole('button', { name: 'Check model availability', exact: true }).click();
-      await page.waitForFunction(() => document.querySelector('.settings-panel [role="status"]')?.textContent.includes('inconclusive'));
-      assert.match(await page.locator('.settings-panel [role="status"]').textContent(), /1 available · 1 hidden · 2 inconclusive/);
-      assert.equal(probes.length, 3, 'quota pauses remaining models for that provider');
-      assert.ok(probes.every(body => JSON.stringify(body.contents) === JSON.stringify([{ role: 'user', parts: [{ text: 'Reply OK.' }] }]) && body.generationConfig.maxOutputTokens === 16));
+      await page.getByRole('button', { name: 'Your models', exact: true }).click();
+      assert.ok(await page.getByRole('button', { name: 'Restore all' }).isVisible(), 'removed models can be restored');
+      // The model check: every catalogue model gets one tiny request.
+      await page.getByRole('button', { name: 'Check models', exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: 'Check models' });
+      await dialog.getByRole('radio', { name: /All models/ }).click();
+      await dialog.getByRole('button', { name: 'Start check' }).click();
+      await dialog.getByText('Check complete').waitFor({ timeout: 60000 });
+      const removed = await dialog.locator('.mc-group').filter({ hasText: 'Removed' }).textContent();
+      assert.match(removed, /gemini-probe-missing/);
+      assert.match(removed, /Model not found/);
+      assert.match(await dialog.locator('.mc-group').filter({ hasText: 'busy' }).textContent(), /gemini-quota-fixture/, 'rate-limited model kept');
+      assert.ok(probes.every(body => body.contents[0].parts[0].text === 'Reply with the single word OK.'));
       assert.ok(await page.evaluate(() => JSON.parse(localStorage.getItem('mr.settings')).unavailableModels.includes('gemini:gemini-probe-missing')));
       assert.ok(await page.evaluate(() => !JSON.parse(localStorage.getItem('mr.settings')).unavailableModels.includes('gemini:gemini-quota-fixture')));
-      assert.ok(await page.getByRole('button', { name: 'Check model availability', exact: true }).isEnabled());
-      assert.ok(await page.locator('.settings-panel').evaluate(el => el.scrollWidth <= el.clientWidth + 1));
-      console.log(`PASS ${width}px: context-free availability checks, confirmed removal, quota preservation and provider pause`);
+      // Keep anyway brings it back.
+      await dialog.locator('.mc-list li').filter({ hasText: 'gemini-probe-missing' }).getByRole('button', { name: 'Keep anyway' }).click();
+      await page.waitForFunction(() => !JSON.parse(localStorage.getItem('mr.settings')).unavailableModels.includes('gemini:gemini-probe-missing'));
+      assert.ok(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth + 1), 'check fits the screen');
+      if (process.env.SHOT) await page.screenshot({ path: `${process.env.SHOT}-${width}.png` });
+      await dialog.getByRole('button', { name: 'Done' }).click();
+      console.log(`PASS ${width}px: model check removes broken models, keeps busy ones, Keep anyway restores`);
       console.log(`PASS ${width}px: section headings, fallback, permanent model rejection, paid model filter, persistence and recovery control`);
       await context.close();
     }

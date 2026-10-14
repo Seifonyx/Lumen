@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { keyVersion, openRouterDailyLimit, probeModel, setKeys } from './lib/ai/providers.js';
+import { checkModels as runModelCheck, type CheckResult } from './lib/ai/model-check';
 import { AI_PROVIDERS, normalizeKeys, providerEnabled } from './lib/ai/provider-config.js';
 import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage } from './lib/api';
 import { keepModelChoice, isExcludedModel } from './lib/ai/model-status.js';
@@ -105,7 +106,10 @@ interface State {
   logout(): void;
   saveApiKeys(keys: ApiKeys): Promise<void>;
   loadCatalog(): Promise<void>;
-  checkModels(signal: AbortSignal, progress: (text: string) => void): Promise<void>;
+  /** Checks models with one tiny request each; broken ones are removed as they're found. */
+  checkModels(ids: string[], signal: AbortSignal, onProgress: (p: { done: number; total: number; current?: string; result?: CheckResult }) => void): Promise<CheckResult[]>;
+  /** Brings back a model the check removed ("Keep anyway"); re-adds it to your models if it was there. */
+  restoreModel(id: string, enable: boolean): void;
   updateSettings(patch: Partial<Settings>): void;
   toast(text: string, kind?: Toast['kind']): void;
   dismissToast(id: string): void;
@@ -874,7 +878,7 @@ export const useStore = create<State>((set, get) => {
       }
     },
 
-    async checkModels(signal, progress) {
+    async checkModels(ids, signal, onProgress) {
       modelCheckController?.abort();
       const check = new AbortController();
       modelCheckController = check;
@@ -882,30 +886,29 @@ export const useStore = create<State>((set, get) => {
       signal.addEventListener('abort', abort, { once: true });
       if (signal.aborted) abort();
       const generation = accountGeneration;
-      const models = [...(get().catalog?.models || [])];
-      const paused = new Set<string>();
-      let available = 0, removed = 0, unchecked = 0;
       try {
-        for (const [index, model] of models.entries()) {
-          if (check.signal.aborted || generation !== accountGeneration) return;
-          progress(`Checking ${index + 1} of ${models.length}: ${model.label}`);
-          const provider = model.id.split(':')[0];
-          if (paused.has(provider)) { unchecked++; continue; }
-          const result = await probeModel(model.id, check.signal);
-          if (check.signal.aborted || generation !== accountGeneration) return;
-          if (result.status === 200) usage?.record(model.id, { requests: 1, input: result.input || 0, output: result.output || 0 });
-          if (result.limit) usage?.block(model.id, result.limit as LimitInfo);
-          if (result.state === 'unavailable') { hideUnavailableModel(model.id); removed++; }
-          else if (result.state === 'available') available++;
-          else unchecked++;
-          // A bad key or quota shouldn't trigger requests for every remaining model.
-          if ([401, 403, 429].includes(result.status || 0) && result.state !== 'unavailable') paused.add(provider);
-        }
-        progress(`${available} available · ${removed} hidden · ${unchecked} inconclusive. Inconclusive models are kept.`);
+        return await runModelCheck(ids, (id, s, o) => probeModel(id, s, o), check.signal, (p) => {
+          if (generation !== accountGeneration) { check.abort(); return; }
+          const r = p.result;
+          if (r) {
+            if (r.outcome === 'broken') hideUnavailableModel(r.id);
+            if (r.outcome === 'working') usage?.record(r.id, { requests: 1, input: 0, output: 0 });
+          }
+          onProgress(p);
+        });
       } finally {
         signal.removeEventListener('abort', abort);
         if (modelCheckController === check) modelCheckController = null;
       }
+    },
+
+    restoreModel(id, enable) {
+      const { settings } = get();
+      get().updateSettings({
+        unavailableModels: (settings.unavailableModels || []).filter((x) => x !== id),
+        ...(enable && !settings.enabledModels.includes(id) ? { enabledModels: [...settings.enabledModels, id] } : {}),
+      });
+      void get().loadCatalog();
     },
 
     async loadCatalog() {

@@ -25,6 +25,10 @@ export interface RouteInput {
   left: (id: string) => number | null;
   /** the model that answered the previous message in this chat, if it worked */
   previous?: string;
+  /** models Auto must not pick (manual choice still allowed) */
+  excluded?: string[];
+  /** provider Auto leans towards when models are close */
+  preferProvider?: string;
 }
 
 export interface RoutePlan {
@@ -35,6 +39,8 @@ export interface RoutePlan {
   reason: string | null;
   /** explanation when a manual choice was overridden */
   notice: string | null;
+  /** Auto only: why the chosen model won, and the next models in line */
+  detail?: { why: string[]; next: string[] };
 }
 
 export interface Task {
@@ -123,7 +129,7 @@ const REASONS: [keyof Task, string][] = [
   ['quick', 'fast for quick replies'],
 ];
 
-function score(m: ModelInfo, task: Task, tokens: number, index: number, total: number, left: number | null, extra: { newest: boolean; previous: boolean }): number {
+function score(m: ModelInfo, task: Task, tokens: number, index: number, total: number, left: number | null, extra: { newest: boolean; previous: boolean; preferred: boolean }, why: string[] = []): number {
   const t = traits(m);
   let s = total ? ((total - index) / total) * 1.6 : 0; // bounded tie-breaker even with hundreds of models
   // Big "Pro" models have the smallest free limits, so they only get an edge on heavy work.
@@ -147,19 +153,21 @@ function score(m: ModelInfo, task: Task, tokens: number, index: number, total: n
   if (task.quick) {
     if (t.reasoner && !t.gemini && !t.fast) s -= 2;
     const ms = replyLatency(m.id);
-    if (ms !== null) s += Math.max(-1.5, Math.min(1.5, (4000 - ms) / 3000));
+    if (ms !== null) { s += Math.max(-1.5, Math.min(1.5, (4000 - ms) / 3000)); if (ms < 2500) why.push(`starts answering in about ${(ms / 1000).toFixed(1)} s`); }
   }
   if (task.writing) s += (t.power >= 2 ? 1 : 0) + (t.gemini ? 1 : 0) + (task.arabic && t.gemini ? 1 : 0);
   // Newest version within a family (e.g. 2.5 over 2.0) gets a small edge.
-  if (extra.newest) s += 1;
+  if (extra.newest) { s += 1; why.push('newest version of its family'); }
+  if (extra.preferred) { s += 1.5; why.push('from your preferred provider'); }
   // Proven track record on this device: models that keep failing sink, reliable ones rise.
   const rel = reliability(m.id);
-  if (rel !== null) s += Math.max(-5, Math.min(2, (rel - 0.75) * 8));
+  if (rel !== null) { s += Math.max(-5, Math.min(2, (rel - 0.75) * 8)); if (rel >= 0.85) why.push(`answers reliably (${Math.round(rel * 100)}% recently)`); }
   // Stay with the model that answered the last message: steadier tone, and it already knows the chat.
-  if (extra.previous && (rel === null || rel >= 0.5)) s += 2.5;
+  if (extra.previous && (rel === null || rel >= 0.5)) { s += 2.5; why.push('answered your last message'); }
   if (m.context && tokens > m.context * 0.85) s -= 100;
   // Save models that are almost out of today's free requests.
   if (left !== null) s -= left <= 3 ? 3 : left <= 10 ? 1 : 0;
+  if (t.fast && task.quick) why.push('very fast provider');
   return s;
 }
 
@@ -176,12 +184,18 @@ export function planRoute(input: RouteInput): RoutePlan {
   const info = new Map(input.catalog.map((m) => [m.id, m]));
   const tokens = input.conversationTokens;
   const task = analyze(input);
-  const known = input.enabled.filter((id) => info.has(id) && !capable(info.get(id), task, tokens));
+  const auto = input.selected === AUTO || !input.selected;
+  const excluded = new Set(auto ? input.excluded || [] : []);
+  const usable = input.enabled.filter((id) => !excluded.has(id));
+  // If every model is excluded from Auto, using one beats sending nothing.
+  const pool = usable.some((id) => info.has(id) && !capable(info.get(id), task, tokens)) ? usable : input.enabled;
+  const known = pool.filter((id) => info.has(id) && !capable(info.get(id), task, tokens));
+  const whyOf = new Map<string, string[]>();
   // The newest version of each family among the candidates.
   const newestOf = new Map<string, number>();
   for (const id of known) { const f = family(info.get(id)!); newestOf.set(f.key, Math.max(newestOf.get(f.key) || 0, f.version)); }
   const scored = known
-    .map((id, i) => { const f = family(info.get(id)!); return { id, s: score(info.get(id)!, task, tokens, i, known.length, input.left(id), { newest: f.version > 0 && f.version === newestOf.get(f.key) && [...known].some((o) => o !== id && family(info.get(o)!).key === f.key), previous: id === input.previous }) }; })
+    .map((id, i) => { const f = family(info.get(id)!); const why: string[] = []; whyOf.set(id, why); return { id, s: score(info.get(id)!, task, tokens, i, known.length, input.left(id), { newest: f.version > 0 && f.version === newestOf.get(f.key) && [...known].some((o) => o !== id && family(info.get(o)!).key === f.key), previous: id === input.previous, preferred: Boolean(input.preferProvider) && id.split(':')[0] === input.preferProvider }, why) }; })
     .sort((a, b) => b.s - a.s);
   // Backups alternate providers when they're close in score, so one provider's outage or rate
   // limit doesn't take out the next few attempts too.
@@ -196,7 +210,7 @@ export function planRoute(input: RouteInput): RoutePlan {
   // Models at their limit go last; they're kept only as a final resort.
   const blocked = (id: string) => input.blocked(id) || isCoolingDown(id);
   const order = [...ranked.filter((id) => !blocked(id)), ...ranked.filter(blocked)];
-  const unknown = input.enabled.filter((id) => !info.has(id));
+  const unknown = pool.filter((id) => !info.has(id));
   const all = [...order, ...unknown];
   const name = (id: string) => info.get(id)?.label || id.split(':').slice(1).join(':');
 
@@ -217,7 +231,9 @@ export function planRoute(input: RouteInput): RoutePlan {
         if (k === 'writing') return t.power >= 2;
         return true;
       })?.[1] || 'best available';
-    return { model, fallbacks: all.slice(1), reason, notice: null };
+    const why = [...(reason !== 'best available' ? [reason] : []), ...(whyOf.get(model) || []).filter((w) => w !== reason)];
+    if (blocked(model)) why.push('every better match is at its limit right now');
+    return { model, fallbacks: all.slice(1), reason, notice: null, detail: { why: why.length ? why.slice(0, 5) : ['best overall match among your models'], next: all.slice(1, 4) } };
   }
 
   // Manual choice: keep it unless it can't handle this message.

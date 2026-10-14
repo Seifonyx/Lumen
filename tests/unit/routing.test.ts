@@ -112,3 +112,18 @@ console.log('PASS fast reasoning-capable providers remain eligible for quick rep
   if (w.reason !== 'strong writer' || /lite|8b/.test(w.model)) throw new Error(`Writing should use a strong writer, got ${w.model} (${w.reason})`);
   console.log('PASS writing tasks go to a strong writer');
 }
+
+// Steering Auto: excluded models are skipped (unless nothing else fits); a preferred provider wins close calls.
+{
+  const base = { selected: AUTO, enabled, catalog, text: 'hi, how are you?', files: [], conversationTokens: 100, search: false, blocked: () => false, left: () => null };
+  const first = planRoute(base as any).model;
+  const ex = planRoute({ ...base, excluded: [first] } as any);
+  if (ex.model === first || ex.fallbacks.includes(first)) throw new Error('Excluded model must not be used by Auto');
+  if (!ex.detail?.why.length || ex.detail.next.length !== 3) throw new Error('Auto should explain its choice and list the next models');
+  if (planRoute({ ...base, selected: first, excluded: [first] } as any).model !== first) throw new Error('Exclusion must not block a manual choice');
+  if (planRoute({ ...base, excluded: enabled } as any).model === '') throw new Error('Excluding everything must still answer');
+  const pair = [M('gemini:gemini-flash-x'), M('openrouter:vendor/flash-x:free', { thinking: false })];
+  const pref = planRoute({ ...base, enabled: pair.map((m) => m.id), catalog: pair as any[], preferProvider: 'openrouter' } as any);
+  if (!pref.model.startsWith('openrouter:')) throw new Error(`Preferred provider should win a close call, got ${pref.model}`);
+  console.log('PASS Auto skips excluded models, explains its choice and leans to a preferred provider');
+}

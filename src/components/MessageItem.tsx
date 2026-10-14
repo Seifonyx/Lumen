@@ -14,6 +14,7 @@ import { modelLabel, useStore } from '../store';
 import type { Message } from '../types';
 import Markdown from './Markdown';
 import GeneratedImage from './GeneratedImage';
+import RouteWhy from './RouteWhy';
 import ModelPicker from './ModelPicker';
 import TextSelection from './TextSelection';
 import MoreMenu from './MoreMenu';
@@ -302,6 +303,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
 
       {!streaming && (
         <div className="msg-actions">
+          {message.route && !message.via && message.model ? <RouteWhy message={message} /> : (
           <span className="model-tag" title={message.via ? `${message.via} layout${message.route ? `: ${message.route}` : ''}` : message.route ? `Auto picked this model: ${message.route}` : message.model}>
             {modelLabel(catalog, message.model)}
             {message.via ? (
@@ -310,6 +312,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
               message.route && <span className="route-tag"> · Auto: {message.route}</span>
             )}
           </span>
+          )}
           {message.text && (
             <>
               <button className="msg-action" aria-label="Copy" title="Copy" onClick={async () => { if (await copyText(message.text)) { setCopied(true); setTimeout(() => setCopied(false), 1500); } }}>

@@ -39,6 +39,8 @@ export interface Message {
   model?: string;
   /** why Auto picked this model, e.g. "reads images" */
   route?: string;
+  /** Auto: why this model was chosen and which were next in line */
+  routeDetail?: { why: string[]; next: string[] };
   /** the layout that answered, e.g. "Max coding" */
   via?: string;
   /** added by the app, not typed by you: repository files a model asked to read */

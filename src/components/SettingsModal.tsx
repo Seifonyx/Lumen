@@ -28,7 +28,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { VOICE_LANGS } from '../lib/speech';
 import { useFocusScope } from '../lib/focus-scope';
 import { PreviewTools } from './PreviewTools';
-import { PROVIDER_NAMES, saveBlob, type ProviderId } from '../lib/util';
+import { PROVIDER_NAMES, providerOfId, saveBlob, type ProviderId } from '../lib/util';
 import { useStore } from '../store';
 import type { Chat, FontSize, ModelInfo, Theme } from '../types';
 import { Badges } from './ModelPicker';
@@ -179,6 +179,18 @@ function ModelsTab() {
             checked={settings.defaultModel === 'auto'}
             onChange={(v) => update({ defaultModel: v ? 'auto' : enabled[0] || '' })}
           />
+          <div className="setting-row">
+            <span className="setting-text">
+              <span className="setting-label">Auto prefers</span>
+              <span className="setting-hint">When models are close, lean towards this provider.{settings.autoExcluded?.length ? ` ${settings.autoExcluded.length} model${settings.autoExcluded.length === 1 ? ' is' : 's are'} kept out of Auto.` : ''}</span>
+            </span>
+            <span className="setting-ctrl">
+              <select aria-label="Provider Auto prefers" value={settings.autoPreferProvider || ''} onChange={(e) => update({ autoPreferProvider: e.target.value || undefined })}>
+                <option value="">No preference</option>
+                {[...new Set(enabled.map((id) => id.split(':')[0]))].filter((p) => p !== 'auto' && !p.startsWith('layout')).map((p) => <option key={p} value={p}>{PROVIDER_NAMES[providerOfId(`${p}:x`)] || p}</option>)}
+              </select>
+            </span>
+          </div>
         </div>
       </div>
 
@@ -224,12 +236,14 @@ function ModelsTab() {
                     <span className="model-sub">
                       {m ? PROVIDER_NAMES[m.provider] : 'Not available right now'}
                       {m?.context ? ` · ${ctx(m.context)} context` : ''}
+                      {settings.autoExcluded?.includes(id) ? ' · not in Auto' : ''}
                     </span>
                   </span>
                   <button className="icon-btn sm model-options" aria-label={`Options for ${m?.label || id}`} aria-expanded={actions === id} aria-controls={`model-actions-${i}`} onClick={() => setActions(actions === id ? null : id)}><MoreHorizontal size={18} /></button>
                   {actions === id && <div className="model-row-actions" id={`model-actions-${i}`}>
                     <button className="btn ghost small" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up"><ArrowUp size={14} /> Up</button>
                     <button className="btn ghost small" onClick={() => move(i, 1)} disabled={i === enabled.length - 1} aria-label="Move down"><ArrowDown size={14} /> Down</button>
+                    <button className="btn ghost small" onClick={() => useStore.getState().setAutoExcluded(id, !settings.autoExcluded?.includes(id))}>{settings.autoExcluded?.includes(id) ? 'Use in Auto' : 'Not in Auto'}</button>
                     <button className="btn ghost small danger" onClick={() => { remove(id); setActions(null); }} aria-label="Remove"><X size={14} /> Remove</button>
                   </div>}
                 </li>

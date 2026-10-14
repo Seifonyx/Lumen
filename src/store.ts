@@ -110,6 +110,8 @@ interface State {
   checkModels(ids: string[], signal: AbortSignal, onProgress: (p: { done: number; total: number; current?: string; result?: CheckResult }) => void): Promise<CheckResult[]>;
   /** Brings back a model the check removed ("Keep anyway"); re-adds it to your models if it was there. */
   restoreModel(id: string, enable: boolean): void;
+  /** Lets Auto use (or stop using) a model; you can still pick it yourself. */
+  setAutoExcluded(id: string, excluded: boolean): void;
   /** Quiet weekly re-check: removes clear-cut broken models and brings back removed ones that answer again. */
   backgroundModelCheck(): Promise<void>;
   updateSettings(patch: Partial<Settings>): void;
@@ -428,6 +430,8 @@ export const useStore = create<State>((set, get) => {
       left: (id) => remaining(get().usage, id),
       // The model that last answered in this chat (Auto stays with it unless the task needs another).
       previous: [...chat.messages].reverse().find((m) => m.role === 'assistant' && m.status === 'done' && !m.error && m.model && m.text)?.model,
+      excluded: settings.autoExcluded,
+      preferProvider: settings.autoPreferProvider,
     });
     let chosen = plan.model;
     if (!chosen) {
@@ -524,6 +528,7 @@ export const useStore = create<State>((set, get) => {
       text: '',
       model: chosen,
       route: model === AUTO ? plan.reason || undefined : undefined,
+      routeDetail: model === AUTO ? plan.detail : undefined,
       via: layout?.name,
       status: 'streaming',
       createdAt: Date.now(),
@@ -948,6 +953,12 @@ export const useStore = create<State>((set, get) => {
       } finally {
         if (modelCheckController === check) modelCheckController = null;
       }
+    },
+
+    setAutoExcluded(id, excluded) {
+      const now = new Set(get().settings.autoExcluded || []);
+      if (excluded) now.add(id); else now.delete(id);
+      get().updateSettings({ autoExcluded: [...now] });
     },
 
     restoreModel(id, enable) {

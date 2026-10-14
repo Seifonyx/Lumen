@@ -159,76 +159,65 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
     <div className="usage-meter" ref={box}>
       <button ref={trigger} className={`usage-chip${level}${pct < 50 && !blockedUntil ? ' quiet' : ''}`} onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="dialog" aria-controls="usage-panel" title="Conversation capacity and daily usage">
         <svg className="usage-ring" viewBox="0 0 20 20" aria-hidden="true"><circle className="usage-ring-track" cx="10" cy="10" r="7" /><circle className="usage-ring-fill" cx="10" cy="10" r="7" strokeDasharray="43.98" strokeDashoffset={43.98 * (1 - pct / 100)} /></svg>
-        <span className="usage-chip-label">Context {pct}%</span>{blockedUntil && <span className="usage-status"> · limit reached</span>}
+        <span className="usage-chip-pct" aria-hidden="true">{pct}%</span><span className="usage-chip-label">Context {pct}%</span>{blockedUntil && <span className="usage-status"> · limit reached</span>}
         <ChevronDown size={12} aria-hidden="true" />
       </button>
       {open && (
         <div ref={dialog} className="usage-pop" id="usage-panel" role="dialog" aria-modal="true" tabIndex={-1} aria-label="Usage">
           <header className="um-head"><span>Usage</span><button ref={close} className="icon-btn sm" aria-label="Close usage" onClick={() => { setOpen(false); trigger.current?.focus({ preventScroll: true }); }}><X size={16} /></button></header>
-          <div className="um-section">
-            <div className="um-heading"><span className="um-title">Conversation capacity</span><strong>{pct}% used</strong></div>
-            <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="How full this chat is">
-              <div className={`meter-fill${level}`} style={{ width: `${pct}%` }} />
-            </div>
-            <p className="um-note">~{formatTokens(used)} of {formatTokens(limit)} tokens before compaction.</p>
-            <details className="um-details"><summary>What counts toward context?</summary>
-            <p className="um-note">This is an estimate of the chat's messages and attachments. Memories and instructions are sent alongside them, outside this compaction threshold.</p>
-            <div className="um-row">
-              <span>Saved memories</span>
-              <span className="muted">{settings.memory ? `~${formatTokens(memoryTokens)} · ${memories.length} saved` : 'Off'}</span>
-            </div>
-            <div className="um-row">
-              <span>Your instructions</span>
-              <span className="muted">{instructionTokens ? `~${formatTokens(instructionTokens)}` : 'None'}</span>
-            </div>
-            </details>
-            {pct >= 85 && <p className="um-note um-warning">This conversation is nearly full. Compact it to make room for your next messages.</p>}
+          <div className="um-tiles">
+            <section className="um-tile" aria-label="This chat">
+              <Gauge pct={pct} tone={level.trim()} label={`${pct}%`} meter={{ name: 'How full this chat is', now: pct, max: 100 }} />
+              <span className="um-tile-label">This chat</span>
+              <strong className="um-tile-value">~{formatTokens(used)} <span>/ {formatTokens(limit)}</span></strong>
+              <span className="um-tile-sub">tokens before it’s compacted</span>
+            </section>
+            <section className="um-tile" aria-label="Today">
+              {(() => {
+                const share = dailyLimit ? Math.min(100, Math.round((requests / dailyLimit) * 100)) : 0;
+                const tone = blockedUntil || share >= 90 ? 'high' : share >= 70 ? 'mid' : '';
+                return <Gauge pct={blockedUntil ? 100 : share} tone={tone} label={blockedUntil ? 'Full' : dailyLimit ? `${share}%` : '—'} meter={dailyLimit ? { name: 'Requests used today', now: Math.min(requests, dailyLimit), max: dailyLimit, text: `${requests} of ${dailyLimit} requests used today` } : undefined} />;
+              })()}
+              <span className="um-tile-label">{freeOR ? 'Shared free pool' : 'Requests today'}</span>
+              <strong className="um-tile-value">{!usage || !current ? '—' : <>{requests}{dailyLimit ? <span> / {dailyLimit}</span> : null}</>}</strong>
+              <span className={`um-tile-sub${blockedUntil ? ' um-bad' : ''}`}>{!usage ? 'Shows once you’re signed in' : !current ? 'Shows after the first reply' : blockedUntil ? `Limit reached · back ${formatUntil(blockedUntil)}` : `${left !== null ? `${left} remaining · ` : ''}resets ${formatUntil(resetAt)}`}</span>
+            </section>
           </div>
-
-          <div className="um-section">
-            <div className="um-title">Daily requests</div>
-            {!usage ? (
-              <p className="um-note">Usage appears once you're signed in.</p>
-            ) : !current ? (
-              <p className="um-note">Auto picks a model for each message. Usage shows here after the first reply.</p>
-            ) : (
-              <>
-                <div className="um-model">{modelLabel(catalog, current)}{picked && <span className="um-note">Last used in this conversation</span>}</div>
-                <div className="um-heading"><span className="um-note">{freeOR ? 'Shared free allowance' : 'Requests today'}</span><strong>{requests}{dailyLimit ? ` / ${dailyLimit}` : ''}</strong></div>
-                {dailyLimit && (
-                  <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={dailyLimit} aria-valuenow={Math.min(requests, dailyLimit)} aria-valuetext={`${requests} of ${dailyLimit} requests used today`} aria-label="Requests used today">
-                    <div className={`meter-fill${requests / dailyLimit >= 0.9 ? ' high' : requests / dailyLimit >= 0.7 ? ' mid' : ''}`} style={{ width: `${Math.min(100, Math.round((requests / dailyLimit) * 100))}%` }} />
-                  </div>
-                )}
-                <p className={`um-note${blockedUntil ? ' um-bad' : ''}`}>{blockedUntil ? `Limit reached · back ${formatUntil(blockedUntil)}` : `${left !== null ? `${left} remaining · ` : ''}Resets ${formatUntil(resetAt)}`}</p>
-                {!dailyLimit && <p className="um-note">Daily allowance unknown. A percentage will appear when the provider reports a limit.</p>}
-                {!freeOR && <details className="um-details"><summary>Token details</summary><p className="um-note">{formatTokens(u?.input || 0)} input · {formatTokens(u?.output || 0)} output</p></details>}
-              </>
-            )}
+          {current && <p className="um-model"><span className="um-dot" aria-hidden="true" />{modelLabel(catalog, current)}{picked ? ' · last used here' : ''}</p>}
+          {pct >= 85 && <p className="um-note um-warning">This chat is nearly full. Compact it to make room for your next messages.</p>}
+          {current && usage && !dailyLimit && <p className="um-note">Daily allowance unknown. A gauge appears once the provider reports a limit.</p>}
+          <details className="um-details">
+            <summary>Details</summary>
+            <div className="um-row"><span>Saved memories</span><span className="muted">{settings.memory ? `~${formatTokens(memoryTokens)} · ${memories.length} saved` : 'Off'}</span></div>
+            <div className="um-row"><span>Your instructions</span><span className="muted">{instructionTokens ? `~${formatTokens(instructionTokens)}` : 'None'}</span></div>
+            {current && !freeOR && <div className="um-row"><span>Tokens today</span><span className="muted">{formatTokens(u?.input || 0)} in · {formatTokens(u?.output || 0)} out</span></div>}
+            <p className="um-note">Memories and instructions go with every message but don’t count toward this chat’s limit.</p>
+          </details>
+          <div className="um-actions">
+            <button className="btn" disabled={busy} onClick={() => { setOpen(false); void compact(chat.id); }}><Shrink size={15} /> Compact now</button>
+            <button className="btn" disabled={busy} onClick={() => { setOpen(false); void continueInNewChat(chat.id); }}><MessageSquarePlus size={15} /> New chat with summary</button>
+            {canUndo && <button className="btn ghost um-wide" disabled={busy} onClick={() => { setOpen(false); void undoCompact(chat.id); }}><Undo2 size={15} /> Undo last compact</button>}
           </div>
-
-          <div className="um-section">
-            <div className="um-title">Manage conversation</div>
-            <div className="um-actions">
-              <button className="btn" disabled={busy} onClick={() => { setOpen(false); void compact(chat.id); }}>
-                <Shrink size={15} /> Compact now
-              </button>
-              <button className="btn ghost" disabled={busy} onClick={() => { setOpen(false); void continueInNewChat(chat.id); }}>
-                <MessageSquarePlus size={15} /> New chat with summary
-              </button>
-              {canUndo && (
-                <button className="btn ghost" disabled={busy} onClick={() => { setOpen(false); void undoCompact(chat.id); }}>
-                  <Undo2 size={15} /> Undo last compact
-                </button>
-              )}
-            </div>
-            <label className="um-toggle">
-              <input type="checkbox" checked={settings.autoCompact} onChange={(e) => updateSettings({ autoCompact: e.target.checked })} />
-              <span>Compact automatically at 100%</span>
-            </label>
-          </div>
+          <label className="um-toggle switch-row">
+            <span>Compact automatically when full</span>
+            <input type="checkbox" role="switch" checked={settings.autoCompact} onChange={(e) => updateSettings({ autoCompact: e.target.checked })} />
+          </label>
         </div>
       )}
+    </div>
+  );
+}
+
+/** A round gauge: a ring that fills with `pct`, the label in the middle. With `meter`, it's announced as a meter. */
+function Gauge({ pct, tone, label, meter }: { pct: number; tone: string; label: string; meter?: { name: string; now: number; max: number; text?: string } }) {
+  const c = 2 * Math.PI * 26;
+  return (
+    <div className={`um-gauge${tone ? ` ${tone}` : ''}`} {...(meter ? { role: 'meter', 'aria-label': meter.name, 'aria-valuemin': 0, 'aria-valuemax': meter.max, 'aria-valuenow': meter.now, 'aria-valuetext': meter.text } : { 'aria-hidden': true })}>
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <circle className="um-gauge-track" cx="32" cy="32" r="26" />
+        <circle className="um-gauge-fill" cx="32" cy="32" r="26" strokeDasharray={c} strokeDashoffset={c * (1 - Math.max(0, Math.min(100, pct)) / 100)} />
+      </svg>
+      <span aria-hidden="true">{label}</span>
     </div>
   );
 }

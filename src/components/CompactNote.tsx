@@ -9,7 +9,6 @@ import { formatTokens, formatUntil, nextReset, providerOf, remaining } from '../
 import { modelInfo, modelLabel, useStore } from '../store';
 import type { Chat, ChatSummary } from '../types';
 import Markdown from './Markdown';
-import './usage-meter.css';
 
 /** The line in a chat where older messages were replaced by a summary. */
 export function CompactNote({ chat, summary }: { chat: Chat; summary: ChatSummary }) {

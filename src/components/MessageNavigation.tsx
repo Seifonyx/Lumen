@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { overviewStops, type MessageStop } from '../lib/message-navigation';
-import './message-navigation.css';
 
 export default function MessageNavigation({ stops, activeId, onJump, height }: {
   stops: MessageStop[]; activeId: string | null; onJump(id: string, keyboard: boolean): void; height: number;

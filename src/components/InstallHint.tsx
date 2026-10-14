@@ -1,7 +1,6 @@
 import { Share, X } from 'lucide-react';
 import { useState } from 'react';
 import { isIOS, isStandalone } from '../lib/device';
-import './touch.css';
 
 const KEY = 'mr.installHint';
 

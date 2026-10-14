@@ -2,7 +2,6 @@ import { ExternalLink, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { GitHubError, gh, hasGitHub, listBranches } from '../lib/github';
 import { useStore } from '../store';
-import './preview-tools.css';
 
 // Preview tools: shown under Settings → General → About → Developer options, for trying changes on a
 // separate test address before they go live. "Build preview" starts the "Preview" GitHub workflow on a

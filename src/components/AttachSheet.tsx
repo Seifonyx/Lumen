@@ -1,7 +1,6 @@
 import { FolderGit2, Images, Camera, Pencil, ChartNoAxesCombined, Columns2, Globe, Check, X, FolderKanban, ChevronRight, Paperclip } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useFocusScope } from '../lib/focus-scope';
-import './touch.css';
 interface Props {
  onClose():void;onFiles():void;onPhotos():void;onCamera():void;onProject():void;projectName?:string;
  onConnectors():void;onMemory():void;memoryEnabled:boolean;temporary:boolean;

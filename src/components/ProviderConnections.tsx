@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown, ExternalLink, Eye, EyeOff, Search, X } from 'lucide-react';
 import type { ApiKeys } from '../lib/firebase';
+import FilterMenu from './FilterMenu';
 import { DEFAULT_PROVIDER_RELAY_URL, EXTRA_PROVIDERS } from '../lib/ai/provider-config.js';
 
 type ExtraId = keyof typeof EXTRA_PROVIDERS;
@@ -48,17 +49,15 @@ export default function ProviderConnections({ main, draft, setDraft, saved }: { 
     <section className="provider-connections" aria-labelledby="providers-heading">
       <h3 id="providers-heading" className="sr-only">Providers</h3>
       <div className="provider-toolbar">
-        <div className="segmented provider-filters" role="radiogroup" aria-label="Show providers">
-          {(['all', 'free', 'connected'] as Filter[]).map((f) => (
-            <button key={f} role="radio" aria-checked={filter === f} className={filter === f ? 'active' : ''} onClick={() => setFilter(f)}>
-              {f === 'all' ? 'All' : f === 'free' ? 'Free tier' : 'Connected'} <span className="provider-count">{counts[f]}</span>
-            </button>
-          ))}
-        </div>
         <label className="search provider-search">
           <Search size={14} />
-          <input type="search" aria-label="Search providers" placeholder="Search" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input type="search" aria-label="Search providers" placeholder="Search providers" value={query} onChange={(e) => setQuery(e.target.value)} />
         </label>
+        <FilterMenu<Filter> label="Show providers" value={filter} onChange={setFilter} options={[
+          { value: 'all', label: 'All providers', count: counts.all },
+          { value: 'free', label: 'Free tier', count: counts.free },
+          { value: 'connected', label: 'Connected', count: counts.connected },
+        ]} />
       </div>
 
       <div className="settings-card">

@@ -38,6 +38,7 @@ import UsageTab from './UsageTab';
 import MemoryTab from './MemoryTab';
 import KeySafety from './KeySafety';
 import ProviderConnections, { type MainProvider } from './ProviderConnections';
+import FilterMenu from './FilterMenu';
 import { normalizeKeys, validAlibabaBase, validRelayUrl } from '../lib/ai/provider-config.js';
 import type { ApiKeys } from '../lib/firebase';
 import PrivacyTab from './PrivacyTab';
@@ -240,19 +241,18 @@ function ModelsTab() {
           }}>{checking ? 'Stop checking' : 'Check model availability'}</button>
           {checkResult && <p className="muted small" role="status">{checkResult}</p>}
           {!!settings.unavailableModels?.length && <p className="muted small">{settings.unavailableModels.length} unavailable model{settings.unavailableModels.length === 1 ? '' : 's'} hidden. <button className="link-btn small" disabled={refreshing || checking} onClick={async () => { setRefreshing(true); update({ unavailableModels: [] }); await loadCatalog(); setRefreshing(false); }}>Restore hidden models</button></p>}
-          <label className="search" style={{ margin: 0 }}>
-            <Search size={16} />
-            <input type="search" aria-label="Search available models" placeholder="Search models" value={query} onChange={(e) => { setQuery(e.target.value); setVisibleModels(24); }} />
-          </label>
-          {connected.length > 1 && (
-            <div className="filter-chips" role="group" aria-label="Provider">
-              {(['all', ...connected] as ('all' | ProviderId)[]).map((p) => (
-                <button key={p} type="button" className={`preset-chip${filter === p ? ' active' : ''}`} aria-pressed={filter === p} onClick={() => { setFilter(p); setVisibleModels(24); }}>
-                  {p === 'all' ? 'All' : PROVIDER_NAMES[p]}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="list-toolbar">
+            <label className="search">
+              <Search size={16} />
+              <input type="search" aria-label="Search available models" placeholder="Search models" value={query} onChange={(e) => { setQuery(e.target.value); setVisibleModels(24); }} />
+            </label>
+            {connected.length > 1 && (
+              <FilterMenu<'all' | ProviderId> label="Provider" value={filter} onChange={(p) => { setFilter(p); setVisibleModels(24); }} options={[
+                { value: 'all', label: 'All providers', count: available.length },
+                ...connected.map((p) => ({ value: p, label: PROVIDER_NAMES[p], count: available.filter((m) => m.provider === p).length })),
+              ]} />
+            )}
+          </div>
           <ul className="model-list add">
             {shown.length === 0 && <li className="muted small pad">{query || filter !== 'all' ? 'No matches.' : 'All added.'}</li>}
             {shown.slice(0, visibleModels).map((m) => (
@@ -556,7 +556,7 @@ export default function SettingsModal() {
         </button>
       </header>
 
-      <div className="settings-scroll" ref={panel}>
+      <div className="settings-scroll" ref={panel} tabIndex={0}>
         <div className="settings-inner">
           <nav className="settings-tabs" aria-label="Settings sections">
             {TABS.map(([tid, tlabel, Icon, tblurb]) => (

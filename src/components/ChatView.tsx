@@ -1,5 +1,5 @@
 import { FolderGit2, FolderKanban, ArrowDown, FileText, Menu, PanelLeftOpen, EyeOff } from 'lucide-react';
-import Logo from './Logo';
+import WelcomeStars from './WelcomeStars';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { activeSummary } from '../lib/compact';
@@ -119,7 +119,12 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
         <button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title="Expand sidebar">
           <PanelLeftOpen size={20} />
         </button>
-        <span className="chat-heading" title={chat?.title}>{empty ? '' : chat?.title || 'Chat'}</span>
+        {empty ? (
+          <span className="topbar-route welcome-route" title={isTemporaryChat(chat) ? 'Incognito: not saved, memory off' : model === AUTO ? 'Auto picks the best model for each message' : undefined}>
+            <span className={`route-dot${isTemporaryChat(chat) ? ' off' : ''}`} aria-hidden="true" />
+            {isTemporaryChat(chat) ? <><b>Incognito</b><span className="route-sep">·</span>not saved</> : model === AUTO ? <><b>Auto</b><span className="route-sep">·</span>{enabledCount} model{enabledCount === 1 ? '' : 's'}</> : <><span className="route-label-muted">Routing to</span><b>{modelLabel(catalog, model)}</b></>}
+          </span>
+        ) : <span className="chat-heading" title={chat?.title}>{chat?.title || 'Chat'}</span>}
         {currentProject && (
           <button
             type="button"
@@ -179,9 +184,8 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
       <div className="messages" ref={scroller} role="region" tabIndex={0} aria-label="Chat messages">
         {empty ? (
           <div className="empty">
-            <span className="welcome-mark" aria-hidden="true"><Logo size={44} /></span>
+            <span className="welcome-mark" aria-hidden="true"><WelcomeStars /></span>
             <h1>{isTemporaryChat(chat)?'Incognito chat':user?.name&&welcomeSequence%(WELCOME_GREETINGS.length+1)===0?greeting:WELCOME_GREETINGS[(welcomeSequence+(user?.name?WELCOME_GREETINGS.length-1:0)) % WELCOME_GREETINGS.length]}</h1>
-            <p className="welcome-route"><span className="route-dot" aria-hidden="true" />{isTemporaryChat(chat) ? 'Not saved · memory off' : model === AUTO ? `Auto · routing across ${enabledCount} model${enabledCount === 1 ? '' : 's'}` : `Routing to ${modelLabel(catalog, model)}`}</p>
           </div>
         ) : (
           chat && <MessageThread key={chat.id} chat={chat} summary={summary} busy={streaming||canvasEditing} compacting={compacting} scroller={scroller} stick={stick} navigationHost={navigationHost}/>

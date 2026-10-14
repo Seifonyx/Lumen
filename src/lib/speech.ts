@@ -31,14 +31,15 @@ export const VOICE_LANGS: [string, string][] = [
 ];
 
 /** Starts listening; calls onText with (final text so far, interim text). Returns a stop function. */
-export function listen(lang: string, onText: (finalText: string, interim: string) => void, onEnd: (error?: string) => void): () => void {
+export function listen(lang: string, onText: (finalText: string, interim: string) => void, onEnd: (error?: string) => void, options: { continuous?: boolean } = {}): () => void {
   if (!Ctor) {
     onEnd('Voice input is not supported in this browser.');
     return () => {};
   }
   const rec = new Ctor();
   rec.lang = lang || navigator.language || 'en-US';
-  rec.continuous = true;
+  // continuous: false ends by itself after a pause, which voice conversations rely on.
+  rec.continuous = options.continuous ?? true;
   rec.interimResults = true;
   let finalText = '';
   rec.onresult = (e: any) => {
@@ -81,4 +82,12 @@ export function speak(id: string, text: string, onDone: () => void) {
 export function stopSpeaking() {
   speakingId = null;
   if (canSpeak) speechSynthesis.cancel();
+}
+
+/** iPhone only lets a page speak after a tap; call this inside the tap that starts a voice conversation. */
+export function unlockSpeech() {
+  if (!canSpeak) return;
+  const u = new SpeechSynthesisUtterance(' ');
+  u.volume = 0;
+  speechSynthesis.speak(u);
 }

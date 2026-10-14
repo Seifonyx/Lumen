@@ -17,7 +17,7 @@ Audit: 2026-10-12. Only mark a feature complete after its working implementation
 | 20 Compare | Implemented, two/three models with per-model usage. |
 | 21 Organization | Projects, tags and branching implemented. Separate chat folders removed from scope at the user's request. |
 | 22 Command palette | Implemented with chats/models/projects/settings. |
-| 23 Voice | Partial: dictation/read-aloud; continuous conversation remains. |
+| 23 Voice | Implemented 2026-10-14: dictation, read-aloud and a hands-free conversation (empty message box → voice button): listens, sends after a pause, reads the reply aloud, listens again; tap to interrupt. Uses the browser's free speech features; privacy shield masks as usual. |
 | 24 Sharing / chat export | Whole-chat Word/Markdown and PDF preview/system print implemented and deployed in phase 5a, including sources and Canvas. Desktop/phone checks passed on live and preview. Opt-in public links remain. |
 | 25 Attachment sync | Partial: thumbnails/small extracted text sync; small original binaries remain. |
 | 26 Open-time tasks | Implemented and deployed in phase 5c: one-off/daily reminders and AI requests, private schedule sync, atomic occurrence claims, time zones/DST, privacy review, separate result chats and manual retry. Runs only with the app open, visible and online. All 29 local browser suites and CI passed; live/preview desktop and phone checks passed. |
@@ -64,4 +64,4 @@ Done before new roadmap work, at the user's request; deployed live.
   demand); CI about 12 minutes; manual Safari (WebKit) screenshot workflow.
 
 Still open from the table above: 17 (images, waiting on free
-access), 23 (continuous voice), 24 (public share links), 25 (original attachment sync), First-run guidance for invited users was suggested and deferred by the user.
+access), 24 (public share links), 25 (original attachment sync), First-run guidance for invited users was suggested and deferred by the user.

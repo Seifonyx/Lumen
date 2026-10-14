@@ -1,9 +1,9 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
 import ChecksBar from './ChecksBar';
-import { ListChecks, FileCode2, FolderKanban, GitBranch, Globe, ShieldCheck, ArrowUp, FileText, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { AudioLines, ListChecks, FileCode2, FolderKanban, GitBranch, Globe, ShieldCheck, ArrowUp, FileText, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ACCEPT, readAttachment } from '../lib/files/read';
-import { canListen, listen } from '../lib/speech';
+import { canListen, canSpeak, listen, unlockSpeech } from '../lib/speech';
 import { formatBytes, isTouch } from '../lib/util';
 import { formatUntil, remaining } from '../lib/usage';
 import { modelInfo, modelLabel, useStore } from '../store';
@@ -13,6 +13,7 @@ import PrivacyCheck from './PrivacyCheck';
 import AttachSheet from './AttachSheet';
 import CompareModelsModal from './CompareModelsModal';
 import { isEditableOffice, saveOriginal } from '../lib/office/originals';
+const VoiceMode = lazy(() => import('./VoiceMode'));
 import { ANALYSIS_TEMPLATES } from '../lib/analysis';
 import { toolModel } from '../lib/ai/tool-inputs.js';
 import { db } from '../lib/db';
@@ -73,6 +74,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
   const [dragging, setDragging] = useState(false);
   const [check, setCheck] = useState<{ findings: Finding[]; unchecked: number; compareModels?: string[] } | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const input = useRef<HTMLTextAreaElement>(null);
   const photoInput = useRef<HTMLInputElement>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
@@ -464,9 +466,16 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
               <Mic size={19} />
             </button>
           )}
-          <button type="submit" className={`send-btn${streaming ? ' stop' : ''}`} disabled={!streaming && !canSend} aria-label={streaming ? 'Stop' : 'Send'} title={streaming ? 'Stop (Esc)' : 'Send'}>
-            {streaming ? <Square size={14} fill="currentColor" /> : <ArrowUp size={19} />}
-          </button>
+          {/* With nothing typed, the send button becomes a hands-free voice conversation (when the browser can listen and speak). */}
+          {!streaming && !text.trim() && !pending.length && canListen && canSpeak && !listening ? (
+            <button type="button" className="send-btn voice-start" onClick={() => { unlockSpeech(); setVoiceOpen(true); }} aria-label="Start voice conversation" title="Voice conversation">
+              <AudioLines size={19} />
+            </button>
+          ) : (
+            <button type="submit" className={`send-btn${streaming ? ' stop' : ''}`} disabled={!streaming && !canSend} aria-label={streaming ? 'Stop' : 'Send'} title={streaming ? 'Stop (Esc)' : 'Send'}>
+              {streaming ? <Square size={14} fill="currentColor" /> : <ArrowUp size={19} />}
+            </button>
+          )}
         </div>
       </form>
       {projectMenu && (
@@ -501,6 +510,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
           anchor={touch ? undefined : sheetAnchor}
         />
       )}
+      {voiceOpen && <Suspense fallback={null}><VoiceMode onClose={() => setVoiceOpen(false)} /></Suspense>}
       {compareOpen && <CompareModelsModal prompt={text.trim()} files={pending.flatMap((p) => p.file ? [p.file] : [])} onClose={() => setCompareOpen(false)} onCompare={compare} />}
       {check && <PrivacyCheck findings={check.findings} unchecked={check.unchecked} onMask={() => dispatch()} onAsIs={() => dispatch({ privacy: 'asIs' })} onEdit={() => setCheck(null)} />}
       <p className="disclaimer">AI can make mistakes. Check important info.</p>

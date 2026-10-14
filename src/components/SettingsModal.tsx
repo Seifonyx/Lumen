@@ -34,6 +34,10 @@ import type { Chat, FontSize, ModelInfo, Theme } from '../types';
 import { Badges } from './ModelPicker';
 import ConnectorsTab from './ConnectorsTab';
 import { savedChats } from '../lib/temporary-chat';
+import { version as APP_VERSION } from '../../package.json';
+import Modal from './Modal';
+import { deleteCloudData, deleteLocalData, deleteSignIn } from '../lib/delete-account';
+import { forgetLocalAccount, isPreviewUser, signOutUser } from '../lib/firebase';
 import UsageTab from './UsageTab';
 import MemoryTab from './MemoryTab';
 import KeySafety from './KeySafety';
@@ -369,6 +373,7 @@ function KeysTab() {
 }
 
 function DataTab() {
+  const [deleting, setDeleting] = useState(false);
   const chats = useStore((s) => s.chats);
   const { clearAllChats, importChats, toast } = useStore.getState();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -385,7 +390,7 @@ function DataTab() {
               <span className="setting-hint">Save {count} chat{count === 1 ? '' : 's'} (with this device's attachments) as one file.</span>
             </span>
             <span className="setting-ctrl">
-              <button className="btn small" onClick={() => saveBlob(new Blob([JSON.stringify({ app: 'model-router', version: 2, chats: savedChats(chats) }, null, 0)], { type: 'application/json' }), `model-router-backup-${new Date().toISOString().slice(0, 10)}.json`)}>
+              <button className="btn small" onClick={() => saveBlob(new Blob([JSON.stringify({ app: 'model-router', version: 2, chats: savedChats(chats) }, null, 0)], { type: 'application/json' }), `lumen-backup-${new Date().toISOString().slice(0, 10)}.json`)}>
                 <Download size={14} /> Back up
               </button>
             </span>
@@ -423,8 +428,9 @@ function DataTab() {
         </div>
       </div>
       <SharedLinks />
+      {deleting && <DeleteAccount onClose={() => setDeleting(false)} />}
       <div className="settings-group">
-        <span className="settings-group-title">Delete chats</span>
+        <span className="settings-group-title">Delete</span>
         <div className="settings-card danger">
           <div className="setting-row danger-row">
             <span className="setting-text">
@@ -437,11 +443,65 @@ function DataTab() {
               </button>
             </span>
           </div>
+          <div className="setting-row danger-row">
+            <span className="setting-text">
+              <span className="setting-label">Delete my account and data</span>
+              <span className="setting-hint">Removes your chats, files, memories, keys, settings and share links everywhere, then signs you out.</span>
+            </span>
+            <span className="setting-ctrl">
+              <button className="btn small danger" onClick={() => setDeleting(true)}>
+                <Trash2 size={14} /> Delete account
+              </button>
+            </span>
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
+/** Typed confirmation, then deletes everything for this account (cloud and this device) and signs out. */
+function DeleteAccount({ onClose }: { onClose: () => void }) {
+  const user = useStore((s) => s.user);
+  const [typed, setTyped] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const run = async () => {
+    if (!user) return;
+    setBusy(true); setError('');
+    const { stop, toast } = useStore.getState();
+    stop();
+    try {
+      if (!isPreviewUser(user.uid)) await deleteCloudData(user.uid);
+    } catch (e) {
+      setBusy(false);
+      setError(`Couldn't delete your data: ${(e as Error).message}. Nothing was signed out; try again.`);
+      return;
+    }
+    await deleteLocalData(user.uid);
+    forgetLocalAccount(user.uid);
+    const removed = isPreviewUser(user.uid) || await deleteSignIn();
+    toast(removed ? 'Your account and data were deleted.' : 'Your data was deleted. Signed out.', 'success');
+    await signOutUser().catch(() => {});
+    window.setTimeout(() => location.reload(), 600);
+  };
+  return (
+    <Modal title="Delete your account?" onClose={busy ? () => {} : onClose}>
+      <div className="delete-account">
+        <p>This permanently deletes everything Lumen stores for <b dir="auto">{user?.email}</b>: chats, messages, files, memories, projects, scheduled tasks, API keys, settings and share links, on every device. It can't be undone.</p>
+        <p className="muted small">Want a copy first? Use <b>Back up</b> above before you continue.</p>
+        <label className="field-block"><span className="setting-label">Type DELETE to confirm</span><input value={typed} onChange={(e) => setTyped(e.target.value)} autoCapitalize="characters" autoComplete="off" aria-label="Type DELETE to confirm" disabled={busy} /></label>
+        {error && <p className="free-tool-error" role="alert">{error}</p>}
+        <div className="delete-account-actions">
+          <button className="btn" disabled={busy} onClick={onClose}>Cancel</button>
+          <button className="btn danger-fill" disabled={busy || typed.trim().toUpperCase() !== 'DELETE'} onClick={() => void run()}>{busy ? 'Deleting…' : 'Delete everything'}</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+const SUPPORT_EMAIL = 'hebaghoneim8@gmail.com';
 
 function AboutSection() {
   const updateReady = useStore((s) => s.updateReady);
@@ -452,7 +512,7 @@ function AboutSection() {
       <div className="settings-card">
         <div className="setting-row">
           <span className="setting-text">
-            <span className="setting-label">Lumen <span className="tag" style={{ textTransform: 'none' }}>v2.0.0</span></span>
+            <span className="setting-label">Lumen <span className="tag" style={{ textTransform: 'none' }}>v{APP_VERSION}</span></span>
             <span className="setting-hint">{updateReady ? 'A new version is ready to install.' : "You're on the latest version."}</span>
           </span>
           {updateReady && (
@@ -462,6 +522,25 @@ function AboutSection() {
               </button>
             </span>
           )}
+        </div>
+        <div className="setting-row">
+          <span className="setting-text">
+            <span className="setting-label">Report a problem or suggest an idea</span>
+            <span className="setting-hint">Opens an email with your app version and device filled in.</span>
+          </span>
+          <span className="setting-ctrl">
+            <a className="btn small" href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Lumen ${APP_VERSION} feedback`)}&body=${encodeURIComponent(`\n\n—\nLumen ${APP_VERSION} · ${navigator.userAgent}`)}`}>Email us</a>
+          </span>
+        </div>
+        <div className="setting-row">
+          <span className="setting-text">
+            <span className="setting-label">Privacy and terms</span>
+            <span className="setting-hint">What Lumen stores, where your messages go, and the rules of use.</span>
+          </span>
+          <span className="setting-ctrl about-links">
+            <a className="link-btn small" href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
+            <a className="link-btn small" href="/terms.html" target="_blank" rel="noopener">Terms</a>
+          </span>
         </div>
         <div className="setting-row">
           <span className="setting-text">

@@ -3477,3 +3477,13 @@ input, textarea { caret-color: var(--text); }
 /* With the keyboard up, the usage sheet sits on top of it, inside the visible area. */
 html.kb-open .usage-pop.sheet { bottom: max(0px, calc(100% - var(--vv-top, 0px) - var(--vv-h, 100%))); max-height: calc(var(--vv-h, 100dvh) - 12px); padding-bottom: 16px; }
 html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv-h, 100%); }
+
+/* Settings: delete account dialog, About links */
+.delete-account { display: grid; gap: 12px; padding: 16px 22px 22px; }
+.delete-account p { margin: 0; }
+.delete-account input { width: 100%; }
+.delete-account-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.delete-account .btn.danger-fill, .settings-page .btn.danger-fill { background: var(--danger); border-color: var(--danger); color: #fff; }
+.delete-account .btn.danger-fill:disabled { opacity: .5; }
+@media (max-width: 600px) { .delete-account { padding: 14px 16px calc(18px + env(safe-area-inset-bottom)); } }
+.about-links { display: inline-flex; gap: 12px; flex-wrap: wrap; }

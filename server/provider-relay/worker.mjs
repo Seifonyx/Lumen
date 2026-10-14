@@ -1,5 +1,5 @@
 // BYOK relay: no stored credentials, arbitrary upstreams, cookies or request logging.
-const origins = new Set(['https://model-router.web.app', 'https://model-router--dev-82jv5mm2.web.app', 'http://localhost:5190']);
+const origins = new Set(['https://lumen-chat.web.app', 'https://model-router.web.app', 'https://model-router--dev-82jv5mm2.web.app', 'http://localhost:5190']);
 export default {
   async fetch(request) {
     const origin = request.headers.get('origin');

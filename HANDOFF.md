@@ -21,6 +21,17 @@
 - Coding writes require review/commit/PR actions. Plan approval binds device/account/repo/branch/context; edit decisions lock after commit. Undo supports latest single-parent commit only. See lib/{coding-plan,edit-review,commit-undo}.
 - Knowledge originals/vectors stay local; page citations sync. Explicit Gemini indexing masks/reviews details, checkpoints and pauses on quota/hidden/offline/account/key/privacy changes. Scanned PDFs need OCR. Never prepare drafts after context/account changes. See lib/knowledge.
 
+## Addresses (since 1.0)
+
+- Live app: Firebase Hosting site `lumen-chat` (https://lumen-chat.web.app), `npm run deploy`.
+- Old address `model-router.web.app`: `npm run deploy:forward` publishes forward/ (a page that sends visitors
+  to the same path on lumen-chat and a service worker that removes the old offline copy). Its `dev` preview
+  channel stays on the old site (`npm run deploy:preview`), because that address is set up for sign-in.
+- Sign-in on a host needs: Firebase authorized domain + `https://<host>/__/auth/handler` in the OAuth web
+  client's redirect URIs + the host in SAME_SITE_AUTH_HOSTS (src/lib/firebase.ts).
+- Account deletion: src/lib/delete-account.ts (every collection under modelRouter/{uid}, share links, local
+  databases, then the sign-in record). Add any new per-account collection there.
+
 ## Verification and release
 
 - Windows: npm.cmd. `npm test`, `npm run build`, `npm run test:e2e:ci`. Java 21/Firebase emulators and Playwright Chromium required; browser cache `C:/Users/seife/AppData/Local/ms-playwright`. Do not rebuild dist while browser tests consume it.

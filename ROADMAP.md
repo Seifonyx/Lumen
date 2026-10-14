@@ -78,3 +78,12 @@ All roadmap items are implemented.
 - Sidebar → View all chats: select several to move, export (one zip) or delete them.
 - Pinning a model to a project already exists: the project's default model.
 - CI: current action versions (Node 24), Ubuntu 24.04 runner, failed in-app tests appear as annotations.
+
+## Lumen 1.0 (2026-10-14)
+
+- Renamed to **Lumen**, new Eclipse icon, new address **https://lumen-chat.web.app** (the old address
+  forwards there once sign-in on the new address is confirmed).
+- General-purpose: no medical presets, templates, assistant or examples.
+- Settings → About: version, "Report a problem", Privacy Policy and Terms (public/privacy.html, terms.html).
+- Settings → Privacy & data → Delete my account and data (cloud data, share links, sign-in record).
+- Sidebar chips, View all chats, draggable bottom sheets, usage sheet on phones.

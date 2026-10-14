@@ -240,6 +240,12 @@ export interface Settings {
   prompts?: SavedPrompt[];
   /** Models explicitly refused by the provider for this account; reset when its key changes. */
   unavailableModels?: string[];
+  /** Why and when each unavailable model was removed (shown in Settings → Models). */
+  unavailableInfo?: Record<string, { reason: string; at: number; label?: string; by?: 'check' | 'chat' | 'auto' }>;
+  /** Models Auto never picks (you can still choose them yourself). */
+  autoExcluded?: string[];
+  /** Provider Auto leans towards when models are otherwise close. */
+  autoPreferProvider?: string;
   /** User workspaces shared across devices with the rest of account settings. */
   projects?: Project[];
   /** ordered: earlier = preferred when switching after a limit */

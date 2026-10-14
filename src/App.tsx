@@ -75,6 +75,14 @@ export default function App() {
     if (authed) return installSidebarGestures();
   }, [authed]);
 
+  // Weekly quiet model check, once the app has settled (not in the test setup, which counts requests).
+  const hasCatalog = useStore((s) => Boolean(s.catalog?.models.length));
+  useEffect(() => {
+    if (!authed || !hasCatalog || (/[?&]emulator\b/.test(location.search) && !(window as { __mrBackgroundCheck?: boolean }).__mrBackgroundCheck)) return;
+    const timer = setTimeout(() => void useStore.getState().backgroundModelCheck(), (window as { __mrBackgroundCheckDelay?: number }).__mrBackgroundCheckDelay ?? 30_000);
+    return () => clearTimeout(timer);
+  }, [authed, hasCatalog]);
+
   // Global shortcuts (see src/lib/shortcuts.ts and the cheat sheet). Esc closes the palette or the phone menu,
   // otherwise stops a reply.
   useEffect(() => {

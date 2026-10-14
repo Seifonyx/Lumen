@@ -58,7 +58,7 @@ export type StreamEvent =
   | { t: 'error'; text: string }
   | { t: 'done' }
   | { t: 'discard' }
-  | { t: 'unavailable'; id: string }
+  | { t: 'unavailable'; id: string; reason?: string }
   | { t: 'request'; id: string }
   | { t: 'usage'; id: string; input: number; output: number }
   | { t: 'limit'; id: string; scope: 'day' | 'minute' | 'unknown'; quota?: number; resetAt?: number; retryAfterSec?: number };

@@ -8,7 +8,7 @@
 
 export type Outcome = 'working' | 'broken' | 'busy' | 'key';
 export type ProbeResult = { status: number; message?: string; text?: string; ms?: number; limit?: unknown; input?: number; output?: number };
-export type CheckResult = { id: string; outcome: Outcome; reason: string; ms?: number };
+export type CheckResult = { id: string; outcome: Outcome; reason: string; ms?: number; /** HTTP status of the deciding attempt (0 = no answer) */ status?: number };
 
 const short = (m = '') => m.replace(/\s+/g, ' ').replace(/^\W+/, '').slice(0, 140);
 
@@ -71,6 +71,7 @@ export async function checkModels(ids: string[], probe: Probe, signal: AbortSign
         // A rate limit is often momentary: wait a little and try once more before calling it busy.
         if (first.status === 429) { await pause(4000); if (signal.aborted) return; first = await probe(id, signal); if (signal.aborted) return; }
         let c = classify(first);
+        let status = first.status;
         if ('retry' in c) {
           await pause(1500);
           if (signal.aborted) return;
@@ -78,10 +79,11 @@ export async function checkModels(ids: string[], probe: Probe, signal: AbortSign
           if (signal.aborted) return;
           if (second.status > 0) answered = true;
           c = settle(c.reason, second);
-          if (c.outcome === 'broken' && first.status === 0 && second.status === 0) { pending.push({ id, ...c }); continue; }
+          status = second.status;
+          if (c.outcome === 'broken' && first.status === 0 && second.status === 0) { pending.push({ id, ...c, status: 0 }); continue; }
         } else answered = true;
         if (c.outcome === 'key') { keyProblem = c.reason; }
-        finish({ id, outcome: c.outcome, reason: c.reason, ms: first.ms });
+        finish({ id, outcome: c.outcome, reason: c.reason, ms: first.ms, status });
       }
     };
     await Promise.all(Array.from({ length: Math.min(perProvider, list.length) }, worker));
@@ -90,3 +92,6 @@ export async function checkModels(ids: string[], probe: Probe, signal: AbortSign
   }));
   return results;
 }
+
+/** Background checks only remove models on unmistakable answers: gone, retired, or paid-only. */
+export const clearCut = (r: CheckResult) => r.outcome === 'broken' && ([402, 404, 410].includes(r.status || 0) || /free tier|paid credits/i.test(r.reason));

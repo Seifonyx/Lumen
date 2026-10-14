@@ -51,7 +51,13 @@ const assert = require('node:assert/strict');
       assert.ok(!(await page.locator('.model-list.add').textContent()).includes('gemini-missing-fixture'));
       assert.ok(!(await page.locator('.model-list.add').textContent()).includes('gemini-3.1-pro-preview'));
       await page.getByRole('button', { name: 'Your models', exact: true }).click();
-      assert.ok(await page.getByRole('button', { name: 'Restore all' }).isVisible(), 'removed models can be restored');
+      // Removed models: listed with their reason, and each can be brought back.
+      await page.getByRole('button', { name: 'Review', exact: true }).click();
+      const removedDialog = page.getByRole('dialog', { name: 'Removed models' });
+      await removedDialog.locator('li').filter({ hasText: 'gemini-missing-fixture' }).waitFor();
+      assert.match(await removedDialog.locator('li').filter({ hasText: 'gemini-missing-fixture' }).textContent(), /not found/i, 'shows why it was removed');
+      assert.ok(await removedDialog.getByRole('button', { name: 'Restore all' }).isVisible());
+      await removedDialog.getByRole('button', { name: 'Done' }).click();
       // The model check: every catalogue model gets one tiny request.
       await page.getByRole('button', { name: 'Check models', exact: true }).click();
       const dialog = page.getByRole('dialog', { name: 'Check models' });

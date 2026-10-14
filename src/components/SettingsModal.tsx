@@ -41,6 +41,7 @@ import ProviderConnections, { type MainProvider } from './ProviderConnections';
 import FilterMenu from './FilterMenu';
 import SharedLinks from './SharedLinks';
 import ModelCheck, { LAST_CHECK_KEY } from './ModelCheck';
+import RemovedModels from './RemovedModels';
 import { normalizeKeys, validAlibabaBase, validRelayUrl } from '../lib/ai/provider-config.js';
 import type { ApiKeys } from '../lib/firebase';
 import PrivacyTab from './PrivacyTab';
@@ -121,6 +122,7 @@ function ModelsTab() {
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [checkOpen, setCheckOpen] = useState(false);
+  const [removedOpen, setRemovedOpen] = useState(false);
   const lastCheck = Number((() => { try { return localStorage.getItem(LAST_CHECK_KEY); } catch { return 0; } })()) || 0;
   const [editing, setEditing] = useState<Layout | null>(null);
   const [filter, setFilter] = useState<'all' | ProviderId>('all');
@@ -194,9 +196,9 @@ function ModelsTab() {
             <div className="setting-row">
               <span className="setting-text">
                 <span className="setting-label">{settings.unavailableModels.length} model{settings.unavailableModels.length === 1 ? '' : 's'} removed</span>
-                <span className="setting-hint">Hidden from your lists and from Auto.</span>
+                <span className="setting-hint">Hidden from your lists and from Auto. See why, or bring any back.</span>
               </span>
-              <span className="setting-ctrl"><button className="btn ghost small" disabled={refreshing} onClick={async () => { setRefreshing(true); update({ unavailableModels: [] }); await loadCatalog(); setRefreshing(false); }}>Restore all</button></span>
+              <span className="setting-ctrl"><button className="btn small" onClick={() => setRemovedOpen(true)}>Review</button></span>
             </div>
           )}
         </div>
@@ -241,6 +243,7 @@ function ModelsTab() {
       </>}
 
       {checkOpen && <ModelCheck onClose={() => setCheckOpen(false)} />}
+      {removedOpen && <RemovedModels onClose={() => setRemovedOpen(false)} />}
       {view === 'layouts' && <LayoutsSection onEdit={setEditing} />}
 
       {view === 'browse' &&

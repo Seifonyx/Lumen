@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { keyVersion, openRouterDailyLimit, probeModel, setKeys } from './lib/ai/providers.js';
-import { checkModels as runModelCheck, type CheckResult } from './lib/ai/model-check';
+import { checkModels as runModelCheck, clearCut, type CheckResult } from './lib/ai/model-check';
 import { AI_PROVIDERS, normalizeKeys, providerEnabled } from './lib/ai/provider-config.js';
 import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage } from './lib/api';
 import { keepModelChoice, isExcludedModel } from './lib/ai/model-status.js';
@@ -110,6 +110,8 @@ interface State {
   checkModels(ids: string[], signal: AbortSignal, onProgress: (p: { done: number; total: number; current?: string; result?: CheckResult }) => void): Promise<CheckResult[]>;
   /** Brings back a model the check removed ("Keep anyway"); re-adds it to your models if it was there. */
   restoreModel(id: string, enable: boolean): void;
+  /** Quiet weekly re-check: removes clear-cut broken models and brings back removed ones that answer again. */
+  backgroundModelCheck(): Promise<void>;
   updateSettings(patch: Partial<Settings>): void;
   toast(text: string, kind?: Toast['kind']): void;
   dismissToast(id: string): void;
@@ -231,12 +233,16 @@ export const useStore = create<State>((set, get) => {
   const currentChat = () => get().chats.find((c) => c.id === get().currentId) || null;
   const clearAssistantDraft = () => { try { localStorage.removeItem(`mr.assistantDraft.${get().user?.uid}`); } catch { /* private mode */ } };
   const currentProjectId = () => get().settings.projects?.some((p) => p.id === get().activeProjectId) ? get().activeProjectId : null;
-  const hideUnavailableModel = (id: string) => {
+  const hideUnavailableModel = (id: string, reason = 'The provider refused it', by: 'check' | 'chat' | 'auto' = 'chat') => {
     const { settings, catalog } = get();
     if (settings.unavailableModels?.includes(id)) return;
+    const label = catalog?.models.find((m) => m.id === id)?.label;
     if (catalog) set({ catalog: { ...catalog, models: catalog.models.filter((m) => m.id !== id), defaults: catalog.defaults.filter((model) => model !== id) } });
+    const info = { ...(settings.unavailableInfo || {}) };
+    info[id] = { reason: reason.replace(/\s+/g, ' ').trim().slice(0, 140) || 'The provider refused it', at: Date.now(), ...(label ? { label } : {}), by };
     get().updateSettings({
       unavailableModels: [...(settings.unavailableModels || []), id],
+      unavailableInfo: info,
       enabledModels: settings.enabledModels.filter((model) => model !== id),
       ...(settings.defaultModel === id ? { defaultModel: AUTO } : {}),
     });
@@ -556,7 +562,7 @@ export const useStore = create<State>((set, get) => {
       for await (const ev of streamChat(body, replyController.signal)) {
         if (generation !== accountGeneration) return;
         if (ev.t === 'attempt') { set({ replyProgress: { chatId, label: ev.number > 1 ? 'Rerouting' : 'Routing', tried: get().replyProgress?.chatId === chatId ? get().replyProgress?.tried : undefined } }); continue; }
-        if (ev.t === 'unavailable') { hideUnavailableModel(ev.id); continue; }
+        if (ev.t === 'unavailable') { hideUnavailableModel(ev.id, ev.reason); continue; }
         if (ev.t === 'request') {
           usage?.record(ev.id, { requests: 1 });
           continue;
@@ -867,7 +873,10 @@ export const useStore = create<State>((set, get) => {
       const clean = normalizeKeys(keys) as unknown as ApiKeys;
       setGitHubToken(clean.github);
       const changed = AI_PROVIDERS.filter((provider) => clean[provider as keyof ApiKeys] !== before[provider as keyof ApiKeys] || providerEnabled(provider, clean) !== providerEnabled(provider, before) || (provider === 'alibaba' && clean.alibabaBaseUrl !== before.alibabaBaseUrl) || (['cloudflare', 'nvidia'].includes(provider) && (clean.providerRelayUrl !== before.providerRelayUrl || clean.cloudflareAccountId !== before.cloudflareAccountId)));
-      if (changed.length) get().updateSettings({ unavailableModels: (get().settings.unavailableModels || []).filter((id) => !changed.some((provider) => id.startsWith(`${provider}:`))) });
+      if (changed.length) {
+        const keep = (id: string) => !changed.some((provider) => id.startsWith(`${provider}:`));
+        get().updateSettings({ unavailableModels: (get().settings.unavailableModels || []).filter(keep), unavailableInfo: Object.fromEntries(Object.entries(get().settings.unavailableInfo || {}).filter(([id]) => keep(id))) });
+      }
       set({ keys: clean });
       await get().loadCatalog();
       if (get().user?.uid !== uid) return;
@@ -893,7 +902,7 @@ export const useStore = create<State>((set, get) => {
           if (generation !== accountGeneration) { check.abort(); return; }
           const r = p.result;
           if (r) {
-            if (r.outcome === 'broken') hideUnavailableModel(r.id);
+            if (r.outcome === 'broken') hideUnavailableModel(r.id, r.reason, 'check');
             if (r.outcome === 'working') usage?.record(r.id, { requests: 1, input: 0, output: 0 });
           }
           onProgress(p);
@@ -904,10 +913,48 @@ export const useStore = create<State>((set, get) => {
       }
     },
 
+    async backgroundModelCheck() {
+      const KEY = 'mr.modelCheck.background', SEEN = 'mr.modelCheck.seen';
+      const read = <T,>(k: string, d: T): T => { try { return JSON.parse(localStorage.getItem(k) || 'null') ?? d; } catch { return d; } };
+      if (Date.now() - read<number>(KEY, 0) < 7 * 24 * 3600_000 || !navigator.onLine || modelCheckController || get().streamingChatId) return;
+      const { settings, catalog } = get();
+      if (!catalog?.models.length) return;
+      try { localStorage.setItem(KEY, JSON.stringify(Date.now())); } catch { /* private mode */ }
+      const seen = read<Record<string, number>>(SEEN, {});
+      // Your models plus removed ones, a few per provider (least recently checked first) to spare free allowances.
+      const candidates = [...new Set([...settings.enabledModels.filter((id) => id !== AUTO && !isLayoutId(id)), ...(settings.unavailableModels || [])])];
+      const perProvider = new Map<string, string[]>();
+      for (const id of candidates.sort((a, b) => (seen[a] || 0) - (seen[b] || 0))) {
+        const p = id.split(':')[0], list = perProvider.get(p) || [];
+        if (list.length < 8) perProvider.set(p, [...list, id]);
+      }
+      const ids = [...perProvider.values()].flat();
+      if (!ids.length) return;
+      const check = new AbortController();
+      modelCheckController = check;
+      const generation = accountGeneration;
+      let removed = 0, back = 0;
+      try {
+        const results = await runModelCheck(ids, (id, sig, o) => probeModel(id, sig, o), check.signal, () => {}, { perProvider: 1 });
+        if (generation !== accountGeneration) return;
+        const wasRemoved = new Set(get().settings.unavailableModels || []);
+        for (const r of results) {
+          seen[r.id] = Date.now();
+          if (wasRemoved.has(r.id) && r.outcome === 'working') { get().restoreModel(r.id, false); back++; }
+          else if (!wasRemoved.has(r.id) && clearCut(r)) { hideUnavailableModel(r.id, r.reason, 'auto'); removed++; }
+        }
+        try { localStorage.setItem(SEEN, JSON.stringify(seen)); } catch { /* private mode */ }
+        if (removed || back) get().toast(`Weekly model check: ${removed ? `removed ${removed} that no longer work${back ? ', ' : ''}` : ''}${back ? `brought back ${back} that work again` : ''}. See Settings → Models.`, 'info');
+      } finally {
+        if (modelCheckController === check) modelCheckController = null;
+      }
+    },
+
     restoreModel(id, enable) {
       const { settings } = get();
       get().updateSettings({
         unavailableModels: (settings.unavailableModels || []).filter((x) => x !== id),
+        unavailableInfo: Object.fromEntries(Object.entries(settings.unavailableInfo || {}).filter(([k]) => k !== id)),
         ...(enable && !settings.enabledModels.includes(id) ? { enabledModels: [...settings.enabledModels, id] } : {}),
       });
       void get().loadCatalog();
@@ -1076,7 +1123,7 @@ export const useStore = create<State>((set, get) => {
       try {
         for await (const ev of streamChat(body, aborter.signal)) {
           if (generation !== accountGeneration) throw new DOMException('Account changed', 'AbortError');
-          if (ev.t === 'unavailable') hideUnavailableModel(ev.id);
+          if (ev.t === 'unavailable') hideUnavailableModel(ev.id, ev.reason);
           else if (ev.t === 'request') usage?.record(ev.id, { requests: 1 });
           else if (ev.t === 'usage') usage?.record(ev.id, { input: ev.input, output: ev.output });
           else if (ev.t === 'limit') usage?.block(ev.id, ev as unknown as LimitInfo);
@@ -1345,7 +1392,7 @@ export const useStore = create<State>((set, get) => {
           try {
             for await (const ev of streamChat(bodyFor(model), aborter.signal)) {
               if (generation !== accountGeneration) return;
-              if (ev.t === 'unavailable') hideUnavailableModel(ev.id);
+              if (ev.t === 'unavailable') hideUnavailableModel(ev.id, ev.reason);
               else if (ev.t === 'request') usage?.record(ev.id, { requests: 1 });
               else if (ev.t === 'usage') usage?.record(ev.id, { input: ev.input, output: ev.output });
               else if (ev.t === 'limit') usage?.block(ev.id, ev as unknown as LimitInfo);

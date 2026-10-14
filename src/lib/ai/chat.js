@@ -150,7 +150,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
       cleanup();
       failures.push({ id, status: opened.status, message: opened.message });
       noteFailure(id, opened.status);
-      if (isUnavailableFailure(opened.status, opened.message)) yield { t: 'unavailable', id };
+      if (isUnavailableFailure(opened.status, opened.message)) yield { t: 'unavailable', id, reason: String(opened.message || '').slice(0, 140) };
       if (opened.status === 401 || (opened.status === 403 && !isUnavailableFailure(opened.status, opened.message))) deadProviders.add(target.provider);
       if (opened.limit) yield { t: 'limit', id, ...opened.limit };
       continue;
@@ -242,7 +242,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     if (failedEarly) {
       failures.push(failedEarly);
       noteFailure(id, failedEarly.status);
-      if (isUnavailableFailure(failedEarly.status, failedEarly.message)) yield { t: 'unavailable', id };
+      if (isUnavailableFailure(failedEarly.status, failedEarly.message)) yield { t: 'unavailable', id, reason: String(failedEarly.message || '').slice(0, 140) };
       // Throw away the failed model's partial thinking before the next model starts.
       if (thought) yield { t: 'discard' };
       if (failedEarly.status === 401 || (failedEarly.status === 403 && !isUnavailableFailure(failedEarly.status, failedEarly.message))) deadProviders.add(target.provider);

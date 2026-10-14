@@ -58,6 +58,8 @@ self.addEventListener('fetch', (event) => {
   }
   // Only the app's own files; AI providers, Firebase and Google sign-in go straight to the network.
   if (url.origin !== self.location.origin || url.pathname.startsWith('/__/')) return;
+  // Stand-alone pages (privacy policy, terms) load as themselves, not as the app.
+  if (req.mode === 'navigate' && /^\/(privacy|terms)\.html$/.test(url.pathname)) return;
   if (req.mode === 'navigate') {
     event.respondWith(caches.open(CACHE).then((c) => c.match('/')).then((hit) => hit || fetch(req)));
     return;

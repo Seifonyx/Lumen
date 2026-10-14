@@ -1,6 +1,6 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
 import ChecksBar from './ChecksBar';
-import { AudioLines, ListChecks, FileCode2, FolderKanban, GitBranch, Globe, ShieldCheck, ArrowUp, FileText, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
+import { AudioLines, Image as ImageIcon, ListChecks, FileCode2, FolderKanban, GitBranch, Globe, ShieldCheck, ArrowUp, FileText, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ACCEPT, readAttachment } from '../lib/files/read';
 import { canListen, canSpeak, listen, unlockSpeech } from '../lib/speech';
@@ -75,6 +75,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
   const [check, setCheck] = useState<{ findings: Finding[]; unchecked: number; compareModels?: string[] } | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
+  const [imageMode, setImageMode] = useState(false);
   const input = useRef<HTMLTextAreaElement>(null);
   const photoInput = useRef<HTMLInputElement>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
@@ -253,6 +254,14 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
       return;
     }
     if (!ensureOnline()) return;
+    // Create image: the description goes to the image model (details masked by the privacy shield).
+    if (imageMode) {
+      const prompt = text.trim();
+      clearText();
+      setImageMode(false);
+      void useStore.getState().createImage(prompt);
+      return;
+    }
     const files = pending.map((p) => p.file!);
     // Privacy shield ("Ask me"): show what was found before anything is sent.
     if (settings.privacyShield && settings.privacyMode === 'ask') {
@@ -351,6 +360,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
         }}
       >
         {chat?.repo && <ChecksBar chat={chat} />}
+        {imageMode && <div className="repo-strip"><span className="ctx-chip image-chip"><ImageIcon size={13} /> Create image · describe it below<button type="button" className="icon-btn xs" aria-label="Stop creating an image" onClick={() => setImageMode(false)}><X size={12} /></button></span></div>}
         {codeExecution && <div className="repo-strip"><span className="ctx-chip">Gemini calculation · runs on Google<button type="button" className="icon-btn xs" aria-label="Remove calculation tool" onClick={() => setCodeExecution(false)}><X size={12} /></button></span></div>}
         {chat?.repo && (
           <div className="repo-strip">
@@ -501,6 +511,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
           onRepo={() => setUi(chat?.repo ? { workspaceOpen: true } : { repoPicker: true })}
           repoName={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : undefined}
           onCompare={() => setCompareOpen(true)}
+          onImage={() => { setImageMode(true); setTimeout(() => input.current?.focus(), 0); }}
           compareDisabled={!canSend || codeExecution || pending.some(p => p.file?.videoUri)}
           onSearch={() => updateSettings({ webSearch: !settings.webSearch })}
           searchEnabled={Boolean(settings.webSearch)}

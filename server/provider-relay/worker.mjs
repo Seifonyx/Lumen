@@ -10,9 +10,11 @@ export default {
     const error = (message, status) => Response.json({ error: { message } }, { status, headers: cors });
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     const url = new URL(request.url);
-    const match = /^\/(nvidia|cloudflare)\/(models|chat\/completions)$/.exec(url.pathname);
+    const match = /^\/(nvidia|cloudflare)\/(models|chat\/completions|image)$/.exec(url.pathname);
     if (!match) return error('Unsupported relay route', 404);
     const [, provider, path] = match;
+    // Images: Cloudflare Workers AI's FLUX.1 [schnell] only (inside its free daily allowance).
+    if (path === 'image' && provider !== 'cloudflare') return error('Unsupported relay route', 404);
     if (request.method !== (path === 'models' ? 'GET' : 'POST')) return error('Method not allowed', 405);
     const auth = request.headers.get('authorization') || '';
     if (!/^Bearer [^\s]{1,2048}$/.test(auth)) return error('A provider key is required', 401);
@@ -22,7 +24,7 @@ export default {
     } else {
       const account = request.headers.get('x-mr-account-id') || '';
       if (!/^[a-f0-9]{32}$/i.test(account)) return error('Invalid Cloudflare account ID', 400);
-      target = `https://api.cloudflare.com/client/v4/accounts/${account}/ai/${path === 'models' ? 'models/search' : 'v1/chat/completions'}`;
+      target = `https://api.cloudflare.com/client/v4/accounts/${account}/ai/${path === 'models' ? 'models/search' : path === 'image' ? 'run/@cf/black-forest-labs/flux-1-schnell' : 'v1/chat/completions'}`;
       if (path === 'models') {
         const page = Number(url.searchParams.get('page') || 1);
         if (!Number.isInteger(page) || page < 1 || page > 100) return error('Invalid catalogue page', 400);
@@ -50,7 +52,10 @@ export default {
       for (const chunk of chunks) { body.set(chunk, offset); offset += chunk.byteLength; }
       try {
         const payload = JSON.parse(new TextDecoder().decode(body));
-        if (typeof payload.model !== 'string' || !Array.isArray(payload.messages)) return error('Model and messages required', 400);
+        if (path === 'image') {
+          if (typeof payload.prompt !== 'string' || !payload.prompt.trim() || payload.prompt.length > 2048) return error('A prompt of up to 2048 characters is required', 400);
+          body = new TextEncoder().encode(JSON.stringify({ prompt: payload.prompt, steps: Math.min(8, Math.max(1, Number(payload.steps) || 4)) }));
+        } else if (typeof payload.model !== 'string' || !Array.isArray(payload.messages)) return error('Model and messages required', 400);
       } catch { return error('Invalid JSON', 400); }
     }
     try {

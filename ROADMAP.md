@@ -12,7 +12,7 @@ Audit: 2026-10-12. Only mark a feature complete after its working implementation
 | 14 Edit uploaded Office files | Implemented 2026-10-14: attached .docx/.xlsx originals stay on the device; models reply with an office-edit list (find/replace, insert/delete paragraphs, Excel cell values/formulas) that is applied inside the original, keeping fonts, tables, headers, styles and number formats. Each edit shows whether it matched; the edited copy downloads. PowerPoint editing is not included. |
 | 15 Canvas | Implemented in phase 3: document/code drafts, manual edits, selected-text AI proposals with accept/reject/undo, previews, downloads and private sync. Office/PDF imports extract text; template-preserving editing remains under item 14. Deployed and verified on live and preview. |
 | 16 Free tools | Implemented and deployed in phase 5b: explicit YouTube video input, Gemini Python execution with visible code/results, and a disclosed keyless Jina web reader with draft review. All 27 browser suites and CI passed; live/preview phone and desktop checks passed. Gemini search already exists. |
-| 17 Images | Conditional: current Google pricing lists image models without free API access; verify key eligibility before adding. |
+| 17 Images | Implemented 2026-10-14: + menu → Create image (FLUX.1 schnell). Cloudflare Workers AI through the relay (larger free daily allowance; needs the relay redeployed once via Actions → Deploy provider relay) or Hugging Face directly (small free monthly credits). Reply shows the picture with Download / Make another; images are re-encoded small enough to sync. Google image models remain unused (no free API access). |
 | 19 Assistants / prompts | Implemented in phase 2: saved helpers with instructions/model, starter helpers, reusable editable prompts and private account sync. Deployed and verified on live and preview. |
 | 20 Compare | Implemented, two/three models with per-model usage. |
 | 21 Organization | Projects, tags and branching implemented. Separate chat folders removed from scope at the user's request. |
@@ -63,5 +63,4 @@ Done before new roadmap work, at the user's request; deployed live.
   startup JavaScript ~534 KB → ~399 KB gzipped (KaTeX, highlight.js and rarely opened screens load on
   demand); CI about 12 minutes; manual Safari (WebKit) screenshot workflow.
 
-Still open from the table above: 17 (images, waiting on free
-access), First-run guidance for invited users was suggested and deferred by the user.
+All roadmap items are implemented. First-run guidance for invited users was suggested and deferred by the user.

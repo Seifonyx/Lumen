@@ -49,6 +49,8 @@ export interface Message {
   sources?: Source[];
   notices?: string[];
   error?: string;
+  /** A request to create an image (the reply carries the image as an attachment). */
+  imagePrompt?: boolean;
   /** privacy shield: how many details were masked, or that it was sent as is */
   privacy?: { masked: number; unmasked?: boolean };
   /** memories this reply saved or removed */

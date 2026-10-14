@@ -13,6 +13,7 @@ import { copyText, isRtl, isTouch, safeFileName, saveBlob } from '../lib/util';
 import { modelLabel, useStore } from '../store';
 import type { Message } from '../types';
 import Markdown from './Markdown';
+import GeneratedImage from './GeneratedImage';
 import ModelPicker from './ModelPicker';
 import TextSelection from './TextSelection';
 import MoreMenu from './MoreMenu';
@@ -249,6 +250,8 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
       toast(`Couldn't create the Word file: ${(e as Error).message}`, 'error');
     }
   };
+
+  if (!message.text && message.files?.some((f) => f.kind === 'image')) return <div className="msg assistant"><GeneratedImage message={message} /></div>;
 
   return (
     <div className="msg assistant">

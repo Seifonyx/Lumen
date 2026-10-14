@@ -5,7 +5,7 @@ const base = 'http://127.0.0.1:8080/v1/projects/the-model-router/databases/(defa
 const app = process.env.MR_TEST_URL || 'http://localhost:5190/?emulator';
 const reply = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { parts: [{ text }] }, finishReason: 'STOP' }] }) + '\n\n';
 // A tiny valid PNG (a 2x2 lime square).
-const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFElEQVR4nGO8cO4MAwMDE4j4z8AAAC2FA7uoKaGGAAAAAElFTkSuQmCC', 'base64');
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
 
 async function device(browser, log) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 820 } });

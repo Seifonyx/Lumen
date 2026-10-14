@@ -165,6 +165,8 @@ interface State {
   /** starts a new chat that carries a summary of this one */
   continueInNewChat(chatId: string): Promise<void>;
   stop(): void;
+  /** Makes an image from a description (Cloudflare Workers AI or Hugging Face) as a reply in the current chat. */
+  createImage(prompt: string): Promise<void>;
 
   addMemory(text: string): Promise<void>;
   updateMemory(id: string, text: string): Promise<void>;
@@ -1731,6 +1733,44 @@ export const useStore = create<State>((set, get) => {
       } finally {
         if (generation === accountGeneration) { compactController = null; set({ compactingChatId: null }); }
       }
+    },
+
+    async createImage(prompt) {
+      const text = prompt.trim();
+      if (!text || get().streamingChatId || get().compactingChatId || get().comparing || get().canvasEditingChatId) return;
+      const generation = accountGeneration;
+      let chat = currentChat();
+      if (!chat) { chat = { ...newChatObject(), projectId: currentProjectId() || undefined }; set((s) => ({ chats: [chat!, ...s.chats], currentId: chat!.id })); }
+      // Privacy shield: personal details in the description are replaced before it leaves the device.
+      const masker = get().settings.privacyShield ? new Masker() : null;
+      const sentPrompt = masker ? masker.mask(text).text : text;
+      const user: Message = { id: uid(), role: 'user', text, imagePrompt: true, createdAt: Date.now() };
+      const reply: Message = { id: uid(), role: 'assistant', text: '', status: 'streaming', createdAt: Date.now() };
+      const title = chat.messages.length === 0 ? text.replace(/\s+/g, ' ').slice(0, 60) : chat.title;
+      let updated: Chat = { ...chat, title, messages: [...chat.messages, user, reply], updatedAt: Date.now() };
+      replaceChat(updated);
+      await persist(updated);
+      const chatId = updated.id;
+      controller = new AbortController();
+      set({ streamingChatId: chatId, replyProgress: { chatId, label: 'Creating image' } });
+      let done: Message;
+      try {
+        const { generateImage } = await import('./lib/images');
+        const image = await generateImage(sentPrompt, get().keys, controller.signal);
+        done = { ...reply, status: 'done', model: image.model, text: '', files: [{ id: uid(), kind: 'image', name: `${text.replace(/[^\p{L}\p{N} ]+/gu, '').trim().slice(0, 40) || 'image'}.jpg`, mime: image.mime, size: Math.round(image.data.length * 0.75), data: image.data, thumb: image.thumb }] };
+      } catch (e) {
+        const aborted = (e as Error).name === 'AbortError';
+        done = { ...reply, status: aborted ? 'stopped' : 'done', text: '', error: aborted ? undefined : (e as Error).message };
+      }
+      controller = null;
+      if (generation !== accountGeneration) return;
+      const latest = get().chats.find((c) => c.id === chatId);
+      if (latest) {
+        updated = { ...latest, messages: latest.messages.map((m) => (m.id === reply.id ? done : m)), updatedAt: Date.now() };
+        replaceChat(updated);
+        await persist(updated);
+      }
+      set({ streamingChatId: null, replyProgress: null });
     },
 
     stop() {

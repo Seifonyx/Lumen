@@ -29,3 +29,14 @@ Never replace this with a public CORS proxy or store user keys in logs. Configur
 - GitHub Models: [retired July 30, 2026](https://docs.github.com/en/github-models); no working inference endpoint remains. GitHub repository coding remains separate.
 
 All eight new connections are disabled by default because an API key alone does not prove zero-cost access. Explicit opt-in permits that provider to consume credits or incur charges. The original four providers retain the existing free-model policy.
+
+## Images
+
+`POST /cloudflare/image` with `{ "prompt": "…" }` runs Workers AI FLUX.1 [schnell]
+(`@cf/black-forest-labs/flux-1-schnell`) on the caller's own Cloudflare account and key. Prompts are
+limited to 2048 characters and steps to 1–8 (default 4).
+
+## Deploying from GitHub
+
+Actions → **Deploy provider relay** → Run workflow. It needs two repository secrets:
+`CLOUDFLARE_API_TOKEN` (permission: Edit Cloudflare Workers) and `CLOUDFLARE_ACCOUNT_ID`.

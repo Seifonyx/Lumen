@@ -3292,3 +3292,23 @@ input, textarea { caret-color: var(--text); }
 .task-notify[data-state="on"] > svg { color: var(--signal-strong); }
 .task-notify > span { flex: 1; min-width: 0; }
 .task-notify .btn { flex: none; }
+
+/* Sidebar: select several chats (move, export, delete) */
+.sidebar .history-heading { padding: 14px 10px 2px 18px; margin: 0; }
+.sidebar .history-heading h2.history-label { padding: 0; margin: 0; border: 0; }
+.history-select { border: 0; background: none; color: var(--text-3); font: inherit; font-size: 12px; font-weight: 550; padding: 4px 8px; border-radius: 8px; cursor: pointer; }
+.history-select:hover { color: var(--text); background: var(--hover, var(--surface-2)); }
+.history-select[aria-pressed="true"] { color: var(--signal-strong); }
+.chat-select { cursor: pointer; gap: 10px; }
+.chat-select input { width: 16px; height: 16px; margin: 0; flex: none; accent-color: var(--signal-strong); }
+.chat-row.checked { background: var(--signal-soft); }
+.bulk-bar { display: grid; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); background: var(--elevated); }
+.bulk-count { display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--text-2); }
+.bulk-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.bulk-actions .btn { justify-content: center; min-width: 0; }
+.bulk-actions .btn.danger:not(:disabled) { color: var(--danger, #c0392b); }
+.bulk-move { display: grid; gap: 2px; max-height: 200px; overflow-y: auto; padding: 4px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); }
+.bulk-move button { display: flex; align-items: center; gap: 8px; border: 0; background: none; color: var(--text); font: inherit; font-size: 13.5px; text-align: start; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+.bulk-move button:hover, .bulk-move button:focus-visible { background: var(--hover, var(--surface-2)); }
+.bulk-actions .btn { padding-inline: 6px; gap: 5px; }
+.bulk-actions .btn svg { flex: none; width: 15px; height: 15px; }

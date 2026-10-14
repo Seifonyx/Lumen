@@ -86,7 +86,7 @@ interface State {
   comparison: ComparisonState | null;
   streamingChatId: string | null;
   /** while a reply is on its way: what's happening, and models that were tried and passed over */
-  replyProgress: { chatId: string; label: string; tried?: string[] } | null;
+  replyProgress: { chatId: string; label: string; tried?: string[]; activity?: string; startedAt?: number } | null;
   /** chat whose older messages are being summarized right now */
   compactingChatId: string | null;
   sidebarOpen: boolean;
@@ -538,7 +538,15 @@ export const useStore = create<State>((set, get) => {
     replaceChat(chat);
     const replyController = new AbortController();
     controller = replyController;
-    set({ streamingChatId: chatId, replyProgress: { chatId, label: 'Routing' } });
+    // What the reply is busy with, shown once routing is done (long tasks otherwise look stuck).
+    const searching = chat.task ? chat.task.search : settings.webSearch;
+    const activity = chat.repo ? 'Working in the repository'
+      : lastUser?.codeExecution ? 'Running code'
+      : reply.knowledgeSources?.length ? 'Searching your documents'
+      : (lastUser?.files?.length || projectFiles.length) ? 'Reading your files'
+      : searching && (chat.task?.search || chosen.startsWith('gemini:')) ? 'Searching the web'
+      : undefined;
+    set({ streamingChatId: chatId, replyProgress: { chatId, label: 'Routing', activity, startedAt: Date.now() } });
 
     // Batch UI updates while text streams in.
     let flushTimer: ReturnType<typeof setTimeout> | undefined;
@@ -566,7 +574,7 @@ export const useStore = create<State>((set, get) => {
     try {
       for await (const ev of streamChat(body, replyController.signal)) {
         if (generation !== accountGeneration) return;
-        if (ev.t === 'attempt') { set({ replyProgress: { chatId, label: ev.number > 1 ? 'Rerouting' : 'Routing', tried: get().replyProgress?.chatId === chatId ? get().replyProgress?.tried : undefined } }); continue; }
+        if (ev.t === 'attempt') { const prev = get().replyProgress?.chatId === chatId ? get().replyProgress : null; set({ replyProgress: { chatId, label: ev.number > 1 ? 'Rerouting' : 'Routing', tried: prev?.tried, activity: prev?.activity, startedAt: prev?.startedAt } }); continue; }
         if (ev.t === 'unavailable') { hideUnavailableModel(ev.id, ev.reason); continue; }
         if (ev.t === 'request') {
           usage?.record(ev.id, { requests: 1 });

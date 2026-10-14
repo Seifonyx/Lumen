@@ -3282,3 +3282,6 @@ input, textarea { caret-color: var(--text); }
 .welcome-guide p { margin: 0; font-size: 13.5px; line-height: 1.55; }
 .welcome-guide ol { margin: 0; padding-inline-start: 20px; display: grid; gap: 4px; font-size: 13.5px; line-height: 1.5; }
 .welcome-guide .btn { justify-self: start; text-decoration: none; }
+
+/* Waiting indicator: elapsed time on long replies */
+.route-elapsed { color: var(--text-3); font-variant-numeric: tabular-nums; }

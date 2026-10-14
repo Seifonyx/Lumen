@@ -47,7 +47,12 @@ function Thinking({ text, active }: { text: string; active: boolean }) {
 function WaitingForReply({ message }: { message: Message }) {
   const progress = useStore(s => s.replyProgress?.chatId === s.currentId ? s.replyProgress : null);
   const catalog = useStore(s => s.catalog);
-  const label = progress?.label || 'Routing';
+  // Seconds since the reply started: after a moment the label says what it's doing, then how long it's taking.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  const elapsed = progress?.startedAt ? Math.floor((now - progress.startedAt) / 1000) : 0;
+  const base = progress?.label || 'Routing';
+  const label = base === 'Routing' && elapsed >= 2 ? progress?.activity || (elapsed >= 8 ? 'Working' : base) : base;
   const tried = progress?.tried || [];
   const target = message.model ? modelLabel(catalog, message.model) : '';
   return (
@@ -58,6 +63,7 @@ function WaitingForReply({ message }: { message: Message }) {
       {target && <span className="route-target" aria-hidden="true"><span className="route-arrow">→</span>{target}</span>}
       {message.via && <span className="route-why" aria-hidden="true">· {message.via}</span>}
       {!message.via && message.route && <span className="route-why" aria-hidden="true">· {message.route}</span>}
+      {elapsed >= 8 && <span className="route-elapsed" aria-hidden="true">{elapsed}s</span>}
     </div>
   );
 }

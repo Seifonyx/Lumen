@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.2.0 · Gestures that follow your finger
+
+- Sheets (model picker, usage, +) and the phone drawer move exactly with your finger and keep its speed
+  when you let go: a quick flick closes or opens even after a short drag, while a slow, short one
+  settles back where it was.
+- You can catch a sheet or the drawer while it's still moving and carry on dragging from there, without it
+  jumping. This also works on a drawer you opened with the menu button.
+- Pulling a sheet up, or the drawer further open than it goes, stretches a little and springs back, instead
+  of stopping dead.
+- In Settings on phones, swipe from the left edge of a section to go back to the list. The list shows
+  underneath as you swipe, and a short swipe stays in the section.
+- Fixed: on phones, tapping the dimmed area beside the open drawer now closes it again.
+
 ## 1.1.0 · Smoother motion
 
 - Nothing vanishes any more: menus, sheets, windows, the command palette and notifications now slide or

@@ -35,6 +35,7 @@ import { Badges } from './ModelPicker';
 import ConnectorsTab from './ConnectorsTab';
 import { savedChats } from '../lib/temporary-chat';
 import { pageSwap } from '../lib/motion';
+import { installSwipeBack } from '../lib/swipe-back';
 import { version as APP_VERSION } from '../../package.json';
 import Modal from './Modal';
 import { deleteCloudData, deleteLocalData, deleteSignIn } from '../lib/delete-account';
@@ -642,6 +643,14 @@ export default function SettingsModal() {
   useEffect(() => {
     panel.current?.scrollTo({ top: 0 });
   }, [tab]);
+
+  // Phones: swipe from the left edge of a section to go back to the list (follows the finger).
+  useEffect(() => {
+    const page = dialog.current;
+    if (!open || !page) return;
+    const narrow = () => window.matchMedia('(max-width: 720px), (pointer: coarse) and (max-width: 1100px)').matches;
+    return installSwipeBack(page, () => narrow() && Boolean(useStore.getState().settingsTab), (copy) => copy.classList.remove('has-section'), () => setUi({ settingsTab: '' }));
+  }, [open, setUi]);
 
 
   if (!open) return null;

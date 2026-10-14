@@ -1,6 +1,11 @@
 import { useStore } from '../store';
+import { rubberBand, spring, Velocity, type Spring } from './spring';
 
-/** A phone drawer that follows the finger; vertical scrolling keeps its native behavior. */
+/**
+ * A phone drawer that follows the finger; vertical scrolling keeps its native behavior. Letting go keeps the
+ * finger's speed (spring), the drawer can be caught mid-slide (including a tap-opened one), and pulling it
+ * further open than it goes resists like a rubber band.
+ */
 export function installSidebarGestures(): () => void {
   const root = document.documentElement;
   const phone = window.matchMedia('(max-width: 899px)');
@@ -9,8 +14,16 @@ export function installSidebarGestures(): () => void {
   let frame = 0;
   let suppressClickUntil = 0;
   let suppressTarget: Element | null = null;
+  let anim: Spring | null = null;
+  const speed = new Velocity();
+  /** Where the drawer actually is on screen (0 closed … width open), even mid-animation. */
+  const visualOffset = (sidebar: HTMLElement, width: number, sign: number) => {
+    const m = new DOMMatrixReadOnly(getComputedStyle(sidebar).transform === 'none' ? undefined : getComputedStyle(sidebar).transform);
+    return Math.max(0, Math.min(width, width + sign * m.m41));
+  };
 
   const clear = () => {
+    anim?.stop(); anim = null;
     cancelAnimationFrame(frame);
     frame = 0;
     delete root.dataset.sidebarDragging;
@@ -25,6 +38,18 @@ export function installSidebarGestures(): () => void {
     drag.scrim.style.opacity = String(drag.offset / drag.width);
   };
   const start = (event: TouchEvent) => {
+    // Caught mid-slide (after a release, or a tap that opened or closed it): continue from where it is.
+    const onDrawer = event.target instanceof Element && Boolean(event.target.closest('.sidebar, .scrim'));
+    const moving = anim?.running && onDrawer ? drag : null;
+    if (moving && event.touches.length === 1) {
+      anim!.stop(); anim = null;
+      const t = event.touches[0];
+      const open = useStore.getState().sidebarOpen;
+      moving.open = open; moving.id = t.identifier; moving.claimed = true; moving.y = t.clientY;
+      moving.x = t.clientX - (moving.offset - (open ? moving.width : 0)) * moving.sign;
+      speed.reset(); speed.add(t.clientX * moving.sign);
+      return;
+    }
     clear();
     const state = useStore.getState();
     if (!phone.matches || event.touches.length !== 1 || state.settingsOpen || !state.authed || window.getSelection()?.toString()) return;
@@ -41,7 +66,16 @@ export function installSidebarGestures(): () => void {
     if (!sidebar || !scrim) return;
     const t = event.touches[0];
     const width = sidebar.getBoundingClientRect().width;
-    drag = { id: t.identifier, x: t.clientX, y: t.clientY, open: state.sidebarOpen, sign: getComputedStyle(sidebar).direction === 'rtl' ? -1 : 1, width, offset: state.sidebarOpen ? width : 0, lastX: t.clientX, time: performance.now(), velocity: 0, claimed: false, target, sidebar, scrim };
+    const sign = getComputedStyle(sidebar).direction === 'rtl' ? -1 : 1;
+    const at = visualOffset(sidebar, width, sign), rest = state.sidebarOpen ? width : 0;
+    drag = { id: t.identifier, x: t.clientX, y: t.clientY, open: state.sidebarOpen, sign, width, offset: rest, lastX: t.clientX, time: performance.now(), velocity: 0, claimed: false, target, sidebar, scrim };
+    speed.reset(); speed.add(t.clientX * sign);
+    // Still sliding from a tap: freeze it where it is and let the finger take over from there.
+    if (onDrawer && Math.abs(at - rest) > 2 && sidebar.getAnimations().length) {
+      drag.offset = at; drag.claimed = true; drag.x = t.clientX - (at - rest) * sign;
+      root.dataset.sidebarDragging = '';
+      paint();
+    }
   };
   const move = (event: TouchEvent) => {
     if (!drag) return;
@@ -53,16 +87,14 @@ export function installSidebarGestures(): () => void {
     if (!drag.claimed) {
       if (dy > 12 && dy > Math.abs(dx)) { clear(); return; }
       if (Math.abs(dx) < 12 || Math.abs(dx) < dy * 1.5) return;
-      if (drag.open ? dx > 0 : dx < 0) { clear(); return; }
+      if (!drag.open && dx < 0) { clear(); return; } // (open + rightward: allowed, it rubber-bands)
       drag.claimed = true;
       root.dataset.sidebarDragging = '';
     }
     if (event.cancelable) event.preventDefault();
-    const now = performance.now();
-    drag.velocity = ((t.clientX - drag.lastX) * drag.sign) / Math.max(1, now - drag.time);
-    drag.lastX = t.clientX;
-    drag.time = now;
-    drag.offset = Math.max(0, Math.min(drag.width, (drag.open ? drag.width : 0) + dx));
+    speed.add(t.clientX * drag.sign);
+    const raw = (drag.open ? drag.width : 0) + dx;
+    drag.offset = raw > drag.width ? drag.width + rubberBand(raw - drag.width, drag.width) : Math.max(0, raw);
     if (!frame) frame = requestAnimationFrame(paint);
   };
   const end = (event: TouchEvent) => {
@@ -71,14 +103,17 @@ export function installSidebarGestures(): () => void {
     if (event.cancelable) event.preventDefault();
     suppressClickUntil = performance.now() + 400;
     suppressTarget = drag.target;
-    const velocity = performance.now() - drag.time < 120 ? drag.velocity : 0;
+    const velocity = speed.get();
     const travelled = Math.abs(drag.offset - (drag.open ? drag.width : 0));
     const fling = travelled >= 24 && Math.abs(velocity) > .45;
-    const open = fling ? velocity > 0 : drag.open ? drag.offset > drag.width * .65 : drag.offset > drag.width * .35;
+    // Past about a third of the way (where the finger's speed would carry it) commits the change.
+    const projected = drag.offset + velocity * 160;
+    const open = fling ? velocity > 0 : drag.open ? projected > drag.width * .65 : projected > drag.width * .35;
     useStore.getState().setUi({ sidebarOpen: open });
-    // Let React apply the final open state, then animate from the last painted position.
-    cancelAnimationFrame(frame);
-    frame = requestAnimationFrame(clear);
+    // The drawer keeps the finger's speed and settles with a spring; the state above is already final.
+    cancelAnimationFrame(frame); frame = 0;
+    const d = drag;
+    anim = spring(d.offset, open ? d.width : 0, velocity, (x) => { d.offset = x; paint(); }, () => { anim = null; clear(); }, { stiffness: 900, damping: 60, restDelta: 0.8 });
   };
   const click = (event: MouseEvent) => {
     if (performance.now() < suppressClickUntil && event.target instanceof Node && suppressTarget?.contains(event.target)) {

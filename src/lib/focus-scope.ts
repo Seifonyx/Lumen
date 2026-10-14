@@ -10,7 +10,7 @@ function isolate() {
   while(branch?.parentElement && branch!==document.body) {
     // A scope marked data-keep-sidebar (Settings on computers) leaves the sidebar usable.
     const keepSidebar=Boolean(scopes.at(-1)?.dataset.keepSidebar)&&!window.matchMedia('(max-width:899px)').matches;
-    for(const sibling of branch.parentElement.children)if(sibling!==branch && sibling instanceof HTMLElement && !sibling.matches('.toasts,[aria-live],.mp-scrim,.sheet-backdrop') && !(keepSidebar&&sibling.classList.contains('sidebar'))) {
+    for(const sibling of branch.parentElement.children)if(sibling!==branch && sibling instanceof HTMLElement && !sibling.matches('.toasts,[aria-live],.mp-scrim,.sheet-backdrop,.scrim') && !(keepSidebar&&sibling.classList.contains('sidebar'))) {
       saved.set(sibling,sibling.inert);sibling.inert=true;
     }
     branch=branch.parentElement;

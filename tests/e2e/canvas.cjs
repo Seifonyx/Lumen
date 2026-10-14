@@ -1,4 +1,5 @@
 const { chromium } = require('playwright');
+const {openSettings,replyAction}=require('./helpers/ui.cjs');
 const assert = require('node:assert/strict');
 (async()=>{
  const browser=await chromium.launch();
@@ -22,7 +23,7 @@ const assert = require('node:assert/strict');
   const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(process.env.MR_TEST_URL||'http://localhost:5190/?emulator');await page.waitForSelector('.composer textarea');
   await page.fill('.composer textarea','Draft an article');await page.click('.send-btn');await page.waitForSelector('.msg.assistant .model-tag');
-  await page.getByRole('button',{name:'Edit in canvas',exact:true}).click();await page.waitForSelector('.canvas-text');
+  await replyAction(page,'Edit in canvas','last');await page.waitForSelector('.canvas-text');
   const original=await page.inputValue('.canvas-text');
   const selectRange=async(start,end)=>{await page.locator('.canvas-text').evaluate((el,{start,end})=>{el.focus();el.setSelectionRange(start,end);document.dispatchEvent(new Event('selectionchange'));},{start,end});};
   const request=async()=>{await page.getByLabel('Canvas edit instruction').fill('Shorten');await page.getByRole('button',{name:'Suggest',exact:true}).click();await page.waitForSelector('.canvas-review');};

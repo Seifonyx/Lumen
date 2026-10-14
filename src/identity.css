@@ -1,0 +1,247 @@
+/* Model Router identity — "Switchboard".
+   Cool ink and paper neutrals, Geist throughout, and one signal colour (lime, like a router's
+   status light) used only where something is live: send, Auto, the active route, focus.
+   Loaded last: these tokens and touches win over the older layers. */
+
+/* ============================================================ Tokens */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #eff1f4;
+  --surface-3: #e5e8ed;
+  --sidebar: #eef0f3;
+  --text: #0e1116;
+  --text-2: #4a5260;
+  --text-3: #636b78;
+  --border: #e1e4e9;
+  --border-strong: #cbd0d8;
+  --input-border: #d4d9e0;
+  --accent: #0e1116;
+  --accent-hover: #262b33;
+  --accent-soft: #e6e9ee;
+  --accent-text: #ffffff;
+  --user-bubble: #e9ecf0;
+  --code-bg: #f1f3f6;
+  --link: #2a5bd7;
+  --focus: #3f6a00;
+  --ring: rgb(14 17 22 / 0.08);
+  --signal: #c2ef3a;
+  --signal-hover: #b3e324;
+  --signal-ink: #11160a;
+  --signal-strong: #3f6a00;
+  --signal-soft: #eef8d2;
+  --shadow-sm: 0 1px 2px rgb(14 17 22 / 0.05);
+  --shadow: 0 1px 2px rgb(14 17 22 / 0.04), 0 6px 18px -6px rgb(14 17 22 / 0.08);
+  --shadow-lg: 0 0 0 1px rgb(14 17 22 / 0.05), 0 12px 32px -8px rgb(14 17 22 / 0.16), 0 28px 64px -24px rgb(14 17 22 / 0.2);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --sidebar-w: 272px;
+  --logo-out: var(--signal);
+}
+:root[data-theme='dark']:not([data-appearance='black']) {
+  --bg: #0d0f12; --surface: #15181c; --surface-2: #1b1f24; --surface-3: #242930; --sidebar: #0a0c0e;
+  --text: #eceef1; --text-2: #a9b1bb; --text-3: #8b939d;
+  --border: #22272e; --border-strong: #333a44; --input-border: #2d333b;
+  --accent: #eceef1; --accent-hover: #ffffff; --accent-soft: #20252b; --accent-text: #0d0f12;
+  --user-bubble: #1d2127; --code-bg: #111418; --link: #8db2ff; --focus: #c2ef3a; --ring: rgb(194 239 58 / 0.14);
+  --signal: #c2ef3a; --signal-hover: #d0f75a; --signal-ink: #11160a; --signal-strong: #c2ef3a; --signal-soft: #1c2410;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
+  --shadow: 0 0 0 1px rgb(255 255 255 / 0.03), 0 8px 24px -8px rgb(0 0 0 / 0.6);
+  --shadow-lg: 0 0 0 1px rgb(255 255 255 / 0.06), 0 16px 40px -8px rgb(0 0 0 / 0.7);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not([data-appearance='black']) {
+    --bg: #0d0f12; --surface: #15181c; --surface-2: #1b1f24; --surface-3: #242930; --sidebar: #0a0c0e;
+    --text: #eceef1; --text-2: #a9b1bb; --text-3: #8b939d;
+    --border: #22272e; --border-strong: #333a44; --input-border: #2d333b;
+    --accent: #eceef1; --accent-hover: #ffffff; --accent-soft: #20252b; --accent-text: #0d0f12;
+    --user-bubble: #1d2127; --code-bg: #111418; --link: #8db2ff; --focus: #c2ef3a; --ring: rgb(194 239 58 / 0.14);
+    --signal: #c2ef3a; --signal-hover: #d0f75a; --signal-ink: #11160a; --signal-strong: #c2ef3a; --signal-soft: #1c2410;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
+    --shadow: 0 0 0 1px rgb(255 255 255 / 0.03), 0 8px 24px -8px rgb(0 0 0 / 0.6);
+    --shadow-lg: 0 0 0 1px rgb(255 255 255 / 0.06), 0 16px 40px -8px rgb(0 0 0 / 0.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme='dark'][data-appearance='black'] {
+  --bg: #000000; --sidebar: #000000; --surface: #0b0c0e; --surface-2: #141619; --surface-3: #1e2125;
+  --text: #eef0f2; --text-2: #adb3ba; --text-3: #8d939a;
+  --border: #1c1f23; --border-strong: #2e3238; --input-border: #2a2e33;
+  --accent: #eef0f2; --accent-hover: #ffffff; --accent-soft: #181b1f; --accent-text: #000000;
+  --user-bubble: #15171a; --code-bg: #07080a; --link: #8db2ff; --focus: #c2ef3a; --ring: rgb(194 239 58 / 0.14);
+  --signal: #c2ef3a; --signal-hover: #d0f75a; --signal-ink: #11160a; --signal-strong: #c2ef3a; --signal-soft: #182010;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); font-feature-settings: 'ss01' 1, 'cv11' 1; }
+::selection { background: color-mix(in srgb, var(--signal) 45%, transparent); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+input, textarea { caret-color: var(--text); }
+
+/* ============================================================ Mark & wordmark */
+.logo { color: var(--text); }
+.sidebar-brand { display: inline-flex; align-items: center; gap: 9px; font: 600 15px/1 var(--font); letter-spacing: -0.02em; color: var(--text); min-width: 0; }
+.sidebar-brand .logo { flex: none; }
+
+/* ============================================================ Buttons */
+.btn { border-radius: var(--radius-sm); font-weight: 500; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.btn.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.icon-btn { border-radius: var(--radius-sm); }
+
+/* ============================================================ Sidebar */
+.sidebar { background: var(--sidebar); border-inline-end: 1px solid var(--border); }
+.sidebar-head { min-height: 56px; padding: 10px 10px 6px 16px; gap: 6px; }
+.sidebar-head .sidebar-brand { margin-inline-end: auto; }
+.sidebar-search-field { margin: 4px 12px 8px; min-height: 38px; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--border); }
+.sidebar-search-field input { font-size: 14px; }
+.sidebar .sidebar-bottom-actions { padding: 0 8px; gap: 1px; margin: 0 0 6px; }
+.sidebar-bottom-actions .new-chat {
+  background: var(--accent); color: var(--accent-text); font-size: 14px; font-weight: 550; min-height: 40px; margin-bottom: 8px;
+  border-radius: var(--radius-sm); justify-content: flex-start; padding: 0 12px;
+}
+.sidebar-bottom-actions .new-chat:hover { background: var(--accent-hover); }
+.sidebar-bottom-actions .new-chat .kbd { margin-inline-start: auto; font: 500 11px var(--mono); color: color-mix(in srgb, var(--accent-text) 72%, var(--accent)); background: none; border: 0; }
+.sidebar-bottom-actions .library-button { min-height: 38px; font-size: 14px; color: var(--text-2); padding: 8px 12px; gap: 11px; border-radius: var(--radius-sm); }
+.sidebar-bottom-actions .library-button:hover { background: var(--surface-3); color: var(--text); }
+.sidebar-bottom-actions .library-button svg { color: var(--text-3); }
+.sidebar h2.sidebar-section-label { font: 600 13px/1.2 var(--font); letter-spacing: 0; text-transform: none; color: var(--text-2); margin: 0; padding: 0; border: 0; }
+.sidebar h2.sidebar-section-label svg { display: none; }
+.sidebar .sidebar-section-heading { display: flex; align-items: center; justify-content: space-between; padding: 16px 12px 4px 20px; margin: 0; }
+.sidebar h2.history-label { padding: 16px 20px 2px; margin: 0; border: 0; }
+.sidebar .group-label { font: 500 11.5px/1.2 var(--font); text-transform: none; letter-spacing: 0; color: var(--text-3); margin: 10px 20px 4px; padding: 0; }
+.chat-row { margin: 0 8px; border-radius: var(--radius-sm); }
+.chat-row:hover { background: var(--surface-3); }
+.chat-row.active { background: var(--surface); box-shadow: var(--shadow-sm), inset 0 0 0 1px var(--border); }
+.chat-row.active::before { content: ''; position: absolute; inset-inline-start: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--signal); }
+.chat-open { font-size: 14px; color: var(--text-2); height: 36px; padding-inline-start: 12px; }
+.chat-row.active .chat-open { color: var(--text); font-weight: 500; }
+.sidebar-project-item { font-size: 14px; }
+.sidebar-empty-project-btn { border: 0; background: none; color: var(--text-3); justify-content: flex-start; padding: 6px 12px; margin: 0 8px; font-size: 13px; }
+.sidebar-empty-project-btn:hover { color: var(--text); background: var(--surface-3); }
+.sidebar-foot { border-top: 1px solid var(--border); }
+.sidebar-foot .avatar { background: var(--accent); color: var(--accent-text); }
+
+/* ============================================================ Top bar */
+.main .topbar { min-height: 56px; border-bottom: 1px solid transparent; }
+.main:not(.is-empty) .topbar { border-bottom-color: var(--border); }
+.chat-heading { font-weight: 550; color: var(--text); letter-spacing: -0.01em; }
+.topbar .new-chat-shortcut { color: var(--text-2); }
+.topbar .new-chat-shortcut[aria-pressed='true'] { color: var(--signal-ink); background: var(--signal); border-color: var(--signal); }
+
+/* ============================================================ Welcome */
+.main.is-empty .empty { flex-direction: column; gap: 14px; text-align: center; }
+.welcome-mark { color: var(--text); }
+.welcome-mark .logo { width: 44px; height: 44px; }
+.main.is-empty .empty h1 { font: 650 clamp(26px, 3vw, 36px)/1.15 var(--font); letter-spacing: -0.04em; margin: 0; color: var(--text); }
+.welcome-route { display: inline-flex; align-items: center; gap: 8px; font: 500 12.5px/1 var(--mono); color: var(--text-2); padding: 7px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); }
+.route-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 0 3px var(--signal-soft); flex: none; }
+
+/* ============================================================ Messages */
+.msg.user .bubble, .msg.user > .user-text, .user-bubble { border-radius: 16px 16px 4px 16px; }
+.model-tag { font: 500 11.5px/1.4 var(--mono); color: var(--text-3); display: inline-flex; align-items: center; gap: 6px; padding-inline-start: 6px; }
+.model-tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--signal); flex: none; }
+.route-tag { color: var(--text-3); }
+.msg-action { color: var(--text-3); border-radius: 6px; }
+.msg-action:hover { color: var(--text); background: var(--surface-3); }
+.code-block { border-radius: 10px; }
+.markdown table { border-radius: 10px; }
+
+/* ============================================================ Composer */
+.composer { background: var(--surface); border: 1px solid var(--input-border); border-radius: 16px; box-shadow: var(--shadow); padding: 14px 14px 10px; }
+.composer:focus-within { border-color: var(--border-strong); box-shadow: var(--shadow); }
+.composer textarea { font-size: 16px; }
+.composer-bar { gap: 6px; }
+.composer-bar .tool-btn { border-radius: 10px; color: var(--text-2); }
+.composer-bar .tool-btn:hover { background: var(--surface-2); color: var(--text); }
+.composer .send-btn { background: var(--signal); color: var(--signal-ink); border: 0; border-radius: 10px; }
+.composer .send-btn:hover:not(:disabled) { background: var(--signal-hover); }
+.composer .send-btn:disabled { background: var(--surface-3); color: var(--text-3); }
+.composer .send-btn.stop { background: var(--accent); color: var(--accent-text); }
+.composer .model-button { border: 1px solid var(--border); border-radius: 999px; background: var(--surface-2); padding: 5px 10px 5px 8px; min-height: 32px; font-size: 13px; font-weight: 500; color: var(--text); gap: 6px; }
+.composer .model-button:hover { background: var(--surface-3); }
+.composer .model-name .auto-icon { display: none; }
+.composer .model-name::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 0 2px var(--signal-soft); flex: none; }
+.composer-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 6px 0 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-size: 13px; font-weight: 500; }
+.composer-chip svg { color: var(--text-2); }
+.composer-chip .icon-btn { width: 22px; height: 22px; }
+.composer-wrap .disclaimer { color: var(--text-3); font-size: 11.5px; }
+
+/* ============================================================ Menus */
+.popover, .menu, .attach-menu, .models-pop { border-radius: 14px; }
+.mp-tile.auto { background: var(--signal); color: var(--signal-ink); }
+.mp-pill { background: var(--signal-soft); color: var(--signal-strong); }
+.mp-item.selected, .mp-layout.selected { box-shadow: inset 0 0 0 1px var(--border-strong); }
+.attach-menu .sheet-row > svg { color: var(--text-2); }
+.add-memory-switch.on { background: var(--signal); }
+.attach-menu-title { font: 600 11px/1.2 var(--font); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); padding: 10px 12px 4px; margin: 0; }
+
+/* ============================================================ Phone */
+@media (max-width: 899px) {
+  .topbar .menu-btn, .topbar .new-chat-shortcut { border: 0; background: transparent; border-radius: var(--radius-sm); }
+  .main .topbar { min-height: 60px; }
+  .composer { border-radius: 20px; padding: 12px 12px 8px; }
+  .composer .model-button { background: var(--surface-2); border-radius: 999px; }
+  .sidebar-bottom-actions .new-chat { min-height: 44px; }
+  .chat-open { height: 44px; font-size: 15px; }
+}
+@media (prefers-reduced-motion: reduce) { .route-dot { box-shadow: none; } }
+
+/* ============================================================ Reply "more" menu */
+.more-menu { position: relative; display: inline-flex; }
+.more-menu-list { top: auto; bottom: calc(100% + 6px); inset-inline-start: 0; inset-inline-end: auto; min-width: 190px; z-index: 30; }
+.logo { --logo-ink: var(--bg); }
+.composer-chip-text { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ============================================================ Context meter: quiet until it matters */
+/* The context ring sits in the top corner of the message box, like a battery indicator. */
+.composer-bar .usage-meter { margin: 0; max-width: none; display: inline-flex; position: absolute; top: 8px; inset-inline-end: 8px; z-index: 2; }
+.composer-bar .usage-chip { min-height: 30px; border-radius: 999px; padding: 0 8px; font-size: 12px; gap: 5px; }
+.composer textarea { padding-inline-end: 36px; }
+.composer:has(.usage-chip:not(.quiet)) textarea { padding-inline-end: 112px; }
+.usage-chip.quiet { padding: 0; width: 32px; justify-content: center; border-color: transparent; background: transparent; }
+.usage-chip.quiet .usage-chip-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.usage-chip.quiet > svg:last-child { display: none; }
+
+/* ============================================================ Sidebar alignment: one left edge */
+.sidebar .sidebar-bottom-actions { padding: 0 12px; }
+.sidebar .sidebar-search-field { margin: 0 0 8px; }
+.sidebar-bottom-actions .library-button { padding: 8px 10px; }
+.sidebar .sidebar-section-heading { padding: 18px 10px 6px 18px; }
+.sidebar h2.history-label { padding: 18px 18px 2px; }
+.sidebar .group-label { margin: 12px 22px 4px; }
+.chat-row { margin: 0 12px; }
+.chat-open { padding-inline-start: 10px; }
+.sidebar-projects-list { padding: 0 12px; }
+.sidebar-empty-project-btn { margin: 0; padding: 6px 10px; }
+
+/* ============================================================ + menu on computers: a light list */
+.sheet-popover-backdrop .attach-menu { padding: 6px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-lg); }
+.sheet-popover-backdrop .attach-menu .attach-menu-group { background: none; padding: 0; margin: 0; border-radius: 0; }
+.sheet-popover-backdrop .attach-menu .sheet-row { border: 0; border-radius: 8px; padding: 8px 10px; min-height: 38px; font-size: 14px; }
+.sheet-popover-backdrop .attach-menu .sheet-row:hover:not(:disabled) { background: var(--surface-2); }
+.sheet-popover-backdrop .attach-menu .sheet-row + .sheet-row { border-top: 0; }
+.sheet-popover-backdrop .attach-menu-title { border-top: 1px solid var(--border); margin-top: 6px; padding: 10px 10px 4px; }
+.attach-menu .sheet-row[aria-checked='true'] > svg:first-child { color: var(--signal-strong); }
+
+/* ============================================================ Switches & settings */
+.switch:checked { background: var(--signal); border-color: color-mix(in srgb, var(--signal) 70%, var(--signal-ink)); }
+.switch:checked::after { background: var(--signal-ink); }
+@media (max-width: 899px) {
+  .settings-tabs button.active .tab-icon, .settings-tabs button .tab-icon { background: transparent; border: 0; box-shadow: none; }
+}
+/* The context panel opens above the message box, aligned to its right edge. */
+.composer-bar .usage-pop { inset-inline-end: -8px; bottom: calc(100% + 16px); }
+
+/* "Scroll to latest" sits at the side of the column, not on top of the text being read. */
+.to-bottom, [dir='rtl'] .to-bottom { inset-inline-start: auto; inset-inline-end: max(16px, calc((100% - 820px) / 2)); transform: none; width: 36px; height: 36px; }
+
+.composer-bar .model-picker { flex: 0 1 auto; min-width: 0; max-width: min(260px, 100%); }
+@media (max-width: 360px) {
+  .composer .model-button { padding: 4px 8px; font-size: 12px; gap: 4px; }
+  .composer .model-name::before { display: none; }
+  .composer-bar { gap: 4px; }
+}
+/* Whatever comes first in the message box (test results, repository, attachments) leaves room for the ring. */
+.composer > :first-child:not(textarea):not(.composer-bar) { margin-inline-end: 34px; }

@@ -99,8 +99,9 @@ body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
 }
-/* No double-tap zoom anywhere (every scroll area starts a new touch-action chain). */
-* { touch-action: manipulation; }
+/* No pinch or double-tap zoom anywhere, scrolling stays native (every scroll area starts a new
+   touch-action chain, so this is set on all elements). */
+* { touch-action: pan-x pan-y; }
 button, input, select, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: default; }

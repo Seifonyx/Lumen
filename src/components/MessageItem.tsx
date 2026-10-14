@@ -2,7 +2,7 @@ import CodingPlanCard from './CodingPlanCard';
 import { parsePlan } from '../lib/coding-plan';
 import KnowledgeSourceView from './KnowledgeSourceView';
 import type { KnowledgeSource } from '../types';
-import { AlertTriangle, Share, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, GitBranch, Info, Pencil, RefreshCw, Square, Volume2 } from 'lucide-react';
+import { AlertTriangle, Share, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, GitBranch, Info, Pencil, RefreshCw, Square, TextSelect, Volume2 } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 import { mentionedPaths, repoTree, seenPaths } from '../lib/workspace';
 import { normalizeEdits } from '../lib/edits';
@@ -15,6 +15,7 @@ import type { Message } from '../types';
 import Markdown from './Markdown';
 import ModelPicker from './ModelPicker';
 import TextSelection from './TextSelection';
+import MoreMenu from './MoreMenu';
 
 function hostOf(url: string) {
   try {
@@ -213,6 +214,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
   const chatTitle = useStore((s) => s.chats.find((c) => c.id === s.currentId)?.title || 'Reply');
   const [copied, setCopied] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [selecting, setSelecting] = useState(false);
   const streaming = message.status === 'streaming';
   const truncated = message.notices?.some((n) => /length limit/.test(n));
 
@@ -293,37 +295,9 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
           </span>
           {message.text && (
             <>
-              <TextSelection text={toPlainText(message.text)} />
               <button className="msg-action" aria-label="Copy" title="Copy" onClick={async () => { if (await copyText(message.text)) { setCopied(true); setTimeout(() => setCopied(false), 1500); } }}>
                 {copied ? <Check size={15} /> : <Copy size={15} />}
               </button>
-              {canShare && (
-                <button className="msg-action" aria-label="Share" title="Share" onClick={() => void shareReply()}>
-                  <Share size={15} />
-                </button>
-              )}
-              {canSpeak && (
-                <button
-                  className="msg-action"
-                  aria-label={speaking ? 'Stop reading' : 'Read aloud'}
-                  title={speaking ? 'Stop reading' : 'Read aloud'}
-                  onClick={() => {
-                    if (speaking) {
-                      stopSpeaking();
-                      setSpeaking(false);
-                    } else {
-                      setSpeaking(true);
-                      speak(message.id, toPlainText(message.text), () => setSpeaking(false));
-                    }
-                  }}
-                >
-                  {speaking ? <Square size={14} /> : <Volume2 size={15} />}
-                </button>
-              )}
-              <button className="msg-action" aria-label="Save as Word" title="Save reply as Word" onClick={saveWord}>
-                <FileDown size={15} />
-              </button>
-              <button className="msg-action" aria-label="Edit in canvas" title="Edit reply in canvas" onClick={() => useStore.getState().openCanvas(`${safeFileName(chatTitle, 'Reply')}.md`, message.text)}><Pencil size={15} /></button>
             </>
           )}
           {!busy && (
@@ -334,6 +308,21 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
               <ModelPicker compact value={message.model || ''} onChange={(id) => void regenerate(message.id, id)} label="Retry with…" align={isRtl(message.text) ? 'right' : 'left'} />
             </>
           )}
+          {message.text && (
+            <MoreMenu
+              items={[
+                ...(canSpeak ? [{ label: speaking ? 'Stop reading' : 'Read aloud', icon: speaking ? <Square size={14} /> : <Volume2 size={15} />, onSelect: () => {
+                  if (speaking) { stopSpeaking(); setSpeaking(false); }
+                  else { setSpeaking(true); speak(message.id, toPlainText(message.text), () => setSpeaking(false)); }
+                } }] : []),
+                ...(canShare ? [{ label: 'Share', icon: <Share size={15} />, onSelect: () => void shareReply() }] : []),
+                { label: 'Save as Word', icon: <FileDown size={15} />, onSelect: () => void saveWord() },
+                { label: 'Edit in canvas', icon: <Pencil size={15} />, onSelect: () => useStore.getState().openCanvas(`${safeFileName(chatTitle, 'Reply')}.md`, message.text) },
+                { label: 'Select text', icon: <TextSelect size={15} />, onSelect: () => setSelecting(true) },
+              ]}
+            />
+          )}
+          {selecting && <TextSelection text={toPlainText(message.text)} open onClose={() => setSelecting(false)} />}
           {truncated && isLast && !busy && (
             <button className="btn small" onClick={() => void continueReply()}>Continue</button>
           )}

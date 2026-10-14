@@ -93,7 +93,8 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
     if (!open) return;
     const fit = () => {
       const panel = box.current?.querySelector<HTMLElement>('.usage-pop');
-      if (panel && trigger.current) panel.style.maxHeight = `${Math.max(0, Math.min(600, trigger.current.getBoundingClientRect().top - 12))}px`;
+      // The panel opens above the message box, so the space is what's above the box.
+      if (panel && trigger.current) panel.style.maxHeight = `${Math.max(0, Math.min(600, (trigger.current.closest('.composer') || trigger.current).getBoundingClientRect().top - 20 - (window.visualViewport?.offsetTop || 0)))}px`;
     };
     let frame = 0;
     const scheduleFit = () => {
@@ -157,9 +158,9 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
 
   return (
     <div className="usage-meter" ref={box}>
-      <button ref={trigger} className={`usage-chip${level}`} onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="dialog" aria-controls="usage-panel" title="Conversation capacity and daily usage">
+      <button ref={trigger} className={`usage-chip${level}${pct < 50 && !blockedUntil ? ' quiet' : ''}`} onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="dialog" aria-controls="usage-panel" title="Conversation capacity and daily usage">
         <svg className="usage-ring" viewBox="0 0 20 20" aria-hidden="true"><circle className="usage-ring-track" cx="10" cy="10" r="7" /><circle className="usage-ring-fill" cx="10" cy="10" r="7" strokeDasharray="43.98" strokeDashoffset={43.98 * (1 - pct / 100)} /></svg>
-        Context {pct}%{blockedUntil && <span className="usage-status"> · limit reached</span>}
+        <span className="usage-chip-label">Context {pct}%</span>{blockedUntil && <span className="usage-status"> · limit reached</span>}
         <ChevronDown size={12} aria-hidden="true" />
       </button>
       {open && (

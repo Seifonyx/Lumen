@@ -1,3 +1,4 @@
+const {openSettings,replyAction}=require('./helpers/ui.cjs');
 const { chromium } = require("playwright"),
   assert = require("node:assert/strict"),
   AxeBuilder = require("@axe-core/playwright").default;
@@ -71,8 +72,7 @@ const upload = async (page, file) => {
   }
 };
 const settings = async (page) => {
-  await page.getByRole('button', {name:/^Add (?:photos, )?files or a repository$/}).click();
-  await page.getByRole('button',{name:'Tools',exact:true}).click();await page.getByRole('button', {name:/Privacy settings/}).click();
+  await openSettings(page,'Privacy & data');
   const dialog=page.getByRole('dialog',{name:'Settings',exact:true});
   await dialog.getByRole('checkbox',{name:/^Privacy shield/}).check();
   await dialog.getByRole('radio',{name:'Ask me',exact:true}).click();

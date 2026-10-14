@@ -1,6 +1,6 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
 import ChecksBar from './ChecksBar';
-import { ListChecks, FileCode2, GitBranch, ShieldCheck, ArrowUp, FileText, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
+import { ListChecks, FileCode2, FolderKanban, GitBranch, Globe, ShieldCheck, ArrowUp, FileText, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ACCEPT, readAttachment } from '../lib/files/read';
 import { canListen, listen } from '../lib/speech';
@@ -333,7 +333,6 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
         </div>
       )}
       {runningTask && <div className="task-running" role="status"><Loader2 size={15} /><span>Running {runningTask.name} · your draft stays here</span><button className="btn small" onClick={stop}>Stop task</button></div>}
-      {meter}
       {usageWarning && (
         <div className={`usage-warning${blockedUntil ? ' blocked' : ''}`} role="status" dir="auto">
           {usageWarning}
@@ -432,7 +431,20 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
             </button>
           )}
           {modelPicker}
+          {settings.webSearch && searchAvailable && (
+            <span className="composer-chip">
+              <Globe size={14} /> Search
+              <button type="button" className="icon-btn xs" aria-label="Turn off web search" onClick={() => updateSettings({ webSearch: false })}><X size={12} /></button>
+            </span>
+          )}
+          {project && !chat?.messages.length && (
+            <span className="composer-chip" title={`New chat in ${project.name}`}>
+              <FolderKanban size={14} /> <span className="composer-chip-text">{project.name}</span>
+              <button type="button" className="icon-btn xs" aria-label="Remove from project" onClick={() => useStore.getState().setComposerProject(null)}><X size={12} /></button>
+            </span>
+          )}
           <div className="spacer" />
+          {meter}
           {settings.privacyShield && (
             <button
               type="button"
@@ -454,9 +466,11 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
           </button>
         </div>
       </form>
-      <div className="composer-options"><button type="button" className="composer-project" disabled={isTemporaryChat(chat)} onClick={()=>setProjectMenu(!projectMenu)}>{project?.name||'Project'} <span aria-hidden="true">⌄</span></button>
-        {projectMenu&&<div className="composer-project-menu" role="group" aria-label="Choose project" onKeyDown={e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();setProjectMenu(false);}}}>{[{id:'',name:'None'},...(settings.projects||[])].map(p=><button type="button" key={p.id} onClick={()=>{useStore.getState().setComposerProject(p.id||null);setProjectMenu(false);}}>{p.name}</button>)}</div>}
-      </div>
+      {projectMenu && (
+        <div className="composer-options">
+          <div className="composer-project-menu" role="group" aria-label="Choose project" onKeyDown={e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();setProjectMenu(false);}}}>{[{id:'',name:'No project'},...(settings.projects||[])].map(p=><button type="button" key={p.id} onClick={()=>{useStore.getState().setComposerProject(p.id||null);setProjectMenu(false);}}>{p.name}</button>)}</div>
+        </div>
+      )}
       {sheet && (
         <AttachSheet
           onClose={() => setSheet(false)}

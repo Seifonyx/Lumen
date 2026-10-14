@@ -1,5 +1,6 @@
 // Visual and interaction regressions for the shared product design. Only local data / mocked AI.
 const { chromium } = require('playwright');
+const {openSettings,replyAction}=require('./helpers/ui.cjs');
 const path = require('node:path');
 const { scan } = require('./helpers/fitscan.cjs');
 let failures = 0;
@@ -36,7 +37,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         await page.waitForSelector('.main.is-empty');
         if (theme === 'black') check(await page.evaluate(() => document.documentElement.dataset.appearance === 'black' && getComputedStyle(document.body).backgroundColor === 'rgb(0, 0, 0)'), `${label}: true black background survives reload`);
         check(inside(await page.locator('.composer').boundingBox(), width, height) && (await scan(page)).length === 0, `${label}: welcome screen and composer fit`);
-        check(await page.locator('.suggestion,.starter-actions,.empty p').count() === 0 && await page.locator('.empty h1').evaluate(el=>el.scrollWidth<=el.clientWidth), `${label}: short single-line greeting without recommendations or subtitle`);
+        check(await page.locator('.suggestion,.starter-actions,.empty p:not(.welcome-route)').count() === 0 && await page.locator('.empty h1').evaluate(el=>el.scrollWidth<=el.clientWidth), `${label}: short single-line greeting and routing status, without recommendations`);
         if (!mobile) {
           await page.click('[aria-label="Collapse sidebar"]');
           check(!(await page.locator('.sidebar').isVisible()), `${label}: sidebar collapses`);
@@ -59,19 +60,18 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         const newChatBox = await page.locator('.sidebar .new-chat').boundingBox();
         const historyBox = await page.locator('.chat-list').boundingBox();
         check(newChatBox.y + newChatBox.height <= historyBox.y, label + ': New chat above history');
-        check(await page.locator('#chat-search').count() === (mobile ? 0 : 1), label + ': responsive search');
-        if(mobile) await page.locator('.sidebar-search-button').click();
+        check(await page.locator('#chat-search').count() === 1, label + ': search is always in the sidebar');
         await page.locator('#chat-search').fill('no-match');
         check(await page.locator('.empty-list').textContent() === 'No chats match.' && await page.locator('#chat-search').evaluate(el => el === document.activeElement), label + ': search filters');
         await page.keyboard.press('Escape');
-        check(await page.locator('#chat-search').count() === (mobile ? 0 : 1), label + ': responsive search remains available');
+        check(await page.locator('#chat-search').count() === 1, label + ': chat search is always in the sidebar');
         if (mobile) await page.click('[aria-label="Close menu"]');
         const add = mobile ? '[aria-label="Add photos, files or a repository"]' : '[aria-label="Add files or a repository"]';
         await page.click(add);
-        check(await page.locator('.sheet-row').count() === 6 && await page.getByRole('button', { name: /^Tools$/ }).isVisible() && await page.getByRole('button', { name: /^Connectors$/ }).isVisible() && await page.locator('.sheet').evaluate((el) => el.contains(document.activeElement)), `${label}: unified add menu has correct actions and keyboard focus`);
+        check(await page.locator('.sheet-row').count() === 7 && await page.getByRole('switch', { name: 'Web search' }).isVisible() && await page.getByRole('button', { name: /GitHub repository/ }).isVisible() && await page.locator('.sheet').evaluate((el) => el.contains(document.activeElement)), `${label}: unified add menu has correct actions and keyboard focus`);
         if (!mobile) check(await page.locator('.sheet-popover-backdrop').isVisible() && inside(await page.locator('.sheet').boundingBox(), width, height), `${label}: add menu opens beside the composer and fits on screen`);
         await page.keyboard.press('Shift+Tab');
-        check(await page.locator('.sheet-row').last().evaluate((el) => el === document.activeElement), `${label}: add menu traps keyboard focus`);
+        check(await page.locator('.sheet-row:not(:disabled)').last().evaluate((el) => el === document.activeElement), `${label}: add menu traps keyboard focus`);
         await page.keyboard.press('Escape');
         check(!(await page.locator('.sheet').isVisible()) && await page.locator(add).evaluate((el) => el === document.activeElement), `${label}: Escape returns focus to add button`);
         await page.click(add);
@@ -81,7 +81,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         if (mobile) await page.keyboard.press('Escape');
         await page.click(add);
         const chooser = page.waitForEvent('filechooser');
-        await page.getByRole('button', { name: /^Add files$/ }).click();
+        await page.getByRole('button', { name: /^Files and images$/ }).click();
         await (await chooser).setFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('Weekly review notes') });
         await page.waitForSelector('.attachment:not(.loading)');
         check(await page.locator('.attachment').count() === 1 && !(await page.locator('.sheet').isVisible()), `${label}: merged menu attaches files`);
@@ -89,7 +89,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         await page.click('.send-btn'); await page.waitForSelector('.msg.assistant .markdown');
         await page.locator('.send-btn.stop').waitFor({ state: 'hidden' });
         check(!(await page.locator('.starter-actions').isVisible()) && (await scan(page)).length === 0, `${label}: conversation replaces welcome and stays readable`);
-        await page.locator('.msg.assistant [aria-label="Select text"]').click();
+        await replyAction(page,'Select text');
         check(inside(await page.locator('.modal.full').boundingBox(), width, height) && await page.locator('.selectable-text').evaluate(el => getComputedStyle(el).userSelect === 'text'), label + ': focused text selection fits and allows selection');
         await page.getByRole('button', { name: 'Select all', exact: true }).click();
         await page.waitForFunction(() => !!window.getSelection()?.toString());

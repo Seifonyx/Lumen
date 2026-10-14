@@ -1,5 +1,6 @@
 // Two "devices" signed in as the same user (Firebase emulators), checking chats and settings sync.
 const { chromium } = require('playwright');
+const {openSettings,replyAction}=require('./helpers/ui.cjs');
 // Settings is a page: on phones the section list shows first, and a section has a back arrow.
 async function openTab(page, name) {
   if (await page.isVisible('.settings-back')) await page.click('.settings-back');
@@ -126,7 +127,7 @@ async function device(browser, name, email, mobile) {
   check(!(await B.page.textContent('.chat-list')).includes('Renamed on laptop'), 'deleted chat stays deleted after reload');
 
   // Saved helpers and their immutable chat instructions cross devices.
-  await B.page.getByRole('button', { name: 'Customize', exact: true }).click();
+  await B.page.getByRole('button', { name: 'Library', exact: true }).click();
   await B.page.getByRole('button', { name: 'New assistant', exact: true }).click();
   await B.page.getByLabel('Library item name').fill('Synced helper');
   await B.page.getByLabel('Library instructions').fill('Use HELPER_SYNC_MARKER in your reply.');
@@ -152,7 +153,7 @@ async function device(browser, name, email, mobile) {
   await A.page.reload();
   await A.page.waitForSelector('.topbar');
   await A.page.click('.menu-btn');
-  await A.page.getByRole('button', { name: 'Customize', exact: true }).click();
+  await A.page.getByRole('button', { name: 'Library', exact: true }).click();
   await A.page.getByRole('heading', { name: 'Synced helper', exact: true }).waitFor();
   check(true, 'saved assistant library synced to phone');
   await A.page.getByRole('button', { name: 'Close', exact: true }).click();
@@ -165,7 +166,7 @@ async function device(browser, name, email, mobile) {
   check(JSON.stringify(A.log.at(-1)).includes('HELPER_SYNC_MARKER'), 'chat helper instructions synced and used on phone');
 
   // Canvas text and edits sync even when a chat has no messages.
-  await B.page.getByRole('button', { name: 'Edit in canvas', exact: true }).first().click();
+  await replyAction(B.page,'Edit in canvas','first');
   await B.page.fill('.canvas-text', 'CANVAS_FROM_LAPTOP');
   await B.page.waitForTimeout(2000);
   await A.page.getByRole('button', { name: 'Open canvas', exact: true }).click();

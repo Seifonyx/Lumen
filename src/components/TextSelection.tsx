@@ -4,8 +4,12 @@ import { copyText } from '../lib/util';
 import Modal from './Modal';
 
 /** A quiet reading surface: selections stay inside this message, away from chat controls. */
-export default function TextSelection({ text }: { text: string }) {
-  const [open, setOpen] = useState(false);
+export default function TextSelection({ text, open: shown, onClose }: { text: string; open?: boolean; onClose?: () => void }) {
+  const [ownOpen, setOwnOpen] = useState(false);
+  // Controlled from a menu (open + onClose), or its own button.
+  const controlled = shown !== undefined;
+  const open = controlled ? shown : ownOpen;
+  const setOpen = (v: boolean) => (controlled ? !v && onClose?.() : setOwnOpen(v));
   const [selected, setSelected] = useState('');
   const [copied, setCopied] = useState(false);
   const content = useRef<HTMLDivElement>(null);
@@ -35,7 +39,7 @@ export default function TextSelection({ text }: { text: string }) {
     };
   }, [open]);
   return <>
-    <button className="msg-action" aria-label="Select text" title="Select text" onClick={() => { setSelected(''); setCopied(false); setOpen(true); }}><TextSelect size={15} /></button>
+    {!controlled && <button className="msg-action" aria-label="Select text" title="Select text" onClick={() => { setSelected(''); setCopied(false); setOpen(true); }}><TextSelect size={15} /></button>}
     {open && <Modal title="Select text" full onClose={() => setOpen(false)}>
       <div className="text-selection-view">
         <div className="text-selection-tools">

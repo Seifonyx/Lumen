@@ -1,4 +1,4 @@
-/** The Model Router mark: two inputs routed to one model. Drawn in the current text colour. */
+/** The Model Router mark: two inputs routed to one model. Drawn in the current text colour; the chosen route lights up in the signal colour. */
 export default function Logo({ size = 24, className = "" }: { size?: number; className?: string }) {
   return (
     <svg className={`logo ${className}`} width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
@@ -8,7 +8,7 @@ export default function Logo({ size = 24, className = "" }: { size?: number; cla
       </g>
       <circle cx="10" cy="10.5" r="2.6" fill="var(--logo-ink, #fff)" />
       <circle cx="10" cy="21.5" r="2.6" fill="var(--logo-ink, #fff)" />
-      <circle cx="22" cy="16" r="3.4" fill="var(--logo-ink, #fff)" />
+      <circle cx="22" cy="16" r="3.4" fill="var(--logo-out, var(--logo-ink, #fff))" />
     </svg>
   );
 }

@@ -1,11 +1,12 @@
-import { FolderGit2, FolderKanban, ArrowDown, FileText, Menu, PanelLeftOpen, Ghost, Sparkles } from 'lucide-react';
+import { FolderGit2, FolderKanban, ArrowDown, FileText, Menu, PanelLeftOpen, EyeOff } from 'lucide-react';
+import Logo from './Logo';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { activeSummary } from '../lib/compact';
 import { AUTO } from '../lib/routing';
 import { isLayoutId } from '../lib/layouts';
 import { formatUntil } from '../lib/usage';
-import { selectCurrentChat, useStore } from '../store';
+import { modelLabel, selectCurrentChat, useStore } from '../store';
 import { UsageMeter } from './CompactNote';
 import Composer from './Composer';
 import { WELCOME_GREETINGS } from '../lib/welcome';
@@ -33,6 +34,8 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   const resetAt = useStore((s) => s.firebaseUsage.resetAt);
   const online = useStore((s) => s.online);
   const workspaceOpen = useStore((s) => s.workspaceOpen);
+  const catalog = useStore((s) => s.catalog);
+  const enabledCount = useStore((s) => s.settings.enabledModels.length);
   const { setUi, setChatModel } = useStore.getState();
   const scroller = useRef<HTMLDivElement>(null);
   const navigationHost = useRef<HTMLDivElement>(null);
@@ -98,7 +101,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
           </div>
           <div className="spacer" />
           <button className="icon-btn new-chat-shortcut" onClick={()=>useStore.getState().toggleTemporaryChat()} aria-label={isTemporaryChat(chat)?'End incognito chat':'Start incognito chat'} aria-pressed={isTemporaryChat(chat)} title="Incognito · not saved, memory off. Your AI provider still receives messages.">
-            <Ghost size={22} />
+            <EyeOff size={19} />
           </button>
         </header>
         <ProjectWorkspace
@@ -153,9 +156,11 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
             {changeCount > 0 && <span className="badge">{changeCount}</span>}
           </button>
         )}
-        <button className="icon-btn new-chat-shortcut" onClick={()=>useStore.getState().toggleTemporaryChat()} aria-label={isTemporaryChat(chat)?'End incognito chat':'Start incognito chat'} aria-pressed={isTemporaryChat(chat)} title="Incognito · not saved, memory off. Your AI provider still receives messages.">
-          <Ghost size={22} />
+        {(empty || isTemporaryChat(chat)) && (
+          <button className="icon-btn new-chat-shortcut" onClick={()=>useStore.getState().toggleTemporaryChat()} aria-label={isTemporaryChat(chat)?'End incognito chat':'Start incognito chat'} aria-pressed={isTemporaryChat(chat)} title="Incognito · not saved, memory off. Your AI provider still receives messages.">
+          <EyeOff size={19} />
         </button>
+        )}
       </header>
       {isTemporaryChat(chat)&&<div className="incognito-note" role="status">Not saved · Memory off · Your selected AI provider receives messages</div>}
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</div>
@@ -182,7 +187,9 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
       <div className="messages" ref={scroller} role="region" tabIndex={0} aria-label="Chat messages">
         {empty ? (
           <div className="empty">
-            <Sparkles className="welcome-mark" size={42} aria-hidden="true"/><h1>{isTemporaryChat(chat)?'Incognito chat':user?.name&&welcomeSequence%(WELCOME_GREETINGS.length+1)===0?greeting:WELCOME_GREETINGS[(welcomeSequence+(user?.name?WELCOME_GREETINGS.length-1:0)) % WELCOME_GREETINGS.length]}</h1>
+            <span className="welcome-mark" aria-hidden="true"><Logo size={44} /></span>
+            <h1>{isTemporaryChat(chat)?'Incognito chat':user?.name&&welcomeSequence%(WELCOME_GREETINGS.length+1)===0?greeting:WELCOME_GREETINGS[(welcomeSequence+(user?.name?WELCOME_GREETINGS.length-1:0)) % WELCOME_GREETINGS.length]}</h1>
+            <p className="welcome-route"><span className="route-dot" aria-hidden="true" />{isTemporaryChat(chat) ? 'Not saved · memory off' : model === AUTO ? `Auto · routing across ${enabledCount} model${enabledCount === 1 ? '' : 's'}` : `Routing to ${modelLabel(catalog, model)}`}</p>
           </div>
         ) : (
           chat && <MessageThread key={chat.id} chat={chat} summary={summary} busy={streaming||canvasEditing} compacting={compacting} scroller={scroller} stick={stick} navigationHost={navigationHost}/>
@@ -206,7 +213,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
 
       <Composer
         model={model}
-        modelPicker={<ModelPicker value={model} onChange={setChatModel} align="right" opensUp />}
+        modelPicker={<ModelPicker value={model} onChange={setChatModel} opensUp />}
         meter={chat && (messages.length > 0 || summary) ? <UsageMeter chat={chat} model={model} /> : null}
       />
       {projectModalId && (

@@ -1,4 +1,5 @@
 const {chromium}=require('playwright');
+const {openSettings,replyAction}=require('./helpers/ui.cjs');
 const assert=require('node:assert/strict');
 (async()=>{
  const base=process.env.MR_TEST_URL||'http://localhost:5190/?emulator';
@@ -23,7 +24,7 @@ const assert=require('node:assert/strict');
    await new Promise((resolve,reject)=>{const tx=database.transaction('chats','readwrite');tx.objectStore('chats').put({id:'legacy-chat',title:'LEGACY_CHAT_MARKER',createdAt:1,updatedAt:1,messages:[{id:'legacy-message',role:'user',text:'LEGACY_PRIVATE_MESSAGE',createdAt:1}],documents:[{id:'legacy-doc',name:'Legacy.md',content:'LEGACY_PRIVATE_CANVAS',updatedAt:1}]});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});database.close();localStorage.setItem('mr.draft.legacy-chat','LEGACY_CHAT_DRAFT');localStorage.setItem('mr.draft.new','LEGACY_NEW_DRAFT');
   });
   await page.goto(base);await page.waitForSelector('.composer textarea');assert.equal(await page.inputValue('.composer textarea'),'LEGACY_NEW_DRAFT');await page.locator('.chat-row').filter({hasText:'LEGACY_CHAT_MARKER'}).locator('.chat-open').click();assert.equal(await page.inputValue('.composer textarea'),'LEGACY_CHAT_DRAFT');await page.getByRole('button',{name:'Open canvas',exact:true}).click();assert.equal(await page.inputValue('.canvas-text'),'LEGACY_PRIVATE_CANVAS');await page.getByRole('button',{name:'Close canvas',exact:true}).click();await page.evaluate(()=>document.querySelector('.sidebar .new-chat').click());
-  await page.fill('.composer textarea','PRIVATE_ACCOUNT_A_MESSAGE');await page.click('.send-btn');await page.waitForSelector('.msg.assistant .model-tag');await page.getByRole('button',{name:'Edit in canvas',exact:true}).click();await page.fill('.canvas-text','PRIVATE_ACCOUNT_A_CANVAS');await page.getByRole('button',{name:'Close canvas',exact:true}).click();await page.fill('.composer textarea','PRIVATE_ACCOUNT_A_DRAFT');
+  await page.fill('.composer textarea','PRIVATE_ACCOUNT_A_MESSAGE');await page.click('.send-btn');await page.waitForSelector('.msg.assistant .model-tag');await replyAction(page,'Edit in canvas','last');await page.fill('.canvas-text','PRIVATE_ACCOUNT_A_CANVAS');await page.getByRole('button',{name:'Close canvas',exact:true}).click();await page.fill('.composer textarea','PRIVATE_ACCOUNT_A_DRAFT');
   await page.evaluate(()=>{
    const uid='preview-account-b',settings={autoIntroduced:true,autoTitle:false,enabledModels:['gemini:gemini-flash-latest'],defaultModel:'gemini:gemini-flash-latest'};
    localStorage.setItem('mr.preview_user',JSON.stringify({uid,email:'b@local.invalid',displayName:'Account B'}));localStorage.setItem(`mr.account.${uid}`,JSON.stringify({geminiKey:'fixture',settings}));

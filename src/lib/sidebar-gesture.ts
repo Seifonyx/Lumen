@@ -30,7 +30,7 @@ export function installSidebarGestures(): () => void {
     if (!phone.matches || event.touches.length !== 1 || state.settingsOpen || !state.authed || window.getSelection()?.toString()) return;
     const target = event.target;
     if (!(target instanceof Element) || document.querySelector('.modal-backdrop, .sheet-backdrop, .models-pop, .usage-pop')) return;
-    if (target.closest('input, textarea, select, [contenteditable], pre, table, .menu, .row-menu')) return;
+    if (target.closest('input, textarea, select, [contenteditable], pre, table, .menu')) return;
     if (state.sidebarOpen ? !target.closest('.sidebar, .scrim') : !target.closest('.main') || target.closest('button, a, label, .composer')) return;
     // Leave sideways code, tables and other horizontal scrollers to the browser.
     for (let el: Element | null = target; el && el !== document.body; el = el.parentElement) {

@@ -21,7 +21,7 @@ const assert=require('node:assert/strict');
   const page=await context.newPage();
   await page.goto(process.env.MR_TEST_URL||'http://localhost:5190/?emulator');
   await page.waitForSelector('.composer textarea');
-  const open=async()=>{if(width<900)await page.click('.menu-btn');await page.getByRole('button',{name:'Customize',exact:true}).click();await page.waitForSelector('.assistant-library');};
+  const open=async()=>{if(width<900)await page.click('.menu-btn');await page.getByRole('button',{name:'Library',exact:true}).click();await page.waitForSelector('.assistant-library');};
   await open();await page.getByRole('button',{name:'New assistant',exact:true}).click();
   await page.getByLabel('Library item name').fill('Quality helper');
   await page.getByLabel('Library instructions').fill('Always use QUALITY_MARKER in your answer.');

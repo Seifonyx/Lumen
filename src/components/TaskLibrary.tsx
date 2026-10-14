@@ -54,10 +54,10 @@ export default function TaskLibrary({ onClose }: { onClose:()=>void }) {
       <div className="library-form-actions"><button type="button" className="btn" disabled={saving} onClick={()=>{setEditing(null);setError('');}}>Back</button><button type="submit" className="btn primary" disabled={saving}>{saving?'Saving…':'Save task'}</button></div>
     </form> : <>
       <div className="task-notify" data-state={notifications}>
-        {notifications==='on' ? <><BellRing size={16}/><span>Notifications on · you’ll be told when a task finishes while the app is in the background.</span></>
+        {notifications==='on' ? <><BellRing size={16}/><span>Notifications on · you’ll be told when a task finishes while you’re in another window or app.</span></>
           : notifications==='blocked' ? <><BellOff size={16}/><span>Notifications are blocked for this site. Allow them in your browser settings to hear when tasks finish.</span></>
           : notifications==='unsupported' ? <><BellOff size={16}/><span>To get notifications on iPhone, add the app to your Home Screen (Share → Add to Home Screen) and open it from there.</span></>
-          : <><Bell size={16}/><span>Get a notification when a task finishes while the app is in the background.</span><button className="btn small" onClick={()=>void enableNotifications().then(setNotifications)}>Turn on</button></>}
+          : <><Bell size={16}/><span>Get a notification when a task finishes while you’re in another window or app (the app must stay open).</span><button className="btn small" onClick={()=>void enableNotifications().then(setNotifications)}>Turn on</button></>}
       </div>
       <div className="task-toolbar"><span className="muted small">{tasks.length} / {MAX_TASKS} saved{!ready?' · loading schedules…':''}</span><button className="btn" disabled={tasks.length>=MAX_TASKS} onClick={newTask}><Plus size={16} />New task</button></div>
       <div className="library-grid">{tasks.map(task=><article className="library-card task-card" key={task.id}>

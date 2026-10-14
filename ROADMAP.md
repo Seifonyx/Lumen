@@ -74,7 +74,7 @@ All roadmap items are implemented.
   out of Auto there or in Settings → Routing, which also sets a preferred provider.
 - First-run guide on the API keys page (one free Gemini key is enough to start).
 - Slow replies say what they're doing (searching the web, reading files…) and, after 8 s, for how long.
-- Scheduled tasks can notify when they finish while the app is in the background (Library → Tasks).
+- Scheduled tasks can notify when they finish while you're in another window or app (Library → Tasks; the app must stay open).
 - Select several chats in the sidebar (Recents → Select) to move, export (one zip) or delete them.
 - Pinning a model to a project already exists: the project's default model.
 - CI: current action versions (Node 24), Ubuntu 24.04 runner, failed in-app tests appear as annotations.

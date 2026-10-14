@@ -1,5 +1,5 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
-import { FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings, Tag, Trash2, X } from 'lucide-react';
+import { FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Tag, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
@@ -138,7 +138,8 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
   }, []);
   useEffect(() => {
     if (phone) {
-      if (open) sidebarRef.current?.querySelector<HTMLButtonElement>('.close-sidebar')?.focus({ preventScroll: true });
+      // Focus the drawer itself so no button shows a focus ring after a tap.
+      if (open) sidebarRef.current?.focus({ preventScroll: true });
       else if (wasOpen.current && !useStore.getState().settingsOpen) document.querySelector<HTMLButtonElement>('.menu-btn')?.focus({ preventScroll: true });
     }
     wasOpen.current = open;
@@ -188,10 +189,12 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
 
       <div className="sidebar-scroll">
       <div className="sidebar-bottom-actions">
-        <button className="btn new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}>
-          <Plus size={18} /> <span>New chat</span>
-          {!phone && <span className="kbd">{modKey}⇧O</span>}
-        </button>
+        {!phone && (
+          <button className="btn new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}>
+            <Plus size={18} /> <span>New chat</span>
+            <span className="kbd">{modKey}⇧O</span>
+          </button>
+        )}
         <label className="search sidebar-search-field">
           <Search size={16} />
           <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape' && query) { e.stopPropagation(); setQuery(''); } }} dir="auto" />
@@ -277,14 +280,14 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
       </nav>
       </div>
       </div>
-      <button className="sidebar-foot" onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })} aria-label="Settings">
-        {user?.photo ? <img className="avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
-        <span className="account">
+      <div className="sidebar-footer">
+        {/* On phones New chat sits at the inline end of the footer; it comes first in the DOM so the account button stays last. */}
+        {phone && <button className="btn new-chat" onClick={newChat}><Plus size={18} /> <span>New chat</span></button>}
+        <button className="sidebar-foot" onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })} aria-label="Settings" title="Settings">
+          {user?.photo ? <img className="avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
           <span className="account-name">{user?.name || user?.email?.split('@')[0] || 'Account'}</span>
-          <span className="account-mail">Settings & preferences</span>
-        </span>
-        <Settings size={16} />
-      </button>
+        </button>
+      </div>
     </aside>
     {artifacts&&<Modal title="Documents" onClose={()=>setArtifacts(false)}><div className="artifact-list">{chats.filter(c=>!isTemporaryChat(c)).flatMap(c=>(c.documents||[]).map(doc=><button className="btn" key={`${c.id}-${doc.id}`} onClick={()=>{useStore.getState().selectChat(c.id);setUi({canvasOpen:true,canvasDocumentId:doc.id});setArtifacts(false);}}><FileText size={18}/><span>{doc.name}<small>{c.title}</small></span></button>))}{!chats.some(c=>!isTemporaryChat(c)&&c.documents?.length)&&<p className="muted">Documents created in canvas will appear here.</p>}</div></Modal>}
     {projectManager && (

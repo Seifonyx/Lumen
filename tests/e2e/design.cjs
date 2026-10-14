@@ -57,9 +57,14 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         check(await page.locator('input[placeholder="Search your repositories"]').evaluate(el => (el === document.activeElement) === !matchMedia('(pointer: coarse)').matches), label + ': repository starter keeps phone keyboard closed');
         await page.locator('.modal [aria-label="Close"]').click();
         if (mobile) await page.click('.menu-btn');
+        if (mobile) await page.waitForFunction(() => Math.abs(document.querySelector('.sidebar').getBoundingClientRect().left) < 1);
         const newChatBox = await page.locator('.sidebar .new-chat').boundingBox();
         const historyBox = await page.locator('.chat-list').boundingBox();
-        check(newChatBox.y + newChatBox.height <= historyBox.y, label + ': New chat above history');
+        if (mobile) {
+          // Phones: New chat floats at the bottom of the drawer, clear of the account button.
+          const sideBox = await page.locator('.sidebar').boundingBox(), footBox = await page.locator('.sidebar-foot').boundingBox();
+          check(newChatBox.y + newChatBox.height >= sideBox.y + sideBox.height - 80 && (newChatBox.x >= footBox.x + footBox.width || newChatBox.x + newChatBox.width <= footBox.x), label + `: New chat floats at the bottom, clear of the account button ${JSON.stringify([newChatBox, footBox, sideBox])}`);
+        } else check(newChatBox.y + newChatBox.height <= historyBox.y, label + ': New chat above history');
         check(await page.locator('#chat-search').count() === 1, label + ': search is always in the sidebar');
         await page.locator('#chat-search').fill('no-match');
         check(await page.locator('.empty-list').textContent() === 'No chats match.' && await page.locator('#chat-search').evaluate(el => el === document.activeElement), label + ': search filters');

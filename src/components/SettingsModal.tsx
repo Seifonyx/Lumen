@@ -11,6 +11,7 @@ import {
   Eye,
   EyeOff,
   Gauge,
+  ChevronDown,
   KeyRound,
   Loader2,
   MoreHorizontal,
@@ -316,47 +317,46 @@ function KeysTab() {
 
   return (
     <div className="settings-section">
-      <div className="settings-card">
-        {KEY_FIELDS.filter(field=>field.id!=='github').map(({ id, label, placeholder, link, hint, linkText }) => {
-          const val = draft[id] || '';
-          const isConfigured = Boolean(val.trim());
-          const visible = Boolean(showKey[id]);
-          return (
-            <div key={id} className="key-provider-card">
-              <div className="key-provider-head">
-                <span className="key-provider-title">
-                  <KeyRound size={15} /> {label}
-                  <span className={`key-status-pill ${isConfigured ? 'configured' : 'unset'}`}>{isConfigured ? 'Key entered' : 'Not set'}</span>
-                </span>
-                <a className="link-btn small inline" href={link} target="_blank" rel="noopener noreferrer">
-                  {linkText || 'Get a free key'} <ExternalLink size={12} />
-                </a>
-              </div>
-              <span className="key-provider-desc">{hint}</span>
-              <div className="key-input-wrap">
-                <input
-                  type={visible ? 'text' : 'password'}
-                  autoComplete="off"
-                  spellCheck={false}
-                  placeholder={placeholder}
-                  aria-label={`${label} API key`}
-                  autoCapitalize="none"
-                  value={val}
-                  onChange={(e) => setDraft({ ...draft, [id]: e.target.value })}
-                />
-                {val && (
-                  <button className="icon-btn sm" onClick={() => setDraft({ ...draft, [id]: '' })} aria-label="Clear key" title="Clear">
-                    <X size={14} />
-                  </button>
-                )}
-                <button className="icon-btn sm" onClick={() => toggleShow(id)} aria-label={visible ? 'Hide' : 'Reveal'} title={visible ? 'Hide' : 'Reveal'}>
-                  {visible ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <section className="provider-connections" aria-labelledby="free-providers">
+        <h3 id="free-providers">Free providers</h3>
+        <p className="muted small">Add at least one key. Each has a free tier; nothing here can charge you.</p>
+        <div className="settings-card">
+          {KEY_FIELDS.filter(field=>field.id!=='github').map(({ id, label, placeholder, link, hint, linkText }) => {
+            const val = draft[id] || '';
+            const isConfigured = Boolean((keys[id] || '').trim());
+            const visible = Boolean(showKey[id]);
+            const noKeys = !KEY_FIELDS.some((f) => f.id !== 'github' && (keys[f.id] || '').trim());
+            return (
+              <details key={id} className="provider-connection key-provider-card" data-provider={id} open={noKeys || undefined}>
+                <summary><span>{label}</span><span className={`key-status-pill ${isConfigured ? 'configured' : 'unset'}`}>{isConfigured ? 'Key entered' : 'Not set'}</span><ChevronDown size={16} aria-hidden="true" /></summary>
+                <div className="provider-connection-body">
+                  <p className="muted small">{hint} <a className="link-btn small inline" href={link} target="_blank" rel="noopener noreferrer">{linkText || 'Get a free key'} <ExternalLink size={12} /></a></p>
+                  <div className="key-input-wrap">
+                    <input
+                      type={visible ? 'text' : 'password'}
+                      autoComplete="off"
+                      spellCheck={false}
+                      placeholder={placeholder}
+                      aria-label={`${label} API key`}
+                      autoCapitalize="none"
+                      value={val}
+                      onChange={(e) => setDraft({ ...draft, [id]: e.target.value })}
+                    />
+                    {val && (
+                      <button className="icon-btn sm" onClick={() => setDraft({ ...draft, [id]: '' })} aria-label="Clear key" title="Clear">
+                        <X size={14} />
+                      </button>
+                    )}
+                    <button className="icon-btn sm" onClick={() => toggleShow(id)} aria-label={visible ? 'Hide' : 'Reveal'} title={visible ? 'Hide' : 'Reveal'}>
+                      {visible ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      </section>
 
       <ProviderConnections draft={draft} setDraft={setDraft}/>
       {validation && <p className="error-text" role="alert">{validation}</p>}

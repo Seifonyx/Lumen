@@ -419,11 +419,9 @@ const settings = async (page) => {
           .locator(".settings-tabs .tab-label")
           .getByText("API keys", { exact: true })
           .click();
-        await page
-          .locator(".key-provider-card")
-          .first()
-          .locator("input")
-          .fill("fixture-new-key");
+        const firstKey = page.locator(".key-provider-card").first();
+        if (!(await firstKey.getAttribute("open"))) await firstKey.locator("summary").click();
+        await firstKey.locator("input").fill("fixture-new-key");
         await page
           .getByRole("button", { name: "Save keys", exact: true })
           .click();

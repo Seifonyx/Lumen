@@ -471,8 +471,8 @@ input, textarea { caret-color: var(--text); }
 .key-status-pill.unset { background: transparent; color: var(--text-3); border: 1px solid var(--border); }
 
 /* API keys: header row title + pill on the left, link on the right; tidy inputs. */
-.key-provider-card { display: grid; gap: 10px; padding: 18px 20px; }
-.key-provider-card:hover { background: transparent; }
+
+
 .key-provider-head { flex-wrap: wrap; row-gap: 6px; }
 .key-provider-title { font-size: 14px; font-weight: 600; }
 .key-provider-title > svg { color: var(--text-3); }
@@ -530,6 +530,8 @@ input, textarea { caret-color: var(--text); }
 .memory-tab .setting-hint { color: var(--text-3); }
 
 .provider-retired { line-height: 1.55; }
+.provider-connection.key-provider-card { padding: 0; display: block; border-bottom: 0; }
+.provider-connection .key-input-wrap { margin-top: 2px; }
 @media (max-width: 600px) {
   .setting-row.choice-wide { flex-direction: column; align-items: stretch; gap: 10px; }
   .settings-page .setting-row.choice-wide .setting-ctrl { display: flex; width: 100%; max-width: none; justify-content: stretch; }
@@ -538,9 +540,89 @@ input, textarea { caret-color: var(--text); }
   .connector-head { flex-wrap: wrap; row-gap: 8px; }
   .connector-head .setting-text { flex-basis: calc(100% - 54px); }
   .connector-head .key-status-pill { margin-inline-start: 54px; }
-  .key-provider-card, .connector-head, .connector-body, .connector-foot { padding-inline: 16px; }
+  .connector-head, .connector-body, .connector-foot { padding-inline: 16px; }
   .connector-foot { flex-wrap: wrap; }
   .connector-foot .btn { width: 100%; justify-content: center; }
   .settings-actions { flex-direction: column; align-items: stretch; }
   .settings-actions .btn { justify-content: center; }
+}
+
+/* ---------- Sidebar footer: the avatar opens Settings; on phones New chat floats bottom-right ---------- */
+.sidebar-footer { margin-top: auto; }
+.sidebar .sidebar-foot { display: inline-flex; align-items: center; gap: 10px; align-self: flex-start; width: auto; max-width: calc(100% - 8px); margin: 6px 4px 4px; padding: 6px 12px 6px 6px; border: 0; border-radius: 999px; background: transparent; box-shadow: none; }
+.sidebar .sidebar-foot:hover { background: var(--surface-3); }
+.sidebar .sidebar-foot .avatar { width: 32px; height: 32px; flex: none; border-radius: 50%; object-fit: cover; }
+.sidebar .sidebar-foot .account-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 500; color: var(--text); }
+.sidebar:focus { outline: none; }
+@media (max-width: 899px) {
+  .sidebar .sidebar-foot { padding: 4px; }
+  .sidebar .sidebar-foot .avatar { width: 40px; height: 40px; }
+  .sidebar .sidebar-foot .account-name { display: none; }
+  .sidebar-footer { display: flex; flex-direction: row-reverse; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 4px calc(8px + env(safe-area-inset-bottom)); }
+  .sidebar-footer .sidebar-foot { margin: 0; }
+  .sidebar .sidebar-footer .new-chat { background: var(--text); color: var(--bg); border-color: transparent; font-weight: 600; flex: none; width: auto; min-height: 48px; margin: 0; padding: 0 20px 0 16px; border-radius: 999px; box-shadow: var(--float-shadow, 0 8px 24px rgba(0,0,0,.18)); }
+  .sidebar .sidebar-scroll { padding-bottom: 12px; }
+  .menu-btn:focus-visible { outline: none; }
+}
+@media (max-width: 899px) and (pointer: fine) { .menu-btn:focus-visible { outline: 2px solid var(--focus); } }
+/* Phone Settings menu: nothing is "current" until a section is open. */
+@media (max-width: 720px), (pointer: coarse) and (max-width: 1100px) {
+  .settings-page:not(.has-section) .settings-tabs button.active { background: transparent; }
+  .settings-page:not(.has-section) .settings-tabs button.active::before { display: none; }
+}
+
+/* ---------- Usage tab ---------- */
+.usage { display: flex; flex-direction: column; gap: 22px; }
+.usage-stats { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 10px; }
+.usage-stat { display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; min-width: 0; padding: 16px 18px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.usage-stat-main { background: var(--text); border-color: transparent; }
+.usage-stat-main .usage-big, .usage-stat-main .usage-stat-label { color: var(--bg); }
+.usage-stat-main .usage-stat-label { opacity: .7; }
+.usage .usage-big { font-size: 40px; line-height: 1; font-weight: 600; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.usage-stat-value { font-size: 22px; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.usage-stat-value small { font-size: 14px; font-weight: 500; color: var(--text-3); }
+.usage-stat-time { font-size: 16px; }
+.usage-stat-label { font-size: 12px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.usage .usage-list { list-style: none; margin: 0; padding: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.usage .usage-list .usage-row, .usage .usage-list .usage-row:first-child, .usage .usage-list .usage-row:last-child { display: grid; gap: 6px; padding: 14px 18px; border: 0; border-radius: 0; background: transparent; }
+.usage .usage-row + .usage-row { border-top: 1px solid var(--border); }
+.usage-row-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.usage-model { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.usage-model .model-title { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.usage-provider { font-size: 12px; color: var(--text-3); white-space: nowrap; }
+.usage .model-sub { font-size: 12.5px; color: var(--text-2); line-height: 1.5; overflow-wrap: anywhere; }
+.usage .status { flex: none; white-space: nowrap; }
+.usage .meter { height: 6px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
+.usage .meter-fill { height: 100%; border-radius: inherit; background: var(--signal-strong); }
+:root[data-theme="dark"] .usage .meter-fill, :root[data-theme="black"] .usage .meter-fill { background: var(--signal); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .usage .meter-fill { background: var(--signal); } }
+.usage .meter-fill.mid { background: var(--amber, #d29a12); }
+.usage .meter-fill.high { background: var(--red, #d64545); }
+.usage .settings-group { display: grid; gap: 10px; }
+.usage .usage-card { display: grid; gap: 12px; padding: 16px 18px; margin: 0; }
+.usage .usage-card + .usage-card { margin-top: 0; }
+.usage-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.usage-card-head .setting-text { min-width: 0; }
+.usage-reset-note { flex: none; font-size: 12px; color: var(--text-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fb-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.usage .fb-row { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 6px 8px; padding: 0; border: 0; }
+.usage .fb-row .meter { grid-column: 1 / -1; }
+.fb-label { font-size: 12.5px; font-weight: 500; }
+.fb-count { font-size: 11.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.usage .setting-hint.warn { color: var(--amber, #b7791f); }
+.usage-foot { margin: 0; line-height: 1.6; color: var(--text-3); }
+@media (max-width: 600px) {
+  .usage-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .usage-stat-main { grid-column: 1 / -1; flex-direction: row; align-items: baseline; justify-content: flex-start; gap: 10px; }
+  .usage-stat { padding: 12px 14px; }
+  .usage-stat-value { font-size: 18px; }
+  .usage-stat-time { font-size: 14px; }
+  .fb-grid { grid-template-columns: 1fr; gap: 10px; }
+  .usage .usage-list .usage-row, .usage .usage-card { padding-inline: 16px; }
+}
+/* Long names and emails never push past their card. */
+.setting-text { min-width: 0; }
+.setting-text .setting-label, .setting-text .setting-hint { overflow-wrap: anywhere; }
+@media (max-width: 720px), (pointer: coarse) and (max-width: 1100px) {
+  .settings-page:not(.has-section) .settings-tabs button.active + button { border-top-color: var(--border); }
 }

@@ -13,7 +13,7 @@ export default function ProviderConnections({ draft, setDraft }: { draft: ApiKey
         const provider = EXTRA_PROVIDERS[id];
         const enabled = draft.providerAccess?.[id] === true;
         return <details key={id} className="provider-connection" data-provider={id}>
-          <summary><span>{provider.label}</span><span className="muted small">{enabled && draft[id] ? 'Enabled' : draft[id] ? 'Saved · off' : 'Not set'}</span><ChevronDown size={16} aria-hidden="true"/></summary>
+          <summary><span>{provider.label}</span><span className={`key-status-pill ${enabled && draft[id] ? 'configured' : 'unset'}`}>{enabled && draft[id] ? 'Enabled' : draft[id] ? 'Saved · off' : 'Not set'}</span><ChevronDown size={16} aria-hidden="true"/></summary>
           <div className="provider-connection-body">
             <p className="muted small">{provider.hint}</p>
             <a className="link-btn small inline" href={provider.link} target="_blank" rel="noopener noreferrer">Provider dashboard <ExternalLink size={12}/></a>
@@ -26,7 +26,7 @@ export default function ProviderConnections({ draft, setDraft }: { draft: ApiKey
       })}
     </div>
     <details className="settings-card provider-relay">
-      <summary><span>NVIDIA & Cloudflare relay</span><span className="muted small">{draft.providerRelayUrl ? 'Your relay' : 'Built-in'}</span><ChevronDown size={16} aria-hidden="true"/></summary>
+      <summary><span>NVIDIA & Cloudflare relay</span><span className="key-status-pill unset">{draft.providerRelayUrl ? 'Your relay' : 'Built-in'}</span><ChevronDown size={16} aria-hidden="true"/></summary>
       <div className="provider-connection-body">
         <p className="muted small">Your key and prompt pass through this app’s relay to NVIDIA or Cloudflare. The relay stores neither. Leave the URL blank to use it, or enter a relay you control.</p>
         <label className="provider-field"><span>Custom relay URL (optional)</span><input type="url" aria-label="Provider relay URL" placeholder={DEFAULT_PROVIDER_RELAY_URL} autoCapitalize="none" spellCheck={false} value={draft.providerRelayUrl || ''} onChange={e => setDraft({ ...draft, providerRelayUrl: e.target.value })}/></label>

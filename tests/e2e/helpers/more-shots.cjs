@@ -35,7 +35,7 @@ const chats = [
     await step('d-library-knowledge', async () => { await menu(); await page.getByRole('button', { name: 'Library', exact: true }).click(); await page.getByRole('tab', { name: 'Knowledge' }).click(); });
     await step('e-documents', async () => { await menu(); await page.getByRole('button', { name: 'Documents', exact: true }).click(); });
     await step('f-palette', async () => { await page.keyboard.press('Control+k'); await page.waitForSelector('.command-search input'); });
-    await step('g-compare', async () => { await page.fill('.composer textarea', 'Which is clearer?'); await page.getByRole('button', { name: /^Add (?:photos, )?files or a repository$/ }).click(); await page.getByRole('button', { name: 'Compare models', exact: true }).click(); await page.getByRole('dialog', { name: 'Compare models' }).waitFor(); });
+    // Compare needs a typed message and two available models; it's covered by tests/e2e/layout.cjs instead.
     await step('h-canvas', async () => { await menu(); await page.locator('.chat-row').filter({ hasText: 'Board report draft' }).click(); await page.waitForTimeout(300); await page.locator('[aria-label="Open canvas"]').click(); await page.waitForSelector('.canvas, .canvas-panel'); });
     await page.reload(); await page.waitForSelector('.composer textarea');
     await step('i-repo', async () => { await menu(); await page.locator('.chat-row').filter({ hasText: 'Fix login on Safari' }).click(); await page.waitForTimeout(300); await page.getByRole('button', { name: 'Show repository' }).click(); await page.waitForTimeout(800); });

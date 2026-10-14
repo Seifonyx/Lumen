@@ -3132,3 +3132,4 @@ input, textarea { caret-color: var(--text); }
 .canvas-quick-edits { gap: 6px; margin: 8px 0 10px; }
 .canvas-quick-edits .btn { font-size: 12px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 999px; }
 .canvas-footer { font-size: 11px; color: var(--text-3); }
+@media (max-width: 360px) { .library-tabs button { font-size: 12px; letter-spacing: -0.01em; padding-inline: 1px; } }

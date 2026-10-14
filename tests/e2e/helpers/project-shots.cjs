@@ -44,7 +44,7 @@ const chats = [
     await page.locator('.sidebar').getByText('Hospital reports', { exact: true }).first().click();
     await page.waitForTimeout(500);
     await shot('p2-workspace');
-    await page.mouse.wheel(0, 600);
+    await page.evaluate(() => document.querySelector('.project-page')?.scrollBy(0, 600));
     await shot('p3-workspace-scrolled');
     const settingsBtn = page.locator('.project-edit-btn');
     if (await settingsBtn.count()) { await settingsBtn.click().catch(() => {}); await shot('p4-manager'); }

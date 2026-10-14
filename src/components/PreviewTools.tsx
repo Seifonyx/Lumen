@@ -12,7 +12,7 @@ const REPO = 'Model-Router';
 const WORKFLOW = 'preview.yml';
 /** The preview channel's address (its sign-in is already set up in src/lib/firebase.ts). */
 export const PREVIEW_URL = 'https://model-router--dev-82jv5mm2.web.app';
-const LIVE_URL = 'https://model-router.web.app';
+const LIVE_URL = 'https://lumen-chat.web.app';
 
 interface Run {
   status: string;

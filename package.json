@@ -9,12 +9,13 @@
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "deploy": "npm run build && python3 scripts/deploy_firebase.py",
-    "deploy:preview": "npm run build && python3 scripts/deploy_firebase.py --channel dev",
+    "deploy:preview": "npm run build && python3 scripts/deploy_firebase.py --site model-router --channel dev",
     "deploy:rules": "python3 scripts/deploy_rules.py",
     "test": "npm run typecheck && npm run test:unit",
     "test:unit": "node scripts/test-unit.mjs",
     "test:e2e": "node scripts/test-e2e.mjs",
-    "test:e2e:ci": "npx --yes firebase-tools@15.30.2 emulators:exec --only auth,firestore --project the-model-router \"node scripts/test-e2e.mjs\""
+    "test:e2e:ci": "npx --yes firebase-tools@15.30.2 emulators:exec --only auth,firestore --project the-model-router \"node scripts/test-e2e.mjs\"",
+    "deploy:forward": "python3 scripts/deploy_firebase.py --site model-router --public forward"
   },
   "dependencies": {
     "@codemirror/lang-css": "6.3.1",

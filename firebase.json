@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "model-router",
+    "site": "lumen-chat",
     "public": "dist",
     "ignore": [
       "firebase.json",

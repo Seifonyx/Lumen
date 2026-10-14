@@ -6,7 +6,7 @@ import { useStore } from '../store';
 type Gemini = { state: 'locked' | 'open' | 'wrong-site' | 'invalid' | 'error'; message?: string } | null;
 type OpenRouter = { state: 'capped' | 'free' | 'open' | 'limit' | 'error'; limit?: number; used?: number; message?: string } | null;
 
-const SITE = 'https://model-router.web.app/*';
+const SITE = 'https://lumen-chat.web.app/*';
 
 function Status({ ok, warn, children }: { ok: boolean; warn?: boolean; children: React.ReactNode }) {
   return (

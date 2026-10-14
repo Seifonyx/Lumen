@@ -4,7 +4,7 @@ A private, phone-friendly AI chat that brings free models from **Google AI Studi
 **OpenRouter**, **Groq** and **Cerebras** together in one place, and switches to another model automatically when one hits its
 free limit. It reads your files and creates real Word, Excel, PowerPoint and PDF documents.
 
-Live at **https://model-router.web.app** (Firebase project `the-model-router`).
+Live at **https://lumen-chat.web.app** (Firebase project `the-model-router`).
 
 ## Features
 

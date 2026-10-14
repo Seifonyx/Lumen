@@ -47,7 +47,7 @@ export default function Login() {
     }
   };
 
-  const isNonProd = location.hostname !== 'model-router.web.app' && location.hostname !== 'model-router--dev-82jv5mm2.web.app';
+  const isNonProd = !['lumen-chat.web.app', 'model-router.web.app', 'model-router--dev-82jv5mm2.web.app'].includes(location.hostname);
 
   return (
     <main className="login">

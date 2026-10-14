@@ -4,6 +4,7 @@
 Uses the hosting settings from firebase.json. Auth: an access token in FIREBASE_ACCESS_TOKEN, or
 `gcloud auth print-access-token`, or a proxy that adds credentials for googleapis.com.
 Equivalent CLI command: firebase deploy --only hosting
+With --site NAME it deploys to another site of the project, and --public DIR deploys another folder.
 With --channel NAME it deploys to a preview channel instead (a separate test address that lasts
 30 days from the last deploy): firebase hosting:channel:deploy NAME
 """
@@ -11,7 +12,8 @@ import gzip, hashlib, json, os, subprocess, sys, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 cfg = json.load(open(os.path.join(ROOT, 'firebase.json')))['hosting']
-SITE = cfg['site']
+arg = lambda name: sys.argv[sys.argv.index(name) + 1] if name in sys.argv else None
+SITE = arg('--site') or cfg['site']  # --site model-router: the old address (forwarder, preview channel)
 API = 'https://firebasehosting.googleapis.com/v1beta1'
 
 
@@ -43,7 +45,7 @@ def call(method, url, body=None, data=None, ctype='application/json', ok404=Fals
         sys.exit(f'{method} {url} failed: {e.code} {e.read().decode()[:500]}')
 
 
-public = os.path.join(ROOT, cfg['public'])
+public = os.path.join(ROOT, arg('--public') or cfg['public'])  # --public forward: the old address's forwarding page
 files = {}
 for base, _, names in os.walk(public):
     for n in names:

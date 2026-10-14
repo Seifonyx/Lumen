@@ -23,6 +23,9 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           projectId: the-model-router
           channelId: live
+      - name: Preview channel lives on the old site (its address is already set up for sign-in)
+        run: |
+          sed -i 's/"site": "lumen-chat"/"site": "model-router"/' firebase.json
       - name: Update preview to this release
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:

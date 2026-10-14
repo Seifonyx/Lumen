@@ -16,6 +16,9 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run build
+      - name: Preview channel lives on the old site (its address is already set up for sign-in)
+        run: |
+          sed -i 's/"site": "lumen-chat"/"site": "model-router"/' firebase.json
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}

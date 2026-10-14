@@ -14,8 +14,9 @@ import { EXTRA_PROVIDERS, normalizeKeys } from './ai/provider-config.js';
 // apps) block the cross-site storage that sign-in through the-model-router.firebaseapp.com needs.
 // A host is listed here only after https://<host>/__/auth/handler was added to the OAuth client's
 // authorized redirect URIs in Google Cloud (otherwise Google refuses the sign-in).
-// The second is the preview address for trying updates first (npm run deploy:preview).
-const SAME_SITE_AUTH_HOSTS: string[] = ['model-router.web.app', 'model-router--dev-82jv5mm2.web.app'];
+// lumen-chat.web.app is the app's address; model-router.web.app is the old one (it now forwards), and
+// the third is the preview address for trying updates first (npm run deploy:preview).
+const SAME_SITE_AUTH_HOSTS: string[] = ['lumen-chat.web.app', 'model-router.web.app', 'model-router--dev-82jv5mm2.web.app'];
 // Anywhere else (localhost while developing) signs in through the live site's handler too: it's the
 // one Google allows, and the sign-in popup works across sites.
 const sameSite = SAME_SITE_AUTH_HOSTS.includes(location.hostname);

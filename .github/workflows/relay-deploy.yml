@@ -30,4 +30,17 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx --yes wrangler@4 deploy
+        run: |
+          npx --yes wrangler@4 deploy | tee deploy.log
+          url=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)
+          echo "::notice title=Relay address::$url"
+          echo "RELAY_URL=$url" >> "$GITHUB_ENV"
+      - name: Check the image route
+        # Without a key the relay must answer 401 "A provider key is required" (an old relay answers 404).
+        run: |
+          sleep 5
+          for path in cloudflare/image cloudflare/chat/completions; do
+            code=$(curl -s -o body.txt -w '%{http_code}' -X POST "$RELAY_URL/$path" -H 'origin: https://model-router.web.app' -H 'content-type: application/json' -d '{"prompt":"check"}')
+            echo "::notice title=$path::HTTP $code $(head -c 200 body.txt)"
+            [ "$code" = "401" ] || exit 1
+          done

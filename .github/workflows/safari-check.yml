@@ -35,7 +35,7 @@ jobs:
           while read -r line; do [ "$line" = "no spills" ] && echo "::notice title=text fit::no text spills in WebKit" || echo "::warning title=text fit::$line"; done < shots/text-fit.txt
           echo "::notice title=screenshots::$(ls shots/*.png 2>/dev/null | wc -l) screenshots taken"
           exit $failed
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: safari-screenshots

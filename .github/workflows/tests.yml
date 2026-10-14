@@ -46,11 +46,11 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.cache/firebase/emulators
           key: firebase-emulators-15.30.2
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: browsers
         with:
           path: ~/.cache/ms-playwright
@@ -63,7 +63,7 @@ jobs:
       - run: npm run test:e2e:ci
       - name: Keep screenshots
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: screenshots
           path: tests/e2e/out

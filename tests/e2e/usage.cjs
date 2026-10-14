@@ -95,9 +95,9 @@ async function device(browser, mobile) {
   check(A.calls.filter((c) => c === 'gemini-3.5-flash').length === before, 'limited model skipped without trying it');
   check(/reached its limit .* using/.test(await A.page.textContent('.msg.assistant >> nth=1 >> .notice')), 'skip explained in the reply');
 
-  // OpenRouter request counts toward the shared pool.
+  // Both fallbacks stayed on DeepSeek (the model that answered last), so the pool shows 2; now a manual Gemini request.
   await A.page.click('.model-button');
-  await A.page.click('.models-pop .mp-title:text-is("DeepSeek")');
+  await A.page.click('.models-pop .mp-title:text-is("gemini-flash-latest")');
   await A.page.fill('.composer textarea', 'third');
   await A.page.click('.send-btn');
   await A.page.waitForSelector('.msg.assistant >> nth=2 >> .model-tag', { timeout: 15000 });
@@ -107,10 +107,13 @@ async function device(browser, mobile) {
   await A.page.click('.model-button');
   check((await A.page.textContent('.models-pop')).includes('Limit'), 'picker marks the limited model');
   await A.page.keyboard.press('Escape');
+  // The usage popup describes the selected model: pick DeepSeek to see the shared OpenRouter pool.
+  await A.page.click('.model-button');
+  await A.page.click('.models-pop .mp-title:text-is("DeepSeek")');
 
   await A.page.locator('.usage-chip').click();
   const dailyMeter = A.page.getByRole('meter', { name: 'Requests used today' });
-  check(A.calls.filter(c => c === 'openrouter').length === 2 && A.calls.filter(c => c === 'gemini-flash-latest').length === 1, 'provider-diverse fallback and manual requests are counted exactly');
+  check(A.calls.filter(c => c === 'openrouter').length === 2 && A.calls.filter(c => c === 'gemini-flash-latest').length === 1, 'fallbacks keep to the model that answered; manual request counted exactly');
   check(await dailyMeter.getAttribute('aria-valuemax') === '50' && await dailyMeter.getAttribute('aria-valuenow') === '2', 'usage popup shows the real shared OpenRouter allowance');
   check((await A.page.locator('.usage-pop').textContent()).includes('48 remaining'), 'usage popup shows the remaining daily requests');
   await A.page.getByRole('button', { name: 'Close usage', exact: true }).click();
@@ -122,7 +125,7 @@ async function device(browser, mobile) {
   await A.page.waitForSelector('.usage-row');
   const text = await A.page.textContent('.usage');
   console.log('      usage tab:', text.replace(/\s+/g, ' ').slice(0, 400));
-  check(/2 of 50 today/.test(text), 'OpenRouter pool: fallback plus manual request, 2 of 50');
+  check(/2 of 50 today/.test(text), 'OpenRouter pool: two fallback requests, 2 of 50');
   check(/Limit reached/.test(text), 'limited model shown');
   check(/1 request · 1K in \/ 300 out tokens/.test(text), 'gemini-flash-latest counts + tokens');
   await A.page.screenshot({ path: path.join(OUT, 'usage-tab.png') });

@@ -63,4 +63,18 @@ Done before new roadmap work, at the user's request; deployed live.
   startup JavaScript ~534 KB → ~399 KB gzipped (KaTeX, highlight.js and rarely opened screens load on
   demand); CI about 12 minutes; manual Safari (WebKit) screenshot workflow.
 
-All roadmap items are implemented. First-run guidance for invited users was suggested and deferred by the user.
+All roadmap items are implemented.
+
+## Follow-up improvements (2026-10-14)
+
+- Model health: Settings → Models → Review lists removed models with the reason and date (Keep / Restore all).
+  A quiet weekly re-check (up to 8 models per provider, one at a time) removes only clear-cut cases and
+  restores models that work again.
+- Auto explains itself: tap the model under a reply for the reasons and what was next in line; keep a model
+  out of Auto there or in Settings → Routing, which also sets a preferred provider.
+- First-run guide on the API keys page (one free Gemini key is enough to start).
+- Slow replies say what they're doing (searching the web, reading files…) and, after 8 s, for how long.
+- Scheduled tasks can notify when they finish while the app is in the background (Library → Tasks).
+- Select several chats in the sidebar (Recents → Select) to move, export (one zip) or delete them.
+- Pinning a model to a project already exists: the project's default model.
+- CI: current action versions (Node 24), Ubuntu 24.04 runner, failed in-app tests appear as annotations.

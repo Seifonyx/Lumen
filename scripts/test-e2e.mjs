@@ -80,7 +80,7 @@ try {
     const second = await runFile(file);
     console.log(second.out.trimEnd());
     if (second.ok) flaky.push(file);
-    else failed.push({ file, out: '' });
+    else failed.push({ file, out: '', detail: second.out });
   }
 } finally {
   preview.kill();
@@ -89,5 +89,10 @@ for (const { file, out } of failed) if (out) console.log(`\n▶ ${file}\n${out.t
 if (process.env.SAVE_TIMINGS) writeFileSync(timingsFile, `${JSON.stringify(Object.fromEntries(Object.entries({ ...timings, ...measured }).sort()), null, 1)}\n`);
 console.log(`\n${files.length} files in ${Math.round((Date.now() - t0) / 1000)} s (${lanes} lanes)`);
 if (flaky.length) console.log(`⚠ passed on the second try: ${flaky.join(', ')}`);
+// On GitHub, each failure becomes an annotation (readable without downloading the log).
+if (process.env.GITHUB_ACTIONS) for (const { file, out, detail } of failed) {
+  const lines = (detail || out).split('\n').filter((l) => /FAIL|Error|assert|expected|actual|Timeout|waiting for/i.test(l)).slice(0, 12).join('\n') || (detail || out).slice(-1500);
+  console.log(`::error title=${file} failed::${lines.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
+}
 console.log(failed.length ? `✗ failed: ${failed.map((f) => f.file).join(', ')}` : `✓ all ${files.length} in-app test files passed`);
 process.exit(failed.length ? 1 : 0);

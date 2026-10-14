@@ -45,7 +45,7 @@ Never use it for large areas, body text on white, or decoration.
 
 ## Layout and what goes where (one place for each thing)
 - **Sidebar**: logo + name · **New chat** (primary) · search · **Library** (assistants, prompts, tools,
-  knowledge, scheduled tasks; one window with tabs) · **Documents** · Projects (with +) · Recents · account.
+  knowledge, scheduled tasks; one window with tabs) · **Documents** · Projects (with +) · Recents (Select → a bar above the account: Move, Export, Delete) · account.
 - **Top bar**: chat title, project pill, repository toggle, canvas. On a new chat the title spot shows the
   routing chip (`● Auto · 3 models`, `● Routing to Gemini Flash`, `● Incognito · not saved`). Incognito
   (eye-off) only on a new chat or while incognito.
@@ -56,7 +56,9 @@ Never use it for large areas, body text on white, or decoration.
 - **`+` menu** (one level): Files and images, Web search (switch), Project, GitHub repository; *Tools*:
   Document canvas, Data analysis, Compare models. Phones add big Camera/Photos buttons. Settings
   (memory, connectors, privacy) live in Settings, not here.
-- **Under a reply**: model name, Copy, Regenerate, Retry with…, and `⋯` for Read aloud, Share,
+- **While a reply loads**: one line — `● Routing → model`, then what it's doing (Searching the web, Reading
+  your files…), then elapsed seconds after 8 s.
+- **Under a reply**: model name (on Auto replies it opens "Why this model"), Copy, Regenerate, Retry with…, and `⋯` for Read aloud, Share,
   Save as Word, Edit in canvas, Select text.
 
 ## Rules

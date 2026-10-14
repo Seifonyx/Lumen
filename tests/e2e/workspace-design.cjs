@@ -32,17 +32,18 @@ const matrix = [[1280,844,'light'],[320,740,'light'],[390,844,'dark'],[430,932,'
   await page.locator('.project-file').waitFor();await page.getByLabel('Project name',{exact:true}).scrollIntoViewIfNeeded();await fits();await capture('project-editor');await scan('project editor');
   assert.ok(await page.locator('.project-color-choices').evaluate(e=>{const p=e.getBoundingClientRect();return [...e.children].every(c=>{const r=c.getBoundingClientRect();return r.left>=p.left-1&&r.right<=p.right+1})}),'Color choices must all fit');
   assert.ok(await page.locator('.project-form-actions').evaluate(e=>e.scrollWidth<=e.clientWidth+1),'Project actions overflow');
-  await page.getByRole('button',{name:'Create workspace',exact:true}).click();await page.locator('.claude-project-title').waitFor();
+  await page.getByRole('button',{name:'Create project',exact:true}).click();await page.locator('.claude-project-title').waitFor();
   await fits();await capture('project');await scan('project');
   const toggle=page.locator('.project-context-toggle');
   if(width<=960){assert.equal(await toggle.getAttribute('aria-expanded'),'false');assert.equal(await page.locator('.project-context-content').isVisible(),false);await toggle.click();assert.equal(await toggle.getAttribute('aria-expanded'),'true')}
+  await page.getByRole('button',{name:'Edit project instructions',exact:true}).click();
   await page.getByLabel('Project instructions',{exact:true}).fill('PROJECT_DESIGN_INSTRUCTIONS: Use short reports.');
-  await page.getByRole('button',{name:'Save',exact:true}).click();await page.getByRole('button',{name:'Saved',exact:true}).waitFor();
-  await page.getByRole('button',{name:'Preview text',exact:true}).click();await page.locator('.project-doc-preview-body').waitFor();assert.match(await page.locator('.project-doc-preview-body').textContent(),/PROJECT_DESIGN_REFERENCE/);await page.locator('.modal [aria-label=Close]').click();
+  await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.locator('.project-instructions').filter({hasText:'Use short reports.'}).waitFor();
+  await page.getByRole('button',{name:'Preview protocol.txt',exact:true}).click();await page.locator('.project-doc-preview-body').waitFor();assert.match(await page.locator('.project-doc-preview-body').textContent(),/PROJECT_DESIGN_REFERENCE/);await page.locator('.modal [aria-label=Close]').click();
   await fits();await capture('project-context');await scan('project context');
   if(width<=960)await toggle.click();
   // New chat must open an ordinary composer rather than returning to the workspace.
-  await page.locator('.claude-project-top-actions').getByRole('button',{name:'New chat',exact:true}).click();
+  if(width<900)await page.locator('.menu-btn').click();await page.locator('.sidebar .new-chat').click();
   await page.locator('.composer textarea').waitFor();assert.equal(await page.locator('.claude-project-view').count(),0);
   await page.locator('.composer textarea').fill('Summarize our protocol.');await page.locator('.send-btn').click();await page.locator('.msg.assistant .model-tag').waitFor();
   assert.equal(requests.length,1);assert.match(JSON.stringify(requests[0]),/PROJECT_DESIGN_REFERENCE/);assert.match(JSON.stringify(requests[0]),/PROJECT_DESIGN_INSTRUCTIONS/);
@@ -55,7 +56,7 @@ const matrix = [[1280,844,'light'],[320,740,'light'],[390,844,'dark'],[430,932,'
   await page.getByLabel('Start a project conversation',{exact:true}).fill('Write another brief report.');await page.getByRole('button',{name:'Send message (Enter)',exact:true}).click();await page.locator('.msg.assistant .model-tag').waitFor();assert.equal(requests.length,2);
   // Switching/creating projects must use the selected workspace, even with a different chat still selected.
   if(width<900)await page.locator('.menu-btn').click();await page.getByRole('button',{name:'New project',exact:true}).first().click();
-  await page.getByLabel('Project name',{exact:true}).fill('Coding practice');await page.getByLabel('Project instructions',{exact:true}).fill('SECOND_PROJECT_ONLY: Explain the code.');await page.getByRole('button',{name:'Create workspace',exact:true}).click();
+  await page.getByLabel('Project name',{exact:true}).fill('Coding practice');await page.getByLabel('Project instructions',{exact:true}).fill('SECOND_PROJECT_ONLY: Explain the code.');await page.getByRole('button',{name:'Create project',exact:true}).click();
   assert.equal(await page.locator('.claude-project-title').textContent(),'Coding practice');
   await page.getByLabel('Start a project conversation',{exact:true}).fill('Write a function.');await page.getByRole('button',{name:'Send message (Enter)',exact:true}).click();await page.locator('.msg.assistant .model-tag').waitFor();assert.equal(requests.length,3);assert.match(JSON.stringify(requests[2]),/SECOND_PROJECT_ONLY/);assert.doesNotMatch(JSON.stringify(requests[2]),/PROJECT_DESIGN_REFERENCE|PROJECT_DESIGN_INSTRUCTIONS/);
   if(width<900)await page.locator('.menu-btn').click();await page.locator('.sidebar-project-item').filter({hasText:'Hospital reports & study'}).click();assert.equal(await page.locator('.claude-project-title').textContent(),'Hospital reports & study');

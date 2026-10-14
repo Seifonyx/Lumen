@@ -36,6 +36,14 @@ const chats = [
     if (await add.count()) { await add.click(); await shot('4-add-menu'); await page.keyboard.press('Escape'); }
     const mp = page.locator('.composer .model-button').first();
     if (await mp.count()) { await mp.click(); await shot('5-models'); await page.keyboard.press('Escape'); }
+    // A reply that takes a while, to see the routing line.
+    await page.route('**/*:streamGenerateContent*', async (r) => { await new Promise((res) => setTimeout(res, 4000)); r.fallback(); });
+    await page.fill('.composer textarea', 'What changed this week?');
+    await page.click('.send-btn');
+    await page.waitForSelector('.route-wait');
+    await page.waitForTimeout(700);
+    await shot('8-routing');
+    await page.waitForSelector('.route-wait', { state: 'detached', timeout: 15000 }).catch(() => {});
     if (phone) await page.click('.menu-btn');
     await page.getByRole('button', { name: 'Library', exact: true }).click();
     await page.locator('.assistant-library').waitFor();

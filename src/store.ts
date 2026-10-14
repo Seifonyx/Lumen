@@ -84,7 +84,8 @@ interface State {
   comparing: boolean;
   comparison: ComparisonState | null;
   streamingChatId: string | null;
-  replyProgress: { chatId: string; label: string } | null;
+  /** while a reply is on its way: what's happening, and models that were tried and passed over */
+  replyProgress: { chatId: string; label: string; tried?: string[] } | null;
   /** chat whose older messages are being summarized right now */
   compactingChatId: string | null;
   sidebarOpen: boolean;
@@ -507,7 +508,7 @@ export const useStore = create<State>((set, get) => {
     replaceChat(chat);
     const replyController = new AbortController();
     controller = replyController;
-    set({ streamingChatId: chatId, replyProgress: { chatId, label: 'Connecting…' } });
+    set({ streamingChatId: chatId, replyProgress: { chatId, label: 'Routing' } });
 
     // Batch UI updates while text streams in.
     let flushTimer: ReturnType<typeof setTimeout> | undefined;
@@ -535,7 +536,7 @@ export const useStore = create<State>((set, get) => {
     try {
       for await (const ev of streamChat(body, replyController.signal)) {
         if (generation !== accountGeneration) return;
-        if (ev.t === 'attempt') { set({ replyProgress: { chatId, label: ev.number > 1 ? 'Trying another model…' : 'Connecting…' } }); continue; }
+        if (ev.t === 'attempt') { set({ replyProgress: { chatId, label: ev.number > 1 ? 'Rerouting' : 'Routing', tried: get().replyProgress?.chatId === chatId ? get().replyProgress?.tried : undefined } }); continue; }
         if (ev.t === 'unavailable') { hideUnavailableModel(ev.id); continue; }
         if (ev.t === 'request') {
           usage?.record(ev.id, { requests: 1 });
@@ -562,7 +563,11 @@ export const useStore = create<State>((set, get) => {
         else if (ev.t === 'think') reply.thinking = (reply.thinking || '') + ev.text;
         else if (ev.t === 'model') {
           // Auto's reason only describes the model it picked, not a stand-in after a failure.
-          if (ev.id !== reply.model) reply.route = undefined;
+          if (ev.id !== reply.model) {
+            reply.route = undefined;
+            const progress = get().replyProgress;
+            if (reply.model && progress?.chatId === chatId) set({ replyProgress: { ...progress, tried: [...(progress.tried || []), reply.model] } });
+          }
           reply.model = ev.id;
         }
         else if (ev.t === 'notice') reply.notices = [...(reply.notices || []), ev.text];

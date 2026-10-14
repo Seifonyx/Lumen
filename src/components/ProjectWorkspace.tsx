@@ -1,734 +1,237 @@
-import { useEffect, useRef, useState } from 'react';
-import {
-  ArrowLeft,
-  ArrowUp,
-  Check,
-  ChevronDown,
-  Clock,
-  ExternalLink,
-  Eye,
-  FileCode,
-  FileSpreadsheet,
-  FileText,
-  FolderKanban,
-  MessageSquare,
-  MoreHorizontal,
-  Pencil,
-  Plus,
-  ScrollText,
-  Search,
-  Settings,
-  Sparkles,
-  Trash2,
-  Upload,
-} from 'lucide-react';
+import { useRef, useState } from 'react';
+import { ArrowUp, ChevronDown, ExternalLink, Eye, FileCode, FileSpreadsheet, FileText, MoreHorizontal, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { modelLabel, useStore } from '../store';
 import { readAttachment } from '../lib/files/read';
+import { formatBytes } from '../lib/util';
 import type { Attachment, Project } from '../types';
 import Modal from './Modal';
 
-const PRESET_TEMPLATES = [
-  { label: '+ Technical Code', text: 'Focus on production-grade, typed, modular code with clean architectural explanations.' },
-  { label: '+ Clinical / Medical', text: 'Use metric units and clinical terminology. Ground answers in verified medical sources.' },
-  { label: '+ Direct & Concise', text: 'Keep responses concise, direct, and structured. Avoid conversational preamble.' },
-  { label: '+ Structured Markdown', text: 'Use structured markdown with headers, bullet points, and syntax-highlighted code blocks.' },
-  { label: '+ Egyptian Arabic', text: 'Respond in professional Egyptian Arabic unless prompted in English.' },
-];
+const MAX_FILES = 5;
+const FILE_TYPES = '.pdf,.docx,.xlsx,.xlsm,.pptx,.txt,.md,.csv,.tsv,.json,.html,.xml,.js,.ts,.py,.css,.sql,.log,.yaml,.yml,.srt,.tex';
 
-export default function ProjectWorkspace({
-  project,
-  onOpenSettings,
-}: {
-  project: Project;
-  onOpenSettings?: () => void;
-}) {
+const ago = (ts: number) => {
+  const mins = Math.floor((Date.now() - ts) / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+};
+
+const fileIcon = (name: string) => (/\.(xlsx|xlsm|csv|tsv)$/i.test(name) ? FileSpreadsheet : /\.(js|ts|tsx|jsx|py|html|css|json|sql|ya?ml)$/i.test(name) ? FileCode : FileText);
+
+/** A project's page: what it is, a box to start a chat in it, its chats, and the context every chat gets. */
+export default function ProjectWorkspace({ project, onOpenSettings }: { project: Project; onOpenSettings?: () => void }) {
   const chats = useStore((s) => s.chats);
   const catalog = useStore((s) => s.catalog);
-  const enabledModels = useStore((s) => s.settings.enabledModels);
-  const {
-    saveProject,
-    selectProject,
-    selectChat,
-    newChat,
-    deleteChat,
-    renameChat,
-    moveChatToProject,
-    send,
-    toast,
-  } = useStore.getState();
+  const { saveProject, selectChat, newChat, deleteChat, renameChat, moveChatToProject, send, toast } = useStore.getState();
 
-  const [quickPrompt, setQuickPrompt] = useState('');
+  const [prompt, setPrompt] = useState('');
   const [contextOpen, setContextOpen] = useState(false);
-  const [searchChats, setSearchChats] = useState('');
-  const [previewDoc, setPreviewDoc] = useState<{ name: string; text: string } | null>(null);
-  const [renamingChatId, setRenamingChatId] = useState<string | null>(null);
-  const [chatNewTitle, setChatNewTitle] = useState('');
-  const [chatMenuId, setChatMenuId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [preview, setPreview] = useState<{ name: string; text: string } | null>(null);
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [newTitle, setNewTitle] = useState('');
+  const [menu, setMenu] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const files = project.files || [];
+  const color = project.color || 'indigo';
 
-  // Editable settings state
-  const [name, setName] = useState(project.name);
-  const [editingTitle, setEditingTitle] = useState(false);
-  const [description, setDescription] = useState(project.description || '');
-  const [instructions, setInstructions] = useState(project.instructions || '');
-  const [defaultModel, setDefaultModel] = useState(project.defaultModel || '');
-  const [color, setColor] = useState(project.color || 'indigo');
-  const [files, setFiles] = useState<Attachment[]>(project.files || []);
-  const [savedInstructionsNotice, setSavedInstructionsNotice] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setName(project.name);
-    setDescription(project.description || '');
-    setInstructions(project.instructions || '');
-    setDefaultModel(project.defaultModel || '');
-    setColor(project.color || 'indigo');
-    setFiles(project.files || []);
-  }, [project]);
-
-  // Sync edits
-  const handleSaveEdits = (override?: Partial<Project>) => {
-    const updated: Project = {
-      ...project,
-      name: (override?.name ?? name).trim(),
-      description: (override?.description ?? description).trim() || undefined,
-      instructions: override?.instructions ?? instructions,
-      defaultModel: (override?.defaultModel ?? defaultModel) || undefined,
-      color: override?.color ?? color,
-      files: override?.files ?? files,
-      updatedAt: Date.now(),
-    };
-    if (!updated.name) {
-      toast('Project name cannot be empty', 'error');
-      return false;
-    }
-    const ok = saveProject(updated);
-    if (ok && override?.instructions !== undefined) {
-      setSavedInstructionsNotice(true);
-      setTimeout(() => setSavedInstructionsNotice(false), 2000);
-    }
-    return ok;
-  };
-
-  const handleFileUpload = async (incoming: File[]) => {
+  const saveFiles = (next: Attachment[]) => saveProject({ ...project, files: next, updatedAt: Date.now() });
+  const addFiles = async (incoming: File[]) => {
     if (!incoming.length) return;
-    setIsUploading(true);
-    const remainingSlots = Math.max(0, 5 - files.length);
-    if (remainingSlots <= 0) {
-      toast('A project can keep up to 5 reference documents.', 'error');
-      setIsUploading(false);
-      return;
-    }
-
+    const room = Math.max(0, MAX_FILES - files.length);
+    if (!room) return toast(`A project keeps up to ${MAX_FILES} files.`, 'error');
+    setUploading(true);
     const added: Attachment[] = [];
-    for (const file of incoming.slice(0, remainingSlots)) {
+    for (const file of incoming.slice(0, room)) {
       try {
-        const attachment = await readAttachment(file, { textOnly: true });
-        if (!attachment.text) throw new Error(`${file.name}: unable to extract readable text.`);
-        added.push({
-          ...attachment,
-          text: attachment.text.slice(0, 20000),
-        });
-      } catch (err) {
-        toast((err as Error).message, 'error');
+        const a = await readAttachment(file, { textOnly: true });
+        if (!a.text) throw new Error(`${file.name}: couldn't read any text from it.`);
+        added.push({ ...a, text: a.text.slice(0, 20000) });
+      } catch (e) {
+        toast((e as Error).message, 'error');
       }
     }
-
-    if (added.length > 0) {
-      const nextFiles = [...files, ...added];
-      setFiles(nextFiles);
-      handleSaveEdits({ files: nextFiles });
-      toast(`Added ${added.length} file${added.length === 1 ? '' : 's'} to project knowledge.`, 'info');
-    }
-    if (incoming.length > remainingSlots) {
-      toast('Maximum 5 reference files allowed per project.', 'error');
-    }
-    setIsUploading(false);
+    if (added.length) saveFiles([...files, ...added]);
+    if (incoming.length > room) toast(`A project keeps up to ${MAX_FILES} files.`, 'error');
+    setUploading(false);
   };
 
-  const handleRemoveFile = (fileId: string) => {
-    const nextFiles = files.filter((f) => f.id !== fileId);
-    setFiles(nextFiles);
-    handleSaveEdits({ files: nextFiles });
-  };
-
-  const handleAddTemplate = (text: string) => {
-    const next = instructions.trim() ? `${instructions.trim()}\n• ${text}` : `• ${text}`;
-    setInstructions(next);
-  };
-
-  const handleStartChatFromPrompt = () => {
-    const text = quickPrompt.trim();
+  const start = () => {
+    const text = prompt.trim();
     if (!text) return;
     newChat();
     void send(text, []);
   };
 
-  // Chats in this project
-  const projectChats = chats.filter((c) => c.projectId === project.id);
-  const filteredChats = projectChats.filter((c) => {
-    if (!searchChats.trim()) return true;
-    const q = searchChats.toLowerCase();
-    return c.title.toLowerCase().includes(q) || c.messages.some((m) => m.text.toLowerCase().includes(q));
-  });
-
-  const totalChars = (files || []).reduce((sum, f) => sum + (f.text?.length || 0), 0) + instructions.length;
-  const quotaPct = Math.min(100, Math.round((totalChars / 150000) * 100));
-
-  const formatRelativeTime = (ts: number) => {
-    const diff = Date.now() - ts;
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return 'Just now';
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    if (days === 1) return 'Yesterday';
-    if (days < 7) return `${days}d ago`;
-    return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  };
+  const projectChats = chats.filter((c) => c.projectId === project.id).sort((a, b) => b.updatedAt - a.updatedAt);
+  const q = query.trim().toLowerCase();
+  const shown = q ? projectChats.filter((c) => c.title.toLowerCase().includes(q) || c.messages.some((m) => m.text.toLowerCase().includes(q))) : projectChats;
+  const instructions = project.instructions?.trim() || '';
 
   return (
-    <div className="claude-project-view">
-      {/* Sleek Claude Top Navbar */}
-      <header className="claude-project-topbar">
-        <div className="claude-project-breadcrumb">
-          <button
-            type="button"
-            className="claude-project-back-btn"
-            onClick={() => selectProject(null)}
-            title="Return to all chats"
-          >
-            <ArrowLeft size={14} />
-            <span>All chats</span>
-          </button>
-          <span className="claude-breadcrumb-slash">/</span>
-          <span className="claude-breadcrumb-name">{project.name}</span>
+    <div className="project-page claude-project-view">
+      <header className="project-head">
+        <span className={`project-tile color-${color}`} aria-hidden="true">{project.name.slice(0, 1).toUpperCase()}</span>
+        <div className="project-head-text">
+          <h1 className="project-title claude-project-title">{project.name}</h1>
+          {project.description && <p className="project-desc">{project.description}</p>}
         </div>
-
-        <div className="claude-project-top-actions">
-          <button
-            type="button"
-            className="btn ghost sm"
-            onClick={() => {
-              if (onOpenSettings) onOpenSettings();
-              else setShowSettingsDrawer(true);
-            }}
-            title="Project settings"
-          >
-            <Settings size={14} />
-            <span>Settings</span>
-          </button>
-          <button
-            type="button"
-            className="btn primary sm"
-            onClick={() => newChat()}
-            title="Start a new chat in this project"
-          >
-            <Plus size={15} />
-            <span>New chat</span>
-          </button>
-        </div>
+        <button type="button" className="btn small project-edit-btn" onClick={onOpenSettings}>
+          <Pencil size={14} /> Edit
+        </button>
       </header>
 
-      {/* Main 2-Column Claude Layout */}
-      <div className="claude-project-body">
-        {/* ===================== LEFT / MAIN COLUMN ===================== */}
-        <main className="claude-project-main">
-          {/* Hero Header */}
-          <section className="claude-project-hero">
-            <div className="claude-project-hero-badge">
-              <div className={`claude-project-avatar color-${color}`}>
-                <FolderKanban size={24} />
-              </div>
-              <div className="claude-project-title-area">
-                {editingTitle ? (
-                  <input
-                    autoFocus
-                    className="claude-project-title-input"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    onBlur={() => {
-                      setEditingTitle(false);
-                      if (name.trim()) handleSaveEdits({ name });
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        setEditingTitle(false);
-                        if (name.trim()) handleSaveEdits({ name });
-                      } else if (e.key === 'Escape') {
-                        setName(project.name);
-                        setEditingTitle(false);
-                      }
-                    }}
-                  />
-                ) : (
-                  <div className="claude-project-title-row">
-                    <h1 className="claude-project-title">{project.name}</h1>
-                    <button
-                      type="button"
-                      className="icon-btn xs"
-                      title="Rename project"
-                      onClick={() => setEditingTitle(true)}
-                    >
-                      <Pencil size={13} />
-                    </button>
-                  </div>
-                )}
-                {project.description ? (
-                  <p className="claude-project-desc">{project.description}</p>
-                ) : (
-                  <button
-                    type="button"
-                    className="claude-project-add-desc-btn"
-                    onClick={() => {
-                      if (onOpenSettings) onOpenSettings();
-                      else setShowSettingsDrawer(true);
-                    }}
-                  >
-                    + Add project description
-                  </button>
-                )}
-              </div>
-            </div>
-          </section>
+      <form className="project-composer" onSubmit={(e) => { e.preventDefault(); start(); }}>
+        <textarea
+          aria-label="Start a project conversation"
+          rows={2}
+          dir="auto"
+          value={prompt}
+          placeholder={`Start a chat in ${project.name}`}
+          onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && window.matchMedia('(pointer: fine)').matches) {
+              e.preventDefault();
+              start();
+            }
+          }}
+        />
+        <div className="project-composer-foot">
+          <span className="project-composer-note">
+            <span className="route-dot" aria-hidden="true" />
+            {[instructions && 'Instructions', files.length && `${files.length} file${files.length === 1 ? '' : 's'}`, project.defaultModel && modelLabel(catalog, project.defaultModel)].filter(Boolean).join(' · ') || 'Every chat here shares this project’s context'}
+          </span>
+          <button type="submit" className="send-btn project-send" disabled={!prompt.trim()} aria-label="Send message (Enter)" title="Send (Enter)">
+            <ArrowUp size={18} />
+          </button>
+        </div>
+      </form>
 
-          {/* Central Claude Prompt Composer */}
-          <div className="claude-composer-box">
-            <textarea
-              aria-label="Start a project conversation"
-              rows={3}
-              value={quickPrompt}
-              placeholder={`Send a message to start a new chat in ${project.name}...`}
-              onChange={(e) => setQuickPrompt(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && window.matchMedia('(pointer: fine)').matches) {
-                  e.preventDefault();
-                  handleStartChatFromPrompt();
-                }
-              }}
-            />
-            <div className="claude-composer-foot">
-              <div className="claude-composer-meta">
-                {files.length > 0 ? (
-                  <span className="claude-composer-pill" title="Documents attached to all messages">
-                    <FileText size={12} /> {files.length} doc{files.length === 1 ? '' : 's'} active
-                  </span>
-                ) : (
-                  <span className="claude-composer-pill muted">
-                    <Sparkles size={12} /> {instructions.trim() ? 'Project instructions included' : 'Project conversation'}
-                  </span>
-                )}
-                {project.defaultModel && (
-                  <span className="claude-composer-pill" title="Default Model">
-                    {modelLabel(catalog, project.defaultModel)}
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                className="btn primary claude-composer-send"
-                disabled={!quickPrompt.trim()}
-                onClick={handleStartChatFromPrompt}
-                title="Send message (Enter)"
-              >
-                <ArrowUp size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Project Activity / Recent Conversations */}
-          <section className="claude-project-activity">
-            <div className="claude-activity-header">
-              <h2 className="claude-activity-title">
-                Conversations ({projectChats.length})
-              </h2>
-              {projectChats.length > 2 && (
-                <label className="claude-activity-search">
-                  <Search size={14} />
-                  <input
-                    type="search"
-                    aria-label="Search project conversations"
-                    placeholder="Search chats..."
-                    value={searchChats}
-                    onChange={(e) => setSearchChats(e.target.value)}
-                  />
-                </label>
-              )}
-            </div>
-
-            {projectChats.length === 0 ? (
-              <div className="claude-empty-chats">
-                <div className="claude-empty-chats-icon">
-                  <MessageSquare size={24} />
-                </div>
-                <h3>No conversations yet</h3>
-                <p>
-                  Start a chat above, or click New chat. Messages will automatically have access to
-                  your reference knowledge and custom guidelines.
-                </p>
-                <button
-                  type="button"
-                  className="btn primary sm"
-                  onClick={() => newChat()}
-                >
-                  <Plus size={14} /> Start first conversation
-                </button>
-              </div>
-            ) : filteredChats.length === 0 ? (
-              <p className="muted small" style={{ padding: '16px 0' }}>
-                No chats match &ldquo;{searchChats}&rdquo;.
-              </p>
-            ) : (
-              <div className="claude-chats-list">
-                {filteredChats.map((c) => {
-                  const msgCount = c.messages.length;
-                  const lastMsg = c.messages.length ? c.messages[c.messages.length - 1] : null;
-                  const previewText = lastMsg?.text?.slice(0, 110) || 'Empty conversation';
-                  const isRenaming = renamingChatId === c.id;
-
-                  return (
-                    <div
-                      key={c.id}
-                      className="claude-chat-row"
-                    >
-                      <div className="claude-chat-row-icon">
-                        <MessageSquare size={16} />
-                      </div>
-
-                      <div className="claude-chat-row-body">
-                        {isRenaming ? (
-                          <input
-                            autoFocus
-                            className="claude-chat-rename-input"
-                            value={chatNewTitle}
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => setChatNewTitle(e.target.value)}
-                            onBlur={() => {
-                              if (chatNewTitle.trim()) void renameChat(c.id, chatNewTitle.trim());
-                              setRenamingChatId(null);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                if (chatNewTitle.trim()) void renameChat(c.id, chatNewTitle.trim());
-                                setRenamingChatId(null);
-                              } else if (e.key === 'Escape') {
-                                setRenamingChatId(null);
-                              }
-                            }}
-                          />
-                        ) : (
-                          <button type="button" className="claude-chat-row-title" title={c.title} onClick={() => selectChat(c.id)}>
-                            {c.title}
-                          </button>
-                        )}
-                        <p className="claude-chat-row-snippet">{previewText}</p>
-                      </div>
-
-                      <div className="claude-chat-row-meta" onClick={(e) => e.stopPropagation()}>
-                        <span className="claude-chat-row-time">
-                          <Clock size={12} />
-                          {formatRelativeTime(c.updatedAt)}
-                        </span>
-                        <span className="claude-chat-row-count">{msgCount} msgs</span>
-
-                        <div className="claude-chat-menu-anchor">
-                          <button
-                            type="button"
-                            className="icon-btn xs"
-                            aria-label={`Options for ${c.title}`}
-                            aria-expanded={chatMenuId === c.id}
-                            aria-haspopup="menu"
-                            onClick={() => setChatMenuId(chatMenuId === c.id ? null : c.id)}
-                          >
-                            <MoreHorizontal size={14} />
-                          </button>
-                          {chatMenuId === c.id && (
-                            <div className="menu claude-chat-dropdown" role="menu" onKeyDown={e => {
-                              if (e.key === 'Escape') { e.stopPropagation(); setChatMenuId(null); e.currentTarget.parentElement?.querySelector<HTMLButtonElement>('button')?.focus(); }
-                              if (!['ArrowDown','ArrowUp','Home','End'].includes(e.key)) return;
-                              e.preventDefault(); const items = [...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')]; const index = items.indexOf(document.activeElement as HTMLButtonElement);
-                              items[e.key === 'Home' ? 0 : e.key === 'End' ? items.length-1 : (index + (e.key === 'ArrowUp' ? -1 : 1) + items.length)%items.length]?.focus();
-                            }}>
-                              <button
-                                type="button"
-                                role="menuitem"
-                                onClick={() => {
-                                  setChatMenuId(null);
-                                  setChatNewTitle(c.title);
-                                  setRenamingChatId(c.id);
-                                }}
-                              >
-                                <Pencil size={13} /> Rename
-                              </button>
-                              <button
-                                type="button"
-                                role="menuitem"
-                                onClick={() => {
-                                  setChatMenuId(null);
-                                  moveChatToProject(c.id, null);
-                                  toast('Moved to All chats', 'info');
-                                }}
-                              >
-                                <ExternalLink size={13} /> Move out
-                              </button>
-                              <button
-                                type="button"
-                                role="menuitem"
-                                className="danger"
-                                onClick={() => {
-                                  setChatMenuId(null);
-                                  if (confirm(`Delete "${c.title}"?`)) void deleteChat(c.id);
-                                }}
-                              >
-                                <Trash2 size={13} /> Delete
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+      <div className="project-grid">
+        <section className="project-chats" aria-label="Chats in this project">
+          <div className="project-section-head">
+            <h2>Chats <span className="project-count">{projectChats.length}</span></h2>
+            {projectChats.length > 5 && (
+              <label className="search project-search">
+                <Search size={14} />
+                <input type="search" aria-label="Search project conversations" placeholder="Search" value={query} onChange={(e) => setQuery(e.target.value)} />
+              </label>
             )}
-          </section>
-        </main>
+          </div>
+          {projectChats.length === 0 ? (
+            <p className="project-empty">No chats yet. Start one above; it will use this project’s instructions and files.</p>
+          ) : shown.length === 0 ? (
+            <p className="project-empty">No chats match “{query}”.</p>
+          ) : (
+            <ul className="project-chat-list">
+              {shown.map((c) => {
+                const last = c.messages.at(-1);
+                return (
+                  <li key={c.id} className="project-chat">
+                    <div className="project-chat-main">
+                      {renaming === c.id ? (
+                        <input
+                          autoFocus
+                          className="project-rename"
+                          aria-label="Chat title"
+                          value={newTitle}
+                          onChange={(e) => setNewTitle(e.target.value)}
+                          onBlur={() => { if (newTitle.trim()) void renameChat(c.id, newTitle.trim()); setRenaming(null); }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') { if (newTitle.trim()) void renameChat(c.id, newTitle.trim()); setRenaming(null); }
+                            else if (e.key === 'Escape') setRenaming(null);
+                          }}
+                        />
+                      ) : (
+                        <button type="button" className="project-chat-title claude-chat-row-title" title={c.title} onClick={() => selectChat(c.id)}>{c.title}</button>
+                      )}
+                      <p className="project-chat-snippet" dir="auto">{last?.text?.replace(/\s+/g, ' ').slice(0, 120) || 'Empty chat'}</p>
+                    </div>
+                    <span className="project-chat-time">{ago(c.updatedAt)}</span>
+                    <div className="project-chat-menu">
+                      <button type="button" className="icon-btn xs" aria-label={`Options for ${c.title}`} aria-haspopup="menu" aria-expanded={menu === c.id} onClick={() => setMenu(menu === c.id ? null : c.id)}>
+                        <MoreHorizontal size={15} />
+                      </button>
+                      {menu === c.id && (
+                        <div className="menu" role="menu" onKeyDown={(e) => {
+                          if (e.key === 'Escape') { e.stopPropagation(); setMenu(null); }
+                          if (!['ArrowDown', 'ArrowUp'].includes(e.key)) return;
+                          e.preventDefault();
+                          const items = [...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')];
+                          const i = items.indexOf(document.activeElement as HTMLButtonElement);
+                          items[(i + (e.key === 'ArrowUp' ? -1 : 1) + items.length) % items.length]?.focus();
+                        }}>
+                          <button type="button" role="menuitem" onClick={() => { setMenu(null); setNewTitle(c.title); setRenaming(c.id); }}><Pencil size={13} /> Rename</button>
+                          <button type="button" role="menuitem" onClick={() => { setMenu(null); moveChatToProject(c.id, null); toast('Moved out of the project', 'info'); }}><ExternalLink size={13} /> Move out of project</button>
+                          <button type="button" role="menuitem" className="danger" onClick={() => { setMenu(null); if (confirm(`Delete "${c.title}"?`)) void deleteChat(c.id); }}><Trash2 size={13} /> Delete</button>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
 
-        {/* ===================== RIGHT SIDEBAR (PROJECT CONTEXT) ===================== */}
-        <aside className={`claude-project-sidebar${contextOpen ? ' context-open' : ''}`} aria-label="Project context">
+        <aside className={`project-context${contextOpen ? ' context-open' : ''}`} aria-label="Project context">
           <button type="button" className="project-context-toggle" aria-expanded={contextOpen} aria-controls="project-context-content" onClick={() => setContextOpen(!contextOpen)}>
-            <span><FolderKanban size={18} /> Project context <small>{files.length} files · {instructions.trim() ? 'Instructions added' : 'No instructions'}</small></span><ChevronDown size={18} />
+            <span>Context <small>{files.length} file{files.length === 1 ? '' : 's'} · {instructions ? 'instructions on' : 'no instructions'}</small></span>
+            <ChevronDown size={18} />
           </button>
           <div id="project-context-content" className="project-context-content">
-          {/* 1. Project Knowledge Card */}
-          <div className="claude-side-card">
-            <div className="claude-side-card-head">
-              <div>
-                <h3 className="claude-side-card-title">Reference files</h3>
-                <span className="muted small">
-                  {totalChars.toLocaleString()} / 150,000 chars ({quotaPct}%)
-                </span>
+            <section className="project-card">
+              <div className="project-card-head">
+                <h3>Instructions</h3>
+                <button type="button" className="btn ghost small" onClick={onOpenSettings} aria-label="Edit project instructions">{instructions ? 'Edit' : 'Add'}</button>
               </div>
-              <button
-                type="button"
-                className="btn ghost xs"
-                disabled={files.length >= 5 || isUploading}
-                onClick={() => fileInputRef.current?.click()}
-                title="Upload document"
-              >
-                <Plus size={14} /> Add doc
-              </button>
-            </div>
+              {instructions ? <p className="project-instructions" dir="auto">{instructions}</p> : <p className="project-empty">Tell models how to work in this project: tone, language, what to focus on.</p>}
+            </section>
 
-            <div className="claude-side-quota-bar">
-              <div
-                className="claude-side-quota-fill"
-                style={{
-                  width: `${quotaPct}%`,
-                  background: quotaPct > 90 ? 'var(--danger)' : quotaPct > 70 ? '#f59e0b' : 'var(--accent)',
-                }}
-              />
-            </div>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              hidden
-              accept=".pdf,.docx,.xlsx,.xlsm,.pptx,.txt,.md,.csv,.tsv,.json,.html,.xml,.js,.ts,.py,.css,.sql,.log,.yaml,.yml,.srt,.tex"
-              onChange={(e) => {
-                const incoming = Array.from(e.target.files || []);
-                void handleFileUpload(incoming);
-                e.target.value = '';
-              }}
-            />
-
-            {files.length === 0 ? (
-              <button type="button"
-                className="claude-side-dropzone"
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  void handleFileUpload(Array.from(e.dataTransfer.files || []));
-                }}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload size={18} style={{ color: 'var(--text-3)' }} />
-                <span>Upload PDF, Word, Code or CSV</span>
-                <small className="muted">Attached to all chats in this project</small>
-              </button>
-            ) : (
-              <div className="claude-side-files-list">
-                {files.map((file) => {
-                  const isSheet = /\.(xlsx|xlsm|csv|tsv)$/i.test(file.name);
-                  const isCode = /\.(js|ts|tsx|jsx|py|html|css|json|sql|ya?ml)$/i.test(file.name);
-                  const isDoc = /\.(docx|pdf|txt|md)$/i.test(file.name);
-                  const Icon = isSheet ? FileSpreadsheet : isCode ? FileCode : isDoc ? FileText : ScrollText;
-
-                  return (
-                    <div key={file.id} className="claude-side-file-item">
-                      <Icon size={15} className="claude-side-file-icon" />
-                      <div className="claude-side-file-meta">
-                        <span className="claude-side-file-name" title={file.name}>
-                          {file.name}
-                        </span>
-                        <span className="claude-side-file-chars">
-                          {(file.text?.length || 0).toLocaleString()} chars
-                        </span>
-                      </div>
-                      <div className="claude-side-file-actions">
-                        {file.text && (
-                          <button
-                            type="button"
-                            className="icon-btn xs"
-                            title="Preview text"
-                            onClick={() => setPreviewDoc({ name: file.name, text: file.text || '' })}
-                          >
-                            <Eye size={13} />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          className="icon-btn xs danger"
-                          title="Remove file"
-                          onClick={() => handleRemoveFile(file.id)}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* 2. Custom Instructions Card */}
-          <div className="claude-side-card">
-            <div className="claude-side-card-head">
-              <div>
-                <h3 className="claude-side-card-title">Instructions</h3>
-                <span className="muted small">Model persona & guidelines</span>
-              </div>
-              <button
-                type="button"
-                className="btn ghost xs"
-                onClick={() => handleSaveEdits({ instructions })}
-                title="Save instructions"
-              >
-                {savedInstructionsNotice ? (
-                  <>
-                    <Check size={13} /> Saved
-                  </>
-                ) : (
-                  'Save'
-                )}
-              </button>
-            </div>
-
-            <div className="claude-preset-chips">
-              {PRESET_TEMPLATES.slice(0, 3).map((tmpl) => (
-                <button
-                  key={tmpl.label}
-                  type="button"
-                  className="claude-preset-chip"
-                  onClick={() => handleAddTemplate(tmpl.text)}
-                >
-                  {tmpl.label}
+            <section className="project-card">
+              <div className="project-card-head">
+                <h3>Files <span className="project-count">{files.length}/{MAX_FILES}</span></h3>
+                <button type="button" className="btn ghost small" disabled={files.length >= MAX_FILES || uploading} onClick={() => fileInput.current?.click()}>
+                  <Plus size={14} /> Add
                 </button>
-              ))}
-            </div>
-
-            <textarea
-              rows={4}
-              aria-label="Project instructions"
-              className="claude-side-instructions-input"
-              value={instructions}
-              maxLength={12000}
-              placeholder="How should models respond in this project? (e.g., tone, style, constraints)..."
-              onChange={(e) => setInstructions(e.target.value)}
-              onBlur={() => handleSaveEdits({ instructions })}
-            />
-            <div className="claude-side-char-count">
-              <span className="muted small">{instructions.length}/12,000 chars</span>
-            </div>
-          </div>
-
+              </div>
+              <input ref={fileInput} type="file" multiple hidden accept={FILE_TYPES} onChange={(e) => { void addFiles([...(e.target.files || [])]); e.target.value = ''; }} />
+              {files.length === 0 ? (
+                <button type="button" className="project-drop" onClick={() => fileInput.current?.click()} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); void addFiles([...(e.dataTransfer.files || [])]); }}>
+                  Add PDFs, Word, Excel or text files. Every chat here can use them.
+                </button>
+              ) : (
+                <ul className="project-files">
+                  {files.map((f) => {
+                    const Icon = fileIcon(f.name);
+                    return (
+                      <li key={f.id} className="project-file-row">
+                        <Icon size={16} className="project-file-icon" />
+                        <span className="project-file-name" title={f.name}>{f.name}</span>
+                        <span className="project-file-size">{formatBytes(f.size || f.text?.length || 0)}</span>
+                        {f.text && <button type="button" className="icon-btn xs" aria-label={`Preview ${f.name}`} title="Preview text" onClick={() => setPreview({ name: f.name, text: f.text || '' })}><Eye size={14} /></button>}
+                        <button type="button" className="icon-btn xs" aria-label={`Remove ${f.name}`} title="Remove" onClick={() => saveFiles(files.filter((x) => x.id !== f.id))}><Trash2 size={14} /></button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
           </div>
         </aside>
       </div>
 
-      {/* Extracted Document Preview Modal */}
-      {previewDoc && (
-        <Modal title={`Knowledge Preview: ${previewDoc.name}`} onClose={() => setPreviewDoc(null)}>
+      {preview && (
+        <Modal title={preview.name} onClose={() => setPreview(null)}>
           <div className="project-doc-preview-modal">
-            <div className="project-doc-preview-meta">
-              <span className="muted small">
-                {previewDoc.text.length.toLocaleString()} characters extracted and provided to models
-              </span>
-            </div>
-            <pre className="project-doc-preview-body">{previewDoc.text}</pre>
-          </div>
-        </Modal>
-      )}
-
-      {/* Edit Details Drawer Modal */}
-      {showSettingsDrawer && (
-        <Modal title={`Project Settings: ${project.name}`} onClose={() => setShowSettingsDrawer(false)}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <label className="field-block">
-              <span className="setting-label">Project Name</span>
-              <input
-                value={name}
-                maxLength={60}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </label>
-
-            <label className="field-block">
-              <span className="setting-label">Project Description</span>
-              <input
-                value={description}
-                maxLength={160}
-                placeholder="Short summary of this project purpose"
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </label>
-
-            <label className="field-block">
-              <span className="setting-label">Default Model</span>
-              <select
-                value={defaultModel}
-                onChange={(e) => setDefaultModel(e.target.value)}
-              >
-                <option value="">Auto (Default)</option>
-                {enabledModels.map((id) => (
-                  <option key={id} value={id}>
-                    {modelLabel(catalog, id)}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
-              <button
-                type="button"
-                className="btn primary"
-                onClick={() => {
-                  handleSaveEdits();
-                  setShowSettingsDrawer(false);
-                }}
-              >
-                Save changes
-              </button>
-            </div>
+            <p className="muted small">The text models get from this file ({preview.text.length.toLocaleString()} characters).</p>
+            <pre className="project-doc-preview-body">{preview.text}</pre>
           </div>
         </Modal>
       )}

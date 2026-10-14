@@ -94,15 +94,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
           <button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title="Expand sidebar">
             <PanelLeftOpen size={20} />
           </button>
-          <div className="project-topbar-pill static">
-            <FolderKanban size={13} className={`color-${currentProject.color || 'indigo'}`} />
-            <span className="project-topbar-name">{currentProject.name}</span>
-            <span className="project-topbar-badge">Workspace</span>
-          </div>
-          <div className="spacer" />
-          <button className="icon-btn new-chat-shortcut" onClick={()=>useStore.getState().toggleTemporaryChat()} aria-label={isTemporaryChat(chat)?'End incognito chat':'Start incognito chat'} aria-pressed={isTemporaryChat(chat)} title="Incognito · not saved, memory off. Your AI provider still receives messages.">
-            <EyeOff size={19} />
-          </button>
+          <span className="chat-heading project-crumb">Projects</span>
         </header>
         <ProjectWorkspace
           project={currentProject}

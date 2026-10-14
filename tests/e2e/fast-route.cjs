@@ -29,7 +29,7 @@ const assert = require('node:assert/strict');
       await page.waitForSelector('.composer textarea');
       await page.fill('.composer textarea', 'hello'); await page.click('.send-btn');
       await page.waitForSelector('.reply-wait');
-      assert.match(await page.locator('.reply-wait').textContent(), /Connecting/);
+      assert.match(await page.locator('.reply-wait').textContent(), /Routing/);
       await page.waitForSelector('.msg.assistant .markdown', { timeout: 15000 });
       await page.locator('.send-btn.stop').waitFor({ state: 'hidden' });
       assert.deepEqual(calls.map(c => c.name), ['gemini-2.5-flash-lite', 'gemma-4-31b-it']);

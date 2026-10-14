@@ -41,9 +41,23 @@ function Thinking({ text, active }: { text: string; active: boolean }) {
   );
 }
 
-function WaitingForReply() {
-  const label = useStore(s => s.replyProgress?.chatId === s.currentId ? s.replyProgress.label : 'Connecting…');
-  return <div className="reply-wait" role="status"><div className="typing" aria-hidden="true"><span /><span /><span /></div><span>{label}</span></div>;
+/** While a reply is on its way: the route it's taking, live (models passed over are struck through). */
+function WaitingForReply({ message }: { message: Message }) {
+  const progress = useStore(s => s.replyProgress?.chatId === s.currentId ? s.replyProgress : null);
+  const catalog = useStore(s => s.catalog);
+  const label = progress?.label || 'Routing';
+  const tried = progress?.tried || [];
+  const target = message.model ? modelLabel(catalog, message.model) : '';
+  return (
+    <div className="reply-wait route-wait" role="status" aria-label={`${label}${target ? ` to ${target}` : ''}`}>
+      <span className="route-pulse" aria-hidden="true" />
+      <span className="route-label">{label}</span>
+      {tried.map((m) => <span key={m} className="route-tried" aria-hidden="true"><s>{modelLabel(catalog, m)}</s></span>)}
+      {target && <span className="route-target" aria-hidden="true"><span className="route-arrow">→</span>{target}</span>}
+      {message.via && <span className="route-why" aria-hidden="true">· {message.via}</span>}
+      {!message.via && message.route && <span className="route-why" aria-hidden="true">· {message.route}</span>}
+    </div>
+  );
 }
 
 /** Under the last reply in a coding chat: files it names that the model hasn't seen, one tap to load them. */
@@ -242,7 +256,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
       {message.text ? (
         <Markdown text={message.coding?.phase === 'plan' && !streaming && parsePlan(message.text) ? message.text.replace(/`{3,}plan\s*\n[\s\S]*?\n`{3,}/i, '') : message.text} streaming={streaming} messageId={message.id} knowledgeSources={message.knowledgeSources} onSource={setSource}/>
       ) : streaming && !message.thinking ? (
-        <WaitingForReply />
+        <WaitingForReply message={message} />
       ) : null}
       {streaming && message.text && <span className="caret" />}
       {message.coding && <CodingPlanCard message={message} />}

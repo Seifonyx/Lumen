@@ -18,7 +18,10 @@ import { cancelKnowledge } from './lib/knowledge/engine';
 const RunPanel = lazy(() => import('./components/RunPanel'));
 const ShortcutsModal = lazy(() => import('./components/ShortcutsModal'));
 // Screens opened on demand load their code the first time they open.
-const SettingsModal = lazy(() => import('./components/SettingsModal'));
+const loadSettings = () => import('./components/SettingsModal');
+const SettingsModal = lazy(loadSettings);
+// Settings is opened often: fetch its code once the app is idle, so it slides in without waiting.
+if (typeof window !== 'undefined') window.addEventListener('load', () => (window.requestIdleCallback || setTimeout)(() => void loadSettings()), { once: true });
 const CommandPalette = lazy(() => import('./components/CommandPalette'));
 const RepoPicker = lazy(() => import('./components/RepoPicker'));
 const PreviewModal = lazy(() => import('./components/PreviewModal'));

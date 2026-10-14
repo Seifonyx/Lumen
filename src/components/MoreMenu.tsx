@@ -1,3 +1,4 @@
+import { Exit } from '../lib/motion';
 import { MoreHorizontal } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
@@ -34,7 +35,7 @@ export default function MoreMenu({ items, label = 'More actions' }: { items: Mor
       <button type="button" className="msg-action" aria-label={label} title={label} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
         <MoreHorizontal size={16} />
       </button>
-      {open && (
+      {open && (<Exit kind="drop">
         <div className="menu more-menu-list" role="menu" aria-label={label}>
           {items.map((it) => (
             <button key={it.label} type="button" role="menuitem" onClick={() => { setOpen(false); it.onSelect(); }}>
@@ -42,7 +43,7 @@ export default function MoreMenu({ items, label = 'More actions' }: { items: Mor
             </button>
           ))}
         </div>
-      )}
+      </Exit>)}
     </div>
   );
 }

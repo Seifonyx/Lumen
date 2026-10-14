@@ -3509,3 +3509,16 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
 /* Older messages added after a chat opens appear above the view: no entrance animation. */
 .message-row.backfill .msg { animation: none; }
 .to-bottom { animation: fade .18s var(--ease); }
+
+/* ============================================================ Motion: exits and moving rows
+   Exit copies of closed menus, sheets and deleted rows are placed relative to their list, so they stay put
+   while it scrolls. */
+.chat-list ul, .all-chats-list, .removed-list, .mc-list { position: relative; }
+.exit-ghost { pointer-events: none !important; }
+.exit-ghost, .exit-ghost * { animation: none !important; transition: none !important; }
+/* Phones: Settings and its sections arrive with a push, so no extra fade or rise on top of it. */
+@media (max-width: 899px) { .settings-page { animation: none; } }
+@media (max-width: 720px), (pointer: coarse) and (max-width: 1100px) { .settings-panel { animation: none; } }
+/* Theme change: a short crossfade of the whole screen (the browser's view transition). */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .28s; animation-timing-function: cubic-bezier(.2,.8,.2,1); }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }

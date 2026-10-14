@@ -1,3 +1,4 @@
+import { Exit } from '../lib/motion';
 import { ChevronDown, Loader2, MessageSquarePlus, Shrink, Undo2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -213,7 +214,7 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
           </label>
         </div>
         );
-        return sheet ? createPortal(<><div ref={scrim} className="um-scrim" onClick={() => setOpen(false)} aria-hidden="true" />{panel}</>, document.body) : panel;
+        return sheet ? createPortal(<><Exit kind="fade"><div ref={scrim} className="um-scrim" onClick={() => setOpen(false)} aria-hidden="true" /></Exit><Exit kind="sheet">{panel}</Exit></>, document.body) : <Exit kind="drop">{panel}</Exit>;
       })()}
     </div>
   );

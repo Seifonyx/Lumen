@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { exitGhost, useFlip } from '../lib/motion';
 import { Download, FolderKanban, Search, Trash2 } from 'lucide-react';
 import Modal from './Modal';
 import { useStore } from '../store';
@@ -33,7 +34,11 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
   const projectName = (id?: string) => projects.find((p) => p.id === id)?.name;
   const plural = (k: number) => `${k} chat${k === 1 ? '' : 's'}`;
 
+  const listRef = useRef<HTMLUListElement>(null);
+  useFlip(listRef, list.map((c) => c.id).join(','), !query);
   const remove = async () => {
+    // Deleted rows slide out while the rest close the gap.
+    listRef.current?.querySelectorAll<HTMLElement>('[data-flip]').forEach((el) => { if (selected.has(el.dataset.flip!)) exitGhost(el, 'row'); });
     for (const chat of picked) await deleteChat(chat.id);
     toast(`Deleted ${plural(n)}`);
     setSelected(new Set()); setConfirming(false);
@@ -70,9 +75,9 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
           </label>
         </div>
         {list.length ? (
-          <ul className="all-chats-list">
+          <ul className="all-chats-list" ref={listRef}>
             {list.map((c) => (
-              <li key={c.id} className={selected.has(c.id) ? 'checked' : ''}>
+              <li key={c.id} data-flip={c.id} className={selected.has(c.id) ? 'checked' : ''}>
                 <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggle(c.id)} aria-label={`Select ${c.title}`} />
                 <button type="button" className="all-chats-open" onClick={() => { selectChat(c.id); setUi({ sidebarOpen: false }); onClose(); }} dir="auto">
                   <span className="all-chats-title">{c.title}</span>

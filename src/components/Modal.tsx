@@ -3,6 +3,7 @@ import { useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useFocusScope } from '../lib/focus-scope';
 import { isSheetScreen, useSheetDrag } from '../lib/sheet-drag';
+import { Exit } from '../lib/motion';
 
 interface Props {
   title: ReactNode;
@@ -21,7 +22,9 @@ export default function Modal({ title, onClose, children, actions, wide, full }:
   const [sheet] = useState(() => !wide && !full && isSheetScreen());
   useSheetDrag(ref, onClose, sheet);
 
+  // Closing: the backdrop fades while the window shrinks away (computers) or the sheet slides down (phones).
   return createPortal(
+    <Exit kind="fade" parts={[['.modal', sheet ? 'sheet' : full || wide ? 'fade' : 'modal']]}>
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`modal${wide ? ' wide' : ''}${full ? ' full' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} ref={ref}>
         {sheet && <div className="sheet-grip" aria-hidden="true" />}
@@ -36,6 +39,7 @@ export default function Modal({ title, onClose, children, actions, wide, full }:
         </header>
         <div className="modal-body">{children}</div>
       </div>
-    </div>,document.body
+    </div>
+    </Exit>,document.body
   );
 }

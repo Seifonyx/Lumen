@@ -9,6 +9,7 @@ import AllChats from './AllChats';
 import Logo from './Logo';
 import Modal from './Modal';
 import { useFocusScope } from '../lib/focus-scope';
+import { Exit, exitGhost, useFlip } from '../lib/motion';
 
 const EMPTY_PROJECTS: Project[] = [];
 
@@ -23,6 +24,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(chat.title);
   const menuRef = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLLIElement>(null);
 
   useEffect(() => {
     if (!menu) return;
@@ -62,7 +64,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   }
 
   return (
-    <li className={`chat-row${active ? ' active' : ''}`}>
+    <li className={`chat-row${active ? ' active' : ''}`} data-flip={chat.id} ref={rowRef}>
       <button className="chat-open" onClick={() => {
         // Phones: the drawer starts sliding away at once (on the compositor), then the chat renders.
         if (window.matchMedia('(max-width: 899px)').matches && useStore.getState().sidebarOpen) { useStore.getState().setUi({ sidebarOpen: false }); requestAnimationFrame(() => setTimeout(() => selectChat(chat.id), 0)); }
@@ -77,7 +79,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
         <button className="icon-btn sm" aria-label="Chat options" aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu(!menu)} onKeyDown={e=>{if(e.key==='ArrowDown'){e.preventDefault();setMenu(true)}}}>
           <MoreHorizontal size={16} />
         </button>
-        {menu && (
+        {menu && (<Exit kind="drop">
           <div className="menu" role="menu" aria-label="Chat options" onKeyDown={e=>{
             if(e.key==='Escape'){e.stopPropagation();setMenu(false);menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();return}
             if(!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
@@ -99,11 +101,11 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
             <button role="menuitem" onClick={() => { setMenu(false); useStore.getState().setUi({ exportChatId: chat.id, sidebarOpen: false }); }}>
               <Download size={15} /> Share or export
             </button>
-            <button role="menuitem" className="danger" onClick={() => { setMenu(false); if (confirm(`Delete "${chat.title}"?`)) void deleteChat(chat.id); }}>
+            <button role="menuitem" className="danger" onClick={() => { setMenu(false); if (confirm(`Delete "${chat.title}"?`)) { if (rowRef.current) exitGhost(rowRef.current, 'row'); void deleteChat(chat.id); } }}>
               <Trash2 size={15} /> Delete
             </button>
           </div>
-        )}
+        </Exit>)}
       </div>
       {tagging && <Modal title="Chat tags" onClose={()=>setTagging(false)}><div className="chat-tag-editor">
         <input autoFocus value={tags} maxLength={140} onChange={e=>setTags(e.target.value)} onKeyDown={e=>{
@@ -128,6 +130,8 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
   const library=(section:string)=>{setUi({sidebarOpen:false});window.dispatchEvent(new CustomEvent('mr:library',{detail:section}));};
   const [query, setQuery] = useState('');
   const [allChats, setAllChats] = useState(false);
+  // Rows glide to their new place when the order changes (pin, new chat, delete); not while searching.
+  const listRef = useRef<HTMLElement>(null);
   const searchInput = useRef<HTMLInputElement>(null);
   const [projectManager, setProjectManager] = useState(false);
   const [editProjectId, setEditProjectId] = useState<string | undefined>(undefined);
@@ -169,6 +173,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
     }
     return out;
   }, [chats, query, currentId]);
+  useFlip(listRef, groups.map(([label, list]) => `${label}:${list.map((c) => c.id).join(',')}`).join('|'), !query);
 
 
   return (
@@ -256,7 +261,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
         <h2 className="sidebar-section-label history-label">{query ? 'Search results' : 'Recents'}</h2>
         {!phone && <button type="button" className="sidebar-chip new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}><Plus size={13} strokeWidth={2.2} /> New chat</button>}
       </div>
-      <nav className="chat-list" aria-label="Chat history">
+      <nav className="chat-list" aria-label="Chat history" ref={listRef}>
         {groups.length === 0 && <p className="muted small empty-list">{query ? 'No chats match.' : 'Your chats will appear here.'}</p>}
         {groups.map(([label, list]) => (
           <section key={label}>

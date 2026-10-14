@@ -34,6 +34,7 @@ import type { Chat, FontSize, ModelInfo, Theme } from '../types';
 import { Badges } from './ModelPicker';
 import ConnectorsTab from './ConnectorsTab';
 import { savedChats } from '../lib/temporary-chat';
+import { pageSwap } from '../lib/motion';
 import { version as APP_VERSION } from '../../package.json';
 import Modal from './Modal';
 import { deleteCloudData, deleteLocalData, deleteSignIn } from '../lib/delete-account';
@@ -631,7 +632,7 @@ export default function SettingsModal() {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || useStore.getState().preview) return;
-      if (tab && window.matchMedia('(max-width: 720px), (pointer: coarse) and (max-width: 1100px)').matches) setUi({ settingsTab: '' });
+      if (tab && window.matchMedia('(max-width: 720px), (pointer: coarse) and (max-width: 1100px)').matches) go('');
       else close();
     };
     window.addEventListener('keydown', onKey);
@@ -642,7 +643,15 @@ export default function SettingsModal() {
     panel.current?.scrollTo({ top: 0 });
   }, [tab]);
 
+
   if (!open) return null;
+
+  // Phones: a section slides in from the right over the list (push); back slides it away (pop).
+  function go(next: string) {
+    const narrow = window.matchMedia('(max-width: 720px), (pointer: coarse) and (max-width: 1100px)').matches;
+    if (narrow && dialog.current && Boolean(next) !== Boolean(tab)) pageSwap(next ? 'push' : 'pop', dialog.current, () => dialog.current, () => setUi({ settingsTab: next }));
+    else setUi({ settingsTab: next });
+  }
 
   const current = TABS.find(([id]) => id === (tab === 'layouts' ? 'models' : tab === 'data' ? 'privacy' : tab)) || TABS[0];
   const [id, label, , blurb] = current;
@@ -652,7 +661,7 @@ export default function SettingsModal() {
     <section className={`settings-page${tab ? ' has-section' : ''}`} aria-label="Settings" role="dialog" aria-modal={window.matchMedia('(max-width: 899px)').matches || undefined} data-keep-sidebar="true" tabIndex={-1} ref={dialog}>
       <header className="settings-top">
         {tab ? (
-          <button className="icon-btn settings-back" onClick={() => setUi({ settingsTab: '' })} aria-label="All settings">
+          <button className="icon-btn settings-back" onClick={() => go('')} aria-label="All settings">
             <ArrowLeft size={18} />
           </button>
         ) : null}
@@ -670,7 +679,7 @@ export default function SettingsModal() {
         <div className="settings-inner">
           <nav className="settings-tabs" aria-label="Settings sections">
             {TABS.map(([tid, tlabel, Icon, tblurb]) => (
-              <button key={tid} aria-current={id === tid ? 'page' : undefined} className={id === tid ? 'active' : ''} onClick={() => setUi({ settingsTab: tid })}>
+              <button key={tid} aria-current={id === tid ? 'page' : undefined} className={id === tid ? 'active' : ''} onClick={() => go(tid)}>
                 <span className="tab-icon"><Icon size={16} /></span>
                 <span className="tab-text">
                   <span className="tab-label">{tlabel}</span>

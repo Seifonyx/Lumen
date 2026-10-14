@@ -1,3 +1,4 @@
+import { Exit } from '../lib/motion';
 import { useSheetDrag } from '../lib/sheet-drag';
 import { Brain, Check, ChevronDown, Cpu, Eye, Globe, Search, SlidersHorizontal, Sparkles, Waypoints, Zap } from 'lucide-react';
 import { AUTO } from '../lib/routing';
@@ -271,12 +272,12 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
         (sheet
           ? createPortal(
               <>
-                <div className="mp-scrim" onClick={() => setOpen(false)} aria-hidden="true" />
-                {menu}
+                <Exit kind="fade"><div className="mp-scrim" onClick={() => setOpen(false)} aria-hidden="true" /></Exit>
+                <Exit kind="sheet">{menu}</Exit>
               </>,
               document.body,
             )
-          : menu)}
+          : <Exit kind="drop">{menu}</Exit>)}
     </div>
   );
 }

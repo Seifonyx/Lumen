@@ -1,3 +1,4 @@
+import { Exit } from '../lib/motion';
 import { useEffect, useRef, useState } from 'react';
 import { modelLabel, useStore } from '../store';
 import type { Message } from '../types';
@@ -23,7 +24,7 @@ export default function RouteWhy({ message }: { message: Message }) {
       <button type="button" className="model-tag route-why-btn" aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(!open)} title="Why Auto chose this model">
         {name}<span className="route-tag"> · Auto: {message.route}</span>
       </button>
-      {open && (
+      {open && (<Exit kind="drop">
         <span className="route-why-pop" role="dialog" aria-label="Why this model">
           <span className="rw-title">Why {name}</span>
           <ul>{(d?.why?.length ? d.why : [message.route || 'best available']).map((w) => <li key={w}>{w}</li>)}</ul>
@@ -36,7 +37,7 @@ export default function RouteWhy({ message }: { message: Message }) {
             <span>Never use {name} in Auto<small>You can still pick it yourself.</small></span>
           </label>
         </span>
-      )}
+      </Exit>)}
     </span>
   );
 }

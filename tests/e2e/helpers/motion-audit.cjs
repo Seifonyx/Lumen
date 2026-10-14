@@ -34,6 +34,7 @@ async function setup(browser, { width, theme, height = width < 900 ? 844 : 820 }
   });
   // Collect Event Timing, long tasks and layout shifts from the start.
   await ctx.addInitScript(() => {
+    window.__mrMotion = true; // animations on under automation (see src/lib/motion.ts)
     window.__audit = { events: [], long: [], shifts: [] };
     try { new PerformanceObserver((l) => l.getEntries().forEach((e) => window.__audit.events.push({ name: e.name, start: e.startTime, duration: e.duration, input: e.processingStart - e.startTime, processing: e.processingEnd - e.processingStart, id: e.interactionId }))).observe({ type: 'event', durationThreshold: 16, buffered: true }); } catch {}
     try { new PerformanceObserver((l) => l.getEntries().forEach((e) => window.__audit.long.push({ start: e.startTime, duration: e.duration }))).observe({ type: 'longtask', buffered: true }); } catch {}

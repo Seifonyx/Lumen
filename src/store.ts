@@ -1,4 +1,5 @@
 import { notify } from './lib/notify';
+import { pageSwap, pageTransition } from './lib/motion';
 import { create } from 'zustand';
 import { keyVersion, openRouterDailyLimit, probeModel, setKeys } from './lib/ai/providers.js';
 import { checkModels as runModelCheck, clearCut, type CheckResult } from './lib/ai/model-check';
@@ -1036,7 +1037,9 @@ export const useStore = create<State>((set, get) => {
     updateSettings(patch) {
       const settings = { ...get().settings, ...patch };
       saveSettings(settings);
-      applyAppearance(settings);
+      // Picking a theme crossfades the whole screen from the old colours to the new ones.
+      if (patch.theme && patch.theme !== get().settings.theme && (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation?.isActive) pageTransition('theme', () => applyAppearance(settings));
+      else applyAppearance(settings);
       const activeProjectId = settings.projects && get().activeProjectId && !settings.projects.some((p) => p.id === get().activeProjectId)
         ? null
         : get().activeProjectId;
@@ -1073,7 +1076,15 @@ export const useStore = create<State>((set, get) => {
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
     },
     setUi(patch) {
-      set({ ...patch, ...(patch.workspaceOpen ? { canvasOpen: false } : {}), ...(patch.canvasOpen ? { workspaceOpen: false } : {}) });
+      const apply = () => set({ ...patch, ...(patch.workspaceOpen ? { canvasOpen: false } : {}), ...(patch.canvasOpen ? { workspaceOpen: false } : {}) });
+      // Opening or closing Settings by hand: a push/pop on phones, a crossfade on computers.
+      const opening = patch.settingsOpen === true && !get().settingsOpen, closing = patch.settingsOpen === false && get().settingsOpen;
+      if ((opening || closing) && typeof document !== 'undefined' && (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation?.isActive) {
+        const phone = window.matchMedia('(max-width: 899px)').matches;
+        pageSwap(phone ? (opening ? 'push' : 'pop') : 'fade', document.querySelector<HTMLElement>(opening ? '.app > .main' : '.settings-page'), () => document.querySelector<HTMLElement>(opening ? '.settings-page' : '.app > .main'), apply);
+        return;
+      }
+      apply();
     },
 
     openCanvas(name, content = '') {

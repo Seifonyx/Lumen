@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.0 · Smoother motion
+
+- Nothing vanishes any more: menus, sheets, windows, the command palette and notifications now slide or
+  fade away when they close, the way they arrived.
+- Deleted chats slide out, and the rest of the list closes the gap smoothly. Pinning or starting a chat
+  moves rows to their new place instead of jumping.
+- Settings on phones moves like a native app: it slides in from the right, each section pushes in over the
+  list, and going back slides it away again. On computers it crossfades.
+- Changing the theme crossfades the whole screen from the old colours to the new ones.
+- A sheet you drag down and let go leaves from where your finger was, without jumping back first.
+- With "reduce motion" turned on in your phone or computer settings, all of this is switched off.
+
 ## 1.0.1 · Faster and steadier
 
 - Opening a long chat is immediate: the sidebar slides away as soon as you tap, the newest messages show

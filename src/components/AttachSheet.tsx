@@ -1,3 +1,4 @@
+import { useExit } from '../lib/motion';
 import { FolderGit2, Images, Image as ImageIcon, Camera, Pencil, ChartNoAxesCombined, Columns2, Globe, Check, X, FolderKanban, ChevronRight, Paperclip } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useFocusScope } from '../lib/focus-scope';
@@ -13,10 +14,12 @@ export default function AttachSheet(p:Props){
  const ref=useRef<HTMLDivElement>(null);
  useFocusScope(ref,true,p.onClose);
  useSheetDrag(ref,p.onClose,!p.anchor);
+ const backdrop=useRef<HTMLDivElement>(null);
+ useExit(backdrop,'fade',[['.sheet',p.anchor?'drop':'sheet']]);
  useEffect(()=>{ref.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();},[]);
  useEffect(()=>{if(!p.anchor)return;const close=()=>p.onClose();window.addEventListener('resize',close);return()=>window.removeEventListener('resize',close);},[p.anchor,p.onClose]);
  const pick=(action:()=>void)=>()=>{action();p.onClose();};
- return <div className={`sheet-backdrop${p.anchor?' sheet-popover-backdrop':''}`} onClick={p.onClose}>
+ return <div ref={backdrop} className={`sheet-backdrop${p.anchor?' sheet-popover-backdrop':''}`} onClick={p.onClose}>
  <div ref={ref} className="sheet attach-menu" style={p.anchor?{left:p.anchor.left,bottom:p.anchor.bottom,maxHeight:Math.max(80,window.innerHeight-p.anchor.bottom-12)}:undefined} role="dialog" aria-modal="true" tabIndex={-1} aria-label="Add to your message" onClick={e=>e.stopPropagation()}
  onKeyDown={e=>{if(!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;const buttons=[...e.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')].filter(button=>button.getClientRects().length>0);const i=buttons.indexOf(document.activeElement as HTMLButtonElement);e.preventDefault();buttons[e.key==='Home'?0:e.key==='End'?buttons.length-1:(i+(e.key==='ArrowUp'?-1:1)+buttons.length)%buttons.length]?.focus();}}
 >

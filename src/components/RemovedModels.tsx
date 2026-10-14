@@ -5,10 +5,14 @@ import FilterMenu from './FilterMenu';
 import { useStore } from '../store';
 import { PROVIDER_NAMES, providerOfId } from '../lib/util';
 
+const NONE: string[] = [];
+const NO_INFO: Record<string, { reason: string; at: number; label?: string }> = {};
+
 /** Settings → Models: every removed model, why and when, with Keep (bring back) and Restore all. */
 export default function RemovedModels({ onClose }: { onClose: () => void }) {
-  const removed = useStore((s) => s.settings.unavailableModels || []);
-  const info = useStore((s) => s.settings.unavailableInfo || {});
+  // Selectors return stored values only (a fresh [] or {} each render would loop forever).
+  const removed = useStore((s) => s.settings.unavailableModels) || NONE;
+  const info = useStore((s) => s.settings.unavailableInfo) || NO_INFO;
   const { restoreModel, updateSettings, loadCatalog } = useStore.getState();
   const [query, setQuery] = useState('');
   const [provider, setProvider] = useState('all');

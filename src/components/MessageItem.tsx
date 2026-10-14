@@ -173,12 +173,11 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
           <button className="msg-action" onClick={async () => { if (await copyText(message.text)) { setCopied(true); setTimeout(() => setCopied(false), 1500); } }} aria-label="Copy" title="Copy">
             {copied ? <Check size={15} /> : <Copy size={15} />}
           </button>
-          {!busy && (
-            <>
-              <button className="msg-action" onClick={() => setEditing(true)} aria-label="Edit" title="Edit and resend"><Pencil size={15} /></button>
-              {chatId && <button className="msg-action" onClick={() => branchChatFrom(chatId, message.id)} aria-label="Branch from this message" title="Branch from here"><GitBranch size={15} /></button>}
-            </>
-          )}
+          {/* While a reply streams these stay in place (dimmed, not usable) instead of disappearing and coming back. */}
+          <span className="busy-hold" inert={busy || undefined}>
+            <button className="msg-action" onClick={() => setEditing(true)} aria-label="Edit" title="Edit and resend"><Pencil size={15} /></button>
+            {chatId && <button className="msg-action" onClick={() => branchChatFrom(chatId, message.id)} aria-label="Branch from this message" title="Branch from here"><GitBranch size={15} /></button>}
+          </span>
         </div>
       )}
     </div>
@@ -326,14 +325,12 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
               </button>
             </>
           )}
-          {!busy && (
-            <>
-              <button className="msg-action" aria-label="Regenerate" title="Regenerate" onClick={() => void regenerate(message.id)}>
-                <RefreshCw size={15} />
-              </button>
-              <ModelPicker compact value={message.model || ''} onChange={(id) => void regenerate(message.id, id)} label="Retry with…" align={isRtl(message.text) ? 'right' : 'left'} />
-            </>
-          )}
+          <span className="busy-hold" inert={busy || undefined}>
+            <button className="msg-action" aria-label="Regenerate" title="Regenerate" onClick={() => void regenerate(message.id)}>
+              <RefreshCw size={15} />
+            </button>
+            <ModelPicker compact value={message.model || ''} onChange={(id) => void regenerate(message.id, id)} label="Retry with…" align={isRtl(message.text) ? 'right' : 'left'} />
+          </span>
           {message.text && (
             <MoreMenu
               items={[

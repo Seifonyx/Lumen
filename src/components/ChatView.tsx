@@ -67,11 +67,26 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
     if (el) el.scrollTop = el.scrollHeight;
   }, [chat?.id]);
 
-  // Follow streaming text while the user is at the bottom.
+  // Follow streaming text while the user is at the bottom; sending a message always brings you to it.
+  const lastRole = messages.at(-1)?.role;
+  const seenLength = useRef(messages.length);
   useLayoutEffect(() => {
     const el = scroller.current;
+    if (messages.length > seenLength.current && lastRole === 'user') stick.current = true;
+    seenLength.current = messages.length;
     if (el && stick.current) el.scrollTop = el.scrollHeight;
-  }, [messages.length, lastText]);
+  }, [messages.length, lastText, lastRole]);
+
+  // Content that settles after the first paint (older messages, code colouring, images) keeps the view on
+  // the latest message instead of leaving it just above.
+  useEffect(() => {
+    const el = scroller.current;
+    const content = el?.querySelector('.thread') ?? el?.firstElementChild;
+    if (!el || !content) return;
+    const observer = new ResizeObserver(() => { if (stick.current) el.scrollTop = el.scrollHeight; });
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [chat?.id, empty]);
 
   useEffect(() => {
     const el = scroller.current;

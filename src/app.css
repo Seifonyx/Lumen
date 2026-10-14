@@ -3487,3 +3487,25 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
 .delete-account .btn.danger-fill:disabled { opacity: .5; }
 @media (max-width: 600px) { .delete-account { padding: 14px 16px calc(18px + env(safe-area-inset-bottom)); } }
 .about-links { display: inline-flex; gap: 12px; flex-wrap: wrap; }
+
+/* ============================================================ Perceived performance
+   Off-screen message bodies skip layout and paint (the browser keeps their last size), so focusing a field,
+   opening a menu or switching theme no longer re-lays out a whole long chat. Only the text body, never the
+   row: menus and pop-ups that hang outside a row must not be clipped. The newest two stay fully live. */
+.thread:not(.virtual-thread) > .message-row:not(:nth-last-child(-n+2)) .markdown { content-visibility: auto; contain-intrinsic-size: auto 240px; }
+/* Message actions that can't be used while a reply streams: kept in place, dimmed. */
+.busy-hold { display: contents; }
+.busy-hold[inert] > * { opacity: .4; transition: opacity .2s var(--ease); }
+/* Hover-revealed assistant actions (computers): the same for the ones inside .busy-hold. */
+@media (hover: hover) and (pointer: fine) {
+  .msg.assistant .msg-actions > .busy-hold > * { opacity: 0; transition: opacity .15s var(--ease); }
+  .msg.assistant:hover .msg-actions > .busy-hold > *, .msg.assistant:focus-within .msg-actions > .busy-hold > *,
+  .message-row:last-child .msg.assistant .msg-actions > .busy-hold > *, .msg-actions:has([aria-expanded='true']) > .busy-hold > * { opacity: 1; }
+  .msg.assistant .msg-actions > .busy-hold[inert] > * { opacity: 0; }
+  .msg.assistant:hover .msg-actions > .busy-hold[inert] > *, .message-row:last-child .msg.assistant .msg-actions > .busy-hold[inert] > * { opacity: .4; }
+}
+/* Theme switch: everything changes colour in the same frame. */
+.theme-switching, .theme-switching *, .theme-switching *::before, .theme-switching *::after { transition: none !important; }
+/* Older messages added after a chat opens appear above the view: no entrance animation. */
+.message-row.backfill .msg { animation: none; }
+.to-bottom { animation: fade .18s var(--ease); }

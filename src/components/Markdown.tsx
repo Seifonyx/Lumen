@@ -1,5 +1,5 @@
 import { memo, useMemo, useSyncExternalStore } from 'react';
-import { markdownExtrasVersion, segments, subscribeMarkdownExtras } from '../lib/markdown';
+import { markdownExtrasVersion, segments, subscribeMarkdownExtras, type Segment } from '../lib/markdown';
 import { copyText } from '../lib/util';
 import { useStore } from '../store';
 import ChartBlock from './ChartBlock';
@@ -9,11 +9,26 @@ import EditCard, { ApplyAll } from './EditCard';
 import { parseEdit } from '../lib/edits';
 import type { KnowledgeSource } from '../types';
 
+// Finished messages are parsed and sanitised once and reused (switching chats, re-renders): this is most of
+// the cost of opening a long chat. Keyed by text, citation count and whether maths/code colouring had loaded.
+const CACHE_SIZE = 400;
+const cache = new Map<string, Segment[]>();
+function cachedSegments(text: string, streaming: boolean, count: number, extras: number): Segment[] {
+  if (streaming) return segments(text, true, count);
+  const key = `${extras}|${count}|${text}`;
+  const hit = cache.get(key);
+  if (hit) { cache.delete(key); cache.set(key, hit); return hit; }
+  const parts = segments(text, false, count);
+  cache.set(key, parts);
+  if (cache.size > CACHE_SIZE) cache.delete(cache.keys().next().value!);
+  return parts;
+}
+
 function Markdown({ text, streaming, messageId,knowledgeSources,onSource }: { text: string; streaming: boolean; messageId?: string; knowledgeSources?:KnowledgeSource[]; onSource?:(source:KnowledgeSource)=>void }) {
   const count=knowledgeSources?.length||0;
   // Re-render once maths and code colouring have loaded.
   const extras = useSyncExternalStore(subscribeMarkdownExtras, markdownExtrasVersion);
-  const parts = useMemo(() => segments(text, streaming,count), [text, streaming,count, extras]);
+  const parts = useMemo(() => cachedSegments(text, streaming, count, extras), [text, streaming, count, extras]);
   const edits = useMemo(
     () => (streaming ? [] : parts.flatMap((p) => (p.type === 'edit' && p.complete ? [parseEdit(p.kind, p.path, p.content)] : []))),
     [parts, streaming],

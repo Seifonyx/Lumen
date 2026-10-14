@@ -16,13 +16,31 @@ function isolate() {
     branch=branch.parentElement;
   }
 }
+// Making the background inert restyles the whole app (tens of milliseconds on a phone with a long chat
+// open), so on open it happens right after the sheet or dialog has painted: it appears at once and its
+// slide/fade (compositor-driven) doesn't wait. The backdrop covers the background meanwhile, so nothing
+// behind can be tapped. Closing undoes it immediately, so focus can return to where it was.
+let pending = 0;
+const after: (() => void)[] = [];
+function scheduleIsolate(then?: () => void) {
+  if (then) after.push(then);
+  if (pending) return;
+  pending = requestAnimationFrame(() => {
+    setTimeout(() => {
+      pending = 0;
+      isolate();
+      after.splice(0).forEach((fn) => fn());
+    }, 0);
+  });
+}
+
 /** Nested dialogs own focus and hide their background from assistive technology. */
 export function useFocusScope(ref:RefObject<HTMLElement|null>,active:boolean,onEscape:()=>void) {
   const close=useRef(onEscape);close.current=onEscape;
   useLayoutEffect(()=>{
     const root=ref.current;if(!active||!root)return;
     const previous=document.activeElement instanceof HTMLElement?document.activeElement:null;
-    scopes.push(root);isolate();
+    scopes.push(root);scheduleIsolate();
     if(!root.contains(document.activeElement))root.focus({preventScroll:true});
     const key=(event:KeyboardEvent)=>{
       if(scopes.at(-1)!==root)return;
@@ -40,7 +58,10 @@ export function useFocusScope(ref:RefObject<HTMLElement|null>,active:boolean,onE
     };
     document.addEventListener('keydown',key,true);
     return()=>{
-      document.removeEventListener('keydown',key,true);scopes.splice(scopes.indexOf(root),1);isolate();
+      // Closing makes the background usable again straight away, so focus returns to where it was at once.
+      document.removeEventListener('keydown',key,true);scopes.splice(scopes.indexOf(root),1);
+      if(pending){cancelAnimationFrame(pending);pending=0;after.splice(0).forEach(fn=>fn());}
+      isolate();
       if(previous?.isConnected && !previous.closest('[inert]') && !(window.matchMedia('(pointer:coarse)').matches && previous.matches('input,textarea')))previous.focus({preventScroll:true});
     };
   },[active,ref]);

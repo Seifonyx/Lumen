@@ -989,6 +989,12 @@ export const useStore = create<State>((set, get) => {
         get().updateSettings({ enabledModels: [], defaultModel: AUTO });
         return;
       }
+      // Show the list from last time straight away (names, not raw ids) while the fresh one loads.
+      if (!get().catalog) {
+        const saved = savedCatalog();
+        const hidden = new Set(get().settings.unavailableModels || []);
+        if (saved) set({ catalog: { ...saved, models: saved.models.filter((m) => providerEnabled(m.id.split(':')[0], keys) && !isExcludedModel(m.id) && !hidden.has(m.id)) } });
+      }
       try {
         let catalog = await fetchCatalog(true).catch((e) => {
           if (navigator.onLine || !savedCatalog()) throw e;

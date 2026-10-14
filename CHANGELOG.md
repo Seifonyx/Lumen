@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.1 · Faster and steadier
+
+- Opening a long chat is immediate: the sidebar slides away as soon as you tap, the newest messages show
+  first and older ones fill in behind them. On a mid-range phone it went from about 2.3 seconds of
+  frozen screen to under a tenth of a second.
+- Menus and sheets (model picker, +, usage, chat menu, new chat) open about twice as fast when a long chat
+  is open.
+- Chats open on the latest message instead of just above it.
+- Sending a message always brings it into view, even if you had scrolled up a little.
+- Buttons under earlier messages no longer disappear and pop back while a reply is being written.
+- Switching theme changes everything in the same frame (no half light, half dark moment).
+- The True black theme no longer flashes dark grey when the app opens, and the phone's status bar now
+  matches the theme you picked.
+- After reloading, model names show straight away instead of a raw id until the list loads.
+
 ## 1.0.0 · 2026-10-14
 
 The first official release of **Lumen**: a private chat app that connects you to free AI models using your own keys.

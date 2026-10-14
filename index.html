@@ -21,8 +21,13 @@
       // Apply the saved theme before first paint to avoid a flash.
       try {
         var s = JSON.parse(localStorage.getItem('mr.settings') || '{}');
-        if (s.theme === 'light' || s.theme === 'dark') document.documentElement.dataset.theme = s.theme;
-        if (s.fontSize) document.documentElement.dataset.font = s.fontSize;
+        var root = document.documentElement;
+        if (s.theme === 'light' || s.theme === 'dark') root.dataset.theme = s.theme;
+        if (s.theme === 'black') { root.dataset.theme = 'dark'; root.dataset.appearance = 'black'; }
+        if (s.fontSize) root.dataset.font = s.fontSize;
+        // The phone's status bar follows the chosen theme, not just the system setting.
+        var bar = { light: '#f6f7f9', dark: '#0d0f12', black: '#000000' }[s.theme];
+        if (bar) document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) { m.setAttribute('content', bar); });
       } catch (e) {}
     </script>
   </head>

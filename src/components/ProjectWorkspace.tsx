@@ -77,8 +77,8 @@ export default function ProjectWorkspace({ project, onOpenSettings }: { project:
   const instructions = project.instructions?.trim() || '';
 
   return (
-    <div className={`project-page claude-project-view color-${color}`}>
-      <div className="project-hero" aria-hidden="true" />
+    <div className="project-page claude-project-view">
+      <div className={`project-hero color-${color}`} aria-hidden="true" />
       <header className="project-head">
         <span className={`project-tile color-${color}`} aria-hidden="true">{project.name.slice(0, 1).toUpperCase()}</span>
         <div className="project-head-text">

@@ -49,7 +49,7 @@ const { profile, seed } = require('./helpers/preview-profile.cjs');
     await page.locator('.msg.assistant').filter({ hasText: 'LAST_REPLY_MARKER' }).waitFor();
 
     await page.keyboard.press('Control+Shift+L');
-    await page.getByRole('tab', { name: 'Assistants' }).waitFor();
+    await page.locator('.hub-page h1', { hasText: 'Assistants' }).waitFor();
     await page.keyboard.press('Escape');
 
     page.once('dialog', (d) => d.accept());

@@ -13,6 +13,7 @@ export default function PaneResizer({ pane, storageKey, label }: { pane: React.R
   useEffect(() => {
     const el = pane.current, w = savedWidth(storageKey);
     if (el && w) el.style.setProperty('--pane-w', `${w}px`);
+    if (el) handle.current?.setAttribute('aria-valuenow', String(Math.round(el.getBoundingClientRect().width)));
   }, [pane, storageKey]);
   const limit = (w: number) => Math.round(Math.max(MIN, Math.min(w, window.innerWidth - MIN - (document.querySelector('.sidebar')?.getBoundingClientRect().width || 0))));
   const apply = (w: number, save = true) => {
@@ -31,6 +32,9 @@ export default function PaneResizer({ pane, storageKey, label }: { pane: React.R
       role="separator"
       aria-orientation="vertical"
       aria-label={label}
+      aria-valuemin={MIN}
+      aria-valuemax={typeof window !== 'undefined' ? window.innerWidth : 2000}
+      aria-valuenow={savedWidth(storageKey) || 560}
       tabIndex={0}
       onPointerDown={(e) => {
         const el = pane.current;

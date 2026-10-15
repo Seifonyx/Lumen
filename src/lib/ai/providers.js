@@ -526,6 +526,28 @@ export async function openRouterDailyLimit() {
 
 // One-shot, non-streaming completion (chat titles, summaries of long chats).
 // Returns the text, or null on failure; `info` (if given) receives { status, input, output, limit }.
+/**
+ * Gemini text embeddings (free tier), for searching your chats by meaning. Returns one vector per text, or
+ * throws with `status` set (429 = slow down).
+ * @param {string[]} texts
+ * @param {'RETRIEVAL_DOCUMENT' | 'RETRIEVAL_QUERY'} taskType
+ * @param {AbortSignal} [signal]
+ * @returns {Promise<number[][]>}
+ */
+export async function embed(texts, taskType, signal) {
+  if (!keys.gemini) throw Object.assign(new Error('Searching by meaning needs a Gemini key.'), { status: 403 });
+  const model = 'models/gemini-embedding-001';
+  const res = await fetch(`${GEMINI_BASE}/${model}:batchEmbedContents`, {
+    method: 'POST',
+    signal,
+    headers: { 'content-type': 'application/json', 'x-goog-api-key': keys.gemini },
+    body: JSON.stringify({ requests: texts.map((text) => ({ model, content: { parts: [{ text }] }, taskType, outputDimensionality: 256 })) }),
+  });
+  if (!res.ok) throw Object.assign(new Error((await readError(res)).message || `Embedding failed (${res.status})`), { status: res.status });
+  const d = await res.json();
+  return (d.embeddings || []).map((e) => e.values || []);
+}
+
 export async function complete({ provider, name }, prompt, { maxTokens = 256, signal, info } = {}) {
   if (!parseModelId(`${provider}:${name}`) || !hasKey(provider)) {
     if (info) Object.assign(info, { status: 403, message: 'This provider is not enabled.' });

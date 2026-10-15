@@ -3932,3 +3932,25 @@ html.pane-resizing, html.pane-resizing * { cursor: col-resize !important; user-s
 .quiz-after { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; animation: research-in 0.25s var(--ease) both; }
 .quiz-after p { margin: 0; flex: 1; }
 @media (prefers-reduced-motion: reduce) { .flashcard-inner { transition: none; } }
+
+/* ---- 2.1 Ask your chats ---- */
+.ask-chats-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 12px; margin: 2px 0 6px; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); background: none; color: var(--text); font: inherit; font-size: 0.8125rem; text-align: start; cursor: pointer; animation: research-in 0.2s var(--ease) both; }
+.ask-chats-btn > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ask-chats-btn svg { color: var(--signal-strong, var(--accent)); flex: none; }
+.ask-chats-btn:hover { background: var(--surface-2); border-style: solid; }
+.ask-chats { display: flex; flex-direction: column; gap: 12px; min-height: 260px; }
+.ask-chats > p { margin: 0; }
+.ask-form { display: flex; gap: 8px; }
+.ask-form .search { flex: 1; margin: 0; }
+.ask-status { display: flex; align-items: center; gap: 8px; color: var(--text-2); font-size: 0.875rem; }
+.ask-error { margin: 0; color: var(--warning); font-size: 0.8125rem; }
+.ask-answer { white-space: pre-wrap; line-height: 1.6; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); animation: research-in 0.3s var(--ease) both; }
+.ask-cite { display: inline-flex; align-items: center; justify-content: center; min-width: 1.45em; height: 1.45em; padding: 0 0.35em; margin: 0 0.08em; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-2); font-size: 0.7em; font-weight: 600; vertical-align: 0.28em; cursor: pointer; }
+.ask-cite:hover { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.ask-subtitle { margin: 6px 0 0; font-size: 0.8125rem; color: var(--text-2); font-weight: 600; }
+.ask-hits { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ask-hits button { display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; text-align: start; cursor: pointer; }
+.ask-hits button:hover { border-color: var(--border-strong); }
+.ask-n { flex: none; display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-2); font-size: 0.75rem; font-weight: 600; }
+.ask-hit { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ask-date { flex: none; }

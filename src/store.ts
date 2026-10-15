@@ -37,6 +37,7 @@ import { canApplyCoding, codingInstructions, parsePlan, planBaseline, planRepo }
 import { applyAppearance, DEFAULT_SETTINGS, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
 import { cleanRewrite, writingPrompt } from './lib/writing-tools';
+import { askPrompt, type Hit } from './lib/history-search';
 import { MAX_SOURCE_CHARS, parseDeck, studyPrompt, type StudyDeck } from './lib/study';
 import { linkCitations, numberSources, parsePlan as parseResearchPlan, planPrompt, reportBrief, searchPrompt } from './lib/research';
 import type { Attachment, Catalog, Chat, ChatSummary, ComparisonState, FileChange, Memory, Message, ModelInfo, Project, RepoLink, Research, SavedAssistant, ScheduledTask, Settings } from './types';
@@ -176,6 +177,8 @@ interface State {
   rewriteText(text: string, ask: string): Promise<string | null>;
   /** Study mode: flashcards and a quiz from a chat or one of its documents. Null if no model managed it. */
   makeStudyDeck(chatId: string, documentId?: string): Promise<StudyDeck | null>;
+  /** Ask your chats: an answer written from the most related parts of your history. */
+  answerFromHistory(question: string, hits: Hit[]): Promise<string | null>;
   /** Swaps `from` for `to` inside a reply (when `from` appears in it exactly once). */
   replaceInMessage(chatId: string, messageId: string, from: string, to: string): Promise<boolean>;
   setChatModel(model: string): void;
@@ -1635,6 +1638,14 @@ export const useStore = create<State>((set, get) => {
         if (compareController === aborter) compareController = null;
         if (get().comparison?.id === comparisonId) set({ comparing: false });
       }
+    },
+    async answerFromHistory(question, hits) {
+      const generation = accountGeneration;
+      const masker = get().settings.privacyShield ? new Masker() : null;
+      const prompt = askPrompt(question, hits);
+      const result = await fetchSummary(masker ? masker.mask(prompt).text : prompt, summaryModels(Math.ceil(prompt.length / 4)), { minLength: 1, report: (id, info) => { if (generation !== accountGeneration) return; usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 }); if (info.limit) usage?.block(id, info.limit); } });
+      if (!result || generation !== accountGeneration) return null;
+      return masker && get().settings.privacyRestore ? masker.unmask(result.text) : result.text;
     },
     async makeStudyDeck(chatId, documentId) {
       const generation = accountGeneration;

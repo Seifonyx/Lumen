@@ -1,6 +1,6 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
-import { Archive, ArchiveRestore, ChevronRight, GraduationCap, Columns2, FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Archive, ArchiveRestore, ChevronRight, GraduationCap, Sparkles, Columns2, FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
 import type { Chat, Project } from '../types';
@@ -13,6 +13,7 @@ import { useFocusScope } from '../lib/focus-scope';
 import { Exit, exitGhost, motionOff, useFlip } from '../lib/motion';
 import { useLongPress } from '../lib/long-press';
 import ContextMenu from './ContextMenu';
+const AskChats = lazy(() => import('./AskChats'));
 
 const EMPTY_PROJECTS: Project[] = [];
 
@@ -155,6 +156,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
   const library=(section:string)=>{setUi({sidebarOpen:false});window.dispatchEvent(new CustomEvent('mr:library',{detail:section}));};
   const [query, setQuery] = useState('');
   const [allChats, setAllChats] = useState(false);
+  const [asking, setAsking] = useState<string | null>(null);
   // Rows glide to their new place when the order changes (pin, new chat, delete); not while searching.
   const listRef = useRef<HTMLElement>(null);
   const searchInput = useRef<HTMLInputElement>(null);
@@ -251,6 +253,11 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
           <Search size={16} />
           <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape' && query) { e.stopPropagation(); setQuery(''); } }} dir="auto" />
         </label>
+        {query.trim().length > 1 && (
+          <button type="button" className="ask-chats-btn" onClick={() => setAsking(query)} title="Find what you talked about, even with different words, and get an answer from it">
+            <Sparkles size={15} /> <span>Ask your chats: “<span dir="auto">{query.trim().slice(0, 40)}</span>”</span>
+          </button>
+        )}
         <button className="library-button" onClick={() => library('assistants')} title={`Assistants, prompts, knowledge, tools and scheduled tasks (${modKey}⇧L)`}><BookOpen size={18} /><span>Library</span></button>
         <button className="library-button" onClick={() => setArtifacts(true)}><FileText size={18} /><span>Documents</span></button>
         <button className="library-button" onClick={() => window.dispatchEvent(new CustomEvent('mr-open-study'))} title="Flashcards and quizzes from your chats and documents"><GraduationCap size={18} /><span>Study</span></button>
@@ -335,6 +342,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
         </button>
       </div>
     </aside>
+    {asking !== null && <Suspense fallback={null}><AskChats initial={asking} onClose={() => setAsking(null)} /></Suspense>}
     {artifacts && (() => {
       const docs = chats.filter((c) => !isTemporaryChat(c)).flatMap((c) => (c.documents || []).map((doc) => ({ doc, chat: c }))).sort((x, y) => y.doc.updatedAt - x.doc.updatedAt);
       return (

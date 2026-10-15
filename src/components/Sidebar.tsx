@@ -293,7 +293,6 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
         {!phone && <button type="button" className="sidebar-chip new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}><Plus size={13} strokeWidth={2.2} /> New chat</button>}
       </div>
       <nav className="chat-list has-indicator" aria-label="Chat history" ref={listRef}>
-        <span className="active-indicator" ref={indicator} aria-hidden="true" />
         {groups.length === 0 && <p className="muted small empty-list">{!query && <span className="empty-moon"><WelcomeStars size={34} /></span>}{query ? 'No chats match.' : 'Your chats will appear here.'}</p>}
         {groups.map(([label, list]) => (
           <section key={label}>
@@ -305,6 +304,8 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
             </ul>
           </section>
         ))}
+        {/* (Last, so it doesn't change which section counts as the first.) */}
+        <span className="active-indicator" ref={indicator} aria-hidden="true" />
       </nav>
       {groups.length > 0 && <button type="button" className="view-all-chats" onClick={() => setAllChats(true)}>View all chats <ChevronRight size={14} aria-hidden="true" /></button>}
       </div>

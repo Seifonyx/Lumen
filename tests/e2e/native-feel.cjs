@@ -127,7 +127,7 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
 
       // ---- Long press on your message: Edit
       [x, y] = await center(page.locator('.msg.user .bubble'));
-      await touchAt(page, x, y, { holdMs: 650 });
+      await touchAt(page, x, y, { holdMs: 900 });
       await page.getByRole('menu', { name: 'Message actions' }).waitFor();
       await page.waitForTimeout(450); await page.screenshot({ path: process.env.SHOTS ? `${process.env.SHOTS}/nf-${theme}-msg-menu.png` : undefined });
       await page.waitForTimeout(400);
@@ -140,7 +140,7 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
       await page.locator('.sidebar.open').waitFor();
       await page.waitForTimeout(500);
       [x, y] = await center(page.locator('.chat-row', { hasText: 'Budget for March' }));
-      await touchAt(page, x, y, { holdMs: 650 });
+      await touchAt(page, x, y, { holdMs: 900 });
       await page.getByRole('menu', { name: 'Chat options' }).waitFor();
       await page.waitForTimeout(450); await page.screenshot({ path: process.env.SHOTS ? `${process.env.SHOTS}/nf-${theme}-chat-menu.png` : undefined });
       assert.equal(await page.locator('.sidebar.open').count(), 1, `${theme}: the drawer stays open under the chat menu`);

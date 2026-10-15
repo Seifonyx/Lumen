@@ -78,6 +78,9 @@ marked.use({
     },
     link({ href, title, tokens }: Tokens.Link) {
       const text = this.parser.parseInline(tokens);
+      // A numbered source, [3] in a report: a small pill rather than bracketed text.
+      const cite = /^\[(\d{1,3})\]$/.exec(text);
+      if (cite) return `<a href="${escapeHtml(href)}" class="cite" title="${escapeHtml(title || href)}" aria-label="Source ${cite[1]}" target="_blank" rel="noopener noreferrer">${cite[1]}</a>`;
       return `<a href="${escapeHtml(href)}"${title ? ` title="${escapeHtml(title)}"` : ''} target="_blank" rel="noopener noreferrer">${text}</a>`;
     },
     table(token: Tokens.Table) {

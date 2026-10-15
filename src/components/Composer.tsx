@@ -140,6 +140,18 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
     if (!isTouch()) input.current?.focus();
   }, [currentId]);
 
+  // Welcome screen shortcuts that turn on a mode (deep research, create image).
+  useEffect(() => {
+    const onMode = (e: Event) => {
+      const mode = (e as CustomEvent<string>).detail;
+      if (mode === 'research') { setDeepResearch(true); setImageMode(false); }
+      else if (mode === 'image') { setImageMode(true); setDeepResearch(false); }
+      requestAnimationFrame(() => input.current?.focus());
+    };
+    window.addEventListener('mr:composer-mode', onMode);
+    return () => window.removeEventListener('mr:composer-mode', onMode);
+  }, []);
+
   useEffect(() => {
     const onPrefill = (e: Event) => {
       const detail = (e as CustomEvent<string | { text: string; append: boolean; files?: Attachment[]; codeExecution?: boolean }>).detail;

@@ -1,5 +1,6 @@
 import { flySent, motionOff } from '../lib/motion';
 import { FolderGit2, FolderKanban, ArrowDown, FileText, Menu, PanelLeftOpen, EyeOff } from 'lucide-react';
+import WelcomeStarters from './WelcomeStarters';
 import WelcomeStars from './WelcomeStars';
 import { modKey } from '../lib/util';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -265,6 +266,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
           <div className="empty">
             <span className="welcome-mark" aria-hidden="true"><WelcomeStars /></span>
             <h1>{isTemporaryChat(chat)?'Incognito chat':user?.name&&welcomeSequence%(WELCOME_GREETINGS.length+1)===0?greeting:WELCOME_GREETINGS[(welcomeSequence+(user?.name?WELCOME_GREETINGS.length-1:0)) % WELCOME_GREETINGS.length]}</h1>
+            {!isTemporaryChat(chat) && <WelcomeStarters />}
           </div>
         ) : (
           chat && <MessageThread key={chat.id} chat={chat} summary={summary} busy={streaming||canvasEditing} compacting={compacting} scroller={scroller} stick={stick} navigationHost={navigationHost}/>

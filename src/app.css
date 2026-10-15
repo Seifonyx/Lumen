@@ -3847,3 +3847,31 @@ html.pane-resizing, html.pane-resizing * { cursor: col-resize !important; user-s
 .memory-project { display: inline-flex; align-items: center; gap: 3px; margin-inline-end: 6px; padding: 0 7px; border-radius: 999px; background: var(--surface-2); color: var(--text-2); }
 .memory-row.editing { flex-wrap: wrap; }
 .memory-row.editing .memory-scope { align-self: flex-start; }
+
+/* ---- 2.0 Design refinements ---- */
+/* Numbered sources: small pills that sit in the line. */
+.markdown a.cite { display: inline-flex; align-items: center; justify-content: center; min-width: 1.45em; height: 1.45em; padding: 0 0.38em; margin: 0 0.08em; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); font-size: 0.7em; font-weight: 600; line-height: 1; text-decoration: none; vertical-align: 0.28em; font-variant-numeric: tabular-nums; transition: background-color 0.15s, color 0.15s, border-color 0.15s; }
+.markdown a.cite:hover, .markdown a.cite:focus-visible { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+/* Quotes and tips: a soft panel instead of a bare line. */
+.markdown blockquote { border-inline-start: 3px solid var(--signal-strong, var(--border-strong)); background: var(--surface-2); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 0.55em 1em; color: var(--text); }
+:root[dir="rtl"] .markdown blockquote { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+:root[data-theme="dark"] .markdown blockquote, :root[data-theme="black"] .markdown blockquote { border-inline-start-color: var(--signal); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .markdown blockquote { border-inline-start-color: var(--signal); } }
+.markdown blockquote > :first-child { margin-top: 0; } .markdown blockquote > :last-child { margin-bottom: 0; }
+/* Tables: a quiet header band and rows that highlight under the pointer. */
+.markdown .table-wrap { border-radius: var(--radius); }
+.markdown th { background: var(--surface-2); }
+.markdown tr:last-child td { border-bottom: 0; }
+@media (hover: hover) { .markdown tbody tr:hover td { background: color-mix(in srgb, var(--surface-2) 55%, transparent); } }
+/* Headings: a little more air above sections. */
+.markdown h2 { margin-top: 1.6em; }
+.markdown > div:first-child > :first-child { margin-top: 0; }
+/* Welcome: starters under the greeting. */
+.welcome-starters { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 22px auto 0; max-width: 720px; }
+.welcome-starter { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); font: inherit; font-size: 0.875rem; cursor: pointer; animation: rise 0.4s var(--ease) both; transition: border-color 0.15s, color 0.15s, transform 0.15s var(--ease), box-shadow 0.15s; }
+.welcome-starter svg { color: var(--text-3); transition: color 0.15s; }
+.welcome-starter:hover { border-color: var(--border-strong); color: var(--text); box-shadow: var(--shadow-sm); }
+.welcome-starter:hover svg { color: var(--signal-strong, var(--text)); }
+.welcome-starter:active { transform: scale(0.97); }
+@media (max-width: 640px) { .welcome-starters { display: grid; grid-template-columns: 1fr 1fr; max-width: 340px; padding: 0 8px; } .welcome-starter { justify-content: center; padding: 10px 12px; font-size: 0.8125rem; } }
+@media (prefers-reduced-motion: reduce) { .welcome-starter { animation: none; } }

@@ -66,6 +66,8 @@ function normalize(raw: any): Chat {
     id: m.id || uid() + i,
     role: m.role,
     codeExecution: Boolean(m.codeExecution),
+    deepResearch: m.deepResearch ? true : undefined,
+    research: m.research && Array.isArray(m.research.steps) ? { phase: m.research.phase === 'searching' || m.research.phase === 'planning' || m.research.phase === 'writing' ? 'stopped' : m.research.phase, steps: m.research.steps.map((s: any) => ({ query: String(s.query || ''), status: s.status === 'searching' || s.status === 'waiting' ? 'failed' : s.status, sources: s.sources })) } : undefined,
     coding: m.coding && typeof m.coding.id === 'string' && ['plan','work'].includes(m.coding.phase) && typeof m.coding.repo === 'string' ? m.coding : undefined,
     text: m.text || '',
     files: (m.files || []).map((f: any) => ({ id: f.id || uid(), size: f.size ?? (f.data?.length ?? f.text?.length ?? 0), mime: f.mime || 'text/plain', ...f })),

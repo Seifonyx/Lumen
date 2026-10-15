@@ -37,3 +37,21 @@ export function listenForNotificationTaps(open: (chatId: string) => void) {
   if (fromUrl) { url.searchParams.delete('openChat'); history.replaceState(null, '', url.pathname + url.search + url.hash); open(fromUrl); }
   return () => { window.removeEventListener('mr-open-chat', fromPage); navigator.serviceWorker?.removeEventListener('message', fromWorker); };
 }
+
+// The app icon's badge (Home Screen app on iPhone, installed app on computers): replies that finished while
+// you were away. Cleared when you come back.
+let unseen = 0;
+export function markUnseen() {
+  if (document.visibilityState === 'visible' && document.hasFocus()) return;
+  unseen++;
+  (navigator as Navigator & { setAppBadge?: (n: number) => Promise<void> }).setAppBadge?.(unseen).catch(() => {});
+}
+if (typeof document !== 'undefined') {
+  const clear = () => {
+    if (document.visibilityState !== 'visible' || !unseen) return;
+    unseen = 0;
+    (navigator as Navigator & { clearAppBadge?: () => Promise<void> }).clearAppBadge?.().catch(() => {});
+  };
+  document.addEventListener('visibilitychange', clear);
+  window.addEventListener('focus', clear);
+}

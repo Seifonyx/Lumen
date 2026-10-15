@@ -108,13 +108,16 @@ export class MemoryStore {
     return m;
   }
 
-  async update(id: string, text: string) {
+  /** Changes a memory's text, and with `projectId` which project it belongs to (null: every chat). */
+  async update(id: string, text: string, projectId?: string | null) {
+    const scope = projectId === undefined ? {} : { projectId: projectId || undefined };
     if (this.userId.startsWith('preview-')) {
-      const items = this.readPreview().map((m) => (m.id === id ? { ...m, text: clip(text), updatedAt: Date.now() } : m));
+      const items = this.readPreview().map((m) => (m.id === id ? { ...m, text: clip(text), updatedAt: Date.now(), ...scope } : m));
       this.writePreview(items);
       return;
     }
-    this.send(setDoc(ref(this.userId), { items: { [id]: { text: clip(text), updatedAt: Date.now() } } }, { merge: true }), 'save to memory');
+    const remote = projectId === undefined ? {} : { projectId: projectId || deleteField() };
+    this.send(setDoc(ref(this.userId), { items: { [id]: { text: clip(text), updatedAt: Date.now(), ...remote } } }, { merge: true }), 'save to memory');
   }
 
   async remove(id: string) {
@@ -155,47 +158,60 @@ export function findMemory(items: Memory[], text: string): Memory | undefined {
   return items.find((m) => sameMemory(m.text, text));
 }
 
-const MARKER = /\[\[\s*(remember|forget)\s*:\s*([\s\S]*?)\]\]/gi;
+const MARKER = /\[\[\s*(remember\s+for\s+project|remember|forget)\s*:\s*([\s\S]*?)\]\]/gi;
 
 /** Splits a finished reply into the visible text and its memory changes. */
-export function extractMemoryOps(raw: string): { text: string; remember: string[]; forget: string[] } {
+export function extractMemoryOps(raw: string): { text: string; remember: string[]; forget: string[]; project: string[] } {
   const remember: string[] = [];
   const forget: string[] = [];
+  const project: string[] = [];
   const text = raw
     .replace(MARKER, (_, kind: string, body: string) => {
       const t = clip(body);
-      if (t) (kind.toLowerCase() === 'remember' ? remember : forget).push(t);
+      const k = kind.toLowerCase();
+      if (t) (k === 'remember' ? remember : k === 'forget' ? forget : project).push(t);
       return '';
     })
     .replace(/\n{3,}/g, '\n\n')
     .trimEnd();
-  return { text, remember, forget };
+  return { text, remember, forget, project };
 }
 
 /** While a reply streams in, hides memory lines, including one that's only half written. */
 export function hideMemoryLines(raw: string): string {
-  return raw.replace(MARKER, '').replace(/\[(\[\s*(r|re|rem|reme|remem|rememb|remembe|remember|f|fo|for|forg|forge|forget)?(\s*:[^\]]*)?\]?)?$/i, '').replace(/\n{3,}/g, '\n\n');
+  return raw.replace(MARKER, '').replace(/\[(\[\s*(r|re|rem|reme|remem|rememb|remembe|remember(?:\s+(?:f|fo|for(?:\s+(?:p|pr|pro|proj|proje|projec|project)?)?)?)?|f|fo|for|forg|forge|forget)?(\s*:[^\]]*)?\]?)?$/i, '').replace(/\n{3,}/g, '\n\n');
 }
 
 /** The memory section of the instructions sent to the model. */
-export function memoryInstructions(items: Memory[], autoSave: boolean): string {
+export const MAX_ABOUT_CHARS = 2000;
+
+/**
+ * The memory section of the instructions sent to the model: what you wrote about yourself, then saved memories
+ * (ones kept for a project only go to that project's chats).
+ */
+export function memoryInstructions(items: Memory[], autoSave: boolean, opts: { projectId?: string; projectName?: string; aboutMe?: string } = {}): string {
   const lines: string[] = [];
   let size = 0;
-  for (const m of items) {
+  const about = (opts.aboutMe || '').trim().slice(0, MAX_ABOUT_CHARS);
+  for (const m of items.filter((x) => !x.projectId || x.projectId === opts.projectId)) {
     if (size + m.text.length > PROMPT_BUDGET) break;
-    lines.push(`- ${m.text}`);
+    lines.push(`- ${m.text}${m.projectId ? ' (this project)' : ''}`);
     size += m.text.length + 3;
   }
   const known = lines.length
     ? `What you remember about the user from earlier chats (use it naturally when relevant; don't recite it unless asked):\n${lines.join('\n')}`
     : 'You have no saved memories about the user yet.';
+  const aboutNote = about ? `What the user wrote about themselves (keep it in mind; it's theirs to change, so don't save it as memories):\n${about}` : '';
+  const projectNote = opts.projectId && opts.projectName ? `This chat is in the user's project "${opts.projectName}". For facts that only matter to this project (its goals, people, decisions, conventions), use [[remember for project: …]] instead of [[remember: …]]; those are only shown in this project's chats.` : '';
   const when = autoSave
     ? 'Save a memory when the user asks you to remember something, or when they share a lasting fact or preference that will help in future chats (their name, job, workplace, ongoing projects, preferred language, tone or formats). Don\'t save one-off details, things already listed above, or what you said yourself.'
     : 'Save a memory only when the user explicitly asks you to remember something.';
   return [
     '# Memory',
+    aboutNote,
     known,
     `To save a memory, end your reply with a line [[remember: short fact in the third person, e.g. "Prefers answers in Arabic"]]. To remove one (when the user asks you to forget it, or it is no longer true), add [[forget: the memory as written above]]. To change a memory, forget the old one and remember the new one. These lines are hidden from the user; the app shows "Memory updated". ${when}`,
+    projectNote,
     'Never save passwords, API keys, financial account details, health information, details about other people, or confidential work figures — even if asked; say you can\'t store that.',
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }

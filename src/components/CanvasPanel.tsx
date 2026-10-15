@@ -1,3 +1,4 @@
+import PaneResizer from './PaneResizer';
 import { Check, Download, Eye, FilePlus2, Loader2, Pencil, Plus, RotateCcw, Sparkles, Square, Trash2, Upload, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useFocusScope } from '../lib/focus-scope';
@@ -56,7 +57,7 @@ function CanvasEditor({ chat, doc }: { chat: Chat; doc: CanvasDocument }) {
     const store = useStore.getState();
     const project = settings.projects?.find(p => p.id === chat.projectId);
     const layout = findLayout(chat.model || settings.defaultModel, store.catalog?.models || [], settings.layouts, settings.hiddenLayouts);
-    const privateText = [doc.name, doc.content, instruction, settings.customInstructions, project?.instructions, chat.assistant?.instructions, layout?.instructions, settings.memory ? memoryInstructions(store.memories, false) : ''].filter(Boolean).join('\n');
+    const privateText = [doc.name, doc.content, instruction, settings.customInstructions, project?.instructions, chat.assistant?.instructions, layout?.instructions, settings.memory ? memoryInstructions(store.memories, false, { aboutMe: settings.aboutMe, projectId: project?.id, projectName: project?.name }) : ''].filter(Boolean).join('\n');
     const findings = settings.privacyShield && settings.privacyMode === 'ask' ? scan(privateText) : [];
     if (findings.length) setCheck(findings); else void dispatch();
   };
@@ -102,9 +103,9 @@ export default function CanvasPanel() {
   const input = useRef<HTMLInputElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [phone, setPhone] = useState(() => window.matchMedia('(max-width:1199px)').matches);
+  const [phone, setPhone] = useState(() => window.matchMedia('(max-width:899px)').matches);
   useEffect(() => {
-    const query = window.matchMedia('(max-width:1199px)');
+    const query = window.matchMedia('(max-width:899px)');
     const changed = () => setPhone(query.matches);
     query.addEventListener('change', changed);
     return () => query.removeEventListener('change', changed);
@@ -141,6 +142,7 @@ export default function CanvasPanel() {
     finally { setImporting(false); }
   };
   return <aside ref={root} className="canvas-panel" aria-label="Document canvas" role={phone ? 'dialog' : 'complementary'} aria-modal={phone || undefined} tabIndex={-1}>
+    {!phone && <PaneResizer pane={root} storageKey="mr.canvasWidth" label="Resize document" />}
     <header className="canvas-head"><span><Pencil size={17} /><strong>Canvas</strong></span><button className="icon-btn" aria-label="Close canvas" onClick={close}><X size={18} /></button></header>
     <div className={`canvas-document-toolbar${(chat?.documents?.length || 0) > 1 ? '' : ' single'}`}><select aria-label="Choose canvas document" value={doc?.id || ''} onChange={e => setUi({ canvasDocumentId: e.target.value })}>{chat?.documents?.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><button className="icon-btn sm" title="New document" aria-label="New canvas document" onClick={() => openCanvas(`Document ${1 + (chat?.documents?.length || 0)}.md`, '')}><Plus size={17} /></button><button className="icon-btn sm" disabled={importing} title="Import text draft" aria-label="Import canvas document" onClick={() => input.current?.click()}>{importing ? <Loader2 size={16} className="spin" /> : <Upload size={16} />}</button><button className="icon-btn sm" disabled={!doc || downloading} aria-label="Download canvas document" title="Download document" onClick={() => void download()}>{downloading ? <Loader2 size={16} className="spin" /> : <Download size={16} />}</button><button className="icon-btn sm" disabled={!doc} aria-label="Delete canvas document" title="Delete document" onClick={() => { if (chat && doc && confirm(`Delete ${doc.name}?`)) deleteCanvasDocument(chat.id, doc.id); }}><Trash2 size={16} /></button></div>
     <input ref={input} type="file" hidden accept=".txt,.md,.csv,.tsv,.json,.html,.xml,.js,.ts,.tsx,.jsx,.py,.css,.sql,.yaml,.yml,.docx,.pdf,.pptx,.xlsx,.xlsm" onChange={e => { const file = e.target.files?.[0]; if (file) void importFile(file); e.target.value = ''; }} />

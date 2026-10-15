@@ -3,7 +3,7 @@ import { haptic } from '../lib/haptics';
 import { playSend } from '../lib/sounds';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import ChecksBar from './ChecksBar';
-import { AudioLines, Image as ImageIcon, ListChecks, FileCode2, FolderKanban, GitBranch, Globe, ShieldCheck, ArrowUp, FileText, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
+import { AudioLines, Image as ImageIcon, ListChecks, FileCode2, FolderKanban, GitBranch, Globe, ShieldCheck, ArrowUp, FileText, Loader2, Mic, Paperclip, Plus, Square, Telescope, X } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ACCEPT, readAttachment } from '../lib/files/read';
 import { canListen, canSpeak, listen, unlockSpeech } from '../lib/speech';
@@ -72,6 +72,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
   const [text, setText] = useState('');
   const [pending, setPending] = useState<Pending[]>([]);
   const [codeExecution, setCodeExecution] = useState(false);
+  const [deepResearch, setDeepResearch] = useState(false);
   const [listening, setListening] = useState(false);
   const [interim, setInterim] = useState('');
   const [dragging, setDragging] = useState(false);
@@ -251,6 +252,16 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
       void addMemory(remember[1]);
       return;
     }
+    const researchCmd = /^\/research\s+([\s\S]+)$/i.exec(text.trim());
+    if (researchCmd && !pending.length) {
+      if (!ensureOnline()) return;
+      if (!settings.enabledModels.some(toolModel)) { toast('Deep research searches with Gemini. Enable a Gemini model in Settings → Models first.', 'error'); return; }
+      liftWelcome(); noteSend(input.current); sendRipple(); haptic(); playSend();
+      clearText();
+      setDeepResearch(false);
+      void send(researchCmd[1].trim(), [], { deepResearch: true });
+      return;
+    }
     if (/^\/memory\s*$/i.test(text.trim())) {
       clearText();
       setUi({ settingsOpen: true, settingsTab: 'memory' });
@@ -279,7 +290,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
 
   const dispatch = (opts?: { privacy?: 'asIs' }) => {
     if (!ensureOnline()) return;
-    if ((codeExecution || pending.some(p => p.file?.videoUri)) && !settings.enabledModels.some(toolModel)) { toast('Enable a Gemini model in Settings → Models first.', 'error'); return; }
+    if ((codeExecution || deepResearch || pending.some(p => p.file?.videoUri)) && !settings.enabledModels.some(toolModel)) { toast(deepResearch ? 'Deep research searches with Gemini. Enable a Gemini model in Settings → Models first.' : 'Enable a Gemini model in Settings → Models first.', 'error'); return; }
     const compareWith = check?.compareModels;
     setCheck(null);
     const files = pending.map((p) => p.file!);
@@ -287,9 +298,10 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
     if (!compareWith && message) { liftWelcome(); noteSend(input.current); sendRipple(); haptic(); playSend(); }
     clearText();
     if (compareWith) void runComparison(message, files, compareWith, opts);
-    else void send(message, files, { ...opts, codeExecution });
+    else void send(message, files, { ...opts, codeExecution, deepResearch: deepResearch && Boolean(message) });
     setPending([]);
     setCodeExecution(false);
+    setDeepResearch(false);
   };
 
   const compare = (models: string[]) => {
@@ -365,6 +377,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
       >
         {chat?.repo && <ChecksBar chat={chat} />}
         {imageMode && <div className="repo-strip"><span className="ctx-chip image-chip"><ImageIcon size={13} /> Create image · describe it below<button type="button" className="icon-btn xs" aria-label="Stop creating an image" onClick={() => setImageMode(false)}><X size={12} /></button></span></div>}
+        {deepResearch && <div className="repo-strip"><span className="ctx-chip research-chip"><Telescope size={13} /> Deep research · ask your question below<button type="button" className="icon-btn xs" aria-label="Turn off deep research" onClick={() => setDeepResearch(false)}><X size={12} /></button></span></div>}
         {codeExecution && <div className="repo-strip"><span className="ctx-chip">Gemini calculation · runs on Google<button type="button" className="icon-btn xs" aria-label="Remove calculation tool" onClick={() => setCodeExecution(false)}><X size={12} /></button></span></div>}
         {chat?.repo && (
           <div className="repo-strip">
@@ -408,7 +421,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
           ref={input}
           rows={1}
           dir="auto"
-          placeholder={listening ? 'Listening…' : 'Message Lumen'}
+          placeholder={listening ? 'Listening…' : deepResearch ? 'What should Lumen research?' : 'Message Lumen'}
           value={interim ? `${text}${text && !text.endsWith(' ') ? ' ' : ''}${interim}` : text}
           onChange={(e) => {
             setText(e.target.value);
@@ -515,7 +528,8 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
           onRepo={() => setUi(chat?.repo ? { workspaceOpen: true } : { repoPicker: true })}
           repoName={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : undefined}
           onCompare={() => setCompareOpen(true)}
-          onImage={() => { setImageMode(true); setTimeout(() => input.current?.focus(), 0); }}
+          onImage={() => { setImageMode(true); setDeepResearch(false); setTimeout(() => input.current?.focus(), 0); }}
+          onResearch={chat?.repo ? undefined : () => { setDeepResearch(true); setImageMode(false); setTimeout(() => input.current?.focus(), 0); }}
           compareDisabled={!canSend || codeExecution || pending.some(p => p.file?.videoUri)}
           onSearch={() => updateSettings({ webSearch: !settings.webSearch })}
           searchEnabled={Boolean(settings.webSearch)}

@@ -1,5 +1,47 @@
 # Changelog
 
+## 2.0.0 · Deep research, imports, side by side, notifications, smarter memory
+
+**Deep research**
+- New: Deep research. Ask a question and Lumen plans several web searches, runs them, reads what they find,
+  and writes one report with numbered sources. Each [1], [2] in the report links to its source, and the full
+  list of sources is at the end.
+- To use it, tap + → Deep research, or type /research followed by your question.
+- While it works, you can see each search, the sites it read and how far along it is. When the report is done,
+  this folds into one line you can tap to see the searches again.
+- The searches use Gemini with Google Search, so you need a Gemini key. A report takes about 6 to 8 requests
+  from your free Gemini allowance.
+
+**Bring your history**
+- New: Settings → Privacy & data → Import from ChatGPT, Claude or Gemini. Choose the export file from the
+  other app (the .zip, or the .json inside it). For Gemini, use Google Takeout's "My Activity" file.
+- Lumen shows how many chats it found. You can import all of them, or only the latest 100.
+- Imported chats are tagged with where they came from. Importing the same file again updates those chats
+  instead of making copies.
+
+**Side by side** (iPad in landscape and computers)
+- New: open another chat next to the one you're in. Use the chat's ⋯ menu (or press and hold it) → Open side
+  by side. Switch swaps the two chats.
+- Drag the divider to change how much room each side gets, or use the arrow keys. Double-click the divider to
+  reset it. Lumen remembers the width.
+- Documents now open beside the chat from iPad-landscape width up. Before, they covered the chat until the
+  screen was quite wide. Their divider works the same way.
+
+**Notifications**
+- When a reply finishes in a chat you're not looking at, a note says so, with Open to go there.
+- When a reply finishes while you're in another app or tab, Lumen's icon shows a badge.
+- New setting: Settings → General → "Notify me when a reply is ready". Deep research always notifies you
+  when its report is done.
+- Lumen still needs to be open in the background for this. Notifications when it's fully closed need a
+  small server, which comes later.
+
+**Smarter memory**
+- New: About me (Settings → Memory). Write what you want every model to know about you, in your own words.
+  "Update from memories" writes a draft from what Lumen has remembered, for you to edit and save.
+- Memories can belong to a project. In a project's chats, models can keep facts that only matter to that
+  project, and those facts aren't shown to other chats. You can move a memory between a project and every
+  chat (Edit → "Every chat" / "Only in …"), or choose this when you add one.
+
 ## 1.7.1 · Smoother scrolling
 
 - Scrolling on phones is now handled entirely by the phone. Lumen's gestures (side menu, swipe back in

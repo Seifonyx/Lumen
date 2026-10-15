@@ -26,12 +26,30 @@ export interface Source {
   url: string;
 }
 
+export interface ResearchStep {
+  query: string;
+  status: 'waiting' | 'searching' | 'done' | 'failed';
+  /** what the search found (kept only while the report is written) */
+  notes?: string;
+  sources?: Source[];
+}
+
+/** Deep research: the searches behind a report and how far along it is. */
+export interface Research {
+  phase: 'planning' | 'searching' | 'writing' | 'done' | 'stopped' | 'failed';
+  steps: ResearchStep[];
+}
+
 export interface KnowledgeSource { docId:string; page:number; title:string; excerpt:string; }
 
 export interface Message {
   knowledgeSources?: KnowledgeSource[];
   coding?: { id: string; phase: 'plan' | 'work'; repo: string };
   codeExecution?: boolean;
+  /** you asked for deep research (several web searches, then a cited report) */
+  deepResearch?: boolean;
+  /** deep research behind this reply */
+  research?: Research;
   id: string;
   role: Role;
   text: string;
@@ -210,6 +228,8 @@ export interface Memory {
   updatedAt: number;
   /** 'chat' = saved by a model during a chat; 'manual' = added by you */
   source: 'chat' | 'manual';
+  /** only for chats in this project (otherwise every chat) */
+  projectId?: string;
   chatId?: string;
 }
 
@@ -264,6 +284,10 @@ export interface Settings {
   haptics?: boolean;
   /** a soft sound when you send */
   sendSound?: boolean;
+  /** a notification when a reply finishes while you're in another app or tab */
+  notifyReplies?: boolean;
+  /** "About me": what you've written about yourself, sent to models with your memories */
+  aboutMe?: string;
   /** the jump-to-message lines beside long chats (unset: on computers, off on phones) */
   messageNavigator?: boolean;
   autoTitle: boolean;

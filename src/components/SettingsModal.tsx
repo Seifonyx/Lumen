@@ -49,6 +49,8 @@ import KeySafety from './KeySafety';
 import ProviderConnections, { type MainProvider } from './ProviderConnections';
 import FilterMenu from './FilterMenu';
 import SharedLinks from './SharedLinks';
+import ImportChats from './ImportChats';
+import NotifyToggle from './NotifyToggle';
 import ModelCheck, { LAST_CHECK_KEY } from './ModelCheck';
 import RemovedModels from './RemovedModels';
 import { normalizeKeys, validAlibabaBase, validRelayUrl } from '../lib/ai/provider-config.js';
@@ -433,6 +435,7 @@ function DataTab() {
               }}
             />
           </div>
+          <ImportChats />
         </div>
       </div>
       <SharedLinks />
@@ -744,6 +747,7 @@ export default function SettingsModal() {
                     <Toggle label="Enter sends the message" hint="On computers. Shift+Enter adds a new line. On phones, use the send button." checked={settings.enterToSend} onChange={(v) => update({ enterToSend: v })} />
                     {isTouch() && <Toggle label="Vibration" hint="A light tap when you send, flip a switch, hold a message or swipe a chat." checked={settings.haptics !== false} onChange={(v) => update({ haptics: v })} />}
                     <Toggle label="Sound when sending" hint="A soft sound when your message goes. On iPhone it follows the silent switch." checked={Boolean(settings.sendSound)} onChange={(v) => { update({ sendSound: v }); if (v) playSend(); }} />
+                    <NotifyToggle Toggle={Toggle} on={Boolean(settings.notifyReplies)} onChange={(v) => update({ notifyReplies: v })} />
                     <Toggle label="Message navigator" hint="The lines on the right of long chats that jump between your messages." checked={settings.messageNavigator ?? navigatorDefault()} onChange={(v) => update({ messageNavigator: v })} />
                     <Toggle label="Show thinking" hint="Show the model's reasoning (collapsed) when it thinks before answering." checked={settings.showThinking} onChange={(v) => update({ showThinking: v })} />
                     <Toggle label="Name chats automatically" hint="Uses a light model to write a short title after the first reply." checked={settings.autoTitle} onChange={(v) => update({ autoTitle: v })} />

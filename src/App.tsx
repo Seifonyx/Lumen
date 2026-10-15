@@ -30,6 +30,7 @@ const PreviewModal = lazy(() => import('./components/PreviewModal'));
 const ComparisonResultsModal = lazy(() => import('./components/ComparisonResultsModal'));
 const AssistantLibrary = lazy(() => import('./components/AssistantLibrary'));
 const CanvasPanel = lazy(() => import('./components/CanvasPanel'));
+const SideChat = lazy(() => import('./components/SideChat'));
 const ChatExportModal = lazy(() => import('./components/ChatExportModal'));
 
 export default function App() {
@@ -41,6 +42,7 @@ export default function App() {
   const settingsOpen = useStore((s) => s.settingsOpen);
   const workspaceOpen = useStore((s) => s.workspaceOpen);
   const canvasOpen = useStore((s) => s.canvasOpen);
+  const sideChatId = useStore((s) => s.sideChatId);
   const runner = useStore((s) => s.runner);
   const exportChatId = useStore((s) => s.exportChatId);
   const repoPicker = useStore((s) => s.repoPicker);
@@ -165,6 +167,7 @@ export default function App() {
       <ChatView onExpandSidebar={toggleSidebar} />
       {!settingsOpen && <WorkspacePanel />}
       {!settingsOpen && canvasOpen && <Suspense fallback={null}><CanvasPanel /></Suspense>}
+      {!settingsOpen && sideChatId && <Suspense fallback={null}><SideChat /></Suspense>}
       {settingsOpen && <Suspense fallback={null}><SettingsModal /></Suspense>}
       {commandPaletteOpen && <Suspense fallback={null}><CommandPalette onClose={() => setCommandPaletteOpen(false)} /></Suspense>}
       {libraryOpen && <Suspense fallback={null}><AssistantLibrary key={accountId} initialTab={libraryTab} onClose={() => setLibraryOpen(false)} /></Suspense>}

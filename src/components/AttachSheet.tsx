@@ -1,12 +1,12 @@
 import { useExit } from '../lib/motion';
-import { FolderGit2, Images, Image as ImageIcon, Camera, Pencil, ChartNoAxesCombined, Columns2, Globe, Check, X, FolderKanban, ChevronRight, Paperclip } from 'lucide-react';
+import { FolderGit2, Images, Image as ImageIcon, Camera, Pencil, ChartNoAxesCombined, Columns2, Globe, Check, X, Telescope, FolderKanban, ChevronRight, Paperclip } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useFocusScope } from '../lib/focus-scope';
 import { useSheetDrag } from '../lib/sheet-drag';
 interface Props {
  onClose():void;onFiles():void;onPhotos():void;onCamera():void;onProject():void;projectName?:string;
  onConnectors():void;onMemory():void;memoryEnabled:boolean;temporary:boolean;
- onRepo():void;onCanvas():void;onAnalysis():void;onCompare():void;compareDisabled:boolean;onImage():void;
+ onRepo():void;onCanvas():void;onAnalysis():void;onCompare():void;compareDisabled:boolean;onImage():void;onResearch?:()=>void;
  onSearch():void;searchEnabled:boolean;searchAvailable:boolean;onPrivacy():void;privacyEnabled:boolean;
  repoName?:string;anchor?:{left:number;bottom:number};
 }
@@ -34,6 +34,7 @@ export default function AttachSheet(p:Props){
  </div>
  <p className="attach-menu-title">Tools</p>
  <div className="attach-menu-group">
+  {p.onResearch&&<button type="button" className="sheet-row" onClick={pick(p.onResearch)}><Telescope size={18}/><span>Deep research</span></button>}
   <button type="button" className="sheet-row" onClick={pick(p.onCanvas)}><Pencil size={18}/><span>Document canvas</span></button>
   <button type="button" className="sheet-row" onClick={pick(p.onAnalysis)}><ChartNoAxesCombined size={18}/><span>Data analysis</span></button>
   <button type="button" className="sheet-row" onClick={pick(p.onImage)}><ImageIcon size={18}/><span>Create image</span></button>

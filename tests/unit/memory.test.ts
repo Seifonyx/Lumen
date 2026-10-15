@@ -19,5 +19,15 @@ check(ins.includes('- Prefers replies in English') && ins.includes('[[remember:'
 check(memoryInstructions([], false).includes('only when the user explicitly asks') && memoryInstructions([], false).includes('no saved memories'), 'ask-only mode');
 const many: any = Array.from({ length: 100 }, (_, i) => ({ id: String(i), text: 'x'.repeat(400), updatedAt: i }));
 check(memoryInstructions(many, true).length < 11000, 'prompt budget respected');
+// 2.0: project-only memories and About me.
+const p = extractMemoryOps('Done.\n[[remember for project: Uses a weekly sprint]]\n[[remember: Likes tea]]');
+check(p.text === 'Done.' && p.project[0] === 'Uses a weekly sprint' && p.remember[0] === 'Likes tea', 'remember for project is its own marker');
+check(hideMemoryLines('Hi [[remember for proj') === 'Hi ', 'half-written project marker hidden while streaming');
+const scoped: any = [{ id: 'a', text: 'Global fact', updatedAt: 1 }, { id: 'b', text: 'Alpha fact', projectId: 'alpha', updatedAt: 1 }, { id: 'c', text: 'Beta fact', projectId: 'beta', updatedAt: 1 }];
+const inAlpha = memoryInstructions(scoped, true, { projectId: 'alpha', projectName: 'Alpha', aboutMe: 'I build boats.' });
+check(inAlpha.includes('Global fact') && inAlpha.includes('Alpha fact (this project)') && !inAlpha.includes('Beta fact'), 'a project chat sees general and its own memories only');
+check(inAlpha.includes('I build boats.') && inAlpha.includes('remember for project') && inAlpha.includes('"Alpha"'), 'About me and the project marker are explained');
+const outside = memoryInstructions(scoped, true);
+check(outside.includes('Global fact') && !outside.includes('Alpha fact') && !outside.includes('remember for project'), 'other chats see only general memories');
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED');
 process.exit(fails ? 1 : 0);

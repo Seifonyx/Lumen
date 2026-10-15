@@ -3,11 +3,12 @@ import { parsePlan } from '../lib/coding-plan';
 import KnowledgeSourceView from './KnowledgeSourceView';
 import type { KnowledgeSource } from '../types';
 import { AlertTriangle, Share, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, GitBranch, Info, Pencil, RefreshCw, Square, TextSelect, Volume2 } from 'lucide-react';
-import { memo, useEffect, useRef, useState } from 'react';
+import { createContext, memo, useContext, useEffect, useRef, useState } from 'react';
 import { useLongPress } from '../lib/long-press';
 import ContextMenu, { type ContextItem } from './ContextMenu';
 import { openImage } from './ImageViewer';
 import MoonPhase from './MoonPhase';
+import ResearchCard from './ResearchCard';
 import { mentionedPaths, repoTree, seenPaths } from '../lib/workspace';
 import { normalizeEdits } from '../lib/edits';
 import { buildFile } from '../lib/generate';
@@ -22,6 +23,9 @@ import RouteWhy from './RouteWhy';
 import ModelPicker from './ModelPicker';
 import TextSelection from './TextSelection';
 import MoreMenu from './MoreMenu';
+
+/** True inside the second pane of side by side: messages there are for reading, with no actions. */
+export const ReadOnlyPane = createContext(false);
 
 function hostOf(url: string) {
   try {
@@ -118,7 +122,8 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
   const [selecting, setSelecting] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const [held, setHeld] = useState<number | null>(null);
-  useLongPress(box, (_, y) => setHeld(y), { enabled: !editing && !message.auto });
+  const readOnly = useContext(ReadOnlyPane);
+  useLongPress(box, (_, y) => setHeld(y), { enabled: !editing && !message.auto && !readOnly });
 
   // Files the app loaded because a model asked for them.
   if (message.auto === 'repository') return <div className="msg auto-files" role="note"><GitBranch size={14}/><span>{message.text.split('\n')[0]}</span></div>;
@@ -177,7 +182,7 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
             : `${message.privacy.masked} personal detail${message.privacy.masked === 1 ? '' : 's'} hidden from the model`}
         </div>
       )}
-      {!editing && (
+      {!editing && !readOnly && (
         <div className="msg-actions user-actions">
           {message.text && <TextSelection text={message.text} />}
           <button className="msg-action" onClick={async () => { if (await copyText(message.text)) { setCopied(true); setTimeout(() => setCopied(false), 1500); } }} aria-label="Copy" title="Copy">
@@ -257,7 +262,8 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
   const streaming = message.status === 'streaming';
   const box = useRef<HTMLDivElement>(null);
   const [held, setHeld] = useState<number | null>(null);
-  useLongPress(box, (_, y) => setHeld(y), { enabled: !streaming && Boolean(message.text) });
+  const readOnly = useContext(ReadOnlyPane);
+  useLongPress(box, (_, y) => setHeld(y), { enabled: !streaming && Boolean(message.text) && !readOnly });
   // The moment a reply finishes: its buttons rise in one after another and the model's dot pings.
   const wasStreaming = useRef(streaming);
   const [justDone, setJustDone] = useState(false);
@@ -289,10 +295,11 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
 
   return (
     <div className={`msg assistant${justDone ? ' just-done' : ''}`} ref={box}>
+      {message.research && <ResearchCard research={message.research} />}
       {message.thinking && <Thinking text={message.thinking} active={streaming && !message.text} />}
       {message.text ? (
         <Markdown text={message.coding?.phase === 'plan' && !streaming && parsePlan(message.text) ? message.text.replace(/`{3,}plan\s*\n[\s\S]*?\n`{3,}/i, '') : message.text} streaming={streaming} messageId={message.id} knowledgeSources={message.knowledgeSources} onSource={setSource}/>
-      ) : streaming && !message.thinking ? (
+      ) : streaming && !message.thinking && !message.research ? (
         <WaitingForReply message={message} />
       ) : null}
       {streaming && message.text && <span className="caret" />}
@@ -300,7 +307,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
       {message.knowledgeSources?.length? <div className="knowledge-citations" aria-label="Document sources">{message.knowledgeSources.map((item,i)=><button className="source btn ghost small" key={`${item.docId}:${item.page}`} onClick={()=>setSource(item)}><span className="source-n">D{i+1}</span><span>{item.title} · {/\.pdf$/i.test(item.title)?'PDF page':'Section'} {item.page}</span></button>)}</div>:null}
       {source&&<KnowledgeSourceView source={source} onClose={()=>setSource(null)}/>}
 
-      {message.sources && message.sources.length > 0 && (
+      {message.sources && message.sources.length > 0 && !message.research && (
         <div className="sources">
           <span className="sources-label">Sources</span>
           {message.sources.slice(0, 8).map((s, i) => (
@@ -334,7 +341,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
         </div>
       )}
 
-      {!streaming && (
+      {!streaming && !readOnly && (
         <div className="msg-actions">
           {message.route && !message.via && message.model ? <RouteWhy message={message} /> : (
           <span className="model-tag" title={message.via ? `${message.via} layout${message.route ? `: ${message.route}` : ''}` : message.route ? `Auto picked this model: ${message.route}` : message.model}>

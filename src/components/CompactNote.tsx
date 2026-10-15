@@ -145,7 +145,7 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
   const canUndo = Boolean(summary && summary.upTo !== null);
 
   // Also sent with every message (these don't count toward the compact point).
-  const memoryTokens = settings.memory ? Math.ceil(memoryInstructions(memories, settings.memoryAuto).length / 4) : 0;
+  const memoryTokens = settings.memory ? Math.ceil(memoryInstructions(memories, settings.memoryAuto, { aboutMe: settings.aboutMe, projectId: chat.projectId, projectName: chat.projectId ? 'project' : undefined }).length / 4) : 0;
   const instructionTokens = Math.ceil(settings.customInstructions.length / 4);
 
   // The model whose usage is shown: your pick, or (for Auto and layouts) the one that answered last.

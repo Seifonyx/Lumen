@@ -27,6 +27,13 @@ self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
+// Push messages (for when a server sends them; Lumen shows them like its own notifications).
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch { data = { title: 'Lumen', body: event.data?.text() || '' }; }
+  event.waitUntil(self.registration.showNotification(data.title || 'Lumen', { body: data.body || '', icon: '/icon-192.png', badge: '/icon-192.png', tag: data.chatId || 'lumen', data: { chatId: data.chatId } }));
+});
+
 // A tapped task notification brings the app forward on that task's chat.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();

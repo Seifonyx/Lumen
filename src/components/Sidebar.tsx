@@ -1,5 +1,5 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
-import { ChevronRight, FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
+import { ChevronRight, Columns2, FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
@@ -21,6 +21,8 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   const { selectChat, deleteChat, renameChat, togglePin, moveChatToProject, setChatTags } = useStore.getState();
   const streaming = useStore((s) => s.streamingChatId === chat.id);
   const [menu, setMenu] = useState(false);
+  // Side by side needs room: tablets in landscape and computers.
+  const wide = typeof window !== 'undefined' && window.matchMedia('(min-width: 900px)').matches;
   const [moving, setMoving] = useState(false);
   const [tagging, setTagging] = useState(false);
   const [tags, setTags] = useState((chat.tags || []).join(', '));
@@ -104,6 +106,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
               <button role="menuitem" onClick={() => { setMenu(false); moveChatToProject(chat.id, null); }}>All chats</button>
               {projects.map((project) => <button key={project.id} role="menuitem" onClick={() => { setMenu(false); moveChatToProject(chat.id, project.id); }}>{project.name}</button>)}
             </div>}
+            {wide && !active && <button role="menuitem" onClick={() => { setMenu(false); useStore.getState().setUi({ sideChatId: chat.id }); }}><Columns2 size={15} /> Open side by side</button>}
             <button role="menuitem" onClick={() => {setMenu(false);setTagging(true)}}><Tag size={15} /> Edit tags</button>
             <button role="menuitem" onClick={() => { setMenu(false); useStore.getState().setUi({ exportChatId: chat.id, sidebarOpen: false }); }}>
               <Download size={15} /> Share or export
@@ -119,6 +122,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
           { label: 'Rename', icon: <Pencil size={17} />, onSelect: () => { setTitle(chat.title); setEditing(true); } },
           { label: chat.pinned ? 'Unpin' : 'Pin', icon: chat.pinned ? <PinOff size={17} /> : <Pin size={17} />, onSelect: () => void togglePin(chat.id) },
           { label: 'Move to project', icon: <FolderKanban size={17} />, onSelect: () => { setMoving(true); setMenu(true); } },
+          ...(wide && !active ? [{ label: 'Open side by side', icon: <Columns2 size={17} />, onSelect: () => useStore.getState().setUi({ sideChatId: chat.id, sidebarOpen: false }) }] : []),
           { label: 'Edit tags', icon: <Tag size={17} />, onSelect: () => setTagging(true) },
           { label: 'Share or export', icon: <Download size={17} />, onSelect: () => useStore.getState().setUi({ exportChatId: chat.id, sidebarOpen: false }) },
           { label: 'Delete', icon: <Trash2 size={17} />, danger: true, onSelect: remove },

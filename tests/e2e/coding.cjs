@@ -117,12 +117,12 @@ const F = '````';
   await page.click('[aria-label="Reset Hard problems"]');
   await page.waitForSelector('.layout-card >> text=Deep thinking');
   check(true, 'edited recommended layout reset');
-  await page.click('[aria-label="Delete Arabic"]');
+  await page.click('[aria-label="Delete Languages & translation"]');
   await page.waitForSelector('text=Bring back 1 removed recommended layout');
-  check(!(await page.$('.layout-card:has-text("Arabic")')), 'recommended layout removed');
+  check(!(await page.$('.layout-card:has-text("Languages & translation")')), 'recommended layout removed');
   await page.screenshot({ path: path.join(__dirname, 'out', 'layouts.png') });
   await page.click('text=Bring back 1 removed recommended layout');
-  await page.waitForSelector('.layout-card >> text=Arabic');
+  await page.waitForSelector('.layout-card >> text=Languages & translation');
   check(true, 'removed recommended layouts brought back');
   await page.click('.settings-page [aria-label="Close"]');
 

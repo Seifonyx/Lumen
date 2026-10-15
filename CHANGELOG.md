@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.1
+
+- Fixed: on slower phones, press-and-hold on a message could be cancelled by the conversation scrolling itself.
+- Fixed: catching a sheet while it moves no longer makes it jump slightly.
+
 ## 1.5.0 · Opens instantly
 
 - Lumen opens straight away: it starts from the copy of your settings and chats on your device and refreshes

@@ -1,5 +1,6 @@
 // Press and hold on a touch screen (messages, chats): the item sinks slightly while you hold, then a menu
-// opens with a tap you can feel. Moving the finger (scrolling) or lifting early cancels it, and the click that
+// opens with a tap you can feel. Moving the finger (scrolling) or lifting early cancels it (the app scrolling by
+// itself doesn't), and the click that
 // would follow the lift is swallowed so nothing else opens underneath.
 import { useEffect, useRef, type RefObject } from 'react';
 import { haptic } from './haptics';
@@ -50,7 +51,6 @@ export function useLongPress(ref: RefObject<HTMLElement | null>, onLongPress: (t
     el.addEventListener('touchend', end);
     el.addEventListener('touchcancel', reset);
     el.addEventListener('contextmenu', menu);
-    window.addEventListener('scroll', reset, { capture: true, passive: true });
     return () => {
       reset();
       el.removeEventListener('touchstart', start);
@@ -58,7 +58,6 @@ export function useLongPress(ref: RefObject<HTMLElement | null>, onLongPress: (t
       el.removeEventListener('touchend', end);
       el.removeEventListener('touchcancel', reset);
       el.removeEventListener('contextmenu', menu);
-      window.removeEventListener('scroll', reset, { capture: true });
     };
   }, [ref, enabled, ignore]);
 }

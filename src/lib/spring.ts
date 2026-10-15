@@ -115,7 +115,9 @@ export function springTo(from: number, to: number, velocity: number, frames: Fra
   const runs = a.flatMap(([el, kf], i) => (el ? [el.animate([kf, b[i][1]], { duration: c.ms, easing })] : []));
   let running = true;
   const at = () => {
-    const i = Math.min(c.xs.length - 1, Math.round((performance.now() - start) / c.dt));
+    // The animation's own clock (it starts on the graphics thread a moment after this code runs).
+    const t = typeof runs[0]?.currentTime === 'number' ? runs[0].currentTime : performance.now() - start;
+    const i = Math.min(c.xs.length - 1, Math.max(0, Math.round(t / c.dt)));
     return from + span * c.xs[i];
   };
   const done = () => { if (!running) return; running = false; runs.forEach((r) => r.cancel()); onDone?.(); };

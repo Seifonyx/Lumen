@@ -74,7 +74,6 @@ export function installSwipeBack(page: HTMLElement, canGoBack: () => boolean, un
       claimed = true;
       makeUnder();
     }
-    if (e.cancelable) e.preventDefault();
     speed.add(t.clientX);
     paint(Math.max(0, ddx));
   };
@@ -92,7 +91,7 @@ export function installSwipeBack(page: HTMLElement, canGoBack: () => boolean, un
     }
   };
   page.addEventListener('touchstart', ts, { passive: true });
-  page.addEventListener('touchmove', tm, { passive: false });
+  page.addEventListener('touchmove', tm, { passive: true });
   page.addEventListener('touchend', te);
   page.addEventListener('touchcancel', te);
   return () => {

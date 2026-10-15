@@ -56,7 +56,6 @@ export function installSwipeRows(list: HTMLElement, { onDelete, onPin }: { onDel
       drag.claimed = true;
       drag.row.classList.add('swiping');
     }
-    if (e.cancelable) e.preventDefault();
     speed.add(t.clientX);
     const w = drag.row.offsetWidth;
     let x = drag.base + dx;
@@ -102,7 +101,7 @@ export function installSwipeRows(list: HTMLElement, { onDelete, onPin }: { onDel
     if (performance.now() - swiped < 400 && (e.target as Element).closest('.swipe-face')) { e.preventDefault(); e.stopPropagation(); }
   };
   list.addEventListener('touchstart', start, { passive: true });
-  list.addEventListener('touchmove', move, { passive: false });
+  list.addEventListener('touchmove', move, { passive: true });
   list.addEventListener('touchend', end);
   list.addEventListener('touchcancel', end);
   list.addEventListener('click', click, true);

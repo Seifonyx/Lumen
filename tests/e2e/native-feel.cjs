@@ -126,6 +126,9 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
       assert.equal(await page.locator('.modal, .text-selection-view').count(), 0, `${theme}: closing the menu opens nothing else`);
 
       // ---- Long press on your message: Edit
+      // (The test backend's sync warnings can sit over the top of the screen: close them first.)
+      await page.locator('.toast-error [aria-label="Dismiss"]').evaluateAll((bs) => bs.forEach((b) => b.click()));
+      await page.waitForTimeout(300);
       [x, y] = await center(page.locator('.msg.user .bubble'));
       await touchAt(page, x, y, { holdMs: 900 });
       await page.getByRole('menu', { name: 'Message actions' }).waitFor();

@@ -24,7 +24,7 @@ export function useLongPress(ref: RefObject<HTMLElement | null>, onLongPress: (t
       const target = e.target as Element;
       if (e.touches.length !== 1 || target.closest(ignore) || !matchMedia('(pointer: coarse)').matches) return;
       x = e.touches[0].clientX; y = e.touches[0].clientY;
-      sink = window.setTimeout(() => el.classList.add('pressing'), 120);
+      sink = window.setTimeout(() => el.classList.add('pressing'), 220);
       timer = window.setTimeout(() => {
         reset(); fired = true;
         haptic('medium');

@@ -92,7 +92,6 @@ export function installSidebarGestures(): () => void {
       drag.claimed = true;
       root.dataset.sidebarDragging = '';
     }
-    if (event.cancelable) event.preventDefault();
     speed.add(t.clientX * drag.sign);
     const raw = (drag.open ? drag.width : 0) + dx;
     drag.offset = raw > drag.width ? drag.width + rubberBand(raw - drag.width, drag.width) : Math.max(0, raw);
@@ -125,7 +124,9 @@ export function installSidebarGestures(): () => void {
     }
   };
   document.addEventListener('touchstart', start, { passive: true });
-  document.addEventListener('touchmove', move, { passive: false });
+  // Passive: the browser scrolls without waiting for this code (sideways drags never scroll here anyway:
+  // the page only pans vertically, see touch-action in app.css).
+  document.addEventListener('touchmove', move, { passive: true });
   document.addEventListener('touchend', end, { passive: false });
   document.addEventListener('touchcancel', clear);
   document.addEventListener('click', click, true);

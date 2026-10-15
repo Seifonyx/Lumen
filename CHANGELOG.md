@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.1 · Smoother scrolling
+
+- Scrolling on phones is now handled entirely by the phone. Lumen's gestures (side menu, swipe back in
+  Settings, swiping chats) only watch your finger, so they can no longer make a scroll stick or lag.
+- Fixed: on phones, the jump-to-message strip on the right edge of long chats caught swipes. Swiping there
+  didn't scroll, and lifting your finger jumped the chat to an earlier message. The strip is now only on
+  computers, and messages on phones use the full width.
+- With the keyboard open, Lumen only checks touches while it's actually open (it used to check all the time).
+- Press-and-hold waits a little longer before a message sinks, so starting a scroll doesn't make it dip.
+
 ## 1.7.0 · More motion
 
 - Theme, Text size and the other choices in Settings: the selection slides to the option you pick, with a

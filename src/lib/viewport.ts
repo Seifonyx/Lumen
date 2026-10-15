@@ -44,6 +44,10 @@ export function initViewport(): void {
       const atBottom = list ? list.scrollHeight - list.scrollTop - list.clientHeight < 80 : false;
       keyboardOpen = keyboard;
       root.classList.toggle('kb-open', keyboard);
+      // Only while the keyboard is open does a touch need checking before the page may move; otherwise
+      // there's no listener, so scrolling never waits for the app.
+      if (keyboard) document.addEventListener('touchmove', preventPageScroll, { passive: false });
+      else document.removeEventListener('touchmove', preventPageScroll);
 
       if (!keyboard) {
         root.style.removeProperty('--vv-h');
@@ -108,5 +112,4 @@ export function initViewport(): void {
     schedule();
     window.setTimeout(schedule, 350);
   });
-  document.addEventListener('touchmove', preventPageScroll, { passive: false });
 }

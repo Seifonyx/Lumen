@@ -35,6 +35,11 @@
 - Lumen still needs to be open in the background for this. Notifications when it's fully closed need a
   small server, which comes later.
 
+**Look**
+- Numbered sources in replies ([1], [2]…) are small round badges that link to the source.
+- Quotes and tips sit in a soft panel, and tables have a shaded header row (rows highlight under the
+  pointer on computers).
+
 **Smarter memory**
 - New: About me (Settings → Memory). Write what you want every model to know about you, in your own words.
   "Update from memories" writes a draft from what Lumen has remembered, for you to edit and save.

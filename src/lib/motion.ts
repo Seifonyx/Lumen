@@ -9,6 +9,7 @@
 // Page transitions: the browser's View Transitions snapshot the screen before and after a change and animate
 // between them, so the first and last frames match the screens exactly. Used for Settings push/pop, opening
 // and closing Settings, and theme changes; skipped where unsupported or with reduced motion.
+import { springTo } from './spring';
 import { cloneElement, useLayoutEffect, useRef, type ReactElement, type Ref, type RefObject } from 'react';
 import { flushSync } from 'react-dom';
 
@@ -18,6 +19,8 @@ export const reducedMotion = () => typeof window !== 'undefined' && window.match
 export const motionOff = () => reducedMotion() || (typeof navigator !== 'undefined' && navigator.webdriver && !(window as { __mrMotion?: boolean }).__mrMotion);
 const EASE_OUT = 'cubic-bezier(.2,.8,.2,1)';
 const EASE_IN = 'cubic-bezier(.4,0,1,1)';
+// iOS-like push/pop: quick start, long soft landing.
+const SLIDE = 'cubic-bezier(.32, .72, 0, 1)';
 
 export type ExitKind = 'fade' | 'pop' | 'sheet' | 'modal' | 'row' | 'toast' | 'drop';
 
@@ -142,23 +145,47 @@ export function pageSwap(dir: 'push' | 'pop' | 'fade', from: HTMLElement | null,
 }
 
 function animateSwap(dir: 'push' | 'pop' | 'fade', ghost: HTMLElement, next: HTMLElement | null) {
-  const opts = { duration: dir === 'fade' ? 180 : 300, easing: EASE_OUT };
+  // Only transform and opacity animate (the screen going underneath is dimmed by a layer, not a filter, and
+  // the shadow is fixed), so the browser runs the whole slide on its graphics thread.
+  const opts = { duration: dir === 'fade' ? 180 : 340, easing: dir === 'fade' ? EASE_OUT : SLIDE };
   const runs: Animation[] = [];
+  const extras: HTMLElement[] = [];
+  const dimOver = (el: HTMLElement, z: string, from: number, to: number) => {
+    const r = el.getBoundingClientRect();
+    const dim = document.createElement('div');
+    dim.className = 'exit-ghost';
+    Object.assign(dim.style, { position: 'fixed', left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, background: '#000', pointerEvents: 'none', zIndex: z, opacity: String(to) });
+    // In the same parent, so it stacks with the two screens (above the one it dims, below the other).
+    el.parentElement?.insertBefore(dim, el.nextSibling);
+    extras.push(dim);
+    return dim.animate([{ opacity: from, transform: from > to ? 'translateX(-28%)' : 'none' }, { opacity: to, transform: from > to ? 'none' : 'translateX(-28%)' }], opts);
+  };
   if (dir === 'push') {
     ghost.style.zIndex = '1';
-    runs.push(ghost.animate([{ transform: 'none', filter: 'brightness(1)' }, { transform: 'translateX(-28%)', filter: 'brightness(.92)' }], opts));
-    if (next) { if (getComputedStyle(next).position === 'static') next.style.position = 'relative'; next.style.zIndex = '2'; runs.push(next.animate([{ transform: 'translateX(100%)', boxShadow: '-8px 0 24px rgb(0 0 0 / .12)' }, { transform: 'none', boxShadow: '-8px 0 24px rgb(0 0 0 / 0)' }], opts)); }
+    runs.push(ghost.animate([{ transform: 'none' }, { transform: 'translateX(-28%)' }], opts));
+    if (next) {
+      if (getComputedStyle(next).position === 'static') next.style.position = 'relative';
+      next.style.zIndex = '3';
+      next.style.boxShadow = '-8px 0 24px rgb(0 0 0 / .1)';
+      runs.push(dimOver(ghost, '2', 0, 0.08));
+      runs.push(next.animate([{ transform: 'translateX(100%)' }, { transform: 'none' }], opts));
+    }
   } else if (dir === 'pop') {
     ghost.style.zIndex = '3';
-    runs.push(ghost.animate([{ transform: 'none', boxShadow: '-8px 0 24px rgb(0 0 0 / .12)' }, { transform: 'translateX(100%)', boxShadow: '-8px 0 24px rgb(0 0 0 / 0)' }], opts));
-    if (next) runs.push(next.animate([{ transform: 'translateX(-28%)', filter: 'brightness(.92)' }, { transform: 'none', filter: 'brightness(1)' }], opts));
+    ghost.style.boxShadow = '-8px 0 24px rgb(0 0 0 / .1)';
+    runs.push(ghost.animate([{ transform: 'none' }, { transform: 'translateX(100%)' }], opts));
+    if (next) {
+      runs.push(next.animate([{ transform: 'translateX(-28%)' }, { transform: 'none' }], opts));
+      runs.push(dimOver(next, '2', 0.08, 0));
+    }
   } else {
     ghost.style.zIndex = '3';
     runs.push(ghost.animate([{ opacity: 1 }, { opacity: 0 }], opts));
   }
   Promise.all(runs.map((r) => r.finished)).catch(() => {}).finally(() => {
     ghost.remove();
-    if (next) { next.style.zIndex = ''; if (next.style.position === 'relative') next.style.position = ''; }
+    extras.forEach((e) => e.remove());
+    if (next) { next.style.zIndex = ''; next.style.boxShadow = ''; if (next.style.position === 'relative') next.style.position = ''; }
   });
 }
 
@@ -208,32 +235,42 @@ export function pageTransition(kind: TransitionKind, change: () => void) {
   }
 }
 
-// ---- A sent message lifts out of the text box and settles into the conversation.
-let flight: { left: number; top: number; at: number } | null = null;
-/** Remember where the text was just before it's sent. */
+// ---- Sending, like a messaging app: the new message rises out of the text box with a soft spring, and the
+// conversation above slides up with it instead of jumping. Transform and opacity only, on the graphics thread.
+let flight: { right: number; bottom: number; at: number; lastId?: string; lastTop?: number } | null = null;
+/** Remember where the text and the latest message were just before sending. */
 export function noteSend(from: HTMLElement | null) {
   if (!from || motionOff()) return;
-  const r = from.getBoundingClientRect(), style = getComputedStyle(from);
-  flight = { left: r.left + parseFloat(style.paddingLeft || '0'), top: r.top + parseFloat(style.paddingTop || '0'), at: performance.now() };
+  const r = from.getBoundingClientRect();
+  const last = document.querySelector<HTMLElement>('.thread .message-row:last-child');
+  flight = { right: r.right, bottom: r.bottom, at: performance.now(), lastId: last?.dataset.messageId, lastTop: last?.getBoundingClientRect().top };
 }
-/** Fly the new message's bubble from there to where it landed. */
+/** Play it once the new message is on the page. */
 export function flySent(bubble: HTMLElement | null | undefined) {
   const f = flight;
   flight = null;
   if (!f || !bubble || performance.now() - f.at > 1500 || motionOff()) return;
+  const thread = bubble.closest<HTMLElement>('.thread');
   const r = bubble.getBoundingClientRect();
-  const style = getComputedStyle(bubble);
-  // Line the bubble's text up with where the typed text was.
-  const dx = f.left - (r.left + parseFloat(style.paddingLeft || '0'));
-  const dy = f.top - (r.top + parseFloat(style.paddingTop || '0'));
-  if (Math.abs(dy) > window.innerHeight) return;
-  const msg = bubble.closest<HTMLElement>('.msg');
-  if (msg) msg.style.animation = 'none';
-  const easing = getComputedStyle(document.documentElement).getPropertyValue('--spring-slide').trim() || 'ease-out';
-  bubble.animate([
-    { transform: `translate(${dx}px, ${dy}px)`, backgroundColor: 'transparent', boxShadow: 'none' },
-    { transform: 'none' },
-  ], { duration: 460, easing });
+  // How far the earlier messages were pushed up: they start where they were and glide.
+  const prev = f.lastId ? thread?.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(f.lastId)}"]`) : null;
+  const shift = prev && f.lastTop !== undefined ? f.lastTop - prev.getBoundingClientRect().top : 0;
+  const lift = shift > 0 && shift < window.innerHeight;
+  // The bubble starts at the bottom right of the text box, a little smaller.
+  const dx = Math.min(0, f.right - r.right);
+  const dy = Math.max(0, f.bottom - r.bottom - (lift ? shift : 0));
+  if (dy > window.innerHeight) return;
+  // The whole message moves as one piece (scaled around the bubble's corner); its buttons fade in as it lands.
+  const msg = bubble.closest<HTMLElement>('.msg') || bubble;
+  const m = msg.getBoundingClientRect();
+  msg.style.animation = 'none';
+  msg.style.transformOrigin = `${r.right - m.left}px ${r.bottom - m.top}px`;
+  springTo(0, 1, 0, (t) => [
+    [msg, { transform: `translate(${dx * (1 - t)}px, ${dy * (1 - t)}px) scale(${0.88 + 0.12 * t})` }],
+    [lift ? thread : null, { transform: `translateY(${shift * (1 - t)}px)` }],
+  ], () => { msg.style.transform = ''; msg.style.transformOrigin = ''; if (thread) thread.style.transform = ''; }, { stiffness: 340, damping: 30 });
+  bubble.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 140, easing: 'ease-out' });
+  msg.querySelector('.msg-actions')?.animate([{ opacity: 0 }, { opacity: 0, offset: 0.6 }, { opacity: 1 }], { duration: 520, easing: 'ease-out' });
 }
 
 // ---- While a reply streams, each new piece of text fades in instead of popping in. Works on the rendered
@@ -269,16 +306,12 @@ export function fadeInText(root: HTMLElement, arrivals: Arrivals) {
       // Split out [a, b) of this node and wrap each word in it.
       const tail = node.splitText(a - start);
       tail.splitText(b - a);
-      const words = tail.data.split(/(?<=\s)/);
-      const frag = document.createDocumentFragment();
-      words.forEach((w, i) => {
-        const span = document.createElement('span');
-        span.className = 'fresh';
-        span.style.animationDelay = `${Math.min(i * 22, 180) - r.age}ms`;
-        span.textContent = w;
-        frag.append(span);
-      });
-      tail.replaceWith(frag);
+      // One fading piece per arrival (a few words): smooth, and cheap enough for long replies.
+      const span = document.createElement('span');
+      span.className = 'fresh';
+      span.style.animationDelay = `${-r.age}ms`;
+      tail.replaceWith(span);
+      span.append(tail);
     }
   }
 }

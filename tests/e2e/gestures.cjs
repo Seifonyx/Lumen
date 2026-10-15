@@ -124,6 +124,7 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
     await touch(page, path(6, 500, 150, 500, 10, 300), { hold: true });
     const mid = await translateX(page.locator('.settings-page:not(.swipe-under)'));
     assert.ok(mid > 100, `settings: the section follows the finger (${mid.toFixed(0)}px)`);
+    assert.ok(await page.locator('.settings-page.swipe-under').evaluate((el) => getComputedStyle(el).visibility === 'visible' && el.getBoundingClientRect().width > 300), 'settings: the list shows underneath while you swipe');
     await touch(page, path(150, 500, 300, 500, 6, 60));
     await page.waitForFunction(() => !document.querySelector('.settings-page.has-section'), null, { timeout: 2000 });
     await page.waitForTimeout(400);

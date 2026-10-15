@@ -2718,7 +2718,7 @@ input, textarea { caret-color: var(--text); }
 @keyframes stop-in { from { transform: scale(.8) rotate(-12deg); opacity: .4; } }
 .popover, .menu, .models-pop:not(.sheet), .sheet-popover-backdrop .attach-menu, .more-menu-list { animation: menu-in .16s var(--ease); transform-origin: bottom left; }
 @keyframes menu-in { from { opacity: 0; transform: translateY(4px) scale(.98); } }
-.chat-row, .sidebar-bottom-actions .library-button, .mp-item, .mp-layout, .sheet-row { transition: background .12s var(--ease), color .12s var(--ease), transform .12s var(--ease); }
+.chat-row, .sidebar-bottom-actions .library-button, .mp-item, .mp-layout, .sheet-row { transition: background-color .12s var(--ease), color .12s var(--ease), transform .12s var(--ease); }
 @media (pointer: coarse) {
   .btn:active:not(:disabled), .icon-btn:active:not(:disabled), .chat-open:active, .sheet-row:active:not(:disabled), .mp-item:active, .mp-layout:active, .composer-bar .tool-btn:active { transform: scale(.96); }
 }
@@ -3543,7 +3543,8 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
 }
 .popover, .menu, .models-pop:not(.sheet), .sheet-popover-backdrop .attach-menu, .more-menu-list, .usage-pop:not(.sheet) { animation: menu-in .32s var(--spring-pop); }
 @media (min-width: 641px) { .modal { animation: pop .3s var(--spring-pop); } }
-@media (max-width: 899px) { .sidebar { transition: transform .4s var(--spring-slide), box-shadow .28s; } }
+/* Only the position animates (a fixed shadow; it is off-screen when closed), so the slide stays on the graphics thread. */
+@media (max-width: 899px) { .sidebar { transition: transform .4s var(--spring-slide); box-shadow: var(--shadow-lg); } }
 @media (prefers-reduced-motion: reduce) {
   .models-pop.sheet, .usage-pop.sheet, .sheet, .modal, .popover, .menu, .models-pop, .more-menu-list, .usage-pop { animation: none; }
 }
@@ -3565,8 +3566,8 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
   .markdown, .bubble { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 }
 /* Swipe a chat row: Pin on the left, Delete on the right */
-.swipe-under { position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: stretch; border-radius: 10px; visibility: hidden; }
-.swipe-row[data-swipe='start'] .swipe-under, .swipe-row[data-swipe='end'] .swipe-under { visibility: visible; }
+.row-actions { position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: stretch; border-radius: 10px; visibility: hidden; }
+.swipe-row[data-swipe='start'] .row-actions, .swipe-row[data-swipe='end'] .row-actions { visibility: visible; }
 .swipe-pin, .swipe-delete { display: flex; align-items: center; gap: 6px; padding: 0 18px; font: 600 .8125rem/1 var(--font); color: var(--bg); }
 .swipe-pin { background: var(--blue); flex: 1; justify-content: flex-start; }
 .swipe-delete { background: var(--red); flex: 1; justify-content: flex-end; border: 0; }
@@ -3622,3 +3623,6 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
 .models-pop.right:not(.sheet) { transform-origin: bottom right; }
 .usage-pop:not(.sheet) { animation: grow-in .34s var(--spring-pop); transform-origin: bottom right; }
 .row-menu .menu { animation: grow-in .3s var(--spring-pop); transform-origin: top right; }
+/* Sending: the reply's placeholder appears once your message has landed. */
+.message-row:last-child .msg.assistant { animation-delay: .16s; }
+.route-wait { animation-delay: .16s; animation-fill-mode: both; }

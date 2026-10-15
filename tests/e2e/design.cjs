@@ -34,14 +34,14 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         const page = await ctx.newPage(), errors = [];
         page.on('pageerror', (e) => errors.push(e.message));
         await page.goto(process.env.MR_TEST_URL || 'http://localhost:5190/?emulator', { waitUntil: 'domcontentloaded', timeout: 60000 });
-        await page.waitForSelector('.main.is-empty');
+        await page.waitForSelector('.app:not(.app-skeleton) .main.is-empty');
         if (theme === 'black') check(await page.evaluate(() => document.documentElement.dataset.appearance === 'black' && getComputedStyle(document.body).backgroundColor === 'rgb(0, 0, 0)'), `${label}: true black background survives reload`);
         check(inside(await page.locator('.composer').boundingBox(), width, height) && (await scan(page)).length === 0, `${label}: welcome screen and composer fit`);
         check(await page.locator('.suggestion,.starter-actions,.empty p:not(.welcome-route)').count() === 0 && await page.locator('.empty h1').evaluate(el=>el.scrollWidth<=el.clientWidth), `${label}: short single-line greeting and routing status, without recommendations`);
         if (!mobile) {
           await page.click('[aria-label="Collapse sidebar"]');
           check(!(await page.locator('.sidebar').isVisible()), `${label}: sidebar collapses`);
-          await page.reload(); await page.waitForSelector('.topbar');
+          await page.reload(); await page.waitForSelector('.app:not(.app-skeleton) .topbar');
           check(!(await page.locator('.sidebar').isVisible()) && await page.locator('[aria-label="Expand sidebar"]').isVisible(), `${label}: focused layout persists after reload`);
           await page.click('[aria-label="Expand sidebar"]');
         } else {

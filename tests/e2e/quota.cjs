@@ -78,7 +78,7 @@ async function send(page, text) {
   await send(A.page, 'one more');
   await B.page.waitForTimeout(3000);
   await B.page.reload();
-  await B.page.waitForSelector('.topbar');
+  await B.page.waitForSelector('.app:not(.app-skeleton) .topbar');
   await B.page.waitForFunction(() => document.querySelectorAll('.chat-row').length >= 6, null, { timeout: 15000 });
   await B.page.waitForTimeout(2500);
   const second = await reads(B.page);

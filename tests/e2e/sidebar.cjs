@@ -38,7 +38,7 @@ const settled = page => page.waitForTimeout(320);
         const page = await ctx.newPage(), errors = [];
         page.on('pageerror', e => errors.push(e.message));
         await page.goto(process.env.MR_TEST_URL || 'http://localhost:5190/?emulator', { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('.main.is-empty');
+        await page.waitForSelector('.app:not(.app-skeleton) .main.is-empty');
         await page.evaluate(rtl => { document.documentElement.dir = rtl ? 'rtl' : 'ltr'; }, rtl);
         const sign = rtl ? -1 : 1, start = rtl ? width - 90 : 90, y = Math.min(250, height / 2);
         const isOpen = () => page.locator('.sidebar').evaluate(el => el.classList.contains('open'));

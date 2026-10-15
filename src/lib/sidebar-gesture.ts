@@ -1,5 +1,5 @@
 import { useStore } from '../store';
-import { rubberBand, spring, Velocity, type Spring } from './spring';
+import { rubberBand, springTo, Velocity, type Motion } from './spring';
 import { haptic } from './haptics';
 
 /**
@@ -15,7 +15,7 @@ export function installSidebarGestures(): () => void {
   let frame = 0;
   let suppressClickUntil = 0;
   let suppressTarget: Element | null = null;
-  let anim: Spring | null = null;
+  let anim: Motion | null = null;
   const speed = new Velocity();
   /** Where the drawer actually is on screen (0 closed … width open), even mid-animation. */
   const visualOffset = (sidebar: HTMLElement, width: number, sign: number) => {
@@ -43,7 +43,7 @@ export function installSidebarGestures(): () => void {
     const onDrawer = event.target instanceof Element && Boolean(event.target.closest('.sidebar, .scrim'));
     const moving = anim?.running && onDrawer ? drag : null;
     if (moving && event.touches.length === 1) {
-      anim!.stop(); anim = null;
+      moving.offset = anim!.stop(); anim = null;
       const t = event.touches[0];
       const open = useStore.getState().sidebarOpen;
       moving.open = open; moving.id = t.identifier; moving.claimed = true; moving.y = t.clientY;
@@ -115,7 +115,9 @@ export function installSidebarGestures(): () => void {
     // The drawer keeps the finger's speed and settles with a spring; the state above is already final.
     cancelAnimationFrame(frame); frame = 0;
     const d = drag;
-    anim = spring(d.offset, open ? d.width : 0, velocity, (x) => { d.offset = x; paint(); }, () => { anim = null; clear(); }, { stiffness: 900, damping: 60, restDelta: 0.8 });
+    // (Runs on the graphics thread: smooth even while the chat you picked is rendering.)
+    const frames = (x: number): [HTMLElement, Keyframe][] => [[d.sidebar, { transform: `translateX(${d.sign * (x - d.width)}px)` }], [d.scrim, { opacity: String(x / d.width) }]];
+    anim = springTo(d.offset, open ? d.width : 0, velocity, frames, () => { anim = null; d.offset = open ? d.width : 0; clear(); }, { stiffness: 900, damping: 60 });
   };
   const click = (event: MouseEvent) => {
     if (performance.now() < suppressClickUntil && event.target instanceof Node && suppressTarget?.contains(event.target)) {

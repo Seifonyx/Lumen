@@ -80,7 +80,7 @@ async function run(browser, width) {
   await page.click('.layout-editor >> text=Cancel');
   await page.click('.settings-page [aria-label="Close"]');
 
-  await page.waitForSelector('.topbar');
+  await page.waitForSelector('.app:not(.app-skeleton) .topbar');
   await look('new chat');
   await shot('empty');
   await page.fill('.composer textarea', 'Please check https://example.com/another/very/long/link/without/any/spaces/that/goes/on/and/on/forever and AVeryLongWordWithoutAnySpacesThatSomeoneMightPasteIntoTheChatBox1234567890');

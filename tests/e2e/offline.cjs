@@ -42,7 +42,7 @@ const original = fs.readFileSync(SW, 'utf8');
     // ---- Offline
     await ctx.setOffline(true);
     await page.reload();
-    await page.waitForSelector('.topbar', { timeout: 20000 });
+    await page.waitForSelector('.app:not(.app-skeleton) .topbar', { timeout: 20000 });
     check(true, 'app opens with no connection');
     await page.waitForSelector('.banner.offline', { timeout: 5000 });
     check((await page.textContent('.banner.offline')).includes("You're offline"), 'offline banner');
@@ -70,7 +70,7 @@ const original = fs.readFileSync(SW, 'utf8');
     check((await page.textContent('.update-bar')).includes('new version'), 'update prompt appears');
     await page.screenshot({ path: path.join(__dirname, 'out', 'update-bar.png') });
     await Promise.all([page.waitForEvent('load', { timeout: 20000 }), page.click('.update-bar >> text=Reload')]);
-    await page.waitForSelector('.topbar', { timeout: 20000 });
+    await page.waitForSelector('.app:not(.app-skeleton) .topbar', { timeout: 20000 });
     const active = await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).waiting === null);
     check(active && !(await page.$('.update-bar')), 'reload switches to the new version');
     check(!errors.length, `no page errors ${errors.join(' | ')}`);

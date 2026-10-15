@@ -3,7 +3,7 @@
 // go back, otherwise it springs back. A screen that's still moving can be caught again.
 import { haptic } from './haptics';
 import { flushSync } from 'react-dom';
-import { spring, Velocity, type Spring } from './spring';
+import { springTo, Velocity, type Motion } from './spring';
 
 const EDGE = 24; // px from the left edge where the gesture starts
 
@@ -13,20 +13,21 @@ const EDGE = 24; // px from the left edge where the gesture starts
  */
 export function installSwipeBack(page: HTMLElement, canGoBack: () => boolean, underlay: (copy: HTMLElement) => void, back: () => void) {
   let start: { x: number; y: number; id: number } | null = null;
-  let claimed = false, dx = 0, anim: Spring | null = null, under: HTMLElement | null = null;
+  let claimed = false, dx = 0, anim: Motion | null = null, under: HTMLElement | null = null, dim: HTMLElement | null = null;
   const speed = new Velocity();
   const width = () => page.offsetWidth;
 
+  // Only transform and opacity change per frame (the screen underneath is dimmed by a layer, not a filter),
+  // so the browser can move everything on its graphics thread.
+  const frames = (x: number): [HTMLElement | null, Keyframe][] => {
+    const p = Math.min(1, x / width());
+    return [[page, { transform: x > 0.5 ? `translateX(${x}px)` : 'translateX(0)' }], [under, { transform: `translateX(${-28 * (1 - p)}%)` }], [dim, { opacity: String(0.08 * (1 - p)) }]];
+  };
   const paint = (x: number) => {
     dx = x;
     page.style.transition = 'none';
-    page.style.transform = x > 0.5 ? `translateX(${x}px)` : '';
     page.style.boxShadow = x > 0.5 ? '-8px 0 24px rgb(0 0 0 / .14)' : '';
-    if (under) {
-      const p = Math.min(1, x / width());
-      under.style.transform = `translateX(${-28 * (1 - p)}%)`;
-      under.style.filter = `brightness(${0.92 + 0.08 * p})`;
-    }
+    frames(x).forEach(([el, kf]) => { if (el) Object.assign(el.style, kf); });
   };
   const makeUnder = () => {
     if (under || !page.parentNode) return;
@@ -38,13 +39,16 @@ export function installSwipeBack(page: HTMLElement, canGoBack: () => boolean, un
     copy.classList.add('exit-ghost', 'swipe-under');
     underlay(copy);
     Object.assign(copy.style, { position: 'absolute', top: `${page.offsetTop}px`, left: `${page.offsetLeft}px`, width: `${page.offsetWidth}px`, height: `${page.offsetHeight}px`, margin: '0', zIndex: '1', pointerEvents: 'none', display: getComputedStyle(page).display });
+    dim = document.createElement('div');
+    Object.assign(dim.style, { position: 'absolute', inset: '0', background: '#000', opacity: '0.08', pointerEvents: 'none', zIndex: '10' });
+    copy.append(dim);
     page.parentNode.insertBefore(copy, page);
     if (getComputedStyle(page).position === 'static') page.style.position = 'relative';
     page.style.zIndex = '2';
     under = copy;
   };
   const reset = () => {
-    under?.remove(); under = null;
+    under?.remove(); under = null; dim = null;
     page.style.transform = ''; page.style.boxShadow = ''; page.style.zIndex = ''; page.style.transition = '';
     if (page.style.position === 'relative') page.style.position = '';
     dx = 0;
@@ -53,7 +57,7 @@ export function installSwipeBack(page: HTMLElement, canGoBack: () => boolean, un
   const ts = (e: TouchEvent) => {
     if (e.touches.length !== 1) return;
     const t = e.touches[0];
-    if (anim?.running) { anim.stop(); anim = null; start = { x: t.clientX - dx, y: t.clientY, id: t.identifier }; claimed = true; speed.reset(); speed.add(t.clientX); return; }
+    if (anim?.running) { dx = anim.stop(); anim = null; start = { x: t.clientX - dx, y: t.clientY, id: t.identifier }; claimed = true; speed.reset(); speed.add(t.clientX); return; }
     if (!canGoBack() || t.clientX > EDGE) return;
     start = { x: t.clientX, y: t.clientY, id: t.identifier };
     claimed = false;
@@ -82,9 +86,9 @@ export function installSwipeBack(page: HTMLElement, canGoBack: () => boolean, un
     const v = speed.get(), w = width();
     if (dx + v * 180 > w * 0.5 || (v > 0.5 && dx > 16)) {
       haptic();
-      anim = spring(dx, w, Math.max(v, 0.6), paint, () => { anim = null; flushSync(back); reset(); }, { stiffness: 320, damping: 34 });
+      anim = springTo(dx, w, Math.max(v, 0.6), frames, () => { anim = null; flushSync(back); reset(); }, { stiffness: 320, damping: 34 });
     } else {
-      anim = spring(dx, 0, v, paint, () => { anim = null; reset(); }, { stiffness: 420, damping: 40 });
+      anim = springTo(dx, 0, v, frames, () => { anim = null; reset(); }, { stiffness: 420, damping: 40 });
     }
   };
   page.addEventListener('touchstart', ts, { passive: true });

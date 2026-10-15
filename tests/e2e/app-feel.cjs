@@ -75,8 +75,11 @@ const scale = (page) => page.locator('.iv-img').evaluate((el) => new DOMMatrixRe
       await page.click('.msg.user .thumb-btn');
       await page.locator('.image-viewer').waitFor();
       // The first frame: cropped to the thumbnail, in its place.
-      const start = await page.locator('.iv-img').evaluate((el) => { const r = el.getBoundingClientRect(), m = /inset\(([\d.]+)% ([\d.]+)%/.exec(el.style.clipPath) || [0, 0, 0]; return { x: r.x + r.width * m[2] / 100, w: r.width * (1 - 2 * m[2] / 100), h: r.height * (1 - 2 * m[1] / 100) }; });
+      // Hold the opening at its first frame to measure it.
+      await page.evaluate(() => document.getAnimations().forEach((a) => { a.pause(); a.currentTime = 0; }));
+      const start = await page.locator('.iv-img').evaluate((el) => { const r = el.getBoundingClientRect(), m = /inset\(([\d.]+)% ([\d.]+)%/.exec(getComputedStyle(el).clipPath) || [0, 0, 0]; return { x: r.x + r.width * m[2] / 100, w: r.width * (1 - 2 * m[2] / 100), h: r.height * (1 - 2 * m[1] / 100) }; });
       assert.ok(Math.abs(start.w - thumb.width) < 40 && Math.abs(start.h - thumb.height) < 40, `${tag}: the picture starts from the one you tapped (${start.w.toFixed(0)}×${start.h.toFixed(0)} vs ${thumb.width.toFixed(0)}×${thumb.height.toFixed(0)})`);
+      await page.evaluate(() => document.getAnimations().forEach((a) => a.play()));
       await page.waitForTimeout(900);
       const open = await page.locator('.iv-img').boundingBox();
       assert.ok(open.width > width * 0.8 || open.height > 600, `${tag}: then fills the screen (${open.width.toFixed(0)}×${open.height.toFixed(0)})`);

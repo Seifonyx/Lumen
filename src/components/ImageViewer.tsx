@@ -7,7 +7,7 @@ import { createPortal } from 'react-dom';
 import { useFocusScope } from '../lib/focus-scope';
 import { haptic } from '../lib/haptics';
 import { motionOff } from '../lib/motion';
-import { rubberBand, spring, Velocity, type Spring } from '../lib/spring';
+import { rubberBand, springTo, Velocity, type Motion } from '../lib/spring';
 import { saveBlob } from '../lib/util';
 
 export type ImageRequest = { src: string; alt: string; name?: string; from?: HTMLElement | null };
@@ -36,20 +36,24 @@ function ImageViewer({ req, onClose }: { req: ImageRequest; onClose: () => void 
   const [fit, setFit] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const [chrome, setChrome] = useState(true);
   const view = useRef<View>({ s: 1, x: 0, y: 0 });
-  const anim = useRef<Spring | null>(null);
+  const anim = useRef<Motion | null>(null);
   const closing = useRef(false);
   const close = useRef<() => void>(() => {});
   useFocusScope(root, true, () => close.current());
 
   const crop = useRef({ x: 0, y: 0 });
+  // Transform and opacity are separate from the crop so the browser can move the picture on its graphics thread.
+  const frames = (v: View, fade: number): [HTMLElement | null, Keyframe][] => {
+    const k = v.k || 0;
+    return [
+      [img.current, { transform: `translate(${v.x}px, ${v.y}px) scale(${v.s})` }],
+      [img.current, { clipPath: k > 0.001 ? `inset(${crop.current.y * k}% ${crop.current.x * k}% round ${12 * k / v.s}px)` : 'inset(0% 0% round 0px)' }],
+      [bg.current, { opacity: String(fade) }],
+    ];
+  };
   const paint = (v: View, fade = 1) => {
     view.current = v;
-    if (img.current) {
-      img.current.style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.s})`;
-      const k = v.k || 0;
-      img.current.style.clipPath = k > 0.001 ? `inset(${crop.current.y * k}% ${crop.current.x * k}% round ${12 * k / v.s}px)` : '';
-    }
-    if (bg.current) bg.current.style.opacity = String(fade);
+    frames(v, fade).forEach(([el, kf]) => { if (el) Object.assign(el.style, kf); });
   };
   /** Where the picture you tapped is, as a view of the fitted image (for growing out of it and back). */
   const originView = (f: NonNullable<typeof fit>): View | null => {
@@ -60,11 +64,23 @@ function ImageViewer({ req, onClose }: { req: ImageRequest; onClose: () => void 
     crop.current = { x: ((1 - Math.min(1, o.width / (f.width * s))) / 2) * 100, y: ((1 - Math.min(1, o.height / (f.height * s))) / 2) * 100 };
     return { s, x: o.left + o.width / 2 - (f.left + f.width / 2), y: o.top + o.height / 2 - (f.top + f.height / 2), k: 1 };
   };
+  const stopAnim = () => {
+    if (!anim.current) return;
+    const t = anim.current.stop();
+    anim.current = null;
+    paint(along.current(t), fadeAt.current(t));
+  };
+  // The running animation's path, to read where it is when caught.
+  const along = useRef<(t: number) => View>(() => ({ s: 1, x: 0, y: 0 }));
+  const fadeAt = useRef<(t: number) => number>(() => 1);
   const animate = (to: View, { fadeTo = 1, velocity = 0, done }: { fadeTo?: number; velocity?: number; done?: () => void } = {}) => {
-    anim.current?.stop();
+    stopAnim();
     const from = { ...view.current }, fade0 = Number(bg.current?.style.opacity || 1);
     if (motionOff()) { paint(to, fadeTo); done?.(); return; }
-    anim.current = spring(0, 1, velocity, (t) => paint({ s: lerp(from.s, to.s, t), x: lerp(from.x, to.x, t), y: lerp(from.y, to.y, t), k: lerp(from.k || 0, to.k || 0, Math.min(1, Math.max(0, t))) }, lerp(fade0, fadeTo, Math.min(1, t))), () => { anim.current = null; done?.(); }, { stiffness: 300, damping: 30, restDelta: 0.002, restSpeed: 0.0005 });
+    along.current = (t) => ({ s: lerp(from.s, to.s, t), x: lerp(from.x, to.x, t), y: lerp(from.y, to.y, t), k: lerp(from.k || 0, to.k || 0, Math.min(1, Math.max(0, t))) });
+    fadeAt.current = (t) => lerp(fade0, fadeTo, Math.min(1, t));
+    view.current = to;
+    anim.current = springTo(0, 1, velocity, (t) => frames(along.current(t), fadeAt.current(t)), () => { anim.current = null; paint(to, fadeTo); done?.(); }, { stiffness: 300, damping: 30 });
   };
   close.current = () => {
     if (closing.current || !fit) { if (!fit) onClose(); return; }
@@ -109,7 +125,7 @@ function ImageViewer({ req, onClose }: { req: ImageRequest; onClose: () => void 
     const mid = (t: TouchList) => ({ x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2, d: Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY) });
     const start = (e: TouchEvent) => {
       if ((e.target as Element).closest('button') || closing.current) return;
-      anim.current?.stop(); anim.current = null;
+      stopAnim();
       const v = { ...view.current };
       if (e.touches.length === 2) {
         const m = mid(e.touches);

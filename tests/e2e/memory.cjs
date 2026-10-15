@@ -125,7 +125,7 @@ async function openMemory(page) {
 
   // Reload: replies stay clean.
   await page.reload();
-  await page.waitForSelector('.topbar');
+  await page.waitForSelector('.app:not(.app-skeleton) .topbar');
   await page.click('.menu-btn');
   await page.click('.chat-row .chat-open >> nth=1');
   await page.waitForSelector('.msg.assistant');

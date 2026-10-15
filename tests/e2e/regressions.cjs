@@ -221,7 +221,7 @@ async function run(browser, mobile) {
     }
     await page.click('.menu-btn');
     await page.click('.sidebar .new-chat');
-    await page.waitForSelector('.main.is-empty');
+    await page.waitForSelector('.app:not(.app-skeleton) .main.is-empty');
     await page.click('.menu-btn');
     await page.locator('.chat-open').last().click();
     await page.waitForSelector('.msg.assistant .markdown');

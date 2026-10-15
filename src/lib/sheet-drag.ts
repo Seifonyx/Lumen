@@ -3,7 +3,7 @@
 // and pulling up past the top resists like a rubber band.
 // Starts from the grab bar or header at any time, or from the content when it's scrolled to the top.
 import { useEffect, useRef, type RefObject } from 'react';
-import { rubberBand, spring, Velocity, type Spring } from './spring';
+import { rubberBand, springTo, Velocity, type Motion } from './spring';
 import { haptic } from './haptics';
 
 const PROJECT_MS = 180; // where the sheet would be this long after release, at release speed
@@ -25,16 +25,26 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
     const el = sheet.current;
     if (!enabled || !el) return;
     let start: { y: number; x: number; id: number; handle: boolean; base: number } | null = null;
-    let y = 0, dragging = false, anim: Spring | null = null, closing = false;
+    let y = 0, dragging = false, anim: Motion | null = null, closing = false;
     const speed = new Velocity();
     // Only a separate scrim fades (a backdrop that contains the sheet would fade the sheet too).
     const backdrop = () => (scrim?.current && !scrim.current.contains(el) ? scrim.current : null);
+    const frames = (v: number): [HTMLElement | null, Keyframe][] => {
+      const b = backdrop();
+      return [[el, { transform: `translateY(${v}px)` }], [b, { opacity: String(v > 0 ? Math.max(0.15, 1 - v / el.offsetHeight) : 1) }]];
+    };
     const set = (v: number) => {
       y = v;
       el.style.transition = 'none';
-      el.style.transform = Math.abs(v) > 0.01 ? `translateY(${v}px)` : '';
       const b = backdrop();
-      if (b) { b.style.transition = 'none'; b.style.opacity = v > 0 ? String(Math.max(0.15, 1 - v / el.offsetHeight)) : ''; }
+      if (b) b.style.transition = 'none';
+      if (Math.abs(v) < 0.01) { el.style.transform = ''; if (b) b.style.opacity = ''; return; }
+      frames(v).forEach(([n, kf]) => { if (n) Object.assign(n.style, kf); });
+    };
+    // Released: the rest of the motion runs on the graphics thread (see springTo).
+    const settle = (to: number, v: number, done: () => void, opts?: { stiffness: number; damping: number }) => {
+      el.style.transition = 'none';
+      anim = springTo(y, to, v, frames, () => { anim = null; y = to; done(); }, opts);
     };
     const down = (x: number, py: number, id: number, target: EventTarget | null) => {
       const t = target as Element | null;
@@ -42,7 +52,7 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
       const handle = moving || Boolean(t?.closest('.sheet-grip, .sheet-grab, .modal-head, .um-head, .add-sheet-header'));
       if (!handle && (t?.closest('input, textarea, select, [contenteditable="true"]') || scrolledInside(t, el))) return;
       // Catch a moving sheet where it is (and call off a close that was under way).
-      if (moving) { anim!.stop(); anim = null; closing = false; }
+      if (moving) { y = anim!.stop(); anim = null; closing = false; }
       start = { x, y: py, id, handle, base: y };
       dragging = moving;
       speed.reset();
@@ -73,9 +83,9 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
       if (y > 0 && (projected > h * 0.5 || (v > FLICK && y > 8))) {
         closing = true;
         haptic();
-        anim = spring(y, h + 40, Math.max(v, 1.2), set, () => { anim = null; if (closing) close.current(); }, { stiffness: 260, damping: 32 });
+        settle(h + 40, Math.max(v, 1.2), () => { if (closing) close.current(); }, { stiffness: 260, damping: 32 });
       } else {
-        anim = spring(y, 0, v, set, () => { anim = null; set(0); });
+        settle(0, v, () => set(0));
       }
     };
     const ts = (e: TouchEvent) => { const t = e.touches[0]; if (e.touches.length === 1) down(t.clientX, t.clientY, t.identifier, e.target); };

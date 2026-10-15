@@ -2,7 +2,7 @@
 // unpins. The row follows the finger, keeps its speed when you let go, and you feel a tap when a swipe passes
 // the point where it will act. One row is open at a time; touching anywhere else closes it.
 import { haptic } from './haptics';
-import { rubberBand, spring, Velocity, type Spring } from './spring';
+import { rubberBand, springTo, Velocity, type Motion } from './spring';
 
 const REVEAL = 88; // width of the Delete button
 const PIN_AT = 72; // swipe right this far (or flick) to pin
@@ -11,9 +11,8 @@ const PROJECT_MS = 160;
 export function installSwipeRows(list: HTMLElement, { onDelete, onPin }: { onDelete: (id: string, row: HTMLElement) => void; onPin: (id: string) => void }) {
   let drag: { row: HTMLElement; face: HTMLElement; id: string; x: number; y: number; base: number; claimed: boolean; armed: boolean; tid: number } | null = null;
   let open: { row: HTMLElement; face: HTMLElement } | null = null;
-  let anim: Spring | null = null;
+  const anims = new Map<HTMLElement, Motion>();
   let swiped = 0;
-  let animRow: HTMLElement | null = null;
   const speed = new Velocity();
   const set = (row: HTMLElement, face: HTMLElement, x: number) => {
     face.style.transform = Math.abs(x) > 0.01 ? `translateX(${x}px)` : '';
@@ -22,9 +21,9 @@ export function installSwipeRows(list: HTMLElement, { onDelete, onPin }: { onDel
     row.style.setProperty('--swipe', String(Math.min(1, Math.abs(x) / (x < 0 ? Math.max(REVEAL, w * 0.6) : PIN_AT))));
   };
   const settle = (row: HTMLElement, face: HTMLElement, from: number, to: number, v: number, done?: () => void) => {
-    anim?.stop();
-    animRow = row;
-    anim = spring(from, to, v, (x) => set(row, face, x), () => { anim = null; set(row, face, to); done?.(); }, { stiffness: 520, damping: 44 });
+    anims.get(row)?.stop();
+    set(row, face, from || to);
+    anims.set(row, springTo(from, to, v, (x) => [[face, { transform: Math.abs(x) > 0.01 ? `translateX(${x}px)` : 'translateX(0)' }]], () => { anims.delete(row); set(row, face, to); done?.(); }, { stiffness: 520, damping: 44 }));
   };
   const current = (face: HTMLElement) => new DOMMatrixReadOnly(getComputedStyle(face).transform === 'none' ? undefined : getComputedStyle(face).transform).m41;
   const closeOpen = (except?: HTMLElement) => {
@@ -41,7 +40,8 @@ export function installSwipeRows(list: HTMLElement, { onDelete, onPin }: { onDel
     closeOpen(row);
     const t = e.touches[0];
     // A row that's still moving is caught where it is.
-    if (anim && animRow === row) { anim.stop(); anim = null; }
+    const moving = anims.get(row);
+    if (moving) { set(row, face, moving.stop()); anims.delete(row); }
     drag = { row, face, id: row.dataset.flip!, x: t.clientX, y: t.clientY, base: current(face), claimed: false, armed: false, tid: t.identifier };
     speed.reset(); speed.add(t.clientX);
   };
@@ -107,7 +107,7 @@ export function installSwipeRows(list: HTMLElement, { onDelete, onPin }: { onDel
   list.addEventListener('touchcancel', end);
   list.addEventListener('click', click, true);
   return () => {
-    anim?.stop();
+    anims.forEach((a) => a.stop());
     list.removeEventListener('touchstart', start);
     list.removeEventListener('touchmove', move);
     list.removeEventListener('touchend', end);

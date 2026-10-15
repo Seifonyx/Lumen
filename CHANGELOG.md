@@ -2,6 +2,14 @@
 
 ## 1.4.0 · The finishing touches
 
+- Smoother everywhere: when you let go of a sheet, the side menu, a swiped chat or a photo, the rest of the
+  motion is now run by the phone's graphics hardware at the screen's full rate, instead of being worked
+  out frame by frame by the app. Before, anything else the app was doing (or Low Power Mode on iPhone,
+  which slows that frame-by-frame work to 30 frames a second) made it stutter. The Settings slide, the
+  side menu and the swipe-back no longer redraw shadows and dimming every frame.
+- Sending feels like a messaging app: your message rises out of the text box with a soft spring while the
+  conversation slides up to make room, and its buttons fade in as it lands.
+- Fixed: since 1.3, swiping back in Settings on a phone showed an empty area instead of the list underneath.
 - Tap a picture in a chat and it grows out of its thumbnail into a full-screen viewer. Pinch or double-tap
   to zoom, drag around while zoomed, and swipe it down to put it back, with the background fading as you go.
   Tap once to hide or show the buttons. On a computer, click to zoom and press Esc to close.

@@ -96,7 +96,7 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
           <ul className="all-chats-list" ref={listRef}>
             {list.map((c) => (
               <li key={c.id} data-flip={c.id} className={`swipe-row${selected.has(c.id) ? ' checked' : ''}`}>
-                <div className="swipe-under" aria-hidden="true">
+                <div className="row-actions" aria-hidden="true">
                   <span className="swipe-pin">{c.pinned ? <PinOff size={18} /> : <Pin size={18} />}{c.pinned ? 'Unpin' : 'Pin'}</span>
                   <button type="button" className="swipe-delete" tabIndex={-1} onClick={(e) => deleteOne(c.id, e.currentTarget.closest('li'))}><Trash2 size={18} />Delete</button>
                 </div>

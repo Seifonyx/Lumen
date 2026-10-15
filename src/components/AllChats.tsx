@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { installSwipeRows } from '../lib/swipe-row';
 import { exitGhost, useFlip } from '../lib/motion';
-import { Download, FolderKanban, Pin, PinOff, Search, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, Download, FolderKanban, Pin, PinOff, Search, Trash2 } from 'lucide-react';
 import Modal from './Modal';
 import { useStore } from '../store';
 import { isTemporaryChat } from '../lib/temporary-chat';
@@ -20,14 +20,21 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [moving, setMoving] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
     return chats
-      .filter((c) => !isTemporaryChat(c) && (c.messages.length > 0 || Boolean(c.documents?.length)))
-      .filter((c) => !q || c.title.toLowerCase().includes(q) || c.tags?.some((t) => t.toLowerCase().includes(q)))
+      .filter((c) => !isTemporaryChat(c) && (c.messages.length > 0 || Boolean(c.documents?.length)) && Boolean(c.archived) === showArchived)
+      .filter((c) => !q || c.title.toLowerCase().includes(q) || c.tags?.some((t) => t.toLowerCase().includes(q)) || c.messages.some((m) => m.text.toLowerCase().includes(q)))
       .sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) || b.updatedAt - a.updatedAt);
-  }, [chats, query]);
+  }, [chats, query, showArchived]);
+  const archivedCount = useMemo(() => chats.filter((c) => c.archived && !isTemporaryChat(c)).length, [chats]);
+  const archive = () => {
+    picked.forEach((c) => void useStore.getState().setArchived(c.id, !showArchived));
+    toast(showArchived ? `Moved ${plural(n)} back` : `Archived ${plural(n)}`);
+    setSelected(new Set());
+  };
   const picked = chats.filter((c) => selected.has(c.id));
   const n = picked.length;
   const allShown = list.length > 0 && list.every((c) => selected.has(c.id));
@@ -85,6 +92,12 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
       <div className="all-chats">
         <div className="list-toolbar">
           <label className="search"><Search size={16} /><input type="search" aria-label="Search all chats" placeholder="Search" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" /></label>
+          {(archivedCount > 0 || showArchived) && (
+            <div className="all-chats-views" role="tablist" aria-label="Show">
+              <button type="button" role="tab" aria-selected={!showArchived} onClick={() => { setShowArchived(false); setSelected(new Set()); }}>Chats</button>
+              <button type="button" role="tab" aria-selected={showArchived} onClick={() => { setShowArchived(true); setSelected(new Set()); }}>Archived{archivedCount ? ` · ${archivedCount}` : ''}</button>
+            </div>
+          )}
         </div>
         <div className="all-chats-head">
           <label className="all-chats-check">
@@ -110,7 +123,7 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
               </li>
             ))}
           </ul>
-        ) : <p className="muted small empty-list">{query ? 'No chats match.' : 'No saved chats yet.'}</p>}
+        ) : <p className="muted small empty-list">{query ? 'No chats match.' : showArchived ? 'No archived chats.' : 'No saved chats yet.'}</p>}
         {moving && n > 0 && (
           <div className="bulk-move" role="menu" aria-label="Move to project">
             <button role="menuitem" onClick={() => move(null)}>All chats · no project</button>
@@ -125,6 +138,7 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
         ) : (
           <div className="all-chats-actions">
             <button type="button" className="btn small" disabled={!n || !projects.length} aria-expanded={moving} title={projects.length ? undefined : 'Create a project first'} onClick={() => setMoving(!moving)}><FolderKanban size={15} /> Move</button>
+            <button type="button" className="btn small" disabled={!n} onClick={archive}>{showArchived ? <ArchiveRestore size={15} /> : <Archive size={15} />} {showArchived ? 'Unarchive' : 'Archive'}</button>
             <button type="button" className="btn small" disabled={!n} onClick={() => void exportAll()}><Download size={15} /> Export</button>
             <button type="button" className="btn small danger" disabled={!n} onClick={() => { setMoving(false); setConfirming(true); }}><Trash2 size={15} /> Delete</button>
           </div>

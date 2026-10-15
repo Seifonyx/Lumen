@@ -91,6 +91,7 @@ function normalize(raw: any): Chat {
     createdAt: created,
     updatedAt: raw.updatedAt ?? raw.updated ?? created,
     pinned: Boolean(raw.pinned),
+    archived: raw.archived ? true : undefined,
     tags: Array.isArray(raw.tags) ? raw.tags.filter((t: unknown): t is string => typeof t === 'string').slice(0, 5) : undefined,
     model: raw.model,
     projectId: raw.projectId,

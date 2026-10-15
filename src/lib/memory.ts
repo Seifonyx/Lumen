@@ -210,7 +210,7 @@ export function memoryInstructions(items: Memory[], autoSave: boolean, opts: { p
     '# Memory',
     aboutNote,
     known,
-    `To save a memory, end your reply with a line [[remember: short fact in the third person, e.g. "Prefers answers in Arabic"]]. To remove one (when the user asks you to forget it, or it is no longer true), add [[forget: the memory as written above]]. To change a memory, forget the old one and remember the new one. These lines are hidden from the user; the app shows "Memory updated". ${when}`,
+    `To save a memory, end your reply with a line [[remember: short fact in the third person, e.g. "Prefers short answers"]]. To remove one (when the user asks you to forget it, or it is no longer true), add [[forget: the memory as written above]]. To change a memory, forget the old one and remember the new one. These lines are hidden from the user; the app shows "Memory updated". ${when}`,
     projectNote,
     'Never save passwords, API keys, financial account details, health information, details about other people, or confidential work figures — even if asked; say you can\'t store that.',
   ].filter(Boolean).join('\n');

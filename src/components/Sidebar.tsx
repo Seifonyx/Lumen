@@ -1,5 +1,5 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
-import { ChevronRight, Columns2, FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
+import { Archive, ArchiveRestore, ChevronRight, Columns2, FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
@@ -106,6 +106,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
               <button role="menuitem" onClick={() => { setMenu(false); moveChatToProject(chat.id, null); }}>All chats</button>
               {projects.map((project) => <button key={project.id} role="menuitem" onClick={() => { setMenu(false); moveChatToProject(chat.id, project.id); }}>{project.name}</button>)}
             </div>}
+            <button role="menuitem" onClick={() => { setMenu(false); void useStore.getState().setArchived(chat.id, !chat.archived); useStore.getState().toast(chat.archived ? 'Moved back to your chats' : 'Archived · find it in View all chats → Archived'); }}>{chat.archived ? <ArchiveRestore size={15} /> : <Archive size={15} />} {chat.archived ? 'Unarchive' : 'Archive'}</button>
             {wide && !active && <button role="menuitem" onClick={() => { setMenu(false); useStore.getState().setUi({ sideChatId: chat.id }); }}><Columns2 size={15} /> Open side by side</button>}
             <button role="menuitem" onClick={() => {setMenu(false);setTagging(true)}}><Tag size={15} /> Edit tags</button>
             <button role="menuitem" onClick={() => { setMenu(false); useStore.getState().setUi({ exportChatId: chat.id, sidebarOpen: false }); }}>
@@ -122,6 +123,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
           { label: 'Rename', icon: <Pencil size={17} />, onSelect: () => { setTitle(chat.title); setEditing(true); } },
           { label: chat.pinned ? 'Unpin' : 'Pin', icon: chat.pinned ? <PinOff size={17} /> : <Pin size={17} />, onSelect: () => void togglePin(chat.id) },
           { label: 'Move to project', icon: <FolderKanban size={17} />, onSelect: () => { setMoving(true); setMenu(true); } },
+          { label: chat.archived ? 'Unarchive' : 'Archive', icon: chat.archived ? <ArchiveRestore size={17} /> : <Archive size={17} />, onSelect: () => { void useStore.getState().setArchived(chat.id, !chat.archived); useStore.getState().toast(chat.archived ? 'Moved back to your chats' : 'Archived · find it in View all chats → Archived'); } },
           ...(wide && !active ? [{ label: 'Open side by side', icon: <Columns2 size={17} />, onSelect: () => useStore.getState().setUi({ sideChatId: chat.id, sidebarOpen: false }) }] : []),
           { label: 'Edit tags', icon: <Tag size={17} />, onSelect: () => setTagging(true) },
           { label: 'Share or export', icon: <Download size={17} />, onSelect: () => useStore.getState().setUi({ exportChatId: chat.id, sidebarOpen: false }) },
@@ -179,19 +181,22 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase();
     const visible = chats.filter((c) => !isTemporaryChat(c) && (c.messages.length > 0 || Boolean(c.documents?.length) || c.id === currentId) );
-    const filtered=visible;
+    // Archived chats stay out of the list, but searching still finds them.
+    const filtered = q ? visible : visible.filter((c) => !c.archived || c.id === currentId);
     const matches = q
       ? filtered.filter((c) => c.title.toLowerCase().includes(q) || c.tags?.some((t) => t.toLowerCase().includes(q)) || c.messages.some((m) => m.text.toLowerCase().includes(q)))
       : filtered;
     const out: [string, Chat[]][] = [];
-    const pinned = matches.filter((c) => c.pinned);
+    const pinned = matches.filter((c) => c.pinned && !c.archived);
     if (pinned.length) out.push(['Pinned', pinned]);
-    for (const c of matches.filter((c) => !c.pinned)) {
+    for (const c of matches.filter((c) => !c.pinned && !c.archived)) {
       const g = dayGroup(c.updatedAt);
       const last = out[out.length - 1];
       if (last && last[0] === g) last[1].push(c);
       else out.push([g, [c]]);
     }
+    const archived = matches.filter((c) => c.archived);
+    if (archived.length) out.push(['Archived', archived]);
     return out;
   }, [chats, query, currentId]);
   useFlip(listRef, groups.map(([label, list]) => `${label}:${list.map((c) => c.id).join(',')}`).join('|'), !query);

@@ -155,6 +155,8 @@ interface State {
   deleteChat(id: string): Promise<void>;
   renameChat(id: string, title: string): Promise<void>;
   togglePin(id: string): Promise<void>;
+  /** Archive (hide from the sidebar) or bring back. */
+  setArchived(id: string, archived: boolean): Promise<void>;
   selectProject(id: string | null): void;
   saveProject(project: Project): boolean;
   deleteProject(id: string): void;
@@ -1467,6 +1469,13 @@ export const useStore = create<State>((set, get) => {
       const chat = get().chats.find((c) => c.id === id);
       if (!chat || !title.trim()) return;
       const updated = { ...chat, title: title.trim().slice(0, 100) };
+      replaceChat(updated);
+      await persist(updated);
+    },
+    async setArchived(id, archived) {
+      const chat = get().chats.find((c) => c.id === id);
+      if (!chat) return;
+      const updated = { ...chat, archived: archived || undefined, pinned: archived ? false : chat.pinned, updatedAt: chat.updatedAt };
       replaceChat(updated);
       await persist(updated);
     },

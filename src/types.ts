@@ -94,6 +94,8 @@ export interface Chat {
   createdAt: number;
   updatedAt: number;
   pinned?: boolean;
+  /** hidden from the sidebar (still in All chats → Archived, and search) */
+  archived?: boolean;
   tags?: string[];
   model?: string;
   /** Project workspace this chat belongs to. */

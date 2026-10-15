@@ -49,7 +49,7 @@ async function open(browser, mobile) {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.stack || error.message));
   await page.goto(process.env.MR_TEST_URL || 'http://localhost:5190/?emulator');
-  await page.waitForSelector('.topbar');
+  await page.waitForSelector('.app:not(.app-skeleton) .topbar');
   return { ctx, page, errors, network, requests };
 }
 
@@ -79,7 +79,7 @@ async function run(browser, mobile) {
   await page.locator('.settings-page [aria-label="Close"]').click();
 
   await page.reload();
-  await page.waitForSelector('.topbar');
+  await page.waitForSelector('.app:not(.app-skeleton) .topbar');
   if (mobile) await page.click('.menu-btn');
   check(await page.locator('.sidebar-project-item[aria-current="page"]').textContent().then(t=>t.includes('Study')), `${label}: project selection survives reload`);
   if (mobile) await page.locator('.sidebar [aria-label="Close menu"]').click();
@@ -89,7 +89,7 @@ async function run(browser, mobile) {
   await page.waitForSelector('.msg.assistant .markdown');
   check(requests.length === 1 && requests[0].url.includes('gemini-2.5-pro') && JSON.stringify(requests[0].body).includes('PROJECT_INSTRUCTIONS_MARKER') && JSON.stringify(requests[0].body).includes('PROJECT_REFERENCE_MARKER'), `${label}: first message after reload uses project instructions, files and model`);
   await page.reload();
-  await page.waitForSelector('.topbar');
+  await page.waitForSelector('.app:not(.app-skeleton) .topbar');
   if (mobile) await page.click('.menu-btn');
   check(await page.locator('.chat-row').count() === 1, `${label}: the saved chat stays inside the selected project's list`);
   if (mobile) await page.locator('.sidebar [aria-label="Close menu"]').click();

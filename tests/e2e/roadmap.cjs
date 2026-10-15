@@ -41,7 +41,7 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
     if (await add.count()) await add.click();
   }
   await page.click('.settings-page [aria-label="Close"]');
-  await page.waitForSelector('.topbar');
+  await page.waitForSelector('.app:not(.app-skeleton) .topbar');
 
   await page.getByRole('button', { name: 'New project', exact: true }).first().click();
   await page.fill('input[aria-label="Project name"]', 'Hospital reports');

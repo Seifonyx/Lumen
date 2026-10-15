@@ -3595,7 +3595,7 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
 .sk-title { width: min(260px, 60%); height: 24px; border-radius: 8px; }
 /* (Sizes match the real empty chat, so the composer is exactly where it will be.) */
 @media (max-width: 899px) { .app-skeleton .topbar { min-height: 69px; } }
-@media (min-width: 900px) { .sk-composer { min-height: 140px; } .sk-welcome { height: 143.4px; } .app-skeleton .composer-wrap { min-height: 173.3px; } }
+@media (min-width: 900px) { .sk-composer { min-height: 140px; } .sk-welcome { height: 151.4px; } .app-skeleton .composer-wrap { min-height: 173.3px; } }
 .sk-rows { display: grid; gap: 14px; padding: 6px 2px; }
 .sk-rows .sk { height: 14px; }
 /* The real app appears over the placeholder frame: only its content fades in. */

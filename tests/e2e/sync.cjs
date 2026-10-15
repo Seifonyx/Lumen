@@ -41,7 +41,7 @@ async function device(browser, name, email, mobile) {
   await page.waitForSelector('.google-btn');
   await page.waitForFunction(() => typeof window.__testSignIn === 'function');
   await page.evaluate((e) => window.__testSignIn(e), email);
-  await page.waitForSelector('.topbar:visible, .settings-page');
+  await page.waitForSelector('.app:not(.app-skeleton) .topbar:visible, .settings-page');
   return { ctx, page, errors, log, name };
 }
 
@@ -123,7 +123,7 @@ async function device(browser, name, email, mobile) {
 
   // ---- Reload laptop: still consistent
   await B.page.reload();
-  await B.page.waitForSelector('.topbar');
+  await B.page.waitForSelector('.app:not(.app-skeleton) .topbar');
   await B.page.waitForTimeout(1500);
   check(!(await B.page.textContent('.chat-list')).includes('Renamed on laptop'), 'deleted chat stays deleted after reload');
 
@@ -152,7 +152,7 @@ async function device(browser, name, email, mobile) {
   await B.page.waitForSelector('.msg.assistant .model-tag');
   await B.page.waitForTimeout(1800);
   await A.page.reload();
-  await A.page.waitForSelector('.topbar');
+  await A.page.waitForSelector('.app:not(.app-skeleton) .topbar');
   await A.page.click('.menu-btn');
   await A.page.getByRole('button', { name: 'Library', exact: true }).click();
   await A.page.getByRole('heading', { name: 'Synced helper', exact: true }).waitFor();
@@ -186,7 +186,7 @@ async function device(browser, name, email, mobile) {
   await B.page.getByLabel('Canvas filename').fill('Standalone.md');
   await B.page.waitForTimeout(2200);
   await A.page.reload();
-  await A.page.waitForSelector('.topbar');
+  await A.page.waitForSelector('.app:not(.app-skeleton) .topbar');
   await A.page.click('.menu-btn');
   await A.page.getByRole('button', { name: 'Document.md', exact: true }).click();
   await A.page.getByRole('button', { name: 'Open canvas', exact: true }).click();

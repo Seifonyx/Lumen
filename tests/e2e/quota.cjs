@@ -36,7 +36,7 @@ async function device(browser, ctx) {
   await page.goto('http://localhost:5190/?emulator');
   await page.waitForFunction(() => typeof window.__testSignIn === 'function');
   await page.evaluate(() => window.__testSignIn('hebaghoneim8@gmail.com'));
-  await page.waitForSelector('.topbar:visible, .settings-page');
+  await page.waitForSelector('.app:not(.app-skeleton) .topbar:visible, .settings-page');
   return { ctx, page, errors };
 }
 const reads = (page) => page.evaluate(() => window.__quota.local().reads);

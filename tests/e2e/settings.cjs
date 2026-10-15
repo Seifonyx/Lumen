@@ -36,7 +36,7 @@ async function open(browser, mobile) {
   await D.page.click('.settings-tabs >> text=General');
   await D.page.screenshot({ path: require('path').join(__dirname, 'out', 'settings-desktop.png') });
   await D.page.keyboard.press('Escape');
-  await D.page.waitForSelector('.topbar');
+  await D.page.waitForSelector('.app:not(.app-skeleton) .topbar');
   check(!(await D.page.$('.settings-page')), 'Esc closes settings');
   check((await D.page.textContent('.disclaimer')) === 'AI can make mistakes. Check important info.', 'warning under the message box has no "patient"');
   await D.page.click('.sidebar-foot');
@@ -45,7 +45,7 @@ async function open(browser, mobile) {
 
   // Phone
   const P = await open(browser, true);
-  await P.page.waitForSelector('.topbar');
+  await P.page.waitForSelector('.app:not(.app-skeleton) .topbar');
   await P.page.click('.menu-btn');
   await P.page.click('.sidebar-foot');
   await P.page.waitForSelector('.settings-tabs');
@@ -63,7 +63,7 @@ async function open(browser, mobile) {
   await P.page.screenshot({ path: require('path').join(__dirname, 'out', 'settings-phone-menu.png') });
   await P.page.click('.settings-tabs >> text=Usage');
   await P.page.click('.settings-page [aria-label="Close"]');
-  await P.page.waitForSelector('.topbar');
+  await P.page.waitForSelector('.app:not(.app-skeleton) .topbar');
   check(true, 'phone: close returns to the chat');
 
   check(![...D.errors, ...P.errors].length, `no page errors ${[...D.errors, ...P.errors].join(' | ')}`);

@@ -58,7 +58,7 @@ const sse = (text, chunks) => 'data: ' + JSON.stringify({ candidates: [{ content
     assert.ok(seen.search.every((s) => s.tools), 'every search asks Google Search');
     assert.match(seen.report, /\[2\] Shared — https:\/\/shared\.example\/\\n\[3\] Site 2/, 'sources are numbered once across searches');
     const msg = page.locator('.msg.assistant').last();
-    assert.equal(await msg.locator('a[href="https://site1.example/page"]').first().textContent(), '[1]');
+    assert.equal(await msg.locator('a.cite[href="https://site1.example/page"]').first().textContent(), '1', 'citations are source badges');
     assert.ok(await msg.locator('h2:has-text("Sources")').count(), 'a Sources list follows the report');
     assert.equal(await msg.locator('ol li a').count(), 4);
     assert.match(await page.locator('.research-title').textContent(), /Researched 3 searches · 4 sources/);

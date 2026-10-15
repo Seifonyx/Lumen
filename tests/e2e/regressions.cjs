@@ -217,6 +217,7 @@ async function run(browser, mobile) {
         window.visualViewport.dispatchEvent(new Event('resize'));
       }, offset);
       await page.waitForFunction(offset => document.documentElement.classList.contains('kb-open') && document.documentElement.style.getPropertyValue('--vv-top') === `${offset}px`, offset);
+      await page.waitForTimeout(450); // the message box slides with the keyboard
       check(await page.locator('.composer').evaluate((el, offset) => el.getBoundingClientRect().bottom <= offset + 460 + 1, offset), `iOS simulation: composer fits after keyboard reopens at offset ${offset}`);
     }
     await page.click('.menu-btn');

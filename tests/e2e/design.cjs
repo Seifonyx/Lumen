@@ -47,6 +47,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         } else {
           await page.evaluate(() => { Object.defineProperty(window.visualViewport, 'height', { configurable: true, value: 460 }); window.visualViewport.dispatchEvent(new Event('resize')); });
           await page.waitForFunction(() => document.documentElement.classList.contains('kb-open'));
+          await page.waitForTimeout(450); // the message box slides with the keyboard
           check(inside(await page.locator('.composer').boundingBox(), width, 460) && !(await page.locator('.starter-actions').isVisible()), `${label}: welcome composer fits with simulated iOS keyboard`);
           await page.evaluate((height) => { Object.defineProperty(window.visualViewport, 'height', { configurable: true, value: height }); window.visualViewport.dispatchEvent(new Event('resize')); }, height);
           await page.waitForFunction(() => !document.documentElement.classList.contains('kb-open'));

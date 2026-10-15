@@ -10,6 +10,8 @@ import Logo from './Logo';
 import Modal from './Modal';
 import { useFocusScope } from '../lib/focus-scope';
 import { Exit, exitGhost, useFlip } from '../lib/motion';
+import { useLongPress } from '../lib/long-press';
+import ContextMenu from './ContextMenu';
 
 const EMPTY_PROJECTS: Project[] = [];
 
@@ -25,6 +27,10 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   const [title, setTitle] = useState(chat.title);
   const menuRef = useRef<HTMLDivElement>(null);
   const rowRef = useRef<HTMLLIElement>(null);
+  // Phones: press and hold a chat for its options.
+  const [held, setHeld] = useState(false);
+  useLongPress(rowRef, () => setHeld(true), { enabled: !editing, ignore: 'input, .row-menu' });
+  const remove = () => { if (confirm(`Delete "${chat.title}"?`)) { if (rowRef.current) exitGhost(rowRef.current, 'row'); void deleteChat(chat.id); } };
 
   useEffect(() => {
     if (!menu) return;
@@ -101,12 +107,22 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
             <button role="menuitem" onClick={() => { setMenu(false); useStore.getState().setUi({ exportChatId: chat.id, sidebarOpen: false }); }}>
               <Download size={15} /> Share or export
             </button>
-            <button role="menuitem" className="danger" onClick={() => { setMenu(false); if (confirm(`Delete "${chat.title}"?`)) { if (rowRef.current) exitGhost(rowRef.current, 'row'); void deleteChat(chat.id); } }}>
+            <button role="menuitem" className="danger" onClick={() => { setMenu(false); remove(); }}>
               <Trash2 size={15} /> Delete
             </button>
           </div>
         </Exit>)}
       </div>
+      {held && rowRef.current && (
+        <ContextMenu anchor={rowRef.current} label="Chat options" onClose={() => setHeld(false)} items={[
+          { label: 'Rename', icon: <Pencil size={17} />, onSelect: () => { setTitle(chat.title); setEditing(true); } },
+          { label: chat.pinned ? 'Unpin' : 'Pin', icon: chat.pinned ? <PinOff size={17} /> : <Pin size={17} />, onSelect: () => void togglePin(chat.id) },
+          { label: 'Move to project', icon: <FolderKanban size={17} />, onSelect: () => { setMoving(true); setMenu(true); } },
+          { label: 'Edit tags', icon: <Tag size={17} />, onSelect: () => setTagging(true) },
+          { label: 'Share or export', icon: <Download size={17} />, onSelect: () => useStore.getState().setUi({ exportChatId: chat.id, sidebarOpen: false }) },
+          { label: 'Delete', icon: <Trash2 size={17} />, danger: true, onSelect: remove },
+        ]} />
+      )}
       {tagging && <Modal title="Chat tags" onClose={()=>setTagging(false)}><div className="chat-tag-editor">
         <input autoFocus value={tags} maxLength={140} onChange={e=>setTags(e.target.value)} onKeyDown={e=>{
           if(e.key==='Enter'){e.preventDefault();setTagging(false);setChatTags(chat.id,tags.split(','));}

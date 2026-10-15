@@ -1,6 +1,7 @@
 // Edge swipe-back for stacked screens on phones (Settings sections): start at the left edge and the screen
 // follows your finger while the previous one eases in underneath; let go past halfway (or with a flick) to
 // go back, otherwise it springs back. A screen that's still moving can be caught again.
+import { haptic } from './haptics';
 import { flushSync } from 'react-dom';
 import { spring, Velocity, type Spring } from './spring';
 
@@ -80,6 +81,7 @@ export function installSwipeBack(page: HTMLElement, canGoBack: () => boolean, un
     if (!was) return;
     const v = speed.get(), w = width();
     if (dx + v * 180 > w * 0.5 || (v > 0.5 && dx > 16)) {
+      haptic();
       anim = spring(dx, w, Math.max(v, 0.6), paint, () => { anim = null; flushSync(back); reset(); }, { stiffness: 320, damping: 34 });
     } else {
       anim = spring(dx, 0, v, paint, () => { anim = null; reset(); }, { stiffness: 420, damping: 40 });

@@ -1,5 +1,6 @@
 import { useStore } from '../store';
 import { rubberBand, spring, Velocity, type Spring } from './spring';
+import { haptic } from './haptics';
 
 /**
  * A phone drawer that follows the finger; vertical scrolling keeps its native behavior. Letting go keeps the
@@ -109,6 +110,7 @@ export function installSidebarGestures(): () => void {
     // Past about a third of the way (where the finger's speed would carry it) commits the change.
     const projected = drag.offset + velocity * 160;
     const open = fling ? velocity > 0 : drag.open ? projected > drag.width * .65 : projected > drag.width * .35;
+    if (open !== drag.open) haptic();
     useStore.getState().setUi({ sidebarOpen: open });
     // The drawer keeps the finger's speed and settles with a spring; the state above is already final.
     cancelAnimationFrame(frame); frame = 0;

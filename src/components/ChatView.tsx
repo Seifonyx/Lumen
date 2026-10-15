@@ -1,3 +1,4 @@
+import { flySent } from '../lib/motion';
 import { FolderGit2, FolderKanban, ArrowDown, FileText, Menu, PanelLeftOpen, EyeOff } from 'lucide-react';
 import WelcomeStars from './WelcomeStars';
 import { modKey } from '../lib/util';
@@ -72,9 +73,12 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   const seenLength = useRef(messages.length);
   useLayoutEffect(() => {
     const el = scroller.current;
+    const added = messages.length > seenLength.current ? messages.slice(seenLength.current) : [];
     if (messages.length > seenLength.current && lastRole === 'user') stick.current = true;
     seenLength.current = messages.length;
     if (el && stick.current) el.scrollTop = el.scrollHeight;
+    const sent = added.findLast((m) => m.role === 'user');
+    if (sent) flySent(el?.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(sent.id)}"] .bubble`));
   }, [messages.length, lastText, lastRole]);
 
   // Content that settles after the first paint (older messages, code colouring, images) keeps the view on

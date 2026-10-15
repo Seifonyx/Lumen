@@ -1,4 +1,5 @@
-import { memo, useMemo, useSyncExternalStore } from 'react';
+import { memo, useLayoutEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import { fadeInText, motionOff, settleText, type Arrivals } from '../lib/motion';
 import { markdownExtrasVersion, segments, subscribeMarkdownExtras, type Segment } from '../lib/markdown';
 import { copyText } from '../lib/util';
 import { useStore } from '../store';
@@ -34,6 +35,18 @@ function Markdown({ text, streaming, messageId,knowledgeSources,onSource }: { te
     [parts, streaming],
   );
 
+  // New words fade in as a reply streams.
+  const root = useRef<HTMLDivElement>(null);
+  const arrivals = useRef<Arrivals | null>(null);
+  useLayoutEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    if (!streaming || motionOff()) { if (arrivals.current) { arrivals.current = null; settleText(el); } return; }
+    // Joining a reply that's already well under way (switching back to its chat) shows what's there at once.
+    arrivals.current ??= { total: text.length > 400 ? Infinity : 0, list: [] };
+    fadeInText(el, arrivals.current);
+  }, [parts, streaming]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const setUi = useStore((s) => s.setUi);
   const onClick = async (e: React.MouseEvent) => {
     const citation=(e.target as HTMLElement).closest('[data-knowledge-citation]') as HTMLElement|null;
@@ -54,7 +67,7 @@ function Markdown({ text, streaming, messageId,knowledgeSources,onSource }: { te
   };
 
   return (
-    <div className="markdown" onClick={onClick}>
+    <div className="markdown" onClick={onClick} ref={root}>
       {parts.map((p) =>
         p.type === 'html' ? (
           <div key={p.key} dangerouslySetInnerHTML={{ __html: p.html }} />

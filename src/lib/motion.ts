@@ -207,3 +207,85 @@ export function pageTransition(kind: TransitionKind, change: () => void) {
     change();
   }
 }
+
+// ---- A sent message lifts out of the text box and settles into the conversation.
+let flight: { left: number; top: number; at: number } | null = null;
+/** Remember where the text was just before it's sent. */
+export function noteSend(from: HTMLElement | null) {
+  if (!from || motionOff()) return;
+  const r = from.getBoundingClientRect(), style = getComputedStyle(from);
+  flight = { left: r.left + parseFloat(style.paddingLeft || '0'), top: r.top + parseFloat(style.paddingTop || '0'), at: performance.now() };
+}
+/** Fly the new message's bubble from there to where it landed. */
+export function flySent(bubble: HTMLElement | null | undefined) {
+  const f = flight;
+  flight = null;
+  if (!f || !bubble || performance.now() - f.at > 1500 || motionOff()) return;
+  const r = bubble.getBoundingClientRect();
+  const style = getComputedStyle(bubble);
+  // Line the bubble's text up with where the typed text was.
+  const dx = f.left - (r.left + parseFloat(style.paddingLeft || '0'));
+  const dy = f.top - (r.top + parseFloat(style.paddingTop || '0'));
+  if (Math.abs(dy) > window.innerHeight) return;
+  const msg = bubble.closest<HTMLElement>('.msg');
+  if (msg) msg.style.animation = 'none';
+  const easing = getComputedStyle(document.documentElement).getPropertyValue('--spring-slide').trim() || 'ease-out';
+  bubble.animate([
+    { transform: `translate(${dx}px, ${dy}px)`, backgroundColor: 'transparent', boxShadow: 'none' },
+    { transform: 'none' },
+  ], { duration: 460, easing });
+}
+
+// ---- While a reply streams, each new piece of text fades in instead of popping in. Works on the rendered
+// HTML: text that arrived in the last half second is wrapped word by word in spans whose fade is offset by
+// how long ago it arrived, so re-rendering mid-fade continues smoothly instead of restarting.
+const FADE_MS = 500;
+const SKIP = '.katex, svg, style, script, .fresh';
+export type Arrivals = { total: number; list: { at: number; time: number }[] };
+export function fadeInText(root: HTMLElement, arrivals: Arrivals) {
+  const now = performance.now();
+  const nodes: { node: Text; start: number }[] = [];
+  let total = 0;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: (n) => (n.parentElement?.closest(SKIP) && !n.parentElement.classList.contains('fresh') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+  });
+  for (let n = walker.nextNode() as Text | null; n; n = walker.nextNode() as Text | null) {
+    if (!n.parentElement?.classList.contains('fresh')) nodes.push({ node: n, start: total });
+    total += n.length;
+  }
+  if (total > arrivals.total) arrivals.list.push({ at: arrivals.total, time: now });
+  else if (total < arrivals.total) arrivals.list = arrivals.list.filter((a) => a.at < total);
+  arrivals.total = total;
+  arrivals.list = arrivals.list.filter((a, i, all) => now - a.time < FADE_MS || (all[i + 1] && now - all[i + 1].time < FADE_MS));
+  const live = arrivals.list.map((a, i, all) => ({ from: a.at, to: all[i + 1]?.at ?? Infinity, age: now - a.time })).filter((r) => r.age < FADE_MS);
+  if (!live.length) return;
+  for (let k = nodes.length - 1; k >= 0; k--) {
+    const { node, start } = nodes[k];
+    const end = start + node.length;
+    for (let j = live.length - 1; j >= 0; j--) {
+      const r = live[j];
+      const a = Math.max(r.from, start), b = Math.min(r.to, end);
+      if (a >= b) continue;
+      // Split out [a, b) of this node and wrap each word in it.
+      const tail = node.splitText(a - start);
+      tail.splitText(b - a);
+      const words = tail.data.split(/(?<=\s)/);
+      const frag = document.createDocumentFragment();
+      words.forEach((w, i) => {
+        const span = document.createElement('span');
+        span.className = 'fresh';
+        span.style.animationDelay = `${Math.min(i * 22, 180) - r.age}ms`;
+        span.textContent = w;
+        frag.append(span);
+      });
+      tail.replaceWith(frag);
+    }
+  }
+}
+/** After streaming: drop the wrappers so the finished reply is plain text again. */
+export function settleText(root: HTMLElement) {
+  const spans = root.querySelectorAll('.fresh');
+  if (!spans.length) return;
+  spans.forEach((s) => s.replaceWith(...s.childNodes));
+  root.normalize();
+}

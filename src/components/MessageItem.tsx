@@ -3,7 +3,9 @@ import { parsePlan } from '../lib/coding-plan';
 import KnowledgeSourceView from './KnowledgeSourceView';
 import type { KnowledgeSource } from '../types';
 import { AlertTriangle, Share, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, GitBranch, Info, Pencil, RefreshCw, Square, TextSelect, Volume2 } from 'lucide-react';
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
+import { useLongPress } from '../lib/long-press';
+import ContextMenu, { type ContextItem } from './ContextMenu';
 import { mentionedPaths, repoTree, seenPaths } from '../lib/workspace';
 import { normalizeEdits } from '../lib/edits';
 import { buildFile } from '../lib/generate';
@@ -111,6 +113,10 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(message.text);
   const [copied, setCopied] = useState(false);
+  const [selecting, setSelecting] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const [held, setHeld] = useState<number | null>(null);
+  useLongPress(box, (_, y) => setHeld(y), { enabled: !editing && !message.auto });
 
   // Files the app loaded because a model asked for them.
   if (message.auto === 'repository') return <div className="msg auto-files" role="note"><GitBranch size={14}/><span>{message.text.split('\n')[0]}</span></div>;
@@ -133,7 +139,7 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
   }
 
   return (
-    <div className="msg user">
+    <div className="msg user" ref={box}>
       {message.files && message.files.length > 0 && (
         <div className="msg-files">
           {message.files.map((f) =>
@@ -179,6 +185,14 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
             {chatId && <button className="msg-action" onClick={() => branchChatFrom(chatId, message.id)} aria-label="Branch from this message" title="Branch from here"><GitBranch size={15} /></button>}
           </span>
         </div>
+      )}
+      {selecting && <TextSelection text={message.text} open onClose={() => setSelecting(false)} />}
+      {held !== null && box.current && (
+        <ContextMenu anchor={box.current.querySelector<HTMLElement>('.bubble') || box.current} wrap="msg user" at={held} align="end" label="Message actions" onClose={() => setHeld(null)} items={[
+          ...(message.text ? [{ label: 'Copy', icon: <Copy size={17} />, onSelect: () => void copyText(message.text) }, { label: 'Select text', icon: <TextSelect size={17} />, onSelect: () => setSelecting(true) }] : []),
+          ...(!busy ? [{ label: 'Edit', icon: <Pencil size={17} />, onSelect: () => setEditing(true) }] : []),
+          ...(!busy && chatId ? [{ label: 'Branch from here', icon: <GitBranch size={17} />, onSelect: () => branchChatFrom(chatId, message.id) }] : []),
+        ] satisfies ContextItem[]} />
       )}
     </div>
   );
@@ -237,6 +251,9 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
   const [speaking, setSpeaking] = useState(false);
   const [selecting, setSelecting] = useState(false);
   const streaming = message.status === 'streaming';
+  const box = useRef<HTMLDivElement>(null);
+  const [held, setHeld] = useState<number | null>(null);
+  useLongPress(box, (_, y) => setHeld(y), { enabled: !streaming && Boolean(message.text) });
   const truncated = message.notices?.some((n) => /length limit/.test(n));
 
   // Phones: the native share sheet (Messages, Mail, Notes, WhatsApp…).
@@ -260,7 +277,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
   if (!message.text && message.files?.some((f) => f.kind === 'image')) return <div className="msg assistant"><GeneratedImage message={message} /></div>;
 
   return (
-    <div className="msg assistant">
+    <div className="msg assistant" ref={box}>
       {message.thinking && <Thinking text={message.thinking} active={streaming && !message.text} />}
       {message.text ? (
         <Markdown text={message.coding?.phase === 'plan' && !streaming && parsePlan(message.text) ? message.text.replace(/`{3,}plan\s*\n[\s\S]*?\n`{3,}/i, '') : message.text} streaming={streaming} messageId={message.id} knowledgeSources={message.knowledgeSources} onSource={setSource}/>
@@ -346,6 +363,19 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
             />
           )}
           {selecting && <TextSelection text={toPlainText(message.text)} open onClose={() => setSelecting(false)} />}
+          {held !== null && box.current && (
+            <ContextMenu anchor={box.current.querySelector<HTMLElement>('.markdown') || box.current} wrap="msg assistant" pad={14} at={held} label="Reply actions" onClose={() => setHeld(null)} items={[
+              { label: 'Copy', icon: <Copy size={17} />, onSelect: () => void copyText(message.text) },
+              { label: 'Select text', icon: <TextSelect size={17} />, onSelect: () => setSelecting(true) },
+              ...(!busy ? [{ label: 'Regenerate', icon: <RefreshCw size={17} />, onSelect: () => void regenerate(message.id) }] : []),
+              ...(canSpeak ? [{ label: speaking ? 'Stop reading' : 'Read aloud', icon: speaking ? <Square size={16} /> : <Volume2 size={17} />, onSelect: () => {
+                if (speaking) { stopSpeaking(); setSpeaking(false); }
+                else { setSpeaking(true); speak(message.id, toPlainText(message.text), () => setSpeaking(false)); }
+              } }] : []),
+              ...(canShare ? [{ label: 'Share', icon: <Share size={17} />, onSelect: () => void shareReply() }] : []),
+              { label: 'Save as Word', icon: <FileDown size={17} />, onSelect: () => void saveWord() },
+            ] satisfies ContextItem[]} />
+          )}
           {truncated && isLast && !busy && (
             <button className="btn small" onClick={() => void continueReply()}>Continue</button>
           )}

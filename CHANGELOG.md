@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.3.0 · Feels like an app
+
+- Press and hold a message or a chat on your phone: it sinks slightly, then lifts out of a blurred background
+  with its actions right next to it (Copy, Select text, Edit, Regenerate, Pin, Rename, Delete…), with a
+  small buzz. To select part of a message, use "Select text" from that menu.
+- In "View all chats" on phones, swipe a chat right to pin it, or left to show Delete. A long swipe left
+  deletes it straight away, and the notification has an Undo button.
+- When you send, your message lifts out of the text box and settles into the conversation. Replies fade in
+  word by word as they're written, instead of appearing in chunks.
+- Light vibrations (Android, and iPhone where Safari allows it) when you send, hold a message, flip a
+  switch, close a sheet by dragging, or a swipe goes through. You can turn them off in Settings → General
+  → Vibration.
+- Sheets now rise from the bottom of the screen and settle with a spring; menus and pop-ups open with a
+  slight bounce. The phone drawer slides with the same spring.
+- Fixed: buttons in notifications (like Undo) now work while a window is open.
+
 ## 1.2.0 · Gestures that follow your finger
 
 - Sheets (model picker, usage, +) and the phone drawer move exactly with your finger and keep its speed

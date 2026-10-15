@@ -4,6 +4,7 @@
 // Starts from the grab bar or header at any time, or from the content when it's scrolled to the top.
 import { useEffect, useRef, type RefObject } from 'react';
 import { rubberBand, spring, Velocity, type Spring } from './spring';
+import { haptic } from './haptics';
 
 const PROJECT_MS = 180; // where the sheet would be this long after release, at release speed
 const FLICK = 0.5; // px per ms
@@ -71,6 +72,7 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
       const projected = y + v * PROJECT_MS;
       if (y > 0 && (projected > h * 0.5 || (v > FLICK && y > 8))) {
         closing = true;
+        haptic();
         anim = spring(y, h + 40, Math.max(v, 1.2), set, () => { anim = null; if (closing) close.current(); }, { stiffness: 260, damping: 32 });
       } else {
         anim = spring(y, 0, v, set, () => { anim = null; set(0); });

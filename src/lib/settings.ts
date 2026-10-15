@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   fontSize: 'medium',
   enterToSend: true,
+  haptics: true,
   autoTitle: true,
   autoCompact: true,
   memory: true,

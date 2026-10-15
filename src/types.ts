@@ -260,6 +260,8 @@ export interface Settings {
   theme: Theme;
   fontSize: FontSize;
   enterToSend: boolean;
+  /** short vibrations for gestures and switches (phones) */
+  haptics?: boolean;
   autoTitle: boolean;
   /** summarize older messages when a chat gets long */
   autoCompact: boolean;

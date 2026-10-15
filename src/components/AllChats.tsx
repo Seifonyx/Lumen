@@ -1,6 +1,7 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { installSwipeRows } from '../lib/swipe-row';
 import { exitGhost, useFlip } from '../lib/motion';
-import { Download, FolderKanban, Search, Trash2 } from 'lucide-react';
+import { Download, FolderKanban, Pin, PinOff, Search, Trash2 } from 'lucide-react';
 import Modal from './Modal';
 import { useStore } from '../store';
 import { isTemporaryChat } from '../lib/temporary-chat';
@@ -36,6 +37,23 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
 
   const listRef = useRef<HTMLUListElement>(null);
   useFlip(listRef, list.map((c) => c.id).join(','), !query);
+  // Phones: swipe a row left to delete (with Undo), right to pin.
+  const deleteOne = (id: string, row?: HTMLElement | null) => {
+    const chat = useStore.getState().chats.find((c) => c.id === id);
+    if (!chat) return;
+    if (row) exitGhost(row, 'row');
+    void deleteChat(id);
+    setSelected((prev) => { const next = new Set(prev); next.delete(id); return next; });
+    toast('Chat deleted', 'info', { label: 'Undo', run: () => void useStore.getState().importChats([chat]) });
+  };
+  const swipe = useRef({ deleteOne, togglePin: useStore.getState().togglePin });
+  swipe.current.deleteOne = deleteOne;
+  const hasList = list.length > 0;
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    return installSwipeRows(el, { onDelete: (id, row) => swipe.current.deleteOne(id, row), onPin: (id) => void swipe.current.togglePin(id) });
+  }, [hasList]);
   const remove = async () => {
     // Deleted rows slide out while the rest close the gap.
     listRef.current?.querySelectorAll<HTMLElement>('[data-flip]').forEach((el) => { if (selected.has(el.dataset.flip!)) exitGhost(el, 'row'); });
@@ -77,12 +95,18 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
         {list.length ? (
           <ul className="all-chats-list" ref={listRef}>
             {list.map((c) => (
-              <li key={c.id} data-flip={c.id} className={selected.has(c.id) ? 'checked' : ''}>
-                <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggle(c.id)} aria-label={`Select ${c.title}`} />
-                <button type="button" className="all-chats-open" onClick={() => { selectChat(c.id); setUi({ sidebarOpen: false }); onClose(); }} dir="auto">
-                  <span className="all-chats-title">{c.title}</span>
-                  <small>{[c.pinned ? 'Pinned' : '', projectName(c.projectId) || '', new Date(c.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(c.updatedAt).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' })].filter(Boolean).join(' · ')}</small>
-                </button>
+              <li key={c.id} data-flip={c.id} className={`swipe-row${selected.has(c.id) ? ' checked' : ''}`}>
+                <div className="swipe-under" aria-hidden="true">
+                  <span className="swipe-pin">{c.pinned ? <PinOff size={18} /> : <Pin size={18} />}{c.pinned ? 'Unpin' : 'Pin'}</span>
+                  <button type="button" className="swipe-delete" tabIndex={-1} onClick={(e) => deleteOne(c.id, e.currentTarget.closest('li'))}><Trash2 size={18} />Delete</button>
+                </div>
+                <div className="swipe-face">
+                  <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggle(c.id)} aria-label={`Select ${c.title}`} />
+                  <button type="button" className="all-chats-open" onClick={() => { selectChat(c.id); setUi({ sidebarOpen: false }); onClose(); }} dir="auto">
+                    <span className="all-chats-title">{c.title}</span>
+                    <small>{[c.pinned ? 'Pinned' : '', projectName(c.projectId) || '', new Date(c.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(c.updatedAt).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' })].filter(Boolean).join(' · ')}</small>
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

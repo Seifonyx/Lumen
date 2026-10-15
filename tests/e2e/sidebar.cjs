@@ -119,7 +119,8 @@ const settled = page => page.waitForTimeout(320);
         await touch(page, '.msg.assistant pre', 'touchmove', start + sign * 150, y);
         await touch(page, '.msg.assistant pre', 'touchend', start + sign * 150, y);
         check(!(await isOpen()), `${label}: code gestures do not open the drawer`);
-        await page.locator('.msg.assistant p').first().evaluate(el => window.getSelection().selectAllChildren(el));
+        // (On phones message text is selected through the long-press menu; code blocks keep native selection.)
+        await page.locator('.msg.assistant pre').first().evaluate(el => window.getSelection().selectAllChildren(el));
         await touch(page, '.messages', 'touchstart', start, y);
         await touch(page, '.messages', 'touchmove', start + sign * 150, y);
         await touch(page, '.messages', 'touchend', start + sign * 150, y);

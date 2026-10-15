@@ -42,6 +42,8 @@ export interface Toast {
   id: string;
   text: string;
   kind: 'info' | 'error' | 'success';
+  /** a button in the notification, e.g. Undo */
+  action?: { label: string; run: () => void };
 }
 
 export interface PreviewFile {
@@ -117,7 +119,7 @@ interface State {
   /** Quiet weekly re-check: removes clear-cut broken models and brings back removed ones that answer again. */
   backgroundModelCheck(): Promise<void>;
   updateSettings(patch: Partial<Settings>): void;
-  toast(text: string, kind?: Toast['kind']): void;
+  toast(text: string, kind?: Toast['kind'], action?: Toast['action']): void;
   dismissToast(id: string): void;
   setUi(patch: Partial<Pick<State, 'sidebarOpen' | 'settingsOpen' | 'settingsTab' | 'preview' | 'runner' | 'workspaceOpen' | 'repoPicker' | 'canvasOpen' | 'canvasDocumentId' | 'exportChatId' | 'projectWorkspaceOpen'>>): void;
   openCanvas(name?: string, content?: string): void;
@@ -1067,10 +1069,10 @@ export const useStore = create<State>((set, get) => {
       }
     },
 
-    toast(text, kind = 'info') {
+    toast(text, kind = 'info', action) {
       const id = uid();
-      set((s) => ({ toasts: [...s.toasts.slice(-3), { id, text, kind }] }));
-      setTimeout(() => get().dismissToast(id), kind === 'error' ? 7000 : 3500);
+      set((s) => ({ toasts: [...s.toasts.slice(-3), { id, text, kind, action }] }));
+      setTimeout(() => get().dismissToast(id), kind === 'error' || action ? 7000 : 3500);
     },
     dismissToast(id) {
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));

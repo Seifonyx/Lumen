@@ -105,14 +105,14 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         await page.locator('.modal [aria-label="Close"]').click();
         check(await page.evaluate(() => !window.getSelection()?.toString()), label + ': selection clears on closing');
         await page.locator('.usage-chip').click();
-        await page.waitForTimeout(180);
+        await page.waitForTimeout(500);
         check(await page.locator('.usage-ring').isVisible() && inside(await page.locator('.usage-pop').boundingBox(), width, height) && (await scan(page)).length === 0, `${label}: compact usage panel fits the screen`);
         check(await page.getByRole('meter', { name: 'How full this chat is' }).count() === 1 && (await page.locator('.usage-pop').textContent()).includes('Daily allowance unknown'), `${label}: usage distinguishes estimated context and unknown daily allowance`);
         await page.screenshot({ path: path.join(__dirname, 'out', `usage-meter-${width}-${theme}.png`) });
         if (mobile) {
           await page.evaluate(() => { Object.defineProperty(window.visualViewport, 'height', { configurable: true, value: 460 }); window.visualViewport.dispatchEvent(new Event('resize')); });
           await page.waitForFunction(() => document.documentElement.classList.contains('kb-open'));
-          await page.waitForTimeout(100);
+          await page.waitForTimeout(500);
           check(inside(await page.locator('.usage-pop').boundingBox(), width, 460), `${label}: usage popup fits above the simulated phone keyboard`);
           await page.evaluate((height) => { Object.defineProperty(window.visualViewport, 'height', { configurable: true, value: height }); window.visualViewport.dispatchEvent(new Event('resize')); }, height);
           await page.waitForFunction(() => !document.documentElement.classList.contains('kb-open'));

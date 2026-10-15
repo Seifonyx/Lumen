@@ -3577,3 +3577,48 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
 .fresh { animation: word-in .5s var(--ease) both; }
 @keyframes word-in { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .fresh { animation: none; } }
+
+/* ---- 1.4 */
+/* Placeholders while things load: soft bars with a slow shimmer. */
+.sk { display: block; height: 12px; border-radius: 6px; background: linear-gradient(90deg, var(--surface-2) 25%, color-mix(in srgb, var(--surface-2) 55%, var(--surface-3)) 50%, var(--surface-2) 75%); background-size: 300% 100%; animation: sk-shimmer 1.6s ease-in-out infinite; }
+@keyframes sk-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+.sk-dot { width: 26px; height: 26px; border-radius: 50%; flex: none; }
+.app-skeleton .sidebar { gap: 18px; padding: 16px 14px; }
+.sk-brand, .app-skeleton .topbar { display: flex; align-items: center; gap: 10px; }
+.sk-field { height: 36px; border-radius: 10px; }
+.sk-list { display: grid; gap: 16px; padding: 8px 4px; }
+.app-skeleton .messages { overflow: hidden; }
+.sk-composer { min-height: 116px; }
+.sk-welcome { height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+.sk-star { width: 44px; height: 44px; border-radius: 14px; }
+.sk-title { width: min(260px, 60%); height: 24px; border-radius: 8px; }
+/* (Sizes match the real empty chat, so the composer is exactly where it will be.) */
+@media (max-width: 899px) { .app-skeleton .topbar { min-height: 69px; } }
+@media (min-width: 900px) { .sk-composer { min-height: 140px; } .sk-welcome { height: 143.4px; } .app-skeleton .composer-wrap { min-height: 173.3px; } }
+.sk-rows { display: grid; gap: 14px; padding: 6px 2px; }
+.sk-rows .sk { height: 14px; }
+/* The real app appears over the placeholder frame: only its content fades in. */
+.app:not(.app-skeleton) .chat-list, .app:not(.app-skeleton) .sidebar-projects-list { animation: fade .3s var(--ease); }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+
+/* Switching chats: the conversation fades in instead of swapping in one frame. */
+.thread { animation: fade .22s var(--ease); }
+
+/* Photo viewer */
+.thumb-btn { display: inline-block; padding: 0; border: 0; background: none; border-radius: var(--radius); cursor: zoom-in; line-height: 0; }
+.generated-image .thumb-btn { display: block; width: 100%; }
+.generated-image .thumb-btn img { width: 100%; }
+.image-viewer { position: fixed; inset: 0; z-index: 96; outline: none; overscroll-behavior: contain; }
+.image-viewer, .image-viewer * { touch-action: none; }
+.iv-backdrop { position: absolute; inset: 0; background: #000; }
+.iv-img { position: absolute; transform-origin: center; will-change: transform; -webkit-user-select: none; user-select: none; -webkit-user-drag: none; -webkit-touch-callout: none; cursor: zoom-in; }
+.iv-bar { position: absolute; top: max(12px, env(safe-area-inset-top)); inset-inline: 12px; display: flex; justify-content: space-between; transition: opacity .2s var(--ease); }
+.image-viewer.bare .iv-bar { opacity: 0; pointer-events: none; }
+.iv-btn { width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgb(255 255 255 / .16); color: #fff; display: grid; place-items: center; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.iv-btn:active { background: rgb(255 255 255 / .28); }
+/* Menus and pop-ups grow out of the button that opened them. */
+@keyframes grow-in { from { opacity: 0; transform: scale(.82); } }
+.models-pop:not(.sheet), .more-menu-list, .sheet-popover-backdrop .attach-menu { animation: grow-in .34s var(--spring-pop); transform-origin: bottom left; }
+.models-pop.right:not(.sheet) { transform-origin: bottom right; }
+.usage-pop:not(.sheet) { animation: grow-in .34s var(--spring-pop); transform-origin: bottom right; }
+.row-menu .menu { animation: grow-in .3s var(--spring-pop); transform-origin: top right; }

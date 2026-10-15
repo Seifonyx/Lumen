@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SkeletonRows } from './AppSkeleton';
 import { Copy, Link2Off } from 'lucide-react';
 import { listShares, shareUrl, stopSharing, type ShareInfo } from '../lib/share';
 import { copyText } from '../lib/util';
@@ -24,7 +25,7 @@ export default function SharedLinks() {
     <div className="settings-group">
       <span className="settings-group-title">Shared links</span>
       <div className="settings-card">
-        {links === null ? <p className="muted small pad">Loading…</p>
+        {links === null ? <div className="pad"><SkeletonRows rows={2} label="Loading shared links" /></div>
           : !links.length ? <p className="muted small pad">No public links. Create one from a chat’s menu → Share or export.</p>
           : links.map((l) => (
             <div className="setting-row" key={l.id}>

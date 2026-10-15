@@ -4,6 +4,8 @@ import Login from './components/Login';
 import NotInvited from './components/NotInvited';
 import Sidebar from './components/Sidebar';
 import Toasts from './components/Toasts';
+import AppSkeleton from './components/AppSkeleton';
+import { ImageViewerHost } from './components/ImageViewer';
 import UpdateBar from './components/UpdateBar';
 import WorkspacePanel from './components/WorkspacePanel';
 import { listenForNotificationTaps } from './lib/notify';
@@ -51,6 +53,8 @@ export default function App() {
   const accountId = useStore(s => s.user?.uid);
   useEffect(()=>useStore.subscribe((next,previous)=>{if(next.user?.uid!==previous.user?.uid||next.keys.gemini!==previous.keys.gemini||next.settings.privacyShield!==previous.settings.privacyShield||next.settings.privacyMode!==previous.settings.privacyMode)cancelKnowledge()}),[]);
   useEffect(() => { setLibraryOpen(false); setCommandPaletteOpen(false); }, [accountId]);
+  // Remembered so the next visit shows the app's frame before any code loads (index.html).
+  useEffect(() => { try { if (authed) localStorage.setItem('mr.signedIn', '1'); else if (authed === false) localStorage.removeItem('mr.signedIn'); } catch { /* private mode */ } }, [authed]);
   useEffect(() => {
     const open = (event: Event) => { const requested=(event as CustomEvent).detail; setLibraryTab(requested === 'knowledge' ? 'knowledge' : requested === 'tasks' ? 'tasks' : requested === 'tools' ? 'tools' : 'assistants'); setUi({ sidebarOpen: false }); setLibraryOpen(true); };
     window.addEventListener('mr:library', open);
@@ -139,7 +143,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [setUi, commandPaletteOpen]);
 
-  if (authed === null) return <div className="splash" aria-busy="true" />;
+  if (authed === null) return <AppSkeleton />;
   if (!authed) {
     return (
       <>
@@ -172,6 +176,7 @@ export default function App() {
           <RunPanel />
         </Suspense>
       )}
+      <ImageViewerHost />
       <Toasts />
       <UpdateBar />
     </div>

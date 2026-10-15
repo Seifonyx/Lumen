@@ -33,6 +33,10 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Signed in before: the app's frame shows at once (same markup as src/components/AppSkeleton.tsx).
+      try { if (localStorage.getItem('mr.signedIn')) document.getElementById('root').innerHTML = '<div class="app app-skeleton" aria-busy="true" aria-label="Loading Lumen"><aside class="sidebar" aria-hidden="true"><div class="sk-brand"><span class="sk sk-dot"></span><span class="sk" style="width:64px"></span></div><span class="sk sk-field"></span><div class="sk-list"><span class="sk" style="width:70%"></span><span class="sk" style="width:52%"></span><span class="sk" style="width:84%"></span><span class="sk" style="width:46%"></span><span class="sk" style="width:62%"></span><span class="sk" style="width:74%"></span><span class="sk" style="width:40%"></span></div></aside><main class="main is-empty" aria-hidden="true"><header class="topbar"><span class="sk sk-dot"></span><span class="sk" style="width:110px"></span></header><div class="conversation-area"><div class="messages"><div class="empty sk-welcome"><span class="sk sk-star"></span><span class="sk sk-title"></span></div></div></div><div class="composer-wrap"><div class="composer sk-composer"></div></div></main></div>'; } catch (e) {}
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -33,6 +33,26 @@ typing stays under 0.09 s per key at 4×; cold start has no layout shift.
 Right-to-left: the interface itself has no right-to-left mode (it's English-only). Arabic chat titles and
 messages flow right to left on their own (`dir="auto"`); they were included in the frame checks.
 
+## Native feel (1.3 and 1.4)
+
+After the three phases, the remaining gap to a native app was the things websites usually don't do:
+
+| What | Version |
+|---|---|
+| Long-press menus on messages and chats (lift, blurred background, buzz) | 1.3.0 |
+| Swipe chat rows: right to pin, left to Delete, long swipe deletes with Undo | 1.3.0 |
+| Sent message flies from the text box; streamed words fade in | 1.3.0 |
+| Haptics (Android vibration; iPhone switch tick on Safari 18+), with a setting to turn them off | 1.3.0 |
+| Sheets rise from the bottom with a spring; menus pop with a slight settle | 1.3.0 |
+| Photo viewer: grows from the thumbnail, pinch/double-tap zoom, swipe down to close | 1.4.0 |
+| Menus grow out of their button | 1.4.0 |
+| Chat switch fades; each chat remembers where you were | 1.4.0 |
+| App frame with placeholders at start-up instead of a blank page; placeholder rows for loading lists | 1.4.0 |
+| No accidental selection of buttons and labels | already in place (1.0) |
+
+Swipe actions are in "View all chats" rather than the phone drawer: in the drawer a left swipe already
+closes the drawer, and both on the same rows would fight. Chats in the drawer have the long-press menu.
+
 ## Proof
 
 - `tests/e2e/transitions.cjs`: every transition recorded frame by frame at 390 px and 1280 px, in light and
@@ -41,6 +61,14 @@ messages flow right to left on their own (`dir="auto"`); they were included in t
   Measured: 0.2 to 2.7.
 - `tests/e2e/gestures.cjs`: real touch sequences for flick vs slow drag, rubber banding, catching a moving
   sheet or drawer, tapping beside the drawer, and the Settings edge swipe-back.
+- `tests/e2e/native-feel.cjs` (1.3): long press on replies, messages and chats (a quick tap or a scroll
+  doesn't open it, nothing underneath gets tapped), swipe to pin / uncover Delete / delete with Undo,
+  the sent message's flight, streamed words fading in and the finished reply left as plain text, and
+  vibrations for send and long press; light and dark.
+- `tests/e2e/app-feel.cjs` (1.4): the start-up frame appears before any code runs and its message box is
+  exactly where the real one appears; the photo viewer starts cropped to the thumbnail in its place,
+  then fills the screen; double tap, pinch, swipe down, click and Esc; menus grow from their button;
+  chats come back to the same message.
 - `tests/e2e/motion.cjs`: long chat opens at the bottom with every message, sending while scrolled up stays
   in view, buttons don't pop during streaming, True black has no grey flash.
 

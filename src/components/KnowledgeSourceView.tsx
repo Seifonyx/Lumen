@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ExternalLink, Loader2 } from "lucide-react";
+import { SkeletonRows } from './AppSkeleton';
+import { ExternalLink } from "lucide-react";
 import type { KnowledgeSource } from "../types";
 import { useStore } from "../store";
 import { original, page } from "../lib/knowledge/db";
@@ -65,9 +66,7 @@ export default function KnowledgeSourceView({
           {source.page}
         </p>
         {loading ? (
-          <p role="status">
-            <Loader2 size={16} className="spin" /> Loading source…
-          </p>
+          <SkeletonRows rows={4} label="Loading source" />
         ) : (
           <>
             {missing && (

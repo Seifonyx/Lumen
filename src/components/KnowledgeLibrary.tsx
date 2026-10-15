@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { SkeletonRows } from './AppSkeleton';
 import { FileText, Loader2, Pause, Plus, Search, Trash2 } from "lucide-react";
 import { useStore } from "../store";
 import type { Attachment, KnowledgeSource } from "../types";
@@ -410,9 +411,7 @@ export default function KnowledgeLibrary({ onClose }: { onClose: () => void }) {
           </p>
         )}
         {loadingLibrary && (
-          <p role="status" className="muted small">
-            Opening your library…
-          </p>
+          <SkeletonRows rows={3} label="Opening your library" />
         )}
         {!loadingLibrary && !docs.length && !importing && (
           <div className="knowledge-empty">

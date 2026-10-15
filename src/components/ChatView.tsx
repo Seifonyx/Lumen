@@ -17,6 +17,28 @@ import ModelPicker from './ModelPicker';
 import ProjectManager from './ProjectManager';
 import ProjectWorkspace from './ProjectWorkspace';
 
+/** How far from the latest message you were in each chat (this session), to come back to the same spot. */
+type Anchor = { id: string; offset: number };
+let restoredTo = -1;
+const positions = new Map<string, Anchor | null>();
+/** The message at the top of the view and how far its top is from the view's top. */
+function topAnchor(el: HTMLElement): Anchor | null {
+  const top = el.getBoundingClientRect().top;
+  for (const row of el.querySelectorAll<HTMLElement>('[data-message-id]')) {
+    const r = row.getBoundingClientRect();
+    if (r.bottom > top + 1) return { id: row.dataset.messageId!, offset: r.top - top };
+  }
+  return null;
+}
+/** Scroll so that message is back where it was; false if it isn't on the page (yet). */
+function restoreAnchor(el: HTMLElement, a: Anchor) {
+  const row = el.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(a.id)}"]`);
+  if (!row) return false;
+  el.scrollTop += row.getBoundingClientRect().top - el.getBoundingClientRect().top - a.offset;
+  restoredTo = el.scrollTop;
+  return true;
+}
+
 export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => void }) {
   const user=useStore(s=>s.user);
   const hour=new Date().getHours();
@@ -61,12 +83,17 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
     previousReply.current={id:chat?.id,streaming};
   },[streaming,chat?.id,messages]);
 
-  // Jump to the bottom when switching chats.
+  // Switching chats: back where you were in that chat (this session), otherwise on the latest message.
+  const hold = useRef<Anchor | null>(null);
   useLayoutEffect(() => {
-    stick.current = true;
     const el = scroller.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [chat?.id]);
+    hold.current = (chat && positions.get(chat.id)) || null;
+    stick.current = hold.current === null;
+    if (!el) return;
+    // (Older messages fill in over the next frames; until the remembered one is there, start from the top.)
+    if (hold.current) { if (!restoreAnchor(el, hold.current)) { el.scrollTop = 0; restoredTo = 0; } }
+    else el.scrollTop = el.scrollHeight;
+  }, [chat?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Follow streaming text while the user is at the bottom; sending a message always brings you to it.
   const lastRole = messages.at(-1)?.role;
@@ -87,7 +114,8 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
     const el = scroller.current;
     const content = el?.querySelector('.thread') ?? el?.firstElementChild;
     if (!el || !content) return;
-    const observer = new ResizeObserver(() => { if (stick.current) el.scrollTop = el.scrollHeight; });
+    // (While older messages fill in above a remembered spot, it stays put.)
+    const observer = new ResizeObserver(() => { if (stick.current) el.scrollTop = el.scrollHeight; else if (hold.current) restoreAnchor(el, hold.current); });
     observer.observe(content);
     return () => observer.disconnect();
   }, [chat?.id, empty]);
@@ -98,10 +126,15 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
     const onScroll = () => {
       const gap = el.scrollHeight - el.scrollTop - el.clientHeight;
       stick.current = gap < 80;
+      // Your own scrolling takes over from a remembered spot; where you are is saved once you stop.
+      if (hold.current && Math.abs(el.scrollTop - restoredTo) > 1) hold.current = null;
+      clearTimeout(saveTimer);
+      saveTimer = window.setTimeout(() => { if (chat) positions.set(chat.id, stick.current ? null : topAnchor(el)); }, 150);
       setShowDown(gap > 400);
     };
+    let saveTimer = 0;
     el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
+    return () => { clearTimeout(saveTimer); el.removeEventListener('scroll', onScroll); };
   }, [chat?.id, projectWorkspaceOpen, empty]);
 
   if (currentProject && projectWorkspaceOpen) {

@@ -4,6 +4,7 @@ import { fetchOriginal } from '../lib/sync';
 import { saveBlob } from '../lib/util';
 import { useStore } from '../store';
 import type { Message } from '../types';
+import { openImage } from './ImageViewer';
 
 /** A reply that is a created image: the picture, which model made it, Download and Make another. */
 export default function GeneratedImage({ message }: { message: Message }) {
@@ -30,7 +31,7 @@ export default function GeneratedImage({ message }: { message: Message }) {
   };
   return (
     <figure className="generated-image">
-      {src && <img src={src} alt={prompt || file.name} />}
+      {src && <button type="button" className="thumb-btn" aria-label="View full screen" onClick={(e) => openImage({ src, alt: prompt || file.name, name: file.name, from: e.currentTarget.querySelector('img') })}><img src={src} alt={prompt || file.name} /></button>}
       <figcaption>
         <span className="model-tag">{message.model}</span>
         <span className="spacer" />

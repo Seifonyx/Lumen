@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.0 · The finishing touches
+
+- Tap a picture in a chat and it grows out of its thumbnail into a full-screen viewer. Pinch or double-tap
+  to zoom, drag around while zoomed, and swipe it down to put it back, with the background fading as you go.
+  Tap once to hide or show the buttons. On a computer, click to zoom and press Esc to close.
+- Menus and pop-ups (model picker, usage, the ⋯ menus) grow out of the button you pressed.
+- Switching chats fades the conversation in, and each chat remembers where you were reading. Go back to it
+  and you're on the same message, not thrown to the bottom (until you close the app).
+- Opening the app shows its frame straight away (sidebar, top bar and message box in their real places,
+  with soft placeholders) instead of a blank screen, and the real content fades in over it without anything
+  moving. Lists that load (shared links, documents and sources) show placeholder rows instead of
+  "Loading…".
+
 ## 1.3.0 · Feels like an app
 
 - Press and hold a message or a chat on your phone: it sinks slightly, then lifts out of a blurred background

@@ -6,6 +6,7 @@ import { AlertTriangle, Share, FolderOpen, ShieldCheck, ShieldOff, Brain, Bookma
 import { memo, useEffect, useRef, useState } from 'react';
 import { useLongPress } from '../lib/long-press';
 import ContextMenu, { type ContextItem } from './ContextMenu';
+import { openImage } from './ImageViewer';
 import { mentionedPaths, repoTree, seenPaths } from '../lib/workspace';
 import { normalizeEdits } from '../lib/edits';
 import { buildFile } from '../lib/generate';
@@ -144,7 +145,9 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
         <div className="msg-files">
           {message.files.map((f) =>
             f.thumb ? (
-              <img key={f.id} src={f.thumb} alt={f.name} className="msg-thumb" title={f.name} />
+              <button key={f.id} type="button" className="thumb-btn" aria-label={`View ${f.name}`} title={f.name} onClick={(e) => openImage({ src: f.data ? `data:${f.mime || 'image/jpeg'};base64,${f.data}` : f.thumb!, alt: f.name, name: f.name, from: e.currentTarget.querySelector('img') })}>
+                <img src={f.thumb} alt="" className="msg-thumb" />
+              </button>
             ) : (
               <button key={f.id} className={`file-chip${f.auto ? ' auto' : ''}`} title={f.auto ? `${f.name} — attached automatically: your message is about it` : f.name} onClick={() => f.text && setUi({ preview: { name: `${f.name}.txt`, content: f.text } })}>
                 <FileDown size={15} /> <span>{f.name}</span>

@@ -1,5 +1,34 @@
 # Changelog
 
+## 2.2.0 · Projects, Collection and Tools
+
+Lumen is reorganised so every place has one job. The sidebar now has **Collection** and **Tools**, with
+**Projects** under them.
+
+**Projects**
+- New Projects page (tap "Projects ›" in the sidebar). Each project shows as a card in its own colour, with
+  its description, how many chats, files and memories it has, and when you last used it. You can search and sort.
+- A project's page has a soft band in its colour, a link back to all projects, and a new Memory card that lists
+  the facts kept just for that project.
+- The sidebar keeps your four most recent projects for quick switching.
+
+**Collection**
+- One place for everything you've added or made in any chat: photos, attached files, canvas documents, images
+  Lumen made, and files you uploaded for Lumen to search ("Searchable", which used to be Knowledge).
+- You can filter by type or project, search, and move an item's chat into a project. Projects are the folders.
+
+**Tools**
+- A catalog of everything Lumen can do, grouped as Research, Create, Analyze, Learn, Assistants and Connected
+  apps. Each card says what the tool does and whether it's ready (for example "Needs a Cloudflare key").
+- Study and your assistants now live here. GitHub is under Connected apps, with more connections to come.
+- The + menu in the message box keeps the everyday tools, adds "Saved prompts" and "Video, web page or
+  calculation", and has "All tools". On a computer it opens downward when there's more room below.
+
+**Also moved**
+- Scheduled tasks are now in Settings → Scheduled tasks.
+- The new pages (Projects, Collection, Tools, Assistants, Study) open in place of the chat, and "Back to chat"
+  (on phones, "Done") returns you.
+
 ## 2.1.1 · Fits on phones
 
 - Study, Ask your chats and Build a layout now have proper margins on phones. Before, they ran to the edges of

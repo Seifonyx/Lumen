@@ -34,6 +34,8 @@ const SideChat = lazy(() => import('./components/SideChat'));
 const SelectionTools = lazy(() => import('./components/SelectionTools'));
 const Study = lazy(() => import('./components/Study'));
 const DocumentsPage = lazy(() => import('./components/DocumentsPage'));
+const PromptsModal = lazy(() => import('./components/PromptsModal'));
+const ToolsModal = lazy(() => import('./components/ToolsModal'));
 const ChatExportModal = lazy(() => import('./components/ChatExportModal'));
 
 export default function App() {
@@ -53,7 +55,9 @@ export default function App() {
   const comparisonOpen = useStore((s) => Boolean(s.comparison));
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  // Library, Documents and Study open as pages in place of the chat.
+  // Assistants, Files and Study open as pages in place of the chat; Prompts and Tools as windows.
+  const [prompts, setPrompts] = useState(false);
+  const [tools, setTools] = useState<null | 'youtube' | 'calculation' | 'reader'>(null);
   const page = useStore((s) => s.page);
   const pageArg = useStore((s) => s.pageArg);
   useEffect(() => {
@@ -68,7 +72,16 @@ export default function App() {
   // Remembered so the next visit shows the app's frame before any code loads (index.html).
   useEffect(() => { try { if (authed) localStorage.setItem('mr.signedIn', '1'); else if (authed === false) localStorage.removeItem('mr.signedIn'); } catch { /* private mode */ } }, [authed]);
   useEffect(() => {
-    const open = (event: Event) => { const requested=(event as CustomEvent).detail; setUi({ page: 'library', pageArg: requested === 'knowledge' ? 'knowledge' : requested === 'tasks' ? 'tasks' : requested === 'tools' ? 'tools' : 'assistants' }); };
+    // Where each kind of saved thing lives now (older shortcuts and links still ask for "the library").
+    const open = (event: Event) => {
+      const requested = String((event as CustomEvent).detail || 'assistants');
+      if (requested === 'knowledge') setUi({ page: 'files', pageArg: 'uploads' });
+      else if (requested === 'documents') setUi({ page: 'files', pageArg: 'documents' });
+      else if (requested === 'tasks') setUi({ settingsOpen: true, settingsTab: 'tasks' });
+      else if (requested === 'prompts') { setUi({ sidebarOpen: false }); setPrompts(true); }
+      else if (requested.startsWith('tools')) { setUi({ sidebarOpen: false }); setTools((requested.split(':')[1] as 'youtube') || 'youtube'); }
+      else setUi({ page: 'assistants' });
+    };
     window.addEventListener('mr:library', open);
     const help = () => setShortcutsOpen(true);
     window.addEventListener('mr:shortcuts', help);
@@ -177,8 +190,8 @@ export default function App() {
       <ChatView onExpandSidebar={toggleSidebar} />
       {page && !settingsOpen && (
         <Suspense fallback={null}>
-          {page === 'library' ? <AssistantLibrary key={`${accountId}-lib`} initialTab={typeof pageArg === 'string' ? pageArg as 'assistants' : 'assistants'} onClose={closePage} />
-            : page === 'documents' ? <DocumentsPage key={`${accountId}-docs`} onClose={closePage} />
+          {page === 'assistants' ? <AssistantLibrary key={`${accountId}-assistants`} onClose={closePage} />
+            : page === 'files' ? <DocumentsPage key={`${accountId}-files-${String(pageArg || '')}`} initialTab={pageArg === 'uploads' ? 'uploads' : 'documents'} onClose={closePage} />
             : <Study key={`${accountId}-study-${JSON.stringify(pageArg || '')}`} startFrom={typeof pageArg === 'object' ? pageArg : undefined} onClose={closePage} />}
         </Suspense>
       )}
@@ -197,6 +210,8 @@ export default function App() {
           <RunPanel />
         </Suspense>
       )}
+      {prompts && <Suspense fallback={null}><PromptsModal onClose={() => setPrompts(false)} /></Suspense>}
+      {tools && <Suspense fallback={null}><ToolsModal initial={tools} onClose={() => setTools(null)} /></Suspense>}
       <ImageViewerHost />
       <Suspense fallback={null}><SelectionTools /></Suspense>
       <Toasts />

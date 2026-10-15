@@ -4156,3 +4156,18 @@ html.pane-resizing, html.pane-resizing * { cursor: col-resize !important; user-s
   .hub-page .study-deck-actions .btn { flex: 1; justify-content: center; }
 }
 @media (prefers-reduced-motion: reduce) { .lib-card, .doc-paper { transition: none; } .lib-card:hover, .doc-open:hover .doc-paper { transform: none; } }
+
+/* ---- 2.2 Prompts and tools windows; Files uploads ---- */
+.prompts-modal { display: flex; flex-direction: column; gap: 14px; padding: 16px 20px 22px; }
+.prompts-modal > p { margin: 0; }
+.prompts-modal .hub-search { max-width: none; }
+.prompts-modal .lib-section { margin: 0; }
+.prompt-use { flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px; padding: 0; border: 0; background: none; color: var(--text); font: inherit; text-align: start; cursor: pointer; }
+.prompts-modal .lib-row { flex-wrap: nowrap; }
+.tools-modal { padding: 16px 20px 22px; }
+.files-uploads .knowledge-library, .files-uploads > div { padding: 0; }
+.prompts-modal .hub-search { flex: none; }
+.prompts-modal .lib-row-text { flex-basis: auto; }
+@media (max-width: 899px) { .prompts-modal .lib-row { flex-wrap: nowrap; padding: 12px; } .prompts-modal .lib-row-actions { width: auto; } }
+.sheet-popover-backdrop .attach-menu .sheet-row { min-height: 36px; padding-block: 6px; }
+.sheet-popover-backdrop .attach-menu .attach-menu-title { margin-block: 6px 2px; }

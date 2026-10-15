@@ -89,7 +89,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
   const stopListening = useRef<(() => void) | null>(null);
   const baseText = useRef('');
   const [sheet, setSheet] = useState(false);
-  const [sheetAnchor, setSheetAnchor] = useState<{ left: number; bottom: number } | undefined>();
+  const [sheetAnchor, setSheetAnchor] = useState<{ left: number; bottom?: number; top?: number } | undefined>();
   const touch = isTouch();
 
   // Unsent text is kept per chat, so it survives switching chats, a reload, or the phone closing the page in the background.
@@ -456,7 +456,10 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
           ) : (
             <button type="button" className={`tool-btn add-tool${chat?.repo ? ' on-repo' : ''}`} onClick={(e) => {
               const box = e.currentTarget.getBoundingClientRect();
-              setSheetAnchor({ left: Math.max(12, Math.min(box.left, window.innerWidth - 300)), bottom: window.innerHeight - box.top + 8 });
+              // Above the button, unless there's clearly more room below it (the message box mid-screen on a new chat).
+              const left = Math.max(12, Math.min(box.left, window.innerWidth - 300));
+              const above = box.top - 20, below = window.innerHeight - box.bottom - 20;
+              setSheetAnchor(above < 560 && below > above ? { left, top: box.bottom + 8 } : { left, bottom: window.innerHeight - box.top + 8 });
               setSheet(true);
             }} aria-label="Add files or a repository" aria-haspopup="dialog" title="Add files or a repository">
               <Plus size={21} />
@@ -529,6 +532,8 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
           repoName={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : undefined}
           onCompare={() => setCompareOpen(true)}
           onImage={() => { setImageMode(true); setDeepResearch(false); setTimeout(() => input.current?.focus(), 0); }}
+          onPrompts={() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'prompts' }))}
+          onTool={(t) => window.dispatchEvent(new CustomEvent('mr:library', { detail: `tools:${t}` }))}
           onResearch={chat?.repo ? undefined : () => { setDeepResearch(true); setImageMode(false); setTimeout(() => input.current?.focus(), 0); }}
           compareDisabled={!canSend || codeExecution || pending.some(p => p.file?.videoUri)}
           onSearch={() => updateSettings({ webSearch: !settings.webSearch })}

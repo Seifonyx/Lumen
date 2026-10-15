@@ -1,4 +1,4 @@
-import {
+import { Clock,
   ArrowDown,
   ArrowLeft,
   ArrowUp,
@@ -50,6 +50,7 @@ import ProviderConnections, { type MainProvider } from './ProviderConnections';
 import FilterMenu from './FilterMenu';
 import SharedLinks from './SharedLinks';
 import ImportChats from './ImportChats';
+import TaskLibrary from './TaskLibrary';
 import NotifyToggle from './NotifyToggle';
 import ModelCheck, { LAST_CHECK_KEY } from './ModelCheck';
 import RemovedModels from './RemovedModels';
@@ -68,6 +69,7 @@ const TABS: [string, string, LucideIcon, string][] = [
   ['usage', 'Usage', Gauge, "Today's requests, limits and resets"],
   ['personalize', 'Personalization', UserRound, 'Instructions every model follows'],
   ['memory', 'Memory', Brain, 'What models remember about you'],
+  ['tasks', 'Scheduled tasks', Clock, 'Reminders and AI requests on a schedule'],
   ['privacy', 'Privacy & data', Shield, 'Protect personal details and manage chat backups'],
 ];
 
@@ -809,6 +811,7 @@ export default function SettingsModal() {
             {id === 'usage' && <UsageTab />}
             {id === 'personalize' && <PersonalizeTab />}
             {id === 'memory' && <MemoryTab Toggle={Toggle} />}
+            {id === 'tasks' && <div className="settings-section"><TaskLibrary onClose={() => setUi({ settingsOpen: false })} /></div>}
             {id === 'privacy' && <div className="settings-section privacy-data"><PrivacyTab Toggle={Toggle} Choice={Choice} /><DataTab /></div>}
           </div>
         </div>

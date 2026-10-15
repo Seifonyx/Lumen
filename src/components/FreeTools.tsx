@@ -5,16 +5,16 @@ import { pageAttachment, readWebPage, videoAttachment } from '../lib/free-tools'
 import { toolModel } from '../lib/ai/tool-inputs.js';
 import { prepareTool } from './Composer';
 
-type Tool = 'youtube' | 'calculation' | 'reader';
+export type Tool = 'youtube' | 'calculation' | 'reader';
 const tools = [
   { id: 'youtube' as const, name: 'YouTube', detail: 'Summarize a public video', Icon: Play },
   { id: 'calculation' as const, name: 'Calculate', detail: 'Python execution by Gemini', Icon: Calculator },
   { id: 'reader' as const, name: 'Read a page', detail: 'Bring a web page into chat', Icon: Globe },
 ];
 
-export default function FreeTools({ onClose }: { onClose: () => void }) {
+export default function FreeTools({ onClose, initial = 'youtube', single = false }: { onClose: () => void; initial?: Tool; single?: boolean }) {
   const enabled = useStore(s => s.settings.enabledModels);
-  const [tool, setTool] = useState<Tool>('youtube');
+  const [tool, setTool] = useState<Tool>(initial);
   const [value, setValue] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -40,8 +40,8 @@ export default function FreeTools({ onClose }: { onClose: () => void }) {
     finally { clearTimeout(timeout); if (active.current === controller) { active.current = null; setBusy(false); } }
   };
   return <div className="free-tools">
-    <p className="muted small">Prepare a tool request, review the draft, then send. These tools use your existing free limits.</p>
-    <div className="free-tool-picker" role="tablist" aria-label="Free tools">{tools.map(({ id, name, detail, Icon }) => <button key={id} role="tab" aria-label={name} aria-selected={tool === id} className={tool === id ? 'active' : ''} onClick={() => { reset(); setTool(id); setValue(''); }}><Icon size={20} /><strong>{name}</strong><span>{detail}</span></button>)}</div>
+    <p className="muted small">Lumen prepares the message for you to check, then you send it. Uses your free limits.</p>
+    {!single && <div className="free-tool-picker" role="tablist" aria-label="Free tools">{tools.map(({ id, name, detail, Icon }) => <button key={id} role="tab" aria-label={name} aria-selected={tool === id} className={tool === id ? 'active' : ''} onClick={() => { reset(); setTool(id); setValue(''); }}><Icon size={20} /><strong>{name}</strong><span>{detail}</span></button>)}</div>}
     <div className="free-tool-form">
       <label className="field-block"><span className="setting-label">{tool === 'calculation' ? 'What should Gemini calculate?' : tool === 'youtube' ? 'Public YouTube video link' : 'Public web page link'}</span>{tool === 'calculation' ? <textarea aria-label="Calculation question" rows={5} maxLength={8000} value={value} onChange={e => { reset(); setValue(e.target.value); }} placeholder="For example: compare two repayment schedules…" /> : <input type="url" aria-label={tool === 'youtube' ? 'YouTube link' : 'Web page link'} maxLength={4096} value={value} onChange={e => { reset(); setValue(e.target.value); }} placeholder={tool === 'youtube' ? 'https://www.youtube.com/watch?v=…' : 'https://example.com/article'} />}</label>
       <p className="free-tool-disclosure muted small">{tool === 'reader' ? 'Clicking Read sends this URL to Jina Reader, a separate free service. Do not use private or signed links. You can inspect the returned text before adding it to your draft; it goes to AI only when you send.' : tool === 'youtube' ? 'Gemini receives the video link when you send. Public videos only; access depends on Google’s current model and key limits. Your other providers cannot watch it.' : 'Google runs Python when you send. Code and execution results appear in the reply. For private files or offline work, use Data analysis instead.'}</p>

@@ -1,5 +1,7 @@
-// Documents: everything you've written in the canvas, across chats, as pages you can see at a glance.
-import { Download, FileText, MoreHorizontal, Plus, Search, Trash2 } from 'lucide-react';
+// Files: what you've written (canvas documents, as pages you can see at a glance) and what you've uploaded for
+// Lumen to search and cite (Uploaded files).
+import { Download, FileText, FileUp, MoreHorizontal, Plus, Search, Trash2 } from 'lucide-react';
+import KnowledgeLibrary from './KnowledgeLibrary';
 import { useMemo, useState } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { saveBlob, safeFileName } from '../lib/util';
@@ -12,7 +14,10 @@ type Sort = 'recent' | 'name';
 const preview = (text: string) => text.split('\n').map((l) => l.replace(/^#{1,6}\s+/, '').replace(/[*_`>]/g, '').replace(/^\s*[-+]\s+/, '• ')).filter((l, i, a) => l.trim() || (i > 0 && a[i - 1].trim())).slice(0, 14);
 const heading = (text: string) => /^#{1,3}\s+/.test(text.trimStart());
 
-export default function DocumentsPage({ onClose }: { onClose: () => void }) {
+export type FilesTab = 'documents' | 'uploads';
+
+export default function DocumentsPage({ onClose, initialTab = 'documents' }: { onClose: () => void; initialTab?: FilesTab }) {
+  const [tab, setTab] = useState<FilesTab>(initialTab);
   const chats = useStore((s) => s.chats);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sort>('recent');
@@ -29,9 +34,11 @@ export default function DocumentsPage({ onClose }: { onClose: () => void }) {
   const newDoc = () => { useStore.getState().newChat(); setTimeout(() => useStore.getState().openCanvas(), 0); };
 
   return (
-    <HubPage label="Documents" title="Documents" subtitle="Everything you've written in the canvas, from all your chats." onClose={onClose}
-      actions={<button type="button" className="btn primary" onClick={newDoc}><Plus size={16} /> New document</button>}
-      toolbar={total > 0 && (
+    <HubPage<FilesTab> label="Files" title="Files" onClose={onClose} tab={tab} onTab={setTab}
+      subtitle={tab === 'documents' ? 'Documents you’ve written in the canvas, from all your chats.' : 'Files you’ve added for Lumen to search. Replies quote them with page numbers.'}
+      tabs={[{ id: 'documents', label: 'Documents', icon: <FileText size={15} />, count: total || undefined }, { id: 'uploads', label: 'Uploaded files', icon: <FileUp size={15} /> }]}
+      actions={tab === 'documents' && <button type="button" className="btn primary" onClick={newDoc}><Plus size={16} /> New document</button>}
+      toolbar={tab === 'documents' && total > 0 && (
         <>
           <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search documents" placeholder="Search documents" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" /></label>
           <div className="hub-seg" role="radiogroup" aria-label="Sort">
@@ -39,7 +46,7 @@ export default function DocumentsPage({ onClose }: { onClose: () => void }) {
           </div>
         </>
       )}>
-      {total === 0 ? (
+      {tab === 'uploads' ? <div className="files-uploads"><KnowledgeLibrary onClose={onClose} /></div> : total === 0 ? (
         <HubEmpty icon={<FileText size={26} />} title="No documents yet" text="Write in the canvas from any chat (+ → Document canvas, or “Edit in canvas” on a reply) and your documents collect here." action={<button type="button" className="btn primary" onClick={newDoc}><Plus size={16} /> New document</button>} />
       ) : docs.length === 0 ? (
         <p className="hub-none">No documents match “{query}”.</p>

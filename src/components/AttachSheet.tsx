@@ -1,14 +1,14 @@
 import { useExit } from '../lib/motion';
-import { FolderGit2, Images, Image as ImageIcon, Camera, Pencil, ChartNoAxesCombined, Columns2, Globe, Check, X, Telescope, FolderKanban, ChevronRight, Paperclip } from 'lucide-react';
+import { FolderGit2, Images, Image as ImageIcon, Camera, Pencil, ChartNoAxesCombined, Columns2, Globe, Check, X, Telescope, MessageSquareText, PlayCircle, FolderKanban, ChevronRight, Paperclip } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useFocusScope } from '../lib/focus-scope';
 import { useSheetDrag } from '../lib/sheet-drag';
 interface Props {
  onClose():void;onFiles():void;onPhotos():void;onCamera():void;onProject():void;projectName?:string;
  onConnectors():void;onMemory():void;memoryEnabled:boolean;temporary:boolean;
- onRepo():void;onCanvas():void;onAnalysis():void;onCompare():void;compareDisabled:boolean;onImage():void;onResearch?:()=>void;
+ onRepo():void;onCanvas():void;onAnalysis():void;onCompare():void;compareDisabled:boolean;onImage():void;onResearch?:()=>void;onPrompts?:()=>void;onTool?:(t:'youtube'|'reader'|'calculation')=>void;
  onSearch():void;searchEnabled:boolean;searchAvailable:boolean;onPrivacy():void;privacyEnabled:boolean;
- repoName?:string;anchor?:{left:number;bottom:number};
+ repoName?:string;anchor?:{left:number;bottom?:number;top?:number};
 }
 export default function AttachSheet(p:Props){
  const ref=useRef<HTMLDivElement>(null);
@@ -20,7 +20,7 @@ export default function AttachSheet(p:Props){
  useEffect(()=>{if(!p.anchor)return;const close=()=>p.onClose();window.addEventListener('resize',close);return()=>window.removeEventListener('resize',close);},[p.anchor,p.onClose]);
  const pick=(action:()=>void)=>()=>{action();p.onClose();};
  return <div ref={backdrop} className={`sheet-backdrop${p.anchor?' sheet-popover-backdrop':''}`} onClick={p.onClose}>
- <div ref={ref} className="sheet attach-menu" style={p.anchor?{left:p.anchor.left,bottom:p.anchor.bottom,maxHeight:Math.max(80,window.innerHeight-p.anchor.bottom-12)}:undefined} role="dialog" aria-modal="true" tabIndex={-1} aria-label="Add to your message" onClick={e=>e.stopPropagation()}
+ <div ref={ref} className="sheet attach-menu" style={p.anchor?(p.anchor.top!==undefined?{left:p.anchor.left,top:p.anchor.top,bottom:'auto',maxHeight:Math.max(80,window.innerHeight-p.anchor.top-12)}:{left:p.anchor.left,bottom:p.anchor.bottom,maxHeight:Math.max(80,window.innerHeight-(p.anchor.bottom||0)-12)}):undefined} role="dialog" aria-modal="true" tabIndex={-1} aria-label="Add to your message" onClick={e=>e.stopPropagation()}
  onKeyDown={e=>{if(!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;const buttons=[...e.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')].filter(button=>button.getClientRects().length>0);const i=buttons.indexOf(document.activeElement as HTMLButtonElement);e.preventDefault();buttons[e.key==='Home'?0:e.key==='End'?buttons.length-1:(i+(e.key==='ArrowUp'?-1:1)+buttons.length)%buttons.length]?.focus();}}
 >
  <div className="sheet-grab" aria-hidden="true"/>
@@ -39,6 +39,8 @@ export default function AttachSheet(p:Props){
   <button type="button" className="sheet-row" onClick={pick(p.onAnalysis)}><ChartNoAxesCombined size={18}/><span>Data analysis</span></button>
   <button type="button" className="sheet-row" onClick={pick(p.onImage)}><ImageIcon size={18}/><span>Create image</span></button>
   <button type="button" className="sheet-row compare-trigger" disabled={p.compareDisabled} onClick={pick(p.onCompare)}><Columns2 size={18}/><span>Compare models</span></button>
+  {p.onPrompts&&<button type="button" className="sheet-row" onClick={pick(p.onPrompts)}><MessageSquareText size={18}/><span>Saved prompts</span></button>}
+  {p.onTool&&<button type="button" className="sheet-row" title="Summarize a YouTube video, read a web page, or calculate with Python" onClick={pick(()=>p.onTool!('youtube'))}><PlayCircle size={18}/><span>Video, web page or calculation</span></button>}
  </div>
  </div></div>;
 }

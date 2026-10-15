@@ -1,5 +1,5 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
-import { Archive, ArchiveRestore, ChevronRight, GraduationCap, Sparkles, Columns2, FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
+import { Archive, ArchiveRestore, ChevronRight, GraduationCap, Sparkles, Columns2, FileText, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
@@ -258,8 +258,8 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
             <Sparkles size={15} /> <span>Ask your chats: “<span dir="auto">{query.trim().slice(0, 40)}</span>”</span>
           </button>
         )}
-        <button className={`library-button${page === 'library' ? ' active' : ''}`} aria-current={page === 'library' ? 'page' : undefined} onClick={() => library('assistants')} title={`Assistants, prompts, knowledge, tools and scheduled tasks (${modKey}⇧L)`}><BookOpen size={18} /><span>Library</span></button>
-        <button className={`library-button${page === 'documents' ? ' active' : ''}`} aria-current={page === 'documents' ? 'page' : undefined} onClick={() => useStore.getState().setUi({ page: 'documents' })}><FileText size={18} /><span>Documents</span></button>
+        <button className={`library-button${page === 'assistants' ? ' active' : ''}`} aria-current={page === 'assistants' ? 'page' : undefined} onClick={() => library('assistants')} title={`Helpers with their own instructions and model (${modKey}⇧L)`}><Sparkles size={18} /><span>Assistants</span></button>
+        <button className={`library-button${page === 'files' ? ' active' : ''}`} aria-current={page === 'files' ? 'page' : undefined} onClick={() => useStore.getState().setUi({ page: 'files', pageArg: 'documents' })} title="Documents you've written and files you've uploaded"><FileText size={18} /><span>Files</span></button>
         <button className={`library-button${page === 'study' ? ' active' : ''}`} aria-current={page === 'study' ? 'page' : undefined} onClick={() => window.dispatchEvent(new CustomEvent('mr-open-study'))} title="Flashcards and quizzes from your chats and documents"><GraduationCap size={18} /><span>Study</span></button>
       </div>
 

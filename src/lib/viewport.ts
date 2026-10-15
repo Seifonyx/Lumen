@@ -35,6 +35,10 @@ export function initViewport(): void {
       if (!touching || !keyboardOpen) root.style.setProperty('--vv-top', `${vv.offsetTop}px`);
     }
 
+    // The message box rides with the keyboard: it's moved in one step (the app is resized to the visible
+    // area), so it glides from where it was to where it lands, with the keyboard's own easing.
+    const wrap = document.querySelector<HTMLElement>('.composer-wrap');
+    const before = keyboard !== keyboardOpen ? wrap?.getBoundingClientRect().top : undefined;
     if (keyboard !== keyboardOpen) {
       const list = document.querySelector<HTMLElement>('.messages');
       const atBottom = list ? list.scrollHeight - list.scrollTop - list.clientHeight < 80 : false;
@@ -46,6 +50,10 @@ export function initViewport(): void {
         root.style.removeProperty('--vv-top');
       }
       if (list && atBottom) requestAnimationFrame(() => { list.scrollTop = list.scrollHeight; });
+      if (wrap && before !== undefined && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const delta = before - wrap.getBoundingClientRect().top;
+        if (Math.abs(delta) > 4 && Math.abs(delta) < innerHeight) wrap.animate([{ transform: `translateY(${delta}px)` }, { transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.32, .72, 0, 1)' });
+      }
     }
 
     // Refresh the baseline only when the keyboard is closed and focus won't immediately open it.

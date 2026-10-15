@@ -1,4 +1,4 @@
-import { flySent } from '../lib/motion';
+import { flySent, motionOff } from '../lib/motion';
 import { FolderGit2, FolderKanban, ArrowDown, FileText, Menu, PanelLeftOpen, EyeOff } from 'lucide-react';
 import WelcomeStars from './WelcomeStars';
 import { modKey } from '../lib/util';
@@ -65,6 +65,8 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   const navigationHost = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const [showDown, setShowDown] = useState(false);
+  // A reply that's being written or just finished below where you're reading.
+  const [unseen, setUnseen] = useState(false);
   const [projectModalId, setProjectModalId] = useState<string | null>(null);
   const [announcement,setAnnouncement]=useState('');
   const previousReply=useRef<{id?:string;streaming:boolean}>({streaming:false});
@@ -95,6 +97,25 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
     else el.scrollTop = el.scrollHeight;
   }, [chat?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => { if (streaming && !stick.current) setUnseen(true); }, [lastText, streaming]);
+  useEffect(() => setUnseen(false), [chat?.id]);
+
+  // While a reply streams, the view glides after the new text instead of jumping down a line at a time.
+  const glide = useRef({ frame: 0, ours: -1 });
+  const toBottom = (el: HTMLElement, smooth: boolean) => {
+    if (!smooth || motionOff()) { cancelAnimationFrame(glide.current.frame); glide.current.frame = 0; el.scrollTop = el.scrollHeight; return; }
+    if (glide.current.frame) return;
+    const step = () => {
+      const target = el.scrollHeight - el.clientHeight, d = target - el.scrollTop;
+      if (d <= 0.5 || !stick.current) { glide.current.frame = 0; return; }
+      el.scrollTop += Math.max(1, d * 0.2);
+      glide.current.ours = el.scrollTop;
+      glide.current.frame = requestAnimationFrame(step);
+    };
+    glide.current.frame = requestAnimationFrame(step);
+  };
+  useEffect(() => () => cancelAnimationFrame(glide.current.frame), []);
+
   // Follow streaming text while the user is at the bottom; sending a message always brings you to it.
   const lastRole = messages.at(-1)?.role;
   const seenLength = useRef(messages.length);
@@ -103,7 +124,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
     const added = messages.length > seenLength.current ? messages.slice(seenLength.current) : [];
     if (messages.length > seenLength.current && lastRole === 'user') stick.current = true;
     seenLength.current = messages.length;
-    if (el && stick.current) el.scrollTop = el.scrollHeight;
+    if (el && stick.current) toBottom(el, streaming && !added.length);
     const sent = added.findLast((m) => m.role === 'user');
     if (sent) flySent(el?.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(sent.id)}"] .bubble`));
   }, [messages.length, lastText, lastRole]);
@@ -115,7 +136,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
     const content = el?.querySelector('.thread') ?? el?.firstElementChild;
     if (!el || !content) return;
     // (While older messages fill in above a remembered spot, it stays put.)
-    const observer = new ResizeObserver(() => { if (stick.current) el.scrollTop = el.scrollHeight; else if (hold.current) restoreAnchor(el, hold.current); });
+    const observer = new ResizeObserver(() => { if (stick.current) toBottom(el, useStore.getState().streamingChatId === chat?.id); else if (hold.current) restoreAnchor(el, hold.current); });
     observer.observe(content);
     return () => observer.disconnect();
   }, [chat?.id, empty]);
@@ -125,12 +146,15 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
     if (!el) return;
     const onScroll = () => {
       const gap = el.scrollHeight - el.scrollTop - el.clientHeight;
-      stick.current = gap < 80;
+      // (The glide's own steps don't count as you scrolling away, even while it's catching up.)
+      const gliding = glide.current.frame && Math.abs(el.scrollTop - glide.current.ours) < 2;
+      stick.current = gap < 80 || Boolean(gliding);
       // Your own scrolling takes over from a remembered spot; where you are is saved once you stop.
       if (hold.current && Math.abs(el.scrollTop - restoredTo) > 1) hold.current = null;
       clearTimeout(saveTimer);
       saveTimer = window.setTimeout(() => { if (chat) positions.set(chat.id, stick.current ? null : topAnchor(el)); }, 150);
       setShowDown(gap > 400);
+      if (gap < 80) setUnseen(false);
     };
     let saveTimer = 0;
     el.addEventListener('scroll', onScroll, { passive: true });
@@ -247,15 +271,22 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
       <div className="message-navigation-host" ref={navigationHost} />
       </div>
 
-      {showDown && (
+      {(showDown || unseen) && (
         <button
-          className="to-bottom"
-          aria-label="Scroll to latest"
+          className={`to-bottom${unseen ? ' labelled' : ''}`}
+          aria-label={unseen ? (streaming ? 'Reply being written, scroll to it' : 'New reply, scroll to it') : 'Scroll to latest'}
           onClick={() => {
+            const el = scroller.current;
+            if (!el) return;
             stick.current = true;
-            scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth' });
+            setUnseen(false);
+            // From far up, jump to the last screenful first, then glide the rest (like tapping the top of an iPhone).
+            const end = el.scrollHeight - el.clientHeight;
+            if (end - el.scrollTop > el.clientHeight * 1.5 && !motionOff()) el.scrollTop = end - el.clientHeight * 1.2;
+            el.scrollTo({ top: end, behavior: motionOff() ? 'auto' : 'smooth' });
           }}
         >
+          {unseen && <span>{streaming ? 'Writing…' : 'New reply'}</span>}
           <ArrowDown size={18} />
         </button>
       )}

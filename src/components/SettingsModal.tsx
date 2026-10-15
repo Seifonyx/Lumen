@@ -36,6 +36,7 @@ import ConnectorsTab from './ConnectorsTab';
 import { savedChats } from '../lib/temporary-chat';
 import { pageSwap } from '../lib/motion';
 import { haptic } from '../lib/haptics';
+import { playSend } from '../lib/sounds';
 import { installSwipeBack } from '../lib/swipe-back';
 import { version as APP_VERSION } from '../../package.json';
 import Modal from './Modal';
@@ -729,7 +730,7 @@ export default function SettingsModal() {
                   <span className="settings-group-title">Appearance</span>
                   <div className="settings-card">
                     <Choice<Theme> label="Theme" value={settings.theme} onChange={(v) => update({ theme: v })} options={[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark'], ['black', 'True black']]} />
-                    <Choice<FontSize> label="Text size" value={settings.fontSize} onChange={(v) => update({ fontSize: v })} options={[['small', 'S'], ['medium', 'M'], ['large', 'L']]} />
+                    <Choice<FontSize> label="Text size" value={settings.fontSize} onChange={(v) => update({ fontSize: v })} options={[['auto', 'Auto'], ['small', 'S'], ['medium', 'M'], ['large', 'L']]} />
                   </div>
                 </div>
 
@@ -738,6 +739,7 @@ export default function SettingsModal() {
                   <div className="settings-card">
                     <Toggle label="Enter sends the message" hint="On computers. Shift+Enter adds a new line. On phones, use the send button." checked={settings.enterToSend} onChange={(v) => update({ enterToSend: v })} />
                     {isTouch() && <Toggle label="Vibration" hint="A light tap when you send, flip a switch, hold a message or swipe a chat." checked={settings.haptics !== false} onChange={(v) => update({ haptics: v })} />}
+                    <Toggle label="Sound when sending" hint="A soft sound when your message goes. On iPhone it follows the silent switch." checked={Boolean(settings.sendSound)} onChange={(v) => { update({ sendSound: v }); if (v) playSend(); }} />
                     <Toggle label="Show thinking" hint="Show the model's reasoning (collapsed) when it thinks before answering." checked={settings.showThinking} onChange={(v) => update({ showThinking: v })} />
                     <Toggle label="Name chats automatically" hint="Uses a light model to write a short title after the first reply." checked={settings.autoTitle} onChange={(v) => update({ autoTitle: v })} />
                     <Toggle

@@ -7,7 +7,7 @@ import { AI_PROVIDERS, normalizeKeys, providerEnabled } from './lib/ai/provider-
 import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage } from './lib/api';
 import { keepModelChoice, isExcludedModel } from './lib/ai/model-status.js';
 import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
-import { cacheAccountSettings, forgetLocalAccount, isPreviewUser, loadKeys, loadRemoteSettings, saveKeys, saveRemoteSettings, signInPreview, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
+import { cacheAccountSettings, forgetLocalAccount, isPreviewUser, loadKeys, loadRemoteSettings, savedAccount, saveKeys, saveRemoteSettings, signInPreview, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { registerServiceWorker } from './pwa/register';
 import { ChatSync } from './lib/sync';
 import { commitChanges as ghCommit, openPullRequest, setGitHubToken } from './lib/github';
@@ -793,17 +793,37 @@ export const useStore = create<State>((set, get) => {
         }
         // Stay on the loading screen until we know this account is invited.
         set({ authed: null, accessDenied: null, user: { uid: user.uid, email: user.email || '', name: user.displayName || '', photo: user.photoURL || '' } });
-        try {
-          const [keys, remoteSettings] = await Promise.all([loadKeys(user.uid), loadRemoteSettings(user.uid)]);
-          if (generation !== accountGeneration) return;
+        // Opened on this device before: show the app at once from the saved copy and this device's chats; the
+        // fresh copy below replaces it a moment later (and still turns away an account that's no longer invited).
+        const saved = savedAccount(user.uid);
+        let openedSettings = '';
+        if (saved) {
           const chats = await db.useAccount(user.uid);
           if (generation !== accountGeneration) return;
           set({ chats });
+          setKeys(saved.keys);
+          setGitHubToken(saved.keys.github);
+          set({ keys: saved.keys, authed: true });
+          set({ settings: { ...DEFAULT_SETTINGS, ...(saved.settings || {}), voiceLang: get().settings.voiceLang } as Settings });
+          get().updateSettings({});
+          openedSettings = JSON.stringify(get().settings);
+        }
+        try {
+          const [keys, remoteSettings] = await Promise.all([loadKeys(user.uid), loadRemoteSettings(user.uid)]);
+          if (generation !== accountGeneration) return;
+          if (!saved) {
+            const chats = await db.useAccount(user.uid);
+            if (generation !== accountGeneration) return;
+            set({ chats });
+          }
           setKeys(keys);
           setGitHubToken(keys.github);
           set({ keys, authed: true });
-          set({ settings: { ...DEFAULT_SETTINGS, ...(remoteSettings || {}), voiceLang: get().settings.voiceLang } as Settings });
-          get().updateSettings({});
+          // (Unless you already changed a setting in the moment since opening.)
+          if (!saved || JSON.stringify(get().settings) === openedSettings) {
+            set({ settings: { ...DEFAULT_SETTINGS, ...(remoteSettings || {}), voiceLang: get().settings.voiceLang } as Settings });
+            get().updateSettings({});
+          }
           try {
             const draftId = localStorage.getItem(`mr.assistantDraft.${user.uid}`);
             if (draftId && get().chats.some((chat) => chat.id === draftId && chat.assistant && !chat.messages.length)) set({ currentId: draftId });

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './app.css';
 import App from './App';
 import { initViewport } from './lib/viewport';
+import { installKeyboardDismiss } from './lib/keyboard-dismiss';
 import { loadMarkdownExtras } from './lib/markdown';
 import { shareIdFromPath } from './lib/share';
 const SharedChatPage = lazy(() => import('./components/SharedChatPage'));
@@ -10,6 +11,7 @@ const sharedId = shareIdFromPath();
 
 // iPhone: keep the app on the visible area while the keyboard is open.
 initViewport();
+installKeyboardDismiss();
 
 // No zooming on phones: pinch is blocked here for iPhone (Safari's gesture events) and by
 // `touch-action: pan-x pan-y` elsewhere (app.css), which also stops double-tap zoom; fields use 16px+

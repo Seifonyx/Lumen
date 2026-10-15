@@ -3626,3 +3626,7 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
 /* Sending: the reply's placeholder appears once your message has landed. */
 .message-row:last-child .msg.assistant { animation-delay: .16s; }
 .route-wait { animation-delay: .16s; animation-fill-mode: both; }
+
+/* ---- 1.5 */
+/* "New reply" on the jump-to-latest button when a reply arrives below where you're reading. */
+.to-bottom.labelled { width: auto; height: 36px; padding: 0 12px 0 14px; gap: 6px; display: inline-flex; align-items: center; border-radius: 999px; font: 500 .8125rem/1 var(--font); color: var(--text); animation: grow-in .34s var(--spring-pop); transform-origin: right center; }

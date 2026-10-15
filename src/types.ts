@@ -235,7 +235,7 @@ export interface Catalog {
 }
 
 export type Theme = 'system' | 'light' | 'dark' | 'black';
-export type FontSize = 'small' | 'medium' | 'large';
+export type FontSize = 'auto' | 'small' | 'medium' | 'large';
 
 export interface Settings {
   assistants?: SavedAssistant[];
@@ -262,6 +262,8 @@ export interface Settings {
   enterToSend: boolean;
   /** short vibrations for gestures and switches (phones) */
   haptics?: boolean;
+  /** a soft sound when you send */
+  sendSound?: boolean;
   autoTitle: boolean;
   /** summarize older messages when a chat gets long */
   autoCompact: boolean;

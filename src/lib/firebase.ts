@@ -228,6 +228,15 @@ async function fetchAccount(uid: string): Promise<Account> {
   }
 }
 
+/** This device's saved copy of the account (keys and settings), so the app can open at once while the fresh
+ *  copy loads. Null the first time on a device, and for the preview account. */
+export function savedAccount(uid: string): { keys: ApiKeys; settings: Record<string, unknown> | null } | null {
+  if (isPreviewUser(uid)) return null;
+  const d = localAccount(uid);
+  if (!d) return null;
+  return { keys: normalizeKeys({ ...d.providerConnections, gemini: d.geminiKey || '', openrouter: d.openrouterKey || '', groq: d.groqKey || '', cerebras: d.cerebrasKey || '', github: d.githubKey || '' }) as unknown as ApiKeys, settings: d.settings || null };
+}
+
 export async function loadKeys(uid: string): Promise<ApiKeys> {
   const d = await readAccount(uid);
   return normalizeKeys({ ...d.providerConnections, gemini: d.geminiKey || '', openrouter: d.openrouterKey || '', groq: d.groqKey || '', cerebras: d.cerebrasKey || '', github: d.githubKey || '' }) as unknown as ApiKeys;

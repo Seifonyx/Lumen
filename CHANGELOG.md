@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.5.0 · Opens instantly
+
+- Lumen opens straight away: it starts from the copy of your settings and chats on your device and refreshes
+  them in the background, instead of waiting for the internet first.
+- When opened from the iPhone home screen, Lumen shows its icon on a light or dark background (matching your
+  phone) while it starts, instead of a white screen.
+- While a reply is being written, the conversation glides down with it instead of jumping a line at a time.
+- With the keyboard open, drag the conversation down to hide it (what you typed stays). On iPhone the
+  message box now slides smoothly with the keyboard instead of jumping.
+- If a reply is being written or finishes while you're reading further up, the arrow button says
+  "Writing…" or "New reply". Tapping it glides you down to it, even from far up.
+- Text size has a new Auto option, now the standard: on iPhone and iPad, Lumen's text follows the size you
+  chose in your device's settings. If you picked a size before, choose Auto in Settings → General → Text size.
+- Optional: a soft sound when you send (Settings → General → Sound when sending; off by default). On iPhone
+  it follows the silent switch.
+
 ## 1.4.0 · The finishing touches
 
 - Smoother everywhere: when you let go of a sheet, the side menu, a swiped chat or a photo, the rest of the

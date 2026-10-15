@@ -1,5 +1,6 @@
 import { noteSend } from '../lib/motion';
 import { haptic } from '../lib/haptics';
+import { playSend } from '../lib/sounds';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import ChecksBar from './ChecksBar';
 import { AudioLines, Image as ImageIcon, ListChecks, FileCode2, FolderKanban, GitBranch, Globe, ShieldCheck, ArrowUp, FileText, Loader2, Mic, Paperclip, Plus, Square, X } from 'lucide-react';
@@ -283,7 +284,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
     setCheck(null);
     const files = pending.map((p) => p.file!);
     const message = text.trim();
-    if (!compareWith && message) { noteSend(input.current); haptic(); }
+    if (!compareWith && message) { noteSend(input.current); haptic(); playSend(); }
     clearText();
     if (compareWith) void runComparison(message, files, compareWith, opts);
     else void send(message, files, { ...opts, codeExecution });

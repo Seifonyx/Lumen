@@ -37,6 +37,7 @@ import { canApplyCoding, codingInstructions, parsePlan, planBaseline, planRepo }
 import { applyAppearance, DEFAULT_SETTINGS, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
 import { cleanRewrite, writingPrompt } from './lib/writing-tools';
+import { MAX_SOURCE_CHARS, parseDeck, studyPrompt, type StudyDeck } from './lib/study';
 import { linkCitations, numberSources, parsePlan as parseResearchPlan, planPrompt, reportBrief, searchPrompt } from './lib/research';
 import type { Attachment, Catalog, Chat, ChatSummary, ComparisonState, FileChange, Memory, Message, ModelInfo, Project, RepoLink, Research, SavedAssistant, ScheduledTask, Settings } from './types';
 
@@ -173,6 +174,8 @@ interface State {
   combineComparison(): Promise<void>;
   /** Writing tools: `text` changed as `ask` says. Null if no model managed it. */
   rewriteText(text: string, ask: string): Promise<string | null>;
+  /** Study mode: flashcards and a quiz from a chat or one of its documents. Null if no model managed it. */
+  makeStudyDeck(chatId: string, documentId?: string): Promise<StudyDeck | null>;
   /** Swaps `from` for `to` inside a reply (when `from` appears in it exactly once). */
   replaceInMessage(chatId: string, messageId: string, from: string, to: string): Promise<boolean>;
   setChatModel(model: string): void;
@@ -1632,6 +1635,19 @@ export const useStore = create<State>((set, get) => {
         if (compareController === aborter) compareController = null;
         if (get().comparison?.id === comparisonId) set({ comparing: false });
       }
+    },
+    async makeStudyDeck(chatId, documentId) {
+      const generation = accountGeneration;
+      const chat = get().chats.find((c) => c.id === chatId);
+      if (!chat) return null;
+      const doc = documentId ? chat.documents?.find((d) => d.id === documentId) : undefined;
+      const source = doc ? doc.content : liveMessages(chat).map((m) => `${m.role === 'user' ? 'Question' : 'Answer'}: ${m.text}`).join('\n\n');
+      const label = doc ? doc.name : chat.title;
+      const masker = get().settings.privacyShield ? new Masker() : null;
+      const prompt = studyPrompt(masker ? masker.mask(source).text : source, label);
+      const result = await fetchSummary(prompt, summaryModels(Math.ceil(Math.min(source.length, MAX_SOURCE_CHARS) / 4)), { report: (id, info) => { if (generation !== accountGeneration) return; usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 }); if (info.limit) usage?.block(id, info.limit); } });
+      if (!result || generation !== accountGeneration) return null;
+      return parseDeck(masker ? masker.unmask(result.text) : result.text, { chatId, ...(doc ? { document: doc.name } : {}), label });
     },
     async rewriteText(text, ask) {
       const generation = accountGeneration;

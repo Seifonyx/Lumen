@@ -32,6 +32,7 @@ const AssistantLibrary = lazy(() => import('./components/AssistantLibrary'));
 const CanvasPanel = lazy(() => import('./components/CanvasPanel'));
 const SideChat = lazy(() => import('./components/SideChat'));
 const SelectionTools = lazy(() => import('./components/SelectionTools'));
+const Study = lazy(() => import('./components/Study'));
 const ChatExportModal = lazy(() => import('./components/ChatExportModal'));
 
 export default function App() {
@@ -52,6 +53,13 @@ export default function App() {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  // Study: opened from the sidebar, or "Study this chat" (which makes a deck from it straight away).
+  const [study, setStudy] = useState<null | { from?: { chatId: string; documentId?: string } }>(null);
+  useEffect(() => {
+    const open = (e: Event) => { const from = (e as CustomEvent).detail; setUi({ sidebarOpen: false }); setStudy({ from: from && typeof from.chatId === 'string' ? from : undefined }); };
+    window.addEventListener('mr-open-study', open);
+    return () => window.removeEventListener('mr-open-study', open);
+  }, [setUi]);
   const [libraryTab, setLibraryTab] = useState<'assistants' | 'prompts' | 'tools' | 'tasks' | 'knowledge'>('assistants');
   const accountId = useStore(s => s.user?.uid);
   useEffect(()=>useStore.subscribe((next,previous)=>{if(next.user?.uid!==previous.user?.uid||next.keys.gemini!==previous.keys.gemini||next.settings.privacyShield!==previous.settings.privacyShield||next.settings.privacyMode!==previous.settings.privacyMode)cancelKnowledge()}),[]);
@@ -171,6 +179,7 @@ export default function App() {
       {!settingsOpen && sideChatId && <Suspense fallback={null}><SideChat /></Suspense>}
       {settingsOpen && <Suspense fallback={null}><SettingsModal /></Suspense>}
       {commandPaletteOpen && <Suspense fallback={null}><CommandPalette onClose={() => setCommandPaletteOpen(false)} /></Suspense>}
+      {study && <Suspense fallback={null}><Study key={accountId} startFrom={study.from} onClose={() => setStudy(null)} /></Suspense>}
       {libraryOpen && <Suspense fallback={null}><AssistantLibrary key={accountId} initialTab={libraryTab} onClose={() => setLibraryOpen(false)} /></Suspense>}
       {comparisonOpen && <Suspense fallback={null}><ComparisonResultsModal /></Suspense>}
       {shortcutsOpen && <Suspense fallback={null}><ShortcutsModal onClose={() => setShortcutsOpen(false)} /></Suspense>}

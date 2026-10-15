@@ -1,5 +1,5 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
-import { Archive, ArchiveRestore, ChevronRight, Columns2, FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
+import { Archive, ArchiveRestore, ChevronRight, GraduationCap, Columns2, FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
@@ -108,6 +108,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
             </div>}
             <button role="menuitem" onClick={() => { setMenu(false); void useStore.getState().setArchived(chat.id, !chat.archived); useStore.getState().toast(chat.archived ? 'Moved back to your chats' : 'Archived · find it in View all chats → Archived'); }}>{chat.archived ? <ArchiveRestore size={15} /> : <Archive size={15} />} {chat.archived ? 'Unarchive' : 'Archive'}</button>
             {wide && !active && <button role="menuitem" onClick={() => { setMenu(false); useStore.getState().setUi({ sideChatId: chat.id }); }}><Columns2 size={15} /> Open side by side</button>}
+            <button role="menuitem" onClick={() => { setMenu(false); window.dispatchEvent(new CustomEvent('mr-open-study', { detail: { chatId: chat.id } })); }}><GraduationCap size={15} /> Study this chat</button>
             <button role="menuitem" onClick={() => {setMenu(false);setTagging(true)}}><Tag size={15} /> Edit tags</button>
             <button role="menuitem" onClick={() => { setMenu(false); useStore.getState().setUi({ exportChatId: chat.id, sidebarOpen: false }); }}>
               <Download size={15} /> Share or export
@@ -125,6 +126,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
           { label: 'Move to project', icon: <FolderKanban size={17} />, onSelect: () => { setMoving(true); setMenu(true); } },
           { label: chat.archived ? 'Unarchive' : 'Archive', icon: chat.archived ? <ArchiveRestore size={17} /> : <Archive size={17} />, onSelect: () => { void useStore.getState().setArchived(chat.id, !chat.archived); useStore.getState().toast(chat.archived ? 'Moved back to your chats' : 'Archived · find it in View all chats → Archived'); } },
           ...(wide && !active ? [{ label: 'Open side by side', icon: <Columns2 size={17} />, onSelect: () => useStore.getState().setUi({ sideChatId: chat.id, sidebarOpen: false }) }] : []),
+          { label: 'Study this chat', icon: <GraduationCap size={17} />, onSelect: () => window.dispatchEvent(new CustomEvent('mr-open-study', { detail: { chatId: chat.id } })) },
           { label: 'Edit tags', icon: <Tag size={17} />, onSelect: () => setTagging(true) },
           { label: 'Share or export', icon: <Download size={17} />, onSelect: () => useStore.getState().setUi({ exportChatId: chat.id, sidebarOpen: false }) },
           { label: 'Delete', icon: <Trash2 size={17} />, danger: true, onSelect: remove },
@@ -251,6 +253,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
         </label>
         <button className="library-button" onClick={() => library('assistants')} title={`Assistants, prompts, knowledge, tools and scheduled tasks (${modKey}⇧L)`}><BookOpen size={18} /><span>Library</span></button>
         <button className="library-button" onClick={() => setArtifacts(true)}><FileText size={18} /><span>Documents</span></button>
+        <button className="library-button" onClick={() => window.dispatchEvent(new CustomEvent('mr-open-study'))} title="Flashcards and quizzes from your chats and documents"><GraduationCap size={18} /><span>Study</span></button>
       </div>
 
       <div className="sidebar-navigation">

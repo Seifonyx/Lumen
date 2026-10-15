@@ -3866,12 +3866,3 @@ html.pane-resizing, html.pane-resizing * { cursor: col-resize !important; user-s
 /* Headings: a little more air above sections. */
 .markdown h2 { margin-top: 1.6em; }
 .markdown > div:first-child > :first-child { margin-top: 0; }
-/* Welcome: starters under the greeting. */
-.welcome-starters { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 22px auto 0; max-width: 720px; }
-.welcome-starter { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); font: inherit; font-size: 0.875rem; cursor: pointer; animation: rise 0.4s var(--ease) both; transition: border-color 0.15s, color 0.15s, transform 0.15s var(--ease), box-shadow 0.15s; }
-.welcome-starter svg { color: var(--text-3); transition: color 0.15s; }
-.welcome-starter:hover { border-color: var(--border-strong); color: var(--text); box-shadow: var(--shadow-sm); }
-.welcome-starter:hover svg { color: var(--signal-strong, var(--text)); }
-.welcome-starter:active { transform: scale(0.97); }
-@media (max-width: 640px) { .welcome-starters { display: grid; grid-template-columns: 1fr 1fr; max-width: 340px; padding: 0 8px; } .welcome-starter { justify-content: center; padding: 10px 12px; font-size: 0.8125rem; } }
-@media (prefers-reduced-motion: reduce) { .welcome-starter { animation: none; } }

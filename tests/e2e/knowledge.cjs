@@ -45,9 +45,17 @@ const open = async (page) => {
       new CustomEvent("mr:library", { detail: "knowledge" }),
     ),
   );
-  await page.getByRole("tab", { name: "Knowledge", exact: true }).waitFor();
+  // Searchable files live in Collection, under the "Searchable" filter.
+  await page.locator(".hub-page .files-uploads .knowledge-library").waitFor();
+  assert.equal(
+    await page.getByRole("radio", { name: "Searchable", exact: true }).getAttribute("aria-checked"),
+    "true",
+  );
 };
 const close = async (page) =>
+  page.locator('.hub-page [aria-label="Close"]').click();
+// The cited source opens in its own window.
+const closeSource = async (page) =>
   page
     .locator(".modal")
     .first()
@@ -199,12 +207,12 @@ const settings = async (page) => {
       await page.locator(".composer textarea").waitFor();
       await open(page);
       const tab = await page
-          .getByRole("tab", { name: "Knowledge", exact: true })
+          .getByRole("radio", { name: "Searchable", exact: true })
           .boundingBox(),
-        strip = await page.locator(".library-tabs").boundingBox();
+        strip = await page.locator(".coll-filters").boundingBox();
       assert.ok(
         tab.x >= strip.x - 1 && tab.x + tab.width <= strip.x + strip.width + 1,
-        "active tab fully visible",
+        "active filter fully visible",
       );
       await upload(page, {
         name: "Hospital protocol.pdf",
@@ -373,7 +381,7 @@ const settings = async (page) => {
         await page.locator(".knowledge-source-view").textContent(),
         /PDF page 2/,
       );
-      await close(page);
+      await closeSource(page);
       await page.reload();
       await page.locator(".composer textarea").waitFor();
       if (width < 900) await page.click(".menu-btn");
@@ -456,7 +464,7 @@ const settings = async (page) => {
           .click();
         await row.waitFor({ state: "hidden" });
         console.log(
-          "PASS background indexing survives Library close; key changes cancel requests and refuse late checkpoints",
+          "PASS background indexing survives closing Collection; key changes cancel requests and refuse late checkpoints",
         );
       }
       await close(page);
@@ -539,7 +547,7 @@ const settings = async (page) => {
         await page.locator(".knowledge-page").textContent(),
         /42 units/,
       );
-      await close(page);
+      await closeSource(page);
       await page.evaluate(() =>
         localStorage.setItem(
           "mr.preview_user",

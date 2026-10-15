@@ -17,11 +17,11 @@ const deck = { title: 'Cell basics', cards: [{ q: 'What makes ATP?', a: 'Mitocho
   try {
     const ctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, serviceWorkers: 'block' });
     await profile(ctx, 'study', 'light');
-    let prompt = '';
+    let prompt = '', requests = 0;
     await ctx.route('**/generativelanguage.googleapis.com/**', (r) => {
       const url = r.request().url();
       if (url.includes('/models?')) return r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash', supportedGenerationMethods: ['generateContent'] }] } });
-      prompt = r.request().postData() || '';
+      prompt = r.request().postData() || ''; requests++;
       return r.fulfill({ json: { candidates: [{ content: { parts: [{ text: '```json\n' + JSON.stringify(deck) + '\n```' }] } }] } });
     });
     const page = await ctx.newPage(), errors = [];
@@ -68,12 +68,17 @@ const deck = { title: 'Cell basics', cards: [{ q: 'What makes ATP?', a: 'Mitocho
     console.log('PASS the quiz marks answers, explains, scores and retries the missed ones');
 
     // ---- The deck list remembers progress (after closing and reopening).
-    await page.keyboard.press('Escape');
-    await page.click('.library-button:has-text("Study")');
+    await page.keyboard.press('Escape'); // back to the decks
+    await page.keyboard.press('Escape'); // closes Study
+    await page.locator('.hub-page').waitFor({ state: 'detached' });
+    const before = requests;
+    await page.click('.library-button:has-text("Tools")');
+    await page.locator('.tool-card').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
     const item = page.locator('.study-deck', { hasText: 'Cell basics' });
     await item.waitFor();
     assert.match(await item.textContent(), /3 cards · 2 questions/);
-    assert.match(await item.textContent(), /best quiz 1\/2/);
+    assert.match(await item.textContent(), /Best quiz 1\/2/);
+    assert.equal(requests, before, 'reopening Study does not make the deck again');
     console.log('PASS decks are kept with your progress');
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }

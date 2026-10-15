@@ -80,6 +80,22 @@ const deck = { title: 'Cell basics', cards: [{ q: 'What makes ATP?', a: 'Mitocho
     assert.match(await item.textContent(), /Best quiz 1\/2/);
     assert.equal(requests, before, 'reopening Study does not make the deck again');
     console.log('PASS decks are kept with your progress');
+
+    // ---- Straight from "Study this chat" to Tools → Study (without closing Study first): still no new deck.
+    await page.keyboard.press('Escape');
+    await page.locator('.hub-page').waitFor({ state: 'detached' });
+    const row2 = page.locator('.chat-row:has-text("Cell biology")');
+    await row2.hover();
+    await row2.getByRole('button', { name: 'Chat options' }).click();
+    await page.getByRole('menuitem', { name: 'Study this chat' }).click();
+    await page.locator('.flashcard').waitFor();
+    const made = requests;
+    await page.click('.library-button:has-text("Tools")');
+    await page.locator('.tool-card').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
+    await page.locator('.study-deck').first().waitFor();
+    await page.waitForTimeout(500);
+    assert.equal(requests, made, 'opening Study from Tools never re-makes the last chat’s deck');
+    console.log('PASS opening Study from Tools after “Study this chat” makes no new deck');
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }
 })().catch((e) => { console.error(e); process.exit(1); });

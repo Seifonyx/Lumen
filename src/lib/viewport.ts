@@ -70,7 +70,10 @@ export function initViewport(): void {
   // scrollable panels to scroll with the keyboard open.
   const preventPageScroll = (event: TouchEvent) => {
     if (!keyboardOpen || !(event.target instanceof Element)) return;
-    if (event.target.closest('.messages')) return;
+    // The conversation scrolls itself; when there's nothing to scroll (a new chat), the drag would pull the
+    // whole page down instead and show the background above the app.
+    const list = event.target.closest<HTMLElement>('.messages');
+    if (list && list.scrollHeight > list.clientHeight + 1) return;
     if (!event.target.closest('.composer')) {
       for (let element: Element | null = event.target; element && element !== document.body; element = element.parentElement) {
         if (element.matches('textarea, [contenteditable="true"]')) return;

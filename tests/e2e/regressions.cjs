@@ -195,7 +195,16 @@ async function run(browser, mobile) {
     check(await touch('.settings-top'), 'iOS simulation: app chrome still blocks page panning');
     await page.locator('.settings-page [aria-label="Close"]').click();
     check(await touch('.composer textarea'), 'iOS simulation: composer drag still cannot pan the page');
+    // A conversation that can scroll scrolls; one that can't (a new chat) mustn't pull the page down and show
+    // the background above the app.
+    const tall = (on) => page.locator('.messages').evaluate((el, on) => { const c = el.firstElementChild; if (c) c.style.minHeight = on ? '3000px' : ''; }, on);
+    await tall(true);
     check(!(await touch('.messages')), 'iOS simulation: chat history scrolling stays enabled');
+    await tall(false);
+    const hide = (on) => page.locator('.messages').evaluate((el, on) => { for (const c of el.children) c.style.display = on ? 'none' : ''; }, on);
+    await hide(true);
+    check(await page.locator('.messages').evaluate((el) => el.scrollHeight <= el.clientHeight + 1) && await touch('.messages'), 'iOS simulation: a chat with nothing to scroll cannot pull the page down');
+    await hide(false);
     await page.keyboard.press('Control+k');
     await page.waitForSelector('.command-search input');
     await page.fill('.command-search input', '');

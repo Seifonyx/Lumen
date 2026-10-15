@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1
+
+- Fixed: on iPhone, dragging down in a new chat with the keyboard open pulled the whole screen down and
+  showed a dark band at the top.
+- Fixed: dragging the conversation down to hide the keyboard no longer stops the scroll; you can drag down
+  and back up in one go, and the keyboard hides when you lift your finger.
+
 ## 1.6.0 · Moonlight
 
 - A new crescent moon. Every new chat starts with Lumen's eclipse: a thin ring of light whose shadow slides

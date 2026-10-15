@@ -189,7 +189,7 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
       await page.click('.send-btn');
       const bubble = page.locator('.msg.user .bubble', { hasText: 'how often should I water' });
       await bubble.waitFor();
-      const flying = await bubble.evaluate((el) => el.getAnimations().length);
+      const flying = await bubble.evaluate((el) => el.closest('.msg').getAnimations({ subtree: true }).length);
       assert.ok(flying > 0, `${theme}: the sent message flies into place`);
       assert.ok(await buzz() > sendBuzz, `${theme}: sending buzzes`);
       await page.waitForFunction(() => [...document.querySelectorAll('.msg.assistant .markdown')].at(-1)?.textContent.includes('Water'), null, { timeout: 5000 });

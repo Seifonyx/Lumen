@@ -192,6 +192,8 @@ export interface ComparisonState {
   files?: Attachment[];
   privacyAsIs?: boolean;
   answers: ComparedAnswer[];
+  /** "Combine": one answer written from all of them */
+  combined?: { text: string; status: 'loading' | 'done' | 'error' | 'stopped'; model?: string; error?: string };
 }
 
 export interface RepoLink {

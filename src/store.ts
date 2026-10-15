@@ -166,7 +166,10 @@ interface State {
   runComparison(text: string, files: Attachment[], models: string[], opts?: { privacy?: 'asIs' }): Promise<void>;
   cancelComparison(): void;
   clearComparison(): void;
+  /** Model, or 'combined' for the combined answer. */
   saveComparisonAnswer(model: string): void;
+  /** Writes one answer from the compared ones: the best of each, and where they disagreed. */
+  combineComparison(): Promise<void>;
   setChatModel(model: string): void;
   clearAllChats(): Promise<void>;
   importChats(chats: Chat[]): Promise<number>;
@@ -1625,6 +1628,51 @@ export const useStore = create<State>((set, get) => {
         if (get().comparison?.id === comparisonId) set({ comparing: false });
       }
     },
+    async combineComparison() {
+      const generation = accountGeneration;
+      const start = get().comparison;
+      const done = start?.answers.filter((a) => a.status === 'done' && a.text.trim()) || [];
+      if (!start || done.length < 2 || get().comparing) return;
+      const { settings, catalog } = get();
+      const id = start.id;
+      const letters = 'ABC';
+      const masker = settings.privacyShield && !start.privacyAsIs ? new Masker() : null;
+      const raw = `Several AI models answered the same question. Write the single best answer to it.
+
+Combine their strengths: keep what is correct, clear and useful from each, fix anything wrong, and drop repetition. Write it as your own answer, in the same language as the question, without mentioning "Answer A" or the models. Then add a short final section headed "**Where they differed**" listing the real disagreements (facts, numbers, recommendations) and which view you went with and why. If they didn't really differ, say so in one line.
+
+Question:
+${start.prompt}
+
+${done.map((a, i) => `--- Answer ${letters[i]} (${modelLabel(catalog, a.model)}) ---\n${a.text}`).join('\n\n')}`;
+      // The strongest of the compared models writes it (thinking models first); the others step in if it fails.
+      const strength = (mid: string) => (modelInfo(catalog, mid)?.thinking ? 2 : 0) + (/pro|opus|large|max|405b|120b|70b|-k2/i.test(mid) ? 1 : 0) - (/lite|mini|nano|small|flash-8b|[^\d]8b|3b/i.test(mid) ? 1 : 0);
+      const order = [...done.map((a) => a.model)].sort((a, b) => strength(b) - strength(a));
+      const patch = (p: Partial<NonNullable<ComparisonState['combined']>>) => set((s) => s.comparison?.id === id ? { comparison: { ...s.comparison, combined: { ...(s.comparison.combined || { text: '', status: 'loading' }), ...p } } } : {});
+      patch({ text: '', status: 'loading', error: undefined, model: order[0] });
+      set({ comparing: true });
+      const aborter = new AbortController();
+      compareController = aborter;
+      let out = '', error = '';
+      try {
+        const body = buildChatBody({ model: order[0], fallbacks: order.slice(1), messages: [{ role: 'user', text: masker ? masker.mask(raw).text : raw }], options: { search: false, customInstructions: settings.customInstructions } });
+        for await (const ev of streamChat(body, aborter.signal)) {
+          if (generation !== accountGeneration) return;
+          if (ev.t === 'text') { out += ev.text; patch({ text: masker && settings.privacyRestore ? masker.unmask(out) : out }); }
+          else if (ev.t === 'model') patch({ model: ev.id });
+          else if (ev.t === 'request') usage?.record(ev.id, { requests: 1 });
+          else if (ev.t === 'usage') usage?.record(ev.id, { input: ev.input, output: ev.output });
+          else if (ev.t === 'limit') usage?.block(ev.id, ev as unknown as LimitInfo);
+          else if (ev.t === 'error') error = ev.text;
+        }
+        patch({ status: out ? 'done' : aborter.signal.aborted ? 'stopped' : 'error', ...(!out ? { error: error || 'No answer was returned.' } : {}) });
+      } catch (e) {
+        patch({ status: (e as Error).name === 'AbortError' ? 'stopped' : 'error', error: (e as Error).name === 'AbortError' ? undefined : (e as Error).message });
+      } finally {
+        if (compareController === aborter) compareController = null;
+        if (get().comparison?.id === id) set({ comparing: false });
+      }
+    },
     cancelComparison() {
       compareController?.abort();
       set((s) => ({ comparing: false, comparison: s.comparison ? { ...s.comparison, answers: s.comparison.answers.map((a) => a.status === 'loading' ? { ...a, status: 'stopped' } : a) } : null }));
@@ -1636,7 +1684,9 @@ export const useStore = create<State>((set, get) => {
     },
     saveComparisonAnswer(model) {
       const comparison = get().comparison;
-      const answer = comparison?.answers.find((a) => a.model === model && a.status === 'done');
+      const answer = model === 'combined'
+        ? (comparison?.combined?.status === 'done' ? { text: comparison.combined.text, model: comparison.combined.model || comparison.answers[0].model, sources: comparison.answers.flatMap((a) => a.sources || []) } : undefined)
+        : comparison?.answers.find((a) => a.model === model && a.status === 'done');
       if (!comparison || !answer) return;
       const original = comparison.chatId ? get().chats.find((c) => c.id === comparison.chatId) : undefined;
       if(comparison.chatId && isTemporaryChat({id:comparison.chatId}) && !original)return;
@@ -1646,7 +1696,7 @@ export const useStore = create<State>((set, get) => {
         const count = scan(comparison.prompt).length + (comparison.files || []).reduce((n, f) => n + (f.text ? scan(f.text).length : 0), 0);
         if (count) userMessage.privacy = { masked: count };
       }
-      const assistant: Message = { id: uid(), role: 'assistant', text: answer.text, model: answer.model, status: 'done', sources: answer.sources, knowledgeSources:normalizeKnowledgeSources(comparison.files?.flatMap(file=>file.knowledgeSources||[])), createdAt: Date.now() };
+      const assistant: Message = { id: uid(), role: 'assistant', text: answer.text, model: answer.model, ...(model === 'combined' ? { via: `Combined from ${comparison.answers.filter((a) => a.status === 'done').length} answers` } : {}), status: 'done', sources: answer.sources?.length ? answer.sources : undefined, knowledgeSources:normalizeKnowledgeSources(comparison.files?.flatMap(file=>file.knowledgeSources||[])), createdAt: Date.now() };
       const title = chat.messages.length ? chat.title : comparison.prompt.replace(/\s+/g, ' ').slice(0, 60) || 'Model comparison';
       const updated = { ...chat, title, model: answer.model, messages: [...chat.messages, userMessage, assistant], updatedAt: Date.now() };
       replaceChat(updated);

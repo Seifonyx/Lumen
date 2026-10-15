@@ -3871,3 +3871,9 @@ html.pane-resizing, html.pane-resizing * { cursor: col-resize !important; user-s
 .all-chats-views { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--surface-2); margin-top: 10px; }
 .all-chats-views button { border: 0; background: none; font: inherit; font-size: 0.8125rem; color: var(--text-2); padding: 5px 12px; border-radius: 999px; cursor: pointer; }
 .all-chats-views button[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+
+/* ---- 2.1 Combine answers ---- */
+.comparison-combined { border-color: var(--border-strong); margin-bottom: 14px; animation: research-in 0.35s var(--ease) both; }
+.comparison-combined header strong { display: inline-flex; align-items: center; gap: 6px; }
+.comparison-combined header { gap: 10px; }
+.comparison-combined.live { box-shadow: 0 0 0 3px var(--ring, transparent); }

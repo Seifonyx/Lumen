@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { HistoryIndex, type Hit } from '../lib/history-search';
 import { useStore } from '../store';
 import Modal from './Modal';
+import { toPlainText } from '../lib/markdown';
 
 export default function AskChats({ initial, onClose }: { initial: string; onClose: () => void }) {
   const uid = useStore((s) => s.user?.uid);
@@ -68,7 +69,7 @@ export default function AskChats({ initial, onClose }: { initial: string; onClos
               {hits.map((h, i) => (
                 <li key={i}><button type="button" onClick={() => open(h.chatId)}>
                   <span className="ask-n">{i + 1}</span>
-                  <span className="ask-hit"><strong dir="auto">{h.title}</strong><span className="muted small" dir="auto">{h.text.replace(/\s+/g, ' ').slice(0, 180)}</span></span>
+                  <span className="ask-hit"><strong dir="auto">{h.title}</strong><span className="muted small" dir="auto">{toPlainText(h.text).replace(/\s+/g, ' ').slice(0, 180)}</span></span>
                   <span className="muted small ask-date">{new Date(h.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                 </button></li>
               ))}

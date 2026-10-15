@@ -3972,3 +3972,31 @@ html.pane-resizing, html.pane-resizing * { cursor: col-resize !important; user-s
 .builder-default { display: flex; gap: 8px; align-items: center; font-size: 0.875rem; }
 .builder-actions { display: flex; gap: 6px; align-items: center; }
 .builder-actions .spacer { flex: 1; }
+
+/* ---- 2.1.1 Phone fit: new windows get the same margins as the rest ---- */
+.study, .ask-chats, .layout-builder { padding: 20px 24px 24px; }
+@media (max-width: 600px) {
+  .study, .ask-chats, .layout-builder { padding: 14px 16px calc(18px + env(safe-area-inset-bottom)); }
+  .study { min-height: 0; }
+  .flashcard { aspect-ratio: auto; height: min(52vh, 340px); }
+  .flashcard-face { padding: 18px; font-size: 1.05rem; }
+  .study-head { gap: 6px; }
+  .study-head .muted.small { max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .study-deck { padding: 12px 14px; }
+  .quiz-q { font-size: 1rem; }
+  .quiz-option { padding: 10px 12px; font-size: 0.9375rem; }
+  .ask-form .btn { padding-inline: 12px; }
+  .research-head { padding: 10px 12px; }
+  .research-steps { padding: 6px 12px 10px; }
+  .research-bar { margin: 0 12px; }
+  .research-sites a { max-width: 140px; }
+}
+.ask-chats-btn > span > span { display: inline; }
+.ask-chats-btn > span { display: block; }
+@media (max-width: 600px) {
+  .builder-actions { flex-wrap: wrap; }
+  .builder-actions .spacer { display: none; }
+  .builder-actions .btn.primary { flex: 1 1 100%; justify-content: center; order: -1; }
+  .comparison-combined header { flex-wrap: wrap; row-gap: 2px; }
+  .writing-result-actions .btn.primary { flex: 1 1 100%; justify-content: center; }
+}

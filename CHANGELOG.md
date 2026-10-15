@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.1.1 · Fits on phones
+
+- Study, Ask your chats and Build a layout now have proper margins on phones. Before, they ran to the edges of
+  the screen and barely fit. Flashcards, quiz answers and the deep research card are also sized for small
+  screens.
+- The buttons in Build a layout and Writing tools wrap neatly on narrow phones instead of crowding.
+- The excerpts in Ask your chats show plain text instead of raw link markup.
+- Every newer screen was checked at iPhone widths (390 and 320 pixels) for anything spilling off the screen.
+
 ## 2.1.0 · Ask your chats, Study, writing tools, Combine, Archive, smarter layouts
 
 **Ask your chats**

@@ -1,5 +1,57 @@
 # Changelog
 
+## 2.1.0 · Ask your chats, Study, writing tools, Combine, Archive, smarter layouts
+
+**Ask your chats**
+- Type in Search chats, then tap "Ask your chats". Lumen finds what you talked about even if you use
+  different words, and answers from it. Each number in the answer opens the chat it came from.
+- It uses your Gemini key. The search index is kept on your device, and only chats that changed are read again.
+
+**Study**
+- New: Study in the sidebar, or "Study this chat" from a chat's menu. Lumen makes flashcards and a quiz from a
+  chat or a document.
+- Flashcards flip when you tap them. "Knew it" moves a card further away; "Not yet" brings it back in the same
+  round and again soon.
+- The quiz marks your answer, explains the right one, keeps your best score, and lets you retry the ones you
+  missed. Decks are saved to your account.
+
+**Writing tools**
+- Select words in a reply and tap "Writing tools": Improve, Shorter, Simpler, More formal, Friendlier, As bullet
+  points, or Translate. You see the result first, then choose "Use in reply" or Copy.
+- The same tools are in Select text, which is handy on phones.
+
+**Compare: Combine into one answer**
+- After comparing models, "Combine into one answer" has the strongest of them write one answer from all the
+  others' answers, with a short list of where they disagreed. You can continue the chat from it like any answer.
+
+**Archive**
+- Archive a chat from its ⋯ menu to hide it from the sidebar without deleting it. Search still finds it, and All
+  chats has an Archived view to bring chats back, one or several at a time.
+- All chats now searches inside messages too, like the sidebar does.
+
+**Smarter layouts**
+- Recommended layouts now score every model you have for the task: overall strength, coding, reasoning, speed,
+  images, PDFs, web search, long inputs and languages. They also prefer the newest version of each model, move
+  down models that fail or are at their limit on your device, and take backups from other providers so one
+  provider's limit doesn't stop the whole layout.
+- New: Settings → Models → Layouts → Build for a task. Pick a task (or describe it, like "debugging React
+  apps"). Lumen checks your providers for new models first, then shows the best ones with the reason for
+  each, and marks new models.
+- New recommended layouts: Writing, and Languages & translation (this replaces the Arabic-only layout).
+
+**Settings**
+- New: Settings → Personalization → Reply language (match my writing, or always a language you choose) and
+  Answer length (Auto, Short, Detailed).
+- The instruction shortcuts are now general ("Explain simply" and "Show sources" replace "Egyptian Arabic"), and
+  the document quick edits are Shorten, Improve writing, Fix grammar and Simplify.
+- Developer options are only shown to the people who build Lumen.
+
+**Fixed: memory picking up things you didn't ask it to keep**
+- Models were nudged to save your "preferred language" from how you wrote, so one chat in Arabic could make
+  later chats answer in Arabic. They now only save what you clearly state, and never infer a preference from
+  the language you write in.
+- Deleting a chat now also forgets the memories a model saved in it (Undo brings them back).
+
 ## 2.0.0 · Deep research, imports, side by side, notifications, smarter memory
 
 **Deep research**

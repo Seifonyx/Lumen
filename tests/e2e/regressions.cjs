@@ -130,7 +130,7 @@ async function run(browser, mobile) {
   await page.click('.compare-picker-actions .primary');
   await page.waitForFunction(() => document.querySelectorAll('.comparison-save').length === 2);
   check((await page.locator('.comparison-answer').allTextContents()).every((text) => text.includes('[EMAIL_1]') && !text.includes(EMAIL)), `${label}: disabling restoration keeps comparisons masked`);
-  await page.locator('.comparison-actions button').click();
+  await page.locator('.comparison-actions').getByRole('button', { name: 'Close', exact: true }).click();
 
   await settings(page, 'Privacy');
   await page.getByRole('radio', { name: 'Ask me', exact: true }).click();

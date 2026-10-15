@@ -2,9 +2,11 @@ import { Check, Copy, TextSelect } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { copyText } from '../lib/util';
 import Modal from './Modal';
+import WritingTools from './WritingTools';
+import { useStore } from '../store';
 
 /** A quiet reading surface: selections stay inside this message, away from chat controls. */
-export default function TextSelection({ text, open: shown, onClose }: { text: string; open?: boolean; onClose?: () => void }) {
+export default function TextSelection({ text, open: shown, onClose, messageId }: { text: string; open?: boolean; onClose?: () => void; messageId?: string }) {
   const [ownOpen, setOwnOpen] = useState(false);
   // Controlled from a menu (open + onClose), or its own button.
   const controlled = shown !== undefined;
@@ -57,6 +59,11 @@ export default function TextSelection({ text, open: shown, onClose }: { text: st
           </div>
         </div>
         <div ref={content} className="selectable-text" dir="auto" tabIndex={0}>{text}</div>
+        {messageId && selected.trim().length >= 3 && (
+          <div className="text-selection-writing" onPointerDown={(e) => { if ((e.target as Element).closest("button")) e.preventDefault(); }}>
+            <WritingTools key={selected} text={selected.trim()} chatId={useStore.getState().currentId || undefined} messageId={messageId} onDone={() => setOpen(false)} />
+          </div>
+        )}
       </div>
     </Modal>}
   </>;

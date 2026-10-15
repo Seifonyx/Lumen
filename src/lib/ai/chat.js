@@ -296,7 +296,7 @@ export async function makeTitle(text, model, skip = () => false) {
 
 // Writes a summary of a long chat with the first model that manages it. `report(id, info)` hears about
 // every attempt ({ status?, input?, output?, limit? }) so usage can be counted and limits remembered.
-export async function summarize(prompt, candidates, { skip = (_id) => false, report = (_id, _info) => {}, signal = /** @type {AbortSignal | undefined} */ (undefined) } = {}) {
+export async function summarize(prompt, candidates, { skip = (_id) => false, report = (_id, _info) => {}, signal = /** @type {AbortSignal | undefined} */ (undefined), minLength = 41 } = {}) {
   const tried = [];
   for (const id of candidates) {
     const m = available(id);
@@ -309,7 +309,7 @@ export async function summarize(prompt, candidates, { skip = (_id) => false, rep
       const out = await complete(m, prompt, { maxTokens: 8192, signal: signal ? AbortSignal.any([signal, timeout]) : timeout, info });
       report(id, info);
       const text = (out || '').trim();
-      if (text.length > 40) return { text, model: id };
+      if (text.length >= minLength) return { text, model: id };
     } catch {
       report(id, info);
       // Try the next model.

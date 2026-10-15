@@ -380,7 +380,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
               ]}
             />
           )}
-          {selecting && <TextSelection text={toPlainText(message.text)} open onClose={() => setSelecting(false)} />}
+          {selecting && <TextSelection text={toPlainText(message.text)} messageId={message.id} open onClose={() => setSelecting(false)} />}
           {held !== null && box.current && (
             <ContextMenu anchor={box.current.querySelector<HTMLElement>('.markdown') || box.current} wrap="msg assistant" pad={14} at={held} label="Reply actions" onClose={() => setHeld(null)} items={[
               { label: 'Copy', icon: <Copy size={17} />, onSelect: () => void copyText(message.text) },

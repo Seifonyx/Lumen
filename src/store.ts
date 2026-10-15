@@ -36,6 +36,7 @@ import { TASK_RUN_MS } from './lib/tasks';
 import { canApplyCoding, codingInstructions, parsePlan, planBaseline, planRepo } from './lib/coding-plan';
 import { applyAppearance, DEFAULT_SETTINGS, loadSettings, saveSettings } from './lib/settings';
 import { modelShortName, uid } from './lib/util';
+import { cleanRewrite, writingPrompt } from './lib/writing-tools';
 import { linkCitations, numberSources, parsePlan as parseResearchPlan, planPrompt, reportBrief, searchPrompt } from './lib/research';
 import type { Attachment, Catalog, Chat, ChatSummary, ComparisonState, FileChange, Memory, Message, ModelInfo, Project, RepoLink, Research, SavedAssistant, ScheduledTask, Settings } from './types';
 
@@ -170,6 +171,10 @@ interface State {
   saveComparisonAnswer(model: string): void;
   /** Writes one answer from the compared ones: the best of each, and where they disagreed. */
   combineComparison(): Promise<void>;
+  /** Writing tools: `text` changed as `ask` says. Null if no model managed it. */
+  rewriteText(text: string, ask: string): Promise<string | null>;
+  /** Swaps `from` for `to` inside a reply (when `from` appears in it exactly once). */
+  replaceInMessage(chatId: string, messageId: string, from: string, to: string): Promise<boolean>;
   setChatModel(model: string): void;
   clearAllChats(): Promise<void>;
   importChats(chats: Chat[]): Promise<number>;
@@ -1627,6 +1632,28 @@ export const useStore = create<State>((set, get) => {
         if (compareController === aborter) compareController = null;
         if (get().comparison?.id === comparisonId) set({ comparing: false });
       }
+    },
+    async rewriteText(text, ask) {
+      const generation = accountGeneration;
+      const { settings } = get();
+      const masker = settings.privacyShield ? new Masker() : null;
+      const prompt = writingPrompt(masker ? masker.mask(text).text : text, ask);
+      // The chat's own model first (it knows the style), then fast ones.
+      const own = modelFor(currentChat());
+      const candidates = [...new Set([...(own && own !== AUTO && !isLayoutId(own) ? [own] : []), ...summaryModels(Math.ceil(prompt.length / 4))])];
+      const result = await fetchSummary(prompt, candidates, { minLength: 1, report: (id, info) => { if (generation !== accountGeneration) return; usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 }); if (info.limit) usage?.block(id, info.limit); } });
+      if (!result || generation !== accountGeneration) return null;
+      const out = cleanRewrite(result.text);
+      return masker && settings.privacyRestore ? masker.unmask(out) : out;
+    },
+    async replaceInMessage(chatId, messageId, from, to) {
+      const chat = get().chats.find((c) => c.id === chatId);
+      const message = chat?.messages.find((m) => m.id === messageId);
+      if (!chat || !message || !from || message.text.split(from).length !== 2) return false;
+      const updated = { ...chat, messages: chat.messages.map((m) => m.id === messageId ? { ...m, text: m.text.replace(from, () => to) } : m) };
+      replaceChat(updated);
+      await persist(updated);
+      return true;
     },
     async combineComparison() {
       const generation = accountGeneration;

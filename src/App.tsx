@@ -31,6 +31,7 @@ const ComparisonResultsModal = lazy(() => import('./components/ComparisonResults
 const AssistantLibrary = lazy(() => import('./components/AssistantLibrary'));
 const CanvasPanel = lazy(() => import('./components/CanvasPanel'));
 const SideChat = lazy(() => import('./components/SideChat'));
+const SelectionTools = lazy(() => import('./components/SelectionTools'));
 const ChatExportModal = lazy(() => import('./components/ChatExportModal'));
 
 export default function App() {
@@ -182,6 +183,7 @@ export default function App() {
         </Suspense>
       )}
       <ImageViewerHost />
+      <Suspense fallback={null}><SelectionTools /></Suspense>
       <Toasts />
       <UpdateBar />
     </div>

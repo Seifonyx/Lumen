@@ -3877,3 +3877,20 @@ html.pane-resizing, html.pane-resizing * { cursor: col-resize !important; user-s
 .comparison-combined header strong { display: inline-flex; align-items: center; gap: 6px; }
 .comparison-combined header { gap: 10px; }
 .comparison-combined.live { box-shadow: 0 0 0 3px var(--ring, transparent); }
+
+/* ---- 2.1 Writing tools ---- */
+.selection-tools { position: fixed; z-index: 70; animation: research-in 0.18s var(--ease) both; }
+.selection-tools-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font: inherit; font-size: 0.8125rem; font-weight: 550; box-shadow: var(--shadow-lg); cursor: pointer; }
+.selection-tools-btn svg, .writing-result-head svg { color: var(--signal-strong, var(--accent)); }
+.selection-tools.open { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: 10px; }
+.writing-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+.writing-tools.result { flex-direction: column; flex-wrap: nowrap; gap: 8px; }
+.writing-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font: inherit; font-size: 0.8125rem; cursor: pointer; transition: border-color 0.15s, background-color 0.15s; }
+.writing-chip:hover:not(:disabled) { border-color: var(--border-strong); background: var(--surface); }
+.writing-chip:disabled { opacity: 0.6; cursor: default; }
+.writing-result-head { display: flex; align-items: center; gap: 6px; font-size: 0.8125rem; font-weight: 600; color: var(--text-2); }
+.writing-result { max-height: 260px; overflow-y: auto; white-space: pre-wrap; font-size: 0.9375rem; line-height: 1.55; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); }
+.writing-result-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.writing-result-actions .spacer { flex: 1; }
+.text-selection-writing { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; }
+:root[data-theme="dark"] .selection-tools-btn svg, :root[data-theme="black"] .selection-tools-btn svg { color: var(--signal); }

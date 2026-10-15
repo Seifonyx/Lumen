@@ -73,6 +73,20 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     await settingsPage.getByRole('button', { name: 'Update from memories' }).click();
     await page.waitForFunction(() => document.querySelector('.about-me textarea')?.value.includes('sailing'));
     console.log('PASS memories can change scope, and About me can be drafted from them');
+
+    // ---- Deleting a chat forgets the memories saved in it (1.8 bug: a deleted chat's language stuck around).
+    await page.click('.settings-page [aria-label="Close"]');
+    page.once('dialog', (d) => d.accept());
+    const row2 = page.locator('.chat-row:has-text("Alpha planning")');
+    await row2.hover();
+    await row2.getByRole('button', { name: 'Chat options' }).click();
+    await page.getByRole('menuitem', { name: 'Delete' }).click();
+    await page.locator('.toast', { hasText: 'Also forgot 2 memories saved in that chat.' }).waitFor();
+    await page.click('.sidebar-foot');
+    await page.locator('.settings-tabs').getByRole('button', { name: 'Memory', exact: true }).click();
+    await settingsPage.locator('.memory-tab').waitFor();
+    assert.equal(await settingsPage.locator('.memory-row', { hasText: /Likes sailing|Alpha ships every Friday/ }).count(), 0, 'memories from the deleted chat are gone');
+    console.log('PASS deleting a chat forgets what was saved in it');
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -204,7 +204,7 @@ export function memoryInstructions(items: Memory[], autoSave: boolean, opts: { p
   const aboutNote = about ? `What the user wrote about themselves (keep it in mind; it's theirs to change, so don't save it as memories):\n${about}` : '';
   const projectNote = opts.projectId && opts.projectName ? `This chat is in the user's project "${opts.projectName}". For facts that only matter to this project (its goals, people, decisions, conventions), use [[remember for project: …]] instead of [[remember: …]]; those are only shown in this project's chats.` : '';
   const when = autoSave
-    ? 'Save a memory when the user asks you to remember something, or when they share a lasting fact or preference that will help in future chats (their name, job, workplace, ongoing projects, preferred language, tone or formats). Don\'t save one-off details, things already listed above, or what you said yourself.'
+    ? 'Save a memory when the user asks you to remember something, or when they clearly state a lasting fact or preference that will help in future chats (their name, job, ongoing projects, or how they want answers). Only save what they say outright: never infer a preference from how they write (writing in a language, or asking one short question, is not a preference), and don\'t save one-off details, the topic of this chat, things already listed above, or what you said yourself.'
     : 'Save a memory only when the user explicitly asks you to remember something.';
   return [
     '# Memory',

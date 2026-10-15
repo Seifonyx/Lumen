@@ -269,6 +269,19 @@ export const useStore = create<State>((set, get) => {
     return pick || enabled[0] || catalog?.defaults[0] || '';
   };
 
+  /** Memories forgotten with a deleted chat, kept for this session so Undo can bring them back. */
+  const forgottenWith = new Map<string, Memory[]>();
+  const forgetChatMemories = async (chatIds: string[]) => {
+    if (!memory) return 0;
+    const ids = new Set(chatIds);
+    const gone = get().memories.filter((m) => m.source === 'chat' && m.chatId && ids.has(m.chatId));
+    if (!gone.length) return 0;
+    for (const id of ids) forgottenWith.set(id, gone.filter((m) => m.chatId === id));
+    set((s) => ({ memories: s.memories.filter((m) => !gone.includes(m)) }));
+    for (const m of gone) await memory.remove(m.id).catch(() => {});
+    return gone.length;
+  };
+
   /** What memory a chat sees: About me, and its project's memories besides the general ones. */
   const memoryScope = (chat?: Chat | null) => {
     const { settings } = get();
@@ -1446,6 +1459,9 @@ export const useStore = create<State>((set, get) => {
       await db.remove(id);
       if (generation !== accountGeneration) return;
       if (had) sync?.remove(id);
+      // Memories a model saved in this chat go with it (Undo brings them back with the chat).
+      const n = await forgetChatMemories([id]);
+      if (n) get().toast(`Also forgot ${n} ${n === 1 ? 'memory' : 'memories'} saved in that chat.`);
     },
     async renameChat(id, title) {
       const chat = get().chats.find((c) => c.id === id);
@@ -1478,6 +1494,7 @@ export const useStore = create<State>((set, get) => {
       if (generation !== accountGeneration) return;
       set({ chats: [], currentId: null });
       ids.forEach((id) => sync?.remove(id));
+      await forgetChatMemories(ids);
     },
     async importChats(incoming) {
       const generation = accountGeneration;
@@ -1488,6 +1505,16 @@ export const useStore = create<State>((set, get) => {
       if (generation !== accountGeneration) return 0;
       set({ chats });
       for (const c of chats) if (valid.some((v) => v.id === c.id)) sync?.push({ ...c, rev: Date.now() });
+      // Undoing a delete: the chat's memories come back too.
+      for (const v of valid) {
+        const kept = forgottenWith.get(v.id);
+        if (!kept || !memory) continue;
+        forgottenWith.delete(v.id);
+        for (const m of kept) {
+          const back = await memory.add(m.text, { source: m.source, chatId: m.chatId, ...(m.projectId ? { projectId: m.projectId } : {}) });
+          set((s) => ({ memories: [back, ...s.memories] }));
+        }
+      }
       return valid.length;
     },
 

@@ -152,7 +152,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
   const selectedProjectId = projects.some((p) => p.id === activeProjectId) ? activeProjectId : null;
   const open = useStore((s) => s.sidebarOpen);
   const { newChat, setUi, selectProject } = useStore.getState();
-  const [artifacts,setArtifacts]=useState(false);
+  const page = useStore((s) => s.page);
   const library=(section:string)=>{setUi({sidebarOpen:false});window.dispatchEvent(new CustomEvent('mr:library',{detail:section}));};
   const [query, setQuery] = useState('');
   const [allChats, setAllChats] = useState(false);
@@ -258,9 +258,9 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
             <Sparkles size={15} /> <span>Ask your chats: “<span dir="auto">{query.trim().slice(0, 40)}</span>”</span>
           </button>
         )}
-        <button className="library-button" onClick={() => library('assistants')} title={`Assistants, prompts, knowledge, tools and scheduled tasks (${modKey}⇧L)`}><BookOpen size={18} /><span>Library</span></button>
-        <button className="library-button" onClick={() => setArtifacts(true)}><FileText size={18} /><span>Documents</span></button>
-        <button className="library-button" onClick={() => window.dispatchEvent(new CustomEvent('mr-open-study'))} title="Flashcards and quizzes from your chats and documents"><GraduationCap size={18} /><span>Study</span></button>
+        <button className={`library-button${page === 'library' ? ' active' : ''}`} aria-current={page === 'library' ? 'page' : undefined} onClick={() => library('assistants')} title={`Assistants, prompts, knowledge, tools and scheduled tasks (${modKey}⇧L)`}><BookOpen size={18} /><span>Library</span></button>
+        <button className={`library-button${page === 'documents' ? ' active' : ''}`} aria-current={page === 'documents' ? 'page' : undefined} onClick={() => useStore.getState().setUi({ page: 'documents' })}><FileText size={18} /><span>Documents</span></button>
+        <button className={`library-button${page === 'study' ? ' active' : ''}`} aria-current={page === 'study' ? 'page' : undefined} onClick={() => window.dispatchEvent(new CustomEvent('mr-open-study'))} title="Flashcards and quizzes from your chats and documents"><GraduationCap size={18} /><span>Study</span></button>
       </div>
 
       <div className="sidebar-navigation">
@@ -343,28 +343,6 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
       </div>
     </aside>
     {asking !== null && <Suspense fallback={null}><AskChats initial={asking} onClose={() => setAsking(null)} /></Suspense>}
-    {artifacts && (() => {
-      const docs = chats.filter((c) => !isTemporaryChat(c)).flatMap((c) => (c.documents || []).map((doc) => ({ doc, chat: c }))).sort((x, y) => y.doc.updatedAt - x.doc.updatedAt);
-      return (
-        <Modal title="Documents" onClose={() => setArtifacts(false)}>
-          {docs.length ? (
-            <ul className="doc-list">
-              {docs.map(({ doc, chat }) => (
-                <li key={`${chat.id}-${doc.id}`}>
-                  <button type="button" className="doc-row" onClick={() => { useStore.getState().selectChat(chat.id); setUi({ canvasOpen: true, canvasDocumentId: doc.id }); setArtifacts(false); }}>
-                    <span className="doc-icon" aria-hidden="true"><FileText size={17} /></span>
-                    <span className="doc-text"><span className="doc-name">{doc.name}</span><span className="doc-chat">{chat.title}</span></span>
-                    <span className="doc-time">{new Date(doc.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="doc-empty"><FileText size={22} aria-hidden="true" /><p>Documents you write in Canvas appear here.</p></div>
-          )}
-        </Modal>
-      );
-    })()}
     {allChats && <AllChats onClose={() => setAllChats(false)} />}
     {projectManager && (
       <ProjectManager

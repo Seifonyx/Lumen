@@ -1,11 +1,11 @@
 // Study: decks of flashcards and quizzes made from your chats and documents. Flashcards flip on tap; "Knew it"
 // sends a card further away, "Not yet" brings it back soon. The quiz keeps your scores.
-import { ArrowLeft, BookOpenCheck, Brain, Check, ChevronRight, Layers, Loader2, Plus, RotateCcw, Trash2, X } from 'lucide-react';
+import { ArrowLeft, BookOpenCheck, Brain, Check, ChevronRight, FileText, GraduationCap, Layers, Loader2, MessageSquare, Plus, RotateCcw, Search, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { dueCards, grade, mastery, nextDue, StudyStore, type StudyDeck } from '../lib/study';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { useStore } from '../store';
-import Modal from './Modal';
+import HubPage, { HubEmpty, relTime } from './HubPage';
 
 type View = { kind: 'list' } | { kind: 'new' } | { kind: 'cards'; id: string } | { kind: 'quiz'; id: string };
 
@@ -36,53 +36,63 @@ export default function Study({ onClose, startFrom }: { onClose: () => void; sta
   useEffect(() => { if (startFrom) void make(startFrom.chatId, startFrom.documentId); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const deck = 'id' in view ? decks.find((d) => d.id === view.id) : undefined;
 
+  const dueTotal = decks.reduce((n, d) => n + dueCards(d).length, 0);
+  const allScores = decks.flatMap((d) => (d.scores || []).map((x) => x.score / Math.max(1, d.quiz.length)));
+  const avg = allScores.length ? Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 100) : null;
+  const back = view.kind === 'list' ? undefined : () => setView({ kind: 'list' });
+  const title = view.kind === 'new' ? 'New deck' : deck ? deck.title : 'Study';
+  const subtitle = view.kind === 'new' ? 'Pick a chat or document. Lumen makes flashcards and a quiz from it.'
+    : deck ? `From “${deck.source.label}” · ${deck.cards.length} cards · ${deck.quiz.length} questions`
+    : 'Flashcards and quizzes made from your chats and documents. Cards you find hard come back sooner.';
   return (
-    <Modal title="Study" onClose={onClose} wide>
+    <HubPage label="Study" title={making ? 'Making your deck' : title} subtitle={making ? 'Reading it and writing flashcards and a quiz…' : subtitle} onClose={onClose} onBack={making ? undefined : back}
+      actions={view.kind === 'list' && !making && <button type="button" className="btn primary" onClick={() => setView({ kind: 'new' })}><Plus size={16} /> New deck</button>}>
       <div className="study">
-        {making && (
-          <div className="study-making" role="status"><Loader2 size={18} className="spin" /> Making flashcards and a quiz…</div>
-        )}
-        {!making && view.kind === 'list' && (
+        {making && <div className="study-making" role="status"><Loader2 size={20} className="spin" /> Making flashcards and a quiz…</div>}
+        {!making && view.kind === 'list' && (decks.length === 0 ? (
+          <HubEmpty icon={<GraduationCap size={26} />} title="No decks yet" text="Pick any chat or document and Lumen turns it into flashcards and a quiz. Your progress is saved to your account." action={<button type="button" className="btn primary" onClick={() => setView({ kind: 'new' })}><Plus size={16} /> Make your first deck</button>} />
+        ) : (
           <>
-            <div className="study-head">
-              <p className="muted small">Flashcards and quizzes made from your chats and documents.</p>
-              <button type="button" className="btn primary small" onClick={() => setView({ kind: 'new' })}><Plus size={15} /> New deck</button>
+            <div className="study-stats">
+              <div><strong>{dueTotal}</strong><span>cards due now</span></div>
+              <div><strong>{decks.length}</strong><span>{decks.length === 1 ? 'deck' : 'decks'}</span></div>
+              <div><strong>{avg === null ? '—' : `${avg}%`}</strong><span>average quiz score</span></div>
             </div>
-            {decks.length === 0 ? (
-              <div className="study-empty"><Layers size={26} /><h3>No decks yet</h3><p className="muted small">Pick a chat or document and Lumen makes flashcards and a quiz from it.</p></div>
-            ) : (
-              <ul className="study-decks">
-                {decks.map((d) => {
-                  const due = dueCards(d).length, m = Math.round(mastery(d) * 100), best = d.scores?.length ? Math.max(...d.scores.map((s) => s.score)) : null;
-                  return (
-                    <li key={d.id} className="study-deck">
-                      <div className="study-deck-main">
-                        <strong dir="auto">{d.title}</strong>
-                        <span className="muted small" dir="auto">From “{d.source.label}” · {d.cards.length} cards · {d.quiz.length} questions</span>
-                        <div className="study-meter" aria-label={`${m}% learned`}><span style={{ transform: `scaleX(${m / 100})` }} /></div>
-                        <span className="muted small">{m}% learned{best !== null ? ` · best quiz ${best}/${d.quiz.length}` : ''}</span>
-                      </div>
-                      <div className="study-deck-actions">
-                        <button type="button" className="btn small" disabled={!d.cards.length} onClick={() => setView({ kind: 'cards', id: d.id })}><Layers size={14} /> {due ? `Review ${due}` : 'Cards'}</button>
-                        <button type="button" className="btn small" disabled={!d.quiz.length} onClick={() => setView({ kind: 'quiz', id: d.id })}><BookOpenCheck size={14} /> Quiz</button>
-                        <button type="button" className="icon-btn sm" aria-label={`Delete ${d.title}`} onClick={() => { if (confirm(`Delete the deck "${d.title}"?`)) { setDecks((all) => all.filter((x) => x.id !== d.id)); void store?.remove(d.id); } }}><Trash2 size={15} /></button>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+            <ul className="study-decks">
+              {decks.map((d) => {
+                const due = dueCards(d).length, m = Math.round(mastery(d) * 100), best = d.scores?.length ? Math.max(...d.scores.map((x) => x.score)) : null;
+                return (
+                  <li key={d.id} className="study-deck">
+                    <div className="study-ring" style={{ ['--p' as string]: m }} aria-label={`${m}% learned`}><span>{m}%</span></div>
+                    <div className="study-deck-main">
+                      <strong dir="auto">{d.title}</strong>
+                      <span className="muted small" dir="auto">From “{d.source.label}” · {d.cards.length} cards · {d.quiz.length} questions</span>
+                      <span className="study-deck-meta">
+                        {due ? <span className="study-due">{due} due</span> : <span className="muted small">Next review {when(nextDue(d))}</span>}
+                        {best !== null && <span className="muted small">Best quiz {best}/{d.quiz.length}</span>}
+                        <span className="muted small">{relTime(d.updatedAt)}</span>
+                      </span>
+                    </div>
+                    <div className="study-deck-actions">
+                      <button type="button" className={`btn small${due ? ' primary' : ''}`} disabled={!d.cards.length} onClick={() => setView({ kind: 'cards', id: d.id })}><Layers size={14} /> {due ? `Review ${due}` : 'Cards'}</button>
+                      <button type="button" className="btn small" disabled={!d.quiz.length} onClick={() => setView({ kind: 'quiz', id: d.id })}><BookOpenCheck size={14} /> Quiz</button>
+                      <button type="button" className="icon-btn sm" aria-label={`Delete ${d.title}`} onClick={() => { if (confirm(`Delete the deck "${d.title}"?`)) { setDecks((all) => all.filter((x) => x.id !== d.id)); void store?.remove(d.id); } }}><Trash2 size={15} /></button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
           </>
-        )}
-        {!making && view.kind === 'new' && <NewDeck onBack={() => setView({ kind: 'list' })} onPick={make} />}
-        {!making && view.kind === 'cards' && deck && <Cards deck={deck} onSave={save} onBack={() => setView({ kind: 'list' })} onQuiz={() => setView({ kind: 'quiz', id: deck.id })} />}
+        ))}
+        {!making && view.kind === 'new' && <NewDeck onPick={make} />}
+        {!making && view.kind === 'cards' && deck && <Cards deck={deck} onSave={save} onQuiz={() => setView({ kind: 'quiz', id: deck.id })} />}
         {!making && view.kind === 'quiz' && deck && <Quiz key={deck.id} deck={deck} onSave={save} onBack={() => setView({ kind: 'list' })} />}
       </div>
-    </Modal>
+    </HubPage>
   );
 }
 
-function NewDeck({ onBack, onPick }: { onBack: () => void; onPick: (chatId: string, documentId?: string) => void }) {
+function NewDeck({ onPick }: { onPick: (chatId: string, documentId?: string) => void }) {
   const chats = useStore((s) => s.chats);
   const [query, setQuery] = useState('');
   const items = useMemo(() => {
@@ -98,12 +108,11 @@ function NewDeck({ onBack, onPick }: { onBack: () => void; onPick: (chatId: stri
   }, [chats, query]);
   return (
     <div className="study-new">
-      <div className="study-head"><button type="button" className="btn ghost small" onClick={onBack}><ArrowLeft size={15} /> Decks</button><span className="muted small">Make a deck from…</span></div>
-      <label className="search"><input type="search" placeholder="Search chats and documents" aria-label="Search chats and documents" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" /></label>
+      <label className="hub-search"><Search size={16} /><input type="search" placeholder="Search chats and documents" aria-label="Search chats and documents" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" /></label>
       {items.length ? (
         <ul className="study-sources">
           {items.map((i) => (
-            <li key={i.key}><button type="button" onClick={() => onPick(i.chatId, i.documentId)}><span><strong dir="auto">{i.label}</strong><span className="muted small">{i.sub}</span></span><ChevronRight size={16} /></button></li>
+            <li key={i.key}><button type="button" onClick={() => onPick(i.chatId, i.documentId)}><span className="lib-row-icon" aria-hidden="true">{i.documentId ? <FileText size={17} /> : <MessageSquare size={17} />}</span><span className="study-source-text"><strong dir="auto">{i.label}</strong><span className="muted small">{i.sub}</span></span><ChevronRight size={16} /></button></li>
           ))}
         </ul>
       ) : <p className="muted small">No chats or documents long enough yet.</p>}
@@ -111,7 +120,7 @@ function NewDeck({ onBack, onPick }: { onBack: () => void; onPick: (chatId: stri
   );
 }
 
-function Cards({ deck, onSave, onBack, onQuiz }: { deck: StudyDeck; onSave: (d: StudyDeck) => void; onBack: () => void; onQuiz: () => void }) {
+function Cards({ deck, onSave, onQuiz }: { deck: StudyDeck; onSave: (d: StudyDeck) => void; onQuiz: () => void }) {
   // The round: cards due when it started (missed ones come back at the end).
   const [queue, setQueue] = useState(() => dueCards(deck).map((c) => c.id));
   const [flipped, setFlipped] = useState(false);
@@ -137,7 +146,7 @@ function Cards({ deck, onSave, onBack, onQuiz }: { deck: StudyDeck; onSave: (d: 
   });
   return (
     <div className="study-cards">
-      <div className="study-head"><button type="button" className="btn ghost small" onClick={onBack}><ArrowLeft size={15} /> Decks</button><span className="muted small" dir="auto">{deck.title}</span><span className="muted small">{card ? `${queue.length} left` : ''}</span></div>
+      {card && <div className="study-head"><span className="muted small">Flashcards</span><span className="muted small">{queue.length} left</span></div>}
       {card ? (
         <>
           <button type="button" className={`flashcard${flipped ? ' flipped' : ''}`} onClick={() => setFlipped(!flipped)} aria-label={flipped ? 'Show question' : 'Show answer'}>
@@ -196,7 +205,7 @@ function Quiz({ deck, onSave, onBack }: { deck: StudyDeck; onSave: (d: StudyDeck
   }
   return (
     <div className="study-quiz">
-      <div className="study-head"><button type="button" className="btn ghost small" onClick={onBack}><ArrowLeft size={15} /> Decks</button><span className="muted small">Question {i + 1} of {questions.length}</span></div>
+      <div className="study-head"><span className="muted small">Quiz</span><span className="muted small">Question {i + 1} of {questions.length}</span></div>
       <div className="study-meter"><span style={{ transform: `scaleX(${i / questions.length})` }} /></div>
       <h3 className="quiz-q" dir="auto">{q.q}</h3>
       <div className="quiz-options" role="group" aria-label="Answers">

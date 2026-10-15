@@ -84,6 +84,10 @@ interface State {
   canvasOpen: boolean;
   /** side by side: another chat shown next to the current one (wide screens) */
   sideChatId: string | null;
+  /** Library, Documents or Study, open in place of the chat */
+  page: null | 'library' | 'documents' | 'study';
+  /** what the page opens on: a Library tab, or the chat/document to make a study deck from */
+  pageArg?: string | { chatId: string; documentId?: string };
   canvasDocumentId: string | null;
   canvasEditingChatId: string | null;
   /** choosing a GitHub repository for the chat */
@@ -130,7 +134,7 @@ interface State {
   updateSettings(patch: Partial<Settings>): void;
   toast(text: string, kind?: Toast['kind'], action?: Toast['action']): void;
   dismissToast(id: string): void;
-  setUi(patch: Partial<Pick<State, 'sidebarOpen' | 'settingsOpen' | 'settingsTab' | 'preview' | 'runner' | 'workspaceOpen' | 'repoPicker' | 'canvasOpen' | 'canvasDocumentId' | 'exportChatId' | 'projectWorkspaceOpen' | 'sideChatId'>>): void;
+  setUi(patch: Partial<Pick<State, 'sidebarOpen' | 'settingsOpen' | 'settingsTab' | 'preview' | 'runner' | 'workspaceOpen' | 'repoPicker' | 'canvasOpen' | 'canvasDocumentId' | 'exportChatId' | 'projectWorkspaceOpen' | 'sideChatId' | 'page' | 'pageArg'>>): void;
   openCanvas(name?: string, content?: string): void;
   saveCanvasDocument(chatId: string, id: string, patch: { name?: string; content?: string }, expectedContent?: string): Promise<boolean>;
   deleteCanvasDocument(chatId: string, id: string): void;
@@ -868,6 +872,7 @@ export const useStore = create<State>((set, get) => {
     workspaceOpen: false,
     canvasOpen: false,
     sideChatId: null,
+    page: null,
     canvasDocumentId: null,
     canvasEditingChatId: null,
     repoPicker: false,
@@ -1246,7 +1251,7 @@ export const useStore = create<State>((set, get) => {
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
     },
     setUi(patch) {
-      const apply = () => set({ ...patch, ...(patch.workspaceOpen ? { canvasOpen: false, sideChatId: null } : {}), ...(patch.canvasOpen ? { workspaceOpen: false, sideChatId: null } : {}), ...(patch.sideChatId ? { canvasOpen: false, workspaceOpen: false } : {}) });
+      const apply = () => set({ ...patch, ...(patch.workspaceOpen ? { canvasOpen: false, sideChatId: null } : {}), ...(patch.canvasOpen ? { workspaceOpen: false, sideChatId: null } : {}), ...(patch.sideChatId ? { canvasOpen: false, workspaceOpen: false } : {}), ...(patch.settingsOpen ? { page: null } : {}), ...(patch.page ? { settingsOpen: false, sidebarOpen: false } : {}) });
       // Opening or closing Settings by hand: a push/pop on phones, a crossfade on computers.
       const opening = patch.settingsOpen === true && !get().settingsOpen, closing = patch.settingsOpen === false && get().settingsOpen;
       if ((opening || closing) && typeof document !== 'undefined' && (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation?.isActive) {
@@ -1443,11 +1448,11 @@ export const useStore = create<State>((set, get) => {
       const projectId = currentProjectId();
       const empty = get().chats.find((c) => c.messages.length === 0 && !c.summary && !c.assistant && !c.documents?.length && (c.projectId || null) === projectId);
       if (empty) {
-        set({ currentId: empty.id, projectWorkspaceOpen: false, sidebarOpen: false, settingsOpen: false });
+        set({ currentId: empty.id, projectWorkspaceOpen: false, sidebarOpen: false, settingsOpen: false, page: null });
         return;
       }
       const chat = { ...newChatObject(), projectId: projectId || undefined };
-      set((s) => ({ chats: [chat, ...s.chats], currentId: chat.id, projectWorkspaceOpen: false, sidebarOpen: false, settingsOpen: false }));
+      set((s) => ({ chats: [chat, ...s.chats], currentId: chat.id, projectWorkspaceOpen: false, sidebarOpen: false, settingsOpen: false, page: null }));
     },
     startAssistant(value) {
       set({ canvasOpen: false, canvasDocumentId: null });
@@ -1457,7 +1462,7 @@ export const useStore = create<State>((set, get) => {
       const allowed = assistant.model === AUTO || settings.enabledModels.includes(assistant.model) || (isLayoutId(assistant.model) && findLayout(assistant.model, catalog?.models || [], settings.layouts, settings.hiddenLayouts));
       const temporary=isTemporaryChat(currentChat());
       const chat: Chat = { ...newChatObject(), ...(temporary?{id:`temporary-${uid()}`} : {}), title: assistant.name, assistant: { ...assistant }, model: allowed ? assistant.model : AUTO, projectId: currentProjectId() || undefined };
-      set((state) => ({ chats: [chat, ...state.chats], currentId: chat.id, projectWorkspaceOpen: false, sidebarOpen: false, settingsOpen: false }));
+      set((state) => ({ chats: [chat, ...state.chats], currentId: chat.id, projectWorkspaceOpen: false, sidebarOpen: false, settingsOpen: false, page: null }));
       void db.put(chat).catch(() => get().toast("Couldn't save the helper chat on this device.", 'error'));
       try { if(!temporary)localStorage.setItem(`mr.assistantDraft.${get().user?.uid}`, chat.id); } catch { /* private mode */ }
     },
@@ -1467,7 +1472,7 @@ export const useStore = create<State>((set, get) => {
       // Opening the chat that's beside this one swaps the two.
       const side = get().sideChatId;
       if (side && side === id) set({ sideChatId: get().currentId && get().currentId !== id ? get().currentId : null });
-      set({ currentId: id, projectWorkspaceOpen: false, sidebarOpen: false, settingsOpen: false, canvasOpen: false, canvasDocumentId: null });
+      set({ currentId: id, projectWorkspaceOpen: false, sidebarOpen: false, settingsOpen: false, canvasOpen: false, canvasDocumentId: null, page: null });
     },
     async deleteChat(id) {
       const generation = accountGeneration;

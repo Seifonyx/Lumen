@@ -1,10 +1,11 @@
-import { useLayoutEffect,useRef,useState } from 'react';
-import { BookOpen, Clock, Pencil, Plus, Search, Sparkles, Trash2, Wrench } from 'lucide-react';
+// Library: assistants (saved helpers with their own instructions and model), prompts, free tools, scheduled
+// tasks and knowledge, as one page with tabs.
+import { useState } from 'react';
+import { BookOpen, Clock, Database, MessageSquareText, Pencil, Plus, Search, Sparkles, Trash2, Wrench } from 'lucide-react';
 import FreeTools from './FreeTools';
 import TaskLibrary from './TaskLibrary';
 import KnowledgeLibrary from './KnowledgeLibrary';
-import Modal from './Modal';
-import FilterMenu from './FilterMenu';
+import HubPage, { HubEmpty } from './HubPage';
 import { modelLabel, useStore } from '../store';
 import { BUILTIN_ASSISTANTS, BUILTIN_PROMPTS, libraryFits, normalizeAssistant, normalizePrompt } from '../lib/assistants';
 import { AUTO } from '../lib/routing';
@@ -12,17 +13,28 @@ import { uid } from '../lib/util';
 import type { SavedAssistant, SavedPrompt } from '../types';
 import { insertPrompt } from './Composer';
 
-export default function AssistantLibrary({ onClose, initialTab = 'assistants' }: { onClose: () => void; initialTab?: 'assistants' | 'prompts' | 'tools' | 'tasks' | 'knowledge' }) {
-  const settings = useStore(s => s.settings);
-  const catalog = useStore(s => s.catalog);
+type Tab = 'assistants' | 'prompts' | 'tools' | 'tasks' | 'knowledge';
+const HUES = [212, 152, 28, 280, 340, 190, 48, 100];
+/** A steady colour per assistant, from its name. */
+const hue = (name: string) => HUES[[...name].reduce((n, c) => n + c.charCodeAt(0), 0) % HUES.length];
+const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() || '').join('') || '?';
+
+const COPY: Record<Tab, string> = {
+  assistants: 'Helpers with their own instructions and model. Start a chat with one, or make your own.',
+  prompts: 'Reusable starting points. Insert one into the message box, add your details, then send.',
+  tools: 'Free tools that run on your device or with your keys.',
+  tasks: 'Reminders and AI requests that run on a schedule.',
+  knowledge: 'Documents Lumen can search and cite in your chats.',
+};
+
+export default function AssistantLibrary({ onClose, initialTab = 'assistants' }: { onClose: () => void; initialTab?: Tab }) {
+  const settings = useStore((s) => s.settings);
+  const catalog = useStore((s) => s.catalog);
   const { updateSettings, startAssistant, toast } = useStore.getState();
   const assistants = settings.assistants || [];
   const prompts = settings.prompts || [];
-  const [tab, setTab] = useState<'assistants' | 'prompts' | 'tools' | 'tasks' | 'knowledge'>(initialTab);
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [query, setQuery] = useState('');
-  const [source, setSource] = useState<'all' | 'mine' | 'starter'>('all');
-  const tabStrip=useRef<HTMLDivElement>(null);
-  useLayoutEffect(()=>{tabStrip.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.scrollIntoView({block:'nearest',inline:'nearest'});},[tab]);
   const [editing, setEditing] = useState<SavedAssistant | SavedPrompt | null>(null);
   const isAssistant = (value: SavedAssistant | SavedPrompt): value is SavedAssistant => 'instructions' in value;
   const save = () => {
@@ -30,46 +42,108 @@ export default function AssistantLibrary({ onClose, initialTab = 'assistants' }:
     const assistant = isAssistant(editing) ? normalizeAssistant(editing) : null;
     const prompt = !isAssistant(editing) ? normalizePrompt(editing) : null;
     if (!assistant && !prompt) return;
-    const nextAssistants = assistant ? [...assistants.filter(a => a.id !== assistant.id), assistant] : assistants;
-    const nextPrompts = prompt ? [...prompts.filter(p => p.id !== prompt.id), prompt] : prompts;
+    const nextAssistants = assistant ? [...assistants.filter((a) => a.id !== assistant.id), assistant] : assistants;
+    const nextPrompts = prompt ? [...prompts.filter((p) => p.id !== prompt.id), prompt] : prompts;
     if (!libraryFits(nextAssistants, nextPrompts)) { toast('Library limit reached: 25 helpers, 50 prompts or 100,000 characters total.', 'error'); return; }
     updateSettings({ assistants: nextAssistants, prompts: nextPrompts });
     setEditing(null);
   };
   const remove = (id: string) => {
     if (!confirm('Delete this saved item? Existing chats will keep their helper instructions.')) return;
-    updateSettings(tab === 'assistants' ? { assistants: assistants.filter(a => a.id !== id) } : { prompts: prompts.filter(p => p.id !== id) });
+    updateSettings(tab === 'assistants' ? { assistants: assistants.filter((a) => a.id !== id) } : { prompts: prompts.filter((p) => p.id !== id) });
   };
-  const items = tab === 'assistants' ? [...assistants, ...BUILTIN_ASSISTANTS] : [...prompts, ...BUILTIN_PROMPTS];
-  const mine = items.filter(item => !item.id.startsWith('builtin-')).length;
-  const matches = items.filter(item => (source === 'all' || (source === 'mine') !== item.id.startsWith('builtin-')) && JSON.stringify(item).toLowerCase().includes(query.trim().toLowerCase()));
-  return <Modal title="Library" onClose={onClose} wide>
-    <div className="assistant-library">
-      {editing ? <div className="library-editor">
-        <h3>{isAssistant(editing) ? 'Assistant details' : 'Prompt details'}</h3>
-        <label className="field-block"><span className="setting-label">Name</span><input aria-label="Library item name" maxLength={60} value={isAssistant(editing) ? editing.name : editing.title} onChange={e => setEditing(isAssistant(editing) ? { ...editing, name: e.target.value } : { ...editing, title: e.target.value })} /></label>
-        {isAssistant(editing) && <>
-          <label className="field-block"><span className="setting-label">Description</span><input maxLength={160} value={editing.description} onChange={e => setEditing({ ...editing, description: e.target.value })} /></label>
-          <label className="field-block"><span className="setting-label">Default model</span><select aria-label="Assistant model" value={editing.model} onChange={e => setEditing({ ...editing, model: e.target.value })}><option value={AUTO}>Auto · choose for the task</option>{settings.enabledModels.filter(id => id !== AUTO).map(id => <option key={id} value={id}>{modelLabel(catalog, id)}</option>)}{editing.model !== AUTO && !settings.enabledModels.includes(editing.model) && <option value={editing.model}>Unavailable · uses Auto</option>}</select></label>
-        </>}
-        <label className="field-block"><span className="setting-label">{isAssistant(editing) ? 'Instructions' : 'Prompt text'}</span><textarea aria-label="Library instructions" rows={8} maxLength={8000} value={isAssistant(editing) ? editing.instructions : editing.text} onChange={e => setEditing(isAssistant(editing) ? { ...editing, instructions: e.target.value } : { ...editing, text: e.target.value })} /></label>
-        <div className="library-form-actions"><button className="btn" onClick={() => setEditing(null)}>Back</button><button className="btn primary" disabled={isAssistant(editing) ? !editing.name.trim() || !editing.instructions.trim() : !editing.title.trim() || !editing.text.trim()} onClick={save}>Save</button></div>
-      </div> : <>
-        <div className="library-tabs" ref={tabStrip} role="tablist" aria-label="Library sections">{(['assistants', 'prompts', 'tools', 'tasks', 'knowledge'] as const).map(value => <button key={value} role="tab" tabIndex={tab === value ? 0 : -1} aria-selected={tab === value} className={tab === value ? 'active' : ''} onKeyDown={e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const tabs=['assistants','prompts','tools','tasks','knowledge'] as const;const index=tabs.indexOf(value);const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(index+(e.key==='ArrowLeft'?-1:1)+tabs.length)%tabs.length;setTab(tabs[next]);setQuery('');setSource('all');e.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role=tab]')[next]?.focus();}} onClick={() => { setTab(value); setQuery('');setSource('all'); }}>{value === 'assistants' ? <Sparkles size={16} /> : value === 'tasks' ? <Clock size={16} /> : value === 'tools' ? <Wrench size={16} /> : <BookOpen size={16} />}{value === 'assistants' ? 'Assistants' : value === 'tasks' ? 'Tasks' : value === 'tools' ? 'Tools' : value === 'knowledge' ? 'Knowledge' : 'Prompts'}</button>)}</div>
-        {tab === 'knowledge' ? <KnowledgeLibrary onClose={onClose} /> : tab === 'tools' ? <FreeTools onClose={onClose} /> : tab === 'tasks' ? <TaskLibrary onClose={onClose} /> : <>
-        <p className="muted small">{tab === 'assistants' ? 'Start a chat with a saved helper’s instructions and model. You can change its model anytime.' : 'Reusable starting points. Insert a prompt, add your details, then send when ready.'}</p>
-        <div className="library-toolbar"><label className="library-search"><Search size={16} /><input type="search" aria-label="Search library" placeholder="Search library" value={query} onChange={e => setQuery(e.target.value)} /></label>{mine > 0 && <FilterMenu<'all' | 'mine' | 'starter'> label="Show" value={source} onChange={setSource} options={[{ value: 'all', label: 'All', count: items.length }, { value: 'mine', label: 'Yours', count: mine }, { value: 'starter', label: 'Starters', count: items.length - mine }]} />}<button className="btn" onClick={() => setEditing(tab === 'assistants' ? { id: uid(), name: '', description: '', instructions: '', model: AUTO } : { id: uid(), title: '', text: '' })}><Plus size={16} />{tab === 'assistants' ? 'New assistant' : 'New prompt'}</button></div>
-        <div className="library-grid">{matches.map(item => {
-          const builtin = item.id.startsWith('builtin-');
-          return <article className="library-card" key={item.id}>
-            <div className="library-card-heading"><span className="library-card-icon">{isAssistant(item) ? <Sparkles size={15} /> : <BookOpen size={15} />}</span><h3>{isAssistant(item) ? item.name : item.title}</h3><span className={`library-tag${builtin ? '' : ' mine'}`}>{builtin ? 'Starter' : 'Yours'}</span></div>
-            <p>{isAssistant(item) ? item.description || 'Your custom assistant.' : item.text}</p>
-            <div className="library-card-actions"><button className="btn small" onClick={() => { if (isAssistant(item)) startAssistant(item); else insertPrompt(item.text); onClose(); }}>{isAssistant(item) ? 'Start chat' : 'Insert prompt'}</button><span className="spacer" /><button className="icon-btn sm" aria-label={`${builtin ? 'Customize' : 'Edit'} ${isAssistant(item) ? item.name : item.title}`} onClick={() => setEditing({ ...item, id: builtin ? uid() : item.id })}><Pencil size={15} /></button>{!builtin && <button className="icon-btn sm" aria-label={`Delete ${isAssistant(item) ? item.name : item.title}`} onClick={() => remove(item.id)}><Trash2 size={15} /></button>}</div>
-          </article>;
-        })}</div>
-        {!matches.length && <p className="muted library-empty">No matching items.</p>}
-        </>}
-      </>}
-    </div>
-  </Modal>;
+  const q = query.trim().toLowerCase();
+  const match = (item: SavedAssistant | SavedPrompt) => !q || JSON.stringify(item).toLowerCase().includes(q);
+  const newItem = () => setEditing(tab === 'assistants' ? { id: uid(), name: '', description: '', instructions: '', model: AUTO } : { id: uid(), title: '', text: '' });
+  const listTab = tab === 'assistants' || tab === 'prompts';
+
+  if (editing) {
+    const assistant = isAssistant(editing);
+    return (
+      <HubPage label="Library" title={assistant ? (editing.name || 'New assistant') : (editing.title || 'New prompt')} subtitle={assistant ? 'An assistant starts every chat with these instructions and model.' : 'A prompt is inserted into the message box for you to finish.'} onClose={onClose} onBack={() => setEditing(null)}>
+        <div className="library-editor hub-form">
+          <label className="field-block"><span className="setting-label">Name</span><input aria-label="Library item name" maxLength={60} value={assistant ? editing.name : editing.title} onChange={(e) => setEditing(assistant ? { ...editing, name: e.target.value } : { ...editing, title: e.target.value })} /></label>
+          {assistant && <>
+            <label className="field-block"><span className="setting-label">Description</span><input maxLength={160} value={editing.description} placeholder="What it helps with, in a few words" onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></label>
+            <label className="field-block"><span className="setting-label">Default model</span><select aria-label="Assistant model" value={editing.model} onChange={(e) => setEditing({ ...editing, model: e.target.value })}><option value={AUTO}>Auto · choose for the task</option>{settings.enabledModels.filter((id) => id !== AUTO).map((id) => <option key={id} value={id}>{modelLabel(catalog, id)}</option>)}{editing.model !== AUTO && !settings.enabledModels.includes(editing.model) && <option value={editing.model}>Unavailable · uses Auto</option>}</select></label>
+          </>}
+          <label className="field-block"><span className="setting-label">{assistant ? 'Instructions' : 'Prompt text'}</span><textarea aria-label="Library instructions" rows={10} maxLength={8000} value={assistant ? editing.instructions : editing.text} onChange={(e) => setEditing(assistant ? { ...editing, instructions: e.target.value } : { ...editing, text: e.target.value })} /></label>
+          <div className="library-form-actions"><button className="btn" onClick={() => setEditing(null)}>Back</button><button className="btn primary" disabled={assistant ? !editing.name.trim() || !editing.instructions.trim() : !editing.title.trim() || !editing.text.trim()} onClick={save}>Save</button></div>
+        </div>
+      </HubPage>
+    );
+  }
+
+  const Assistant = ({ a }: { a: SavedAssistant }) => {
+    const builtin = a.id.startsWith('builtin-');
+    return (
+      <article className="lib-card" style={{ ['--h' as string]: hue(a.name) }}>
+        <button type="button" className="lib-card-main" onClick={() => { startAssistant(a); onClose(); }} aria-label={`Start a chat with ${a.name}`}>
+          <span className="lib-avatar" aria-hidden="true">{builtin ? <Sparkles size={18} /> : initials(a.name)}</span>
+          <span className="lib-card-text">
+            <strong dir="auto">{a.name}</strong>
+            <span className="lib-desc" dir="auto">{a.description || 'Your custom assistant.'}</span>
+          </span>
+        </button>
+        <footer className="lib-card-foot">
+          <span className="lib-owner">{builtin ? 'By Lumen' : 'By you'} · {a.model === AUTO ? 'Auto' : modelLabel(catalog, a.model)}</span>
+          <span className="spacer" />
+          <button className="icon-btn sm" aria-label={`${builtin ? 'Customize' : 'Edit'} ${a.name}`} title={builtin ? 'Make your own copy' : 'Edit'} onClick={() => setEditing({ ...a, id: builtin ? uid() : a.id })}><Pencil size={15} /></button>
+          {!builtin && <button className="icon-btn sm" aria-label={`Delete ${a.name}`} onClick={() => remove(a.id)}><Trash2 size={15} /></button>}
+        </footer>
+      </article>
+    );
+  };
+  const Prompt = ({ p }: { p: SavedPrompt }) => {
+    const builtin = p.id.startsWith('builtin-');
+    return (
+      <li className="lib-row">
+        <span className="lib-row-icon" aria-hidden="true"><MessageSquareText size={17} /></span>
+        <span className="lib-row-text"><strong dir="auto">{p.title}</strong><span dir="auto">{p.text.replace(/\s+/g, ' ')}</span></span>
+        <span className="lib-row-actions">
+          <button className="icon-btn sm" aria-label={`${builtin ? 'Customize' : 'Edit'} ${p.title}`} onClick={() => setEditing({ ...p, id: builtin ? uid() : p.id })}><Pencil size={15} /></button>
+          {!builtin && <button className="icon-btn sm" aria-label={`Delete ${p.title}`} onClick={() => remove(p.id)}><Trash2 size={15} /></button>}
+          <button className="btn small" onClick={() => { insertPrompt(p.text); onClose(); }}>Use</button>
+        </span>
+      </li>
+    );
+  };
+  const mineA = assistants.filter(match), lumenA = BUILTIN_ASSISTANTS.filter(match);
+  const mineP = prompts.filter(match), lumenP = BUILTIN_PROMPTS.filter(match);
+
+  return (
+    <HubPage<Tab> label="Library" title="Library" subtitle={COPY[tab]} onClose={onClose} tab={tab} onTab={(t) => { setTab(t); setQuery(''); }}
+      tabs={[
+        { id: 'assistants', label: 'Assistants', icon: <Sparkles size={15} /> },
+        { id: 'prompts', label: 'Prompts', icon: <BookOpen size={15} /> },
+        { id: 'knowledge', label: 'Knowledge', icon: <Database size={15} /> },
+        { id: 'tools', label: 'Tools', icon: <Wrench size={15} /> },
+        { id: 'tasks', label: 'Tasks', icon: <Clock size={15} /> },
+      ]}
+      actions={listTab && <button className="btn primary" onClick={newItem}><Plus size={16} /> {tab === 'assistants' ? 'New assistant' : 'New prompt'}</button>}
+      toolbar={listTab && <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search library" placeholder={tab === 'assistants' ? 'Search assistants' : 'Search prompts'} value={query} onChange={(e) => setQuery(e.target.value)} /></label>}>
+      <div className="assistant-library">
+        {tab === 'knowledge' ? <KnowledgeLibrary onClose={onClose} /> : tab === 'tools' ? <FreeTools onClose={onClose} /> : tab === 'tasks' ? <TaskLibrary onClose={onClose} /> : tab === 'assistants' ? (
+          <>
+            {(mineA.length > 0 || !q) && (
+              <section className="lib-section">
+                <h2>Yours</h2>
+                {mineA.length ? <div className="lib-grid">{mineA.map((a) => <Assistant key={a.id} a={a} />)}</div> : (
+                  <button type="button" className="lib-create" onClick={newItem}><span className="lib-create-icon"><Plus size={18} /></span><span><strong>Make an assistant</strong><span>Give it instructions and a model; it’s ready in every chat.</span></span></button>
+                )}
+              </section>
+            )}
+            {lumenA.length > 0 && <section className="lib-section"><h2>From Lumen</h2><div className="lib-grid">{lumenA.map((a) => <Assistant key={a.id} a={a} />)}</div></section>}
+            {q && !mineA.length && !lumenA.length && <p className="hub-none">No assistants match “{query}”.</p>}
+          </>
+        ) : (
+          <>
+            {mineP.length > 0 && <section className="lib-section"><h2>Yours</h2><ul className="lib-rows">{mineP.map((p) => <Prompt key={p.id} p={p} />)}</ul></section>}
+            {lumenP.length > 0 && <section className="lib-section"><h2>From Lumen</h2><ul className="lib-rows">{lumenP.map((p) => <Prompt key={p.id} p={p} />)}</ul></section>}
+            {!mineP.length && !lumenP.length && (q ? <p className="hub-none">No prompts match “{query}”.</p> : <HubEmpty icon={<BookOpen size={24} />} title="No prompts" text="Save prompts you use often." />)}
+          </>
+        )}
+      </div>
+    </HubPage>
+  );
 }

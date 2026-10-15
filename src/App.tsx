@@ -33,6 +33,7 @@ const CanvasPanel = lazy(() => import('./components/CanvasPanel'));
 const SideChat = lazy(() => import('./components/SideChat'));
 const SelectionTools = lazy(() => import('./components/SelectionTools'));
 const Study = lazy(() => import('./components/Study'));
+const DocumentsPage = lazy(() => import('./components/DocumentsPage'));
 const ChatExportModal = lazy(() => import('./components/ChatExportModal'));
 
 export default function App() {
@@ -52,22 +53,22 @@ export default function App() {
   const comparisonOpen = useStore((s) => Boolean(s.comparison));
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  const [libraryOpen, setLibraryOpen] = useState(false);
-  // Study: opened from the sidebar, or "Study this chat" (which makes a deck from it straight away).
-  const [study, setStudy] = useState<null | { from?: { chatId: string; documentId?: string } }>(null);
+  // Library, Documents and Study open as pages in place of the chat.
+  const page = useStore((s) => s.page);
+  const pageArg = useStore((s) => s.pageArg);
   useEffect(() => {
-    const open = (e: Event) => { const from = (e as CustomEvent).detail; setUi({ sidebarOpen: false }); setStudy({ from: from && typeof from.chatId === 'string' ? from : undefined }); };
+    const open = (e: Event) => { const from = (e as CustomEvent).detail; setUi({ page: 'study', pageArg: from && typeof from.chatId === 'string' ? from : undefined }); };
     window.addEventListener('mr-open-study', open);
     return () => window.removeEventListener('mr-open-study', open);
   }, [setUi]);
-  const [libraryTab, setLibraryTab] = useState<'assistants' | 'prompts' | 'tools' | 'tasks' | 'knowledge'>('assistants');
+  const closePage = () => setUi({ page: null, pageArg: undefined });
   const accountId = useStore(s => s.user?.uid);
   useEffect(()=>useStore.subscribe((next,previous)=>{if(next.user?.uid!==previous.user?.uid||next.keys.gemini!==previous.keys.gemini||next.settings.privacyShield!==previous.settings.privacyShield||next.settings.privacyMode!==previous.settings.privacyMode)cancelKnowledge()}),[]);
-  useEffect(() => { setLibraryOpen(false); setCommandPaletteOpen(false); }, [accountId]);
+  useEffect(() => { setUi({ page: null }); setCommandPaletteOpen(false); }, [accountId, setUi]);
   // Remembered so the next visit shows the app's frame before any code loads (index.html).
   useEffect(() => { try { if (authed) localStorage.setItem('mr.signedIn', '1'); else if (authed === false) localStorage.removeItem('mr.signedIn'); } catch { /* private mode */ } }, [authed]);
   useEffect(() => {
-    const open = (event: Event) => { const requested=(event as CustomEvent).detail; setLibraryTab(requested === 'knowledge' ? 'knowledge' : requested === 'tasks' ? 'tasks' : requested === 'tools' ? 'tools' : 'assistants'); setUi({ sidebarOpen: false }); setLibraryOpen(true); };
+    const open = (event: Event) => { const requested=(event as CustomEvent).detail; setUi({ page: 'library', pageArg: requested === 'knowledge' ? 'knowledge' : requested === 'tasks' ? 'tasks' : requested === 'tools' ? 'tools' : 'assistants' }); };
     window.addEventListener('mr:library', open);
     const help = () => setShortcutsOpen(true);
     window.addEventListener('mr:shortcuts', help);
@@ -168,19 +169,24 @@ export default function App() {
   }
   if (accessDenied) return <NotInvited email={accessDenied} />;
   return (
-    <div className={`app${settingsOpen ? ' settings-open' : ''}${workspaceOpen ? ' workspace-open' : ''}${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
+    <div className={`app${settingsOpen ? ' settings-open' : ''}${page && !settingsOpen ? ' page-open' : ''}${workspaceOpen ? ' workspace-open' : ''}${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
       <TaskEngine />
       <a className="skip-link" href="#message-input">Skip to message</a>
       <Sidebar onCollapse={toggleSidebar} />
       <div className={`scrim${sidebarOpen ? ' visible' : ''}`} aria-hidden="true" onClick={() => setUi({ sidebarOpen: false })} />
       <ChatView onExpandSidebar={toggleSidebar} />
+      {page && !settingsOpen && (
+        <Suspense fallback={null}>
+          {page === 'library' ? <AssistantLibrary key={`${accountId}-lib`} initialTab={typeof pageArg === 'string' ? pageArg as 'assistants' : 'assistants'} onClose={closePage} />
+            : page === 'documents' ? <DocumentsPage key={`${accountId}-docs`} onClose={closePage} />
+            : <Study key={`${accountId}-study-${JSON.stringify(pageArg || '')}`} startFrom={typeof pageArg === 'object' ? pageArg : undefined} onClose={closePage} />}
+        </Suspense>
+      )}
       {!settingsOpen && <WorkspacePanel />}
       {!settingsOpen && canvasOpen && <Suspense fallback={null}><CanvasPanel /></Suspense>}
       {!settingsOpen && sideChatId && <Suspense fallback={null}><SideChat /></Suspense>}
       {settingsOpen && <Suspense fallback={null}><SettingsModal /></Suspense>}
       {commandPaletteOpen && <Suspense fallback={null}><CommandPalette onClose={() => setCommandPaletteOpen(false)} /></Suspense>}
-      {study && <Suspense fallback={null}><Study key={accountId} startFrom={study.from} onClose={() => setStudy(null)} /></Suspense>}
-      {libraryOpen && <Suspense fallback={null}><AssistantLibrary key={accountId} initialTab={libraryTab} onClose={() => setLibraryOpen(false)} /></Suspense>}
       {comparisonOpen && <Suspense fallback={null}><ComparisonResultsModal /></Suspense>}
       {shortcutsOpen && <Suspense fallback={null}><ShortcutsModal onClose={() => setShortcutsOpen(false)} /></Suspense>}
       {repoPicker && <Suspense fallback={null}><RepoPicker onClose={() => setUi({ repoPicker: false })} /></Suspense>}

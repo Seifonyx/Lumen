@@ -11,7 +11,7 @@ export const BUILTIN_ASSISTANTS: SavedAssistant[] = [
 export const BUILTIN_PROMPTS: SavedPrompt[] = [
   { id: 'builtin-summary', title: 'Summarize a document', text: 'Summarize the attached document. Give the main points, decisions, action items and unanswered questions. Use only the document and cite page numbers when available.' },
   { id: 'builtin-report', title: 'Draft a professional report', text: 'Turn the following notes into a professional report with an executive summary, findings and action items. Flag missing information rather than inventing it.\n\nNotes:\n' },
-  { id: 'builtin-translate', title: 'Translate into Egyptian Arabic', text: 'Translate the following into clear Egyptian Arabic while preserving meaning, names, numbers and professional terminology.\n\nText:\n' },
+  { id: 'builtin-translate', title: 'Translate a text', text: 'Translate the following into [language]. Keep the meaning, names, numbers and tone, and use natural phrasing rather than word-for-word translation.\n\nText:\n' },
   { id: 'builtin-clean', title: 'Plan a data cleanup', text: 'Review the attached spreadsheet. Identify missing values, duplicates, inconsistent types and suspicious values. Explain the cleaning steps and ask before removing or changing ambiguous data.' },
 ];
 

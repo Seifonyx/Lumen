@@ -3774,10 +3774,6 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
 .main, .main *, .sidebar, .sidebar *, .settings-page, .settings-page *, .all-chats-list, .all-chats-list * { touch-action: pan-y; }
 .code-block pre, .code-block pre *, .table-wrap, .table-wrap *, .math-block, .math-block *, .markdown .katex-display, .markdown .katex-display *,
 .attachments, .attachments *, .library-tabs, .library-tabs *, .sheet-tabs, .sheet-tabs * { touch-action: pan-x pan-y; }
-/* Phones: the jump-to-message rail sat exactly where a thumb scrolls (swipes there didn't scroll and a lift
-   jumped the chat); it's for computers, and the conversation gets that width back. */
-@media (pointer: coarse) and (max-width: 899px) {
-  .message-navigation { display: none; }
-  .conversation-area:has(.message-navigation) .thread { padding-inline-end: 18px; }
-  .conversation-area:has(.message-navigation) .virtual-thread .message-row { padding-inline-end: 0; }
-}
+/* (The jump-to-message rail is off by default on phones, where it sat exactly where a thumb scrolls: see the
+   Message navigator setting.) */
+

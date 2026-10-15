@@ -2,12 +2,14 @@ import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual';
 import { startTransition, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { Chat, ChatSummary } from '../types';
 import MessageItem from './MessageItem';
+import { useStore } from '../store';
 import { CompactingNote, CompactNote } from './CompactNote';
 import { createPortal } from 'react-dom';
 import MessageNavigation from './MessageNavigation';
 import { messageStops, stopAtIndex } from '../lib/message-navigation';
 
 const FIRST_PAINT = 6;
+export const navigatorDefault = () => !(window.matchMedia('(pointer: coarse)').matches && window.matchMedia('(max-width: 899px)').matches);
 const BATCH = 12;
 
 export default function MessageThread({chat,summary,busy,compacting,scroller,stick,navigationHost}: {chat:Chat;summary:ChatSummary|null;busy:boolean;compacting:boolean;scroller:RefObject<HTMLDivElement|null>;stick:RefObject<boolean>;navigationHost:RefObject<HTMLDivElement|null>}) {
@@ -22,6 +24,8 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
   const [navigationRoot,setNavigationRoot] = useState<HTMLDivElement|null>(null);
   const [bounds,setBounds] = useState({width:0,height:0});
   const messages = chat.messages;
+  // The lines on the right that jump between your messages: Settings → General; by default on computers only.
+  const showNavigator = useStore((s) => s.settings.messageNavigator ?? navigatorDefault());
   const messageData=useRef(messages);messageData.current=messages;
   const stops=useMemo(()=>messageStops(messages),[messages]);
   const pinnedKeys=useMemo(()=>new Set([...pinned,...(focus?[focus]:[]),...(jumpTarget?[jumpTarget]:[])]),[pinned,focus,jumpTarget]);
@@ -128,7 +132,7 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
   </>;
   return <>
     <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</div>
-    {navigationRoot && stops.length>1 && createPortal(<MessageNavigation stops={stops} activeId={activeStop} height={bounds.height} onJump={(id,keyboard)=>{stick.current=false;setJumpKeyboard(keyboard);setJumpTarget(id)}}/>,navigationRoot)}
+    {navigationRoot && showNavigator && stops.length>1 && createPortal(<MessageNavigation stops={stops} activeId={activeStop} height={bounds.height} onJump={(id,keyboard)=>{stick.current=false;setJumpKeyboard(keyboard);setJumpTarget(id)}}/>,navigationRoot)}
     {count>120 && <div className="history-controls"><span className="muted small">{count.toLocaleString()} messages</span><button className="btn ghost small" aria-pressed={full} title="Show all messages for browser search and screen-reader reading" onClick={()=>setFull(!full)}>{full?'Use faster scrolling':'Show full conversation'}</button></div>}
     {summary?.upTo===null && <div className="thread-summary"><CompactNote chat={chat} summary={summary}/></div>}
     <div ref={host} className={`thread${enabled?' virtual-thread':''}`} role={count?'feed':'region'} aria-label="Conversation" aria-busy={busy} aria-live="off" style={enabled?{height:virtual.getTotalSize()}:undefined}>

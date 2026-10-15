@@ -5,6 +5,7 @@ const { profile, seed } = require('./helpers/preview-profile.cjs');
 const URL = process.env.MR_TEST_URL || 'http://localhost:5190/?emulator';
 const now = Date.now();
 const chats = ['First chat', 'Second chat', 'Third chat'].map((t, i) => ({ id: `mm${i}`, title: t, createdAt: now - i * 1e6, updatedAt: now - i * 1e6, model: 'gemini:gemini-flash-latest', messages: [{ id: `mm${i}u`, role: 'user', text: 'hello there', createdAt: now }, { id: `mm${i}a`, role: 'assistant', status: 'done', model: 'gemini:gemini-flash-latest', text: 'Hi!', createdAt: now }] }));
+chats.push({ id: 'mmlong', title: 'Long talk', createdAt: now - 9e6, updatedAt: now - 9e6, model: 'gemini:gemini-flash-latest', messages: Array.from({ length: 6 }, (_, i) => [{ id: `lu${i}`, role: 'user', text: `Question ${i}`, createdAt: now - 9e6 + i }, { id: `la${i}`, role: 'assistant', status: 'done', model: 'gemini:gemini-flash-latest', text: 'An answer. '.repeat(30), createdAt: now - 9e6 + i }]).flat() });
 const near = (a, b, d = 2) => Math.abs(a - b) <= d;
 
 (async () => {
@@ -43,6 +44,23 @@ const near = (a, b, d = 2) => Math.abs(a - b) <= d;
     }
     await page.click('.settings-page [aria-label="Close"]');
     console.log('PASS the Theme selection slides to the option you pick');
+
+    // ---- The message navigator can be turned off (and back on).
+    await page.click('.chat-row:has-text("Long talk") .chat-open');
+    await page.locator('.message-navigation').waitFor();
+    const nav = async (on) => {
+      await page.click('.sidebar-foot');
+      await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click();
+      const toggle = page.locator('.settings-page:not(.exit-ghost)').getByLabel('Message navigator');
+      if (on) await toggle.check(); else await toggle.uncheck();
+      await page.click('.settings-page [aria-label="Close"]');
+      await page.waitForTimeout(400);
+    };
+    await nav(false);
+    assert.equal(await page.locator('.message-navigation').count(), 0, 'turning the navigator off hides it');
+    await nav(true);
+    await page.locator('.message-navigation').waitFor();
+    console.log('PASS the message navigator can be turned off and on');
 
     // ---- Usage gauges fill from zero.
     await page.click('.usage-chip');

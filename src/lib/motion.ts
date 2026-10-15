@@ -45,6 +45,13 @@ function copyValues(from: Element, to: Element) {
  * Plays an exit for `node` using a copy, then removes the copy. `parts` animates inner pieces too (for
  * example a sheet sliding down while its backdrop fades).
  */
+/** The exit's first frame at the element's current opacity, when it starts from "fully visible". */
+function fromNow(frames: Keyframe[], el: HTMLElement): Keyframe[] {
+  const opacity = parseFloat(getComputedStyle(el).opacity);
+  if (!('opacity' in frames[0]) || !(opacity < 0.99)) return frames;
+  return [{ ...frames[0], opacity }, ...frames.slice(1)];
+}
+
 export function exitGhost(node: HTMLElement, kind: ExitKind, parts: [string, ExitKind][] = []) {
   if (motionOff() || !node.isConnected || !node.parentNode) return;
   const ghost = node.cloneNode(true) as HTMLElement;
@@ -64,8 +71,14 @@ export function exitGhost(node: HTMLElement, kind: ExitKind, parts: [string, Exi
     Object.assign(ghost.style, { top: `${node.offsetTop}px`, left: `${node.offsetLeft}px`, right: 'auto', bottom: 'auto', width: `${node.offsetWidth}px`, margin: '0' });
   }
   ghost.style.pointerEvents = 'none';
+  // No blur behind a copy that's fading out: Safari can draw a fading blurred layer as a black flash.
+  ghost.style.setProperty('backdrop-filter', 'none');
+  ghost.style.setProperty('-webkit-backdrop-filter', 'none');
   node.parentNode.insertBefore(ghost, node);
   let { frames, ms } = KEYFRAMES[kind];
+  // Fade from how it looks right now (a backdrop already faded by dragging its sheet away must not flash
+  // back to full darkness first).
+  frames = fromNow(frames, node);
   // A sheet that was being dragged leaves from where the finger let go, not from its resting place.
   const now = node.style.transform;
   if (kind === 'sheet' && now && now !== 'none') { frames = [{ transform: now }, frames[1]]; ms = 160; }
@@ -74,7 +87,8 @@ export function exitGhost(node: HTMLElement, kind: ExitKind, parts: [string, Exi
     const el = ghost.querySelector<HTMLElement>(selector);
     const live = node.querySelector<HTMLElement>(selector)?.style.transform;
     const part = KEYFRAMES[partKind];
-    const pf = partKind === 'sheet' && live && live !== 'none' ? [{ transform: live }, part.frames[1]] : part.frames;
+    const liveNode = node.querySelector<HTMLElement>(selector);
+    const pf = partKind === 'sheet' && live && live !== 'none' ? [{ transform: live }, part.frames[1]] : liveNode ? fromNow(part.frames, liveNode) : part.frames;
     if (el) runs.push(el.animate(pf, { duration: part.ms, easing: EASE_IN, fill: 'forwards' }));
   }
   Promise.all(runs.map((r) => r.finished)).catch(() => {}).finally(() => ghost.remove());

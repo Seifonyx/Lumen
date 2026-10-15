@@ -69,7 +69,8 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
   const pop = useRef<HTMLDivElement>(null);
   const search = useRef<HTMLInputElement>(null);
   useFocusScope(pop,open,()=>setOpen(false));
-  useSheetDrag(pop, () => setOpen(false), open && sheet);
+  const scrim = useRef<HTMLDivElement>(null);
+  useSheetDrag(pop, () => setOpen(false), open && sheet, scrim);
 
   const statusOf = (id: string) => {
     const u = usage?.models[id];
@@ -272,7 +273,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
         (sheet
           ? createPortal(
               <>
-                <Exit kind="fade"><div className="mp-scrim" onClick={() => setOpen(false)} aria-hidden="true" /></Exit>
+                <Exit kind="fade"><div ref={scrim} className="mp-scrim" onClick={() => setOpen(false)} aria-hidden="true" /></Exit>
                 <Exit kind="sheet">{menu}</Exit>
               </>,
               document.body,

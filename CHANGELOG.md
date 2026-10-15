@@ -9,6 +9,11 @@
   computers, and messages on phones use the full width.
 - With the keyboard open, Lumen only checks touches while it's actually open (it used to check all the time).
 - Press-and-hold waits a little longer before a message sinks, so starting a scroll doesn't make it dip.
+- Fixed: a dark flicker after closing things. Dragging a sheet away (model picker, +, usage, windows) left the
+  dimmed background behind for a moment; it now clears as the sheet goes. Closing animations start from how
+  things actually look, and fading layers no longer use the blur that can flash black on iPhone.
+- New setting: Settings → General → Message navigator, the lines on the right of long chats that jump between
+  your messages. It's on by default on computers and off on phones.
 
 ## 1.7.0 · More motion
 

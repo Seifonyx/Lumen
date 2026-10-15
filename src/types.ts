@@ -264,6 +264,8 @@ export interface Settings {
   haptics?: boolean;
   /** a soft sound when you send */
   sendSound?: boolean;
+  /** the jump-to-message lines beside long chats (unset: on computers, off on phones) */
+  messageNavigator?: boolean;
   autoTitle: boolean;
   /** summarize older messages when a chat gets long */
   autoCompact: boolean;

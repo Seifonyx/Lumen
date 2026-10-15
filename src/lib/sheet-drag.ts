@@ -27,18 +27,30 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
     let start: { y: number; x: number; id: number; handle: boolean; base: number } | null = null;
     let y = 0, dragging = false, anim: Motion | null = null, closing = false;
     const speed = new Velocity();
-    // Only a separate scrim fades (a backdrop that contains the sheet would fade the sheet too).
+    // The dimmed background lightens as the sheet goes, so nothing dark is left behind once it's gone. A
+    // separate scrim fades; a backdrop that contains the sheet has its colour faded (its opacity would fade
+    // the sheet too).
     const backdrop = () => (scrim?.current && !scrim.current.contains(el) ? scrim.current : null);
+    const holder = () => (backdrop() ? null : el.parentElement?.closest<HTMLElement>('.modal-backdrop, .sheet-backdrop') || null);
+    let base: number[] | null = null;
+    const tint = (b: HTMLElement, k: number) => {
+      base ??= (getComputedStyle(b).backgroundColor.match(/[\d.]+/g) || ['0', '0', '0', '0']).map(Number);
+      const [r, g, bl, a = 1] = base;
+      return `rgba(${r}, ${g}, ${bl}, ${(a * k).toFixed(3)})`;
+    };
     const frames = (v: number): [HTMLElement | null, Keyframe][] => {
-      const b = backdrop();
-      return [[el, { transform: `translateY(${v}px)` }], [b, { opacity: String(v > 0 ? Math.max(0.15, 1 - v / el.offsetHeight) : 1) }]];
+      // (Clears a little ahead of the sheet, so the screen never ends up darker than where it lands.)
+      const k = v > 0 ? Math.max(0, 1 - (1.6 * v) / el.offsetHeight) : 1;
+      const b = backdrop(), h = holder();
+      return [[el, { transform: `translateY(${v}px)` }], [b, { opacity: String(k) }], [h, { backgroundColor: h ? tint(h, k) : '' }]];
     };
     const set = (v: number) => {
       y = v;
       el.style.transition = 'none';
-      const b = backdrop();
+      const b = backdrop(), h = holder();
       if (b) b.style.transition = 'none';
-      if (Math.abs(v) < 0.01) { el.style.transform = ''; if (b) b.style.opacity = ''; return; }
+      if (h) h.style.transition = 'none';
+      if (Math.abs(v) < 0.01) { el.style.transform = ''; if (b) b.style.opacity = ''; if (h) h.style.backgroundColor = ''; return; }
       frames(v).forEach(([n, kf]) => { if (n) Object.assign(n.style, kf); });
     };
     // Released: the rest of the motion runs on the graphics thread (see springTo).
@@ -83,7 +95,10 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
       if (y > 0 && (projected > h * 0.5 || (v > FLICK && y > 8))) {
         closing = true;
         haptic();
-        settle(h + 40, Math.max(v, 1.2), () => { if (closing) close.current(); }, { stiffness: 260, damping: 32 });
+        // (No blur behind it while it goes: Safari can draw a fading blurred layer as a black flash.)
+        const hb = holder();
+        if (hb) { hb.style.setProperty('backdrop-filter', 'none'); hb.style.setProperty('-webkit-backdrop-filter', 'none'); }
+        settle(h + 40, Math.max(v, 1.2), () => { if (closing) close.current(); }, { stiffness: 380, damping: 36 });
       } else {
         settle(0, v, () => set(0));
       }

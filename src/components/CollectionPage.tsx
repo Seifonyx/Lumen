@@ -1,0 +1,149 @@
+// Collection: everything you've added or made, from every chat: photos, files you attached, documents you wrote
+// in the canvas, images Lumen created, and files you uploaded for Lumen to search. Projects are the folders:
+// filter by one, or move an item's chat into one.
+import { Download, FileText, FolderKanban, Image as ImageIcon, MoreHorizontal, Plus, Search, Sparkles, Trash2, FileSearch, Paperclip, LayoutGrid } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { isTemporaryChat } from '../lib/temporary-chat';
+import { saveBlob, safeFileName } from '../lib/util';
+import { useStore } from '../store';
+import type { Attachment, CanvasDocument, Chat, Project } from '../types';
+import HubPage, { HubEmpty, relTime } from './HubPage';
+import KnowledgeLibrary from './KnowledgeLibrary';
+import { openImage } from './ImageViewer';
+
+export type CollectionKind = 'all' | 'photos' | 'documents' | 'files' | 'generated' | 'searchable';
+type Item =
+  | { kind: 'photos' | 'generated' | 'files'; key: string; chat: Chat; file: Attachment; at: number }
+  | { kind: 'documents'; key: string; chat: Chat; doc: CanvasDocument; at: number };
+
+const NO_PROJECTS: Project[] = [];
+/** A few lines of a document, Markdown marks removed, for its page preview. */
+const preview = (text: string) => text.split('\n').map((l) => l.replace(/^#{1,6}\s+/, '').replace(/[*_`>]/g, '').replace(/^\s*[-+]\s+/, '• ')).filter((l, i, a) => l.trim() || (i > 0 && a[i - 1].trim())).slice(0, 14);
+const heading = (text: string) => /^#{1,3}\s+/.test(text.trimStart());
+const imageSrc = (f: Attachment) => (f.data ? `data:${f.mime || 'image/jpeg'};base64,${f.data}` : f.thumb || '');
+const ext = (name: string) => (/\.([a-z0-9]{1,5})$/i.exec(name)?.[1] || 'file').toUpperCase();
+
+export default function CollectionPage({ onClose, initial = 'all' }: { onClose: () => void; initial?: CollectionKind }) {
+  const chats = useStore((s) => s.chats);
+  const projects = useStore((s) => s.settings.projects) || NO_PROJECTS;
+  const [kind, setKind] = useState<CollectionKind>(initial);
+  const [project, setProject] = useState('');
+  const [query, setQuery] = useState('');
+  const [menu, setMenu] = useState<string | null>(null);
+  const [moving, setMoving] = useState<string | null>(null);
+
+  const items = useMemo(() => {
+    const out: Item[] = [];
+    for (const chat of chats) {
+      if (isTemporaryChat(chat)) continue;
+      for (const doc of chat.documents || []) out.push({ kind: 'documents', key: `d-${chat.id}-${doc.id}`, chat, doc, at: doc.updatedAt });
+      for (const m of chat.messages) for (const file of m.files || []) {
+        if (file.auto || file.videoUri) continue;
+        const k = file.kind === 'image' ? (m.role === 'assistant' ? 'generated' : 'photos') : 'files';
+        out.push({ kind: k, key: `f-${chat.id}-${m.id}-${file.id}`, chat, file, at: m.createdAt });
+      }
+    }
+    return out.sort((a, b) => b.at - a.at);
+  }, [chats]);
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: items.length };
+    for (const i of items) c[i.kind] = (c[i.kind] || 0) + 1;
+    return c;
+  }, [items]);
+  const q = query.trim().toLowerCase();
+  const shown = items.filter((i) => (kind === 'all' || i.kind === kind) && (!project || i.chat.projectId === project) && (!q || (i.kind === 'documents' ? `${i.doc.name} ${i.doc.content}` : i.file.name).toLowerCase().includes(q) || i.chat.title.toLowerCase().includes(q)));
+
+  const openChat = (chatId: string) => useStore.getState().selectChat(chatId);
+  const open = (i: Item, from?: Element | null) => {
+    if (i.kind === 'documents') { openChat(i.chat.id); useStore.getState().setUi({ canvasOpen: true, canvasDocumentId: i.doc.id }); }
+    else if ((i.kind === 'photos' || i.kind === 'generated') && imageSrc(i.file)) openImage({ src: imageSrc(i.file), alt: i.file.name, name: i.file.name, from: from as HTMLElement | null });
+    else openChat(i.chat.id);
+  };
+  const newDoc = () => { useStore.getState().newChat(); setTimeout(() => useStore.getState().openCanvas(), 0); };
+  const FILTERS: { id: CollectionKind; label: string; icon: React.ReactNode }[] = [
+    { id: 'all', label: 'Everything', icon: <LayoutGrid size={15} /> },
+    { id: 'photos', label: 'Photos', icon: <ImageIcon size={15} /> },
+    { id: 'documents', label: 'Documents', icon: <FileText size={15} /> },
+    { id: 'files', label: 'Attached files', icon: <Paperclip size={15} /> },
+    { id: 'generated', label: 'Made by Lumen', icon: <Sparkles size={15} /> },
+    { id: 'searchable', label: 'Searchable', icon: <FileSearch size={15} /> },
+  ];
+  const projectName = (id?: string) => projects.find((p) => p.id === id)?.name;
+
+  const More = ({ i }: { i: Item }) => (
+    <div className="doc-more">
+      <button type="button" className="icon-btn sm" aria-label={`More for ${i.kind === 'documents' ? i.doc.name : i.file.name}`} aria-haspopup="menu" aria-expanded={menu === i.key} onClick={(e) => { e.stopPropagation(); setMenu(menu === i.key ? null : i.key); setMoving(null); }}><MoreHorizontal size={16} /></button>
+      {menu === i.key && (
+        <div className="menu doc-menu" role="menu" onMouseLeave={() => { setMenu(null); setMoving(null); }}>
+          <button type="button" role="menuitem" onClick={() => { setMenu(null); openChat(i.chat.id); }}>Open its chat</button>
+          {i.kind === 'documents' && <button type="button" role="menuitem" onClick={() => { setMenu(null); void saveBlob(new Blob([i.doc.content], { type: 'text/markdown' }), `${safeFileName(i.doc.name.replace(/\.md$/i, ''), 'Document')}.md`); }}><Download size={15} /> Download</button>}
+          {projects.length > 0 && <button type="button" role="menuitem" aria-expanded={moving === i.key} onClick={() => setMoving(moving === i.key ? null : i.key)}><FolderKanban size={15} /> Move chat to project</button>}
+          {moving === i.key && (
+            <div className="doc-move">
+              <button type="button" role="menuitem" onClick={() => { useStore.getState().moveChatToProject(i.chat.id, null); setMenu(null); }}>No project</button>
+              {projects.map((p) => <button key={p.id} type="button" role="menuitem" aria-current={i.chat.projectId === p.id || undefined} onClick={() => { useStore.getState().moveChatToProject(i.chat.id, p.id); useStore.getState().toast(`Moved “${i.chat.title}” to ${p.name}`, 'success'); setMenu(null); }}>{p.name}</button>)}
+            </div>
+          )}
+          {i.kind === 'documents' && <button type="button" role="menuitem" className="danger" onClick={() => { setMenu(null); if (confirm(`Delete “${i.doc.name}”?`)) void useStore.getState().deleteCanvasDocument(i.chat.id, i.doc.id); }}><Trash2 size={15} /> Delete</button>}
+        </div>
+      )}
+    </div>
+  );
+
+  const sub = (i: Item) => [projectName(i.chat.projectId), i.chat.title, relTime(i.at)].filter(Boolean).join(' · ');
+
+  return (
+    <HubPage label="Collection" title="Collection" subtitle="Everything you’ve added or made, from all your chats. Projects keep things together." onClose={onClose}
+      actions={<button type="button" className="btn primary" onClick={newDoc}><Plus size={16} /> New document</button>}>
+      <div className="coll-filters" role="radiogroup" aria-label="Show">
+        {FILTERS.map((f) => (
+          <button key={f.id} type="button" role="radio" aria-checked={kind === f.id} className="coll-chip" onClick={() => setKind(f.id)}>
+            {f.icon}{f.label}{f.id !== 'searchable' && counts[f.id] ? <span className="hub-count">{counts[f.id]}</span> : null}
+          </button>
+        ))}
+      </div>
+      {kind === 'searchable' ? (
+        <div className="files-uploads"><p className="muted small coll-note">Files you’ve uploaded for Lumen to search. Replies quote them with page numbers.</p><KnowledgeLibrary onClose={onClose} /></div>
+      ) : (
+        <>
+          {items.length > 0 && (
+            <div className="hub-toolbar">
+              <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search your collection" placeholder="Search names and documents" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" /></label>
+              {projects.length > 0 && (
+                <label className="coll-project"><FolderKanban size={15} /><select aria-label="Project" value={project} onChange={(e) => setProject(e.target.value)}><option value="">All projects</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+              )}
+            </div>
+          )}
+          {items.length === 0 ? (
+            <HubEmpty icon={<LayoutGrid size={26} />} title="Nothing here yet" text="Photos and files you attach, documents you write in the canvas and images Lumen makes all collect here." action={<button type="button" className="btn primary" onClick={newDoc}><Plus size={16} /> New document</button>} />
+          ) : shown.length === 0 ? (
+            <p className="hub-none">Nothing matches.</p>
+          ) : (
+            <ul className="coll-grid">
+              {shown.map((i) => (
+                <li key={i.key} className={`coll-item kind-${i.kind}`}>
+                  <button type="button" className="doc-open" onClick={(e) => open(i, e.currentTarget.querySelector('img'))} aria-label={`Open ${i.kind === 'documents' ? i.doc.name : i.file.name}`}>
+                    {i.kind === 'documents' ? (
+                      <span className="doc-paper" aria-hidden="true">
+                        {preview(i.doc.content).map((l, n) => <span key={n} className={n === 0 && heading(i.doc.content) ? 'doc-paper-h' : ''} dir="auto">{l || ' '}</span>)}
+                      </span>
+                    ) : (i.kind === 'photos' || i.kind === 'generated') ? (
+                      <span className="coll-photo">{imageSrc(i.file) ? <img src={i.file.thumb || imageSrc(i.file)} alt="" loading="lazy" /> : <span className="coll-away">On another device</span>}{i.kind === 'generated' && <span className="coll-badge"><Sparkles size={12} /> Made by Lumen</span>}</span>
+                    ) : (
+                      <span className="coll-file"><span className="coll-ext">{ext(i.file.name)}</span><FileText size={30} strokeWidth={1.4} /></span>
+                    )}
+                    <span className="doc-meta">
+                      <span className="doc-name" dir="auto">{i.kind === 'documents' ? i.doc.name.replace(/\.md$/i, '') : i.file.name}</span>
+                      <span className="doc-sub" dir="auto">{sub(i)}</span>
+                    </span>
+                  </button>
+                  <More i={i} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </HubPage>
+  );
+}

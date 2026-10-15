@@ -1,5 +1,5 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
-import { Archive, ArchiveRestore, ChevronRight, GraduationCap, Sparkles, Columns2, FileText, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
+import { Archive, ArchiveRestore, ChevronRight, GraduationCap, LayoutGrid, Shapes, Sparkles, Columns2, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
@@ -153,7 +153,6 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
   const open = useStore((s) => s.sidebarOpen);
   const { newChat, setUi, selectProject } = useStore.getState();
   const page = useStore((s) => s.page);
-  const library=(section:string)=>{setUi({sidebarOpen:false});window.dispatchEvent(new CustomEvent('mr:library',{detail:section}));};
   const [query, setQuery] = useState('');
   const [allChats, setAllChats] = useState(false);
   const [asking, setAsking] = useState<string | null>(null);
@@ -258,20 +257,20 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
             <Sparkles size={15} /> <span>Ask your chats: “<span dir="auto">{query.trim().slice(0, 40)}</span>”</span>
           </button>
         )}
-        <button className={`library-button${page === 'assistants' ? ' active' : ''}`} aria-current={page === 'assistants' ? 'page' : undefined} onClick={() => library('assistants')} title={`Helpers with their own instructions and model (${modKey}⇧L)`}><Sparkles size={18} /><span>Assistants</span></button>
-        <button className={`library-button${page === 'files' ? ' active' : ''}`} aria-current={page === 'files' ? 'page' : undefined} onClick={() => useStore.getState().setUi({ page: 'files', pageArg: 'documents' })} title="Documents you've written and files you've uploaded"><FileText size={18} /><span>Files</span></button>
-        <button className={`library-button${page === 'study' ? ' active' : ''}`} aria-current={page === 'study' ? 'page' : undefined} onClick={() => window.dispatchEvent(new CustomEvent('mr-open-study'))} title="Flashcards and quizzes from your chats and documents"><GraduationCap size={18} /><span>Study</span></button>
+        <button className={`library-button${page === 'collection' ? ' active' : ''}`} aria-current={page === 'collection' ? 'page' : undefined} onClick={() => useStore.getState().setUi({ page: 'collection', pageArg: 'all' })} title="Photos, files and documents from all your chats"><LayoutGrid size={18} /><span>Collection</span></button>
+        <button className={`library-button${page === 'tools' || page === 'assistants' || page === 'study' ? ' active' : ''}`} aria-current={page === 'tools' ? 'page' : undefined} onClick={() => useStore.getState().setUi({ page: 'tools' })} title={`Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`}><Shapes size={18} /><span>Tools</span></button>
       </div>
 
       <div className="sidebar-navigation">
       <div className="sidebar-section-heading">
-        <h2 className="sidebar-section-label">Projects</h2>
+        <h2 className="sidebar-section-label"><button type="button" className={`sidebar-section-link${page === 'projects' ? ' active' : ''}`} onClick={() => useStore.getState().setUi({ page: 'projects' })} title="All projects">Projects <ChevronRight size={14} aria-hidden="true" /></button></h2>
         <button type="button" className="sidebar-chip" onClick={() => { setEditProjectId(undefined); setCreateNewProject(true); setProjectManager(true); }} title="Create a new project"><Plus size={13} strokeWidth={2.2} /> New project</button>
       </div>
 
       <div className="sidebar-projects-list">
         {(
-          projects.map((project) => {
+          // The few you used last; all of them are on the Projects page.
+          [...projects].sort((a, b) => Math.max(b.updatedAt, ...chats.filter((c) => c.projectId === b.id).map((c) => c.updatedAt)) - Math.max(a.updatedAt, ...chats.filter((c) => c.projectId === a.id).map((c) => c.updatedAt))).filter((p, i) => i < 4 || p.id === selectedProjectId).map((project) => {
             const isSelected = selectedProjectId === project.id;
             const count = chats.filter((c) => c.projectId === project.id).length;
             return (
@@ -305,6 +304,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
             );
           })
         )}
+        {projects.length > 4 && <button type="button" className="view-all-chats" onClick={() => useStore.getState().setUi({ page: 'projects' })}>All projects ({projects.length}) <ChevronRight size={14} aria-hidden="true" /></button>}
       </div>
 
       <div className="sidebar-section-heading history-heading">

@@ -33,7 +33,9 @@ const CanvasPanel = lazy(() => import('./components/CanvasPanel'));
 const SideChat = lazy(() => import('./components/SideChat'));
 const SelectionTools = lazy(() => import('./components/SelectionTools'));
 const Study = lazy(() => import('./components/Study'));
-const DocumentsPage = lazy(() => import('./components/DocumentsPage'));
+const CollectionPage = lazy(() => import('./components/CollectionPage'));
+const ProjectsPage = lazy(() => import('./components/ProjectsPage'));
+const ToolsPage = lazy(() => import('./components/ToolsPage'));
 const PromptsModal = lazy(() => import('./components/PromptsModal'));
 const ToolsModal = lazy(() => import('./components/ToolsModal'));
 const ChatExportModal = lazy(() => import('./components/ChatExportModal'));
@@ -75,8 +77,11 @@ export default function App() {
     // Where each kind of saved thing lives now (older shortcuts and links still ask for "the library").
     const open = (event: Event) => {
       const requested = String((event as CustomEvent).detail || 'assistants');
-      if (requested === 'knowledge') setUi({ page: 'files', pageArg: 'uploads' });
-      else if (requested === 'documents') setUi({ page: 'files', pageArg: 'documents' });
+      if (requested === 'knowledge') setUi({ page: 'collection', pageArg: 'searchable' });
+      else if (requested === 'documents') setUi({ page: 'collection', pageArg: 'documents' });
+      else if (requested === 'collection') setUi({ page: 'collection', pageArg: 'all' });
+      else if (requested === 'tools-page') setUi({ page: 'tools' });
+      else if (requested === 'projects') setUi({ page: 'projects' });
       else if (requested === 'tasks') setUi({ settingsOpen: true, settingsTab: 'tasks' });
       else if (requested === 'prompts') { setUi({ sidebarOpen: false }); setPrompts(true); }
       else if (requested.startsWith('tools')) { setUi({ sidebarOpen: false }); setTools((requested.split(':')[1] as 'youtube') || 'youtube'); }
@@ -191,7 +196,9 @@ export default function App() {
       {page && !settingsOpen && (
         <Suspense fallback={null}>
           {page === 'assistants' ? <AssistantLibrary key={`${accountId}-assistants`} onClose={closePage} />
-            : page === 'files' ? <DocumentsPage key={`${accountId}-files-${String(pageArg || '')}`} initialTab={pageArg === 'uploads' ? 'uploads' : 'documents'} onClose={closePage} />
+            : page === 'collection' ? <CollectionPage key={`${accountId}-collection-${String(pageArg || '')}`} initial={typeof pageArg === 'string' ? pageArg as 'all' : 'all'} onClose={closePage} />
+            : page === 'projects' ? <ProjectsPage key={`${accountId}-projects`} onClose={closePage} />
+            : page === 'tools' ? <ToolsPage key={`${accountId}-tools`} onClose={closePage} />
             : <Study key={`${accountId}-study-${JSON.stringify(pageArg || '')}`} startFrom={typeof pageArg === 'object' ? pageArg : undefined} onClose={closePage} />}
         </Suspense>
       )}

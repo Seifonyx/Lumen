@@ -173,7 +173,9 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
           <button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title={`Expand sidebar (${modKey}⇧S)`}>
             <PanelLeftOpen size={20} />
           </button>
-          <span className="chat-heading project-crumb">Projects</span>
+          <button type="button" className="chat-heading project-crumb" onClick={() => setUi({ page: 'projects' })} title="All projects">Projects</button>
+          <span className="project-crumb-sep" aria-hidden="true">/</span>
+          <span className="project-crumb-name">{currentProject.name}</span>
         </header>
         <ProjectWorkspace
           project={currentProject}

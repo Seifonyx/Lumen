@@ -85,7 +85,7 @@ interface State {
   /** side by side: another chat shown next to the current one (wide screens) */
   sideChatId: string | null;
   /** Library, Documents or Study, open in place of the chat */
-  page: null | 'assistants' | 'files' | 'study';
+  page: null | 'projects' | 'collection' | 'tools' | 'assistants' | 'study';
   /** what the page opens on: a Files tab, or the chat/document to make a study deck from */
   pageArg?: string | { chatId: string; documentId?: string };
   canvasDocumentId: string | null;

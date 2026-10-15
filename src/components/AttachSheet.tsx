@@ -1,5 +1,5 @@
 import { useExit } from '../lib/motion';
-import { FolderGit2, Images, Image as ImageIcon, Camera, Pencil, ChartNoAxesCombined, Columns2, Globe, Check, X, Telescope, MessageSquareText, PlayCircle, FolderKanban, ChevronRight, Paperclip } from 'lucide-react';
+import { FolderGit2, Images, Image as ImageIcon, Camera, Pencil, ChartNoAxesCombined, Columns2, Globe, Check, X, Telescope, MessageSquareText, PlayCircle, LayoutGrid, FolderKanban, ChevronRight, Paperclip } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useFocusScope } from '../lib/focus-scope';
 import { useSheetDrag } from '../lib/sheet-drag';
@@ -41,6 +41,7 @@ export default function AttachSheet(p:Props){
   <button type="button" className="sheet-row compare-trigger" disabled={p.compareDisabled} onClick={pick(p.onCompare)}><Columns2 size={18}/><span>Compare models</span></button>
   {p.onPrompts&&<button type="button" className="sheet-row" onClick={pick(p.onPrompts)}><MessageSquareText size={18}/><span>Saved prompts</span></button>}
   {p.onTool&&<button type="button" className="sheet-row" title="Summarize a YouTube video, read a web page, or calculate with Python" onClick={pick(()=>p.onTool!('youtube'))}><PlayCircle size={18}/><span>Video, web page or calculation</span></button>}
+  <button type="button" className="sheet-row all-tools" onClick={pick(()=>window.dispatchEvent(new CustomEvent('mr:library',{detail:'tools-page'})))}><LayoutGrid size={18}/><span>All tools</span><ChevronRight size={16}/></button>
  </div>
  </div></div>;
 }

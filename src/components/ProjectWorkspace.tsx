@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ArrowUp, ChevronDown, ExternalLink, Eye, FileCode, FileSpreadsheet, FileText, MoreHorizontal, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { modelLabel, useStore } from '../store';
 import { readAttachment } from '../lib/files/read';
@@ -26,6 +26,8 @@ const fileIcon = (name: string) => (/\.(xlsx|xlsm|csv|tsv)$/i.test(name) ? FileS
 /** A project's page: what it is, a box to start a chat in it, its chats, and the context every chat gets. */
 export default function ProjectWorkspace({ project, onOpenSettings }: { project: Project; onOpenSettings?: () => void }) {
   const chats = useStore((s) => s.chats);
+  const allMemories = useStore((s) => s.memories);
+  const memories = useMemo(() => allMemories.filter((m) => m.projectId === project.id), [allMemories, project.id]);
   const catalog = useStore((s) => s.catalog);
   const { saveProject, selectChat, newChat, deleteChat, renameChat, moveChatToProject, send, toast } = useStore.getState();
 
@@ -75,7 +77,8 @@ export default function ProjectWorkspace({ project, onOpenSettings }: { project:
   const instructions = project.instructions?.trim() || '';
 
   return (
-    <div className="project-page claude-project-view">
+    <div className={`project-page claude-project-view color-${color}`}>
+      <div className="project-hero" aria-hidden="true" />
       <header className="project-head">
         <span className={`project-tile color-${color}`} aria-hidden="true">{project.name.slice(0, 1).toUpperCase()}</span>
         <div className="project-head-text">
@@ -192,6 +195,16 @@ export default function ProjectWorkspace({ project, onOpenSettings }: { project:
                 <button type="button" className="btn ghost small" onClick={onOpenSettings} aria-label="Edit project instructions">{instructions ? 'Edit' : 'Add'}</button>
               </div>
               {instructions ? <p className="project-instructions" dir="auto">{instructions}</p> : <p className="project-empty">Tell models how to work in this project: tone, language, what to focus on.</p>}
+            </section>
+
+            <section className="project-card">
+              <div className="project-card-head">
+                <h3>Memory <span className="project-count">{memories.length}</span></h3>
+                <button type="button" className="btn ghost small" onClick={() => useStore.getState().setUi({ settingsOpen: true, settingsTab: 'memory' })}>Manage</button>
+              </div>
+              {memories.length ? (
+                <ul className="project-memories">{memories.slice(0, 4).map((m) => <li key={m.id} dir="auto">{m.text}</li>)}{memories.length > 4 && <li className="muted">+{memories.length - 4} more</li>}</ul>
+              ) : <p className="project-empty">Facts that only matter here are kept for this project’s chats.</p>}
             </section>
 
             <section className="project-card">

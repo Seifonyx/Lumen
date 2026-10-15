@@ -1,9 +1,10 @@
-import { ArrowDown, ArrowUp, Copy, Pencil, Plus, RotateCcw, Search, Star, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, Pencil, Plus, RotateCcw, Search, Sparkles, Star, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { allLayouts, LAYOUT_ICONS, LAYOUT_PREFIX, newLayoutId, RECOMMENDED_IDS, type Layout } from '../lib/layouts';
 import { PROVIDER_NAMES } from '../lib/util';
 import { modelLabel, useStore } from '../store';
 import LayoutIcon from './LayoutIcon';
+import LayoutBuilder from './LayoutBuilder';
 
 export function LayoutEditor({ start, onDone }: { start: Layout; onDone: () => void }) {
   const catalog = useStore((s) => s.catalog);
@@ -176,15 +177,20 @@ export default function LayoutsSection({ onEdit }: { onEdit: (l: Layout) => void
   const all = allLayouts(catalog?.models || [], custom, hidden);
   const copyOf = (l: Layout): Layout => ({ ...l, id: newLayoutId(), name: `${l.name} (copy)`.slice(0, 40), builtin: undefined, edited: undefined });
   const removed = hidden.filter((id) => RECOMMENDED_IDS.includes(id)).length;
+  const [building, setBuilding] = useState(false);
 
   return (
     <div className="settings-group layouts-tab">
       <div className="settings-group-title">
         <span>Layouts</span>
+        <span className="layout-head-actions">
+        <button className="link-btn small" onClick={() => setBuilding(true)} title="Pick a task; Lumen checks for new models and chooses the best ones for it"><Sparkles size={14} /> Build for a task</button>
         <button className="link-btn small" onClick={() => onEdit({ id: newLayoutId(), name: '', icon: 'layers', description: '', models: [], mode: 'order' })}>
           <Plus size={14} /> New layout
         </button>
+        </span>
       </div>
+      {building && <LayoutBuilder onClose={() => setBuilding(false)} />}
       {all.length === 0 ? (
         <div className="settings-card pad-card">
           <p className="muted small" style={{ margin: 0 }}>No layouts. Create one{removed ? ', or bring back the recommended ones' : ''}.</p>

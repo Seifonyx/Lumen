@@ -23,6 +23,7 @@ import { quota, type QuotaView } from './lib/quota';
 import { extractMemoryOps, findMemory, hideMemoryLines, MAX_MEMORIES, memoryInstructions, MemoryStore } from './lib/memory';
 import { AUTO, analyze, planRoute } from './lib/routing';
 import { hasVideo, toolModel } from './lib/ai/tool-inputs.js';
+import { isCoolingDown, reliability } from './lib/ai/health.js';
 import { findLayout, isLayoutId } from './lib/layouts';
 import { formatUntil, remaining, UsageTracker, type LimitInfo, type UsageView } from './lib/usage';
 import { db } from './lib/db';
@@ -116,6 +117,8 @@ interface State {
   logout(): void;
   saveApiKeys(keys: ApiKeys): Promise<void>;
   loadCatalog(): Promise<void>;
+  /** How models are doing on this device right now (limits, failures), for ranking them. */
+  modelContext(): import('./lib/layout-builder').Context;
   /** Checks models with one tiny request each; broken ones are removed as they're found. */
   checkModels(ids: string[], signal: AbortSignal, onProgress: (p: { done: number; total: number; current?: string; result?: CheckResult }) => void): Promise<CheckResult[]>;
   /** Brings back a model the check removed ("Keep anyway"); re-adds it to your models if it was there. */
@@ -1659,6 +1662,13 @@ export const useStore = create<State>((set, get) => {
       const result = await fetchSummary(prompt, summaryModels(Math.ceil(Math.min(source.length, MAX_SOURCE_CHARS) / 4)), { report: (id, info) => { if (generation !== accountGeneration) return; usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 }); if (info.limit) usage?.block(id, info.limit); } });
       if (!result || generation !== accountGeneration) return null;
       return parseDeck(masker ? masker.unmask(result.text) : result.text, { chatId, ...(doc ? { document: doc.name } : {}), label });
+    },
+    modelContext() {
+      return {
+        blocked: (id) => (usage?.blockedUntil(id) ?? null) !== null || isCoolingDown(id),
+        reliability: (id) => reliability(id),
+        left: (id) => remaining(get().usage, id),
+      };
     },
     async rewriteText(text, ask) {
       const generation = accountGeneration;

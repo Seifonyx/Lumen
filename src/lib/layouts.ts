@@ -5,6 +5,7 @@
 // in settings (and so synced across devices).
 
 import type { ModelInfo } from '../types';
+import { rankForTask, TASKS, type Context } from './layout-builder';
 
 export interface Layout {
   id: string;
@@ -29,90 +30,20 @@ export const LAYOUT_PREFIX = 'layout:';
 export const isLayoutId = (id?: string | null): id is string => Boolean(id && id.startsWith(LAYOUT_PREFIX));
 export const layoutKey = (id: string) => id.slice(LAYOUT_PREFIX.length);
 
-const PRO = /gemini-(?:2\.5|[3-9][\d.]*)-pro|gemini-pro-latest/;
-
-interface Recipe {
-  id: string;
-  name: string;
-  icon: LayoutIcon;
-  description: string;
-  mode: 'auto' | 'order';
-  /** tried in order; each adds up to `per` matching models */
-  wants: RegExp[];
-  per?: number;
-  instructions?: string;
-}
-
-const RECIPES: Recipe[] = [
-  {
-    id: 'coding',
-    name: 'Max coding',
-    icon: 'code',
-    description: 'The strongest coding models first: Qwen3 Coder, GPT-OSS 120B, Gemini Pro, Kimi, DeepSeek.',
-    mode: 'order',
-    wants: [/qwen-?3.*coder/, /gpt-oss-120b/, PRO, /kimi-k2/, /deepseek.*(chat|v3)/, /devstral|codestral/, /glm-4\.[5-9]/, /deepseek-r1/, /llama-3\.3-70b/, /gemini-flash-latest/],
-    instructions:
-      'You are an expert software engineer. Write correct, complete, production-quality code that follows the existing style. Prefer small, focused changes over rewrites. Briefly explain what you changed and why, point out edge cases, and say how to test it.',
-  },
-  {
-    id: 'everyday',
-    name: 'Everyday',
-    icon: 'sun',
-    description: 'Quick, capable all-rounders for daily questions, writing and planning.',
-    mode: 'auto',
-    wants: [/gemini-flash-latest/, /gemini-[\d.]+-flash$/, /llama-3\.3-70b/, /gpt-oss-120b/, /gemini-flash-lite-latest/, /llama-?3\.1-8b/],
-  },
-  {
-    id: 'thinking',
-    name: 'Deep thinking',
-    icon: 'brain',
-    description: 'Reasoning models for hard problems, maths, analysis and decisions.',
-    mode: 'order',
-    wants: [PRO, /deepseek-r1/, /qwen-?3-235b/, /gpt-oss-120b/, /qwq/, /gemini-flash-latest/],
-    instructions: 'Think the problem through carefully before answering. Check facts, units and calculations, consider alternatives, and state your assumptions.',
-  },
-  {
-    id: 'fast',
-    name: 'Fastest',
-    icon: 'zap',
-    description: 'Near-instant replies from Cerebras and Groq, then Gemini Flash-Lite.',
-    mode: 'order',
-    wants: [/^cerebras:/, /^groq:.*(8b-instant|llama-3\.3-70b|gpt-oss)/, /gemini-flash-lite/, /gemini-flash-latest/],
-    per: 2,
-  },
-  {
-    id: 'documents',
-    name: 'Documents & files',
-    icon: 'file',
-    description: 'The most reliable models for Word, Excel, PowerPoint and reading PDFs.',
-    mode: 'order',
-    wants: [/gemini-flash-latest/, PRO, /gemini-[\d.]+-flash$/],
-  },
-  {
-    id: 'arabic',
-    name: 'Arabic',
-    icon: 'languages',
-    description: 'Models that write natural Arabic, including Egyptian dialect.',
-    mode: 'order',
-    wants: [/gemini-flash-latest/, PRO, /gemma/, /qwen/],
-    instructions: 'Reply in Arabic unless the user writes in another language. Use natural, clear Arabic; match Egyptian dialect if the user uses it.',
-  },
-];
+// Recommended layouts: the task profiles in layout-builder, filled with the best models this account has.
+const RECOMMENDED = ['coding', 'everyday', 'thinking', 'fast', 'documents', 'writing', 'languages'];
+/** Older ids that were renamed. */
+const RENAMED: Record<string, string> = { arabic: 'languages' };
 
 /** Recommended layouts, filled with the best matching models from this account's catalog. */
-export function recommendedLayouts(catalog: ModelInfo[]): Layout[] {
-  return RECIPES.map((r) => {
-    const models: string[] = [];
-    for (const want of r.wants) {
-      const hits = catalog.filter((m) => !m.preview && want.test(m.id) && !models.includes(m.id)).slice(0, r.per ?? 1);
-      models.push(...hits.map((m) => m.id));
-      if (models.length >= 8) break;
-    }
-    return { id: r.id, name: r.name, icon: r.icon, description: r.description, models, mode: r.mode, instructions: r.instructions, builtin: true };
-  });
+export function recommendedLayouts(catalog: ModelInfo[], ctx: Context = {}): Layout[] {
+  return RECOMMENDED.map((id) => TASKS.find((t) => t.id === id)!).map((t) => ({
+    id: t.id, name: t.name, icon: t.icon, description: t.description, mode: t.mode, instructions: t.instructions, builtin: true,
+    models: rankForTask(t, catalog, ctx, t.id === 'fast' ? 5 : 6).map((p) => p.id),
+  }));
 }
 
-export const RECOMMENDED_IDS = RECIPES.map((r) => r.id);
+export const RECOMMENDED_IDS = RECOMMENDED;
 export const isRecommendedId = (id: string) => RECOMMENDED_IDS.includes(id);
 
 /**
@@ -128,7 +59,8 @@ export function allLayouts(catalog: ModelInfo[], custom: Layout[] = [], hidden: 
 }
 
 export function findLayout(id: string, catalog: ModelInfo[], custom: Layout[] = [], hidden: string[] = []): Layout | undefined {
-  const key = isLayoutId(id) ? layoutKey(id) : id;
+  const raw = isLayoutId(id) ? layoutKey(id) : id;
+  const key = RENAMED[raw] && !custom.some((l) => l.id === raw) ? RENAMED[raw] : raw;
   return allLayouts(catalog, custom, hidden).find((l) => l.id === key);
 }
 

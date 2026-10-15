@@ -1,0 +1,92 @@
+// Build a layout for a kind of work: pick a task (or describe it), Lumen checks your providers for new models,
+// ranks every model for that task and shows why each one was picked. Untick any you don't want, then save.
+import { Check, Loader2, RefreshCw, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { rankForTask, taskFromText, TASKS, type Pick, type TaskProfile } from '../lib/layout-builder';
+import { newLayoutId, LAYOUT_PREFIX } from '../lib/layouts';
+import { modelLabel, useStore } from '../store';
+import Modal from './Modal';
+
+export default function LayoutBuilder({ onClose }: { onClose: () => void }) {
+  const [text, setText] = useState('');
+  const [task, setTask] = useState<TaskProfile | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [picks, setPicks] = useState<Pick[] | null>(null);
+  const [chosen, setChosen] = useState<Set<string>>(new Set());
+  const [name, setName] = useState('');
+  const [fresh, setFresh] = useState<string[]>([]);
+  const [useDefault, setUseDefault] = useState(false);
+  const catalog = useStore((s) => s.catalog);
+
+  const build = async (t: TaskProfile) => {
+    setTask(t); setName(t.name); setPicks(null);
+    // New models appear all the time: look again before choosing.
+    setStatus('Checking your providers for new models…');
+    const before = new Set(useStore.getState().catalog?.models.map((m) => m.id) || []);
+    await useStore.getState().loadCatalog().catch(() => {});
+    const models = useStore.getState().catalog?.models || [];
+    setFresh(models.filter((m) => before.size && !before.has(m.id)).map((m) => m.id));
+    setStatus(`Ranking ${models.length} models for ${t.name.toLowerCase()}…`);
+    const ranked = rankForTask(t, models, useStore.getState().modelContext(), 6);
+    setPicks(ranked);
+    setChosen(new Set(ranked.map((p) => p.id)));
+    setStatus(null);
+  };
+  const save = () => {
+    if (!task || !picks) return;
+    const { settings, updateSettings, toast } = useStore.getState();
+    const layout = { id: newLayoutId(), name: name.trim() || task.name, icon: task.icon, description: task.description, models: picks.filter((p) => chosen.has(p.id)).map((p) => p.id), mode: task.mode, instructions: task.instructions };
+    updateSettings({ layouts: [...(settings.layouts || []), layout], ...(useDefault ? { defaultModel: LAYOUT_PREFIX + layout.id } : {}) });
+    toast(`Saved “${layout.name}”. Pick it from the model menu.`, 'success');
+    onClose();
+  };
+
+  return (
+    <Modal title="Build a layout" onClose={onClose}>
+      <div className="layout-builder">
+        {!picks && !status && (
+          <>
+            <p className="muted small">What kind of work is it for? Lumen checks for new models first, then picks the best ones you have for it.</p>
+            <div className="builder-tasks">
+              {TASKS.map((t) => <button key={t.id} type="button" className="writing-chip" onClick={() => void build(t)}>{t.name}</button>)}
+            </div>
+            <form className="ask-form" onSubmit={(e) => { e.preventDefault(); if (text.trim()) void build(taskFromText(text)); }}>
+              <label className="search"><input dir="auto" aria-label="Describe the work" placeholder="Or describe it, e.g. “debugging React apps”" value={text} onChange={(e) => setText(e.target.value)} /></label>
+              <button type="submit" className="btn primary" disabled={!text.trim()}><Sparkles size={15} /> Build</button>
+            </form>
+          </>
+        )}
+        {status && <div className="ask-status" role="status"><Loader2 size={16} className="spin" /> {status}</div>}
+        {picks && task && (
+          <>
+            <label className="builder-name"><span className="muted small">Name</span><input value={name} maxLength={40} onChange={(e) => setName(e.target.value)} dir="auto" /></label>
+            {fresh.length > 0 && <p className="builder-fresh small">Found {fresh.length} new model{fresh.length === 1 ? '' : 's'} since last time.</p>}
+            {picks.length === 0 ? <p className="muted small">None of your models can do this. Add a key for a provider that can (for images and web search, Gemini).</p> : (
+              <ol className="builder-picks">
+                {picks.map((p, i) => (
+                  <li key={p.id}>
+                    <label>
+                      <input type="checkbox" checked={chosen.has(p.id)} onChange={() => setChosen((s) => { const n = new Set(s); if (n.has(p.id)) n.delete(p.id); else n.add(p.id); return n; })} />
+                      <span className="builder-pick">
+                        <strong>{i === 0 ? 'First: ' : ''}{modelLabel(catalog, p.id)}{fresh.includes(p.id) && <span className="builder-new">new</span>}</strong>
+                        <span className="muted small">{p.why.join(' · ')}</span>
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ol>
+            )}
+            <p className="muted small">{task.mode === 'auto' ? 'For each message, the best of these answers.' : 'The first one answers; the next steps in if it fails or hits its limit.'}</p>
+            <label className="builder-default"><input type="checkbox" checked={useDefault} onChange={(e) => setUseDefault(e.target.checked)} /> Use it for new chats</label>
+            <div className="builder-actions">
+              <button type="button" className="btn ghost small" onClick={() => { setPicks(null); setTask(null); }}>Back</button>
+              <button type="button" className="btn ghost small" onClick={() => void build(task)}><RefreshCw size={14} /> Check again</button>
+              <span className="spacer" />
+              <button type="button" className="btn primary small" disabled={!chosen.size} onClick={save}><Check size={14} /> Save layout</button>
+            </div>
+          </>
+        )}
+      </div>
+    </Modal>
+  );
+}

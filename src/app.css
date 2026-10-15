@@ -3954,3 +3954,21 @@ html.pane-resizing, html.pane-resizing * { cursor: col-resize !important; user-s
 .ask-n { flex: none; display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-2); font-size: 0.75rem; font-weight: 600; }
 .ask-hit { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .ask-date { flex: none; }
+
+/* ---- 2.1 Layout builder ---- */
+.layout-head-actions { display: inline-flex; gap: 12px; align-items: center; }
+.layout-builder { display: flex; flex-direction: column; gap: 12px; min-height: 240px; }
+.layout-builder > p { margin: 0; }
+.builder-tasks { display: flex; flex-wrap: wrap; gap: 6px; }
+.builder-name { display: flex; flex-direction: column; gap: 4px; }
+.builder-name input { font: inherit; padding: 8px 10px; border: 1px solid var(--input-border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); }
+.builder-picks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.builder-picks label { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; animation: research-in 0.3s var(--ease) both; }
+.builder-picks li:nth-child(2) label { animation-delay: 40ms; } .builder-picks li:nth-child(3) label { animation-delay: 80ms; } .builder-picks li:nth-child(4) label { animation-delay: 120ms; } .builder-picks li:nth-child(5) label { animation-delay: 160ms; } .builder-picks li:nth-child(6) label { animation-delay: 200ms; }
+.builder-picks input { margin-top: 3px; }
+.builder-pick { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.builder-new { margin-inline-start: 6px; padding: 0 6px; border-radius: 999px; background: var(--signal-soft, var(--surface-2)); color: var(--signal-strong, var(--text)); font-size: 0.7rem; font-weight: 600; vertical-align: 1px; }
+.builder-fresh { margin: 0; color: var(--signal-strong, var(--text)); }
+.builder-default { display: flex; gap: 8px; align-items: center; font-size: 0.875rem; }
+.builder-actions { display: flex; gap: 6px; align-items: center; }
+.builder-actions .spacer { flex: 1; }

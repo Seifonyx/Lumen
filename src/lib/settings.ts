@@ -86,3 +86,12 @@ export function applyAppearance(s: Settings) {
     requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('theme-switching')));
   }
 }
+
+/** Reply language and answer length, as instructions for every model ('' when both are left to the model). */
+export function styleInstructions(settings: Pick<Settings, 'replyLanguage' | 'answerLength'>): string {
+  const out: string[] = [];
+  if (settings.replyLanguage) out.push(`Always reply in ${settings.replyLanguage}, whatever language the user writes in, unless they ask for another language.`);
+  if (settings.answerLength === 'short') out.push('Keep answers short: lead with the answer in a few sentences or bullets, and only go longer when the task clearly needs it.');
+  else if (settings.answerLength === 'detailed') out.push('Give thorough answers: explain the reasoning, cover the important details and caveats, and include examples where they help.');
+  return out.join('\n');
+}

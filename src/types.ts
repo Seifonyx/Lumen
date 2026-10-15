@@ -292,6 +292,10 @@ export interface Settings {
   notifyReplies?: boolean;
   /** "About me": what you've written about yourself, sent to models with your memories */
   aboutMe?: string;
+  /** reply in this language ('' = the language you write in) */
+  replyLanguage?: string;
+  /** how long answers should be */
+  answerLength?: 'auto' | 'short' | 'detailed';
   /** the jump-to-message lines beside long chats (unset: on computers, off on phones) */
   messageNavigator?: boolean;
   autoTitle: boolean;

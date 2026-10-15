@@ -514,8 +514,12 @@ function DeleteAccount({ onClose }: { onClose: () => void }) {
 
 const SUPPORT_EMAIL = 'hebaghoneim8@gmail.com';
 
+/** The people who build Lumen (Developer options are only shown to them). */
+const DEVELOPERS = ['hebaghoneim8@gmail.com', 'seifeldingamal2021@gmail.com'];
+
 function AboutSection() {
   const updateReady = useStore((s) => s.updateReady);
+  const developer = useStore((s) => DEVELOPERS.includes((s.user?.email || '').toLowerCase()) || isPreviewUser(s.user?.uid));
   const [devOpen, setDevOpen] = useState(false);
   return (
     <div className="settings-group">
@@ -553,6 +557,7 @@ function AboutSection() {
             <a className="link-btn small" href="/terms.html" target="_blank" rel="noopener">Terms</a>
           </span>
         </div>
+        {developer && (
         <div className="setting-row">
           <span className="setting-text">
             <span className="setting-label">Developer options</span>
@@ -564,8 +569,9 @@ function AboutSection() {
             </button>
           </span>
         </div>
+        )}
       </div>
-      {devOpen && <PreviewTools />}
+      {developer && devOpen && <PreviewTools />}
     </div>
   );
 }
@@ -574,8 +580,11 @@ const PRESET_INSTRUCTIONS = [
   { label: '+ Student', text: 'I am a student; explain things step by step with simple examples, and check my understanding.' },
   { label: '+ Software Engineer', text: 'I am a software engineer; write clean, modular, typed code with minimal boilerplate and clear explanations.' },
   { label: '+ Concise & Direct', text: 'Keep answers short, direct, and factual. Avoid conversational filler, intros, or summaries.' },
-  { label: '+ Egyptian Arabic', text: 'Answer in Egyptian Arabic unless I write in English. Use familiar everyday professional expressions.' },
+  { label: '+ Explain simply', text: 'Explain things in plain words, as if to a smart friend who is new to the topic. Define any jargon.' },
+  { label: '+ Show sources', text: 'When you state facts that could be wrong or out of date, say how sure you are and where they come from.' },
 ];
+
+const REPLY_LANGUAGES = ['English', 'Arabic', 'Egyptian Arabic', 'French', 'Spanish', 'German', 'Italian', 'Portuguese', 'Turkish', 'Russian', 'Chinese', 'Japanese', 'Korean', 'Hindi', 'Urdu', 'Indonesian', 'Dutch', 'Persian'];
 
 function PersonalizeTab() {
   const settings = useStore((s) => s.settings);
@@ -590,6 +599,24 @@ function PersonalizeTab() {
 
   return (
     <div className="settings-section">
+      <div className="settings-group">
+        <span className="settings-group-title">Answers</span>
+        <div className="settings-card">
+          <div className="setting-row">
+            <span className="setting-text">
+              <span className="setting-label">Reply language</span>
+              <span className="setting-hint">Models answer in the language you write in, or always in the one you choose.</span>
+            </span>
+            <span className="setting-ctrl">
+              <select aria-label="Reply language" value={settings.replyLanguage || ''} onChange={(e) => update({ replyLanguage: e.target.value || undefined })}>
+                <option value="">Match my writing</option>
+                {REPLY_LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </span>
+          </div>
+          <Choice<'auto' | 'short' | 'detailed'> label="Answer length" value={settings.answerLength || 'auto'} onChange={(v) => update({ answerLength: v === 'auto' ? undefined : v })} options={[['auto', 'Auto'], ['short', 'Short'], ['detailed', 'Detailed']]} />
+        </div>
+      </div>
       <div className="settings-group">
         <div className="settings-card pad-card">
           <label className="field-block" style={{ paddingTop: 0 }}>

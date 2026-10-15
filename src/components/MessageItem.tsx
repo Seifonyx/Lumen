@@ -7,6 +7,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import { useLongPress } from '../lib/long-press';
 import ContextMenu, { type ContextItem } from './ContextMenu';
 import { openImage } from './ImageViewer';
+import MoonPhase from './MoonPhase';
 import { mentionedPaths, repoTree, seenPaths } from '../lib/workspace';
 import { normalizeEdits } from '../lib/edits';
 import { buildFile } from '../lib/generate';
@@ -60,7 +61,7 @@ function WaitingForReply({ message }: { message: Message }) {
   const target = message.model ? modelLabel(catalog, message.model) : '';
   return (
     <div className="reply-wait route-wait" role="status" aria-label={`${label}${target ? ` to ${target}` : ''}`}>
-      <span className="route-pulse" aria-hidden="true" />
+      <MoonPhase />
       <span className="route-label">{label}</span>
       {tried.map((m) => <span key={m} className="route-tried" aria-hidden="true"><s>{modelLabel(catalog, m)}</s></span>)}
       {target && <span className="route-target" aria-hidden="true"><span className="route-arrow">→</span>{target}</span>}
@@ -257,6 +258,13 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
   const box = useRef<HTMLDivElement>(null);
   const [held, setHeld] = useState<number | null>(null);
   useLongPress(box, (_, y) => setHeld(y), { enabled: !streaming && Boolean(message.text) });
+  // The moment a reply finishes: its buttons rise in one after another and the model's dot pings.
+  const wasStreaming = useRef(streaming);
+  const [justDone, setJustDone] = useState(false);
+  useEffect(() => {
+    if (wasStreaming.current && !streaming && message.status === 'done') { setJustDone(true); const t = setTimeout(() => setJustDone(false), 1400); wasStreaming.current = streaming; return () => clearTimeout(t); }
+    wasStreaming.current = streaming;
+  }, [streaming, message.status]);
   const truncated = message.notices?.some((n) => /length limit/.test(n));
 
   // Phones: the native share sheet (Messages, Mail, Notes, WhatsApp…).
@@ -280,7 +288,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
   if (!message.text && message.files?.some((f) => f.kind === 'image')) return <div className="msg assistant"><GeneratedImage message={message} /></div>;
 
   return (
-    <div className="msg assistant" ref={box}>
+    <div className={`msg assistant${justDone ? ' just-done' : ''}`} ref={box}>
       {message.thinking && <Thinking text={message.thinking} active={streaming && !message.text} />}
       {message.text ? (
         <Markdown text={message.coding?.phase === 'plan' && !streaming && parsePlan(message.text) ? message.text.replace(/`{3,}plan\s*\n[\s\S]*?\n`{3,}/i, '') : message.text} streaming={streaming} messageId={message.id} knowledgeSources={message.knowledgeSources} onSource={setSource}/>

@@ -1,4 +1,4 @@
-import { noteSend } from '../lib/motion';
+import { liftWelcome, noteSend, sendRipple } from '../lib/motion';
 import { haptic } from '../lib/haptics';
 import { playSend } from '../lib/sounds';
 import { isTemporaryChat } from '../lib/temporary-chat';
@@ -284,7 +284,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
     setCheck(null);
     const files = pending.map((p) => p.file!);
     const message = text.trim();
-    if (!compareWith && message) { noteSend(input.current); haptic(); playSend(); }
+    if (!compareWith && message) { liftWelcome(); noteSend(input.current); sendRipple(); haptic(); playSend(); }
     clearText();
     if (compareWith) void runComparison(message, files, compareWith, opts);
     else void send(message, files, { ...opts, codeExecution });

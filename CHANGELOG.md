@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.6.0 · Moonlight
+
+- A new crescent moon. Every new chat starts with Lumen's eclipse: a thin ring of light whose shadow slides
+  away to reveal a glowing crescent, with two sparkles popping in beside it. It then floats and glows softly.
+- While a reply is on its way, a tiny moon goes through its phases (instead of a pulsing dot).
+- Sending: a ring ripples out of the send button, and the new-chat welcome lifts away as your first
+  message rises into place.
+- When a reply finishes, its buttons rise in one after another and the model's dot gives a small glow.
+- Menus, the model list, the + menu, Settings and (on phones) the chat list flow in one item at a time.
+- The copy tick draws itself; a warning notification gives a small shake; the + on New chat turns as you
+  press it.
+- The sign-in screen: the Lumen mark arrives with a glow and the rest rises in after it.
+- While a reply is being written, the Lumen mark in the sidebar glows softly.
+- With "reduce motion" turned on in your device settings, all of this stays still.
+
 ## 1.5.1
 
 - Fixed: on slower phones, press-and-hold on a message could be cancelled by the conversation scrolling itself.

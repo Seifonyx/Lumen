@@ -322,3 +322,30 @@ export function settleText(root: HTMLElement) {
   spans.forEach((s) => s.replaceWith(...s.childNodes));
   root.normalize();
 }
+
+// ---- Small moments
+/** Sending: a lime ring ripples out of the send button and its icon hops. */
+export function sendRipple() {
+  if (motionOff()) return;
+  const btn = document.querySelector<HTMLElement>('.composer .send-btn');
+  if (!btn) return;
+  const ring = document.createElement('span');
+  ring.className = 'send-ripple';
+  ring.setAttribute('aria-hidden', 'true');
+  btn.append(ring);
+  ring.animate([{ transform: 'scale(.7)', opacity: 0.6 }, { transform: 'scale(2.1)', opacity: 0 }], { duration: 560, easing: 'cubic-bezier(.2, .8, .2, 1)' }).finished.finally(() => ring.remove());
+  btn.querySelector('svg')?.animate([{ transform: 'none' }, { transform: 'translateY(-4px) scale(.88)', offset: 0.35 }, { transform: 'none' }], { duration: 440, easing: 'cubic-bezier(.3, 1.3, .5, 1)' });
+}
+/** The first message of a new chat: the welcome (crescent and greeting) lifts away instead of vanishing. */
+export function liftWelcome() {
+  if (motionOff()) return;
+  const welcome = document.querySelector<HTMLElement>('.main.is-empty .empty');
+  if (!welcome) return;
+  const r = welcome.getBoundingClientRect();
+  const ghost = welcome.cloneNode(true) as HTMLElement;
+  ghost.classList.add('exit-ghost');
+  ghost.setAttribute('aria-hidden', 'true');
+  Object.assign(ghost.style, { position: 'fixed', left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, margin: '0', zIndex: '5', pointerEvents: 'none' });
+  document.body.append(ghost);
+  ghost.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-28px) scale(.96)' }], { duration: 320, easing: 'cubic-bezier(.4, 0, .2, 1)' }).finished.finally(() => ghost.remove());
+}

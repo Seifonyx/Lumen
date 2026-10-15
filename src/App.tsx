@@ -74,6 +74,8 @@ export default function App() {
 
   // Keep the phone awake while a reply is being written, so locking the screen doesn't cut it off.
   const working = useStore((s) => s.streamingChatId !== null || s.compactingChatId !== null || s.comparing || s.canvasEditingChatId !== null);
+  // The sidebar's Lumen mark glows softly while a reply is being written (CSS: data-replying).
+  useEffect(() => { document.documentElement.toggleAttribute('data-replying', working); }, [working]);
   useEffect(() => {
     keepScreenAwake(working);
     return () => keepScreenAwake(false);

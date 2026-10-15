@@ -3630,3 +3630,97 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
 /* ---- 1.5 */
 /* "New reply" on the jump-to-latest button when a reply arrives below where you're reading. */
 .to-bottom.labelled { width: auto; height: 36px; padding: 0 12px 0 14px; gap: 6px; display: inline-flex; align-items: center; border-radius: 999px; font: 500 .8125rem/1 var(--font); color: var(--text); animation: grow-in .34s var(--spring-pop); transform-origin: right center; }
+
+/* ============================================================ 1.6: moonlight
+   The crescent: Lumen's eclipse turning into a crescent moon on a new chat (see WelcomeStars). */
+.welcome-moon { overflow: visible; }
+.welcome-moon .moon-disc { fill: var(--signal); stroke: var(--signal-strong); stroke-width: .6; }
+.welcome-moon .moon-shadow { transform-box: view-box; animation: moon-reveal 1.15s .2s cubic-bezier(.32, .72, 0, 1) both; }
+.welcome-moon .moon-halo { fill: var(--signal); opacity: 0; animation: halo-in 1.2s .35s var(--ease) forwards, halo-breathe 4.5s 1.6s ease-in-out infinite; }
+.welcome-moon .moon-float { animation: moon-float 6s 1.5s ease-in-out infinite; }
+.welcome-moon .star-b { animation: star-in .6s .95s var(--ease) both, twinkle 3.2s 1.8s ease-in-out infinite; }
+.welcome-moon .star-c { animation: star-in .6s 1.1s var(--ease) both, twinkle 2.6s 2.2s ease-in-out infinite; }
+@keyframes moon-reveal { from { transform: translate(0, 0); } to { transform: translate(8px, -6.5px); } }
+@keyframes halo-in { from { opacity: 0; } to { opacity: var(--halo, .35); } }
+@keyframes halo-breathe { 0%, 100% { opacity: var(--halo, .35); } 50% { opacity: calc(var(--halo, .35) * .55); } }
+@keyframes moon-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.6px); } }
+:root[data-theme='dark'] .welcome-moon, :root[data-theme='black'] .welcome-moon { --halo: .6; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .welcome-moon { --halo: .6; } }
+@media (prefers-reduced-motion: reduce) { .welcome-moon * { animation: none !important; } .welcome-moon .moon-shadow { transform: translate(8px, -6.5px); } .welcome-moon .moon-halo { opacity: .35; } }
+/* Waiting for a reply: the moon's phases (the shadow sweeps across, then the moon glows full for a beat). */
+.moon-phase { flex: none; overflow: visible; }
+.moon-phase .mp-disc { fill: var(--signal); }
+.moon-phase .mp-shadow { fill: var(--bg); transform-box: view-box; animation: mp-sweep 1.8s cubic-bezier(.45, 0, .55, 1) infinite; }
+.moon-phase .mp-glow { fill: none; stroke: var(--signal); stroke-width: 1; opacity: 0; transform-box: fill-box; transform-origin: center; animation: mp-glow 1.8s ease-out infinite; }
+@keyframes mp-sweep { 0% { transform: translateX(-13px); } 100% { transform: translateX(13px); } }
+@keyframes mp-glow { 0% { opacity: .6; transform: scale(.9); } 30% { opacity: 0; transform: scale(1.6); } 100% { opacity: 0; transform: scale(1.6); } }
+@media (prefers-reduced-motion: reduce) { .moon-phase * { animation: none !important; } .moon-phase .mp-shadow { transform: translateX(6px); } }
+/* Sending: the ripple (see sendRipple). */
+.composer .send-btn { position: relative; overflow: visible; }
+.send-ripple { position: absolute; inset: 0; border-radius: inherit; border: 2px solid var(--signal); pointer-events: none; }
+/* A reply just finished. */
+.msg.just-done .msg-actions > *, .msg.just-done .msg-actions > .busy-hold > * { animation: rise-in .42s var(--spring-pop) both; }
+.msg.just-done .msg-actions > :nth-child(2) { animation-delay: .04s; }
+.msg.just-done .msg-actions > :nth-child(3) { animation-delay: .08s; }
+.msg.just-done .msg-actions > :nth-child(4) { animation-delay: .12s; }
+.msg.just-done .msg-actions > :nth-child(5) { animation-delay: .16s; }
+.msg.just-done .msg-actions > :nth-child(6) { animation-delay: .2s; }
+.msg.just-done .model-tag::before { animation: dot-ping .9s var(--ease); }
+@keyframes rise-in { from { opacity: 0; transform: translateY(6px) scale(.9); } }
+@keyframes dot-ping { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--signal) 70%, transparent); } 100% { box-shadow: 0 0 0 9px transparent; } }
+
+/* Menus, the model list, the + menu and Settings: items flow in one after another. */
+.menu > button, .menu > [role="menuitem"], .more-menu-list > button, .ctx-menu > button, .mp-body .mp-item, .attach-menu .sheet-row, .settings-tabs > button { animation: item-in .34s var(--ease) both; }
+.menu > button:nth-child(2), .menu > [role="menuitem"]:nth-child(2), .more-menu-list > button:nth-child(2), .ctx-menu > button:nth-child(2), .mp-body .mp-item:nth-child(2), .attach-menu .sheet-row:nth-child(2), .settings-tabs > button:nth-child(2) { animation-delay: 0.022s; }
+.menu > button:nth-child(3), .menu > [role="menuitem"]:nth-child(3), .more-menu-list > button:nth-child(3), .ctx-menu > button:nth-child(3), .mp-body .mp-item:nth-child(3), .attach-menu .sheet-row:nth-child(3), .settings-tabs > button:nth-child(3) { animation-delay: 0.044s; }
+.menu > button:nth-child(4), .menu > [role="menuitem"]:nth-child(4), .more-menu-list > button:nth-child(4), .ctx-menu > button:nth-child(4), .mp-body .mp-item:nth-child(4), .attach-menu .sheet-row:nth-child(4), .settings-tabs > button:nth-child(4) { animation-delay: 0.066s; }
+.menu > button:nth-child(5), .menu > [role="menuitem"]:nth-child(5), .more-menu-list > button:nth-child(5), .ctx-menu > button:nth-child(5), .mp-body .mp-item:nth-child(5), .attach-menu .sheet-row:nth-child(5), .settings-tabs > button:nth-child(5) { animation-delay: 0.088s; }
+.menu > button:nth-child(6), .menu > [role="menuitem"]:nth-child(6), .more-menu-list > button:nth-child(6), .ctx-menu > button:nth-child(6), .mp-body .mp-item:nth-child(6), .attach-menu .sheet-row:nth-child(6), .settings-tabs > button:nth-child(6) { animation-delay: 0.110s; }
+.menu > button:nth-child(7), .menu > [role="menuitem"]:nth-child(7), .more-menu-list > button:nth-child(7), .ctx-menu > button:nth-child(7), .mp-body .mp-item:nth-child(7), .attach-menu .sheet-row:nth-child(7), .settings-tabs > button:nth-child(7) { animation-delay: 0.132s; }
+.menu > button:nth-child(8), .menu > [role="menuitem"]:nth-child(8), .more-menu-list > button:nth-child(8), .ctx-menu > button:nth-child(8), .mp-body .mp-item:nth-child(8), .attach-menu .sheet-row:nth-child(8), .settings-tabs > button:nth-child(8) { animation-delay: 0.154s; }
+.menu > button:nth-child(9), .menu > [role="menuitem"]:nth-child(9), .more-menu-list > button:nth-child(9), .ctx-menu > button:nth-child(9), .mp-body .mp-item:nth-child(9), .attach-menu .sheet-row:nth-child(9), .settings-tabs > button:nth-child(9) { animation-delay: 0.176s; }
+.menu > button:nth-child(10), .menu > [role="menuitem"]:nth-child(10), .more-menu-list > button:nth-child(10), .ctx-menu > button:nth-child(10), .mp-body .mp-item:nth-child(10), .attach-menu .sheet-row:nth-child(10), .settings-tabs > button:nth-child(10) { animation-delay: 0.198s; }
+.menu > button:nth-child(11), .menu > [role="menuitem"]:nth-child(11), .more-menu-list > button:nth-child(11), .ctx-menu > button:nth-child(11), .mp-body .mp-item:nth-child(11), .attach-menu .sheet-row:nth-child(11), .settings-tabs > button:nth-child(11) { animation-delay: 0.220s; }
+.menu > button:nth-child(12), .menu > [role="menuitem"]:nth-child(12), .more-menu-list > button:nth-child(12), .ctx-menu > button:nth-child(12), .mp-body .mp-item:nth-child(12), .attach-menu .sheet-row:nth-child(12), .settings-tabs > button:nth-child(12) { animation-delay: 0.242s; }
+@keyframes item-in { from { opacity: 0; transform: translateY(5px); } }
+/* Phones: chats slide in when the menu opens. */
+@media (max-width: 899px) {
+  .sidebar.open .chat-list li, .sidebar.open .sidebar-project-item-wrap { animation: row-in .38s var(--ease) both; }
+
+  .sidebar.open .chat-list ul li:nth-child(2) { animation-delay: 0.082s; }
+  .sidebar.open .chat-list ul li:nth-child(3) { animation-delay: 0.104s; }
+  .sidebar.open .chat-list ul li:nth-child(4) { animation-delay: 0.126s; }
+  .sidebar.open .chat-list ul li:nth-child(5) { animation-delay: 0.148s; }
+  .sidebar.open .chat-list ul li:nth-child(6) { animation-delay: 0.170s; }
+  .sidebar.open .chat-list ul li:nth-child(7) { animation-delay: 0.192s; }
+  .sidebar.open .chat-list ul li:nth-child(8) { animation-delay: 0.214s; }
+  .sidebar.open .chat-list ul li:nth-child(9) { animation-delay: 0.236s; }
+  .sidebar.open .chat-list ul li:nth-child(10) { animation-delay: 0.258s; }
+  .sidebar.open .chat-list ul li:nth-child(11) { animation-delay: 0.280s; }
+  .sidebar.open .chat-list ul li:nth-child(12) { animation-delay: 0.302s; }
+  .sidebar.open .chat-list ul li:first-child { animation-delay: .06s; }
+}
+@keyframes row-in { from { opacity: 0; transform: translateX(-10px); } }
+/* Copy: the tick draws itself. */
+.msg-action .lucide-check path, .toast-success .lucide-circle-check-big path:last-child, .toast-success .lucide-circle-check path:last-child { stroke-dasharray: 30; animation: draw-tick .45s .05s var(--ease) both; }
+@keyframes draw-tick { from { stroke-dashoffset: 30; } to { stroke-dashoffset: 0; } }
+/* Notifications: a success tick draws itself; a warning gives a small shake. */
+.toast-error > svg:first-child { animation: nudge .5s .12s var(--ease); }
+@keyframes nudge { 20% { transform: rotate(-12deg); } 45% { transform: rotate(10deg); } 70% { transform: rotate(-5deg); } 100% { transform: none; } }
+/* New chat / New project: the plus turns as you press. */
+.sidebar-chip svg, .new-chat svg { transition: transform .35s var(--spring-pop); }
+.sidebar-chip:active svg, .new-chat:active svg { transform: rotate(90deg); }
+/* Sign-in: the mark arrives with a glow, then the rest rises in. */
+.login-card .logo { animation: logo-in .9s var(--spring-pop) both; filter: drop-shadow(0 0 0 transparent); }
+.login-card > :not(.logo) { animation: item-in .5s var(--ease) both; }
+.login-card > :nth-child(2) { animation-delay: .18s; } .login-card > :nth-child(3) { animation-delay: .26s; } .login-card > :nth-child(4) { animation-delay: .34s; } .login-card > :nth-child(5) { animation-delay: .42s; } .login-card > :nth-child(6) { animation-delay: .5s; }
+@keyframes logo-in { from { opacity: 0; transform: scale(.6) rotate(-25deg); } 60% { filter: drop-shadow(0 0 18px color-mix(in srgb, var(--signal) 70%, transparent)); } to { opacity: 1; transform: none; filter: drop-shadow(0 0 0 transparent); } }
+/* While a reply is being written, the Lumen mark in the sidebar glows softly. */
+.sidebar-brand { position: relative; }
+.sidebar-brand::before { content: ''; position: absolute; inset-inline-start: -8px; top: 50%; width: 40px; height: 40px; margin-top: -20px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--signal) 55%, transparent), transparent 68%); opacity: 0; pointer-events: none; transition: opacity .4s var(--ease); }
+:root[data-replying] .sidebar-brand::before { animation: brand-breathe 2.2s ease-in-out infinite; }
+@keyframes brand-breathe { 0%, 100% { opacity: .15; transform: scale(.85); } 50% { opacity: .7; transform: scale(1.1); } }
+@media (prefers-reduced-motion: reduce) {
+  .menu > button, .more-menu-list > button, .ctx-menu > button, .mp-body .mp-item, .attach-menu .sheet-row, .settings-tabs > button, .sidebar.open .chat-list li, .sidebar.open .sidebar-project-item-wrap, .login-card > *, .login-card .logo, .msg.just-done *, .toast-error > svg, .msg-action .lucide-check path { animation: none !important; }
+  :root[data-replying] .sidebar-brand::before { animation: none; opacity: .4; }
+}

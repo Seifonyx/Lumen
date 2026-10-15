@@ -15,7 +15,7 @@ export default function Toasts() {
     <div className="toasts" role="status" aria-live="polite" ref={box}>
       {toasts.map((t) => (
         <Exit key={t.id} kind="toast">
-          <div className={`toast toast-${t.kind}`} data-flip={t.id}>
+          <div className={`toast toast-${t.kind}`} data-flip={t.id} style={{ '--life': `${t.kind === 'error' || t.action ? 7 : 3.5}s` } as React.CSSProperties}>
             {t.kind === 'error' ? <TriangleAlert size={16} /> : t.kind === 'success' ? <CheckCircle2 size={16} /> : <Info size={16} />}
             <span dir="auto">{t.text}</span>
             {t.action && <button className="toast-action" onClick={() => { dismiss(t.id); t.action!.run(); }}>{t.action.label}</button>}

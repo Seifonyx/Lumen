@@ -3724,3 +3724,45 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
   .menu > button, .more-menu-list > button, .ctx-menu > button, .mp-body .mp-item, .attach-menu .sheet-row, .settings-tabs > button, .sidebar.open .chat-list li, .sidebar.open .sidebar-project-item-wrap, .login-card > *, .login-card .logo, .msg.just-done *, .toast-error > svg, .msg-action .lucide-check path { animation: none !important; }
   :root[data-replying] .sidebar-brand::before { animation: none; opacity: .4; }
 }
+
+/* ============================================================ 1.7: more motion */
+/* Segmented controls (Theme, Text size…): one thumb glides to the chosen option with a little spring. */
+.segmented.has-thumb { position: relative; }
+.segmented.has-thumb > button { position: relative; z-index: 1; transition: color .25s var(--ease); }
+.segmented.has-thumb > button.active { background: transparent; box-shadow: none; }
+.seg-thumb { position: absolute; top: 0; left: 0; z-index: 0; border-radius: 5px; background: var(--surface); box-shadow: 0 1px 2px rgb(0 0 0 / .08), 0 0 0 1px var(--border); pointer-events: none; transition: transform .42s var(--spring-pop), width .42s var(--spring-pop); }
+/* Switches: the knob springs across, and stretches while you press it (like iOS). */
+.switch::after { transition: inset-inline-start .38s var(--spring-pop), width .2s var(--ease); }
+.switch:active::after { width: 20px; }
+.switch:checked:active::after { inset-inline-start: 14px; }
+/* Send ↔ voice ↔ stop: the button and its icon morph in. */
+.composer .send-btn { animation: btn-morph .34s var(--spring-pop); }
+.composer .send-btn svg { animation: icon-in .3s var(--spring-pop); }
+@keyframes btn-morph { from { transform: scale(.7) rotate(-20deg); opacity: .4; } }
+@keyframes icon-in { from { transform: scale(.4) rotate(-45deg); opacity: 0; } }
+/* Usage: the gauges fill up and the tiles rise in when it opens. */
+.um-gauge-fill { animation: gauge-fill .9s .1s var(--ease) both; }
+@keyframes gauge-fill { from { stroke-dashoffset: var(--c); } }
+.um-tile { animation: item-in .4s var(--ease) both; }
+.um-tile + .um-tile { animation-delay: .06s; }
+/* The top bar gets a soft edge when the conversation scrolls under it. */
+.topbar { transition: box-shadow .25s var(--ease); }
+.topbar.scrolled { box-shadow: 0 1px 0 var(--border), 0 6px 16px -12px rgb(0 0 0 / .25); }
+/* Attachments pop in (and pop out when removed). */
+.attachment { animation: chip-in .38s var(--spring-pop); }
+@keyframes chip-in { from { opacity: 0; transform: scale(.7) translateY(6px); } }
+/* Notifications show how long they'll stay. */
+.toast { position: relative; overflow: hidden; }
+.toast::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: color-mix(in srgb, var(--text) 18%, transparent); transform-origin: left; animation: toast-life var(--life, 3.5s) linear forwards; }
+@keyframes toast-life { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+/* The bar on the open chat glides between chats. */
+.chat-list.has-indicator { position: relative; }
+.chat-list.has-indicator .chat-row.active::before { display: none; }
+.active-indicator { position: absolute; top: 0; left: 0; z-index: 2; width: 3px; border-radius: 3px; background: var(--signal); opacity: 0; pointer-events: none; transition: transform .45s var(--spring-pop), height .3s var(--ease), opacity .2s; }
+/* An empty chat list has a little crescent. */
+.empty-list { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding-block: 18px; }
+.empty-moon { display: grid; place-items: center; }
+@media (prefers-reduced-motion: reduce) {
+  .seg-thumb, .switch::after, .active-indicator, .topbar { transition: none; }
+  .composer .send-btn, .composer .send-btn svg, .um-gauge-fill, .um-tile, .attachment { animation: none; }
+}

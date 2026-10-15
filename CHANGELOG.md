@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.7.0 · More motion
+
+- Theme, Text size and the other choices in Settings: the selection slides to the option you pick, with a
+  little spring.
+- Switches spring across, and the knob stretches while you press it, like on iPhone.
+- The send button morphs between voice, send and stop instead of swapping.
+- Usage: the gauges fill up and the numbers count up when you open it; the tiles rise in.
+- The bar marking the open chat in the sidebar glides to the chat you pick.
+- Attached files pop in, and pop out when you remove them.
+- Notifications show a thin bar for how long they'll stay.
+- The top bar gets a soft edge once the conversation scrolls under it.
+- An empty chat list shows a small crescent moon.
+
 ## 1.6.1
 
 - Fixed: on iPhone, dragging down in a new chat with the keyboard open pulled the whole screen down and

@@ -34,7 +34,7 @@ import type { Chat, FontSize, ModelInfo, Theme } from '../types';
 import { Badges } from './ModelPicker';
 import ConnectorsTab from './ConnectorsTab';
 import { savedChats } from '../lib/temporary-chat';
-import { pageSwap } from '../lib/motion';
+import { pageSwap, useSegmentThumb } from '../lib/motion';
 import { haptic } from '../lib/haptics';
 import { playSend } from '../lib/sounds';
 import { installSwipeBack } from '../lib/swipe-back';
@@ -95,6 +95,8 @@ function Choice<T extends string>({
   label: string;
   hint?: string;
 }) {
+  const seg = useRef<HTMLDivElement>(null);
+  useSegmentThumb(seg, value);
   return (
     <div className={`setting-row${options.length > 3 ? ' choice-wide' : ''}`}>
       <span className="setting-text">
@@ -102,7 +104,8 @@ function Choice<T extends string>({
         {hint && <span className="setting-hint">{hint}</span>}
       </span>
       <span className="setting-ctrl">
-        <div className="segmented" role="radiogroup" aria-label={label}>
+        <div className="segmented has-thumb" role="radiogroup" aria-label={label} ref={seg}>
+          <span className="seg-thumb" aria-hidden="true" />
           {options.map(([v, text]) => (
             <button key={v} role="radio" aria-label={label==='Text size'?v==='small'?'Small':v==='medium'?'Medium':'Large':undefined} aria-checked={value === v} tabIndex={value===v?0:-1} className={value === v ? 'active' : ''} onClick={() => onChange(v)} onKeyDown={e=>{
               if(!['ArrowLeft','ArrowUp','ArrowRight','ArrowDown','Home','End'].includes(e.key))return;

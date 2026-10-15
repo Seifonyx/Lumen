@@ -1,4 +1,4 @@
-import { Exit } from '../lib/motion';
+import { Exit, motionOff } from '../lib/motion';
 import { ChevronDown, Loader2, MessageSquarePlus, Shrink, Undo2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -220,6 +220,24 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
   );
 }
 
+/** Numbers in a label count up from zero when it appears (e.g. "34%"). */
+function CountUp({ text }: { text: string }) {
+  const m = /^(\D*)(\d+)(.*)$/.exec(text);
+  const target = m ? Number(m[2]) : 0;
+  const [n, setN] = useState(() => (m && !motionOff() ? 0 : target));
+  useEffect(() => {
+    if (!m || motionOff()) { setN(target); return; }
+    const start = performance.now();
+    let frame = requestAnimationFrame(function tick(now) {
+      const t = Math.min(1, (now - start) / 700);
+      setN(Math.round(target * (1 - Math.pow(1 - t, 3))));
+      if (t < 1) frame = requestAnimationFrame(tick);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [target]); // eslint-disable-line react-hooks/exhaustive-deps
+  return <>{m ? `${m[1]}${n}${m[3]}` : text}</>;
+}
+
 /** A round gauge: a ring that fills with `pct`, the label in the middle. With `meter`, it's announced as a meter. */
 function Gauge({ pct, tone, label, meter }: { pct: number; tone: string; label: string; meter?: { name: string; now: number; max: number; text?: string } }) {
   const c = 2 * Math.PI * 26;
@@ -227,9 +245,9 @@ function Gauge({ pct, tone, label, meter }: { pct: number; tone: string; label: 
     <div className={`um-gauge${tone ? ` ${tone}` : ''}`} {...(meter ? { role: 'meter', 'aria-label': meter.name, 'aria-valuemin': 0, 'aria-valuemax': meter.max, 'aria-valuenow': meter.now, 'aria-valuetext': meter.text } : { 'aria-hidden': true })}>
       <svg viewBox="0 0 64 64" aria-hidden="true">
         <circle className="um-gauge-track" cx="32" cy="32" r="26" />
-        <circle className="um-gauge-fill" cx="32" cy="32" r="26" strokeDasharray={c} strokeDashoffset={c * (1 - Math.max(0, Math.min(100, pct)) / 100)} />
+        <circle className="um-gauge-fill" cx="32" cy="32" r="26" strokeDasharray={c} strokeDashoffset={c * (1 - Math.max(0, Math.min(100, pct)) / 100)} style={{ '--c': c } as React.CSSProperties} />
       </svg>
-      <span aria-hidden="true">{label}</span>
+      <span aria-hidden="true"><CountUp text={label} /></span>
     </div>
   );
 }

@@ -154,6 +154,8 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
       clearTimeout(saveTimer);
       saveTimer = window.setTimeout(() => { if (chat) positions.set(chat.id, stick.current ? null : topAnchor(el)); }, 150);
       setShowDown(gap > 400);
+      // The top bar gets a soft edge once the conversation scrolls under it.
+      el.closest('.main')?.querySelector('.topbar')?.classList.toggle('scrolled', el.scrollTop > 6);
       if (gap < 80) setUnseen(false);
     };
     let saveTimer = 0;

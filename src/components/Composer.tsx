@@ -1,4 +1,4 @@
-import { liftWelcome, noteSend, sendRipple } from '../lib/motion';
+import { Exit, liftWelcome, noteSend, sendRipple } from '../lib/motion';
 import { haptic } from '../lib/haptics';
 import { playSend } from '../lib/sounds';
 import { isTemporaryChat } from '../lib/temporary-chat';
@@ -387,7 +387,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
         {pending.length > 0 && (
           <div className="attachments">
             {pending.map((p) => (
-              <div key={p.key} className={`attachment${p.file ? '' : ' loading'}`} title={p.name}>
+              <Exit key={p.key} kind="pop"><div className={`attachment${p.file ? '' : ' loading'}`} title={p.name}>
                 {p.file?.thumb ? <img src={p.file.thumb} alt="" /> : p.file ? <FileText size={18} /> : <Loader2 size={18} className="spin" />}
                 <span className="att-meta">
                   <span className="att-name">{p.name}</span>
@@ -398,7 +398,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
                     <X size={14} />
                   </button>
                 )}
-              </div>
+              </div></Exit>
             ))}
           </div>
         )}

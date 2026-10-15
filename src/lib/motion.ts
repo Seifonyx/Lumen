@@ -349,3 +349,26 @@ export function liftWelcome() {
   document.body.append(ghost);
   ghost.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-28px) scale(.96)' }], { duration: 320, easing: 'cubic-bezier(.4, 0, .2, 1)' }).finished.finally(() => ghost.remove());
 }
+
+// ---- Sliding selection for segmented controls (Theme, Text size…): one thumb glides to the chosen option.
+export function useSegmentThumb(box: RefObject<HTMLElement | null>, value: string) {
+  const first = useRef(true);
+  useLayoutEffect(() => {
+    const el = box.current;
+    const thumb = el?.querySelector<HTMLElement>(':scope > .seg-thumb');
+    const active = el?.querySelector<HTMLElement>(':scope > button.active');
+    if (!el || !thumb || !active) return;
+    const place = () => {
+      thumb.style.width = `${active.offsetWidth}px`;
+      thumb.style.height = `${active.offsetHeight}px`;
+      thumb.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`;
+    };
+    // No glide the first time (it's simply there), or when motion is off.
+    if (first.current || motionOff()) { thumb.style.transition = 'none'; place(); void thumb.offsetWidth; thumb.style.transition = ''; }
+    else place();
+    first.current = false;
+    const ro = new ResizeObserver(() => { thumb.style.transition = 'none'; place(); void thumb.offsetWidth; thumb.style.transition = ''; });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [box, value]);
+}

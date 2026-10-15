@@ -1,15 +1,16 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { ChevronRight, FileText, BookOpen, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
 import type { Chat, Project } from '../types';
 import ProjectManager from './ProjectManager';
 import AllChats from './AllChats';
 import Logo from './Logo';
+import WelcomeStars from './WelcomeStars';
 import Modal from './Modal';
 import { useFocusScope } from '../lib/focus-scope';
-import { Exit, exitGhost, useFlip } from '../lib/motion';
+import { Exit, exitGhost, motionOff, useFlip } from '../lib/motion';
 import { useLongPress } from '../lib/long-press';
 import ContextMenu from './ContextMenu';
 
@@ -190,6 +191,20 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
     return out;
   }, [chats, query, currentId]);
   useFlip(listRef, groups.map(([label, list]) => `${label}:${list.map((c) => c.id).join(',')}`).join('|'), !query);
+  // The bar marking the open chat glides to the chat you pick instead of jumping.
+  const indicator = useRef<HTMLSpanElement>(null);
+  const placed = useRef(false);
+  useLayoutEffect(() => {
+    const nav = listRef.current, bar = indicator.current;
+    if (!nav || !bar) return;
+    const row = nav.querySelector<HTMLElement>('.chat-row.active');
+    if (!row) { bar.style.opacity = '0'; placed.current = false; return; }
+    const n = nav.getBoundingClientRect(), r = row.getBoundingClientRect();
+    const move = () => { bar.style.height = `${r.height - 18}px`; bar.style.transform = `translate(${r.left - n.left}px, ${r.top - n.top + 9}px)`; bar.style.opacity = '1'; };
+    if (!placed.current || motionOff()) { bar.style.transition = 'none'; move(); void bar.offsetWidth; bar.style.transition = ''; }
+    else move();
+    placed.current = true;
+  }, [currentId, groups]);
 
 
   return (
@@ -277,8 +292,9 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
         <h2 className="sidebar-section-label history-label">{query ? 'Search results' : 'Recents'}</h2>
         {!phone && <button type="button" className="sidebar-chip new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}><Plus size={13} strokeWidth={2.2} /> New chat</button>}
       </div>
-      <nav className="chat-list" aria-label="Chat history" ref={listRef}>
-        {groups.length === 0 && <p className="muted small empty-list">{query ? 'No chats match.' : 'Your chats will appear here.'}</p>}
+      <nav className="chat-list has-indicator" aria-label="Chat history" ref={listRef}>
+        <span className="active-indicator" ref={indicator} aria-hidden="true" />
+        {groups.length === 0 && <p className="muted small empty-list">{!query && <span className="empty-moon"><WelcomeStars size={34} /></span>}{query ? 'No chats match.' : 'Your chats will appear here.'}</p>}
         {groups.map(([label, list]) => (
           <section key={label}>
             <h3 className="group-label">{label}</h3>

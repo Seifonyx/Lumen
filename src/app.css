@@ -3528,7 +3528,9 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
 @media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
 
 /* ---- 1.3: native feel */
-.haptic-switch { position: fixed; left: -100px; top: 0; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+/* The hidden switch that makes iPhones tick. Far off-screen: on iOS 26 a flipped switch's knob turns to glass
+   and is drawn outside the switch's own box, so near the screen it showed as a floating grey circle. */
+.haptic-switch { position: fixed; left: -10000px; top: -10000px; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; clip-path: inset(50%); }
 /* Springs: sheets rise from below and settle; menus and popovers pop with a slight settle. Browsers without
    linear() easing get a close cubic-bezier instead. */
 :root { --spring-sheet: cubic-bezier(.2, .9, .25, 1); --spring-pop: cubic-bezier(.3, 1.25, .5, 1); --spring-slide: cubic-bezier(.2, .9, .25, 1); }

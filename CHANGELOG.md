@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.4.7 · Replies flow smoothly
+
+- Fixed: replies could freeze for a few seconds and then jump ahead in big blocks. Some providers and
+  networks send text in bursts (it happened with the Cloudflare models). Lumen now paces the text: it sees
+  how often new text arrives and lets it flow in steadily, a word at a time, so a burst reads as one smooth
+  stream. Nothing is lost or delayed at the end; the whole reply is shown when it finishes.
+- Fixed: a grey circle could float over the chat on iPhone. It was the knob of the hidden switch Lumen uses
+  to make the phone vibrate, which iOS 26 draws as glass outside its hiding place. It's now kept well off
+  screen.
+
 ## 2.4.6 · Smooth replies on iPhone
 
 - Fixed: on iPhone, replies could arrive in jerky chunks instead of flowing in smoothly. Safari was redrawing

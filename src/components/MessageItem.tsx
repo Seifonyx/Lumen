@@ -5,6 +5,7 @@ import type { KnowledgeSource } from '../types';
 import { AlertTriangle, Share, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, GitBranch, Info, Pencil, RefreshCw, Square, TextSelect, Volume2 } from 'lucide-react';
 import { createContext, memo, useContext, useEffect, useRef, useState } from 'react';
 import { useLongPress } from '../lib/long-press';
+import { useSmoothText } from '../lib/smooth-text';
 import ContextMenu, { type ContextItem } from './ContextMenu';
 import { openImage } from './ImageViewer';
 import MoonPhase from './MoonPhase';
@@ -260,6 +261,9 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
   const [speaking, setSpeaking] = useState(false);
   const [selecting, setSelecting] = useState(false);
   const streaming = message.status === 'streaming';
+  // Text that arrives in bursts flows in at a steady pace (lib/smooth-text); `revealing` lasts until it's all shown.
+  const flowing = useSmoothText(message.text, streaming);
+  const revealing = streaming || flowing.length < message.text.length;
   const box = useRef<HTMLDivElement>(null);
   const [held, setHeld] = useState<number | null>(null);
   const readOnly = useContext(ReadOnlyPane);
@@ -298,11 +302,11 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
       {message.research && <ResearchCard research={message.research} />}
       {message.thinking && <Thinking text={message.thinking} active={streaming && !message.text} />}
       {message.text ? (
-        <Markdown text={message.coding?.phase === 'plan' && !streaming && parsePlan(message.text) ? message.text.replace(/`{3,}plan\s*\n[\s\S]*?\n`{3,}/i, '') : message.text} streaming={streaming} messageId={message.id} knowledgeSources={message.knowledgeSources} onSource={setSource}/>
+        <Markdown text={revealing ? flowing : message.coding?.phase === 'plan' && parsePlan(message.text) ? message.text.replace(/`{3,}plan\s*\n[\s\S]*?\n`{3,}/i, '') : message.text} streaming={revealing} messageId={message.id} knowledgeSources={message.knowledgeSources} onSource={setSource}/>
       ) : streaming && !message.thinking && !message.research ? (
         <WaitingForReply message={message} />
       ) : null}
-      {streaming && message.text && <span className="caret" />}
+      {revealing && flowing && <span className="caret" />}
       {message.coding && <CodingPlanCard message={message} />}
       {message.knowledgeSources?.length? <div className="knowledge-citations" aria-label="Document sources">{message.knowledgeSources.map((item,i)=><button className="source btn ghost small" key={`${item.docId}:${item.page}`} onClick={()=>setSource(item)}><span className="source-n">D{i+1}</span><span>{item.title} · {/\.pdf$/i.test(item.title)?'PDF page':'Section'} {item.page}</span></button>)}</div>:null}
       {source&&<KnowledgeSourceView source={source} onClose={()=>setSource(null)}/>}

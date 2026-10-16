@@ -1,5 +1,5 @@
 import { useExit } from '../lib/motion';
-import { FolderGit2, Images, Image as ImageIcon, Camera, Pencil, ChartNoAxesCombined, Columns2, Globe, Check, X, Telescope, MessageSquareText, PlayCircle, LayoutGrid, FolderKanban, ChevronRight, Paperclip } from 'lucide-react';
+import { FolderGit2, Images, Image as ImageIcon, Camera, Pencil, ChartNoAxesCombined, Columns2, Globe, Check, Telescope, MessageSquareText, PlayCircle, LayoutGrid, FolderKanban, ChevronRight, Paperclip } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useFocusScope } from '../lib/focus-scope';
 import { useSheetDrag } from '../lib/sheet-drag';
@@ -24,7 +24,7 @@ export default function AttachSheet(p:Props){
  onKeyDown={e=>{if(!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;const buttons=[...e.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')].filter(button=>button.getClientRects().length>0);const i=buttons.indexOf(document.activeElement as HTMLButtonElement);e.preventDefault();buttons[e.key==='Home'?0:e.key==='End'?buttons.length-1:(i+(e.key==='ArrowUp'?-1:1)+buttons.length)%buttons.length]?.focus();}}
 >
  <div className="sheet-grab" aria-hidden="true"/>
- {!p.anchor&&<header className="add-sheet-header"><h2>Add</h2><button type="button" className="icon-btn" aria-label="Close" onClick={p.onClose}><X size={20}/></button></header>}
+ {!p.anchor&&<header className="add-sheet-header"><h2>Add</h2></header>}
  {!p.anchor&&<div className="photo-actions"><button type="button" onClick={pick(p.onCamera)}><Camera size={24}/><span>Camera</span></button><button type="button" onClick={pick(p.onPhotos)}><Images size={24}/><span>Photos</span></button></div>}
  <div className="attach-menu-group">
   <button type="button" className="sheet-row" onClick={pick(p.onFiles)}><Paperclip size={18}/><span>Files and images</span></button>

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.4.13 · The + menu as a card
+
+- On phones, the + menu is now a card like the model picker: no taller than about three-quarters of the
+  screen, with its list scrolling inside. The ✕ at the top is gone: drag the card down or tap outside it
+  to close.
+
 ## 2.4.12 · Sheets follow your swipe
 
 - Fixed: swiping down on a sheet (the model picker and others) sometimes moved the chat behind it instead

@@ -4311,3 +4311,11 @@ button.project-crumb:hover { color: var(--text); background: var(--surface-2); }
 /* The selected chat: a clear filled row in bold, no side bar. */
 .sidebar .chat-row.active { background: color-mix(in srgb, var(--text) 12%, transparent); box-shadow: none; }
 .sidebar .chat-row.active .chat-open { color: var(--text); font-weight: 600; }
+
+/* Phones: the + menu is a card like the model picker, no taller than most of the screen; its list scrolls
+   inside it. Drag it down or tap outside to close (no ✕). */
+@media (max-width: 899px) {
+  .sheet-backdrop:not(.sheet-popover-backdrop) .attach-menu { max-height: min(72dvh, calc(var(--vv-h, 100dvh) - 24px)); overflow-y: auto; overscroll-behavior: contain; }
+  .add-sheet-header { padding: 4px 8px 14px; }
+  .add-sheet-header h2 { font-size: 17px; font-weight: 600; }
+}

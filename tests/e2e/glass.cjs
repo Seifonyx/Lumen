@@ -70,6 +70,21 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     console.log('PASS the tab bar moves between pages');
     await t.ctx.close();
 
+    // 2.3.1: in the sidebar, the account picture and New chat sit on one line with no extra gap below,
+    // and "Your chats will appear here" is centred.
+    t = await open(IPHONE, 'glass-empty');
+    await t.page.click('.menu-btn'); await t.page.waitForTimeout(600);
+    const side = await t.page.evaluate(() => {
+      const r = (s) => document.querySelector(s).getBoundingClientRect();
+      const a = r('.sidebar-footer .sidebar-foot'), n = r('.sidebar-footer .new-chat'), sb = r('.sidebar'), e = r('.empty-list');
+      return { avatar: a.top + a.height / 2, button: n.top + n.height / 2, gap: sb.bottom - n.bottom, empty: e.left + e.width / 2, middle: sb.left + sb.width / 2 };
+    });
+    assert.ok(Math.abs(side.avatar - side.button) <= 1, `account picture (${side.avatar}) and New chat (${side.button}) line up`);
+    assert.ok(side.gap <= 24, `no big gap under New chat (${Math.round(side.gap)}px)`);
+    assert.ok(Math.abs(side.empty - side.middle) <= 2, 'the empty message is centred');
+    console.log('PASS sidebar footer lines up and the empty message is centred');
+    await t.ctx.close();
+
     // Computers never see the tab bar.
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     await profile(ctx, 'glass-desktop', 'light');

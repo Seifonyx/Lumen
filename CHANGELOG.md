@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.3.1 · Sidebar touch-ups on iPhone
+
+- Your account picture and the New chat button now sit on the same line at the bottom of the sidebar, and
+  the empty space under them is gone.
+- "Your chats will appear here" is now in the middle of the sidebar.
+
 ## 2.3.0 · The iPhone look
 
 On iPhones and iPads, Lumen now looks and feels like an iOS 26 app, with see-through "glass" controls

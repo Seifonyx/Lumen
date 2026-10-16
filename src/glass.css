@@ -284,6 +284,13 @@ html.glass .seg-thumb { border-radius: 999px; box-shadow: 0 3px 8px rgb(0 0 0 / 
   html.glass .scrim { background: var(--glass-scrim); }
   html.glass .sidebar .search, html.glass .sidebar-chip { background: var(--glass-fill); border-color: transparent; border-radius: 999px; }
   html.glass .sidebar-chip.new-chat.floating { border-radius: 999px; }
+  /* The panel already floats clear of the home bar, so its footer doesn't add that space again; the account
+     picture and New chat sit on one line, both 48px tall. */
+  html.glass .sidebar { padding-bottom: 8px; }
+  html.glass .sidebar .sidebar-footer { align-items: center; padding: 10px 6px 6px; border-top: 0; }
+  html.glass .sidebar .sidebar-footer .sidebar-foot { flex: none; width: 48px; height: 48px; padding: 4px; margin: 0; border: 0; border-radius: 50%; display: grid; place-items: center; }
+  html.glass .sidebar .sidebar-footer .sidebar-foot .avatar { width: 40px; height: 40px; }
+  html.glass .sidebar .sidebar-footer .sidebar-chip.floating { height: 48px; margin: 0; }
 }
 
 /* ---------------------------------------------------------- Sheets, windows, menus, toasts */

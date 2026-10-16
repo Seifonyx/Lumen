@@ -69,3 +69,46 @@ jobs:
           path: tests/e2e/out
           if-no-files-found: ignore
           retention-days: 7
+
+  webkit:
+    name: Safari engine (WebKit)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps webkit
+      - id: webkit_build
+        run: npm run build
+      - name: Welcome and responsive layout in WebKit
+        if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' }}
+        run: npm run test:e2e -- welcome layout
+        env:
+          MR_WEBKIT: '1'
+      - name: WebKit tab bar interactions
+        if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' }}
+        shell: bash
+        run: |
+          node node_modules/vite/bin/vite.js preview --port 5190 --strictPort > /tmp/vite-webkit.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            curl -fsS http://localhost:5190/ > /dev/null && break
+            sleep 1
+          done
+          curl -fsS http://localhost:5190/ > /dev/null
+          node tests/webkit/tabbar.cjs
+      - name: Keep WebKit evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: webkit-evidence
+          path: |
+            tests/e2e/out/webkit-*.png
+            .impeccable/review/*webkit*.png
+          if-no-files-found: ignore
+          retention-days: 7

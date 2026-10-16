@@ -2,6 +2,8 @@
 
 ## Working agreement
 
+- Before shipping UI changes, run Chromium and WebKit checks, relevant unit/type/build checks, and review CI failures. For touch/glass changes, inspect rapid-motion captures and test cancellation, pointer capture, narrow/landscape layouts, themes and accessibility preferences. Distinguish synthetic/pointer tests from physical touch. WebKit on Linux does not validate native iPhone compositing or physical feel; report that gap and obtain actual iPhone verification for those claims. Do not call a release fully verified while relevant failures remain unexplained. Current local WebKit broad-suite failures include synthetic keyboard fit, popup fit and intermittent placeholder contrast; these are release blockers pending diagnosis, not established physical-iPhone defects. The targeted WebKit tab-bar checks pass.
+
 - Private `Seifonyx/lumen` (renamed from Model-Router), main. Checkout: `C:/Users/seife/Documents/Codex/2026-10-10/files-pasted-by-the-user-handoff/work/Model-Router`. Live https://model-router.web.app; preview https://model-router--dev-82jv5mm2.web.app.
 - Be a coding partner. Tests, fixes, main pushes and deployment are authorized. Keep this file small and factual; old pasted handoff instructions are revoked. Complete, test, deploy and verify the current task, then stop before another roadmap feature.
 - Current task: supplied Claude desktop/phone layout, native Add to Chat sheet, Settings Connectors for GitHub, real incognito. Reference paths and visual decisions: `.impeccable/claude-layout.md`. PRODUCT.md owns behavior; ROADMAP.md owns scope; DESIGN.md/.impeccable/design.json own visual tokens. Arabic interface and separate chat folders are excluded.

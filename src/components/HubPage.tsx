@@ -1,7 +1,7 @@
 // The layout shared by Library, Documents and Study: they open in place of the chat (the sidebar stays), with a
 // large title, a line about what's here, the main action, optional tabs, and the content below.
-import { ArrowLeft, Menu } from 'lucide-react';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { ArrowLeft, FolderKanban, LayoutGrid, Menu, MessageCircle, Shapes } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useFocusScope } from '../lib/focus-scope';
 import { useStore } from '../store';
 
@@ -24,8 +24,10 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
     return () => window.removeEventListener('keydown', key);
   }, [onBack, onClose]);
   useEffect(() => { root.current?.focus({ preventScroll: true }); }, []);
+  // iPhone glass look: the small title in the bar shows once the big one has scrolled away.
+  const [scrolled, setScrolled] = useState(false);
   return (
-    <section ref={root} className="hub-page" aria-label={label} tabIndex={-1} data-keep-sidebar="true">
+    <section ref={root} className={`hub-page${scrolled ? ' scrolled' : ''}`} aria-label={label} tabIndex={-1} data-keep-sidebar="true">
       <div className="hub-bar">
         {onBack ? (
           <button type="button" className="icon-btn hub-nav" aria-label="Back" onClick={onBack}><ArrowLeft size={20} /></button>
@@ -35,7 +37,7 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
         <span className="hub-bar-title">{label}</span>
         <button type="button" className="btn ghost small hub-close" aria-label="Close" onClick={onClose}><span className="hub-close-long">Back to chat</span><span className="hub-close-short">Done</span></button>
       </div>
-      <div className="hub-scroll">
+      <div className="hub-scroll" onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 56)}>
         <div className="hub-inner">
           <header className="hub-head">
             <div className="hub-titles">
@@ -58,7 +60,32 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
           <div className="hub-body">{children}</div>
         </div>
       </div>
+      {phone && !onBack && <GlassTabs />}
     </section>
+  );
+}
+
+/** iPhone glass look: a floating tab bar to move between the chat and the main pages (shown only with glass). */
+function GlassTabs() {
+  const page = useStore((s) => s.page);
+  const go = (p: 'projects' | 'collection' | 'tools' | null) => useStore.getState().setUi({ page: p, pageArg: undefined });
+  const tabs = [
+    { id: null, label: 'Chats', icon: <MessageCircle size={22} /> },
+    { id: 'projects' as const, label: 'Projects', icon: <FolderKanban size={22} /> },
+    { id: 'collection' as const, label: 'Collection', icon: <LayoutGrid size={22} /> },
+    { id: 'tools' as const, label: 'Tools', icon: <Shapes size={22} /> },
+  ];
+  const current = page === 'assistants' || page === 'study' ? 'tools' : page;
+  // The selected tab sits under a glass lens that slides to the tab you touch and swells while you hold it.
+  const [held, setHeld] = useState<number | null>(null);
+  const index = Math.max(0, tabs.findIndex((t) => t.id === current));
+  const lens = held ?? index;
+  return (
+    <nav className={`glass-tabbar${held !== null ? ' held' : ''}`} aria-label="Sections" style={{ ['--i' as string]: lens, ['--n' as string]: tabs.length }}
+      onPointerUp={() => setHeld(null)} onPointerCancel={() => setHeld(null)} onPointerLeave={() => setHeld(null)}>
+      <span className="glass-lens" aria-hidden="true" />
+      {tabs.map((t, i) => <button key={t.label} type="button" aria-current={current === t.id ? 'page' : undefined} onPointerDown={() => setHeld(i)} onPointerEnter={(e) => { if (e.buttons) setHeld(i); }} onClick={() => go(t.id)}>{t.icon}<span>{t.label}</span></button>)}
+    </nav>
   );
 }
 

@@ -658,6 +658,7 @@ export default function SettingsModal() {
   const user = useStore((s) => s.user);
   const { updateSettings: update, setUi, logout } = useStore.getState();
   const panel = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
   const dialog = useRef<HTMLElement>(null);
 
   const close = () => {
@@ -705,7 +706,7 @@ export default function SettingsModal() {
 
   return (
     // On computers the sidebar stays usable next to Settings; on phones Settings covers the screen.
-    <section className={`settings-page${tab ? ' has-section' : ''}`} aria-label="Settings" role="dialog" aria-modal={window.matchMedia('(max-width: 899px)').matches || undefined} data-keep-sidebar="true" tabIndex={-1} ref={dialog}>
+    <section className={`settings-page${tab ? ' has-section' : ''}${scrolled ? ' scrolled' : ''}`} aria-label="Settings" role="dialog" aria-modal={window.matchMedia('(max-width: 899px)').matches || undefined} data-keep-sidebar="true" tabIndex={-1} ref={dialog}>
       <header className="settings-top">
         {tab ? (
           <button className="icon-btn settings-back" onClick={() => go('')} aria-label="All settings">
@@ -722,7 +723,9 @@ export default function SettingsModal() {
         </button>
       </header>
 
-      <div className="settings-scroll" ref={panel} tabIndex={0}>
+      <div className="settings-scroll" ref={panel} tabIndex={0} onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 40)}>
+        {/* iPhone glass look: an iOS large title that scrolls away (hidden otherwise) */}
+        <p className="settings-large-title" aria-hidden="true">{tab ? label : 'Settings'}</p>
         <div className="settings-inner">
           <nav className="settings-tabs" aria-label="Settings sections">
             {TABS.map(([tid, tlabel, Icon, tblurb]) => (

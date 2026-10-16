@@ -1,4 +1,5 @@
 import { flySent, motionOff } from '../lib/motion';
+import { watchGlassInsets } from '../lib/glass';
 import { FolderGit2, FolderKanban, ArrowDown, FileText, Menu, PanelLeftOpen, EyeOff } from 'lucide-react';
 import WelcomeStars from './WelcomeStars';
 import { modKey } from '../lib/util';
@@ -98,6 +99,8 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   }, [chat?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { if (streaming && !stick.current) setUnseen(true); }, [lastText, streaming]);
+  // iPhone glass look: the chat scrolls under the floating bars.
+  useEffect(() => watchGlassInsets(scroller.current?.closest('.main') as HTMLElement | null), [projectWorkspaceOpen, chat?.id]);
   useEffect(() => setUnseen(false), [chat?.id]);
 
   // While a reply streams, the view glides after the new text instead of jumping down a line at a time.
@@ -200,6 +203,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
         <button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title={`Expand sidebar (${modKey}⇧S)`}>
           <PanelLeftOpen size={20} />
         </button>
+        <div className="topbar-center">
         {empty ? (
           <span className="topbar-route welcome-route" title={isTemporaryChat(chat) ? 'Incognito: not saved, memory off' : model === AUTO ? 'Auto picks the best model for each message' : undefined}>
             <span className={`route-dot${isTemporaryChat(chat) ? ' off' : ''}`} aria-hidden="true" />
@@ -220,7 +224,9 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
             )}
           </button>
         )}
+        </div>
         <div className="spacer" />
+        <div className="topbar-trailing">
         {Boolean(chat?.documents?.length) && <button className="icon-btn" aria-label="Open canvas" title="Open canvas" onClick={() => useStore.getState().openCanvas()}><FileText size={18} /></button>}
         {chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}
         {chat?.repo && (
@@ -239,6 +245,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
           <EyeOff size={19} />
         </button>
         )}
+        </div>
       </header>
       {isTemporaryChat(chat)&&<div className="incognito-note" role="status">Not saved · Memory off · Your selected AI provider receives messages</div>}
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</div>

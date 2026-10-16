@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.3.0 · The iPhone look
+
+On iPhones and iPads, Lumen now looks and feels like an iOS 26 app, with see-through "glass" controls
+floating over your chats. Computers and Android phones look the same as before.
+
+- **Chat:** messages scroll all the way under a floating top bar and message box. Text fades and blurs at the
+  edges so the buttons stay readable. The chat's name sits in the middle of the top bar, with its project
+  underneath.
+- **Glass you can feel:** buttons swell a little under your finger and spring back. Menus spring out of the
+  button that opened them.
+- **Tab bar:** Projects, Collection and Tools have a floating tab bar to move between them and back to your
+  chats. A glass lens slides to the tab you pick.
+- **Large titles:** pages and Settings start with a big title that tucks into the top bar as you scroll.
+- **Sheets and sidebar:** the + menu, model picker and other windows float just above the bottom with deep
+  rounded corners. The sidebar is a floating glass panel.
+- **Settings:** keeps Lumen's own look, with the new iOS 26 switches and rounder choice buttons.
+- **Uses the iPhone's own font** (SF Pro).
+- **Only where it runs smoothly:** iOS 16 or later. If a phone starts to stutter with the glass, Lumen switches
+  that phone back to the solid look by itself.
+
 ## 2.2.0 · Projects, Collection and Tools
 
 Lumen is reorganised so every place has one job. The sidebar now has **Collection** and **Tools**, with

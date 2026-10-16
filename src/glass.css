@@ -1,0 +1,326 @@
+/* ============================================================ iPhone glass (iOS 26 "Liquid Glass")
+   Only applies under html.glass (see lib/glass.ts): iPhones and iPads that draw it smoothly.
+   Modelled on iOS 26: clear glass that bends light at its rim, controls that float over the content and
+   swell when pressed, plain centred titles, large titles that scroll away, a tab bar with a sliding lens,
+   inset grouped lists and iOS switches. Uses the system font (SF Pro) like every iPhone app. */
+html.glass {
+  --font: -apple-system, 'SF Pro Text', system-ui, 'Noto Sans Arabic', sans-serif;
+  --glass-tint: rgb(255 255 255 / 0.5);
+  --glass-tint-strong: rgb(255 255 255 / 0.72);
+  --glass-filter: blur(12px) saturate(2) brightness(1.04);
+  --glass-filter-strong: blur(26px) saturate(1.9);
+  /* The rim: light catches the top-left and bottom-right edges, like a lens. */
+  --glass-rim: linear-gradient(150deg, rgb(255 255 255 / 0.95), rgb(255 255 255 / 0.25) 28%, rgb(255 255 255 / 0.05) 50%, rgb(255 255 255 / 0.2) 75%, rgb(255 255 255 / 0.85));
+  --glass-depth: inset 0 0 14px rgb(255 255 255 / 0.45), inset 0 -10px 18px -14px rgb(0 0 0 / 0.08);
+  --glass-shadow: 0 8px 30px rgb(0 0 0 / 0.1), 0 1px 4px rgb(0 0 0 / 0.06);
+  --glass-fill: rgb(120 120 128 / 0.12);
+  --glass-fill-press: rgb(120 120 128 / 0.2);
+  --glass-scrim: rgb(0 0 0 / 0.2);
+  --ios-tint: #007aff;
+  --ios-green: #34c759;
+  --spring: cubic-bezier(0.34, 1.45, 0.64, 1);
+  --spring-soft: cubic-bezier(0.25, 1.2, 0.5, 1);
+}
+@media (prefers-color-scheme: dark) {
+  html.glass:not([data-theme='light']) {
+    --glass-tint: rgb(40 40 44 / 0.42);
+    --glass-tint-strong: rgb(30 30 32 / 0.7);
+    --glass-filter: blur(12px) saturate(1.8) brightness(0.92);
+    --glass-rim: linear-gradient(150deg, rgb(255 255 255 / 0.45), rgb(255 255 255 / 0.08) 28%, rgb(255 255 255 / 0.02) 50%, rgb(255 255 255 / 0.06) 75%, rgb(255 255 255 / 0.35));
+    --glass-depth: inset 0 0 14px rgb(255 255 255 / 0.06), inset 0 -10px 18px -14px rgb(0 0 0 / 0.4);
+    --glass-shadow: 0 10px 34px rgb(0 0 0 / 0.5), 0 1px 4px rgb(0 0 0 / 0.4);
+    --glass-fill: rgb(118 118 128 / 0.24);
+    --glass-fill-press: rgb(118 118 128 / 0.36);
+    --glass-scrim: rgb(0 0 0 / 0.45);
+    --ios-tint: #0a84ff; --ios-green: #30d158;
+  }
+}
+html.glass[data-theme='dark'] {
+  --glass-tint: rgb(40 40 44 / 0.42);
+  --glass-tint-strong: rgb(30 30 32 / 0.7);
+  --glass-filter: blur(12px) saturate(1.8) brightness(0.92);
+  --glass-rim: linear-gradient(150deg, rgb(255 255 255 / 0.45), rgb(255 255 255 / 0.08) 28%, rgb(255 255 255 / 0.02) 50%, rgb(255 255 255 / 0.06) 75%, rgb(255 255 255 / 0.35));
+  --glass-depth: inset 0 0 14px rgb(255 255 255 / 0.06), inset 0 -10px 18px -14px rgb(0 0 0 / 0.4);
+  --glass-shadow: 0 10px 34px rgb(0 0 0 / 0.5), 0 1px 4px rgb(0 0 0 / 0.4);
+  --glass-fill: rgb(118 118 128 / 0.24);
+  --glass-fill-press: rgb(118 118 128 / 0.36);
+  --glass-scrim: rgb(0 0 0 / 0.45);
+  --ios-tint: #0a84ff; --ios-green: #30d158;
+}
+html.glass body { -webkit-font-smoothing: antialiased; }
+
+/* ---------------------------------------------------------- The material
+   Clear glass for controls; a thicker, frostier one for sheets, menus and panels that hold text. */
+html.glass .topbar .menu-btn,
+html.glass .topbar-trailing,
+html.glass .composer,
+html.glass .to-bottom,
+html.glass .hub-bar .hub-nav,
+html.glass .hub-bar .hub-close,
+html.glass .settings-top .icon-btn,
+html.glass .glass-tabbar,
+html.glass .toast,
+html.glass .sheet,
+html.glass .modal,
+html.glass .popover,
+html.glass .menu,
+html.glass .sidebar,
+html.glass .sidebar-chip.new-chat.floating {
+  border: 1px solid transparent;
+  background: linear-gradient(var(--glass-tint), var(--glass-tint)) padding-box, var(--glass-rim) border-box;
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  box-shadow: var(--glass-depth), var(--glass-shadow);
+}
+html.glass .sheet,
+html.glass .modal,
+html.glass .popover,
+html.glass .menu,
+html.glass .sidebar,
+html.glass .toast,
+html.glass .glass-tabbar,
+html.glass .composer {
+  background: linear-gradient(var(--glass-tint-strong), var(--glass-tint-strong)) padding-box, var(--glass-rim) border-box;
+  -webkit-backdrop-filter: var(--glass-filter-strong);
+  backdrop-filter: var(--glass-filter-strong);
+}
+
+/* Press: glass swells under your finger and springs back, like iOS 26. */
+html.glass :is(.topbar .menu-btn, .topbar-trailing .icon-btn, .hub-nav, .hub-close, .settings-top .icon-btn, .to-bottom, .composer .send-btn, .composer .tool-btn, .composer .icon-btn, .sidebar-chip.new-chat.floating) {
+  transition: scale 0.45s var(--spring), background-color 0.2s, filter 0.2s;
+}
+html.glass :is(.topbar .menu-btn, .topbar-trailing .icon-btn, .hub-nav, .hub-close, .settings-top .icon-btn, .to-bottom, .composer .send-btn, .composer .tool-btn, .composer .icon-btn, .sidebar-chip.new-chat.floating):active {
+  scale: 1.12; filter: brightness(1.06);
+}
+html.glass .topbar-trailing .icon-btn:active { scale: 1.08; background: var(--glass-fill-press); }
+
+/* iOS 26 "scroll edge": what scrolls under the bars is softly blurred and faded out. */
+html.glass .main > .topbar::before, html.glass .hub-bar::before, html.glass .settings-top::before {
+  content: ''; position: absolute; inset: 0 0 -30px; z-index: -1; pointer-events: none;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 88%, transparent), color-mix(in srgb, var(--bg) 55%, transparent) 60%, transparent);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent); mask-image: linear-gradient(to bottom, #000 55%, transparent);
+}
+
+/* ---------------------------------------------------------- Chat */
+html.glass .main { --glass-top: 64px; --glass-bottom: 120px; }
+html.glass .main > .topbar {
+  position: absolute; inset-inline: 0; top: 0; z-index: 12; min-height: 0;
+  display: flex; align-items: center; gap: 8px;
+  padding: max(8px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 6px max(16px, env(safe-area-inset-left));
+  background: none; -webkit-backdrop-filter: none; backdrop-filter: none; border: 0; box-shadow: none; pointer-events: none;
+}
+html.glass .main > .topbar > * { pointer-events: auto; }
+html.glass .topbar .menu-btn { width: 44px; height: 44px; border-radius: 50%; color: var(--text); flex: none; }
+/* The title: plain, centred, with the project underneath, as in iOS navigation bars. */
+html.glass .topbar-center {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  position: absolute; left: 50%; translate: -50% 0; top: max(8px, env(safe-area-inset-top)); height: 44px;
+  max-width: calc(100% - 2 * 16px - 2 * 52px - 24px); min-width: 0;
+}
+html.glass .topbar-center .chat-heading,
+html.glass .topbar-center .topbar-route {
+  display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 17px; font-weight: 600; letter-spacing: -0.02em; color: var(--text);
+  background: none; border: 0; padding: 0; height: auto; box-shadow: none; text-align: center;
+}
+html.glass .topbar-center .topbar-route { display: inline-flex; align-items: center; gap: 5px; font-size: 15px; font-weight: 500; }
+html.glass .topbar-center .topbar-route b { font-weight: 600; }
+html.glass .topbar-center .project-topbar-pill {
+  height: auto; padding: 0; border: 0; background: none; box-shadow: none; gap: 4px; max-width: 100%;
+  font-size: 12px; font-weight: 500; color: var(--text-2);
+}
+html.glass .topbar-center .project-topbar-pill:active { opacity: 0.5; }
+html.glass .topbar-center .project-topbar-badge { display: none; }
+html.glass .topbar-center .project-topbar-pill svg { width: 11px; height: 11px; }
+html.glass .topbar-trailing { display: flex; align-items: center; height: 44px; padding: 0 2px; border-radius: 999px; margin-inline-start: auto; flex: none; }
+html.glass .topbar-trailing:empty { display: none; }
+html.glass .topbar-trailing .icon-btn { width: 40px; height: 40px; border-radius: 50%; color: var(--text); background: none; }
+html.glass .topbar-trailing .assistant-badge { padding: 0 10px; font-size: 13px; font-weight: 600; background: none; border: 0; }
+html.glass .topbar .spacer { display: none; }
+/* The project page's breadcrumb, also plain and centred. */
+html.glass .project-workspace-main > .topbar .project-crumb, html.glass .project-workspace-main > .topbar .project-crumb-sep { display: none; }
+html.glass .project-workspace-main > .topbar .project-crumb-name { position: absolute; left: 50%; translate: -50% 0; font-size: 17px; font-weight: 600; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+html.glass .main > .conversation-area { flex: 1; min-height: 0; }
+html.glass .main > .conversation-area > .messages {
+  padding-top: calc(var(--glass-top) + 4px); padding-bottom: calc(var(--glass-bottom) + 8px);
+  scroll-padding-top: var(--glass-top); scroll-padding-bottom: calc(var(--glass-bottom) + 16px);
+}
+html.glass .main > .banner { position: absolute; z-index: 11; top: calc(var(--glass-top) + 4px); inset-inline: 16px; width: auto; }
+
+html.glass .main > .composer-wrap {
+  position: absolute; inset-inline: 0; bottom: 0; z-index: 12; background: none; pointer-events: none;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+html.glass .main > .composer-wrap::before {
+  content: ''; position: absolute; inset: -24px 0 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(to top, color-mix(in srgb, var(--bg) 75%, transparent), color-mix(in srgb, var(--bg) 35%, transparent) 55%, transparent);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(to top, #000 50%, transparent); mask-image: linear-gradient(to top, #000 50%, transparent);
+}
+html.glass .main > .composer-wrap > * { pointer-events: auto; }
+html.glass .composer-wrap .disclaimer { display: none; }
+html.glass .composer { border-radius: 30px; padding: 12px 10px 8px 18px; }
+html.glass .composer textarea { font-size: 17px; }
+html.glass .composer textarea::placeholder { color: color-mix(in srgb, var(--text) 40%, transparent); }
+html.glass .composer .model-button { background: var(--glass-fill); border: 0; border-radius: 999px; }
+html.glass .composer .tool-btn { background: var(--glass-fill); border: 0; border-radius: 50%; }
+html.glass .composer .send-btn { border-radius: 50%; }
+html.glass .to-bottom { bottom: calc(var(--glass-bottom) + 10px); width: 44px; height: 44px; color: var(--text); }
+html.glass .to-bottom.labelled { width: auto; border-radius: 999px; padding: 0 16px; }
+
+/* ---------------------------------------------------------- Pages: large title, inline title once scrolled */
+html.glass .hub-page { position: relative; }
+html.glass .hub-bar {
+  position: absolute; inset-inline: 0; top: 0; z-index: 12; min-height: 0; border: 0;
+  padding: max(8px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 6px max(16px, env(safe-area-inset-left));
+  background: none; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; pointer-events: none;
+}
+html.glass .hub-bar > * { pointer-events: auto; }
+html.glass .hub-bar .hub-nav { width: 44px; height: 44px; border-radius: 50%; color: var(--text); }
+html.glass .hub-bar .hub-close { height: 44px; padding: 0 18px; border-radius: 999px; font-size: 17px; font-weight: 600; color: var(--text); margin-inline-start: auto; }
+html.glass .hub-bar .hub-bar-title {
+  position: absolute; left: 50%; translate: -50% 0; top: max(8px, env(safe-area-inset-top)); line-height: 44px; max-width: 50%;
+  font-size: 17px; font-weight: 600; letter-spacing: -0.02em; background: none; padding: 0;
+  opacity: 0; transition: opacity 0.2s;
+}
+html.glass .hub-page.scrolled .hub-bar .hub-bar-title { opacity: 1; }
+html.glass .hub-scroll { padding-top: calc(max(8px, env(safe-area-inset-top)) + 50px); }
+html.glass .hub-head h1 { font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.01em; }
+html.glass .hub-head p { font-size: 15px; }
+html.glass .hub-page.scrolled .hub-head h1 { opacity: 0; transition: opacity 0.15s; }
+
+/* The tab bar (phones): a glass capsule; a lens marks the tab you're on, slides when you switch and swells
+   while you hold a tab. */
+.glass-tabbar, .glass-lens { display: none; }
+@media (max-width: 899px) {
+  html.glass .glass-tabbar {
+    --pad: 4px;
+    display: flex; position: absolute; z-index: 12; left: 50%; translate: -50% 0;
+    bottom: max(8px, env(safe-area-inset-bottom)); padding: var(--pad); border-radius: 999px;
+    width: min(370px, calc(100% - 40px));
+  }
+  html.glass .glass-lens {
+    display: block; position: absolute; top: var(--pad); bottom: var(--pad); left: var(--pad); border-radius: 999px;
+    width: calc((100% - 2 * var(--pad)) / var(--n));
+    translate: calc(var(--i) * 100%) 0;
+    background: var(--glass-fill);
+    transition: translate 0.55s var(--spring-soft), scale 0.4s var(--spring), background 0.2s, box-shadow 0.2s;
+  }
+  html.glass .glass-tabbar.held .glass-lens {
+    scale: 1.14 1.22; background: linear-gradient(rgb(255 255 255 / 0.25), rgb(255 255 255 / 0.25)) padding-box, var(--glass-rim) border-box;
+    border: 1px solid transparent; box-shadow: var(--glass-depth), 0 6px 20px rgb(0 0 0 / 0.14);
+    -webkit-backdrop-filter: blur(2px) saturate(1.6); backdrop-filter: blur(2px) saturate(1.6);
+  }
+  html.glass .glass-tabbar button {
+    position: relative; z-index: 1; flex: 1; min-width: 0; height: 54px; border: 0; border-radius: 999px; background: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+    color: var(--text); font-size: 10px; font-weight: 600; letter-spacing: 0.01em; -webkit-tap-highlight-color: transparent;
+    transition: color 0.25s;
+  }
+  html.glass .glass-tabbar button svg { width: 24px; height: 24px; stroke-width: 1.8; }
+  html.glass .glass-tabbar button[aria-current='page'] { color: var(--ios-tint); }
+  html.glass .glass-tabbar button[aria-current='page'] svg { stroke-width: 2.2; }
+  html.glass .hub-page:has(.glass-tabbar)::after {
+    content: ''; position: absolute; inset: auto 0 0; height: calc(max(8px, env(safe-area-inset-bottom)) + 90px); z-index: 11; pointer-events: none;
+    background: linear-gradient(to top, color-mix(in srgb, var(--bg) 75%, transparent), color-mix(in srgb, var(--bg) 30%, transparent) 60%, transparent);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    -webkit-mask-image: linear-gradient(to top, #000 45%, transparent); mask-image: linear-gradient(to top, #000 45%, transparent);
+  }
+  html.glass .hub-page:has(.glass-tabbar) .hub-inner { padding-bottom: calc(max(8px, env(safe-area-inset-bottom)) + 90px); }
+}
+
+/* ---------------------------------------------------------- Settings: Lumen's own look, in iOS 26 form
+   (floating glass buttons, a large title that scrolls away, rounder groups); colours and icons stay Lumen's. */
+@media (max-width: 899px) {
+  html.glass .settings-page { position: relative; }
+  html.glass .settings-top {
+    position: absolute; inset-inline: 0; top: 0; z-index: 12; min-height: 0; background: none; border: 0; pointer-events: none;
+    padding: max(8px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 6px max(16px, env(safe-area-inset-left));
+  }
+  html.glass .settings-top > * { pointer-events: auto; }
+  html.glass .settings-top .icon-btn { width: 44px; height: 44px; border-radius: 50%; color: var(--text); }
+  html.glass .settings-title { position: absolute; left: 50%; translate: -50% 0; top: max(8px, env(safe-area-inset-top)); line-height: 44px; font-size: 17px; font-weight: 600; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+  html.glass .settings-page.scrolled .settings-title { opacity: 1; }
+  html.glass .settings-page.has-section .settings-title-main { display: none; }
+  html.glass .settings-title-section { display: inline; }
+  html.glass .settings-scroll { padding-top: calc(max(8px, env(safe-area-inset-top)) + 50px); }
+  html.glass .settings-large-title { display: block; margin: 4px 0 10px; padding: 0 20px; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); transition: opacity 0.15s; }
+  html.glass .settings-page.scrolled .settings-large-title { opacity: 0; }
+  html.glass .settings-heading { display: none; }
+  html.glass .settings-tabs, html.glass .settings-card { border-radius: 24px; }
+  html.glass .settings-tabs button { min-height: 52px; }
+  html.glass .settings-tabs button:active, html.glass .setting-row:active { background: var(--glass-fill); }
+}
+
+/* iOS 26 switch: a wide capsule; the knob turns to glass and stretches while you hold it. */
+html.glass .switch {
+  width: 63px; height: 28px; border: 0; background: rgb(120 120 128 / 0.16);
+  transition: background 0.25s;
+}
+html.glass .switch:checked { background: var(--ios-green); border: 0; }
+html.glass .switch::after {
+  top: 2px; inset-inline-start: 2px; width: 37px; height: 24px; border-radius: 999px; background: #fff;
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.15), 0 1px 1px rgb(0 0 0 / 0.06);
+  transition: inset-inline-start 0.45s var(--spring), scale 0.35s var(--spring), background 0.2s;
+}
+html.glass .switch:checked::after { inset-inline-start: 24px; }
+html.glass .switch:active::after { scale: 1.25 1.35; background: rgb(255 255 255 / 0.55); box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 0.9), 0 4px 12px rgb(0 0 0 / 0.18); }
+
+/* Segmented controls: a capsule track with a sliding white capsule. */
+html.glass .segmented { border: 0; border-radius: 999px; background: rgb(120 120 128 / 0.14); padding: 2px; }
+html.glass .segmented button { border-radius: 999px; }
+html.glass .seg-thumb { border-radius: 999px; box-shadow: 0 3px 8px rgb(0 0 0 / 0.12), 0 0 0 0.5px rgb(0 0 0 / 0.04); }
+
+/* ---------------------------------------------------------- Sidebar: a floating glass panel */
+@media (max-width: 899px) {
+  html.glass .sidebar {
+    inset: max(8px, env(safe-area-inset-top)) auto max(8px, env(safe-area-inset-bottom)) 8px; height: auto;
+    border-radius: 36px; transform: translateX(calc(-100% - 24px));
+  }
+  [dir='rtl'] html.glass .sidebar, html.glass[dir='rtl'] .sidebar { inset: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)) auto; transform: translateX(calc(100% + 24px)); }
+  html.glass .sidebar.open { transform: none; }
+  html.glass .scrim { background: var(--glass-scrim); }
+  html.glass .sidebar .search, html.glass .sidebar-chip { background: var(--glass-fill); border-color: transparent; border-radius: 999px; }
+  html.glass .sidebar-chip.new-chat.floating { border-radius: 999px; }
+}
+
+/* ---------------------------------------------------------- Sheets, windows, menus, toasts */
+html.glass .modal-backdrop, html.glass .sheet-backdrop:not(.sheet-popover-backdrop) { background: var(--glass-scrim); -webkit-backdrop-filter: none; backdrop-filter: none; }
+@media (max-width: 899px) {
+  /* Sheets float just above the bottom with corners that follow the screen's own curve. */
+  html.glass .sheet-backdrop:not(.sheet-popover-backdrop) .sheet,
+  html.glass .modal-backdrop .modal:not(.full),
+  html.glass .models-pop.sheet {
+    margin: 0 8px max(8px, env(safe-area-inset-bottom)); width: calc(100% - 16px); border-radius: 44px;
+  }
+  html.glass .modal-backdrop .modal.full { border-radius: 0; }
+}
+html.glass .modal-head { background: none; border-color: transparent; }
+html.glass .modal-title { font-size: 17px; font-weight: 600; }
+html.glass .modal-body { background: none; }
+html.glass .add-sheet-header h2 { font-size: 17px; font-weight: 600; }
+html.glass .attach-menu .attach-menu-group,
+html.glass .mp-body .mp-item,
+html.glass .mp-body .mp-layout { background: var(--glass-fill); border-color: transparent; border-radius: 22px; }
+html.glass .attach-menu .sheet-row { font-size: 17px; }
+html.glass .sheet-grab, html.glass .sheet-grip { background: color-mix(in srgb, var(--text) 22%, transparent); width: 36px; height: 5px; }
+/* Menus grow out of the button that opened them, with a spring. */
+html.glass .menu, html.glass .popover:not(.sheet) { border-radius: 26px; padding: 6px; transform-origin: top right; animation: glass-pop 0.42s var(--spring); }
+html.glass .menu button { border-radius: 14px; min-height: 44px; font-size: 16px; padding: 0 14px; }
+html.glass .menu button:active { background: var(--glass-fill-press); }
+@keyframes glass-pop {
+  from { opacity: 0; scale: 0.5; filter: blur(6px); }
+  60% { opacity: 1; filter: none; }
+  to { opacity: 1; scale: 1; }
+}
+html.glass .toast { border-radius: 999px; padding-inline: 18px; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.glass .glass-lens, html.glass .switch::after, html.glass .menu, html.glass .popover { transition: none; animation: none; }
+}
+/* No glass where the person asked for less of it (also checked in lib/glass.ts when the app opens). */
+@media (prefers-reduced-transparency: reduce) {
+  html.glass * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+}

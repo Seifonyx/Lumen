@@ -81,6 +81,9 @@ a { color: var(--link); }
 .pad { padding: 16px; }
 .center { display: grid; place-items: center; }
 .spacer { flex: 1; }
+/* Groups in the chat's top bar; only the iPhone glass look (glass.css) lays them out as their own boxes. */
+.topbar-center, .topbar-trailing { display: contents; }
+.settings-large-title { display: none; }
 .error-text { color: var(--danger); margin: 0; font-size: 0.875rem; }
 .spin { animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

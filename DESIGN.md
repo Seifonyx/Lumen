@@ -52,7 +52,7 @@ Never use it for large areas, body text on white, or decoration.
   (eye-off) only on a new chat or while incognito.
 - **Welcome**: the lime moon and one short greeting. On phones the greeting sits above the bottom composer. Empty history uses quiet text, without a repeated illustration.
 - **Sidebar footer**: the avatar opens Settings. On phones New chat sits at the bottom right of the footer.
-- **Message box**: `+` menu · model chip · active chips (Web search, Project) · context ring · Dictate · Send (or labelled Voice conversation when empty). Phone voice controls have their own row.
+- **Message box**: `+` menu · model chip · active chips (Web search, Project) · context ring · Dictate · Send (or labelled Voice conversation when empty). Desktop voice controls have visible labels; phones keep the compact icon controls in the original single row.
   The context ring stays a quiet circle until the chat is half full.
 - **`+` menu** (one level): Files and images, Web search (switch), Project, GitHub repository; *Tools*:
   Document canvas, Data analysis, Compare models. Phones add big Camera/Photos buttons. Settings

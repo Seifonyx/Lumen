@@ -4350,9 +4350,11 @@ button.project-crumb:hover { color: var(--text); background: var(--surface-2); }
 }
 .composer-voice-controls svg { flex: none; }
 @media (max-width: 899px) {
-  .composer-bar { flex-wrap: wrap; }
-  .composer-voice-controls { flex-basis: 100%; }
-  .composer .dictation-btn, .composer .voice-start { min-height: 44px; }
+  .composer-voice-controls { flex: none; gap: 4px; margin-inline-start: 0; }
+  .composer .dictation-btn, .composer .voice-start {
+    width: 44px; min-height: 44px; padding-inline: 0; border-radius: 10px;
+  }
+  .composer-voice-controls button > span { display: none; }
   .main.is-empty .conversation-area { flex: 1; align-items: center; justify-content: flex-end; }
   .main.is-empty .empty { padding: 16px 12px 24px; gap: 12px; }
   html.kb-open .main.is-empty .conversation-area { justify-content: center; }

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.4.5 · Green where it matters
+
+- Lumen's green is now kept for the important things: the send and voice buttons, the logo, the welcome moon
+  and progress meters. The + in New chat and New project, the dots beside model names, tab underlines and
+  other small marks use the normal text colours.
+- The selected chat in the sidebar has no green bar. It's a clearly filled row with its name in bold.
+- On iPhone, the extra space under your account picture and New chat at the bottom of the sidebar is gone.
+
 ## 2.4.4 · Glass tone
 
 - On iPhone, the glass is darker in dark mode and lighter in light mode, so it blends with the screen behind

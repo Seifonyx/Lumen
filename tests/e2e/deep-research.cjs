@@ -79,7 +79,7 @@ const sse = (text, chunks) => 'data: ' + JSON.stringify({ candidates: [{ content
     console.log('PASS the research is kept with the chat (without the notes)');
 
     // ---- /research does the same.
-    await page.click('.sidebar-chip.new-chat');
+    await page.locator('.sidebar').getByRole('button', { name: 'New chat', exact: true }).click();
     await page.fill('.composer textarea', '/research Wind power');
     await page.click('.send-btn');
     await page.locator('.msg.assistant .research-card[data-phase="done"]').waitFor({ timeout: 15000 });

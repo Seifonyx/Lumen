@@ -504,21 +504,23 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
               <ShieldCheck size={17} />
             </button>
           )}
-          {canListen && (
-            <button type="button" className={`tool-btn${listening ? ' recording' : ''}`} onClick={toggleMic} aria-label={listening ? 'Stop voice input' : 'Voice input'} title="Voice input">
-              <Mic size={19} />
-            </button>
-          )}
-          {/* With nothing typed, the send button becomes a hands-free voice conversation (when the browser can listen and speak). */}
-          {!streaming && !text.trim() && !pending.length && canListen && canSpeak && !listening ? (
-            <button type="button" className="send-btn voice-start" onClick={() => { unlockSpeech(); setVoiceOpen(true); }} aria-label="Start voice conversation" title="Voice conversation">
-              <AudioLines size={19} />
-            </button>
-          ) : (
-            <button type="submit" className={`send-btn${streaming ? ' stop' : ''}`} disabled={!streaming && !canSend} aria-label={streaming ? 'Stop' : 'Send'} title={streaming ? 'Stop (Esc)' : 'Send'}>
-              {streaming ? <Square size={14} fill="currentColor" /> : <ArrowUp size={19} />}
-            </button>
-          )}
+          <div className="composer-voice-controls">
+            {canListen && (
+              <button type="button" className={`tool-btn dictation-btn${listening ? ' recording' : ''}`} onClick={toggleMic} aria-label={listening ? 'Stop dictation' : 'Dictate'} aria-pressed={listening} title="Dictate a message to review before sending">
+                <Mic size={19} /><span>{listening ? 'Stop dictation' : 'Dictate'}</span>
+              </button>
+            )}
+            {/* With nothing typed, the send button becomes a hands-free voice conversation (when the browser can listen and speak). */}
+            {!streaming && !text.trim() && !pending.length && canListen && canSpeak && !listening ? (
+              <button type="button" className="send-btn voice-start" onClick={() => { unlockSpeech(); setVoiceOpen(true); }} aria-label="Start voice conversation" title="Start a hands-free voice conversation">
+                <AudioLines size={19} /><span>Voice conversation</span>
+              </button>
+            ) : (
+              <button type="submit" className={`send-btn${streaming ? ' stop' : ''}`} disabled={!streaming && !canSend} aria-label={streaming ? 'Stop' : 'Send'} title={streaming ? 'Stop (Esc)' : 'Send'}>
+                {streaming ? <Square size={14} fill="currentColor" /> : <ArrowUp size={19} />}
+              </button>
+            )}
+          </div>
         </div>
       </form>
       {projectMenu && (

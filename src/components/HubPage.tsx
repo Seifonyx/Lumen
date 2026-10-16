@@ -95,7 +95,7 @@ function GlassTabs({ bar }: { bar?: HubBar }) {
   const tabs = [
     { id: null, label: 'Chats', icon: <MessageCircle size={22} /> },
     { id: 'projects' as const, label: 'Projects', icon: <FolderKanban size={22} /> },
-    { id: 'collection' as const, label: 'Collection', icon: <LayoutGrid size={22} /> },
+    { id: 'collection' as const, label: 'Library', icon: <LayoutGrid size={22} /> },
     { id: 'tools' as const, label: 'Tools', icon: <Shapes size={22} /> },
   ];
   const current = page === 'assistants' || page === 'study' ? 'tools' : page;

@@ -119,7 +119,7 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
   const sub = (i: Item) => [projectName(i.chat.projectId), i.chat.title, relTime(i.at)].filter(Boolean).join(' · ');
 
   return (
-    <HubPage label="Collection" title="Collection" subtitle="Everything you’ve added or made, from all your chats. Projects keep things together." onClose={onClose} bar={bar}
+    <HubPage label="Library" title="Library" subtitle="Your files, photos and documents from every chat. Find actions and assistants in Tools." onClose={onClose} bar={bar}
       actions={<button type="button" className="btn primary" onClick={newDoc}><Plus size={16} /> New document</button>}>
       {!glassPhone && <div className="coll-filters" role="radiogroup" aria-label="Show">
         {FILTERS.map((f) => (
@@ -134,7 +134,7 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
         <>
           {(items.length > 0 || glassPhone) && (
             <div className="hub-toolbar">
-              <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search your collection" placeholder={glassPhone ? `Search ${FILTERS.find((f) => f.id === kind)?.label.toLowerCase()}` : 'Search names and documents'} value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" /></label>
+              <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search your library" placeholder={glassPhone ? `Search ${FILTERS.find((f) => f.id === kind)?.label.toLowerCase()}` : 'Search names and documents'} value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" /></label>
               {projects.length > 0 && (
                 <label className="coll-project"><FolderKanban size={15} /><select aria-label="Project" value={project} onChange={(e) => setProject(e.target.value)}><option value="">All projects</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
               )}

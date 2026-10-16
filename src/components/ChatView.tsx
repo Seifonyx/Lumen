@@ -9,7 +9,7 @@ import { activeSummary } from '../lib/compact';
 import { AUTO } from '../lib/routing';
 import { isLayoutId } from '../lib/layouts';
 import { formatUntil } from '../lib/usage';
-import { modelLabel, selectCurrentChat, useStore } from '../store';
+import { selectCurrentChat, useStore } from '../store';
 import { UsageMeter } from './CompactNote';
 import Composer from './Composer';
 import { WELCOME_GREETINGS } from '../lib/welcome';
@@ -59,8 +59,6 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   const resetAt = useStore((s) => s.firebaseUsage.resetAt);
   const online = useStore((s) => s.online);
   const workspaceOpen = useStore((s) => s.workspaceOpen);
-  const catalog = useStore((s) => s.catalog);
-  const enabledCount = useStore((s) => s.settings.enabledModels.length);
   const { setUi, setChatModel } = useStore.getState();
   const scroller = useRef<HTMLDivElement>(null);
   const navigationHost = useRef<HTMLDivElement>(null);
@@ -214,12 +212,12 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
           <PanelLeftOpen size={20} />
         </button>
         <div className="topbar-center">
-        {empty ? (
-          <span className="topbar-route welcome-route" title={isTemporaryChat(chat) ? 'Incognito: not saved, memory off' : model === AUTO ? 'Auto picks the best model for each message' : undefined}>
-            <span className={`route-dot${isTemporaryChat(chat) ? ' off' : ''}`} aria-hidden="true" />
-            {isTemporaryChat(chat) ? <><b>Incognito</b><span className="route-sep">·</span>not saved</> : model === AUTO ? <><b>Auto</b><span className="route-sep">·</span>{enabledCount} model{enabledCount === 1 ? '' : 's'}</> : <><span className="route-label-muted">Routing to</span><b>{modelLabel(catalog, model)}</b></>}
+        {isTemporaryChat(chat) ? (
+          <span className="topbar-route welcome-route" title="Incognito: not saved, memory off">
+            <span className="route-dot off" aria-hidden="true" />
+            <b>Incognito</b><span className="route-sep">·</span>not saved
           </span>
-        ) : <span className="chat-heading" title={chat?.title}>{chat?.title || 'Chat'}</span>}
+        ) : !empty && <span className="chat-heading" title={chat?.title}>{chat?.title || 'Chat'}</span>}
         {currentProject && (
           <button
             type="button"

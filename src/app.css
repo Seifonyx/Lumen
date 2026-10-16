@@ -4329,3 +4329,30 @@ button.project-crumb:hover { color: var(--text); background: var(--surface-2); }
 .tool-card-wrap > .tool-card { flex: 1; min-width: 0; padding-inline-end: 52px; }
 .tool-card-edit { position: absolute; top: 10px; inset-inline-end: 10px; width: 36px; height: 36px; color: var(--text-3); }
 .library-form-actions .danger-text { color: var(--danger); margin-inline-end: auto; }
+
+/* Chat entry: one primary sidebar action, quiet history and explicit voice actions. */
+.sidebar .sidebar-bottom-actions .sidebar-primary-action {
+  background: var(--accent); color: var(--accent-text); font-weight: 600;
+  margin-bottom: 8px;
+}
+.sidebar .sidebar-bottom-actions .sidebar-primary-action:hover { background: var(--accent-hover); }
+.sidebar .sidebar-search-field { background: transparent; }
+.sidebar .sidebar-search-field:focus-within { background: var(--surface); }
+.sidebar .chat-list .empty-list {
+  display: block; max-width: none; margin: 0; padding: 12px var(--sb-inset);
+  text-align: start;
+}
+.composer-voice-controls { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-inline-start: auto; }
+.composer .dictation-btn, .composer .voice-start {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  width: auto; flex: none; padding-inline: 10px; border-radius: 8px;
+  font: 500 12px/1.2 var(--font); white-space: nowrap;
+}
+.composer-voice-controls svg { flex: none; }
+@media (max-width: 899px) {
+  .composer-voice-controls { flex: none; gap: 4px; margin-inline-start: 0; }
+  .composer .dictation-btn, .composer .voice-start {
+    width: 44px; min-height: 44px; padding-inline: 0; border-radius: 10px;
+  }
+  .composer-voice-controls button > span { display: none; }
+}

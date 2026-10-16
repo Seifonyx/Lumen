@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.4.3 · Solid sidebar
+
+- On iPhone, the sidebar is a solid full-height panel again, as in other iOS apps, instead of a floating glass
+  card. Glass is kept for the floating controls: New chat, the round buttons, the message box, the tab bar,
+  sheets and menus.
+
 ## 2.4.2 · Glass like other iOS 26 apps
 
 - On iPhone, the glass now matches apps like Claude: a lighter, see-through grey with a soft sheen from the

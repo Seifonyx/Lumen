@@ -70,7 +70,6 @@ html.glass .sheet,
 html.glass .modal,
 html.glass .popover,
 html.glass .menu,
-html.glass .sidebar,
 html.glass .sidebar-chip.new-chat.floating {
   border: 1px solid transparent;
   background: var(--glass-sheen) padding-box, linear-gradient(var(--glass-tint), var(--glass-tint)) padding-box, var(--glass-rim) border-box;
@@ -82,7 +81,6 @@ html.glass .sheet,
 html.glass .modal,
 html.glass .popover,
 html.glass .menu,
-html.glass .sidebar,
 html.glass .toast,
 html.glass .glass-tabbar,
 html.glass .composer {
@@ -288,14 +286,9 @@ html.glass .segmented { border: 0; border-radius: 999px; background: rgb(120 120
 html.glass .segmented button { border-radius: 999px; }
 html.glass .seg-thumb { border-radius: 999px; box-shadow: 0 3px 8px rgb(0 0 0 / 0.12), 0 0 0 0.5px rgb(0 0 0 / 0.04); }
 
-/* ---------------------------------------------------------- Sidebar: a floating glass panel */
+/* ---------------------------------------------------------- Sidebar: a solid panel, as in iOS apps
+   Full height and flush with the edge; only the floating New chat button is glass. */
 @media (max-width: 899px) {
-  html.glass .sidebar {
-    inset: max(8px, env(safe-area-inset-top)) auto max(8px, env(safe-area-inset-bottom)) 8px; height: auto;
-    border-radius: 36px; transform: translateX(calc(-100% - 24px));
-  }
-  [dir='rtl'] html.glass .sidebar, html.glass[dir='rtl'] .sidebar { inset: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)) auto; transform: translateX(calc(100% + 24px)); }
-  html.glass .sidebar.open { transform: none; }
   html.glass .scrim { background: var(--glass-scrim); }
   /* Rows at iPhone size, highlighted as one rounded piece. */
   html.glass .sidebar .chat-row { height: 44px; border-radius: 14px; }
@@ -303,12 +296,10 @@ html.glass .seg-thumb { border-radius: 999px; box-shadow: 0 3px 8px rgb(0 0 0 / 
   html.glass .sidebar .chat-row.active { box-shadow: none; }
   html.glass .sidebar .library-button { min-height: 44px; font-size: 16px; }
   html.glass .sidebar .sidebar-project-item { min-height: 40px; font-size: 16px; }
-  html.glass .sidebar .search, html.glass .sidebar-chip { background: var(--glass-fill); border-color: transparent; border-radius: 999px; }
+  html.glass .sidebar .search, html.glass .sidebar-chip:not(.floating) { background: var(--glass-fill); border-color: transparent; border-radius: 999px; }
   html.glass .sidebar-chip.new-chat.floating { border-radius: 999px; }
-  /* The panel already floats clear of the home bar, so its footer doesn't add that space again; the account
-     picture and New chat sit on one line, both 48px tall. */
-  html.glass .sidebar { padding-bottom: 8px; }
-  html.glass .sidebar .sidebar-footer { align-items: center; padding: 10px 6px 6px; border-top: 0; }
+  /* The account picture and New chat sit on one line, both 48px tall. */
+  html.glass .sidebar .sidebar-footer { align-items: center; padding: 10px 6px calc(6px + env(safe-area-inset-bottom)); border-top: 0; }
   html.glass .sidebar .sidebar-footer .sidebar-foot { flex: none; width: 48px; height: 48px; padding: 4px; margin: 0; border: 0; border-radius: 50%; display: grid; place-items: center; }
   html.glass .sidebar .sidebar-footer .sidebar-foot .avatar { width: 40px; height: 40px; }
   html.glass .sidebar .sidebar-footer .sidebar-chip.floating { height: 48px; margin: 0; }

@@ -20,6 +20,12 @@ Never replace this with a public CORS proxy or store user keys in logs. Configur
 
 ## Other providers
 
+The relay also forwards to the official endpoints of providers that refuse browser requests (`RELAY_BASES`
+in `src/lib/ai/provider-config.js`: xAI, Perplexity, Together, Fireworks, DeepInfra, SambaNova, Novita,
+Hyperbolic, Nebius, Scaleway, OVHcloud, SiliconFlow, Chutes, Featherless, Z.ai, Moonshot, Venice and Baseten). The app tries
+each directly first. Redeploy the Worker after adding a provider there.
+
+
 - Mistral: `https://api.mistral.ai/v1`; catalogue capabilities determine chat/vision support.
 - Cohere: native `/v1/models?endpoint=chat` catalogue (paginated), `/compatibility/v1/chat/completions` for generation. Evaluation keys are limited and unsuitable for production.
 - Hugging Face: `https://router.huggingface.co/v1`; use inference permission, live provider metadata and monthly credits/account caps.

@@ -161,6 +161,26 @@ export interface ApiKeys {
   alibaba?: string;
   cloudflare?: string;
   aion?: string;
+  openai?: string;
+  anthropic?: string;
+  xai?: string;
+  perplexity?: string;
+  together?: string;
+  fireworks?: string;
+  deepinfra?: string;
+  sambanova?: string;
+  novita?: string;
+  hyperbolic?: string;
+  nebius?: string;
+  scaleway?: string;
+  ovh?: string;
+  siliconflow?: string;
+  chutes?: string;
+  featherless?: string;
+  zai?: string;
+  moonshot?: string;
+  venice?: string;
+  baseten?: string;
   /** Explicit consent to credit-consuming or billable APIs; disabled by default. */
   providerAccess?: Partial<Record<keyof typeof EXTRA_PROVIDERS, boolean>>;
   cloudflareAccountId?: string;

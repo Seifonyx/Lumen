@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.6.0 · Every provider
+
+Settings → API keys now has 20 more providers, so you can use a key from almost any AI service:
+- **Big labs:** OpenAI, Anthropic (Claude), xAI (Grok), Perplexity (answers searched on the web), Moonshot (Kimi)
+  and Z.ai (GLM).
+- **Open-model hosts:** Together AI, Fireworks AI, DeepInfra, SambaNova, Novita AI, Hyperbolic, Nebius AI
+  Studio, Scaleway, OVHcloud AI Endpoints, SiliconFlow, Chutes, Featherless, Venice AI and Baseten.
+- **Free tiers:** SambaNova, Scaleway, OVHcloud, SiliconFlow and Z.ai have free tiers or free models, and show
+  under the Free filter.
+- **Off until you turn them on:** like the other added providers, each one stays off until you enable it, since
+  most charge for use. Set a spending limit in each provider's dashboard.
+- **Model lists:** each provider's models come from its own live list. Perplexity doesn't publish one, so its
+  three Sonar models are built in. OpenAI's list skips speech, image and realtime models, and models that only
+  work through its newer API.
+- **Connections:** Claude connects straight from your browser. A provider that refuses requests from browsers
+  is reached through the app's relay instead. Settings → API keys → Relay says so; your key and prompt pass
+  through the relay, and it stores neither.
+- Fixed: the offline test now checks the build actually being tested.
+
 ## 2.5.1 · Polish, part 2
 
 On iPhone:

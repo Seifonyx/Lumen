@@ -10,7 +10,7 @@ export type MainProvider = { id: MainId; label: string; placeholder: string; lin
 type Filter = 'all' | 'free' | 'connected';
 
 /** Providers with a free tier that needs no payment details. */
-const FREE = new Set<string>(['gemini', 'openrouter', 'groq', 'cerebras', 'mistral', 'cohere', 'nvidia', 'huggingface', 'cloudflare']);
+const FREE = new Set<string>(['gemini', 'openrouter', 'groq', 'cerebras', 'mistral', 'cohere', 'nvidia', 'huggingface', 'cloudflare', ...Object.entries(EXTRA_PROVIDERS).filter(([, v]) => 'free' in v && v.free).map(([k]) => k)]);
 
 /** Every provider in one list, with filters. Built-in providers work as soon as a key is added; the others also need "Enable". */
 export default function ProviderConnections({ main, draft, setDraft, saved }: { main: MainProvider[]; draft: ApiKeys; setDraft: (value: ApiKeys) => void; saved: ApiKeys }) {
@@ -107,9 +107,9 @@ export default function ProviderConnections({ main, draft, setDraft, saved }: { 
       </div>
 
       <details className="settings-card provider-relay">
-        <summary><span>NVIDIA & Cloudflare relay</span><span className="key-status-pill unset">{draft.providerRelayUrl ? 'Your relay' : 'Built-in'}</span><ChevronDown size={16} aria-hidden="true" /></summary>
+        <summary><span>Relay</span><span className="key-status-pill unset">{draft.providerRelayUrl ? 'Your relay' : 'Built-in'}</span><ChevronDown size={16} aria-hidden="true" /></summary>
         <div className="provider-connection-body">
-          <p className="muted small">Your key and prompt pass through this app’s relay to NVIDIA or Cloudflare. The relay stores neither. Leave the URL blank to use it, or enter a relay you control.</p>
+          <p className="muted small">NVIDIA and Cloudflare always connect through this app’s relay; other providers use it only if they turn away requests from browsers. Your key and prompt pass through it, and it stores neither. Leave the URL blank to use it, or enter a relay you control.</p>
           <label className="provider-field"><span>Custom relay URL (optional)</span><input type="url" aria-label="Provider relay URL" placeholder={DEFAULT_PROVIDER_RELAY_URL} autoCapitalize="none" spellCheck={false} value={draft.providerRelayUrl || ''} onChange={(e) => setDraft({ ...draft, providerRelayUrl: e.target.value })} /></label>
           <a className="link-btn small inline" href="https://github.com/Seifonyx/lumen/blob/main/server/provider-relay/README.md" target="_blank" rel="noopener noreferrer">Relay setup <ExternalLink size={12} /></a>
         </div>

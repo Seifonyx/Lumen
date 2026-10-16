@@ -30,6 +30,9 @@ const COMPAT = {
 // Speech, safety classifiers and agent systems aren't chat models.
 const COMPAT_SKIP = /(whisper|tts|playai|orpheus|guard|safeguard|distil|compound|embed|rerank)/i;
 // NVIDIA's shared /models list also includes specialist endpoints that cannot chat.
+// OpenAI's list includes speech, image, realtime and embedding models, and some that only work through its
+// newer Responses API (pro, codex, deep research), which this app doesn't use.
+const OPENAI_SKIP = /(?:realtime|audio|transcribe|tts|image|search-api|instruct|-pro\b|codex|deep-research|computer-use|moderation|embedding)/i;
 const NVIDIA_SKIP = /(?:content-safety|video-detector|ising-calibration|nemotron-parse|nvclip|deplot|(?:^|\/)riva-|(?:^|[-/])reward(?:-|$))/i;
 
 // Gemini models that aren't chat models (speech, images, video, music, embeddings, agents...).
@@ -165,8 +168,14 @@ async function compatFetch(provider, path, options = {}, catalogue = false) {
     base = keys.alibabaBaseUrl || config.base;
     if (!validAlibabaBase(base)) throw new Error('Alibaba Cloud: choose an official Model Studio endpoint.');
   }
+  // Claude takes the key in its own header too, and asks browser apps to say they're calling directly.
+  if (provider === 'anthropic') {
+    headers.set('x-api-key', keys[provider]);
+    headers.set('anthropic-version', '2023-06-01');
+    headers.set('anthropic-dangerous-direct-browser-access', 'true');
+  }
+  const relayUrl = keys.providerRelayUrl || DEFAULT_PROVIDER_RELAY_URL;
   if (config.relay) {
-    const relayUrl = keys.providerRelayUrl || DEFAULT_PROVIDER_RELAY_URL;
     if (!validRelayUrl(relayUrl)) throw new Error(`${config.label}: use a valid HTTPS relay in API keys settings.`);
     base = `${relayUrl}/${provider}`;
     if (provider === 'cloudflare') {
@@ -174,16 +183,23 @@ async function compatFetch(provider, path, options = {}, catalogue = false) {
       headers.set('x-mr-account-id', keys.cloudflareAccountId);
     }
   }
+  const send = (url) => fetch(url, { ...options, headers: Object.fromEntries(headers), credentials: 'omit', referrerPolicy: 'no-referrer' });
   try {
-    return await fetch(`${base}${path}`, { ...options, headers: Object.fromEntries(headers), credentials: 'omit', referrerPolicy: 'no-referrer' });
+    return await send(`${base}${path}`);
   } catch (error) {
     if (options.signal?.aborted) throw error;
-    throw new Error(`${config.label}: connection failed. Check the key, endpoint and browser access${config.relay ? ' to your relay' : ''}.`);
+    // A provider that turns browser requests away (no CORS) is reached through the relay instead.
+    if (config.fallback && validRelayUrl(relayUrl)) {
+      try { return await send(`${relayUrl}/${provider}${path}`); } catch (again) { if (options.signal?.aborted) throw again; }
+    }
+    throw new Error(`${config.label}: connection failed. Check the key, endpoint and browser access${config.relay || config.fallback ? ' to your relay' : ''}.`);
   }
 }
 
 async function compatCatalog(provider) {
-  const { label } = COMPAT[provider];
+  const { label, models: fixed } = COMPAT[provider];
+  // A provider without a model list (Perplexity): its documented models, checked with the key on first use.
+  if (fixed) return fixed.map(([name, title], i) => ({ id: `${provider}:${name}`, provider, name, label: title, context: 128_000, vision: false, pdf: false, thinking: /reason/.test(name), search: provider === 'perplexity', created: fixed.length - i }));
   const signal = AbortSignal.timeout(15_000);
   let data = [], pageToken = '', page = 1;
   const seen = new Set();
@@ -193,7 +209,8 @@ async function compatCatalog(provider) {
     const res = await compatFetch(provider, path, { signal }, true);
     if (!res.ok) throw new Error(`${label}: ${await upstreamError(res)}`);
     const json = await res.json();
-    const items = provider === 'cohere' ? json.models : provider === 'cloudflare' ? json.result : json.data;
+    // (Together answers with a bare list.)
+    const items = provider === 'cohere' ? json.models : provider === 'cloudflare' ? json.result : Array.isArray(json) ? json : json.data;
     if (!Array.isArray(items) || json.success === false) throw new Error(`${label}: invalid model catalogue`);
     data.push(...items);
     pageToken = json.next_page_token || '';
@@ -213,6 +230,8 @@ async function compatCatalog(provider) {
     .filter(m => provider !== 'cohere' || m.endpoints?.includes('chat'))
     .filter(m => provider !== 'cloudflare' || /text generation/i.test(m.task?.name || ''))
     .filter(m => provider !== 'huggingface' || (!m.providers?.length || m.providers.some(p => p.status === 'live')))
+    .filter(m => !m.type || /chat|text|language|llm/i.test(m.type))
+    .filter(m => provider !== 'openai' || (/^(?:gpt-|o\d|chatgpt-)/.test(m.id) && !OPENAI_SKIP.test(m.id)))
     .filter(m => !m.architecture?.output_modalities || m.architecture.output_modalities.includes('text'))
     .map((m) => ({
       id: `${provider}:${m.id}`,
@@ -224,7 +243,7 @@ async function compatCatalog(provider) {
       pdf: false, // PDFs reach these models only as extracted text
       thinking: m.reasoning === true || m.reasoning_effort?.supported === true || /gpt-oss|qwen-?3|deepseek.*(?:r1|reasoner|v4|flash)|reason|think|qwq|magistral/i.test(m.id),
       search: false,
-      created: m.created || 0,
+      created: m.created || (m.created_at ? Date.parse(m.created_at) / 1000 : 0),
     }))
     .sort((a, b) => b.created - a.created);
 }
@@ -355,7 +374,7 @@ async function openCompat(provider, name, messages, instructions, signal) {
   const res = await compatFetch(provider, '/chat/completions', {
     method: 'POST',
     signal,
-    body: JSON.stringify({ model: name, stream: true, messages: [{ role: 'system', content: instructions }, ...toCompat(messages, vision)], ...(provider === 'cloudflare' ? { options: { rejectIfBusy: true } } : {}) }),
+    body: JSON.stringify({ model: name, stream: true, messages: [{ role: 'system', content: instructions }, ...toCompat(messages, vision)], ...(provider === 'cloudflare' ? { options: { rejectIfBusy: true } } : {}), ...(provider === 'anthropic' ? { max_tokens: /claude-3-(?!7)/.test(name) ? 4096 : 16000 } : {}) }),
   });
   if (!res.ok) return { ok: false, status: res.status, ...(await readError(res)) };
   return { ok: true, events: compatEvents(res.body) };

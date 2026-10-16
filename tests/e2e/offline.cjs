@@ -5,7 +5,8 @@ const path = require('path');
 let failures = 0;
 const check = (c, l) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) failures++; };
 const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
-const SW = path.join(__dirname, '..', '..', 'dist', 'sw.js');
+// The build being served (a frozen copy while another build is made, see scripts/test-e2e.mjs).
+const SW = path.join(__dirname, '..', '..', process.env.MR_TEST_DIST || 'dist', 'sw.js');
 const original = fs.readFileSync(SW, 'utf8');
 
 (async () => {

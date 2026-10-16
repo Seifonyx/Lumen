@@ -100,7 +100,7 @@ export const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(
 export const modKey = isMac ? '⌘' : 'Ctrl ';
 
 /** Display names for model providers, in the order they're shown. */
-export const PROVIDER_NAMES = { google: 'Google', openrouter: 'OpenRouter', groq: 'Groq', cerebras: 'Cerebras', mistral: 'Mistral', cohere: 'Cohere', nvidia: 'NVIDIA NIM', huggingface: 'Hugging Face', deepseek: 'DeepSeek', alibaba: 'Alibaba Cloud', cloudflare: 'Cloudflare Workers AI', aion: 'Aion Labs' } as const;
+export const PROVIDER_NAMES = { google: 'Google', openrouter: 'OpenRouter', groq: 'Groq', cerebras: 'Cerebras', mistral: 'Mistral', cohere: 'Cohere', nvidia: 'NVIDIA NIM', huggingface: 'Hugging Face', deepseek: 'DeepSeek', alibaba: 'Alibaba Cloud', cloudflare: 'Cloudflare Workers AI', aion: 'Aion Labs', openai: 'OpenAI', anthropic: 'Anthropic', xai: 'xAI', perplexity: 'Perplexity', together: 'Together AI', fireworks: 'Fireworks AI', deepinfra: 'DeepInfra', sambanova: 'SambaNova', novita: 'Novita AI', hyperbolic: 'Hyperbolic', nebius: 'Nebius AI Studio', scaleway: 'Scaleway', ovh: 'OVHcloud', siliconflow: 'SiliconFlow', chutes: 'Chutes', featherless: 'Featherless', zai: 'Z.ai', moonshot: 'Moonshot AI', venice: 'Venice AI', baseten: 'Baseten' } as const;
 export type ProviderId = keyof typeof PROVIDER_NAMES;
 /** Provider of a model id like "groq:llama-3.3-70b-versatile". */
 export const providerOfId = (id: string): ProviderId => {

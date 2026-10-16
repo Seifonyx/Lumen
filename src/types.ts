@@ -239,7 +239,7 @@ export interface Memory {
 
 export interface ModelInfo {
   id: string;
-  provider: 'google' | 'openrouter' | 'groq' | 'cerebras' | 'mistral' | 'cohere' | 'nvidia' | 'huggingface' | 'deepseek' | 'alibaba' | 'cloudflare' | 'aion';
+  provider: 'google' | 'openrouter' | 'groq' | 'cerebras' | 'mistral' | 'cohere' | 'nvidia' | 'huggingface' | 'deepseek' | 'alibaba' | 'cloudflare' | 'aion' | 'openai' | 'anthropic' | 'xai' | 'perplexity' | 'together' | 'fireworks' | 'deepinfra' | 'sambanova' | 'novita' | 'hyperbolic' | 'nebius' | 'scaleway' | 'ovh' | 'siliconflow' | 'chutes' | 'featherless' | 'zai' | 'moonshot' | 'venice' | 'baseten';
   name: string;
   label: string;
   context: number | null;

@@ -6,7 +6,9 @@ import relay from '../../server/provider-relay/worker.mjs';
 assert(JSON.parse(readFileSync(new URL('../../server/provider-relay/wrangler.jsonc', import.meta.url))).compatibility_flags.includes('enable_request_signal'), 'Workers incoming cancellation requires enable_request_signal');
 const ids = Object.keys(EXTRA_PROVIDERS), calls = [];
 const config = { ...Object.fromEntries(ids.map(id => [id, `synthetic-${id}`])), providerAccess: Object.fromEntries(ids.map(id => [id, true])), providerRelayUrl: 'https://relay.example', cloudflareAccountId: 'a'.repeat(32) };
-const model = id => id === 'cloudflare' ? '@cf/meta/current-chat' : id === 'aion' ? 'aion-labs/current-chat' : `${id}-current-chat`;
+const model = id => id === 'cloudflare' ? '@cf/meta/current-chat' : id === 'aion' ? 'aion-labs/current-chat' : id === 'openai' ? 'gpt-current-chat' : id === 'perplexity' ? 'sonar' : `${id}-current-chat`;
+// Every provider lists one chat model, except Perplexity, whose three documented models are built in.
+const TOTAL = ids.length - 1 + EXTRA_PROVIDERS.perplexity.models.length;
 const stream = body => new Response(`data: ${JSON.stringify(body)}\n\ndata: [DONE]\n\n`, { headers: { 'content-type': 'text/event-stream' } });
 let failure = null;
 globalThis.fetch = async (url, opts = {}) => {
@@ -25,7 +27,7 @@ globalThis.fetch = async (url, opts = {}) => {
 P.setKeys(config);
 let catalogue = await P.catalog({ refresh: true });
 assert.equal(catalogue.errors.length, 0);
-assert.equal(catalogue.models.length, 8);
+assert.equal(catalogue.models.length, TOTAL);
 for (const id of ids) {
   assert(P.hasKey(id));
   assert(catalogue.models.some(m => m.id === `${id}:${model(id)}`));
@@ -46,7 +48,7 @@ for (const id of ids) {
 assert(calls.some(c => c.url === 'https://api.cohere.ai/v1/models?endpoint=chat'));
 assert(calls.some(c => c.url.startsWith('https://relay.example/cloudflare/models') && new Headers(c.opts.headers).get('x-mr-account-id') === 'a'.repeat(32)));
 P.setKeys({ ...config, providerRelayUrl: '' });
-assert.equal((await P.catalog({ refresh: true })).models.length, 8);
+assert.equal((await P.catalog({ refresh: true })).models.length, TOTAL);
 assert(calls.some(c => c.url.startsWith(`${DEFAULT_PROVIDER_RELAY_URL}/nvidia/models`)));
 assert(calls.some(c => c.url.startsWith(`${DEFAULT_PROVIDER_RELAY_URL}/cloudflare/models`)));
 P.setKeys({ ...config, providerAccess: {} });
@@ -64,7 +66,7 @@ const limited = await P.openStream({ provider: 'deepseek', name: model('deepseek
 assert.equal(limited.status, 429); assert.equal(limited.limit.retryAfterSec, 4);
 catalogue = await P.catalog({ refresh: true });
 assert.deepEqual(catalogue.failedProviders, ['deepseek']);
-assert.equal(catalogue.models.length, 7);
+assert.equal(catalogue.models.length, TOTAL - 1);
 failure = null;
 assert.equal(P.parseModelId('cloudflare:@cf/meta/model').provider, 'cloudflare');
 assert.equal(P.parseModelId('githubmodels:retired'), null);
@@ -119,4 +121,26 @@ assert.equal((await relay.fetch(req('/nvidia/chat/completions', { method: 'POST'
 assert.equal(relayCall.opts.redirect, 'manual');
 globalThis.fetch = async () => new Response(null, { status: 302, headers: { location: 'https://untrusted.example' } });
 assert.equal((await relay.fetch(req('/nvidia/models'))).status, 502, 'Relay refuses redirects without forwarding credentials');
-console.log('PASS all eight provider adapters, opt-ins, usage, limits, model safety and relay forwarding');
+// 2.6: the relay also stands in for providers that refuse browser requests, but only at their official address.
+let forwarded = '';
+globalThis.fetch = async (url) => { forwarded = String(url); return Response.json({ data: [] }); };
+assert.equal((await relay.fetch(req('/sambanova/models'))).status, 200);
+assert.equal(forwarded, 'https://api.sambanova.ai/v1/models');
+assert.equal((await relay.fetch(req('/openai/models'))).status, 404, 'providers that allow browser calls are not relayed');
+assert.equal((await relay.fetch(req('/constructor/models'))).status, 404);
+// In the app: Claude gets its own headers; a refused browser request (no CORS) retries through the relay.
+const sent = [];
+globalThis.fetch = async (url, opts = {}) => {
+  sent.push({ url: String(url), headers: new Headers(opts.headers) });
+  if (String(url).startsWith('https://api.sambanova.ai')) throw new TypeError('Failed to fetch');
+  return Response.json({ data: [{ id: 'claude-current', display_name: 'Claude Current', created_at: '2026-05-01T00:00:00Z' }, { id: 'sambanova-chat' }] });
+};
+P.setKeys({ anthropic: 'synthetic-claude', sambanova: 'synthetic-samba', providerAccess: { anthropic: true, sambanova: true }, providerRelayUrl: 'https://relay.example' });
+const both = await P.catalog({ refresh: true });
+const claude = sent.find(c => c.url.startsWith('https://api.anthropic.com'));
+assert.equal(claude.headers.get('x-api-key'), 'synthetic-claude');
+assert.equal(claude.headers.get('anthropic-dangerous-direct-browser-access'), 'true');
+assert(both.models.some(m => m.id === 'anthropic:claude-current' && m.label === 'Claude Current'));
+assert(sent.some(c => c.url === 'https://relay.example/sambanova/models'), 'falls back to the relay');
+assert(both.models.some(m => m.id === 'sambanova:sambanova-chat'));
+console.log('PASS all provider adapters, opt-ins, usage, limits, model safety and relay forwarding');

@@ -1,4 +1,6 @@
 // BYOK relay: no stored credentials, arbitrary upstreams, cookies or request logging.
+// Other providers' official endpoints, for when a provider turns browser requests away (no CORS).
+import { RELAY_BASES } from '../../src/lib/ai/provider-config.js';
 const origins = new Set(['https://lumen-chat.web.app', 'https://model-router.web.app', 'https://model-router--dev-82jv5mm2.web.app', 'http://localhost:5190']);
 export default {
   async fetch(request) {
@@ -10,8 +12,8 @@ export default {
     const error = (message, status) => Response.json({ error: { message } }, { status, headers: cors });
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     const url = new URL(request.url);
-    const match = /^\/(nvidia|cloudflare)\/(models|chat\/completions|image)$/.exec(url.pathname);
-    if (!match) return error('Unsupported relay route', 404);
+    const match = /^\/([a-z]+)\/(models|chat\/completions|image)$/.exec(url.pathname);
+    if (!match || !(match[1] === 'nvidia' || match[1] === 'cloudflare' || Object.hasOwn(RELAY_BASES, match[1]))) return error('Unsupported relay route', 404);
     const [, provider, path] = match;
     // Images: Cloudflare Workers AI's FLUX.1 [schnell] only (inside its free daily allowance).
     if (path === 'image' && provider !== 'cloudflare') return error('Unsupported relay route', 404);
@@ -21,6 +23,8 @@ export default {
     let target;
     if (provider === 'nvidia') {
       target = `https://integrate.api.nvidia.com/v1/${path}`;
+    } else if (provider !== 'cloudflare') {
+      target = `${RELAY_BASES[provider]}/${path}`;
     } else {
       const account = request.headers.get('x-mr-account-id') || '';
       if (!/^[a-f0-9]{32}$/i.test(account)) return error('Invalid Cloudflare account ID', 400);

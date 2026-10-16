@@ -8,7 +8,7 @@ import { db } from './firebase';
 import { quota } from './quota';
 import { AI_PROVIDERS } from './ai/provider-config.js';
 
-export type Provider = 'gemini' | 'openrouter' | 'groq' | 'cerebras' | 'mistral' | 'cohere' | 'nvidia' | 'huggingface' | 'deepseek' | 'alibaba' | 'cloudflare' | 'aion';
+export type Provider = 'gemini' | 'openrouter' | 'groq' | 'cerebras' | 'mistral' | 'cohere' | 'nvidia' | 'huggingface' | 'deepseek' | 'alibaba' | 'cloudflare' | 'aion' | 'openai' | 'anthropic' | 'xai' | 'perplexity' | 'together' | 'fireworks' | 'deepinfra' | 'sambanova' | 'novita' | 'hyperbolic' | 'nebius' | 'scaleway' | 'ovh' | 'siliconflow' | 'chutes' | 'featherless' | 'zai' | 'moonshot' | 'venice' | 'baseten';
 const PROVIDERS = AI_PROVIDERS as Provider[];
 export interface LimitInfo {
   scope: 'day' | 'minute' | 'unknown';

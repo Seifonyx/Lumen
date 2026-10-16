@@ -131,8 +131,11 @@ export function Exit({ kind, parts, children }: { kind: ExitKind; parts?: [strin
  * screen now; `to` finds the screen after the change. The change itself is applied immediately and in full,
  * so focus, state and tests see it at once; only a copy of the old screen is animated.
  */
+/** Set while a change has already been animated by a gesture (swipe-back), so pageSwap just applies it. */
+export const swapControl = { skip: false };
+
 export function pageSwap(dir: 'push' | 'pop' | 'fade', from: HTMLElement | null, to: () => HTMLElement | null, change: () => void) {
-  if (!from || motionOff() || !from.isConnected || !from.parentNode) { change(); return; }
+  if (swapControl.skip || !from || motionOff() || !from.isConnected || !from.parentNode) { change(); return; }
   const ghost = from.cloneNode(true) as HTMLElement;
   copyValues(from, ghost);
   ghost.inert = true;

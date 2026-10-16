@@ -5,6 +5,7 @@ import './glass.css';
 import App from './App';
 import { initViewport } from './lib/viewport';
 import { initGlass } from './lib/glass';
+import { initPress } from './lib/press';
 import { installKeyboardDismiss } from './lib/keyboard-dismiss';
 import { loadMarkdownExtras } from './lib/markdown';
 import { shareIdFromPath } from './lib/share';
@@ -15,6 +16,7 @@ const sharedId = shareIdFromPath();
 initViewport();
 // iPhone: the see-through "glass" look, where it runs smoothly.
 initGlass();
+initPress();
 installKeyboardDismiss();
 
 // No zooming on phones: pinch is blocked here for iPhone (Safari's gesture events) and by

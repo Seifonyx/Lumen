@@ -85,14 +85,23 @@ html.glass .composer {
   backdrop-filter: var(--glass-filter-strong);
 }
 
-/* Press: glass swells under your finger and springs back, like iOS 26. */
-html.glass :is(.topbar .menu-btn, .topbar-trailing .icon-btn, .hub-nav, .hub-close, .settings-top .icon-btn, .to-bottom, .composer .send-btn, .composer .tool-btn, .composer .icon-btn, .sidebar-chip.new-chat.floating) {
-  transition: scale 0.45s var(--spring), background-color 0.2s, filter 0.2s;
+/* Press (lib/press.ts swells glass buttons by touch): the light that gathers under your finger. */
+.press-glow { display: none; }
+html.glass .press-glow {
+  display: block; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 2;
+  background: radial-gradient(circle at var(--px, 50%) var(--py, 50%), rgb(255 255 255 / 0.42), rgb(255 255 255 / 0.12) 38%, transparent 70%);
+  mix-blend-mode: plus-lighter; opacity: 1; transition: opacity 0.35s;
+  animation: press-glow-in 0.18s ease-out;
 }
-html.glass :is(.topbar .menu-btn, .topbar-trailing .icon-btn, .hub-nav, .hub-close, .settings-top .icon-btn, .to-bottom, .composer .send-btn, .composer .tool-btn, .composer .icon-btn, .sidebar-chip.new-chat.floating):active {
-  scale: 1.12; filter: brightness(1.06);
-}
-html.glass .topbar-trailing .icon-btn:active { scale: 1.08; background: var(--glass-fill-press); }
+@keyframes press-glow-in { from { opacity: 0; } }
+/* The older press styles (shrink, grey fill) give way to the swell. */
+html.glass :is(.btn, .icon-btn, .tool-btn, .send-btn, .sidebar-chip, .model-button, .composer-bar .tool-btn):active:not(:disabled) { transform: none; }
+html.glass :is(.topbar, .hub-bar, .settings-top, .composer, .sidebar-footer) .icon-btn:active:not(:disabled) { background: none; }
+html.glass .chat-open:active { background: none; transform: none; }
+/* Rows highlight and cards sink a little, as in iOS lists. */
+html.glass :is(.chat-row, .sheet-row, .settings-tabs button, .mp-item, .mp-layout, .library-button, .sidebar-project-item, .menu button):active { background: var(--glass-fill-press); }
+html.glass :is(.tool-card, .project-card, .lib-card, .coll-item, .study-deck) { transition: scale 0.4s var(--spring), border-color 0.15s, box-shadow 0.2s; }
+html.glass :is(.tool-card, .project-card, .lib-card, .coll-item, .study-deck):active { scale: 0.97; transition-duration: 0.12s; }
 
 /* iOS 26 "scroll edge": what scrolls under the bars is softly blurred and faded out. */
 html.glass .main > .topbar::before, html.glass .hub-bar::before, html.glass .settings-top::before {
@@ -282,6 +291,12 @@ html.glass .seg-thumb { border-radius: 999px; box-shadow: 0 3px 8px rgb(0 0 0 / 
   [dir='rtl'] html.glass .sidebar, html.glass[dir='rtl'] .sidebar { inset: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)) auto; transform: translateX(calc(100% + 24px)); }
   html.glass .sidebar.open { transform: none; }
   html.glass .scrim { background: var(--glass-scrim); }
+  /* Rows at iPhone size, highlighted as one rounded piece. */
+  html.glass .sidebar .chat-row { height: 44px; border-radius: 14px; }
+  html.glass .sidebar .chat-row .chat-open { height: 44px; font-size: 16px; }
+  html.glass .sidebar .chat-row.active { box-shadow: none; }
+  html.glass .sidebar .library-button { min-height: 44px; font-size: 16px; }
+  html.glass .sidebar .sidebar-project-item { min-height: 40px; font-size: 16px; }
   html.glass .sidebar .search, html.glass .sidebar-chip { background: var(--glass-fill); border-color: transparent; border-radius: 999px; }
   html.glass .sidebar-chip.new-chat.floating { border-radius: 999px; }
   /* The panel already floats clear of the home bar, so its footer doesn't add that space again; the account
@@ -331,3 +346,56 @@ html.glass .toast { border-radius: 999px; padding-inline: 18px; }
 @media (prefers-reduced-transparency: reduce) {
   html.glass * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
+
+/* Swipe-back (lib/swipe-back.ts): the chat shows under the page while it's being swiped away. */
+.app.swipe-revealing > .main { display: flex !important; }
+.app.swipe-revealing > .hub-page, .app.swipe-revealing > .settings-page { position: fixed; inset: 0; z-index: 41; }
+.swipe-dim { position: absolute; inset: 0; z-index: 30; background: #000; opacity: 0.08; pointer-events: none; }
+
+/* ---------------------------------------------------------- Long-press menus (iOS 26)
+   The screen behind blurs more and dims less; the held item lifts with a deeper shadow; the menu is glass,
+   with each action's name first and its icon at the far end, thin lines between them, as on iPhone. */
+html.glass .ctx-scrim { background: rgb(0 0 0 / 0.12); -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); }
+html.glass .ctx-preview { border-radius: 22px; box-shadow: 0 18px 50px rgb(0 0 0 / 0.22), 0 2px 8px rgb(0 0 0 / 0.1); }
+html.glass .menu.ctx-menu { border-radius: 26px; padding: 6px 0; width: min(260px, calc(100vw - 24px)); }
+html.glass .menu.ctx-menu button { flex-direction: row-reverse; justify-content: space-between; height: 46px; padding: 0 18px; font-size: 17px; border-radius: 0; gap: 16px; position: relative; }
+html.glass .menu.ctx-menu button + button::before { content: ''; position: absolute; top: 0; inset-inline: 18px 0; height: 0.5px; background: color-mix(in srgb, var(--text) 14%, transparent); }
+html.glass .menu.ctx-menu button svg { width: 20px; height: 20px; flex: none; }
+html.glass .menu.ctx-menu button.danger { color: #ff3b30; }
+
+/* ---------------------------------------------------------- Icons
+   iOS draws its icons heavier and a bit larger than a website's thin outlines. */
+html.glass svg.lucide { stroke-width: 2.1px; }
+html.glass :is(.topbar, .hub-bar, .settings-top) .icon-btn svg { width: 22px; height: 22px; }
+html.glass .composer :is(.tool-btn, .icon-btn) svg { width: 22px; height: 22px; }
+html.glass .composer .send-btn svg { width: 22px; height: 22px; stroke-width: 2.4px; }
+html.glass .sidebar .library-button svg, html.glass .sidebar .search svg { width: 21px; height: 21px; }
+html.glass .msg-actions .msg-action svg { width: 19px; height: 19px; }
+html.glass .settings-tabs .tab-icon svg { width: 20px; height: 20px; }
+html.glass .sheet-row > svg { width: 21px; height: 21px; }
+
+/* ---------------------------------------------------------- Polish
+   Buttons are capsules (iOS 26); the account card never wraps the email; the selected option in a segmented
+   control is lighter than its track in dark mode, as on iOS; the model line under a reply uses the normal font;
+   your own messages keep their actions in the long-press menu (Copy, Select text, Edit, Branch), as in Messages. */
+html.glass .btn { border-radius: 999px; }
+html.glass .account-row .setting-text { min-width: 0; }
+html.glass .account-row .setting-hint { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html.glass .account-row .logout { border-radius: 999px; padding-inline: 14px; }
+html.glass { --seg-thumb: #ffffff; }
+@media (prefers-color-scheme: dark) { html.glass:not([data-theme='light']) { --seg-thumb: #636366; } }
+html.glass[data-theme='dark'] { --seg-thumb: #636366; }
+html.glass .seg-thumb { background: var(--seg-thumb); }
+html.glass .segmented button.active { color: var(--text); }
+html.glass .model-tag { font: 500 12.5px/1.4 var(--font); letter-spacing: 0; }
+@media (max-width: 899px) and (pointer: coarse) {
+  html.glass .msg-actions.user-actions { display: none; }
+}
+@media (max-width: 899px) {
+  /* Every row in the Settings list has the same thin line under it, the selected one included. */
+  html.glass .settings-page .settings-tabs button, html.glass .settings-page .settings-tabs button.active { background: none; border-bottom: 0.5px solid var(--border); }
+  html.glass .settings-page .settings-tabs button:last-child { border-bottom: 0; }
+  html.glass .settings-page .settings-tabs button.active::before { display: none; }
+}
+/* A held glass button lifts off the surface. */
+html.glass .is-pressed { box-shadow: var(--glass-depth), 0 10px 26px rgb(0 0 0 / 0.18), 0 0 0 0.5px rgb(255 255 255 / 0.5) inset; z-index: 3; }

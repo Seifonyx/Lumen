@@ -72,6 +72,42 @@ const only = (process.env.SHOTS || '').split(',').filter(Boolean);
     await page.click('.sidebar-foot'); await page.waitForTimeout(400); await shot('8-settings');
     await page.locator('.settings-tabs button').first().click(); await page.waitForTimeout(400); await shot('9-settings-general');
     await ctx.close();
+
+    // Interactions, with motion on: a held button, a long-pressed reply, a page half swiped back.
+    if (process.env.NO_INTERACTIONS) continue;
+    const ictx = await browser.newContext({ viewport: { width: 393, height: 852 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, userAgent: UA, serviceWorkers: 'block' });
+    await profile(ictx, 'shots-glass', theme);
+    await ictx.addInitScript(() => { window.__mrMotion = true; });
+    const ip = await ictx.newPage();
+    const iready = async () => { await ip.waitForSelector('.app:not(.app-skeleton) .composer textarea'); await ip.waitForTimeout(600); };
+    await ip.goto(url); await iready();
+    await seed(ip, 'shots-glass', chats); await ip.goto(url); await iready();
+    const ishot = async (n) => { if (only.length && !only.includes(n)) return; await ip.screenshot({ path: path.join(out, `${theme}-${n}.png`) }); };
+    const touchAt = (sel, moves = [], hold = true) => ip.evaluate(async ([sel, moves, hold]) => {
+      const el = document.querySelector(sel); const r = el.getBoundingClientRect(); const x0 = r.left + r.width / 2, y0 = r.top + Math.min(r.height / 2, 60);
+      const target = document.elementFromPoint(x0, y0);
+      const mk = (x, y) => new Touch({ identifier: 5, target, clientX: x, clientY: y });
+      const fire = (type, x, y, down = true) => target.dispatchEvent(new TouchEvent(type, { touches: down ? [mk(x, y)] : [], changedTouches: [mk(x, y)], bubbles: true, cancelable: true }));
+      target.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, isPrimary: true, pointerType: 'touch', clientX: x0, clientY: y0 }));
+      fire('touchstart', x0, y0);
+      for (const [dx, dy] of moves) { await new Promise((ok) => setTimeout(ok, 16)); target.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, isPrimary: true, pointerType: 'touch', clientX: x0 + dx, clientY: y0 + dy })); fire('touchmove', x0 + dx, y0 + dy); }
+      if (!hold) fire('touchend', x0, y0, false);
+    }, [sel, moves, hold]);
+    await touchAt('.composer .tool-btn', [[6, -4], [10, -8]]);
+    await ip.waitForTimeout(500); await ishot('10-press');
+    await ip.evaluate(() => window.dispatchEvent(new PointerEvent('pointerup')));
+    await ip.click('.menu-btn'); await ip.waitForTimeout(500);
+    await ip.locator('.sidebar').getByText('A week in Lisbon', { exact: true }).first().click();
+    await ip.waitForSelector('.msg.assistant'); await ip.waitForTimeout(700);
+    await ip.evaluate(() => { document.querySelector('.messages').scrollTop = 0; });
+    await touchAt('.msg.assistant');
+    await ip.waitForTimeout(1300); await ishot('11-long-press');
+    await ip.keyboard.press('Escape'); await ip.waitForTimeout(500);
+    await ip.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tools-page' })));
+    await ip.waitForSelector('.hub-page'); await ip.waitForTimeout(800);
+    await touchAt('.hub-head', [[20, 2], [60, 4], [110, 5], [150, 6]]);
+    await ip.waitForTimeout(250); await ishot('12-swipe-back');
+    await ictx.close();
   }
   await browser.close();
 })().catch((e) => { console.error(e); process.exit(1); });

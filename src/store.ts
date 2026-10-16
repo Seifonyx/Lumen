@@ -1259,6 +1259,15 @@ export const useStore = create<State>((set, get) => {
         pageSwap(phone ? (opening ? 'push' : 'pop') : 'fade', document.querySelector<HTMLElement>(opening ? '.app > .main' : '.settings-page'), () => document.querySelector<HTMLElement>(opening ? '.settings-page' : '.app > .main'), apply);
         return;
       }
+      // Pages (Projects, Collection, Tools…) on phones: they slide in over the chat and slide away to go back.
+      // Moving between pages (the tab bar) doesn't slide, as with iOS tabs.
+      if ('page' in patch && typeof document !== 'undefined' && !get().settingsOpen && window.matchMedia('(max-width: 899px)').matches && (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation?.isActive) {
+        const was = get().page, next = patch.page ?? null;
+        if (Boolean(was) !== Boolean(next)) {
+          pageSwap(next ? 'push' : 'pop', document.querySelector<HTMLElement>(next ? '.app > .main' : '.hub-page'), () => document.querySelector<HTMLElement>(next ? '.hub-page' : '.app > .main'), apply);
+          return;
+        }
+      }
       apply();
     },
 

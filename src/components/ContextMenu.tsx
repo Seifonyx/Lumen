@@ -75,8 +75,12 @@ export default function ContextMenu({ anchor, at, items, label, align = 'start',
     menu.current?.focus({ preventScroll: true });
     if (motionOff()) return;
     const spring = getComputedStyle(document.documentElement).getPropertyValue('--spring-pop').trim() || 'ease-out';
-    box.animate([{ transform: `translateY(${place.from - place.top}px) scale(1)` }, { transform: 'translateY(0) scale(1.02)' }], { duration: 380, easing: spring, fill: 'both' });
-    menu.current?.animate([{ opacity: 0, transform: 'translateY(-6px) scale(.92)' }, { opacity: 1, transform: 'none' }], { duration: 340, easing: spring });
+    // iPhone glass look (iOS 26): the item lifts a little higher and the menu grows out of it like a droplet.
+    const glass = document.documentElement.classList.contains('glass');
+    box.animate([{ transform: `translateY(${place.from - place.top}px) scale(1)` }, { transform: `translateY(0) scale(${glass ? 1.035 : 1.02})` }], { duration: glass ? 460 : 380, easing: spring, fill: 'both' });
+    menu.current?.animate(glass
+      ? [{ opacity: 0, transform: 'translateY(-10px) scale(.4)', filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0)', offset: 0.5 }, { opacity: 1, transform: 'none', filter: 'blur(0)' }]
+      : [{ opacity: 0, transform: 'translateY(-6px) scale(.92)' }, { opacity: 1, transform: 'none' }], { duration: glass ? 480 : 340, easing: spring });
   }, [place, anchor, wrap, pad]);
 
   return createPortal(

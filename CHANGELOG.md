@@ -1,5 +1,30 @@
 # Changelog
 
+## 2.4.0 · Feels like an iPhone app
+
+On iPhones and iPads:
+- **Buttons you can feel:** hold a glass button and it swells under your finger, with a soft light where you
+  touch. It leans after your finger if you drag, then springs back with a little bounce when you let go.
+  List rows highlight and cards sink slightly, as in iOS.
+- **Swipe back from anywhere:** on Projects, Collection, Tools and Settings, swipe right anywhere on the screen
+  to go back. The page follows your finger and the chat slides back in underneath. Let go early and it
+  springs back.
+- **Pages slide in:** Projects, Collection, Tools, Assistants and Study slide in from the right and slide away
+  when you close them. Switching tabs doesn't slide, as on iOS.
+- **Long-press menus like iOS 26:** the screen behind blurs, the message lifts a little higher, and the glass
+  menu grows out of it. Each action's name comes first with its icon at the far end, and thin lines separate
+  them.
+- **Heavier, larger icons**, closer to the iPhone's own.
+- **Polish:**
+  - Your own messages keep Copy, Select text, Edit and Branch in the long-press menu instead of a row of
+    icons, as in Messages.
+  - Buttons are capsules, and Sign out no longer has square corners.
+  - Your email no longer wraps onto a second line in Settings.
+  - In dark mode, the selected Theme and Text size option is lighter than its bar.
+  - Every Settings row has its dividing line.
+  - Sidebar rows are taller and highlight as one rounded piece when pressed.
+  - The model name under a reply uses the normal font.
+
 ## 2.3.1 · Sidebar touch-ups on iPhone
 
 - Your account picture and the New chat button now sit on the same line at the bottom of the sidebar, and

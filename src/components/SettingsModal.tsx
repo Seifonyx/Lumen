@@ -688,7 +688,10 @@ export default function SettingsModal() {
     const page = dialog.current;
     if (!open || !page) return;
     const narrow = () => window.matchMedia('(max-width: 720px), (pointer: coarse) and (max-width: 1100px)').matches;
-    return installSwipeBack(page, () => narrow() && Boolean(useStore.getState().settingsTab), (copy) => copy.classList.remove('has-section'), () => setUi({ settingsTab: '' }));
+    const section = installSwipeBack(page, () => narrow() && Boolean(useStore.getState().settingsTab), (copy) => copy.classList.remove('has-section'), () => setUi({ settingsTab: '' }));
+    // iPhone glass look: from the list of sections, swiping right closes Settings and the chat slides back.
+    const root = installSwipeBack(page, () => narrow() && !useStore.getState().settingsTab && document.documentElement.classList.contains('glass'), () => {}, () => setUi({ settingsOpen: false }), { reveal: () => document.querySelector<HTMLElement>('.app > .main') });
+    return () => { section(); root(); };
   }, [open, setUi]);
 
 

@@ -3,6 +3,8 @@
 import { ArrowLeft, FolderKanban, LayoutGrid, Menu, MessageCircle, Shapes } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useFocusScope } from '../lib/focus-scope';
+import { installSwipeBack } from '../lib/swipe-back';
+import { swapControl } from '../lib/motion';
 import { useStore } from '../store';
 
 export interface HubTab<T extends string> { id: T; label: string; icon?: ReactNode; count?: number }
@@ -24,6 +26,15 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
     return () => window.removeEventListener('keydown', key);
   }, [onBack, onClose]);
   useEffect(() => { root.current?.focus({ preventScroll: true }); }, []);
+  // Phones: swipe right to go back (a step inside the page goes back to the page; otherwise to the chat).
+  const back = useRef(onBack || onClose);
+  back.current = onBack || onClose;
+  const stepped = Boolean(onBack);
+  useEffect(() => {
+    const page = root.current;
+    if (!page) return;
+    return installSwipeBack(page, () => window.matchMedia('(max-width: 899px)').matches, () => {}, () => back.current(), stepped ? {} : { reveal: () => document.querySelector<HTMLElement>('.app > .main') });
+  }, [stepped]);
   // iPhone glass look: the small title in the bar shows once the big one has scrolled away.
   const [scrolled, setScrolled] = useState(false);
   return (
@@ -68,7 +79,8 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
 /** iPhone glass look: a floating tab bar to move between the chat and the main pages (shown only with glass). */
 function GlassTabs() {
   const page = useStore((s) => s.page);
-  const go = (p: 'projects' | 'collection' | 'tools' | null) => useStore.getState().setUi({ page: p, pageArg: undefined });
+  // Switching tabs doesn't slide (as on iOS), not even back to the chats.
+  const go = (p: 'projects' | 'collection' | 'tools' | null) => { swapControl.skip = true; try { useStore.getState().setUi({ page: p, pageArg: undefined }); } finally { swapControl.skip = false; } };
   const tabs = [
     { id: null, label: 'Chats', icon: <MessageCircle size={22} /> },
     { id: 'projects' as const, label: 'Projects', icon: <FolderKanban size={22} /> },

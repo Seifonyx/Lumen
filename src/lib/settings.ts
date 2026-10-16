@@ -87,10 +87,13 @@ export function applyAppearance(s: Settings) {
   }
 }
 
-/** Reply language and answer length, as instructions for every model ('' when both are left to the model). */
+/** Reply language and answer length, as instructions for every model. With no reply language chosen, the
+ *  reply follows the language of the person's latest message: other context (memories, project names and
+ *  notes, files, earlier messages) can be in another language, and some models would otherwise copy it. */
 export function styleInstructions(settings: Pick<Settings, 'replyLanguage' | 'answerLength'>): string {
   const out: string[] = [];
   if (settings.replyLanguage) out.push(`Always reply in ${settings.replyLanguage}, whatever language the user writes in, unless they ask for another language.`);
+  else out.push("Reply in the language of the user's latest message. Memories, project names and notes, files and earlier messages may be in other languages; they don't change the language you reply in.");
   if (settings.answerLength === 'short') out.push('Keep answers short: lead with the answer in a few sentences or bullets, and only go longer when the task clearly needs it.');
   else if (settings.answerLength === 'detailed') out.push('Give thorough answers: explain the reasoning, cover the important details and caveats, and include examples where they help.');
   return out.join('\n');

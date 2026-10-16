@@ -152,7 +152,11 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   useEffect(() => {
     const el = scroller.current;
     if (!el) return;
-    const onScroll = () => {
+    // Measured at most once a frame: while a reply streams the view scrolls every frame, and measuring the
+    // whole conversation on each scroll event made the app sluggish.
+    let queued = 0, lastScrolled: boolean | null = null;
+    const onScroll = () => { if (!queued) queued = requestAnimationFrame(() => { queued = 0; measure(); }); };
+    const measure = () => {
       const gap = el.scrollHeight - el.scrollTop - el.clientHeight;
       // (The glide's own steps don't count as you scrolling away, even while it's catching up.)
       const gliding = glide.current.frame && Math.abs(el.scrollTop - glide.current.ours) < 2;
@@ -163,12 +167,13 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
       saveTimer = window.setTimeout(() => { if (chat) positions.set(chat.id, stick.current ? null : topAnchor(el)); }, 150);
       setShowDown(gap > 400);
       // The top bar gets a soft edge once the conversation scrolls under it.
-      el.closest('.main')?.querySelector('.topbar')?.classList.toggle('scrolled', el.scrollTop > 6);
+      const scrolled = el.scrollTop > 6;
+      if (scrolled !== lastScrolled) { lastScrolled = scrolled; el.closest('.main')?.querySelector('.topbar')?.classList.toggle('scrolled', scrolled); }
       if (gap < 80) setUnseen(false);
     };
     let saveTimer = 0;
     el.addEventListener('scroll', onScroll, { passive: true });
-    return () => { clearTimeout(saveTimer); el.removeEventListener('scroll', onScroll); };
+    return () => { clearTimeout(saveTimer); cancelAnimationFrame(queued); el.removeEventListener('scroll', onScroll); };
   }, [chat?.id, projectWorkspaceOpen, empty]);
 
   if (currentProject && projectWorkspaceOpen) {

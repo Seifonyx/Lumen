@@ -294,18 +294,21 @@ export function flySent(bubble: HTMLElement | null | undefined) {
 // HTML: text that arrived in the last half second is wrapped word by word in spans whose fade is offset by
 // how long ago it arrived, so re-rendering mid-fade continues smoothly instead of restarting.
 const FADE_MS = 500;
-const SKIP = '.katex, svg, style, script, .fresh';
+const SKIP_BLOCKS = '.katex, svg, style, script';
 export type Arrivals = { total: number; list: { at: number; time: number }[] };
 export function fadeInText(root: HTMLElement, arrivals: Arrivals) {
   const now = performance.now();
   const nodes: { node: Text; start: number }[] = [];
   let total = 0;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-    acceptNode: (n) => (n.parentElement?.closest(SKIP) && !n.parentElement.classList.contains('fresh') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+  // Maths, graphics and code styles are skipped as whole blocks (one check per element, not per word), so this
+  // stays cheap on long replies; text already fading is counted but not wrapped again.
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+    acceptNode: (n) => (n.nodeType === Node.TEXT_NODE ? NodeFilter.FILTER_ACCEPT : (n as Element).matches(SKIP_BLOCKS) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP),
   });
-  for (let n = walker.nextNode() as Text | null; n; n = walker.nextNode() as Text | null) {
-    if (!n.parentElement?.classList.contains('fresh')) nodes.push({ node: n, start: total });
-    total += n.length;
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const t = n as Text;
+    if (!t.parentElement?.classList.contains('fresh')) nodes.push({ node: t, start: total });
+    total += t.length;
   }
   if (total > arrivals.total) arrivals.list.push({ at: arrivals.total, time: now });
   else if (total < arrivals.total) arrivals.list = arrivals.list.filter((a) => a.at < total);

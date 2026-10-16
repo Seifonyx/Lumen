@@ -46,6 +46,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     await page.click('.send-btn');
     await page.locator('.msg.assistant').nth(1).locator('.model-tag').waitFor();
     assert.doesNotMatch(bodies.at(-1), /Always reply in|Keep answers short/);
+    assert.match(bodies.at(-1), /language of the user's latest message/, 'with no reply language chosen, replies follow the language you write in');
     console.log('PASS turning them off removes the instructions');
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }

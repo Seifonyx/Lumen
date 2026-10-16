@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.4.8 · A responsive app while replies stream
+
+- Fixed: the whole app could freeze while a long reply streamed (the sidebar took seconds to open, taps
+  didn't respond). While a reply comes in:
+  - finished paragraphs are now drawn once and reused, so each update only redraws the paragraph still
+    being written, instead of rebuilding the whole reply;
+  - the chat checks its scroll position at most once per frame, instead of measuring the whole
+    conversation on every scroll step;
+  - the fade-in of new words does far less work on long replies.
+- The steady flow from 2.4.7 now only applies to replies that really arrive in bursts, and it slows down if
+  the phone gets busy, so it never makes the app sluggish.
+- Fixed: replies could come back in another language (for example Arabic) when you wrote in English. With
+  Reply language left on automatic, models are now told to answer in the language of your latest message,
+  even when memories, project names, files or earlier messages are in another language.
+- Correction to 2.4.7: the grey circle seen in screen recordings was the iPhone's AssistiveTouch button,
+  not part of Lumen.
+
 ## 2.4.7 · Replies flow smoothly
 
 - Fixed: replies could freeze for a few seconds and then jump ahead in big blocks. Some providers and

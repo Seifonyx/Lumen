@@ -25,11 +25,34 @@ function cachedSegments(text: string, streaming: boolean, count: number, extras:
   return parts;
 }
 
+// While a reply streams, its finished paragraphs (everything before the last blank line that isn't inside a
+// code block) are parsed once each and reused, so each update re-draws only the paragraph still being written
+// instead of the whole reply. That keeps long replies, and the rest of the app, smooth while text arrives.
+const FENCE = /^ {0,3}(`{3,}|~{3,})/gm;
+function streamingSegments(text: string, count: number, extras: number): Segment[] {
+  // Repository edits written as SEARCH/REPLACE blocks can span blank lines: parse those replies whole.
+  if (/<{5,9} ?SEARCH/.test(text)) return segments(text, true, count);
+  const blocks: string[] = [];
+  let start = 0, open = false, last = 0;
+  for (let i = text.indexOf('\n\n'); i >= 0; i = text.indexOf('\n\n', i + 2)) {
+    // Inside a code block a blank line isn't a paragraph break.
+    open = ((text.slice(last, i).match(FENCE) || []).length % 2 === 1) !== open;
+    last = i;
+    if (open) continue;
+    blocks.push(text.slice(start, i + 2));
+    start = i + 2;
+  }
+  const out: Segment[] = [];
+  blocks.forEach((b, i) => { if (b.trim()) for (const p of cachedSegments(b, false, count, extras)) out.push({ ...p, key: `b${i}${p.key}` }); });
+  for (const p of segments(text.slice(start), true, count)) out.push({ ...p, key: `t${p.key}` });
+  return out;
+}
+
 function Markdown({ text, streaming, messageId,knowledgeSources,onSource }: { text: string; streaming: boolean; messageId?: string; knowledgeSources?:KnowledgeSource[]; onSource?:(source:KnowledgeSource)=>void }) {
   const count=knowledgeSources?.length||0;
   // Re-render once maths and code colouring have loaded.
   const extras = useSyncExternalStore(subscribeMarkdownExtras, markdownExtrasVersion);
-  const parts = useMemo(() => cachedSegments(text, streaming, count, extras), [text, streaming, count, extras]);
+  const parts = useMemo(() => (streaming ? streamingSegments(text, count, extras) : cachedSegments(text, false, count, extras)), [text, streaming, count, extras]);
   const edits = useMemo(
     () => (streaming ? [] : parts.flatMap((p) => (p.type === 'edit' && p.complete ? [parseEdit(p.kind, p.path, p.content)] : []))),
     [parts, streaming],

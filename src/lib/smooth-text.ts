@@ -5,7 +5,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { motionOff } from './motion';
 
-const STEP_MS = 40;          // how often the shown text grows (about 25 times a second)
+const STEP_MS = 80;          // how often the shown text grows (about 12 times a second)
+const BURSTY_MS = 250;       // text arriving further apart than this is paced; closer together it already flows
 const MIN_RATE = 0.03;       // never slower than ~30 characters a second
 const CATCH_UP_MS = 900;     // a big backlog is shown within about this long, so the reply never lags far behind
 
@@ -13,7 +14,7 @@ const CATCH_UP_MS = 900;     // a big backlog is shown within about this long, s
  *  finishes revealing quickly and then equals `text`. */
 export function useSmoothText(text: string, streaming: boolean): string {
   const [shown, setShown] = useState(() => (streaming ? 0 : text.length));
-  const st = useRef({ shown: streaming ? 0 : text.length, arrivals: [] as number[], prev: text.length, timer: 0, last: 0 });
+  const st = useRef({ shown: streaming ? 0 : text.length, arrivals: [] as number[], prev: text.length, timer: 0, last: 0, every: STEP_MS });
   const live = useRef({ text, streaming });
   live.current = { text, streaming };
 
@@ -25,12 +26,17 @@ export function useSmoothText(text: string, streaming: boolean): string {
     }
     s.prev = text.length;
     if (text.length < s.shown) { s.shown = text.length; setShown(s.shown); } // edited or restarted
-    if (motionOff()) { s.shown = text.length; setShown(s.shown); return; }
+    // Only bursty streams are paced: when text already arrives often, showing it as it comes is smooth and cheapest.
+    const a = s.arrivals, gaps = a.slice(1).map((x, i) => x - a[i]);
+    const bursty = gaps.length > 0 && gaps.reduce((x, y) => x + y, 0) / gaps.length > BURSTY_MS;
+    if (motionOff() || (gaps.length > 0 && !bursty && !s.timer)) { s.shown = text.length; setShown(s.shown); return; }
     if (s.shown >= text.length || s.timer) return;
     s.last = performance.now();
     const step = () => {
       const now = performance.now(), dt = now - s.last;
       s.last = now;
+      // A step that ran late means the phone is busy: take fewer, bigger steps; ease back when it's idle.
+      s.every = dt > s.every + 40 ? Math.min(400, s.every * 1.6) : Math.max(STEP_MS, s.every * 0.9);
       const { text: t, streaming: on } = live.current;
       const backlog = t.length - s.shown;
       if (backlog <= 0) { s.timer = 0; return; }
@@ -46,7 +52,7 @@ export function useSmoothText(text: string, streaming: boolean): string {
       else if (space < 0) next = t.length;
       s.shown = next;
       setShown(next);
-      s.timer = s.shown < t.length ? window.setTimeout(step, STEP_MS) : 0;
+      s.timer = s.shown < t.length ? window.setTimeout(step, s.every) : 0;
     };
     s.timer = window.setTimeout(step, 0);
   }, [text, streaming]);

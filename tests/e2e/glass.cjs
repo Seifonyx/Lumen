@@ -72,7 +72,7 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     assert.equal(await page.locator('.tool-card', { hasText: 'Deep research' }).count(), 0, 'only the chosen category shows');
     // 2.4.15: the title sits in the top bar, the search box only searches this tab, and + makes something new for it.
     assert.equal(await page.locator('.hub-head').isVisible(), false, 'no big heading or grey description');
-    assert.equal(await page.locator('.hub-new').getAttribute('aria-label'), 'New study deck');
+    assert.equal(await page.locator('.hub-new').count(), 0, 'no + on Tools (2.4.17)');
     await page.fill('input[aria-label="Search tools"]', 'research');
     assert.equal(await page.locator('.tool-card', { hasText: 'Deep research' }).count(), 0, 'search stays inside the tab');
     await page.fill('input[aria-label="Search tools"]', '');

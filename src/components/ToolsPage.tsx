@@ -75,15 +75,7 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
   const pick = (id: Section) => { setActive(id); scroller.current?.closest('.hub-scroll')?.scrollTo({ top: 0 }); };
   const ICONS: Record<Section, ReactNode> = { research: <Telescope size={22} />, create: <Pencil size={22} />, analyze: <BarChart3 size={22} />, learn: <GraduationCap size={22} />, assistants: <Sparkles size={22} /> };
   const HUES: Record<Section, number> = { research: 212, create: 330, analyze: 160, learn: 40, assistants: 270 };
-  // The + at the top left starts something new in the chosen category.
-  const CREATE: Record<Section, { label: string; run: () => void }> = {
-    research: { label: 'New deep research', run: () => composerMode('research') },
-    create: { label: 'New document', run: () => { s.setUi({ page: null }); s.newChat(); setTimeout(() => useStore.getState().openCanvas(), 0); } },
-    analyze: { label: 'New data analysis', run: () => s.setUi({ page: null, runner: { lang: 'python', code: ANALYSIS_TEMPLATES.overview.code, analysis: true } }) },
-    learn: { label: 'New study deck', run: () => s.setUi({ page: 'study', pageArg: undefined }) },
-    assistants: { label: 'New assistant', run: () => s.setUi({ page: 'assistants', pageArg: 'new' }) },
-  };
-  const bar = glassPhone ? { label: 'Tool categories', active, onSelect: (id: string) => pick(id as Section), create: CREATE[active], items: SECTIONS.map((sec) => ({ id: sec.id, label: sec.label, icon: ICONS[sec.id], hue: HUES[sec.id] })) } : undefined;
+  const bar = glassPhone ? { label: 'Tool categories', active, onSelect: (id: string) => pick(id as Section), items: SECTIONS.map((sec) => ({ id: sec.id, label: sec.label, icon: ICONS[sec.id], hue: HUES[sec.id] })) } : undefined;
   // With the tab bar, only the chosen category shows, and the search looks only inside it.
   const shownHere = (id: Section) => !glassPhone || id === active;
   const jump = (id: Section) => { setActive(id); document.getElementById(`tools-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };

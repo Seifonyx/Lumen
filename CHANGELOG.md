@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.17 · No + on Tools
+
+- On iPhone, the + at the top left of Tools is gone; the menu button is back in its place. (Collection
+  keeps its +.)
+
 ## 2.4.16 · Collection without a Search tab
 
 On iPhone:

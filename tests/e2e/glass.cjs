@@ -82,11 +82,19 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
       const between = { x: (points[0].x + points[1].x) / 2, y: points[0].y };
       await send('touchMove', between);
       await page.waitForFunction(() => Math.abs(Number(document.querySelector('.glass-tabbar').style.getPropertyValue('--lens-position')) - .5) < .01);
-      assert.equal(await nav.locator('.glass-lens').getAttribute('aria-hidden'), 'true', 'Magnified copy is decorative, not another accessible control');
+      assert.equal(await nav.locator('.glass-lens').getAttribute('aria-hidden'), 'true');
+      assert.equal(await nav.locator('.glass-lens svg, .glass-lens-content').count(), 0, 'The lens must not carry a duplicate icon');
       for (const i of indices) {
         await send('touchMove', points[i]);
         await page.waitForFunction(i => document.querySelector('.glass-tabbar').style.getPropertyValue('--i') === String(i), i);
         assert.equal(await nav.locator('[aria-current="page"]').innerText(), before, 'Preview must not navigate before release');
+        assert.equal(await nav.locator('[data-preview]').count(), 1, 'One candidate at a time');
+        assert.equal(await nav.locator('button svg').count(), points.length, 'One real icon per tab throughout the drag');
+        const centres = await nav.locator('button svg').evaluateAll(icons => icons.map(e => { const r=e.getBoundingClientRect();return r.left+r.width/2; }));
+        assert.ok(centres.every((x,n) => Math.abs(x-points[n].x)<1), 'Icons stay anchored as the lens passes');
+        assert.ok(await nav.locator('button .glass-tab-content').evaluateAll(els => els.every(e => getComputedStyle(e).opacity === '1' && getComputedStyle(e).visibility === 'visible')), 'Tab icons and labels must never disappear');
+        const active = nav.locator('[aria-current="page"]'), candidate = nav.locator('[data-preview]');
+        if (await active.getAttribute('data-preview') === null) assert.notEqual(await active.evaluate(e => getComputedStyle(e).color), await candidate.evaluate(e => getComputedStyle(e).color), 'Previous selection must not keep its selected colour while scrubbing');
       }
       if (finish === 'outside') await send('touchMove', { x: points[indices.at(-1)].x, y: points[0].y - 100 });
       await send(finish === 'cancel' ? 'touchCancel' : 'touchEnd');
@@ -108,7 +116,7 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     assert.equal(await page.locator('.tool-card', { hasText: 'Deep research' }).count(), 0, 'search stays inside the tab');
     await page.fill('input[aria-label="Search tools"]', '');
     assert.equal(await page.getByText('Connected apps').count(), 0, 'connected apps live in Settings');
-    await scrub([0, 1, 2, 3]);
+    await scrub([0, 4, 1, 3, 0, 2, 4, 1, 0, 1, 2, 3]);
     await scrub([3, 2, 1, 0]);
     await scrub([0, 1, 2], 'cancel');
     await scrub([0, 1], 'outside');
@@ -143,7 +151,7 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     await page.waitForSelector('.glass-tabbar.page-sections');
     assert.deepEqual(await page.$$eval('.glass-tabbar button', (b) => b.map((x) => x.textContent)), ['All', 'Photos', 'Docs', 'Files', 'Made'], 'no Search tab: the search box covers it');
     assert.equal(await page.locator('.coll-filters').count(), 0, 'no filter chips at the top');
-    await scrub([0, 1, 2, 3, 4]);
+    await scrub([0, 4, 1, 3, 0, 2, 4, 1, 0, 1, 2, 3, 4]);
     await scrub([4, 3, 2, 1, 0]);
     await scrub([0, 2], 'cancel');
     await scrub([0, 1], 'outside');

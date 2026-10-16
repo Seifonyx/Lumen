@@ -173,12 +173,13 @@ function GlassTabs({ bar }: { bar?: HubBar }) {
           suppressClick.current = false;
         }
       }}>
-      <span className="glass-lens" aria-hidden="true">
-        {held !== null && <span className="glass-lens-content" data-hue={items[held]?.hue !== undefined || undefined} style={items[held]?.hue !== undefined ? { ['--hue' as string]: items[held].hue } : undefined}>
-          {items[held]?.icon}<span>{items[held]?.label}</span>
-        </span>}
-      </span>
-      {items.map((t, i) => <button key={t.key} type="button" aria-current={t.on ? 'page' : undefined} data-preview={held === i || undefined} data-hue={t.hue !== undefined || undefined} style={t.hue !== undefined ? { ['--hue' as string]: t.hue } : undefined} onClick={t.pick}>{t.icon}<span>{t.label}</span></button>)}
+      <span className="glass-lens" aria-hidden="true" />
+      {items.map((t, i) => <button key={t.key} type="button" aria-current={t.on ? 'page' : undefined} data-preview={held === i || undefined} data-hue={t.hue !== undefined || undefined} style={{
+        ...(t.hue !== undefined ? { ['--hue' as string]: t.hue } : {}),
+        // Magnify the real, stationary tab content. A copied icon travelling with the
+        // lens flickers and jumps as its identity changes at each tab boundary.
+        ['--tab-zoom' as string]: held === null ? 1 : 1 + .12 * Math.max(0, 1 - Math.abs(i - (lensPosition ?? lens))),
+      }} onClick={t.pick}><span className="glass-tab-content">{t.icon}<span>{t.label}</span></span></button>)}
     </nav>
   );
 }

@@ -478,3 +478,10 @@ html.glass.kb-open .glass-tabbar, html.glass.kb-open .hub-page:has(.glass-tabbar
    box gives way to the page's (which filters by name). */
 html.glass .coll-section-title { margin: 22px 4px 10px; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
 html.glass .hub-page.has-bar .coll-searchable .knowledge-search { display: none; }
+/* …and its explanations: no intro, file-type note or duplicate heading; the empty card keeps just its title.
+   (The note about indexing sending text to Google stays: it's a privacy disclosure.) */
+html.glass .hub-page.has-bar .coll-searchable .knowledge-library > p.muted,
+html.glass .hub-page.has-bar .coll-searchable .knowledge-documents > p.muted:not(.knowledge-disclosure),
+html.glass .hub-page.has-bar .coll-searchable .knowledge-documents > header,
+html.glass .hub-page.has-bar .coll-searchable .knowledge-documents p.muted:not(.knowledge-disclosure) { display: none; }
+html.glass .hub-page.has-bar .coll-searchable .knowledge-documents:has(.knowledge-empty) .knowledge-disclosure { display: none; }

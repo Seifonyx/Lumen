@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.4.16 · Collection without a Search tab
+
+On iPhone:
+- Collection's tab bar has five tabs: the Search tab is gone, since the search box at the top covers it.
+  Files you uploaded for Lumen to search now sit in the Files tab, under your attached files. Its + uploads
+  one, and the search box finds them by name.
+- The search box on Tools and Collection is now one rounded iOS-style field. It no longer looks like a box
+  inside a box, or shows a double outline when you tap it.
+- The tab bar steps out of the way while you type, instead of riding up on the keyboard.
+
 ## 2.4.15 · Tidier Tools and Collection
 
 On iPhone, Tools and Collection are simpler:

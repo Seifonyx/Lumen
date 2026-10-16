@@ -82,13 +82,18 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     // Collection's filters are its tab bar.
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'collection' })));
     await page.waitForSelector('.glass-tabbar.page-sections');
-    assert.deepEqual(await page.$$eval('.glass-tabbar button', (b) => b.map((x) => x.textContent)), ['All', 'Photos', 'Docs', 'Files', 'Made', 'Search']);
+    assert.deepEqual(await page.$$eval('.glass-tabbar button', (b) => b.map((x) => x.textContent)), ['All', 'Photos', 'Docs', 'Files', 'Made'], 'no Search tab: the search box covers it');
     assert.equal(await page.locator('.coll-filters').count(), 0, 'no filter chips at the top');
     await page.locator('.glass-tabbar button', { hasText: 'Photos' }).click();
     assert.equal(await page.locator('.hub-new').getAttribute('aria-label'), 'Add photos');
     assert.ok(await page.locator('.hub-empty button', { hasText: 'Add photos' }).isVisible(), 'an empty tab offers to add something');
-    await page.locator('.glass-tabbar button', { hasText: 'Search' }).click();
-    await page.waitForSelector('.files-uploads');
+    // Files also holds the files uploaded for Lumen to search; the tab bar steps aside while typing.
+    await page.locator('.glass-tabbar button', { hasText: 'Files' }).click();
+    await page.waitForSelector('.coll-searchable .knowledge-library');
+    assert.equal(await page.locator('.hub-new').getAttribute('aria-label'), 'Upload a file');
+    await page.evaluate(() => document.documentElement.classList.add('kb-open'));
+    assert.equal(await page.locator('.glass-tabbar').isVisible(), false, 'tab bar hidden while typing');
+    await page.evaluate(() => document.documentElement.classList.remove('kb-open'));
     await page.locator('.hub-close').click();
     await page.waitForSelector('.hub-page', { state: 'detached' });
     console.log('PASS the tab bar moves between pages');

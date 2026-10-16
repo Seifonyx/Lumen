@@ -430,3 +430,16 @@ html.glass .composer .model-button { overflow: visible; }
 html.glass .topbar-route .route-dot { background: var(--signal); box-shadow: 0 0 7px 1px color-mix(in srgb, var(--signal) 70%, transparent); }
 html.glass .topbar-center .topbar-route { overflow: visible; max-width: none; white-space: nowrap; }
 html.glass .topbar-route .route-dot.off { background: var(--text-3); box-shadow: none; }
+
+/* Pages with their own sections in the tab bar (Tools, Collection): the chips at the top give way to the bar,
+   and each section's tab takes its own colour (the same as its cards) when chosen. */
+@media (max-width: 899px) {
+  html.glass .tools-rail { display: none; }
+  html.glass .tools-layout { display: block; }
+  html.glass .glass-tabbar.page-sections { width: calc(100% - 24px); max-width: 420px; }
+  html.glass .glass-tabbar.page-sections button { font-size: 10px; letter-spacing: 0; }
+  html.glass .glass-tabbar button[aria-current='page'][data-hue] { color: hsl(var(--hue) 65% 45%); }
+  html.glass .glass-tabbar.held .glass-lens, html.glass .glass-tabbar .glass-lens { transition: translate 0.5s var(--spring-soft), scale 0.4s var(--spring), background 0.2s; }
+}
+@media (max-width: 899px) and (prefers-color-scheme: dark) { html.glass:not([data-theme='light']) .glass-tabbar button[aria-current='page'][data-hue] { color: hsl(var(--hue) 75% 72%); } }
+@media (max-width: 899px) { html.glass[data-theme='dark'] .glass-tabbar button[aria-current='page'][data-hue], html.glass[data-theme='black'] .glass-tabbar button[aria-current='page'][data-hue] { color: hsl(var(--hue) 75% 72%); } }

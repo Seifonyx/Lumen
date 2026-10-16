@@ -56,17 +56,31 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     assert.ok(top.first >= top.bar, `the first message (${Math.round(top.first)}) starts below the top bar (${Math.round(top.bar)})`);
     console.log('PASS the chat runs under the bars without hiding messages');
 
-    // Tab bar between pages.
-    await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tools-page' })));
+    // Tab bar between pages (Projects shows the app's pages).
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'projects' })));
     await page.waitForSelector('.glass-tabbar');
-    assert.equal(await page.locator('.glass-tabbar [aria-current="page"]').innerText(), 'Tools');
-    await page.locator('.glass-tabbar button', { hasText: 'Projects' }).click();
-    await page.waitForSelector('.hub-page[aria-label="Projects"]');
-    await page.locator('.glass-tabbar button', { hasText: 'Collection' }).click();
-    await page.waitForSelector('.hub-page[aria-label="Collection"]');
+    assert.equal(await page.locator('.glass-tabbar [aria-current="page"]').innerText(), 'Projects');
     await page.locator('.glass-tabbar button', { hasText: 'Chats' }).click();
     await page.waitForSelector('.hub-page', { state: 'detached' });
     await page.waitForSelector('.composer textarea');
+    // 2.4.14: Tools shows its categories in the tab bar, one at a time, and no Connected apps.
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tools-page' })));
+    await page.waitForSelector('.glass-tabbar.page-sections');
+    assert.deepEqual(await page.$$eval('.glass-tabbar button', (b) => b.map((x) => x.textContent)), ['Research', 'Create', 'Analyze', 'Learn', 'Assistants']);
+    await page.locator('.glass-tabbar button', { hasText: 'Learn' }).click();
+    assert.deepEqual(await page.$$eval('.tools-section h2', (h) => h.map((x) => x.textContent)), ['Learn'], 'only the chosen category shows');
+    assert.equal(await page.getByText('Connected apps').count(), 0, 'connected apps live in Settings');
+    await page.locator('.hub-close').click();
+    await page.waitForSelector('.hub-page', { state: 'detached' });
+    // Collection's filters are its tab bar.
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'collection' })));
+    await page.waitForSelector('.glass-tabbar.page-sections');
+    assert.deepEqual(await page.$$eval('.glass-tabbar button', (b) => b.map((x) => x.textContent)), ['All', 'Photos', 'Docs', 'Files', 'Made', 'Search']);
+    assert.equal(await page.locator('.coll-filters').count(), 0, 'no filter chips at the top');
+    await page.locator('.glass-tabbar button', { hasText: 'Search' }).click();
+    await page.waitForSelector('.files-uploads');
+    await page.locator('.hub-close').click();
+    await page.waitForSelector('.hub-page', { state: 'detached' });
     console.log('PASS the tab bar moves between pages');
     await t.ctx.close();
 

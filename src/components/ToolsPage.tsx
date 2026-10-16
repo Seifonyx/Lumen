@@ -1,14 +1,15 @@
 // Tools: everything Lumen can do beyond a plain chat, in one catalog: research, creating, analysing, learning,
-// assistants and connected apps. Each card says what the tool does and what it needs; opening one starts it.
-// (The message box's + menu keeps the everyday ones one tap away.)
-import { BarChart3, BookOpenCheck, Calculator, Columns2, FileSearch, FolderGit2, Globe, GraduationCap, Image as ImageIcon, MessageSquareText, Pencil, PlayCircle, Plug, Plus, Search, Sparkles, Telescope, TextCursorInput } from 'lucide-react';
+// and assistants. Each card says what the tool does and what it needs; opening one starts it.
+// (The message box's + menu keeps the everyday ones one tap away; connected apps live in Settings → Connectors.)
+// On iPhones with the glass look, the bottom tab bar picks a category, so the page shows one at a time.
+import { BarChart3, BookOpenCheck, Calculator, Columns2, FileSearch, Globe, GraduationCap, Image as ImageIcon, MessageSquareText, Pencil, PlayCircle, Plus, Search, Sparkles, Telescope, TextCursorInput } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ANALYSIS_TEMPLATES } from '../lib/analysis';
 import { BUILTIN_ASSISTANTS } from '../lib/assistants';
 import { useStore } from '../store';
 import HubPage from './HubPage';
 
-type Section = 'research' | 'create' | 'analyze' | 'learn' | 'assistants' | 'apps';
+type Section = 'research' | 'create' | 'analyze' | 'learn' | 'assistants';
 interface Tool { id: string; section: Section; name: string; text: string; icon: ReactNode; needs?: string; ready?: boolean; state?: string; run: () => void }
 
 const SECTIONS: { id: Section; label: string; blurb: string }[] = [
@@ -17,7 +18,6 @@ const SECTIONS: { id: Section; label: string; blurb: string }[] = [
   { id: 'analyze', label: 'Analyze', blurb: 'Numbers, data and second opinions.' },
   { id: 'learn', label: 'Learn', blurb: 'Make what you read stick.' },
   { id: 'assistants', label: 'Assistants', blurb: 'Helpers with their own instructions and model.' },
-  { id: 'apps', label: 'Connected apps', blurb: 'Your accounts elsewhere, used in chats.' },
 ];
 
 const composerMode = (mode: 'research' | 'image') => {
@@ -33,6 +33,8 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
   const settings = useStore((s) => s.settings);
   const [query, setQuery] = useState('');
   const [active, setActive] = useState<Section>('research');
+  // iPhone glass look: one category at a time, chosen in the bottom tab bar.
+  const [glassPhone] = useState(() => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches);
   const scroller = useRef<HTMLDivElement>(null);
   const gemini = Boolean(keys.gemini);
   const s = useStore.getState();
@@ -52,9 +54,7 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
     { id: 'compare', section: 'analyze', name: 'Compare models', text: 'Ask two or three models at once, then combine their answers.', icon: <Columns2 size={20} />, run: () => { s.setUi({ page: null }); s.toast('Type your question, then choose + → Compare models.'); setTimeout(() => document.querySelector<HTMLTextAreaElement>('.composer textarea')?.focus(), 100); } },
     { id: 'study', section: 'learn', name: 'Study', text: 'Flashcards and quizzes from any chat or document. Hard cards come back sooner.', icon: <GraduationCap size={20} />, run: () => s.setUi({ page: 'study', pageArg: undefined }) },
     { id: 'study-chat', section: 'learn', name: 'Study partner', text: 'An assistant that explains step by step and quizzes you.', icon: <BookOpenCheck size={20} />, run: () => { const a = BUILTIN_ASSISTANTS.find((x) => x.id === 'builtin-study'); if (a) { s.startAssistant(a); s.setUi({ page: null }); } } },
-    { id: 'github', section: 'apps', name: 'GitHub', text: 'Work on your repositories: read code, plan and commit changes.', icon: <FolderGit2 size={20} />, state: keys.github ? 'Connected' : 'Not connected', run: () => (keys.github ? s.setUi({ page: null, repoPicker: true }) : s.setUi({ settingsOpen: true, settingsTab: 'connectors' })) },
-    { id: 'more-apps', section: 'apps', name: 'More connections', text: 'Google Drive, Calendar and others are on the way.', icon: <Plug size={20} />, state: 'Soon', run: () => s.toast('More connections are coming. Tell us which you want.') },
-  ], [gemini, keys.cloudflare, keys.github, settings.webSearch]); // eslint-disable-line react-hooks/exhaustive-deps
+  ], [gemini, keys.cloudflare, settings.webSearch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const assistants = [...(settings.assistants || []), ...BUILTIN_ASSISTANTS].slice(0, 6);
   const q = query.trim().toLowerCase();
@@ -62,7 +62,7 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
   // The category list follows the section you're reading.
   useEffect(() => {
     const root = scroller.current?.closest('.hub-scroll');
-    if (!root) return;
+    if (!root || glassPhone) return;
     const seen = new Map<string, boolean>();
     const io = new IntersectionObserver((entries) => {
       for (const e of entries) seen.set(e.target.id.replace('tools-', ''), e.isIntersecting);
@@ -71,7 +71,13 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
     }, { root, rootMargin: '0px 0px -60% 0px' });
     root.querySelectorAll('.tools-section').forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, [query]);
+  }, [query, glassPhone]);
+  const pick = (id: Section) => { setActive(id); scroller.current?.closest('.hub-scroll')?.scrollTo({ top: 0 }); };
+  const ICONS: Record<Section, ReactNode> = { research: <Telescope size={22} />, create: <Pencil size={22} />, analyze: <BarChart3 size={22} />, learn: <GraduationCap size={22} />, assistants: <Sparkles size={22} /> };
+  const HUES: Record<Section, number> = { research: 212, create: 330, analyze: 160, learn: 40, assistants: 270 };
+  const bar = glassPhone ? { label: 'Tool categories', active, onSelect: (id: string) => pick(id as Section), items: SECTIONS.map((sec) => ({ id: sec.id, label: sec.label, icon: ICONS[sec.id], hue: HUES[sec.id] })) } : undefined;
+  // With the tab bar, only the chosen category shows (a search looks through all of them).
+  const shownHere = (id: Section) => !glassPhone || Boolean(q) || id === active;
   const jump = (id: Section) => { setActive(id); document.getElementById(`tools-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   const Card = ({ t }: { t: Tool }) => (
     <button type="button" className={`tool-card sec-${t.section}`} onClick={t.run}>
@@ -85,7 +91,7 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
   );
 
   return (
-    <HubPage label="Tools" title="Tools" subtitle="Everything Lumen can do beyond a chat. The ones you use most are also in the + menu." onClose={onClose}
+    <HubPage label="Tools" title="Tools" subtitle="Everything Lumen can do beyond a chat. The ones you use most are also in the + menu." onClose={onClose} bar={bar}
       toolbar={<label className="hub-search"><Search size={16} /><input type="search" aria-label="Search tools" placeholder="Search tools" value={query} onChange={(e) => setQuery(e.target.value)} /></label>}>
       <div className="tools-layout" ref={scroller}>
         <nav className="tools-rail" aria-label="Tool categories">
@@ -93,6 +99,7 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
         </nav>
         <div className="tools-sections">
           {SECTIONS.map((sec) => {
+            if (!shownHere(sec.id)) return null;
             if (sec.id === 'assistants') {
               const list = assistants.filter((a) => match({ name: a.name, text: a.description }));
               if (q && !list.length) return null;

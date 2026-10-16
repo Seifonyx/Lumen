@@ -8,9 +8,12 @@ import { swapControl } from '../lib/motion';
 import { useStore } from '../store';
 
 export interface HubTab<T extends string> { id: T; label: string; icon?: ReactNode; count?: number }
+/** A page's own bottom tab bar (iPhone glass look): its sections instead of the app's, each with its colour. */
+export interface HubBar { items: { id: string; label: string; icon: ReactNode; hue?: number }[]; active: string; onSelect: (id: string) => void; label: string }
 
-export default function HubPage<T extends string>({ title, subtitle, actions, tabs, tab, onTab, toolbar, onClose, onBack, children, label }: {
+export default function HubPage<T extends string>({ title, subtitle, actions, tabs, tab, onTab, toolbar, onClose, onBack, children, label, bar }: {
   title: ReactNode; subtitle?: ReactNode; actions?: ReactNode; label: string;
+  bar?: HubBar;
   tabs?: HubTab<T>[]; tab?: T; onTab?: (t: T) => void;
   toolbar?: ReactNode; onClose: () => void;
   /** a step inside the page (e.g. a deck): the arrow goes back to the page instead of closing it */
@@ -71,13 +74,13 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
           <div className="hub-body">{children}</div>
         </div>
       </div>
-      {phone && !onBack && <GlassTabs />}
+      {phone && !onBack && <GlassTabs bar={bar} />}
     </section>
   );
 }
 
 /** iPhone glass look: a floating tab bar to move between the chat and the main pages (shown only with glass). */
-function GlassTabs() {
+function GlassTabs({ bar }: { bar?: HubBar }) {
   const page = useStore((s) => s.page);
   // Switching tabs doesn't slide (as on iOS), not even back to the chats.
   const go = (p: 'projects' | 'collection' | 'tools' | null) => { swapControl.skip = true; try { useStore.getState().setUi({ page: p, pageArg: undefined }); } finally { swapControl.skip = false; } };
@@ -90,13 +93,16 @@ function GlassTabs() {
   const current = page === 'assistants' || page === 'study' ? 'tools' : page;
   // The selected tab sits under a glass lens that slides to the tab you touch and swells while you hold it.
   const [held, setHeld] = useState<number | null>(null);
-  const index = Math.max(0, tabs.findIndex((t) => t.id === current));
+  // A page with its own sections (Tools, Collection) shows those instead of the app's pages.
+  const items = bar ? bar.items.map((b) => ({ key: b.id, label: b.label, icon: b.icon, hue: b.hue, on: bar.active === b.id, pick: () => bar.onSelect(b.id) }))
+    : tabs.map((t) => ({ key: t.label, label: t.label, icon: t.icon, hue: undefined, on: current === t.id, pick: () => go(t.id) }));
+  const index = Math.max(0, items.findIndex((t) => t.on));
   const lens = held ?? index;
   return (
-    <nav className={`glass-tabbar${held !== null ? ' held' : ''}`} aria-label="Sections" style={{ ['--i' as string]: lens, ['--n' as string]: tabs.length }}
+    <nav className={`glass-tabbar${held !== null ? ' held' : ''}${bar ? ' page-sections' : ''}`} aria-label={bar?.label || 'Sections'} style={{ ['--i' as string]: lens, ['--n' as string]: items.length }}
       onPointerUp={() => setHeld(null)} onPointerCancel={() => setHeld(null)} onPointerLeave={() => setHeld(null)}>
       <span className="glass-lens" aria-hidden="true" />
-      {tabs.map((t, i) => <button key={t.label} type="button" aria-current={current === t.id ? 'page' : undefined} onPointerDown={() => setHeld(i)} onPointerEnter={(e) => { if (e.buttons) setHeld(i); }} onClick={() => go(t.id)}>{t.icon}<span>{t.label}</span></button>)}
+      {items.map((t, i) => <button key={t.key} type="button" aria-current={t.on ? 'page' : undefined} data-hue={t.hue !== undefined || undefined} style={t.hue !== undefined ? { ['--hue' as string]: t.hue } : undefined} onPointerDown={() => setHeld(i)} onPointerEnter={(e) => { if (e.buttons) setHeld(i); }} onClick={t.pick}>{t.icon}<span>{t.label}</span></button>)}
     </nav>
   );
 }

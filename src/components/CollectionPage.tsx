@@ -69,6 +69,11 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
     { id: 'searchable', label: 'Searchable', icon: <FileSearch size={15} /> },
   ];
   const projectName = (id?: string) => projects.find((p) => p.id === id)?.name;
+  // iPhone glass look: the filters are the bottom tab bar (short names so six fit), not chips at the top.
+  const [glassPhone] = useState(() => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches);
+  const SHORT: Record<CollectionKind, string> = { all: 'All', photos: 'Photos', documents: 'Docs', files: 'Files', generated: 'Made', searchable: 'Search' };
+  const BIG: Record<CollectionKind, React.ReactNode> = { all: <LayoutGrid size={22} />, photos: <ImageIcon size={22} />, documents: <FileText size={22} />, files: <Paperclip size={22} />, generated: <Sparkles size={22} />, searchable: <FileSearch size={22} /> };
+  const bar = glassPhone ? { label: 'Show', active: kind, onSelect: (id: string) => setKind(id as CollectionKind), items: FILTERS.map((f) => ({ id: f.id, label: SHORT[f.id], icon: BIG[f.id] })) } : undefined;
 
   const More = ({ i }: { i: Item }) => (
     <div className="doc-more">
@@ -93,15 +98,15 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
   const sub = (i: Item) => [projectName(i.chat.projectId), i.chat.title, relTime(i.at)].filter(Boolean).join(' · ');
 
   return (
-    <HubPage label="Collection" title="Collection" subtitle="Everything you’ve added or made, from all your chats. Projects keep things together." onClose={onClose}
+    <HubPage label="Collection" title="Collection" subtitle="Everything you’ve added or made, from all your chats. Projects keep things together." onClose={onClose} bar={bar}
       actions={<button type="button" className="btn primary" onClick={newDoc}><Plus size={16} /> New document</button>}>
-      <div className="coll-filters" role="radiogroup" aria-label="Show">
+      {!glassPhone && <div className="coll-filters" role="radiogroup" aria-label="Show">
         {FILTERS.map((f) => (
           <button key={f.id} type="button" role="radio" aria-checked={kind === f.id} className="coll-chip" onClick={() => setKind(f.id)}>
             {f.icon}{f.label}{f.id !== 'searchable' && counts[f.id] ? <span className="hub-count">{counts[f.id]}</span> : null}
           </button>
         ))}
-      </div>
+      </div>}
       {kind === 'searchable' ? (
         <div className="files-uploads"><p className="muted small coll-note">Files you’ve uploaded for Lumen to search. Replies quote them with page numbers.</p><KnowledgeLibrary onClose={onClose} /></div>
       ) : (

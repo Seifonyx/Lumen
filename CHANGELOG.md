@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.4.14 · Tools and Collection tab bars
+
+On iPhone:
+- **Tools:** the bottom tab bar now holds the tool categories (Research, Create, Analyze, Learn and
+  Assistants), each in its own colour. The page shows one category at a time instead of one long list.
+  Searching still looks through all of them.
+- **Collection:** its filters (All, Photos, Docs, Files, Made by Lumen and Search) moved from the chips at the
+  top to the same glass tab bar.
+- On these two pages, leave with Done or the menu button at the top.
+
+Everywhere:
+- Connected apps are no longer listed in Tools; they're in Settings → Connectors (GitHub is still in the +
+  menu).
+
 ## 2.4.13 · The + menu as a card
 
 - On phones, the + menu is now a card like the model picker: no taller than about three-quarters of the

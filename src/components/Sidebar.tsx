@@ -7,7 +7,6 @@ import type { Chat, Project } from '../types';
 import ProjectManager from './ProjectManager';
 import AllChats from './AllChats';
 import Logo from './Logo';
-import WelcomeStars from './WelcomeStars';
 import Modal from './Modal';
 import { useFocusScope } from '../lib/focus-scope';
 import { Exit, exitGhost, motionOff, useFlip } from '../lib/motion';
@@ -248,6 +247,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
 
       <div className="sidebar-scroll">
       <div className="sidebar-bottom-actions">
+        {!phone && <button type="button" className="new-chat sidebar-primary-action" onClick={newChat} title={`New chat (${modKey}⇧O)`}><Plus size={18} strokeWidth={2.2} /><span>New chat</span></button>}
         <label className="search sidebar-search-field">
           <Search size={16} />
           <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape' && query) { e.stopPropagation(); setQuery(''); } }} dir="auto" />
@@ -257,7 +257,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
             <Sparkles size={15} /> <span>Ask your chats: “<span dir="auto">{query.trim().slice(0, 40)}</span>”</span>
           </button>
         )}
-        <button className={`library-button${page === 'collection' ? ' active' : ''}`} aria-current={page === 'collection' ? 'page' : undefined} onClick={() => useStore.getState().setUi({ page: 'collection', pageArg: 'all' })} title="Photos, files and documents from all your chats"><LayoutGrid size={18} /><span>Collection</span></button>
+        <button className={`library-button${page === 'collection' ? ' active' : ''}`} aria-current={page === 'collection' ? 'page' : undefined} onClick={() => useStore.getState().setUi({ page: 'collection', pageArg: 'all' })} title="Photos, files and documents from all your chats"><LayoutGrid size={18} /><span>Library</span></button>
         <button className={`library-button${page === 'tools' || page === 'assistants' || page === 'study' ? ' active' : ''}`} aria-current={page === 'tools' ? 'page' : undefined} onClick={() => useStore.getState().setUi({ page: 'tools' })} title={`Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`}><Shapes size={18} /><span>Tools</span></button>
       </div>
 
@@ -309,10 +309,9 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
 
       <div className="sidebar-section-heading history-heading">
         <h2 className="sidebar-section-label history-label">{query ? 'Search results' : 'Recents'}</h2>
-        {!phone && <button type="button" className="sidebar-chip new-chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}><Plus size={13} strokeWidth={2.2} /> New chat</button>}
       </div>
       <nav className="chat-list has-indicator" aria-label="Chat history" ref={listRef}>
-        {groups.length === 0 && <p className="muted small empty-list">{!query && <span className="empty-moon"><WelcomeStars size={34} /></span>}{query ? 'No chats match.' : 'Your chats will appear here.'}</p>}
+        {groups.length === 0 && <p className="muted small empty-list">{query ? 'No chats match.' : 'Your chats will appear here.'}</p>}
         {groups.map(([label, list]) => (
           <section key={label}>
             <h3 className="group-label">{label}</h3>

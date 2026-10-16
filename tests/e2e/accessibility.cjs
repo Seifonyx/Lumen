@@ -18,7 +18,7 @@ const {profile}=require('./helpers/preview-profile.cjs');
  if(width<900)await page.click('.menu-btn');await page.getByRole('button',{name:'Tools',exact:true}).click();await page.locator('.hub-page .tool-card').first().waitFor();await scan('tools page');
  await page.getByRole('button',{name:'All assistants',exact:true}).click();await page.locator('.assistant-library').waitFor();await scan('assistants page');
  await page.getByRole('button',{name:'New assistant',exact:true}).click();await page.getByLabel('Library item name').waitFor();await scan('assistant editor');await closePage();
- if(width<900)await page.click('.menu-btn');await page.getByRole('button',{name:'Collection',exact:true}).click();await page.locator('.coll-filters').waitFor();await scan('collection Everything');
+ if(width<900)await page.click('.menu-btn');await page.getByRole('button',{name:'Library',exact:true}).click();await page.locator('.coll-filters').waitFor();await scan('collection Everything');
  await page.getByRole('radio',{name:'Searchable',exact:true}).click();await page.locator('.files-uploads .knowledge-library').waitFor();await scan('collection Searchable');await closePage();
  await plus('Saved prompts');await page.locator('.prompts-modal').waitFor();await scan('prompts window');await trap('.modal');await close();
  await plus('Video, web page or calculation');await page.locator('.free-tools').waitFor();await scan('quick tools window');await trap('.modal');await close();assert.ok(!await page.locator('.main').evaluate(el=>el.inert));

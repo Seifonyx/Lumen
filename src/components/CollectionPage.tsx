@@ -73,7 +73,26 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
   const [glassPhone] = useState(() => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches);
   const SHORT: Record<CollectionKind, string> = { all: 'All', photos: 'Photos', documents: 'Docs', files: 'Files', generated: 'Made', searchable: 'Search' };
   const BIG: Record<CollectionKind, React.ReactNode> = { all: <LayoutGrid size={22} />, photos: <ImageIcon size={22} />, documents: <FileText size={22} />, files: <Paperclip size={22} />, generated: <Sparkles size={22} />, searchable: <FileSearch size={22} /> };
-  const bar = glassPhone ? { label: 'Show', active: kind, onSelect: (id: string) => setKind(id as CollectionKind), items: FILTERS.map((f) => ({ id: f.id, label: SHORT[f.id], icon: BIG[f.id] })) } : undefined;
+  // What "new" means in each tab (the + at the top left, and the button under an empty tab).
+  const inNewChat = (mode: 'attach' | 'image') => { useStore.getState().setUi({ page: null }); useStore.getState().newChat(); setTimeout(() => window.dispatchEvent(new CustomEvent('mr:composer-mode', { detail: mode })), 80); };
+  const CREATE: Record<CollectionKind, { label: string; run: () => void }> = {
+    all: { label: 'New document', run: newDoc },
+    documents: { label: 'New document', run: newDoc },
+    photos: { label: 'Add photos', run: () => inNewChat('attach') },
+    files: { label: 'Attach a file', run: () => inNewChat('attach') },
+    generated: { label: 'Create an image', run: () => inNewChat('image') },
+    searchable: { label: 'Upload a file to search', run: () => document.querySelector<HTMLInputElement>('.files-uploads input[type="file"]')?.click() },
+  };
+  const EMPTY: Record<CollectionKind, string> = {
+    all: 'Photos and files you attach, documents you write in the canvas and images Lumen makes all collect here.',
+    photos: 'Photos you add to your chats show up here.',
+    documents: 'Documents you write in the canvas show up here.',
+    files: 'Files you attach to your chats show up here.',
+    generated: 'Images Lumen creates for you show up here.',
+    searchable: 'Files you upload for Lumen to search show up here.',
+  };
+  const bar = glassPhone ? { label: 'Show', active: kind, onSelect: (id: string) => { setKind(id as CollectionKind); setQuery(''); }, create: CREATE[kind], items: FILTERS.map((f) => ({ id: f.id, label: SHORT[f.id], icon: BIG[f.id] })) } : undefined;
+  const emptyHere = kind !== 'all' && kind !== 'searchable' && !items.some((i) => i.kind === kind);
 
   const More = ({ i }: { i: Item }) => (
     <div className="doc-more">
@@ -111,16 +130,16 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
         <div className="files-uploads"><p className="muted small coll-note">Files you’ve uploaded for Lumen to search. Replies quote them with page numbers.</p><KnowledgeLibrary onClose={onClose} /></div>
       ) : (
         <>
-          {items.length > 0 && (
+          {(items.length > 0 || glassPhone) && (
             <div className="hub-toolbar">
-              <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search your collection" placeholder="Search names and documents" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" /></label>
+              <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search your collection" placeholder={glassPhone ? `Search ${FILTERS.find((f) => f.id === kind)?.label.toLowerCase()}` : 'Search names and documents'} value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" /></label>
               {projects.length > 0 && (
                 <label className="coll-project"><FolderKanban size={15} /><select aria-label="Project" value={project} onChange={(e) => setProject(e.target.value)}><option value="">All projects</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
               )}
             </div>
           )}
-          {items.length === 0 ? (
-            <HubEmpty icon={<LayoutGrid size={26} />} title="Nothing here yet" text="Photos and files you attach, documents you write in the canvas and images Lumen makes all collect here." action={<button type="button" className="btn primary" onClick={newDoc}><Plus size={16} /> New document</button>} />
+          {items.length === 0 || (glassPhone && emptyHere && !q) ? (
+            <HubEmpty icon={BIG[kind]} title="Nothing here yet" text={EMPTY[kind]} action={<button type="button" className="btn primary" onClick={CREATE[kind].run}><Plus size={16} /> {CREATE[kind].label}</button>} />
           ) : shown.length === 0 ? (
             <p className="hub-none">Nothing matches.</p>
           ) : (

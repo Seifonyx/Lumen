@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.4.15 · Tidier Tools and Collection
+
+On iPhone, Tools and Collection are simpler:
+- The page name sits in the middle of the top bar; the big heading and grey description are gone.
+- A search box at the top searches only the tab you're in.
+- The + at the top left makes something new for that tab: a document, a photo or file in a new chat, an
+  image, a deep research, a data analysis, a study deck or an assistant. The "New…" buttons and notes inside
+  the tabs are gone.
+- A tab with nothing in it says "Nothing here yet" with a button to add the first thing.
+
+On all phones:
+- Fixed: opening the sidebar from a page like Projects or Tools opened it behind the page, so the menu
+  button seemed to do nothing.
+
 ## 2.4.14 · Tools and Collection tab bars
 
 On iPhone:

@@ -4319,3 +4319,9 @@ button.project-crumb:hover { color: var(--text); background: var(--surface-2); }
   .add-sheet-header { padding: 4px 8px 14px; }
   .add-sheet-header h2 { font-size: 17px; font-weight: 600; }
 }
+
+/* Phones: the sidebar opens over a page like Projects or Tools (it opened behind it before). */
+@media (max-width: 899px) {
+  .app.page-open .sidebar { z-index: 46; }
+  .app.page-open .scrim { z-index: 45; }
+}

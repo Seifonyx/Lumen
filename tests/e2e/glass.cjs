@@ -68,7 +68,14 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     await page.waitForSelector('.glass-tabbar.page-sections');
     assert.deepEqual(await page.$$eval('.glass-tabbar button', (b) => b.map((x) => x.textContent)), ['Research', 'Create', 'Analyze', 'Learn', 'Assistants']);
     await page.locator('.glass-tabbar button', { hasText: 'Learn' }).click();
-    assert.deepEqual(await page.$$eval('.tools-section h2', (h) => h.map((x) => x.textContent)), ['Learn'], 'only the chosen category shows');
+    assert.ok(await page.locator('.tool-card', { hasText: 'Study partner' }).isVisible(), 'the chosen category shows');
+    assert.equal(await page.locator('.tool-card', { hasText: 'Deep research' }).count(), 0, 'only the chosen category shows');
+    // 2.4.15: the title sits in the top bar, the search box only searches this tab, and + makes something new for it.
+    assert.equal(await page.locator('.hub-head').isVisible(), false, 'no big heading or grey description');
+    assert.equal(await page.locator('.hub-new').getAttribute('aria-label'), 'New study deck');
+    await page.fill('input[aria-label="Search tools"]', 'research');
+    assert.equal(await page.locator('.tool-card', { hasText: 'Deep research' }).count(), 0, 'search stays inside the tab');
+    await page.fill('input[aria-label="Search tools"]', '');
     assert.equal(await page.getByText('Connected apps').count(), 0, 'connected apps live in Settings');
     await page.locator('.hub-close').click();
     await page.waitForSelector('.hub-page', { state: 'detached' });
@@ -77,6 +84,9 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     await page.waitForSelector('.glass-tabbar.page-sections');
     assert.deepEqual(await page.$$eval('.glass-tabbar button', (b) => b.map((x) => x.textContent)), ['All', 'Photos', 'Docs', 'Files', 'Made', 'Search']);
     assert.equal(await page.locator('.coll-filters').count(), 0, 'no filter chips at the top');
+    await page.locator('.glass-tabbar button', { hasText: 'Photos' }).click();
+    assert.equal(await page.locator('.hub-new').getAttribute('aria-label'), 'Add photos');
+    assert.ok(await page.locator('.hub-empty button', { hasText: 'Add photos' }).isVisible(), 'an empty tab offers to add something');
     await page.locator('.glass-tabbar button', { hasText: 'Search' }).click();
     await page.waitForSelector('.files-uploads');
     await page.locator('.hub-close').click();

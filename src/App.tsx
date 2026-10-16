@@ -195,7 +195,7 @@ export default function App() {
       <ChatView onExpandSidebar={toggleSidebar} />
       {page && !settingsOpen && (
         <Suspense fallback={null}>
-          {page === 'assistants' ? <AssistantLibrary key={`${accountId}-assistants`} onClose={closePage} />
+          {page === 'assistants' ? <AssistantLibrary key={`${accountId}-assistants-${String(pageArg || '')}`} startNew={pageArg === 'new'} onClose={closePage} />
             : page === 'collection' ? <CollectionPage key={`${accountId}-collection-${String(pageArg || '')}`} initial={typeof pageArg === 'string' ? pageArg as 'all' : 'all'} onClose={closePage} />
             : page === 'projects' ? <ProjectsPage key={`${accountId}-projects`} onClose={closePage} />
             : page === 'tools' ? <ToolsPage key={`${accountId}-tools`} onClose={closePage} />

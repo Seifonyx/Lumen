@@ -75,9 +75,17 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
   const pick = (id: Section) => { setActive(id); scroller.current?.closest('.hub-scroll')?.scrollTo({ top: 0 }); };
   const ICONS: Record<Section, ReactNode> = { research: <Telescope size={22} />, create: <Pencil size={22} />, analyze: <BarChart3 size={22} />, learn: <GraduationCap size={22} />, assistants: <Sparkles size={22} /> };
   const HUES: Record<Section, number> = { research: 212, create: 330, analyze: 160, learn: 40, assistants: 270 };
-  const bar = glassPhone ? { label: 'Tool categories', active, onSelect: (id: string) => pick(id as Section), items: SECTIONS.map((sec) => ({ id: sec.id, label: sec.label, icon: ICONS[sec.id], hue: HUES[sec.id] })) } : undefined;
-  // With the tab bar, only the chosen category shows (a search looks through all of them).
-  const shownHere = (id: Section) => !glassPhone || Boolean(q) || id === active;
+  // The + at the top left starts something new in the chosen category.
+  const CREATE: Record<Section, { label: string; run: () => void }> = {
+    research: { label: 'New deep research', run: () => composerMode('research') },
+    create: { label: 'New document', run: () => { s.setUi({ page: null }); s.newChat(); setTimeout(() => useStore.getState().openCanvas(), 0); } },
+    analyze: { label: 'New data analysis', run: () => s.setUi({ page: null, runner: { lang: 'python', code: ANALYSIS_TEMPLATES.overview.code, analysis: true } }) },
+    learn: { label: 'New study deck', run: () => s.setUi({ page: 'study', pageArg: undefined }) },
+    assistants: { label: 'New assistant', run: () => s.setUi({ page: 'assistants', pageArg: 'new' }) },
+  };
+  const bar = glassPhone ? { label: 'Tool categories', active, onSelect: (id: string) => pick(id as Section), create: CREATE[active], items: SECTIONS.map((sec) => ({ id: sec.id, label: sec.label, icon: ICONS[sec.id], hue: HUES[sec.id] })) } : undefined;
+  // With the tab bar, only the chosen category shows, and the search looks only inside it.
+  const shownHere = (id: Section) => !glassPhone || id === active;
   const jump = (id: Section) => { setActive(id); document.getElementById(`tools-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   const Card = ({ t }: { t: Tool }) => (
     <button type="button" className={`tool-card sec-${t.section}`} onClick={t.run}>
@@ -92,7 +100,7 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
 
   return (
     <HubPage label="Tools" title="Tools" subtitle="Everything Lumen can do beyond a chat. The ones you use most are also in the + menu." onClose={onClose} bar={bar}
-      toolbar={<label className="hub-search"><Search size={16} /><input type="search" aria-label="Search tools" placeholder="Search tools" value={query} onChange={(e) => setQuery(e.target.value)} /></label>}>
+      toolbar={<label className="hub-search"><Search size={16} /><input type="search" aria-label="Search tools" placeholder={glassPhone ? `Search ${SECTIONS.find((x) => x.id === active)?.label}` : 'Search tools'} value={query} onChange={(e) => setQuery(e.target.value)} /></label>}>
       <div className="tools-layout" ref={scroller}>
         <nav className="tools-rail" aria-label="Tool categories">
           {SECTIONS.map((sec) => <button key={sec.id} type="button" className={active === sec.id ? 'active' : ''} aria-current={active === sec.id || undefined} onClick={() => jump(sec.id)}>{sec.label}</button>)}
@@ -105,7 +113,7 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
               if (q && !list.length) return null;
               return (
                 <section key={sec.id} id={`tools-${sec.id}`} className="tools-section">
-                  <header><h2>{sec.label}</h2><p>{sec.blurb}</p><button type="button" className="btn small" onClick={() => s.setUi({ page: 'assistants' })}>All assistants</button></header>
+                  {!glassPhone && <header><h2>{sec.label}</h2><p>{sec.blurb}</p><button type="button" className="btn small" onClick={() => s.setUi({ page: 'assistants' })}>All assistants</button></header>}
                   <div className="tools-grid">
                     {list.map((a) => (
                       <button key={a.id} type="button" className="tool-card sec-assistants" onClick={() => { s.startAssistant(a); s.setUi({ page: null }); }}>
@@ -113,7 +121,7 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
                         <span className="tool-text"><strong>{a.name}</strong><span>{a.description || 'Your custom assistant.'}</span></span>
                       </button>
                     ))}
-                    {!q && <button type="button" className="tool-card tool-new" onClick={() => s.setUi({ page: 'assistants' })}><span className="tool-icon" aria-hidden="true"><Plus size={20} /></span><span className="tool-text"><strong>Make an assistant</strong><span>Your own instructions and model, ready in every chat.</span></span></button>}
+                    {!q && !glassPhone && <button type="button" className="tool-card tool-new" onClick={() => s.setUi({ page: 'assistants' })}><span className="tool-icon" aria-hidden="true"><Plus size={20} /></span><span className="tool-text"><strong>Make an assistant</strong><span>Your own instructions and model, ready in every chat.</span></span></button>}
                   </div>
                 </section>
               );
@@ -122,12 +130,14 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
             if (!list.length) return null;
             return (
               <section key={sec.id} id={`tools-${sec.id}`} className="tools-section">
-                <header><h2>{sec.label}</h2><p>{sec.blurb}</p></header>
+                {!glassPhone && <header><h2>{sec.label}</h2><p>{sec.blurb}</p></header>}
                 <div className="tools-grid">{list.map((t) => <Card key={t.id} t={t} />)}</div>
               </section>
             );
           })}
-          {q && !tools.some(match) && !assistants.some((a) => match({ name: a.name, text: a.description })) && <p className="hub-none">No tools match “{query}”.</p>}
+          {q && (glassPhone
+            ? (active === 'assistants' ? !assistants.some((a) => match({ name: a.name, text: a.description })) : !tools.some((t) => t.section === active && match(t)))
+            : !tools.some(match) && !assistants.some((a) => match({ name: a.name, text: a.description }))) && <p className="hub-none">No tools match “{query}”.</p>}
         </div>
       </div>
     </HubPage>

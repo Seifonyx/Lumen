@@ -1,6 +1,6 @@
 // The layout shared by Library, Documents and Study: they open in place of the chat (the sidebar stays), with a
 // large title, a line about what's here, the main action, optional tabs, and the content below.
-import { ArrowLeft, FolderKanban, LayoutGrid, Menu, MessageCircle, Shapes } from 'lucide-react';
+import { ArrowLeft, FolderKanban, LayoutGrid, Menu, MessageCircle, Plus, Shapes } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useFocusScope } from '../lib/focus-scope';
 import { installSwipeBack } from '../lib/swipe-back';
@@ -9,7 +9,9 @@ import { useStore } from '../store';
 
 export interface HubTab<T extends string> { id: T; label: string; icon?: ReactNode; count?: number }
 /** A page's own bottom tab bar (iPhone glass look): its sections instead of the app's, each with its colour. */
-export interface HubBar { items: { id: string; label: string; icon: ReactNode; hue?: number }[]; active: string; onSelect: (id: string) => void; label: string }
+export interface HubBar { items: { id: string; label: string; icon: ReactNode; hue?: number }[]; active: string; onSelect: (id: string) => void; label: string;
+  /** What the + at the top left makes for the chosen tab (e.g. "New document"). */
+  create?: { label: string; run: () => void } }
 
 export default function HubPage<T extends string>({ title, subtitle, actions, tabs, tab, onTab, toolbar, onClose, onBack, children, label, bar }: {
   title: ReactNode; subtitle?: ReactNode; actions?: ReactNode; label: string;
@@ -41,10 +43,13 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
   // iPhone glass look: the small title in the bar shows once the big one has scrolled away.
   const [scrolled, setScrolled] = useState(false);
   return (
-    <section ref={root} className={`hub-page${scrolled ? ' scrolled' : ''}`} aria-label={label} tabIndex={-1} data-keep-sidebar="true">
+    <section ref={root} className={`hub-page${scrolled ? ' scrolled' : ''}${bar ? ' has-bar' : ''}`} aria-label={label} tabIndex={-1} data-keep-sidebar="true">
       <div className="hub-bar">
         {onBack ? (
           <button type="button" className="icon-btn hub-nav" aria-label="Back" onClick={onBack}><ArrowLeft size={20} /></button>
+        ) : bar?.create ? (
+          // Pages with their own tab bar (iPhone): the top-left button makes something new for the chosen tab.
+          <button type="button" className="icon-btn hub-nav hub-new" aria-label={bar.create.label} title={bar.create.label} onClick={bar.create.run}><Plus size={22} /></button>
         ) : phone ? (
           <button type="button" className="icon-btn hub-nav" aria-label="Open sidebar" onClick={() => useStore.getState().setUi({ sidebarOpen: true })}><Menu size={20} /></button>
         ) : null}

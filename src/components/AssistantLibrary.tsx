@@ -14,13 +14,13 @@ const HUES = [212, 152, 28, 280, 340, 190, 48, 100];
 const hue = (name: string) => HUES[[...name].reduce((n, c) => n + c.charCodeAt(0), 0) % HUES.length];
 const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() || '').join('') || '?';
 
-export default function AssistantLibrary({ onClose }: { onClose: () => void }) {
+export default function AssistantLibrary({ onClose, startNew = false }: { onClose: () => void; startNew?: boolean }) {
   const settings = useStore((s) => s.settings);
   const catalog = useStore((s) => s.catalog);
   const { updateSettings, startAssistant, toast } = useStore.getState();
   const assistants = settings.assistants || [];
   const [query, setQuery] = useState('');
-  const [editing, setEditing] = useState<SavedAssistant | null>(null);
+  const [editing, setEditing] = useState<SavedAssistant | null>(() => (startNew ? { id: uid(), name: '', description: '', instructions: '', model: AUTO } : null));
   const save = () => {
     const assistant = editing && normalizeAssistant(editing);
     if (!assistant) return;

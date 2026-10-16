@@ -146,6 +146,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
       const mode = (e as CustomEvent<string>).detail;
       if (mode === 'research') { setDeepResearch(true); setImageMode(false); }
       else if (mode === 'image') { setImageMode(true); setDeepResearch(false); }
+      else if (mode === 'attach') { setSheet(true); return; } // the + menu, to add photos or files
       requestAnimationFrame(() => input.current?.focus());
     };
     window.addEventListener('mr:composer-mode', onMode);

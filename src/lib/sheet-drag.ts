@@ -62,7 +62,9 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
       const t = target as Element | null;
       const moving = Boolean(anim?.running);
       const handle = moving || Boolean(t?.closest('.sheet-grip, .sheet-grab, .modal-head, .um-head, .add-sheet-header'));
-      if (!handle && (t?.closest('input, textarea, select, [contenteditable="true"]') || scrolledInside(t, el))) return;
+      // (A swipe down that starts on a one-line field, such as the search box at the top, still moves the sheet;
+      // a tap still types in it. Multi-line text and menus keep the touch for themselves.)
+      if (!handle && (t?.closest('textarea, select, [contenteditable="true"]') || scrolledInside(t, el))) return;
       // Catch a moving sheet where it is (and call off a close that was under way).
       if (moving) { y = anim!.stop(); anim = null; closing = false; }
       start = { x, y: py, id, handle, base: y };
@@ -78,6 +80,8 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
         // Upward from the content scrolls it; upward from the grab bar or header rubber-bands.
         if (ddy < 0 && !start.handle) { start = null; return; }
         dragging = true;
+        // Dragging from a field: no keyboard popping up as the sheet goes.
+        if (document.activeElement instanceof HTMLInputElement && el.contains(document.activeElement)) document.activeElement.blur();
       }
       if (e.cancelable) e.preventDefault();
       speed.add(py);

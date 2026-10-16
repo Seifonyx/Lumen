@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.4.12 · Sheets follow your swipe
+
+- Fixed: swiping down on a sheet (the model picker and others) sometimes moved the chat behind it instead
+  of the sheet. A swipe that starts on the search box at the top of a sheet now moves the sheet as well
+  (tapping the box still lets you type), and the app itself no longer rubber-bands when a swipe isn't
+  for a list or a sheet.
+
 ## 2.4.11 · Sheets close cleanly
 
 - Fixed: on iPhone, a strip of a closing sheet (the model picker, the + menu and other cards) could flicker

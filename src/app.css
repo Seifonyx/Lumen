@@ -66,6 +66,9 @@ body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
 }
+/* The page itself never rubber-bands (Safari bounces the root element, not the body): only the chat, lists
+   and sheets scroll, so a swipe that isn't for them doesn't drag the whole app around. */
+html { overscroll-behavior: none; }
 /* No pinch or double-tap zoom anywhere, scrolling stays native (every scroll area starts a new
    touch-action chain, so this is set on all elements). */
 * { touch-action: pan-x pan-y; }

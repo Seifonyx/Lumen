@@ -49,6 +49,8 @@ const drag = (page, selector, dy) => page.evaluate(async ([sel, dy]) => {
 
     await check('usage sheet', () => page.click('.usage-chip'), '.usage-pop.sheet', '.usage-pop.sheet .sheet-grip');
     await check('model picker', () => page.click('.composer .model-button'), '.models-pop.sheet', '.models-pop.sheet .sheet-grip');
+    // 2.4.12: a swipe down that starts on the search box at the top of the model picker moves the sheet too.
+    await check('model picker from its search box', () => page.click('.composer .model-button'), '.models-pop.sheet', '.models-pop.sheet input[type="search"]');
     await check('+ sheet', () => page.getByRole('button', { name: /^Add (?:photos, )?files or a repository$/ }).click(), '.sheet.attach-menu', '.sheet.attach-menu .sheet-grab');
     await check('All chats window', async () => { await page.click('.menu-btn'); await page.click('.view-all-chats'); }, '.modal', '.modal .sheet-grip');
     assert.deepEqual(errors, []);

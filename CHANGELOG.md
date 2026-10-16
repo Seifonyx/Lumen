@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.4.1 · Softer glass
+
+- The glass on iPhone is softer, closer to other iOS 26 apps. The dark halo around buttons is gone, the edge
+  is a faint line of light along the top, and the fill is a flatter grey. This applies everywhere: buttons,
+  the message box, the tab bar, sheets, menus and the sidebar.
+
 ## 2.4.0 · Feels like an iPhone app
 
 On iPhones and iPads:

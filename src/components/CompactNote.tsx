@@ -165,7 +165,7 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
 
   return (
     <div className="usage-meter" ref={box}>
-      <button ref={trigger} className={`usage-chip${level}${pct < 50 && !blockedUntil ? ' quiet' : ''}`} onClick={() => { setSheet(isSheetScreen()); setOpen(!open); }} aria-expanded={open} aria-haspopup="dialog" aria-controls="usage-panel" title="Conversation capacity and daily usage">
+      <button ref={trigger} className={`usage-chip${level}${pct < 50 && !blockedUntil ? ' quiet' : ''}${pct < 10 && !blockedUntil && !open ? ' idle' : ''}`} onClick={() => { setSheet(isSheetScreen()); setOpen(!open); }} aria-expanded={open} aria-haspopup="dialog" aria-controls="usage-panel" title="Conversation capacity and daily usage">
         <svg className="usage-ring" viewBox="0 0 20 20" aria-hidden="true"><circle className="usage-ring-track" cx="10" cy="10" r="7" /><circle className="usage-ring-fill" cx="10" cy="10" r="7" strokeDasharray="43.98" strokeDashoffset={43.98 * (1 - pct / 100)} /></svg>
         <span className="usage-chip-pct" aria-hidden="true">{pct}%</span><span className="usage-chip-label">Context {pct}%</span>{blockedUntil && <span className="usage-status"> · limit reached</span>}
         <ChevronDown size={12} aria-hidden="true" />

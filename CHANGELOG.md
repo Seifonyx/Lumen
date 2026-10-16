@@ -1,5 +1,27 @@
 # Changelog
 
+## 2.5.1 · Polish, part 2
+
+On iPhone:
+- Sheets close by swiping down or tapping outside, like the + card. The ✕ in the corner is gone, and the
+  Prompts sheet has a round + for a new prompt instead of a "New" chip. Fixed a green outline that showed
+  around the Prompts sheet.
+- All chats works like Mail. Rows are plain until you tap Select. Then each row gets a round check (tap a row
+  to pick it), and Move, Archive, Export and Delete appear in an even row at the bottom.
+- In the sidebar, Projects has a round + next to it instead of a "+ New project" chip.
+- The + card's Camera and Photos tiles are soft glass like the rows under them, not solid blocks.
+- In a chat, the context ring shows without "0%" until a chat has used a tenth of what the model can hold.
+  Code blocks have bigger Run and Copy buttons, and the fade under the top bar is shorter.
+- Settings:
+  - API keys are quiet rows: "Not set" is plain text and turns green once a key is in.
+  - Scheduled tasks shows the notification setting as a card, with the note on how tasks run at the bottom.
+  - Dropdowns in Settings show their full choice.
+
+Everywhere:
+- Shorter descriptions in Settings (Memory, Privacy, Personalization, backups, import and scheduled tasks).
+- The custom-instructions examples no longer assume a country or language.
+- Tests can run against a separate copy of the build, so a new build doesn't disturb a test run.
+
 ## 2.5.0 · Polish, part 1
 
 On iPhone:

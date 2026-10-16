@@ -124,6 +124,21 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     await page.locator('.hub-close').click();
     await page.waitForSelector('.hub-page', { state: 'detached' });
     console.log('PASS the tab bar moves between pages');
+
+    // 2.5.1: All chats has a Select mode (rows are plain until then) and iPhone sheets have no ✕.
+    await page.click('.menu-btn'); await page.waitForTimeout(400);
+    await page.click('.view-all-chats');
+    await page.waitForSelector('.all-chats');
+    assert.equal(await page.locator('.all-chats input[type="checkbox"]').count(), 0, 'no checkboxes until Select');
+    assert.equal(await page.locator('.all-chats-actions').count(), 0, 'no action row until Select');
+    assert.equal(await page.locator('.modal [aria-label="Close"]').isVisible(), false, 'no ✕ on the sheet');
+    await page.click('.all-chats-select');
+    await page.locator('.all-chats-open').first().click();
+    assert.equal(await page.locator('.all-chats-list li.checked').count(), 1, 'tapping a row selects it');
+    assert.ok(await page.locator('.all-chats-actions .btn', { hasText: 'Archive' }).isEnabled());
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('.all-chats', { state: 'detached' });
+    console.log('PASS select mode and sheets without ✕');
     await t.ctx.close();
 
     // 2.3.1: in the sidebar, the account picture and New chat sit on one line with no extra gap below,

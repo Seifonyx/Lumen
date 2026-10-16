@@ -264,7 +264,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
       <div className="sidebar-navigation">
       <div className="sidebar-section-heading">
         <h2 className="sidebar-section-label"><button type="button" className={`sidebar-section-link${page === 'projects' ? ' active' : ''}`} onClick={() => useStore.getState().setUi({ page: 'projects' })} title="All projects">Projects <ChevronRight size={14} aria-hidden="true" /></button></h2>
-        <button type="button" className="sidebar-chip" onClick={() => { setEditProjectId(undefined); setCreateNewProject(true); setProjectManager(true); }} title="Create a new project"><Plus size={13} strokeWidth={2.2} /> New project</button>
+        <button type="button" className="sidebar-chip" onClick={() => { setEditProjectId(undefined); setCreateNewProject(true); setProjectManager(true); }} title="Create a new project" aria-label="New project"><Plus size={13} strokeWidth={2.2} /><span className="chip-text"> New project</span></button>
       </div>
 
       <div className="sidebar-projects-list">

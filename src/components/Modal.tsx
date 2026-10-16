@@ -26,7 +26,7 @@ export default function Modal({ title, onClose, children, actions, wide, full }:
   return createPortal(
     <Exit kind="fade" parts={[['.modal', sheet ? 'sheet' : full || wide ? 'fade' : 'modal']]}>
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={`modal${wide ? ' wide' : ''}${full ? ' full' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} ref={ref}>
+      <div className={`modal${wide ? ' wide' : ''}${full ? ' full' : ''}${sheet ? ' is-sheet' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} ref={ref}>
         {sheet && <div className="sheet-grip" aria-hidden="true" />}
         <header className="modal-head">
           <h2 className="modal-title" id={titleId}>{title}</h2>

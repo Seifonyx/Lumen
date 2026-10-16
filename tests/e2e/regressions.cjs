@@ -160,7 +160,7 @@ async function run(browser, mobile) {
     });
     check(fits, 'phone: project editor actions fit at 320px');
     await page.screenshot({ path: path.join(__dirname, 'out', 'regression-project-320.png') });
-    await page.locator('.modal [aria-label="Close"]').click();
+    await page.keyboard.press('Escape'); await page.waitForSelector('.modal', { state: 'detached' });
     await page.setViewportSize({ width: 390, height: 844 });
     await settings(page, 'Personalization');
     // Exercise the actual iOS handler with a synthetic keyboard viewport. Physical Safari still needs checking.

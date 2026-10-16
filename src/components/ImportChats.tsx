@@ -34,7 +34,7 @@ export default function ImportChats() {
             {messages > LOTS && ' That many can take a day or two to reach your other devices on the free plan.'}
           </span>
         ) : (
-          <span className="setting-hint">Use the export file from the other app (.zip, .json, or Gemini's My Activity file). Importing the same file again updates those chats.</span>
+          <span className="setting-hint">The export file from the other app (.zip or .json). Importing it again updates those chats.</span>
         )}
       </span>
       <span className="setting-ctrl import-actions">

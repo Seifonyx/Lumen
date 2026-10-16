@@ -20,7 +20,7 @@ export default function PrivacyTab({ Toggle, Choice }: { Toggle: (p: ToggleProps
         <div className="settings-card">
           <Toggle
             label="Privacy shield"
-            hint="Before anything leaves your device, hide phone numbers, emails, national IDs, card numbers, account and file numbers, dates of birth, and people’s names."
+            hint="Hides phone numbers, emails, IDs, card and account numbers, birth dates and names before anything leaves your device."
             checked={settings.privacyShield}
             onChange={(v) => update({ privacyShield: v })}
           />
@@ -44,7 +44,7 @@ export default function PrivacyTab({ Toggle, Choice }: { Toggle: (p: ToggleProps
       </div>
 
       <details className="settings-card privacy-tester">
-        <summary><span className="setting-label">Preview masking</span><span className="setting-hint">Try sample text locally, before sending it to a model.</span></summary>
+        <summary><span className="setting-label">Preview masking</span><span className="setting-hint">Try it on sample text.</span></summary>
         <div className="privacy-tester-body">
           <textarea aria-label="Sample text to mask" dir="auto" rows={3} value={sample} onChange={(e) => setSample(e.target.value)} style={{ minHeight: 0 }} />
           <div className="privacy-preview" dir="auto">

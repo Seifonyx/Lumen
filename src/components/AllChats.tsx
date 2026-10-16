@@ -21,6 +21,11 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
   const [moving, setMoving] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  // iPhone glass look: like Mail or Notes, rows are plain until you tap Select; then each gets a round check and
+  // the actions appear in a bar at the bottom.
+  const [glassPhone] = useState(() => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches);
+  const [selectMode, setSelectMode] = useState(false);
+  const picking = !glassPhone || selectMode;
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -88,8 +93,9 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <Modal title="All chats" onClose={onClose}>
-      <div className="all-chats">
+    <Modal title="All chats" onClose={onClose}
+      actions={glassPhone && list.length > 0 && <button type="button" className="btn ghost small all-chats-select" onClick={() => { setSelectMode(!selectMode); setSelected(new Set()); setMoving(false); setConfirming(false); }}>{selectMode ? 'Done' : 'Select'}</button>}>
+      <div className={`all-chats${picking ? '' : ' browsing'}`}>
         <div className="list-toolbar">
           <label className="search"><Search size={16} /><input type="search" aria-label="Search all chats" placeholder="Search" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" /></label>
           {(archivedCount > 0 || showArchived) && (
@@ -99,12 +105,12 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
             </div>
           )}
         </div>
-        <div className="all-chats-head">
+        {picking && <div className="all-chats-head">
           <label className="all-chats-check">
             <input type="checkbox" checked={allShown} disabled={!list.length} onChange={() => setSelected(allShown ? new Set() : new Set(list.map((c) => c.id)))} aria-label="Select all chats" />
-            <span>{n ? `${n} selected` : `${plural(list.length)}`}</span>
+            <span>{n ? `${n} selected` : glassPhone ? 'Select all' : `${plural(list.length)}`}</span>
           </label>
-        </div>
+        </div>}
         {list.length ? (
           <ul className="all-chats-list" ref={listRef}>
             {list.map((c) => (
@@ -114,8 +120,8 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
                   <button type="button" className="swipe-delete" tabIndex={-1} onClick={(e) => deleteOne(c.id, e.currentTarget.closest('li'))}><Trash2 size={18} />Delete</button>
                 </div>
                 <div className="swipe-face">
-                  <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggle(c.id)} aria-label={`Select ${c.title}`} />
-                  <button type="button" className="all-chats-open" onClick={() => { selectChat(c.id); setUi({ sidebarOpen: false }); onClose(); }} dir="auto">
+                  {picking && <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggle(c.id)} aria-label={`Select ${c.title}`} />}
+                  <button type="button" className="all-chats-open" onClick={() => { if (glassPhone && selectMode) { toggle(c.id); return; } selectChat(c.id); setUi({ sidebarOpen: false }); onClose(); }} dir="auto">
                     <span className="all-chats-title">{c.title}</span>
                     <small>{[c.pinned ? 'Pinned' : '', projectName(c.projectId) || '', new Date(c.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(c.updatedAt).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' })].filter(Boolean).join(' · ')}</small>
                   </button>
@@ -135,7 +141,7 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
             <span>Delete {plural(n)}? This can’t be undone.</span>
             <div className="all-chats-actions"><button type="button" className="btn small" onClick={() => setConfirming(false)}>Cancel</button><button type="button" className="btn small danger-fill" onClick={() => void remove()}><Trash2 size={15} /> Delete</button></div>
           </div>
-        ) : (
+        ) : picking && (
           <div className="all-chats-actions">
             <button type="button" className="btn small" disabled={!n || !projects.length} aria-expanded={moving} title={projects.length ? undefined : 'Create a project first'} onClick={() => setMoving(!moving)}><FolderKanban size={15} /> Move</button>
             <button type="button" className="btn small" disabled={!n} onClick={archive}>{showArchived ? <ArchiveRestore size={15} /> : <Archive size={15} />} {showArchived ? 'Unarchive' : 'Archive'}</button>

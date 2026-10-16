@@ -56,7 +56,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         await page.getByRole('button',{name:/^Add (?:photos, )?files or a repository$/}).click();await page.getByRole('button',{name:/GitHub repository/}).click();
         await page.locator('input[placeholder="Search your repositories"]').waitFor();
         check(await page.locator('input[placeholder="Search your repositories"]').evaluate(el => (el === document.activeElement) === !matchMedia('(pointer: coarse)').matches), label + ': repository starter keeps phone keyboard closed');
-        await page.locator('.modal [aria-label="Close"]').click();
+        await page.keyboard.press('Escape'); await page.waitForSelector('.modal', { state: 'detached' });
         if (mobile) await page.click('.menu-btn');
         if (mobile) await page.waitForFunction(() => Math.abs(document.querySelector('.sidebar').getBoundingClientRect().left) < 1);
         const newChatBox = await page.locator('.sidebar .new-chat').boundingBox();
@@ -103,7 +103,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         const selectedReply = await page.evaluate(() => window.getSelection().toString());
         await page.getByRole('button', { name: 'Copy selected', exact: true }).click();
         check(await page.evaluate(text => window.__lastCopied === text, selectedReply), label + ': copies only the selected reply text');
-        await page.locator('.modal [aria-label="Close"]').click();
+        await page.keyboard.press('Escape'); await page.waitForSelector('.modal', { state: 'detached' });
         check(await page.evaluate(() => !window.getSelection()?.toString()), label + ': selection clears on closing');
         await page.locator('.usage-chip').click();
         await page.waitForTimeout(500);

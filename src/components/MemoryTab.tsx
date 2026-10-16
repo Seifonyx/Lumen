@@ -138,13 +138,13 @@ export default function MemoryTab({ Toggle }: { Toggle: (p: { checked: boolean; 
         <div className="settings-card">
           <Toggle
             label="Use memory across chats"
-            hint="Models receive these remembered facts with every message, avoiding repetitive explanations. Works across all models."
+            hint="Models get your remembered facts with every message."
             checked={settings.memory}
             onChange={(v) => update({ memory: v })}
           />
           <Toggle
             label="Allow models to save memories"
-            hint="Models may automatically remember lasting preferences, projects, or context you share. Off = only when you ask."
+            hint="Models remember lasting preferences on their own. Off: only when you ask."
             checked={settings.memoryAuto}
             onChange={(v) => update({ memoryAuto: v })}
           />
@@ -189,7 +189,7 @@ export default function MemoryTab({ Toggle }: { Toggle: (p: { checked: boolean; 
 
           {memories.length === 0 ? (
             <p className="muted small memory-empty">
-              No memories saved yet. Add a fact above, tell any model “remember that…”, or type <code>/remember</code> in chat.
+              No memories saved yet. Add one above, or say “remember that…” in a chat.
             </p>
           ) : (
             <ul className="memory-list" style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>

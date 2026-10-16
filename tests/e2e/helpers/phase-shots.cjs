@@ -41,6 +41,7 @@ const only = (process.env.ONLY || '').split(',').filter(Boolean);
     await step('settings', () => settings(''));
     await step('prompts', async () => { await home(); await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'prompts' }))); await page.waitForTimeout(500); });
     await step('all-chats', async () => { await home(); await page.click('.menu-btn'); await page.waitForTimeout(300); await page.click('.view-all-chats'); });
+    await step('all-chats-select', async () => { await home(); await page.click('.menu-btn'); await page.waitForTimeout(300); await page.click('.view-all-chats'); await page.waitForTimeout(400); await page.click('.all-chats-select'); await page.locator('.all-chats-open').first().click(); });
     await step('sidebar', async () => { await home(); await page.click('.menu-btn'); });
     await step('plus', async () => { await home(); await page.locator('.composer .tool-btn').first().click(); });
     await step('collection', () => lib('collection'));

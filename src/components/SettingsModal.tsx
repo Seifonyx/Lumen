@@ -359,7 +359,7 @@ function KeysTab() {
       <ProviderConnections main={KEY_FIELDS.filter((field): field is MainProvider => field.id !== 'github')} draft={draft} setDraft={setDraft} saved={keys} />
       {validation && <p className="error-text" role="alert">{validation}</p>}
       <div className="settings-actions">
-        <span className="muted small">Saved privately to your Google account and shared across your devices.</span>
+        <span className="muted small">Saved privately to your account, on all your devices.</span>
         <button
           className="btn primary"
           disabled={busy || !changed || Boolean(validation)}
@@ -410,7 +410,7 @@ function DataTab() {
           <div className="setting-row">
             <span className="setting-text">
               <span className="setting-label">Restore a backup</span>
-              <span className="setting-hint">Adds the chats from a backup file. Existing chats are kept.</span>
+              <span className="setting-hint">Adds its chats; yours are kept.</span>
             </span>
             <span className="setting-ctrl">
               <button className="btn small" onClick={() => fileRef.current?.click()}>
@@ -607,7 +607,7 @@ function PersonalizeTab() {
           <div className="setting-row">
             <span className="setting-text">
               <span className="setting-label">Reply language</span>
-              <span className="setting-hint">Models answer in the language you write in, or always in the one you choose.</span>
+              <span className="setting-hint">Match your writing, or always use one.</span>
             </span>
             <span className="setting-ctrl">
               <select aria-label="Reply language" value={settings.replyLanguage || ''} onChange={(e) => update({ replyLanguage: e.target.value || undefined })}>
@@ -623,7 +623,7 @@ function PersonalizeTab() {
         <div className="settings-card pad-card">
           <label className="field-block" style={{ paddingTop: 0 }}>
             <span className="setting-label">Custom instructions</span>
-            <span className="setting-hint">Tell every model about you and how to answer — e.g. your job, language preferences, tone, or formats you like.</span>
+            <span className="setting-hint">About you and how you like answers.</span>
             <div className="preset-chips">
               {PRESET_INSTRUCTIONS.map(({ label, text }) => (
                 <button key={label} type="button" className="preset-chip" onClick={() => appendPreset(text)}>
@@ -635,7 +635,7 @@ function PersonalizeTab() {
               dir="auto"
               rows={8}
               maxLength={4000}
-              placeholder={'Examples:\n• I live in Egypt; use metric units and EGP.\n• Answer in Egyptian Arabic unless I write in English.\n• Keep answers short unless I ask for detail.'}
+              placeholder={'Examples:\n• Use metric units and my local currency.\n• Explain technical terms simply.\n• Keep answers short unless I ask for detail.'}
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
               onBlur={() => update({ customInstructions: instructions })}

@@ -546,3 +546,85 @@ html.glass .coll-project select { max-width: none; }
   html.glass .hub-form .setting-label { font-size: 13px; font-weight: 600; color: var(--text-2); text-transform: none; padding-inline: 4px; }
   html.glass .hub-form .library-form-actions .btn { height: 48px; padding: 0 24px; font-size: 17px; }
 }
+
+/* ---------------------------------------------------------- 2.5.1 polish */
+/* Sheets never show a focus ring around themselves (only the controls inside do). */
+html.glass :is(.sheet, .modal, .models-pop):focus, html.glass :is(.sheet, .modal, .models-pop):focus-visible { outline: none; }
+@media (max-width: 899px) {
+  /* API keys: quiet rows. A provider's status is plain text at the end ("Not set"), green only once a key is in. */
+  html.glass .provider-connections summary { min-height: 52px; }
+  html.glass .provider-name { font-size: 17px; font-weight: 500; }
+  html.glass .provider-free { border: 0; padding: 0; font-size: 13px; color: var(--text-3); }
+  html.glass .key-status-pill { padding: 0; border: 0; background: none; font-size: 15px; font-weight: 400; }
+  html.glass .key-status-pill.unset { color: var(--text-3); }
+  html.glass .key-status-pill.unset::before { display: none; }
+  html.glass .key-status-pill.configured { color: var(--green); }
+  /* Scheduled tasks: the notification setting is a card like the rest of Settings, New task sits on the right,
+     and the note on how tasks run is a short line at the bottom. */
+  html.glass .task-library { display: flex; flex-direction: column; }
+  html.glass .task-library > p.muted:first-child { order: 9; margin: 18px 4px 0; font-size: 13px; }
+  html.glass .task-notify { border: 0; border-radius: 24px; padding: 14px 16px; background: var(--surface); color: var(--text); font-size: 15px; }
+  html.glass .task-notify svg { flex: none; color: var(--text-2); }
+  html.glass .task-notify .btn { margin-inline-start: auto; flex: none; }
+  html.glass .task-card { border-radius: 24px; }
+  /* Settings rows: descriptions are short and a little smaller. */
+  html.glass .settings-page .setting-hint { font-size: 13px; line-height: 1.4; }
+  /* The + card: Camera and Photos are soft glass tiles like the rows under them, not solid blocks. */
+  html.glass .photo-actions button { background: var(--glass-fill); border: 0; border-radius: 22px; color: var(--text); box-shadow: none; }
+  html.glass .photo-actions button:active { background: var(--glass-fill-press); }
+}
+/* Sheets on iPhone close by swiping down or tapping outside, like the + card: no ✕ in the corner. Their
+   own buttons (such as +) are round glass. */
+@media (max-width: 899px) {
+  html.glass .modal.is-sheet .modal-head .modal-actions > .icon-btn[aria-label='Close'] { display: none; }
+  html.glass .modal.is-sheet .modal-head { min-height: 52px; }
+  html.glass .modal .modal-new { width: 44px; height: 44px; border-radius: 50%; color: var(--text); }
+}
+/* All chats (iPhone): a rounded search field; in Select mode, round checks and an even row of actions. */
+@media (max-width: 899px) {
+  html.glass .all-chats .search { height: 44px; border: 0; border-radius: 999px; background: var(--glass-fill); padding: 0 14px; }
+  html.glass .all-chats .search input { font-size: 17px; background: none; border: 0; outline: none; box-shadow: none; }
+  html.glass .all-chats input[type='checkbox'] {
+    -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+    border: 1.5px solid color-mix(in srgb, var(--text) 30%, transparent); background: none; transition: background 0.15s, border-color 0.15s;
+  }
+  html.glass .all-chats input[type='checkbox']:checked {
+    border-color: var(--ios-tint); background: var(--ios-tint) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") no-repeat center;
+  }
+  html.glass .all-chats-check { font-size: 16px; color: var(--ios-tint); font-weight: 500; min-height: 40px; }
+  html.glass .all-chats-actions { justify-content: space-between; flex-wrap: nowrap; gap: 4px; padding-top: 6px; }
+  html.glass .all-chats-actions .btn { flex: 1; flex-direction: column; height: auto; min-height: 52px; gap: 3px; padding: 6px 4px; border: 0; background: none; font-size: 12px; font-weight: 500; color: var(--ios-tint); }
+  html.glass .all-chats-actions .btn svg { width: 22px; height: 22px; }
+  html.glass .all-chats-actions .btn:disabled { color: var(--text-3); opacity: 0.6; }
+  html.glass .all-chats-actions .btn.danger:not(:disabled) { color: #ff3b30; }
+  html.glass .all-chats-select { font-size: 17px; font-weight: 600; color: var(--text); height: 44px; padding: 0 16px; border-radius: 999px; }
+  html.glass .all-chats.browsing .all-chats-open { padding-inline-start: 4px; }
+  html.glass .all-chats-confirm .all-chats-actions .btn { flex-direction: row; min-height: 44px; font-size: 15px; }
+}
+/* Sidebar (iPhone): "Projects ›" with just a round + beside it, not a "+ New project" chip. */
+@media (max-width: 899px) {
+  html.glass .sidebar-section-heading .sidebar-chip { width: 34px; height: 34px; padding: 0; border-radius: 50%; display: grid; place-items: center; }
+  html.glass .sidebar-section-heading .sidebar-chip svg { width: 18px; height: 18px; }
+  html.glass .sidebar-section-heading .sidebar-chip .chip-text { display: none; }
+  html.glass .sidebar-section-label, html.glass .sidebar-section-link { font-size: 15px; }
+}
+/* Chat (iPhone): the context chip is just its ring (no "0%") until a chat has used a tenth of what the model can hold; code blocks
+   get buttons big enough to tap; the fade under the top bar is shorter, so text reads right up to the bar. */
+@media (max-width: 899px) {
+  html.glass .usage-chip.idle { padding: 0; width: 32px; justify-content: center; background: none; }
+  html.glass .usage-chip.idle :is(.usage-chip-pct, .usage-status, svg.lucide) { display: none; }
+  html.glass .code-head { height: 44px; padding: 0 6px 0 16px; font-size: 13px; }
+  html.glass .code-copy { height: 34px; padding: 0 14px; border-radius: 999px; background: var(--glass-fill); font-size: 15px; font-weight: 500; color: var(--text); }
+  html.glass .code-copy:active { background: var(--glass-fill-press); }
+  html.glass .code-actions { gap: 6px; }
+  html.glass .code-run { color: var(--text); }
+  html.glass .main > .topbar::before { inset: 0 0 -14px; }
+}
+@media (max-width: 899px) {
+  /* A chosen chat in Select mode is marked by its check, with a soft grey row (no green). */
+  html.glass .all-chats-list li.checked .swipe-face { background: var(--glass-fill); }
+  /* A Settings row with a dropdown puts the dropdown under its name, full width, so the choice isn't cut off. */
+  html.glass .settings-page .setting-row:has(> .setting-ctrl > select) { flex-wrap: wrap; }
+  html.glass .settings-page .setting-row:has(> .setting-ctrl > select) > .setting-ctrl { flex: 1 1 100%; justify-content: stretch; }
+  html.glass .settings-page .setting-row > .setting-ctrl > select { width: 100%; max-width: none; }
+}

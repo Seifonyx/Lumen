@@ -23,7 +23,7 @@ const byLength = (a, b) => (timings[b] ?? 30) - (timings[a] ?? 30) || a.localeCo
 const shared = files.filter(usesEmulators).sort(byLength);
 const isolated = files.filter((f) => !usesEmulators(f)).sort(byLength);
 
-const preview = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--port', '5190', '--strictPort'], { stdio: 'ignore' });
+const preview = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--port', '5190', '--strictPort', ...(process.env.MR_TEST_DIST ? ['--outDir', process.env.MR_TEST_DIST] : [])], { stdio: 'ignore' });
 const up = async () => {
   for (let i = 0; i < 60; i++) {
     try {

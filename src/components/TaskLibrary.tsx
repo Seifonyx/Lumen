@@ -33,7 +33,7 @@ export default function TaskLibrary({ onClose }: { onClose:()=>void }) {
   const toggle=async(task:ScheduledTask)=>{try{await useStore.getState().saveTask({...task,enabled:!task.enabled});}catch(e){useStore.getState().toast((e as Error).message,'error');}};
   const remove=async(task:ScheduledTask)=>{if(!confirm('Delete this schedule? Existing result chats will stay.'))return;try{await useStore.getState().deleteTask(task.id);}catch(e){useStore.getState().toast((e as Error).message,'error');}};
   return <div className="task-library">
-    <p className="muted small">Tasks run only while this app is open, visible and online. Reminders use no AI messages. AI tasks use your current privacy settings and one message per model attempt; they stop after five minutes. Missed daily tasks catch up once.</p>
+    <p className="muted small">Tasks run while Lumen is open. Reminders use no AI messages; missed daily tasks run once when you’re back.</p>
     {editing ? <form className="task-editor" onSubmit={event=>{event.preventDefault();void save();}}>
       <h3>{tasks.some(task=>task.id===editing.id)?'Edit task':'New task'}</h3>
       <label className="field-block"><span className="setting-label">Name</span><input aria-label="Task name" required maxLength={60} value={editing.name} onChange={event=>setEditing({...editing,name:event.target.value})} placeholder="Morning headlines" /></label>
@@ -49,15 +49,15 @@ export default function TaskLibrary({ onClose }: { onClose:()=>void }) {
         <label className="field-block"><span className="setting-label">Time zone</span><select aria-label="Daily task time zone" value={editing.schedule.timeZone} onChange={event=>setEditing({...editing,schedule:{...(editing.schedule as {kind:'daily';time:string;timeZone:string}),timeZone:event.target.value}})}>{[...new Set([zone,editing.schedule.timeZone,'UTC','Africa/Cairo','Europe/London','Europe/Paris','America/New_York','America/Los_Angeles','Asia/Dubai','Asia/Tokyo','Australia/Sydney'])].map(value=><option key={value} value={value}>{value.replaceAll('_',' ')}</option>)}</select></label>
       </div>}
       <label className="task-toggle"><input type="checkbox" checked={editing.enabled} onChange={event=>setEditing({...editing,enabled:event.target.checked})} />{editing.kind==='assistant'?'Run automatically while the app is open':'Enable reminder'}</label>
-      {editing.kind==='assistant' && <p className="muted small">Automatic AI runs are off until you enable them. “Ask me” privacy mode pauses requests containing personal details for review. Results are saved in their own chats; your current draft stays in place.</p>}
+      {editing.kind==='assistant' && <p className="muted small">Results are saved in their own chats. With privacy set to “Ask me”, requests with personal details wait for your review.</p>}
       {error && <p className="free-tool-error" role="alert">{error}</p>}
       <div className="library-form-actions"><button type="button" className="btn" disabled={saving} onClick={()=>{setEditing(null);setError('');}}>Back</button><button type="submit" className="btn primary" disabled={saving}>{saving?'Saving…':'Save task'}</button></div>
     </form> : <>
       <div className="task-notify" data-state={notifications}>
-        {notifications==='on' ? <><BellRing size={16}/><span>Notifications on · you’ll be told when a task finishes while you’re in another window or app.</span></>
-          : notifications==='blocked' ? <><BellOff size={16}/><span>Notifications are blocked for this site. Allow them in your browser settings to hear when tasks finish.</span></>
+        {notifications==='on' ? <><BellRing size={16}/><span>Notifications on for finished tasks.</span></>
+          : notifications==='blocked' ? <><BellOff size={16}/><span>Notifications are blocked. Allow them in your settings to hear when tasks finish.</span></>
           : notifications==='unsupported' ? <><BellOff size={16}/><span>To get notifications on iPhone, add the app to your Home Screen (Share → Add to Home Screen) and open it from there.</span></>
-          : <><Bell size={16}/><span>Get a notification when a task finishes while you’re in another window or app (the app must stay open).</span><button className="btn small" onClick={()=>void enableNotifications().then(setNotifications)}>Turn on</button></>}
+          : <><Bell size={16}/><span>Get notified when a task finishes.</span><button className="btn small" onClick={()=>void enableNotifications().then(setNotifications)}>Turn on</button></>}
       </div>
       <div className="task-toolbar"><span className="muted small">{tasks.length} / {MAX_TASKS} saved{!ready?' · loading schedules…':''}</span><button className="btn" disabled={tasks.length>=MAX_TASKS} onClick={newTask}><Plus size={16} />New task</button></div>
       <div className="library-grid">{tasks.map(task=><article className="library-card task-card" key={task.id}>

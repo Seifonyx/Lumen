@@ -405,3 +405,9 @@ html.glass .composer .send-btn, html.glass .composer .send-btn:not(:disabled):no
 html.glass .composer :is(.repo-chip, .ctx-chip, .plan-toggle, .composer-chip) { background: var(--glass-fill); border-color: transparent; }
 /* Like Claude and other iOS 26 apps, the chat shows through the message box (blurred) instead of fading out under it. */
 html.glass .main > .composer-wrap::before { display: none; }
+
+/* While a reply streams (html.streaming), Safari redraws every blur the new text passes under, many times a
+   second. The fades under the bars become plain gradients and the glass over the chat blurs lighter until the
+   reply is done, which is hard to notice while text is moving and keeps the text arriving smoothly. */
+html.glass.streaming .main > .topbar::before { -webkit-backdrop-filter: none; backdrop-filter: none; -webkit-mask-image: none; mask-image: none; }
+html.glass.streaming :is(.composer, .topbar .menu-btn, .topbar-trailing, .to-bottom) { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }

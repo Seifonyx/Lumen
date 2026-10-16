@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.4.6 · Smooth replies on iPhone
+
+- Fixed: on iPhone, replies could arrive in jerky chunks instead of flowing in smoothly. Safari was redrawing
+  the glass blur behind every bar and button each time new text arrived. While a reply streams, the glass now
+  blurs a little lighter and the fades under the top bar become plain gradients. Everything returns to full
+  glass as soon as the reply finishes.
+- The check that switches the glass off on phones that stutter now runs every time the app opens (before, it
+  stopped after one smooth session), and it ignores the moments while a reply is streaming.
+
 ## 2.4.5 · Green where it matters
 
 - Lumen's green is now kept for the important things: the send and voice buttons, the logo, the welcome moon

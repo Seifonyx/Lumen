@@ -23,14 +23,17 @@ const near = (a, b, d = 2) => Math.abs(a - b) <= d;
     await page.reload();
     await page.waitForSelector('.composer textarea');
 
-    // ---- The open-chat bar follows you.
+    // ---- The open chat is marked by a filled row in bold (2.4.5: no green bar beside it).
     for (const title of ['First chat', 'Third chat']) {
       await page.click(`.chat-row:has-text("${title}") .chat-open`);
       await page.waitForTimeout(700);
-      const [bar, row] = await Promise.all([page.locator('.active-indicator').boundingBox(), page.locator('.chat-row.active').boundingBox()]);
-      assert.ok(near(bar.y, row.y + 9) && near(bar.x, row.x), `the bar sits on "${title}" (${JSON.stringify([bar, row])})`);
+      const look = await page.locator('.chat-row.active').evaluate((row) => ({ title: row.textContent, bg: getComputedStyle(row).backgroundColor, weight: getComputedStyle(row.querySelector('.chat-open')).fontWeight }));
+      assert.ok(look.title.includes(title), `"${title}" is the selected row`);
+      assert.notEqual(look.bg, 'rgba(0, 0, 0, 0)', 'the selected row is filled');
+      assert.ok(Number(look.weight) >= 600, 'the selected row is bold');
+      assert.equal(await page.locator('.active-indicator').evaluate((el) => getComputedStyle(el).display).catch(() => 'none'), 'none', 'no bar beside it');
     }
-    console.log('PASS the open-chat bar glides to the chat you open');
+    console.log('PASS the open chat is a filled, bold row');
 
     // ---- The segmented thumb lands on your choice.
     await page.click('.sidebar-foot');

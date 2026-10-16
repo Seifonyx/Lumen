@@ -99,6 +99,11 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   }, [chat?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { if (streaming && !stick.current) setUnseen(true); }, [lastText, streaming]);
+  // While a reply streams, the page knows (the iPhone glass look draws lighter then, so text arrives smoothly).
+  useEffect(() => {
+    document.documentElement.classList.toggle('streaming', streaming);
+    return () => document.documentElement.classList.remove('streaming');
+  }, [streaming]);
   // iPhone glass look: the chat scrolls under the floating bars.
   useEffect(() => watchGlassInsets(scroller.current?.closest('.main') as HTMLElement | null), [projectWorkspaceOpen, chat?.id]);
   useEffect(() => setUnseen(false), [chat?.id]);

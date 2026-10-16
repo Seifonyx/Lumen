@@ -39,7 +39,8 @@ export function initGlass(): void {
   // Frame timing while something is moving. A frame over 34 ms is a visible hitch (two missed frames at 60 Hz).
   let samples = 0, slow = 0, last = 0, until = 0, frame = 0;
   const tick = (t: number) => {
-    if (last && document.visibilityState === 'visible') {
+    // Frames while a reply streams don't count: that work is the reply's, not the glass's.
+    if (last && document.visibilityState === 'visible' && !root.classList.contains('streaming')) {
       samples++;
       if (t - last > 34) slow++;
     }
@@ -59,13 +60,11 @@ export function initGlass(): void {
       write('off');
       stop();
     } else if (samples > 1800) {
-      write('ok');
-      stop(); // it's smooth here; stop measuring
+      stop(); // smooth so far; measured again next time the app opens
     }
   };
   const opts = { capture: true, passive: true } as const;
   const stop = () => { for (const e of ['scroll', 'touchmove', 'transitionstart', 'animationstart']) document.removeEventListener(e, moving, opts); };
-  if (read() === 'ok') return;
   for (const e of ['scroll', 'touchmove', 'transitionstart', 'animationstart']) document.addEventListener(e, moving, opts);
 }
 

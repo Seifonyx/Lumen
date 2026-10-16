@@ -79,7 +79,8 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
     all: { label: 'New document', run: newDoc },
     documents: { label: 'New document', run: newDoc },
     photos: { label: 'Add photos', run: () => inNewChat('attach') },
-    files: { label: 'Attach a file', run: () => inNewChat('attach') },
+    // (Files you upload for Lumen to search live here, under your attached files; attach to a chat from its +.)
+    files: { label: 'Upload a file', run: () => document.querySelector<HTMLInputElement>('.files-uploads input[type="file"]')?.click() },
     generated: { label: 'Create an image', run: () => inNewChat('image') },
     searchable: { label: 'Upload a file to search', run: () => document.querySelector<HTMLInputElement>('.files-uploads input[type="file"]')?.click() },
   };
@@ -91,8 +92,9 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
     generated: 'Images Lumen creates for you show up here.',
     searchable: 'Files you upload for Lumen to search show up here.',
   };
-  const bar = glassPhone ? { label: 'Show', active: kind, onSelect: (id: string) => { setKind(id as CollectionKind); setQuery(''); }, create: CREATE[kind], items: FILTERS.map((f) => ({ id: f.id, label: SHORT[f.id], icon: BIG[f.id] })) } : undefined;
-  const emptyHere = kind !== 'all' && kind !== 'searchable' && !items.some((i) => i.kind === kind);
+  const bar = glassPhone ? { label: 'Show', active: kind, onSelect: (id: string) => { setKind(id as CollectionKind); setQuery(''); }, create: CREATE[kind], items: FILTERS.filter((f) => f.id !== 'searchable').map((f) => ({ id: f.id, label: SHORT[f.id], icon: BIG[f.id] })) } : undefined;
+  // (On iPhone the Files tab also lists the files uploaded for search, so it's never shown as empty.)
+  const emptyHere = kind !== 'all' && kind !== 'searchable' && !(glassPhone && kind === 'files') && !items.some((i) => i.kind === kind);
 
   const More = ({ i }: { i: Item }) => (
     <div className="doc-more">
@@ -138,7 +140,7 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
               )}
             </div>
           )}
-          {items.length === 0 || (glassPhone && emptyHere && !q) ? (
+          {glassPhone && kind === 'files' && !shown.length ? null : (items.length === 0 && !(glassPhone && kind === 'files')) || (glassPhone && emptyHere && !q) ? (
             <HubEmpty icon={BIG[kind]} title="Nothing here yet" text={EMPTY[kind]} action={<button type="button" className="btn primary" onClick={CREATE[kind].run}><Plus size={16} /> {CREATE[kind].label}</button>} />
           ) : shown.length === 0 ? (
             <p className="hub-none">Nothing matches.</p>
@@ -165,6 +167,12 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
                 </li>
               ))}
             </ul>
+          )}
+          {glassPhone && kind === 'files' && (
+            <section className="files-uploads coll-searchable" aria-label="Files Lumen can search">
+              <h2 className="coll-section-title">Files Lumen can search</h2>
+              <KnowledgeLibrary onClose={onClose} filter={query} />
+            </section>
           )}
         </>
       )}

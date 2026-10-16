@@ -454,3 +454,27 @@ html.glass .topbar-route .route-dot.off { background: var(--text-3); box-shadow:
   html.glass .hub-page.has-bar .hub-toolbar { margin-top: 0; }
   html.glass .hub-page.has-bar .coll-note, html.glass .hub-page.has-bar .knowledge-documents > header .btn { display: none; }
 }
+
+/* Search fields on pages (iPhone): one rounded field like iOS, a soft fill with the icon inside, no box
+   inside a box and no outline ring when you tap it. */
+html.glass .hub-search {
+  height: 44px; max-width: none; padding: 0 14px; gap: 8px; border: 0; border-radius: 999px;
+  background: var(--glass-fill); box-shadow: none; color: var(--text-3);
+}
+html.glass .hub-search:focus-within { box-shadow: none; background: var(--glass-fill-press); }
+html.glass .hub-search input,
+html.glass .hub-search input:focus {
+  -webkit-appearance: none; appearance: none; height: 100%; padding: 0; margin: 0; border: 0; border-radius: 0;
+  background: transparent; box-shadow: none; outline: none; font-size: 17px; color: var(--text);
+}
+html.glass .hub-search input::placeholder { color: color-mix(in srgb, var(--text) 45%, transparent); }
+html.glass .hub-search input::-webkit-search-decoration { -webkit-appearance: none; }
+html.glass .hub-search svg { width: 18px; height: 18px; flex: none; }
+
+/* While typing, the tab bar steps aside (as in iOS apps) instead of riding up on the keyboard. */
+html.glass.kb-open .glass-tabbar, html.glass.kb-open .hub-page:has(.glass-tabbar)::after { display: none; }
+
+/* Collection → Files (iPhone): files uploaded for Lumen to search, under the attached files. Its own search
+   box gives way to the page's (which filters by name). */
+html.glass .coll-section-title { margin: 22px 4px 10px; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+html.glass .hub-page.has-bar .coll-searchable .knowledge-search { display: none; }

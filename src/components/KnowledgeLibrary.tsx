@@ -49,7 +49,8 @@ function session(): KnowledgeSession {
     },
   };
 }
-export default function KnowledgeLibrary({ onClose }: { onClose: () => void }) {
+/** `filter` narrows the list to names containing it (the page's own search box, on iPhone). */
+export default function KnowledgeLibrary({ onClose, filter = '' }: { onClose: () => void; filter?: string }) {
   const account = useStore((s) => s.user?.uid),
     key = useStore((s) => s.keys.gemini),
     settings = useStore((s) => s.settings),
@@ -423,7 +424,7 @@ export default function KnowledgeLibrary({ onClose }: { onClose: () => void }) {
             </p>
           </div>
         )}
-        {docs.map((doc) => (
+        {docs.filter((doc) => !filter.trim() || doc.name.toLowerCase().includes(filter.trim().toLowerCase())).map((doc) => (
           <div className="knowledge-document" key={doc.id}>
             <label className="knowledge-document-label">
               <input

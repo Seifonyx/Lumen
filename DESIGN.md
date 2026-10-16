@@ -81,4 +81,4 @@ Never use it for large areas, body text on white, or decoration.
   runs them in Safari's engine; the manual "Safari visual check" workflow does this on GitHub.
 
 ## Phone tab bar gestures
-The iPhone glass bars in Tools and Library support pressing and sliding across tabs. The lens previews the tab under the finger; release selects it. Release outside the bar, a cancelled gesture or lost pointer capture restores the current tab. Tab gestures do not start page swipe-back. Ordinary taps and keyboard activation stay available.
+The iPhone glass bars in Tools and Library support pressing and sliding across tabs. The lens follows the finger continuously and magnifies the candidate icon and label over a translucent, backdrop-blurred surface; release selects the previewed tab. Respect reduced motion and reduced transparency preferences. Release outside the bar, a cancelled gesture or lost pointer capture restores the current tab. Tab gestures do not start page swipe-back. Ordinary taps and keyboard activation stay available.

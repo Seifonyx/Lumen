@@ -77,6 +77,12 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
       }));
       const send = (type, point) => touch.send('Input.dispatchTouchEvent', { type, touchPoints: point ? [{ ...point, id: 1 }] : [] });
       await send('touchStart', points[indices[0]]);
+      await page.waitForFunction(() => document.querySelector('.glass-tabbar').classList.contains('held'));
+      assert.ok(await nav.locator('.glass-lens').evaluate(e => getComputedStyle(e).backdropFilter.includes('blur(10px)')), 'Held lens blurs the live backdrop');
+      const between = { x: (points[0].x + points[1].x) / 2, y: points[0].y };
+      await send('touchMove', between);
+      await page.waitForFunction(() => Math.abs(Number(document.querySelector('.glass-tabbar').style.getPropertyValue('--lens-position')) - .5) < .01);
+      assert.equal(await nav.locator('.glass-lens').getAttribute('aria-hidden'), 'true', 'Magnified copy is decorative, not another accessible control');
       for (const i of indices) {
         await send('touchMove', points[i]);
         await page.waitForFunction(i => document.querySelector('.glass-tabbar').style.getPropertyValue('--i') === String(i), i);

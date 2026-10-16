@@ -218,7 +218,7 @@ html.glass .hub-page.scrolled .hub-head h1 { opacity: 0; transition: opacity 0.1
   html.glass .glass-lens {
     display: block; position: absolute; top: var(--pad); bottom: var(--pad); left: var(--pad); border-radius: 999px;
     width: calc((100% - 2 * var(--pad)) / var(--n));
-    translate: calc(var(--i) * 100%) 0;
+    translate: calc(var(--lens-position, var(--i)) * 100%) 0;
     background: var(--glass-fill);
     transition: translate 0.55s var(--spring-soft), scale 0.4s var(--spring), background 0.2s, box-shadow 0.2s;
   }
@@ -441,7 +441,7 @@ html.glass .topbar-route .route-dot.off { background: var(--text-3); box-shadow:
   html.glass .glass-tabbar.page-sections { width: calc(100% - 24px); max-width: 420px; }
   html.glass .glass-tabbar.page-sections button { font-size: 10px; letter-spacing: 0; }
   html.glass .glass-tabbar button[aria-current='page'][data-hue] { color: hsl(var(--hue) 65% 45%); }
-  html.glass .glass-tabbar.held .glass-lens, html.glass .glass-tabbar .glass-lens { transition: translate 0.5s var(--spring-soft), scale 0.4s var(--spring), background 0.2s; }
+
 }
 @media (max-width: 899px) and (prefers-color-scheme: dark) { html.glass:not([data-theme='light']) .glass-tabbar button[aria-current='page'][data-hue] { color: hsl(var(--hue) 75% 72%); } }
 @media (max-width: 899px) { html.glass[data-theme='dark'] .glass-tabbar button[aria-current='page'][data-hue], html.glass[data-theme='black'] .glass-tabbar button[aria-current='page'][data-hue] { color: hsl(var(--hue) 75% 72%); } }
@@ -629,4 +629,57 @@ html.glass :is(.sheet, .modal, .models-pop):focus, html.glass :is(.sheet, .modal
   html.glass .settings-page .setting-row:has(> .setting-ctrl > select) { flex-wrap: wrap; }
   html.glass .settings-page .setting-row:has(> .setting-ctrl > select) > .setting-ctrl { flex: 1 1 100%; justify-content: stretch; }
   html.glass .settings-page .setting-row > .setting-ctrl > select { width: 100%; max-width: none; }
+}
+
+/* The tab bar has its own translucent backing. Keep the nav out of the backdrop
+   filter chain so the raised lens can sample the scene rather than an opaque bar. */
+@media (max-width: 899px) {
+  html.glass .glass-tabbar {
+    background: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+    box-shadow: none;
+  }
+  html.glass .glass-tabbar::before {
+    content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    border-radius: inherit; border: 1px solid transparent;
+    background: linear-gradient(160deg, rgb(255 255 255 / .18), transparent 55%) padding-box,
+      linear-gradient(color-mix(in srgb, var(--surface) 45%, transparent), color-mix(in srgb, var(--surface) 45%, transparent)) padding-box,
+      var(--glass-rim) border-box;
+    -webkit-backdrop-filter: blur(18px) saturate(1.8); backdrop-filter: blur(18px) saturate(1.8);
+    box-shadow: var(--glass-depth), var(--glass-shadow);
+  }
+  html.glass .glass-lens { pointer-events: none; }
+  html.glass .glass-tabbar.held .glass-lens {
+    z-index: 2; display: grid; place-items: center; overflow: hidden;
+    scale: 1.12 1.2;
+    background: linear-gradient(145deg, rgb(255 255 255 / .3), transparent 45%, rgb(255 255 255 / .08)) padding-box,
+      linear-gradient(color-mix(in srgb, var(--surface) 18%, transparent), color-mix(in srgb, var(--surface) 18%, transparent)) padding-box,
+      var(--glass-rim) border-box;
+    -webkit-backdrop-filter: blur(10px) saturate(1.9) contrast(1.06);
+    backdrop-filter: blur(10px) saturate(1.9) contrast(1.06);
+    box-shadow: inset 0 1px 1px rgb(255 255 255 / .6), inset 0 -1px 2px rgb(255 255 255 / .15), 0 8px 18px rgb(0 0 0 / .18);
+    transition: translate 55ms linear, scale .22s var(--spring), background .2s, box-shadow .2s;
+  }
+  html.glass .glass-lens-content {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+    color: var(--ios-tint); font-size: 10px; font-weight: 600; line-height: normal;
+    scale: 1.04; white-space: nowrap;
+  }
+  html.glass .glass-lens-content svg { width: 24px; height: 24px; stroke-width: 2.2; }
+  html.glass .glass-lens-content[data-hue] { color: hsl(var(--hue) 65% 45%); }
+  html.glass .glass-tabbar.held button[data-preview] > :is(svg, span) { opacity: 0; }
+}
+@media (max-width: 899px) and (prefers-color-scheme: dark) {
+  html.glass:not([data-theme='light']) .glass-lens-content[data-hue] { color: hsl(var(--hue) 75% 72%); }
+}
+@media (max-width: 899px) {
+  html.glass:is([data-theme='dark'], [data-theme='black']) .glass-lens-content[data-hue] { color: hsl(var(--hue) 75% 72%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.glass .glass-tabbar.held .glass-lens { transition: none; scale: 1; }
+  html.glass .glass-lens-content { scale: 1; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  html.glass .glass-tabbar::before, html.glass .glass-tabbar.held .glass-lens {
+    background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
 }

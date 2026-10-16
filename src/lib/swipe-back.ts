@@ -91,7 +91,7 @@ export function installSwipeBack(page: HTMLElement, canGoBack: () => boolean, un
   };
 
   const ts = (e: TouchEvent) => {
-    if (e.touches.length !== 1) return;
+    if (e.touches.length !== 1 || (e.target as Element).closest('.glass-tabbar')) return;
     const t = e.touches[0];
     if (anim?.running) { dx = anim.stop(); anim = null; start = { x: t.clientX - dx, y: t.clientY, id: t.identifier, edge: true }; claimed = true; speed.reset(); speed.add(t.clientX); return; }
     if (!canGoBack()) return;

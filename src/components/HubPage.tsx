@@ -101,6 +101,17 @@ function GlassTabs({ bar }: { bar?: HubBar }) {
   const current = page === 'assistants' || page === 'study' ? 'tools' : page;
   // The selected tab sits under a glass lens that slides to the tab you touch and swells while you hold it.
   const [held, setHeld] = useState<number | null>(null);
+  const pointer = useRef<number | null>(null);
+  const suppressClick = useRef(false);
+  const tabAt = (nav: HTMLElement, x: number, y: number) => {
+    const bounds = nav.getBoundingClientRect();
+    if (y < bounds.top || y > bounds.bottom || x < bounds.left || x > bounds.right) return null;
+    const index = [...nav.querySelectorAll('button')].findIndex(button => {
+      const r = button.getBoundingClientRect();
+      return x >= r.left && x <= r.right;
+    });
+    return index < 0 ? null : index;
+  };
   // A page with its own sections (Tools, Collection) shows those instead of the app's pages.
   const items = bar ? bar.items.map((b) => ({ key: b.id, label: b.label, icon: b.icon, hue: b.hue, on: bar.active === b.id, pick: () => bar.onSelect(b.id) }))
     : tabs.map((t) => ({ key: t.label, label: t.label, icon: t.icon, hue: undefined, on: current === t.id, pick: () => go(t.id) }));
@@ -108,9 +119,49 @@ function GlassTabs({ bar }: { bar?: HubBar }) {
   const lens = held ?? index;
   return (
     <nav className={`glass-tabbar${held !== null ? ' held' : ''}${bar ? ' page-sections' : ''}`} aria-label={bar?.label || 'Sections'} style={{ ['--i' as string]: lens, ['--n' as string]: items.length }}
-      onPointerUp={() => setHeld(null)} onPointerCancel={() => setHeld(null)} onPointerLeave={() => setHeld(null)}>
+      onPointerDown={e => {
+        if (!e.isPrimary || e.button !== 0 || pointer.current !== null) return;
+        const next = tabAt(e.currentTarget, e.clientX, e.clientY);
+        if (next === null) return;
+        pointer.current = e.pointerId;
+        suppressClick.current = false;
+        e.currentTarget.setPointerCapture(e.pointerId);
+        setHeld(next);
+      }}
+      onPointerMove={e => {
+        if (pointer.current === e.pointerId) setHeld(tabAt(e.currentTarget, e.clientX, e.clientY));
+      }}
+      onPointerUp={e => {
+        if (pointer.current !== e.pointerId) return;
+        const next = tabAt(e.currentTarget, e.clientX, e.clientY);
+        pointer.current = null;
+        suppressClick.current = true;
+        setHeld(null);
+        e.currentTarget.releasePointerCapture(e.pointerId);
+        if (next !== null) items[next]?.pick();
+      }}
+      onPointerCancel={e => {
+        if (pointer.current !== e.pointerId) return;
+        pointer.current = null;
+        suppressClick.current = true;
+        setHeld(null);
+      }}
+      onLostPointerCapture={e => {
+        if (pointer.current !== e.pointerId) return;
+        pointer.current = null;
+        suppressClick.current = true;
+        setHeld(null);
+      }}
+      onClickCapture={e => {
+        // A captured pointer commits on release; leave keyboard/assistive clicks alone.
+        if (suppressClick.current && e.detail !== 0) {
+          e.preventDefault();
+          e.stopPropagation();
+          suppressClick.current = false;
+        }
+      }}>
       <span className="glass-lens" aria-hidden="true" />
-      {items.map((t, i) => <button key={t.key} type="button" aria-current={t.on ? 'page' : undefined} data-hue={t.hue !== undefined || undefined} style={t.hue !== undefined ? { ['--hue' as string]: t.hue } : undefined} onPointerDown={() => setHeld(i)} onPointerEnter={(e) => { if (e.buttons) setHeld(i); }} onClick={t.pick}>{t.icon}<span>{t.label}</span></button>)}
+      {items.map(t => <button key={t.key} type="button" aria-current={t.on ? 'page' : undefined} data-hue={t.hue !== undefined || undefined} style={t.hue !== undefined ? { ['--hue' as string]: t.hue } : undefined} onClick={t.pick}>{t.icon}<span>{t.label}</span></button>)}
     </nav>
   );
 }

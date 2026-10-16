@@ -67,6 +67,27 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     await page.locator('.glass-tabbar button', { hasText: 'Chats' }).click();
     await page.waitForSelector('.hub-page', { state: 'detached' });
     await page.waitForSelector('.composer textarea');
+    // Real touch input has implicit pointer capture: hover/enter events cannot implement scrubbing.
+    const touch = await page.context().newCDPSession(page);
+    const scrub = async (indices, finish = 'release') => {
+      const nav = page.locator('.glass-tabbar');
+      const before = await nav.locator('[aria-current="page"]').innerText();
+      const points = await nav.locator('button').evaluateAll(buttons => buttons.map(b => {
+        const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      }));
+      const send = (type, point) => touch.send('Input.dispatchTouchEvent', { type, touchPoints: point ? [{ ...point, id: 1 }] : [] });
+      await send('touchStart', points[indices[0]]);
+      for (const i of indices) {
+        await send('touchMove', points[i]);
+        await page.waitForFunction(i => document.querySelector('.glass-tabbar').style.getPropertyValue('--i') === String(i), i);
+        assert.equal(await nav.locator('[aria-current="page"]').innerText(), before, 'Preview must not navigate before release');
+      }
+      if (finish === 'outside') await send('touchMove', { x: points[indices.at(-1)].x, y: points[0].y - 100 });
+      await send(finish === 'cancel' ? 'touchCancel' : 'touchEnd');
+      await page.waitForFunction(() => !document.querySelector('.glass-tabbar').classList.contains('held'));
+      assert.equal(await nav.locator('[aria-current="page"]').innerText(), finish === 'release' ? await nav.locator('button').nth(indices.at(-1)).innerText() : before);
+      assert.equal(await page.locator('.app.swipe-revealing').count(), 0, 'Tab scrubbing must not trigger back navigation');
+    };
     // 2.4.14: Tools shows its categories in the tab bar, one at a time, and no Connected apps.
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tools-page' })));
     await page.waitForSelector('.glass-tabbar.page-sections');
@@ -81,6 +102,11 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     assert.equal(await page.locator('.tool-card', { hasText: 'Deep research' }).count(), 0, 'search stays inside the tab');
     await page.fill('input[aria-label="Search tools"]', '');
     assert.equal(await page.getByText('Connected apps').count(), 0, 'connected apps live in Settings');
+    await scrub([0, 1, 2, 3]);
+    await scrub([3, 2, 1, 0]);
+    await scrub([0, 1, 2], 'cancel');
+    await scrub([0, 1], 'outside');
+    console.log('PASS Tools touch scrubbing previews, commits on release and cancels safely');
     // 2.4.17: the + appears only where it adds something (Assistants), and the assistant editor returns to
     // Tools → Assistants (no old Assistants page on iPhone).
     await page.locator('.glass-tabbar button', { hasText: 'Assistants' }).click();
@@ -111,6 +137,15 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     await page.waitForSelector('.glass-tabbar.page-sections');
     assert.deepEqual(await page.$$eval('.glass-tabbar button', (b) => b.map((x) => x.textContent)), ['All', 'Photos', 'Docs', 'Files', 'Made'], 'no Search tab: the search box covers it');
     assert.equal(await page.locator('.coll-filters').count(), 0, 'no filter chips at the top');
+    await scrub([0, 1, 2, 3, 4]);
+    await scrub([4, 3, 2, 1, 0]);
+    await scrub([0, 2], 'cancel');
+    await scrub([0, 1], 'outside');
+    const photosTab = page.locator('.glass-tabbar button', { hasText: 'Photos' });
+    await photosTab.focus(); await page.keyboard.press('Enter');
+    assert.equal(await page.locator('.glass-tabbar [aria-current="page"]').innerText(), 'Photos', 'Keyboard activation still works');
+    console.log('PASS Library touch scrubbing in both directions, cancellation and keyboard activation');
+
     await page.locator('.glass-tabbar button', { hasText: 'Photos' }).click();
     assert.equal(await page.locator('.hub-new').getAttribute('aria-label'), 'Add photos');
     assert.ok(await page.locator('.hub-empty button', { hasText: 'Add photos' }).isVisible(), 'an empty tab offers to add something');

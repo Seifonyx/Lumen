@@ -210,6 +210,7 @@ html.glass .hub-page.scrolled .hub-head h1 { opacity: 0; transition: opacity 0.1
 @media (max-width: 899px) {
   html.glass .glass-tabbar {
     --pad: 4px;
+    touch-action: none; -webkit-user-select: none; user-select: none;
     display: flex; position: absolute; z-index: 12; left: 50%; translate: -50% 0;
     bottom: max(8px, env(safe-area-inset-bottom)); padding: var(--pad); border-radius: 999px;
     width: min(370px, calc(100% - 40px));
@@ -222,6 +223,7 @@ html.glass .hub-page.scrolled .hub-head h1 { opacity: 0; transition: opacity 0.1
     transition: translate 0.55s var(--spring-soft), scale 0.4s var(--spring), background 0.2s, box-shadow 0.2s;
   }
   html.glass .glass-tabbar.held .glass-lens {
+    transition: translate .12s ease-out, scale .18s var(--spring), background .2s, box-shadow .2s;
     scale: 1.14 1.22; background: linear-gradient(rgb(255 255 255 / 0.25), rgb(255 255 255 / 0.25)) padding-box, var(--glass-rim) border-box;
     border: 1px solid transparent; box-shadow: var(--glass-depth), 0 6px 20px rgb(0 0 0 / 0.14);
     -webkit-backdrop-filter: blur(2px) saturate(1.6); backdrop-filter: blur(2px) saturate(1.6);

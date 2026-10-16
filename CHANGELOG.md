@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.4 · Glass tone
+
+- On iPhone, the glass is darker in dark mode and lighter in light mode, so it blends with the screen behind
+  it.
+
 ## 2.4.3 · Solid sidebar
 
 - On iPhone, the sidebar is a solid full-height panel again, as in other iOS apps, instead of a floating glass

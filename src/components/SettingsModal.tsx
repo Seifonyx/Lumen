@@ -285,7 +285,7 @@ function ModelsTab() {
           </button>
         </div>
         <div className="settings-card pad-card">
-          {catalogError && <p className="error-text small" dir="auto">{catalogError}</p>}
+          {catalogError && <p className="error-text small" dir="auto">Couldn't refresh every provider: {catalogError}. Models found last time are still listed; tap Refresh to try again.</p>}
           <div className="list-toolbar">
             <label className="search">
               <Search size={16} />

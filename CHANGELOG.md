@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.4.9 · Smoother sidebar, clearer errors
+
+- Swiping the sidebar open on iPhone is smoother. The floating New chat button inside it no longer
+  re-blurs on every frame while the sidebar moves; it keeps its glass look, since the sidebar behind it is
+  solid. The sidebar is also ready to move before your finger does.
+- When a provider doesn't answer while Lumen refreshes the model list, Settings → Models now says which
+  provider it was and what happened (for example "Hugging Face didn't respond in time"), instead of the
+  browser's own "Fetch is aborted". It also tells you that the models found last time are still listed.
+
 ## 2.4.8 · A responsive app while replies stream
 
 - Fixed: the whole app could freeze while a long reply streamed (the sidebar took seconds to open, taps

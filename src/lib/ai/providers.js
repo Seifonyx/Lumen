@@ -255,7 +255,16 @@ export async function catalog({ refresh = false } = {}) {
   const results = await Promise.allSettled(AI_PROVIDERS.map(p => !hasKey(p) ? [] : p === 'gemini' ? geminiCatalog() : p === 'openrouter' ? openRouterCatalog() : compatCatalog(p)));
   if (version !== keyGeneration) throw new Error('Provider settings changed. Refresh models again.');
   const [google, openrouter, groq, cerebras] = results.map((r) => (r.status === 'fulfilled' ? r.value : []));
-  const errors = results.filter((r) => r.status === 'rejected').map((r) => r.reason.message);
+  // Which provider failed and why, in plain words (a timeout or lost connection shows as the browser's own
+  // message otherwise, such as "Fetch is aborted", without saying which provider it was).
+  const names = { gemini: 'Google Gemini', openrouter: 'OpenRouter', groq: 'Groq', cerebras: 'Cerebras', ...Object.fromEntries(Object.entries(EXTRA_PROVIDERS).map(([k, v]) => [k, v.label])) };
+  const plain = (name, e) => {
+    const m = String(e?.message || e || '');
+    if (e?.name === 'AbortError' || e?.name === 'TimeoutError' || /abort|timed? ?out/i.test(m)) return `${name} didn't respond in time`;
+    if (/failed to fetch|load failed|networkerror|network connection/i.test(m)) return `${name} couldn't be reached`;
+    return m.toLowerCase().startsWith(name.split(' ')[0].toLowerCase()) ? m : `${name}: ${m}`;
+  };
+  const errors = results.map((r, i) => (r.status === 'rejected' ? plain(names[AI_PROVIDERS[i]] || AI_PROVIDERS[i], r.reason) : null)).filter(Boolean);
   const value = {
     providers: Object.fromEntries(AI_PROVIDERS.map(p => [p === 'gemini' ? 'google' : p, hasKey(p)])),
     models: results.flatMap(r => r.status === 'fulfilled' ? r.value : []),

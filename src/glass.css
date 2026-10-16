@@ -411,3 +411,10 @@ html.glass .main > .composer-wrap::before { display: none; }
    reply is done, which is hard to notice while text is moving and keeps the text arriving smoothly. */
 html.glass.streaming .main > .topbar::before { -webkit-backdrop-filter: none; backdrop-filter: none; -webkit-mask-image: none; mask-image: none; }
 html.glass.streaming :is(.composer, .topbar .menu-btn, .topbar-trailing, .to-bottom) { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+
+/* The sidebar slides as one piece: ready to move before your finger does, and with nothing inside it that
+   has to re-blur on every frame (New chat keeps its glass look; behind it is the solid sidebar anyway). */
+@media (max-width: 899px) {
+  html.glass .sidebar, html.glass .scrim { will-change: transform, opacity; }
+  html.glass .sidebar-chip.new-chat.floating { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--glass-sheen) padding-box, linear-gradient(var(--surface-2), var(--surface-2)) padding-box, var(--glass-rim) border-box; }
+}

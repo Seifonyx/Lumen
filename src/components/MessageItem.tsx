@@ -2,7 +2,7 @@ import CodingPlanCard from './CodingPlanCard';
 import { parsePlan } from '../lib/coding-plan';
 import KnowledgeSourceView from './KnowledgeSourceView';
 import type { KnowledgeSource } from '../types';
-import { AlertTriangle, Share, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, GitBranch, Info, Pencil, RefreshCw, Square, TextSelect, Volume2 } from 'lucide-react';
+import { AlertTriangle, Share, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, GitBranch, Info, Pencil, RefreshCw, Repeat, Square, TextSelect, Volume2 } from 'lucide-react';
 import { createContext, memo, useContext, useEffect, useRef, useState } from 'react';
 import { useLongPress } from '../lib/long-press';
 import { useSmoothText } from '../lib/smooth-text';
@@ -381,6 +381,8 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
                 { label: 'Save as Word', icon: <FileDown size={15} />, onSelect: () => void saveWord() },
                 { label: 'Edit in canvas', icon: <Pencil size={15} />, onSelect: () => useStore.getState().openCanvas(`${safeFileName(chatTitle, 'Reply')}.md`, message.text) },
                 { label: 'Select text', icon: <TextSelect size={15} />, onSelect: () => setSelecting(true) },
+                // iPhone glass look: "Retry with…" lives here instead of in the row, which keeps just the icons.
+                ...(!busy && document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches ? [{ label: 'Retry with…', icon: <Repeat size={15} />, onSelect: () => box.current?.querySelector<HTMLButtonElement>('.model-picker.compact > .msg-action')?.click() }] : []),
               ]}
             />
           )}

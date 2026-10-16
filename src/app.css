@@ -2971,9 +2971,7 @@ input, textarea { caret-color: var(--text); }
 .usage { display: flex; flex-direction: column; gap: 22px; }
 .usage-stats { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 10px; }
 .usage-stat { display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; min-width: 0; padding: 16px 18px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
-.usage-stat-main { background: var(--text); border-color: transparent; }
-.usage-stat-main .usage-big, .usage-stat-main .usage-stat-label { color: var(--bg); }
-.usage-stat-main .usage-stat-label { opacity: .7; }
+.usage-stat-main .usage-stat-label { font-size: 14px; color: var(--text-2); }
 .usage .usage-big { font-size: 40px; line-height: 1; font-weight: 600; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
 .usage-stat-value { font-size: 22px; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .usage-stat-value small { font-size: 14px; font-weight: 500; color: var(--text-3); }

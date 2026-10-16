@@ -1,6 +1,6 @@
 import { Clock,
   ArrowDown,
-  ArrowLeft,
+  ChevronLeft,
   ArrowUp,
   Blocks,
   Boxes,
@@ -713,7 +713,7 @@ export default function SettingsModal() {
       <header className="settings-top">
         {tab ? (
           <button className="icon-btn settings-back" onClick={() => go('')} aria-label="All settings">
-            <ArrowLeft size={18} />
+            <ChevronLeft size={24} />
           </button>
         ) : null}
         <h1 className="settings-title">

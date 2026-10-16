@@ -29,20 +29,23 @@ export default function ProjectsPage({ onClose }: { onClose: () => void }) {
     .sort((a, b) => (sort === 'name' ? a.name.localeCompare(b.name) : last(b) - last(a)));
   const open = (id: string) => { useStore.getState().setUi({ page: null }); useStore.getState().selectProject(id); };
   const create = () => setEditing({ create: true });
+  // iPhone glass look: like Tools and Collection (centred title, + at the top left, one search field; newest first).
+  const [glassPhone] = useState(() => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches);
 
   return (
     <HubPage label="Projects" title="Projects" subtitle="Workspaces with their own instructions, files and memory. Every chat in a project shares them." onClose={onClose}
-      actions={<button type="button" className="btn primary" onClick={create}><Plus size={16} /> New project</button>}
+      compact={glassPhone} create={glassPhone ? { label: 'New project', run: create } : undefined}
+      actions={!glassPhone && <button type="button" className="btn primary" onClick={create}><Plus size={16} /> New project</button>}
       toolbar={projects.length > 0 && (
         <>
           <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search projects" placeholder="Search projects" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" /></label>
-          <div className="hub-seg" role="radiogroup" aria-label="Sort">
+          {!glassPhone && <div className="hub-seg" role="radiogroup" aria-label="Sort">
             {([['recent', 'Recent'], ['name', 'Name']] as const).map(([v, l]) => <button key={v} type="button" role="radio" aria-checked={sort === v} onClick={() => setSort(v)}>{l}</button>)}
-          </div>
+          </div>}
         </>
       )}>
       {projects.length === 0 ? (
-        <HubEmpty icon={<FolderKanban size={26} />} title="No projects yet" text="Make a project for anything ongoing (a course, a client, a trip) and give it instructions and files. Every chat in it starts with them." action={<button type="button" className="btn primary" onClick={create}><Plus size={16} /> New project</button>} />
+        <HubEmpty icon={<FolderKanban size={26} />} title="No projects yet" text={glassPhone ? 'For anything ongoing, like a course, a client or a trip.' : 'Make a project for anything ongoing (a course, a client, a trip) and give it instructions and files. Every chat in it starts with them.'} action={<button type="button" className="btn primary" onClick={create}><Plus size={16} /> New project</button>} />
       ) : shown.length === 0 ? (
         <p className="hub-none">No projects match “{query}”.</p>
       ) : (

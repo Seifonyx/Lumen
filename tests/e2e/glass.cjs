@@ -60,6 +60,10 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'projects' })));
     await page.waitForSelector('.glass-tabbar');
     assert.equal(await page.locator('.glass-tabbar [aria-current="page"]').innerText(), 'Projects');
+    // 2.5.0: Projects looks like Tools and Collection: centred title, + at the top left, one search field.
+    assert.equal(await page.locator('.hub-page.has-bar').count(), 1, 'Projects has the compact iPhone header');
+    assert.equal(await page.locator('.hub-new').getAttribute('aria-label'), 'New project');
+    assert.equal(await page.locator('.hub-actions').count(), 0, 'no big New project button');
     await page.locator('.glass-tabbar button', { hasText: 'Chats' }).click();
     await page.waitForSelector('.hub-page', { state: 'detached' });
     await page.waitForSelector('.composer textarea');
@@ -83,6 +87,14 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     assert.equal(await page.locator('.hub-new').getAttribute('aria-label'), 'New assistant');
     await page.locator('.hub-new').click();
     await page.waitForSelector('input[aria-label="Library item name"]');
+    // 2.5.0: dropdowns open an iOS menu; choosing in it changes the setting.
+    const model = page.locator('select[aria-label="Assistant model"]');
+    await model.tap();
+    await page.waitForSelector('.glass-select-menu [role="option"][aria-selected="true"]');
+    assert.equal((await page.locator('.glass-select-menu [aria-selected="true"]').innerText()).trim(), 'Auto · choose for the task');
+    await page.locator('.glass-select-menu [role="option"]').nth(1).click();
+    await page.waitForSelector('.glass-select-menu', { state: 'detached' });
+    assert.equal(await model.inputValue(), 'gemini:gemini-flash-latest', 'the choice reaches the app');
     await page.locator('.hub-nav[aria-label="Back"]').click();
     await page.waitForSelector('.glass-tabbar.page-sections');
     assert.equal(await page.locator('.glass-tabbar [aria-current="page"]').innerText(), 'Assistants', 'back in Tools → Assistants');

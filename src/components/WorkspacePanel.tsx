@@ -1,6 +1,6 @@
 import { AlertTriangle, Wrench } from 'lucide-react';
 import { checkChanges, problemsMessage, type Problem } from '../lib/precommit';
-import { ArrowLeft, Check, ChevronDown, ChevronRight, ExternalLink, File, FileDiff, Folder, GitBranch, GitCommitHorizontal, Loader2, MessageSquarePlus, RefreshCw, RotateCcw, Search, Unplug, X } from 'lucide-react';
+import { Check, ChevronLeft, ChevronDown, ChevronRight, ExternalLink, File, FileDiff, Folder, GitBranch, GitCommitHorizontal, Loader2, MessageSquarePlus, RefreshCw, RotateCcw, Search, Unplug, X } from 'lucide-react';
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { lineStats } from '../lib/edits';
 import type { TreeEntry } from '../lib/github';
@@ -141,7 +141,7 @@ function FileView({ chat, path, onBack }: { chat: Chat; path: string; onBack: ()
   return (
     <div className="ws-file">
       <div className="ws-file-head">
-        <button className="icon-btn sm" onClick={onBack} aria-label="Back to files"><ArrowLeft size={16} /></button>
+        <button className="icon-btn sm" onClick={onBack} aria-label="Back to files"><ChevronLeft size={18} /></button>
         <span className="ws-path" title={path}>{path}</span>
         {change && <span className="ws-mark">{change.content === null ? 'deleted' : change.original === null ? 'new' : 'edited'}</span>}
       </div>

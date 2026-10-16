@@ -485,3 +485,64 @@ html.glass .hub-page.has-bar .coll-searchable .knowledge-documents > p.muted:not
 html.glass .hub-page.has-bar .coll-searchable .knowledge-documents > header,
 html.glass .hub-page.has-bar .coll-searchable .knowledge-documents p.muted:not(.knowledge-disclosure) { display: none; }
 html.glass .hub-page.has-bar .coll-searchable .knowledge-documents:has(.knowledge-empty) .knowledge-disclosure { display: none; }
+
+/* Settings → Usage: the cards follow the theme and the rounder card shape of the rest of Settings. */
+html.glass .usage-stat { border-radius: 22px; }
+/* Under a reply (iPhone): just the icons; "Retry with…" is in the ⋯ menu (its model list still opens from here). */
+@media (max-width: 899px) { html.glass .msg-actions .model-picker.compact > .msg-action { display: none; } }
+
+/* Dropdowns (iPhone): a capsule with the up-and-down chevrons of an iOS pop-up button; tapping one opens a
+   glass menu with a checkmark by the chosen option (lib/glass-select.ts). */
+@media (max-width: 899px) {
+  html.glass select:not([multiple]) {
+    -webkit-appearance: none; appearance: none; min-height: 44px; height: 44px; padding: 0 38px 0 16px; border: 0; border-radius: 999px;
+    background: var(--glass-fill) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 15 5 5 5-5'/%3E%3Cpath d='m7 9 5-5 5 5'/%3E%3C/svg%3E") no-repeat right 14px center;
+    color: var(--text); font: inherit; font-size: 17px; box-shadow: none; outline: none; text-overflow: ellipsis;
+  }
+  html.glass select:not([multiple]):dir(rtl) { padding: 0 16px 0 38px; background-position: left 14px center; }
+  html.glass select:not([multiple]):focus-visible { box-shadow: 0 0 0 3px var(--ring); }
+  html.glass select:not([multiple])[aria-expanded='true'] { background-color: var(--glass-fill-press); }
+}
+html.glass .glass-select-scrim { position: fixed; inset: 0; z-index: 9998; }
+html.glass .menu.glass-select-menu {
+  position: fixed; z-index: 9999; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column;
+  padding: 6px 0; border-radius: 26px;
+}
+html.glass .menu.glass-select-menu button {
+  display: flex; align-items: center; gap: 6px; width: 100%; min-height: 46px; padding: 0 18px 0 10px; border-radius: 0;
+  font-size: 17px; text-align: start; position: relative; flex: none;
+}
+html.glass .menu.glass-select-menu button + button::before { content: ''; position: absolute; top: 0; inset-inline: 40px 0; height: 0.5px; background: color-mix(in srgb, var(--text) 14%, transparent); }
+html.glass .menu.glass-select-menu button > span:last-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html.glass .glass-select-check { width: 24px; flex: none; display: grid; place-items: center; }
+html.glass .glass-select-group { padding: 12px 18px 4px 40px; font-size: 13px; font-weight: 600; color: var(--text-3); }
+html.glass .menu.glass-select-menu.closing { opacity: 0; scale: 0.9; transition: opacity 0.15s, scale 0.15s; }
+
+/* Back buttons are iOS chevrons; they point the other way in right-to-left languages. */
+:is(.hub-nav[aria-label='Back'], .settings-back) svg:dir(rtl) { scale: -1 1; }
+
+/* A project's page (iPhone): the bar stays put while the page scrolls under it, the name sits centred in the
+   bar like Tools and Collection (no second big heading), and the note in its message box uses the normal font. */
+@media (max-width: 899px) {
+  html.glass .project-workspace-main > .topbar { position: sticky; margin-bottom: calc(-1 * (max(8px, env(safe-area-inset-top)) + 50px)); }
+  html.glass .project-workspace-main > .project-page { padding-top: calc(max(8px, env(safe-area-inset-top)) + 62px); }
+  html.glass .project-page .project-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  html.glass .project-composer-note { font: 500 13px/1.4 var(--font); }
+  html.glass .project-composer, html.glass .project-context, html.glass .project-card { border-radius: 24px; }
+}
+/* Collection's project filter is just the dropdown (no box around it). */
+html.glass .coll-project { height: auto; padding: 0; border: 0; background: none; }
+html.glass .coll-project > svg { display: none; }
+html.glass .coll-project select { max-width: none; }
+/* Forms on pages (assistant editor, project settings): iOS fields, soft-filled and rounded, without the
+   description under the title. */
+@media (max-width: 899px) {
+  html.glass .hub-form :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea) {
+    border: 0; border-radius: 14px; background: var(--glass-fill); box-shadow: none; font-size: 17px; padding: 12px 14px;
+  }
+  html.glass .hub-form input:not([type='checkbox']):not([type='radio']):not([type='range']) { height: 48px; }
+  html.glass .hub-form :is(input, textarea):focus { background: var(--glass-fill-press); box-shadow: none; outline: none; }
+  html.glass .hub-page:has(.hub-form) .hub-head p { display: none; }
+  html.glass .hub-form .setting-label { font-size: 13px; font-weight: 600; color: var(--text-2); text-transform: none; padding-inline: 4px; }
+  html.glass .hub-form .library-form-actions .btn { height: 48px; padding: 0 24px; font-size: 17px; }
+}

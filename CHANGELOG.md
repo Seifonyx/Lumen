@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.5.0 · Polish, part 1
+
+On iPhone:
+- Projects now looks like Tools and Collection. The name sits in the middle of the top bar, with a + at the
+  top left for a new project and one search field. The big heading, grey description, large New project
+  button and Recent/Name switch are gone (newest first).
+- A project's own page no longer slides under the top bar. Its name sits in the bar, and the note in its
+  message box uses the normal font instead of a code font.
+- Dropdowns open an iOS-style menu that grows out of them: glass, with a checkmark by the current choice,
+  instead of the browser's own picker. Every dropdown in the app works this way. The dropdown itself is a
+  rounded button with the iOS up-and-down arrows.
+- Under each reply, only the icons stay (copy, regenerate, ⋯). "Retry with…" moved into the ⋯ menu.
+- Back buttons are iOS chevrons (‹) instead of arrows.
+- The assistant editor uses iOS-style fields (soft, rounded, no boxes) and drops the grey description.
+- Collection's project filter is a single rounded dropdown, not a box around a box.
+
+Everywhere:
+- Settings → Usage: the big "total requests today" card follows the theme. It was bright white in dark
+  mode.
+
 ## 2.4.17 · Assistants live in Tools
 
 On iPhone:

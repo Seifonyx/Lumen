@@ -950,8 +950,10 @@ table.sheet td.pending { color: #8f8f8f; font-style: italic; font-family: var(--
 .toast-error > svg:first-child { color: var(--red); }
 .toast-success > svg:first-child { color: var(--green); }
 
+/* Tiny transition durations can retain stale layout values in WebKit. Disable
+   transitions for reduced motion; keep animation end events for cleanup. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0s !important; }
 }
 
 .field-block input { width: 100%; }
@@ -4355,4 +4357,9 @@ button.project-crumb:hover { color: var(--text); background: var(--surface-2); }
     width: 44px; min-height: 44px; padding-inline: 0; border-radius: 10px;
   }
   .composer-voice-controls button > span { display: none; }
+}
+
+/* Narrow phones must fit every rotating greeting with Safari's fallback fonts. */
+@media (max-width: 360px) {
+  .main.is-empty .empty h1 { font-size: clamp(22px, 7.5vw, 26px); }
 }

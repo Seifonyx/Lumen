@@ -98,7 +98,8 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
         // (No blur behind it while it goes: Safari can draw a fading blurred layer as a black flash.)
         const hb = holder();
         if (hb) { hb.style.setProperty('backdrop-filter', 'none'); hb.style.setProperty('-webkit-backdrop-filter', 'none'); }
-        settle(h + 40, Math.max(v, 1.2), () => { if (closing) close.current(); }, { stiffness: 380, damping: 36 });
+        // (Well past its height: a sheet floating above the bottom edge must leave the screen completely.)
+        settle(h + 120, Math.max(v, 1.2), () => { if (closing) close.current(); }, { stiffness: 380, damping: 36 });
       } else {
         settle(0, v, () => set(0));
       }

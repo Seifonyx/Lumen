@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.4.11 · Sheets close cleanly
+
+- Fixed: on iPhone, a strip of a closing sheet (the model picker, the + menu and other cards) could flicker
+  at the bottom of the screen for a moment. The sheets float slightly above the bottom edge, and they now
+  slide all the way off screen when they close, whether you tap away or drag them down.
+
 ## 2.4.10 · Model button and green dot
 
 - On iPhone, the model button in the message box is now as tall as the round buttons beside it, with its

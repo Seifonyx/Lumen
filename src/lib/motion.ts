@@ -28,7 +28,8 @@ const KEYFRAMES: Record<ExitKind, { frames: Keyframe[]; ms: number }> = {
   fade: { frames: [{ opacity: 1 }, { opacity: 0 }], ms: 140 },
   pop: { frames: [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.97)' }], ms: 130 },
   drop: { frames: [{ opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: 'translateY(6px)' }], ms: 130 },
-  sheet: { frames: [{ transform: 'translateY(0)' }, { transform: 'translateY(100%)' }], ms: 220 },
+  // (Past its own height: sheets that float above the bottom edge, as with the iPhone glass look, must leave the screen fully.)
+  sheet: { frames: [{ transform: 'translateY(0)' }, { transform: 'translateY(calc(100% + 120px))' }], ms: 220 },
   modal: { frames: [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.97)' }], ms: 150 },
   row: { frames: [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: 'translateX(-12px)' }], ms: 180 },
   toast: { frames: [{ opacity: 1, transform: 'translateY(0) scale(1)' }, { opacity: 0, transform: 'translateY(-8px) scale(.98)' }], ms: 180 },

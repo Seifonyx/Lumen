@@ -102,11 +102,19 @@ jobs:
           done
           curl -fsS http://localhost:5190/ > /dev/null
           node tests/webkit/tabbar.cjs
+      - name: Long-chat message navigation in WebKit
+        if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' }}
+        run: npm run test:e2e -- message-navigation
+        env:
+          MR_WEBKIT: '1'
+          # This suite seeds its own preview account and mocks provider requests.
+          MR_TEST_URL: http://localhost:5190/
       - name: Keep WebKit evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: webkit-evidence
+          include-hidden-files: true
           path: |
             tests/e2e/out/webkit-*.png
             .impeccable/review/*webkit*.png

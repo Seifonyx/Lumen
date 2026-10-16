@@ -46,6 +46,9 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
   const host=useRef<HTMLDivElement>(null);
   const [margin,setMargin]=useState(0);
   const virtual = useVirtualizer({ count, enabled, getScrollElement:()=>scroller.current,
+    // Measuring a row can change the thread height; defer that work out of
+    // ResizeObserver delivery to avoid feedback-loop errors in WebKit.
+    useAnimationFrameWithResizeObserver:true,
     getItemKey:i=>messages[i].id, estimateSize:i=>Math.max(160,Math.min(1200,100+messages[i].text.length/2)),
     overscan:6,paddingStart:30,paddingEnd:44,gap:28,scrollMargin:margin,
     rangeExtractor:range=>[...new Set([...defaultRangeExtractor(range),...(pinnedKeys.size?messages.flatMap((m,i)=>pinnedKeys.has(m.id)?[i]:[]):[])])].filter(i=>i>=0&&i<count).sort((a,b)=>a-b),
@@ -91,7 +94,12 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
       if(row){
         const target=Math.max(0,Math.min(parent.scrollHeight-parent.clientHeight,parent.scrollTop+row.getBoundingClientRect().top-parent.getBoundingClientRect().top-12));
         const delta=Math.abs(parent.scrollTop-target);
-        parent.scrollTop=target;stable=delta<2?stable+1:0;
+        // The DOM target already includes measured height changes. An absolute
+        // virtualizer command discards deferred iOS size compensation so it cannot
+        // replay the same change after landing. Our loop owns the final alignment.
+        if(enabled){virtual.scrollToOffset(target,{behavior:'auto'});virtual.cancelScroll()}
+        else parent.scrollTop=target;
+        stable=delta<2?stable+1:0;
         if(stable>=2||attempt>=11){
           row.focus({preventScroll:true});setLastJump(jumpTarget);setActiveStop(jumpTarget);
           setAnnouncement(`Jumped to sent message ${stops.find(stop=>stop.id===jumpTarget)?.ordinal || ''}.`);

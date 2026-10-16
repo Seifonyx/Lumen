@@ -1,11 +1,12 @@
 # Safari-engine release checks
 
-The `Safari engine (WebKit)` CI job installs pinned Playwright WebKit and runs the existing welcome/layout suites plus `tabbar.cjs`. Failures are kept visible; do not skip assertions or replace WebKit with Chromium to get a green result.
+The `Safari engine (WebKit)` CI job installs pinned Playwright WebKit and runs the existing welcome/layout and long-chat message-navigation suites plus `tabbar.cjs`. Failures are kept visible; do not skip assertions or replace WebKit with Chromium to get a green result.
 
 Locally, install dependencies with `npm ci`, install WebKit with `npx playwright install --with-deps webkit`, build, and run:
 
 ```sh
 MR_WEBKIT=1 npm run test:e2e -- welcome layout
+MR_WEBKIT=1 MR_TEST_URL=http://localhost:5190/ npm run test:e2e -- message-navigation
 # In another terminal, start npm run preview -- --port 5190 --strictPort
 node tests/webkit/tabbar.cjs
 ```
@@ -17,3 +18,5 @@ Coverage: iPhone-sized light/dark/black and landscape contexts, actual touch tap
 Release gate: type check, unit tests, build, relevant Chromium and WebKit checks, reviewed motion evidence, and explained CI failures. A physical iPhone check or real-device service is needed before claiming native touch/glass fidelity. Keep device/emulator results and known gaps distinct.
 
 The local WebKit welcome suite passes five configurations, the layout suite passes six, and the tab-bar suite passes four. Testing exposed tiny reduced-motion transitions retaining stale viewport dimensions; disabling transitions rather than shortening them fixes keyboard fit. A narrow-phone type adjustment fits Safari fallback fonts. Popup geometry is checked after layout settles, with the original bounds preserved. A complete release also requires current CI results and physical iPhone feedback for touch/glass fidelity.
+
+The long-chat matrix checks exact jumps through 1,000-message histories in five layouts. Absolute landing commands clear deferred iOS virtualizer corrections; row measurements run outside ResizeObserver delivery to avoid feedback-loop errors in WebKit.

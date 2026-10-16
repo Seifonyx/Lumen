@@ -4293,14 +4293,14 @@ button.project-crumb:hover { color: var(--text); background: var(--surface-2); }
 }
 
 /* ============================================================ Green where it matters
-   Lumen's green marks the important things: the send and voice buttons, the logo, the welcome moon and
-   progress meters. Small marks elsewhere (the + in New chat and New project, a bar beside the selected chat or
-   settings section, dots beside model names, tab underlines and checkmarks) use the normal text colours. */
+   Lumen's green marks the important things: the send and voice buttons, the logo, the welcome moon, progress
+   meters and the glowing dot for the model that will answer (in the message box and on a new chat's top bar).
+   Small marks elsewhere (the + in New chat and New project, a bar beside the selected chat or settings
+   section, dots under replies, tab underlines and checkmarks) use the normal text colours. */
 .sidebar .sidebar-chip svg, :root[data-theme='dark'] .sidebar .sidebar-chip svg, :root[data-appearance='black'] .sidebar .sidebar-chip svg { --plus: currentColor; color: var(--text); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .sidebar .sidebar-chip svg { --plus: currentColor; color: var(--text); } }
 .chat-row.active::before, .settings-tabs button.active::before, .chat-list .active-indicator { display: none; }
-.model-tag::before, .composer .model-name::before { display: none; }
-.route-dot { background: var(--text-3); box-shadow: none; }
+.model-tag::before { display: none; }
 :root[data-theme="dark"] .library-tabs button.active::after, :root[data-theme="black"] .library-tabs button.active::after { background: var(--text); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .library-tabs button.active::after { background: var(--text); } }
 :root[data-theme="dark"] .command-item.active > svg, :root[data-theme="black"] .command-item.active > svg, :root[data-theme="dark"] .library-card-icon, :root[data-theme="black"] .library-card-icon { color: inherit; }

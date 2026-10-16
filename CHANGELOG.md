@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.4.2 · Glass like other iOS 26 apps
+
+- On iPhone, the glass now matches apps like Claude: a lighter, see-through grey with a soft sheen from the
+  top, a thin edge of light all round, and a soft shadow.
+- The chat now shows through the message box, blurred, instead of fading out underneath it.
+- The controls inside the message box are faint translucent fills, and the send button no longer glows.
+
 ## 2.4.1 · Softer glass
 
 - The glass on iPhone is softer, closer to other iOS 26 apps. The dark halo around buttons is gone, the edge

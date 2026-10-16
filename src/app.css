@@ -4355,7 +4355,4 @@ button.project-crumb:hover { color: var(--text); background: var(--surface-2); }
     width: 44px; min-height: 44px; padding-inline: 0; border-radius: 10px;
   }
   .composer-voice-controls button > span { display: none; }
-  .main.is-empty .conversation-area { flex: 1; align-items: center; justify-content: flex-end; }
-  .main.is-empty .empty { padding: 16px 12px 24px; gap: 12px; }
-  html.kb-open .main.is-empty .conversation-area { justify-content: center; }
 }

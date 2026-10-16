@@ -50,7 +50,7 @@ Never use it for large areas, body text on white, or decoration.
 - **Sidebar**: logo + name · primary **New chat** · search · **Library** (photos, attached files, canvas documents, generated files and searchable documents) · **Tools** (actions and assistants) · Projects (+ New project chip on the heading row) · Recents (phones: New chat floats bottom-right) · View all chats (select several → Move, Export, Delete) · account. Chips are small outlined pills.
 - **Top bar**: chat title, project pill, repository toggle, canvas. On a new chat the title spot stays quiet; incognito retains its `Incognito · not saved` indicator. Model selection lives in the composer; routing status appears only while a request runs. Incognito
   (eye-off) only on a new chat or while incognito.
-- **Welcome**: the lime moon and one short greeting. On phones the greeting sits above the bottom composer. Empty history uses quiet text, without a repeated illustration.
+- **Welcome**: the lime moon and one short greeting. Keep the original centered phone welcome and its spacing. Empty history uses quiet text, without a repeated illustration.
 - **Sidebar footer**: the avatar opens Settings. On phones New chat sits at the bottom right of the footer.
 - **Message box**: `+` menu · model chip · active chips (Web search, Project) · context ring · Dictate · Send (or labelled Voice conversation when empty). Desktop voice controls have visible labels; phones keep the compact icon controls in the original single row.
   The context ring stays a quiet circle until the chat is half full.

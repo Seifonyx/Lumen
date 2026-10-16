@@ -14,7 +14,6 @@ const matrix=process.env.MR_TEST_WIDTH?all.filter(v=>v[0]===Number(process.env.M
  assert.equal(await page.locator('.topbar-route').count(),0,'Model selection should not be repeated in the empty header');
  assert.equal(await page.locator('.sidebar .empty-moon').count(),0,'Empty history should not repeat the welcome illustration');
  if(width>=900){const newChat=await page.locator('.sidebar .new-chat').boundingBox(),search=await page.locator('.sidebar-search-field').boundingBox();assert.ok(newChat.y<search.y,'New chat should precede search');}
- else assert.ok(await page.evaluate(()=>document.querySelector('.composer').getBoundingClientRect().top-document.querySelector('.empty h1').getBoundingClientRect().bottom<=56),'Mobile greeting should sit near the composer');
  await page.evaluate(()=>document.querySelector('.sidebar .new-chat').click());await input.fill('KEEP_MY_DRAFT');const seen=new Set();
  for(let i=0;i<5;i++){const before=await heading.textContent();seen.add(before);await fit();await page.evaluate(()=>document.querySelector('.sidebar .new-chat').click());await page.waitForFunction(text=>document.querySelector('.empty h1').textContent!==text,before);assert.equal(await input.inputValue(),'KEEP_MY_DRAFT');}
  assert.equal(seen.size,5,'Greeting does not rotate through distinct messages');const stable=await heading.textContent();await input.fill('KEEP_MY_DRAFT updated');await page.waitForTimeout(250);assert.equal(await heading.textContent(),stable,'Typing changes greeting');

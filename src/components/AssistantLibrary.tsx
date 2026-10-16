@@ -14,13 +14,15 @@ const HUES = [212, 152, 28, 280, 340, 190, 48, 100];
 const hue = (name: string) => HUES[[...name].reduce((n, c) => n + c.charCodeAt(0), 0) % HUES.length];
 const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() || '').join('') || '?';
 
-export default function AssistantLibrary({ onClose, startNew = false }: { onClose: () => void; startNew?: boolean }) {
+/** With `onDone`, this is just the editor (opened from Tools on iPhone): Back, Save and Delete return there. */
+export default function AssistantLibrary({ onClose, startNew = false, startWith, onDone }: { onClose: () => void; startNew?: boolean; startWith?: SavedAssistant; onDone?: () => void }) {
   const settings = useStore((s) => s.settings);
   const catalog = useStore((s) => s.catalog);
   const { updateSettings, startAssistant, toast } = useStore.getState();
   const assistants = settings.assistants || [];
   const [query, setQuery] = useState('');
-  const [editing, setEditing] = useState<SavedAssistant | null>(() => (startNew ? { id: uid(), name: '', description: '', instructions: '', model: AUTO } : null));
+  const [editing, setEditingState] = useState<SavedAssistant | null>(() => startWith || (startNew ? { id: uid(), name: '', description: '', instructions: '', model: AUTO } : null));
+  const setEditing = (next: SavedAssistant | null) => { if (!next && onDone) onDone(); else setEditingState(next); };
   const save = () => {
     const assistant = editing && normalizeAssistant(editing);
     if (!assistant) return;
@@ -30,8 +32,9 @@ export default function AssistantLibrary({ onClose, startNew = false }: { onClos
     setEditing(null);
   };
   const remove = (id: string) => {
-    if (!confirm('Delete this assistant? Chats that used it keep its instructions.')) return;
+    if (!confirm('Delete this assistant? Chats that used it keep its instructions.')) return false;
     updateSettings({ assistants: assistants.filter((a) => a.id !== id) });
+    return true;
   };
   const q = query.trim().toLowerCase();
   const match = (item: SavedAssistant) => !q || JSON.stringify(item).toLowerCase().includes(q);
@@ -45,7 +48,11 @@ export default function AssistantLibrary({ onClose, startNew = false }: { onClos
           <label className="field-block"><span className="setting-label">Description</span><input maxLength={160} value={editing.description} placeholder="What it helps with, in a few words" onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></label>
           <label className="field-block"><span className="setting-label">Default model</span><select aria-label="Assistant model" value={editing.model} onChange={(e) => setEditing({ ...editing, model: e.target.value })}><option value={AUTO}>Auto · choose for the task</option>{settings.enabledModels.filter((id) => id !== AUTO).map((id) => <option key={id} value={id}>{modelLabel(catalog, id)}</option>)}{editing.model !== AUTO && !settings.enabledModels.includes(editing.model) && <option value={editing.model}>Unavailable · uses Auto</option>}</select></label>
           <label className="field-block"><span className="setting-label">Instructions</span><textarea aria-label="Library instructions" rows={10} maxLength={8000} value={editing.instructions} onChange={(e) => setEditing({ ...editing, instructions: e.target.value })} /></label>
-          <div className="library-form-actions"><button className="btn" onClick={() => setEditing(null)}>Back</button><button className="btn primary" disabled={!editing.name.trim() || !editing.instructions.trim()} onClick={save}>Save</button></div>
+          <div className="library-form-actions">
+            {/* (Opened from Tools, the back arrow at the top already goes back; your own assistants can be deleted here.) */}
+            {onDone ? assistants.some((a) => a.id === editing.id) && <button className="btn danger-text" onClick={() => { if (remove(editing.id)) onDone(); }}><Trash2 size={15} /> Delete</button> : <button className="btn" onClick={() => setEditing(null)}>Back</button>}
+            <button className="btn primary" disabled={!editing.name.trim() || !editing.instructions.trim()} onClick={save}>Save</button>
+          </div>
         </div>
       </HubPage>
     );

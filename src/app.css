@@ -4325,3 +4325,9 @@ button.project-crumb:hover { color: var(--text); background: var(--surface-2); }
   .app.page-open .sidebar { z-index: 46; }
   .app.page-open .scrim { z-index: 45; }
 }
+
+/* Tools → Assistants: each card can carry an edit button in its corner (iPhone). */
+.tool-card-wrap { position: relative; display: flex; }
+.tool-card-wrap > .tool-card { flex: 1; min-width: 0; padding-inline-end: 52px; }
+.tool-card-edit { position: absolute; top: 10px; inset-inline-end: 10px; width: 36px; height: 36px; color: var(--text-3); }
+.library-form-actions .danger-text { color: var(--danger); margin-inline-end: auto; }

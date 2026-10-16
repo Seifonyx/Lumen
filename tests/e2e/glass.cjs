@@ -77,6 +77,21 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     assert.equal(await page.locator('.tool-card', { hasText: 'Deep research' }).count(), 0, 'search stays inside the tab');
     await page.fill('input[aria-label="Search tools"]', '');
     assert.equal(await page.getByText('Connected apps').count(), 0, 'connected apps live in Settings');
+    // 2.4.17: the + appears only where it adds something (Assistants), and the assistant editor returns to
+    // Tools → Assistants (no old Assistants page on iPhone).
+    await page.locator('.glass-tabbar button', { hasText: 'Assistants' }).click();
+    assert.equal(await page.locator('.hub-new').getAttribute('aria-label'), 'New assistant');
+    await page.locator('.hub-new').click();
+    await page.waitForSelector('input[aria-label="Library item name"]');
+    await page.locator('.hub-nav[aria-label="Back"]').click();
+    await page.waitForSelector('.glass-tabbar.page-sections');
+    assert.equal(await page.locator('.glass-tabbar [aria-current="page"]').innerText(), 'Assistants', 'back in Tools → Assistants');
+    assert.equal(await page.locator('.lib-section').count(), 0, 'not the old Assistants page');
+    await page.locator('.hub-close').click();
+    await page.waitForSelector('.hub-page', { state: 'detached' });
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'assistants' })));
+    await page.waitForSelector('.glass-tabbar.page-sections');
+    assert.equal(await page.locator('.glass-tabbar [aria-current="page"]').innerText(), 'Assistants', 'the Assistants page opens as Tools → Assistants');
     await page.locator('.hub-close').click();
     await page.waitForSelector('.hub-page', { state: 'detached' });
     // Collection's filters are its tab bar.

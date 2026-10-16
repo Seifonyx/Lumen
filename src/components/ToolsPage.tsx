@@ -8,6 +8,9 @@ import { ANALYSIS_TEMPLATES } from '../lib/analysis';
 import { BUILTIN_ASSISTANTS } from '../lib/assistants';
 import { useStore } from '../store';
 import HubPage from './HubPage';
+import AssistantLibrary from './AssistantLibrary';
+import { uid } from '../lib/util';
+import type { SavedAssistant } from '../types';
 
 type Section = 'research' | 'create' | 'analyze' | 'learn' | 'assistants';
 interface Tool { id: string; section: Section; name: string; text: string; icon: ReactNode; needs?: string; ready?: boolean; state?: string; run: () => void }
@@ -28,11 +31,13 @@ const composerMode = (mode: 'research' | 'image') => {
 };
 const library = (detail: string) => window.dispatchEvent(new CustomEvent('mr:library', { detail }));
 
-export default function ToolsPage({ onClose }: { onClose: () => void }) {
+export default function ToolsPage({ onClose, initial = 'research', newAssistant = false }: { onClose: () => void; initial?: Section; newAssistant?: boolean }) {
   const keys = useStore((s) => s.keys);
   const settings = useStore((s) => s.settings);
   const [query, setQuery] = useState('');
-  const [active, setActive] = useState<Section>('research');
+  const [active, setActive] = useState<Section>(initial);
+  // iPhone: an assistant is made or edited right here, and Back, Save or Delete return to this tab.
+  const [editingAssistant, setEditingAssistant] = useState<SavedAssistant | 'new' | null>(newAssistant ? 'new' : null);
   // iPhone glass look: one category at a time, chosen in the bottom tab bar.
   const [glassPhone] = useState(() => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches);
   const scroller = useRef<HTMLDivElement>(null);
@@ -56,7 +61,9 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
     { id: 'study-chat', section: 'learn', name: 'Study partner', text: 'An assistant that explains step by step and quizzes you.', icon: <BookOpenCheck size={20} />, run: () => { const a = BUILTIN_ASSISTANTS.find((x) => x.id === 'builtin-study'); if (a) { s.startAssistant(a); s.setUi({ page: null }); } } },
   ], [gemini, keys.cloudflare, settings.webSearch]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const assistants = [...(settings.assistants || []), ...BUILTIN_ASSISTANTS].slice(0, 6);
+  // (On iPhone this tab is the only list of assistants, so it shows them all.)
+  const allAssistants = [...(settings.assistants || []), ...BUILTIN_ASSISTANTS];
+  const assistants = glassPhone ? allAssistants : allAssistants.slice(0, 6);
   const q = query.trim().toLowerCase();
   const match = (t: { name: string; text: string }) => !q || `${t.name} ${t.text}`.toLowerCase().includes(q);
   // The category list follows the section you're reading.
@@ -75,7 +82,9 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
   const pick = (id: Section) => { setActive(id); scroller.current?.closest('.hub-scroll')?.scrollTo({ top: 0 }); };
   const ICONS: Record<Section, ReactNode> = { research: <Telescope size={22} />, create: <Pencil size={22} />, analyze: <BarChart3 size={22} />, learn: <GraduationCap size={22} />, assistants: <Sparkles size={22} /> };
   const HUES: Record<Section, number> = { research: 212, create: 330, analyze: 160, learn: 40, assistants: 270 };
-  const bar = glassPhone ? { label: 'Tool categories', active, onSelect: (id: string) => pick(id as Section), items: SECTIONS.map((sec) => ({ id: sec.id, label: sec.label, icon: ICONS[sec.id], hue: HUES[sec.id] })) } : undefined;
+  // A + only where it adds something: on the Assistants tab (the other tabs' cards already start those tools).
+  const create = active === 'assistants' ? { label: 'New assistant', run: () => setEditingAssistant('new') } : undefined;
+  const bar = glassPhone ? { label: 'Tool categories', active, onSelect: (id: string) => pick(id as Section), create, items: SECTIONS.map((sec) => ({ id: sec.id, label: sec.label, icon: ICONS[sec.id], hue: HUES[sec.id] })) } : undefined;
   // With the tab bar, only the chosen category shows, and the search looks only inside it.
   const shownHere = (id: Section) => !glassPhone || id === active;
   const jump = (id: Section) => { setActive(id); document.getElementById(`tools-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
@@ -89,6 +98,8 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
       </span>
     </button>
   );
+
+  if (editingAssistant) return <AssistantLibrary key={typeof editingAssistant === 'string' ? 'new' : editingAssistant.id} startNew={editingAssistant === 'new'} startWith={typeof editingAssistant === 'string' ? undefined : editingAssistant} onClose={onClose} onDone={() => setEditingAssistant(null)} />;
 
   return (
     <HubPage label="Tools" title="Tools" subtitle="Everything Lumen can do beyond a chat. The ones you use most are also in the + menu." onClose={onClose} bar={bar}
@@ -108,10 +119,14 @@ export default function ToolsPage({ onClose }: { onClose: () => void }) {
                   {!glassPhone && <header><h2>{sec.label}</h2><p>{sec.blurb}</p><button type="button" className="btn small" onClick={() => s.setUi({ page: 'assistants' })}>All assistants</button></header>}
                   <div className="tools-grid">
                     {list.map((a) => (
-                      <button key={a.id} type="button" className="tool-card sec-assistants" onClick={() => { s.startAssistant(a); s.setUi({ page: null }); }}>
-                        <span className="tool-icon" aria-hidden="true"><Sparkles size={20} /></span>
-                        <span className="tool-text"><strong>{a.name}</strong><span>{a.description || 'Your custom assistant.'}</span></span>
-                      </button>
+                      <div key={a.id} className="tool-card-wrap">
+                        <button type="button" className="tool-card sec-assistants" onClick={() => { s.startAssistant(a); s.setUi({ page: null }); }}>
+                          <span className="tool-icon" aria-hidden="true"><Sparkles size={20} /></span>
+                          <span className="tool-text"><strong>{a.name}</strong><span>{a.description || 'Your custom assistant.'}</span></span>
+                        </button>
+                        {/* iPhone: edit yours (or make your own copy of one of Lumen's) */}
+                        {glassPhone && <button type="button" className="icon-btn tool-card-edit" aria-label={a.id.startsWith('builtin-') ? `Customize ${a.name}` : `Edit ${a.name}`} onClick={() => setEditingAssistant(a.id.startsWith('builtin-') ? { ...a, id: uid() } : a)}><Pencil size={17} /></button>}
+                      </div>
                     ))}
                     {!q && !glassPhone && <button type="button" className="tool-card tool-new" onClick={() => s.setUi({ page: 'assistants' })}><span className="tool-icon" aria-hidden="true"><Plus size={20} /></span><span className="tool-text"><strong>Make an assistant</strong><span>Your own instructions and model, ready in every chat.</span></span></button>}
                   </div>

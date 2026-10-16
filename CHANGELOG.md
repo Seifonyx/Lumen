@@ -1,9 +1,15 @@
 # Changelog
 
-## 2.4.17 · No + on Tools
+## 2.4.17 · Assistants live in Tools
 
-- On iPhone, the + at the top left of Tools is gone; the menu button is back in its place. (Collection
-  keeps its +.)
+On iPhone:
+- A + only appears where it adds something. In Tools, that's the Assistants tab ("New assistant"); the other
+  tabs' cards already start their tools. Collection keeps its +.
+- Fixed: making an assistant from Tools opened the old Assistants page, and going back landed there. The
+  editor now opens inside Tools, and Back, Save or Delete return you to the Assistants tab.
+- The old Assistants page is gone on iPhone. Tools → Assistants lists them all, each with a pencil to edit it
+  (or to make your own copy of one of Lumen's), and your own can be deleted from the editor. Anything that
+  used to open the Assistants page now opens Tools → Assistants.
 
 ## 2.4.16 · Collection without a Search tab
 

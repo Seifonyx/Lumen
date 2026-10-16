@@ -40,6 +40,8 @@ const PromptsModal = lazy(() => import('./components/PromptsModal'));
 const ToolsModal = lazy(() => import('./components/ToolsModal'));
 const ChatExportModal = lazy(() => import('./components/ChatExportModal'));
 
+const glassPhone = () => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches;
+
 export default function App() {
   const authed = useStore((s) => s.authed);
   const init = useStore((s) => s.init);
@@ -195,7 +197,9 @@ export default function App() {
       <ChatView onExpandSidebar={toggleSidebar} />
       {page && !settingsOpen && (
         <Suspense fallback={null}>
-          {page === 'assistants' ? <AssistantLibrary key={`${accountId}-assistants-${String(pageArg || '')}`} startNew={pageArg === 'new'} onClose={closePage} />
+          {/* iPhone glass look: assistants live in Tools → Assistants (the separate Assistants page is computer-only). */}
+          {page === 'assistants' && glassPhone() ? <ToolsPage key={`${accountId}-tools-assistants-${String(pageArg || '')}`} initial="assistants" newAssistant={pageArg === 'new'} onClose={closePage} />
+            : page === 'assistants' ? <AssistantLibrary key={`${accountId}-assistants-${String(pageArg || '')}`} startNew={pageArg === 'new'} onClose={closePage} />
             : page === 'collection' ? <CollectionPage key={`${accountId}-collection-${String(pageArg || '')}`} initial={typeof pageArg === 'string' ? pageArg as 'all' : 'all'} onClose={closePage} />
             : page === 'projects' ? <ProjectsPage key={`${accountId}-projects`} onClose={closePage} />
             : page === 'tools' ? <ToolsPage key={`${accountId}-tools`} onClose={closePage} />

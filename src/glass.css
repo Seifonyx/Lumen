@@ -424,6 +424,9 @@ html.glass .composer .model-button { height: 44px; min-height: 44px; padding: 0 
 html.glass .composer .model-picker { display: inline-flex; align-items: center; }
 /* The glowing green dot for the model that will answer: in the message box and on a new chat's top bar. */
 html.glass .composer .model-name { display: inline-flex; align-items: center; gap: 7px; }
-html.glass .composer .model-name::before { display: block; content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 0 2px var(--signal-soft), 0 0 8px var(--signal); flex: none; }
-html.glass .topbar-route .route-dot { background: var(--signal); box-shadow: 0 0 0 3px var(--signal-soft), 0 0 8px var(--signal); }
+html.glass .composer .model-name { overflow: visible; }
+html.glass .composer .model-name::before { display: block; content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 7px 1px color-mix(in srgb, var(--signal) 70%, transparent); flex: none; }
+html.glass .composer .model-button { overflow: visible; }
+html.glass .topbar-route .route-dot { background: var(--signal); box-shadow: 0 0 7px 1px color-mix(in srgb, var(--signal) 70%, transparent); }
+html.glass .topbar-center .topbar-route { overflow: visible; max-width: none; white-space: nowrap; }
 html.glass .topbar-route .route-dot.off { background: var(--text-3); box-shadow: none; }

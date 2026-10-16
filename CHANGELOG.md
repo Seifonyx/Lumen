@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.4.10 · Model button and green dot
+
+- On iPhone, the model button in the message box is now as tall as the round buttons beside it, with its
+  name centred.
+- The softly glowing green dot is back: beside the model in the message box, and beside "Auto" at the top of
+  a new chat.
+- The top of a new chat shows "Auto · N models" in full, instead of cutting off the end.
+
 ## 2.4.9 · Smoother sidebar, clearer errors
 
 - Swiping the sidebar open on iPhone is smoother. The floating New chat button inside it no longer

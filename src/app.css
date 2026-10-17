@@ -2559,7 +2559,7 @@ input, textarea { caret-color: var(--text); }
 .sidebar h2.history-label { margin: 0; border: 0; }
 .sidebar .group-label { font: 500 11.5px/1.2 var(--font); text-transform: none; letter-spacing: 0; color: var(--text-3); padding: 0; }
 .chat-row { border-radius: var(--radius-sm); }
-.chat-row:hover { background: var(--surface-3); }
+.chat-row:not(.menu-open):hover { background: var(--surface-3); }
 .chat-row.active { background: var(--surface); box-shadow: var(--shadow-sm), inset 0 0 0 1px var(--border); }
 .chat-row.active::before { content: ''; position: absolute; inset-inline-start: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--signal); }
 .chat-open { font-size: 14px; color: var(--text-2); height: 36px; }

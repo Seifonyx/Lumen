@@ -94,7 +94,7 @@ html.glass :is(.btn, .icon-btn, .tool-btn, .send-btn, .sidebar-chip, .model-butt
 html.glass :is(.topbar, .hub-bar, .settings-top, .composer, .sidebar-footer) .icon-btn:active:not(:disabled) { background: none; }
 html.glass .chat-open:active { background: none; transform: none; }
 /* Rows highlight and cards sink a little, as in iOS lists. */
-html.glass :is(.chat-row, .sheet-row, .settings-tabs button, .mp-item, .mp-layout, .library-button, .sidebar-project-item, .menu button):active { background: var(--glass-fill-press); }
+html.glass :is(.chat-row:not(.menu-open), .sheet-row, .settings-tabs button, .mp-item, .mp-layout, .library-button, .sidebar-project-item, .menu button):active { background: var(--glass-fill-press); }
 html.glass :is(.tool-card, .project-card, .lib-card, .coll-item, .study-deck) { transition: scale 0.4s var(--spring), border-color 0.15s, box-shadow 0.2s; }
 html.glass :is(.tool-card, .project-card, .lib-card, .coll-item, .study-deck):active { scale: 0.97; transition-duration: 0.12s; }
 

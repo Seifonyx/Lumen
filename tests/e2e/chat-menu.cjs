@@ -48,6 +48,9 @@ const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/6
           return p;
         };
         let point = await hold();
+        const preview = page.locator('.ctx-preview');
+        assert.ok(await preview.evaluate(el => { const s = getComputedStyle(el); return s.backgroundColor !== 'rgba(0, 0, 0, 0)' && s.backgroundColor !== 'transparent' && parseFloat(s.borderRadius) >= 8; }), 'Held chat keeps a visible rounded bubble');
+        assert.equal(await preview.locator('.chat-open').evaluate(el => getComputedStyle(el).fontSize), await row().locator('.chat-open').evaluate(el => getComputedStyle(el).fontSize), 'Lifted title keeps its sidebar typography');
         await touch('touchMove', width - 12, point.y);
         await page.waitForTimeout(100);
         const offset = await drawer.evaluate(el => new DOMMatrixReadOnly(getComputedStyle(el).transform === 'none' ? undefined : getComputedStyle(el).transform).m41);
@@ -119,7 +122,9 @@ const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/6
         await page.waitForTimeout(350);
         const ir = await inline.getByRole('menuitem', { name: 'Rename', exact: true }).boundingBox();
         const ip = await inline.getByRole('menuitem', { name: 'Pin', exact: true }).boundingBox();
+        const rowColor = await alpha.evaluate(el => getComputedStyle(el).backgroundColor);
         await touch('touchStart', ir.x + ir.width / 2, ir.y + ir.height / 2);
+        assert.equal(await alpha.evaluate(el => getComputedStyle(el).backgroundColor), rowColor, 'Holding an ellipsis action does not recolor the chat bubble');
         await touch('touchMove', ip.x + ip.width / 2, ip.y + ip.height / 2);
         assert.equal(await inline.getByRole('menuitem', { name: 'Pin', exact: true }).getAttribute('data-menu-preview'), 'true');
         await touch('touchEnd', ip.x + ip.width / 2, ip.y + ip.height / 2);

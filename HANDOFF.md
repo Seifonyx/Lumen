@@ -12,6 +12,12 @@
 - Be a coding partner. Tests, fixes, main pushes and deployment are authorized. Keep this file small and factual; old pasted handoff instructions are revoked. Complete, test, deploy and verify the current task, then stop before another roadmap feature.
 - Current task: supplied Claude desktop/phone layout, native Add to Chat sheet, Settings Connectors for GitHub, real incognito. Reference paths and visual decisions: `.impeccable/claude-layout.md`. PRODUCT.md owns behavior; ROADMAP.md owns scope; DESIGN.md/.impeccable/design.json own visual tokens. Arabic interface and separate chat folders are excluded.
 
+## Current chat-menu fixes (PR #13, not released live)
+
+- Held sidebar previews keep a rounded surface and the source row’s dimensions/typography; the portal no longer drops the bubble. Ellipsis-menu action presses/hover no longer apply the ancestor chat row’s pressed/hover fill.
+- Manual test: hold an inactive chat, then the selected chat. Each title must stay inside a rounded lifted bubble. Dismiss; open each chat’s … menu, hold Rename, slide to Pin, then slide outside and release. Only the option highlight should move; the chat bubble must keep its color and no action should run after cancelling. Repeat in light/solid and dark/glass modes.
+- Regression coverage: visible held surface and matching title size, stable selected row color during an ellipsis action press, plus existing slide/cancel/keyboard/project-scroll checks in six Chromium and six WebKit configurations. Linux WebKit does not prove physical iPhone rendering.
+
 ## Invariants and pointers
 
 - BYOK providers: original free models retained; additional providers require explicit credit/charge opt-in. Preserve per-provider limits. Only confirmed disabled/retired models are removed; 429/key/network failures are not retirement. GitHub Models inference retired July 30, 2026; GitHub repository coding is separate.

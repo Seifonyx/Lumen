@@ -73,6 +73,25 @@ export default function ContextMenu({ anchor, at, items, label, align = 'start',
     box.replaceChildren(holder);
     // Without padding the card is the item itself (a bubble keeps its own shape).
     if (!pad) { box.style.background = 'transparent'; box.style.borderRadius = getComputedStyle(anchor).borderRadius; }
+    // Sidebar rows normally inherit their shape/type from .sidebar, which the portal
+    // deliberately sits outside. Keep that appearance, and give transparent rows a
+    // surface so the lifted chat remains a bubble above the blurred background.
+    if (anchor.classList.contains('chat-row')) {
+      const source = getComputedStyle(anchor);
+      for (const property of ['height', 'border-radius', 'background-color', 'box-shadow', 'padding', 'gap', 'color']) {
+        copy.style.setProperty(property, source.getPropertyValue(property));
+      }
+      const title = anchor.querySelector<HTMLElement>('.chat-open');
+      const copiedTitle = copy.querySelector<HTMLElement>('.chat-open');
+      if (title && copiedTitle) {
+        const style = getComputedStyle(title);
+        for (const property of ['height', 'font-size', 'font-weight', 'line-height', 'color']) {
+          copiedTitle.style.setProperty(property, style.getPropertyValue(property));
+        }
+      }
+      box.style.background = 'var(--surface)';
+      box.style.borderRadius = source.borderRadius;
+    }
     // Focus the menu itself (arrow keys move into it) so no item shows a focus ring after a touch.
     menu.current?.focus({ preventScroll: true });
     if (motionOff()) return;

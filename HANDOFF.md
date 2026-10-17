@@ -4,6 +4,8 @@
 
 - User release preference (2026-10-17): saying “approved” authorizes committing the current update to main and deploying it live. Complete the relevant verification and release without asking for confirmation again.
 
+- For every implemented change, give the user a short manual test: where to go, what to do, and the expected result. Group the steps by improvement.
+
 - Before shipping UI changes, run Chromium and WebKit checks, relevant unit/type/build checks, and review CI failures. For touch/glass changes, inspect rapid-motion captures and test cancellation, pointer capture, narrow/landscape layouts, themes and accessibility preferences. Distinguish synthetic/pointer tests from physical touch. WebKit on Linux does not validate native iPhone compositing or physical feel; report that gap and obtain actual iPhone verification for those claims. Do not call a release fully verified while relevant failures remain unexplained. WebKit verification exposed tiny reduced-motion transitions retaining stale keyboard-frame dimensions; zero-duration transitions fix it. Narrow greetings now fit Safari fallback fonts. Long-chat jumps must clear deferred iOS virtualizer adjustments when applying a measured target; row measurements run outside ResizeObserver delivery to avoid WebKit feedback-loop errors. The local WebKit welcome, layout and tab-bar matrices pass; check the latest CI results and physical iPhone feedback before release.
 
 - Private `Seifonyx/lumen` (renamed from Model-Router), main. Checkout: `C:/Users/seife/Documents/Codex/2026-10-10/files-pasted-by-the-user-handoff/work/Model-Router`. Live https://model-router.web.app; preview https://model-router--dev-82jv5mm2.web.app.

@@ -52,6 +52,8 @@ export interface Toast {
 }
 
 export interface PreviewFile {
+  /** Ephemeral UI origin; never part of saved chat content. */
+  from?: HTMLElement | null;
   name: string;
   content: string;
 }

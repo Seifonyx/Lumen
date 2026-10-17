@@ -156,7 +156,7 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
                 <img src={f.thumb} alt="" className="msg-thumb" />
               </button>
             ) : (
-              <button key={f.id} className={`file-chip${f.auto ? ' auto' : ''}`} title={f.auto ? `${f.name} — attached automatically: your message is about it` : f.name} onClick={() => f.text && setUi({ preview: { name: `${f.name}.txt`, content: f.text } })}>
+              <button key={f.id} className={`file-chip${f.auto ? ' auto' : ''}`} title={f.auto ? `${f.name} — attached automatically: your message is about it` : f.name} onClick={e => f.text && setUi({ preview: { name: `${f.name}.txt`, content: f.text, from: e.currentTarget } })}>
                 <FileDown size={15} /> <span>{f.name}</span>
                 {f.auto && <span className="chip-note">auto</span>}
               </button>

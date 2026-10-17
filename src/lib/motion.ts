@@ -99,15 +99,15 @@ export function exitGhost(node: HTMLElement, kind: ExitKind, parts: [string, Exi
  * Gives a component an exit animation when it unmounts. Skips the immediate remount React's development
  * mode does, so only real closes animate.
  */
-export function useExit(ref: RefObject<HTMLElement | null>, kind: ExitKind, parts: [string, ExitKind][] = []) {
+export function useExit(ref: RefObject<HTMLElement | null>, kind: ExitKind, parts: [string, ExitKind][] = [], enabled = true) {
   const born = useRef(0);
-  const opts = useRef({ kind, parts });
-  opts.current = { kind, parts };
+  const opts = useRef({ kind, parts, enabled });
+  opts.current = { kind, parts, enabled };
   useLayoutEffect(() => {
     born.current = performance.now();
     const node = ref.current;
     return () => {
-      if (!node || performance.now() - born.current < 40) return;
+      if (!opts.current.enabled || !node || performance.now() - born.current < 40) return;
       exitGhost(node, opts.current.kind, opts.current.parts);
     };
   }, [ref]);
@@ -137,9 +137,9 @@ const setRef = <T,>(ref: Ref<T> | undefined, value: T | null) => {
 };
 
 /** Wraps one element (with its own ref, if any) so it animates out when it's removed. */
-export function Exit({ kind, parts, children }: { kind: ExitKind; parts?: [string, ExitKind][]; children: ReactElement<{ ref?: Ref<HTMLElement> }> }) {
+export function Exit({ kind, parts, children, enabled = true }: { kind: ExitKind; parts?: [string, ExitKind][]; enabled?: boolean; children: ReactElement<{ ref?: Ref<HTMLElement> }> }) {
   const ref = useRef<HTMLElement | null>(null);
-  useExit(ref, kind, parts);
+  useExit(ref, kind, parts, enabled);
   const own = children.props.ref;
   return cloneElement(children, { ref: (el: HTMLElement | null) => { ref.current = el; setRef(own, el); } });
 }

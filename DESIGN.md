@@ -88,6 +88,12 @@ Controls press inward by 1.5–3.5% and release with one short spring in solid a
 
 Only replies appended to an open conversation receive a 220ms entrance; opening history and remounting virtual rows never replay it. New streaming text fades from readable opacity over 240ms without restarting existing paragraphs. Auto selection adds one 520ms lime ring per model choice, retained through elapsed-time updates; reduced motion keeps the signal still. Floating panels use `--layer-shadow` for a soft contact edge and cast shadow in each appearance; the composer and tab-bar materials keep their existing treatment.
 
+### Attachment continuity
+
+Loaded composer photos open the existing pinch/zoom viewer from their thumbnail. Previewable text attachments and generated file cards expand into the existing file preview and return to their current on-screen source when closed; missing/offscreen sources use a short fade. Closing during entry cancels the entrance cleanly, and reduced motion skips spatial animation.
+
+Attachment chips arrive and reflow over 240ms, retaining their current visual position during interrupted changes. The tray settles its own height, ignores horizontal scroll when computing movement, and leaves no empty gap after the final removal. Only explicit Remove actions leave brief inert exit copies; switching chats/accounts removes all previous-scope attachment UI immediately. Keep the phone keyboard, welcome and input layout unchanged.
+
 ## Phone tab bar gestures
 The iPhone glass bars in Tools and Library support pressing and sliding across tabs. The lens follows the finger continuously and gently enlarges the real tab content in place over a translucent, backdrop-blurred surface; release selects the previewed tab. Keep every icon anchored and visible, with only the candidate coloured during a drag. Do not move a duplicated icon inside the lens. Respect reduced motion and reduced transparency preferences. Release outside the bar, a cancelled gesture or lost pointer capture restores the current tab. Tab gestures do not start page swipe-back. Ordinary taps and keyboard activation stay available.
 

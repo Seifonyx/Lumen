@@ -109,7 +109,7 @@ async function run(browser, mobile) {
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   await ctx.setOffline(false);
   network.offline = false;
-  await page.locator('.attachment button').click();
+  await page.getByRole('button', { name: 'Remove draft.txt', exact: true }).click();
 
   await page.fill('.composer textarea', `My email is ${EMAIL}; repeat it.`);
   await page.getByRole('button',{name:/^Add (?:photos, )?files or a repository$/}).click();await page.getByRole('button',{name:'Compare models',exact:true}).click();

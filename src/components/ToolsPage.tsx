@@ -13,7 +13,7 @@ import { uid } from '../lib/util';
 import type { SavedAssistant } from '../types';
 
 type Section = 'research' | 'create' | 'analyze' | 'learn' | 'assistants';
-interface Tool { id: string; section: Section; name: string; text: string; icon: ReactNode; needs?: string; ready?: boolean; state?: string; run: () => void }
+interface Tool { id: string; section: Section; name: string; text: string; icon: ReactNode; needs?: string; ready?: boolean; state?: string; run?: () => void }
 
 const SECTIONS: { id: Section; label: string; blurb: string }[] = [
   { id: 'research', label: 'Research', blurb: 'Find things out, on the web and in your own history.' },
@@ -52,11 +52,11 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
     { id: 'youtube', section: 'research', name: 'Summarize a YouTube video', text: 'Main points and timestamps from a public video.', icon: <PlayCircle size={20} />, needs: 'Gemini key', ready: gemini, run: () => library('tools:youtube') },
     { id: 'canvas', section: 'create', name: 'Document canvas', text: 'Write and edit a document side by side with the chat.', icon: <Pencil size={20} />, run: () => { s.setUi({ page: null }); s.newChat(); setTimeout(() => useStore.getState().openCanvas(), 0); } },
     { id: 'image', section: 'create', name: 'Create an image', text: 'Describe it and Lumen draws it.', icon: <ImageIcon size={20} />, needs: 'Cloudflare key', ready: Boolean(keys.cloudflare), run: () => composerMode('image') },
-    { id: 'writing', section: 'create', name: 'Writing tools', text: 'Select words in any reply to improve, shorten, change the tone or translate them.', icon: <TextCursorInput size={20} />, run: () => s.toast('Select some words in any reply, then tap “Writing tools”.') },
+    { id: 'writing', section: 'create', name: 'Writing tools', text: 'Select text in a reply, then choose Writing tools to improve, shorten, change the tone or translate it.', icon: <TextCursorInput size={20} />, state: 'In replies' },
     { id: 'prompts', section: 'create', name: 'Saved prompts', text: 'Start a message from a prompt you use often.', icon: <MessageSquareText size={20} />, run: () => library('prompts') },
     { id: 'analysis', section: 'analyze', name: 'Data analysis', text: 'Charts and answers from CSV and Excel files, run on your device.', icon: <BarChart3 size={20} />, run: () => s.setUi({ page: null, runner: { lang: 'python', code: ANALYSIS_TEMPLATES.overview.code, analysis: true } }) },
     { id: 'calc', section: 'analyze', name: 'Calculate', text: 'Exact maths with Python, shown step by step.', icon: <Calculator size={20} />, needs: 'Gemini key', ready: gemini, run: () => library('tools:calculation') },
-    { id: 'compare', section: 'analyze', name: 'Compare models', text: 'Ask two or three models at once, then combine their answers.', icon: <Columns2 size={20} />, run: () => { s.setUi({ page: null }); s.toast('Type your question, then choose + → Compare models.'); setTimeout(() => document.querySelector<HTMLTextAreaElement>('.composer textarea')?.focus(), 100); } },
+    { id: 'compare', section: 'analyze', name: 'Compare models', text: 'Ask two or three models at once, then combine their answers.', icon: <Columns2 size={20} />, run: () => { s.setUi({ page: null, sidebarOpen: false }); window.dispatchEvent(new CustomEvent('mr:composer-mode', { detail: 'compare' })); } },
     { id: 'study', section: 'learn', name: 'Study', text: 'Flashcards and quizzes from any chat or document. Hard cards come back sooner.', icon: <GraduationCap size={20} />, run: () => s.setUi({ page: 'study', pageArg: undefined }) },
     { id: 'study-chat', section: 'learn', name: 'Study partner', text: 'An assistant that explains step by step and quizzes you.', icon: <BookOpenCheck size={20} />, run: () => { const a = BUILTIN_ASSISTANTS.find((x) => x.id === 'builtin-study'); if (a) { s.startAssistant(a); s.setUi({ page: null }); } } },
   ], [gemini, keys.cloudflare, settings.webSearch]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -88,16 +88,19 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
   // With the tab bar, only the chosen category shows, and the search looks only inside it.
   const shownHere = (id: Section) => !glassPhone || id === active;
   const jump = (id: Section) => { setActive(id); document.getElementById(`tools-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-  const Card = ({ t }: { t: Tool }) => (
-    <button type="button" className={`tool-card sec-${t.section}`} onClick={t.run}>
+  const Card = ({ t }: { t: Tool }) => {
+    const content = <>
       <span className="tool-icon" aria-hidden="true">{t.icon}</span>
       <span className="tool-text">
         <strong>{t.name}{t.state && <span className={`tool-state${t.state === 'On' || t.state === 'Connected' ? ' on' : ''}`}>{t.state}</span>}</strong>
         <span>{t.text}</span>
         {t.needs && <span className={`tool-needs${t.ready ? ' ok' : ''}`}>{t.ready ? '✓ ' : 'Needs a '}{t.ready ? t.needs.replace(' key', ' ready') : t.needs}</span>}
       </span>
-    </button>
-  );
+    </>;
+    return t.run
+      ? <button type="button" className={`tool-card sec-${t.section}`} onClick={t.run}>{content}</button>
+      : <article className={`tool-card tool-contextual sec-${t.section}`}>{content}</article>;
+  };
 
   if (editingAssistant) return <AssistantLibrary key={typeof editingAssistant === 'string' ? 'new' : editingAssistant.id} startNew={editingAssistant === 'new'} startWith={typeof editingAssistant === 'string' ? undefined : editingAssistant} onClose={onClose} onDone={() => setEditingAssistant(null)} />;
 

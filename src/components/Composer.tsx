@@ -140,13 +140,14 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
     if (!isTouch()) input.current?.focus();
   }, [currentId]);
 
-  // Tools that start in the message box (Deep research, Create image), opened from the Tools page.
+  // Tools share the composer's existing setup and draft instead of sending on launch.
   useEffect(() => {
     const onMode = (e: Event) => {
       const mode = (e as CustomEvent<string>).detail;
       if (mode === 'research') { setDeepResearch(true); setImageMode(false); }
       else if (mode === 'image') { setImageMode(true); setDeepResearch(false); }
       else if (mode === 'attach') { setSheet(true); return; } // the + menu, to add photos or files
+      else if (mode === 'compare') { setCompareOpen(true); return; }
       requestAnimationFrame(() => input.current?.focus());
     };
     window.addEventListener('mr:composer-mode', onMode);
@@ -318,6 +319,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
   };
 
   const compare = (models: string[]) => {
+    if (!canSend || codeExecution || pending.some(p => p.file?.videoUri)) return;
     if (!ensureOnline()) return;
     setCompareOpen(false);
     const files = pending.map((p) => p.file!);
@@ -560,7 +562,9 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
         />
       )}
       {voiceOpen && <Suspense fallback={null}><VoiceMode onClose={() => setVoiceOpen(false)} /></Suspense>}
-      {compareOpen && <CompareModelsModal prompt={text.trim()} files={pending.flatMap((p) => p.file ? [p.file] : [])} onClose={() => setCompareOpen(false)} onCompare={compare} />}
+      {compareOpen && <CompareModelsModal prompt={text} onPromptChange={value => { setText(value); saveDraft(value); }} files={pending.flatMap((p) => p.file ? [p.file] : [])}
+        unavailableReason={streaming ? 'Wait for the current reply to finish before comparing models.' : !ready ? 'Wait for attached files to finish loading.' : codeExecution ? 'Turn off data analysis in the composer before comparing models.' : pending.some(p => p.file?.videoUri) ? 'Remove the video attachment before comparing models.' : undefined}
+        onClose={() => setCompareOpen(false)} onCompare={compare} />}
       {check && <PrivacyCheck findings={check.findings} unchecked={check.unchecked} onMask={() => dispatch()} onAsIs={() => dispatch({ privacy: 'asIs' })} onEdit={() => setCheck(null)} />}
       <p className="disclaimer">AI can make mistakes. Check important info.</p>
     </div>

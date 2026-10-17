@@ -5,7 +5,7 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import { rubberBand, springTo, Velocity, type Motion } from './spring';
 import { haptic } from './haptics';
-import { motionOff } from './motion';
+import { reducedMotion } from './motion';
 
 const PROJECT_MS = 180; // where the sheet would be this long after release, at release speed
 const FLICK = 0.5; // px per ms
@@ -57,7 +57,7 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
     // Released: the rest of the motion runs on the graphics thread (see springTo).
     const settle = (to: number, v: number, done: () => void, opts?: { stiffness: number; damping: number }) => {
       el.style.transition = 'none';
-      if (motionOff()) { set(to); done(); return; }
+      if (reducedMotion()) { set(to); done(); return; }
       anim = springTo(y, to, v, frames, () => { anim = null; y = to; done(); }, opts || { stiffness: 420, damping: 34 });
     };
     const down = (x: number, py: number, id: number, target: EventTarget | null) => {

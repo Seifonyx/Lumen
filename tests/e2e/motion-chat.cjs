@@ -13,7 +13,15 @@ const now = Date.now();
       const ctx = await browser.newContext({ viewport: { width, height: 844 }, isMobile: width < 900, hasTouch: width < 900, reducedMotion: reduced ? 'reduce' : 'no-preference', serviceWorkers: 'block', ...(width < 900 ? { userAgent: ua } : {}) });
       const account = `motion-chat-${width}-${reduced}`;
       await profile(ctx, account, theme, { defaultModel: 'auto' });
-      await ctx.addInitScript(() => { window.__mrMotion = true; });
+      await ctx.addInitScript(() => {
+        window.__mrMotion = true;
+        window.__replyEntrances = [];
+        const animate = Element.prototype.animate;
+        Element.prototype.animate = function (...args) {
+          if (this.matches('.msg.assistant')) window.__replyEntrances.push(this.closest('[data-message-id]')?.dataset.messageId);
+          return animate.apply(this, args);
+        };
+      });
       let finish;
       let requests = 0;
       await ctx.route('**/generativelanguage.googleapis.com/**', async route => {
@@ -44,11 +52,15 @@ const now = Date.now();
       if (!only || only === 'history') {
         const animations = await page.locator('.message-row .msg').evaluateAll(els => els.map(el => getComputedStyle(el).animationName));
         assert.ok(animations.every(name => name === 'none'), `Restored history does not replay arrivals (${animations})`);
+        assert.deepEqual(await page.evaluate(() => window.__replyEntrances), [], 'Restored history never requests a WAAPI entrance');
       }
       if (!only || only === 'route') {
         await page.locator('.composer textarea').fill('Give me a concise next step.');
         await page.locator('.send-btn').click();
         await page.locator('.route-wait').waitFor();
+        const replyId = await page.locator('.msg.assistant').last().evaluate(el => el.closest('[data-message-id]').dataset.messageId);
+        const entranceCount = () => page.evaluate(id => window.__replyEntrances.filter(value => value === id).length, replyId);
+        assert.equal(await entranceCount(), reduced ? 0 : 1, 'Only a fresh reply requests an entrance, once');
         const pulse = page.locator('.route-choice.selected');
         assert.equal(await pulse.count(), 1, 'Auto selection receives one quiet, explicit signal');
         assert.equal(await pulse.getAttribute('aria-hidden'), 'true', 'The pulse is decorative');
@@ -58,6 +70,7 @@ const now = Date.now();
         await pulse.evaluate(el => { el.dataset.fixtureRetain = 'original'; });
         await page.waitForTimeout(1150);
         assert.equal(await pulse.getAttribute('data-fixture-retain'), 'original', 'Elapsed-time updates do not recreate the selection pulse');
+        assert.equal(await entranceCount(), reduced ? 0 : 1, 'Progress updates do not restart the reply entrance');
         finish();
         await page.locator('.msg.assistant', { hasText: 'The second paragraph stays readable.' }).waitFor();
         await page.locator('.composer textarea').fill('NEXT_DRAFT');
@@ -66,6 +79,7 @@ const now = Date.now();
         await page.locator('.hub-page:not(.exit-ghost)').getByRole('button', { name: 'Close', exact: true }).click();
         assert.equal(await page.locator('.composer textarea').inputValue(), 'NEXT_DRAFT');
         assert.equal(requests, 1, 'Motion does not trigger additional inference');
+        assert.equal(await entranceCount(), reduced ? 0 : 1, 'Streaming and returning from Library never replay the reply entrance');
       }
       assert.deepEqual(errors, []);
       console.log(`PASS chat motion ${process.env.MR_WEBKIT ? 'webkit' : 'chromium'} ${width}px ${theme} ${reduced ? 'reduced' : 'motion'}: ${only || 'history, Auto pulse, reply, draft'}`);

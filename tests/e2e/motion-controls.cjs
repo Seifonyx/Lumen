@@ -11,7 +11,7 @@ const rest = page => page.waitForFunction(() => !document.querySelector('.page-s
 (async () => {
   const browser = await (process.env.MR_WEBKIT ? webkit : chromium).launch();
   try {
-    for (const [width, glass, reduced] of [[1280, false, false], [390, true, false], [390, true, true]]) {
+    for (const [width, glass, reduced] of [[1280, false, false], [390, false, false], [390, true, false], [390, false, true], [390, true, true]]) {
       const ctx = await browser.newContext({ viewport: { width, height: 844 }, isMobile: width < 900, hasTouch: width < 900, serviceWorkers: 'block', reducedMotion: reduced ? 'reduce' : 'no-preference', ...(glass ? { userAgent: ua } : {}) });
       await profile(ctx, `motion-controls-${width}-${reduced}`, glass ? 'dark' : 'light');
       await ctx.addInitScript(() => { window.__mrMotion = true; });
@@ -23,25 +23,35 @@ const rest = page => page.waitForFunction(() => !document.querySelector('.page-s
       await input.fill('KEEP_MY_DRAFT');
 
       if (run('press')) {
-        const add = page.locator('.composer button[aria-label^="Add"]').first();
-        const box = await add.boundingBox();
-        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-        await page.mouse.down();
-        if (!reduced) await page.waitForFunction(() => {
-          const el = document.querySelector('.composer button[aria-label^="Add"]');
-          const scale = Number(getComputedStyle(el).scale.split(' ')[0]);
-          return scale >= .94 && scale < 1;
-        }, null, { timeout: 3000 });
-        const pressed = await add.evaluate(el => ({ scale: getComputedStyle(el).scale, translate: getComputedStyle(el).translate }));
-        const scale = Number(pressed.scale.split(' ')[0]);
-        if (reduced) assert.ok(pressed.scale === 'none' || scale === 1, 'Reduced motion keeps the control stationary');
-        else assert.ok(scale >= .94 && scale < 1, `A bounded press-in, without swelling (${pressed.scale})`);
-        assert.ok(pressed.translate === 'none' || pressed.translate === '0px', 'Buttons stay under the finger');
-        await page.mouse.move(1, 1);
-        await page.mouse.up();
-        await page.waitForTimeout(400);
-        assert.equal(await page.locator('.is-pressed').count(), 0, 'Releasing outside clears press feedback');
-        assert.equal(await page.locator('.attach-menu').count(), 0, 'Releasing outside does not activate the action');
+        const controls = ['.composer button[aria-label^="Add"]', '.composer .send-btn', ...(width >= 900 ? ['.sidebar .new-chat'] : [])];
+        for (const selector of controls) {
+          const add = page.locator(selector).first();
+          const box = await add.boundingBox();
+          await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+          await page.mouse.down();
+          if (!reduced) await page.waitForFunction(selector => {
+            const el = document.querySelector(selector);
+            const scale = Number(getComputedStyle(el).scale.split(' ')[0]);
+            return scale >= .94 && scale <= .99;
+          }, selector, { timeout: 3000 });
+          await page.waitForTimeout(180);
+          const pressed = await add.evaluate(el => {
+            const style = getComputedStyle(el);
+            const matrix = new DOMMatrixReadOnly(style.transform === 'none' ? undefined : style.transform);
+            return { scale: style.scale, translate: style.translate, transformScale: Math.hypot(matrix.a, matrix.b) };
+          });
+          const scale = Number(pressed.scale.split(' ')[0]);
+          if (reduced) assert.ok(pressed.scale === 'none' || scale === 1, 'Reduced motion keeps the control stationary');
+          else assert.ok(scale >= .94 && scale < 1, `A bounded press-in, without swelling (${pressed.scale})`);
+          assert.ok(pressed.translate === 'none' || pressed.translate === '0px', 'Buttons stay under the finger');
+          assert.ok(Math.abs(pressed.transformScale - 1) < .003, `The shared press must not compound with older :active transforms (${pressed.transformScale})`);
+          await page.mouse.move(1, 1);
+          await page.mouse.up();
+          await page.waitForTimeout(400);
+          assert.equal(await page.locator('.is-pressed').count(), 0, 'Releasing outside clears press feedback');
+          assert.equal(await page.locator('.attach-menu').count(), 0, 'Releasing outside does not activate the action');
+          assert.equal(await page.locator('.composer textarea').inputValue(), 'KEEP_MY_DRAFT', 'A released-outside Send does not submit the draft');
+        }
       }
 
       if (run('cancel') && width < 900) {
@@ -79,7 +89,7 @@ const rest = page => page.waitForFunction(() => !document.querySelector('.page-s
           assert.ok(await page.evaluate(() => window.__outgoingSurfaces > 0), 'Opening a hub preserves a noninteractive outgoing surface on phone and desktop');
         }
         // Interrupt the entrance: the destination must remain usable, with no obsolete copied screens.
-        await hub.getByRole('button', { name: 'Close', exact: true }).click({ force: true });
+        await page.keyboard.press('Escape');
         await rest(page);
         await page.waitForTimeout(500);
         assert.equal(await page.locator('.page-swap-ghost').count(), 0);

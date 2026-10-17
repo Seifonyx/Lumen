@@ -3233,10 +3233,10 @@ input, textarea { caret-color: var(--text); }
 :root[data-theme="dark"] .image-chip svg, :root[data-theme="black"] .image-chip svg { color: var(--signal); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .image-chip svg { color: var(--signal); } }
 
-/* A shared press/release rhythm; transforms never move the control's layout or hit area. */
+/* A shared press/release rhythm keeps layout and the control's centre stationary. */
 .motion-pressable { transition: scale .28s var(--spring-pop), filter .14s ease-out; }
 .motion-pressable.is-pressed { filter: brightness(1.04); transition-duration: .11s; }
-.motion-pressable:active { transform: none; }
+:root .motion-pressable:active:not(:disabled) { transform: none; }
 @keyframes canvas-arrive { from { opacity: 0; transform: translateX(20px); } }
 @media (prefers-reduced-motion: no-preference) { .canvas-panel { animation: canvas-arrive .28s var(--ease); } }
 @media (prefers-reduced-motion: no-preference) {

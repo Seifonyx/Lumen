@@ -2,7 +2,7 @@
 // scrolling, cancellation and releasing outside always remove the feedback.
 const BUTTONS = [
   '.btn', '.icon-btn', '.tool-btn', '.send-btn', '.sidebar-chip', '.model-button', '.to-bottom',
-  '.hub-close', '.composer-chip', '.project-topbar-pill', 'button.tool-card',
+  '.hub-close', '.composer-chip', '.project-topbar-pill', '.new-chat', 'button.tool-card',
 ].join(', ');
 const NOT_IN = '.menu, .ctx-menu, .sheet-row, .chat-row, .mp-item, .mp-layout, .settings-tabs, .msg-actions, .glass-tabbar';
 const cleanup = new WeakMap<HTMLElement, number>();

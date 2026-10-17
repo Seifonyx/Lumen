@@ -134,8 +134,13 @@ export function Exit({ kind, parts, children }: { kind: ExitKind; parts?: [strin
  */
 /** Set while a change has already been animated by a gesture (swipe-back), so pageSwap just applies it. */
 export const swapControl = { skip: false };
+let swapSerial = 0;
+let stopSwap: (() => void) | null = null;
 
 export function pageSwap(dir: 'push' | 'pop' | 'fade', from: HTMLElement | null, to: () => HTMLElement | null, change: () => void) {
+  const serial = ++swapSerial;
+  stopSwap?.();
+  stopSwap = null;
   if (swapControl.skip || !from || motionOff() || !from.isConnected || !from.parentNode) { change(); return; }
   const ghost = from.cloneNode(true) as HTMLElement;
   copyValues(from, ghost);
@@ -143,11 +148,13 @@ export function pageSwap(dir: 'push' | 'pop' | 'fade', from: HTMLElement | null,
   ghost.setAttribute('aria-hidden', 'true');
   ghost.removeAttribute('id');
   ghost.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
-  ghost.classList.add('exit-ghost');
+  ghost.classList.add('exit-ghost', 'page-swap-ghost');
+  ghost.style.animation = 'none';
   ghost.style.display = getComputedStyle(from).display;
   const scroll = [...from.querySelectorAll<HTMLElement>('*')].filter((el) => el.scrollTop > 0).map((el) => [el, el.scrollTop] as const);
   Object.assign(ghost.style, { position: 'absolute', top: `${from.offsetTop}px`, left: `${from.offsetLeft}px`, width: `${from.offsetWidth}px`, height: `${from.offsetHeight}px`, margin: '0', pointerEvents: 'none' });
   from.parentNode.insertBefore(ghost, from);
+  stopSwap = () => ghost.remove();
   // Keep the copy scrolled exactly like the original.
   const all = [...from.querySelectorAll<HTMLElement>('*')], copies = [...ghost.querySelectorAll<HTMLElement>('*')];
   for (const [el, top] of scroll) { const c = copies[all.indexOf(el)]; if (c) c.scrollTop = top; }
@@ -155,9 +162,10 @@ export function pageSwap(dir: 'push' | 'pop' | 'fade', from: HTMLElement | null,
   // A screen that loads on demand may need a moment to appear; the copy of the old one covers the wait.
   let tries = 0;
   const begin = () => {
+    if (serial !== swapSerial) return;
     const found = to();
     if (!found && tries++ < 20) { requestAnimationFrame(begin); return; }
-    animateSwap(dir, ghost, found);
+    stopSwap = animateSwap(dir, ghost, found);
   };
   begin();
 }
@@ -168,6 +176,7 @@ function animateSwap(dir: 'push' | 'pop' | 'fade', ghost: HTMLElement, next: HTM
   const opts = { duration: dir === 'fade' ? 180 : 340, easing: dir === 'fade' ? EASE_OUT : SLIDE };
   const runs: Animation[] = [];
   const extras: HTMLElement[] = [];
+  const original = next ? { position: next.style.position, zIndex: next.style.zIndex, boxShadow: next.style.boxShadow } : null;
   const dimOver = (el: HTMLElement, z: string, from: number, to: number) => {
     const r = el.getBoundingClientRect();
     const dim = document.createElement('div');
@@ -199,12 +208,20 @@ function animateSwap(dir: 'push' | 'pop' | 'fade', ghost: HTMLElement, next: HTM
   } else {
     ghost.style.zIndex = '3';
     runs.push(ghost.animate([{ opacity: 1 }, { opacity: 0 }], opts));
+    if (next) runs.push(next.animate([{ opacity: .7, transform: 'scale(.99)' }, { opacity: 1, transform: 'none' }], { ...opts, duration: 240 }));
   }
-  Promise.all(runs.map((r) => r.finished)).catch(() => {}).finally(() => {
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    runs.forEach(run => run.cancel());
     ghost.remove();
     extras.forEach((e) => e.remove());
-    if (next) { next.style.zIndex = ''; next.style.boxShadow = ''; if (next.style.position === 'relative') next.style.position = ''; }
-  });
+    if (next && original) Object.assign(next.style, original);
+    if (stopSwap === cleanup) stopSwap = null;
+  };
+  Promise.all(runs.map((r) => r.finished)).catch(() => {}).finally(cleanup);
+  return cleanup;
 }
 
 /**

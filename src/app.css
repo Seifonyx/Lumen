@@ -3234,6 +3234,19 @@ input, textarea { caret-color: var(--text); }
 :root[data-theme="dark"] .image-chip svg, :root[data-theme="black"] .image-chip svg { color: var(--signal); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .image-chip svg { color: var(--signal); } }
 
+/* A shared press/release rhythm; transforms never move the control's layout or hit area. */
+.motion-pressable { transition: scale .28s var(--spring-pop), filter .14s ease-out; }
+.motion-pressable.is-pressed { filter: brightness(1.04); transition-duration: .11s; }
+.motion-pressable:active { transform: none; }
+@keyframes canvas-arrive { from { opacity: 0; transform: translateX(20px); } }
+@media (prefers-reduced-motion: no-preference) { .canvas-panel { animation: canvas-arrive .28s var(--ease); } }
+@media (prefers-reduced-motion: no-preference) {
+  .motion-pressable.is-pressed { scale: var(--press-scale, .965); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .motion-pressable, .motion-pressable.is-pressed { scale: none !important; translate: none !important; }
+}
+
 /* ---------- Model check ---------- */
 .model-check { display: grid; gap: 14px; padding: 18px 22px 22px; }
 .mc-intro { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-2); }
@@ -4017,7 +4030,7 @@ html.pane-resizing, html.pane-resizing * { cursor: col-resize !important; user-s
 
 /* ==== 2.2 Pages: Library, Documents, Study ==== */
 .app.page-open .main { display: none; }
-.hub-page { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; background: var(--bg); outline: none; animation: fade 0.18s var(--ease); }
+.hub-page { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; background: var(--bg); outline: none; }
 .hub-bar { display: flex; align-items: center; gap: 8px; min-height: 56px; padding: 8px 20px 0 32px; }
 .hub-bar-title { display: none; }
 .hub-bar h1.hub-bar-title { margin: 0; }

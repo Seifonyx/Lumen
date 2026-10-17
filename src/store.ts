@@ -1256,15 +1256,17 @@ export const useStore = create<State>((set, get) => {
       const opening = patch.settingsOpen === true && !get().settingsOpen, closing = patch.settingsOpen === false && get().settingsOpen;
       if ((opening || closing) && typeof document !== 'undefined' && (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation?.isActive) {
         const phone = window.matchMedia('(max-width: 899px)').matches;
-        pageSwap(phone ? (opening ? 'push' : 'pop') : 'fade', document.querySelector<HTMLElement>(opening ? '.app > .main' : '.settings-page'), () => document.querySelector<HTMLElement>(opening ? '.settings-page' : '.app > .main'), apply);
+        pageSwap(phone ? (opening ? 'push' : 'pop') : 'fade', document.querySelector<HTMLElement>(opening ? (get().page ? '.hub-page:not(.exit-ghost)' : '.app > .main') : '.settings-page:not(.exit-ghost)'), () => document.querySelector<HTMLElement>(opening ? '.settings-page:not(.exit-ghost)' : '.app > .main'), apply);
         return;
       }
       // Pages (Projects, Collection, Tools…) on phones: they slide in over the chat and slide away to go back.
       // Moving between pages (the tab bar) doesn't slide, as with iOS tabs.
-      if ('page' in patch && typeof document !== 'undefined' && !get().settingsOpen && window.matchMedia('(max-width: 899px)').matches && (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation?.isActive) {
+      if ('page' in patch && typeof document !== 'undefined' && !get().settingsOpen && (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation?.isActive) {
         const was = get().page, next = patch.page ?? null;
-        if (Boolean(was) !== Boolean(next)) {
-          pageSwap(next ? 'push' : 'pop', document.querySelector<HTMLElement>(next ? '.app > .main' : '.hub-page'), () => document.querySelector<HTMLElement>(next ? '.hub-page' : '.app > .main'), apply);
+        if (was !== next) {
+          const phone = window.matchMedia('(max-width: 899px)').matches;
+          const direction = !phone || (was && next) ? 'fade' : next ? 'push' : 'pop';
+          pageSwap(direction, document.querySelector<HTMLElement>(was ? '.hub-page:not(.exit-ghost)' : '.app > .main'), () => document.querySelector<HTMLElement>(next ? '.hub-page:not(.exit-ghost)' : '.app > .main'), apply);
           return;
         }
       }

@@ -2,6 +2,7 @@ import PaneResizer from './PaneResizer';
 import { Check, Download, Eye, FilePlus2, Loader2, Pencil, Plus, RotateCcw, Sparkles, Square, Trash2, Upload, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useFocusScope } from '../lib/focus-scope';
+import { useExit } from '../lib/motion';
 import { selectCurrentChat, useStore } from '../store';
 import type { CanvasDocument, Chat } from '../types';
 import { replaceCanvasRange } from '../lib/canvas';
@@ -100,6 +101,7 @@ export default function CanvasPanel() {
   const { setUi, openCanvas, deleteCanvasDocument, saveCanvasDocument, toast } = useStore.getState();
   const doc = chat?.documents?.find(d => d.id === selectedId) || chat?.documents?.[0];
   const root = useRef<HTMLElement>(null);
+  useExit(root, 'drop');
   const input = useRef<HTMLInputElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [importing, setImporting] = useState(false);

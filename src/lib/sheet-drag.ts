@@ -5,6 +5,7 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import { rubberBand, springTo, Velocity, type Motion } from './spring';
 import { haptic } from './haptics';
+import { motionOff } from './motion';
 
 const PROJECT_MS = 180; // where the sheet would be this long after release, at release speed
 const FLICK = 0.5; // px per ms
@@ -39,8 +40,8 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
       return `rgba(${r}, ${g}, ${bl}, ${(a * k).toFixed(3)})`;
     };
     const frames = (v: number): [HTMLElement | null, Keyframe][] => {
-      // (Clears a little ahead of the sheet, so the screen never ends up darker than where it lands.)
-      const k = v > 0 ? Math.max(0, 1 - (1.6 * v) / el.offsetHeight) : 1;
+      // Keep the background depth connected to the sheet until it has fully left the screen.
+      const k = v > 0 ? Math.max(0, 1 - v / (el.offsetHeight + 120)) : 1;
       const b = backdrop(), h = holder();
       return [[el, { transform: `translateY(${v}px)` }], [b, { opacity: String(k) }], [h, { backgroundColor: h ? tint(h, k) : '' }]];
     };
@@ -56,7 +57,8 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
     // Released: the rest of the motion runs on the graphics thread (see springTo).
     const settle = (to: number, v: number, done: () => void, opts?: { stiffness: number; damping: number }) => {
       el.style.transition = 'none';
-      anim = springTo(y, to, v, frames, () => { anim = null; y = to; done(); }, opts);
+      if (motionOff()) { set(to); done(); return; }
+      anim = springTo(y, to, v, frames, () => { anim = null; y = to; done(); }, opts || { stiffness: 420, damping: 34 });
     };
     const down = (x: number, py: number, id: number, target: EventTarget | null) => {
       const t = target as Element | null;
@@ -108,7 +110,15 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
         settle(0, v, () => set(0));
       }
     };
-    const ts = (e: TouchEvent) => { const t = e.touches[0]; if (e.touches.length === 1) down(t.clientX, t.clientY, t.identifier, e.target); };
+    // An interrupted gesture restores the sheet even beyond the normal dismissal threshold.
+    const cancel = () => {
+      if (!start) return;
+      start = null; dragging = false; closing = false;
+      anim?.stop(); anim = null;
+      speed.reset();
+      settle(0, 0, () => set(0));
+    };
+    const ts = (e: TouchEvent) => { const t = e.touches[0]; if (e.touches.length === 1) down(t.clientX, t.clientY, t.identifier, e.target); else cancel(); };
     const tm = (e: TouchEvent) => { const t = [...e.touches].find((x) => x.identifier === start?.id); if (t) move(t.clientX, t.clientY, e); };
     // Mouse: only from the grab bar or header (so text can still be selected).
     const pd = (e: PointerEvent) => { if (e.pointerType !== 'mouse' || e.button !== 0) return; down(e.clientX, e.clientY, -1, e.target); if (start && !start.handle) start = null; };
@@ -117,19 +127,23 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
     el.addEventListener('touchstart', ts, { passive: true });
     el.addEventListener('touchmove', tm, { passive: false });
     el.addEventListener('touchend', up);
-    el.addEventListener('touchcancel', up);
+    el.addEventListener('touchcancel', cancel);
     el.addEventListener('pointerdown', pd);
     window.addEventListener('pointermove', pm);
     window.addEventListener('pointerup', pu);
+    window.addEventListener('pointercancel', cancel);
+    window.addEventListener('blur', cancel);
     return () => {
       anim?.stop();
       el.removeEventListener('touchstart', ts);
       el.removeEventListener('touchmove', tm);
       el.removeEventListener('touchend', up);
-      el.removeEventListener('touchcancel', up);
+      el.removeEventListener('touchcancel', cancel);
       el.removeEventListener('pointerdown', pd);
       window.removeEventListener('pointermove', pm);
       window.removeEventListener('pointerup', pu);
+      window.removeEventListener('pointercancel', cancel);
+      window.removeEventListener('blur', cancel);
     };
   }, [sheet, enabled, scrim]);
 }

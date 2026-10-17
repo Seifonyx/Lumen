@@ -89,16 +89,7 @@ html.glass .composer {
   backdrop-filter: var(--glass-filter-strong);
 }
 
-/* Press (lib/press.ts swells glass buttons by touch): the light that gathers under your finger. */
-.press-glow { display: none; }
-html.glass .press-glow {
-  display: block; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 2;
-  background: radial-gradient(circle at var(--px, 50%) var(--py, 50%), rgb(255 255 255 / 0.42), rgb(255 255 255 / 0.12) 38%, transparent 70%);
-  mix-blend-mode: plus-lighter; opacity: 1; transition: opacity 0.35s;
-  animation: press-glow-in 0.18s ease-out;
-}
-@keyframes press-glow-in { from { opacity: 0; } }
-/* The older press styles (shrink, grey fill) give way to the swell. */
+/* Shared press feedback owns scale; native :active still supplies row highlights. */
 html.glass :is(.btn, .icon-btn, .tool-btn, .send-btn, .sidebar-chip, .model-button, .composer-bar .tool-btn):active:not(:disabled) { transform: none; }
 html.glass :is(.topbar, .hub-bar, .settings-top, .composer, .sidebar-footer) .icon-btn:active:not(:disabled) { background: none; }
 html.glass .chat-open:active { background: none; transform: none; }
@@ -402,7 +393,8 @@ html.glass .model-tag { font: 500 12.5px/1.4 var(--font); letter-spacing: 0; }
   html.glass .settings-page .settings-tabs button.active::before { display: none; }
 }
 /* A held glass button lifts off the surface. */
-html.glass .is-pressed { box-shadow: var(--glass-depth), 0 6px 18px rgb(0 0 0 / 0.12); z-index: 3; }
+html.glass .motion-pressable.is-pressed { scale: var(--press-scale, .965); }
+@media (prefers-reduced-motion: reduce) { html.glass .motion-pressable.is-pressed { scale: none; } }
 
 /* The send button is a plain coloured circle, as in iOS apps (no glow). */
 html.glass .composer .send-btn, html.glass .composer .send-btn:not(:disabled):not(.stop) { box-shadow: none; }

@@ -102,9 +102,9 @@ jobs:
           done
           curl -fsS http://localhost:5190/ > /dev/null
           node tests/webkit/tabbar.cjs
-      - name: Hub actions and long-chat navigation in WebKit
+      - name: Hub actions, motion and long-chat navigation in WebKit
         if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' }}
-        run: npm run test:e2e -- message-navigation hub-actions
+        run: npm run test:e2e -- message-navigation hub-actions motion-controls motion-chat
         env:
           MR_WEBKIT: '1'
           # This suite seeds its own preview account and mocks provider requests.

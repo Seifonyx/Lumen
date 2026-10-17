@@ -66,7 +66,7 @@ function WaitingForReply({ message }: { message: Message }) {
   const target = message.model ? modelLabel(catalog, message.model) : '';
   return (
     <div className="reply-wait route-wait" role="status" aria-label={`${label}${target ? ` to ${target}` : ''}`}>
-      <MoonPhase />
+      <span key={message.model || 'pending'} className={`route-choice${message.routeDetail && target ? ' selected' : ''}`} aria-hidden="true"><MoonPhase /></span>
       <span className="route-label">{label}</span>
       {tried.map((m) => <span key={m} className="route-tried" aria-hidden="true"><s>{modelLabel(catalog, m)}</s></span>)}
       {target && <span className="route-target" aria-hidden="true"><span className="route-arrow">→</span>{target}</span>}

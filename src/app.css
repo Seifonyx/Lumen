@@ -525,7 +525,7 @@ input[type='search']::-webkit-search-cancel-button { -webkit-appearance: none; }
 /* ============================================================ Messages */
 .messages { flex: 1; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scroll-padding-bottom: 24px; }
 .thread { margin: 0 auto; display: flex; flex-direction: column; }
-.msg { display: flex; flex-direction: column; gap: 8px; min-width: 0; animation: rise 0.25s var(--ease); }
+.msg { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .msg.user { align-items: flex-end; }
 .bubble { max-width: min(80%, 620px); background: var(--user-bubble); padding: 9px 15px; border-radius: 18px 18px 6px 18px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
 [dir='rtl'] .bubble, .bubble[dir='rtl'] { border-radius: 18px 18px 18px 6px; }
@@ -2722,8 +2722,7 @@ input, textarea { caret-color: var(--text); }
   .message-row:last-child .msg.assistant .msg-actions > *, .msg-actions:has([aria-expanded='true']) > * { opacity: 1; }
 }
 /* ============================================================ Motion (short, calm, off with reduced motion) */
-.message-row:last-child .msg { animation: msg-in .32s var(--ease) both; }
-@keyframes msg-in { from { opacity: 0; transform: translateY(8px); } }
+/* Reply entrances are owned by useReplyEntrance: history and virtual rows stay still. */
 .composer .send-btn { transition: background .18s var(--ease), color .18s var(--ease), transform .12s var(--ease), box-shadow .18s var(--ease); }
 .composer .send-btn:not(:disabled):active { transform: scale(.92); }
 .composer .send-btn.stop { animation: stop-in .2s var(--ease); }
@@ -3234,6 +3233,19 @@ input, textarea { caret-color: var(--text); }
 :root[data-theme="dark"] .image-chip svg, :root[data-theme="black"] .image-chip svg { color: var(--signal); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .image-chip svg { color: var(--signal); } }
 
+/* A shared press/release rhythm keeps layout and the control's centre stationary. */
+.motion-pressable { transition: scale .28s var(--spring-pop), filter .14s ease-out; }
+.motion-pressable.is-pressed { filter: brightness(1.04); transition-duration: .11s; }
+:root .motion-pressable:active:not(:disabled) { transform: none; }
+@keyframes canvas-arrive { from { opacity: 0; transform: translateX(20px); } }
+@media (prefers-reduced-motion: no-preference) { .canvas-panel { animation: canvas-arrive .28s var(--ease); } }
+@media (prefers-reduced-motion: no-preference) {
+  .motion-pressable.is-pressed { scale: var(--press-scale, .965); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .motion-pressable, .motion-pressable.is-pressed { scale: none !important; translate: none !important; }
+}
+
 /* ---------- Model check ---------- */
 .model-check { display: grid; gap: 14px; padding: 18px 22px 22px; }
 .mc-intro { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-2); }
@@ -3587,8 +3599,8 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
 .swipe-pin svg, .swipe-delete svg { transform: scale(calc(.7 + var(--swipe, 0) * .3)); transition: transform .15s var(--ease); }
 .swipe-row.armed .swipe-pin svg, .swipe-row.armed .swipe-delete svg { transform: scale(1.18); }
 /* Streaming replies: new words fade in */
-.fresh { animation: word-in .5s var(--ease) both; }
-@keyframes word-in { from { opacity: 0; } }
+.fresh { animation: word-in .24s var(--ease) both; }
+@keyframes word-in { from { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .fresh { animation: none; } }
 
 /* ---- 1.4 */
@@ -4017,7 +4029,7 @@ html.pane-resizing, html.pane-resizing * { cursor: col-resize !important; user-s
 
 /* ==== 2.2 Pages: Library, Documents, Study ==== */
 .app.page-open .main { display: none; }
-.hub-page { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; background: var(--bg); outline: none; animation: fade 0.18s var(--ease); }
+.hub-page { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; background: var(--bg); outline: none; }
 .hub-bar { display: flex; align-items: center; gap: 8px; min-height: 56px; padding: 8px 20px 0 32px; }
 .hub-bar-title { display: none; }
 .hub-bar h1.hub-bar-title { margin: 0; }
@@ -4370,3 +4382,32 @@ button.tool-card:hover, button.tool-card:focus-visible { border-color: var(--bor
 @media (max-width: 360px) {
   .main.is-empty .empty h1 { font-size: clamp(22px, 7.5vw, 26px); }
 }
+
+/* Floating surfaces share a soft contact edge and a broader, quiet cast shadow. */
+:root {
+  --layer-shadow: inset 0 1px 0 rgb(255 255 255 / .55), 0 2px 5px rgb(0 0 0 / .045), 0 20px 56px -20px rgb(0 0 0 / .25);
+}
+:root[data-theme="dark"] {
+  --layer-shadow: inset 0 1px 0 rgb(255 255 255 / .055), 0 2px 6px rgb(0 0 0 / .2), 0 24px 64px -20px rgb(0 0 0 / .65);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --layer-shadow: inset 0 1px 0 rgb(255 255 255 / .055), 0 2px 6px rgb(0 0 0 / .2), 0 24px 64px -20px rgb(0 0 0 / .65); }
+}
+.modal, .sheet, .models-pop, .usage-pop, .popover, .menu { box-shadow: var(--layer-shadow); }
+.modal-backdrop, .sheet-backdrop { animation-duration: .2s; }
+@media (prefers-reduced-motion: no-preference) {
+  .sheet, .modal.is-sheet, .models-pop.sheet, .usage-pop.sheet { animation-duration: .36s; }
+}
+
+/* A single signal when Auto chooses a route. Time/progress updates keep this node intact. */
+.route-choice { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.route-choice.selected::after {
+  content: ''; position: absolute; inset: -3px; border: 1.5px solid var(--signal-strong);
+  border-radius: 50%; pointer-events: none; opacity: 0;
+  animation: route-selected .52s cubic-bezier(.16, 1, .3, 1) 1;
+}
+@keyframes route-selected {
+  from { opacity: .7; transform: scale(.65); }
+  to { opacity: 0; transform: scale(1.7); }
+}
+@media (prefers-reduced-motion: reduce) { .route-choice.selected::after { animation: none; } }

@@ -113,6 +113,24 @@ export function useExit(ref: RefObject<HTMLElement | null>, kind: ExitKind, part
   }, [ref]);
 }
 
+/** Only replies appended to an already-open conversation arrive. Loading history, switching chats
+ * and remounting virtual rows never replay entrances, and token updates never restart them. */
+export function useReplyEntrance(root: RefObject<HTMLElement | null>, ids: string[]) {
+  const seen = useRef<Set<string> | null>(null);
+  seen.current ??= new Set(ids);
+  const order = ids.join('|');
+  useLayoutEffect(() => {
+    const fresh = ids.filter(id => !seen.current!.has(id));
+    seen.current = new Set(ids);
+    if (motionOff()) return;
+    const runs = fresh.flatMap(id => {
+      const message = root.current?.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(id)}"] > .msg.assistant`);
+      return message ? [message.animate([{ opacity: .5, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: EASE_OUT })] : [];
+    });
+    return () => runs.forEach(run => run.cancel());
+  }, [root, order]); // ids have the same contents while the order is unchanged.
+}
+
 const setRef = <T,>(ref: Ref<T> | undefined, value: T | null) => {
   if (typeof ref === 'function') ref(value);
   else if (ref) (ref as { current: T | null }).current = value;
@@ -134,8 +152,13 @@ export function Exit({ kind, parts, children }: { kind: ExitKind; parts?: [strin
  */
 /** Set while a change has already been animated by a gesture (swipe-back), so pageSwap just applies it. */
 export const swapControl = { skip: false };
+let swapSerial = 0;
+let stopSwap: (() => void) | null = null;
 
 export function pageSwap(dir: 'push' | 'pop' | 'fade', from: HTMLElement | null, to: () => HTMLElement | null, change: () => void) {
+  const serial = ++swapSerial;
+  stopSwap?.();
+  stopSwap = null;
   if (swapControl.skip || !from || motionOff() || !from.isConnected || !from.parentNode) { change(); return; }
   const ghost = from.cloneNode(true) as HTMLElement;
   copyValues(from, ghost);
@@ -143,11 +166,13 @@ export function pageSwap(dir: 'push' | 'pop' | 'fade', from: HTMLElement | null,
   ghost.setAttribute('aria-hidden', 'true');
   ghost.removeAttribute('id');
   ghost.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
-  ghost.classList.add('exit-ghost');
+  ghost.classList.add('exit-ghost', 'page-swap-ghost');
+  ghost.style.animation = 'none';
   ghost.style.display = getComputedStyle(from).display;
   const scroll = [...from.querySelectorAll<HTMLElement>('*')].filter((el) => el.scrollTop > 0).map((el) => [el, el.scrollTop] as const);
   Object.assign(ghost.style, { position: 'absolute', top: `${from.offsetTop}px`, left: `${from.offsetLeft}px`, width: `${from.offsetWidth}px`, height: `${from.offsetHeight}px`, margin: '0', pointerEvents: 'none' });
   from.parentNode.insertBefore(ghost, from);
+  stopSwap = () => ghost.remove();
   // Keep the copy scrolled exactly like the original.
   const all = [...from.querySelectorAll<HTMLElement>('*')], copies = [...ghost.querySelectorAll<HTMLElement>('*')];
   for (const [el, top] of scroll) { const c = copies[all.indexOf(el)]; if (c) c.scrollTop = top; }
@@ -155,9 +180,10 @@ export function pageSwap(dir: 'push' | 'pop' | 'fade', from: HTMLElement | null,
   // A screen that loads on demand may need a moment to appear; the copy of the old one covers the wait.
   let tries = 0;
   const begin = () => {
+    if (serial !== swapSerial) return;
     const found = to();
     if (!found && tries++ < 20) { requestAnimationFrame(begin); return; }
-    animateSwap(dir, ghost, found);
+    stopSwap = animateSwap(dir, ghost, found);
   };
   begin();
 }
@@ -168,6 +194,7 @@ function animateSwap(dir: 'push' | 'pop' | 'fade', ghost: HTMLElement, next: HTM
   const opts = { duration: dir === 'fade' ? 180 : 340, easing: dir === 'fade' ? EASE_OUT : SLIDE };
   const runs: Animation[] = [];
   const extras: HTMLElement[] = [];
+  const original = next ? { position: next.style.position, zIndex: next.style.zIndex, boxShadow: next.style.boxShadow } : null;
   const dimOver = (el: HTMLElement, z: string, from: number, to: number) => {
     const r = el.getBoundingClientRect();
     const dim = document.createElement('div');
@@ -199,12 +226,20 @@ function animateSwap(dir: 'push' | 'pop' | 'fade', ghost: HTMLElement, next: HTM
   } else {
     ghost.style.zIndex = '3';
     runs.push(ghost.animate([{ opacity: 1 }, { opacity: 0 }], opts));
+    if (next) runs.push(next.animate([{ opacity: .7, transform: 'scale(.99)' }, { opacity: 1, transform: 'none' }], { ...opts, duration: 240 }));
   }
-  Promise.all(runs.map((r) => r.finished)).catch(() => {}).finally(() => {
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    runs.forEach(run => run.cancel());
     ghost.remove();
     extras.forEach((e) => e.remove());
-    if (next) { next.style.zIndex = ''; next.style.boxShadow = ''; if (next.style.position === 'relative') next.style.position = ''; }
-  });
+    if (next && original) Object.assign(next.style, original);
+    if (stopSwap === cleanup) stopSwap = null;
+  };
+  Promise.all(runs.map((r) => r.finished)).catch(() => {}).finally(cleanup);
+  return cleanup;
 }
 
 /**
@@ -294,7 +329,7 @@ export function flySent(bubble: HTMLElement | null | undefined) {
 // ---- While a reply streams, each new piece of text fades in instead of popping in. Works on the rendered
 // HTML: text that arrived in the last half second is wrapped word by word in spans whose fade is offset by
 // how long ago it arrived, so re-rendering mid-fade continues smoothly instead of restarting.
-const FADE_MS = 500;
+const FADE_MS = 240;
 const SKIP_BLOCKS = '.katex, svg, style, script';
 export type Arrivals = { total: number; list: { at: number; time: number }[] };
 export function fadeInText(root: HTMLElement, arrivals: Arrivals) {

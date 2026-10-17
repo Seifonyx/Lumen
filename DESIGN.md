@@ -82,5 +82,11 @@ Never use it for large areas, body text on white, or decoration.
   `project-shots`, `more-shots`) and `textfit.cjs` (text spilling out of its box). `BROWSER=webkit`
   runs them in Safari's engine; the manual "Safari visual check" workflow does this on GitHub.
 
+## Motion rhythm
+
+Controls press inward by 1.5–3.5% and release with one short spring in solid and glass appearances; scrolling their own container or cancelling input clears feedback. Reduced motion keeps controls stationary. Hub navigation uses a connected push/pop on phones and a short crossfade on desktop, with only one outgoing, inert surface during interrupted navigation. Canvas arrives as an adjacent panel. Bottom sheets track the finger and backdrop together, return safely after cancellation, and respect reduced motion when settling. Preserve the existing phone welcome and compact voice controls.
+
+Only replies appended to an open conversation receive a 220ms entrance; opening history and remounting virtual rows never replay it. New streaming text fades from readable opacity over 240ms without restarting existing paragraphs. Auto selection adds one 520ms lime ring per model choice, retained through elapsed-time updates; reduced motion keeps the signal still. Floating panels use `--layer-shadow` for a soft contact edge and cast shadow in each appearance; the composer and tab-bar materials keep their existing treatment.
+
 ## Phone tab bar gestures
 The iPhone glass bars in Tools and Library support pressing and sliding across tabs. The lens follows the finger continuously and gently enlarges the real tab content in place over a translucent, backdrop-blurred surface; release selects the previewed tab. Keep every icon anchored and visible, with only the candidate coloured during a drag. Do not move a duplicated icon inside the lens. Respect reduced motion and reduced transparency preferences. Release outside the bar, a cancelled gesture or lost pointer capture restores the current tab. Tab gestures do not start page swipe-back. Ordinary taps and keyboard activation stay available.

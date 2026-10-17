@@ -16,6 +16,7 @@
 
 - Held sidebar previews keep a rounded surface and the source row’s dimensions/typography; the portal no longer drops the bubble. Ellipsis-menu action presses/hover no longer apply the ancestor chat row’s pressed/hover fill.
 - Manual test: hold an inactive chat, then the selected chat. Each title must stay inside a rounded lifted bubble. Dismiss; open each chat’s … menu, hold Rename, slide to Pin, then slide outside and release. Only the option highlight should move; the chat bubble must keep its color and no action should run after cancelling. Repeat in light/solid and dark/glass modes.
+- Verification: type/unit/build passed; native-feel/sidebar/glass production suites passed without retries; all twelve updated hosted Chromium/WebKit menu configurations passed. Hosted JS/CSS bytes match the tested build (497b323). Test coordinates now wait for drawer/menu animations; the focused hosted WebKit case also passes with that wait. Full CI remains pending.
 - Regression coverage: visible held surface and matching title size, stable selected row color during an ellipsis action press, plus existing slide/cancel/keyboard/project-scroll checks in six Chromium and six WebKit configurations. Linux WebKit does not prove physical iPhone rendering.
 
 ## Invariants and pointers

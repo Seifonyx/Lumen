@@ -9,6 +9,7 @@ import { useSmoothText } from '../lib/smooth-text';
 import ContextMenu, { type ContextItem } from './ContextMenu';
 import { openImage } from './ImageViewer';
 import MoonPhase from './MoonPhase';
+import ThinkingWaves from './ThinkingWaves';
 import ResearchCard from './ResearchCard';
 import { mentionedPaths, repoTree, seenPaths } from '../lib/workspace';
 import { normalizeEdits } from '../lib/edits';
@@ -299,6 +300,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
 
   return (
     <div className={`msg assistant${justDone ? ' just-done' : ''}`} ref={box}>
+      <ThinkingWaves active={streaming && !message.text && !message.research} />
       {message.research && <ResearchCard research={message.research} />}
       {message.thinking && <Thinking text={message.thinking} active={streaming && !message.text} />}
       {message.text ? (

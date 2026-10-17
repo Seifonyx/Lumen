@@ -94,6 +94,12 @@ Loaded composer photos open the existing pinch/zoom viewer from their thumbnail.
 
 Attachment chips arrive and reflow over 240ms, retaining their current visual position during interrupted changes. The tray settles its own height, ignores horizontal scroll when computing movement, and leaves no empty gap after the final removal. Only explicit Remove actions leave brief inert exit copies; switching chats/accounts removes all previous-scope attachment UI immediately. Keep the phone keyboard, welcome and input layout unchanged.
 
+### Animated artwork
+
+The existing eclipse/logo and welcome moon carry one orbiting light with a fading trail and one slow flare per eight-second orbit. Keep the existing welcome geometry, greeting and mark. Normal replies show three small woven ribbons above the existing routing/thinking status, then release eight points of light as the answer starts; Stop also clears the artwork. This is decoration, not a progress or model-quality claim. Preserve real status text and route metadata.
+
+Pause decorative CSS and native SVG timelines when offscreen, when the document is hidden, or while Reduce Motion is enabled. Reduced motion shows static artwork while waiting and removes it without a spatial exit. Observers, preference listeners and exit timers belong to their mounted surface and clean up on chat/account/navigation changes. Use no external artwork, network calls or animation dependency.
+
 ## Phone tab bar gestures
 The iPhone glass bars in Tools and Library support pressing and sliding across tabs. The lens follows the finger continuously and gently enlarges the real tab content in place over a translucent, backdrop-blurred surface; release selects the previewed tab. Keep every icon anchored and visible, with only the candidate coloured during a drag. Do not move a duplicated icon inside the lens. Respect reduced motion and reduced transparency preferences. Release outside the bar, a cancelled gesture or lost pointer capture restores the current tab. Tab gestures do not start page swipe-back. Ordinary taps and keyboard activation stay available.
 

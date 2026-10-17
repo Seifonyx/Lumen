@@ -12,14 +12,21 @@
 - Be a coding partner. Tests, fixes, main pushes and deployment are authorized. Keep this file small and factual; old pasted handoff instructions are revoked. Complete, test, deploy and verify the current task, then stop before another roadmap feature.
 - Current task: supplied Claude desktop/phone layout, native Add to Chat sheet, Settings Connectors for GitHub, real incognito. Reference paths and visual decisions: `.impeccable/claude-layout.md`. PRODUCT.md owns behavior; ROADMAP.md owns scope; DESIGN.md/.impeccable/design.json own visual tokens. Arabic interface and separate chat folders are excluded.
 
-## Attachment animation batch (first two suggestions; PR #14 in preview)
+## Animated visuals batch (orbiting moon + thinking ribbons; preview pending)
+
+- Existing logo and welcome moon gain a slow orbiting light/trail and brief flare. Three small SVG ribbons visibly weave while a normal reply waits, then dissolve into eight sparks as the answer starts; Stop clears them too. Existing welcome layout, route text, reasoning and keyboard behavior remain intact.
+- Manual test 1: open New chat and watch the moon for 8–10 seconds. One light should orbit with a fading trail and brief flare. Scroll/hide it or switch browser tabs: it should pause, then resume. Reduce Motion should show a static mark.
+- Manual test 2: send a question and watch the three ribbons weave while waiting. They should dissolve as text arrives. Try Stop and a quick chat switch; no ribbons should linger. With Reduce Motion, the ribbons stay still. Your next draft must remain intact.
+- Verification: type/unit/build passed; production Chromium visual-animations, motion-chat and welcome suites passed without retries; four Chromium and four WebKit visual configurations passed; phone/desktop motion frames inspected and source review found no important findings. Preview/full CI pending. Coverage includes real orbit/path movement, foreground/offscreen pause, native SVG timeline pause, live preference changes, reply/Stop cleanup, drafts, themes and narrow layouts in Chromium and WebKit. Physical iPhone rendering remains unverified.
+
+## Attachment animation batch (PR #14 released live at 34990ba)
 
 - Expand file previews from composer text attachments, saved chat file chips and generated file cards; close back into their source or fade safely if it disappeared. Composer photo thumbnails open the existing expanding photo viewer. No new preview type or external service is introduced.
 - Attachment entry/removal reflows remaining chips and the tray height. Motion cancels safely on repeated actions and scope changes; discarded attachment copies never follow into another chat. Reduce Motion skips spatial animation.
 - Manual test 1: attach a photo and a text file. Tap the photo, zoom, then close; tap the text file, close, and repeat quickly. Each preview should grow from its item and return without losing your draft. Also test a generated file card and Escape on desktop.
 - Manual test 2: attach three files, remove the first and middle, then remove the last. Remaining chips slide together; the empty tray leaves no gap. Repeat while the tray is scrolled sideways, then switch chats during removal: no old attachment should linger. Check Reduce Motion: instant layout and usable previews, with no travel/zoom animation.
-- Verification: type/unit/build passed, five production Chromium suites passed without retries, and all ten final attachment Chromium/WebKit configurations passed. Review fixes for scope cleanup and read-only uploaded HTML are regression-covered. All ten hosted Chromium/WebKit cases passed and preview JS/CSS bytes match the tested build. Full CI found an old ambiguous attachment-button selector in regressions.cjs; it now targets Remove draft.txt explicitly and the complete desktop/phone regression suite passes. Full CI rerun pending.
-- Last live release: 2a05df8 / PR #13, deploy 39037626939 succeeded; full pre-merge CI 39036471501 passed. Live neutral opening, sliding highlight and keyboard reopening checks passed in Chromium/WebKit and hosted assets matched the tested build.
+- Verification: type/unit/build passed, five production Chromium suites passed without retries, and all ten final attachment Chromium/WebKit configurations passed. Review fixes for scope cleanup and read-only uploaded HTML are regression-covered. All ten hosted Chromium/WebKit cases passed and preview JS/CSS bytes match the tested build. Full CI found an old ambiguous attachment-button selector in regressions.cjs; it now targets Remove draft.txt explicitly and the complete desktop/phone regression suite passes. Full CI rerun passed (39048082386), deployed live successfully (39049195786), and all ten live Chromium/WebKit attachment configurations passed.
+- Last live release: 34990ba / PR #14; live JS/CSS bytes matched the tested build.
 
 ## Neutral ellipsis menu opening
 

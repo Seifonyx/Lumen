@@ -14,7 +14,7 @@ const url=process.env.MR_TEST_URL||'http://localhost:5190/';
   assert.equal(await page.locator('body').evaluate(el=>getComputedStyle(el).webkitUserSelect),'none','Portals and blank body space inherit selection protection');
   if(width<900)await page.locator('.menu-btn').click();
   await page.locator('.chat-open').filter({hasText:'Selection test'}).click();await page.locator('[data-message-id="a"]').waitFor();
-  await page.waitForFunction(expected=>{const node=document.querySelector('.msg.assistant pre');return node&&getComputedStyle(node).webkitUserSelect===expected;},width<900?'none':'text');
+  await page.waitForFunction(expected=>{const node=document.querySelector('.msg.assistant pre');return node&&getComputedStyle(node).webkitUserSelect===expected;},'text');
   if(width>=900){
    const paragraph=await page.locator('.msg.assistant .markdown p').first().boundingBox();
    await page.mouse.move(paragraph.x+1,paragraph.y+paragraph.height/2);await page.mouse.down();

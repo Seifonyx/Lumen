@@ -109,7 +109,7 @@ A held chat’s menu owns the remainder of that touch, so moving the finger cann
 
 ## Selection boundaries
 
-App chrome, blank page space and body-mounted portal titles inherit selection suppression from html/body. Desktop message content and editors keep native selection. On touch screens, message code/thinking/errors use the existing Select text reading surface; that surface and real inputs retain native selection and copy. Lifted context-menu copies always suppress selection. Keep gesture handling, zoom and focus behavior unchanged.
+App chrome, blank page space and body-mounted portal titles inherit selection suppression from html/body. Desktop message content and editors keep native selection. On touch screens, message bodies use the existing Select text reading surface. Code, readable errors/thinking, that reading surface and real inputs retain their existing native selection and copy. Lifted context-menu copies always suppress selection. Keep gesture handling, zoom and focus behavior unchanged.
 
 ## Model layout building
 

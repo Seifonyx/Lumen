@@ -3586,7 +3586,7 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
 .menu.ctx-menu { max-height: min(70dvh, calc(100dvh - 100px)); overflow-y: auto; overscroll-behavior: contain; }
 @media (pointer: coarse) {
   /* On phones a long press opens the message menu (with "Select text") instead of the browser's selection. */
-  .markdown, .bubble, .msg .thinking-body, .msg .error-msg, .msg pre, .msg code { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .markdown, .bubble { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 }
 .ctx-preview, .ctx-preview * { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none; }
 /* Swipe a chat row: Pin on the left, Delete on the right */

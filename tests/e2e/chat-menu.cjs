@@ -165,6 +165,22 @@ const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/6
         await touch('touchMove', width - 12, 120);
         await touch('touchEnd', width - 12, 120);
         await page.keyboard.press('Escape');
+        point = await hold();
+        await touch('touchEnd', point.x, point.y);
+        // Browsers retain :active on the original pressed button while the pointer moves.
+        // The moving highlight must be the only fill, even with that native state retained.
+        const startAction = menu.getByRole('menuitem', { name: 'Rename', exact: true });
+        const nextAction = menu.getByRole('menuitem', { name: 'Pin', exact: true });
+        await page.waitForTimeout(550);
+        await startAction.hover();
+        await page.mouse.down();
+        const nextBox = await nextAction.boundingBox();
+        await page.mouse.move(nextBox.x + nextBox.width / 2, nextBox.y + nextBox.height / 2);
+        await page.waitForTimeout(200);
+        assert.equal(await nextAction.getAttribute('data-menu-preview'), 'true');
+        assert.equal(await startAction.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)', 'The original pressed action has no second highlight after sliding');
+        await page.mouse.move(width - 12, 120);
+        await page.mouse.up();
       } else {
         await row().getByRole('button', { name: 'Chat options' }).click();
         const menu = row().getByRole('menu', { name: 'Chat options' });

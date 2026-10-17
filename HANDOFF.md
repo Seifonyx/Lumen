@@ -12,6 +12,11 @@
 - Be a coding partner. Tests, fixes, main pushes and deployment are authorized. Keep this file small and factual; old pasted handoff instructions are revoked. Complete, test, deploy and verify the current task, then stop before another roadmap feature.
 - Current task: supplied Claude desktop/phone layout, native Add to Chat sheet, Settings Connectors for GitHub, real incognito. Reference paths and visual decisions: `.impeccable/claude-layout.md`. PRODUCT.md owns behavior; ROADMAP.md owns scope; DESIGN.md/.impeccable/design.json own visual tokens. Arabic interface and separate chat folders are excluded.
 
+## Sliding action highlight regression
+
+- Keep the open-row exclusion at zero added CSS specificity, so the shared scrub-menu reset overrides native pressed fills. Before the fix, holding Rename then sliding to Pin left Rename filled as well.
+- Manual test: open a chat menu, hold Rename and slide down to Pin/Archive, then back up. Exactly one rounded highlight should follow your finger; the starting action must clear. Slide outside and release to cancel; repeat through both long-press and … menus.
+
 ## Current chat-menu fixes (PR #13, not released live)
 
 - Held sidebar previews keep a rounded surface and the source row’s dimensions/typography; the portal no longer drops the bubble. Ellipsis-menu action presses/hover no longer apply the ancestor chat row’s pressed/hover fill.

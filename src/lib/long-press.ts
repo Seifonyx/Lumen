@@ -40,7 +40,11 @@ export function useLongPress(ref: RefObject<HTMLElement | null>, onLongPress: (t
       reset();
       if (!fired) return;
       if (e.cancelable) e.preventDefault();
-      const swallow = (c: Event) => { c.preventDefault(); c.stopPropagation(); };
+      // Suppress only the held item's follow-up click, not a quick tap on its portal menu.
+      const swallow = (c: Event) => {
+        if (!(c.target instanceof Node) || !el.contains(c.target)) return;
+        c.preventDefault(); c.stopPropagation();
+      };
       window.addEventListener('click', swallow, { capture: true, once: true });
       setTimeout(() => window.removeEventListener('click', swallow, { capture: true }), 400);
     };

@@ -40,7 +40,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
 
   useEffect(() => {
     if (!menu) return;
-    const root = menuRef.current?.querySelector<HTMLElement>('[role="menu"]');
+    const root = menuRef.current?.querySelector<HTMLElement>('.menu:not(.exit-ghost)');
     (menuKeyboard.current ? root?.querySelector<HTMLElement>('[role="menuitem"]') : root)?.focus({ preventScroll: true });
     const close = (e: MouseEvent) => {
       if (!menuRef.current?.contains(e.target as Node)) setMenu(false);

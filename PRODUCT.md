@@ -60,6 +60,8 @@ The desktop sidebar has Search, New chat, Projects, saved canvas Artifacts, Sche
 
 Settings → Connectors owns the GitHub repository token, connection test, disconnect and repository picker. A saved token is labelled saved; a successful test verifies repository access. AI provider credentials and billing consent remain in API keys.
 
+Phone hub headers keep app navigation available in the same position across Tools, Library and Projects, with contextual creation as a separate action. Each active hub exposes one main landmark and page heading. Tools → Compare models opens the existing comparison setup directly, preserves the current draft and attachments, and allows editing the question before explicit submission. Cancelling keeps that draft. Writing tools is explained where listed and remains available through selection of text in a reply.
+
 ## Incognito chat
 
 The top-right ghost starts/ends an incognito session. Messages, attachments, canvas documents and draft text remain in memory only, excluded from history/search, IndexedDB, backups and cloud chat sync. Memory is neither read nor written, including automatic reply markers and /remember. File imports and voice callbacks cannot cross chats, private speech playback stops on exit, and deleting a private canvas never creates a sync tombstone. Project assignment is disabled. Leaving or reloading discards the session; the previous normal text draft is restored on exit. Model requests and quota usage still occur, and the selected provider receives the messages. Explicit downloads, repository actions and account settings retain their normal effects and review gates.

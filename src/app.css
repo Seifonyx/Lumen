@@ -418,6 +418,7 @@ input[type='search']::-webkit-search-cancel-button { -webkit-appearance: none; }
 .command-hint { display: flex; justify-content: flex-end; gap: 14px; padding: 10px 4px 0; border-top: 1px solid var(--border); margin-top: 8px; color: var(--text-3); font-size: 0.6875rem; }
 .compare-picker { padding: 16px 20px 18px; }
 .compare-prompt { max-height: 100px; overflow: auto; padding: 10px 12px; margin: 12px 0; border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text-2); font-size: 0.875rem; white-space: pre-wrap; }
+.field-block textarea.compare-prompt { width: 100%; min-height: 88px; margin: 8px 0 12px; font: inherit; font-size: 16px; resize: none; }
 .compare-model-list { display: flex; flex-direction: column; gap: 4px; max-height: 44vh; overflow: auto; }
 .compare-model-row { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 10px; border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--text-2); text-align: start; }
 .compare-model-row:hover, .compare-model-row.selected { background: var(--surface-2); border-color: var(--border); color: var(--text); }
@@ -1690,9 +1691,12 @@ table.sheet td.pending { color: #8f8f8f; font-style: italic; font-family: var(--
 html.kb-open, html.kb-open body { overflow: hidden; }
 html.kb-open .app { position: fixed; left: 0; right: 0; top: var(--vv-top, 0px); height: var(--vv-h, 100%); }
 html.kb-open .composer-wrap { padding-bottom: 8px; }
-@media (max-width: 640px) {
+@media (max-width: 899px) {
   html.kb-open .modal-backdrop { top: var(--vv-top, 0px); bottom: auto; height: var(--vv-h, 100%); }
   html.kb-open .modal, html.kb-open .modal.wide, html.kb-open .modal.full { max-height: 100%; }
+  /* The editable comparison must fit the keyboard frame. A percentage max-height
+     inside the backdrop's auto-sized grid track can retain its intrinsic height. */
+  html.kb-open .modal:has(.compare-picker) { max-height: calc(var(--vv-h, 100dvh) - 48px); }
 }
 /* Fingers need bigger targets than a mouse (Apple recommends at least 44pt). */
 @media (pointer: coarse) {
@@ -4016,6 +4020,8 @@ html.pane-resizing, html.pane-resizing * { cursor: col-resize !important; user-s
 .hub-page { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; background: var(--bg); outline: none; animation: fade 0.18s var(--ease); }
 .hub-bar { display: flex; align-items: center; gap: 8px; min-height: 56px; padding: 8px 20px 0 32px; }
 .hub-bar-title { display: none; }
+.hub-bar h1.hub-bar-title { margin: 0; }
+.hub-bar-title.hub-bar-heading { display: none; }
 .hub-close { margin-inline-start: auto; }
 .hub-close-short { display: none; }
 .hub-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
@@ -4042,7 +4048,7 @@ html.pane-resizing, html.pane-resizing * { cursor: col-resize !important; user-s
 .hub-seg button[aria-checked="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
 .hub-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 72px 16px; gap: 6px; }
 .hub-empty-icon { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 18px; background: var(--surface-2); color: var(--text-2); margin-bottom: 10px; }
-.hub-empty h3 { margin: 0; font-size: 18px; font-weight: 650; letter-spacing: -0.01em; }
+.hub-empty h2 { margin: 0; font-size: 18px; font-weight: 650; letter-spacing: -0.01em; }
 .hub-empty p { margin: 0 0 14px; color: var(--text-2); max-width: 420px; line-height: 1.55; }
 .hub-none { color: var(--text-2); padding: 24px 0; }
 .hub-form { max-width: 720px; }
@@ -4255,7 +4261,8 @@ button.project-crumb:hover { color: var(--text); background: var(--surface-2); }
 .tools-section header p { margin: 0; color: var(--text-2); font-size: 13.5px; flex: 1; }
 .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
 .tool-card { --tc: 212; display: flex; gap: 14px; align-items: flex-start; padding: 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); font: inherit; text-align: start; cursor: pointer; transition: border-color 0.15s, box-shadow 0.2s, transform 0.2s var(--ease); }
-.tool-card:hover, .tool-card:focus-visible { border-color: var(--border-strong); box-shadow: var(--shadow); transform: translateY(-1px); }
+button.tool-card:hover, button.tool-card:focus-visible { border-color: var(--border-strong); box-shadow: var(--shadow); transform: translateY(-1px); }
+.tool-card.tool-contextual { cursor: default; }
 .tool-card.sec-research { --tc: 212; } .tool-card.sec-create { --tc: 330; } .tool-card.sec-analyze { --tc: 160; } .tool-card.sec-learn { --tc: 40; } .tool-card.sec-assistants { --tc: 270; } .tool-card.sec-apps { --tc: 200; }
 .tool-icon { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: hsl(var(--tc) 80% 95%); color: hsl(var(--tc) 55% 35%); }
 .tool-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }

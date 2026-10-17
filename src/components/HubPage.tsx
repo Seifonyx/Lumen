@@ -10,7 +10,7 @@ import { useStore } from '../store';
 export interface HubTab<T extends string> { id: T; label: string; icon?: ReactNode; count?: number }
 /** A page's own bottom tab bar (iPhone glass look): its sections instead of the app's, each with its colour. */
 export interface HubBar { items: { id: string; label: string; icon: ReactNode; hue?: number }[]; active: string; onSelect: (id: string) => void; label: string;
-  /** What the + at the top left makes for the chosen tab (e.g. "New document"). */
+  /** The separate creation action for the chosen tab (e.g. "New document"). */
   create?: { label: string; run: () => void } }
 
 export default function HubPage<T extends string>({ title, subtitle, actions, tabs, tab, onTab, toolbar, onClose, onBack, children, label, bar, compact, create }: {
@@ -33,6 +33,11 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
     return () => window.removeEventListener('keydown', key);
   }, [onBack, onClose]);
   useEffect(() => { root.current?.focus({ preventScroll: true }); }, []);
+  useEffect(() => {
+    const previous = document.title;
+    document.title = `${label} · Lumen`;
+    return () => { document.title = previous; };
+  }, [label]);
   // Phones: swipe right to go back (a step inside the page goes back to the page; otherwise to the chat).
   const back = useRef(onBack || onClose);
   back.current = onBack || onClose;
@@ -46,17 +51,16 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
   const [scrolled, setScrolled] = useState(false);
   const make = bar?.create || create;
   return (
-    <section ref={root} className={`hub-page${scrolled ? ' scrolled' : ''}${bar || compact ? ' has-bar' : ''}`} aria-label={label} tabIndex={-1} data-keep-sidebar="true">
+    <main ref={root} className={`hub-page${scrolled ? ' scrolled' : ''}${bar || compact ? ' has-bar' : ''}`} aria-label={label} tabIndex={-1} data-keep-sidebar="true">
       <div className="hub-bar">
         {onBack ? (
           <button type="button" className="icon-btn hub-nav" aria-label="Back" onClick={onBack}><ChevronLeft size={26} /></button>
-        ) : make ? (
-          // Pages with their own tab bar (iPhone): the top-left button makes something new for the chosen tab.
-          <button type="button" className="icon-btn hub-nav hub-new" aria-label={make.label} title={make.label} onClick={make.run}><Plus size={22} /></button>
         ) : phone ? (
           <button type="button" className="icon-btn hub-nav" aria-label="Open sidebar" onClick={() => useStore.getState().setUi({ sidebarOpen: true })}><Menu size={20} /></button>
         ) : null}
-        <span className="hub-bar-title">{label}</span>
+        {!onBack && make && <button type="button" className="icon-btn hub-nav hub-new" aria-label={make.label} title={make.label} onClick={make.run}><Plus size={22} /></button>}
+        <h1 className="hub-bar-title hub-bar-heading">{label}</h1>
+        <span className="hub-bar-title hub-bar-label" aria-hidden="true">{label}</span>
         <button type="button" className="btn ghost small hub-close" aria-label="Close" onClick={onClose}><span className="hub-close-long">Back to chat</span><span className="hub-close-short">Done</span></button>
       </div>
       <div className="hub-scroll" onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 56)}>
@@ -83,7 +87,7 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
         </div>
       </div>
       {phone && !onBack && <GlassTabs bar={bar} />}
-    </section>
+    </main>
   );
 }
 
@@ -189,7 +193,7 @@ export function HubEmpty({ icon, title, text, action }: { icon: ReactNode; title
   return (
     <div className="hub-empty">
       <span className="hub-empty-icon" aria-hidden="true">{icon}</span>
-      <h3>{title}</h3>
+      <h2>{title}</h2>
       <p>{text}</p>
       {action}
     </div>

@@ -199,6 +199,9 @@ html.glass .hub-bar .hub-bar-title {
   opacity: 0; transition: opacity 0.2s;
 }
 html.glass .hub-page.scrolled .hub-bar .hub-bar-title { opacity: 1; }
+html.glass .hub-bar:has(.hub-new) .hub-bar-title {
+  max-width: max(0px, calc(100% - max(16px, env(safe-area-inset-left)) - max(16px, env(safe-area-inset-right)) - 196px));
+}
 html.glass .hub-scroll { padding-top: calc(max(8px, env(safe-area-inset-top)) + 50px); }
 html.glass .hub-head h1 { font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.01em; }
 html.glass .hub-head p { font-size: 15px; }
@@ -447,11 +450,13 @@ html.glass .topbar-route .route-dot.off { background: var(--text-3); box-shadow:
 @media (max-width: 899px) { html.glass[data-theme='dark'] .glass-tabbar button[aria-current='page'][data-hue], html.glass[data-theme='black'] .glass-tabbar button[aria-current='page'][data-hue] { color: hsl(var(--hue) 75% 72%); } }
 
 /* Pages with their own tab bar (Tools, Collection) on iPhone: the title sits centred in the top bar (no big
-   heading or grey description), the search box comes first, and the + at the top left makes something new
-   for the chosen tab, so the tabs themselves have no "New…" buttons or notes. */
+   heading or grey description), the search box comes first, and a separate + beside navigation makes
+   something new for the chosen tab. The sidebar button keeps the same position in every category. */
 @media (max-width: 899px) {
   html.glass .hub-page.has-bar .hub-head { display: none; }
   html.glass .hub-page.has-bar .hub-bar .hub-bar-title { opacity: 1; }
+  html.glass .hub-page.has-bar .hub-bar-heading { display: block; }
+  html.glass .hub-page.has-bar .hub-bar-label { display: none; }
   html.glass .hub-page.has-bar .hub-scroll { padding-top: calc(max(8px, env(safe-area-inset-top)) + 58px); }
   html.glass .hub-page.has-bar .hub-toolbar { margin-top: 0; }
   html.glass .hub-page.has-bar .coll-note, html.glass .hub-page.has-bar .knowledge-documents > header .btn { display: none; }

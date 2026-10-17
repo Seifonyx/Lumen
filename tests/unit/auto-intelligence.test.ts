@@ -6,6 +6,8 @@ const base: any = { selected: AUTO, catalog, enabled: catalog.map(m => m.id), te
 const complex = analyze({ ...base, text: 'Compare the tradeoffs of distributed architectures and analyze failure modes' });
 assert.equal(complex.quick, false, 'A short but difficult decision must not use quick-answer mode');
 assert.equal(complex.reasoning, true);
+assert.equal(analyze({ ...base, text: 'Build a React dashboard with authentication' }).code, true, 'Framework and app-building requests are coding tasks');
+assert.equal(analyze({ ...base, text: 'Update this component', files: [{kind:'text',name:'App.tsx',text:'export default App'}] }).code, true, 'TSX attachments retain the coding task');
 const follow = planRoute({ ...base, text: 'Do it', recentText: 'Fix this Python concurrency bug and verify the algorithm', previous: catalog[0].id });
 assert.equal(follow.model, catalog[1].id, 'A short follow-up must retain the coding/reasoning task');
 assert.notEqual(planRoute({ ...base, conversationTokens: 30000, instructionTokens: 5000 }).model, catalog[0].id, 'Instructions and output reserve count toward the context window');

@@ -66,7 +66,7 @@ export interface Task {
   writing: boolean;
 }
 
-const CODE = /```|\b(function|class|def|const|import|return|stack ?trace|exception|traceback|bug|debug|compile|syntax|regex|sql|python|javascript|typescript|java|c\+\+|html|css|api|json|code|script)\b|كود|برمج/i;
+const CODE = /```|\b(function|class|def|const|import|return|stack ?trace|exception|traceback|bug|debug|compile|syntax|regex|sql|python|javascript|typescript|react|vue|svelte|nextjs|frontend|backend|java|c\+\+|html|css|api|json|code|script)\b|\b(?:build|create|implement|develop)\s+(?:an?\s+|the\s+|my\s+)?(?:(?:web|mobile|native)\s+)?(?:app(?:lication)?|website|dashboard|component|endpoint)\b|كود|برمج/i;
 const REASONING = /\b(prove|proof|solve|calculate|compute|equation|integral|derivative|probability|statistics|optimi[sz]e|step[- ]by[- ]step|why does|explain why|logic|puzzle|analy[sz]e|analysis|trade[- ]?offs?|architectures?|failure modes?|migration|evaluate|reasoning|security|strategy)\b|[=^√∑∫]\s*\d|\d\s*[+\-*/^]\s*\d|احسب|معادلة|برهن|حل المسألة/i;
 const WRITING = /\b(write|rewrite|draft|compose|essay|email|e-mail|letter|cover letter|article|blog|story|poem|summar(?:y|ise|ize)|paraphrase|proofread|translate|translation|tone|formal|polish)\b|اكتب|أعد صياغة|لخص|ترجم|رسالة|مقال/i;
 const FILES = /\b(word|docx|excel|xlsx|spreadsheet|sheet|workbook|powerpoint|pptx|slides?|presentation|deck|pdf|report|csv|table|chart)\b|ملف|عرض تقديمي|تقرير|جدول|إكسل|اكسل|وورد|باوربوينت/i;
@@ -87,7 +87,7 @@ export function analyze(input: Pick<RouteInput, 'text' | 'files' | 'conversation
   const image = files.some((f) => f.kind === 'image');
   const pdf = files.some((f) => f.kind === 'pdf');
   const rawPdf = files.some((f) => f.kind === 'pdf' && !f.text);
-  const code = CODE.test(text) || files.some((f) => /\.(js|ts|py|java|c|cpp|cs|go|rs|rb|php|sql|css|html?)$/i.test(f.name));
+  const code = CODE.test(text) || files.some((f) => /\.(jsx?|tsx?|mjs|cjs|vue|svelte|py|java|kt|swift|dart|c|cpp|cs|go|rs|rb|php|sql|css|html?)$/i.test(f.name));
   const reasoning = REASONING.test(text);
   const wantsFile = FILES.test(text) && /\b(make|create|build|generate|write|export|give me|turn|convert|prepare)\b|اعمل|اعملي|أنشئ|انشئ|حول|جهز|اكتب/i.test(text);
   const long = input.conversationTokens > 30_000;

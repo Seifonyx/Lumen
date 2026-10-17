@@ -30,12 +30,12 @@ const now = Date.now();
         if (error.message.includes('firestore.googleapis.com') && error.message.includes('due to access control checks')) return;
         errors.push(error.message);
       });
-      const initialCatalog = page.waitForResponse(response => response.url().includes('generativelanguage.googleapis.com/v1beta/models?'));
-      await page.goto(process.env.MR_TEST_URL || 'http://localhost:5190/');
-      await page.locator('.composer textarea').waitFor();
-      await (await initialCatalog).finished();
+      const url = process.env.MR_TEST_URL || 'http://localhost:5190/';
+      // Seed on a static same-origin page before starting the app. Reloading during the
+      // settings prefetch produces an artificial module-abort error in hosted WebKit.
+      await page.goto(new URL('/privacy.html', url).href);
       await seed(page, account, [{ id: 'motion-reading', title: 'Motion reading', createdAt: now - 6e5, updatedAt: now, model: 'auto', messages: Array.from({ length: 12 }, (_, i) => ({ id: `old-${i}`, role: i % 2 ? 'assistant' : 'user', status: 'done', model: 'gemini:gemini-flash-latest', text: `Earlier message ${i}. ` + 'A readable piece of saved conversation. '.repeat(12), createdAt: now - 6e5 + i * 1000 })) }]);
-      await page.reload();
+      await page.goto(url);
       await page.locator('.composer textarea').waitFor();
       if (width < 900) await page.locator('.menu-btn').click();
       await page.locator('.chat-open').filter({ hasText: 'Motion reading' }).click();

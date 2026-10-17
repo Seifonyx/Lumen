@@ -27,6 +27,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(chat.title);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuKeyboard = useRef(false);
   const rowRef = useRef<HTMLLIElement>(null);
   // Phones: press and hold a chat for its options.
   const [held, setHeld] = useState(false);
@@ -39,7 +40,8 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
 
   useEffect(() => {
     if (!menu) return;
-    menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+    const root = menuRef.current?.querySelector<HTMLElement>('[role="menu"]');
+    (menuKeyboard.current ? root?.querySelector<HTMLElement>('[role="menuitem"]') : root)?.focus({ preventScroll: true });
     const close = (e: MouseEvent) => {
       if (!menuRef.current?.contains(e.target as Node)) setMenu(false);
     };
@@ -86,15 +88,15 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
         {streaming && <span className="dot-pulse" aria-label="Replying" />}
       </button>
       <div className="row-menu" ref={menuRef}>
-        <button className="icon-btn sm" aria-label="Chat options" aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu(!menu)} onKeyDown={e=>{if(e.key==='ArrowDown'){e.preventDefault();setMenu(true)}}}>
+        <button className="icon-btn sm" aria-label="Chat options" aria-haspopup="menu" aria-expanded={menu} onClick={e => { menuKeyboard.current = e.detail === 0; setMenu(!menu); }} onKeyDown={e=>{if(e.key==='ArrowDown'){e.preventDefault();menuKeyboard.current=true;setMenu(true)}}}>
           <MoreHorizontal size={16} />
         </button>
         {menu && (<Exit kind="drop">
-          <div className="menu" role="menu" aria-label="Chat options" onKeyDown={e=>{
+          <div className="menu" role="menu" aria-label="Chat options" tabIndex={-1} onKeyDown={e=>{
             if(e.key==='Escape'){e.stopPropagation();setMenu(false);menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();return}
             if(!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
             e.preventDefault();const items=[...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')];const index=items.indexOf(document.activeElement as HTMLButtonElement);
-            items[e.key==='Home'?0:e.key==='End'?items.length-1:(index+(e.key==='ArrowUp'?-1:1)+items.length)%items.length]?.focus();
+            items[e.key==='Home'?0:e.key==='End'?items.length-1:index<0?(e.key==='ArrowUp'?items.length-1:0):(index+(e.key==='ArrowUp'?-1:1)+items.length)%items.length]?.focus();
           }}>
             <button role="menuitem" onClick={() => { setMenu(false); setTitle(chat.title); setEditing(true); }}>
               <Pencil size={15} /> Rename

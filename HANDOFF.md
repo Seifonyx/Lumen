@@ -12,6 +12,11 @@
 - Be a coding partner. Tests, fixes, main pushes and deployment are authorized. Keep this file small and factual; old pasted handoff instructions are revoked. Complete, test, deploy and verify the current task, then stop before another roadmap feature.
 - Current task: supplied Claude desktop/phone layout, native Add to Chat sheet, Settings Connectors for GitHub, real incognito. Reference paths and visual decisions: `.impeccable/claude-layout.md`. PRODUCT.md owns behavior; ROADMAP.md owns scope; DESIGN.md/.impeccable/design.json own visual tokens. Arabic interface and separate chat folders are excluded.
 
+## Neutral ellipsis menu opening
+
+- Touch/mouse opening focuses the menu container, so Rename is not highlighted before interaction. Keyboard opening still focuses the first action; ArrowUp/Down from the container enters last/first action.
+- Manual test: tap … and leave your finger off the menu: no action should be highlighted. Hold and slide over actions: one highlight follows your finger. On desktop, focus … and press ArrowDown: Rename receives keyboard focus; Escape closes the menu.
+
 ## Sliding action highlight regression
 
 - Keep the open-row exclusion at zero added CSS specificity, so the shared scrub-menu reset overrides native pressed fills. Before the fix, holding Rename then sliding to Pin left Rename filled as well.

@@ -114,6 +114,10 @@ const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/6
         // An inactive row must also remain stable: ancestor :active used to tint it.
         await row().getByRole('button', { name: 'Chat options' }).click();
         const inactiveMenu = row().getByRole('menu', { name: 'Chat options' });
+        await inactiveMenu.waitFor();
+        await page.waitForTimeout(350);
+        assert.equal(await inactiveMenu.locator('[data-menu-preview]').count(), 0, 'Opening ellipsis has no preselected action');
+        assert.equal(await inactiveMenu.locator('.menu-touch-highlight').evaluate(el => el.hidden), true, 'Opening ellipsis keeps the highlight hidden');
         await inactiveMenu.getByRole('menuitem', { name: 'Rename', exact: true }).scrollIntoViewIfNeeded();
         await page.waitForTimeout(350);
         await page.mouse.move(width - 5, 100);
@@ -184,6 +188,15 @@ const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/6
       } else {
         await row().getByRole('button', { name: 'Chat options' }).click();
         const menu = row().getByRole('menu', { name: 'Chat options' });
+        await page.waitForTimeout(350);
+        assert.equal(await menu.locator('[data-menu-preview]').count(), 0, 'Mouse opening starts neutral');
+        await page.keyboard.press('ArrowUp');
+        assert.equal(await menu.getByRole('menuitem', { name: 'Delete', exact: true }).evaluate(el => el === document.activeElement), true, 'ArrowUp enters the last action from the menu container');
+        await page.keyboard.press('Escape');
+        const opener = row().getByRole('button', { name: 'Chat options' });
+        await opener.focus();
+        await page.keyboard.press('ArrowDown');
+        assert.equal(await menu.getByRole('menuitem', { name: 'Rename', exact: true }).evaluate(el => el === document.activeElement), true, 'Keyboard opening still focuses the first action');
         assert.equal(await menu.getByRole('menuitem', { name: /Study this|tags/i }).count(), 0);
         await menu.getByRole('menuitem', { name: 'Pin', exact: true }).click();
         await row().locator('.pin-mark').waitFor();

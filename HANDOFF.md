@@ -12,12 +12,11 @@
 - Be a coding partner. Tests, fixes, main pushes and deployment are authorized. Keep this file small and factual; old pasted handoff instructions are revoked. Complete, test, deploy and verify the current task, then stop before another roadmap feature.
 - Current task: supplied Claude desktop/phone layout, native Add to Chat sheet, Settings Connectors for GitHub, real incognito. Reference paths and visual decisions: `.impeccable/claude-layout.md`. PRODUCT.md owns behavior; ROADMAP.md owns scope; DESIGN.md/.impeccable/design.json own visual tokens. Arabic interface and separate chat folders are excluded.
 
-## Animated visuals batch (orbiting moon + thinking ribbons; preview pending)
+## Orbiting moon (PR #15; approved for release)
 
-- Existing logo and welcome moon gain a slow orbiting light/trail and brief flare. Three small SVG ribbons visibly weave while a normal reply waits, then dissolve into eight sparks as the answer starts; Stop clears them too. Existing welcome layout, route text, reasoning and keyboard behavior remain intact.
-- Manual test 1: open New chat and watch the moon for 8–10 seconds. One light should orbit with a fading trail and brief flare. Scroll/hide it or switch browser tabs: it should pause, then resume. Reduce Motion should show a static mark.
-- Manual test 2: send a question and watch the three ribbons weave while waiting. They should dissolve as text arrives. Try Stop and a quick chat switch; no ribbons should linger. With Reduce Motion, the ribbons stay still. Your next draft must remain intact.
-- Verification: type/unit/build passed; production Chromium visual-animations, motion-chat and welcome suites passed without retries; four Chromium and four WebKit visual configurations passed; phone/desktop motion frames inspected and source review found no important findings. Preview/full CI pending. Coverage includes real orbit/path movement, foreground/offscreen pause, native SVG timeline pause, live preference changes, reply/Stop cleanup, drafts, themes and narrow layouts in Chromium and WebKit. Physical iPhone rendering remains unverified.
+- Keep the existing logo/welcome moon with one slow orbiting light, fading trail and brief flare. The user rejected the thinking ribbons; that component and all ribbon styles are removed, restoring the existing reply indicator.
+- Manual test: open New chat and watch the moon for 8–10 seconds. One light should orbit with a fading trail and brief flare. Scroll/hide it or switch browser tabs: it should pause, then resume. Reduce Motion should show a static mark. Send a question: the usual reply status should appear without ribbons. Your draft and welcome layout must stay stable.
+- Verification covers real orbit movement, foreground/offscreen pause, live preference changes, drafts, themes and narrow layouts in Chromium and WebKit. Physical iPhone rendering remains unverified.
 
 ## Attachment animation batch (PR #14 released live at 34990ba)
 

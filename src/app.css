@@ -4424,22 +4424,13 @@ button.tool-card:hover, button.tool-card:focus-visible { border-color: var(--bor
 .attachment-open { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0; border: 0; background: none; color: inherit; text-align: start; cursor: pointer; }
 .attachment-open:disabled { opacity: 1; cursor: default; }
 
-/* Literal artwork: a comet around the eclipse, and three woven thinking ribbons. */
+/* Decorative artwork: a comet around the existing eclipse. */
 .moon-orbit { transform-box: view-box; transform-origin: 0 0; animation: eclipse-orbit 8s linear infinite; }
 .orbit-flare { opacity: 0; animation: eclipse-flare 8s ease-in-out infinite; }
 @keyframes eclipse-orbit { to { transform: rotate(360deg); } }
 @keyframes eclipse-flare { 0%, 78%, 92%, 100% { opacity: 0; } 84% { opacity: 1; } 88% { opacity: .3; } }
 .animated-visual[data-visual-active="false"] * { animation-play-state: paused !important; }
-.thinking-art { width: 136px; height: 44px; overflow: hidden; pointer-events: none; }
-.thinking-visual { display: block; }
-.thinking-spark { opacity: 0; transform-box: fill-box; transform-origin: center; }
-.thinking-art[data-phase="dissolving"] { animation: thinking-fold .42s cubic-bezier(.16,1,.3,1) both; }
-.thinking-art[data-phase="dissolving"] .thinking-ribbon { transform-origin: 68px 22px; animation: ribbon-release .3s ease-out both; }
-.thinking-art[data-phase="dissolving"] .thinking-spark { animation: ribbon-spark .4s ease-out both; }
-@keyframes ribbon-release { to { opacity: 0; transform: scaleY(.15); } }
-@keyframes ribbon-spark { 0% { opacity: 0; } 20% { opacity: .9; } 100% { opacity: 0; transform: translate(var(--spark-x),var(--spark-y)) scale(.3); } }
-@keyframes thinking-fold { 0%, 30% { height: 44px; } 100% { height: 0; } }
 @media (prefers-reduced-motion: reduce) {
-  .moon-orbit, .orbit-flare, .thinking-art, .thinking-ribbon, .thinking-spark { animation: none !important; }
-  .orbit-flare, .thinking-spark { opacity: 0; }
+  .moon-orbit, .orbit-flare { animation: none !important; }
+  .orbit-flare { opacity: 0; }
 }

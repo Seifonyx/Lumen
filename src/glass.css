@@ -1,7 +1,7 @@
 /* ============================================================ iPhone glass (iOS 26 "Liquid Glass")
    Only applies under html.glass (see lib/glass.ts): iPhones and iPads that draw it smoothly.
    Modelled on iOS 26: clear glass that bends light at its rim, controls that float over the content and
-   swell when pressed, plain centred titles, large titles that scroll away, a tab bar with a sliding lens,
+   settle under a press, plain centred titles, large titles that scroll away, a tab bar with a sliding lens,
    inset grouped lists and iOS switches. Uses the system font (SF Pro) like every iPhone app. */
 html.glass {
   --font: -apple-system, 'SF Pro Text', system-ui, 'Noto Sans Arabic', sans-serif;
@@ -394,6 +394,7 @@ html.glass .model-tag { font: 500 12.5px/1.4 var(--font); letter-spacing: 0; }
 }
 /* A held glass button lifts off the surface. */
 html.glass .motion-pressable.is-pressed { scale: var(--press-scale, .965); }
+html.glass :is(.sheet, .modal, .models-pop.sheet, .usage-pop.sheet) { box-shadow: var(--glass-depth), var(--layer-shadow); }
 @media (prefers-reduced-motion: reduce) { html.glass .motion-pressable.is-pressed { scale: none; } }
 
 /* The send button is a plain coloured circle, as in iOS apps (no glow). */

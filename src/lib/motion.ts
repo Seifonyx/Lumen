@@ -113,6 +113,24 @@ export function useExit(ref: RefObject<HTMLElement | null>, kind: ExitKind, part
   }, [ref]);
 }
 
+/** Only replies appended to an already-open conversation arrive. Loading history, switching chats
+ * and remounting virtual rows never replay entrances, and token updates never restart them. */
+export function useReplyEntrance(root: RefObject<HTMLElement | null>, ids: string[]) {
+  const seen = useRef<Set<string> | null>(null);
+  seen.current ??= new Set(ids);
+  const order = ids.join('|');
+  useLayoutEffect(() => {
+    const fresh = ids.filter(id => !seen.current!.has(id));
+    seen.current = new Set(ids);
+    if (motionOff()) return;
+    const runs = fresh.flatMap(id => {
+      const message = root.current?.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(id)}"] > .msg.assistant`);
+      return message ? [message.animate([{ opacity: .5, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: EASE_OUT })] : [];
+    });
+    return () => runs.forEach(run => run.cancel());
+  }, [root, order]); // ids have the same contents while the order is unchanged.
+}
+
 const setRef = <T,>(ref: Ref<T> | undefined, value: T | null) => {
   if (typeof ref === 'function') ref(value);
   else if (ref) (ref as { current: T | null }).current = value;
@@ -311,7 +329,7 @@ export function flySent(bubble: HTMLElement | null | undefined) {
 // ---- While a reply streams, each new piece of text fades in instead of popping in. Works on the rendered
 // HTML: text that arrived in the last half second is wrapped word by word in spans whose fade is offset by
 // how long ago it arrived, so re-rendering mid-fade continues smoothly instead of restarting.
-const FADE_MS = 500;
+const FADE_MS = 240;
 const SKIP_BLOCKS = '.katex, svg, style, script';
 export type Arrivals = { total: number; list: { at: number; time: number }[] };
 export function fadeInText(root: HTMLElement, arrivals: Arrivals) {

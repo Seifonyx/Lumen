@@ -7,6 +7,7 @@ import { CompactingNote, CompactNote } from './CompactNote';
 import { createPortal } from 'react-dom';
 import MessageNavigation from './MessageNavigation';
 import { messageStops, stopAtIndex } from '../lib/message-navigation';
+import { useReplyEntrance } from '../lib/motion';
 
 const FIRST_PAINT = 6;
 export const navigatorDefault = () => !(window.matchMedia('(pointer: coarse)').matches && window.matchMedia('(max-width: 899px)').matches);
@@ -44,6 +45,7 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
     return()=>{cancelAnimationFrame(frame);clearTimeout(timer)};
   },[start]);
   const host=useRef<HTMLDivElement>(null);
+  useReplyEntrance(host, messages.map(message => message.id));
   const [margin,setMargin]=useState(0);
   const virtual = useVirtualizer({ count, enabled, getScrollElement:()=>scroller.current,
     // Measuring a row can change the thread height; defer that work out of

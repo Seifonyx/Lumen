@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useFocusScope } from '../lib/focus-scope';
 import { Exit, motionOff } from '../lib/motion';
+import { installMenuScrub } from '../lib/menu-scrub';
 
 export interface ContextItem {
   label: string;
@@ -29,6 +30,7 @@ export default function ContextMenu({ anchor, at, items, label, align = 'start',
   const menu = useRef<HTMLDivElement>(null);
   const [place, setPlace] = useState<{ top: number; left: number; width: number; height: number; offset: number; menuTop: number; menuLeft: number; from: number } | null>(null);
   useFocusScope(layer, true, onClose);
+  useLayoutEffect(() => menu.current ? installMenuScrub(menu.current, anchor) : undefined, [anchor]);
 
   useLayoutEffect(() => {
     // Its unscaled box (it may still be easing back from the slight press-in).

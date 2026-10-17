@@ -93,4 +93,4 @@ The iPhone glass bars in Tools and Library support pressing and sliding across t
 
 ## Chat context menus
 
-A held chat’s menu owns the remainder of that touch, so moving the finger cannot drag the sidebar underneath it. Dismissing the menu leaves the drawer open and usable. Chat options omit Study and tag editing; Study stays in Tools. Chat tags have no badges or search behavior; existing stored metadata remains compatible.
+A held chat’s menu owns the remainder of that touch, so moving the finger cannot drag the sidebar underneath it. Dismissing the menu leaves the drawer open and usable. Held and ellipsis chat menus share one rounded highlight: sliding previews an action, release chooses only the current action, and leaving the menu or cancelling the touch chooses nothing. Long option lists remain reachable by edge scrolling; touch does not draw a keyboard focus box, while keyboard navigation keeps visible focus. Chat options omit Study and tag editing; Study stays in Tools. Chat tags have no badges or search behavior; existing stored metadata remains compatible.

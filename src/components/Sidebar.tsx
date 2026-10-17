@@ -11,6 +11,7 @@ import { useFocusScope } from '../lib/focus-scope';
 import { Exit, exitGhost, motionOff, useFlip } from '../lib/motion';
 import { useLongPress } from '../lib/long-press';
 import ContextMenu from './ContextMenu';
+import { installMenuScrub } from '../lib/menu-scrub';
 const AskChats = lazy(() => import('./AskChats'));
 
 const EMPTY_PROJECTS: Project[] = [];
@@ -30,6 +31,10 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   // Phones: press and hold a chat for its options.
   const [held, setHeld] = useState(false);
   useLongPress(rowRef, () => setHeld(true), { enabled: !editing, ignore: 'input, .row-menu' });
+  useLayoutEffect(() => {
+    const root = menu && menuRef.current?.querySelector<HTMLElement>('.menu:not(.exit-ghost)');
+    return root ? installMenuScrub(root) : undefined;
+  }, [menu]);
   const remove = () => { if (confirm(`Delete "${chat.title}"?`)) { if (rowRef.current) exitGhost(rowRef.current, 'row'); void deleteChat(chat.id); } };
 
   useEffect(() => {
@@ -70,7 +75,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   }
 
   return (
-    <li className={`chat-row${active ? ' active' : ''}`} data-flip={chat.id} ref={rowRef}>
+    <li className={`chat-row${active ? ' active' : ''}${menu ? ' menu-open' : ''}`} data-flip={chat.id} ref={rowRef}>
       <button className="chat-open" onClick={() => {
         // Phones: the drawer starts sliding away at once (on the compositor), then the chat renders.
         if (window.matchMedia('(max-width: 899px)').matches && useStore.getState().sidebarOpen) { useStore.getState().setUi({ sidebarOpen: false }); requestAnimationFrame(() => setTimeout(() => selectChat(chat.id), 0)); }

@@ -352,8 +352,8 @@ html.glass .toast { border-radius: 999px; padding-inline: 18px; }
    with each action's name first and its icon at the far end, thin lines between them, as on iPhone. */
 html.glass .ctx-scrim { background: rgb(0 0 0 / 0.12); -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); }
 html.glass .ctx-preview { border-radius: 22px; box-shadow: 0 18px 50px rgb(0 0 0 / 0.22), 0 2px 8px rgb(0 0 0 / 0.1); }
-html.glass .menu.ctx-menu { border-radius: 26px; padding: 6px 0; width: min(260px, calc(100vw - 24px)); }
-html.glass .menu.ctx-menu button { flex-direction: row-reverse; justify-content: space-between; height: 46px; padding: 0 18px; font-size: 17px; border-radius: 0; gap: 16px; position: relative; }
+html.glass .menu.ctx-menu { border-radius: 26px; padding: 6px; width: min(260px, calc(100vw - 24px)); }
+html.glass .menu.ctx-menu button { flex-direction: row-reverse; justify-content: space-between; height: 46px; padding: 0 18px; font-size: 17px; border-radius: 14px; gap: 16px; position: relative; }
 html.glass .menu.ctx-menu button + button::before { content: ''; position: absolute; top: 0; inset-inline: 18px 0; height: 0.5px; background: color-mix(in srgb, var(--text) 14%, transparent); }
 html.glass .menu.ctx-menu button svg { width: 20px; height: 20px; flex: none; }
 html.glass .menu.ctx-menu button.danger { color: #ff3b30; }

@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
   const browser = await (process.env.MR_WEBKIT ? webkit : chromium).launch();
   try {
     for (const width of [1280, 390]) {
-      const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: width < 900, hasTouch: width < 900 });
+      const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: width < 900, hasTouch: width < 900, serviceWorkers: 'block' });
       const calls = [];
       await context.route('**/firestore.googleapis.com/**', r => r.abort());
       await context.route('**/generativelanguage.googleapis.com/**', async r => {

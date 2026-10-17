@@ -22,6 +22,8 @@ const ua='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605
   assert.equal(Math.hypot(q.x-p.x,q.y-p.y)>1,!reduced,'Orbit really moves, except with Reduce Motion');
   await page.evaluate(()=>{Object.defineProperty(document,'visibilityState',{configurable:true,get:()=> 'hidden'});document.dispatchEvent(new Event('visibilitychange'));});
   await page.waitForFunction(()=>document.querySelector('.welcome-moon').dataset.visualActive==='false');
+  // CSS pause commits on the next rendering tick; wait for pending pause tasks before measuring.
+  await moon.evaluate(el=>Promise.all(el.getAnimations({subtree:true}).map(animation=>animation.ready)));
   const hidden=await head.boundingBox();await page.waitForTimeout(250);const still=await head.boundingBox();
   assert.ok(Math.hypot(hidden.x-still.x,hidden.y-still.y)<.2,'Hidden-document visuals pause');
   await page.evaluate(()=>{delete document.visibilityState;document.dispatchEvent(new Event('visibilitychange'));});

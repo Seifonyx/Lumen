@@ -106,3 +106,11 @@ The iPhone glass bars in Tools and Library support pressing and sliding across t
 ## Chat context menus
 
 A held chat’s menu owns the remainder of that touch, so moving the finger cannot drag the sidebar underneath it. Dismissing the menu leaves the drawer open and usable. Held and ellipsis chat menus share one rounded highlight: sliding previews an action, release chooses only the current action, and leaving the menu or cancelling the touch chooses nothing. Long option lists remain reachable by edge scrolling; touch does not draw a keyboard focus box, while keyboard navigation keeps visible focus. Chat options omit Study and tag editing; Study stays in Tools. Chat tags have no badges or search behavior; existing stored metadata remains compatible.
+
+## Selection boundaries
+
+App chrome, blank page space and body-mounted portal titles inherit selection suppression from html/body. Desktop message content and editors keep native selection. On touch screens, message code/thinking/errors use the existing Select text reading surface; that surface and real inputs retain native selection and copy. Lifted context-menu copies always suppress selection. Keep gesture handling, zoom and focus behavior unchanged.
+
+## Model layout building
+
+Reuse the existing Modal, fields, status and save/cancel flow. Rank only models meeting every requested capability and explicit context minimum; show honest empty results when none fit. Keep available models ahead of temporarily blocked ones and retain provider-diverse backups. Rechecking preserves the name and unchecked choices; stale account/connection results cannot be saved. Explanations describe model-family hints and observed behavior, not benchmark scores or guaranteed answer quality.

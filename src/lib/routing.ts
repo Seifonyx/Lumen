@@ -71,7 +71,7 @@ const REASONING = /\b(prove|proof|solve|calculate|compute|equation|integral|deri
 const WRITING = /\b(write|rewrite|draft|compose|essay|email|e-mail|letter|cover letter|article|blog|story|poem|summar(?:y|ise|ize)|paraphrase|proofread|translate|translation|tone|formal|polish)\b|اكتب|أعد صياغة|لخص|ترجم|رسالة|مقال/i;
 const FILES = /\b(word|docx|excel|xlsx|spreadsheet|sheet|workbook|powerpoint|pptx|slides?|presentation|deck|pdf|report|csv|table|chart)\b|ملف|عرض تقديمي|تقرير|جدول|إكسل|اكسل|وورد|باوربوينت/i;
 
-/** Rough token estimate: ~4 characters per token, fixed costs for images and PDF pages. */
+/** Conservative estimate with extra allowance for non-ASCII text, images and PDF pages. */
 export function estimateTokens(text: string, files: Attachment[] = []): number {
   return contentTokens(text, files);
 }
@@ -168,7 +168,7 @@ function score(m: ModelInfo, task: Task, tokens: number, index: number, total: n
   // Proven track record on this device: models that keep failing sink, reliable ones rise.
   const rel = reliability(m.id);
   if (rel !== null) { s += Math.max(-5, Math.min(2, (rel - 0.75) * 8)); if (rel >= 0.85) why.push(`answers reliably (${Math.round(rel * 100)}% recently)`); }
-  // Stay with the model that answered the last message: steadier tone, and it already knows the chat.
+  // Favor continuity only among close matches; every request still carries the full active context.
   if (extra.previous && (rel === null || rel >= 0.5)) { s += 1; why.push('answered your last message'); }
   if (m.context && tokens > m.context * 0.85) s -= 100;
   // Save models that are almost out of today's free requests.
@@ -222,7 +222,7 @@ export function planRoute(input: RouteInput): RoutePlan {
 
   if (!all.length && (auto || capable(info.get(input.selected), task, tokens))) {
     const context = pool.some(id => info.has(id) && !fitsContext(info.get(id)?.context, tokens));
-    return { model: '', fallbacks: [], reason: null, notice: null, error: context
+    return { model: '', fallbacks: [], reason: null, notice: null, error: !pool.length ? 'No models are enabled for this request. Check Settings → Models.' : context
       ? 'This chat exceeds the context available in your models. Compact the chat, continue in a new chat with a summary, or choose a model with a larger context window.'
       : 'None of your enabled models can read these attachments. Enable a model that supports them in Settings → Models.' };
   }

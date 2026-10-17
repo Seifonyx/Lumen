@@ -1835,7 +1835,7 @@ html.kb-open .main.is-empty .conversation-area { flex: 1; }
 .sidebar-bottom-actions { justify-content: flex-start; padding: 10px 4px 0; border-top: 1px solid var(--border); flex-shrink: 0; }
 .sidebar-bottom-actions .new-chat { display: inline-flex; gap: 10px; padding-inline: 14px; }
 /* App chrome never joins a text selection; message content keeps native selection handles. */
-#root { -webkit-user-select: none; user-select: none; }
+html, body, #root { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 input, textarea, [contenteditable='true'], .markdown, .bubble, .thinking-body, .error-msg, .selectable-text, pre {
   -webkit-user-select: text; user-select: text;
 }
@@ -1845,6 +1845,7 @@ button, .msg-actions, .code-head, .sidebar, .topbar { -webkit-user-select: none;
 .text-selection-tools { position: sticky; top: 0; z-index: 1; background: var(--surface); padding-block: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border); }
 .text-selection-tools > div { display: flex; gap: 8px; flex-shrink: 0; }
 .selectable-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 16px; line-height: 1.8; max-width: 760px; margin-inline: auto; outline: none; }
+input, textarea, [contenteditable='true'], .selectable-text { -webkit-touch-callout: default; }
 .selectable-text:focus-visible { outline: 2px solid var(--focus); outline-offset: 6px; border-radius: 4px; }
 @media (max-width: 599px) {
   .text-selection-view { padding-inline: 18px; }
@@ -3585,8 +3586,9 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
 .menu.ctx-menu { max-height: min(70dvh, calc(100dvh - 100px)); overflow-y: auto; overscroll-behavior: contain; }
 @media (pointer: coarse) {
   /* On phones a long press opens the message menu (with "Select text") instead of the browser's selection. */
-  .markdown, .bubble { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .markdown, .bubble, .msg .thinking-body, .msg .error-msg, .msg pre, .msg code { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 }
+.ctx-preview, .ctx-preview * { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none; }
 /* Swipe a chat row: Pin on the left, Delete on the right */
 .row-actions { position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: stretch; border-radius: 10px; visibility: hidden; }
 .swipe-row[data-swipe='start'] .row-actions, .swipe-row[data-swipe='end'] .row-actions { visibility: visible; }

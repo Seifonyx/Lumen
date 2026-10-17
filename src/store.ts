@@ -21,7 +21,7 @@ import { cancelKnowledge } from './lib/knowledge/engine';
 import { normalizeKnowledgeSources } from './lib/knowledge/core';
 import { quota, type QuotaView } from './lib/quota';
 import { extractMemoryOps, findMemory, hideMemoryLines, MAX_MEMORIES, memoryInstructions, MemoryStore } from './lib/memory';
-import { AUTO, analyze, estimateTokens, planRoute } from './lib/routing';
+import { AUTO, analyze, estimateTokens, planRoute, type RouteInput } from './lib/routing';
 import { buildInstructions } from './lib/ai/instructions.js';
 import { inputBudget } from './lib/ai/context-budget.js';
 import { waitFor as waitForSignal } from './lib/ai/chat.js';
@@ -382,7 +382,7 @@ export const useStore = create<State>((set, get) => {
       if (generation !== accountGeneration) return 'stopped';
       if (compactController.signal.aborted) return 'stopped';
       if (!out) {
-        get().toast(manual ? "Couldn't summarize this chat right now. Try again in a minute." : "Couldn't summarize the earlier messages right now — the whole chat was sent instead.", 'error');
+        get().toast(manual ? "Couldn't summarize this chat right now. Try again in a minute." : "Couldn't summarize the earlier messages. The full chat will be used only if it fits an available model.", 'error');
         return 'skipped';
       }
       const latest = get().chats.find((c) => c.id === chatId);
@@ -555,14 +555,14 @@ export const useStore = create<State>((set, get) => {
     // unless it can't handle the message. Models at their limit go to the back of the line.
     const blocked = (id: string) => (usage?.blockedUntil(id) ?? null) !== null;
     const lastUser = [...chat.messages].reverse().find((m) => m.role === 'user');
-    const recentText = liveMessages(chat).filter(m => m.role === 'user' && m.id !== lastUser?.id).slice(-2).map(m => m.text).join('\n');
+    const recentText = [activeSummary(chat)?.text, ...liveMessages(chat).filter(m => m.role === 'user' && m.id !== lastUser?.id).slice(-2).map(m => m.text)].filter(Boolean).join('\n');
     const contextFiles = [...liveMessages(chat).flatMap(m => m.files || []), ...projectFiles];
     const task = analyze({ recentText, text: lastUser?.text || '', files: contextFiles, conversationTokens: contextTokens(chat) + projectTokens, search: settings.webSearch });
     const quickReply = model === AUTO && task.quick && !task.search && !chat.repo && !chat.assistant && !layout && !toolRequest && contextTokens(chat) + projectTokens < 4000
       // Short follow-ups can continue a complex job. Keep the model's normal reasoning.
       && !/^(?:yes|ok(?:ay)?|go ahead|do it|continue|proceed|sure)\b/i.test(lastUser?.text.trim() || '');
     const thinkingModels = catalogModels.filter(m => m.thinking && !/^gemini:gemini-2\.5-flash(?:-|$)/i.test(m.id)).map(m => m.id);
-    const plan = planRoute({
+    const routeInput: RouteInput = {
       selected: model,
       enabled: routeModels,
       catalog: get().catalog?.models || [],
@@ -578,7 +578,13 @@ export const useStore = create<State>((set, get) => {
       previous: [...chat.messages].reverse().find((m) => m.role === 'assistant' && m.status === 'done' && !m.error && m.model && m.text)?.model,
       excluded: settings.autoExcluded,
       preferProvider: settings.autoPreferProvider,
-    });
+    };
+    let plan = planRoute(routeInput);
+    const outside = layoutModels.length && settings.autoSwitch ? settings.enabledModels.filter(id => !layoutModels.includes(id) && (!toolRequest || toolModel(id))) : [];
+    const backupPlan = outside.length ? planRoute({ ...routeInput, selected: AUTO, enabled: outside }) : null;
+    if (!plan.model && backupPlan?.model) {
+      plan = { ...backupPlan, notice: `No model in “${layout!.name}” fits this context and attachments — using ${modelLabel(get().catalog, backupPlan.model)}.` };
+    }
     let chosen = plan.model;
     if (!chosen) {
       if (plan.error) throw new Error(plan.error);
@@ -586,8 +592,8 @@ export const useStore = create<State>((set, get) => {
       return;
     }
     // After a layout's own models, your other models are the last resort.
-    const rest = layoutModels.length ? settings.enabledModels.filter((id) => !layoutModels.includes(id) && id !== plan.model && (!toolRequest || toolModel(id))) : [];
-    let fallbacks = settings.autoSwitch ? [...plan.fallbacks, ...rest] : [];
+    const rest = backupPlan ? [backupPlan.model, ...backupPlan.fallbacks].filter(Boolean) : [];
+    let fallbacks = settings.autoSwitch ? [...new Set([...plan.fallbacks, ...rest])].filter(id => id !== plan.model) : [];
     const preNotices: string[] = plan.notice ? [plan.notice] : [];
     if (layout && !layoutModels.length) preNotices.push(`None of the "${layout.name}" models are available with your keys — using your own models.`);
     if (settings.autoSwitch && blocked(chosen)) {
@@ -645,16 +651,11 @@ export const useStore = create<State>((set, get) => {
     const research = Boolean(lastUser?.deepResearch) && !chat.repo;
     let makeBody: () => string;
     let body: string;
-    try {
-      const memoryNote = masker ? masker.mask(rawMemory).text : rawMemory;
-      const chatTask = chat.task;
-      const searchOn = !research && (chatTask ? chatTask.search : settings.webSearch);
-      makeBody = () => buildChatBody({ model: chosen, fallbacks, messages: wire, options: { modelContexts: Object.fromEntries(catalogModels.map(m => [m.id, m.context])), quickReply: quickReply && !research, thinkingModels, preferredModels: layoutModels, search: searchOn, requireSearch: Boolean(chatTask?.search), codeExecution: Boolean(lastUser?.codeExecution), customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: masker ? masker.mask(workspaceNote).text : workspaceNote } });
-      body = makeBody();
-    } catch (e) {
-      get().toast((e as Error).message, 'error');
-      return;
-    }
+    const memoryNote = masker ? masker.mask(rawMemory).text : rawMemory;
+    const chatTask = chat.task;
+    const searchOn = !research && (chatTask ? chatTask.search : settings.webSearch);
+    makeBody = () => buildChatBody({ model: chosen, fallbacks, messages: wire, options: { modelContexts: Object.fromEntries(catalogModels.map(m => [m.id, m.context])), quickReply: quickReply && !research, thinkingModels, preferredModels: layoutModels, search: searchOn, requireSearch: Boolean(chatTask?.search), codeExecution: Boolean(lastUser?.codeExecution), customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: masker ? masker.mask(workspaceNote).text : workspaceNote } });
+    body = makeBody();
 
     if (replyController.signal.aborted || generation !== accountGeneration || planRepo(get().chats.find(c => c.id === chatId)?.repo) !== repoScope) return;
     if (coding) {
@@ -669,8 +670,8 @@ export const useStore = create<State>((set, get) => {
       coding,
       text: '',
       model: chosen,
-      route: model === AUTO ? plan.reason || undefined : undefined,
-      routeDetail: model === AUTO ? plan.detail : undefined,
+      route: model === AUTO && chosen === plan.model ? plan.reason || undefined : undefined,
+      routeDetail: model === AUTO && chosen === plan.model ? plan.detail : undefined,
       via: layout?.name,
       status: 'streaming',
       createdAt: Date.now(),
@@ -731,7 +732,19 @@ export const useStore = create<State>((set, get) => {
       if (replyController.signal.aborted) throw new DOMException('Stopped', 'AbortError');
       for await (const ev of streamChat(body, replyController.signal)) {
         if (generation !== accountGeneration) return;
-        if (ev.t === 'attempt') { const prev = get().replyProgress?.chatId === chatId ? get().replyProgress : null; set({ replyProgress: { chatId, label: ev.number > 1 ? 'Rerouting' : 'Routing', tried: prev?.tried, activity: prev?.activity, startedAt: prev?.startedAt } }); continue; }
+        if (ev.t === 'attempt') {
+          const prev = get().replyProgress?.chatId === chatId ? get().replyProgress : null;
+          const tried = new Set(prev?.tried);
+          if (reply.model && reply.model !== ev.id) {
+            tried.add(reply.model);
+            reply.route = undefined;
+            reply.routeDetail = undefined;
+          }
+          reply.model = ev.id;
+          set({ replyProgress: { chatId, label: ev.number > 1 ? 'Rerouting' : 'Routing', tried: [...tried], activity: prev?.activity, startedAt: prev?.startedAt } });
+          schedule(true);
+          continue;
+        }
         if (ev.t === 'unavailable') { hideUnavailableModel(ev.id, ev.reason); continue; }
         if (ev.t === 'request') {
           usage?.record(ev.id, { requests: 1 });
@@ -786,7 +799,7 @@ export const useStore = create<State>((set, get) => {
       if (generation === accountGeneration && controller === replyController) { controller = null; set({ streamingChatId: null, replyProgress: null }); }
     }
     if (generation !== accountGeneration) return;
-    if (planRepo(get().chats.find(c => c.id === chatId)?.repo) !== repoScope) { if (get().streamingChatId === chatId) set({ streamingChatId: null }); return; }
+    if (planRepo(get().chats.find(c => c.id === chatId)?.repo) !== repoScope) { if (get().streamingChatId === chatId && (!controller || controller === replyController)) set({ streamingChatId: null, replyProgress: null }); return; }
     if (raw) await applyMemoryLines(reply, raw, chatId, restore);
     if (reply.research) {
       // The notes were only needed to write the report; the sources stay.

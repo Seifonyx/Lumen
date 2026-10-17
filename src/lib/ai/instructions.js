@@ -94,7 +94,7 @@ The user attached: ${names.join(', ')}. When they ask you to change, fill in, co
 For Excel use cell edits instead: {"edits":[{"sheet":"Summary","cell":"B4","value":12},{"sheet":"Summary","cell":"C4","value":"=B4*2"}]}. In the attached CSV text, line 1 is row 1 and the first value is column A.
 Rules: "find" text must be copied exactly from one paragraph or table cell, without Markdown symbols (no **, #, | or list markers). Keep each find short but unique. Use "all":true for placeholders that repeat. One block per file. Outside the block, briefly list what you changed. Only write a new file (file: block) if the user asks for a new document.`;
 
-export function buildInstructions({ custom = '', memory = '', workspace = '', officeFiles = [], now = new Date() } = {}) {
+export function buildInstructions({ custom = '', memory = '', workspace = '', officeFiles = /** @type {string[]} */ ([]), now = new Date() } = {}) {
   const date = now.toISOString().slice(0, 10);
   const parts = [
     `You are a helpful, knowledgeable assistant in a private chat app called Lumen. Today's date is ${date}.`,

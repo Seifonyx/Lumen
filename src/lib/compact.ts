@@ -43,14 +43,14 @@ export function compactLimit(model?: ModelInfo): number {
  * KEEP_TOKENS, always the newest user message) and starts the kept part on a user message.
  * Returns 0 when there's nothing worth summarizing.
  */
-export function cutPoint(live: Message[], manual = false): number {
+export function cutPoint(live: Message[], manual = false, keepTokens = KEEP_TOKENS): number {
   if (live.length < 3) return 0;
   let keep = 0;
   let size = 0;
   const maxKeep = manual ? 2 : KEEP_MESSAGES;
   for (let i = live.length - 1; i >= 0; i--) {
     const t = tokensOf(live[i]);
-    if (keep >= 1 && (keep >= maxKeep || size + t > KEEP_TOKENS)) break;
+    if (keep >= 1 && (keep >= maxKeep || size + t > keepTokens)) break;
     keep++;
     size += t;
   }

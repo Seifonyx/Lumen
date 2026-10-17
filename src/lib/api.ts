@@ -35,7 +35,7 @@ export interface AttemptInfo {
 export async function fetchSummary(
   prompt: string,
   models: string[],
-  opts: { signal?: AbortSignal; report?: (id: string, info: AttemptInfo) => void; minLength?: number },
+  opts: { signal?: AbortSignal; report?: (id: string, info: AttemptInfo) => void; minLength?: number; maxTokens?: number },
 ): Promise<{ text: string; model: string } | null> {
   return (await summarize(prompt, models, opts)) as { text: string; model: string } | null;
 }

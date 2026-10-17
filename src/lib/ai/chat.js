@@ -3,10 +3,11 @@
 // and, for the usage meter: {t:'request', id} {t:'usage', id, input, output} {t:'limit', id, scope, quota?, resetAt?, retryAfterSec?}
 
 import { buildInstructions } from './instructions.js';
-import { complete, hasGemini, hasKey, keyVersion, openStream, parseModelId } from './providers.js';
+import { complete, hasGemini, hasKey, keyVersion, modelCapabilities, openStream, parseModelId } from './providers.js';
 import { isUnavailableFailure } from './model-status.js';
 import { hasVideo, toolModel } from './tool-inputs.js';
 import { isCoolingDown, noteFailure, noteSuccess, noteReplyLatency, replyLatency } from './health.js';
+import { requestTokens, fitsContext } from './context-budget.js';
 
 const MAX_ATTEMPTS = 5;
 export const timeouts = {
@@ -19,6 +20,8 @@ export const timeouts = {
   firstAnswerMs: 60_000,
   noAnswerMs: 120_000,
   totalMs: 600_000,
+  summaryAttemptMs: 30_000,
+  summaryTotalMs: 60_000,
 };
 
 // Keep the chosen model first, then try another provider before more models from the same one.
@@ -41,7 +44,7 @@ export function attemptQueue(ids) {
 }
 
 // Race the wait itself, not just fetch's abort handling (some stalled streams don't settle).
-function waitFor(promise, signal) {
+export function waitFor(promise, signal) {
   return new Promise((resolve, reject) => {
     const abort = () => { cleanup(); reject(Object.assign(new Error('Stopped'), { name: 'AbortError' })); };
     const cleanup = () => signal.removeEventListener('abort', abort);
@@ -56,6 +59,7 @@ function describe({ status, message = '' }) {
   if (status === 'empty') return 'returned an empty reply';
   if (status === 'blocked') return 'declined to answer';
   if (status === 'network') return "couldn't be reached";
+  if (status === 'context') return 'has too little context for this request';
   if (status === 429 || /quota|rate.?limit|exhausted/i.test(message)) return 'hit its usage limit';
   if (status === 401 || status === 403) return 'was refused (check the API key)';
   if (status === 404) return 'is not available';
@@ -71,6 +75,8 @@ const available = (id) => {
 
 export async function* runChat({ model, fallbacks = [], messages, options = {} }, signal) {
   const needsGemini = Boolean(options.codeExecution) || Boolean(options.requireSearch) || hasVideo(messages);
+  const image = messages.some(m => m.files?.some(f => f.kind === 'image' && !f.text));
+  const pdf = messages.some(m => m.files?.some(f => f.kind === 'pdf' && !f.text));
   const candidates = [model, ...fallbacks].filter((id, i, all) => id && all.indexOf(id) === i && available(id) && (!needsGemini || toolModel(id)));
   const preferred = options.preferredModels?.length ? new Set([model, ...options.preferredModels]) : null;
   const queue = preferred
@@ -83,6 +89,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
   }
   const officeFiles = [...new Set(messages.flatMap((m) => (m.files || []).map((f) => f.name)).filter((n) => /\.(docx|xlsx|xlsm)$/i.test(n || '')))];
   const instructions = buildInstructions({ custom: options.customInstructions || '', memory: options.memory || '', workspace: options.workspace || '', officeFiles });
+  const tokens = requestTokens(messages, instructions);
   const failures = [];
   const label = (id) => id.split(':').slice(1).join(':');
 
@@ -95,6 +102,15 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     if (signal.aborted) return;
     const target = available(id);
     if (!target) continue;
+    const metadata = modelCapabilities(id);
+    if (metadata && ((image && !metadata.vision) || (pdf && metadata.pdf === false))) {
+      failures.push({ id, status: 400, message: 'This model cannot read the attachments in this conversation.' });
+      continue;
+    }
+    if (!fitsContext(metadata?.context ?? options.modelContexts?.[id], tokens)) {
+      failures.push({ id, status: 'context', message: 'The conversation and instructions exceed this model’s safe context budget.' });
+      continue;
+    }
     // A rejected key fails every model that uses it, so don't try them one by one.
     if (deadProviders.has(target.provider)) continue;
     if (attempts++ >= MAX_ATTEMPTS || Date.now() - started >= (answered ? timeouts.totalMs : timeouts.noAnswerMs)) break;
@@ -296,23 +312,30 @@ export async function makeTitle(text, model, skip = () => false) {
 
 // Writes a summary of a long chat with the first model that manages it. `report(id, info)` hears about
 // every attempt ({ status?, input?, output?, limit? }) so usage can be counted and limits remembered.
-export async function summarize(prompt, candidates, { skip = (_id) => false, report = (_id, _info) => {}, signal = /** @type {AbortSignal | undefined} */ (undefined), minLength = 41 } = {}) {
+export async function summarize(prompt, candidates, { skip = (_id) => false, report = (_id, _info) => {}, signal = /** @type {AbortSignal | undefined} */ (undefined), minLength = 41, maxTokens = 8192 } = {}) {
   const tried = [];
+  const started = Date.now();
   for (const id of candidates) {
     const m = available(id);
     if (!m || skip(id) || tried.includes(id)) continue;
     tried.push(id);
-    if (signal?.aborted) break;
+    const remaining = timeouts.summaryTotalMs - (Date.now() - started);
+    if (signal?.aborted || remaining <= 0) break;
     const info = {};
-    const timeout = AbortSignal.timeout(120_000);
+    const attempt = new AbortController();
+    const timer = setTimeout(() => attempt.abort(), Math.min(timeouts.summaryAttemptMs, remaining));
+    const combined = signal ? AbortSignal.any([signal, attempt.signal]) : attempt.signal;
     try {
-      const out = await complete(m, prompt, { maxTokens: 8192, signal: signal ? AbortSignal.any([signal, timeout]) : timeout, info });
+      const out = await waitFor(complete(m, prompt, { maxTokens, signal: combined, info }), combined);
       report(id, info);
       const text = (out || '').trim();
       if (text.length >= minLength) return { text, model: id };
     } catch {
       report(id, info);
       // Try the next model.
+    } finally {
+      clearTimeout(timer);
+      attempt.abort();
     }
     if (tried.length >= 4) break;
   }

@@ -63,7 +63,11 @@ ev = await collect({ model: 'cerebras:gpt-oss-120b', messages: msgs });
 check(ev.filter((e) => e.t === 'text').map((e) => e.text).join('') === 'Hi from cerebras' && ev.some((e) => e.t === 'think') && ev.some((e) => e.t === 'usage' && e.input === 7), 'Cerebras reasoning + usage');
 
 const pdf = [{ role: 'user', text: 'read this', files: [{ kind: 'pdf', name: 'labs.pdf', mime: 'application/pdf', data: 'AAAA' }, { kind: 'image', name: 'x.png', mime: 'image/png', data: 'BBBB' }] }];
-await collect({ model: 'cerebras:gpt-oss-120b', messages: pdf });
+const beforeUnsupported = calls.length;
+const unsupported = await collect({ model: 'cerebras:gpt-oss-120b', messages: pdf });
+check(calls.length === beforeUnsupported && unsupported.some(e => e.t === 'error'), 'routing rejects unreadable history attachments before making a request');
+// The provider serializer still protects raw data if called directly outside routing.
+await P.openStream(P.parseModelId('cerebras:gpt-oss-120b'), pdf, { instructions: '', signal: new AbortController().signal });
 const c = calls.findLast((x) => x.url.startsWith('https://api.cerebras.ai/v1/chat')).body.messages[1].content;
 check(typeof c === 'string' && c.includes(`"labs.pdf" — this model can't read it`) && c.includes('"x.png"') && !c.includes('AAAA'), 'unreadable files become a note, not raw data');
 

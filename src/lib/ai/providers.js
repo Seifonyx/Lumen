@@ -10,6 +10,8 @@ import { AI_PROVIDERS, DEFAULT_PROVIDER_RELAY_URL, EXTRA_PROVIDERS, normalizeKey
 // API keys come from the user's settings (stored in their private Firebase document).
 let keys = normalizeKeys();
 let capabilities = new Map();
+/** Metadata from the current connected catalogue; no credentials or request content. */
+export const modelCapabilities = id => capabilities.get(id);
 let keyGeneration = 0;
 export const keyVersion = () => keyGeneration;
 export function setKeys(next) {

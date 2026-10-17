@@ -4423,3 +4423,14 @@ button.tool-card:hover, button.tool-card:focus-visible { border-color: var(--bor
 .attachments.attachments-empty { padding-bottom: 0; }
 .attachment-open { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0; border: 0; background: none; color: inherit; text-align: start; cursor: pointer; }
 .attachment-open:disabled { opacity: 1; cursor: default; }
+
+/* Decorative artwork: a comet around the existing eclipse. */
+.moon-orbit { transform-box: view-box; transform-origin: 0 0; animation: eclipse-orbit 8s linear infinite; }
+.orbit-flare { opacity: 0; animation: eclipse-flare 8s ease-in-out infinite; }
+@keyframes eclipse-orbit { to { transform: rotate(360deg); } }
+@keyframes eclipse-flare { 0%, 78%, 92%, 100% { opacity: 0; } 84% { opacity: 1; } 88% { opacity: .3; } }
+.animated-visual[data-visual-active="false"] * { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) {
+  .moon-orbit, .orbit-flare { animation: none !important; }
+  .orbit-flare { opacity: 0; }
+}

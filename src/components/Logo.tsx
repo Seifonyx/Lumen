@@ -1,12 +1,15 @@
 import { useId } from 'react';
+import EclipseOrbit from './EclipseOrbit';
+import { useVisualActivity } from '../lib/visual-activity';
 
 /** The Lumen mark: an eclipse, a dark moon ringed by lime light with one bright flare. Same tile in every theme (it's the app icon). */
 export default function Logo({ size = 24, className = "" }: { size?: number; className?: string }) {
+  const activity = useVisualActivity();
   const id = useId().replace(/:/g, '');
   // Small marks (sidebar, shared pages) get a softer halo so they don't glow over the text beside them.
   const small = size <= 32;
   return (
-    <svg className={`logo ${className}`} width={size} height={size} viewBox="0 0 512 512" aria-hidden="true">
+    <svg ref={activity.ref} data-visual-active={activity.active} className={`logo animated-visual ${className}`} width={size} height={size} viewBox="0 0 512 512" aria-hidden="true">
       <defs>
         <clipPath id={`${id}c`}><rect width="512" height="512" rx="120" /></clipPath>
         <radialGradient id={`${id}bg`} cx=".5" cy=".45" r=".7"><stop offset="0" stopColor="#18200f" /><stop offset="1" stopColor="#060708" /></radialGradient>
@@ -21,6 +24,7 @@ export default function Logo({ size = 24, className = "" }: { size?: number; cla
         <circle cx="268" cy="246" r="132" fill="#060708" />
         <circle cx="166" cy="344" r="34" fill="#fff" opacity={small ? 0.5 : 0.9} filter={`url(#${id}b2)`} />
         <path d="M166 298Q170.6 339.4 212 344Q170.6 348.6 166 390Q161.4 348.6 120 344Q161.4 339.4 166 298Z" fill="#fff" />
+        <EclipseOrbit x={256} y={256} radius={158} />
       </g>
     </svg>
   );

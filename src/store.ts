@@ -224,6 +224,7 @@ let compareController: AbortController | null = null;
 let compactController: AbortController | null = null;
 let canvasController: AbortController | null = null;
 let modelCheckController: AbortController | null = null;
+let catalogLoad: { generation: number; version: number; work: Promise<void> } | null = null;
 const canvasSyncTimers = new Map<string, ReturnType<typeof setTimeout>>();
 let sync: ChatSync | null = null;
 let usage: UsageTracker | null = null;
@@ -504,6 +505,14 @@ export const useStore = create<State>((set, get) => {
     const generation = accountGeneration;
     let chat = get().chats.find((c) => c.id === chatId);
     if (!chat) return;
+    // A fast send can beat the initial catalogue. Unknown metadata must not bypass context checks.
+    if (!get().catalog?.models.length) {
+      await waitForSignal(get().loadCatalog(), replyController.signal);
+      if (generation !== accountGeneration || replyController.signal.aborted) return;
+      chat = get().chats.find(c => c.id === chatId);
+      if (!chat) return;
+      if (!get().catalog?.models.length) throw new Error("Couldn't load model capabilities. Check your connection and refresh Models in Settings, then try again.");
+    }
     const coding = chat.codingPlan && ['planning', 'approved'].includes(chat.codingPlan.status) && chat.codingPlan.repo === planRepo(chat.repo)
       ? { id: chat.codingPlan.id, phase: chat.codingPlan.status === 'planning' ? 'plan' as const : 'work' as const, repo: planRepo(chat.repo) } : undefined;
     const repoScope = planRepo(chat.repo);
@@ -1227,54 +1236,60 @@ export const useStore = create<State>((set, get) => {
     async loadCatalog() {
       const generation = accountGeneration;
       const version = keyVersion();
-      const { keys } = get();
-      if (!AI_PROVIDERS.some(p => providerEnabled(p, keys))) {
-        set({ catalog: null, catalogError: null, settingsOpen: true, settingsTab: 'keys' });
-        get().updateSettings({ enabledModels: [], defaultModel: AUTO });
-        return;
-      }
-      // Show the list from last time straight away (names, not raw ids) while the fresh one loads.
-      if (!get().catalog) {
-        const saved = savedCatalog();
-        const hidden = new Set(get().settings.unavailableModels || []);
-        if (saved) set({ catalog: { ...saved, models: saved.models.filter((m) => providerEnabled(m.id.split(':')[0], keys) && !isExcludedModel(m.id) && !hidden.has(m.id)) } });
-      }
-      try {
-        let catalog = await fetchCatalog(true).catch((e) => {
-          if (navigator.onLine || !savedCatalog()) throw e;
-          return savedCatalog()!;
-        });
-        if (generation !== accountGeneration || version !== keyVersion()) return;
-        // Offline: use the list from last time so the app stays usable.
-        if (catalog.errors.length && !navigator.onLine && savedCatalog()) catalog = savedCatalog()!;
-        if (navigator.onLine && !catalog.errors.length) {
-          try {
-            localStorage.setItem('mr.catalog', JSON.stringify(catalog));
-          } catch {
-            /* storage full */
+      if (catalogLoad?.generation === generation && catalogLoad.version === version) return catalogLoad.work;
+      const work = (async () => {
+        const { keys } = get();
+        if (!AI_PROVIDERS.some(p => providerEnabled(p, keys))) {
+          set({ catalog: null, catalogError: null, settingsOpen: true, settingsTab: 'keys' });
+          get().updateSettings({ enabledModels: [], defaultModel: AUTO });
+          return;
+        }
+        // Show the list from last time straight away (names, not raw ids) while the fresh one loads.
+        if (!get().catalog) {
+          const saved = savedCatalog();
+          const hidden = new Set(get().settings.unavailableModels || []);
+          if (saved) set({ catalog: { ...saved, models: saved.models.filter((m) => providerEnabled(m.id.split(':')[0], keys) && !isExcludedModel(m.id) && !hidden.has(m.id)) } });
+        }
+        try {
+          let catalog = await fetchCatalog(true).catch((e) => {
+            if (navigator.onLine || !savedCatalog()) throw e;
+            return savedCatalog()!;
+          });
+          if (generation !== accountGeneration || version !== keyVersion()) return;
+          // Offline: use the list from last time so the app stays usable.
+          if (catalog.errors.length && !navigator.onLine && savedCatalog()) catalog = savedCatalog()!;
+          if (navigator.onLine && !catalog.errors.length) {
+            try {
+              localStorage.setItem('mr.catalog', JSON.stringify(catalog));
+            } catch {
+              /* storage full */
+            }
           }
+          void openRouterDailyLimit().then((n) => usage?.setOpenRouterDaily(n));
+          usage?.useProviders(AI_PROVIDERS.filter(p => catalog.providers[p === 'gemini' ? 'google' : p as ModelInfo['provider']]) as import('./lib/usage').Provider[]);
+          const previous = get().catalog || savedCatalog();
+          if (catalog.failedProviders?.length && previous) {
+            catalog = { ...catalog, models: [...catalog.models, ...previous.models.filter((m) => catalog.failedProviders!.includes(m.id.split(':')[0]) && !isExcludedModel(m.id))] };
+          }
+          const unavailable = new Set(get().settings.unavailableModels || []);
+          catalog = { ...catalog, models: catalog.models.filter((m) => providerEnabled(m.id.split(':')[0], get().keys) && !isExcludedModel(m.id) && !unavailable.has(m.id)) };
+          const { settings } = get();
+          const known = new Set(catalog.models.map((m) => m.id));
+          let enabled = settings.enabledModels.filter((id) => !unavailable.has(id) && keepModelChoice(id, catalog));
+          if (!enabled.length) enabled = catalog.defaults.filter((id) => known.has(id));
+          // New chats use Auto (introduced once; you can switch back to a fixed model any time).
+          const wanted = settings.autoIntroduced ? settings.defaultModel : AUTO;
+          const defaultModel = wanted === AUTO || enabled.includes(wanted) || (isLayoutId(wanted) && findLayout(wanted, catalog.models, settings.layouts, settings.hiddenLayouts)) ? wanted : enabled[0] || '';
+          set({ catalog, catalogError: catalog.errors.length ? catalog.errors.join(' · ') : null });
+          get().updateSettings({ enabledModels: enabled, defaultModel, autoIntroduced: true });
+        } catch (e) {
+          if (generation !== accountGeneration || version !== keyVersion()) return;
+          set({ catalogError: (e as Error).message });
         }
-        void openRouterDailyLimit().then((n) => usage?.setOpenRouterDaily(n));
-        usage?.useProviders(AI_PROVIDERS.filter(p => catalog.providers[p === 'gemini' ? 'google' : p as ModelInfo['provider']]) as import('./lib/usage').Provider[]);
-        const previous = get().catalog || savedCatalog();
-        if (catalog.failedProviders?.length && previous) {
-          catalog = { ...catalog, models: [...catalog.models, ...previous.models.filter((m) => catalog.failedProviders!.includes(m.id.split(':')[0]) && !isExcludedModel(m.id))] };
-        }
-        const unavailable = new Set(get().settings.unavailableModels || []);
-        catalog = { ...catalog, models: catalog.models.filter((m) => providerEnabled(m.id.split(':')[0], get().keys) && !isExcludedModel(m.id) && !unavailable.has(m.id)) };
-        const { settings } = get();
-        const known = new Set(catalog.models.map((m) => m.id));
-        let enabled = settings.enabledModels.filter((id) => !unavailable.has(id) && keepModelChoice(id, catalog));
-        if (!enabled.length) enabled = catalog.defaults.filter((id) => known.has(id));
-        // New chats use Auto (introduced once; you can switch back to a fixed model any time).
-        const wanted = settings.autoIntroduced ? settings.defaultModel : AUTO;
-        const defaultModel = wanted === AUTO || enabled.includes(wanted) || (isLayoutId(wanted) && findLayout(wanted, catalog.models, settings.layouts, settings.hiddenLayouts)) ? wanted : enabled[0] || '';
-        set({ catalog, catalogError: catalog.errors.length ? catalog.errors.join(' · ') : null });
-        get().updateSettings({ enabledModels: enabled, defaultModel, autoIntroduced: true });
-      } catch (e) {
-        if (generation !== accountGeneration || version !== keyVersion()) return;
-        set({ catalogError: (e as Error).message });
-      }
+      })();
+      const pending = { generation, version, work };
+      catalogLoad = pending;
+      try { await work; } finally { if (catalogLoad === pending) catalogLoad = null; }
     },
 
     updateSettings(patch) {

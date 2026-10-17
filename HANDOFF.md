@@ -15,9 +15,9 @@
 ## Auto and context recovery — phase 1 (preview pending)
 
 - Auto recognizes short complex analysis/architecture requests and carries recent intent into explicit follow-ups. Shared model-family hints complement capability metadata, observed reliability and speed; continuity is a bounded tie-breaker. Routing includes instructions, memory, workspace/project content, previous attachments and reply headroom.
-- Summary requests have a per-attempt deadline, a shared one-minute budget and a cancellation race even if the transport ignores AbortSignal. Preparation reserves/cleans its busy state; impossible context produces a retryable reply error. No history is deleted or silently dropped by routing.
+- A fast send waits for initial catalogue capabilities and shares its pending load, so unknown metadata cannot bypass context limits. Summary requests have a per-attempt deadline, a shared one-minute budget and a cancellation race even if the transport ignores AbortSignal. Preparation reserves/cleans its busy state; impossible context produces a retryable reply error. No history is deleted or silently dropped by routing.
 - Manual test: with Auto, ask a complex code/analysis question, then “Do it”; inspect Why this model. Open a long chat, send several follow-ups and confirm each completes. Stop while it says compacting, then send again. With automatic compaction off and a small-context model, an oversized chat should show a context error while the composer stays editable.
-- Verification so far: full unit/type suite and production build passed; eight long-chat recovery/oversize/Stop/layout-backup cases passed in each of Chromium and Linux WebKit. Seven targeted production Chromium suites pass without retries. Final WebKit, full CI and hosted preview verification remain required before release.
+- Verification so far: full unit/type suite and production build passed; eight long-chat recovery/oversize/Stop/layout-backup cases passed in each of Chromium and Linux WebKit; delayed-catalogue startup regression tests also pass in both engines. Seven targeted production Chromium suites pass without retries. Full CI and hosted preview verification of the catalogue-readiness fix remain required before release.
 
 ## Custom layouts and selection — phase 2 (preview pending)
 

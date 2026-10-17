@@ -1,5 +1,5 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
-import { Archive, ArchiveRestore, ChevronRight, GraduationCap, LayoutGrid, Shapes, Sparkles, Columns2, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Tag, Trash2, X } from 'lucide-react';
+import { Archive, ArchiveRestore, ChevronRight, LayoutGrid, Shapes, Sparkles, Columns2, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Trash2, X } from 'lucide-react';
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
@@ -7,37 +7,41 @@ import type { Chat, Project } from '../types';
 import ProjectManager from './ProjectManager';
 import AllChats from './AllChats';
 import Logo from './Logo';
-import Modal from './Modal';
 import { useFocusScope } from '../lib/focus-scope';
 import { Exit, exitGhost, motionOff, useFlip } from '../lib/motion';
 import { useLongPress } from '../lib/long-press';
 import ContextMenu from './ContextMenu';
+import { installMenuScrub } from '../lib/menu-scrub';
 const AskChats = lazy(() => import('./AskChats'));
 
 const EMPTY_PROJECTS: Project[] = [];
 
 function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
-  const { selectChat, deleteChat, renameChat, togglePin, moveChatToProject, setChatTags } = useStore.getState();
+  const { selectChat, deleteChat, renameChat, togglePin, moveChatToProject } = useStore.getState();
   const streaming = useStore((s) => s.streamingChatId === chat.id);
   const [menu, setMenu] = useState(false);
   // Side by side needs room: tablets in landscape and computers.
   const wide = typeof window !== 'undefined' && window.matchMedia('(min-width: 900px)').matches;
   const [moving, setMoving] = useState(false);
-  const [tagging, setTagging] = useState(false);
-  const [tags, setTags] = useState((chat.tags || []).join(', '));
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(chat.title);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuKeyboard = useRef(false);
   const rowRef = useRef<HTMLLIElement>(null);
   // Phones: press and hold a chat for its options.
   const [held, setHeld] = useState(false);
   useLongPress(rowRef, () => setHeld(true), { enabled: !editing, ignore: 'input, .row-menu' });
+  useLayoutEffect(() => {
+    const root = menu && menuRef.current?.querySelector<HTMLElement>('.menu:not(.exit-ghost)');
+    return root ? installMenuScrub(root) : undefined;
+  }, [menu]);
   const remove = () => { if (confirm(`Delete "${chat.title}"?`)) { if (rowRef.current) exitGhost(rowRef.current, 'row'); void deleteChat(chat.id); } };
 
   useEffect(() => {
     if (!menu) return;
-    menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+    const root = menuRef.current?.querySelector<HTMLElement>('.menu:not(.exit-ghost)');
+    (menuKeyboard.current ? root?.querySelector<HTMLElement>('[role="menuitem"]') : root)?.focus({ preventScroll: true });
     const close = (e: MouseEvent) => {
       if (!menuRef.current?.contains(e.target as Node)) setMenu(false);
     };
@@ -73,7 +77,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   }
 
   return (
-    <li className={`chat-row${active ? ' active' : ''}`} data-flip={chat.id} ref={rowRef}>
+    <li className={`chat-row${active ? ' active' : ''}${menu ? ' menu-open' : ''}`} data-flip={chat.id} ref={rowRef}>
       <button className="chat-open" onClick={() => {
         // Phones: the drawer starts sliding away at once (on the compositor), then the chat renders.
         if (window.matchMedia('(max-width: 899px)').matches && useStore.getState().sidebarOpen) { useStore.getState().setUi({ sidebarOpen: false }); requestAnimationFrame(() => setTimeout(() => selectChat(chat.id), 0)); }
@@ -81,19 +85,18 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
       }} dir="auto" title={chat.title}>
         {chat.pinned && <Pin size={13} className="pin-mark" />}
         <span className="chat-title">{chat.title}</span>
-        {!!chat.tags?.length && <span className="chat-tag-count" title={chat.tags.join(', ')}>{chat.tags.length}</span>}
         {streaming && <span className="dot-pulse" aria-label="Replying" />}
       </button>
       <div className="row-menu" ref={menuRef}>
-        <button className="icon-btn sm" aria-label="Chat options" aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu(!menu)} onKeyDown={e=>{if(e.key==='ArrowDown'){e.preventDefault();setMenu(true)}}}>
+        <button className="icon-btn sm" aria-label="Chat options" aria-haspopup="menu" aria-expanded={menu} onClick={e => { menuKeyboard.current = e.detail === 0; setMenu(!menu); }} onKeyDown={e=>{if(e.key==='ArrowDown'){e.preventDefault();menuKeyboard.current=true;setMenu(true)}}}>
           <MoreHorizontal size={16} />
         </button>
         {menu && (<Exit kind="drop">
-          <div className="menu" role="menu" aria-label="Chat options" onKeyDown={e=>{
+          <div className="menu" role="menu" aria-label="Chat options" tabIndex={-1} onKeyDown={e=>{
             if(e.key==='Escape'){e.stopPropagation();setMenu(false);menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();return}
             if(!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
             e.preventDefault();const items=[...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')];const index=items.indexOf(document.activeElement as HTMLButtonElement);
-            items[e.key==='Home'?0:e.key==='End'?items.length-1:(index+(e.key==='ArrowUp'?-1:1)+items.length)%items.length]?.focus();
+            items[e.key==='Home'?0:e.key==='End'?items.length-1:index<0?(e.key==='ArrowUp'?items.length-1:0):(index+(e.key==='ArrowUp'?-1:1)+items.length)%items.length]?.focus();
           }}>
             <button role="menuitem" onClick={() => { setMenu(false); setTitle(chat.title); setEditing(true); }}>
               <Pencil size={15} /> Rename
@@ -108,8 +111,6 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
             </div>}
             <button role="menuitem" onClick={() => { setMenu(false); void useStore.getState().setArchived(chat.id, !chat.archived); useStore.getState().toast(chat.archived ? 'Moved back to your chats' : 'Archived · find it in View all chats → Archived'); }}>{chat.archived ? <ArchiveRestore size={15} /> : <Archive size={15} />} {chat.archived ? 'Unarchive' : 'Archive'}</button>
             {wide && !active && <button role="menuitem" onClick={() => { setMenu(false); useStore.getState().setUi({ sideChatId: chat.id }); }}><Columns2 size={15} /> Open side by side</button>}
-            <button role="menuitem" onClick={() => { setMenu(false); window.dispatchEvent(new CustomEvent('mr-open-study', { detail: { chatId: chat.id } })); }}><GraduationCap size={15} /> Study this chat</button>
-            <button role="menuitem" onClick={() => {setMenu(false);setTagging(true)}}><Tag size={15} /> Edit tags</button>
             <button role="menuitem" onClick={() => { setMenu(false); useStore.getState().setUi({ exportChatId: chat.id, sidebarOpen: false }); }}>
               <Download size={15} /> Share or export
             </button>
@@ -126,18 +127,10 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
           { label: 'Move to project', icon: <FolderKanban size={17} />, onSelect: () => { setMoving(true); setMenu(true); } },
           { label: chat.archived ? 'Unarchive' : 'Archive', icon: chat.archived ? <ArchiveRestore size={17} /> : <Archive size={17} />, onSelect: () => { void useStore.getState().setArchived(chat.id, !chat.archived); useStore.getState().toast(chat.archived ? 'Moved back to your chats' : 'Archived · find it in View all chats → Archived'); } },
           ...(wide && !active ? [{ label: 'Open side by side', icon: <Columns2 size={17} />, onSelect: () => useStore.getState().setUi({ sideChatId: chat.id, sidebarOpen: false }) }] : []),
-          { label: 'Study this chat', icon: <GraduationCap size={17} />, onSelect: () => window.dispatchEvent(new CustomEvent('mr-open-study', { detail: { chatId: chat.id } })) },
-          { label: 'Edit tags', icon: <Tag size={17} />, onSelect: () => setTagging(true) },
           { label: 'Share or export', icon: <Download size={17} />, onSelect: () => useStore.getState().setUi({ exportChatId: chat.id, sidebarOpen: false }) },
           { label: 'Delete', icon: <Trash2 size={17} />, danger: true, onSelect: remove },
         ]} />
       )}
-      {tagging && <Modal title="Chat tags" onClose={()=>setTagging(false)}><div className="chat-tag-editor">
-        <input autoFocus value={tags} maxLength={140} onChange={e=>setTags(e.target.value)} onKeyDown={e=>{
-          if(e.key==='Enter'){e.preventDefault();setTagging(false);setChatTags(chat.id,tags.split(','));}
-        }} placeholder="tag1, tag2" aria-label="Chat tags"/>
-        <button onClick={()=>{setTagging(false);setChatTags(chat.id,tags.split(','));}}>Save</button><small>Up to 5 tags; search finds them.</small>
-      </div></Modal>}
     </li>
   );
 }
@@ -186,7 +179,7 @@ export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
     // Archived chats stay out of the list, but searching still finds them.
     const filtered = q ? visible : visible.filter((c) => !c.archived || c.id === currentId);
     const matches = q
-      ? filtered.filter((c) => c.title.toLowerCase().includes(q) || c.tags?.some((t) => t.toLowerCase().includes(q)) || c.messages.some((m) => m.text.toLowerCase().includes(q)))
+      ? filtered.filter((c) => c.title.toLowerCase().includes(q) || c.messages.some((m) => m.text.toLowerCase().includes(q)))
       : filtered;
     const out: [string, Chat[]][] = [];
     const pinned = matches.filter((c) => c.pinned && !c.archived);

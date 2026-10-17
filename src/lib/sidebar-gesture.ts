@@ -39,6 +39,7 @@ export function installSidebarGestures(): () => void {
     drag.scrim.style.opacity = String(drag.offset / drag.width);
   };
   const start = (event: TouchEvent) => {
+    if (document.querySelector('.ctx-layer:not(.exit-ghost)')) { clear(); return; }
     // Caught mid-slide (after a release, or a tap that opened or closed it): continue from where it is.
     const onDrawer = event.target instanceof Element && Boolean(event.target.closest('.sidebar, .scrim'));
     const moving = anim?.running && onDrawer ? drag : null;
@@ -80,6 +81,9 @@ export function installSidebarGestures(): () => void {
   };
   const move = (event: TouchEvent) => {
     if (!drag) return;
+    // A long press can open a context menu after this touch began on a chat row.
+    // Touch events retain that original target: hand the gesture over instead of dragging behind it.
+    if (document.querySelector('.ctx-layer:not(.exit-ghost)')) { clear(); return; }
     if (event.touches.length !== 1 || window.getSelection()?.toString() || useStore.getState().settingsOpen || document.querySelector('.modal-backdrop, .sheet-backdrop')) { clear(); return; }
     const t = event.touches[0];
     if (t.identifier !== drag.id) { clear(); return; }

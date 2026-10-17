@@ -1,4 +1,4 @@
-// Projects, tags/branching, Ctrl+K palette, and side-by-side model comparison.
+// Projects, branching, simplified chat options, Ctrl+K palette, and model comparison.
 const { chromium } = require('playwright');
 let failures = 0;
 const check = (c, l) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) failures++; };
@@ -59,10 +59,8 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   await page.click('.msg.user [aria-label="Branch from this message"]');
   check(await page.locator('.chat-row.active .chat-title').textContent().then((t) => t.includes('(branch)')), 'branch starts at the selected message and preserves the original chat');
   await page.click('.chat-row.active [aria-label="Chat options"]');
-  await page.click('[role="menuitem"] >> text=Edit tags');
-  await page.fill('.chat-tag-editor input', 'urgent, ICU');
-  await page.click('.chat-tag-editor button');
-  check((await page.locator('.chat-row.active .chat-tag-count').getAttribute('title')) === 'urgent, ICU', 'chat tags are saved and searchable');
+  check(await page.getByRole('menuitem', { name: /Study this|tags/i }).count() === 0, 'chat options omit Study and tag editing');
+  await page.keyboard.press('Escape');
 
   await page.keyboard.press('Control+k');
   await page.fill('.command-search input', 'Hospital reports');

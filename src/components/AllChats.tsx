@@ -31,7 +31,7 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
     const q = query.trim().toLowerCase();
     return chats
       .filter((c) => !isTemporaryChat(c) && (c.messages.length > 0 || Boolean(c.documents?.length)) && Boolean(c.archived) === showArchived)
-      .filter((c) => !q || c.title.toLowerCase().includes(q) || c.tags?.some((t) => t.toLowerCase().includes(q)) || c.messages.some((m) => m.text.toLowerCase().includes(q)))
+      .filter((c) => !q || c.title.toLowerCase().includes(q) || c.messages.some((m) => m.text.toLowerCase().includes(q)))
       .sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) || b.updatedAt - a.updatedAt);
   }, [chats, query, showArchived]);
   const archivedCount = useMemo(() => chats.filter((c) => c.archived && !isTemporaryChat(c)).length, [chats]);

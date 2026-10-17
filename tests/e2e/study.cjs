@@ -32,16 +32,16 @@ const deck = { title: 'Cell basics', cards: [{ q: 'What makes ATP?', a: 'Mitocho
     await page.reload();
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
 
-    // ---- From the chat's menu.
-    const row = page.locator('.chat-row:has-text("Cell biology")');
-    await row.hover();
-    await row.getByRole('button', { name: 'Chat options' }).click();
-    await page.getByRole('menuitem', { name: 'Study this chat' }).click();
+    // ---- Study remains available in Tools after removing the sidebar shortcut.
+    await page.click('.library-button:has-text("Tools")');
+    await page.locator('.tool-card').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
+    await page.getByRole('button', { name: 'Make your first deck', exact: true }).click();
+    await page.locator('.study-sources button', { hasText: 'Cell biology' }).click();
     const card = page.locator('.flashcard');
     await card.waitFor();
     assert.match(prompt, /mitochondria make energy/);
     assert.match(await page.locator('.study-head').textContent(), /3 left/);
-    console.log('PASS Study this chat makes a deck and starts the cards');
+    console.log('PASS Tools → Study makes a deck from a selected chat and starts the cards');
 
     // ---- Flip; Not yet → comes back at the end; Knew it → leaves the round.
     assert.match(await card.textContent(), /What makes ATP\?/);
@@ -81,21 +81,6 @@ const deck = { title: 'Cell basics', cards: [{ q: 'What makes ATP?', a: 'Mitocho
     assert.equal(requests, before, 'reopening Study does not make the deck again');
     console.log('PASS decks are kept with your progress');
 
-    // ---- Straight from "Study this chat" to Tools → Study (without closing Study first): still no new deck.
-    await page.keyboard.press('Escape');
-    await page.locator('.hub-page').waitFor({ state: 'detached' });
-    const row2 = page.locator('.chat-row:has-text("Cell biology")');
-    await row2.hover();
-    await row2.getByRole('button', { name: 'Chat options' }).click();
-    await page.getByRole('menuitem', { name: 'Study this chat' }).click();
-    await page.locator('.flashcard').waitFor();
-    const made = requests;
-    await page.click('.library-button:has-text("Tools")');
-    await page.locator('.tool-card').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
-    await page.locator('.study-deck').first().waitFor();
-    await page.waitForTimeout(500);
-    assert.equal(requests, made, 'opening Study from Tools never re-makes the last chat’s deck');
-    console.log('PASS opening Study from Tools after “Study this chat” makes no new deck');
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -90,3 +90,7 @@ Only replies appended to an open conversation receive a 220ms entrance; opening 
 
 ## Phone tab bar gestures
 The iPhone glass bars in Tools and Library support pressing and sliding across tabs. The lens follows the finger continuously and gently enlarges the real tab content in place over a translucent, backdrop-blurred surface; release selects the previewed tab. Keep every icon anchored and visible, with only the candidate coloured during a drag. Do not move a duplicated icon inside the lens. Respect reduced motion and reduced transparency preferences. Release outside the bar, a cancelled gesture or lost pointer capture restores the current tab. Tab gestures do not start page swipe-back. Ordinary taps and keyboard activation stay available.
+
+## Chat context menus
+
+A held chat’s menu owns the remainder of that touch, so moving the finger cannot drag the sidebar underneath it. Dismissing the menu leaves the drawer open and usable. Held and ellipsis chat menus share one rounded highlight: sliding previews an action, release chooses only the current action, and leaving the menu or cancelling the touch chooses nothing. Long option lists remain reachable by edge scrolling; touch does not draw a keyboard focus box, while keyboard navigation keeps visible focus. Chat options omit Study and tag editing; Study stays in Tools. Chat tags have no badges or search behavior; existing stored metadata remains compatible.

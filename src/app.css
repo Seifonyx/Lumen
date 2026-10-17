@@ -448,6 +448,8 @@ input[type='search']::-webkit-search-cancel-button { -webkit-appearance: none; }
 .group-label { margin: 16px 10px 4px; }
 .chat-list section:first-child .group-label { margin-top: 8px; }
 .chat-row { display: flex; align-items: center; position: relative; transition: background 0.12s; }
+.chat-row.menu-open { z-index: 2; }
+.chat-row.menu-open .row-menu { opacity: 1; }
 .chat-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; border: 0; background: none; padding: 0 4px 0 10px; text-align: start; }
 .chat-row:hover .chat-open, .chat-row.active .chat-open { color: var(--text); }
 .chat-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -516,11 +518,6 @@ input[type='search']::-webkit-search-cancel-button { -webkit-appearance: none; }
 .menu button.danger:hover { background: var(--danger-soft); }
 .chat-move-list { max-height: 180px; overflow-y: auto; margin: 2px 0; padding: 4px 0; border-block: 1px solid var(--border); }
 .chat-move-list button { padding-inline-start: 20px; }
-.chat-tag-editor { display: grid; gap: 6px; padding: 6px 8px 8px; border-block: 1px solid var(--border); }
-.chat-tag-editor input { width: 100%; height: 34px !important; padding: 6px 8px; font-size: 0.75rem; }
-.chat-tag-editor button { justify-content: center; height: 28px; background: var(--surface-2); }
-.chat-tag-editor small { padding-inline: 2px; color: var(--text-3); font-size: 0.6875rem; }
-.chat-tag-count { flex: none; min-width: 15px; height: 15px; display: inline-grid; place-items: center; border-radius: 999px; background: var(--surface-2); color: var(--text-3); font-size: 0.625rem; }
 
 /* ============================================================ Messages */
 .messages { flex: 1; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scroll-padding-bottom: 24px; }
@@ -2562,7 +2559,7 @@ input, textarea { caret-color: var(--text); }
 .sidebar h2.history-label { margin: 0; border: 0; }
 .sidebar .group-label { font: 500 11.5px/1.2 var(--font); text-transform: none; letter-spacing: 0; color: var(--text-3); padding: 0; }
 .chat-row { border-radius: var(--radius-sm); }
-.chat-row:hover { background: var(--surface-3); }
+.chat-row:not(.menu-open):hover { background: var(--surface-3); }
 .chat-row.active { background: var(--surface); box-shadow: var(--shadow-sm), inset 0 0 0 1px var(--border); }
 .chat-row.active::before { content: ''; position: absolute; inset-inline-start: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--signal); }
 .chat-open { font-size: 14px; color: var(--text-2); height: 36px; }
@@ -3585,6 +3582,7 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
 .ctx-preview .chat-row { list-style: none; }
 .menu.ctx-menu { position: fixed; inset-inline-end: auto; width: min(250px, calc(100vw - 24px)); padding: 6px; border-radius: 14px; animation: none; outline: none; }
 .menu.ctx-menu button { height: 44px; font-size: .9375rem; gap: 12px; padding: 0 12px; }
+.menu.ctx-menu { max-height: min(70dvh, calc(100dvh - 100px)); overflow-y: auto; overscroll-behavior: contain; }
 @media (pointer: coarse) {
   /* On phones a long press opens the message menu (with "Select text") instead of the browser's selection. */
   .markdown, .bubble { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
@@ -3706,6 +3704,15 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
 .menu > button:nth-child(10), .menu > [role="menuitem"]:nth-child(10), .more-menu-list > button:nth-child(10), .ctx-menu > button:nth-child(10), .mp-body .mp-item:nth-child(10), .attach-menu .sheet-row:nth-child(10), .settings-tabs > button:nth-child(10) { animation-delay: 0.198s; }
 .menu > button:nth-child(11), .menu > [role="menuitem"]:nth-child(11), .more-menu-list > button:nth-child(11), .ctx-menu > button:nth-child(11), .mp-body .mp-item:nth-child(11), .attach-menu .sheet-row:nth-child(11), .settings-tabs > button:nth-child(11) { animation-delay: 0.220s; }
 .menu > button:nth-child(12), .menu > [role="menuitem"]:nth-child(12), .more-menu-list > button:nth-child(12), .ctx-menu > button:nth-child(12), .mp-body .mp-item:nth-child(12), .attach-menu .sheet-row:nth-child(12), .settings-tabs > button:nth-child(12) { animation-delay: 0.242s; }
+.menu.menu-scrub { isolation: isolate; }
+.menu.menu-scrub button { position: relative; z-index: 1; animation: none; }
+:root .menu.menu-scrub button:is(:hover, :active) { background: transparent; }
+:root .menu.menu-scrub[data-menu-input="touch"] button:focus-visible { outline: none; }
+:root .menu.menu-scrub[data-menu-input="keyboard"] button:focus { outline: 2px solid var(--focus); outline-offset: -2px; }
+.menu-touch-highlight { position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none; background: var(--surface-2); transition: transform .12s var(--ease), width .12s var(--ease), height .12s var(--ease); }
+html.glass .menu-touch-highlight { background: var(--glass-fill-press); }
+:root .menu-touch-highlight[data-danger="true"] { background: var(--danger-soft); }
+@media (prefers-reduced-motion: reduce) { .menu-touch-highlight { transition: none; } }
 @keyframes item-in { from { opacity: 0; transform: translateY(5px); } }
 /* Phones: chats slide in when the menu opens. */
 @media (max-width: 899px) {

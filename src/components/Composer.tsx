@@ -1,4 +1,6 @@
-import { Exit, liftWelcome, noteSend, sendRipple } from '../lib/motion';
+import { useAttachmentMotion } from '../lib/attachment-motion';
+import { openImage } from './ImageViewer';
+import { exitGhost, liftWelcome, noteSend, sendRipple } from '../lib/motion';
 import { haptic } from '../lib/haptics';
 import { playSend } from '../lib/sounds';
 import { isTemporaryChat } from '../lib/temporary-chat';
@@ -71,6 +73,11 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
 
   const [text, setText] = useState('');
   const [pending, setPending] = useState<Pending[]>([]);
+  const attachments = useRef<HTMLDivElement>(null);
+  const attachmentScope = getComposerScope();
+  const pendingScope = useRef(attachmentScope);
+  const visiblePending = pendingScope.current === attachmentScope ? pending : [];
+  useAttachmentMotion(attachments, visiblePending.map(p => `${p.key}:${Boolean(p.file)}`).join('|'), attachmentScope);
   const [codeExecution, setCodeExecution] = useState(false);
   const [deepResearch, setDeepResearch] = useState(false);
   const [listening, setListening] = useState(false);
@@ -112,6 +119,7 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
   };
   useEffect(() => {
     draftKeyRef.current = draftKey;
+    pendingScope.current = getComposerScope();
     setPending([]);setInterim('');stopListening.current?.();setListening(false);
     if(temporaryRef.current){setText('');return;}
     try {
@@ -412,24 +420,28 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
             ))}
           </div>
         )}
-        {pending.length > 0 && (
-          <div className="attachments">
-            {pending.map((p) => (
-              <Exit key={p.key} kind="pop"><div className={`attachment${p.file ? '' : ' loading'}`} title={p.name}>
+        <div key={attachmentScope} className={`attachments${visiblePending.length ? '' : ' attachments-empty'}`} ref={attachments}>
+          {visiblePending.map((p) => (
+            <div key={p.key} className={`attachment${p.file ? '' : ' loading'}`} data-attachment-key={p.key} title={p.name}>
+              <button type="button" className="attachment-open" disabled={!p.file?.thumb && !p.file?.text} aria-label={`Preview ${p.name}`} onClick={e => {
+                const f = p.file;
+                if (f?.thumb) openImage({ src: f.data ? `data:${f.mime};base64,${f.data}` : f.thumb, alt: f.name, name: f.name, from: e.currentTarget.querySelector('img') });
+                else if (f?.text) setUi({ preview: { name: /\.txt$/i.test(f.name) ? f.name : `${f.name}.txt`, content: f.text, from: e.currentTarget.closest<HTMLElement>('.attachment') } });
+              }}>
                 {p.file?.thumb ? <img src={p.file.thumb} alt="" /> : p.file ? <FileText size={18} /> : <Loader2 size={18} className="spin" />}
                 <span className="att-meta">
                   <span className="att-name">{p.name}</span>
                   <span className="att-size">{p.file ? (p.file.kind === 'text' && !p.file.mime.startsWith('text') ? 'Converted to text' : formatBytes(p.file.size)) : 'Reading…'}</span>
                 </span>
-                {p.file && (
-                  <button type="button" className="icon-btn xs" aria-label={`Remove ${p.name}`} onClick={() => setPending((x) => x.filter((y) => y.key !== p.key))}>
-                    <X size={14} />
-                  </button>
-                )}
-              </div></Exit>
-            ))}
-          </div>
-        )}
+              </button>
+              {p.file && (
+                <button type="button" className="icon-btn xs" aria-label={`Remove ${p.name}`} onClick={e => { const chip = e.currentTarget.closest<HTMLElement>('.attachment'); if (chip) exitGhost(chip, 'pop'); setPending(x => x.filter(y => y.key !== p.key)); }}>
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
         <textarea
           id="message-input"
           aria-label="Message"

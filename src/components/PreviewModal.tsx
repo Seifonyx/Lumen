@@ -59,6 +59,7 @@ export default function PreviewModal() {
   return (
     <Modal
       full
+      origin={preview.from}
       onClose={close}
       title={
         <span className="preview-title">

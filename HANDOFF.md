@@ -12,6 +12,15 @@
 - Be a coding partner. Tests, fixes, main pushes and deployment are authorized. Keep this file small and factual; old pasted handoff instructions are revoked. Complete, test, deploy and verify the current task, then stop before another roadmap feature.
 - Current task: supplied Claude desktop/phone layout, native Add to Chat sheet, Settings Connectors for GitHub, real incognito. Reference paths and visual decisions: `.impeccable/claude-layout.md`. PRODUCT.md owns behavior; ROADMAP.md owns scope; DESIGN.md/.impeccable/design.json own visual tokens. Arabic interface and separate chat folders are excluded.
 
+## Attachment animation batch (first two suggestions; preview pending)
+
+- Expand file previews from composer text attachments, saved chat file chips and generated file cards; close back into their source or fade safely if it disappeared. Composer photo thumbnails open the existing expanding photo viewer. No new preview type or external service is introduced.
+- Attachment entry/removal reflows remaining chips and the tray height. Motion cancels safely on repeated actions and scope changes; discarded attachment copies never follow into another chat. Reduce Motion skips spatial animation.
+- Manual test 1: attach a photo and a text file. Tap the photo, zoom, then close; tap the text file, close, and repeat quickly. Each preview should grow from its item and return without losing your draft. Also test a generated file card and Escape on desktop.
+- Manual test 2: attach three files, remove the first and middle, then remove the last. Remaining chips slide together; the empty tray leaves no gap. Repeat while the tray is scrolled sideways, then switch chats during removal: no old attachment should linger. Check Reduce Motion: instant layout and usable previews, with no travel/zoom animation.
+- Verification: type/unit/build passed, five production Chromium suites passed without retries, and all ten final attachment Chromium/WebKit configurations passed. Review fixes for scope cleanup and read-only uploaded HTML are regression-covered. Preview/full CI pending.
+- Last live release: 2a05df8 / PR #13, deploy 39037626939 succeeded; full pre-merge CI 39036471501 passed. Live neutral opening, sliding highlight and keyboard reopening checks passed in Chromium/WebKit and hosted assets matched the tested build.
+
 ## Neutral ellipsis menu opening
 
 - Touch/mouse opening focuses the menu container, so Rename is not highlighted before interaction. Keyboard opening still focuses the first action; ArrowUp/Down from the container enters last/first action.
@@ -22,7 +31,7 @@
 - Keep the open-row exclusion at zero added CSS specificity, so the shared scrub-menu reset overrides native pressed fills. Before the fix, holding Rename then sliding to Pin left Rename filled as well.
 - Manual test: open a chat menu, hold Rename and slide down to Pin/Archive, then back up. Exactly one rounded highlight should follow your finger; the starting action must clear. Slide outside and release to cancel; repeat through both long-press and … menus.
 
-## Current chat-menu fixes (PR #13, not released live)
+## Released chat-menu fixes (PR #13, live at 2a05df8)
 
 - Held sidebar previews keep a rounded surface and the source row’s dimensions/typography; the portal no longer drops the bubble. Ellipsis-menu action presses/hover no longer apply the ancestor chat row’s pressed/hover fill.
 - Manual test: hold an inactive chat, then the selected chat. Each title must stay inside a rounded lifted bubble. Dismiss; open each chat’s … menu, hold Rename, slide to Pin, then slide outside and release. Only the option highlight should move; the chat bubble must keep its color and no action should run after cancelling. Repeat in light/solid and dark/glass modes.

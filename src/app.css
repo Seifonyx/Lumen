@@ -696,10 +696,10 @@ input[type='search']::-webkit-search-cancel-button { -webkit-appearance: none; }
 .send-btn:disabled { background: var(--surface-3); color: var(--text-3); }
 .send-btn.stop { background: var(--accent); color: var(--accent-text); }
 .disclaimer { text-align: center; margin: 8px 0 0; color: var(--text-3); letter-spacing: 0.01em; }
-.attachments { display: flex; gap: 8px; overflow-x: auto; padding: 0 0 10px; }
+.attachments { position: relative; display: flex; gap: 8px; overflow-x: auto; padding: 0 0 10px; }
 .attachment { display: flex; align-items: center; gap: 8px; flex: none; max-width: 230px; padding: 5px 4px 5px 5px; border: 1px solid var(--border); }
 .attachment img { width: 34px; height: 34px; object-fit: cover; border-radius: 6px; }
-.attachment > svg { margin: 0 6px; color: var(--text-2); flex: none; }
+.attachment-open > svg { margin: 0 6px; color: var(--text-2); flex: none; }
 .attachment.loading { opacity: 0.7; }
 .att-meta { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
 .att-name { font-size: 0.8125rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -3780,8 +3780,7 @@ html.glass .menu-touch-highlight { background: var(--glass-fill-press); }
 .topbar { transition: box-shadow .25s var(--ease); }
 .topbar.scrolled { box-shadow: 0 1px 0 var(--border), 0 6px 16px -12px rgb(0 0 0 / .25); }
 /* Attachments pop in (and pop out when removed). */
-.attachment { animation: chip-in .38s var(--spring-pop); }
-@keyframes chip-in { from { opacity: 0; transform: scale(.7) translateY(6px); } }
+/* Attachment entry/reflow is coordinated by useAttachmentMotion. */
 /* Notifications show how long they'll stay. */
 .toast { position: relative; overflow: hidden; }
 .toast::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: color-mix(in srgb, var(--text) 18%, transparent); transform-origin: left; animation: toast-life var(--life, 3.5s) linear forwards; }
@@ -4418,3 +4417,9 @@ button.tool-card:hover, button.tool-card:focus-visible { border-color: var(--bor
   to { opacity: 0; transform: scale(1.7); }
 }
 @media (prefers-reduced-motion: reduce) { .route-choice.selected::after { animation: none; } }
+
+/* File previews retain the source card as their spatial origin. */
+.modal.origin-preview { animation: none; transform-origin: center; }
+.attachments.attachments-empty { padding-bottom: 0; }
+.attachment-open { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0; border: 0; background: none; color: inherit; text-align: start; cursor: pointer; }
+.attachment-open:disabled { opacity: 1; cursor: default; }

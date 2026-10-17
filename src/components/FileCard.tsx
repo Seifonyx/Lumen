@@ -77,7 +77,7 @@ export default function FileCard({ name: rawName, content, complete }: { name: s
       {complete && kind !== 'unsupported' && (
         <div className="file-actions">
           <button className="icon-btn sm" onClick={() => useStore.getState().openCanvas(name, content)} aria-label={`Edit ${name} in canvas`} title="Edit in canvas"><Pencil size={16} /></button>
-          <button className="btn ghost small" onClick={() => setUi({ preview: { name, content } })} aria-label={`Preview ${name}`}>
+          <button className="btn ghost small" onClick={e => setUi({ preview: { name, content, from: e.currentTarget.closest<HTMLElement>('.file-card') } })} aria-label={`Preview ${name}`}>
             <Eye size={16} /> <span className="hide-xs">Preview</span>
           </button>
           <button className="btn primary small" onClick={save} disabled={busy} aria-label={kind === 'pdf' ? `Save ${name} as PDF` : `Save ${name}`}>

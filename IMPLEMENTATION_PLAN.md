@@ -104,10 +104,19 @@ For each implementation milestone record exact commands/results in AI_HANDOFF.md
 
 | Item | Exact revision/state | Evidence / next action |
 |---|---|---|
-| Latest verified production | `7fbdde2246a546a980744e63b7d88655dad6d8de` | Prior live release; retain until the new deployment is actually verified. |
+| Latest verified production | `02c322da48368d6277e5eb8b599edfead7f92e0e` | Deploy39157498252 success; hosted assets +4 Chromium/2 WebKit suites passed. |
 | PR19 milestone source | `07efe214ef6c94aad2ddd7e29354eb3a4d9b1734` | Exact-head full CI39136235729: all3 jobs passed; independently releasable scoped registry/selection/layout/credential work. |
 | Latest merged milestone | `02c322da48368d6277e5eb8b599edfead7f92e0e` | PR19 merged through normal GitHub workflow on2026-10-18; no bypass. |
-| Pending production deployment | Deploy39157498252, head `02c322da48368d6277e5eb8b599edfead7f92e0e` | Verify workflow success + live asset/core-flow behavior before recording deployed. |
-| Ongoing branch | `feat/model-picker-recovery`, base `02c322da48368d6277e5eb8b599edfead7f92e0e` | Later declaration/recovery/helper/comparison/streaming work remains local/uncommitted and not release-ready; exact blockers in AI_HANDOFF.md. |
+| Verified production deployment | Deploy39157498252, head `02c322da48368d6277e5eb8b599edfead7f92e0e` | Success and live core-flow checks verified; later local WIP remains undeployed. |
+| Ongoing branch | `feat/model-picker-recovery`, base `4406c338be50528f1d516488d767e708d38e1664` | Later declaration/recovery/helper/comparison/streaming work remains local/uncommitted and not release-ready; exact blockers in AI_HANDOFF.md. |
 
 Do not delay a verified milestone because later rows/phases remain unfinished. Do not merge the local WIP while releasing PR19 or the policy amendment. Persist this policy via a documentation-only release PR, then continue implementation without restarting.
+
+## PR19 production verification (2026-10-18)
+
+- Runtime source07efe214ef6c94aad2ddd7e29354eb3a4d9b1734 merged in PR19 at02c322da48368d6277e5eb8b599edfead7f92e0e. Deploy39157498252 completed successfully for that exact merge commit.
+- https://lumen-chat.web.app/ served fresh assets. SHA256 evidence: store-BGs2kXdx.js `0866c1cc1ef81bd577dd1af9dc2d7406ad32e83a61fdcc6623a1f7e5932ab16a`; sync-b7Jnwgqx.js `93feb462277dfa7a565c247abed3e2d175f1364176bf979782fd4edba4e7190b`. Registry mr.catalog.v2 and health mr.modelRecord.v2 markers present. Full asset evidence is pr19-live-assets.json outside repo.
+- Hosted Chromium: selection-policy, routing-priorities, layout-policies, catalog-lifecycle all passed without retries (37s). Hosted Linux WebKit: selection-policy and layout-policies passed without retries (62s). Tests use synthetic local guest accounts and mocked provider responses with actual live app assets; no paid inference or model-quality benchmark claim.
+- PR20 merged the permanent deployment policy into main at4406c338be50528f1d516488d767e708d38e1664. It changed only AI_HANDOFF.md and IMPLEMENTATION_PLAN.md; no application redeployment is needed for that documentation-only commit. Source/master spec preserved.
+- Deployed features: scoped registry/cache/lifecycle discovery, shared eligibility/manual intent, quality/speed/cost/balanced priorities, saved layout constraints/fallbacks, credential/request/health isolation, phone first-input race and optional formatting resilience. Undeployed: subsequent local declarations, typed recovery/expiry, helper rework, comparison-stage retry/synthesis and semantic stream-completion changes.
+- Continue on feat/model-picker-recovery. This release does not complete the overall overhaul. Preserve all remaining phases and exact local blockers above.

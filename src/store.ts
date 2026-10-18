@@ -98,6 +98,7 @@ interface State {
   /** choosing a GitHub repository for the chat */
   repoPicker: boolean;
   catalogError: string | null;
+  catalogErrorDismissed: boolean;
   settings: Settings;
   chats: Chat[];
   currentId: string | null;
@@ -126,6 +127,7 @@ interface State {
   logout(): void;
   saveApiKeys(keys: ApiKeys): Promise<void>;
   loadCatalog(): Promise<void>;
+  dismissCatalogError(): void;
   /** How models are doing on this device right now (limits, failures), for ranking them. */
   modelContext(): import('./lib/layout-builder').Context;
   /** Checks models with one tiny request each; broken ones are removed as they're found. */
@@ -954,6 +956,7 @@ export const useStore = create<State>((set, get) => {
     canvasEditingChatId: null,
     repoPicker: false,
     catalogError: null,
+    catalogErrorDismissed: false,
     settings: loadSettings(),
     chats: [],
     currentId: null,
@@ -996,7 +999,7 @@ export const useStore = create<State>((set, get) => {
         clearTimeout(settingsTimer);
         canvasSyncTimers.forEach(timer => clearTimeout(timer));
         canvasSyncTimers.clear();
-        set({ authed: user ? null : false, chats: [], currentId: null, memories: [], usage: null, catalog: null, preview: null, exportChatId: null, runner: null, comparison: null, streamingChatId: null, compactingChatId: null, comparing: false, canvasEditingChatId: null, workspaceOpen: false, canvasOpen: false, canvasDocumentId: null, repoPicker: false, settingsOpen: false, sidebarOpen: false });
+        set({ authed: user ? null : false, chats: [], currentId: null, memories: [], usage: null, catalog: null, catalogError: null, catalogErrorDismissed: false, preview: null, exportChatId: null, runner: null, comparison: null, streamingChatId: null, compactingChatId: null, comparing: false, canvasEditingChatId: null, workspaceOpen: false, canvasOpen: false, canvasDocumentId: null, repoPicker: false, settingsOpen: false, sidebarOpen: false });
         setKeys({ gemini: '', openrouter: '', groq: '', cerebras: '' });
         setGitHubToken('');
         forgetRepo(); forgetIndex();
@@ -1240,7 +1243,7 @@ export const useStore = create<State>((set, get) => {
       const work = (async () => {
         const { keys } = get();
         if (!AI_PROVIDERS.some(p => providerEnabled(p, keys))) {
-          set({ catalog: null, catalogError: null, settingsOpen: true, settingsTab: 'keys' });
+          set({ catalog: null, catalogError: null, catalogErrorDismissed: false, settingsOpen: true, settingsTab: 'keys' });
           get().updateSettings({ enabledModels: [], defaultModel: AUTO });
           return;
         }
@@ -1280,16 +1283,20 @@ export const useStore = create<State>((set, get) => {
           // New chats use Auto (introduced once; you can switch back to a fixed model any time).
           const wanted = settings.autoIntroduced ? settings.defaultModel : AUTO;
           const defaultModel = wanted === AUTO || enabled.includes(wanted) || (isLayoutId(wanted) && findLayout(wanted, catalog.models, settings.layouts, settings.hiddenLayouts)) ? wanted : enabled[0] || '';
-          set({ catalog, catalogError: catalog.errors.length ? catalog.errors.join(' · ') : null });
+          set({ catalog, catalogError: catalog.errors.length ? catalog.errors.join(' · ') : null, catalogErrorDismissed: false });
           get().updateSettings({ enabledModels: enabled, defaultModel, autoIntroduced: true });
         } catch (e) {
           if (generation !== accountGeneration || version !== keyVersion()) return;
-          set({ catalogError: (e as Error).message });
+          set({ catalogError: (e as Error).message, catalogErrorDismissed: false });
         }
       })();
       const pending = { generation, version, work };
       catalogLoad = pending;
       try { await work; } finally { if (catalogLoad === pending) catalogLoad = null; }
+    },
+
+    dismissCatalogError() {
+      set({ catalogErrorDismissed: true });
     },
 
     updateSettings(patch) {

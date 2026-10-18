@@ -1279,7 +1279,10 @@ export const useStore = create<State>((set, get) => {
       try { localStorage.setItem(KEY, JSON.stringify(Date.now())); } catch { /* private mode */ }
       const seen = read<Record<string, number>>(SEEN, {});
       // Your models plus removed ones, a few per provider (least recently checked first) to spare free allowances.
-      const candidates = [...new Set([...settings.enabledModels.filter((id) => id !== AUTO && !isLayoutId(id)), ...(settings.unavailableModels || [])])];
+      // Unchecked declarations are assumptions, not consent to automatic inference probes.
+      // Users can still explicitly select them in Check models or send a message.
+      const declared=new Set((settings.modelDeclarations || []).map(model=>model.id));
+      const candidates = [...new Set([...settings.enabledModels.filter((id) => id !== AUTO && !isLayoutId(id)), ...(settings.unavailableModels || [])])].filter(id=>!declared.has(id));
       const perProvider = new Map<string, string[]>();
       for (const id of candidates.sort((a, b) => (seen[a] || 0) - (seen[b] || 0))) {
         const p = id.split(':')[0], list = perProvider.get(p) || [];

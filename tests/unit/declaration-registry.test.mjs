@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import {catalog,resolveCatalog,restoreCatalog,modelCapabilities,setKeys,openStream,complete} from '../../src/lib/ai/providers.js';
+import {modelProblem} from '../../src/lib/ai/eligibility.js';
+const endpoint='https://generativelanguage.googleapis.com/v1beta';
+const declaration=(name,fields={})=>({provider:'gemini',endpoint,name,id:`gemini:${name}`,context:128000,...fields});
+let fixture=[null,{name:'models/gemini-disabled',active:false,inputTokenLimit:128000,supportedGenerationMethods:['generateContent']},{name:'models/gemini-embedding-only',supportedGenerationMethods:['embedContent']}];
+globalThis.fetch=async()=>Response.json({models:fixture});setKeys({gemini:'declaration-test'});
+const raw=await catalog();
+assert(raw.deniedModelIds.includes('gemini:gemini-disabled'));assert(raw.deniedModelIds.includes('gemini:gemini-embedding-only'));
+let merged=resolveCatalog(raw,[declaration('gemini-disabled'),declaration('gemini-embedding-only'),declaration('gemini-unlisted')]);
+assert.deepEqual(merged.models.map(m=>m.id),['gemini:gemini-unlisted'],'only a genuinely unlisted compatible model can be declared');
+assert.equal(modelCapabilities('gemini:gemini-unlisted').context,128000);
+fixture=[];
+const omitted=await catalog({refresh:true});
+assert.deepEqual(resolveCatalog(omitted,[declaration('gemini-disabled')]).models,[],'omission is not affirmative permission to revive a model the API denied');
+fixture=[{name:'models/gemini-disabled',inputTokenLimit:128000,supportedGenerationMethods:['generateContent']}];
+const restored=await catalog({refresh:true});
+assert(!restored.deniedModelIds.includes('gemini:gemini-disabled'),'an affirmative compatible listing clears a past denial');
+assert.deepEqual(resolveCatalog(raw,[]).models,[],'removing declarations returns to raw discovery');assert.equal(modelCapabilities('gemini:gemini-unlisted'),undefined);
+// Scope-validated hydration must retain explicit negative facts when discovery is offline.
+const cache=JSON.parse(JSON.stringify(raw));setKeys({gemini:'declaration-next'});restoreCatalog(cache);
+assert.deepEqual(resolveCatalog(cache,[declaration('gemini-disabled')]).models,[]);
+setKeys({gemini:'declaration-auth'});globalThis.fetch=async()=>Response.json({error:{message:'Rejected key'}},{status:401});
+const rejected=await catalog();assert.deepEqual(resolveCatalog(rejected,[declaration('gemini-unlisted')]).models,[]);
+// Explicitly nonstreaming models remain usable by one-shot helpers only.
+setKeys({gemini:'declaration-stream'});fixture=[];globalThis.fetch=async()=>Response.json({models:fixture});
+const discovered=await catalog();merged=resolveCatalog(discovered,[declaration('gemini-batch-only',{streaming:false})]);
+assert.match(modelProblem(merged.models[0]),/stream/i);
+let calls=0;globalThis.fetch=async()=>{calls++;return Response.json({candidates:[{content:{parts:[{text:'One shot still works'}]}}]});};
+await assert.rejects(openStream({provider:'gemini',name:'gemini-batch-only'},[{role:'user',text:'Hello'}],{instructions:'',signal:new AbortController().signal}),/stream/i);assert.equal(calls,0);
+assert.equal(await complete({provider:'gemini',name:'gemini-batch-only'},'Hello'),'One shot still works');assert.equal(calls,1);
+setKeys({});console.log('PASS declaration propagation, explicit API denials across cached hydration/auth, raw removal and streaming-only eligibility');

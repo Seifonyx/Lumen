@@ -1,47 +1,83 @@
 // Helpers for reading streamed replies from the AI providers.
 
-// Reads a server-sent-events body and yields each parsed JSON "data:" payload.
-export async function* readSSE(body) {
+// A transport EOF is successful only after the adapter's semantic finish marker.
+// After that marker, briefly drain usage frames without waiting on a lingering socket.
+import { waitFor } from './abort.js';
+const streamFailure = (code, message) => Object.assign(new Error(message), { name: 'ProviderStreamError', code, status: 'stream' });
+export function finishStream(completion) {
+  if(completion.finished)return;
+  completion.finished=true;
+  completion.onComplete?.();
+}
+export async function* readSSE(body, { completion, signal, finishGraceMs = 100 } = {}) {
   const reader = body.getReader();
   const decoder = new TextDecoder();
-  let buffer = '';
+  let buffer = '', finishDeadline = null;
+  const finishExpired = () => {
+    if (!completion?.finished) return false;
+    finishDeadline ??= performance.now() + finishGraceMs;
+    return performance.now() >= finishDeadline;
+  };
   try {
     for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
+      if (finishExpired()) break;
+      let timer, next;
+      try {
+        const read = reader.read();
+        const pending = finishDeadline === null ? read : Promise.race([
+          read, new Promise(resolve => { timer = setTimeout(() => resolve({ done: true }), Math.max(0, finishDeadline - performance.now())); }),
+        ]);
+        next = await (signal ? waitFor(pending, signal) : pending);
+      } catch (error) {
+        if (completion?.finished && !signal?.aborted) break;
+        throw error;
+      } finally { clearTimeout(timer); }
+      const { value, done } = next;
+      if (done) {
+        if (completion && !completion.finished) throw streamFailure('incomplete_stream', 'The provider stream ended before its completion marker.');
+        break;
+      }
       buffer += decoder.decode(value, { stream: true });
       let nl;
       while ((nl = buffer.indexOf('\n')) >= 0) {
+        if (finishExpired()) return;
         const line = buffer.slice(0, nl).trim();
         buffer = buffer.slice(nl + 1);
         if (!line.startsWith('data:')) continue;
         const data = line.slice(5).trim();
-        if (data === '[DONE]') return;
-        if (!data) continue;
-        try {
-          yield JSON.parse(data);
-        } catch {
-          // Ignore keep-alive comments and partial lines.
+        if (data === '[DONE]') {
+          if (completion) {
+            if (completion.allowDone !== false) finishStream(completion);
+            if (!completion.finished) throw streamFailure('incomplete_stream', 'The provider stream ended before its completion marker.');
+          }
+          return;
         }
+        if (!data) continue;
+        let parsed;
+        try { parsed = JSON.parse(data); }
+        catch {
+          if (completion && !completion.finished) throw streamFailure('malformed_stream', 'The provider returned a malformed stream frame.');
+          continue; // Keep the permissive low-level reader and ignore unusable trailing usage.
+        }
+        yield parsed;
       }
     }
   } finally {
-    // End markers and early fallback must close the body, not leave a live connection behind.
     void reader.cancel().catch(() => {});
     reader.releaseLock();
   }
 }
 
 // Pulls a readable error message out of a failed upstream response.
-export async function upstreamError(res) {
+export async function upstreamError(res,{redact=String}={}) {
   const raw = await res.text().catch(() => '');
   try {
     const body = JSON.parse(raw);
     const err = Array.isArray(body) ? body[0]?.error : body.error;
     const msg = err?.message || err?.metadata?.raw || (typeof err === 'string' ? err : '') || body.message || raw;
-    return String(msg).slice(0, 400);
+    return redact(String(msg)).slice(0, 400);
   } catch {
-    return raw.slice(0, 400) || `HTTP ${res.status}`;
+    return redact(raw).slice(0, 400) || `HTTP ${res.status}`;
   }
 }
 
@@ -49,7 +85,7 @@ export async function upstreamError(res) {
  * Reads a failed response: a readable message plus, for rate-limit errors, what was hit.
  * limit = { scope: 'day' | 'minute', quota?: number, resetAt?: number (ms), retryAfterSec?: number }
  */
-export async function readError(res) {
+export async function readError(res,{redact=String}={}) {
   const raw = await res.text().catch(() => '');
   let body = null;
   try {
@@ -58,9 +94,9 @@ export async function readError(res) {
     // not JSON
   }
   const err = Array.isArray(body) ? body[0]?.error : body?.error;
-  const message = String(err?.message || err?.metadata?.raw || (typeof err === 'string' ? err : '') || body?.message || raw || `HTTP ${res.status}`).slice(0, 400);
+  const message = redact(String(err?.message || err?.metadata?.raw || (typeof err === 'string' ? err : '') || body?.message || raw || `HTTP ${res.status}`)).slice(0, 400);
   const limit = res.status === 429 ? parseLimit(err, message, res.headers) : null;
-  return { message, limit };
+  return { message, limit,code:err?.type || err?.status || err?.code || body?.type || null };
 }
 
 export function parseLimit(err, message = '', headers) {

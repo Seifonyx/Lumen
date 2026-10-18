@@ -51,7 +51,7 @@ globalThis.fetch = async (url, init = {}) => {
     case 'metadata-forever': return stream(Array.from({length: 100}, () => ({usageMetadata: {promptTokenCount: 1}})), {delay: 30}, init.signal);
     case 'hang-headers': return new Promise((_, rej) => init.signal?.addEventListener('abort', () => rej(Object.assign(new Error('aborted'), { name: 'AbortError' }))));
     case 'hang-body': return stream([], { hangAfter: true }, init.signal);
-    case 'empty': return stream([gEnd], {}, init.signal);
+    case 'empty': return stream([name.startsWith('OR:') ? { choices: [{ delta: {}, finish_reason: 'stop' }] } : gEnd], {}, init.signal);
     case 'blocked': return stream([{ promptFeedback: { blockReason: 'SAFETY' } }], {}, init.signal);
     case 'safety-stop': return stream([{ candidates: [{ content: { parts: [] }, finishReason: 'SAFETY' }] }], {}, init.signal);
     case 'instream-error': return stream([{ error: { code: 429, message: 'Rate limit exceeded: free-models-per-day' } }], {}, init.signal);
@@ -70,7 +70,7 @@ globalThis.fetch = async (url, init = {}) => {
 const { setKeys } = await import(new URL('../../src/lib/ai/providers.js', import.meta.url));
 const { runChat, timeouts, attemptQueue } = await import(new URL('../../src/lib/ai/chat.js', import.meta.url));
 const { clearHealth, isCoolingDown } = await import('../../src/lib/ai/health.js');
-setKeys({ gemini: 'g', openrouter: 'o' });
+setKeys({ gemini: 'synthetic-gemini-credential', openrouter: 'synthetic-openrouter-credential' });
 timeouts.firstResponseMs = 400;
 timeouts.idleMs = 600;
 
@@ -134,7 +134,7 @@ const providers = attemptQueue(many).slice(0,4).map(id => id.split(':')[0]);
 if(new Set(providers).size !== 4) { failures++; console.log('FAIL all providers must appear before the attempt cap'); }
 else console.log('PASS large catalogues reach all connected providers within four attempts');
 await scenario('transient overload cools down without permanent exclusion', {'model-a': '503'}, r => r.model === C && isCoolingDown(A) && !r.events.some(e => e.t === 'unavailable'));
-setKeys({gemini: 'replacement', openrouter: 'o'});
+setKeys({gemini: 'replacement', openrouter: 'synthetic-openrouter-credential'});
 if(isCoolingDown(A)) { failures++; console.log('FAIL key change must clear health'); }
 else console.log('PASS transient health clears on key/account changes');
 await scenario('explicit layout priority is kept before general fallback pool', {'model-a': '503'}, r => r.model === B, {options: {preferredModels: [A,B]}});

@@ -14,8 +14,8 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     await ctx.route('**/generativelanguage.googleapis.com/**', (r) => {
       const url = r.request().url();
       if (url.includes('/models?')) return r.fulfill({ json: { models: [
-        { name: 'models/gemini-flash-latest', displayName: 'Gemini Flash', supportedGenerationMethods: ['generateContent'] },
-        { name: 'models/gemini-2.5-pro', displayName: 'Gemini 2.5 Pro', supportedGenerationMethods: ['generateContent'], thinking: true },
+        { name: 'models/gemini-flash-latest', displayName: 'Gemini Flash', inputTokenLimit:128000, supportedGenerationMethods: ['generateContent'] },
+        { name: 'models/gemini-2.5-pro', displayName: 'Gemini 2.5 Pro', inputTokenLimit:128000, supportedGenerationMethods: ['generateContent'], thinking: true },
       ] } });
       if (url.includes(':generateContent')) return r.fulfill({ json: { candidates: [{ content: { parts: [{ text: 'Title' }] } }] } });
       const body = r.request().postData() || '';

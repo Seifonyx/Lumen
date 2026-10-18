@@ -13,6 +13,7 @@ const steps = [
   { query: 'x', status: 'done' as const, notes: 'Note one', sources: [{ title: 'A', url: 'https://a.example' }, { title: 'B', url: 'https://b.example' }] },
   { query: 'y', status: 'done' as const, notes: 'Note two', sources: [{ title: 'B', url: 'https://b.example' }, { title: 'C', url: 'https://c.example' }] },
   { query: 'z', status: 'failed' as const },
+  { query: 'interrupted', status: 'failed' as const, notes:'UNTRUSTED_PARTIAL_NOTE',sources:[{title:'Incomplete',url:'https://incomplete.example'}] },
 ];
 const { sources } = numberSources(steps);
 assert.deepEqual(sources.map((s) => s.title), ['A', 'B', 'C']);
@@ -21,6 +22,7 @@ assert.match(brief, /Search 1: x\nSources: \[1\] \[2\]/);
 assert.match(brief, /Search 2: y\nSources: \[2\] \[3\]/);
 assert.match(brief, /\[3\] C — https:\/\/c\.example/);
 assert.doesNotMatch(brief, /Search 3/);
+assert.doesNotMatch(brief,/UNTRUSTED_PARTIAL_NOTE|incomplete.example/);
 
 // Citations become links (not inside code, not unknown numbers), and the list is added.
 const out = linkCitations('Fact [1][3]. Unknown [9]. `arr[1]`\n```\nx[2]\n```', sources);

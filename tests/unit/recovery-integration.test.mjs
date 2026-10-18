@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {runChat,summarize} from '../../src/lib/ai/chat.js';
+import {setKeys} from '../../src/lib/ai/providers.js';
+import {clearRecord,reliability} from '../../src/lib/ai/health.js';
+const collect=async(body)=>{const events=[];for await(const event of runChat(body,new AbortController().signal))events.push(event);return events;};
+const messages=[{role:'user',text:'Hello'}];let calls=[];
+setKeys({gemini:'recovery-fixture'});clearRecord();globalThis.fetch=async()=>{calls.push('unexpected');return new Response('');};
+let events=await collect({model:'gemini:gemini-flash-latest',fallbacks:['gemini:gemini-2.5-pro'],messages:[{role:'user',text:'Read this video',files:[{kind:'text',videoUri:'https://attacker.invalid/private',mime:'video/mp4'}]}]});
+assert.equal(calls.length,0);assert.equal(events.filter(e=>e.t==='attempt').length,1,'invalid local input stops rather than trying unchanged data against every model');assert.equal(reliability('gemini:gemini-flash-latest'),null);
+setKeys({groq:'recovery-groq',gemini:'recovery-google'});calls=[];clearRecord();
+globalThis.fetch=async url=>{calls.push(String(url));return Response.json({error:{type:'invalid_request_error',message:'Bad schema'}},{status:422});};
+events=await collect({model:'groq:first',fallbacks:['groq:second','gemini:gemini-2.5-pro'],messages});assert.equal(calls.length,1);assert.equal(reliability('groq:first'),null);assert(events.some(e=>e.t==='error'));
+setKeys({groq:'recovery-billing',gemini:'recovery-google-2'});calls=[];clearRecord();
+globalThis.fetch=async url=>{calls.push(String(url));return String(url).includes('groq')?Response.json({error:{type:'insufficient_credits',message:'Not enough credits'}},{status:402}):new Response('data: '+JSON.stringify({candidates:[{content:{parts:[{text:'OTHER_PROVIDER_ANSWER'}]},finishReason:'STOP'}]})+'\n\n');};
+events=await collect({model:'groq:first',fallbacks:['groq:second','gemini:gemini-2.5-pro'],messages});assert.equal(calls.length,2,'billing failure skips other models using the same account');assert(events.some(e=>e.t==='text'&&e.text==='OTHER_PROVIDER_ANSWER'));assert.equal(reliability('groq:first'),null);
+setKeys({gemini:'recovery-summary'});calls=[];globalThis.fetch=async url=>{calls.push(String(url));return Response.json({error:{type:'invalid_request_error',message:'Bad schema'}},{status:422});};
+assert.equal(await summarize('Original summary',['gemini:first','gemini:second']),null);assert.equal(calls.length,1,'one-shot recovery also stops on terminal request validation');
+setKeys({});console.log('PASS shared terminal validation, provider billing circuit, no model health poisoning and helper recovery');

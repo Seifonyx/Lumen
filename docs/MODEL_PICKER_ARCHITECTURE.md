@@ -34,7 +34,7 @@ Metadata sources are distinct:
 - Inferred: bounded family/name hints, not benchmarks.
 - Unknown: no specification is invented. Unknown context gets a conservative request allowance; missing prices are not zero.
 
-For declarations, API facts must override conflicting user assumptions; documented transport constraints cannot be bypassed by a checkbox. A declaration may fill unknown or inferred metadata, but cannot make an unsupported adapter operation work. Authentication rejection must not be hidden by declared or cached models. This declaration layer remains a tracked implementation task until its tests and UI are verified.
+For declarations, API facts override conflicting user assumptions; documented transport constraints cannot be bypassed by a checkbox. A declaration may fill unknown or inferred metadata, but cannot make an unsupported adapter operation work. Raw scoped discovery caches stay separate from derived declarations. Explicit API denials survive filtering and cache hydration; authentication rejection cannot be hidden by declared or cached models. Declaration identity includes the supported endpoint and, for Cloudflare, its account. OpenRouter declarations only enrich API-listed, confirmed-free models. Declared facts remain labelled unchecked and never trigger background inference probes.
 
 ## Refresh and synchronization
 
@@ -61,6 +61,12 @@ Fallback scope is limited by the global switching setting: none, within the layo
 The streaming runtime already bounds attempts and deadlines and separates failure before useful answer text from failure after visible text. Keep that distinction. After partial output, preserve the text, show the failure and require an explicit retry; never splice a replacement model into an apparent continuation. Cancellation is terminal. Credential failures skip the affected provider without penalizing model answer quality.
 
 Comparison stages need immutable request snapshots for explicit retries; a successful stage must not be rerun just because another fails. Invalidate old synthesis when its source answers change. Cross-account/key changes cancel or invalidate old stage executions. Research/tool stages retain strict capabilities, permissions and side-effect safeguards. No automatic replay of external commits, tool side effects or ambiguous billing writes.
+
+`ai/recovery.js` classifies failures independently of mode policy. Callers supply authorized candidates and consume bounded attempt/time budgets. Terminal validation/cancellation stops; account-wide authentication/billing failures skip sibling models without damaging model quality history. Model/capability failures request throttled provider metadata expiry through the active-browser coordinator, never recursively invoke inference. Current registry membership outranks old request capability snapshots at each fallback attempt, including one-shot summaries and titles.
+
+Comparison source stages use only explicitly selected models and retry only the failed/stopped slot on user action. Frozen request/restoration data stays in private session closures; account, connection, privacy, instructions and originating context invalidate old work. Synthesis depends only on completed source answers and uses shared task/quality routing within their selected IDs. Global switching controls its fallbacks. No failed synthesis text becomes a source. Research plans and searches use the originating chat's helper pool; incomplete search notes and sources never feed the report.
+
+Stream adapters distinguish semantic completion from transport EOF. Missing/malformed completion before finish produces an error; visible output remains readable and cannot silently continue on a fallback. After logical finish only trailing usage is accepted, with a bounded100ms drain before closing lingering IO. Explicit output allowances are clamped to known provider limits; missing limits remain unknown. Ordinary chat retains its existing allowance while synthesis and research specify their own budgets.
 
 ## Security and verification
 

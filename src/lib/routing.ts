@@ -43,6 +43,7 @@ export interface RouteInput {
   /** IDs known absent or denied in the current credential-scoped registry. */
   unavailable?: string[];
   preference?: 'balanced' | 'quality' | 'speed' | 'cost';
+  streaming?: boolean;
   preserveOrder?: boolean;
   disabledFallbackHint?: string;
 }
@@ -194,8 +195,8 @@ function score(m: ModelInfo, task: Task, tokens: number, index: number, total: n
 }
 
 /** Can this model handle the message at all? */
-function capable(m: ModelInfo | undefined, task: Task, tokens: number): string | null {
-  return modelProblem(m,{image:task.image,pdf:task.rawPdf,tokens});
+function capable(m: ModelInfo | undefined, task: Task, tokens: number, streaming=true): string | null {
+  return modelProblem(m,{image:task.image,pdf:task.rawPdf,tokens,streaming});
 }
 
 export function planRoute(input: RouteInput): RoutePlan {
@@ -210,7 +211,7 @@ export function planRoute(input: RouteInput): RoutePlan {
   const unavailable = new Set(input.unavailable || []);
   const usable = input.enabled.filter((id) => !excluded.has(id) && !unavailable.has(id));
   const pool = [...new Set(usable)];
-  const manualProblem=unavailable.has(input.selected)?'is not available from your connected provider':capable(info.get(input.selected),task,tokens);
+  const manualProblem=unavailable.has(input.selected)?'is not available from your connected provider':capable(info.get(input.selected),task,tokens,input.streaming!==false);
   if(!auto && manualProblem && input.allowFallback===false) {
     return {model:'',fallbacks:[],reason:null,notice:null,error:`${info.get(input.selected)?.label || input.selected} ${manualProblem}. ${input.disabledFallbackHint || 'Automatic switching is off. Choose a compatible model or enable switching in Settings → Models.'}`};
   }
@@ -218,7 +219,7 @@ export function planRoute(input: RouteInput): RoutePlan {
     return {model:'',fallbacks:[],reason:null,notice:null,error:'Your models are excluded from Auto or unavailable. Choose a model manually or review Auto exclusions in Settings → Models.'};
   }
   const reasoningAllowed = (id: string) => !auto || !task.noReasoning || !info.has(id) || features(info.get(id)!).slow < 1;
-  const known = pool.filter((id) => info.has(id) && reasoningAllowed(id) && !capable(info.get(id), task, tokens));
+  const known = pool.filter((id) => info.has(id) && reasoningAllowed(id) && !capable(info.get(id), task, tokens,input.streaming!==false));
   const whyOf = new Map<string, string[]>();
   // The newest version of each family among the candidates.
   const newestOf = new Map<string, number>();
@@ -238,7 +239,7 @@ export function planRoute(input: RouteInput): RoutePlan {
   }
   // Models at their limit go last; they're kept only as a final resort.
   const blocked = (id: string) => input.blocked(id) || (input.left(id) ?? Infinity) <= 0 || isCoolingDown(id);
-  const unknown = pool.filter((id) => !info.has(id) && !capable(undefined, task, tokens));
+  const unknown = pool.filter((id) => !info.has(id) && !capable(undefined, task, tokens,input.streaming!==false));
   // Capabilities and availability take priority over continuity, quality hints, and
   // provider diversity. Keep non-search models as an honest last resort.
   const all = [...ranked, ...unknown].sort((a, b) => Number(blocked(a)) - Number(blocked(b))
@@ -285,7 +286,7 @@ export function planRoute(input: RouteInput): RoutePlan {
   // Manual choice: keep it unless it can't handle this message.
   const problem = manualProblem;
   if (problem) {
-    const alt = all.find((id) => id !== input.selected && !capable(info.get(id), task, tokens));
+    const alt = all.find((id) => id !== input.selected && !capable(info.get(id), task, tokens,input.streaming!==false));
     if (alt) {
       return {
         model: alt,

@@ -10,6 +10,7 @@ export function createModelRegistry({ providers, enabled, load, ttl = () => 10 *
   now = Date.now, random = Math.random, sleep = ms => new Promise(r => setTimeout(r, ms)),
   concurrency = 4, attemptMs = 15_000, maxRetries = 1 }) {
   const records = new Map();
+  const revisions=new Map();
   const scope = new AbortController();
   let inFlight = null;
   let valid = true;
@@ -43,6 +44,7 @@ export function createModelRegistry({ providers, enabled, load, ttl = () => 10 *
 
   async function discover(provider) {
     const previous=records.get(provider);
+    const revision=revisions.get(provider) || 0;
     const lastAttempt=now();
     let failure;
     for(let attempt=0;attempt<=maxRetries;attempt++) {
@@ -53,7 +55,7 @@ export function createModelRegistry({ providers, enabled, load, ttl = () => 10 *
         if(!Array.isArray(list)) throw new Error('Invalid model catalogue');
         const models=[...new Map(list.filter(m => typeof m?.id === 'string' && m.id.startsWith(`${provider}:`)).map(m=>[m.id,m])).values()];
         const lastSuccess=now();
-        records.set(provider,{models,state:'ready',lastAttempt,lastSuccess,nextRefresh:lastSuccess+ttl(provider)*(0.9+random()*0.2),failures:0});
+        records.set(provider,{models,state:'ready',lastAttempt,lastSuccess,nextRefresh:revision===(revisions.get(provider)||0)?lastSuccess+ttl(provider)*(0.9+random()*0.2):0,failures:0});
         return;
       } catch(e) {
         if(!valid) throw changed();
@@ -73,6 +75,14 @@ export function createModelRegistry({ providers, enabled, load, ttl = () => 10 *
 
   return {
     snapshot,
+    expire(provider) {
+      if(!valid || !providers.includes(provider) || !enabled(provider))return false;
+      const record=records.get(provider);
+      if(!record || (record.error && record.nextRefresh>now()))return false;
+      revisions.set(provider,(revisions.get(provider)||0)+1);
+      records.set(provider,{...record,state:record.models.length?'stale':record.state,nextRefresh:0});
+      return true;
+    },
     invalidate() { valid=false;records.clear();scope.abort(); },
     seed(value) {
       if(inFlight || !valid) return;

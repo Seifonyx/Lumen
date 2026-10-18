@@ -3,7 +3,7 @@
 // and, for the usage meter: {t:'request', id} {t:'usage', id, input, output} {t:'limit', id, scope, quota?, resetAt?, retryAfterSec?}
 
 import { buildInstructions } from './instructions.js';
-import { complete, hasGemini, hasKey, keyVersion, modelCapabilities, openStream, parseModelId,providerSignal } from './providers.js';
+import { complete, hasKey, isModelRegistered, keyVersion, invalidateModelMetadata, modelCapabilities, openStream, parseModelId,providerSignal } from './providers.js';
 import { isUnavailableFailure } from './model-status.js';
 import { hasVideo, toolModel } from './tool-inputs.js';
 import { healthScope, isCoolingDown, noteFailure, noteSuccess, noteReplyLatency, replyLatency } from './health.js';
@@ -11,6 +11,7 @@ import { requestTokens } from './context-budget.js';
 import { attachmentNeeds, modelProblem,modelRequirementsProblem } from './eligibility.js';
 import { estimatedCost } from './preferences.js';
 import { waitFor } from './abort.js';
+import { classifyFailure,recoveryDecision } from './recovery.js';
 export { waitFor } from './abort.js';
 
 const MAX_ATTEMPTS = 5;
@@ -99,6 +100,15 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
   const started = Date.now();
   let answered = false;
   let attempts = 0;
+  const metadataInvalidated=new Set();
+  const decisionFor=(failure,id,visibleOutput=false)=>{
+    const classified=classifyFailure({...failure,id});
+    if(classified.refreshMetadata && !metadataInvalidated.has(classified.provider)) {metadataInvalidated.add(classified.provider);invalidateModelMetadata(id);}
+    return recoveryDecision(classified,{
+      remainingAttempts:MAX_ATTEMPTS-attempts,remainingMs:(answered?timeouts.totalMs:timeouts.noAnswerMs)-(Date.now()-started),
+      canFallback:queue.slice(queue.indexOf(id)+1).some(next=>!deadProviders.has(next.split(':')[0])),visibleOutput,
+    });
+  };
 
   for (const id of queue) {
     if (signal.aborted) return;
@@ -106,7 +116,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     if (!target) continue;
     const metadata = modelCapabilities(id) || options.modelCapabilities?.[id];
     const effective=metadata || (options.modelContexts?.[id]!==undefined?{context:options.modelContexts[id]}:undefined);
-    const problem=(options.modelRequirements?modelRequirementsProblem(effective,options.modelRequirements):null) || modelProblem(effective,{image,pdf,tokens});
+    const problem=modelProblem(effective,{image,pdf,tokens,unavailable:isModelRegistered(id)===false}) || (options.modelRequirements?modelRequirementsProblem(effective,options.modelRequirements):null);
     if (problem) {
       const context=/context|too small/.test(problem);
       failures.push({ id, status: context?'context':metadata?400:'capabilities', message:problem });
@@ -129,6 +139,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     const stopAttempt = () => attempt.abort();
     signal.addEventListener('abort', stopAttempt, { once: true });
     let timedOut = false;
+    let completed = false;
     let timer = setTimeout(() => {
       timedOut = true;
       attempt.abort();
@@ -136,10 +147,12 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     let answerTimer = setTimeout(() => { timedOut = true; attempt.abort(); }, quick ? Math.min(timeouts.firstAnswerMs, Math.max(timeouts.quickAnswerMs, startWait)) : timeouts.firstAnswerMs);
     let deadline = setTimeout(() => { timedOut = true; attempt.abort(); }, Math.max(1, (answered ? timeouts.totalMs : timeouts.noAnswerMs) - (Date.now() - started)));
     const setTotalDeadline = () => {
+      if(completed)return;
       deadline = setTimeout(() => { timedOut = true; attempt.abort(); }, Math.max(1, timeouts.totalMs - (Date.now() - started)));
     };
     const keepAlive = () => {
       clearTimeout(timer);
+      if(completed)return;
       timer = setTimeout(() => {
         timedOut = true;
         attempt.abort();
@@ -157,9 +170,11 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     try {
       let opened;
       try {
-        opened = await waitFor(openStream(target, messages, { instructions, metadata, quickReply: quick, search: Boolean(options.search), requireSearch: Boolean(options.requireSearch), codeExecution: Boolean(options.codeExecution), signal: attempt.signal }), attempt.signal);
+        opened = await waitFor(openStream(target, messages, { instructions, metadata, quickReply: quick,maxTokens:options.maxTokens, search: Boolean(options.search), requireSearch: Boolean(options.requireSearch), codeExecution: Boolean(options.codeExecution), signal: attempt.signal,
+          onComplete:()=>{completed=true;clearTimeout(timer);clearTimeout(answerTimer);clearTimeout(deadline);},
+        }), attempt.signal);
       } catch (e) {
-        opened = { ok: false, status: timedOut ? 'timeout' : 'network', message: timedOut ? '' : e.message };
+        opened = { ok: false, status: timedOut ? 'timeout' : e.status || 'network', message: timedOut ? '' : e.message,error:timedOut?undefined:e };
       }
       if (signal.aborted) {
         cleanup();
@@ -168,10 +183,12 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
       if (!opened.ok) {
         cleanup();
         failures.push({ id, status: opened.status, message: opened.message });
-        noteFailure(id, opened.status, opened.message,observationScope);
+        const decision=decisionFor(opened,id);
+        if(decision.penalizeHealth)noteFailure(id, opened.status, opened.message,observationScope);
         if (isUnavailableFailure(opened.status, opened.message)) yield { t: 'unavailable', id, reason: String(opened.message || '').slice(0, 140) };
-        if (opened.status === 401 || (opened.status === 403 && !isUnavailableFailure(opened.status, opened.message))) deadProviders.add(target.provider);
+        if(decision.skipProvider)deadProviders.add(target.provider);
         if (opened.limit) yield { t: 'limit', id, ...opened.limit };
+        if(decision.action==='stop')break;
         continue;
       }
       yield { t: 'request', id };
@@ -207,11 +224,11 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
           // Metadata must not extend the wait for a real response indefinitely.
           if ((ev.t === 'text' || ev.t === 'think') && ev.text?.trim()) keepAlive();
           if (ev.t === 'error' && !wrote) {
-            failedEarly = { id, status: ev.status, message: ev.text };
+            failedEarly = { id, status: ev.status, message: ev.text,code:ev.code,limit:ev.limit };
             if (ev.limit) yield { t: 'limit', id, ...ev.limit };
             break;
           }
-          if (ev.t === 'error') { failedLate = true; noteFailure(id, ev.status || 500, ev.text,observationScope); }
+          if (ev.t === 'error') { failedLate = true; if(decisionFor({...ev,message:ev.text},id,true).penalizeHealth)noteFailure(id, ev.status || 500, ev.text,observationScope); }
           if (ev.t === 'usage') {
             yield { ...ev, id };
             continue;
@@ -247,7 +264,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
           cleanup();
           return;
         }
-        if (!wrote) failedEarly = { id, status: timedOut ? 'timeout' : 'network', message: timedOut ? '' : e.message };
+        if (!wrote) failedEarly = { id, status: timedOut ? 'timeout' : e.status || 'network', message: timedOut ? '' : e.message,error:timedOut?undefined:e };
         else {
           failedLate = true;
           noteFailure(id, timedOut ? 'timeout' : 'network','',observationScope);
@@ -261,11 +278,13 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
       }
       if (failedEarly) {
         failures.push(failedEarly);
-        noteFailure(id, failedEarly.status, failedEarly.message,observationScope);
+        const decision=decisionFor(failedEarly,id);
+        if(decision.penalizeHealth)noteFailure(id, failedEarly.status, failedEarly.message,observationScope);
         if (isUnavailableFailure(failedEarly.status, failedEarly.message)) yield { t: 'unavailable', id, reason: String(failedEarly.message || '').slice(0, 140) };
         // Throw away the failed model's partial thinking before the next model starts.
         if (thought) yield { t: 'discard' };
-        if (failedEarly.status === 401 || (failedEarly.status === 403 && !isUnavailableFailure(failedEarly.status, failedEarly.message))) deadProviders.add(target.provider);
+        if(decision.skipProvider)deadProviders.add(target.provider);
+        if(decision.action==='stop')break;
         continue;
       }
       if (!failedLate) {
@@ -296,38 +315,33 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
  * @param {string | undefined} model
  * @param {(id: string) => boolean} [skip] models to avoid (e.g. ones at their limit)
  */
-export async function makeTitle(text, model, skip = () => false) {
+export async function makeTitle(text, model, skip = () => false,models=model?[model]:[]) {
   if (!text.trim()) return null;
   const generation = keyVersion();
-  const candidates = [];
-  if (hasGemini()) candidates.push('gemini:gemini-flash-lite-latest', 'gemini:gemini-2.5-flash-lite');
-  if (available(model)) candidates.push(model);
+  const candidates=[...new Set(models)].filter(id=>available(id)&&isModelRegistered(id)!==false).slice(0,3);
   const prompt = `Write a short title (2 to 6 words) for a chat that starts with the message below. Use the same language as the message. Reply with the title only, no quotes or punctuation at the end.\n\nMessage:\n${text.slice(0, 2000)}`;
-  for (const id of candidates) {
-    if (keyVersion() !== generation) return null;
-    if (skip(id) || isCoolingDown(id)) continue;
-    try {
-      const timeout = AbortSignal.timeout(10_000);
-      const out = await waitFor(complete(parseModelId(id), prompt, { signal: timeout }), timeout);
-      if (keyVersion() !== generation) return null;
-      const title = (out || '').split('\n').find((l) => l.trim())?.replace(/^["'#*\s]+|["'*.\s]+$/g, '').slice(0, 80);
-      if (title) return { title, model: id };
-    } catch {
-      // Try the next model.
-    }
-  }
-  return null;
+  const result=await summarize(prompt,candidates,{skip:id=>skip(id)||isCoolingDown(id),signal:AbortSignal.timeout(10_000),minLength:1,maxTokens:256});
+  if(keyVersion()!==generation || !result)return null;
+  const title=result.text.split('\n').find(line=>line.trim())?.replace(/^["'#*\s]+|["'*.\s]+$/g,'').slice(0,80);
+  return title?{title,model:result.model}:null;
 }
 
 // Writes a summary of a long chat with the first model that manages it. `report(id, info)` hears about
 // every attempt ({ status?, input?, output?, limit? }) so usage can be counted and limits remembered.
-export async function summarize(prompt, candidates, { skip = (_id) => false, report = (_id, _info) => {}, signal = /** @type {AbortSignal | undefined} */ (undefined), minLength = 41, maxTokens = 8192 } = {}) {
+export async function summarize(prompt, candidates, { skip = (_id) => Boolean(false), report = (_id, _info) => {}, signal = /** @type {AbortSignal | undefined} */ (undefined), minLength = 41, maxTokens = 8192,modelRequirements } = {}) {
   try { signal=providerSignal(signal); } catch { return null; }
   const tried = [];
   const started = Date.now();
+  const deadProviders=new Set();
+  const tokens=requestTokens([{role:'user',text:prompt}]);
+  const decisionFor=(failure,id)=>{
+    const classified=classifyFailure({...failure,id});
+    if(classified.refreshMetadata)invalidateModelMetadata(id);
+    return recoveryDecision(classified,{remainingAttempts:4-tried.length,remainingMs:timeouts.summaryTotalMs-(Date.now()-started),canFallback:candidates.some(next=>next!==id&&!tried.includes(next)&&!deadProviders.has(next.split(':')[0]))});
+  };
   for (const id of candidates) {
     const m = available(id);
-    if (!m || skip(id) || tried.includes(id)) continue;
+    if (!m || isModelRegistered(id)===false || modelProblem(modelCapabilities(id),{tokens,streaming:false}) || (modelRequirements && modelRequirementsProblem(modelCapabilities(id),modelRequirements)) || deadProviders.has(m.provider) || skip(id) || tried.includes(id)) continue;
     tried.push(id);
     const remaining = timeouts.summaryTotalMs - (Date.now() - started);
     if (signal?.aborted || remaining <= 0) break;
@@ -337,12 +351,21 @@ export async function summarize(prompt, candidates, { skip = (_id) => false, rep
     const combined = signal ? AbortSignal.any([signal, attempt.signal]) : attempt.signal;
     try {
       const out = await waitFor(complete(m, prompt, { maxTokens, signal: combined, info }), combined);
+      if(signal.aborted)break;
       report(id, info);
+      if(info.status>=400 || info.status==='output-limit') {
+        const decision=decisionFor(info,id);
+        if(decision.skipProvider)deadProviders.add(m.provider);
+        if(decision.action==='stop')break;
+      }
       const text = (out || '').trim();
       if (text.length >= minLength) return { text, model: id };
-    } catch {
+    } catch(error) {
       if(signal.aborted) break;
       report(id, info);
+      const decision=decisionFor({...info,status:attempt.signal.aborted?'timeout':info.status,error:attempt.signal.aborted?undefined:error},id);
+      if(decision.skipProvider)deadProviders.add(m.provider);
+      if(decision.action==='stop')break;
       // Try the next model.
     } finally {
       clearTimeout(timer);

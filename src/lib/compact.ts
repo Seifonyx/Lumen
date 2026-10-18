@@ -3,6 +3,7 @@
 
 import type { Chat, ChatSummary, Message, ModelInfo } from '../types';
 import { estimateTokens } from './routing';
+import { requestTokens } from './ai/context-budget.js';
 
 /** Above this many tokens a chat is compacted (free models get slow, forgetful and hit limits sooner). */
 export const COMPACT_AT = 50_000;
@@ -10,7 +11,7 @@ export const COMPACT_AT = 50_000;
 const KEEP_TOKENS = 12_000;
 const KEEP_MESSAGES = 6;
 
-const tokensOf = (m: Message) => estimateTokens(m.text, m.files) + 4;
+const tokensOf = (m: Message) => estimateTokens(m.text, m.files) + 8;
 
 /** The summary if it still matches the chat (an edit or regenerate before its end makes it stale). */
 export function activeSummary(chat: Chat): ChatSummary | null {
@@ -29,8 +30,7 @@ export function liveMessages(chat: Chat): Message[] {
 
 /** Rough size of what the next request sends. */
 export function contextTokens(chat: Chat): number {
-  const s = activeSummary(chat);
-  return (s ? Math.ceil(s.text.length / 4) + 50 : 0) + liveMessages(chat).reduce((n, m) => n + tokensOf(m), 0);
+  return requestTokens(withSummary(activeSummary(chat), liveMessages(chat).filter(m => !m.error || m.text))) - 100;
 }
 
 /** The point to compact at: smaller for models with a small context window. */

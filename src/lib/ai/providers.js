@@ -343,11 +343,13 @@ function withInstructionsInFirstUser(messages, instructions) {
 
 // ---------------------------------------------------------------- Streaming
 
-// Opens a streaming request. Resolves to { ok: true, events } or { ok: false, status, message }.
-export async function openStream({ provider, name }, messages, { instructions, search, requireSearch, codeExecution, quickReply, signal }) {
+// Opens a streaming request. searchEnabled reports tools retained in the request
+// or a provider's native search, so the chat can explain degraded search honestly.
+// Resolves to { ok: true, events, searchEnabled? } or { ok: false, status, message }.
+export async function openStream({ provider, name }, messages, { instructions, metadata, search, requireSearch, codeExecution, quickReply, signal }) {
   if (!parseModelId(`${provider}:${name}`) || !hasKey(provider)) return { ok: false, status: 403, message: 'This provider is not enabled. Review API keys settings.' };
   if (provider === 'gemini') return openGemini(name, messages, instructions, search, signal, codeExecution, requireSearch, quickReply);
-  if (COMPAT[provider]) return openCompat(provider, name, messages, instructions, signal);
+  if (COMPAT[provider]) return openCompat(provider, name, messages, instructions, signal, metadata);
   return openOpenRouter(name, messages, instructions, signal);
 }
 
@@ -370,8 +372,8 @@ function toCompat(messages, vision) {
   });
 }
 
-async function openCompat(provider, name, messages, instructions, signal) {
-  const model = capabilities.get(`${provider}:${name}`);
+async function openCompat(provider, name, messages, instructions, signal, metadata) {
+  const model = capabilities.get(`${provider}:${name}`) || metadata;
   const vision = model?.vision ?? modelVision(provider, name);
   const res = await compatFetch(provider, '/chat/completions', {
     method: 'POST',
@@ -379,7 +381,7 @@ async function openCompat(provider, name, messages, instructions, signal) {
     body: JSON.stringify({ model: name, stream: true, messages: [{ role: 'system', content: instructions }, ...toCompat(messages, vision)], ...(provider === 'cloudflare' ? { options: { rejectIfBusy: true } } : {}), ...(provider === 'anthropic' ? { max_tokens: /claude-3-(?!7)/.test(name) ? 4096 : 16000 } : {}) }),
   });
   if (!res.ok) return { ok: false, status: res.status, ...(await readError(res)) };
-  return { ok: true, events: compatEvents(res.body) };
+  return { ok: true, searchEnabled: provider === 'perplexity', events: compatEvents(res.body) };
 }
 
 /** Splits streamed text into thinking and answer when a model writes <think>…</think> inline. */
@@ -456,13 +458,15 @@ async function openGemini(name, messages, instructions, search, signal, codeExec
     });
 
   let res = await send({ ...body, ...extras });
-  // If thinking or search options are what the model refused, try once more without them.
-  if (res.status === 400 && Object.keys(extras).length && !codeExecution && !requireSearch) {
+  // Retry unsupported thinking options once, retaining requested search tools.
+  // Strict tool requests still fail rather than silently changing their options.
+  if (res.status === 400 && extras.generationConfig && !codeExecution && !requireSearch) {
     await res.body?.cancel();
-    res = await send(body);
+    const { generationConfig: _thinking, ...retained } = extras;
+    res = await send({ ...body, ...retained });
   }
   if (!res.ok) return { ok: false, status: res.status, ...(await readError(res)) };
-  return { ok: true, events: geminiEvents(res.body) };
+  return { ok: true, searchEnabled: Boolean(search && !gemma && geminiThinks(name)), events: geminiEvents(res.body) };
 }
 
 async function* geminiEvents(body) {

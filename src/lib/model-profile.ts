@@ -30,24 +30,25 @@ const params = (n: string) => Number(/(?:^|[-/:._])(\d{1,4}(?:\.\d)?)b(?=[-/:._]
 
 export function strength(m: ModelInfo) {
   const n = lower(m);
-  const known = KNOWN.find(([re]) => re.test(n));
-  if (known) return known[1];
   const p = params(n);
+  const known = KNOWN.find(([re]) => re.test(n));
+  // Family reputation must not give a 1B/distilled variant a flagship score.
+  if (known) return p > 0 && p < 30 ? Math.min(known[1], p >= 12 ? 5.8 : p >= 7 ? 5 : 3.8) : known[1];
   if (p >= 200) return 8; if (p >= 65) return 7; if (p >= 30) return 6; if (p >= 12) return 5; if (p > 0) return 3.5;
-  return /(^|[-/:._])(pro|ultra|large|max|opus)([-/:._]|$)/.test(n) ? 7.5 : /(^|[-/:._])(lite|mini|nano|small|tiny)([-/:._]|$)/.test(n) ? 4.5 : 5.5;
+  return /(^|[-/:._])(pro|ultra|large|max|opus|sonnet)([-/:._]|$)/.test(n) ? 7.5 : /(^|[-/:._])(lite|mini|nano|small|tiny|haiku)([-/:._]|$)/.test(n) ? 4.5 : 5.5;
 }
 
 /** What a model is good at, each 0–1. */
 export function features(m: ModelInfo): Record<Feature, number> {
   const n = lower(m), p = params(n), gemini = m.provider === 'google' && !/gemma/.test(n);
-  const light = /(^|[-/:._])(lite|mini|nano|small|tiny|instant)([-/:._]|$)/.test(n) || (p > 0 && p <= 12);
+  const light = /(^|[-/:._])(lite|mini|nano|small|tiny|instant|haiku)([-/:._]|$)/.test(n) || (p > 0 && p <= 12);
   return {
     strength: strength(m) / 10,
-    coder: /coder|codestral|devstral/.test(n) ? 1 : /kimi-k2|glm-(4\.[5-9]|[5-9])|gpt-oss|deepseek[\w.-]*(v3|v4|chat)|gemini-(?:[3-9][\d.]*|2\.5)-pro|qwen-?3/.test(n) ? 0.6 : 0.15,
+    coder: /coder|codestral|devstral/.test(n) ? 1 : /kimi-k2|glm-(4\.[5-9]|[5-9])|gpt-oss|gpt-(?:4\.[1-9]|[5-9])|claude[\w.-]*(?:sonnet|opus)|deepseek[\w.-]*(v3|v4|chat)|gemini-(?:[3-9][\d.]*|2\.5)-pro|qwen-?3/.test(n) ? 0.6 : 0.15,
     reasoner: /\br1\b|-r1|reason|think|qwq|magistral/.test(n) ? 1 : m.thinking ? (strength(m) >= 8.5 ? 1 : 0.7) : 0,
     // Reasoning-only models think at length before every answer.
     slow: /\br1\b|-r1|reasoner|thinking|qwq|magistral/.test(n) ? 1 : 0,
-    speed: m.provider === 'cerebras' ? 1 : m.provider === 'groq' ? 0.9 : light ? 0.65 : /flash/.test(n) ? 0.55 : p >= 200 || /pro|large|max/.test(n) ? 0.1 : 0.35,
+    speed: m.provider === 'cerebras' ? 1 : m.provider === 'groq' ? 0.9 : light ? 0.65 : /flash/.test(n) ? 0.55 : p >= 200 || /(?:^|[-/:._])(?:pro|large|max|opus)(?:[-/:._]|$)/.test(n) ? 0.1 : 0.35,
     vision: m.vision ? 1 : 0,
     pdf: m.pdf ? 1 : 0,
     search: m.search ? 1 : 0,
@@ -57,10 +58,31 @@ export function features(m: ModelInfo): Record<Feature, number> {
   };
 }
 
-/** A model's family without version or size, to keep only the newest of each. */
-export function familyOf(m: ModelInfo) {
-  const n = m.name.toLowerCase().replace(/:free$/, '');
-  return `${m.provider}:${n.replace(/\d+(?:\.\d+)?b\b/g, '#').replace(/\d+(?:\.\d+)*/g, 'v').replace(/-?(latest|preview|exp|instruct|it|versatile|\d{4,})/g, '')}`;
+/** Separate dated snapshots from semantic versions; aliases have no verified release order. */
+function releaseName(m: ModelInfo) {
+  const name = m.name.toLowerCase().replace(/:free$/, '');
+  const dated = /[-@](\d{8}|\d{4}-\d{2}-\d{2}|\d{4})$/.exec(name);
+  return { name: dated ? name.slice(0, dated.index) : name, date: dated ? Number(dated[1].replace(/-/g, '')) : 0 };
 }
-export const versionOf = (m: ModelInfo) => /latest/.test(m.name) ? 99 : Number(/(\d+(?:\.\d+)?)/.exec(m.name.toLowerCase().replace(/\d{1,4}b\b/g, ''))?.[1]) || 0;
+
+/** Family and provider stay distinct; sizes, version punctuation and snapshots do not. */
+export function familyOf(m: ModelInfo) {
+  const {name} = releaseName(m);
+  const family = name.replace(/(?:a)?\d+(?:\.\d+)?b\b/g, '').replace(/\d+(?:[.-]\d+)*/g, '')
+    .replace(/\b(?:latest|preview|exp|instruct|it|versatile)\b/g, '').replace(/[._-]+/g, '-').replace(/-+(?=\/|$)|(^|\/)-+/g, '$1');
+  return `${m.provider}:${family}`;
+}
+/** Date-only IDs and semantic versions cannot be ordered against each other. */
+export function versionFamilyOf(m: ModelInfo) {
+  const {name} = releaseName(m);
+  const semantic = /\d/.test(name.split('/').at(-1)!.replace(/(?:a)?\d+(?:\.\d+)?b\b/g, ''));
+  return `${familyOf(m)}:${semantic ? 'version' : 'snapshot'}`;
+}
+export function versionOf(m: ModelInfo) {
+  if (/\blatest\b/i.test(m.name)) return 0;
+  const {name, date} = releaseName(m);
+  const clean = name.split('/').at(-1)!.replace(/(?:a)?\d+(?:\.\d+)?b\b/g, '');
+  const parts = /(\d+)(?:[.-](\d{1,3}))?(?:[.-](\d{1,3}))?/.exec(clean);
+  return (parts ? Number(parts[1]) * 1e6 + Number(parts[2] || 0) * 1e3 + Number(parts[3] || 0) : 0) + date / 1e9;
+}
 

@@ -7,7 +7,7 @@ import { complete, hasGemini, hasKey, keyVersion, modelCapabilities, openStream,
 import { isUnavailableFailure } from './model-status.js';
 import { hasVideo, toolModel } from './tool-inputs.js';
 import { isCoolingDown, noteFailure, noteSuccess, noteReplyLatency, replyLatency } from './health.js';
-import { requestTokens, fitsContext } from './context-budget.js';
+import { requestTokens, fitsContext, UNKNOWN_CONTEXT } from './context-budget.js';
 
 const MAX_ATTEMPTS = 5;
 export const timeouts = {
@@ -24,17 +24,18 @@ export const timeouts = {
   summaryTotalMs: 60_000,
 };
 
-// Keep the chosen model first, then try another provider before more models from the same one.
-// This gives every connected provider a chance within the five actual requests.
-export function attemptQueue(ids) {
+// Keep the chosen model first, then spread attempts across providers. Searchable
+// backups come first among equally healthy models when search was requested.
+export function attemptQueue(ids, { searchCapable, keepFirst = true } = {}) {
   const remaining = [...ids];
   const queue = [];
   const counts = new Map();
   while (remaining.length) {
     const healthy = remaining.filter(id => !isCoolingDown(id));
-    const pool = healthy.length ? healthy : remaining;
+    const available = healthy.length ? healthy : remaining;
+    const pool = searchCapable && available.some(searchCapable) ? available.filter(searchCapable) : available;
     const fewest = Math.min(...pool.map(id => counts.get(id.split(':')[0]) || 0));
-    const index = queue.length ? remaining.findIndex(id => pool.includes(id) && (counts.get(id.split(':')[0]) || 0) === fewest) : 0;
+    const index = queue.length || !keepFirst ? remaining.findIndex(id => pool.includes(id) && (counts.get(id.split(':')[0]) || 0) === fewest) : 0;
     const [id] = remaining.splice(index, 1);
     queue.push(id);
     const provider = id.split(':')[0];
@@ -60,6 +61,7 @@ function describe({ status, message = '' }) {
   if (status === 'blocked') return 'declined to answer';
   if (status === 'network') return "couldn't be reached";
   if (status === 'context') return 'has too little context for this request';
+  if (status === 'capabilities') return 'has no verified attachment capabilities';
   if (status === 429 || /quota|rate.?limit|exhausted/i.test(message)) return 'hit its usage limit';
   if (status === 401 || status === 403) return 'was refused (check the API key)';
   if (status === 404) return 'is not available';
@@ -79,9 +81,11 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
   const pdf = messages.some(m => m.files?.some(f => f.kind === 'pdf' && !f.text));
   const candidates = [model, ...fallbacks].filter((id, i, all) => id && all.indexOf(id) === i && available(id) && (!needsGemini || toolModel(id)));
   const preferred = options.preferredModels?.length ? new Set([model, ...options.preferredModels]) : null;
+  const searchCapable = options.search ? id => Boolean((modelCapabilities(id) || options.modelCapabilities?.[id])?.search) : undefined;
+  const ordering = { searchCapable, keepFirst: !options.search || candidates[0] === model };
   const queue = preferred
-    ? [...attemptQueue(candidates.filter(id => preferred.has(id))), ...attemptQueue(candidates.filter(id => !preferred.has(id)))]
-    : attemptQueue(candidates);
+    ? [...attemptQueue(candidates.filter(id => preferred.has(id)), ordering), ...attemptQueue(candidates.filter(id => !preferred.has(id)), { searchCapable, keepFirst: !options.search })]
+    : attemptQueue(candidates, ordering);
   if (queue.length === 0) {
     yield { t: 'error', text: needsGemini ? 'This tool request requires an enabled Gemini model and a Google API key. Check Settings → Models and API keys.' : `No API key for ${model}. Add your keys in Settings → API keys.` };
     yield { t: 'done' };
@@ -102,12 +106,19 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     if (signal.aborted) return;
     const target = available(id);
     if (!target) continue;
-    const metadata = modelCapabilities(id);
-    if (metadata && ((image && !metadata.vision) || (pdf && metadata.pdf === false))) {
+    const metadata = modelCapabilities(id) || options.modelCapabilities?.[id];
+    if (!metadata && (image || pdf)) {
+      failures.push({ id, status: 'capabilities', message: 'Refresh Models in Settings to verify whether this model can read the attachments.' });
+      continue;
+    }
+    if (metadata && ((image && !metadata.vision) || (pdf && !metadata.pdf))) {
       failures.push({ id, status: 400, message: 'This model cannot read the attachments in this conversation.' });
       continue;
     }
-    if (!fitsContext(metadata?.context ?? options.modelContexts?.[id], tokens)) {
+    // A present context:null row is explicit unknown capacity; an absent row is
+    // different and must not accidentally gain an infinite budget.
+    const context = metadata ? metadata.context : options.modelContexts?.[id];
+    if (!fitsContext(context === undefined ? UNKNOWN_CONTEXT : context, tokens)) {
       failures.push({ id, status: 'context', message: 'The conversation and instructions exceed this model’s safe context budget.' });
       continue;
     }
@@ -154,7 +165,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
 
     let opened;
     try {
-      opened = await waitFor(openStream(target, messages, { instructions, quickReply: quick, search: Boolean(options.search), requireSearch: Boolean(options.requireSearch), codeExecution: Boolean(options.codeExecution), signal: attempt.signal }), attempt.signal);
+      opened = await waitFor(openStream(target, messages, { instructions, metadata, quickReply: quick, search: Boolean(options.search), requireSearch: Boolean(options.requireSearch), codeExecution: Boolean(options.codeExecution), signal: attempt.signal }), attempt.signal);
     } catch (e) {
       opened = { ok: false, status: timedOut ? 'timeout' : 'network', message: timedOut ? '' : e.message };
     }
@@ -165,7 +176,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     if (!opened.ok) {
       cleanup();
       failures.push({ id, status: opened.status, message: opened.message });
-      noteFailure(id, opened.status);
+      noteFailure(id, opened.status, opened.message);
       if (isUnavailableFailure(opened.status, opened.message)) yield { t: 'unavailable', id, reason: String(opened.message || '').slice(0, 140) };
       if (opened.status === 401 || (opened.status === 403 && !isUnavailableFailure(opened.status, opened.message))) deadProviders.add(target.provider);
       if (opened.limit) yield { t: 'limit', id, ...opened.limit };
@@ -183,8 +194,8 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
         yield { t: 'notice', text: `${why} — switched to ${label(id)}.` };
       }
       yield { t: 'model', id };
-      if (options.search && !/^gemini:gemini/.test(id)) {
-        yield { t: 'notice', text: 'Web search only works with Gemini models, so this answer did not search the web.' };
+      if (options.search && !opened.searchEnabled) {
+        yield { t: 'notice', text: 'This model does not support web search, so this answer did not search the web.' };
       }
     };
 
@@ -208,7 +219,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
           if (ev.limit) yield { t: 'limit', id, ...ev.limit };
           break;
         }
-        if (ev.t === 'error') { failedLate = true; noteFailure(id, ev.status || 500); }
+        if (ev.t === 'error') { failedLate = true; noteFailure(id, ev.status || 500, ev.text); }
         if (ev.t === 'usage') {
           yield { ...ev, id };
           continue;
@@ -257,7 +268,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     }
     if (failedEarly) {
       failures.push(failedEarly);
-      noteFailure(id, failedEarly.status);
+      noteFailure(id, failedEarly.status, failedEarly.message);
       if (isUnavailableFailure(failedEarly.status, failedEarly.message)) yield { t: 'unavailable', id, reason: String(failedEarly.message || '').slice(0, 140) };
       // Throw away the failed model's partial thinking before the next model starts.
       if (thought) yield { t: 'discard' };

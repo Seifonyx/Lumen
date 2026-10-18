@@ -5,8 +5,10 @@
 
 import type { ModelInfo } from '../types';
 import type { LayoutIcon } from './layouts';
+import { inputBudget } from './ai/context-budget.js';
+import { interpretWork, type WorkTask } from './work-intent';
 
-import { features, familyOf, versionOf, type Feature } from './model-profile';
+import { features, familyOf, versionFamilyOf, versionOf, type Feature } from './model-profile';
 export { features, familyOf, strength } from './model-profile';
 export type { Feature } from './model-profile';
 
@@ -21,6 +23,9 @@ export interface TaskProfile {
   requires?: 'vision' | 'search';
   requiresAll?: ('vision' | 'search' | 'pdf')[];
   minContext?: number;
+  /** Actual input size, leaving the same answer reserve as chat routing. */
+  minInputTokens?: number;
+  noReasoning?: boolean;
   instructions?: string;
   /** words in a description that point to this task */
   words?: RegExp;
@@ -62,9 +67,9 @@ export const TASKS: TaskProfile[] = [
 ];
 
 const PHRASES: Record<Feature, string> = {
-  strength: 'one of the strongest models you have', coder: 'built for code', reasoner: 'thinks step by step', slow: 'takes time to think', speed: 'very fast',
+  strength: 'strong model-family hint', coder: 'coding model-family hint', reasoner: 'supports reasoning', slow: 'takes time to think', speed: 'speed-oriented model-family hint',
   vision: 'can see images', pdf: 'reads PDFs directly', search: 'can search the web', longctx: 'handles very long inputs',
-  languages: 'strong in many languages', files: 'reliable at making files',
+  languages: 'multilingual model-family hint', files: 'file-handling model-family hint',
 };
 
 export interface Context {
@@ -80,36 +85,46 @@ export interface Context {
 
 export interface Pick { id: string; score: number; why: string[] }
 
+/** Shared by ranking and saving, so refreshed metadata cannot bypass a task requirement. */
+export function modelMeetsTask(task: TaskProfile, model: ModelInfo): boolean {
+  const required = [...(task.requires ? [task.requires] : []), ...(task.requiresAll || [])];
+  if (!required.every(key => model[key])) return false;
+  const context = model.context || 0;
+  if (task.minContext && (!Number.isFinite(context) || context < task.minContext)) return false;
+  if (task.minInputTokens && (!Number.isFinite(context) || context <= 0 || inputBudget(context) < task.minInputTokens)) return false;
+  return !task.noReasoning || features(model).slow < 1;
+}
+
 /** The best models for a task, best first, each with why it was picked. */
 export function rankForTask(task: TaskProfile, catalog: ModelInfo[], ctx: Context = {}, count = 6): Pick[] {
-  const required = [...new Set([...(task.requires ? [task.requires] : []), ...(task.requiresAll || [])])];
   const seen = new Set<string>();
   const usable = catalog.filter(m => {
-    if (seen.has(m.id) || !required.every(key => m[key]) || (task.minContext && (m.context || 0) < task.minContext)) return false;
+    if (seen.has(m.id) || !modelMeetsTask(task, m)) return false;
     seen.add(m.id); return true;
   });
   // Newest of each family: an older version is only a fallback.
   const newest = new Map<string, number>();
-  for (const m of usable) newest.set(familyOf(m), Math.max(newest.get(familyOf(m)) || 0, versionOf(m)));
+  for (const m of usable) newest.set(versionFamilyOf(m), Math.max(newest.get(versionFamilyOf(m)) || 0, versionOf(m)));
   const scored = usable.map((m) => {
     const f = features(m);
     const parts = (Object.keys(task.weights) as Feature[]).map((k) => ({ k, v: (task.weights[k] || 0) * f[k] }));
     let s = parts.reduce((n, p) => n + p.v, 0);
-    const why = parts.filter((p) => p.v >= 0.6 && (p.k !== 'strength' || f.strength >= 0.84)).sort((a, b) => b.v - a.v).slice(0, 2).map((p) => PHRASES[p.k]);
-    const older = versionOf(m) < (newest.get(familyOf(m)) || 0);
-    if (older) s -= 1.2; else if (versionOf(m) > 0 && usable.some((o) => o !== m && familyOf(o) === familyOf(m))) why.push('newest of its family');
+    const why = parts.filter((p) => p.v >= 0.6 && (p.k !== 'strength' || f.strength >= 0.84)).sort((a, b) => b.v - a.v).slice(0, 2).map((p) => p.k === 'coder' && f.coder === 1 ? 'built for code' : PHRASES[p.k]);
+    const older = versionOf(m) > 0 && versionOf(m) < (newest.get(versionFamilyOf(m)) || 0);
+    if (older) s -= 1.2; else if (versionOf(m) > 0 && usable.some((o) => o !== m && versionOf(o) > 0 && versionFamilyOf(o) === versionFamilyOf(m))) why.push('newest of its family');
     if (m.preview) s -= 0.8;
     const r = ctx.reliability?.(m.id);
     if (r != null) { s += (r - 0.75) * 3; if (r < 0.5) why.push('has failed often here'); }
-    if (ctx.blocked?.(m.id)) { s -= 2.5; why.push('at its limit right now'); }
+    const left = ctx.left?.(m.id);
+    const blocked = Boolean(ctx.blocked?.(m.id)) || (left != null && left <= 0);
+    if (blocked) { s -= 2.5; why.push('at its limit right now'); }
     if (ctx.preferProvider === m.id.split(':')[0]) { s += .25; why.push('from your preferred provider'); }
     if ((task.weights.speed || 0) >= 1) {
       const ms = ctx.latency?.(m.id);
       if (ms != null) s += Math.max(-.6, Math.min(.6, (4000 - ms) / 6000));
     }
-    const left = ctx.left?.(m.id);
-    if (left != null && left <= 3) s -= 1.2;
-    return { m, s, why };
+    if (left != null && left > 0 && left <= 3) s -= 1.2;
+    return { m, s, why, blocked };
   }).sort((a, b) => b.s - a.s);
   // Greedy: each later pick pays a little for sharing a provider (so one provider's limit doesn't stop the
   // whole layout) and a lot for repeating a family.
@@ -118,9 +133,9 @@ export function rankForTask(task: TaskProfile, catalog: ModelInfo[], ctx: Contex
   const pool = [...scored];
   while (picks.length < count && pool.length) {
     let best = 0, bestScore = -Infinity;
-    const ready = pool.some(c => !ctx.blocked?.(c.m.id));
+    const ready = pool.some(c => !c.blocked);
     pool.forEach((c, i) => {
-      if (ready && ctx.blocked?.(c.m.id)) return;
+      if (ready && c.blocked) return;
       const adj = c.s - (picks.length ? 0.7 * (providers.get(c.m.provider) || 0) : 0) - (families.has(familyOf(c.m)) ? 3 : 0);
       if (adj > bestScore) { bestScore = adj; best = i; }
     });
@@ -136,13 +151,8 @@ export function rankForTask(task: TaskProfile, catalog: ModelInfo[], ctx: Contex
 
 /** The task a description is about (several can mix), e.g. "debugging React apps" → coding. */
 export function taskFromText(text: string): TaskProfile {
-  // Exclusions are user intent, not extra keywords to match. Keep them out of task detection.
-  const excluded = new Set<string>();
-  const positive = text.replace(/\b(?:without|no|avoid|skip|do not|don't)\s+(?:(?:any|lengthy|long|slow|web|online)\s+)*(reasoning|thinking|search(?:ing)?|research|cod(?:e|ing)|images?|photos?)\b/gi, (_match, word: string) => {
-    excluded.add(/reason|think/i.test(word) ? 'thinking' : /search/i.test(word) ? 'research' : /cod/i.test(word) ? 'coding' : 'images');
-    return '';
-  });
-  const hits = TASKS.filter(t => !excluded.has(t.id) && t.words?.test(positive));
+  const intent = interpretWork(text);
+  const hits = TASKS.filter(t => intent.tasks.includes(t.id as WorkTask) && !intent.excluded.includes(t.id as WorkTask));
   const base = hits[0] || TASKS.find(t => t.id === 'everyday')!;
   const weights: Partial<Record<Feature, number>> = {};
   for (const task of (hits.length ? hits : [base])) for (const [key, value] of Object.entries(task.weights) as [Feature, number][]) {
@@ -150,14 +160,15 @@ export function taskFromText(text: string): TaskProfile {
     // A negative speed/latency preference must survive mixed tasks.
     weights[key] = previous === undefined ? value : value < 0 || previous < 0 ? Math.min(previous, value) : Math.max(previous, value);
   }
-  if (excluded.has('thinking')) { weights.reasoner = 0; weights.slow = Math.min(weights.slow || 0, -2); }
-  const context = /\b(\d+(?:\.\d+)?)\s*([km])?\s*(?:[- ]token(?:s)?(?:\s+context)?|context(?:\s+tokens?)?)\b/i.exec(positive);
-  const minContext = context ? Number(context[1]) * (context[2]?.toLowerCase() === 'm' ? 1e6 : context[2] ? 1e3 : 1) : undefined;
-  if (minContext) weights.longctx = Math.max(weights.longctx || 0, 2);
-  const requiresAll = [...new Set(hits.flatMap(t => [...(t.requires ? [t.requires] : []), ...(t.requiresAll || [])]))];
-  if (/\b(?:read|scan|analy[sz]e)\b.*\bpdfs?\b/i.test(positive)) requiresAll.push('pdf');
-  return { ...base, id: hits.length === 1 ? base.id : 'custom', name: titleCase(text) || base.name, description: text, weights, requires: undefined, requiresAll, minContext,
-    instructions: [...hits.map(t => t.instructions), `Layout purpose and preferences: ${text.trim().slice(0, 2000)}\nApply these preferences unless the user's current request asks otherwise.`].filter(Boolean).join('\n\n') };
+  if (intent.speed) { weights.speed = Math.max(weights.speed || 0, 4); weights.slow = Math.min(weights.slow || 0, -1.5); }
+  if (intent.quality) weights.strength = Math.max(weights.strength || 0, 2);
+  if (intent.noReasoning) { weights.reasoner = 0; weights.slow = Math.min(weights.slow || 0, -2); }
+  if (intent.excluded.includes('research')) weights.search = 0;
+  if (intent.excluded.includes('images')) weights.vision = 0;
+  if (intent.minContext || intent.minInputTokens) weights.longctx = Math.max(weights.longctx || 0, 2);
+  return { ...base, id: hits.length === 1 ? base.id : 'custom', name: titleCase(text) || base.name, description: text, weights, requires: undefined,
+    requiresAll: [...new Set(intent.required)], minContext: intent.minContext, minInputTokens: intent.minInputTokens, noReasoning: intent.noReasoning,
+    instructions: [...hits.map(t => t.instructions), `Layout purpose and preferences (these take precedence over the general task guidance above): ${text.trim()}\nApply these preferences unless the user's current request asks otherwise.`].filter(Boolean).join('\n\n') };
 }
 
 const titleCase = (s: string) => { const t = s.trim().replace(/\s+/g, ' ').slice(0, 40); return t ? t[0].toUpperCase() + t.slice(1) : ''; };

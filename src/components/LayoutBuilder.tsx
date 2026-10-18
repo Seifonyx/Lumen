@@ -3,7 +3,7 @@
 import { Check, Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { keyVersion } from '../lib/ai/providers.js';
-import { rankForTask, taskFromText, TASKS, type Pick, type TaskProfile } from '../lib/layout-builder';
+import { modelMeetsTask, rankForTask, taskFromText, TASKS, type Pick, type TaskProfile } from '../lib/layout-builder';
 import { newLayoutId, LAYOUT_PREFIX } from '../lib/layouts';
 import { modelLabel, useStore } from '../store';
 import Modal from './Modal';
@@ -18,6 +18,8 @@ export default function LayoutBuilder({ onClose }: { onClose: () => void }) {
   const [fresh, setFresh] = useState<string[]>([]);
   const [useDefault, setUseDefault] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Keep choices even while a catalogue temporarily omits a model.
+  const choices = useRef(new Map<string, boolean>());
   const operation = useRef(0);
   const busy = useRef(false);
   const builtScope = useRef('');
@@ -30,7 +32,7 @@ export default function LayoutBuilder({ onClose }: { onClose: () => void }) {
     if (busy.current) return;
     busy.current = true;
     const token = ++operation.current, owner = scope();
-    const selected = new Set(chosen);
+    const selected = preserve ? new Map(choices.current) : new Map<string, boolean>();
     setError(null);
     setTask(t); if (!preserve) setName(t.name); setPicks(null);
     // New models appear all the time: look again before choosing.
@@ -43,16 +45,18 @@ export default function LayoutBuilder({ onClose }: { onClose: () => void }) {
     const models = useStore.getState().catalog?.models || [];
     setFresh(models.filter((m) => before.size && !before.has(m.id)).map((m) => m.id));
     setStatus(`Ranking ${models.length} models for ${t.name.toLowerCase()}…`);
-    const ranked = rankForTask(t, models, useStore.getState().modelContext(), 6);
+    const ranked = rankForTask(t, models, useStore.getState().modelContext(), preserve ? models.length : 6)
+      .filter((pick, index) => index < 6 || selected.get(pick.id) === true);
     builtScope.current = owner;
     setPicks(ranked);
-    setChosen(new Set(ranked.filter(p => !preserve || selected.has(p.id)).map((p) => p.id)));
+    if (!preserve) choices.current = new Map(ranked.map(pick => [pick.id, true]));
+    setChosen(new Set(ranked.filter(p => !preserve || selected.get(p.id) === true).map((p) => p.id)));
     setStatus(null);
   };
   const save = () => {
     if (!task || !picks) return;
-    const known = new Set(useStore.getState().catalog?.models.map(m => m.id));
-    if (builtScope.current !== scope() || picks.some(p => chosen.has(p.id) && !known.has(p.id))) {
+    const known = new Map(useStore.getState().catalog?.models.map(m => [m.id, m]));
+    if (builtScope.current !== scope() || picks.some(p => chosen.has(p.id) && (!known.has(p.id) || !modelMeetsTask(task, known.get(p.id)!)))) {
       setError('Your models changed. Check again before saving.'); return;
     }
     if (!chosen.size) return;
@@ -89,7 +93,11 @@ export default function LayoutBuilder({ onClose }: { onClose: () => void }) {
                 {picks.map((p) => (
                   <li key={p.id}>
                     <label>
-                      <input type="checkbox" checked={chosen.has(p.id)} onChange={() => setChosen((s) => { const n = new Set(s); if (n.has(p.id)) n.delete(p.id); else n.add(p.id); return n; })} />
+                      <input type="checkbox" checked={chosen.has(p.id)} onChange={(event) => {
+                        const checked = event.target.checked;
+                        choices.current.set(p.id, checked);
+                        setChosen((s) => { const next = new Set(s); if (checked) next.add(p.id); else next.delete(p.id); return next; });
+                      }} />
                       <span className="builder-pick">
                         <strong>{picks.find(item => chosen.has(item.id))?.id === p.id ? 'First: ' : ''}{modelLabel(catalog, p.id)}{fresh.includes(p.id) && <span className="builder-new">new</span>}</strong>
                         <span className="muted small">{p.why.join(' · ')}</span>

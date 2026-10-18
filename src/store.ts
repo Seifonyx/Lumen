@@ -7,6 +7,7 @@ import { AI_PROVIDERS, normalizeKeys, providerEnabled } from './lib/ai/provider-
 import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage } from './lib/api';
 import { keepModelChoice, isExcludedModel } from './lib/ai/model-status.js';
 import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
+import { previousWork } from './lib/work-intent';
 import { cacheAccountSettings, forgetLocalAccount, isPreviewUser, loadKeys, loadRemoteSettings, savedAccount, saveKeys, saveRemoteSettings, signInPreview, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { registerServiceWorker } from './pwa/register';
 import { ChatSync } from './lib/sync';
@@ -521,7 +522,7 @@ export const useStore = create<State>((set, get) => {
     if (chat.repo && chat.codingPlanMode && !coding) return;
     const { settings } = get();
     const projectFiles = settings.projects?.find((p) => p.id === chat!.projectId)?.files?.filter((f) => Boolean(f.text)) || [];
-    const projectTokens = projectFiles.reduce((n, f) => n + Math.ceil((f.text?.length || 0) / 4), 0);
+    const projectTokens = estimateTokens('', projectFiles);
     let model = modelOverride || modelFor(chat);
     if (!model) {
       get().toast('No models are enabled. Open Settings → Models.', 'error');
@@ -566,9 +567,9 @@ export const useStore = create<State>((set, get) => {
     // unless it can't handle the message. Models at their limit go to the back of the line.
     const blocked = (id: string) => (usage?.blockedUntil(id) ?? null) !== null;
     const lastUser = [...chat.messages].reverse().find((m) => m.role === 'user');
-    const recentText = [activeSummary(chat)?.text, ...liveMessages(chat).filter(m => m.role === 'user' && m.id !== lastUser?.id).slice(-2).map(m => m.text)].filter(Boolean).join('\n');
+    const recentText = previousWork(liveMessages(chat).filter(m => m.role === 'user' && m.id !== lastUser?.id).map(m => m.text), activeSummary(chat)?.text);
     const contextFiles = [...liveMessages(chat).flatMap(m => m.files || []), ...projectFiles];
-    const task = analyze({ recentText, text: lastUser?.text || '', files: contextFiles, conversationTokens: contextTokens(chat) + projectTokens, search: settings.webSearch });
+    const task = analyze({ recentText, text: lastUser?.text || '', files: contextFiles, conversationTokens: contextTokens(chat) + projectTokens, search: chat.task ? chat.task.search : settings.webSearch });
     const quickReply = model === AUTO && task.quick && !task.search && !chat.repo && !chat.assistant && !layout && !toolRequest && contextTokens(chat) + projectTokens < 4000
       // Short follow-ups can continue a complex job. Keep the model's normal reasoning.
       && !/^(?:yes|ok(?:ay)?|go ahead|do it|continue|proceed|sure)\b/i.test(lastUser?.text.trim() || '');
@@ -665,7 +666,11 @@ export const useStore = create<State>((set, get) => {
     const memoryNote = masker ? masker.mask(rawMemory).text : rawMemory;
     const chatTask = chat.task;
     const searchOn = !research && (chatTask ? chatTask.search : settings.webSearch);
-    makeBody = () => buildChatBody({ model: chosen, fallbacks, messages: wire, options: { modelContexts: Object.fromEntries(catalogModels.map(m => [m.id, m.context])), quickReply: quickReply && !research, thinkingModels, preferredModels: layoutModels, search: searchOn, requireSearch: Boolean(chatTask?.search), codeExecution: Boolean(lastUser?.codeExecution), customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: masker ? masker.mask(workspaceNote).text : workspaceNote } });
+    makeBody = () => buildChatBody({ model: chosen, fallbacks, messages: wire, options: {
+      modelCapabilities: requestCapabilities(get().catalog, [chosen, ...fallbacks]),
+      blockedModels: [chosen, ...fallbacks].filter(id => blocked(id) || (remaining(get().usage, id) ?? Infinity) <= 0),
+      quickReply: quickReply && !research, thinkingModels, preferredModels: layoutModels, search: searchOn && task.search, requireSearch: Boolean(chatTask?.search), codeExecution: Boolean(lastUser?.codeExecution), customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: masker ? masker.mask(workspaceNote).text : workspaceNote,
+    } });
     body = makeBody();
 
     if (replyController.signal.aborted || generation !== accountGeneration || planRepo(get().chats.find(c => c.id === chatId)?.repo) !== repoScope) return;
@@ -1685,7 +1690,7 @@ export const useStore = create<State>((set, get) => {
         })),
         inputWire,
       ];
-      const projectTokens = projectFiles.reduce((n, f) => n + Math.ceil((f.text?.length || 0) / 4), 0);
+      const projectTokens = estimateTokens('', projectFiles);
       const lastInput = wire[wire.length - 1];
       if (projectFiles.length) lastInput.files = [...(lastInput.files || []), ...projectFiles.map(({ kind, name, mime, text: fileText }) => ({ kind, name, mime, text: fileText }))];
       const masker = settings.privacyShield ? new Masker() : null;
@@ -1706,6 +1711,7 @@ export const useStore = create<State>((set, get) => {
       const bodyFor = (model: string) => buildChatBody({
         model, fallbacks: [], messages: wire,
         options: {
+          modelCapabilities: requestCapabilities(get().catalog, [model]),
           search: settings.webSearch,
           customInstructions: masker ? masker.mask(custom).text : custom,
           memory: masker ? masker.mask(rawMemory).text : rawMemory,
@@ -2213,7 +2219,7 @@ ${done.map((a, i) => `--- Answer ${letters[i]} (${modelLabel(catalog, a.model)})
           assistant: chat.assistant,
           projectId: chat.projectId,
           documents: chat.documents?.map(doc => ({ ...doc })),
-          summary: { ...out.summary, upTo: null, from: chat.title, saved: Math.max(0, contextTokens(chat) - Math.ceil(out.summary.text.length / 4)) },
+          summary: { ...out.summary, upTo: null, from: chat.title, saved: Math.max(0, contextTokens(chat) - estimateTokens(out.summary.text)) },
         };
         set((s) => ({ chats: [next, ...s.chats.filter((c) => !(c.messages.length === 0 && !c.summary && !c.documents?.length))], currentId: next.id, sidebarOpen: false }));
       } catch {
@@ -2413,6 +2419,11 @@ function dropStale(summary: ChatSummary | undefined, kept: Message[]): ChatSumma
 }
 
 export const selectCurrentChat = (s: State) => s.chats.find((c) => c.id === s.currentId) || null;
+
+function requestCapabilities(catalog: Catalog | null, ids: string[]) {
+  const planned = new Set(ids);
+  return Object.fromEntries((catalog?.models || []).filter(m => planned.has(m.id)).map(({id,context,vision,pdf,search}) => [id,{context,vision,pdf,search}]));
+}
 
 export function modelInfo(catalog: Catalog | null, id?: string): ModelInfo | undefined {
   return catalog?.models.find((m) => m.id === id);

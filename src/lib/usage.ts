@@ -36,6 +36,9 @@ export interface UsageView {
 
 // Google's free quotas reset at midnight Pacific time; OpenRouter's, Groq's and Cerebras's at midnight UTC.
 const TZ = Object.fromEntries(PROVIDERS.map(p => [p, p === 'gemini' ? 'America/Los_Angeles' : 'UTC'])) as Record<Provider, string>;
+const DAY_FORMATTERS = Object.fromEntries(['UTC', 'America/Los_Angeles'].map(timeZone => [timeZone,
+  new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }),
+]));
 
 export const providerOf = (id: string): Provider => {
   const p = id.split(':')[0] as Provider;
@@ -44,7 +47,7 @@ export const providerOf = (id: string): Provider => {
 const enc = (id: string) => id.replace(/[^A-Za-z0-9]/g, '_');
 
 export function dayKey(p: Provider, now = new Date()) {
-  return `${p}-${new Intl.DateTimeFormat('en-CA', { timeZone: TZ[p], year: 'numeric', month: '2-digit', day: '2-digit' }).format(now)}`;
+  return `${p}-${DAY_FORMATTERS[TZ[p]].format(now)}`;
 }
 
 /** The next midnight in the provider's time zone, as a timestamp. */
@@ -63,15 +66,22 @@ type DayDoc = {
   b?: Record<string, { id: string; until: number; quota?: number }>;
 };
 type QuotaDoc = Record<string, { id: string; quota: number }>;
+type Counts = { requests: number; input: number; output: number };
 
 export class UsageTracker {
   private days = Object.fromEntries(PROVIDERS.map(p => [p, {}])) as Record<Provider, DayDoc>;
+  /** Minimum usage observed on this device, independent of Firestore availability. */
+  private localDays = Object.fromEntries(PROVIDERS.map(p => [p, {}])) as Record<Provider, DayDoc>;
+  private dayKeys = Object.fromEntries(PROVIDERS.map(p => [p, dayKey(p)])) as Record<Provider, string>;
   private quotas: QuotaDoc = {};
+  private localQuotas: QuotaDoc = {};
   private shortBlocks = new Map<string, number>();
   private unsubs: Unsubscribe[] = [];
   private dayTimer: ReturnType<typeof setTimeout> | undefined;
-  /** counts not yet sent (sent in batches when the free-plan guard asks for it) */
-  private pending = new Map<string, { requests: number; input: number; output: number }>();
+  /** Unsent counts retain their original provider/date, including after a rejected write. */
+  private pending = new Map<string, Map<string, Counts>>();
+  private inFlight = new Set<string>();
+  private active = false;
   private flushTimer: ReturnType<typeof setTimeout> | undefined;
   private stopQuota: (() => void) | null = null;
   openrouterDaily: number | null = null;
@@ -82,13 +92,38 @@ export class UsageTracker {
     return doc(db, 'modelRouter', this.uid, 'usage', id);
   }
 
+  private currentDay(p: Provider) {
+    const key = dayKey(p);
+    if (this.dayKeys[p] !== key) {
+      this.dayKeys[p] = key;
+      this.days[p] = {};
+      this.localDays[p] = {};
+    }
+    return key;
+  }
+
+  private addPending(key: string, id: string, delta: Counts) {
+    const batch = this.pending.get(key) || new Map<string, Counts>();
+    const previous = batch.get(id) || { requests: 0, input: 0, output: 0 };
+    batch.set(id, { requests: previous.requests + delta.requests, input: previous.input + delta.input, output: previous.output + delta.output });
+    this.pending.set(key, batch);
+  }
+
+  private scheduleFlush() {
+    this.flushTimer ??= setTimeout(() => this.flush(), 60_000);
+  }
+
   /** Providers whose daily counts are watched (each costs a Firebase read when the app opens). */
   private watched = new Set<Provider>(['gemini', 'openrouter']);
   private dayUnsubs = new Map<Provider, () => void>();
 
   private watch(p: Provider) {
     if (this.dayUnsubs.has(p)) return;
-    const unsub = onSnapshot(this.ref(dayKey(p)), (s) => {
+    const key = this.currentDay(p);
+    const unsub = onSnapshot(this.ref(key), { includeMetadataChanges: true }, (s) => {
+      // Local Firestore echoes already contain our in-flight increments. Wait for the
+      // acknowledged snapshot instead of counting the same observation twice.
+      if (this.currentDay(p) !== key || s.metadata.hasPendingWrites) return;
       if (!s.metadata.fromCache && !s.metadata.hasPendingWrites) quota.count('reads');
       this.days[p] = (s.data() as DayDoc) || {};
       this.emit();
@@ -106,10 +141,9 @@ export class UsageTracker {
 
   start() {
     this.stop();
-    if (this.uid.startsWith('preview-')) {
-      this.emit();
-      return;
-    }
+    this.active = true;
+    this.emit();
+    if (this.uid.startsWith('preview-')) return;
     for (const p of this.watched) this.watch(p);
     this.unsubs.push(
       onSnapshot(this.ref('quotas'), (s) => {
@@ -127,6 +161,7 @@ export class UsageTracker {
   }
 
   stop() {
+    this.active = false;
     this.flush();
     this.unsubs.forEach((u) => u());
     this.unsubs = [];
@@ -138,18 +173,19 @@ export class UsageTracker {
   }
 
   record(id: string, delta: { requests?: number; input?: number; output?: number }) {
-    const p = this.pending.get(id) || { requests: 0, input: 0, output: 0 };
-    p.requests += delta.requests || 0;
-    p.input += delta.input || 0;
-    p.output += delta.output || 0;
-    this.pending.set(id, p);
+    const provider = providerOf(id);
+    const key = this.currentDay(provider);
+    const previous = this.view().models[id];
+    const d = { requests: delta.requests || 0, input: delta.input || 0, output: delta.output || 0 };
+    (this.localDays[provider].m ??= {})[enc(id)] = {
+      id, requests: (previous?.requests || 0) + d.requests, input: (previous?.input || 0) + d.input, output: (previous?.output || 0) + d.output,
+    };
+    if (!this.uid.startsWith('preview-')) this.addPending(key, id, d);
     const level = quota.level();
     if (level === 'normal') this.flush();
-    else {
-      // Close to Firebase's free limit: send counts once a minute (or after the reset when paused).
-      if (level === 'slow') this.flushTimer ??= setTimeout(() => this.flush(), 60_000);
-      this.emit();
-    }
+    // Close to Firebase's free limit: send counts once a minute (or after the reset when paused).
+    else if (level === 'slow' && this.pending.size) this.scheduleFlush();
+    this.emit();
   }
 
   private flush() {
@@ -160,19 +196,43 @@ export class UsageTracker {
       return;
     }
     if (!this.pending.size || quota.level() === 'paused') return;
-    const byDay = new Map<string, Record<string, unknown>>();
-    for (const [id, d] of this.pending) {
-      const fields: Record<string, unknown> = { id };
-      if (d.requests) fields.requests = increment(d.requests);
-      if (d.input) fields.input = increment(d.input);
-      if (d.output) fields.output = increment(d.output);
-      const key = dayKey(providerOf(id));
-      byDay.set(key, { ...(byDay.get(key) || {}), [enc(id)]: fields });
-    }
-    this.pending.clear();
-    for (const [key, m] of byDay) {
+    const visible = this.view();
+    for (const [key, batch] of this.pending) {
+      if (this.inFlight.has(key)) continue;
+      const m: Record<string, unknown> = {};
+      for (const [id, d] of batch) {
+        const fields: Record<string, unknown> = { id };
+        if (d.requests) fields.requests = increment(d.requests);
+        if (d.input) fields.input = increment(d.input);
+        if (d.output) fields.output = increment(d.output);
+        m[enc(id)] = fields;
+        const provider = providerOf(id);
+        if (this.currentDay(provider) === key) {
+          const u = visible.models[id];
+          (this.localDays[provider].m ??= {})[enc(id)] = { id, requests: u.requests, input: u.input, output: u.output };
+        }
+      }
+      // New observations go into a different batch while this immutable batch is in flight.
+      this.pending.delete(key);
+      this.inFlight.add(key);
       quota.count('writes');
-      void setDoc(this.ref(key), { m }, { merge: true }).catch(() => {});
+      void setDoc(this.ref(key), { m }, { merge: true }).then(() => {
+        this.inFlight.delete(key);
+        if (this.pending.size) {
+          if (!this.active || quota.level() === 'normal') this.flush();
+          else if (quota.level() === 'slow') this.scheduleFlush();
+        }
+      }).catch((error: unknown) => {
+        this.inFlight.delete(key);
+        const code = (error as { code?: string } | null)?.code;
+        // Firestore retries transport failures itself. Only replay definite server
+        // rejections; an ambiguous failed acknowledgment may already have committed.
+        if (code && /^(?:firestore\/)?(?:permission-denied|unauthenticated|failed-precondition|resource-exhausted|aborted)$/.test(code)) {
+          for (const [id, d] of batch) this.addPending(key, id, d);
+        }
+        if (this.active && this.pending.size && quota.level() !== 'paused') this.scheduleFlush();
+        this.emit();
+      });
     }
   }
 
@@ -181,9 +241,13 @@ export class UsageTracker {
     const now = Date.now();
     if (limit.scope === 'day') {
       const until = limit.resetAt && limit.resetAt > now ? limit.resetAt : nextReset(p);
+      const key = this.currentDay(p);
+      const blocks = (this.localDays[p].b ??= {});
+      blocks[enc(id)] = { id, until: Math.max(until, blocks[enc(id)]?.until || 0), ...(limit.quota ? { quota: limit.quota } : {}) };
+      if (limit.quota && !(p === 'openrouter' && id.endsWith(':free'))) this.localQuotas[enc(id)] = { id, quota: limit.quota };
       if (!this.uid.startsWith('preview-')) {
         quota.count('writes');
-        void setDoc(this.ref(dayKey(p)), { b: { [enc(id)]: { id, until, ...(limit.quota ? { quota: limit.quota } : {}) } } }, { merge: true }).catch(() => {});
+        void setDoc(this.ref(key), { b: { [enc(id)]: blocks[enc(id)] } }, { merge: true }).catch(() => {});
         if (limit.quota && !(p === 'openrouter' && id.endsWith(':free'))) {
           quota.count('writes');
           void setDoc(this.ref('quotas'), { [enc(id)]: { id, quota: limit.quota } }, { merge: true }).catch(() => {});
@@ -200,45 +264,50 @@ export class UsageTracker {
   blockedUntil(id: string): number | null {
     const now = Date.now();
     const p = providerOf(id);
-    const day = this.days[p].b?.[enc(id)]?.until || 0;
-    const short = this.shortBlocks.get(id) || 0;
     // When the shared OpenRouter allowance is used up, every free model is blocked.
     const v = this.view();
     const pool = p === 'openrouter' && id.endsWith(':free') && v.openrouter.limit && v.openrouter.used >= v.openrouter.limit ? v.openrouter.resetAt : 0;
-    const until = Math.max(day, short, pool);
+    const until = Math.max(v.models[id]?.blockedUntil || 0, pool);
     return until > now ? until : null;
   }
 
   view(): UsageView {
     const models: Record<string, ModelUsage> = {};
     const now = Date.now();
-    let orUsed = 0;
     for (const p of PROVIDERS) {
+      const key = this.currentDay(p);
       for (const m of Object.values(this.days[p].m || {})) {
         models[m.id] = { id: m.id, requests: m.requests || 0, input: m.input || 0, output: m.output || 0, quota: null, blockedUntil: null, blockScope: null };
-        if (p === 'openrouter' && m.id.endsWith(':free')) orUsed += m.requests || 0;
       }
-      for (const b of Object.values(this.days[p].b || {})) {
+      for (const [id, d] of this.pending.get(key) || []) {
+        const u = (models[id] ??= { id, requests: 0, input: 0, output: 0, quota: null, blockedUntil: null, blockScope: null });
+        u.requests += d.requests;
+        u.input += d.input;
+        u.output += d.output;
+      }
+      // The server snapshot may already include our sent counts. A local floor
+      // preserves them without adding them twice, including when sync is unavailable.
+      // Concurrent remote usage is a lower bound until the write is acknowledged.
+      for (const m of Object.values(this.localDays[p].m || {})) {
+        const u = (models[m.id] ??= { id: m.id, requests: 0, input: 0, output: 0, quota: null, blockedUntil: null, blockScope: null });
+        u.requests = Math.max(u.requests, m.requests || 0);
+        u.input = Math.max(u.input, m.input || 0);
+        u.output = Math.max(u.output, m.output || 0);
+      }
+      for (const b of [...Object.values(this.days[p].b || {}), ...Object.values(this.localDays[p].b || {})]) {
         const u = (models[b.id] ??= { id: b.id, requests: 0, input: 0, output: 0, quota: null, blockedUntil: null, blockScope: null });
-        if (b.until > now) {
+        if (b.until > now && b.until > (u.blockedUntil || 0)) {
           u.blockedUntil = b.until;
           u.blockScope = 'day';
         }
         if (b.quota && p === 'gemini') u.quota = b.quota;
       }
     }
-    // Counts waiting to be sent.
-    for (const [id, d] of this.pending) {
-      const u = (models[id] ??= { id, requests: 0, input: 0, output: 0, quota: null, blockedUntil: null, blockScope: null });
-      u.requests += d.requests;
-      u.input += d.input;
-      u.output += d.output;
-      if (id.startsWith('openrouter:') && id.endsWith(':free')) orUsed += d.requests;
-    }
-    for (const q of Object.values(this.quotas)) {
+    for (const q of Object.values({ ...this.quotas, ...this.localQuotas })) {
       const u = (models[q.id] ??= { id: q.id, requests: 0, input: 0, output: 0, quota: null, blockedUntil: null, blockScope: null });
       u.quota ??= q.quota;
     }
+    const orUsed = Object.values(models).filter(m => m.id.startsWith('openrouter:') && m.id.endsWith(':free')).reduce((total, m) => total + m.requests, 0);
     for (const [id, until] of this.shortBlocks) {
       if (until <= now) continue;
       const u = (models[id] ??= { id, requests: 0, input: 0, output: 0, quota: null, blockedUntil: null, blockScope: null });

@@ -1,4 +1,6 @@
 // Short, device-local cooldowns for transient failures. Never retire a model or share these.
+import { isUnavailableFailure } from './model-status.js';
+
 const cooldowns = new Map();
 const timings = new Map();
 const MAX_TIMINGS = 128;
@@ -52,10 +54,11 @@ export function reliability(id) {
   return n >= 2 ? (r.ok * fade + 1) / (n + 2) : null; // gently pulled toward 50% until there's history
 }
 
-export function noteFailure(id, status) {
+export function noteFailure(id, status, message = '') {
   if (status >= 500 || ['timeout', 'network', 'empty'].includes(status)) cooldowns.set(id, Date.now() + 90_000);
-  // Rate limits say nothing about quality; anything else counts against the model.
-  if (status !== 429) noteOutcome(id, false);
+  // Quota and rejected credentials say nothing about a model's ability to answer.
+  // Explicit model-access failures still matter, even when the provider uses 403.
+  if (status !== 429 && status !== 401 && (status !== 403 || isUnavailableFailure(status, message))) noteOutcome(id, false);
 }
 export function noteSuccess(id) { cooldowns.delete(id); noteOutcome(id, true); }
 export function clearHealth() { cooldowns.clear(); timings.clear(); }

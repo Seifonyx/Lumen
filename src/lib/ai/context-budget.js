@@ -1,4 +1,7 @@
 // Conservative estimates, not a provider tokenizer. Leave room for serialization and an answer.
+// A bounded last resort when a saved model's catalogue could not be recovered.
+export const UNKNOWN_CONTEXT = 8192;
+
 export function textTokens(text = '') {
   let wide = 0;
   for (const char of text) if (char.codePointAt(0) > 127) wide++;

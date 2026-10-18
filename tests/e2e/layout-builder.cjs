@@ -9,11 +9,28 @@ const g = (name, label) => ({ name: `models/${name}`, displayName: label, suppor
   const browser = await (process.env.MR_WEBKIT?webkit:chromium).launch();
   try { for (const width of [1280,390]) {
     const ctx = await browser.newContext({ viewport: { width, height: 860 }, isMobile:width<900, hasTouch:width<900, serviceWorkers: 'block' });
-    await profile(ctx, 'layout-builder-'+width, 'light');
-    let listed = 0;
+    const uid = 'layout-builder-'+width;
+    await profile(ctx, uid, 'light');
+    // A failing original free provider keeps reconnect recovery active. No real credentials or requests.
+    await ctx.addInitScript(uid => {
+      const key = `mr.account.${uid}`, account = JSON.parse(localStorage.getItem(key));
+      if (account) localStorage.setItem(key, JSON.stringify({ ...account, openrouterKey: 'fixture-openrouter' }));
+    }, uid);
+    await ctx.route('**/openrouter.ai/**', r => r.fulfill({ status: 503, json: { error: { message: 'Fixture provider temporarily unavailable' } } }));
+    let listed = 0, catalogMode = 'initial';
     await ctx.route('**/generativelanguage.googleapis.com/**', (r) => {
       if (r.request().url().includes('/models?')) {
         listed++;
+        if (catalogMode.startsWith('selection')) {
+          let models = [g('gemini-2.5-pro', 'Choice Pro'), g('gemini-flash-latest', 'Choice Flash'), g('gemini-flash-lite-latest', 'Choice Lite'), g('gemma-4-27b-it', 'Choice Gemma 27'), g('gemma-4-12b-it', 'Choice Gemma 12'), g('gemma-4-4b-it', 'Choice Gemma 4')];
+          if (catalogMode !== 'selection-initial') models.push(g('gemini-3-pro', 'Fresh Pro'));
+          if (catalogMode === 'selection-hidden') models = models.filter(m => !m.name.includes('flash-lite'));
+          return r.fulfill({ json: { models } });
+        }
+        if (catalogMode.startsWith('capacity')) {
+          const changed = catalogMode === 'capacity-reduced';
+          return r.fulfill({ json: { models: [{ ...g('gemini-flash-latest', changed ? 'Capacity reduced' : 'Capacity ready'), inputTokenLimit: changed ? 16_000 : 262_144 }] } });
+        }
         // A new model shows up after the app first loaded its list.
         const models = [g('gemini-flash-latest', 'Gemini Flash'), g('gemini-flash-lite-latest', 'Gemini Flash-Lite'), g('gemma-4-31b-it', 'Gemma 4')];
         if (listed > 1) models.push(g('gemini-3-pro', 'Gemini 3 Pro'));
@@ -38,7 +55,7 @@ const g = (name, label) => ({ name: `models/${name}`, displayName: label, suppor
     const first = page.locator('.builder-picks li').first();
     assert.match(await first.textContent(), /Gemini 3 Pro/, 'the new strongest model comes first');
     assert.match(await first.textContent(), /new/);
-    assert.match(await first.textContent(), /strongest|code/);
+    assert.match(await first.textContent(), /family|code/);
     console.log('PASS checks for new models, then ranks them for the task with reasons');
 
     // Untick one, use for new chats, save.
@@ -70,7 +87,47 @@ const g = (name, label) => ({ name: `models/${name}`, displayName: label, suppor
     await page.getByRole('button',{name:'Build',exact:true}).click();
     await page.locator('.builder-picks li').first().waitFor();
     assert.equal(await page.locator('.builder-picks li',{hasText:'Gemma 4'}).count(),0,'Research plus screenshots requires both search and vision');
-    console.log(`PASS ${width}px ${process.env.MR_WEBKIT?'webkit':'chromium'}: mixed capabilities and preserved recheck choices`);
+    await page.getByRole('dialog', { name: 'Build a layout', exact: true }).getByRole('button', { name: 'Close', exact: true }).click();
+
+    catalogMode = 'selection-initial';
+    await page.getByRole('button', { name: 'Build for a task' }).click();
+    await page.locator('.builder-tasks .writing-chip', { hasText: 'Max coding' }).click();
+    await page.locator('.builder-picks li').last().waitFor();
+    assert.equal(await page.locator('.builder-picks li').count(), 6);
+    catalogMode = 'selection-new';
+    await page.getByRole('button', { name: 'Check again', exact: true }).click();
+    await page.locator('.builder-picks li', { hasText: 'Fresh Pro' }).waitFor();
+    assert.equal(await page.locator('.builder-picks li').count(), 7, 'A new recommendation cannot silently displace an eligible selected model');
+    for (const label of ['Choice Pro', 'Choice Flash', 'Choice Lite', 'Choice Gemma 27', 'Choice Gemma 12', 'Choice Gemma 4']) {
+      assert.equal(await page.locator('.builder-picks li', { hasText: label }).locator('input').isChecked(), true, `${label} remains selected`);
+    }
+    assert.equal(await page.locator('.builder-picks li', { hasText: 'Fresh Pro' }).locator('input').isChecked(), false, 'Fresh recommendations need an explicit choice on recheck');
+    await page.locator('.builder-picks li', { hasText: 'Choice Lite' }).locator('input').uncheck();
+    catalogMode = 'selection-hidden';
+    await page.getByRole('button', { name: 'Check again', exact: true }).click();
+    await page.locator('.builder-picks li').first().waitFor();
+    assert.equal(await page.locator('.builder-picks li', { hasText: 'Choice Lite' }).count(), 0);
+    catalogMode = 'selection-new';
+    await page.getByRole('button', { name: 'Check again', exact: true }).click();
+    await page.locator('.builder-picks li', { hasText: 'Choice Lite' }).waitFor();
+    assert.equal(await page.locator('.builder-picks li', { hasText: 'Choice Lite' }).locator('input').isChecked(), false, 'A disappeared and returning unchecked model stays unchecked');
+    await page.getByRole('dialog', { name: 'Build a layout', exact: true }).getByRole('button', { name: 'Close', exact: true }).click();
+
+    catalogMode = 'capacity-valid';
+    await page.getByRole('button', { name: 'Build for a task' }).click();
+    await page.getByLabel('Describe the work').fill('Review code with a 200k token context');
+    await page.getByRole('button', { name: 'Build', exact: true }).click();
+    await page.locator('.builder-picks li', { hasText: 'Capacity ready' }).waitFor();
+    catalogMode = 'capacity-reduced';
+    // The app's ordinary reconnect refresh changes metadata while the original result remains open.
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+    await page.locator('.builder-picks li', { hasText: 'Capacity reduced' }).waitFor();
+    await page.getByRole('button', { name: 'Save layout', exact: true }).click();
+    await page.getByRole('alert').filter({ hasText: 'Your models changed' }).waitFor();
+    await page.getByRole('button', { name: 'Check again', exact: true }).click();
+    await page.getByText('No connected model meets all the requirements.', { exact: false }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Save layout', exact: true }).isDisabled(), true);
+    console.log(`PASS ${width}px ${process.env.MR_WEBKIT?'webkit':'chromium'}: capabilities, retained choices, returned deselections and stale-capacity save rejection`);
     assert.deepEqual(errors, []);
     await ctx.close();
   }} finally { await browser.close(); }

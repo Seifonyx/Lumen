@@ -164,7 +164,7 @@ const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/6
         const list = await projects.boundingBox();
         await touch('touchStart', list.x + list.width / 2, list.y + 22);
         await touch('touchMove', list.x + list.width / 2, list.y + list.height - 6);
-        await page.waitForTimeout(350);
+        await page.waitForFunction(el => el.scrollTop > 30, await projects.elementHandle(), {timeout:3000});
         assert.ok(await projects.evaluate(el => el.scrollTop) > 30, 'A held finger at the inner project list edge scrolls to more options');
         await touch('touchMove', width - 12, 120);
         await touch('touchEnd', width - 12, 120);

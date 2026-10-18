@@ -1,5 +1,30 @@
 # Dynamic Model Picker implementation plan
 
+## Permanent amendment: Progressive Verified Deployment Policy
+
+Added by the user on 2026-10-18. This execution-policy amendment supplements MASTER_REQUIREMENTS.md without replacing or weakening it. It remains active for every future agent and session unless the user explicitly changes it.
+
+Every completed, independently production-ready milestone must be evaluated for immediate integration into main and production deployment. Do not wait for the entire overhaul merely because unrelated phases remain unfinished. Never merge incomplete, unverified, unsafe, or dependency-breaking work to accelerate release.
+
+For each milestone:
+
+1. Determine independent releasability and unfinished dependencies.
+2. Verify relevant tests, type checks, builds, and required CI checks.
+3. Review security, privacy, compatibility, and regression risks.
+4. Confirm no unresolved dependency on unfinished work.
+5. Understand deployment and rollback procedures.
+6. Merge through the authorized GitHub workflow, respecting branch protections.
+7. Verify the actual production deployment.
+8. Test that the live application remains functional.
+9. Record the merge commit, deployment status, verification evidence, and outstanding work.
+10. Continue the next phase without restarting the project.
+
+Keep unfinished work isolated. Where practical, use reviewable commits or a dedicated release branch to release only a verified subset. A pushed branch, successful local build, or green subset of tests is not production-readiness proof. Never bypass protections, force-push, disable checks, or overwrite unrelated changes.
+
+Future agents must track committed, pushed, merged, and deployed states separately; record the exact latest verified production commit separately from the latest feature-branch commit; document specific release blockers when a milestone is not ready; and continue remaining phases after each deployment. Before handoff, update this file and the companion plan/handoff, preserve the full master requirements and this policy, synchronize coherent verified commits safely, and record uncommitted/unverified work and the exact next task.
+
+
+
 Authoritative scope: [MASTER_REQUIREMENTS.md](MASTER_REQUIREMENTS.md), preserved verbatim from the user's upload. Operational state: [AI_HANDOFF.md](AI_HANDOFF.md). Existing behavior: PRODUCT.md; visual rules: DESIGN.md.
 
 Status vocabulary: **Not started**, **In progress**, **Implemented but unverified**, **Verified**, **Blocked**, **Deferred with justification**. Visiting a phase does not complete it. All requirements remain in scope unless an explicit, documented architectural applicability decision explains otherwise.
@@ -20,19 +45,19 @@ Use a working branch for incomplete milestones. Main updates require the relevan
 | P01-A scoped registry | §§2,4,5,13,15 | P00 | Provider/endpoint identity, credential generation, normalized capabilities, provenance/freshness and availability; no stale credentials/account leakage. | Verified |
 | P01-B adapter discovery | §§2,4,15 | P01-A | Actual supported list APIs, pagination/deduplication, dynamic new models; truthful documented declarations where no list API exists; no fabricated specs. | Verified |
 | P01-C reconciliation | §§2,4,9 | P01-A/B | Last-known-good for transient errors only; definitive permission failure never revives old models; removals never erase fixed layouts or explicit choices. | Verified |
-| P01-D user declarations | §§2,4,5,13,15–16 | P01/P03 | Add/remove declared models and fill unknown metadata for supported endpoints; API/documented facts outrank user assumptions, authentication failure cannot resurrect declarations, live propagation and private settings persistence verified. Standalone normalization/merge and tests implemented; integration remains. | In progress |
+| P01-D user declarations | §§2,4,5,13,15–16 | P01/P03 | Add/remove declared models and fill unknown metadata for supported endpoints; API/documented facts outrank user assumptions, authentication failure cannot resurrect declarations, live propagation and private settings persistence verified. UI/raw-derived registry integration implemented locally; Chromium lifecycle flow passed, final current checks remain. | Implemented but unverified |
 | P02-A refresh coordinator | §§2–3,14 | P01 | Configuration events, manual refresh, TTL, lifecycle/resume/online, active-runtime refresh, bounded concurrency/retries/backoff/jitter, in-flight dedupe and out-of-order protection. | Verified |
 | P02-B persistence/sync | §§3–5,13 | P01/P02-A | Credential/account/endpoint-scoped cache, safe invalidation, metadata updates propagate without remounts or edit loss. Fake-clock and account/key-race tests. | Verified |
 | P03-A shared eligibility | §§4–6,8–10,15 | P01/P02 | One capability/context/permission contract used by all applicable selection and request paths; strict requirements precede scoring; unknowns bounded. Core chat/layout/comparison verified; remaining helper callers tracked in P06-B. | In progress |
 | P03-B Auto policy/evidence | §§6,14,16 | P03-A | Quality/speed/cost/balanced preferences, ambiguity/mixed-task handling, unknown-model uncertainty, metadata-driven newcomers; deterministic task cases and honest ranking explanations. Actual answer benchmarks remain distinct from routing mocks. | Verified |
 | P04-A layout lifecycle | §7 | P03 | Creation/edit/delete/duplicate/save/load, presets, fixed and Auto assignments, roles/preferences/fallbacks, registry updates and missing assignments; tested backward compatibility/migrations. | In progress |
 | P04-B layout execution design | §§7,10 | P04-A | Applicability documented in docs/MODEL_PICKER_ARCHITECTURE.md: preserve Auto/order sets, add saved constraints/priority/fallback scopes, use existing parallel comparison → conditional synthesis stage graph, and recover individual failed stages in P07. | In progress |
-| P05-A recovery contract | §§8,11,13–15 | P03 | Shared classified failures and mode-specific policy; cancellation/terminal failures do not reroute, strict manual/layout constraints respected; request/attempt deadlines and bounded spend. Credential scope cancellation/retry and helper-body isolation implemented; typed failures remain. | In progress |
-| P05-B recovery/discovery integration | §§3,8 | P02/P05-A | Model/capability failure triggers bounded invalidation without refresh/retry recursion; provider health, cooldown/circuit state and ordered candidate selection tested. | Not started |
+| P05-A recovery contract | §§8,11,13–15 | P03 | Shared classified failures and mode-specific policy; cancellation/terminal failures do not reroute, strict manual/layout constraints respected; request/attempt deadlines and bounded spend. Credential scope cancellation/retry and helper-body isolation implemented; classified recovery and metadata invalidation now integrated locally; final review variants/tests remain. | In progress |
+| P05-B recovery/discovery integration | §§3,8 | P02/P05-A | Model/capability failure triggers bounded invalidation without refresh/retry recursion; provider health, cooldown/circuit state and ordered candidate selection tested. Local targeted expiry/throttle implemented; full checks remain. | Implemented but unverified |
 | P06-A manual selection | §§5,9,12 | P03/P05 | Stable explicit selection through refresh/restart; compatibility/availability feedback; substitutions require existing explicit fallback authorization. | Not started |
-| P06-B all execution callers | §§5,8,10 | P05 | Audit/fix chat, compare, synthesis, canvas, side chat, tasks, summaries and tools. Each mode uses appropriate shared metadata/policy. | Not started |
-| P07-A multi-model runtime | §§7,10 | P04/P05/P06 | Bounded concurrency, recover only failed stages, explicit roles/dependencies/context transfer, preserve partial successes, safe cancellation; no unexpected paid calls. | Not started |
-| P08-A streaming/state | §§8,10–11 | P05/P07 | Before/after-visible-output failure distinction, no duplicate output or seamless false continuations, no stale state/orphans; tool side effects never replayed blindly. | Not started |
+| P06-B all execution callers | §§5,8,10 | P05 | Audit/fix chat, compare, synthesis, canvas, side chat, tasks, summaries and tools. Each mode uses appropriate shared metadata/policy. Shared helper pool/title/research integration is local and needs final checks. | In progress |
+| P07-A multi-model runtime | §§7,10 | P04/P05/P06 | Bounded concurrency, recover only failed stages, explicit roles/dependencies/context transfer, preserve partial successes, safe cancellation; no unexpected paid calls. Immutable stage retry/synthesis/UI integrated locally; browser verification pending. | Implemented but unverified |
+| P08-A streaming/state | §§8,10–11 | P05/P07 | Before/after-visible-output failure distinction, no duplicate output or seamless false continuations, no stale state/orphans; tool side effects never replayed blindly. Completion-marker/partial-output fixes integrated, focused tests passed; whole-app regression pending. | In progress |
 | P09-A shared selection UX | §§5,7,9,12 | P01–P08 | Search/group/filter/status/preference/layout workflows, stable open edits during refresh, phone/desktop keyboard/focus/touch/scroll/a11y. Preserve established styling. | Not started |
 | P10-A security review | §§13,15–17 | continuous | Credential/logging/storage scope, relay SSRF/allowed hosts, permission/billing/privacy boundaries and custom endpoint declarations reviewed with negative tests. Credential-boundary and scoped health-record fixes tested; final review remains. | In progress |
 | P10-B performance/cost | §§3,6,10,14 | continuous | Measure discovery requests/concurrency, registry/routing overhead and UI update cost where practical; no speculative complexity or hidden extra inference calls. | Not started |
@@ -74,3 +99,15 @@ For each implementation milestone record exact commands/results in AI_HANDOFF.md
 - P01-D pure declaration normalization/merge (12 focused tests) and P07 reusable comparison-stage result/cancellation helper (11 focused tests) are ready but not integrated. Their existence does not complete either phase. P08 protocol-completion review found missing termination-marker enforcement; patch and red tests are outside tracked source until integration.
 
 - Layout/credential milestone locally verified: four focused Chromium suites passed cleanly (102s); three WebKit suites passed with a navigation retry, whose optional stylesheet-loader failure was reproduced and fixed. Final full workspace type/58-unit/build check passed; one Chromium formatting-recovery suite and two WebKit suites (formatting recovery + navigation matrix,44s) passed cleanly. Four new pure modules remain unintegrated and are excluded from this milestone’s claim of completed product behavior. Review accepted the runtime constraint fix. See AI_HANDOFF.md for exact logs and remaining integration steps.
+
+## Progressive release ledger (authoritative latest state)
+
+| Item | Exact revision/state | Evidence / next action |
+|---|---|---|
+| Latest verified production | `7fbdde2246a546a980744e63b7d88655dad6d8de` | Prior live release; retain until the new deployment is actually verified. |
+| PR19 milestone source | `07efe214ef6c94aad2ddd7e29354eb3a4d9b1734` | Exact-head full CI39136235729: all3 jobs passed; independently releasable scoped registry/selection/layout/credential work. |
+| Latest merged milestone | `02c322da48368d6277e5eb8b599edfead7f92e0e` | PR19 merged through normal GitHub workflow on2026-10-18; no bypass. |
+| Pending production deployment | Deploy39157498252, head `02c322da48368d6277e5eb8b599edfead7f92e0e` | Verify workflow success + live asset/core-flow behavior before recording deployed. |
+| Ongoing branch | `feat/model-picker-recovery`, base `02c322da48368d6277e5eb8b599edfead7f92e0e` | Later declaration/recovery/helper/comparison/streaming work remains local/uncommitted and not release-ready; exact blockers in AI_HANDOFF.md. |
+
+Do not delay a verified milestone because later rows/phases remain unfinished. Do not merge the local WIP while releasing PR19 or the policy amendment. Persist this policy via a documentation-only release PR, then continue implementation without restarting.

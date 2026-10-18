@@ -248,10 +248,31 @@ export interface ModelInfo {
   thinking: boolean;
   search: boolean;
   preview?: boolean;
+  endpoint?: string;
+  outputLimit?: number | null;
+  modalities?: { input: string[] | null; output: string[] | null };
+  tools?: boolean | null;
+  structuredOutput?: boolean | null;
+  streaming?: boolean | null;
+  pricing?: { input: number | null; output: number | null; currency: 'USD'; unit: 'token' };
+  metadata?: {
+    source?: 'api' | 'documented' | 'user';
+    fields?: Partial<Record<'context' | 'vision' | 'pdf' | 'thinking' | 'search', 'api' | 'documented' | 'inferred' | 'unknown'>>;
+    refreshedAt?: number;
+    stale?: boolean;
+  };
 }
 
 export interface Catalog {
   failedProviders?: string[];
+  providerStatus?: Record<string, {
+    state: 'ready' | 'stale' | 'error';
+    lastAttempt: number;
+    lastSuccess: number | null;
+    nextRefresh: number;
+    error?: string;
+    errorKind?: 'auth' | 'rate-limit' | 'provider' | 'timeout' | 'network' | 'invalid';
+  }>;
   providers: Partial<Record<ModelInfo['provider'], boolean>>;
   models: ModelInfo[];
   defaults: string[];

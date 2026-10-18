@@ -1,9 +1,11 @@
 import { markUnseen, notify } from './lib/notify';
 import { pageSwap, pageTransition } from './lib/motion';
 import { create } from 'zustand';
-import { keyVersion, openRouterDailyLimit, probeModel, setKeys } from './lib/ai/providers.js';
+import { keyVersion, openRouterDailyLimit, probeModel, restoreCatalog, setKeys } from './lib/ai/providers.js';
+import { catalogScope, readCatalogCache, writeCatalogCache } from './lib/ai/catalog-cache.js';
+import { startCatalogRefresh } from './lib/ai/catalog-refresh.js';
 import { checkModels as runModelCheck, clearCut, type CheckResult } from './lib/ai/model-check';
-import { AI_PROVIDERS, normalizeKeys, providerEnabled } from './lib/ai/provider-config.js';
+import { AI_PROVIDERS, EXTRA_PROVIDERS, normalizeKeys, providerEnabled } from './lib/ai/provider-config.js';
 import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage } from './lib/api';
 import { keepModelChoice, isExcludedModel } from './lib/ai/model-status.js';
 import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
@@ -127,7 +129,7 @@ interface State {
   loginPreview(email?: string): void;
   logout(): void;
   saveApiKeys(keys: ApiKeys): Promise<void>;
-  loadCatalog(): Promise<void>;
+  loadCatalog(force?: boolean): Promise<void>;
   dismissCatalogError(): void;
   /** How models are doing on this device right now (limits, failures), for ranking them. */
   modelContext(): import('./lib/layout-builder').Context;
@@ -228,6 +230,10 @@ let compactController: AbortController | null = null;
 let canvasController: AbortController | null = null;
 let modelCheckController: AbortController | null = null;
 let catalogLoad: { generation: number; version: number; work: Promise<void> } | null = null;
+let loadedCatalogScope: string | null = null;
+let keySaveGeneration = 0;
+let keySaveQueue: Promise<void> = Promise.resolve();
+let stopDiscoveryLifecycle: (() => void) | undefined;
 const canvasSyncTimers = new Map<string, ReturnType<typeof setTimeout>>();
 let sync: ChatSync | null = null;
 let usage: UsageTracker | null = null;
@@ -238,14 +244,6 @@ let accountGeneration = 0;
 let settingsTimer: ReturnType<typeof setTimeout> | undefined;
 /** the shared settings as last saved or loaded */
 let lastSharedSettings = '';
-
-function savedCatalog(): Catalog | null {
-  try {
-    return JSON.parse(localStorage.getItem('mr.catalog') || 'null');
-  } catch {
-    return null;
-  }
-}
 
 const newChatObject = (): Chat => ({ id: uid(), title: 'New chat', createdAt: Date.now(), updatedAt: Date.now(), messages: [] });
 
@@ -988,15 +986,18 @@ export const useStore = create<State>((set, get) => {
       registerServiceWorker((apply) => set({ updateReady: apply }));
       const onNet = () => {
         set({ online: navigator.onLine });
-        // Back online: refresh the model list if it couldn't load.
-        if (navigator.onLine && get().authed && get().catalogError) void get().loadCatalog();
       };
       window.addEventListener('online', onNet);
       window.addEventListener('offline', onNet);
+      stopDiscoveryLifecycle?.();
+      stopDiscoveryLifecycle=startCatalogRefresh({canRefresh:()=>Boolean(navigator.onLine && get().authed && get().user && AI_PROVIDERS.some(p=>providerEnabled(p,get().keys))),refresh:()=>get().loadCatalog(false)});
+      try { localStorage.removeItem('mr.catalog'); } catch { /* obsolete unscoped cache */ }
       watchUser(async (user) => {
         cancelKnowledge();
         modelCheckController?.abort();
         const generation = ++accountGeneration;
+        loadedCatalogScope = null;
+        keySaveGeneration++;
         get().stop();
         stopSpeaking();
         controller = null; compactController = null; compareController = null; canvasController = null;
@@ -1141,19 +1142,30 @@ export const useStore = create<State>((set, get) => {
       canvasController?.abort();
       const uid = get().user?.uid;
       if (!uid) return;
+      const saveGeneration=++keySaveGeneration;
       const before = get().keys;
-      await saveKeys(uid, keys);
-      if (get().user?.uid !== uid) return;
+      // Preserve invocation order in remote settings too, not only in the UI.
+      const saving=keySaveQueue.catch(()=>{}).then(async()=>{if(get().user?.uid===uid && saveGeneration===keySaveGeneration)await saveKeys(uid,keys);});
+      keySaveQueue=saving;
+      await saving;
+      if (get().user?.uid !== uid || saveGeneration!==keySaveGeneration) return;
       setKeys(keys);
       const clean = normalizeKeys(keys) as unknown as ApiKeys;
       setGitHubToken(clean.github);
-      const changed = AI_PROVIDERS.filter((provider) => clean[provider as keyof ApiKeys] !== before[provider as keyof ApiKeys] || providerEnabled(provider, clean) !== providerEnabled(provider, before) || (provider === 'alibaba' && clean.alibabaBaseUrl !== before.alibabaBaseUrl) || (['cloudflare', 'nvidia'].includes(provider) && (clean.providerRelayUrl !== before.providerRelayUrl || clean.cloudflareAccountId !== before.cloudflareAccountId)));
+      const changed = AI_PROVIDERS.filter((provider) => {
+        const config=(EXTRA_PROVIDERS as Record<string,{relay?:boolean;fallback?:boolean}>)[provider];
+        return clean[provider as keyof ApiKeys] !== before[provider as keyof ApiKeys] || providerEnabled(provider,clean)!==providerEnabled(provider,before)
+          || (provider==='alibaba'&&clean.alibabaBaseUrl!==before.alibabaBaseUrl)
+          || (provider==='cloudflare'&&clean.cloudflareAccountId!==before.cloudflareAccountId)
+          || ((config?.relay||config?.fallback)&&clean.providerRelayUrl!==before.providerRelayUrl);
+      });
       if (changed.length) {
         const keep = (id: string) => !changed.some((provider) => id.startsWith(`${provider}:`));
         get().updateSettings({ unavailableModels: (get().settings.unavailableModels || []).filter(keep), unavailableInfo: Object.fromEntries(Object.entries(get().settings.unavailableInfo || {}).filter(([id]) => keep(id))) });
       }
       set({ keys: clean });
-      await get().loadCatalog();
+      if(changed.length) { loadedCatalogScope=null;set({catalog:null}); }
+      if(changed.length || !get().catalog) await get().loadCatalog();
       if (get().user?.uid !== uid) return;
       // A newly connected provider: switch on its suggested models so they're ready to use.
       const added = AI_PROVIDERS.filter(k => providerEnabled(k, clean) && !providerEnabled(k, before));
@@ -1241,44 +1253,36 @@ export const useStore = create<State>((set, get) => {
       void get().loadCatalog();
     },
 
-    async loadCatalog() {
+    async loadCatalog(force = true) {
       const generation = accountGeneration;
       const version = keyVersion();
       if (catalogLoad?.generation === generation && catalogLoad.version === version) return catalogLoad.work;
+      const statuses=get().catalog?.providerStatus;
+      if(!force && loadedCatalogScope && statuses && Object.keys(statuses).length && Object.values(statuses).every(s=>s.nextRefresh>Date.now())) return;
       const work = (async () => {
-        const { keys } = get();
+        const { keys, user } = get();
+        if(!user) return;
         if (!AI_PROVIDERS.some(p => providerEnabled(p, keys))) {
           set({ catalog: null, catalogError: null, catalogErrorDismissed: false, settingsOpen: true, settingsTab: 'keys' });
           get().updateSettings({ enabledModels: [], defaultModel: AUTO });
           return;
         }
-        // Show the list from last time straight away (names, not raw ids) while the fresh one loads.
-        if (!get().catalog) {
-          const saved = savedCatalog();
-          const hidden = new Set(get().settings.unavailableModels || []);
-          if (saved) set({ catalog: { ...saved, models: saved.models.filter((m) => providerEnabled(m.id.split(':')[0], keys) && !isExcludedModel(m.id) && !hidden.has(m.id)) } });
-        }
         try {
-          let catalog = await fetchCatalog(true).catch((e) => {
-            if (navigator.onLine || !savedCatalog()) throw e;
-            return savedCatalog()!;
-          });
+          const scope=await catalogScope(user.uid,keys);
           if (generation !== accountGeneration || version !== keyVersion()) return;
-          // Offline: use the list from last time so the app stays usable.
-          if (catalog.errors.length && !navigator.onLine && savedCatalog()) catalog = savedCatalog()!;
-          if (navigator.onLine && !catalog.errors.length) {
-            try {
-              localStorage.setItem('mr.catalog', JSON.stringify(catalog));
-            } catch {
-              /* storage full */
-            }
+          if(loadedCatalogScope!==scope) {
+            loadedCatalogScope=scope;
+            const saved=readCatalogCache(localStorage,user.uid,scope) as Catalog | null;
+            const hidden=new Set(get().settings.unavailableModels || []);
+            if(saved) restoreCatalog(saved);
+            set({catalog:saved?{...saved,models:saved.models.filter(m=>providerEnabled(m.id.split(':')[0],keys)&&!isExcludedModel(m.id)&&!hidden.has(m.id))}:null});
           }
-          void openRouterDailyLimit().then((n) => usage?.setOpenRouterDaily(n));
+          let catalog=await fetchCatalog(force);
+          if (generation !== accountGeneration || version !== keyVersion()) return;
+          writeCatalogCache(localStorage,user.uid,scope,catalog);
+          // Quota lookup is ancillary and must not run every refresh tick or cross key/account changes.
+          if(force) void openRouterDailyLimit().then((n) => {if(generation===accountGeneration && version===keyVersion())usage?.setOpenRouterDaily(n);});
           usage?.useProviders(AI_PROVIDERS.filter(p => catalog.providers[p === 'gemini' ? 'google' : p as ModelInfo['provider']]) as import('./lib/usage').Provider[]);
-          const previous = get().catalog || savedCatalog();
-          if (catalog.failedProviders?.length && previous) {
-            catalog = { ...catalog, models: [...catalog.models, ...previous.models.filter((m) => catalog.failedProviders!.includes(m.id.split(':')[0]) && !isExcludedModel(m.id))] };
-          }
           const unavailable = new Set(get().settings.unavailableModels || []);
           catalog = { ...catalog, models: catalog.models.filter((m) => providerEnabled(m.id.split(':')[0], get().keys) && !isExcludedModel(m.id) && !unavailable.has(m.id)) };
           const { settings } = get();
@@ -1288,7 +1292,8 @@ export const useStore = create<State>((set, get) => {
           // New chats use Auto (introduced once; you can switch back to a fixed model any time).
           const wanted = settings.autoIntroduced ? settings.defaultModel : AUTO;
           const defaultModel = wanted === AUTO || enabled.includes(wanted) || (isLayoutId(wanted) && findLayout(wanted, catalog.models, settings.layouts, settings.hiddenLayouts)) ? wanted : enabled[0] || '';
-          set({ catalog, catalogError: catalog.errors.length ? catalog.errors.join(' · ') : null, catalogErrorDismissed: false });
+          const catalogError=catalog.errors.length?catalog.errors.join(' · '):null;
+          set({ catalog, catalogError, catalogErrorDismissed:!force && catalogError===get().catalogError?get().catalogErrorDismissed:false });
           get().updateSettings({ enabledModels: enabled, defaultModel, autoIntroduced: true });
         } catch (e) {
           if (generation !== accountGeneration || version !== keyVersion()) return;

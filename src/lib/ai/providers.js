@@ -6,6 +6,7 @@ import { isActiveModel, isExcludedModel, isUnavailableFailure } from './model-st
 import { safeVideoUri, toolBlock } from './tool-inputs.js';
 import { clearHealth } from './health.js';
 import { AI_PROVIDERS, DEFAULT_PROVIDER_RELAY_URL, EXTRA_PROVIDERS, normalizeKeys, providerEnabled, validAlibabaBase, validRelayUrl } from './provider-config.js';
+import { createModelRegistry } from './registry.js';
 
 // API keys come from the user's settings (stored in their private Firebase document).
 let keys = normalizeKeys();
@@ -16,7 +17,8 @@ let keyGeneration = 0;
 export const keyVersion = () => keyGeneration;
 export function setKeys(next) {
   const clean = normalizeKeys(next);
-  if (JSON.stringify(clean) !== JSON.stringify(keys)) { cache = null; capabilities.clear(); clearHealth(); keyGeneration++; }
+  const signature = value => { const {github:_,...config}=value;return JSON.stringify(config); };
+  if (signature(clean) !== signature(keys)) { registry?.invalidate(); registry = null; capabilities.clear(); clearHealth(); keyGeneration++; }
   keys = clean;
 }
 
@@ -65,14 +67,13 @@ function prettyGemini(m) {
   return m.displayName || m.name.replace(/^models\//, '');
 }
 
-async function geminiCatalog() {
-  const signal = AbortSignal.timeout(15_000);
+async function geminiCatalog(configuration, signal) {
   const models = [];
   let pageToken = '';
   const seen = new Set();
   do {
-    const res = await fetch(`${GEMINI_BASE}/models?pageSize=1000${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`, { signal, headers: { 'x-goog-api-key': keys.gemini } });
-    if (!res.ok) throw new Error(`Google: ${await upstreamError(res)}`);
+    const res = await fetch(`${GEMINI_BASE}/models?pageSize=1000${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`, { signal, headers: { 'x-goog-api-key': configuration.gemini } });
+    if (!res.ok) throw await discoveryError('Google',res);
     const page = await res.json();
     if (!Array.isArray(page.models)) throw new Error('Google: invalid model catalogue');
     models.push(...page.models);
@@ -81,7 +82,7 @@ async function geminiCatalog() {
     seen.add(pageToken);
   } while (pageToken);
   return models
-    .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
+    .filter((m) => typeof m?.name==='string' && parseModelId(`gemini:${m.name.replace(/^models\//,'')}`) && Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
     .map((m) => ({ ...m, short: m.name.replace(/^models\//, '') }))
     .filter((m) => !GEMINI_SKIP.test(m.short) && isActiveModel(m) && !isExcludedModel(`gemini:${m.short}`))
     .map((m) => ({
@@ -90,6 +91,9 @@ async function geminiCatalog() {
       name: m.short,
       label: prettyGemini(m),
       context: m.inputTokenLimit || null,
+      outputLimit: positive(m.outputTokenLimit),
+      endpoint: GEMINI_BASE,
+      metadata: {source:'api',fields:{context:m.inputTokenLimit?'api':'unknown',vision:'inferred',pdf:'inferred',thinking:'inferred',search:'inferred'}},
       vision: !/^gemma-?(?:2|3-(?:1b|270m)(?:-|$))/i.test(m.short),
       pdf: !isGemma(m.short),
       thinking: geminiThinks(m.short),
@@ -98,13 +102,13 @@ async function geminiCatalog() {
     }));
 }
 
-async function openRouterCatalog() {
-  const res = await fetch(`${OPENROUTER_BASE}/models`, { signal: AbortSignal.timeout(15_000), headers: { authorization: `Bearer ${keys.openrouter}` } });
-  if (!res.ok) throw new Error(`OpenRouter: ${await upstreamError(res)}`);
+async function openRouterCatalog(configuration, signal) {
+  const res = await fetch(`${OPENROUTER_BASE}/models`, { signal, headers: { authorization: `Bearer ${configuration.openrouter}` } });
+  if (!res.ok) throw await discoveryError('OpenRouter',res);
   const { data } = await res.json();
   if (!Array.isArray(data)) throw new Error('OpenRouter: invalid model catalogue');
   return data
-    .filter((m) => isActiveModel(m) && m.pricing?.prompt != null && m.pricing?.completion != null && Number(m.pricing.prompt) === 0 && Number(m.pricing.completion) === 0)
+    .filter((m) => typeof m?.id==='string' && parseModelId(`openrouter:${m.id}`) && isActiveModel(m) && m.pricing?.prompt != null && m.pricing?.completion != null && Number(m.pricing.prompt) === 0 && Number(m.pricing.completion) === 0)
     .filter((m) => (m.architecture?.output_modalities || ['text']).includes('text'))
     .filter((m) => !/embed|guard|moderation|content-safety|tts|whisper/i.test(m.id))
     .map((m) => {
@@ -115,6 +119,13 @@ async function openRouterCatalog() {
         name: m.id,
         label: (m.name || m.id).replace(/\s*\(free\)\s*$/i, ''),
         context: m.context_length || null,
+        endpoint: OPENROUTER_BASE,
+        outputLimit: positive(m.top_provider?.max_completion_tokens),
+        modalities: {input:m.architecture?.input_modalities || null,output:m.architecture?.output_modalities || null},
+        tools: Array.isArray(m.supported_parameters)?m.supported_parameters.includes('tools'):null,
+        structuredOutput: Array.isArray(m.supported_parameters)?m.supported_parameters.includes('response_format'):null,
+        pricing: {input:0,output:0,currency:'USD',unit:'token'},
+        metadata: {source:'api',fields:{context:m.context_length?'api':'unknown',vision:m.architecture?.input_modalities?'api':'unknown',pdf:'documented',thinking:m.supported_parameters?'api':'unknown',search:'documented'}},
         vision: input.includes('image'),
         pdf: true, // OpenRouter turns PDFs into text for models that can't read them
         thinking: (m.supported_parameters || []).includes('reasoning'),
@@ -149,6 +160,13 @@ function modelContext(metadata) {
   return limits.length ? Math.min(...limits) : null;
 }
 
+const positive = value => Number.isFinite(value) && value > 0 ? value : null;
+async function discoveryError(label,res) {
+  const retry=res.headers.get('retry-after');
+  const retryAfterMs=retry ? (/^\d+(?:\.\d+)?$/.test(retry)?Number(retry)*1000:Math.max(0,Date.parse(retry)-Date.now())) : 0;
+  return Object.assign(new Error(`${label}: ${await upstreamError(res)}`),{status:res.status,retryAfterMs});
+}
+
 function modelVision(provider, name, metadata = {}) {
   if (metadata.input_modalities) return metadata.input_modalities.includes('image');
   if (metadata.capabilities?.vision != null) return metadata.capabilities.vision === true;
@@ -158,31 +176,31 @@ function modelVision(provider, name, metadata = {}) {
   return /(?:vision|pixtral|qwen.*(?:vl|vision)|llama-(?:3\.2-(?:11b|90b)|4)|nemotron.*vl)/i.test(name);
 }
 
-async function compatFetch(provider, path, options = {}, catalogue = false) {
+async function compatFetch(provider, path, options = {}, catalogue = false, configuration = keys) {
   const config = COMPAT[provider];
-  if (!config || !hasKey(provider)) throw new Error('This provider is not enabled.');
+  if (!config || !providerEnabled(provider,configuration)) throw new Error('This provider is not enabled.');
   let base = config.base;
   const headers = new Headers(options.headers);
-  headers.set('authorization', `Bearer ${keys[provider]}`);
+  headers.set('authorization', `Bearer ${configuration[provider]}`);
   if (options.body) headers.set('content-type', 'application/json');
   if (provider === 'cohere' && catalogue) base = 'https://api.cohere.ai/v1';
   if (provider === 'alibaba') {
-    base = keys.alibabaBaseUrl || config.base;
+    base = configuration.alibabaBaseUrl || config.base;
     if (!validAlibabaBase(base)) throw new Error('Alibaba Cloud: choose an official Model Studio endpoint.');
   }
   // Claude takes the key in its own header too, and asks browser apps to say they're calling directly.
   if (provider === 'anthropic') {
-    headers.set('x-api-key', keys[provider]);
+    headers.set('x-api-key', configuration[provider]);
     headers.set('anthropic-version', '2023-06-01');
     headers.set('anthropic-dangerous-direct-browser-access', 'true');
   }
-  const relayUrl = keys.providerRelayUrl || DEFAULT_PROVIDER_RELAY_URL;
+  const relayUrl = configuration.providerRelayUrl || DEFAULT_PROVIDER_RELAY_URL;
   if (config.relay) {
     if (!validRelayUrl(relayUrl)) throw new Error(`${config.label}: use a valid HTTPS relay in API keys settings.`);
     base = `${relayUrl}/${provider}`;
     if (provider === 'cloudflare') {
-      if (!/^[a-f0-9]{32}$/i.test(keys.cloudflareAccountId)) throw new Error('Cloudflare: enter the 32-character account ID.');
-      headers.set('x-mr-account-id', keys.cloudflareAccountId);
+      if (!/^[a-f0-9]{32}$/i.test(configuration.cloudflareAccountId)) throw new Error('Cloudflare: enter the 32-character account ID.');
+      headers.set('x-mr-account-id', configuration.cloudflareAccountId);
     }
   }
   const send = (url) => fetch(url, { ...options, headers: Object.fromEntries(headers), credentials: 'omit', referrerPolicy: 'no-referrer' });
@@ -198,24 +216,29 @@ async function compatFetch(provider, path, options = {}, catalogue = false) {
   }
 }
 
-async function compatCatalog(provider) {
+async function compatCatalog(provider, configuration, signal) {
   const { label, models: fixed } = COMPAT[provider];
   // A provider without a model list (Perplexity): its documented models, checked with the key on first use.
-  if (fixed) return fixed.map(([name, title], i) => ({ id: `${provider}:${name}`, provider, name, label: title, context: 128_000, vision: false, pdf: false, thinking: /reason/.test(name), search: provider === 'perplexity', created: fixed.length - i }));
-  const signal = AbortSignal.timeout(15_000);
+  if (fixed) return fixed.map(([name, title], i) => ({ id: `${provider}:${name}`, provider, name, label: title, context: 128_000, vision: false, pdf: false, thinking: /reason/.test(name), search: provider === 'perplexity', created: fixed.length - i,endpoint:COMPAT[provider].base,metadata:{source:'documented',fields:{context:'documented',vision:'documented',pdf:'documented',thinking:'documented',search:'documented'}} }));
   let data = [], pageToken = '', page = 1;
   const seen = new Set();
   do {
     const path = provider === 'cohere' ? `/models?endpoint=chat${pageToken ? `&page_token=${encodeURIComponent(pageToken)}` : ''}`
-      : provider === 'cloudflare' ? `/models?per_page=100&page=${page}` : '/models';
-    const res = await compatFetch(provider, path, { signal }, true);
-    if (!res.ok) throw new Error(`${label}: ${await upstreamError(res)}`);
+      : provider === 'cloudflare' ? `/models?per_page=100&page=${page}`
+      : provider === 'anthropic' ? `/models?limit=100${pageToken?`&after_id=${encodeURIComponent(pageToken)}`:''}` : '/models';
+    const res = await compatFetch(provider, path, { signal }, true, configuration);
+    if (!res.ok) throw await discoveryError(label,res);
     const json = await res.json();
     // (Together answers with a bare list.)
     const items = provider === 'cohere' ? json.models : provider === 'cloudflare' ? json.result : Array.isArray(json) ? json : json.data;
     if (!Array.isArray(items) || json.success === false) throw new Error(`${label}: invalid model catalogue`);
     data.push(...items);
     pageToken = json.next_page_token || '';
+    if (provider === 'anthropic' && json.has_more) {
+      const last=json.last_id || items.at(-1)?.id;
+      if(!last) throw new Error(`${label}: invalid catalogue page`);
+      pageToken=last;
+    }
     if (pageToken && seen.has(pageToken)) throw new Error(`${label}: repeated catalogue page`);
     seen.add(pageToken);
     if (provider === 'cloudflare' && page < (json.result_info?.total_pages || 1)) { page++; continue; }
@@ -232,7 +255,7 @@ async function compatCatalog(provider) {
     .filter(m => provider !== 'cohere' || m.endpoints?.includes('chat'))
     .filter(m => provider !== 'cloudflare' || /text generation/i.test(m.task?.name || ''))
     .filter(m => provider !== 'huggingface' || (!m.providers?.length || m.providers.some(p => p.status === 'live')))
-    .filter(m => !m.type || /chat|text|language|llm/i.test(m.type))
+    .filter(m => !m.type || /chat|text|language|llm|^model$/i.test(m.type))
     .filter(m => provider !== 'openai' || (/^(?:gpt-|o\d|chatgpt-)/.test(m.id) && !OPENAI_SKIP.test(m.id)))
     .filter(m => !m.architecture?.output_modalities || m.architecture.output_modalities.includes('text'))
     .map((m) => ({
@@ -241,9 +264,15 @@ async function compatCatalog(provider) {
       name: m.id,
       label: m.display_name || m.displayName || (provider === 'deepseek' || provider === 'aion' ? m.name : '') || prettyModelName(m.id),
       context: modelContext(m),
+      outputLimit: positive(m.max_output_tokens || m.max_completion_tokens),
+      endpoint: provider==='alibaba'?(configuration.alibabaBaseUrl || COMPAT[provider].base):COMPAT[provider].base || `${configuration.providerRelayUrl || DEFAULT_PROVIDER_RELAY_URL}/${provider}`,
+      modalities: {input:m.input_modalities || m.architecture?.input_modalities || null,output:m.output_modalities || m.architecture?.output_modalities || null},
+      tools: typeof m.capabilities?.function_calling==='boolean'?m.capabilities.function_calling:null,
+      structuredOutput: typeof m.capabilities?.json_schema==='boolean'?m.capabilities.json_schema:null,
+      metadata: {source:'api',fields:{context:modelContext(m)?'api':'unknown',vision:m.input_modalities || m.architecture?.input_modalities || m.capabilities?.vision!=null?'api':'inferred',pdf:'documented',thinking:m.reasoning!=null || m.reasoning_effort?.supported!=null?'api':'inferred',search:'documented'}},
       vision: modelVision(provider, m.id, m),
       pdf: false, // PDFs reach these models only as extracted text
-      thinking: m.reasoning === true || m.reasoning_effort?.supported === true || /gpt-oss|qwen-?3|deepseek.*(?:r1|reasoner|v4|flash)|reason|think|qwq|magistral/i.test(m.id),
+      thinking: typeof m.reasoning==='boolean'?m.reasoning:typeof m.reasoning_effort?.supported==='boolean'?m.reasoning_effort.supported:/gpt-oss|qwen-?3|deepseek.*(?:r1|reasoner|v4|flash)|reason|think|qwq|magistral/i.test(m.id),
       search: false,
       created: m.created || (m.created_at ? Date.parse(m.created_at) / 1000 : 0),
     }))
@@ -267,34 +296,47 @@ function providerDefaults(list) {
   return [...new Set(ids.filter(Boolean))];
 }
 
-let cache = null;
+let registry = null;
+function currentRegistry() {
+  if(registry) return registry;
+  const configuration=keys;
+  const names = { gemini:'Google Gemini',openrouter:'OpenRouter',groq:'Groq',cerebras:'Cerebras',...Object.fromEntries(Object.entries(EXTRA_PROVIDERS).map(([k,v])=>[k,v.label])) };
+  registry=createModelRegistry({providers:AI_PROVIDERS,enabled:p=>providerEnabled(p,configuration),
+    ttl:p=>COMPAT[p]?.models?24*3600_000:10*60_000,
+    load:async(p,signal)=>{
+      try {
+        const models=await (p==='gemini'?geminiCatalog(configuration,signal):p==='openrouter'?openRouterCatalog(configuration,signal):compatCatalog(p,configuration,signal));
+        return models.map(m=>({...m,metadata:{...m.metadata,refreshedAt:Date.now()}}));
+      } catch(e) {
+        let message=String(e?.message || e || 'Model discovery failed');
+        for(const id of AI_PROVIDERS) if(configuration[id]) message=message.split(configuration[id]).join('[redacted]');
+        if(e?.name==='TimeoutError' || e?.name==='AbortError') message=`${names[p]} didn't respond in time`;
+        else if(!message.toLowerCase().startsWith(names[p].split(' ')[0].toLowerCase())) message=`${names[p]}: ${message}`;
+        throw Object.assign(new Error(message),{name:e?.name || 'Error',status:e?.status,retryAfterMs:e?.retryAfterMs});
+      }
+    },
+  });
+  return registry;
+}
+
+/** Only seed from a cache already validated against the current account and credential scope. */
+export function restoreCatalog(value) {
+  const safe={...value,models:(value.models || []).filter(m=>parseModelId(m.id)&&hasKey(m.id.split(':')[0])&&!isExcludedModel(m.id))};
+  currentRegistry().seed(safe);
+  capabilities=new Map(currentRegistry().snapshot().models.map(m=>[m.id,m]));
+}
 
 export async function catalog({ refresh = false } = {}) {
-  if (refresh) cache = null;
-  if (cache && cache.expires > Date.now()) return cache.value;
   const version = keyGeneration;
-  const results = await Promise.allSettled(AI_PROVIDERS.map(p => !hasKey(p) ? [] : p === 'gemini' ? geminiCatalog() : p === 'openrouter' ? openRouterCatalog() : compatCatalog(p)));
+  const result=await currentRegistry().read({refresh});
   if (version !== keyGeneration) throw new Error('Provider settings changed. Refresh models again.');
-  const [google, openrouter, groq, cerebras] = results.map((r) => (r.status === 'fulfilled' ? r.value : []));
-  // Which provider failed and why, in plain words (a timeout or lost connection shows as the browser's own
-  // message otherwise, such as "Fetch is aborted", without saying which provider it was).
-  const names = { gemini: 'Google Gemini', openrouter: 'OpenRouter', groq: 'Groq', cerebras: 'Cerebras', ...Object.fromEntries(Object.entries(EXTRA_PROVIDERS).map(([k, v]) => [k, v.label])) };
-  const plain = (name, e) => {
-    const m = String(e?.message || e || '');
-    if (e?.name === 'AbortError' || e?.name === 'TimeoutError' || /abort|timed? ?out/i.test(m)) return `${name} didn't respond in time`;
-    if (/failed to fetch|load failed|networkerror|network connection/i.test(m)) return `${name} couldn't be reached`;
-    return m.toLowerCase().startsWith(name.split(' ')[0].toLowerCase()) ? m : `${name}: ${m}`;
-  };
-  const errors = results.map((r, i) => (r.status === 'rejected' ? plain(names[AI_PROVIDERS[i]] || AI_PROVIDERS[i], r.reason) : null)).filter(Boolean);
+  const list=p=>result.models.filter(m=>m.id.startsWith(`${p}:`));
   const value = {
+    ...result,
     providers: Object.fromEntries(AI_PROVIDERS.map(p => [p === 'gemini' ? 'google' : p, hasKey(p)])),
-    models: results.flatMap(r => r.status === 'fulfilled' ? r.value : []),
-    defaults: [...pickDefaults(google, openrouter, groq, cerebras), ...results.slice(4).flatMap(r => r.status === 'fulfilled' ? providerDefaults(r.value) : [])],
-    errors,
-    failedProviders: results.flatMap((r, i) => r.status === 'rejected' ? [AI_PROVIDERS[i]] : []),
+    defaults: [...pickDefaults(list('gemini'),list('openrouter'),list('groq'),list('cerebras')),...AI_PROVIDERS.slice(4).flatMap(p=>providerDefaults(list(p)))],
   };
   capabilities = new Map(value.models.map(m => [m.id, m]));
-  if (errors.length === 0) cache = { value, expires: Date.now() + 10 * 60 * 1000 };
   return value;
 }
 

@@ -7,17 +7,17 @@ Read MASTER_REQUIREMENTS.md, IMPLEMENTATION_PLAN.md, this file, Git status/log, 
 ## Current state
 
 - Overall: **In progress; overhaul is not complete**.
-- Current phase: P00 audit/baseline; next implementation is P01/P02 registry isolation and refresh.
-- Exact current task: persist complete requirements/roadmap, trace registry lifecycle, run baseline checks; then add behavioral regression cases for credential isolation, concurrency and refresh reconciliation.
+- Current phase: P01-C/P03 shared selection policy, following the verified discovery/refresh foundation.
+- Exact current task: commit/push the verified foundation, then integrate shared eligibility and fix unauthorized manual substitution, hard exclusions, missing-model choice preservation and unknown-context bounds.
 - Branch: `feat/dynamic-model-picker`, based on main `7fbdde2246a546a980744e63b7d88655dad6d8de` (PR18 already live).
-- Latest implementation commit: none for this overhaul. Initial documents pending commit.
-- Remote: initial milestone not pushed yet. Never infer remote synchronization from a local commit.
+- Latest checkpoint commit: `bb2cc3d5a075526d9b9957cdebbd218e6c439d0d` (requirements/roadmap/handoff).
+- Remote: initial documents pushed; `git ls-remote` matched that exact branch hash. Application changes remain local/uncommitted and are not released.
 - Production: prior release remains live at https://lumen-chat.web.app/. No overhaul deployment performed.
 
 ## Completed / in progress / remaining
 
-- Completed: read complete user directive; inspect provider discovery, provider configuration, catalog/store publication, model schema, picker/settings, saved layout semantics, CI and existing recovery tests.
-- In progress: P00 baseline type/unit checks and architectural audit. Log: `/workspace/.lumen-verification/dynamic-picker-2026-10-18/baseline-tests.log`.
+- Completed: P00 plus P01-A/B and P02-A/B. Scoped registry/cache, bounded deduplicated provider discovery/retries, per-provider freshness/backoff, active/resume refresh, native Anthropic pagination, explicit metadata negatives and secret-redacted discovery diagnostics.
+- In progress: P01-C/P03. New local `selection-policy.test.ts` reproduces manual fallback despite `allowFallback:false`; shared eligibility module is drafted but not integrated. Those two files are excluded from the foundation commit until implemented and verified.
 - Not started: remaining implementation/verification tasks in IMPLEMENTATION_PLAN.md; none may be assumed done merely because existing code approximates them.
 - Blocked: none confirmed. Check existing GitHub credentials with a read-only operation before diagnosing a missing credential.
 
@@ -34,14 +34,19 @@ Read MASTER_REQUIREMENTS.md, IMPLEMENTATION_PLAN.md, this file, Git status/log, 
 - MASTER_REQUIREMENTS.md: exact complete original uploaded text (including execution protocol).
 - IMPLEMENTATION_PLAN.md: requirement mapping, stable task IDs, dependencies, criteria, risks and audit evidence.
 - AI_HANDOFF.md: operational state and continuation contract.
-- Application source: none yet.
+- Foundation source: `src/lib/ai/registry.js`, `catalog-cache.js`, `catalog-refresh.js` (new); provider discovery/adapters, `src/store.ts`, additive metadata in `src/types.ts`.
+- Tests: new model-registry, catalog-scope, catalog-refresh, discovery-integration unit files and `tests/e2e/catalog-lifecycle.cjs`.
 
 ## Verification evidence
 
 - Git initially clean on main at `7fbdde2`.
-- Existing baseline `npm test` launched with Node22; outcome pending. Do not describe it as passing until inspected.
-- Build/browser checks not yet run for this task.
-- Existing source has 44 unit-test files and full Chromium/WebKit workflows. Recount after adding tests.
+- Baseline `npm test`: passed all 44 original files and type check. Baseline build passed. Three baseline Chromium suites passed without retries.
+- Focused registry unit checks: deduplication, bounded concurrency, per-provider TTL/retries/backoff, auth eviction, cancellation/deadlines, hydration, account/endpoint cache isolation, native pagination, authoritative negatives, redaction and lifecycle listener gating passed.
+- Final foundation: `foundation-unit.log` — type check and all 48 unit files passed; `foundation-build.log` — production build passed.
+- `foundation-chromium.log`: catalog-lifecycle, Auto intelligence, layout-builder, context-recovery, model-health, removed-models, all six passed (72s), no retries.
+- `foundation-webkit.log`: catalog-lifecycle, Auto intelligence, layout-builder, context-recovery, all four passed (108s), no retries.
+- Earlier `registry-*.log` runs are diagnostic, not final evidence: one test needed clock installation before app startup, and one WebKit run collided with an owned test server. Both were followed by successful sequential runs.
+- P03 red test: manual incompatible model returns a substitute despite fallback disabled; expected no model. Shared eligibility draft has not been tested/integrated yet.
 
 ## Risks and known gaps
 
@@ -67,4 +72,4 @@ Existing test browser preloads live outside the repository. Hosted tests require
 
 ## Exact next action
 
-Inspect baseline output and remaining runtime/persistence paths. Commit the initial documents, verify remote branch access/push, then implement P01/P02 with deterministic discovery/scope-race tests first. Update both progress documents after each verified milestone; record the actual remote commit separately from local working state.
+Commit/push only the verified foundation files (exclude new local `eligibility.js` and `selection-policy.test.ts`). Then integrate those drafts into routing, layouts, comparison and runtime; pass explicit fallback policy from store; preserve explicit choices through registry removal; add regression tests before the next checkpoint. P04 onward remains required. No main push or deployment yet; full CI/production validation must precede release.

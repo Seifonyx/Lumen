@@ -99,7 +99,8 @@ const sse = item => `data: ${JSON.stringify(item)}\n\ndata: [DONE]\n\n`;
       const targets = await page.locator('.provider-connection summary, .provider-consent, .provider-field input').evaluateAll(items => items.filter(el => el.getBoundingClientRect().height > 0).map(el => el.getBoundingClientRect().height));
       assert(targets.every(h => h >= 44), 'New touch targets are at least 44px');
       for (const id of Object.keys(providers).filter(id => id !== 'mistral')) await page.locator(`[data-provider="${id}"] summary`).click();
-      while (await page.locator('.toast button').count()) await page.locator('.toast button').first().click();
+      // Toasts dismiss themselves; don't race a click against their exit animation.
+      await page.locator('.toast').last().waitFor({state:'detached'});
       await page.locator('[data-provider="mistral"] summary').scrollIntoViewIfNeeded();
       await page.screenshot({ path: `tests/e2e/out/multi-provider-${width}-${theme}.png` });
       await relay.scrollIntoViewIfNeeded();

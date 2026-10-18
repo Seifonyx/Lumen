@@ -6,6 +6,7 @@
 
 import type { ModelInfo } from '../types';
 import { rankForTask, TASKS, type Context } from './layout-builder';
+import { layoutRequirements } from './layout-policy';
 
 export interface Layout {
   id: string;
@@ -18,6 +19,15 @@ export interface Layout {
   mode: 'auto' | 'order';
   /** extra instructions for every model in this layout */
   instructions?: string;
+  /** Omitted fields preserve saved layouts from earlier versions. */
+  priority?: 'balanced' | 'quality' | 'speed' | 'cost';
+  fallback?: 'none' | 'layout' | 'enabled';
+  requirements?: {
+    capabilities?: ('vision' | 'pdf' | 'search')[];
+    minContext?: number;
+    minInputTokens?: number;
+    noReasoning?: boolean;
+  };
   builtin?: boolean;
   /** a recommended layout the user changed */
   edited?: boolean;
@@ -39,6 +49,7 @@ const RENAMED: Record<string, string> = { arabic: 'languages' };
 export function recommendedLayouts(catalog: ModelInfo[], ctx: Context = {}): Layout[] {
   return RECOMMENDED.map((id) => TASKS.find((t) => t.id === id)!).map((t) => ({
     id: t.id, name: t.name, icon: t.icon, description: t.description, mode: t.mode, instructions: t.instructions, builtin: true,
+    requirements:layoutRequirements(t),priority:t.id==='fast'?'speed':t.priority,
     models: rankForTask(t, catalog, ctx, t.id === 'fast' ? 5 : 6).map((p) => p.id),
   }));
 }

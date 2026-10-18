@@ -22,3 +22,19 @@ export function modelProblem(model, {image=false,pdf=false,search=false,tools=fa
 export function attachmentNeeds(files=[]) {
   return {image:files.some(f=>f.kind==='image'&&!f.text),pdf:files.some(f=>f.kind==='pdf'&&!f.text)};
 }
+
+/** Same persisted requirements are checked at planning and every runtime attempt. */
+export function modelRequirementsProblem(model,requirements) {
+  if(!model)return 'is not available from your connected provider';
+  if(!requirements)return null;
+  const r=requirements;
+  if(r.capabilities && (!Array.isArray(r.capabilities)||r.capabilities.some(c=>!['vision','pdf','search'].includes(c))))return 'has unsupported saved capability requirements';
+  if([r.minContext,r.minInputTokens].some(n=>n!==undefined && (!Number.isSafeInteger(n)||n<=0)))return 'has invalid saved context requirements';
+  const caps=r.capabilities || [];
+  const problem=modelProblem(model,{image:caps.includes('vision'),pdf:caps.includes('pdf'),search:caps.includes('search'),minContext:r.minContext,minInputTokens:r.minInputTokens});
+  return problem || (r.noReasoning && requiresReasoning(model)?'requires reasoning excluded by this layout':null);
+}
+export function requiresReasoning(model) {
+  if(model.thinking===false && ['api','user','documented'].includes(model.metadata?.fields?.thinking || ''))return false;
+  return /\br1\b|-r1|reasoner|thinking|qwq|magistral/.test(`${model.provider}:${model.name}`.toLowerCase());
+}

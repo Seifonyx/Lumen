@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { keyVersion } from '../lib/ai/providers.js';
 import { modelMeetsTask, rankForTask, taskFromText, TASKS, type Pick, type TaskProfile } from '../lib/layout-builder';
 import { newLayoutId, LAYOUT_PREFIX } from '../lib/layouts';
+import { layoutRequirements } from '../lib/layout-policy';
 import { modelLabel, useStore } from '../store';
 import Modal from './Modal';
 
@@ -61,7 +62,7 @@ export default function LayoutBuilder({ onClose }: { onClose: () => void }) {
     }
     if (!chosen.size) return;
     const { settings, updateSettings, toast } = useStore.getState();
-    const layout = { id: newLayoutId(), name: name.trim() || task.name, icon: task.icon, description: task.description, models: picks.filter((p) => chosen.has(p.id)).map((p) => p.id), mode: task.mode, instructions: task.instructions };
+    const layout = { id: newLayoutId(), name: name.trim() || task.name, icon: task.icon, description: task.description, models: picks.filter((p) => chosen.has(p.id)).map((p) => p.id), mode: task.mode, instructions: task.instructions,requirements:layoutRequirements(task),priority:task.priority || (task.id==='fast'?'speed':undefined) };
     updateSettings({ layouts: [...(settings.layouts || []), layout], ...(useDefault ? { defaultModel: LAYOUT_PREFIX + layout.id } : {}) });
     toast(`Saved “${layout.name}”. Pick it from the model menu.`, 'success');
     close();

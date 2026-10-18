@@ -7,7 +7,7 @@ const matrix=process.env.MR_TEST_WIDTH?all.filter(v=>v[0]===Number(process.env.M
  const uid='preview-message-navigation-'+width;await profile(ctx,uid,theme,{messageNavigator:true}); // (off by default on phones: this test covers it everywhere)await ctx.route('**/firestore.googleapis.com/**',r=>r.fulfill({status:403,headers:{'access-control-allow-origin':'*'},json:{error:{code:403,message:'Isolated fixture'}}}));
  await ctx.addInitScript(()=>{if('serviceWorker' in navigator)navigator.serviceWorker.register=()=>Promise.reject(new Error('Isolated fixture'));});
  const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>{if(e.message.includes('firestore.googleapis.com')&&e.message.includes('due to access control checks'))return;errors.push(e.message)});
- await page.goto(process.env.MR_TEST_URL||'http://localhost:5190/?emulator');await page.locator('.composer textarea').waitFor();assert.equal(await page.locator('.message-navigation').count(),0);
+ await page.goto(process.env.MR_TEST_URL||'http://localhost:5190/');await page.locator('.composer textarea').waitFor();assert.equal(await page.locator('.message-navigation').count(),0);
  const messages=Array.from({length:1000},(_,i)=>({id:'turn-'+i,role:i%2?'assistant':'user',text:i%2?'### Reply '+i+'\n\nUseful answer with details.\n\n```js\nconst value = '+i+';\n```':`QUESTION_${i/2+1}: A sent question with supporting details.`,createdAt:i+1,status:'done'}));
  messages[14].text='';messages[14].files=[{id:'file',kind:'text',name:'protocol.txt',mime:'text/plain',size:10,text:'Reference text'}];
  messages[18].text='مرحبا، سؤال بالعربية';

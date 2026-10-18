@@ -1,3 +1,4 @@
+import { requiresReasoning } from './ai/eligibility.js';
 // Shared model-family hints. Capability metadata remains authoritative; these are heuristics, not benchmarks.
 import type { ModelInfo } from '../types';
 
@@ -48,7 +49,7 @@ export function features(m: ModelInfo): Record<Feature, number> {
     coder: /coder|codestral|devstral/.test(n) ? 1 : /kimi-k2|glm-(4\.[5-9]|[5-9])|gpt-oss|gpt-(?:4\.[1-9]|[5-9])|claude[\w.-]*(?:sonnet|opus)|deepseek[\w.-]*(v3|v4|chat)|gemini-(?:[3-9][\d.]*|2\.5)-pro|qwen-?3/.test(n) ? 0.6 : 0.15,
     reasoner: noReasoning?0:/\br1\b|-r1|reason|think|qwq|magistral/.test(n) ? 1 : m.thinking ? (strength(m) >= 8.5 ? 1 : 0.7) : 0,
     // Reasoning-only models think at length before every answer.
-    slow: noReasoning?0:/\br1\b|-r1|reasoner|thinking|qwq|magistral/.test(n) ? 1 : 0,
+    slow: requiresReasoning(m) ? 1 : 0,
     speed: m.provider === 'cerebras' ? 1 : m.provider === 'groq' ? 0.9 : light ? 0.65 : /flash/.test(n) ? 0.55 : p >= 200 || /(?:^|[-/:._])(?:pro|large|max|opus)(?:[-/:._]|$)/.test(n) ? 0.1 : 0.35,
     vision: m.vision ? 1 : 0,
     pdf: m.pdf ? 1 : 0,

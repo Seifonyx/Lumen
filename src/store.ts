@@ -7,6 +7,7 @@ import { startCatalogRefresh } from './lib/ai/catalog-refresh.js';
 import { attachmentNeeds, modelProblem } from './lib/ai/eligibility.js';
 import { choosePreference } from './lib/ai/preferences.js';
 import { selectedModel } from './lib/model-selection';
+import { layoutModelProblem,layoutPolicy,planLayout } from './lib/layout-policy';
 import { checkModels as runModelCheck, clearCut, type CheckResult } from './lib/ai/model-check';
 import { AI_PROVIDERS, EXTRA_PROVIDERS, normalizeKeys, providerEnabled } from './lib/ai/provider-config.js';
 import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage } from './lib/api';
@@ -32,7 +33,7 @@ import { buildInstructions } from './lib/ai/instructions.js';
 import { inputBudget } from './lib/ai/context-budget.js';
 import { waitFor as waitForSignal } from './lib/ai/chat.js';
 import { hasVideo, toolModel } from './lib/ai/tool-inputs.js';
-import { isCoolingDown, reliability, replyLatency } from './lib/ai/health.js';
+import { isCoolingDown, reliability, replyLatency, setHealthScope } from './lib/ai/health.js';
 import { findLayout, isLayoutId } from './lib/layouts';
 import { formatUntil, remaining, UsageTracker, type LimitInfo, type UsageView } from './lib/usage';
 import { db } from './lib/db';
@@ -528,14 +529,16 @@ export const useStore = create<State>((set, get) => {
     const catalogModels = get().catalog?.models || [];
     const layout = isLayoutId(model) ? findLayout(model, catalogModels, settings.layouts, settings.hiddenLayouts) : undefined;
     const usable = (id: string) => catalogModels.some((m) => m.id === id);
-    const layoutModels = layout ? layout.models.filter(usable) : [];
-    if(layout && !layoutModels.length && !settings.autoSwitch) throw new Error(`None of the “${layout.name}” models are available. Automatic switching is off. Edit the layout or reconnect its provider in Settings.`);
-    if(layout?.mode==='order' && !settings.autoSwitch && !usable(layout.models[0])) throw new Error(`The first model in “${layout.name}” is unavailable. Automatic switching is off. Edit the layout or reconnect its provider in Settings.`);
-    if (layout) model = layout.mode === 'auto' || !layoutModels.length ? AUTO : layoutModels[0];
+    const layoutRules=layout?layoutPolicy(layout,settings.autoSwitch):{switching:settings.autoSwitch,outside:false};
+    const layoutModels = layout ? layout.models.filter(id=>!layoutModelProblem(layout,modelInfo(get().catalog,id))) : [];
+    const outsideModels=layout && layoutRules.outside?settings.enabledModels.filter(id=>!layout.models.includes(id)&&!layoutModelProblem(layout,modelInfo(get().catalog,id))):[];
+    if(layout && !layoutModels.length && !outsideModels.length) throw new Error(`No model in “${layout.name}” meets its saved requirements or is available. ${!settings.autoSwitch?'Automatic switching is off. ':''}Edit the layout or reconnect its providers.`);
+    if(layout?.mode==='order' && !layoutRules.switching && layoutModelProblem(layout,modelInfo(get().catalog,layout.models[0]))) throw new Error(`The first model in “${layout.name}” is unavailable or incompatible. ${!settings.autoSwitch?'Automatic switching is off.':'Fallback is disabled for this layout.'} Edit the layout or reconnect its provider.`);
+    if (layout) model = layout.mode === 'auto' ? AUTO : layout.models[0] || AUTO;
     const toolRequest = Boolean([...chat.messages].reverse().find(m => m.role === 'user')?.codeExecution) || hasVideo(liveMessages(chat)) || Boolean(chat.task?.search);
-    let routeModels = (layoutModels.length ? layoutModels : settings.enabledModels).filter(id => !toolRequest || toolModel(id));
-    if (toolRequest && !routeModels.length && settings.autoSwitch) routeModels = settings.enabledModels.filter(toolModel);
-    if (toolRequest && model !== AUTO && !toolModel(model)) {
+    let routeModels = (layout?[...layoutModels,...outsideModels]:settings.enabledModels).filter(id => !toolRequest || toolModel(id));
+    if (toolRequest && !routeModels.length && settings.autoSwitch && (!layout||layoutRules.outside)) routeModels = settings.enabledModels.filter(toolModel);
+    if (toolRequest && model !== AUTO && !toolModel(model) && !layout) {
       if(!settings.autoSwitch)throw new Error('This tool needs a Gemini model. Automatic switching is off. Choose Gemini in the model picker first.');
       model = AUTO;
     }
@@ -571,7 +574,7 @@ export const useStore = create<State>((set, get) => {
     const recentText = previousWork(liveMessages(chat).filter(m => m.role === 'user' && m.id !== lastUser?.id).map(m => m.text), activeSummary(chat)?.text);
     const contextFiles = [...liveMessages(chat).flatMap(m => m.files || []), ...projectFiles];
     const task = analyze({ recentText, text: lastUser?.text || '', files: contextFiles, conversationTokens: contextTokens(chat) + projectTokens, search: chat.task ? chat.task.search : settings.webSearch });
-    const routingPriority=choosePreference(settings.routingPreference,task) as Settings['routingPreference'];
+    const routingPriority=choosePreference(layout?.priority || settings.routingPreference,task) as Settings['routingPreference'];
     const quickReply = model === AUTO && routingPriority!=='quality' && task.quick && !task.search && !chat.repo && !chat.assistant && !layout && !toolRequest && contextTokens(chat) + projectTokens < 4000
       // Short follow-ups can continue a complex job. Keep the model's normal reasoning.
       && !/^(?:yes|ok(?:ay)?|go ahead|do it|continue|proceed|sure)\b/i.test(lastUser?.text.trim() || '');
@@ -592,28 +595,20 @@ export const useStore = create<State>((set, get) => {
       previous: [...chat.messages].reverse().find((m) => m.role === 'assistant' && m.status === 'done' && !m.error && m.model && m.text)?.model,
       excluded: settings.autoExcluded,
       preferProvider: settings.autoPreferProvider,
-      allowFallback:settings.autoSwitch,
+      allowFallback:layoutRules.switching,
       preference:routingPriority,
-      unavailable:[model,...settings.enabledModels,...(layout?.models || [])].filter(id=>!usable(id)),
+      unavailable:[model,...settings.enabledModels,...(layout?.models || [])].filter(id=>!usable(id)||(toolRequest&&!toolModel(id))),
     };
-    let plan = planRoute(routeInput);
-    const outside = layoutModels.length && settings.autoSwitch ? settings.enabledModels.filter(id => !layoutModels.includes(id) && (!toolRequest || toolModel(id))) : [];
-    const backupPlan = outside.length ? planRoute({ ...routeInput, selected: AUTO, enabled: outside }) : null;
-    if (!plan.model && backupPlan?.model) {
-      plan = { ...backupPlan, notice: `No model in “${layout!.name}” fits this context and attachments — using ${modelLabel(get().catalog, backupPlan.model)}.` };
-    }
+    const plan = layout?planLayout(layout,{...routeInput,enabled:settings.enabledModels},settings.autoSwitch):planRoute(routeInput);
     let chosen = plan.model;
     if (!chosen) {
       if (plan.error) throw new Error(plan.error);
       get().toast(toolRequest ? 'Enable a Gemini model for this tool in Settings → Models.' : 'No models are enabled. Open Settings → Models.', 'error');
       return;
     }
-    // After a layout's own models, your other models are the last resort.
-    const rest = backupPlan ? [backupPlan.model, ...backupPlan.fallbacks].filter(Boolean) : [];
-    let fallbacks = settings.autoSwitch ? [...new Set([...plan.fallbacks, ...rest])].filter(id => id !== plan.model) : [];
+    let fallbacks = plan.fallbacks;
     const preNotices: string[] = plan.notice ? [plan.notice] : [];
-    if (layout && !layoutModels.length) preNotices.push(`None of the "${layout.name}" models are available with your keys — using your own models.`);
-    if (settings.autoSwitch && blocked(chosen)) {
+    if (layoutRules.switching && blocked(chosen)) {
       const next = fallbacks.find((id) => !blocked(id));
       if (next) {
         if (model !== AUTO && !layout) preNotices.push(`${modelLabel(get().catalog, chosen)} reached its limit (available again ${formatUntil(usage!.blockedUntil(chosen)!)}) — using ${modelLabel(get().catalog, next)}.`);
@@ -673,6 +668,7 @@ export const useStore = create<State>((set, get) => {
     const searchOn = !research && (chatTask ? chatTask.search : settings.webSearch);
     makeBody = () => buildChatBody({ model: chosen, fallbacks, messages: wire, options: {
       routingPreference:routingPriority,
+      preserveOrder:layout?.mode==='order',modelRequirements:layout?.requirements,
       modelCapabilities: requestCapabilities(get().catalog, [chosen, ...fallbacks]),
       blockedModels: [chosen, ...fallbacks].filter(id => blocked(id) || (remaining(get().usage, id) ?? Infinity) <= 0),
       quickReply: quickReply && !research, thinkingModels, preferredModels: layoutModels, search: searchOn && task.search, requireSearch: Boolean(chatTask?.search), codeExecution: Boolean(lastUser?.codeExecution), customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: masker ? masker.mask(workspaceNote).text : workspaceNote,
@@ -1005,6 +1001,7 @@ export const useStore = create<State>((set, get) => {
         modelCheckController?.abort();
         const generation = ++accountGeneration;
         loadedCatalogScope = null;
+        setHealthScope(null);
         keySaveGeneration++;
         get().stop();
         stopSpeaking();
@@ -1277,6 +1274,7 @@ export const useStore = create<State>((set, get) => {
         try {
           const scope=await catalogScope(user.uid,keys);
           if (generation !== accountGeneration || version !== keyVersion()) return;
+          setHealthScope(scope);
           if(loadedCatalogScope!==scope) {
             loadedCatalogScope=scope;
             const saved=readCatalogCache(localStorage,user.uid,scope) as Catalog | null;
@@ -1433,17 +1431,16 @@ export const useStore = create<State>((set, get) => {
       if (!chat || !doc) throw new Error('This document is no longer available.');
       const { settings, catalog } = get();
       const prompt = canvasEditPrompt(doc, instruction, start, end);
-      let selected = modelFor(chat);
+      const selected = modelFor(chat);
       const layout = isLayoutId(selected) ? findLayout(selected, catalog?.models || [], settings.layouts, settings.hiddenLayouts) : undefined;
-      const enabled = layout?.models.length ? layout.models : settings.enabledModels;
-      if (layout) selected = layout.mode === 'auto' ? AUTO : enabled[0] || AUTO;
-      const plan = planRoute({ selected, enabled, catalog: catalog?.models || [], text: prompt, files: [], conversationTokens: estimateTokens(prompt), search: false, blocked: id => (usage?.blockedUntil(id) ?? null) !== null, left: id => remaining(get().usage, id),allowFallback:settings.autoSwitch,unavailable:[selected,...enabled].filter(mid=>!catalog?.models.some(m=>m.id===mid)),excluded:settings.autoExcluded });
-      if (!plan.model) throw new Error(plan.error || 'No models are enabled. Open Settings → Models.');
       const project = settings.projects?.find(p => p.id === chat.projectId);
       const instructions = [settings.customInstructions, styleInstructions(settings), project?.instructions, chat.assistant?.instructions, layout?.instructions, 'You are editing a canvas selection. Return only the replacement text. Do not add memory commands or explanations.'].filter(Boolean).join('\n\n');
       const memoryNote = settings.memory && !isTemporaryChat(chat) ? memoryInstructions(get().memories, false, memoryScope(chat)) : '';
+      const routeInput:RouteInput={selected,enabled:settings.enabledModels,catalog:catalog?.models || [],text:prompt,files:[],conversationTokens:estimateTokens(prompt),instructionTokens:estimateTokens(buildInstructions({custom:instructions,memory:memoryNote,workspace:'',officeFiles:[]})),search:false,blocked:id=>(usage?.blockedUntil(id)??null)!==null,left:id=>remaining(get().usage,id),allowFallback:settings.autoSwitch,preference:layout?.priority || settings.routingPreference,excluded:settings.autoExcluded,unavailable:[selected,...settings.enabledModels,...(layout?.models || [])].filter(mid=>!catalog?.models.some(m=>m.id===mid))};
+      const plan=layout?planLayout(layout,routeInput,settings.autoSwitch):planRoute(routeInput);
+      if(!plan.model)throw new Error(plan.error || 'No eligible model is available. Open Settings → Models.');
       const masker = settings.privacyShield && !asIs ? new Masker() : null;
-      const body = buildChatBody({ model: plan.model, fallbacks: settings.autoSwitch ? plan.fallbacks : [], messages: [{ role: 'user', text: masker ? masker.mask(prompt).text : prompt }], options: { search: false, customInstructions: masker ? masker.mask(instructions).text : instructions, memory: masker ? masker.mask(memoryNote).text : memoryNote } });
+      const body = buildChatBody({ model: plan.model, fallbacks:plan.fallbacks,messages: [{ role: 'user', text: masker ? masker.mask(prompt).text : prompt }], options: {search:false,preserveOrder:layout?.mode==='order',modelRequirements:layout?.requirements,preferredModels:layout?.models,modelCapabilities:requestCapabilities(catalog,[plan.model,...plan.fallbacks]),routingPreference:choosePreference(layout?.priority || settings.routingPreference,analyze(routeInput)),customInstructions: masker ? masker.mask(instructions).text : instructions, memory: masker ? masker.mask(memoryNote).text : memoryNote } });
       const aborter = new AbortController();
       const abort = () => aborter.abort();
       signal.addEventListener('abort', abort, { once: true });
@@ -1800,6 +1797,7 @@ export const useStore = create<State>((set, get) => {
         left: (id) => remaining(get().usage, id),
         latency: (id) => replyLatency(id),
         preferProvider: get().settings.autoPreferProvider,
+        priority:get().settings.routingPreference,
       };
     },
     async rewriteText(text, ask) {

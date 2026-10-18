@@ -78,11 +78,7 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
 
   return (
     <li className={`chat-row${active ? ' active' : ''}${menu ? ' menu-open' : ''}`} data-flip={chat.id} ref={rowRef}>
-      <button className="chat-open" onClick={() => {
-        // Phones: the drawer starts sliding away at once (on the compositor), then the chat renders.
-        if (window.matchMedia('(max-width: 899px)').matches && useStore.getState().sidebarOpen) { useStore.getState().setUi({ sidebarOpen: false }); requestAnimationFrame(() => setTimeout(() => selectChat(chat.id), 0)); }
-        else selectChat(chat.id);
-      }} dir="auto" title={chat.title}>
+      <button className="chat-open" onClick={() => selectChat(chat.id)} dir="auto" title={chat.title}>
         {chat.pinned && <Pin size={13} className="pin-mark" />}
         <span className="chat-title">{chat.title}</span>
         {streaming && <span className="dot-pulse" aria-label="Replying" />}

@@ -4,9 +4,10 @@
 import { parseLimit, readError, readSSE, upstreamError } from './http.js';
 import { isActiveModel, isExcludedModel, isUnavailableFailure } from './model-status.js';
 import { safeVideoUri, toolBlock } from './tool-inputs.js';
-import { clearHealth } from './health.js';
+import { setHealthScope } from './health.js';
 import { AI_PROVIDERS, DEFAULT_PROVIDER_RELAY_URL, EXTRA_PROVIDERS, normalizeKeys, providerEnabled, validAlibabaBase, validRelayUrl } from './provider-config.js';
 import { createModelRegistry } from './registry.js';
+import { waitFor } from './abort.js';
 
 // API keys come from the user's settings (stored in their private Firebase document).
 let keys = normalizeKeys();
@@ -14,11 +15,32 @@ let capabilities = new Map();
 /** Metadata from the current connected catalogue; no credentials or request content. */
 export const modelCapabilities = id => capabilities.get(id);
 let keyGeneration = 0;
+let credentialController = new AbortController();
 export const keyVersion = () => keyGeneration;
+/** Bind an entire operation, including retries, to the current credential scope. */
+export function providerSignal(signal) {
+  const combined=signal?AbortSignal.any([signal,credentialController.signal]):credentialController.signal;
+  if(combined.aborted)throw Object.assign(new Error('Provider request stopped.'),{name:'AbortError'});
+  return combined;
+}
+async function providerFetch(url,options={}) {
+  const signal=providerSignal(options.signal || AbortSignal.timeout(20_000));
+  const request=fetch(url,{...options,signal,credentials:'omit',redirect:'error'}).then(response=>{
+    if(signal.aborted) {void response.body?.cancel().catch(()=>{});throw Object.assign(new Error('Provider request stopped.'),{name:'AbortError'});}
+    return response;
+  });
+  const response=await waitFor(request,signal);
+  // Uncooperative IO must not publish a response from an abandoned configuration.
+  if(signal.aborted)throw Object.assign(new Error('Provider request stopped.'),{name:'AbortError'});
+  return response;
+}
 export function setKeys(next) {
   const clean = normalizeKeys(next);
   const signature = value => { const {github:_,...config}=value;return JSON.stringify(config); };
-  if (signature(clean) !== signature(keys)) { registry?.invalidate(); registry = null; capabilities.clear(); clearHealth(); keyGeneration++; }
+  if (signature(clean) !== signature(keys)) {
+    credentialController.abort();credentialController=new AbortController();
+    registry?.invalidate(); registry = null; capabilities.clear(); setHealthScope(null); keyGeneration++;
+  }
   keys = clean;
 }
 
@@ -72,7 +94,7 @@ async function geminiCatalog(configuration, signal) {
   let pageToken = '';
   const seen = new Set();
   do {
-    const res = await fetch(`${GEMINI_BASE}/models?pageSize=1000${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`, { signal, headers: { 'x-goog-api-key': configuration.gemini } });
+    const res = await providerFetch(`${GEMINI_BASE}/models?pageSize=1000${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`, { signal, headers: { 'x-goog-api-key': configuration.gemini } });
     if (!res.ok) throw await discoveryError('Google',res);
     const page = await res.json();
     if (!Array.isArray(page.models)) throw new Error('Google: invalid model catalogue');
@@ -103,7 +125,7 @@ async function geminiCatalog(configuration, signal) {
 }
 
 async function openRouterCatalog(configuration, signal) {
-  const res = await fetch(`${OPENROUTER_BASE}/models`, { signal, headers: { authorization: `Bearer ${configuration.openrouter}` } });
+  const res = await providerFetch(`${OPENROUTER_BASE}/models`, { signal, headers: { authorization: `Bearer ${configuration.openrouter}` } });
   if (!res.ok) throw await discoveryError('OpenRouter',res);
   const { data } = await res.json();
   if (!Array.isArray(data)) throw new Error('OpenRouter: invalid model catalogue');
@@ -177,6 +199,7 @@ function modelVision(provider, name, metadata = {}) {
 }
 
 async function compatFetch(provider, path, options = {}, catalogue = false, configuration = keys) {
+  options={...options,signal:providerSignal(options.signal)};
   const config = COMPAT[provider];
   if (!config || !providerEnabled(provider,configuration)) throw new Error('This provider is not enabled.');
   let base = config.base;
@@ -203,7 +226,7 @@ async function compatFetch(provider, path, options = {}, catalogue = false, conf
       headers.set('x-mr-account-id', configuration.cloudflareAccountId);
     }
   }
-  const send = (url) => fetch(url, { ...options, headers: Object.fromEntries(headers), credentials: 'omit', referrerPolicy: 'no-referrer' });
+  const send = (url) => providerFetch(url, { ...options, headers: Object.fromEntries(headers), credentials: 'omit', referrerPolicy: 'no-referrer' });
   try {
     return await send(`${base}${path}`);
   } catch (error) {
@@ -389,6 +412,7 @@ function withInstructionsInFirstUser(messages, instructions) {
 // or a provider's native search, so the chat can explain degraded search honestly.
 // Resolves to { ok: true, events, searchEnabled? } or { ok: false, status, message }.
 export async function openStream({ provider, name }, messages, { instructions, metadata, search, requireSearch, codeExecution, quickReply, signal }) {
+  signal=providerSignal(signal);
   if (!parseModelId(`${provider}:${name}`) || !hasKey(provider)) return { ok: false, status: 403, message: 'This provider is not enabled. Review API keys settings.' };
   if (provider === 'gemini') return openGemini(name, messages, instructions, search, signal, codeExecution, requireSearch, quickReply);
   if (COMPAT[provider]) return openCompat(provider, name, messages, instructions, signal, metadata);
@@ -476,6 +500,7 @@ async function* compatEvents(body) {
 }
 
 async function openGemini(name, messages, instructions, search, signal, codeExecution = false, requireSearch = false, quickReply = false) {
+  const credential=keys.gemini;
   const gemma = isGemma(name);
   if(requireSearch && (!search || gemma || !geminiThinks(name)))return {ok:false,status:400,message:'This model cannot search the web for this task.'};
   const body = gemma
@@ -492,10 +517,10 @@ async function openGemini(name, messages, instructions, search, signal, codeExec
   if (codeExecution) extras.tools = [...(extras.tools || []), { codeExecution: {} }];
 
   const send = (payload) =>
-    fetch(`${GEMINI_BASE}/models/${encodeURIComponent(name)}:streamGenerateContent?alt=sse`, {
+    providerFetch(`${GEMINI_BASE}/models/${encodeURIComponent(name)}:streamGenerateContent?alt=sse`, {
       method: 'POST',
       signal,
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': keys.gemini },
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': credential },
       body: JSON.stringify(payload),
     });
 
@@ -546,6 +571,7 @@ async function* geminiEvents(body) {
 }
 
 async function openOpenRouter(name, messages, instructions, signal) {
+  const credential=keys.openrouter;
   const gemma = isGemma(name);
   const chat = gemma
     ? toOpenRouter(withInstructionsInFirstUser(messages, instructions))
@@ -555,12 +581,12 @@ async function openOpenRouter(name, messages, instructions, signal) {
   if (messages.some((m) => (m.files || []).some((f) => f.kind === 'pdf'))) {
     body.plugins = [{ id: 'file-parser', pdf: { engine: 'pdf-text' } }];
   }
-  const res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
+  const res = await providerFetch(`${OPENROUTER_BASE}/chat/completions`, {
     method: 'POST',
     signal,
     headers: {
       'content-type': 'application/json',
-      authorization: `Bearer ${keys.openrouter}`,
+      authorization: `Bearer ${credential}`,
       'x-title': 'Lumen',
       'http-referer': location.origin,
     },
@@ -590,10 +616,11 @@ async function* openRouterEvents(body) {
 /** OpenRouter's daily allowance for free models: 50 requests, or 1000 once you've bought credits. */
 export async function openRouterDailyLimit() {
   if (!keys.openrouter) return null;
+  const signal=providerSignal(AbortSignal.timeout(15_000));
   try {
-    const res = await fetch(`${OPENROUTER_BASE}/key`, { headers: { authorization: `Bearer ${keys.openrouter}` } });
+    const res = await providerFetch(`${OPENROUTER_BASE}/key`, { signal,headers: { authorization: `Bearer ${keys.openrouter}` } });
     if (!res.ok) return null;
-    const { data } = await res.json();
+    const { data } = await waitFor(res.json(),signal);
     return data?.is_free_tier === false ? 1000 : 50;
   } catch {
     return null;
@@ -611,53 +638,56 @@ export async function openRouterDailyLimit() {
  * @returns {Promise<number[][]>}
  */
 export async function embed(texts, taskType, signal) {
+  signal=providerSignal(signal || AbortSignal.timeout(30_000));
   if (!keys.gemini) throw Object.assign(new Error('Searching by meaning needs a Gemini key.'), { status: 403 });
   const model = 'models/gemini-embedding-001';
-  const res = await fetch(`${GEMINI_BASE}/${model}:batchEmbedContents`, {
+  const res = await providerFetch(`${GEMINI_BASE}/${model}:batchEmbedContents`, {
     method: 'POST',
     signal,
     headers: { 'content-type': 'application/json', 'x-goog-api-key': keys.gemini },
     body: JSON.stringify({ requests: texts.map((text) => ({ model, content: { parts: [{ text }] }, taskType, outputDimensionality: 256 })) }),
   });
-  if (!res.ok) throw Object.assign(new Error((await readError(res)).message || `Embedding failed (${res.status})`), { status: res.status });
-  const d = await res.json();
+  if (!res.ok) throw Object.assign(new Error((await waitFor(readError(res),signal)).message || `Embedding failed (${res.status})`), { status: res.status });
+  const d = await waitFor(res.json(),signal);
   return (d.embeddings || []).map((e) => e.values || []);
 }
 
 export async function complete({ provider, name }, prompt, { maxTokens = 256, signal, info } = {}) {
+  const configuration=keys;
+  signal=providerSignal(signal || AbortSignal.timeout(30_000));
   if (!parseModelId(`${provider}:${name}`) || !hasKey(provider)) {
     if (info) Object.assign(info, { status: 403, message: 'This provider is not enabled.' });
     return null;
   }
   if (provider === 'gemini') {
-    const res = await fetch(`${GEMINI_BASE}/models/${encodeURIComponent(name)}:generateContent`, {
+    const res = await providerFetch(`${GEMINI_BASE}/models/${encodeURIComponent(name)}:generateContent`, {
       method: 'POST',
       signal,
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': keys.gemini },
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': configuration.gemini },
       body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: maxTokens } }),
     });
     if (!res.ok) {
-      if (info) Object.assign(info, { status: res.status, ...(await readError(res)) });
+      if (info) Object.assign(info, { status: res.status, ...(await waitFor(readError(res),signal)) });
       return null;
     }
-    const d = await res.json();
+    const d = await waitFor(res.json(),signal);
     if (info) info.status = 200;
     if (info && d.usageMetadata) Object.assign(info, { input: d.usageMetadata.promptTokenCount || 0, output: (d.usageMetadata.candidatesTokenCount || 0) + (d.usageMetadata.thoughtsTokenCount || 0) });
     return (d.candidates?.[0]?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text).join('');
   }
   const compat = COMPAT[provider];
-  const send = compat ? options => compatFetch(provider, '/chat/completions', options) : options => fetch(`${OPENROUTER_BASE}/chat/completions`, options);
+  const send = compat ? options => compatFetch(provider, '/chat/completions', options,false,configuration) : options => providerFetch(`${OPENROUTER_BASE}/chat/completions`, options);
   const res = await send({
     method: 'POST',
     signal,
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${compat ? keys[provider] : keys.openrouter}` },
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${compat ? configuration[provider] : configuration.openrouter}` },
     body: JSON.stringify({ model: name, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }),
   });
   if (!res.ok) {
-    if (info) Object.assign(info, { status: res.status, ...(await readError(res)) });
+    if (info) Object.assign(info, { status: res.status, ...(await waitFor(readError(res),signal)) });
     return null;
   }
-  const d = await res.json();
+  const d = await waitFor(res.json(),signal);
   if (info) info.status = 200;
   if (info && d.usage) Object.assign(info, { input: d.usage.prompt_tokens || 0, output: d.usage.completion_tokens || 0 });
   // Some models write their thinking inline; only the answer is wanted here.
@@ -701,18 +731,20 @@ export async function probeModel(id, signal, { maxTokens = 48, timeoutMs = 25_00
  */
 export async function geminiKeyLock() {
   if (!keys.gemini) return null;
+  const key=keys.gemini, signal=providerSignal(AbortSignal.timeout(20_000));
   const probe = (referrerPolicy) =>
-    fetch(`${GEMINI_BASE}/models?pageSize=1`, { headers: { 'x-goog-api-key': keys.gemini }, referrerPolicy, cache: 'no-store' });
+    providerFetch(`${GEMINI_BASE}/models?pageSize=1`, { signal, headers: { 'x-goog-api-key': key }, referrerPolicy, cache: 'no-store' });
   try {
     const [bare, normal] = await Promise.all([probe('no-referrer'), probe('strict-origin-when-cross-origin')]);
-    const bareErr = bare.ok ? null : await readError(bare);
-    const normalErr = normal.ok ? null : await readError(normal);
+    const bareErr = bare.ok ? null : await waitFor(readError(bare),signal);
+    const normalErr = normal.ok ? null : await waitFor(readError(normal),signal);
     if (normal.ok && bare.ok) return { state: 'open' };
     if (normal.ok && /refer/i.test(bareErr?.message || '')) return { state: 'locked' };
     if (/refer/i.test(normalErr?.message || '')) return { state: 'wrong-site', message: normalErr.message };
     if (normal.status === 400 || normal.status === 401) return { state: 'invalid', message: normalErr?.message };
     return { state: 'error', message: (normalErr || bareErr)?.message };
   } catch {
+    if(signal.aborted)return null;
     return { state: 'error', message: "Couldn't reach Google." };
   }
 }
@@ -720,15 +752,17 @@ export async function geminiKeyLock() {
 /** OpenRouter key details: spending limit (0 = free models only), credits used, free tier. */
 export async function openRouterKeyInfo() {
   if (!keys.openrouter) return null;
+  const key=keys.openrouter,signal=providerSignal(AbortSignal.timeout(20_000));
   try {
-    const res = await fetch(`${OPENROUTER_BASE}/key`, { headers: { authorization: `Bearer ${keys.openrouter}` }, cache: 'no-store' });
-    if (!res.ok) return { state: 'error', message: (await readError(res)).message };
-    const { data = {} } = await res.json();
+    const res = await providerFetch(`${OPENROUTER_BASE}/key`, { signal, headers: { authorization: `Bearer ${key}` }, cache: 'no-store' });
+    if (!res.ok) return { state: 'error', message: (await waitFor(readError(res),signal)).message };
+    const { data = {} } = await waitFor(res.json(),signal);
     const limit = data.limit === undefined ? null : data.limit;
     if (limit === 0) return { state: 'capped' };
     if (limit === null) return { state: data.is_free_tier ? 'free' : 'open' };
     return { state: 'limit', limit, used: data.usage ?? 0 };
   } catch {
+    if(signal.aborted)return null;
     return { state: 'error', message: "Couldn't reach OpenRouter." };
   }
 }

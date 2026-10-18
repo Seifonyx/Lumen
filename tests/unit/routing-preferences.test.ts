@@ -31,6 +31,7 @@ assert.equal(planRoute({...cost,files:[{id:'pic',name:'pic.png',mime:'image/png'
 const costs:any={'a:chosen':2,'a:free':0,'b:paid':1};
 assert.deepEqual(attemptQueue(['a:chosen','b:paid','a:free'],{cost:(id:string)=>costs[id]}),['a:chosen','a:free','b:paid'],'the explicit primary stays first, then known price precedes provider spreading');
 assert.deepEqual(attemptQueue(['a:chosen','b:paid','a:free'],{cost:(id:string)=>costs[id],blocked:(id:string)=>id==='a:free'}),['a:chosen','b:paid','a:free'],'readiness precedes cost');
+assert.deepEqual(attemptQueue(['a:chosen','a:free','b:paid'],{preserveOrder:true,cost:(id:string)=>costs[id],searchCapable:(id:string)=>id.startsWith('b:')}),['a:chosen','a:free','b:paid'],'fixed layout order is not overridden by provider spreading, cost or optional search');
 
 setKeys({gemini:'fixture',openrouter:'fixture'});
 const primary='openrouter:primary',cheap='openrouter:cheap',expensive='gemini:expensive';

@@ -6,6 +6,7 @@
 import type { ModelInfo } from '../types';
 import type { LayoutIcon } from './layouts';
 import { modelProblem } from './ai/eligibility.js';
+import { estimatedCost,compareKnownCost } from './ai/preferences.js';
 import { interpretWork, type WorkTask } from './work-intent';
 
 import { features, familyOf, versionFamilyOf, versionOf, type Feature } from './model-profile';
@@ -18,6 +19,7 @@ export interface TaskProfile {
   icon: LayoutIcon;
   description: string;
   mode: 'auto' | 'order';
+  priority?: 'balanced' | 'quality' | 'speed' | 'cost';
   weights: Partial<Record<Feature, number>>;
   /** models without this can't do the task at all */
   requires?: 'vision' | 'search';
@@ -73,6 +75,7 @@ const PHRASES: Record<Feature, string> = {
 };
 
 export interface Context {
+  priority?: 'balanced' | 'quality' | 'speed' | 'cost';
   /** model is at its limit now */
   blocked?: (id: string) => boolean;
   /** how often it answered on this device (0–1), or null if unknown */
@@ -94,6 +97,7 @@ export function modelMeetsTask(task: TaskProfile, model: ModelInfo): boolean {
 
 /** The best models for a task, best first, each with why it was picked. */
 export function rankForTask(task: TaskProfile, catalog: ModelInfo[], ctx: Context = {}, count = 6): Pick[] {
+  const priority=task.priority || (task.id==='fast'?'speed':ctx.priority);
   const seen = new Set<string>();
   const usable = catalog.filter(m => {
     if (seen.has(m.id) || !modelMeetsTask(task, m)) return false;
@@ -106,6 +110,8 @@ export function rankForTask(task: TaskProfile, catalog: ModelInfo[], ctx: Contex
     const f = features(m);
     const parts = (Object.keys(task.weights) as Feature[]).map((k) => ({ k, v: (task.weights[k] || 0) * f[k] }));
     let s = parts.reduce((n, p) => n + p.v, 0);
+    if(priority==='quality')s+=f.strength*4;
+    if(priority==='speed')s+=f.speed*2-f.slow;
     const why = parts.filter((p) => p.v >= 0.6 && (p.k !== 'strength' || f.strength >= 0.84)).sort((a, b) => b.v - a.v).slice(0, 2).map((p) => p.k === 'coder' && f.coder === 1 ? 'built for code' : PHRASES[p.k]);
     const older = versionOf(m) > 0 && versionOf(m) < (newest.get(versionFamilyOf(m)) || 0);
     if (older) s -= 1.2; else if (versionOf(m) > 0 && usable.some((o) => o !== m && versionOf(o) > 0 && versionFamilyOf(o) === versionFamilyOf(m))) why.push('newest of its family');
@@ -131,8 +137,11 @@ export function rankForTask(task: TaskProfile, catalog: ModelInfo[], ctx: Contex
   while (picks.length < count && pool.length) {
     let best = 0, bestScore = -Infinity;
     const ready = pool.some(c => !c.blocked);
+    const relevant=pool.filter(c=>!ready||!c.blocked);
+    const cheapest=priority==='cost'?relevant.map(c=>estimatedCost(c.m,task.minInputTokens || 1000)).filter((n):n is number=>n!==null).sort((a,b)=>a-b)[0]:undefined;
     pool.forEach((c, i) => {
       if (ready && c.blocked) return;
+      if(cheapest!==undefined && compareKnownCost(estimatedCost(c.m,task.minInputTokens || 1000),cheapest)>0)return;
       const adj = c.s - (picks.length ? 0.7 * (providers.get(c.m.provider) || 0) : 0) - (families.has(familyOf(c.m)) ? 3 : 0);
       if (adj > bestScore) { bestScore = adj; best = i; }
     });
@@ -164,6 +173,7 @@ export function taskFromText(text: string): TaskProfile {
   if (intent.excluded.includes('images')) weights.vision = 0;
   if (intent.minContext || intent.minInputTokens) weights.longctx = Math.max(weights.longctx || 0, 2);
   return { ...base, id: hits.length === 1 ? base.id : 'custom', name: titleCase(text) || base.name, description: text, weights, requires: undefined,
+    priority:intent.quality?'quality':intent.cost?'cost':intent.speed?'speed':undefined,
     requiresAll: [...new Set(intent.required)], minContext: intent.minContext, minInputTokens: intent.minInputTokens, noReasoning: intent.noReasoning,
     instructions: [...hits.map(t => t.instructions), `Layout purpose and preferences (these take precedence over the general task guidance above): ${text.trim()}\nApply these preferences unless the user's current request asks otherwise.`].filter(Boolean).join('\n\n') };
 }

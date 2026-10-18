@@ -35,7 +35,7 @@ const successful = reliability(ID);
 for (let i = 0; i < 4; i++) noteFailure(ID, 429);
 assert(Math.abs(reliability(ID) - successful) < 0.001, 'Ordinary quota still says nothing about quality');
 setKeys({ groq: 'another-fixture' });
-assert(reliability(ID) > 0.5, 'Replacing credentials preserves real successful model history');
+assert.equal(reliability(ID),null, 'Replacing credentials starts a separate connection history');
 clearHealth(); clearRecord();
 
 console.log('PASS authentication and quota failures do not poison reliability while model-access failures and successes remain meaningful');

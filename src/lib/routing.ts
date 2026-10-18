@@ -43,6 +43,8 @@ export interface RouteInput {
   /** IDs known absent or denied in the current credential-scoped registry. */
   unavailable?: string[];
   preference?: 'balanced' | 'quality' | 'speed' | 'cost';
+  preserveOrder?: boolean;
+  disabledFallbackHint?: string;
 }
 
 export interface RoutePlan {
@@ -210,7 +212,7 @@ export function planRoute(input: RouteInput): RoutePlan {
   const pool = [...new Set(usable)];
   const manualProblem=unavailable.has(input.selected)?'is not available from your connected provider':capable(info.get(input.selected),task,tokens);
   if(!auto && manualProblem && input.allowFallback===false) {
-    return {model:'',fallbacks:[],reason:null,notice:null,error:`${info.get(input.selected)?.label || input.selected} ${manualProblem}. Automatic switching is off. Choose a compatible model or enable switching in Settings → Models.`};
+    return {model:'',fallbacks:[],reason:null,notice:null,error:`${info.get(input.selected)?.label || input.selected} ${manualProblem}. ${input.disabledFallbackHint || 'Automatic switching is off. Choose a compatible model or enable switching in Settings → Models.'}`};
   }
   if(auto && !pool.length && input.enabled.length && input.enabled.every(id=>excluded.has(id)||unavailable.has(id)) && excluded.size) {
     return {model:'',fallbacks:[],reason:null,notice:null,error:'Your models are excluded from Auto or unavailable. Choose a model manually or review Auto exclusions in Settings → Models.'};
@@ -240,6 +242,7 @@ export function planRoute(input: RouteInput): RoutePlan {
   // Capabilities and availability take priority over continuity, quality hints, and
   // provider diversity. Keep non-search models as an honest last resort.
   const all = [...ranked, ...unknown].sort((a, b) => Number(blocked(a)) - Number(blocked(b))
+    || (input.preserveOrder?input.enabled.indexOf(a)-input.enabled.indexOf(b):0)
     || (auto && task.search ? Number(Boolean(info.get(b)?.search)) - Number(Boolean(info.get(a)?.search)) : 0)
     || (preference==='cost'?compareKnownCost(estimatedCost(info.get(a),tokens),estimatedCost(info.get(b),tokens)):0));
   const name = (id: string) => info.get(id)?.label || id.split(':').slice(1).join(':');

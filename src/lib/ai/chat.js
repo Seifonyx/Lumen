@@ -3,13 +3,15 @@
 // and, for the usage meter: {t:'request', id} {t:'usage', id, input, output} {t:'limit', id, scope, quota?, resetAt?, retryAfterSec?}
 
 import { buildInstructions } from './instructions.js';
-import { complete, hasGemini, hasKey, keyVersion, modelCapabilities, openStream, parseModelId } from './providers.js';
+import { complete, hasGemini, hasKey, keyVersion, modelCapabilities, openStream, parseModelId,providerSignal } from './providers.js';
 import { isUnavailableFailure } from './model-status.js';
 import { hasVideo, toolModel } from './tool-inputs.js';
-import { isCoolingDown, noteFailure, noteSuccess, noteReplyLatency, replyLatency } from './health.js';
+import { healthScope, isCoolingDown, noteFailure, noteSuccess, noteReplyLatency, replyLatency } from './health.js';
 import { requestTokens } from './context-budget.js';
-import { attachmentNeeds, modelProblem } from './eligibility.js';
+import { attachmentNeeds, modelProblem,modelRequirementsProblem } from './eligibility.js';
 import { estimatedCost } from './preferences.js';
+import { waitFor } from './abort.js';
+export { waitFor } from './abort.js';
 
 const MAX_ATTEMPTS = 5;
 export const timeouts = {
@@ -28,7 +30,7 @@ export const timeouts = {
 
 // Keep the chosen model first, then spread attempts across providers. Readiness
 // precedes layout preference; search breaks ties within each ready/layout tier.
-export function attemptQueue(ids, { searchCapable, blocked, preferred, cost, keepFirst = true } = {}) {
+export function attemptQueue(ids, { searchCapable, blocked, preferred, cost, preserveOrder=false, keepFirst = true } = {}) {
   const remaining = [...ids];
   const queue = [];
   const counts = new Map();
@@ -36,28 +38,17 @@ export function attemptQueue(ids, { searchCapable, blocked, preferred, cost, kee
     const healthy = remaining.filter(id => !isCoolingDown(id) && !blocked?.(id));
     const available = healthy.length ? healthy : remaining;
     const scoped = preferred && available.some(preferred) ? available.filter(preferred) : available;
-    const searchable = searchCapable && scoped.some(searchCapable) ? scoped.filter(searchCapable) : scoped;
-    const lowest=cost?Math.min(...searchable.map(id=>cost(id)??Infinity)):Infinity;
+    const searchable = !preserveOrder && searchCapable && scoped.some(searchCapable) ? scoped.filter(searchCapable) : scoped;
+    const lowest=!preserveOrder && cost?Math.min(...searchable.map(id=>cost(id)??Infinity)):Infinity;
     const pool=Number.isFinite(lowest)?searchable.filter(id=>cost(id)===lowest):searchable;
     const fewest = Math.min(...pool.map(id => counts.get(id.split(':')[0]) || 0));
-    const index = queue.length || !keepFirst ? remaining.findIndex(id => pool.includes(id) && (counts.get(id.split(':')[0]) || 0) === fewest) : 0;
+    const index = queue.length || !keepFirst ? remaining.findIndex(id => pool.includes(id) && (preserveOrder || (counts.get(id.split(':')[0]) || 0) === fewest)) : 0;
     const [id] = remaining.splice(index, 1);
     queue.push(id);
     const provider = id.split(':')[0];
     counts.set(provider, (counts.get(provider) || 0) + 1);
   }
   return queue;
-}
-
-// Race the wait itself, not just fetch's abort handling (some stalled streams don't settle).
-export function waitFor(promise, signal) {
-  return new Promise((resolve, reject) => {
-    const abort = () => { cleanup(); reject(Object.assign(new Error('Stopped'), { name: 'AbortError' })); };
-    const cleanup = () => signal.removeEventListener('abort', abort);
-    signal.addEventListener('abort', abort, { once: true });
-    Promise.resolve(promise).then(value => { cleanup(); resolve(value); }, error => { cleanup(); reject(error); });
-    if (signal.aborted) abort();
-  });
 }
 
 function describe({ status, message = '' }) {
@@ -81,6 +72,8 @@ const available = (id) => {
 };
 
 export async function* runChat({ model, fallbacks = [], messages, options = {} }, signal) {
+  signal=providerSignal(signal);
+  const observationScope=healthScope();
   const needsGemini = Boolean(options.codeExecution) || Boolean(options.requireSearch) || hasVideo(messages);
   const {image,pdf}=attachmentNeeds(messages.flatMap(m=>m.files || []));
   const candidates = [model, ...fallbacks].filter((id, i, all) => id && all.indexOf(id) === i && available(id) && (!needsGemini || toolModel(id)));
@@ -92,9 +85,10 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
   const instructions = buildInstructions({ custom: options.customInstructions || '', memory: options.memory || '', workspace: options.workspace || '', officeFiles });
   const tokens = requestTokens(messages, instructions);
   const cost=options.routingPreference==='cost'?id=>estimatedCost(modelCapabilities(id)||options.modelCapabilities?.[id],tokens):undefined;
-  const queue = attemptQueue(candidates, { searchCapable, blocked, cost, preferred: preferred ? id => preferred.has(id) : undefined, keepFirst: candidates[0] === model });
+  const queue = attemptQueue(candidates, { searchCapable, blocked, cost, preserveOrder:options.preserveOrder===true,preferred: preferred ? id => preferred.has(id) : undefined, keepFirst: candidates[0] === model });
   if (queue.length === 0) {
     yield { t: 'error', text: needsGemini ? 'This tool request requires an enabled Gemini model and a Google API key. Check Settings → Models and API keys.' : `No API key for ${model}. Add your keys in Settings → API keys.` };
+    if(signal.aborted)return;
     yield { t: 'done' };
     return;
   }
@@ -112,7 +106,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     if (!target) continue;
     const metadata = modelCapabilities(id) || options.modelCapabilities?.[id];
     const effective=metadata || (options.modelContexts?.[id]!==undefined?{context:options.modelContexts[id]}:undefined);
-    const problem=modelProblem(effective,{image,pdf,tokens});
+    const problem=(options.modelRequirements?modelRequirementsProblem(effective,options.modelRequirements):null) || modelProblem(effective,{image,pdf,tokens});
     if (problem) {
       const context=/context|too small/.test(problem);
       failures.push({ id, status: context?'context':metadata?400:'capabilities', message:problem });
@@ -159,126 +153,134 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
       attempt.abort(); // closes the connection if we gave up on this model
     };
 
-    let opened;
+    let iterator;
     try {
-      opened = await waitFor(openStream(target, messages, { instructions, metadata, quickReply: quick, search: Boolean(options.search), requireSearch: Boolean(options.requireSearch), codeExecution: Boolean(options.codeExecution), signal: attempt.signal }), attempt.signal);
-    } catch (e) {
-      opened = { ok: false, status: timedOut ? 'timeout' : 'network', message: timedOut ? '' : e.message };
-    }
-    if (signal.aborted) {
-      cleanup();
-      return;
-    }
-    if (!opened.ok) {
-      cleanup();
-      failures.push({ id, status: opened.status, message: opened.message });
-      noteFailure(id, opened.status, opened.message);
-      if (isUnavailableFailure(opened.status, opened.message)) yield { t: 'unavailable', id, reason: String(opened.message || '').slice(0, 140) };
-      if (opened.status === 401 || (opened.status === 403 && !isUnavailableFailure(opened.status, opened.message))) deadProviders.add(target.provider);
-      if (opened.limit) yield { t: 'limit', id, ...opened.limit };
-      continue;
-    }
-    yield { t: 'request', id };
-
-    // Announce the model only once it actually starts answering.
-    let announced = false;
-    const announce = function* () {
-      if (announced) return;
-      announced = true;
-      if (failures.length) {
-        const why = failures.map((f) => `${label(f.id)} ${describe(f)}`).join('; ');
-        yield { t: 'notice', text: `${why} — switched to ${label(id)}.` };
+      let opened;
+      try {
+        opened = await waitFor(openStream(target, messages, { instructions, metadata, quickReply: quick, search: Boolean(options.search), requireSearch: Boolean(options.requireSearch), codeExecution: Boolean(options.codeExecution), signal: attempt.signal }), attempt.signal);
+      } catch (e) {
+        opened = { ok: false, status: timedOut ? 'timeout' : 'network', message: timedOut ? '' : e.message };
       }
-      yield { t: 'model', id };
-      if (options.search && !opened.searchEnabled) {
-        yield { t: 'notice', text: 'This model does not support web search, so this answer did not search the web.' };
-      }
-    };
-
-    // Until real answer text arrives, notices and sources are held back: if the model ends up
-    // blocked or empty, we move on to the next one without showing them.
-    let wrote = false;
-    let thought = false;
-    const held = [];
-    let failedEarly = null;
-    let failedLate = false;
-    const iterator = opened.events[Symbol.asyncIterator]();
-    try {
-      for (;;) {
-        const next = await waitFor(iterator.next(), attempt.signal);
-        if (next.done) break;
-        const ev = next.value;
-        // Metadata must not extend the wait for a real response indefinitely.
-        if ((ev.t === 'text' || ev.t === 'think') && ev.text?.trim()) keepAlive();
-        if (ev.t === 'error' && !wrote) {
-          failedEarly = { id, status: ev.status, message: ev.text };
-          if (ev.limit) yield { t: 'limit', id, ...ev.limit };
-          break;
-        }
-        if (ev.t === 'error') { failedLate = true; noteFailure(id, ev.status || 500, ev.text); }
-        if (ev.t === 'usage') {
-          yield { ...ev, id };
-          continue;
-        }
-        if (!wrote && (ev.t === 'notice' || ev.t === 'sources')) {
-          held.push(ev);
-          continue;
-        }
-        if (!wrote && ev.t === 'text' && !ev.text?.trim()) {
-          held.push(ev); // retain leading whitespace, but don't treat it as a useful answer
-          continue;
-        }
-        yield* announce();
-        if (ev.t === 'think') thought = true;
-        if (ev.t === 'text') {
-          if (!wrote) {
-            wrote = true;
-            firstAnswerMs = Date.now() - attemptStarted;
-            answered = true;
-            clearTimeout(answerTimer);
-            // A useful answer can stream longer, but still has a hard overall deadline.
-            clearTimeout(deadline);
-            setTotalDeadline();
-            yield* held.splice(0);
-          }
-        }
-        yield ev;
-      }
-    } catch (e) {
       if (signal.aborted) {
         cleanup();
         return;
       }
-      if (!wrote) failedEarly = { id, status: timedOut ? 'timeout' : 'network', message: timedOut ? '' : e.message };
-      else {
-        failedLate = true;
-        noteFailure(id, timedOut ? 'timeout' : 'network');
-        yield { t: 'error', text: timedOut ? 'The model stopped responding partway through. Tap Try again or Retry with another model.' : `Connection to the model dropped: ${e.message}` };
+      if (!opened.ok) {
+        cleanup();
+        failures.push({ id, status: opened.status, message: opened.message });
+        noteFailure(id, opened.status, opened.message,observationScope);
+        if (isUnavailableFailure(opened.status, opened.message)) yield { t: 'unavailable', id, reason: String(opened.message || '').slice(0, 140) };
+        if (opened.status === 401 || (opened.status === 403 && !isUnavailableFailure(opened.status, opened.message))) deadProviders.add(target.provider);
+        if (opened.limit) yield { t: 'limit', id, ...opened.limit };
+        continue;
       }
+      yield { t: 'request', id };
+
+      // Announce the model only once it actually starts answering.
+      let announced = false;
+      const announce = function* () {
+        if (announced) return;
+        announced = true;
+        if (failures.length) {
+          const why = failures.map((f) => `${label(f.id)} ${describe(f)}`).join('; ');
+          yield { t: 'notice', text: `${why} — switched to ${label(id)}.` };
+        }
+        yield { t: 'model', id };
+        if (options.search && !opened.searchEnabled) {
+          yield { t: 'notice', text: 'This model does not support web search, so this answer did not search the web.' };
+        }
+      };
+
+      // Until real answer text arrives, notices and sources are held back: if the model ends up
+      // blocked or empty, we move on to the next one without showing them.
+      let wrote = false;
+      let thought = false;
+      const held = [];
+      let failedEarly = null;
+      let failedLate = false;
+      iterator = opened.events[Symbol.asyncIterator]();
+      try {
+        for (;;) {
+          const next = await waitFor(iterator.next(), attempt.signal);
+          if (next.done) break;
+          const ev = next.value;
+          // Metadata must not extend the wait for a real response indefinitely.
+          if ((ev.t === 'text' || ev.t === 'think') && ev.text?.trim()) keepAlive();
+          if (ev.t === 'error' && !wrote) {
+            failedEarly = { id, status: ev.status, message: ev.text };
+            if (ev.limit) yield { t: 'limit', id, ...ev.limit };
+            break;
+          }
+          if (ev.t === 'error') { failedLate = true; noteFailure(id, ev.status || 500, ev.text,observationScope); }
+          if (ev.t === 'usage') {
+            yield { ...ev, id };
+            continue;
+          }
+          if (!wrote && (ev.t === 'notice' || ev.t === 'sources')) {
+            held.push(ev);
+            continue;
+          }
+          if (!wrote && ev.t === 'text' && !ev.text?.trim()) {
+            held.push(ev); // retain leading whitespace, but don't treat it as a useful answer
+            continue;
+          }
+          yield* announce();
+          if(signal.aborted)return;
+          if (ev.t === 'think') thought = true;
+          if (ev.t === 'text') {
+            if (!wrote) {
+              wrote = true;
+              firstAnswerMs = Date.now() - attemptStarted;
+              answered = true;
+              clearTimeout(answerTimer);
+              // A useful answer can stream longer, but still has a hard overall deadline.
+              clearTimeout(deadline);
+              setTotalDeadline();
+              for(const item of held.splice(0)) {if(signal.aborted)return;yield item;}
+            }
+          }
+          if(signal.aborted)return;
+          yield ev;
+        }
+      } catch (e) {
+        if (signal.aborted) {
+          cleanup();
+          return;
+        }
+        if (!wrote) failedEarly = { id, status: timedOut ? 'timeout' : 'network', message: timedOut ? '' : e.message };
+        else {
+          failedLate = true;
+          noteFailure(id, timedOut ? 'timeout' : 'network','',observationScope);
+          yield { t: 'error', text: timedOut ? 'The model stopped responding partway through. Tap Try again or Retry with another model.' : `Connection to the model dropped: ${e.message}` };
+        }
+      }
+      cleanup();
+      if (!failedEarly && !wrote) {
+        const blocked = held.find((h) => h.t === 'notice' && /blocked|stopped the reply/i.test(h.text));
+        failedEarly = { id, status: blocked ? 'blocked' : 'empty', message: blocked ? blocked.text : '' };
+      }
+      if (failedEarly) {
+        failures.push(failedEarly);
+        noteFailure(id, failedEarly.status, failedEarly.message,observationScope);
+        if (isUnavailableFailure(failedEarly.status, failedEarly.message)) yield { t: 'unavailable', id, reason: String(failedEarly.message || '').slice(0, 140) };
+        // Throw away the failed model's partial thinking before the next model starts.
+        if (thought) yield { t: 'discard' };
+        if (failedEarly.status === 401 || (failedEarly.status === 403 && !isUnavailableFailure(failedEarly.status, failedEarly.message))) deadProviders.add(target.provider);
+        continue;
+      }
+      if (!failedLate) {
+        noteSuccess(id,observationScope);
+        // Reasoning-capable models still provide useful speed observations on a
+        // simple Auto question, even when we retain their longer startup budget.
+        if (options.quickReply === true && !needsGemini && firstAnswerMs !== null) noteReplyLatency(id, firstAnswerMs,observationScope);
+      }
+      if(signal.aborted)return;
+      yield { t: 'done' };
+      return;
+    } finally {
+      cleanup();
+      void iterator?.return?.().catch(()=>{});
     }
-    cleanup();
-    void iterator.return?.().catch(() => {});
-    if (!failedEarly && !wrote) {
-      const blocked = held.find((h) => h.t === 'notice' && /blocked|stopped the reply/i.test(h.text));
-      failedEarly = { id, status: blocked ? 'blocked' : 'empty', message: blocked ? blocked.text : '' };
-    }
-    if (failedEarly) {
-      failures.push(failedEarly);
-      noteFailure(id, failedEarly.status, failedEarly.message);
-      if (isUnavailableFailure(failedEarly.status, failedEarly.message)) yield { t: 'unavailable', id, reason: String(failedEarly.message || '').slice(0, 140) };
-      // Throw away the failed model's partial thinking before the next model starts.
-      if (thought) yield { t: 'discard' };
-      if (failedEarly.status === 401 || (failedEarly.status === 403 && !isUnavailableFailure(failedEarly.status, failedEarly.message))) deadProviders.add(target.provider);
-      continue;
-    }
-    if (!failedLate) {
-      noteSuccess(id);
-      // Reasoning-capable models still provide useful speed observations on a
-      // simple Auto question, even when we retain their longer startup budget.
-      if (options.quickReply === true && !needsGemini && firstAnswerMs !== null) noteReplyLatency(id, firstAnswerMs);
-    }
-    yield { t: 'done' };
-    return;
   }
 
   if (!signal.aborted) {
@@ -320,6 +322,7 @@ export async function makeTitle(text, model, skip = () => false) {
 // Writes a summary of a long chat with the first model that manages it. `report(id, info)` hears about
 // every attempt ({ status?, input?, output?, limit? }) so usage can be counted and limits remembered.
 export async function summarize(prompt, candidates, { skip = (_id) => false, report = (_id, _info) => {}, signal = /** @type {AbortSignal | undefined} */ (undefined), minLength = 41, maxTokens = 8192 } = {}) {
+  try { signal=providerSignal(signal); } catch { return null; }
   const tried = [];
   const started = Date.now();
   for (const id of candidates) {
@@ -338,6 +341,7 @@ export async function summarize(prompt, candidates, { skip = (_id) => false, rep
       const text = (out || '').trim();
       if (text.length >= minLength) return { text, model: id };
     } catch {
+      if(signal.aborted) break;
       report(id, info);
       // Try the next model.
     } finally {

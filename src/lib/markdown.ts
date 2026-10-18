@@ -17,7 +17,9 @@ let extrasLoading: Promise<void> | null = null;
 let extrasVersion = 0;
 const extrasListeners = new Set<() => void>();
 export function loadMarkdownExtras(): Promise<void> {
-  extrasLoading ||= import('./markdown-extras').then((m) => { extras = m; extrasVersion++; extrasListeners.forEach((fn) => fn()); });
+  extrasLoading ||= import('./markdown-extras')
+    .then((m) => { extras = m; extrasVersion++; extrasListeners.forEach((fn) => fn()); })
+    .catch(() => { /* Optional formatting can fail offline or during navigation; retain readable source until reload. */ });
   return extrasLoading;
 }
 export const subscribeMarkdownExtras = (fn: () => void) => { extrasListeners.add(fn); return () => { extrasListeners.delete(fn); }; };

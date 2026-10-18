@@ -1,19 +1,45 @@
 # Dynamic Model Picker operational handoff
 
+## Permanent amendment: Progressive Verified Deployment Policy
+
+Added by the user on 2026-10-18. This execution-policy amendment supplements MASTER_REQUIREMENTS.md without replacing or weakening it. It remains active for every future agent and session unless the user explicitly changes it.
+
+Every completed, independently production-ready milestone must be evaluated for immediate integration into main and production deployment. Do not wait for the entire overhaul merely because unrelated phases remain unfinished. Never merge incomplete, unverified, unsafe, or dependency-breaking work to accelerate release.
+
+For each milestone:
+
+1. Determine independent releasability and unfinished dependencies.
+2. Verify relevant tests, type checks, builds, and required CI checks.
+3. Review security, privacy, compatibility, and regression risks.
+4. Confirm no unresolved dependency on unfinished work.
+5. Understand deployment and rollback procedures.
+6. Merge through the authorized GitHub workflow, respecting branch protections.
+7. Verify the actual production deployment.
+8. Test that the live application remains functional.
+9. Record the merge commit, deployment status, verification evidence, and outstanding work.
+10. Continue the next phase without restarting the project.
+
+Keep unfinished work isolated. Where practical, use reviewable commits or a dedicated release branch to release only a verified subset. A pushed branch, successful local build, or green subset of tests is not production-readiness proof. Never bypass protections, force-push, disable checks, or overwrite unrelated changes.
+
+Future agents must track committed, pushed, merged, and deployed states separately; record the exact latest verified production commit separately from the latest feature-branch commit; document specific release blockers when a milestone is not ready; and continue remaining phases after each deployment. Before handoff, update this file and the companion plan/handoff, preserve the full master requirements and this policy, synchronize coherent verified commits safely, and record uncommitted/unverified work and the exact next task.
+
+
+
 ## Read first
 
 Read MASTER_REQUIREMENTS.md, IMPLEMENTATION_PLAN.md, this file, Git status/log, then inspect the relevant source. This file supersedes the stale task-status paragraphs in HANDOFF.md for this overhaul; retain its user preferences and environment guidance.
 
 ## Current state
 
-- Overall: **In progress; overhaul is not complete**.
-- Current phase: P04 layout policies and P05/P10 credential-boundary hardening locally verified; checkpoint push next. P01-D user declarations and P07 comparison stages have standalone modules/tests but are not integrated yet.
-- Exact current task: save/push verified layout/credential work, then integrate declarations and comparison-stage recovery. Do not include a deliberately red stream regression in this checkpoint.
-- Branch: `feat/dynamic-model-picker`, based on main `7fbdde2246a546a980744e63b7d88655dad6d8de` (PR18 already live).
-- Latest verified implementation commit: `9e98d4e3a0759ba713712fd30dea51d2a9b1cf7d` (selection and routing priorities).
-- Remote: selection checkpoint pushed; `git ls-remote` matched that exact branch hash. Layout-policy changes remain local/uncommitted and are not released. Full CI on the new head must be checked; foundation failure is historical diagnostic evidence, not a final result.
-- Working PR: https://github.com/Seifonyx/Lumen/pull/19 (draft). Foundation CI run `39122176355`: type/unit/build and WebKit passed; Chromium failed in Auto's first send (no model request or error; likely draft/send race). Regression scroll simulation retried once and passed. Failure log: `foundation-ci-failed.log`. The artifact attachment tool returned “No handler registered”; the PR exists on GitHub.
-- Production: prior release remains live at https://lumen-chat.web.app/. No overhaul deployment performed.
+- Overall: **In progress; overhaul is not complete**. New permanent progressive-release policy above is authoritative.
+- Latest feature/base commit: `02c322da48368d6277e5eb8b599edfead7f92e0e`, continuation branch `feat/model-picker-recovery`. This is the merge of PR19; subsequent development is local/uncommitted and must not be merged until verified.
+- Latest verified milestone source: `07efe214ef6c94aad2ddd7e29354eb3a4d9b1734`, safely merged through PR19 at `02c322da48368d6277e5eb8b599edfead7f92e0e` on 2026-10-18. Remote head was explicitly verified before merging with `--match-head-commit`.
+- PR19: **MERGED** https://github.com/Seifonyx/Lumen/pull/19. Exact-head CI run `39136235729` passed all three jobs: type/build/unit, full Chromium + Firebase emulators, and WebKit. No unfinished local declarations/recovery/comparison code was included. Branch-protection inspection endpoint returned HTTP403 for this integration token; normal GitHub merge enforcement was used, with no admin bypass or disabled check.
+- Production runtime: latest verified production commit remains `7fbdde2246a546a980744e63b7d88655dad6d8de` until new deployment is verified. Pending deployment run: https://github.com/Seifonyx/Lumen/actions/runs/39157498252, pinned to merge commit `02c322da48368d6277e5eb8b599edfead7f92e0e`; manually dispatched Deploy workflow. Check its actual outcome and hosted assets before changing verified-production status.
+- Current implementation: P01-D declarations, P05 classified recovery/metadata invalidation, P06 helpers, P07 comparison recovery, and P08 completion-marker handling are integrated **locally but not fully verified**. Do not release them merely because PR19 passed.
+- Exact next task: verify PR19 deployment and live behavior; persist this policy to main through a documentation-only PR; fix local typecheck errors and two recovery-classification review findings; run new comparison/declaration browser suites and full current checks. See latest continuation section below.
+- Required source documents are intact. MASTER_REQUIREMENTS.md remains the exact original complete upload; this policy is a separate permanent amendment in the two operational docs.
+- Older progress paragraphs below are historical evidence and can describe superseded implementation states; this Current state and latest continuation section control resumption.
 
 ## Completed / in progress / remaining
 
@@ -122,3 +148,39 @@ Additional manual tests for this milestone:
 - New standalone `helper-routing.ts` and `recovery.js` have focused green tests, remain unintegrated. Agent completion reports are not end-to-end feature completion.
 - P01-D integration must collect explicit API-denied model IDs before filtering and persist `Catalog.deniedModelIds` in scope-bound cache. Otherwise unlisted declarations can resurrect an API-disabled model after reload. Also reject explicit streaming:false for streaming calls while permitting one-shot helpers.
 - P07 comparison regression suite is being prepared as a new file only. Public modal gets Stop plus per-card Retry this model; snapshot account/key/privacy/instruction validation gets unit tests rather than a test-only store backdoor.
+
+## Latest continuation: local undeployed implementation and exact tasks
+
+These changes exist in the working tree; they were NOT in merged PR19:
+
+- New `ai/model-declarations.js`, ModelDeclaration types, `ModelDeclarations.tsx` in Settings, raw discovery vs derived publication, live add/edit/remove, endpoint/Cloudflare-account scope, explicit API denial tombstones persisted in scoped caches, provenance/unchecked labels, streaming:false guards. Chromium declaration+catalog lifecycle suites passed (18s) before later runtime/helper integration. Screenshot inspected at390px. New declaration-registry unit passes, including auth/denial/cache/removal and one-shot vs stream eligibility.
+- New `ai/recovery.js` and classification/decision tests; runChat + summarize consume classified failures. Invalid local video input/HTTP422 stops,402 account credits skips sibling provider models without model-health penalty. Inference error messages redact actual key strings. Some older one-letter synthetic test keys were changed to realistic distinct strings because redaction correctly removed their ordinary letter occurrences.
+- Scoped provider metadata invalidation: registry.expire(provider), max one invalidation/provider/minute, stale state/targeted refresh, no recursive inference. catalog-refresh lifecycle listens for mr:model-metadata-invalidated; store callback marks provider nextRefresh0. Focused metadata-invalidation unit passes.
+- Live registry membership overrides old request snapshots: `isModelRegistered` blocks a model removed between planning and failover. Red→green runtime-registry-removal test passes. Request metadata still supports an uncatalogued short-text last resort only before a current catalog has been published.
+- P08 semantic completion: strict provider completion markers, incomplete/malformed prefinish stream detection,100ms absolute trailing-usage drain, no replacement after visible text. Patch from `/tmp/lumen-stream-completion.patch` is APPLIED; regression copied into tests/unit/stream-completion.test.mjs. Focused stream, credential, reroute33 and search runtime checks pass. New optional maxTokens propagates/clamps to known outputLimit across adapters and survives Gemini thinking-parameter retry; complete clamps to reported output maximum. output-budget unit passes.
+- New helper-routing.ts with11 focused tests, including nonstreaming one-shot allowance. RouteInput.streaming distinguishes streamed chat from one-shot helpers. Store summary/title/research/writing/study helpers now use shared current enabled/scoped routing instead of hardcoded Gemini IDs; this LAST integration has not been fully checked.
+- P07 comparison-stage.ts and comparison-snapshot.ts + focused tests. `/tmp/lumen-comparison-integration.patch` is APPLIED. Store has immutable private request/restore closures, explicit failed/stopped-slot retry, independent source successes, derived synthesis invalidation, current metadata/context validation, bounded comparison2–3 parallel calls, shared helper-routed synthesis only over successful selected IDs, Stop and per-card Retry UI, and visible partial errors. Root added store policy subscription to abort active comparison/synthesis if privacy/instructions/context changes, preventing old-context fallbacks. New browser suite comparison-recovery.cjs has NOT run yet.
+
+Known concrete local blockers to fix next:
+
+1. Latest `npm run typecheck` failed only TS6133: unused MAX_SOURCE_CHARS import at store.ts:55 and unused `settings` in runResearch near495 after helper integration. Remove these, rerun.
+2. Read-only recovery review found real provider variants not classified correctly: Gemini `The input token count (194873) exceeds the maximum number ...` with INVALID_ARGUMENT becomes invalid-input instead of context;403 `Model alpha is not supported for your account` becomes provider authorization instead of model-unavailable. Add red cases to recovery tests, then reuse/extend isUnavailableFailure and broaden token-count-exceeds parsing.
+3. Declaration editor Cancel/Save may fail to restore Add focus because close() focuses a still-disabled button before React commits. Verify with keyboard browser assertion, fix after committed render if confirmed.
+4. Review helper pool semantics and deep-research role budget after recent replacement; do not widen manual/layout fallback consent. Deep-research fixture now reports128k context so tests do not rely on unlimited unknown capacity.
+5. Run comparison-recovery + model-declarations in Chromium and WebKit, existing combine/deep-research/context/selection suites, full type/unit/build. Current browsertest fixture comparison default URL now omits unnecessary ?emulator; its outside model uses a nonretired synthetic ID.
+6. Complete remaining P09/P10/P11 tasks and exact requirement audit. Premium static audit previously reported33 inherited findings; no clean UI audit claim. Establish native-control ownership and resolve/justify touched-flow findings.
+
+Current verification logs under `/workspace/.lumen-verification/dynamic-picker-2026-10-18/`:
+
+- declarations-chromium.log: both declaration+catalog lifecycle suites passed clean18s.
+- recovery-integration-unit.log: full workspace units/type passed before later registry-removal/output/helper integration.
+- runtime-final-unit.log: failed only search-runtime expected2 requests but Groq fixture listed no models; fixture now explicitly lists its text model to retain the intended fresh-search-metadata test; focused search-runtime passes. No full green claim for the latest source yet.
+- recovery-webkit.log: four applicable suites passed (declarations/context/Auto with WebKit; deep-research actually hardcodes Chromium); providers suite failed only missing local emulators. This run is NOT all green and is not five WebKit suites. Local emulators now run, so repeat providers cleanly if relevant.
+
+Local Firebase emulator setup recovered without changing HOME or disabling TLS:
+
+`PATH=/workspace/.lumen-tools/node_modules/node/bin:$PATH XDG_CONFIG_HOME=/workspace/.config FIREBASE_EMULATORS_PATH=/workspace/.cache/firebase/emulators CI=1 node_modules/.bin/firebase emulators:start --only auth,firestore --project the-model-router`
+
+Active exec session64273 owns auth9099/firestore8080/hub4400; log firebase-emulators-local.log shows ready. First attempt failed only unwritable default /home/agent cache/config; use the above vars in future. Never run concurrent browser runners on5190. Last browser runner95072 completed; no browser runner active at this handoff update. New tests are uncommitted and full CI will discover them only after future source is verified/committed.
+
+Progressive release evaluation: PR19 independently ready (complete green exact-head CI, scoped backward-compatible fixes, no dependency on local new modules, review accepted). Merged normally; deployment/live verification remains pending. Rollback: revert the PR19 merge via reviewed revert and deploy the last verified production revision, or redeploy the prior known-good main revision through the existing manual deployment workflow; never reset/force-push main. Deployment workflow builds a clean GitHub checkout and does not include local WIP.

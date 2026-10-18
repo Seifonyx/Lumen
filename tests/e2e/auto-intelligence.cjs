@@ -26,13 +26,11 @@ const fulfill = (route, response) => route.fulfill({...response,headers:{...cors
         enabledModels, defaultModel: unicode ? lite : 'auto', autoSwitch: !unicode, webSearch: search,
         ...(mode === 'layout-quota-fallback' ? {layouts:[{id:'quota-layout',name:'Quota layout',icon:'code',mode:'order',models:[pro,lite]}]} : {}),
         ...(mode === 'project' ? { projects: [{ id: 'source', name: 'Source', createdAt: 1, files: [{ id: 'f', kind: 'text', name: 'arabic.txt', mime: 'text/plain', size: 224000, text: wideText }] }] } : {}),
-      });
-      await context.addInitScript(({uid}) => {
-        const key = `mr.account.${uid}`, account = JSON.parse(localStorage.getItem(key));
-        localStorage.setItem(key, JSON.stringify({ ...account, openrouterKey: 'fixture' }));
+      }, {openrouterKey:'fixture'});
+      await context.addInitScript(() => {
         // This suite measures chat requests; the weekly availability probe has its own suite.
         localStorage.setItem('mr.modelCheck.background', JSON.stringify(Date.now()));
-      }, {uid});
+      });
       await context.route('**/openrouter.ai/**', async route => {
         if (route.request().method() === 'OPTIONS') return fulfill(route, {status:204});
         const path = new URL(route.request().url()).pathname;
@@ -69,7 +67,16 @@ const fulfill = (route, response) => route.fulfill({...response,headers:{...cors
       await page.locator('.chat-open').filter({hasText:'Decision test'}).click();
       const prompt = mode === 'prose' ? 'Write an email about a Python bug' : mode === 'new-task' ? 'Yes, write a birthday poem instead' : search && mode !== 'offline' ? 'Fix this Python bug using current documentation' : mode === 'offline' ? 'Research supplied papers, do not use web search' : 'Summarize the provided text';
       await page.locator('.composer textarea').fill(prompt);
-      await page.locator('.send-btn').click();
+      assert.equal(await page.locator('.composer textarea').inputValue(),prompt,'rapid chat selection preserves the first input');
+      await page.getByRole('button',{name:'Send',exact:true}).click();
+      if(unicode) {
+        await page.locator('.error-msg').filter({hasText:/Automatic switching is off/}).first().waitFor();
+        assert.equal(requests.length,0,'an incompatible manual choice is not silently replaced');
+        await page.locator('.model-button').click();
+        await page.locator('.models-pop .mp-title').filter({hasText:/^Pro$/}).click();
+        await page.locator('.composer textarea').fill('Summarize the provided text');
+        await page.locator('.send-btn').click();
+      }
       await page.getByText(`INTELLIGENCE_REPLY_${mode.endsWith('fallback') ? 2 : 1}`, {exact:true}).waitFor().catch(async error => {
         console.error({width,mode,models:requests.map(r=>r.model),errors:await page.locator('.error-msg, .reply-wait').allTextContents()});
         throw error;

@@ -6,7 +6,7 @@ import { playSend } from '../lib/sounds';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import ChecksBar from './ChecksBar';
 import { AudioLines, Image as ImageIcon, ListChecks, FileCode2, FolderKanban, GitBranch, Globe, ShieldCheck, ArrowUp, FileText, Loader2, Mic, Paperclip, Plus, Square, Telescope, X } from 'lucide-react';
-import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { ACCEPT, readAttachment } from '../lib/files/read';
 import { canListen, canSpeak, listen, unlockSpeech } from '../lib/speech';
 import { formatBytes, isTouch } from '../lib/util';
@@ -117,7 +117,9 @@ export default function Composer({ model, meter, modelPicker }: { model: string;
     setInterim('');
     saveDraft('');
   };
-  useEffect(() => {
+  // Restore the new chat's draft before it can receive input. A deferred effect
+  // can overwrite the first keystrokes after a fast chat switch.
+  useLayoutEffect(() => {
     draftKeyRef.current = draftKey;
     pendingScope.current = getComposerScope();
     setPending([]);setInterim('');stopListening.current?.();setListening(false);

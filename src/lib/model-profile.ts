@@ -42,12 +42,13 @@ export function strength(m: ModelInfo) {
 export function features(m: ModelInfo): Record<Feature, number> {
   const n = lower(m), p = params(n), gemini = m.provider === 'google' && !/gemma/.test(n);
   const light = /(^|[-/:._])(lite|mini|nano|small|tiny|instant|haiku)([-/:._]|$)/.test(n) || (p > 0 && p <= 12);
+  const noReasoning=m.thinking===false && ['api','user','documented'].includes(m.metadata?.fields?.thinking || '');
   return {
     strength: strength(m) / 10,
     coder: /coder|codestral|devstral/.test(n) ? 1 : /kimi-k2|glm-(4\.[5-9]|[5-9])|gpt-oss|gpt-(?:4\.[1-9]|[5-9])|claude[\w.-]*(?:sonnet|opus)|deepseek[\w.-]*(v3|v4|chat)|gemini-(?:[3-9][\d.]*|2\.5)-pro|qwen-?3/.test(n) ? 0.6 : 0.15,
-    reasoner: /\br1\b|-r1|reason|think|qwq|magistral/.test(n) ? 1 : m.thinking ? (strength(m) >= 8.5 ? 1 : 0.7) : 0,
+    reasoner: noReasoning?0:/\br1\b|-r1|reason|think|qwq|magistral/.test(n) ? 1 : m.thinking ? (strength(m) >= 8.5 ? 1 : 0.7) : 0,
     // Reasoning-only models think at length before every answer.
-    slow: /\br1\b|-r1|reasoner|thinking|qwq|magistral/.test(n) ? 1 : 0,
+    slow: noReasoning?0:/\br1\b|-r1|reasoner|thinking|qwq|magistral/.test(n) ? 1 : 0,
     speed: m.provider === 'cerebras' ? 1 : m.provider === 'groq' ? 0.9 : light ? 0.65 : /flash/.test(n) ? 0.55 : p >= 200 || /(?:^|[-/:._])(?:pro|large|max|opus)(?:[-/:._]|$)/.test(n) ? 0.1 : 0.35,
     vision: m.vision ? 1 : 0,
     pdf: m.pdf ? 1 : 0,

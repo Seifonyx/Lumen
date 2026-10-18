@@ -10,6 +10,7 @@ export interface WorkIntent {
   noReasoning: boolean;
   speed: boolean;
   quality: boolean;
+  cost: boolean;
 }
 
 const CODE = /```|\b(?:function|class|def|const|import|return|stack ?trace|exception|traceback|bugs?|debug(?:ging)?|compil\w*|syntax|regex|sql|python|javascript|typescript|react|vue|svelte|next\.?js|frontend|backend|java|html|css|api|json|cod(?:e|ing)|scripts?|program(?:ming)?|software|apps?|websites?|endpoints?|components?)\b|\bc\+\+\b|كود|برمج/i;
@@ -100,11 +101,12 @@ export function interpretWork(raw: string): WorkIntent {
     // Native PDF ingestion is requested only when the PDF itself is the input.
     if (!excluded.has('documents') && !clauseProse && !abstract && (actualPdf || !createsSoftware) && /\b(?:read|reading|scan|analy[sz]e|review|summari[sz]e)\b[^;\n]{0,80}\bpdfs?\b/i.test(clause)) required.add('pdf');
   }
-  const speed = /\b(?:fast(?:est)?|quick|instant|speed|low latency|short replies?|brief|concise)\b/i.test(positive);
+  const speed = /\b(?:fast(?:est)?|quick|instant|speed|low latency)\b/i.test(positive);
   const quality = /\b(?:best|highest|maximum|max)\s+(?:quality|accuracy|correctness)|\b(?:quality|accuracy)\s+(?:over|before)\s+speed\b/i.test(positive);
+  const cost = /\b(?:use|pick|choose|prefer|route to)\s+(?:the\s+)?(?:cheapest|least expensive|lowest[- ]cost)\s+(?:available\s+)?models?\b|^\s*(?:minimi[sz]e|reduce|save on)\s+(?:inference|api|token|routing)\s+(?:costs?|spend)\b/i.test(positive);
   if (speed) tasks.add('fast');
   if (!tasks.size) tasks.add('everyday');
-  return {tasks:[...tasks],excluded:[...excluded],required:[...required],...contextNeeds(positive),noReasoning:excluded.has('thinking'),speed,quality};
+  return {tasks:[...tasks],excluded:[...excluded],required:[...required],...contextNeeds(positive),noReasoning:excluded.has('thinking'),speed,quality,cost};
 }
 
 /** Only anaphoric follow-ups inherit intent; an explicit new deliverable owns its own route. */

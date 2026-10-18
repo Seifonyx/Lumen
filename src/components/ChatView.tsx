@@ -6,10 +6,8 @@ import { modKey } from '../lib/util';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { activeSummary } from '../lib/compact';
-import { AUTO } from '../lib/routing';
-import { isLayoutId } from '../lib/layouts';
 import { formatUntil } from '../lib/usage';
-import { selectCurrentChat, useStore } from '../store';
+import { selectCurrentChat,selectCurrentModel, useStore } from '../store';
 import { UsageMeter } from './CompactNote';
 import Composer from './Composer';
 import { WELCOME_GREETINGS } from '../lib/welcome';
@@ -53,7 +51,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   const projects = useStore((s) => s.settings.projects) || [];
   const projectWorkspaceOpen = useStore((s) => s.projectWorkspaceOpen);
   const currentProject = projects.find((p) => p.id === (projectWorkspaceOpen ? activeProjectId : chat ? chat.projectId : activeProjectId));
-  const defaultModel = useStore((s) => currentProject?.defaultModel || s.settings.defaultModel);
+  const model = useStore(selectCurrentModel);
   const compacting = useStore((s) => s.compactingChatId !== null && s.compactingChatId === s.currentId);
   const syncPaused = useStore((s) => s.firebaseUsage.level === 'paused' && s.authed === true);
   const resetAt = useStore((s) => s.firebaseUsage.resetAt);
@@ -70,7 +68,6 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   const [announcement,setAnnouncement]=useState('');
   const previousReply=useRef<{id?:string;streaming:boolean}>({streaming:false});
 
-  const model = chat?.model && (chat.model === AUTO || isLayoutId(chat.model) || useStore.getState().settings.enabledModels.includes(chat.model)) ? chat.model : defaultModel;
   const messages = chat?.messages || [];
   const changeCount = Object.keys(chat?.changes || {}).length;
   const summary = chat ? activeSummary(chat) : null;

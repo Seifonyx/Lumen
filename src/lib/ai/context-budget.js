@@ -18,7 +18,7 @@ export function contentTokens(text = '', files = []) {
 }
 
 export function inputBudget(context) {
-  if (!Number.isFinite(context) || context <= 0) return Infinity;
+  if (!Number.isFinite(context) || context <= 0) context = UNKNOWN_CONTEXT;
   const answer = Math.min(8192, Math.max(1024, Math.floor(context * .15)));
   return Math.max(0, Math.floor(context * .9) - answer);
 }

@@ -257,7 +257,7 @@ export interface ModelInfo {
   pricing?: { input: number | null; output: number | null; currency: 'USD'; unit: 'token' };
   metadata?: {
     source?: 'api' | 'documented' | 'user';
-    fields?: Partial<Record<'context' | 'vision' | 'pdf' | 'thinking' | 'search', 'api' | 'documented' | 'inferred' | 'unknown'>>;
+    fields?: Partial<Record<'context' | 'vision' | 'pdf' | 'thinking' | 'search', 'api' | 'documented' | 'user' | 'inferred' | 'unknown'>>;
     refreshedAt?: number;
     stale?: boolean;
   };
@@ -299,6 +299,8 @@ export interface Settings {
   enabledModels: string[];
   defaultModel: string;
   autoSwitch: boolean;
+  /** Automated ranking preference; compatible manual and fixed assignments remain authoritative. */
+  routingPreference?: 'balanced' | 'quality' | 'speed' | 'cost';
   webSearch: boolean;
   showThinking: boolean;
   customInstructions: string;

@@ -8,6 +8,8 @@ import { isCoolingDown, reliability, replyLatency } from './ai/health.js';
 import { contentTokens, fitsContext, UNKNOWN_CONTEXT } from './ai/context-budget.js';
 import { versionFamilyOf, features, strength, versionOf } from './model-profile';
 import { contextualWork, interpretWork } from './work-intent';
+import { modelProblem } from './ai/eligibility.js';
+import { choosePreference, compareKnownCost, estimatedCost } from './ai/preferences.js';
 
 export const AUTO = 'auto';
 
@@ -36,6 +38,11 @@ export interface RouteInput {
   excluded?: string[];
   /** provider Auto leans towards when models are close */
   preferProvider?: string;
+  /** Substitution requires explicit user authorization (the automatic-switching setting). */
+  allowFallback?: boolean;
+  /** IDs known absent or denied in the current credential-scoped registry. */
+  unavailable?: string[];
+  preference?: 'balanced' | 'quality' | 'speed' | 'cost';
 }
 
 export interface RoutePlan {
@@ -67,6 +74,7 @@ export interface Task {
   writing: boolean;
   speed: boolean;
   quality: boolean;
+  cost: boolean;
   noReasoning: boolean;
 }
 
@@ -85,7 +93,7 @@ export function analyze(input: Pick<RouteInput, 'text' | 'files' | 'conversation
   const { files } = input;
   const text = intentText(input.text, input.recentText);
   const intent = interpretWork(text);
-  const image = files.some((f) => f.kind === 'image');
+  const image = files.some((f) => f.kind === 'image' && !f.text);
   const pdf = files.some((f) => f.kind === 'pdf');
   const rawPdf = files.some((f) => f.kind === 'pdf' && !f.text);
   const code = intent.tasks.includes('coding') || (!intent.excluded.includes('coding') && files.some((f) => /\.(jsx?|tsx?|mjs|cjs|vue|svelte|py|java|kt|swift|dart|c|cpp|cs|go|rs|rb|php|sql|css|html?)$/i.test(f.name)));
@@ -94,7 +102,7 @@ export function analyze(input: Pick<RouteInput, 'text' | 'files' | 'conversation
   const long = input.conversationTokens > 30_000;
   const writing = intent.tasks.includes('writing') || (!code && text.length > 600);
   const quick = !image && !pdf && !files.length && !code && !reasoning && !wantsFile && !long && !writing && text.length < 280;
-  return { image, pdf, rawPdf, code, reasoning, files: wantsFile, arabic: hasRtl(text), long, quick, search: input.search && !intent.excluded.includes('research'), writing, speed: intent.speed, quality: intent.quality, noReasoning: intent.noReasoning };
+  return { image, pdf, rawPdf, code, reasoning, files: wantsFile, arabic: hasRtl(text), long, quick, search: input.search && !intent.excluded.includes('research'), writing, speed: intent.speed, quality: intent.quality, cost:intent.cost, noReasoning: intent.noReasoning };
 }
 
 /** Name-based hints about a model's size and specialities. */
@@ -112,7 +120,7 @@ function traits(m: ModelInfo) {
     gemma: /gemma/.test(n),
     power: strong ? 3 : light ? 1 : 2,
     coder: /coder|codestral|devstral|code/.test(n),
-    reasoner: m.thinking || /\br1\b|-r1|reason|think|qwq/.test(n),
+    reasoner: features(m).reasoner > 0,
   };
 }
 
@@ -141,7 +149,7 @@ function score(m: ModelInfo, task: Task, tokens: number, index: number, total: n
   const heavy = task.code || task.reasoning || task.files || task.long;
   const profile = features(m);
   s += t.power === 1 ? 1 : 2;
-  if (t.power === 3) s += heavy ? 1.5 : -1;
+  if (t.power === 3) s += heavy || task.quality ? 1.5 : -1;
   if (heavy || task.writing) s += (strength(m) / 10 - .6) * 4;
   if (m.preview) s -= 0.5;
   if (task.image) s += m.vision ? 4 : -50;
@@ -158,6 +166,7 @@ function score(m: ModelInfo, task: Task, tokens: number, index: number, total: n
   // A name or provider is only a hint: use recent first-answer timings as a bounded
   // tie-breaker. Heavy tasks retain their capability and quality ranking.
   if (task.quick) {
+    if(t.coder) s-=2; // ambiguous everyday requests favor a generalist over a narrow specialist
     if (t.reasoner && !t.gemini && !t.fast) s -= 2;
     const ms = replyLatency(m.id);
     if (ms !== null) { s += Math.max(-1.5, Math.min(1.5, (4000 - ms) / 3000)); if (ms < 2500) why.push(`starts answering in about ${(ms / 1000).toFixed(1)} s`); }
@@ -165,7 +174,7 @@ function score(m: ModelInfo, task: Task, tokens: number, index: number, total: n
   if (task.writing) s += (t.power >= 2 ? 1 : 0) + (t.gemini ? 1 : 0) + (task.arabic && t.gemini ? 1 : 0);
   if (task.writing && !task.code && t.coder) s -= 2;
   if (task.speed && !task.quality) s += profile.speed * 3 - profile.slow * 2;
-  if (task.quality) s += profile.strength * 2;
+  if (task.quality) s += profile.strength * 10;
   if (task.noReasoning) s -= profile.slow * 8;
   // Newest version within a family (e.g. 2.5 over 2.0) gets a small edge.
   if (extra.newest) { s += 1; why.push('newest version of its family'); }
@@ -184,26 +193,28 @@ function score(m: ModelInfo, task: Task, tokens: number, index: number, total: n
 
 /** Can this model handle the message at all? */
 function capable(m: ModelInfo | undefined, task: Task, tokens: number): string | null {
-  if (!m) {
-    if (task.image || task.rawPdf) return 'has no verified attachment capabilities';
-    return fitsContext(UNKNOWN_CONTEXT, tokens) ? null : 'has no verified context window for this much text';
-  }
-  if (task.image && !m.vision) return "can't read images";
-  if (task.rawPdf && !m.pdf) return "can't read PDFs";
-  if (!fitsContext(m.context, tokens)) return 'is too small for this much text and a reply';
-  return null;
+  return modelProblem(m,{image:task.image,pdf:task.rawPdf,tokens});
 }
 
 export function planRoute(input: RouteInput): RoutePlan {
   const info = new Map(input.catalog.map((m) => [m.id, m]));
   const tokens = input.conversationTokens + (input.instructionTokens || 0) + 100;
   const task = analyze(input);
+  const preference=choosePreference(input.preference,task);
+  if(preference==='quality') {task.quality=true;task.quick=false;}
+  if(preference==='speed') task.speed=true;
   const auto = input.selected === AUTO || !input.selected;
   const excluded = new Set(auto ? input.excluded || [] : []);
-  const usable = input.enabled.filter((id) => !excluded.has(id));
-  // If every model is excluded from Auto, using one beats sending nothing.
-  const pool = [...new Set(usable.length ? usable : input.enabled)];
-  const rescued = auto && !usable.length && pool.length > 0 && excluded.size > 0;
+  const unavailable = new Set(input.unavailable || []);
+  const usable = input.enabled.filter((id) => !excluded.has(id) && !unavailable.has(id));
+  const pool = [...new Set(usable)];
+  const manualProblem=unavailable.has(input.selected)?'is not available from your connected provider':capable(info.get(input.selected),task,tokens);
+  if(!auto && manualProblem && input.allowFallback===false) {
+    return {model:'',fallbacks:[],reason:null,notice:null,error:`${info.get(input.selected)?.label || input.selected} ${manualProblem}. Automatic switching is off. Choose a compatible model or enable switching in Settings → Models.`};
+  }
+  if(auto && !pool.length && input.enabled.length && input.enabled.every(id=>excluded.has(id)||unavailable.has(id)) && excluded.size) {
+    return {model:'',fallbacks:[],reason:null,notice:null,error:'Your models are excluded from Auto or unavailable. Choose a model manually or review Auto exclusions in Settings → Models.'};
+  }
   const reasoningAllowed = (id: string) => !auto || !task.noReasoning || !info.has(id) || features(info.get(id)!).slow < 1;
   const known = pool.filter((id) => info.has(id) && reasoningAllowed(id) && !capable(info.get(id), task, tokens));
   const whyOf = new Map<string, string[]>();
@@ -229,10 +240,13 @@ export function planRoute(input: RouteInput): RoutePlan {
   // Capabilities and availability take priority over continuity, quality hints, and
   // provider diversity. Keep non-search models as an honest last resort.
   const all = [...ranked, ...unknown].sort((a, b) => Number(blocked(a)) - Number(blocked(b))
-    || (auto && task.search ? Number(Boolean(info.get(b)?.search)) - Number(Boolean(info.get(a)?.search)) : 0));
+    || (auto && task.search ? Number(Boolean(info.get(b)?.search)) - Number(Boolean(info.get(a)?.search)) : 0)
+    || (preference==='cost'?compareKnownCost(estimatedCost(info.get(a),tokens),estimatedCost(info.get(b),tokens)):0));
   const name = (id: string) => info.get(id)?.label || id.split(':').slice(1).join(':');
 
-  if (!all.length && (auto || capable(info.get(input.selected), task, tokens))) {
+  if(!auto && manualProblem && !all.length) return {model:'',fallbacks:[],reason:null,notice:null,error:`${name(input.selected)} ${manualProblem}. No eligible backup is available. Choose a compatible model or reconnect the provider in Settings.`};
+
+  if (!all.length && (auto || manualProblem)) {
     const context = pool.some(id => !fitsContext(info.has(id) ? info.get(id)?.context : UNKNOWN_CONTEXT, tokens));
     return { model: '', fallbacks: [], reason: null, notice: null, error: !pool.length ? 'No models are enabled for this request. Check Settings → Models.' : context
       ? 'This chat exceeds the context available in your models. Compact the chat, continue in a new chat with a summary, or choose a model with a larger context window.'
@@ -258,15 +272,15 @@ export function planRoute(input: RouteInput): RoutePlan {
         return true;
       })?.[1] || 'best available';
     const why = [...(reason !== 'best available' ? [reason] : []), ...(whyOf.get(model) || []).filter((w) => w !== reason)];
+    if(preference==='cost') why.unshift(estimatedCost(m,tokens)===null?'prices are unknown; using task fit':'lower reported price among compatible available choices');
+    else if(preference==='quality') why.unshift('quality priority, estimated from model-family hints');
+    else if(preference==='speed') why.unshift('speed priority');
     if (blocked(model)) why.push('every better match is at its limit right now');
-    const notice = rescued ? 'Every enabled model is excluded from Auto. Using your enabled models as a last resort; review Auto exclusions in Settings → Models.' : null;
-    if (rescued) why.push('all enabled models were excluded; using the last-resort pool');
-    return { model, fallbacks: all.slice(1), reason, notice, detail: { why: why.length ? why.slice(0, 5) : ['best overall match among your models'], next: all.slice(1, 4) } };
+    return { model, fallbacks: input.allowFallback===false?[]:all.slice(1), reason, notice:null, detail: { why: why.length ? why.slice(0, 5) : ['best overall match among your models'], next: all.slice(1, 4) } };
   }
 
   // Manual choice: keep it unless it can't handle this message.
-  const chosen = info.get(input.selected);
-  const problem = capable(chosen, task, tokens);
+  const problem = manualProblem;
   if (problem) {
     const alt = all.find((id) => id !== input.selected && !capable(info.get(id), task, tokens));
     if (alt) {
@@ -278,5 +292,5 @@ export function planRoute(input: RouteInput): RoutePlan {
       };
     }
   }
-  return { model: input.selected, fallbacks: all.filter((id) => id !== input.selected), reason: null, notice: null };
+  return { model: input.selected, fallbacks: input.allowFallback===false?[]:all.filter((id) => id !== input.selected), reason: null, notice: null };
 }

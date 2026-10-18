@@ -50,7 +50,7 @@ events = await collect({ model: TEXT, messages: [{ role: 'user', text: 'A'.repea
 assert.equal(calls.length, 0, 'Recovered context limits constrain oversized requests');
 
 events = await collect({ model: TEXT, messages: [{ role: 'user', text: 'A'.repeat(100000) }], options: { modelCapabilities: { [TEXT]: metadata({ context: null }) }, modelContexts: { [TEXT]: 32000 } } });
-assert.equal(calls.length, 1, 'An explicit context:null row remains distinct from completely missing capabilities');
+assert.equal(calls.length, 0, 'An explicit unknown context is bounded and cannot grant infinite capacity');
 
 await catalog({ refresh: true });
 events = await collect({ model: TEXT, messages: raw('image'), options: { modelCapabilities: { [TEXT]: metadata({ vision: true }) } } });

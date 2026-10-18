@@ -28,6 +28,7 @@ export default function RouteWhy({ message }: { message: Message }) {
         <span className="route-why-pop" role="dialog" aria-label="Why this model">
           <span className="rw-title">Why {name}</span>
           <ul>{(d?.why?.length ? d.why : [message.route || 'best available']).map((w) => <li key={w}>{w}</li>)}</ul>
+          <span className="muted small">Fit is estimated from capabilities and model-family hints. Answer quality is not guaranteed.</span>
           {!!d?.next?.length && <>
             <span className="rw-title">Next in line</span>
             <ol>{d.next.map((id) => <li key={id}>{modelLabel(catalog, id)}</li>)}</ol>

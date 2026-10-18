@@ -5,7 +5,7 @@
 
 import type { ModelInfo } from '../types';
 import type { LayoutIcon } from './layouts';
-import { inputBudget } from './ai/context-budget.js';
+import { modelProblem } from './ai/eligibility.js';
 import { interpretWork, type WorkTask } from './work-intent';
 
 import { features, familyOf, versionFamilyOf, versionOf, type Feature } from './model-profile';
@@ -88,10 +88,7 @@ export interface Pick { id: string; score: number; why: string[] }
 /** Shared by ranking and saving, so refreshed metadata cannot bypass a task requirement. */
 export function modelMeetsTask(task: TaskProfile, model: ModelInfo): boolean {
   const required = [...(task.requires ? [task.requires] : []), ...(task.requiresAll || [])];
-  if (!required.every(key => model[key])) return false;
-  const context = model.context || 0;
-  if (task.minContext && (!Number.isFinite(context) || context < task.minContext)) return false;
-  if (task.minInputTokens && (!Number.isFinite(context) || context <= 0 || inputBudget(context) < task.minInputTokens)) return false;
+  if(modelProblem(model,{image:required.includes('vision'),pdf:required.includes('pdf'),search:required.includes('search'),minContext:task.minContext,minInputTokens:task.minInputTokens}))return false;
   return !task.noReasoning || features(model).slow < 1;
 }
 

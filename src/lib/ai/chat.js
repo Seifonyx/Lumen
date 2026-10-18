@@ -7,7 +7,9 @@ import { complete, hasGemini, hasKey, keyVersion, modelCapabilities, openStream,
 import { isUnavailableFailure } from './model-status.js';
 import { hasVideo, toolModel } from './tool-inputs.js';
 import { isCoolingDown, noteFailure, noteSuccess, noteReplyLatency, replyLatency } from './health.js';
-import { requestTokens, fitsContext, UNKNOWN_CONTEXT } from './context-budget.js';
+import { requestTokens } from './context-budget.js';
+import { attachmentNeeds, modelProblem } from './eligibility.js';
+import { estimatedCost } from './preferences.js';
 
 const MAX_ATTEMPTS = 5;
 export const timeouts = {
@@ -26,7 +28,7 @@ export const timeouts = {
 
 // Keep the chosen model first, then spread attempts across providers. Readiness
 // precedes layout preference; search breaks ties within each ready/layout tier.
-export function attemptQueue(ids, { searchCapable, blocked, preferred, keepFirst = true } = {}) {
+export function attemptQueue(ids, { searchCapable, blocked, preferred, cost, keepFirst = true } = {}) {
   const remaining = [...ids];
   const queue = [];
   const counts = new Map();
@@ -34,7 +36,9 @@ export function attemptQueue(ids, { searchCapable, blocked, preferred, keepFirst
     const healthy = remaining.filter(id => !isCoolingDown(id) && !blocked?.(id));
     const available = healthy.length ? healthy : remaining;
     const scoped = preferred && available.some(preferred) ? available.filter(preferred) : available;
-    const pool = searchCapable && scoped.some(searchCapable) ? scoped.filter(searchCapable) : scoped;
+    const searchable = searchCapable && scoped.some(searchCapable) ? scoped.filter(searchCapable) : scoped;
+    const lowest=cost?Math.min(...searchable.map(id=>cost(id)??Infinity)):Infinity;
+    const pool=Number.isFinite(lowest)?searchable.filter(id=>cost(id)===lowest):searchable;
     const fewest = Math.min(...pool.map(id => counts.get(id.split(':')[0]) || 0));
     const index = queue.length || !keepFirst ? remaining.findIndex(id => pool.includes(id) && (counts.get(id.split(':')[0]) || 0) === fewest) : 0;
     const [id] = remaining.splice(index, 1);
@@ -78,22 +82,22 @@ const available = (id) => {
 
 export async function* runChat({ model, fallbacks = [], messages, options = {} }, signal) {
   const needsGemini = Boolean(options.codeExecution) || Boolean(options.requireSearch) || hasVideo(messages);
-  const image = messages.some(m => m.files?.some(f => f.kind === 'image' && !f.text));
-  const pdf = messages.some(m => m.files?.some(f => f.kind === 'pdf' && !f.text));
+  const {image,pdf}=attachmentNeeds(messages.flatMap(m=>m.files || []));
   const candidates = [model, ...fallbacks].filter((id, i, all) => id && all.indexOf(id) === i && available(id) && (!needsGemini || toolModel(id)));
   const preferred = options.preferredModels?.length ? new Set([model, ...options.preferredModels]) : null;
   const searchCapable = options.search ? id => Boolean((modelCapabilities(id) || options.modelCapabilities?.[id])?.search) : undefined;
   const blockedModels = new Set(options.blockedModels || []);
   const blocked = id => blockedModels.has(id);
-  const queue = attemptQueue(candidates, { searchCapable, blocked, preferred: preferred ? id => preferred.has(id) : undefined, keepFirst: candidates[0] === model });
+  const officeFiles = [...new Set(messages.flatMap((m) => (m.files || []).map((f) => f.name)).filter((n) => /\.(docx|xlsx|xlsm)$/i.test(n || '')))];
+  const instructions = buildInstructions({ custom: options.customInstructions || '', memory: options.memory || '', workspace: options.workspace || '', officeFiles });
+  const tokens = requestTokens(messages, instructions);
+  const cost=options.routingPreference==='cost'?id=>estimatedCost(modelCapabilities(id)||options.modelCapabilities?.[id],tokens):undefined;
+  const queue = attemptQueue(candidates, { searchCapable, blocked, cost, preferred: preferred ? id => preferred.has(id) : undefined, keepFirst: candidates[0] === model });
   if (queue.length === 0) {
     yield { t: 'error', text: needsGemini ? 'This tool request requires an enabled Gemini model and a Google API key. Check Settings → Models and API keys.' : `No API key for ${model}. Add your keys in Settings → API keys.` };
     yield { t: 'done' };
     return;
   }
-  const officeFiles = [...new Set(messages.flatMap((m) => (m.files || []).map((f) => f.name)).filter((n) => /\.(docx|xlsx|xlsm)$/i.test(n || '')))];
-  const instructions = buildInstructions({ custom: options.customInstructions || '', memory: options.memory || '', workspace: options.workspace || '', officeFiles });
-  const tokens = requestTokens(messages, instructions);
   const failures = [];
   const label = (id) => id.split(':').slice(1).join(':');
 
@@ -107,19 +111,11 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     const target = available(id);
     if (!target) continue;
     const metadata = modelCapabilities(id) || options.modelCapabilities?.[id];
-    if (!metadata && (image || pdf)) {
-      failures.push({ id, status: 'capabilities', message: 'Refresh Models in Settings to verify whether this model can read the attachments.' });
-      continue;
-    }
-    if (metadata && ((image && !metadata.vision) || (pdf && !metadata.pdf))) {
-      failures.push({ id, status: 400, message: 'This model cannot read the attachments in this conversation.' });
-      continue;
-    }
-    // A present context:null row is explicit unknown capacity; an absent row is
-    // different and must not accidentally gain an infinite budget.
-    const context = metadata ? metadata.context : options.modelContexts?.[id];
-    if (!fitsContext(context === undefined ? UNKNOWN_CONTEXT : context, tokens)) {
-      failures.push({ id, status: 'context', message: 'The conversation and instructions exceed this model’s safe context budget.' });
+    const effective=metadata || (options.modelContexts?.[id]!==undefined?{context:options.modelContexts[id]}:undefined);
+    const problem=modelProblem(effective,{image,pdf,tokens});
+    if (problem) {
+      const context=/context|too small/.test(problem);
+      failures.push({ id, status: context?'context':metadata?400:'capabilities', message:problem });
       continue;
     }
     // A rejected key fails every model that uses it, so don't try them one by one.

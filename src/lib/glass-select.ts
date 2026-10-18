@@ -26,7 +26,9 @@ export function installGlassSelect(): () => void {
     const menu = document.createElement('div');
     menu.className = 'menu glass-select-menu';
     menu.setAttribute('role', 'listbox');
-    menu.setAttribute('aria-label', select.getAttribute('aria-label') || 'Choose');
+    const namedBy=(select.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean).map(id=>document.getElementById(id)?.textContent?.trim()).filter(Boolean).join(' ');
+    const label=select.labels?.[0];
+    menu.setAttribute('aria-label', select.getAttribute('aria-label') || namedBy || label?.querySelector('.setting-label')?.textContent?.trim() || label?.textContent?.trim() || 'Choose');
     let current: HTMLButtonElement | null = null;
     const add = (option: HTMLOptionElement) => {
       if (option.hidden) return;
@@ -72,6 +74,7 @@ export function installGlassSelect(): () => void {
     select.setAttribute('aria-expanded', 'true');
     const key = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close?.(); select.focus({ preventScroll: true }); }
+      if (e.key === 'Tab') { close?.(); select.focus({ preventScroll: true }); }
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
         const list = [...menu.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')];

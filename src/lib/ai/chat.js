@@ -116,7 +116,7 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
     if (!target) continue;
     const metadata = modelCapabilities(id) || options.modelCapabilities?.[id];
     const effective=metadata || (options.modelContexts?.[id]!==undefined?{context:options.modelContexts[id]}:undefined);
-    const problem=modelProblem(effective,{image,pdf,tokens,unavailable:isModelRegistered(id)===false}) || (options.modelRequirements?modelRequirementsProblem(effective,options.modelRequirements):null);
+    const problem=modelProblem(effective,{image,pdf,tokens,outputTokens:options.maxTokens,unavailable:isModelRegistered(id)===false}) || (options.modelRequirements?modelRequirementsProblem(effective,options.modelRequirements):null);
     if (problem) {
       const context=/context|too small/.test(problem);
       failures.push({ id, status: context?'context':metadata?400:'capabilities', message:problem });
@@ -341,7 +341,8 @@ export async function summarize(prompt, candidates, { skip = (_id) => Boolean(fa
   };
   for (const id of candidates) {
     const m = available(id);
-    if (!m || isModelRegistered(id)===false || modelProblem(modelCapabilities(id),{tokens,streaming:false}) || (modelRequirements && modelRequirementsProblem(modelCapabilities(id),modelRequirements)) || deadProviders.has(m.provider) || skip(id) || tried.includes(id)) continue;
+    const metadata=modelCapabilities(id);
+    if (!m || isModelRegistered(id)===false || modelProblem(metadata,{tokens,streaming:false,outputTokens:metadata?maxTokens:undefined}) || (modelRequirements && modelRequirementsProblem(metadata,modelRequirements)) || deadProviders.has(m.provider) || skip(id) || tried.includes(id)) continue;
     tried.push(id);
     const remaining = timeouts.summaryTotalMs - (Date.now() - started);
     if (signal?.aborted || remaining <= 0) break;

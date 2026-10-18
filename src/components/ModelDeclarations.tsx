@@ -192,8 +192,8 @@ export default function ModelDeclarations() {
         {currentDraft && <form className="declared-model-editor" noValidate data-local-escape onSubmit={save} aria-label={currentDraft.original ? 'Edit custom model' : 'Add custom model'} onKeyDown={event => {
           if (event.key === 'Escape' && !event.nativeEvent.isComposing) {event.stopPropagation();event.preventDefault();close();}
         }}>
-          <label className="field-block" htmlFor={`${prefix}-provider`}><span className="setting-label">Provider</span>
-            <select id={`${prefix}-provider`} ref={node => {fields.current.provider=node;}} value={currentDraft.provider} onChange={event => change('provider',event.target.value)} aria-invalid={error?.field === 'provider'} aria-describedby={error?.field === 'provider' ? `${prefix}-error` : undefined}>
+          <label className="field-block" htmlFor={`${prefix}-provider`}><span className="setting-label" id={`${prefix}-provider-label`}>Provider</span>
+            <select id={`${prefix}-provider`} aria-labelledby={`${prefix}-provider-label`} ref={node => {fields.current.provider=node;}} value={currentDraft.provider} onChange={event => change('provider',event.target.value)} aria-invalid={error?.field === 'provider'} aria-describedby={error?.field === 'provider' ? `${prefix}-error` : undefined}>
               {AI_PROVIDERS.map(provider => <option key={provider} value={provider} disabled={!providerEnabled(provider,keys)}>{providerName(provider)}{providerEnabled(provider,keys) ? '' : ' · not connected'}</option>)}
             </select>
           </label>
@@ -210,8 +210,8 @@ export default function ModelDeclarations() {
           <details className="declared-model-capabilities"><summary>Capabilities (optional)</summary>
             <p className="setting-hint">Leave unknown details unset. Declaring support cannot add PDF or search features to a provider connection.</p>
             {CAPABILITIES.map(([field,label]) => <label key={field} className="field-block" htmlFor={`${prefix}-${field}`}>
-              <span className="setting-label">{label}</span>
-              <select id={`${prefix}-${field}`} value={currentDraft.capabilities[field]} onChange={event => {setError(null);setDraft({...currentDraft,capabilities:{...currentDraft.capabilities,[field]:event.target.value as Choice}});}}>
+              <span className="setting-label" id={`${prefix}-${field}-label`}>{label}</span>
+              <select id={`${prefix}-${field}`} aria-labelledby={`${prefix}-${field}-label`} value={currentDraft.capabilities[field]} onChange={event => {setError(null);setDraft({...currentDraft,capabilities:{...currentDraft.capabilities,[field]:event.target.value as Choice}});}}>
                 <option value="">Unknown</option><option value="yes">Yes</option><option value="no">No</option>
               </select>
             </label>)}

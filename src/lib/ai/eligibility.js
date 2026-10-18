@@ -2,7 +2,7 @@ import { fitsContext, UNKNOWN_CONTEXT } from './context-budget.js';
 
 /** Shared hard constraints. A positive rank never makes an incompatible model eligible. */
 export function modelProblem(model, {image=false,pdf=false,search=false,tools=false,structuredOutput=false,streaming=true,
-  tokens=0,minContext=0,minInputTokens=0,unavailable=false}={}) {
+  tokens=0,outputTokens=/** @type {number | undefined} */ (undefined),minContext=0,minInputTokens=0,unavailable=false}={}) {
   if(streaming && model?.streaming===false)return 'does not support streamed replies';
   if(unavailable) return 'is not available from your connected provider';
   if(!model && (image||pdf)) return 'has no verified attachment capabilities';
@@ -16,6 +16,12 @@ export function modelProblem(model, {image=false,pdf=false,search=false,tools=fa
   if(minContext && (!known || context<minContext)) return 'has too little verified context for this task';
   if(minInputTokens && (!known || !fitsContext(context,minInputTokens))) return 'has too little verified context for the input and a reply';
   if(!fitsContext(known?context:UNKNOWN_CONTEXT,tokens)) return known?'is too small for this much text and a reply':'has no verified context window for this much text';
+  if(outputTokens!==undefined) {
+    if(!Number.isFinite(outputTokens) || outputTokens<0)return 'has an invalid requested output allowance';
+    const limit=model?.outputLimit;
+    const answer=Number.isFinite(limit)&&limit>0?Math.min(outputTokens,limit):outputTokens;
+    if(tokens+answer>Math.floor((known?context:UNKNOWN_CONTEXT)*.9))return 'is too small for this text and the requested reply allowance';
+  }
   return null;
 }
 

@@ -112,6 +112,7 @@ async function preserveAnswer(card) {
           const second = dialog.locator('.comparison-grid .comparison-card').filter({ has: page.locator('header strong').filter({ hasText: /^Pro B$/ }) });
           const verifyFirst = await preserveAnswer(first);
           assert.match(await first.textContent(), /SOURCE_A_STABLE_1/);
+          await first.getByRole('status').filter({hasText:'Answer ready'}).waitFor();
 
           if (mode === 'stop') {
             await heldRequest.promise;
@@ -120,6 +121,7 @@ async function preserveAnswer(card) {
             releaseHeld.resolve();
           } else {
             await second.locator('.error-msg').filter({ hasText: mode === 'partial-error' ? 'SOURCE_STREAM_FAILURE' : 'SOURCE_UNAVAILABLE_BEFORE_OUTPUT' }).waitFor();
+            assert.equal(await second.locator('.error-msg').getAttribute('role'),'alert','failed stages announce their error without replacing partial text');
           }
           const retry = second.getByRole('button', { name: 'Retry this model', exact: true });
           await retry.waitFor();

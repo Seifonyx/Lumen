@@ -1,7 +1,6 @@
 import type { ModelInfo, Settings } from '../types';
 import { AUTO, analyze, planRoute, type RouteInput } from './routing';
 import { modelProblem } from './ai/eligibility.js';
-import { UNKNOWN_CONTEXT } from './ai/context-budget.js';
 import { choosePreference, compareKnownCost, estimatedCost } from './ai/preferences.js';
 
 export type HelperRoutingSettings = Pick<Settings, 'enabledModels' | 'autoExcluded' | 'routingPreference' | 'autoPreferProvider'>;
@@ -29,12 +28,7 @@ export function helperModels(catalog: ModelInfo[], settings: HelperRoutingSettin
     const quota = left(id);
     remaining.set(id, quota);
     if (quota !== null && quota <= 0) return false;
-    if (modelProblem(model, { tokens: inputTokens,streaming:false })) return false;
-    const context = typeof model.context === 'number' && Number.isFinite(model.context) && model.context > 0 ? model.context : UNKNOWN_CONTEXT;
-    const limit = model.outputLimit;
-    const answer = typeof limit === 'number' && Number.isFinite(limit) && limit > 0 ? Math.min(outputTokens, limit) : outputTokens;
-    // Preserve the shared conservative eligibility, adding the actual helper reply allowance.
-    return inputTokens + answer <= Math.floor(context * .9);
+    return !modelProblem(model, { tokens: inputTokens,streaming:false,outputTokens });
   });
   const input: RouteInput = {
     selected: AUTO, enabled, catalog, text, streaming:false,files: [], conversationTokens: tokens, search: false,

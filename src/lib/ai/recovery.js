@@ -56,7 +56,7 @@ export function classifyFailure(input = {}) {
     const kind = limit?.scope === 'day' || /exhaust|quota|daily|per.?day/i.test(text) ? 'quota' : 'rate-limit';
     return make(kind, scope, { retryable: scope === 'model' && kind === 'rate-limit' });
   }
-  if (status === 400 && /unsupported|unrecognized|unknown|not supported/i.test(text) && /parameter|thinking|generation.?config|response_format/i.test(text)) return make('parameters');
+  if (status === 400 && /unsupported|unrecognized|unknown|not supported/i.test(text) && /parameter|thinking|include.?thoughts|generation.?config|response_format/i.test(text)) return make('parameters');
   if (status === 422 || /invalid_request_error|invalid_argument/i.test(code) || /messages must (?:be|contain)|malformed (?:request|json)|invalid (?:json|request body)/i.test(message)) return make('invalid-input', 'request');
   if (status >= 500) return make('provider', 'provider');
   if (status === 'network' || status === 0 || /Failed to fetch|network (?:error|request failed)|connection failed|load failed/i.test(message)) return make('network');

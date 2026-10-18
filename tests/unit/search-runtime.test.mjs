@@ -74,7 +74,7 @@ assert.equal(calls.length, 1, 'A compatible manual choice stays first even when 
 assert(events.some(event => event.t === 'model' && event.id === TEXT));
 
 events = await collect(PRIMARY, { ...searchOptions, preferredModels: [PRIMARY, TEXT] }, [SEARCH, TEXT]);
-assert(events.some(event => event.t === 'model' && event.id === TEXT), 'An explicit layout pool stays ahead of models outside the layout');
+assert(events.some(event => event.t === 'model' && event.id === TEXT), 'Ready layout models stay ahead of ready models outside the layout');
 
 events = await collect(PRIMARY, { ...searchOptions, preferredModels: [PRIMARY] }, [TEXT, SEARCH]);
 assert(events.some(event => event.t === 'model' && event.id === SEARCH), 'The outside pool starts with its searchable candidate, preserving only the actual manual choice first');
@@ -84,6 +84,10 @@ events = await collect(PRIMARY, { ...searchOptions, modelCapabilities: { ...sear
 assert(events.some(event => event.t === 'model' && event.id === SONAR), 'Searchable fallbacks still diversify providers before retrying the same one');
 assert.equal(calls.length, 2);
 
+events = await collect(PRIMARY, { ...searchOptions, preferredModels: [PRIMARY], modelCapabilities: { ...searchOptions.modelCapabilities, [SONAR]: capability(true) } }, [SEARCH, SONAR, TEXT]);
+assert(events.some(event => event.t === 'model' && event.id === SONAR), 'Provider counts remain anchored to the actual primary when leaving its preferred layout pool');
+assert.equal(calls.length, 2);
+
 calls.length = 0;
 clearHealth();
 noteFailure(SEARCH, 503);
@@ -91,6 +95,39 @@ events = [];
 for await (const event of runChat({ model: PRIMARY, fallbacks: [SEARCH, TEXT], messages: [{ role: 'user', text: 'Latest news' }], options: searchOptions }, new AbortController().signal)) events.push(event);
 assert(events.some(event => event.t === 'model' && event.id === TEXT), 'A healthy non-search fallback precedes a cooling searchable model');
 assert(events.some(event => event.t === 'notice' && /did not search/i.test(event.text)), 'The final non-search fallback remains explicit about degradation');
+
+const quotaBlocked = Array.from({ length: 4 }, (_, index) => `gemini:gemini-2.5-flash-lite-${index}`);
+const quotaOptions = { ...searchOptions, blockedModels: quotaBlocked, modelCapabilities: { ...searchOptions.modelCapabilities, ...Object.fromEntries(quotaBlocked.map(id => [id, capability(true)])) } };
+globalThis.fetch = async (url, options) => {
+  if (String(url).includes('googleapis')) {
+    calls.push({ url: String(url), body: JSON.parse(options.body) });
+    return Response.json({ error: { message: 'Daily quota exhausted' } }, { status: 429 });
+  }
+  return originalFetch(url, options);
+};
+events = await collect(PRIMARY, quotaOptions, [TEXT, ...quotaBlocked]);
+assert(events.some(event => event.t === 'model' && event.id === TEXT), 'Ready text fallback must answer before known quota-blocked search models consume the five-attempt cap');
+assert.equal(calls.length, 2);
+assert.deepEqual(events.filter(event => event.t === 'attempt').map(event => event.id), [PRIMARY, TEXT]);
+
+events = await collect(PRIMARY, { ...quotaOptions, blockedModels: [PRIMARY, ...quotaBlocked] }, [TEXT, ...quotaBlocked]);
+assert.deepEqual(events.filter(event => event.t === 'attempt').map(event => event.id), [PRIMARY, TEXT], 'An explicitly chosen primary stays first even when its recorded quota is exhausted');
+
+events = await collect(PRIMARY, { ...quotaOptions, preferredModels: [PRIMARY, ...quotaBlocked] }, [TEXT, ...quotaBlocked]);
+assert.deepEqual(events.filter(event => event.t === 'attempt').map(event => event.id), [PRIMARY, TEXT], 'Four exhausted preferred layout rows must not consume the attempt budget before an allowed ready outside fallback');
+assert(events.some(event => event.t === 'model' && event.id === TEXT));
+assert.equal(calls.length, 2, 'Known exhausted layout rows stay behind the working outside fallback');
+
+globalThis.fetch = async (url, options) => {
+  if (String(url).includes('api.groq.com')) {
+    calls.push({ url: String(url), body: JSON.parse(options.body) });
+    return Response.json({ error: { message: 'Temporary overload' } }, { status: 503 });
+  }
+  return originalFetch(url, options);
+};
+events = await collect(TEXT, { ...searchOptions, blockedModels: [SEARCH] }, [SEARCH]);
+assert(events.some(event => event.t === 'model' && event.id === SEARCH), 'A quota-blocked model remains available as the final resort after ready candidates fail');
+assert.equal(calls.length, 2);
 
 const GEMMA = 'gemini:gemma-4-31b-it';
 globalThis.fetch = async (url, options = {}) => {
@@ -108,4 +145,4 @@ assert(events.some(event => event.t === 'model' && event.id === SEARCH), 'Fresh 
 assert.equal(calls.length, 2);
 assert(calls[1].url.includes('/gemini-2.5-flash-lite:'));
 
-console.log('PASS Search survives retries and failover while preserving manual choices, layout boundaries, health, diversity and fresh metadata');
+console.log('PASS Search survives retries and failover while preserving manual choices, readiness, layout preference, diversity and fresh metadata');

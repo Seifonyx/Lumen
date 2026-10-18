@@ -16,7 +16,9 @@ const url=process.env.MR_TEST_URL||'http://localhost:5190/';
   await page.locator('.chat-open').filter({hasText:'Selection test'}).click();await page.locator('[data-message-id="a"]').waitFor();
   await page.waitForFunction(expected=>{const node=document.querySelector('.msg.assistant pre');return node&&getComputedStyle(node).webkitUserSelect===expected;},'text');
   if(width>=900){
-   const paragraph=await page.locator('.msg.assistant .markdown p').first().boundingBox();
+   const prose=page.locator('.msg.assistant .markdown p').first();
+   await prose.waitFor({state:'visible'});await prose.scrollIntoViewIfNeeded();await prose.hover();
+   const paragraph=await prose.boundingBox();assert.ok(paragraph,'Desktop prose has a visible layout before dragging');
    await page.mouse.move(paragraph.x+1,paragraph.y+paragraph.height/2);await page.mouse.down();
    await page.mouse.move(paragraph.x+Math.min(180,paragraph.width-1),paragraph.y+paragraph.height/2,{steps:8});await page.mouse.up();
    assert.match(await page.evaluate(()=>getSelection().toString()),/readable/,'Real desktop drag selection remains available');

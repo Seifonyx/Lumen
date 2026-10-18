@@ -24,16 +24,17 @@ export const timeouts = {
   summaryTotalMs: 60_000,
 };
 
-// Keep the chosen model first, then spread attempts across providers. Searchable
-// backups come first among equally healthy models when search was requested.
-export function attemptQueue(ids, { searchCapable, keepFirst = true } = {}) {
+// Keep the chosen model first, then spread attempts across providers. Readiness
+// precedes layout preference; search breaks ties within each ready/layout tier.
+export function attemptQueue(ids, { searchCapable, blocked, preferred, keepFirst = true } = {}) {
   const remaining = [...ids];
   const queue = [];
   const counts = new Map();
   while (remaining.length) {
-    const healthy = remaining.filter(id => !isCoolingDown(id));
+    const healthy = remaining.filter(id => !isCoolingDown(id) && !blocked?.(id));
     const available = healthy.length ? healthy : remaining;
-    const pool = searchCapable && available.some(searchCapable) ? available.filter(searchCapable) : available;
+    const scoped = preferred && available.some(preferred) ? available.filter(preferred) : available;
+    const pool = searchCapable && scoped.some(searchCapable) ? scoped.filter(searchCapable) : scoped;
     const fewest = Math.min(...pool.map(id => counts.get(id.split(':')[0]) || 0));
     const index = queue.length || !keepFirst ? remaining.findIndex(id => pool.includes(id) && (counts.get(id.split(':')[0]) || 0) === fewest) : 0;
     const [id] = remaining.splice(index, 1);
@@ -82,10 +83,9 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
   const candidates = [model, ...fallbacks].filter((id, i, all) => id && all.indexOf(id) === i && available(id) && (!needsGemini || toolModel(id)));
   const preferred = options.preferredModels?.length ? new Set([model, ...options.preferredModels]) : null;
   const searchCapable = options.search ? id => Boolean((modelCapabilities(id) || options.modelCapabilities?.[id])?.search) : undefined;
-  const ordering = { searchCapable, keepFirst: !options.search || candidates[0] === model };
-  const queue = preferred
-    ? [...attemptQueue(candidates.filter(id => preferred.has(id)), ordering), ...attemptQueue(candidates.filter(id => !preferred.has(id)), { searchCapable, keepFirst: !options.search })]
-    : attemptQueue(candidates, ordering);
+  const blockedModels = new Set(options.blockedModels || []);
+  const blocked = id => blockedModels.has(id);
+  const queue = attemptQueue(candidates, { searchCapable, blocked, preferred: preferred ? id => preferred.has(id) : undefined, keepFirst: candidates[0] === model });
   if (queue.length === 0) {
     yield { t: 'error', text: needsGemini ? 'This tool request requires an enabled Gemini model and a Google API key. Check Settings → Models and API keys.' : `No API key for ${model}. Add your keys in Settings → API keys.` };
     yield { t: 'done' };

@@ -668,6 +668,7 @@ export const useStore = create<State>((set, get) => {
     const searchOn = !research && (chatTask ? chatTask.search : settings.webSearch);
     makeBody = () => buildChatBody({ model: chosen, fallbacks, messages: wire, options: {
       modelCapabilities: requestCapabilities(get().catalog, [chosen, ...fallbacks]),
+      blockedModels: [chosen, ...fallbacks].filter(id => blocked(id) || (remaining(get().usage, id) ?? Infinity) <= 0),
       quickReply: quickReply && !research, thinkingModels, preferredModels: layoutModels, search: searchOn && task.search, requireSearch: Boolean(chatTask?.search), codeExecution: Boolean(lastUser?.codeExecution), customInstructions: masker ? masker.mask(instructions).text : instructions, memory: memoryNote, workspace: masker ? masker.mask(workspaceNote).text : workspaceNote,
     } });
     body = makeBody();

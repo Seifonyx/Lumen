@@ -199,6 +199,7 @@ async function run(browser, mobile) {
     // the background above the app.
     const tall = (on) => page.locator('.messages').evaluate((el, on) => { const c = el.firstElementChild; if (c) c.style.minHeight = on ? '3000px' : ''; }, on);
     await tall(true);
+    await page.waitForFunction(()=>{const el=document.querySelector('.messages');return el && el.scrollHeight>el.clientHeight+1;});
     check(!(await touch('.messages')), 'iOS simulation: chat history scrolling stays enabled');
     await tall(false);
     const hide = (on) => page.locator('.messages').evaluate((el, on) => { for (const c of el.children) c.style.display = on ? 'none' : ''; }, on);

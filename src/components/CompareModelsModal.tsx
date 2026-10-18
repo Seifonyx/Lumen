@@ -3,6 +3,8 @@ import { Boxes, Check } from 'lucide-react';
 import { modelLabel, useStore } from '../store';
 import Modal from './Modal';
 import type { Attachment } from '../types';
+import { attachmentNeeds, modelProblem } from '../lib/ai/eligibility.js';
+import { estimateTokens } from '../lib/routing';
 
 export default function CompareModelsModal({ prompt, onPromptChange, files, unavailableReason, onClose, onCompare }: { prompt: string; onPromptChange: (value: string) => void; files: Attachment[]; unavailableReason?: string; onClose: () => void; onCompare: (models: string[]) => void }) {
   const enabled = useStore((s) => s.settings.enabledModels);
@@ -16,7 +18,7 @@ export default function CompareModelsModal({ prompt, onPromptChange, files, unav
   const toggle = (id: string) => setSelected((current) => current.includes(id) ? current.filter((x) => x !== id) : current.filter(supports).length < 3 ? [...current.filter(supports), id] : current);
   const supports = (id: string) => {
     const model = catalog?.models.find((m) => m.id === id);
-    return !model || (!files.some((f) => f.kind === 'image') || model.vision) && (!files.some((f) => f.kind === 'pdf') || model.pdf);
+    return Boolean(model) && !modelProblem(model,{...attachmentNeeds(files),tokens:estimateTokens(prompt,files)});
   };
   const chosen = selected.filter(supports);
 

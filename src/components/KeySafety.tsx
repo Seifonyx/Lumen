@@ -1,6 +1,6 @@
 import { ChevronDown, ExternalLink, Loader2, RefreshCw, ShieldAlert, ShieldCheck } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { geminiKeyLock, openRouterKeyInfo } from '../lib/ai/providers.js';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { geminiKeyLock, keyVersion, openRouterKeyInfo } from '../lib/ai/providers.js';
 import { useStore } from '../store';
 
 type Gemini = { state: 'locked' | 'open' | 'wrong-site' | 'invalid' | 'error'; message?: string } | null;
@@ -34,10 +34,14 @@ export default function KeySafety() {
   const [gemini, setGemini] = useState<Gemini>(null);
   const [openrouter, setOpenrouter] = useState<OpenRouter>(null);
   const [busy, setBusy] = useState(false);
+  const checkGeneration=useRef(0);
 
   const check = useCallback(async () => {
+    const current=++checkGeneration.current,version=keyVersion();
     setBusy(true);
+    setGemini(null);setOpenrouter(null);
     const [g, o] = await Promise.all([geminiKeyLock(), openRouterKeyInfo()]);
+    if(current!==checkGeneration.current || version!==keyVersion())return;
     setGemini(g as Gemini);
     setOpenrouter(o as OpenRouter);
     setBusy(false);
@@ -45,6 +49,8 @@ export default function KeySafety() {
 
   useEffect(() => {
     if (keys.gemini || keys.openrouter) void check();
+    else {setGemini(null);setOpenrouter(null);setBusy(false);}
+    return ()=>{checkGeneration.current++;};
   }, [keys.gemini, keys.openrouter, check]);
 
   if (!keys.gemini && !keys.openrouter) return null;

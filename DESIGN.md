@@ -61,6 +61,7 @@ Never use it for large areas, body text on white, or decoration.
   (memory, connectors, privacy) live in Settings, not here.
 - **While a reply loads**: one line — `● Routing → model`, then what it's doing (Searching the web, Reading
   your files…), then elapsed seconds after 8 s.
+- **Routing controls**: Settings → Models owns balanced/quality/speed/cost priority. The current prompt can override a saved priority. A compatible manual choice remains fixed; disabling automatic switching blocks substitutions for incompatible choices too. Auto exclusions are hard constraints. Missing price/context metadata stays unknown, and refresh preserves saved choices and open edits.
 - **Under a reply**: model name (on Auto replies it opens "Why this model"), Copy, Regenerate, Retry with…, and `⋯` for Read aloud, Share,
   Save as Word, Edit in canvas, Select text.
 

@@ -6,6 +6,7 @@ export const DEFAULT_SETTINGS: Settings = {
   enabledModels: [],
   defaultModel: '',
   autoSwitch: true,
+  routingPreference: 'balanced',
   webSearch: false,
   showThinking: true,
   customInstructions: '',

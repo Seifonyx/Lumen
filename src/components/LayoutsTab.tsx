@@ -5,6 +5,7 @@ import { PROVIDER_NAMES } from '../lib/util';
 import { modelLabel, useStore } from '../store';
 import LayoutIcon from './LayoutIcon';
 import LayoutBuilder from './LayoutBuilder';
+import { layoutModelProblem } from '../lib/layout-policy';
 
 export function LayoutEditor({ start, onDone }: { start: Layout; onDone: () => void }) {
   const catalog = useStore((s) => s.catalog);
@@ -15,6 +16,7 @@ export function LayoutEditor({ start, onDone }: { start: Layout; onDone: () => v
   const top = useRef<HTMLDivElement>(null);
   useEffect(() => { top.current?.scrollIntoView({ block: 'start' }); }, []);
   const models = catalog?.models || [];
+  const requirementError=[l.requirements?.minContext,l.requirements?.minInputTokens].some(n=>n!==undefined&&(!Number.isSafeInteger(n)||n<1));
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
     return models.filter((m) => !l.models.includes(m.id) && (!q || `${m.label} ${m.name} ${m.provider}`.toLowerCase().includes(q))).slice(0, 40);
@@ -25,8 +27,9 @@ export function LayoutEditor({ start, onDone }: { start: Layout; onDone: () => v
     setL({ ...l, models: next });
   };
   const save = () => {
-    const exists = layouts.some((x) => x.id === l.id);
-    update({ layouts: exists ? layouts.map((x) => (x.id === l.id ? l : x)) : [...layouts, l] });
+    if(requirementError)return;
+    const exists = layouts.some((x) => x.id === l.id),saved={...l,name:l.name.trim(),models:[...new Set(l.models)]};
+    update({ layouts: exists ? layouts.map((x) => (x.id === l.id ? saved : x)) : [...layouts, saved] });
     onDone();
   };
 
@@ -51,18 +54,33 @@ export function LayoutEditor({ start, onDone }: { start: Layout; onDone: () => v
       </div>
       <label className="field-block">
         <span className="setting-label">Description</span>
-        <input type="text" value={l.description} maxLength={120} onChange={(e) => setL({ ...l, description: e.target.value })} placeholder="What it's for" />
+        <input type="text" value={l.description} onChange={(e) => setL({ ...l, description: e.target.value })} placeholder="What it's for" />
       </label>
       <div className="setting-row">
         <span className="setting-text">
           <span className="setting-label">How models are used</span>
-          <span className="setting-hint">{l.mode === 'auto' ? 'Picks the best of these for each message (like Auto).' : 'Always the first one; the next takes over if it fails or hits a limit.'}</span>
+          <span className="setting-hint">{l.mode === 'auto' ? 'Auto chooses among these models for each message.' : 'Starts with the first model. Fallback rules control when another can answer.'}</span>
         </span>
         <div className="segmented">
           <button className={l.mode === 'order' ? 'active' : ''} onClick={() => setL({ ...l, mode: 'order' })}>In order</button>
           <button className={l.mode === 'auto' ? 'active' : ''} onClick={() => setL({ ...l, mode: 'auto' })}>Best for each</button>
         </div>
       </div>
+      <label className="field-block"><span className="setting-label">Routing priority</span><select aria-label="Layout routing priority" value={l.priority || ''} onChange={e=>setL({...l,priority:e.target.value?e.target.value as Layout['priority']:undefined})}>
+        <option value="">Use app setting</option><option value="balanced">Balanced</option><option value="quality">Quality</option><option value="speed">Speed</option><option value="cost">Cost</option>
+      </select><span className="setting-hint">Used for automatic choices. Fixed model order stays authoritative.</span></label>
+      <label className="field-block"><span className="setting-label">Fallback models</span><select aria-label="Layout fallback models" value={l.fallback || 'enabled'} onChange={e=>setL({...l,fallback:e.target.value as Layout['fallback']})}>
+        <option value="enabled">Layout, then enabled models</option><option value="layout">Only models in this layout</option><option value="none">No automatic fallback</option>
+      </select><span className="setting-hint">The app’s automatic-switching setting must also be on.</span></label>
+      <details className="layout-requirements"><summary>Requirements{l.requirements?.minContext?` · ${l.requirements.minContext.toLocaleString()} context`:''}</summary>
+      <fieldset className="field-block"><legend className="setting-label">Required capabilities</legend>
+        {(['vision','pdf','search'] as const).map(cap=><label key={cap} className="builder-default"><input type="checkbox" checked={Boolean(l.requirements?.capabilities?.includes(cap))} onChange={e=>setL({...l,requirements:{...l.requirements,capabilities:e.target.checked?[...new Set([...(l.requirements?.capabilities || []),cap])]:(l.requirements?.capabilities || []).filter(c=>c!==cap)}})} />{cap==='vision'?'Images':cap==='pdf'?'Native PDF input':'Web search'}</label>)}
+        <label className="builder-default"><input type="checkbox" checked={Boolean(l.requirements?.noReasoning)} onChange={e=>setL({...l,requirements:{...l.requirements,noReasoning:e.target.checked}})} />Exclude models that require lengthy reasoning</label>
+      </fieldset>
+      <label className="field-block"><span className="setting-label">Minimum context (tokens)</span><input type="number" min={1} step={1} value={l.requirements?.minContext ?? ''} onChange={e=>setL({...l,requirements:{...l.requirements,minContext:e.target.value===''?undefined:Number(e.target.value)}})} placeholder="No minimum" /></label>
+      <label className="field-block"><span className="setting-label">Input to fit (tokens)</span><input type="number" min={1} step={1} value={l.requirements?.minInputTokens ?? ''} onChange={e=>setL({...l,requirements:{...l.requirements,minInputTokens:e.target.value===''?undefined:Number(e.target.value)}})} placeholder="No minimum" /><span className="setting-hint">Reserves room for the input and a reply.</span></label>
+      </details>
+      {requirementError&&<p className="error-msg" role="alert">Context requirements must be positive whole numbers.</p>}
       <div className="field-block">
         <span className="setting-label">Models{l.mode === 'order' ? ' (first is used first)' : ''}</span>
         <ul className="model-list">
@@ -73,7 +91,7 @@ export function LayoutEditor({ start, onDone }: { start: Layout; onDone: () => v
               <li key={id} className="model-row">
                 <span className="model-meta">
                   <span className="model-title">{m?.label || modelLabel(catalog, id)}</span>
-                  <span className="model-sub">{m ? PROVIDER_NAMES[m.provider] : 'Not available with your keys'}</span>
+                  <span className="model-sub">{layoutModelProblem(l,m) || (m ? PROVIDER_NAMES[m.provider] : 'Not available with your keys')}</span>
                 </span>
                 <button className="icon-btn sm" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up"><ArrowUp size={16} /></button>
                 <button className="icon-btn sm" onClick={() => move(i, 1)} disabled={i === l.models.length - 1} aria-label="Move down"><ArrowDown size={16} /></button>
@@ -95,7 +113,7 @@ export function LayoutEditor({ start, onDone }: { start: Layout; onDone: () => v
                   <span className="model-title">{m.label}</span>
                   <span className="model-sub">{PROVIDER_NAMES[m.provider]} · {m.name}</span>
                 </span>
-                <button className="icon-btn sm" onClick={() => setL({ ...l, models: [...l.models, m.id] })} aria-label={`Add ${m.label}`}><Plus size={17} /></button>
+                <button className="icon-btn sm" disabled={Boolean(layoutModelProblem(l,m))} title={layoutModelProblem(l,m) || undefined} onClick={() => setL({ ...l, models: [...l.models, m.id] })} aria-label={`Add ${m.label}`}><Plus size={17} /></button>
               </li>
             ))}
           </ul>
@@ -104,11 +122,11 @@ export function LayoutEditor({ start, onDone }: { start: Layout; onDone: () => v
       <label className="field-block">
         <span className="setting-label">Instructions (optional)</span>
         <span className="setting-hint">Added for every model in this layout, on top of your own instructions.</span>
-        <textarea dir="auto" rows={4} value={l.instructions || ''} maxLength={2000} onChange={(e) => setL({ ...l, instructions: e.target.value })} style={{ minHeight: 0 }} />
+        <textarea dir="auto" rows={4} value={l.instructions || ''} onChange={(e) => setL({ ...l, instructions: e.target.value })} style={{ minHeight: 0 }} />
       </label>
       <div className="editor-actions">
         <button className="btn ghost" onClick={onDone}>Cancel</button>
-        <button className="btn primary" disabled={!l.name.trim() || !l.models.length} onClick={save}>Save layout</button>
+        <button className="btn primary" disabled={!l.name.trim() || !l.models.length || requirementError} onClick={save}>Save layout</button>
       </div>
     </div>
   );
@@ -119,7 +137,7 @@ function Card({ l, onEdit, onCopy }: { l: Layout; onEdit: () => void; onCopy: ()
   const settings = useStore((s) => s.settings);
   const update = useStore((s) => s.updateSettings);
   const id = LAYOUT_PREFIX + l.id;
-  const available = l.models.filter((m) => catalog?.models.some((x) => x.id === m));
+  const available = l.models.filter(id=>!layoutModelProblem(l,catalog?.models.find(m=>m.id===id)));
   const isDefault = settings.defaultModel === id;
   const saved = settings.layouts || [];
   const remove = () => {

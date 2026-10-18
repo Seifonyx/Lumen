@@ -11,6 +11,7 @@ import { modelLabel, useStore } from '../store';
 import { allLayouts, findLayout, isLayoutId, LAYOUT_PREFIX } from '../lib/layouts';
 import LayoutIcon from './LayoutIcon';
 import type { ModelInfo } from '../types';
+import { layoutModelProblem } from '../lib/layout-policy';
 
 export function Badges({ m }: { m?: ModelInfo }) {
   if (!m) return null;
@@ -127,9 +128,10 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
   }, [open]);
 
   const q = query.trim().toLowerCase();
-  const models = enabled.map((id) => catalog?.models.find((m) => m.id === id) || ({ id, label: modelLabel(catalog, id), name: id.split(':').slice(1).join(':'), provider: providerOfId(id) } as ModelInfo));
+  const savedIds=value && value!==AUTO && !isLayoutId(value) && !enabled.includes(value)?[value,...enabled]:enabled;
+  const models = savedIds.map((id) => catalog?.models.find((m) => m.id === id) || ({ id, label: modelLabel(catalog, id), name: id.split(':').slice(1).join(':'), provider: providerOfId(id) } as ModelInfo));
   const layouts = useMemo(
-    () => allLayouts(catalog?.models || [], customLayouts, hiddenLayouts).filter((l) => l.models.some((id) => catalog?.models.some((m) => m.id === id))),
+    () => allLayouts(catalog?.models || [], customLayouts, hiddenLayouts).filter((l) => l.models.length>0),
     [catalog, customLayouts, hiddenLayouts],
   );
   const current = isLayoutId(value) ? findLayout(value, catalog?.models || [], customLayouts, hiddenLayouts) : undefined;
@@ -193,7 +195,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
             <div className="mp-layouts">
               {shownLayouts.map((l) => {
                 const id = LAYOUT_PREFIX + l.id;
-                const usable = l.models.filter((m) => catalog?.models.some((x) => x.id === m));
+                const usable = l.models.filter(id=>!layoutModelProblem(l,catalog?.models.find(m=>m.id===id)));
                 return (
                   <button type="button"
                     key={id}
@@ -206,7 +208,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
                     <span className="mp-tile"><LayoutIcon icon={l.icon} size={15} /></span>
                     <span className="mp-text">
                       <span className="mp-title">{l.name}</span>
-                      <span className="mp-sub">{usable.length} model{usable.length === 1 ? '' : 's'}</span>
+                      <span className="mp-sub">{usable.length} available{usable.length<l.models.length?` · ${l.models.length-usable.length} unavailable`:''}</span>
                     </span>
                     {id === value && <Check size={14} className="mp-check" />}
                   </button>

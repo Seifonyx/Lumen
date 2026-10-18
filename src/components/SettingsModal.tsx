@@ -30,7 +30,8 @@ import { useFocusScope } from '../lib/focus-scope';
 import { PreviewTools } from './PreviewTools';
 import { isTouch, PROVIDER_NAMES, providerOfId, saveBlob, type ProviderId } from '../lib/util';
 import { useStore } from '../store';
-import type { Chat, FontSize, ModelInfo, Theme } from '../types';
+import type { Chat, FontSize, ModelInfo, Settings, Theme } from '../types';
+import { choosePreference } from '../lib/ai/preferences.js';
 import { Badges } from './ModelPicker';
 import ConnectorsTab from './ConnectorsTab';
 import { savedChats } from '../lib/temporary-chat';
@@ -195,6 +196,12 @@ function ModelsTab() {
             checked={settings.defaultModel === 'auto'}
             onChange={(v) => update({ defaultModel: v ? 'auto' : enabled[0] || '' })}
           />
+          <div className="setting-row">
+            <span className="setting-text"><span className="setting-label">Routing priority</span><span className="setting-hint">Your request takes priority. Cost uses reported prices; missing prices stay unknown.</span></span>
+            <span className="setting-ctrl"><select aria-label="Routing priority" value={choosePreference(settings.routingPreference)} onChange={e=>update({routingPreference:e.target.value as Settings['routingPreference']})}>
+              <option value="balanced">Balanced</option><option value="quality">Quality</option><option value="speed">Speed</option><option value="cost">Cost</option>
+            </select></span>
+          </div>
           <div className="setting-row">
             <span className="setting-text">
               <span className="setting-label">Auto prefers</span>

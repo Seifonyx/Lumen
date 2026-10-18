@@ -14,7 +14,11 @@ import { join } from 'node:path';
 const dir = 'tests/e2e';
 mkdirSync(join(dir, 'out'), { recursive: true });
 const only = process.argv.slice(2);
-const files = readdirSync(dir).filter((f) => f.endsWith('.cjs') && (!only.length || only.includes(f.replace(/\.cjs$/, '')))).sort();
+const available=readdirSync(dir).filter(f=>f.endsWith('.cjs'));
+const unknown=only.filter(name=>!available.includes(`${name}.cjs`));
+if(unknown.length) {console.error(`Unknown in-app test suite(s): ${unknown.join(', ')}`);process.exit(2);}
+const files = available.filter(f=>!only.length || only.includes(f.replace(/\.cjs$/, ''))).sort();
+if(!files.length) {console.error('No in-app test suites selected.');process.exit(2);}
 const timingsFile = join(dir, 'timings.json');
 const timings = existsSync(timingsFile) ? JSON.parse(readFileSync(timingsFile, 'utf8')) : {};
 const usesEmulators = (f) => /127\.0\.0\.1:(8080|9099)|localhost:(8080|9099)|__testSignIn|emulator\/v1/.test(readFileSync(join(dir, f), 'utf8'));

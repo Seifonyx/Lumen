@@ -40,6 +40,7 @@ const g = (name, label) => ({ name: `models/${name}`, displayName: label, suppor
     });
     const page = await ctx.newPage(), errors = [];
     page.on('pageerror', (e) => {if(!e.message.includes('firestore.googleapis.com'))errors.push(e.message);});
+    await page.clock.setFixedTime(Date.now());
     await page.goto(URL);
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
     if(width<900)await page.locator('.menu-btn').click();
@@ -119,7 +120,9 @@ const g = (name, label) => ({ name: `models/${name}`, displayName: label, suppor
     await page.getByRole('button', { name: 'Build', exact: true }).click();
     await page.locator('.builder-picks li', { hasText: 'Capacity ready' }).waitFor();
     catalogMode = 'capacity-reduced';
-    // The app's ordinary reconnect refresh changes metadata while the original result remains open.
+    // Expired metadata refreshes on reconnect while the original result remains open.
+    // A synthetic online event must not bypass healthy providers' TTL on its own.
+    await page.clock.setFixedTime(Date.now() + 11 * 60_000);
     await page.evaluate(() => window.dispatchEvent(new Event('online')));
     await page.locator('.builder-picks li', { hasText: 'Capacity reduced' }).waitFor();
     await page.getByRole('button', { name: 'Save layout', exact: true }).click();

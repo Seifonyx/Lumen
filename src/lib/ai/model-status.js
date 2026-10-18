@@ -49,10 +49,9 @@ export function isActiveModel(model) {
     && (!expiry || expiry > Date.now());
 }
 
-// An unavailable provider must not erase saved choices. A successful empty list must prune them.
+// Discovery changes availability, not the user's saved selection. Explicit model
+// rejection/removal is handled separately; retired/unsupported IDs remain excluded.
 export function keepModelChoice(id, catalog) {
   if (isExcludedModel(id)) return false;
-  if (catalog.models.some((model) => model.id === id)) return true;
-  const provider = id.split(':')[0];
-  return Boolean(catalog.failedProviders?.includes(provider));
+  return typeof id==='string' && /^[a-z]+:[\w.@\-\/:~]+$/.test(id);
 }

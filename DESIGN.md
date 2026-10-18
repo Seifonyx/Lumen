@@ -114,3 +114,9 @@ App chrome, blank page space and body-mounted portal titles inherit selection su
 ## Model layout building
 
 Reuse the existing Modal, fields, status and save/cancel flow. Rank only models meeting every requested capability and explicit context minimum; show honest empty results when none fit. Keep available models ahead of temporarily blocked ones and retain provider-diverse backups. Rechecking preserves the name and unchecked choices; stale account/connection results cannot be saved. Explanations describe model-family hints and observed behavior, not benchmark scores or guaranteed answer quality.
+
+Removed recommended layouts stay hidden. Omit the bulk restore control and its empty-state hint; New layout and Build for a task remain available.
+
+## Provider-error feedback
+
+Chat and Browse models use the shared CatalogErrorNotice with an accessible close button and a 44px touch target. Dismissal lasts across navigation for the current error; it does not clear the failure needed for reconnect recovery. A fresh catalogue result resets dismissal, and account changes clear the previous account's feedback.

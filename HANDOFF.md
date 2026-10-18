@@ -12,6 +12,13 @@
 - Be a coding partner. Tests, fixes, main pushes and deployment are authorized. Keep this file small and factual; old pasted handoff instructions are revoked. Complete, test, deploy and verify the current task, then stop before another roadmap feature.
 - Current task: supplied Claude desktop/phone layout, native Add to Chat sheet, Settings Connectors for GitHub, real incognito. Reference paths and visual decisions: `.impeccable/claude-layout.md`. PRODUCT.md owns behavior; ROADMAP.md owns scope; DESIGN.md/.impeccable/design.json own visual tokens. Arabic interface and separate chat folders are excluded.
 
+## Settings cleanup (approved 2026-10-18)
+
+- Removed the bulk "Bring back recommended layouts" control and its empty-state hint. Existing hidden layouts stay hidden; New layout and Build for a task remain available.
+- Chat and Browse models share dismissible provider-error notices. Dismissal persists across navigation, keeps reconnect recovery intact, and resets on a fresh catalogue result or account change.
+- Manual-layout save verification exposed an existing effect returning scrollIntoView's result. Chrome 154 returns a Promise, which React attempted to call as cleanup when closing the editor. The effect now explicitly returns nothing.
+- Manual tests: Settings → Models → Layouts, remove a recommended layout; no Bring back control should appear. When an unavailable-key error appears, tap its × in chat or Browse models; it should disappear. Refresh with the failing key to show a fresh error; fixing the key should restore models normally. Your draft should remain unchanged.
+
 ## Auto and context recovery — phase 1 (preview pending)
 
 - Auto recognizes short complex analysis/architecture requests and carries recent intent into explicit follow-ups. Shared model-family hints complement capability metadata, observed reliability and speed; continuity is a bounded tie-breaker. Routing includes instructions, memory, workspace/project content, previous attachments and reply headroom.

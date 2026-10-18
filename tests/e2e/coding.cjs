@@ -107,7 +107,7 @@ const F = '````';
   await page.click('.layout-editor >> text=Save layout');
   await page.waitForSelector('.layout-card >> text=Web apps');
   check(true, 'custom layout created');
-  // Recommended layouts can be edited, reset, removed and brought back.
+  // Recommended layouts can be edited, reset and removed without a restore control.
   await page.click('.layout-card:has-text("Deep thinking") [aria-label="Edit Deep thinking"]');
   await page.fill('.layout-editor input[placeholder="e.g. Web apps"]', 'Hard problems');
   await page.click('.layout-editor >> text=Save layout');
@@ -118,12 +118,10 @@ const F = '````';
   await page.waitForSelector('.layout-card >> text=Deep thinking');
   check(true, 'edited recommended layout reset');
   await page.click('[aria-label="Delete Languages & translation"]');
-  await page.waitForSelector('text=Bring back 1 removed recommended layout');
+  await page.waitForSelector('.layout-card:has-text("Languages & translation")', { state: 'detached' });
   check(!(await page.$('.layout-card:has-text("Languages & translation")')), 'recommended layout removed');
+  check(await page.getByRole('button', { name: /Bring back.*recommended layout/i }).count() === 0, 'recommended-layout restore control removed');
   await page.screenshot({ path: path.join(__dirname, 'out', 'layouts.png') });
-  await page.click('text=Bring back 1 removed recommended layout');
-  await page.waitForSelector('.layout-card >> text=Languages & translation');
-  check(true, 'removed recommended layouts brought back');
   await page.click('.settings-page [aria-label="Close"]');
 
   await page.click('.model-button');

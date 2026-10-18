@@ -59,6 +59,7 @@ import type { ApiKeys } from '../lib/firebase';
 import PrivacyTab from './PrivacyTab';
 import LayoutsSection, { LayoutEditor } from './LayoutsTab';
 import type { Layout } from '../lib/layouts';
+import CatalogErrorNotice from './CatalogErrorNotice';
 
 /** Settings sections: id, name, icon, one-line description */
 const TABS: [string, string, LucideIcon, string][] = [
@@ -134,7 +135,6 @@ function ModelsTab() {
   const settings = useStore((s) => s.settings);
   const update = useStore((s) => s.updateSettings);
   const loadCatalog = useStore((s) => s.loadCatalog);
-  const catalogError = useStore((s) => s.catalogError);
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [checkOpen, setCheckOpen] = useState(false);
@@ -285,7 +285,7 @@ function ModelsTab() {
           </button>
         </div>
         <div className="settings-card pad-card">
-          {catalogError && <p className="error-text small" dir="auto">Couldn't refresh every provider: {catalogError}. Models found last time are still listed; tap Refresh to try again.</p>}
+          <CatalogErrorNotice placement="models" />
           <div className="list-toolbar">
             <label className="search">
               <Search size={16} />

@@ -17,6 +17,7 @@ import MessageThread from './MessageThread';
 import ModelPicker from './ModelPicker';
 import ProjectManager from './ProjectManager';
 import ProjectWorkspace from './ProjectWorkspace';
+import CatalogErrorNotice from './CatalogErrorNotice';
 
 /** How far from the latest message you were in each chat (this session), to come back to the same spot. */
 type Anchor = { id: string; offset: number };
@@ -46,7 +47,6 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
   const greeting=`${hour<12?'Morning':hour<18?'Afternoon':'Evening'}${user?.name?', '+user.name.split(' ')[0].slice(0,20):''}`;
   const welcomeSequence = useStore(s => s.welcomeSequence);
   const chat = useStore(selectCurrentChat);
-  const catalogError = useStore((s) => s.catalogError);
   const streaming = useStore((s) => s.streamingChatId !== null && s.streamingChatId === s.currentId);
   const canvasEditing = useStore(s => s.canvasEditingChatId !== null);
   const activeProjectId = useStore((s) => s.activeProjectId);
@@ -270,11 +270,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
         </div>
       )}
 
-      {catalogError && (
-        <div className="banner" role="alert" dir="auto">
-          Some models couldn't be loaded: {catalogError}
-        </div>
-      )}
+      <CatalogErrorNotice placement="chat" />
 
       <div className="conversation-area">
       <div className="messages" ref={scroller} role="region" tabIndex={0} aria-label="Chat messages">

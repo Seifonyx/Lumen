@@ -1,6 +1,6 @@
 import { ArrowDown, ArrowUp, Copy, Pencil, Plus, RotateCcw, Search, Sparkles, Star, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { allLayouts, LAYOUT_ICONS, LAYOUT_PREFIX, newLayoutId, RECOMMENDED_IDS, type Layout } from '../lib/layouts';
+import { allLayouts, LAYOUT_ICONS, LAYOUT_PREFIX, newLayoutId, type Layout } from '../lib/layouts';
 import { PROVIDER_NAMES } from '../lib/util';
 import { modelLabel, useStore } from '../store';
 import LayoutIcon from './LayoutIcon';
@@ -13,7 +13,7 @@ export function LayoutEditor({ start, onDone }: { start: Layout; onDone: () => v
   const [l, setL] = useState<Layout>({ ...start, builtin: undefined, edited: undefined });
   const [query, setQuery] = useState('');
   const top = useRef<HTMLDivElement>(null);
-  useEffect(() => top.current?.scrollIntoView({ block: 'start' }), []);
+  useEffect(() => { top.current?.scrollIntoView({ block: 'start' }); }, []);
   const models = catalog?.models || [];
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -123,7 +123,7 @@ function Card({ l, onEdit, onCopy }: { l: Layout; onEdit: () => void; onCopy: ()
   const isDefault = settings.defaultModel === id;
   const saved = settings.layouts || [];
   const remove = () => {
-    if (!confirm(l.builtin ? `Remove the recommended "${l.name}" layout? You can bring it back later.` : `Delete the "${l.name}" layout?`)) return;
+    if (!confirm(l.builtin ? `Remove the recommended "${l.name}" layout?` : `Delete the "${l.name}" layout?`)) return;
     update({
       layouts: saved.filter((x) => x.id !== l.id),
       ...(l.builtin ? { hiddenLayouts: [...new Set([...(settings.hiddenLayouts || []), l.id])] } : {}),
@@ -173,10 +173,8 @@ export default function LayoutsSection({ onEdit }: { onEdit: (l: Layout) => void
   const catalog = useStore((s) => s.catalog);
   const custom = useStore((s) => s.settings.layouts) || [];
   const hidden = useStore((s) => s.settings.hiddenLayouts) || [];
-  const update = useStore((s) => s.updateSettings);
   const all = allLayouts(catalog?.models || [], custom, hidden);
   const copyOf = (l: Layout): Layout => ({ ...l, id: newLayoutId(), name: `${l.name} (copy)`.slice(0, 40), builtin: undefined, edited: undefined });
-  const removed = hidden.filter((id) => RECOMMENDED_IDS.includes(id)).length;
   const [building, setBuilding] = useState(false);
 
   return (
@@ -193,7 +191,7 @@ export default function LayoutsSection({ onEdit }: { onEdit: (l: Layout) => void
       {building && <LayoutBuilder onClose={() => setBuilding(false)} />}
       {all.length === 0 ? (
         <div className="settings-card pad-card">
-          <p className="muted small" style={{ margin: 0 }}>No layouts. Create one{removed ? ', or bring back the recommended ones' : ''}.</p>
+          <p className="muted small" style={{ margin: 0 }}>No layouts. Create one.</p>
         </div>
       ) : (
         <div className="settings-card">
@@ -208,11 +206,6 @@ export default function LayoutsSection({ onEdit }: { onEdit: (l: Layout) => void
         A layout is a set of models for one kind of work. Pick it from the model menu; ★ makes it the default for new chats.
         {!catalog?.providers.groq && !catalog?.providers.cerebras ? ' Add free Groq and Cerebras keys for the Fastest and Max coding layouts.' : ''}
       </p>
-      {removed > 0 && (
-        <button className="btn ghost small restore-btn" onClick={() => update({ hiddenLayouts: [] })}>
-          <RotateCcw size={14} /> Bring back {removed} removed recommended layout{removed === 1 ? '' : 's'}
-        </button>
-      )}
     </div>
   );
 }

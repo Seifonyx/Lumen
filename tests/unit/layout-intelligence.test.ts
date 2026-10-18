@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import { rankForTask, taskFromText, TASKS } from '../../src/lib/layout-builder';
+const m=(id:string,extra={})=>({id,name:id.split(':').slice(1).join(':'),label:id,provider:'openrouter',context:128000,vision:false,pdf:false,search:false,thinking:false,...extra}) as any;
+const mixed=taskFromText('Research current sources and analyze screenshots');
+const catalog=[m('openrouter:vendor/pro-vision',{vision:true}),m('openrouter:vendor/pro-search',{search:true}),m('openrouter:vendor/small-both',{vision:true,search:true})];
+assert.deepEqual(rankForTask(mixed,catalog).map(p=>p.id),['openrouter:vendor/small-both'],'Mixed work must satisfy every required capability, not just the first matching task');
+const fast=taskFromText('Fast coding without lengthy reasoning');
+assert.ok((fast.weights.slow||0)<0,'Mixing tasks must preserve the penalty for slow models');
+assert.equal(fast.weights.reasoner,0,'Explicitly excluded reasoning must not be added back by a keyword hit');
+const long=taskFromText('Review code with a 200k token context');
+assert.deepEqual(rankForTask(long,[m('openrouter:vendor/coder-small'),m('openrouter:vendor/coder-large',{context:262144})]).map(p=>p.id),['openrouter:vendor/coder-large'],'Explicit context requirements are hard constraints');
+const coding=TASKS.find(t=>t.id==='coding')!;
+const health=rankForTask(coding,[m('openrouter:qwen3-coder'),m('groq:tiny-8b',{provider:'groq'})],{blocked:id=>id.startsWith('openrouter')});
+assert.equal(health[0].id,'groq:tiny-8b','Available models come before a higher-scoring blocked model');
+const dup=rankForTask(coding,[catalog[0],catalog[0],catalog[1]],{},6);
+assert.equal(new Set(dup.map(p=>p.id)).size,dup.length,'Duplicate catalogue rows cannot occupy multiple layout slots');
+assert.ok(taskFromText('TypeScript apps; answer in French and output code only').instructions?.includes('answer in French and output code only'),'Specific custom layout preferences must reach the model, not just its saved name');
+console.log('PASS combined capabilities, negation, context requirements and usable layout ranking');

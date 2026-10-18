@@ -5,6 +5,8 @@
 import type { Attachment, ModelInfo } from '../types';
 import { hasRtl } from './util';
 import { isCoolingDown, reliability, replyLatency } from './ai/health.js';
+import { contentTokens, fitsContext } from './ai/context-budget.js';
+import { familyOf, features, strength, versionOf } from './model-profile';
 
 export const AUTO = 'auto';
 
@@ -18,6 +20,10 @@ export interface RouteInput {
   files: Attachment[];
   /** rough size of the whole conversation, in tokens */
   conversationTokens: number;
+  /** Instructions, memory and workspace content sent outside conversation messages. */
+  instructionTokens?: number;
+  /** Recent user intent, consulted only for a short follow-up such as "do it". */
+  recentText?: string;
   search: boolean;
   /** true when a model is at its limit until it resets */
   blocked: (id: string) => boolean;
@@ -39,6 +45,7 @@ export interface RoutePlan {
   reason: string | null;
   /** explanation when a manual choice was overridden */
   notice: string | null;
+  error?: string;
   /** Auto only: why the chosen model won, and the next models in line */
   detail?: { why: string[]; next: string[] };
 }
@@ -59,28 +66,28 @@ export interface Task {
   writing: boolean;
 }
 
-const CODE = /```|\b(function|class|def|const|import|return|stack ?trace|exception|traceback|bug|debug|compile|syntax|regex|sql|python|javascript|typescript|java|c\+\+|html|css|api|json|code|script)\b|كود|برمج/i;
-const REASONING = /\b(prove|proof|solve|calculate|compute|equation|integral|derivative|probability|statistics|optimi[sz]e|step[- ]by[- ]step|why does|explain why|logic|puzzle)\b|[=^√∑∫]\s*\d|\d\s*[+\-*/^]\s*\d|احسب|معادلة|برهن|حل المسألة/i;
+const CODE = /```|\b(function|class|def|const|import|return|stack ?trace|exception|traceback|bug|debug|compile|syntax|regex|sql|python|javascript|typescript|react|vue|svelte|nextjs|frontend|backend|java|c\+\+|html|css|api|json|code|script)\b|\b(?:build|create|implement|develop)\s+(?:an?\s+|the\s+|my\s+)?(?:(?:web|mobile|native)\s+)?(?:app(?:lication)?|website|dashboard|component|endpoint)\b|كود|برمج/i;
+const REASONING = /\b(prove|proof|solve|calculate|compute|equation|integral|derivative|probability|statistics|optimi[sz]e|step[- ]by[- ]step|why does|explain why|logic|puzzle|analy[sz]e|analysis|trade[- ]?offs?|architectures?|failure modes?|migration|evaluate|reasoning|security|strategy)\b|[=^√∑∫]\s*\d|\d\s*[+\-*/^]\s*\d|احسب|معادلة|برهن|حل المسألة/i;
 const WRITING = /\b(write|rewrite|draft|compose|essay|email|e-mail|letter|cover letter|article|blog|story|poem|summar(?:y|ise|ize)|paraphrase|proofread|translate|translation|tone|formal|polish)\b|اكتب|أعد صياغة|لخص|ترجم|رسالة|مقال/i;
 const FILES = /\b(word|docx|excel|xlsx|spreadsheet|sheet|workbook|powerpoint|pptx|slides?|presentation|deck|pdf|report|csv|table|chart)\b|ملف|عرض تقديمي|تقرير|جدول|إكسل|اكسل|وورد|باوربوينت/i;
 
-/** Rough token estimate: ~4 characters per token, fixed costs for images and PDF pages. */
+/** Conservative estimate with extra allowance for non-ASCII text, images and PDF pages. */
 export function estimateTokens(text: string, files: Attachment[] = []): number {
-  let n = Math.ceil(text.length / 4);
-  for (const f of files) {
-    if (f.kind === 'image') n += 300;
-    else if (f.kind === 'pdf') n += Math.ceil((f.size || 0) / 3000) * 260 + 300;
-    else n += Math.ceil((f.text?.length || 0) / 4);
-  }
-  return n;
+  return contentTokens(text, files);
 }
 
-export function analyze(input: Pick<RouteInput, 'text' | 'files' | 'conversationTokens' | 'search'>): Task {
-  const { text, files } = input;
+export function intentText(text: string, recent = ''): string {
+  const follow = text.length < 180 && /^(?:yes|ok(?:ay)?|sure|approved|go ahead|do (?:it|that|these|\d)|continue|proceed|carry on|try again|make (?:it|that|this)|improve (?:it|that|this)|what about (?:it|that|this)|and (?:then|now)|fix (?:it|that|this))\b/i.test(text.trim());
+  return follow && recent ? `${recent.slice(-6000)}\n${text}` : text;
+}
+
+export function analyze(input: Pick<RouteInput, 'text' | 'files' | 'conversationTokens' | 'search' | 'recentText'>): Task {
+  const { files } = input;
+  const text = intentText(input.text, input.recentText);
   const image = files.some((f) => f.kind === 'image');
   const pdf = files.some((f) => f.kind === 'pdf');
   const rawPdf = files.some((f) => f.kind === 'pdf' && !f.text);
-  const code = CODE.test(text) || files.some((f) => /\.(js|ts|py|java|c|cpp|cs|go|rs|rb|php|sql|css|html?)$/i.test(f.name));
+  const code = CODE.test(text) || files.some((f) => /\.(jsx?|tsx?|mjs|cjs|vue|svelte|py|java|kt|swift|dart|c|cpp|cs|go|rs|rb|php|sql|css|html?)$/i.test(f.name));
   const reasoning = REASONING.test(text);
   const wantsFile = FILES.test(text) && /\b(make|create|build|generate|write|export|give me|turn|convert|prepare)\b|اعمل|اعملي|أنشئ|انشئ|حول|جهز|اكتب/i.test(text);
   const long = input.conversationTokens > 30_000;
@@ -110,10 +117,7 @@ function traits(m: ModelInfo) {
 
 /** A model's family (name without version/size) and version, to prefer the newest of a family. */
 function family(m: ModelInfo): { key: string; version: number } {
-  const n = m.name.toLowerCase().replace(/:free$/, '');
-  const version = Number(/(\d+(?:\.\d+)?)/.exec(n.replace(/\d{1,4}b\b/g, ''))?.[1]) || 0;
-  const key = `${m.provider}:${n.replace(/\d+(?:\.\d+)?b?/g, '#').replace(/-?(latest|preview|exp|\d{2,})/g, '')}`;
-  return { key, version };
+  return { key: familyOf(m), version: versionOf(m) };
 }
 
 const REASONS: [keyof Task, string][] = [
@@ -134,14 +138,16 @@ function score(m: ModelInfo, task: Task, tokens: number, index: number, total: n
   let s = total ? ((total - index) / total) * 1.6 : 0; // bounded tie-breaker even with hundreds of models
   // Big "Pro" models have the smallest free limits, so they only get an edge on heavy work.
   const heavy = task.code || task.reasoning || task.files || task.long;
+  const profile = features(m);
   s += t.power === 1 ? 1 : 2;
   if (t.power === 3) s += heavy ? 1.5 : -1;
+  if (heavy || task.writing) s += (strength(m) / 10 - .6) * 4;
   if (m.preview) s -= 0.5;
   if (task.image) s += m.vision ? 4 : -50;
   if (task.pdf && t.gemini) s += 2;
   if (task.rawPdf && m.pdf === false) s -= 50;
   if (task.search) s += m.search ? 6 : -2;
-  if (task.code) s += (t.coder ? 4 : 0) + (t.gemini ? 1 : 0);
+  if (task.code) s += (t.coder ? 4 : 0) + (t.gemini ? 1 : 0) + profile.coder * 1.5;
   if (task.reasoning) s += t.reasoner ? 3 : 0;
   if (task.files) s += (t.gemini ? 3 : 0) + (t.power === 1 ? -1 : 0);
   if (task.arabic) s += t.gemini ? 2 : t.gemma ? 1 : 0;
@@ -162,8 +168,8 @@ function score(m: ModelInfo, task: Task, tokens: number, index: number, total: n
   // Proven track record on this device: models that keep failing sink, reliable ones rise.
   const rel = reliability(m.id);
   if (rel !== null) { s += Math.max(-5, Math.min(2, (rel - 0.75) * 8)); if (rel >= 0.85) why.push(`answers reliably (${Math.round(rel * 100)}% recently)`); }
-  // Stay with the model that answered the last message: steadier tone, and it already knows the chat.
-  if (extra.previous && (rel === null || rel >= 0.5)) { s += 2.5; why.push('answered your last message'); }
+  // Favor continuity only among close matches; every request still carries the full active context.
+  if (extra.previous && (rel === null || rel >= 0.5)) { s += 1; why.push('answered your last message'); }
   if (m.context && tokens > m.context * 0.85) s -= 100;
   // Save models that are almost out of today's free requests.
   if (left !== null) s -= left <= 3 ? 3 : left <= 10 ? 1 : 0;
@@ -176,19 +182,19 @@ function capable(m: ModelInfo | undefined, task: Task, tokens: number): string |
   if (!m) return null;
   if (task.image && !m.vision) return "can't read images";
   if (task.rawPdf && m.pdf === false) return "can't read PDFs";
-  if (m.context && tokens > m.context * 0.95) return 'is too small for this much text';
+  if (!fitsContext(m.context, tokens)) return 'is too small for this much text and a reply';
   return null;
 }
 
 export function planRoute(input: RouteInput): RoutePlan {
   const info = new Map(input.catalog.map((m) => [m.id, m]));
-  const tokens = input.conversationTokens;
+  const tokens = input.conversationTokens + (input.instructionTokens || 0) + 100;
   const task = analyze(input);
   const auto = input.selected === AUTO || !input.selected;
   const excluded = new Set(auto ? input.excluded || [] : []);
   const usable = input.enabled.filter((id) => !excluded.has(id));
   // If every model is excluded from Auto, using one beats sending nothing.
-  const pool = usable.some((id) => info.has(id) && !capable(info.get(id), task, tokens)) ? usable : input.enabled;
+  const pool = [...new Set(usable.length ? usable : input.enabled)];
   const known = pool.filter((id) => info.has(id) && !capable(info.get(id), task, tokens));
   const whyOf = new Map<string, string[]>();
   // The newest version of each family among the candidates.
@@ -210,9 +216,16 @@ export function planRoute(input: RouteInput): RoutePlan {
   // Models at their limit go last; they're kept only as a final resort.
   const blocked = (id: string) => input.blocked(id) || isCoolingDown(id);
   const order = [...ranked.filter((id) => !blocked(id)), ...ranked.filter(blocked)];
-  const unknown = pool.filter((id) => !info.has(id));
+  const unknown = pool.filter((id) => !info.has(id) && !task.image && !task.rawPdf);
   const all = [...order, ...unknown];
   const name = (id: string) => info.get(id)?.label || id.split(':').slice(1).join(':');
+
+  if (!all.length && (auto || capable(info.get(input.selected), task, tokens))) {
+    const context = pool.some(id => info.has(id) && !fitsContext(info.get(id)?.context, tokens));
+    return { model: '', fallbacks: [], reason: null, notice: null, error: !pool.length ? 'No models are enabled for this request. Check Settings → Models.' : context
+      ? 'This chat exceeds the context available in your models. Compact the chat, continue in a new chat with a summary, or choose a model with a larger context window.'
+      : 'None of your enabled models can read these attachments. Enable a model that supports them in Settings → Models.' };
+  }
 
   if (input.selected === AUTO || !input.selected) {
     const model = all[0] || '';

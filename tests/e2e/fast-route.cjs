@@ -1,17 +1,18 @@
-const { chromium } = require('playwright');
+const { chromium, webkit } = require('playwright');
 const assert = require('node:assert/strict');
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await (process.env.MR_WEBKIT ? webkit : chromium).launch();
   try {
     for (const width of [1280, 390]) {
-      const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: width < 900, hasTouch: width < 900 });
+      const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: width < 900, hasTouch: width < 900, serviceWorkers: 'block' });
       const calls = [];
       await context.route('**/firestore.googleapis.com/**', r => r.abort());
-      await context.route('**/generativelanguage.googleapis.com/**', r => {
+      await context.route('**/generativelanguage.googleapis.com/**', async r => {
         if (r.request().url().includes('/models?')) return r.fulfill({ json: { models: ['gemini-2.5-flash-lite', 'gemma-4-31b-it'].map(name => ({ name: `models/${name}`, supportedGenerationMethods: ['generateContent'], inputTokenLimit: 131072 })) } });
         const name = /models\/([^:]+):/.exec(r.request().url())[1];
         calls.push({ name, at: Date.now(), payload: r.request().postDataJSON() });
         if (name === 'gemini-2.5-flash-lite') return; // real silent-request deadline
+        await new Promise(resolve => setTimeout(resolve, 500)); // Inspect the actual fallback before its answer arrives.
         return r.fulfill({ contentType: 'text/event-stream', body: `data: ${JSON.stringify({ candidates: [{ content: { parts: [{ text: 'A quick answer.' }] }, finishReason: 'STOP' }], usageMetadata: { promptTokenCount: 5, candidatesTokenCount: 3 } })}\n\n` });
       });
       await context.addInitScript(() => {
@@ -30,6 +31,7 @@ const assert = require('node:assert/strict');
       await page.fill('.composer textarea', 'hello'); await page.click('.send-btn');
       await page.waitForSelector('.reply-wait');
       assert.match(await page.locator('.reply-wait').textContent(), /Routing/);
+      await page.waitForFunction(() => /gemma/i.test(document.querySelector('.reply-wait .route-target')?.textContent||''), null, {timeout: 13000});
       await page.waitForSelector('.msg.assistant .markdown', { timeout: 15000 });
       await page.locator('.send-btn.stop').waitFor({ state: 'hidden' });
       assert.deepEqual(calls.map(c => c.name), ['gemini-2.5-flash-lite', 'gemma-4-31b-it']);

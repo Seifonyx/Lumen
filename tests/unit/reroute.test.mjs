@@ -139,5 +139,7 @@ if(isCoolingDown(A)) { failures++; console.log('FAIL key change must clear healt
 else console.log('PASS transient health clears on key/account changes');
 await scenario('explicit layout priority is kept before general fallback pool', {'model-a': '503'}, r => r.model === B, {options: {preferredModels: [A,B]}});
 await scenario('Gemini final packet finishes even if the socket stays open', {'model-a': 'finished-open'}, r => r.model === A && r.text === 'Finished answer' && !r.error && r.ms < 300 && r.events.some(e => e.t === 'usage' && e.output === 3));
+await scenario('oversized primary is skipped before an external request', {}, r => r.model === C && !r.calls.includes('model-a') && /context/.test(r.notices[0]), {options: {modelContexts: {[A]: 1024}}});
+await scenario('no context fits: clear terminal error and no requests', {}, r => !!r.error && r.calls.length === 0 && r.events.at(-1).t === 'done', {options: {modelContexts: {[A]: 1024, [B]: 1024, [C]: 1024}}});
 console.log(failures ? `\n${failures} FAILED` : '\nALL PASSED');
 process.exit(failures ? 1 : 0);

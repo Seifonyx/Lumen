@@ -1,5 +1,8 @@
 # Dynamic Model Picker implementation plan
 
+> **Separate design initiative — Lumen Adaptive Native (2026-10-19; currently design-only).** The user rejected the generic Refined Lumen Native V1 concepts (draft PR #28 closed unmerged) and approved a new platform-adaptive direction: iOS native-quality feel, precision desktop workspace, same Lumen identity. Its **independent** evidence-based audit, specification, 100-point weighted plan, and cross-agent handoff are in `docs/design/ADAPTIVE_NATIVE_{BASELINE,SPEC,PLAN,HANDOFF}.md`. Design completion ~**7.5%** (initial source/CI screenshot baseline only); **this does not alter the Dynamic Model Picker's original 98.5%** or its remaining hosted acceptance gate. Substantive design changes require real-app before/after screenshots, user visual approval and usual CI, not the rejected standalone mockups. No production visual code was changed by the design-audit checkpoint.
+
+
 ## Permanent amendment: Progressive Verified Deployment Policy
 
 Added by the user on 2026-10-18. This execution-policy amendment supplements MASTER_REQUIREMENTS.md without replacing or weakening it. It remains active for every future agent and session unless the user explicitly changes it.

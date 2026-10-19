@@ -53,7 +53,7 @@ The generic premium static scan still reports22 inherited form/textarea findings
 For every independently releasable milestone, inspect the complete diff and current tree, verify relevant local checks and all required exact-head CI, confirm no unfinished dependency, review risks and rollback, merge normally, deploy that merged revision, verify actual hosted assets/core flows, record the exact production commit separately, and continue remaining work. No bypasses, force pushes, accidental local WIP release or build-only readiness claims.
 
 
-## Final reliability milestone coverage (PR25; full current CI/release pending)
+## Final reliability milestone coverage (PR25; full source CI and production Deploy complete; hosted smoke pending)
 
 | Requirement | Integrated behavior | Local evidence |
 |---|---|---|
@@ -64,6 +64,14 @@ For every independently releasable milestone, inspect the complete diff and curr
 
 Local final source7cde3ea passes78unit/type/build and independent review. Complete exact-head CI39245877175, normal main merge and production deployment/live verification remain required; this table does not mark the overhaul finished. AI_HANDOFF.md owns the exact evolving source/main/production ledger and honest emulator/hardware/answer-quality limits.
 
+
+## Recent production release acceptance and historical reconciliation — 2026-10-19
+
+**PR24 independently verified milestone, preserved from the old divergent `docs/model-picker-release-ledger` branch:** source `2ce5c9a`, full CI `39247939607` passed 73 unit files/type/build, 100 Chromium files without retry, and required WebKit with one diagnosed historical hub-actions retry (not called retry-free). Normal merge `6447a13d84150b8b16837176515f44e6ef5d8caf` and Deploy `39250100845` both succeeded; prior agent reported 18 matching live assets plus hosted Chromium3/WebKit2 clean. This is historical PR24 acceptance and must not be read as the current production version. The old documentation branch otherwise has superseded progress and PR25-pending claims; it is not safe to merge over the newer main documentation without reconciliation.
+
+**PR25 current release:** source `1ca29f0f207e261267fbd80c8b39b31e1e0ad8e0` passed all required CI jobs in `39249464644` (Chromium/Firebase emulator, Linux WebKit, unit/type/build). PR25 normally merged as `1966348725a9cc6a3bfec0a283448a451aa9d6cd`; source-to-merge GitHub compare reported zero changed files. GitHub Actions manual [Deploy run `39257887973`](https://github.com/Seifonyx/Lumen/actions/runs/39257887973) used that exact main commit and completed successfully (one attempt). The deploy job passed `npm ci`, typecheck, build, Firebase live deployment to project `the-model-router` / site `lumen-chat`, and preview deployment; logs explicitly report production/preview deploy success. Subsequent PR26 `2f9a0e3817b5c01834b2b72180378b3ce5b29c9c` is documentation-only and does not change live runtime.
+
+**Manual live signal:** after the new deployment, the user said **"its all good"**. No specific test scenarios, devices, browsers or provider accounts were described. This is positive user feedback, not evidence of every acceptance-checklist item. **Still unverified here:** current production assets compared to reviewed build, automated hosted Chromium/WebKit smoke runs, authenticated offline/connection replay in live site, physical iPhone, and real-model answer-quality comparison. These limitations do not invalidate the successful GitHub/Firebase deployment, but P11-B's original hosted acceptance criterion remains pending. Baseline v1 retains 24 task IDs, 100 total weight and earned98.5/100; do not raise to100 without required evidence.
 
 ## Manual acceptance checklist
 

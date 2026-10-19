@@ -26,6 +26,11 @@ function fakeChat() {
   const now = Date.now();
   return [{
     id:'renaissance-conversation', title:'Designing the Lumen workspace', createdAt:now-76000, updatedAt:now-1000,
+    documents:[{
+      id:'renaissance-plan-doc', name:'Lumen navigation research.md',
+      content:'# Navigation research\n\n## Interaction contracts\n\nPreserve model routing and keyboard access while giving iOS and desktop distinct layouts.\n\n- Auto model selection remains accessible\n- Real Projects, Library and Tools navigation\n- Stable composer focus and history',
+      updatedAt:now-2500,
+    }],
     messages: [
       {id:'u1',role:'user',text:'How can we build a distinctive native-feeling workspace without losing the advanced model tools?',createdAt:now-76000},
       {id:'a1',role:'assistant',model:'gemini:gemini-flash-latest',status:'done',createdAt:now-75000,
@@ -109,7 +114,11 @@ function fakeChat() {
     // An actual feature hub, not a fabricated placeholder page.
     if(phone)await page.locator('.menu-btn').click();
     await page.getByRole('button',{name:'Library',exact:true}).first().click();
-    await wait(300);
+    await page.locator('.hub-page[aria-label="Library"]').waitFor({timeout:12000});
+    // A populated real Library is part of the design review. An empty
+    // placeholder cannot prove feature-workspace hierarchy or item legibility.
+    await page.getByText('Lumen navigation research.md',{exact:true}).first().waitFor({timeout:12000});
+    await wait(250);
     await shot('library');
     if(errors.length)throw Error('Page errors: '+errors.slice(0,3).join(' | '));
     await ctx.close();

@@ -315,12 +315,12 @@ export async function* runChat({ model, fallbacks = [], messages, options = {} }
  * @param {string | undefined} model
  * @param {(id: string) => boolean} [skip] models to avoid (e.g. ones at their limit)
  */
-export async function makeTitle(text, model, skip = () => false,models=model?[model]:[]) {
+export async function makeTitle(text, model, skip = () => false,models=model?[model]:[],report=(_id,_info)=>{}) {
   if (!text.trim()) return null;
   const generation = keyVersion();
   const candidates=[...new Set(models)].filter(id=>available(id)&&isModelRegistered(id)!==false).slice(0,3);
   const prompt = `Write a short title (2 to 6 words) for a chat that starts with the message below. Use the same language as the message. Reply with the title only, no quotes or punctuation at the end.\n\nMessage:\n${text.slice(0, 2000)}`;
-  const result=await summarize(prompt,candidates,{skip:id=>skip(id)||isCoolingDown(id),signal:AbortSignal.timeout(10_000),minLength:1,maxTokens:256});
+  const result=await summarize(prompt,candidates,{skip:id=>skip(id)||isCoolingDown(id),signal:AbortSignal.timeout(10_000),minLength:1,maxTokens:256,report});
   if(keyVersion()!==generation || !result)return null;
   const title=result.text.split('\n').find(line=>line.trim())?.replace(/^["'#*\s]+|["'*.\s]+$/g,'').slice(0,80);
   return title?{title,model:result.model}:null;
@@ -330,6 +330,7 @@ export async function makeTitle(text, model, skip = () => false,models=model?[mo
 // every attempt ({ status?, input?, output?, limit? }) so usage can be counted and limits remembered.
 export async function summarize(prompt, candidates, { skip = (_id) => Boolean(false), report = (_id, _info) => {}, signal = /** @type {AbortSignal | undefined} */ (undefined), minLength = 41, maxTokens = 8192,modelRequirements } = {}) {
   try { signal=providerSignal(signal); } catch { return null; }
+  const version=keyVersion();
   const tried = [];
   const started = Date.now();
   const deadProviders=new Set();
@@ -352,7 +353,6 @@ export async function summarize(prompt, candidates, { skip = (_id) => Boolean(fa
     try {
       const out = await waitFor(complete(m, prompt, { maxTokens, signal: combined, info }), combined);
       if(signal.aborted)break;
-      report(id, info);
       if(info.status>=400 || info.status==='output-limit') {
         const decision=decisionFor(info,id);
         if(decision.skipProvider)deadProviders.add(m.provider);
@@ -362,7 +362,6 @@ export async function summarize(prompt, candidates, { skip = (_id) => Boolean(fa
       if (text.length >= minLength) return { text, model: id };
     } catch(error) {
       if(signal.aborted) break;
-      report(id, info);
       const decision=decisionFor({...info,status:attempt.signal.aborted?'timeout':info.status,error:attempt.signal.aborted?undefined:error},id);
       if(decision.skipProvider)deadProviders.add(m.provider);
       if(decision.action==='stop')break;
@@ -370,6 +369,9 @@ export async function summarize(prompt, candidates, { skip = (_id) => Boolean(fa
     } finally {
       clearTimeout(timer);
       attempt.abort();
+      // Count a started request once even on Stop, while suppressing old-key
+      // publication. Callers also retain account-generation guards.
+      if(keyVersion()===version)report(id, info);
     }
     if (tried.length >= 4) break;
   }

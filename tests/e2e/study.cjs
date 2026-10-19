@@ -1,8 +1,8 @@
 // 2.1: Study makes flashcards and a quiz from a chat; cards flip, "Not yet" brings a card back in the same round,
 // "Knew it" schedules it later; the quiz shows right/wrong with the reason and keeps the score.
-const { chromium } = require('playwright'), assert = require('node:assert/strict');
+const { chromium, webkit } = require('playwright'), assert = require('node:assert/strict');
 const { profile, seed } = require('./helpers/preview-profile.cjs');
-const URL = process.env.MR_TEST_URL || 'http://localhost:5190/?emulator';
+const URL = process.env.MR_TEST_URL || 'http://localhost:5190/';
 const now = Date.now();
 const chat = { id: 'bio', title: 'Cell biology', createdAt: now, updatedAt: now, model: 'gemini:gemini-flash-latest', messages: [
   { id: 'u', role: 'user', text: 'Explain the parts of a cell', createdAt: now },
@@ -13,14 +13,14 @@ const deck = { title: 'Cell basics', cards: [{ q: 'What makes ATP?', a: 'Mitocho
     { q: 'What do ribosomes build?', options: ['Proteins', 'Fats', 'Sugars', 'DNA'], answer: 0, why: 'Ribosomes translate RNA into proteins.' }] };
 
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await (process.env.MR_WEBKIT ? webkit : chromium).launch();
   try {
     const ctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, serviceWorkers: 'block' });
-    await profile(ctx, 'study', 'light');
+    await profile(ctx, 'preview-study', 'light');
     let prompt = '', requests = 0;
     await ctx.route('**/generativelanguage.googleapis.com/**', (r) => {
       const url = r.request().url();
-      if (url.includes('/models?')) return r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash', supportedGenerationMethods: ['generateContent'] }] } });
+      if (url.includes('/models?')) return r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash', inputTokenLimit: 128000, supportedGenerationMethods: ['generateContent'] }] } });
       prompt = r.request().postData() || ''; requests++;
       return r.fulfill({ json: { candidates: [{ content: { parts: [{ text: '```json\n' + JSON.stringify(deck) + '\n```' }] } }] } });
     });
@@ -28,7 +28,7 @@ const deck = { title: 'Cell basics', cards: [{ q: 'What makes ATP?', a: 'Mitocho
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(URL);
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
-    await seed(page, 'study', [chat]);
+    await seed(page, 'preview-study', [chat]);
     await page.reload();
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
 

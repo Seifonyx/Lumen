@@ -75,3 +75,5 @@ Credentials go only to supported official endpoints or the user's configured rel
 Tests use deterministic provider responses for lifecycle, eligibility, ordering, recovery, streaming, cancellation and stage-state behavior. They do not measure answer quality. Actual comparative quality needs representative real answers, a defined evaluation rubric and authorized provider access/budget. Physical iPhone compositing/touch remains distinct from Linux WebKit verification.
 
 Release requires relevant local checks, full repository CI, reviewed security/compatibility outcomes, protected main integration and hosted deployment verification. No claim of mathematical optimality or impossibility of future improvements is supported.
+
+Titles snapshot only their actual first-user input and originating consent. Later tool/file/repository continuations cannot discard the unchanged title; first-input edits/deletion, policy/privacy/model/project/memory changes, disabling autoTitle and account/key changes still invalidate. Per-attempt title/helper accounting includes failed/completed calls and same-key Stop, with old-key publication suppressed.

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {setKeys,probeModel} from '../../src/lib/ai/providers.js';
-import {summarize} from '../../src/lib/ai/chat.js';
+import {summarize,makeTitle} from '../../src/lib/ai/chat.js';
 for(const provider of ['gemini','groq']) {
  setKeys({[provider]:`helper-completion-${provider}`});const budgets=[];
  globalThis.fetch=async(_url,options)=>{
@@ -19,4 +19,15 @@ for(const provider of ['gemini','groq']) {
  assert(second.text,'the existing authorized larger diagnostic can verify a reasoning model');
  assert.deepEqual(budgets,[48,512]);
 }
-setKeys({});console.log('PASS helpers reject provider-declared truncation and use only authorized budgeted backups');
+setKeys({groq:'title-attempt-usage'});let calls=0;const reports=[];
+globalThis.fetch=async()=>++calls===1?Response.json({error:{message:'Overloaded'}},{status:503}):Response.json({choices:[{message:{content:'Clear chat title'},finish_reason:'stop'}],usage:{prompt_tokens:12,completion_tokens:3}});
+const titled=await makeTitle('Original request','groq:first',()=>false,['groq:first','groq:second'],(id,info)=>reports.push({id,...info}));
+assert.equal(titled?.title,'Clear chat title');assert.equal(reports.length,2,'every attempted title completion, including a failed attempt, must report usage');
+assert.equal(reports[0].status,503);assert.equal(reports[1].input,12);assert.equal(reports[1].output,3);
+const aborter=new AbortController(),cancelReports=[];let entered;
+const started=new Promise(resolve=>{entered=resolve;});
+globalThis.fetch=async()=>{entered();return new Promise(()=>{});};
+const cancelled=summarize('Original request',['groq:first'],{signal:aborter.signal,report:(id,info)=>cancelReports.push({id,...info})});
+await started;aborter.abort();assert.equal(await cancelled,null);
+assert.equal(cancelReports.length,1,'a started helper request still counts once when stopped before a response');
+setKeys({});console.log('PASS helpers reject truncation, preserve budgets and report every title attempt');

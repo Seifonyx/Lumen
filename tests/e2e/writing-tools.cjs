@@ -1,8 +1,8 @@
 // 2.1: select words in a reply → Writing tools → an action (Shorter, Translate…) shows the result first; "Use in
 // reply" puts it in place of the selection, or Copy. Also inside Select text.
-const { chromium } = require('playwright'), assert = require('node:assert/strict');
+const { chromium, webkit } = require('playwright'), assert = require('node:assert/strict');
 const { profile, seed } = require('./helpers/preview-profile.cjs');
-const URL = process.env.MR_TEST_URL || 'http://localhost:5190/?emulator';
+const URL = process.env.MR_TEST_URL || 'http://localhost:5190/';
 const now = Date.now();
 const chat = { id: 'wt', title: 'Writing', createdAt: now, updatedAt: now, model: 'gemini:gemini-flash-latest', messages: [
   { id: 'u', role: 'user', text: 'Write me a note', createdAt: now },
@@ -10,14 +10,14 @@ const chat = { id: 'wt', title: 'Writing', createdAt: now, updatedAt: now, model
 ] };
 
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await (process.env.MR_WEBKIT ? webkit : chromium).launch();
   try {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 820 }, serviceWorkers: 'block' });
-    await profile(ctx, 'writing-tools', 'light');
+    await profile(ctx, 'preview-writing-tools', 'light');
     const asks = [];
     await ctx.route('**/generativelanguage.googleapis.com/**', (r) => {
       const url = r.request().url();
-      if (url.includes('/models?')) return r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash', supportedGenerationMethods: ['generateContent'] }] } });
+      if (url.includes('/models?')) return r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash', inputTokenLimit: 128000, supportedGenerationMethods: ['generateContent'] }] } });
       const body = r.request().postData() || '';
       asks.push(body);
       const out = body.includes('Translate it into French') ? 'Cette phrase est courte.' : 'This sentence is short.';
@@ -25,16 +25,29 @@ const chat = { id: 'wt', title: 'Writing', createdAt: now, updatedAt: now, model
     });
     const page = await ctx.newPage(), errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
+    // Seed on the same origin without warming optional modules. WebKit can keep
+    // an already-loaded module in memory across reloads, bypassing route holds.
+    const fixture=new globalThis.URL('/__writing_fixture__',URL).href;
+    await ctx.route(fixture,route=>route.fulfill({contentType:'text/html',body:'<!doctype html><title>Fixture seed</title>'}));
+    await page.goto(fixture);
+    await seed(page, 'preview-writing-tools', [chat]);
+    let releaseTools,toolsHeld=false;
+    const toolsReady=new Promise(resolve=>{releaseTools=resolve;});
+    await ctx.route('**/SelectionTools-*.js',async route=>{toolsHeld=true;await toolsReady;await route.continue();});
+    const requestedTools=page.waitForRequest('**/SelectionTools-*.js');
     await page.goto(URL);
-    await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
-    await seed(page, 'writing-tools', [chat]);
-    await page.reload();
+    await requestedTools;
     await page.click('.chat-row:has-text("Writing") .chat-open');
     const p = page.locator('.msg.assistant .markdown p', { hasText: 'quite long' });
     await p.waitFor();
 
     // Select the sentence.
-    await p.evaluate((el) => { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); });
+    await p.scrollIntoViewIfNeeded();
+    await p.selectText();
+    assert(toolsHeld,'the optional selection-tools chunk is held until after selection');
+    assert.match(await page.evaluate(()=>getSelection()?.toString() || ''),/quite long and wordy/);
+    releaseTools();
+    await page.locator('.selection-tools-btn').waitFor();
     await page.locator('.selection-tools-btn').click();
     await page.locator('.writing-chip', { hasText: 'Shorter' }).click();
     await page.locator('.writing-result', { hasText: 'This sentence is short.' }).waitFor();

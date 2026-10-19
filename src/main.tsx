@@ -2,6 +2,14 @@ import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import './app.css';
 import './glass.css';
+// Design Renaissance experiment, strictly opt-in on this isolated branch.
+// No default production UI changes. Both treatments style the real Lumen
+// components and preserve all original interaction/state ownership.
+const renaissance = new URLSearchParams(window.location.search).get('renaissance');
+if (renaissance === 'atelier' || renaissance === 'workbench') {
+  document.documentElement.classList.add(`renaissance-${renaissance}`);
+}
+import './design-renaissance-exploration.css';
 import App from './App';
 import { initViewport } from './lib/viewport';
 import { initGlass } from './lib/glass';

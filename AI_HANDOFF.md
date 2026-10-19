@@ -38,18 +38,19 @@ The complete overhaul remains in progress. Historical intermediate checkpoints a
 | Latest verified production/main | `dab0fff854cc9657fd707b9e279c3bdb168bd64d`, PR23 normal merge, Deploy39243721175 success;18asset matches +hosted Chromium3/WebKit2 clean |
 | Previous verified runtime/rollback | `3f48c6e02719b5f0c28be85e4c1e6e3cc2ef045b`, PR22 normal merge, Deploy39243260811 success;18asset matches +hosted Chromium4/WebKit2 clean |
 | Earlier foundation | `02c322da48368d6277e5eb8b599edfead7f92e0e`, PR19 +Deploy39157498252 verified; later docs20/21 did not change runtime |
-| Latest pushed key candidate | `b7049023aef4f23e82fd808364f311dd2c31c372`, feat/model-picker-key-save, PR24; exact remote verified, fullCI39245177533 pending |
-| Current ROOT branch/base | `7cde3ea39a13408a266d16ae325b0e88357af387`, feat/model-picker-final-recovery in /workspace/Lumen, PR25; pushed/exact remote verified, fullCI39245877175 pending |
+| Latest pushed key candidate | `2ce5c9a886219f5dfb2e73e11c4036c66ea00dc1`, feat/model-picker-key-save, PR24; exact remote verified, replacement fullCI39247939607 running |
+| Current ROOT branch/base | `d9cf8dbd31b007fbc6656dda595d395d0c8dc79e`, feat/model-picker-final-recovery in /workspace/Lumen, PR25; pushed/exact remote verified, replacement fullCI39248044452 running |
 | Isolation | Runtime release worktree /workspace/Lumen-runtime-release at984b1a9; key release worktree /workspace/Lumen-policy-release atb704902. Neither includes ROOT final implementation. Four named stashes are recovered owned backups, not hidden unique source. Do not blindly pop. |
 
 Never confuse pushed/merged/deployed/production-verified. Actual latest remote main must be rechecked before integration. No force push, protections bypass or unfinished-source release.
 
 ## Exact next actions
 
-1. Evaluate PR25 exact7cde3ea fullCI39245877175. Source and handoff are committed/pushed/exact remote verified; no uncommitted implementation. It builds on PR24. Require all three exact-head CI jobs, including expanded actual WebKit research. Keep this source head stable; subsequent local changes are final ledger/validation documentation only.
-2. In parallel evaluate PR24 fullCI39245177533 on exactb704902. It changes key-save reliability and corrected guest fixtures only; it has no dependency on ROOT final settings/routing repairs. Once all checks pass, normally merge with matching-head guard, dispatch Deploy onmain, verify workflow SHA and real hosted assets/core flows. Serialize deployments. Do not wait unnecessarily for final milestone.
-3. Final milestone: required fullCI/independent review, normal merge after24, Deploy, verify assets/core workflows, update final requirement map/weights/status/ledger. Preserve original master and all permanent policies. No100% until every required gate and final synchronized documentation passes.
-4. PR23 main CI39243719879 is separate from its successful exact-feature CI39199773200. A superseded cancelled run is not green evidence. Inspect any introduced failure rather than skipping or retry-hiding it.
+1. Evaluate PR24 exact2ce5c9a fullCI39247939607. Source/exact remote verified; type/build/73unit passed, browsers pending. Independently releasable key-save repair, no dependency on final settings/routing work. Once every exact-head check passes and full logs are reviewed, normal matching-head merge, dispatch Deploy onmain, verify exact workflow SHA/success, reviewed policy-release/dist asset parity and hosted core Chromium/WebKit. Serialize deployments.
+2. Evaluate PR25 exactd9cf8db fullCI39248044452. Source/exact remote verified; type/build/79unit passed, browsers pending. After24, normal merge and deployment/live verification of reviewed /workspace/Lumen/dist. Product/workflow tree equals7cde3ea; latest changes repair fixtures/rendered role coverage only.
+3. b704902 CI39245177533 failed2/100Chromium files;7cde3ea CI39245877175 was superseded/cancelled with the same2/101 failures in its completed test step. Both preserved unit/build/WebKit success. These are historical failures, never green evidence. Fixture roots/fixes/regressions are recorded below.
+4. Final ledger/validation documentation is held locally to preserve stable source CI. Update final mapping/weights only on evidence, commit/push normally, merge a docs-only PR after releases. No100% until all mandatory source/release/final-document gates pass. Main23 CI39243719879 already succeeded.
+
 
 ## Released implementation
 
@@ -114,3 +115,16 @@ Evidence: key-fixture-role-phone-chromium.log2suites clean15s including390/320ph
 Current integration checkpoint: merges key fixture source2ce5c9a886219f5dfb2e73e11c4036c66ea00dc1 into final source7cde3ea. Both runtime application trees are unchanged; only fixture/component-render coverage and accurate documentation change. PR24 b704902 CI39245177533 failed the two fixture cases above; PR25 7cde3ea CI39245877175 inherits them and must be superseded. Commit/push the reviewed integration, verify the exact remote revision and require fresh full CI for PR24 and PR25. No new production deployment. Owned final-ledger stash recovered into this checkpoint; do not blindly pop old backups.
 
 Integrated final fixture evidence: final-role-phone-unit.log type/all79unitfiles pass; final-role-phone-chromium.log2suites clean9s. Product/workflow tree matches7cde3ea exactly; reviewed final dist remains valid. PR24 updated exact2ce5c9a fullCI39247939607 is running. Commit/push this fixture-only merge and require fresh complete PR25 CI; no runtime release is claimed.
+
+Latest continuation checkpoint: source heads2ce5c9a/d9cf8db are committed/pushed/exact remote verified. All implementation is committed. Local AI_HANDOFF.md and validation checklist edits are documentation only, held for final release synchronization. Fresh fullCI39247939607/39248044452 are the only current release gates. Production remainsdab0fff/Deploy39243721175.
+
+
+## Tools interaction root-cause repair — 2026-10-19
+
+Current key/final replacement WebKit jobs118044358442/118044968193 succeed but are NOT retry-free: hub-actions desktop second comparison open retried in PR24; Study opening retried in PR25. Logs pr24-role-green-webkit.log/pr25-role-green-webkit.log preserve first failures. Investigation found ToolsPage declares Card inside its render function: React changes the component type and replaces tool buttons whenever parent search/connection/scroll-observer state updates. A release can therefore lose its original pointer target. This predates all current key/settings work; deterministic browser reproduction establishes the defect, not an unsupported claim that historical logs captured its exact triggering event.
+
+The new tool-card-stability regression holds Study/Compare while changing only trailing search whitespace (identical filtering/position), asserts the original DOM node survives, then releases and checks the actual page/dialog. Old d9cf8db build fails isConnected=false on both runner attempts (tool-card-stability-red.log). Module-scope ToolCard preserves identical markup/actions with stable component identity; no memoization, permissions, animation or model-policy change. Local79unit/type/build pass; Chromium3suites tool-card-stability/hub-actions/study pass. Actual WebKit3suites and independent final diff review pending. The new regression is also added to required WebKit CI.
+
+This small UI recovery repair belongs to final PR25; PR24 remains application-source unchanged and independent. Require fresh full PR25 CI after this source change, not only old d9cf8db CI. PR24 current fullCI39247939607 continues and can release independently once all checks and diagnosed retry evidence are accepted. Production remainsdab0fff. No increased progress credit until release acceptance.
+
+Tool-card final local verification: tool-card-stability-unit.log type/all79unitfiles pass; build passes; targeted Chromium3suites clean27s and actual WebKit3suites clean45s (tool-card-stability-chromium/webkit.log). Independent actual source/test review finds no blocker. Source/root head will include this coherent repair; require a fresh exact-head complete PR25 CI after push. No application code in key-release branch2ce5c9a changes.

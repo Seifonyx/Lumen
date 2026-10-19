@@ -2,6 +2,7 @@ import { flySent, motionOff } from '../lib/motion';
 import { watchGlassInsets } from '../lib/glass';
 import { FolderGit2, FolderKanban, ArrowDown, FileText, Menu, PanelLeftOpen, EyeOff } from 'lucide-react';
 import WelcomeStars from './WelcomeStars';
+import RenaissanceLaunchpad from './RenaissanceLaunchpad';
 import { modKey } from '../lib/util';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
@@ -275,6 +276,9 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
           <div className="empty">
             <span className="welcome-mark" aria-hidden="true"><WelcomeStars /></span>
             <h1>{isTemporaryChat(chat)?'Incognito chat':user?.name&&welcomeSequence%(WELCOME_GREETINGS.length+1)===0?greeting:WELCOME_GREETINGS[(welcomeSequence+(user?.name?WELCOME_GREETINGS.length-1:0)) % WELCOME_GREETINGS.length]}</h1>
+            {!isTemporaryChat(chat) && (document.documentElement.classList.contains('renaissance-atelier') || document.documentElement.classList.contains('renaissance-workbench')) && (
+              <RenaissanceLaunchpad />
+            )}
           </div>
         ) : (
           chat && <MessageThread key={chat.id} chat={chat} summary={summary} busy={streaming||canvasEditing} compacting={compacting} scroller={scroller} stick={stick} navigationHost={navigationHost}/>

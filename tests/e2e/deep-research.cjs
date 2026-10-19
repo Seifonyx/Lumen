@@ -13,7 +13,7 @@ const sse = (text, chunks) => 'data: ' + JSON.stringify({ candidates: [{ content
     const seen = { plan: 0, search: [], report: '' };
     await ctx.route('**/generativelanguage.googleapis.com/**', async (r) => {
       const url = r.request().url();
-      if (url.includes('/models?')) return r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash', supportedGenerationMethods: ['generateContent'] }] } });
+      if (url.includes('/models?')) return r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash',inputTokenLimit:128000, supportedGenerationMethods: ['generateContent'] }] } });
       const body = r.request().postData() || '';
       if (url.includes(':generateContent')) {
         if (body.includes('planning web research')) { seen.plan++; return r.fulfill({ json: { candidates: [{ content: { parts: [{ text: '["solar panel efficiency 2026", "perovskite cells cost", "solar recycling"]' }] } }] } }); }
@@ -24,6 +24,7 @@ const sse = (text, chunks) => 'data: ' + JSON.stringify({ candidates: [{ content
         seen.search.push({ q, tools: /google_search/.test(body) });
         const n = seen.search.length;
         await new Promise((res) => setTimeout(res, 500));
+        if(n===4)return r.fulfill({contentType:'text/event-stream',body:'data: '+JSON.stringify({candidates:[{content:{parts:[{text:'INCOMPLETE_UNVERIFIED_RESEARCH_NOTE'}]}}]})+'\n\n'});
         return r.fulfill({ contentType: 'text/event-stream', body: sse(`Notes about ${q}: fact ${n}.`, [[`Site ${n}`, `https://site${n}.example/page`], ['Shared', 'https://shared.example/']]) });
       }
       if (body.includes('Deep research. Web searches were run')) {
@@ -84,6 +85,9 @@ const sse = (text, chunks) => 'data: ' + JSON.stringify({ candidates: [{ content
     await page.click('.send-btn');
     await page.locator('.msg.assistant .research-card[data-phase="done"]').waitFor({ timeout: 15000 });
     assert.equal(seen.plan, 2);
+    await page.locator('.research-head').click();
+    assert.equal(await page.locator('.research-step.failed').count(),1,'an interrupted search is failed even after partial notes');
+    assert.doesNotMatch(seen.report,/INCOMPLETE_UNVERIFIED_RESEARCH_NOTE/,'failed partial notes are excluded from the final report');
     console.log('PASS /research starts deep research');
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }

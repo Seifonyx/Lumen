@@ -132,7 +132,7 @@ assert.equal(calls.length, 2);
 const GEMMA = 'gemini:gemma-4-31b-it';
 globalThis.fetch = async (url, options = {}) => {
   if (String(url).includes('/models?')) return Response.json({ models: [SEARCH, GEMMA].map(id => ({ name: `models/${id.split(':')[1]}`, inputTokenLimit: 128000, supportedGenerationMethods: ['generateContent'] })) });
-  if (String(url).endsWith('/models')) return Response.json({ data: [] });
+  if (String(url).endsWith('/models')) return Response.json({ data: [{id:'fixture-text',context_window:128000,architecture:{input_modalities:['text']}}] });
   if (String(url).includes('api.groq.com')) {
     calls.push({ url: String(url), body: JSON.parse(options.body) });
     return Response.json({ error: { message: 'Temporary overload' } }, { status: 503 });

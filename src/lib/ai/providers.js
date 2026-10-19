@@ -1,17 +1,36 @@
 // Provider adapters discover live models and stream replies
 // as a common sequence of events: { t: 'text' | 'think' | 'sources' | 'notice' | 'error', ... }.
 
-import { parseLimit, readError, readSSE, upstreamError } from './http.js';
+import { finishStream, parseLimit, readError as readHttpError, readSSE, upstreamError as readUpstreamError } from './http.js';
 import { isActiveModel, isExcludedModel, isUnavailableFailure } from './model-status.js';
 import { safeVideoUri, toolBlock } from './tool-inputs.js';
 import { setHealthScope } from './health.js';
 import { AI_PROVIDERS, DEFAULT_PROVIDER_RELAY_URL, EXTRA_PROVIDERS, normalizeKeys, providerEnabled, validAlibabaBase, validRelayUrl } from './provider-config.js';
 import { createModelRegistry } from './registry.js';
 import { waitFor } from './abort.js';
+import { mergeModelDeclarations } from './model-declarations.js';
+
+const redactProviderMessage = (value,configuration=keys) => {
+  let message=String(value || '');
+  for(const provider of AI_PROVIDERS)if(configuration[provider])message=message.split(configuration[provider]).join('[redacted]');
+  return message;
+};
+async function readError(response,signal,configuration=keys) {
+  const work=readHttpError(response,{redact:value=>redactProviderMessage(value,configuration)});
+  return signal?waitFor(work,signal):work;
+}
+async function upstreamError(response,signal,configuration=keys) {
+  const work=readUpstreamError(response,{redact:value=>redactProviderMessage(value,configuration)});
+  return signal?waitFor(work,signal):work;
+}
 
 // API keys come from the user's settings (stored in their private Firebase document).
 let keys = normalizeKeys();
 let capabilities = new Map();
+let catalogPublished=false;
+export const isModelRegistered=id=>catalogPublished?capabilities.has(id):null;
+let deniedModels = new Map();
+const invalidationTimes=new Map();
 /** Metadata from the current connected catalogue; no credentials or request content. */
 export const modelCapabilities = id => capabilities.get(id);
 let keyGeneration = 0;
@@ -39,7 +58,7 @@ export function setKeys(next) {
   const signature = value => { const {github:_,...config}=value;return JSON.stringify(config); };
   if (signature(clean) !== signature(keys)) {
     credentialController.abort();credentialController=new AbortController();
-    registry?.invalidate(); registry = null; capabilities.clear(); setHealthScope(null); keyGeneration++;
+    registry?.invalidate(); registry = null; capabilities.clear(); catalogPublished=false; deniedModels.clear(); invalidationTimes.clear(); setHealthScope(null); keyGeneration++;
   }
   keys = clean;
 }
@@ -83,19 +102,46 @@ export function parseModelId(id) {
   return { provider, name };
 }
 
+// Explicit negative facts survive derived declarations and same-scope cache hydration.
+function rememberDenials(provider,rows,denied) {
+  if(!denied)return;
+  for(const row of rows) {
+    if(!row || typeof row!=='object')continue;
+    const name=provider==='gemini'?row.name?.replace(/^models\//,''):['cohere','cloudflare'].includes(provider)?row.name:row.id;
+    const id=`${provider}:${name}`;
+    if(!parseModelId(id))continue;
+    const incompatible=!isActiveModel(row) || row.archived===true || row.is_deprecated===true
+      || (provider==='gemini' && Array.isArray(row.supportedGenerationMethods) && !row.supportedGenerationMethods.includes('generateContent'))
+      || (provider==='mistral' && row.capabilities?.completion_chat===false)
+      || (provider==='cohere' && Array.isArray(row.endpoints) && !row.endpoints.includes('chat'))
+      || (provider==='huggingface' && row.providers?.length && !row.providers.some(p=>p.status==='live'))
+      || (Array.isArray(row.architecture?.output_modalities) && !row.architecture.output_modalities.includes('text'));
+    if(incompatible)denied.add(id);
+  }
+}
+export function resolveCatalog(value,declarations=[],unavailableModels=[]) {
+  let models;
+  try {models=mergeModelDeclarations(value.models,declarations,{configuration:keys,providerStatus:value.providerStatus,unavailableModels:[...(value.deniedModelIds || []),...unavailableModels]});}
+  catch {models=value.models;}
+  models=models.filter(m=>!isExcludedModel(m.id)&&!unavailableModels.includes(m.id));
+  const resolved={...value,models};
+  capabilities=new Map(models.map(m=>[m.id,m]));catalogPublished=true;
+  return resolved;
+}
+
 // ---------------------------------------------------------------- Catalog
 
 function prettyGemini(m) {
   return m.displayName || m.name.replace(/^models\//, '');
 }
 
-async function geminiCatalog(configuration, signal) {
+async function geminiCatalog(configuration, signal, denied) {
   const models = [];
   let pageToken = '';
   const seen = new Set();
   do {
     const res = await providerFetch(`${GEMINI_BASE}/models?pageSize=1000${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`, { signal, headers: { 'x-goog-api-key': configuration.gemini } });
-    if (!res.ok) throw await discoveryError('Google',res);
+    if (!res.ok) throw await discoveryError('Google',res,signal,configuration);
     const page = await res.json();
     if (!Array.isArray(page.models)) throw new Error('Google: invalid model catalogue');
     models.push(...page.models);
@@ -103,6 +149,7 @@ async function geminiCatalog(configuration, signal) {
     if (pageToken && seen.has(pageToken)) throw new Error('Google: repeated catalogue page');
     seen.add(pageToken);
   } while (pageToken);
+  rememberDenials('gemini',models,denied);
   return models
     .filter((m) => typeof m?.name==='string' && parseModelId(`gemini:${m.name.replace(/^models\//,'')}`) && Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
     .map((m) => ({ ...m, short: m.name.replace(/^models\//, '') }))
@@ -124,11 +171,12 @@ async function geminiCatalog(configuration, signal) {
     }));
 }
 
-async function openRouterCatalog(configuration, signal) {
+async function openRouterCatalog(configuration, signal, denied) {
   const res = await providerFetch(`${OPENROUTER_BASE}/models`, { signal, headers: { authorization: `Bearer ${configuration.openrouter}` } });
-  if (!res.ok) throw await discoveryError('OpenRouter',res);
+  if (!res.ok) throw await discoveryError('OpenRouter',res,signal,configuration);
   const { data } = await res.json();
   if (!Array.isArray(data)) throw new Error('OpenRouter: invalid model catalogue');
+  rememberDenials('openrouter',data,denied);
   return data
     .filter((m) => typeof m?.id==='string' && parseModelId(`openrouter:${m.id}`) && isActiveModel(m) && m.pricing?.prompt != null && m.pricing?.completion != null && Number(m.pricing.prompt) === 0 && Number(m.pricing.completion) === 0)
     .filter((m) => (m.architecture?.output_modalities || ['text']).includes('text'))
@@ -183,10 +231,10 @@ function modelContext(metadata) {
 }
 
 const positive = value => Number.isFinite(value) && value > 0 ? value : null;
-async function discoveryError(label,res) {
+async function discoveryError(label,res,signal,configuration) {
   const retry=res.headers.get('retry-after');
   const retryAfterMs=retry ? (/^\d+(?:\.\d+)?$/.test(retry)?Number(retry)*1000:Math.max(0,Date.parse(retry)-Date.now())) : 0;
-  return Object.assign(new Error(`${label}: ${await upstreamError(res)}`),{status:res.status,retryAfterMs});
+  return Object.assign(new Error(`${label}: ${await upstreamError(res,signal,configuration)}`),{status:res.status,retryAfterMs});
 }
 
 function modelVision(provider, name, metadata = {}) {
@@ -239,7 +287,7 @@ async function compatFetch(provider, path, options = {}, catalogue = false, conf
   }
 }
 
-async function compatCatalog(provider, configuration, signal) {
+async function compatCatalog(provider, configuration, signal, denied) {
   const { label, models: fixed } = COMPAT[provider];
   // A provider without a model list (Perplexity): its documented models, checked with the key on first use.
   if (fixed) return fixed.map(([name, title], i) => ({ id: `${provider}:${name}`, provider, name, label: title, context: 128_000, vision: false, pdf: false, thinking: /reason/.test(name), search: provider === 'perplexity', created: fixed.length - i,endpoint:COMPAT[provider].base,metadata:{source:'documented',fields:{context:'documented',vision:'documented',pdf:'documented',thinking:'documented',search:'documented'}} }));
@@ -250,7 +298,7 @@ async function compatCatalog(provider, configuration, signal) {
       : provider === 'cloudflare' ? `/models?per_page=100&page=${page}`
       : provider === 'anthropic' ? `/models?limit=100${pageToken?`&after_id=${encodeURIComponent(pageToken)}`:''}` : '/models';
     const res = await compatFetch(provider, path, { signal }, true, configuration);
-    if (!res.ok) throw await discoveryError(label,res);
+    if (!res.ok) throw await discoveryError(label,res,signal,configuration);
     const json = await res.json();
     // (Together answers with a bare list.)
     const items = provider === 'cohere' ? json.models : provider === 'cloudflare' ? json.result : Array.isArray(json) ? json : json.data;
@@ -270,6 +318,7 @@ async function compatCatalog(provider, configuration, signal) {
   } while (page <= 100);
   if (page > 100) throw new Error(`${label}: catalogue exceeded page limit`);
   if (!Array.isArray(data)) throw new Error(`${label}: invalid model catalogue`);
+  rememberDenials(provider,data,denied);
   return data
     .map(m => ({ ...m, id: provider === 'cohere' || provider === 'cloudflare' ? m.name : m.id }))
     .filter((m) => typeof m.id === 'string' && m.id && parseModelId(`${provider}:${m.id}`) && isActiveModel(m) && !m.is_deprecated && !m.archived && !isExcludedModel(`${provider}:${m.id}`) && !COMPAT_SKIP.test(m.id))
@@ -322,13 +371,21 @@ function providerDefaults(list) {
 let registry = null;
 function currentRegistry() {
   if(registry) return registry;
-  const configuration=keys;
+  const configuration=keys,version=keyGeneration;
   const names = { gemini:'Google Gemini',openrouter:'OpenRouter',groq:'Groq',cerebras:'Cerebras',...Object.fromEntries(Object.entries(EXTRA_PROVIDERS).map(([k,v])=>[k,v.label])) };
   registry=createModelRegistry({providers:AI_PROVIDERS,enabled:p=>providerEnabled(p,configuration),
     ttl:p=>COMPAT[p]?.models?24*3600_000:10*60_000,
     load:async(p,signal)=>{
       try {
-        const models=await (p==='gemini'?geminiCatalog(configuration,signal):p==='openrouter'?openRouterCatalog(configuration,signal):compatCatalog(p,configuration,signal));
+        const denied=new Set();
+        const models=await (p==='gemini'?geminiCatalog(configuration,signal,denied):p==='openrouter'?openRouterCatalog(configuration,signal,denied):compatCatalog(p,configuration,signal,denied));
+        if(version===keyGeneration && !signal.aborted) {
+          // Omission does not reverse an explicit denial. Only a newly compatible
+          // API row (or a new connection scope) can restore this declaration.
+          const retained=new Set([...(deniedModels.get(p) || []),...denied]);
+          for(const model of models)retained.delete(model.id);
+          deniedModels.set(p,retained);
+        }
         return models.map(m=>({...m,metadata:{...m.metadata,refreshedAt:Date.now()}}));
       } catch(e) {
         let message=String(e?.message || e || 'Model discovery failed');
@@ -345,8 +402,9 @@ function currentRegistry() {
 /** Only seed from a cache already validated against the current account and credential scope. */
 export function restoreCatalog(value) {
   const safe={...value,models:(value.models || []).filter(m=>parseModelId(m.id)&&hasKey(m.id.split(':')[0])&&!isExcludedModel(m.id))};
+  deniedModels=new Map(AI_PROVIDERS.map(p=>[p,new Set((value.deniedModelIds || []).filter(id=>id.startsWith(`${p}:`)))]));
   currentRegistry().seed(safe);
-  capabilities=new Map(currentRegistry().snapshot().models.map(m=>[m.id,m]));
+  capabilities=new Map(currentRegistry().snapshot().models.map(m=>[m.id,m]));catalogPublished=true;
 }
 
 export async function catalog({ refresh = false } = {}) {
@@ -356,11 +414,24 @@ export async function catalog({ refresh = false } = {}) {
   const list=p=>result.models.filter(m=>m.id.startsWith(`${p}:`));
   const value = {
     ...result,
+    deniedModelIds:[...deniedModels.values()].flatMap(ids=>[...ids]),
     providers: Object.fromEntries(AI_PROVIDERS.map(p => [p === 'gemini' ? 'google' : p, hasKey(p)])),
     defaults: [...pickDefaults(list('gemini'),list('openrouter'),list('groq'),list('cerebras')),...AI_PROVIDERS.slice(4).flatMap(p=>providerDefaults(list(p)))],
   };
-  capabilities = new Map(value.models.map(m => [m.id, m]));
+  capabilities = new Map(value.models.map(m => [m.id, m]));catalogPublished=true;
   return value;
+}
+
+/** One provider-specific refresh request per minute; never recurse into inference. */
+export function invalidateModelMetadata(id) {
+  const parsed=parseModelId(id);
+  if(!parsed || !hasKey(parsed.provider) || !registry)return false;
+  const now=Date.now(),previous=invalidationTimes.get(parsed.provider);
+  if(previous!==undefined && now-previous<60_000)return false;
+  if(!registry.expire(parsed.provider))return false;
+  invalidationTimes.set(parsed.provider,now);
+  if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('mr:model-metadata-invalidated',{detail:{provider:parsed.provider}}));
+  return true;
 }
 
 // ---------------------------------------------------------------- Message conversion
@@ -411,12 +482,38 @@ function withInstructionsInFirstUser(messages, instructions) {
 // Opens a streaming request. searchEnabled reports tools retained in the request
 // or a provider's native search, so the chat can explain degraded search honestly.
 // Resolves to { ok: true, events, searchEnabled? } or { ok: false, status, message }.
-export async function openStream({ provider, name }, messages, { instructions, metadata, search, requireSearch, codeExecution, quickReply, signal }) {
+function outputAllowance(model,requested) {
+  if(requested===undefined)return undefined;
+  if(!Number.isSafeInteger(requested) || requested<=0)throw Object.assign(new Error('Invalid output token budget.'),{code:'invalid_input'});
+  return Math.min(requested,positive(model?.outputLimit) || requested);
+}
+const outputOption=(provider,maxTokens)=>maxTokens===undefined?{}:provider==='openai'?{max_completion_tokens:maxTokens}:{max_tokens:maxTokens};
+
+export async function openStream({ provider, name }, messages, { instructions, metadata, search, requireSearch, codeExecution, quickReply, maxTokens, signal,onComplete }) {
   signal=providerSignal(signal);
+  if(capabilities.get(`${provider}:${name}`)?.streaming===false)throw Object.assign(new Error('This model does not support streamed replies.'),{status:'capabilities',code:'unsupported_streaming'});
   if (!parseModelId(`${provider}:${name}`) || !hasKey(provider)) return { ok: false, status: 403, message: 'This provider is not enabled. Review API keys settings.' };
-  if (provider === 'gemini') return openGemini(name, messages, instructions, search, signal, codeExecution, requireSearch, quickReply);
-  if (COMPAT[provider]) return openCompat(provider, name, messages, instructions, signal, metadata);
-  return openOpenRouter(name, messages, instructions, signal);
+  maxTokens=outputAllowance(capabilities.get(`${provider}:${name}`) || metadata,maxTokens);
+  const opened=await (provider === 'gemini'?openGemini(name, messages, instructions, search, signal, codeExecution, requireSearch, quickReply,maxTokens,onComplete)
+    :COMPAT[provider]?openCompat(provider, name, messages, instructions, signal, metadata,maxTokens,onComplete)
+    :openOpenRouter(name, messages, instructions, signal,maxTokens,onComplete));
+  if(signal.aborted)throw Object.assign(new Error('Provider request stopped.'),{name:'AbortError'});
+  return opened.ok?{...opened,events:scopedEvents(opened.events,signal)}:opened;
+}
+
+/** Guard every delivered delta, including frames already buffered by an adapter. */
+async function* scopedEvents(events,signal) {
+  const iterator=events[Symbol.asyncIterator]();
+  try {
+    for(;;) {
+      if(signal.aborted)throw Object.assign(new Error('Provider request stopped.'),{name:'AbortError'});
+      const next=await waitFor(iterator.next(),signal);
+      if(next.done)return;
+      yield next.value;
+    }
+  } finally {
+    try {void Promise.resolve(iterator.return?.()).catch(()=>{});}catch { /* Already closed. */ }
+  }
 }
 
 // Groq / Cerebras: OpenAI-style messages. They can't take PDFs, and Cerebras takes no images, so
@@ -438,16 +535,17 @@ function toCompat(messages, vision) {
   });
 }
 
-async function openCompat(provider, name, messages, instructions, signal, metadata) {
+async function openCompat(provider, name, messages, instructions, signal, metadata,maxTokens,onComplete) {
+  const configuration=keys;
   const model = capabilities.get(`${provider}:${name}`) || metadata;
   const vision = model?.vision ?? modelVision(provider, name);
   const res = await compatFetch(provider, '/chat/completions', {
     method: 'POST',
     signal,
-    body: JSON.stringify({ model: name, stream: true, messages: [{ role: 'system', content: instructions }, ...toCompat(messages, vision)], ...(provider === 'cloudflare' ? { options: { rejectIfBusy: true } } : {}), ...(provider === 'anthropic' ? { max_tokens: /claude-3-(?!7)/.test(name) ? 4096 : 16000 } : {}) }),
-  });
-  if (!res.ok) return { ok: false, status: res.status, ...(await readError(res)) };
-  return { ok: true, searchEnabled: provider === 'perplexity', events: compatEvents(res.body) };
+    body: JSON.stringify({ model: name, stream: true, messages: [{ role: 'system', content: instructions }, ...toCompat(messages, vision)], ...(provider === 'cloudflare' ? { options: { rejectIfBusy: true } } : {}), ...(provider === 'anthropic' ? { max_tokens: /claude-3-(?!7)/.test(name) ? 4096 : 16000 } : {}),...outputOption(provider,maxTokens) }),
+  },false,configuration);
+  if (!res.ok) return { ok: false, status: res.status, ...(await readError(res,signal,configuration)) };
+  return { ok: true, searchEnabled: provider === 'perplexity', events: compatEvents(res.body, signal,onComplete) };
 }
 
 /** Splits streamed text into thinking and answer when a model writes <think>…</think> inline. */
@@ -478,17 +576,35 @@ function thinkSplitter() {
   };
 }
 
-async function* compatEvents(body) {
+async function* compatEvents(body, signal,onComplete) {
   const split = thinkSplitter();
-  for await (const d of readSSE(body)) {
-    if (d.error) {
+  const completion = { finished: false,onComplete };
+  let inputSeen=0,outputSeen=0;
+  for await (const d of readSSE(body, { completion, signal })) {
+    const alreadyFinished = completion.finished;
+    // OpenAI-compatible responses, plus native lifecycle markers from provider gateways.
+    if (d.choices?.[0]?.finish_reason || d.type === 'message_stop' || d.type === 'message-end' || d.event_type === 'message-end') finishStream(completion);
+    if (d.error && !alreadyFinished) {
       const text = d.error.message || 'The provider returned an error.';
       const code = Number(d.error.code) || (/rate|limit|quota/i.test(text) ? 429 : 500);
-      yield { t: 'error', text, status: code, limit: code === 429 ? parseLimit(d.error, text) : null };
+      yield { t: 'error', text:redactProviderMessage(text),code:d.error.type || d.error.status || d.error.code, status: code, limit: code === 429 ? parseLimit(d.error, text) : null };
       return;
     }
-    const usage = d.usage || d.x_groq?.usage;
-    if (usage) yield { t: 'usage', input: usage.prompt_tokens || 0, output: usage.completion_tokens || 0 };
+    const usage = d.message?.usage || d.delta?.usage?.tokens || d.response?.usage?.tokens || d.response?.meta?.tokens || d.usage || d.x_groq?.usage;
+    if (usage) {
+      // Native gateways may send cumulative partial counters followed by totals.
+      const input=Math.max(inputSeen,positive(usage.prompt_tokens ?? usage.input_tokens) || 0);
+      const output=Math.max(outputSeen,positive(usage.completion_tokens ?? usage.output_tokens) || 0);
+      if(input>inputSeen || output>outputSeen)yield {t:'usage',input:input-inputSeen,output:output-outputSeen};
+      inputSeen=input;outputSeen=output;
+    }
+    if (alreadyFinished) continue;
+    if (d.type === 'content_block_delta') {
+      if (d.delta?.type === 'text_delta' && d.delta.text) yield* split(d.delta.text);
+      if (d.delta?.type === 'thinking_delta' && d.delta.thinking) yield { t: 'think', text: d.delta.thinking };
+    }
+    if (d.event_type === 'text-generation' && d.text) yield* split(d.text);
+    if (d.type === 'content-delta' && d.delta?.message?.content?.text) yield* split(d.delta.message.content.text);
     const choice = d.choices?.[0];
     const delta = choice?.delta || {};
     if (delta.reasoning) yield { t: 'think', text: delta.reasoning };
@@ -499,8 +615,8 @@ async function* compatEvents(body) {
   yield* split('', true);
 }
 
-async function openGemini(name, messages, instructions, search, signal, codeExecution = false, requireSearch = false, quickReply = false) {
-  const credential=keys.gemini;
+async function openGemini(name, messages, instructions, search, signal, codeExecution = false, requireSearch = false, quickReply = false,maxTokens,onComplete) {
+  const configuration=keys,credential=configuration.gemini;
   const gemma = isGemma(name);
   if(requireSearch && (!search || gemma || !geminiThinks(name)))return {ok:false,status:400,message:'This model cannot search the web for this task.'};
   const body = gemma
@@ -513,6 +629,7 @@ async function openGemini(name, messages, instructions, search, signal, codeExec
   if (quickReply && /^gemini-2\.5-flash(?:-|$)/i.test(name) && !search && !codeExecution) {
     extras.generationConfig = { thinkingConfig: { thinkingBudget: 0 } };
   }
+  if(maxTokens!==undefined)extras.generationConfig={...extras.generationConfig,maxOutputTokens:maxTokens};
   if (search && !gemma && geminiThinks(name)) extras.tools = [{ google_search: {} }];
   if (codeExecution) extras.tools = [...(extras.tools || []), { codeExecution: {} }];
 
@@ -527,26 +644,30 @@ async function openGemini(name, messages, instructions, search, signal, codeExec
   let res = await send({ ...body, ...extras });
   // Retry unsupported thinking options once, retaining requested search tools.
   // Strict tool requests still fail rather than silently changing their options.
-  if (res.status === 400 && extras.generationConfig && !codeExecution && !requireSearch) {
+  if (res.status === 400 && extras.generationConfig?.thinkingConfig && !codeExecution && !requireSearch) {
     await res.body?.cancel();
     const { generationConfig: _thinking, ...retained } = extras;
-    res = await send({ ...body, ...retained });
+    res = await send({ ...body, ...retained,...(maxTokens!==undefined?{generationConfig:{maxOutputTokens:maxTokens}}:{}) });
   }
-  if (!res.ok) return { ok: false, status: res.status, ...(await readError(res)) };
-  return { ok: true, searchEnabled: Boolean(search && !gemma && geminiThinks(name)), events: geminiEvents(res.body) };
+  if (!res.ok) return { ok: false, status: res.status, ...(await readError(res,signal,configuration)) };
+  return { ok: true, searchEnabled: Boolean(search && !gemma && geminiThinks(name)), events: geminiEvents(res.body, signal,onComplete) };
 }
 
-async function* geminiEvents(body) {
+async function* geminiEvents(body, signal,onComplete) {
   const seen = new Set();
+  const completion = { finished: false, allowDone: false,onComplete };
   let usage = null;
-  for await (const d of readSSE(body)) {
-    if (d.error) {
+  for await (const d of readSSE(body, { completion, signal })) {
+    const alreadyFinished = completion.finished;
+    if (d.candidates?.[0]?.finishReason || d.promptFeedback?.blockReason) finishStream(completion);
+    if (d.error && !alreadyFinished) {
       const text = d.error.message || 'Google returned an error.';
       const code = Number(d.error.code) || 500;
-      yield { t: 'error', text, status: code, limit: code === 429 ? parseLimit(d.error, text) : null };
+      yield { t: 'error', text:redactProviderMessage(text),code:d.error.type || d.error.status || d.error.code, status: code, limit: code === 429 ? parseLimit(d.error, text) : null };
       return;
     }
     if (d.usageMetadata) usage = d.usageMetadata;
+    if (alreadyFinished) continue;
     if (d.promptFeedback?.blockReason) yield { t: 'notice', text: `Google blocked this request (${d.promptFeedback.blockReason}).` };
     const cand = d.candidates?.[0];
     for (const p of cand?.content?.parts || []) {
@@ -570,13 +691,13 @@ async function* geminiEvents(body) {
   if (usage) yield { t: 'usage', input: usage.promptTokenCount || 0, output: (usage.candidatesTokenCount || 0) + (usage.thoughtsTokenCount || 0) };
 }
 
-async function openOpenRouter(name, messages, instructions, signal) {
-  const credential=keys.openrouter;
+async function openOpenRouter(name, messages, instructions, signal,maxTokens,onComplete) {
+  const configuration=keys,credential=configuration.openrouter;
   const gemma = isGemma(name);
   const chat = gemma
     ? toOpenRouter(withInstructionsInFirstUser(messages, instructions))
     : [{ role: 'system', content: instructions }, ...toOpenRouter(messages)];
-  const body = { model: name, stream: true, messages: chat, usage: { include: true } };
+  const body = { model: name, stream: true, messages: chat, usage: { include: true },...outputOption('openrouter',maxTokens) };
   // Free text extraction so PDFs never cost credits.
   if (messages.some((m) => (m.files || []).some((f) => f.kind === 'pdf'))) {
     body.plugins = [{ id: 'file-parser', pdf: { engine: 'pdf-text' } }];
@@ -592,19 +713,23 @@ async function openOpenRouter(name, messages, instructions, signal) {
     },
     body: JSON.stringify(body),
   });
-  if (!res.ok) return { ok: false, status: res.status, ...(await readError(res)) };
-  return { ok: true, events: openRouterEvents(res.body) };
+  if (!res.ok) return { ok: false, status: res.status, ...(await readError(res,signal,configuration)) };
+  return { ok: true, events: openRouterEvents(res.body, signal,onComplete) };
 }
 
-async function* openRouterEvents(body) {
-  for await (const d of readSSE(body)) {
-    if (d.error) {
+async function* openRouterEvents(body, signal,onComplete) {
+  const completion = { finished: false,onComplete };
+  for await (const d of readSSE(body, { completion, signal })) {
+    const alreadyFinished = completion.finished;
+    if (d.choices?.[0]?.finish_reason) finishStream(completion);
+    if (d.error && !alreadyFinished) {
       const text = d.error.message || 'OpenRouter returned an error.';
       const code = Number(d.error.code) || 500;
-      yield { t: 'error', text, status: code, limit: code === 429 ? parseLimit(d.error, text) : null };
+      yield { t: 'error', text:redactProviderMessage(text),code:d.error.type || d.error.status || d.error.code, status: code, limit: code === 429 ? parseLimit(d.error, text) : null };
       return;
     }
     if (d.usage) yield { t: 'usage', input: d.usage.prompt_tokens || 0, output: d.usage.completion_tokens || 0 };
+    if (alreadyFinished) continue;
     const choice = d.choices?.[0];
     const delta = choice?.delta || {};
     if (delta.reasoning) yield { t: 'think', text: delta.reasoning };
@@ -647,13 +772,14 @@ export async function embed(texts, taskType, signal) {
     headers: { 'content-type': 'application/json', 'x-goog-api-key': keys.gemini },
     body: JSON.stringify({ requests: texts.map((text) => ({ model, content: { parts: [{ text }] }, taskType, outputDimensionality: 256 })) }),
   });
-  if (!res.ok) throw Object.assign(new Error((await waitFor(readError(res),signal)).message || `Embedding failed (${res.status})`), { status: res.status });
+  if (!res.ok) throw Object.assign(new Error((await readError(res,signal)).message || `Embedding failed (${res.status})`), { status: res.status });
   const d = await waitFor(res.json(),signal);
   return (d.embeddings || []).map((e) => e.values || []);
 }
 
 export async function complete({ provider, name }, prompt, { maxTokens = 256, signal, info } = {}) {
   const configuration=keys;
+  maxTokens=outputAllowance(capabilities.get(`${provider}:${name}`),maxTokens);
   signal=providerSignal(signal || AbortSignal.timeout(30_000));
   if (!parseModelId(`${provider}:${name}`) || !hasKey(provider)) {
     if (info) Object.assign(info, { status: 403, message: 'This provider is not enabled.' });
@@ -667,12 +793,16 @@ export async function complete({ provider, name }, prompt, { maxTokens = 256, si
       body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: maxTokens } }),
     });
     if (!res.ok) {
-      if (info) Object.assign(info, { status: res.status, ...(await waitFor(readError(res),signal)) });
+      if (info) Object.assign(info, { status: res.status, ...(await readError(res,signal,configuration)) });
       return null;
     }
     const d = await waitFor(res.json(),signal);
     if (info) info.status = 200;
     if (info && d.usageMetadata) Object.assign(info, { input: d.usageMetadata.promptTokenCount || 0, output: (d.usageMetadata.candidatesTokenCount || 0) + (d.usageMetadata.thoughtsTokenCount || 0) });
+    if(d.candidates?.[0]?.finishReason==='MAX_TOKENS') {
+      if(info)Object.assign(info,{status:'output-limit',message:'The helper reply reached its output limit before completion.'});
+      return null;
+    }
     return (d.candidates?.[0]?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text).join('');
   }
   const compat = COMPAT[provider];
@@ -681,15 +811,19 @@ export async function complete({ provider, name }, prompt, { maxTokens = 256, si
     method: 'POST',
     signal,
     headers: { 'content-type': 'application/json', authorization: `Bearer ${compat ? configuration[provider] : configuration.openrouter}` },
-    body: JSON.stringify({ model: name, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }),
+    body: JSON.stringify({ model: name, ...outputOption(provider,maxTokens), messages: [{ role: 'user', content: prompt }] }),
   });
   if (!res.ok) {
-    if (info) Object.assign(info, { status: res.status, ...(await waitFor(readError(res),signal)) });
+    if (info) Object.assign(info, { status: res.status, ...(await readError(res,signal,configuration)) });
     return null;
   }
   const d = await waitFor(res.json(),signal);
   if (info) info.status = 200;
   if (info && d.usage) Object.assign(info, { input: d.usage.prompt_tokens || 0, output: d.usage.completion_tokens || 0 });
+  if(['length','max_tokens'].includes(d.choices?.[0]?.finish_reason)) {
+    if(info)Object.assign(info,{status:'output-limit',message:'The helper reply reached its output limit before completion.'});
+    return null;
+  }
   // Some models write their thinking inline; only the answer is wanted here.
   return (d.choices?.[0]?.message?.content || '').replace(/<think>[\s\S]*?(<\/think>|$)/g, '').trim() || null;
 }
@@ -712,7 +846,9 @@ export async function probeModel(id, signal, { maxTokens = 48, timeoutMs = 25_00
   const started = Date.now();
   try {
     const text = await complete(target, 'Reply with the single word OK.', { maxTokens, signal: attempt.signal, info });
-    return { ...info, status: info.status ?? 0, text: text || '', ms: Date.now() - started };
+    // A tiny probe may spend its allowance thinking. Preserve the diagnostic's
+    // numeric HTTP contract so model-check can run its existing larger retry.
+    return { ...info, status: info.status==='output-limit'?200:info.status ?? 0, text: text || '', ms: Date.now() - started };
   } catch (e) {
     return { status: 0, message: timedOut ? 'No answer within 25 seconds' : signal.aborted ? 'Stopped' : (e && e.message) || 'Network error', text: '', ms: Date.now() - started };
   } finally {
@@ -736,8 +872,8 @@ export async function geminiKeyLock() {
     providerFetch(`${GEMINI_BASE}/models?pageSize=1`, { signal, headers: { 'x-goog-api-key': key }, referrerPolicy, cache: 'no-store' });
   try {
     const [bare, normal] = await Promise.all([probe('no-referrer'), probe('strict-origin-when-cross-origin')]);
-    const bareErr = bare.ok ? null : await waitFor(readError(bare),signal);
-    const normalErr = normal.ok ? null : await waitFor(readError(normal),signal);
+    const bareErr = bare.ok ? null : await readError(bare,signal,{gemini:key});
+    const normalErr = normal.ok ? null : await readError(normal,signal,{gemini:key});
     if (normal.ok && bare.ok) return { state: 'open' };
     if (normal.ok && /refer/i.test(bareErr?.message || '')) return { state: 'locked' };
     if (/refer/i.test(normalErr?.message || '')) return { state: 'wrong-site', message: normalErr.message };
@@ -755,7 +891,7 @@ export async function openRouterKeyInfo() {
   const key=keys.openrouter,signal=providerSignal(AbortSignal.timeout(20_000));
   try {
     const res = await providerFetch(`${OPENROUTER_BASE}/key`, { signal, headers: { authorization: `Bearer ${key}` }, cache: 'no-store' });
-    if (!res.ok) return { state: 'error', message: (await waitFor(readError(res),signal)).message };
+    if (!res.ok) return { state: 'error', message: (await readError(res,signal)).message };
     const { data = {} } = await waitFor(res.json(),signal);
     const limit = data.limit === undefined ? null : data.limit;
     if (limit === 0) return { state: 'capped' };

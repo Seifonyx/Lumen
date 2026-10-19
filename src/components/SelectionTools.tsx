@@ -32,6 +32,8 @@ export default function SelectionTools() {
       }, 180);
     };
     document.addEventListener('selectionchange', check);
+    // A user can select text before this optional chunk mounts.
+    check();
     const away = (e: PointerEvent) => { if (openRef.current && !box.current?.contains(e.target as Node)) { setOpen(false); setPicked(null); } };
     const key = (e: KeyboardEvent) => { if (e.key === 'Escape' && openRef.current) { setOpen(false); setPicked(null); } };
     const scroll = () => { if (!openRef.current) setPicked(null); };

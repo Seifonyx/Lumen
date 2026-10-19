@@ -39,7 +39,7 @@ Write detailed, factual notes on what you find: specific facts, figures, dates, 
 export function numberSources(steps: Research['steps']): { sources: Source[]; index: Map<string, number> } {
   const sources: Source[] = [];
   const index = new Map<string, number>();
-  for (const s of steps) for (const src of s.sources || []) {
+  for (const s of steps.filter(step=>step.status==='done')) for (const src of s.sources || []) {
     if (index.has(src.url)) continue;
     sources.push(src);
     index.set(src.url, sources.length);
@@ -50,7 +50,7 @@ export function numberSources(steps: Research['steps']): { sources: Source[]; in
 /** What the writing model is given: the notes from every search and the numbered sources behind them. */
 export function reportBrief(question: string, steps: Research['steps']) {
   const { sources, index } = numberSources(steps);
-  const notes = steps.filter((s) => s.notes).map((s, i) => {
+  const notes = steps.filter((s) => s.status==='done' && s.notes).map((s, i) => {
     const refs = (s.sources || []).map((src) => `[${index.get(src.url)}]`).join(' ');
     return `### Search ${i + 1}: ${s.query}\nSources: ${refs || 'none'}\n\n${s.notes!.trim()}`;
   }).join('\n\n');

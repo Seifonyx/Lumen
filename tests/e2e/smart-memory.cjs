@@ -1,8 +1,8 @@
 // 2.0: "About me" in your own words goes to every model; facts a model keeps "for this project" stay in that
 // project's chats; you can move a memory between a project and every chat.
-const { chromium } = require('playwright'), assert = require('node:assert/strict');
+const { chromium, webkit } = require('playwright'), assert = require('node:assert/strict');
 const { profile, seed } = require('./helpers/preview-profile.cjs');
-const URL = process.env.MR_TEST_URL || 'http://localhost:5190/?emulator';
+const URL = process.env.MR_TEST_URL || 'http://localhost:5190/';
 const now = Date.now();
 const projects = [{ id: 'alpha', name: 'Alpha', instructions: '', createdAt: now, updatedAt: now }];
 const chats = [
@@ -12,13 +12,13 @@ const chats = [
 const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { parts: [{ text }] }, finishReason: 'STOP' }] }) + '\n\n';
 
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await (process.env.MR_WEBKIT ? webkit : chromium).launch();
   try {
     const ctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, serviceWorkers: 'block' });
-    await profile(ctx, 'smart-memory', 'light', { memory: true, memoryAuto: true, projects });
+    await profile(ctx, 'preview-smart-memory', 'light', { memory: true, memoryAuto: true, projects });
     const bodies = [];
     await ctx.route('**/generativelanguage.googleapis.com/**', (r) => {
-      if (r.request().url().includes('/models?')) return r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash', supportedGenerationMethods: ['generateContent'] }] } });
+      if (r.request().url().includes('/models?')) return r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash', inputTokenLimit: 128000, supportedGenerationMethods: ['generateContent'] }] } });
       const body = r.request().postData() || '';
       if (r.request().url().includes(':generateContent')) return r.fulfill({ json: { candidates: [{ content: { parts: [{ text: 'I like sailing and I keep notes in Markdown. I prefer short, direct answers.' }] } }] } });
       bodies.push(body);
@@ -28,7 +28,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(URL);
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
-    await seed(page, 'smart-memory', chats);
+    await seed(page, 'preview-smart-memory', chats);
     await page.reload();
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
 

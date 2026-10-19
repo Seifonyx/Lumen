@@ -223,7 +223,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
             <div className="mp-label">{PROVIDER_NAMES[p]}</div>
             {list.map((m) => {
               const info = catalog?.models.find((x) => x.id === m.id);
-              const sub = [info?.context ? `${ctx(info.context)} context` : '', info?.preview ? 'preview' : '', !info ? 'Not available right now' : ''].filter(Boolean).join(' · ') || m.name;
+              const sub = [info?.context ? `${ctx(info.context)} context` : '', info?.preview ? 'preview' : '', info?.metadata?.verification==='unchecked'?'Declared · unchecked':'',info?.metadata?.stale?'Cached details':'', !info ? 'Not available right now' : ''].filter(Boolean).join(' · ') || m.name;
               return (
                 <button type="button" key={m.id} role="option" aria-selected={m.id === value} className={`mp-item${m.id === value ? ' selected' : ''}${info ? '' : ' unavailable'}`} onClick={() => pick(m.id)}>
                   <ProviderMark provider={p} />

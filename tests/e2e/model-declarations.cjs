@@ -1,0 +1,53 @@
+const {chromium,webkit}=require('playwright');
+const assert=require('node:assert/strict');
+const {profile}=require('./helpers/preview-profile.cjs');
+const base=process.env.MR_TEST_URL || 'http://localhost:5190/';
+(async()=>{
+ const browser=await(process.env.MR_WEBKIT?webkit:chromium).launch();
+ try {for(const width of [390,1280]){
+  const ctx=await browser.newContext({viewport:{width,height:844},isMobile:width<900,hasTouch:width<900,serviceWorkers:'block'});
+  const uid=`preview-declarations-${width}`,calls=[];let denied=false;
+  await profile(ctx,uid,'dark');
+  await ctx.route('**/generativelanguage.googleapis.com/**',r=>{
+   if(r.request().url().includes('/models?'))return r.fulfill(denied?{status:401,json:{error:{message:'Key rejected'}}}:{json:{models:[{name:'models/gemini-flash-latest',displayName:'Gemini Flash',inputTokenLimit:64000,supportedGenerationMethods:['generateContent']}]}});
+   calls.push(r.request().url());return r.fulfill({contentType:'text/event-stream',body:'data: '+JSON.stringify({candidates:[{content:{parts:[{text:'DECLARED_MODEL_REPLY'}]},finishReason:'STOP'}]})+'\n\n'});
+  });
+  const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const settings=async()=>{if(width<900)await page.locator('.menu-btn').click();await page.locator('.sidebar-foot').click();await page.locator('.settings-tabs').getByRole('button',{name:'Models',exact:true}).click();};
+  await page.goto(base);await page.locator('.composer textarea').waitFor();await settings();
+  await page.getByRole('button',{name:'Add custom model',exact:true}).click({timeout:3000});
+  await page.getByLabel('Model ID',{exact:true}).fill('gemini-custom-chat');
+  await page.getByLabel('Display name',{exact:true}).fill('Custom Test');
+  await page.getByLabel('Context limit (tokens)',{exact:true}).fill('128000');
+  await page.getByRole('button',{name:'Save model',exact:true}).click();
+  await page.locator('.declared-models').getByText('Custom Test',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Add custom model',exact:true}).evaluate(node=>document.activeElement===node),true,'saving restores keyboard focus to the enabled Add button');
+  await page.getByRole('button',{name:'Add custom model',exact:true}).click();
+  await page.getByLabel('Model ID',{exact:true}).waitFor();await page.keyboard.press('Escape');
+  assert.equal(await page.getByRole('button',{name:'Add custom model',exact:true}).evaluate(node=>document.activeElement===node),true,'Escape closes the editor and restores keyboard focus');
+  assert.equal(calls.length,0,'saving a declaration does not probe or send private content');
+  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('mr.settings')).modelDeclarations);
+  assert.equal(saved[0].context,128000);assert(!JSON.stringify(saved).includes('fixture'),'declarations contain no credentials');
+  await page.locator('.settings-page').getByRole('button',{name:'Close',exact:true}).click();
+  await page.locator('.model-button').click();
+  const row=page.locator('.mp-item').filter({hasText:'Custom Test'});
+  assert.match(await row.innerText(),/declared|unchecked/i);await row.click();
+  await page.locator('.composer textarea').fill('Hello custom model');await page.getByRole('button',{name:'Send',exact:true}).click();
+  await page.getByText('DECLARED_MODEL_REPLY',{exact:true}).waitFor();assert.equal(calls.length,1);assert(calls[0].includes('gemini-custom-chat'));
+  await page.reload();await page.locator('.composer textarea').waitFor();await settings();
+  await page.locator('.declared-models').getByText('Custom Test',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Edit Custom Test',exact:true}).click();
+  await page.getByLabel('Context limit (tokens)',{exact:true}).fill('0');await page.getByRole('button',{name:'Save model',exact:true}).click();
+  await page.getByRole('alert').filter({hasText:/context|token/i}).waitFor();
+  await page.getByLabel('Context limit (tokens)',{exact:true}).fill('256000');await page.getByRole('button',{name:'Save model',exact:true}).click();
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mr.settings')).modelDeclarations[0].context),256000);
+  await page.screenshot({path:`tests/e2e/out/model-declarations-${process.env.MR_WEBKIT?'webkit':'chromium'}-${width}.png`});
+  denied=true;await page.reload();await page.locator('.composer textarea').waitFor();
+  await page.waitForFunction(()=>!!document.querySelector('.catalog-error-notice, .catalog-error'));
+  await page.locator('.model-button').click();
+  assert.equal(await page.locator('.models-pop .mp-item').filter({hasText:'Custom Test'}).count(),0,'rejected credentials cannot resurrect declarations');await page.keyboard.press('Escape');
+  await settings();await page.getByRole('button',{name:'Remove Custom Test',exact:true}).click();
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mr.settings')).modelDeclarations.length),0);
+  assert.deepEqual(errors,[]);console.log(`PASS declared models ${process.env.MR_WEBKIT?'webkit':'chromium'} ${width}px: live propagation, no probes, first use, reload, edit, auth eviction and removal`);await ctx.close();
+ }}finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exit(1)});

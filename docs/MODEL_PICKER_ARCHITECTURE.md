@@ -34,7 +34,7 @@ Metadata sources are distinct:
 - Inferred: bounded family/name hints, not benchmarks.
 - Unknown: no specification is invented. Unknown context gets a conservative request allowance; missing prices are not zero.
 
-For declarations, API facts must override conflicting user assumptions; documented transport constraints cannot be bypassed by a checkbox. A declaration may fill unknown or inferred metadata, but cannot make an unsupported adapter operation work. Authentication rejection must not be hidden by declared or cached models. This declaration layer remains a tracked implementation task until its tests and UI are verified.
+For declarations, API facts override conflicting user assumptions; documented transport constraints cannot be bypassed by a checkbox. A declaration may fill unknown or inferred metadata, but cannot make an unsupported adapter operation work. Raw scoped discovery caches stay separate from derived declarations. Explicit API denials survive filtering and cache hydration; authentication rejection cannot be hidden by declared or cached models. Declaration identity includes the supported endpoint and, for Cloudflare, its account. OpenRouter declarations only enrich API-listed, confirmed-free models. Declared facts remain labelled unchecked and never trigger background inference probes.
 
 ## Refresh and synchronization
 
@@ -62,6 +62,12 @@ The streaming runtime already bounds attempts and deadlines and separates failur
 
 Comparison stages need immutable request snapshots for explicit retries; a successful stage must not be rerun just because another fails. Invalidate old synthesis when its source answers change. Cross-account/key changes cancel or invalidate old stage executions. Research/tool stages retain strict capabilities, permissions and side-effect safeguards. No automatic replay of external commits, tool side effects or ambiguous billing writes.
 
+`ai/recovery.js` classifies failures independently of mode policy. Callers supply authorized candidates and consume bounded attempt/time budgets. Terminal validation/cancellation stops; account-wide authentication/billing failures skip sibling models without damaging model quality history. Model/capability failures request throttled provider metadata expiry through the active-browser coordinator, never recursively invoke inference. Current registry membership outranks old request capability snapshots at each fallback attempt, including one-shot summaries and titles.
+
+Comparison source stages use only explicitly selected models and retry only the failed/stopped slot on user action. Frozen request/restoration data stays in private session closures; account, connection, privacy, instructions and originating context invalidate old work. Synthesis depends only on completed source answers and uses shared task/quality routing within their selected IDs. Global switching controls its fallbacks. No failed synthesis text becomes a source. Research plans and searches use the originating chat's helper pool; incomplete search notes and sources never feed the report.
+
+Stream adapters distinguish semantic completion from transport EOF. Missing/malformed completion before finish produces an error; visible output remains readable and cannot silently continue on a fallback. After logical finish only trailing usage is accepted, with a bounded100ms drain before closing lingering IO. Explicit output allowances are clamped to known provider limits; missing limits remain unknown. Ordinary chat retains its existing allowance while synthesis and research specify their own budgets.
+
 ## Security and verification
 
 Credentials go only to supported official endpoints or the user's configured relay. The relay accepts fixed provider/path allowlists, never arbitrary upstream URLs, and does not forward redirects. Catalog diagnostics redact credentials. Cache and local performance records need correct account/configuration scope. Provider billing opt-ins and privacy masking remain authoritative for every caller.
@@ -69,3 +75,5 @@ Credentials go only to supported official endpoints or the user's configured rel
 Tests use deterministic provider responses for lifecycle, eligibility, ordering, recovery, streaming, cancellation and stage-state behavior. They do not measure answer quality. Actual comparative quality needs representative real answers, a defined evaluation rubric and authorized provider access/budget. Physical iPhone compositing/touch remains distinct from Linux WebKit verification.
 
 Release requires relevant local checks, full repository CI, reviewed security/compatibility outcomes, protected main integration and hosted deployment verification. No claim of mathematical optimality or impossibility of future improvements is supported.
+
+Titles snapshot only their actual first-user input and originating consent. Later tool/file/repository continuations cannot discard the unchanged title; first-input edits/deletion, policy/privacy/model/project/memory changes, disabling autoTitle and account/key changes still invalidate. Per-attempt title/helper accounting includes failed/completed calls and same-key Stop, with old-key publication suppressed.

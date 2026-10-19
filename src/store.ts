@@ -1,7 +1,7 @@
 import { markUnseen, notify } from './lib/notify';
 import { pageSwap, pageTransition } from './lib/motion';
 import { create } from 'zustand';
-import { keyVersion, openRouterDailyLimit, parseModelId, probeModel, restoreCatalog, setKeys } from './lib/ai/providers.js';
+import { keyVersion, providerSignal, openRouterDailyLimit, parseModelId, probeModel, restoreCatalog, resolveCatalog, setKeys } from './lib/ai/providers.js';
 import { catalogScope, readCatalogCache, writeCatalogCache } from './lib/ai/catalog-cache.js';
 import { startCatalogRefresh } from './lib/ai/catalog-refresh.js';
 import { attachmentNeeds, modelProblem } from './lib/ai/eligibility.js';
@@ -10,7 +10,7 @@ import { selectedModel } from './lib/model-selection';
 import { layoutModelProblem,layoutPolicy,planLayout } from './lib/layout-policy';
 import { checkModels as runModelCheck, clearCut, type CheckResult } from './lib/ai/model-check';
 import { AI_PROVIDERS, EXTRA_PROVIDERS, normalizeKeys, providerEnabled } from './lib/ai/provider-config.js';
-import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage } from './lib/api';
+import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type WireMessage, type StreamEvent } from './lib/api';
 import { keepModelChoice, isExcludedModel } from './lib/ai/model-status.js';
 import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
 import { previousWork } from './lib/work-intent';
@@ -30,7 +30,10 @@ import { quota, type QuotaView } from './lib/quota';
 import { extractMemoryOps, findMemory, hideMemoryLines, MAX_MEMORIES, memoryInstructions, MemoryStore } from './lib/memory';
 import { AUTO, analyze, estimateTokens, planRoute, type RouteInput } from './lib/routing';
 import { buildInstructions } from './lib/ai/instructions.js';
-import { inputBudget } from './lib/ai/context-budget.js';
+import { inputBudget, requestTokens } from './lib/ai/context-budget.js';
+import { runComparisonStage } from './lib/comparison-stage';
+import { comparisonSnapshotKey, titleSnapshotKey } from './lib/comparison-snapshot';
+import { helperModels } from './lib/helper-routing';
 import { waitFor as waitForSignal } from './lib/ai/chat.js';
 import { hasVideo, toolModel } from './lib/ai/tool-inputs.js';
 import { isCoolingDown, reliability, replyLatency, setHealthScope } from './lib/ai/health.js';
@@ -49,7 +52,7 @@ import { applyAppearance, DEFAULT_SETTINGS, loadSettings, saveSettings, styleIns
 import { modelShortName, uid } from './lib/util';
 import { cleanRewrite, writingPrompt } from './lib/writing-tools';
 import { askPrompt, type Hit } from './lib/history-search';
-import { MAX_SOURCE_CHARS, parseDeck, studyPrompt, type StudyDeck } from './lib/study';
+import { parseDeck, studyPrompt, type StudyDeck } from './lib/study';
 import { linkCitations, numberSources, parsePlan as parseResearchPlan, planPrompt, reportBrief, searchPrompt } from './lib/research';
 import type { Attachment, Catalog, Chat, ChatSummary, ComparisonState, FileChange, Memory, Message, ModelInfo, Project, RepoLink, Research, SavedAssistant, ScheduledTask, Settings } from './types';
 
@@ -188,6 +191,7 @@ interface State {
   branchChatFrom(chatId: string, messageId: string): void;
   setChatTags(chatId: string, tags: string[]): void;
   runComparison(text: string, files: Attachment[], models: string[], opts?: { privacy?: 'asIs' }): Promise<void>;
+  retryComparison(model: string): Promise<void>;
   cancelComparison(): void;
   clearComparison(): void;
   /** Model, or 'combined' for the combined answer. */
@@ -235,6 +239,8 @@ let canvasController: AbortController | null = null;
 let modelCheckController: AbortController | null = null;
 let catalogLoad: { generation: number; version: number; work: Promise<void> } | null = null;
 let loadedCatalogScope: string | null = null;
+let rawCatalogValue: Catalog | null = null;
+let derivedCatalogSettings = '';
 let keySaveGeneration = 0;
 let keySaveQueue: Promise<void> = Promise.resolve();
 let stopDiscoveryLifecycle: (() => void) | undefined;
@@ -251,7 +257,32 @@ let lastSharedSettings = '';
 
 const newChatObject = (): Chat => ({ id: uid(), title: 'New chat', createdAt: Date.now(), updatedAt: Date.now(), messages: [] });
 
+interface ComparisonSession {
+  id: string;
+  generation: number;
+  version: number;
+  policyMatches(): boolean;
+  modelProblem(model: string): string | null;
+  run(models: string[], aborter?: AbortController): Promise<void>;
+}
+
 export const useStore = create<State>((set, get) => {
+  // Request bodies and restoration maps are ephemeral; never put them in saved chat state.
+  let comparisonSession: ComparisonSession | null = null;
+  const observeComparison = (event: StreamEvent) => {
+    if (event.t === 'unavailable') hideUnavailableModel(event.id, event.reason);
+    else if (event.t === 'request') usage?.record(event.id, { requests: 1 });
+    else if (event.t === 'usage') usage?.record(event.id, { input: event.input, output: event.output });
+    else if (event.t === 'limit') usage?.block(event.id, event as unknown as LimitInfo);
+  };
+
+  const watchComparisonPolicy=(session:ComparisonSession,active:AbortController)=>useStore.subscribe((next,previous)=>{
+    if(active.signal.aborted)return;
+    if(next.settings!==previous.settings || next.memories!==previous.memories || next.chats!==previous.chats || next.currentId!==previous.currentId || next.activeProjectId!==previous.activeProjectId) {
+      if(!session.policyMatches()) {active.abort();get().toast('Comparison settings or context changed. Compare again to use the current settings.');}
+    }
+  });
+
   let returnChatId: string | null = null;
   let returnProjectId: string | null = null;
   const discardTemporary = () => {
@@ -318,18 +349,39 @@ export const useStore = create<State>((set, get) => {
     return { aboutMe: settings.aboutMe, projectId: project?.id, projectName: project?.name };
   };
 
-  /** Models to write a summary with: fast Gemini models first, then the user's own models. */
-  const summaryModels = (tokens: number, outputTokens = 8192): string[] => {
-    const { settings, catalog } = get();
-    const known = (id: string) => !catalog?.models.length || catalog.models.some((m) => m.id === id);
-    const fits = (id: string) => {
-      const ctx = modelInfo(catalog, id)?.context;
-      return !ctx || ctx * .95 > tokens * 1.1 + outputTokens;
+  /** Every helper uses the current registry and the originating chat’s permitted pool. */
+  const summaryModels = (tokens: number, outputTokens = 8192, text='Summarize the source faithfully', chat?:Chat | null, preferred?:string): string[] => {
+    const { settings, catalog }=get();
+    const selected=chat?modelFor(chat):AUTO;
+    const layout=isLayoutId(selected)?findLayout(selected,catalog?.models || [],settings.layouts,settings.hiddenLayouts):null;
+    const policy=layout?layoutPolicy(layout,settings.autoSwitch):null;
+    const enabled=layout?[...new Set([...layout.models,...(policy?.outside?settings.enabledModels:[])])].filter(id=>!layoutModelProblem(layout,modelInfo(catalog,id)))
+      :selected!==AUTO&&!settings.autoSwitch?[selected]:settings.enabledModels;
+    const scope=layout?.mode==='order'&&!policy?.switching?enabled.filter(id=>id===layout.models[0]):enabled;
+    let candidates=helperModels(catalog?.models || [],{...settings,enabledModels:scope,routingPreference:layout?.priority || settings.routingPreference},{
+      tokens,outputTokens,text,preferred:preferred || (selected!==AUTO&&!isLayoutId(selected)?selected:undefined),
+      blocked:id=>(usage?.blockedUntil(id) ?? null)!==null || isCoolingDown(id),left:id=>remaining(get().usage,id),
+    });
+    if(layout?.mode==='order')candidates=[...layout.models.filter(id=>candidates.includes(id)),...candidates.filter(id=>!layout.models.includes(id))];
+    return settings.autoSwitch && (!layout || policy?.switching)?candidates:candidates.slice(0,1);
+  };
+
+  /** Frozen helper consent plus fresh per-attempt metadata; never widens its original queue. */
+  const helperScope = (chat?:Chat | null,title=false) => {
+    const generation=accountGeneration,version=keyVersion();
+    const settings=get().settings,selected=chat?modelFor(chat):AUTO;
+    const layout=isLayoutId(selected)?findLayout(selected,get().catalog?.models || [],settings.layouts,settings.hiddenLayouts):null;
+    const snapshot=()=>(title?titleSnapshotKey:comparisonSnapshotKey)({settings:get().settings,chat:chat?get().chats.find(item=>item.id===chat.id) || null:null,memories:get().memories});
+    const key=snapshot();
+    const current=()=>generation===accountGeneration && version===keyVersion() && snapshot()===key;
+    return {current,modelRequirements:layout?.requirements,
+      skip:(id:string)=>!current() || Boolean(layout && layoutModelProblem(layout,modelInfo(get().catalog,id))),
     };
-    const fast = ['gemini:gemini-flash-latest', 'gemini:gemini-2.5-flash', 'gemini:gemini-flash-lite-latest', 'gemini:gemini-2.5-flash-lite'].filter(known);
-    const ids = [...new Set([...fast, ...settings.enabledModels.filter((id) => id !== AUTO)])].filter(fits);
-    const blocked = (id: string) => (usage?.blockedUntil(id) ?? null) !== null;
-    return [...ids.filter((id) => !blocked(id)), ...ids.filter(blocked)];
+  };
+  const scopedSummary = async (prompt:string,models:string[],options:Parameters<typeof fetchSummary>[2],chat?:Chat | null) => {
+    const scope=helperScope(chat);
+    const result=await fetchSummary(prompt,models,{...options,skip:id=>scope.skip(id) || Boolean(options.skip?.(id)),modelRequirements:scope.modelRequirements});
+    return scope.current()?result:null;
   };
 
   /**
@@ -342,7 +394,7 @@ export const useStore = create<State>((set, get) => {
     // Privacy shield: the model summarizes placeholders; the summary is stored with the real values.
     const masker = get().settings.privacyShield ? new Masker() : null;
     const prompt = masker ? masker.mask(summaryPrompt(older, previous)).text : summaryPrompt(older, previous);
-    const result = await fetchSummary(prompt, summaryModels(estimateTokens(prompt), 4096), {
+    const result = await scopedSummary(prompt, summaryModels(estimateTokens(prompt),4096,'Summarize this conversation',chat), {
       signal,
       maxTokens: 4096,
       report: (id, info) => {
@@ -350,7 +402,7 @@ export const useStore = create<State>((set, get) => {
         usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 });
         if (info.limit) usage?.block(id, info.limit);
       },
-    });
+    },chat);
     if (!result) return null;
     return {
       through: older,
@@ -441,7 +493,7 @@ export const useStore = create<State>((set, get) => {
    * Deep research: plans searches, runs each with a Gemini model that searches Google, and keeps their notes and
    * sources on `reply.research` (shown as it goes). Returns the finished steps, or null if it was stopped.
    */
-  const runResearch = async (reply: Message, question: string, signal: AbortSignal, show: () => void, generation: number): Promise<Research['steps'] | null> => {
+  const runResearch = async (reply: Message, question: string, signal: AbortSignal, show: () => void, generation: number,chat:Chat): Promise<Research['steps'] | null> => {
     const research: Research = { phase: 'planning', steps: [] };
     reply.research = research;
     show();
@@ -450,38 +502,42 @@ export const useStore = create<State>((set, get) => {
       usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 });
       if (info.limit) usage?.block(id, info.limit);
     };
-    const planned = await fetchSummary(planPrompt(question), summaryModels(2000), { signal, report });
+    const planned = await scopedSummary(planPrompt(question), summaryModels(estimateTokens(planPrompt(question)),2048,'Plan the research',chat), { signal, report,maxTokens:2048 },chat);
     if (signal.aborted || generation !== accountGeneration) return null;
     const queries = parseResearchPlan(planned?.text || '', question);
     research.phase = 'searching';
     research.steps = queries.map((query) => ({ query, status: 'waiting' }));
     reply.research = { ...research };
     show();
-    // Search models: fast Gemini models that can search Google, then your other Gemini models.
-    const { settings, catalog } = get();
-    const known = (id: string) => !catalog?.models.length || catalog.models.some((m) => m.id === id);
-    const blocked = (id: string) => (usage?.blockedUntil(id) ?? null) !== null;
-    const ids = [...new Set(['gemini:gemini-flash-latest', 'gemini:gemini-2.5-flash', ...settings.enabledModels.filter(toolModel), 'gemini:gemini-flash-lite-latest'])].filter((id) => toolModel(id) && known(id));
-    const searchers = [...ids.filter((id) => !blocked(id)), ...ids.filter(blocked)];
+    // Research stages keep the originating chat’s scope and verified search requirements.
+    const { catalog } = get();
+    const scope=helperScope(chat);
+    const searchers=summaryModels(estimateTokens(searchPrompt(question,question)),4096,'Research current sources',chat)
+      .filter(id=>toolModel(id)&&!modelProblem(modelInfo(catalog,id),{search:true}));
     const searchOne = async (i: number) => {
       const step = research.steps[i];
       step.status = 'searching';
       reply.research = { ...research, steps: [...research.steps] };
       show();
       let notes = '';
+      let failed = false;
       const sources: { title: string; url: string }[] = [];
       try {
-        const body = buildChatBody({ model: searchers[0], fallbacks: searchers.slice(1), messages: [{ role: 'user', text: searchPrompt(question, step.query) }], options: { search: true, requireSearch: true } });
+        const eligible=searchers.filter(id=>!scope.skip(id));
+        if(!eligible.length)throw new Error('No permitted research model remains.');
+        const body = buildChatBody({ model: eligible[0], fallbacks: eligible.slice(1), messages: [{ role: 'user', text: searchPrompt(question, step.query) }], options: { search: true, requireSearch: true,modelCapabilities:requestCapabilities(get().catalog,eligible),modelRequirements:scope.modelRequirements,maxTokens:4096 } });
         for await (const ev of streamChat(body, signal)) {
           if (generation !== accountGeneration) return;
           if (ev.t === 'text') notes += ev.text;
+          else if (ev.t === 'error') failed = true;
           else if (ev.t === 'sources') { for (const src of ev.items) if (!sources.some((x) => x.url === src.url)) sources.push(src); }
           else if (ev.t === 'request') usage?.record(ev.id, { requests: 1 });
           else if (ev.t === 'usage') usage?.record(ev.id, { input: ev.input, output: ev.output });
           else if (ev.t === 'limit') usage?.block(ev.id, ev as unknown as LimitInfo);
         }
-      } catch { /* counted as failed below */ }
-      research.steps[i] = { ...step, status: notes.trim() ? 'done' : 'failed', notes: notes.trim() ? notes.slice(0, 12_000) : undefined, sources: sources.slice(0, 10) };
+      } catch { failed = true; }
+      const complete=!failed && !signal.aborted && Boolean(notes.trim());
+      research.steps[i] = { ...step, status: complete ? 'done' : 'failed', notes: complete ? notes.slice(0, 12_000) : undefined, sources: complete ? sources.slice(0, 10) : [] };
       reply.research = { ...research, steps: [...research.steps] };
       show();
     };
@@ -733,7 +789,7 @@ export const useStore = create<State>((set, get) => {
     let cited: ReturnType<typeof numberSources>['sources'] = [];
     if (research) {
       const question = wire[wire.findLastIndex((m) => m.role === 'user')]?.text || '';
-      const steps = await runResearch(reply, question, replyController.signal, () => schedule(true), generation);
+      const steps = await runResearch(reply, question, replyController.signal, () => schedule(true), generation,chat);
       if (generation !== accountGeneration) return;
       if (steps && !replyController.signal.aborted) {
         const at = wire.findLastIndex((m) => m.role === 'user');
@@ -862,9 +918,15 @@ export const useStore = create<State>((set, get) => {
       // Naming is background work: repository file requests and the next turn
       // should never wait for a separate title completion.
       void (async () => {
-        const result = await fetchTitle(titleMasker ? titleMasker.mask(firstText).text : firstText, reply.model, (id) => (usage?.blockedUntil(id) ?? null) !== null);
-        if (generation !== accountGeneration) return;
-        if (result) usage?.record(result.model, { requests: 1 });
+        const titleText=titleMasker ? titleMasker.mask(firstText).text : firstText;
+        const candidates=summaryModels(estimateTokens(titleText)+200,256,'Write a short chat title',updated,reply.model);
+        const scope=helperScope(updated,true);
+        const result = await fetchTitle(titleText, reply.model, (id) => scope.skip(id) || (usage?.blockedUntil(id) ?? null) !== null,candidates,(id,info)=>{
+          if(generation!==accountGeneration)return;
+          usage?.record(id,{requests:1,input:info.input || 0,output:info.output || 0});
+          if(info.limit)usage?.block(id,info.limit);
+        });
+        if (generation !== accountGeneration || !scope.current()) return;
         const latest = get().chats.find((c) => c.id === chatId);
         if (result && latest && latest.title === updated.title) {
           const named = { ...latest, title: titleMasker ? titleMasker.unmask(result.title) : result.title };
@@ -994,18 +1056,23 @@ export const useStore = create<State>((set, get) => {
       window.addEventListener('online', onNet);
       window.addEventListener('offline', onNet);
       stopDiscoveryLifecycle?.();
-      stopDiscoveryLifecycle=startCatalogRefresh({canRefresh:()=>Boolean(navigator.onLine && get().authed && get().user && AI_PROVIDERS.some(p=>providerEnabled(p,get().keys))),refresh:()=>get().loadCatalog(false)});
+      stopDiscoveryLifecycle=startCatalogRefresh({canRefresh:()=>Boolean(navigator.onLine && get().authed && get().user && AI_PROVIDERS.some(p=>providerEnabled(p,get().keys))),refresh:()=>get().loadCatalog(false),onInvalidate:(provider:string)=>{
+        const current=get().catalog,status=current?.providerStatus?.[provider];
+        if(current&&status)set({catalog:{...current,providerStatus:{...current.providerStatus,[provider]:{...status,nextRefresh:0}}}});
+      }});
       try { localStorage.removeItem('mr.catalog'); } catch { /* obsolete unscoped cache */ }
       watchUser(async (user) => {
         cancelKnowledge();
         modelCheckController?.abort();
         const generation = ++accountGeneration;
         loadedCatalogScope = null;
+        rawCatalogValue=null;derivedCatalogSettings='';
         setHealthScope(null);
         keySaveGeneration++;
         get().stop();
         stopSpeaking();
         controller = null; compactController = null; compareController = null; canvasController = null;
+        comparisonSession = null;
         settingsReady = false;
         clearTimeout(settingsTimer);
         canvasSyncTimers.forEach(timer => clearTimeout(timer));
@@ -1097,7 +1164,7 @@ export const useStore = create<State>((set, get) => {
           if (generation !== accountGeneration) return;
           set({ chats });
         }
-        void quota.start();
+        if(!isPreviewUser(user.uid))void quota.start();
         sync = new ChatSync(user.uid, {
           local: (id) => generation === accountGeneration ? get().chats.find((c) => c.id === id) : undefined,
           allLocal: () => generation === accountGeneration ? get().chats.filter(c=>!isTemporaryChat(c)) : [],
@@ -1165,6 +1232,7 @@ export const useStore = create<State>((set, get) => {
           || ((config?.relay||config?.fallback)&&clean.providerRelayUrl!==before.providerRelayUrl);
       });
       if (changed.length) {
+        rawCatalogValue=null;derivedCatalogSettings='';
         const keep = (id: string) => !changed.some((provider) => id.startsWith(`${provider}:`));
         get().updateSettings({ unavailableModels: (get().settings.unavailableModels || []).filter(keep), unavailableInfo: Object.fromEntries(Object.entries(get().settings.unavailableInfo || {}).filter(([id]) => keep(id))) });
       }
@@ -1214,7 +1282,10 @@ export const useStore = create<State>((set, get) => {
       try { localStorage.setItem(KEY, JSON.stringify(Date.now())); } catch { /* private mode */ }
       const seen = read<Record<string, number>>(SEEN, {});
       // Your models plus removed ones, a few per provider (least recently checked first) to spare free allowances.
-      const candidates = [...new Set([...settings.enabledModels.filter((id) => id !== AUTO && !isLayoutId(id)), ...(settings.unavailableModels || [])])];
+      // Unchecked declarations are assumptions, not consent to automatic inference probes.
+      // Users can still explicitly select them in Check models or send a message.
+      const declared=new Set((settings.modelDeclarations || []).map(model=>model.id));
+      const candidates = [...new Set([...settings.enabledModels.filter((id) => id !== AUTO && !isLayoutId(id)), ...(settings.unavailableModels || [])])].filter(id=>!declared.has(id));
       const perProvider = new Map<string, string[]>();
       for (const id of candidates.sort((a, b) => (seen[a] || 0) - (seen[b] || 0))) {
         const p = id.split(':')[0], list = perProvider.get(p) || [];
@@ -1279,12 +1350,17 @@ export const useStore = create<State>((set, get) => {
             loadedCatalogScope=scope;
             const saved=readCatalogCache(localStorage,user.uid,scope) as Catalog | null;
             const hidden=new Set(get().settings.unavailableModels || []);
+            rawCatalogValue=saved;
             if(saved) restoreCatalog(saved);
-            set({catalog:saved?{...saved,models:saved.models.filter(m=>providerEnabled(m.id.split(':')[0],keys)&&!isExcludedModel(m.id)&&!hidden.has(m.id))}:null});
+            const resolved=saved?resolveCatalog(saved,get().settings.modelDeclarations,[...hidden]) as Catalog:null;
+            set({catalog:resolved?{...resolved,models:resolved.models.filter(m=>providerEnabled(m.id.split(':')[0],keys)&&!isExcludedModel(m.id)&&!hidden.has(m.id))}:null});
           }
           let catalog=await fetchCatalog(force);
           if (generation !== accountGeneration || version !== keyVersion()) return;
+          rawCatalogValue=catalog;
           writeCatalogCache(localStorage,user.uid,scope,catalog);
+          catalog=resolveCatalog(catalog,get().settings.modelDeclarations,get().settings.unavailableModels) as Catalog;
+          derivedCatalogSettings=JSON.stringify([get().settings.modelDeclarations,get().settings.unavailableModels]);
           // Quota lookup is ancillary and must not run every refresh tick or cross key/account changes.
           if(force) void openRouterDailyLimit().then((n) => {if(generation===accountGeneration && version===keyVersion())usage?.setOpenRouterDaily(n);});
           usage?.useProviders(AI_PROVIDERS.filter(p => catalog.providers[p === 'gemini' ? 'google' : p as ModelInfo['provider']]) as import('./lib/usage').Provider[]);
@@ -1327,6 +1403,11 @@ export const useStore = create<State>((set, get) => {
         try { localStorage.removeItem('mr.activeProject'); } catch { /* private mode */ }
       }
       set({ settings, activeProjectId });
+      const derived=JSON.stringify([settings.modelDeclarations,settings.unavailableModels]);
+      if(rawCatalogValue && derived!==derivedCatalogSettings) {
+        derivedCatalogSettings=derived;
+        set({catalog:resolveCatalog(rawCatalogValue,settings.modelDeclarations,settings.unavailableModels) as Catalog});
+      }
       // Share settings with your other devices (voice language stays per device).
       const uid = get().user?.uid;
       if (uid && settingsReady) {
@@ -1665,22 +1746,25 @@ export const useStore = create<State>((set, get) => {
     },
 
     async runComparison(text, files, models, opts) {
-      const generation = accountGeneration;
       if (get().comparing || get().streamingChatId || get().compactingChatId || get().canvasEditingChatId) return;
       if (!navigator.onLine) {
         get().toast("You're offline — your message is kept here; send it when you're back online.");
         return;
       }
-      const selected = [...new Set(models)].filter((id) => get().settings.enabledModels.includes(id)).slice(0, 3);
-      if (selected.length < 2) {
-        get().toast('Choose two or three enabled models to compare.', 'error');
-        return;
-      }
-      const chat = currentChat();
-      const settings = get().settings;
+      const selected = [...new Set(models)].filter(id => get().settings.enabledModels.includes(id)).slice(0, 3);
+      if (selected.length < 2) { get().toast('Choose two or three enabled models to compare.', 'error'); return; }
+      const generation = accountGeneration, version = keyVersion();
+      const chat = currentChat(), settings = get().settings;
+      const chatId = chat?.id || null;
       const projectId = chat ? chat.projectId : currentProjectId();
-      const project = settings.projects?.find((p) => p.id === projectId);
-      const projectFiles = project?.files?.filter((f) => Boolean(f.text)) || [];
+      const project = settings.projects?.find(item => item.id === projectId);
+      const projectFiles = project?.files?.filter(file => Boolean(file.text)) || [];
+      const policyKey = comparisonSnapshotKey({ settings, chat, projectId, memories: get().memories });
+      const policyMatches = () => comparisonSnapshotKey({
+        settings: get().settings,
+        chat: chatId ? get().chats.find(item => item.id === chatId) || null : currentChat(),
+        projectId: chatId ? projectId : currentProjectId(), memories: get().memories,
+      }) === policyKey;
       const inputWire: WireMessage = {
         role: 'user', text,
         files: files.filter((f) => f.data || f.text || f.videoUri).map(({ kind, name, mime, data, text: fileText, videoUri }) => ({ kind, name, mime, data, text: fileText, videoUri })),
@@ -1709,71 +1793,107 @@ export const useStore = create<State>((set, get) => {
           wire[i] = { ...wire[i], text: masker.mask(wire[i].text).text, files: wire[i].files?.map((f) => (f.text ? { ...f, text: masker.mask(f.text).text } : f)) };
         }
       }
-      let workspace = '';
-      if (chat?.repo) {
-        const tree = await repoTree(chat.repo).catch(() => null);
-        workspace = workspaceInstructions(chat.repo, tree?.files || [], Boolean(tree?.truncated), chat.context || [], '');
-      }
-      const rawMemory = settings.memory && !isTemporaryChat(chat) ? memoryInstructions(get().memories, settings.memoryAuto, memoryScope(chat)) : '';
-      const custom = [settings.customInstructions, styleInstructions(settings), project?.instructions, chat?.assistant?.instructions].filter(Boolean).join('\n\n');
-      const required=attachmentNeeds(wire.flatMap(m=>m.files || []));
-      for(const model of selected) {
-        const metadata=modelInfo(get().catalog,model);
-        const problem=modelProblem(metadata,{...required,tokens:wire.reduce((sum,m)=>sum+estimateTokens(m.text,m.files as Attachment[])+8,0)+estimateTokens(custom)+estimateTokens(rawMemory)+estimateTokens(workspace),unavailable:!metadata});
-        if(problem) {get().toast(`${modelLabel(get().catalog,model)} ${problem}. Choose compatible models before comparing.`,'error');return;}
-      }
-      const restore = (value: string) => masker && settings.privacyRestore ? masker.unmask(value) : value;
-      const bodyFor = (model: string) => buildChatBody({
-        model, fallbacks: [], messages: wire,
-        options: {
-          modelCapabilities: requestCapabilities(get().catalog, [model]),
-          search: settings.webSearch,
-          customInstructions: masker ? masker.mask(custom).text : custom,
-          memory: masker ? masker.mask(rawMemory).text : rawMemory,
-          workspace,
-          conversationTokens: (chat ? contextTokens(chat) : 0) + projectTokens,
-        },
-      });
-      const comparisonId = uid();
-      set({
-        comparing: true,
-        comparison: { id: comparisonId, chatId: chat?.id || null, projectId: projectId || undefined, prompt: text, files: files.length ? files : undefined, privacyAsIs: opts?.privacy === 'asIs', answers: selected.map((model) => ({ model, text: '', status: 'loading' })) },
-      });
       const aborter = new AbortController();
+      const signal = providerSignal(aborter.signal);
       compareController = aborter;
-      const updateAnswer = (model: string, patch: Partial<ComparisonState['answers'][number]>) => set((s) => s.comparison?.id === comparisonId ? ({ comparison: { ...s.comparison, answers: s.comparison.answers.map((a) => a.model === model ? { ...a, ...patch } : a) } }) : {});
+      set({ comparing: true });
       try {
-        await Promise.all(selected.map(async (model) => {
-          let textOut = '';
-          let error = '';
-          let sources: NonNullable<ComparisonState['answers'][number]['sources']> = [];
-          try {
-            for await (const ev of streamChat(bodyFor(model), aborter.signal)) {
-              if (generation !== accountGeneration) return;
-              if (ev.t === 'unavailable') hideUnavailableModel(ev.id, ev.reason);
-              else if (ev.t === 'request') usage?.record(ev.id, { requests: 1 });
-              else if (ev.t === 'usage') usage?.record(ev.id, { input: ev.input, output: ev.output });
-              else if (ev.t === 'limit') usage?.block(ev.id, ev as unknown as LimitInfo);
-              else if (ev.t === 'text') textOut += ev.text;
-              else if (ev.t === 'sources') sources = [...sources, ...ev.items];
-              else if (ev.t === 'error') error = ev.text;
-              updateAnswer(model, { text: restore(hideMemoryLines(textOut)), ...(sources.length ? { sources } : {}) });
+        let workspace = '';
+        if (chat?.repo) {
+          const tree = await waitForSignal(repoTree(chat.repo).catch(() => null), signal);
+          workspace = workspaceInstructions(chat.repo, tree?.files || [], Boolean(tree?.truncated), chat.context || [], '');
+        }
+        if (generation !== accountGeneration || version !== keyVersion() || signal.aborted || compareController !== aborter) return;
+        if (!policyMatches()) { get().toast('Comparison settings or context changed. Compare again to use the current settings.', 'error'); return; }
+        const rawMemory = settings.memory && !isTemporaryChat(chat) ? memoryInstructions(get().memories, settings.memoryAuto, memoryScope(chat)) : '';
+        const custom = [settings.customInstructions, styleInstructions(settings), project?.instructions, chat?.assistant?.instructions].filter(Boolean).join('\n\n');
+        const customInstructions = masker ? masker.mask(custom).text : custom;
+        const memoryText = masker ? masker.mask(rawMemory).text : rawMemory;
+        const workspaceText = masker ? masker.mask(workspace).text : workspace;
+        const officeFiles = [...new Set(wire.flatMap(message => message.files || []).map(file => file.name).filter(name => /\.(docx|xlsx|xlsm)$/i.test(name)))];
+        const tokens = requestTokens(wire, buildInstructions({ custom: customInstructions, memory: memoryText, workspace: workspaceText, officeFiles }));
+        const required = attachmentNeeds(wire.flatMap(message => message.files || []));
+        const problemFor = (model: string): string | null => {
+          if (!get().settings.enabledModels.includes(model)) return 'is no longer enabled';
+          const metadata = modelInfo(get().catalog, model);
+          return modelProblem(metadata, { ...required, tokens, unavailable: !metadata || !providerEnabled(model.split(':')[0], get().keys) });
+        };
+        for (const model of selected) {
+          const problem = problemFor(model);
+          if (problem) { get().toast(`${modelLabel(get().catalog, model)} ${problem}. Choose compatible models before comparing.`, 'error'); return; }
+        }
+        const restore = (value: string) => masker && settings.privacyRestore ? masker.unmask(value) : value;
+        const bodies = new Map(selected.map(model => [model, buildChatBody({
+          model, fallbacks: [], messages: wire,
+          options: {
+            modelCapabilities: requestCapabilities(get().catalog, [model]),
+            search: settings.webSearch, customInstructions, memory: memoryText, workspace: workspaceText,
+            conversationTokens: (chat ? contextTokens(chat) : 0) + projectTokens,
+          },
+        })]));
+        const comparisonId = uid();
+        const session: ComparisonSession = {
+          id: comparisonId, generation, version, policyMatches, modelProblem: problemFor,
+          async run(ids, active = new AbortController()) {
+            compareController = active;
+            set({ comparing: true });
+            const current = () => comparisonSession === session && generation === accountGeneration
+              && get().comparison?.id === comparisonId && compareController === active;
+            const unwatch=watchComparisonPolicy(session,active);
+            try {
+              const stageSignal = providerSignal(active.signal);
+              await Promise.all(ids.map(model => runComparisonStage({
+                events: streamChat(bodies.get(model)!, stageSignal), signal: stageSignal,
+                transformText: value => restore(hideMemoryLines(value)), isCurrent: current, onEvent: observeComparison,
+                patch: patch => set(state => current() && state.comparison ? {
+                  comparison: { ...state.comparison, answers: state.comparison.answers.map(answer => answer.model === model ? { ...answer, ...patch, model } : answer) },
+                } : {}),
+              })));
+            } finally {
+              unwatch();
+              if (compareController === active) {
+                compareController = null;
+                if (generation === accountGeneration && get().comparison?.id === comparisonId) set({ comparing: false });
+              }
             }
-            updateAnswer(model, { status: textOut ? 'done' : aborter.signal.aborted ? 'stopped' : 'error', ...(error && !textOut ? { error } : !textOut ? { error: 'No answer was returned.' } : {}) });
-          } catch (e) {
-            updateAnswer(model, { status: (e as Error).name === 'AbortError' ? 'stopped' : 'error', error: (e as Error).name === 'AbortError' ? undefined : (e as Error).message });
-          }
-        }));
+          },
+        };
+        comparisonSession = session;
+        set({ comparison: {
+          id: comparisonId, chatId, projectId: projectId || undefined, prompt: text,
+          files: files.length ? structuredClone(files) : undefined, privacyAsIs: opts?.privacy === 'asIs',
+          answers: selected.map(model => ({ model, text: '', status: 'loading' })),
+        } });
+        await session.run(selected, aborter);
+      } catch (failure) {
+        if (generation === accountGeneration && compareController === aborter && !signal.aborted) get().toast((failure as Error).message || 'The comparison could not start.', 'error');
       } finally {
-        if (compareController === aborter) compareController = null;
-        if (get().comparison?.id === comparisonId) set({ comparing: false });
+        if (compareController === aborter) {
+          compareController = null;
+          if (generation === accountGeneration) set({ comparing: false });
+        }
       }
+    },
+    async retryComparison(model) {
+      const start = get().comparison, session = comparisonSession;
+      const answer = start?.answers.find(item => item.model === model);
+      if (!start || !session || start.id !== session.id || !answer || !['error', 'stopped'].includes(answer.status)
+        || get().comparing || get().streamingChatId || get().compactingChatId || get().canvasEditingChatId) return;
+      if (session.generation !== accountGeneration || session.version !== keyVersion() || !session.policyMatches()) {
+        get().toast('Comparison settings or context changed. Compare again to use the current settings.', 'error'); return;
+      }
+      const problem = session.modelProblem(model);
+      if (problem) { get().toast(`${modelLabel(get().catalog, model)} ${problem}. Compare again with a compatible model.`, 'error'); return; }
+      if ((usage?.blockedUntil(model) ?? null) !== null) { get().toast('This model is at its usage limit. Retry after it resets.', 'error'); return; }
+      if (!navigator.onLine) { get().toast("You're offline. Retry when you're back online."); return; }
+      set({ comparison: { ...start, combined: undefined, answers: start.answers.map(item => item.model === model ? { model, text: '', status: 'loading' } : item) } });
+      await session.run([model]);
     },
     async answerFromHistory(question, hits) {
       const generation = accountGeneration;
       const masker = get().settings.privacyShield ? new Masker() : null;
       const prompt = askPrompt(question, hits);
-      const result = await fetchSummary(masker ? masker.mask(prompt).text : prompt, summaryModels(Math.ceil(prompt.length / 4)), { minLength: 1, report: (id, info) => { if (generation !== accountGeneration) return; usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 }); if (info.limit) usage?.block(id, info.limit); } });
+      const result = await scopedSummary(masker ? masker.mask(prompt).text : prompt, summaryModels(estimateTokens(prompt)), { minLength: 1, report: (id, info) => { if (generation !== accountGeneration) return; usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 }); if (info.limit) usage?.block(id, info.limit); } });
       if (!result || generation !== accountGeneration) return null;
       return masker && get().settings.privacyRestore ? masker.unmask(result.text) : result.text;
     },
@@ -1786,7 +1906,7 @@ export const useStore = create<State>((set, get) => {
       const label = doc ? doc.name : chat.title;
       const masker = get().settings.privacyShield ? new Masker() : null;
       const prompt = studyPrompt(masker ? masker.mask(source).text : source, label);
-      const result = await fetchSummary(prompt, summaryModels(Math.ceil(Math.min(source.length, MAX_SOURCE_CHARS) / 4)), { report: (id, info) => { if (generation !== accountGeneration) return; usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 }); if (info.limit) usage?.block(id, info.limit); } });
+      const result = await scopedSummary(prompt, summaryModels(estimateTokens(prompt),8192,'Make a study deck',chat), { report: (id, info) => { if (generation !== accountGeneration) return; usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 }); if (info.limit) usage?.block(id, info.limit); } },chat);
       if (!result || generation !== accountGeneration) return null;
       return parseDeck(masker ? masker.unmask(result.text) : result.text, { chatId, ...(doc ? { document: doc.name } : {}), label });
     },
@@ -1807,8 +1927,9 @@ export const useStore = create<State>((set, get) => {
       const prompt = writingPrompt(masker ? masker.mask(text).text : text, ask);
       // The chat's own model first (it knows the style), then fast ones.
       const own = modelFor(currentChat());
-      const candidates = [...new Set([...(own && own !== AUTO && !isLayoutId(own) ? [own] : []), ...summaryModels(Math.ceil(prompt.length / 4))])];
-      const result = await fetchSummary(prompt, candidates, { minLength: 1, report: (id, info) => { if (generation !== accountGeneration) return; usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 }); if (info.limit) usage?.block(id, info.limit); } });
+      const chat=currentChat();
+      const candidates = summaryModels(estimateTokens(prompt),8192,ask,chat,own && own!==AUTO&&!isLayoutId(own)?own:undefined);
+      const result = await scopedSummary(prompt, candidates, { minLength: 1, report: (id, info) => { if (generation !== accountGeneration) return; usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 }); if (info.limit) usage?.block(id, info.limit); } },chat);
       if (!result || generation !== accountGeneration) return null;
       const out = cleanRewrite(result.text);
       return masker && settings.privacyRestore ? masker.unmask(out) : out;
@@ -1823,14 +1944,18 @@ export const useStore = create<State>((set, get) => {
       return true;
     },
     async combineComparison() {
-      const generation = accountGeneration;
-      const start = get().comparison;
-      const done = start?.answers.filter((a) => a.status === 'done' && a.text.trim()) || [];
-      if (!start || done.length < 2 || get().comparing) return;
+      const start = get().comparison, session = comparisonSession;
+      const done = start?.answers.filter(answer => answer.status === 'done' && answer.text.trim()) || [];
+      if (!start || !session || start.id !== session.id || done.length < 2 || get().comparing
+        || get().streamingChatId || get().compactingChatId || get().canvasEditingChatId) return;
+      if (session.generation !== accountGeneration || session.version !== keyVersion() || !session.policyMatches()) {
+        get().toast('Comparison settings or context changed. Compare again to use the current settings.', 'error'); return;
+      }
+      if (!navigator.onLine) { get().toast("You're offline. Combine the answers when you're back online."); return; }
       const { settings, catalog } = get();
-      const id = start.id;
+      const generation = accountGeneration, id = start.id;
       const letters = 'ABC';
-      const masker = settings.privacyShield && !start.privacyAsIs ? new Masker() : null;
+      const masker = settings.privacyShield ? new Masker() : null;
       const raw = `Several AI models answered the same question. Write the single best answer to it.
 
 Combine their strengths: keep what is correct, clear and useful from each, fix anything wrong, and drop repetition. Write it as your own answer, in the same language as the question, without mentioning "Answer A" or the models. Then add a short final section headed "**Where they differed**" listing the real disagreements (facts, numbers, recommendations) and which view you went with and why. If they didn't really differ, say so in one line.
@@ -1839,41 +1964,70 @@ Question:
 ${start.prompt}
 
 ${done.map((a, i) => `--- Answer ${letters[i]} (${modelLabel(catalog, a.model)}) ---\n${a.text}`).join('\n\n')}`;
-      // The strongest of the compared models writes it (thinking models first); the others step in if it fails.
-      const strength = (mid: string) => (modelInfo(catalog, mid)?.thinking ? 2 : 0) + (/pro|opus|large|max|405b|120b|70b|-k2/i.test(mid) ? 1 : 0) - (/lite|mini|nano|small|flash-8b|[^\d]8b|3b/i.test(mid) ? 1 : 0);
-      const order = [...done.map((a) => a.model)].sort((a, b) => strength(b) - strength(a));
-      const patch = (p: Partial<NonNullable<ComparisonState['combined']>>) => set((s) => s.comparison?.id === id ? { comparison: { ...s.comparison, combined: { ...(s.comparison.combined || { text: '', status: 'loading' }), ...p } } } : {});
-      patch({ text: '', status: 'loading', error: undefined, model: order[0] });
-      set({ comparing: true });
+      const prompt = masker && !start.privacyAsIs ? masker.mask(raw).text : raw;
+      const chat = start.chatId ? get().chats.find(item => item.id === start.chatId) : null;
+      const project = settings.projects?.find(item => item.id === start.projectId);
+      const custom = [settings.customInstructions, styleInstructions(settings), project?.instructions, chat?.assistant?.instructions].filter(Boolean).join('\n\n');
+      const customInstructions = masker ? masker.mask(custom).text : custom;
+      const messages: WireMessage[] = [{ role: 'user', text: prompt }];
+      const tokens = requestTokens(messages, buildInstructions({ custom: customInstructions }));
+      const sources = done.map(answer => answer.model).filter(model => settings.enabledModels.includes(model));
+      const order = helperModels(catalog?.models || [], { ...settings, enabledModels: sources }, {
+        tokens: tokens - 100, outputTokens: 8192, text: start.prompt, priority: 'quality',
+        blocked: model => (usage?.blockedUntil(model) ?? null) !== null || isCoolingDown(model),
+        left: model => remaining(get().usage, model),
+      }).filter(model => !modelProblem(modelInfo(catalog, model), { tokens, unavailable: !providerEnabled(model.split(':')[0], get().keys) }));
+      if (!order.length) { get().toast('No completed comparison model is available to combine these answers. Retry after its limit resets or compare again.', 'error'); return; }
+      const fallbacks = settings.autoSwitch ? order.slice(1) : [];
+      const preference = choosePreference('quality', analyze({ text: start.prompt, files: [], conversationTokens: tokens, search: false }));
+      let body: string;
+      try {
+        body = buildChatBody({ model: order[0], fallbacks, messages, options: {
+          search: false, customInstructions, modelCapabilities: requestCapabilities(catalog, [order[0], ...fallbacks]),
+          routingPreference: preference, maxTokens: 8192,
+        } });
+      } catch (failure) {
+        get().toast((failure as Error).message || 'These answers could not be combined.', 'error'); return;
+      }
+      const restore = (value: string) => masker && settings.privacyRestore ? masker.unmask(value) : value;
       const aborter = new AbortController();
       compareController = aborter;
-      let out = '', error = '';
+      const current = () => comparisonSession === session && generation === accountGeneration
+        && get().comparison?.id === id && compareController === aborter;
+      set({ comparing: true, comparison: { ...start, combined: { text: '', status: 'loading', model: order[0] } } });
+      const unwatch=watchComparisonPolicy(session,aborter);
       try {
-        const body = buildChatBody({ model: order[0], fallbacks: order.slice(1), messages: [{ role: 'user', text: masker ? masker.mask(raw).text : raw }], options: { search: false, customInstructions: settings.customInstructions } });
-        for await (const ev of streamChat(body, aborter.signal)) {
-          if (generation !== accountGeneration) return;
-          if (ev.t === 'text') { out += ev.text; patch({ text: masker && settings.privacyRestore ? masker.unmask(out) : out }); }
-          else if (ev.t === 'model') patch({ model: ev.id });
-          else if (ev.t === 'request') usage?.record(ev.id, { requests: 1 });
-          else if (ev.t === 'usage') usage?.record(ev.id, { input: ev.input, output: ev.output });
-          else if (ev.t === 'limit') usage?.block(ev.id, ev as unknown as LimitInfo);
-          else if (ev.t === 'error') error = ev.text;
-        }
-        patch({ status: out ? 'done' : aborter.signal.aborted ? 'stopped' : 'error', ...(!out ? { error: error || 'No answer was returned.' } : {}) });
-      } catch (e) {
-        patch({ status: (e as Error).name === 'AbortError' ? 'stopped' : 'error', error: (e as Error).name === 'AbortError' ? undefined : (e as Error).message });
+        const signal = providerSignal(aborter.signal);
+        await runComparisonStage({
+          events: streamChat(body, signal), signal, isCurrent: current,
+          transformText: value => restore(hideMemoryLines(value)), onEvent: observeComparison,
+          patch: patch => set(state => current() && state.comparison ? {
+            comparison: { ...state.comparison, combined: { ...state.comparison.combined!, text: patch.text, status: patch.status, error: patch.error, ...(patch.model ? { model: patch.model } : {}) } },
+          } : {}),
+        });
       } finally {
-        if (compareController === aborter) compareController = null;
-        if (get().comparison?.id === id) set({ comparing: false });
+        unwatch();
+        if (compareController === aborter) {
+          compareController = null;
+          if (generation === accountGeneration && get().comparison?.id === id) set({ comparing: false });
+        }
       }
     },
     cancelComparison() {
-      compareController?.abort();
-      set((s) => ({ comparing: false, comparison: s.comparison ? { ...s.comparison, answers: s.comparison.answers.map((a) => a.status === 'loading' ? { ...a, status: 'stopped' } : a) } : null }));
+      const active = compareController;
+      compareController = null;
+      active?.abort();
+      set(state => ({ comparing: false, comparison: state.comparison ? {
+        ...state.comparison,
+        answers: state.comparison.answers.map(answer => answer.status === 'loading' ? { ...answer, status: 'stopped' } : answer),
+        ...(state.comparison.combined?.status === 'loading' ? { combined: { ...state.comparison.combined, status: 'stopped' } } : {}),
+      } : null }));
     },
     clearComparison() {
-      compareController?.abort();
+      const active = compareController;
       compareController = null;
+      comparisonSession = null;
+      active?.abort();
       set({ comparing: false, comparison: null });
     },
     saveComparisonAnswer(model) {
@@ -2411,7 +2565,7 @@ ${settings.aboutMe?.trim() || '(nothing yet)'}
 Facts remembered from their chats:
 ${facts || '(none)'}`;
       const generation = accountGeneration;
-      const result = await fetchSummary(prompt, summaryModels(2000), { report: (id, info) => { if (generation !== accountGeneration) return; usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 }); if (info.limit) usage?.block(id, info.limit); } });
+      const result = await scopedSummary(prompt, summaryModels(estimateTokens(prompt)), { report: (id, info) => { if (generation !== accountGeneration) return; usage?.record(id, { requests: 1, input: info.input || 0, output: info.output || 0 }); if (info.limit) usage?.block(id, info.limit); } });
       return result ? result.text.trim().replace(/^["']|["']$/g, '').slice(0, 2000) : null;
     },
     async deleteMemory(id) {

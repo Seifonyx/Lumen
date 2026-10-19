@@ -46,7 +46,7 @@ export function useFocusScope(ref:RefObject<HTMLElement|null>,active:boolean,onE
       if(scopes.at(-1)!==root)return;
       if(event.key==='Escape'){
         if(event.target instanceof Element && event.target.closest('[role="menu"]'))return;
-        if(event.target instanceof Element && event.target.matches('[data-local-escape]'))return;
+        if(event.target instanceof Element && event.target.closest('[data-local-escape]'))return;
         if(root.querySelector('.cm-tooltip-autocomplete'))return;
         event.preventDefault();event.stopImmediatePropagation();close.current();return;
       }

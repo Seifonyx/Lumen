@@ -1,5 +1,5 @@
 // Usage meter test: counts, learned limits, skipping limited models, OpenRouter pool, sync to a 2nd device.
-const { chromium } = require('playwright');
+const { chromium, webkit } = require('playwright');
 // Settings is a page: on phones the section list shows first, and a section has a back arrow.
 async function openTab(page, name) {
   if (await page.isVisible('.settings-back')) await page.click('.settings-back');
@@ -19,7 +19,7 @@ async function mock(ctx, calls) {
       return route.fulfill({ json: { models: ['gemini-3.5-flash', 'gemini-flash-latest'].map((n) => ({ name: `models/${n}`, displayName: n, supportedGenerationMethods: ['generateContent'] })) } });
     }
     const model = /models\/([^:]+):/.exec(url)[1];
-    calls.push(model);
+    calls.push(url.includes(':generateContent') ? `${model}:title` : model);
     if (url.includes(':generateContent')) return route.fulfill({ json: { candidates: [{ content: { parts: [{ text: 'Usage Test' }] } }] } });
     if (model === 'gemini-3.5-flash') {
       return route.fulfill({
@@ -36,7 +36,9 @@ async function mock(ctx, calls) {
     const url = route.request().url();
     if (url.endsWith('/key')) return route.fulfill({ json: { data: { is_free_tier: true } } });
     if (url.endsWith('/models')) return route.fulfill({ json: { data: [{ id: 'deepseek/free-model:free', name: 'DeepSeek (free)', pricing: { prompt: '0', completion: '0' } }] } });
-    calls.push('openrouter');
+    const title=route.request().postDataJSON()?.stream!==true;
+    calls.push(title ? 'openrouter:title' : 'openrouter');
+    if(title)return route.fulfill({json:{choices:[{message:{content:'Usage Test'},finish_reason:'stop'}],usage:{prompt_tokens:12,completion_tokens:3}}});
     return route.fulfill({ headers: { 'content-type': 'text/event-stream' }, body: sse({ choices: [{ delta: { content: 'OR reply' } }] }) + sse({ choices: [{ delta: {}, finish_reason: 'stop' }], usage: { prompt_tokens: 500, completion_tokens: 50 } }) });
   });
 }
@@ -58,7 +60,7 @@ async function device(browser, mobile) {
 (async () => {
   await fetch('http://127.0.0.1:8080/emulator/v1/projects/the-model-router/databases/(default)/documents', { method: 'DELETE' });
   await fetch('http://127.0.0.1:9099/emulator/v1/projects/the-model-router/accounts', { method: 'DELETE' });
-  const browser = await chromium.launch();
+  const browser = await (process.env.MR_WEBKIT ? webkit : chromium).launch();
   const A = await device(browser, true);
   await A.page.waitForSelector('input[placeholder="AIza…"]');
   await A.page.fill('input[placeholder="AIza…"]', 'g-key');
@@ -95,7 +97,7 @@ async function device(browser, mobile) {
   check(A.calls.filter((c) => c === 'gemini-3.5-flash').length === before, 'limited model skipped without trying it');
   check(/reached its limit .* using/.test(await A.page.textContent('.msg.assistant >> nth=1 >> .notice')), 'skip explained in the reply');
 
-  // Both fallbacks stayed on DeepSeek (the model that answered last), so the pool shows 2; now a manual Gemini request.
+  // Both fallbacks stayed on DeepSeek; its enabled background title is a third pool request.
   await A.page.click('.model-button');
   await A.page.click('.models-pop .mp-title:text-is("gemini-flash-latest")');
   await A.page.fill('.composer textarea', 'third');
@@ -113,9 +115,9 @@ async function device(browser, mobile) {
 
   await A.page.locator('.usage-chip').click();
   const dailyMeter = A.page.getByRole('meter', { name: 'Requests used today' });
-  check(A.calls.filter(c => c === 'openrouter').length === 2 && A.calls.filter(c => c === 'gemini-flash-latest').length === 1, 'fallbacks keep to the model that answered; manual request counted exactly');
-  check(await dailyMeter.getAttribute('aria-valuemax') === '50' && await dailyMeter.getAttribute('aria-valuenow') === '2', 'usage popup shows the real shared OpenRouter allowance');
-  check((await A.page.locator('.usage-pop').textContent()).includes('48 remaining'), 'usage popup shows the remaining daily requests');
+  check(A.calls.filter(c => c === 'openrouter').length === 2 && A.calls.filter(c => c === 'gemini-flash-latest').length === 1 && A.calls.filter(c => c === 'openrouter:title').length === 1, 'fallbacks keep to the answered model; manual request and the enabled title are counted exactly');
+  check(await dailyMeter.getAttribute('aria-valuemax') === '50' && await dailyMeter.getAttribute('aria-valuenow') === '3', 'usage popup includes two replies and the real background title request');
+  check((await A.page.locator('.usage-pop').textContent()).includes('47 remaining'), 'usage popup shows the remaining daily requests');
   await A.page.getByRole('button', { name: 'Close usage', exact: true }).click();
 
   // Usage tab.
@@ -125,9 +127,9 @@ async function device(browser, mobile) {
   await A.page.waitForSelector('.usage-row');
   const text = await A.page.textContent('.usage');
   console.log('      usage tab:', text.replace(/\s+/g, ' ').slice(0, 400));
-  check(/2 of 50 today/.test(text), 'OpenRouter pool: two fallback requests, 2 of 50');
+  check(/3 of 50 today/.test(text), 'OpenRouter pool: two fallback requests plus title, 3 of 50');
   check(/Limit reached/.test(text), 'limited model shown');
-  check(/1 request · 1K in \/ 300 out tokens/.test(text), 'gemini-flash-latest counts + tokens');
+  check(/1 request · 1K in \/ 300 out tokens/.test(text) && A.calls.filter(c => c === 'gemini-flash-latest:title').length === 0, 'manual Gemini request counted once; title stays on the answered OpenRouter model');
   await A.page.screenshot({ path: path.join(OUT, 'usage-tab.png') });
 
   // Second device sees the same counts and block.
@@ -137,8 +139,8 @@ async function device(browser, mobile) {
   await openTab(B.page, 'Usage');
   await B.page.waitForSelector('.usage-row');
   const textB = await B.page.textContent('.usage');
-  check(/Limit reached/.test(textB) && /2 of 50 today/.test(textB), 'usage + block synced to second device');
-  check(/0 left today|0 requests/.test(textB) || /left today/.test(textB) || true, 'limit learned (quota 20)');
+  check(/Limit reached/.test(textB) && /3 of 50 today/.test(textB), 'usage + block synced to second device');
+  check(/0 requests · daily limit 20/.test(textB), 'blocked model retains its learned daily limit on the second device');
   const learned = await B.page.textContent('.usage'); console.log('      B usage:', learned.replace(/\s+/g, ' ').slice(0, 500));
   check(/daily limit 20/.test(learned), 'learned daily limit shown');
 

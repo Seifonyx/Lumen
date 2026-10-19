@@ -1,8 +1,9 @@
 import { fitsContext, UNKNOWN_CONTEXT } from './context-budget.js';
 
 /** Shared hard constraints. A positive rank never makes an incompatible model eligible. */
-export function modelProblem(model, {image=false,pdf=false,search=false,tools=false,structuredOutput=false,
+export function modelProblem(model, {image=false,pdf=false,search=false,tools=false,structuredOutput=false,streaming=true,
   tokens=0,minContext=0,minInputTokens=0,unavailable=false}={}) {
+  if(streaming && model?.streaming===false)return 'does not support streamed replies';
   if(unavailable) return 'is not available from your connected provider';
   if(!model && (image||pdf)) return 'has no verified attachment capabilities';
   if(image && !model?.vision) return "can't read images";

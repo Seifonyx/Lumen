@@ -5,6 +5,7 @@ import type { Attachment, Catalog } from '../types';
 import { makeTitle, runChat, summarize } from './ai/chat.js';
 import type { LimitInfo } from './usage';
 import { catalog } from './ai/providers.js';
+import type { Layout } from './layouts';
 
 export class ApiError extends Error {
   constructor(message: string, public status: number) {
@@ -16,16 +17,16 @@ export async function fetchCatalog(refresh = false): Promise<Catalog> {
   return (await catalog({ refresh })) as Catalog;
 }
 
-export async function fetchTitle(text: string, model?: string, skip?: (id: string) => boolean): Promise<{ title: string; model: string } | null> {
+export async function fetchTitle(text: string, model?: string, skip?: (id: string) => boolean,models?:string[],report?:(id:string,info:AttemptInfo)=>void): Promise<{ title: string; model: string } | null> {
   try {
-    return (await makeTitle(text, model, skip)) as { title: string; model: string } | null;
+    return (await makeTitle(text, model, skip,models,report)) as { title: string; model: string } | null;
   } catch {
     return null;
   }
 }
 
 export interface AttemptInfo {
-  status?: number;
+  status?: number | 'output-limit';
   input?: number;
   output?: number;
   limit?: LimitInfo | null;
@@ -35,7 +36,7 @@ export interface AttemptInfo {
 export async function fetchSummary(
   prompt: string,
   models: string[],
-  opts: { signal?: AbortSignal; report?: (id: string, info: AttemptInfo) => void; minLength?: number; maxTokens?: number },
+  opts: { signal?: AbortSignal; report?: (id: string, info: AttemptInfo) => void; minLength?: number; maxTokens?: number; skip?: (id:string)=>boolean; modelRequirements?:Layout['requirements'] },
 ): Promise<{ text: string; model: string } | null> {
   return (await summarize(prompt, models, opts)) as { text: string; model: string } | null;
 }

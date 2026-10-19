@@ -257,13 +257,34 @@ export interface ModelInfo {
   pricing?: { input: number | null; output: number | null; currency: 'USD'; unit: 'token' };
   metadata?: {
     source?: 'api' | 'documented' | 'user';
-    fields?: Partial<Record<'context' | 'vision' | 'pdf' | 'thinking' | 'search', 'api' | 'documented' | 'user' | 'inferred' | 'unknown'>>;
+    fields?: Partial<Record<'context' | 'outputLimit' | 'vision' | 'pdf' | 'thinking' | 'search' | 'tools' | 'structuredOutput' | 'streaming', 'api' | 'documented' | 'user' | 'inferred' | 'unknown'>>;
+    verification?: 'unchecked';
+    declaredFields?: string[];
     refreshedAt?: number;
     stale?: boolean;
   };
 }
 
+export interface ModelDeclaration {
+  id: string;
+  provider: string;
+  endpoint: string;
+  name: string;
+  label?: string;
+  accountId?: string;
+  context?: number;
+  outputLimit?: number;
+  vision?: boolean;
+  pdf?: boolean;
+  thinking?: boolean;
+  search?: boolean;
+  tools?: boolean;
+  structuredOutput?: boolean;
+  streaming?: boolean;
+}
+
 export interface Catalog {
+  deniedModelIds?: string[];
   failedProviders?: string[];
   providerStatus?: Record<string, {
     state: 'ready' | 'stale' | 'error';
@@ -296,6 +317,7 @@ export interface Settings {
   /** User workspaces shared across devices with the rest of account settings. */
   projects?: Project[];
   /** ordered: earlier = preferred when switching after a limit */
+  modelDeclarations?: ModelDeclaration[];
   enabledModels: string[];
   defaultModel: string;
   autoSwitch: boolean;

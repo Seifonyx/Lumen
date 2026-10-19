@@ -4446,3 +4446,12 @@ button.tool-card:hover, button.tool-card:focus-visible { border-color: var(--bor
   .moon-orbit, .orbit-flare { animation: none !important; }
   .orbit-flare { opacity: 0; }
 }
+
+/* Custom-model settings share the model and layout form rhythm. */
+.declared-models { list-style: none; margin: 12px 0 0; padding: 0; }
+.declared-model-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); }
+.declared-model-row .model-meta { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.declared-model-row .model-meta > span { display: block; }
+.declared-model-actions { display: flex; flex: none; }
+.declared-model-editor { margin-top: 16px; }
+.declared-model-capabilities > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }

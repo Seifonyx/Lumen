@@ -1,22 +1,22 @@
 // 2.1: Ask your chats finds chats by meaning (different words), answers from them with numbered links that open
 // the chat, and only re-reads chats that changed.
-const { chromium } = require('playwright'), assert = require('node:assert/strict');
+const { chromium, webkit } = require('playwright'), assert = require('node:assert/strict');
 const { profile, seed } = require('./helpers/preview-profile.cjs');
-const URL = process.env.MR_TEST_URL || 'http://localhost:5190/?emulator';
+const URL = process.env.MR_TEST_URL || 'http://localhost:5190/';
 const now = Date.now();
 const mk = (id, title, q, a, at) => ({ id, title, createdAt: at, updatedAt: at, model: 'gemini:gemini-flash-latest', messages: [{ id: id + 'u', role: 'user', text: q, createdAt: at }, { id: id + 'a', role: 'assistant', status: 'done', text: a, createdAt: at }] });
 // A toy "meaning": money/vehicle words point one way, baking words another.
 const vec = (t) => [/car|loan|vehicle|financ|money/i.test(t) ? 1 : 0, /cake|bake|recipe|oven/i.test(t) ? 1 : 0, 0.05];
 
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await (process.env.MR_WEBKIT ? webkit : chromium).launch();
   try {
     const ctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, serviceWorkers: 'block' });
-    await profile(ctx, 'ask-chats', 'light');
+    await profile(ctx, 'preview-ask-chats', 'light');
     let embedded = 0, answerPrompt = '';
     await ctx.route('**/generativelanguage.googleapis.com/**', (r) => {
       const url = r.request().url();
-      if (url.includes('/models?')) return r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash', supportedGenerationMethods: ['generateContent'] }] } });
+      if (url.includes('/models?')) return r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash', inputTokenLimit: 128000, supportedGenerationMethods: ['generateContent'] }] } });
       const body = r.request().postDataJSON();
       if (url.includes(':batchEmbedContents')) {
         if (body.requests[0].taskType === 'RETRIEVAL_DOCUMENT') embedded += body.requests.length;
@@ -26,10 +26,12 @@ const vec = (t) => [/car|loan|vehicle|financ|money/i.test(t) ? 1 : 0, /cake|bake
       return r.fulfill({ json: { candidates: [{ content: { parts: [{ text: 'You picked the 5-year car loan at 4% [1].' }] } }] } });
     });
     const page = await ctx.newPage(), errors = [];
+    let cloudRequests=0;
+    page.on('request',request=>{if(new globalThis.URL(request.url()).hostname==='firestore.googleapis.com')cloudRequests++;});
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(URL);
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
-    await seed(page, 'ask-chats', [
+    await seed(page, 'preview-ask-chats', [
       mk('car', 'Buying a car', 'Should I take the 5-year car loan at 4%?', 'Yes, the 5-year loan is cheaper overall.', now - 1e5),
       mk('cake', 'Birthday cake', 'Best chocolate cake recipe?', 'Bake at 180C for 35 minutes.', now - 2e5),
     ]);
@@ -59,6 +61,7 @@ const vec = (t) => [/car|loan|vehicle|financ|money/i.test(t) ? 1 : 0, /cake|bake
     await page.locator('.ask-cite').first().click();
     await page.locator('.main .msg.assistant:has-text("the 5-year loan is cheaper")').waitFor();
     console.log('PASS a citation opens its chat');
+    assert.equal(cloudRequests,0,'preview history and quota stay local instead of contacting account storage');
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }
 })().catch((e) => { console.error(e); process.exit(1); });

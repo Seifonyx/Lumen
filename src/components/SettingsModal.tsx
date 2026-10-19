@@ -1,3 +1,4 @@
+import ModelDeclarations from './ModelDeclarations';
 import { Clock,
   ArrowDown,
   ChevronLeft,
@@ -217,6 +218,7 @@ function ModelsTab() {
         </div>
       </div>
 
+      <ModelDeclarations />
       <div className="settings-group">
         <span className="settings-group-title">Model health</span>
         <div className="settings-card model-health">
@@ -258,7 +260,7 @@ function ModelsTab() {
                     <span className="model-title">{m?.label || id.split(':').slice(1).join(':')}</span>
                     <span className="model-sub">
                       {m ? PROVIDER_NAMES[m.provider] : 'Not available right now'}
-                      {m?.context ? ` · ${ctx(m.context)} context` : ''}
+                      {m?.context ? ` · ${ctx(m.context)} context` : ''}{m?.metadata?.verification==='unchecked'?' · Declared details · unchecked':''}{m?.metadata?.stale?' · Cached details':''}
                       {settings.autoExcluded?.includes(id) ? ' · not in Auto' : ''}
                     </span>
                   </span>

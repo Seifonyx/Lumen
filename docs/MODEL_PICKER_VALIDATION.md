@@ -51,3 +51,15 @@ The generic premium static scan still reports22 inherited form/textarea findings
 ## Release gate
 
 For every independently releasable milestone, inspect the complete diff and current tree, verify relevant local checks and all required exact-head CI, confirm no unfinished dependency, review risks and rollback, merge normally, deploy that merged revision, verify actual hosted assets/core flows, record the exact production commit separately, and continue remaining work. No bypasses, force pushes, accidental local WIP release or build-only readiness claims.
+
+
+## Final reliability milestone coverage (PR25; full current CI/release pending)
+
+| Requirement | Integrated behavior | Local evidence |
+|---|---|---|
+| §§3–5,7,13,16 | API keys and full settings/layout snapshots use independent cache-only revisions, immutable SDK submissions, stale-read/reload protection, current-UID/auth-session denial/replay guards and unchanged save debounce; settings-only field replacement preserves credentials and removes stale nested keys. | account-key-persistence/integration, account-settings-persistence/integration/startup, key-save-resilience and layout-save-resilience. Actual blocked-write layout loss and early cached-startup edit loss reproduced before fixes. |
+| §§8,10,14,16 | Canvas/research transfer current quota readiness into bounded recovery within their original permitted pools; repeated exhausted backups cannot starve the ready authorized alternative. Research retains fixed first intent, strict search and4096allowance. | Canvas actual-caller2cases, research actual planner/UsageTracker/runtime6query case18bounded calls/no outside model; Canvas phone/desktop and research browser flows. |
+| §§7–9,12,16 | Explicit fixed-order layout assignments bypass Auto-only exclusions for helper execution; dynamic Auto/outside exclusions and hard requirements/order/readiness/fallback consent remain. | helper-layout actual-caller5case matrix plus writing/study/layout browser regressions. |
+| §§13,16 | Sandbox fixture IDs and IndexedDB seeds use the real preview- namespace; actual-account/invite/denial tests remain authenticated. | Shared profile/seed normalization and corrected direct storage references; affected5Chromium/actualWebKit research; final4actualWebKit research/writing/study/layout matrix. No error suppression. |
+
+Local final source7cde3ea passes78unit/type/build and independent review. Complete exact-head CI39245877175, normal main merge and production deployment/live verification remain required; this table does not mark the overhaul finished. AI_HANDOFF.md owns the exact evolving source/main/production ledger and honest emulator/hardware/answer-quality limits.

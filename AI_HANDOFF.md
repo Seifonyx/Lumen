@@ -39,14 +39,14 @@ The complete overhaul remains in progress. Historical intermediate checkpoints a
 | Previous verified runtime/rollback | `3f48c6e02719b5f0c28be85e4c1e6e3cc2ef045b`, PR22 normal merge, Deploy39243260811 success;18asset matches +hosted Chromium4/WebKit2 clean |
 | Earlier foundation | `02c322da48368d6277e5eb8b599edfead7f92e0e`, PR19 +Deploy39157498252 verified; later docs20/21 did not change runtime |
 | Latest pushed key candidate | `b7049023aef4f23e82fd808364f311dd2c31c372`, feat/model-picker-key-save, PR24; exact remote verified, fullCI39245177533 pending |
-| Current ROOT branch/base | feat/model-picker-final-recovery in /workspace/Lumen, based onb704902; coherent locally verified final milestone below is awaiting commit/push/new PR/fullCI |
+| Current ROOT branch/base | `7cde3ea39a13408a266d16ae325b0e88357af387`, feat/model-picker-final-recovery in /workspace/Lumen, PR25; pushed/exact remote verified, fullCI39245877175 pending |
 | Isolation | Runtime release worktree /workspace/Lumen-runtime-release at984b1a9; key release worktree /workspace/Lumen-policy-release atb704902. Neither includes ROOT final implementation. Four named stashes are recovered owned backups, not hidden unique source. Do not blindly pop. |
 
 Never confuse pushed/merged/deployed/production-verified. Actual latest remote main must be rechecked before integration. No force push, protections bypass or unfinished-source release.
 
 ## Exact next actions
 
-1. Finish coherent ROOT checkpoint: review full diff, validate78unit/type/build and local browser evidence below, commit/push feat/model-picker-final-recovery, verify remote SHA, open PR againstmain. It builds on PR24; no unfinished source remains hidden once committed. Require all three exact-head CI jobs, including expanded actual WebKit research.
+1. Evaluate PR25 exact7cde3ea fullCI39245877175. Source and handoff are committed/pushed/exact remote verified; no uncommitted implementation. It builds on PR24. Require all three exact-head CI jobs, including expanded actual WebKit research. Keep this source head stable; subsequent local changes are final ledger/validation documentation only.
 2. In parallel evaluate PR24 fullCI39245177533 on exactb704902. It changes key-save reliability and corrected guest fixtures only; it has no dependency on ROOT final settings/routing repairs. Once all checks pass, normally merge with matching-head guard, dispatch Deploy onmain, verify workflow SHA and real hosted assets/core flows. Serialize deployments. Do not wait unnecessarily for final milestone.
 3. Final milestone: required fullCI/independent review, normal merge after24, Deploy, verify assets/core workflows, update final requirement map/weights/status/ledger. Preserve original master and all permanent policies. No100% until every required gate and final synchronized documentation passes.
 4. PR23 main CI39243719879 is separate from its successful exact-feature CI39199773200. A superseded cancelled run is not green evidence. Inspect any introduced failure rather than skipping or retry-hiding it.
@@ -67,7 +67,7 @@ Evidence:72unit/type/build; key-save-final-chromium5 suites clean40s; actual Web
 
 Full CI on earlier8ade00b exposed providers.cjs expecting one reply while a malformed SSE title mock triggered fallback. Corrected nonstreamJSON mock +exacttitle/provider request/input/output assertions, independently reviewed, two focused suites green26s; full98/99 CI subsequently green. PR24 denial hardening exposed legacy test guests with nonguest logical IDs and emulator URLs. b704902 normalizes profile+seed IDs consistently, updates direct storage/manual helper refs, uses actual WebKit research with pointer-independent Add control. Real Firebase/invite/denial tests unchanged. Five affected suites pass against exactkey source30s, actual WebKit research8s. Earlier39243179620 is superseded/cancelled, not proof of readiness; fresh39245177533 must pass.
 
-## Final milestone — locally verified, not yet pushed/deployed
+## Final milestone — committed/pushed PR25, not yet merged/deployed
 
 P02-B/P04-A durability: new account-settings-persistence.ts stages full immutable JSON settings before existing800ms debounce, independent settings revisions/ACK/read/replay and permission/session guards, semantic no-op detection. Reconciliation captures BOTH snapshots before network, protects settings first then passes chosen settings to key reconciliation. Remote write replaces the whole settings field via mergeFields while preserving keys. Deletions cannot revive from recursively merged old maps. Storage failure is explicit. Genuine edits during cached-account startup stage before remote read completes; empty hydration cannot overwrite another device's newer settings. No premature SDK submission before readiness. Same-UID key replay dedupes per session and refuses old-session ACK.
 
@@ -99,3 +99,18 @@ Normal integration: inspect fresh remote/diff/exact-head CI, gh pr merge --merge
 
 
 Final coherent checkpoint verification before commit: final-checkpoint-unit.log all78unit/type pass, final-checkpoint-build.log build passes after integration ofb704902 ancestry and all source review fixes. Product tree was not changed afterward. Four actual WebKit suites pass47s and five corrected guest Chromium suites33s; key/layout current browserproofs and individualCanvas/writing/study/layout passes are detailed above. Required newCI will run101Chromium files and include actualWebKit deep research. Source snapshots and docs are coherent; commit/push now, verify exactremoteSHA, open PR, waitfullcurrentCI before release. No production claim for this final milestone.
+
+
+Latest operational checkpoint: root source7cde3ea39a13408a266d16ae325b0e88357af387 is pushed/exact remote verified, https://github.com/Seifonyx/Lumen/pull/25, fullCI39245877175 pending. Subsequent changes in this worktree are documentation only, intentionally held for final source/main/live synchronization rather than superseding a running source CI with ledger-only edits. Preserve source head while24/25checksrun; continue normal progressive releases when green.
+
+
+## Full-CI fixture follow-up — 2026-10-19
+
+PR24 exactb704902 fullCI39245177533 passed type/build/72unit and required WebKit, but failed2/100Chromium files: answer-style used an explicitly privileged preview identity while expecting developer controls hidden; phone-windows seeded Study data under its former unprefixed account ID. No product failure or permission change. Corrected preview-role expectation and exact normalized Study key. New developer-options unit renders the actual AboutSection with actual developer list/isPreviewUser, preserving ordinary/missing-user negative coverage plus both developers/case normalization and preview positive. The current invite list contains only the two developer accounts; no invented nondeveloper authenticated access.
+
+Evidence: key-fixture-role-phone-chromium.log2suites clean15s including390/320phone; key-role-phone-unit.log type/all73unitfiles pass; actual rendered2case matrix passes. Independent profile-consumer/permission review accepted coverage and found no other mismatches. Runtime/build tree remains identical tob704902, so prior reviewed production build is retained. Require fresh complete exact-head CI before normal merge/deploy; earlier failed run is not green evidence. Completion remains88%, pending final release gates.
+
+
+Current integration checkpoint: merges key fixture source2ce5c9a886219f5dfb2e73e11c4036c66ea00dc1 into final source7cde3ea. Both runtime application trees are unchanged; only fixture/component-render coverage and accurate documentation change. PR24 b704902 CI39245177533 failed the two fixture cases above; PR25 7cde3ea CI39245877175 inherits them and must be superseded. Commit/push the reviewed integration, verify the exact remote revision and require fresh full CI for PR24 and PR25. No new production deployment. Owned final-ledger stash recovered into this checkpoint; do not blindly pop old backups.
+
+Integrated final fixture evidence: final-role-phone-unit.log type/all79unitfiles pass; final-role-phone-chromium.log2suites clean9s. Product/workflow tree matches7cde3ea exactly; reviewed final dist remains valid. PR24 updated exact2ce5c9a fullCI39247939607 is running. Commit/push this fixture-only merge and require fresh complete PR25 CI; no runtime release is claimed.

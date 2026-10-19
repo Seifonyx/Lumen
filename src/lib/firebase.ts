@@ -9,6 +9,7 @@ import { connectFirestoreEmulator, doc, getDoc, initializeFirestore, serverTimes
 import config from '../firebase-config.json';
 import { quota } from './quota';
 import { EXTRA_PROVIDERS, normalizeKeys } from './ai/provider-config.js';
+import { createAccountKeyPersistence, type AccountKeyCache } from './account-key-persistence';
 
 // Sign-in runs through the app's own address where Google allows it. Phones (Safari, home-screen
 // apps) block the cross-site storage that sign-in through the-model-router.firebaseapp.com needs.
@@ -56,6 +57,7 @@ export function getStoredPreviewUser(): PreviewUser | null {
   }
 }
 
+let accountSession=0;
 let previewListeners: Array<(user: User | PreviewUser | null) => void> = [];
 
 export function signInPreview(email = 'preview@local.user', name = 'Guest'): PreviewUser {
@@ -79,17 +81,18 @@ export function watchUser(cb: (user: User | PreviewUser | null) => void) {
   getRedirectResult(auth).catch((e) => {
     redirectError = friendly(e);
   });
-  previewListeners.push(cb);
+  const deliver = (user: User | PreviewUser | null) => {accountSession++;cb(user);};
+  previewListeners.push(deliver);
   const stored = getStoredPreviewUser();
   if (stored) {
-    setTimeout(() => cb(stored), 0);
+    setTimeout(() => deliver(stored), 0);
   }
   const unsub = onAuthStateChanged(auth, (user) => {
     if (getStoredPreviewUser()) return;
-    cb(user);
+    deliver(user);
   });
   return () => {
-    previewListeners = previewListeners.filter((l) => l !== cb);
+    previewListeners = previewListeners.filter((l) => l !== deliver);
     unsub();
   };
 }
@@ -192,7 +195,7 @@ const keysDoc = (uid: string) => doc(db, 'modelRouter', uid);
 
 // A copy of keys and settings stays on the device so the app also opens without a connection.
 const localKey = (uid: string) => `mr.account.${uid}`;
-type Account = { geminiKey?: string; openrouterKey?: string; groqKey?: string; cerebrasKey?: string; githubKey?: string; providerConnections?: Partial<ApiKeys>; settings?: Record<string, unknown> };
+type Account = AccountKeyCache;
 function localAccount(uid: string): Account | null {
   try {
     return JSON.parse(localStorage.getItem(localKey(uid)) || 'null');
@@ -203,9 +206,36 @@ function localAccount(uid: string): Account | null {
 function keepLocal(uid: string, patch: Account) {
   try {
     localStorage.setItem(localKey(uid), JSON.stringify({ ...(localAccount(uid) || {}), ...patch }));
+    return true;
   } catch {
-    /* private mode */
+    return false;
   }
+}
+
+const deniedAccounts = new Set<string>();
+const denialListeners = new Set<(uid: string) => void>();
+export function watchAccountAccessDenied(listener: (uid: string) => void): void {denialListeners.add(listener);}
+function denyAccount(uid: string): void {
+  deniedAccounts.add(uid);
+  accountRead = null;
+  forgetLocalAccount(uid);
+  denialListeners.forEach(listener=>listener(uid));
+}
+const accountKeyPersistence = createAccountKeyPersistence({
+  readLocal: localAccount, writeLocal: keepLocal,
+  onRemoteDenied: denyAccount,
+  currentSession: () => accountSession,
+  currentUid: () => getStoredPreviewUser()?.uid || auth.currentUser?.uid || null,
+  isPreview: isPreviewUser,
+  enqueueRemote: (uid, fields) => {
+    quota.count('writes');
+    return setDoc(keysDoc(uid), { ...fields, updatedAt: serverTimestamp() }, { merge: true });
+  },
+});
+
+/** Retry durable pending keys only for the active, non-denied account. SDK owns transport retries. */
+export function resumePendingAccountKeys(uid: string): void {
+  if (!deniedAccounts.has(uid)) accountKeyPersistence.resume(uid);
 }
 
 /** Removes this device's copy (on sign-out). */
@@ -218,34 +248,45 @@ export function forgetLocalAccount(uid: string) {
 }
 
 // Keys and settings live in the same document: read it once when both are loaded together.
-let accountRead: { uid: string; at: number; data: Promise<Account> } | null = null;
+let accountRead: { uid: string; session: number; at: number; data: Promise<Account> } | null = null;
 function readAccount(uid: string): Promise<Account> {
-  if (!accountRead || accountRead.uid !== uid || Date.now() - accountRead.at > 5000) {
-    accountRead = { uid, at: Date.now(), data: fetchAccount(uid) };
+  if (!accountRead || accountRead.uid !== uid || accountRead.session !== accountSession || Date.now() - accountRead.at > 5000) {
+    accountRead = { uid, session: accountSession, at: Date.now(), data: fetchAccount(uid) };
   }
   return accountRead.data;
 }
 
 async function fetchAccount(uid: string): Promise<Account> {
   const saved = localAccount(uid);
-  if (isPreviewUser(uid)) {
-    return saved || { geminiKey: '', openrouterKey: '', groqKey: '', cerebrasKey: '', githubKey: '', settings: {} };
-  }
+  if (isPreviewUser(uid)) return saved || {};
+  if (deniedAccounts.has(uid) && !navigator.onLine) throw Object.assign(new Error('Account access was denied.'), {code:'permission-denied'});
   if (!navigator.onLine && saved) return saved;
+  const start = accountKeyPersistence.captureRead(uid);
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(Object.assign(new Error('offline'), { code: 'unavailable' })), saved ? 8000 : 20000));
+    const timeout = new Promise<never>((_, reject) => {timer=setTimeout(() => reject(Object.assign(new Error('offline'), { code: 'unavailable' })), saved ? 8000 : 20000);});
     const snap = (await Promise.race([getDoc(keysDoc(uid)), timeout])) as DocumentSnapshot;
+    if(start.session!==accountSession || auth.currentUser?.uid!==uid)throw new Error('The account changed during this read.');
     quota.count('reads');
-    const d = (snap.data() || {}) as Account;
-    keepLocal(uid, { geminiKey: d.geminiKey || '', openrouterKey: d.openrouterKey || '', groqKey: d.groqKey || '', cerebrasKey: d.cerebrasKey || '', githubKey: d.githubKey || '', providerConnections: d.providerConnections || {}, settings: d.settings });
-    return d;
+    if (!snap.metadata.fromCache) deniedAccounts.delete(uid);
+    if (deniedAccounts.has(uid)) throw Object.assign(new Error('Account access was denied.'), {code:'permission-denied'});
+    const result=accountKeyPersistence.reconcileRead(uid,start,(snap.data() || {}) as Account);
+    resumePendingAccountKeys(uid);
+    return result;
   } catch (e) {
-    if (saved) return saved;
-    if (isPreviewUser(uid)) return { geminiKey: '', openrouterKey: '', groqKey: '', cerebrasKey: '', githubKey: '', settings: {} };
-    // Not invited: never fall back to the saved copy.
-    if ((e as { code?: string }).code === 'permission-denied' || !saved) throw e;
-    return saved;
-  }
+    // An explicit access denial must never turn into an offline-cache login or replay.
+    if ((e as {code?:string}).code === 'permission-denied') {
+      if(start.session===accountSession && auth.currentUser?.uid===uid)denyAccount(uid);
+      throw e;
+    }
+    // Re-read: a newer local save may have happened while the network was pending.
+    const latest=localAccount(uid);
+    if (latest && start.session===accountSession && (getStoredPreviewUser()?.uid || auth.currentUser?.uid) === uid && !deniedAccounts.has(uid)) {
+      resumePendingAccountKeys(uid);
+      return latest;
+    }
+    throw e;
+  } finally {clearTimeout(timer);}
 }
 
 /** This device's saved copy of the account (keys and settings), so the app can open at once while the fresh
@@ -282,21 +323,9 @@ export async function saveRemoteSettings(uid: string, settings: object): Promise
   }
 }
 
+/** Resolves after durable local save and SDK enqueue, independently of server acknowledgement. */
 export async function saveKeys(uid: string, keys: ApiKeys): Promise<void> {
+  if (deniedAccounts.has(uid)) throw new Error('Account access was denied. Sign in again before saving keys.');
+  accountKeyPersistence.save(uid,keys);
   accountRead = null;
-  quota.count('writes');
-  const clean = normalizeKeys(keys) as unknown as ApiKeys;
-  const providerConnections: Partial<ApiKeys> = {
-    ...Object.fromEntries(Object.keys(EXTRA_PROVIDERS).map(id => [id, clean[id as keyof typeof EXTRA_PROVIDERS]])),
-    providerAccess: clean.providerAccess, cloudflareAccountId: clean.cloudflareAccountId,
-    alibabaBaseUrl: clean.alibabaBaseUrl, providerRelayUrl: clean.providerRelayUrl,
-  };
-  const fields = { geminiKey: clean.gemini, openrouterKey: clean.openrouter, groqKey: clean.groq, cerebrasKey: clean.cerebras, githubKey: clean.github, providerConnections };
-  keepLocal(uid, fields);
-  if (isPreviewUser(uid)) return;
-  try {
-    await setDoc(keysDoc(uid), { ...fields, updatedAt: serverTimestamp() }, { merge: true });
-  } catch {
-    /* ignore Firestore errors in preview/offline */
-  }
 }

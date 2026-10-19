@@ -56,6 +56,13 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
             const panel = document.querySelector('.models-pop.sheet,.attach-menu');
             const layouts = document.querySelector('.mp-layouts');
             const options = [...document.querySelectorAll('.models-pop.sheet .mp-layout')];
+            const auto = document.querySelector('.models-pop.sheet .mp-auto');
+            const mpBody = document.querySelector('.models-pop.sheet .mp-body');
+            const autoBox = auto?.getBoundingClientRect();
+            const bodyBox = mpBody?.getBoundingClientRect();
+            const autoFullyVisible = autoBox && bodyBox
+              ? autoBox.top >= bodyBox.top - 1 && autoBox.bottom <= bodyBox.bottom + 1
+              : null;
             const box = panel?.getBoundingClientRect();
             const clipped = box ? options.filter(opt => {
               const r = opt.getBoundingClientRect();
@@ -67,12 +74,14 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
               panelBackground: panel ? getComputedStyle(panel).backgroundImage : null,
               layoutColumns: layouts ? getComputedStyle(layouts).gridTemplateColumns : null,
               optionCount: options.length, horizontallyClippedOptions: clipped,
+              autoFullyVisible,
             };
           });
           diagnostics.push({ ...c, experiment, surface, ...result });
           if (result.scrollWidth > result.width + 1) throw new Error('Page overflow at ' + c.width + ' ' + c.theme + '/' + surface);
-          if (experiment === 'after' && c.width === 320 && surface === 'picker' && result.horizontallyClippedOptions) {
-            throw new Error(result.horizontallyClippedOptions + ' model layouts still clipped at 320px');
+          if (experiment === 'after' && c.width === 320 && surface === 'picker') {
+            if (result.horizontallyClippedOptions) throw new Error(result.horizontallyClippedOptions + ' model layouts still clipped at 320px');
+            if (!result.autoFullyVisible) throw new Error('Auto remains obscured when the 320px picker opens');
           }
         };
         await screenshot('welcome');

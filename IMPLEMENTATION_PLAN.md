@@ -256,3 +256,18 @@ Manual tests after release:
 3. Remove a connected key and save. Its models must stop being eligible immediately and remain removed after reconnect/reload.
 4. With account sync unavailable, sign out/switch accounts. Login must remain usable and another account must never inherit the pending key.
 5. Existing custom-model/comparison/layout/recovery/accessibility test steps remain active. Actual permission revocation and stalled-write races are covered by controlled SDK/emulator tests, not manufactured provider failures on production.
+
+
+### Additional P11 account regression evidence
+
+Source8f4a02ce3380a6dca6034cd769314dd2777d1447 remains pushed/exact remote verified; subsequent changes are documentation only. key-save-auth-regression.log:7 Chromium files passed clean152s (account-isolation, account-sync, attachment-sync, quota, delete-account, privacy, tasks-sync), including quota batching/paused operation/Pacific reset, cross-device attachments, deletion, privacy masking and scheduled-task isolation. No retries. The phone390px actual WebKit save-feedback screenshot was inspected: hint wraps without overflow, save control remains visible, no page errors (key-save-webkit-phone.png). Source not changed after these checks. Fresh PR24 full CI39198665763 type/build/72unit green, browser jobs pending at this checkpoint. PR22/23 full Chromium also pending; neither new candidate merged/deployed. Keep82%/medium until current integration evidence changes credit. Permanent policy/protocol/master remain intact.
+
+
+## Final provider-accounting fixture checkpoint — 2026-10-19
+
+PR22 exact8ade00b fullCI39197805965 completed: type/build/68unit and allrequired WebKit green;97/98 Chromium files passed, providers.cjs failed both attempts (1030s total). No merge/deploy. The provider fixture returned SSE to a nonstream title request and still expected only the reply to be counted. Actual accounting correctly included the failed Groq title and its authorized Gemini fallback. Updated only tests/e2e/providers.cjs: real nonstream JSON title shape with12input/3output, assert exactlyoneGroq title (no unintended fallback), Groq2requests52input/7output and Cerebras1request30input/3output. Existing provider/key/discovery/thinking/reset/error assertions remain. Independent review approved stronger accounting/consent assertions. Clean red provider-accounting-clean-red.log; corrected providers+usage two Chromium suites clean26s in provider-accounting-green.log. No application source change. Commit/push and require complete new exact-head CI; propagate test correction toPR23/24 without including unfinished final recovery source.
+
+Source22 remains independently release-ready pending that gate, with main3be7307 and verified production02c322 unchanged. New ROOT feat/model-picker-final-recovery based8f4a02c holds separate uncommitted final P02-B settings durability and P06-B Canvas/helper caller repairs; do not include them in22/23/24. Weighted baseline remains82%/medium/18remaining; no arbitrary rescoring. Preserve master/protocol/policy.
+
+
+Verified propagation: the provider fixture correction passed in the combined polish source (polish-provider-build.log and polish-provider-green.log). PR23 latest pushed1793e4ac23d823ffa2cd056617ca63717776f931. This key branch merge includes the same corrected fixture plus the unchanged verified8f4a02c key-save source; no ROOT final-recovery WIP is included. Require fresh complete CI on the resulting head. Earlier PR23/24 runs inherit the known providers.cjs failure and cannot establish readiness.

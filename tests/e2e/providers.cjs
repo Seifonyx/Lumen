@@ -13,23 +13,25 @@ const sse = (chunks) => chunks.map((o) => `data: ${JSON.stringify(o)}\n\n`).join
   await fetch('http://127.0.0.1:9099/emulator/v1/projects/the-model-router/accounts', { method: 'DELETE' });
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
-  const seen = [];
+  const seen = [], titles = [];
   await ctx.route('**/generativelanguage.googleapis.com/**', (route) => {
     const url = route.request().url();
     if (url.includes('/models?')) return route.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash Latest', inputTokenLimit: 1048576, supportedGenerationMethods: ['generateContent'] }] } });
-    if (url.includes(':generateContent')) return route.fulfill({ json: { candidates: [{ content: { parts: [{ text: 'Provider Test' }] } }] } });
+    if (url.includes(':generateContent')) {titles.push('gemini');return route.fulfill({ json: { candidates: [{ content: { parts: [{ text: 'Provider Test' }] } }] } });}
     return route.fulfill({ headers: { 'content-type': 'text/event-stream' }, body: sse([{ candidates: [{ content: { parts: [{ text: 'from gemini' }] }, finishReason: 'STOP' }] }]) });
   });
   await ctx.route('**/api.groq.com/**', (route) => {
     const req = route.request();
     seen.push({ url: req.url(), auth: req.headers().authorization });
     if (req.url().endsWith('/models')) return route.fulfill({ json: { data: [{ id: 'openai/gpt-oss-120b', context_window: 131072, active: true }, { id: 'openai/gpt-oss-20b', context_window: 131072, active: true }, { id: 'whisper-large-v3', active: true }] } });
+    if(req.postDataJSON()?.stream!==true) {titles.push('groq');return route.fulfill({json:{choices:[{message:{content:'Provider Test'},finish_reason:'stop'}],usage:{prompt_tokens:12,completion_tokens:3}}});}
     return route.fulfill({ headers: { 'content-type': 'text/event-stream' }, body: sse([{ choices: [{ delta: { content: '<think>quick check</think>Hello from Groq' } }] }, { choices: [{ delta: {}, finish_reason: 'stop' }], x_groq: { usage: { prompt_tokens: 40, completion_tokens: 4 } } }]) });
   });
   await ctx.route('**/api.cerebras.ai/**', (route) => {
     const req = route.request();
     seen.push({ url: req.url(), auth: req.headers().authorization });
     if (req.url().endsWith('/models')) return route.fulfill({ json: { data: [{ id: 'gpt-oss-120b' }, { id: 'qwen-3.8-27b' }] } });
+    if(req.postDataJSON()?.stream!==true) {titles.push('cerebras');return route.fulfill({json:{choices:[{message:{content:'Provider Test'},finish_reason:'stop'}],usage:{prompt_tokens:12,completion_tokens:3}}});}
     return route.fulfill({ headers: { 'content-type': 'text/event-stream' }, body: sse([{ choices: [{ delta: { content: 'Hello from Cerebras' } }] }, { choices: [{ delta: {}, finish_reason: 'stop' }], usage: { prompt_tokens: 30, completion_tokens: 3 } }]) });
   });
   const page = await ctx.newPage();
@@ -78,7 +80,8 @@ const sse = (chunks) => chunks.map((o) => `data: ${JSON.stringify(o)}\n\n`).join
   await page.click('.sidebar-foot');
   await openTab(page, 'Usage');
   const u = await page.textContent('.usage');
-  check(/GPT-OSS 20B.*1 request · 40 in/.test(u.replace(/\s+/g, ' ')) && /GPT-OSS 120B.*1 request · 30 in/.test(u.replace(/\s+/g, ' ')) && /Groq and Cerebras limits reset/.test(u), 'usage counted per model');
+  check(JSON.stringify(titles)===JSON.stringify(['groq']), 'one enabled background title stays on Groq and is counted');
+  check(/GPT-OSS 20B.*2 requests · 52 in \/ 7 out/.test(u.replace(/\s+/g, ' ')) && /GPT-OSS 120B.*1 request · 30 in \/ 3 out/.test(u.replace(/\s+/g, ' ')) && /Groq and Cerebras limits reset/.test(u), 'usage counts each reply and the completed title with exact real tokens per model');
   await page.screenshot({ path: require('path').join(__dirname, 'out', 'providers-usage.png') });
 
   check(!errors.length, `no page errors ${errors.join(' | ')}`);

@@ -29,29 +29,31 @@ Future agents must track committed, pushed, merged, and deployed states separate
 
 Read PROJECT_CONTINUUM.md at every continuation. It is the permanent user-approved continuation protocol (2026-10-19), supplementing the original full master and progressive deployment policy. Reuse IMPLEMENTATION_PLAN.md progress baseline v1 and its24 task weights; do not substitute a new agent's scoring.
 
-Progress checkpoint: previous numerical estimate unavailable (no prior weighted baseline); first disclosed range80–85%; first baseline v1 **83%**; current **82% (medium confidence)**, earned82/100 and remaining18 weighted work after the evidenced P02-B reopening below. Approved feature scope unchanged; this is a methodology addition, not new feature scope or fabricated historical progress. Current phase: PR22 full-CI helper/title regression repair, then isolated PR23 polish/current CI and P11 release/production synchronization. Evidence/credit rules are in the plan. Report previous/current progress, change, confidence, phase, verified work, remaining work, Git/main/production states and exact next milestone at session start/end. Recalculate using unchanged weights after meaningful evidence changes.
+Progress checkpoint: previous numerical estimate unavailable (no prior weighted baseline); first disclosed range80–85%; first baseline v1 **83%**; current **82% (medium confidence)**, earned82/100 and remaining18 weighted work after the evidenced P02-B reopening below. Approved feature scope unchanged; this is a methodology addition, not new feature scope or fabricated historical progress. Current phase: P11 exact-head CI, independent final architecture review and progressive production releases of PR22/23/24. Evidence/credit rules are in the plan. Report previous/current progress, change, confidence, phase, verified work, remaining work, Git/main/production states and exact next milestone at session start/end. Recalculate using unchanged weights after meaningful evidence changes.
 
 ## Read first
 
 Read MASTER_REQUIREMENTS.md, IMPLEMENTATION_PLAN.md, this file, Git status/log, then inspect the relevant source. This file supersedes the stale task-status paragraphs in HANDOFF.md for this overhaul; retain its user preferences and environment guidance.
 
-## Current state — 2026-10-18
+## Current state — 2026-10-19
 
-The overhaul remains **in progress**. The permanent policy above and complete MASTER_REQUIREMENTS.md remain active. Historical intermediate states are archived in [docs/history/MODEL_PICKER_2026-10-18.md](docs/history/MODEL_PICKER_2026-10-18.md); they do not override this ledger.
+The overhaul remains in progress:82%/medium,18weighted work remaining. Current source checkpoints are committed/pushed and clean; this subsequent operational ledger update is local documentation until the final synchronization commit. Historical paragraphs below describe earlier checkpoints and do not override this table or the latest appended evidence.
 
 | State | Exact revision / evidence |
 |---|---|
 | Latest verified production runtime | `02c322da48368d6277e5eb8b599edfead7f92e0e`; Deploy39157498252 success, hosted assets plus4 Chromium/2 WebKit suites passed |
-| Latest merged main | `3be7307cb960b50d3c5bed90613608337b34405d`; later PR20/21 changes are documentation only |
-| Latest pushed runtime feature | `9b174584bd21a00af2ee78c2811193e18d71f9fa`, feat/model-picker-recovery, PR22; remote SHA explicitly verified, fresh full CI39196403013 pending |
-| Latest polish source / root working branch | `ca9d50c4951814857b1e55a7bb56bdf89957e1b6`, feat/model-picker-polish, PR23; pushed and exact remote SHA verified. Only subsequent ledger updates are local. Not in PR22. |
-| Isolated runtime release worktree | `/workspace/Lumen-runtime-release`, feat/model-picker-recovery; no local polish source included |
+| Latest merged main | `3be7307cb960b50d3c5bed90613608337b34405d`; PR20/21 documentation only |
+| Runtime candidate | `8ade00b03a295d97d3f42ad920c7c7559496dcff`, feat/model-picker-recovery, PR22, pushed/exact remote verified; CI39197805965 unit/build +WebKit green, Chromium pending |
+| Polish candidate/root branch | `84481f494c2583687ff3bd496ebe28c79f12d183`, feat/model-picker-polish, PR23, pushed/exact remote verified; CI39197921656 unit/build +WebKit green, Chromium pending |
+| Key-save candidate/current local source | `8f4a02ce3380a6dca6034cd769314dd2777d1447`, feat/model-picker-key-save in /workspace/Lumen-policy-release, PR24, pushed/exact remote verified; CI39198665763 pending, type/build/unit green |
+| Isolation | Runtime in /workspace/Lumen-runtime-release; polish in /workspace/Lumen; key source in /workspace/Lumen-policy-release. No unfinished source is included in another candidate. Two named owned stashes are backups of already recovered ledger/WIP, not hidden implementation. |
 
 ## Exact next actions
 
-1. Check fresh full CI39196403013 on PR22 exact head9b174584bd21a00af2ee78c2811193e18d71f9fa; earlier39160504107 failed6/98 Chromium suites and is superseded. When every job passes, review the complete PR, normally merge with exact-head guard, dispatch Deploy on main, verify workflow SHA and hosted assets/core flows. Do not wait for unrelated polish.
-2. P09/P10 source committed/pushed atca9d50c4951814857b1e55a7bb56bdf89957e1b6, exact remote SHA verified, PR23 https://github.com/Seifonyx/Lumen/pull/23. Require full CI39161870338 on that exact head; type/build/unit green, both browser jobs pending. Only ledger notes are now local. Do not rebuild dist under an active browser runner. The includeThoughts classification finding is fixed and approved.
-3. Finish P11 requirement/mode/security/architecture validation using docs/MODEL_PICKER_VALIDATION.md. Release the independently safe polish milestone through the same workflow and verify actual production. Synchronize exact source/main/production hashes and manual steps. Do not claim overall completion before these gates pass.
+1. Wait for full exact-head CI on PR22, inspect complete results (including retries), normally merge with matching-head guard, serialize Deploy on main, verify workflow SHA and hosted assets/core flows. Do not treat two green jobs as full CI or postpone this safe release for PR24.
+2. Integrate/release PR23 after PR22 and all its exact-head checks pass. Confirm its diff contains only intended polish plus tested runtime ancestry. Verify actual production separately.
+3. PR24 repairs stalled key activation/reload/re-auth/denial and quota lifecycle; require all72unit/full Chromium +required WebKit CI, ordinary main integration, actual Deploy and hosted tests. Optional authenticated WebKit emulator CORS failures remain honestly documented below.
+4. Finish P11 architecture/requirements review and final regression/deployment ledger; recalculate using unchanged v1 weights. Update this table with exact main/production/source states and commit/push/merge final docs. No100% before mandatory gates pass. No paid inference or physical-device claim.
 
 ## Implemented and released
 
@@ -196,3 +198,18 @@ Manual tests after release:
 3. Remove a connected key and save. Its models must stop being eligible immediately and remain removed after reconnect/reload.
 4. With account sync unavailable, sign out/switch accounts. Login must remain usable and another account must never inherit the pending key.
 5. Existing custom-model/comparison/layout/recovery/accessibility test steps remain active. Actual permission revocation and stalled-write races are covered by controlled SDK/emulator tests, not manufactured provider failures on production.
+
+
+### Additional P11 account regression evidence
+
+Source8f4a02ce3380a6dca6034cd769314dd2777d1447 remains pushed/exact remote verified; subsequent changes are documentation only. key-save-auth-regression.log:7 Chromium files passed clean152s (account-isolation, account-sync, attachment-sync, quota, delete-account, privacy, tasks-sync), including quota batching/paused operation/Pacific reset, cross-device attachments, deletion, privacy masking and scheduled-task isolation. No retries. The phone390px actual WebKit save-feedback screenshot was inspected: hint wraps without overflow, save control remains visible, no page errors (key-save-webkit-phone.png). Source not changed after these checks. Fresh PR24 full CI39198665763 type/build/72unit green, browser jobs pending at this checkpoint. PR22/23 full Chromium also pending; neither new candidate merged/deployed. Keep82%/medium until current integration evidence changes credit. Permanent policy/protocol/master remain intact.
+
+
+## Final provider-accounting fixture checkpoint — 2026-10-19
+
+PR22 exact8ade00b fullCI39197805965 completed: type/build/68unit and allrequired WebKit green;97/98 Chromium files passed, providers.cjs failed both attempts (1030s total). No merge/deploy. The provider fixture returned SSE to a nonstream title request and still expected only the reply to be counted. Actual accounting correctly included the failed Groq title and its authorized Gemini fallback. Updated only tests/e2e/providers.cjs: real nonstream JSON title shape with12input/3output, assert exactlyoneGroq title (no unintended fallback), Groq2requests52input/7output and Cerebras1request30input/3output. Existing provider/key/discovery/thinking/reset/error assertions remain. Independent review approved stronger accounting/consent assertions. Clean red provider-accounting-clean-red.log; corrected providers+usage two Chromium suites clean26s in provider-accounting-green.log. No application source change. Commit/push and require complete new exact-head CI; propagate test correction toPR23/24 without including unfinished final recovery source.
+
+Source22 remains independently release-ready pending that gate, with main3be7307 and verified production02c322 unchanged. New ROOT feat/model-picker-final-recovery based8f4a02c holds separate uncommitted final P02-B settings durability and P06-B Canvas/helper caller repairs; do not include them in22/23/24. Weighted baseline remains82%/medium/18remaining; no arbitrary rescoring. Preserve master/protocol/policy.
+
+
+Verified propagation: the provider fixture correction passed in the combined polish source (polish-provider-build.log and polish-provider-green.log). PR23 latest pushed1793e4ac23d823ffa2cd056617ca63717776f931. This key branch merge includes the same corrected fixture plus the unchanged verified8f4a02c key-save source; no ROOT final-recovery WIP is included. Require fresh complete CI on the resulting head. Earlier PR23/24 runs inherit the known providers.cjs failure and cannot establish readiness.

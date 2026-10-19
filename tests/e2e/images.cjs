@@ -1,10 +1,11 @@
 // Create image: + menu → Create image → the reply is the picture (Hugging Face or Cloudflare via the relay).
 const { chromium } = require('playwright'), assert = require('node:assert/strict');
-const { profile } = require('./helpers/preview-profile.cjs');
+const { profile, previewUid } = require('./helpers/preview-profile.cjs');
 // A tiny valid PNG (2x2) stands in for the generated image.
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
 
 async function open(browser, uid, connect) {
+  uid = previewUid(uid);
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, serviceWorkers: 'block', reducedMotion: 'reduce', acceptDownloads: true });
   await profile(ctx, uid, 'light');
   if (connect) await ctx.addInitScript(({ uid, connect }) => {

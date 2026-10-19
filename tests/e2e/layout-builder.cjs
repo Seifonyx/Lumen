@@ -9,7 +9,7 @@ const g = (name, label) => ({ name: `models/${name}`, displayName: label, suppor
   const browser = await (process.env.MR_WEBKIT?webkit:chromium).launch();
   try { for (const width of [1280,390]) {
     const ctx = await browser.newContext({ viewport: { width, height: 860 }, isMobile:width<900, hasTouch:width<900, serviceWorkers: 'block' });
-    const uid = 'layout-builder-'+width;
+    const uid = 'preview-layout-builder-'+width;
     await profile(ctx, uid, 'light');
     // A failing original free provider keeps reconnect recovery active. No real credentials or requests.
     await ctx.addInitScript(uid => {

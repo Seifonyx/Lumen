@@ -35,7 +35,7 @@ PROJECT_CONTINUUM.md records the user's permanent Version2.0 continuation protoc
 
 No prior numerical percentage/weighting baseline was present in this plan or handoff. Do not invent a previous percentage. Baseline v1 below uses the existing24 stable phase/task IDs; future agents must reuse it unless an approved scope change or demonstrated calculation defect justifies a versioned amendment. Complexity, integration, testing and credential/operational risk determine weights. P11 owns final cross-project regression/release/docs work; implementation weights cover distinct features, not repeated credit for the same shared module.
 
-**Calculation:** overall completion =100 × Σ(weight × earned fraction) / Σ(weights). Total scope100; earned82; approximately82% complete, **medium confidence**. Remaining weighted work18. This is a defined-scope engineering estimate, not an answer-quality/perfection claim. Prior checkpoint: no weighted estimate; first baseline83% fell within the disclosed80–85% range; current82% follows the evidenced reopening of P02-B below. Historical 'Verified' statements apply to their recorded revisions; this ledger conservatively gates changed integrated paths on current CI.
+**Calculation:** overall completion =100 × Σ(weight × earned fraction) / Σ(weights). Total scope100; earned88; approximately88% complete, **medium confidence**. Remaining weighted work12. This is a defined-scope engineering estimate, not an answer-quality/perfection claim. Prior checkpoint: no weighted estimate; first baseline83% fell within the disclosed80–85% range; current82% follows the evidenced reopening of P02-B below. Historical 'Verified' statements apply to their recorded revisions; this ledger conservatively gates changed integrated paths on current CI.
 
 **Partial credit (apply consistently):**0 not started/no evidence;0.25 accepted, demonstrably completed sub-deliverable;0.5 integrated implementation with partial verification;0.75 feature-specific local tests/integration and review passed but current full CI/integration acceptance still pending;1 all applicable acceptance and required verification pass for the integrated revision. Unintegrated modules cannot earn full feature credit. Blocked/deferred tasks retain only evidenced credit; required unfinished work is never silently excluded. Architectural not-applicable decisions require explicit justification. Final production verification is separately weighted in P11-B, so local/CI/main are never called deployed.
 
@@ -49,25 +49,25 @@ For P11-A,0.5 reflects source/architecture mapping and local checks with full CI
 | P01-A | 6 | 1 | 6 |
 | P01-B | 6 | 1 | 6 |
 | P01-C | 5 | 1 | 5 |
-| P01-D | 4 | 0.75 | 3 |
+| P01-D | 4 | 1 | 4 |
 | P02-A | 5 | 1 | 5 |
 | P02-B | 4 | 0.75 | 3 |
-| P03-A | 6 | 0.75 | 4.5 |
+| P03-A | 6 | 1 | 6 |
 | P03-B | 6 | 1 | 6 |
 | P04-A | 5 | 0.75 | 3.75 |
 | P04-B | 4 | 0.75 | 3 |
 | P05-A | 7 | 0.75 | 5.25 |
-| P05-B | 4 | 0.75 | 3 |
+| P05-B | 4 | 1 | 4 |
 | P06-A | 3 | 1 | 3 |
 | P06-B | 4 | 0.75 | 3 |
 | P07-A | 6 | 0.75 | 4.5 |
-| P08-A | 5 | 0.75 | 3.75 |
-| P09-A | 3 | 0.75 | 2.25 |
+| P08-A | 5 | 1 | 5 |
+| P09-A | 3 | 1 | 3 |
 | P10-A | 3 | 0.75 | 2.25 |
-| P10-B | 2 | 0.75 | 1.5 |
+| P10-B | 2 | 1 | 2 |
 | P11-A | 3 | 0.5 | 1.5 |
 | P11-B | 3 | 0.25 | 0.75 |
-| **Total** | **100** | | **82** |
+| **Total** | **100** | | **88** |
 
 Evidence: PR19 full CI39136235729 and verified production02c322 establish foundation/manual/Auto work. PR22 feature-specific matrices/review/68unit/type/build passed, but full CI39160504107 failed6/98 browser suites and current fixes still need clean rerun/full CI. PR23 ca9d50c polish is pushed with local69unit/type/build/Chromium/WebKit/a11y/performance/parity evidence; its CI39161870338 was cancelled because it inherited PR22 failures. P11 source/requirements/independent review passed; final current CI, integration, deployment/live checks and synchronized ledger remain. Exact current operations/files/logs are in AI_HANDOFF.md. Update this table and checkpoint history only when evidence changes; never reset weights when agents change.
 
@@ -271,3 +271,14 @@ Source22 remains independently release-ready pending that gate, with main3be7307
 
 
 Verified propagation: the provider fixture correction passed in the combined polish source (polish-provider-build.log and polish-provider-green.log). PR23 latest pushed1793e4ac23d823ffa2cd056617ca63717776f931. This key branch merge includes the same corrected fixture plus the unchanged verified8f4a02c key-save source; no ROOT final-recovery WIP is included. Require fresh complete CI on the resulting head. Earlier PR23/24 runs inherit the known providers.cjs failure and cannot establish readiness.
+
+
+## Verified guest-fixture authorization alignment — 2026-10-19
+
+This PR24 follow-up changes ONLY test fixtures/helpers +documentation, never product authorization. Legacy profile/seed callers used logical IDs such as deep-research with emulator URLs; these IDs were not real preview users and the corrected explicit-denial path appropriately refused them. Shared preview-profile now normalizes logical IDs to preview- idempotently for BOTH account bootstrap and IndexedDB seed. Direct storage references in images/import-history/layout-builder and six manual screenshot helpers match the actual UID. Deep research uses truepreview/noemulator, matching DB identity, accessible Add control for either pointer mode and actual MR_WEBKIT engine selection. Real authenticated Firebase, invite-only, account-isolation and denial assertions are unchanged. No error suppression or skipped assertions. Independent review checked every profile consumer and caught/fixed six manual helper references; helper scripts pass syntax checks.
+
+Exact unchanged product source is5f455debf264f16090b1727bbb943a2e20e477b7 (key-save8f plus prior verified runtime/polish). key-guest-scope-chromium.log5affected files pass clean30s (research/images/import/layout-builder/archive); key-guest-scope-webkit.log actualresearch passes clean8s. ROOT newer final-recovery source separately passed the same5Chromium33s plus4actualWebKit47s; it is not included here. Current CI39243179620 is superseded by this verified fixture correction and is not proof of readiness; require fresh complete exact-head CI after push.
+
+Release ledger: PR22 source984b1a9 passedfullCI39199646064,98Chromium files904s clean +allrequiredWebKit, normallymerged3f48c6e02719b5f0c28be85e4c1e6e3cc2ef045b, Deploy39243260811 success +18liveassetmatches +hostedChromium4/WebKit2 clean. PR23 source1793e4ac23d823ffa2cd056617ca63717776f931 passedfullCI39199773200,99Chromium893s clean +allrequiredWebKit, normallymergeddab0fff854cc9657fd707b9e279c3bdb168bd64d, Deploy39243721175 success +18liveassetmatches +hostedChromium3/WebKit2 clean. Latest verifiedproduction/main isdab0fff. Previous3f48c6e is rollbackreference; no server/rules migration. ROOTfeat/model-picker-final-recovery holds LOCAL/UNCOMMITTED settings/layoutdurability +Canvas/helper/research repairs, independent of this release.
+
+Weighted baseline unchangedv1/100:82→88% (medium),12remaining. P01-D/P03-A/P05-B/P08-A now fullcredit after PR22 completeCI/main/live verification (+4.75); P09-A/P10-B after PR23 fullCI/main/live (+1.25). Remaining requirements/caller/settings/P11 gates receive no premature credit. MASTER_REQUIREMENTS.md untouched; permanent ProjectContinuum/progressive policy retained. Commit/push this coherent verified fixture follow-up, verifyremoteSHA, require fullCI, then normally merge/deploy/liveverify PR24 without waiting for unrelated ROOT WIP.

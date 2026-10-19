@@ -26,6 +26,8 @@ const vec = (t) => [/car|loan|vehicle|financ|money/i.test(t) ? 1 : 0, /cake|bake
       return r.fulfill({ json: { candidates: [{ content: { parts: [{ text: 'You picked the 5-year car loan at 4% [1].' }] } }] } });
     });
     const page = await ctx.newPage(), errors = [];
+    let cloudRequests=0;
+    page.on('request',request=>{if(new globalThis.URL(request.url()).hostname==='firestore.googleapis.com')cloudRequests++;});
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(URL);
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
@@ -59,6 +61,7 @@ const vec = (t) => [/car|loan|vehicle|financ|money/i.test(t) ? 1 : 0, /cake|bake
     await page.locator('.ask-cite').first().click();
     await page.locator('.main .msg.assistant:has-text("the 5-year loan is cheaper")').waitFor();
     console.log('PASS a citation opens its chat');
+    assert.equal(cloudRequests,0,'preview history and quota stay local instead of contacting account storage');
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }
 })().catch((e) => { console.error(e); process.exit(1); });

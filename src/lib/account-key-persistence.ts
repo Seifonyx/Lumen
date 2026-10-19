@@ -67,11 +67,11 @@ export function createAccountKeyPersistence(dependencies: Dependencies) {
     throw new Error('Could not save API keys on this device. Check local storage and try again.');
   };
   function enqueue(uid: string,revision: string,keys: ApiKeys): boolean {
-    if (currentUid() !== uid || isPreview(uid) || inFlight.get(uid)?.has(revision)) return false;
-    const session=currentSession();
+    const session=currentSession(),identity=JSON.stringify([session,revision]);
+    if (currentUid() !== uid || isPreview(uid) || inFlight.get(uid)?.has(identity)) return false;
     const active=inFlight.get(uid) || new Set<string>();
-    active.add(revision);inFlight.set(uid,active);
-    const finish = () => {active.delete(revision);if (!active.size && inFlight.get(uid) === active) inFlight.delete(uid);};
+    active.add(identity);inFlight.set(uid,active);
+    const finish = () => {active.delete(identity);if (!active.size && inFlight.get(uid) === active) inFlight.delete(uid);};
     const rejected = (error: unknown) => {
       const local=readLocal(uid);
       if ((error as {code?:string})?.code === 'permission-denied' && currentUid() === uid && currentSession() === session
@@ -82,7 +82,7 @@ export function createAccountKeyPersistence(dependencies: Dependencies) {
     try { acknowledgement=enqueueRemote(uid,immutableFields(keys)); }
     catch (error) { rejected(error);finish();return true; }
     void Promise.resolve(acknowledgement).then(() => {
-      if (currentUid() !== uid) return;
+      if (currentUid() !== uid || currentSession() !== session) return;
       const local=readLocal(uid);
       // Never recreate a cache cleared on logout, nor acknowledge a newer save.
       if (!local || local.keyRevision !== revision || local.pendingKeyRevision !== revision) return;

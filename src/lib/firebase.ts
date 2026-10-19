@@ -10,6 +10,7 @@ import config from '../firebase-config.json';
 import { quota } from './quota';
 import { EXTRA_PROVIDERS, normalizeKeys } from './ai/provider-config.js';
 import { createAccountKeyPersistence, type AccountKeyCache } from './account-key-persistence';
+import { createAccountSettingsPersistence } from './account-settings-persistence';
 
 // Sign-in runs through the app's own address where Google allows it. Phones (Safari, home-screen
 // apps) block the cross-site storage that sign-in through the-model-router.firebaseapp.com needs.
@@ -233,6 +234,23 @@ const accountKeyPersistence = createAccountKeyPersistence({
   },
 });
 
+const accountSettingsPersistence = createAccountSettingsPersistence({
+  readLocal: localAccount, writeLocal: keepLocal,
+  currentUid: () => getStoredPreviewUser()?.uid || auth.currentUser?.uid || null,
+  currentSession: () => accountSession, isDenied: uid => deniedAccounts.has(uid),
+  isPreview: isPreviewUser, onRemoteDenied: denyAccount,
+  enqueueRemote: (uid, settings) => {
+    quota.count('writes');
+    return setDoc(keysDoc(uid), { settings, updatedAt: serverTimestamp() }, { mergeFields: ['settings','updatedAt'] });
+  },
+});
+
+/** Authenticated recovery for both independent pending fields; no automatic retry loop. */
+export function resumePendingAccountWrites(uid: string): void {
+  if(deniedAccounts.has(uid))return;
+  accountKeyPersistence.resume(uid);accountSettingsPersistence.resume(uid);
+}
+
 /** Retry durable pending keys only for the active, non-denied account. SDK owns transport retries. */
 export function resumePendingAccountKeys(uid: string): void {
   if (!deniedAccounts.has(uid)) accountKeyPersistence.resume(uid);
@@ -262,6 +280,7 @@ async function fetchAccount(uid: string): Promise<Account> {
   if (deniedAccounts.has(uid) && !navigator.onLine) throw Object.assign(new Error('Account access was denied.'), {code:'permission-denied'});
   if (!navigator.onLine && saved) return saved;
   const start = accountKeyPersistence.captureRead(uid);
+  const settingsStart = accountSettingsPersistence.captureRead(uid);
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const timeout = new Promise<never>((_, reject) => {timer=setTimeout(() => reject(Object.assign(new Error('offline'), { code: 'unavailable' })), saved ? 8000 : 20000);});
@@ -270,8 +289,10 @@ async function fetchAccount(uid: string): Promise<Account> {
     quota.count('reads');
     if (!snap.metadata.fromCache) deniedAccounts.delete(uid);
     if (deniedAccounts.has(uid)) throw Object.assign(new Error('Account access was denied.'), {code:'permission-denied'});
-    const result=accountKeyPersistence.reconcileRead(uid,start,(snap.data() || {}) as Account);
-    resumePendingAccountKeys(uid);
+    const remote=(snap.data() || {}) as Account;
+    const settings=accountSettingsPersistence.reconcileRead(uid,settingsStart,remote.settings);
+    const result=accountKeyPersistence.reconcileRead(uid,start,{...remote,settings:settings || undefined});
+    resumePendingAccountWrites(uid);
     return result;
   } catch (e) {
     // An explicit access denial must never turn into an offline-cache login or replay.
@@ -282,7 +303,7 @@ async function fetchAccount(uid: string): Promise<Account> {
     // Re-read: a newer local save may have happened while the network was pending.
     const latest=localAccount(uid);
     if (latest && start.session===accountSession && (getStoredPreviewUser()?.uid || auth.currentUser?.uid) === uid && !deniedAccounts.has(uid)) {
-      resumePendingAccountKeys(uid);
+      resumePendingAccountWrites(uid);
       return latest;
     }
     throw e;
@@ -304,23 +325,18 @@ export async function loadKeys(uid: string): Promise<ApiKeys> {
 }
 
 /** Settings shared across devices (model list, instructions, appearance). */
-export function cacheAccountSettings(uid: string, settings: object): void {
-  keepLocal(uid, { settings: settings as Record<string, unknown> });
+export function cacheAccountSettings(uid: string, settings: object): boolean {
+  try {accountSettingsPersistence.stage(uid,settings);return true;} catch {return false;}
 }
 
 export async function loadRemoteSettings(uid: string): Promise<Record<string, unknown> | null> {
   return (await readAccount(uid)).settings || null;
 }
 
+/** Resolves after local durability + SDK enqueue, without waiting for a server ACK. */
 export async function saveRemoteSettings(uid: string, settings: object): Promise<void> {
-  quota.count('writes');
-  keepLocal(uid, { settings: settings as Record<string, unknown> });
-  if (isPreviewUser(uid)) return;
-  try {
-    await setDoc(keysDoc(uid), { settings, updatedAt: serverTimestamp() }, { merge: true });
-  } catch {
-    /* ignore Firestore errors in preview/offline */
-  }
+  accountSettingsPersistence.stage(uid,settings);
+  accountSettingsPersistence.flush(uid);
 }
 
 /** Resolves after durable local save and SDK enqueue, independently of server acknowledgement. */

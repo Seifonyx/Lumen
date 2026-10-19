@@ -110,7 +110,7 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
           model: 'auto',
           messages: [
             { id: 'u1', role: 'user', text: 'Can we make the model picker easier to use on a small phone?', createdAt: now - 60000 },
-            { id: 'a1', role: 'assistant', model: 'gemini:gemini-flash-latest', status: 'done', text: '## A more considered experience\\n\\nKeep the model choices visible, readable and easy to select. Preserve **Auto**, layout choices and clear availability labels.\\n\\n- Avoid clipping long layout names.\\n- Keep sheets legible over conversation text.\\n- Make every action reachable by touch or keyboard.', createdAt: now - 59000 },
+            { id: 'a1', role: 'assistant', model: 'gemini:gemini-flash-latest', status: 'done', text: ['## A more considered experience', '', 'Keep the model choices visible, readable and easy to select. Preserve **Auto**, layout choices and clear availability labels.', '', '- Avoid clipping long layout names.', '- Keep sheets legible over conversation text.', '- Make every action reachable by touch or keyboard.'].join(String.fromCharCode(10)), createdAt: now - 59000 },
           ],
         }]);
         await page.reload();

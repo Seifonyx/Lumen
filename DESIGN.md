@@ -121,3 +121,13 @@ Removed recommended layouts stay hidden. Omit the bulk restore control and its e
 ## Provider-error feedback
 
 Chat and Browse models use the shared CatalogErrorNotice with an accessible close button and a 44px touch target. Dismissal lasts across navigation for the current error; it does not clear the failure needed for reconnect recovery. A fresh catalogue result resets dismissal, and account changes clear the previous account's feedback.
+
+
+## Approved amendment — Lumen Design Renaissance v1.0 (2026-10-19)
+
+**Full authoritative directive:** [`docs/design/LUMEN_DESIGN_RENAISSANCE_V1.md`](docs/design/LUMEN_DESIGN_RENAISSANCE_V1.md). **Permanent engineering and cross-agent protocol:** [`PROJECT_CONTINUUM.md`](PROJECT_CONTINUUM.md), with full supplied v2.0 text preserved in [`docs/design/PROJECT_CONTINUUM_V2_FULL.md`](docs/design/PROJECT_CONTINUUM_V2_FULL.md). Entry point for coding agents: [`AGENTS.md`](AGENTS.md).
+
+The user approved the **scope and quality bar of Design Renaissance**, not the actual visual styling from previously rejected PR #28 or PR #30. For the current overhaul, this full directive supersedes older *unapproved* aesthetic suggestions and conservative proposals **only where they block the authorized ambitious complete-product transformation**. Preserve Switchboard brand identity, current verified feature behavior, privacy, user data, accessibility and existing approved controls. Preserve the full earlier design guidance above as historic/current product context rather than silently overwriting it.
+
+Both experiences require substantial actual-application redesign: iOS-native tactility plus a precise, capable desktop workspace, with tablet/Android adaptation. User must review and expressly approve real, complete redesigned iOS and desktop app screens before any substantial visual changes merge into production. Continue with existing independently weighted [`docs/design/ADAPTIVE_NATIVE_PLAN.md`](docs/design/ADAPTIVE_NATIVE_PLAN.md) and [`docs/design/ADAPTIVE_NATIVE_HANDOFF.md`](docs/design/ADAPTIVE_NATIVE_HANDOFF.md) on every meaningful milestone.
+

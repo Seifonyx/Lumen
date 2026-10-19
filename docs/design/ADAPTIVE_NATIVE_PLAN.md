@@ -1,5 +1,8 @@
 # Lumen Adaptive Native — independent implementation ledger
 
+> **APPROVED SCOPE AMENDMENT — Lumen Design Renaissance v1.0 (2026-10-19).** The full user-approved creative and implementation directive is preserved **unchanged** at [`LUMEN_DESIGN_RENAISSANCE_V1.md`](LUMEN_DESIGN_RENAISSANCE_V1.md); permanent execution is [`PROJECT_CONTINUUM.md`](../../PROJECT_CONTINUUM.md), full user's supplied v2 text [`PROJECT_CONTINUUM_V2_FULL.md`](PROJECT_CONTINUUM_V2_FULL.md). Every future agent must read **both in full** and recover this plan + [`ADAPTIVE_NATIVE_HANDOFF.md`](ADAPTIVE_NATIVE_HANDOFF.md). PRs #28 and #30 were visually rejected and are **closed unmerged**. This amendment demands a **substantial complete-screen transformation**, not a small polish of sheet opacity, wrapping or hover.
+
+
 > **Project:** Lumen Adaptive Native (the new UX/visual initiative). Approved strategic direction: iOS Apple-quality tactility; desktop Linear/Raycast-level precision; Android/tablet-appropriate adaptation; all under Lumen's own identity. **Status:** baseline and design specification only, no redesigned runtime UI. Do NOT conflate this with the original Dynamic Model Picker implementation plan.
 
 ## Governance and non-regression obligations
@@ -79,3 +82,52 @@ A phase earns 0, 0.25, 0.5, 0.75 or 1 of its weight for separately evidenced mil
 5. Update THIS design ledger/handoff after each verified milestone while leaving the original Model Picker docs intact.
 
 Project goal is superior measurable quality, not a claim of absolute perfection or a license to erase real app functionality.
+
+---
+
+## Approved amendment ledger — Lumen Design Renaissance v1.0 (2026-10-19)
+
+**Approval:** user supplied and approved `LUMEN DESIGN RENAISSANCE v1.0 — Master Autonomous Design & Implementation Prompt` and confirmed Project Continuum v2.0 as permanent operational protocol. The uploaded complete text is preserved at `docs/design/LUMEN_DESIGN_RENAISSANCE_V1.md`; the complete uploaded universal Project Continuum is at `docs/design/PROJECT_CONTINUUM_V2_FULL.md`, referenced from root `PROJECT_CONTINUUM.md`. Root `MASTER_REQUIREMENTS.md` retains original Model Picker authority and was not replaced.
+
+**Scope interpretation:** Design Renaissance **strengthens** the already-approved Adaptive Native project across both iOS and desktop; all nine weighted categories (AN00–AN08) already include research, distinct visual directions, real component proofs, full-screen review, integrations, feature workspaces, accessibility and deployment. Therefore this is a **versioned acceptance/quality amendment (scope baseline v1.1)** within the *same* nine task IDs and 100 total weight; no scores or weights are reset or modified for merely receiving the brief. If later actual coverage uncovers a materially new effort outside those categories, request an explicit scope-baseline revision and disclose recalculation rather than silently changing percentages. **Progress at checkpoint stays 7.5/100 (7.5%), medium confidence for source/CI baseline but low for visual acceptance, +0 this documentation milestone.** Separate Dynamic Model Picker estimate remains **98.5%** until its own evidence changes.
+
+### Exact requirements coverage map — audit statuses at each milestone
+
+| Renaissance sections / approved requirement | Existing owner(s) | Current status | Acceptance and evidence still required |
+|---|---|---|---|
+| 0–1 mission, rejection history, continuity | AN00, AN01, handoff | Verified **documentation**, aesthetic unapproved | Preserve both full directives; exclude rejected PRs #28/#30 from implementation; recovery from Git and evidence |
+| 2 research, ~10–15 primary references with meaningful product application | AN01 | In progress (13-source first-party dossier completed, not user-approved concept) | [Design Renaissance research](DESIGN_RENAISSANCE_RESEARCH.md) verified source links + live reference inspections where possible; use findings in real app changes |
+| 3 distinct Lumen identity (Eclipse, signal, cool neutrals, routing) | AN01, AN04 | In progress (existing baseline/source; new art direction unapproved) | A cohesive, immediately recognizable full-screen composition, not a generic template or deleted capability |
+| 4–5 iOS native-quality complete product | AN02, AN05 | Not started for **accepted** substantive redesign | Welcome, populated chat, composer, nav, sheets, model picker, project/tool hub and dense state as actual app, theme/keyboard/touch evidence |
+| 6 desktop complete professional workspace | AN03, AN06 | Not started for accepted substantive redesign | Full workspace/navigation/reader/composer + actual dense feature surface; 1280/1440 screenshots and shortcut/keyboard evidence |
+| 7 typography/materials/colors/motion | AN01, AN04, AN05, AN06 | In progress (existing rules audit only) | Shared semantic system; device-specific materials, native-like gestures, contrast/performance and 3 themes, no arbitrary new overrides |
+| 8 materially distinct compositions | AN01, AN02, AN03 | In progress (research has 2 conceptual options/platform only) | **At least two** meaningful iOS/desktop compositions explored and evaluated by evidence before selection; real component high-fidelity proof |
+| 9 full-screen before/after evidence | AN00, AN02, AN03, AN08 | In progress (baseline exists; PR30 images rejected as minor) | Exact same fixture/state/browser/viewport across complete welcome + populated chat + tools + overlays, downloadable originals and comparisons |
+| 10 explicit aesthetic approval + 6-factor quality rubric | AN02, AN03, AN08 | Not started; approval **not granted** | User sees actual redesigned app, explicitly accepts style **before** any substantial visual production merge; score based on evidence only |
+| 11 architecture/ownership, 12 all feature parity | AN04–AN08 | Existing contracts verified, redesign parity not started | No duplicate controls/data changes; keyboard/pointer/route/editor/privacy/credentials/regressions pass on real app |
+| 13, 14 multi-state responsiveness/testing/staged phases | AN05–AN08 | Not started for new code | Cross-device/browser/theme/zoom/reduced-effect/long content scenarios, CI, preview isolation and exact SHA verification |
+| 15–19 handoff, autonomy, failure-prevention, reporting | All AN tasks, `ADAPTIVE_NATIVE_HANDOFF.md` | In progress (persistent protocol auto-entry added) | Update plan/handoff **after every meaningful checkpoint**, source/progress/tests/proof artifacts/approvals/preview SHA, preserve next task for other agents |
+
+### Stronger requirements for AN02 and AN03 (existing weights unchanged)
+
+**AN02 — iOS 12 points:** do not award accepted concept/proof credit for changing only Add-sheet readability or picker labels. Require visibly transformed **real** iPhone welcome, **populated** conversation, composer and contextual controls, navigation/drawer, model picker, Add sheet, and one complete tool/feature hub; light/dark/black, 320/390/430 plus keyboard. Keep UX-contract behavior and non-glass fallback, inspect interaction; user aesthetic signoff before marking visually accepted. Rejected PR30 is not a starting design to polish.
+
+**AN03 — desktop 12 points:** do not award accepted concept/proof credit for sidebar hover/focus. Require a composition-level new experience on real `Sidebar`, `ChatView`, `Composer`, contextual headers and one sophisticated workspace: full 1280/1440 workspace (welcome and rich actual conversation), selection/route controls, keyboard/search, dense tool/Canvas/Compare surface, command/popup and settings. Confirm every control remains accessible and the difference is visible without a changelog.
+
+**AN08 — release 12 points:** required explicit aesthetic review before merge into `main` of **substantial visual changes**. Preview may be deployed from isolated, verified experiment branches only with proof that Firebase Hosting production and shared environments are untouched. If preview isolation cannot be verified, provide real screenshot and recording evidence instead. Physical iPhone claims remain unverified unless actual hardware evidence exists.
+
+### Conflict and precedence log
+
+1. **User's new visual ambition vs historic `DESIGN.md` language protecting the original phone welcome/composer geometry:** preserve the **functional behavior, visible product capabilities, safe areas, input, keyboard and accessibility**. Consider new visual layout on *review-only branches*. Any legacy *approved* fixed geometry cannot be silently discarded; design proposal + explicit user's visual approval resolves it. This is an **open creative-compatibility decision**, not license to ship an unapproved change.
+2. **Product document zoom preference vs `src/main.tsx` touch/gesture cancellation:** source wins as implemented behavior, not as acceptance proof. Reproduce accessibility/gesture conflicts and resolve in a dedicated tested patch; do not silently remove sheet navigation or pinch zoom.
+3. **Progressive release vs user approval gate:** docs, research and unrelated independently safe fixes may merge under existing authorization. Any *substantial design changes* require preview/real-app visual review and explicit user aesthetic approval **before production main merge and deploy**. Required CI alone is not approval. No undocumented exception.
+4. **Prior conservative design proposal vs newly approved Renaissance:** PR28 and PR30 are specifically rejected and **closed unmerged**. Research/prototype on new isolated branches; any independently valuable tiny defect fixes belong to separate safe PRs and do not count as flagship Renaissance delivery.
+5. **Absolute-best aspiration vs verifiable engineering:** pursue top practical standards but never claim future-proof perfection or skip security/privacy/performance for visuals. Security, data integrity, existing approved features and explicit user approval prevail. Record unresolved conflicts in this plan and handoff.
+
+### Immediate next actions / stage gates
+
+1. **Governance checkpoint:** exact full directives, `AGENTS.md`, root `PROJECT_CONTINUUM.md`/`DESIGN.md` additive pointers, design research, plan/handoff committed in a docs-only PR; verify file integrity and 100-point math. May merge docs-only as a safe continuum milestone (not a design deployment).
+2. **Implementation checkpoint:** branch separately from latest main (not rejected PR30); build a **substantial real-component iOS transformation** plus a contrasting composition alternative; capture welcome + populated conversation + composer + sheets/hub, assess 320/390/430, tests + artifact.
+3. **Desktop checkpoint:** build a comparably substantial desktop workspace, actual tool workspace and populated conversation on a separate safe branch; inspect before/after and functional parity.
+4. **Visual acceptance checkpoint:** show full-resolution real app screens and, if safe, isolated preview; record explicit aesthetic decision. If rejected, redesign composition, not cosmetic tweaked margins. **No production visual merge before approval.**
+5. Update plan/handoff after every meaningful verified milestone, preserve SHA, tests, screenshots and recovery instructions. Continue into AN04–AN08 only when their dependencies/approval allow.

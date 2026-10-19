@@ -87,6 +87,20 @@
   html.adaptive-native-proof .models-pop.sheet .mp-layout .mp-title {
     font-size: 12.5px;
   }
+  /* The current model can be below the fold and the picker scrolls to it.
+     Keep Auto, the universal fallback choice, visible while browsing without
+     changing the existing selected-option scroll or keyboard behavior. */
+  html.adaptive-native-proof .models-pop.sheet .mp-body {
+    scroll-padding-block-start: 62px;
+  }
+  html.adaptive-native-proof .models-pop.sheet .mp-auto {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+  }
 }
 
 /* Desktop: preserve the current panel density and hierarchy. Apply a

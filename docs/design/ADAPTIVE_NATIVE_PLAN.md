@@ -144,3 +144,15 @@ Project goal is superior measurable quality, not a claim of absolute perfection 
 **Status as of this checkpoint:** code authored and pushed, GitHub Actions run **39279893692** accepted but **queued** (no verified passing build, typecheck or screenshots at time of recording). **AN00–AN08 weighted fractions unchanged; earned 7.5/100.** AN01 concept exploration = implemented but unverified. AN02/AN03 are *not* earned, approved or complete. No production/preview deployed; source main unchanged by PR #32. Old baseline WebKit evidence remains source/provenance-limited. Investigate queued CI rather than silently reporting it as passing.
 
 **Next exact gate:** obtain and inspect CI WebKit screenshot artifact and tests, compare each full-screen alternate against current Lumen and complex workspaces, inspect native/iOS fallback behavior and horizontal overflow. Reject/revise anything generic, inaccessible, cramped or less capable. Only then offer actual-app evidence for explicit user visual review. Do not merge PR #32 into main or deploy substantial visual changes to production absent the user's approval. Sync this plan/handoff after the next confirmed milestone.
+
+### Continuum checkpoint — review-fixture hardening, 2026-10-19
+
+PR #32 remains a DRAFT with **no aesthetic approval**. Current source/test head before this note: `c6a3b1d9d9bf5d0014144e73338101aaa46ff325`. Main baseline: `eedf37df07bd1d63ce49525687e3641a4e74924d`.
+
+Source-only checks: experiment styles are opt-in for `?renaissance=atelier` and `?renaissance=workbench`; 76 scoped CSS selector groups and balanced braces inspected. This does not prove compilation, visual quality or feature parity.
+
+The real-app WebKit capture helper now seeds a populated saved document in Library and asserts the expected content is rendered, rather than assessing only an empty Library. It preserves the composer draft and checks model-option labels, layout choices, and Add-sheet action counts across identical current/Atelier/Workbench fixtures. Existing responsive screenshot matrix is unchanged.
+
+**Unverified CI:** most recent GitHub Actions run `39281319451` is queued with no completed jobs; earlier runs `39279893692` and `39280152176` are also queued. Cause is unknown. Do not report screenshots, builds or tests as passing until jobs actually execute. No redesign preview/production deployment.
+
+Stable AN00–AN08 weights total 100, earned remains **7.5**; no extra progress credit for unrun tests or unaudited visual code. Separate Model Picker stays **98.5%**. Next: inspect latest PR branch/run, obtain actual same-fixture full-screen screenshots, investigate any failures, verify functionality and obtain explicit user aesthetic approval before substantial visual changes are merged or deployed.

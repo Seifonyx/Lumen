@@ -681,3 +681,151 @@ html.kb-open.renaissance-workbench .main.is-empty .renaissance-launchpad {
   html.renaissance-atelier .renaissance-start,
   html.renaissance-workbench .renaissance-start { transition: none; }
 }
+
+
+/* =========================================================
+   FEATURE HUB COMPOSITION — actual Tools / Projects / Library pages.
+   This is a complete workspace treatment, not an empty chat-only concept.
+   No hub state, filters, creation actions or document content are replaced.
+   ========================================================= */
+
+@media (min-width:900px) {
+  /* Atelier: editorial content area and distinct yet restrained command header. */
+  html.renaissance-atelier .app:not(.app-skeleton) > .hub-page .hub-bar {
+    min-height: 72px;
+    padding: 12px clamp(22px, 3vw, 52px);
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--surface) 82%, var(--bg));
+  }
+  html.renaissance-atelier .app:not(.app-skeleton) > .hub-page .hub-inner {
+    max-width: 1140px;
+    padding: 32px clamp(26px, 4.5vw, 76px) 100px;
+  }
+  html.renaissance-atelier .hub-page .hub-head {
+    min-height: 156px;
+    gap: 40px;
+    align-items: center;
+    padding: 16px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 30px;
+  }
+  html.renaissance-atelier .hub-page .hub-head h1 {
+    font-weight: 625;
+    font-size: clamp(38px, 3.6vw, 53px);
+    line-height: 1.08;
+    letter-spacing: -.055em;
+  }
+  html.renaissance-atelier .hub-page .hub-head p {
+    max-width: 57ch;
+    font-size: 15px;
+    line-height: 1.65;
+    margin-top: 15px;
+  }
+  html.renaissance-atelier .hub-page .hub-actions .btn {
+    min-height: 46px;
+    padding-inline: 22px;
+    border-radius: 13px;
+  }
+  html.renaissance-atelier .hub-page .hub-toolbar,
+  html.renaissance-atelier .hub-page .coll-filters {
+    margin-bottom: 24px;
+  }
+  html.renaissance-atelier .hub-page .coll-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 24px 20px;
+  }
+  html.renaissance-atelier .hub-page .coll-photo,
+  html.renaissance-atelier .hub-page .coll-file {
+    border-radius: 18px;
+    background: var(--surface);
+    border-color: var(--border);
+    box-shadow: 0 12px 24px -25px rgb(0 0 0 / .3);
+  }
+
+  /* Workbench: intentionally flatter, more information-dense and anchored. */
+  html.renaissance-workbench .app:not(.app-skeleton) > .hub-page {
+    background: var(--bg);
+    border-inline-start: 1px solid var(--border);
+  }
+  html.renaissance-workbench .hub-page .hub-bar {
+    min-height: 76px;
+    padding: 12px 42px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  html.renaissance-workbench .hub-page .hub-inner {
+    max-width: 1380px;
+    padding: 0 clamp(22px, 3.5vw, 55px) 70px;
+  }
+  html.renaissance-workbench .hub-page .hub-head {
+    align-items: center;
+    gap: 28px;
+    padding: 33px 0 27px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  html.renaissance-workbench .hub-page .hub-head h1 {
+    font-size: clamp(30px, 2.7vw, 39px);
+    letter-spacing: -.04em;
+  }
+  html.renaissance-workbench .hub-page .hub-head p {
+    max-width: 62ch;
+    line-height: 1.5;
+    margin-top: 9px;
+  }
+  html.renaissance-workbench .hub-page .hub-actions .btn {
+    min-height: 42px;
+    padding: 0 18px;
+    border-radius: 8px;
+  }
+  html.renaissance-workbench .hub-page .coll-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 18px 12px;
+  }
+  html.renaissance-workbench .hub-page .coll-photo,
+  html.renaissance-workbench .hub-page .coll-file {
+    border-radius: 10px;
+    border-color: var(--border);
+  }
+}
+
+/* Mobile hub: clear full-content hierarchy, task rows remain touch friendly.
+   Keep native glass nav/tab bars and their real gestures in their own owners. */
+@media (max-width:899px) {
+  html.renaissance-atelier .hub-page .hub-inner {
+    padding-inline: max(21px, env(safe-area-inset-left));
+  }
+  html.renaissance-atelier .hub-page .hub-head,
+  html.renaissance-workbench .hub-page .hub-head {
+    gap: 12px;
+    margin-bottom: 11px;
+  }
+  html.renaissance-atelier .hub-page .hub-head h1 {
+    font-size: clamp(27px, 8.5vw, 35px);
+    letter-spacing: -.055em;
+    line-height: 1.1;
+  }
+  html.renaissance-atelier .hub-page .coll-grid,
+  html.renaissance-workbench .hub-page .coll-grid {
+    gap: 16px 12px;
+  }
+  html.renaissance-atelier .hub-page .coll-photo,
+  html.renaissance-atelier .hub-page .coll-file {
+    border-radius: 16px;
+  }
+  html.renaissance-workbench .hub-page .hub-scroll {
+    background: var(--surface);
+  }
+  html.renaissance-workbench .hub-page .hub-inner {
+    padding-inline: max(17px, env(safe-area-inset-left));
+  }
+  html.renaissance-workbench .hub-page .hub-head h1 {
+    font-size: clamp(25px, 7.5vw, 32px);
+    letter-spacing: -.043em;
+  }
+  html.renaissance-workbench .hub-page .coll-photo,
+  html.renaissance-workbench .hub-page .coll-file {
+    border-radius: 10px;
+    background: var(--bg);
+  }
+}

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { Chat, Memory } from '../../src/types';
 import { DEFAULT_SETTINGS } from '../../src/lib/settings';
-import { comparisonSnapshotKey, type ComparisonSnapshotInput } from '../../src/lib/comparison-snapshot';
+import { comparisonSnapshotKey, titleSnapshotKey, type ComparisonSnapshotInput } from '../../src/lib/comparison-snapshot';
 
 const chat: Chat = {
   id: 'chat', title: 'Original', createdAt: 1, updatedAt: 2, projectId: 'project',
@@ -94,4 +94,22 @@ test('changed conversation, assistant or repository context invalidates a frozen
 test('the active composer project is fingerprinted before any chat exists', () => {
   const fresh = { ...input, chat: null };
   assert.notEqual(comparisonSnapshotKey({ ...fresh, projectId: null }), comparisonSnapshotKey(fresh));
+});
+
+test('a first-message title survives automatic repository reads and later turns but not original input or consent changes', () => {
+  const key=titleSnapshotKey(input),next=structuredClone(input);
+  next.chat!.repo!.branch='new-branch';next.chat!.context=['loaded.ts'];
+  next.chat!.messages.push({id:'automatic-read',role:'user',text:'Here are requested files',createdAt:3});
+  assert.equal(titleSnapshotKey(next),key,'background title only depends on the first user message, not later tool continuations');
+  for(const kind of ['input','deleted','privacy','routing','model','assistant','title-disabled']) {
+    const changed=structuredClone(input);
+    if(kind==='input')changed.chat!.messages[0].text='Replaced first question';
+    if(kind==='deleted')changed.chat=null;
+    if(kind==='privacy')changed.settings.privacyShield=!changed.settings.privacyShield;
+    if(kind==='routing')changed.settings.autoSwitch=!changed.settings.autoSwitch;
+    if(kind==='model')changed.chat!.model='other';
+    if(kind==='assistant')changed.chat!.assistant={id:'new',name:'New',description:'',model:'other',instructions:'Different'};
+    if(kind==='title-disabled')changed.settings.autoTitle=!changed.settings.autoTitle;
+    assert.notEqual(titleSnapshotKey(changed),key,kind+' must invalidate old naming work');
+  }
 });

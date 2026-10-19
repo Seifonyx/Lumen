@@ -1,6 +1,6 @@
 // Coding workspace + layouts: Max coding layout, connect a GitHub repo, browse/open files, attach a
 // file, AI asks to read a file, applies edits, diff, commit to a new branch with a pull request.
-const { chromium } = require('playwright');
+const { chromium, webkit } = require('playwright');
 const path = require('path');
 const { scan } = require('./helpers/fitscan.cjs');
 async function openTab(page, name) {
@@ -17,7 +17,7 @@ const F = '````';
 (async () => {
   await fetch('http://127.0.0.1:8080/emulator/v1/projects/the-model-router/databases/(default)/documents', { method: 'DELETE' });
   await fetch('http://127.0.0.1:9099/emulator/v1/projects/the-model-router/accounts', { method: 'DELETE' });
-  const browser = await chromium.launch();
+  const browser = await (process.env.MR_WEBKIT ? webkit : chromium).launch();
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const ai = [];
   const gh = { trees: [], commits: [], refs: [], pulls: [], reads: [] };

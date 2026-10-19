@@ -30,3 +30,10 @@ export function comparisonSnapshotKey({ settings, chat, projectId, memories }: C
   return JSON.stringify(view, (_key, value) => value && typeof value === 'object' && !Array.isArray(value)
     ? Object.fromEntries(Object.keys(value).sort().map(key => [key, value[key]])) : value);
 }
+
+/** Titles use the first user input only; later tool reads/turns do not change that input. */
+export function titleSnapshotKey(input: ComparisonSnapshotInput): string {
+  const chat=input.chat;
+  return JSON.stringify([input.settings.autoTitle,comparisonSnapshotKey({...input,chat:chat?{...chat,repo:undefined,context:[],summary:undefined,
+    messages:chat.messages.filter(message=>message.role==='user').slice(0,1)}:null})]);
+}

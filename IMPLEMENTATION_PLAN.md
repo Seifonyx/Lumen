@@ -29,6 +29,48 @@ Authoritative scope: [MASTER_REQUIREMENTS.md](MASTER_REQUIREMENTS.md), preserved
 
 Status vocabulary: **Not started**, **In progress**, **Implemented but unverified**, **Verified**, **Blocked**, **Deferred with justification**. Visiting a phase does not complete it. All requirements remain in scope unless an explicit, documented architectural applicability decision explains otherwise.
 
+## Permanent amendment: Project Continuum and progress baseline v1
+
+PROJECT_CONTINUUM.md records the user's permanent Version2.0 continuation protocol approved2026-10-19. Read and follow it alongside the complete original MASTER_REQUIREMENTS.md and progressive deployment policy. This amendment adds stable evidence-based tracking; approved Model Picker feature scope is unchanged.
+
+No prior numerical percentage/weighting baseline was present in this plan or handoff. Do not invent a previous percentage. Baseline v1 below uses the existing24 stable phase/task IDs; future agents must reuse it unless an approved scope change or demonstrated calculation defect justifies a versioned amendment. Complexity, integration, testing and credential/operational risk determine weights. P11 owns final cross-project regression/release/docs work; implementation weights cover distinct features, not repeated credit for the same shared module.
+
+**Calculation:** overall completion =100 × Σ(weight × earned fraction) / Σ(weights). Total scope100; earned82; approximately82% complete, **medium confidence**. Remaining weighted work18. This is a defined-scope engineering estimate, not an answer-quality/perfection claim. Prior checkpoint: no weighted estimate; first baseline83% fell within the disclosed80–85% range; current82% follows the evidenced reopening of P02-B below. Historical 'Verified' statements apply to their recorded revisions; this ledger conservatively gates changed integrated paths on current CI.
+
+**Partial credit (apply consistently):**0 not started/no evidence;0.25 accepted, demonstrably completed sub-deliverable;0.5 integrated implementation with partial verification;0.75 feature-specific local tests/integration and review passed but current full CI/integration acceptance still pending;1 all applicable acceptance and required verification pass for the integrated revision. Unintegrated modules cannot earn full feature credit. Blocked/deferred tasks retain only evidenced credit; required unfinished work is never silently excluded. Architectural not-applicable decisions require explicit justification. Final production verification is separately weighted in P11-B, so local/CI/main are never called deployed.
+
+For P11-A,0.5 reflects source/architecture mapping and local checks with full CI failures still blocking;1 requires final full current CI/regression acceptance. For P11-B,0.25 reflects the verified foundation release and coherent source checkpoints;0.5 requires remaining runtime integrated normally into main;0.75 requires latest runtime deployed and live-verified;1 additionally requires final synchronized committed/pushed/merged documentation and exact production ledger. Mandatory unfinished gates prohibit100%.
+
+| Stable task | Weight | Earned fraction | Earned weighted work |
+|---|---:|---:|---:|
+| P00-A | 3 | 1 | 3 |
+| P00-B | 2 | 1 | 2 |
+| P00-C | 1 | 1 | 1 |
+| P01-A | 6 | 1 | 6 |
+| P01-B | 6 | 1 | 6 |
+| P01-C | 5 | 1 | 5 |
+| P01-D | 4 | 0.75 | 3 |
+| P02-A | 5 | 1 | 5 |
+| P02-B | 4 | 0.75 | 3 |
+| P03-A | 6 | 0.75 | 4.5 |
+| P03-B | 6 | 1 | 6 |
+| P04-A | 5 | 0.75 | 3.75 |
+| P04-B | 4 | 0.75 | 3 |
+| P05-A | 7 | 0.75 | 5.25 |
+| P05-B | 4 | 0.75 | 3 |
+| P06-A | 3 | 1 | 3 |
+| P06-B | 4 | 0.75 | 3 |
+| P07-A | 6 | 0.75 | 4.5 |
+| P08-A | 5 | 0.75 | 3.75 |
+| P09-A | 3 | 0.75 | 2.25 |
+| P10-A | 3 | 0.75 | 2.25 |
+| P10-B | 2 | 0.75 | 1.5 |
+| P11-A | 3 | 0.5 | 1.5 |
+| P11-B | 3 | 0.25 | 0.75 |
+| **Total** | **100** | | **82** |
+
+Evidence: PR19 full CI39136235729 and verified production02c322 establish foundation/manual/Auto work. PR22 feature-specific matrices/review/68unit/type/build passed, but full CI39160504107 failed6/98 browser suites and current fixes still need clean rerun/full CI. PR23 ca9d50c polish is pushed with local69unit/type/build/Chromium/WebKit/a11y/performance/parity evidence; its CI39161870338 was cancelled because it inherited PR22 failures. P11 source/requirements/independent review passed; final current CI, integration, deployment/live checks and synchronized ledger remain. Exact current operations/files/logs are in AI_HANDOFF.md. Update this table and checkpoint history only when evidence changes; never reset weights when agents change.
+
 ## Architectural approach
 
 Extend the existing browser-side provider adapters and shared request runtime. Keep stable provider-prefixed IDs and existing saved settings/layout schemas wherever possible. Discovery must publish one coherent credential-scoped registry; selection and execution consume it. Preserve user choices separately from transient availability. Unknown specifications stay unknown; inferred rankings are not measured answer quality. Browser refresh runs only while the app can execute.
@@ -106,8 +148,8 @@ For each implementation milestone record exact commands/results in AI_HANDOFF.md
 |---|---|---|
 | Latest verified production | `02c322da48368d6277e5eb8b599edfead7f92e0e` | Deploy39157498252 success; live assets +4 Chromium/2 WebKit suites clean |
 | Latest merged main | `3be7307cb960b50d3c5bed90613608337b34405d` | PR19 runtime plus policy/verification-only PR20/21; app runtime identical02c322 |
-| Latest pushed runtime source | `1c73895346f3c3ca72b8085a3ba88d6f78bbd10d`, PR22 feat/model-picker-recovery | Exact remote SHA verified; full CI39160504107 pending Chromium/Firebase, type/build/unit and WebKit green |
-| Ongoing isolated branch | feat/model-picker-polish, HEAD1c73895 | Local P09/P10 controls/performance/budget/parameter fix plus P11 validation map; not included in PR22 |
+| Latest pushed runtime source | `9b174584bd21a00af2ee78c2811193e18d71f9fa`, PR22 feat/model-picker-recovery | Exact remote SHA verified; fresh full CI39196403013 pending; prior39160504107 failed and is superseded |
+| Latest polish source | `ca9d50c4951814857b1e55a7bb56bdf89957e1b6`, feat/model-picker-polish, PR23 | Pushed/exact remote verified; full CI39161870338 pending browser jobs. Only later ledger notes remain local; no polish source in PR22 |
 
 Evaluate PR22 for normal merge/deploy immediately after every current required check passes; no unfinished polish dependency. Verify actual deployment/core flows, then continue remaining phases. Exact next tasks, files, logs, rollback and manual tests are in AI_HANDOFF.md. Older chronological entries below are historical and do not override this ledger.
 
@@ -147,3 +189,23 @@ PR22 runtime head1c73895346f3c3ca72b8085a3ba88d6f78bbd10d is pushed/exactly veri
 Shared UI ownership/accessibility and routing CPU optimization are implemented on isolated feat/model-picker-polish. Final pre-parameter checks: all68unit/type/build,6 Chromium suites77s,3 WebKit suites72s clean without retries;16 rendered axe surface scans, phone/desktop light/dark and screenshots inspected. New69th unit file narrows Gemini parameter recovery. Final polish-reviewed logs: typecheck/all69unit/build pass; provider Chromium11s/WebKit11s clean. Independent final review approved classifier/scope/budget/tool preservation; no blocker remains in this local milestone. Require its own full exact-head CI before release. Explicit reply allowances now share eligibility and revalidate fresh fallback metadata. Exact144 root/512 independent decision parity cases and synthetic zero-network benchmarks support CPU-only claims. P11 requirement/mode map is docs/MODEL_PICKER_VALIDATION.md. No paid inference benchmark or physical-iPhone claim. Keep PR22 and this local milestone separate until each passes its own CI/deployment gates.
 
 P11 source/architecture review now traces every applicable execution mode and sections1–18 in the validation map; no unresolved runtime dependency or known foundational blocker found. Non-chat image/knowledge/GitHub operations retain their own permissions/side-effect boundaries rather than being rerouted as chat models. Overall completion still requires each pending milestone's exact-head full CI, merge/deployment/live checks and final synchronized ledger.
+
+PR23 https://github.com/Seifonyx/Lumen/pull/23 now contains the verified local polish milestone atca9d50c4951814857b1e55a7bb56bdf89957e1b6. Exact remote SHA matched. Type/build/unit CI green; full Chromium/WebKit pending. Do not restart unchanged-source CI for ledger-only updates; synchronize those through a documentation-only PR after runtime releases.
+
+Final independent P11 architecture/applicability review accepted the requirements map and actual mode boundaries; five focused recovery/helper/provider-error/stream/declaration suites passed independently. No additional source blocker found. Full CI and actual production verification remain mandatory before overall completion.
+
+## Authoritative runtime follow-up integration
+
+PR22 source9b174584bd21a00af2ee78c2811193e18d71f9fa is committed/pushed/exact remote verified; current full CI39196403013 is running. Old1c73895 CI39160504107 failed6/98 Chromium suites. PR23 ca9d50c4951814857b1e55a7bb56bdf89957e1b6 CI39161870338 was cancelled due inherited failures. Root feat/model-picker-polish is integrating9b17458 now; both source intents and permanent protocol/baseline are retained, with new combined checks/CI required. No new runtime has merged/deployed; main3be7307 and verified production02c322 remain distinct.
+
+Fixes: titles snapshot first input/consent and survive automatic file continuations; first-input/deletion/privacy/routing/model/assistant/project/memory/autoTitle and account/key changes still invalidate. Failed/completed title attempts and real tokens report once; same-key Stop counts, old-key publication remains suppressed. Original credential assertions unchanged. Four successful-helper fixtures supply128k context; unknown8192/output-budget guards remain strict. Usage counts2 OpenRouter replies plus1 enabled title in pool3/50 with47remaining; manual Gemini1 and actual tokens. Preview-guest IDs/no emulator query remove accidental shared-emulator listeners. SelectionTools now checks an existing selection on lazy mount; held-chunk browser regression proves oldsource missed it.
+
+Runtime local evidence: pr22-followup-unit/build all68/type/build pass; affected Chromium6suites clean32s; final fresh-page writing fixture Chromium passed and four actual WebKit guest suites clean17s (pr22-selection-final-*). Independent review accepted source/scope/accounting/selection/guest fixtures and24task/100weight/83earned baseline; progress checker executes in CI. Optional real-auth WebKit coding/usage emulator expansion failed models loading after key save and needs diagnosis while CI runs; not claimed verified. SaveApiKeys awaiting Firestore acknowledgement and emulator cross-origin errors are diagnostic leads, not a proven production regression.
+
+Next: finish merge resolution, verify combined69unit/type/build/targeted Chromium+WebKit, commit/push PR23 and exact remote verify; require fresh full CI. Diagnose optional emulator failure independently, then normal merge/Deploy/hosted verification for each safe milestone. Preserve original master, Project Continuum, weighted83% baseline and permanent progressive-release policy. No speculation or skipped mandatory failures.
+
+## Merged local verification and evidenced progress correction
+
+Runtime9b17458 and polishca9d50c are combined, preserving explicit output-budget revalidation, performance/UI work and all required WebKit suites. `polish-merged-unit.log`: typecheck/all69unit files passed; build passed. Eight Chromium suites clean38s and3 actual WebKit suites clean63s (accessibility/comparison/writing) verify the resolved merge without retries. Next commit/push this merge to PR23 and require fresh full exact-head CI; PR22 current CI39196403013 continues independently.
+
+Previous weighted estimate83% → current82% (medium), same baseline v1/100weights/scope. Newly inspected saveApiKeys→keySaveQueue→saveKeys awaits Firestore backend acknowledgement before local credential activation/catalog discovery. Installed Firebase SDK documents that this promise can remain unresolved offline; independent review confirms the path predates PR22 and can also block later/account saves. P02-B is reopened from1 to0.75, losing exactly1 earned weight; remaining18. This is evidence-based defect discovery, not arbitrary rescoring or scope expansion. Behavioral blocked-write proof and an isolated fix are next while CI runs. It is not an introduced PR22 dependency or a claim of a production WebKit regression. Preserve the milestone releases and finish the fix before overall completion.

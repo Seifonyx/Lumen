@@ -32,7 +32,7 @@ import { AUTO, analyze, estimateTokens, planRoute, type RouteInput } from './lib
 import { buildInstructions } from './lib/ai/instructions.js';
 import { inputBudget, requestTokens } from './lib/ai/context-budget.js';
 import { runComparisonStage } from './lib/comparison-stage';
-import { comparisonSnapshotKey } from './lib/comparison-snapshot';
+import { comparisonSnapshotKey, titleSnapshotKey } from './lib/comparison-snapshot';
 import { helperModels } from './lib/helper-routing';
 import { waitFor as waitForSignal } from './lib/ai/chat.js';
 import { hasVideo, toolModel } from './lib/ai/tool-inputs.js';
@@ -367,11 +367,11 @@ export const useStore = create<State>((set, get) => {
   };
 
   /** Frozen helper consent plus fresh per-attempt metadata; never widens its original queue. */
-  const helperScope = (chat?:Chat | null) => {
+  const helperScope = (chat?:Chat | null,title=false) => {
     const generation=accountGeneration,version=keyVersion();
     const settings=get().settings,selected=chat?modelFor(chat):AUTO;
     const layout=isLayoutId(selected)?findLayout(selected,get().catalog?.models || [],settings.layouts,settings.hiddenLayouts):null;
-    const snapshot=()=>comparisonSnapshotKey({settings:get().settings,chat:chat?get().chats.find(item=>item.id===chat.id) || null:null,memories:get().memories});
+    const snapshot=()=>(title?titleSnapshotKey:comparisonSnapshotKey)({settings:get().settings,chat:chat?get().chats.find(item=>item.id===chat.id) || null:null,memories:get().memories});
     const key=snapshot();
     const current=()=>generation===accountGeneration && version===keyVersion() && snapshot()===key;
     return {current,modelRequirements:layout?.requirements,
@@ -920,10 +920,13 @@ export const useStore = create<State>((set, get) => {
       void (async () => {
         const titleText=titleMasker ? titleMasker.mask(firstText).text : firstText;
         const candidates=summaryModels(estimateTokens(titleText)+200,256,'Write a short chat title',updated,reply.model);
-        const scope=helperScope(updated);
-        const result = await fetchTitle(titleText, reply.model, (id) => scope.skip(id) || (usage?.blockedUntil(id) ?? null) !== null,candidates);
+        const scope=helperScope(updated,true);
+        const result = await fetchTitle(titleText, reply.model, (id) => scope.skip(id) || (usage?.blockedUntil(id) ?? null) !== null,candidates,(id,info)=>{
+          if(generation!==accountGeneration)return;
+          usage?.record(id,{requests:1,input:info.input || 0,output:info.output || 0});
+          if(info.limit)usage?.block(id,info.limit);
+        });
         if (generation !== accountGeneration || !scope.current()) return;
-        if (result) usage?.record(result.model, { requests: 1 });
         const latest = get().chats.find((c) => c.id === chatId);
         if (result && latest && latest.title === updated.title) {
           const named = { ...latest, title: titleMasker ? titleMasker.unmask(result.title) : result.title };

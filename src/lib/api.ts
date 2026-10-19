@@ -17,9 +17,9 @@ export async function fetchCatalog(refresh = false): Promise<Catalog> {
   return (await catalog({ refresh })) as Catalog;
 }
 
-export async function fetchTitle(text: string, model?: string, skip?: (id: string) => boolean,models?:string[]): Promise<{ title: string; model: string } | null> {
+export async function fetchTitle(text: string, model?: string, skip?: (id: string) => boolean,models?:string[],report?:(id:string,info:AttemptInfo)=>void): Promise<{ title: string; model: string } | null> {
   try {
-    return (await makeTitle(text, model, skip,models)) as { title: string; model: string } | null;
+    return (await makeTitle(text, model, skip,models,report)) as { title: string; model: string } | null;
   } catch {
     return null;
   }

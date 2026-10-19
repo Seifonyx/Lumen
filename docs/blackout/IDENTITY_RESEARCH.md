@@ -3,9 +3,10 @@
 
 ## Visual evidence actually inspected
 - Current `DESIGN.md` / real WebKit baseline: cool neutral light/dark/true black; small lime Eclipse mark, compact light sidebar, central chat, floating phone composer and overlay sheet.
-- 9Router `images/9router.png` official screenshot: dark dense provider management UI, left rail, grouped OAuth/free/API connections, multi-column cards, test controls.
+- Official 9Router `images/9router.png` screenshot: dark dense provider management UI, left rail, grouped OAuth/free/API connections, multi-column cards, test controls.
+- Five additional public preview images inspected via image results: categorized Providers/status cards, ordered Create Combo editor, Usage token/cost/recent-requests dashboard, Endpoint/tunnel/token-saver settings, CLI connection form. Full-size gallery screening and real mobile screenshots remain outstanding.
 - Apple HIG material/layout/macOS guidance: interaction layers distinguish controls from content; adaptive safe areas; spacious but productive Mac density; keyboard accessibility. Links: https://developer.apple.com/design/human-interface-guidelines/materials , https://developer.apple.com/design/human-interface-guidelines/layout , https://developer.apple.com/design/human-interface-guidelines/designing-for-macos/ .
-- **No other screenshot from the 36-URL uploaded manifest has been visually verified.** Screenshots are not owned by Lumen; avoid literal replication.
+- **Only six images/previews have been visually reviewed**, not the complete 36-URL manifest; most gallery entries have not been viewed. Screenshots are not owned by Lumen; avoid literal replication. Sources are enumerated in `REFERENCE_MANIFEST.md` and `PHASE1_AUDIT.md`.
 
 ## Candidate A — Blackline / The Instrument
 Geometry: disciplined 4/8px grids, angular instrument-like header, narrow navigation rail adjacent to light/dark work canvas; no tile-heavy admin-dashboard clone. Typography: distinctive numeric/monospaced routing labels paired with confident neo-grotesk content text. Logo: a negative-space beam traveling through a circular aperture rather than the previous lime flare. Motion: route changes reveal a fine white progress path, not decorative ambient glow. iOS: compact top context and single bottom-owned composer; focus and keyboard keep task in foreground. Desktop: capable sidebar + writing stage + collapsible evidence/context region. Risk: could feel too technical for creative chat; prove populated conversations and real document canvas.

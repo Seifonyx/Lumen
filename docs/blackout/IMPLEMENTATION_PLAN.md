@@ -23,7 +23,7 @@ Read `BLACKOUT_V1_1_AMENDMENT.md` exactly; read root `PROJECT_CONTINUUM.md`, ful
 | Milestone | Required verified deliverable | Current state |
 |---|---|---|
 | B01.1 | Check repo main/PRs, user v1.1 file, architecture and current product contracts | Source-verified; amendment preserved in repo branch |
-| B01.2 | Inspect uploaded ZIP and actual observed external reference screens, source links and trust limits | Partially verified: 36 URL manifest, 1 actual 9Router screenshot visually inspected; remaining URLs not verified |
+| B01.2 | Inspect uploaded ZIP and actual observed external reference screens, source links and trust limits | Partially verified: all 36 source URLs preserved under `REFERENCE_MANIFEST.md`; one official screenshot fully opened plus five public screenshot previews visually examined; remaining references unverified |
 | B01.3 | Reconcile full BLACKOUT master with user-approved scope and 9Router reference evidence | **Blocked: master prompt not present** |
 | B01.4 | Verify current-app baseline across populated desktop/mobile states and complete security/feature comparison | In progress; prior real WebKit baseline inspected, new screenshot matrix not run |
 | B02.1 | Define 3 truly different identity hypotheses (type, geometry, logo, controls, nav, light/dark/black) | Research hypotheses only; unapproved |

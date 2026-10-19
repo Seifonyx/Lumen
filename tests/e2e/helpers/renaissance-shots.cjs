@@ -125,7 +125,31 @@ function fakeChat() {
     await page.getByText('Lumen navigation research.md',{exact:true}).first().waitFor({timeout:12000});
     await wait(250);
     await shot('library');
-    parity.push({width,theme,mode,optionNames:options.map(x=>x.trim()),layoutNames:layouts.map(x=>x.trim()),addActions:addCount,documentVisible:true});
+    if(mode!=='current') {
+      // Verify all three visible starts actually open the REAL app features.
+      // Do this after visual captures to avoid state mutation skewing pairs.
+      await page.locator('.hub-page .hub-close').click();
+      if(phone) {
+        await page.locator('.menu-btn').click();
+        await page.locator('.sidebar-footer .new-chat').click();
+      } else {
+        await page.locator('.sidebar .sidebar-primary-action').click();
+      }
+      await page.getByRole('navigation',{name:'Start a task in Lumen'}).waitFor({timeout:12000});
+      if(await page.locator('.renaissance-start').count()!==3)throw Error('Real task shortcuts missing');
+      for(const [label,destination] of [
+        ['Explore tools','Tools'],
+        ['Your projects','Projects']
+      ]) {
+        await page.getByRole('button',{name:new RegExp(label)}).click();
+        await page.locator('.hub-page[aria-label="'+destination+'"]').waitFor({timeout:12000});
+        await page.locator('.hub-page .hub-close').click();
+      }
+      await page.getByRole('button',{name:/Write a document/}).click();
+      await page.getByRole('button',{name:'Close canvas'}).waitFor({timeout:12000});
+      await page.getByRole('button',{name:'Close canvas'}).click();
+    }
+    parity.push({width,theme,mode,optionNames:options.map(x=>x.trim()),layoutNames:layouts.map(x=>x.trim()),addActions:addCount,documentVisible:true,shortcutsTested:mode!=='current'});
     if(errors.length)throw Error('Page errors: '+errors.slice(0,3).join(' | '));
     await ctx.close();
     console.log('RENAISSANCE PASS '+prefix);

@@ -55,15 +55,3 @@ Never reveal/commit/log secrets, expose cross-account data, bypass auth/security
 Before session/usage/agent boundaries inspect Git, safely finish/checkpoint, update plan/handoff/master amendments, recalculate using the existing weights, record evidence, run applicable checks, commit/push coherent verified work, verify remote SHA and record local/pushed/main/deployed revisions separately. Document all WIP, blockers, pending tests and exact next task/files. After hard cutoff the next agent must inspect/recover; never invent synchronization/deployment success.
 
 At beginning and end report concisely: PROJECT; OVERALL COMPLETION (approximate %, confidence); CHANGE THIS SESSION (previous→current or justified baseline change); CURRENT PHASE; COMPLETED; VERIFIED (actual checks); REMAINING; GIT STATUS (branch/exact source/push/merge); PRODUCTION STATUS (exact verified commit/blocker); NEXT ACTION. At start change may be none yet. Use a range instead of unsupported precision. Continue autonomous implementation after the report, not just planning/recommendations.
-
-
-## Permanent protocol source and current visual-overhaul amendment (2026-10-19)
-
-This root file remains Lumen's active **PROJECT CONTINUUM v2.0** operational and cross-agent protocol; it is **not replaced** by the latest design brief. The user's complete v2.0 master text has additionally been preserved in `docs/design/PROJECT_CONTINUUM_V2_FULL.md` for exact review.
-
-The user separately approved **LUMEN DESIGN RENAISSANCE v1.0** as the authoritative **scope, research, visual-quality, real-app proof and aesthetic-acceptance directive** for the current Lumen design overhaul. Its entire original text is in `docs/design/LUMEN_DESIGN_RENAISSANCE_V1.md`. Every future agent must read it completely, in addition to this protocol, before continuing design work. See root `AGENTS.md` for agent autodiscovery.
-
-This is an **additive, explicitly approved scope amendment**, not a rewrite of `MASTER_REQUIREMENTS.md` (the separate Dynamic Model Picker workstream), `DESIGN.md`, the original feature contract, or established progress weights. Keep `docs/design/ADAPTIVE_NATIVE_PLAN.md` and `docs/design/ADAPTIVE_NATIVE_HANDOFF.md` synchronized **after each meaningful design milestone**; root `IMPLEMENTATION_PLAN.md` and `AI_HANDOFF.md` remain the Model Picker ledgers. Record source SHA, actual tests, screenshot artifacts, unapproved states, unresolved conflicts and next task.
-
-**Conflict rule:** security, privacy, existing user data, feature parity, accessibility and user-approval requirements prevail; document any unresolved conflict and make safe independent progress. No substantial visual changes merge into production or deploy live until the user has explicitly reviewed **the actual redesigned Lumen application** and aesthetically approved it. Preview-only branches/isolated nonproduction previews are not equivalent to that approval. PRs #28 and #30 were rejected as visual designs; do not revive or treat them as accepted.
-

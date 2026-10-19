@@ -110,6 +110,20 @@ jobs:
           MR_WEBKIT: '1'
           # This suite seeds its own preview account and mocks provider requests.
           MR_TEST_URL: http://localhost:5190/
+      - name: Adaptive Native visual proof (this review branch only)
+        if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' && github.head_ref == 'design/adaptive-native-real-component-proof' }}
+        shell: bash
+        run: |
+          node node_modules/vite/bin/vite.js preview --port 5192 --strictPort > /tmp/vite-native-proof.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            curl -fsS http://localhost:5192/ >/dev/null && break
+            sleep 1
+          done
+          curl -fsS http://localhost:5192/ >/dev/null
+          MR_TEST_URL=http://localhost:5192/ node tests/e2e/helpers/adaptive-proof-shots.cjs
+
       - name: Keep WebKit evidence
         if: always()
         uses: actions/upload-artifact@v6
@@ -118,6 +132,7 @@ jobs:
           include-hidden-files: true
           path: |
             tests/e2e/out/webkit-*.png
+            tests/e2e/out/webkit-adaptive-diagnostics.json
             .impeccable/review/*webkit*.png
           if-no-files-found: ignore
           retention-days: 7

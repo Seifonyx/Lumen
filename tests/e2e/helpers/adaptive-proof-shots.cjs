@@ -3,7 +3,7 @@
 const { webkit } = require('playwright');
 const fs = require('node:fs');
 const path = require('node:path');
-const { profile } = require('./preview-profile.cjs');
+const { profile, seed } = require('./preview-profile.cjs');
 const base = process.env.MR_TEST_URL || 'http://localhost:5192/';
 const out = path.resolve('tests/e2e/out');
 const cases = [
@@ -99,6 +99,27 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
           await screenshot('desktop-focused');
           await record('desktop-focused');
         }
+        // Matched populated conversation: show real message typography and desktop active sidebar.
+        const uid = 'native-proof-' + c.width + '-' + c.theme + '-' + experiment;
+        const now = Date.now();
+        await seed(page, uid, [{
+          id: 'visual-review',
+          title: 'Architecture review',
+          createdAt: now - 60000,
+          updatedAt: now - 1000,
+          model: 'auto',
+          messages: [
+            { id: 'u1', role: 'user', text: 'Can we make the model picker easier to use on a small phone?', createdAt: now - 60000 },
+            { id: 'a1', role: 'assistant', model: 'gemini:gemini-flash-latest', status: 'done', text: '## A more considered experience\\n\\nKeep the model choices visible, readable and easy to select. Preserve **Auto**, layout choices and clear availability labels.\\n\\n- Avoid clipping long layout names.\\n- Keep sheets legible over conversation text.\\n- Make every action reachable by touch or keyboard.', createdAt: now - 59000 },
+          ],
+        }]);
+        await page.reload();
+        await page.locator('.composer textarea').waitFor();
+        if (phone) await page.locator('.menu-btn').click();
+        await page.locator('.chat-row').filter({ hasText: 'Architecture review' }).first().click();
+        await sleep(280);
+        await screenshot('conversation');
+        await record('conversation');
         if (errors.length) throw new Error('Page errors: ' + errors.slice(0,3).join('; '));
         await ctx.close();
         console.log('Captured real ' + c.width + 'px ' + c.theme + ' ' + experiment + ', model options ' + count);

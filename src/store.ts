@@ -14,7 +14,7 @@ import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type
 import { keepModelChoice, isExcludedModel } from './lib/ai/model-status.js';
 import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
 import { previousWork } from './lib/work-intent';
-import { cacheAccountSettings, forgetLocalAccount, isPreviewUser, loadKeys, loadRemoteSettings, savedAccount, saveKeys, saveRemoteSettings, signInPreview, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
+import { cacheAccountSettings, forgetLocalAccount, isPreviewUser, loadKeys, loadRemoteSettings, savedAccount, saveKeys, resumePendingAccountKeys, watchAccountAccessDenied, saveRemoteSettings, signInPreview, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { registerServiceWorker } from './pwa/register';
 import { ChatSync } from './lib/sync';
 import { commitChanges as ghCommit, openPullRequest, setGitHubToken } from './lib/github';
@@ -242,7 +242,6 @@ let loadedCatalogScope: string | null = null;
 let rawCatalogValue: Catalog | null = null;
 let derivedCatalogSettings = '';
 let keySaveGeneration = 0;
-let keySaveQueue: Promise<void> = Promise.resolve();
 let stopDiscoveryLifecycle: (() => void) | undefined;
 const canvasSyncTimers = new Map<string, ReturnType<typeof setTimeout>>();
 let sync: ChatSync | null = null;
@@ -1052,6 +1051,8 @@ export const useStore = create<State>((set, get) => {
       registerServiceWorker((apply) => set({ updateReady: apply }));
       const onNet = () => {
         set({ online: navigator.onLine });
+        const uid=get().user?.uid;
+        if(navigator.onLine && uid && !get().accessDenied)resumePendingAccountKeys(uid);
       };
       window.addEventListener('online', onNet);
       window.addEventListener('offline', onNet);
@@ -1061,6 +1062,18 @@ export const useStore = create<State>((set, get) => {
         if(current&&status)set({catalog:{...current,providerStatus:{...current.providerStatus,[provider]:{...status,nextRefresh:0}}}});
       }});
       try { localStorage.removeItem('mr.catalog'); } catch { /* obsolete unscoped cache */ }
+      watchAccountAccessDenied(uid => {
+        if(get().user?.uid!==uid)return;
+        accountGeneration++;keySaveGeneration++;
+        settingsReady=false;clearTimeout(settingsTimer);
+        canvasSyncTimers.forEach(timer=>clearTimeout(timer));canvasSyncTimers.clear();
+        loadedCatalogScope=null;rawCatalogValue=null;derivedCatalogSettings='';setHealthScope(null);
+        modelCheckController?.abort();compactController?.abort();canvasController?.abort();
+        cancelKnowledge();get().stop();
+        setKeys({gemini:'',openrouter:'',groq:'',cerebras:''});setGitHubToken('');
+        sync?.stop();usage?.stop();memory?.stop();taskStorage?.stop();quota.stop();
+        set({keys:{gemini:'',openrouter:'',groq:'',cerebras:'',github:''},catalog:null,accessDenied:get().user?.email || 'this account',authed:true});
+      });
       watchUser(async (user) => {
         cancelKnowledge();
         modelCheckController?.abort();
@@ -1091,9 +1104,10 @@ export const useStore = create<State>((set, get) => {
         taskStorage?.stop(); taskStorage = null;
         set({ tasks: [], tasksReady: false, runningTaskId: null });
         set({ memories: [] });
-        await quota.flush();
-        if (generation !== accountGeneration) return;
+        // The SDK queues this snapshot synchronously; an offline ACK must not block auth.
+        void quota.flush();
         quota.stop();
+        if (generation !== accountGeneration) return;
         settingsReady = false;
         if (!user) {
           void db.useAccount(null);
@@ -1149,7 +1163,7 @@ export const useStore = create<State>((set, get) => {
           if (generation !== accountGeneration) return;
           // The database refuses accounts that aren't invited.
           const isInvitedException = isPreviewUser(user.uid) || Boolean(user.email && user.email.toLowerCase() === 'seifeldingamal2021@gmail.com');
-          if ((e as { code?: string }).code === 'permission-denied' && !isInvitedException) {
+          if ((e as { code?: string }).code === 'permission-denied') {
             set({ authed: true, accessDenied: user.email || 'this account', catalog: null });
             return;
           }
@@ -1216,13 +1230,12 @@ export const useStore = create<State>((set, get) => {
       if (!uid) return;
       const saveGeneration=++keySaveGeneration;
       const before = get().keys;
-      // Preserve invocation order in remote settings too, not only in the UI.
-      const saving=keySaveQueue.catch(()=>{}).then(async()=>{if(get().user?.uid===uid && saveGeneration===keySaveGeneration)await saveKeys(uid,keys);});
-      keySaveQueue=saving;
-      await saving;
-      if (get().user?.uid !== uid || saveGeneration!==keySaveGeneration) return;
-      setKeys(keys);
+      // Freeze input before the first async boundary. Local durability, not a cloud ACK,
+      // is the activation boundary; the SDK receives writes in invocation order.
       const clean = normalizeKeys(keys) as unknown as ApiKeys;
+      await saveKeys(uid,clean);
+      if (get().user?.uid !== uid || saveGeneration!==keySaveGeneration) return;
+      setKeys(clean);
       setGitHubToken(clean.github);
       const changed = AI_PROVIDERS.filter((provider) => {
         const config=(EXTRA_PROVIDERS as Record<string,{relay?:boolean;fallback?:boolean}>)[provider];
@@ -1239,7 +1252,7 @@ export const useStore = create<State>((set, get) => {
       set({ keys: clean });
       if(changed.length) { loadedCatalogScope=null;set({catalog:null}); }
       if(changed.length || !get().catalog) await get().loadCatalog();
-      if (get().user?.uid !== uid) return;
+      if (get().user?.uid !== uid || saveGeneration!==keySaveGeneration) return;
       // A newly connected provider: switch on its suggested models so they're ready to use.
       const added = AI_PROVIDERS.filter(k => providerEnabled(k, clean) && !providerEnabled(k, before));
       const catalog = get().catalog;

@@ -1,8 +1,8 @@
 // 2.1: Settings → Personalization: Reply language and Answer length go to every model as instructions; Developer
-// options are only for the people who build Lumen.
+// options are for developers and explicit preview accounts (ordinary-user rendering has unit coverage).
 const { chromium } = require('playwright'), assert = require('node:assert/strict');
 const { profile } = require('./helpers/preview-profile.cjs');
-const URL = process.env.MR_TEST_URL || 'http://localhost:5190/?emulator';
+const URL = process.env.MR_TEST_URL || 'http://localhost:5190/';
 const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { parts: [{ text }] }, finishReason: 'STOP' }] }) + '\n\n';
 
 (async () => {
@@ -22,7 +22,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
     await page.click('.sidebar-foot');
     await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click();
-    assert.equal(await page.locator('.settings-page:not(.exit-ghost)').getByText('Developer options').count(), 0, 'Developer options hidden from other people');
+    assert.equal(await page.locator('.settings-page:not(.exit-ghost)').getByText('Developer options').count(), 1, 'Explicit preview accounts expose their testing controls');
     await page.locator('.settings-tabs').getByRole('button', { name: /Personali[sz]ation/ }).click();
     const sp = page.locator('.settings-page:not(.exit-ghost)');
     await sp.getByLabel('Reply language').selectOption('French');

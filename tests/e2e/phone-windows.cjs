@@ -1,9 +1,9 @@
 // 2.1.1: on phones the newer windows (Study, Ask your chats, Build a layout) keep a margin from the screen edges
 // and nothing in them spills off the screen.
 const { chromium } = require('playwright'), assert = require('node:assert/strict');
-const { profile } = require('./helpers/preview-profile.cjs');
+const { profile, previewUid } = require('./helpers/preview-profile.cjs');
 const { scan } = require('./helpers/fitscan.cjs');
-const URL = process.env.MR_TEST_URL || 'http://localhost:5190/?emulator';
+const URL = process.env.MR_TEST_URL || 'http://localhost:5190/';
 const now = Date.now();
 const deck = { id: 'd1', title: 'A rather long deck title about cell biology and energy', source: { label: 'Cell biology' }, createdAt: now, updatedAt: now,
   cards: [{ id: 'c1', q: 'What is the main product of the light-dependent reactions of photosynthesis?', a: 'ATP and NADPH', box: 1, due: 0 }],
@@ -15,7 +15,7 @@ const deck = { id: 'd1', title: 'A rather long deck title about cell biology and
     for (const width of [390, 320]) {
       const ctx = await browser.newContext({ viewport: { width, height: 760 }, isMobile: true, hasTouch: true, serviceWorkers: 'block' });
       await profile(ctx, `phone-windows-${width}`, 'light');
-      await ctx.addInitScript(([key, d]) => { if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify([d])); }, [`mr.study.phone-windows-${width}`, deck]);
+      await ctx.addInitScript(([key, d]) => { if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify([d])); }, [`mr.study.${previewUid(`phone-windows-${width}`)}`, deck]);
       await ctx.route('**/generativelanguage.googleapis.com/**', (r) => r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash', supportedGenerationMethods: ['generateContent'] }] } }));
       const page = await ctx.newPage();
       await page.goto(URL);

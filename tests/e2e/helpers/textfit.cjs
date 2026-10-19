@@ -47,7 +47,7 @@ function check(BOXES) {
     const phone = w < 900;
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: phone, hasTouch: phone, reducedMotion: 'reduce' });
     await profile(ctx, 'textfit', theme);
-    if (big) await ctx.addInitScript(() => { const s = JSON.parse(localStorage.getItem('mr.settings') || '{}'); s.fontSize = 'large'; localStorage.setItem('mr.settings', JSON.stringify(s)); const a = JSON.parse(localStorage.getItem('mr.account.textfit') || '{}'); a.settings = { ...(a.settings || {}), fontSize: 'large' }; localStorage.setItem('mr.account.textfit', JSON.stringify(a)); localStorage.setItem('mr.preview_user', JSON.stringify({ uid: 'textfit', email: 'a.very.long.address.for.testing@hospital-example.invalid', displayName: 'シSeifシ Gamal Abdelrahman' })); });
+    if (big) await ctx.addInitScript(() => { const s = JSON.parse(localStorage.getItem('mr.settings') || '{}'); s.fontSize = 'large'; localStorage.setItem('mr.settings', JSON.stringify(s)); const a = JSON.parse(localStorage.getItem('mr.account.preview-textfit') || '{}'); a.settings = { ...(a.settings || {}), fontSize: 'large' }; localStorage.setItem('mr.account.preview-textfit', JSON.stringify(a)); localStorage.setItem('mr.preview_user', JSON.stringify({ uid: 'preview-textfit', email: 'a.very.long.address.for.testing@hospital-example.invalid', displayName: 'シSeifシ Gamal Abdelrahman' })); });
     const page = await ctx.newPage();
     await page.goto(url); await page.waitForSelector('.composer textarea');
     await seed(page, 'textfit', chats); await page.reload(); await page.waitForSelector('.composer textarea');

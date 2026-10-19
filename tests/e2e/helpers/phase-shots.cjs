@@ -15,7 +15,7 @@ const only = (process.env.ONLY || '').split(',').filter(Boolean);
   for (const theme of (process.env.THEMES || 'dark,light').split(',')) {
     const ctx = await browser.newContext({ viewport: { width: 393, height: 852 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, userAgent: UA, reducedMotion: 'reduce', serviceWorkers: 'block' });
     await profile(ctx, 'phase', theme);
-    await ctx.addInitScript((projects) => { if (window.top !== window) return; for (const key of ['mr.settings', 'mr.account.phase']) { const v = JSON.parse(localStorage.getItem(key) || '{}'); if (key === 'mr.settings') v.projects = projects; else v.settings = { ...(v.settings || {}), projects }; localStorage.setItem(key, JSON.stringify(v)); } }, projects);
+    await ctx.addInitScript((projects) => { if (window.top !== window) return; for (const key of ['mr.settings', 'mr.account.preview-phase']) { const v = JSON.parse(localStorage.getItem(key) || '{}'); if (key === 'mr.settings') v.projects = projects; else v.settings = { ...(v.settings || {}), projects }; localStorage.setItem(key, JSON.stringify(v)); } }, projects);
     const page = await ctx.newPage();
     page.on('pageerror', (e) => console.log('pageerror', e.message));
     const ready = async () => { await page.waitForSelector('.app:not(.app-skeleton) .composer textarea'); await page.waitForTimeout(400); };

@@ -20,7 +20,7 @@ const chats = [
     const ctx = await browser.newContext({ viewport: { width: w, height: phone ? 844 : 820 }, isMobile: phone, hasTouch: phone, reducedMotion: 'reduce' });
     await profile(ctx, 'more-shots', theme);
     await ctx.route('**/generativelanguage.googleapis.com/**', (r) => r.request().url().includes('/models?') ? r.fulfill({ json: { models: [{ name: 'models/gemini-flash-latest', displayName: 'Gemini Flash', supportedGenerationMethods: ['generateContent'] }, { name: 'models/gemini-2.5-pro', displayName: 'Gemini 2.5 Pro', supportedGenerationMethods: ['generateContent'] }] } }) : r.fallback());
-    await ctx.addInitScript(() => { for (const k of ['mr.settings', 'mr.account.more-shots']) { const v = JSON.parse(localStorage.getItem(k) || '{}'); const s = k === 'mr.settings' ? v : (v.settings ||= {}); s.enabledModels = ['gemini:gemini-flash-latest', 'gemini:gemini-2.5-pro']; localStorage.setItem(k, JSON.stringify(v)); } });
+    await ctx.addInitScript(() => { for (const k of ['mr.settings', 'mr.account.preview-more-shots']) { const v = JSON.parse(localStorage.getItem(k) || '{}'); const s = k === 'mr.settings' ? v : (v.settings ||= {}); s.enabledModels = ['gemini:gemini-flash-latest', 'gemini:gemini-2.5-pro']; localStorage.setItem(k, JSON.stringify(v)); } });
     const page = await ctx.newPage();
     // Sync is blocked on purpose here; WebKit reports those blocked requests as page errors.
     page.on('pageerror', (e) => { if (!/firestore\.googleapis\.com/.test(e.message)) console.log('pageerror', e.message); });

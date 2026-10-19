@@ -368,7 +368,7 @@ function KeysTab() {
       <ProviderConnections main={KEY_FIELDS.filter((field): field is MainProvider => field.id !== 'github')} draft={draft} setDraft={setDraft} saved={keys} />
       {validation && <p className="error-text" role="alert">{validation}</p>}
       <div className="settings-actions">
-        <span className="muted small">Saved privately to your account, on all your devices.</span>
+        <span className="muted small">Saved on this device, then synced privately to your account when connected.</span>
         <button
           className="btn primary"
           disabled={busy || !changed || Boolean(validation)}
@@ -376,7 +376,7 @@ function KeysTab() {
             setBusy(true);
             try {
               await saveApiKeys(draft);
-              toast('Keys saved. Your models are loading.', 'success');
+              toast('Keys saved on this device. Account sync continues when connected.', 'success');
             } catch (e) {
               toast(`Couldn't save keys: ${(e as Error).message}`, 'error');
             } finally {

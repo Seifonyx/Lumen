@@ -27,7 +27,7 @@ const chats = [
     await profile(ctx, 'audit', theme);
     await ctx.addInitScript((projects) => {
       if (window.top !== window) return;
-      for (const key of ['mr.settings', 'mr.account.audit']) {
+      for (const key of ['mr.settings', 'mr.account.preview-audit']) {
         const v = JSON.parse(localStorage.getItem(key) || '{}');
         if (key === 'mr.settings') v.projects = projects; else v.settings = { ...(v.settings || {}), projects };
         localStorage.setItem(key, JSON.stringify(v));

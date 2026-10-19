@@ -1,15 +1,15 @@
 // 2.0: Deep research plans several web searches, shows them as they run with the sites they read, then writes
 // one report whose [n] citations link to numbered sources. The notes aren't kept; the searches are.
-const { chromium } = require('playwright'), assert = require('node:assert/strict');
+const { chromium, webkit } = require('playwright'), assert = require('node:assert/strict');
 const { profile } = require('./helpers/preview-profile.cjs');
-const URL = process.env.MR_TEST_URL || 'http://localhost:5190/?emulator';
+const URL = process.env.MR_TEST_URL || 'http://localhost:5190/';
 const sse = (text, chunks) => 'data: ' + JSON.stringify({ candidates: [{ content: { parts: [{ text }] }, ...(chunks ? { groundingMetadata: { groundingChunks: chunks.map(([title, uri]) => ({ web: { title, uri } })) } } : {}), finishReason: 'STOP' }] }) + '\n\n';
 
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await (process.env.MR_WEBKIT ? webkit : chromium).launch();
   try {
     const ctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, serviceWorkers: 'block' });
-    await profile(ctx, 'deep-research', 'light');
+    await profile(ctx, 'preview-deep-research', 'light');
     const seen = { plan: 0, search: [], report: '' };
     await ctx.route('**/generativelanguage.googleapis.com/**', async (r) => {
       const url = r.request().url();
@@ -39,7 +39,7 @@ const sse = (text, chunks) => 'data: ' + JSON.stringify({ candidates: [{ content
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
 
     // ---- Turned on from the + menu; the composer says so.
-    await page.click('.add-tool');
+    await page.getByRole('button',{name:/^Add (?:photos, )?files or a repository$/}).click();
     await page.getByRole('button', { name: 'Deep research' }).click();
     await page.locator('.research-chip').waitFor();
     assert.equal(await page.locator('.composer textarea').getAttribute('placeholder'), 'What should Lumen research?');
@@ -73,7 +73,7 @@ const sse = (text, chunks) => 'data: ' + JSON.stringify({ candidates: [{ content
     await page.reload();
     await page.click('.chat-row .chat-open');
     await page.locator('.research-card[data-phase="done"]').waitFor();
-    const stored = await page.evaluate(() => new Promise((res) => { const r = indexedDB.open('model-router-account-deep-research'); r.onsuccess = () => { const tx = r.result.transaction('chats'); const q = tx.objectStore('chats').getAll(); q.onsuccess = () => res(q.result); }; }));
+    const stored = await page.evaluate(() => new Promise((res) => { const r = indexedDB.open('model-router-account-preview-deep-research'); r.onsuccess = () => { const tx = r.result.transaction('chats'); const q = tx.objectStore('chats').getAll(); q.onsuccess = () => res(q.result); }; }));
     const reply = stored[0].messages.find((m) => m.research);
     assert.equal(reply.research.steps.length, 3);
     assert.ok(reply.research.steps.every((s) => !s.notes), 'notes are not kept');

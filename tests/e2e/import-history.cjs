@@ -66,7 +66,7 @@ const geminiHtml = `<html><body><div class="outer-cell"><div class="content-cell
     await load(files.geminiHtml, /Found 1 Gemini chat \(2 messages\)/);
     console.log('PASS ChatGPT, Claude and Gemini exports are recognised');
 
-    const stored = async () => page.evaluate(() => new Promise((res) => { const r = indexedDB.open('model-router-account-import-history'); r.onsuccess = () => { const q = r.result.transaction('chats').objectStore('chats').getAll(); q.onsuccess = () => res(q.result); }; }));
+    const stored = async () => page.evaluate(() => new Promise((res) => { const r = indexedDB.open('model-router-account-preview-import-history'); r.onsuccess = () => { const q = r.result.transaction('chats').objectStore('chats').getAll(); q.onsuccess = () => res(q.result); }; }));
     let all = await stored();
     const byId = Object.fromEntries(all.map((c) => [c.id, c]));
     const cg = byId['import-chatgpt-cg1'];

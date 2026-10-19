@@ -42,6 +42,7 @@ class QuotaGuard {
   private lastLevel: GuardLevel = 'normal';
   private emitTimer: ReturnType<typeof setTimeout> | undefined;
   private active = false;
+  private generation = 0;
 
   private ref() {
     return doc(db, 'modelRouterShared', `quota-${this.day}`);
@@ -85,8 +86,10 @@ class QuotaGuard {
   async start() {
     this.stop();
     this.active = true;
+    const generation = this.generation;
     this.rollover();
     await this.refresh();
+    if (!this.active || generation !== this.generation) return;
     this.timer = setInterval(() => void this.flush(), FLUSH_MS);
     document.addEventListener('visibilitychange', this.onHide);
     this.resetTimer = setTimeout(() => void this.start(), nextReset('gemini') - Date.now() + 5000);
@@ -94,8 +97,11 @@ class QuotaGuard {
 
   stop() {
     this.active = false;
+    this.generation++;
     clearInterval(this.timer);
     clearTimeout(this.resetTimer);
+    clearTimeout(this.emitTimer);
+    this.timer = this.resetTimer = this.emitTimer = undefined;
     document.removeEventListener('visibilitychange', this.onHide);
   }
 
@@ -107,30 +113,40 @@ class QuotaGuard {
   async flush() {
     if (!this.active) return;
     this.rollover();
+    const generation = this.generation, day = this.day, ref = this.ref();
     const p = this.pending;
     if (!p.reads && !p.writes && !p.deletes) return;
     this.pending = zero();
     // The flush itself costs one write and one read.
-    const delta = { reads: increment(p.reads + 1), writes: increment(p.writes + 1), deletes: increment(p.deletes), day: this.day };
+    const delta = { reads: increment(p.reads + 1), writes: increment(p.writes + 1), deletes: increment(p.deletes), day };
     try {
-      await setDoc(this.ref(), delta, { merge: true });
+      await setDoc(ref, delta, { merge: true });
+      if (!this.current(generation, day)) return;
       await this.refresh(false);
     } catch {
-      // Keep the counts for the next try.
+      if (day !== this.day || day !== quotaDay()) return;
+      // Costs belong to the shared project, so retain same-day unsent counts
+      // across account changes without emitting or reviving the old session.
       (Object.keys(p) as Op[]).forEach((k) => (this.pending[k] += p[k]));
     }
   }
 
   private async refresh(countRead = true) {
+    const generation = this.generation, day = this.day, ref = this.ref();
     try {
-      const snap = await getDoc(this.ref());
+      const snap = await getDoc(ref);
+      if (!this.current(generation, day)) return;
       const d = snap.data() || {};
       this.shared = { reads: Number(d.reads) || 0, writes: Number(d.writes) || 0, deletes: Number(d.deletes) || 0 };
       if (countRead) this.pending.reads += 1;
     } catch {
       // Offline: keep the last known totals.
     }
-    this.emit();
+    if (this.current(generation, day)) this.emit();
+  }
+
+  private current(generation: number, day: string) {
+    return this.active && generation === this.generation && day === this.day && day === quotaDay();
   }
 
   private rollover() {

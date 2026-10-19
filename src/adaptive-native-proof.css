@@ -1,0 +1,128 @@
+/*
+ * Lumen Adaptive Native — real-component, review-only visual proof.
+ * All declarations are gated behind ?native-proof=1. No production default changes.
+ * These rules adjust the actual Lumen sheet, picker, and desktop sidebar:
+ * not a replacement UI or a duplicate component.
+ *
+ * If approved, migrate each declaration back to its canonical app.css/glass.css
+ * owner, then delete this experiment file and URL switch. Do not ship a new
+ * permanent overrides layer.
+ */
+
+/* iOS: retain the floating material/rim but stop underlying words shining
+   through text-bearing sheets. This deliberately does NOT recolor the composer,
+   global app chrome, or system navigation. */
+@media (max-width: 899px) {
+  html.glass.adaptive-native-proof .sheet-backdrop:not(.sheet-popover-backdrop) {
+    background: rgb(0 0 0 / 0.34);
+  }
+  html.glass.adaptive-native-proof .sheet-backdrop:not(.sheet-popover-backdrop) .attach-menu,
+  html.glass.adaptive-native-proof .models-pop.sheet {
+    background:
+      linear-gradient(165deg, color-mix(in srgb, var(--surface) 96%, white 4%), var(--surface) 65%) padding-box,
+      var(--glass-rim) border-box;
+    border: 1px solid transparent;
+    -webkit-backdrop-filter: var(--glass-filter-strong);
+    backdrop-filter: var(--glass-filter-strong);
+  }
+  html.glass.adaptive-native-proof .attach-menu .attach-menu-group,
+  html.glass.adaptive-native-proof .mp-body .mp-item,
+  html.glass.adaptive-native-proof .mp-body .mp-layout {
+    background: var(--surface-2);
+    border-color: color-mix(in srgb, var(--text) 6%, transparent);
+  }
+  html.glass.adaptive-native-proof .attach-menu .sheet-row:focus-visible,
+  html.glass.adaptive-native-proof .mp-body [role='option']:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: -3px;
+  }
+
+  /* Make model details readable rather than ghosting behind a translucent
+     panel. Don't change selection, model availability, data or actions. */
+  html.adaptive-native-proof .models-pop.sheet .mp-section {
+    min-width: 0;
+  }
+  html.adaptive-native-proof .models-pop.sheet .mp-layouts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+  }
+  html.adaptive-native-proof .models-pop.sheet .mp-layout {
+    min-width: 0;
+    overflow: hidden;
+  }
+  html.adaptive-native-proof .models-pop.sheet .mp-layout .mp-title,
+  html.adaptive-native-proof .models-pop.sheet .mp-layout .mp-sub {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* iPhone SE / 320px: one comfortably readable option per row instead of
+   two forced min-content columns with clipped, potentially ambiguous names.
+   The same options stay in the same logical / keyboard order. */
+@media (max-width: 359px) {
+  html.adaptive-native-proof .models-pop.sheet .mp-layouts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+  }
+  html.adaptive-native-proof .models-pop.sheet .mp-layout {
+    min-height: 56px;
+    padding-inline: 12px;
+  }
+  html.adaptive-native-proof .models-pop.sheet .mp-layout .mp-title,
+  html.adaptive-native-proof .models-pop.sheet .mp-layout .mp-sub {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+  }
+}
+
+/* Desktop: preserve the current panel density and hierarchy. Apply a
+   disciplined focus and hover treatment to real navigation owners rather
+   than adding separate navigation rails, panels or marketing tiles. */
+@media (min-width: 900px) and (hover: hover) {
+  html.adaptive-native-proof .sidebar .library-button,
+  html.adaptive-native-proof .sidebar .sidebar-empty-project-btn,
+  html.adaptive-native-proof .sidebar .chat-row {
+    transition: background-color 120ms ease, box-shadow 120ms ease;
+  }
+  html.adaptive-native-proof .sidebar .library-button:hover,
+  html.adaptive-native-proof .sidebar .sidebar-empty-project-btn:hover,
+  html.adaptive-native-proof .sidebar .chat-row:hover:not(.active) {
+    background: color-mix(in srgb, var(--text) 7%, transparent);
+  }
+}
+@media (min-width: 900px) {
+  html.adaptive-native-proof .sidebar .sidebar-search-field:focus-within {
+    background: var(--surface);
+    box-shadow: inset 0 0 0 1px var(--border-strong);
+  }
+  html.adaptive-native-proof .sidebar .chat-row.active {
+    background: color-mix(in srgb, var(--text) 9%, transparent);
+    box-shadow: inset 2px 0 0 var(--signal);
+  }
+  html.adaptive-native-proof .composer:focus-within {
+    border-color: var(--border-strong);
+    box-shadow: var(--layer-shadow);
+  }
+}
+
+/* Reduced transparency: solid panels should stay solid. Honor OS preference
+   even when ?glass explicitly forces iPhone material for comparison. */
+@media (prefers-reduced-transparency: reduce) {
+  html.glass.adaptive-native-proof .sheet-backdrop:not(.sheet-popover-backdrop) .attach-menu,
+  html.glass.adaptive-native-proof .models-pop.sheet {
+    background: var(--surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.adaptive-native-proof .sidebar .chat-row,
+  html.adaptive-native-proof .sidebar .library-button {
+    transition: none;
+  }
+}

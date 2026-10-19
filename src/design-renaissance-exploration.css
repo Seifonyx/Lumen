@@ -1,0 +1,441 @@
+/*
+ * Lumen Design Renaissance — composition exploration, NEVER production styles.
+ * Enabled ONLY by ?renaissance=atelier or ?renaissance=workbench.
+ * One live app / actual controls / two distinct compositions:
+ * Atelier: immersive editorial canvas, nested professional desktop stage,
+ *          split mobile greeting and tactile input surface.
+ * Workbench: edge-to-edge dense workstation, more grounded mobile writing.
+ *
+ * Auth, routing, Model Picker, Projects, Tools, history, keyboard and all
+ * original React component/state owners remain unchanged.
+ * This file is temporary; any accepted candidate must be integrated into the
+ * canonical styles, reviewed and approved before a production merge.
+ */
+
+/* =========================================================
+   ATELIER — desktop / composed focal workspace
+   ========================================================= */
+@media (min-width: 900px) {
+  html.renaissance-atelier .app:not(.app-skeleton) {
+    --renaissance-inset: clamp(10px, 1.1vw, 18px);
+    gap: var(--renaissance-inset);
+    padding: var(--renaissance-inset);
+    background: #13191e;
+  }
+
+  /* A quiet, dark navigation instrument. Keep actual route history,
+     search, projects, account and button structure. */
+  html.renaissance-atelier .app:not(.app-skeleton) > .sidebar {
+    --sidebar: #181e24;
+    --bg: #181e24;
+    --surface: #212a32;
+    --surface-2: #29333c;
+    --surface-3: #32404a;
+    --text: #f3f5f6;
+    --text-2: #b6c0c8;
+    --text-3: #929fa9;
+    --border: #33404a;
+    --border-strong: #53616d;
+    --accent: #c2ef3a;
+    --accent-hover: #d0f75a;
+    --accent-text: #121916;
+    --focus: #c2ef3a;
+    --sb-fill: color-mix(in srgb, var(--text) 6%, transparent);
+    --sb-fill-hover: color-mix(in srgb, var(--text) 9%, transparent);
+    border: 1px solid rgb(255 255 255 / .08);
+    border-radius: 18px;
+    padding-top: 20px;
+    box-shadow: 0 6px 18px rgb(0 0 0 / .11);
+    overflow: hidden;
+  }
+  html.renaissance-atelier .sidebar .sidebar-head {
+    padding-top: 10px;
+    padding-bottom: 20px;
+  }
+  html.renaissance-atelier .sidebar .sidebar-brand {
+    font-size: 17px;
+    letter-spacing: -.025em;
+  }
+  html.renaissance-atelier .sidebar .sidebar-bottom-actions .sidebar-primary-action {
+    min-height: 46px;
+    background: #c2ef3a;
+    color: #0b1315;
+    border: 1px solid #c2ef3a;
+    border-radius: 11px;
+    box-shadow: inset 0 1px rgb(255 255 255 / .32);
+  }
+  html.renaissance-atelier .sidebar .sidebar-bottom-actions .sidebar-primary-action:hover {
+    background: #d0f75a;
+  }
+  html.renaissance-atelier .sidebar .sidebar-search-field {
+    background: #242d35;
+    height: 41px;
+    margin-top: 8px;
+    margin-bottom: 7px;
+    border: 1px solid #35424b;
+  }
+  html.renaissance-atelier .sidebar .sidebar-section-heading {
+    padding-top: 25px;
+  }
+  html.renaissance-atelier .sidebar .sidebar-section-label,
+  html.renaissance-atelier .sidebar .sidebar-section-link {
+    color: #f0f3f5;
+  }
+  html.renaissance-atelier .sidebar .chat-row.active {
+    background: #344148;
+    box-shadow: inset 3px 0 #c2ef3a;
+  }
+  html.renaissance-atelier .sidebar .sidebar-footer {
+    border-top: 1px solid #33404a;
+    margin-top: 8px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+  html.renaissance-atelier .sidebar .sidebar-foot .avatar {
+    background: #c2ef3a;
+    color: #13191e;
+  }
+
+  /* Main as a spacious paper instrument inside the darker workbench,
+     still a single live ChatView, no duplicate navigation or controls. */
+  html.renaissance-atelier .app:not(.app-skeleton) > .main,
+  html.renaissance-atelier .app:not(.app-skeleton) > .hub-page,
+  html.renaissance-atelier .app:not(.app-skeleton) > .settings-page {
+    background: var(--bg);
+    border-radius: 19px;
+    border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+    box-shadow: 0 28px 65px -28px rgb(0 0 0 / .42);
+    overflow: hidden;
+  }
+  html.renaissance-atelier .main > .topbar {
+    min-height: 72px;
+    padding-inline: clamp(24px, 3vw, 54px);
+    background: color-mix(in srgb, var(--surface) 80%, var(--bg));
+    border-bottom: 1px solid var(--border);
+    box-shadow: none;
+  }
+  html.renaissance-atelier .main.is-empty::before { flex: 1.05; }
+  html.renaissance-atelier .main.is-empty::after { flex: 1.35; }
+
+  html.renaissance-atelier .main.is-empty .empty {
+    align-items: flex-start;
+    text-align: start;
+    gap: 23px;
+    max-width: 860px;
+    width: min(100% - 80px, 860px);
+    padding: 24px 0 34px;
+  }
+  html.renaissance-atelier .main.is-empty .empty h1 {
+    font-size: clamp(38px, 4vw, 57px);
+    font-weight: 630;
+    letter-spacing: -.055em;
+    line-height: 1.07;
+  }
+  html.renaissance-atelier .main.is-empty .empty .welcome-mark {
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    margin: 0;
+    border-radius: 25px;
+    background: radial-gradient(circle at 40% 33%, color-mix(in srgb, var(--signal) 14%, transparent), transparent 68%);
+  }
+  html.renaissance-atelier .main.is-empty .empty .welcome-mark .logo {
+    width: 66px;
+    height: 66px;
+  }
+  html.renaissance-atelier .main .thread {
+    max-width: 850px;
+    padding: 46px 44px 74px;
+  }
+  html.renaissance-atelier .main .msg {
+    margin-bottom: 42px;
+  }
+  html.renaissance-atelier .main .markdown {
+    font-size: 15.5px;
+    line-height: 1.74;
+  }
+  html.renaissance-atelier .main .composer-wrap {
+    padding-inline: clamp(30px, 3vw, 52px);
+    padding-bottom: 24px;
+    background: linear-gradient(to bottom, transparent, var(--bg) 25%);
+  }
+  html.renaissance-atelier .main .composer {
+    max-width: 860px;
+    border: 1px solid var(--input-border);
+    border-radius: 20px;
+    background: var(--surface);
+    padding: 19px 19px 13px;
+    box-shadow: 0 2px 2px rgb(0 0 0 / .035), 0 22px 55px -22px rgb(0 0 0 / .2);
+  }
+  html.renaissance-atelier .main .composer textarea {
+    font-size: 16.5px;
+    min-height: 68px;
+  }
+  html.renaissance-atelier .main .composer-bar {
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* For small laptop/narrow workspaces, fit the useful work region first. */
+@media (min-width:900px) and (max-width:1100px) {
+  html.renaissance-atelier .app:not(.app-skeleton) {
+    gap: 8px;
+    padding: 8px;
+  }
+  html.renaissance-atelier .app:not(.app-skeleton) > .sidebar {
+    --sidebar-w: 248px;
+  }
+  html.renaissance-atelier .main.is-empty .empty {
+    width: min(100% - 44px, 800px);
+  }
+}
+
+/* ATELIER — phone / editorial greeting and integrated writing layer */
+@media (max-width:899px) {
+  html.renaissance-atelier .main {
+    background:
+      radial-gradient(ellipse 90% 45% at 52% 46%, color-mix(in srgb, var(--signal) 3%, transparent), transparent 78%),
+      var(--bg);
+  }
+  html.renaissance-atelier .main.is-empty::before { flex: 1.03; }
+  html.renaissance-atelier .main.is-empty::after { flex: 1.23; }
+  html.renaissance-atelier .main.is-empty .empty {
+    width: min(100%, 560px);
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: minmax(60px, 74px) minmax(0, 1fr);
+    column-gap: 18px;
+    row-gap: 9px;
+    padding: 16px 23px 22px;
+    text-align: start;
+    align-items: center;
+    justify-items: start;
+  }
+  html.renaissance-atelier .main.is-empty .empty .welcome-mark {
+    grid-column: 1;
+    grid-row: 1;
+    margin: 0;
+    width: 74px;
+    height: 80px;
+    display: grid;
+    place-items: center;
+  }
+  html.renaissance-atelier .main.is-empty .empty .welcome-mark .logo {
+    width: 66px;
+    height: 66px;
+  }
+  html.renaissance-atelier .main.is-empty .empty h1 {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: start;
+    font-size: clamp(25px, 7.1vw, 33px);
+    letter-spacing: -.052em;
+    line-height: 1.1;
+    text-overflow: clip;
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  html.renaissance-atelier .main > .topbar {
+    padding-inline: max(17px, env(safe-area-inset-left));
+  }
+  html.renaissance-atelier .main .composer-wrap {
+    padding-inline: max(14px, env(safe-area-inset-left));
+    padding-bottom: max(13px, env(safe-area-inset-bottom));
+  }
+  html.renaissance-atelier .main .composer {
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 25px;
+    padding: 17px 14px 10px;
+    box-shadow: 0 16px 48px -25px rgb(0 0 0 / .38);
+  }
+  html.renaissance-atelier .main .composer textarea {
+    min-height: 66px;
+    font-size: 17px;
+    line-height: 1.45;
+  }
+  html.renaissance-atelier .main .composer-bar {
+    gap: 6px;
+  }
+  html.renaissance-atelier .main .thread {
+    padding-inline: max(22px, env(safe-area-inset-left));
+  }
+  html.renaissance-atelier .main .markdown {
+    font-size: 16px;
+    line-height: 1.68;
+  }
+}
+
+/* =========================================================
+   WORKBENCH — desktop / edge-to-edge command desk, not an
+   inner stage like Atelier. Structured, dense, never boxed chat.
+   ========================================================= */
+@media (min-width:900px) {
+  html.renaissance-workbench .app:not(.app-skeleton) {
+    --sidebar-w: 292px;
+    background: var(--bg);
+  }
+  html.renaissance-workbench .app:not(.app-skeleton) > .sidebar {
+    border-inline-end: 1px solid var(--border);
+    background: var(--surface);
+    padding-top: 18px;
+  }
+  html.renaissance-workbench .sidebar .sidebar-head {
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+    padding-bottom: 23px;
+  }
+  html.renaissance-workbench .sidebar .sidebar-bottom-actions {
+    gap: 7px;
+  }
+  html.renaissance-workbench .sidebar .sidebar-bottom-actions .sidebar-primary-action {
+    min-height: 48px;
+    border-radius: 12px;
+    background: var(--accent);
+    box-shadow: 0 5px 15px -10px var(--text);
+  }
+  html.renaissance-workbench .sidebar .sidebar-search-field {
+    border: 1px solid var(--border);
+    height: 42px;
+    border-radius: 11px;
+    margin-bottom: 12px;
+    background: var(--bg);
+  }
+  html.renaissance-workbench .sidebar .sidebar-section-heading {
+    margin-top: 9px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  html.renaissance-workbench .sidebar .chat-row.active {
+    background: var(--surface-2);
+    box-shadow: inset 0 0 0 1px var(--border-strong);
+  }
+  html.renaissance-workbench .main {
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+  }
+  html.renaissance-workbench .main > .topbar {
+    min-height: 76px;
+    padding: 12px 45px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  html.renaissance-workbench .main.is-empty::before { flex: .7; }
+  html.renaissance-workbench .main.is-empty::after { flex: 1.85; }
+  html.renaissance-workbench .main.is-empty .empty {
+    width: min(100% - 100px, 720px);
+    padding: 26px 0 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 18px;
+  }
+  html.renaissance-workbench .main.is-empty .empty .welcome-mark .logo {
+    width: 80px;
+    height: 80px;
+  }
+  html.renaissance-workbench .main.is-empty .empty h1 {
+    font-size: 43px;
+    letter-spacing: -.06em;
+    font-weight: 620;
+  }
+  html.renaissance-workbench .main .thread {
+    width: min(100%, 900px);
+    max-width: 900px;
+    padding: 49px 65px 90px;
+  }
+  html.renaissance-workbench .main .composer-wrap {
+    padding: 18px 32px 26px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+  html.renaissance-workbench .main .composer {
+    max-width: 900px;
+    border-radius: 13px;
+    padding: 15px 17px 10px;
+    box-shadow: 0 3px 14px -11px rgb(0 0 0 / .3);
+  }
+  html.renaissance-workbench .main .composer textarea {
+    min-height: 58px;
+  }
+}
+
+/* WORKBENCH — phone / bottom-weighted note-taking composition,
+   markedly different spatial rhythm than Atelier's moon+type lockup. */
+@media (max-width:899px) {
+  html.renaissance-workbench .main.is-empty::before { flex: 2.2; }
+  html.renaissance-workbench .main.is-empty::after { flex: .2; }
+  html.renaissance-workbench .main.is-empty .empty {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    text-align: start;
+    gap: 20px;
+    padding: 22px max(28px, env(safe-area-inset-left)) 27px;
+    box-sizing: border-box;
+  }
+  html.renaissance-workbench .main.is-empty .empty .welcome-mark {
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    margin: 0;
+  }
+  html.renaissance-workbench .main.is-empty .empty .welcome-mark .logo {
+    width: 80px;
+    height: 80px;
+  }
+  html.renaissance-workbench .main.is-empty .empty h1 {
+    font-size: clamp(31px, 9vw, 40px);
+    letter-spacing: -.058em;
+    line-height: 1.05;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    overflow: visible;
+    text-align: start;
+  }
+  html.renaissance-workbench .main > .topbar {
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  html.renaissance-workbench .main .composer-wrap {
+    background: var(--surface);
+    padding: 12px max(15px, env(safe-area-inset-left)) max(15px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
+  }
+  html.renaissance-workbench .main .composer {
+    border-radius: 17px;
+    padding: 13px 12px 9px;
+    background: var(--bg);
+    box-shadow: 0 2px 7px -5px rgb(0 0 0 / .16);
+  }
+  html.renaissance-workbench .main .composer textarea {
+    min-height: 63px;
+    font-size: 17px;
+  }
+  html.renaissance-workbench .main .thread {
+    padding-inline: max(26px, env(safe-area-inset-left));
+  }
+}
+
+/* All preview directions: never ignore reduced motion or touch keyboard.
+   Do not transform the fixed visualViewport logic or critical focus owners. */
+@media (prefers-reduced-motion:reduce) {
+  html[class*='renaissance-'] .main,
+  html[class*='renaissance-'] .sidebar,
+  html[class*='renaissance-'] .composer,
+  html[class*='renaissance-'] .topbar { transition: none !important; }
+}
+@media (max-width:899px) {
+  html.kb-open.renaissance-atelier .main.is-empty::before,
+  html.kb-open.renaissance-atelier .main.is-empty::after,
+  html.kb-open.renaissance-workbench .main.is-empty::before,
+  html.kb-open.renaissance-workbench .main.is-empty::after {
+    display: none;
+  }
+}

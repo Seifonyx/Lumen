@@ -27,9 +27,31 @@ Future agents must track committed, pushed, merged, and deployed states separate
 
 ## Permanent amendment: Project Continuum Version2.0
 
-Read PROJECT_CONTINUUM.md at every continuation alongside the complete original MASTER_REQUIREMENTS.md and this file. Reuse IMPLEMENTATION_PLAN.md baseline v1, its24 stable task IDs and100weights. Initial baseline83%; evidenced P02-B reopening82%; current **88% (medium confidence)**, earned88/100,12remaining. No feature scope/weight change. PR22 complete CI/main/live acceptance earned4.75 in P01-D/P03-A/P05-B/P08-A; PR23 acceptance earned1.25 in P09-A/P10-B. All unfinished rows retain partial credit. Recalculate with `node scripts/project-progress.mjs`; never substitute another agent's scoring. Report previous/current percentage, change, confidence, phase, evidence, Git/production and precise next milestone at session start/end.
+Read PROJECT_CONTINUUM.md at every continuation alongside the complete original MASTER_REQUIREMENTS.md and this file. Reuse IMPLEMENTATION_PLAN.md baseline v1, its24 stable task IDs and100weights. Initial baseline83%; evidenced P02-B reopening82%; prior checkpoint88%; current **98.5% (medium confidence)**, earned98.5/100,1.5remaining after PR24 production acceptance and PR25 exact-head CI plus ordinary main merge (10.5 earned additional points). No feature scope/weight change. PR22 complete CI/main/live acceptance earned4.75 in P01-D/P03-A/P05-B/P08-A; PR23 acceptance earned1.25 in P09-A/P10-B. All unfinished rows retain partial credit. Recalculate with `node scripts/project-progress.mjs`; never substitute another agent's scoring. Report previous/current percentage, change, confidence, phase, evidence, Git/production and precise next milestone at session start/end.
 
-## Current operational state — 2026-10-19
+## Active release and cross-agent checkpoint — 2026-10-19 (normal chat)
+
+**Authoritative current operational checkpoint:** supersedes the dated PR23/PR24/PR25 pending tables and instructions further below. Preserve older snapshots as history. Project Continuum v2.0 and original master requirements remain active.
+
+| State | Verified evidence and limitations |
+|---|---|
+| Latest merged main | `1966348725a9cc6a3bfec0a283448a451aa9d6cd`; PR25 confirmed normally merged/closed. Comparison with PR25 tested source `1ca29f0f207e261267fbd80c8b39b31e1e0ad8e0` shows **zero changed files**, establishing identical merged source tree. |
+| PR25 exact-head checks | CI `39249464644` completed **success** on all three jobs: Chromium/Firebase emulators, WebKit, and type/build/unit tests. This chat did not run a separate local test suite. |
+| Latest independently verified live release | `6447a13d84150b8b16837176515f44e6ef5d8caf` (PR24), Deploy `39250100845` success; earlier agent recorded 18 matched assets plus hosted Chromium3/WebKit2 clean. |
+| PR25 production status | User reports having run `Deploy` on main. Exact workflow_dispatch run SHA/conclusion, asset parity and live browser flows **not independently confirmed** by available chat tools. Do not claim latest PR25 production verification until evidence exists. |
+| Weighted progress | **88 → 98.5/100, +10.5, medium confidence**, using unchanged 24 task weights. Remaining P11-B 1.5 points: 0.75 production/live validation; 0.75 final merged documentation/release-ledger acceptance. Recalculate using `node scripts/project-progress.mjs`. |
+| Concurrent documentation | Existing `docs/model-picker-release-ledger` branch is divergent (older by four commits; separate docs-only revision) and should not be overwritten or merged blindly. Current checkpoint on `docs/model-picker-continuum-20261019`. Reconcile histories during final documentation. |
+
+### Precise next steps
+
+1. Check the manually dispatched **Deploy** Actions run: commit must equal `1966348725a9cc6a3bfec0a283448a451aa9d6cd`, conclusion `success`, correct Firebase live target. Review build/live asset parity; run hosted Chromium/WebKit core flows, layout save/reconnect/delete, fixed Not-in-Auto Study/rewrite, quota recovery and Study/Compare held-press where practical. Record test/credential/device limitations precisely.
+2. If the exact live release is verified, advance P11-B fraction 0.5→0.75 with evidence in both docs. Do not conflate user-reported deployment with audited live verification.
+3. Reconcile `docs/model-picker-release-ledger` and `docs/MODEL_PICKER_VALIDATION.md`; preserve original requirement scope. Complete final manual/architecture/security acceptance evidence and synchronized reviewed commit/push/merge of docs. Then and only then advance P11-B 0.75→1 and declare 100% for approved scope.
+4. Any real defect found during hosted testing is an implementation task; fix with meaningful regression coverage and rerun required CI before release. Do not fabricate paid inference benchmarks or physical iPhone verification.
+
+**Tool limits during this session:** GitHub connector verifies PR metadata, CI, commits, trees, branch files, and supports PR/file changes but does not list/trigger manually dispatched Deploy workflow runs. Live-site HTTP access from the available container failed DNS resolution. This session did not run local Node/browser tests or hosted smoke tests; pending verification is explicit.
+
+## Historical operational state — 2026-10-19 (superseded)
 
 The complete overhaul remains in progress. Historical intermediate checkpoints are archived in docs/history/MODEL_PICKER_2026-10-18.md and MODEL_PICKER_2026-10-19.md; they do not override this ledger.
 

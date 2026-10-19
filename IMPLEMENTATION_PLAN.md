@@ -35,7 +35,7 @@ PROJECT_CONTINUUM.md records the user's permanent Version2.0 continuation protoc
 
 No prior numerical percentage/weighting baseline was present in this plan or handoff. Do not invent a previous percentage. Baseline v1 below uses the existing24 stable phase/task IDs; future agents must reuse it unless an approved scope change or demonstrated calculation defect justifies a versioned amendment. Complexity, integration, testing and credential/operational risk determine weights. P11 owns final cross-project regression/release/docs work; implementation weights cover distinct features, not repeated credit for the same shared module.
 
-**Calculation:** overall completion =100 × Σ(weight × earned fraction) / Σ(weights). Total scope100; earned83; approximately83% complete, **medium confidence**. Remaining weighted work17. This is a defined-scope engineering estimate, not an answer-quality/perfection claim. Prior checkpoint: no weighted estimate; current baseline83% falls within the disclosed80–85% range. Historical 'Verified' statements apply to their recorded revisions; this ledger conservatively gates changed integrated paths on current CI.
+**Calculation:** overall completion =100 × Σ(weight × earned fraction) / Σ(weights). Total scope100; earned82; approximately82% complete, **medium confidence**. Remaining weighted work18. This is a defined-scope engineering estimate, not an answer-quality/perfection claim. Prior checkpoint: no weighted estimate; current baseline83% falls within the disclosed80–85% range. Historical 'Verified' statements apply to their recorded revisions; this ledger conservatively gates changed integrated paths on current CI.
 
 **Partial credit (apply consistently):**0 not started/no evidence;0.25 accepted, demonstrably completed sub-deliverable;0.5 integrated implementation with partial verification;0.75 feature-specific local tests/integration and review passed but current full CI/integration acceptance still pending;1 all applicable acceptance and required verification pass for the integrated revision. Unintegrated modules cannot earn full feature credit. Blocked/deferred tasks retain only evidenced credit; required unfinished work is never silently excluded. Architectural not-applicable decisions require explicit justification. Final production verification is separately weighted in P11-B, so local/CI/main are never called deployed.
 
@@ -51,7 +51,7 @@ For P11-A,0.5 reflects source/architecture mapping and local checks with full CI
 | P01-C | 5 | 1 | 5 |
 | P01-D | 4 | 0.75 | 3 |
 | P02-A | 5 | 1 | 5 |
-| P02-B | 4 | 1 | 4 |
+| P02-B | 4 | 0.75 | 3 |
 | P03-A | 6 | 0.75 | 4.5 |
 | P03-B | 6 | 1 | 6 |
 | P04-A | 5 | 0.75 | 3.75 |
@@ -67,7 +67,7 @@ For P11-A,0.5 reflects source/architecture mapping and local checks with full CI
 | P10-B | 2 | 0.75 | 1.5 |
 | P11-A | 3 | 0.5 | 1.5 |
 | P11-B | 3 | 0.25 | 0.75 |
-| **Total** | **100** | | **83** |
+| **Total** | **100** | | **82** |
 
 Evidence: PR19 full CI39136235729 and verified production02c322 establish foundation/manual/Auto work. PR22 feature-specific matrices/review/68unit/type/build passed, but full CI39160504107 failed6/98 browser suites and current fixes still need clean rerun/full CI. PR23 ca9d50c polish is pushed with local69unit/type/build/Chromium/WebKit/a11y/performance/parity evidence; its CI39161870338 was cancelled because it inherited PR22 failures. P11 source/requirements/independent review passed; final current CI, integration, deployment/live checks and synchronized ledger remain. Exact current operations/files/logs are in AI_HANDOFF.md. Update this table and checkpoint history only when evidence changes; never reset weights when agents change.
 
@@ -204,3 +204,14 @@ Current source local verification complete: `pr22-followup-unit.log` typecheck/a
 Independent review accepts title/accounting/scope and SelectionTools changes, preview-guest isolation and83/100 weighted baseline. `node scripts/project-progress.mjs` validates24 tasks/100weight/83earned/17remaining and now runs in type/build CI. Original master untouched; permanent user-approved Project Continuum amendment is PROJECT_CONTINUUM.md.
 
 Push this coherent verified follow-up to PR22 and require complete fresh CI. Additional optional WebKit real-auth/emulator coding/usage tests did not load models after key save; those failures are not passed or ignored. Investigate while required CI runs (saveApiKeys currently awaits Firestore acknowledgement before catalog activation; emulator cross-origin traffic also errored). No production-auth claim or product regression diagnosis yet. Preserve required Chromium authenticated sync coverage and WebKit guest flows. Never deploy merely because the scoped matrices are green.
+
+
+## Current verified preview-isolation checkpoint — 2026-10-19
+
+PR22 head9b174584bd21a00af2ee78c2811193e18d71f9fa full CI39196403013 failed required WebKit: ask-chats/study functional assertions passed, but preview quota startup contacted Firestore and the deliberately isolated guest fixture correctly reported unhandled CORS errors. No merge/deploy occurred. A request-count regression reproduced2 unauthorized guest cloud requests (preview-quota-clean-red.log); startup now skips shared cloud quota for preview accounts. Authenticated quota behavior is unchanged. No error filters, skipped tests or weakened assertions.
+
+Current exact-source local evidence: preview-quota-unit.log typecheck/all68unit files passed; preview-quota-build.log build passed; preview-quota-chromium.log ask-chats/study/usage3 suites passed clean17s; preview-quota-webkit.log ask-chats/study2 suites passed clean9s. Independent credential review accepted the guard and actual-request assertion. New source files: src/store.ts and tests/e2e/ask-chats.cjs. Commit/push this verified milestone and require fresh complete exact-head CI before normal merge/deploy/live verification. Rollback remains reviewed revert + deployment of02c322da48368d6277e5eb8b599edfead7f92e0e. Latest main3be7307cb960b50d3c5bed90613608337b34405d and latest verified production02c322 remain unchanged.
+
+Progress baseline v1 remains100weights. Previous83% → current82% (medium confidence),18remaining: P02-B reopened from1 to0.75 after deterministic blocked-Firestore-write testing proved the preexisting saveKeys acknowledgement wait prevents local catalog activation. Isolated feat/model-picker-key-save work in /workspace/Lumen-policy-release owns that fix; it is not included here or a newly introduced PR22 dependency. Do not mark it complete until integration/recovery tests pass. Next: fresh PR22 CI, integrate this guard into PR23, finish isolated key-save recovery, then normally merge/deploy/live-verify independently green milestones. Preserve MASTER_REQUIREMENTS.md and permanent Project Continuum/deployment policies.
+
+Manual test: open a local guest account, search saved chats or create Study cards, then reload. Both remain usable without a cloud-account request; normal signed-in usage counters must still synchronize. For key saves (fix pending), reproduce only with synthetic keys and a controlled blocked network; never log real credentials.

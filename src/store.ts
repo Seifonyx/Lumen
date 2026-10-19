@@ -1164,7 +1164,7 @@ export const useStore = create<State>((set, get) => {
           if (generation !== accountGeneration) return;
           set({ chats });
         }
-        void quota.start();
+        if(!isPreviewUser(user.uid))void quota.start();
         sync = new ChatSync(user.uid, {
           local: (id) => generation === accountGeneration ? get().chats.find((c) => c.id === id) : undefined,
           allLocal: () => generation === accountGeneration ? get().chats.filter(c=>!isTemporaryChat(c)) : [],

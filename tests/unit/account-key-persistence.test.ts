@@ -182,3 +182,14 @@ test('an old auth session cannot revoke or reconcile a newly signed-in session w
   assert.deepEqual(denied,[]);
   assert.throws(()=>coordinator.reconcileRead('alice',read,{geminiKey:'stale'}),/account changed/i);
 });
+
+test('a new auth session can resume a pending key without waiting for the old session ACK', async () => {
+  const h=harness();let session=1;
+  const coordinator=createAccountKeyPersistence({...h.dependencies,currentSession:()=>session});
+  coordinator.save('alice',keys('alpha'));session=3;
+  assert.equal(coordinator.resume('alice'),true,'an old session stalled enqueue cannot suppress current replay');
+  assert.equal(h.sends.length,2);assert.equal(coordinator.resume('alice'),false,'same-session replay remains deduped');
+  h.sends[0].ack.resolve();await settle();
+  assert.equal(h.local.get('alice')?.pendingKeyRevision,h.local.get('alice')?.keyRevision,'old-session ACK cannot clear current replay');
+  h.sends[1].ack.resolve();await settle();assert.equal(h.local.get('alice')?.pendingKeyRevision,null);
+});

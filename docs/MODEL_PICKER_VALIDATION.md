@@ -51,3 +51,36 @@ The generic premium static scan still reports22 inherited form/textarea findings
 ## Release gate
 
 For every independently releasable milestone, inspect the complete diff and current tree, verify relevant local checks and all required exact-head CI, confirm no unfinished dependency, review risks and rollback, merge normally, deploy that merged revision, verify actual hosted assets/core flows, record the exact production commit separately, and continue remaining work. No bypasses, force pushes, accidental local WIP release or build-only readiness claims.
+
+
+## Final reliability milestone coverage (PR25; full current CI/release pending)
+
+| Requirement | Integrated behavior | Local evidence |
+|---|---|---|
+| §§3–5,7,13,16 | API keys and full settings/layout snapshots use independent cache-only revisions, immutable SDK submissions, stale-read/reload protection, current-UID/auth-session denial/replay guards and unchanged save debounce; settings-only field replacement preserves credentials and removes stale nested keys. | account-key-persistence/integration, account-settings-persistence/integration/startup, key-save-resilience and layout-save-resilience. Actual blocked-write layout loss and early cached-startup edit loss reproduced before fixes. |
+| §§8,10,14,16 | Canvas/research transfer current quota readiness into bounded recovery within their original permitted pools; repeated exhausted backups cannot starve the ready authorized alternative. Research retains fixed first intent, strict search and4096allowance. | Canvas actual-caller2cases, research actual planner/UsageTracker/runtime6query case18bounded calls/no outside model; Canvas phone/desktop and research browser flows. |
+| §§7–9,12,16 | Explicit fixed-order layout assignments bypass Auto-only exclusions for helper execution; dynamic Auto/outside exclusions and hard requirements/order/readiness/fallback consent remain. | helper-layout actual-caller5case matrix plus writing/study/layout browser regressions. |
+| §§13,16 | Sandbox fixture IDs and IndexedDB seeds use the real preview- namespace; actual-account/invite/denial tests remain authenticated. | Shared profile/seed normalization and corrected direct storage references; affected5Chromium/actualWebKit research; final4actualWebKit research/writing/study/layout matrix. No error suppression. |
+
+Local final source7cde3ea passes78unit/type/build and independent review. Complete exact-head CI39245877175, normal main merge and production deployment/live verification remain required; this table does not mark the overhaul finished. AI_HANDOFF.md owns the exact evolving source/main/production ledger and honest emulator/hardware/answer-quality limits.
+
+
+## Manual acceptance checklist
+
+Run these against the latest verified production release recorded in AI_HANDOFF.md. The expected routing behavior is observable; the exercises do not establish comparative answer quality.
+
+| Change | What to do | Expected result |
+|---|---|---|
+| Dynamic catalog and declarations | In Settings → Models, refresh a connected provider. Add a supported custom model with truthful limits, save without choosing Check models, then edit/remove it and reload. | Discovery updates the list; declared metadata is labelled unchecked; saving alone sends no inference probe; edits/removals persist. A removed model cannot remain eligible through a stale cache. |
+| Auto priorities | Select Auto, try a coding request and a writing request, then change the routing priority between quality, speed and cost. Inspect the chosen model/explanation. | Selection respects available capabilities and the selected priority. It may legitimately choose the same model; no guarantee that every request changes models or that inferred ranking proves answer quality. |
+| Explicit choice and layout scope | Save an ordered layout with two compatible assigned models and layout-only fallback. Mark the first Not in Auto, select that layout and use a writing or Study helper. Then return to dynamic Auto. | Fixed assignments keep their order and remain usable; Auto exclusions still apply to dynamic choices. Layout-only recovery cannot use outside models. |
+| Durable key saves | During a temporary sync interruption, save or replace a provider key; reopen API keys, reload, then reconnect. Switch accounts during pending sync. | Save feedback is local and prompt; the latest local key survives reload and later sync. Another account never inherits it. Removing a key removes its models from eligibility. |
+| Durable layouts/settings | Build/edit a layout, reload immediately, then delete it and reload again. Repeat during a temporary sync interruption and reconnect. Make one edit immediately after reopening a cached account. | The newest layout/requirements survive; a deleted layout stays deleted; startup or delayed remote reads cannot overwrite the edit. Key fields remain unchanged. |
+| Stream interruption | Start a long response, press Stop, then send another message. For an actual connection failure, inspect any visible partial response before retrying. | Stop ends the request; the next message works. Partial failure remains visible and is never silently joined to another model's answer. |
+| Comparison recovery | Compare two models, Stop one unfinished slot, then retry that slot. Combine only completed selected answers. | Finished slots remain intact; retry affects only its slot. Synthesis never includes failed or unselected answers. |
+| Picker controls | Search models while refreshing the catalog; try arrows, Escape and Tab. On a phone, open/edit custom-model limits and layout requirements. | Search/edit state remains stable, focus stays predictable, labels are readable, and controls fit without horizontal overflow. |
+| Recovery under exhausted backups | Automated controlled-provider scenarios exercise Canvas with exhausted assigned backups and research whose first queries consume quotas. | A ready permitted alternative is reached within finite budgets; research preserves completed queries, strict search/output limits and the original allowed pool. The automated evidence is more reliable than deliberately exhausting real quotas. |
+
+Authenticated offline/reload behavior is covered with real Firebase emulators and synthetic credentials. Hosted smoke tests use real production assets with isolated guest profiles and mocked provider responses. Actual provider answer quality and physical iPhone rendering remain separate evidence boundaries.
+
+Tools action stability: the actual-browser held-press/unchanged-filter regression reproduces parent-render replacement of Study/Compare buttons before the fix. Module-scope ToolCard retains their DOM identity and release actions. This provides a concrete root cause for missed presses, with separate Chromium/WebKit evidence and full CI release gates; historical WebKit retries remain documented, never labelled clean.

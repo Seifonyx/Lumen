@@ -31,6 +31,22 @@ const composerMode = (mode: 'research' | 'image') => {
 };
 const library = (detail: string) => window.dispatchEvent(new CustomEvent('mr:library', { detail }));
 
+// Stable component identity keeps an in-progress press intact when search,
+// connection settings or the scroll observer update the Tools page.
+function ToolCard({ t }: { t: Tool }) {
+    const content = <>
+      <span className="tool-icon" aria-hidden="true">{t.icon}</span>
+      <span className="tool-text">
+        <strong>{t.name}{t.state && <span className={`tool-state${t.state === 'On' || t.state === 'Connected' ? ' on' : ''}`}>{t.state}</span>}</strong>
+        <span>{t.text}</span>
+        {t.needs && <span className={`tool-needs${t.ready ? ' ok' : ''}`}>{t.ready ? '✓ ' : 'Needs a '}{t.ready ? t.needs.replace(' key', ' ready') : t.needs}</span>}
+      </span>
+    </>;
+    return t.run
+      ? <button type="button" className={`tool-card sec-${t.section}`} onClick={t.run}>{content}</button>
+      : <article className={`tool-card tool-contextual sec-${t.section}`}>{content}</article>;
+}
+
 export default function ToolsPage({ onClose, initial = 'research', newAssistant = false }: { onClose: () => void; initial?: Section; newAssistant?: boolean }) {
   const keys = useStore((s) => s.keys);
   const settings = useStore((s) => s.settings);
@@ -88,19 +104,7 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
   // With the tab bar, only the chosen category shows, and the search looks only inside it.
   const shownHere = (id: Section) => !glassPhone || id === active;
   const jump = (id: Section) => { setActive(id); document.getElementById(`tools-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-  const Card = ({ t }: { t: Tool }) => {
-    const content = <>
-      <span className="tool-icon" aria-hidden="true">{t.icon}</span>
-      <span className="tool-text">
-        <strong>{t.name}{t.state && <span className={`tool-state${t.state === 'On' || t.state === 'Connected' ? ' on' : ''}`}>{t.state}</span>}</strong>
-        <span>{t.text}</span>
-        {t.needs && <span className={`tool-needs${t.ready ? ' ok' : ''}`}>{t.ready ? '✓ ' : 'Needs a '}{t.ready ? t.needs.replace(' key', ' ready') : t.needs}</span>}
-      </span>
-    </>;
-    return t.run
-      ? <button type="button" className={`tool-card sec-${t.section}`} onClick={t.run}>{content}</button>
-      : <article className={`tool-card tool-contextual sec-${t.section}`}>{content}</article>;
-  };
+
 
   if (editingAssistant) return <AssistantLibrary key={typeof editingAssistant === 'string' ? 'new' : editingAssistant.id} startNew={editingAssistant === 'new'} startWith={typeof editingAssistant === 'string' ? undefined : editingAssistant} onClose={onClose} onDone={() => setEditingAssistant(null)} />;
 
@@ -141,7 +145,7 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
             return (
               <section key={sec.id} id={`tools-${sec.id}`} className="tools-section">
                 {!glassPhone && <header><h2>{sec.label}</h2><p>{sec.blurb}</p></header>}
-                <div className="tools-grid">{list.map((t) => <Card key={t.id} t={t} />)}</div>
+                <div className="tools-grid">{list.map((t) => <ToolCard key={t.id} t={t} />)}</div>
               </section>
             );
           })}

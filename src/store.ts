@@ -14,7 +14,7 @@ import { buildChatBody, fetchCatalog, fetchSummary, fetchTitle, streamChat, type
 import { keepModelChoice, isExcludedModel } from './lib/ai/model-status.js';
 import { activeSummary, compactLimit, contextTokens, cutPoint, liveMessages, summaryPrompt, withSummary } from './lib/compact';
 import { previousWork } from './lib/work-intent';
-import { cacheAccountSettings, forgetLocalAccount, isPreviewUser, loadKeys, loadRemoteSettings, savedAccount, saveKeys, resumePendingAccountKeys, watchAccountAccessDenied, saveRemoteSettings, signInPreview, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
+import { cacheAccountSettings, forgetLocalAccount, isPreviewUser, loadKeys, loadRemoteSettings, savedAccount, saveKeys, resumePendingAccountWrites, watchAccountAccessDenied, saveRemoteSettings, signInPreview, signInWithGoogle, signOutUser, watchUser, type ApiKeys } from './lib/firebase';
 import { registerServiceWorker } from './pwa/register';
 import { ChatSync } from './lib/sync';
 import { commitChanges as ghCommit, openPullRequest, setGitHubToken } from './lib/github';
@@ -251,9 +251,6 @@ let taskStorage: TaskStore | null = null;
 let settingsReady = false;
 let accountGeneration = 0;
 let settingsTimer: ReturnType<typeof setTimeout> | undefined;
-/** the shared settings as last saved or loaded */
-let lastSharedSettings = '';
-
 const newChatObject = (): Chat => ({ id: uid(), title: 'New chat', createdAt: Date.now(), updatedAt: Date.now(), messages: [] });
 
 interface ComparisonSession {
@@ -357,7 +354,8 @@ export const useStore = create<State>((set, get) => {
     const enabled=layout?[...new Set([...layout.models,...(policy?.outside?settings.enabledModels:[])])].filter(id=>!layoutModelProblem(layout,modelInfo(catalog,id)))
       :selected!==AUTO&&!settings.autoSwitch?[selected]:settings.enabledModels;
     const scope=layout?.mode==='order'&&!policy?.switching?enabled.filter(id=>id===layout.models[0]):enabled;
-    let candidates=helperModels(catalog?.models || [],{...settings,enabledModels:scope,routingPreference:layout?.priority || settings.routingPreference},{
+    const autoExcluded=layout?.mode==='order'?settings.autoExcluded?.filter(id=>!layout.models.includes(id)):settings.autoExcluded;
+    let candidates=helperModels(catalog?.models || [],{...settings,autoExcluded,enabledModels:scope,routingPreference:layout?.priority || settings.routingPreference},{
       tokens,outputTokens,text,preferred:preferred || (selected!==AUTO&&!isLayoutId(selected)?selected:undefined),
       blocked:id=>(usage?.blockedUntil(id) ?? null)!==null || isCoolingDown(id),left:id=>remaining(get().usage,id),
     });
@@ -524,7 +522,9 @@ export const useStore = create<State>((set, get) => {
       try {
         const eligible=searchers.filter(id=>!scope.skip(id));
         if(!eligible.length)throw new Error('No permitted research model remains.');
-        const body = buildChatBody({ model: eligible[0], fallbacks: eligible.slice(1), messages: [{ role: 'user', text: searchPrompt(question, step.query) }], options: { search: true, requireSearch: true,modelCapabilities:requestCapabilities(get().catalog,eligible),modelRequirements:scope.modelRequirements,maxTokens:4096 } });
+        // Earlier searches can exhaust this frozen pool; refresh readiness without changing its assignments.
+        const blockedModels=eligible.filter(id=>(usage?.blockedUntil(id) ?? null)!==null || (remaining(get().usage,id) ?? Infinity)<=0);
+        const body = buildChatBody({ model: eligible[0], fallbacks: eligible.slice(1), messages: [{ role: 'user', text: searchPrompt(question, step.query) }], options: { search: true, requireSearch: true,blockedModels,modelCapabilities:requestCapabilities(get().catalog,eligible),modelRequirements:scope.modelRequirements,maxTokens:4096 } });
         for await (const ev of streamChat(body, signal)) {
           if (generation !== accountGeneration) return;
           if (ev.t === 'text') notes += ev.text;
@@ -1052,7 +1052,7 @@ export const useStore = create<State>((set, get) => {
       const onNet = () => {
         set({ online: navigator.onLine });
         const uid=get().user?.uid;
-        if(navigator.onLine && uid && !get().accessDenied)resumePendingAccountKeys(uid);
+        if(navigator.onLine && uid && !get().accessDenied)resumePendingAccountWrites(uid);
       };
       window.addEventListener('online', onNet);
       window.addEventListener('offline', onNet);
@@ -1153,10 +1153,6 @@ export const useStore = create<State>((set, get) => {
             const draftId = localStorage.getItem(`mr.assistantDraft.${user.uid}`);
             if (draftId && get().chats.some((chat) => chat.id === draftId && chat.assistant && !chat.messages.length)) set({ currentId: draftId });
           } catch { /* private mode */ }
-          {
-            const { voiceLang: _voice, ...shared } = get().settings;
-            lastSharedSettings = remoteSettings ? JSON.stringify(shared) : '';
-          }
           settingsReady = true;
           if (!remoteSettings) get().updateSettings({});
         } catch (e) {
@@ -1423,19 +1419,24 @@ export const useStore = create<State>((set, get) => {
       }
       // Share settings with your other devices (voice language stays per device).
       const uid = get().user?.uid;
-      if (uid && settingsReady) {
+      // A cached account can already be editable while its authoritative read is pending.
+      // Stage genuine edits now; empty hydration must not overwrite another device's settings.
+      const cachedEdit=get().authed===true && !get().accessDenied && Object.keys(patch).length>0;
+      if (uid && (settingsReady || cachedEdit)) {
         const { voiceLang: _localVoice, ...localShared } = settings;
-        cacheAccountSettings(uid, localShared);
+        if(!cacheAccountSettings(uid, localShared)) {
+          const message="Couldn't save settings on this device. Check local storage and try again.";
+          if(!get().toasts.some(toast=>toast.text===message))get().toast(message,'error');
+          return;
+        }
+        if(!settingsReady)return; // Read reconciliation resumes this durable edit after authorization.
         clearTimeout(settingsTimer);
         settingsTimer = setTimeout(() => {
           if (get().user?.uid !== uid || !settingsReady) return;
           const { voiceLang: _voice, ...shared } = get().settings;
-          // Only write when something actually changed (saves Firebase's free daily writes).
-          const json = JSON.stringify(shared);
-          if (json === lastSharedSettings) return;
-          lastSharedSettings = json;
+          // The durable coordinator coalesces no-op edits and in-flight revisions.
           saveRemoteSettings(uid, shared).catch(() => {
-            lastSharedSettings = '';
+            get().toast("Couldn't save settings on this device. Check local storage and try again.",'error');
           });
         }, 800);
       }
@@ -1534,7 +1535,13 @@ export const useStore = create<State>((set, get) => {
       const plan=layout?planLayout(layout,routeInput,settings.autoSwitch):planRoute(routeInput);
       if(!plan.model)throw new Error(plan.error || 'No eligible model is available. Open Settings → Models.');
       const masker = settings.privacyShield && !asIs ? new Masker() : null;
-      const body = buildChatBody({ model: plan.model, fallbacks:plan.fallbacks,messages: [{ role: 'user', text: masker ? masker.mask(prompt).text : prompt }], options: {search:false,preserveOrder:layout?.mode==='order',modelRequirements:layout?.requirements,preferredModels:layout?.models,modelCapabilities:requestCapabilities(catalog,[plan.model,...plan.fallbacks]),routingPreference:choosePreference(layout?.priority || settings.routingPreference,analyze(routeInput)),customInstructions: masker ? masker.mask(instructions).text : instructions, memory: masker ? masker.mask(memoryNote).text : memoryNote } });
+      const body = buildChatBody({ model: plan.model, fallbacks:plan.fallbacks,messages: [{ role: 'user', text: masker ? masker.mask(prompt).text : prompt }], options: {
+        search:false,preserveOrder:layout?.mode==='order',modelRequirements:layout?.requirements,preferredModels:layout?.models,
+        modelCapabilities:requestCapabilities(catalog,[plan.model,...plan.fallbacks]),
+        blockedModels:[plan.model,...plan.fallbacks].filter(mid=>(usage?.blockedUntil(mid)??null)!==null || (remaining(get().usage,mid)??Infinity)<=0),
+        routingPreference:choosePreference(layout?.priority || settings.routingPreference,analyze(routeInput)),
+        customInstructions: masker ? masker.mask(instructions).text : instructions, memory: masker ? masker.mask(memoryNote).text : memoryNote,
+      } });
       const aborter = new AbortController();
       const abort = () => aborter.abort();
       signal.addEventListener('abort', abort, { once: true });

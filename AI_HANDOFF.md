@@ -1,5 +1,8 @@
 # Dynamic Model Picker operational handoff
 
+> **New, separate Lumen Blackout workstream (2026-10-19):** User-approved phased/identity-first *v1.1 amendment* in [`docs/blackout/BLACKOUT_V1_1_AMENDMENT.md`](docs/blackout/BLACKOUT_V1_1_AMENDMENT.md). Blackout Phase 1 recovery, provisional scope, reference and handoff are isolated in [`docs/blackout/IMPLEMENTATION_PLAN.md`](docs/blackout/IMPLEMENTATION_PLAN.md) and [`docs/blackout/AI_HANDOFF.md`](docs/blackout/AI_HANDOFF.md). The full distinct Blackout master directive is not yet available; do not claim full scope recovery, progress percentage, visual approval, or deployment. **The independent Dynamic Model Picker's requirements and 98.5% ledger below are unchanged.**
+
+
 ## Permanent amendment: Progressive Verified Deployment Policy
 
 Added by the user on 2026-10-18. This execution-policy amendment supplements MASTER_REQUIREMENTS.md without replacing or weakening it. It remains active for every future agent and session unless the user explicitly changes it.

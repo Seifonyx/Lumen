@@ -1,0 +1,47 @@
+# Lumen Blackout — Phase 1 source audit and requirements recovery
+**Checkpoint:** 2026-10-19; repo: `Seifonyx/Lumen`; audited `main` SHA `c4b55781f1046e8abd75966ecb6c565327a1d62a`.
+**State:** Phase 1 IN PROGRESS / source and one image reference inspected. No visual or scope approval inferred.
+
+## Evidence provenance and missing master
+- **Received:** user's exact **LUMEN BLACKOUT v1.1 Mandatory Execution Amendment**, recorded unchanged in `BLACKOUT_V1_1_AMENDMENT.md`. This is an **amendment**, not the complete Blackout master directive. The complete Blackout master directive has **not** been located in conversation uploads, the available Library results, or Lumen's current main tree. Do not replace it with the cancelled Design Renaissance directive. Capture it when provided; until then, scope coverage and progress percentages are intentionally UNSET.
+- **Received:** `9Router_UI_Reference_Pack(1).zip`, SHA-256 `f9839c759f0fb7ab5fe38e48e47f0ec2f58f8ef5eccd7f6b76bbd1a2b9ede24f`. Inspected ZIP central directory: **five files, zero image pixels**: `README.txt`, `sources.json`, `download_9router_images.py`, `download_windows.bat`, `download_mac_linux.sh`. Inventory lists **36 URLs** (22 distinct unclassified gallery images plus 14 categorized additional URLs: Overview 1; Endpoint 4; Providers 2; Provider Detail 1; Combos 3; Usage 1; CLI Tools 1; Login 1). The gallery publicly lists 23 slots with one repeated URL. No screenshot package was generated, and no downloader code was run. Do not state that all 36 screenshots were viewed. For a stable source: https://devlive.org/project/decolua/9router/screenshots
+- **Visually inspected:** official 9Router screenshot at https://raw.githubusercontent.com/decolua/9router/master/images/9router.png, published by https://github.com/decolua/9router; actual visible image shows a dark three-region desktop view: persistent left navigation, Providers heading/compact toolbar, multiple provider groups and compact connected/disconnected cards, test actions, an endpoint-proxy application context. Other external image URLs in the uploaded ZIP were not verified as accessible: some time out or reject fetch. No unobserved screen is asserted as visual evidence.
+- **Inspected:** read-only main source, product/design guidance, `package.json`, routes, usage, provider configurations, model registry, account persistence, and CI YAML. Read-only visual baseline screenshot of the current Lumen app (from a previous actual WebKit baseline) was inspected for context; do **not** treat an earlier rejected visual implementation as an approved identity or adopt the abandoned workstream's documents.
+- **Public 9Router sources:** https://github.com/decolua/9router ; https://github.com/decolua/9router/blob/master/docs/ARCHITECTURE.md . External reference claims require version- and permission-aware verification.
+- **Cross-product references:** https://developer.apple.com/design/human-interface-guidelines/ ; https://developer.apple.com/design/human-interface-guidelines/materials ; https://developer.apple.com/design/human-interface-guidelines/designing-for-macos/ . Use their layout, hierarchy, accessible controls, keyboard/resize and layered material guidance as *principles*, not pixel templates.
+
+## Verified present-day Lumen architecture
+| Area | Verified main-source evidence | Constraint / observation |
+|---|---|---|
+| Runtime | React 19 + TypeScript + Vite + Zustand; Firebase Auth/Firestore (`package.json`, `src/main.tsx`, `src/store.ts`, `src/lib/firebase.ts`) | **Browser-first web application**, not a local gateway process. |
+| Identity | `DESIGN.md`: Switchboard, Eclipse ring logo, Geist typography, cool-neutral light/dark/true-black, lime `--signal`; `src/app.css` | Existing identity is a baseline only. User requests a genuinely new monochrome identity; logo and lime may change **after visual approval**. |
+| App surfaces | `src/App.tsx`, Sidebar, HubPage, Settings, Canvas, Tools, Projects, Library, Study, Compare | Preserve navigation, gestures, drafts, interaction ownership, accessibility, working document/AI tools. |
+| Provider connections | `src/lib/ai/provider-config.js` + `src/lib/ai/providers.js` | BYOK across major providers, explicit provider enable/charge consent, default relay for browser-incompatible APIs, dynamic adapter-backed discovery. Do not imply server-owned gateway exists. |
+| Model selection | `src/lib/routing.ts`, `src/lib/layout-builder.ts`, `src/lib/ai/registry.js`, ModelPicker | Auto, custom Layouts, fallback/recovery, scoped registry and model constraints already exist; do not recreate or regress. |
+| Usage | `src/lib/usage.ts`, `src/components/UsageTab.tsx` | Daily model requests/tokens, resets, provider-reported quota information. Unknown external remaining balances cannot be presented as authoritative. |
+| Security/account | `src/lib/firebase.ts`, `src/lib/account-key-persistence.ts`, `firestore.rules`, `src/lib/ai/recovery.js` | User-scoped keys, OAuth account boundaries, private settings, retry classification. Source inspection is **not** penetration test. Do not ship risky proxy/OAuth changes without design/security review. |
+| CI | `.github/workflows/tests.yml` | Typecheck/unit/build, Chromium Firebase emulator, WebKit. No new Blackout build/tests run yet; documentation-only on isolated branch. |
+
+## Grounded baseline design assessment (not a quality pass)
+From a real WebKit baseline and `DESIGN.md`: desktop new-chat prioritizes whitespace and a central composer while left navigation is compact; phone new-chat relies on floating greeting/composer and slide-in sheets; model options, Files/Tools menus and Library pages are already functional. Identity's lime signal and current Eclipse graphic are deeply implemented, so a successful rebrand must address icon assets, state semantics and motion, not only exchange CSS colors. Potential questions to test during concept review: empty-vs-populated visual hierarchy, dense provider/settings ergonomics, the composition of full-size chat/history, layered menus and mobile keyboard/safe areas. These are **design review questions**, not confirmed bugs.
+
+## 9Router comparison (provisional, category-level; not feature authorization)
+| Reference area | Observed/reported 9Router function | Lumen coverage / divergence | Implementation decision |
+|---|---|---|---|
+| Providers | Grouped connections, status and test controls; 40+ advertised provider options | Connection controls and provider catalog already exist; supported sets and workflow differ | Research information architecture and discoverability, not a pixel clone |
+| Model combos/fallback | Ordered combos and account/provider fallback | Custom Layouts and routing/recovery already exist | Audit actual behavioral gaps; don't duplicate |
+| Quotas/usage | Gateway request logs, quota and reset dashboards | Lumen already tracks usage counts and quota signals; not full gateway telemetry | Assess privacy-preserving explainability and supported metrics |
+| CLI/OpenAI-compatible endpoint | Local port/server proxy used by external tools | **Not present as such in browser-only Lumen**, different trust boundary | Separate backend/local-service security architecture and explicit authorization required |
+| OAuth / multiple upstream accounts | 9Router gateway manages tokens and account fallbacks | Lumen uses Firebase user auth and BYOK provider credentials | Do not import provider subscription cookies, uncontrolled refresh tokens or questionable auth workarounds |
+| Request logging / debug | Gateway logs (sometimes full payloads when enabled) | Lumen's privacy and account-isolation requirements dominate | Never enable raw prompt/key logging by analogy |
+| Screenshot styling | One verified dense dark provider-card dashboard (official hero image) | Lumen is an AI workspace with chat as primary experience | Use only hierarchy/density principles; original monochrome identity needs explicit user approval |
+
+## Security and product compatibility gates
+1. Provider tokens must stay account-scoped, never copied to other users or logged. No arbitrary-origin credential forwarding, implicit paid calls, unsafe proxy targets, undocumented OAuth interception, or bypass of service terms.
+2. Dynamic model lists must be scoped to credential/account state and recover from key changes, expired caches, aborts, and provider failures; never leak metadata across accounts.
+3. Preserve pre-existing draft, History, Projects, Library, Study, Compare, Canvas, rerouting and model layout behavior during design work.
+4. Real rendered desktop **and** mobile identity proof is mandatory before extensive app changes; include light, dark, true-black and accessible semantic status colors.
+5. Phase 1 cannot be marked complete until the missing BLACKOUT master prompt is recovered/reconciled and meaningful screenshot/reference coverage is established with verifiable observations.
+
+## Phase 1 next evidence
+Recover user-provided complete BLACKOUT master, reconcile each requirement against app/source and security boundaries. Retrieve additional actual reference images only if the original source permits (do not run opaque downloader blindly). Define exact identity review examples and optional small isolated real-component prototypes. Then seek **explicit approval** of the identity before Phase 3 or broad UI implementation.

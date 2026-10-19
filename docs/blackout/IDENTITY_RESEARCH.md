@@ -1,0 +1,22 @@
+# Lumen Blackout — preliminary identity exploration (NOT approved)
+**Checkpoint:** source/reference research only. The three directions below are hypotheses for later real-component desktop+mobile visual proof; none is a generated image, installed UI or user-approved design. Scope details may change once the missing Blackout master is recovered.
+
+## Visual evidence actually inspected
+- Current `DESIGN.md` / real WebKit baseline: cool neutral light/dark/true black; small lime Eclipse mark, compact light sidebar, central chat, floating phone composer and overlay sheet.
+- 9Router `images/9router.png` official screenshot: dark dense provider management UI, left rail, grouped OAuth/free/API connections, multi-column cards, test controls.
+- Apple HIG material/layout/macOS guidance: interaction layers distinguish controls from content; adaptive safe areas; spacious but productive Mac density; keyboard accessibility. Links: https://developer.apple.com/design/human-interface-guidelines/materials , https://developer.apple.com/design/human-interface-guidelines/layout , https://developer.apple.com/design/human-interface-guidelines/designing-for-macos/ .
+- **No other screenshot from the 36-URL uploaded manifest has been visually verified.** Screenshots are not owned by Lumen; avoid literal replication.
+
+## Candidate A — Blackline / The Instrument
+Geometry: disciplined 4/8px grids, angular instrument-like header, narrow navigation rail adjacent to light/dark work canvas; no tile-heavy admin-dashboard clone. Typography: distinctive numeric/monospaced routing labels paired with confident neo-grotesk content text. Logo: a negative-space beam traveling through a circular aperture rather than the previous lime flare. Motion: route changes reveal a fine white progress path, not decorative ambient glow. iOS: compact top context and single bottom-owned composer; focus and keyboard keep task in foreground. Desktop: capable sidebar + writing stage + collapsible evidence/context region. Risk: could feel too technical for creative chat; prove populated conversations and real document canvas.
+
+## Candidate B — Paper / Afterimage
+Geometry: high-contrast ink panels on exacting near-white editorial content; generous content rhythm contrasted with dense utilities only when needed. Typography: deliberately distinguish reading/work content from settings/commands; no generic giant greeting or boutique serif identity. Logo: an interrupted disk producing a clean reflected arc. Motion: subtle connected view changes and anchored composer without fake spring clutter. Mobile: tactile vertical hierarchy, obvious current scope, precisely accessible sheet labels; Desktop: page-like writing experience with contextual navigation. Risk: may become anonymous minimalism; require a uniquely Lumen visual mark and signature routing affordance proven at small sizes.
+
+## Candidate C — Axis / The Signal
+Geometry: modular offset axes and layered rectilinear frames, large monochrome focus fields interleaved with small dense workflow strips; avoids 9Router's categorized-card grid. Typography: bold tight display only at feature transitions; readable 15–16px content and small codified model metadata. Logo: intersecting voids/lines forming a recognizable luminous slit without accent color. Motion: sequential node-to-node route animation that conveys actual model selection/recovery. iOS: purposeful workspaces and strong active-state position; Desktop: command-driven workspace with a sidecar for provider/model diagnostics. Risk: unnecessary dashboard overload; test at 320px and with long localized labels.
+
+## Evaluation contract before user approval
+Produce high-fidelity **actual-app** examples for each credible candidate at 390 phone and 1440 desktop, with at least a nonempty conversation, model/Layouts selector, provider dashboard, populated Library and modal/sheet. Show light/dark/true black. Compare direct accessibility contrast, legibility, navigation affordances, recognizability without a lime accent, responsive continuity, feature controls, friction, purposeful visual originality and distance from 9Router's layout. Clearly label implementation images vs conceptual identity proposals. Seek explicit approval of a **specific identity** (mark, typography, geometry, surface and navigation language), **before** executing major screen transformations.
+
+No default has been selected. Do not ship by choosing a direction based on this document alone.

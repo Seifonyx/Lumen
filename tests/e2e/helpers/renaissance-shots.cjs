@@ -122,7 +122,11 @@ function fakeChat() {
     await page.locator('.hub-page[aria-label="Library"]').waitFor({timeout:12000});
     // A populated real Library is part of the design review. An empty
     // placeholder cannot prove feature-workspace hierarchy or item legibility.
-    await page.getByText('Lumen navigation research.md',{exact:true}).first().waitFor({timeout:12000});
+    // The Library intentionally removes ".md" from the visible filename, while
+    // the real Open button retains the full filename in its accessible name.
+    // Assert the actual component contract; don't wait for text it never renders.
+    await page.getByRole('button',{name:'Open Lumen navigation research.md',exact:true}).waitFor({timeout:12000});
+    await page.getByText('Lumen navigation research',{exact:true}).first().waitFor({timeout:12000});
     await wait(250);
     await shot('library');
     // Same blank document Canvas in CURRENT and both design directions:

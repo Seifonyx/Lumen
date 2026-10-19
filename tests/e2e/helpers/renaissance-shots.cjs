@@ -20,6 +20,7 @@ const configs = [
 const views = ['current','atelier','workbench'];
 const data = [];
 const files = [];
+const parity = [];
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function fakeChat() {
@@ -93,13 +94,17 @@ function fakeChat() {
     await input.fill('PRESERVED_DRAFT');
     await page.locator('.composer .model-button').click();
     await page.locator('.models-pop').waitFor();
+    const options = await page.locator('.models-pop [role="option"]').allTextContents();
+    const layouts = await page.locator('.models-pop .mp-layout').allTextContents();
+    if(!options.length || !layouts.length)throw Error('Model or Layout choices missing in '+prefix);
     await shot('model-picker');
     await page.keyboard.press('Escape');
     const add=page.getByRole('button',{name:/^Add (?:photos, )?files or a repository$/});
     await add.click();
     await page.locator('.attach-menu').waitFor();
     await shot('add-sheet');
-    if(await page.locator('.attach-menu .sheet-row').count()<10)throw Error('Add controls disappeared');
+    const addCount = await page.locator('.attach-menu .sheet-row').count();
+    if(addCount<10)throw Error('Add controls disappeared');
     await page.keyboard.press('Escape');
     if(await input.inputValue()!=='PRESERVED_DRAFT')throw Error('Draft lost after sheet');
     await input.fill('');
@@ -120,15 +125,27 @@ function fakeChat() {
     await page.getByText('Lumen navigation research.md',{exact:true}).first().waitFor({timeout:12000});
     await wait(250);
     await shot('library');
+    parity.push({width,theme,mode,optionNames:options.map(x=>x.trim()),layoutNames:layouts.map(x=>x.trim()),addActions:addCount,documentVisible:true});
     if(errors.length)throw Error('Page errors: '+errors.slice(0,3).join(' | '));
     await ctx.close();
     console.log('RENAISSANCE PASS '+prefix);
    }
   }
  }finally{await browser.close()}
+ // A visual mode must not silently drop model choices, layout choices, or Add
+ // actions. Compare content and counts with the unmodified app at every size.
+ for(const item of parity){
+   if(item.mode==='current')continue;
+   const baseline=parity.find(x=>x.width===item.width && x.theme===item.theme && x.mode==='current');
+   if(!baseline)throw Error('No same-viewport baseline for '+item.mode+' '+item.width);
+   for(const key of ['optionNames','layoutNames']){
+     if(JSON.stringify(item[key])!==JSON.stringify(baseline[key]))throw Error('Lost or reordered '+key+' in '+item.mode+' '+item.width);
+   }
+   if(item.addActions!==baseline.addActions)throw Error('Add action mismatch in '+item.mode+' '+item.width);
+ }
  fs.writeFileSync(path.join(out,'diagnostics.json'),JSON.stringify({
   provenance:'Real Lumen React application on WebKit with mocked user/provider calls',
-  modes:views,viewportCases:configs,files,observations:data,
+  modes:views,viewportCases:configs,files,observations:data,parity,
  },null,2));
  console.log('RENAISSANCE CAPTURED '+files.length+' complete-screen screenshots');
 })().catch(e=>{console.error(e);process.exitCode=1});

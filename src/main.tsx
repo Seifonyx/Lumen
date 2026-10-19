@@ -2,6 +2,12 @@ import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import './app.css';
 import './glass.css';
+// Design proof only: experimental real-component refinements opt in via ?native-proof=1.
+// The default app receives no CSS changes. Remove this and the trial stylesheet after review.
+if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('native-proof') === '1') {
+  document.documentElement.classList.add('adaptive-native-proof');
+}
+import './adaptive-native-proof.css';
 import App from './App';
 import { initViewport } from './lib/viewport';
 import { initGlass } from './lib/glass';

@@ -9,7 +9,7 @@ const calls = [];
 globalThis.fetch = async (url, options) => {
   const body = JSON.parse(options.body);
   calls.push({ url: String(url), body });
-  if (reject-- > 0) return Response.json({ error: { message: 'Unsupported generation configuration' } }, { status: 400 });
+  if (reject-- > 0) return Response.json({ error: { message: 'Unsupported thinkingConfig parameter in generation configuration' } }, { status: 400 });
   const event = String(url).includes('googleapis')
     ? { candidates: [{ content: { parts: [{ text: 'Fixture answer' }] }, finishReason: 'STOP' }] }
     : { choices: [{ delta: { content: 'Fixture answer' }, finish_reason: 'stop' }] };

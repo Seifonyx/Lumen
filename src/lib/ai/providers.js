@@ -9,6 +9,7 @@ import { AI_PROVIDERS, DEFAULT_PROVIDER_RELAY_URL, EXTRA_PROVIDERS, normalizeKey
 import { createModelRegistry } from './registry.js';
 import { waitFor } from './abort.js';
 import { mergeModelDeclarations } from './model-declarations.js';
+import { classifyFailure } from './recovery.js';
 
 const redactProviderMessage = (value,configuration=keys) => {
   let message=String(value || '');
@@ -645,7 +646,8 @@ async function openGemini(name, messages, instructions, search, signal, codeExec
   // Retry unsupported thinking options once, retaining requested search tools.
   // Strict tool requests still fail rather than silently changing their options.
   if (res.status === 400 && extras.generationConfig?.thinkingConfig && !codeExecution && !requireSearch) {
-    await res.body?.cancel();
+    const failure={ok:false,status:res.status,...await readError(res,signal,configuration)};
+    if(classifyFailure(failure).kind!=='parameters' || !/thinking|include.?thoughts/i.test(failure.message))return failure;
     const { generationConfig: _thinking, ...retained } = extras;
     res = await send({ ...body, ...retained,...(maxTokens!==undefined?{generationConfig:{maxOutputTokens:maxTokens}}:{}) });
   }

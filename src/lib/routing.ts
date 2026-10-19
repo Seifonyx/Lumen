@@ -223,19 +223,34 @@ export function planRoute(input: RouteInput): RoutePlan {
   const whyOf = new Map<string, string[]>();
   // The newest version of each family among the candidates.
   const newestOf = new Map<string, number>();
-  for (const id of known) { const f = family(info.get(id)!); newestOf.set(f.key, Math.max(newestOf.get(f.key) || 0, f.version)); }
+  const families=new Map(known.map(id=>[id,family(info.get(id)!)]));
+  const versionedCount=new Map<string,number>();
+  for (const f of families.values()) {
+    newestOf.set(f.key, Math.max(newestOf.get(f.key) || 0, f.version));
+    if(f.version>0)versionedCount.set(f.key,(versionedCount.get(f.key) || 0)+1);
+  }
   const scored = known
-    .map((id, i) => { const f = family(info.get(id)!); const why: string[] = []; whyOf.set(id, why); return { id, s: score(info.get(id)!, task, tokens, i, known.length, input.left(id), { newest: f.version > 0 && f.version === newestOf.get(f.key) && known.some((o) => o !== id && family(info.get(o)!).key === f.key && family(info.get(o)!).version > 0), previous: id === input.previous, preferred: Boolean(input.preferProvider) && id.split(':')[0] === input.preferProvider }, why) }; })
+    .map((id, i) => { const f = families.get(id)!; const why: string[] = []; whyOf.set(id, why); return { id, s: score(info.get(id)!, task, tokens, i, known.length, input.left(id), { newest: f.version > 0 && f.version === newestOf.get(f.key) && (versionedCount.get(f.key) || 0)>1, previous: id === input.previous, preferred: Boolean(input.preferProvider) && id.split(':')[0] === input.preferProvider }, why) }; })
     .sort((a, b) => b.s - a.s);
   // Backups alternate providers when they're close in score, so one provider's outage or rate
   // limit doesn't take out the next few attempts too.
   const provider = (id: string) => id.split(':')[0];
   const ranked: string[] = [];
   const rest = [...scored];
+  const providersLeft=new Map<string,number>();
+  for(const item of rest) {const p=provider(item.id);providersLeft.set(p,(providersLeft.get(p) || 0)+1);}
   while (rest.length) {
     const last = ranked.length ? provider(ranked[ranked.length - 1]) : '';
-    const i = ranked.length && rest[0] && provider(rest[0].id) === last ? rest.findIndex((x) => provider(x.id) !== last && x.s >= rest[0].s - 2.5) : 0;
-    ranked.push(rest.splice(i < 0 ? 0 : i, 1)[0].id);
+    let i=0;
+    if(last && providersLeft.size>1 && provider(rest[0].id)===last) {
+      // Rest stays score-sorted; candidates below this band cannot win diversity.
+      for(let at=1;at<rest.length && rest[at].s>=rest[0].s-2.5;at++) {
+        if(provider(rest[at].id)!==last) {i=at;break;}
+      }
+    }
+    const chosen=rest.splice(i,1)[0].id,p=provider(chosen),count=providersLeft.get(p)!-1;
+    if(count)providersLeft.set(p,count);else providersLeft.delete(p);
+    ranked.push(chosen);
   }
   // Models at their limit go last; they're kept only as a final resort.
   const blocked = (id: string) => input.blocked(id) || (input.left(id) ?? Infinity) <= 0 || isCoolingDown(id);

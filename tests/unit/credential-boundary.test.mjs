@@ -14,11 +14,11 @@ reset();await caught;assert.equal(calls,1);
 pending.resolve(Response.json({error:{message:'Unsupported thinking options'}},{status:400}));
 await new Promise(r=>setTimeout(r,0));assert.equal(calls,1);
 
-// Credential changes during the safe-parameter adjustment also stop its second fetch.
+// Credential changes while reading a parameter rejection also stop its second fetch.
 reset();let cancelling=deferred(),entered=deferred();calls=0;
-globalThis.fetch=async()=>{calls++;const res=new Response('bad options',{status:400});res.body.cancel=()=>{entered.resolve();return cancelling.promise;};return res;};
+globalThis.fetch=async()=>{calls++;return {ok:false,status:400,text:()=>{entered.resolve();return cancelling.promise;}};};
 work=openStream({provider:'gemini',name:'gemini-2.5-flash'},user,{instructions:'',signal:new AbortController().signal});
-const adjusted=assert.rejects(work,{name:'AbortError'});await entered.promise;reset();cancelling.resolve();await adjusted;assert.equal(calls,1);
+const adjusted=assert.rejects(work,{name:'AbortError'});await entered.promise;reset();cancelling.resolve(JSON.stringify({error:{message:'Unsupported thinking options'}}));await adjusted;assert.equal(calls,1);
 
 // No fallback model may inherit a replacement configuration after an old request is cancelled.
 reset();pending=deferred();calls=0;

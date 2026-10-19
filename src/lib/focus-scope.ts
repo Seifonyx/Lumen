@@ -44,6 +44,9 @@ export function useFocusScope(ref:RefObject<HTMLElement|null>,active:boolean,onE
     if(!root.contains(document.activeElement))root.focus({preventScroll:true});
     const key=(event:KeyboardEvent)=>{
       if(scopes.at(-1)!==root)return;
+      // The existing select enhancement is a body portal with its own keyboard
+      // owner. Its Escape/Tab must settle before the containing dialog handles them.
+      if(event.target instanceof Element && event.target.closest('.glass-select-menu'))return;
       if(event.key==='Escape'){
         if(event.target instanceof Element && event.target.closest('[role="menu"]'))return;
         if(event.target instanceof Element && event.target.closest('[data-local-escape]'))return;

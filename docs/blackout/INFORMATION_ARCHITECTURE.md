@@ -33,6 +33,10 @@ Both prototypes reuse App/store and actual Composer, ModelPicker, UsageMeter, La
 
 ## Explicitly unfinished
 
-The alternatives are architectural proof, not approved full branding. A final distinctive mark, full motion, optically refined typography, provider detail redesign, finished policy-editor layout and complete iPhone keyboard/device acceptance remain. Existing provider editor and usage panels are preserved canonical components; styling/reorganizing them is not evidence that new 9Router capabilities have been implemented. No persistent route history, quota endpoint, gateway, new OAuth or cost reporting is claimed.
+The alternatives are architectural proof, not approved full branding. A final distinctive mark, full motion, optically refined typography, production provider-detail integration (the focused proof is verified below), finished policy-editor layout and complete iPhone keyboard/device acceptance remain. Existing provider editor and usage panels are preserved canonical components; styling/reorganizing them is not evidence that new 9Router capabilities have been implemented. No persistent route history, quota endpoint, gateway, new OAuth or cost reporting is claimed.
 
 The original Aperture/Relay/Fold screenshots were insufficient and are retired. Gate 1 remains unapproved. Do not present the new alternatives as an approved identity solely because their workflow tests pass.
+
+## Provider intelligence proof amendment — 20 October 2026
+
+The focused packet now demonstrates all32 supported provider definitions through one shared `workspace-proofs/ProviderBrowser.tsx`, replacing the four-row proof overview. Desktop uses adjacent list/detail; phone opens a dedicated detail with Back. Key presence, saved opt-in, catalog/discovery, inference uncertainty, model eligibility and local/model/shared-pool usage are distinct. Manage connection delegates to the canonical masked owner; model actions delegate to existing selection/send-time routing. No extra provider store, health probe, inference history or production integration. See `workspace-proofs/PROVIDER_INTELLIGENCE.md` and the portable review for exact evidence. This supersedes earlier proof limitations without changing verified production capability dispositions. Gate1 is still unapproved.

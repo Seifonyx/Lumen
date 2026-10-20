@@ -7,7 +7,7 @@ const {profile,seed}=require('../../../tests/e2e/helpers/preview-profile.cjs');
 const {chats}=require('./fixture.cjs');
 const direction=process.env.BLACKOUT_DIRECTION||'index',width=Number(process.env.BLACKOUT_WIDTH)||1440,theme=process.env.BLACKOUT_THEME||'dark';
 const engine=process.env.MR_WEBKIT?webkit:chromium;
-const out=path.join(__dirname,'screens');
+const out=process.env.BLACKOUT_OUTPUT||path.join(__dirname,'screens');
 const flash='gemini:gemini-flash-latest',pro='gemini:gemini-2.5-pro';
 const layout={id:'launch-writing',name:'Launch writing',icon:'pen',description:'A focused writing route, with a deliberate backup.',models:[pro,flash],mode:'order',fallback:'layout',priority:'quality'};
 const shortDraft='Turn Monday into a practical checklist.';
@@ -76,7 +76,7 @@ const longDraft='Turn Monday into a practical checklist.\n\nI want the launch to
   await page.getByRole('button',{name:'Close usage',exact:true}).click();
   await page.getByRole('button',{name:'Routing Center',exact:true}).click();await page.getByRole('main',{name:'Routing Center',exact:true}).waitFor();await shot('routing-center');
   await page.getByRole('button',{name:'Model inventory',exact:true}).click();await shot('model-inventory');
-  await page.locator('.proof-model-row').first().getByRole('button',{name:'Use model'}).click();assert((await page.locator('.composer .model-button').textContent()).includes('Gemini Flash'));assert.equal(await input.inputValue(),shortDraft);
+  await page.locator('.proof-model-row').first().getByRole('button',{name:/^Use /}).click();assert((await page.locator('.composer .model-button').textContent()).includes('Gemini Flash'));assert.equal(await input.inputValue(),shortDraft);
   await page.locator('.composer .model-button').click();await page.getByRole('option').filter({hasText:'Launch writing'}).click();await page.getByRole('button',{name:'Routing Center',exact:true}).click();
   await page.getByRole('button',{name:'Usage & quotas',exact:true}).click();await shot('routing-usage');
   await page.getByRole('button',{name:'Diagnostics',exact:true}).click();await shot('diagnostics');await page.locator('.proof-diagnostics .route-why-btn').click();await page.getByRole('dialog',{name:'Why this model',exact:true}).waitFor();await shot('route-explanation');await page.keyboard.press('Escape');

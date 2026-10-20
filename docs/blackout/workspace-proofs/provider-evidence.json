@@ -1,0 +1,317 @@
+{
+  "syntheticData": true,
+  "gate1": "not approved",
+  "productionIntegration": false,
+  "cases": [
+    {
+      "status": "passed",
+      "direction": "index",
+      "width": 1440,
+      "engine": "chromium",
+      "syntheticData": true,
+      "inferenceRequests": 0,
+      "blockedAuthSdkRequests": [],
+      "unexpectedExternalRequests": [],
+      "pageErrors": [],
+      "scans": [
+        {
+          "state": "providers",
+          "violations": []
+        },
+        {
+          "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "detail",
+          "violations": []
+        }
+      ],
+      "limitations": [
+        "No real provider calls or physical iPhone",
+        "Catalog discovery does not prove inference",
+        "Synthetic account transition checks proof-local UI, not a live sign-in flow"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "index",
+      "width": 1440,
+      "engine": "webkit",
+      "syntheticData": true,
+      "inferenceRequests": 0,
+      "blockedAuthSdkRequests": [
+        {
+          "host": "apis.google.com",
+          "path": "/js/api.js"
+        },
+        {
+          "host": "apis.google.com",
+          "path": "/js/api.js"
+        }
+      ],
+      "unexpectedExternalRequests": [],
+      "pageErrors": [],
+      "scans": [
+        {
+          "state": "providers",
+          "violations": []
+        },
+        {
+          "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "detail",
+          "violations": []
+        }
+      ],
+      "limitations": [
+        "No real provider calls or physical iPhone",
+        "Catalog discovery does not prove inference",
+        "Synthetic account transition checks proof-local UI, not a live sign-in flow"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "index",
+      "width": 390,
+      "engine": "chromium",
+      "syntheticData": true,
+      "inferenceRequests": 0,
+      "blockedAuthSdkRequests": [],
+      "unexpectedExternalRequests": [],
+      "pageErrors": [],
+      "scans": [
+        {
+          "state": "providers",
+          "violations": []
+        },
+        {
+          "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "detail",
+          "violations": []
+        }
+      ],
+      "limitations": [
+        "No real provider calls or physical iPhone",
+        "Catalog discovery does not prove inference",
+        "Synthetic account transition checks proof-local UI, not a live sign-in flow"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "index",
+      "width": 390,
+      "engine": "webkit",
+      "syntheticData": true,
+      "inferenceRequests": 0,
+      "blockedAuthSdkRequests": [
+        {
+          "host": "apis.google.com",
+          "path": "/js/api.js"
+        },
+        {
+          "host": "apis.google.com",
+          "path": "/js/api.js"
+        }
+      ],
+      "unexpectedExternalRequests": [],
+      "pageErrors": [],
+      "scans": [
+        {
+          "state": "providers",
+          "violations": []
+        },
+        {
+          "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "detail",
+          "violations": []
+        }
+      ],
+      "limitations": [
+        "No real provider calls or physical iPhone",
+        "Catalog discovery does not prove inference",
+        "Synthetic account transition checks proof-local UI, not a live sign-in flow"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "studio",
+      "width": 1440,
+      "engine": "chromium",
+      "syntheticData": true,
+      "inferenceRequests": 0,
+      "blockedAuthSdkRequests": [],
+      "unexpectedExternalRequests": [],
+      "pageErrors": [],
+      "scans": [
+        {
+          "state": "providers",
+          "violations": []
+        },
+        {
+          "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "detail",
+          "violations": []
+        }
+      ],
+      "limitations": [
+        "No real provider calls or physical iPhone",
+        "Catalog discovery does not prove inference",
+        "Synthetic account transition checks proof-local UI, not a live sign-in flow"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "studio",
+      "width": 1440,
+      "engine": "webkit",
+      "syntheticData": true,
+      "inferenceRequests": 0,
+      "blockedAuthSdkRequests": [
+        {
+          "host": "apis.google.com",
+          "path": "/js/api.js"
+        },
+        {
+          "host": "apis.google.com",
+          "path": "/js/api.js"
+        }
+      ],
+      "unexpectedExternalRequests": [],
+      "pageErrors": [],
+      "scans": [
+        {
+          "state": "providers",
+          "violations": []
+        },
+        {
+          "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "detail",
+          "violations": []
+        }
+      ],
+      "limitations": [
+        "No real provider calls or physical iPhone",
+        "Catalog discovery does not prove inference",
+        "Synthetic account transition checks proof-local UI, not a live sign-in flow"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "studio",
+      "width": 390,
+      "engine": "chromium",
+      "syntheticData": true,
+      "inferenceRequests": 0,
+      "blockedAuthSdkRequests": [],
+      "unexpectedExternalRequests": [],
+      "pageErrors": [],
+      "scans": [
+        {
+          "state": "providers",
+          "violations": []
+        },
+        {
+          "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "detail",
+          "violations": []
+        }
+      ],
+      "limitations": [
+        "No real provider calls or physical iPhone",
+        "Catalog discovery does not prove inference",
+        "Synthetic account transition checks proof-local UI, not a live sign-in flow"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "studio",
+      "width": 390,
+      "engine": "webkit",
+      "syntheticData": true,
+      "inferenceRequests": 0,
+      "blockedAuthSdkRequests": [
+        {
+          "host": "apis.google.com",
+          "path": "/js/api.js"
+        },
+        {
+          "host": "apis.google.com",
+          "path": "/js/api.js"
+        }
+      ],
+      "unexpectedExternalRequests": [],
+      "pageErrors": [],
+      "scans": [
+        {
+          "state": "providers",
+          "violations": []
+        },
+        {
+          "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "detail",
+          "violations": []
+        }
+      ],
+      "limitations": [
+        "No real provider calls or physical iPhone",
+        "Catalog discovery does not prove inference",
+        "Synthetic account transition checks proof-local UI, not a live sign-in flow"
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "index-1440-providers.png",
+      "sha256": "240d166bc4205bbceb1cc9743cbf641defaf05a4b9ffae04075b61ba2efcf70a"
+    },
+    {
+      "name": "index-1440-detail.png",
+      "sha256": "994d5beb16e81dd22c2223ec0c08d9c3d52654626e089045654a4e24c80e3ee8"
+    },
+    {
+      "name": "index-390-providers.png",
+      "sha256": "3e0fcf4d1fe92d254a392e7be46f3b2d908a1d2ff060b280159784d77d70db8c"
+    },
+    {
+      "name": "index-390-detail.png",
+      "sha256": "b8fe10474336645a441a287654ebb5b6ee375bcc9515494070639b021f1d6405"
+    },
+    {
+      "name": "studio-1440-providers.png",
+      "sha256": "92de2762d02866e6c7713716b40bb265ce0fc85f934d24bf26868f690dc1194d"
+    },
+    {
+      "name": "studio-1440-detail.png",
+      "sha256": "51e2469539f07c4b4a4e05a58e61eb5f73ebbe9e4f2ccf4deb65213889c81f3d"
+    },
+    {
+      "name": "studio-390-providers.png",
+      "sha256": "e25c4f2c88adfd5ac6583df846453c56e31568f9d3179ae607874f3ffed79bf4"
+    },
+    {
+      "name": "studio-390-detail.png",
+      "sha256": "b133113652b5a02bbf728c169f008d86a79b9fa1d96c021f811ce018e87c784c"
+    }
+  ]
+}

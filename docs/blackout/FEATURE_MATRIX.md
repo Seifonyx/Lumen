@@ -2,6 +2,8 @@
 
 Research checkpoint: **20 October 2026**. This is a source-grounded comparison and delivery proposal, not evidence that new functionality has shipped or that provider integrations have been live-tested. It supports Blackout Phase 1 and the complete master directive §5. Identity/core/final aesthetic approval gates remain binding.
 
+Focused proof update (20 October): F01–F05 browsing/discovery presentation is demonstrated locally by the shared32-provider browser/detail in `workspace-proofs/PROVIDER_INTELLIGENCE.md`. These are isolated UI proofs; the production dispositions and conditional architecture decisions below are unchanged.
+
 ## Evidence and version boundaries
 
 - **9Router source inspected:** `decolua/9router`, default branch `master`, commit [`87a74e1bda3677193c6f71a7e2100c90311f0689`](https://github.com/decolua/9router/commit/87a74e1bda3677193c6f71a7e2100c90311f0689), committed 15 October 2026. Its package version is **0.5.104** [R02].

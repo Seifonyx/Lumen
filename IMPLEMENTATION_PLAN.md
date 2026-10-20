@@ -1,5 +1,15 @@
 # Dynamic Model Picker implementation plan
 
+## Independent usage-draft fix — 20 October 2026 (Africa/Cairo)
+
+The fix-only branch `fix/usage-draft-no-submit-20261020` contains source checkpoint `8a328bb` (cherry-pick of reviewed `1736a92`). Five UsageMeter buttons explicitly avoid form submission; the new pointer/Enter regression checks draft/message/network/focus behavior at 1440/390 in Chromium and Linux WebKit. Red/green reproduction, independent reruns, typecheck, 149 unit tests and production build passed; normal design regression also passed. See `docs/testing/usage-draft-regression.md`.
+
+Release state at this checkpoint: local verified fix, push/CI/merge/deployment pending. Main observed `c4b55781f1046e8abd75966ecb6c565327a1d62a`; latest separately verified deployed runtime `1966348725a9cc6a3bfec0a283448a451aa9d6cd`, successful run 39257887973, with 18 matching live assets checked on 20 October. Do not infer deployment from this source commit. Model Picker's existing 98.5% methodology remains unchanged.
+
+The separate Blackout initiative continues in draft PR #34. Both latest user course corrections explicitly leave identity Gate 1 **NOT APPROVED**. Its full master/research and experimental Workspace/Routing Center proofs remain on that branch; no experimental UI is included here. Do not restart rejected visual directions or merge them with this fix.
+
+Next release action: push safely, check exact-head required CI, inspect the three-file functional diff plus these operational notes, then use normal protected merge/deploy only if ready. Verify actual live usage-draft behavior. Rollback is a reviewed normal merge revert followed by deploying a known-good main revision; no force push/reset or branch-protection bypass.
+
 ## Permanent amendment: Progressive Verified Deployment Policy
 
 Added by the user on 2026-10-18. This execution-policy amendment supplements MASTER_REQUIREMENTS.md without replacing or weakening it. It remains active for every future agent and session unless the user explicitly changes it.

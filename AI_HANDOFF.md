@@ -2,6 +2,15 @@
 
 > **Lumen Blackout, separate workstream (20 October 2026):** Full [Blackout master](docs/blackout/MASTER_REQUIREMENTS.md) and [current Continuum directive](docs/blackout/PROJECT_CONTINUUM_2026-10-20.md) are now preserved verbatim. Follow the [Blackout plan](docs/blackout/IMPLEMENTATION_PLAN.md) and [handoff](docs/blackout/AI_HANDOFF.md). Identity studies remain isolated in draft PR #34; explicit identity, core and final aesthetic gates apply. **The independent Dynamic Model Picker requirements and 98.5% ledger below remain unchanged.**
 
+## Independent usage-draft fix — 20 October 2026 (Africa/Cairo)
+
+The fix-only branch `fix/usage-draft-no-submit-20261020` contains source checkpoint `8a328bb` (cherry-pick of reviewed `1736a92`). Five UsageMeter buttons explicitly avoid form submission; the new pointer/Enter regression checks draft/message/network/focus behavior at 1440/390 in Chromium and Linux WebKit. Red/green reproduction, independent reruns, typecheck, 149 unit tests and production build passed; normal design regression also passed. See `docs/testing/usage-draft-regression.md`.
+
+Release verification: PR #35 head `d9422173f4d5d503164b15b54dd991265412abae` passed all three exact-head CI jobs in run39444721821 and merged normally to `677bc51f39fbf8fcf66bc91f846b71a4912bb306`. Deploy39447533639 succeeded on that exact SHA; this is the latest verified production runtime. All18 reviewed built assets match live over system-CA-validated HTTPS. Hosted synthetic usage-draft checks passed Chromium/WebKit1440/390. Chromium default cloud CA trust failed, so its test rerun narrowly pinned the existing environment proxy CA public key; WebKit passed with SSL_CERT_FILE pointing to the system CA bundle. No general TLS bypass or product trust change. This verifies the hosted UI fix, not live provider inference or physical iPhone. Model Picker's existing98.5% methodology remains unchanged.
+
+The separate Blackout initiative continues in draft PR #34. Both latest user course corrections explicitly leave identity Gate 1 **NOT APPROVED**. Its full master/research and experimental Workspace/Routing Center proofs remain on that branch; no experimental UI is included here. Do not restart rejected visual directions or merge them with this fix.
+
+Manual test: type an unsent draft; open and close Usage using pointer or Enter. The draft must remain, no message should be sent, and focus returns to Usage. Continue the separate Blackout task from its branch handoff. Rollback is a reviewed normal merge revert followed by deploying a known-good main revision; no force push/reset or branch-protection bypass.
 
 ## Permanent amendment: Progressive Verified Deployment Policy
 

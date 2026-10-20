@@ -1,0 +1,31 @@
+// Same source App and fixture, without any experimental entry or stylesheet.
+const {chromium}=require('playwright');
+const fs=require('node:fs');
+const path=require('node:path');
+const assert=require('node:assert/strict');
+const {profile,seed}=require('../../../tests/e2e/helpers/preview-profile.cjs');
+const {chats}=require('./fixture.cjs');
+const out=path.join(__dirname,'screens');
+const shortDraft='Turn Monday into a practical checklist.';
+const longDraft='Turn Monday into a practical checklist.\n\nI want the launch to feel deliberate. Help me shape one clear offer, choose the work worth showing, and write a useful introduction.\n\nKeep the plan realistic for one person. I have three hours on Monday and a small existing portfolio.\n\nBefore drafting the page, tell me what you would leave out. Make the tradeoffs clear.\n\nFinish with five specific things I can do before lunch.';
+(async()=>{const browser=await chromium.launch();try{for(const width of [1440,390]){
+ const owner=`preview-blackout-matched-baseline-${width}`;
+ const context=await browser.newContext({viewport:{width,height:width<900?844:960},isMobile:width<900,hasTouch:width<900,serviceWorkers:'block',reducedMotion:'reduce',timezoneId:'Africa/Cairo'});
+ await profile(context,owner,'dark',{enabledModels:['gemini:gemini-flash-latest','gemini:gemini-2.5-pro'],defaultModel:'auto',messageNavigator:false,layouts:[{id:'launch-writing',name:'Launch writing',icon:'pen',description:'A focused writing route, with a deliberate backup.',models:['gemini:gemini-2.5-pro','gemini:gemini-flash-latest'],mode:'order',fallback:'layout',priority:'quality'}]});
+ await context.addInitScript(()=>localStorage.setItem('mr.modelCheck.background',JSON.stringify(Date.now())));
+ let inference=0;
+ await context.route('**/generativelanguage.googleapis.com/**',route=>{if(!route.request().url().includes('/models?')){inference++;return route.abort();}return route.fulfill({json:{models:[{name:'models/gemini-flash-latest',displayName:'Gemini Flash',inputTokenLimit:128000,supportedGenerationMethods:['generateContent']},{name:'models/gemini-2.5-pro',displayName:'Gemini 2.5 Pro',inputTokenLimit:1048576,supportedGenerationMethods:['generateContent']}]}});});
+ const page=await context.newPage(),errors=[],screens=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://localhost:5193/');await page.locator('.composer textarea').waitFor();await seed(page,owner,chats);await page.reload();await page.locator('.composer textarea').waitFor();
+ const sidebar=async()=>{if(width<900)await page.getByRole('button',{name:'Open chats',exact:true}).click();};
+ await sidebar();await page.getByRole('button',{name:'A launch worth remembering',exact:true}).click();
+ const input=page.locator('.composer textarea');await input.fill(shortDraft);
+ const shot=async state=>{await page.evaluate(async()=>{await document.fonts.ready;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);const file=`baseline-${width}-dark-chromium-${state}.png`;await page.screenshot({path:path.join(out,file)});screens.push(file);console.log(file);};
+ await page.locator('.messages').evaluate(el=>el.scrollTop=0);await shot('workspace');await input.fill(longDraft);await shot('expanded-input');await input.fill(shortDraft);
+ await page.locator('.composer .model-button').click();await page.getByRole('searchbox',{name:'Search models',exact:true}).waitFor();await shot('model-picker');await page.keyboard.press('Escape');
+ await page.locator('.composer .usage-chip').click();await page.getByRole('dialog',{name:'Usage',exact:true}).waitFor();await shot('usage-details');await page.getByRole('button',{name:'Close usage',exact:true}).click();
+ const openSettings=async label=>{if(await page.locator('.settings-page').isVisible())await page.locator('.settings-page').getByRole('button',{name:'Close',exact:true}).click();await sidebar();await page.getByRole('button',{name:'Settings',exact:true}).click();await page.locator('.settings-tabs').getByRole('button',{name:label,exact:true}).click();};
+ await openSettings('API keys');await shot('provider-management');await shot('routing-center');await page.locator('.provider-connection[data-provider="gemini"] summary').click();await shot('provider-connection');
+ await openSettings('Models');await shot('model-inventory');await page.getByRole('button',{name:'Layouts',exact:true}).click();await shot('routing-policies');await page.getByRole('button',{name:'Edit Launch writing',exact:true}).click();await shot('fallback-editor');
+ assert.equal(inference,0);assert.deepEqual(errors,[]);fs.writeFileSync(path.join(out,`baseline-${width}-dark-chromium.json`),JSON.stringify({status:'passed',width,height:width<900?844:960,source:'normal Lumen App; usage-button functional fix applied, no visual experiments',syntheticData:true,inferenceRequests:inference,pageErrors:errors,screens},null,2)+'\n');await context.close();
+ }}finally{await browser.close();}})().catch(e=>{console.error(e);process.exit(1)});

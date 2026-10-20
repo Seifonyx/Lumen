@@ -1,0 +1,13 @@
+{
+  "concept": "relay",
+  "theme": "light",
+  "width": 1440,
+  "height": 960,
+  "engine": "chromium",
+  "syntheticData": true,
+  "inferenceRequests": 0,
+  "pageErrors": [],
+  "accessibility": {
+    "library": []
+  }
+}

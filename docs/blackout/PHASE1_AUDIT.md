@@ -1,47 +1,47 @@
-# Lumen Blackout — Phase 1 source audit and requirements recovery
-**Checkpoint:** 2026-10-19; repo: `Seifonyx/Lumen`; audited `main` SHA `c4b55781f1046e8abd75966ecb6c565327a1d62a`.
-**State:** Phase 1 IN PROGRESS / source audit and six external screenshot previews (including one directly opened official full image) inspected. No visual or scope approval inferred.
+# Lumen Blackout — recovered source and architecture audit
 
-## Evidence provenance and missing master
-- **Received:** user's exact **LUMEN BLACKOUT v1.1 Mandatory Execution Amendment**, recorded unchanged in `BLACKOUT_V1_1_AMENDMENT.md`. This is an **amendment**, not the complete Blackout master directive. The complete Blackout master directive has **not** been located in conversation uploads, the available Library results, or Lumen's current main tree. Do not replace it with the cancelled Design Renaissance directive. Capture it when provided; until then, scope coverage and progress percentages are intentionally UNSET.
-- **Received:** `9Router_UI_Reference_Pack(1).zip`, SHA-256 `f9839c759f0fb7ab5fe38e48e47f0ec2f58f8ef5eccd7f6b76bbd1a2b9ede24f`. Inspected ZIP central directory: **five files, zero image pixels**: `README.txt`, `sources.json`, `download_9router_images.py`, `download_windows.bat`, `download_mac_linux.sh`. Inventory lists **36 URLs** (22 distinct unclassified gallery images plus 14 categorized additional URLs: Overview 1; Endpoint 4; Providers 2; Provider Detail 1; Combos 3; Usage 1; CLI Tools 1; Login 1). The gallery publicly lists 23 slots with one repeated URL. The URL inventory is now preserved under `REFERENCE_MANIFEST.md` for cross-agent continuation. No screenshot package was generated, and no downloader code was run. Do not state that all 36 screenshots were viewed. For a stable source: https://devlive.org/project/decolua/9router/screenshots
-- **Visually inspected directly:** official 9Router screenshot at https://raw.githubusercontent.com/decolua/9router/master/images/9router.png, published by https://github.com/decolua/9router; actual visible image shows a dark three-region desktop view: persistent left navigation, Providers heading/compact toolbar, multiple provider groups and compact connected/disconnected cards, test actions, an endpoint-proxy application context. **Additional observed public image previews** (cropped/search results, not locally saved full-res evidence): categorized Providers/status UI (https://medium.com/@ganjar_hadiatna/9router-bagian-2-persiapan-instalasi-4de57e36a943), Create Combo modal with ordered list, reordering and Add Model (https://tothost.vn/Upload/blog/20260608-huong-dan-cai-dat-va-ket-noi-9router-voi-openclaw-hermes-ai-agent-de-su-dung-llm-mien-phi/12.png), Usage analytics with token/cost counters and request history (https://miro.medium.com/v2/resize%3Afit%3A1200/1%2AsAsSLniTWnY3xo3N0zv1Uw.png), Endpoint configuration with local endpoint/Tunnel and token saver (https://is3.cloudhost.id/idcloudhost-web/2026/05/Screenshot-2026-05-06-084344.png), and CLI tool configuration mapping (https://i-blog.csdnimg.cn/img_convert/f8ebce847cd7ed3743720c113f167bcf.png). These are **five image previews**, plus the directly opened official screenshot, not complete inspection of the 36 URL inventory. Other URLs may time out, block or disappear; do not assert that unobserved screens are visually verified.
-- **Inspected:** read-only main source, product/design guidance, `package.json`, routes, usage, provider configurations, model registry, account persistence, and CI YAML. Read-only visual baseline screenshot of the current Lumen app (from a previous actual WebKit baseline) was inspected for context; do **not** treat an earlier rejected visual implementation as an approved identity or adopt the abandoned workstream's documents.
-- **Public 9Router sources:** https://github.com/decolua/9router ; https://github.com/decolua/9router/blob/master/docs/ARCHITECTURE.md . External reference claims require version- and permission-aware verification.
-- **Cross-product references:** https://developer.apple.com/design/human-interface-guidelines/ ; https://developer.apple.com/design/human-interface-guidelines/materials ; https://developer.apple.com/design/human-interface-guidelines/designing-for-macos/ . Use their layout, hierarchy, accessible controls, keyboard/resize and layered material guidance as *principles*, not pixel templates.
+Current checkpoint: **20 October 2026, Africa/Cairo**. Supersedes the 19 October missing-master/six-preview checkpoint. Source baseline main: `c4b55781f1046e8abd75966ecb6c565327a1d62a`. Draft continuation PR: [#34](https://github.com/Seifonyx/Lumen/pull/34).
 
-## Verified present-day Lumen architecture
-| Area | Verified main-source evidence | Constraint / observation |
-|---|---|---|
-| Runtime | React 19 + TypeScript + Vite + Zustand; Firebase Auth/Firestore (`package.json`, `src/main.tsx`, `src/store.ts`, `src/lib/firebase.ts`) | **Browser-first web application**, not a local gateway process. |
-| Identity | `DESIGN.md`: Switchboard, Eclipse ring logo, Geist typography, cool-neutral light/dark/true-black, lime `--signal`; `src/app.css` | Existing identity is a baseline only. User requests a genuinely new monochrome identity; logo and lime may change **after visual approval**. |
-| App surfaces | `src/App.tsx`, Sidebar, HubPage, Settings, Canvas, Tools, Projects, Library, Study, Compare | Preserve navigation, gestures, drafts, interaction ownership, accessibility, working document/AI tools. |
-| Provider connections | `src/lib/ai/provider-config.js` + `src/lib/ai/providers.js` | BYOK across major providers, explicit provider enable/charge consent, default relay for browser-incompatible APIs, dynamic adapter-backed discovery. Do not imply server-owned gateway exists. |
-| Model selection | `src/lib/routing.ts`, `src/lib/layout-builder.ts`, `src/lib/ai/registry.js`, ModelPicker | Auto, custom Layouts, fallback/recovery, scoped registry and model constraints already exist; do not recreate or regress. |
-| Usage | `src/lib/usage.ts`, `src/components/UsageTab.tsx` | Daily model requests/tokens, resets, provider-reported quota information. Unknown external remaining balances cannot be presented as authoritative. |
-| Security/account | `src/lib/firebase.ts`, `src/lib/account-key-persistence.ts`, `firestore.rules`, `src/lib/ai/recovery.js` | User-scoped keys, OAuth account boundaries, private settings, retry classification. Source inspection is **not** penetration test. Do not ship risky proxy/OAuth changes without design/security review. |
-| CI | `.github/workflows/tests.yml` | Typecheck/unit/build, Chromium Firebase emulator, WebKit. No new Blackout build/tests run yet; documentation-only on isolated branch. |
+## Authority recovery
 
-## Grounded baseline design assessment (not a quality pass)
-From a real WebKit baseline and `DESIGN.md`: desktop new-chat prioritizes whitespace and a central composer while left navigation is compact; phone new-chat relies on floating greeting/composer and slide-in sheets; model options, Files/Tools menus and Library pages are already functional. Identity's lime signal and current Eclipse graphic are deeply implemented, so a successful rebrand must address icon assets, state semantics and motion, not only exchange CSS colors. Potential questions to test during concept review: empty-vs-populated visual hierarchy, dense provider/settings ergonomics, the composition of full-size chat/history, layered menus and mobile keyboard/safe areas. These are **design review questions**, not confirmed bugs.
+The full Blackout master is now recovered and preserved **verbatim**, SHA-256 `f0bf08d5f4d7622e9366db4924f1601a6f4abc5f69a19a9c31d154cd45766fae`, in [MASTER_REQUIREMENTS.md](MASTER_REQUIREMENTS.md). Latest user Continuum is preserved verbatim, SHA-256 `01aaf9a710b8ddcd474170aad8575359338a73ab5a7655a8d70a3a72c3aec66e`, in [PROJECT_CONTINUUM_2026-10-20.md](PROJECT_CONTINUUM_2026-10-20.md). The existing [v1.1 amendment](BLACKOUT_V1_1_AMENDMENT.md) sets eight phases and explicit identity/core/final gates; all master requirements remain active. This recovery resolves PR34's original missing-master blocker. It does **not** provide aesthetic approval.
 
-## 9Router comparison (provisional, category-level; not feature authorization)
-| Reference area | Observed/reported 9Router function | Lumen coverage / divergence | Implementation decision |
-|---|---|---|---|
-| Providers | Grouped connections, status and test controls; 40+ advertised provider options | Connection controls and provider catalog already exist; supported sets and workflow differ | Research information architecture and discoverability, not a pixel clone |
-| Model combos/fallback | Observed Combo editor with ordered fallback sequence, controls for reorder/remove/add; docs also report account/provider fallback | Custom Layouts and routing/recovery already exist | Audit actual behavioral gaps; don't duplicate |
-| Quotas/usage | Observed estimated-cost/token widgets and recent request rows; docs report quota and reset dashboards | Lumen already tracks usage counts and quota signals; not full gateway telemetry | Assess privacy-preserving explainability and supported metrics |
-| CLI/OpenAI-compatible endpoint | Observed CLI configuration and Endpoint settings; local port/server proxy used by external tools | **Not present as such in browser-only Lumen**, different trust boundary | Separate backend/local-service security architecture and explicit authorization required |
-| OAuth / multiple upstream accounts | 9Router gateway manages tokens and account fallbacks | Lumen uses Firebase user auth and BYOK provider credentials | Do not import provider subscription cookies, uncontrolled refresh tokens or questionable auth workarounds |
-| Request logging / debug | Gateway logs (sometimes full payloads when enabled) | Lumen's privacy and account-isolation requirements dominate | Never enable raw prompt/key logging by analogy |
-| Screenshot styling | One verified dense dark provider-card dashboard (official hero image) | Lumen is an AI workspace with chat as primary experience | Use only hierarchy/density principles; original monochrome identity needs explicit user approval |
+Root Model Picker `MASTER_REQUIREMENTS.md` remains unchanged (Git blob `45abb59dc9cf8c3d06d8ce16370a732b2170f248`). Its independent 98.5% ledger remains active. PR28/30 rejected generic/refinement experiments and cancelled Renaissance/Adaptive Native documents are historical evidence, not approved new identities.
 
-## Security and product compatibility gates
-1. Provider tokens must stay account-scoped, never copied to other users or logged. No arbitrary-origin credential forwarding, implicit paid calls, unsafe proxy targets, undocumented OAuth interception, or bypass of service terms.
-2. Dynamic model lists must be scoped to credential/account state and recover from key changes, expired caches, aborts, and provider failures; never leak metadata across accounts.
-3. Preserve pre-existing draft, History, Projects, Library, Study, Compare, Canvas, rerouting and model layout behavior during design work.
-4. Real rendered desktop **and** mobile identity proof is mandatory before extensive app changes; include light, dark, true-black and accessible semantic status colors.
-5. Phase 1 cannot be marked complete until the missing BLACKOUT master prompt is recovered/reconciled and meaningful screenshot/reference coverage is established with verifiable observations.
+## Reference evidence and prior ZIP provenance
 
-## Phase 1 next evidence
-Recover user-provided complete BLACKOUT master, reconcile each requirement against app/source and security boundaries. Retrieve accessible full-resolution reference images only if the original source permits (do not run opaque downloader blindly); existing six visual observations are not exhaustive. Define exact identity review examples and optional small isolated real-component prototypes. Then seek **explicit approval** of the identity before Phase 3 or broad UI implementation.
+The 19 October audit inspected the central directory of `9Router_UI_Reference_Pack(1).zip`, SHA-256 `f9839c759f0fb7ab5fe38e48e47f0ec2f58f8ef5eccd7f6b76bbd1a2b9ede24f`: five files (`README.txt`, `sources.json`, Python downloader, Windows/macOS launchers), **zero image pixels**. Its 36 distinct URLs are preserved in [REFERENCE_MANIFEST.md](REFERENCE_MANIFEST.md). The ZIP was not found/reopened in this continuation; prior inventory evidence is retained, not claimed as a new inspection. No downloader was executed.
+
+Fresh retrieval/visual inspection: 14 manifest images plus two pinned official images; all 22 gallery CDN links returned 503, gallery HTML timed out. One hero image is duplicated. See [REFERENCE_REVIEW.md](REFERENCE_REVIEW.md) and machine-readable hashes/failures. Full external pixels remain outside Git; public screenshot permission is not assumed. Source-backed 38-feature comparison uses current pinned repository code, not only screenshots.
+
+## Actual architecture and preservation contract
+
+| Area | Current Lumen evidence / implications |
+|---|---|
+| Runtime | React 19/TypeScript/Vite static browser application; Firebase Auth/Firestore/Hosting. It is not an externally served gateway. |
+| Providers | Browser adapters and explicitly configured relay paths; 32 configured AI providers; account/key-scoped discovery/registry; paid-provider opt-in remains authoritative. |
+| Selection/recovery | Auto, manual models, custom Layouts, context eligibility, shared routing policy and bounded execution recovery already exist. Preserve fixed/manual assignments, task/capability constraints and explicit fallbacks. |
+| Workspace | Chat/History/Projects/Library/Tools/Study/Compare/Canvas/GitHub workflow access must survive any redesign. Settings/keys and composer remain usable, not hidden for visual minimalism. |
+| Privacy/state | Account-owned Firebase rules, local databases/session guards, incognito and Privacy Shield; no new prompt logging, credential export, secret-bearing screenshots, unknown proxy or cross-account metadata. |
+| CI/deployment | Existing Tests workflow includes type/build/unit/progress plus Chromium emulator and WebKit jobs. Markdown/docs paths are ignored by automatic Tests triggers. Production deployment is an explicit workflow, not inferred from a PR push. |
+| Visual owners | `DESIGN.md`, `UX-CONTRACT.md`, shared tokens/components remain production authority. Isolated `docs/blackout/prototypes` CSS is not imported into the app. Approval is required before promotion to those owners. |
+
+## Runtime and Git evidence
+
+- Main observed: `c4b55781f1046e8abd75966ecb6c565327a1d62a` (later changes are documentation).
+- Latest verified runtime deployment: `1966348725a9cc6a3bfec0a283448a451aa9d6cd`, [successful deploy run 39257887973](https://github.com/Seifonyx/Lumen/actions/runs/39257887973).
+- Production: https://lumen-chat.web.app/ . Fresh 20 October comparison found **18 live assets matching the reviewed local build**. This is asset parity, not a new hosted workflow test or a new deployment.
+- App source/config/package/workflow diff from reviewed `1ca29f0f207e261267fbd80c8b39b31e1e0ad8e0` is zero; the new Blackout checkpoint modifies docs/review artifacts only.
+- Independent preview-auth/clock test WIP remains in `/workspace/Lumen-preview-test`, branch `test/preview-auth-clock`; do not discard or accidentally release it.
+
+## Verified proof and remaining risks
+
+Real-component studies use synthetic guest state and mocked catalog responses; inference is blocked and counted. Actual screenshots cover populated chat, searchable picker/overlay, API keys, welcome and populated Library, with dark desktop/phone, light desktop, true-black phone and 320px Linux WebKit. Search no-results/restoration, picker Escape and draft preservation are exercised. All final captured states have zero document overflow and zero page errors; exact automated accessibility results and limits live in [prototypes/README.md](prototypes/README.md).
+
+These are **identity proofs**, not a full transformed product. Real keyboard/touch/refraction on physical iPhone, streaming/error/slow/Canvas/Compare states and full wider locale/zoom matrix remain future acceptance work. Static premium audit flagged existing form/textarea source patterns; runtime checks do not erase those findings. Resolve actual ownership/validation issues during B03/B07 rather than silently weakening the audit or shipping unrelated app changes now.
+
+Next: review the three distinct real-app identities and record the user's explicit Gate 1 decision. Continue B03 then interaction/flagship B04 only after that decision. Do not retry old gallery URLs or rebuild already verified routing simply to produce activity.
+
+## 20 October independent production correction
+
+Usage controls default-submitted the chat composer. PR #35 released the five explicit button types and focused regression through all required CI, main `677bc51f39fbf8fcf66bc91f846b71a4912bb306`, successful deploy39447533639. Eighteen live assets matched; hosted Chromium/WebKit1440/390 draft isolation passed with synthetic accounts. See AI_HANDOFF.md for TLS evidence and exact release ledger. No experimental Blackout visuals reached production.

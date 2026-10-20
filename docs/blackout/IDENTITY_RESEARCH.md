@@ -1,23 +1,18 @@
-# Lumen Blackout — preliminary identity exploration (NOT approved)
-**Checkpoint:** source/reference research only. The three directions below are hypotheses for later real-component desktop+mobile visual proof; none is a generated image, installed UI or user-approved design. Scope details may change once the missing Blackout master is recovered.
+# Blackout identity and product architecture — current research
 
-## Visual evidence actually inspected
-- Current `DESIGN.md` / real WebKit baseline: cool neutral light/dark/true black; small lime Eclipse mark, compact light sidebar, central chat, floating phone composer and overlay sheet.
-- Official 9Router `images/9router.png` screenshot: dark dense provider management UI, left rail, grouped OAuth/free/API connections, multi-column cards, test controls.
-- Five additional public preview images inspected via image results: categorized Providers/status cards, ordered Create Combo editor, Usage token/cost/recent-requests dashboard, Endpoint/tunnel/token-saver settings, CLI connection form. Full-size gallery screening and real mobile screenshots remain outstanding.
-- Apple HIG material/layout/macOS guidance: interaction layers distinguish controls from content; adaptive safe areas; spacious but productive Mac density; keyboard accessibility. Links: https://developer.apple.com/design/human-interface-guidelines/materials , https://developer.apple.com/design/human-interface-guidelines/layout , https://developer.apple.com/design/human-interface-guidelines/designing-for-macos/ .
-- **Only six images/previews have been visually reviewed**, not the complete 36-URL manifest; most gallery entries have not been viewed. Screenshots are not owned by Lumen; avoid literal replication. Sources are enumerated in `REFERENCE_MANIFEST.md` and `PHASE1_AUDIT.md`.
+20 October 2026, Africa/Cairo. Full master recovered; both exact critical course corrections are preserved. **Gate 1 NOT APPROVED.** Earlier missing-master/unrendered-hypothesis claims are superseded.
 
-## Candidate A — Blackline / The Instrument
-Geometry: disciplined 4/8px grids, angular instrument-like header, narrow navigation rail adjacent to light/dark work canvas; no tile-heavy admin-dashboard clone. Typography: distinctive numeric/monospaced routing labels paired with confident neo-grotesk content text. Logo: a negative-space beam traveling through a circular aperture rather than the previous lime flare. Motion: route changes reveal a fine white progress path, not decorative ambient glow. iOS: compact top context and single bottom-owned composer; focus and keyboard keep task in foreground. Desktop: capable sidebar + writing stage + collapsible evidence/context region. Risk: could feel too technical for creative chat; prove populated conversations and real document canvas.
+## Rejected intermediate work
 
-## Candidate B — Paper / Afterimage
-Geometry: high-contrast ink panels on exacting near-white editorial content; generous content rhythm contrasted with dense utilities only when needed. Typography: deliberately distinguish reading/work content from settings/commands; no generic giant greeting or boutique serif identity. Logo: an interrupted disk producing a clean reflected arc. Motion: subtle connected view changes and anchored composer without fake spring clutter. Mobile: tactile vertical hierarchy, obvious current scope, precisely accessible sheet labels; Desktop: page-like writing experience with contextual navigation. Risk: may become anonymous minimalism; require a uniquely Lumen visual mark and signature routing affordance proven at small sizes.
+Aperture, Relay and Fold changed marks, type, palette, geometry and density but retained conventional chat composition and an insufficient composer. The user explicitly rejected that degree of change. Their code/screens are retained in `prototypes/` as experimental history; do not reuse their recommendation or mark as an approved starting point. The earlier Blackline/Paper/Axis hypotheses were never approved either.
 
-## Candidate C — Axis / The Signal
-Geometry: modular offset axes and layered rectilinear frames, large monochrome focus fields interleaved with small dense workflow strips; avoids 9Router's categorized-card grid. Typography: bold tight display only at feature transitions; readable 15–16px content and small codified model metadata. Logo: intersecting voids/lines forming a recognizable luminous slit without accent color. Motion: sequential node-to-node route animation that conveys actual model selection/recovery. iOS: purposeful workspaces and strong active-state position; Desktop: command-driven workspace with a sidecar for provider/model diagnostics. Risk: unnecessary dashboard overload; test at 320px and with long localized labels.
+## Current actual alternatives
 
-## Evaluation contract before user approval
-Produce high-fidelity **actual-app** examples for each credible candidate at 390 phone and 1440 desktop, with at least a nonempty conversation, model/Layouts selector, provider dashboard, populated Library and modal/sheet. Show light/dark/true black. Compare direct accessibility contrast, legibility, navigation affordances, recognizability without a lime accent, responsive continuity, feature controls, friction, purposeful visual originality and distance from 9Router's layout. Clearly label implementation images vs conceptual identity proposals. Seek explicit approval of a **specific identity** (mark, typography, geometry, surface and navigation language), **before** executing major screen transformations.
+See [two-experience review](workspace-proofs/review.html), [implementation/evidence](workspace-proofs/README.md), [9Router reference board](reference-board.html) and [native information architecture](INFORMATION_ARCHITECTURE.md).
 
-No default has been selected. Do not ship by choosing a direction based on this document alone.
+- **Index:** workspace navigation index; editorial conversation; visible intelligence margin; three-tier composer; horizontal Routing Center sections/provider ledger. Phone: bottom navigation and focused sheets.
+- **Studio:** horizontal product navigation; full-height drafting station beside the answer; management section index/grouped provider inventory. Phone: top Workspace/Routing switch and a deliberate expanded writing state.
+
+These are original composition/interaction probes using real App components and synthetic state. They do not establish a final exceptional identity. Wordmark/type systems are provisional; a distinctive final mark, small-size optical review, full motion, more integrated provider-detail design and physical-device refinement remain ahead. No old geometric mark is recycled as selected.
+
+Monochrome is a constraint, not the accomplishment. All three aesthetic gates remain. Do not request approval again until the combined Workspace/Routing Center evidence, composer, typography and brand treatment meet the course-correction standard. Engineering tests cannot substitute for that review.

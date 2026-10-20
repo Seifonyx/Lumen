@@ -1,24 +1,53 @@
-# Lumen Blackout — Cross-agent operational handoff
-**Newest recovery checkpoint:** 2026-10-19. **Current workstream:** *new* Blackout, user-requested 9Router-informed but original monochrome Lumen redesign + conditional capability improvements. This is not a revival of the abandoned prior redesign.
-**Development branch:** `docs/lumen-blackout-phase1-20261019`; **base main:** `c4b55781f1046e8abd75966ecb6c565327a1d62a`. See GitHub branch HEAD for the SHA of this docs checkpoint after it is committed; do not infer production deployment. **Open PRs on base:** none at audit start. No app source, test, workflow, token, Firebase or provider configuration touched.
+# Lumen Blackout — cross-agent handoff
 
-## Sources and current authority
-- Exact user v1.1 amendment: `docs/blackout/BLACKOUT_V1_1_AMENDMENT.md`, accompanied by an uploaded text file.
-- Permanent independent protocol: root `PROJECT_CONTINUUM.md` and `PROJECT_CONTINUUM_V2_FULL.md`.
-- **BLOCKER:** v1.1 explicitly refers to a complete separate `LUMEN BLACKOUT` master directive that **has not been located**. User's recently supplied second text is the v1.1 amendment, not the master. Do not claim to have read or fulfilled a missing master, nor use cancelled prior visual directives as substitutes. Ask for the full master only after exhausting document retrieval; continue safe research meanwhile.
-- `9Router_UI_Reference_Pack(1).zip` sha256 `f9839c759f0fb7ab5fe38e48e47f0ec2f58f8ef5eccd7f6b76bbd1a2b9ede24f`: downloader/manifests ONLY, zero screenshots. 36 listed distinct URLs, now faithfully transcribed into `REFERENCE_MANIFEST.md`; 22 gallery + 14 topical. Visually examined the official `images/9router.png` provider dashboard and five other **cropped public image previews** (Providers, ordered Combo editor, Usage, Endpoint, CLI setup); the full collection of 36 has not been inspected. Do not report all 36 as visually reviewed or claims of full screenshot coverage.
-- External architecture evidence: https://github.com/decolua/9router/blob/master/docs/ARCHITECTURE.md — local Next.js gateway, OAuth/API provider routing, request translations, quotas. Do not falsely represent browser Lumen as an already existing proxy.
-- Current Lumen source checks and comparison matrix: `PHASE1_AUDIT.md`. Preliminary identity research/hypotheses: `IDENTITY_RESEARCH.md`.
-- Model Picker remains separate, with original `MASTER_REQUIREMENTS.md` / root plan/handoff, approximately 98.5% at last verified checkpoint. Preserve all independent tasks, weights, deployment gates and product security behavior.
+**Checkpoint:20 October 2026, Africa/Cairo. Phase B02, identity/product-architecture exploration. Gate 1 NOT APPROVED.** Current completion **18.5% (approximately 19%, Medium confidence)** on stable Blackout baseline v1. Previous committed checkpoint was unscored; an uncommitted 19.75% draft overcredited rejected visual work. Research is retained; current credit comes from the actual new two-experience proof, not the old recolors. Weights unchanged;81.5 points remain. Independent Model Picker ledger stays 98.5%.
 
-## Work status/evidence
-**Phase 1 in progress**. Verified repository main identity/architecture and no open PRs at time of audit. Visually observed the official 9Router dashboard plus five categorized public image previews and a Lumen real-app baseline; inspected all five reference ZIP entries; verified current source contains routing/Layouts, provider opt-in, quota information, privacy mechanisms and Browser/Firebase architecture. Public Apple platform guidance consulted. No Blackout code changes, no tests executed, no new design renders, no approved identity, no percentage claim. Confidence: high in source/ZIP observations, low in full Blackout scope and unviewed screenshot/full-size mobile coverage.
+## Read first
 
-## Required next task
-1. Find/receive the **complete LUMEN BLACKOUT master directive**, then map each approved requirement to `PHASE1_AUDIT.md` and revise/freeze `IMPLEMENTATION_PLAN.md` weights. Do not substitute interpretations for explicit instructions.
-2. Expand verified screen references beyond official provider dashboard, inspect current Lumen populated surfaces and security architecture; test which evidence links work and note inaccessible screens.
-3. Develop three genuinely different, strong black/white identity candidates with meaningful actual desktop/phone visuals and original Lumen traits; first request **explicit user aesthetic approval** before substantial redesign coding.
-4. Keep this handoff and plan synced after every verified milestone. Leave `main`, Firebase and production unchanged until authorized release.
+1. Exact full [master](MASTER_REQUIREMENTS.md), SHA-256 `f0bf08d5f4d7622e9366db4924f1601a6f4abc5f69a19a9c31d154cd45766fae`; now recovered, not missing.
+2. [v1.1 phase amendment](BLACKOUT_V1_1_AMENDMENT.md) and exact [latest Continuum](PROJECT_CONTINUUM_2026-10-20.md), SHA-256 `01aaf9a710b8ddcd474170aad8575359338a73ab5a7655a8d70a3a72c3aec66e`.
+3. Exact [first critical correction](DESIGN_COURSE_CORRECTION_2026-10-20.md), SHA-256 `b67ae76f7d0aeded9ab2984feb659ee027f4ebf6d4fe5c45672a3bc6d1793732`, and [Routing Center correction](ROUTING_CENTER_COURSE_CORRECTION_2026-10-20.md), SHA-256 `38e8f189697f3807b5ed245f0d645f7960467452599862afb08402acb4c55491`.
+4. [Plan/weights/coverage](IMPLEMENTATION_PLAN.md), [architecture](INFORMATION_ARCHITECTURE.md), [current proof and exact verification](workspace-proofs/README.md), root AGENTS/PRODUCT/DESIGN/UX-CONTRACT and independent Model Picker requirements.
 
-## Hard limits
-Do not install/run 9Router, harvest OAuth cookies/subscriptions, transfer provider keys to uncontrolled proxies, store request bodies in logs, invent unsupported features or expose cross-account metadata. Do not merge significant visual changes before user identity, core visual and final acceptance gates.
+The root Model Picker master remains byte-preserved, blob `45abb59dc9cf8c3d06d8ce16370a732b2170f248`. All original requirements remain; these Blackout documents are a separate approved initiative. Do not revive cancelled/rejected PR28/30/32 or use their identities as approved defaults.
+
+## Permanent progressive deployment policy
+
+Evaluate each completed coherent milestone for independent release. Review the complete intended diff, tests/type/build/required exact-head CI, security/privacy/compatibility/regressions, migrations and unfinished dependencies; confirm deployment and normal reviewed-revert rollback procedures. Use the authorized protected merge workflow, verify actual production SHA/deployment and live behavior, record deployed versus undeployed work, then continue. Separate safe subsets from unfinished work. Never bypass protections, force-push, overwrite concurrent work, or equate a push/build/green subset with deployment.
+
+Blackout's explicit aesthetic boundaries remain: Gate 1 before extensive identity implementation, Gate 2 core/flagship visual approval before major integration, Gate 3 final aesthetic approval. No experimental visual milestone is independently production-ready yet. Do not assume the whole project must finish before an unrelated safe functional fix can ship.
+
+## Verified work and actual limitations
+
+- Full source/requirements/Git recovery and immutable uploads, plus stable weighted scope mapping.
+- Actual 9Router research:14 manifest images plus two pinned official images visually opened; one repeated hero. All 22 gallery links returned503. Ten selected actual images form the accessible local [reference board](reference-board.html). Dedicated current quota/request/mobile references remain a documented gap. Pinned source 0.5.104 and observed public release v0.5.35 are distinct from older screenshots.
+- [38-feature matrix](FEATURE_MATRIX.md),20 pinned primary sources, native delivery/security/acceptance contracts. [Information architecture](INFORMATION_ARCHITECTURE.md) explicitly maps reference organization into both Workspace and Routing Center. No new gateway, unsupported OAuth, credential vault, cost source, private logging or compression service is authorized by analogy.
+- Aperture/Relay/Fold are **rejected intermediate experiments**, retained only in `prototypes/` as history/tooling. The old recommendation is withdrawn.
+- New **Index** and **Studio** actual-component proofs in `workspace-proofs/`: different navigation, conversation/drafting allocation, three-tier composer and Routing Center composition. Real existing controls handle Auto/manual/Layout, context, usage, policies, fallback order/permissions, masked connections and Send/Stop.
+- Ten final cases /176 captured-state axe scans passed with zero violations/page errors/document overflow. Dark desktop/phone, light desktop, true-black phone and 320px Linux WebKit; matched normal-App baselines at 1440×960 and 390×844. Manual/reopened fixture isolation and external-request denial tested. See README/reports rather than extrapolating to untested states.
+- Independent review caught and helped diagnose Studio mobile expansion: actual grid child `.conversation-area` created an implicit extra row. Root cause fixed; assertions include form/wrapper height and input/footer containment. Independent recheck measured714/694/532px at 390×844 and confirmed draft/conversation restoration. No remaining blocker found for this isolated architectural checkpoint.
+- No final mark, complete motion/brand system, redesigned full-provider detail flow, physical iPhone keyboard/refraction or full product-state/theme/zoom/locale matrix is complete. Existing connection/usage/editor owners remain partly inherited. Do not describe these as finished branding or new 9Router integration capabilities.
+- Strict premium static audit exited1 on 22 existing source patterns (15 textarea/local resize-evidence and 7 noValidate findings). Documented for B03/B07; not silently skipped or called compliant.
+
+## Independent functional fix / Git and deployment state
+
+- Development branch: `docs/lumen-blackout-phase1-20261019`, draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34).
+- Last committed local source checkpoint at this handoff preparation: `1736a92` (usage fix); previous feature remote checkpoint `d4756daa327cdaab106a16a175141d58d5f75d6f`. Research/proof/doc work described above is being synchronized as a coherent checkpoint; resolve final containing commit with Git rather than treating these pre-checkpoint values as production.
+- Safe subset isolated into `fix/usage-draft-no-submit-20261020` in reused `/workspace/Lumen-release-ledger`; source `8a328bb`, pushed/reviewed head `d9422173f4d5d503164b15b54dd991265412abae`.
+- [PR #35](https://github.com/Seifonyx/Lumen/pull/35) **merged** to main `677bc51f39fbf8fcf66bc91f846b71a4912bb306` after all exact-head CI jobs passed, run 39444721821. Only five UsageMeter button types, meaningful regression and operational notes; no Blackout visual source.
+- Original bug: opening usage with a draft default-submitted the composer. RED reproduction; pointer/Enter/draft/messages/network/focus checks passed in Chromium/WebKit 1440/390; independent reviewer reran all four. `npm test` and build passed, ordinary design regression passed. Manual test: type unsent text, open/close usage, confirm no send and draft remains.
+- Production prior verified runtime: `1966348725a9cc6a3bfec0a283448a451aa9d6cd`, deploy 39257887973,18 matching live assets freshly checked20 October.
+- **Latest verified deployed runtime:** `677bc51f39fbf8fcf66bc91f846b71a4912bb306`, [deploy39447533639](https://github.com/Seifonyx/Lumen/actions/runs/39447533639) succeeded20 October. All18 reviewed built assets matched live over system-CA-validated HTTPS. Hosted usage-draft regression passed Chromium and Linux WebKit at1440/390 (pointer and Enter, no send, draft/message/focus preservation). Chromium default cloud CA trust failed; hosted rerun narrowly pinned the existing environment proxy CA public key, with no broad TLS bypass. WebKit passed with `SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt`. This verifies synthetic isolated UI behavior on the hosted bundle, not real credentials/provider inference or physical iPhone. Raw results: `usage-fix-production-assets.json`, `usage-live-chromium-pinned.log`, `usage-live-webkit-trusted.log` in the evidence directory. Production URL:https://lumen-chat.web.app/ . No Blackout visual deployment.
+
+## Environment and recoverability
+
+Node22/deps/Chromium/WebKit already installed; onboarding reused existing setup, no new credentials/infrastructure. Current owned servers: ordinary reviewed dist 5190; Vite source/proof 5193; evidence/reference server 5194; older artifact server 5191. Commands in workspace-proofs/README.md. Local raw evidence/logs/cache: `/workspace/.lumen-verification/blackout-2026-10-20/`. No external screenshot pixels are committed; source/hash metadata and the board are persistent, cache can be retrieved through verified HTTPS if lost. Owned Lumen screenshots use synthetic data only.
+
+Preserve other worktrees. `/workspace/Lumen-preview-test` branch `test/preview-auth-clock` contains prior uncommitted test-only auth bridge/clock/workflow WIP; it is isolated and was not released. Never reset/stash-pop/overwrite it blindly. Older release branches/backups remain. Main's latest operational notes may require reconciliation into this feature branch after the independent fix release; resolve conflicts preserving both records, not by discarding either.
+
+## Exact next task
+
+1. Production fix verification is complete; synchronize the research/proof checkpoint, reconcile main and update draft PR #34/exact Git states. Keep the experimental redesign draft/unmerged.
+2. Continue B02: integrate selected-provider detail/model relationships beyond the four-core-provider overview; develop a genuinely distinctive original mark/type/motion system for both architectural directions; refine actual controls/editor density. Preserve all useful research and working engineering.
+3. Add short-height/keyboard-aware proof and eventually physical iPhone acceptance without calling Linux WebKit a device emulator. Review complete A–F evidence and remaining identity defects before asking for Gate 1 again. The user explicitly said not to request approval merely because the first screenshot or test suite exists.
+4. Only after explicit Gate 1 approval: shared token/component implementation B03 and functional core/interaction flagships B04 for Gate 2, then the remaining approved features/screens/hardening/final acceptance. Continue progressive verified releases of independently safe milestones throughout.

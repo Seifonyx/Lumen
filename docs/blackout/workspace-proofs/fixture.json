@@ -1,0 +1,104 @@
+{
+  "chats": [
+    {
+      "id": "launch",
+      "title": "A launch worth remembering",
+      "createdAt": 1792497500000,
+      "updatedAt": 1792497600000,
+      "model": "auto",
+      "messages": [
+        {
+          "id": "question",
+          "role": "user",
+          "text": "I’m launching a small design studio. Help me make a focused first-week plan — something I can actually follow.",
+          "createdAt": 1792497510000
+        },
+        {
+          "id": "answer",
+          "role": "assistant",
+          "model": "gemini:gemini-flash-latest",
+          "route": "writing · balanced",
+          "status": "done",
+          "createdAt": 1792497520000,
+          "text": "## Make the first week count.\n\nYou don’t need a louder launch. You need a clear offer, a small audience, and a reason for them to come back.\n\n### Lead with one strong idea\nDescribe the problem you solve in one sentence. Pair it with **one excellent piece of work**, rather than an entire portfolio.\n\n### A week with a little structure\n\n| When | Focus | Something finished |\n|---|---|---|\n| Monday | Define the offer | One clear project page |\n| Tuesday–Wednesday | Start conversations | Five personal introductions |\n| Thursday–Friday | Listen and refine | A stronger second version |\n\nKeep the work small enough to finish. The goal is **five useful conversations**, not five hundred impressions.\n\nWould you like to turn Monday into a checklist?"
+        }
+      ]
+    },
+    {
+      "id": "history-0",
+      "title": "Notes for a quieter workspace",
+      "createdAt": 1792411200000,
+      "updatedAt": 1792411200000,
+      "pinned": false,
+      "messages": [
+        {
+          "id": "m-0",
+          "role": "user",
+          "text": "Notes for a quieter workspace",
+          "createdAt": 1792497500000
+        }
+      ]
+    },
+    {
+      "id": "history-1",
+      "title": "Research: independent studios",
+      "createdAt": 1792324800000,
+      "updatedAt": 1792324800000,
+      "pinned": false,
+      "messages": [
+        {
+          "id": "m-1",
+          "role": "user",
+          "text": "Research: independent studios",
+          "createdAt": 1792497500000
+        }
+      ]
+    },
+    {
+      "id": "history-2",
+      "title": "Fix the Safari sign-in flow",
+      "createdAt": 1792238400000,
+      "updatedAt": 1792238400000,
+      "pinned": true,
+      "messages": [
+        {
+          "id": "m-2",
+          "role": "user",
+          "text": "Fix the Safari sign-in flow",
+          "createdAt": 1792497500000
+        }
+      ]
+    },
+    {
+      "id": "history-3",
+      "title": "A better project brief",
+      "createdAt": 1792152000000,
+      "updatedAt": 1792152000000,
+      "pinned": false,
+      "messages": [
+        {
+          "id": "m-3",
+          "role": "user",
+          "text": "A better project brief",
+          "createdAt": 1792497500000
+        }
+      ]
+    },
+    {
+      "id": "history-4",
+      "title": "Reading list — October",
+      "createdAt": 1792065600000,
+      "updatedAt": 1792065600000,
+      "pinned": false,
+      "messages": [
+        {
+          "id": "m-4",
+          "role": "user",
+          "text": "Reading list — October",
+          "createdAt": 1792497500000
+        }
+      ]
+    }
+  ],
+  "now": 1792497600000
+}

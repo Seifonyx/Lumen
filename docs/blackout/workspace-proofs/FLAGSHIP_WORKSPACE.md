@@ -1,6 +1,6 @@
 # Flagship Workspace & Composer — implementation and evidence
 
-20 October 2026. [Scoped brief](../FLAGSHIP_WORKSPACE_COMPOSER_2026-10-20.md). Base/source checkpoint `6d5492e690ccea301db6f000bc9ee01766fd7e5c`; draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34). **Gate 1 NOT APPROVED. No merge/deploy.** Current exact proposal source is the containing Git commit; the final synchronized hash is recorded in the handoff follow-up.
+20 October 2026. [Scoped brief](../FLAGSHIP_WORKSPACE_COMPOSER_2026-10-20.md). Base/source checkpoint `6d5492e690ccea301db6f000bc9ee01766fd7e5c`; draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34). **Gate 1 NOT APPROVED. No merge/deploy.** Exact verified implementation/artifact commit **`327a1082baf6b9d27123a6af21bec6ca94462860`** is committed/pushed with matching remote SHA; the containing follow-up changes only documentation.
 
 [Portable visual review](workspace-review.html), [machine evidence](workspace-evidence.json). The file embeds26 actual full-resolution screenshots: six states × two directions × two viewports, plus two matched original-app workspace comparisons. It has no external asset/font/script dependency. No historical screenshot directories were regenerated or committed. The earlier [provider review](provider-review.html) remains intact.
 

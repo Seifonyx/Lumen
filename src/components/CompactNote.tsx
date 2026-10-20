@@ -165,7 +165,7 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
 
   return (
     <div className="usage-meter" ref={box}>
-      <button ref={trigger} className={`usage-chip${level}${pct < 50 && !blockedUntil ? ' quiet' : ''}${pct < 10 && !blockedUntil && !open ? ' idle' : ''}`} onClick={() => { setSheet(isSheetScreen()); setOpen(!open); }} aria-expanded={open} aria-haspopup="dialog" aria-controls="usage-panel" title="Conversation capacity and daily usage">
+      <button type="button" ref={trigger} className={`usage-chip${level}${pct < 50 && !blockedUntil ? ' quiet' : ''}${pct < 10 && !blockedUntil && !open ? ' idle' : ''}`} onClick={() => { setSheet(isSheetScreen()); setOpen(!open); }} aria-expanded={open} aria-haspopup="dialog" aria-controls="usage-panel" title="Conversation capacity and daily usage">
         <svg className="usage-ring" viewBox="0 0 20 20" aria-hidden="true"><circle className="usage-ring-track" cx="10" cy="10" r="7" /><circle className="usage-ring-fill" cx="10" cy="10" r="7" strokeDasharray="43.98" strokeDashoffset={43.98 * (1 - pct / 100)} /></svg>
         <span className="usage-chip-pct" aria-hidden="true">{pct}%</span><span className="usage-chip-label">Context {pct}%</span>{blockedUntil && <span className="usage-status"> · limit reached</span>}
         <ChevronDown size={12} aria-hidden="true" />
@@ -174,7 +174,7 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
         const panel = (
         <div ref={dialog} className={`usage-pop${sheet ? ' sheet' : ''}`} id="usage-panel" role="dialog" aria-modal="true" tabIndex={-1} aria-label="Usage">
           {sheet && <div className="sheet-grip" aria-hidden="true" />}
-          <header className="um-head"><span>Usage</span><button ref={close} className="icon-btn sm" aria-label="Close usage" onClick={() => { setOpen(false); trigger.current?.focus({ preventScroll: true }); }}><X size={16} /></button></header>
+          <header className="um-head"><span>Usage</span><button type="button" ref={close} className="icon-btn sm" aria-label="Close usage" onClick={() => { setOpen(false); trigger.current?.focus({ preventScroll: true }); }}><X size={16} /></button></header>
           <div className="um-tiles">
             <section className="um-tile" aria-label="This chat">
               <Gauge pct={pct} tone={level.trim()} label={`${pct}%`} meter={{ name: 'How full this chat is', now: pct, max: 100 }} />
@@ -204,9 +204,9 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
             <p className="um-note">Memories and instructions go with every message but don’t count toward this chat’s limit.</p>
           </details>
           <div className="um-actions">
-            <button className="btn" disabled={busy} onClick={() => { setOpen(false); void compact(chat.id); }}><Shrink size={15} /> Compact now</button>
-            <button className="btn" disabled={busy} onClick={() => { setOpen(false); void continueInNewChat(chat.id); }}><MessageSquarePlus size={15} /> New chat with summary</button>
-            {canUndo && <button className="btn ghost um-wide" disabled={busy} onClick={() => { setOpen(false); void undoCompact(chat.id); }}><Undo2 size={15} /> Undo last compact</button>}
+            <button type="button" className="btn" disabled={busy} onClick={() => { setOpen(false); void compact(chat.id); }}><Shrink size={15} /> Compact now</button>
+            <button type="button" className="btn" disabled={busy} onClick={() => { setOpen(false); void continueInNewChat(chat.id); }}><MessageSquarePlus size={15} /> New chat with summary</button>
+            {canUndo && <button type="button" className="btn ghost um-wide" disabled={busy} onClick={() => { setOpen(false); void undoCompact(chat.id); }}><Undo2 size={15} /> Undo last compact</button>}
           </div>
           <label className="um-toggle switch-row">
             <span>Compact automatically when full</span>

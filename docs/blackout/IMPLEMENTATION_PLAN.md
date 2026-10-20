@@ -49,7 +49,7 @@ The previous committed checkpoint deliberately had **no Blackout percentage** be
 
 ## Independently released functional milestone
 
-PR #35 fixed UsageMeter controls accidentally submitting unsent drafts, independently from Blackout. Exact-head CI39444721821 passed all three jobs; normal merge/main `677bc51f39fbf8fcf66bc91f846b71a4912bb306`; deploy39447533639 succeeded. All18 built assets match production, and hosted Chromium/WebKit regression passed at1440/390 using synthetic isolated accounts. Cloud TLS details and exact evidence are in the handoff. No Blackout visual changes were deployed, and this separate functional fix earns no extra Blackout identity credit.
+PR #35 fixed UsageMeter controls accidentally submitting unsent drafts, independently from Blackout. Exact-head CI39444721821 passed all three jobs; normal merge/main `677bc51f39fbf8fcf66bc91f846b71a4912bb306`; deploy39447533639 succeeded. All18 built assets match production, and hosted Chromium/WebKit regression passed at1440/390 using synthetic isolated accounts. Cloud TLS details and exact evidence are in the handoff. Docs-only PR #36 merged as655438f0ec8d2e3594595252af4a99e6c58627a0, with no runtime change/redeployment; latest verified runtime remains677bc51. Research/proof checkpoint eda84a2 is preserved on draft PR #34 and reconciled with main. No Blackout visual changes were deployed, and this separate functional fix earns no extra Blackout identity credit.
 
 ## Verification and exact next task
 

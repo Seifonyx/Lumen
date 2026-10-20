@@ -84,7 +84,7 @@ PR #35 fixed UsageMeter controls accidentally submitting unsent drafts, independ
 
 Proposal acceptance: first full response paragraph visible above a composer ≤42% of phone viewport; exact draft/selection/focus, independent desktop Focus scrolling, accessible history/search/new conversation/model/usage/provider/policy workflows; safe-area/keyboard-space simulations distinguished from physical device. Seven focused cases/124 axe scans supplement the retained11 cases/194 scans (318 workflow scans total, all pass); both offline engines pass16 images/control/download/focus checks and4 further scans. The original flagship assertions are retained; only an optional test-server port is added to the older harness. Exact results, failure history and screenshot hashes are recorded in the evidence.
 
-**18.5→18.5%, Medium confidence; weights/fractions unchanged,81.5 remaining.** No B02.3 approval, B03/B04 production integration, final identity or physical/complete complex-state credit. Type/build pass;22 existing static findings remain. PR #34 stays draft. No merge/deploy; preserve latest main/runtime separately in the handoff.
+**18.5→18.5%, Medium confidence; weights/fractions unchanged,81.5 remaining.** No B02.3 approval, B03/B04 production integration, final identity or physical/complete complex-state credit. Type/build pass;22 existing static findings remain. Verified source/artifact commit `5c9ff0f3e20e0127afb45d48eca4f8fe2dc4b696` is committed/pushed with matching local/remote hashes; the containing documentation-only follow-up records synchronization. PR #34 stays draft. No merge/deploy; preserve latest main/runtime separately in the handoff.
 
 ## Verification and next review
 

@@ -2,6 +2,8 @@
 
 20 October2026. [User scope](../GATE1_CONSOLIDATION_2026-10-20.md). Base `4ff2ad77cecbc37f4f52423f74877738497f45ea`; existing draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34). **Gate1 NOT APPROVED. No production integration, merge or deployment.**
 
+Verified implementation/artifact commit **`5c9ff0f3e20e0127afb45d48eca4f8fe2dc4b696`** is committed/pushed with matching local/remote hashes. The containing final follow-up updates documentation only. Latest merged main remains655438f; latest separately verified deployed runtime remains677bc51. No release was attempted.
+
 ## Proposal and ownership
 
 [Portable review](consolidation-review.html) embeds16 actual application frames: six desktop/phone states for the consolidated proposal plus four matched previous-flagship Workspace/expanded-editor comparisons. [Machine evidence](consolidation-evidence.json) retains cases, reading measurements and image hashes. Previous26-image review, provider review and original source directions remain intact.

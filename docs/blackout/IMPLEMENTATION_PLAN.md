@@ -61,7 +61,7 @@ PR #35 fixed UsageMeter controls accidentally submitting unsent drafts, independ
 
 [Quality-closure brief](PROVIDER_UX_QUALITY_CLOSURE_2026-10-20.md), [Q01–Q09 implementation/verification map](workspace-proofs/PROVIDER_UX_QUALITY.md), [portable review](workspace-proofs/provider-review.html). This corrects the existing unweighted B02-PROVIDER checkpoint; no new phase, weight or duplicated credit. Responsive overview/navigation/detail, saved-versus-enabled filters/visible selection, grounded default, scoped model-action subscriptions with1000-model validation, browser-local timestamps and separate presentation/focus evidence are verified. Ten focused cases/60 axe scans, the existing18-state workspace flow, proof typecheck/build and offline review pass;22 existing strict-audit findings remain.
 
-**18.5→18.5%, Medium confidence; all baseline weights/fractions unchanged.** The remaining identity, physical-device/complex-state and approval acceptance groups are not complete. No production integration/merge/deployment: Gate1 is unapproved. Keep PR #34 draft and stop after this slice. Exact source/push state and remaining scope are recorded in the handoff.
+**18.5→18.5%, Medium confidence; all baseline weights/fractions unchanged.** The remaining identity, physical-device/complex-state and approval acceptance groups are not complete. No production integration/merge/deployment: Gate1 is unapproved. Keep PR #34 draft and stop after this slice. Verified quality source/artifact commit `a9e34834fae3af1e0b721badcb9e24e03327f9ce` is committed/pushed and remote synchronization was confirmed. The containing final handoff/link-label update is documentation-only. Exact state and remaining scope are recorded in the handoff.
 
 ## Verification and next review
 

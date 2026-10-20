@@ -21,3 +21,8 @@ Monochrome is a constraint, not the accomplishment. All three aesthetic gates re
 ## Flagship proposal refinement — 20 October2026
 
 [Current portable workspace review](workspace-proofs/workspace-review.html) refines these same two directions after the verified provider slices. Index now has an actionable document outline and selective intelligence; Studio retains independent drafting/review with deliberate mobile writing mode. Both use a shared canonical-state three-layer composer and provisional wordmark-first treatment, without introducing a symbol. This does not select an identity or resolve the remaining full-motion/device/complex-state criteria. Gate1 and18.5% baseline remain unchanged; stop after the proposal.
+
+
+## Consolidated proposal —20 October2026
+
+The next scoped user brief makes Index's editorial reading shell primary and Studio's sustained drafting an optional Focus mode. [Current review](workspace-proofs/consolidation-review.html) shows this unified application rather than two competing products. Typography-led wordmark/geometry and shared overlays remain provisional; no logo or Gate1 decision is declared. The former alternatives and provider work are preserved for evidence. Progress remains18.5%, and work stops before production integration.

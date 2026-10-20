@@ -2,7 +2,9 @@
 
 20 October 2026, Africa/Cairo. **Gate 1 remains NOT APPROVED.** [Course correction](../ROUTING_CENTER_COURSE_CORRECTION_2026-10-20.md) governs. These are actual local Lumen component renders with labelled synthetic accounts, not generated artwork or a production redesign.
 
-**Latest:** [Flagship Workspace & Composer](FLAGSHIP_WORKSPACE.md), [portable offline flagship review](workspace-review.html), [machine evidence](workspace-evidence.json). This is a bounded proposal after provider quality; Gate1 is unapproved and work stops here. The board embeds26 actual images, including original-app comparisons, with no external assets.
+**Latest:** [Gate1 flagship consolidation](CONSOLIDATION.md), [portable16-image review](consolidation-review.html), [machine evidence](consolidation-evidence.json). One Workspace plus optional Focus writing, in an opt-in isolated preview. Gate1 remains unapproved; no merge/deployment or automatic migration.
+
+**Preserved flagship exploration:** [Flagship Workspace & Composer](FLAGSHIP_WORKSPACE.md), [portable offline flagship review](workspace-review.html), [machine evidence](workspace-evidence.json). This is a bounded proposal after provider quality; Gate1 is unapproved and work stops here. The board embeds26 actual images, including original-app comparisons, with no external assets.
 
 **Preserved provider slice:** [Provider UX quality closure](PROVIDER_UX_QUALITY.md), [portable offline review](provider-review.html). Twelve ordinary and four separate keyboard-focus captures supersede the previous provider presentation. The sections below retain earlier architectural-checkpoint evidence.
 
@@ -87,3 +89,8 @@ MR_WEBKIT=1 node docs/blackout/workspace-proofs/check-workspace-review.cjs
 ```
 
 The builder requires the complete11-case matrix and two focused reports recorded in FLAGSHIP_WORKSPACE.md; commands above illustrate individual cases, not the entire matrix. It refuses failed/incomplete reports. Default output is the external flagship evidence directory. Inspect `workspace-review.html` offline or at `http://localhost:5194/workspace-proofs/workspace-review.html`. Physical keyboard/device behavior is not simulated by screenshots.
+
+
+## Consolidated proposal
+
+Use a fresh isolated browser profile at `http://localhost:5195/docs/blackout/workspace-proofs/?proposal=consolidated&fixture=1`. The same opt-in query works on5193. Legacy direction URLs remain available. See CONSOLIDATION.md for the stable-server command, focused and retained matrix, changed assertions, manual checks and remaining weaknesses. `consolidation-review.html` is self-contained and also available at `http://localhost:5194/workspace-proofs/consolidation-review.html`. No production design-system integration.

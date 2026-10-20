@@ -37,7 +37,7 @@ const longDraft='Turn Monday into a practical checklist.\n\nI want the launch to
   });
   const page=await context.newPage(),errors=[],checks={},screens=[];
   page.on('pageerror',e=>errors.push(e.message));
-  const url=`http://localhost:5193/docs/blackout/workspace-proofs/?direction=${direction}`;
+  const url=`http://localhost:${process.env.BLACKOUT_PORT||5193}/docs/blackout/workspace-proofs/?direction=${direction}`;
   await page.goto(url);await page.locator('.composer textarea').waitFor();
   await seed(page,owner,chats);await page.reload();await page.locator('.proof-navigation').waitFor();
   if(width<900&&direction==='studio')await page.getByRole('button',{name:'Open chats',exact:true}).click();

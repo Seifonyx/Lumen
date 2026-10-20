@@ -2,7 +2,21 @@
 
 **Checkpoint:20 October 2026, Africa/Cairo. Phase B02, identity/product-architecture exploration. Gate 1 NOT APPROVED.** Current completion **18.5% (approximately 19%, Medium confidence)** on stable Blackout baseline v1. Previous committed checkpoint was unscored; an uncommitted 19.75% draft overcredited rejected visual work. Research is retained; current credit comes from the actual new two-experience proof, not the old recolors. Weights unchanged;81.5 points remain. Independent Model Picker ledger stays 98.5%.
 
-## Latest focused checkpoint — Flagship Workspace & Composer proposal
+## Latest scoped work — Gate1 flagship consolidation
+
+User [consolidation brief](GATE1_CONSOLIDATION_2026-10-20.md) authorizes only this continuation from clean synchronized `4ff2ad77cecbc37f4f52423f74877738497f45ea`. Read [implementation/verification](workspace-proofs/CONSOLIDATION.md), [portable review](workspace-proofs/consolidation-review.html) and [machine evidence](workspace-proofs/consolidation-evidence.json). Previous flagship/provider slices, shared ComposerChrome and their review artifacts remain preserved.
+
+One opt-in preview (`?proposal=consolidated`) combines Index's reading shell with optional reversible desktop Focus writing beside the response and dedicated phone writing. Mobile uses one toolbar, a compact title and progressive original-brief disclosure. Prominent history/native search/new conversation/Projects/Routing Center and recent shortcuts remain reachable. Each composer layer owns its padding; disclaimer/divider/editor are contained. The picker/UsageMeter chip now consistently shows conversation-only estimates; Focus labels draft estimates separately. Provider engineering and production sources/dependencies are untouched.
+
+**Previous18.5→current18.5%, Medium confidence;81.5 weighted points remain.** Stable baseline v1 unchanged, no approval or B03/B04 integration credit; Model Picker98.5% unchanged. Seven proposal cases/124 axe states and the retained11-case baseline/194 states pass:18 cases/318 scans with zero reported violations/page errors/overflow. Both offline review engines pass all16 images/comparisons, HTML/PNG downloads, dialog focus and4 further axe scans. Exact results/failure history are in CONSOLIDATION.md. Type/build pass;22 pre-existing strict-audit findings remain. No physical iPhone/live-provider/production verification is claimed. Synthetic24px safe-area and480px viewport tests are explicitly simulations.
+
+Raw evidence: `/workspace/.lumen-verification/consolidation-2026-10-20/`; final test server5195 disables HMR/watch to avoid in-flight source reloads; restart it after any future source edit before testing, since its cache is intentionally frozen. Failed initial logs are retained in `attempts/`; source was frozen for final checks. Original dev preview5193 and artifact server5194 remain. Only16 curated frames are embedded, not a new historical PNG collection.
+
+Branch `docs/lumen-blackout-phase1-20261019`, existing draft PR #34; final source/push synchronization is recorded by the containing checkpoint and follow-up. Latest merged main is still `655438f0ec8d2e3594595252af4a99e6c58627a0`; latest separately verified deployed runtime is still `677bc51f39fbf8fcf66bc91f846b71a4912bb306`. No Blackout visual merge/deployment or production integration.
+
+**Exact next action: STOP after this consolidated exploratory proposal.** Review the16-image board and manual test sequences. Gate1 remains NOT APPROVED; no automatic approval request or B03/B04 migration. Future work needs the next explicitly scoped product direction. Earlier stop boundaries are historical and superseded only for this consolidation.
+
+## Previous focused checkpoint — Flagship Workspace & Composer proposal
 
 The user authorized [this bounded workspace/composer slice](FLAGSHIP_WORKSPACE_COMPOSER_2026-10-20.md) after provider quality. It supersedes the previous slice's stop only for this work. Base was clean/synchronized `6d5492e690ccea301db6f000bc9ee01766fd7e5c`. Read [implementation, failures and limits](workspace-proofs/FLAGSHIP_WORKSPACE.md), [portable offline review](workspace-proofs/workspace-review.html) and [machine evidence](workspace-proofs/workspace-evidence.json).
 

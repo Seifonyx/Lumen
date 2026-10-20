@@ -16,3 +16,8 @@ See [two-experience review](workspace-proofs/review.html), [implementation/evide
 These are original composition/interaction probes using real App components and synthetic state. They do not establish a final exceptional identity. Wordmark/type systems are provisional; a distinctive final mark, small-size optical review, full motion, more integrated provider-detail design and physical-device refinement remain ahead. No old geometric mark is recycled as selected.
 
 Monochrome is a constraint, not the accomplishment. All three aesthetic gates remain. Do not request approval again until the combined Workspace/Routing Center evidence, composer, typography and brand treatment meet the course-correction standard. Engineering tests cannot substitute for that review.
+
+
+## Flagship proposal refinement — 20 October2026
+
+[Current portable workspace review](workspace-proofs/workspace-review.html) refines these same two directions after the verified provider slices. Index now has an actionable document outline and selective intelligence; Studio retains independent drafting/review with deliberate mobile writing mode. Both use a shared canonical-state three-layer composer and provisional wordmark-first treatment, without introducing a symbol. This does not select an identity or resolve the remaining full-motion/device/complex-state criteria. Gate1 and18.5% baseline remain unchanged; stop after the proposal.

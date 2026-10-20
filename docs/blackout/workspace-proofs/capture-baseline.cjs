@@ -5,7 +5,8 @@ const path=require('node:path');
 const assert=require('node:assert/strict');
 const {profile,seed}=require('../../../tests/e2e/helpers/preview-profile.cjs');
 const {chats}=require('./fixture.cjs');
-const out=path.join(__dirname,'screens');
+const out=process.env.BLACKOUT_OUTPUT||path.join(__dirname,'screens');
+fs.mkdirSync(out,{recursive:true});
 const shortDraft='Turn Monday into a practical checklist.';
 const longDraft='Turn Monday into a practical checklist.\n\nI want the launch to feel deliberate. Help me shape one clear offer, choose the work worth showing, and write a useful introduction.\n\nKeep the plan realistic for one person. I have three hours on Monday and a small existing portfolio.\n\nBefore drafting the page, tell me what you would leave out. Make the tradeoffs clear.\n\nFinish with five specific things I can do before lunch.';
 (async()=>{const browser=await chromium.launch();try{for(const width of [1440,390]){

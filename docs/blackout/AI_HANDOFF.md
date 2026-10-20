@@ -2,7 +2,21 @@
 
 **Checkpoint:20 October 2026, Africa/Cairo. Phase B02, identity/product-architecture exploration. Gate 1 NOT APPROVED.** Current completion **18.5% (approximately 19%, Medium confidence)** on stable Blackout baseline v1. Previous committed checkpoint was unscored; an uncommitted 19.75% draft overcredited rejected visual work. Research is retained; current credit comes from the actual new two-experience proof, not the old recolors. Weights unchanged;81.5 points remain. Independent Model Picker ledger stays 98.5%.
 
-## Latest focused checkpoint — Provider UX quality closure
+## Latest focused checkpoint — Flagship Workspace & Composer proposal
+
+The user authorized [this bounded workspace/composer slice](FLAGSHIP_WORKSPACE_COMPOSER_2026-10-20.md) after provider quality. It supersedes the previous slice's stop only for this work. Base was clean/synchronized `6d5492e690ccea301db6f000bc9ee01766fd7e5c`. Read [implementation, failures and limits](workspace-proofs/FLAGSHIP_WORKSPACE.md), [portable offline review](workspace-proofs/workspace-review.html) and [machine evidence](workspace-proofs/workspace-evidence.json).
+
+Index now has a working-document reading plane and keyboard-operable answer outline with selective route/context intelligence; Studio has independent sustained-writing/response panes and intentional full phone writing mode. A shared proof-only composer presentation preserves the real textarea/draft/selection/focus, reflects canonical tools and file state, and retains actual picker/usage/Send/Stop owners. Desktop/phone wordmark-first treatments remain provisional. Provider browser/quality work is preserved; no source runtime component, production design token or dependency changed.
+
+**Previous18.5→current18.5%, Medium confidence;81.5 points remain.** Existing baseline fractions/weights are unchanged: this is refinement of partial B02.1/B02.2, not identity approval or B03/B04 integration. Model Picker stays98.5%. Eleven main cases pass194 axe state scans at1440×960/390×844 in Chromium/Linux WebKit plus320px/reduced-height cases. Two focused interaction cases check prefill, forward selection, tool state and reduced motion; eight rapid WebKit picker switches pass. Original matched baselines, proof TypeScript/build and self-contained review checks pass.22 prior strict-audit findings remain. Physical iPhone/live-provider behavior and full complex-state/theme/zoom coverage are not claimed. Failure history, including one intermediate in-flight-source WebKit draft assertion with unisolated cause, is retained in the implementation note.
+
+Changed files: proof `ComposerChrome.tsx`, `main.tsx`, `workspace.css`; focused workflow/interaction checks; baseline output override; portable review builder/checker/artifact/evidence; current brief and documentation. Raw captures/logs/build/audit are outside Git in `/workspace/.lumen-verification/flagship-2026-10-20/`. Only26 curated captures are embedded, not a new PNG directory. Earlier provider-review.html is preserved.
+
+Git: branch `docs/lumen-blackout-phase1-20261019`, existing draft PR #34. This checkpoint's containing implementation commit will be recorded by the final handoff-only synchronization revision; resolve current HEAD with Git and confirm the remote feature ref before continuing. Latest merged main remains `655438f0ec8d2e3594595252af4a99e6c58627a0`; latest separately verified deployed runtime remains `677bc51f39fbf8fcf66bc91f846b71a4912bb306`. No Blackout merge/deploy is authorized by this slice; Gate1 remains unapproved.
+
+**Exact next action: STOP at this reviewable flagship proposal.** Product owner can inspect the portable board and test sequences. Future implementation requires the next explicit scoped direction; do not automatically begin identity rollout, production integration or unrelated tasks. No automatic approval request. Preserve the source/progress/provider evidence and all existing gates.
+
+## Previous focused checkpoint — Provider UX quality closure
 
 The [quality-closure brief](PROVIDER_UX_QUALITY_CLOSURE_2026-10-20.md) continues PR #34 from verified clean local/remote `a2cff7b38025981650c58da3f86fc5d67e602904`. Read [current implementation/verification](workspace-proofs/PROVIDER_UX_QUALITY.md), [portable review](workspace-proofs/provider-review.html) and [machine evidence](workspace-proofs/provider-evidence.json). This supersedes the prior slice's current-state UI descriptions, not its historical evidence or approved scope.
 

@@ -332,3 +332,141 @@
  .proof-routing>.proof-routing-head .proof-primary{margin:0;flex:none;min-height:44px;padding:10px;font-size:12px}
  .proof-routing:has(.proof-provider-browser.has-detail)>.proof-routing-head{display:none}
 }
+/* Flagship proposal. Composition-only tokens live here; production Switchboard is untouched. */
+:root[data-workspace-proof]{--proof-reading:760px;--proof-rule:var(--border);--proof-inset:clamp(22px,3vw,48px)}
+:root[data-workspace-proof] .proof-navigation .proof-wordmark{text-transform:none;border:0;font-size:32px;letter-spacing:-1.9px;display:flex;flex-direction:column;align-items:start;gap:8px;padding:0 8px 18px;font-weight:680;line-height:1}
+.proof-wordmark-edition{font:11px/1.4 Geist Mono,monospace!important;letter-spacing:2px;color:var(--text-3)}
+.proof-nav-caption{font:13px/1.6 inherit;letter-spacing:0;padding:0 8px 28px}
+:root[data-workspace-proof=studio] .proof-navigation .proof-wordmark{flex-direction:row;align-items:baseline;gap:14px;padding:0;margin-right:20px;font-weight:780;font-stretch:108%}
+:root[data-workspace-proof] .topbar{height:58px;padding-inline:24px}
+:root[data-workspace-proof] .main{grid-template-rows:58px minmax(0,1fr) auto}
+:root[data-workspace-proof] .chat-heading{font-family:inherit;font-size:13px}
+:root[data-workspace-proof] .thread{max-width:var(--proof-reading);padding:32px var(--proof-inset) 48px;gap:28px}
+.proof-document-head{order:-1;padding-bottom:25px;border-bottom:1px solid var(--proof-rule)}
+.proof-document-head h1{font:580 clamp(28px,2.65vw,38px)/1.13 Blackout Archivo,sans-serif;letter-spacing:-1.4px;margin:12px 0 14px;max-width:520px;text-wrap:balance}
+.proof-document-head p{font-size:12px;color:var(--text-3);line-height:1.6;margin:0}
+.proof-document-head p span{padding-inline:9px;color:var(--border-strong)}
+:root[data-workspace-proof] .msg.user::before{content:'YOUR BRIEF';font-size:11px;letter-spacing:1px}
+:root[data-workspace-proof] .msg.assistant::before{content:'LUMEN / RESPONSE';font-size:11px}
+:root[data-workspace-proof] .msg.user{padding-left:16px;border-left:1px solid var(--border-strong)}
+:root[data-workspace-proof] .msg.user .bubble{font-size:15px;line-height:1.75}
+:root[data-workspace-proof] .markdown h2{font-size:28px;line-height:1.18;letter-spacing:-.9px;margin-bottom:18px}
+:root[data-workspace-proof] .markdown h3{font-size:16px;line-height:1.5;margin-top:24px}
+:root[data-workspace-proof] .markdown{font-size:15px;line-height:1.8}
+:root[data-workspace-proof] .markdown :is(h2,h3){scroll-margin-top:24px}
+:root[data-workspace-proof] .composer-wrap{padding:0 24px 20px}
+:root[data-workspace-proof] .composer{border-radius:12px;border-color:var(--border-strong);box-shadow:0 8px 30px #0002;transition:border-color 160ms,box-shadow 160ms}
+:root[data-workspace-proof] .composer:focus-within{border-color:var(--text-2);box-shadow:0 0 0 1px var(--border-strong),0 8px 30px #0002}
+.proof-writing-head{order:-3;display:none;justify-content:space-between;align-items:start;padding:24px 24px 20px;gap:18px}
+.proof-writing-head .proof-section-label{font-size:11px;letter-spacing:1.1px;margin:0 0 9px}
+.proof-writing-head strong{font:590 29px/1.15 Blackout Archivo,sans-serif;letter-spacing:-1px}
+.proof-writing-head>span{font-size:12px;color:var(--text-3);white-space:nowrap;padding-top:4px}
+.proof-context-toolbar{padding:5px 10px;gap:3px;flex-wrap:nowrap}
+.proof-context-toolbar button{min-height:44px;padding:8px;font-size:12px;gap:6px;white-space:nowrap;transition:background 150ms,color 150ms}
+.proof-context-toolbar .proof-expand{min-width:44px}
+.proof-file-count{font:11px/1.4 Geist Mono,monospace}
+:root[data-workspace-proof] .composer textarea{padding:18px 20px!important;font-size:17px;line-height:1.7;min-height:100px!important;max-height:32dvh;overscroll-behavior:contain}
+:root[data-workspace-proof] .composer-bar{padding:10px;gap:6px;grid-template-columns:minmax(0,1fr) auto auto}
+:root[data-workspace-proof] .model-button{min-height:50px;max-width:260px;gap:4px 8px;padding:6px 10px}
+:root[data-workspace-proof] .model-button>.model-name{font-size:14px}
+.proof-route-caption{font-size:12px;line-height:1.4}
+:root[data-workspace-proof] .composer-bar .usage-chip{padding:6px 10px;min-height:50px;max-width:170px}
+:root[data-workspace-proof] .proof-usage-label{display:flex;flex-direction:column;gap:2px;align-items:start;font-size:11px;line-height:1.4;white-space:normal;text-align:left}
+:root[data-workspace-proof] .proof-usage-label>span{display:inline;font-size:11px}
+:root[data-workspace-proof] .proof-usage-label b{font-size:12px;font-weight:550}
+.proof-usage-label small{font-size:11px;color:var(--text-3)}
+:root[data-workspace-proof] .dictation-btn{width:44px;min-width:44px;height:44px}
+:root[data-workspace-proof] .composer .composer-chip:has([aria-label='Turn off web search']){display:none}
+:root[data-workspace-proof] .proof-margin{padding:30px 20px;background:var(--bg)}
+.proof-margin .proof-section-label{font-size:11px;letter-spacing:1px}
+.proof-document-outline{display:grid;gap:6px;margin-bottom:26px}
+.proof-document-outline button{display:flex;align-items:baseline;gap:12px;min-height:44px;padding:10px 0;border:0;background:none;color:var(--text-2);text-align:left;font-size:13px;line-height:1.6;cursor:pointer}
+.proof-document-outline button span{font:11px Geist Mono,monospace;color:var(--text-3)}
+.proof-document-outline button:hover{color:var(--text);text-decoration:underline;text-underline-offset:4px}
+.proof-margin-section{padding-block:22px}.proof-margin .proof-route-title{font-size:22px!important;line-height:1.4}
+.proof-margin p{font-size:13px;line-height:1.6}.proof-margin .proof-link{font-size:12px;min-height:44px}
+.proof-phone-wordmark{display:none}
+:root[data-workspace-proof=studio] .main{grid-template-columns:minmax(380px,.85fr) minmax(0,1.15fr);grid-template-rows:58px minmax(0,1fr)}
+:root[data-workspace-proof=studio] .composer-wrap{padding:26px;min-height:0;background:var(--sidebar);border-right:1px solid var(--border)}
+:root[data-workspace-proof=studio] .composer{border:1px solid var(--border-strong);background:var(--surface);border-radius:12px;overflow:hidden;box-shadow:none}
+:root[data-workspace-proof=studio] .composer::before{display:none}
+:root[data-workspace-proof=studio] .proof-writing-head{display:flex}
+:root[data-workspace-proof=studio] .composer textarea{flex:1 1 0;min-height:100px!important;max-height:none;font-size:19px;line-height:1.75;padding:24px!important}
+:root[data-workspace-proof=studio] .composer-bar{grid-template-columns:minmax(0,1fr) auto;gap:7px}
+:root[data-workspace-proof=studio] .composer-bar .usage-meter{grid-row:2;grid-column:1}
+:root[data-workspace-proof=studio] .composer-bar .usage-chip{max-width:none;min-height:44px}
+:root[data-workspace-proof=studio] .composer-voice-controls{grid-column:2;grid-row:1/3}
+:root[data-workspace-proof=studio] .thread{padding-inline:44px}
+:root[data-workspace-proof=studio] .proof-document-head h1{font-weight:730;font-stretch:105%;font-size:34px}
+:root[data-workspace-proof=studio][data-proof-expanded] .main{grid-template-columns:minmax(480px,1.15fr) minmax(0,.85fr)}
+:root[data-workspace-proof=index][data-proof-expanded] .composer-wrap{grid-row:2/-1;padding:24px;display:flex;min-height:0}
+:root[data-workspace-proof=index][data-proof-expanded] .composer{flex:1;min-height:0}
+:root[data-workspace-proof=index][data-proof-expanded] .conversation-area{display:none}
+:root[data-workspace-proof][data-proof-expanded] .proof-writing-head{display:flex}
+:root[data-workspace-proof][data-proof-expanded] .composer textarea{flex:1 1 0;min-height:100px!important;max-height:none}
+:root[data-workspace-proof] :is(.proof-context-toolbar,.proof-navigation) button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+:root[data-workspace-proof] .proof-context-toolbar button:active{background:var(--surface-3)}
+@media(max-width:1150px) and (min-width:900px){:root[data-workspace-proof=studio] .main{grid-template-columns:410px minmax(0,1fr)}:root[data-workspace-proof=studio] .composer-wrap{padding:16px}:root[data-workspace-proof=studio] .thread{padding-inline:28px}}
+@media(max-width:899px){
+ :root[data-workspace-proof] .main,:root[data-workspace-proof=studio][data-proof-expanded] .main{grid-template-columns:minmax(0,1fr);grid-template-rows:52px minmax(0,1fr) auto}
+ :root[data-workspace-proof] .topbar{height:52px;padding-inline:10px;gap:6px}
+ :root[data-workspace-proof] .topbar .chat-heading{display:none}
+ .proof-phone-wordmark{display:flex;font:650 24px/1 Blackout Archivo,sans-serif;letter-spacing:-1.2px;gap:9px;align-items:baseline;order:-1;margin-right:auto}
+ .proof-phone-wordmark small{font:11px/1.4 Geist Mono,monospace;letter-spacing:0;color:var(--text-3)}
+ :root[data-workspace-proof] .topbar>.icon-btn:first-child{order:-2}
+ :root[data-workspace-proof] .topbar .spacer{display:none}
+ :root[data-workspace-proof] .thread,:root[data-workspace-proof=studio] .thread{padding:24px 22px 30px;gap:24px}
+ .proof-document-head{padding-bottom:22px}
+ .proof-document-head h1,:root[data-workspace-proof=studio] .proof-document-head h1{font-size:30px;line-height:1.12;letter-spacing:-1.1px;margin-top:10px}
+ .proof-document-head p{font-size:12px}
+ :root[data-workspace-proof] .msg.user .bubble{font-size:15px}
+ :root[data-workspace-proof] .markdown{font-size:15px;line-height:1.8}
+ :root[data-workspace-proof] .markdown h2{font-size:26px;line-height:1.2}
+ :root[data-workspace-proof] .composer-wrap{padding:4px 10px 10px;background:var(--bg);border:0;display:block}
+ :root[data-workspace-proof] .proof-writing-head{display:none}
+ :root[data-workspace-proof] .proof-context-toolbar{padding:2px 5px;gap:0}
+ :root[data-workspace-proof] .proof-context-toolbar button{font-size:12px;padding:7px 6px;gap:4px;min-height:44px;justify-content:center}
+ :root[data-workspace-proof] .composer textarea{flex:none;min-height:76px!important;max-height:24dvh;font-size:16px;line-height:1.65;padding:14px 16px!important}
+ :root[data-workspace-proof] .composer-bar{grid-template-columns:minmax(0,1fr) auto;gap:0;padding:5px 7px 7px}
+ :root[data-workspace-proof] .model-button{min-height:46px;padding:4px 7px}
+ :root[data-workspace-proof] .model-button>.model-name{font-size:14px}
+ :root[data-workspace-proof] .proof-route-caption{font-size:11px}
+ :root[data-workspace-proof] .composer-bar .usage-meter{grid-column:1;grid-row:2}
+ :root[data-workspace-proof] .composer-bar .usage-chip{min-height:44px;padding:4px 7px;max-width:none}
+ :root[data-workspace-proof] .proof-usage-label{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:2px 6px}
+ .proof-usage-label small{flex-basis:100%;font-size:11px}
+ :root[data-workspace-proof] .composer-voice-controls{grid-column:2;grid-row:1/3;gap:4px}
+ :root[data-workspace-proof] .proof-navigation>button:nth-of-type(2),:root[data-workspace-proof] .proof-navigation>button:nth-of-type(3),:root[data-workspace-proof] .proof-navigation>button:nth-of-type(4),:root[data-workspace-proof] .proof-navigation>button:nth-of-type(7){font-size:11px}
+ :root[data-workspace-proof][data-proof-expanded] .app{grid-template-rows:22px minmax(0,1fr)}
+ :root[data-workspace-proof][data-proof-expanded] .proof-navigation{display:none}
+ :root[data-workspace-proof][data-proof-expanded] .main{grid-row:2;grid-template-rows:52px minmax(0,1fr)}
+ :root[data-workspace-proof][data-proof-expanded] .conversation-area,:root[data-workspace-proof][data-proof-expanded] .to-bottom{display:none}
+ :root[data-workspace-proof][data-proof-expanded] .composer-wrap{grid-row:2;display:flex;padding:10px;height:100%;min-height:0;align-self:stretch}
+ :root[data-workspace-proof][data-proof-expanded] .composer{height:100%;flex:1 1 0;min-height:0}
+ :root[data-workspace-proof][data-proof-expanded] .proof-writing-head{padding:18px 16px 16px;display:flex}
+ :root[data-workspace-proof][data-proof-expanded] .proof-writing-head strong{font-size:26px}
+ :root[data-workspace-proof][data-proof-expanded] .composer textarea{min-height:70px!important;flex:1 1 0;max-height:none;font-size:17px;line-height:1.8;padding:18px!important}
+}
+@media(max-width:360px){.proof-context-toolbar button:first-child>span,.proof-context-toolbar button[aria-label='Add context']>span{display:none}:root[data-workspace-proof] .proof-context-toolbar button{min-width:44px}:root[data-workspace-proof] .thread{padding-inline:18px}}
+@media(max-height:600px) and (max-width:899px){:root[data-workspace-proof][data-proof-expanded] .proof-writing-head{padding-block:10px}:root[data-workspace-proof][data-proof-expanded] .proof-writing-head strong{font-size:21px}:root[data-workspace-proof][data-proof-expanded] .proof-writing-head .proof-section-label{margin-bottom:4px}:root[data-workspace-proof][data-proof-expanded] .composer textarea{min-height:60px!important}}
+@media(prefers-reduced-motion:reduce){:root[data-workspace-proof] *, :root[data-workspace-proof] *::before, :root[data-workspace-proof] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* The document heading precedes the canonical message feed, preserving article semantics. */
+:root[data-workspace-proof] .messages{display:flex;flex-direction:column}
+:root[data-workspace-proof] .messages>.thread{flex-shrink:0;width:100%;margin-block:0;padding-top:24px}
+.proof-document-head{flex-shrink:0;width:100%;max-width:var(--proof-reading);padding:32px var(--proof-inset) 24px;margin:0 auto;border:0;position:relative}
+.proof-document-head::after{content:'';position:absolute;bottom:0;left:var(--proof-inset);right:var(--proof-inset);height:1px;background:var(--border)}
+:root[data-workspace-proof=studio] .proof-document-head{padding-inline:44px}
+:root[data-workspace-proof=studio] .proof-document-head::after{inset-inline:44px}
+:root[data-workspace-proof] .send-btn{animation:none;box-shadow:none!important}
+@media(max-width:899px){.proof-document-head,:root[data-workspace-proof=studio] .proof-document-head{padding:18px 22px}.proof-document-head::after,:root[data-workspace-proof=studio] .proof-document-head::after{inset-inline:22px}.proof-document-head h1,:root[data-workspace-proof=studio] .proof-document-head h1{font-size:26px;margin:7px 0 10px}.proof-document-head .proof-section-label{font-size:10px;margin-bottom:0}:root[data-workspace-proof] .messages>.thread{padding-top:18px}}
+/* Keep the real latest-reply control in the conversation grid cell, never over the editor or margin. */
+:root[data-workspace-proof] .to-bottom{position:relative;grid-column:1;grid-row:2;inset:auto;justify-self:end;align-self:end;margin:0 18px 14px 0;min-width:44px;min-height:44px;transform:none}
+:root[data-workspace-proof=studio] .to-bottom{grid-column:2}
+:root[data-workspace-proof][data-proof-expanded] .to-bottom{display:none}
+@media(max-width:899px){:root[data-workspace-proof] .to-bottom{grid-column:1}}
+@media(max-width:899px) and (max-height:600px){:root[data-workspace-proof] .to-bottom{display:none}}
+:root[data-workspace-proof]{--signal-soft:var(--surface-3)}
+:root[data-workspace-proof] .pmark{filter:grayscale(1)}
+:root[data-workspace-proof][data-proof-expanded] .proof-writing-head{animation:proof-writing-enter 180ms ease-out both}
+@keyframes proof-writing-enter{from{opacity:.65;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){:root[data-workspace-proof][data-proof-expanded] .proof-writing-head{animation:none}}

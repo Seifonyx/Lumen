@@ -2,7 +2,9 @@
 
 20 October 2026, Africa/Cairo. **Gate 1 remains NOT APPROVED.** [Course correction](../ROUTING_CENTER_COURSE_CORRECTION_2026-10-20.md) governs. These are actual local Lumen component renders with labelled synthetic accounts, not generated artwork or a production redesign.
 
-**Latest:** [Provider UX quality closure](PROVIDER_UX_QUALITY.md), [portable offline review](provider-review.html). Twelve ordinary and four separate keyboard-focus captures supersede the previous provider presentation. The sections below retain earlier architectural-checkpoint evidence.
+**Latest:** [Flagship Workspace & Composer](FLAGSHIP_WORKSPACE.md), [portable offline flagship review](workspace-review.html), [machine evidence](workspace-evidence.json). This is a bounded proposal after provider quality; Gate1 is unapproved and work stops here. The board embeds26 actual images, including original-app comparisons, with no external assets.
+
+**Preserved provider slice:** [Provider UX quality closure](PROVIDER_UX_QUALITY.md), [portable offline review](provider-review.html). Twelve ordinary and four separate keyboard-focus captures supersede the previous provider presentation. The sections below retain earlier architectural-checkpoint evidence.
 
 Open [review.html](review.html) for ten matched workflow views and [the actual 9Router board](../reference-board.html) for individually sourced reference images. [INFORMATION_ARCHITECTURE.md](../INFORMATION_ARCHITECTURE.md) explains how research changes the product. The original Aperture/Relay/Fold studies are retired.
 
@@ -14,7 +16,7 @@ Both connect Workspace ↔ Routing Center, with catalog inventory, existing conn
 
 Proof-only React portals and CSS are exploration scaffolding, not the production design-system architecture. No product entry imports these files. Before any promotion, implement the selected structure through shared component/token owners and the approved design system; preserve all existing phone keyboard/draft/gesture/security contracts.
 
-## Actual verification
+## Earlier architectural-checkpoint verification
 
 Final matrix: **10 passed cases, 176 captured-state axe scans, zero reported violations; zero page errors or document overflow.** Machine reports and screenshots are in `screens/`.
 
@@ -66,3 +68,22 @@ node docs/blackout/workspace-proofs/check-review.cjs
 Type an identifiable draft. Open usage, change model/Auto/Layout, visit Routing Center and return: preserve draft/selection. Edit Launch writing, reorder models and change fallback scope, save/reload/reopen. Open provider credentials: stay masked. Expand Studio on phone: the form should fill the working area with input/footer contained, and collapse should restore the conversation.
 
 Physical iPhone keyboard/gestures/refraction, complete light-phone/black-desktop matrix, live provider/auth/quota behavior, final logo/small-icon design, original motion language, provider-detail redesign, complete account/error/slow/streaming/Canvas/Compare states and full 200% zoom/localization remain unfinished. No final visual approval or whole-product completion claim is made. Do not request Gate 1 solely on test passes: refine these concrete product/identity gaps first.
+
+
+## Reproduce the flagship proposal
+
+Use the existing Node22/browser preload setup above. Keep new raw evidence outside Git:
+
+```sh
+BLACKOUT_OUTPUT=/workspace/.lumen-verification/flagship-2026-10-20/baseline node docs/blackout/workspace-proofs/capture-baseline.cjs
+BLACKOUT_DIRECTION=index BLACKOUT_WIDTH=1440 node docs/blackout/workspace-proofs/flagship-check.cjs
+BLACKOUT_DIRECTION=studio BLACKOUT_WIDTH=390 node docs/blackout/workspace-proofs/flagship-check.cjs
+BLACKOUT_DIRECTION=studio BLACKOUT_WIDTH=320 MR_WEBKIT=1 node docs/blackout/workspace-proofs/flagship-check.cjs
+BLACKOUT_DIRECTION=studio BLACKOUT_WIDTH=390 BLACKOUT_HEIGHT=480 BLACKOUT_OUTPUT=/workspace/.lumen-verification/flagship-2026-10-20/short node docs/blackout/workspace-proofs/flagship-check.cjs
+BLACKOUT_DIRECTION=index BLACKOUT_WIDTH=390 MR_WEBKIT=1 node docs/blackout/workspace-proofs/flagship-interaction-check.cjs
+node docs/blackout/workspace-proofs/build-workspace-review.cjs
+node docs/blackout/workspace-proofs/check-workspace-review.cjs
+MR_WEBKIT=1 node docs/blackout/workspace-proofs/check-workspace-review.cjs
+```
+
+The builder requires the complete11-case matrix and two focused reports recorded in FLAGSHIP_WORKSPACE.md; commands above illustrate individual cases, not the entire matrix. It refuses failed/incomplete reports. Default output is the external flagship evidence directory. Inspect `workspace-review.html` offline or at `http://localhost:5194/workspace-proofs/workspace-review.html`. Physical keyboard/device behavior is not simulated by screenshots.

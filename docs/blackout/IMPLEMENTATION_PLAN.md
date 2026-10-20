@@ -63,6 +63,21 @@ PR #35 fixed UsageMeter controls accidentally submitting unsent drafts, independ
 
 **18.5→18.5%, Medium confidence; all baseline weights/fractions unchanged.** The remaining identity, physical-device/complex-state and approval acceptance groups are not complete. No production integration/merge/deployment: Gate1 is unapproved. Keep PR #34 draft and stop after this slice. Verified quality source/artifact commit `a9e34834fae3af1e0b721badcb9e24e03327f9ce` is committed/pushed and remote synchronization was confirmed. The containing final handoff/link-label update is documentation-only. Exact state and remaining scope are recorded in the handoff.
 
+## Flagship Workspace & Composer — isolated proposal checkpoint
+
+[Scoped user amendment](FLAGSHIP_WORKSPACE_COMPOSER_2026-10-20.md), [architecture/verification/limits](workspace-proofs/FLAGSHIP_WORKSPACE.md), [portable offline review](workspace-proofs/workspace-review.html). Unweighted refinement **B02-WORKSPACE** maps to existing B02.1/B02.2; no new scope weight or duplicate credit. The explicit workspace brief supersedes the prior provider stop boundary only for this proposal.
+
+| Deliverable | Status / evidence |
+|---|---|
+| Distinct Index/Studio composition | Verified isolated proof: document/outline/intelligence margin versus independent drafting/response panes |
+| Unified real three-layer composer | Verified: canonical context/tool/file owners; same textarea and draft/selection/focus; real picker/usage/Send/Stop |
+| Phone writing and navigation | Verified in Linux engine/viewport tests, including320px and simulated480px keyboard space; physical iPhone remains unverified |
+| Curated actual visual review |26 embedded desktop/phone frames, six states per direction plus two original comparisons; separate provider quality board preserved |
+| Regression and accessibility |11 main cases/194 axe scans; two focused motion/prefill/selection cases and eight rapid WebKit picker switches; type/build and offline review checks |
+| Production integration / approval |Not started; Gate1 remains NOT APPROVED, no merge/deploy |
+
+**18.5→18.5%, Medium confidence;81.5 remaining.** Stable baseline v1 unchanged. Optical/composition refinements do not complete the entire B02.1 identity/motion acceptance group; physical/complex-state B02.2 evidence remains incomplete and B02.3 explicit approval remains0. No production B03/B04 credit is awarded.22 pre-existing strict-audit findings remain. See the handoff for exact source/main/deployed state and the implementation note for actual failure history and manual test sequences.
+
 ## Verification and next review
 
-Use [PROVIDER_UX_QUALITY.md](workspace-proofs/PROVIDER_UX_QUALITY.md) for current checks/manual review and the earlier provider note for historical implementation commands. Review the12 ordinary overview/list/detail captures separately from4 keyboard-focus captures. There is no automatic transition into another Blackout phase; preserve the master and the original post-approval B03/B04 dependencies.
+Use [FLAGSHIP_WORKSPACE.md](workspace-proofs/FLAGSHIP_WORKSPACE.md) for the latest proposal and actual checks, and retain the provider quality note/board as its separately verified milestone. Review the26 curated workspace frames and two directions. Stop here; no automatic transition into another phase, approval request, merge or deployment. Preserve the master, stable weights and original post-approval B03/B04 dependencies.

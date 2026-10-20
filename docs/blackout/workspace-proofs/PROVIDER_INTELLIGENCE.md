@@ -1,5 +1,7 @@
 # Provider intelligence — focused proof checkpoint
 
+**Historical slice note:** current provider UX, filters/defaults/subscriptions and visual evidence are superseded by [PROVIDER_UX_QUALITY.md](PROVIDER_UX_QUALITY.md). The portable review now contains12 presentation and4 keyboard-focus captures; the original results below describe their recorded earlier checkpoint.
+
 20 October 2026, Africa/Cairo. Scope: the exact [execution packet](../PROVIDER_INTELLIGENCE_PACKET_2026-10-20.md), SHA256 `f71b15a549198aa7b83b34df2460683f3080ac4a016105913fee04d22274222d`. **Gate 1 remains unapproved. No production integration or deployment.**
 
 ## Open the visual review

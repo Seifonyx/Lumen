@@ -9,17 +9,37 @@
       "width": 1440,
       "engine": "chromium",
       "syntheticData": true,
+      "largeCatalog": {
+        "models": 1000,
+        "unrelatedUpdates": 10,
+        "unrelatedCommits": 0,
+        "elapsedMs": 326.40000000596046,
+        "permissionChangeCommits": 1000,
+        "disabledAfterKeyRemoval": 1000
+      },
       "inferenceRequests": 0,
       "blockedAuthSdkRequests": [],
       "unexpectedExternalRequests": [],
       "pageErrors": [],
       "scans": [
         {
+          "state": "overview",
+          "violations": []
+        },
+        {
           "state": "providers",
           "violations": []
         },
         {
           "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "long-provider",
+          "violations": []
+        },
+        {
+          "state": "keyboard-focus",
           "violations": []
         },
         {
@@ -39,6 +59,7 @@
       "width": 1440,
       "engine": "webkit",
       "syntheticData": true,
+      "largeCatalog": null,
       "inferenceRequests": 0,
       "blockedAuthSdkRequests": [
         {
@@ -54,11 +75,23 @@
       "pageErrors": [],
       "scans": [
         {
+          "state": "overview",
+          "violations": []
+        },
+        {
           "state": "providers",
           "violations": []
         },
         {
           "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "long-provider",
+          "violations": []
+        },
+        {
+          "state": "keyboard-focus",
           "violations": []
         },
         {
@@ -78,17 +111,30 @@
       "width": 390,
       "engine": "chromium",
       "syntheticData": true,
+      "largeCatalog": null,
       "inferenceRequests": 0,
       "blockedAuthSdkRequests": [],
       "unexpectedExternalRequests": [],
       "pageErrors": [],
       "scans": [
         {
+          "state": "overview",
+          "violations": []
+        },
+        {
           "state": "providers",
           "violations": []
         },
         {
           "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "long-provider",
+          "violations": []
+        },
+        {
+          "state": "keyboard-focus",
           "violations": []
         },
         {
@@ -108,6 +154,7 @@
       "width": 390,
       "engine": "webkit",
       "syntheticData": true,
+      "largeCatalog": null,
       "inferenceRequests": 0,
       "blockedAuthSdkRequests": [
         {
@@ -123,11 +170,23 @@
       "pageErrors": [],
       "scans": [
         {
+          "state": "overview",
+          "violations": []
+        },
+        {
           "state": "providers",
           "violations": []
         },
         {
           "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "long-provider",
+          "violations": []
+        },
+        {
+          "state": "keyboard-focus",
           "violations": []
         },
         {
@@ -147,17 +206,30 @@
       "width": 1440,
       "engine": "chromium",
       "syntheticData": true,
+      "largeCatalog": null,
       "inferenceRequests": 0,
       "blockedAuthSdkRequests": [],
       "unexpectedExternalRequests": [],
       "pageErrors": [],
       "scans": [
         {
+          "state": "overview",
+          "violations": []
+        },
+        {
           "state": "providers",
           "violations": []
         },
         {
           "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "long-provider",
+          "violations": []
+        },
+        {
+          "state": "keyboard-focus",
           "violations": []
         },
         {
@@ -177,6 +249,7 @@
       "width": 1440,
       "engine": "webkit",
       "syntheticData": true,
+      "largeCatalog": null,
       "inferenceRequests": 0,
       "blockedAuthSdkRequests": [
         {
@@ -192,11 +265,23 @@
       "pageErrors": [],
       "scans": [
         {
+          "state": "overview",
+          "violations": []
+        },
+        {
           "state": "providers",
           "violations": []
         },
         {
           "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "long-provider",
+          "violations": []
+        },
+        {
+          "state": "keyboard-focus",
           "violations": []
         },
         {
@@ -216,17 +301,30 @@
       "width": 390,
       "engine": "chromium",
       "syntheticData": true,
+      "largeCatalog": null,
       "inferenceRequests": 0,
       "blockedAuthSdkRequests": [],
       "unexpectedExternalRequests": [],
       "pageErrors": [],
       "scans": [
         {
+          "state": "overview",
+          "violations": []
+        },
+        {
           "state": "providers",
           "violations": []
         },
         {
           "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "long-provider",
+          "violations": []
+        },
+        {
+          "state": "keyboard-focus",
           "violations": []
         },
         {
@@ -246,6 +344,7 @@
       "width": 390,
       "engine": "webkit",
       "syntheticData": true,
+      "largeCatalog": null,
       "inferenceRequests": 0,
       "blockedAuthSdkRequests": [
         {
@@ -261,11 +360,125 @@
       "pageErrors": [],
       "scans": [
         {
+          "state": "overview",
+          "violations": []
+        },
+        {
           "state": "providers",
           "violations": []
         },
         {
           "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "long-provider",
+          "violations": []
+        },
+        {
+          "state": "keyboard-focus",
+          "violations": []
+        },
+        {
+          "state": "detail",
+          "violations": []
+        }
+      ],
+      "limitations": [
+        "No real provider calls or physical iPhone",
+        "Catalog discovery does not prove inference",
+        "Synthetic account transition checks proof-local UI, not a live sign-in flow"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "index",
+      "width": 320,
+      "engine": "webkit",
+      "syntheticData": true,
+      "largeCatalog": null,
+      "inferenceRequests": 0,
+      "blockedAuthSdkRequests": [
+        {
+          "host": "apis.google.com",
+          "path": "/js/api.js"
+        },
+        {
+          "host": "apis.google.com",
+          "path": "/js/api.js"
+        }
+      ],
+      "unexpectedExternalRequests": [],
+      "pageErrors": [],
+      "scans": [
+        {
+          "state": "overview",
+          "violations": []
+        },
+        {
+          "state": "providers",
+          "violations": []
+        },
+        {
+          "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "long-provider",
+          "violations": []
+        },
+        {
+          "state": "keyboard-focus",
+          "violations": []
+        },
+        {
+          "state": "detail",
+          "violations": []
+        }
+      ],
+      "limitations": [
+        "No real provider calls or physical iPhone",
+        "Catalog discovery does not prove inference",
+        "Synthetic account transition checks proof-local UI, not a live sign-in flow"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "studio",
+      "width": 320,
+      "engine": "chromium",
+      "syntheticData": true,
+      "largeCatalog": {
+        "models": 1000,
+        "unrelatedUpdates": 10,
+        "unrelatedCommits": 0,
+        "elapsedMs": 315.7999999821186,
+        "permissionChangeCommits": 1000,
+        "disabledAfterKeyRemoval": 1000
+      },
+      "inferenceRequests": 0,
+      "blockedAuthSdkRequests": [],
+      "unexpectedExternalRequests": [],
+      "pageErrors": [],
+      "scans": [
+        {
+          "state": "overview",
+          "violations": []
+        },
+        {
+          "state": "providers",
+          "violations": []
+        },
+        {
+          "state": "no-key",
+          "violations": []
+        },
+        {
+          "state": "long-provider",
+          "violations": []
+        },
+        {
+          "state": "keyboard-focus",
           "violations": []
         },
         {
@@ -282,36 +495,68 @@
   ],
   "screenshots": [
     {
+      "name": "index-1440-overview.png",
+      "sha256": "d4bc03eb0f26a83bdd2cb135a38005825744c09f336a2b4aadff2d8368c02ba6"
+    },
+    {
       "name": "index-1440-providers.png",
-      "sha256": "240d166bc4205bbceb1cc9743cbf641defaf05a4b9ffae04075b61ba2efcf70a"
+      "sha256": "059e80fc0f49e0cd6f4d4b614be8f5fbaf26a3fc05f4b33e671d6e07742b0214"
     },
     {
       "name": "index-1440-detail.png",
-      "sha256": "994d5beb16e81dd22c2223ec0c08d9c3d52654626e089045654a4e24c80e3ee8"
+      "sha256": "128ac40924732b1c4fef4aa03c48a881470a75b09780424e7b4a0a74e0945f86"
+    },
+    {
+      "name": "index-1440-keyboard-focus.png",
+      "sha256": "de70aec59b5aaee55ef2f050de7e98da4ffabb827677a3f28599efeb024f800d"
+    },
+    {
+      "name": "index-390-overview.png",
+      "sha256": "8f35b33c6048bdb42338270c791bbac28a5ccf47876ff85ddf08a291303bc37e"
     },
     {
       "name": "index-390-providers.png",
-      "sha256": "3e0fcf4d1fe92d254a392e7be46f3b2d908a1d2ff060b280159784d77d70db8c"
+      "sha256": "c2bb6ce6eb8db0866d6e3308095efb714fceef552828156eeeeb430d711948f8"
     },
     {
       "name": "index-390-detail.png",
-      "sha256": "b8fe10474336645a441a287654ebb5b6ee375bcc9515494070639b021f1d6405"
+      "sha256": "a03d08fad036dda8cac30e422efc62d2b2f5e986be79f2cd3501535223d3fba2"
+    },
+    {
+      "name": "index-390-keyboard-focus.png",
+      "sha256": "88861814f3e05cd01862580d98525fe8d7125f60587f1b45fd76ad2485474ce6"
+    },
+    {
+      "name": "studio-1440-overview.png",
+      "sha256": "54fff1c05865e21cadde120e0d19673927ec115404bc2e97a843fd2f31b53c61"
     },
     {
       "name": "studio-1440-providers.png",
-      "sha256": "92de2762d02866e6c7713716b40bb265ce0fc85f934d24bf26868f690dc1194d"
+      "sha256": "03903c729fbf98ceee509abb96f90e5b078f398d392de1f8fe365711e2c7dcd0"
     },
     {
       "name": "studio-1440-detail.png",
-      "sha256": "51e2469539f07c4b4a4e05a58e61eb5f73ebbe9e4f2ccf4deb65213889c81f3d"
+      "sha256": "888a4da4b3e10257e9a58a8b8ecf239deb3470086001b370ca26a788b46a531f"
+    },
+    {
+      "name": "studio-1440-keyboard-focus.png",
+      "sha256": "9bef10ef8f6c6b96fbec698e733dfdab69e0135aa833793655acdec33c1b73a1"
+    },
+    {
+      "name": "studio-390-overview.png",
+      "sha256": "45a13c80bdcd626ca82276dfb3583acc7fdd7e985843d90755915c0967fd5151"
     },
     {
       "name": "studio-390-providers.png",
-      "sha256": "e25c4f2c88adfd5ac6583df846453c56e31568f9d3179ae607874f3ffed79bf4"
+      "sha256": "3ac9e42489c4d3801c16376b451a89279d529d1700b9d33054c6851ed688ee78"
     },
     {
       "name": "studio-390-detail.png",
-      "sha256": "b133113652b5a02bbf728c169f008d86a79b9fa1d96c021f811ce018e87c784c"
+      "sha256": "92343bb89c4e64696b49f684a023a3b828a7985682ab047fb6d5e4ba2905641b"
+    },
+    {
+      "name": "studio-390-keyboard-focus.png",
+      "sha256": "2e621d8898210d8df023cd67bf790bcfc687f202e4ced5b8a94064c5a9779820"
     }
   ]
 }

@@ -2,7 +2,7 @@
 
 20 October 2026, Africa/Cairo. **Gate 1 remains NOT APPROVED.** [Course correction](../ROUTING_CENTER_COURSE_CORRECTION_2026-10-20.md) governs. These are actual local Lumen component renders with labelled synthetic accounts, not generated artwork or a production redesign.
 
-**Latest focused slice:** [Provider intelligence — portable offline review](provider-review.html), [implementation/evidence](PROVIDER_INTELLIGENCE.md). Its eight embedded captures supersede the earlier four-provider overview.
+**Latest:** [Provider UX quality closure](PROVIDER_UX_QUALITY.md), [portable offline review](provider-review.html). Twelve ordinary and four separate keyboard-focus captures supersede the previous provider presentation. The sections below retain earlier architectural-checkpoint evidence.
 
 Open [review.html](review.html) for ten matched workflow views and [the actual 9Router board](../reference-board.html) for individually sourced reference images. [INFORMATION_ARCHITECTURE.md](../INFORMATION_ARCHITECTURE.md) explains how research changes the product. The original Aperture/Relay/Fold studies are retired.
 

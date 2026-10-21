@@ -1,8 +1,12 @@
 # Lumen Blackout — cross-agent handoff
 
-**Checkpoint: 21 October 2026 (quality pass; see below). Phase B02, identity/product-architecture exploration. Gate 1 NOT APPROVED.** Current completion **18.5% (approximately 19%, Medium confidence)** on stable Blackout baseline v1. Previous committed checkpoint was unscored; an uncommitted 19.75% draft overcredited rejected visual work. Research is retained; current credit comes from the actual new two-experience proof, not the old recolors. Weights unchanged;81.5 points remain. Independent Model Picker ledger stays 98.5%.
+**Checkpoint: 21 October 2026 (final verification; see below). Phase B02, identity/product-architecture exploration. Gate 1 NOT APPROVED.** Current completion **18.5% (approximately 19%, Medium confidence)** on stable Blackout baseline v1. Previous committed checkpoint was unscored; an uncommitted 19.75% draft overcredited rejected visual work. Research is retained; current credit comes from the actual new two-experience proof, not the old recolors. Weights unchanged;81.5 points remain. Independent Model Picker ledger stays 98.5%.
 
-## Latest scoped work — Gate1 flagship quality pass (21 October 2026)
+## Latest — Gate1 final verification (21 October 2026)
+
+Verification only, at `1d1e0f7e02df4849949bdddbd880e8956fe25bd7`. Record: [workspace-proofs/FINAL_VERIFICATION.md](workspace-proofs/FINAL_VERIFICATION.md). WebKit ran in the official `mcr.microsoft.com/playwright:v1.56.1-noble` image (WebKit 26.0, build 2215) via Docker with `--network host`, because the container's Playwright CDN is blocked. All 8 required WebKit cases plus 2 short-height supplements pass; the 10 Chromium cases were re-run at the same SHA and pass (20 cases, 354 axe states, 0 violations, one intercepted Send/Stop each, 0 real calls). The portable review and evidence were rebuilt (`sourceBase` 1d1e0f7) and pass the checker in both engines. Physical-iPhone checklist written; it is **blocked** because `bootstrap.ts` renders only on hostname `localhost` — a test-only host allowance needs owner approval. Gate1 NOT APPROVED; no merge/deploy. **18.5% unchanged. Exact next action: STOP for owner review.**
+
+## Previous — Gate1 flagship quality pass (21 October 2026)
 
 User [quality-pass brief](GATE1_QUALITY_PASS_2026-10-21.md) continues PR #34 from `41bae00` (consolidation implementation `5c9ff0f`). Read [record, before/after and limits](workspace-proofs/QUALITY_PASS.md). Opt-in preview only; no `src/`, dependency or production entry change.
 

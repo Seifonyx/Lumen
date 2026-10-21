@@ -96,3 +96,7 @@ Use CONSOLIDATION.md and the new portable review for this scope; older workspace
 
 **18.5→18.5%, Medium confidence; weights/fractions unchanged, 81.5 remaining.** Refines partial B02.1/B02.2; no B02.3 approval, B03/B04 integration or physical-device credit. Gate1 NOT APPROVED; stop for owner review.
 
+### Gate1 final verification — 21 October 2026
+
+[Record](workspace-proofs/FINAL_VERIFICATION.md). At `1d1e0f7`: WebKit (official Playwright 1.56.1 image) 8 required + 2 supplementary cases and Chromium 10 cases pass, 354 axe states, 0 violations; portable review rebuilt and checked in both engines. Physical-iPhone checklist prepared but blocked by the localhost-only preview guard pending an owner decision. **18.5→18.5%, Medium confidence.** Gate1 NOT APPROVED; stop for owner review.
+

@@ -70,7 +70,7 @@ All on a frozen localhost Vite server, port 5195 (`hmr:false, watch:null`), rest
 - **Red/green:** against the unchanged `41bae00` source, the new harness fails at 390 (mode stays "Workspace" in Focus) and at 1440 (no mode label). With the mode checks removed, it fails on the missing honest usage label. All pass on the new source.
 - **Other checks:** `usage-share.test.mjs` passes. Proof `tsc` passes. Repository `npm test` (typecheck plus all unit tests) passes. The production `vite build` passes with the existing ineffective `sync.ts` dynamic-import warning.
 
-**Not run:**
+**Not run (WebKit and the review rebuild were later completed in [FINAL_VERIFICATION.md](FINAL_VERIFICATION.md)):**
 - **Linux WebKit:** it isn't installed in this environment, and its download is blocked by the network policy. The WebKit halves of the matrix, including Studio 320×844 WebKit, still need a run.
 - **The strict premium static audit:** its tool isn't in this repository or environment. The 22 pre-existing findings recorded earlier are not re-verified.
 - **The portable offline review HTML:** not rebuilt. Its builder expects the full Chromium+WebKit report set, so the curated pairs above are the review artifact for this pass.

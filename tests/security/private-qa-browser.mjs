@@ -16,8 +16,9 @@ import { verifyBuild } from '../../scripts/qa/verify.mjs';
 
 const buildDir = process.env.QA_BUILD_DIR;
 assert.ok(buildDir, 'Set QA_BUILD_DIR to the output of scripts/qa/build.mjs');
-const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-const problems = await verifyBuild(buildDir, process.env.QA_EXPECTED_COMMIT || head);
+// In a container without git, pass the commit the build must match explicitly.
+const head = process.env.QA_EXPECTED_COMMIT || execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+const problems = await verifyBuild(buildDir, head);
 assert.deepEqual(problems, [], 'build must match its manifest and commit before it is served');
 
 const engine = process.env.MR_WEBKIT ? webkit : chromium;

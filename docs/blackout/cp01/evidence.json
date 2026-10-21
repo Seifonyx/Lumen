@@ -1,0 +1,238 @@
+{
+  "scope": "CP01 only; Gate 1 approved; CP02+ unauthorized; no merge/deploy/exposure",
+  "sourceBase": "df54edf244ccadf6886f0608f230631fe3b52dee",
+  "sourceHashes": {
+    "src/App.tsx": "d10aec6aa72772b3085d287d306632ce1af279c1fb1dcd52f147723351ffd553",
+    "src/components/Sidebar.tsx": "bf4887f23952c855850b441abfc87f73c89694f3d0b891a3247b6805dc115f3c",
+    "src/components/ChatView.tsx": "d182acfe60874a83405572c3e7f383f8918097e6811699b8467d45a7b894e096",
+    "src/components/Composer.tsx": "48061a51e66cb70d73fae51ea77db74c935c001d7a0ac51d807668f17d312230",
+    "src/lib/workspace-presentation.ts": "192175f45b75f1debf42705fc6f6118dc70ed7bdc3c580ff5a496c4e856ec6c4",
+    "src/styles/canvas.css": "7510e6e1d24cf1c0b937a7076ac39ee38df59d0bce6548321895252339a491e6",
+    "tests/e2e/canvas-integration.cjs": "bb6e482ad249f95118e72ee2dcdae32ef889771f7dc43ba87b7fa978e53b1831",
+    "tests/security/canvas-preview-isolation.cjs": "3d565781893ea1ed798f7f113e7d01abf03a7b427f227812dc2a672126459f48",
+    "tests/security/canvas-build-isolation.mjs": "2398f4d072343b3896da8a8eff1de10cea9e2429cb70ae09e6592b1839e89c41",
+    "tests/unit/canvas-foundation.test.mjs": "966b2a3ab21ade9afa72759227e04d3aadbbcb4d95eb1d2678bf03f856713ae5",
+    "tests/types/canvas-presentation.ts": "3fdace0dcb380d1e3ffaadcc9a1400859840d0821a944e149152476bf3edb4fe",
+    "tests/types/tsconfig.canvas.json": "9287137170b9a503ad04d56e97e2470b64f6a5be39d5b6631897c7bd4b076518"
+  },
+  "node": "v22.23.3",
+  "playwright": "1.56.1",
+  "unitFilesPassed": 80,
+  "compileContracts": "positive and negative cases pass; original missing-export RED recorded",
+  "tokenContract": "missing-foundation RED then GREEN; source-scoped custom properties, browser theme/reduced-motion/no-appearance-change assertions",
+  "productionBuild": {
+    "modulesAudited": 2556,
+    "artifactCount": 174,
+    "baselineByteEquality": true,
+    "negativeImportControls": 5,
+    "artifactManifestSHA256": "cf7f1a15c489152ee573821c4645baa723795ac958a8183bfac8768ea1fef33f"
+  },
+  "browserMatrices": [
+    {
+      "engine": "chromium",
+      "cases": [
+        {
+          "mode": "ordinary",
+          "width": 1440,
+          "height": 960,
+          "status": "passed",
+          "interceptedSends": 1,
+          "blockedExternal": []
+        },
+        {
+          "mode": "ordinary",
+          "width": 390,
+          "height": 844,
+          "status": "passed",
+          "interceptedSends": 1,
+          "blockedExternal": []
+        },
+        {
+          "mode": "ordinary",
+          "width": 320,
+          "height": 568,
+          "status": "passed",
+          "interceptedSends": 1,
+          "blockedExternal": []
+        },
+        {
+          "mode": "canvas",
+          "width": 1440,
+          "height": 960,
+          "status": "passed",
+          "interceptedSends": 1,
+          "blockedExternal": []
+        },
+        {
+          "mode": "canvas",
+          "width": 390,
+          "height": 844,
+          "status": "passed",
+          "interceptedSends": 1,
+          "blockedExternal": []
+        },
+        {
+          "mode": "canvas",
+          "width": 320,
+          "height": 568,
+          "status": "passed",
+          "interceptedSends": 1,
+          "blockedExternal": []
+        }
+      ],
+      "physicalDevice": false,
+      "realProviderCalls": 0
+    },
+    {
+      "engine": "webkit",
+      "cases": [
+        {
+          "mode": "ordinary",
+          "width": 1440,
+          "height": 960,
+          "status": "passed",
+          "interceptedSends": 1,
+          "blockedExternal": [
+            "apis.google.com"
+          ]
+        },
+        {
+          "mode": "ordinary",
+          "width": 390,
+          "height": 844,
+          "status": "passed",
+          "interceptedSends": 1,
+          "blockedExternal": [
+            "apis.google.com"
+          ]
+        },
+        {
+          "mode": "ordinary",
+          "width": 320,
+          "height": 568,
+          "status": "passed",
+          "interceptedSends": 1,
+          "blockedExternal": [
+            "apis.google.com"
+          ]
+        },
+        {
+          "mode": "canvas",
+          "width": 1440,
+          "height": 960,
+          "status": "passed",
+          "interceptedSends": 1,
+          "blockedExternal": [
+            "apis.google.com"
+          ]
+        },
+        {
+          "mode": "canvas",
+          "width": 390,
+          "height": 844,
+          "status": "passed",
+          "interceptedSends": 1,
+          "blockedExternal": [
+            "apis.google.com"
+          ]
+        },
+        {
+          "mode": "canvas",
+          "width": 320,
+          "height": 568,
+          "status": "passed",
+          "interceptedSends": 1,
+          "blockedExternal": [
+            "apis.google.com"
+          ]
+        }
+      ],
+      "physicalDevice": false,
+      "realProviderCalls": 0
+    }
+  ],
+  "previewIsolation": {
+    "engines": [
+      "chromium",
+      "webkit"
+    ],
+    "checks": [
+      "non-preview account rejected even with harness flag",
+      "non-localhost hostname rejected",
+      "manual synthetic preview blocks provider transport",
+      "ordinary proposal query cannot load preview"
+    ],
+    "passed": true
+  },
+  "existingRegressions": [
+    {
+      "suite": "usage-draft",
+      "exit": 0,
+      "seconds": 8.4
+    },
+    {
+      "suite": "chat-menu",
+      "exit": 0,
+      "seconds": 89.9
+    },
+    {
+      "suite": "selection-boundaries",
+      "exit": 0,
+      "seconds": 3.7
+    },
+    {
+      "suite": "model-picker-accessibility",
+      "exit": 0,
+      "seconds": 13.8
+    },
+    {
+      "suite": "incognito",
+      "exit": 0,
+      "seconds": 26.0
+    },
+    {
+      "suite": "account-isolation",
+      "exit": 0,
+      "seconds": 5.6
+    }
+  ],
+  "negativeControl": "replacing expanded textarea failed identity/selection assertion as expected",
+  "screenshots": {
+    "1440": {
+      "viewport": [
+        1440,
+        960
+      ],
+      "ordinaryBaselineFinalPNGEqual": true,
+      "sha256": "f2fcbce7b9ed096c12d90228ab7a7fb3705085862c58b16515b790864e2cb5d6"
+    },
+    "390": {
+      "viewport": [
+        390,
+        844
+      ],
+      "ordinaryBaselineFinalPNGEqual": true,
+      "sha256": "d75e8dacfa13a176496f1a86c0ce211ce8a9303af1334e6fd7a879eef3f2f17c"
+    }
+  },
+  "review": {
+    "independent": "no Important or Critical findings",
+    "personallyVerified": "foundation unit/compile checks, script syntax, diff check, 174 independent artifact hashes",
+    "limits": "browser matrix not independently rerun; no physical iPhone/live-provider/CP02 verification"
+  },
+  "unverified": [
+    "physical iPhone/keyboard/glass/touch/VoiceOver",
+    "IME/undo/device gestures",
+    "partial-stream retention in new CP01 test",
+    "live authentication transitions in new CP01 test",
+    "emulator-backed full E2E suite",
+    "live providers"
+  ],
+  "progress": {
+    "previous": 21.5,
+    "current": 21.5,
+    "baseline": "Blackout v1",
+    "confidence": "Medium",
+    "noWeightOrFractionChange": true
+  }
+}

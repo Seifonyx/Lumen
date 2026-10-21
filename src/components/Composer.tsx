@@ -35,7 +35,14 @@ export const prefillComposer = (text: string) => window.dispatchEvent(new Custom
 export const insertPrompt = (text: string) => window.dispatchEvent(new CustomEvent(PREFILL, { detail: { text, append: true } }));
 export const prepareTool = (text: string, files: Attachment[] = [], codeExecution = false) => window.dispatchEvent(new CustomEvent(PREFILL, { detail: { text, append: true, files, codeExecution } }));
 
-export default function Composer({ model, meter, modelPicker }: { model: string; meter?: ReactNode; modelPicker?: ReactNode }) {
+/** Canonical picker/meter slots; draft, attachments and dispatch remain owned here. */
+export interface ComposerProps {
+  model: string;
+  meter?: ReactNode;
+  modelPicker?: ReactNode;
+}
+
+export default function Composer({ model, meter, modelPicker }: ComposerProps) {
   const send = useStore((s) => s.send);
   const runComparison = useStore((s) => s.runComparison);
   const stop = useStore((s) => s.stop);

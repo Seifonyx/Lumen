@@ -131,7 +131,11 @@ function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   );
 }
 
-export default function Sidebar({ onCollapse }: { onCollapse: () => void }) {
+export interface SidebarProps {
+  onCollapse: () => void;
+}
+
+export default function Sidebar({ onCollapse }: SidebarProps) {
   const user = useStore((st) => st.user);
   const chats = useStore((s) => s.chats);
   const currentId = useStore((s) => s.currentId);

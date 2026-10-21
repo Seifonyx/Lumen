@@ -1,12 +1,12 @@
 # Lumen Blackout — implementation plan
 
-Checkpoint: **21 October 2026, UTC — post-Gate 1 Canvas blueprint**. Baseline **v1** freezes the existing eight parent weights after recovery of the full master. This is a separate approved initiative; Model Picker remains **98.5%**, and cancelled Adaptive Native's historical 7.5% is not transferable credit.
+Checkpoint: **21 October 2026, UTC — verified CP01 Canvas foundation**. Baseline **v1** freezes the existing eight parent weights after recovery of the full master. This is a separate approved initiative; Model Picker remains **98.5%**, and cancelled Adaptive Native's historical 7.5% is not transferable credit.
 
 ## Current owner decision and scope
 
-**Gate 1 APPROVED; Canvas (A) selected. Production implementation NOT authorized.** The owner confirmed approval after the final sidebar-spacing review and explicitly switched to Codex for a documentation-only production-integration blueprint. **Gates 2/3 pending; no production code, preview exposure/security relaxation, merge or deployment.** Current deliverable: [Canvas production-integration blueprint](CANVAS_PRODUCTION_INTEGRATION_BLUEPRINT.md), unweighted CP00. CP01–CP06 describe proposed execution children, not authorization or completed implementation. The original full master is unchanged.
+**Gate 1 APPROVED; Canvas (A) selected; owner accepted the blueprint and authorized CP01 ONLY.** [CP01 implementation/evidence](CP01_FOUNDATION.md) records isolated contract characterization, exported current prop contracts/type-only composition map and scoped inactive tokens. Default production assets and matched screenshots are byte-identical to the pre-change baseline. **CP02+ and production visual migration remain unauthorized; Gates2/3 pending. No preview exposure/security relaxation, merge or deployment.** Stop after CP01 handoff/synchronization for owner and ChatGPT review.
 
-This current section and ledger supersede historical stop/approval statements below; historical evidence/estimates are preserved. Selected Canvas replaces the rejected consolidated Workspace/Focus proposal as the foundation. First recommended implementation slice is CP01 contract characterization/component seams/scoped tokens in the isolated harness, **only after a separately scoped owner instruction**. Stop after documentation delivery.
+The [accepted integration blueprint](CANVAS_PRODUCTION_INTEGRATION_BLUEPRINT.md) remains the phase/ownership plan. This latest scope supersedes historical blueprint-only stop language and pending Gate1 statements, preserving dated evidence/estimates. The concurrent live-context visual-polish clarification at `3a0bf755…` was preserved as a future CP02–CP04/Gate2 acceptance lens, not a CP01 redesign.
 
 ## Authority and permanent release policy
 
@@ -62,14 +62,22 @@ The [blueprint](CANVAS_PRODUCTION_INTEGRATION_BLUEPRINT.md) supplies exact compo
 | Child | Parent mapping | Current state / next condition |
 |---|---|---|
 | CP00 · post-Gate 1 blueprint | B02.3 decision record; no new weight | Documentation complete; doc validation and synchronization recorded in handoff; stop for owner review |
-| CP01 · characterization/seams/tokens | B03/B07 | Not started; separate owner implementation authorization required |
+| CP01 · characterization/seams/tokens | B03/B07 | **Verified isolated foundation** under explicit CP01-only owner authorization; see CP01_FOUNDATION.md and cp01/evidence.json; stop before CP02 |
 | CP02 · canonical composer/writing sheet | B03/B04/B07 | Not started; CP01 + authorized physical-device access; early real-iPhone acceptance; Gate 2 checkpoint A |
 | CP03 · navigation/reading/projects | B04/B06/B07 | Not started; CP02 evidence/review; Gate 2 checkpoint B |
 | CP04 · Routing Center integration proof | B04/B05/B07 | Not started; preserve verified provider slice; combined formal Gate 2 review package, not automatic approval |
 | CP05 · authorized integration/remaining screens/hardening | B03–B07 | Not started; explicit Gate 2 and integration permission, then Gate 3 final review |
 | CP06 · approved release/production verification | B08 | Not started; applicable approvals, exact-head CI, release authorization and rollback prerequisites |
 
-**Progressive release evaluation for this milestone:** CP00 is independently reviewable documentation, authorized for commit/push to PR #34 and the separate live-context branch only. It is **not authorized for merge/deployment**. No source subset is being released. Do not merge PR #34's historical experiments wholesale or infer release permission from earlier general authorization. Latest explicit owner boundaries control.
+**Progressive release evaluation for this milestone:** CP01 is independently reviewable/tested and authorized for commit/push to PR #34, plus a separate public-safe live checkpoint. It is **not authorized for merge/deployment**. No source subset is being released. Do not merge PR #34's historical experiments wholesale or infer release permission from earlier general authorization. Latest explicit owner boundaries control.
+
+## CP01 verification and stable progress
+
+**21.5% → 21.5%, Medium confidence; 78.5 points remain.** All baseline v1 weights/fractions are unchanged. CP01 is an unweighted child milestone; inactive scoped aliases and type-only interface preparation do not satisfy any entire remaining B03/B07 acceptance group. No integration, physical-device, Gate2/3 or unrelated capability credit.
+
+Actual checks: baseline and final `npm test` (typecheck + all80 unit files), proof TypeScript, ordinary Vite build and2556-module import audit,174 byte-identical emitted artifacts,12 Chromium/WebKit contract cases,8 preview-boundary checks (4 per engine),6 existing focused browser suites,3 additional ordinary-build cases without a proof URL, and exact desktop/phone screenshot equality. New compile/token checks and a deliberate textarea-remount mutation supply expected-failure evidence. Independent review found no Important/Critical defects. The explicit proof-boundary test lives outside built-app discovery; no CI/build pipeline change. Environment/bootstrap-assumption failures, known warnings and unverified physical/IME/undo/live-auth/partial-stream cases are documented in CP01_FOUNDATION.md, not hidden.
+
+Current source and focused evidence are coherent; exact committed/pushed revision is resolved from this milestone's containing Git commit and verified against the remote at delivery. Latest main/runtime remain separate in the handoff. **Exact next action: STOP for CP01 review; CP02 requires a separate owner instruction and resolved device-access prerequisites.**
 
 ## Historical implementation/evidence checkpoints
 

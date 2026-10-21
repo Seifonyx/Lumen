@@ -42,6 +42,9 @@ const ChatExportModal = lazy(() => import('./components/ChatExportModal'));
 
 const glassPhone = () => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches;
 
+/** Root presentation takes no account, transport or replacement-store props. */
+export type AppProps = Record<string, never>;
+
 export default function App() {
   const authed = useStore((s) => s.authed);
   const init = useStore((s) => s.init);

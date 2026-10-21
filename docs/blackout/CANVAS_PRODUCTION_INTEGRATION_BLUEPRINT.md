@@ -2,6 +2,8 @@
 
 **21 October 2026 · planning only · source checkpoint `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a` · draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34).**
 
+**Execution amendment, 21 October 2026:** the owner accepted this blueprint and separately authorized **CP01 only**. Its foundation/results are recorded in [CP01_FOUNDATION.md](CP01_FOUNDATION.md). The planning-only language below records the original blueprint checkpoint; CP02+, production visual integration, preview exposure, merge/deployment and Gates2/3 remain unauthorized/pending. No approved design or phase scope is replaced.
+
 ## Decision and authorization
 
 **Gate 1 is APPROVED. Canvas (A) is the selected Lumen design foundation. Production implementation is NOT authorized.** The owner confirmed this after the final sidebar-spacing review and authorized this blueprint, documentation synchronization and pushes only. Gate 2 and Gate 3 remain pending. No production source, preview security, hosting, authentication configuration, merge or deployment changes belong to this assignment. Reviewing this plan does not automatically authorize its execution.

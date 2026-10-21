@@ -39,7 +39,11 @@ function restoreAnchor(el: HTMLElement, a: Anchor) {
   return true;
 }
 
-export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => void }) {
+export interface ChatViewProps {
+  onExpandSidebar: () => void;
+}
+
+export default function ChatView({ onExpandSidebar }: ChatViewProps) {
   const user=useStore(s=>s.user);
   const hour=new Date().getHours();
   const greeting=`${hour<12?'Morning':hour<18?'Afternoon':'Evening'}${user?.name?', '+user.name.split(' ')[0].slice(0,20):''}`;

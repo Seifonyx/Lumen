@@ -16,6 +16,7 @@ Other applications, including 9Router and ChatGPT, may inspire general UI/intera
 - Never misrepresent estimates, live provider usage, availability, tests, invoices, readiness or privacy/security behavior.
 - Support usable mobile keyboards/safe areas, native-feeling gestures, reduced motion/transparency and actual device verification before release.
 - Separate mock/proof evidence, code implementation, test pass, owner acceptance, merge, deployment and production verification.
+- **Reusable iPhone Safari verification (owner direction, 2026-10-21):** plan a repeatable private, device-accessible synthetic preview workflow for present and future mobile updates, usable without Mac/USB developer access. Favor a stable *testing procedure* and optional controlled entry point with commit-pinned, access-controlled, short-lived test builds rather than permanent public exposure. Maintain strict separation from production accounts, credentials, data and provider inference, and retain real-device keyboard/touch/glass/VoiceOver evidence as required. Hosting/access mechanisms, services/costs, network exposure and any preview-origin/auth/security changes require a separate explicit owner approval; a preference for this testing capability is **not** authorization to create or deploy it.
 
 ## Approval boundaries and roles
 

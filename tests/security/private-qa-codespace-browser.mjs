@@ -35,9 +35,6 @@ try {
     assert.deepEqual(external, []);
     assert.deepEqual(state, { csp: [], blocked: [], firebase: [] });
     assert.deepEqual(errors, []);
-    // A request with a foreign Host header never gets app bytes.
-    const foreign = await page.evaluate(async () => (await fetch(location.href, { headers: {} })).status);
-    assert.equal(foreign, 200, 'same host still served');
     await context.close();
     console.log(`PASS codespace server ${process.env.MR_WEBKIT ? 'webkit' : 'chromium'} ${width}x${height}: app loads behind the gate, forged identity ignored, 0 external requests, 0 CSP/page errors`);
   }

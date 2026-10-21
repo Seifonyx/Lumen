@@ -1,0 +1,15 @@
+{
+  // Private iPhone QA only: a synthetic Lumen review build on a PRIVATE forwarded port (GitHub sign-in,
+  // creator only). No secrets, Firebase, real providers or production data. See
+  // docs/blackout/QA02_CODESPACES_SESSION.md before starting a session; delete the Codespace afterwards.
+  "name": "Lumen private QA (synthetic)",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "hostRequirements": { "cpus": 2 },
+  "postCreateCommand": "npm ci --no-audit --no-fund",
+  "postStartCommand": "nohup sh -c 'node scripts/qa/build.mjs --out /tmp/lumen-qa-build --hours 8 && node scripts/qa/serve-codespace.mjs --build /tmp/lumen-qa-build --port 4173' > /tmp/lumen-qa.log 2>&1 &",
+  "forwardPorts": [4173],
+  "portsAttributes": {
+    "4173": { "label": "Lumen QA (must be Private)", "onAutoForward": "notify", "requireLocalPort": true }
+  },
+  "otherPortsAttributes": { "onAutoForward": "ignore" }
+}

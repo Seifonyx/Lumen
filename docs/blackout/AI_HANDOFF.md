@@ -1,8 +1,20 @@
 # Lumen Blackout — cross-agent handoff
 
-**Checkpoint: 21 October 2026, UTC — QA01 local private-testing foundation implemented and verified by Claude Code (owner-directed continuation after Codex reached its usage limit). Gate 1 APPROVED; Canvas selected; CP01 complete; QA01 ONLY authorized. QA02/QA03, CP02+, production visual integration, preview publication, merge and deployment NOT authorized. Gates 2/3 pending.** Completion **21.5% → 21.5%, Medium confidence**, unchanged stable Blackout v1 weights/fractions; 78.5 points remain. Independent Model Picker remains 98.5%.
+**Checkpoint: 21 October 2026, UTC — QA01 accepted (exact-head CI 39652612955 passed); QA02-A Cloudflare readiness preflight delivered as planning only. Gate 1 APPROVED; Canvas selected; CP01 and QA01 complete. QA02 provisioning/deployment, QA03, CP02+, production visual integration, merge and deployment NOT authorized. Gates 2/3 pending.** Completion **21.5% → 21.5%, Medium confidence**; 78.5 points remain. Independent Model Picker remains 98.5%.
 
-## Latest — QA01 local private-testing foundation (verified; stop for review)
+## Latest — QA02-A Cloudflare readiness preflight (planning only; stop for review)
+
+Read [QA02A_PREFLIGHT.md](QA02A_PREFLIGHT.md). Owner authorized QA02-A only after accepting QA01. **No Cloudflare account access exists in this session** (no token/login/account; relay secrets not read) and direct fetches of developers.cloudflare.com are refused by the session network policy, so capabilities come from search summaries of Cloudflare's own docs/changelog and are listed as **owner checks**, not verified facts. Nothing was created, enrolled, configured, deployed, paid for or exposed.
+
+**Findings:** Access Free covers ≤ 50 users at $0; independent MFA (Face ID passkey/TOTP, per application) exists but its plan availability is **unknown**; one-click Access for Workers covers workers.dev + preview URLs (shared preview policy); Workers Free 100k requests/day and **10 ms CPU per request** — QA01's per-request SHA-256 of large files may exceed it (new finding; canary must measure; fix via stored R2 checksums or $5 Workers Paid); R2 free tier 10 GB, payment method possibly required to enable; R2 tokens can be bucket-scoped, Worker deploy tokens assumed account-wide; budget alerts are informational, never caps.
+
+**Decisions recommended:** pinned `jose` (Cloudflare's documented Access-JWT pattern) in the QA Worker package only, keeping QA01's policy layer and all negative tests; QA-only per-namespace swap of five device-wide preferences (`mr.settings`, `mr.activeProject`, `mr.sidebarCollapsed`, `mr.canvasWidth`, `mr.sideWidth`) in `qa/iphone/main.tsx` before QA03 — no production change. Owner-only login with OTP + Face ID passkey MFA preferred.
+
+**Rollout:** step 0 owner read-only dashboard checks → 1 local code (jose, deny/canary Worker, CPU-light integrity, device-key fix) → 2 Access/MFA setup → 3 deny-only Worker → 4 R2 + harmless canary → 5 iPhone Safari login/MFA → 6 revocation/teardown rehearsal → 7 QA03. Each step lists its required approval; tests D1–D8 and C1–C10 defined. **Target $0/month; worst case $12/month** ($5 Workers Paid + $7 Access seat) only with explicit approval.
+
+**Exact next action: STOP for owner and ChatGPT review.** Owner can do step 0 (read-only checks, report privately). Steps 1–7 each need the explicit approval named in the preflight.
+
+## Previous — QA01 local private-testing foundation (verified; stop for review)
 
 Read [QA01_FOUNDATION.md](QA01_FOUNDATION.md) and [qa01/evidence.json](qa01/evidence.json). Owner authorized **QA01 only** after the [QA proposal](PRIVATE_IPHONE_QA_PROPOSAL.md). Codex's partial ledger reached Claude Code as an upload; **its in-progress QA01-A code was not accessible** (remote ended at `88c7baa`; no local QA01 files, stash or worktree) and was re-implemented from the proposal, not claimed as recovered. Codex's two rulings (ordinary presentation, no CP02; WebCrypto RS256 with injected test keys, no new dependency) were kept.
 
@@ -16,7 +28,7 @@ Read [QA01_FOUNDATION.md](QA01_FOUNDATION.md) and [qa01/evidence.json](qa01/evid
 
 **Progress:** QA01 is unweighted preparation; **21.5% → 21.5%, Medium confidence.**
 
-**Exact next action: STOP for owner and ChatGPT review of QA01.** QA02 (service/access/budget/canary, plus JWT-verifier sign-off), QA03 (publication/tooling) and CP02 each need separate explicit authorization.
+**Superseded:** QA01 accepted; see QA02-A above. QA02 (service/access/budget/canary, plus JWT-verifier sign-off), QA03 (publication/tooling) and CP02 each need separate explicit authorization.
 
 ## Previous — QA00 private iPhone testing decision proposal
 

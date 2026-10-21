@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-21, owner direction for reusable private iPhone test-plan assignment (CP01 remains latest implemented milestone). **Scope:** owner-authorized CP01 only; isolated contract tests, type-only presentation preparation and inactive scoped tokens. No CP02+, production visual migration, preview exposure/security change, merge or deployment. See [README.md](README.md) for maintenance protocol and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for standing rules. This dated checkpoint separates source inspection, documentation validation, historical runtime reports and owner approval.
+> **Last sync:** 2026-10-21, Codex delivered QA00 reusable private iPhone testing proposal; CP01 remains latest implemented milestone. **Latest scope:** planning/documentation ONLY, no QA implementation/provisioning/publication, CP02+, production visual migration, preview exposure/security change, merge or deployment. See [README.md](README.md) for maintenance protocol and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for standing rules. This dated checkpoint separates source inspection, documentation validation, historical runtime reports and owner approval.
 
 ## Live code and approval state
 
@@ -8,16 +8,35 @@
 |---|---|
 | Repo | `Seifonyx/Lumen` (public) |
 | Workstream | Draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34), `docs/lumen-blackout-phase1-20261019`; open, draft, unmerged |
-| **Latest pushed CP01/workstream commit** | **`c9153fd75ba16ebf70908f5d8c092cb540b9aa58`**; local HEAD and remote branch ref matched after push on 2026-10-21 |
+| **Latest pushed workstream/documentation commit** | **`88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f`**; QA00 proposal, six Markdown paths only; local HEAD and remote workstream ref matched after push on 2026-10-21 |
+| Latest implemented CP01 source | `c9153fd75ba16ebf70908f5d8c092cb540b9aa58`; QA00 changes no runtime/configuration/test source |
 | Approved Canvas visual source | `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`; unchanged by the documentation milestone |
 | Design direction / Gate 1 | **Canvas (A) selected; Gate 1 APPROVED**, explicitly confirmed by owner after final sidebar-spacing review. Further polish remains; rejected Workspace/Focus consolidation is not the foundation. |
 | Implementation / later gates | Owner accepted the blueprint and **explicitly authorized CP01 ONLY**, now verified. **CP02+ and production visual integration NOT authorized; Gates2/3 pending.** No preview exposure, host/auth changes, merge or deployment. |
 | **Canonical Blackout completion** | **21.5%, approximately 22%, Medium confidence**, adopted in workstream plan. Previous 18.5% → 21.5% solely from B02.3 (weight 3, fraction 0 → 1) for formal owner approval. All other weights/fractions unchanged; 78.5 points remain. CP01 adds **no new weighted credit:21.5% → 21.5%**; no entire remaining B03/B07 acceptance group is complete. Separate Model Picker remains98.5%. |
-| Active agent | **Codex, owner-confirmed**; CP01 delivered, stopped for owner/ChatGPT review. No automatic CP02 continuation. |
+| Active agent | **Codex, owner-confirmed**; QA00 private testing proposal delivered, stopped for owner/ChatGPT review. QA01+ infrastructure and CP02 need separate authorization. |
 | Latest observed merged main | `655438f0ec8d2e3594595252af4a99e6c58627a0` (documentation-only checkpoint) |
 | Latest separately previously verified deployed runtime | `677bc51f39fbf8fcf66bc91f846b71a4912bb306`, [deployment 39447533639](https://github.com/Seifonyx/Lumen/actions/runs/39447533639). No fresh live verification this session. |
 
-## Latest — owner-authorized CP01 complete
+## Latest — QA00 reusable private iPhone testing proposal delivered
+
+**[Decision-ready proposal at exact pushed revision](https://github.com/Seifonyx/Lumen/blob/88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f/docs/blackout/PRIVATE_IPHONE_QA_PROPOSAL.md)** · [current workstream handoff](https://github.com/Seifonyx/Lumen/blob/88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f/docs/blackout/AI_HANDOFF.md) · [plan/unchanged weighted ledger](https://github.com/Seifonyx/Lumen/blob/88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f/docs/blackout/IMPLEMENTATION_PLAN.md). Draft PR34 remains open/unmerged. **This is a proposal, not an implemented or deployed system; no external test link exists.**
+
+**Recommendation:** dedicated Cloudflare Access-protected QA Worker, private R2 serving/control storage and short-lived private CI staging. Stable authenticated entry, immutable source/run-pinned builds, exact reviewer identity + MFA, Worker JWT validation, per-request expiry/revocation, no public asset/alias bypass and no offline service worker. Proposed defaults are8-hour login/MFA,72-hour builds,3 active builds,7-day serving retention; none is approved for execution by this report. Existing production Firebase/relay and localhost proof stay unchanged. A new QA build must exclude Firebase/live transport/SW through tested build-only adapters while preserving canonical components/store/contracts. Seeded guest fixtures alone do not establish remote isolation.
+
+**Research executed:** read all three live files at `f26f835e19be3aad266e8161b78711ad6906cfa9`, recovered clean workstream c9153fd and PR metadata; inspected hosting/Actions/relay/bootstrap/Firebase/PWA owners and CP01/blueprint; retrieved/read current primary Cloudflare, Firebase, Google IAP and GitHub documentation. Compared Firebase preview, Cloudflare Pages/Access, Cloud Run/IAP and private-network approaches. Firebase hashed URLs are public; public Actions artifacts are not private review distribution; GitHub's manual workflow/default-branch prerequisite requires a separately approved narrow QA-tooling PR. No completed design research was repeated, service credentials read or dashboard changed.
+
+**Proposal coverage:** threat model, strong login/origin/asset controls, no production data/keys/inference, version manifests/conditional registry publication, automatic deadline/revocation/cleanup and honest downloaded-byte limits, isolated CI packaging/private handoff, operational/budget assumptions, iPhone-only login/testing/private screenshot-recording feedback, QA00–QA04 phases/rollback, QV01–QV10 future isolation/device tests and exact owner decisions. Approximate engineering estimate5–8 days plus account/device unknowns; target$0 incremental only if free allowances/features suffice, optional$5 Worker baseline subject to approval. Access seat/MFA entitlements, token scope and hard billing limits are unverified; no spending authority or guaranteed cap is inferred.
+
+**Verification actually performed for this documentation slice:**128 local Markdown links resolve; six authorized Markdown paths only; all stable weighted rows and arithmetic100/21.5/78.5 unchanged;10 explicit master/amendment/Continuum/bootstrap/build/hosting/deploy files byte-identical; zero runtime/config/test changes; full intended diff review and whitespace check pass. Source commit pushed normally and remote ref verified exactly. Freshly queried existing CP01 CI39631070563, all3 jobs success at c9153fd; **no product types/build/unit/browser, hosted auth/security/expiry, physical iPhone or live-provider tests were rerun for QA00**. Future tests are not recorded as passes. A supplementary token-doc URL returned403; prefix-limited token support remains explicitly unknown. No independent hosted capability is claimed.
+
+**Progress:**21.5% →21.5%, Medium confidence;78.5 remaining. QA tasks are unweighted preparation, no new acceptance-group credit or Gate2 approval. CP01 remains latest implemented foundation; approved Canvas/provider work preserved. Main remains last observed655438f; previously verified production runtime677bc51, no new production verification/deployment.
+
+**Owner review / next action:** STOP at this proposal. First recommended separately authorized slice is **QA01 local-only QA adapters, gate contracts and isolation tests**, no provisioning. QA02 service/access/budget/canary, QA03 private publication/default-branch tooling and CP02 product work each need separate explicit authorization. Existing localhost checks/auth/Firebase security are not relaxed. No new account, purchase, tunnel, service, hosting deployment, public preview, production modification, merge or Gate2 approval occurred. Private evidence channel/retention and reviewer identity must be selected privately before use.
+
+The separate live worktree was clean and fast-forwarded to f26f835 before this update; prior CP01 review, owner iPhone constraints and visual-polish notes below are preserved. This file's containing commit is verified against its own remote branch separately; it is not merged into main/workstream.
+
+## Previous implemented milestone — owner-authorized CP01 complete
 
 The owner accepted the Canvas blueprint and separately authorized **CP01 only**, preserving Canvas/Lumen identity and all production/account/security behavior. That instruction supersedes the prior blueprint-review stop only for this foundation; no CP02 or later permission is inferred.
 

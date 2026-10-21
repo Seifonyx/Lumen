@@ -2,7 +2,11 @@
 
 **Checkpoint: 21 October 2026 (final verification; see below). Phase B02, identity/product-architecture exploration. Gate 1 NOT APPROVED.** Current completion **18.5% (approximately 19%, Medium confidence)** on stable Blackout baseline v1. Previous committed checkpoint was unscored; an uncommitted 19.75% draft overcredited rejected visual work. Research is retained; current credit comes from the actual new two-experience proof, not the old recolors. Weights unchanged;81.5 points remain. Independent Model Picker ledger stays 98.5%.
 
-## Latest — Canvas navigation completeness & sidebar refinement (21 October 2026)
+## Latest — Canvas sidebar spacing & hierarchy (21 October 2026)
+
+Owner feedback on the sidebar: larger, more spacious primary navigation closer to the reference. CSS-only refinement: iPhone primary rows 52px/58px pitch, 18.5px labels, 24px icons aligned with the mark, inset separator; compact 44px secondary tree; short-height (≤700px) variant; restrained desktop; no sticky-heading band; no touch hover residue; section toggles 44px. Record: [SIDEBAR.md follow-up](workspace-proofs/proposals/SIDEBAR.md); images `proposals/sidebar/spacing/`. Chromium (5 iPhone sizes incl. 320×568/393×640, desktop) and WebKit pass. **Exact next action: STOP for owner review.** Gate1 NOT APPROVED. 18.5% unchanged.
+
+## Previous — Canvas navigation completeness & sidebar refinement (21 October 2026)
 
 Owner-selected Canvas sidebar refined from the owner's iPhone sidebar reference (layout principles only; Lumen identity kept). New `proposals/CanvasNav.tsx`: header (mark, search, close/collapse), destination rows, hairline separator, **collapsible Projects / each folder / Conversations** (chevrons, `aria-expanded`, inert folds, per-account remembered state, open-chat marker), restored per-chat actions (rename, pin, move, archive, side by side, share/export, delete with confirm; ⋯/right-click on desktop, long press on iPhone), account footer, desktop collapse via production's `.app.sidebar-collapsed` + ⌘⇧S. Record, tests, limits and the physical-iPhone recommendation: [proposals/SIDEBAR.md](workspace-proofs/proposals/SIDEBAR.md); images in `proposals/sidebar/`. `nav-check.cjs` passes in Chromium 1440/393/320/430 and WebKit 393/1440; regressions pass. No physical iPhone. **Exact next action: STOP for owner review.** Gate1 NOT APPROVED. 18.5% unchanged.
 

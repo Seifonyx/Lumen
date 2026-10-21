@@ -111,3 +111,7 @@ Owner selected A · Canvas; one polish pass in the opt-in preview. [Record](work
 ### Canvas navigation completeness & sidebar refinement — 21 October 2026
 
 [Record](workspace-proofs/proposals/SIDEBAR.md). Reference-informed sidebar, collapsible Projects/folders/Conversations, restored row actions, account footer and desktop collapse in the opt-in Canvas preview; Chromium + WebKit pass. **18.5→18.5%, Medium confidence**; no approval or B03/B04 credit. Stop for owner review.
+
+### Canvas sidebar spacing & hierarchy — 21 October 2026
+
+CSS-only refinement of the Canvas sidebar per owner feedback ([record](workspace-proofs/proposals/SIDEBAR.md#follow-up--spacing--hierarchy-refinement-owner-feedback)). Chromium + WebKit pass. **18.5→18.5%, Medium confidence.** Stop for owner review.

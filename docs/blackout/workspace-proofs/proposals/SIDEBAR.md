@@ -147,3 +147,56 @@ Ready for final owner review of the Canvas sidebar. Recommended review order:
 3. Then decide on the physical-iPhone allowance above.
 
 **STOP for owner review. Gate1 remains unapproved.**
+
+---
+
+## Follow-up — spacing & hierarchy refinement (owner feedback)
+
+The owner liked the sidebar but wanted the main navigation larger, more spacious and closer to the reference's quality. This is CSS only (`canvas.css`), with no behaviour change.
+
+Images are in [sidebar/spacing/](sidebar/spacing/), each before/after:
+- iPhone default;
+- Projects expanded;
+- sections collapsed;
+- 320×568;
+- desktop.
+
+**iPhone primary navigation** (Library, Tools, Models & routing):
+- **Size and spacing:** rows are 52px with about 58px between them (the reference is about 57pt). Labels are 18.5px and icons 24px, at full ink.
+- **Alignment:** icons share one left edge with the Lumen mark.
+- **Header:** more room under the wordmark (29px) and the 42px glass search/close buttons.
+- **Separator:** an inset hairline, with deliberate space above and below it.
+
+**Projects and Conversations:**
+- **Stay compact:** 15.5px rows, at 44px each. They now read clearly as secondary.
+- **Unchanged:** behaviour, briefs, "Show N more", chat actions, long-press, remembered state and current-chat markers.
+
+**Balance:**
+- **Bottom band:** the New chat pill and account button sit on a quiet band of their own, and the list fades out above it.
+- **Sticky headings:** they use the drawer's own glass tint and blur. The faint band they showed before is gone.
+- **Touch:** touch screens no longer keep a hover fill after a tap, which iOS Safari does by default.
+
+**Short screens** (height of 700px or less):
+- **Tighter:** primary rows become 46px (17.5px labels) and header and separator spacing tightens.
+- **The tree keeps room:** the destinations scroll with the tree, so on a 320×568 screen it isn't covered, and New chat and account stay fixed and reachable.
+
+**Desktop:** a restrained version at the same 272px width. Primary rows are 38px with 14px labels and 18px icons; there is slightly more space under the header and an inset separator.
+
+**Measured on iPhone (Chromium):**
+
+| Viewport | Primary rows | Spacing between rows | Pill / account | Section headings | Project rows |
+|---|---|---|---|---|---|
+| 393×852 and 430×932 | 52px | 58px | 50px | 44px | 44px |
+| 320×568 and 393×640 | 46px | 48px | 46px | 44px | 44px |
+
+The heading toggles were 40px in the first try of this pass and were raised to 44px.
+
+**Checks (all pass):**
+- **`nav-check.cjs`, Chromium:** iPhone 393×852, 320×693, 430×932, 393×640 and 320×568, plus desktop 1440×900. Every behaviour assertion passes, with 0 axe violations and no overflow.
+- **`nav-check.cjs`, WebKit:** iPhone 393×852 and 320×568, plus desktop.
+- **`capture.cjs`:** Canvas desktop, iPhone and 320px in Chromium; Canvas iPhone in WebKit; Desk iPhone.
+- **Other regressions:** `polish-check.cjs` at 393 and 1440; the consolidated harness at 390 and 1440; proof `tsc`.
+
+**Remaining:**
+- The earlier limitations still apply: no physical iPhone, WebKit blur, no swipe gestures for the drawer, and the native delete confirmation.
+- The reference shows more destinations than Lumen has. Lumen's three rows were kept rather than padded out with invented ones.

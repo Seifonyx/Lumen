@@ -312,3 +312,65 @@
 /* Grid tracks never grow to a long title's width: titles truncate inside the drawer at 320px. */
 .pc-fold,.pc-dest,.pc-chats,.pc-project .pc-fold ul{grid-template-columns:minmax(0,1fr)}
 .pc-fold-inner,.pc-project,.pc-group{min-width:0}
+
+/* ================= Sidebar spacing & hierarchy (owner feedback; preview only, Gate1 not approved) ================
+   Primary destinations read as the app's main navigation: larger icons and labels, generous rows, one shared left
+   edge with the wordmark, and an inset hairline before saved content. Projects / Conversations stay compact. */
+.pc-dest{position:relative;border-bottom:0}
+.pc-dest::after{content:'';position:absolute;left:10px;right:10px;bottom:0;height:1px;background:var(--px-rim)}
+.pc-dest button>svg{stroke-width:1.9}
+.pc-dest button[aria-current=page]{background:var(--px-fill-strong)}
+/* Desktop: a restrained version — slightly larger primary rows, nothing wider. */
+@media(min-width:900px){
+ .pc-nav-head{padding:2px 2px 12px 10px}
+ .pc-dest{gap:2px;padding:2px 0 12px;margin-bottom:8px}
+ .pc-dest button{gap:12px;min-height:38px;padding:0 10px;font-size:14px}
+ .pc-dest button>svg{width:18px;height:18px}
+ .pc-search{margin:0 0 10px}
+}
+/* iPhone: primary navigation with confident spacing; the tree below is visibly secondary. */
+@media(max-width:899px){
+ .pc-nav-head{min-height:44px;padding:4px 0 22px 10px;gap:10px}
+ .pc-brand{gap:11px}
+ .pc-brand .px-wordmark{font-size:29px;letter-spacing:-.045em}
+ .pc-head-btn{width:42px;height:42px}
+ .pc-search{margin:-8px 0 16px}
+ .pc-dest{gap:6px;padding:0 0 18px;margin-bottom:12px}
+ .pc-dest::after{left:10px;right:10px}
+ .pc-dest button{gap:18px;min-height:52px;padding:0 10px;border-radius:14px;font-size:18.5px;font-weight:500;letter-spacing:-.012em}
+ .pc-dest button>svg{width:24px;height:24px;color:var(--text)}
+ /* Secondary content: compact type, still 44pt targets. */
+ .px-canvas .pc-nav{--pc-fs:15.5px}
+ .pc-section-toggle{min-height:40px;margin-top:4px;padding:0 10px}
+ .pc-section-add{width:44px;height:44px;margin-top:2px}
+ .pc-project-row{min-height:44px;padding:0 10px 0 8px;font-size:15.5px;font-weight:600}
+ .pc-project-row .px-mono{width:22px;height:22px;font-size:12px}
+ .pc-open{padding:0 10px;color:var(--text-2)}
+ .pc-group h3{padding:12px 10px 4px;font-size:12.5px}
+ .pc-more,.pc-new-here,.pc-empty{font-size:14px}
+ .pc-all{padding:0 10px;font-size:14.5px}
+ .pc-brief-text{font-size:13.5px}
+ .pc-brief-meta{font-size:12px}
+ /* Fixed bottom actions sit on their own band; the list fades out above them. */
+ .pc-foot{margin:0 -14px;padding:12px 14px 0;border-top:1px solid color-mix(in srgb,var(--text) 6%,transparent)}
+}
+/* Short screens (iPhone SE, landscape-ish heights): keep the hierarchy but give the tree room. */
+@media(max-width:899px) and (max-height:700px){
+ .pc-nav-head{padding-bottom:12px}
+ .pc-brand .px-wordmark{font-size:26px}
+ .pc-dest{gap:2px;padding-bottom:12px;margin-bottom:8px}
+ .pc-dest button{min-height:46px;font-size:17.5px}
+ .pc-dest button>svg{width:22px;height:22px}
+ .pc-new-pill{min-height:46px}
+ .pc-account{width:46px;min-height:46px}
+}
+/* Touch screens keep no "hover" fill after a tap (iOS Safari leaves :hover on the last tapped element). */
+@media(hover:none){
+ .pc-dest button:not([aria-current]):hover,.pc-project-row:hover,.pc-row:hover .pc-open:not([aria-current]),.pc-section-add:hover,.pc-all:hover,.pc-more:hover,.pc-new-here:hover,.pc-brief:hover,.pc-head-btn:hover{background-color:transparent}
+ .pc-brief:hover{background:var(--px-fill)}
+ html.glass .pc-head-btn:hover{background:var(--glass-sheen) padding-box,linear-gradient(var(--glass-tint),var(--glass-tint)) padding-box,var(--glass-rim) border-box}
+}
+@media(max-width:899px){.pc-section-toggle{min-height:44px;margin-top:2px}}
+/* Pinned section headings use the drawer's own glass tint, so they read as part of it (no band) yet still cover
+   rows scrolling beneath. */
+@media(max-width:899px){html.glass .pc-nav .pc-section{background:color-mix(in srgb,var(--bg) 90%,transparent);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px)}}

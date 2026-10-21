@@ -2,7 +2,7 @@
 
 20 October 2026, Africa/Cairo. **Gate 1 remains NOT APPROVED.** [Course correction](../ROUTING_CENTER_COURSE_CORRECTION_2026-10-20.md) governs. These are actual local Lumen component renders with labelled synthetic accounts, not generated artwork or a production redesign.
 
-**Latest:** [Canvas sidebar refinement](proposals/SIDEBAR.md) — collapsible sections, restored chat actions, account and desktop collapse; images in `proposals/sidebar/`. Gate1 unapproved.
+**Latest:** [Canvas sidebar refinement](proposals/SIDEBAR.md) — collapsible sections, restored chat actions, account and desktop collapse, then a spacing & hierarchy follow-up; images in `proposals/sidebar/` and `proposals/sidebar/spacing/`. Gate1 unapproved.
 
 **Before that:** [Canvas final polish](proposals/CANVAS_POLISH.md) — the owner-selected direction, refined once; before/after in `proposals/polish/`. Gate1 unapproved.
 

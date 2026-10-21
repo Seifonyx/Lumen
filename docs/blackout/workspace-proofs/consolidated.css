@@ -101,3 +101,52 @@
 @media(max-height:600px) and (max-width:899px){:root[data-proof-consolidated] .proof-document-head{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}:root[data-proof-consolidated] .msg.assistant::before{display:none}}
 /* Each composer layer owns its padding; inherited form padding must not be counted again. */
 :root[data-proof-consolidated] .composer{padding:0}
+/* ---- Gate1 quality pass (21 Oct 2026): identity, rail, mode identity, usage. Opt-in preview only. ---- */
+/* One display face (Archivo) for titles and key values, the interface face for reading, mono only for small
+   section labels — set the same way everywhere so the labels read as one system. */
+:root[data-proof-consolidated] .proof-section-label{font:500 10.5px/1.4 Geist Mono,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);margin:0 0 12px}
+/* (Desktop sizes; phones keep their compact title so the answer stays on the first screen.) */
+@media(min-width:900px){
+ :root[data-proof-consolidated] .proof-document-head h1{font:600 34px/1.1 Blackout Archivo,sans-serif;letter-spacing:-.03em;max-width:600px;text-wrap:balance}
+ :root[data-proof-consolidated] .markdown h2{font:600 25px/1.2 Blackout Archivo,sans-serif;letter-spacing:-.02em;margin:2px 0 14px}
+ :root[data-proof-consolidated] .markdown h3{font-size:16.5px;font-weight:620;line-height:1.4;margin:30px 0 6px}
+ :root[data-proof-consolidated] .msg.assistant .markdown{font-size:16px;line-height:1.72}
+ :root[data-proof-consolidated] .msg.assistant .markdown>:is(p,ul,ol,blockquote,h2,h3){max-width:66ch}
+}
+/* Mode identity: the top bar names the mode before the conversation title; Focus is the inverted, unmistakable state. */
+.proof-topbar-mode{display:none}
+@media(min-width:900px){
+ :root[data-proof-consolidated] .proof-topbar-mode{display:inline-flex;align-items:center;order:-1;flex:none;height:26px;padding:0 10px;margin-right:12px;border:1px solid var(--border-strong);border-radius:999px;font:500 10.5px/1 Geist Mono,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--text)}
+ :root[data-proof-consolidated] .proof-topbar-mode[data-mode=Focus]{background:var(--text);border-color:var(--text);color:var(--bg)}
+ :root[data-proof-consolidated] .topbar .chat-heading{color:var(--text-2);font-weight:450}
+}
+:root[data-proof-consolidated] .proof-wordmark-edition[data-mode=Focus]{color:var(--text)}
+/* Intelligence rail: quieter than the reading column, one question per block, consistent rhythm. */
+@media(min-width:1151px){:root[data-proof-consolidated]:not([data-proof-expanded]) .main{grid-template-columns:minmax(0,1fr) 272px}}
+/* (Desktop only: on phones and in Focus the rail stays hidden by the earlier rules; it is never a grid column there.) */
+@media(min-width:1151px){:root[data-proof-consolidated]:not([data-proof-expanded]) .proof-rail{display:flex;flex-direction:column;padding:26px 24px 32px;background:var(--bg)}}
+.proof-rail-block{padding:20px 0 18px;border-top:1px solid var(--border)}
+.proof-rail-block:first-child{border-top:0;padding-top:0}
+.proof-rail .proof-document-outline{gap:0;margin:0}
+.proof-rail .proof-document-outline button{min-height:40px;padding:8px 0;gap:10px;font-size:13px;line-height:1.45;color:var(--text-2)}
+.proof-rail .proof-document-outline button span{font-size:10.5px;letter-spacing:.04em}
+.proof-rail-value{display:block;font:600 19px/1.25 Blackout Archivo,sans-serif;letter-spacing:-.015em;color:var(--text);font-variant-numeric:tabular-nums}
+.proof-rail-value small{font:400 12px/1.4 var(--font,system-ui),sans-serif;letter-spacing:0;color:var(--text-3)}
+.proof-rail p{font-size:12.5px;line-height:1.55;color:var(--text-2);margin:4px 0 8px}
+.proof-rail .route-why-btn{display:block;width:100%;min-height:0;padding:2px 0;margin:2px 0 4px;border:0;background:none;font:12px/1.5 var(--font,system-ui),sans-serif;letter-spacing:0;color:var(--text-3);text-align:left;white-space:normal}
+.proof-rail .route-why-btn:hover{color:var(--text-2);text-decoration:underline;text-underline-offset:3px}
+.proof-rail-split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 6px}
+.proof-rail-split div{display:grid;gap:2px;margin:0}
+.proof-rail-split dt{font-size:11px;color:var(--text-3)}
+.proof-rail-split dd{margin:0;font-size:14px;font-weight:550;color:var(--text);font-variant-numeric:tabular-nums}
+.proof-rail .proof-link{min-height:36px;font-size:12.5px;color:var(--text)}
+/* Phone toolbar: the wordmark always names the mode (Workspace, Focus or Routing), down to 320px. */
+/* (At 360px and below the mode sits under the wordmark, so all four 44px buttons still fit at 320px.) */
+@media(max-width:360px){:root[data-proof-consolidated] .proof-phone-wordmark{flex-direction:column;align-items:flex-start;gap:3px;font-size:20px;min-width:0}:root[data-proof-consolidated] .proof-phone-wordmark small{display:block;font-size:10px;line-height:1}}
+:root[data-proof-consolidated] .proof-phone-wordmark small{text-transform:none}
+/* Usage: the chip is named by its visible estimate (not a rounded "Context 0%"), and a gauge relabelled by
+   UsageShareLabels shows its honest label with a minimum visible arc. Canonical values are untouched. */
+:root[data-proof-consolidated] .composer .usage-chip .usage-chip-label{display:none}
+:root[data-proof-consolidated] .um-gauge[data-proof-share]>span:not(.proof-gauge-label){display:none}
+:root[data-proof-consolidated] .um-gauge[data-proof-share] .um-gauge-fill{stroke-dashoffset:calc(var(--c) * 1px * (1 - var(--proof-arc)))}
+.proof-gauge-label{position:relative;font-size:12.5px;font-weight:650;font-variant-numeric:tabular-nums;color:var(--text)}

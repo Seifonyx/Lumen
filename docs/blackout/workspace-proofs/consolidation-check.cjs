@@ -60,11 +60,17 @@ const longDraft='Turn Monday into a practical checklist.\n\nI want the launch to
   await page.locator('.messages').evaluate(el=>el.scrollTop=0);
   if(width<900){const reading=await page.locator('.msg.assistant .markdown p').first().boundingBox(),composer=await page.locator('.composer-wrap').boundingBox();console.log('READING',JSON.stringify({reading,composer,height,layers:await page.locator('.proof-context-toolbar,.composer textarea,.composer-bar').evaluateAll(nodes=>nodes.map(n=>({class:n.className,height:n.getBoundingClientRect().height,style:n.getAttribute('style')})))}));assert(reading.y+reading.height<=composer.y,'first full response paragraph is visible before composer');assert(composer.height<=height*.42,'collapsed composer leaves reading priority');const metrics={responseTop:reading.y,responseBottom:reading.y+reading.height,composerTop:composer.y,composerHeight:composer.height};fs.writeFileSync(path.join(out,`reading-${width}-${height}-${engine.name()}.json`),JSON.stringify(metrics,null,2));assert.equal(await page.locator('.proof-brief-toggle').evaluate(el=>el.closest('.message-row')?.getAttribute('data-message-index')),'0','brief disclosure belongs only to the original message');assert.equal(await page.locator('.proof-brief-toggle').getAttribute('aria-expanded'),'false');await page.locator('.proof-brief-toggle').click();assert.equal(await page.locator('.msg.user .bubble').isVisible(),true);await page.locator('.proof-brief-toggle').click();}
   await shot('workspace');
+  // Gate1 quality pass: the mode is named accurately, and every top-bar button fits inside the viewport.
+  const modeText=()=>page.evaluate(()=>(innerWidth<900?document.querySelector('.proof-phone-wordmark small'):document.querySelector('.proof-topbar-mode'))?.textContent);
+  assert.equal(await modeText(),'Workspace','reading names the Workspace mode');
+  const topbarButtons=await page.locator(".main .topbar button").evaluateAll(nodes=>nodes.filter(n=>n.getClientRects().length&&getComputedStyle(n).visibility!=='hidden').map(n=>{const r=n.getBoundingClientRect();return {name:n.getAttribute('aria-label')||n.textContent,left:r.left,right:r.right,width:r.width,height:r.height};}));
+  for(const b of topbarButtons){assert(b.left>=0&&b.right<=width+0.5,`${b.name} fits inside the ${width}px toolbar`);if(width<900)assert(b.width>=44&&b.height>=44,`${b.name} keeps a 44px touch target`);}
   if(width<900){await page.getByRole('button',{name:'Open chats',exact:true}).click();await shot('navigation');await page.getByRole('button',{name:'Close menu',exact:true}).click();}
   await input.fill(longDraft);await input.evaluate(el=>{el.focus();el.setSelectionRange(12,38,'backward');window.__originalInput=el;});
   await page.getByRole('button',{name:'Expand input',exact:true}).click();
   assert.deepEqual(await input.evaluate(el=>({same:el===window.__originalInput,text:el.value,start:el.selectionStart,end:el.selectionEnd,direction:el.selectionDirection,focused:el===document.activeElement})),{same:true,text:longDraft,start:12,end:38,direction:'backward',focused:true},'expansion preserves draft, DOM, selection and focus');
   const expandedBox=await input.boundingBox();assert(expandedBox.height>=(height<650?60:180),'expanded writing surface has usable height, not a collapsed row');assert(expandedBox.width>=240,'expanded input has readable measure');await input.evaluate(el=>{el.setSelectionRange(0,0);el.blur();});await shot('expanded-input');
+  assert.equal(await modeText(),'Focus','writing names the Focus mode');
   await input.focus();await page.keyboard.press('Escape');assert.equal(await page.getByRole('button',{name:'Expand input',exact:true}).getAttribute('aria-expanded'),'false','Escape returns from writing mode');assert.equal(await input.inputValue(),longDraft);await page.getByRole('button',{name:'Expand input',exact:true}).click();
   // A long draft scrolls only its editor; Studio response scroll never moves the draft.
   const veryLong=Array.from({length:80},(_,i)=>`Paragraph ${i+1}: think carefully about the launch, its constraints and the audience.`).join('\n\n');
@@ -101,6 +107,11 @@ const longDraft='Turn Monday into a practical checklist.\n\nI want the launch to
   assert.equal(await toolbar.getByRole('button',{name:'Research',exact:true}).isDisabled(),true);
   await page.evaluate(async()=>{const {useStore}=await import('/src/store.ts');useStore.setState({catalog:window.__originalCatalog,settings:{...useStore.getState().settings,enabledModels:window.__originalEnabled}});});
   await page.locator('.composer .usage-chip').click();await page.getByRole('dialog',{name:'Usage',exact:true}).waitFor();await shot('usage-details');
+  // A small nonzero share never reads as 0%: ~231 of 50K tokens is shown and spoken as less than 1%.
+  const chatMeter=page.getByRole('meter',{name:'How full this chat is',exact:true});
+  assert.equal((await chatMeter.locator('.proof-gauge-label').textContent()).trim(),'<1%','small nonzero chat share is labelled <1%');
+  assert.match(await chatMeter.getAttribute('aria-valuetext'),/^Less than 1% used/,'and announced as less than 1%');
+  assert.doesNotMatch(await page.locator('.composer .usage-chip').evaluate(el=>el.innerText),/\b0%/,'the composer chip never shows a rounded 0%');
   await page.getByRole('button',{name:'Close usage',exact:true}).click();
   await page.evaluate(async(flash)=>{const {useStore}=await import('/src/store.ts');window.__originalUsage=useStore.getState().usage;useStore.setState({usage:{models:{[flash]:{id:flash,requests:3,input:1200,output:600,quota:10,blockedUntil:null,blockScope:null}},geminiResetAt:Date.now()+3600000}});},flash);
   await page.getByRole('button',{name:'Conversation intelligence',exact:true}).click();await page.waitForFunction(()=>document.querySelector('.proof-context-details')?.textContent?.includes('7 requests'));await page.keyboard.press('Escape');

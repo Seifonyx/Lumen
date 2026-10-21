@@ -1,0 +1,72 @@
+[
+ {
+  "image": "desktop-workspace-before.png",
+  "source": "before/desk/index-1440-dark-chromium-workspace.png",
+  "sha256": "2b0d999190ca354d1700d173d18a5dcf9ff90bfc42dc922ff81461dae7ffd722"
+ },
+ {
+  "image": "desktop-workspace-after.png",
+  "source": "after/desk/index-1440-dark-chromium-workspace.png",
+  "sha256": "2decc05e0e24d80063aa89f7ac9da309630560ee9f5db93382f77feab530a62a"
+ },
+ {
+  "image": "desktop-focus-before.png",
+  "source": "before/desk/index-1440-dark-chromium-expanded-input.png",
+  "sha256": "793dcb1605231df4d39a0cfa7f9b80dcb678562f7508c32a45037aeed7eed57b"
+ },
+ {
+  "image": "desktop-focus-after.png",
+  "source": "after/desk/index-1440-dark-chromium-expanded-input.png",
+  "sha256": "92529870cac6dc06bba0afcc19d3f688e844b207fe2e26dba2b611e1a9bc5170"
+ },
+ {
+  "image": "phone-workspace-before.png",
+  "source": "before/phone/index-390-dark-chromium-workspace.png",
+  "sha256": "2f68b44ec4a6e28b2ca99533abd9701e67e859c0dd657ee2f76919c695450706"
+ },
+ {
+  "image": "phone-workspace-after.png",
+  "source": "after/phone/index-390-dark-chromium-workspace.png",
+  "sha256": "cde04bbfb87dab3405457c39de3856f8fbf39757e147dea4e36576ca90d1c6ce"
+ },
+ {
+  "image": "phone-focus-before.png",
+  "source": "before/phone/index-390-dark-chromium-expanded-input.png",
+  "sha256": "fddff389993d1b7f49f2f15e18c612d4db99accfcfcfcb328e021076e9f65e94"
+ },
+ {
+  "image": "phone-focus-after.png",
+  "source": "after/phone/index-390-dark-chromium-expanded-input.png",
+  "sha256": "183ebe89e267c43a602b01f8bf4ece943f887b5742239b517cc1bb83beeb0696"
+ },
+ {
+  "image": "narrow-320-workspace-before.png",
+  "source": "before/narrow/index-320-dark-chromium-workspace.png",
+  "sha256": "eabb503b2891e5c670d31d4c9192221ea15f19900a955adb60b3761db437f503"
+ },
+ {
+  "image": "narrow-320-workspace-after.png",
+  "source": "after/narrow/index-320-dark-chromium-workspace.png",
+  "sha256": "d7bd3442cf3b0f4012135269f5380e67d885f2c312e3a9ed8c5fe74eda8977f0"
+ },
+ {
+  "image": "phone-usage-before.png",
+  "source": "before/phone/index-390-dark-chromium-usage-details.png",
+  "sha256": "f0a3b847ffc1e9cd41b7f50be3a234d32e4898359a6acc7314dbe01ab5ad770d"
+ },
+ {
+  "image": "phone-usage-after.png",
+  "source": "after/phone/index-390-dark-chromium-usage-details.png",
+  "sha256": "1cf6ae7fb95fa9cdf5523e521043b815dd67f27ee2435589cf0c225afde40f50"
+ },
+ {
+  "image": "short-390x480-workspace-before.png",
+  "source": "before/short/index-390-dark-chromium-workspace.png",
+  "sha256": "2a682ca3084c377f249ccf315402b718b251db48b641dc35b640e7c38ff8cb0f"
+ },
+ {
+  "image": "short-390x480-workspace-after.png",
+  "source": "after/short/index-390-dark-chromium-workspace.png",
+  "sha256": "5133f11d5b4c1f4f7c72d66d1a83b6a71d7eab35fe0edf8512f66b2884d6fc19"
+ }
+]

@@ -22,7 +22,7 @@ const BASE_HEADERS = {
   'Content-Security-Policy': CSP,
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Resource-Policy': 'same-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), serial=(), hid=(), display-capture=(), interest-cohort=()',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), display-capture=()',
 };
 
 const deny = (status, head) => new Response(head ? null : ({ 401: 'Sign in required.', 403: 'Not permitted.', 404: 'Not found.', 405: 'Method not allowed.', 410: 'This review build is no longer available.', 503: 'Review access is unavailable.' })[status] || 'Denied.', {

@@ -95,7 +95,7 @@ try {
     await composer(page).fill(`Hello from ${width}px`);
     await page.getByRole('button', { name: 'Send', exact: true }).click();
     await page.getByText(/No live provider was contacted/).last().waitFor({ timeout: 20000 });
-    await page.getByRole('button', { name: 'Send', exact: true }).or(page.getByRole('button', { name: 'Voice conversation', exact: true })).first().waitFor();
+    await page.getByRole('button', { name: 'Send', exact: true }).or(page.getByRole('button', { name: 'Start voice conversation', exact: true })).first().waitFor();
     const repliesBefore = await page.locator('.msg.assistant').count();
     await composer(page).fill('[synthetic:slow] please write slowly');
     await page.getByRole('button', { name: 'Send', exact: true }).click();

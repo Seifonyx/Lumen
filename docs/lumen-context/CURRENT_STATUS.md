@@ -47,6 +47,12 @@ ChatGPT independently fetched GitHub Actions [run 39631070563](https://github.co
 
 **Reviewer recommendation (not an owner approval):** accept CP01 as completed within its authorized foundation scope; preserve 21.5% Medium confidence and zero new weighted-group credit. **No automatic CP02 authorization.** Before CP02, obtain an owner-approved, non-public, synthetic-only physical-iPhone delivery/inspection route and explicit CP02 scope. Remote Linux has no connected iPhone or Mac device services. Prefer first asking whether the owner has access to an iPhone plus Mac/local test host; if not, draft a restricted device-test delivery proposal with threat boundary, access controls, expiry/teardown and no credentials or external inference, for separate owner permission. Do not weaken localhost/auth guards, open a tunnel, deploy, merge, or silently substitute Linux WebKit for physical evidence.
 
+## Physical-iPhone test access constraint — 2026-10-21
+
+The next physical-device validation route must work on **iPhone Safari without a Mac-assisted developer/USB debugging setup**. CP01 is complete, but this availability constraint does **not** authorize CP02, host/origin/auth changes, an Internet-facing preview, deployment, or a paid/new third-party service.
+
+**Next proposed step for owner decision:** create a **planning-only** assessment of an ephemeral access-controlled private HTTPS synthetic build usable directly in Safari. Specify exact isolation from ordinary production accounts/data, no credentials or external provider inference, restrictive access and HTTPS, immutable source/build identification, expiry/teardown and audit/checks. Evaluate alternatives and any backend/infrastructure, DNS, preview guard, hosting/security, permission or cost implications. No external test link exists yet, no hosting method has been authorized, and current localhost guards must remain unchanged. Request owner approval of the exact test method separately, then request CP02 implementation authorization. Preserve physical keyboard/glass/gesture/VoiceOver acceptance as unverified until a real iPhone run.
+
 ## Historical CP00 — accepted planning deliverable
 
 **[Canvas production-integration blueprint — exact committed revision](https://github.com/Seifonyx/Lumen/blob/df54edf244ccadf6886f0608f230631fe3b52dee/docs/blackout/CANVAS_PRODUCTION_INTEGRATION_BLUEPRINT.md).**

@@ -65,7 +65,7 @@ The [blueprint](CANVAS_PRODUCTION_INTEGRATION_BLUEPRINT.md) supplies exact compo
 |---|---|---|
 | CP00 · post-Gate 1 blueprint | B02.3 decision record; no new weight | Documentation complete; doc validation and synchronization recorded in handoff; stop for owner review |
 | CP01 · characterization/seams/tokens | B03/B07 | **Verified isolated foundation** under explicit CP01-only owner authorization; see CP01_FOUNDATION.md and cp01/evidence.json; stop before CP02 |
-| CP02 · canonical composer/writing sheet | B03/B04/B07 | Not started; CP01 + authorized physical-device access; early real-iPhone acceptance; Gate 2 checkpoint A |
+| CP02 · canonical composer/writing sheet | B03/B04/B07 | **Implemented and verified (flag off in production)** under explicit CP02-only authorization; see CP02_COMPOSER.md. Physical-iPhone acceptance pending; Gate 2 checkpoint A not approved |
 | CP03 · navigation/reading/projects | B04/B06/B07 | Not started; CP02 evidence/review; Gate 2 checkpoint B |
 | CP04 · Routing Center integration proof | B04/B05/B07 | Not started; preserve verified provider slice; combined formal Gate 2 review package, not automatic approval |
 | CP05 · authorized integration/remaining screens/hardening | B03–B07 | Not started; explicit Gate 2 and integration permission, then Gate 3 final review |
@@ -193,3 +193,9 @@ Cloudflare Z1 paused by owner. [Codespaces private-port feasibility](QA02_CODESP
 ### QA02 Codespaces adapter — 21 October 2026
 
 QA-only review server + devcontainer implemented and locally verified at `ac93683` ([guide](QA02_CODESPACES_SESSION.md)); production output byte-identical. No Codespace created. **21.5% → 21.5%.**
+
+### QA fixes and CP02 — 22 October 2026
+
+- **QA fixes:** the review banner gets its own layout row, and the Codespaces start is a foreground attach script. Verified in both engines.
+- **CP02:** the Canvas composer and writing sheet in canonical Composer, behind the compile-time `CANVAS_COMPOSER` flag. The flag is off in production, which stays byte-identical. The QA review build turns it on. See the [record](CP02_COMPOSER.md).
+- Physical-iPhone confirmation (8 items) is pending; it needs a new owner-created Codespace after review. **21.5% → 21.5%.**

@@ -92,3 +92,7 @@ Access ends when you delete or stop the Codespace, when GitHub's port cookie exp
 | No terminal or message after setup | The attach command did not run | Open a terminal (☰ → Terminal → New Terminal) and run `bash scripts/qa/codespace-start.sh` |
 
 The session procedure is otherwise unchanged: confirm port 4173 is **Private** before opening the link, and delete the Codespace afterwards.
+
+## Update — CP02 (22 October 2026)
+
+From commit `e0196eb` on this branch, the synthetic review build shows the **CP02 Canvas composer and writing sheet** ([record](CP02_COMPOSER.md)); the rest of the app is the ordinary synthetic Lumen app. The session procedure, private port, $0 checks and teardown are unchanged. The physical-iPhone checklist is in the CP02 record. Creating the Codespace is an owner-only step after review.

@@ -1,8 +1,30 @@
 # Lumen Blackout — cross-agent handoff
 
-**Checkpoint: 21 October 2026, UTC — owner set a permanent strict $0 budget; QA02 revised to a zero-cost architecture (planning only). Gate 1 APPROVED; CP01 and QA01 complete. No QA02 provisioning/deployment, QA03, CP02+, merge or deployment authorized. Gates 2/3 pending.** Completion **21.5% → 21.5%, Medium confidence**; 78.5 points remain.
+**Checkpoint: 22 October 2026, UTC — QA banner/Codespaces start fixes and CP02 (Canvas composer + writing sheet, flag off in production) implemented and verified locally; physical-iPhone confirmation pending. Gate 1 APPROVED; CP01, QA01 complete. No CP03, merge, deployment, default production migration, Gate 2 approval, paid service or new Codespace authorized.** Completion **21.5% → 21.5%, Medium confidence**; 78.5 points remain.
 
-## Latest — first private Codespaces iPhone session succeeded (owner-run)
+## Latest — CP02 Canvas composer + QA fixes (implemented, verified; stop for owner review)
+
+Owner authorized two QA-only fixes and **CP02 only**.
+
+**QA fixes** (`7c628bb`, `5065ff7`, `64f7fdc`):
+- The review banner takes its own layout row. The app, phone drawer and keyboard layout start below it, with a 0 px gap asserted in both engines.
+- The Codespaces start is now a foreground `postAttachCommand` script with timed logs and clear `FAILED:` messages. See the [session guide](QA02_CODESPACES_SESSION.md).
+
+**CP02** (`e0196eb` code, `ea3954c` tests) — read [CP02_COMPOSER.md](CP02_COMPOSER.md):
+- The canonical Composer gains resting/engaged/expanded states and a writing sheet through `ComposerCanvas.tsx`. It reuses the existing focus-scope, sheet-drag and viewport hooks.
+- It keeps the same mounted textarea, draft, attachments, Send/Stop, picker and usage controls.
+- `CANVAS_COMPOSER` is `false`, so production output is **byte-identical (174 files)**. Only the synthetic QA review build turns it on.
+- **Verified:**
+  - `npm test`;
+  - the new CP02 browser contract, Chromium and WebKit × 4 viewports;
+  - the existing QA browser and Codespaces contracts;
+  - the QA01 isolation audit 8/8, with the guard deliberately allowing exactly the 4 CP02 files with the flag off;
+  - the CP01 graph check.
+- **Open:** 8 physical-iPhone confirmation items, listed in the record.
+
+**Exact next action: STOP for owner review.** Only the owner may create the next Codespace (it will serve the Canvas composer automatically). No CP03, merge, deploy, Gate 2 or paid service.
+
+## Previous — first private Codespaces iPhone session succeeded (owner-run)
 
 Owner ran one $0 session per [QA02_CODESPACES_SESSION.md](QA02_CODESPACES_SESSION.md): no payment method, Codespaces $0, no secrets; port 4173 Private; iPhone Safari GitHub sign-in and the synthetic app worked; composer/keyboard/picker/Send/Stop/scroll/navigation/rotation reported OK; Codespace deleted. Follow-ups: QA banner overlaps the page top; `postStartCommand` did not start automatically (manual start documented). Served app is the ordinary app; CP02 not started. Progress 21.5%. **Next: owner decides on CP02.**
 

@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-21, Codex QA01 work interrupted and owner switched active assignment to Claude Code for QA01-only continuation. CP01 remains latest verified implemented milestone; QA01 completion unverified. **Scope:** QA01 local-only tests/adapters, no QA02/QA03 provisioning or publication, CP02, preview exposure, merge or deployment. See [README.md](README.md) for maintenance protocol and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for standing rules. This dated checkpoint separates source inspection, documentation validation, historical runtime reports and owner approval.
+> **Last sync:** 2026-10-21, Claude Code QA01 delivery (owner-directed continuation after Codex's usage limit). **Scope:** QA01 local-only synthetic build, gate/registry contracts and isolation tests. No QA02/QA03 provisioning or publication, CP02, preview exposure, host/auth/Firebase change, merge or deployment. See [README.md](README.md) for maintenance protocol and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for standing rules. This dated checkpoint separates source inspection, agent-reported testing and owner approval.
 
 ## Live code and approval state
 
@@ -8,17 +8,35 @@
 |---|---|
 | Repo | `Seifonyx/Lumen` (public) |
 | Workstream | Draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34), `docs/lumen-blackout-phase1-20261019`; open, draft, unmerged |
-| **Latest pushed workstream/documentation commit** | **`88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f`**; QA00 proposal, six Markdown paths only; local HEAD and remote workstream ref matched after push on 2026-10-21 |
-| Latest implemented CP01 source | `c9153fd75ba16ebf70908f5d8c092cb540b9aa58`; QA00 changes no runtime/configuration/test source |
+| **Latest pushed workstream commit** | **`7f13482c1a1d75095afd2ced327e1cccbeca5eb6`** (QA01 records); QA01 verified code commit **`d0ef5f84b0d949ca1612453e45ccd937985caeeb`**; local HEAD and remote workstream ref matched after push on 2026-10-21 |
+| Earlier implemented milestones | CP01 `c9153fd75ba16ebf70908f5d8c092cb540b9aa58`; QA00 proposal `88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f` |
 | Approved Canvas visual source | `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`; unchanged by the documentation milestone |
 | Design direction / Gate 1 | **Canvas (A) selected; Gate 1 APPROVED**, explicitly confirmed by owner after final sidebar-spacing review. Further polish remains; rejected Workspace/Focus consolidation is not the foundation. |
-| Implementation / later gates | Owner authorized **completed CP01** and separately **QA01 local-only implementation**; interrupted Codex work not yet verified. **QA02/QA03, CP02+ production visual integration NOT authorized; Gates 2/3 pending.** No preview exposure, host/auth changes, merge or deployment. |
-| **Canonical Blackout completion** | **21.5%, approximately 22%, Medium confidence**, adopted in workstream plan. Previous 18.5% → 21.5% solely from B02.3 (weight 3, fraction 0 → 1) for formal owner approval. All other weights/fractions unchanged; 78.5 points remain. CP01 adds **no new weighted credit:21.5% → 21.5%**; no entire remaining B03/B07 acceptance group is complete. Separate Model Picker remains98.5%. |
-| Active agent | **Claude Code, owner-directed QA01 handoff** after Codex usage limit; Claude has not yet reported starting/completing. QA01-only authorization retained; QA02/QA03 and CP02 not authorized. |
+| Implementation / later gates | Owner authorized **CP01** (complete) and **QA01 only** (now implemented and agent-verified; awaiting owner/ChatGPT review). **QA02/QA03, CP02+ production visual integration NOT authorized; Gates 2/3 pending.** No preview exposure, host/auth changes, merge or deployment. |
+| **Canonical Blackout completion** | **21.5%, approximately 22%, Medium confidence** (workstream plan). 18.5% → 21.5% solely from B02.3 (owner Gate 1 decision). CP01 and QA01 add **no weighted credit** (unweighted preparation; no B03–B08 acceptance group complete). 78.5 points remain. Separate Model Picker remains 98.5%. |
+| Active agent | **Claude Code** (owner-directed QA01 continuation after Codex usage limit); QA01 delivered and stopped for review. No automatic QA02/QA03/CP02 continuation. |
 | Latest observed merged main | `655438f0ec8d2e3594595252af4a99e6c58627a0` (documentation-only checkpoint) |
 | Latest separately previously verified deployed runtime | `677bc51f39fbf8fcf66bc91f846b71a4912bb306`, [deployment 39447533639](https://github.com/Seifonyx/Lumen/actions/runs/39447533639). No fresh live verification this session. |
 
-## Latest — QA00 reusable private iPhone testing proposal delivered
+## Latest — QA01 local private-testing foundation delivered (agent-verified; awaiting review)
+
+**[QA01 record at the exact pushed revision](https://github.com/Seifonyx/Lumen/blob/7f13482c1a1d75095afd2ced327e1cccbeca5eb6/docs/blackout/QA01_FOUNDATION.md)** · [machine evidence](https://github.com/Seifonyx/Lumen/blob/7f13482c1a1d75095afd2ced327e1cccbeca5eb6/docs/blackout/qa01/evidence.json) · [handoff](https://github.com/Seifonyx/Lumen/blob/7f13482c1a1d75095afd2ced327e1cccbeca5eb6/docs/blackout/AI_HANDOFF.md). Draft PR #34 remains open/unmerged. **No external test link exists; nothing was hosted or published.**
+
+**Recovery:** Codex's QA01 ledger reached Claude Code only as an uploaded copy; its in-progress QA01-A code was **not accessible** (remote ended at `88c7baa`; no local files/stash/worktree held it). QA01-A was re-implemented from the accepted proposal and is not claimed as recovered. Codex's recorded rulings were kept (ordinary presentation, no CP02; WebCrypto RS256 with injected test keys, no new dependency).
+
+**Implemented (local only):** fail-closed gate and control plane (identity token → per-request registry → reviewer → build → path → manifest/asset digests; expiry and revocation on the next request; create-only publication with revocation that always wins races; private/no-store/CSP headers); a separate synthetic QA build where Firebase, cloud sync, service worker and live provider/relay transport are replaced at build time while the canonical app, store, composer, model picker, usage and Incognito are reused; a lease lock and persistent synthetic-review banner; commit-pinned build/verify tooling with graph and output audits. Production entry, `src/`, Vite production config, packages, Firebase config/rules, provider relay, workflows and the localhost Canvas proof are **unchanged** (asserted).
+
+**Agent-reported verification at code commit `d0ef5f8`, not independently rerun by ChatGPT:** 83 unit files pass (32 new QA cases); 8/8 isolation checks with ordinary production output **byte-identical (174 files)** to the pre-QA01 baseline and every planted forbidden import/file/primitive caught; Chromium and Linux WebKit (Docker) browser contracts at four viewports with 0 external requests, 0 CSP/axe/page errors and 0 service workers; planted requests refused (transport/CSP) and the request detector proven by a deliberately unprotected control; separate reviewer namespaces; revocation/expiry lock open pages and refuse reloads; six existing regression suites pass. CI for the pushed head should be checked on PR #34.
+
+**Independent read-only review:** no Critical; three Important findings (publication lifetime bound, ASCII-only identity matching, indirect `fetch` bypass) fixed with tests; ten minor/test findings fixed. **Open for sign-off:** the proposal suggested a vetted JWT library while QA01 kept the WebCrypto verifier per the recorded ruling — owner/ChatGPT should accept or change this before QA02. A device-wide `mr.activeProject` UI preference is shared across review namespaces on one origin (documented limit; fixing it would touch production source).
+
+**Not claimed:** physical iPhone, hosted Access/MFA/JWKS/R2/Worker behaviour, live providers or production verification. The private CI artifact handoff is documented only.
+
+**Progress:** 21.5% → 21.5%, Medium confidence.
+
+**Exact next action: STOP for owner and ChatGPT review of QA01.** QA02 (verify Cloudflare entitlements/billing/MFA, provision deny-only canary, JWT-verifier decision), QA03 (publication tooling/default-branch PR) and CP02 each require separate explicit authorization.
+
+## Previous — QA00 reusable private iPhone testing proposal delivered
 
 **[Decision-ready proposal at exact pushed revision](https://github.com/Seifonyx/Lumen/blob/88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f/docs/blackout/PRIVATE_IPHONE_QA_PROPOSAL.md)** · [current workstream handoff](https://github.com/Seifonyx/Lumen/blob/88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f/docs/blackout/AI_HANDOFF.md) · [plan/unchanged weighted ledger](https://github.com/Seifonyx/Lumen/blob/88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f/docs/blackout/IMPLEMENTATION_PLAN.md). Draft PR34 remains open/unmerged. **This is a proposal, not an implemented or deployed system; no external test link exists.**
 

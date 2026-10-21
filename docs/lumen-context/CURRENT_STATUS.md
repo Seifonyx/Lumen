@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-21, owner authorized QA02-A preflight (capabilities/costs/authentication/rollout readiness), after exact-head QA01 CI success. **Scope:** read-only/preparatory checks and bounded local evidence only. No QA02 service provisioning/canary exposure, QA03 publication, CP02, production/security change, merge or deployment. See [README.md](README.md) for maintenance protocol and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for standing rules. This dated checkpoint separates source inspection, agent-reported testing and owner approval.
+> **Last sync:** 2026-10-21, Claude Code QA02-A preflight delivery (planning only). **Scope:** Cloudflare capability/cost/security/rollout assessment; nothing created, enrolled, configured, deployed, paid for or exposed. No QA02 provisioning, QA03, CP02, production/security change, merge or deployment. See [README.md](README.md) for maintenance protocol and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for standing rules. This dated checkpoint separates source inspection, agent-reported findings and owner approval.
 
 ## Live code and approval state
 
@@ -8,15 +8,30 @@
 |---|---|
 | Repo | `Seifonyx/Lumen` (public) |
 | Workstream | Draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34), `docs/lumen-blackout-phase1-20261019`; open, draft, unmerged |
-| **Latest pushed workstream commit** | **`7f13482c1a1d75095afd2ced327e1cccbeca5eb6`** (QA01 records); QA01 verified code commit **`d0ef5f84b0d949ca1612453e45ccd937985caeeb`**; local HEAD and remote workstream ref matched after push on 2026-10-21 |
+| **Latest pushed workstream commit** | **`ffcbb18aad520cdcd00b5030135ff4838a2b228d`** (QA02-A preflight, four Markdown files); QA01 verified code `d0ef5f84b0d949ca1612453e45ccd937985caeeb`, QA01 head `7f13482` passed exact-head CI 39652612955; local HEAD and remote ref matched after push on 2026-10-21 |
 | Earlier implemented milestones | CP01 `c9153fd75ba16ebf70908f5d8c092cb540b9aa58`; QA00 proposal `88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f` |
 | Approved Canvas visual source | `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`; unchanged by the documentation milestone |
 | Design direction / Gate 1 | **Canvas (A) selected; Gate 1 APPROVED**, explicitly confirmed by owner after final sidebar-spacing review. Further polish remains; rejected Workspace/Focus consolidation is not the foundation. |
-| Implementation / later gates | Owner-authorized **CP01 and QA01 completed**; **QA02-A preflight only now authorized**. Service provisioning/deny-only canary, QA03 and CP02+ production visual integration **not authorized**; Gates 2/3 pending. No preview exposure, host/auth changes, merge or deployment. |
+| Implementation / later gates | **CP01 and QA01 complete; QA02-A preflight delivered (planning only).** QA02 provisioning/deny-only/canary, QA03 and CP02+ production visual integration **not authorized**; Gates 2/3 pending. No preview exposure, host/auth changes, merge or deployment. |
 | **Canonical Blackout completion** | **21.5%, approximately 22%, Medium confidence** (workstream plan). 18.5% → 21.5% solely from B02.3 (owner Gate 1 decision). CP01 and QA01 add **no weighted credit** (unweighted preparation; no B03–B08 acceptance group complete). 78.5 points remain. Separate Model Picker remains 98.5%. |
-| Active agent | **Claude Code**; owner has authorized QA02-A preflight after completed QA01. No infrastructure provisioning, QA03 or CP02 continuation without separate approval. |
+| Active agent | **Claude Code**; QA02-A delivered and stopped for owner/ChatGPT review. No infrastructure, QA03 or CP02 continuation without separate approval. |
 | Latest observed merged main | `655438f0ec8d2e3594595252af4a99e6c58627a0` (documentation-only checkpoint) |
 | Latest separately previously verified deployed runtime | `677bc51f39fbf8fcf66bc91f846b71a4912bb306`, [deployment 39447533639](https://github.com/Seifonyx/Lumen/actions/runs/39447533639). No fresh live verification this session. |
+
+
+## Latest — QA02-A Cloudflare readiness preflight delivered (planning only)
+
+**[Preflight report at the exact pushed revision](https://github.com/Seifonyx/Lumen/blob/ffcbb18aad520cdcd00b5030135ff4838a2b228d/docs/blackout/QA02A_PREFLIGHT.md)** · [handoff](https://github.com/Seifonyx/Lumen/blob/ffcbb18aad520cdcd00b5030135ff4838a2b228d/docs/blackout/AI_HANDOFF.md). Draft PR #34 remains open/unmerged.
+
+**Evidence limits:** this Claude Code session has **no Cloudflare account access** (no token, login or account; repository secrets not read) and cannot fetch developers.cloudflare.com directly (session network policy). Capabilities come from search summaries of Cloudflare's own documentation/changelog and are presented as **owner read-only checks**, not verified account facts. No account capability is inferred from the existing provider-relay tooling.
+
+**Findings (to confirm on the dashboard):** Zero Trust Free covers ≤ 50 users at $0 (Pay-as-you-go $7/user/month); per-application independent MFA supports Face ID/passkeys and TOTP, but **plan availability is unknown**; one-click Access for Workers protects the workers.dev route and preview URLs (account-wide shared preview policy); Workers Free allows 100k requests/day (shared with the relay) and **10 ms CPU per request** — QA01's per-request hashing of large files may exceed it, so the canary must measure it (fix: stored R2 checksums, or $5/month Workers Paid with approval); R2 free tier 10 GB/month, enabling may require a payment method (billing activation needs separate approval); R2 tokens can be bucket-scoped, Worker deploy tokens are assumed account-wide; budget alerts notify but never cap spend.
+
+**Recommendations:** pinned `jose` (Cloudflare's documented Access-JWT pattern) in the QA Worker package only, keeping QA01's policy checks and negative tests; a QA-only per-namespace swap of five device-wide preferences including `mr.activeProject` before QA03 (no production change); owner-only Access policy with one-time PIN + Face ID passkey MFA preferred.
+
+**Rollout (each step separately approved):** 0 owner read-only checks → 1 local code (jose, deny/canary Worker, CPU-light integrity, preference fix) → 2 Access/MFA setup → 3 deny-only Worker → 4 R2 + harmless canary (no Lumen assets) → 5 iPhone Safari login/MFA test → 6 revocation/teardown rehearsal → 7 QA03. Deny tests D1–D8 and canary tests C1–C10 defined. **Target $0/month; worst case $12/month only with explicit approval.**
+
+**Progress:** 21.5% → 21.5%, Medium confidence. **Exact next action: STOP for owner and ChatGPT review;** the owner may perform step 0 privately (never post account IDs, emails or tokens publicly).
 
 ## Latest — QA01 local private-testing foundation delivered (agent-verified; awaiting review)
 

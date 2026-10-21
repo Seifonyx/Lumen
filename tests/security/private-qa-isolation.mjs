@@ -121,9 +121,13 @@ try {
   // 4. Files QA01 must not change.
   const guarded = ['src', 'index.html', 'vite.config.ts', 'package.json', 'package-lock.json', 'firebase.json', '.firebaserc', 'firestore.rules', 'server/provider-relay',
     '.github', 'docs/blackout/workspace-proofs', 'public'];
-  const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim();
-  assert.equal(changed, '', `QA01 must not modify production entry, proof guard, hosting, rules, relay or workflows:\n${changed}`);
-  pass('production entry, localhost proof guard, hosting/rules/relay/workflows unchanged', `since ${base.slice(0, 12)}`);
+  // CP02 (owner-authorized) adds the flagged Canvas composer in exactly these source files. The flag stays off in
+  // the ordinary build, and section 1's byte equality proves its output is still the pre-QA01 baseline.
+  const cp02 = ['src/components/Composer.tsx', 'src/components/ComposerCanvas.tsx', 'src/lib/canvas-presentation.ts', 'src/styles/canvas-composer.css'];
+  const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
+  assert.deepEqual(changed, [], `QA01 must not modify production entry, proof guard, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
+  assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');
+  pass('production entry, localhost proof guard, hosting/rules/relay/workflows unchanged; only the CP02 files (flag off) in src', `since ${base.slice(0, 12)}`);
 
   // 5. No-publication contract for the local tooling.
   const tooling = ['server/private-qa/gate.mjs', 'server/private-qa/control.mjs', 'server/private-qa/access-jwt.mjs', 'server/private-qa/paths.mjs', 'scripts/qa/build.mjs', 'scripts/qa/verify.mjs', 'scripts/qa/audit.mjs'];

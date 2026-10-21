@@ -1,6 +1,12 @@
 # Lumen Blackout — implementation plan
 
-Checkpoint: **20 October 2026, Africa/Cairo**. Baseline **v1** freezes the existing eight parent weights after recovery of the full master. This is a separate approved initiative; Model Picker remains **98.5%**, and cancelled Adaptive Native's historical 7.5% is not transferable credit.
+Checkpoint: **21 October 2026, UTC — post-Gate 1 Canvas blueprint**. Baseline **v1** freezes the existing eight parent weights after recovery of the full master. This is a separate approved initiative; Model Picker remains **98.5%**, and cancelled Adaptive Native's historical 7.5% is not transferable credit.
+
+## Current owner decision and scope
+
+**Gate 1 APPROVED; Canvas (A) selected. Production implementation NOT authorized.** The owner confirmed approval after the final sidebar-spacing review and explicitly switched to Codex for a documentation-only production-integration blueprint. **Gates 2/3 pending; no production code, preview exposure/security relaxation, merge or deployment.** Current deliverable: [Canvas production-integration blueprint](CANVAS_PRODUCTION_INTEGRATION_BLUEPRINT.md), unweighted CP00. CP01–CP06 describe proposed execution children, not authorization or completed implementation. The original full master is unchanged.
+
+This current section and ledger supersede historical stop/approval statements below; historical evidence/estimates are preserved. Selected Canvas replaces the rejected consolidated Workspace/Focus proposal as the foundation. First recommended implementation slice is CP01 contract characterization/component seams/scoped tokens in the isolated harness, **only after a separately scoped owner instruction**. Stop after documentation delivery.
 
 ## Authority and permanent release policy
 
@@ -22,16 +28,18 @@ Formula: **100 × Σ(weight × earned fraction) / Σ(weights)**. Total = **100**
 | B01.4 | Native capability/security matrix and populated baseline; B01.1–3 | 3 | 38 identified contracts; concrete native/security/acceptance proposals; matched current desktop/phone baseline; no inference/privacy transfer | 1 | 3 |
 | B02.1 | Two or three original two-experience identity studies; B01 | 5 | Positioning/mark/type; geometry/nav/materials; theme/status/accessibility; refined visual/motion/small-icon review | .5 | 2.5 |
 | B02.2 | Actual-component identity proof; B02.1 | 9 | Matched desktop/phone real components; chat/expanded input/picker/context and Routing Center/provider/policy/usage evidence; light/dark/black/narrow WebKit; complete dynamic/complex-state and physical-device evidence | .75 | 6.75 |
-| B02.3 | Explicit identity decision; B02.1–2 | 3 | User selects or explicitly approves a specific identity, with refinement feedback recorded | 0 | 0 |
+| B02.3 | Explicit identity decision; B02.1–2 | 3 | User selects or explicitly approves a specific identity, with refinement feedback recorded; owner formally approved Canvas after sidebar-spacing review, confirmed 21 October 2026 | 1 | 3 |
 | B03 | Shared design-system foundation; B02.3 | 10 | Semantic light/dark/black tokens; shared components and original assets; accessible responsive/motion states; tested ownership and DESIGN.md integration | 0 | 0 |
 | B04 | Interaction architecture, flagship and core shell/chat; B02.3, B03 | 19 | Purpose-built desktop/phone navigation and route controls; functional populated flagships; **Gate 2 before major integration**; chat/drafts/keyboard/model/gesture/Canvas recovery and regression evidence | 0 | 0 |
 | B05 | Secure equivalent feature expansion; B02.3, B03, relevant B04 | 17 | Every F01–F38 disposition resolved; native provider/route/Layout/usage improvements integrated; conditional architecture/permissions explicitly decided; regression/privacy/cost evidence | 0 | 0 |
 | B06 | Remaining screens; B03–5 as applicable | 11 | Settings/keys/Models/Layouts/Tools/Library/Projects; Study/Compare/Canvas/GitHub; complete responsive/multi-theme states; accessible usable cross-screen workflows | 0 | 0 |
 | B07 | Hardening; incremental, final after B03–6 | 10 | Account/credentials/failure/migration regression; accessibility/keyboard/contrast; measured performance/cost; compatibility and physical-device gaps honestly resolved | 0 | 0 |
 | B08 | Final aesthetic/release/production verification; B01–7 | 6 | Full final visual acceptance; exact-head CI/security review; protected merge/deploy/rollback verification; live tests and complete docs/handoff | 0 | 0 |
-| | **Total** | **100** | **Current 18.5%, approximately 19%; remaining 81.5 weighted points** | | **18.5** |
+| | **Total** | **100** | **Current 21.5%, approximately 22%; remaining 78.5 weighted points** | | **21.5** |
 
-The previous committed checkpoint deliberately had **no Blackout percentage** because the master was missing. An interim uncommitted 19.75% draft overcredited the first visual studies; the user rejected their architecture. We preserved B01 research/tooling, reduced B02.1 to .5 for unfinished identity/mark/motion, and award B02.2 .75 only for the new verified two-experience proof. Current 18.5% is the first synchronized baseline; the weights are unchanged. This is an evidence/acceptance correction, not a restart or a change to another initiative's progress. Confidence **Medium**: strong repository/source/rendered-test evidence, but user aesthetic acceptance and most product implementation remain ahead. B01.2 retains missing quota/request-detail/current mobile reference coverage. B02.1 retains final original mark, optical/type refinement, final integrated identity refinement and real interaction motion (the focused provider-detail proof is separately verified below). Retired Aperture/Relay/Fold are not current identity candidates. B02.2 is an identity study, not production-ready end-to-end redesign; physical iPhone behavior, virtual keyboard and complex streaming/Canvas/comparison states remain unverified.
+**Previous synchronized 18.5% → current 21.5% (+3 points), Medium confidence.** The only changed fraction is B02.3: 0 → 1, weight 3, for the owner's explicit Canvas selection/Gate 1 approval and recorded refinement feedback. Evidence: live checkpoint `docs/lumen-live-context` at `c003f575e02bc299d79298fa1fab8313ac7f830c`, final source `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`, [sidebar feedback record](workspace-proofs/proposals/SIDEBAR.md) and the owner's current handoff instruction. Existing weights and B01/B02.1/B02.2/B03–B08 fractions are unchanged. Blueprint work earns no implementation credit. Total weight 100; earned 21.5; remaining 78.5. Independent Model Picker remains 98.5%.
+
+Historical baseline: the first committed 18.5% corrected an uncommitted 19.75% overestimate of rejected studies. Those research/tooling results and historical records remain preserved. Current approval resolves the design-selection decision only. B01.2 retains reference-coverage gaps; B02.1 retains integrated identity/theme/type/motion refinement; B02.2 retains physical iPhone, virtual keyboard and complex-state coverage. Gate 1 approval does not imply all B02 acceptance groups passed. Production B03–B08 remain unimplemented/zero credit, and Gates 2/3 remain pending.
 
 ## Requirements coverage
 
@@ -39,13 +47,33 @@ The previous committed checkpoint deliberately had **no Blackout percentage** be
 |---|---|---|
 | §§0–1 continuity/identity mission; §§14,16,18,20 autonomous/handoff | B01.1/B01.3; this plan and AI_HANDOFF.md, original sources | Verified checkpoint; recurring obligations remain |
 | §§2–3 independent sources and reference library | B01.2; REFERENCE_REVIEW.md, REFERENCE_MANIFEST.md, REFERENCE_EVIDENCE.json | In progress; inaccessible gallery and coverage gaps explicit |
-| §4 all 13 identity deliverables, §11 originality, §17 rejected failure modes | B02.1–3; IDENTITY_RESEARCH.md and workspace-proofs/review.html | Studies implemented/partially verified; **identity approval pending** |
+| §4 all 13 identity deliverables, §11 originality, §17 rejected failure modes | B02.1–3; IDENTITY_RESEARCH.md and workspace-proofs/review.html | Canvas foundation **approved at Gate 1**; remaining study/device criteria partial |
 | §5 provider/route/usage/developer/efficiency/ops/account feature analysis | B01.4 then B05; FEATURE_MATRIX.md F01–F38 | Matrix verified; new capabilities unimplemented; conditional decisions remain |
 | §6 credentials/privacy/architecture/claims; §12 preservation | B03–7, every F delivery contract | Existing safeguards preserved; new boundaries require explicit decisions |
-| §7 desktop/iOS/tablet; §8 complete interface scope; master's phase 3 flagships | B03/B04/B06, Gate 2 | Prototype evidence only; interaction architecture not finalized before Gate 1 |
-| §9 phase order and all 3 aesthetic gates | B01–8 per v1.1, retaining master flagship approval in B04 | Gate 1 pending; Gates 2/3 not reached |
+| §7 desktop/iOS/tablet; §8 complete interface scope; master's phase 3 flagships | B03/B04/B06, Gate 2 | Canvas selected; CP00 blueprint maps canonical owners; production implementation unauthorized |
+| §9 phase order and all 3 aesthetic gates | B01–8 per v1.1, retaining master flagship approval in B04 | Gate 1 approved; Gates 2/3 pending; no integration/release permission |
 | §10 actual multi-device full-size evidence; §13 quality assurance | B02.2 then B03–8; capture harness/report/actual screenshots | Isolated proof checked; whole-app redesign/device acceptance pending |
 | §15 progressive release; §19 completion | B08 plus each independently releasable milestone | PR #34 deliberately unmerged; no Blackout visual production deployment |
+
+## Current integration roadmap — unweighted execution children
+
+The [blueprint](CANVAS_PRODUCTION_INTEGRATION_BLUEPRINT.md) supplies exact component owners, feature/security parity, dependencies, tests, early physical-iPhone checks, Gate 2 reviews and per-slice rollback. Stable task weights above remain authoritative.
+
+| Child | Parent mapping | Current state / next condition |
+|---|---|---|
+| CP00 · post-Gate 1 blueprint | B02.3 decision record; no new weight | Documentation complete; doc validation and synchronization recorded in handoff; stop for owner review |
+| CP01 · characterization/seams/tokens | B03/B07 | Not started; separate owner implementation authorization required |
+| CP02 · canonical composer/writing sheet | B03/B04/B07 | Not started; CP01 + authorized physical-device access; early real-iPhone acceptance; Gate 2 checkpoint A |
+| CP03 · navigation/reading/projects | B04/B06/B07 | Not started; CP02 evidence/review; Gate 2 checkpoint B |
+| CP04 · Routing Center integration proof | B04/B05/B07 | Not started; preserve verified provider slice; combined formal Gate 2 review package, not automatic approval |
+| CP05 · authorized integration/remaining screens/hardening | B03–B07 | Not started; explicit Gate 2 and integration permission, then Gate 3 final review |
+| CP06 · approved release/production verification | B08 | Not started; applicable approvals, exact-head CI, release authorization and rollback prerequisites |
+
+**Progressive release evaluation for this milestone:** CP00 is independently reviewable documentation, authorized for commit/push to PR #34 and the separate live-context branch only. It is **not authorized for merge/deployment**. No source subset is being released. Do not merge PR #34's historical experiments wholesale or infer release permission from earlier general authorization. Latest explicit owner boundaries control.
+
+## Historical implementation/evidence checkpoints
+
+All following percentages, gate states and stop instructions describe their dated milestone, not today's authorization. Preserve the provider and flagship work; no reruns or additional production credit are claimed by this blueprint.
 
 ## Independently released functional milestone
 
@@ -88,7 +116,7 @@ Proposal acceptance: first full response paragraph visible above a composer ≤4
 
 ## Verification and next review
 
-Use CONSOLIDATION.md and the new portable review for this scope; older workspace/provider boards retain their separate verified evidence. Stop at this coherent proposal. No automatic approval request, identity rollout or production migration. The complete master and original gates remain active.
+Historical consolidated-proposal review instructions; that architecture was later rejected. Current continuation uses the approved Canvas source, the blueprint and latest handoff above. Older workspace/provider boards retain their separate evidence. Production implementation remains unauthorized.
 
 ### Gate1 flagship quality pass — 21 October 2026
 

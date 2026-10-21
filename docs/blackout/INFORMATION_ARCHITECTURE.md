@@ -1,5 +1,7 @@
 # 9Router → current Lumen → Blackout product architecture
 
+**Current decision, 21 October 2026:** Gate 1 approved; Canvas selected. The [production-integration blueprint](CANVAS_PRODUCTION_INTEGRATION_BLUEPRINT.md) is the current ownership/phase proposal, documentation only; implementation remains unauthorized. Index/Studio and pending-gate descriptions below are historical research/proof context. Preserve their provider functionality; do not revive the rejected consolidated Workspace/Focus shell.
+
 20 October 2026, Africa/Cairo. Responds to [critical Routing Center correction](ROUTING_CENTER_COURSE_CORRECTION_2026-10-20.md). Primary reference evidence: [actual screenshot board](reference-board.html), [individual observations](REFERENCE_REVIEW.md), and [38-feature/security matrix](FEATURE_MATRIX.md). This document connects that research to the next actual UI, rather than creating a parallel generic chat redesign.
 
 ## One product, two connected experiences

@@ -6,9 +6,9 @@
 
 | Item | Last known state |
 |---|---|
-| Repo | \`Seifonyx/Lumen\` (public) |
-| Blackout work | Draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34), branch \`docs/lumen-blackout-phase1-20261019\` |
-| **Latest directly verified PR HEAD** | \`bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a\`, verified on 2026-10-21 |
+| Repo | `Seifonyx/Lumen` (public) |
+| Blackout work | Draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34), branch `docs/lumen-blackout-phase1-20261019` |
+| **Latest directly verified PR HEAD** | `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`, verified on 2026-10-21 |
 | Branch state | PR #34 open, draft, unmerged at verification; no Canvas production migration or deployment authorized |
 | Design direction | **Canvas (A) chosen for refinement**; earlier Workspace/Focus consolidation presentation rejected |
 | **Gate 1** | **NOT APPROVED**. Owner previously expressed intent to consider approval after final sidebar refinement, not actual sign-off |
@@ -19,7 +19,7 @@
 
 The owner selected Canvas's layout, then requested a ChatGPT-inspired but independently branded sidebar with independently collapsible Projects/project folders/Conversations and preserved chat actions. The follow-up feedback was **larger, airier primary navigation** (Library, Tools, Models & routing) while keeping the project/history tree compact.
 
-**Latest pushed work:** [commit \`bb29ffe\`](https://github.com/Seifonyx/Lumen/commit/bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a), CSS-only Canvas sidebar spacing/hierarchy refinement. Report/evidence: [SIDEBAR.md](https://github.com/Seifonyx/Lumen/blob/bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a/docs/blackout/workspace-proofs/proposals/SIDEBAR.md) and screenshots in \`docs/blackout/workspace-proofs/proposals/sidebar/spacing/\` on the PR branch.
+**Latest pushed work:** [commit `bb29ffe`](https://github.com/Seifonyx/Lumen/commit/bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a), CSS-only Canvas sidebar spacing/hierarchy refinement. Report/evidence: [SIDEBAR.md](https://github.com/Seifonyx/Lumen/blob/bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a/docs/blackout/workspace-proofs/proposals/SIDEBAR.md) and screenshots in `docs/blackout/workspace-proofs/proposals/sidebar/spacing/` on the PR branch.
 
 **Reported tests, not independently rerun by ChatGPT:** Chromium multiple iPhone sizes (including short-height and 320px) and desktop; WebKit iPhone/desktop; nav-check, captures, polish-check, consolidated regression and proof TypeScript; all agent-reported pass. Physical iPhone still untested. Do not mistake synthetic WebKit screenshot evidence for real iPhone glass, keyboard or touch testing.
 
@@ -33,4 +33,4 @@ If Claude Code hits its limit before a further assignment, the owner will explic
 
 ## Context branch synchronization
 
-This document is on **\`docs/lumen-live-context\`**. It is intentionally separate from the coding PR branch. After meaningful changes, update it **here**, verify its commit and do not imply that static ChatGPT Project Sources auto-update. Never put confidential details in this public repository.
+This document is on **`docs/lumen-live-context`**. It is intentionally separate from the coding PR branch. After meaningful changes, update it **here**, verify its commit and do not imply that static ChatGPT Project Sources auto-update. Never put confidential details in this public repository.

@@ -166,7 +166,8 @@ try {
     const control = await open(REVIEWERS.owner, { bypassCSP: true });
     await control.page.goto(gate.buildUrl);
     await composer(control.page).waitFor({ timeout: 20000 });
-    await control.page.evaluate(() => fetch('https://planted-detector-check.invalid/x').catch(() => null));
+    // fetch is already refused by the transport, so plant primitives only CSP would stop (bypassed here).
+    await control.page.evaluate(() => { new Image().src = 'https://planted-detector-check.invalid/p.png'; const x = new XMLHttpRequest(); x.open('GET', 'https://planted-detector-check.invalid/x'); x.send(); });
     await settle(control.page, 300);
     assert.ok(control.seen.external.some((u) => u.includes('planted-detector-check.invalid')), 'the request detector must catch a planted external request');
     await control.context.close();

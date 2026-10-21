@@ -1,0 +1,115 @@
+/* Proposal A — CANVAS. The conversation is the canvas; navigation is one tree (projects are folders of
+   conversations); every control floats. The composer is a single calm capsule that opens into a second row only
+   while you're writing, and grows into a writing sheet over the conversation when you want more room. */
+:root[data-proposal=canvas]{--pc-nav-w:272px}
+
+/* ---------- Navigation tree */
+.px-canvas .pc-nav{display:flex;flex-direction:column;gap:10px;height:100%;padding:16px 12px 12px;box-sizing:border-box}
+.pc-nav-head{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 6px}
+.pc-nav-close{display:none}
+.pc-new{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 10px;border:0;border-radius:12px;background:none;color:var(--text);font:600 14px var(--font);cursor:pointer}
+.pc-new:hover{background:var(--px-fill)}
+.pc-new kbd{margin-left:auto;font:500 11px var(--px-mono);color:var(--text-3)}
+.pc-tree{flex:1;min-height:0;overflow:auto;padding:4px 0 8px;margin:0 -4px;padding-inline:4px}
+.pc-tree .px-label{padding:18px 10px 8px}
+.pc-tree ul{list-style:none;margin:0;padding:0}
+.pc-project-row{display:flex;align-items:center;gap:8px;width:100%;min-height:38px;padding:0 8px;border:0;border-radius:10px;background:none;color:var(--text);font:560 14px var(--font);text-align:left;cursor:pointer}
+.pc-project-row>svg{color:var(--text-3);flex:none}
+.pc-project-row:hover{background:var(--px-fill)}
+.pc-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pc-count{font:500 11.5px var(--font);color:var(--text-3);font-variant-numeric:tabular-nums}
+.pc-project ul{margin:2px 0 8px 23px;padding-left:12px;border-left:1px solid var(--px-rim)}
+.pc-tree li>button{display:block;width:100%;min-height:34px;padding:0 10px;border:0;border-radius:9px;background:none;color:var(--text-2);font:450 13.5px/34px var(--font);text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.pc-tree li>button:hover{background:var(--px-fill);color:var(--text)}
+.pc-tree li>button[aria-current=page]{background:var(--px-fill-strong);color:var(--text);font-weight:600}
+.pc-project-actions{display:flex;gap:2px}
+.pc-tree .pc-project-actions button{display:inline-flex;align-items:center;gap:6px;width:auto;color:var(--text-3);font-size:12.5px}
+.px-canvas .px-destinations{padding-top:10px;border-top:1px solid var(--px-rim)}
+
+/* ---------- Desktop shell */
+@media(min-width:900px){
+ .px-nav-host.px-canvas{order:-1;flex:none;width:var(--pc-nav-w);height:100%;background:var(--sidebar,var(--bg));border-right:1px solid var(--px-rim)}
+ :root[data-proposal=canvas] .main>.topbar{position:absolute;inset:0 0 auto;z-index:12;height:64px;min-height:0;padding:12px 18px;border:0;background:linear-gradient(var(--bg) 35%,transparent);display:flex;align-items:center}
+ :root[data-proposal=canvas] .main>.conversation-area>.messages{padding-top:64px;padding-bottom:170px}
+ :root[data-proposal=canvas] .pc-nav-btn-hide{display:none}
+ :root[data-proposal=canvas] .px-lead>.px-nav-btn[data-proposal-nav]{display:none}
+}
+.pc-crumb{display:flex;align-items:center;gap:6px;min-width:0;color:var(--text-3)}
+.pc-crumb button{border:0;background:none;padding:4px 6px;margin:-4px -2px;border-radius:8px;color:var(--text-2);font:500 13.5px var(--font);cursor:pointer;white-space:nowrap}
+.pc-crumb button:hover{background:var(--px-fill);color:var(--text)}
+.pc-title{font:600 14.5px var(--font);color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- Composer: one capsule (rest) → two rows (writing) → sheet (expanded) */
+:root[data-proposal=canvas] .composer{display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;padding:6px;border-radius:28px;max-width:760px;margin:0 auto;transition:border-radius .35s var(--px-ease),padding .35s var(--px-ease)}
+:root[data-proposal=canvas] .composer>.composer-bar,:root[data-proposal=canvas] .composer .composer-voice-controls{display:contents}
+:root[data-proposal=canvas] .composer>:is(.repo-strip,.attachments,.checks-bar){order:0;flex:0 0 100%}
+:root[data-proposal=canvas] .composer>.attachments.attachments-empty{display:none}
+:root[data-proposal=canvas] .composer>textarea{order:2;flex:1 1 140px;min-width:0;min-height:40px!important;max-height:38dvh;padding:9px 8px!important;font-size:16px;line-height:1.5;background:none}
+:root[data-proposal=canvas] .composer .composer-bar>.tool-btn:not(.shield-on){order:1;width:38px;height:38px;padding:0;border-radius:50%;background:var(--px-fill);color:var(--text)}
+:root[data-proposal=canvas] .composer .model-picker{order:3}
+:root[data-proposal=canvas] .composer .model-button{height:34px;min-height:34px;padding:0 10px;gap:6px;border:0;border-radius:999px;background:none;color:var(--text-2);font-size:13.5px}
+:root[data-proposal=canvas] .composer .model-button:hover{background:var(--px-fill);color:var(--text)}
+:root[data-proposal=canvas] .composer .composer-chip{order:4}
+:root[data-proposal=canvas] .composer .spacer{order:5;flex:1 1 0;display:none}
+:root[data-proposal=canvas] .composer .usage-meter{order:6;display:none}
+:root[data-proposal=canvas] .composer .shield-on{order:7}
+:root[data-proposal=canvas] .composer .px-expand{order:8;display:none}
+:root[data-proposal=canvas] .composer .dictation-btn{order:9;display:none}
+:root[data-proposal=canvas] .composer .send-btn{order:10;width:38px;height:38px;min-width:38px;padding:0;border-radius:50%}
+:root[data-proposal=canvas] .composer :is(.send-btn,.dictation-btn)>span{display:none}
+/* Writing: the text takes its own row; the tools you need now appear under it. */
+:root[data-proposal=canvas] .composer:is(:focus-within,:has(textarea:not(:placeholder-shown)),:has(.attachment)){border-radius:24px;padding:8px 8px 6px}
+:root[data-proposal=canvas] .composer:is(:focus-within,:has(textarea:not(:placeholder-shown)),:has(.attachment))>textarea{order:0;flex-basis:100%;min-height:52px!important;padding:6px 10px 4px!important}
+:root[data-proposal=canvas] .composer:is(:focus-within,:has(textarea:not(:placeholder-shown)),:has(.attachment)) :is(.spacer){display:block}
+:root[data-proposal=canvas] .composer:is(:focus-within,:has(textarea:not(:placeholder-shown)),:has(.attachment)) .usage-meter{display:flex}
+:root[data-proposal=canvas] .composer:is(:focus-within,:has(textarea:not(:placeholder-shown)),:has(.attachment)) .px-expand{display:inline-grid}
+:root[data-proposal=canvas] .composer:is(:focus-within,:has(textarea:not(:placeholder-shown)),:has(.attachment)) .dictation-btn{display:inline-flex}
+:root[data-proposal=canvas] .composer .usage-chip{min-height:34px;border:0;background:none;color:var(--text-3)}
+
+@media(min-width:900px){
+ :root[data-proposal=canvas] .main>.composer-wrap{position:absolute;inset:auto 0 0;z-index:12;padding:0 28px 22px;background:none;pointer-events:none}
+ :root[data-proposal=canvas] .main>.composer-wrap>*{pointer-events:auto}
+ :root[data-proposal=canvas] .composer-wrap .disclaimer{max-width:760px;margin:8px auto 0;font-size:11px;text-align:center;color:var(--text-3)}
+ :root[data-proposal=canvas] .composer{border:1px solid var(--px-rim);background:var(--px-glass-strong);-webkit-backdrop-filter:blur(26px) saturate(1.5);backdrop-filter:blur(26px) saturate(1.5);box-shadow:var(--px-shadow)}
+}
+
+/* Expanded writing: a sheet that rises over the conversation (still visible above it), not a new place. */
+:root[data-proposal=canvas][data-proof-expanded] .main>.composer-wrap{z-index:80}
+:root[data-proposal=canvas][data-proof-expanded] .main>.composer-wrap::after{content:'';position:fixed;inset:0;z-index:-1;background:rgb(0 0 0 / .42);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);pointer-events:auto}
+:root[data-proposal=canvas][data-proof-expanded] .composer{position:fixed;z-index:1;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto;align-items:stretch;gap:6px;padding:12px 14px 10px;border-radius:30px}
+:root[data-proposal=canvas][data-proof-expanded] .composer>.px-sheet-head{grid-row:1}
+:root[data-proposal=canvas][data-proof-expanded] .composer>:is(.repo-strip,.attachments,.checks-bar){grid-row:2}
+:root[data-proposal=canvas][data-proof-expanded] .composer>textarea{grid-row:3;height:auto!important;max-height:none;min-height:0!important;padding:6px 10px!important;font-size:19px;line-height:1.75;overflow:auto}
+:root[data-proposal=canvas][data-proof-expanded] .composer>.composer-bar{grid-row:4;display:flex;align-items:center;gap:4px;padding-top:6px;border-top:1px solid var(--px-rim)}
+:root[data-proposal=canvas][data-proof-expanded] .composer .composer-voice-controls{display:flex;align-items:center;gap:4px;order:10}
+:root[data-proposal=canvas][data-proof-expanded] .composer :is(.spacer){display:block;flex:1}
+:root[data-proposal=canvas][data-proof-expanded] .composer :is(.usage-meter,.dictation-btn){display:flex}
+.px-grabber{display:none}
+@media(min-width:900px){
+ :root[data-proposal=canvas][data-proof-expanded] .composer{left:calc(var(--pc-nav-w) + (100vw - var(--pc-nav-w)) / 2);translate:-50% 0;bottom:24px;width:min(820px,calc(100vw - var(--pc-nav-w) - 64px));height:min(78dvh,760px);max-width:none;margin:0}
+}
+
+/* ---------- iPhone: production glass, rearranged */
+@media(max-width:899px){
+ .px-nav-host.px-canvas{position:fixed;z-index:61;inset:0 auto 0 0;width:min(86vw,340px);padding-top:env(safe-area-inset-top);background:var(--sidebar,var(--bg));box-shadow:var(--px-shadow);animation:pc-in .35s var(--px-ease)}
+ .pc-nav-close{display:inline-grid;place-items:center;width:36px;height:36px;border:0;border-radius:50%;background:var(--px-fill);color:var(--text)}
+ .px-canvas .pc-tree li>button,.px-canvas .pc-project-row,.px-canvas .pc-new,.px-canvas .px-destinations button{min-height:44px;font-size:15.5px}
+ .px-canvas .pc-tree li>button{line-height:44px}
+ :root[data-proposal=canvas] .px-lead{gap:8px}
+ :root[data-proposal=canvas] .pc-crumb{flex:1;justify-content:center;flex-direction:column;align-items:center;gap:0;line-height:1.2}
+ :root[data-proposal=canvas] .pc-crumb>svg{display:none}
+ :root[data-proposal=canvas] .pc-crumb .pc-title{order:-1;font-size:16px}
+ :root[data-proposal=canvas] .pc-crumb button{font-size:12px;padding:1px 6px;margin:0;color:var(--text-3)}
+ html.glass[data-proposal=canvas] .px-lead>.px-nav-btn{width:44px;height:44px;border-radius:50%;border:1px solid transparent;background:var(--glass-sheen) padding-box,linear-gradient(var(--glass-tint),var(--glass-tint)) padding-box,var(--glass-rim) border-box;-webkit-backdrop-filter:var(--glass-filter);backdrop-filter:var(--glass-filter);box-shadow:var(--glass-depth),var(--glass-shadow)}
+ html.glass[data-proposal=canvas] .main>.composer-wrap{padding-inline:10px}
+ html.glass[data-proposal=canvas] .composer{padding:5px;border-radius:26px}
+ html.glass[data-proposal=canvas] .composer>textarea{font-size:17px}
+ :root[data-proposal=canvas][data-proof-expanded] .composer{width:auto;max-width:none;margin:0;left:8px;right:8px;top:calc(max(8px,env(safe-area-inset-top)) + 52px);bottom:max(8px,env(safe-area-inset-bottom));border-radius:34px;padding:8px 12px 8px}
+ :root[data-proposal=canvas][data-proof-expanded] .px-grabber{display:block;position:absolute;top:7px;left:50%;translate:-50% 0;width:38px;height:5px;border-radius:3px;background:color-mix(in srgb,var(--text) 25%,transparent)}
+ :root[data-proposal=canvas][data-proof-expanded] .px-sheet-head{padding-top:12px}
+ :root[data-proposal=canvas][data-proof-expanded] .composer>textarea{font-size:18px}
+}
+@keyframes pc-in{from{translate:-100% 0}}
+:root[data-proposal=canvas][data-proof-expanded] .composer .px-expand{display:none!important}
+/* Writing is never at the mercy of blur: the expanded sheet is nearly opaque (glass only at its rim). */
+:root[data-proposal=canvas][data-proof-expanded] .composer{background:linear-gradient(var(--bg),var(--bg)) padding-box,var(--glass-rim,linear-gradient(var(--px-rim),var(--px-rim))) border-box!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}

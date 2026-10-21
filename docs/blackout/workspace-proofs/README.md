@@ -2,7 +2,9 @@
 
 20 October 2026, Africa/Cairo. **Gate 1 remains NOT APPROVED.** [Course correction](../ROUTING_CENTER_COURSE_CORRECTION_2026-10-20.md) governs. These are actual local Lumen component renders with labelled synthetic accounts, not generated artwork or a production redesign.
 
-**Latest:** [Gate1 final verification](FINAL_VERIFICATION.md) — Chromium + WebKit matrix at `1d1e0f7`, rebuilt [portable review](consolidation-review.html), physical-iPhone checklist. Gate1 remains unapproved.
+**Latest:** [Two directions after the owner's rejection of the consolidation](proposals/PROPOSALS.md) — A Canvas and B Desk, [offline review](proposals/review.html). No direction selected; Gate1 unapproved.
+
+**Previous:** [Gate1 final verification](FINAL_VERIFICATION.md) — Chromium + WebKit matrix at `1d1e0f7`, rebuilt [portable review](consolidation-review.html), physical-iPhone checklist. Gate1 remains unapproved.
 
 **Previous:** [Gate1 quality pass](QUALITY_PASS.md) — typography, intelligence rail, mode identity and honest usage share on the consolidated preview, with before/after captures. Gate1 remains unapproved.
 

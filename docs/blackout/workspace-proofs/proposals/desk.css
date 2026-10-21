@@ -1,0 +1,131 @@
+/* Proposal B — DESK. Lumen as a writing desk organised by spaces: All conversations or a project. Spaces sit on a
+   rail, the chosen space's conversations in a list (Mail/Notes structure); on iPhone that becomes native push
+   navigation (space list → conversation). The composer is docked like an editor's panel: a quiet route line
+   (model, context, tools) above a writing field; expanded writing turns the document into a page. */
+:root[data-proposal=desk]{--pd-rail:84px;--pd-list:312px}
+
+/* ---------- Rail */
+.pd-rail{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 8px 12px;box-sizing:border-box;background:var(--sidebar,var(--bg))}
+.pd-rail>.px-wordmark{font-size:15px;margin:2px 0 14px}
+.pd-space{display:flex;flex-direction:column;align-items:center;gap:5px;width:100%;padding:6px 2px;border:0;border-radius:12px;background:none;color:var(--text-2);font:500 10.5px/1.2 var(--font);cursor:pointer}
+.pd-space>span:last-child{max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd-tile{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:var(--px-fill);color:var(--text);font:650 17px/1 var(--px-display);transition:background .2s,color .2s}
+.pd-tile.px-mono{width:42px;height:42px;border-radius:13px}
+.pd-space:hover .pd-tile{background:var(--px-fill-strong)}
+.pd-space[aria-current] .pd-tile{background:var(--text);color:var(--bg)}
+.pd-space[aria-current]{color:var(--text)}
+.pd-add .pd-tile{background:none;border:1px dashed color-mix(in srgb,var(--text) 25%,transparent)}
+.pd-rail .px-destinations{margin-top:auto;grid-template-columns:1fr;gap:2px;width:100%}
+.pd-rail .px-destinations button{flex-direction:column;gap:4px;min-height:52px;padding:6px 2px;justify-content:center;font-size:10.5px;text-align:center}
+
+/* ---------- Conversation list */
+.pd-list{display:flex;flex-direction:column;gap:10px;min-height:0;padding:18px 14px 12px;box-sizing:border-box;border-right:1px solid var(--px-rim);background:color-mix(in srgb,var(--text) 2.5%,var(--bg))}
+.pd-list-head{display:flex;align-items:center;gap:8px;padding:0 4px}
+.pd-list-head h2{flex:1;min-width:0;margin:0;font:640 22px/1.15 var(--px-display);letter-spacing:-.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd-list-close{display:none}
+.pd-list-new{display:inline-grid;place-items:center;width:36px;height:36px;border:0;border-radius:11px;background:var(--px-fill);color:var(--text);cursor:pointer}
+.pd-brief{display:grid;gap:3px;padding:12px 14px;border:1px solid var(--px-rim);border-radius:14px;background:none;color:var(--text);text-align:left;cursor:pointer}
+.pd-brief strong{font:560 14px/1.35 var(--font)}
+.pd-brief>span:last-child{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-3)}
+.pd-brief:hover{background:var(--px-fill)}
+.pd-chats{flex:1;min-height:0;overflow:auto;list-style:none;margin:0 -4px;padding:0 4px}
+.pd-chats button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;width:100%;padding:11px 12px;border:0;border-radius:12px;background:none;color:var(--text);text-align:left;cursor:pointer}
+.pd-chats button:hover{background:var(--px-fill)}
+.pd-chats button[aria-current=page]{background:var(--px-fill-strong)}
+.pd-chats button[aria-current=page] .pd-chat-meta{color:var(--text-2)}
+.pd-chat-title{font:600 14px/1.35 var(--font);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd-chat-meta{font-size:11.5px;color:var(--text-3);white-space:nowrap;align-self:center}
+.pd-chat-preview{grid-column:1/-1;font-size:13px;line-height:1.45;color:var(--text-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ---------- Desktop shell */
+@media(min-width:900px){
+ .px-nav-host.px-desk{order:-1;flex:none;display:grid;grid-template-columns:var(--pd-rail) var(--pd-list);height:100%}
+ :root[data-proposal=desk] .main>.topbar{min-height:0;height:56px;padding:0 24px;border-bottom:1px solid var(--px-rim);background:var(--bg)}
+ :root[data-proposal=desk] .pd-back{display:none}
+ :root[data-proposal=desk] .main>.composer-wrap{padding:10px 24px 14px;border-top:1px solid var(--px-rim);background:var(--bg)}
+ :root[data-proposal=desk] .composer-wrap .disclaimer{display:none}
+}
+.pd-title{display:flex;align-items:baseline;gap:10px;min-width:0}
+.pd-title>span{font:600 15px var(--font);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd-title small{font-size:12.5px;color:var(--text-3);white-space:nowrap}
+
+/* ---------- Composer: route line over a writing field */
+:root[data-proposal=desk] .composer{display:flex;flex-wrap:wrap;align-items:center;gap:0 2px;max-width:780px;margin:0 auto;padding:0;border:0;border-radius:0;background:none;box-shadow:none}
+:root[data-proposal=desk] .composer>.composer-bar,:root[data-proposal=desk] .composer .composer-voice-controls{display:contents}
+:root[data-proposal=desk] .composer>:is(.repo-strip,.attachments,.checks-bar){order:0;flex:0 0 100%;margin-bottom:6px}
+:root[data-proposal=desk] .composer>.attachments.attachments-empty{display:none}
+:root[data-proposal=desk] .composer .composer-bar>.tool-btn:not(.shield-on){order:1;width:32px;height:32px;padding:0;border-radius:9px;background:none;color:var(--text-2)}
+:root[data-proposal=desk] .composer .model-picker{order:2}
+:root[data-proposal=desk] .composer .model-button{height:32px;min-height:32px;padding:0 8px;gap:6px;border:0;border-radius:9px;background:none;color:var(--text-2);font-size:13px}
+:root[data-proposal=desk] .composer :is(.model-button,.composer-bar>.tool-btn,.usage-chip,.px-expand):hover{background:var(--px-fill);color:var(--text)}
+:root[data-proposal=desk] .composer .composer-chip{order:3}
+:root[data-proposal=desk] .composer .spacer{order:4;flex:1 1 0}
+:root[data-proposal=desk] .composer .usage-meter{order:5}
+:root[data-proposal=desk] .composer .usage-chip{min-height:32px;border:0;background:none}
+:root[data-proposal=desk] .composer .shield-on{order:6}
+:root[data-proposal=desk] .composer .px-expand{order:7;width:32px;height:32px;border-radius:9px}
+:root[data-proposal=desk] .composer::after{content:'';order:8;flex:0 0 100%;height:6px}
+:root[data-proposal=desk] .composer>textarea{order:9;flex:1 1 200px;min-width:0;min-height:50px!important;max-height:34dvh;padding:13px 16px!important;border:1px solid var(--px-rim)!important;border-radius:16px;background:var(--px-fill);font-size:16px;line-height:1.55}
+:root[data-proposal=desk] .composer>textarea:focus{border-color:color-mix(in srgb,var(--text) 35%,transparent)!important}
+:root[data-proposal=desk] .composer .dictation-btn{order:10;width:44px;height:44px;padding:0;margin-left:6px;border-radius:14px}
+:root[data-proposal=desk] .composer .send-btn{order:11;width:48px;height:48px;min-width:48px;padding:0;margin-left:6px;border-radius:15px}
+:root[data-proposal=desk] .composer :is(.send-btn,.dictation-btn)>span{display:none}
+
+/* Page mode: expanded writing replaces the document view with a page; the answer you're replying to stays
+   one tap away above it. The list steps aside. */
+.pd-replying{border:1px solid var(--px-rim);border-radius:14px;padding:10px 14px;color:var(--text-2)}
+.pd-replying summary{display:flex;gap:10px;align-items:baseline;cursor:pointer;list-style:none;font-size:13.5px}
+.pd-replying summary::-webkit-details-marker{display:none}
+.pd-replying summary>span:last-child{color:var(--text);font-weight:560;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd-replying-body{margin-top:8px;font-size:14px;line-height:1.6;white-space:pre-line}
+:root[data-proposal=desk][data-proof-expanded] .pd-replying{display:block;order:-9;flex:0 0 100%}
+:root[data-proposal=desk][data-proof-expanded] .main>.conversation-area,:root[data-proposal=desk][data-proof-expanded] .main>.to-bottom{display:none}
+:root[data-proposal=desk][data-proof-expanded] .main>.composer-wrap{flex:1;min-height:0;display:flex;flex-direction:column;padding:22px 24px 16px;border-top:0}
+:root[data-proposal=desk][data-proof-expanded] .composer{flex:1;min-height:0;width:100%;max-width:780px;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr) auto;gap:10px;align-content:stretch;align-items:stretch}
+:root[data-proposal=desk][data-proof-expanded] .composer::after{display:none}
+:root[data-proposal=desk][data-proof-expanded] .composer>.px-sheet-head{grid-row:1}
+:root[data-proposal=desk][data-proof-expanded] .composer>.pd-replying{grid-row:2}
+:root[data-proposal=desk][data-proof-expanded] .composer>:is(.repo-strip,.attachments,.checks-bar){grid-row:3}
+:root[data-proposal=desk][data-proof-expanded] .composer>textarea{grid-row:4;height:auto!important;max-height:none;min-height:0!important;padding:22px 26px!important;border-radius:20px;font-size:19px;line-height:1.8;overflow:auto}
+:root[data-proposal=desk][data-proof-expanded] .composer>.composer-bar{grid-row:5;display:flex;align-items:center;gap:2px}
+:root[data-proposal=desk][data-proof-expanded] .composer .composer-voice-controls{display:flex;align-items:center;order:12}
+@media(min-width:900px){:root[data-proposal=desk][data-proof-expanded] .px-nav-host.px-desk{grid-template-columns:var(--pd-rail)}:root[data-proposal=desk][data-proof-expanded] .pd-list{display:none}}
+
+/* ---------- iPhone: push navigation over production glass */
+@media(max-width:899px){
+ .px-nav-host.px-desk{position:fixed;z-index:61;inset:0;display:flex;flex-direction:column;overflow:hidden;padding-top:env(safe-area-inset-top);background:var(--bg);animation:pd-push .4s var(--px-ease)}
+ .px-desk .pd-list{display:contents}
+ .px-desk .pd-list-head{order:0;padding:12px 16px 4px}
+ .px-desk .pd-list-head h2{font-size:32px;letter-spacing:-.035em}
+ .px-desk .pd-list-close{display:inline-grid;place-items:center;width:44px;height:44px;margin-left:-8px;border:0;border-radius:50%;background:none;color:var(--text)}
+ .px-desk .pd-list-new{width:44px;height:44px;border-radius:50%}
+ .px-desk .pd-rail{order:1;flex-direction:row;align-items:stretch;gap:8px;padding:6px 16px 10px;overflow-x:auto;background:none;scrollbar-width:none}
+ .px-desk .pd-rail>.px-wordmark{display:none}
+ .px-desk .pd-space{flex-direction:row;width:auto;flex:none;gap:8px;min-height:44px;padding:0 14px 0 6px;border-radius:999px;background:var(--px-fill);font-size:14px}
+ .px-desk .pd-space .pd-tile{width:30px;height:30px;border-radius:50%;font-size:13px}
+ .px-desk .pd-space[aria-current]{background:var(--text);color:var(--bg)}
+ .px-desk .pd-space[aria-current] .pd-tile{background:var(--bg);color:var(--text)}
+ .px-desk .pd-rail .px-destinations{display:contents}
+ .px-desk .pd-rail .px-destinations button{flex-direction:row;flex:none;min-height:44px;padding:0 14px;border-radius:999px;background:var(--px-fill);font-size:14px;white-space:nowrap}
+ .px-desk .pd-brief{order:2;margin:0 16px}
+ .px-desk .px-search{order:3;margin:4px 16px 0;height:42px;border-radius:999px}
+ .px-desk .pd-chats{order:4;flex:1;margin:4px 0 0;padding:0 8px max(12px,env(safe-area-inset-bottom))}
+ .px-desk .pd-chats button{padding:12px}
+ /* iOS 26: a round glass back button; its accessible name says where it goes. */
+ :root[data-proposal=desk] .pd-back{display:inline-grid;place-items:center;width:44px;padding:0;border-radius:50%}
+ :root[data-proposal=desk] .pd-back span{display:none}
+ :root[data-proposal=desk] .pd-title{flex-direction:column;align-items:center;gap:0}
+ :root[data-proposal=desk] .pd-title small{display:block}
+ :root[data-proposal=desk] .pd-title{position:absolute;left:50%;translate:-50% 0;max-width:58%;pointer-events:none}
+ :root[data-proposal=desk] .pd-title>span{font-size:16px}
+ html.glass[data-proposal=desk] .pd-back{height:44px;border:1px solid transparent;background:var(--glass-sheen) padding-box,linear-gradient(var(--glass-tint),var(--glass-tint)) padding-box,var(--glass-rim) border-box;-webkit-backdrop-filter:var(--glass-filter);backdrop-filter:var(--glass-filter);box-shadow:var(--glass-depth),var(--glass-shadow)}
+ /* Docked glass panel across the bottom (not a floating capsule). */
+ html.glass[data-proposal=desk] .main>.composer-wrap{left:0;right:0;padding:8px 10px max(8px,env(safe-area-inset-bottom));border-top:1px solid transparent;background:var(--glass-sheen) padding-box,linear-gradient(var(--glass-tint-strong),var(--glass-tint-strong)) padding-box,var(--glass-rim) border-box;-webkit-backdrop-filter:var(--glass-filter-strong);backdrop-filter:var(--glass-filter-strong);pointer-events:auto}
+ html.glass[data-proposal=desk] .composer{background:none!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:0;border-radius:0}
+ html.glass[data-proposal=desk] .composer>textarea{min-height:44px!important;padding:10px 14px!important;border-radius:22px;font-size:17px;background:var(--glass-fill)}
+ html.glass[data-proposal=desk] .composer .send-btn{width:44px;height:44px;min-width:44px;border-radius:50%}
+ html.glass[data-proposal=desk] .composer .dictation-btn{display:none}
+ :root[data-proposal=desk][data-proof-expanded] .main>.composer-wrap{position:fixed;inset:calc(max(8px,env(safe-area-inset-top)) + 52px) 0 0;z-index:40;padding:12px 12px max(8px,env(safe-area-inset-bottom))}
+ :root[data-proposal=desk][data-proof-expanded] .composer>textarea{padding:16px 18px!important;font-size:18px}
+}
+@keyframes pd-push{from{translate:-30% 0;opacity:.6}}

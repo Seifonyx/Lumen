@@ -18,13 +18,16 @@ import ProviderBrowser, { ProofModelAction } from './ProviderBrowser';
 import { ComposerContext, useComposerPresentation } from './ComposerChrome';
 import ConsolidatedNavigation from './ConsolidatedNavigation';
 import UsageShareLabels from './UsageShareLabels';
+import ProposalChrome from './proposals/ProposalChrome';
 import './consolidated.css';
 import type { Layout } from '../../../src/lib/layouts';
 
 const params=new URLSearchParams(location.search);
 const consolidated=params.get('proposal')==='consolidated';
+// Gate1 reconsideration proposals start from pure production styling (no earlier proof shell attributes).
+const variant=params.get('proposal')==='canvas'||params.get('proposal')==='desk'?params.get('proposal') as 'canvas'|'desk':null;
 const concept=!consolidated&&params.get('direction')==='studio'?'studio':'index';
-document.documentElement.dataset.workspaceProof=concept;
+if(variant)document.documentElement.dataset.proposal=variant;else document.documentElement.dataset.workspaceProof=concept;
 document.documentElement.toggleAttribute('data-proof-consolidated',consolidated);
 type TargetName='app'|'main'|'form'|'topbar'|'route'|'usage'|'thread'|'brief';
 const queries:Record<TargetName,string>={app:'.app',main:'.main',form:'.main .composer',topbar:'.main .topbar',route:'.main .composer .model-button',usage:'.main .composer .usage-chip',thread:'.main .messages',brief:'.main .thread .message-row[data-message-index="0"] .msg.user'};
@@ -93,4 +96,4 @@ function ProofChrome(){
  </main>;
  return <>{createPortal(navigation,targets.app)}{createPortal(<div className="proof-build-label">Exploratory local implementation · synthetic fixtures · not production</div>,targets.app)}{view==='routing'&&createPortal(<div className="proof-routing-layer" hidden={settingsOpen}>{routing}</div>,targets.app)}{targets.form&&createPortal(<>{writingHead}{upper}</>,targets.form)}{targets.thread&&createPortal(documentHead,targets.thread)}{targets.route&&createPortal(<span className="proof-route-caption">{model==='auto'?(consolidated?'Task-aware':'Choose for each task'):model.startsWith('layout:')?(consolidated?'Layout policy':'Configured routing policy'):(consolidated?'Manual model':'Manual model selection')}</span>,targets.route)}{targets.usage&&createPortal(consolidated?<span className="proof-usage-label"><b>~{formatTokens(total)}</b><span>Chat tokens</span></span>:<span className="proof-usage-label"><span>Context estimate</span><b>~{formatTokens(total+estimateTokens(draft))} tokens</b><small>{left===null?'Allowance unknown':`${left} requests left${model==='auto'||model.startsWith('layout:')?' · last model':''}`}</small></span>,targets.usage)}{targets.main&&view==='workspace'&&!page&&!settingsOpen&&createPortal(margin,targets.main)}{consolidated&&targets.brief&&createPortal(<button type="button" className="proof-brief-toggle" aria-expanded={briefOpen} aria-controls="proof-original-brief" onClick={()=>setBriefOpen(x=>!x)}>Your brief <span>{briefOpen?'Hide':'Read'}</span></button>,targets.brief)}{targets.topbar&&createPortal(<><span className="proof-phone-wordmark">Lumen<small>{consolidated?(mode==='Routing Center'?'Routing':mode):concept==='index'?'Index':'Studio'}</small></span>{consolidated&&<span className="proof-topbar-mode" data-mode={mode}>{mode}</span>}{consolidated&&<><button type="button" className="proof-focus-toggle" aria-pressed={expanded} onClick={toggle}>{expanded?'Back to reading':'Focus writing'}</button><button type="button" className="proof-phone-new" aria-label="New conversation" title="New conversation" onClick={()=>{openWorkspace();useStore.getState().newChat();}}><SquarePen size={19}/></button><button type="button" className="proof-phone-routing" aria-label="Routing Center" title="Routing Center" onClick={()=>openRouting()}><Waypoints size={19}/></button></>}<button type="button" className="proof-mobile-context" aria-label="Conversation intelligence" title="Conversation intelligence" onClick={()=>setContextOpen(true)}>{consolidated?<Info size={19}/>:<SlidersHorizontal size={18}/>}</button></>,targets.topbar)}{consolidated&&<UsageShareLabels/>}{contextOpen&&<Modal title="Conversation intelligence" onClose={()=>setContextOpen(false)}><div className="proof-context-details">{contextContent}</div></Modal>}</>;
 }
-const host=document.createElement('div');document.body.append(host);createRoot(host).render(<ProofChrome/>);
+const host=document.createElement('div');document.body.append(host);createRoot(host).render(variant?<ProposalChrome kind={variant}/>:<ProofChrome/>);

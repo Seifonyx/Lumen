@@ -100,3 +100,7 @@ Use CONSOLIDATION.md and the new portable review for this scope; older workspace
 
 [Record](workspace-proofs/FINAL_VERIFICATION.md). At `1d1e0f7`: WebKit (official Playwright 1.56.1 image) 8 required + 2 supplementary cases and Chromium 10 cases pass, 354 axe states, 0 violations; portable review rebuilt and checked in both engines. Physical-iPhone checklist prepared but blocked by the localhost-only preview guard pending an owner decision. **18.5→18.5%, Medium confidence.** Gate1 NOT APPROVED; stop for owner review.
 
+### Gate1 product-experience reconsideration — 21 October 2026
+
+Owner rejected the consolidated visual architecture. Two isolated directions (A Canvas, B Desk) built over the real App with production iPhone glass; [record](workspace-proofs/proposals/PROPOSALS.md), [review](workspace-proofs/proposals/review.html). Exploration only: **18.5→18.5%, Medium confidence**; no approval, selection or B03/B04 credit. Stop for owner choice.
+

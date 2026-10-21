@@ -2,7 +2,11 @@
 
 **Checkpoint: 21 October 2026 (final verification; see below). Phase B02, identity/product-architecture exploration. Gate 1 NOT APPROVED.** Current completion **18.5% (approximately 19%, Medium confidence)** on stable Blackout baseline v1. Previous committed checkpoint was unscored; an uncommitted 19.75% draft overcredited rejected visual work. Research is retained; current credit comes from the actual new two-experience proof, not the old recolors. Weights unchanged;81.5 points remain. Independent Model Picker ledger stays 98.5%.
 
-## Latest — Gate1 final verification (21 October 2026)
+## Latest — Gate1 product-experience reconsideration (21 October 2026)
+
+Owner verdict: the consolidated Workspace + Focus architecture is **not accepted** (reading/writing less comfortable, composer messy, navigation fragmented, iPhone glass lost). Two opt-in design proofs were built over the real App: `?proposal=canvas` (A: one navigation tree with projects as folders, one-row glass capsule composer, writing sheet) and `?proposal=desk` (B: spaces rail + list / iPhone push navigation, docked composer with route line, page mode). Read [proposals/PROPOSALS.md](workspace-proofs/proposals/PROPOSALS.md) and the offline [review](workspace-proofs/proposals/review.html). Contracts (same textarea/draft/selection/focus across expand, real picker/usage, one intercepted Send/Stop) pass in Chromium desktop/iPhone and WebKit iPhone; 0 axe violations. No production change, no selection. **Exact next action: STOP for the owner to choose a direction.** Gate1 NOT APPROVED. 18.5% unchanged.
+
+## Previous — Gate1 final verification (21 October 2026)
 
 Verification only, at `1d1e0f7e02df4849949bdddbd880e8956fe25bd7`. Record: [workspace-proofs/FINAL_VERIFICATION.md](workspace-proofs/FINAL_VERIFICATION.md). WebKit ran in the official `mcr.microsoft.com/playwright:v1.56.1-noble` image (WebKit 26.0, build 2215) via Docker with `--network host`, because the container's Playwright CDN is blocked. All 8 required WebKit cases plus 2 short-height supplements pass; the 10 Chromium cases were re-run at the same SHA and pass (20 cases, 354 axe states, 0 violations, one intercepted Send/Stop each, 0 real calls). The portable review and evidence were rebuilt (`sourceBase` 1d1e0f7) and pass the checker in both engines. Physical-iPhone checklist written; it is **blocked** because `bootstrap.ts` renders only on hostname `localhost` — a test-only host allowance needs owner approval. Gate1 NOT APPROVED; no merge/deploy. **18.5% unchanged. Exact next action: STOP for owner review.**
 

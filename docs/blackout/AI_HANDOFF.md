@@ -1,8 +1,24 @@
 # Lumen Blackout — cross-agent handoff
 
-**Checkpoint: 21 October 2026, UTC — QA00 reusable private iPhone testing proposal delivered; CP01 remains latest implemented foundation. Gate 1 APPROVED; Canvas selected; blueprint accepted. Latest authorization is QA planning/documentation ONLY; CP02+ and production visual integration NOT authorized. Gates2/3 pending.** Completion **21.5% → 21.5%, Medium confidence**, unchanged stable Blackout v1 weights/fractions;78.5 points remain. Independent Model Picker remains98.5%.
+**Checkpoint: 21 October 2026, UTC — QA01 local private-testing foundation implemented and verified by Claude Code (owner-directed continuation after Codex reached its usage limit). Gate 1 APPROVED; Canvas selected; CP01 complete; QA01 ONLY authorized. QA02/QA03, CP02+, production visual integration, preview publication, merge and deployment NOT authorized. Gates 2/3 pending.** Completion **21.5% → 21.5%, Medium confidence**, unchanged stable Blackout v1 weights/fractions; 78.5 points remain. Independent Model Picker remains 98.5%.
 
-## Latest — QA00 private iPhone testing decision proposal
+## Latest — QA01 local private-testing foundation (verified; stop for review)
+
+Read [QA01_FOUNDATION.md](QA01_FOUNDATION.md) and [qa01/evidence.json](qa01/evidence.json). Owner authorized **QA01 only** after the [QA proposal](PRIVATE_IPHONE_QA_PROPOSAL.md). Codex's partial ledger reached Claude Code as an upload; **its in-progress QA01-A code was not accessible** (remote ended at `88c7baa`; no local QA01 files, stash or worktree) and was re-implemented from the proposal, not claimed as recovered. Codex's two rulings (ordinary presentation, no CP02; WebCrypto RS256 with injected test keys, no new dependency) were kept.
+
+**Implemented:** `server/private-qa/` (paths, RS256 verifier, manifest/registry/publish/revoke with conditional writes and revocation tombstones, fail-closed gate with per-request registry reads and private/no-store/CSP headers); `vite.qa.config.ts` + `qa/iphone/` (separate synthetic build: Firebase/sync/SW replaced at build time, Firebase SDK stubbed, every app `fetch` rewritten and the page-wide `fetch` replaced by a deterministic local Gemini transport, workers disabled, lease lock, synthetic banner, per-reviewer/build namespace and fixtures, canonical App/store/Composer/picker/usage/Incognito unchanged); `scripts/qa/{audit,build,verify}.mjs` (commit-pinned, clean-tree-only, no network/credentials/publication); tests in `tests/unit/private-qa-*` (CI via `npm test`) and `tests/security/private-qa-{isolation,browser,local-gate,fixtures}.mjs`. `.gitignore` adds `dist-qa`. **No `src/`, root entry, Vite production config, packages, Firebase config/rules, relay, `public/`, workflow or localhost proof file changed** (asserted against `88c7baa`).
+
+**Verified at code commit `d0ef5f84b0d949ca1612453e45ccd937985caeeb`:** `npm test` 83 unit files (new: gate 14, control 10, transport 8 cases); isolation audit 8/8 with production output **byte-identical (174 files)** to the pre-QA01 baseline and planted controls (11+4 graph, 1 missing adapter, 10 output, 4 real planted builds, `?raw`, 12 transform, 4 verifier) all caught; browser contract **Chromium 141 and Linux WebKit 26.0** at 1440×960/390×844/320×568/390×480: 0 external requests, 0 blocked app hosts, 0 refused Firebase calls, 0 CSP violations, 0 page errors, 0 service workers, 0 overflow, 0 axe; draft/selection through picker/usage, synthetic stream and real Stop; planted fetch refused by transport, XHR/WebSocket/image/SW refused by CSP, CSP-bypassed detector control caught; reviewer namespaces separate; revocation and expiry lock open pages and refuse reloads. Six existing Chromium suites pass on the ordinary build. Failures and fixes are recorded in the QA01 note.
+
+**Independent review:** no Critical; 3 Important (72 h bound from publication time, ASCII-only identity, indirect fetch) all fixed with tests; 10 minor/test findings fixed; 2 documented — **JWT library vs hand-written WebCrypto verifier needs explicit owner/ChatGPT sign-off before QA02**, and canonical `mr.activeProject` stays device-wide (changing it would touch production `src/`).
+
+**Not claimed:** physical iPhone, hosted Access/MFA/JWKS/R2/Worker behaviour, live providers, production verification. No Cloudflare/hosting/credential/tunnel/Firebase change, preview publication, merge or deployment. CI artifact handoff is documented only (QA01 note).
+
+**Progress:** QA01 is unweighted preparation; **21.5% → 21.5%, Medium confidence.**
+
+**Exact next action: STOP for owner and ChatGPT review of QA01.** QA02 (service/access/budget/canary, plus JWT-verifier sign-off), QA03 (publication/tooling) and CP02 each need separate explicit authorization.
+
+## Previous — QA00 private iPhone testing decision proposal
 
 Read [PRIVATE_IPHONE_QA_PROPOSAL.md](PRIVATE_IPHONE_QA_PROPOSAL.md). Owner wants reusable, strong-access-controlled, versioned, synthetic-only iPhone Safari testing without Mac/USB. This supersedes the CP01 stop **only for planning/documentation**. No QA infrastructure/adapter implementation, service enrollment/account creation/spending, remote publication/tunnel, host/auth/Firebase change, CP02, merge/deploy or Gate2 approval.
 
@@ -20,7 +36,7 @@ Read [PRIVATE_IPHONE_QA_PROPOSAL.md](PRIVATE_IPHONE_QA_PROPOSAL.md). Owner wants
 
 **Git:** `docs/lumen-blackout-phase1-20261019`, source base/latest implemented CP01 `c9153fd75ba16ebf70908f5d8c092cb540b9aa58`. QA00 local/pushed revision is this containing documentation commit (resolve `git log -1 --format=%H -- docs/blackout/PRIVATE_IPHONE_QA_PROPOSAL.md`); remote equality is checked after push and the separate live checkpoint records the exact SHA. Latest observed main `655438f0ec8d2e3594595252af4a99e6c58627a0`; latest separately previously verified deployed runtime `677bc51f39fbf8fcf66bc91f846b71a4912bb306`, deployment39447533639. No fresh production verification, merge or deployment. Separate live-context commit is verified/reported independently, not merged into this workstream/main.
 
-**Exact next action: STOP for owner/ChatGPT review of this proposal.** Recommend separately authorizing QA01 local-only adapters, gate contracts and isolation tests first; no service provisioning in that slice. QA02/QA03 hosting/access/publication and CP02 product work each need explicit authorization. No new owner decision is inferred from delivery.
+**Superseded by QA01 above.** (Was: STOP for owner/ChatGPT review of this proposal.) Recommend separately authorizing QA01 local-only adapters, gate contracts and isolation tests first; no service provisioning in that slice. QA02/QA03 hosting/access/publication and CP02 product work each need explicit authorization. No new owner decision is inferred from delivery.
 
 ## Previous — verified CP01; stop for owner/ChatGPT review
 

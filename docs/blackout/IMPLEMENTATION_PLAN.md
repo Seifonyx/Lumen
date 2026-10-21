@@ -169,3 +169,7 @@ Owner selected A · Canvas; one polish pass in the opt-in preview. [Record](work
 ### Canvas sidebar spacing & hierarchy — 21 October 2026
 
 CSS-only refinement of the Canvas sidebar per owner feedback ([record](workspace-proofs/proposals/SIDEBAR.md#follow-up--spacing--hierarchy-refinement-owner-feedback)). Chromium + WebKit pass. **18.5→18.5%, Medium confidence.** Stop for owner review.
+
+### QA01 local private-testing foundation — 21 October 2026
+
+Owner authorized **QA01 only** following the [private iPhone QA proposal](PRIVATE_IPHONE_QA_PROPOSAL.md). Claude Code continued after Codex's usage limit; Codex's in-progress code was not accessible and was re-implemented, not recovered. [Record, results, review and limits](QA01_FOUNDATION.md); [evidence](qa01/evidence.json). Local gate/control contracts, a separate synthetic QA build with compile-time Firebase/sync/SW/transport isolation, commit-pinned build/verify tooling and isolation/browser contracts; verified at `d0ef5f84b0d949ca1612453e45ccd937985caeeb` (83 unit files; 8/8 isolation checks with byte-identical production output; Chromium + Linux WebKit at four viewports; six existing suites). Independent review: 0 Critical, 3 Important fixed. **21.5% → 21.5%, Medium confidence; 78.5 remaining** — QA tasks are unweighted and complete no B03–B08 acceptance group. No hosting, credential, publication, CP02, merge or deployment. Stop for owner/ChatGPT review; QA02/QA03/CP02 need separate authorization.

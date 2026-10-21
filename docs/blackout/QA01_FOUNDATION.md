@@ -13,7 +13,7 @@ Codex started QA01 and reached its usage limit; the owner made **Claude Code** t
 
 | Task | Interface and acceptance | State |
 |---|---|---|
-| QA01-A | `makeManifest`, `publish`, `revoke`, `createGate` over fake revision/CAS storage and synthetic RS256 keys; authenticated assets, expiry/revoke, reviewer/build/path/failure negatives, publish/revoke races | **Verified** — 13 gate + 8 control unit tests |
+| QA01-A | `makeManifest`, `publish`, `revoke`, `createGate` over fake revision/CAS storage and synthetic RS256 keys; authenticated assets, expiry/revoke, reviewer/build/path/failure negatives, publish/revoke races | **Verified** — 14 gate + 10 control unit tests |
 | QA01-B | Separate Vite QA entry; compile-time Firebase/sync/provider/SW adapters; canonical App/store/Composer/picker/usage/Incognito and fixtures reused; no production edits | **Verified** — Chromium + Linux WebKit browser contract |
 | QA01-C | Production/QA graph audit with planted negative controls; unchanged ordinary output; commit-pinned manifest build/verify; no-publication contract | **Verified** — 8-check isolation audit, production output byte-identical |
 | QA01-D | Type/unit/build, focused Chromium/WebKit, existing regressions, all-request capture and planted negatives, independent review, docs, push/context sync, stop | **Verified** — see results below |
@@ -27,8 +27,8 @@ Codex started QA01 and reached its usage limit; the owner made **Claude Code** t
 | `server/private-qa/control.mjs` | Strict registry schema; create-only registry; conditional (ETag) registry updates with re-read/re-apply and read-back; immutable manifests (commit, run, attempt, digests, types, fixture/lockfile digests, ≤72 h, ≤50 MB, ≤400 files, clean tree only); create-only publication that activates last; revocation tombstones so **revocation always wins** a publication race; max 3 active builds. |
 | `server/private-qa/gate.mjs` | Request handler: method (GET/HEAD) → exact host → fetch-metadata (no cross-site embedding) → token → **registry read on every request** → reviewer → build (active, not revoked, not expired) → path → manifest digest pinned by registry → asset digest. `private, no-store`, CSP, `nosniff`, `no-referrer`, `noindex`, COOP/CORP, Permissions-Policy on every response; no ETag/Last-Modified, so no 304/partial reuse. `/__lease` returns an opaque per-reviewer-per-build namespace, never the identity. |
 | `vite.qa.config.ts` | Separate QA build (root `qa/iphone`, relative base, no public dir, no source maps, no preload polyfill). Plugin replaces `src/lib/firebase.ts`, `src/lib/sync.ts`, `src/pwa/register.ts`; stubs `firebase/app|auth|firestore`; refuses any other Firebase package and any forbidden module; rewrites every `fetch(` in `src/` to the synthetic transport and every `new Worker(` to a clear disabled error; refuses `XMLHttpRequest`/`WebSocket`/`EventSource`/`sendBeacon`/`serviceWorker.register` in app source. |
-| `qa/iphone/adapters/*` | `firebase.ts` (same exports; synthetic `preview-qa-<namespace>` account; key saving and Google sign-in refused), `firebase-sdk.ts` (inert refs; every read/write/listener/transaction refuses and is counted), `sync.ts` (no-op), `pwa-register.ts` (no SW), `transport.ts` (deterministic local Gemini catalogue/stream; same-origin GET, blob:, data:; everything else refused), `lease.ts` (start, 60 s, focus/visibility/pageshow and before each reply), `worker-disabled.ts`. |
-| `qa/iphone/main.tsx`, `index.html`, `qa.css`, `fixtures/profile.ts` | Nothing runs until the lease confirms access; seeds the existing synthetic proof fixture per namespace; persistent “Synthetic review · no live provider requests · build · until” banner with a scoped Reset; lock overlay (stops replies, `inert` app) on expiry/revocation. The real `src/main` App mounts unchanged. |
+| `qa/iphone/adapters/*` | `native-fetch.ts` (the single capture of the browser's fetch), `firebase.ts` (same exports; synthetic `preview-qa-<namespace>` account; key saving and Google sign-in refused), `firebase-sdk.ts` (inert refs; every read/write/listener/transaction refuses and is counted), `sync.ts` (no-op), `pwa-register.ts` (no SW), `transport.ts` (deterministic local Gemini catalogue/stream; same-origin GET, blob:, data:; everything else refused), `lease.ts` (start, 60 s, focus/visibility/pageshow and before each reply), `worker-disabled.ts`. |
+| `qa/iphone/main.tsx`, `index.html`, `qa.css`, `fixtures/profile.ts` | Replaces the page's global `fetch` with the synthetic transport (covers third-party and indirect calls); nothing runs until the lease confirms access; seeds the existing synthetic proof fixture per namespace; persistent “Synthetic review · no live provider requests · build · until” banner with a scoped Reset; lock overlay (stops replies, `inert` app) on expiry/revocation. The real `src/main` App mounts unchanged. |
 | `scripts/qa/{audit,build,verify}.mjs` | Graph/output audits with a reasoned third-party allowlist; commit-pinned local build refusing dirty trees; verifier (digests, no extra files, exact commit, not expired). No network client, credential read or upload. |
 | Tests | `tests/unit/private-qa-{gate,control}.test.mjs`, `tests/unit/private-qa-transport.test.ts` (run by `npm test` and CI); `tests/security/private-qa-{isolation,browser}.mjs` (explicit, slower); fixtures/loopback harness in `tests/security/`. |
 
@@ -36,18 +36,18 @@ Codex started QA01 and reached its usage limit; the owner made **Claude Code** t
 
 ## Verification results
 
-Raw logs are outside Git in `/tmp/lumen-qa01/`. Concise machine evidence: [qa01/evidence.json](qa01/evidence.json).
+Final verified code commit **`d0ef5f84b0d949ca1612453e45ccd937985caeeb`** (QA build `d0ef5f8…-0-1`); the containing documentation commit only adds records. Raw logs are outside Git in `/tmp/lumen-qa01/`. Concise machine evidence: [qa01/evidence.json](qa01/evidence.json).
 
 | Check | Result |
 |---|---|
 | Baseline before edits: `npm test`, `npm run build` (separate outDir) | Pass; 174 production files recorded |
-| `npm test` final (typecheck + unit) | **83 unit files pass** (80 existing + 3 new), including QA type-check of `qa/iphone` against the canonical modules it replaces |
-| `tests/security/private-qa-isolation.mjs` with `QA01_BASELINE_DIST` and `QA_BUILD_DIR` | **8/8 checks pass**: production graph has no QA code and its **174 files are byte-identical to the pre-QA01 baseline**; QA graph 2,543 modules/164 files audited; 11 QA + 4 production planted-module controls and a missing-adapter control caught; 7 planted-output controls caught; 4 real planted builds refused (`firebase/storage`, Firebase config, proof bootstrap, SW source) plus `?raw` replacement; 5 primitive controls refused; rewrite checks; verifier rejects tampered/extra/wrong-commit/expired; guarded paths unchanged; tooling has no network client/credential read/publication workflow |
+| `npm test` final (typecheck + unit) | **83 unit files pass** (80 existing + 3 new: gate 14, control 10, transport 8 cases), including a type-check of `qa/iphone` against the canonical modules it replaces |
+| `tests/security/private-qa-isolation.mjs` with `QA01_BASELINE_DIST` and `QA_BUILD_DIR` | **8/8 checks pass**: production graph has no QA code and its **174 files are byte-identical to the pre-QA01 baseline** (now mandatory); QA graph 2,544 modules/164 files audited; 11 QA + 4 production planted-module controls and a missing-adapter control caught; 10 planted-output controls caught (incl. indirect `fetch` and a second native capture); 4 real planted builds refused (`firebase/storage`, Firebase config, proof bootstrap, SW source) plus `?raw` replacement; 12 primitive/indirect-fetch transform controls refused; rewrite checks; verifier rejects tampered/extra/wrong-commit/expired; guarded paths unchanged; tooling has no network client/credential read/publication workflow |
 | `scripts/qa/build.mjs` | Builds only from a clean tree; manifest pins the full commit; refused the dirty tree during development (by design) |
 | `tests/security/private-qa-browser.mjs`, **Chromium** 141 | **Pass** at 1440×960, 390×844, 320×568, 390×480 |
 | Same, **Linux WebKit** 26.0 (official Playwright 1.56.1 container, read-only repo mount) | **Pass**, same four viewports |
 | Per viewport, both engines | 0 requests leaving the review origin; 0 blocked app hosts; 0 refused Firebase calls; 0 CSP violations; 0 page errors; 0 service workers; 0 horizontal overflow; 0 axe (WCAG 2.1 A/AA) violations; draft + selection survive picker and usage; synthetic reply streams; real Stop ends a slow reply with exactly one partial reply |
-| Planted negatives (both engines) | In-page `fetch`, `WebSocket`, image beacon and SW registration to `.invalid` hosts refused by CSP before the network; a deliberately CSP-bypassed control context **was caught** by the request detector |
+| Planted negatives (both engines) | In-page `fetch` refused by the page-wide synthetic transport; `XMLHttpRequest`, `WebSocket`, image beacon and SW registration refused by CSP before the network; a deliberately CSP-bypassed control context's planted image/XHR **was caught** by the request detector |
 | Access in browser | No identity → 401 with no app bytes; non-permitted identity → 403; second reviewer gets a different namespace and none of the first reviewer's draft (shared browser storage); removing a reviewer locks an open page on its next check and reload → 403; at expiry, the next reply is refused, the page locks, a fresh token gets 410 |
 | Existing regressions, Chromium, ordinary build (identical bytes) | usage-draft, chat-menu, selection-boundaries, model-picker-accessibility, incognito, account-isolation — **all pass** |
 
@@ -57,10 +57,34 @@ Raw logs are outside Git in `/tmp/lumen-qa01/`. Concise machine evidence: [qa01/
 - **Third-party network primitives:** pdf.js, the PowerPoint generator and KaTeX (method named `fetch`) contain `fetch(`/`XMLHttpRequest`; JSZip/xlsx/docx only *test for* `importScripts`. These are listed in a reasoned allowlist; any new chunk with a primitive fails the audit. Vite's modulepreload polyfill (its own `fetch`) was disabled, and the search-worker source was no longer emitted once `new Worker(new URL(…))` was neutralised.
 - **Test bugs fixed (no product behaviour or assertion weakened):** wrong idle-button label; a Promise serialised inside `page.evaluate`; Chromium reports CSP-refused images as failed `csp` requests (now distinguished from requests that reached the network; the route proves none did); an identity token naturally expired with the build (401 before 410, then 410 proven with a fresh token); a transport test that matched text across stream frames; a planted `?raw` import that the plugin safely resolved to the adapter (control replaced; the safe behaviour is asserted); the tooling scan flagged the gate's `fetch` *method* and the auditor's own pattern strings.
 - **Permissions-Policy:** Chromium warned about unrecognised `bluetooth`/`interest-cohort`; removed.
+- **After the review fixes:** both browser runs first failed on the planted-negative step because the planted page `fetch` was now refused by the transport (a stronger layer) before CSP; the test now asserts the transport refusal, adds a planted `XMLHttpRequest` to keep proving CSP `connect-src`, and the detector control plants an image/XHR. A test-edit syntax error was caught by the unit runner and fixed.
 
 ### Independent review
 
-See the review section of the [handoff](AI_HANDOFF.md) for the findings and their disposition.
+One read-only reviewer (separate agent) reviewed `88c7baa..b402907` against the proposal and reran the gate/control unit suites. **No Critical findings; 3 Important, all fixed and covered by new tests:**
+
+1. *Lifetime beyond 72 h* (reproduced): a manifest with a future `createdAt` could stay active for a year. Now `publish` bounds lifetime from publication time (`createdAt ≤ now + 5 min`, `expiresAt ≤ now + 72 h`) and the registry rejects any entry longer than 72 h.
+2. *Unicode case-mapping identity confusion* (reproduced): `\u212Aate@…` lower-cased to `kate@…`. Emails must now be printable ASCII; `iat` is required; RSA keys under 2048 bits and unusable key sets are never trusted (and cannot crash the process).
+3. *Indirect `fetch` bypass*: `window.fetch(`/`fetch.call`/passing `fetch` as a value escaped the rewrite and audit. Now the QA entry replaces the page's global `fetch` with the transport, the build refuses indirect forms in app source, and the output audit flags indirect calls and allows exactly one native capture (`adapters/native-fetch.ts`).
+
+Minor findings fixed: own-property MIME lookup; same-site subresource requests denied (only same-origin/none); active-build limit checked before uploading (no orphan files); an applied registry write that another writer changes immediately is reported as applied (`confirmedCurrent: false`) rather than failed; `Request` bodies honoured by the transport; misnamed list test renamed; baseline byte equality mandatory (explicit skip only); the isolation test now plants indirect `fetch`. **Documented, not changed:** (a) the proposal suggests a vetted JWT library; QA01 keeps Codex's recorded ruling (WebCrypto, no new dependency) — the reviewer found the hand-written verifier sound but asks for **explicit owner/ChatGPT sign-off before QA02**; (b) canonical `mr.activeProject` is device-wide (not per namespace), a small cross-review UI preference shared on one origin; changing it would modify production `src/`, outside QA01.
+
+## Reproduce
+
+Local only, Node 22 and existing dependencies; nothing is published. Use a clean checkout (the build refuses uncommitted changes).
+
+```sh
+npm test                                              # includes the three QA01 unit files and the QA type-check
+npm run build -- --outDir /tmp/qa01-baseline          # on the base commit 88c7baa, for byte equality
+node scripts/qa/build.mjs --out /tmp/qa01-build       # commit-pinned synthetic build + manifest
+node scripts/qa/verify.mjs --out /tmp/qa01-build --commit "$(git rev-parse HEAD)"
+QA01_BASELINE_DIST=/tmp/qa01-baseline QA_BUILD_DIR=/tmp/qa01-build node tests/security/private-qa-isolation.mjs
+QA_BUILD_DIR=/tmp/qa01-build node tests/security/private-qa-browser.mjs          # Chromium
+# WebKit: same command with MR_WEBKIT=1 inside mcr.microsoft.com/playwright:v1.56.1-noble
+#   (read-only repo mount, --network host, QA_EXPECTED_COMMIT=<sha>)
+```
+
+The browser contract starts its own loopback gate (127.0.0.1, random port, in-memory storage, synthetic keys generated per run) and stops it at the end.
 
 ## Private CI artifact handoff (documented, not implemented)
 

@@ -217,7 +217,11 @@ try {
     await page.getByRole('button', { name: 'Send', exact: true }).click();
     await page.getByRole('alertdialog', { name: 'Review ended' }).waitFor({ timeout: 10000 });
     assert.equal(await page.getByText(/No live provider was contacted.*after expiry/).count(), 0, 'no reply is produced after expiry');
-    assert.equal((await page.reload()).status(), 410);
+    // The page's own identity token is also past its lifetime by then (401); a freshly issued token
+    // shows the build itself is refused for being expired (410).
+    assert.ok([401, 410].includes((await page.reload()).status()));
+    const fresh = await fetch(gate.buildUrl, { headers: { 'Cf-Access-Jwt-Assertion': await gate.token(REVIEWERS.owner) } });
+    assert.equal(fresh.status, 410);
     await context.close();
     results.push({ expire: 'send refused, locked and reload refused' });
   }

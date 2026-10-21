@@ -2,7 +2,11 @@
 
 **Checkpoint: 21 October 2026, UTC — owner set a permanent strict $0 budget; QA02 revised to a zero-cost architecture (planning only). Gate 1 APPROVED; CP01 and QA01 complete. No QA02 provisioning/deployment, QA03, CP02+, merge or deployment authorized. Gates 2/3 pending.** Completion **21.5% → 21.5%, Medium confidence**; 78.5 points remain.
 
-## Latest — $0 passkey security amendment (planning only; stop for review)
+## Latest — Codespaces private-port feasibility (planning only; Cloudflare Z1 paused)
+
+Owner paused the Cloudflare passkey/Durable Object Z1. [Feasibility](QA02_CODESPACES_FEASIBILITY.md): a temporary GitHub Codespace serving the QA01 build on a **private** forwarded port (creator-only GitHub sign-in, 3 h cookie) is viable at $0 when no payment method is on file (free quota 120 core-hours/15 GB-month; use is blocked, not billed, when exhausted). Smallest change for approval: `scripts/qa/serve-codespace.mjs` (reuses QA01 gate, injects synthetic identity, Codespace/host-restricted) + `.devcontainer/devcontainer.json` (private port 4173). Owner checks: no payment method; Safari cookie behaviour on first session. **STOP for owner approval.**
+
+## Previous — $0 passkey security amendment (paused)
 
 Read [QA02_PASSKEY_AMENDMENT.md](QA02_PASSKEY_AMENDMENT.md). Corrects the $0 revision: stateless signed challenges are **not** single-use and config changes are not globally immediate. Adds one SQLite-backed Durable Object (documented as available on Workers Free; over-quota fails, no overage) as the atomic authority for one-time challenges, single enrolment, opaque sessions, credential/session revocation and kill switch; fail closed on any DO error. `@simplewebauthn/server` (documents Workers support) with exact origin/RP ID and user verification; `jose` dropped. Owner checks V1–V5 (Workers Free, no billing prompt on the first DO migration, account MFA). Exact Z1 local-only scope and replay/concurrency/enrolment/session/storage-failure/bypass/revocation tests defined. **STOP for owner and ChatGPT review.**
 

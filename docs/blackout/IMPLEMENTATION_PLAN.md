@@ -185,3 +185,7 @@ Owner made $0 a permanent requirement. [Revision](QA02_ZERO_COST_ARCHITECTURE.md
 ### QA02 passkey security amendment — 21 October 2026
 
 [Amendment](QA02_PASSKEY_AMENDMENT.md): Durable Object (SQLite, Workers Free) as atomic auth authority replacing stateless challenge cookies; corrected revocation/enrolment claims; owner checks V1–V5; Z1 local scope and tests. Planning only: **21.5% → 21.5%.**
+
+### QA02 Codespaces feasibility — 21 October 2026
+
+Cloudflare Z1 paused by owner. [Codespaces private-port feasibility](QA02_CODESPACES_FEASIBILITY.md): viable $0 temporary route; two QA-only files proposed. Planning only: **21.5% → 21.5%.**

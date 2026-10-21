@@ -70,6 +70,14 @@ Prior checkpoint records ChatGPT's inspection of five committed before/after com
 
 **STOP: owner review of the blueprint.** First recommended implementation slice is **CP01 only**, after a separately scoped authorization, with ordinary production output unchanged and a safe physical-device test route defined before CP02. Do not implement automatically, request automatic Gate 2 approval, merge, deploy or expose the preview.
 
+## ChatGPT review of Codex integration blueprint — 2026-10-21
+
+ChatGPT independently fetched and read the committed blueprint, inspected the current Blackout weighted ledger/handoff, checked draft PR #34 at `df54edf244ccadf6886f0608f230631fe3b52dee`, checked its commit has **five Markdown-only changed paths**, and spot-checked canonical production owners (`src/App.tsx`, `Sidebar.tsx`, `ChatView.tsx`, `Composer.tsx`, `src/glass.css`) and feature matrix availability. The `B02.3` 0→1 weight-3 change is consistent with explicit owner Gate 1 approval and a **21.5% adopted ledger**; no implementation credit is awarded. Codex's documentation checks were reported, **not rerun** by ChatGPT.
+
+**Reviewer verdict, not an owner decision:** the blueprint is a credible, carefully scoped foundation for owner review. It identifies real state/component ownership, rejects proof-only DOM observers/duplicate state, preserves provider/security/account boundaries, distinguishes Gate 1/2/3, avoids wholesale PR #34 merge, and schedules physical-device evidence early. No major blocker to proposing CP01 was detected from the inspected documentation, though its future code and harness need independent verification.
+
+**Refinement for first authorized slice:** bound CP01 strictly to synthetic contract characterization, explicit presentation seams and isolated scoped-token adapter; avoid changing default production imports/output, feature routing, credentials, storage schemas, build/deploy pipelines or live network permission. Validate non-importability of proof bootstrap/test credentials in the ordinary bundle and regression baseline. Record exact unmet tests/physical-device test access feasibility without bypassing localhost guards. **CP01 is not owner-authorized by this review.** Request explicit owner permission before Codex starts; stop after evidence for CP01 review, before CP02. The recorded agent is Codex (last confirmed).
+
 ## Context branch synchronization
 
 This file belongs on **`docs/lumen-live-context`**, separate from the coding workstream and main. Only public-safe project metadata, decisions, evidence links and risks are recorded here. Its containing commit is the latest context checkpoint; verify local and remote refs independently. Do not merge this branch into production or imply static ChatGPT Project Sources update automatically. Read before writing and preserve concurrent changes; never force push.

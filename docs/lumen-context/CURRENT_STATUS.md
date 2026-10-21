@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-21, Claude Code $0 passkey security amendment (planning only). Nothing created, deployed or paid for. See [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
+> **Last sync:** 2026-10-21, owner paused Cloudflare passkey Z1; Claude Code delivered a GitHub Codespaces private-port feasibility note (planning only). Nothing created or paid for. See [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
 
 ## Live code and approval state
 
@@ -8,7 +8,7 @@
 |---|---|
 | Repo | `Seifonyx/Lumen` (public) |
 | Workstream | Draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34), `docs/lumen-blackout-phase1-20261019`; open, draft, unmerged |
-| **Latest pushed workstream commit** | **`fe05c4d8b9abbe1ea2e07e9c7bda169f1e9094f2`** (passkey amendment, Markdown only); QA01 verified code `d0ef5f8`; local and remote refs matched after push |
+| **Latest pushed workstream commit** | **`9b83697c2178f144903d1d0c7fb1c876cdfd63e3`** (Codespaces feasibility, Markdown only); QA01 verified code `d0ef5f8`; local and remote refs matched after push |
 | Earlier implemented milestones | CP01 `c9153fd75ba16ebf70908f5d8c092cb540b9aa58`; QA00 proposal `88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f` |
 | Approved Canvas visual source | `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`; unchanged by the documentation milestone |
 | Design direction / Gate 1 | **Canvas (A) selected; Gate 1 APPROVED**, explicitly confirmed by owner after final sidebar-spacing review. Further polish remains; rejected Workspace/Focus consolidation is not the foundation. |
@@ -20,6 +20,11 @@
 
 
 
+
+
+## Latest — Codespaces private-port route (feasibility, planning only)
+
+Owner paused the custom Cloudflare passkey/Durable Object Z1. **[Feasibility note](https://github.com/Seifonyx/Lumen/blob/9b83697c2178f144903d1d0c7fb1c876cdfd63e3/docs/blackout/QA02_CODESPACES_FEASIBILITY.md):** a temporary GitHub Codespace serving the existing QA01 synthetic build on a **private** forwarded HTTPS port (creator-only GitHub sign-in, 3-hour cookie, every file through GitHub's proxy) is **viable and simpler**. $0 holds when **no payment method** is on file: free personal quota (120 core-hours, 15 GB-month) and use is blocked rather than billed when exhausted (GitHub docs, via search summaries). Proposed QA-only change: `scripts/qa/serve-codespace.mjs` (reuses QA01 gate; injects synthetic identity; runs only in a Codespace; host-restricted) and `.devcontainer/devcontainer.json` (private port 4173). Unknowns: Safari keeping the port-auth cookie; iPhone usability of the Ports panel. Production and the localhost Canvas proof untouched. **Progress 21.5%. STOP for owner approval.**
 
 ## Potential simplified iPhone QA path — ChatGPT recommendation — 2026-10-21
 

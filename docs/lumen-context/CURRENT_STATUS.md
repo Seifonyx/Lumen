@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-21, owner paused Cloudflare passkey Z1; Claude Code delivered a GitHub Codespaces private-port feasibility note (planning only). Nothing created or paid for. See [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
+> **Last sync:** 2026-10-21, Claude Code implemented and locally verified the QA-only Codespaces private-port adapter. No Codespace created, no port forwarded, nothing deployed or paid for. See [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
 
 ## Live code and approval state
 
@@ -8,7 +8,7 @@
 |---|---|
 | Repo | `Seifonyx/Lumen` (public) |
 | Workstream | Draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34), `docs/lumen-blackout-phase1-20261019`; open, draft, unmerged |
-| **Latest pushed workstream commit** | **`9b83697c2178f144903d1d0c7fb1c876cdfd63e3`** (Codespaces feasibility, Markdown only); QA01 verified code `d0ef5f8`; local and remote refs matched after push |
+| **Latest pushed workstream commit** | **`a42b8e4e5549206aa7bad34390c791264218d2bd`** (docs); verified Codespaces adapter code `ac93683280f5dc4d8a2aaaf0df20f05d4fb1fee7`; local and remote refs matched after push |
 | Earlier implemented milestones | CP01 `c9153fd75ba16ebf70908f5d8c092cb540b9aa58`; QA00 proposal `88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f` |
 | Approved Canvas visual source | `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`; unchanged by the documentation milestone |
 | Design direction / Gate 1 | **Canvas (A) selected; Gate 1 APPROVED**, explicitly confirmed by owner after final sidebar-spacing review. Further polish remains; rejected Workspace/Focus consolidation is not the foundation. |
@@ -21,6 +21,11 @@
 
 
 
+
+
+## Latest — Codespaces private-port QA adapter implemented (agent-verified, local only)
+
+**[Session guide](https://github.com/Seifonyx/Lumen/blob/a42b8e4e5549206aa7bad34390c791264218d2bd/docs/blackout/QA02_CODESPACES_SESSION.md).** QA-only `scripts/qa/serve-codespace.mjs` + `.devcontainer/devcontainer.json`: serves the verified QA01 synthetic build (ordinary app, not Canvas) through the unchanged QA01 gate on loopback for GitHub's private, creator-authenticated forwarded port; runs only in a Codespace; refuses unverified builds and foreign hosts; discards browser identity headers. **Agent-reported verification at `ac93683`:** `npm test` 84 files; QA01 isolation 8/8 with production output byte-identical; Chromium + Linux WebKit browser smoke. **Not executed:** a real Codespace, GitHub port proxy/sign-in, iPhone Safari. **$0 condition:** no payment method on the owner's GitHub account (free quota exhausted → blocked, not billed) — owner read-only checks listed in the guide. Port visibility must be confirmed **Private** in the Ports panel every session. Cloudflare Z1 paused. **Progress 21.5%. STOP; first Codespaces session needs separate owner authorization.**
 
 ## Latest — Codespaces private-port route (feasibility, planning only)
 

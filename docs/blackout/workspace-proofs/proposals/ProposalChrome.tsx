@@ -1,9 +1,9 @@
 // Gate1 reconsideration: two opt-in design proposals over the real App (?proposal=canvas | ?proposal=desk).
 // The real Composer (textarea, draft, attachments, picker, UsageMeter, Send/Stop), store actions and pages stay the
 // owners; this file only adds navigation, a few top-bar slots and the expand control. Exploration, not production.
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpen, ChevronDown, ChevronLeft, ChevronRight, Inbox, LayoutGrid, ListTree, Maximize2, PanelLeft, Plus, Search, Settings2, SlidersHorizontal, Sparkles, SquarePen, X } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, Inbox, LayoutGrid, Maximize2, PanelLeft, Plus, Search, Settings2, SlidersHorizontal, SquarePen } from 'lucide-react';
 import { selectCurrentChat, useStore } from '../../../../src/store';
 import { estimateTokens } from '../../../../src/lib/routing';
 import { formatTokens } from '../../../../src/lib/usage';
@@ -11,8 +11,8 @@ import { useComposerPresentation } from '../ComposerChrome';
 import UsageShareLabels from '../UsageShareLabels';
 import { contextTokens } from '../../../../src/lib/compact';
 import type { Chat, Project } from '../../../../src/types';
-import AllChats from '../../../../src/components/AllChats';
-const AskChats = lazy(() => import('../../../../src/components/AskChats'));
+import CanvasNav from './CanvasNav';
+import { modKey } from '../../../../src/lib/util';
 import './shared.css';
 import './canvas.css';
 import './desk.css';
@@ -60,50 +60,7 @@ function Destinations() {
   </div>;
 }
 
-/** Proposal A — Canvas: one navigation tree. Projects are folders of conversations, not a separate app.
- *  Polish: a one-line project brief (from Desk), date groups for loose conversations, long folders folded to five,
- *  and the production sidebar's All chats and Ask your chats re-homed (their own components). */
-const LIMIT = 5;
-const DAY = 86400000;
-function groupOf(c: Chat) { if (c.pinned) return 'Pinned'; const d = (Date.now() - c.updatedAt) / DAY; return d < 1 ? 'Today' : d < 2 ? 'Yesterday' : d < 7 ? 'Previous 7 days' : d < 30 ? 'Previous 30 days' : 'Older'; }
-function CanvasNav({ chat, onClose }: { chat?: Chat | null; onClose: () => void }) {
-  const chats = useStore((s) => s.chats), projects = useStore((s) => s.settings.projects) || NO_PROJECTS;
-  const [query, setQuery] = useState('');
-  const [open, setOpen] = useState<Record<string, boolean>>({});
-  const [more, setMore] = useState<Record<string, boolean>>({});
-  const [allChats, setAllChats] = useState(false);
-  const [asking, setAsking] = useState<string | null>(null);
-  const q = query.trim().toLowerCase(), match = (c: Chat) => !q || c.title.toLowerCase().includes(q);
-  const isOpen = (p: Project) => open[p.id] ?? (p.id === chat?.projectId || Boolean(q));
-  const pick = (fn: () => void) => () => { fn(); onClose(); };
-  const row = (c: Chat) => <li key={c.id}><button type="button" aria-current={c.id === chat?.id ? 'page' : undefined} onClick={pick(() => go.chat(c.id))}>{c.title}</button></li>;
-  const unfiled = sorted(chats.filter((c) => !c.projectId)).filter(match);
-  const groups = unfiled.reduce<[string, Chat[]][]>((acc, c) => { const g = groupOf(c); const last = acc.at(-1); if (last && last[0] === g) last[1].push(c); else acc.push([g, [c]]); return acc; }, []);
-  return <nav className="pc-nav" aria-label="Conversations and projects">
-    <div className="pc-nav-head"><span className="px-wordmark">Lumen</span><button type="button" className="pc-nav-close" data-proposal-nav-close aria-label="Close navigation" onClick={onClose}><X size={18} /></button></div>
-    <button type="button" className="pc-new" onClick={pick(() => go.newIn(null))}><SquarePen size={17} />New chat<kbd>⌘N</kbd></button>
-    <label className="px-search"><Search size={16} /><input type="search" aria-label="Search conversations" placeholder="Search" value={query} onChange={(e) => setQuery(e.target.value)} /></label>
-    {q && <button type="button" className="pc-ask" onClick={() => setAsking(query)} title="Find what you talked about, even with different words"><Sparkles size={15} /><span>Ask your chats: “{query.trim().slice(0, 32)}”</span></button>}
-    <div className="pc-tree">
-      <div className="pc-section"><h2 className="px-label">Projects</h2><button type="button" className="pc-section-add" aria-label="New project" title="New project" onClick={pick(() => go.page('projects'))}><Plus size={15} /></button></div>
-      {projects.map((p) => { const list = sorted(chats.filter((c) => c.projectId === p.id)).filter(match); if (q && !list.length) return null; const shown = more[p.id] || q ? list : list.slice(0, LIMIT); return <div key={p.id} className="pc-project">
-        <button type="button" className="pc-project-row" data-proposal-space={p.id} aria-expanded={isOpen(p)} onClick={() => setOpen({ ...open, [p.id]: !isOpen(p) })}>{isOpen(p) ? <ChevronDown size={15} /> : <ChevronRight size={15} />}<span className="px-mono" aria-hidden="true">{p.name.slice(0, 1)}</span><span className="pc-name">{p.name}</span><span className="pc-count">{list.length}</span></button>
-        {isOpen(p) && <ul>
-          <li><button type="button" className="pc-brief" onClick={pick(() => go.overview(p.id))}><span className="pc-brief-text">{p.description || 'Project overview'}</span><span className="pc-brief-meta">{p.instructions?.trim() ? 'Instructions' : 'No instructions'} · {p.files?.length || 0} files<ChevronRight size={12} aria-hidden="true" /></span></button></li>
-          {shown.map(row)}
-          {list.length > shown.length && <li><button type="button" className="pc-more" onClick={() => setMore({ ...more, [p.id]: true })}>Show {list.length - shown.length} more</button></li>}
-          <li><button type="button" className="pc-new-here" onClick={pick(() => go.newIn(p.id))}><Plus size={14} />New chat in {p.name}</button></li>
-        </ul>}
-      </div>; })}
-      <div className="pc-section"><h2 className="px-label">Conversations</h2></div>
-      {groups.map(([g, list]) => <div key={g} className="pc-group"><h3>{g}</h3><ul className="pc-chats">{list.map(row)}</ul></div>)}
-      {!q && <button type="button" className="pc-all" onClick={() => setAllChats(true)}><ListTree size={15} />All chats<ChevronRight size={13} aria-hidden="true" /></button>}
-    </div>
-    <Destinations />
-    {allChats && <AllChats onClose={() => setAllChats(false)} />}
-    {asking !== null && <Suspense fallback={null}><AskChats initial={asking} onClose={() => setAsking(null)} /></Suspense>}
-  </nav>;
-}
+/** Proposal A — Canvas: see CanvasNav.tsx (one tree; projects are folders of conversations). */
 
 /** Proposal B — Desk: spaces (All + each project) on a rail, the chosen space's conversations in a list. */
 function DeskNav({ chat, space, setSpace, onClose }: { chat?: Chat | null; space: string; setSpace: (s: string) => void; onClose: () => void }) {
@@ -138,6 +95,16 @@ export default function ProposalChrome({ kind }: { kind: Kind }) {
   const page = useStore((s) => s.page), settingsOpen = useStore((s) => s.settingsOpen);
   const { draft, expanded, toggle } = useComposerPresentation(t.form, chat?.id);
   const [navOpen, setNavOpen] = useState(false);
+  // Desktop: the sidebar collapses with production's own state (.app.sidebar-collapsed, ⌘⇧S, remembered as before).
+  const [railHidden, setRailHidden] = useState(false);
+  useEffect(() => {
+    const app = t.app; if (!app) return;
+    const sync = () => setRailHidden(app.classList.contains('sidebar-collapsed'));
+    const observer = new MutationObserver(sync); observer.observe(app, { attributes: true, attributeFilter: ['class'] }); sync();
+    return () => observer.disconnect();
+  }, [t.app]);
+  const toggleRail = () => document.querySelector<HTMLButtonElement>('.app>.sidebar .collapse-sidebar')?.click();
+  useEffect(() => { document.documentElement.toggleAttribute('data-pc-rail-hidden', kind === 'canvas' && !phone && railHidden); }, [kind, phone, railHidden]);
   const project = projects.find((p) => p.id === chat?.projectId);
   const [space, setSpace] = useState<string>('all');
   useEffect(() => { setSpace(chat?.projectId || 'all'); }, [chat?.id, chat?.projectId]);
@@ -159,10 +126,10 @@ export default function ProposalChrome({ kind }: { kind: Kind }) {
   const last = useMemo(() => chat?.messages.findLast((m) => m.role === 'assistant'), [chat]);
   if (!t.app) return null;
   const close = () => setNavOpen(false);
-  const nav = kind === 'canvas' ? <CanvasNav chat={chat} onClose={close} /> : <DeskNav chat={chat} space={space} setSpace={setSpace} onClose={close} />;
-  const shown = !phone || navOpen;
+  const nav = kind === 'canvas' ? <CanvasNav chat={chat} phone={phone} onClose={close} onCollapse={toggleRail} /> : <DeskNav chat={chat} space={space} setSpace={setSpace} onClose={close} />;
+  const shown = phone ? navOpen : !(kind === 'canvas' && railHidden);
   const lead = kind === 'canvas'
-    ? <><button type="button" className="px-nav-btn" data-proposal-nav aria-label={phone ? 'Open conversations' : 'Conversations and projects'} aria-expanded={phone ? navOpen : undefined} onClick={() => setNavOpen(!navOpen)}><PanelLeft size={19} /></button>
+    ? <><button type="button" className="px-nav-btn" data-proposal-nav aria-label={phone ? 'Open conversations' : 'Show sidebar'} aria-expanded={phone ? navOpen : !railHidden} title={phone ? undefined : `Show sidebar (${modKey}⇧S)`} onClick={() => (phone ? setNavOpen(!navOpen) : toggleRail())}><PanelLeft size={19} /></button>
       <div className="pc-crumb">{project && <><button type="button" onClick={() => go.overview(project.id)}>{project.name}</button><ChevronRight size={13} aria-hidden="true" /></>}<span className="pc-title">{chat?.title || 'New chat'}</span></div>
       {phone && <button type="button" className="px-nav-btn pc-compose" aria-label="New chat" onClick={() => go.newIn(chat?.projectId || null)}><SquarePen size={19} /></button>}</>
     : <><button type="button" className="px-nav-btn pd-back" data-proposal-nav aria-label={phone ? `Back to ${project ? project.name : 'all conversations'}` : 'Conversations'} onClick={() => setNavOpen(true)}><ChevronLeft size={21} />{phone && <span>{project ? project.name : 'All'}</span>}</button>

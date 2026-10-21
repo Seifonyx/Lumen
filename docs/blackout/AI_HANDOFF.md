@@ -2,7 +2,11 @@
 
 **Checkpoint: 21 October 2026 (final verification; see below). Phase B02, identity/product-architecture exploration. Gate 1 NOT APPROVED.** Current completion **18.5% (approximately 19%, Medium confidence)** on stable Blackout baseline v1. Previous committed checkpoint was unscored; an uncommitted 19.75% draft overcredited rejected visual work. Research is retained; current credit comes from the actual new two-experience proof, not the old recolors. Weights unchanged;81.5 points remain. Independent Model Picker ledger stays 98.5%.
 
-## Latest — Canvas final design refinement (21 October 2026)
+## Latest — Canvas navigation completeness & sidebar refinement (21 October 2026)
+
+Owner-selected Canvas sidebar refined from the owner's iPhone sidebar reference (layout principles only; Lumen identity kept). New `proposals/CanvasNav.tsx`: header (mark, search, close/collapse), destination rows, hairline separator, **collapsible Projects / each folder / Conversations** (chevrons, `aria-expanded`, inert folds, per-account remembered state, open-chat marker), restored per-chat actions (rename, pin, move, archive, side by side, share/export, delete with confirm; ⋯/right-click on desktop, long press on iPhone), account footer, desktop collapse via production's `.app.sidebar-collapsed` + ⌘⇧S. Record, tests, limits and the physical-iPhone recommendation: [proposals/SIDEBAR.md](workspace-proofs/proposals/SIDEBAR.md); images in `proposals/sidebar/`. `nav-check.cjs` passes in Chromium 1440/393/320/430 and WebKit 393/1440; regressions pass. No physical iPhone. **Exact next action: STOP for owner review.** Gate1 NOT APPROVED. 18.5% unchanged.
+
+## Previous — Canvas final design refinement (21 October 2026)
 
 Owner selected **A · Canvas** (borrowing Desk's project context) for one polish pass — not Gate1 approval. Only `proposals/ProposalChrome.tsx` and `proposals/canvas.css` changed: project brief + 5-chat fold + date groups + sticky sections, re-homed All chats / Ask your chats / New project, 24px question→answer gap, calmer engaged composer, 90%-tint iPhone glass, sheet rise + swipe-down, title/top-bar fixes. Record, nav audit (per-row chat menu still NOT re-homed), tests and limits: [proposals/CANVAS_POLISH.md](workspace-proofs/proposals/CANVAS_POLISH.md); before/after in `proposals/polish/`. Chromium 1440/393/320/430 + WebKit 393 pass (0 axe); regressions pass. No physical iPhone. **Exact next action: STOP for owner review.** Gate1 NOT APPROVED. 18.5% unchanged.
 

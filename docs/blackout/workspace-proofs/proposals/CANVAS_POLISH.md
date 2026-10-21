@@ -1,5 +1,7 @@
 # Canvas — final design refinement (one polish pass)
 
+> **Update:** the navigation items listed below as not re-homed were restored in the [sidebar refinement](SIDEBAR.md).
+
 21 October 2026. The owner chose **A · Canvas**, borrowing Desk's project context. This pass refines Canvas without redesigning it. It is still an opt-in preview (`?proposal=canvas`): **no production change, merge or deployment. Gate1 NOT APPROVED.** Completion stays at 18.5%.
 
 **What changed:** only `proposals/ProposalChrome.tsx` and `proposals/canvas.css`. Desk, `shared.css`, `src/`, and provider/routing/security code are untouched.

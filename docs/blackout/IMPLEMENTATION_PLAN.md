@@ -107,3 +107,7 @@ Owner rejected the consolidated visual architecture. Two isolated directions (A 
 ### Canvas final design refinement — 21 October 2026
 
 Owner selected A · Canvas; one polish pass in the opt-in preview. [Record](workspace-proofs/proposals/CANVAS_POLISH.md). Navigation (brief, groups, fold, re-homed AllChats/AskChats/New project), reading gap, composer and sheet polish; Chromium + WebKit pass. **18.5→18.5%, Medium confidence**; no approval or B03/B04 credit. Stop for owner review.
+
+### Canvas navigation completeness & sidebar refinement — 21 October 2026
+
+[Record](workspace-proofs/proposals/SIDEBAR.md). Reference-informed sidebar, collapsible Projects/folders/Conversations, restored row actions, account footer and desktop collapse in the opt-in Canvas preview; Chromium + WebKit pass. **18.5→18.5%, Medium confidence**; no approval or B03/B04 credit. Stop for owner review.

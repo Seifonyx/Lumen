@@ -3,36 +3,12 @@
    while you're writing, and grows into a writing sheet over the conversation when you want more room. */
 :root[data-proposal=canvas]{--pc-nav-w:272px}
 
-/* ---------- Navigation tree */
-.px-canvas .pc-nav{display:flex;flex-direction:column;gap:10px;height:100%;padding:16px 12px 12px;box-sizing:border-box}
-.pc-nav-head{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 6px}
-.pc-nav-close{display:none}
-.pc-new{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 10px;border:0;border-radius:12px;background:none;color:var(--text);font:600 14px var(--font);cursor:pointer}
-.pc-new:hover{background:var(--px-fill)}
-.pc-new kbd{margin-left:auto;font:500 11px var(--px-mono);color:var(--text-3)}
-.pc-tree{flex:1;min-height:0;overflow:auto;padding:4px 0 8px;margin:0 -4px;padding-inline:4px}
-.pc-tree .px-label{padding:18px 10px 8px}
-.pc-tree ul{list-style:none;margin:0;padding:0}
-.pc-project-row{display:flex;align-items:center;gap:8px;width:100%;min-height:38px;padding:0 8px;border:0;border-radius:10px;background:none;color:var(--text);font:560 14px var(--font);text-align:left;cursor:pointer}
-.pc-project-row>svg{color:var(--text-3);flex:none}
-.pc-project-row:hover{background:var(--px-fill)}
-.pc-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pc-count{font:500 11.5px var(--font);color:var(--text-3);font-variant-numeric:tabular-nums}
-.pc-project ul{margin:2px 0 8px 23px;padding-left:12px;border-left:1px solid var(--px-rim)}
-.pc-tree li>button{display:block;width:100%;min-height:34px;padding:0 10px;border:0;border-radius:9px;background:none;color:var(--text-2);font:450 13.5px/34px var(--font);text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
-.pc-tree li>button:hover{background:var(--px-fill);color:var(--text)}
-.pc-tree li>button[aria-current=page]{background:var(--px-fill-strong);color:var(--text);font-weight:600}
-.pc-project-actions{display:flex;gap:2px}
-.pc-tree .pc-project-actions button{display:inline-flex;align-items:center;gap:6px;width:auto;color:var(--text-3);font-size:12.5px}
-.px-canvas .px-destinations{padding-top:10px;border-top:1px solid var(--px-rim)}
-
 /* ---------- Desktop shell */
 @media(min-width:900px){
  .px-nav-host.px-canvas{order:-1;flex:none;width:var(--pc-nav-w);height:100%;background:var(--sidebar,var(--bg));border-right:1px solid var(--px-rim)}
  :root[data-proposal=canvas] .main>.topbar{position:absolute;inset:0 0 auto;z-index:12;height:64px;min-height:0;padding:12px 18px;border:0;background:linear-gradient(var(--bg) 35%,transparent);display:flex;align-items:center}
  :root[data-proposal=canvas] .main>.conversation-area>.messages{padding-top:64px;padding-bottom:170px}
- :root[data-proposal=canvas] .pc-nav-btn-hide{display:none}
- :root[data-proposal=canvas] .px-lead>.px-nav-btn[data-proposal-nav]{display:none}
+  :root[data-proposal=canvas] .px-lead>.px-nav-btn[data-proposal-nav]{display:none}
 }
 .pc-crumb{display:flex;align-items:center;gap:6px;min-width:0;color:var(--text-3)}
 .pc-crumb button{border:0;background:none;padding:4px 6px;margin:-4px -2px;border-radius:8px;color:var(--text-2);font:500 13.5px var(--font);cursor:pointer;white-space:nowrap}
@@ -92,9 +68,6 @@
 /* ---------- iPhone: production glass, rearranged */
 @media(max-width:899px){
  .px-nav-host.px-canvas{position:fixed;z-index:61;inset:0 auto 0 0;width:min(86vw,340px);padding-top:env(safe-area-inset-top);background:var(--sidebar,var(--bg));box-shadow:var(--px-shadow);animation:pc-in .35s var(--px-ease)}
- .pc-nav-close{display:inline-grid;place-items:center;width:36px;height:36px;border:0;border-radius:50%;background:var(--px-fill);color:var(--text)}
- .px-canvas .pc-tree li>button,.px-canvas .pc-project-row,.px-canvas .pc-new,.px-canvas .px-destinations button{min-height:44px;font-size:15.5px}
- .px-canvas .pc-tree li>button{line-height:44px}
  :root[data-proposal=canvas] .px-lead{gap:8px}
  :root[data-proposal=canvas] .pc-crumb{flex:1;justify-content:center;flex-direction:column;align-items:center;gap:0;line-height:1.2}
  :root[data-proposal=canvas] .pc-crumb>svg{display:none}
@@ -128,43 +101,6 @@
 :root[data-proposal=canvas] .composer .send-btn{margin:0}
 
 /* ================= Canvas polish pass (owner-selected direction; still a proposal, not Gate1 approval) ========= */
-
-/* ---------- Tree: sections, project brief, date groups, long lists */
-.pc-section{position:sticky;top:-4px;z-index:2;display:flex;align-items:center;justify-content:space-between;margin:0 -4px;padding:0 4px;background:var(--sidebar,var(--bg))}
-.pc-tree .pc-section .px-label{padding:16px 10px 6px}
-.pc-tree .pc-section:first-child .px-label{padding-top:6px}
-.pc-section-add{display:inline-grid;place-items:center;width:28px;height:28px;margin-top:8px;border:0;border-radius:8px;background:none;color:var(--text-3);cursor:pointer}
-.pc-tree .pc-section:first-child .pc-section-add{margin-top:0}
-.pc-section-add:hover{background:var(--px-fill);color:var(--text)}
-.pc-project+.pc-project{margin-top:1px}
-.pc-project-row .px-mono{width:20px;height:20px;border-radius:6px;font-size:11px}
-.pc-project-row[aria-expanded=true] .pc-count{opacity:0}
-.pc-tree li>button.pc-brief{display:flex;flex-direction:column;gap:2px;height:auto;min-height:0;margin:2px 0 4px;padding:8px 10px;border-radius:10px;background:var(--px-fill);line-height:1.35;white-space:normal}
-.pc-brief-text{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px;color:var(--text-2)}
-.pc-brief-meta{display:flex;align-items:center;gap:2px;font:500 11px var(--font);color:var(--text-3)}
-.pc-tree li>button.pc-brief:hover{background:var(--px-fill-strong)}
-.pc-tree li>button:is(.pc-more,.pc-new-here){display:flex;align-items:center;gap:7px;min-height:30px;font-size:12.5px;line-height:30px;color:var(--text-3)}
-.pc-tree li>button:is(.pc-more,.pc-new-here):hover{color:var(--text)}
-.pc-group h3{margin:0;padding:10px 10px 3px;font:500 11.5px var(--font);color:var(--text-3)}
-.pc-group:first-of-type h3{padding-top:2px}
-.pc-all{display:flex;align-items:center;gap:9px;width:100%;min-height:34px;margin-top:6px;padding:0 10px;border:0;border-radius:9px;background:none;color:var(--text-2);font:500 13px var(--font);cursor:pointer}
-.pc-all>svg:last-child{margin-left:auto;color:var(--text-3)}
-.pc-all:hover{background:var(--px-fill);color:var(--text)}
-.pc-ask{display:flex;align-items:center;gap:8px;min-height:36px;margin-top:-4px;padding:0 10px;border:0;border-radius:10px;background:var(--px-fill);color:var(--text-2);font:500 13px var(--font);text-align:left;cursor:pointer}
-.pc-ask span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pc-ask:hover{background:var(--px-fill-strong);color:var(--text)}
-/* Desktop density: tighter rows so a realistic history fits; iPhone keeps 44pt targets (above). */
-@media(min-width:900px){
- .px-canvas .pc-tree li>button{min-height:32px;line-height:32px}
- .px-canvas .pc-project-row{min-height:34px}
-}
-@media(max-width:899px){
- .px-canvas .pc-tree li>button:is(.pc-more,.pc-new-here){min-height:44px;line-height:44px;font-size:14px}
- .px-canvas :is(.pc-all,.pc-ask){min-height:44px;font-size:14.5px}
- .px-canvas .pc-section-add{width:44px;height:44px;margin-top:0}
- .px-canvas .pc-group h3{font-size:12.5px}
- .px-canvas .pc-brief-text{font-size:13.5px}
-}
 
 /* ---------- Reading: the first answer starts close to the question it answers */
 :root[data-proposal=canvas] .thread{gap:24px}
@@ -218,6 +154,161 @@
  :root[data-proposal=canvas] .main>.topbar{background:linear-gradient(var(--bg) 72%,color-mix(in srgb,var(--bg) 60%,transparent) 88%,transparent)}
  :root[data-proposal=canvas] .main>.topbar.scrolled{box-shadow:none}
 }
-/* Destinations size to their labels so "Models & routing" stays on one line. */
-.px-canvas .px-destinations{display:flex;flex-wrap:wrap}
-.px-canvas .px-destinations button{flex:1 1 auto;white-space:nowrap}
+
+/* ================= Canvas sidebar refinement (preview only; Gate1 not approved) ==================================
+   A calm, native-feeling sidebar: mark and wordmark, destination rows, hairline separators, collapsible Projects /
+   folders / Conversations, contextual row actions, and an account footer. Lumen's own type (Archivo wordmark, mono
+   section labels), monochrome ink and production glass; the reference only informed spacing and hierarchy. */
+.px-canvas .pc-nav{--pc-row:32px;--pc-gap:2px;--pc-fs:13.5px;--pc-ico:17px;display:flex;flex-direction:column;height:100%;padding:14px 10px 10px;box-sizing:border-box}
+.pc-nav ul{list-style:none;margin:0;padding:0}
+.pc-nav button{font-family:var(--font)}
+.pc-nav-head{display:flex;align-items:center;gap:6px;padding:2px 4px 10px 8px}
+.pc-brand{display:flex;align-items:center;gap:9px;flex:1;min-width:0;color:var(--text)}
+.pc-brand .px-wordmark{font-size:21px}
+.pc-head-btn{display:inline-grid;place-items:center;flex:none;width:32px;height:32px;border:0;border-radius:10px;background:none;color:var(--text-2);cursor:pointer}
+.pc-head-btn:hover{background:var(--px-fill);color:var(--text)}
+.pc-search{margin:0 2px 8px}
+.pc-ask{display:flex;align-items:center;gap:8px;min-height:36px;margin:0 2px 8px;padding:0 10px;border:0;border-radius:10px;background:var(--px-fill);color:var(--text-2);font-size:13px;text-align:left;cursor:pointer}
+.pc-ask span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pc-ask:hover{background:var(--px-fill-strong);color:var(--text)}
+.pc-tree{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;margin:0 -10px;padding:0 10px 12px}
+
+/* Destinations: the places that aren't conversations, as quiet icon rows; a hairline separates them from the tree. */
+.pc-dest{display:grid;gap:var(--pc-gap);padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid var(--px-rim)}
+.pc-dest button{display:flex;align-items:center;gap:12px;width:100%;min-height:calc(var(--pc-row) + 2px);padding:0 10px;border:0;border-radius:10px;background:none;color:var(--text);font-size:var(--pc-fs);font-weight:500;text-align:left;cursor:pointer}
+.pc-dest button>svg{flex:none;width:var(--pc-ico);height:var(--pc-ico);color:var(--text-2)}
+.pc-dest button:hover,.pc-dest button[aria-current=page]{background:var(--px-fill)}
+.pc-dest kbd{margin-left:auto;font:500 11px var(--px-mono);color:var(--text-3)}
+
+/* Section headings: label + chevron toggles (right = closed, down = open); "+" stays a separate control. */
+.pc-section{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:4px;margin:0 -10px;padding:0 10px;background:var(--sidebar,var(--bg))}
+.pc-section-h{flex:1;min-width:0;margin:0;font:inherit}
+.pc-section-toggle{display:flex;align-items:center;gap:6px;width:100%;min-height:34px;margin-top:6px;padding:0 10px;border:0;border-radius:8px;background:none;color:var(--text-3);cursor:pointer}
+.pc-section-toggle .px-label{color:inherit}
+.pc-section-toggle:hover:not(:disabled){color:var(--text)}
+.pc-section-toggle:disabled{cursor:default}
+.pc-section-toggle:disabled .pc-chev{opacity:.35}
+.pc-section-add{display:inline-grid;place-items:center;flex:none;width:28px;height:28px;margin-top:6px;border:0;border-radius:8px;background:none;color:var(--text-3);cursor:pointer}
+.pc-section-add:hover{background:var(--px-fill);color:var(--text)}
+.pc-chev{flex:none;transition:rotate .24s var(--px-ease)}
+[aria-expanded=true]>.pc-chev{rotate:90deg}
+.pc-here{display:inline-block;flex:none;width:6px;height:6px;margin-left:auto;border-radius:50%;background:var(--text)}
+.pc-section-toggle .pc-here{margin-left:2px}
+
+/* Folding: height eases between 0 and its content; closed content is inert. */
+.pc-fold{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .28s var(--px-ease),opacity .2s ease}
+.pc-fold[data-open]{grid-template-rows:1fr;opacity:1}
+.pc-fold-inner{min-height:0;overflow:hidden}
+
+/* Project folders. */
+.pc-project-row{display:flex;align-items:center;gap:8px;width:100%;min-height:calc(var(--pc-row) + 2px);padding:0 10px 0 8px;border:0;border-radius:10px;background:none;color:var(--text);font-size:var(--pc-fs);font-weight:560;text-align:left;cursor:pointer}
+.pc-project-row>.pc-chev{color:var(--text-3)}
+.pc-project-row:hover{background:var(--px-fill)}
+.pc-project-row .px-mono{width:20px;height:20px;border-radius:6px;font-size:11px}
+.pc-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pc-count{font:500 11.5px var(--font);color:var(--text-3);font-variant-numeric:tabular-nums}
+.pc-project-row[aria-expanded=true] .pc-count{opacity:0}
+.pc-project .pc-fold ul{display:grid;gap:var(--pc-gap);margin:2px 0 6px 18px;padding-left:10px;border-left:1px solid var(--px-rim)}
+.pc-brief{display:flex;flex-direction:column;gap:2px;width:100%;margin:2px 0;padding:8px 10px;border:0;border-radius:10px;background:var(--px-fill);color:var(--text-2);line-height:1.35;text-align:left;cursor:pointer}
+.pc-brief:hover{background:var(--px-fill-strong)}
+.pc-brief-text{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px}
+.pc-brief-meta{display:flex;align-items:center;gap:2px;font-size:11px;font-weight:500;color:var(--text-3)}
+.pc-more,.pc-new-here,.pc-empty{display:flex;align-items:center;gap:7px;width:100%;min-height:30px;padding:0 10px;border:0;border-radius:9px;background:none;color:var(--text-3);font-size:12.5px;text-align:left;cursor:pointer}
+.pc-more:hover,.pc-new-here:hover,.pc-empty:hover{background:var(--px-fill);color:var(--text)}
+.pc-empty{min-height:0;padding:8px 10px;line-height:1.4}
+
+/* Conversation rows; actions stay out of sight until you need them. */
+.pc-chats{display:grid;gap:var(--pc-gap)}
+.pc-group h3{margin:0;padding:10px 10px 3px;font:500 11.5px var(--font);color:var(--text-3)}
+.pc-group:first-child h3{padding-top:4px}
+.pc-row{position:relative;display:flex;align-items:center;border-radius:9px}
+.pc-open{display:flex;align-items:center;gap:6px;flex:1;min-width:0;min-height:var(--pc-row);padding:0 10px;border:0;border-radius:9px;background:none;color:var(--text-2);font-size:var(--pc-fs);text-align:left;cursor:pointer}
+.pc-row-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pc-pin{flex:none;color:var(--text-3)}
+.pc-row:hover .pc-open,.pc-row.menu-open .pc-open{background:var(--px-fill);color:var(--text)}
+.pc-open[aria-current=page]{background:var(--px-fill-strong);color:var(--text);font-weight:600}
+.pc-row-more{position:absolute;right:3px;top:50%;translate:0 -50%;display:inline-grid;place-items:center;width:28px;height:28px;border:0;border-radius:8px;background:none;color:var(--text-2);opacity:0;cursor:pointer;transition:opacity .12s}
+.pc-row-more:hover{background:var(--px-fill-strong);color:var(--text)}
+.pc-row:is(:hover,:focus-within,.menu-open) .pc-row-more{opacity:1}
+.pc-row:is(:hover,:focus-within,.menu-open) .pc-open{padding-right:34px}
+.pc-row.editing input{width:100%;min-height:var(--pc-row);padding:0 10px;border:0;border-radius:9px;background:var(--px-fill-strong);color:var(--text);font:inherit;font-size:var(--pc-fs);outline:2px solid color-mix(in srgb,var(--text) 35%,transparent)}
+.pc-all{display:flex;align-items:center;gap:9px;width:100%;min-height:calc(var(--pc-row) + 2px);margin-top:6px;padding:0 10px;border:0;border-radius:9px;background:none;color:var(--text-2);font-size:13px;font-weight:500;cursor:pointer}
+.pc-all>svg:last-child{margin-left:auto;color:var(--text-3)}
+.pc-all:hover{background:var(--px-fill);color:var(--text)}
+.pc-none{margin:4px 10px;font-size:12.5px;color:var(--text-3)}
+
+/* Row action menu (desktop dropdown; phones use production's long-press ContextMenu). */
+.menu.pc-menu{z-index:95;min-width:212px;padding:5px;border-radius:12px;inset:auto;outline:none}
+.menu.pc-menu button{gap:10px;height:34px;border-radius:7px;font-size:13px}
+.menu.pc-menu button>svg{flex:none;color:var(--text-2)}
+.menu.pc-menu button.danger>svg{color:inherit}
+.pc-menu-chev{margin-left:auto;transition:rotate .2s var(--px-ease)}
+[aria-expanded=true]>.pc-menu-chev{rotate:90deg}
+.pc-menu-mono.px-mono{width:18px;height:18px;border-radius:5px;font-size:10px}
+.pc-menu .chat-move-list button{padding-inline-start:18px}
+/* The lifted copy in the long-press menu sits outside the nav, so it carries its own row look. */
+.ctx-copy.pc-ctx .pc-row{display:flex;align-items:center;min-height:48px;padding:0 16px;border-radius:14px;background:var(--surface);color:var(--text);font-size:16px}
+.ctx-copy.pc-ctx .pc-open{display:flex;align-items:center;gap:6px;border:0;padding:0;background:none;color:inherit;font:inherit}
+.ctx-copy.pc-ctx .pc-row-more{display:none}
+
+/* Account footer. */
+.pc-foot{display:flex;align-items:center;gap:10px;padding-top:8px;border-top:1px solid var(--px-rim)}
+.pc-account{display:flex;align-items:center;gap:10px;flex:1;min-width:0;min-height:44px;padding:0 8px;border:0;border-radius:12px;background:none;color:var(--text);text-align:left;cursor:pointer}
+.pc-account:hover{background:var(--px-fill)}
+.pc-avatar{display:inline-grid;place-items:center;flex:none;width:28px;height:28px;border-radius:50%;background:var(--px-fill-strong);color:var(--text);font:650 12.5px var(--px-display);object-fit:cover}
+.pc-account-text{display:grid;flex:1;min-width:0;line-height:1.25}
+.pc-account-name{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pc-account-sub{font-size:11.5px;color:var(--text-3)}
+.pc-account-gear{flex:none;color:var(--text-3)}
+
+/* Desktop: collapsed sidebar (production state) gives the reading column the full width. */
+:root[data-proposal=canvas][data-pc-rail-hidden]{--pc-nav-w:0px}
+@media(min-width:900px){:root[data-proposal=canvas][data-pc-rail-hidden] .px-lead>.px-nav-btn[data-proposal-nav]{display:inline-grid}}
+
+/* ---------- iPhone drawer: production glass, 44pt+ rows, bottom actions in thumb reach. */
+@media(max-width:899px){
+ .px-canvas .pc-nav{--pc-row:44px;--pc-gap:0px;--pc-fs:16px;--pc-ico:21px;padding:calc(env(safe-area-inset-top) + 12px) 14px max(12px,env(safe-area-inset-bottom))}
+ .px-nav-host.px-canvas{width:min(84vw,340px);padding-top:0}
+ .pc-nav-head{padding:2px 0 12px 6px;gap:8px}
+ .pc-brand .px-wordmark{font-size:27px}
+ .pc-head-btn{width:40px;height:40px;border-radius:50%;background:var(--px-fill);color:var(--text)}
+ .pc-search{height:44px;margin:0 0 10px;border-radius:14px}
+ .pc-search input{font-size:16px}
+ .pc-tree{margin:0 -14px;padding:0 14px 12px}
+ .pc-dest{padding-bottom:12px;margin-bottom:6px}
+ .pc-dest button{gap:16px;min-height:48px;padding:0 8px;font-size:17px;font-weight:500}
+ .pc-section{margin:0 -14px;padding:0 14px}
+ .pc-section-toggle{min-height:44px;padding:0 8px}
+ .pc-section-toggle .px-label{font-size:11.5px}
+ .pc-section-add{width:44px;height:44px;margin-top:6px;border-radius:12px}
+ .pc-project-row{min-height:48px;font-size:16.5px;padding:0 8px 0 6px}
+ .pc-project-row .px-mono{width:24px;height:24px;border-radius:7px;font-size:12.5px}
+ .pc-project .pc-fold ul{margin-left:16px}
+ .pc-brief-text{font-size:14px}
+ .pc-brief-meta{font-size:12.5px}
+ .pc-more,.pc-new-here,.pc-empty{min-height:44px;font-size:14.5px}
+ .pc-group h3{padding:12px 8px 4px;font-size:13px}
+ .pc-open{padding:0 8px;border-radius:12px}
+ .pc-all{min-height:44px;font-size:15px;padding:0 8px}
+ .pc-ask{min-height:44px;font-size:14.5px}
+ /* Long press opens a chat's actions; the ⋯ button appears only on the open chat or for keyboard/VoiceOver focus. */
+ .pc-row-more{width:36px;height:36px;right:2px}
+ .pc-row:not(.current):not(:focus-within) .pc-row-more{opacity:0;pointer-events:none}
+ .pc-row:not(.current):not(:focus-within) .pc-open{padding-right:8px}
+ .pc-row.current .pc-row-more{opacity:1}
+ .pc-row.current .pc-open{padding-right:44px}
+ .pc-foot{gap:12px;padding-top:12px;border-top:0}
+ .pc-new-pill{display:inline-flex;align-items:center;gap:9px;min-height:50px;padding:0 22px 0 18px;border:0;border-radius:999px;background:var(--text);color:var(--bg);font-size:16.5px;font-weight:620;cursor:pointer;box-shadow:0 6px 18px rgb(0 0 0 / .25)}
+ .pc-account{flex:0 0 auto;justify-content:center;width:50px;min-height:50px;margin-left:auto;padding:0;border-radius:50%;background:var(--px-fill)}
+ .pc-avatar{width:30px;height:30px;font-size:13.5px}
+ html.glass .px-nav-host.px-canvas{border-right:1px solid transparent;background:linear-gradient(color-mix(in srgb,var(--bg) 90%,transparent),color-mix(in srgb,var(--bg) 90%,transparent)) padding-box,var(--glass-rim) border-box;-webkit-backdrop-filter:var(--glass-filter-strong,blur(30px) saturate(1.6));backdrop-filter:var(--glass-filter-strong,blur(30px) saturate(1.6));box-shadow:var(--glass-shadow),18px 0 48px rgb(0 0 0 / .35)}
+ html.glass .pc-nav .pc-section{background:color-mix(in srgb,var(--bg) 94%,transparent)}
+ html.glass .pc-head-btn,html.glass .pc-account{border:1px solid transparent;background:var(--glass-sheen) padding-box,linear-gradient(var(--glass-tint),var(--glass-tint)) padding-box,var(--glass-rim) border-box}
+}
+@media(prefers-reduced-transparency:reduce){html.glass .px-nav-host.px-canvas{background:var(--sidebar,var(--bg))!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}}
+@keyframes pc-out{to{translate:-100% 0}}
+/* The list fades out above the footer instead of being cut by it. */
+.pc-tree{-webkit-mask-image:linear-gradient(#000 calc(100% - 22px),transparent);mask-image:linear-gradient(#000 calc(100% - 22px),transparent)}
+/* Grid tracks never grow to a long title's width: titles truncate inside the drawer at 320px. */
+.pc-fold,.pc-dest,.pc-chats,.pc-project .pc-fold ul{grid-template-columns:minmax(0,1fr)}
+.pc-fold-inner,.pc-project,.pc-group{min-width:0}

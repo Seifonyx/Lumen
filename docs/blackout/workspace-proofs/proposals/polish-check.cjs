@@ -36,6 +36,6 @@ await p.screenshot({path:OUT+'/canvas-'+(W<900?'phone':'desktop')+'-long-list.pn
 const gap=await p.evaluate(()=>{const u=document.querySelector('.msg.user .bubble'),a=document.querySelector('.msg.assistant');return a&&u?Math.round(a.querySelector('.markdown, .bubble, *').getBoundingClientRect().top-u.getBoundingClientRect().bottom):null});
 const sticky=await p.evaluate(()=>{const t=document.querySelector('.pc-tree');t.scrollTop=t.scrollHeight;return [t.scrollHeight>t.clientHeight, getComputedStyle(document.querySelector('.pc-section')).position]});
 await p.screenshot({path:OUT+'/canvas-'+(W<900?'phone':'desktop')+'-long-list-scrolled.png'});
-await p.locator('.pc-more').first().click();const after=await p.locator('.pc-tree [data-proposal-space=studio] + ul li').count();
+await p.locator('.pc-more').first().click();const after=await p.locator('.pc-tree [data-proposal-space=studio] ~ * li').count();
 console.log(JSON.stringify({W,swipe,more,gapUserToAnswer:gap,treeScrolls:sticky,studioRowsAfterShowMore:after,errs}));
 await b.close();})();

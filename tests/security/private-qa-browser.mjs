@@ -32,12 +32,15 @@ async function open(who, { width = 390, height = 844, bypassCSP = false } = {}) 
   const phone = width < 900;
   const context = await browser.newContext({ viewport: { width, height }, isMobile: phone && engineName === 'chromium', hasTouch: phone, bypassCSP,
     extraHTTPHeaders: who ? { 'Cf-Access-Jwt-Assertion': await gate.token(who) } : {} });
-  const seen = { requests: [], external: [], violations: [], errors: [] };
+  // `external` lists requests that left the page for another origin. A request the browser itself refused
+  // under CSP (Chromium still reports it, failed with ERR_BLOCKED_BY_CSP) never reached the network.
+  const seen = { requests: [], attempts: new Map(), errors: [], get external() { return [...this.attempts].filter(([, failure]) => !/BLOCKED_BY_CSP/i.test(failure || '')).map(([url]) => url); } };
   context.on('request', (request) => {
     const url = request.url();
     seen.requests.push(url);
-    if (!url.startsWith(gate.origin) && !/^(data|blob):/.test(url)) seen.external.push(url);
+    if (!url.startsWith(gate.origin) && !/^(data|blob):/.test(url)) seen.attempts.set(url, null);
   });
+  context.on('requestfailed', (request) => { if (seen.attempts.has(request.url())) seen.attempts.set(request.url(), request.failure()?.errorText || 'failed'); });
   // Anything leaving the loopback gate would be a failure; abort it so nothing is ever delivered.
   await context.route((url) => !url.href.startsWith(gate.origin), (route) => route.abort('blockedbyclient'));
   await context.addInitScript(() => {
@@ -151,6 +154,7 @@ try {
     assert.notEqual(planted.sw, 'registered');
     assert.ok(planted.csp.some((d) => d === 'connect-src') && planted.csp.some((d) => d === 'img-src'), `CSP reported the planted requests: ${planted.csp}`);
     assert.deepEqual(seen.external, [], 'CSP stopped planted requests before the network');
+    results.push({ plantedAttemptsRefusedByCsp: [...seen.attempts].map(([url, failure]) => ({ url, failure })) });
     await context.close();
 
     const control = await open(REVIEWERS.owner, { bypassCSP: true });

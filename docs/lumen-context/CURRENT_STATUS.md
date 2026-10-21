@@ -10,9 +10,9 @@
 | Blackout work | Draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34), branch `docs/lumen-blackout-phase1-20261019` |
 | **Latest directly verified PR HEAD** | `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`, verified on 2026-10-21 |
 | Branch state | PR #34 open, draft, unmerged at verification; no Canvas production migration or deployment authorized |
-| Design direction | **Canvas (A) chosen for refinement**; earlier Workspace/Focus consolidation presentation rejected |
-| **Gate 1** | **NOT APPROVED**. Owner previously expressed intent to consider approval after final sidebar refinement, not actual sign-off |
-| Blackout accepted weighted baseline | **18.5%, Medium confidence**, last recorded; unchanged without official evidence/approval recalculation |
+| Design direction | **Canvas (A) approved by owner as Gate 1 foundation on 2026-10-21**, with additional polish still expected; former Workspace/Focus consolidation rejected |
+| **Gate 1** | **APPROVED by explicit owner response on 2026-10-21**, following final Canvas sidebar-spacing review; approval covers design foundation, not production integration, merging, deployment or Gate 2/3 |
+| Blackout recorded weighted baseline | **18.5%, Medium confidence** at last scored code-branch checkpoint; owner-approved B02.3 design decision is **new scoring evidence** (3-point task, potentially 21.5% if fully credited), pending a reviewed update of the canonical Blackout plan/ledger; do not silently inflate or replace other task fractions |
 | Active coding agent | **Claude Code (last owner-confirmed)**, with switch to **Codex anticipated** near usage limit, not yet confirmed |
 
 ## Most recent work (agent-reported; commit inspected)
@@ -29,15 +29,23 @@ After receiving Claude Code's completion report, ChatGPT checked draft PR #34 at
 
 **Reviewer assessment, NOT owner approval:** the increased iPhone primary-navigation size and spacing, compact project/history hierarchy, responsive short-height adaptation and restrained desktop treatment are coherent and ready for owner design sign-off review; no additional open-ended styling loop recommended. The report's Chromium/WebKit, accessibility, touch-target and regression results are **Claude-reported**, not independently rerun by ChatGPT. A physical iPhone remains untested, and gesture/glass/keyboard feel remain follow-up validation items.
 
-**Owner has not yet provided the final decision on this last spacing pass.** Canvas remains owner-selected for design refinement only. Gate 1 NOT APPROVED; no production integration, merge or deployment authorized. The active coding agent remains Claude Code (last owner-confirmed); Codex is anticipated, not yet confirmed.
+**Superseded after this review:** the owner later explicitly approved Gate 1 for Canvas while noting further polish is required. This paragraph records the pre-approval review state only; see the newer decision below. The active coding agent remains Claude Code (last owner-confirmed); Codex is anticipated, not yet confirmed.
 
-## Exact next action
+## Owner milestone: formal Gate 1 approval — 2026-10-21
 
-**Owner visual review of latest sidebar spacing/hierarchy screenshots.** Obtain an **explicit separate Gate 1 decision** if accepted, or one targeted change request if not. Do not assign speculative redesign or production migration while awaiting that decision.
+The owner responded **yes** to the explicit question whether they wished to *formally approve Gate 1* following the final Canvas sidebar-spacing refinements, while noting that the design still needs some polish and is overall excellent. This is an **owner authorization of the Canvas design direction / Gate 1 only**, not a claim that every polish item, identity asset, device scenario or release criterion has been verified. **Do not reopen Canvas-vs-Desk or initiate more exploratory redesign.**
 
-If Gate 1 is explicitly approved: update this checkpoint and, if durable direction changed, the charter; commission a **staged production integration blueprint** first (component ownership, feature/security parity, rollback/testing, early physical-iPhone verification). Do not merge or deploy until separately authorized.
+**Approved design baseline:** draft PR #34 at verified HEAD `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`; see `docs/blackout/workspace-proofs/proposals/SIDEBAR.md` and `proposals/sidebar/spacing/` on the coding branch. Earlier owner-approved selections and subsequent sidebar tweaks belong to this selected Canvas design. Future polish must preserve its core interaction architecture and Lumen-specific identity. This docs checkpoint did not change PR #34, `main` or production.
 
-If Claude Code hits its limit before a further assignment, the owner will explicitly switch to Codex. Codex should fetch the current PR HEAD, check any unfinished/unpushed work, continue only the next authorized task and preserve the chosen Canvas architecture.
+**Known follow-up requirements:** physical-iPhone Safari/glass/keyboard/touch/VoiceOver validation (not yet performed), drawer open/close swipe consideration, native delete confirmation polish, light theme and detailed remaining feature/security/routing parity. Claude-reported Chromium/WebKit tests and captured screenshots are good isolated proof evidence **but not production verification**.
+
+**Progress:** last scored Blackout baseline was 18.5% from the workstream plan. Gate 1 approval is direct evidence for B02.3's explicit-decision criterion (weight 3, previously zero); a full +3-point award would imply **21.5%**, subject to checking the workstream rubric and updating the canonical weighted ledger on the coding branch. Until then, treat **18.5% as last recorded scored value; 21.5% as a provisional calculation, not an adopted ledger figure**. Do not infer completion of other B02 tasks or Gates 2/3.
+
+## Exact next authorized action — planning only
+
+Prepare a **staged production-integration blueprint for the owner to review**, not an immediate implementation. Assign it to the currently active coding agent (last confirmed **Claude Code**; if the owner confirms a switch, **Codex** instead). First verify current PR HEAD, main and workstream plans; identify canonical production owners and Canvas proof components, feature parity/38-contract matrix, security and account boundaries, design tokens/identity and dark/light handling, mobile/desktop/keyboard/gesture concerns, early physical-iPhone validation options requiring separate consent, rollback/flags, regression/acceptance tests, and independent review checkpoints including Gate 2 before major visual integration. Propose small independently testable phases with stop/approval conditions. Preserve completed proof work and avoid broad rewrites or weakening product boundaries.
+
+**STOP after the blueprint** for explicit owner authorization of implementation. No merge, deployment, preview network exposure, test-only host allowance or production component migration is implied by Gate 1 approval. Continue to track anticipated Claude-to-Codex handoff without marking it complete until the owner confirms it.
 
 ## Context branch synchronization
 

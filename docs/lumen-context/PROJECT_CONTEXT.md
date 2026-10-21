@@ -1,6 +1,6 @@
 # Lumen — live, PUBLIC-SAFE project charter
 
-> **Canonical ref:** \`Seifonyx/Lumen\` branch \`docs/lumen-live-context\`. This public-safe charter is a **working summary**, not a publication of the owner's full private ChatGPT Project Sources. Follow [README.md](README.md) for update rules.
+> **Canonical ref:** `Seifonyx/Lumen` branch `docs/lumen-live-context`. This public-safe charter is a **working summary**, not a publication of the owner's full private ChatGPT Project Sources. Follow [README.md](README.md) for update rules.
 
 ## Product and visual direction
 
@@ -27,6 +27,6 @@ Other applications, including 9Router and ChatGPT, may inspire general UI/intera
 
 ## Context governance
 
-The dated operational checkpoint belongs in [CURRENT_STATUS.md](CURRENT_STATUS.md), NOT this charter. At a meaningful milestone, update that live file proactively and identify what was verified, owner-decided, only agent-reported or unknown. Update this charter only for **durable** decisions. Consult the actual coding branch's \`AGENTS.md\`, workstream handoff and plan for detailed technical specifications, tests, release rules and official milestone weights.
+The dated operational checkpoint belongs in [CURRENT_STATUS.md](CURRENT_STATUS.md), NOT this charter. At a meaningful milestone, update that live file proactively and identify what was verified, owner-decided, only agent-reported or unknown. Update this charter only for **durable** decisions. Consult the actual coding branch's `AGENTS.md`, workstream handoff and plan for detailed technical specifications, tests, release rules and official milestone weights.
 
 **Security:** This repository is public. Never paste full private Project Sources, sensitive user conversations, credential details, access tokens, private addresses or confidential security data into these files. Private Project Sources may contain additional details and must not be publicly copied.

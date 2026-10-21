@@ -46,7 +46,8 @@ export async function namespaceFor(salt, buildId, email) {
 export function createGate({ storage, trust, hosts, now = () => Date.now() }) {
   if (!storage || !trust?.issuer || !trust?.audience || !Array.isArray(hosts) || !hosts.length) throw new Error('Gate configuration is incomplete.');
   const allowedHosts = new Set(hosts.map((h) => h.toLowerCase()));
-  const keys = importTrustKeys(trust.keys);
+  // Imported once; a failure is handled (every request then denies) instead of crashing the process.
+  const keys = importTrustKeys(trust.keys).catch(() => new Map());
 
   async function handle(request) {
     const head = request.method === 'HEAD';
@@ -54,8 +55,9 @@ export function createGate({ storage, trust, hosts, now = () => Date.now() }) {
     let url;
     try { url = new URL(request.url); } catch { return deny(404, head); }
     if (!allowedHosts.has(url.host.toLowerCase()) || url.username || url.password) return deny(404, head);
-    // Other sites may link here, but may not load these files into their own pages.
-    if (request.headers.get('Sec-Fetch-Site') === 'cross-site' && request.headers.get('Sec-Fetch-Mode') !== 'navigate') return deny(403, head);
+    // Other sites may link here, but only this origin (or the reviewer typing/bookmarking) may load files.
+    const site = request.headers.get('Sec-Fetch-Site');
+    if (site && !['same-origin', 'none'].includes(site) && request.headers.get('Sec-Fetch-Mode') !== 'navigate') return deny(403, head);
 
     const at = now();
     const identity = await verifyAccessJwt(request.headers.get('Cf-Access-Jwt-Assertion'), { keys: await keys, issuer: trust.issuer, audience: trust.audience, now: at });

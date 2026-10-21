@@ -24,6 +24,7 @@ export async function importTrustKeys(jwks) {
   for (const jwk of jwks || []) {
     if (!jwk || jwk.kty !== 'RSA' || typeof jwk.kid !== 'string' || !jwk.kid || (jwk.alg && jwk.alg !== 'RS256') || (jwk.use && jwk.use !== 'sig') || jwk.d) continue;
     const key = await crypto.subtle.importKey('jwk', { kty: 'RSA', n: jwk.n, e: jwk.e, alg: 'RS256', ext: true }, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+    if (key.algorithm.modulusLength < 2048) continue; // weak keys are not trusted
     keys.set(jwk.kid, key);
   }
   return keys;
@@ -51,8 +52,9 @@ export async function verifyAccessJwt(token, { keys, issuer, audience, now = Dat
     if (!aud.includes(audience)) return null;
     if (!Number.isSafeInteger(claims.exp) || claims.exp <= seconds) return null;
     if (claims.nbf !== undefined && (!Number.isSafeInteger(claims.nbf) || claims.nbf > seconds)) return null;
-    if (claims.iat !== undefined && (!Number.isSafeInteger(claims.iat) || claims.iat > seconds + 60 || claims.exp - claims.iat > maxLifetimeSeconds)) return null;
-    if (typeof claims.email !== 'string' || !/^[^\s@]+@[^\s@]+$/.test(claims.email) || claims.email.length > 254) return null;
+    if (!Number.isSafeInteger(claims.iat) || claims.iat > seconds + 60 || claims.exp - claims.iat > maxLifetimeSeconds) return null;
+    // Printable ASCII only: Unicode case mapping (e.g. the Kelvin sign) must not turn one address into another.
+    if (typeof claims.email !== 'string' || !/^[\x21-\x3f\x41-\x7e]+@[\x21-\x3f\x41-\x7e]+$/.test(claims.email) || claims.email.length > 254) return null;
     return { email: claims.email.toLowerCase() };
   } catch {
     return null;

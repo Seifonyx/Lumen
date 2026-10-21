@@ -6,8 +6,7 @@
 // Prompts can steer scenarios: "[synthetic:error]", "[synthetic:quota]", "[synthetic:slow]".
 
 import { ensureLease } from './lease';
-
-const nativeFetch = globalThis.fetch.bind(globalThis);
+import { nativeFetch } from './native-fetch';
 const blockedHosts: string[] = [];
 (globalThis as { __qaBlockedHosts?: string[] }).__qaBlockedHosts = blockedHosts;
 
@@ -74,7 +73,7 @@ async function synthetic(url: URL, init: RequestInit | undefined): Promise<Respo
   // A reply is new activity: confirm this build is still admitted before producing anything.
   if (!(await ensureLease())) return json({ error: { code: 403, message: 'This review build has expired or access was removed.', status: 'PERMISSION_DENIED' } }, 403);
   let body: unknown = null;
-  try { body = JSON.parse(String(init?.body || 'null')); } catch { /* treated as empty */ }
+  try { body = JSON.parse(typeof init?.body === 'string' ? init.body : 'null'); } catch { /* treated as empty */ }
   const prompt = lastUserText(body);
   if (prompt.includes('[synthetic:quota]')) return json({ error: { code: 429, message: 'Synthetic quota reached for this review scenario. Try again in 1 minute.', status: 'RESOURCE_EXHAUSTED' } }, 429);
   if (prompt.includes('[synthetic:error]')) return json({ error: { code: 503, message: 'Synthetic provider error for this review scenario.', status: 'UNAVAILABLE' } }, 503);
@@ -88,6 +87,8 @@ async function synthetic(url: URL, init: RequestInit | undefined): Promise<Respo
 }
 
 export async function qaFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  // A Request object carries its own method/body/signal: fold them into init so nothing is ignored.
+  if (input instanceof Request && !init) init = { method: input.method, body: ['GET', 'HEAD'].includes(input.method) ? undefined : await input.clone().text(), signal: input.signal, headers: input.headers };
   const raw = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
   let url: URL;
   try { url = new URL(raw, document.baseURI); } catch { throw new TypeError('Invalid request address.'); }

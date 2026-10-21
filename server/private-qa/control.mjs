@@ -38,6 +38,7 @@ export function parseRegistry(bytes) {
   for (const [id, build] of Object.entries(value.builds)) {
     if (!BUILD_ID.test(id) || !build || typeof build !== 'object') return null;
     if (!['active', 'revoked'].includes(build.status) || !hex64(build.manifestDigest) || !isTime(build.expiresAt) || !isTime(build.activatedAt)) return null;
+    if (build.expiresAt - build.activatedAt > LIMITS.maxBuildMs) return null;
     if (!Array.isArray(build.reviewers) || !build.reviewers.every(email) || build.sourceSha !== id.slice(0, 40)) return null;
   }
   for (const [id, at] of Object.entries(value.revoked)) if (!BUILD_ID.test(id) || !isTime(at)) return null;
@@ -74,9 +75,10 @@ export async function updateRegistry(storage, change, { attempts = 5 } = {}) {
     if (!parseRegistry(serialize(next))) throw fail('invalid_registry', 'The registry change is not valid.');
     const put = await storage.put(REGISTRY_KEY, serialize(next), { onlyIf: { etagMatches: current.etag } });
     if (put) {
+      // The conditional write is the commit point. A later writer may already have changed it again;
+      // that does not undo this change, so report what was written and whether it is still current.
       const readback = await readRegistry(storage);
-      if (!readback || readback.etag !== put.etag) throw fail('readback', 'The registry changed again before it could be confirmed.');
-      return readback.registry;
+      return Object.defineProperty(next, 'confirmedCurrent', { value: Boolean(readback && readback.etag === put.etag), enumerable: false });
     }
   }
   throw fail('conflict', 'The registry kept changing; nothing was applied.');
@@ -138,6 +140,8 @@ export async function publish({ storage, manifestBytes, files, reviewers, now = 
   const manifest = await parseManifest(manifestBytes);
   if (!manifest) throw fail('manifest', 'The manifest is not valid.');
   if (manifest.expiresAt <= now) throw fail('expired', 'This build has already expired.');
+  // Lifetime is bounded from now, not from a creation time the manifest itself claims.
+  if (manifest.createdAt > now + 5 * 60_000 || manifest.expiresAt > now + LIMITS.maxBuildMs) throw fail('expiry', 'A build may be available for at most 72 hours from publication.');
   const id = manifest.buildId;
   const permitted = [...new Set((reviewers || []).map((r) => String(r).toLowerCase()))];
   if (!permitted.length || !permitted.every(email)) throw fail('reviewers', 'Name at least one permitted reviewer.');
@@ -151,6 +155,8 @@ export async function publish({ storage, manifestBytes, files, reviewers, now = 
   if (!before) throw fail('registry_unavailable', 'The registry is missing or malformed.');
   if (before.registry.revoked[id] || before.registry.builds[id]) throw fail('duplicate', 'This build ID was already used.');
   if (!permitted.every((r) => before.registry.reviewers.includes(r))) throw fail('reviewers', 'Every reviewer must already be allowed by the registry.');
+  const activeNow = (registry) => Object.values(registry.builds).filter((b) => b.status === 'active' && b.expiresAt > now).length;
+  if (activeNow(before.registry) >= LIMITS.maxActiveBuilds) throw fail('limit', 'Three builds are already active; revoke one first.');
   for (const path of expected) {
     if (!(await storage.put(fileKey(id, path), supplied.get(path), { onlyIf: { etagDoesNotMatch: '*' } }))) throw fail('duplicate', 'This build ID already has stored files.');
   }
@@ -159,8 +165,7 @@ export async function publish({ storage, manifestBytes, files, reviewers, now = 
   return updateRegistry(storage, (registry) => {
     if (registry.revoked[id] || registry.builds[id]) throw fail('duplicate', 'This build ID was revoked or registered meanwhile.');
     if (!permitted.every((r) => registry.reviewers.includes(r))) throw fail('reviewers', 'A reviewer was removed meanwhile.');
-    const active = Object.values(registry.builds).filter((b) => b.status === 'active' && b.expiresAt > now).length;
-    if (active >= LIMITS.maxActiveBuilds) throw fail('limit', 'Three builds are already active; revoke one first.');
+    if (activeNow(registry) >= LIMITS.maxActiveBuilds) throw fail('limit', 'Three builds are already active; revoke one first.');
     registry.builds[id] = { status: 'active', sourceSha: manifest.commit, manifestDigest: digest, expiresAt: manifest.expiresAt, activatedAt: now, reviewers: permitted };
     return registry;
   });

@@ -32,8 +32,8 @@ export class MemoryStorage {
 const b64url = (value) => Buffer.from(typeof value === 'string' ? value : JSON.stringify(value)).toString('base64url');
 
 /** A synthetic signer with its public JWK. */
-export function testIdentityProvider({ kid = `qa-test-${randomUUID().slice(0, 8)}`, issuer = 'https://qa-test.invalid', audience = 'qa-test-audience' } = {}) {
-  const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+export function testIdentityProvider({ kid = `qa-test-${randomUUID().slice(0, 8)}`, issuer = 'https://qa-test.invalid', audience = 'qa-test-audience', modulusLength = 2048 } = {}) {
+  const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength });
   const jwk = { ...publicKey.export({ format: 'jwk' }), kid, alg: 'RS256', use: 'sig' };
   const sign = async (claims, header = {}) => {
     const h = b64url({ alg: 'RS256', kid, typ: 'JWT', ...header });

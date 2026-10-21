@@ -34,7 +34,8 @@ export function assetPath(path) {
 
 export function mimeOf(path) {
   const dot = path.lastIndexOf('.');
-  return dot > 0 ? MIME[path.slice(dot + 1)] || null : null;
+  const ext = dot > 0 ? path.slice(dot + 1) : '';
+  return Object.hasOwn(MIME, ext) ? MIME[ext] : null;
 }
 
 /**

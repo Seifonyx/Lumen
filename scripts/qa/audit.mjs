@@ -40,6 +40,9 @@ export const NETWORK_ALLOWLIST = [
   { file: /^assets\/markdown-extras-[\w-]+\.js$/, reason: 'KaTeX lexer method named fetch(); not a network call' },
   { file: /^assets\/runner-[\w-]+\.js$/, reason: 'Pyodide worker source text (importScripts) inside a string; worker creation is disabled in QA builds' },
 ];
+/** The QA adapters' single capture of the browser's fetch, before the global is replaced. */
+export const NATIVE_FETCH_CAPTURE = 'globalThis.fetch.bind(globalThis)';
+const INDIRECT_FETCH = /\b(?:window|globalThis|self)\s*\.\s*fetch\s*(?:\(|\.\s*(?:call|apply|bind)\b)|\bfetch\s*\.\s*(?:call|apply|bind)\b/g;
 const NETWORK_PRIMITIVE = /(?<![\w$.])fetch\s*\(|XMLHttpRequest|new\s+WebSocket|new\s+EventSource|sendBeacon|importScripts\s*\(|serviceWorker\s*\.\s*register/;
 
 export function listFiles(dir, prefix = '') {
@@ -50,13 +53,19 @@ export function auditOutput(dir, { qaTransportFile } = {}) {
   const files = listFiles(dir);
   const problems = [];
   const network = [];
+  let nativeCaptures = 0;
   for (const file of files) {
     const ext = file.slice(file.lastIndexOf('.') + 1);
-    if (!MIME[ext]) problems.push(`${file}: file type not allowed in a review build`);
+    if (!Object.hasOwn(MIME, ext)) problems.push(`${file}: file type not allowed in a review build`);
     if (/(^|\/)(sw\.js|manifest\.webmanifest)$|\.map$/.test(file)) problems.push(`${file}: service worker, install manifest or source map`);
     if (!/\.(?:html|m?js|css|json|svg|txt)$/.test(file)) continue;
     const text = readFileSync(join(dir, file), 'utf8');
     for (const marker of OUTPUT_FORBIDDEN_TEXT) if (text.includes(marker)) problems.push(`${file}: contains "${marker}"`);
+    // Indirect calls are allowed only as the single native capture, and only once in the whole build.
+    const indirect = [...text.matchAll(INDIRECT_FETCH)].filter((m) => !text.startsWith(NATIVE_FETCH_CAPTURE, m.index));
+    const captures = text.split(NATIVE_FETCH_CAPTURE).length - 1;
+    nativeCaptures += captures;
+    if (indirect.length && !NETWORK_ALLOWLIST.some((entry) => entry.file.test(file))) problems.push(`${file}: indirect fetch call outside the reviewed allowlist`);
     if (NETWORK_PRIMITIVE.test(text)) {
       const allowed = NETWORK_ALLOWLIST.find((entry) => entry.file.test(file)) || (qaTransportFile && qaTransportFile.test(file) ? { reason: 'QA transport/lease (synthetic + same-origin only)' } : null);
       if (allowed) network.push({ file, reason: allowed.reason });
@@ -64,6 +73,7 @@ export function auditOutput(dir, { qaTransportFile } = {}) {
     }
   }
   if (!files.includes('index.html')) problems.push('index.html missing');
+  if (nativeCaptures > 1) problems.push(`${nativeCaptures} captures of the browser fetch; only the QA adapter's single capture is allowed`);
   if (problems.length) throw Object.assign(new Error(`QA output audit failed:\n${problems.join('\n')}`), { code: 'output', problems });
   return { files, network };
 }

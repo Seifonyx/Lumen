@@ -55,6 +55,19 @@ test('publication is create-only, digest-checked and activates only after every 
   assert.equal((await readRegistry(storage)).registry.builds[other.manifest.buildId], undefined, 'failed publications never activate');
 });
 
+test('lifetime is bounded from publication time, not from the creation time a manifest claims', async () => {
+  const storage = await fresh();
+  const future = await manifest({ createdAt: T0 + 365 * 24 * HOUR, expiresAt: T0 + 365 * 24 * HOUR + 72 * HOUR });
+  await rejects(publish({ storage, manifestBytes: future.bytes, files: files(), reviewers: [OWNER], now: T0 }), 'expiry');
+  const ok = await manifest({ createdAt: T0 - HOUR, expiresAt: T0 + 71 * HOUR });
+  await publish({ storage, manifestBytes: ok.bytes, files: files(), reviewers: [OWNER], now: T0 });
+  // A registry entry claiming more than 72 hours of access is malformed (and the gate then denies everything).
+  const { registry } = await readRegistry(storage);
+  registry.builds[ok.manifest.buildId].expiresAt = T0 + 400 * HOUR;
+  storage.overwrite(REGISTRY_KEY, enc.encode(JSON.stringify(registry)));
+  assert.equal(await readRegistry(storage), null);
+});
+
 test('at most three builds are active at once', async () => {
   const storage = await fresh();
   for (const run of [1, 2, 3]) {
@@ -63,6 +76,7 @@ test('at most three builds are active at once', async () => {
   }
   const fourth = await manifest({ run: 4 });
   await rejects(publish({ storage, manifestBytes: fourth.bytes, files: files(), reviewers: [OWNER], now: T0 }), 'limit');
+  assert.deepEqual(storage.keys(`builds/${fourth.manifest.buildId}/`), [], 'a refused build leaves no orphan files');
   await revoke({ storage, buildId: `${'a'.repeat(40)}-1-1`, now: T0 });
   const fifth = await manifest({ run: 5 });
   await publish({ storage, manifestBytes: fifth.bytes, files: files(), reviewers: [OWNER], now: T0 });
@@ -93,10 +107,24 @@ test('concurrent registry writers are reconciled by conditional writes, never lo
     if (!interleaved && key === REGISTRY_KEY) { interleaved = true; storage.put = originalPut; await publish({ storage, manifestBytes: two.bytes, files: files(), reviewers: [OWNER], now: T0 }); }
     return originalPut(key, b, o);
   };
-  await publish({ storage, manifestBytes: one.bytes, files: files(), reviewers: [OWNER], now: T0 });
+  const applied = await publish({ storage, manifestBytes: one.bytes, files: files(), reviewers: [OWNER], now: T0 });
+  assert.equal(applied.confirmedCurrent, true);
   const { registry } = await readRegistry(storage);
   assert.equal(registry.builds[one.manifest.buildId].status, 'active');
   assert.equal(registry.builds[two.manifest.buildId].status, 'active');
+});
+
+test('a write that succeeded is reported as applied even if another writer changes the registry right after', async () => {
+  const storage = await fresh();
+  const originalGet = storage.get.bind(storage);
+  let writes = 0;
+  const originalPut = storage.put.bind(storage);
+  storage.put = async (key, b, o) => { const result = await originalPut(key, b, o); if (key === REGISTRY_KEY && result && ++writes === 1) { const cur = storage.objects.get(key); storage.overwrite(key, cur.bytes); } return result; };
+  const result = await revoke({ storage, everything: true, now: T0 });
+  assert.equal(result.enabled, false);
+  assert.equal(result.confirmedCurrent, false, 'applied, but changed again since');
+  assert.equal((await readRegistry(storage)).registry.enabled, false);
+  storage.get = originalGet;
 });
 
 test('a registry that keeps changing gives up without applying anything', async () => {

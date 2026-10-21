@@ -2,9 +2,10 @@
 // still use this exact build; any other answer locks the app. Checked at start, every 60 seconds, when
 // the page returns to view, and before each synthetic reply.
 
+import { nativeFetch } from './native-fetch';
+
 export interface Lease { buildId: string; namespace: string; expiresAt: number; now: number }
 
-const nativeFetch = globalThis.fetch.bind(globalThis);
 const LEASE_URL = new URL('./__lease', document.baseURI).href;
 let locked = false;
 const lockListeners = new Set<(reason: string) => void>();

@@ -53,7 +53,9 @@ export function qaIsolation(): Plugin {
     transform(code, id) {
       const path = strip(id);
       if (!path.startsWith(at('src/')) || !/\.(?:[jt]sx?|mjs)$/.test(path)) return null;
-      if (/\bnew\s+(?:XMLHttpRequest|WebSocket|EventSource|SharedWorker)\b|\.sendBeacon\s*\(|serviceWorker\s*\.\s*register\s*\(/.test(code)) {
+      if (/\bnew\s+(?:XMLHttpRequest|WebSocket|EventSource|SharedWorker)\b|\.sendBeacon\s*\(|serviceWorker\s*\.\s*register\s*\(/.test(code)
+        // Indirect fetch (window.fetch, fetch.call, passing fetch as a value) would skip the rewrite below.
+        || /\b(?:window|globalThis|self)\s*\.\s*fetch\b|\bfetch\s*\.\s*(?:call|apply|bind)\b|[=:,({\[]\s*fetch\s*[,;)\]}]/.test(code)) {
         this.error(`QA build: ${path} uses a network or service-worker primitive the synthetic transport does not cover`);
       }
       let next = code;

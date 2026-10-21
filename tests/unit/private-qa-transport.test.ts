@@ -58,6 +58,12 @@ test('the synthetic catalogue and replies stay on the device and never echo a wh
   assert.deepEqual(nativeCalls.filter((u) => !u.endsWith('/__lease')), [], 'only the lease is asked, nothing else');
 });
 
+test('a Request object\'s own method and body are honoured, never silently dropped', async () => {
+  const quota = await qaFetch(new Request(`${GEMINI}/models/gemini-2.5-pro:streamGenerateContent?alt=sse`, { method: 'POST', body: body('[synthetic:quota]') }));
+  assert.equal(quota.status, 429);
+  await assert.rejects(qaFetch(new Request(`${origin}/b/x/upload`, { method: 'POST', body: 'x' })), /disabled/);
+});
+
 test('scenarios: quota and provider errors are reported like a provider would', async () => {
   const quota = await qaFetch(`${GEMINI}/models/gemini-2.5-pro:streamGenerateContent?alt=sse`, { method: 'POST', body: body('[synthetic:quota]') });
   assert.equal(quota.status, 429);

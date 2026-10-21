@@ -78,6 +78,10 @@ test('missing, unsigned, forged, wrong-issuer/audience, expired and not-yet-vali
     tamperedClaims: `${h}.${Buffer.from(JSON.stringify({ ...base, email: STRANGER })).toString('base64url')}.${s}`,
     swappedSignature: `${h}.${p}.${s.slice(0, -4)}AAAA`,
     critical: await idp.sign(base, { crit: ['exp'] }),
+    noIssuedAt: await idp.sign({ ...base, iat: undefined }),
+    tooLongLived: await idp.sign({ ...base, exp: iat + 25 * 3600 }),
+    kelvinSignPrefix: await idp.sign({ ...base, email: '\u212Aowner@example.test' }),
+    unicodeOwner: await idp.sign({ ...base, email: 'ownеr@example.test' }),
   };
   for (const [name, token] of Object.entries(tokens)) {
     for (const path of ['/', `/b/${a}/`, `/b/${a}/assets/app.js`, `/b/${a}/__lease`]) {
@@ -86,6 +90,25 @@ test('missing, unsigned, forged, wrong-issuer/audience, expired and not-yet-vali
       assert.ok(!response.text.includes('BUILD_A_ONLY') && !response.text.includes('<title>'), `${name} leaked bytes`);
     }
   }
+});
+
+test('identity matching is exact ASCII (case-insensitive), and weak signing keys are never trusted', async () => {
+  const { call, a, idp, now } = await world();
+  const iat = Math.floor(now() / 1000);
+  assert.equal((await call(`/b/${a}/`, { token: await idp.sign({ iss: idp.issuer, aud: [idp.audience], email: 'Owner@Example.TEST', iat, exp: iat + 600 }), who: null })).status, 200);
+  // Kelvin sign K lower-cases to "k": a different identity must not become a permitted reviewer.
+  const storage = new MemoryStorage();
+  await initRegistry({ storage, reviewers: ['kate@x.test'], namespaceSalt: 'd'.repeat(32) });
+  const gate = createGate({ storage, trust: idp.trust, hosts: ['qa.test'], now: () => now() });
+  const kelvin = await idp.sign({ iss: idp.issuer, aud: [idp.audience], email: '\u212Aate@x.test', iat, exp: iat + 600 });
+  assert.equal((await gate.fetch(new Request('https://qa.test/', { headers: { 'Cf-Access-Jwt-Assertion': kelvin } }))).status, 401);
+  const kate = await idp.sign({ iss: idp.issuer, aud: [idp.audience], email: 'kate@x.test', iat, exp: iat + 600 });
+  assert.equal((await gate.fetch(new Request('https://qa.test/', { headers: { 'Cf-Access-Jwt-Assertion': kate } }))).status, 200);
+  const weak = testIdentityProvider({ modulusLength: 1024 });
+  const weakGate = createGate({ storage, trust: weak.trust, hosts: ['qa.test'], now: () => now() });
+  assert.equal((await weakGate.fetch(new Request('https://qa.test/', { headers: { 'Cf-Access-Jwt-Assertion': await weak.token('kate@x.test', { now: now() }) } }))).status, 401);
+  const broken = createGate({ storage, trust: { issuer: 'x', audience: 'y', keys: [{ kty: 'RSA', kid: 'bad', n: '!!', e: 'AQAB' }] }, hosts: ['qa.test'] });
+  assert.equal((await broken.fetch(new Request('https://qa.test/', { headers: { 'Cf-Access-Jwt-Assertion': kate } }))).status, 401, 'an unusable key configuration denies instead of crashing');
 });
 
 test('reviewers only see builds they are allowed, and other identities are denied', async () => {
@@ -110,6 +133,8 @@ test('only GET and HEAD on the exact configured host; other sites cannot embed b
   for (const host of ['qa.test.evil.invalid', 'other.test', 'qa.test:8443']) assert.equal((await call(`/b/${a}/`, { host })).status, 404, host);
   assert.equal((await call(`/b/${a}/assets/app.js`, { headers: { 'Sec-Fetch-Site': 'cross-site', 'Sec-Fetch-Mode': 'no-cors' } })).status, 403);
   assert.equal((await call(`/b/${a}/__lease`, { headers: { 'Sec-Fetch-Site': 'cross-site', 'Sec-Fetch-Mode': 'cors' } })).status, 403);
+  assert.equal((await call(`/b/${a}/assets/app.js`, { headers: { 'Sec-Fetch-Site': 'same-site', 'Sec-Fetch-Mode': 'no-cors' } })).status, 403, 'a sibling subdomain may not embed files either');
+  assert.equal((await call(`/b/${a}/assets/app.js`, { headers: { 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors' } })).status, 200);
   assert.equal((await call(`/b/${a}/`, { headers: { 'Sec-Fetch-Site': 'cross-site', 'Sec-Fetch-Mode': 'navigate' } })).status, 200, 'a link from elsewhere may open the page');
   const head = await call(`/b/${a}/assets/app.js`, { method: 'HEAD' });
   assert.equal(head.status, 200);
@@ -224,7 +249,7 @@ test('the lease gives an opaque namespace per reviewer and build, without the id
   assert.equal(lease.namespace, await namespaceFor('d'.repeat(32), a, OWNER));
 });
 
-test('the build list escapes registry content and lists only live builds', async () => {
+test('the build list shows only live builds and the synthetic notice', async () => {
   const { call, setClock } = await world();
   const page = await call('/');
   assert.match(page.text, /Synthetic review only/);

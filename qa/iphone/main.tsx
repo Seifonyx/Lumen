@@ -4,6 +4,7 @@
 
 import './qa.css';
 import { lock, onLock, readLease, watchLease, type Lease } from './adapters/lease';
+import { qaFetch } from './adapters/transport';
 import { configureQaAccount } from './adapters/firebase';
 import { FIRST_CHAT, FIXTURE_CHATS, FIXTURE_SETTINGS } from './fixtures/profile';
 
@@ -81,6 +82,10 @@ function lockScreen(reason: string) {
   document.body.append(overlay);
   overlay.querySelector('a')!.focus();
 }
+
+// Every fetch in the page (including third-party code and indirect calls) goes through the synthetic
+// transport from here on; the build-time rewrite of application source is the first layer.
+globalThis.fetch = qaFetch as typeof fetch;
 
 void (async () => {
   const lease = await readLease();

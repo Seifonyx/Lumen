@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-21, Claude Code QA02-A preflight delivery (planning only). **Scope:** Cloudflare capability/cost/security/rollout assessment; nothing created, enrolled, configured, deployed, paid for or exposed. No QA02 provisioning, QA03, CP02, production/security change, merge or deployment. See [README.md](README.md) for maintenance protocol and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for standing rules. This dated checkpoint separates source inspection, agent-reported findings and owner approval.
+> **Last sync:** 2026-10-21, owner clarified a strict zero-spend requirement after QA02-A planning review. **Scope:** architecture/cost/security review only; nothing created, enrolled, configured, deployed, paid for or exposed. No QA02 provisioning, QA03, CP02, production/security change, merge or deployment. See [README.md](README.md) for maintenance protocol and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for standing rules. This dated checkpoint separates source inspection, agent-reported findings and owner approval.
 
 ## Live code and approval state
 
@@ -18,6 +18,16 @@
 | Latest observed merged main | `655438f0ec8d2e3594595252af4a99e6c58627a0` (documentation-only checkpoint) |
 | Latest separately previously verified deployed runtime | `677bc51f39fbf8fcf66bc91f846b71a4912bb306`, [deployment 39447533639](https://github.com/Seifonyx/Lumen/actions/runs/39447533639). No fresh live verification this session. |
 
+
+## Owner hard zero-spend decision and QA02-A review — 2026-10-21
+
+**New explicit durable owner requirement:** **US$0 incremental setup and recurring/usage spend** for the reusable iPhone Safari QA system. Zero cost is a **hard constraint**, **not** a target with a $5 Worker/$7 Access or any other paid fallback. No paid plan/upgrade, fee, domain or vendor enrollment that could create new charges may be presumed acceptable. Do not ask the owner to compromise on this or relax security. The durable rule is recorded in [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). This decision supersedes optional paid fallback proposals in the previous QA00/QA02-A documents; those remain historical alternatives, not current authorization.
+
+**Direct evidence read:** [QA02-A report](https://github.com/Seifonyx/Lumen/blob/ffcbb18aad520cdcd00b5030135ff4838a2b228d/docs/blackout/QA02A_PREFLIGHT.md) at `ffcbb18aad520cdcd00b5030135ff4838a2b228d` and GitHub PR #34 (draft/open/unmerged at same head). The QA02-A report is four Markdown paths only according to direct commit inspection; vendor *account-specific* features remain unverified because Claude Code had no Cloudflare access. This is a completed **planning preflight**, not a tested or approved hosted setup. CI on earlier QA01 passed, no new runtime tests/provisioning implied.
+
+**Independent documentation corroboration, not a user-account entitlement test:** Cloudflare Workers current Free limit is 100,000 requests/day and 10ms CPU/request (<https://developers.cloudflare.com/workers/platform/limits/>). Cloudflare R2 Get Started requires an R2 subscription checkout flow even though included free usage exists (<https://developers.cloudflare.com/r2/get-started/>). Cloudflare Workers Static Assets (<https://developers.cloudflare.com/workers/static-assets/>) provides a potentially no-additional-storage-charge alternative for immutable review assets, but default asset routes can bypass Worker code unless explicitly and securely configured; it **must not** be assumed to satisfy private authorization/expiry/revoke requirements. Independent MFA supports passkeys/Face ID and TOTP, but Free-plan eligibility is not established in this account (<https://developers.cloudflare.com/cloudflare-one/access-controls/access-settings/independent-mfa/>).
+
+**Reviewer direction / next recommendation (no implementation approval):** Ask Claude Code for a **planning-only strict-$0 architecture revision**: evaluate Workers Free + private Access + Worker-first-gated Static Assets, with threat tests proving all CSS/JS/HTML/fixtures/versions/aliases and caches are gated, expiration/revocation fail closed, and no public asset bypass; contrast alternative free access/hosting only if equivalently safe. Verify whether any Cloudflare account enrollment/payment method is required; halt if one is requested or if any free entitlement/security property remains unresolved. Consider CPU-cost reductions that do not need Workers Paid. Maintain synthetic-only no-Firebase/provider/SW graph and ongoing restricted private iPhone Safari QA. Do not enable any R2 subscription checkout, set up Access, deploy Workers/assets, incur charges, create payment method, merge PR #34, or start QA03/CP02/Gate 2 without separate owner authorization. Blackout remains **21.5%, Medium confidence**.
 
 ## Latest — QA02-A Cloudflare readiness preflight delivered (planning only)
 

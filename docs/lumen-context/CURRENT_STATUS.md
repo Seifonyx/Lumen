@@ -44,6 +44,10 @@ ChatGPT independently read the full [private iPhone QA proposal](https://github.
 
 **Next recommended assignment:** obtain explicit owner permission for **QA01 local-only synthetic build/adapters + negative isolation/contract tests**. QA01 must keep ordinary production import graph and output unchanged; preserve existing localhost proof guard and production Firebase/provider/relay, avoid secrets and remote accounts, document exact CI private artifact handoff without implementing credentialed publishing, and test access/expiry/revocation logic locally with fake keys/data. Stop on unsafe dependencies, unknown Cloudflare capabilities, or a need for production/host modifications. **Do not infer that the owner already approved QA01, QA02/QA03, service enrollment/hosting, spending, default-branch merge, CP02, Gate 2 or deploy.** Preserve baseline **21.5% Medium** and draft/unmerged PR #34.
 
+## QA01 owner authorization — 2026-10-21
+
+Owner authorized Codex to begin **QA01 only**, the isolated local synthetic build/adapters and contract/isolation testing slice proposed in QA00. Preserve the ordinary production build, existing localhost preview restrictions, authentication and provider boundaries. No Cloudflare setup, hosted QA publication, spending, QA02/QA03, CP02, Gate 2, merge or deployment is authorized. Stop after QA01 for review; progress remains **21.5%, Medium confidence**. This authorization is not a claim of completed work.
+
 ## Previous implemented milestone — owner-authorized CP01 complete
 
 The owner accepted the Canvas blueprint and separately authorized **CP01 only**, preserving Canvas/Lumen identity and all production/account/security behavior. That instruction supersedes the prior blueprint-review stop only for this foundation; no CP02 or later permission is inferred.

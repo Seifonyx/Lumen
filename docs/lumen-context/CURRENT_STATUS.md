@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-21, owner clarified a strict zero-spend requirement after QA02-A planning review. **Scope:** architecture/cost/security review only; nothing created, enrolled, configured, deployed, paid for or exposed. No QA02 provisioning, QA03, CP02, production/security change, merge or deployment. See [README.md](README.md) for maintenance protocol and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for standing rules. This dated checkpoint separates source inspection, agent-reported findings and owner approval.
+> **Last sync:** 2026-10-21, Claude Code strict-$0 QA02 architecture revision (planning only). Nothing created, enrolled, configured, deployed, paid for or exposed. No QA02 provisioning, QA03, CP02, production/security change, merge or deployment. See [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
 
 ## Live code and approval state
 
@@ -8,7 +8,7 @@
 |---|---|
 | Repo | `Seifonyx/Lumen` (public) |
 | Workstream | Draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34), `docs/lumen-blackout-phase1-20261019`; open, draft, unmerged |
-| **Latest pushed workstream commit** | **`ffcbb18aad520cdcd00b5030135ff4838a2b228d`** (QA02-A preflight, four Markdown files); QA01 verified code `d0ef5f84b0d949ca1612453e45ccd937985caeeb`, QA01 head `7f13482` passed exact-head CI 39652612955; local HEAD and remote ref matched after push on 2026-10-21 |
+| **Latest pushed workstream commit** | **`28a64a5a74d5601f30da6001fac8fbc2f6d4e400`** ($0 QA02 revision, Markdown only); QA01 verified code `d0ef5f8`, CI 39652612955 passed at `7f13482`; local HEAD and remote ref matched after push |
 | Earlier implemented milestones | CP01 `c9153fd75ba16ebf70908f5d8c092cb540b9aa58`; QA00 proposal `88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f` |
 | Approved Canvas visual source | `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`; unchanged by the documentation milestone |
 | Design direction / Gate 1 | **Canvas (A) selected; Gate 1 APPROVED**, explicitly confirmed by owner after final sidebar-spacing review. Further polish remains; rejected Workspace/Focus consolidation is not the foundation. |
@@ -18,6 +18,15 @@
 | Latest observed merged main | `655438f0ec8d2e3594595252af4a99e6c58627a0` (documentation-only checkpoint) |
 | Latest separately previously verified deployed runtime | `677bc51f39fbf8fcf66bc91f846b71a4912bb306`, [deployment 39447533639](https://github.com/Seifonyx/Lumen/actions/runs/39447533639). No fresh live verification this session. |
 
+
+
+## Latest — strict $0 QA02 architecture revision delivered (planning only)
+
+**[Revision at the exact pushed revision](https://github.com/Seifonyx/Lumen/blob/28a64a5a74d5601f30da6001fac8fbc2f6d4e400/docs/blackout/QA02_ZERO_COST_ARCHITECTURE.md).** Agent-reported research via search summaries of Cloudflare documentation (direct fetch blocked in the session; no account access).
+
+**Conclusion:** Cloudflare Access is **unsuitable** under $0 — its documented Zero Trust onboarding requires entering payment details even for the Free plan, and per-app MFA plan availability is unknown; R2 may require a card. **Recommended:** a single Worker on **Workers Free** with Static Assets served only after the Worker runs first on every request, and a **self-hosted passkey (Face ID) sign-in** using pinned maintained libraries (`@simplewebauthn/server`, `jose`), configuration-based expiry/revocation/kill switch (no KV/R2), integrity verified before upload and by a post-deploy sweep instead of per-request hashing (keeps CPU under the 10 ms Free limit). Owns its authentication → requires independent security review. **Fallback if review or the Workers-Free check fails: local-only testing.**
+
+**Stages (each separately approved):** Z0 owner read-only checks (Workers Free plan, request use, iPhone passkeys, deploy method) → Z1 local code + review → Z2 deny-only Worker → Z3 passkey enrolment + harmless canary → Z4 revocation/teardown → Z5 QA03. Negative tests A1–A12, R1–R5, S1–S5, B1–B2. Physical iPhone verification still required. **Progress 21.5% → 21.5%. STOP for owner and ChatGPT review.**
 
 ## Owner hard zero-spend decision and QA02-A review — 2026-10-21
 

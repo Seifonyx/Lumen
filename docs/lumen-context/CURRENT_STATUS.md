@@ -13,7 +13,7 @@
 | Design direction | **Canvas (A) approved by owner as Gate 1 foundation on 2026-10-21**, with additional polish still expected; former Workspace/Focus consolidation rejected |
 | **Gate 1** | **APPROVED by explicit owner response on 2026-10-21**, following final Canvas sidebar-spacing review; approval covers design foundation, not production integration, merging, deployment or Gate 2/3 |
 | Blackout recorded weighted baseline | **18.5%, Medium confidence** at last scored code-branch checkpoint; owner-approved B02.3 design decision is **new scoring evidence** (3-point task, potentially 21.5% if fully credited), pending a reviewed update of the canonical Blackout plan/ledger; do not silently inflate or replace other task fractions |
-| Active coding agent | **Claude Code (last owner-confirmed)**, with switch to **Codex anticipated** near usage limit, not yet confirmed |
+| Active coding agent | **Claude Code last owner-confirmed; paused mid-blueprint**. Codex switch is being considered but has not been explicitly confirmed. |
 
 ## Most recent work (agent-reported; commit inspected)
 
@@ -46,6 +46,14 @@ The owner responded **yes** to the explicit question whether they wished to *for
 Prepare a **staged production-integration blueprint for the owner to review**, not an immediate implementation. Assign it to the currently active coding agent (last confirmed **Claude Code**; if the owner confirms a switch, **Codex** instead). First verify current PR HEAD, main and workstream plans; identify canonical production owners and Canvas proof components, feature parity/38-contract matrix, security and account boundaries, design tokens/identity and dark/light handling, mobile/desktop/keyboard/gesture concerns, early physical-iPhone validation options requiring separate consent, rollback/flags, regression/acceptance tests, and independent review checkpoints including Gate 2 before major visual integration. Propose small independently testable phases with stop/approval conditions. Preserve completed proof work and avoid broad rewrites or weakening product boundaries.
 
 **STOP after the blueprint** for explicit owner authorization of implementation. No merge, deployment, preview network exposure, test-only host allowance or production component migration is implied by Gate 1 approval. Continue to track anticipated Claude-to-Codex handoff without marking it complete until the owner confirms it.
+
+## Agent interruption and proposed Codex handoff — 2026-10-21
+
+Owner reports Claude Code paused about six minutes into the **approved Gate 1 production-integration blueprint planning task** because its usage window was exhausted; available again after approximately 1.5 hours as reported at the time. ChatGPT recommends handing the **planning-only** assignment to Codex if the owner wishes to continue now. **The owner has asked whether to switch, not yet confirmed the switch.** Do not label Codex the active agent until then.
+
+At verification, draft PR #34 remained at `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`, with no new pushed blueprint commit. **Claude's local six-minute work is UNKNOWN**, since GitHub cannot inspect uncommitted files. Whichever agent continues must first inspect local worktree (`git status`, diffs, untracked docs and partial notes), preserve any genuine WIP, and avoid resetting/discarding/repeating it. If isolated environments prevent local transfer, explicitly label the inaccessible WIP rather than claiming it was preserved; reconstruct from canonical repository and owner-authorized scope.
+
+The assignment stays **blueprint-only**: map approved Canvas proof to production owners, feature/security parity, safe phases, test plans and rollback/physical-iPhone validation with Gate 2 and owner sign-offs; do not change production code, merge, deploy, expose preview or initiate integration. Owner-approved Gate 1 and outstanding polish remain unchanged.
 
 ## Context branch synchronization
 

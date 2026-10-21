@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-22, first owner-run private GitHub Codespaces iPhone Safari session succeeded and was torn down. No production change, deployment, merge or spend. See [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
+> **Last sync:** 2026-10-22, ChatGPT reviewed the recorded first private iPhone session and verified PR #34 documentation commit; session results remain owner-reported. No production change, deployment or merge. See [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
 
 ## ChatGPT independent Codespaces adapter review — 2026-10-21
 
@@ -9,6 +9,14 @@ Reviewed QA-only code, security tests, browser smoke test source, session guide 
 **Disposition:** accept the QA-only local implementation within its authorized scope; do not infer production, Gate2, deployment or first-session approval. Server keeps QA01 signed gate, discards browser identity, restricts hosts/loopback, verifies commit/build/lease and uses temporary synthetic credentials. GitHub's private-port protection is an external boundary not recreated by the server. GitHub documents private-by-default ports and included personal allowance, but owner's actual billing, available quota, account-level Codespaces secrets and real Safari port-auth are unverified.
 
 **Next decision:** owner must check personal account has no payment method and available free Codespaces quota, no unintended Codespaces secrets, and expressly approve one temporary session before creating a Codespace. Once opened, confirm port 4173 is Private, use synthetic data only, verify HTTPS URL, browser login, host behavior and physical touch/keyboard; delete Codespace afterwards. No CP02/QA03, merge, production or Cloudflare Z1. Progress 21.5%, Medium; Claude Code remains the last confirmed agent. PROJECT_CONTEXT unchanged.
+
+## ChatGPT independent first-iPhone checkpoint review — 2026-10-22
+
+**Source/provenance:** Read [owner-run session record](https://github.com/Seifonyx/Lumen/blob/9642d4bb25c3d1f86d83dffa51751876abe814e5/docs/blackout/QA02_CODESPACES_SESSION.md) and [AI handoff](https://github.com/Seifonyx/Lumen/blob/9642d4bb25c3d1f86d83dffa51751876abe814e5/docs/blackout/AI_HANDOFF.md); inspected the [CP02 integration blueprint](https://github.com/Seifonyx/Lumen/blob/9642d4bb25c3d1f86d83dffa51751876abe814e5/docs/blackout/CANVAS_PRODUCTION_INTEGRATION_BLUEPRINT.md) and compared exact commits. GitHub independently confirms [PR #34](https://github.com/Seifonyx/Lumen/pull/34) open/draft/unmerged at `9642d4bb25c3d1f86d83dffa51751876abe814e5`; this newest commit changes only the session guide and handoff. The private Safari success, UI checks, $0 and 0 remaining Codespaces are **owner/Claude-reported**, not independently reproduced by ChatGPT. No changes to main, production deploy, or Gate 2 approval.
+
+**Disposition:** accept the first real-iPhone **synthetic QA access** milestone. It validates an owner-reported phone access method, **not** the Canvas presentation, physical Canvas sheet gestures or accessibility. Two QA-only follow-ups: synthetic banner overlaps mobile header, compromising visual review, and Codespace `postStartCommand` failed to auto-start (manual start succeeded). The banner needs a non-overlapping layout with safe areas; startup requires diagnostics, reliable lifecycle startup, and tested explicit failure/error messaging. Preserve signed gate, private GitHub auth/port 4173, 8-hour expiry, synthetic isolation and $0 requirements.
+
+**Recommended next owner decision, NOT authorization:** one bounded assignment to repair these two QA test-harness issues first, then implement **CP02 only** (canonical Composer resting/engaged/expanded and same mounted writing sheet, real picker/meter/tools, focused input/focus/gesture tests) in an isolated synthetic review entry; owner reviews CP02 Gate 2 checkpoint A with real-device evidence. Never automatically begin CP03/CP04, integrate into default production UI, merge, deploy or approve Gate 2. If authorizing CP02, owner must explicitly scope it; QA cleanup alone is a separate possible assignment. Blackout remains **21.5%, Medium confidence**; Claude Code last active. PROJECT_CONTEXT unchanged.
 
 ## Live code and approval state
 
@@ -20,9 +28,9 @@ Reviewed QA-only code, security tests, browser smoke test source, session guide 
 | Earlier implemented milestones | CP01 `c9153fd75ba16ebf70908f5d8c092cb540b9aa58`; QA00 proposal `88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f` |
 | Approved Canvas visual source | `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`; unchanged by the documentation milestone |
 | Design direction / Gate 1 | **Canvas (A) selected; Gate 1 APPROVED**, explicitly confirmed by owner after final sidebar-spacing review. Further polish remains; rejected Workspace/Focus consolidation is not the foundation. |
-| Implementation / later gates | **CP01 and QA01 complete; QA02-A preflight delivered (planning only).** QA02 provisioning/deny-only/canary, QA03 and CP02+ production visual integration **not authorized**; Gates 2/3 pending. No preview exposure, host/auth changes, merge or deployment. |
+| Implementation / later gates | **CP01, QA01 and Codespaces QA adapter complete; one private synthetic Codespaces iPhone session owner-reported successful and deleted.** Cloudflare QA02 deployment/QA03 and **CP02+ unapproved**; Gates 2/3 pending. No production visual integration, merge or deployment. |
 | **Canonical Blackout completion** | **21.5%, approximately 22%, Medium confidence** (workstream plan). 18.5% → 21.5% solely from B02.3 (owner Gate 1 decision). CP01 and QA01 add **no weighted credit** (unweighted preparation; no B03–B08 acceptance group complete). 78.5 points remain. Separate Model Picker remains 98.5%. |
-| Active agent | **Claude Code**; QA02-A delivered and stopped for owner/ChatGPT review. No infrastructure, QA03 or CP02 continuation without separate approval. |
+| Active agent | **Claude Code**, last owner-confirmed; first private Codespaces Safari session reported and stopped. Next assignment requires explicit owner authorization; no CP02+ continuation by inference. |
 | Latest observed merged main | `655438f0ec8d2e3594595252af4a99e6c58627a0` (documentation-only checkpoint) |
 | Latest separately previously verified deployed runtime | `677bc51f39fbf8fcf66bc91f846b71a4912bb306`, [deployment 39447533639](https://github.com/Seifonyx/Lumen/actions/runs/39447533639). No fresh live verification this session. |
 

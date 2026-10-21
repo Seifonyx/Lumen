@@ -57,3 +57,13 @@ Access ends when you delete or stop the Codespace, when GitHub's port cookie exp
 - **The forwarded hostname comes from GitHub's environment variables,** and we assume the Codespaces proxy preserves the `Host` header. If it rewrites `Host`, the gate returns 404 for everything. That fails closed and is fixed locally once observed.
 - **Billing protection depends on having no payment method on file** (official rule: use is blocked, not billed). Any future card on the account changes that.
 - **Physical-device items** — keyboard, glass, gestures, VoiceOver and Face ID — are still unverified until a real session.
+
+## First real session — 21/22 October 2026 (owner-run)
+
+- **$0 checks:** no payment method; Codespaces usage $0 this month (120 core-hours available); all budgets $0 with paid usage blocked; no Codespaces user secrets; idle timeout 30 min.
+- **Created by the owner** from their own account on branch `docs/lumen-blackout-phase1-20261019` at `a42b8e4`, 2-core. The automatic start (`postStartCommand`) did not produce a log on first boot; the build and server were started manually with the documented commands. Build `a42b8e4…-0-1` passed verification (164 files, audit clean, 8-hour expiry).
+- **Port 4173 shown as Private** in the Ports panel; it was the only forwarded port.
+- **iPhone Safari:** GitHub sign-in for the private port worked; the synthetic app loaded with its banner. Owner reports keyboard, typing, model picker, Send, Stop, scrolling, navigation and rotation all working.
+- **Observed issue (QA-only):** the synthetic-review banner overlaps the top of the page on iPhone. Follow-up: give the banner its own space or move it.
+- **Teardown:** Codespace deleted; Codespaces list shows 0.
+- Served app was the ordinary synthetic Lumen app, not the Canvas design (CP02 not started).

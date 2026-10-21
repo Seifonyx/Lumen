@@ -2,7 +2,11 @@
 
 **Checkpoint: 21 October 2026, UTC — owner set a permanent strict $0 budget; QA02 revised to a zero-cost architecture (planning only). Gate 1 APPROVED; CP01 and QA01 complete. No QA02 provisioning/deployment, QA03, CP02+, merge or deployment authorized. Gates 2/3 pending.** Completion **21.5% → 21.5%, Medium confidence**; 78.5 points remain.
 
-## Latest — Codespaces private-port QA adapter (implemented, locally verified; stop)
+## Latest — first private Codespaces iPhone session succeeded (owner-run)
+
+Owner ran one $0 session per [QA02_CODESPACES_SESSION.md](QA02_CODESPACES_SESSION.md): no payment method, Codespaces $0, no secrets; port 4173 Private; iPhone Safari GitHub sign-in and the synthetic app worked; composer/keyboard/picker/Send/Stop/scroll/navigation/rotation reported OK; Codespace deleted. Follow-ups: QA banner overlaps the page top; `postStartCommand` did not start automatically (manual start documented). Served app is the ordinary app; CP02 not started. Progress 21.5%. **Next: owner decides on CP02.**
+
+## Previous — Codespaces private-port QA adapter (implemented, locally verified)
 
 Owner authorized the QA-only Codespaces adapter; Cloudflare Z1 stays paused. Read [QA02_CODESPACES_SESSION.md](QA02_CODESPACES_SESSION.md). Added `scripts/qa/serve-codespace.mjs` (QA01 gate on 127.0.0.1; Codespace-only; verified build only; forwarded/loopback hosts only; discards browser identity and signs its own synthetic identity), `.devcontainer/devcontainer.json` (Node 22, builds and serves port 4173, no visibility override, no secrets), `server/private-qa/memory-storage.mjs` (moved from fixtures), unit + browser tests. **Verified at code commit `ac93683280f5dc4d8a2aaaf0df20f05d4fb1fee7`:** `npm test` 84 files; QA01 isolation 8/8 with production output byte-identical (174 files); Codespaces browser smoke Chromium + Linux WebKit at 390×844/1440×960. **Not executed:** a real Codespace, GitHub's port proxy/sign-in, iPhone Safari. Owner $0 checks and session/teardown steps are in the guide. **STOP; the first private Codespaces session needs separate owner authorization.**
 

@@ -181,3 +181,7 @@ QA01 accepted after exact-head CI run 39652612955 passed. Owner authorized QA02-
 ### QA02 strict $0 architecture revision — 21 October 2026
 
 Owner made $0 a permanent requirement. [Revision](QA02_ZERO_COST_ARCHITECTURE.md): Access/R2/paid fallbacks excluded; Workers Free + Worker-first Static Assets + self-hosted passkey sign-in (maintained libraries), configuration-based registry/revocation, pre-upload and post-deploy integrity instead of per-request hashing; stages Z0–Z5 with negative tests; local-only fallback. Planning only: **21.5% → 21.5%, Medium confidence.**
+
+### QA02 passkey security amendment — 21 October 2026
+
+[Amendment](QA02_PASSKEY_AMENDMENT.md): Durable Object (SQLite, Workers Free) as atomic auth authority replacing stateless challenge cookies; corrected revocation/enrolment claims; owner checks V1–V5; Z1 local scope and tests. Planning only: **21.5% → 21.5%.**

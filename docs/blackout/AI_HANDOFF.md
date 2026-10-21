@@ -2,7 +2,11 @@
 
 **Checkpoint: 21 October 2026, UTC — owner set a permanent strict $0 budget; QA02 revised to a zero-cost architecture (planning only). Gate 1 APPROVED; CP01 and QA01 complete. No QA02 provisioning/deployment, QA03, CP02+, merge or deployment authorized. Gates 2/3 pending.** Completion **21.5% → 21.5%, Medium confidence**; 78.5 points remain.
 
-## Latest — strict $0 QA02 architecture revision (planning only; stop for review)
+## Latest — $0 passkey security amendment (planning only; stop for review)
+
+Read [QA02_PASSKEY_AMENDMENT.md](QA02_PASSKEY_AMENDMENT.md). Corrects the $0 revision: stateless signed challenges are **not** single-use and config changes are not globally immediate. Adds one SQLite-backed Durable Object (documented as available on Workers Free; over-quota fails, no overage) as the atomic authority for one-time challenges, single enrolment, opaque sessions, credential/session revocation and kill switch; fail closed on any DO error. `@simplewebauthn/server` (documents Workers support) with exact origin/RP ID and user verification; `jose` dropped. Owner checks V1–V5 (Workers Free, no billing prompt on the first DO migration, account MFA). Exact Z1 local-only scope and replay/concurrency/enrolment/session/storage-failure/bypass/revocation tests defined. **STOP for owner and ChatGPT review.**
+
+## Previous — strict $0 QA02 architecture revision (amended by the passkey amendment)
 
 Read [QA02_ZERO_COST_ARCHITECTURE.md](QA02_ZERO_COST_ARCHITECTURE.md). Owner made **$0 a permanent hard requirement**. Cloudflare Access is excluded (Zero Trust onboarding requires entering payment details even on Free; MFA plan availability unknown), and so are R2 (card may be required) and every paid fallback from QA02-A. **Recommended:** one Worker on **Workers Free** + Static Assets with `run_worker_first: true` (Worker checks every request) + **self-hosted passkey (Face ID) sign-in** using pinned `@simplewebauthn/server` and `jose` sessions; registry/expiry/revocation as deployment configuration (no KV/R2); integrity verified before upload and by a post-deploy sweep instead of per-request hashing (fixes the 10 ms CPU risk). Stages Z0 (owner read-only checks O1–O4) → Z1 local code + review → Z2 deny-only → Z3 passkey + canary → Z4 revocation/teardown → Z5 QA03; tests A1–A12, R1–R5, S1–S5, B1–B2. Fallback if Z1 review or O1 fails: local-only testing. Nothing created or deployed.
 

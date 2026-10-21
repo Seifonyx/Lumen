@@ -168,3 +168,5 @@ Set `QA_ENABLED=false` (instant deny) → bump `SESSION_GENERATION` → remove t
 ## 11. Stop
 
 Planning only. **STOP for owner and ChatGPT review.** Z0 needs only owner time; Z1 onwards each need the approval listed. Progress **21.5% → 21.5%, Medium confidence.**
+
+> **Amended (21 October 2026):** stateless challenge cookies are not single-use; see [QA02_PASSKEY_AMENDMENT.md](QA02_PASSKEY_AMENDMENT.md) for the Durable Object design that replaces them and the corrected revocation claims.

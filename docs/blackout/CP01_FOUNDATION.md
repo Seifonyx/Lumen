@@ -92,6 +92,8 @@ Use `MR_WEBKIT=1` on a host with matching Playwright WebKit dependencies (this s
 
 ## Device preparation
 
+**Subsequent owner direction,21 October2026:** testing must be reusable and accessible through iPhone Safari without Mac/USB. [Private iPhone QA decision proposal](PRIVATE_IPHONE_QA_PROPOSAL.md) investigates this separately as documentation only; no device route, service, host/auth change or CP02 implementation is authorized by that proposal. The CP01 feasibility/tests below remain their dated evidence. Later exact-head [GitHub CI39631070563](https://github.com/Seifonyx/Lumen/actions/runs/39631070563) passed all3 jobs at `c9153fd75ba16ebf70908f5d8c092cb540b9aa58`, supplementing the earlier local full-suite limitations; no physical-device/live-provider claim follows.
+
 **Verified environment:** remote Linux, no `/dev/bus/usb` device tree and no `xcrun`, `idevice_id` or `usbmuxd` executable. No attached iPhone, Mac Safari or real device-service session is available. Docker WebKit remains Linux WebKit. CP01's three owned test servers were confirmed listening only on `127.0.0.1` (5196–5198); no Vite/hosting/auth configuration or preview guard was changed. Temporary servers are stopped at handoff.
 
 | Option | Feasibility / boundary |

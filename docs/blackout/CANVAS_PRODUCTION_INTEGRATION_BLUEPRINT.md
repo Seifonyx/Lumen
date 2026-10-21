@@ -92,6 +92,8 @@ The preview proves the design foundation, not all production parity. Each row be
 
 ## Gate 2 evidence and early physical-iPhone plan
 
+**Later planning amendment,21 October2026:** the owner requires iPhone Safari testing without Mac/USB and commissioned a reusable private QA proposal. See [PRIVATE_IPHONE_QA_PROPOSAL.md](PRIVATE_IPHONE_QA_PROPOSAL.md) for the recommended protected, synthetic-only, versioned/expiring route. This supersedes the local/USB-first preference below for future device delivery, **not the security gates**. The system is not implemented/approved for execution; no external link exists. Preserve CP01/local proof, no host allowance/Firebase change, CP02 still separately unauthorized. Physical evidence remains outstanding.
+
 Before CP02 runtime work, resolve access without changing security implicitly. The preview's `bootstrap.ts` deliberately requires `localhost`, separate synthetic ownership and blocked external transport. Current Docker/Linux WebKit evidence cannot validate native keyboard, touch, glass compositing or VoiceOver.
 
 1. First evaluate a **trusted local/USB device-debugging workflow** that can preserve the actual localhost/origin guard and isolated profile. Verify feasibility on the available computer/device; do not assert this exists or that ordinary iPhone Safari shares a computer's localhost. Record failure if unavailable.

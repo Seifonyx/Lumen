@@ -1,8 +1,10 @@
 # Lumen Blackout — implementation plan
 
-Checkpoint: **21 October 2026, UTC — verified CP01 Canvas foundation**. Baseline **v1** freezes the existing eight parent weights after recovery of the full master. This is a separate approved initiative; Model Picker remains **98.5%**, and cancelled Adaptive Native's historical 7.5% is not transferable credit.
+Checkpoint: **21 October 2026, UTC — QA00 private iPhone testing proposal; CP01 remains latest implemented foundation**. Baseline **v1** freezes the existing eight parent weights after recovery of the full master. This is a separate approved initiative; Model Picker remains **98.5%**, and cancelled Adaptive Native's historical 7.5% is not transferable credit.
 
 ## Current owner decision and scope
+
+**Latest assignment: QA00 planning/documentation ONLY**, [reusable private iPhone QA proposal](PRIVATE_IPHONE_QA_PROPOSAL.md). Owner wants a maintained, access-controlled, versioned and expiring synthetic Safari test capability without Mac/USB. Proposal recommends dedicated Cloudflare Access/Worker/private R2, with the existing localhost proof and production Firebase unchanged. QA01+ infrastructure/code, new services/spending/credentials, remote preview publication and CP02 remain unauthorized. **Stop for proposal review, no merge/deploy or Gate2 approval.** This supersedes the previous CP01-review stop only for the bounded planning task; no new weighted credit.
 
 **Gate 1 APPROVED; Canvas (A) selected; owner accepted the blueprint and authorized CP01 ONLY.** [CP01 implementation/evidence](CP01_FOUNDATION.md) records isolated contract characterization, exported current prop contracts/type-only composition map and scoped inactive tokens. Default production assets and matched screenshots are byte-identical to the pre-change baseline. **CP02+ and production visual migration remain unauthorized; Gates2/3 pending. No preview exposure/security relaxation, merge or deployment.** Stop after CP01 handoff/synchronization for owner and ChatGPT review.
 
@@ -78,6 +80,22 @@ The [blueprint](CANVAS_PRODUCTION_INTEGRATION_BLUEPRINT.md) supplies exact compo
 Actual checks: baseline and final `npm test` (typecheck + all80 unit files), proof TypeScript, ordinary Vite build and2556-module import audit,174 byte-identical emitted artifacts,12 Chromium/WebKit contract cases,8 preview-boundary checks (4 per engine),6 existing focused browser suites,3 additional ordinary-build cases without a proof URL, and exact desktop/phone screenshot equality. New compile/token checks and a deliberate textarea-remount mutation supply expected-failure evidence. Independent review found no Important/Critical defects. The explicit proof-boundary test lives outside built-app discovery; no CI/build pipeline change. Environment/bootstrap-assumption failures, known warnings and unverified physical/IME/undo/live-auth/partial-stream cases are documented in CP01_FOUNDATION.md, not hidden.
 
 Current source and focused evidence are coherent; exact committed/pushed revision is resolved from this milestone's containing Git commit and verified against the remote at delivery. Latest main/runtime remain separate in the handoff. **Exact next action: STOP for CP01 review; CP02 requires a separate owner instruction and resolved device-access prerequisites.**
+
+## QA00 — reusable private iPhone testing preparation
+
+**Planning complete; proposed system NOT implemented or runtime-verified.** See [decision proposal](PRIVATE_IPHONE_QA_PROPOSAL.md) for source inventory, alternatives, strong access/MFA/JWT/origin controls, synthetic/Firebase/network boundaries, version registry/expiry/revocation, CI private-artifact handoff, costs, owner workflow, QV01–QV10 acceptance and rollback. Source base `c9153fd75ba16ebf70908f5d8c092cb540b9aa58`; live context read at `f26f835e19be3aad266e8161b78711ad6906cfa9`. Actual hosting/account entitlement, token scope, CI handoff, Safari authentication and all physical-device behavior remain unverified. Free-plan estimates are conditional, not spending authorization.
+
+| Unweighted task | Dependency / actual state | Acceptance / next condition |
+|---|---|---|
+| QA00 proposal | CP01 completed; owner explicitly authorized planning only | Verified documentation/source/primary-source review; links, stable ledger, master/source preservation and diff checks; remote equality verified at delivery |
+| QA01 local QA target/adapters/gate contracts | **Not started / unauthorized** | Separately authorize; prove ordinary build unchanged, local proof preserved, no Firebase/live transport/SW; settle isolated build/private handoff before provisioning |
+| QA02 locked canary infrastructure | **Not started / unauthorized**, QA01 review and exact service/access/budget approval | Access + MFA + JWT, private storage, alternate-origin denial, expiry/revoke/failure/cleanup tests and actual iPhone login; no CP02 |
+| QA03 repeatable publication/tooling | **Not started / unauthorized**, QA02 and separately approved tooling workflow/default-branch PR | Commit-pinned synthetic pilot, QV01–QV10, private evidence/workflow; no PR34 merge or production UI change |
+| QA04 ongoing QA | Future authorization within agreed limits | Maintain manifests, physical-device evidence, revoke/cleanup drills and private feedback for each separately approved product slice |
+
+All are preparation children supporting existing B04/B07, **no new weights or scope-baseline revision**. **21.5% → 21.5%, Medium confidence; 78.5 remaining.** A proposal, future service capability and CP01 passing CI do not satisfy additional acceptance groups. Existing Model Picker98.5% is untouched. First recommended future slice: QA01 local-only adapters/contracts/isolation tests, **only after explicit owner authorization**. CP02 remains separately gated even if private testing is later approved.
+
+**Actual QA00 checks:** inspected canonical code/bootstrap/hosting/workflows and remote/PR state; freshly queried existing CP01 CI (all3 jobs success at c9153fd); retrieved/read primary vendor documentation; validated Markdown links, weighted ledger and unchanged original sources/masters; reviewed complete Markdown-only diff. Product type/build/unit/browser, hosted gate/security, physical Safari and live-provider tests were not run for this planning assignment. Commit revision is the containing proposal checkpoint; exact pushed SHA and separate context update are recorded at delivery/live checkpoint. No merge, deployment, new service/account, preview exposure or auth/Firebase change. **Exact next action: STOP for owner review of QA00, not automatic QA01 or CP02.**
 
 ## Historical implementation/evidence checkpoints
 

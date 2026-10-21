@@ -8,7 +8,6 @@ export class MemoryStorage {
   constructor() {
     this.objects = new Map();
     this.failGet = null; // (key) => boolean: simulate an unavailable read
-    this.beforePut = null; // async (key) => void: interleave a concurrent writer
     this.gets = [];
   }
   async get(key) {
@@ -18,7 +17,6 @@ export class MemoryStorage {
     return object ? { bytes: object.bytes.slice(), etag: object.etag } : null;
   }
   async put(key, bytes, { onlyIf } = {}) {
-    if (this.beforePut) { const hook = this.beforePut; this.beforePut = null; await hook(key); }
     const current = this.objects.get(key);
     if (onlyIf?.etagDoesNotMatch === '*' && current) return null;
     if (onlyIf?.etagMatches !== undefined && current?.etag !== onlyIf.etagMatches) return null;

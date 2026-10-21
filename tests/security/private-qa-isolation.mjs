@@ -1,0 +1,138 @@
+// QA01 isolation audit. Builds the ordinary production app and the synthetic QA build, then proves:
+//   1. production: no QA/gate/tooling module in its graph, and (with QA01_BASELINE_DIST) byte-identical output;
+//   2. QA: no Firebase/sync/service-worker/proof/test/server module, the adapters present, output audited;
+//   3. the auditors, the build plugin and the verifier each catch deliberately planted violations;
+//   4. production entry, localhost proof guard, hosting/rules/relay/workflows unchanged since QA01_BASE;
+//   5. local QA tooling cannot publish: no network clients, credentials or deployment workflow.
+//   QA01_BASELINE_DIST=/tmp/baseline node tests/security/private-qa-isolation.mjs
+
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { build } from 'vite';
+import { PRODUCTION_GRAPH_FORBIDDEN, QA_GRAPH_FORBIDDEN, QA_GRAPH_REQUIRED, auditGraph, auditOutput, listFiles } from '../../scripts/qa/audit.mjs';
+import { verifyBuild } from '../../scripts/qa/verify.mjs';
+import { qaIsolation } from '../../vite.qa.config.ts';
+
+const root = process.cwd();
+const base = process.env.QA01_BASE || '88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f';
+const work = mkdtempSync(join(tmpdir(), 'lumen-qa01-isolation-'));
+const report = { base, checks: [] };
+const pass = (name, detail = '') => { report.checks.push(name); console.log(`PASS ${name}${detail ? ` — ${detail}` : ''}`); };
+const hashes = (dir) => Object.fromEntries(listFiles(dir).map((f) => [f, createHash('sha256').update(readFileSync(join(dir, f))).digest('hex')]));
+const observe = (sink) => ({ name: 'qa01-graph-observer', generateBundle() { sink.push(...this.getModuleIds()); } });
+
+try {
+  // 1. Ordinary production build.
+  const productionIds = [];
+  const production = join(work, 'production');
+  await build({ logLevel: 'warn', build: { outDir: production, emptyOutDir: true }, plugins: [observe(productionIds)] });
+  auditGraph(productionIds, { forbidden: PRODUCTION_GRAPH_FORBIDDEN });
+  const productionHashes = hashes(production);
+  if (process.env.QA01_BASELINE_DIST) assert.deepEqual(productionHashes, hashes(resolve(process.env.QA01_BASELINE_DIST)), 'ordinary output must be byte-identical to the pre-QA01 baseline');
+  pass('production graph excludes QA code', `${productionIds.length} modules, ${Object.keys(productionHashes).length} files, baseline equality: ${Boolean(process.env.QA01_BASELINE_DIST)}`);
+
+  // 2. Synthetic QA build.
+  const qaIds = [];
+  const qa = join(work, 'qa');
+  await build({ configFile: join(root, 'vite.qa.config.ts'), logLevel: 'warn', build: { outDir: qa, emptyOutDir: true }, plugins: [observe(qaIds)] });
+  auditGraph(qaIds, { forbidden: QA_GRAPH_FORBIDDEN, required: QA_GRAPH_REQUIRED, root });
+  const { files, network } = auditOutput(qa);
+  pass('QA graph and output audited', `${qaIds.length} modules, ${files.length} files, ${network.length} reviewed third-party network chunks`);
+  report.qaNetworkChunks = network;
+
+  // 3a. Planted graph violations.
+  const planted = ['node_modules/firebase/app/dist/esm/index.esm.js', 'node_modules/@firebase/firestore/dist/index.esm.js', 'src/lib/firebase.ts', 'src/lib/sync.ts?v=1', 'src/pwa/sw.js',
+    'src/pwa/register.ts', 'src/firebase-config.json', 'docs/blackout/workspace-proofs/bootstrap.ts', 'tests/e2e/helpers/preview-profile.cjs', 'server/private-qa/gate.mjs', 'server/provider-relay/worker.mjs'];
+  for (const id of planted) assert.throws(() => auditGraph([...qaIds, join(root, id)], { forbidden: QA_GRAPH_FORBIDDEN }), { code: 'forbidden_module' }, id);
+  assert.throws(() => auditGraph(qaIds.filter((id) => !id.endsWith('qa/iphone/adapters/transport.ts')), { forbidden: QA_GRAPH_FORBIDDEN, required: QA_GRAPH_REQUIRED, root }), { code: 'missing_module' });
+  for (const id of ['qa/iphone/main.tsx', 'server/private-qa/gate.mjs', 'scripts/qa/build.mjs', 'vite.qa.config.ts']) {
+    assert.throws(() => auditGraph([...productionIds, join(root, id)], { forbidden: PRODUCTION_GRAPH_FORBIDDEN }), { code: 'forbidden_module' }, id);
+  }
+  pass('graph auditors reject planted modules', `${planted.length} QA + 4 production negative controls, 1 missing-adapter control`);
+
+  // 3b. Planted output violations.
+  for (const [name, content] of [['assets/evil-1.js', 'fetch("https://exfil.invalid")'], ['assets/evil-2.js', 'x="the-model-router.firebaseapp.com"'], ['assets/evil-3.js', 'navigator.serviceWorker.register("/sw.js")'],
+    ['assets/evil-4.js', 'new XMLHttpRequest()'], ['sw.js', 'self.oninstall=1'], ['assets/app.js.map', '{}'], ['assets/evil.wasm', '']]) {
+    const dir = join(work, `planted-${name.replace(/\W/g, '_')}`);
+    cpSync(qa, dir, { recursive: true });
+    mkdirSync(join(dir, 'assets'), { recursive: true });
+    writeFileSync(join(dir, name), content);
+    assert.throws(() => auditOutput(dir), { code: 'output' }, name);
+  }
+  pass('output auditor rejects planted files', '7 negative controls');
+
+  // 3c. The build plugin refuses forbidden imports in real builds, and rewrites/blocks primitives.
+  for (const [label, source] of [['firebase/storage', "import 'firebase/storage';"], ['Firebase configuration', `import ${JSON.stringify(join(root, 'src/firebase-config.json'))};`],
+    ['proof bootstrap', `import ${JSON.stringify(join(root, 'docs/blackout/workspace-proofs/bootstrap.ts'))};`], ['service worker source', `import ${JSON.stringify(join(root, 'src/pwa/sw.js?raw'))};`]]) {
+    const dir = mkdtempSync(join(work, 'plant-'));
+    writeFileSync(join(dir, 'index.html'), '<!doctype html><script type="module" src="./main.js"></script>');
+    writeFileSync(join(dir, 'main.js'), source);
+    await assert.rejects(build({ configFile: false, root: dir, logLevel: 'silent', plugins: [qaIsolation()], build: { outDir: join(dir, 'out'), write: false } }), /QA build: (unsupported Firebase import|forbidden module)/, label);
+  }
+  {
+    // Replacement wins even for ?raw: the import resolves to the adapter (no default export), so the
+    // build fails rather than ever reading the real sync source.
+    const dir = mkdtempSync(join(work, 'plant-'));
+    writeFileSync(join(dir, 'index.html'), '<!doctype html><script type="module" src="./main.js"></script>');
+    writeFileSync(join(dir, 'main.js'), `import s from ${JSON.stringify(join(root, 'src/lib/sync.ts?raw'))}; console.log(s);`);
+    await assert.rejects(build({ configFile: false, root: dir, logLevel: 'silent', plugins: [qaIsolation()], build: { outDir: join(dir, 'out'), write: false } }),
+      (e) => /Missing export|default/i.test(String(e.message)) && /qa\/iphone\/adapters\/sync\.ts/.test(String(e.message)));
+  }
+  const plugin = qaIsolation();
+  const fail = { error(message) { throw new Error(message); } };
+  const srcId = join(root, 'src/lib/planted.ts');
+  for (const code of ['new XMLHttpRequest()', 'new WebSocket("wss://x")', 'new EventSource("/x")', 'navigator.sendBeacon("/x")', 'navigator.serviceWorker.register("/sw.js")']) {
+    assert.throws(() => plugin.transform.call(fail, code, srcId), /QA build: .* network or service-worker primitive/, code);
+  }
+  const rewritten = plugin.transform.call(fail, 'const a = await fetch(url); obj.fetch(x); const w = new Worker(new URL("./x.worker.ts", import.meta.url), { type: "module" });', srcId).code;
+  assert.match(rewritten, /__qaFetch\(url\)/);
+  assert.match(rewritten, /obj\.fetch\(x\)/);
+  assert.match(rewritten, /__qaWorker\(null, \{ type: "module" \}\)/);
+  assert.ok(!/new URL\("\.\/x\.worker\.ts"/.test(rewritten));
+  assert.equal(plugin.transform.call(fail, 'fetch(x)', join(root, 'node_modules/lib/index.js')), null, 'third-party code is audited, not rewritten');
+  pass('QA build plugin refuses planted imports and primitives', '4 real planted builds, ?raw replacement, 5 primitive controls, rewrite checks');
+
+  // 3d. The verifier rejects tampered, extra-file and wrong-commit builds.
+  const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  if (process.env.QA_BUILD_DIR) {
+    const good = resolve(process.env.QA_BUILD_DIR);
+    assert.deepEqual(await verifyBuild(good, head), []);
+    const copy = (name) => { const dir = join(work, name); cpSync(good, dir, { recursive: true }); return dir; };
+    const tampered = copy('tampered');
+    writeFileSync(join(tampered, 'site/index.html'), '<!doctype html><title>tampered</title>');
+    assert.ok((await verifyBuild(tampered, head)).some((p) => /index\.html: digest mismatch/.test(p)));
+    const extra = copy('extra');
+    writeFileSync(join(extra, 'site/assets/extra.js'), '1');
+    assert.ok((await verifyBuild(extra, head)).some((p) => /extra\.js: not in the manifest/.test(p)));
+    assert.ok((await verifyBuild(good, 'f'.repeat(40))).some((p) => /is not the expected/.test(p)));
+    assert.ok((await verifyBuild(good, head, Date.now() + 73 * 3600_000)).includes('build has expired'));
+    pass('verifier accepts the pinned build and rejects tampered/extra/wrong-commit/expired', head.slice(0, 12));
+  }
+
+  // 4. Files QA01 must not change.
+  const guarded = ['src', 'index.html', 'vite.config.ts', 'package.json', 'package-lock.json', 'firebase.json', '.firebaserc', 'firestore.rules', 'server/provider-relay',
+    '.github', 'docs/blackout/workspace-proofs', 'public'];
+  const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim();
+  assert.equal(changed, '', `QA01 must not modify production entry, proof guard, hosting, rules, relay or workflows:\n${changed}`);
+  pass('production entry, localhost proof guard, hosting/rules/relay/workflows unchanged', `since ${base.slice(0, 12)}`);
+
+  // 5. No-publication contract for the local tooling.
+  const tooling = ['server/private-qa/gate.mjs', 'server/private-qa/control.mjs', 'server/private-qa/access-jwt.mjs', 'server/private-qa/paths.mjs', 'scripts/qa/build.mjs', 'scripts/qa/verify.mjs', 'scripts/qa/audit.mjs'];
+  for (const file of tooling) {
+    const text = readFileSync(file, 'utf8');
+    // The auditor names these primitives in order to detect them; for it, check real imports/env reads only.
+    if (file === 'scripts/qa/audit.mjs') { assert.ok(!/from 'node:(?:https?|net|dgram|child_process)'|process\.env/.test(text), `${file} must not open connections or read the environment`); continue; }
+    assert.ok(!/(?<![\w$.])(?<!async )fetch\s*\(|node:https?|node:net|node:dgram|XMLHttpRequest|WebSocket|wrangler|CLOUDFLARE|R2_|ACCESS_TOKEN|API_TOKEN|process\.env\.(?!QA_OUT_DIR)/.test(text), `${file} must not contain network clients or credential reads`);
+  }
+  assert.ok(!listFiles('.github/workflows').some((f) => /qa/i.test(f)), 'no QA publication workflow exists');
+  pass('local QA tooling has no network client, credential read or publication workflow', `${tooling.length} files`);
+
+  writeFileSync(join(work, 'report.json'), JSON.stringify(report, null, 2));
+  console.log(`PASS QA01 isolation audit (${report.checks.length} checks); report ${join(work, 'report.json')}`);
+} finally {
+  if (!process.env.QA01_KEEP) rmSync(work, { recursive: true, force: true });
+}

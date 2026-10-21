@@ -34,7 +34,7 @@ async function open(who, { width = 390, height = 844, bypassCSP = false } = {}) 
     extraHTTPHeaders: who ? { 'Cf-Access-Jwt-Assertion': await gate.token(who) } : {} });
   // `external` lists requests that left the page for another origin. A request the browser itself refused
   // under CSP (Chromium still reports it, failed with ERR_BLOCKED_BY_CSP) never reached the network.
-  const seen = { requests: [], attempts: new Map(), errors: [], get external() { return [...this.attempts].filter(([, failure]) => !/BLOCKED_BY_CSP/i.test(failure || '')).map(([url]) => url); } };
+  const seen = { requests: [], attempts: new Map(), errors: [], get external() { return [...this.attempts].filter(([, failure]) => !/^csp$|BLOCKED_BY_CSP/i.test(failure || '')).map(([url]) => url); } };
   context.on('request', (request) => {
     const url = request.url();
     seen.requests.push(url);

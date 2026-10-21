@@ -23,6 +23,14 @@ The owner selected Canvas's layout, then requested a ChatGPT-inspired but indepe
 
 **Reported tests, not independently rerun by ChatGPT:** Chromium multiple iPhone sizes (including short-height and 320px) and desktop; WebKit iPhone/desktop; nav-check, captures, polish-check, consolidated regression and proof TypeScript; all agent-reported pass. Physical iPhone still untested. Do not mistake synthetic WebKit screenshot evidence for real iPhone glass, keyboard or touch testing.
 
+## Review of the final sidebar-spacing pass — 2026-10-21
+
+After receiving Claude Code's completion report, ChatGPT checked draft PR #34 at `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`, read the committed follow-up in `docs/blackout/workspace-proofs/proposals/SIDEBAR.md`, and inspected **five actual committed before/after image comparisons** (`iphone-default.jpg`, `iphone-projects-expanded.jpg`, `iphone-sections-collapsed.jpg`, `iphone-320x568.jpg`, `desktop-sidebar.jpg` in `proposals/sidebar/spacing/`).
+
+**Reviewer assessment, NOT owner approval:** the increased iPhone primary-navigation size and spacing, compact project/history hierarchy, responsive short-height adaptation and restrained desktop treatment are coherent and ready for owner design sign-off review; no additional open-ended styling loop recommended. The report's Chromium/WebKit, accessibility, touch-target and regression results are **Claude-reported**, not independently rerun by ChatGPT. A physical iPhone remains untested, and gesture/glass/keyboard feel remain follow-up validation items.
+
+**Owner has not yet provided the final decision on this last spacing pass.** Canvas remains owner-selected for design refinement only. Gate 1 NOT APPROVED; no production integration, merge or deployment authorized. The active coding agent remains Claude Code (last owner-confirmed); Codex is anticipated, not yet confirmed.
+
 ## Exact next action
 
 **Owner visual review of latest sidebar spacing/hierarchy screenshots.** Obtain an **explicit separate Gate 1 decision** if accepted, or one targeted change request if not. Do not assign speculative redesign or production migration while awaiting that decision.

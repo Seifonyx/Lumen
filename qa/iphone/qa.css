@@ -4,6 +4,8 @@
 html[data-qa-review], html[data-qa-review] body { height: 100%; }
 html[data-qa-review] body { display: flex; flex-direction: column; margin: 0; }
 html[data-qa-review] #root { flex: 1 1 auto; min-height: 0; height: auto; position: relative; }
+/* Phone drawer and its scrim are fixed to the viewport: start them below the banner as well. */
+@media (max-width: 899px) { html[data-qa-review] :is(.app > .sidebar, .app > .scrim) { top: var(--qa-banner-h, 0px); } }
 /* Keyboard open: the app is pinned to the visual viewport; start it below the banner. */
 html[data-qa-review].kb-open .app { top: calc(var(--vv-top, 0px) + var(--qa-banner-h, 0px)); height: calc(var(--vv-h, 100%) - var(--qa-banner-h, 0px)); }
 .qa-banner {

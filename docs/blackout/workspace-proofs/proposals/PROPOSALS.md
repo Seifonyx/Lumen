@@ -1,5 +1,7 @@
 # Gate1 product-experience reconsideration — two directions
 
+> **Update:** the owner selected A · Canvas; its single polish pass is recorded in [CANVAS_POLISH.md](CANVAS_POLISH.md). Gate1 still NOT APPROVED.
+
 21 October 2026. Owner verdict on the consolidated Workspace + Focus proposal: promising, not there. Reading and writing were less comfortable, the composer was messy, navigation fragmented, and the iPhone lost Lumen's glass. **Gate1 NOT APPROVED. The consolidated visual architecture is not accepted.** This is design exploration: no production migration, merge or deployment, and no direction is selected.
 
 - **Base:** PR #34 branch `docs/lumen-blackout-phase1-20261019` at `89caae4`.

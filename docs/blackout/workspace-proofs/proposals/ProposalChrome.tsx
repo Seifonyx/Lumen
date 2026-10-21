@@ -1,9 +1,9 @@
 // Gate1 reconsideration: two opt-in design proposals over the real App (?proposal=canvas | ?proposal=desk).
 // The real Composer (textarea, draft, attachments, picker, UsageMeter, Send/Stop), store actions and pages stay the
 // owners; this file only adds navigation, a few top-bar slots and the expand control. Exploration, not production.
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpen, ChevronDown, ChevronLeft, ChevronRight, Inbox, LayoutGrid, Maximize2, PanelLeft, Plus, Search, Settings2, SlidersHorizontal, SquarePen, X } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronLeft, ChevronRight, Inbox, LayoutGrid, ListTree, Maximize2, PanelLeft, Plus, Search, Settings2, SlidersHorizontal, Sparkles, SquarePen, X } from 'lucide-react';
 import { selectCurrentChat, useStore } from '../../../../src/store';
 import { estimateTokens } from '../../../../src/lib/routing';
 import { formatTokens } from '../../../../src/lib/usage';
@@ -11,6 +11,8 @@ import { useComposerPresentation } from '../ComposerChrome';
 import UsageShareLabels from '../UsageShareLabels';
 import { contextTokens } from '../../../../src/lib/compact';
 import type { Chat, Project } from '../../../../src/types';
+import AllChats from '../../../../src/components/AllChats';
+const AskChats = lazy(() => import('../../../../src/components/AskChats'));
 import './shared.css';
 import './canvas.css';
 import './desk.css';
@@ -58,29 +60,48 @@ function Destinations() {
   </div>;
 }
 
-/** Proposal A — Canvas: one navigation tree. Projects are folders of conversations, not a separate app. */
+/** Proposal A — Canvas: one navigation tree. Projects are folders of conversations, not a separate app.
+ *  Polish: a one-line project brief (from Desk), date groups for loose conversations, long folders folded to five,
+ *  and the production sidebar's All chats and Ask your chats re-homed (their own components). */
+const LIMIT = 5;
+const DAY = 86400000;
+function groupOf(c: Chat) { if (c.pinned) return 'Pinned'; const d = (Date.now() - c.updatedAt) / DAY; return d < 1 ? 'Today' : d < 2 ? 'Yesterday' : d < 7 ? 'Previous 7 days' : d < 30 ? 'Previous 30 days' : 'Older'; }
 function CanvasNav({ chat, onClose }: { chat?: Chat | null; onClose: () => void }) {
   const chats = useStore((s) => s.chats), projects = useStore((s) => s.settings.projects) || NO_PROJECTS;
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [more, setMore] = useState<Record<string, boolean>>({});
+  const [allChats, setAllChats] = useState(false);
+  const [asking, setAsking] = useState<string | null>(null);
   const q = query.trim().toLowerCase(), match = (c: Chat) => !q || c.title.toLowerCase().includes(q);
   const isOpen = (p: Project) => open[p.id] ?? (p.id === chat?.projectId || Boolean(q));
   const pick = (fn: () => void) => () => { fn(); onClose(); };
+  const row = (c: Chat) => <li key={c.id}><button type="button" aria-current={c.id === chat?.id ? 'page' : undefined} onClick={pick(() => go.chat(c.id))}>{c.title}</button></li>;
   const unfiled = sorted(chats.filter((c) => !c.projectId)).filter(match);
+  const groups = unfiled.reduce<[string, Chat[]][]>((acc, c) => { const g = groupOf(c); const last = acc.at(-1); if (last && last[0] === g) last[1].push(c); else acc.push([g, [c]]); return acc; }, []);
   return <nav className="pc-nav" aria-label="Conversations and projects">
     <div className="pc-nav-head"><span className="px-wordmark">Lumen</span><button type="button" className="pc-nav-close" data-proposal-nav-close aria-label="Close navigation" onClick={onClose}><X size={18} /></button></div>
     <button type="button" className="pc-new" onClick={pick(() => go.newIn(null))}><SquarePen size={17} />New chat<kbd>⌘N</kbd></button>
     <label className="px-search"><Search size={16} /><input type="search" aria-label="Search conversations" placeholder="Search" value={query} onChange={(e) => setQuery(e.target.value)} /></label>
+    {q && <button type="button" className="pc-ask" onClick={() => setAsking(query)} title="Find what you talked about, even with different words"><Sparkles size={15} /><span>Ask your chats: “{query.trim().slice(0, 32)}”</span></button>}
     <div className="pc-tree">
-      <h2 className="px-label">Projects</h2>
-      {projects.map((p) => { const list = sorted(chats.filter((c) => c.projectId === p.id)).filter(match); if (q && !list.length) return null; return <div key={p.id} className="pc-project">
+      <div className="pc-section"><h2 className="px-label">Projects</h2><button type="button" className="pc-section-add" aria-label="New project" title="New project" onClick={pick(() => go.page('projects'))}><Plus size={15} /></button></div>
+      {projects.map((p) => { const list = sorted(chats.filter((c) => c.projectId === p.id)).filter(match); if (q && !list.length) return null; const shown = more[p.id] || q ? list : list.slice(0, LIMIT); return <div key={p.id} className="pc-project">
         <button type="button" className="pc-project-row" data-proposal-space={p.id} aria-expanded={isOpen(p)} onClick={() => setOpen({ ...open, [p.id]: !isOpen(p) })}>{isOpen(p) ? <ChevronDown size={15} /> : <ChevronRight size={15} />}<span className="px-mono" aria-hidden="true">{p.name.slice(0, 1)}</span><span className="pc-name">{p.name}</span><span className="pc-count">{list.length}</span></button>
-        {isOpen(p) && <ul>{list.map((c) => <li key={c.id}><button type="button" aria-current={c.id === chat?.id ? 'page' : undefined} onClick={pick(() => go.chat(c.id))}>{c.title}</button></li>)}<li className="pc-project-actions"><button type="button" onClick={pick(() => go.newIn(p.id))}><Plus size={14} />New chat here</button><button type="button" onClick={pick(() => go.overview(p.id))}>Overview</button></li></ul>}
+        {isOpen(p) && <ul>
+          <li><button type="button" className="pc-brief" onClick={pick(() => go.overview(p.id))}><span className="pc-brief-text">{p.description || 'Project overview'}</span><span className="pc-brief-meta">{p.instructions?.trim() ? 'Instructions' : 'No instructions'} · {p.files?.length || 0} files<ChevronRight size={12} aria-hidden="true" /></span></button></li>
+          {shown.map(row)}
+          {list.length > shown.length && <li><button type="button" className="pc-more" onClick={() => setMore({ ...more, [p.id]: true })}>Show {list.length - shown.length} more</button></li>}
+          <li><button type="button" className="pc-new-here" onClick={pick(() => go.newIn(p.id))}><Plus size={14} />New chat in {p.name}</button></li>
+        </ul>}
       </div>; })}
-      <h2 className="px-label">Conversations</h2>
-      <ul className="pc-chats">{unfiled.map((c) => <li key={c.id}><button type="button" aria-current={c.id === chat?.id ? 'page' : undefined} onClick={pick(() => go.chat(c.id))}>{c.title}</button></li>)}</ul>
+      <div className="pc-section"><h2 className="px-label">Conversations</h2></div>
+      {groups.map(([g, list]) => <div key={g} className="pc-group"><h3>{g}</h3><ul className="pc-chats">{list.map(row)}</ul></div>)}
+      {!q && <button type="button" className="pc-all" onClick={() => setAllChats(true)}><ListTree size={15} />All chats<ChevronRight size={13} aria-hidden="true" /></button>}
     </div>
     <Destinations />
+    {allChats && <AllChats onClose={() => setAllChats(false)} />}
+    {asking !== null && <Suspense fallback={null}><AskChats initial={asking} onClose={() => setAsking(null)} /></Suspense>}
   </nav>;
 }
 
@@ -122,6 +143,18 @@ export default function ProposalChrome({ kind }: { kind: Kind }) {
   useEffect(() => { setSpace(chat?.projectId || 'all'); }, [chat?.id, chat?.projectId]);
   useEffect(() => { document.documentElement.toggleAttribute('data-proposal-nav-open', navOpen); }, [navOpen]);
   useEffect(() => { if (settingsOpen || page) setNavOpen(false); }, [settingsOpen, page]);
+  const dragging = useRef<{ y: number; id: number } | null>(null);
+  useEffect(() => {
+    // iPhone sheet: drag the header down to put writing away, as with any iOS sheet (Done and Escape still work).
+    const form = t.form as HTMLElement | undefined;
+    const head = form?.querySelector<HTMLElement>('.px-sheet-head');
+    if (kind !== 'canvas' || !phone || !expanded || !form || !head) return;
+    const down = (e: PointerEvent) => { if ((e.target as Element).closest('button')) return; dragging.current = { y: e.clientY, id: e.pointerId }; head.setPointerCapture(e.pointerId); form.style.transition = 'none'; };
+    const move = (e: PointerEvent) => { const d = dragging.current; if (!d || d.id !== e.pointerId) return; const dy = Math.max(0, e.clientY - d.y); form.style.translate = `0 ${dy}px`; };
+    const up = (e: PointerEvent) => { const d = dragging.current; if (!d || d.id !== e.pointerId) return; dragging.current = null; const dy = e.clientY - d.y; form.style.transition = ''; form.style.translate = ''; if (dy > 90) toggle(); };
+    head.addEventListener('pointerdown', down); head.addEventListener('pointermove', move); head.addEventListener('pointerup', up); head.addEventListener('pointercancel', up);
+    return () => { head.removeEventListener('pointerdown', down); head.removeEventListener('pointermove', move); head.removeEventListener('pointerup', up); head.removeEventListener('pointercancel', up); form.style.translate = ''; form.style.transition = ''; };
+  }, [kind, phone, expanded, t.form, toggle]);
   const words = draft.trim() ? draft.trim().split(/\s+/).length : 0;
   const last = useMemo(() => chat?.messages.findLast((m) => m.role === 'assistant'), [chat]);
   if (!t.app) return null;
@@ -136,7 +169,7 @@ export default function ProposalChrome({ kind }: { kind: Kind }) {
       <div className="pd-title"><span>{chat?.title || 'New chat'}</span>{project && <small>{project.name}</small>}</div></>;
   // Expanded writing is a state of the composer, not a destination: a sheet (Canvas) or a page (Desk).
   const head = <div className="px-sheet-head">
-    {kind === 'canvas' && <span className="px-grabber" aria-hidden="true" />}
+    {kind === 'canvas' && <span className="px-grabber" aria-hidden="true" title="Drag down to put away" />}
     <div><span className="px-label">{kind === 'canvas' ? 'Writing' : 'Page'}</span><strong>{chat?.title || 'New chat'}</strong></div>
     <span className="px-count">{words} words · ~{formatTokens(estimateTokens(draft))} tokens</span>
     <button type="button" className="px-done" aria-label="Collapse writing" onClick={toggle}>Done</button>

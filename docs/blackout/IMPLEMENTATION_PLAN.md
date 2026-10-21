@@ -104,3 +104,6 @@ Use CONSOLIDATION.md and the new portable review for this scope; older workspace
 
 Owner rejected the consolidated visual architecture. Two isolated directions (A Canvas, B Desk) built over the real App with production iPhone glass; [record](workspace-proofs/proposals/PROPOSALS.md), [review](workspace-proofs/proposals/review.html). Exploration only: **18.5→18.5%, Medium confidence**; no approval, selection or B03/B04 credit. Stop for owner choice.
 
+### Canvas final design refinement — 21 October 2026
+
+Owner selected A · Canvas; one polish pass in the opt-in preview. [Record](workspace-proofs/proposals/CANVAS_POLISH.md). Navigation (brief, groups, fold, re-homed AllChats/AskChats/New project), reading gap, composer and sheet polish; Chromium + WebKit pass. **18.5→18.5%, Medium confidence**; no approval or B03/B04 credit. Stop for owner review.

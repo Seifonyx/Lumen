@@ -71,7 +71,7 @@ Open `docs/blackout/workspace-proofs/?proposal=canvas` or `?proposal=desk` on th
 ## Verification (actual renders, synthetic account, one intercepted send)
 
 [capture.cjs](capture.cjs) drives production, Canvas and Desk through the same seven states (conversation, navigation, composer at rest, writing, expanded, model picker, context). It passes for all of these, with 0 axe violations, 0 page errors and 0 overflow:
-- Chromium: desktop 1440×900 and iPhone 393×852 (iPhone UA, so production glass is on).
+- Chromium: desktop 1440×900 and iPhone 393×852 (iPhone UA, so production glass is on); Canvas also at iPhone 320×693 and 430×932, and Desk at 320×693.
 - WebKit 26.0 (official `mcr.microsoft.com/playwright:v1.56.1-noble` image): iPhone 393×852.
 
 For both proposals it also asserts:
@@ -80,6 +80,7 @@ For both proposals it also asserts:
 - exactly one intercepted Send, then the real Stop.
 
 The existing consolidated harness still passes at 1440 and 390 (it's unchanged), as do the proof `tsc` and the production build.
+- **Layout fixes from this review:** comparing the frames side by side caught Canvas's writing row wrapping Send onto a third line at 393px in Chromium (which offers dictation) and at 320px, and Desk's title touching the back button at 320px. Both are fixed and checked at 320, 393 and 430.
 - **What it doesn't show:** this WebKit build draws little or no backdrop blur, so glass appears clearer than on a device. It checks layout only. A real-iPhone check is still blocked by the preview's localhost-only guard (see [FINAL_VERIFICATION.md](../FINAL_VERIFICATION.md)).
 - **Raw output** is outside Git in `/home/user/.lumen-verification/gate1-reconsideration/`.
 

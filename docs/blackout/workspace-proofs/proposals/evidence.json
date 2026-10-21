@@ -1,312 +1,313 @@
 {
  "gate1": "not approved",
  "productionIntegration": false,
+ "directionSelected": null,
  "images": [
   {
    "image": "screens/production-desktop-conversation.jpg",
-   "engine": "chromium",
    "source": "<raw>/production/production-desktop-conversation.png",
-   "sha256": "67ededa8b2313ddf5a7ec9df98e8e59ff28b4497693baa84c3a8819f25dfdaf4"
+   "sha256": "67ededa8b2313ddf5a7ec9df98e8e59ff28b4497693baa84c3a8819f25dfdaf4",
+   "engine": "chromium"
   },
   {
    "image": "screens/production-desktop-navigation.jpg",
-   "engine": "chromium",
    "source": "<raw>/production/production-desktop-navigation.png",
-   "sha256": "67ededa8b2313ddf5a7ec9df98e8e59ff28b4497693baa84c3a8819f25dfdaf4"
+   "sha256": "67ededa8b2313ddf5a7ec9df98e8e59ff28b4497693baa84c3a8819f25dfdaf4",
+   "engine": "chromium"
   },
   {
    "image": "screens/production-desktop-composer-rest.jpg",
-   "engine": "chromium",
    "source": "<raw>/production/production-desktop-composer-rest.png",
-   "sha256": "e5b5e9b5dece315aa99c8df0ac93e7e40e2723292a9b3b873769eb13a2876bd4"
+   "sha256": "e5b5e9b5dece315aa99c8df0ac93e7e40e2723292a9b3b873769eb13a2876bd4",
+   "engine": "chromium"
   },
   {
    "image": "screens/production-desktop-composer-draft.jpg",
-   "engine": "chromium",
    "source": "<raw>/production/production-desktop-composer-draft.png",
-   "sha256": "9110dc26021cd48858afb5940b575e49d93c952c46cad7798175d54a9f3d03bb"
+   "sha256": "9110dc26021cd48858afb5940b575e49d93c952c46cad7798175d54a9f3d03bb",
+   "engine": "chromium"
   },
   {
    "image": "screens/production-desktop-model-picker.jpg",
-   "engine": "chromium",
    "source": "<raw>/production/production-desktop-model-picker.png",
-   "sha256": "524a2081333a6c0f7fe143f059c1208771501a34e7fa4ec6a14e29a06fe2d25d"
+   "sha256": "524a2081333a6c0f7fe143f059c1208771501a34e7fa4ec6a14e29a06fe2d25d",
+   "engine": "chromium"
   },
   {
    "image": "screens/production-desktop-context.jpg",
-   "engine": "chromium",
    "source": "<raw>/production/production-desktop-context.png",
-   "sha256": "a9a4182c047e5518cbbceff9407d5c8f958344b05891a5c9d6d6641e4a34a8aa"
+   "sha256": "a9a4182c047e5518cbbceff9407d5c8f958344b05891a5c9d6d6641e4a34a8aa",
+   "engine": "chromium"
   },
   {
    "image": "screens/production-phone-conversation.jpg",
-   "engine": "chromium",
    "source": "<raw>/production/production-phone-conversation.png",
-   "sha256": "ac6f94738e812473911480e58100385821a63464e6b7c349b1aa983f4471d87b"
+   "sha256": "ac6f94738e812473911480e58100385821a63464e6b7c349b1aa983f4471d87b",
+   "engine": "chromium"
   },
   {
    "image": "screens/production-phone-navigation.jpg",
-   "engine": "chromium",
    "source": "<raw>/production/production-phone-navigation.png",
-   "sha256": "b13db1575df3542402d236fd27b1903e822274fe0b03dd7aa686c57532d116ca"
+   "sha256": "b13db1575df3542402d236fd27b1903e822274fe0b03dd7aa686c57532d116ca",
+   "engine": "chromium"
   },
   {
    "image": "screens/production-phone-composer-rest.jpg",
-   "engine": "chromium",
    "source": "<raw>/production/production-phone-composer-rest.png",
-   "sha256": "30559ff12b644eb483d1363b12f441b828488570348faeef660d61e0fc7a23fb"
+   "sha256": "30559ff12b644eb483d1363b12f441b828488570348faeef660d61e0fc7a23fb",
+   "engine": "chromium"
   },
   {
    "image": "screens/production-phone-composer-draft.jpg",
-   "engine": "chromium",
    "source": "<raw>/production/production-phone-composer-draft.png",
-   "sha256": "885231a4f5dec475886dbacdf2e7575a1d51cc8868433e8f0977d3dad3f5dbef"
+   "sha256": "885231a4f5dec475886dbacdf2e7575a1d51cc8868433e8f0977d3dad3f5dbef",
+   "engine": "chromium"
   },
   {
    "image": "screens/production-phone-model-picker.jpg",
-   "engine": "chromium",
    "source": "<raw>/production/production-phone-model-picker.png",
-   "sha256": "15350564ab66855ba52227d83d8d70d8711ddd5c748814822974c3b34fbdcf47"
+   "sha256": "15350564ab66855ba52227d83d8d70d8711ddd5c748814822974c3b34fbdcf47",
+   "engine": "chromium"
   },
   {
    "image": "screens/production-phone-context.jpg",
-   "engine": "chromium",
    "source": "<raw>/production/production-phone-context.png",
-   "sha256": "b72f8e4f8aaa3e0e560966fc010436c66e730adeb295608730afce00434d2d35"
-  },
-  {
-   "image": "screens/canvas-desktop-conversation.jpg",
-   "engine": "chromium",
-   "source": "<raw>/canvas/canvas-desktop-conversation.png",
-   "sha256": "e389dc29ffab5f5d77c8551ac8ae4b51c173401879ee06a18f0cd6a7fc23582c"
-  },
-  {
-   "image": "screens/canvas-desktop-navigation.jpg",
-   "engine": "chromium",
-   "source": "<raw>/canvas/canvas-desktop-navigation.png",
-   "sha256": "8193ff1122ffb340d926a15d08abcf6c5e43d05096570d525457774323995c28"
-  },
-  {
-   "image": "screens/canvas-desktop-composer-rest.jpg",
-   "engine": "chromium",
-   "source": "<raw>/canvas/canvas-desktop-composer-rest.png",
-   "sha256": "dc0a7281f075a90564acca68e0e3021c495de64c4f2b588cb1c798a402572f15"
-  },
-  {
-   "image": "screens/canvas-desktop-composer-draft.jpg",
-   "engine": "chromium",
-   "source": "<raw>/canvas/canvas-desktop-composer-draft.png",
-   "sha256": "edde58431ab0d0f58d2358742f13beab9def3afa4453bd2c0d528caca8ddce06"
-  },
-  {
-   "image": "screens/canvas-desktop-expanded.jpg",
-   "engine": "chromium",
-   "source": "<raw>/canvas/canvas-desktop-expanded.png",
-   "sha256": "84bffd7d00a040f3cb775438f525d8ce753e939d82c9736a97d797ff74d3727a"
-  },
-  {
-   "image": "screens/canvas-desktop-model-picker.jpg",
-   "engine": "chromium",
-   "source": "<raw>/canvas/canvas-desktop-model-picker.png",
-   "sha256": "a747385730d6ae89f06cc297831133b5a371555c90cac0ab76876dbad890341a"
-  },
-  {
-   "image": "screens/canvas-desktop-context.jpg",
-   "engine": "chromium",
-   "source": "<raw>/canvas/canvas-desktop-context.png",
-   "sha256": "ebc7158b4e8c682342a738c6fdea3f67b6721b4f3b3f09632b18031c06cd4fa5"
-  },
-  {
-   "image": "screens/canvas-phone-conversation.jpg",
-   "engine": "chromium",
-   "source": "<raw>/canvas/canvas-phone-conversation.png",
-   "sha256": "a4254d05142897138eeead76367c9b73cff98da593e7bf9e457c755ce7813303"
-  },
-  {
-   "image": "screens/canvas-phone-navigation.jpg",
-   "engine": "chromium",
-   "source": "<raw>/canvas/canvas-phone-navigation.png",
-   "sha256": "558f48ea74e39f48bec15be49f391f0c557de6fe07e325dbe0c78a405dce9c32"
-  },
-  {
-   "image": "screens/canvas-phone-composer-rest.jpg",
-   "engine": "chromium",
-   "source": "<raw>/canvas/canvas-phone-composer-rest.png",
-   "sha256": "2962be15e59b34fc5655c657bd01190f2b7f74dc96772e2a2f43401a35455c0d"
-  },
-  {
-   "image": "screens/canvas-phone-composer-draft.jpg",
-   "engine": "chromium",
-   "source": "<raw>/canvas/canvas-phone-composer-draft.png",
-   "sha256": "e930fc697b27e73c7e159a9b0eee2997f4eab43c4237c61356ffc88437610fd0"
-  },
-  {
-   "image": "screens/canvas-phone-expanded.jpg",
-   "engine": "chromium",
-   "source": "<raw>/canvas/canvas-phone-expanded.png",
-   "sha256": "0bf291cf988a776ea45d64ee46de1f820450dc23fa1f2d5589be53dad8131349"
-  },
-  {
-   "image": "screens/canvas-phone-model-picker.jpg",
-   "engine": "chromium",
-   "source": "<raw>/canvas/canvas-phone-model-picker.png",
-   "sha256": "25bad8aff4550b1d61195b4005c9875e99727dda0b9de4cdf9165ba99b248cce"
-  },
-  {
-   "image": "screens/canvas-phone-context.jpg",
-   "engine": "chromium",
-   "source": "<raw>/canvas/canvas-phone-context.png",
-   "sha256": "f6503558e600d47afb8a369277995e306bc372695441e4c3ec49b21beccf77b9"
-  },
-  {
-   "image": "screens/desk-desktop-conversation.jpg",
-   "engine": "chromium",
-   "source": "<raw>/desk/desk-desktop-conversation.png",
-   "sha256": "268ee017dff5f1ae0823710fa0d02f534a8a62fa124d74da69feed7af0327339"
-  },
-  {
-   "image": "screens/desk-desktop-navigation.jpg",
-   "engine": "chromium",
-   "source": "<raw>/desk/desk-desktop-navigation.png",
-   "sha256": "173c4a0843aac562fefa8e52d26216ab063f53c1b06b26226c98bce1811ad041"
-  },
-  {
-   "image": "screens/desk-desktop-composer-rest.jpg",
-   "engine": "chromium",
-   "source": "<raw>/desk/desk-desktop-composer-rest.png",
-   "sha256": "b0f97b4c52b2bb096836d84acb678384a1e15e4dfb1332ae3b0858dd83f9b861"
-  },
-  {
-   "image": "screens/desk-desktop-composer-draft.jpg",
-   "engine": "chromium",
-   "source": "<raw>/desk/desk-desktop-composer-draft.png",
-   "sha256": "087092d0c2d6feee889b50db72683f9bd0c35876793c9c94bad4db880ab003b0"
-  },
-  {
-   "image": "screens/desk-desktop-expanded.jpg",
-   "engine": "chromium",
-   "source": "<raw>/desk/desk-desktop-expanded.png",
-   "sha256": "8ba89c35f4ba47c31798afcb95c56d738d16caee9f6f53ab3b1112a89d9e16af"
-  },
-  {
-   "image": "screens/desk-desktop-model-picker.jpg",
-   "engine": "chromium",
-   "source": "<raw>/desk/desk-desktop-model-picker.png",
-   "sha256": "a3dbb6008f3ecd3f4909a5b018ef66191ca1c72fb514ab167e73698ee84c8ff2"
-  },
-  {
-   "image": "screens/desk-desktop-context.jpg",
-   "engine": "chromium",
-   "source": "<raw>/desk/desk-desktop-context.png",
-   "sha256": "a5d4f7358aaed76a9c4b3ae9933fd41074533af94f3a252cf6e865d3b84e5d27"
-  },
-  {
-   "image": "screens/desk-phone-conversation.jpg",
-   "engine": "chromium",
-   "source": "<raw>/desk/desk-phone-conversation.png",
-   "sha256": "8c0f9965369548f2c83cf48c1628694e89b4b77a00b51c28b655ccfb090aaf2c"
-  },
-  {
-   "image": "screens/desk-phone-navigation.jpg",
-   "engine": "chromium",
-   "source": "<raw>/desk/desk-phone-navigation.png",
-   "sha256": "78123771c558b5c25ec114320c2d7cbdea4777173cafa780e3009976508a9b9d"
-  },
-  {
-   "image": "screens/desk-phone-composer-rest.jpg",
-   "engine": "chromium",
-   "source": "<raw>/desk/desk-phone-composer-rest.png",
-   "sha256": "3325db1dd88538327375fa58190e95286f7e363ed62142f70e2a7cf51838cc63"
-  },
-  {
-   "image": "screens/desk-phone-composer-draft.jpg",
-   "engine": "chromium",
-   "source": "<raw>/desk/desk-phone-composer-draft.png",
-   "sha256": "48e5488c24ef369a92686864e3f1f66fcfc9d6bd46b1db13698702e884fb3734"
-  },
-  {
-   "image": "screens/desk-phone-expanded.jpg",
-   "engine": "chromium",
-   "source": "<raw>/desk/desk-phone-expanded.png",
-   "sha256": "312d51512fd7bee59568689d3c08ca048e876ebd8b409f61e828c22ade174a8f"
-  },
-  {
-   "image": "screens/desk-phone-model-picker.jpg",
-   "engine": "chromium",
-   "source": "<raw>/desk/desk-phone-model-picker.png",
-   "sha256": "eb845437bb6bcd0b77cdba09111343bf45c6c0279f5339500830a46d9d0e7d65"
-  },
-  {
-   "image": "screens/desk-phone-context.jpg",
-   "engine": "chromium",
-   "source": "<raw>/desk/desk-phone-context.png",
-   "sha256": "7bd13e082c90e1af21f01d875e3fc867a464c79317ae0367282ec7f0283eaa0b"
+   "sha256": "b72f8e4f8aaa3e0e560966fc010436c66e730adeb295608730afce00434d2d35",
+   "engine": "chromium"
   },
   {
    "image": "screens/webkit-production-phone-conversation.jpg",
-   "engine": "webkit",
    "source": "<raw>/webkit/production/production-phone-conversation.png",
-   "sha256": "b3fd2e2014d3283a2c046475a008f2178d129df081d870d67dec75b03a1f0644"
+   "sha256": "b3fd2e2014d3283a2c046475a008f2178d129df081d870d67dec75b03a1f0644",
+   "engine": "webkit"
   },
   {
    "image": "screens/webkit-production-phone-composer-rest.jpg",
-   "engine": "webkit",
    "source": "<raw>/webkit/production/production-phone-composer-rest.png",
-   "sha256": "07675128595f50f5397dcf38f216586d2e1dc21cf811818f8c0482bf26bb1091"
+   "sha256": "07675128595f50f5397dcf38f216586d2e1dc21cf811818f8c0482bf26bb1091",
+   "engine": "webkit"
   },
   {
    "image": "screens/webkit-production-phone-composer-draft.jpg",
-   "engine": "webkit",
    "source": "<raw>/webkit/production/production-phone-composer-draft.png",
-   "sha256": "6a3f28c3a283c70e5f62720cbaafe12a0ca68daec4595846700ba1c9af883033"
+   "sha256": "6a3f28c3a283c70e5f62720cbaafe12a0ca68daec4595846700ba1c9af883033",
+   "engine": "webkit"
+  },
+  {
+   "image": "screens/canvas-desktop-conversation.jpg",
+   "source": "<raw>/canvas/canvas-desktop-conversation.png",
+   "sha256": "10e708f1b79c5f58de940299e6f3729604cd5c1ed429cc90b7def25ae89cfabb",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/canvas-desktop-navigation.jpg",
+   "source": "<raw>/canvas/canvas-desktop-navigation.png",
+   "sha256": "eb30ce0a1069b42a5c83da71629627835b0ff9f857e0b6888016c832f019fc23",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/canvas-desktop-composer-rest.jpg",
+   "source": "<raw>/canvas/canvas-desktop-composer-rest.png",
+   "sha256": "33953402e6a63aae60b0a7e55c7a54c3c6dfa04ba33e8201c02c794b76f74b43",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/canvas-desktop-composer-draft.jpg",
+   "source": "<raw>/canvas/canvas-desktop-composer-draft.png",
+   "sha256": "1c246e519e56cfb389c7645d4a37e33f969378fba27c1922e64a7f2c53a6a59c",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/canvas-desktop-expanded.jpg",
+   "source": "<raw>/canvas/canvas-desktop-expanded.png",
+   "sha256": "fe4154e86a3fe278e78dc3b15188acc2629e8e4263129e8eb7fcd596931cde4c",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/canvas-desktop-model-picker.jpg",
+   "source": "<raw>/canvas/canvas-desktop-model-picker.png",
+   "sha256": "271b052fa73a5d48da57cd4f58a56efe7c6f36e566968665b28ccd1c74c5ad4d",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/canvas-desktop-context.jpg",
+   "source": "<raw>/canvas/canvas-desktop-context.png",
+   "sha256": "42b1d6e76dc8f0b111d064a1a878bd48ae00bb34401a3124fb36f29a14cdebad",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/canvas-phone-conversation.jpg",
+   "source": "<raw>/canvas/canvas-phone-conversation.png",
+   "sha256": "c559c2cc02f8f9a60800302cf5666bf74a975d80654e43dd793d7a364d8af7ce",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/canvas-phone-navigation.jpg",
+   "source": "<raw>/canvas/canvas-phone-navigation.png",
+   "sha256": "558f48ea74e39f48bec15be49f391f0c557de6fe07e325dbe0c78a405dce9c32",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/canvas-phone-composer-rest.jpg",
+   "source": "<raw>/canvas/canvas-phone-composer-rest.png",
+   "sha256": "ac4d253352874e9d7a0c66836c81b069f5d1e873ba31d844f2b86efa8374cacf",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/canvas-phone-composer-draft.jpg",
+   "source": "<raw>/canvas/canvas-phone-composer-draft.png",
+   "sha256": "c7c21fa922df219862833963087924ca0a472deecd55847daeb2baae044d4d30",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/canvas-phone-expanded.jpg",
+   "source": "<raw>/canvas/canvas-phone-expanded.png",
+   "sha256": "2389adcc75da81911db1a7b6ba2534728e4882dc7818891e7d62bb481522ef52",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/canvas-phone-model-picker.jpg",
+   "source": "<raw>/canvas/canvas-phone-model-picker.png",
+   "sha256": "c89da8fedfc6ff33c42ec84615a0ff6d184b9a449ce7cf3c84ac37ecfe945918",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/canvas-phone-context.jpg",
+   "source": "<raw>/canvas/canvas-phone-context.png",
+   "sha256": "0e9ac6a758d7be8f272442ef15b382f3cade845d83a7cd1538a93de85d74a4ec",
+   "engine": "chromium"
   },
   {
    "image": "screens/webkit-canvas-phone-conversation.jpg",
-   "engine": "webkit",
    "source": "<raw>/webkit/canvas/canvas-phone-conversation.png",
-   "sha256": "99d6eb994bbd34e58884d1a7a5c027da1a5dad2a068aaf458c0771e68b302f9e"
+   "sha256": "0477032d70c1dc0e2c9691c05cd71979f0aa382bcd55a45252f372e15ebd9b6d",
+   "engine": "webkit"
   },
   {
    "image": "screens/webkit-canvas-phone-composer-rest.jpg",
-   "engine": "webkit",
    "source": "<raw>/webkit/canvas/canvas-phone-composer-rest.png",
-   "sha256": "882a75e08304368cea69ab037cf3339aa34749968aced5c66d1ede57dfd19545"
+   "sha256": "85c1464b5cf3dc15cd846bedd2f645d6b5957a09d978c6dd06239a42dc22bad0",
+   "engine": "webkit"
   },
   {
    "image": "screens/webkit-canvas-phone-composer-draft.jpg",
-   "engine": "webkit",
    "source": "<raw>/webkit/canvas/canvas-phone-composer-draft.png",
-   "sha256": "f40c1f3f16e04c84dda5cfd3ae4faf3af25479d2545c4a58a35303428598038b"
+   "sha256": "fe675c0689bfdb844c020243f15bb3613fd9eeba0731b92c27e81ddf7951b24e",
+   "engine": "webkit"
   },
   {
    "image": "screens/webkit-canvas-phone-expanded.jpg",
-   "engine": "webkit",
    "source": "<raw>/webkit/canvas/canvas-phone-expanded.png",
-   "sha256": "1944653e2ec814a353eb775a7a471798a065a7ec7647e43bd78f6cb50fa9aea9"
+   "sha256": "f82ca37d2de63bc38a771b54ed39b4d28a27587a755e8d759377b018a05d8d82",
+   "engine": "webkit"
+  },
+  {
+   "image": "screens/desk-desktop-conversation.jpg",
+   "source": "<raw>/desk/desk-desktop-conversation.png",
+   "sha256": "268ee017dff5f1ae0823710fa0d02f534a8a62fa124d74da69feed7af0327339",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/desk-desktop-navigation.jpg",
+   "source": "<raw>/desk/desk-desktop-navigation.png",
+   "sha256": "173c4a0843aac562fefa8e52d26216ab063f53c1b06b26226c98bce1811ad041",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/desk-desktop-composer-rest.jpg",
+   "source": "<raw>/desk/desk-desktop-composer-rest.png",
+   "sha256": "b0f97b4c52b2bb096836d84acb678384a1e15e4dfb1332ae3b0858dd83f9b861",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/desk-desktop-composer-draft.jpg",
+   "source": "<raw>/desk/desk-desktop-composer-draft.png",
+   "sha256": "087092d0c2d6feee889b50db72683f9bd0c35876793c9c94bad4db880ab003b0",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/desk-desktop-expanded.jpg",
+   "source": "<raw>/desk/desk-desktop-expanded.png",
+   "sha256": "8ba89c35f4ba47c31798afcb95c56d738d16caee9f6f53ab3b1112a89d9e16af",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/desk-desktop-model-picker.jpg",
+   "source": "<raw>/desk/desk-desktop-model-picker.png",
+   "sha256": "a3dbb6008f3ecd3f4909a5b018ef66191ca1c72fb514ab167e73698ee84c8ff2",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/desk-desktop-context.jpg",
+   "source": "<raw>/desk/desk-desktop-context.png",
+   "sha256": "a5d4f7358aaed76a9c4b3ae9933fd41074533af94f3a252cf6e865d3b84e5d27",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/desk-phone-conversation.jpg",
+   "source": "<raw>/desk/desk-phone-conversation.png",
+   "sha256": "8c0f9965369548f2c83cf48c1628694e89b4b77a00b51c28b655ccfb090aaf2c",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/desk-phone-navigation.jpg",
+   "source": "<raw>/desk/desk-phone-navigation.png",
+   "sha256": "78123771c558b5c25ec114320c2d7cbdea4777173cafa780e3009976508a9b9d",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/desk-phone-composer-rest.jpg",
+   "source": "<raw>/desk/desk-phone-composer-rest.png",
+   "sha256": "3325db1dd88538327375fa58190e95286f7e363ed62142f70e2a7cf51838cc63",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/desk-phone-composer-draft.jpg",
+   "source": "<raw>/desk/desk-phone-composer-draft.png",
+   "sha256": "48e5488c24ef369a92686864e3f1f66fcfc9d6bd46b1db13698702e884fb3734",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/desk-phone-expanded.jpg",
+   "source": "<raw>/desk/desk-phone-expanded.png",
+   "sha256": "312d51512fd7bee59568689d3c08ca048e876ebd8b409f61e828c22ade174a8f",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/desk-phone-model-picker.jpg",
+   "source": "<raw>/desk/desk-phone-model-picker.png",
+   "sha256": "eb845437bb6bcd0b77cdba09111343bf45c6c0279f5339500830a46d9d0e7d65",
+   "engine": "chromium"
+  },
+  {
+   "image": "screens/desk-phone-context.jpg",
+   "source": "<raw>/desk/desk-phone-context.png",
+   "sha256": "7bd13e082c90e1af21f01d875e3fc867a464c79317ae0367282ec7f0283eaa0b",
+   "engine": "chromium"
   },
   {
    "image": "screens/webkit-desk-phone-conversation.jpg",
-   "engine": "webkit",
    "source": "<raw>/webkit/desk/desk-phone-conversation.png",
-   "sha256": "784382214efc918e45a2eca0a9b288cbf70155a100c3bf81bee7f5422d3de996"
+   "sha256": "784382214efc918e45a2eca0a9b288cbf70155a100c3bf81bee7f5422d3de996",
+   "engine": "webkit"
   },
   {
    "image": "screens/webkit-desk-phone-composer-rest.jpg",
-   "engine": "webkit",
    "source": "<raw>/webkit/desk/desk-phone-composer-rest.png",
-   "sha256": "0d7b190fe9ac6b05bcebb8adab39a7d3ba8b3562ab60349d5d48c137d57cbd55"
+   "sha256": "0d7b190fe9ac6b05bcebb8adab39a7d3ba8b3562ab60349d5d48c137d57cbd55",
+   "engine": "webkit"
   },
   {
    "image": "screens/webkit-desk-phone-composer-draft.jpg",
-   "engine": "webkit",
    "source": "<raw>/webkit/desk/desk-phone-composer-draft.png",
-   "sha256": "cf04331e2545ba0267ab218ae91cff63b1bca6dfdb2adb5b17628e332825f4d8"
+   "sha256": "cf04331e2545ba0267ab218ae91cff63b1bca6dfdb2adb5b17628e332825f4d8",
+   "engine": "webkit"
   },
   {
    "image": "screens/webkit-desk-phone-expanded.jpg",
-   "engine": "webkit",
    "source": "<raw>/webkit/desk/desk-phone-expanded.png",
-   "sha256": "b3e304990bbcf453c9d09d73d97e31c1d7eef575c5671cbcac0835e6fdcd2689"
+   "sha256": "b3e304990bbcf453c9d09d73d97e31c1d7eef575c5671cbcac0835e6fdcd2689",
+   "engine": "webkit"
   }
  ],
  "reports": {
@@ -488,6 +489,90 @@
    "width": 393,
    "height": 852,
    "engine": "webkit",
+   "checks": {
+    "expand": {
+     "same": true,
+     "text": "Turn Monday into a practical checklist.\n\nKeep it realistic for one person with three hours, and tell me what you would leave out.",
+     "start": 12,
+     "end": 38,
+     "focused": true
+    },
+    "collapse": {
+     "same": true,
+     "text": "Turn Monday into a practical checklist.\n\nKeep it realistic for one person with three hours, and tell me what you would leave out.",
+     "start": 12,
+     "end": 38
+    },
+    "sendStop": {
+     "mocked": 1
+    }
+   },
+   "pageErrors": [],
+   "realProviderCalls": 0,
+   "axeViolations": 0,
+   "axeStates": 3
+  },
+  "canvas-phone-320-chromium": {
+   "status": "passed",
+   "width": 320,
+   "height": 693,
+   "engine": "chromium",
+   "checks": {
+    "expand": {
+     "same": true,
+     "text": "Turn Monday into a practical checklist.\n\nKeep it realistic for one person with three hours, and tell me what you would leave out.",
+     "start": 12,
+     "end": 38,
+     "focused": true
+    },
+    "collapse": {
+     "same": true,
+     "text": "Turn Monday into a practical checklist.\n\nKeep it realistic for one person with three hours, and tell me what you would leave out.",
+     "start": 12,
+     "end": 38
+    },
+    "sendStop": {
+     "mocked": 1
+    }
+   },
+   "pageErrors": [],
+   "realProviderCalls": 0,
+   "axeViolations": 0,
+   "axeStates": 3
+  },
+  "canvas-phone-430-chromium": {
+   "status": "passed",
+   "width": 430,
+   "height": 932,
+   "engine": "chromium",
+   "checks": {
+    "expand": {
+     "same": true,
+     "text": "Turn Monday into a practical checklist.\n\nKeep it realistic for one person with three hours, and tell me what you would leave out.",
+     "start": 12,
+     "end": 38,
+     "focused": true
+    },
+    "collapse": {
+     "same": true,
+     "text": "Turn Monday into a practical checklist.\n\nKeep it realistic for one person with three hours, and tell me what you would leave out.",
+     "start": 12,
+     "end": 38
+    },
+    "sendStop": {
+     "mocked": 1
+    }
+   },
+   "pageErrors": [],
+   "realProviderCalls": 0,
+   "axeViolations": 0,
+   "axeStates": 3
+  },
+  "desk-phone-320-chromium": {
+   "status": "passed",
+   "width": 320,
+   "height": 693,
+   "engine": "chromium",
    "checks": {
     "expand": {
      "same": true,

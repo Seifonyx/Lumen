@@ -129,3 +129,4 @@
  :root[data-proposal=desk][data-proof-expanded] .composer>textarea{padding:16px 18px!important;font-size:18px}
 }
 @keyframes pd-push{from{translate:-30% 0;opacity:.6}}
+@media(max-width:360px){:root[data-proposal=desk] .pd-title{max-width:50%}:root[data-proposal=desk] .px-count{display:none}}

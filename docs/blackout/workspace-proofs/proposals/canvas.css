@@ -113,3 +113,16 @@
 :root[data-proposal=canvas][data-proof-expanded] .composer .px-expand{display:none!important}
 /* Writing is never at the mercy of blur: the expanded sheet is nearly opaque (glass only at its rim). */
 :root[data-proposal=canvas][data-proof-expanded] .composer{background:linear-gradient(var(--bg),var(--bg)) padding-box,var(--glass-rim,linear-gradient(var(--px-rim),var(--px-rim))) border-box!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+/* iPhone writing row: + · model · context · expand · dictation · Send must fit one line at 320–430px, so the
+   context chip shows just its estimate (no ring/chevron) and the gaps tighten. */
+@media(max-width:899px){
+ :root[data-proposal=canvas] .composer{gap:2px}
+ :root[data-proposal=canvas] .composer .usage-chip{padding:0 6px;gap:0}
+ :root[data-proposal=canvas] .composer .usage-chip>:is(svg){display:none}
+ :root[data-proposal=canvas] .composer .model-button{padding:0 8px}
+ :root[data-proposal=canvas] .composer :is(.px-expand,.dictation-btn){width:36px;height:36px}
+}
+@media(max-width:360px){:root[data-proposal=canvas] .px-usage-unit{display:none}:root[data-proposal=canvas] .composer .model-button{padding:0 6px}}
+@media(max-width:360px){:root[data-proposal=canvas] .composer :is(.composer-bar>.tool-btn:not(.shield-on),.dictation-btn,.px-expand,.send-btn){width:36px!important;min-width:36px!important;height:36px!important;padding:0!important}:root[data-proposal=canvas] .composer .usage-chip{padding:0 4px}}
+:root[data-proposal=canvas] .composer .spacer{min-width:0;width:auto}
+:root[data-proposal=canvas] .composer .send-btn{margin:0}

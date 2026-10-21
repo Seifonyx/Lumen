@@ -147,7 +147,7 @@ export default function ProposalChrome({ kind }: { kind: Kind }) {
     {phone && navOpen && createPortal(<button type="button" className="px-scrim" aria-label="Close navigation" tabIndex={-1} onClick={close} />, t.app)}
     {t.topbar && createPortal(<div className="px-lead">{lead}</div>, t.topbar)}
     {t.form && createPortal(<>{head}{replying}</>, t.form)}
-    {t.usage && chat && createPortal(<span className="px-usage">~{formatTokens(contextTokens(chat))} tokens</span>, t.usage)}
+    {t.usage && chat && createPortal(<span className="px-usage">~{formatTokens(contextTokens(chat))}<span className="px-usage-unit"> tokens</span></span>, t.usage)}
     <UsageShareLabels />
     {t.bar && createPortal(<button type="button" className="px-expand" data-proposal-expand aria-label={expanded ? 'Collapse writing' : 'Expand writing'} aria-expanded={expanded} aria-controls="message-input" title={expanded ? 'Back (Esc)' : 'Expand writing'} onClick={toggle}><Maximize2 size={17} /></button>, t.bar)}
   </>;

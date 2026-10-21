@@ -6,7 +6,7 @@
 
 Lumen is an independent, premium AI workspace for conversation, reading, sustained writing, projects, model selection/routing, providers, usage context and tools. It should have a **recognizable original identity**, clear information hierarchy and excellent desktop and iPhone usability.
 
-**Canvas (A)** is the selected **design foundation**, not an automatic Gate 1 approval. It uses a unified Projects/conversations tree, a compact single-row resting composer, progressive writing controls, a reversible expanded writing sheet, comfortable response reading and existing iPhone glass materials. Preserve the chosen structure unless the owner directs otherwise.
+**Canvas (A)** is the owner-selected design foundation, and **Gate 1 was explicitly approved by the owner on 2026-10-21 following the final sidebar-spacing review, with further polish acknowledged as remaining work**. It uses a unified Projects/conversations tree, a compact single-row resting composer, progressive writing controls, a reversible expanded writing sheet, comfortable response reading and existing iPhone glass materials. **Preserve the approved Canvas direction** unless the owner directs otherwise; approval does not imply perfection, physical-device readiness or release acceptance.
 
 Other applications, including 9Router and ChatGPT, may inspire general UI/interaction principles, but **Lumen is not a clone**: original branding, implementation, hierarchy and code are required. Inspiration is not permission to copy proprietary assets or exact screens. Do not assert comparative security without an evidence-based audit.
 
@@ -22,8 +22,9 @@ Other applications, including 9Router and ChatGPT, may inspire general UI/intera
 - **Owner:** solely decides product direction, Gate approvals, production integration authorization, merging and deployment.
 - **ChatGPT:** planner, product reviewer, evidence verifier, agent brief author and cross-thread checkpoint maintainer.
 - **Claude Code:** primary coding agent. **Codex:** handoff/secondary implementation agent when Claude approaches usage limits. Track the **currently active agent in CURRENT_STATUS.md**; no agent switch occurs merely because one is planned.
-- **Gate 1 is not automatic.** Canvas preference, successful screenshots, CI passes, a clean PR or an agent report never equals explicit Gate approval.
-- Blackout work is currently isolated in draft preview PR #34. Do not integrate it into production until the owner separately authorizes staged work. No merge/deploy without appropriate explicit permission.
+- **Gate 1 approval is explicit and recorded:** the owner approved Canvas's overall design direction on 2026-10-21 despite acknowledging remaining polish. This closes the Gate 1 design-selection decision **only**. Green tests or agent reports must never be mistaken for approval of other gates or authorization to integrate, merge or deploy.
+- **After Gate 1:** commission a staged production-integration **blueprint for owner review first**, mapping component ownership, feature/security parity, rollout/rollback, test gates and early physical-iPhone checks. Writing and reviewing that plan is permitted; executing it in production requires separate owner authorization. Gate 2 and Gate 3 remain pending.
+- Blackout work remains isolated in draft preview PR #34 pending further authorization. No merge/deploy without appropriate explicit permission.
 
 ## Context governance
 

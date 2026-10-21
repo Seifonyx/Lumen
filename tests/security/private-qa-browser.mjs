@@ -115,11 +115,10 @@ try {
       }
     }
 
-    const state = await page.evaluate(() => ({
+    const state = await page.evaluate(async () => ({
       blockedHosts: window.__qaBlockedHosts || [], disabledCalls: window.__qaDisabledCalls || [], csp: window.__cspViolations || [],
-      workers: navigator.serviceWorker ? navigator.serviceWorker.getRegistrations().then((r) => r.length) : 0,
+      workers: navigator.serviceWorker ? (await navigator.serviceWorker.getRegistrations()).length : 0,
     }));
-    state.workers = await state.workers;
     const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
     results.push({ viewport: `${width}x${height}`, requests: seen.requests.length, external: seen.external, errors: seen.errors, overflow: await overflow(page),
       axe: axe.violations.map((v) => ({ id: v.id, nodes: v.nodes.length })), ...state });

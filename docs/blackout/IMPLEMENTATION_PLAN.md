@@ -89,3 +89,10 @@ Proposal acceptance: first full response paragraph visible above a composer ≤4
 ## Verification and next review
 
 Use CONSOLIDATION.md and the new portable review for this scope; older workspace/provider boards retain their separate verified evidence. Stop at this coherent proposal. No automatic approval request, identity rollout or production migration. The complete master and original gates remain active.
+
+### Gate1 flagship quality pass — 21 October 2026
+
+[Scoped brief](GATE1_QUALITY_PASS_2026-10-21.md), [record and before/after](workspace-proofs/QUALITY_PASS.md). Typography/hierarchy, intelligence rail, accurate Workspace/Focus/Routing mode identity, phone toolbar clarity and an honest usage share, all in the opt-in consolidated preview. Chromium matrix (11 cases, 195 axe states, 0 violations) passes; WebKit not run in this environment. Implementation commit `e20673adae392b2bc2f46b9a422150759cf0ee6e`.
+
+**18.5→18.5%, Medium confidence; weights/fractions unchanged, 81.5 remaining.** Refines partial B02.1/B02.2; no B02.3 approval, B03/B04 integration or physical-device credit. Gate1 NOT APPROVED; stop for owner review.
+

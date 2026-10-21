@@ -2,7 +2,9 @@
 
 20 October 2026, Africa/Cairo. **Gate 1 remains NOT APPROVED.** [Course correction](../ROUTING_CENTER_COURSE_CORRECTION_2026-10-20.md) governs. These are actual local Lumen component renders with labelled synthetic accounts, not generated artwork or a production redesign.
 
-**Latest:** [Gate1 flagship consolidation](CONSOLIDATION.md), [portable16-image review](consolidation-review.html), [machine evidence](consolidation-evidence.json). One Workspace plus optional Focus writing, in an opt-in isolated preview. Gate1 remains unapproved; no merge/deployment or automatic migration.
+**Latest:** [Gate1 quality pass](QUALITY_PASS.md) — typography, intelligence rail, mode identity and honest usage share on the consolidated preview, with before/after captures. Gate1 remains unapproved.
+
+**Previous:** [Gate1 flagship consolidation](CONSOLIDATION.md), [portable16-image review](consolidation-review.html), [machine evidence](consolidation-evidence.json). One Workspace plus optional Focus writing, in an opt-in isolated preview. Gate1 remains unapproved; no merge/deployment or automatic migration.
 
 **Preserved flagship exploration:** [Flagship Workspace & Composer](FLAGSHIP_WORKSPACE.md), [portable offline flagship review](workspace-review.html), [machine evidence](workspace-evidence.json). This is a bounded proposal after provider quality; Gate1 is unapproved and work stops here. The board embeds26 actual images, including original-app comparisons, with no external assets.
 

@@ -1,8 +1,20 @@
 # Lumen Blackout — cross-agent handoff
 
-**Checkpoint:20 October 2026, Africa/Cairo. Phase B02, identity/product-architecture exploration. Gate 1 NOT APPROVED.** Current completion **18.5% (approximately 19%, Medium confidence)** on stable Blackout baseline v1. Previous committed checkpoint was unscored; an uncommitted 19.75% draft overcredited rejected visual work. Research is retained; current credit comes from the actual new two-experience proof, not the old recolors. Weights unchanged;81.5 points remain. Independent Model Picker ledger stays 98.5%.
+**Checkpoint: 21 October 2026 (quality pass; see below). Phase B02, identity/product-architecture exploration. Gate 1 NOT APPROVED.** Current completion **18.5% (approximately 19%, Medium confidence)** on stable Blackout baseline v1. Previous committed checkpoint was unscored; an uncommitted 19.75% draft overcredited rejected visual work. Research is retained; current credit comes from the actual new two-experience proof, not the old recolors. Weights unchanged;81.5 points remain. Independent Model Picker ledger stays 98.5%.
 
-## Latest scoped work — Gate1 flagship consolidation
+## Latest scoped work — Gate1 flagship quality pass (21 October 2026)
+
+User [quality-pass brief](GATE1_QUALITY_PASS_2026-10-21.md) continues PR #34 from `41bae00` (consolidation implementation `5c9ff0f`). Read [record, before/after and limits](workspace-proofs/QUALITY_PASS.md). Opt-in preview only; no `src/`, dependency or production entry change.
+
+Changes: desktop type hierarchy (34px title over 25px answer heading, 66ch measure, one section-label system); quieter 272px intelligence rail with conversation/draft context split; accurate Workspace/Focus/Routing mode identity in sidebar edition, desktop top-bar pill and phone wordmark; compose and ⓘ phone icons, 320px toolbar fit; honest usage share (`usage-share.js` + `UsageShareLabels.tsx`: "<1%"/">99%", spoken text, minimum arc) without changing canonical UsageMeter data.
+
+Verification (Chromium only): consolidated 1440×960/390×844/320×844/390×480/320×480 and retained Index/Studio 1440/390 + Index 320×480 + Studio 390×480 pass — 11 cases, 195 axe states, 0 violations/page errors/overflow, one intercepted Send/Stop each. Phone reading geometry identical before/after. New assertions (mode identity, toolbar fit, usage label) were red on `41bae00`, green now. Proof tsc, `npm test`, `vite build` pass. **Not run:** Linux WebKit (not installable here), strict premium audit (tool absent), portable review rebuild. Raw evidence: `/home/user/.lumen-verification/gate1-quality-2026-10-21/` (outside Git, this container only).
+
+**18.5→18.5%, Medium confidence; 81.5 weighted points remain.** Implementation commit `e20673adae392b2bc2f46b9a422150759cf0ee6e`; the docs-only follow-up records it — resolve the final HEAD with Git and confirm the remote ref.
+
+**Exact next action: STOP for owner review.** Gate1 NOT APPROVED; no merge/deploy/production integration. Before any approval request: WebKit matrix run and physical-iPhone check of toolbar icons, Focus and keyboard.
+
+## Previous scoped work — Gate1 flagship consolidation
 
 User [consolidation brief](GATE1_CONSOLIDATION_2026-10-20.md) authorizes only this continuation from clean synchronized `4ff2ad77cecbc37f4f52423f74877738497f45ea`. Read [implementation/verification](workspace-proofs/CONSOLIDATION.md), [portable review](workspace-proofs/consolidation-review.html) and [machine evidence](workspace-proofs/consolidation-evidence.json). Previous flagship/provider slices, shared ComposerChrome and their review artifacts remain preserved.
 

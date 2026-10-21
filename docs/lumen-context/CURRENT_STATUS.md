@@ -78,6 +78,12 @@ ChatGPT independently fetched and read the committed blueprint, inspected the cu
 
 **Refinement for first authorized slice:** bound CP01 strictly to synthetic contract characterization, explicit presentation seams and isolated scoped-token adapter; avoid changing default production imports/output, feature routing, credentials, storage schemas, build/deploy pipelines or live network permission. Validate non-importability of proof bootstrap/test credentials in the ordinary bundle and regression baseline. Record exact unmet tests/physical-device test access feasibility without bypassing localhost guards. **CP01 is not owner-authorized by this review.** Request explicit owner permission before Codex starts; stop after evidence for CP01 review, before CP02. The recorded agent is Codex (last confirmed).
 
+## Owner visual-polish clarification — 2026-10-21
+
+The owner positively endorsed the **quality and refinement level** of illustrative premium AI workspace reference images shown in ChatGPT (sidebar, conversation/composer and Routing Center) as the kind of polish they had meant was still missing from Canvas. **This is directional feedback, not a new approved screenshot/specification or a reversal of Gate 1.** The images were generic inspiration, not verified Lumen implementations. Preserve the original Canvas structure and Lumen identity while raising typographic hierarchy, spacing/proportions, cohesive surfaces, restraint, control/icon precision, interaction states and desktop/iPhone finish. Do not copy third-party brand assets or exact screen layouts.
+
+**Scope:** incorporate this as a visual acceptance lens for CP02–CP04/Gate 2 and later final polish. CP01 remains bounded to contract characterization, seams and scoped tokens; no new production redesign authorization or Gate 2 approval follows from this feedback. The last verified code PR head remains `df54edf244ccadf6886f0608f230631fe3b52dee`, draft/unmerged at this review.
+
 ## Context branch synchronization
 
 This file belongs on **`docs/lumen-live-context`**, separate from the coding workstream and main. Only public-safe project metadata, decisions, evidence links and risks are recorded here. Its containing commit is the latest context checkpoint; verify local and remote refs independently. Do not merge this branch into production or imply static ChatGPT Project Sources update automatically. Read before writing and preserve concurrent changes; never force push.

@@ -1,8 +1,14 @@
 # Lumen Blackout — cross-agent handoff
 
-**Checkpoint: 21 October 2026, UTC — QA01 accepted (exact-head CI 39652612955 passed); QA02-A Cloudflare readiness preflight delivered as planning only. Gate 1 APPROVED; Canvas selected; CP01 and QA01 complete. QA02 provisioning/deployment, QA03, CP02+, production visual integration, merge and deployment NOT authorized. Gates 2/3 pending.** Completion **21.5% → 21.5%, Medium confidence**; 78.5 points remain. Independent Model Picker remains 98.5%.
+**Checkpoint: 21 October 2026, UTC — owner set a permanent strict $0 budget; QA02 revised to a zero-cost architecture (planning only). Gate 1 APPROVED; CP01 and QA01 complete. No QA02 provisioning/deployment, QA03, CP02+, merge or deployment authorized. Gates 2/3 pending.** Completion **21.5% → 21.5%, Medium confidence**; 78.5 points remain.
 
-## Latest — QA02-A Cloudflare readiness preflight (planning only; stop for review)
+## Latest — strict $0 QA02 architecture revision (planning only; stop for review)
+
+Read [QA02_ZERO_COST_ARCHITECTURE.md](QA02_ZERO_COST_ARCHITECTURE.md). Owner made **$0 a permanent hard requirement**. Cloudflare Access is excluded (Zero Trust onboarding requires entering payment details even on Free; MFA plan availability unknown), and so are R2 (card may be required) and every paid fallback from QA02-A. **Recommended:** one Worker on **Workers Free** + Static Assets with `run_worker_first: true` (Worker checks every request) + **self-hosted passkey (Face ID) sign-in** using pinned `@simplewebauthn/server` and `jose` sessions; registry/expiry/revocation as deployment configuration (no KV/R2); integrity verified before upload and by a post-deploy sweep instead of per-request hashing (fixes the 10 ms CPU risk). Stages Z0 (owner read-only checks O1–O4) → Z1 local code + review → Z2 deny-only → Z3 passkey + canary → Z4 revocation/teardown → Z5 QA03; tests A1–A12, R1–R5, S1–S5, B1–B2. Fallback if Z1 review or O1 fails: local-only testing. Nothing created or deployed.
+
+**Exact next action: STOP for owner and ChatGPT review.**
+
+## Previous — QA02-A Cloudflare readiness preflight (superseded on hosting/cost by the $0 revision)
 
 Read [QA02A_PREFLIGHT.md](QA02A_PREFLIGHT.md). Owner authorized QA02-A only after accepting QA01. **No Cloudflare account access exists in this session** (no token/login/account; relay secrets not read) and direct fetches of developers.cloudflare.com are refused by the session network policy, so capabilities come from search summaries of Cloudflare's own docs/changelog and are listed as **owner checks**, not verified facts. Nothing was created, enrolled, configured, deployed, paid for or exposed.
 
@@ -12,7 +18,7 @@ Read [QA02A_PREFLIGHT.md](QA02A_PREFLIGHT.md). Owner authorized QA02-A only afte
 
 **Rollout:** step 0 owner read-only dashboard checks → 1 local code (jose, deny/canary Worker, CPU-light integrity, device-key fix) → 2 Access/MFA setup → 3 deny-only Worker → 4 R2 + harmless canary → 5 iPhone Safari login/MFA → 6 revocation/teardown rehearsal → 7 QA03. Each step lists its required approval; tests D1–D8 and C1–C10 defined. **Target $0/month; worst case $12/month** ($5 Workers Paid + $7 Access seat) only with explicit approval.
 
-**Exact next action: STOP for owner and ChatGPT review.** Owner can do step 0 (read-only checks, report privately). Steps 1–7 each need the explicit approval named in the preflight.
+**Superseded by the $0 revision.** (Was: owner can do step 0 (read-only checks, report privately). Steps 1–7 each need the explicit approval named in the preflight.
 
 ## Previous — QA01 local private-testing foundation (verified; stop for review)
 

@@ -133,3 +133,5 @@ Every step is reversible without touching Lumen production, Firebase or the rela
 ## 12. Stop
 
 QA02-A is complete as planning. **STOP for owner and ChatGPT review.** Step 0 needs only the owner's time; steps 1–7 each need the explicit approval listed. Progress **21.5% → 21.5%, Medium confidence** (QA work is unweighted).
+
+> **Superseded on hosting and cost (21 October 2026):** the owner set a permanent $0 budget. See [QA02_ZERO_COST_ARCHITECTURE.md](QA02_ZERO_COST_ARCHITECTURE.md); the paid fallbacks, Access and R2 above no longer apply.

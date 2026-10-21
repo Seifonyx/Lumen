@@ -177,3 +177,7 @@ Owner authorized **QA01 only** following the [private iPhone QA proposal](PRIVAT
 ### QA02-A Cloudflare readiness preflight — 21 October 2026
 
 QA01 accepted after exact-head CI run 39652612955 passed. Owner authorized QA02-A (assessment only). [Preflight report](QA02A_PREFLIGHT.md): capability matrix with confidence levels (no account access in this session; owner read-only checks listed), JWT recommendation (pinned `jose` + QA01 policy layer), QA-only device-preference isolation, new Worker CPU-limit finding, MFA options for iPhone Safari, proposed configuration, seven-step approval-gated rollout, deny/canary tests, costs (target $0, worst case $12/month with approval) and rollback. Planning only: **21.5% → 21.5%, Medium confidence.** Nothing provisioned; stop for owner/ChatGPT review.
+
+### QA02 strict $0 architecture revision — 21 October 2026
+
+Owner made $0 a permanent requirement. [Revision](QA02_ZERO_COST_ARCHITECTURE.md): Access/R2/paid fallbacks excluded; Workers Free + Worker-first Static Assets + self-hosted passkey sign-in (maintained libraries), configuration-based registry/revocation, pre-upload and post-deploy integrity instead of per-request hashing; stages Z0–Z5 with negative tests; local-only fallback. Planning only: **21.5% → 21.5%, Medium confidence.**

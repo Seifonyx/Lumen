@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-21, Claude Code strict-$0 QA02 architecture revision (planning only). Nothing created, enrolled, configured, deployed, paid for or exposed. No QA02 provisioning, QA03, CP02, production/security change, merge or deployment. See [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
+> **Last sync:** 2026-10-21, Claude Code $0 passkey security amendment (planning only). Nothing created, deployed or paid for. See [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
 
 ## Live code and approval state
 
@@ -8,7 +8,7 @@
 |---|---|
 | Repo | `Seifonyx/Lumen` (public) |
 | Workstream | Draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34), `docs/lumen-blackout-phase1-20261019`; open, draft, unmerged |
-| **Latest pushed workstream commit** | **`28a64a5a74d5601f30da6001fac8fbc2f6d4e400`** ($0 QA02 revision, Markdown only); QA01 verified code `d0ef5f8`, CI 39652612955 passed at `7f13482`; local HEAD and remote ref matched after push |
+| **Latest pushed workstream commit** | **`fe05c4d8b9abbe1ea2e07e9c7bda169f1e9094f2`** (passkey amendment, Markdown only); QA01 verified code `d0ef5f8`; local and remote refs matched after push |
 | Earlier implemented milestones | CP01 `c9153fd75ba16ebf70908f5d8c092cb540b9aa58`; QA00 proposal `88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f` |
 | Approved Canvas visual source | `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`; unchanged by the documentation milestone |
 | Design direction / Gate 1 | **Canvas (A) selected; Gate 1 APPROVED**, explicitly confirmed by owner after final sidebar-spacing review. Further polish remains; rejected Workspace/Focus consolidation is not the foundation. |
@@ -19,6 +19,11 @@
 | Latest separately previously verified deployed runtime | `677bc51f39fbf8fcf66bc91f846b71a4912bb306`, [deployment 39447533639](https://github.com/Seifonyx/Lumen/actions/runs/39447533639). No fresh live verification this session. |
 
 
+
+
+## Latest — $0 passkey security amendment delivered (planning only)
+
+**[Amendment at the exact pushed revision](https://github.com/Seifonyx/Lumen/blob/fe05c4d8b9abbe1ea2e07e9c7bda169f1e9094f2/docs/blackout/QA02_PASSKEY_AMENDMENT.md).** Agent-reported research (search summaries of Cloudflare/SimpleWebAuthn docs; no account access). **Correction accepted:** stateless signed challenges are not single-use; config changes are not globally immediate. **Amended design:** one SQLite-backed Durable Object (documented as available on Workers Free, over-quota operations fail rather than bill) atomically consumes challenges, allows exactly one enrolment, stores opaque sessions and revocations, and holds the kill switch; any DO failure denies (503). `@simplewebauthn/server` with exact origin/RP ID and required user verification; `jose` dropped. Every static asset still passes the Worker and session check. **Owner checks V1–V5** (Workers Free, official DO Free limits, no billing prompt on first DO migration — otherwise stop and stay local-only — account MFA, $0 after a week). Z1 local-only scope and negative tests (replay, concurrency, duplicate enrolment, forged sessions, failed storage, asset bypass, revocation) defined. **Progress 21.5% → 21.5%. STOP for owner and ChatGPT review.**
 
 ## Latest — strict $0 QA02 architecture revision delivered (planning only)
 

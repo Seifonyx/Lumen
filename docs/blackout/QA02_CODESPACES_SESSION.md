@@ -67,3 +67,28 @@ Access ends when you delete or stop the Codespace, when GitHub's port cookie exp
 - **Observed issue (QA-only):** the synthetic-review banner overlaps the top of the page on iPhone. Follow-up: give the banner its own space or move it.
 - **Teardown:** Codespace deleted; Codespaces list shows 0.
 - Served app was the ordinary synthetic Lumen app, not the Canvas design (CP02 not started).
+
+## Update — banner and automatic start fixes (22 October 2026)
+
+**Banner:** the synthetic-review banner is now the page's first row. The app (`#root`) fills the space below it; the phone drawer and its scrim start below it; with the keyboard open, the app is pinned below it. The QA browser contract asserts in Chromium and Linux WebKit at 1440×960, 390×844, 320×568 and 390×480 that nothing of the app (container, header, sidebar/drawer, main) starts above the banner's bottom, both normally and with a simulated keyboard (measured gap 0 px, banner 32 px). The first run of that assertion caught the phone drawer overlapping, which is fixed.
+
+**Automatic start:**
+- **Cause:** `postStartCommand` started the server as an unsupervised background job. On the first session, no log existed when the terminal was opened, so it either had not run yet (setup was still installing packages) or the job did not survive.
+- **Now:** `postAttachCommand` runs `bash scripts/qa/codespace-start.sh` in a visible terminal each time the editor attaches. This happens after `npm ci`. The script:
+  - refuses outside a Codespace or on a checkout with uncommitted changes;
+  - builds and audits the review;
+  - serves it in the foreground of that terminal, logging every step with a time to `/tmp/lumen-qa.log`;
+  - on later attaches, prints **Already running** with the link instead of starting a second copy.
+- **Locally verified** with simulated Codespace variables: start, Already running with link, right host 200 / foreign host 404, refusal outside a Codespace, refusal with an uncommitted file.
+
+| Message in the terminal / log | Meaning | What to do |
+|---|---|---|
+| `Lumen synthetic review ready … https://…-4173.app.github.dev/b/…/` | Running | Check Ports shows **Private**, then open the link on the iPhone |
+| `Already running. Review link: …` | A previous attach already started it | Use that link |
+| `FAILED: not running inside a GitHub Codespace.` | Started elsewhere | Only run it in the Codespace |
+| `FAILED: the checkout has uncommitted changes …` | Files were edited in the Codespace | Discard the edits (Source Control → Discard), then run `bash scripts/qa/codespace-start.sh` |
+| `FAILED: npm ci did not complete` / `the review build or its isolation audit failed` | Install or build problem | Send a screenshot of the terminal; don't change settings |
+| `FAILED: the review server stopped` | The terminal was closed or the process ended | Run `bash scripts/qa/codespace-start.sh` again |
+| No terminal or message after setup | The attach command did not run | Open a terminal (☰ → Terminal → New Terminal) and run `bash scripts/qa/codespace-start.sh` |
+
+The session procedure is otherwise unchanged: confirm port 4173 is **Private** before opening the link, and delete the Codespace afterwards.

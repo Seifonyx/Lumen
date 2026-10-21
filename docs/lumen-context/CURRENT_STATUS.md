@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-22, ChatGPT reviewed the recorded first private iPhone session and verified PR #34 documentation commit; session results remain owner-reported. No production change, deployment or merge. See [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
+> **Last sync:** 2026-10-22, Claude Code — QA banner/Codespaces start fixes and **CP02** (Canvas composer + writing sheet, compile-time flag **off** in production) implemented, agent-verified and pushed to draft PR #34. No production change, deployment or merge. See [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
 
 ## ChatGPT independent Codespaces adapter review — 2026-10-21
 
@@ -24,13 +24,13 @@ Reviewed QA-only code, security tests, browser smoke test source, session guide 
 |---|---|
 | Repo | `Seifonyx/Lumen` (public) |
 | Workstream | Draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34), `docs/lumen-blackout-phase1-20261019`; open, draft, unmerged |
-| **Latest pushed workstream commit** | **`9642d4bb25c3d1f86d83dffa51751876abe814e5`** (session record); Codespaces adapter code `ac93683`, CI 39664046109 passed at `a42b8e4` |
+| **Latest pushed workstream commit** | **`55052bd5d7227501020cb1c57cc7d3e695b5622d`** (CP02 docs/evidence); CP02 code `e0196eb`, tests `ea3954c`; QA fixes `7c628bb`/`5065ff7`/`64f7fdc`. Earlier: session record `9642d4b`, Codespaces adapter `ac93683` |
 | Earlier implemented milestones | CP01 `c9153fd75ba16ebf70908f5d8c092cb540b9aa58`; QA00 proposal `88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f` |
 | Approved Canvas visual source | `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`; unchanged by the documentation milestone |
 | Design direction / Gate 1 | **Canvas (A) selected; Gate 1 APPROVED**, explicitly confirmed by owner after final sidebar-spacing review. Further polish remains; rejected Workspace/Focus consolidation is not the foundation. |
-| Implementation / later gates | **CP01, QA01 and Codespaces QA adapter complete; one private synthetic Codespaces iPhone session owner-reported successful and deleted.** Cloudflare QA02 deployment/QA03 and **CP02+ unapproved**; Gates 2/3 pending. No production visual integration, merge or deployment. |
+| Implementation / later gates | **CP01, QA01, Codespaces QA adapter and QA fixes complete; CP02 implemented behind an off-by-default flag (agent-verified; physical-iPhone confirmation pending).** CP03+, Cloudflare QA02 deployment/QA03, default production migration unapproved; Gate 2 checkpoint A not approved; Gates 2/3 pending. No production visual integration, merge or deployment. |
 | **Canonical Blackout completion** | **21.5%, approximately 22%, Medium confidence** (workstream plan). 18.5% → 21.5% solely from B02.3 (owner Gate 1 decision). CP01 and QA01 add **no weighted credit** (unweighted preparation; no B03–B08 acceptance group complete). 78.5 points remain. Separate Model Picker remains 98.5%. |
-| Active agent | **Claude Code**, last owner-confirmed; first private Codespaces Safari session reported and stopped. Next assignment requires explicit owner authorization; no CP02+ continuation by inference. |
+| Active agent | **Claude Code**, stopped after CP02 for owner review. Next Codespace is owner-created only; no CP03 continuation by inference. |
 | Latest observed merged main | `655438f0ec8d2e3594595252af4a99e6c58627a0` (documentation-only checkpoint) |
 | Latest separately previously verified deployed runtime | `677bc51f39fbf8fcf66bc91f846b71a4912bb306`, [deployment 39447533639](https://github.com/Seifonyx/Lumen/actions/runs/39447533639). No fresh live verification this session. |
 
@@ -39,6 +39,30 @@ Reviewed QA-only code, security tests, browser smoke test source, session guide 
 
 
 
+
+## Latest — QA fixes and CP02 Canvas composer (agent-verified; stop for owner review, 2026-10-22)
+
+Owner authorized two QA-only fixes and **CP02 only**.
+
+**QA fixes:**
+- The synthetic banner takes its own layout row, with a 0 px overlap asserted in Chromium and Linux WebKit at 4 viewports.
+- Codespaces now starts via a foreground `postAttachCommand` script with timed logs and explicit `FAILED:` messages ([guide](https://github.com/Seifonyx/Lumen/blob/55052bd5d7227501020cb1c57cc7d3e695b5622d/docs/blackout/QA02_CODESPACES_SESSION.md)).
+
+**CP02** ([record](https://github.com/Seifonyx/Lumen/blob/55052bd5d7227501020cb1c57cc7d3e695b5622d/docs/blackout/CP02_COMPOSER.md)):
+- The canonical Composer gains resting/engaged/expanded states and a writing sheet. It uses the same mounted textarea and the existing focus-scope, sheet-drag and viewport hooks.
+- It keeps the real picker, usage, attachments, Send/Stop and drafts.
+- The compile-time flag is `false`: production output is byte-identical to baseline (174 files). Only the synthetic QA review build enables it.
+
+**Agent-reported checks:**
+- `npm test`;
+- the new CP02 browser contract (Chromium + WebKit × 1440×960, 390×844, 320×568, 390×480);
+- the existing QA browser and Codespaces contracts;
+- the QA01 isolation audit 8/8, with the guard deliberately allowing exactly the four CP02 source files with the flag off;
+- the CP01 graph check.
+
+**Not executed:** physical iPhone. Eight device items are listed (keyboard, drag, glass, IME/undo, VoiceOver, safe areas, nested controls, Send/Stop).
+
+**Progress 21.5%, Medium** (unweighted child milestone; device acceptance open). **STOP:** no CP03, merge, deploy, Gate 2, paid service or agent-created Codespace.
 
 ## Latest — first private Codespaces iPhone session succeeded (owner-run, 2026-10-22)
 

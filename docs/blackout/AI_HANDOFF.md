@@ -2,7 +2,11 @@
 
 **Checkpoint: 21 October 2026, UTC — owner set a permanent strict $0 budget; QA02 revised to a zero-cost architecture (planning only). Gate 1 APPROVED; CP01 and QA01 complete. No QA02 provisioning/deployment, QA03, CP02+, merge or deployment authorized. Gates 2/3 pending.** Completion **21.5% → 21.5%, Medium confidence**; 78.5 points remain.
 
-## Latest — Codespaces private-port feasibility (planning only; Cloudflare Z1 paused)
+## Latest — Codespaces private-port QA adapter (implemented, locally verified; stop)
+
+Owner authorized the QA-only Codespaces adapter; Cloudflare Z1 stays paused. Read [QA02_CODESPACES_SESSION.md](QA02_CODESPACES_SESSION.md). Added `scripts/qa/serve-codespace.mjs` (QA01 gate on 127.0.0.1; Codespace-only; verified build only; forwarded/loopback hosts only; discards browser identity and signs its own synthetic identity), `.devcontainer/devcontainer.json` (Node 22, builds and serves port 4173, no visibility override, no secrets), `server/private-qa/memory-storage.mjs` (moved from fixtures), unit + browser tests. **Verified at code commit `ac93683280f5dc4d8a2aaaf0df20f05d4fb1fee7`:** `npm test` 84 files; QA01 isolation 8/8 with production output byte-identical (174 files); Codespaces browser smoke Chromium + Linux WebKit at 390×844/1440×960. **Not executed:** a real Codespace, GitHub's port proxy/sign-in, iPhone Safari. Owner $0 checks and session/teardown steps are in the guide. **STOP; the first private Codespaces session needs separate owner authorization.**
+
+## Previous — Codespaces private-port feasibility (planning only)
 
 Owner paused the Cloudflare passkey/Durable Object Z1. [Feasibility](QA02_CODESPACES_FEASIBILITY.md): a temporary GitHub Codespace serving the QA01 build on a **private** forwarded port (creator-only GitHub sign-in, 3 h cookie) is viable at $0 when no payment method is on file (free quota 120 core-hours/15 GB-month; use is blocked, not billed, when exhausted). Smallest change for approval: `scripts/qa/serve-codespace.mjs` (reuses QA01 gate, injects synthetic identity, Codespace/host-restricted) + `.devcontainer/devcontainer.json` (private port 4173). Owner checks: no payment method; Safari cookie behaviour on first session. **STOP for owner approval.**
 

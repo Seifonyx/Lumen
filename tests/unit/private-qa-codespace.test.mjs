@@ -87,6 +87,11 @@ test('the devcontainer keeps the review port unpublished and runs only QA toolin
   const text = readFileSync('.devcontainer/devcontainer.json', 'utf8');
   assert.ok(!/"visibility"\s*:\s*"(public|org)"/i.test(text), 'never request a public or organisation port');
   assert.ok(!/secrets|GITHUB_TOKEN|firebase|deploy/i.test(text.replace(/\/\/.*$/gm, '')), 'no secrets, Firebase or deployment');
-  assert.match(text, /serve-codespace\.mjs --build \/tmp\/lumen-qa-build --port 4173/);
+  assert.match(text, /"postAttachCommand": "bash scripts\/qa\/codespace-start\.sh"/);
+  assert.ok(!/postStartCommand/.test(text.replace(/\/\/.*$/gm, "")), "no unsupervised background start");
+  const start = readFileSync("scripts/qa/codespace-start.sh", "utf8");
+  assert.match(start, /CODESPACES:-}" = "true"/);
+  assert.match(start, /uncommitted changes/);
+  assert.match(start, /serve-codespace\.mjs --build "\$OUT" --port "\$PORT"/);
   assert.match(text, /"otherPortsAttributes"\s*:\s*\{\s*"onAutoForward"\s*:\s*"ignore"/);
 });

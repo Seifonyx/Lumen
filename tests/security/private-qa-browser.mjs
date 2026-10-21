@@ -77,6 +77,21 @@ try {
     assert.equal(response.headers()['cache-control'], 'private, no-store');
     await composer(page).waitFor({ timeout: 20000 });
     await page.getByText(/^Synthetic review · no live provider requests/).waitFor();
+    // The banner has its own row: nothing of the app (header, safe area, navigation) starts above its bottom,
+    // including with the iPhone keyboard layout (kb-open pins the app to the visual viewport).
+    const overlap = await page.evaluate(async () => {
+      const bar = document.querySelector('.qa-banner').getBoundingClientRect();
+      const tops = () => [...document.querySelectorAll('.app, .app .topbar, .app .sidebar, .app .main')].filter((n) => n.getClientRects().length).map((n) => n.getBoundingClientRect().top);
+      const normal = Math.min(...tops()) - bar.bottom;
+      document.documentElement.style.setProperty('--vv-top', '0px');
+      document.documentElement.style.setProperty('--vv-h', `${Math.round(innerHeight * 0.55)}px`);
+      document.documentElement.classList.add('kb-open');
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const keyboard = document.querySelector('.app').getBoundingClientRect().top - bar.bottom;
+      document.documentElement.classList.remove('kb-open');
+      return { normal, keyboard, height: bar.height };
+    });
+    assert.ok(overlap.normal >= -0.5 && overlap.keyboard >= -0.5, `banner overlaps the app: ${JSON.stringify(overlap)}`);
     const account = await page.evaluate(() => JSON.parse(localStorage.getItem('mr.preview_user') || '{}').uid);
     assert.match(account, /^preview-qa-[0-9a-f]{32}$/);
 
@@ -124,7 +139,7 @@ try {
       workers: navigator.serviceWorker ? (await navigator.serviceWorker.getRegistrations()).length : 0,
     }));
     const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
-    results.push({ viewport: `${width}x${height}`, requests: seen.requests.length, external: seen.external, errors: seen.errors, overflow: await overflow(page),
+    results.push({ viewport: `${width}x${height}`, bannerGap: overlap, requests: seen.requests.length, external: seen.external, errors: seen.errors, overflow: await overflow(page),
       axe: axe.violations.map((v) => ({ id: v.id, nodes: v.nodes.length })), ...state });
     assert.deepEqual(seen.external, [], 'no request may leave the review origin');
     assert.deepEqual(state.blockedHosts, [], 'normal review flows need no blocked host');

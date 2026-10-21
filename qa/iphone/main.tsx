@@ -66,7 +66,11 @@ function banner(lease: Lease, uid: string) {
   button.setAttribute('aria-label', 'Reset this review to its starting chats');
   button.addEventListener('click', () => void reset(uid));
   bar.append(text, button);
-  document.body.append(bar);
+  // First in the page, before the app, so it occupies its own row (see qa.css).
+  document.body.prepend(bar);
+  const measure = () => document.documentElement.style.setProperty('--qa-banner-h', `${bar.getBoundingClientRect().height}px`);
+  new ResizeObserver(measure).observe(bar);
+  measure();
 }
 
 function lockScreen(reason: string) {

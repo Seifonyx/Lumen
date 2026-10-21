@@ -3,6 +3,7 @@
 //
 // Build-time isolation, enforced by the `lumen-qa-isolation` plugin:
 //   • src/lib/firebase.ts, src/lib/sync.ts, src/pwa/register.ts → QA adapters (same exports, no Firebase);
+//   • src/lib/canvas-presentation.ts → on (CP02 Canvas composer and its styles; off in the ordinary build);
 //   • firebase/app|auth|firestore → a stub that refuses every operation; any other Firebase package fails;
 //   • every `fetch(` in application source → the synthetic transport; every `new Worker(` → a disabled error;
 //   • the real Firebase, sync, service-worker and Firebase-configuration modules can never load.
@@ -19,6 +20,8 @@ export const QA_REPLACEMENTS: Record<string, string> = {
   [at('src/lib/firebase.ts')]: at('qa/iphone/adapters/firebase.ts'),
   [at('src/lib/sync.ts')]: at('qa/iphone/adapters/sync.ts'),
   [at('src/pwa/register.ts')]: at('qa/iphone/adapters/pwa-register.ts'),
+  // CP02: the Canvas composer presentation is on in the review build only.
+  [at('src/lib/canvas-presentation.ts')]: at('qa/iphone/adapters/canvas-presentation.ts'),
 };
 const SDK_STUB = at('qa/iphone/adapters/firebase-sdk.ts');
 const SDK_ENTRIES = new Set(['firebase/app', 'firebase/auth', 'firebase/firestore']);

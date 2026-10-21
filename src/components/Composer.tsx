@@ -22,6 +22,8 @@ const VoiceMode = lazy(() => import('./VoiceMode'));
 import { ANALYSIS_TEMPLATES } from '../lib/analysis';
 import { toolModel } from '../lib/ai/tool-inputs.js';
 import { db } from '../lib/db';
+import { CANVAS_COMPOSER } from '../lib/canvas-presentation';
+import { useCanvasComposer } from './ComposerCanvas';
 
 interface Pending {
   key: string;
@@ -123,6 +125,8 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
     setText('');
     setInterim('');
     saveDraft('');
+    // Sending (or a command) from the writing sheet returns to the conversation.
+    if (CANVAS_COMPOSER) canvas!.collapse();
   };
   // Restore the new chat's draft before it can receive input. A deferred effect
   // can overwrite the first keystrokes after a fast chat switch.
@@ -152,6 +156,9 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
   }, []);
 
   useEffect(autosize, [text, interim, autosize]);
+  // CP02 Canvas presentation: off (folded away) in the ordinary build, so the hook order is fixed per build.
+  // Where it adds a piece, the ternaries below keep the ordinary branch's JSX unchanged.
+  const canvas = CANVAS_COMPOSER ? useCanvasComposer({ input, scope: attachmentScope, value: interim || text, attachments: visiblePending.length, title: chat?.title, autosize }) : null;
 
   useEffect(() => {
     if (!isTouch()) input.current?.focus();
@@ -387,7 +394,7 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
   const searchAvailable = !info || info.search;
 
   return (
-    <div className="composer-wrap">
+    <div className="composer-wrap" {...(CANVAS_COMPOSER ? canvas!.wrap : undefined)}>
       {dragging && (
         <div className="drop-overlay">
           <Paperclip size={28} />
@@ -402,12 +409,13 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
       )}
       <form
         className="composer"
+        {...(CANVAS_COMPOSER ? canvas!.form : undefined)}
         onSubmit={(e) => {
           e.preventDefault();
           submit();
         }}
       >
-        {chat?.repo && <ChecksBar chat={chat} />}
+        {CANVAS_COMPOSER ? <>{canvas!.head}{chat?.repo && <ChecksBar chat={chat} />}</> : chat?.repo && <ChecksBar chat={chat} />}
         {imageMode && <div className="repo-strip"><span className="ctx-chip image-chip"><ImageIcon size={13} /> Create image · describe it below<button type="button" className="icon-btn xs" aria-label="Stop creating an image" onClick={() => setImageMode(false)}><X size={12} /></button></span></div>}
         {deepResearch && <div className="repo-strip"><span className="ctx-chip research-chip"><Telescope size={13} /> Deep research · ask your question below<button type="button" className="icon-btn xs" aria-label="Turn off deep research" onClick={() => setDeepResearch(false)}><X size={12} /></button></span></div>}
         {codeExecution && <div className="repo-strip"><span className="ctx-chip">Gemini calculation · runs on Google<button type="button" className="icon-btn xs" aria-label="Remove calculation tool" onClick={() => setCodeExecution(false)}><X size={12} /></button></span></div>}
@@ -457,6 +465,7 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
           ref={input}
           rows={1}
           dir="auto"
+          {...(CANVAS_COMPOSER ? canvas!.textarea : undefined)}
           placeholder={listening ? 'Listening…' : deepResearch ? 'What should Lumen research?' : 'Message Lumen'}
           value={interim ? `${text}${text && !text.endsWith(' ') ? ' ' : ''}${interim}` : text}
           onChange={(e) => {
@@ -465,6 +474,7 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
             setInterim('');
           }}
           onKeyDown={(e) => {
+            if (CANVAS_COMPOSER && canvas!.escape(e)) return;
             if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && settings.enterToSend && !isTouch()) {
               e.preventDefault();
               submit();
@@ -515,7 +525,7 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
             </span>
           )}
           <div className="spacer" />
-          {meter}
+          {CANVAS_COMPOSER ? <>{meter}{canvas!.expand}</> : meter}
           {settings.privacyShield && (
             <button
               type="button"
@@ -582,7 +592,7 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
           anchor={touch ? undefined : sheetAnchor}
         />
       )}
-      {voiceOpen && <Suspense fallback={null}><VoiceMode onClose={() => setVoiceOpen(false)} /></Suspense>}
+      {CANVAS_COMPOSER ? <>{canvas!.scrim}{voiceOpen && <Suspense fallback={null}><VoiceMode onClose={() => setVoiceOpen(false)} /></Suspense>}</> : voiceOpen && <Suspense fallback={null}><VoiceMode onClose={() => setVoiceOpen(false)} /></Suspense>}
       {compareOpen && <CompareModelsModal prompt={text} onPromptChange={value => { setText(value); saveDraft(value); }} files={pending.flatMap((p) => p.file ? [p.file] : [])}
         unavailableReason={streaming ? 'Wait for the current reply to finish before comparing models.' : !ready ? 'Wait for attached files to finish loading.' : codeExecution ? 'Turn off data analysis in the composer before comparing models.' : pending.some(p => p.file?.videoUri) ? 'Remove the video attachment before comparing models.' : undefined}
         onClose={() => setCompareOpen(false)} onCompare={compare} />}

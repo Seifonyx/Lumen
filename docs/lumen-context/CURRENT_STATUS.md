@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-21, Claude Code implemented and locally verified the QA-only Codespaces private-port adapter. No Codespace created, no port forwarded, nothing deployed or paid for. See [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
+> **Last sync:** 2026-10-22, first owner-run private GitHub Codespaces iPhone Safari session succeeded and was torn down. No production change, deployment, merge or spend. See [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
 
 ## ChatGPT independent Codespaces adapter review — 2026-10-21
 
@@ -16,7 +16,7 @@ Reviewed QA-only code, security tests, browser smoke test source, session guide 
 |---|---|
 | Repo | `Seifonyx/Lumen` (public) |
 | Workstream | Draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34), `docs/lumen-blackout-phase1-20261019`; open, draft, unmerged |
-| **Latest pushed workstream commit** | **`a42b8e4e5549206aa7bad34390c791264218d2bd`** (docs); verified Codespaces adapter code `ac93683280f5dc4d8a2aaaf0df20f05d4fb1fee7`; local and remote refs matched after push |
+| **Latest pushed workstream commit** | **`9642d4bb25c3d1f86d83dffa51751876abe814e5`** (session record); Codespaces adapter code `ac93683`, CI 39664046109 passed at `a42b8e4` |
 | Earlier implemented milestones | CP01 `c9153fd75ba16ebf70908f5d8c092cb540b9aa58`; QA00 proposal `88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f` |
 | Approved Canvas visual source | `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`; unchanged by the documentation milestone |
 | Design direction / Gate 1 | **Canvas (A) selected; Gate 1 APPROVED**, explicitly confirmed by owner after final sidebar-spacing review. Further polish remains; rejected Workspace/Focus consolidation is not the foundation. |
@@ -30,6 +30,11 @@ Reviewed QA-only code, security tests, browser smoke test source, session guide 
 
 
 
+
+
+## Latest — first private Codespaces iPhone session succeeded (owner-run, 2026-10-22)
+
+Owner verified $0 conditions (no payment method, Codespaces usage $0 of the free allowance, $0 budgets blocking paid usage, no Codespaces secrets), created one 2-core Codespace on the workstream at `a42b8e4`, confirmed port 4173 **Private**, and opened the synthetic QA01 build in **real iPhone Safari** after GitHub sign-in. Owner reports composer/keyboard, model picker, Send, Stop, scrolling, navigation and rotation working. Codespace deleted (0 remaining). **This is the first physical-iPhone evidence for the private QA pipeline; it covers the ordinary synthetic app, not Canvas.** Follow-ups: QA banner overlaps the page top; automatic start did not run (manual start worked). **Progress 21.5%.** Next: owner decision on CP02 (Canvas production integration), which this route can then test on iPhone.
 
 ## Latest — Codespaces private-port QA adapter implemented (agent-verified, local only)
 

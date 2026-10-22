@@ -9,11 +9,13 @@ test('the Canvas composer flag is off in the ordinary build and on only through 
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m);
   const qa = readFileSync('qa/iphone/adapters/canvas-presentation.ts', 'utf8');
   assert.match(qa, /^export const CANVAS_COMPOSER = true;$/m);
+  assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_SHELL = false;$/m);
+  assert.match(qa, /^export const CANVAS_SHELL = true;$/m);
   assert.match(readFileSync('vite.qa.config.ts', 'utf8'), /\[at\('src\/lib\/canvas-presentation\.ts'\)\]: at\('qa\/iphone\/adapters\/canvas-presentation\.ts'\)/);
-  assert.ok(!/canvas-presentation|canvas(?:-composer)?\.css/.test(readFileSync('vite.config.ts', 'utf8')), 'the ordinary config never enables it');
+  assert.ok(!/canvas-presentation|canvas(?:-composer|-shell)?\.css/.test(readFileSync('vite.config.ts', 'utf8')), 'the ordinary config never enables it');
   // Styles load with the switch, never from the component (a CSS import would survive tree-shaking).
-  for (const file of ['src/components/Composer.tsx', 'src/components/ComposerCanvas.tsx']) assert.ok(!/\.css['"]/.test(readFileSync(file, 'utf8')), `${file} imports no stylesheet`);
-  for (const file of ['src/main.tsx', 'src/App.tsx']) assert.ok(!/canvas(?:-composer)?\.css/.test(readFileSync(file, 'utf8')), `${file} never loads Canvas styles`);
+  for (const file of ['src/components/Composer.tsx', 'src/components/ComposerCanvas.tsx', 'src/components/SidebarCanvas.tsx', 'src/components/Sidebar.tsx', 'src/components/ChatView.tsx']) assert.ok(!/\.css['"]/.test(readFileSync(file, 'utf8')), `${file} imports no stylesheet`);
+  for (const file of ['src/main.tsx', 'src/App.tsx']) assert.ok(!/canvas(?:-composer|-shell)?\.css/.test(readFileSync(file, 'utf8')), `${file} never loads Canvas styles`);
 });
 
 test('every flagged Composer branch keeps the ordinary expression as its alternative', () => {
@@ -47,4 +49,26 @@ test('Canvas composer styles are scoped to the opted-in composer and load nothin
   });
   root.walkDecls((decl) => assert.ok(!/url\s*\(|@import/i.test(decl.value), 'no network/font dependency'));
   assert.ok(rules > 30);
+});
+
+test('CP03 shell seams fold to the ordinary code and its styles stay scoped', () => {
+  const sidebar = readFileSync('src/components/Sidebar.tsx', 'utf8');
+  assert.equal((sidebar.match(/CANVAS_SHELL\b/g) || []).length - 1, 1, 'Sidebar: one early return, constant per build');
+  assert.match(sidebar, /^  if \(CANVAS_SHELL\) return <SidebarCanvas onCollapse=\{onCollapse\} \/>;$/m);
+  const app = readFileSync('src/App.tsx', 'utf8');
+  assert.equal((app.match(/CANVAS_SHELL\b/g) || []).length - 1, 1);
+  assert.match(app, /\{\.\.\.\(CANVAS_SHELL \? \{ 'data-lumen-canvas-shell': '', 'data-lumen-canvas-foundation': '' \} : undefined\)\}/);
+  const view = readFileSync('src/components/ChatView.tsx', 'utf8');
+  const t = /\{CANVAS_SHELL \? <>(.+?)<\/> : (.+?)\}\n/.exec(view);
+  assert.ok(t, 'ChatView: one ternary');
+  assert.equal(t[1].replace(/<button type="button" className="icon-btn cv-compose"[^]*?<\/button>/, '').replace(/^\{|\}$/g, ''), t[2], 'its ordinary branch is unchanged');
+  const root = postcss.parse(readFileSync('src/styles/canvas-shell.css', 'utf8'));
+  let rules = 0;
+  root.walkAtRules((rule) => assert.ok(['media', 'keyframes'].includes(rule.name), `no @${rule.name}`));
+  root.walkRules((rule) => {
+    rules++;
+    for (const selector of rule.selectors) assert.match(selector, /^(?:(?:html\.glass|\[dir='rtl'\]) )?\.app\[data-lumen-canvas-shell\]/, `scoped: ${selector}`);
+  });
+  root.walkDecls((decl) => assert.ok(!/url\s*\(|@import/i.test(decl.value), 'no network/font dependency'));
+  assert.ok(rules > 40);
 });

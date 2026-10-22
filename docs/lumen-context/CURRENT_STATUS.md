@@ -1,6 +1,6 @@
 # Lumen — CURRENT execution checkpoint (PUBLIC-SAFE)
 
-> **Live working state, maintained by whichever agent is active.** Last checkpoint update: **2026-10-22**, owner CP04 iPhone feedback. For rules read [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). Older events are preserved in the [historical log](STATUS_HISTORY_THROUGH_2026-10-22.md), which is **not** a source of current authorization.
+> **Live working state, maintained by whichever agent is active.** Last checkpoint update: **2026-10-22**, owner **Gate 2 approval and CP05 authorization** (recorded by Claude Code). For rules read [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). Older events are preserved in the [historical log](STATUS_HISTORY_THROUGH_2026-10-22.md), which is **not** a source of current authorization.
 
 ## Current state — update this section in place
 
@@ -11,19 +11,24 @@
 | Latest observed PR head | `19b581d33991627a6f0251fa4247c9820f794222` (observed 2026-10-22; newer commits are **documentation-only instruction/hand-off maintenance**, not new CP04 product changes; refresh before material release decisions) |
 | Active coding agent | **Claude Code** (last owner-confirmed; do not infer switches) |
 | Design decision | **Canvas (A) selected; Gate 1 approved by owner on 2026-10-21**. Historical approval remains valid unless explicitly superseded |
-| Current implementation | **CP01–CP04** completed on isolated draft workstream, with the CP03 date-heading cleanup included. CP02 physical iPhone acceptance reported by owner; **CP04 reviewed by the owner on a real iPhone, with broadly positive feedback and substantial future polish expected** |
+| Current implementation | **CP01–CP04** completed on the isolated draft workstream (CP03 date-heading cleanup included); CP04 reviewed by the owner on a real iPhone. **CP05 authorized and in progress (Claude Code):** integrate Canvas through canonical production components in reviewable stages and extend it to Settings, Projects, Library, Tools and other screens, with production activation disabled |
 | Production | Canvas presentation flags **off** for ordinary production build; agent reports production artifacts byte-identical. No merge, deploy or production migration authorized by this milestone |
-| Gates | **Gate 2 and Gate 3 not yet owner-approved** at this checkpoint. CP05+ and production integration not authorized. Refresh from newer owner direction |
-| Weighted Blackout progress | **21.5%, Medium confidence**, 78.5% remaining under existing v1 weights. CP01–CP04 are child/preparation milestones; no extra weighted acceptance credited yet. Separate Model Picker 98.5% as previously recorded |
+| Gates | **Gate 2 APPROVED by the owner on 2026-10-22** for the overall visual and interaction foundation, with substantial polish and refinement to continue. **Gate 3 not approved.** CP05 implementation authorized in the isolated feature branch; merge, deployment, default production activation and new spending are not authorized |
+| Weighted Blackout progress | **21.5%, Medium confidence**, 78.5% remaining under existing v1 weights. Gate 2 is a milestone inside B04, not a separately weighted item; credit changes only when a whole B03–B07 acceptance group is complete and accepted. Separate Model Picker 98.5% as previously recorded |
 | QA workflow | Reusable **private, synthetic-only, auto-starting, auto-stopping GitHub Codespace** preferred; strict **$0 additional spending**. Owner confirms Private port; do not expose credentials, provider inference or production data |
 | Paused work | Cloudflare passkey/Durable Object hosted QA route; no activation inferred |
 | Last meaningful evidence | Claude's [CP04 implementation record](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CP04_ROUTING_CENTER.md); reports Chromium/WebKit CP01–CP04/QA and isolation/units passing. Reported tests are **not** independently rerun by ChatGPT |
 
 ## Next action / owner decisions needed
 
-**The owner has tried CP04 on a real iPhone and reports the combined experience is great overall, while expecting considerable visual/interaction polish later.** No specific new defects or acceptance criteria were supplied; don't invent or implement a detailed polish list. Maintain a lightweight deferred polish backlog as specific feedback arrives, prioritizing severe functional/accessibility issues separately from cosmetic refinements. Existing open design choice: after **Use model**, return immediately to the chat (current behavior) or remain in Routing Center; await owner feedback if it matters for a later polish pass.
+**Claude Code continues CP05 without approval pauses**, escalating only material functionality, security, privacy or architecture issues. Stages:
+1. Integrate the approved Canvas tokens and components through canonical production owners, keeping the off-by-default activation.
+2. Extend the design to Settings, Projects, Library, Tools and the remaining screens.
+3. Run the necessary tests at meaningful milestones, reusing the Gate 2 evidence.
 
-**Next owner decision:** whether/when to explicitly accept Gate 2 after their overall review, and which concrete polish items deserve earlier attention. CP04 positive feedback is **not formal Gate 2 acceptance**. No CP05+, merge, deployment, paid service, production integration or public exposure authorized by this message. Continue low-friction planning and preserve the current isolated QA setup.
+Claude maintains a prioritized visual-refinement backlog in the workstream; non-blocking polish does not delay progress. The reusable private, synthetic-only, $0 Codespaces iPhone QA stays in place.
+
+**When ready:** Claude provides the new Codespaces build and a concise review summary. Still owner-only: merge, deployment, default production activation, new spending and Gate 3.
 
 ## Standing documentation design — maintained, never hardcode active scope
 

@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-22, Claude reported automatic Codespaces startup confirmed on the latest CP02 QA build; optional trailing-slash/token-text checks remain open, CP03 and Gate 2 still unapproved.
+> **Last sync:** 2026-10-22, Claude Code — owner accepted CP02 at its checkpoint and authorized **CP03 only**; CP03 is implemented, agent-verified and pushed at `e281c2f` (flag off in production, byte-identical). No production change, deployment, merge or Gate 2 approval.
 
 ## ChatGPT independent Codespaces adapter review — 2026-10-21
 
@@ -61,6 +61,22 @@ Owner prefers **reusing the existing private Codespace** with its automatic revi
 
 
 
+
+## Latest — CP03 Canvas navigation, header and reading (agent-verified; stop for owner review, 2026-10-22)
+
+**[Record](https://github.com/Seifonyx/Lumen/blob/e281c2f/docs/blackout/CP03_SHELL.md).**
+- **Navigation:** a canonical `SidebarCanvas`: one tree of Projects as folders plus loose Conversations by day. It is the same sidebar element and state, and reuses `ChatRow`, search, All chats, Ask, and the project manager.
+- **Header and reading:** a scoped-CSS breadcrumb, Canvas reading, and on desktop a header and composer that float over the conversation.
+- **Production:** everything is behind `CANVAS_SHELL = false`, so production output is byte-identical. Only the synthetic QA review build enables it.
+
+**Agent-reported checks:**
+- CP03 and CP02 browser contracts in Chromium and WebKit;
+- the existing QA contract;
+- isolation audit 8/8;
+- CP01 graph check;
+- `npm test`.
+
+**Next:** the owner reviews on iPhone. **No CP04, merge, deploy or Gate 2. Progress 21.5%.**
 
 ## Latest — CP02 confirmed on a real iPhone (owner-run, 2026-10-22)
 

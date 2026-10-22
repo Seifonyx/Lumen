@@ -1,6 +1,6 @@
 # Lumen — CURRENT execution checkpoint (PUBLIC-SAFE)
 
-> **Live working state, maintained by whichever agent is active.** Last checkpoint update: **2026-10-22**, CP05 second milestone pushed (recorded by Claude Code); exact-head evidence independently re-run in the CP05 closeout check. For rules read [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). Older events are preserved in the [historical log](STATUS_HISTORY_THROUGH_2026-10-22.md), which is **not** a source of current authorization.
+> **Live working state, maintained by whichever agent is active.** Last checkpoint update: **2026-10-22**, CP05 second milestone closed at `fa44efe` (agent closeout report; exact-head checks reported passing). For rules read [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). Older events are preserved in the [historical log](STATUS_HISTORY_THROUGH_2026-10-22.md), which is **not** a source of current authorization.
 
 ## Current state — update this section in place
 
@@ -8,10 +8,10 @@
 |---|---|
 | Project | Public [Seifonyx/Lumen](https://github.com/Seifonyx/Lumen) |
 | Active coding stream | `docs/lumen-blackout-phase1-20261019`; [draft PR #34](https://github.com/Seifonyx/Lumen/pull/34), observed **open/unmerged** |
-| Latest observed PR head | `fa44efe` (CP05 second milestone and docs; agent-reported). The contracts were verified at `38c4dce`, which the owner independently checked on GitHub; `fa44efe` adds only documentation and evidence |
-| Active coding agent | **Claude Code** (last owner-confirmed; do not infer switches) |
+| Latest observed PR head | `fa44efe0e4024b27575a57dccf9ecee18bcaf101` (independently confirmed in GitHub PR #34 and commit details, pushed 2026-10-22 13:57 UTC; documentation and evidence only relative to `38c4dce`) |
+| Active coding agent | **None currently running on PR #34 per latest closeout report.** Claude Code completed and stopped the CP05 session; future agent assignment is not presumed |
 | Design decision | **Canvas (A) selected; Gate 1 approved by owner on 2026-10-21**. Historical approval remains valid unless explicitly superseded |
-| Current implementation | **CP01–CP04 complete. CP05 in progress, with its second milestone pushed.** Canvas now covers Settings, Projects, Library, Tools, the project workspace, dialogs, Assistants, Study, Compare, the document Canvas panel and true black. The owner's decisions are applied: zoom unchanged, ink switches with a clear off state, Geist only, and a "Use model" confirmation. A [production activation and rollback plan](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CANVAS_ACTIVATION_PLAN.md) has been written; **nothing is activated**. See the [CP05 record](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CP05_INTEGRATION.md) |
+| Current implementation | **CP01–CP04 complete; CP05 second implementation milestone finished, pushed and closed out.** Follow-on P2 visual polish and physical iPhone acceptance remain open, not part of the finished test claim. Canvas now covers Settings, Projects, Library, Tools, the project workspace, dialogs, Assistants, Study, Compare, the document Canvas panel and true black. The owner's decisions are applied: zoom unchanged, ink switches with a clear off state, Geist only, and a "Use model" confirmation. A [production activation and rollback plan](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CANVAS_ACTIVATION_PLAN.md) has been written; **nothing is activated**. See the [CP05 record](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CP05_INTEGRATION.md) |
 | Production | Canvas presentation flags **off** for ordinary production build; agent reports production artifacts byte-identical. No merge, deploy or production migration authorized by this milestone |
 | Gates | **Gate 2 APPROVED by the owner on 2026-10-22** for the overall visual and interaction foundation, with substantial polish and refinement to continue. **Gate 3 not approved.** CP05 implementation authorized in the isolated feature branch; merge, deployment, default production activation and new spending are not authorized |
 | Weighted Blackout progress | **21.5%, Medium confidence**, 78.5% remaining under existing v1 weights. Gate 2 is a milestone inside B04, not a separately weighted item; credit changes only when a whole B03–B07 acceptance group is complete and accepted. Separate Model Picker 98.5% as previously recorded |
@@ -31,9 +31,9 @@
 **These decisions are now applied in the CP05 second milestone (pushed).**
 
 **Next:**
-- The owner reviews it on iPhone in the existing Codespace.
-- Claude Code continues the CP05 P2 backlog (see `CANVAS_REFINEMENT_BACKLOG.md`) without approval pauses, within the same boundaries.
-- Gate 3 review happens when the owner is ready. The activation plan is ready for that review.
+- **Owner:** review CP05 on a physical iPhone in the existing private synthetic-only Codespace, especially mobile Routing Center navigation, Settings headings, providers, composer, keyboard/safe areas, and visual coherence in all themes.
+- **Agent (not currently running):** after the owner's review, address the focused P2 backlog in `CANVAS_REFINEMENT_BACKLOG.md` within existing CP05 scope; do not start a concurrent branch session or infer a new phase.
+- **Owner:** consider Gate 3 separately only after adequate visual/device acceptance. The activation and rollback document is a proposal, not an activation instruction.
 
 **Still owner-only:** production activation, merge, deployment, new spending, public preview exposure and Gate 3.
 

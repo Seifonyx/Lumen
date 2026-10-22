@@ -7,9 +7,13 @@ This is a **docs-only branch**, deliberately independent from `main` and the dra
 ## Read order for ChatGPT, Claude Code and Codex
 
 1. Read this `README.md`, then `PROJECT_CONTEXT.md` and `CURRENT_STATUS.md` **from branch `docs/lumen-live-context`**, not the default `main` branch.
-2. Treat the live files as a dated checkpoint, not proof of current code state. Read the latest direct owner direction and new agent reports. For live implementation claims, check the actual repo PR/branch/commit.
+2. Treat the live files as a dated checkpoint, not proof of current code state. Read the latest direct owner direction and new agent reports. Verify actual PR/branch/commit evidence when needed for a material decision; do not expand every routine report into a full re-audit.
 3. Check existing `AGENTS.md`, `PROJECT_CONTINUUM.md`, and the relevant workstream `AI_HANDOFF.md` / implementation plan on the **actual coding branch**. Preserve existing technical authority and weights.
 4. Owner-only authority: design sign-off, Gate 1 and other gates, production integration, merging and deployment require separate explicit owner permission.
+
+## Efficient continuity and risk-based review (owner direction, 2026-10-22)
+
+Keep the required start-of-thread checkpoint read and milestone status synchronization **lightweight**. For ordinary progress, use the current agent's report and checkpoint as the working account, labelled as reported where appropriate. **Do not automatically run an exhaustive independent code/PR/CI/screenshot audit for every report.** Verify the few material facts needed for the next decision, or investigate deeper when evidence conflicts, a regression matters, the owner asks, or security/privacy, auth/account boundaries, spending, external exposure, release/merge/deployment or a mandatory acceptance gate is at stake. Make responses concise and action-oriented. Technical agents still perform the tests required for their work; this is a reduction in duplicated oversight, **not** a waiver of meaningful safety checks or explicit owner authority.
 
 ## Update contract — do not wait for the owner to request documentation
 

@@ -73,6 +73,14 @@ Local final source7cde3ea passes78unit/type/build and independent review. Comple
 
 **Manual live signal:** after the new deployment, the user said **"its all good"**. No specific test scenarios, devices, browsers or provider accounts were described. This is positive user feedback, not evidence of every acceptance-checklist item. **Still unverified here:** current production assets compared to reviewed build, automated hosted Chromium/WebKit smoke runs, authenticated offline/connection replay in live site, physical iPhone, and real-model answer-quality comparison. These limitations do not invalidate the successful GitHub/Firebase deployment, but P11-B's original hosted acceptance criterion remains pending. Baseline v1 retains 24 task IDs, 100 total weight and earned98.5/100; do not raise to100 without required evidence.
 
+## Hosted acceptance — 2026-10-22 (P11-B live gate)
+
+The pending hosted criterion above is now met for production runtime `677bc51` (Deploy `39447533639`, includes PR25): **174/174** built files match `lumen-chat.web.app` byte for byte, and the existing isolated suites passed against the live origin with synthetic guest profiles and mocked providers. Chromium: 18 suites, 96 checks. WebKit: 13 suites, 80 checks. One Canvas page-load timeout passed on immediate rerun and is recorded as such. Suites map to the checklist rows below (catalog, declarations, Auto priorities, layouts and fixed-order helpers, picker controls, stream Stop, comparison recovery, recovery under exhausted backups, held-press tools). Full table, limits and reproduction steps: [testing/hosted-model-picker-acceptance.md](testing/hosted-model-picker-acceptance.md).
+
+**Release ledger reconciliation:** the old `docs/model-picker-release-ledger` branch has since been deleted from the remote. Its unique PR24 record is the paragraph preserved above; the rest was superseded. It was never merged.
+
+**Release ledger (Model Picker):** PR19 `02c322d` → PR22 `3f48c6e` → PR23 `dab0fff` → PR24 `6447a13` (Deploy `39250100845`) → PR25 `1966348` (Deploy `39257887973`) → latest production runtime `677bc51` (PR #35, Deploy `39447533639`, hosted-verified 2026-10-20 for the usage fix and 2026-10-22 for Model Picker acceptance).
+
 ## Manual acceptance checklist
 
 Run these against the latest verified production release recorded in AI_HANDOFF.md. The expected routing behavior is observable; the exercises do not establish comparative answer quality.

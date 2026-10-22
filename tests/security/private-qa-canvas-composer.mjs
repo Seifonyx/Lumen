@@ -209,6 +209,9 @@ try {
       assert.deepEqual(await draftKeys(page), savedDraft, 'draft is still stored after reload');
       // The review opens a new chat after a reload; return to the chat the draft belongs to.
       if (phone) { await page.getByRole('button', { name: 'Open chats', exact: true }).first().click(); await settle(page, 500); }
+      // With the Canvas tree the chat sits in its project folder ("Studio launch"), closed when another chat is open.
+      const folder = page.locator('.sidebar .cv-project-row', { hasText: 'Studio launch' });
+      if (await folder.count() && await folder.getAttribute('aria-expanded') === 'false') { await folder.click(); await settle(page); }
       await page.locator('.sidebar').getByText(/A launch worth remember/).first().click();
       await settle(page, 600);
       assert.ok(title.includes('A launch worth remember'), 'draft was written in the launch chat');

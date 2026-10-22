@@ -125,7 +125,8 @@ try {
   // stay off in the ordinary build, and section 1's byte equality proves its output is still the pre-QA01 baseline.
   const cp02 = ['src/components/Composer.tsx', 'src/components/ComposerCanvas.tsx', 'src/lib/canvas-presentation.ts', 'src/styles/canvas-composer.css',
     'src/App.tsx', 'src/components/Sidebar.tsx', 'src/components/SidebarCanvas.tsx', 'src/components/ChatView.tsx', 'src/styles/canvas-shell.css',
-    'src/components/RoutingCenter.tsx', 'src/lib/routing-center.ts', 'src/styles/canvas-routing.css'];
+    'src/components/RoutingCenter.tsx', 'src/lib/routing-center.ts', 'src/styles/canvas-routing.css',
+    'src/styles/canvas-screens.css'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `QA01 must not modify production entry, proof guard, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');

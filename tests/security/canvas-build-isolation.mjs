@@ -9,7 +9,7 @@ const out = resolve(process.env.CP01_OUT || 'tests/e2e/out/cp01');
 const output = join(out, 'production-dist');
 const root = process.cwd();
 // CP02: the Canvas composer styles and the QA adapter that turns it on must never reach the ordinary graph.
-const forbidden = /(?:^|\/)(?:docs\/blackout|tests|qa)(?:\/|$)|(?:^|\/)src\/(?:lib\/workspace-presentation\.ts|styles\/canvas(?:-composer|-shell|-routing)?\.css|components\/RoutingCenter\.tsx)(?:\?|$)/;
+const forbidden = /(?:^|\/)(?:docs\/blackout|tests|qa)(?:\/|$)|(?:^|\/)src\/(?:lib\/workspace-presentation\.ts|styles\/canvas(?:-composer|-shell|-routing|-screens)?\.css|components\/RoutingCenter\.tsx)(?:\?|$)/;
 function assertIsolated(ids) {
   const leaked = ids.map(id => id.replaceAll('\\', '/')).filter(id => forbidden.test(id));
   assert.deepEqual(leaked, [], 'ordinary build must not reach proof, fixtures, test auth/transport, or Canvas foundation');

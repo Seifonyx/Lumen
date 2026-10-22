@@ -56,7 +56,7 @@ test('CP03 shell seams fold to the ordinary code and its styles stay scoped', ()
   assert.equal((sidebar.match(/CANVAS_SHELL\b/g) || []).length - 1, 1, 'Sidebar: one early return, constant per build');
   assert.match(sidebar, /^  if \(CANVAS_SHELL\) return <SidebarCanvas onCollapse=\{onCollapse\} \/>;$/m);
   const app = readFileSync('src/App.tsx', 'utf8');
-  assert.equal((app.match(/CANVAS_SHELL\b/g) || []).length - 1, 2, 'App: the scope attributes and the Routing Center mount');
+  assert.equal((app.match(/CANVAS_SHELL\b/g) || []).length - 1, 3, 'App: the document scope, the app scope attributes and the Routing Center mount');
   assert.match(app, /\{\.\.\.\(CANVAS_SHELL \? \{ 'data-lumen-canvas-shell': '', 'data-lumen-canvas-foundation': '' \} : undefined\)\}/);
   const view = readFileSync('src/components/ChatView.tsx', 'utf8');
   const t = /\{CANVAS_SHELL \? <>(.+?)<\/> : (.+?)\}\n/.exec(view);
@@ -87,6 +87,18 @@ test('CP04 Routing Center loads only through the QA switch and its styles stay s
   let rules = 0;
   root.walkAtRules((rule) => assert.ok(['media'].includes(rule.name), `no @${rule.name}`));
   root.walkRules((rule) => { rules++; for (const selector of rule.selectors) assert.match(selector, /^(?:html\[data-qa-review\] )?\.app\[data-lumen-canvas-shell\]/, `scoped: ${selector}`); });
+  root.walkDecls((decl) => assert.ok(!/url\s*\(|@import/i.test(decl.value), 'no network/font dependency'));
+  assert.ok(rules > 40);
+});
+
+test('CP05 Canvas screens: document scope only while the shell is on; styles scoped and load nothing', () => {
+  const app = readFileSync('src/App.tsx', 'utf8');
+  assert.match(app, /^if \(CANVAS_SHELL\) \{ document\.documentElement\.setAttribute\('data-lumen-canvas', ''\); document\.documentElement\.setAttribute\('data-lumen-canvas-foundation', ''\); \}$/m);
+  assert.match(readFileSync('qa/iphone/adapters/canvas-presentation.ts', 'utf8'), /import '\.\.\/\.\.\/\.\.\/src\/styles\/canvas-screens\.css';/);
+  const root = postcss.parse(readFileSync('src/styles/canvas-screens.css', 'utf8'));
+  let rules = 0;
+  root.walkAtRules((rule) => assert.ok(['media'].includes(rule.name), `no @${rule.name}`));
+  root.walkRules((rule) => { rules++; for (const selector of rule.selectors) assert.match(selector, /^html(?:\.glass)?\[data-lumen-canvas\]/, `scoped: ${selector}`); });
   root.walkDecls((decl) => assert.ok(!/url\s*\(|@import/i.test(decl.value), 'no network/font dependency'));
   assert.ok(rules > 40);
 });

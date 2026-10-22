@@ -1,6 +1,6 @@
 # Lumen — CURRENT execution checkpoint (PUBLIC-SAFE)
 
-> **Live working state, maintained by whichever agent is active.** Last checkpoint update: **2026-10-22**, owner **Gate 2 approval and CP05 authorization** (recorded by Claude Code). For rules read [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). Older events are preserved in the [historical log](STATUS_HISTORY_THROUGH_2026-10-22.md), which is **not** a source of current authorization.
+> **Live working state, maintained by whichever agent is active.** Last checkpoint update: **2026-10-22**, CP05 first milestone pushed (Claude Code). For rules read [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). Older events are preserved in the [historical log](STATUS_HISTORY_THROUGH_2026-10-22.md), which is **not** a source of current authorization.
 
 ## Current state — update this section in place
 
@@ -8,27 +8,32 @@
 |---|---|
 | Project | Public [Seifonyx/Lumen](https://github.com/Seifonyx/Lumen) |
 | Active coding stream | `docs/lumen-blackout-phase1-20261019`; [draft PR #34](https://github.com/Seifonyx/Lumen/pull/34), observed **open/unmerged** |
-| Latest observed PR head | `19b581d33991627a6f0251fa4247c9820f794222` (observed 2026-10-22; newer commits are **documentation-only instruction/hand-off maintenance**, not new CP04 product changes; refresh before material release decisions) |
+| Latest observed PR head | `b487eb1` (CP05 first milestone and docs; agent-reported) |
 | Active coding agent | **Claude Code** (last owner-confirmed; do not infer switches) |
 | Design decision | **Canvas (A) selected; Gate 1 approved by owner on 2026-10-21**. Historical approval remains valid unless explicitly superseded |
-| Current implementation | **CP01–CP04** completed on the isolated draft workstream (CP03 date-heading cleanup included); CP04 reviewed by the owner on a real iPhone. **CP05 authorized and in progress (Claude Code):** integrate Canvas through canonical production components in reviewable stages and extend it to Settings, Projects, Library, Tools and other screens, with production activation disabled |
+| Current implementation | **CP01–CP04 complete**; owner reviewed CP04 on iPhone. **CP05 in progress:** first milestone pushed — Canvas extended to Settings, Projects, Library, Tools, the project workspace and dialogs through scoped styles on the canonical components; two interaction bugs fixed; refinement backlog and DESIGN.md ownership map added. See the [CP05 record](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CP05_INTEGRATION.md) |
 | Production | Canvas presentation flags **off** for ordinary production build; agent reports production artifacts byte-identical. No merge, deploy or production migration authorized by this milestone |
 | Gates | **Gate 2 APPROVED by the owner on 2026-10-22** for the overall visual and interaction foundation, with substantial polish and refinement to continue. **Gate 3 not approved.** CP05 implementation authorized in the isolated feature branch; merge, deployment, default production activation and new spending are not authorized |
 | Weighted Blackout progress | **21.5%, Medium confidence**, 78.5% remaining under existing v1 weights. Gate 2 is a milestone inside B04, not a separately weighted item; credit changes only when a whole B03–B07 acceptance group is complete and accepted. Separate Model Picker 98.5% as previously recorded |
 | QA workflow | Reusable **private, synthetic-only, auto-starting, auto-stopping GitHub Codespace** preferred; strict **$0 additional spending**. Owner confirms Private port; do not expose credentials, provider inference or production data |
 | Paused work | Cloudflare passkey/Durable Object hosted QA route; no activation inferred |
-| Last meaningful evidence | Claude's [CP04 implementation record](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CP04_ROUTING_CENTER.md); reports Chromium/WebKit CP01–CP04/QA and isolation/units passing. Reported tests are **not** independently rerun by ChatGPT |
+| Last meaningful evidence | [CP05 record](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CP05_INTEGRATION.md). Agent-reported: CP05 (dark and light), CP04, CP03 and CP02 contracts plus the QA browser contract in Chromium and WebKit; isolation 8/8; CP01 graph check (production byte-identical); `npm test`. Not independently rerun |
 
 ## Next action / owner decisions needed
 
-**Claude Code continues CP05 without approval pauses**, escalating only material functionality, security, privacy or architecture issues. Stages:
-1. Integrate the approved Canvas tokens and components through canonical production owners, keeping the off-by-default activation.
-2. Extend the design to Settings, Projects, Library, Tools and the remaining screens.
-3. Run the necessary tests at meaningful milestones, reusing the Gate 2 evidence.
+**Owner:** review the CP05 build on iPhone through the existing Codespace (it updates itself; tap **Reset** for fresh synthetic data). Then decide the P1 items in the [refinement backlog](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CANVAS_REFINEMENT_BACKLOG.md):
+- **pinch zoom**, which is blocked in production today; the blueprint had assumed otherwise;
+- ink versus iOS-green switches;
+- the display font;
+- whether "Use model" returns to the chat.
 
-Claude maintains a prioritized visual-refinement backlog in the workstream; non-blocking polish does not delay progress. The reusable private, synthetic-only, $0 Codespaces iPhone QA stays in place.
+**Claude Code:** continue CP05 without pauses:
+- remaining screens: Study, Assistants, Compare, document Canvas, black theme;
+- P2 polish;
+- the release-activation design (old path kept until parity);
+- physical VoiceOver after integration.
 
-**When ready:** Claude provides the new Codespaces build and a concise review summary. Still owner-only: merge, deployment, default production activation, new spending and Gate 3.
+Escalate only material functionality, security, privacy or architecture issues. Still owner-only: merge, deployment, default production activation, new spending and Gate 3.
 
 ## Standing documentation design — maintained, never hardcode active scope
 

@@ -47,6 +47,8 @@ const UseModel = memo(function UseModel({ model }: { model: ModelInfo }) {
         if (fresh.user?.uid !== owner || selectionProblem(fresh, model)) return;
         fresh.setChatModel(model.id);
         closeRoutingCenter();
+        // Back in the conversation (draft untouched): say the choice took.
+        fresh.toast(`Now using ${model.label} in this chat`);
       }}>Use model <ArrowUpRight size={14} /></button>
       {problem && <small id={`rc-why-${model.id}`}>{problem}</small>}
     </div>

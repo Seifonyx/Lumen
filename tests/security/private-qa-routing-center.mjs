@@ -121,12 +121,13 @@ try {
       }
       pass('providers');
 
-      // Canonical manual selection: the conversation's model changes, the Routing Center closes, the draft stays.
+      // Canonical manual selection: the conversation's model changes, the Routing Center closes with a confirmation, the draft stays.
       await detail.getByRole('button', { name: 'Use Gemini 2.5 Pro (synthetic)', exact: true }).click();
       await settle(page, 600);
       assert.equal(await isOpen(page), false, 'choosing a model returns to the chat');
       assert.match(await page.locator('.composer .model-name-text').innerText(), /Gemini 2\.5 Pro/);
       assert.equal(await page.getByRole('textbox', { name: 'Message', exact: true }).inputValue(), DRAFT, 'draft kept');
+      assert.ok(await page.getByText(/Now using Gemini 2\.5 Pro \(synthetic\) in this chat/).first().isVisible(), 'the choice is confirmed');
       pass('use model');
 
       // Policies: the real Layout editor, edit and new (cancelled, nothing saved).

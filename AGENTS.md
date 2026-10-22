@@ -2,6 +2,17 @@
 
 Read this file and the authoritative project documentation at the start of each coding session or agent switch.
 
+## Mandatory automatic live-checkpoint reconciliation
+
+**Owner direction, 2026-10-22 — applies to Claude Code, Codex and any coding agent without a reminder from the owner.** Before starting a new Lumen task, session, or agent handoff:
+
+1. Fetch `docs/lumen-context/README.md`, `PROJECT_CONTEXT.md`, and `CURRENT_STATUS.md` from `Seifonyx/Lumen`, ref `docs/lumen-live-context`. Consult this branch's `docs/blackout/AI_HANDOFF.md` and plan for relevant recent progress and the latest explicit owner instruction.
+2. Compare the checkpoint's **latest milestone, owner authorization, active agent and next step** with the handoff/recent relevant evidence. If another agent (including ChatGPT) already recorded everything meaningful, **do not write anything**.
+3. If a decision, result, handoff or milestone is missing/stale, **synchronize it yourself** to `docs/lumen-live-context/docs/lumen-context/CURRENT_STATUS.md` before substantive new work; change `PROJECT_CONTEXT.md` only when a durable rule changed. Read the latest blob SHA, make a narrow public-safe update, handle races by refetching and reconciling, and read back to confirm. Do not merge the docs branch into the coding branch.
+4. At meaningful completion repeat the check/update; report the link briefly. If you lack write access, state the gap once with a proposed correction; never make the owner manually reupload or prompt every agent.
+
+This is a **lightweight, agent-invoked startup check**, not a background sync. Avoid duplicate entries, extensive verification, or repeated approvals. Distinguish agent-reported outcomes from independently verified code; preserve all owner approval gates, privacy boundaries, zero-spend constraints and production isolation. Latest explicit owner directions always outrank historical "unauthorized" notes in this file.
+
 ## Permanent operating protocol
 
 - [PROJECT_CONTINUUM.md](PROJECT_CONTINUUM.md) — current autonomous development, verification, deployment, and cross-agent continuation rules.

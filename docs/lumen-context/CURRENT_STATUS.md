@@ -8,7 +8,7 @@
 |---|---|
 | Project | Public [Seifonyx/Lumen](https://github.com/Seifonyx/Lumen) |
 | Active coding stream | `docs/lumen-blackout-phase1-20261019`; [draft PR #34](https://github.com/Seifonyx/Lumen/pull/34), observed **open/unmerged** |
-| Latest observed PR head | `b487eb1` (CP05 first milestone and docs; agent-reported) |
+| Latest observed PR head | `38c4dce` (independently checked on GitHub, 2026-10-22 13:52 UTC); CP05 session still in progress per owner report |
 | Active coding agent | **Claude Code** (last owner-confirmed; do not infer switches) |
 | Design decision | **Canvas (A) selected; Gate 1 approved by owner on 2026-10-21**. Historical approval remains valid unless explicitly superseded |
 | Current implementation | **CP01–CP04 complete**; owner reviewed CP04 on iPhone. **CP05 in progress:** first milestone pushed — Canvas extended to Settings, Projects, Library, Tools, the project workspace and dialogs through scoped styles on the canonical components; two interaction bugs fixed; refinement backlog and DESIGN.md ownership map added. See the [CP05 record](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CP05_INTEGRATION.md) |
@@ -35,7 +35,7 @@
 - an organized backlog;
 - a **production-activation and rollback plan** for future review (nothing activated).
 
-At the next milestone: push, then give the owner a summary, bugs and risks, an iPhone guide and any genuine decisions.
+**Immediate coordination:** Let the existing CP05 Blackout session complete its final contracts and re-apply/push its saved documentation patch; do not duplicate or concurrently modify that coding branch. When it finishes, check the final pushed head and CP05 docs, refresh this live checkpoint, and provide the owner a concise milestone summary, bugs/risks, an iPhone review guide and any genuine decisions. Only then consider P2 polish. This interim checkpoint does not declare CP05 complete.
 
 **Still owner-only:** production activation, merge, deployment, new spending, public preview exposure and Gate 3.
 

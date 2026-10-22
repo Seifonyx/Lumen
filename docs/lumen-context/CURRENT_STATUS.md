@@ -1,19 +1,19 @@
 # Lumen — CURRENT execution checkpoint (PUBLIC-SAFE)
 
-> **Live working state, maintained by whichever agent is active.** Last checkpoint update: **2026-10-22**, Model Picker completed at 100% (Claude Code); post-Gate 3 readiness review recorded earlier the same day. This does not authorize merge, activation, deployment or spending. For rules read [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). Older events are preserved in the [historical log](STATUS_HISTORY_THROUGH_2026-10-22.md), which is **not** a source of current authorization.
+> **Live working state, maintained by whichever agent is active.** Last checkpoint update: **2026-10-22**, Canvas activation release branch opened as draft [PR #38](https://github.com/Seifonyx/Lumen/pull/38) (Claude Code); Model Picker completed at 100% earlier the same day. This does not authorize merge, activation, deployment or spending. For rules read [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). Older events are preserved in the [historical log](STATUS_HISTORY_THROUGH_2026-10-22.md), which is **not** a source of current authorization.
 
 ## Current state — update this section in place
 
 | Subject | Latest recorded position |
 |---|---|
 | Project | Public [Seifonyx/Lumen](https://github.com/Seifonyx/Lumen) |
-| Active coding stream | `docs/lumen-blackout-phase1-20261019`; [draft PR #34](https://github.com/Seifonyx/Lumen/pull/34), observed **open/unmerged** |
+| Active coding stream | **Canvas activation release branch** `claude/project-thread-erq8vo` from `main`, [draft PR #38](https://github.com/Seifonyx/Lumen/pull/38), open/unmerged, head `463324d`. Design history stays on `docs/lumen-blackout-phase1-20261019` ([draft PR #34](https://github.com/Seifonyx/Lumen/pull/34), open/unmerged, not for merging wholesale) |
 | Latest observed PR head | `5f0ba60a2a6b84533c6a225dc51ecbd637300bcd` (2026-10-22, Claude Code project thread). It adds the docs-only post-Gate 3 readiness review to `CANVAS_ACTIVATION_PLAN.md` on top of `eec9f68`; runtime code is unchanged since `c3b59d8` |
-| Active coding agent | **None running.** Claude Code finished the CP05 P2 refinement and stopped for owner review; future assignment is not presumed |
+| Active coding agent | **Claude Code (project thread)** is driving PR #38 to green CI, then stops before any merge or deploy |
 | Design decision | **Canvas (A) selected; Gate 1 approved 2026-10-21; Gate 2 and Gate 3 approved 2026-10-22 by owner.** Gate 3 scope is final visual/interaction foundation as reviewed at CP05 P2 head `eec9f68`, not permission to activate or release |
 | Current implementation | **CP01–CP04 complete; CP05 second milestone closed out; the authorized CP05 P2 refinement is pushed** (phone Routing Center sections in a 3 × 2 grid, unconnected providers folded under "Not connected", phone Settings display heading). The remaining P2 backlog stays open and unassigned. Owner completed hands-on iPhone reviews both before and after the P2 refinement and reports that the current presentation "all looks good" (no itemized physical-device accessibility matrix; explicit Gate 3 approval followed the review). Canvas now covers Settings, Projects, Library, Tools, the project workspace, dialogs, Assistants, Study, Compare, the document Canvas panel and true black. The owner's decisions are applied: zoom unchanged, ink switches with a clear off state, Geist only, and a "Use model" confirmation. A [production activation and rollback plan](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CANVAS_ACTIVATION_PLAN.md) has been written; **nothing is activated**. See the [CP05 record](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CP05_INTEGRATION.md) |
 | Production | Canvas presentation flags **off** for ordinary production build; agent reports production artifacts byte-identical. No merge, deploy or production migration authorized by this milestone |
-| Gates | **Gate 1 APPROVED 2026-10-21; Gate 2 and Gate 3 APPROVED 2026-10-22 by owner** for the selected Canvas visual and interaction foundation. No approval for production integration implementation, protected merge, deployment, default activation, public exposure or new spending. Readiness planning and evidence reconciliation only next |
+| Gates | **Gate 1 APPROVED 2026-10-21; Gate 2 and Gate 3 APPROVED 2026-10-22 by owner** for the selected Canvas visual and interaction foundation. **Activation implementation on a separate release branch authorized by the owner on 2026-10-22** (build the branch and draft PR, bring CI green, stop). No approval for protected merge, deployment, default activation, public exposure or new spending |
 | Weighted Blackout progress | **21.5%, Medium confidence**, 78.5% remaining under existing v1 weights; unchanged by the readiness review. Model Picker is **complete at 100%** under baseline v1 (was 98.5%). On 2026-10-22, after the owner allowed `lumen-chat.web.app`, Claude Code ran hosted acceptance (agent-run, synthetic). All 174 files built from production runtime `677bc51` match live byte for byte. Hosted suites passed in Chromium (18 suites, 96 checks; one Canvas page-load timeout passed on rerun) and WebKit (13 suites, 80 checks). With the owner's approval, docs [PR #37](https://github.com/Seifonyx/Lumen/pull/37) was merged normally to `main` as `fc74091` on 2026-10-22, so P11-B = 1. Docs only: no runtime change and no deploy (Deploy is manual `workflow_dispatch`). Not claimed: answer quality, physical iPhone |
 | Mobile pinch-zoom decision | **Owner explicitly prefers native-app-style chat: keep pinch zoom disabled in the primary chat interface.** Maintain readable text and accessible scaling options where feasible; review document/media cases independently. No pinch-zoom implementation requested. |
 | QA workflow | Reusable **private, synthetic-only, auto-starting, auto-stopping GitHub Codespace** preferred; strict **$0 additional spending**. Owner confirms Private port; do not expose credentials, provider inference or production data |
@@ -38,8 +38,16 @@
 5. WebKit CI install is unreliable.
 6. VoiceOver, keyboard and activated-build iPhone checks remain.
 
+**Activation implementation (authorized 2026-10-22), [draft PR #38](https://github.com/Seifonyx/Lumen/pull/38):** addresses blockers 1–5 (agent-run, synthetic, $0):
+- `LUMEN_CANVAS=1` build switch shared by production and the QA build. The ordinary build stays byte-identical to `main` `655438f` and is the rollback build. Deploy and Preview get a `presentation` input that defaults to `canvas`. Merging deploys nothing.
+- CI: Canvas build in `checks`; new `in-app-canvas` job (66 of 104 suites on the Canvas build with emulator auth, including account isolation, sync, keys, privacy, delete account, model picker, settings and accessibility); new `canvas` job (isolation plus CP02–CP05 and Routing Center contracts in Chromium and WebKit). WebKit jobs now run in Playwright's container image.
+- One real fix: the Canvas account subtitle had only 4.06:1 contrast on hover.
+- Known gap: 38 suites still drive the ordinary sidebar, so they run only on the ordinary build (listed in `docs/CANVAS_ACTIVATION.md`).
+- Performance: startup JS +2.4 KB gz (+0.5%), CSS +7.3 KB gz, Routing Center a 6 KB lazy chunk.
+
 **Next:**
-- **Owner:** decide whether to authorize **activation implementation** on an isolated release branch: a build-selectable switch, a Canvas CI job, a ported core emulator subset and a WebKit CI fix. Nothing is deployed or merged by that step.
+- **Agent:** bring PR #38 CI to green, then stop.
+- **Owner, separately:** a physical-iPhone VoiceOver and keyboard pass on the activated build, then approval to merge, then separate approval to deploy.
 
 **Still owner-only and NOT AUTHORIZED:** production integration implementation, activation, merge, deployment, new spending and public preview exposure. **Gate 3 is approved** (design only).
 

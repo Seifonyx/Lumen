@@ -41,7 +41,7 @@ const assert=require('node:assert/strict');
   await card.waitFor({state:'detached'});
   await page.locator('.hub-page [aria-label="Close"]').click();
   assert.ok(await page.locator('.assistant-badge').isVisible());
-  await page.evaluate(()=>document.querySelector('.sidebar .new-chat').click());assert.equal(await page.locator('.assistant-badge').count(),0);
+  await page.evaluate(()=>(document.querySelector('.sidebar .new-chat, .cv-new-pill')||[...document.querySelectorAll('.cv-dest button')].find(b=>b.textContent.includes('New chat'))).click());assert.equal(await page.locator('.assistant-badge').count(),0);
   await page.fill('.composer textarea','Existing draft');await prompts();
   await page.getByRole('button',{name:'New',exact:true}).click();
   await page.getByLabel('Library item name').fill('My prompt');await page.getByLabel('Library instructions').fill('PROMPT_MARKER');await page.getByRole('button',{name:'Save',exact:true}).click();

@@ -113,7 +113,7 @@ async function device(browser, mobile) {
   await A.page.click('.model-button');
   await A.page.click('.models-pop .mp-title:text-is("DeepSeek")');
 
-  await A.page.locator('.usage-chip').click();
+  await A.page.locator('.composer textarea').focus().then(()=>A.page.locator('.usage-chip').click());
   const dailyMeter = A.page.getByRole('meter', { name: 'Requests used today' });
   check(A.calls.filter(c => c === 'openrouter').length === 2 && A.calls.filter(c => c === 'gemini-flash-latest').length === 1 && A.calls.filter(c => c === 'openrouter:title').length === 1, 'fallbacks keep to the answered model; manual request and the enabled title are counted exactly');
   check(await dailyMeter.getAttribute('aria-valuemax') === '50' && await dailyMeter.getAttribute('aria-valuenow') === '3', 'usage popup includes two replies and the real background title request');

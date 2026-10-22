@@ -61,6 +61,23 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
   }, [input]);
   const collapse = useCallback(() => toggle(false), [toggle]);
 
+  // A press holds the state until it ends. Inside the composer that keeps its controls in place; elsewhere (a message's
+  // controls, while the box has focus) the composer would otherwise shrink mid-press, move the target and lose the click.
+  const press = useCallback(() => {
+    pressing.current = true;
+    const settle = () => {
+      window.removeEventListener('pointerup', settle, true); window.removeEventListener('pointercancel', settle, true);
+      // After the click has been delivered: engaged while the message box (or a control after it) has focus.
+      setTimeout(() => { pressing.current = false; const f = form.current, a = document.activeElement; setFocused(Boolean(f && a && f.contains(a) && (a === input.current || focusedRef.current))); }, 0);
+    };
+    window.addEventListener('pointerup', settle, true); window.addEventListener('pointercancel', settle, true);
+  }, [input]);
+  useEffect(() => {
+    const outside = (e: PointerEvent) => { if (focusedRef.current && !pressing.current && !form.current?.contains(e.target as Node)) press(); };
+    window.addEventListener('pointerdown', outside, true);
+    return () => window.removeEventListener('pointerdown', outside, true);
+  }, [press]);
+
   // Nested focus ownership (the picker, usage, attach and privacy dialogs stack above it) and Escape/Tab.
   useFocusScope(form, expanded, collapse);
   // Phone: drag the header down to put writing away; a released or interrupted drag springs back.
@@ -102,15 +119,7 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
       // (Safari doesn't focus buttons, so the box blurs on pointer down). The state settles once the press ends.
       onFocus: (e: FocusEvent<HTMLFormElement>) => { if ((e.target as Element) === input.current) setFocused(true); },
       onBlur: (e: FocusEvent<HTMLFormElement>) => { if (!pressing.current && !e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false); },
-      onPointerDown: () => {
-        pressing.current = true;
-        const settle = () => {
-          window.removeEventListener('pointerup', settle, true); window.removeEventListener('pointercancel', settle, true);
-          // After the click has been delivered: engaged while the message box (or a control after it) has focus.
-          setTimeout(() => { pressing.current = false; const f = form.current, a = document.activeElement; setFocused(Boolean(f && a && f.contains(a) && (a === input.current || focusedRef.current))); }, 0);
-        };
-        window.addEventListener('pointerup', settle, true); window.addEventListener('pointercancel', settle, true);
-      },
+      onPointerDown: press,
     },
     // Escape in the message box is handled here (not by the focus scope) so an IME composition can cancel first.
     textarea: { 'data-local-escape': '' },

@@ -256,7 +256,7 @@ const F = '````';
   await page.locator('.models-nav button').filter({ hasText: 'Layouts' }).click();
   await page.locator('.layout-card', { hasText: 'Web apps' }).locator('[aria-label="Use for new chats"]').click();
   await page.click('.settings-page [aria-label="Close"]');
-  await page.evaluate(()=>document.querySelector('.sidebar .new-chat').click());
+  await page.evaluate(()=>(document.querySelector('.sidebar .new-chat, .cv-new-pill')||[...document.querySelectorAll('.cv-dest button')].find(b=>b.textContent.includes('New chat'))).click());
   check((await page.textContent('.model-button')).includes('Web apps'), 'custom layout is the default for new chats');
 
   // ---- The coding panel on a phone

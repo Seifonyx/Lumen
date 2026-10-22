@@ -17,13 +17,13 @@ The switch is build-time only, not a runtime toggle, a query parameter or a secu
 - **Tests:**
   - Existing jobs keep testing the ordinary build, which guards the rollback path and shared logic.
   - The `checks` job also builds Canvas.
-  - The `in-app-canvas` job runs the in-app suites listed in `tests/e2e/canvas-core.txt` (66 of 104) against the Canvas build with the Firebase emulators: account isolation and sync, keys and providers, privacy and account deletion, drafts, send and stop, attachments, the model picker, settings and the accessibility scan.
+  - The `in-app-canvas` job runs the in-app suites listed in `tests/e2e/canvas-core.txt` (72 of 104) against the Canvas build with the Firebase emulators: account isolation and sync, keys and providers, privacy and account deletion, drafts, send and stop, attachments, the model picker, settings and the accessibility scan.
   - The `canvas` job runs, in Chromium and WebKit, the isolation audit (ordinary, Canvas production and QA builds) and the CP02–CP05, Routing Center and QA browser contracts on the synthetic QA build.
   - The WebKit jobs run in Playwright's container image, so they no longer download WebKit.
 
 ## Known gap
 
-38 in-app suites still look for the ordinary sidebar's own controls (the date-grouped chat list, `.usage-chip`, `.view-all-chats`, `.sidebar .new-chat`, the old sidebar footer's layout) or measure ordinary-layout geometry, so they run only on the ordinary build: app-feel, archive, ask-chats, assistants, auto-explain, auto-intelligence, bulk-chats, canvas-integration, chat-menu, coding, coding-plan, compact, deep-research, design, fit, free-tools, glass, incognito, layout, memory, message-navigation, model-health, more-motion, motion-controls, native-feel, phone-windows, quota, regressions, roadmap, safe-insets, sheet-drag, sidebar, smart-memory, study, transitions, usage, welcome, workspace-design. The features they exercise are shared code and stay covered there; what is not yet proven on Canvas is how those features are reached in the Canvas layout. Port them (selectors that work in both layouts, as in `sync.cjs`) and add each to `canvas-core.txt`.
+32 in-app suites still look for the ordinary sidebar's own controls (the date-grouped chat list, `.usage-chip`, `.view-all-chats`, `.sidebar .new-chat`, the old sidebar footer's layout) or measure ordinary-layout geometry, so they run only on the ordinary build: app-feel, archive, ask-chats, assistants, auto-explain, auto-intelligence, bulk-chats, canvas-integration, chat-menu, deep-research, design, fit, free-tools, glass, layout, message-navigation, model-health, more-motion, motion-controls, native-feel, phone-windows, quota, regressions, roadmap, safe-insets, sheet-drag, sidebar, smart-memory, study, transitions, welcome, workspace-design. The features they exercise are shared code and stay covered there; what is not yet proven on Canvas is how those features are reached in the Canvas layout. Port them (selectors that work in both layouts, as in `sync.cjs`) and add each to `canvas-core.txt`.
 
 ## Before deploying (owner-approved steps)
 

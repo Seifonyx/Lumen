@@ -12,8 +12,11 @@ background-check
 canvas
 catalog-lifecycle
 chat-export
+coding
+coding-plan
 combine
 commit-undo
+compact
 comparison-recovery
 context-recovery
 declared-background
@@ -25,6 +28,7 @@ gestures
 hub-actions
 images
 import-history
+incognito
 invite
 key-save-resilience
 knowledge
@@ -33,10 +37,11 @@ layout-policies
 layout-save-resilience
 long-history
 markdown-recovery
+memory
 model-declarations
 model-picker-accessibility
-motion-chat
 motion
+motion-chat
 multi-provider
 notifications
 office-edit
@@ -59,9 +64,10 @@ side-by-side
 smooth-bursts
 smooth-chat
 sync
-tasks-sync
 tasks
+tasks-sync
 tool-card-stability
+usage
 usage-draft
 visual-animations
 voice-mode

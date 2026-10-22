@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-22, owner added automatic agent-start checkpoint reconciliation; CP03 date-heading cleanup and CP04 isolated implementation are authorized. Gate 2, CP05, merge and deployment remain pending.
+> **Last sync:** 2026-10-22, Claude Code — CP03 date-heading cleanup and **CP04 Routing Center** implemented, agent-verified and pushed at `0e41c16` (flags off in production, byte-identical). Owner iPhone review of the combined Canvas experience is next. Gate 2, CP05, merge and deployment remain pending.
 
 ## ChatGPT independent Codespaces adapter review — 2026-10-21
 
@@ -71,6 +71,26 @@ At every agent session/handoff, ChatGPT, Claude Code, Codex and successor agents
 
 
 
+
+## Latest — CP03 sidebar polish + CP04 Routing Center (agent-verified; owner iPhone review next, 2026-10-22)
+
+**[Record](https://github.com/Seifonyx/Lumen/blob/0e41c16/docs/blackout/CP04_ROUTING_CENTER.md).**
+- **Sidebar:** loose conversations are one heading-free list, with pinned first and then newest first. Projects, search and actions are unchanged.
+- **Routing Center:** a canonical `RoutingCenter.tsx` in Canvas styling with six sections: Overview, Providers, Models, Policies, Usage and Diagnostics.
+  - It reuses `setChatModel` (behind the picker's eligibility gates), `LayoutEditor`, `UsageTab`, `RouteWhy`, `FilterMenu`, and Settings → Keys.
+  - Unknown allowances stay Unknown. The routing engine is unchanged.
+  - It opens from **Models & routing** and keeps the chat draft.
+- **Production:** the loader exists only in the QA switch replacement, so the production build is byte-identical (174 files).
+
+**Agent-reported checks (one milestone run):**
+- CP04, CP03, CP02 and QA browser contracts in Chromium and Linux WebKit;
+- QA01 isolation audit 8/8;
+- CP01 graph check;
+- `npm test`.
+
+The commits were rebased onto the owner's `2f634ef`/`8bb38ae` docs commits without force.
+
+**Next:** the owner reviews the combined Canvas experience on iPhone through the existing Codespace (it updates itself; tap Reset if projects are missing). **No CP05, merge, deploy, spending or Gate 2. Progress 21.5%.**
 
 ## Latest — CP03 Canvas navigation, header and reading (agent-verified; stop for owner review, 2026-10-22)
 

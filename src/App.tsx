@@ -16,7 +16,7 @@ import { keepScreenAwake } from './lib/wakelock';
 import { installSidebarGestures } from './lib/sidebar-gesture';
 import TaskEngine from './components/TaskEngine';
 import { cancelKnowledge } from './lib/knowledge/engine';
-import { CANVAS_SHELL } from './lib/canvas-presentation';
+import { CANVAS_SHELL, RoutingCenter } from './lib/canvas-presentation';
 
 const RunPanel = lazy(() => import('./components/RunPanel'));
 const ShortcutsModal = lazy(() => import('./components/ShortcutsModal'));
@@ -198,7 +198,7 @@ export default function App() {
       <a className="skip-link" href="#message-input">Skip to message</a>
       <Sidebar onCollapse={toggleSidebar} />
       <div className={`scrim${sidebarOpen ? ' visible' : ''}`} aria-hidden="true" onClick={() => setUi({ sidebarOpen: false })} />
-      <ChatView onExpandSidebar={toggleSidebar} />
+      {CANVAS_SHELL ? <><ChatView onExpandSidebar={toggleSidebar} />{RoutingCenter && <Suspense fallback={null}><RoutingCenter /></Suspense>}</> : <ChatView onExpandSidebar={toggleSidebar} />}
       {page && !settingsOpen && (
         <Suspense fallback={null}>
           {/* iPhone glass look: assistants live in Tools → Assistants (the separate Assistants page is computer-only). */}

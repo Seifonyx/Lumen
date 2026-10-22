@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-22, ChatGPT independently reviewed CP02 source, committed visual/test evidence and completed GitHub CI; physical-iPhone CP02 acceptance remains pending. No production integration, merge or deployment. See [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
+> **Last sync:** 2026-10-22, owner directed lean, risk-based partner reviews; routine agent reports should not trigger exhaustive independent audits. CP02 iPhone acceptance still pending; no CP03, merge or deployment approval.
 
 ## ChatGPT independent Codespaces adapter review — 2026-10-21
 
@@ -25,6 +25,12 @@ Reviewed QA-only code, security tests, browser smoke test source, session guide 
 **Reviewer verdict:** CP02 is a credible, bounded **isolated exploratory implementation ready for a separately owner-authorized real-iPhone test**, not approved as physical-device acceptance, Gate 2 or production integration. The unchanged production flag and QA-only activation are source-verified. Two QA fixes are reflected in the committed scripts and browser evidence; Codespaces automatic attach startup remains untested in a fresh actual Codespace. In screenshots, the mobile sheet's long title truncates tightly alongside the count and Done controls, a polish item to inspect on the physical device; not a blocking defect for collecting initial device evidence. Preserve the author's design choices (Send collapses, desktop composer stays in flow, canonical meter) as **provisional pending owner review**, not accepted simply because implemented.
 
 **Exactly next:** owner reviews this evidence and may explicitly authorize **one temporary $0 private Codespaces session** from their own account, after reconfirming no payment method, quota, no secrets and port 4173 **Private**; inspect physical Safari keyboard/safe areas, interrupted/swipe gestures, glass/blur, dictation/IME/undo, VoiceOver modal behavior, nested controls and Send/Stop with synthetic data; delete Codespace and record any defects. No CP03/CP04, Gate 2 approval, default production integration, merge/deploy, public ports or spending. Current progress **21.5%, Medium confidence**; active agent last confirmed Claude Code; PROJECT_CONTEXT unchanged.
+
+## Latest owner direction — practical, risk-based verification (2026-10-22)
+
+**Owner decision:** ChatGPT should operate as an efficient planner/project partner, **not** independently re-audit every Claude Code/Codex progress report. Trust coherent agent-reported test/implementation summaries as the normal working status, while attributing them as reports rather than independent proof. Keep responses short, focused on next action and product decisions; avoid repeated PR/code/CI/image checks and unnecessary approval friction on already authorized work. Verify narrowly when materially necessary (contradiction, meaningful defects, security/privacy/auth/account isolation, unexpected spending, external exposure, release/merge/deploy, mandatory gates, or explicit owner request). **Preserve required continuity reads and checkpoint synchronization, coding-agent test obligations, and owner-only authorization/approval boundaries.** This durable operating preference was added to [README.md](README.md), [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) and [CHATGPT_PROJECT_INSTRUCTIONS.md](CHATGPT_PROJECT_INSTRUCTIONS.md).
+
+**Current next action stays:** owner-led single **private, $0, synthetic-only CP02 iPhone Safari session** if the owner chooses to authorize it; inspect keyboard, gestures, layout/glass, VoiceOver and nested controls, then delete Codespace and report. **CP03+ unapproved; Gate 2 pending; no merge/deployment.** Blackout **21.5%, Medium confidence**; Claude Code remains active.
 
 ## Live code and approval state
 

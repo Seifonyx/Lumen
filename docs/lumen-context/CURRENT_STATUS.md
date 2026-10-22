@@ -1,6 +1,6 @@
 # Lumen — CURRENT execution checkpoint (PUBLIC-SAFE)
 
-> **Live working state, maintained by whichever agent is active.** Last checkpoint update: **2026-10-22**, owner resolved pinch-zoom preference during CP05. For rules read [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). Older events are preserved in the [historical log](STATUS_HISTORY_THROUGH_2026-10-22.md), which is **not** a source of current authorization.
+> **Live working state, maintained by whichever agent is active.** Last checkpoint update: **2026-10-22**, owner design decisions and continued CP05 authorization (recorded by Claude Code). For rules read [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). Older events are preserved in the [historical log](STATUS_HISTORY_THROUGH_2026-10-22.md), which is **not** a source of current authorization.
 
 ## Current state — update this section in place
 
@@ -22,19 +22,22 @@
 
 ## Next action / owner decisions needed
 
-**Owner:** review the CP05 build on iPhone through the existing Codespace (it updates itself; tap **Reset** for fresh synthetic data). Then decide the P1 items in the [refinement backlog](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CANVAS_REFINEMENT_BACKLOG.md):
-- **pinch zoom decision RESOLVED:** owner prefers it disabled in the primary chat interface, consistent with the native-chat feel. No work to enable it; retain accessibility via readable text/OS size accommodations where feasible, and assess specialized document/media zoom separately.
-- ink versus iOS-green switches;
-- the display font;
-- whether "Use model" returns to the chat.
+**Owner decisions recorded (2026-10-22), replacing the P1 backlog questions:**
+- **Pinch zoom:** stays disabled in the main chat (native-app feel). Keep comfortable text sizes and system text-size support where feasible; the document Canvas may have its own zoom.
+- **Switches:** monochrome ink on iPhone and desktop, with clear on/off contrast.
+- **Typography:** Geist only. No Archivo or other font dependency.
+- **"Use model":** returns to the chat, keeping the draft and model, with clear success feedback.
 
-**Claude Code:** continue CP05 without pauses:
-- remaining screens: Study, Assistants, Compare, document Canvas, black theme;
-- P2 polish;
-- the release-activation design (old path kept until parity);
-- physical VoiceOver after integration.
+**Claude Code continues CP05 without approval pauses:**
+- Canvas for Study, Assistants, Compare, the document Canvas panel and the True Black theme;
+- cohesion across Settings, Projects, Library, Tools, the Routing Center and the conversation workspace;
+- usability and accessibility fixes found along the way;
+- an organized backlog;
+- a **production-activation and rollback plan** for future review (nothing activated).
 
-Escalate only material functionality, security, privacy or architecture issues. Still owner-only: merge, deployment, default production activation, new spending and Gate 3.
+At the next milestone: push, then give the owner a summary, bugs and risks, an iPhone guide and any genuine decisions.
+
+**Still owner-only:** production activation, merge, deployment, new spending, public preview exposure and Gate 3.
 
 ## Standing documentation design — maintained, never hardcode active scope
 

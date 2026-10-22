@@ -36,7 +36,7 @@ const artifacts = manifest(output);
 // CP02 markers: the flag-off build must fold the Canvas composer away entirely (no attribute, class or label).
 const sentinels = ['__blackoutHarness', 'preview-blackout-interactive', 'synthetic-contract-marker', 'data-lumen-canvas-foundation', 'lumen.blackout.canvasNav',
   'data-lumen-canvas-composer', 'data-composer-state', 'canvas-sheet-head', 'canvas-writing-scrim', 'Expand writing', 'canvas-writing-title',
-  'data-lumen-canvas-shell', 'cv-nav', 'cv-fold', 'New chat in '];
+  'data-lumen-canvas-shell', 'cv-nav', 'cv-fold', 'cv-section-toggle'];
 for (const file of Object.keys(artifacts).filter(f => /\.(?:html|js|css)$/.test(f))) {
   const content = readFileSync(join(output, file), 'utf8');
   for (const marker of sentinels) assert(!content.includes(marker), `${file}: unexpected proof/test marker ${marker}`);

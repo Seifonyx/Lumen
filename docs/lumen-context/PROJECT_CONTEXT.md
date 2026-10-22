@@ -10,6 +10,8 @@ Lumen is an independent, premium AI workspace for conversation, reading, sustain
 
 Other applications, including 9Router and ChatGPT, may inspire general UI/interaction principles, but **Lumen is not a clone**: original branding, implementation, hierarchy and code are required. Inspiration is not permission to copy proprietary assets or exact screens. Do not assert comparative security without an evidence-based audit.
 
+**Owner CP03 sidebar refinement (2026-10-22):** In the approved Canvas navigation, remove timeline grouping headings from the conversations list (such as Today, Yesterday, Previous 7 Days and older date bands). Keep one visually clean, newest-first conversation list below the project folders, retaining the established search, selection and chat actions. This is a presentation refinement, not a chat-data or grouping migration. Additional CP03 polish may follow physical-iPhone feedback; Gate 2 is still pending.
+
 ## Engineering requirements
 
 - Reuse canonical store/Composer/ModelPicker/UsageMeter/routing/providers/permissions, preserving Send/Stop, attachments, drafts, selection, accessibility and existing account boundaries.

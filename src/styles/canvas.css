@@ -11,7 +11,7 @@
   --canvas-rim: color-mix(in srgb, var(--text) 10%, transparent);
   --canvas-fill: color-mix(in srgb, var(--text) 7%, transparent);
   --canvas-body-font: var(--font);
-  --canvas-display-font: 'Blackout Archivo', var(--font), system-ui, sans-serif;
+  --canvas-display-font: var(--font), system-ui, sans-serif;
   --canvas-data-font: 'Geist Mono', ui-monospace, monospace;
   --canvas-reading-measure: 720px;
   --canvas-reading-size: 16.5px;

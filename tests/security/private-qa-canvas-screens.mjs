@@ -101,7 +101,7 @@ try {
         assert.deepEqual(await page.evaluate(() => [document.documentElement.dataset.theme || 'auto', document.documentElement.dataset.appearance || '']), theme === 'black' ? ['dark', 'black'] : [theme, '']);
         let look = await canvasLook(page, '.settings-heading h2');
         assert.ok(look.scoped && look.ink, 'Canvas scope with ink accents');
-        assert.match(look.headingFont, /Archivo|Geist|system-ui/);
+        assert.match(look.headingFont, /Geist/); // owner decision: Geist stays the display face (no Archivo)
         record.screens.settings = await axe(page, 'section.settings-page');
         await shot(page, join(out, `${tag}-settings.png`));
         await closeAll(page);

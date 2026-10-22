@@ -16,7 +16,7 @@ html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas][data-lu
   --cv5-fill-strong: color-mix(in srgb, var(--text) 12%, transparent);
   --cv5-rim: color-mix(in srgb, var(--text) 10%, transparent);
   --cv5-card: color-mix(in srgb, var(--surface) 60%, transparent);
-  --cv5-display: 'Blackout Archivo', var(--font), system-ui, sans-serif;
+  --cv5-display: var(--font), system-ui, sans-serif;
   --cv5-mono: 'Geist Mono', ui-monospace, monospace;
 }
 html[data-lumen-canvas] .switch:checked, html.glass[data-lumen-canvas] .switch:checked { background: var(--text); border-color: var(--text); }

@@ -2,14 +2,14 @@
 
 A prioritized, living list. Severe functional and accessibility issues are fixed in place. They are never parked here as "polish".
 
-## P1 — owner decision or confirmation
+## Decided by the owner (CP05)
 
-| Item | Detail | Proposal |
+| Item | Decision | Status |
 |---|---|---|
-| Pinch zoom is blocked on phones | Existing production behaviour: `src/main.tsx` blocks Safari `gesturestart`, and `touch-action` blocks double-tap. The text-size setting exists, but blocked zoom limits low-vision users (WCAG 1.4.4). The integration blueprint assumed zoom was preserved; it is not. | Owner decision. Recommend allowing pinch zoom of reading content before release. CP05 leaves it unchanged. |
-| Switches are ink, not iOS green | Canvas is monochrome, so switches, Send and the focus ring are ink. On iPhone, green is the native convention. | Confirm on device; easy to restore green for glass (iPhone) only. |
-| "Use model" returns to the chat | From the Routing Center. The alternative is to stay. | Keep unless the owner prefers staying. |
-| Display font | Canvas headings name "Blackout Archivo", which is not bundled, so they fall back to Geist. | Decide whether to license and bundle Archivo (size and loading cost) or adopt Geist display as final. |
+| Pinch zoom on phones | Keep it disabled in the main chat. Keep comfortable text sizes and the text-size setting ("Auto" follows the system on iPhone). The document Canvas may get its own zoom later. | Unchanged, as decided |
+| Switches | Monochrome ink on iPhone and desktop, with clear on and off states. | Done: the off state now has a visible rim and a grey knob in light, dark and true black |
+| Display font | Keep Geist. No Archivo, no font dependencies. | Done: the Archivo name is removed from the Canvas tokens; the contract asserts Geist |
+| "Use model" | Return to the chat, keeping the draft and the model, with clear confirmation. | Done: a "Now using … in this chat" toast; the contract asserts it |
 
 ## P2 — visual refinement (non-blocking)
 
@@ -19,7 +19,7 @@ A prioritized, living list. Severe functional and accessibility issues are fixed
 4. **Hub pages** (Library, Tools, Projects): the "Back to chat" and "Done" buttons could use the Routing Center's "← Chat" pill.
 5. **Project manager:** it still offers colour dots, though Canvas shows monochrome monograms. Either hide them or use the colour subtly.
 6. **Composer usage chip:** it shows "0%". The proof's "~N tokens" context wording is pending.
-7. **Not yet visually reviewed:** the black theme; Study, Assistants and Compare; the document Canvas panel; Login and onboarding; long-press menus.
+7. **Not yet visually reviewed:** Login and onboarding, long-press menus, the Compare results view (needs live answers), Study deck and quiz views (needs a deck).
 8. **Routing Center, desktop:** wide spacing between "Connect" and "a provider".
 9. **Sidebar:** the active row's ⋯ on phones; the folder chevron animation timing.
 
@@ -27,4 +27,11 @@ A prioritized, living list. Severe functional and accessibility issues are fixed
 
 - **CP03:** date-group headings removed (one newest-first list).
 - **CP04:** provider rows overlapping on desktop; "1 keys"; route text wrapping.
-- **CP05:** a project brief now opens from Library, Tools and Projects; the picker opens from a resting composer; monochrome project tile.
+- **CP05:**
+  - A project brief now opens from Library, Tools and Projects.
+  - The picker opens from a resting composer.
+  - Monochrome project tile.
+  - Monochrome assistant avatars and the Study ring and due chips.
+  - Compare checks.
+  - The document Canvas panel's head and view switch.
+  - True black is covered by the contract.

@@ -39,7 +39,7 @@ async function open(browser, mobile) {
   await D.page.waitForSelector('.app:not(.app-skeleton) .topbar');
   check(!(await D.page.$('.settings-page')), 'Esc closes settings');
   check((await D.page.textContent('.disclaimer')) === 'AI can make mistakes. Check important info.', 'warning under the message box has no "patient"');
-  await D.page.click('.sidebar-foot');
+  await D.page.click('.sidebar-foot, .cv-account');
   check((await D.page.textContent('.settings-heading h2')) === 'General', 'desktop: opening from the sidebar shows General');
   await D.page.click('.settings-page [aria-label="Close"]');
 
@@ -47,7 +47,7 @@ async function open(browser, mobile) {
   const P = await open(browser, true);
   await P.page.waitForSelector('.app:not(.app-skeleton) .topbar');
   await P.page.click('.menu-btn');
-  await P.page.click('.sidebar-foot');
+  await P.page.click('.sidebar-foot, .cv-account');
   await P.page.waitForSelector('.settings-tabs');
   const rows = await P.page.$$eval('.settings-tabs button', (b) => b.map((x) => x.querySelector('.tab-label').textContent));
   check(rows.length === 9 && rows.includes('Connectors') && rows[0] === 'General' && !rows.includes('Layouts'), `phone: section menu (${rows.join(', ')})`);

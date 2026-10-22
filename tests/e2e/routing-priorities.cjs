@@ -24,7 +24,7 @@ const cors={'access-control-allow-origin':'*','access-control-allow-headers':'*'
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base);await page.locator('.composer textarea').waitFor();
   if(width<900)await page.locator('.menu-btn').click();
-  await page.locator('.sidebar-foot').click();
+  await page.locator('.sidebar-foot, .cv-account').click();
   await page.locator('.settings-tabs').getByRole('button',{name:'Models',exact:true}).click();
   await page.getByLabel('Routing priority',{exact:true}).selectOption(priority==='prompt-override'?'quality':priority);
   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mr.settings')).routingPreference),priority==='prompt-override'?'quality':priority);

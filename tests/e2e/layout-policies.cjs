@@ -6,7 +6,7 @@ const a='openrouter:vendor/primary:free',b='openrouter:vendor/backup:free',g='ge
 const cors={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS'};
 async function settings(page,width) {
  if(width<900)await page.locator('.menu-btn').click();
- await page.locator('.sidebar-foot').click();
+ await page.locator('.sidebar-foot, .cv-account').click();
  await page.locator('.settings-tabs').getByRole('button',{name:'Models',exact:true}).click();
  await page.getByRole('button',{name:'Layouts',exact:true}).click();
 }

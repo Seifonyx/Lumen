@@ -83,10 +83,10 @@ async function check(page, cdp, name, act, results) {
       await page.waitForTimeout(600);
       await check(page, cdp, `${tag} model picker opens`, async () => { await page.click('.composer .model-button'); await page.locator('.models-pop').waitFor(); }, results);
       await check(page, cdp, `${tag} model picker closes`, async () => { await page.keyboard.press('Escape'); }, results);
-      await check(page, cdp, `${tag} usage opens`, async () => { await page.click('.usage-chip'); await page.locator('.usage-pop').waitFor(); }, results);
+      await check(page, cdp, `${tag} usage opens`, async () => { await page.focus('.composer textarea').then(()=>page.click('.usage-chip')); await page.locator('.usage-pop').waitFor(); }, results);
       await check(page, cdp, `${tag} usage closes`, async () => { await page.keyboard.press('Escape'); }, results);
       await drawer();
-      await check(page, cdp, `${tag} settings opens`, async () => { await page.click('.sidebar-foot'); await page.locator('.settings-page').waitFor(); }, results);
+      await check(page, cdp, `${tag} settings opens`, async () => { await page.click('.sidebar-foot, .cv-account'); await page.locator('.settings-page').waitFor(); }, results);
       if (phone) {
         await check(page, cdp, `${tag} settings section push`, async () => { await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click(); }, results);
       } else await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click();

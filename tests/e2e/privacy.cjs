@@ -77,7 +77,7 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   check(!(await page.$('.privacy-check')) && sent().includes('01011112222') && !(await page.$('.shield-on')), 'off by default: nothing is masked');
 
   // ---- Turn on (Ask me)
-  await page.click('.sidebar-foot');
+  await page.click('.sidebar-foot, .cv-account');
   await openTab(page, 'Privacy');
   check((await page.textContent('.privacy-preview')).includes('[NAME_1]') && (await page.textContent('.privacy-preview')).includes('[PHONE_1]'), 'settings preview shows what models would see');
   await page.locator('.setting-row', { hasText: 'Privacy shield' }).locator('input').click();
@@ -85,7 +85,7 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   await page.click('.settings-page [aria-label="Close"]');
   check(Boolean(await page.$('.shield-on')), 'shield icon in the message box');
 
-  await page.evaluate(()=>document.querySelector('.sidebar .new-chat').click());
+  await page.evaluate(()=>(document.querySelector('.sidebar .new-chat, .cv-new-pill')||[...document.querySelectorAll('.cv-dest button')].find(b=>b.textContent.includes('New chat'))).click());
   await send('Patient Ahmed Mahmoud, phone 01012345678, needs a follow-up call');
   await page.waitForSelector('.privacy-check');
   const found = await page.textContent('.privacy-found');
@@ -118,7 +118,7 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   check((await page.textContent('.msg.user >> nth=-1')).includes('Sent without masking'), 'and says so');
 
   // Auto mode.
-  await page.click('.sidebar-foot');
+  await page.click('.sidebar-foot, .cv-account');
   await openTab(page, 'Privacy');
   await page.click('.privacy-tab .segmented >> text=Mask automatically');
   await page.click('.settings-page [aria-label="Close"]');

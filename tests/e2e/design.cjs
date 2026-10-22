@@ -121,7 +121,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         await page.keyboard.press('Escape');
         check(!(await page.locator('.usage-pop').isVisible()) && await page.locator('.usage-chip').evaluate(el => el === document.activeElement), `${label}: usage Escape restores keyboard focus`);
         if (mobile) await page.click('.menu-btn');
-        await page.click('.sidebar-foot');
+        await page.click('.sidebar-foot, .cv-account');
         if (mobile) await page.waitForFunction(() => document.querySelector('.sidebar').getBoundingClientRect().right <= 0);
         for (const name of ['General', 'API keys', 'Models', 'Usage', 'Personalization', 'Memory', 'Privacy & data']) {
           if (await page.locator('.settings-back').isVisible()) await page.click('.settings-back');

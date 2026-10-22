@@ -45,7 +45,7 @@ const assert = require('node:assert/strict');
       await page.reload();
       await page.waitForSelector('.composer textarea');
       if (width < 900) await page.click('.menu-btn');
-      await page.click('.sidebar-foot');
+      await page.click('.sidebar-foot, .cv-account');
       await page.locator('.settings-tabs').getByRole('button', { name: 'Models', exact: true }).click();
       await page.getByRole('button', { name: 'Browse models', exact: true }).click();
       assert.ok(!(await page.locator('.model-list.add').textContent()).includes('gemini-missing-fixture'));

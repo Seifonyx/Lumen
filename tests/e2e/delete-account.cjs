@@ -49,7 +49,7 @@ async function signedIn(browser, email) {
     assert.ok((await listAll(`modelRouter/${mine}/chats`)).length > 0, 'my chat synced before deleting');
 
     await me.page.click('.menu-btn');
-    await me.page.click('.sidebar-foot');
+    await me.page.click('.sidebar-foot, .cv-account');
     await me.page.locator('.settings-tabs').getByRole('button', { name: 'Privacy & data', exact: true }).click();
     await me.page.getByRole('button', { name: 'Delete account' }).click();
     const dialog = me.page.getByRole('dialog', { name: 'Delete your account?' });

@@ -119,7 +119,7 @@ async function send(page, text, n) {
   check(!(await page.$('.compact-note')), 'undo removes the divider');
   // Turning auto off: full chat is sent.
   await page.click('.menu-btn');
-  await page.click('.sidebar-foot');
+  await page.click('.sidebar-foot, .cv-account');
   await openTab(page, 'General');
   await page.locator('.setting-row', { hasText: 'Compact long chats automatically' }).locator('input').click();
   await page.click('.settings-page [aria-label="Close"]');
@@ -129,7 +129,7 @@ async function send(page, text, n) {
 
   // Failed summary: still answers with the full chat.
   log.failSummary = true;
-  await page.click('.usage-chip');
+  await page.focus('.composer textarea').then(()=>page.click('.usage-chip'));
   await page.click('text=Compact now');
   await page.waitForSelector('.compact-note.working', { state: 'detached', timeout: 15000 });
   check(!(await page.$('.compact-note')), 'failed compaction leaves the chat as it was');
@@ -137,7 +137,7 @@ async function send(page, text, n) {
 
   // New chat with summary.
   log.delaySummary = 1000; // Exercise the loading indicator before the completed continuation.
-  await page.click('.usage-chip');
+  await page.focus('.composer textarea').then(()=>page.click('.usage-chip'));
   await page.click('text=New chat with summary');
   await page.getByRole('note').filter({ hasText: 'Continues “' }).waitFor({ timeout: 15000 });
   await page.waitForSelector('.compact-note.working', { state: 'detached', timeout: 15000 });

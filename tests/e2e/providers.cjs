@@ -77,7 +77,7 @@ const sse = (chunks) => chunks.map((o) => `data: ${JSON.stringify(o)}\n\n`).join
 
   await page.waitForTimeout(1200);
   await page.click('.menu-btn');
-  await page.click('.sidebar-foot');
+  await page.click('.sidebar-foot, .cv-account');
   await openTab(page, 'Usage');
   const u = await page.textContent('.usage');
   check(JSON.stringify(titles)===JSON.stringify(['groq']), 'one enabled background title stays on Groq and is counted');

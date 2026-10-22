@@ -72,23 +72,24 @@ async function device(browser, name, email, mobile) {
   check(A.log.filter((b) => b.systemInstruction).at(-1).systemInstruction.parts[0].text.includes('Use metric units.'), 'custom instructions used');
   await A.page.waitForTimeout(800);
   await A.page.click('.menu-btn');
-  check((await A.page.textContent('.chat-list')).includes('Synced Chat Title'), 'chat titled on phone');
+  check((await A.page.textContent(':is(.chat-list, .cv-nav)')).includes('Synced Chat Title'), 'chat titled on phone');
   await A.page.click('.chat-row [aria-label="Chat options"]');
   await A.page.click('.menu >> text=Pin');
-  await A.page.click('.close-sidebar');
+  await A.page.click('.sidebar [aria-label="Close menu"]');
   await A.page.waitForTimeout(1500);
 
   // ---- Laptop: same account
   const B = await device(browser, 'laptop', 'hebaghoneim8@gmail.com', false);
   await B.page.waitForSelector('.model-button', { timeout: 15000 }); await B.page.waitForTimeout(1500);
   check(!(await B.page.$('.settings-page')), 'keys loaded automatically on laptop (no prompt)');
-  await B.page.waitForFunction(() => document.querySelector('.chat-list')?.textContent.includes('Synced Chat Title'), null, { timeout: 15000 });
-  check((await B.page.textContent('.chat-list section:first-child .group-label')) === 'Pinned', 'pin synced');
+  await B.page.waitForFunction(() => document.querySelector(':is(.chat-list, .cv-nav)')?.textContent.includes('Synced Chat Title'), null, { timeout: 15000 });
+  check(await B.page.locator('.chat-row').filter({ hasText: 'Synced Chat Title' }).locator('.pin-mark').count() === 1, 'pin synced');
+  if (await B.page.$('.chat-list')) check((await B.page.textContent('.chat-list section:first-child .group-label')) === 'Pinned', 'pinned group first');
   await B.page.click('text=Synced Chat Title');
   await B.page.waitForSelector('.msg.assistant');
   check((await B.page.textContent('.msg.user .bubble')) === 'Hello from phone', 'messages synced');
   check(await B.page.$('.msg.user .msg-thumb'), 'image thumbnail synced');
-  await B.page.click('.sidebar-foot');
+  await B.page.click('.sidebar-foot, .cv-account');
   await openTab(B.page, 'Personalization');
   check((await B.page.inputValue('.field-block textarea')) === 'Use metric units.', 'custom instructions synced');
   await B.page.click('.settings-page [aria-label="Close"]');
@@ -112,20 +113,20 @@ async function device(browser, name, email, mobile) {
   await B.page.fill('.chat-row.editing input', 'Renamed on laptop');
   await B.page.keyboard.press('Enter');
   await A.page.click('.menu-btn').catch(() => {});
-  await A.page.waitForFunction(() => document.querySelector('.chat-list')?.textContent.includes('Renamed on laptop'), null, { timeout: 15000 });
+  await A.page.waitForFunction(() => document.querySelector(':is(.chat-list, .cv-nav)')?.textContent.includes('Renamed on laptop'), null, { timeout: 15000 });
   check(true, 'rename synced');
 
   // ---- Delete on phone -> gone on laptop
   await A.page.locator('.chat-row', { hasText: 'Renamed on laptop' }).locator('[aria-label="Chat options"]').click();
   await A.page.click('.menu >> text=Delete');
-  await B.page.waitForFunction(() => !document.querySelector('.chat-list')?.textContent.includes('Renamed on laptop'), null, { timeout: 15000 });
+  await B.page.waitForFunction(() => !document.querySelector(':is(.chat-list, .cv-nav)')?.textContent.includes('Renamed on laptop'), null, { timeout: 15000 });
   check(true, 'delete synced');
 
   // ---- Reload laptop: still consistent
   await B.page.reload();
   await B.page.waitForSelector('.app:not(.app-skeleton) .topbar');
   await B.page.waitForTimeout(1500);
-  check(!(await B.page.textContent('.chat-list')).includes('Renamed on laptop'), 'deleted chat stays deleted after reload');
+  check(!(await B.page.textContent(':is(.chat-list, .cv-nav)')).includes('Renamed on laptop'), 'deleted chat stays deleted after reload');
 
   // Saved helpers and their immutable chat instructions cross devices.
   await B.page.getByRole('button', { name: 'Tools', exact: true }).click();
@@ -180,7 +181,7 @@ async function device(browser, name, email, mobile) {
   check(true, 'canvas edits synced live back to laptop');
   await A.page.getByRole('button', { name: 'Close canvas', exact: true }).click();
   await B.page.getByRole('button', { name: 'Close canvas', exact: true }).click();
-  await B.page.evaluate(()=>document.querySelector('.sidebar .new-chat').click());
+  await B.page.evaluate(()=>(document.querySelector('.sidebar .new-chat, .cv-new-pill')||[...document.querySelectorAll('.cv-dest button')].find(b=>b.textContent.includes('New chat'))).click());
   await B.page.keyboard.press('Control+k');
   await B.page.getByLabel('Search commands').fill('Open document canvas');
   await B.page.keyboard.press('Enter');

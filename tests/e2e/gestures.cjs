@@ -114,7 +114,7 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
 
     // ---- Settings edge swipe-back
     if (!(await page.locator('.sidebar.open').count())) { await page.click('.menu-btn'); await page.locator('.sidebar.open').waitFor(); await page.waitForTimeout(400); }
-    await page.click('.sidebar-foot');
+    await page.click('.sidebar-foot, .cv-account');
     await page.locator('.settings-page').waitFor();
     await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click();
     await page.locator('.settings-page.has-section').waitFor();

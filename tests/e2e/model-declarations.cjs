@@ -13,7 +13,7 @@ const base=process.env.MR_TEST_URL || 'http://localhost:5190/';
    calls.push(r.request().url());return r.fulfill({contentType:'text/event-stream',body:'data: '+JSON.stringify({candidates:[{content:{parts:[{text:'DECLARED_MODEL_REPLY'}]},finishReason:'STOP'}]})+'\n\n'});
   });
   const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  const settings=async()=>{if(width<900)await page.locator('.menu-btn').click();await page.locator('.sidebar-foot').click();await page.locator('.settings-tabs').getByRole('button',{name:'Models',exact:true}).click();};
+  const settings=async()=>{if(width<900)await page.locator('.menu-btn').click();await page.locator('.sidebar-foot, .cv-account').click();await page.locator('.settings-tabs').getByRole('button',{name:'Models',exact:true}).click();};
   await page.goto(base);await page.locator('.composer textarea').waitFor();await settings();
   await page.getByRole('button',{name:'Add custom model',exact:true}).click({timeout:3000});
   await page.getByLabel('Model ID',{exact:true}).fill('gemini-custom-chat');

@@ -113,7 +113,7 @@ async function device(browser, mobile) {
   await A.page.click('.model-button');
   await A.page.click('.models-pop .mp-title:text-is("DeepSeek")');
 
-  await A.page.locator('.usage-chip').click();
+  await A.page.locator('.composer textarea').focus().then(()=>A.page.locator('.usage-chip').click());
   const dailyMeter = A.page.getByRole('meter', { name: 'Requests used today' });
   check(A.calls.filter(c => c === 'openrouter').length === 2 && A.calls.filter(c => c === 'gemini-flash-latest').length === 1 && A.calls.filter(c => c === 'openrouter:title').length === 1, 'fallbacks keep to the answered model; manual request and the enabled title are counted exactly');
   check(await dailyMeter.getAttribute('aria-valuemax') === '50' && await dailyMeter.getAttribute('aria-valuenow') === '3', 'usage popup includes two replies and the real background title request');
@@ -122,7 +122,7 @@ async function device(browser, mobile) {
 
   // Usage tab.
   await A.page.click('.menu-btn');
-  await A.page.click('.sidebar-foot');
+  await A.page.click('.sidebar-foot, .cv-account');
   await openTab(A.page, 'Usage');
   await A.page.waitForSelector('.usage-row');
   const text = await A.page.textContent('.usage');
@@ -135,7 +135,7 @@ async function device(browser, mobile) {
   // Second device sees the same counts and block.
   const B = await device(browser, false);
   await B.page.waitForTimeout(2000);
-  await B.page.click('.sidebar-foot');
+  await B.page.click('.sidebar-foot, .cv-account');
   await openTab(B.page, 'Usage');
   await B.page.waitForSelector('.usage-row');
   const textB = await B.page.textContent('.usage');

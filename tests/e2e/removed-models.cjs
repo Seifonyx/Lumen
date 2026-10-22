@@ -21,7 +21,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
     await page.goto(process.env.MR_TEST_URL || 'http://localhost:5190/?emulator');
     await page.waitForSelector('.composer textarea');
     await page.click('.menu-btn');
-    await page.click('.sidebar-foot');
+    await page.click('.sidebar-foot, .cv-account');
     await page.locator('.settings-tabs').getByRole('button', { name: 'Models', exact: true }).click();
     await page.getByRole('button', { name: 'Review', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Removed models' });

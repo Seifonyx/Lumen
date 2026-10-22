@@ -1,0 +1,178 @@
+/* CP02 Canvas composer and writing sheet (approved Canvas design, Gate 1).
+ * Loaded only with the Canvas presentation (src/lib/canvas-presentation.ts); the ordinary build never imports it.
+ * Scoped to a composer that opted in ([data-lumen-canvas-composer]); palette/material owners stay in app.css and
+ * glass.css, tokens come from canvas.css. States come from Composer (data-composer-state), not from :has()/:focus.
+ *   resting  — one calm capsule: + · model · chips · Send
+ *   engaged  — writing: the text takes its own row, the usage meter, expand and dictation appear under it
+ *   expanded — the same form becomes a sheet over the conversation (still visible above it)
+ */
+.composer-wrap[data-lumen-canvas-composer] {
+  --canvas-fill-strong: color-mix(in srgb, var(--text) 12%, transparent);
+  --canvas-glass-strong: color-mix(in srgb, var(--surface) 82%, transparent);
+  --canvas-shadow: 0 18px 48px rgb(0 0 0 / .32), 0 2px 8px rgb(0 0 0 / .18);
+}
+:root[data-theme='light'] .composer-wrap[data-lumen-canvas-composer] { --canvas-shadow: 0 18px 48px rgb(0 0 0 / .12), 0 2px 8px rgb(0 0 0 / .06); }
+
+/* ---------- Resting: one capsule */
+.composer-wrap[data-lumen-canvas-composer] .composer {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; padding: 6px;
+  border-radius: var(--canvas-composer-radius); max-width: var(--canvas-composer-width); margin: 0 auto;
+  transition: border-radius var(--canvas-motion-duration) var(--canvas-motion-easing), padding var(--canvas-motion-duration) var(--canvas-motion-easing);
+}
+.composer-wrap[data-lumen-canvas-composer] .composer > .composer-bar,
+.composer-wrap[data-lumen-canvas-composer] .composer .composer-voice-controls { display: contents; }
+.composer-wrap[data-lumen-canvas-composer] .composer > :is(.repo-strip, .attachments, .checks-bar, .canvas-sheet-head) { order: 0; flex: 0 0 100%; }
+.composer-wrap[data-lumen-canvas-composer] .composer > .attachments.attachments-empty { display: none; }
+.composer-wrap[data-lumen-canvas-composer] .composer > textarea {
+  order: 2; flex: 1 1 140px; min-width: 0; min-height: 40px !important; max-height: 38dvh;
+  padding: 9px 8px !important; font-size: 16px; line-height: 1.5; background: none;
+}
+.composer-wrap[data-lumen-canvas-composer] .composer .composer-bar > .tool-btn:not(.shield-on) {
+  order: 1; width: 38px; height: 38px; padding: 0; border-radius: 50%; background: var(--canvas-fill); color: var(--canvas-ink);
+}
+.composer-wrap[data-lumen-canvas-composer] .composer .model-picker { order: 3; }
+.composer-wrap[data-lumen-canvas-composer] .composer .model-button {
+  height: 34px; min-height: 34px; padding: 0 10px; gap: 6px; border: 0; border-radius: 999px;
+  background: none; color: var(--canvas-secondary); font-size: 13.5px;
+}
+.composer-wrap[data-lumen-canvas-composer] .composer .model-button:hover { background: var(--canvas-fill); color: var(--canvas-ink); }
+.composer-wrap[data-lumen-canvas-composer] .composer .composer-chip { order: 4; }
+.composer-wrap[data-lumen-canvas-composer] .composer .spacer { order: 5; flex: 1 1 0; min-width: 0; width: auto; display: none; }
+.composer-wrap[data-lumen-canvas-composer] .composer .usage-meter { order: 6; display: none; position: static; margin: 0; }
+/* The ring sits in the row instead of the box's corner, so nothing needs to leave room for it. */
+.composer-wrap[data-lumen-canvas-composer] .composer > :first-child:not(textarea):not(.composer-bar) { margin-inline-end: 0; }
+.composer-wrap[data-lumen-canvas-composer] .composer .usage-chip { min-height: 34px; border: 0; background: none; color: var(--canvas-muted); }
+.composer-wrap[data-lumen-canvas-composer] .composer .shield-on { order: 7; }
+.composer-wrap[data-lumen-canvas-composer] .composer .canvas-expand { order: 8; display: none; }
+.composer-wrap[data-lumen-canvas-composer] .composer .dictation-btn { order: 9; display: none; }
+.composer-wrap[data-lumen-canvas-composer] .composer .send-btn { order: 10; width: 38px; height: 38px; min-width: 38px; padding: 0; margin: 0; border-radius: 50%; }
+.composer-wrap[data-lumen-canvas-composer] .composer :is(.send-btn, .dictation-btn) > span { display: none; }
+/* Ink on paper: Send is the one solid control. */
+html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn:not(:disabled):not(.voice-start) { background: var(--canvas-ink); color: var(--canvas-paper); box-shadow: none; }
+html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn.voice-start { background: var(--canvas-fill-strong); color: var(--canvas-ink); box-shadow: none; }
+
+.composer-wrap[data-lumen-canvas-composer] .canvas-expand {
+  place-items: center; width: 36px; height: 36px; flex: none; padding: 0; border: 0; border-radius: 50%;
+  background: none; color: var(--canvas-secondary); cursor: pointer;
+}
+.composer-wrap[data-lumen-canvas-composer] .canvas-expand:hover { background: var(--canvas-fill); color: var(--canvas-ink); }
+
+/* ---------- Engaged: writing takes its own row; the tools needed now appear under it */
+.composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer { border-radius: 24px; padding: 8px 8px 6px; }
+.composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer > textarea { order: 0; flex-basis: 100%; min-height: 52px !important; padding: 6px 10px 4px !important; }
+.composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .spacer { display: block; }
+.composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .usage-meter { display: flex; }
+.composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .canvas-expand { display: inline-grid; }
+.composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .dictation-btn { display: inline-flex; }
+
+/* Desktop: a floating glass capsule (in the page flow; the reading surface is CP03). */
+@media (min-width: 900px) {
+  .composer-wrap[data-lumen-canvas-composer] .composer {
+    border: 1px solid var(--canvas-rim); background: var(--canvas-glass-strong);
+    -webkit-backdrop-filter: blur(26px) saturate(1.5); backdrop-filter: blur(26px) saturate(1.5); box-shadow: var(--canvas-shadow);
+  }
+  .composer-wrap[data-lumen-canvas-composer] .disclaimer { max-width: var(--canvas-composer-width); margin: 8px auto 0; font-size: 11px; text-align: center; color: var(--canvas-muted); }
+}
+
+/* ---------- Expanded: the same form becomes a writing sheet over the conversation */
+/* It leaves the page flow: the composer keeps its resting height so the conversation behind doesn't move. */
+.composer-wrap[data-composer-state='expanded'][data-lumen-canvas-composer] { z-index: 80; box-sizing: border-box; height: var(--canvas-rest-h, auto); }
+.composer-wrap[data-lumen-canvas-composer] > .canvas-writing-scrim {
+  display: block; position: fixed; inset: 0; z-index: 0; background: rgb(0 0 0 / .42);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); pointer-events: auto;
+  animation: canvas-scrim-in var(--canvas-motion-duration) var(--canvas-motion-easing);
+}
+.composer-wrap[data-composer-state='expanded'][data-lumen-canvas-composer] .composer {
+  position: fixed; z-index: 1; display: flex; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 6px;
+  max-width: none; margin: 0; padding: 12px 14px 10px; box-sizing: border-box; border-radius: var(--canvas-sheet-radius);
+  /* Writing is never at the mercy of blur: the sheet is opaque, with glass only at its rim. */
+  border: 1px solid var(--canvas-rim); background: var(--canvas-paper);
+  -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: var(--canvas-shadow);
+  animation: canvas-sheet-in var(--canvas-motion-duration) var(--canvas-motion-easing);
+}
+.composer-wrap[data-composer-state='expanded'][data-lumen-canvas-composer] .composer > :is(.repo-strip, .attachments, .checks-bar, .canvas-sheet-head) { flex: none; }
+.composer-wrap[data-composer-state='expanded'][data-lumen-canvas-composer] .composer > textarea {
+  order: 0; flex: 1 1 auto; height: auto !important; min-height: 0 !important; max-height: none;
+  padding: 6px 10px !important; font-size: 19px; line-height: 1.75; overflow: auto;
+}
+.composer-wrap[data-composer-state='expanded'][data-lumen-canvas-composer] .composer > .composer-bar {
+  display: flex; flex: none; align-items: center; gap: 4px; padding-top: 6px; border-top: 1px solid var(--canvas-rim);
+}
+.composer-wrap[data-composer-state='expanded'][data-lumen-canvas-composer] .composer .composer-voice-controls { display: flex; align-items: center; gap: 4px; order: 10; }
+.composer-wrap[data-composer-state='expanded'][data-lumen-canvas-composer] .composer .spacer { display: block; flex: 1; }
+.composer-wrap[data-composer-state='expanded'][data-lumen-canvas-composer] .composer .usage-meter { display: flex; }
+.composer-wrap[data-composer-state='expanded'][data-lumen-canvas-composer] .composer .dictation-btn { display: inline-flex; }
+
+.composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head { position: relative; align-self: stretch; width: auto; margin: 0; display: flex; align-items: center; gap: 12px; padding: 4px 4px 10px; touch-action: none; }
+/* The header carries .sheet-grab so the existing sheet gesture treats it as a handle; it is not a grab bar itself. */
+.composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head.sheet-grab { height: auto; border-radius: 0; background: none; cursor: default; }
+.composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head.sheet-grab::after { content: none; }
+.composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head > div { flex: 1; min-width: 0; }
+.composer-wrap[data-lumen-canvas-composer] .canvas-sheet-label { display: block; font: 500 10.5px/1.3 var(--canvas-data-font); letter-spacing: .12em; text-transform: uppercase; color: var(--canvas-muted); }
+.composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head strong {
+  display: block; font: 620 19px/1.25 var(--canvas-display-font); letter-spacing: -.02em; color: var(--canvas-ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.composer-wrap[data-lumen-canvas-composer] .canvas-sheet-count { font-size: 12px; color: var(--canvas-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.composer-wrap[data-lumen-canvas-composer] .canvas-sheet-done {
+  min-height: 36px; min-width: 64px; padding: 0 14px; border: 0; border-radius: 999px;
+  background: var(--canvas-fill-strong); color: var(--canvas-ink); font: 600 14px var(--canvas-body-font); cursor: pointer;
+}
+.composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head .sheet-grip { display: none; }
+
+/* Desktop sheet: centred over the conversation column, rising from the composer's place. */
+@media (min-width: 900px) {
+  .composer-wrap[data-composer-state='expanded'][data-lumen-canvas-composer] .composer {
+    position: absolute; left: 50%; translate: -50% 0; bottom: 24px;
+    width: min(var(--canvas-sheet-width), calc(100% - 64px)); height: min(78dvh, 760px);
+  }
+}
+
+/* ---------- iPhone */
+@media (max-width: 899px) {
+  .composer-wrap[data-lumen-canvas-composer] .composer { gap: 2px; }
+  .composer-wrap[data-lumen-canvas-composer] .composer .model-button { padding: 0 8px; }
+  .composer-wrap[data-lumen-canvas-composer] .composer :is(.canvas-expand, .dictation-btn) { width: 36px; height: 36px; }
+  html.glass .composer-wrap[data-lumen-canvas-composer] .composer { padding: 5px; border-radius: 26px; }
+  html.glass .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer { padding: 8px 8px 6px; border-radius: 24px; }
+  html.glass .composer-wrap[data-lumen-canvas-composer] .composer > textarea { font-size: 17px; }
+
+  /* The sheet leaves room for the top bar; --canvas-sheet-offset-top lets a host add space above the app. */
+  .composer-wrap[data-composer-state='expanded'][data-lumen-canvas-composer] .composer {
+    left: 8px; right: 8px; width: auto;
+    top: calc(max(8px, env(safe-area-inset-top)) + var(--canvas-sheet-offset-top, 0px) + 52px);
+    bottom: max(8px, env(safe-area-inset-bottom));
+    border-radius: 34px; padding: 8px 12px;
+  }
+  /* Keyboard open: fit the visible area above it (viewport.ts measures it). */
+  html.kb-open .composer-wrap[data-composer-state='expanded'][data-lumen-canvas-composer] .composer {
+    top: calc(var(--vv-top, 0px) + var(--canvas-sheet-offset-top, 0px) + 8px); bottom: auto;
+    height: calc(var(--vv-h, 100dvh) - var(--canvas-sheet-offset-top, 0px) - 16px);
+  }
+  html.glass .composer-wrap[data-composer-state='expanded'][data-lumen-canvas-composer] .composer > textarea,
+  .composer-wrap[data-composer-state='expanded'][data-lumen-canvas-composer] .composer > textarea { font-size: 18px; }
+  .composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head { padding-top: 12px; }
+  .composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head .sheet-grip {
+    display: block; position: absolute; top: -2px; left: 50%; translate: -50% 0; width: 38px; height: 5px; border-radius: 3px;
+    background: color-mix(in srgb, var(--canvas-ink) 25%, transparent);
+  }
+}
+@media (max-width: 360px) {
+  .composer-wrap[data-lumen-canvas-composer] .composer :is(.composer-bar > .tool-btn:not(.shield-on), .dictation-btn, .canvas-expand, .send-btn) {
+    width: 36px; min-width: 36px; height: 36px; padding: 0;
+  }
+  .composer-wrap[data-lumen-canvas-composer] .composer .model-button { padding: 0 6px; }
+  .composer-wrap[data-lumen-canvas-composer] .composer .usage-chip { padding: 0 4px; }
+  .composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head { gap: 8px; }
+  .composer-wrap[data-lumen-canvas-composer] .canvas-sheet-count { font-size: 11px; }
+}
+
+@keyframes canvas-sheet-in { from { opacity: 0; transform: translateY(24px); } }
+@keyframes canvas-scrim-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .composer-wrap[data-lumen-canvas-composer][data-composer-state] :is(.composer, .canvas-writing-scrim) { animation: none; transition: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .composer-wrap[data-lumen-canvas-composer] .composer { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--canvas-surface); }
+  .composer-wrap[data-lumen-canvas-composer] > .canvas-writing-scrim { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgb(0 0 0 / .6); }
+}

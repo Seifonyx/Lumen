@@ -16,6 +16,10 @@ import { keepScreenAwake } from './lib/wakelock';
 import { installSidebarGestures } from './lib/sidebar-gesture';
 import TaskEngine from './components/TaskEngine';
 import { cancelKnowledge } from './lib/knowledge/engine';
+import { CANVAS_SHELL, RoutingCenter } from './lib/canvas-presentation';
+// CP05: the Canvas scope covers the whole document (pages and portalled dialogs/menus) while the shell switch is on;
+// the ordinary build folds this away.
+if (CANVAS_SHELL) { document.documentElement.setAttribute('data-lumen-canvas', ''); document.documentElement.setAttribute('data-lumen-canvas-foundation', ''); }
 
 const RunPanel = lazy(() => import('./components/RunPanel'));
 const ShortcutsModal = lazy(() => import('./components/ShortcutsModal'));
@@ -41,6 +45,9 @@ const ToolsModal = lazy(() => import('./components/ToolsModal'));
 const ChatExportModal = lazy(() => import('./components/ChatExportModal'));
 
 const glassPhone = () => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches;
+
+/** Root presentation takes no account, transport or replacement-store props. */
+export type AppProps = Record<string, never>;
 
 export default function App() {
   const authed = useStore((s) => s.authed);
@@ -189,12 +196,12 @@ export default function App() {
   }
   if (accessDenied) return <NotInvited email={accessDenied} />;
   return (
-    <div className={`app${settingsOpen ? ' settings-open' : ''}${page && !settingsOpen ? ' page-open' : ''}${workspaceOpen ? ' workspace-open' : ''}${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
+    <div className={`app${settingsOpen ? ' settings-open' : ''}${page && !settingsOpen ? ' page-open' : ''}${workspaceOpen ? ' workspace-open' : ''}${sidebarCollapsed ? ' sidebar-collapsed' : ''}`} {...(CANVAS_SHELL ? { 'data-lumen-canvas-shell': '', 'data-lumen-canvas-foundation': '' } : undefined)}>
       <TaskEngine />
       <a className="skip-link" href="#message-input">Skip to message</a>
       <Sidebar onCollapse={toggleSidebar} />
       <div className={`scrim${sidebarOpen ? ' visible' : ''}`} aria-hidden="true" onClick={() => setUi({ sidebarOpen: false })} />
-      <ChatView onExpandSidebar={toggleSidebar} />
+      {CANVAS_SHELL ? <><ChatView onExpandSidebar={toggleSidebar} />{RoutingCenter && <Suspense fallback={null}><RoutingCenter /></Suspense>}</> : <ChatView onExpandSidebar={toggleSidebar} />}
       {page && !settingsOpen && (
         <Suspense fallback={null}>
           {/* iPhone glass look: assistants live in Tools → Assistants (the separate Assistants page is computer-only). */}

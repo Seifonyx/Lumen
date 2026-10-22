@@ -1,0 +1,32 @@
+/* Synthetic QA build only: the review banner, the locked state and the not-authorised page. */
+/* The banner takes real layout space above the app: body becomes a column, the banner is its first row and
+   the app (#root) fills the rest, so the banner never covers the header, safe area or navigation. */
+html[data-qa-review], html[data-qa-review] body { height: 100%; }
+html[data-qa-review] body { display: flex; flex-direction: column; margin: 0; }
+html[data-qa-review] #root { flex: 1 1 auto; min-height: 0; height: auto; position: relative; }
+/* Phone drawer and its scrim are fixed to the viewport: start them below the banner as well. */
+@media (max-width: 899px) { html[data-qa-review] :is(.app > .sidebar, .app > .scrim) { top: var(--qa-banner-h, 0px); } }
+/* The phone writing sheet (CP02) starts below the banner too. */
+html[data-qa-review] { --canvas-sheet-offset-top: var(--qa-banner-h, 0px); }
+/* Keyboard open: the app is pinned to the visual viewport; start it below the banner. */
+html[data-qa-review].kb-open .app { top: calc(var(--vv-top, 0px) + var(--qa-banner-h, 0px)); height: calc(var(--vv-h, 100%) - var(--qa-banner-h, 0px)); }
+.qa-banner {
+  flex: none; position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; box-sizing: border-box;
+  padding: max(3px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) 3px max(10px, env(safe-area-inset-left));
+  background: #3a2a00; color: #ffe08a; font: 600 11px/1.3 system-ui, -apple-system, sans-serif; letter-spacing: .01em;
+}
+.qa-banner span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qa-banner button {
+  flex: none; border: 0; border-radius: 999px; padding: 3px 10px; min-height: 26px;
+  background: #ffe08a; color: #3a2a00; font: inherit; cursor: pointer;
+}
+.qa-banner button:focus-visible, .qa-lock a:focus-visible, .qa-lock button:focus-visible { outline: 2px solid #9cc4ff; outline-offset: 2px; }
+.qa-lock {
+  position: fixed; inset: 0; z-index: 2147483001; display: grid; place-items: center; padding: 24px;
+  background: rgb(8 9 11 / .94); color: #f4f4f5; font: 16px/1.5 system-ui, -apple-system, sans-serif; text-align: center;
+}
+.qa-lock div { max-width: 26rem; }
+.qa-lock h1 { font-size: 20px; margin: 0 0 8px; }
+.qa-lock a, .qa-lock button { color: #ffe08a; }
+.qa-lock button { background: none; border: 1px solid currentColor; border-radius: 999px; padding: 8px 14px; font: inherit; margin-top: 12px; cursor: pointer; }
+.qa-unavailable { padding: 32px 20px; font: 16px/1.5 system-ui, -apple-system, sans-serif; color: #f4f4f5; background: #0d0f12; min-height: 100vh; box-sizing: border-box; }

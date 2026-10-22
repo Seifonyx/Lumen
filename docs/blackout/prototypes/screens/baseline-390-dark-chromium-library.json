@@ -1,0 +1,13 @@
+{
+  "concept": "baseline",
+  "theme": "dark",
+  "width": 390,
+  "height": 844,
+  "engine": "chromium",
+  "syntheticData": true,
+  "inferenceRequests": 0,
+  "pageErrors": [],
+  "accessibility": {
+    "library": []
+  }
+}

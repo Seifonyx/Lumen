@@ -1,0 +1,18 @@
+{
+  // Private iPhone QA only: a synthetic Lumen review build on a PRIVATE forwarded port (GitHub sign-in,
+  // creator only). No secrets, Firebase, real providers or production data. See
+  // docs/blackout/QA02_CODESPACES_SESSION.md before starting a session; delete the Codespace afterwards.
+  "name": "Lumen private QA (synthetic)",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "hostRequirements": { "cpus": 2 },
+  "postCreateCommand": "npm ci --no-audit --no-fund",
+  // The review starts from .vscode/tasks.json ("Lumen QA review", runs on folder open) in a visible terminal.
+  // Lifecycle commands (postStartCommand, then postAttachCommand) did not start it in the browser editor on real
+  // sessions. Manual fallback: bash scripts/qa/codespace-start.sh
+  "customizations": { "vscode": { "settings": { "task.allowAutomaticTasks": "on" } } },
+  "forwardPorts": [4173],
+  "portsAttributes": {
+    "4173": { "label": "Lumen QA (must be Private)", "onAutoForward": "notify", "requireLocalPort": true }
+  },
+  "otherPortsAttributes": { "onAutoForward": "ignore" }
+}

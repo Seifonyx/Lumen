@@ -1,0 +1,41 @@
+// Canvas polish checks: swipe-down sheet (short drag returns, long drag puts away; draft + selection kept), long-list fold, reading gap, sticky tree sections.
+// Usage: W=393 H=852 OUT=dir node docs/blackout/workspace-proofs/proposals/polish-check.cjs  (preview on localhost:5195)
+const {chromium}=require('playwright');
+const {profile,seed}=require('../../../../tests/e2e/helpers/preview-profile.cjs');
+const {chats,projects,now}=require('./fixture.cjs');
+const W=Number(process.env.W||1440),H=Number(process.env.H||900),OUT=process.env.OUT;
+(async()=>{const b=await chromium.launch();
+const ctx=await b.newContext({viewport:{width:W,height:H},isMobile:W<900,hasTouch:W<900,serviceWorkers:'block',reducedMotion:'reduce',userAgent:W<900?'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1':undefined});
+await ctx.route('**/*',r=>new URL(r.request().url()).hostname==='localhost'?r.continue():r.abort());
+const owner='preview-blackout-long';await profile(ctx,owner,'dark',{projects});
+await ctx.addInitScript(()=>{window.__blackoutHarness=true;});
+const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.goto('http://localhost:5195/docs/blackout/workspace-proofs/?proposal=canvas');await p.locator('.composer textarea').waitFor();
+const t=['Pricing the first three offers','Portfolio order','Cold email draft','Studio name shortlist','Invoice template','Contract checklist','Website copy pass','Client onboarding','Moodboard notes','Rate card','Weekly review','Newsletter idea','Hiring a part-time assistant','Tax questions'];
+const extra=t.map((title,i)=>({id:'x'+i,title,createdAt:now-(i+1)*36e5*20,updatedAt:now-(i+1)*36e5*20,model:'auto',projectId:i<9?'studio':undefined,messages:[{id:'m'+i,role:'user',text:title,createdAt:now-(i+1)*36e5*20}]}));
+await seed(p,owner,[...chats,...extra]);await p.reload();await p.locator('.composer textarea').waitFor();
+await p.waitForFunction(async()=>{const {useStore}=await import('/src/store.ts');return useStore.getState().chats.length>=20;});
+await p.evaluate(async()=>{const {useStore}=await import('/src/store.ts');useStore.getState().selectChat('launch');});
+await p.getByText('Make the first week count.',{exact:true}).first().waitFor();
+const ta=p.locator('.composer textarea');await ta.click();await ta.fill('Draft that must survive a swipe.');await ta.evaluate(el=>el.setSelectionRange(6,11));
+await p.locator('[data-proposal-expand]').first().click();await p.waitForTimeout(500);
+const exp1=await p.evaluate(()=>document.documentElement.hasAttribute('data-proof-expanded'));
+let swipe='desktop: Done';
+if(W<900){const hb=await p.locator('.px-sheet-head .px-label').boundingBox();
+await p.mouse.move(hb.x+5,hb.y+5);await p.mouse.down();await p.mouse.move(hb.x+5,hb.y+40,{steps:4});await p.mouse.up();await p.waitForTimeout(200);
+const short=await p.evaluate(()=>document.documentElement.hasAttribute('data-proof-expanded'));
+await p.mouse.move(hb.x+5,hb.y+5);await p.mouse.down();await p.mouse.move(hb.x+5,hb.y+160,{steps:8});await p.mouse.up();await p.waitForTimeout(300);
+const st=await ta.evaluate(el=>({expanded:document.documentElement.hasAttribute('data-proof-expanded'),text:el.value,sel:[el.selectionStart,el.selectionEnd],translate:document.querySelector('.composer').style.translate}));
+swipe={expandedBefore:exp1,stillExpandedAfter35px:short,after155px:st};
+}else{await p.locator('.px-done').click();await p.waitForTimeout(300);}
+await ta.fill('');
+if(W<900)await p.locator('[data-proposal-nav]').first().click();
+await p.waitForTimeout(300);
+const more=await p.locator('.pc-more').allTextContents();
+await p.screenshot({path:OUT+'/canvas-'+(W<900?'phone':'desktop')+'-long-list.png'});
+const gap=await p.evaluate(()=>{const u=document.querySelector('.msg.user .bubble'),a=document.querySelector('.msg.assistant');return a&&u?Math.round(a.querySelector('.markdown, .bubble, *').getBoundingClientRect().top-u.getBoundingClientRect().bottom):null});
+const sticky=await p.evaluate(()=>{const t=document.querySelector('.pc-tree');t.scrollTop=t.scrollHeight;return [t.scrollHeight>t.clientHeight, getComputedStyle(document.querySelector('.pc-section')).position]});
+await p.screenshot({path:OUT+'/canvas-'+(W<900?'phone':'desktop')+'-long-list-scrolled.png'});
+await p.locator('.pc-more').first().click();const after=await p.locator('.pc-tree [data-proposal-space=studio] ~ * li').count();
+console.log(JSON.stringify({W,swipe,more,gapUserToAnswer:gap,treeScrolls:sticky,studioRowsAfterShowMore:after,errs}));
+await b.close();})();

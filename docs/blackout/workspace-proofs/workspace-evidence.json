@@ -1,0 +1,665 @@
+{
+  "gate1": "not approved",
+  "syntheticData": true,
+  "productionIntegration": false,
+  "sourceBase": "6d5492e690ccea301db6f000bc9ee01766fd7e5c",
+  "cases": [
+    {
+      "status": "passed",
+      "direction": "index",
+      "width": 1440,
+      "height": 960,
+      "theme": "dark",
+      "blockedExternal": [],
+      "engine": "chromium",
+      "syntheticData": true,
+      "realProviderCalls": 0,
+      "mockedInferenceRequests": 1,
+      "pageErrors": [],
+      "checks": {
+        "workspace": [],
+        "expanded-input": [],
+        "add-context": [],
+        "attached-context": [],
+        "model-picker": [],
+        "usage-details": [],
+        "routing-center": [],
+        "model-inventory": [],
+        "routing-usage": [],
+        "diagnostics": [],
+        "route-explanation": [],
+        "routing-policies": [],
+        "fallback-editor": [],
+        "fallback-saved": [],
+        "provider-management": [],
+        "provider-connection": [],
+        "stop-state": []
+      },
+      "screens": [
+        "index-1440-dark-chromium-workspace.png",
+        "index-1440-dark-chromium-expanded-input.png",
+        "index-1440-dark-chromium-attached-context.png",
+        "index-1440-dark-chromium-model-picker.png",
+        "index-1440-dark-chromium-usage-details.png",
+        "index-1440-dark-chromium-routing-center.png"
+      ],
+      "limitations": [
+        "Linux engine/viewport checks, not a physical iPhone",
+        "No production imports or deployment",
+        "No live provider/quality/quota validation"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "index",
+      "width": 1440,
+      "height": 960,
+      "theme": "dark",
+      "blockedExternal": [
+        "apis.google.com/js/api.js",
+        "apis.google.com/js/api.js",
+        "apis.google.com/js/api.js"
+      ],
+      "engine": "webkit",
+      "syntheticData": true,
+      "realProviderCalls": 0,
+      "mockedInferenceRequests": 1,
+      "pageErrors": [],
+      "checks": {
+        "workspace": [],
+        "expanded-input": [],
+        "add-context": [],
+        "attached-context": [],
+        "model-picker": [],
+        "usage-details": [],
+        "routing-center": [],
+        "model-inventory": [],
+        "routing-usage": [],
+        "diagnostics": [],
+        "route-explanation": [],
+        "routing-policies": [],
+        "fallback-editor": [],
+        "fallback-saved": [],
+        "provider-management": [],
+        "provider-connection": [],
+        "stop-state": []
+      },
+      "screens": [
+        "index-1440-dark-webkit-workspace.png",
+        "index-1440-dark-webkit-expanded-input.png",
+        "index-1440-dark-webkit-attached-context.png",
+        "index-1440-dark-webkit-model-picker.png",
+        "index-1440-dark-webkit-usage-details.png",
+        "index-1440-dark-webkit-routing-center.png"
+      ],
+      "limitations": [
+        "Linux engine/viewport checks, not a physical iPhone",
+        "No production imports or deployment",
+        "No live provider/quality/quota validation"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "index",
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "blockedExternal": [],
+      "engine": "chromium",
+      "syntheticData": true,
+      "realProviderCalls": 0,
+      "mockedInferenceRequests": 1,
+      "pageErrors": [],
+      "checks": {
+        "workspace": [],
+        "navigation": [],
+        "expanded-input": [],
+        "add-context": [],
+        "attached-context": [],
+        "model-picker": [],
+        "usage-details": [],
+        "routing-center": [],
+        "model-inventory": [],
+        "routing-usage": [],
+        "diagnostics": [],
+        "route-explanation": [],
+        "routing-policies": [],
+        "fallback-editor": [],
+        "fallback-saved": [],
+        "provider-management": [],
+        "provider-connection": [],
+        "stop-state": []
+      },
+      "screens": [
+        "index-390-dark-chromium-workspace.png",
+        "index-390-dark-chromium-expanded-input.png",
+        "index-390-dark-chromium-attached-context.png",
+        "index-390-dark-chromium-model-picker.png",
+        "index-390-dark-chromium-usage-details.png",
+        "index-390-dark-chromium-routing-center.png"
+      ],
+      "limitations": [
+        "Linux engine/viewport checks, not a physical iPhone",
+        "No production imports or deployment",
+        "No live provider/quality/quota validation"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "index",
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "blockedExternal": [
+        "apis.google.com/js/api.js",
+        "apis.google.com/js/api.js",
+        "apis.google.com/js/api.js"
+      ],
+      "engine": "webkit",
+      "syntheticData": true,
+      "realProviderCalls": 0,
+      "mockedInferenceRequests": 1,
+      "pageErrors": [],
+      "checks": {
+        "workspace": [],
+        "navigation": [],
+        "expanded-input": [],
+        "add-context": [],
+        "attached-context": [],
+        "model-picker": [],
+        "usage-details": [],
+        "routing-center": [],
+        "model-inventory": [],
+        "routing-usage": [],
+        "diagnostics": [],
+        "route-explanation": [],
+        "routing-policies": [],
+        "fallback-editor": [],
+        "fallback-saved": [],
+        "provider-management": [],
+        "provider-connection": [],
+        "stop-state": []
+      },
+      "screens": [
+        "index-390-dark-webkit-workspace.png",
+        "index-390-dark-webkit-expanded-input.png",
+        "index-390-dark-webkit-attached-context.png",
+        "index-390-dark-webkit-model-picker.png",
+        "index-390-dark-webkit-usage-details.png",
+        "index-390-dark-webkit-routing-center.png"
+      ],
+      "limitations": [
+        "Linux engine/viewport checks, not a physical iPhone",
+        "No production imports or deployment",
+        "No live provider/quality/quota validation"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "studio",
+      "width": 1440,
+      "height": 960,
+      "theme": "dark",
+      "blockedExternal": [],
+      "engine": "chromium",
+      "syntheticData": true,
+      "realProviderCalls": 0,
+      "mockedInferenceRequests": 1,
+      "pageErrors": [],
+      "checks": {
+        "workspace": [],
+        "expanded-input": [],
+        "add-context": [],
+        "attached-context": [],
+        "model-picker": [],
+        "usage-details": [],
+        "routing-center": [],
+        "model-inventory": [],
+        "routing-usage": [],
+        "diagnostics": [],
+        "route-explanation": [],
+        "routing-policies": [],
+        "fallback-editor": [],
+        "fallback-saved": [],
+        "provider-management": [],
+        "provider-connection": [],
+        "stop-state": []
+      },
+      "screens": [
+        "studio-1440-dark-chromium-workspace.png",
+        "studio-1440-dark-chromium-expanded-input.png",
+        "studio-1440-dark-chromium-attached-context.png",
+        "studio-1440-dark-chromium-model-picker.png",
+        "studio-1440-dark-chromium-usage-details.png",
+        "studio-1440-dark-chromium-routing-center.png"
+      ],
+      "limitations": [
+        "Linux engine/viewport checks, not a physical iPhone",
+        "No production imports or deployment",
+        "No live provider/quality/quota validation"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "studio",
+      "width": 1440,
+      "height": 960,
+      "theme": "dark",
+      "blockedExternal": [
+        "apis.google.com/js/api.js",
+        "apis.google.com/js/api.js",
+        "apis.google.com/js/api.js"
+      ],
+      "engine": "webkit",
+      "syntheticData": true,
+      "realProviderCalls": 0,
+      "mockedInferenceRequests": 1,
+      "pageErrors": [],
+      "checks": {
+        "workspace": [],
+        "expanded-input": [],
+        "add-context": [],
+        "attached-context": [],
+        "model-picker": [],
+        "usage-details": [],
+        "routing-center": [],
+        "model-inventory": [],
+        "routing-usage": [],
+        "diagnostics": [],
+        "route-explanation": [],
+        "routing-policies": [],
+        "fallback-editor": [],
+        "fallback-saved": [],
+        "provider-management": [],
+        "provider-connection": [],
+        "stop-state": []
+      },
+      "screens": [
+        "studio-1440-dark-webkit-workspace.png",
+        "studio-1440-dark-webkit-expanded-input.png",
+        "studio-1440-dark-webkit-attached-context.png",
+        "studio-1440-dark-webkit-model-picker.png",
+        "studio-1440-dark-webkit-usage-details.png",
+        "studio-1440-dark-webkit-routing-center.png"
+      ],
+      "limitations": [
+        "Linux engine/viewport checks, not a physical iPhone",
+        "No production imports or deployment",
+        "No live provider/quality/quota validation"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "studio",
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "blockedExternal": [],
+      "engine": "chromium",
+      "syntheticData": true,
+      "realProviderCalls": 0,
+      "mockedInferenceRequests": 1,
+      "pageErrors": [],
+      "checks": {
+        "workspace": [],
+        "navigation": [],
+        "expanded-input": [],
+        "add-context": [],
+        "attached-context": [],
+        "model-picker": [],
+        "usage-details": [],
+        "routing-center": [],
+        "model-inventory": [],
+        "routing-usage": [],
+        "diagnostics": [],
+        "route-explanation": [],
+        "routing-policies": [],
+        "fallback-editor": [],
+        "fallback-saved": [],
+        "provider-management": [],
+        "provider-connection": [],
+        "stop-state": []
+      },
+      "screens": [
+        "studio-390-dark-chromium-workspace.png",
+        "studio-390-dark-chromium-expanded-input.png",
+        "studio-390-dark-chromium-attached-context.png",
+        "studio-390-dark-chromium-model-picker.png",
+        "studio-390-dark-chromium-usage-details.png",
+        "studio-390-dark-chromium-routing-center.png"
+      ],
+      "limitations": [
+        "Linux engine/viewport checks, not a physical iPhone",
+        "No production imports or deployment",
+        "No live provider/quality/quota validation"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "studio",
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "blockedExternal": [
+        "apis.google.com/js/api.js",
+        "apis.google.com/js/api.js",
+        "apis.google.com/js/api.js"
+      ],
+      "engine": "webkit",
+      "syntheticData": true,
+      "realProviderCalls": 0,
+      "mockedInferenceRequests": 1,
+      "pageErrors": [],
+      "checks": {
+        "workspace": [],
+        "navigation": [],
+        "expanded-input": [],
+        "add-context": [],
+        "attached-context": [],
+        "model-picker": [],
+        "usage-details": [],
+        "routing-center": [],
+        "model-inventory": [],
+        "routing-usage": [],
+        "diagnostics": [],
+        "route-explanation": [],
+        "routing-policies": [],
+        "fallback-editor": [],
+        "fallback-saved": [],
+        "provider-management": [],
+        "provider-connection": [],
+        "stop-state": []
+      },
+      "screens": [
+        "studio-390-dark-webkit-workspace.png",
+        "studio-390-dark-webkit-expanded-input.png",
+        "studio-390-dark-webkit-attached-context.png",
+        "studio-390-dark-webkit-model-picker.png",
+        "studio-390-dark-webkit-usage-details.png",
+        "studio-390-dark-webkit-routing-center.png"
+      ],
+      "limitations": [
+        "Linux engine/viewport checks, not a physical iPhone",
+        "No production imports or deployment",
+        "No live provider/quality/quota validation"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "studio",
+      "width": 320,
+      "height": 844,
+      "theme": "dark",
+      "blockedExternal": [
+        "apis.google.com/js/api.js",
+        "apis.google.com/js/api.js",
+        "apis.google.com/js/api.js"
+      ],
+      "engine": "webkit",
+      "syntheticData": true,
+      "realProviderCalls": 0,
+      "mockedInferenceRequests": 1,
+      "pageErrors": [],
+      "checks": {
+        "workspace": [],
+        "navigation": [],
+        "expanded-input": [],
+        "add-context": [],
+        "attached-context": [],
+        "model-picker": [],
+        "usage-details": [],
+        "routing-center": [],
+        "model-inventory": [],
+        "routing-usage": [],
+        "diagnostics": [],
+        "route-explanation": [],
+        "routing-policies": [],
+        "fallback-editor": [],
+        "fallback-saved": [],
+        "provider-management": [],
+        "provider-connection": [],
+        "stop-state": []
+      },
+      "screens": [
+        "studio-320-dark-webkit-workspace.png",
+        "studio-320-dark-webkit-expanded-input.png",
+        "studio-320-dark-webkit-attached-context.png",
+        "studio-320-dark-webkit-model-picker.png",
+        "studio-320-dark-webkit-usage-details.png",
+        "studio-320-dark-webkit-routing-center.png"
+      ],
+      "limitations": [
+        "Linux engine/viewport checks, not a physical iPhone",
+        "No production imports or deployment",
+        "No live provider/quality/quota validation"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "index",
+      "width": 320,
+      "height": 480,
+      "theme": "dark",
+      "blockedExternal": [],
+      "engine": "chromium",
+      "syntheticData": true,
+      "realProviderCalls": 0,
+      "mockedInferenceRequests": 1,
+      "pageErrors": [],
+      "checks": {
+        "workspace": [],
+        "navigation": [],
+        "expanded-input": [],
+        "add-context": [],
+        "attached-context": [],
+        "model-picker": [],
+        "usage-details": [],
+        "routing-center": [],
+        "model-inventory": [],
+        "routing-usage": [],
+        "diagnostics": [],
+        "route-explanation": [],
+        "routing-policies": [],
+        "fallback-editor": [],
+        "fallback-saved": [],
+        "provider-management": [],
+        "provider-connection": [],
+        "stop-state": []
+      },
+      "screens": [
+        "index-320-dark-chromium-workspace.png",
+        "index-320-dark-chromium-expanded-input.png",
+        "index-320-dark-chromium-attached-context.png",
+        "index-320-dark-chromium-model-picker.png",
+        "index-320-dark-chromium-usage-details.png",
+        "index-320-dark-chromium-routing-center.png"
+      ],
+      "limitations": [
+        "Linux engine/viewport checks, not a physical iPhone",
+        "No production imports or deployment",
+        "No live provider/quality/quota validation"
+      ]
+    },
+    {
+      "status": "passed",
+      "direction": "studio",
+      "width": 390,
+      "height": 480,
+      "theme": "dark",
+      "blockedExternal": [],
+      "engine": "chromium",
+      "syntheticData": true,
+      "realProviderCalls": 0,
+      "mockedInferenceRequests": 1,
+      "pageErrors": [],
+      "checks": {
+        "workspace": [],
+        "navigation": [],
+        "expanded-input": [],
+        "add-context": [],
+        "attached-context": [],
+        "model-picker": [],
+        "usage-details": [],
+        "routing-center": [],
+        "model-inventory": [],
+        "routing-usage": [],
+        "diagnostics": [],
+        "route-explanation": [],
+        "routing-policies": [],
+        "fallback-editor": [],
+        "fallback-saved": [],
+        "provider-management": [],
+        "provider-connection": [],
+        "stop-state": []
+      },
+      "screens": [
+        "studio-390-dark-chromium-workspace.png",
+        "studio-390-dark-chromium-expanded-input.png",
+        "studio-390-dark-chromium-attached-context.png",
+        "studio-390-dark-chromium-model-picker.png",
+        "studio-390-dark-chromium-usage-details.png",
+        "studio-390-dark-chromium-routing-center.png"
+      ],
+      "limitations": [
+        "Linux engine/viewport checks, not a physical iPhone",
+        "No production imports or deployment",
+        "No live provider/quality/quota validation"
+      ]
+    }
+  ],
+  "interactions": [
+    {
+      "status": "passed",
+      "direction": "studio",
+      "width": 390,
+      "engine": "chromium",
+      "motion": "normal entrance and reduced-motion disable verified",
+      "canonicalPrefill": true,
+      "researchExternalRemoval": true,
+      "forwardSelection": true,
+      "contextDialog": true,
+      "pageErrors": [],
+      "mockedInferenceRequests": 0
+    },
+    {
+      "status": "passed",
+      "direction": "index",
+      "width": 390,
+      "engine": "webkit",
+      "motion": "normal entrance and reduced-motion disable verified",
+      "canonicalPrefill": true,
+      "rapidModelSwitches": 8,
+      "researchExternalRemoval": true,
+      "forwardSelection": true,
+      "contextDialog": true,
+      "pageErrors": [],
+      "mockedInferenceRequests": 0
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "index-1440-dark-chromium-workspace.png",
+      "sha256": "a862b6d70a1abb82edacac867f8a5e55b84a5a00ac97e04386c27e46f480298b"
+    },
+    {
+      "name": "index-390-dark-chromium-workspace.png",
+      "sha256": "08392ed992a0ad9c85778a014cb2b21ca98e88302e56595d3150ce2492f58ed7"
+    },
+    {
+      "name": "index-1440-dark-chromium-expanded-input.png",
+      "sha256": "7a299215c70934659543a8f284320db5793eb091feed84a3903fd0c26ef2f7e0"
+    },
+    {
+      "name": "index-390-dark-chromium-expanded-input.png",
+      "sha256": "7937a95ea18d6d8a89b80f1d8b041386427854334f3faee8bac2f1c4e6e6cffe"
+    },
+    {
+      "name": "index-1440-dark-chromium-model-picker.png",
+      "sha256": "fee82a4ebbadc4f0a183d1fa7eb9cedf6793115e1ba2b094efea2e06489a6539"
+    },
+    {
+      "name": "index-390-dark-chromium-model-picker.png",
+      "sha256": "7b07116d367a9a999a2b1a8ceea6d23b56ab7ad258570f6aa9652f308e1de524"
+    },
+    {
+      "name": "index-1440-dark-chromium-usage-details.png",
+      "sha256": "628f5ea5b6772fe143f3e201f4c2cafb25db30f9c6876496701ecae8b3d2dea6"
+    },
+    {
+      "name": "index-390-dark-chromium-usage-details.png",
+      "sha256": "e319ee12144c6aa0b7ec7af1f50769b4e2a9e84d8cc2fac92af92642ff0e12da"
+    },
+    {
+      "name": "index-1440-dark-chromium-attached-context.png",
+      "sha256": "6459878c93cac9eee8bff242b9f07289280af4b717ee527d5830dc604c30451b"
+    },
+    {
+      "name": "index-390-dark-chromium-attached-context.png",
+      "sha256": "b3660c8fbc49299a98c1b0b34bacd126253be1245e4b3098e76db0cf213387a5"
+    },
+    {
+      "name": "index-1440-dark-chromium-routing-center.png",
+      "sha256": "d6e2fe5cfb0f69256219505ff434c0b160c088567a397186e6bc1d742606c459"
+    },
+    {
+      "name": "index-390-dark-chromium-routing-center.png",
+      "sha256": "7bdaa60d999d9e34a1b4fe7c50d85b1d3c956652565ef50415db3cdb1201bc2e"
+    },
+    {
+      "name": "studio-1440-dark-chromium-workspace.png",
+      "sha256": "12290f57b0640fa858096d53fcc5bf5fa091b4ebed817ceb969056a3d4824caa"
+    },
+    {
+      "name": "studio-390-dark-chromium-workspace.png",
+      "sha256": "60f79fea387d107befae59d42fb704e83cb26274c6a34784748ba53ce28e37e2"
+    },
+    {
+      "name": "studio-1440-dark-chromium-expanded-input.png",
+      "sha256": "a6d0695a5ee337932d254c08f0769197d427980867b2d0f1ea07aa0f89e1dc72"
+    },
+    {
+      "name": "studio-390-dark-chromium-expanded-input.png",
+      "sha256": "c8fe9b3c38fbc4ef2625e2495d37aaedc9205974a4449e395ce52c16e98c7931"
+    },
+    {
+      "name": "studio-1440-dark-chromium-model-picker.png",
+      "sha256": "fdd3bd11e701e27a4d095cb9d0c724ac6e6836cdc11633746d17e203a97f7efa"
+    },
+    {
+      "name": "studio-390-dark-chromium-model-picker.png",
+      "sha256": "28f96be3f8ad183cf1bcc6306ee69c88859c213e791fd78566617e1a3a6a921b"
+    },
+    {
+      "name": "studio-1440-dark-chromium-usage-details.png",
+      "sha256": "84200471d392815e5ea82658ef78e36614668d11a5d24214a814cc9ad357685d"
+    },
+    {
+      "name": "studio-390-dark-chromium-usage-details.png",
+      "sha256": "f3143715ade97f08882f9025b945574e259a4e0a208ffeb20a29e90821df480b"
+    },
+    {
+      "name": "studio-1440-dark-chromium-attached-context.png",
+      "sha256": "42a2a2b8076482f6b1168a7ab7ae958f8680bc00b0b16fdd83ed7a6516b14a44"
+    },
+    {
+      "name": "studio-390-dark-chromium-attached-context.png",
+      "sha256": "6038d5243135f992177b5f2951415f885b970b7d0dcbf50cd8e400b4b571a7c1"
+    },
+    {
+      "name": "studio-1440-dark-chromium-routing-center.png",
+      "sha256": "e552822ba6212455e142cfcd3eb4ed175533d70f3abb8e00698a251a50255cbd"
+    },
+    {
+      "name": "studio-390-dark-chromium-routing-center.png",
+      "sha256": "701005d749547590c73e8a1cbc13cd08483a8b63cdb47bb54daad1dabbba5713"
+    },
+    {
+      "name": "baseline/baseline-1440-dark-chromium-workspace.png",
+      "sha256": "dfdfc8c3563d8a7424c77ab8ed525e55649ea571dbb8c7304d499ca770c56bbd"
+    },
+    {
+      "name": "baseline/baseline-390-dark-chromium-workspace.png",
+      "sha256": "d03d597df96d878701fcfdca3cf2bd3c16f32f4162e702f1584c45cf571aab56"
+    }
+  ]
+}

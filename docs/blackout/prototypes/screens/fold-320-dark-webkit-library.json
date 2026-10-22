@@ -1,0 +1,13 @@
+{
+  "concept": "fold",
+  "theme": "dark",
+  "width": 320,
+  "height": 844,
+  "engine": "webkit",
+  "syntheticData": true,
+  "inferenceRequests": 0,
+  "pageErrors": [],
+  "accessibility": {
+    "library": []
+  }
+}

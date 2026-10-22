@@ -1,0 +1,62 @@
+/* Gate1 reconsideration — shared by both proposals (opt-in preview only; production never imports this).
+   Blackout stays monochrome: the only "colour" is ink on paper and glass over content. */
+:root[data-proposal]{--px-display:'Blackout Archivo',var(--font),system-ui,sans-serif;--px-mono:'Geist Mono',ui-monospace,monospace;--px-ease:cubic-bezier(.32,.72,0,1)}
+/* Desktop glass: real translucency for floating controls only (iPhone uses production html.glass materials). */
+:root[data-proposal]{--px-glass:color-mix(in srgb,var(--bg) 70%,transparent);--px-glass-strong:color-mix(in srgb,var(--surface) 82%,transparent);--px-rim:color-mix(in srgb,var(--text) 10%,transparent);--px-fill:color-mix(in srgb,var(--text) 7%,transparent);--px-fill-strong:color-mix(in srgb,var(--text) 12%,transparent);--px-shadow:0 18px 48px rgb(0 0 0 / .32),0 2px 8px rgb(0 0 0 / .18)}
+:root[data-proposal][data-theme=light]{--px-shadow:0 18px 48px rgb(0 0 0 / .12),0 2px 8px rgb(0 0 0 / .06)}
+
+/* The production sidebar and its top-bar controls give way to each proposal's navigation; the top bar keeps its
+   real trailing actions (canvas, repository, incognito). */
+:root[data-proposal] .app>.sidebar,:root[data-proposal] .app>.scrim{display:none!important}
+:root[data-proposal] .topbar>:is(.menu-btn,.expand-sidebar,.topbar-center){display:none!important}
+:root[data-proposal] .px-lead{display:flex;align-items:center;gap:6px;order:-1;min-width:0;flex:1}
+
+/* Ink-on-paper actions: Send is the one solid control; the model's dot follows the text colour. */
+:root[data-proposal] .composer .send-btn:not(:disabled){background:var(--text)!important;color:var(--bg)!important;box-shadow:none!important}
+:root[data-proposal] .composer .send-btn.voice-start{background:var(--px-fill-strong)!important;color:var(--text)!important}
+:root[data-proposal] .composer .model-name::before,:root[data-proposal] .route-dot{background:var(--text)!important;box-shadow:none!important}
+
+/* Reading: comfortable measure and rhythm on every surface. */
+:root[data-proposal] .markdown{font-size:16.5px;line-height:1.72}
+:root[data-proposal] .markdown h2{font:620 27px/1.18 var(--px-display);letter-spacing:-.025em;margin:6px 0 14px}
+:root[data-proposal] .markdown h3{font-size:17px;font-weight:640;margin:28px 0 6px;letter-spacing:-.01em}
+:root[data-proposal] .msg.user .bubble{font-size:15.5px;line-height:1.6}
+@media(min-width:900px){:root[data-proposal] .thread{max-width:720px}}
+
+/* Shared pieces. */
+.px-wordmark{font:660 22px/1 var(--px-display);letter-spacing:-.045em;color:var(--text)}
+.px-label{display:block;margin:0;font:500 10.5px/1.3 var(--px-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
+.px-mono{display:inline-grid;place-items:center;flex:none;width:22px;height:22px;border-radius:7px;background:var(--px-fill-strong);color:var(--text);font:650 12px/1 var(--px-display)}
+.px-search{display:flex;align-items:center;gap:8px;height:38px;padding:0 12px;border-radius:12px;background:var(--px-fill);color:var(--text-3)}
+.px-search input{flex:1;min-width:0;border:0;background:none;outline:none;font:inherit;font-size:14px;color:var(--text)}
+.px-search:focus-within{box-shadow:0 0 0 2px color-mix(in srgb,var(--text) 35%,transparent)}
+.px-nav-btn{display:inline-grid;place-items:center;min-width:40px;height:40px;border:0;border-radius:12px;background:none;color:var(--text);cursor:pointer}
+.px-nav-btn:hover{background:var(--px-fill)}
+.px-destinations{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+.px-destinations button{display:flex;align-items:center;gap:9px;min-height:40px;padding:0 10px;border:0;border-radius:10px;background:none;color:var(--text-2);font-size:13px;text-align:left;cursor:pointer}
+.px-destinations button:hover{background:var(--px-fill);color:var(--text)}
+.px-scrim{position:fixed;inset:0;z-index:60;border:0;background:rgb(0 0 0 / .35);cursor:default}
+:root:not([data-proposal-nav-open]) .px-scrim{display:none}
+.px-expand{display:inline-grid;place-items:center;width:36px;height:36px;border:0;border-radius:50%;background:none;color:var(--text-2);cursor:pointer;flex:none}
+.px-expand:hover{background:var(--px-fill);color:var(--text)}
+
+/* Expanded writing header (both proposals): only while writing is expanded. */
+.px-sheet-head,.pd-replying{display:none}
+:root[data-proof-expanded] .px-sheet-head{display:flex;align-items:center;gap:12px;order:-10;flex:0 0 100%;padding:4px 4px 10px}
+.px-sheet-head>div{flex:1;min-width:0}
+.px-sheet-head strong{display:block;font:620 19px/1.25 var(--px-display);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.px-count{font-size:12px;color:var(--text-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.px-done{min-height:36px;min-width:64px;margin-left:4px;padding:0 14px;border:0;border-radius:999px;background:var(--px-fill-strong);color:var(--text);font:600 14px var(--font);cursor:pointer}
+:root[data-proof-expanded] .px-expand{display:none}
+
+@media(prefers-reduced-motion:reduce){:root[data-proposal] *{transition-duration:0s!important;animation:none!important}}
+
+/* The context chip names its real estimate ("~231 tokens") instead of a rounded "0%"; the panel's gauge gets
+   the honest "<1%" label from UsageShareLabels. Canonical UsageMeter data is unchanged. */
+:root[data-proposal] .composer .usage-chip :is(.usage-chip-pct,.usage-chip-label){display:none}
+:root[data-proposal] .composer .usage-chip.idle{width:auto;padding:0 8px}
+.px-usage{font:500 12.5px var(--font);color:var(--text-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+:root[data-proposal] .um-gauge[data-proof-share]>span:not(.proof-gauge-label){display:none}
+:root[data-proposal] .um-gauge[data-proof-share] .um-gauge-fill{stroke-dashoffset:calc(var(--c) * 1px * (1 - var(--proof-arc)))}
+/* Production pins the usage chip to the composer's top-right corner; in both proposals it sits in the control row. */
+:root[data-proposal] .composer-bar .usage-meter{position:static;inset:auto;margin:0}

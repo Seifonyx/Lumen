@@ -1,5 +1,7 @@
 # Dynamic Model Picker operational handoff
 
+> **Lumen Blackout, separate workstream (20 October 2026):** Full [Blackout master](docs/blackout/MASTER_REQUIREMENTS.md) and [current Continuum directive](docs/blackout/PROJECT_CONTINUUM_2026-10-20.md) are now preserved verbatim. Follow the [Blackout plan](docs/blackout/IMPLEMENTATION_PLAN.md) and [handoff](docs/blackout/AI_HANDOFF.md). Identity studies remain isolated in draft PR #34; explicit identity, core and final aesthetic gates apply. **The independent Dynamic Model Picker requirements and 98.5% ledger below remain unchanged.**
+
 ## Independent usage-draft fix — 20 October 2026 (Africa/Cairo)
 
 The fix-only branch `fix/usage-draft-no-submit-20261020` contains source checkpoint `8a328bb` (cherry-pick of reviewed `1736a92`). Five UsageMeter buttons explicitly avoid form submission; the new pointer/Enter regression checks draft/message/network/focus behavior at 1440/390 in Chromium and Linux WebKit. Red/green reproduction, independent reruns, typecheck, 149 unit tests and production build passed; normal design regression also passed. See `docs/testing/usage-draft-regression.md`.

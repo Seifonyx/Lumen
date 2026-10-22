@@ -1,0 +1,259 @@
+{
+ "record": "QA01 local private-testing foundation (Blackout, PR #34 workstream)",
+ "date": "2026-10-21",
+ "agent": "Claude Code (owner-directed continuation after Codex usage limit)",
+ "sourceBase": "88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f",
+ "verifiedCodeCommit": "d0ef5f84b0d949ca1612453e45ccd937985caeeb",
+ "notClaimed": [
+  "physical iPhone",
+  "hosted Cloudflare Access/MFA/R2/Worker",
+  "live providers",
+  "production verification",
+  "merge or deployment"
+ ],
+ "unitTests": {
+  "files": 83,
+  "newFiles": {
+   "private-qa-gate": 14,
+   "private-qa-control": 10,
+   "private-qa-transport": 8
+  },
+  "result": "pass"
+ },
+ "isolationAudit": {
+  "checks": 8,
+  "result": "pass",
+  "productionFiles": 174,
+  "productionByteIdenticalToBaseline": true,
+  "productionModules": 2556,
+  "qaModules": 2544,
+  "qaFiles": 164,
+  "negativeControls": {
+   "plantedGraphModulesQA": 11,
+   "plantedGraphModulesProduction": 4,
+   "missingAdapter": 1,
+   "plantedOutputFiles": 10,
+   "realPlantedBuilds": 4,
+   "rawReplacement": 1,
+   "primitiveAndIndirectFetchTransforms": 12,
+   "verifierNegatives": 4
+  },
+  "thirdPartyNetworkChunks": [
+   "pdf.js loader",
+   "pdf.js worker",
+   "PowerPoint generator image loader",
+   "KaTeX lexer method named fetch",
+   "Pyodide worker source string (worker creation disabled)"
+  ]
+ },
+ "qaBuild": {
+  "buildId": "d0ef5f84b0d949ca1612453e45ccd937985caeeb-0-1",
+  "files": 164,
+  "sizeMB": 7.7,
+  "publishedAnywhere": false
+ },
+ "browser": {
+  "chromium": "141.0.7390.37 (Playwright 1.56.1)",
+  "webkit": "Linux WebKit 26.0 in mcr.microsoft.com/playwright:v1.56.1-noble",
+  "runs": [
+   {
+    "engine": "chromium",
+    "build": "d0ef5f84b0d949ca1612453e45ccd937985caeeb-0-1",
+    "viewports": [
+     {
+      "viewport": "1440x960",
+      "requests": 56,
+      "external": 0,
+      "errors": 0,
+      "overflow": 0,
+      "axe": 0,
+      "blockedHosts": 0,
+      "disabledCalls": 0,
+      "csp": 0,
+      "workers": 0
+     },
+     {
+      "viewport": "390x844",
+      "requests": 47,
+      "external": 0,
+      "errors": 0,
+      "overflow": 0,
+      "axe": 0,
+      "blockedHosts": 0,
+      "disabledCalls": 0,
+      "csp": 0,
+      "workers": 0
+     },
+     {
+      "viewport": "320x568",
+      "requests": 47,
+      "external": 0,
+      "errors": 0,
+      "overflow": 0,
+      "axe": 0,
+      "blockedHosts": 0,
+      "disabledCalls": 0,
+      "csp": 0,
+      "workers": 0
+     },
+     {
+      "viewport": "390x480",
+      "requests": 47,
+      "external": 0,
+      "errors": 0,
+      "overflow": 0,
+      "axe": 0,
+      "blockedHosts": 0,
+      "disabledCalls": 0,
+      "csp": 0,
+      "workers": 0
+     }
+    ],
+    "other": [
+     {
+      "plantedAttemptsRefusedByCsp": [
+       {
+        "url": "https://planted-xhr.invalid/x",
+        "failure": "csp"
+       },
+       {
+        "url": "https://planted-pixel.invalid/p.png",
+        "failure": "csp"
+       }
+      ]
+     },
+     {
+      "planted": {
+       "fetch": "blocked",
+       "transportBlocked": [
+        "planted-exfiltration.invalid"
+       ],
+       "socket": "constructed",
+       "sw": "blocked",
+       "csp": [
+        "connect-src",
+        "connect-src",
+        "worker-src",
+        "img-src"
+       ]
+      },
+      "detectorControl": "caught"
+     },
+     {
+      "namespaces": "separate"
+     },
+     {
+      "revokeReviewer": "locked and refused"
+     },
+     {
+      "expire": "send refused, locked and reload refused"
+     }
+    ]
+   },
+   {
+    "engine": "webkit",
+    "build": "d0ef5f84b0d949ca1612453e45ccd937985caeeb-0-1",
+    "viewports": [
+     {
+      "viewport": "1440x960",
+      "requests": 57,
+      "external": 0,
+      "errors": 0,
+      "overflow": 0,
+      "axe": 0,
+      "blockedHosts": 0,
+      "disabledCalls": 0,
+      "csp": 0,
+      "workers": 0
+     },
+     {
+      "viewport": "390x844",
+      "requests": 48,
+      "external": 0,
+      "errors": 0,
+      "overflow": 0,
+      "axe": 0,
+      "blockedHosts": 0,
+      "disabledCalls": 0,
+      "csp": 0,
+      "workers": 0
+     },
+     {
+      "viewport": "320x568",
+      "requests": 48,
+      "external": 0,
+      "errors": 0,
+      "overflow": 0,
+      "axe": 0,
+      "blockedHosts": 0,
+      "disabledCalls": 0,
+      "csp": 0,
+      "workers": 0
+     },
+     {
+      "viewport": "390x480",
+      "requests": 48,
+      "external": 0,
+      "errors": 0,
+      "overflow": 0,
+      "axe": 0,
+      "blockedHosts": 0,
+      "disabledCalls": 0,
+      "csp": 0,
+      "workers": 0
+     }
+    ],
+    "other": [
+     {
+      "plantedAttemptsRefusedByCsp": []
+     },
+     {
+      "planted": {
+       "fetch": "blocked",
+       "transportBlocked": [
+        "planted-exfiltration.invalid"
+       ],
+       "socket": "blocked",
+       "sw": "blocked",
+       "csp": [
+        "connect-src",
+        "img-src",
+        "connect-src",
+        "worker-src"
+       ]
+      },
+      "detectorControl": "caught"
+     },
+     {
+      "namespaces": "separate"
+     },
+     {
+      "revokeReviewer": "locked and refused"
+     },
+     {
+      "expire": "send refused, locked and reload refused"
+     }
+    ]
+   }
+  ]
+ },
+ "existingRegressionsChromiumOrdinaryBuild": {
+  "suites": [
+   "usage-draft",
+   "chat-menu",
+   "selection-boundaries",
+   "model-picker-accessibility",
+   "incognito",
+   "account-isolation"
+  ],
+  "result": "pass",
+  "note": "run at 603be2d; ordinary output byte-identical at every QA01 commit"
+ },
+ "independentReview": {
+  "critical": 0,
+  "important": 3,
+  "importantFixed": 3,
+  "minorAndTestFindingsFixed": 10,
+  "minorDocumented": 2
+ }
+}

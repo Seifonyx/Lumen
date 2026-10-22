@@ -1,0 +1,16 @@
+{
+  // Private iPhone QA (Codespaces): starts the synthetic review in a visible terminal when the folder opens.
+  // The script refuses to run outside a Codespace, so opening this folder locally does nothing harmful.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Lumen QA review",
+      "type": "shell",
+      "command": "bash scripts/qa/codespace-start.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": false },
+      "runOptions": { "runOn": "folderOpen" }
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "engine": "chromium",
+  "commit": "2fc1b49608d5e88baf3a7331f57c3196834a971a",
+  "physicalDevice": false,
+  "screenshotToolingCsp": [],
+  "results": [
+    {
+      "viewport": "1440x960-dark",
+      "engine": "chromium",
+      "screens": {
+        "settings": [],
+        "library": [],
+        "tools": [],
+        "projects": [],
+        "project": [],
+        "allChats": [],
+        "routing": []
+      },
+      "checks": [
+        "settings",
+        "library, tools, projects",
+        "create project",
+        "project from brief",
+        "dialogs",
+        "routing center",
+        "axe, overflow, CSP, network, errors"
+      ]
+    },
+    {
+      "viewport": "1440x960-light",
+      "engine": "chromium",
+      "screens": {
+        "settings": [],
+        "library": [],
+        "tools": [],
+        "projects": [],
+        "project": [],
+        "allChats": [],
+        "routing": []
+      },
+      "checks": [
+        "settings",
+        "library, tools, projects",
+        "create project",
+        "project from brief",
+        "dialogs",
+        "routing center",
+        "axe, overflow, CSP, network, errors"
+      ]
+    },
+    {
+      "viewport": "390x844-dark",
+      "engine": "chromium",
+      "screens": {
+        "settings": [],
+        "library": [],
+        "tools": [],
+        "projects": [],
+        "project": [],
+        "allChats": [],
+        "routing": []
+      },
+      "checks": [
+        "settings",
+        "library, tools, projects",
+        "create project",
+        "project from brief",
+        "dialogs",
+        "routing center",
+        "axe, overflow, CSP, network, errors"
+      ]
+    },
+    {
+      "viewport": "390x844-light",
+      "engine": "chromium",
+      "screens": {
+        "settings": [],
+        "library": [],
+        "tools": [],
+        "projects": [],
+        "project": [],
+        "allChats": [],
+        "routing": []
+      },
+      "checks": [
+        "settings",
+        "library, tools, projects",
+        "create project",
+        "project from brief",
+        "dialogs",
+        "routing center",
+        "axe, overflow, CSP, network, errors"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,152 @@
+/* Gate1 consolidation: opt-in preview only. Earlier Index/Studio proofs remain available. */
+:root[data-proof-consolidated] .app{grid-template-columns:220px minmax(0,1fr)}
+:root[data-proof-consolidated] .proof-unified-navigation{padding:25px 14px 14px;gap:3px;overflow:auto}
+:root[data-proof-consolidated] .proof-unified-navigation button{font-size:13px;line-height:1.4;padding:10px;min-height:44px;flex-shrink:0}
+:root[data-proof-consolidated] .proof-unified-navigation .proof-wordmark{padding:0 10px 23px;font-size:33px;gap:10px}
+:root[data-proof-consolidated] .proof-unified-navigation .proof-new-primary{background:var(--surface-3);border:1px solid var(--border-strong);margin-bottom:6px;color:var(--text)}
+.proof-recent-heading{font-size:12px;color:var(--text-3);padding:24px 10px 8px}
+.proof-recent-list{display:grid;gap:2px;padding-bottom:18px}
+:root[data-proof-consolidated] .proof-recent-list button{font-size:12px;color:var(--text-2);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;width:100%;max-width:190px}
+:root[data-proof-consolidated] .main{grid-template-columns:minmax(0,1fr) 246px;grid-template-rows:58px minmax(0,1fr) auto}
+:root[data-proof-consolidated] .thread{gap:22px;padding-top:20px}
+:root[data-proof-consolidated] .proof-document-head{padding-block:22px 18px}
+:root[data-proof-consolidated] .proof-document-head h1{font-size:30px;letter-spacing:-1px;margin:0;line-height:1.2}
+:root[data-proof-consolidated] .proof-document-head .proof-section-label,:root[data-proof-consolidated] .proof-document-head p{display:none}
+:root[data-proof-consolidated] .composer-wrap{padding:10px 28px 12px;display:flex;flex-direction:column;align-items:center;min-height:0}
+:root[data-proof-consolidated] .composer{width:100%;max-width:760px;flex-shrink:0;overflow:visible}
+:root[data-proof-consolidated] .disclaimer{flex-shrink:0;position:static;max-width:760px;margin:7px 0 0;font-size:11px;line-height:1.4}
+:root[data-proof-consolidated] .composer textarea{min-height:72px!important;max-height:24dvh;padding:14px 18px!important;line-height:1.65}
+:root[data-proof-consolidated] .proof-usage-label{min-width:65px;gap:2px}
+:root[data-proof-consolidated] .proof-usage-label b{font-size:13px;font-weight:550}
+:root[data-proof-consolidated] .proof-usage-label>span{font-size:11px}
+:root[data-proof-consolidated] .composer-bar .usage-chip{min-height:46px}
+.proof-focus-toggle{min-height:44px;padding:8px 14px;border:1px solid var(--border-strong);border-radius:7px;color:var(--text);background:var(--surface);font-size:13px;cursor:pointer;flex-shrink:0}
+.proof-focus-toggle:hover,.proof-focus-toggle[aria-pressed=true]{background:var(--surface-3)}
+.proof-phone-new,.proof-brief-toggle{display:none}
+:root[data-proof-consolidated] .proof-writing-head>span{line-height:1.6;text-align:right;white-space:normal;max-width:180px}
+.proof-writing-head small{display:block;font-size:11px;color:var(--text-3)}
+:root[data-proof-consolidated][data-proof-expanded] .main{grid-template-columns:minmax(380px,.9fr) minmax(0,1.1fr);grid-template-rows:58px minmax(0,1fr)}
+:root[data-proof-consolidated][data-proof-expanded] .proof-margin{display:none}
+:root[data-proof-consolidated][data-proof-expanded] .conversation-area{display:flex;grid-column:2;grid-row:2;border-left:1px solid var(--border)}
+:root[data-proof-consolidated][data-proof-expanded] .composer-wrap{grid-column:1;grid-row:2;display:flex;flex-direction:column;padding:22px;min-height:0;align-items:stretch}
+:root[data-proof-consolidated][data-proof-expanded] .composer{flex:1 1 0;min-height:0;width:100%;max-width:none;overflow:hidden}
+:root[data-proof-consolidated][data-proof-expanded] .composer textarea{flex:1 1 0;min-height:100px!important;height:auto!important;max-height:none;padding:22px!important;line-height:1.8;font-size:18px}
+:root[data-proof-consolidated][data-proof-expanded] .proof-writing-head{padding:22px 20px 20px;flex-shrink:0}
+:root[data-proof-consolidated][data-proof-expanded] .proof-writing-head strong{font-size:28px}
+:root[data-proof-consolidated][data-proof-expanded] .composer-bar{grid-template-columns:minmax(0,1fr) auto;gap:0 8px;flex-shrink:0}
+:root[data-proof-consolidated][data-proof-expanded] .composer-bar .usage-meter{grid-column:1;grid-row:2}
+:root[data-proof-consolidated][data-proof-expanded] .composer-voice-controls{grid-column:2;grid-row:1/3}
+:root[data-proof-consolidated][data-proof-expanded] .proof-document-head{padding-inline:32px}
+:root[data-proof-consolidated][data-proof-expanded] .proof-document-head::after{inset-inline:32px}
+:root[data-proof-consolidated][data-proof-expanded] .thread{padding-inline:32px}
+/* Canonical picker/usage remain their own overlays; align their material and type to this shell. */
+:root[data-proof-consolidated] :is(.models-pop,.usage-pop){background:var(--surface);border-color:var(--border-strong);border-radius:12px;color:var(--text)}
+:root[data-proof-consolidated] :is(.mp-title,.usage-pop h3){font-weight:600}
+:root[data-proof-consolidated] .models-pop .mp-pill{background:var(--surface-3);color:var(--text-2)}
+:root[data-proof-consolidated][data-proof-expanded] .composer .usage-pop:not(.sheet){position:fixed;left:250px;bottom:40px;right:auto;max-height:calc(100dvh - 130px)!important;z-index:95}
+@media(min-width:900px) and (max-width:1150px){:root[data-proof-consolidated] .main{grid-template-columns:minmax(0,1fr)}:root[data-proof-consolidated][data-proof-expanded] .main{grid-template-columns:390px minmax(0,1fr)}}
+@media(max-width:899px){
+ :root[data-proof-consolidated] .app{grid-template-columns:minmax(0,1fr);grid-template-rows:22px minmax(0,1fr)}
+ :root[data-proof-consolidated] .proof-unified-navigation{display:none}
+ :root[data-proof-consolidated] .main{grid-column:1;grid-row:2;grid-template-columns:minmax(0,1fr);grid-template-rows:52px minmax(0,1fr) auto}
+ :root[data-proof-consolidated] .proof-focus-toggle{display:none}
+ :root[data-proof-consolidated] .proof-phone-new{display:grid;place-items:center;min-width:44px;min-height:44px;background:none;border:0;color:var(--text);cursor:pointer}
+ :root[data-proof-consolidated] .proof-phone-wordmark{font-size:25px}
+ :root[data-proof-consolidated] .proof-document-head{padding:14px 20px 8px}
+ :root[data-proof-consolidated] .proof-document-head h1{font-size:18px;line-height:1.4;letter-spacing:-.3px}
+ :root[data-proof-consolidated] .proof-document-head::after{display:none}
+ :root[data-proof-consolidated] .messages>.thread{padding:0 20px 28px;gap:16px}
+ :root[data-proof-consolidated] .thread>.message-row[data-message-index="0"]:has(.msg.user){margin:0}
+ :root[data-proof-consolidated] .thread>.message-row[data-message-index="0"] .msg.user{padding:0;border:0;gap:0}
+ :root[data-proof-consolidated] .thread>.message-row[data-message-index="0"] .msg.user::before{display:none}
+ :root[data-proof-consolidated] .thread>.message-row[data-message-index="0"] .msg.user:not([data-brief-open])>:not(.proof-brief-toggle){display:none}
+ :root[data-proof-consolidated] .proof-brief-toggle{display:flex;order:-1;align-items:center;justify-content:space-between;width:100%;min-height:44px;padding:8px 0;border:0;border-bottom:1px solid var(--border);color:var(--text-2);background:none;font-size:13px;text-align:left;cursor:pointer}
+ .proof-brief-toggle span{color:var(--text-3);font-size:12px}
+ :root[data-proof-consolidated] .msg.assistant::before{content:'LUMEN';font-size:10px;margin-bottom:7px}
+ :root[data-proof-consolidated] .markdown h2{font-size:26px;margin-bottom:14px}
+ :root[data-proof-consolidated] .markdown{font-size:15px;line-height:1.75}
+ :root[data-proof-consolidated] .composer-wrap{padding:6px 10px max(10px,var(--proof-safe-bottom,env(safe-area-inset-bottom)))}
+ :root[data-proof-consolidated] .composer textarea{min-height:54px!important;max-height:110px;padding:10px 14px!important;font-size:16px;line-height:1.6}
+ :root[data-proof-consolidated] .composer-bar{grid-template-columns:minmax(0,1fr) 80px auto;gap:4px;padding:5px 6px}
+ :root[data-proof-consolidated] .composer-bar .usage-meter{grid-column:2;grid-row:1}
+ :root[data-proof-consolidated] .composer-bar .usage-chip{min-height:44px;padding:4px;max-width:80px}
+ :root[data-proof-consolidated] .proof-usage-label{display:flex;flex-direction:column;align-items:start;gap:2px;min-width:0}
+ :root[data-proof-consolidated] .proof-usage-label b{font-size:13px}
+ :root[data-proof-consolidated] .proof-usage-label>span{font-size:11px;white-space:nowrap}
+ :root[data-proof-consolidated] .composer-voice-controls{grid-column:3;grid-row:1;gap:0}
+ :root[data-proof-consolidated] .model-button{padding-inline:4px;min-height:44px;gap:3px 4px}
+ :root[data-proof-consolidated] .model-button>.model-name{font-size:13px}
+ :root[data-proof-consolidated] .proof-route-caption{font-size:11px}
+ :root[data-proof-consolidated] .proof-context-toolbar{padding:2px 5px}
+ :root[data-proof-consolidated] .disclaimer{display:none}
+ :root[data-proof-consolidated][data-proof-expanded] .main{grid-template-columns:minmax(0,1fr);grid-template-rows:52px minmax(0,1fr)}
+ :root[data-proof-consolidated][data-proof-expanded] .conversation-area{display:none}
+ :root[data-proof-consolidated][data-proof-expanded] .composer-wrap{grid-column:1;grid-row:2;padding:10px 10px max(10px,var(--proof-safe-bottom,env(safe-area-inset-bottom)));height:100%}
+ :root[data-proof-consolidated][data-proof-expanded] .composer{height:100%;min-height:0}
+ :root[data-proof-consolidated][data-proof-expanded] .proof-writing-head{padding:18px 16px 14px}
+ :root[data-proof-consolidated][data-proof-expanded] .proof-writing-head strong{font-size:25px}
+ :root[data-proof-consolidated][data-proof-expanded] .proof-writing-head>span{font-size:11px;max-width:125px}
+ :root[data-proof-consolidated][data-proof-expanded] .composer textarea{padding:16px!important;min-height:60px!important;font-size:17px;line-height:1.8}
+ :root[data-proof-consolidated][data-proof-expanded] .composer-bar{grid-template-columns:minmax(0,1fr) 80px auto}
+ :root[data-proof-consolidated][data-proof-expanded] .composer-bar .usage-meter{grid-column:2;grid-row:1}
+ :root[data-proof-consolidated][data-proof-expanded] .composer-voice-controls{grid-column:3;grid-row:1}
+}
+@media(max-width:360px){:root[data-proof-consolidated] .proof-phone-wordmark small{display:none}:root[data-proof-consolidated] .model-button>svg{display:none}:root[data-proof-consolidated] .proof-context-toolbar button{padding-inline:6px}}
+@media(max-height:600px) and (max-width:899px){:root[data-proof-consolidated] .proof-document-head{padding-top:8px}:root[data-proof-consolidated] .proof-document-head h1{font-size:15px}:root[data-proof-consolidated] .messages>.thread{gap:10px}:root[data-proof-consolidated] .markdown h2{font-size:22px;margin-bottom:10px}:root[data-proof-consolidated] .composer textarea{min-height:46px!important}:root[data-proof-consolidated][data-proof-expanded] .proof-writing-head{padding-block:10px}:root[data-proof-consolidated][data-proof-expanded] .proof-writing-head strong{font-size:22px}}
+.proof-phone-routing,.proof-routing-workspace{display:none}
+@media(max-width:899px){:root[data-proof-consolidated] .proof-phone-routing{display:grid;place-items:center;min-width:44px;min-height:44px;background:none;border:0;color:var(--text);cursor:pointer}:root[data-proof-consolidated] .proof-routing-workspace{display:flex;min-height:44px;align-items:center;padding:8px 0;margin-bottom:12px;border:0;background:none;color:var(--text);font-size:14px;cursor:pointer}}
+:root[data-proof-consolidated] .proof-mobile-context{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border:0;background:none;color:var(--text);cursor:pointer}
+:root[data-proof-consolidated] .sidebar-brand{font:650 26px/1 Blackout Archivo,sans-serif;letter-spacing:-1px}
+:root[data-proof-consolidated] .sidebar-brand>svg{display:none}
+@media(max-height:600px) and (max-width:899px){:root[data-proof-consolidated] .proof-document-head{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}:root[data-proof-consolidated] .msg.assistant::before{display:none}}
+/* Each composer layer owns its padding; inherited form padding must not be counted again. */
+:root[data-proof-consolidated] .composer{padding:0}
+/* ---- Gate1 quality pass (21 Oct 2026): identity, rail, mode identity, usage. Opt-in preview only. ---- */
+/* One display face (Archivo) for titles and key values, the interface face for reading, mono only for small
+   section labels — set the same way everywhere so the labels read as one system. */
+:root[data-proof-consolidated] .proof-section-label{font:500 10.5px/1.4 Geist Mono,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);margin:0 0 12px}
+/* (Desktop sizes; phones keep their compact title so the answer stays on the first screen.) */
+@media(min-width:900px){
+ :root[data-proof-consolidated] .proof-document-head h1{font:600 34px/1.1 Blackout Archivo,sans-serif;letter-spacing:-.03em;max-width:600px;text-wrap:balance}
+ :root[data-proof-consolidated] .markdown h2{font:600 25px/1.2 Blackout Archivo,sans-serif;letter-spacing:-.02em;margin:2px 0 14px}
+ :root[data-proof-consolidated] .markdown h3{font-size:16.5px;font-weight:620;line-height:1.4;margin:30px 0 6px}
+ :root[data-proof-consolidated] .msg.assistant .markdown{font-size:16px;line-height:1.72}
+ :root[data-proof-consolidated] .msg.assistant .markdown>:is(p,ul,ol,blockquote,h2,h3){max-width:66ch}
+}
+/* Mode identity: the top bar names the mode before the conversation title; Focus is the inverted, unmistakable state. */
+.proof-topbar-mode{display:none}
+@media(min-width:900px){
+ :root[data-proof-consolidated] .proof-topbar-mode{display:inline-flex;align-items:center;order:-1;flex:none;height:26px;padding:0 10px;margin-right:12px;border:1px solid var(--border-strong);border-radius:999px;font:500 10.5px/1 Geist Mono,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--text)}
+ :root[data-proof-consolidated] .proof-topbar-mode[data-mode=Focus]{background:var(--text);border-color:var(--text);color:var(--bg)}
+ :root[data-proof-consolidated] .topbar .chat-heading{color:var(--text-2);font-weight:450}
+}
+:root[data-proof-consolidated] .proof-wordmark-edition[data-mode=Focus]{color:var(--text)}
+/* Intelligence rail: quieter than the reading column, one question per block, consistent rhythm. */
+@media(min-width:1151px){:root[data-proof-consolidated]:not([data-proof-expanded]) .main{grid-template-columns:minmax(0,1fr) 272px}}
+/* (Desktop only: on phones and in Focus the rail stays hidden by the earlier rules; it is never a grid column there.) */
+@media(min-width:1151px){:root[data-proof-consolidated]:not([data-proof-expanded]) .proof-rail{display:flex;flex-direction:column;padding:26px 24px 32px;background:var(--bg)}}
+.proof-rail-block{padding:20px 0 18px;border-top:1px solid var(--border)}
+.proof-rail-block:first-child{border-top:0;padding-top:0}
+.proof-rail .proof-document-outline{gap:0;margin:0}
+.proof-rail .proof-document-outline button{min-height:40px;padding:8px 0;gap:10px;font-size:13px;line-height:1.45;color:var(--text-2)}
+.proof-rail .proof-document-outline button span{font-size:10.5px;letter-spacing:.04em}
+.proof-rail-value{display:block;font:600 19px/1.25 Blackout Archivo,sans-serif;letter-spacing:-.015em;color:var(--text);font-variant-numeric:tabular-nums}
+.proof-rail-value small{font:400 12px/1.4 var(--font,system-ui),sans-serif;letter-spacing:0;color:var(--text-3)}
+.proof-rail p{font-size:12.5px;line-height:1.55;color:var(--text-2);margin:4px 0 8px}
+.proof-rail .route-why-btn{display:block;width:100%;min-height:0;padding:2px 0;margin:2px 0 4px;border:0;background:none;font:12px/1.5 var(--font,system-ui),sans-serif;letter-spacing:0;color:var(--text-3);text-align:left;white-space:normal}
+.proof-rail .route-why-btn:hover{color:var(--text-2);text-decoration:underline;text-underline-offset:3px}
+.proof-rail-split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 6px}
+.proof-rail-split div{display:grid;gap:2px;margin:0}
+.proof-rail-split dt{font-size:11px;color:var(--text-3)}
+.proof-rail-split dd{margin:0;font-size:14px;font-weight:550;color:var(--text);font-variant-numeric:tabular-nums}
+.proof-rail .proof-link{min-height:36px;font-size:12.5px;color:var(--text)}
+/* Phone toolbar: the wordmark always names the mode (Workspace, Focus or Routing), down to 320px. */
+/* (At 360px and below the mode sits under the wordmark, so all four 44px buttons still fit at 320px.) */
+@media(max-width:360px){:root[data-proof-consolidated] .proof-phone-wordmark{flex-direction:column;align-items:flex-start;gap:3px;font-size:20px;min-width:0}:root[data-proof-consolidated] .proof-phone-wordmark small{display:block;font-size:10px;line-height:1}}
+:root[data-proof-consolidated] .proof-phone-wordmark small{text-transform:none}
+/* Usage: the chip is named by its visible estimate (not a rounded "Context 0%"), and a gauge relabelled by
+   UsageShareLabels shows its honest label with a minimum visible arc. Canonical values are untouched. */
+:root[data-proof-consolidated] .composer .usage-chip .usage-chip-label{display:none}
+:root[data-proof-consolidated] .um-gauge[data-proof-share]>span:not(.proof-gauge-label){display:none}
+:root[data-proof-consolidated] .um-gauge[data-proof-share] .um-gauge-fill{stroke-dashoffset:calc(var(--c) * 1px * (1 - var(--proof-arc)))}
+.proof-gauge-label{position:relative;font-size:12.5px;font-weight:650;font-variant-numeric:tabular-nums;color:var(--text)}

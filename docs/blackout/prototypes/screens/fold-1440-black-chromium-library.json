@@ -1,0 +1,26 @@
+{
+  "concept": "fold",
+  "theme": "black",
+  "width": 1440,
+  "height": 960,
+  "engine": "chromium",
+  "syntheticData": true,
+  "inferenceRequests": 0,
+  "pageErrors": [],
+  "accessibility": {
+    "library": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".primary"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.18 (foreground color: #000000, background color: #181818, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  }
+}

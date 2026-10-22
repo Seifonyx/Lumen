@@ -1,0 +1,17 @@
+{
+  "concept": "aperture",
+  "theme": "light",
+  "width": 1440,
+  "height": 960,
+  "engine": "chromium",
+  "source": "real Lumen components; local CSS/mark study only",
+  "syntheticData": true,
+  "inferenceRequests": 0,
+  "pageErrors": [],
+  "accessibility": {
+    "welcome": [],
+    "chat": [],
+    "picker": [],
+    "providers": []
+  }
+}

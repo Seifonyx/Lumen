@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "width": 390,
+  "height": 844,
+  "source": "normal Lumen App; usage-button functional fix applied, no visual experiments",
+  "syntheticData": true,
+  "inferenceRequests": 0,
+  "pageErrors": [],
+  "screens": [
+    "baseline-390-dark-chromium-workspace.png",
+    "baseline-390-dark-chromium-expanded-input.png",
+    "baseline-390-dark-chromium-model-picker.png",
+    "baseline-390-dark-chromium-usage-details.png",
+    "baseline-390-dark-chromium-provider-management.png",
+    "baseline-390-dark-chromium-routing-center.png",
+    "baseline-390-dark-chromium-provider-connection.png",
+    "baseline-390-dark-chromium-model-inventory.png",
+    "baseline-390-dark-chromium-routing-policies.png",
+    "baseline-390-dark-chromium-fallback-editor.png"
+  ]
+}

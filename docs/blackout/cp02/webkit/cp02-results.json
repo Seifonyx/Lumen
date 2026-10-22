@@ -1,0 +1,189 @@
+{
+  "engine": "webkit",
+  "commit": "ea3954ce93fbb44589d59678d1bcc373bccd99d4",
+  "physicalDevice": false,
+  "screenshotToolingCsp": [
+    "1440x960-1-resting.png: style-src-elem inline  @resting",
+    "1440x960-2-engaged.png: style-src-elem inline  @engaged",
+    "1440x960-3-expanded.png: style-src-elem inline  @expanded",
+    "1440x960-4-incognito-expanded.png: style-src-elem inline  @expanded",
+    "390x844-1-resting.png: style-src-elem inline  @resting",
+    "390x844-2-engaged.png: style-src-elem inline  @engaged",
+    "390x844-3-expanded.png: style-src-elem inline  @expanded",
+    "390x844-4-incognito-expanded.png: style-src-elem inline  @expanded",
+    "390x844-5-expanded-keyboard.png: style-src-elem inline  @expanded",
+    "320x568-1-resting.png: style-src-elem inline  @resting",
+    "320x568-2-engaged.png: style-src-elem inline  @engaged",
+    "320x568-3-expanded.png: style-src-elem inline  @expanded",
+    "320x568-4-incognito-expanded.png: style-src-elem inline  @expanded",
+    "320x568-5-expanded-keyboard.png: style-src-elem inline  @expanded",
+    "390x480-1-resting.png: style-src-elem inline  @resting",
+    "390x480-2-engaged.png: style-src-elem inline  @engaged",
+    "390x480-3-expanded.png: style-src-elem inline  @expanded",
+    "390x480-4-incognito-expanded.png: style-src-elem inline  @expanded",
+    "390x480-5-expanded-keyboard.png: style-src-elem inline  @expanded"
+  ],
+  "results": [
+    {
+      "viewport": "1440x960",
+      "engine": "webkit",
+      "checks": [
+        "resting capsule",
+        "engaged on focus/text",
+        {
+          "name": "expanded keeps textarea/selection/direction/focus",
+          "detail": {
+            "sheetTop": 198.1270294189453,
+            "bannerBottom": 32,
+            "sheetHeight": 748.796875
+          }
+        },
+        "Tab stays in sheet",
+        "nested picker/usage own Escape",
+        "IME Escape ignored",
+        {
+          "name": "undo after collapse",
+          "detail": "restored in 1"
+        },
+        "Done + draft persistence",
+        "attachments in sheet",
+        "Send collapses; Stop works",
+        "chat switch resets presentation, keeps per-chat drafts",
+        "incognito",
+        "axe expanded",
+        "second reviewer isolated",
+        "reduced motion"
+      ],
+      "undo": "restored in 1",
+      "axe": [],
+      "external": 0,
+      "errors": 0
+    },
+    {
+      "viewport": "390x844",
+      "engine": "webkit",
+      "checks": [
+        "resting capsule",
+        "engaged on focus/text",
+        {
+          "name": "expanded keeps textarea/selection/direction/focus",
+          "detail": {
+            "sheetTop": 92,
+            "bannerBottom": 32,
+            "sheetHeight": 744
+          }
+        },
+        "Tab stays in sheet",
+        "nested picker/usage own Escape",
+        "IME Escape ignored",
+        {
+          "name": "undo after collapse",
+          "detail": "restored in 1"
+        },
+        "Done + draft persistence",
+        "attachments in sheet",
+        "Send collapses; Stop works",
+        "chat switch resets presentation, keeps per-chat drafts",
+        "incognito",
+        {
+          "name": "simulated keyboard",
+          "detail": {
+            "visibleHeight": 464,
+            "sheetBottom": 456
+          }
+        },
+        "axe expanded",
+        "second reviewer isolated",
+        "reduced motion"
+      ],
+      "undo": "restored in 1",
+      "axe": [],
+      "external": 0,
+      "errors": 0
+    },
+    {
+      "viewport": "320x568",
+      "engine": "webkit",
+      "checks": [
+        "resting capsule",
+        "engaged on focus/text",
+        {
+          "name": "expanded keeps textarea/selection/direction/focus",
+          "detail": {
+            "sheetTop": 92,
+            "bannerBottom": 32,
+            "sheetHeight": 468
+          }
+        },
+        "Tab stays in sheet",
+        "nested picker/usage own Escape",
+        "IME Escape ignored",
+        {
+          "name": "undo after collapse",
+          "detail": "restored in 1"
+        },
+        "Done + draft persistence",
+        "attachments in sheet",
+        "Send collapses; Stop works",
+        "chat switch resets presentation, keeps per-chat drafts",
+        "incognito",
+        {
+          "name": "simulated keyboard",
+          "detail": {
+            "visibleHeight": 312,
+            "sheetBottom": 304
+          }
+        },
+        "axe expanded",
+        "second reviewer isolated",
+        "reduced motion"
+      ],
+      "undo": "restored in 1",
+      "axe": [],
+      "external": 0,
+      "errors": 0
+    },
+    {
+      "viewport": "390x480",
+      "engine": "webkit",
+      "checks": [
+        "resting capsule",
+        "engaged on focus/text",
+        {
+          "name": "expanded keeps textarea/selection/direction/focus",
+          "detail": {
+            "sheetTop": 92,
+            "bannerBottom": 32,
+            "sheetHeight": 380
+          }
+        },
+        "Tab stays in sheet",
+        "nested picker/usage own Escape",
+        "IME Escape ignored",
+        {
+          "name": "undo after collapse",
+          "detail": "restored in 1"
+        },
+        "Done + draft persistence",
+        "attachments in sheet",
+        "Send collapses; Stop works",
+        "chat switch resets presentation, keeps per-chat drafts",
+        "incognito",
+        {
+          "name": "simulated keyboard",
+          "detail": {
+            "visibleHeight": 264,
+            "sheetBottom": 256
+          }
+        },
+        "axe expanded",
+        "second reviewer isolated",
+        "reduced motion"
+      ],
+      "undo": "restored in 1",
+      "axe": [],
+      "external": 0,
+      "errors": 0
+    }
+  ]
+}

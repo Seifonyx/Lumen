@@ -1,0 +1,45 @@
+/* CP01 foundation only. Explicitly loaded by isolated tests; never imported by production.
+ * Palette/material owners stay in app.css/glass.css; only --canvas-* aliases live here.
+ * Approved source: Blackout Canvas at bb29ffe. No component styles or new font requests.
+ */
+[data-lumen-canvas-foundation] {
+  --canvas-paper: var(--bg);
+  --canvas-surface: var(--surface);
+  --canvas-ink: var(--text);
+  --canvas-secondary: var(--text-2);
+  --canvas-muted: var(--text-3);
+  --canvas-rim: color-mix(in srgb, var(--text) 10%, transparent);
+  --canvas-fill: color-mix(in srgb, var(--text) 7%, transparent);
+  --canvas-body-font: var(--font);
+  --canvas-display-font: var(--font), system-ui, sans-serif;
+  --canvas-data-font: 'Geist Mono', ui-monospace, monospace;
+  --canvas-reading-measure: 720px;
+  --canvas-reading-size: 16.5px;
+  --canvas-reading-leading: 1.72;
+  --canvas-answer-gap: 24px;
+  --canvas-nav-width: 272px;
+  --canvas-touch-target: 44px;
+  --canvas-composer-width: 760px;
+  --canvas-composer-radius: 28px;
+  --canvas-sheet-width: 820px;
+  --canvas-sheet-radius: 30px;
+  --canvas-space-1: 4px;
+  --canvas-space-2: 8px;
+  --canvas-space-3: 12px;
+  --canvas-space-4: 16px;
+  --canvas-space-6: 24px;
+  --canvas-focus: var(--focus);
+  --canvas-glass-filter: var(--glass-filter, none);
+  --canvas-glass-tint: var(--glass-tint, var(--surface));
+  --canvas-motion-duration: 240ms;
+  --canvas-motion-easing: cubic-bezier(.32, .72, 0, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-lumen-canvas-foundation] { --canvas-motion-duration: 0ms; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  [data-lumen-canvas-foundation] {
+    --canvas-glass-filter: none;
+    --canvas-glass-tint: var(--surface);
+  }
+}

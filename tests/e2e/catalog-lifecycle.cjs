@@ -30,7 +30,7 @@ const initial=Date.now();
   assert.equal(calls,1);
   assert.equal(await page.evaluate(()=>localStorage.getItem('mr.catalog')),null,'discard unscoped legacy cache');
   if(width<900)await page.locator('.menu-btn').click();
-  await page.locator('.sidebar-foot').click();
+  await page.locator('.sidebar-foot, .cv-account').click();
   await page.locator('.settings-tabs').getByRole('button',{name:'Models',exact:true}).click();
   await page.getByRole('button',{name:'Browse models',exact:true}).click();
   await page.getByRole('searchbox',{name:'Search available models'}).fill('newcomer');

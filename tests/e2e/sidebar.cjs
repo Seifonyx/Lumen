@@ -106,7 +106,7 @@ const settled = page => page.waitForTimeout(320);
         await touch(page, '.composer textarea', 'touchmove', start + sign * 150, y);
         await touch(page, '.composer textarea', 'touchend', start + sign * 150, y);
         check(!(await isOpen()) && await page.inputValue('.composer textarea') === 'Keep my draft', `${label}: composer gestures preserve the draft`);
-        await page.click('.menu-btn'); await page.click('.sidebar-foot');
+        await page.click('.menu-btn'); await page.click('.sidebar-foot, .cv-account');
         await touch(page, '.settings-page', 'touchstart', start, y);
         await touch(page, '.settings-page', 'touchmove', start + sign * 150, y);
         await touch(page, '.settings-page', 'touchend', start + sign * 150, y);

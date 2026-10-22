@@ -6,3 +6,5 @@ dist
 tests/e2e/out
 .impeccable/review
 dist-test
+dist-qa
+dist-canvas

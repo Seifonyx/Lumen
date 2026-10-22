@@ -119,7 +119,7 @@ async function send(page, text, n) {
   check(!(await page.$('.compact-note')), 'undo removes the divider');
   // Turning auto off: full chat is sent.
   await page.click('.menu-btn');
-  await page.click('.sidebar-foot');
+  await page.click('.sidebar-foot, .cv-account');
   await openTab(page, 'General');
   await page.locator('.setting-row', { hasText: 'Compact long chats automatically' }).locator('input').click();
   await page.click('.settings-page [aria-label="Close"]');

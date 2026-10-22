@@ -55,7 +55,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     console.log('PASS away: the icon badge and a notification');
 
     // ---- The setting.
-    await page.click('.sidebar-foot');
+    await page.click('.sidebar-foot, .cv-account');
     await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click();
     const toggle = page.locator('.settings-page:not(.exit-ghost)').getByLabel('Notify me when a reply is ready');
     assert.ok(await toggle.isChecked());

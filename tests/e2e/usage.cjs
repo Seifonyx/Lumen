@@ -122,7 +122,7 @@ async function device(browser, mobile) {
 
   // Usage tab.
   await A.page.click('.menu-btn');
-  await A.page.click('.sidebar-foot');
+  await A.page.click('.sidebar-foot, .cv-account');
   await openTab(A.page, 'Usage');
   await A.page.waitForSelector('.usage-row');
   const text = await A.page.textContent('.usage');
@@ -135,7 +135,7 @@ async function device(browser, mobile) {
   // Second device sees the same counts and block.
   const B = await device(browser, false);
   await B.page.waitForTimeout(2000);
-  await B.page.click('.sidebar-foot');
+  await B.page.click('.sidebar-foot, .cv-account');
   await openTab(B.page, 'Usage');
   await B.page.waitForSelector('.usage-row');
   const textB = await B.page.textContent('.usage');

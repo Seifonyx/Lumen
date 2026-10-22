@@ -44,7 +44,7 @@ const g = (name, label) => ({ name: `models/${name}`, displayName: label, suppor
     await page.goto(URL);
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
     if(width<900)await page.locator('.menu-btn').click();
-    await page.click('.sidebar-foot');
+    await page.click('.sidebar-foot, .cv-account');
     await page.locator('.settings-tabs').getByRole('button', { name: 'Models', exact: true }).click();
     await page.locator('.models-nav button').filter({ hasText: 'Layouts' }).click();
     await page.getByRole('button', { name: 'Build for a task' }).click();

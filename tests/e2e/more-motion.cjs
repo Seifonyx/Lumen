@@ -36,7 +36,7 @@ const near = (a, b, d = 2) => Math.abs(a - b) <= d;
     console.log('PASS the open chat is a filled, bold row');
 
     // ---- The segmented thumb lands on your choice.
-    await page.click('.sidebar-foot');
+    await page.click('.sidebar-foot, .cv-account');
     await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click();
     const theme = page.getByRole('radiogroup', { name: 'Theme' });
     for (const name of ['Dark', 'Auto', 'Light']) {
@@ -52,7 +52,7 @@ const near = (a, b, d = 2) => Math.abs(a - b) <= d;
     await page.click('.chat-row:has-text("Long talk") .chat-open');
     await page.locator('.message-navigation').waitFor();
     const nav = async (on) => {
-      await page.click('.sidebar-foot');
+      await page.click('.sidebar-foot, .cv-account');
       await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click();
       const toggle = page.locator('.settings-page:not(.exit-ghost)').getByLabel('Message navigator');
       if (on) await toggle.check(); else await toggle.uncheck();

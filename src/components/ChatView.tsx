@@ -1,6 +1,6 @@
 import { flySent, motionOff } from '../lib/motion';
 import { watchGlassInsets } from '../lib/glass';
-import { FolderGit2, FolderKanban, ArrowDown, FileText, Menu, PanelLeftOpen, EyeOff } from 'lucide-react';
+import { FolderGit2, FolderKanban, ArrowDown, FileText, Menu, PanelLeftOpen, EyeOff, MessageSquarePlus } from 'lucide-react';
 import WelcomeStars from './WelcomeStars';
 import { modKey } from '../lib/util';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -16,6 +16,7 @@ import ModelPicker from './ModelPicker';
 import ProjectManager from './ProjectManager';
 import ProjectWorkspace from './ProjectWorkspace';
 import CatalogErrorNotice from './CatalogErrorNotice';
+import { CANVAS_SHELL } from '../lib/canvas-presentation';
 
 /** How far from the latest message you were in each chat (this session), to come back to the same spot. */
 type Anchor = { id: string; offset: number };
@@ -39,7 +40,11 @@ function restoreAnchor(el: HTMLElement, a: Anchor) {
   return true;
 }
 
-export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => void }) {
+export interface ChatViewProps {
+  onExpandSidebar: () => void;
+}
+
+export default function ChatView({ onExpandSidebar }: ChatViewProps) {
   const user=useStore(s=>s.user);
   const hour=new Date().getHours();
   const greeting=`${hour<12?'Morning':hour<18?'Afternoon':'Evening'}${user?.name?', '+user.name.split(' ')[0].slice(0,20):''}`;
@@ -233,7 +238,7 @@ export default function ChatView({ onExpandSidebar }: { onExpandSidebar: () => v
         <div className="spacer" />
         <div className="topbar-trailing">
         {Boolean(chat?.documents?.length) && <button className="icon-btn" aria-label="Open canvas" title="Open canvas" onClick={() => useStore.getState().openCanvas()}><FileText size={18} /></button>}
-        {chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}
+        {CANVAS_SHELL ? <>{chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}<button type="button" className="icon-btn cv-compose" aria-label="New chat" title={`New chat (${modKey}⇧O)`} onClick={() => useStore.getState().newChat()}><MessageSquarePlus size={19} /></button></> : chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}
         {chat?.repo && (
           <button
             className={`icon-btn code-toggle${workspaceOpen ? ' on' : ''}`}

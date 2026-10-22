@@ -115,7 +115,7 @@ const long = Array.from({ length: 12 }, (_, i) => [
     await page.waitForTimeout(300);
     assert.equal(await page.evaluate(() => window.__sounds), 0, 'no sound by default');
     await page.locator('.send-btn.stop').waitFor({ state: 'hidden', timeout: 8000 });
-    await page.click('.menu-btn'); await page.waitForTimeout(500); await page.click('.sidebar-foot');
+    await page.click('.menu-btn'); await page.waitForTimeout(500); await page.click('.sidebar-foot, .cv-account');
     await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click();
     await page.waitForTimeout(500);
     await page.locator('.settings-page:not(.exit-ghost)').getByLabel('Sound when sending').check();

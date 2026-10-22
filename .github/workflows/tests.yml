@@ -30,6 +30,10 @@ jobs:
       - run: npm run typecheck
       - run: node scripts/project-progress.mjs
       - run: npm run build
+      - name: Build the Canvas presentation too (what Deploy ships)
+        run: npm run build -- --outDir dist-canvas
+        env:
+          LUMEN_CANVAS: '1'
       - run: npm run test:unit
 
   in-app:
@@ -71,10 +75,60 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  in-app-canvas:
+    # The same in-app tests against the Canvas build (what Deploy ships by default), for the suites listed in
+    # tests/e2e/canvas-core.txt. The rest still look for the ordinary sidebar; the ordinary build keeps the full run above.
+    name: In-app tests on the Canvas build (Chromium + Firebase emulators)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-15.30.2
+      - uses: actions/cache@v5
+        id: browsers
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npm ci
+      - name: Browser
+        run: |
+          if [ "${{ steps.browsers.outputs.cache-hit }}" = "true" ]; then npx playwright install-deps chromium; else npx playwright install --with-deps chromium; fi
+      - name: Build (Canvas presentation)
+        run: npm run build -- --outDir dist-canvas
+        env:
+          LUMEN_CANVAS: '1'
+      - name: Core suites on the Canvas build
+        run: npx --yes firebase-tools@15.30.2 emulators:exec --only auth,firestore --project the-model-router "node scripts/test-e2e.mjs $(grep -v '^#' tests/e2e/canvas-core.txt | tr '\n' ' ')"
+        env:
+          MR_TEST_DIST: dist-canvas
+      - name: Keep screenshots
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: canvas-screenshots
+          path: tests/e2e/out
+          if-no-files-found: ignore
+          retention-days: 7
+
   webkit:
     name: Safari engine (WebKit)
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
+    # WebKit and its system libraries come preinstalled in Playwright's image (same version as package.json), so the
+    # job no longer downloads them; that download was where it hung.
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -82,7 +136,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps webkit
       - id: webkit_build
         run: npm run build
       - name: Welcome and responsive layout in WebKit
@@ -97,11 +150,7 @@ jobs:
           node node_modules/vite/bin/vite.js preview --port 5190 --strictPort > /tmp/vite-webkit.log 2>&1 &
           preview_pid=$!
           trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
-          for attempt in $(seq 1 30); do
-            curl -fsS http://localhost:5190/ > /dev/null && break
-            sleep 1
-          done
-          curl -fsS http://localhost:5190/ > /dev/null
+          node -e "(async()=>{for(let i=0;i<30;i++){try{if((await fetch('http://localhost:5190/')).ok)return}catch{}await new Promise(r=>setTimeout(r,1000))}process.exit(1)})()"
           node tests/webkit/tabbar.cjs
       - name: Hub actions, motion and long-chat navigation in WebKit
         if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' }}
@@ -119,5 +168,50 @@ jobs:
           path: |
             tests/e2e/out/webkit-*.png
             .impeccable/review/*webkit*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
+  canvas:
+    name: Canvas presentation (isolation and contracts, Chromium + WebKit)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
+    env:
+      QA_BUILD_DIR: /tmp/qa-build
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The isolation audit compares against the commit Canvas activation branched from.
+          fetch-depth: 0
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Synthetic QA build (same "on" module as production Canvas)
+        run: node scripts/qa/build.mjs --out "$QA_BUILD_DIR"
+      - name: Isolation (ordinary, Canvas production and QA builds)
+        run: |
+          node tests/security/private-qa-isolation.mjs
+          node tests/security/canvas-build-isolation.mjs
+        env:
+          # Byte equality with the pre-activation release is checked when activation is reviewed, not on every run.
+          QA01_ALLOW_NO_BASELINE: '1'
+      - name: Canvas contracts in Chromium
+        run: for t in canvas-composer canvas-shell routing-center canvas-screens browser; do node tests/security/private-qa-$t.mjs || exit 1; done
+      - name: Canvas contracts in WebKit
+        if: ${{ !cancelled() }}
+        run: for t in canvas-composer canvas-shell routing-center canvas-screens browser; do node tests/security/private-qa-$t.mjs || exit 1; done
+        env:
+          MR_WEBKIT: '1'
+      - name: Keep Canvas evidence
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: canvas-evidence
+          path: tests/e2e/out
           if-no-files-found: ignore
           retention-days: 7

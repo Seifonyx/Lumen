@@ -129,7 +129,7 @@ async function send(page, text) {
   await B.page.waitForTimeout(3000);
   check(!(await B.page.textContent('.chat-list')).includes('brand new') && !(await B.page.textContent('.thread')).includes('offline-ish'), 'nothing synced while paused');
   // Usage tab card.
-  await A.page.click('.sidebar-foot');
+  await A.page.click('.sidebar-foot, .cv-account');
   await openTab(A.page, 'Usage');
   const card = await A.page.textContent('.firebase-card');
   check(/Reads46,\d{3} \/ 50,000/.test(card.replace(/\s+/g, '')) || /46,\d{3}/.test(card), `usage card shows counts (${card.slice(0, 90)})`);

@@ -33,7 +33,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
 
     // ---- About me, saved.
-    await page.click('.sidebar-foot');
+    await page.click('.sidebar-foot, .cv-account');
     await page.locator('.settings-tabs').getByRole('button', { name: 'Memory', exact: true }).click();
     const settingsPage = page.locator('.settings-page:not(.exit-ghost)');
     await settingsPage.getByLabel('About me').fill('I build wooden boats.');
@@ -61,7 +61,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     console.log('PASS other chats don’t see the project’s memories');
 
     // ---- Memory tab: the project label; move it to every chat; draft About me from memories.
-    await page.click('.sidebar-foot');
+    await page.click('.sidebar-foot, .cv-account');
     await page.locator('.settings-tabs').getByRole('button', { name: 'Memory', exact: true }).click();
     const row = settingsPage.locator('.memory-row', { hasText: 'Alpha ships every Friday' });
     assert.match(await row.locator('.memory-project').textContent(), /Alpha/);
@@ -82,7 +82,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     await row2.getByRole('button', { name: 'Chat options' }).click();
     await page.getByRole('menuitem', { name: 'Delete' }).click();
     await page.locator('.toast', { hasText: 'Also forgot 2 memories saved in that chat.' }).waitFor();
-    await page.click('.sidebar-foot');
+    await page.click('.sidebar-foot, .cv-account');
     await page.locator('.settings-tabs').getByRole('button', { name: 'Memory', exact: true }).click();
     await settingsPage.locator('.memory-tab').waitFor();
     assert.equal(await settingsPage.locator('.memory-row', { hasText: /Likes sailing|Alpha ships every Friday/ }).count(), 0, 'memories from the deleted chat are gone');

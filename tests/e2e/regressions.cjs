@@ -56,7 +56,7 @@ async function open(browser, mobile) {
 async function settings(page, name) {
   if (!(await page.locator('.settings-page').isVisible())) {
     if (await page.locator('.menu-btn').isVisible() && !(await page.locator('.sidebar.open').isVisible())) await page.click('.menu-btn');
-    await page.click('.sidebar-foot');
+    await page.click('.sidebar-foot, .cv-account');
   }
   if (await page.locator('.settings-back').isVisible()) await page.click('.settings-back');
   await page.locator('.settings-tabs button').filter({ hasText: name }).first().click();

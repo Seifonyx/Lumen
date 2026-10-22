@@ -17,7 +17,7 @@ const {profile}=require('./helpers/preview-profile.cjs');
   await page.waitForFunction(()=>JSON.parse(localStorage.getItem('mr.modelCheck.seen')||'{}')['gemini:gemini-flash-latest']);
   assert.equal(calls.filter(url=>url.includes('gemini-unknown-custom:')).length,0,'automatic weekly diagnostics cannot spend requests on unchecked user declarations');
   assert.equal(calls.filter(url=>url.includes('gemini-flash-latest:')).length,1,'existing API-discovered weekly health check still runs');
-  await page.locator('.menu-btn').click();await page.locator('.sidebar-foot').click();await page.locator('.settings-tabs').getByRole('button',{name:'Models',exact:true}).click();
+  await page.locator('.menu-btn').click();await page.locator('.sidebar-foot, .cv-account').click();await page.locator('.settings-tabs').getByRole('button',{name:'Models',exact:true}).click();
   await page.getByRole('button',{name:'Check models',exact:true}).click();const dialog=page.getByRole('dialog',{name:'Check models',exact:true});await dialog.getByRole('button',{name:'Start check',exact:true}).click();
   await dialog.getByText('Check complete',{exact:true}).waitFor();
   assert.equal(calls.filter(url=>url.includes('gemini-unknown-custom:')).length,1,'an explicit user-requested diagnostic can check declared models');

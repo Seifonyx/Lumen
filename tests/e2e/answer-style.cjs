@@ -20,7 +20,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(URL);
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
-    await page.click('.sidebar-foot');
+    await page.click('.sidebar-foot, .cv-account');
     await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click();
     assert.equal(await page.locator('.settings-page:not(.exit-ghost)').getByText('Developer options').count(), 1, 'Explicit preview accounts expose their testing controls');
     await page.locator('.settings-tabs').getByRole('button', { name: /Personali[sz]ation/ }).click();
@@ -37,7 +37,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     console.log('PASS reply language and answer length reach the model');
 
     // Back to "Match my writing": nothing extra.
-    await page.click('.sidebar-foot');
+    await page.click('.sidebar-foot, .cv-account');
     await page.locator('.settings-tabs').getByRole('button', { name: /Personali[sz]ation/ }).click();
     await sp.getByLabel('Reply language').selectOption('');
     await sp.getByRole('radiogroup', { name: 'Answer length' }).getByRole('radio', { name: 'Auto' }).click();

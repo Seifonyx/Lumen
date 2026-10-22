@@ -50,7 +50,7 @@ const geminiHtml = `<html><body><div class="outer-cell"><div class="content-cell
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(URL);
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
-    await page.click('.sidebar-foot');
+    await page.click('.sidebar-foot, .cv-account');
     await page.locator('.settings-tabs').getByRole('button', { name: 'Privacy & data', exact: true }).click();
     const row = page.locator('.settings-page:not(.exit-ghost) .import-row');
     const load = async (f, expect) => {

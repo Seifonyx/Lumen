@@ -44,7 +44,7 @@ async function send(page, text, n) {
 const sys = (log) => log.at(-1).systemInstruction.parts[0].text;
 async function openMemory(page) {
   await page.click('.menu-btn');
-  await page.click('.sidebar-foot');
+  await page.click('.sidebar-foot, .cv-account');
   await openTab(page, 'Memory');
   await page.waitForSelector('.memory-tab');
 }

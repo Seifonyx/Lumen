@@ -251,7 +251,7 @@ const F = '````';
   check(!lastReply.includes('<<<<<<<') && !lastReply.includes('tool_call') && (await page.isVisible('.msg.assistant >> nth=-1 >> .edit-card >> text=Apply')), '<tool_call> edit shown as an edit card');
 
   // ---- Custom layout as default
-  await page.click('.sidebar-foot');
+  await page.click('.sidebar-foot, .cv-account');
   await openTab(page, 'Models');
   await page.locator('.models-nav button').filter({ hasText: 'Layouts' }).click();
   await page.locator('.layout-card', { hasText: 'Web apps' }).locator('[aria-label="Use for new chats"]').click();

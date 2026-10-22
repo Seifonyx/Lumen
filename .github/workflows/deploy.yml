@@ -2,6 +2,12 @@ name: Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      presentation:
+        description: Canvas is the approved design. Ordinary rebuilds the previous presentation (rollback).
+        type: choice
+        options: [canvas, ordinary]
+        default: canvas
 
 jobs:
   deploy:
@@ -15,7 +21,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
-      - run: npm run build
+      - name: Build (${{ inputs.presentation }} presentation)
+        run: npm run build
+        env:
+          LUMEN_CANVAS: ${{ inputs.presentation == 'ordinary' && '0' || '1' }}
       - name: Deploy live
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:

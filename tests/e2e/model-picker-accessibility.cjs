@@ -26,7 +26,7 @@ const {profile}=require('./helpers/preview-profile.cjs');
   assert(lists>before,'TTL refresh actually requested updated metadata while the picker stayed open');
   await scan('open searchable picker');await search.press('ArrowDown');assert.equal(await page.locator('[role="option"]:focus').count(),1);
   await page.keyboard.press('Escape');assert.equal(await page.locator('.model-button').evaluate(node=>document.activeElement===node),true,'picker restores focus to its trigger');
-  if(width<900)await page.locator('.menu-btn').click();await page.locator('.sidebar-foot').click();await page.locator('.settings-tabs').getByRole('button',{name:'Models',exact:true}).click();
+  if(width<900)await page.locator('.menu-btn').click();await page.locator('.sidebar-foot, .cv-account').click();await page.locator('.settings-tabs').getByRole('button',{name:'Models',exact:true}).click();
   await page.getByRole('button',{name:'Add custom model',exact:true}).click();await page.getByLabel('Model ID',{exact:true}).fill('gemini-custom-a11y');
   if(width<900) {
    const provider=page.locator('.declared-model-editor select').first();await provider.press('Space');

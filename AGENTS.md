@@ -52,3 +52,7 @@ Latest Blackout [design correction](docs/blackout/DESIGN_COURSE_CORRECTION_2026-
 - `CANVAS_SHELL` joins `CANVAS_COMPOSER` in `src/lib/canvas-presentation.ts`; both stay `false` in the ordinary build.
 - The owner prefers a lean, risk-based workflow: necessary tests and practical visual checks.
 - CP04, merge, deployment, production activation, Gate 2 approval and paid services remain unauthorized.
+
+**Subsequent scoped owner assignment (22 October 2026): CP03 sidebar polish + CP04 ONLY**, implemented and verified — see the [CP04 record](docs/blackout/CP04_ROUTING_CENTER.md).
+- The Routing Center loader exists only in `qa/iphone/adapters/canvas-presentation.ts`; production exports `RoutingCenter = null`.
+- CP05, merge, deployment, production activation, spending and Gate 2 approval remain unauthorized.

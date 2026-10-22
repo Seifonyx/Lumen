@@ -67,7 +67,7 @@ The [blueprint](CANVAS_PRODUCTION_INTEGRATION_BLUEPRINT.md) supplies exact compo
 | CP01 · characterization/seams/tokens | B03/B07 | **Verified isolated foundation** under explicit CP01-only owner authorization; see CP01_FOUNDATION.md and cp01/evidence.json; stop before CP02 |
 | CP02 · canonical composer/writing sheet | B03/B04/B07 | **Implemented and verified (flag off in production)** under explicit CP02-only authorization; see CP02_COMPOSER.md. Physical-iPhone acceptance pending; Gate 2 checkpoint A not approved |
 | CP03 · navigation/reading/projects | B04/B06/B07 | **Implemented and verified (flag off in production)** under explicit CP03-only authorization; see CP03_SHELL.md. CP02 accepted at its checkpoint. Owner iPhone review pending; Gate 2 not approved |
-| CP04 · Routing Center integration proof | B04/B05/B07 | Not started; preserve verified provider slice; combined formal Gate 2 review package, not automatic approval |
+| CP04 · Routing Center integration proof | B04/B05/B07 | **Implemented and verified (flag off in production)** under explicit CP04 authorization; see CP04_ROUTING_CENTER.md. Owner iPhone review of the combined Canvas experience next; formal Gate 2 package and approval still pending |
 | CP05 · authorized integration/remaining screens/hardening | B03–B07 | Not started; explicit Gate 2 and integration permission, then Gate 3 final review |
 | CP06 · approved release/production verification | B08 | Not started; applicable approvals, exact-head CI, release authorization and rollback prerequisites |
 
@@ -203,3 +203,7 @@ QA-only review server + devcontainer implemented and locally verified at `ac9368
 ### CP03 — 22 October 2026
 
 The Canvas navigation tree, breadcrumb and reading layout are in canonical components behind `CANVAS_SHELL` (off in production, which stays byte-identical). The QA review build enables them ([record](CP03_SHELL.md)). **21.5% → 21.5%.**
+
+### CP03 polish + CP04 — 22 October 2026
+
+The sidebar list is heading-free and newest first. The Canvas Routing Center sits behind the shell switch, with its loader present only in the QA replacement; production is byte-identical ([record](CP04_ROUTING_CENTER.md)). **21.5% → 21.5%.**

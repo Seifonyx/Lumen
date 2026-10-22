@@ -2,7 +2,17 @@
 
 **Checkpoint: 22 October 2026, UTC — QA banner/Codespaces start fixes and CP02 (Canvas composer + writing sheet, flag off in production) implemented and verified locally; physical-iPhone confirmation pending. Gate 1 APPROVED; CP01, QA01 complete. No CP03, merge, deployment, default production migration, Gate 2 approval, paid service or new Codespace authorized.** Completion **21.5% → 21.5%, Medium confidence**; 78.5 points remain.
 
-## Latest — CP03 Canvas navigation, header and reading (implemented, verified; stop for owner review)
+## Latest — CP03 sidebar polish + CP04 Routing Center (implemented, verified; owner iPhone review next)
+
+The owner authorized both in one assignment. See [CP04_ROUTING_CENTER.md](CP04_ROUTING_CENTER.md).
+- **Sidebar:** one heading-free, newest-first list with pinned first.
+- **Routing Center:** a canonical `RoutingCenter.tsx` reusing `setChatModel`, `LayoutEditor`, `UsageTab`, `RouteWhy`, `FilterMenu` and Settings → Keys. Its lazy loader exists only in the QA switch replacement; production is byte-identical.
+
+**Verified:** all four browser contracts (CP04, CP03, CP02, QA) in Chromium and WebKit, isolation 8/8, the CP01 check and `npm test`.
+
+**Not authorized:** CP05, merge, deploy, spending or Gate 2. Progress 21.5%.
+
+## Previous — CP03 Canvas navigation, header and reading (implemented, verified; stop for owner review)
 
 The owner accepted CP02 and authorized **CP03 only**. See [CP03_SHELL.md](CP03_SHELL.md).
 - A canonical `SidebarCanvas` (unified Projects/Conversations tree, reusing `ChatRow` and Sidebar's state), a CSS breadcrumb and Canvas reading are all behind `CANVAS_SHELL = false`.

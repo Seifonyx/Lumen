@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-22, Claude Code — owner accepted CP02 at its checkpoint and authorized **CP03 only**; CP03 is implemented, agent-verified and pushed at `e281c2f` (flag off in production, byte-identical). No production change, deployment, merge or Gate 2 approval.
+> **Last sync:** 2026-10-22, owner added automatic agent-start checkpoint reconciliation; CP03 date-heading cleanup and CP04 isolated implementation are authorized. Gate 2, CP05, merge and deployment remain pending.
 
 ## ChatGPT independent Codespaces adapter review — 2026-10-21
 
@@ -43,6 +43,12 @@ Owner prefers **reusing the existing private Codespace** with its automatic revi
 ## Owner CP03 iPhone polish — 2026-10-22
 
 Owner reports CP03 works well on a real iPhone and requests removing the Today/Yesterday/Previous 7 days and other date separators from the chat list. Present conversations as one newest-first list, keeping project folders, search and chat actions intact. Claude Code can implement this limited CP03 polish with focused checks; CP04, Gate 2, merge and deployment remain unapproved. Blackout remains 21.5%.
+
+## Owner rule — automatic cross-agent checkpoint repair (2026-10-22)
+
+At every agent session/handoff, ChatGPT, Claude Code, Codex and successor agents check the live GitHub README/PROJECT_CONTEXT/CURRENT_STATUS against the latest meaningful work and owner direction. **If another agent already synchronized it, no duplicate write; if a decision or milestone is missing, the current agent with writer access updates CURRENT_STATUS itself**, reads back to confirm and proceeds without asking the owner to remind agents. Only durable rules change PROJECT_CONTEXT. This is a lightweight **agent-triggered** process, not a continuously running background sync or a mandate for full code audits. [README](README.md), [charter](PROJECT_CONTEXT.md), [ChatGPT instructions](CHATGPT_PROJECT_INSTRUCTIONS.md), coding-branch `AGENTS.md` and new `CLAUDE.md` now carry this instruction.
+
+**Owner's latest scoped assignment:** finish the CP03 date-heading removal, then proceed **directly into CP04** isolated Canvas Routing Center implementation, combining proportionate checks at the end. The owner has explicitly authorized CP04; historical references saying CP04 is unauthorized are superseded. **Still not approved:** Gate 2, CP05, default production integration, PR merge or deployment, any spending/public access. Blackout remains 21.5%, Medium confidence; Claude Code is the last confirmed active coder.
 
 ## Live code and approval state
 

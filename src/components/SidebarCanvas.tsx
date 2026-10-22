@@ -7,8 +7,9 @@
 import { BookOpen, ChevronRight, LayoutGrid, MessageSquarePlus, MessageSquareText, PanelLeftClose, Plus, Search, Settings2, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 import { Suspense, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
-import { dayGroup, modKey } from '../lib/util';
+import { modKey } from '../lib/util';
 import { useFocusScope } from '../lib/focus-scope';
+import { closeRoutingCenter, openRoutingCenter, useRoutingCenter } from '../lib/routing-center';
 import { useStore } from '../store';
 import type { Chat, Project } from '../types';
 import AllChats from './AllChats';
@@ -22,19 +23,10 @@ const PHONE = '(max-width: 899px)';
 type Open = { projects: boolean; conversations: boolean; folders: Record<string, boolean> };
 const OPEN: Open = { projects: true, conversations: true, folders: {} };
 
-/** Pinned first, then by day; archived ones only while searching (as in Sidebar). */
-function group(list: Chat[]): [string, Chat[]][] {
-  const out: [string, Chat[]][] = [];
-  const pinned = list.filter((c) => c.pinned && !c.archived);
-  if (pinned.length) out.push(['Pinned', pinned]);
-  for (const c of list.filter((c) => !c.pinned && !c.archived)) {
-    const g = dayGroup(c.updatedAt), last = out.at(-1);
-    if (last && last[0] === g) last[1].push(c); else out.push([g, [c]]);
-  }
-  const archived = list.filter((c) => c.archived);
-  if (archived.length) out.push(['Archived', archived]);
-  return out;
-}
+/** One clean list, no headings: pinned first (marked by their pin), then newest first; archived chats (shown only
+ *  while searching, as in Sidebar) last. */
+const newestFirst = (list: Chat[]) => [...list].sort((a, b) => Number(Boolean(a.archived)) - Number(Boolean(b.archived))
+  || Number(Boolean(b.pinned && !b.archived)) - Number(Boolean(a.pinned && !a.archived)) || b.updatedAt - a.updatedAt);
 
 /** A disclosure region whose height eases open and shut; closed content is inert (no focus, hidden from AT). */
 function Fold({ id, open, children }: { id: string; open: boolean; children: ReactNode }) {
@@ -49,6 +41,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const activeProjectId = useStore((s) => s.activeProjectId);
   const open = useStore((s) => s.sidebarOpen);
   const page = useStore((s) => s.page);
+  const routing = useRoutingCenter().open;
   const { newChat, setUi, selectProject } = useStore.getState();
   const [phone, setPhone] = useState(() => window.matchMedia(PHONE).matches);
   const [query, setQuery] = useState('');
@@ -93,7 +86,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const recency = (p: Project) => Math.max(p.updatedAt, ...chats.filter((c) => c.projectId === p.id).map((c) => c.updatedAt));
   const ordered = useMemo(() => [...projects].sort((a, b) => recency(b) - recency(a)), [projects, chats]); // eslint-disable-line react-hooks/exhaustive-deps
   const known = new Set(projects.map((p) => p.id));
-  const loose = group(matches.filter((c) => !c.projectId || !known.has(c.projectId)));
+  const loose = newestFirst(matches.filter((c) => !c.projectId || !known.has(c.projectId)));
   const current = chats.find((c) => c.id === currentId);
   const hereProject = current?.projectId && known.has(current.projectId) ? current.projectId : activeProjectId;
 
@@ -127,6 +120,8 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
           // As in Sidebar: using the sidebar while Settings is open (computers) leaves Settings.
           const target = (e.target as HTMLElement).closest('button, a, [role="button"]');
           if (target && !target.closest('.cv-account, .row-menu, [role="menu"]') && useStore.getState().settingsOpen) setUi({ settingsOpen: false });
+          // Going anywhere else from the tree leaves the Routing Center (the head's own buttons and row menus excepted).
+          if (target && !target.closest('[data-routing-center], .cv-head, .cv-section-h, .cv-project-row, .row-menu, [role="menu"]')) closeRoutingCenter();
         }}
       >
         <div className="cv-head">
@@ -156,7 +151,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
               {!phone && <li><button type="button" onClick={newChat} title={`New chat (${modKey}⇧O)`}><MessageSquarePlus size={18} /><span>New chat</span><kbd>{modKey}⇧O</kbd></button></li>}
               <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onClick={() => toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span></button></li>
               <li><button type="button" aria-current={page === 'tools' || page === 'assistants' || page === 'study' ? 'page' : undefined} onClick={() => toPage('tools')} title={`Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`}><LayoutGrid size={18} /><span>Tools</span></button></li>
-              <li><button type="button" onClick={() => setUi({ settingsOpen: true, settingsTab: 'models', sidebarOpen: false })}><SlidersHorizontal size={18} /><span>Models &amp; routing</span></button></li>
+              <li><button type="button" data-routing-center aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><SlidersHorizontal size={18} /><span>Models &amp; routing</span></button></li>
             </ul>
           )}
 
@@ -196,12 +191,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
 
           {section('conversations', q ? 'Search results' : 'Conversations', Boolean(current && !hereProject && !isTemporaryChat(current)))}
           <Fold id={`${ids}-conversations`} open={sectionOpen('conversations')}>
-            {loose.map(([label, list]) => (
-              <section key={label} className="cv-group">
-                <h3>{label}</h3>
-                <ul className="cv-chats">{list.map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}</ul>
-              </section>
-            ))}
+            {loose.length > 0 && <ul className="cv-chats cv-loose">{loose.map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}</ul>}
             {!loose.length && <p className="cv-none">{q ? 'No loose conversations match.' : 'Your chats will appear here.'}</p>}
             {!q && <button type="button" className="cv-all" onClick={() => setAllChats(true)}><MessageSquareText size={15} />All chats<ChevronRight size={13} aria-hidden="true" /></button>}
           </Fold>

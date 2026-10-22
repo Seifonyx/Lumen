@@ -76,10 +76,8 @@
 .app[data-lumen-canvas-shell] .cv-empty { min-height: 0; padding: 8px 10px; line-height: 1.4; }
 
 /* Conversation rows: Sidebar's ChatRow, restyled; actions stay out of sight until needed. */
+.app[data-lumen-canvas-shell] .cv-loose { margin-top: 4px; }
 .app[data-lumen-canvas-shell] .cv-chats { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--cv-gap); }
-.app[data-lumen-canvas-shell] .cv-group { min-width: 0; }
-.app[data-lumen-canvas-shell] .cv-group h3 { margin: 0; padding: 10px 10px 3px; font: 500 11.5px var(--canvas-body-font); color: var(--canvas-muted); }
-.app[data-lumen-canvas-shell] .cv-group:first-child h3 { padding-top: 4px; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row { position: relative; display: flex; align-items: center; min-width: 0; margin: 0; padding: 0; border-radius: 9px; background: none; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-open { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; min-height: var(--cv-row); padding: 0 10px; border: 0; border-radius: 9px; background: none; color: var(--canvas-secondary); font-size: var(--cv-fs); font-weight: 400; text-align: start; cursor: pointer; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -168,7 +166,6 @@
   .app[data-lumen-canvas-shell] .cv-brief-text { font-size: 13.5px; }
   .app[data-lumen-canvas-shell] .cv-brief-meta { font-size: 12px; }
   .app[data-lumen-canvas-shell] :is(.cv-more, .cv-new-here, .cv-empty) { min-height: 44px; font-size: 14px; }
-  .app[data-lumen-canvas-shell] .cv-group h3 { padding: 12px 10px 4px; font-size: 12.5px; }
   .app[data-lumen-canvas-shell] .cv-nav .chat-open { border-radius: 12px; }
   .app[data-lumen-canvas-shell] .cv-all { min-height: 44px; font-size: 14.5px; }
   .app[data-lumen-canvas-shell] .cv-ask { min-height: 44px; font-size: 14.5px; }

@@ -75,6 +75,8 @@ const canvasLook = (page, heading) => page.evaluate((sel) => {
   return { scoped: root.hasAttribute('data-lumen-canvas'), ink: signal === text || signal === 'var(--text)', headingFont: h ? getComputedStyle(h).fontFamily : null };
 }, heading);
 async function axe(page, include) {
+  // Measure settled screens: an opening dialog fades in, and mid-fade text reads as low contrast.
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.effect?.getTiming().iterations === Infinity || a.playState !== 'running'), null, { timeout: 5000 }).catch(() => {});
   let builder = new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']);
   if (include) builder = builder.include(include);
   return (await builder.analyze()).violations.map((v) => ({ id: v.id, nodes: v.nodes.length, target: v.nodes[0]?.target?.join(' ') }));

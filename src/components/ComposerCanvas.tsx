@@ -97,10 +97,10 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
       role: expanded ? 'dialog' : undefined,
       'aria-modal': expanded || undefined,
       'aria-labelledby': expanded ? HEAD_ID : undefined,
-      // Only the message box engages the composer, and never mid-press: a click that starts while the layout is
-      // changing would land on a control that has moved (resting → engaged), or lose a control that is about to hide
+      // Only the message box engages the composer (at once: it is itself the press target). Other controls never
+      // change the state mid-press: the click would land on a control that has moved, or lose one about to hide
       // (Safari doesn't focus buttons, so the box blurs on pointer down). The state settles once the press ends.
-      onFocus: (e: FocusEvent<HTMLFormElement>) => { if ((e.target as Element) === input.current && !pressing.current) setFocused(true); },
+      onFocus: (e: FocusEvent<HTMLFormElement>) => { if ((e.target as Element) === input.current) setFocused(true); },
       onBlur: (e: FocusEvent<HTMLFormElement>) => { if (!pressing.current && !e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false); },
       onPointerDown: () => {
         pressing.current = true;

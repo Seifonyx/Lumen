@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-22, Claude Code — CP03 date-heading cleanup and **CP04 Routing Center** implemented, agent-verified and pushed at `0e41c16` (flags off in production, byte-identical). Owner iPhone review of the combined Canvas experience is next. Gate 2, CP05, merge and deployment remain pending.
+> **Last sync:** 2026-10-22, optimized owner-requested ChatGPT project instructions for maximum available capabilities, low-friction handoffs and tool-first execution. CP03 polish + CP04 scope remains authorized; Gate 2/CP05/merge/deploy unapproved.
 
 ## ChatGPT independent Codespaces adapter review — 2026-10-21
 
@@ -49,6 +49,10 @@ Owner reports CP03 works well on a real iPhone and requests removing the Today/Y
 At every agent session/handoff, ChatGPT, Claude Code, Codex and successor agents check the live GitHub README/PROJECT_CONTEXT/CURRENT_STATUS against the latest meaningful work and owner direction. **If another agent already synchronized it, no duplicate write; if a decision or milestone is missing, the current agent with writer access updates CURRENT_STATUS itself**, reads back to confirm and proceeds without asking the owner to remind agents. Only durable rules change PROJECT_CONTEXT. This is a lightweight **agent-triggered** process, not a continuously running background sync or a mandate for full code audits. [README](README.md), [charter](PROJECT_CONTEXT.md), [ChatGPT instructions](CHATGPT_PROJECT_INSTRUCTIONS.md), coding-branch `AGENTS.md` and new `CLAUDE.md` now carry this instruction.
 
 **Owner's latest scoped assignment:** finish the CP03 date-heading removal, then proceed **directly into CP04** isolated Canvas Routing Center implementation, combining proportionate checks at the end. The owner has explicitly authorized CP04; historical references saying CP04 is unauthorized are superseded. **Still not approved:** Gate 2, CP05, default production integration, PR merge or deployment, any spending/public access. Blackout remains 21.5%, Medium confidence; Claude Code is the last confirmed active coder.
+
+## Owner preference — maximum capabilities, minimal manual work (2026-10-22)
+
+The owner requested more capable, convenient Lumen project guidance, not more routine audit overhead. The optimized [ChatGPT Project instructions template](CHATGPT_PROJECT_INSTRUCTIONS.md) now directs tool-first execution (connected GitHub, available project/files/research/artifact/Work/Codex tools as appropriate), proactive product judgment, ready-to-send briefs, minimal repeated questions, and risk-based verification. [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) records capability-first convenience as a durable preference. The owner must copy the updated template into ChatGPT Project settings once; GitHub does not edit that private UI setting. No new permissions or paid services inferred. Existing automatic agent-entry checkpoint repairs, strict $0 QA and all Gate/merge/deploy boundaries are unchanged. Most recent authorized work remains **CP03 sidebar date heading cleanup followed directly by CP04 isolated Routing Center**, without a pause between small polish and CP04. Overall Blackout 21.5% until weighted acceptance evidence changes.
 
 ## Live code and approval state
 

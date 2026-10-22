@@ -95,7 +95,24 @@ try {
       // Providers: filters, search, detail.
       await tab(page, 'Providers');
       await settle(page);
+      // Every section is in view and a full touch target (phones: a 3 × 2 grid, not a hidden sideways strip).
+      const tabs = await rc(page).getByRole('navigation', { name: 'Routing sections' }).getByRole('button').evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { name: el.textContent, left: r.left, right: r.right, height: r.height, cut: el.scrollWidth > el.clientWidth }; }));
+      assert.equal(tabs.length, 6);
+      for (const t of tabs) assert.ok(t.left >= 0 && t.right <= width && !t.cut && (!phone || t.height >= 44), `section "${t.name}" fully visible: ${JSON.stringify(t)}`);
       assert.match(await rc(page).locator('.rc-count').innerText(), /^\d+ of \d+ providers$/);
+      // Providers without a key or permission fold under one row; saved connections stay listed with their state.
+      const fold = rc(page).locator('.rc-fold > button');
+      assert.equal(await fold.getAttribute('aria-expanded'), 'false');
+      assert.match(await fold.innerText(), /Not connected\s+\d+ providers · no key saved/);
+      assert.match(await rc(page).locator('[data-provider="gemini"]').innerText(), /Key saved · enabled/);
+      assert.equal(await rc(page).locator('[data-provider="groq"]').isVisible(), false, 'unconnected providers start folded');
+      await shot(page, join(out, `${tag}-2-providers-folded.png`));
+      await fold.click();
+      assert.equal(await fold.getAttribute('aria-expanded'), 'true');
+      assert.match(await rc(page).locator('[data-provider="groq"]').innerText(), /No key saved/);
+      await fold.click();
+      assert.equal(await rc(page).locator('[data-provider="groq"]').isVisible(), false);
+      // A search reaches folded providers directly.
       await rc(page).getByRole('searchbox', { name: 'Find a provider' }).fill('groq');
       await settle(page, 200);
       assert.equal(await rc(page).locator('.rc-provider-scroll > button').count(), 1);

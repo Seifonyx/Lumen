@@ -13,15 +13,12 @@ A prioritized, living list. Severe functional and accessibility issues are fixed
 
 ## P2 — visual refinement (non-blocking)
 
-1. **Settings, phone:** the section title in the header is small; give the opened section a Canvas display heading.
-2. **Routing Center, phone:** section tabs scroll sideways (Usage and Diagnostics are off-screen); consider "More".
-3. **Providers list:** 32 rows, mostly "No key saved"; group the unconnected providers under a folded heading.
-4. **Hub pages** (Library, Tools, Projects): the "Back to chat" and "Done" buttons could use the Routing Center's "← Chat" pill.
-5. **Project manager:** it still offers colour dots, though Canvas shows monochrome monograms. Either hide them or use the colour subtly.
-6. **Composer usage chip:** it shows "0%". The proof's "~N tokens" context wording is pending.
-7. **Not yet visually reviewed:** Login and onboarding, long-press menus, the Compare results view (needs live answers), Study deck and quiz views (needs a deck).
-8. **Routing Center, desktop:** wide spacing between "Connect" and "a provider".
-9. **Sidebar:** the active row's ⋯ on phones; the folder chevron animation timing.
+1. **Hub pages** (Library, Tools, Projects): the "Back to chat" and "Done" buttons could use the Routing Center's "← Chat" pill.
+2. **Project manager:** it still offers colour dots, though Canvas shows monochrome monograms. Either hide them or use the colour subtly.
+3. **Composer usage chip:** it shows "0%". The proof's "~N tokens" context wording is pending.
+4. **Not yet visually reviewed:** Login and onboarding, long-press menus, the Compare results view (needs live answers), Study deck and quiz views (needs a deck).
+5. **Routing Center, desktop:** wide spacing between "Connect" and "a provider".
+6. **Sidebar:** the active row's ⋯ on phones; the folder chevron animation timing.
 
 ## Done
 
@@ -35,3 +32,7 @@ A prioritized, living list. Severe functional and accessibility issues are fixed
   - Compare checks.
   - The document Canvas panel's head and view switch.
   - True black is covered by the contract.
+- **CP05 P2 refinement:**
+  - Routing Center on phones: all six sections show in a 3 × 2 grid of 44pt targets (no hidden sideways strip).
+  - Providers: those with neither a saved key nor permission fold under "Not connected · N providers"; a search or filter lists everything.
+  - Settings on phones: the opened section has a Canvas display heading; the bar's small title appears once it scrolls away.

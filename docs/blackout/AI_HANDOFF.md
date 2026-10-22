@@ -3,7 +3,16 @@
 > **Historical workstream log — not current authorization.** For the current workstream state, latest owner decisions, next action and Gate approvals, read [the compact live checkpoint](https://github.com/Seifonyx/Lumen/blob/docs/lumen-live-context/docs/lumen-context/CURRENT_STATUS.md). “Latest”, “Next”, “STOP” and “unauthorized” inside dated sections below describe what was true **when that section was written**, not what is authorized now. At meaningful milestones update the live checkpoint and this handoff's newest milestone section without erasing older evidence. The frozen progress ledger is in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 
 
-## Latest — CP05 second milestone: remaining screens, owner decisions, activation plan (verified; owner iPhone review)
+## Latest — CP05 P2 refinement: phone Routing Center sections, folded providers, phone Settings heading (owner review)
+
+The owner reviewed CP05 on iPhone ("all looks good") and authorized three P2 items only:
+- Routing Center sections in a 3 × 2 grid on phones;
+- unconnected providers folded under "Not connected";
+- a Canvas display heading for the opened Settings section on phones.
+
+Details and verification are in [CP05_INTEGRATION.md](CP05_INTEGRATION.md#p2-refinement--phone-routing-center-sections-folded-providers-phone-settings-heading). Production stays byte-identical and the Canvas flags stay off. No merge, deploy, activation or Gate 3. **Next: STOP for owner review.**
+
+## Previous — CP05 second milestone: remaining screens, owner decisions, activation plan (verified; owner iPhone review)
 
 Owner decisions are applied:
 - pinch zoom stays disabled;

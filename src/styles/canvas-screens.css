@@ -125,3 +125,14 @@ html[data-lumen-canvas] .canvas-review pre { background: var(--cv5-fill); }
 /* ---------- Switches: a clear off state too (rimmed track), not only the ink on state. */
 html[data-lumen-canvas] .switch:not(:checked) { background: var(--cv5-fill); border-color: color-mix(in srgb, var(--text) 45%, transparent); }
 html[data-lumen-canvas] .switch:not(:checked)::after { background: color-mix(in srgb, var(--text) 60%, var(--bg)); box-shadow: none; }
+
+/* ---------- Settings on phones: the opened section gets the Canvas display heading (production hides it there); the bar's
+   small section title waits until that heading scrolls away. It stays in the accessibility tree throughout. */
+@media (max-width: 720px), (pointer: coarse) and (max-width: 1100px) {
+  html[data-lumen-canvas]:not(.glass) .settings-page.has-section .settings-heading h2 { display: block; margin: 0 0 6px; font: 640 30px/1.12 var(--cv5-display); letter-spacing: -.03em; color: var(--text); }
+  html[data-lumen-canvas]:not(.glass) .settings-page.has-section .settings-title-section { opacity: 0; transition: opacity .2s; }
+  html[data-lumen-canvas]:not(.glass) .settings-page.has-section.scrolled .settings-title-section { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-lumen-canvas] .settings-title-section { transition: none; }
+}

@@ -4,7 +4,7 @@
 // selection through setChatModel, Layouts through LayoutEditor, usage through UsageTab, decisions through RouteWhy,
 // connections through Settings → Keys. Send-time routing, eligibility and recovery are unchanged.
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronRight, Plus, Search, Shield, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, ChevronRight, Plus, Search, Shield, SlidersHorizontal, X } from 'lucide-react';
 import { modelLabel, selectCurrentChat, selectCurrentModel, useStore } from '../store';
 import { AI_PROVIDERS, providerEnabled } from '../lib/ai/provider-config.js';
 import { modelProblem } from '../lib/ai/eligibility.js';
@@ -73,6 +73,18 @@ function Providers({ preferred }: { preferred?: string }) {
   const matches = (p: typeof providers[number], text: string, scope: typeof filter) => (scope === 'all' || (scope === 'saved' ? p.keySaved : p.enabled)) && `${p.label} ${p.id}`.toLowerCase().includes(text.trim().toLowerCase());
   const visible = providers.filter((p) => matches(p, query, filter));
   const active = visible.find((p) => p.id === selected);
+  // Providers with neither a saved key nor permission fold under one row, closed unless the current model's provider is
+  // among them; a search or a filter lists everything.
+  const connected = visible.filter((p) => p.keySaved || p.enabled), unconnected = visible.filter((p) => !p.keySaved && !p.enabled);
+  const [unfolded, setUnfolded] = useState(() => Boolean(preferred) && !providers.some((p) => p.id === preferred && (p.keySaved || p.enabled)));
+  const folding = Boolean(unconnected.length && connected.length) && !query.trim() && filter === 'all';
+  const row = (p: typeof providers[number]) => (
+    <button type="button" key={p.id} data-provider={p.id} aria-current={active?.id === p.id ? 'true' : undefined} onClick={() => { setSelected(p.id); setDetail(true); }}>
+      <span className="rc-initial" aria-hidden="true">{p.label.slice(0, 1)}</span>
+      <span><strong>{p.label}</strong><small>{p.keySaved ? (p.enabled ? 'Key saved · enabled' : 'Key saved · permission off') : p.enabled ? 'No key saved · enabled' : 'No key saved'}</small><small className="rc-discovery">{discovery(p.status?.state)} · {p.models.length} models</small></span>
+      <ChevronRight size={16} aria-hidden="true" />
+    </button>
+  );
   const change = (text: string, scope: typeof filter) => {
     setQuery(text); setFilter(scope);
     if (!providers.some((p) => p.id === selected && matches(p, text, scope))) { setSelected(null); setDetail(false); }
@@ -94,13 +106,16 @@ function Providers({ preferred }: { preferred?: string }) {
         <div className="rc-search"><Search size={16} aria-hidden="true" /><input ref={input} type="search" aria-label="Find a provider" placeholder="Find a provider" value={query} onChange={(e) => change(e.target.value, filter)} />{query && <button type="button" aria-label="Clear provider search" onClick={() => { change('', filter); input.current?.focus(); }}><X size={16} /></button>}</div>
         <p className="rc-count" role="status">{visible.length} of {providers.length} providers</p>
         <div className="rc-provider-scroll">
-          {visible.map((p) => (
-            <button type="button" key={p.id} data-provider={p.id} aria-current={active?.id === p.id ? 'true' : undefined} onClick={() => { setSelected(p.id); setDetail(true); }}>
-              <span className="rc-initial" aria-hidden="true">{p.label.slice(0, 1)}</span>
-              <span><strong>{p.label}</strong><small>{p.keySaved ? (p.enabled ? 'Key saved · enabled' : 'Key saved · permission off') : 'No key saved'}</small><small className="rc-discovery">{discovery(p.status?.state)} · {p.models.length} models</small></span>
-              <ChevronRight size={16} aria-hidden="true" />
-            </button>
-          ))}
+          {folding ? connected.map(row) : visible.map(row)}
+          {folding && (
+            <div className="rc-fold">
+              <button type="button" aria-expanded={unfolded} aria-controls="rc-unconnected" onClick={() => setUnfolded(!unfolded)}>
+                <span><strong>Not connected</strong><small>{unconnected.length} {unconnected.length === 1 ? 'provider' : 'providers'} · no key saved</small></span>
+                <ChevronDown size={16} aria-hidden="true" />
+              </button>
+            </div>
+          )}
+          {folding && <div id="rc-unconnected" className="rc-folded" hidden={!unfolded}>{unconnected.map(row)}</div>}
           {!visible.length && <div className="rc-empty"><p>No providers match.</p><button type="button" className="rc-link" onClick={() => { change('', 'all'); input.current?.focus(); }}>Reset provider filters</button></div>}
         </div>
       </div>

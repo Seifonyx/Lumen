@@ -22,7 +22,7 @@
 .app[data-lumen-canvas-shell] .rc-primary { display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 38px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--canvas-ink); color: var(--canvas-paper); font: 600 13.5px var(--canvas-body-font); cursor: pointer; }
 .app[data-lumen-canvas-shell] .rc-link { display: inline-flex; align-items: center; gap: 6px; padding: 4px 0; border: 0; background: none; color: var(--canvas-ink); font: 500 13.5px var(--canvas-body-font); text-decoration: underline; text-decoration-color: var(--canvas-rim); text-underline-offset: 4px; cursor: pointer; }
 
-/* Sections: a quiet segmented row; scrolls sideways on phones. */
+/* Sections: a quiet segmented row; a grid on phones. */
 .app[data-lumen-canvas-shell] .rc-tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 20px; border-radius: 14px; background: var(--canvas-fill); overflow-x: auto; scrollbar-width: none; }
 .app[data-lumen-canvas-shell] .rc-tabs::-webkit-scrollbar { display: none; }
 .app[data-lumen-canvas-shell] .rc-tabs button { flex: none; min-height: 34px; padding: 0 14px; border: 0; border-radius: 10px; background: none; color: var(--canvas-secondary); font: 500 13.5px var(--canvas-body-font); cursor: pointer; white-space: nowrap; }
@@ -60,14 +60,24 @@
 .app[data-lumen-canvas-shell] .rc-provider-list { display: grid; gap: 10px; }
 .app[data-lumen-canvas-shell] .rc-count { margin: 0; font-size: 12px; color: var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .rc-provider-scroll { display: flex; flex-direction: column; gap: 2px; max-height: 62vh; overflow: auto; }
-.app[data-lumen-canvas-shell] .rc-provider-scroll > button { display: flex; flex: none; align-items: center; gap: 12px; width: 100%; height: auto; min-height: 56px; padding: 8px 10px; line-height: 1.3; border: 0; border-radius: 12px; background: none; color: var(--canvas-ink); text-align: start; cursor: pointer; }
-.app[data-lumen-canvas-shell] .rc-provider-scroll > button:hover { background: var(--canvas-fill); }
-.app[data-lumen-canvas-shell] .rc-provider-scroll > button[aria-current='true'] { background: var(--rc-fill-strong); }
-.app[data-lumen-canvas-shell] .rc-provider-scroll > button > span:nth-child(2) { display: grid; flex: 1; min-width: 0; gap: 1px; }
+.app[data-lumen-canvas-shell] .rc-provider-scroll [data-provider] { display: flex; flex: none; align-items: center; gap: 12px; width: 100%; height: auto; min-height: 56px; padding: 8px 10px; line-height: 1.3; border: 0; border-radius: 12px; background: none; color: var(--canvas-ink); text-align: start; cursor: pointer; }
+.app[data-lumen-canvas-shell] .rc-provider-scroll [data-provider]:hover { background: var(--canvas-fill); }
+.app[data-lumen-canvas-shell] .rc-provider-scroll [data-provider][aria-current='true'] { background: var(--rc-fill-strong); }
+.app[data-lumen-canvas-shell] .rc-provider-scroll [data-provider] > span:nth-child(2) { display: grid; flex: 1; min-width: 0; gap: 1px; }
 .app[data-lumen-canvas-shell] .rc-provider-scroll strong { font-size: 14px; font-weight: 600; }
 .app[data-lumen-canvas-shell] .rc-provider-scroll small { font-size: 12px; color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .rc-provider-scroll .rc-discovery { color: var(--canvas-muted); }
-.app[data-lumen-canvas-shell] .rc-provider-scroll > button > svg { flex: none; color: var(--canvas-muted); }
+.app[data-lumen-canvas-shell] .rc-provider-scroll [data-provider] > svg { flex: none; color: var(--canvas-muted); }
+/* Unconnected providers fold under one quiet row. */
+.app[data-lumen-canvas-shell] .rc-fold { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--canvas-rim); }
+.app[data-lumen-canvas-shell] .rc-fold > button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 6px 10px; border: 0; border-radius: 12px; background: none; color: var(--canvas-ink); text-align: start; cursor: pointer; }
+.app[data-lumen-canvas-shell] .rc-fold > button:hover { background: var(--canvas-fill); }
+.app[data-lumen-canvas-shell] .rc-fold > button > span { display: grid; flex: 1; min-width: 0; gap: 1px; }
+.app[data-lumen-canvas-shell] .rc-fold strong { font-size: 13.5px; font-weight: 600; }
+.app[data-lumen-canvas-shell] .rc-fold small { font-size: 12px; color: var(--canvas-muted); }
+.app[data-lumen-canvas-shell] .rc-fold svg { flex: none; color: var(--canvas-muted); transition: rotate .2s; }
+.app[data-lumen-canvas-shell] .rc-fold > button[aria-expanded='true'] svg { rotate: 180deg; }
+.app[data-lumen-canvas-shell] .rc-folded:not([hidden]) { display: flex; flex-direction: column; gap: 2px; }
 .app[data-lumen-canvas-shell] .rc-initial { display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 9px; background: var(--rc-fill-strong); font: 650 14px var(--canvas-display-font); }
 .app[data-lumen-canvas-shell] .rc-provider-detail, .app[data-lumen-canvas-shell] .rc-provider-pick { display: grid; gap: 14px; padding: 18px; border: 1px solid var(--canvas-rim); border-radius: 18px; }
 .app[data-lumen-canvas-shell] .rc-provider-pick h3 { font-size: 16px; }
@@ -116,14 +126,15 @@
   .app[data-lumen-canvas-shell] .rc-close, .app[data-lumen-canvas-shell] .rc-primary { min-height: 44px; }
   .app[data-lumen-canvas-shell] .rc-primary { margin-inline-start: auto; }
   .app[data-lumen-canvas-shell] .rc-wide { display: none; }
-  .app[data-lumen-canvas-shell] .rc-tabs { margin-inline: -16px; padding-inline: 16px; border-radius: 0; background: none; border-bottom: 1px solid var(--canvas-rim); }
-  .app[data-lumen-canvas-shell] .rc-tabs button { min-height: 44px; border-radius: 0; box-shadow: none; }
-  .app[data-lumen-canvas-shell] .rc-tabs button[aria-current='page'] { background: none; box-shadow: inset 0 -2px 0 var(--canvas-ink); }
+  /* Every section in view: the segmented control becomes a 3 × 2 grid of 44pt targets (no hidden sideways strip). */
+  .app[data-lumen-canvas-shell] .rc-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
+  .app[data-lumen-canvas-shell] .rc-tabs button { min-width: 0; min-height: 44px; padding: 0 6px; overflow: hidden; text-overflow: ellipsis; }
   .app[data-lumen-canvas-shell] .rc-summary, .app[data-lumen-canvas-shell] .rc-grid { grid-template-columns: minmax(0, 1fr); }
   .app[data-lumen-canvas-shell] .rc-providers { grid-template-columns: minmax(0, 1fr); }
   .app[data-lumen-canvas-shell] .rc-providers.has-detail > .rc-provider-list, .app[data-lumen-canvas-shell] .rc-providers:not(.has-detail) > :is(.rc-provider-detail, .rc-provider-pick) { display: none; }
   .app[data-lumen-canvas-shell] .rc-provider-scroll { max-height: none; }
   .app[data-lumen-canvas-shell] .rc-back { display: inline-flex; min-height: 44px; }
+  .app[data-lumen-canvas-shell] .rc-fold > button { min-height: 52px; }
   .app[data-lumen-canvas-shell] .rc-provider-detail { padding: 0; border: 0; }
   .app[data-lumen-canvas-shell] .rc-model { flex-direction: column; align-items: stretch; }
   .app[data-lumen-canvas-shell] .rc-use { justify-items: start; max-width: none; text-align: start; }
@@ -132,6 +143,9 @@
   .app[data-lumen-canvas-shell] .rc-facts { grid-template-columns: minmax(0, 1fr); }
 }
 @media (hover: none) {
-  .app[data-lumen-canvas-shell] :is(.rc-provider-scroll > button:not([aria-current]), .rc-use button, .rc-close):hover { background-color: transparent; }
+  .app[data-lumen-canvas-shell] :is(.rc-provider-scroll [data-provider]:not([aria-current]), .rc-fold > button, .rc-use button, .rc-close):hover { background-color: transparent; }
   .app[data-lumen-canvas-shell] .rc-close:hover { background: var(--canvas-fill); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app[data-lumen-canvas-shell] .rc-fold svg { transition: none; }
 }

@@ -91,3 +91,17 @@ The Routing Center contract also asserts the "Use model" confirmation.
 - **Unit tests:** `npm test` passes.
 
 Evidence: [desktop](cp05/m2/desktop.png), [phone](cp05/m2/phone.png), [Chromium results](cp05/m2/results-chromium.json), [WebKit results](cp05/m2/results-webkit.json).
+
+## P2 refinement — phone Routing Center sections, folded providers, phone Settings heading
+
+Owner-authorized follow-up after the owner's iPhone review ("all looks good"). Scope is the three backlog items only; the approved design is unchanged.
+
+- **Routing Center sections (phones):** the segmented control becomes a 3 × 2 grid. All six sections are visible at 320 to 899 px, each a 44pt target, with no sideways scrolling. The desktop row is unchanged.
+- **Providers:** providers with neither a saved key nor permission fold under one **Not connected · N providers · no key saved** row (a real button with `aria-expanded` and `aria-controls`). Saved or enabled providers stay listed with their exact state. A provider without a key that is still enabled is never folded, and its row now says so ("No key saved · enabled"). The fold starts open when the current model's provider is unconnected. A search or a filter shows the plain full list. The count line and the detail view are unchanged.
+- **Settings (phones):** the opened section shows its Canvas display heading (30 px Geist), which production hides on phones. The bar's small section title fades in only once the heading scrolls away, and stays in the accessibility tree throughout. The glass look is untouched.
+
+Presentation only. `RoutingCenter.tsx` is reached only through the QA switch, and the CSS is scoped to the Canvas attributes, so the ordinary production build is unchanged (byte-identical, see below). No state, routing, key, draft or account logic changed.
+
+**Contracts extended:**
+- CP04 asserts that every section is fully visible and at least 44pt tall on phones. It also checks the fold (closed by default, the saved connection listed with its state, open and close, a search reaching a folded provider) and saves a folded screenshot.
+- CP05 asserts the phone Settings display heading (at least 28 px, "General") and that the small bar title is hidden while the heading is in view.

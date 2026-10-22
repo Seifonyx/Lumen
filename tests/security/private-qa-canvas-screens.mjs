@@ -102,6 +102,12 @@ try {
         let look = await canvasLook(page, '.settings-heading h2');
         assert.ok(look.scoped && look.ink, 'Canvas scope with ink accents');
         assert.match(look.headingFont, /Geist/); // owner decision: Geist stays the display face (no Archivo)
+        // Phones: the opened section shows its display heading; the bar's small title waits until it scrolls away.
+        if (phone) {
+          const head = await page.evaluate(() => { const h = document.querySelector('.settings-heading h2'), t = document.querySelector('.settings-title-section'); return { shown: Boolean(h && h.getBoundingClientRect().height), size: h ? parseFloat(getComputedStyle(h).fontSize) : 0, text: h?.textContent, bar: t ? getComputedStyle(t).opacity : null }; });
+          assert.ok(head.shown && head.size >= 28 && head.text === 'General', `section display heading: ${JSON.stringify(head)}`);
+          assert.equal(head.bar, '0', 'no duplicate small title while the heading is in view');
+        }
         record.screens.settings = await axe(page, 'section.settings-page');
         await shot(page, join(out, `${tag}-settings.png`));
         await closeAll(page);

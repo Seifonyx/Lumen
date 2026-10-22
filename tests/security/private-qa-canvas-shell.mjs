@@ -111,7 +111,7 @@ try {
       await shot(page, join(out, `${tag}-1-chat.png`));
       pass('reading layout');
 
-      // The tree: folders from the canonical store; the open chat's folder is open; loose chats grouped.
+      // The tree: folders from the canonical store; the open chat's folder is open; loose chats in one list.
       await openNav(page, phone);
       const studio = nav(page).getByRole('button', { name: /Studio launch/ }).first();
       const lisbon = nav(page).getByRole('button', { name: /Lisbon in spring/ }).first();
@@ -121,6 +121,11 @@ try {
       assert.ok(await inStudio.getByText('A launch worth remembering').isVisible());
       assert.equal(await nav(page).locator('.chat-row.active').count(), 1, 'one current chat');
       assert.ok(await nav(page).getByText('Notes for a quieter workspace').isVisible(), 'loose conversations listed');
+      // One clean list: no date headings; pinned first, then newest first.
+      const loose = await nav(page).locator('.cv-loose > .chat-row').evaluateAll((rows) => rows.map((r) => ({ pinned: Boolean(r.querySelector('.pin-mark')), title: r.textContent.trim() })));
+      assert.equal(await nav(page).locator('.cv-tree h3').count(), 0, 'no date-group headings');
+      assert.ok(loose.length >= 3 && loose[0].pinned && loose.slice(1).every((r) => !r.pinned), 'pinned chats lead the list');
+      record.looseOrder = loose.map((r) => r.title);
       await shot(page, join(out, `${tag}-2-nav.png`));
       // Disclosure: open Lisbon, fold Studio; content inside a closed folder is inert.
       await lisbon.click(); await settle(page);

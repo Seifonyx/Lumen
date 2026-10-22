@@ -124,11 +124,13 @@ try {
   // CP02/CP03 (owner-authorized) add the flagged Canvas composer and shell in exactly these source files. The flags
   // stay off in the ordinary build, and section 1's byte equality proves its output is still the pre-QA01 baseline.
   const cp02 = ['src/components/Composer.tsx', 'src/components/ComposerCanvas.tsx', 'src/lib/canvas-presentation.ts', 'src/styles/canvas-composer.css',
-    'src/App.tsx', 'src/components/Sidebar.tsx', 'src/components/SidebarCanvas.tsx', 'src/components/ChatView.tsx', 'src/styles/canvas-shell.css'];
+    'src/App.tsx', 'src/components/Sidebar.tsx', 'src/components/SidebarCanvas.tsx', 'src/components/ChatView.tsx', 'src/styles/canvas-shell.css',
+    'src/components/RoutingCenter.tsx', 'src/lib/routing-center.ts', 'src/styles/canvas-routing.css'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `QA01 must not modify production entry, proof guard, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_SHELL = false;$/m, 'the Canvas shell stays off in the ordinary build');
+  assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const RoutingCenter: ComponentType \| null = null;$/m, 'the ordinary build has no Routing Center loader');
   pass('production entry, localhost proof guard, hosting/rules/relay/workflows unchanged; only the CP02 files (flag off) in src', `since ${base.slice(0, 12)}`);
 
   // 5. No-publication contract for the local tooling.

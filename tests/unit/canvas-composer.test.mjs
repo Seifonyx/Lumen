@@ -56,7 +56,7 @@ test('CP03 shell seams fold to the ordinary code and its styles stay scoped', ()
   assert.equal((sidebar.match(/CANVAS_SHELL\b/g) || []).length - 1, 1, 'Sidebar: one early return, constant per build');
   assert.match(sidebar, /^  if \(CANVAS_SHELL\) return <SidebarCanvas onCollapse=\{onCollapse\} \/>;$/m);
   const app = readFileSync('src/App.tsx', 'utf8');
-  assert.equal((app.match(/CANVAS_SHELL\b/g) || []).length - 1, 1);
+  assert.equal((app.match(/CANVAS_SHELL\b/g) || []).length - 1, 2, 'App: the scope attributes and the Routing Center mount');
   assert.match(app, /\{\.\.\.\(CANVAS_SHELL \? \{ 'data-lumen-canvas-shell': '', 'data-lumen-canvas-foundation': '' \} : undefined\)\}/);
   const view = readFileSync('src/components/ChatView.tsx', 'utf8');
   const t = /\{CANVAS_SHELL \? <>(.+?)<\/> : (.+?)\}\n/.exec(view);
@@ -69,6 +69,24 @@ test('CP03 shell seams fold to the ordinary code and its styles stay scoped', ()
     rules++;
     for (const selector of rule.selectors) assert.match(selector, /^(?:(?:html\.glass|\[dir='rtl'\]) )?\.app\[data-lumen-canvas-shell\]/, `scoped: ${selector}`);
   });
+  root.walkDecls((decl) => assert.ok(!/url\s*\(|@import/i.test(decl.value), 'no network/font dependency'));
+  assert.ok(rules > 40);
+});
+
+test('CP04 Routing Center loads only through the QA switch and its styles stay scoped', () => {
+  assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const RoutingCenter: ComponentType \| null = null;$/m);
+  const qa = readFileSync('qa/iphone/adapters/canvas-presentation.ts', 'utf8');
+  assert.match(qa, /^export const RoutingCenter = lazy\(\(\) => import\('\.\.\/\.\.\/\.\.\/src\/components\/RoutingCenter'\)\);$/m);
+  assert.match(qa, /import '\.\.\/\.\.\/\.\.\/src\/styles\/canvas-routing\.css';/);
+  for (const file of ['src/App.tsx', 'src/components/Sidebar.tsx', 'src/components/SidebarCanvas.tsx', 'src/components/ChatView.tsx', 'src/main.tsx']) {
+    assert.ok(!/import\(['"][^'"]*RoutingCenter/.test(readFileSync(file, 'utf8')), `${file} never imports the Routing Center`);
+  }
+  const app = readFileSync('src/App.tsx', 'utf8');
+  assert.match(app, /\{CANVAS_SHELL \? <><ChatView onExpandSidebar=\{toggleSidebar\} \/>\{RoutingCenter && <Suspense fallback=\{null\}><RoutingCenter \/><\/Suspense>\}<\/> : <ChatView onExpandSidebar=\{toggleSidebar\} \/>\}/);
+  const root = postcss.parse(readFileSync('src/styles/canvas-routing.css', 'utf8'));
+  let rules = 0;
+  root.walkAtRules((rule) => assert.ok(['media'].includes(rule.name), `no @${rule.name}`));
+  root.walkRules((rule) => { rules++; for (const selector of rule.selectors) assert.match(selector, /^(?:html\[data-qa-review\] )?\.app\[data-lumen-canvas-shell\]/, `scoped: ${selector}`); });
   root.walkDecls((decl) => assert.ok(!/url\s*\(|@import/i.test(decl.value), 'no network/font dependency'));
   assert.ok(rules > 40);
 });

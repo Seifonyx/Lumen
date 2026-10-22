@@ -8,7 +8,7 @@
 |---|---|
 | Project | Public [Seifonyx/Lumen](https://github.com/Seifonyx/Lumen) |
 | Active coding stream | `docs/lumen-blackout-phase1-20261019`; [draft PR #34](https://github.com/Seifonyx/Lumen/pull/34), observed **open/unmerged** |
-| Latest observed PR head | `0e41c16515a6d3675b22b7fd9faee389635bcbc2` (observed by GitHub integration 2026-10-22; refresh before material release decisions) |
+| Latest observed PR head | `19b581d33991627a6f0251fa4247c9820f794222` (observed 2026-10-22; newer commits are **documentation-only instruction/hand-off maintenance**, not new CP04 product changes; refresh before material release decisions) |
 | Active coding agent | **Claude Code** (last owner-confirmed; do not infer switches) |
 | Design decision | **Canvas (A) selected; Gate 1 approved by owner on 2026-10-21**. Historical approval remains valid unless explicitly superseded |
 | Current implementation | **CP01–CP04** completed on isolated draft workstream, with the CP03 date-heading cleanup included. CP02 physical iPhone acceptance reported by owner; **CP04 real-iPhone review outstanding** |
@@ -24,6 +24,10 @@
 **Owner reviews the combined Canvas workspace + Routing Center CP04** using the existing private iPhone Codespace. Try Models & routing → Overview / Providers / Models / Policies / Usage / Diagnostics, chat draft preservation, selection of a model, Settings return, and the cleaned sidebar. Claude's one open interaction choice: should **Use model** return immediately to the chat (current behavior), or stay in Routing Center?
 
 Record feedback and scoped polish if needed. **Do not infer formal Gate 2 approval from positive comments or tests**; the owner grants it explicitly. No CP05+, merge, deployment, paid service, or public exposure without the appropriate authorization. Avoid unnecessary intermediate stops inside an already authorized task.
+
+## Standing documentation design — maintained, never hardcode active scope
+
+Permanent agent rules live in the docs-branch [README](README.md), [charter](PROJECT_CONTEXT.md), [ChatGPT template](CHATGPT_PROJECT_INSTRUCTIONS.md) and coding-branch `AGENTS.md`/`CLAUDE.md`. None should hardcode an active CP phase, assigned agent, code SHA, progress percentage, or pending Gate status. Dated workstream handoff/plan sections are historical unless the newest owner instruction and this live checkpoint confirm them. Historical status through the restructuring is preserved [here](STATUS_HISTORY_THROUGH_2026-10-22.md). No product/release gate changed as part of documentation restructuring.
 
 ## Agent synchronization contract — no manual status maintenance by owner
 

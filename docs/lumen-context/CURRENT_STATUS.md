@@ -1,6 +1,6 @@
 # Lumen — CURRENT execution checkpoint (PUBLIC-SAFE)
 
-> **Live working state, maintained by whichever agent is active.** Last checkpoint update: **2026-10-22**, CP05 second milestone pushed (recorded by Claude Code). For rules read [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). Older events are preserved in the [historical log](STATUS_HISTORY_THROUGH_2026-10-22.md), which is **not** a source of current authorization.
+> **Live working state, maintained by whichever agent is active.** Last checkpoint update: **2026-10-22**, CP05 second milestone pushed (recorded by Claude Code); exact-head evidence independently re-run in the CP05 closeout check. For rules read [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). Older events are preserved in the [historical log](STATUS_HISTORY_THROUGH_2026-10-22.md), which is **not** a source of current authorization.
 
 ## Current state — update this section in place
 
@@ -18,7 +18,7 @@
 | Mobile pinch-zoom decision | **Owner explicitly prefers native-app-style chat: keep pinch zoom disabled in the primary chat interface.** Maintain readable text and accessible scaling options where feasible; review document/media cases independently. No pinch-zoom implementation requested. |
 | QA workflow | Reusable **private, synthetic-only, auto-starting, auto-stopping GitHub Codespace** preferred; strict **$0 additional spending**. Owner confirms Private port; do not expose credentials, provider inference or production data |
 | Paused work | Cloudflare passkey/Durable Object hosted QA route; no activation inferred |
-| Last meaningful evidence | CP05 second milestone at `38c4dce`. Agent-reported:<br>• CP05 contract in dark, light and true black<br>• CP04 (now asserting the confirmation), CP03, CP02 and the QA browser contract, in Chromium and WebKit<br>• isolation 8/8<br>• CP01 graph check; production byte-identical<br>• `npm test`<br>Not independently rerun |
+| Last meaningful evidence | CP05 second milestone. **Independently re-run at the exact PR head `fa44efe` on 2026-10-22 (CP05 closeout check, Claude Code project thread):**<br>• `npm test` (typecheck and unit tests)<br>• QA01 isolation 8/8, with production byte-identical to a fresh `main` (`655438f`) build<br>• CP01 graph check: 2560 modules, 174 artifact hashes, baseline equality<br>• CP05 screens (dark, light, true black; 1440 and 390), CP04 Routing Center, CP03 shell, CP02 composer and the QA browser contract, all passing in Chromium and in Linux WebKit (Playwright 1.56.1 image)<br>GitHub CI run 39791522019 at `fa44efe`: type/build/unit and Chromium + emulators **passed**. The WebKit job was **cancelled** while installing WebKit (an infrastructure stall, not a test failure) and still needs a re-run. Synthetic and automated only, not a physical iPhone |
 
 ## Next action / owner decisions needed
 

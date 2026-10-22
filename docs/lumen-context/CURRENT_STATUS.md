@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-22, Claude Code — owner tested **CP02 on a real iPhone** in one private $0 Codespace: all eight device items passed. QA tooling fixes pushed at `3a1b2d1`. No production change, deployment, merge or Gate 2 approval.
+> **Last sync:** 2026-10-22, Claude reported automatic Codespaces startup confirmed on the latest CP02 QA build; optional trailing-slash/token-text checks remain open, CP03 and Gate 2 still unapproved.
 
 ## ChatGPT independent Codespaces adapter review — 2026-10-21
 
@@ -32,13 +32,17 @@ Reviewed QA-only code, security tests, browser smoke test source, session guide 
 
 **Current next action stays:** owner-led single **private, $0, synthetic-only CP02 iPhone Safari session** if the owner chooses to authorize it; inspect keyboard, gestures, layout/glass, VoiceOver and nested controls, then delete Codespace and report. **CP03+ unapproved; Gate 2 pending; no merge/deployment.** Blackout **21.5%, Medium confidence**; Claude Code remains active.
 
+## Latest — CP02 startup confirmed in resumed private Codespace (agent report, 2026-10-22)
+
+Claude reports the owner-opened private Codespaces session automatically launched the **Lumen QA review** terminal and built QA revision `3a1b2d1`; no manual startup was needed. The separate no-trailing-slash build URL and “~1 token” label checks were suggested as optional and **not confirmed** in this update. Workstream [draft PR #34](https://github.com/Seifonyx/Lumen/pull/34) is open, unmerged at `b7344b8e7088b21cf2acfeaf3df07c9aa4d3e396` (limited PR-status check; no exhaustive audit). Prior owner-run CP02 physical iPhone checks remain reported passed; Gate 2 is **not** approved. CP02 checkpoint A is not a substitute for formal Gate 2 after CP03/CP04 review. Claude's suggestion to leave an idle Codespace assumes auto-stop after 30 min; **stopped Codespaces still consume storage allowance**, so owner should stop or delete per strict $0 preference and available quota. No CP03 implementation authorization yet; if owner accepts CP02 and elects to proceed, the next bounded assignment is CP03 navigation/reading behind isolated QA presentation, preserving production boundary, with new device feedback after implementation. Progress **21.5%, Medium confidence**, active agent Claude Code. No PROJECT_CONTEXT charter change.
+
 ## Live code and approval state
 
 | Item | Directly verified / recorded state |
 |---|---|
 | Repo | `Seifonyx/Lumen` (public) |
 | Workstream | Draft [PR #34](https://github.com/Seifonyx/Lumen/pull/34), `docs/lumen-blackout-phase1-20261019`; open, draft, unmerged |
-| **Latest pushed workstream commit** | **`55052bd5d7227501020cb1c57cc7d3e695b5622d`** (CP02 docs/evidence); CP02 code `e0196eb`, tests `ea3954c`; QA fixes `7c628bb`/`5065ff7`/`64f7fdc`. Earlier: session record `9642d4b`, Codespaces adapter `ac93683` |
+| **Latest pushed workstream commit** | **`b7344b8e7088b21cf2acfeaf3df07c9aa4d3e396`** (Claude's startup/device note); CP02 code `e0196eb`, tests `ea3954c`; QA fixes `7c628bb`/`5065ff7`/`64f7fdc`. Earlier: session record `9642d4b`, Codespaces adapter `ac93683` |
 | Earlier implemented milestones | CP01 `c9153fd75ba16ebf70908f5d8c092cb540b9aa58`; QA00 proposal `88c7baa3e1e1873ae0dfcf21119b37c6fb20c37f` |
 | Approved Canvas visual source | `bb29ffe3073e2509cdb9ee718af4afee1b1b4b3a`; unchanged by the documentation milestone |
 | Design direction / Gate 1 | **Canvas (A) selected; Gate 1 APPROVED**, explicitly confirmed by owner after final sidebar-spacing review. Further polish remains; rejected Workspace/Focus consolidation is not the foundation. |

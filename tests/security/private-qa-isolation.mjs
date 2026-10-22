@@ -145,7 +145,7 @@ try {
     'src/components/RoutingCenter.tsx', 'src/lib/routing-center.ts', 'src/styles/canvas-routing.css',
     'src/styles/canvas-screens.css', 'src/styles/canvas.css', 'src/lib/workspace-presentation.ts',
     // Activation (owner-authorized 2026-10-22): the shared "on" module, its LUMEN_CANVAS selection, and the workflows
-    // that set it (Deploy and Preview build Canvas by default) or test it.
+    // that set it (Deploy and Preview build Canvas only when it is chosen) or test it.
     'src/lib/canvas-presentation.on.ts', 'vite.config.ts', '.github/workflows/deploy.yml', '.github/workflows/preview.yml', '.github/workflows/tests.yml'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);

@@ -22,7 +22,11 @@ test('the Canvas flags are off in the ordinary build and on through one module s
   assert.ok(!/canvas(?:-composer|-shell|-routing|-screens)?\.css/.test(config), 'styles load only through the "on" module');
   // The Deploy workflow builds Canvas unless an operator explicitly chooses the ordinary (rollback) build.
   const deploy = readFileSync('.github/workflows/deploy.yml', 'utf8');
-  assert.match(deploy, /LUMEN_CANVAS: \$\{\{ inputs\.presentation == 'ordinary' && '0' \|\| '1' \}\}/);
+  // Canvas ships only when chosen: ordinary is the default and anything else builds ordinary.
+  for (const workflow of [deploy, readFileSync('.github/workflows/preview.yml', 'utf8')]) {
+    assert.match(workflow, /^ {8}default: ordinary$/m);
+    assert.match(workflow, /LUMEN_CANVAS: \$\{\{ inputs\.presentation == 'canvas' && '1' \|\| '0' \}\}/);
+  }
   // Styles load with the switch, never from the component (a CSS import would survive tree-shaking).
   for (const file of ['src/components/Composer.tsx', 'src/components/ComposerCanvas.tsx', 'src/components/SidebarCanvas.tsx', 'src/components/Sidebar.tsx', 'src/components/ChatView.tsx']) assert.ok(!/\.css['"]/.test(readFileSync(file, 'utf8')), `${file} imports no stylesheet`);
   for (const file of ['src/main.tsx', 'src/App.tsx']) assert.ok(!/canvas(?:-composer|-shell)?\.css/.test(readFileSync(file, 'utf8')), `${file} never loads Canvas styles`);

@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       presentation:
-        description: Canvas is the approved design. Ordinary builds the previous presentation.
+        description: Ordinary is the current production presentation. Choose canvas to preview Canvas.
         type: choice
-        options: [canvas, ordinary]
-        default: canvas
+        options: [ordinary, canvas]
+        default: ordinary
 
 jobs:
   preview:
@@ -24,7 +24,7 @@ jobs:
       - name: Build (${{ inputs.presentation }} presentation)
         run: npm run build
         env:
-          LUMEN_CANVAS: ${{ inputs.presentation == 'ordinary' && '0' || '1' }}
+          LUMEN_CANVAS: ${{ inputs.presentation == 'canvas' && '1' || '0' }}
       - name: Preview channel lives on the old site (its address is already set up for sign-in)
         run: |
           sed -i 's/"site": "lumen-chat"/"site": "model-router"/' firebase.json

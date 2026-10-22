@@ -30,7 +30,7 @@ jobs:
       - run: npm run typecheck
       - run: node scripts/project-progress.mjs
       - run: npm run build
-      - name: Build the Canvas presentation too (what Deploy ships)
+      - name: Build the Canvas presentation too (what Deploy ships when canvas is chosen)
         run: npm run build -- --outDir dist-canvas
         env:
           LUMEN_CANVAS: '1'
@@ -76,7 +76,7 @@ jobs:
           retention-days: 7
 
   in-app-canvas:
-    # The same in-app tests against the Canvas build (what Deploy ships by default), for the suites listed in
+    # The same in-app tests against the Canvas build (what Deploy ships when canvas is chosen), for the suites listed in
     # tests/e2e/canvas-core.txt. The rest still look for the ordinary sidebar; the ordinary build keeps the full run above.
     name: In-app tests on the Canvas build (Chromium + Firebase emulators)
     runs-on: ubuntu-24.04

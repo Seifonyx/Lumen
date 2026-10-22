@@ -40,6 +40,10 @@ Claude reports the owner-opened private Codespaces session automatically launche
 
 Owner prefers **reusing the existing private Codespace** with its automatic review startup and stable forwarded-port host, rather than deleting and recreating the Codespace (and receiving a new address) after every QA session. This is sensible within the existing strict $0 personal-account policy: a stopped Codespace uses storage allowance but no compute; continued storage is counted in GB-month and can exhaust the personal quota. The ordinary no-payment-method policy blocks excess use rather than billing. **Working recommendation:** let it auto-stop after inactivity, resume when needed, check Codespaces storage use periodically, and delete only when no longer useful or close to the allowance. No instruction to keep it continuously running or expose a public port. The base forwarded hostname ordinarily remains associated with the same Codespace and port; the commit-specific `/b/...` review path can change after a rebuild, and the automatic script prints the current link. GitHub normally automatically deletes a Codespace after 30 days of inactivity unless retention is changed; do not promise permanence. This preference supersedes older routine advice to delete after *every* test, not the existing privacy/security/cost controls. No new CP03 or deployment authorization inferred.
 
+## Owner CP03 iPhone polish — 2026-10-22
+
+Owner reports CP03 works well on a real iPhone and requests removing the Today/Yesterday/Previous 7 days and other date separators from the chat list. Present conversations as one newest-first list, keeping project folders, search and chat actions intact. Claude Code can implement this limited CP03 polish with focused checks; CP04, Gate 2, merge and deployment remain unapproved. Blackout remains 21.5%.
+
 ## Live code and approval state
 
 | Item | Directly verified / recorded state |

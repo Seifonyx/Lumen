@@ -1,0 +1,59 @@
+{
+  "engine": "chromium",
+  "commit": "c3b59d8ed18bf232f55c1e1a42bedb123a1a5343",
+  "physicalDevice": false,
+  "screenshotToolingCsp": [],
+  "results": [
+    {
+      "viewport": "1440x960",
+      "engine": "chromium",
+      "checks": [
+        "opens from navigation",
+        "overview",
+        "providers",
+        "use model",
+        "policies",
+        "usage and diagnostics",
+        "manage connection",
+        "closing",
+        "axe, network, CSP, overflow, errors",
+        "second reviewer"
+      ],
+      "axe": []
+    },
+    {
+      "viewport": "390x844",
+      "engine": "chromium",
+      "checks": [
+        "opens from navigation",
+        "overview",
+        "providers",
+        "use model",
+        "policies",
+        "usage and diagnostics",
+        "manage connection",
+        "closing",
+        "axe, network, CSP, overflow, errors",
+        "second reviewer"
+      ],
+      "axe": []
+    },
+    {
+      "viewport": "320x568",
+      "engine": "chromium",
+      "checks": [
+        "opens from navigation",
+        "overview",
+        "providers",
+        "use model",
+        "policies",
+        "usage and diagnostics",
+        "manage connection",
+        "closing",
+        "axe, network, CSP, overflow, errors",
+        "second reviewer"
+      ],
+      "axe": []
+    }
+  ]
+}

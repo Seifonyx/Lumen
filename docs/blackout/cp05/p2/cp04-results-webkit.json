@@ -1,0 +1,72 @@
+{
+  "engine": "webkit",
+  "commit": "c3b59d8ed18bf232f55c1e1a42bedb123a1a5343",
+  "physicalDevice": false,
+  "screenshotToolingCsp": [
+    "style-src-elem inline",
+    "style-src-elem inline",
+    "style-src-elem inline",
+    "style-src-elem inline",
+    "style-src-elem inline",
+    "style-src-elem inline",
+    "style-src-elem inline",
+    "style-src-elem inline",
+    "style-src-elem inline",
+    "style-src-elem inline",
+    "style-src-elem inline",
+    "style-src-elem inline"
+  ],
+  "results": [
+    {
+      "viewport": "1440x960",
+      "engine": "webkit",
+      "checks": [
+        "opens from navigation",
+        "overview",
+        "providers",
+        "use model",
+        "policies",
+        "usage and diagnostics",
+        "manage connection",
+        "closing",
+        "axe, network, CSP, overflow, errors",
+        "second reviewer"
+      ],
+      "axe": []
+    },
+    {
+      "viewport": "390x844",
+      "engine": "webkit",
+      "checks": [
+        "opens from navigation",
+        "overview",
+        "providers",
+        "use model",
+        "policies",
+        "usage and diagnostics",
+        "manage connection",
+        "closing",
+        "axe, network, CSP, overflow, errors",
+        "second reviewer"
+      ],
+      "axe": []
+    },
+    {
+      "viewport": "320x568",
+      "engine": "webkit",
+      "checks": [
+        "opens from navigation",
+        "overview",
+        "providers",
+        "use model",
+        "policies",
+        "usage and diagnostics",
+        "manage connection",
+        "closing",
+        "axe, network, CSP, overflow, errors",
+        "second reviewer"
+      ],
+      "axe": []
+    }
+  ]
+}

@@ -105,3 +105,12 @@ Presentation only. `RoutingCenter.tsx` is reached only through the QA switch, an
 **Contracts extended:**
 - CP04 asserts that every section is fully visible and at least 44pt tall on phones. It also checks the fold (closed by default, the saved connection listed with its state, open and close, a search reaching a folded provider) and saves a folded screenshot.
 - CP05 asserts the phone Settings display heading (at least 28 px, "General") and that the small bar title is hidden while the heading is in view.
+
+**Verified at `c3b59d8`:**
+- **Contracts:** CP05 (dark, light, true black; 1440 and 390), CP04 (1440, 390, 320), CP03, CP02 and the QA browser contract. All pass in Chromium and in Linux WebKit (Playwright 1.56.1 image).
+- **Isolation:** QA01 isolation 8/8.
+- **Production:** the CP01 graph check passes (2560 modules, 174 artifact hashes), and the build is byte-identical to a fresh build of `main` (`655438f`).
+- **Unit tests:** `npm test` passes.
+- Synthetic and automated only, not a physical iPhone.
+
+Evidence: [phone providers, folded](cp05/p2/phone-providers-folded.png), [320 px sections](cp05/p2/phone-320-sections.png), [phone Settings heading](cp05/p2/phone-settings-heading.png), CP04 results for [Chromium](cp05/p2/cp04-results-chromium.json) and [WebKit](cp05/p2/cp04-results-webkit.json).

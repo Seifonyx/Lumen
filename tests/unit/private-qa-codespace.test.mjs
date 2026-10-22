@@ -92,6 +92,8 @@ test('the devcontainer keeps the review port unpublished and runs only QA toolin
   const start = readFileSync("scripts/qa/codespace-start.sh", "utf8");
   assert.match(start, /CODESPACES:-}" = "true"/);
   assert.match(start, /uncommitted changes/);
+  assert.match(start, /git merge -q --ff-only "origin\/\$BRANCH"/, 'updates by fast-forward only');
+  assert.ok(start.indexOf('uncommitted changes') < start.indexOf('--ff-only'), 'never updates over local edits');
   assert.match(start, /serve-codespace\.mjs --build "\$OUT" --port "\$PORT"/);
   assert.match(text, /"otherPortsAttributes"\s*:\s*\{\s*"onAutoForward"\s*:\s*"ignore"/);
 });

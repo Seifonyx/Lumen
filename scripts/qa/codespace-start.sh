@@ -33,6 +33,21 @@ if [ -n "$(git status --porcelain)" ]; then
   fail "the checkout has uncommitted changes; a review build must match one exact commit."
 fi
 
+# Each start shows the newest commit on this branch: fast-forward only, never over local edits (checked above).
+# If the update is impossible (offline, or history rewritten), the current commit is built instead.
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+LOCK_BEFORE="$(git hash-object package-lock.json)"
+say "Updating to the latest commit on $BRANCH…"
+if git fetch -q origin "$BRANCH" >>"$LOG" 2>&1 && git merge -q --ff-only "origin/$BRANCH" >>"$LOG" 2>&1; then
+  say "Up to date at $(git rev-parse --short HEAD)."
+else
+  say "Could not update (see $LOG); building the current commit instead."
+fi
+if [ "$(git hash-object package-lock.json)" != "$LOCK_BEFORE" ]; then
+  say "Packages changed; reinstalling (npm ci)…"
+  npm ci --no-audit --no-fund >>"$LOG" 2>&1 || fail "npm ci did not complete (see $LOG)."
+fi
+
 say "Building the synthetic review for commit $(git rev-parse --short HEAD) (1–3 minutes)…"
 node scripts/qa/build.mjs --out "$OUT" --hours 8 2>&1 | tee -a "$LOG"
 [ "${PIPESTATUS[0]}" -eq 0 ] || fail "the review build or its isolation audit failed (see above)."

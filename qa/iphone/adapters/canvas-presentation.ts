@@ -5,6 +5,7 @@ import '../../../src/styles/canvas.css';
 import '../../../src/styles/canvas-composer.css';
 import '../../../src/styles/canvas-shell.css';
 import '../../../src/styles/canvas-routing.css';
+import '../../../src/styles/canvas-screens.css';
 import { lazy } from 'react';
 
 export const CANVAS_COMPOSER = true;

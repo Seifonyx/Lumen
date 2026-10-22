@@ -173,7 +173,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
                   </button>
                   <Fold id={`${ids}-p-${p.id}`} open={isOpen}>
                     <ul className="cv-chats">
-                      <li><button type="button" className={`cv-brief${activeProjectId === p.id ? ' active' : ''}`} onClick={() => selectProject(p.id)}>
+                      <li><button type="button" className={`cv-brief${activeProjectId === p.id ? ' active' : ''}`} onClick={() => { setUi({ page: null, settingsOpen: false }); selectProject(p.id); }}>
                         <span className="cv-brief-text">{p.description || 'Project overview'}</span>
                         <span className="cv-brief-meta">{p.instructions?.trim() ? 'Instructions' : 'No instructions'} · {p.files?.length || 0} {p.files?.length === 1 ? 'file' : 'files'}<ChevronRight size={12} aria-hidden="true" /></span>
                       </button></li>

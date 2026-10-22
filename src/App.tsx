@@ -17,6 +17,9 @@ import { installSidebarGestures } from './lib/sidebar-gesture';
 import TaskEngine from './components/TaskEngine';
 import { cancelKnowledge } from './lib/knowledge/engine';
 import { CANVAS_SHELL, RoutingCenter } from './lib/canvas-presentation';
+// CP05: the Canvas scope covers the whole document (pages and portalled dialogs/menus) while the shell switch is on;
+// the ordinary build folds this away.
+if (CANVAS_SHELL) { document.documentElement.setAttribute('data-lumen-canvas', ''); document.documentElement.setAttribute('data-lumen-canvas-foundation', ''); }
 
 const RunPanel = lazy(() => import('./components/RunPanel'));
 const ShortcutsModal = lazy(() => import('./components/ShortcutsModal'));

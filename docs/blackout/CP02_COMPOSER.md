@@ -148,3 +148,26 @@ Linux engines and simulation cannot prove these. They block promotion and must n
 8. **Send/Stop from the sheet** on the synthetic transport: it collapses, and Stop works.
 
 **Device route:** the existing private Codespaces route ([session guide](QA02_CODESPACES_SESSION.md)) now serves this Canvas composer automatically. That needs a **new Codespace, which only the owner may create after review**.
+
+## Physical iPhone session — 22 October 2026 (owner-run, Safari, private Codespace)
+
+The owner created one $0 Codespace from their own account on this branch (review build `39a995a…-0-1`) and confirmed port 4173 **Private**.
+
+| Area | Result |
+|---|---|
+| Review banner | **Pass:** above the app, clear of the header and status area |
+| Resting composer | **Pass:** clean capsule, clear of the home indicator |
+| Typing and keyboard | **Pass:** the box rises with the keyboard and grows to two rows; text stays visible; no jumps |
+| Expanded sheet | **Pass:** below the banner and header, clear of the home bar; with the keyboard open it fits above it and the caret stays visible; text kept; Done returns |
+| Swipe gestures | **Pass:** short drag springs back, flick dismisses, inner text scrolls without moving the sheet, interrupted drag restores |
+| Menus from the sheet | **Pass:** model picker, usage and + / Photos open on top and return to the sheet with the text kept |
+| Send/Stop | **Pass:** Send collapses the sheet; Stop ends a slow reply |
+| Rotation, safe areas, VoiceOver | **Pass** (owner-reported) |
+
+**Findings, fixed afterwards (QA tooling and one label):**
+- **Automatic start did not run.** Neither `postAttachCommand` on create nor resume in the browser editor started the server; the manual command did. It now starts from a VS Code folder-open task (`.vscode/tasks.json`) in a visible terminal, with automatic tasks allowed in the devcontainer settings. This needs confirming on the next start.
+- **A link without its trailing slash gave "Not found".** The server now redirects `/b/<build>` to `/b/<build>/`, for permitted hosts only.
+- **"~1 tokens"** in the sheet header now reads "~1 token".
+- **Idle stop:** the Codespace stopped after the 30-minute idle timeout mid-test. The phone tab does not count as activity. Resume it from github.com/codespaces; the review link stays the same.
+
+All eight physical-iPhone items above are confirmed by the owner. Gate 2 checkpoint A is **not** marked approved; that decision remains the owner's.

@@ -96,3 +96,11 @@ The session procedure is otherwise unchanged: confirm port 4173 is **Private** b
 ## Update — CP02 (22 October 2026)
 
 From commit `e0196eb` on this branch, the synthetic review build shows the **CP02 Canvas composer and writing sheet** ([record](CP02_COMPOSER.md)); the rest of the app is the ordinary synthetic Lumen app. The session procedure, private port, $0 checks and teardown are unchanged. The physical-iPhone checklist is in the CP02 record. Creating the Codespace is an owner-only step after review.
+
+## Update — reusing one Codespace (22 October 2026)
+
+- **Keep the Codespace between tests; don't delete it.** Stopped, it only uses a little storage within the free 15 GB-month.
+- **To test an update:** github.com/codespaces → tap the Codespace. The "Lumen QA review" terminal starts by itself. It updates to the newest branch commit (fast-forward only, never over local edits), builds and prints the link.
+- **If no terminal appears,** run `bash scripts/qa/codespace-start.sh`.
+- **The link** works with or without the trailing `/`.
+- **Delete it** when you no longer need it, or if anything looks wrong with port visibility.

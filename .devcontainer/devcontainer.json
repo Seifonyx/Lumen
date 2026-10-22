@@ -6,10 +6,10 @@
   "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
   "hostRequirements": { "cpus": 2 },
   "postCreateCommand": "npm ci --no-audit --no-fund",
-  // Runs in a visible terminal each time the editor attaches, after npm ci has finished. A background job
-  // started from postStartCommand did not survive/appear on the first real session, so the server now runs in
-  // the foreground of that terminal and the script reports "Already running" on later attaches.
-  "postAttachCommand": "bash scripts/qa/codespace-start.sh",
+  // The review starts from .vscode/tasks.json ("Lumen QA review", runs on folder open) in a visible terminal.
+  // Lifecycle commands (postStartCommand, then postAttachCommand) did not start it in the browser editor on real
+  // sessions. Manual fallback: bash scripts/qa/codespace-start.sh
+  "customizations": { "vscode": { "settings": { "task.allowAutomaticTasks": "on" } } },
   "forwardPorts": [4173],
   "portsAttributes": {
     "4173": { "label": "Lumen QA (must be Private)", "onAutoForward": "notify", "requireLocalPort": true }

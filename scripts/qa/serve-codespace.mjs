@@ -69,7 +69,7 @@ export async function startCodespaceServer({ buildDir, port = 4173, env = proces
   await publish({ storage, manifestBytes, files, reviewers: [REVIEWER], now: now() });
   const { buildId } = JSON.parse(new TextDecoder().decode(manifestBytes));
 
-  let gate;
+  let gate, hosts = [];
   const server = createServer(async (req, res) => {
     try {
       const headers = new Headers();
@@ -79,6 +79,12 @@ export async function startCodespaceServer({ buildDir, port = 4173, env = proces
       }
       headers.set(IDENTITY_HEADER, identity.token(now()));
       const host = typeof req.headers.host === 'string' ? req.headers.host : '';
+      // A copied link often loses its trailing slash; send it to the build (this exact path only, same host).
+      if (req.method === 'GET' && req.url === `/b/${buildId}` && hosts.includes(host)) {
+        res.writeHead(308, { location: `/b/${buildId}/`, 'cache-control': 'no-store' });
+        res.end();
+        return;
+      }
       const response = await gate.fetch(new Request(`https://${host || 'invalid.invalid'}${req.url}`, { method: req.method, headers }));
       res.writeHead(response.status, Object.fromEntries(response.headers));
       res.end(Buffer.from(await response.arrayBuffer()));
@@ -90,7 +96,8 @@ export async function startCodespaceServer({ buildDir, port = 4173, env = proces
   await new Promise((done, fail) => { server.once('error', fail); server.listen(port, '127.0.0.1', done); });
   const actualPort = server.address().port;
   // Only the Codespace's forwarded host and the container's own loopback names are accepted.
-  gate = createGate({ storage, trust: identity.trust, hosts: [forwardedHost.replace(`-${port}.`, `-${actualPort}.`), `localhost:${actualPort}`, `127.0.0.1:${actualPort}`], now });
+  hosts = [forwardedHost.replace(`-${port}.`, `-${actualPort}.`), `localhost:${actualPort}`, `127.0.0.1:${actualPort}`];
+  gate = createGate({ storage, trust: identity.trust, hosts, now });
   const host = forwardedHost.replace(`-${port}.`, `-${actualPort}.`);
   return {
     host, buildId, address: server.address(),

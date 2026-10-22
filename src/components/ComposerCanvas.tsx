@@ -114,7 +114,7 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
           <span className="canvas-sheet-label">Writing</span>
           <strong id={HEAD_ID}>{title || 'New chat'}</strong>
         </div>
-        <span className="canvas-sheet-count">{words} {words === 1 ? 'word' : 'words'} · ~{formatTokens(estimateTokens(value))} tokens</span>
+        <span className="canvas-sheet-count">{words} {words === 1 ? 'word' : 'words'} · ~{formatTokens(estimateTokens(value))} {estimateTokens(value) === 1 ? 'token' : 'tokens'}</span>
         <button type="button" className="canvas-sheet-done" aria-label="Done, collapse writing" title="Collapse writing (Esc)" onClick={collapse}>Done</button>
       </div>
     ) : null,

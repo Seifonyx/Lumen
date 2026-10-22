@@ -2,7 +2,18 @@
 
 **Checkpoint: 22 October 2026, UTC — QA banner/Codespaces start fixes and CP02 (Canvas composer + writing sheet, flag off in production) implemented and verified locally; physical-iPhone confirmation pending. Gate 1 APPROVED; CP01, QA01 complete. No CP03, merge, deployment, default production migration, Gate 2 approval, paid service or new Codespace authorized.** Completion **21.5% → 21.5%, Medium confidence**; 78.5 points remain.
 
-## Latest — CP02 Canvas composer + QA fixes (implemented, verified; stop for owner review)
+## Latest — CP02 confirmed on a real iPhone (owner-run, 22 October 2026)
+
+The owner tested CP02 in one private $0 Codespace; all eight physical items passed (see [CP02_COMPOSER.md](CP02_COMPOSER.md)).
+
+Fixed afterwards:
+- automatic start now runs from a VS Code folder-open task (to confirm on the next start);
+- the review link without its trailing slash is redirected;
+- the "~1 token" label.
+
+Codespace start also fast-forwards to the latest branch commit, so the owner keeps one Codespace for future tests. Gate 2 not marked approved; no CP03, merge or deploy. Progress unchanged at 21.5%.
+
+## Previous — CP02 Canvas composer + QA fixes (implemented, verified; stop for owner review)
 
 Owner authorized two QA-only fixes and **CP02 only**.
 

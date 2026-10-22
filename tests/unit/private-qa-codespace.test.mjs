@@ -71,6 +71,10 @@ test('serves only on loopback, only to permitted hosts, through the gate, ignori
     const stranger = testIdentityProvider();
     const forgedLease = JSON.parse((await get(port, `/b/${server.buildId}/__lease`, { Host: forwarded, 'Cf-Access-Jwt-Assertion': await stranger.token('attacker@example.test') })).body);
     assert.equal(forgedLease.namespace, lease.namespace);
+    const bare = await get(port, `/b/${server.buildId}`, { Host: forwarded });
+    assert.equal(bare.status, 308, 'a link without its trailing slash is redirected');
+    assert.equal(bare.headers.location, `/b/${server.buildId}/`);
+    assert.equal((await get(port, `/b/${server.buildId}`, { Host: 'evil.test' })).status, 404, 'but never for a foreign host');
     assert.equal((await get(port, `/b/${server.buildId}/assets/missing.js`, { Host: forwarded })).status, 404);
     assert.equal((await get(port, '/control/registry.json', { Host: forwarded })).status, 404);
     // Expiry: the next request after the build's deadline is refused.
@@ -87,8 +91,11 @@ test('the devcontainer keeps the review port unpublished and runs only QA toolin
   const text = readFileSync('.devcontainer/devcontainer.json', 'utf8');
   assert.ok(!/"visibility"\s*:\s*"(public|org)"/i.test(text), 'never request a public or organisation port');
   assert.ok(!/secrets|GITHUB_TOKEN|firebase|deploy/i.test(text.replace(/\/\/.*$/gm, '')), 'no secrets, Firebase or deployment');
-  assert.match(text, /"postAttachCommand": "bash scripts\/qa\/codespace-start\.sh"/);
-  assert.ok(!/postStartCommand/.test(text.replace(/\/\/.*$/gm, "")), "no unsupervised background start");
+  assert.ok(!/postStartCommand|postAttachCommand/.test(text.replace(/\/\/.*$/gm, '')), 'one start path only: the folder-open task');
+  assert.match(text, /"task\.allowAutomaticTasks": "on"/);
+  const tasks = readFileSync('.vscode/tasks.json', 'utf8');
+  assert.match(tasks, /"command": "bash scripts\/qa\/codespace-start\.sh"/);
+  assert.match(tasks, /"runOn": "folderOpen"/);
   const start = readFileSync("scripts/qa/codespace-start.sh", "utf8");
   assert.match(start, /CODESPACES:-}" = "true"/);
   assert.match(start, /uncommitted changes/);

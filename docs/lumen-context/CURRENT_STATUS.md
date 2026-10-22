@@ -1,6 +1,6 @@
 # Lumen — CURRENT execution checkpoint (PUBLIC-SAFE)
 
-> **Live working state, maintained by whichever agent is active.** Last checkpoint update: **2026-10-22**, CP05 first milestone pushed (Claude Code). For rules read [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). Older events are preserved in the [historical log](STATUS_HISTORY_THROUGH_2026-10-22.md), which is **not** a source of current authorization.
+> **Live working state, maintained by whichever agent is active.** Last checkpoint update: **2026-10-22**, owner resolved pinch-zoom preference during CP05. For rules read [README.md](README.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). Older events are preserved in the [historical log](STATUS_HISTORY_THROUGH_2026-10-22.md), which is **not** a source of current authorization.
 
 ## Current state — update this section in place
 
@@ -15,6 +15,7 @@
 | Production | Canvas presentation flags **off** for ordinary production build; agent reports production artifacts byte-identical. No merge, deploy or production migration authorized by this milestone |
 | Gates | **Gate 2 APPROVED by the owner on 2026-10-22** for the overall visual and interaction foundation, with substantial polish and refinement to continue. **Gate 3 not approved.** CP05 implementation authorized in the isolated feature branch; merge, deployment, default production activation and new spending are not authorized |
 | Weighted Blackout progress | **21.5%, Medium confidence**, 78.5% remaining under existing v1 weights. Gate 2 is a milestone inside B04, not a separately weighted item; credit changes only when a whole B03–B07 acceptance group is complete and accepted. Separate Model Picker 98.5% as previously recorded |
+| Mobile pinch-zoom decision | **Owner explicitly prefers native-app-style chat: keep pinch zoom disabled in the primary chat interface.** Maintain readable text and accessible scaling options where feasible; review document/media cases independently. No pinch-zoom implementation requested. |
 | QA workflow | Reusable **private, synthetic-only, auto-starting, auto-stopping GitHub Codespace** preferred; strict **$0 additional spending**. Owner confirms Private port; do not expose credentials, provider inference or production data |
 | Paused work | Cloudflare passkey/Durable Object hosted QA route; no activation inferred |
 | Last meaningful evidence | [CP05 record](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CP05_INTEGRATION.md). Agent-reported: CP05 (dark and light), CP04, CP03 and CP02 contracts plus the QA browser contract in Chromium and WebKit; isolation 8/8; CP01 graph check (production byte-identical); `npm test`. Not independently rerun |
@@ -22,7 +23,7 @@
 ## Next action / owner decisions needed
 
 **Owner:** review the CP05 build on iPhone through the existing Codespace (it updates itself; tap **Reset** for fresh synthetic data). Then decide the P1 items in the [refinement backlog](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CANVAS_REFINEMENT_BACKLOG.md):
-- **pinch zoom**, which is blocked in production today; the blueprint had assumed otherwise;
+- **pinch zoom decision RESOLVED:** owner prefers it disabled in the primary chat interface, consistent with the native-chat feel. No work to enable it; retain accessibility via readable text/OS size accommodations where feasible, and assess specialized document/media zoom separately.
 - ink versus iOS-green switches;
 - the display font;
 - whether "Use model" returns to the chat.

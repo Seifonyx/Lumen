@@ -165,7 +165,7 @@ The owner created one $0 Codespace from their own account on this branch (review
 | Rotation, safe areas, VoiceOver | **Pass** (owner-reported) |
 
 **Findings, fixed afterwards (QA tooling and one label):**
-- **Automatic start did not run.** Neither `postAttachCommand` on create nor resume in the browser editor started the server; the manual command did. It now starts from a VS Code folder-open task (`.vscode/tasks.json`) in a visible terminal, with automatic tasks allowed in the devcontainer settings. This needs confirming on the next start.
+- **Automatic start did not run.** Neither `postAttachCommand` on create nor resume in the browser editor started the server; the manual command did. It now starts from a VS Code folder-open task (`.vscode/tasks.json`) in a visible terminal, with automatic tasks allowed in the devcontainer settings. **Confirmed** on the owner's Codespace after `git pull` and an editor reload: the task ran by itself and served build `3a1b2d1…-0-1`.
 - **A link without its trailing slash gave "Not found".** The server now redirects `/b/<build>` to `/b/<build>/`, for permitted hosts only.
 - **"~1 tokens"** in the sheet header now reads "~1 token".
 - **Idle stop:** the Codespace stopped after the 30-minute idle timeout mid-test. The phone tab does not count as activity. Resume it from github.com/codespaces; the review link stays the same.

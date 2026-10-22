@@ -59,3 +59,35 @@ Evidence: [desktop dark](cp05/desktop-dark.png), [desktop light](cp05/desktop-li
    - the model picker from the resting capsule;
    - Models & routing.
 4. Decide the P1 items in the backlog: zoom, green versus ink switches, display font, and the "Use model" return.
+
+## Second milestone — remaining screens, owner decisions, activation plan
+
+**Owner decisions applied** (see the backlog's "Decided" table):
+- **Pinch zoom:** stays disabled in the main chat, unchanged.
+- **Switches:** monochrome ink with a clear off state (rimmed track, grey knob).
+- **Display face:** Geist (the Archivo name is removed from the Canvas tokens).
+- **"Use model":** returns to the chat, keeping the draft and the model, and confirms with "Now using … in this chat".
+
+**Screens added (scoped CSS only, canonical components unchanged):**
+- **Assistants:** ink avatars instead of per-name hues; rimmed cards; mono section labels.
+- **Study:** ink progress ring and due chip; rimmed stats and decks.
+- **Compare:** ink checks.
+- **Document Canvas panel:** display head and a quiet segmented Edit/Preview switch.
+- **True black:** covered throughout.
+
+**Activation:** [CANVAS_ACTIVATION_PLAN.md](CANVAS_ACTIVATION_PLAN.md) covers the one-commit switch flip, the pre-activation checklist, the Hosting rollback and partial switch-off. **Nothing is activated.**
+
+**Contract:** `private-qa-canvas-screens.mjs` now also covers:
+- Study, Assistants (avatar ink asserted), Compare and the document Canvas panel;
+- all three themes (dark, light, true black);
+- 9 checks per combination.
+
+The Routing Center contract also asserts the "Use model" confirmation.
+
+**Verified at `38c4dce`:**
+- **Contracts:** CP05 (dark, light, true black; 1440 and 390), CP04 (now asserting the confirmation), CP03, CP02 and the QA browser contract. All pass in Chromium and in Linux WebKit.
+- **Isolation:** QA01 isolation 8/8.
+- **Production:** CP01 graph check passes with baseline equality, and the production build is byte-identical to the baseline.
+- **Unit tests:** `npm test` passes.
+
+Evidence: [desktop](cp05/m2/desktop.png), [phone](cp05/m2/phone.png), [Chromium results](cp05/m2/results-chromium.json), [WebKit results](cp05/m2/results-webkit.json).

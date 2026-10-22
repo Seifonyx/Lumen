@@ -3,7 +3,30 @@
 > **Historical workstream log — not current authorization.** For the current workstream state, latest owner decisions, next action and Gate approvals, read [the compact live checkpoint](https://github.com/Seifonyx/Lumen/blob/docs/lumen-live-context/docs/lumen-context/CURRENT_STATUS.md). “Latest”, “Next”, “STOP” and “unauthorized” inside dated sections below describe what was true **when that section was written**, not what is authorized now. At meaningful milestones update the live checkpoint and this handoff's newest milestone section without erasing older evidence. The frozen progress ledger is in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 
 
-## Latest — CP05 first milestone: Canvas across the app (implemented, verified; owner iPhone review)
+## Latest — CP05 second milestone: remaining screens, owner decisions, activation plan (verified; owner iPhone review)
+
+Owner decisions are applied:
+- pinch zoom stays disabled;
+- ink switches with a clear off state;
+- Geist stays (no Archivo);
+- "Use model" returns to the chat with a "Now using …" confirmation.
+
+Canvas now also covers Assistants, Study, Compare, the document Canvas panel and true black. See [CP05_INTEGRATION.md](CP05_INTEGRATION.md) (second milestone) and the [backlog](CANVAS_REFINEMENT_BACKLOG.md). The production activation and rollback plan is in [CANVAS_ACTIVATION_PLAN.md](CANVAS_ACTIVATION_PLAN.md). **Nothing is activated.** Production is byte-identical.
+
+**Verified:**
+- CP05 in all three themes, plus CP04, CP03, CP02 and the QA browser contract, in Chromium and WebKit;
+- isolation 8/8;
+- the CP01 graph check;
+- `npm test`.
+
+**Next:**
+- owner iPhone review;
+- the P2 backlog;
+- Gate 3 when the owner is ready.
+
+**Not authorized:** activation, merge, deploy, spending, public preview or Gate 3.
+
+## Previous — CP05 first milestone: Canvas across the app (implemented, verified; owner iPhone review)
 
 The owner approved **Gate 2** (overall foundation, with polish to continue) and authorized **CP05**. See [CP05_INTEGRATION.md](CP05_INTEGRATION.md) and the [backlog](CANVAS_REFINEMENT_BACKLOG.md).
 - `canvas-screens.css`, scoped to `html[data-lumen-canvas]`, extends Canvas to Settings, the hub pages, the project workspace and dialogs, with the document scope set only while the shell switch is on. Production is byte-identical.

@@ -97,7 +97,8 @@ try {
         if (phone) { await page.getByRole('dialog', { name: 'Settings' }).getByRole('button', { name: /^General/ }).first().click(); await settle(page); }
         const themeLabel = { light: 'Light', black: 'True black' }[theme];
         if (themeLabel) { await page.getByRole('radio', { name: themeLabel, exact: true }).or(page.getByRole('button', { name: themeLabel, exact: true })).first().click(); await settle(page); }
-        assert.equal(await page.evaluate(() => document.documentElement.dataset.theme || 'auto'), theme);
+        // True black is the dark theme with the black appearance.
+        assert.deepEqual(await page.evaluate(() => [document.documentElement.dataset.theme || 'auto', document.documentElement.dataset.appearance || '']), theme === 'black' ? ['dark', 'black'] : [theme, '']);
         let look = await canvasLook(page, '.settings-heading h2');
         assert.ok(look.scoped && look.ink, 'Canvas scope with ink accents');
         assert.match(look.headingFont, /Archivo|Geist|system-ui/);

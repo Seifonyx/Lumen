@@ -16,6 +16,7 @@ import { keepScreenAwake } from './lib/wakelock';
 import { installSidebarGestures } from './lib/sidebar-gesture';
 import TaskEngine from './components/TaskEngine';
 import { cancelKnowledge } from './lib/knowledge/engine';
+import { CANVAS_SHELL } from './lib/canvas-presentation';
 
 const RunPanel = lazy(() => import('./components/RunPanel'));
 const ShortcutsModal = lazy(() => import('./components/ShortcutsModal'));
@@ -192,7 +193,7 @@ export default function App() {
   }
   if (accessDenied) return <NotInvited email={accessDenied} />;
   return (
-    <div className={`app${settingsOpen ? ' settings-open' : ''}${page && !settingsOpen ? ' page-open' : ''}${workspaceOpen ? ' workspace-open' : ''}${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
+    <div className={`app${settingsOpen ? ' settings-open' : ''}${page && !settingsOpen ? ' page-open' : ''}${workspaceOpen ? ' workspace-open' : ''}${sidebarCollapsed ? ' sidebar-collapsed' : ''}`} {...(CANVAS_SHELL ? { 'data-lumen-canvas-shell': '', 'data-lumen-canvas-foundation': '' } : undefined)}>
       <TaskEngine />
       <a className="skip-link" href="#message-input">Skip to message</a>
       <Sidebar onCollapse={toggleSidebar} />

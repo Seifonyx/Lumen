@@ -12,11 +12,13 @@ import { Exit, exitGhost, motionOff, useFlip } from '../lib/motion';
 import { useLongPress } from '../lib/long-press';
 import ContextMenu from './ContextMenu';
 import { installMenuScrub } from '../lib/menu-scrub';
-const AskChats = lazy(() => import('./AskChats'));
+import { CANVAS_SHELL } from '../lib/canvas-presentation';
+import SidebarCanvas from './SidebarCanvas';
+export const AskChats = lazy(() => import('./AskChats'));
 
 const EMPTY_PROJECTS: Project[] = [];
 
-function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
+export function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
   const { selectChat, deleteChat, renameChat, togglePin, moveChatToProject } = useStore.getState();
   const streaming = useStore((s) => s.streamingChatId === chat.id);
@@ -136,6 +138,8 @@ export interface SidebarProps {
 }
 
 export default function Sidebar({ onCollapse }: SidebarProps) {
+  // CP03 Canvas navigation (off, folded away, in the ordinary build): the same sidebar element, state and rows.
+  if (CANVAS_SHELL) return <SidebarCanvas onCollapse={onCollapse} />;
   const user = useStore((st) => st.user);
   const chats = useStore((s) => s.chats);
   const currentId = useStore((s) => s.currentId);

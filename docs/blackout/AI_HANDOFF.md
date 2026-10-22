@@ -1,6 +1,6 @@
 # Lumen Blackout — cross-agent handoff
 
-**Checkpoint: 22 October 2026, UTC — QA banner/Codespaces start fixes and CP02 (Canvas composer + writing sheet, flag off in production) implemented and verified locally; physical-iPhone confirmation pending. Gate 1 APPROVED; CP01, QA01 complete. No CP03, merge, deployment, default production migration, Gate 2 approval, paid service or new Codespace authorized.** Completion **21.5% → 21.5%, Medium confidence**; 78.5 points remain.
+> **Historical workstream log — not current authorization.** For the current workstream state, latest owner decisions, next action and Gate approvals, read [the compact live checkpoint](https://github.com/Seifonyx/Lumen/blob/docs/lumen-live-context/docs/lumen-context/CURRENT_STATUS.md). “Latest”, “Next”, “STOP” and “unauthorized” inside dated sections below describe what was true **when that section was written**, not what is authorized now. At meaningful milestones update the live checkpoint and this handoff's newest milestone section without erasing older evidence. The frozen progress ledger is in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 
 ## Latest — CP03 sidebar polish + CP04 Routing Center (implemented, verified; owner iPhone review next)
 
@@ -308,6 +308,8 @@ Node22/deps/Chromium/WebKit already installed; onboarding reused existing setup,
 
 Preserve other worktrees. `/workspace/Lumen-preview-test` branch `test/preview-auth-clock` contains prior uncommitted test-only auth bridge/clock/workflow WIP; it is isolated and was not released. Never reset/stash-pop/overwrite it blindly. Older release branches/backups remain. Main's latest operational notes may require reconciliation into this feature branch after the independent fix release; resolve conflicts preserving both records, not by discarding either.
 
-## Exact next task / stop boundary
+## Historical QA00 stop boundary (superseded; for provenance only)
+
+> **Not a current task assignment.** This STOP applied at the older QA00 planning checkpoint. Use the live checkpoint and latest explicit owner decision for active work.
 
 **STOP after QA00 proposal/docs commit/push and separate live-checkpoint verification.** Await owner/ChatGPT proposal review and separately scoped authorization; QA01+ implementation/infrastructure and CP02 are not authorized. Preserve CP01, approved Canvas/provider work, ordinary production output and localhost proof. No preview exposure, auth/Firebase relaxation, merge/deployment or automatic Gate2 approval.

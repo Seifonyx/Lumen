@@ -1,6 +1,6 @@
 # Lumen — live execution checkpoint (PUBLIC-SAFE)
 
-> **Last sync:** 2026-10-22, owner directed lean, risk-based partner reviews; routine agent reports should not trigger exhaustive independent audits. CP02 iPhone acceptance still pending; no CP03, merge or deployment approval.
+> **Last sync:** 2026-10-22, Claude Code — owner tested **CP02 on a real iPhone** in one private $0 Codespace: all eight device items passed. QA tooling fixes pushed at `3a1b2d1`. No production change, deployment, merge or Gate 2 approval.
 
 ## ChatGPT independent Codespaces adapter review — 2026-10-21
 
@@ -53,6 +53,25 @@ Reviewed QA-only code, security tests, browser smoke test source, session guide 
 
 
 
+
+## Latest — CP02 confirmed on a real iPhone (owner-run, 2026-10-22)
+
+The owner created one private $0 Codespace from their own account; port 4173 was Private. In iPhone Safari, all eight items passed (owner-reported):
+- banner;
+- resting composer;
+- typing and keyboard;
+- expanded sheet, including with the keyboard open;
+- swipe dismiss, spring-back and cancellation;
+- menus opened from the sheet;
+- Send/Stop;
+- rotation, safe areas and VoiceOver.
+
+Fixed afterwards at `3a1b2d1` (QA tooling plus one label):
+- automatic start moved to a VS Code folder-open task, still to be confirmed on the next start;
+- the review link without its trailing slash now redirects;
+- "~1 token" wording.
+
+Starting the Codespace now fast-forwards to the latest branch commit, so the owner keeps one Codespace for future tests. **Gate 2 not marked approved; no CP03, merge or deploy. Progress 21.5%.**
 
 ## Latest — QA fixes and CP02 Canvas composer (agent-verified; stop for owner review, 2026-10-22)
 

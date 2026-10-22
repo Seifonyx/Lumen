@@ -9,7 +9,7 @@
 | Project | Public [Seifonyx/Lumen](https://github.com/Seifonyx/Lumen) |
 | Active coding stream | **Canvas activation release branch** `claude/project-thread-erq8vo` from `main`, [draft PR #38](https://github.com/Seifonyx/Lumen/pull/38), open/unmerged, head `463324d`. Design history stays on `docs/lumen-blackout-phase1-20261019` ([draft PR #34](https://github.com/Seifonyx/Lumen/pull/34), open/unmerged, not for merging wholesale) |
 | Latest observed PR head | `5f0ba60a2a6b84533c6a225dc51ecbd637300bcd` (2026-10-22, Claude Code project thread). It adds the docs-only post-Gate 3 readiness review to `CANVAS_ACTIVATION_PLAN.md` on top of `eec9f68`; runtime code is unchanged since `c3b59d8` |
-| Active coding agent | **Claude Code (project thread)** is driving PR #38 to green CI, then stops before any merge or deploy |
+| Active coding agent | **None running.** Claude Code brought PR #38 to green CI and stopped before any merge or deploy |
 | Design decision | **Canvas (A) selected; Gate 1 approved 2026-10-21; Gate 2 and Gate 3 approved 2026-10-22 by owner.** Gate 3 scope is final visual/interaction foundation as reviewed at CP05 P2 head `eec9f68`, not permission to activate or release |
 | Current implementation | **CP01–CP04 complete; CP05 second milestone closed out; the authorized CP05 P2 refinement is pushed** (phone Routing Center sections in a 3 × 2 grid, unconnected providers folded under "Not connected", phone Settings display heading). The remaining P2 backlog stays open and unassigned. Owner completed hands-on iPhone reviews both before and after the P2 refinement and reports that the current presentation "all looks good" (no itemized physical-device accessibility matrix; explicit Gate 3 approval followed the review). Canvas now covers Settings, Projects, Library, Tools, the project workspace, dialogs, Assistants, Study, Compare, the document Canvas panel and true black. The owner's decisions are applied: zoom unchanged, ink switches with a clear off state, Geist only, and a "Use model" confirmation. A [production activation and rollback plan](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CANVAS_ACTIVATION_PLAN.md) has been written; **nothing is activated**. See the [CP05 record](https://github.com/Seifonyx/Lumen/blob/docs/lumen-blackout-phase1-20261019/docs/blackout/CP05_INTEGRATION.md) |
 | Production | Canvas presentation flags **off** for ordinary production build; agent reports production artifacts byte-identical. No merge, deploy or production migration authorized by this milestone |
@@ -46,7 +46,7 @@
 - Performance: startup JS +2.4 KB gz (+0.5%), CSS +7.3 KB gz, Routing Center a 6 KB lazy chunk.
 
 **Next:**
-- **Agent:** bring PR #38 CI to green, then stop.
+- **CI green on PR #38 at `463324d`** ([run 39824597279](https://github.com/Seifonyx/Lumen/actions/runs/39824597279)): all five jobs passed, including WebKit in the container image (5 min), the Canvas in-app job (66 suites) and the Canvas isolation and contracts job in Chromium and WebKit. Agent stopped; nothing merged or deployed.
 - **Owner, separately:** a physical-iPhone VoiceOver and keyboard pass on the activated build, then approval to merge, then separate approval to deploy.
 
 **Still owner-only and NOT AUTHORIZED:** production integration implementation, activation, merge, deployment, new spending and public preview exposure. **Gate 3 is approved** (design only).

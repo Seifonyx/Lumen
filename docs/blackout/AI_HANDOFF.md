@@ -2,7 +2,17 @@
 
 **Checkpoint: 22 October 2026, UTC — QA banner/Codespaces start fixes and CP02 (Canvas composer + writing sheet, flag off in production) implemented and verified locally; physical-iPhone confirmation pending. Gate 1 APPROVED; CP01, QA01 complete. No CP03, merge, deployment, default production migration, Gate 2 approval, paid service or new Codespace authorized.** Completion **21.5% → 21.5%, Medium confidence**; 78.5 points remain.
 
-## Latest — CP02 confirmed on a real iPhone (owner-run, 22 October 2026)
+## Latest — CP03 Canvas navigation, header and reading (implemented, verified; stop for owner review)
+
+The owner accepted CP02 and authorized **CP03 only**. See [CP03_SHELL.md](CP03_SHELL.md).
+- A canonical `SidebarCanvas` (unified Projects/Conversations tree, reusing `ChatRow` and Sidebar's state), a CSS breadcrumb and Canvas reading are all behind `CANVAS_SHELL = false`.
+- Production is byte-identical. The QA review build turns the shell on and seeds the synthetic projects.
+
+**Verified:** CP03 and CP02 contracts in Chromium and WebKit, the QA browser contract, isolation 8/8, the CP01 check and `npm test`.
+
+**Next:** owner iPhone review (Reset the review to load the projects). No CP04, merge, deploy or Gate 2. Progress 21.5%.
+
+## Previous — CP02 confirmed on a real iPhone (owner-run, 22 October 2026)
 
 The owner tested CP02 in one private $0 Codespace; all eight physical items passed (see [CP02_COMPOSER.md](CP02_COMPOSER.md)).
 

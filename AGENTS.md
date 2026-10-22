@@ -36,3 +36,8 @@ Latest Blackout [design correction](docs/blackout/DESIGN_COURSE_CORRECTION_2026-
 - Physical-iPhone confirmation is pending.
 - Do not create Codespaces as an agent.
 - CP03, merge, deployment, default production migration, Gate 2 approval and paid services remain unauthorized.
+
+**Subsequent scoped owner assignment (22 October 2026): CP02 accepted; CP03 ONLY**, implemented and verified — see the [CP03 record](docs/blackout/CP03_SHELL.md).
+- `CANVAS_SHELL` joins `CANVAS_COMPOSER` in `src/lib/canvas-presentation.ts`; both stay `false` in the ordinary build.
+- The owner prefers a lean, risk-based workflow: necessary tests and practical visual checks.
+- CP04, merge, deployment, production activation, Gate 2 approval and paid services remain unauthorized.

@@ -1,0 +1,66 @@
+{
+  "engine": "webkit",
+  "commit": "de0af608cc04bd3d28e8596f3246041d82d9ca3f",
+  "physicalDevice": false,
+  "screenshotToolingCsp": [
+    "style-src-elem inline",
+    "style-src-elem inline",
+    "style-src-elem inline",
+    "style-src-elem inline",
+    "style-src-elem inline",
+    "style-src-elem inline"
+  ],
+  "results": [
+    {
+      "viewport": "1440x960",
+      "engine": "webkit",
+      "checks": [
+        "header breadcrumb",
+        "reading layout",
+        "folders and disclosure",
+        "row actions",
+        "search",
+        "all chats",
+        "project overview and new chat in project",
+        "drawer / collapse",
+        "axe, network, CSP, overflow, errors",
+        "second reviewer isolated"
+      ],
+      "axe": []
+    },
+    {
+      "viewport": "390x844",
+      "engine": "webkit",
+      "checks": [
+        "header breadcrumb",
+        "reading layout",
+        "folders and disclosure",
+        "row actions",
+        "search",
+        "all chats",
+        "project overview and new chat in project",
+        "drawer / collapse",
+        "axe, network, CSP, overflow, errors",
+        "second reviewer isolated"
+      ],
+      "axe": []
+    },
+    {
+      "viewport": "320x568",
+      "engine": "webkit",
+      "checks": [
+        "header breadcrumb",
+        "reading layout",
+        "folders and disclosure",
+        "row actions",
+        "search",
+        "all chats",
+        "project overview and new chat in project",
+        "drawer / collapse",
+        "axe, network, CSP, overflow, errors",
+        "second reviewer isolated"
+      ],
+      "axe": []
+    }
+  ]
+}

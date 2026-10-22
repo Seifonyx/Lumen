@@ -7,6 +7,34 @@ up wherever something is live, like the status light on a router.
 It is its own app. Don't copy another product's look (no serif "greeting" headings, no terracotta/orange
 accent, no warm-brown dark mode, no ghost icon). When in doubt, remove.
 
+## Canvas (the approved Blackout direction): where it lives
+
+Canvas is the owner-approved visual and interaction direction (Gate 1 identity, Gate 2 foundation). It is integrated
+through the canonical components behind compile-time switches in `src/lib/canvas-presentation.ts`, which stay
+**off in the ordinary build**: production output is byte-identical and only the private synthetic review build
+(`vite.qa.config.ts` → `qa/iphone/adapters/canvas-presentation.ts`) turns them on. Release activation is a
+separate owner decision.
+
+| Concern | Owner |
+|---|---|
+| Tokens (`--canvas-*`: paper, ink, rim, fill, measure, radii, motion) | `src/styles/canvas.css` |
+| Composer capsule → engaged → writing sheet | `src/components/ComposerCanvas.tsx` + `src/styles/canvas-composer.css` (state stays in `Composer.tsx`) |
+| Navigation tree, header breadcrumb, reading measure | `src/components/SidebarCanvas.tsx` (reuses `Sidebar`'s `ChatRow`) + `src/styles/canvas-shell.css` |
+| Routing Center | `src/components/RoutingCenter.tsx` + `src/styles/canvas-routing.css` |
+| Settings, Projects, Library, Tools, dialogs, sheets, menus | `src/styles/canvas-screens.css`, which restyles the existing components' markup |
+
+Canvas rules:
+- Ink on paper. The signal colour, switches and focus ring become ink; tool icons and project monograms are
+  monochrome.
+- Display headings and mono uppercase section labels.
+- Hairline rims and quiet fills, not borders and colour.
+- One solid ink pill per screen for the primary action.
+- Segmented controls use a fill track with a raised paper thumb.
+- Every Canvas rule is scoped (`[data-lumen-canvas-*]`), never global.
+- Never weaken a behaviour to get a look.
+
+Open refinements are tracked in `docs/blackout/CANVAS_REFINEMENT_BACKLOG.md`.
+
 ## Mark
 Lumen's mark is the **Eclipse**: a dark moon ringed by lime light with one white flare (src/components/Logo.tsx, public/icon.svg; PNGs rendered from the same drawing). It is always a dark tile, in every theme.
 

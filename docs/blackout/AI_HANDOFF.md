@@ -2,7 +2,25 @@
 
 > **Historical workstream log — not current authorization.** For the current workstream state, latest owner decisions, next action and Gate approvals, read [the compact live checkpoint](https://github.com/Seifonyx/Lumen/blob/docs/lumen-live-context/docs/lumen-context/CURRENT_STATUS.md). “Latest”, “Next”, “STOP” and “unauthorized” inside dated sections below describe what was true **when that section was written**, not what is authorized now. At meaningful milestones update the live checkpoint and this handoff's newest milestone section without erasing older evidence. The frozen progress ledger is in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 
-## Latest — CP03 sidebar polish + CP04 Routing Center (implemented, verified; owner iPhone review next)
+
+## Latest — CP05 first milestone: Canvas across the app (implemented, verified; owner iPhone review)
+
+The owner approved **Gate 2** (overall foundation, with polish to continue) and authorized **CP05**. See [CP05_INTEGRATION.md](CP05_INTEGRATION.md) and the [backlog](CANVAS_REFINEMENT_BACKLOG.md).
+- `canvas-screens.css`, scoped to `html[data-lumen-canvas]`, extends Canvas to Settings, the hub pages, the project workspace and dialogs, with the document scope set only while the shell switch is on. Production is byte-identical.
+- Fixed:
+  - the picker click from a resting composer (mid-press layout change);
+  - the project brief from pages.
+- DESIGN.md has the ownership map.
+
+**Verified:** all 5 contracts in Chromium and WebKit (CP05 in dark and light), isolation, the CP01 check and `npm test`.
+
+**Next:**
+- owner iPhone review and the P1 backlog decisions;
+- continue CP05: remaining screens (Study, Assistants, Compare, document Canvas, black theme), the P2 backlog, the release-activation design, and physical VoiceOver after integration.
+
+**Not authorized:** merge, deploy, default activation, spending or Gate 3.
+
+## Previous — CP03 sidebar polish + CP04 Routing Center (implemented, verified; owner iPhone review next)
 
 The owner authorized both in one assignment. See [CP04_ROUTING_CENTER.md](CP04_ROUTING_CENTER.md).
 - **Sidebar:** one heading-free, newest-first list with pinned first.

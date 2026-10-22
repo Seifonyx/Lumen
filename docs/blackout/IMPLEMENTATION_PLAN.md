@@ -70,7 +70,7 @@ The [blueprint](CANVAS_PRODUCTION_INTEGRATION_BLUEPRINT.md) supplies exact compo
 | CP02 · canonical composer/writing sheet | B03/B04/B07 | **Implemented and verified (flag off in production)** under explicit CP02-only authorization; see CP02_COMPOSER.md. Physical-iPhone acceptance pending; Gate 2 checkpoint A not approved |
 | CP03 · navigation/reading/projects | B04/B06/B07 | **Implemented and verified (flag off in production)** under explicit CP03-only authorization; see CP03_SHELL.md. CP02 accepted at its checkpoint. Owner iPhone review pending; Gate 2 not approved |
 | CP04 · Routing Center integration proof | B04/B05/B07 | **Implemented and verified (flag off in production)** under explicit CP04 authorization; see CP04_ROUTING_CENTER.md. Owner iPhone review of the combined Canvas experience next; formal Gate 2 package and approval still pending |
-| CP05 · authorized integration/remaining screens/hardening | B03–B07 | Not started; explicit Gate 2 and integration permission, then Gate 3 final review |
+| CP05 · authorized integration/remaining screens/hardening | B03–B07 | **In progress.** Gate 2 approved by the owner on 2026-10-22. First milestone: Canvas across Settings, Projects, Library, Tools and dialogs (production byte-identical); see CP05_INTEGRATION.md and CANVAS_REFINEMENT_BACKLOG.md. Gate 3 pending |
 | CP06 · approved release/production verification | B08 | Not started; applicable approvals, exact-head CI, release authorization and rollback prerequisites |
 
 **Progressive release evaluation for this milestone:** CP01 is independently reviewable/tested and authorized for commit/push to PR #34, plus a separate public-safe live checkpoint. It is **not authorized for merge/deployment**. No source subset is being released. Do not merge PR #34's historical experiments wholesale or infer release permission from earlier general authorization. Latest explicit owner boundaries control.
@@ -209,3 +209,7 @@ The Canvas navigation tree, breadcrumb and reading layout are in canonical compo
 ### CP03 polish + CP04 — 22 October 2026
 
 The sidebar list is heading-free and newest first. The Canvas Routing Center sits behind the shell switch, with its loader present only in the QA replacement; production is byte-identical ([record](CP04_ROUTING_CENTER.md)). **21.5% → 21.5%.**
+
+### Gate 2 + CP05 first milestone — 22 October 2026
+
+The owner approved Gate 2 (foundation; polish continues) and authorized CP05. Canvas now covers the remaining main screens through scoped styles on the canonical components; two interaction bugs were fixed. **21.5% → 21.5%**: Gate 2 is a B04 milestone, and no whole group is complete yet.

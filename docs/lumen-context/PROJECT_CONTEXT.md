@@ -10,6 +10,8 @@ Lumen is an independent, premium AI workspace for conversation, reading, sustain
 
 Other products (including 9Router and ChatGPT) may be used as **functional inspiration**, never as a license to duplicate trademarked layouts, proprietary assets or unique screenshots. Routing Center must be a substantial, integrated workspace, not a decorative replica. Retain Lumen's actual model/provider capabilities.
 
+**Native-app-style interaction preference (owner decision, 2026-10-22):** Keep pinch-to-zoom disabled in Lumen's primary chat-style interface; avoid treating a browser-like pinch gesture as a default mobile behavior. Preserve a comfortable readable default scale and support accessible text-size/OS display preferences where feasible. Do not weaken essential accessibility accommodations or extend this decision indiscriminately to document/media views that have their own zoom requirements; handle such cases explicitly in the relevant design review.
+
 ## Stable engineering guarantees
 
 - Reuse canonical components, state, model/provider routing, policies, permissions and usage sources rather than building conflicting parallel copies. Preserve composer draft/selection/IME/undo, Send/Stop, attachments, nested menus, accessibility, account isolation and data integrity.

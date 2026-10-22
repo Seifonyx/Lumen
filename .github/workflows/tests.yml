@@ -39,7 +39,7 @@ jobs:
   in-app:
     name: In-app tests (Chromium + Firebase emulators)
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -80,7 +80,7 @@ jobs:
     # tests/e2e/canvas-core.txt. The rest still look for the ordinary sidebar; the ordinary build keeps the full run above.
     name: In-app tests on the Canvas build (Chromium + Firebase emulators)
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

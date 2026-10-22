@@ -143,7 +143,7 @@ try {
   const cp02 = ['src/components/Composer.tsx', 'src/components/ComposerCanvas.tsx', 'src/lib/canvas-presentation.ts', 'src/styles/canvas-composer.css',
     'src/App.tsx', 'src/components/Sidebar.tsx', 'src/components/SidebarCanvas.tsx', 'src/components/ChatView.tsx', 'src/styles/canvas-shell.css',
     'src/components/RoutingCenter.tsx', 'src/lib/routing-center.ts', 'src/styles/canvas-routing.css',
-    'src/styles/canvas-screens.css', 'src/styles/canvas.css',
+    'src/styles/canvas-screens.css', 'src/styles/canvas.css', 'src/lib/workspace-presentation.ts',
     // Activation (owner-authorized 2026-10-22): the shared "on" module, its LUMEN_CANVAS selection, and the workflows
     // that set it (Deploy and Preview build Canvas by default) or test it.
     'src/lib/canvas-presentation.on.ts', 'vite.config.ts', '.github/workflows/deploy.yml', '.github/workflows/preview.yml', '.github/workflows/tests.yml'];

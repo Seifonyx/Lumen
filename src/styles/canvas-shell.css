@@ -166,11 +166,12 @@
     position: absolute; inset: 0 0 auto; z-index: 12; height: 64px; min-height: 0; padding: 12px 18px;
     background: linear-gradient(var(--bg) 72%, color-mix(in srgb, var(--bg) 60%, transparent) 88%, transparent); box-shadow: none;
   }
-  .app[data-lumen-canvas-shell] .main:not(.is-empty) > .conversation-area > .messages { padding-top: 56px; padding-bottom: 150px; scroll-padding-bottom: 150px; }
+  /* Room below the last message for the floating composer at its current height (ComposerCanvas sets --cv-composer-h). */
+  .app[data-lumen-canvas-shell] .main:not(.is-empty) > .conversation-area > .messages { padding-top: 56px; padding-bottom: calc(var(--cv-composer-h, 132px) + 18px); scroll-padding-bottom: calc(var(--cv-composer-h, 132px) + 18px); }
   .app[data-lumen-canvas-shell] .main:not(.is-empty) > .composer-wrap { position: absolute; inset: auto 0 0; z-index: 12; padding: 0 28px 18px; background: none; pointer-events: none; }
   .app[data-lumen-canvas-shell] .main:not(.is-empty) > .composer-wrap > * { pointer-events: auto; }
   .app[data-lumen-canvas-shell] .main:not(.is-empty) > .composer-wrap::before { content: ''; position: absolute; inset: -36px 0 0; z-index: -1; background: linear-gradient(transparent, var(--bg) 70%); pointer-events: none; }
-  .app[data-lumen-canvas-shell] .main:not(.is-empty) .to-bottom { bottom: 150px; }
+  .app[data-lumen-canvas-shell] .main:not(.is-empty) .to-bottom { bottom: calc(var(--cv-composer-h, 132px) + 18px); }
   @media (pointer: fine) {
     .app[data-lumen-canvas-shell] .msg.user { position: relative; }
     .app[data-lumen-canvas-shell] .msg.user > .msg-actions { position: absolute; top: 100%; inset-inline-end: 0; margin-top: 2px; z-index: 1; }

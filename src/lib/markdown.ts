@@ -7,6 +7,7 @@ import { escapeHtml } from './util';
 import { EDIT_FENCE, normalizeEdits, replaceReadRequests } from './edits';
 import { replaceSearchRequests } from './repoindex';
 import { runLang } from './runner';
+import { CANVAS_SHELL } from './canvas-presentation';
 
 // Maths (KaTeX) and code colouring (highlight.js) are large and most replies don't need them, so they load on
 // first use (or when the browser is idle). Until then maths shows as its source and code as plain text; once they
@@ -92,7 +93,10 @@ marked.use({
       };
       const head = `<tr>${token.header.map((c, i) => cell(c, i, 'th')).join('')}</tr>`;
       const body = token.rows.map((r) => `<tr>${r.map((c, i) => cell(c, i, 'td')).join('')}</tr>`).join('');
-      return `<div class="table-wrap"><table><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+      // Canvas tables scroll inside their frame, so the frame takes keyboard focus to scroll it.
+      return CANVAS_SHELL
+        ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Table"><table><thead>${head}</thead><tbody>${body}</tbody></table></div>`
+        : `<div class="table-wrap"><table><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
     },
   },
 });

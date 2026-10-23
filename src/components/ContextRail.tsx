@@ -30,7 +30,7 @@ export const jumpToMessage = (id: string) => window.dispatchEvent(new CustomEven
 export function RailToggle() {
   const open = useRail();
   return (
-    <button type="button" className="icon-btn cv-rail-toggle" aria-pressed={open} aria-controls="cv-context-rail" aria-label={open ? 'Hide chat details' : 'Show chat details'} title={open ? 'Hide chat details' : 'Outline, sources and models'} onClick={() => setRail(!open)}>
+    <button type="button" className="icon-btn cv-rail-toggle" aria-pressed={open} aria-controls={open ? 'cv-context-rail' : undefined} aria-label={open ? 'Hide chat details' : 'Show chat details'} title={open ? 'Hide chat details' : 'Outline, sources and models'} onClick={() => setRail(!open)}>
       <Icon d={PANEL} size={18} />
     </button>
   );

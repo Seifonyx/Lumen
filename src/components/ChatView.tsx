@@ -16,7 +16,7 @@ import ModelPicker from './ModelPicker';
 import ProjectManager from './ProjectManager';
 import ProjectWorkspace from './ProjectWorkspace';
 import CatalogErrorNotice from './CatalogErrorNotice';
-import { BrandMark, CANVAS_SHELL } from '../lib/canvas-presentation';
+import { BrandMark, CANVAS_SHELL, newGeneralChat } from '../lib/canvas-presentation';
 import { ContextRail, RailToggle } from './ContextRail';
 import CanvasHome from './CanvasHome';
 
@@ -256,7 +256,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
         <div className="spacer" />
         <div className="topbar-trailing">
         {Boolean(chat?.documents?.length) && <button className="icon-btn" aria-label="Open canvas" title="Open canvas" onClick={() => useStore.getState().openCanvas()}><FileText size={18} /></button>}
-        {CANVAS_SHELL ? <>{chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}{!empty && <RailToggle />}<button type="button" className="icon-btn cv-compose" aria-label="New chat" title={`New chat (${modKey}⇧O)`} onClick={() => useStore.getState().newChat()}><MessageSquarePlus size={19} /></button></> : chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}
+        {CANVAS_SHELL ? <>{chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}{!empty && <RailToggle />}<button type="button" className="icon-btn cv-compose" aria-label="New chat" title={`New chat (${modKey}⇧O)`} onClick={() => (newGeneralChat || useStore.getState().newChat)()}><MessageSquarePlus size={19} /></button></> : chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}
         {chat?.repo && (
           <button
             className={`icon-btn code-toggle${workspaceOpen ? ' on' : ''}`}

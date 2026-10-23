@@ -1,5 +1,5 @@
 // Phase 2 navigation: a synthetic, realistic account for screenshots and navigation tests (no network, no real data).
-// Three projects, twenty chats over two months (two pinned, two archived) and readable messages in the open ones.
+// Three projects, twenty-one chats over two months (two pinned, two archived) and readable messages in the open ones.
 // Seeds localStorage (preview sign-in, settings) and the account's IndexedDB chat store before the app starts.
 const DAY = 86400000;
 const UID = 'preview-nav';
@@ -15,6 +15,7 @@ const titles = [
   ['thesis-method', 'Method section feedback', 'thesis', 9],
   ['safari', 'Fix the Safari sign-in flow', null, 0.05, { pinned: true }],
   ['quiet', 'Notes for a quieter workspace', null, 0.3],
+  ['long', 'A very long conversation title about planning the spring launch with partners, press and a small budget', null, 0.6],
   ['research', 'Research: independent studios', null, 0.9],
   ['reading', 'Reading list — October', null, 1.5],
   ['recipe', 'A weeknight dal, simplified', null, 2.5],

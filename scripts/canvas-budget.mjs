@@ -9,7 +9,9 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // Kilobytes, gzipped. Raise one only with a reason in the commit; the point is that growth is a decision.
 // startupJs 6 → 8 (2026-10-23): the approved Lumen identity's wordmark and mark ship inline (≈1.5 KB gz of vector art
 // plus ≈0.8 KB for the component), so the sidebar head draws with the first frame instead of after a request.
-const BUDGET = { startupJs: 8, startupCss: 14, routingCenter: 9, canvasCss: 16 };
+// startupJs 8 → 8.5 (Phase 2 slice 2): the tree's screen-reader state (current chat, pinned), the announced search
+// count and the drawer's focus return run before any interaction (≈0.5 KB gz); the arrow keys load lazily.
+const BUDGET = { startupJs: 8.5, startupCss: 14, routingCenter: 9, canvasCss: 16 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

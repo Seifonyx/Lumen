@@ -12,6 +12,10 @@
  *   BrandMark         integrated wordmark and the standalone mark. Null here, so the ordinary build imports no artwork.
  *   CanvasNav       — Phase 2 navigation (src/components/CanvasNav.tsx): Back closes pages shown in place of the chat,
  *                     focus returns to where it came from, and the collapsed sidebar becomes a rail.
+ *   newGeneralChat  — Phase 2 slice 2: the global New chat (src/lib/new-chat.ts), always outside projects. Null here,
+ *                     so shared callers (⌘⇧O, the command palette) keep the ordinary newChat.
+ *   loadTreeKeys    — Phase 2 slice 2: loads the Canvas tree's arrow keys (src/lib/tree-keys.ts). The loader lives only
+ *                     in the "on" module, so the ordinary build emits no chunk for it.
  */
 import type { ComponentType } from 'react';
 export type BrandArtProps = { height: number; decorative?: boolean; className?: string };
@@ -21,3 +25,5 @@ export const RoutingCenter: ComponentType | null = null;
 export const BrandWordmark: ComponentType<BrandArtProps> | null = null;
 export const BrandMark: ComponentType<BrandArtProps> | null = null;
 export const CanvasNav: ComponentType<{ collapsed: boolean; onExpand: () => void }> | null = null;
+export const loadTreeKeys: (() => Promise<typeof import('./tree-keys')>) | null = null;
+export const newGeneralChat: (() => void) | null = null;

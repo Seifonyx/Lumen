@@ -8,6 +8,7 @@ import { closeRoutingCenter, openRoutingCenter, useRoutingCenter } from '../lib/
 import { modKey } from '../lib/util';
 import { useStore } from '../store';
 import { focusSettled, later } from './CanvasNav';
+import { newGeneralChat } from '../lib/new-chat';
 
 export default function CanvasRail({ onExpand }: { onExpand: () => void }) {
   const page = useStore((s) => s.page);
@@ -16,7 +17,7 @@ export default function CanvasRail({ onExpand }: { onExpand: () => void }) {
   const expand = useRef<HTMLButtonElement>(null);
   useEffect(() => { if (!focusSettled()) expand.current?.focus({ preventScroll: true }); }, []);
 
-  const { setUi, newChat } = useStore.getState();
+  const { setUi } = useStore.getState();
   const go = (next: 'collection' | 'tools' | 'projects', pageArg?: string) => { closeRoutingCenter(); setUi({ page: next, settingsOpen: false, ...(pageArg ? { pageArg } : {}) }); };
   const search = () => { onExpand(); later(() => document.querySelector<HTMLInputElement>('#chat-search')?.focus()); };
   const items: [string, string, ReactNode, boolean, () => void][] = [
@@ -29,7 +30,7 @@ export default function CanvasRail({ onExpand }: { onExpand: () => void }) {
     <nav className="cv-navrail" aria-label="Navigation">
       {BrandMark && <span className="cv-navrail-mark"><BrandMark height={20} decorative /></span>}
       <button ref={expand} type="button" className="cv-navrail-btn cv-navrail-expand" aria-label="Expand sidebar" title={`Expand sidebar (${modKey}⇧S)`} onClick={onExpand}><PanelLeftOpen size={19} /></button>
-      <button type="button" className="cv-navrail-btn" aria-label="New chat" title={`New chat (${modKey}⇧O)`} onClick={() => { setUi({ page: null, settingsOpen: false }); closeRoutingCenter(); newChat(); }}><MessageSquarePlus size={19} /></button>
+      <button type="button" className="cv-navrail-btn" aria-label="New chat" title={`New chat (${modKey}⇧O)`} onClick={() => { setUi({ page: null, settingsOpen: false }); closeRoutingCenter(); newGeneralChat(); }}><MessageSquarePlus size={19} /></button>
       <button type="button" className="cv-navrail-btn" aria-label="Search chats" title="Search chats" onClick={search}><Search size={19} /></button>
       <span className="cv-navrail-rule" aria-hidden="true" />
       <ul>

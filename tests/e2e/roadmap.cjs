@@ -50,7 +50,9 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   await page.waitForSelector('.project-file');
   await page.getByRole('button',{name:'Create project',exact:true}).click();
   check(await page.locator(':is(.sidebar-project-item[aria-current="page"], .cv-project:has(.cv-brief.active) .cv-name)').textContent().then(t=>t.includes('Hospital reports')), 'new project is selected');
-  await page.locator('.sidebar .new-chat, .cv-dest-new, .cv-new-pill').click();
+  // A chat in the project: the ordinary sidebar's New chat starts in the selected project; in Canvas that is the
+  // project's own "New chat in <project>" (the global New chat is always general).
+  await page.locator('.sidebar .new-chat, .cv-project:has(.cv-brief.active) .cv-new-here').click();
   await page.fill('.composer textarea', 'Summarize the project protocol.');
   await page.click('.send-btn');
   await page.waitForSelector('.msg.assistant .model-tag', { timeout: 20000 });

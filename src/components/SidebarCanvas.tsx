@@ -5,21 +5,41 @@
 // owner) and reuses its ChatRow (rename, pin, move, archive, side by side, share/export, delete, long press),
 // search semantics, AllChats, AskChats and ProjectManager. Folder disclosure is presentation only.
 import { BookOpen, ChevronRight, LayoutGrid, MessageSquarePlus, MessageSquareText, PanelLeftClose, Plus, Search, Settings2, SlidersHorizontal, Sparkles, X } from 'lucide-react';
-import { Suspense, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { isMac, modKey } from '../lib/util';
 import { useFocusScope } from '../lib/focus-scope';
-import { closeRoutingCenter, openRoutingCenter, useRoutingCenter } from '../lib/routing-center';
+import { closeRoutingCenter, openRoutingCenter, routingCenterOpen, useRoutingCenter } from '../lib/routing-center';
 import { useStore } from '../store';
 import type { Chat, Project } from '../types';
 import AllChats from './AllChats';
 import ProjectManager from './ProjectManager';
 import { AskChats, ChatRow, type SidebarProps } from './Sidebar';
-import { BrandWordmark } from '../lib/canvas-presentation';
+import { BrandWordmark, loadTreeKeys as loadKeys } from '../lib/canvas-presentation';
+import { newGeneralChat, newProjectChat } from '../lib/new-chat';
 
 const EMPTY_PROJECTS: Project[] = [];
 const LIMIT = 5;
 const PHONE = '(max-width: 899px)';
+// Phase 2 slice 2: the tree's keyboard. Every row's main control is one stop for the arrow keys (row menus, the
+// section "+" and the ⌘K hint stay on Tab). Rows inside a closed folder are inert, so they are never reached.
+const ROW = '.cv-dest button, .cv-section-toggle:not(:disabled), .cv-project-row, .cv-brief, .chat-open, .cv-more, .cv-new-here, .cv-all, .cv-empty, .cv-ask';
+const shown = (el: Element | null | undefined): el is HTMLElement => el instanceof HTMLElement && el.isConnected && el.getClientRects().length > 0 && !el.closest('[inert], [hidden]');
+/** The buttons that open the drawer on phones, by the bar that is showing (chat, a hub page, the Routing Center). */
+const DRAWER_OPENERS = '.menu-btn, .hub-nav[aria-label="Open sidebar"], .rc-menu';
+/** Scrolls only the tree (never the page) so `row` is in view. */
+function reveal(row: Element | null | undefined) {
+  const tree = row?.closest<HTMLElement>('.cv-tree');
+  if (!row || !tree) return;
+  const r = row.getBoundingClientRect(), t = tree.getBoundingClientRect();
+  if (r.top < t.top) tree.scrollTop -= t.top - r.top + 8;
+  else if (r.bottom > t.bottom) tree.scrollTop += r.bottom - t.bottom + 8;
+}
+// The arrow keys load with the tree's first focus (Tab, a click or a tap into it), before any key can reach them.
+// (The loader comes through the Canvas switch, so the ordinary build has no chunk for it.)
+let treeKeys: typeof import('../lib/tree-keys').treeKeys | null = null;
+const loadTreeKeys = () => { if (!treeKeys) void loadKeys?.().then((m) => { treeKeys = m.treeKeys; }); };
+
 type Open = { projects: boolean; conversations: boolean; folders: Record<string, boolean> };
 const OPEN: Open = { projects: true, conversations: true, folders: {} };
 
@@ -39,10 +59,11 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const currentId = useStore((s) => s.currentId);
   const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
   const activeProjectId = useStore((s) => s.activeProjectId);
+  const workspaceOpen = useStore((s) => s.projectWorkspaceOpen);
   const open = useStore((s) => s.sidebarOpen);
   const page = useStore((s) => s.page);
   const routing = useRoutingCenter().open;
-  const { newChat, setUi, selectProject } = useStore.getState();
+  const { setUi, selectProject } = useStore.getState();
   const [phone, setPhone] = useState(() => window.matchMedia(PHONE).matches);
   const [query, setQuery] = useState('');
   const [disclosure, setDisclosure] = useState<Open>(OPEN);
@@ -53,6 +74,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const sidebarRef = useRef<HTMLElement>(null);
   const searchInput = useRef<HTMLInputElement>(null);
   const wasOpen = useRef(false);
+  const opener = useRef<{ el: HTMLElement | null; page: unknown; routing: boolean }>({ el: null, page: null, routing: false });
   const ids = useId();
 
   // Same drawer ownership as Sidebar: a modal dialog on phones, part of the page on computers.
@@ -65,11 +87,36 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   }, []);
   useEffect(() => {
     if (phone) {
-      if (open) sidebarRef.current?.focus({ preventScroll: true });
-      else if (wasOpen.current && !useStore.getState().settingsOpen) document.querySelector<HTMLButtonElement>('.menu-btn')?.focus({ preventScroll: true });
+      if (open) {
+        // Remember what opened the drawer, and where we were, so closing can hand focus back to it.
+        const active = document.activeElement;
+        opener.current = { el: active instanceof HTMLElement && !sidebarRef.current?.contains(active) ? active : null, page: useStore.getState().page, routing: routingCenterOpen() };
+        sidebarRef.current?.focus({ preventScroll: true });
+        reveal(sidebarRef.current?.querySelector('.chat-row.active'));
+      } else if (wasOpen.current && !useStore.getState().settingsOpen) {
+        // Closing to go somewhere else (a page, the Routing Center) leaves focus to that destination.
+        const was = opener.current, s = useStore.getState();
+        if (s.page === was.page && routingCenterOpen() === was.routing) {
+          const target = shown(was.el) && s.page === was.page ? was.el : [...document.querySelectorAll<HTMLElement>(DRAWER_OPENERS)].find(shown);
+          target?.focus({ preventScroll: true });
+        }
+      }
     }
     wasOpen.current = open;
   }, [open, phone]);
+  // Computers: the open chat stays in view in the tree when it changes from elsewhere (palette, a page, a new chat).
+  useEffect(() => { if (!phone) requestAnimationFrame(() => reveal(sidebarRef.current?.querySelector('.chat-row.active'))); }, [currentId, phone]);
+  // ChatRow is shared with the ordinary sidebar (one seam there), so the tree adds its state as attributes: the open
+  // chat is the current page, and a pinned chat is described as pinned (its pin icon is decorative).
+  useLayoutEffect(() => {
+    sidebarRef.current?.querySelectorAll('.chat-row').forEach((row) => {
+      const button = row.querySelector('.chat-open');
+      if (!button) return;
+      button.toggleAttribute('aria-current', false);
+      if (row.classList.contains('active')) button.setAttribute('aria-current', 'page');
+      if (row.querySelector('.pin-mark')) button.setAttribute('aria-describedby', `${ids}-pinned`); else button.removeAttribute('aria-describedby');
+    });
+  });
   // Another account starts from its own (default) disclosure, never the previous one's.
   useEffect(() => { setDisclosure(OPEN); setMore({}); setQuery(''); }, [user?.uid]);
 
@@ -133,23 +180,32 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
           <Search size={16} />
           <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} dir="auto"
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Escape' && query) { e.stopPropagation(); setQuery(''); } }} />
+            onKeyDown={(e) => {
+              if (e.key === 'Escape' && query) { e.stopPropagation(); setQuery(''); }
+              // Down moves into the tree (the first result while searching); Return opens the first result.
+              else if (e.key === 'ArrowDown') { const first = [...(sidebarRef.current?.querySelectorAll<HTMLElement>(`.cv-tree :is(${ROW})`) || [])].find(shown); if (first) { e.preventDefault(); first.focus(); reveal(first); } }
+              else if (e.key === 'Enter' && q && !e.nativeEvent.isComposing) { const first = sidebarRef.current?.querySelector<HTMLElement>('.cv-tree .chat-open'); if (first) { e.preventDefault(); first.click(); } }
+            }} />
           {/* iPhone has no built-in clear control in search fields: one tap empties it and keeps the field. */}
           {query && <button type="button" className="cv-search-clear" aria-label="Clear search" onClick={() => { setQuery(''); searchInput.current?.focus({ preventScroll: true }); }}><X size={15} /></button>}
           {/* Desktop: the command palette, one shortcut away (the same key press the app already listens for). */}
           {!phone && !query && <button type="button" className="cv-kbd" title="Search and jump to anything" aria-label={`Search and jump to anything (${modKey}K)`}
             onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: isMac, ctrlKey: !isMac, bubbles: true }))}><kbd>{modKey}K</kbd></button>}
         </label>
+        <span id={`${ids}-pinned`} hidden>Pinned</span>
+        <span id={`${ids}-general`} hidden>Not in a project</span>
+        {/* Screen readers hear how many conversations a search finds as it narrows. */}
+        <p className="sr-only" role="status">{q ? (matches.length ? `${matches.length} ${matches.length === 1 ? 'conversation' : 'conversations'} found` : 'No conversations match') : ''}</p>
         {q.length > 1 && (
           <button type="button" className="cv-ask" onClick={() => setAsking(query)} title="Find what you talked about, even with different words, and get an answer from it">
             <Sparkles size={15} /><span>Ask your chats: “<span dir="auto">{query.trim().slice(0, 40)}</span>”</span>
           </button>
         )}
 
-        <div className="cv-tree">
+        <div className="cv-tree" onFocus={loadTreeKeys} onKeyDown={(e) => treeKeys?.(e.nativeEvent, e.currentTarget, ROW, searchInput.current, reveal)}>
           {!q && (
             <ul className="cv-dest" aria-label="Places">
-              {!phone && <li><button type="button" className="cv-dest-new" aria-label="New chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}><MessageSquarePlus size={18} /><span>New chat</span><kbd>{modKey}⇧O</kbd></button></li>}
+              {!phone && <li><button type="button" className="cv-dest-new" aria-label="New chat" aria-describedby={`${ids}-general`} onClick={newGeneralChat} title={`New chat (${modKey}⇧O)`}><MessageSquarePlus size={18} /><span>New chat</span><kbd>{modKey}⇧O</kbd></button></li>}
               <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onClick={() => toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span></button></li>
               <li><button type="button" aria-current={page === 'tools' || page === 'assistants' || page === 'study' ? 'page' : undefined} onClick={() => toPage('tools')} title={`Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`}><LayoutGrid size={18} /><span>Tools</span></button></li>
               <li><button type="button" data-routing-center aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><SlidersHorizontal size={18} /><span>Models &amp; routing</span></button></li>
@@ -173,14 +229,15 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
                     {!isOpen && contains ? here : <span className="cv-count" aria-label={`${list.length} chats`}>{list.length}</span>}
                   </button>
                   <Fold id={`${ids}-p-${p.id}`} open={isOpen}>
-                    <ul className="cv-chats">
-                      <li><button type="button" className={`cv-brief${activeProjectId === p.id ? ' active' : ''}`} onClick={() => { setUi({ page: null, settingsOpen: false }); selectProject(p.id); }}>
+                    <ul className="cv-chats" aria-label={p.name}>
+                      <li><button type="button" className={`cv-brief${activeProjectId === p.id ? ' active' : ''}${activeProjectId === p.id && workspaceOpen ? ' open' : ''}`} aria-current={activeProjectId === p.id && workspaceOpen ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false }); selectProject(p.id); }}>
                         <span className="cv-brief-text">{p.description || 'Project overview'}</span>
                         <span className="cv-brief-meta">{p.instructions?.trim() ? 'Instructions' : 'No instructions'} · {p.files?.length || 0} {p.files?.length === 1 ? 'file' : 'files'}<ChevronRight size={12} aria-hidden="true" /></span>
                       </button></li>
+                      {/* Inside the folder, so it reads as part of this project; the label names it too. */}
+                      {!q && <li><button type="button" className="cv-new-here" onClick={() => newProjectChat(p.id)}><span className="cv-new-here-icon" aria-hidden="true"><Plus size={13} /></span><span className="cv-new-here-label">New chat in {p.name}</span></button></li>}
                       {shown.map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}
                       {list.length > shown.length && <li><button type="button" className="cv-more" onClick={() => setMore({ ...more, [p.id]: true })}>Show {list.length - shown.length} more</button></li>}
-                      {!q && <li><button type="button" className="cv-new-here" onClick={() => { selectProject(p.id); newChat(); }}><Plus size={14} />New chat in {p.name}</button></li>}
                     </ul>
                   </Fold>
                 </div>
@@ -192,7 +249,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
 
           {section('conversations', q ? 'Search results' : 'Conversations', Boolean(current && !hereProject && !isTemporaryChat(current)))}
           <Fold id={`${ids}-conversations`} open={sectionOpen('conversations')}>
-            {loose.some((c) => !c.archived) && <ul className="cv-chats cv-loose">{loose.filter((c) => !c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}</ul>}
+            {loose.some((c) => !c.archived) && <ul className="cv-chats cv-loose" aria-label={q ? 'Search results' : 'Conversations'}>{loose.filter((c) => !c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}</ul>}
             {/* Search also finds archived chats; they are marked as such, after the rest. */}
             {loose.some((c) => c.archived) && <>
               <p className="cv-archived-label" id={`${ids}-archived`}>Archived</p>
@@ -204,7 +261,9 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         </div>
 
         <div className="cv-foot">
-          {phone && <button type="button" className="cv-new-pill" onClick={newChat}><MessageSquarePlus size={18} />New chat</button>}
+          {/* The global New chat: always a general conversation, outside projects (src/lib/new-chat.ts). A project's own
+              New chat is inside its folder. */}
+          {phone && <button type="button" className="cv-new-pill" onClick={newGeneralChat} aria-label="New chat" aria-describedby={`${ids}-general`}><MessageSquarePlus size={18} aria-hidden="true" />New chat</button>}
           <button type="button" className="cv-account" aria-label="Settings" title={`Settings (${modKey},)`} onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })}>
             {user?.photo ? <img className="cv-avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="cv-avatar" aria-hidden="true">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
             {!phone && <span className="cv-account-text"><span className="cv-account-name">{user?.name || user?.email?.split('@')[0] || 'Account'}</span><span className="cv-account-sub">Settings &amp; keys</span></span>}

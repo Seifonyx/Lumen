@@ -101,6 +101,8 @@ async function run(browser, width) {
   await shot('chat-top');
   await page.click('.menu-btn');
   await page.waitForTimeout(300);
+  // Let the drawer finish sliding in before measuring it.
+  await page.waitForFunction(() => !document.getAnimations().some((a) => a.playState === 'running' && a.effect?.target?.closest?.('.sidebar')), null, { timeout: 3000 }).catch(() => {});
   await look('sidebar with a long chat title');
   await shot('sidebar');
   check(!errors.length, `${width}px no page errors ${errors.join(' | ')}`);

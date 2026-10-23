@@ -56,6 +56,13 @@ function canvasPublic(): Plugin | false {
   return {
     name: 'lumen-canvas-public',
     apply: 'build',
+    // The start-up frame wears the Canvas layout, so the message box appears where the real one will.
+    transformIndexHtml(html) {
+      return html
+        .replace('<html ', '<html data-lumen-canvas data-lumen-canvas-foundation ')
+        .replace('<div class="app app-skeleton"', '<div class="app app-skeleton" data-lumen-canvas-shell data-lumen-canvas-foundation')
+        .replace('<div class="composer sk-composer">', '<div class="composer sk-composer" data-lumen-canvas-foundation data-lumen-canvas-composer>');
+    },
     generateBundle(_options, bundle) {
       for (const file of walk('public-canvas')) {
         this.emitFile({ type: 'asset', fileName: relative('public-canvas', file).replaceAll('\\', '/'), source: readFileSync(file) });

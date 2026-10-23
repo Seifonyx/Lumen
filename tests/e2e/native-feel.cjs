@@ -154,7 +154,7 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
 
       // ---- Swipe rows in All chats
       await page.waitForTimeout(400);
-      await page.click('.view-all-chats');
+      await page.click('.view-all-chats, .cv-all');
       const dialog = page.getByRole('dialog', { name: 'All chats' });
       await dialog.waitFor();
       await page.waitForTimeout(500);
@@ -185,7 +185,7 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
       await page.waitForTimeout(400);
 
       // ---- Send: the message flies in; streamed words fade in, then are plain text
-      if (await page.locator('.sidebar.open').count()) { await page.click('.close-sidebar'); await page.waitForTimeout(500); }
+      if (await page.locator('.sidebar.open').count()) { await page.click('.close-sidebar, .cv-nav [aria-label="Close menu"]'); await page.waitForTimeout(500); }
       await page.click('text=Garden ideas').catch(() => {});
       const sendBuzz = await buzz();
       await page.fill('.composer textarea', 'And how often should I water?');

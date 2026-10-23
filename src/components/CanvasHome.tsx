@@ -37,26 +37,26 @@ export default function CanvasHome({ temporary }: { temporary: boolean }) {
       {project
         ? <p className="cv-home-where">New chat in <strong dir="auto">{project.name}</strong> <button type="button" onClick={() => selectProject(null)}>Start outside it</button></p>
         : <p className="cv-home-where">Ask anything, or pick up where you left off.</p>}
-      {recent.length > 0 && (
-        <section className="cv-home-continue" aria-labelledby="cv-home-continue">
-          <h2 id="cv-home-continue">Continue</h2>
-          <ul>
-            {recent.map((c) => {
-              const p = c.projectId ? projects?.find((x) => x.id === c.projectId) : null;
-              return (
-                <li key={c.id}>
-                  <button type="button" onClick={() => selectChat(c.id)}>
-                    {p ? <span className="cv-mono" aria-hidden="true">{p.name.trim().slice(0, 1).toUpperCase()}</span> : <span className="cv-home-icon" aria-hidden="true"><MessageSquareText size={15} /></span>}
-                    <span className="cv-home-title" dir="auto">{c.title}</span>
-                    <span className="cv-home-when">{p ? `${p.name} · ` : ''}{when(c.updatedAt)}</span>
-                    <ChevronRight size={14} aria-hidden="true" />
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
+      {/* Always present (it holds its height on desktop), so the message box doesn't move as chats load. */}
+      <section className="cv-home-continue" aria-labelledby="cv-home-continue">
+        <h2 id="cv-home-continue">Continue</h2>
+        {!recent.length && <p className="cv-home-none">Your recent chats will show up here.</p>}
+        <ul hidden={!recent.length}>
+          {recent.map((c) => {
+            const p = c.projectId ? projects?.find((x) => x.id === c.projectId) : null;
+            return (
+              <li key={c.id}>
+                <button type="button" onClick={() => selectChat(c.id)}>
+                  {p ? <span className="cv-mono" aria-hidden="true">{p.name.trim().slice(0, 1).toUpperCase()}</span> : <span className="cv-home-icon" aria-hidden="true"><MessageSquareText size={15} /></span>}
+                  <span className="cv-home-title" dir="auto">{c.title}</span>
+                  <span className="cv-home-when">{p ? `${p.name} · ` : ''}{when(c.updatedAt)}</span>
+                  <ChevronRight size={14} aria-hidden="true" />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </div>
   );
 }

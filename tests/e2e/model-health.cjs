@@ -33,7 +33,10 @@ const assert = require('node:assert/strict');
       assert.equal(await page.locator('.sidebar h2').count(), 2);
       assert.ok(await page.locator('.sidebar h2').first().evaluate(el => {
         const heading = getComputedStyle(el);
-        return Number(heading.fontWeight) >= 600 && parseFloat(heading.fontSize) >= 13;
+        const label = getComputedStyle(el.querySelector('.cv-label') || el);
+        // Classic sidebar: semibold headings. Canvas: its approved mono, uppercase, tracked labels.
+        return (Number(heading.fontWeight) >= 600 && parseFloat(heading.fontSize) >= 13)
+          || (label.textTransform === 'uppercase' && parseFloat(label.letterSpacing) > 0 && /mono/i.test(label.fontFamily));
       }), 'Section headings retain a distinct semibold hierarchy');
       await page.fill('.composer textarea', 'Hello');
       await page.click('.send-btn');

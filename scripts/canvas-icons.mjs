@@ -5,27 +5,28 @@ import { chromium } from 'playwright';
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const INK = '#0b0b0c', PAPER = '#f7f7f5', NIGHT = '#000000';
-// The mark on its own 450x540 drawing grid: a standing panel, its foot, and warm light where they meet.
+// The mark on its own 450x540 drawing grid: a standing panel, its foot, and warm light where they meet (a bright silhouette so it holds at 16 px).
 const mark = (id) => `
 <defs>
- <linearGradient id="${id}p" x1="0" y1="0" x2="0.35" y2="1"><stop offset="0" stop-color="#b4b1ad"/><stop offset=".55" stop-color="#d3cfc9"/><stop offset="1" stop-color="#fbf5ea"/></linearGradient>
- <linearGradient id="${id}e" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".4"/><stop offset=".12" stop-color="#fff" stop-opacity="0"/></linearGradient>
- <linearGradient id="${id}f" x1="0" y1="0" x2="1" y2=".55"><stop offset="0" stop-color="#fbf3e4"/><stop offset=".38" stop-color="#d9d2c6"/><stop offset=".7" stop-color="#7a7671"/><stop offset="1" stop-color="#3b3936"/></linearGradient>
- <radialGradient id="${id}g" cx="190" cy="322" r="105" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff6e6" stop-opacity=".8"/><stop offset=".35" stop-color="#ffe9c7" stop-opacity=".22"/><stop offset="1" stop-color="#ffe9c7" stop-opacity="0"/></radialGradient>
- <filter id="${id}b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+ <linearGradient id="${id}p" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#cfcbc4"/><stop offset=".5" stop-color="#ebe7df"/><stop offset="1" stop-color="#fffaf0"/></linearGradient>
+ <linearGradient id="${id}e" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".7"/><stop offset=".1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+ <linearGradient id="${id}f" x1="0" y1="0" x2="1" y2=".5"><stop offset="0" stop-color="#fff8ea"/><stop offset=".45" stop-color="#d8d1c4"/><stop offset="1" stop-color="#8f8a82"/></linearGradient>
+ <linearGradient id="${id}r" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".0"/><stop offset=".4" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity=".0"/></linearGradient>
+ <radialGradient id="${id}g" cx="190" cy="322" r="200" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff3d6" stop-opacity=".95"/><stop offset=".25" stop-color="#ffe3b0" stop-opacity=".38"/><stop offset=".6" stop-color="#ffd9a0" stop-opacity=".10"/><stop offset="1" stop-color="#ffd9a0" stop-opacity="0"/></radialGradient>
+<filter id="${id}b" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="16"/></filter>
 </defs>
+<circle cx="190" cy="322" r="200" fill="url(#${id}g)" style="mix-blend-mode:screen"/>
 <g stroke-linejoin="round" stroke-width="22">
  <path d="M48,410 L190,320 L410,425 L270,515 Z" fill="url(#${id}f)" stroke="url(#${id}f)"/>
  <path d="M45,135 L185,45 L190,320 L48,410 Z" fill="url(#${id}p)" stroke="url(#${id}p)"/>
  <path d="M45,135 L185,45 L190,320 L48,410 Z" fill="url(#${id}e)" stroke="none"/>
 </g>
-<path d="M190,320 L235,342 L248,500 L205,486 Z" fill="#fff" opacity=".18" filter="url(#${id}b)"/>
-<ellipse cx="190" cy="330" rx="70" ry="40" fill="#fff3dd" opacity=".55" filter="url(#${id}b)"/>
-<rect x="-40" y="-40" width="530" height="620" fill="url(#${id}g)" style="mix-blend-mode:screen"/>`;
+<path d="M48,410 L190,320 L410,425" fill="none" stroke="#fffdf6" stroke-opacity=".55" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" transform="translate(0 -8)"/>
+<ellipse cx="192" cy="322" rx="62" ry="34" fill="#fff6e4" opacity=".85" filter="url(#${id}b)"/>`;
 // The mark centred on the 512 icon grid; `scale` shrinks it for the maskable icon's safe zone.
-const glyph = (id, scale = 1) => { const s = 0.7 * scale; return `<g transform="translate(${256 - 227.5 * s} ${256 - 280 * s}) scale(${s})">${mark(id)}</g>`; };
+const glyph = (id, scale = 1) => { const s = 0.86 * scale; return `<g transform="translate(${256 - 227.5 * s} ${256 - 280 * s + 4}) scale(${s})">${mark(id)}</g>`; };
 const tile = ({ radius = 0, scale = 1, id = 'm' } = {}) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><radialGradient id="${id}t" cx=".45" cy=".5" r=".75"><stop offset="0" stop-color="#1b1b1b"/><stop offset="1" stop-color="#060606"/></radialGradient></defs><rect width="512" height="512" rx="${radius}" fill="url(#${id}t)"/>${glyph(id, scale)}</svg>`;
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><radialGradient id="${id}t" cx=".5" cy=".38" r=".85"><stop offset="0" stop-color="#232325"/><stop offset="1" stop-color="#070708"/></radialGradient><clipPath id="${id}c"><rect width="512" height="512" rx="${radius}"/></clipPath></defs><rect width="512" height="512" rx="${radius}" fill="url(#${id}t)"/><g clip-path="url(#${id}c)">${glyph(id, scale)}</g></svg>`;
 
 mkdirSync('public-canvas/splash', { recursive: true });
 writeFileSync('public-canvas/icon.svg', tile({ radius: 112 }) + '\n');

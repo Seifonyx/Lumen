@@ -17,13 +17,15 @@ The switch is build-time only, not a runtime toggle, a query parameter or a secu
 - **Tests:**
   - Existing jobs keep testing the ordinary build, which guards the rollback path and shared logic.
   - The `checks` job also builds Canvas.
-  - The `in-app-canvas` job runs the in-app suites listed in `tests/e2e/canvas-core.txt` (72 of 104) against the Canvas build with the Firebase emulators: account isolation and sync, keys and providers, privacy and account deletion, drafts, send and stop, attachments, the model picker, settings and the accessibility scan.
+  - The `in-app-canvas` job runs the in-app suites listed in `tests/e2e/canvas-core.txt` (103 of 104) against the Canvas build with the Firebase emulators: account isolation and sync, keys and providers, privacy and account deletion, drafts, send and stop, attachments, the model picker, settings and the accessibility scan.
   - The `canvas` job runs, in Chromium and WebKit, the isolation audit (ordinary, Canvas production and QA builds) and the CP02–CP05, Routing Center and QA browser contracts on the synthetic QA build.
   - The WebKit jobs run in Playwright's container image, so they no longer download WebKit.
 
 ## Known gap
 
-32 in-app suites still look for the ordinary sidebar's own controls (the date-grouped chat list, `.usage-chip`, `.view-all-chats`, `.sidebar .new-chat`, the old sidebar footer's layout) or measure ordinary-layout geometry, so they run only on the ordinary build: app-feel, archive, ask-chats, assistants, auto-explain, auto-intelligence, bulk-chats, canvas-integration, chat-menu, deep-research, design, fit, free-tools, glass, layout, message-navigation, model-health, more-motion, motion-controls, native-feel, phone-windows, quota, regressions, roadmap, safe-insets, sheet-drag, sidebar, smart-memory, study, transitions, welcome, workspace-design. The features they exercise are shared code and stay covered there; what is not yet proven on Canvas is how those features are reached in the Canvas layout. Port them (selectors that work in both layouts, as in `sync.cjs`) and add each to `canvas-core.txt`.
+None for the in-app suites. All but one run on both builds; the 32 that once drove only the ordinary sidebar were ported in the polish release (selectors that work in both layouts, and `tests/e2e/helpers/open-chat.cjs` for chats filed in folded project folders). `canvas-integration` stays ordinary-only on purpose: it checks that Canvas styles and tokens never leak into the ordinary build.
+
+The ports found two real Canvas bugs, both fixed: the home message box moved as chats loaded, and a chat's options menu was clipped by its sidebar section.
 
 ## Follow-up polish (non-blocking)
 
@@ -31,21 +33,21 @@ The owner's iPhone pass on the activated build (22 October 2026) found it looks 
 
 **P1: noticed in the release-candidate review**
 
-1. **Message navigation:** on narrow phones (320 px) with a draft, "Scroll to latest" covers the last tick of the navigation rail. Move the button left of the rail or raise it.
-2. **Archived chats in search:** Canvas lists them without an "Archived" label (the ordinary sidebar has an Archived heading). Add a small tag on the row while searching.
+1. ✓ *Done in the polish release.* **Message navigation:** on narrow phones (320 px) with a draft, "Scroll to latest" covers the last tick of the navigation rail. Move the button left of the rail or raise it.
+2. ✓ *Done in the polish release.* **Archived chats in search:** Canvas lists them without an "Archived" label (the ordinary sidebar has an Archived heading). Add a small tag on the row while searching.
 
 **P2: visual refinement** (carried from the design backlog on the `docs/lumen-blackout-phase1-20261019` branch)
 
 3. Hub pages (Library, Tools, Projects): use the Routing Center's "← Chat" pill for "Back to chat" and "Done".
-4. Project manager: hide its colour dots, or use colour subtly, to match Canvas's monochrome monograms.
-5. Composer usage chip: shows "0%" on a new chat; the "~N tokens" context wording is pending.
-6. Routing Center on desktop: wide spacing between "Connect" and "a provider".
+4. ✓ *Done in the polish release (project colours fold to ink).* Project manager: hide its colour dots, or use colour subtly, to match Canvas's monochrome monograms.
+5. ✓ *Done in the polish release.* Composer usage chip: shows "0%" on a new chat; the "~N tokens" context wording is pending.
+6. ✓ *Done in the polish release.* Routing Center on desktop: wide spacing between "Connect" and "a provider".
 7. Sidebar: the active row's ⋯ on phones; the folder chevron animation timing.
 8. Not yet visually reviewed: login and onboarding, long-press menus, the Compare results view, Study deck and quiz views.
 
 **P3: test coverage**
 
-9. Port the 32 ordinary-only suites (see Known gap) and add each to `canvas-core.txt`.
+9. ✓ *Done in the polish release (103 of 104).* Port the 32 ordinary-only suites (see Known gap) and add each to `canvas-core.txt`.
 
 ## Before deploying (owner-approved steps)
 

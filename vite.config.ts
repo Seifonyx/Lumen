@@ -68,7 +68,7 @@ function canvasPublic(): Plugin | false {
         this.emitFile({ type: 'asset', fileName: relative('public-canvas', file).replaceAll('\\', '/'), source: readFileSync(file) });
       }
       const font = Object.keys(bundle).find((f) => /\/geist-latin-wght-normal-[^/]+\.woff2$/.test(f));
-      const style = readFileSync('src/pwa/legal-canvas.css', 'utf8').replace('__GEIST__', font ? `/${font}` : '');
+      const style = readFileSync('src/pwa/legal-ink.css', 'utf8').replace('__GEIST__', font ? `/${font}` : '');
       for (const page of ['privacy.html', 'terms.html']) {
         const html = readFileSync(join('public', page), 'utf8').replace(/<style>[\s\S]*?<\/style>/, `<style>${style}</style>`);
         this.emitFile({ type: 'asset', fileName: page, source: html });

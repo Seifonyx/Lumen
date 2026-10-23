@@ -37,7 +37,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         await page.waitForSelector('.app:not(.app-skeleton) .main.is-empty');
         if (theme === 'black') check(await page.evaluate(() => document.documentElement.dataset.appearance === 'black' && getComputedStyle(document.body).backgroundColor === 'rgb(0, 0, 0)'), `${label}: true black background survives reload`);
         check(inside(await page.locator('.composer').boundingBox(), width, height) && (await scan(page)).length === 0, `${label}: welcome screen and composer fit`);
-        check(await page.locator('.suggestion,.starter-actions,.empty p:not(.welcome-route):not(.cv-home-where)').count() === 0 && await page.locator('.empty h1').evaluate(el=>el.scrollWidth<=el.clientWidth), `${label}: short single-line greeting and routing status, without recommendations`);
+        check(await page.locator('.suggestion,.starter-actions,.empty p:not(.welcome-route):not(.cv-home-where):not(.cv-home-none)').count() === 0 && await page.locator('.empty h1').evaluate(el=>el.scrollWidth<=el.clientWidth), `${label}: short single-line greeting and routing status, without recommendations`);
         if (!mobile) {
           await page.click('[aria-label="Collapse sidebar"]');
           check(!(await page.locator('.sidebar').isVisible()), `${label}: sidebar collapses`);

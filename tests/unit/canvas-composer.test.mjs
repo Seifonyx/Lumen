@@ -80,8 +80,9 @@ test('CP03 shell seams fold to the ordinary code and its styles stay scoped', ()
   let rules = 0;
   root.walkAtRules((rule) => assert.ok(['media', 'keyframes'].includes(rule.name), `no @${rule.name}`));
   root.walkRules((rule) => {
+    if (rule.parent?.type === 'atrule' && rule.parent.name === 'keyframes') return; // keyframe steps, not selectors
     rules++;
-    for (const selector of rule.selectors) assert.match(selector, /^(?:(?:html\.glass|\[dir='rtl'\]) )?\.app\[data-lumen-canvas-shell\]/, `scoped: ${selector}`);
+    for (const selector of rule.selectors) assert.match(selector, /^(?:(?:html\.glass|html\.streaming|\[dir='rtl'\]) )?\.app\[data-lumen-canvas-shell\]/, `scoped: ${selector}`);
   });
   root.walkDecls((decl) => assert.ok(!/url\s*\(|@import/i.test(decl.value), 'no network/font dependency'));
   assert.ok(rules > 40);

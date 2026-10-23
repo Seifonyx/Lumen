@@ -78,6 +78,14 @@ works like this:
 - **Components:** `src/components/BrandCrease.tsx` (`BrandWordmark`, `BrandMark`) draws from the generated
   `src/lib/brand-crease-art.ts`.
 
+### Final polish (owner-requested, after Phase 1C)
+
+![Actual size](mockups/final-polish-actual-size.png)
+
+- **L to u:** the gap opened by 16 units (regular 56, small 72), so it reads as one crease. At 20 px in Dark the base's tip and the u's bowl no longer merge, and at display size the join no longer looks cramped. +32 was tried and started to detach the L.
+- **Dark sign-in:** the hairline rim on the app icon went from 14% to 22% white. There's no glow or shadow.
+- **Private iPhone QA:** this branch's review shows the preview. `qa/iphone/review-identity.json` opts it in: `vite.qa.config.ts` reads the file and swaps `src/lib/brand-identity.ts` for an adapter that re-exports the same "on" module. Open the existing Codespace review as usual. It's synthetic-only, uses the same lease and gate, and costs $0. The review is signed in, so it shows the sidebar and drawer wordmark and the collapsed-bar mark. Sign-in, the shared page and the home-screen icon are in the boards here. Remove that file before any merge unless the identity is adopted.
+
 ### Self-critique
 
 - **Does it read immediately as Lumen?** Yes, at every size tested (15–150 px). At 16–20 px the L reads like a

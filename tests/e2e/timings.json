@@ -11,6 +11,7 @@
  "coding.cjs": 12,
  "commit-undo.cjs": 12,
  "compact.cjs": 14,
+ "composer.cjs": 40,
  "design.cjs": 53,
  "edit-review.cjs": 16,
  "fast-route.cjs": 19,

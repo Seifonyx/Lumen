@@ -467,7 +467,7 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
           rows={1}
           dir="auto"
           {...(CANVAS_COMPOSER ? canvas!.textarea : undefined)}
-          placeholder={listening ? 'Listening…' : deepResearch ? 'What should Lumen research?' : 'Message Lumen'}
+          placeholder={listening ? 'Listening…' : deepResearch ? 'What should Lumen research?' : CANVAS_COMPOSER ? canvas!.placeholder : 'Message Lumen'}
           value={interim ? `${text}${text && !text.endsWith(' ') ? ' ' : ''}${interim}` : text}
           onChange={(e) => {
             setText(e.target.value);

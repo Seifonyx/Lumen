@@ -104,3 +104,4 @@ welcome
 workspace-design
 writing-tools
 reading
+composer

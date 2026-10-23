@@ -11,9 +11,36 @@
   - Measured on PR #46: 6 min 22 s instead of 9 min 30 s. The slowest jobs are now two ordinary in-app shards (about 6.2 min against 4.3–4.7 for the others); rebalancing them by recorded time is the next speed step.
 - **Local verification policy for agents:** before a push, run only what the change touches: `npm test`, the ordinary byte check, the budget, the affected contract(s) and the affected in-app suites. Leave the full 103-file Canvas list (about 20 minutes on this 4-CPU container) to CI, which runs the same list in parallel. Run the full list locally only to diagnose a CI failure.
 
+## Chat, Reading & Composer, Phase 3 slice 2 (the composer) — 23 October 2026
+
+Draft PR on `claude/lucid-dijkstra-541bbi` from `main` `1536d9a` (slice 1 is live as Deploy #66). Canvas only; the ordinary build is byte-identical to `main`. **Not approved for merge or deploy.**
+
+- **Assessment** (`tests/e2e/helpers/composer-shots.cjs`: resting, typing, multiline, attachments, streaming/Stop, writing sheet, project chip; 1280/1440 and 320/390/430, Light and Dark):
+  - Desktop was sound.
+  - On phones, controls overflowed and wrapped. At rest, the voice button sat alone on a second row (104 px tall at 320). While writing, Send/Stop and Dictate dropped to a third row.
+  - The writing sheet's title was cut to "Launch plan, ..." beside the count.
+  - The remove-attachment target was 22 × 22.
+  - On Safari, the Enter that confirms an IME candidate arrives after `compositionend` (`isComposing` false, `keyCode` 229) and could send.
+- **Implemented:**
+  - `canvas-composer.css` (phones):
+    - At rest: one row; the model shows its provider mark and is still announced by name.
+    - While writing: two rows; the model name shortens; the usage meter shows its ring.
+    - 44 pt hit areas for small controls.
+    - A returning-focus usage meter floats instead of taking a slot, so the next press can't miss a moved control (caught by `sheet-drag`).
+  - `ComposerCanvas.tsx`: the count under the sheet title; the IME Enter guard.
+- **Checks:**
+  - `npm test` passes; the ordinary build matches `main` under `diff -r`.
+  - Budget: JS 8.9/9, CSS 15.9/16.
+  - QA01 and CP01 pass.
+  - CP02, CP03 and CP05 pass in Chromium.
+  - The new `tests/e2e/composer.cjs` passes, and fails on the previous build. It covers 320/390/430 plain and glass plus 1440, with axe.
+  - 14 composer and message suites pass on the Canvas build. `coding-plan` needed one retry under 3 lanes, then passed 3 of 3 runs alone.
+- **Not done:** a physical iPhone (dictation, the real keyboard, a Japanese IME).
+- **Next:** owner review. Then slice 3: streaming, scrolling and the response lifecycle.
+
 ## Chat, Reading & Composer, Phase 3 slice 1 — 23 October 2026
 
-Draft [PR #47](https://github.com/Seifonyx/Lumen/pull/47) on `claude/lucid-dijkstra-541bbi` from `main` `de78183` (Phase 2 slice 3 is live as Deploy #65). Canvas only; the ordinary build is byte-identical to `main`. **Not approved for merge or deploy.** Phase 2 was merged and deployed on the owner's instruction; its physical-iPhone checklist (`docs/testing/phase2-navigation-iphone-checks.md`) is still not run.
+[PR #47](https://github.com/Seifonyx/Lumen/pull/47) was merged as `1536d9a` and is live as Deploy #66 (owner-approved 2026-10-23; all 180 files byte-identical to the live site). CI first caught a regression: the floating composer could cover the last reply when the draft grew. It was fixed in `acb6ef7` by reserving the composer's real height (`--cv-composer-h`). Phase 2 was merged and deployed on the owner's instruction; its physical-iPhone checklist (`docs/testing/phase2-navigation-iphone-checks.md`) is still not run.
 
 - **Assessment** (synthetic `tests/e2e/helpers/chat-fixture.cjs`, screenshots by `chat-shots.cjs` at 1280/1440/1920 and 320/390/430, Light and Dark, actual size):
   - Answer headings were 27 px against 15.5 px body text, in fixed px.

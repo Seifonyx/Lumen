@@ -1,5 +1,36 @@
 # Dynamic Model Picker operational handoff
 
+## Desktop & iPhone navigation, Phase 2 — 23 October 2026
+
+Draft PR #44 on branch `claude/lucid-dijkstra-541bbi`, from `main` `1c574a4` (Phase 1 is live; CI is sharded since PR #43). Canvas only; the ordinary build is byte-identical to `main`. **Not approved for merge or deploy.**
+
+- **Assessment** (current production Canvas on a synthetic account; `tests/e2e/helpers/nav-fixture.cjs` and `nav-shots.cjs`, run against a local `LUMEN_CANVAS=1` build):
+  - Focus fell to `<body>` after closing hubs or the Routing Center, and after collapse or expand.
+  - Browser Back left the app.
+  - The collapsed desktop sidebar offered only an expand button.
+  - On phones the Routing Center had no drawer button, and its header differed from the other hubs.
+  - The pin glyph pushed titles off their shared edge, and there was no clear-search control on iPhone.
+  - Drawer touch targets were already 44px.
+- **Slice 1:**
+  - `src/components/CanvasNav.tsx` (through the switch; null in the ordinary module): one history entry for pages shown in place of the chat, focus return, and collapse/expand focus.
+  - `CanvasRail.tsx`: the collapsed rail, loaded lazily.
+  - Routing Center: a `rc-topbar` (drawer button on phones, Chat at the end), swipe back on phones, and Connect full width on phones.
+  - Pin trails the title; `cv-search-clear`.
+  - The approved "pinned first, one list" tree is unchanged (CP03 enforces it).
+- **Checks:**
+  - `npm test`; the ordinary build matches `diff -r` against `main`.
+  - QA01 and CP01 isolation (CanvasNav and CanvasRail are on the reviewed list).
+  - CP02–CP05 and the browser contract in Chromium; CP03 and CP04 extended for the rail, Back and focus.
+  - Budget: startup JS growth 7.4 of 8 KB.
+  - 16 navigation-related in-app suites on the Canvas build, run locally with emulators.
+  - WebKit and the full sharded run are left to CI. No physical iPhone was used.
+- **Next:** gather owner feedback on slice 1. Candidate slice 2 items:
+  - Keyboard movement through the tree (arrow keys).
+  - Draft preservation across the account/project switch.
+  - Hub transitions on desktop.
+  - Drawer density on 320×568.
+
+
 ## Brand identity and design foundation, Phase 1 — 23 October 2026
 
 Live status and authorizations are in `docs/lumen-context/CURRENT_STATUS.md` on `docs/lumen-live-context`; this entry records the coding work only. Branch `claude/lucid-dijkstra-541bbi`, from `main` `26c209d` (the live Canvas build, Deploy #61).

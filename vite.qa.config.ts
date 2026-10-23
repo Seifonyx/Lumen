@@ -23,6 +23,11 @@ export const QA_REPLACEMENTS: Record<string, string> = {
   // CP02: the Canvas composer presentation is on in the review build only.
   [at('src/lib/canvas-presentation.ts')]: at('qa/iphone/adapters/canvas-presentation.ts'),
 };
+// Crease identity preview (owner review): only when the review opts in. scripts/qa/build.mjs sets LUMEN_QA_IDENTITY
+// from qa/iphone/review-identity.json; unset keeps the shipped identity in the review too.
+const QA_IDENTITY = process.env.LUMEN_QA_IDENTITY ?? '';
+if (!['', 'crease'].includes(QA_IDENTITY)) throw new Error(`LUMEN_QA_IDENTITY must be crease or unset, not "${QA_IDENTITY}"`);
+if (QA_IDENTITY === 'crease') QA_REPLACEMENTS[at('src/lib/brand-identity.ts')] = at('qa/iphone/adapters/brand-identity.ts');
 const SDK_STUB = at('qa/iphone/adapters/firebase-sdk.ts');
 const SDK_ENTRIES = new Set(['firebase/app', 'firebase/auth', 'firebase/firestore']);
 const TRANSPORT = at('qa/iphone/adapters/transport.ts');

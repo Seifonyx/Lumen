@@ -16,7 +16,7 @@ html[data-lumen-canvas] .shared-brand .brand-wordmark { display: block; color: v
 
 /* Sign-in: the app icon is the brand moment. On Dark a hairline rim keeps the dark tile from melting into the page. */
 html[data-lumen-canvas] .login-card .logo { width: 56px; height: 56px; border-radius: 12.5px; }
-html[data-lumen-canvas][data-theme='dark'] .login-card .logo { box-shadow: 0 0 0 1px rgb(255 255 255 / .14); }
+html[data-lumen-canvas][data-theme='dark'] .login-card .logo { box-shadow: 0 0 0 1px rgb(255 255 255 / .22); }
 @media (prefers-color-scheme: dark) {
-  html[data-lumen-canvas]:not([data-theme='light']) .login-card .logo { box-shadow: 0 0 0 1px rgb(255 255 255 / .14); }
+  html[data-lumen-canvas]:not([data-theme='light']) .login-card .logo { box-shadow: 0 0 0 1px rgb(255 255 255 / .22); }
 }

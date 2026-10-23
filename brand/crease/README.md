@@ -49,7 +49,7 @@ All numbers are in font units (cap 710), in `scripts/brand-crease.mjs`, `WORD`:
 | `DX`, `SD` | 330, 0.62 | the base's projection (the icon's depth angle) |
 | `G` | 34 (60 small) | the crease |
 | `TOP`, `DIP` | 722, 8 | top-right overshoot; the base's point below the baseline |
-| `GAP`, `TRACK` | 40, −28 (56, −10 small) | base to u; letter spacing |
+| `GAP`, `TRACK` | 56, −28 (72, −10 small) | base to u (opened by 16 in the final polish so the gap reads as one crease); letter spacing |
 
 Rules:
 - **Size:** use the regular wordmark at 28 px tall and above, the small drawing from 16 to 28 px, and nothing

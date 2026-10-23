@@ -110,9 +110,9 @@ function lockupBaseline(panel, floor, text, { height, gap, overshoot } = BASELIN
 // the hinge angle: the same cut as the screen's crease, carried through the word.
 // Font units, y-up, baseline 0. W screen width, HINGE hinge/front-edge slope, S top cut, DX/SD base projection,
 // G crease, TOP top-right corner, DIP how far the base's front point goes below the baseline, R corners.
-const WORD = { W: 176, HINGE: 0.36, S: MARK.S, DX: 330, SD: 0.62, G: 34, TOP: 722, DIP: 8, R: 8, GAP: 40, TRACK: -28 };
+const WORD = { W: 176, HINGE: 0.36, S: MARK.S, DX: 330, SD: 0.62, G: 34, TOP: 722, DIP: 8, R: 8, GAP: 56, TRACK: -28 };
 // Below 28 px tall: a wider crease and looser letters, so the opening and the letters stay apart on the pixel grid.
-const WORD_SMALL = { ...WORD, G: 60, R: 5, GAP: 56, TRACK: -10 };
+const WORD_SMALL = { ...WORD, G: 60, R: 5, GAP: 72, TRACK: -10 };
 const UMEN = JSON.parse(readFileSync(`${OUT}/source/geist-660.json`, 'utf8'));
 /** The wordmark's L: screen and base as two rounded polygons (y-up). */
 function creaseL({ W, HINGE, S, DX, SD, G, TOP, DIP, R }) {
@@ -184,7 +184,7 @@ for (const [suffix, o] of [['', WORD], ['-small', WORD_SMALL]]) {
   put(`lumen-wordmark${suffix}-mono.svg`, svg(vbw, `<title>Lumen</title><g fill="currentColor">${lw.body}</g>`, a11y));
 }
 // The colour icon on dark grounds inside the product (sign-in in Dark): a hairline rim keeps the tile's edge.
-put('app-icon-dark-rim.svg', tile({ bg: INK, panel: LIT, floor: SHADE, radius: 114, glow: true }).replace('</svg>', '<rect x=".75" y=".75" width="510.5" height="510.5" rx="113.25" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="1.5"/></svg>'));
+put('app-icon-dark-rim.svg', tile({ bg: INK, panel: LIT, floor: SHADE, radius: 114, glow: true }).replace('</svg>', '<rect x=".75" y=".75" width="510.5" height="510.5" rx="113.25" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="1.5"/></svg>'));
 // The app's brand components read their drawings from one generated module (no network, no runtime font).
 {
   const lw = lumenWordmark(WORD), ls = lumenWordmark(WORD_SMALL), sm = crease(SMALL);

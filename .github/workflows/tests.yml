@@ -40,7 +40,7 @@ jobs:
       - run: npm run test:unit
 
   in-app-shard:
-    name: In-app tests (Chromium + Firebase emulators) ${{ matrix.shard }}/4
+    name: In-app tests (Chromium + Firebase emulators) ${{ matrix.shard }}/5
     runs-on: ubuntu-24.04
     # Chromium and its system libraries come preinstalled in Playwright's image (same version as package.json): no apt
     # install, which a slow package mirror once stretched to 11 minutes on some machines.
@@ -51,9 +51,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5]
     env:
-      E2E_SHARD: ${{ matrix.shard }}/4
+      E2E_SHARD: ${{ matrix.shard }}/5
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -84,7 +84,7 @@ jobs:
   in-app-canvas-shard:
     # The same in-app tests against the Canvas build (what Deploy ships when canvas is chosen), for the suites listed in
     # tests/e2e/canvas-core.txt. The rest still look for the ordinary sidebar; the ordinary build keeps the full run above.
-    name: In-app tests on the Canvas build (Chromium + Firebase emulators) ${{ matrix.shard }}/4
+    name: In-app tests on the Canvas build (Chromium + Firebase emulators) ${{ matrix.shard }}/5
     runs-on: ubuntu-24.04
     # Chromium and its system libraries come preinstalled in Playwright's image (same version as package.json): no apt
     # install, which a slow package mirror once stretched to 11 minutes on some machines.
@@ -95,9 +95,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5]
     env:
-      E2E_SHARD: ${{ matrix.shard }}/4
+      E2E_SHARD: ${{ matrix.shard }}/5
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -130,10 +130,16 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  webkit:
-    name: Safari engine (WebKit)
+  webkit-part:
+    # Two machines (about 3 minutes each instead of 6): the first also runs welcome/layout and the tab bar, the long
+    # list below is split by recorded duration (E2E_SHARD, as the in-app jobs).
+    name: Safari engine (WebKit) ${{ matrix.part }}/2
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [1, 2]
     # WebKit and its system libraries come preinstalled in Playwright's image (same version as package.json), so the
     # job no longer downloads them; that download was where it hung.
     container:
@@ -148,12 +154,12 @@ jobs:
       - id: webkit_build
         run: npm run build
       - name: Welcome and responsive layout in WebKit
-        if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' && matrix.part == 1 }}
         run: npm run test:e2e -- welcome layout
         env:
           MR_WEBKIT: '1'
       - name: WebKit tab bar interactions
-        if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' && matrix.part == 1 }}
         shell: bash
         run: |
           node node_modules/vite/bin/vite.js preview --port 5190 --strictPort > /tmp/vite-webkit.log 2>&1 &
@@ -166,13 +172,14 @@ jobs:
         run: npm run test:e2e -- message-navigation hub-actions motion-controls motion-chat chat-menu attachment-motion visual-animations context-recovery layout-builder selection-boundaries fast-route auto-intelligence catalog-lifecycle selection-policy routing-priorities layout-policies model-declarations comparison-recovery declared-background model-picker-accessibility ask-chats smart-memory study writing-tools deep-research tool-card-stability
         env:
           MR_WEBKIT: '1'
+          E2E_SHARD: ${{ matrix.part }}/2
           # This suite seeds its own preview account and mocks provider requests.
           MR_TEST_URL: http://localhost:5190/
       - name: Keep WebKit evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: webkit-evidence
+          name: webkit-evidence-${{ matrix.part }}
           include-hidden-files: true
           path: |
             tests/e2e/out/webkit-*.png
@@ -181,13 +188,23 @@ jobs:
           retention-days: 7
 
   canvas-engine:
-    name: Canvas presentation (isolation and contracts, ${{ matrix.engine }})
+    # Three balanced groups per engine (measured 2026-10-23: screens 165 s; composer 90 + routing 58; shell 82 +
+    # browser 36 + the isolation audit), so the slowest machine takes under 3 minutes instead of 7.
+    name: Canvas presentation (${{ matrix.group }}, ${{ matrix.engine }})
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         engine: [Chromium, WebKit]
+        group: [screens, composer-routing, shell-browser]
+        include:
+          - group: screens
+            contracts: canvas-screens
+          - group: composer-routing
+            contracts: canvas-composer routing-center
+          - group: shell-browser
+            contracts: canvas-shell browser
     container:
       image: mcr.microsoft.com/playwright:v1.56.1-noble
       options: --ipc=host
@@ -207,7 +224,7 @@ jobs:
       - name: Synthetic QA build (same "on" module as production Canvas)
         run: node scripts/qa/build.mjs --out "$QA_BUILD_DIR"
       - name: Isolation (ordinary, Canvas production and QA builds)
-        if: matrix.engine == 'Chromium'
+        if: matrix.engine == 'Chromium' && matrix.group == 'shell-browser'
         run: |
           node tests/security/private-qa-isolation.mjs
           node tests/security/canvas-build-isolation.mjs
@@ -215,14 +232,14 @@ jobs:
           # Byte equality with the pre-activation release is checked when activation is reviewed, not on every run.
           QA01_ALLOW_NO_BASELINE: '1'
       - name: Canvas contracts in ${{ matrix.engine }}
-        run: for t in canvas-composer canvas-shell routing-center canvas-screens browser; do node tests/security/private-qa-$t.mjs || exit 1; done
+        run: for t in ${{ matrix.contracts }}; do node tests/security/private-qa-$t.mjs || exit 1; done
         env:
           MR_WEBKIT: ${{ matrix.engine == 'WebKit' && '1' || '' }}
       - name: Keep Canvas evidence
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: canvas-evidence-${{ matrix.engine }}
+          name: canvas-evidence-${{ matrix.engine }}-${{ matrix.group }}
           path: tests/e2e/out
           if-no-files-found: ignore
           retention-days: 7
@@ -255,3 +272,12 @@ jobs:
     timeout-minutes: 2
     steps:
       - run: test "${{ needs.canvas-engine.result }}" = success
+
+  webkit:
+    name: Safari engine (WebKit)
+    needs: webkit-part
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - run: test "${{ needs.webkit-part.result }}" = success

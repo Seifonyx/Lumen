@@ -1,5 +1,16 @@
 # Dynamic Model Picker operational handoff
 
+## Verification speed (owner request, 2026-10-23)
+
+- **CI layout:**
+  - In-app runs on 5 machines per build.
+  - Safari (WebKit) runs on 2 machines.
+  - The Canvas contracts run in 3 balanced groups per engine, with the isolation audit in the shell/browser group.
+  - Gates keep the original check names; the new Safari gate is "Safari engine (WebKit)".
+  - 19 parallel jobs, within the 20-job limit for public repos.
+  - Expected: about 5 minutes instead of 8.
+- **Local verification policy for agents:** before a push, run only what the change touches: `npm test`, the ordinary byte check, the budget, the affected contract(s) and the affected in-app suites. Leave the full 103-file Canvas list (about 20 minutes on this 4-CPU container) to CI, which runs the same list in parallel. Run the full list locally only to diagnose a CI failure.
+
 ## Desktop & iPhone navigation, Phase 2 slice 3 — 23 October 2026
 
 Draft PR on `claude/lucid-dijkstra-541bbi` from `main` `a01856c` (slice 2 is live as Deploy #64). Canvas only; the ordinary build is byte-identical to `main`. **Not approved for merge or deploy.**

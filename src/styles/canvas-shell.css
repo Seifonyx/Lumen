@@ -384,3 +384,8 @@
   /* The glass look sets 16px titles in fixed 44px rows (glass.css): same at the default size, growing past it. */
   html.glass .app[data-lumen-canvas-shell] .cv-nav .chat-row .chat-open { height: auto; min-height: var(--cv-row); font-size: calc(var(--fs, 15px) + 1px); }
 }
+@media (max-width: 899px) and (max-height: 700px) {
+  /* Short phones keep their slightly smaller footer, still growing with the text. */
+  .app[data-lumen-canvas-shell] .cv-new-pill { min-height: max(46px, calc(var(--fs, 15px) * 1.4 + 25px)); }
+  .app[data-lumen-canvas-shell] .cv-account { width: max(46px, calc(var(--fs, 15px) * 1.4 + 25px)); min-height: max(46px, calc(var(--fs, 15px) * 1.4 + 25px)); }
+}

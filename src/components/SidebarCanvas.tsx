@@ -134,6 +134,8 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
           <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} dir="auto"
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Escape' && query) { e.stopPropagation(); setQuery(''); } }} />
+          {/* iPhone has no built-in clear control in search fields: one tap empties it and keeps the field. */}
+          {query && <button type="button" className="cv-search-clear" aria-label="Clear search" onClick={() => { setQuery(''); searchInput.current?.focus({ preventScroll: true }); }}><X size={15} /></button>}
           {/* Desktop: the command palette, one shortcut away (the same key press the app already listens for). */}
           {!phone && !query && <button type="button" className="cv-kbd" title="Search and jump to anything" aria-label={`Search and jump to anything (${modKey}K)`}
             onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: isMac, ctrlKey: !isMac, bubbles: true }))}><kbd>{modKey}K</kbd></button>}

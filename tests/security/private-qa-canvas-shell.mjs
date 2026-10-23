@@ -6,7 +6,8 @@
 //
 // Per viewport (1440×960, 390×844, 320×568): folders and loose conversations from the canonical store; the open
 // chat's folder open; folder/section disclosure; project overview, new chat in a project; row actions (rename);
-// search over titles and messages with Ask; All chats; phone drawer open/close; header breadcrumb; reading
+// search over titles and messages with Ask; All chats; phone drawer open/close; collapsed rail, Back from a page
+// and focus return (Phase 2); header breadcrumb; reading
 // measure; floating composer clear of the last answer (desktop); a second reviewer's isolated tree; axe; no request
 // leaving the review origin. Screenshots go to CP03_OUT.
 
@@ -186,15 +187,42 @@ try {
         assert.equal(await nav(page).getAttribute('role'), 'dialog');
         await closeNav(page, true);
         assert.equal(await nav(page).evaluate((el) => el.inert), true, 'closed drawer is inert');
+        // Back returns from a page shown in place of the chat, and focus lands on the drawer button (no keyboard).
+        await openNav(page, true);
+        await nav(page).getByRole('button', { name: 'Library', exact: true }).click();
+        await page.getByRole('main', { name: 'Library' }).waitFor();
+        await page.goBack();
+        await page.getByRole('main', { name: 'Library' }).waitFor({ state: 'detached' });
+        await page.waitForFunction(() => document.activeElement?.matches('.menu-btn'));
       } else {
         await nav(page).getByRole('button', { name: 'Collapse sidebar', exact: true }).click();
         await settle(page);
         assert.equal(await nav(page).isVisible(), false);
+        // Collapsed rail: the same destinations, focus on the control that undoes the collapse.
+        const rail = page.getByRole('navigation', { name: 'Navigation', exact: true });
+        await page.waitForFunction(() => document.activeElement?.matches('.cv-navrail-expand'));
+        assert.deepEqual(await rail.getByRole('button').evaluateAll((b) => b.map((x) => x.getAttribute('aria-label'))),
+          ['Expand sidebar', 'New chat', 'Search chats', 'Library', 'Tools', 'Projects', 'Models & routing', 'Settings']);
+        await shot(page, join(out, `${tag}-rail.png`));
+        await rail.getByRole('button', { name: 'Library', exact: true }).click();
+        await page.getByRole('main', { name: 'Library' }).waitFor();
+        assert.equal(await rail.getByRole('button', { name: 'Library', exact: true }).getAttribute('aria-current'), 'page');
+        // Back closes the page, not the app; focus returns to the rail button that opened it.
+        await page.goBack();
+        await page.getByRole('main', { name: 'Library' }).waitFor({ state: 'detached' });
+        await page.waitForFunction(() => document.activeElement?.matches('.cv-navrail-btn[aria-label="Library"]'));
         await page.getByRole('button', { name: 'Expand sidebar', exact: true }).click();
         await settle(page);
         assert.equal(await nav(page).isVisible(), true);
+        await page.waitForFunction(() => document.activeElement?.matches('.collapse-sidebar'));
+        assert.equal(await rail.count(), 0, 'the rail leaves with the collapse');
+        // From the sidebar: a destination opened and closed with Chat returns focus to that destination.
+        await nav(page).getByRole('button', { name: 'Tools', exact: true }).click();
+        await page.getByRole('main', { name: 'Tools' }).waitFor();
+        await page.getByRole('button', { name: 'Close', exact: true }).click();
+        await page.waitForFunction(() => document.activeElement?.closest('.cv-dest') && document.activeElement.textContent.includes('Tools'));
       }
-      pass('drawer / collapse');
+      pass('drawer / collapse / rail / back / focus return');
 
       await openNav(page, phone);
       const state = await page.evaluate(() => ({ csp: window.__cspViolations, blocked: window.__qaBlockedHosts || [], overflow: document.documentElement.scrollWidth - innerWidth }));

@@ -202,14 +202,24 @@ try {
       await page.keyboard.press('Escape');
       await settle(page);
       assert.equal(await isOpen(page), false, 'Escape closes');
-      // Computers: the tree stays beside it, and choosing another chat closes it. (Phones leave through "Chat".)
-      if (!phone) {
-        await openRouting(page, phone);
-        await page.locator('aside.cv-nav').getByText('Notes for a quieter workspace').click();
+      // Back closes it (not the app), as on the other pages shown in place of the chat.
+      await openRouting(page, phone);
+      await page.goBack();
+      await settle(page);
+      assert.equal(await isOpen(page), false, 'Back closes');
+      assert.ok(page.url().startsWith(gate.origin), 'Back stays in Lumen');
+      // Computers: the tree stays beside it; phones reach it from the same bar button as Library and Tools.
+      // Either way, choosing another chat closes it.
+      await openRouting(page, phone);
+      if (phone) {
+        assert.equal(await rc(page).getByRole('button', { name: 'Open sidebar', exact: true }).isVisible(), true, 'phone: the drawer button leads the bar');
+        await rc(page).getByRole('button', { name: 'Open sidebar', exact: true }).click();
         await settle(page, 600);
-        assert.equal(await isOpen(page), false, 'another chat closes it');
-        assert.ok(await page.locator('.main').isVisible());
       }
+      await page.locator('aside.cv-nav').getByText('Notes for a quieter workspace').click();
+      await settle(page, 600);
+      assert.equal(await isOpen(page), false, 'another chat closes it');
+      assert.ok(await page.locator('.main').isVisible());
       pass('closing');
 
       assert.deepEqual(seen.external, []);

@@ -4,12 +4,13 @@
 // selection through setChatModel, Layouts through LayoutEditor, usage through UsageTab, decisions through RouteWhy,
 // connections through Settings → Keys. Send-time routing, eligibility and recovery are unchanged.
 import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, ChevronRight, Plus, Search, Shield, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, ChevronRight, Menu, Plus, Search, Shield, SlidersHorizontal, X } from 'lucide-react';
 import { modelLabel, selectCurrentChat, selectCurrentModel, useStore } from '../store';
 import { AI_PROVIDERS, providerEnabled } from '../lib/ai/provider-config.js';
 import { modelProblem } from '../lib/ai/eligibility.js';
 import { PROVIDER_NAMES, providerOfId } from '../lib/util';
 import { formatTokens, remaining } from '../lib/usage';
+import { installSwipeBack } from '../lib/swipe-back';
 import { closeRoutingCenter, showRoutingSection, useRoutingCenter, type RoutingSection } from '../lib/routing-center';
 import type { Layout } from '../lib/layouts';
 import type { ModelInfo } from '../types';
@@ -240,6 +241,12 @@ export default function RoutingCenter() {
   useEffect(() => { if (open && (opened.current.owner !== owner || opened.current.currentId !== currentId)) closeRoutingCenter(); }, [open, owner, currentId]);
   useEffect(() => { if (open) heading.current?.focus({ preventScroll: true }); }, [open]);
   useEffect(() => { setEditing(null); if (page.current) page.current.scrollTop = 0; }, [section]);
+  // Phones: swipe right to go back to the chat, as from the other pages shown in its place.
+  useEffect(() => {
+    const el = page.current;
+    if (!open || !el) return;
+    return installSwipeBack(el, () => window.matchMedia('(max-width: 899px)').matches && !el.querySelector('.rc-provider-detail, [role="dialog"]'), () => {}, closeRoutingCenter, { reveal: () => document.querySelector<HTMLElement>('.app > .main') });
+  }, [open]);
   if (!open) return null;
 
   const last = chat?.messages.findLast((m) => m.role === 'assistant' && m.model);
@@ -253,8 +260,12 @@ export default function RoutingCenter() {
   return (
     <section ref={page} className="rc-page" hidden={covered} aria-labelledby="rc-title"
       onKeyDown={(e) => { if (e.key === 'Escape' && !e.defaultPrevented && !(e.target as Element).closest('[role="dialog"], [role="menu"], [role="listbox"], input, textarea, select')) { e.preventDefault(); closeRoutingCenter(); } }}>
-      <header className="rc-head">
+      {/* The same bar as Library, Tools and Projects: the drawer on phones, Chat at the end. */}
+      <div className="rc-topbar">
+        <button type="button" className="rc-menu" aria-label="Open sidebar" onClick={() => useStore.getState().setUi({ sidebarOpen: true })}><Menu size={20} /></button>
         <button type="button" className="rc-close" aria-label="Back to chat" onClick={closeRoutingCenter}><ArrowLeft size={18} /><span>Chat</span></button>
+      </div>
+      <header className="rc-head">
         <div className="rc-title">
           <span className="rc-label">Providers · Models · Policies</span>
           <h1 id="rc-title" tabIndex={-1} ref={heading}>Routing Center</h1>

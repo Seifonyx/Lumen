@@ -15,3 +15,4 @@ export const CANVAS_SHELL = true;
 export const RoutingCenter = lazy(() => import('../components/RoutingCenter'));
 export type { BrandArtProps } from './canvas-presentation';
 export { BrandMark, BrandWordmark } from '../components/BrandCrease';
+export { default as CanvasNav } from '../components/CanvasNav';

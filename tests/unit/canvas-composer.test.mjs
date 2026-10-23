@@ -99,7 +99,7 @@ test('CP04 Routing Center loads only through the "on" module, lazily, and its st
     assert.ok(!/import\(['"][^'"]*RoutingCenter/.test(readFileSync(file, 'utf8')), `${file} never imports the Routing Center`);
   }
   const app = readFileSync('src/App.tsx', 'utf8');
-  assert.match(app, /\{CANVAS_SHELL \? <><ChatView onExpandSidebar=\{toggleSidebar\} \/>\{RoutingCenter && <Suspense fallback=\{null\}><RoutingCenter \/><\/Suspense>\}<\/> : <ChatView onExpandSidebar=\{toggleSidebar\} \/>\}/);
+  assert.match(app, /\{CANVAS_SHELL \? <>(?:\{CanvasNav && <CanvasNav collapsed=\{sidebarCollapsed\} onExpand=\{toggleSidebar\} \/>\})?<ChatView onExpandSidebar=\{toggleSidebar\} \/>\{RoutingCenter && <Suspense fallback=\{null\}><RoutingCenter \/><\/Suspense>\}<\/> : <ChatView onExpandSidebar=\{toggleSidebar\} \/>\}/);
   const root = postcss.parse(readFileSync('src/styles/canvas-routing.css', 'utf8'));
   let rules = 0;
   root.walkAtRules((rule) => assert.ok(['media'].includes(rule.name), `no @${rule.name}`));

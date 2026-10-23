@@ -86,7 +86,8 @@
 .app[data-lumen-canvas-shell] .cv-nav .chat-row { position: relative; display: flex; align-items: center; min-width: 0; margin: 0; padding: 0; border-radius: 9px; background: none; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-open { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; min-height: var(--cv-row); padding: 0 10px; border: 0; border-radius: 9px; background: none; color: var(--canvas-secondary); font-size: var(--cv-fs); font-weight: 400; text-align: start; cursor: pointer; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.app[data-lumen-canvas-shell] .cv-nav .pin-mark { flex: none; width: 12px; height: 12px; color: var(--canvas-muted); }
+/* The pin trails the title, so every title in a list starts on the same edge. */
+.app[data-lumen-canvas-shell] .cv-nav .pin-mark { flex: none; order: 1; width: 12px; height: 12px; color: var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row:is(:hover, .menu-open) .chat-open { background: var(--canvas-fill); color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row.active .chat-open { background: var(--canvas-fill-strong); color: var(--canvas-ink); font-weight: 600; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row::before, .app[data-lumen-canvas-shell] .cv-nav .chat-row::after { content: none; }
@@ -306,3 +307,26 @@
   .app[data-lumen-canvas-shell] .cv-rail strong { overflow: hidden; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
   .app[data-lumen-canvas-shell] .cv-rail small { overflow: hidden; color: var(--canvas-muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 }
+
+/* ================= Collapsed rail (computers; Phase 2, src/components/CanvasNav.tsx)
+ * With the sidebar collapsed the same destinations stay one click away in a 60px column. The rail owns the mark and
+ * the expand control, so the top bar's copies step aside. */
+.app[data-lumen-canvas-shell] .cv-navrail { display: none; }
+@media (min-width: 900px) {
+  .app[data-lumen-canvas-shell].sidebar-collapsed .cv-navrail { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none; inline-size: 60px; box-sizing: border-box; padding: 14px 0 12px; background: var(--sidebar); border-inline-end: 1px solid var(--border); }
+  .app[data-lumen-canvas-shell].sidebar-collapsed .topbar :is(.cv-collapsed-mark, .expand-sidebar) { display: none; }
+  .app[data-lumen-canvas-shell] .cv-navrail ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+  .app[data-lumen-canvas-shell] .cv-navrail-mark { display: grid; place-items: center; block-size: 32px; margin-block-end: 8px; color: var(--canvas-ink); }
+  .app[data-lumen-canvas-shell] .cv-navrail-btn { display: grid; place-items: center; inline-size: 40px; block-size: 40px; padding: 0; border: 0; border-radius: 11px; background: none; color: var(--canvas-secondary); cursor: pointer; }
+  .app[data-lumen-canvas-shell] .cv-navrail-btn:hover { background: var(--canvas-fill); color: var(--canvas-ink); }
+  .app[data-lumen-canvas-shell] .cv-navrail-btn[aria-current='page'] { background: var(--canvas-fill-strong); color: var(--canvas-ink); }
+  .app[data-lumen-canvas-shell] .cv-navrail-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+  .app[data-lumen-canvas-shell] .cv-navrail-rule { inline-size: 24px; block-size: 1px; margin: 6px 0; background: var(--canvas-rim); }
+  .app[data-lumen-canvas-shell] .cv-navrail-account { margin-block-start: auto; }
+}
+
+/* Search: one clear control (ours), not the engine's own as well. */
+.app[data-lumen-canvas-shell] .cv-search input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.app[data-lumen-canvas-shell] .cv-search-clear { display: inline-grid; place-items: center; flex: none; inline-size: 28px; block-size: 28px; margin-inline-end: -6px; padding: 0; border: 0; border-radius: 50%; background: var(--canvas-fill-strong); color: var(--canvas-secondary); cursor: pointer; }
+.app[data-lumen-canvas-shell] .cv-search-clear:hover { color: var(--canvas-ink); }
+@media (max-width: 899px) { .app[data-lumen-canvas-shell] .cv-search-clear { position: relative; } .app[data-lumen-canvas-shell] .cv-search-clear::after { content: ''; position: absolute; inset: -8px; } }

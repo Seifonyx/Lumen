@@ -10,6 +10,8 @@
  *                     lives only in the "on" module, so the ordinary build has no import of it at all.
  *   BrandWordmark,  — the Lumen identity (Crease, approved 2026-10-23; src/components/BrandCrease.tsx): the
  *   BrandMark         integrated wordmark and the standalone mark. Null here, so the ordinary build imports no artwork.
+ *   CanvasNav       — Phase 2 navigation (src/components/CanvasNav.tsx): Back closes pages shown in place of the chat,
+ *                     focus returns to where it came from, and the collapsed sidebar becomes a rail.
  */
 import type { ComponentType } from 'react';
 export type BrandArtProps = { height: number; decorative?: boolean; className?: string };
@@ -18,3 +20,4 @@ export const CANVAS_SHELL = false;
 export const RoutingCenter: ComponentType | null = null;
 export const BrandWordmark: ComponentType<BrandArtProps> | null = null;
 export const BrandMark: ComponentType<BrandArtProps> | null = null;
+export const CanvasNav: ComponentType<{ collapsed: boolean; onExpand: () => void }> | null = null;

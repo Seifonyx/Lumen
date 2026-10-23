@@ -20,6 +20,8 @@ test('CanvasNav keeps one history entry for pages shown in place of the chat and
   assert.match(src, /if \(!history\.state\?\.\[MARK\]\) history\.pushState/, 'moving between pages reuses the entry');
   assert.match(src, /ownPops\+\+; history\.back\(\)/, 'closing inside the app takes the entry back');
   assert.ok(!/localStorage|indexedDB|fetch\(|settings\./.test(src), 'presentation only');
-  // The rail is the same navigation: no chat list or project tree of its own.
-  assert.ok(!/ChatRow|s\.chats|settings\.projects/.test(src), 'no second copy of the tree');
+  // The rail is the same navigation, loaded with the first collapse: no chat list or project tree of its own.
+  assert.match(src, /const CanvasRail = lazy\(\(\) => import\('\.\/CanvasRail'\)\);/);
+  const rail = readFileSync('src/components/CanvasRail.tsx', 'utf8');
+  for (const file of [src, rail]) assert.ok(!/ChatRow|s\.chats|settings\.projects|localStorage|indexedDB|fetch\(/.test(file), 'no second copy of the tree, presentation only');
 });

@@ -127,6 +127,19 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
     return () => window.removeEventListener('pointerdown', outside, true);
   }, [press]);
 
+  // Computers: Stop hands the keyboard back to the message box, so a correction or follow-up can be typed at once
+  // (the button turns back into Send or voice under the pointer). Phones keep the keyboard down.
+  useEffect(() => {
+    const el = form.current;
+    if (!el) return;
+    const stopped = (e: MouseEvent) => {
+      if (!(e.target as Element | null)?.closest('.send-btn.stop') || !window.matchMedia('(pointer: fine)').matches) return;
+      requestAnimationFrame(() => input.current?.focus({ preventScroll: true }));
+    };
+    el.addEventListener('click', stopped);
+    return () => el.removeEventListener('click', stopped);
+  }, [input]);
+
   // Nested focus ownership (the picker, usage, attach and privacy dialogs stack above it) and Escape/Tab.
   useFocusScope(form, expanded, collapse);
   // Phone: drag the header down to put writing away; a released or interrupted drag springs back.

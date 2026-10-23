@@ -11,9 +11,32 @@
   - Measured on PR #46: 6 min 22 s instead of 9 min 30 s. The slowest jobs are now two ordinary in-app shards (about 6.2 min against 4.3–4.7 for the others); rebalancing them by recorded time is the next speed step.
 - **Local verification policy for agents:** before a push, run only what the change touches: `npm test`, the ordinary byte check, the budget, the affected contract(s) and the affected in-app suites. Leave the full 103-file Canvas list (about 20 minutes on this 4-CPU container) to CI, which runs the same list in parallel. Run the full list locally only to diagnose a CI failure.
 
+## Chat, Reading & Composer, Phase 3 slice 3 (streaming and scroll) — 23 October 2026
+
+PR on `claude/lucid-dijkstra-541bbi` from `main` `b171a3e` (slice 2 merged, deploying as Deploy #67). Canvas only; the ordinary build is byte-identical to `main`. The owner pre-approved merge and deploy once CI is green ("merge it and deploy it").
+
+- **Assessment** (`tests/e2e/helpers/stream-fixture.cjs`, a local streamed reply with no network or inference, about 7 s of Markdown; 1440 and 390):
+  - Already sound: following while at the bottom; holding still when scrolled away; the "Writing…" pill and its return; Stop to "Stopped"; announcements.
+  - No long tasks while text arrives, even with the long conversation open; only the send itself, about 60 ms.
+  - Gaps found:
+    - While streaming, every paragraph is its own `div`, so the "first child has no top margin" rules (base and slice 1) took headings' space away until the reply finished, and the text jumped then.
+    - The scroll handler measures once a frame, so a streamed update could pull the view back under a wheel or finger that had just started moving up.
+    - After Stop, focus stayed on the button.
+- **Implemented:**
+  - `canvas-reading.css`: only the reply's first and last blocks lose their outer margins.
+  - `ChatView.tsx` (Canvas only, `if (CANVAS_SHELL) useEffect`): a wheel up, finger drag down, PageUp, ArrowUp or Home stops following at once.
+  - `ComposerCanvas.tsx`: on computers, Stop returns the keyboard to the message box; phones keep the keyboard down.
+  - Removed the phone `h2:first-child` margin in `canvas-shell.css`.
+  - Budget: startup JS limit 9 → 9.5 (measured 9.1), with the reason recorded.
+- **Checks:**
+  - The new `tests/e2e/streaming.cjs` (1440/390) passes 4 of 4 runs and fails on the previous build.
+  - 16 scroll, streaming and message suites pass on the Canvas build.
+  - `npm test` passes; the ordinary build is identical.
+- **Not done:** a physical iPhone (momentum scrolling while a reply streams, VoiceOver announcements).
+
 ## Chat, Reading & Composer, Phase 3 slice 2 (the composer) — 23 October 2026
 
-Draft PR on `claude/lucid-dijkstra-541bbi` from `main` `1536d9a` (slice 1 is live as Deploy #66). Canvas only; the ordinary build is byte-identical to `main`. **Not approved for merge or deploy.**
+[PR #48](https://github.com/Seifonyx/Lumen/pull/48) was merged as `b171a3e` (owner-approved 2026-10-23). CI first caught two regressions, both fixed: the usage meter became unreachable at 320 (`design`, QA browser contract), and the model name was hidden at rest (`workspace-design`, the 2.4.3 readability requirement). The name now shows at every width; below 380 px the box says "Message".
 
 - **Assessment** (`tests/e2e/helpers/composer-shots.cjs`: resting, typing, multiline, attachments, streaming/Stop, writing sheet, project chip; 1280/1440 and 320/390/430, Light and Dark):
   - Desktop was sound.

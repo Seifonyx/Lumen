@@ -15,7 +15,9 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // marker in the tree (≈0.3 KB gz); both must work before any interaction, so neither can load later.
 // startupCss 14 → 16 (Phase 3 slice 1): the reading styles (canvas-reading.css: headings, quotes, tables, code, sources,
 // the reply line, attachments; ≈1.6 KB gz) style the first conversation on screen, so they cannot load later.
-const BUDGET = { startupJs: 9, startupCss: 16, routingCenter: 9, canvasCss: 16 };
+// startupJs 9 → 9.5 (Phase 3 slice 3): a wheel, drag or Page Up stops following a streaming reply at once, and Stop
+// returns the keyboard to the message box (≈0.2 KB gz); both act on the first interaction, so neither can load later.
+const BUDGET = { startupJs: 9.5, startupCss: 16, routingCenter: 9, canvasCss: 16 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

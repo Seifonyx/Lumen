@@ -183,7 +183,6 @@
   /* In-answer headings at a phone scale: about 24 / 20 / 17 px. */
   .app[data-lumen-canvas-shell] .markdown h1 { font: 640 24px/1.2 var(--canvas-display-font); letter-spacing: -.022em; margin: 6px 0 12px; }
   .app[data-lumen-canvas-shell] .markdown h2 { font-size: 20px; line-height: 1.25; letter-spacing: -.018em; margin: 22px 0 8px; }
-  .app[data-lumen-canvas-shell] .markdown h2:first-child { margin-top: 4px; }
   .app[data-lumen-canvas-shell] .markdown h3 { font-size: 17px; margin: 20px 0 6px; }
   .app[data-lumen-canvas-shell] .markdown :is(h4, h5, h6) { font-size: 15.5px; font-weight: 640; margin: 16px 0 4px; }
   .app[data-lumen-canvas-shell] { --cv-row: 44px; --cv-gap: 0px; --cv-fs: 15.5px; }

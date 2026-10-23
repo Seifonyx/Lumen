@@ -226,10 +226,18 @@
 }
 @media (max-width: 899px) and (max-height: 700px) {
   .app[data-lumen-canvas-shell] .cv-head { padding-bottom: 10px; }
-  .app[data-lumen-canvas-shell] .cv-dest { gap: 2px; padding-bottom: 10px; margin-bottom: 6px; }
-  .app[data-lumen-canvas-shell] .cv-dest button { min-height: 46px; font-size: 17.5px; }
+  /* Short phones (SE, landscape): the three places become one row of tiles, so the conversations start about
+     100px higher. Each tile stays a 60px-tall target. */
+  .app[data-lumen-canvas-shell] .cv-dest { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding-bottom: 10px; margin-bottom: 6px; }
+  .app[data-lumen-canvas-shell] .cv-dest button { flex-direction: column; justify-content: center; gap: 4px; min-height: 60px; padding: 6px 4px; background: var(--canvas-fill); font-size: 12.5px; font-weight: 560; line-height: 1.15; letter-spacing: 0; text-align: center; }
+  .app[data-lumen-canvas-shell] .cv-dest button > svg { width: 21px; height: 21px; }
+  .app[data-lumen-canvas-shell] .cv-dest button[aria-current='page'] { background: var(--canvas-fill-strong); }
   .app[data-lumen-canvas-shell] .cv-new-pill { min-height: 46px; }
   .app[data-lumen-canvas-shell] .cv-account { width: 46px; min-height: 46px; }
+}
+/* The narrowest phones: a little more drawer for titles, still 40px of the page to tap to close. */
+@media (max-width: 360px) {
+  .app[data-lumen-canvas-shell] .cv-nav { width: calc(100vw - 40px); }
 }
 /* Touch screens keep no "hover" fill after a tap (iOS Safari leaves :hover on the last tapped element). */
 @media (hover: none) {
@@ -330,3 +338,6 @@
 .app[data-lumen-canvas-shell] .cv-search-clear { display: inline-grid; place-items: center; flex: none; inline-size: 28px; block-size: 28px; margin-inline-end: -6px; padding: 0; border: 0; border-radius: 50%; background: var(--canvas-fill-strong); color: var(--canvas-secondary); cursor: pointer; }
 .app[data-lumen-canvas-shell] .cv-search-clear:hover { color: var(--canvas-ink); }
 @media (max-width: 899px) { .app[data-lumen-canvas-shell] .cv-search-clear { position: relative; } .app[data-lumen-canvas-shell] .cv-search-clear::after { content: ''; position: absolute; inset: -8px; } }
+
+/* Keyboard focus in the tree is drawn inside each row, so the scrolling tree never clips it (Phase 2 slice 2). */
+.app[data-lumen-canvas-shell] .cv-nav :is(.cv-dest button, .cv-section-toggle, .cv-project-row, .cv-brief, .chat-open, .cv-more, .cv-new-here, .cv-all, .cv-empty, .cv-ask, .row-menu > .icon-btn, .cv-section-add):focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }

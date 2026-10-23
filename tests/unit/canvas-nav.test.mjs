@@ -25,3 +25,15 @@ test('CanvasNav keeps one history entry for pages shown in place of the chat and
   const rail = readFileSync('src/components/CanvasRail.tsx', 'utf8');
   for (const file of [src, rail]) assert.ok(!/ChatRow|s\.chats|settings\.projects|localStorage|indexedDB|fetch\(/.test(file), 'no second copy of the tree, presentation only');
 });
+
+test("the tree's arrow keys load lazily from SidebarCanvas only, and change no roles", () => {
+  const tree = readFileSync('src/components/SidebarCanvas.tsx', 'utf8');
+  assert.match(tree, /import\('\.\.\/lib\/tree-keys'\)/);
+  assert.ok(!/from '\.\.\/lib\/tree-keys'/.test(tree), 'no static import (startup stays lean)');
+  for (const file of ['src/App.tsx', 'src/components/Sidebar.tsx', 'src/components/ChatView.tsx', 'src/main.tsx']) assert.ok(!readFileSync(file, 'utf8').includes('tree-keys'), file);
+  const keys = readFileSync('src/lib/tree-keys.ts', 'utf8');
+  assert.ok(!/setAttribute|removeAttribute|tabIndex|\.role\s*=/.test(keys), 'rows keep their button semantics');
+  // The shared ChatRow keeps its single Canvas seam; the tree adds current/pinned state as attributes.
+  assert.match(tree, /setAttribute\('aria-current', 'page'\)/);
+  assert.match(tree, /setAttribute\('aria-describedby', `\$\{ids\}-pinned`\)/);
+});

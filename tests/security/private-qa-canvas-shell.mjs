@@ -7,7 +7,7 @@
 // Per viewport (1440×960, 390×844, 320×568): folders and loose conversations from the canonical store; the open
 // chat's folder open; folder/section disclosure; project overview, new chat in a project; row actions (rename);
 // search over titles and messages with Ask; All chats; phone drawer open/close; collapsed rail, Back from a page
-// and focus return (Phase 2); header breadcrumb; reading
+// and focus return (Phase 2); tree keyboard, list names, current chat, announced pins and result count (slice 2); header breadcrumb; reading
 // measure; floating composer clear of the last answer (desktop); a second reviewer's isolated tree; axe; no request
 // leaving the review origin. Screenshots go to CP03_OUT.
 
@@ -157,9 +157,45 @@ try {
       assert.ok(await nav(page).getByText('Four quiet days in Lisbon').isVisible(), 'search finds a chat inside a folder');
       assert.ok(await nav(page).getByRole('button', { name: /Ask your chats/ }).isVisible());
       assert.equal(await nav(page).getByText('Notes for a quieter workspace').count(), 0, 'non-matching chats are hidden');
+      assert.match(await nav(page).getByRole('status').textContent(), /^\d+ conversations? found$/, 'the result count is announced');
       await nav(page).getByRole('searchbox', { name: 'Search chats' }).fill('');
       await settle(page);
       pass('search');
+
+      // Tree semantics (Phase 2 slice 2): each folder's list is named after its project, the open chat is current,
+      // pins are announced.
+      await openNav(page, phone && !(await nav(page).evaluate((el) => el.classList.contains('open'))));
+      for (const name of ['Studio launch', 'Lisbon in spring']) assert.equal(await nav(page).getByRole('list', { name, exact: true }).count(), 1, `${name} list is named`);
+      assert.equal(await nav(page).locator('.chat-open[aria-current="page"]').count(), 1, 'one current chat');
+      const pinned = await nav(page).locator('.chat-row:has(.pin-mark) .chat-open').evaluateAll((b) => b.map((x) => document.getElementById(x.getAttribute('aria-describedby') || '')?.textContent));
+      assert.ok(pinned.length > 0 && pinned.every((t) => t === 'Pinned'), `pins are announced: ${pinned}`);
+      assert.equal(await nav(page).locator('.chat-row:not(:has(.pin-mark)) .chat-open[aria-describedby]').count(), 0, 'only pinned chats say so');
+      // Tree keyboard (computers): Down from search enters the tree, Right opens a folder and enters it, Left
+      // returns to the folder and closes it, Up from the first row returns to search.
+      if (!phone) {
+        const search = nav(page).getByRole('searchbox', { name: 'Search chats' });
+        await search.focus();
+        await page.keyboard.press('ArrowDown');
+        assert.ok(await page.evaluate(() => document.activeElement?.closest('.cv-dest') !== null), 'Down from search enters the tree');
+        await page.keyboard.press('ArrowUp');
+        assert.ok(await search.evaluate((el) => el === document.activeElement), 'Up from the first row returns to search');
+        const lisbon = nav(page).locator('.cv-project-row', { hasText: 'Lisbon in spring' });
+        await lisbon.focus();
+        if (await lisbon.getAttribute('aria-expanded') === 'true') await page.keyboard.press('ArrowLeft');
+        assert.equal(await lisbon.getAttribute('aria-expanded'), 'false');
+        await page.keyboard.press('ArrowRight');
+        assert.equal(await lisbon.getAttribute('aria-expanded'), 'true', 'Right opens a folder');
+        await page.keyboard.press('ArrowRight');
+        await page.keyboard.press('ArrowDown');
+        assert.ok(await page.evaluate(() => document.activeElement?.closest('.cv-project')?.textContent.includes('Lisbon in spring') && document.activeElement.matches('.chat-open')), 'Right then Down reach a chat inside the folder');
+        await page.keyboard.press('ArrowLeft');
+        assert.ok(await lisbon.evaluate((el) => el === document.activeElement), 'Left returns to the folder');
+        await page.keyboard.press('ArrowLeft');
+        assert.equal(await lisbon.getAttribute('aria-expanded'), 'false', 'Left closes it');
+        await page.keyboard.press('End');
+        assert.ok(await page.evaluate(() => document.activeElement?.matches('.cv-all')), 'End reaches the last row');
+      }
+      pass('tree semantics and keyboard');
 
       // All chats opens the canonical list.
       await nav(page).getByRole('button', { name: /All chats/ }).click();
@@ -191,6 +227,11 @@ try {
         await openNav(page, true);
         await nav(page).getByRole('button', { name: 'Library', exact: true }).click();
         await page.getByRole('main', { name: 'Library' }).waitFor();
+        // The drawer opened from a page's own bar gives focus back to that button when it closes (slice 2).
+        await page.getByRole('button', { name: 'Open sidebar', exact: true }).click();
+        await settle(page, 500);
+        await page.keyboard.press('Escape');
+        await page.waitForFunction(() => document.activeElement?.matches('.hub-nav[aria-label="Open sidebar"]'));
         await page.goBack();
         await page.getByRole('main', { name: 'Library' }).waitFor({ state: 'detached' });
         await page.waitForFunction(() => document.activeElement?.matches('.menu-btn'));

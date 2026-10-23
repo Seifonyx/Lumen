@@ -21,6 +21,8 @@ import type { Message } from '../types';
 import Markdown from './Markdown';
 import GeneratedImage from './GeneratedImage';
 import RouteWhy from './RouteWhy';
+import { CANVAS_SHELL } from '../lib/canvas-presentation';
+import { isReroute, rerouteReason } from '../lib/reroute';
 import ModelPicker from './ModelPicker';
 import TextSelection from './TextSelection';
 import MoreMenu from './MoreMenu';
@@ -323,7 +325,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
         </div>
       )}
 
-      {message.notices?.map((n, i) => (
+      {(CANVAS_SHELL ? message.notices?.filter((n) => !isReroute(n)) : message.notices)?.map((n, i) => (
         <div key={i} className="notice" dir="auto"><Info size={14} /> {n}</div>
       ))}
 
@@ -347,7 +349,11 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
 
       {!streaming && !readOnly && (
         <div className="msg-actions">
-          {message.route && !message.via && message.model ? <RouteWhy message={message} /> : (
+          {message.route && !message.via && message.model ? <RouteWhy message={message} /> : CANVAS_SHELL && !message.via && rerouteReason(message.notices) ? (
+          <span className="model-tag cv-rerouted" title={`Auto switched models: ${rerouteReason(message.notices)}`}>
+            <span className="route-model">{modelLabel(catalog, message.model)}</span><span className="route-tag"> · Rerouted: {rerouteReason(message.notices)}</span>
+          </span>
+          ) : (
           <span className="model-tag" title={message.via ? `${message.via} layout${message.route ? `: ${message.route}` : ''}` : message.route ? `Auto picked this model: ${message.route}` : message.model}>
             {modelLabel(catalog, message.model)}
             {message.via ? (

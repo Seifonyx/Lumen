@@ -8,6 +8,7 @@ import { useFocusScope } from '../lib/focus-scope';
 import { useSheetDrag } from '../lib/sheet-drag';
 import { estimateTokens } from '../lib/routing';
 import { formatTokens } from '../lib/usage';
+import { installMessageActionTaps } from '../lib/message-taps';
 
 export type ComposerPresentation = 'resting' | 'engaged' | 'expanded';
 
@@ -20,6 +21,8 @@ interface Options {
   attachments: number;
   title?: string;
   autosize: () => void;
+  /** What's in force for the next message, shown as chips above the input: web search, and the project a new chat starts in. */
+  context: { search: boolean; project: { id: string; name: string } | null; turnOffSearch: () => void; leaveProject: () => void };
 }
 
 const PHONE = '(max-width: 899px)';
@@ -30,8 +33,17 @@ const ExpandIcon = () => (
     <path d="M15 3h6v6" /><path d="m21 3-7 7" /><path d="m3 21 7-7" /><path d="M9 21H3v-6" />
   </svg>
 );
+// Globe, FolderKanban and X, inline for the same reason.
+const icon = (paths: string[], size = 13) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {paths.map((d) => <path key={d} d={d} />)}
+  </svg>
+);
+const GLOBE = ['M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20', 'M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20', 'M2 12h20'];
+const FOLDER = ['M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z', 'M8 10v4', 'M12 10v2', 'M16 10v6'];
+const CLOSE = ['M18 6 6 18', 'm6 6 12 12'];
 
-export function useCanvasComposer({ input, scope, value, attachments, title, autosize }: Options) {
+export function useCanvasComposer({ input, scope, value, attachments, title, autosize, context }: Options) {
   const form = useRef<HTMLFormElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   const [focused, setFocused] = useState(false);
@@ -39,9 +51,14 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
   const pressing = useRef(false);
   const [expanded, setExpanded] = useState(false);
   const [restHeight, setRestHeight] = useState(0);
+  // Desktop: the sheet is anchored to the window, centred on the conversation column it rose from.
+  const [column, setColumn] = useState<{ left: number; width: number } | null>(null);
   const [phone, setPhone] = useState(() => window.matchMedia(PHONE).matches);
   const selection = useRef<{ start: number; end: number; direction: 'forward' | 'backward' | 'none'; scroll: number } | null>(null);
   const restore = useRef(false);
+
+  // (Lives with the composer because Canvas always mounts it beside the conversation.)
+  useEffect(() => installMessageActionTaps(), []);
 
   useEffect(() => {
     const query = window.matchMedia(PHONE);
@@ -51,14 +68,25 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
   }, []);
   useLayoutEffect(() => { restore.current = false; setExpanded(false); }, [scope]);
 
+  const measureColumn = useCallback(() => {
+    const r = form.current?.parentElement?.getBoundingClientRect();
+    if (r) setColumn({ left: Math.round(r.left), width: Math.round(r.width) });
+  }, []);
+  useEffect(() => {
+    if (!expanded) return;
+    window.addEventListener('resize', measureColumn);
+    return () => window.removeEventListener('resize', measureColumn);
+  }, [expanded, measureColumn]);
+
   const toggle = useCallback((open: boolean) => {
     const el = input.current;
     if (el) selection.current = { start: el.selectionStart, end: el.selectionEnd, direction: el.selectionDirection, scroll: el.scrollTop };
     // The composer leaves the page flow while it is a sheet: keep its place so the conversation doesn't move.
     if (open) setRestHeight(form.current?.parentElement?.offsetHeight || 0);
+    if (open) measureColumn();
     restore.current = true;
     setExpanded(open);
-  }, [input]);
+  }, [input, measureColumn]);
   const collapse = useCallback(() => toggle(false), [toggle]);
 
   // A press holds the state until it ends. Inside the composer that keeps its controls in place; elsewhere (a message's
@@ -102,12 +130,22 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
   return {
     state,
     expanded,
+    // Above the input: what the next message will use. The same choices stay removable with one tap.
+    chips: (context.search || context.project) ? (
+      <div className="repo-strip cv-context-chips">
+        {context.search && <span className="ctx-chip">{icon(GLOBE)} Web search<button type="button" className="icon-btn xs" aria-label="Turn off web search" onClick={context.turnOffSearch}>{icon(CLOSE, 12)}</button></span>}
+        {context.project && <span className="ctx-chip" title={`New chat in ${context.project.name}`}>{icon(FOLDER)} <span className="ctx-chip-name">{context.project.name}</span><button type="button" className="icon-btn xs" aria-label="Remove from project" onClick={context.leaveProject}>{icon(CLOSE, 12)}</button></span>}
+      </div>
+    ) : null,
     collapse: () => { if (expanded) collapse(); },
     wrap: {
       'data-lumen-canvas-foundation': '',
       'data-lumen-canvas-composer': '',
       'data-composer-state': state,
-      style: expanded && restHeight ? ({ '--canvas-rest-h': `${restHeight}px` } as CSSProperties) : undefined,
+      style: expanded ? ({
+        ...(restHeight ? { '--canvas-rest-h': `${restHeight}px` } : {}),
+        ...(column ? { '--canvas-column-left': `${column.left}px`, '--canvas-column-width': `${column.width}px` } : {}),
+      } as CSSProperties) : undefined,
     },
     form: {
       ref: form,
@@ -117,7 +155,9 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
       // Only the message box engages the composer (at once: it is itself the press target). Other controls never
       // change the state mid-press: the click would land on a control that has moved, or lose one about to hide
       // (Safari doesn't focus buttons, so the box blurs on pointer down). The state settles once the press ends.
-      onFocus: (e: FocusEvent<HTMLFormElement>) => { if ((e.target as Element) === input.current) setFocused(true); },
+      // Focus coming back from one of its own dialogs (usage, picker: phones show them as sheets outside the form)
+      // keeps it engaged, so the control it returns to stays on screen.
+      onFocus: (e: FocusEvent<HTMLFormElement>) => { if ((e.target as Element) === input.current || (e.relatedTarget as Element | null)?.closest('[role="dialog"]')) setFocused(true); },
       onBlur: (e: FocusEvent<HTMLFormElement>) => { if (!pressing.current && !e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false); },
       onPointerDown: press,
     },

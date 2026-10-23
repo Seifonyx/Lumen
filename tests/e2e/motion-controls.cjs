@@ -23,7 +23,7 @@ const rest = page => page.waitForFunction(() => !document.querySelector('.page-s
       await input.fill('KEEP_MY_DRAFT');
 
       if (run('press')) {
-        const controls = ['.composer button[aria-label^="Add"]', '.composer .send-btn', ...(width >= 900 ? ['.sidebar .new-chat'] : [])];
+        const controls = ['.composer button[aria-label^="Add"]', '.composer .send-btn', ...(width >= 900 ? ['.sidebar .new-chat, .cv-dest-new, .cv-new-pill'] : [])];
         for (const selector of controls) {
           const add = page.locator(selector).first();
           const box = await add.boundingBox();

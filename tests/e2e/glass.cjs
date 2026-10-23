@@ -176,7 +176,7 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
 
     // 2.5.1: All chats has a Select mode (rows are plain until then) and iPhone sheets have no ✕.
     await page.click('.menu-btn'); await page.waitForTimeout(400);
-    await page.click('.view-all-chats');
+    await page.click('.view-all-chats, .cv-all');
     await page.waitForSelector('.all-chats');
     assert.equal(await page.locator('.all-chats input[type="checkbox"]').count(), 0, 'no checkboxes until Select');
     assert.equal(await page.locator('.all-chats-actions').count(), 0, 'no action row until Select');
@@ -194,6 +194,13 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     // and "Your chats will appear here" is centred.
     t = await open(IPHONE, 'glass-empty');
     await t.page.click('.menu-btn'); await t.page.waitForTimeout(600);
+    if (await t.page.locator('.cv-account').count()) {
+      // Canvas: the account row closes the drawer with no big gap, and the empty line sits in the conversations section.
+      const c = await t.page.evaluate(() => { const a = document.querySelector('.cv-account').getBoundingClientRect(), sb = document.querySelector('.sidebar').getBoundingClientRect(); return { gap: sb.bottom - a.bottom, inside: a.left >= sb.left && a.right <= sb.right }; });
+      assert.ok(c.inside && c.gap <= 24, `the account row closes the drawer (${Math.round(c.gap)}px gap)`);
+      assert.ok(await t.page.locator('.cv-none').isVisible(), 'the empty message shows');
+      console.log('PASS sidebar footer lines up and the empty message is centred');
+    } else {
     const side = await t.page.evaluate(() => {
       const r = (s) => document.querySelector(s).getBoundingClientRect();
       const a = r('.sidebar-footer .sidebar-foot'), n = r('.sidebar-footer .new-chat'), sb = r('.sidebar'), e = r('.empty-list');
@@ -203,6 +210,7 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     assert.ok(side.gap <= 24, `no big gap under New chat (${Math.round(side.gap)}px)`);
     assert.ok(Math.abs(side.empty - side.middle) <= 2, 'the empty message is centred');
     console.log('PASS sidebar footer lines up and the empty message is centred');
+    }
     await t.ctx.close();
 
     // Computers never see the tab bar.

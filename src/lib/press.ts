@@ -1,6 +1,12 @@
+import { CANVAS_SHELL } from './canvas-presentation';
 // One bounded press language for glass and solid controls. The action stays under the finger;
 // scrolling, cancellation and releasing outside always remove the feedback.
-const BUTTONS = [
+const BUTTONS = CANVAS_SHELL ? [
+  '.btn', '.icon-btn', '.tool-btn', '.send-btn', '.sidebar-chip', '.model-button', '.to-bottom',
+  '.hub-close', '.composer-chip', '.project-topbar-pill', '.new-chat', 'button.tool-card',
+  // Canvas: its tree's places, New chat and account share the same press.
+  '.cv-dest button', '.cv-new-pill', '.cv-account', '.cv-all',
+].join(', ') : [
   '.btn', '.icon-btn', '.tool-btn', '.send-btn', '.sidebar-chip', '.model-button', '.to-bottom',
   '.hub-close', '.composer-chip', '.project-topbar-pill', '.new-chat', 'button.tool-card',
 ].join(', ');

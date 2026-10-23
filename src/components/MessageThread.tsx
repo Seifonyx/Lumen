@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom';
 import MessageNavigation from './MessageNavigation';
 import { messageStops, stopAtIndex } from '../lib/message-navigation';
 import { useReplyEntrance } from '../lib/motion';
+import { CANVAS_SHELL } from '../lib/canvas-presentation';
 
 const FIRST_PAINT = 6;
 export const navigatorDefault = () => !(window.matchMedia('(pointer: coarse)').matches && window.matchMedia('(max-width: 899px)').matches);
@@ -28,6 +29,11 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
   // The lines on the right that jump between your messages: Settings → General; by default on computers only.
   const showNavigator = useStore((s) => s.settings.messageNavigator ?? navigatorDefault());
   const messageData=useRef(messages);messageData.current=messages;
+  // Canvas context rail: its outline and model rows jump here the same way the navigator does.
+  if(CANVAS_SHELL)useEffect(()=>{ // eslint-disable-line react-hooks/rules-of-hooks
+    const jump=(e:Event)=>{const id=(e as CustomEvent<string>).detail;if(messageData.current.some(m=>m.id===id)){stick.current=false;setJumpKeyboard(false);setJumpTarget(id)}};
+    window.addEventListener('lumen:jump',jump);return()=>window.removeEventListener('lumen:jump',jump);
+  },[stick]);
   const stops=useMemo(()=>messageStops(messages),[messages]);
   const pinnedKeys=useMemo(()=>new Set([...pinned,...(focus?[focus]:[]),...(jumpTarget?[jumpTarget]:[])]),[pinned,focus,jumpTarget]);
   const enabled = messages.length > 120 && !full;

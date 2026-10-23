@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import EclipseOrbit from './EclipseOrbit';
 import { useVisualActivity } from '../lib/visual-activity';
+import { CANVAS_SHELL } from '../lib/canvas-presentation';
 
 /** The Lumen mark: an eclipse, a dark moon ringed by lime light with one bright flare. Same tile in every theme (it's the app icon). */
 export default function Logo({ size = 24, className = "" }: { size?: number; className?: string }) {
@@ -8,6 +9,8 @@ export default function Logo({ size = 24, className = "" }: { size?: number; cla
   const id = useId().replace(/:/g, '');
   // Small marks (sidebar, shared pages) get a softer halo so they don't glow over the text beside them.
   const small = size <= 32;
+  // Canvas: no symbol until the real logo lands; the brand is the plain "Lumen" wordmark.
+  if (CANVAS_SHELL) return null;
   return (
     <svg ref={activity.ref} data-visual-active={activity.active} className={`logo animated-visual ${className}`} width={size} height={size} viewBox="0 0 512 512" aria-hidden="true">
       <defs>

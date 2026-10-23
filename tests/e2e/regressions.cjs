@@ -81,7 +81,7 @@ async function run(browser, mobile) {
   await page.reload();
   await page.waitForSelector('.app:not(.app-skeleton) .topbar');
   if (mobile) await page.click('.menu-btn');
-  check(await page.locator('.sidebar-project-item[aria-current="page"]').textContent().then(t=>t.includes('Study')), `${label}: project selection survives reload`);
+  check(await page.locator('.sidebar-project-item[aria-current="page"], .cv-project:has(.cv-brief.active) .cv-name').textContent().then(t=>t.includes('Study')), `${label}: project selection survives reload`);
   if (mobile) await page.locator('.sidebar [aria-label="Close menu"]').click();
   check((await page.locator('.model-button').textContent()).includes('Gemini 2.5 Pro'), `${label}: project default model is shown before the first message`);
   await page.fill('.composer textarea', 'Use the project references after reload.');
@@ -150,7 +150,7 @@ async function run(browser, mobile) {
   if (mobile) {
     await page.setViewportSize({ width: 320, height: 720 });
     await page.click('.menu-btn');
-    await page.locator('.sidebar-project-action').first().click();
+    await page.locator('.sidebar-project-action, .cv-section-add[aria-label="New project"]').first().click();
     const fits = await page.locator('.project-form-actions').evaluate((row) => {
       const bounds = row.getBoundingClientRect();
       return row.scrollWidth <= row.clientWidth + 1 && [...row.querySelectorAll('button')].every((button) => {
@@ -231,7 +231,7 @@ async function run(browser, mobile) {
       check(await page.locator('.composer').evaluate((el, offset) => el.getBoundingClientRect().bottom <= offset + 460 + 1, offset), `iOS simulation: composer fits after keyboard reopens at offset ${offset}`);
     }
     await page.click('.menu-btn');
-    await page.click('.sidebar .new-chat');
+    await page.click('.sidebar .new-chat, .cv-dest-new, .cv-new-pill');
     await page.waitForSelector('.app:not(.app-skeleton) .main.is-empty');
     await page.click('.menu-btn');
     await page.locator('.chat-open').last().click();

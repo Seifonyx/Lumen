@@ -1,10 +1,10 @@
 // CP05 browser contract: Canvas across the app (Library, Tools, Projects, project workspace, Settings, All chats,
-// picker, usage, + menu, Routing Center, Study, Assistants, Compare, document Canvas panel) in dark, light and true black, in a committed synthetic review build served through
+// picker, usage, + menu, Routing Center, Study, Assistants, Compare, document Canvas panel) in dark and light (Canvas has no True black), in a committed synthetic review build served through
 // the real QA gate on loopback, in Chromium or Linux WebKit (MR_WEBKIT=1). Not a physical-iPhone result.
 //
 //   node scripts/qa/build.mjs --out /tmp/qa-build && QA_BUILD_DIR=/tmp/qa-build node tests/security/private-qa-canvas-screens.mjs
 //
-// Per viewport (1440×960, 390×844) and theme (dark, light, true black): every destination opens with the Canvas scope, ink
+// Per viewport (1440×960, 390×844) and theme (dark, light; no True black on Canvas): every destination opens with the Canvas scope, ink
 // (monochrome) accents and display headings; one workflow per area (create a project → it appears in the Canvas
 // tree; open a project from its brief while a page is showing); axe per screen; no overflow, CSP violation, page
 // error or request leaving the review origin. Screenshots go to CP05_OUT.
@@ -85,7 +85,7 @@ async function axe(page, include) {
 try {
   for (const [width, height] of VIEWPORTS) {
     const phone = width < 900;
-    for (const theme of (process.env.CP05_THEMES || 'dark,light,black').split(',')) {
+    for (const theme of (process.env.CP05_THEMES || 'dark,light').split(',')) {
       const tag = `${width}x${height}-${theme}`;
       const record = { viewport: tag, engine: engineName, screens: {}, checks: [] };
       const pass = (name) => record.checks.push(name);
@@ -95,10 +95,11 @@ try {
         await go(page, phone, 'Settings');
         await page.getByRole('dialog', { name: 'Settings' }).waitFor();
         if (phone) { await page.getByRole('dialog', { name: 'Settings' }).getByRole('button', { name: /^General/ }).first().click(); await settle(page); }
-        const themeLabel = { light: 'Light', black: 'True black' }[theme];
-        if (themeLabel) { await page.getByRole('radio', { name: themeLabel, exact: true }).or(page.getByRole('button', { name: themeLabel, exact: true })).first().click(); await settle(page); }
-        // True black is the dark theme with the black appearance.
-        assert.deepEqual(await page.evaluate(() => [document.documentElement.dataset.theme || 'auto', document.documentElement.dataset.appearance || '']), theme === 'black' ? ['dark', 'black'] : [theme, '']);
+        // Canvas offers Light and Dark (and Auto); True black is not a choice.
+        assert.equal(await page.getByRole('radio', { name: 'True black', exact: true }).or(page.getByRole('button', { name: 'True black', exact: true })).count(), 0, `${tag}: no True black`);
+        const themeLabel = { light: 'Light', dark: 'Dark' }[theme];
+        await page.getByRole('radio', { name: themeLabel, exact: true }).or(page.getByRole('button', { name: themeLabel, exact: true })).first().click(); await settle(page);
+        assert.deepEqual(await page.evaluate(() => [document.documentElement.dataset.theme || 'auto', document.documentElement.dataset.appearance || '']), [theme, '']);
         let look = await canvasLook(page, '.settings-heading h2');
         assert.ok(look.scoped && look.ink, 'Canvas scope with ink accents');
         assert.match(look.headingFont, /Geist/); // owner decision: Geist stays the display face (no Archivo)
@@ -231,4 +232,4 @@ try {
   await browser.close();
   await gate.close();
 }
-console.log(`CP05 Canvas screens contract passed in ${engineName} at ${VIEWPORTS.map((v) => v.join('x')).join(', ')} (dark, light and true black)`);
+console.log(`CP05 Canvas screens contract passed in ${engineName} at ${VIEWPORTS.map((v) => v.join('x')).join(', ')} (dark and light)`);

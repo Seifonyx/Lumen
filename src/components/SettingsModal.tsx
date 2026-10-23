@@ -62,6 +62,7 @@ import PrivacyTab from './PrivacyTab';
 import LayoutsSection, { LayoutEditor } from './LayoutsTab';
 import type { Layout } from '../lib/layouts';
 import CatalogErrorNotice from './CatalogErrorNotice';
+import { CANVAS_SHELL } from '../lib/canvas-presentation';
 
 /** Settings sections: id, name, icon, one-line description */
 const TABS: [string, string, LucideIcon, string][] = [
@@ -780,7 +781,9 @@ export default function SettingsModal() {
                 <div className="settings-group">
                   <span className="settings-group-title">Appearance</span>
                   <div className="settings-card">
-                    <Choice<Theme> label="Theme" value={settings.theme} onChange={(v) => update({ theme: v })} options={[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark'], ['black', 'True black']]} />
+                    {CANVAS_SHELL
+                      ? <Choice<Theme> label="Theme" value={settings.theme === 'black' ? 'dark' : settings.theme} onChange={(v) => update({ theme: v })} options={[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]} />
+                      : <Choice<Theme> label="Theme" value={settings.theme} onChange={(v) => update({ theme: v })} options={[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark'], ['black', 'True black']]} />}
                     <Choice<FontSize> label="Text size" value={settings.fontSize} onChange={(v) => update({ fontSize: v })} options={[['auto', 'Auto'], ['small', 'S'], ['medium', 'M'], ['large', 'L']]} />
                   </div>
                 </div>

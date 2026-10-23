@@ -5,6 +5,8 @@ import Modal from './Modal';
 import type { Attachment } from '../types';
 import { attachmentNeeds, modelProblem } from '../lib/ai/eligibility.js';
 import { estimateTokens } from '../lib/routing';
+import { CANVAS_SHELL } from '../lib/canvas-presentation';
+import { modelTraits } from '../lib/model-traits';
 
 export default function CompareModelsModal({ prompt, onPromptChange, files, unavailableReason, onClose, onCompare }: { prompt: string; onPromptChange: (value: string) => void; files: Attachment[]; unavailableReason?: string; onClose: () => void; onCompare: (models: string[]) => void }) {
   const enabled = useStore((s) => s.settings.enabledModels);
@@ -34,7 +36,7 @@ export default function CompareModelsModal({ prompt, onPromptChange, files, unav
           {enabled.map((id) => {
             const checked = selected.includes(id);
             return <button key={id} className={`compare-model-row${checked ? ' selected' : ''}${!supports(id) ? ' incompatible' : ''}`} disabled={!supports(id)} onClick={() => toggle(id)} aria-pressed={checked}>
-              <span className="compare-check">{checked && <Check size={14} />}</span><Boxes size={16} /><span>{modelLabel(catalog, id)}</span><small>{checked ? 'Selected' : ''}</small>
+              <span className="compare-check">{checked && <Check size={14} />}</span><Boxes size={16} /><span>{modelLabel(catalog, id)}</span><small>{CANVAS_SHELL ? modelTraits(catalog?.models.find((m) => m.id === id)) : checked ? 'Selected' : ''}</small>
             </button>;
           })}
           {enabled.length < 2 && <p className="muted small">Enable at least two models in Settings → Models to compare answers.</p>}

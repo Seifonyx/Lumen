@@ -95,7 +95,9 @@ async function check(page, cdp, name, act, results) {
       if (phone) await check(page, cdp, `${tag} settings section pop`, async () => { await page.click('.settings-back'); }, results);
       await check(page, cdp, `${tag} settings closes`, async () => { await page.click('.settings-page [aria-label="Close"]'); }, results);
       await drawer();
-      await check(page, cdp, `${tag} all chats opens`, async () => { await page.click('.view-all-chats'); await page.getByRole('dialog', { name: 'All chats' }).waitFor(); }, results);
+      await check(page, cdp, `${tag} all chats opens`, async () => { await page.click('.view-all-chats, .cv-all'); await page.getByRole('dialog', { name: 'All chats' }).waitFor(); }, results);
+      // (Canvas: rows are plain until Select; pick that mode before the measured step.)
+      { const select = page.getByRole('dialog', { name: 'All chats' }).locator('.all-chats-select'); if (await select.count()) { await select.click(); await page.waitForTimeout(400); } }
       await check(page, cdp, `${tag} chat deleted (row slides out)`, async () => { const d = page.getByRole('dialog', { name: 'All chats' }); await d.getByLabel('Select Chat number 5').check(); await d.getByRole('button', { name: 'Delete' }).click(); await d.getByRole('alert').getByRole('button', { name: 'Delete' }).click(); }, results);
       await check(page, cdp, `${tag} all chats closes`, async () => { await page.keyboard.press('Escape'); }, results);
       assert.deepEqual(errors, []);

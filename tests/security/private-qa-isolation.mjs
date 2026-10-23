@@ -146,7 +146,13 @@ try {
     'src/styles/canvas-screens.css', 'src/styles/canvas.css', 'src/lib/workspace-presentation.ts',
     // Activation (owner-authorized 2026-10-22): the shared "on" module, its LUMEN_CANVAS selection, and the workflows
     // that set it (Deploy and Preview build Canvas only when it is chosen) or test it.
-    'src/lib/canvas-presentation.on.ts', 'vite.config.ts', '.github/workflows/deploy.yml', '.github/workflows/preview.yml', '.github/workflows/tests.yml'];
+    'src/lib/canvas-presentation.on.ts', 'vite.config.ts', '.github/workflows/deploy.yml', '.github/workflows/preview.yml', '.github/workflows/tests.yml',
+    // Canvas polish (owner-approved 2026-10-22): flagged presentation in these files; the ordinary output stays byte-equal.
+    'src/components/ModelPicker.tsx', 'src/components/CompactNote.tsx', 'src/components/ProjectWorkspace.tsx', 'src/lib/chat-preview.ts', 'src/lib/markdown.ts',
+    'src/components/RouteWhy.tsx', 'src/lib/route-words.ts', 'src/components/Logo.tsx', 'src/components/CanvasHome.tsx', 'src/components/SettingsModal.tsx', 'src/lib/settings.ts',
+    'src/pwa/legal-ink.css', 'src/lib/press.ts', 'src/components/HubPage.tsx', 'src/lib/message-taps.ts', 'src/components/AllChats.tsx', 'src/components/CompareModelsModal.tsx', 'src/lib/model-traits.ts',
+    'src/components/MessageItem.tsx', 'src/lib/reroute.ts', 'src/lib/chat-records.ts', 'src/lib/routing-transfer.ts', 'src/components/ContextRail.tsx',
+    'src/components/MessageThread.tsx', 'src/components/ProjectMemory.tsx', 'src/components/RoutingExtras.tsx'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');

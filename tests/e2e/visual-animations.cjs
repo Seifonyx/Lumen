@@ -16,6 +16,8 @@ const ua='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605
   page.on('pageerror',e=>{if(!e.message.includes('firestore.googleapis.com'))errors.push(e.message);});
   await page.goto(url);await page.locator('.composer textarea').waitFor();
   const moon=page.locator('.welcome-moon'),head=moon.locator('.orbit-head');
+  // Both presentations show the same new-chat moon with its two stars.
+  {
   assert.equal(await head.count(),1,'Welcome moon has one orbiting light');
   await page.waitForTimeout(1500);
   const p=await head.boundingBox();await page.waitForTimeout(450);const q=await head.boundingBox();
@@ -40,6 +42,7 @@ const ua='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605
    assert.equal(await moon.locator('.moon-orbit').evaluate(el=>getComputedStyle(el).animationName),'none','Live preference changes stop the orbit');
    await page.emulateMedia({reducedMotion:'no-preference'});
    await page.waitForFunction(()=>document.querySelector('.welcome-moon').dataset.visualActive==='true');
+  }
   }
   await page.locator('.composer textarea').fill('KEEP_MOON_DRAFT');
   await page.waitForTimeout(300);

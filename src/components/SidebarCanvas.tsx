@@ -7,13 +7,12 @@
 import { BookOpen, ChevronRight, LayoutGrid, MessageSquarePlus, MessageSquareText, PanelLeftClose, Plus, Search, Settings2, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 import { Suspense, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
-import { modKey } from '../lib/util';
+import { isMac, modKey } from '../lib/util';
 import { useFocusScope } from '../lib/focus-scope';
 import { closeRoutingCenter, openRoutingCenter, useRoutingCenter } from '../lib/routing-center';
 import { useStore } from '../store';
 import type { Chat, Project } from '../types';
 import AllChats from './AllChats';
-import Logo from './Logo';
 import ProjectManager from './ProjectManager';
 import { AskChats, ChatRow, type SidebarProps } from './Sidebar';
 
@@ -45,7 +44,6 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const { newChat, setUi, selectProject } = useStore.getState();
   const [phone, setPhone] = useState(() => window.matchMedia(PHONE).matches);
   const [query, setQuery] = useState('');
-  const [searching, setSearching] = useState(false);
   const [disclosure, setDisclosure] = useState<Open>(OPEN);
   const [more, setMore] = useState<Record<string, boolean>>({});
   const [allChats, setAllChats] = useState(false);
@@ -73,7 +71,6 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   }, [open, phone]);
   // Another account starts from its own (default) disclosure, never the previous one's.
   useEffect(() => { setDisclosure(OPEN); setMore({}); setQuery(''); }, [user?.uid]);
-  useEffect(() => { if (searching && phone) searchInput.current?.focus({ preventScroll: true }); }, [searching, phone]);
 
   const q = query.trim().toLowerCase();
   // Sidebar's semantics: saved chats with content (or the open one); searching matches titles and messages and
@@ -125,20 +122,21 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         }}
       >
         <div className="cv-head">
-          <span className="cv-brand"><Logo size={phone ? 26 : 22} /><span className="cv-wordmark">Lumen</span></span>
-          {phone && <button type="button" className="cv-head-btn" aria-label="Search chats" aria-expanded={searching} onClick={() => { if (searching) setQuery(''); setSearching(!searching); }}><Search size={18} /></button>}
+          <span className="cv-brand"><span className="cv-wordmark">Lumen</span></span>
           {phone
             ? <button type="button" className="cv-head-btn" aria-label="Close menu" onClick={() => setUi({ sidebarOpen: false })}><X size={18} /></button>
             : <button type="button" className="cv-head-btn collapse-sidebar" aria-label="Collapse sidebar" title={`Collapse sidebar (${modKey}⇧S)`} onClick={onCollapse}><PanelLeftClose size={17} /></button>}
         </div>
-        {(searching || !phone) && (
-          <label className="search cv-search">
-            <Search size={16} />
-            <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} dir="auto"
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Escape' && (query || phone)) { e.stopPropagation(); setQuery(''); if (phone) setSearching(false); } }} />
-          </label>
-        )}
+        {/* Always in the drawer too: one tap to search, no extra step (phones don't focus it, so no keyboard). */}
+        <label className="search cv-search">
+          <Search size={16} />
+          <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} dir="auto"
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Escape' && query) { e.stopPropagation(); setQuery(''); } }} />
+          {/* Desktop: the command palette, one shortcut away (the same key press the app already listens for). */}
+          {!phone && !query && <button type="button" className="cv-kbd" title="Search and jump to anything" aria-label={`Search and jump to anything (${modKey}K)`}
+            onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: isMac, ctrlKey: !isMac, bubbles: true }))}><kbd>{modKey}K</kbd></button>}
+        </label>
         {q.length > 1 && (
           <button type="button" className="cv-ask" onClick={() => setAsking(query)} title="Find what you talked about, even with different words, and get an answer from it">
             <Sparkles size={15} /><span>Ask your chats: “<span dir="auto">{query.trim().slice(0, 40)}</span>”</span>
@@ -148,7 +146,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         <div className="cv-tree">
           {!q && (
             <ul className="cv-dest" aria-label="Places">
-              {!phone && <li><button type="button" onClick={newChat} title={`New chat (${modKey}⇧O)`}><MessageSquarePlus size={18} /><span>New chat</span><kbd>{modKey}⇧O</kbd></button></li>}
+              {!phone && <li><button type="button" className="cv-dest-new" aria-label="New chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}><MessageSquarePlus size={18} /><span>New chat</span><kbd>{modKey}⇧O</kbd></button></li>}
               <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onClick={() => toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span></button></li>
               <li><button type="button" aria-current={page === 'tools' || page === 'assistants' || page === 'study' ? 'page' : undefined} onClick={() => toPage('tools')} title={`Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`}><LayoutGrid size={18} /><span>Tools</span></button></li>
               <li><button type="button" data-routing-center aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><SlidersHorizontal size={18} /><span>Models &amp; routing</span></button></li>
@@ -191,7 +189,12 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
 
           {section('conversations', q ? 'Search results' : 'Conversations', Boolean(current && !hereProject && !isTemporaryChat(current)))}
           <Fold id={`${ids}-conversations`} open={sectionOpen('conversations')}>
-            {loose.length > 0 && <ul className="cv-chats cv-loose">{loose.map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}</ul>}
+            {loose.some((c) => !c.archived) && <ul className="cv-chats cv-loose">{loose.filter((c) => !c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}</ul>}
+            {/* Search also finds archived chats; they are marked as such, after the rest. */}
+            {loose.some((c) => c.archived) && <>
+              <p className="cv-archived-label" id={`${ids}-archived`}>Archived</p>
+              <ul className="cv-chats cv-loose cv-archived" aria-labelledby={`${ids}-archived`}>{loose.filter((c) => c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}</ul>
+            </>}
             {!loose.length && <p className="cv-none">{q ? 'No loose conversations match.' : 'Your chats will appear here.'}</p>}
             {!q && <button type="button" className="cv-all" onClick={() => setAllChats(true)}><MessageSquareText size={15} />All chats<ChevronRight size={13} aria-hidden="true" /></button>}
           </Fold>

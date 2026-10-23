@@ -34,6 +34,8 @@ jobs:
         run: npm run build -- --outDir dist-canvas
         env:
           LUMEN_CANVAS: '1'
+      - name: Canvas performance budget (startup JS/CSS growth, lazy Routing Center)
+        run: node scripts/canvas-budget.mjs dist dist-canvas
       - run: npm run test:unit
 
   in-app:

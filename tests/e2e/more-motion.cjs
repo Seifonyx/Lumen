@@ -27,7 +27,7 @@ const near = (a, b, d = 2) => Math.abs(a - b) <= d;
     for (const title of ['First chat', 'Third chat']) {
       await page.click(`.chat-row:has-text("${title}") .chat-open`);
       await page.waitForTimeout(700);
-      const look = await page.locator('.chat-row.active').evaluate((row) => ({ title: row.textContent, bg: getComputedStyle(row).backgroundColor, weight: getComputedStyle(row.querySelector('.chat-open')).fontWeight }));
+      const look = await page.locator('.chat-row.active').evaluate((row) => ({ title: row.textContent, bg: [row, row.querySelector('.chat-open')].map((el) => getComputedStyle(el).backgroundColor).find((c) => c !== 'rgba(0, 0, 0, 0)') || 'rgba(0, 0, 0, 0)', weight: getComputedStyle(row.querySelector('.chat-open')).fontWeight }));
       assert.ok(look.title.includes(title), `"${title}" is the selected row`);
       assert.notEqual(look.bg, 'rgba(0, 0, 0, 0)', 'the selected row is filled');
       assert.ok(Number(look.weight) >= 600, 'the selected row is bold');
@@ -66,6 +66,7 @@ const near = (a, b, d = 2) => Math.abs(a - b) <= d;
     console.log('PASS the message navigator can be turned off and on');
 
     // ---- Usage gauges fill from zero.
+    await page.focus('.composer textarea');
     await page.click('.usage-chip');
     await page.locator('.usage-pop').waitFor();
     const fill = await page.locator('.um-gauge-fill').first().evaluate((el) => el.getAnimations().some((a) => a.animationName === 'gauge-fill'));

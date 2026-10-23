@@ -130,7 +130,8 @@ const scale = (page) => page.locator('.iv-img').evaluate((el) => new DOMMatrixRe
       };
       await open2('Long reading');
       await page.locator('.messages').evaluate((el) => { el.scrollTop = el.scrollHeight - el.clientHeight - 1500; el.dispatchEvent(new Event('scroll')); });
-      await page.waitForTimeout(200);
+      // The spot is saved 150 ms after scrolling stops; give a busy machine room for that.
+      await page.waitForTimeout(500);
       const was = await page.locator('.messages').evaluate((el) => el.scrollHeight - el.scrollTop - el.clientHeight);
       await open2('Holiday photo');
       await open2('Long reading');

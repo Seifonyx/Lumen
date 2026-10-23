@@ -74,20 +74,20 @@ const settled = page => page.waitForTimeout(320);
         await settled(page);
         check(await isOpen() && (await scan(page)).length === 0 && await page.locator('.main').evaluate(el => el.inert), `${label}: swipe from the chat area opens a fitting modal drawer`);
         await page.screenshot({ path: path.join(__dirname, 'out', `sidebar-${width}-${rtl ? 'rtl' : 'ltr'}.png`) });
-        await page.locator('.sidebar-foot').focus(); await page.keyboard.press('Tab');
-        check(await page.locator('.close-sidebar').evaluate(el => el === document.activeElement), `${label}: drawer keyboard focus stays inside`);
+        await page.locator('.sidebar-foot, .cv-account').focus(); await page.keyboard.press('Tab');
+        check(await page.locator('.close-sidebar, .cv-nav [aria-label="Close menu"]').evaluate(el => el === document.activeElement), `${label}: drawer keyboard focus stays inside`);
 
         const closeX = rtl ? width - 230 : 230;
-        await touch(page, '.chat-list', 'touchstart', closeX, y);
-        await touch(page, '.chat-list', 'touchmove', closeX - sign * 28, y);
+        await touch(page, ':is(.chat-list, .cv-nav)', 'touchstart', closeX, y);
+        await touch(page, ':is(.chat-list, .cv-nav)', 'touchmove', closeX - sign * 28, y);
         await page.waitForTimeout(180);
-        await touch(page, '.chat-list', 'touchend', closeX - sign * 28, y);
+        await touch(page, ':is(.chat-list, .cv-nav)', 'touchend', closeX - sign * 28, y);
         await settled(page);
         check(await isOpen(), `${label}: a slow short closing swipe stays open`);
-        await touch(page, '.chat-list', 'touchstart', closeX, y);
-        await touch(page, '.chat-list', 'touchmove', closeX - sign * 150, y);
+        await touch(page, ':is(.chat-list, .cv-nav)', 'touchstart', closeX, y);
+        await touch(page, ':is(.chat-list, .cv-nav)', 'touchmove', closeX - sign * 150, y);
         await page.waitForTimeout(150);
-        await touch(page, '.chat-list', 'touchend', closeX - sign * 150, y);
+        await touch(page, ':is(.chat-list, .cv-nav)', 'touchend', closeX - sign * 150, y);
         await settled(page);
         check(!(await isOpen()) && !(await page.locator('.main').evaluate(el => el.inert)), `${label}: opposite swipe closes the drawer`);
 
@@ -140,8 +140,8 @@ const settled = page => page.waitForTimeout(320);
         for (let i = 1; i <= 5; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: start + sign * i * 32, y: nativeY }] }); await page.waitForTimeout(16); }
         await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await settled(page);
         check(await isOpen(), `${label}: native horizontal touch opens the drawer`);
-        await page.locator('.chat-list').scrollIntoViewIfNeeded();
-        const listBox = await page.locator('.chat-list').boundingBox(), listY = listBox.y + listBox.height / 2;
+        await page.locator(':is(.chat-list, .cv-nav)').scrollIntoViewIfNeeded();
+        const listBox = await page.locator(':is(.chat-list, .cv-nav)').boundingBox(), listY = listBox.y + listBox.height / 2;
         await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: closeX, y: listY }] });
         for (let i = 1; i <= 5; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: closeX - sign * i * 32, y: listY }] }); await page.waitForTimeout(16); }
         await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await settled(page);

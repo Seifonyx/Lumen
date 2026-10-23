@@ -162,7 +162,7 @@ async function device(browser, name, email, mobile) {
   check(true, 'saved assistant library synced to phone');
   await A.page.locator('.hub-page [aria-label="Close"]').click();
   await A.page.click('.menu-btn');
-  await A.page.getByRole('button', { name: 'Synced Chat Title', exact: true }).click();
+  await A.page.locator('.sidebar').getByRole('button', { name: 'Synced Chat Title', exact: true }).click();
   await A.page.waitForSelector('.assistant-badge');
   await A.page.fill('.composer textarea', 'Continue synced helper');
   await A.page.click('.send-btn');

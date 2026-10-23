@@ -17,6 +17,8 @@ import ProjectManager from './ProjectManager';
 import ProjectWorkspace from './ProjectWorkspace';
 import CatalogErrorNotice from './CatalogErrorNotice';
 import { CANVAS_SHELL } from '../lib/canvas-presentation';
+import { ContextRail, RailToggle } from './ContextRail';
+import CanvasHome from './CanvasHome';
 
 /** How far from the latest message you were in each chat (this session), to come back to the same spot. */
 type Anchor = { id: string; offset: number };
@@ -91,6 +93,16 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
   useLayoutEffect(() => {
     const el = scroller.current;
     hold.current = (chat && positions.get(chat.id)) || null;
+    // Canvas: a chat opened fresh lands on your last question, so its answer reads from the start.
+    if (CANVAS_SHELL && !hold.current && el && chat && chat.messages.at(-1)?.role === 'assistant' && useStore.getState().streamingChatId !== chat.id) {
+      const question = [...chat.messages].reverse().find((m) => m.role === 'user');
+      if (question) {
+        hold.current = { id: question.id, offset: (parseFloat(getComputedStyle(el).paddingTop) || 0) + 8 };
+        stick.current = false;
+        if (!restoreAnchor(el, hold.current)) { el.scrollTop = el.scrollHeight; restoredTo = el.scrollTop; }
+        return;
+      }
+    }
     stick.current = hold.current === null;
     if (!el) return;
     // (Older messages fill in over the next frames; until the remembered one is there, start from the top.)
@@ -238,7 +250,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
         <div className="spacer" />
         <div className="topbar-trailing">
         {Boolean(chat?.documents?.length) && <button className="icon-btn" aria-label="Open canvas" title="Open canvas" onClick={() => useStore.getState().openCanvas()}><FileText size={18} /></button>}
-        {CANVAS_SHELL ? <>{chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}<button type="button" className="icon-btn cv-compose" aria-label="New chat" title={`New chat (${modKey}⇧O)`} onClick={() => useStore.getState().newChat()}><MessageSquarePlus size={19} /></button></> : chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}
+        {CANVAS_SHELL ? <>{chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}{!empty && <RailToggle />}<button type="button" className="icon-btn cv-compose" aria-label="New chat" title={`New chat (${modKey}⇧O)`} onClick={() => useStore.getState().newChat()}><MessageSquarePlus size={19} /></button></> : chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}
         {chat?.repo && (
           <button
             className={`icon-btn code-toggle${workspaceOpen ? ' on' : ''}`}
@@ -276,7 +288,12 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
 
       <div className="conversation-area">
       <div className="messages" ref={scroller} role="region" tabIndex={0} aria-label="Chat messages">
-        {empty ? (
+        {empty ? CANVAS_SHELL ? (
+          <div className="empty">
+            <span className="welcome-mark" aria-hidden="true"><WelcomeStars /></span>
+            <CanvasHome temporary={isTemporaryChat(chat)} />
+          </div>
+        ) : (
           <div className="empty">
             <span className="welcome-mark" aria-hidden="true"><WelcomeStars /></span>
             <h1>{isTemporaryChat(chat)?'Incognito chat':user?.name&&welcomeSequence%(WELCOME_GREETINGS.length+1)===0?greeting:WELCOME_GREETINGS[(welcomeSequence+(user?.name?WELCOME_GREETINGS.length-1:0)) % WELCOME_GREETINGS.length]}</h1>
@@ -285,7 +302,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
           chat && <MessageThread key={chat.id} chat={chat} summary={summary} busy={streaming||canvasEditing} compacting={compacting} scroller={scroller} stick={stick} navigationHost={navigationHost}/>
         )}
       </div>
-      <div className="message-navigation-host" ref={navigationHost} />
+      {CANVAS_SHELL ? <><div className="message-navigation-host" ref={navigationHost} />{!empty && <ContextRail chat={chat} />}</> : <div className="message-navigation-host" ref={navigationHost} />}
       </div>
 
       {(showDown || unseen) && (

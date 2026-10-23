@@ -1,4 +1,5 @@
 // 2.0: "About me" in your own words goes to every model; facts a model keeps "for this project" stay in that
+const { openChat } = require('./helpers/open-chat.cjs');
 // project's chats; you can move a memory between a project and every chat.
 const { chromium, webkit } = require('playwright'), assert = require('node:assert/strict');
 const { profile, seed } = require('./helpers/preview-profile.cjs');
@@ -41,7 +42,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     await page.click('.settings-page [aria-label="Close"]');
 
     // ---- In a project chat: About me is sent; the project fact is kept for the project.
-    await page.click('.chat-row:has-text("Alpha planning") .chat-open');
+    await openChat(page, 'Alpha planning');
     await page.fill('.composer textarea', 'We ship on Fridays. I like sailing.');
     await page.click('.send-btn');
     await page.locator('.msg.assistant:has-text("Noted.")').waitFor();

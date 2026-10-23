@@ -12,6 +12,7 @@ import { allLayouts, findLayout, isLayoutId, LAYOUT_PREFIX } from '../lib/layout
 import LayoutIcon from './LayoutIcon';
 import type { ModelInfo } from '../types';
 import { layoutModelProblem } from '../lib/layout-policy';
+import { CANVAS_COMPOSER } from '../lib/canvas-presentation';
 
 export function Badges({ m }: { m?: ModelInfo }) {
   if (!m) return null;
@@ -101,6 +102,11 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
     if (!open || !el || sheet) return;
     el.style.translate = '';
     if (opensUp && ref.current) el.style.maxHeight = `${Math.max(80, Math.min(560, ref.current.getBoundingClientRect().top - (window.visualViewport?.offsetTop||0) - 16))}px`;
+    // Canvas: the top bar draws above the composer (the centred new-chat one sits high), so the dropdown stops below it.
+    if (CANVAS_COMPOSER && opensUp && ref.current) {
+      const bar = ref.current.closest('.main')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom || 0;
+      el.style.maxHeight = `${Math.max(80, Math.min(560, ref.current.getBoundingClientRect().top - Math.max(window.visualViewport?.offsetTop || 0, bar) - 16))}px`;
+    }
     const r = el.getBoundingClientRect();
     const W = document.documentElement.clientWidth;
     const shift = r.right > W - 8 ? W - 8 - r.right : r.left < 8 ? 8 - r.left : 0;

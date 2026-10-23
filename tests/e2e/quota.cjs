@@ -99,8 +99,9 @@ async function send(page, text) {
   check(texts.length === 6 && texts[4].includes('live update') && texts[5].includes('Re: live update') && texts[0].includes('one'), 'other device shows the update in the right order');
 
   // Edit + regenerate style change: delete a chat on A → gone on B.
-  const victim = await A.page.locator('.chat-row').first().locator('.chat-title').textContent();
-  await A.page.locator('.chat-row').first().locator('[aria-label="Chat options"]').click();
+  // (Not the chat B has open: the slow-mode checks below read it.)
+  const victim = await A.page.locator('.chat-row:not(.active)').first().locator('.chat-title').textContent();
+  await A.page.locator('.chat-row:not(.active)').first().locator('[aria-label="Chat options"]').click();
   await A.page.click('.menu >> text=Delete');
   await B.page.waitForFunction((t) => ![...document.querySelectorAll('.chat-title')].some((e) => e.textContent === t), victim, { timeout: 10000 });
   check(true, 'delete still syncs');
@@ -127,7 +128,7 @@ async function send(page, text) {
   await A.page.evaluate(()=>(document.querySelector('.sidebar .new-chat, .cv-new-pill')||[...document.querySelectorAll('.cv-dest button')].find(b=>b.textContent.includes('New chat'))).click());
   await send(A.page, 'brand new chat while paused');
   await B.page.waitForTimeout(3000);
-  check(!(await B.page.textContent('.chat-list')).includes('brand new') && !(await B.page.textContent('.thread')).includes('offline-ish'), 'nothing synced while paused');
+  check(!(await B.page.textContent(':is(.chat-list, .cv-nav)')).includes('brand new') && !(await B.page.textContent('.thread')).includes('offline-ish'), 'nothing synced while paused');
   // Usage tab card.
   await A.page.click('.sidebar-foot, .cv-account');
   await openTab(A.page, 'Usage');
@@ -141,7 +142,7 @@ async function send(page, text) {
   await setShared(0);
   await A.page.evaluate(() => window.__quota.start());
   await B.page.evaluate(() => window.__quota.start());
-  await B.page.waitForFunction(() => document.querySelector('.chat-list')?.textContent.includes('Re: brand') || [...document.querySelectorAll('.chat-row')].length >= 6, null, { timeout: 20000 });
+  await B.page.waitForFunction(() => document.querySelector('.chat-list, .cv-nav')?.textContent.includes('Re: brand') || [...document.querySelectorAll('.chat-row')].length >= 6, null, { timeout: 20000 });
   await B.page.waitForTimeout(2000);
   const titles = await B.page.$$eval('.chat-row', (els) => els.length);
   check(titles === 6, `chat made while paused synced after reset (${titles} chats)`);

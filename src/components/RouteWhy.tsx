@@ -1,7 +1,9 @@
 import { Exit } from '../lib/motion';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { modelLabel, useStore } from '../store';
 import type { Message } from '../types';
+import { CANVAS_SHELL } from '../lib/canvas-presentation';
+import { routeWords } from '../lib/route-words';
 
 /** The model line under an Auto reply: tap to see why Auto chose it, what was next, and to keep it out of Auto. */
 export default function RouteWhy({ message }: { message: Message }) {
@@ -17,13 +19,27 @@ export default function RouteWhy({ message }: { message: Message }) {
     document.addEventListener('keydown', key, true);
     return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', key, true); };
   }, [open]);
+  // Canvas: an answer near the top (the first one, or a chat opened on its last question) has no room above the
+  // line, so the explanation opens below it instead of under the top bar.
+  if (CANVAS_SHELL) useLayoutEffect(() => { // eslint-disable-line react-hooks/rules-of-hooks
+    const el = root.current, pop = el?.querySelector<HTMLElement>('.route-why-pop');
+    if (!open || !el || !pop) return;
+    const bar = el.closest('.main')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom || 0;
+    el.toggleAttribute('data-below', el.getBoundingClientRect().top - Math.max(0, bar) < pop.offsetHeight + 16);
+  }, [open]);
   const d = message.routeDetail;
   const name = modelLabel(catalog, message.model);
   return (
     <span className="route-why-wrap" ref={root}>
+      {CANVAS_SHELL ? (
+      <button type="button" className="model-tag route-why-btn" aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(!open)} title="Why Auto chose this model">
+        <span className="route-model">{name}</span><span className="route-tag"> · {routeWords(message.route)}</span>
+      </button>
+      ) : (
       <button type="button" className="model-tag route-why-btn" aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(!open)} title="Why Auto chose this model">
         {name}<span className="route-tag"> · Auto: {message.route}</span>
       </button>
+      )}
       {open && (<Exit kind="drop">
         <span className="route-why-pop" role="dialog" aria-label="Why this model">
           <span className="rw-title">Why {name}</span>

@@ -1,7 +1,8 @@
 // The layout shared by Library, Documents and Study: they open in place of the chat (the sidebar stays), with a
 // large title, a line about what's here, the main action, optional tabs, and the content below.
-import { ChevronLeft, FolderKanban, LayoutGrid, Menu, MessageCircle, Plus, Shapes } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, FolderKanban, LayoutGrid, Menu, MessageCircle, Plus, Shapes } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { CANVAS_SHELL } from '../lib/canvas-presentation';
 import { useFocusScope } from '../lib/focus-scope';
 import { installSwipeBack } from '../lib/swipe-back';
 import { swapControl } from '../lib/motion';
@@ -61,7 +62,9 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
         {!onBack && make && <button type="button" className="icon-btn hub-nav hub-new" aria-label={make.label} title={make.label} onClick={make.run}><Plus size={22} /></button>}
         <h1 className="hub-bar-title hub-bar-heading">{label}</h1>
         <span className="hub-bar-title hub-bar-label" aria-hidden="true">{label}</span>
-        <button type="button" className="btn ghost small hub-close" aria-label="Close" onClick={onClose}><span className="hub-close-long">Back to chat</span><span className="hub-close-short">Done</span></button>
+        {CANVAS_SHELL
+          ? <button type="button" className="hub-close cv-chat-pill" aria-label="Close" title="Back to chat" onClick={onClose}><ArrowLeft size={18} aria-hidden="true" /><span>Chat</span></button>
+          : <button type="button" className="btn ghost small hub-close" aria-label="Close" onClick={onClose}><span className="hub-close-long">Back to chat</span><span className="hub-close-short">Done</span></button>}
       </div>
       <div className="hub-scroll" onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 56)}>
         <div className="hub-inner">

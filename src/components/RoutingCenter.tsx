@@ -3,7 +3,7 @@
 // Presentation only: it reads Lumen's existing catalog, keys, settings and usage and reuses its owners — manual
 // selection through setChatModel, Layouts through LayoutEditor, usage through UsageTab, decisions through RouteWhy,
 // connections through Settings → Keys. Send-time routing, eligibility and recovery are unchanged.
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, ChevronRight, Plus, Search, Shield, SlidersHorizontal, X } from 'lucide-react';
 import { modelLabel, selectCurrentChat, selectCurrentModel, useStore } from '../store';
 import { AI_PROVIDERS, providerEnabled } from '../lib/ai/provider-config.js';
@@ -16,7 +16,15 @@ import type { ModelInfo } from '../types';
 import { LayoutEditor } from './LayoutsTab';
 import UsageTab from './UsageTab';
 import RouteWhy from './RouteWhy';
+import { routeWords } from '../lib/route-words';
+import { isTemporaryChat } from '../lib/temporary-chat';
 import FilterMenu from './FilterMenu';
+// Tier 5 panels (usage history, request log, routing file, connection check) load on first use, in their own chunk.
+const extras = () => import('./RoutingExtras');
+const CheckConnection = lazy(() => extras().then((m) => ({ default: m.CheckConnection })));
+const UsageHistory = lazy(() => extras().then((m) => ({ default: m.UsageHistory })));
+const RequestLog = lazy(() => extras().then((m) => ({ default: m.RequestLog })));
+const RoutingFile = lazy(() => extras().then((m) => ({ default: m.RoutingFile })));
 
 const SECTIONS: [RoutingSection, string][] = [['overview', 'Overview'], ['providers', 'Providers'], ['models', 'Models'], ['policies', 'Policies'], ['usage', 'Usage'], ['diagnostics', 'Diagnostics']];
 const providerId = (model: ModelInfo) => (model.provider === 'google' ? 'gemini' : model.provider);
@@ -131,6 +139,7 @@ function Providers({ preferred }: { preferred?: string }) {
             <div><dt>Discovery</dt><dd>{discovery(active.status?.state)}{active.status?.lastSuccess ? ` · ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(active.status.lastSuccess)}` : ''}</dd></div>
           </dl>
           <p className="rc-notice">{problem ? `${problem} ` : ''}Discovery does not verify successful replies.</p>
+          {active.enabled && <Suspense fallback={null}><CheckConnection key={active.id} provider={active.id} /></Suspense>}
           <div className="rc-allowance"><span>Request allowance</span><strong>{sharedLeft !== null ? `${sharedLeft} requests remaining · shared free-model pool` : knownLimits.length ? 'Per-model limits below' : 'Unknown'}</strong></div>
           <ProviderModels key={active.id} models={active.models} />
           <details className="rc-provenance"><summary>Usage &amp; provenance</summary>
@@ -165,6 +174,54 @@ function ProviderModels({ models }: { models: ModelInfo[] }) {
       {!filtered.length && <div className="rc-empty"><h4>{models.length ? 'No models match.' : 'No catalog models'}</h4><p>{models.length ? 'Clear your model search.' : 'Check the connection and permissions in Settings to discover models.'}</p></div>}
       {filtered.length > 24 && <nav className="rc-pages" aria-label="Model pages"><button type="button" disabled={current === 0} onClick={() => setPage(current - 1)}>Previous</button><span role="status">{current * 24 + 1}–{Math.min(filtered.length, (current + 1) * 24)} of {filtered.length}</span><button type="button" disabled={current + 1 === pages} onClick={() => setPage(current + 1)}>Next</button></nav>}
     </section>
+  );
+}
+
+const ago = (t: number) => {
+  const m = Math.round((Date.now() - t) / 60000);
+  return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`;
+};
+
+/** Overview: the latest answer in each of your recent chats, which model gave it and why; and the providers your
+ * catalog draws on right now. Read from this account's own chats, catalog and usage; nothing is estimated. */
+function RecentDecisions() {
+  const chats = useStore((s) => s.chats), catalog = useStore((s) => s.catalog), usage = useStore((s) => s.usage);
+  const recent = useMemo(() => chats.filter((c) => !isTemporaryChat(c)).map((c) => {
+    for (let i = c.messages.length - 1; i >= 0; i--) { const m = c.messages[i]; if (m.role === 'assistant' && m.model && m.status !== 'streaming') return { chat: c, m }; }
+    return null;
+  }).filter((x): x is NonNullable<typeof x> => Boolean(x)).sort((a, b) => b.m.createdAt - a.m.createdAt).slice(0, 5), [chats]);
+  const providers = useMemo(() => {
+    const now = Date.now(), by = new Map<string, { models: number; limited: number }>();
+    for (const m of catalog?.models || []) {
+      const p = by.get(m.provider) || { models: 0, limited: 0 };
+      p.models++; if ((usage?.models[m.id]?.blockedUntil || 0) > now) p.limited++;
+      by.set(m.provider, p);
+    }
+    return [...by].sort((a, b) => b[1].models - a[1].models);
+  }, [catalog, usage]);
+  const open = (id: string) => { closeRoutingCenter(); useStore.getState().selectChat(id); };
+  return (
+    <div className="rc-recent-grid">
+      <section className="rc-card rc-recent">
+        <span className="rc-label">Recent decisions</span>
+        {recent.length ? <ul>{recent.map(({ chat, m }) => (
+          <li key={chat.id}><button type="button" onClick={() => open(chat.id)}>
+            <span className="rc-recent-model">{modelLabel(catalog, m.model!)}</span>
+            <span className="rc-recent-why">{m.route ? routeWords(m.route) : 'No route recorded'}</span>
+            <span className="rc-recent-chat" dir="auto">{chat.title}<span> · {ago(m.createdAt)}</span></span>
+          </button></li>
+        ))}</ul> : <p className="rc-muted">Answers you get will show which model gave them and why.</p>}
+      </section>
+      <section className="rc-card rc-recent">
+        <span className="rc-label">Providers in your catalog</span>
+        {providers.length ? <ul>{providers.slice(0, 6).map(([id, p]) => (
+          <li key={id}><button type="button" onClick={() => showRoutingSection('providers')}>
+            <span className="rc-recent-model">{PROVIDER_NAMES[id as keyof typeof PROVIDER_NAMES] || id}</span>
+            <span className="rc-recent-why">{p.models} model{p.models === 1 ? '' : 's'}{p.limited ? ` · ${p.limited} temporarily limited` : ' · available'}</span>
+          </button></li>
+        ))}</ul> : <p className="rc-muted">No provider models yet. Connect a provider to fill your catalog.</p>}
+      </section>
+    </div>
   );
 }
 
@@ -203,7 +260,7 @@ export default function RoutingCenter() {
           <h1 id="rc-title" tabIndex={-1} ref={heading}>Routing Center</h1>
           <p>Your providers, models and routing rules.</p>
         </div>
-        <button type="button" className="rc-primary" aria-label="Connect a provider" onClick={() => openSettings('keys')}><Plus size={16} />Connect<span className="rc-wide">a provider</span></button>
+        <button type="button" className="rc-primary" aria-label="Connect a provider" onClick={() => openSettings('keys')}><Plus size={16} /><span>Connect<span className="rc-wide"> a provider</span></span></button>
       </header>
       <nav className="rc-tabs" aria-label="Routing sections">
         {SECTIONS.map(([id, label]) => <button type="button" key={id} aria-current={section === id ? 'page' : undefined} onClick={() => showRoutingSection(id)}>{label}</button>)}
@@ -214,7 +271,7 @@ export default function RoutingCenter() {
           <div className="rc-summary">
             <div><span>Models in this catalog</span><strong>{models.length}<small> models</small></strong><p>{config.enabledModels.length} enabled for selection</p></div>
             <div><span>Saved routing policies</span><strong>{layouts.length}<small> Layout{layouts.length === 1 ? '' : 's'}</small></strong><p>Auto-ranked or ordered, with explicit fallback scope</p></div>
-            <div><span>{routed ? 'Last answer allowance' : 'Selected model allowance'}</span><strong>{left === null ? 'Unknown' : left}<small>{left === null ? '' : ' requests left'}</small></strong><p>{left === null ? 'No request allowance is reported for this route.' : `For ${modelLabel(catalog, current)} only.${routed ? ' Auto and Layouts may choose another model.' : ''}`}</p></div>
+            <div><span>{routed ? 'Last answer allowance' : 'Selected model allowance'}</span>{left === null ? <strong className="rc-unknown">Unknown</strong> : <strong>{left}<small> requests left</small></strong>}<p>{left === null ? 'No request allowance is reported for this route.' : `For ${modelLabel(catalog, current)} only.${routed ? ' Auto and Layouts may choose another model.' : ''}`}</p></div>
           </div>
           <section className="rc-card">
             <span className="rc-label">This conversation</span>
@@ -222,6 +279,7 @@ export default function RoutingCenter() {
             <p className="rc-muted">{model === 'auto' ? 'Task-aware choice at send.' : model.startsWith('layout:') ? 'Your saved routing policy.' : 'Fixed manual selection.'}</p>
             {last?.route ? <RouteWhy message={last} /> : <p className="rc-muted">No completed answer with a route record yet.</p>}
           </section>
+          <RecentDecisions />
           <div className="rc-actions">
             <button type="button" className="rc-row-link" onClick={() => showRoutingSection('providers')}>Browse providers<ArrowRight size={16} /></button>
             <button type="button" className="rc-row-link" onClick={() => showRoutingSection('policies')}>Policies &amp; fallbacks<ArrowRight size={16} /></button>
@@ -254,10 +312,11 @@ export default function RoutingCenter() {
             </article>
           ))}
           {!editing && !layouts.length && <p className="rc-muted">No saved policies yet. Auto chooses for each task until you add one.</p>}
+          {!editing && <Suspense fallback={null}><RoutingFile /></Suspense>}
         </div>
       )}
 
-      {section === 'usage' && <div className="rc-body"><h2 className="rc-h2">Usage &amp; quotas</h2><p className="rc-muted">Local account counters and provider-reported limits where available. Unknown values remain unknown.</p><UsageTab /></div>}
+      {section === 'usage' && <div className="rc-body"><h2 className="rc-h2">Usage &amp; quotas</h2><p className="rc-muted">Local account counters and provider-reported limits where available. Unknown values remain unknown.</p><Suspense fallback={null}><UsageHistory /></Suspense><UsageTab /></div>}
 
       {section === 'diagnostics' && (
         <div className="rc-body">
@@ -265,6 +324,7 @@ export default function RoutingCenter() {
           <p className="rc-muted">Existing decision evidence only. No request logger or health probes are added.</p>
           <div className="rc-grid">
             <section className="rc-card"><h3>Latest model choice</h3>{last?.route ? <RouteWhy message={last} /> : <p className="rc-muted">No route explanation is recorded.</p>}</section>
+            <Suspense fallback={null}><RequestLog /></Suspense>
             <section className="rc-card"><h3><Shield size={16} /> Privacy boundary</h3><p className="rc-muted">Provider credentials stay in Lumen’s existing account scope. No prompt bodies or credentials are added to a diagnostic history.</p></section>
             <section className="rc-card"><h3>Developer endpoint</h3><p className="rc-muted">Not available in browser Lumen. A local or server gateway would need a separately approved trust and deployment architecture.</p></section>
           </div>

@@ -16,7 +16,7 @@ const {profile,seed}=require('./helpers/preview-profile.cjs');
   await page.goto(process.env.MR_TEST_URL||'http://localhost:5190/');await page.locator('.composer textarea').waitFor();
   await seed(page,owner,[{id:'usage-draft',title:'Usage draft regression',createdAt:1,updatedAt:2,model:'gemini:gemini-flash-latest',messages:[{id:'q',role:'user',text:'An existing question.',createdAt:1},{id:'a',role:'assistant',text:'An existing answer.',model:'gemini:gemini-flash-latest',status:'done',createdAt:2}]}]);
   await page.reload();await page.locator('.composer textarea').waitFor();if(width<900)await page.getByRole('button',{name:'Open chats',exact:true}).click();
-  await page.getByRole('button',{name:'Usage draft regression',exact:true}).click();
+  await page.locator('.sidebar').getByRole('button',{name:'Usage draft regression',exact:true}).click();
   const input=page.locator('.composer textarea');await input.fill(draft);
   const count=await page.locator('[data-message-id]').count();
   for(const interaction of ['pointer','keyboard']){

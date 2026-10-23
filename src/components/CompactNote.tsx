@@ -1,6 +1,6 @@
 import { Exit, motionOff } from '../lib/motion';
 import { ChevronDown, Loader2, MessageSquarePlus, Shrink, Undo2, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { isSheetScreen, useSheetDrag } from '../lib/sheet-drag';
 import { useFocusScope } from '../lib/focus-scope';
@@ -12,6 +12,7 @@ import { formatTokens, formatUntil, nextReset, providerOf, remaining } from '../
 import { modelInfo, modelLabel, useStore } from '../store';
 import type { Chat, ChatSummary } from '../types';
 import Markdown from './Markdown';
+import { CANVAS_COMPOSER } from '../lib/canvas-presentation';
 
 /** The line in a chat where older messages were replaced by a summary. */
 export function CompactNote({ chat, summary }: { chat: Chat; summary: ChatSummary }) {
@@ -80,6 +81,25 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
   const close = useRef<HTMLButtonElement>(null);
   const dialog = useRef<HTMLDivElement>(null);
   useFocusScope(dialog,open,()=>{setOpen(false);trigger.current?.focus({preventScroll:true})});
+  // Canvas: a phone sheet leaves the composer inert while open, so the immediate return of focus can miss; once it
+  // has closed, focus that went nowhere goes back to the chip.
+  if (CANVAS_COMPOSER) { // eslint-disable-next-line react-hooks/rules-of-hooks
+    const wasOpen = useRef(false); useLayoutEffect(() => { // eslint-disable-line react-hooks/rules-of-hooks
+      if (open) { wasOpen.current = true; return; }
+      if (!wasOpen.current) return;
+      wasOpen.current = false;
+      const back = () => {
+        const t = trigger.current;
+        if (!t || (document.activeElement && document.activeElement !== document.body)) return;
+        // (The resting composer hides the chip; it stays while it holds focus.)
+        t.setAttribute('data-return', ''); t.addEventListener('blur', () => t.removeAttribute('data-return'), { once: true });
+        t.focus({ preventScroll: true });
+      };
+      back();
+      const id = requestAnimationFrame(back);
+      return () => cancelAnimationFrame(id);
+    }, [open]);
+  }
   // Phones: usage slides up from the bottom as a sheet you can drag down to close.
   const [sheet, setSheet] = useState(false);
   const scrim = useRef<HTMLDivElement>(null);
@@ -163,13 +183,25 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
   const dailyLimit = freeOR ? usage?.openrouter.limit || null : u?.quota || null;
   const resetAt = current ? (freeOR && usage ? usage.openrouter.resetAt : nextReset(providerOf(current))) : 0;
 
+  // Canvas: no number while context use is negligible (just the quiet ring, so usage stays one tap away); then
+  // honest words instead of a bare percentage.
+  const words = CANVAS_COMPOSER ? (pct >= 10 ? `${pct}% of context` : pct >= 5 ? `~${formatTokens(used)} tokens` : '') : '';
+
   return (
     <div className="usage-meter" ref={box}>
+      {CANVAS_COMPOSER ? (
+      <button type="button" ref={trigger} className={`usage-chip${level}${pct < 50 && !blockedUntil ? ' quiet' : ''}${pct < 10 && !blockedUntil && !open ? ' idle' : ''}`} onClick={() => { setSheet(isSheetScreen()); setOpen(!open); }} aria-expanded={open} aria-haspopup="dialog" aria-controls="usage-panel" title="Conversation capacity and daily usage">
+        <svg className="usage-ring" viewBox="0 0 20 20" aria-hidden="true"><circle className="usage-ring-track" cx="10" cy="10" r="7" /><circle className="usage-ring-fill" cx="10" cy="10" r="7" strokeDasharray="43.98" strokeDashoffset={43.98 * (1 - pct / 100)} /></svg>
+        {words ? <span className="usage-chip-words">{words}<span className="sr-only"> used in this chat</span></span> : <span className="sr-only">Usage</span>}{blockedUntil && <span className="usage-status"> · limit reached</span>}
+        <ChevronDown size={12} aria-hidden="true" />
+      </button>
+      ) : (
       <button type="button" ref={trigger} className={`usage-chip${level}${pct < 50 && !blockedUntil ? ' quiet' : ''}${pct < 10 && !blockedUntil && !open ? ' idle' : ''}`} onClick={() => { setSheet(isSheetScreen()); setOpen(!open); }} aria-expanded={open} aria-haspopup="dialog" aria-controls="usage-panel" title="Conversation capacity and daily usage">
         <svg className="usage-ring" viewBox="0 0 20 20" aria-hidden="true"><circle className="usage-ring-track" cx="10" cy="10" r="7" /><circle className="usage-ring-fill" cx="10" cy="10" r="7" strokeDasharray="43.98" strokeDashoffset={43.98 * (1 - pct / 100)} /></svg>
         <span className="usage-chip-pct" aria-hidden="true">{pct}%</span><span className="usage-chip-label">Context {pct}%</span>{blockedUntil && <span className="usage-status"> · limit reached</span>}
         <ChevronDown size={12} aria-hidden="true" />
       </button>
+      )}
       {open && (() => {
         const panel = (
         <div ref={dialog} className={`usage-pop${sheet ? ' sheet' : ''}`} id="usage-panel" role="dialog" aria-modal="true" tabIndex={-1} aria-label="Usage">

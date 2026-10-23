@@ -35,6 +35,16 @@ html[data-lumen-canvas] :is(.hub-search, .search.project-search) { height: 40px;
 html[data-lumen-canvas] :is(.hub-search, .search.project-search):focus-within { box-shadow: 0 0 0 2px color-mix(in srgb, var(--text) 35%, transparent); }
 html[data-lumen-canvas] .hub-empty h2, html[data-lumen-canvas] .hub-empty h3 { font-family: var(--cv5-display); letter-spacing: -.015em; }
 html[data-lumen-canvas] .hub-empty-icon { background: var(--cv5-fill); color: var(--text); }
+/* Purposeful empty states: a faint preview of what the page will hold sits above the one starting action. */
+html[data-lumen-canvas] .hub-empty { position: relative; padding-top: 40px; }
+html[data-lumen-canvas] .hub-empty::before {
+  content: ''; display: block; width: 116px; height: 84px; margin: 0 auto 26px; border-radius: 14px;
+  border: 1px solid var(--cv5-rim); background: var(--cv5-card);
+  box-shadow: -128px 0 0 -1px var(--cv5-fill), 128px 0 0 -1px var(--cv5-fill);
+  -webkit-mask-image: linear-gradient(#000 30%, transparent); mask-image: linear-gradient(#000 30%, transparent);
+}
+html[data-lumen-canvas] .hub-empty .hub-empty-icon { margin-top: -74px; position: relative; box-shadow: 0 0 0 6px var(--bg); }
+@media (max-width: 360px) { html[data-lumen-canvas] .hub-empty::before { box-shadow: -122px 0 0 -1px var(--cv5-fill), 122px 0 0 -1px var(--cv5-fill); } }
 
 /* Actions: one solid ink pill per screen; others quiet. */
 html[data-lumen-canvas] .btn.primary { border: 0; border-radius: 999px; background: var(--text); color: var(--bg); box-shadow: none; }
@@ -93,6 +103,16 @@ html[data-lumen-canvas] :is(.tag, .chip, .badge) { border-radius: 999px; }
 /* ---------- Project workspace: monochrome monogram and a neutral hero, as in the tree and Projects. */
 html[data-lumen-canvas][data-lumen-canvas-foundation] .project-tile { background: var(--text); color: var(--bg); font-family: var(--cv5-display); }
 html[data-lumen-canvas][data-lumen-canvas-foundation] .project-hero { background: linear-gradient(180deg, var(--cv5-fill-strong), transparent); }
+/* One ink monogram everywhere: per-project hues (indigo by default) fold to ink, and the colour choice is hidden. */
+html[data-lumen-canvas] :is(.color-indigo, .color-emerald, .color-green, .color-amber, .color-rose, .color-cyan, .color-purple):not(.project-color-dot) { --pc: var(--text); }
+html[data-lumen-canvas][data-lumen-canvas-foundation] .project-page .project-tile, html[data-lumen-canvas][data-lumen-canvas-foundation] .project-tile { background: var(--text) !important; color: var(--bg) !important; box-shadow: none; }
+html[data-lumen-canvas] .pf-field:has(> .project-color-choices) { display: none; }
+/* One project visual language: the ink monogram and a header rule, no grey gradient covers. */
+html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-band { height: auto; padding: 18px 18px 0; background: none; }
+html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-card .proj-mono { position: static; width: 40px; height: 40px; border-radius: 12px; font-size: 17px; box-shadow: none; }
+html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-card .proj-body { padding-top: 12px; }
+html[data-lumen-canvas][data-lumen-canvas-foundation] .project-page > .project-hero { display: none; }
+html[data-lumen-canvas][data-lumen-canvas-foundation] .project-head { padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid var(--cv5-rim); }
 
 /* ---------- Assistants: ink avatars instead of per-name hues; rimmed cards, display names. */
 html[data-lumen-canvas][data-lumen-canvas-foundation] .lib-card { --av-bg: var(--cv5-fill-strong); --av-fg: var(--text); border-color: var(--cv5-rim); border-radius: 18px; background: var(--cv5-card); }
@@ -136,3 +156,62 @@ html[data-lumen-canvas] .switch:not(:checked)::after { background: color-mix(in 
 @media (prefers-reduced-motion: reduce) {
   html[data-lumen-canvas] .settings-title-section { transition: none; }
 }
+
+/* Hub pages leave by the same "← Chat" pill as the Routing Center. */
+html[data-lumen-canvas] .hub-close.cv-chat-pill { display: inline-flex; align-items: center; gap: 6px; flex: none; margin-inline-start: auto; min-height: 36px; padding: 0 12px 0 8px; border: 0; border-radius: 999px; background: var(--canvas-fill); color: var(--canvas-ink); font: 500 13.5px var(--canvas-body-font); cursor: pointer; }
+html[data-lumen-canvas] .hub-close.cv-chat-pill:hover { background: var(--canvas-fill-strong); }
+@media (max-width: 899px) { html[data-lumen-canvas] .hub-close.cv-chat-pill { min-height: 44px; margin-inline: auto 8px; font-size: 15px; } }
+
+/* Tools: equal cards in a section, titles on one line (a badge moves under it), and a mark beside a warning. */
+html[data-lumen-canvas] .tools-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); grid-auto-rows: 1fr; }
+html[data-lumen-canvas] .tool-text { min-width: 0; }
+html[data-lumen-canvas] .tool-text strong { flex-wrap: wrap; row-gap: 4px; }
+html[data-lumen-canvas] .tool-needs:not(.ok) { display: inline-flex; align-items: center; gap: 5px; }
+html[data-lumen-canvas] .tool-needs:not(.ok)::before { content: '!'; display: inline-grid; place-items: center; flex: none; width: 13px; height: 13px; border: 1.5px solid currentColor; border-radius: 50%; font: 700 9px/1 var(--canvas-body-font); }
+@media (max-width: 899px) {
+  /* Phone: compact rows. */
+  html[data-lumen-canvas] .tools-grid { grid-template-columns: 1fr; grid-auto-rows: auto; gap: 8px; }
+  html[data-lumen-canvas] .tool-card { gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; }
+  html[data-lumen-canvas] .tool-card .tool-icon { width: 34px; height: 34px; border-radius: 10px; }
+  html[data-lumen-canvas] .tool-card .tool-icon svg { width: 18px; height: 18px; }
+  html[data-lumen-canvas] .tool-text > span:not(.tool-needs) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+}
+@media (max-width: 359px) {
+  /* The narrowest phones: the pill keeps its arrow and gives the centred title room. */
+  html[data-lumen-canvas] .hub-close.cv-chat-pill { justify-content: center; width: 44px; padding: 0; }
+  html[data-lumen-canvas] .hub-close.cv-chat-pill > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+
+/* Reply errors: a quiet card on paper; the state's colour stays on its icon and edge. */
+html[data-lumen-canvas] .error-box { border-color: color-mix(in srgb, var(--danger, #d14343) 35%, var(--cv5-rim, transparent)); background: color-mix(in srgb, var(--danger, #d14343) 5%, var(--bg)); color: var(--text); }
+html[data-lumen-canvas] .error-box > svg { color: var(--danger, #d14343); }
+html[data-lumen-canvas] .study-new .hub-search { flex: none; }
+html[data-lumen-canvas] :is(.study-cards, .study-quiz) { width: 100%; }
+html[data-lumen-canvas] .comparison-answer .markdown :is(th, td) { overflow-wrap: normal; }
+@media (max-width: 419px) {
+  html[data-lumen-canvas] .compare-model-row { flex-wrap: wrap; row-gap: 0; padding-block: 8px; }
+  html[data-lumen-canvas] .compare-model-row > small:not(:empty) { flex-basis: 100%; margin-inline-start: 54px; }
+}
+html[data-lumen-canvas] .cv-memory .project-memories { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+html[data-lumen-canvas] .cv-memory .project-memories > li { display: grid; gap: 4px; padding: 10px 0; border-top: 1px solid var(--cv5-rim); }
+html[data-lumen-canvas] .cv-memory .project-memories > li:first-child { border-top: 0; }
+html[data-lumen-canvas] .cv-memory .project-memories p { margin: 0; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+html[data-lumen-canvas] .cv-memory-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+html[data-lumen-canvas] .cv-memory-actions > .muted { margin-inline-end: auto; }
+html[data-lumen-canvas] .cv-memory-actions .btn { min-height: 36px; }
+html[data-lumen-canvas] .cv-memory-edit { display: grid; gap: 8px; margin: 4px 0 8px; }
+html[data-lumen-canvas] .cv-memory-edit textarea { box-sizing: border-box; width: 100%; padding: 10px 12px; border: 0; border-radius: 12px; background: var(--cv5-fill); color: var(--text); font: inherit; font-size: 14px; resize: vertical; }
+html[data-lumen-canvas] .cv-memory-edit textarea:focus { outline: 2px solid color-mix(in srgb, var(--text) 35%, transparent); }
+html[data-lumen-canvas] .cv-memory-edit span { display: flex; gap: 8px; }
+@media (hover: none) { html[data-lumen-canvas] .cv-memory-actions .btn { min-height: 44px; } }
+
+/* ---------- No brand symbol until the real logo lands (Phase 2): the wait signal is a plain breathing ink dot, not a moon,
+   and the start-up frame drops the brand dot placeholder. */
+html[data-lumen-canvas] .moon-phase :is(.mp-shadow, .mp-glow) { display: none; }
+html[data-lumen-canvas] .moon-phase .mp-disc { fill: currentColor; transform-box: fill-box; transform-origin: center; transform: scale(.45); animation: pulse 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { html[data-lumen-canvas] .moon-phase .mp-disc { animation: none; } }
+html[data-lumen-canvas] .app-skeleton .sk-brand .sk-dot { display: none; }
+/* The new-chat moon with its two stars, in its own lime as before (the owner's choice); everything else stays ink. */
+html[data-lumen-canvas] .welcome-moon { --signal: #c2ef3a; --signal-strong: #3f6a00; }
+html[data-lumen-canvas][data-theme='dark'] .welcome-moon { --signal-strong: #c2ef3a; }
+@media (prefers-color-scheme: dark) { html[data-lumen-canvas]:not([data-theme='light']) .welcome-moon { --signal-strong: #c2ef3a; } }

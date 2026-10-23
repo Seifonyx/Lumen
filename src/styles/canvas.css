@@ -33,6 +33,19 @@
   --canvas-glass-tint: var(--glass-tint, var(--surface));
   --canvas-motion-duration: 240ms;
   --canvas-motion-easing: cubic-bezier(.32, .72, 0, 1);
+  /* Foundation scales (docs/brand/DESIGN_FOUNDATION.md). Type: one display voice, tight and semibold; everything
+   * else is Geist at reading weights; mono only for data (model names, shortcuts, section labels). */
+  --canvas-type-display: 640 32px/1.1 var(--canvas-display-font);   /* page titles: Library, Tools, Settings */
+  --canvas-type-title: 620 19px/1.2 var(--canvas-display-font);     /* section headings inside a page */
+  --canvas-tracking-display: -.03em;
+  --canvas-tracking-title: -.015em;
+  --canvas-type-label: 500 10.5px/1.3 var(--canvas-data-font);      /* mono section labels, uppercase, .12em */
+  /* Radii: controls, rows, cards and floating panels step up together; pills are for actions and chips. */
+  --canvas-radius-control: 10px;
+  --canvas-radius-row: 9px;
+  --canvas-radius-card: 16px;
+  --canvas-radius-panel: 20px;
+  --canvas-radius-pill: 999px;
 }
 @media (prefers-reduced-motion: reduce) {
   [data-lumen-canvas-foundation] { --canvas-motion-duration: 0ms; }

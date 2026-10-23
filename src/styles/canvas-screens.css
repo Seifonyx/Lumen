@@ -21,9 +21,15 @@ html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas][data-lu
 }
 html[data-lumen-canvas] .switch:checked, html.glass[data-lumen-canvas] .switch:checked { background: var(--text); border-color: var(--text); }
 html[data-lumen-canvas] .switch:checked::after { background: var(--bg); }
+/* Lamplight: the only warm colour in the interface, the light from the mark's crease; text selection only.
+   Selected text sits on it instead of a 45% ink wash: calmer, and clearer in Dark (about 8.5:1 against 4.1:1). */
+html[data-lumen-canvas] { --canvas-lamplight: #f1e2b6; }
+html[data-lumen-canvas][data-theme='dark'] { --canvas-lamplight: #4d4130; }
+@media (prefers-color-scheme: dark) { html[data-lumen-canvas]:not([data-theme='light']) { --canvas-lamplight: #4d4130; } }
+html[data-lumen-canvas] ::selection { background: var(--canvas-lamplight); color: var(--text); }
 
 /* ---------- Page shell (HubPage: Library, Tools, Projects, Study, Assistants…) */
-html[data-lumen-canvas] .hub-head h1, html.glass[data-lumen-canvas] .hub-head h1 { font: 640 32px/1.1 var(--cv5-display); letter-spacing: -.03em; }
+html[data-lumen-canvas] .hub-head h1, html.glass[data-lumen-canvas] .hub-head h1 { font: var(--canvas-type-display); letter-spacing: var(--canvas-tracking-display); }
 html[data-lumen-canvas] .hub-head p { color: var(--text-2); font-size: 14.5px; }
 html[data-lumen-canvas] .hub-tabs { gap: 4px; padding: 4px; margin-bottom: 20px; border: 0; border-radius: 14px; background: var(--cv5-fill); }
 html[data-lumen-canvas] .hub-tabs button { margin: 0; padding: 0 14px; min-height: 34px; border: 0; border-radius: 10px; color: var(--text-2); }
@@ -56,7 +62,7 @@ html[data-lumen-canvas] .btn.ghost { border-color: var(--cv5-rim); }
 html[data-lumen-canvas] .tool-card { border-color: var(--cv5-rim); border-radius: 16px; background: var(--cv5-card); }
 html[data-lumen-canvas] .tool-card:hover { border-color: color-mix(in srgb, var(--text) 18%, transparent); }
 html[data-lumen-canvas][data-lumen-canvas-foundation] .tool-card .tool-icon { background: var(--cv5-fill-strong); color: var(--text); }
-html[data-lumen-canvas] .tools-section h2, html[data-lumen-canvas] .tools-section > header h2 { font: 620 19px/1.2 var(--cv5-display); letter-spacing: -.015em; }
+html[data-lumen-canvas] .tools-section h2, html[data-lumen-canvas] .tools-section > header h2 { font: var(--canvas-type-title); letter-spacing: var(--canvas-tracking-title); }
 html[data-lumen-canvas] .tools-rail button[aria-current='true'], html[data-lumen-canvas] .tools-rail button.active { background: var(--cv5-fill-strong); color: var(--text); }
 
 /* ---------- Projects: neutral bands and monograms (the Canvas tree's look), rimmed cards. */
@@ -67,7 +73,7 @@ html[data-lumen-canvas] .proj-card h2, html[data-lumen-canvas] .proj-card h3 { f
 html[data-lumen-canvas] .proj-stats > * { border-radius: 999px; background: var(--cv5-fill); }
 html[data-lumen-canvas] .project-title { font: 640 30px/1.12 var(--cv5-display); letter-spacing: -.03em; }
 html[data-lumen-canvas] .project-card { border-color: var(--cv5-rim); border-radius: 16px; background: var(--cv5-card); }
-html[data-lumen-canvas] .project-section-head h2, html[data-lumen-canvas] .project-section-head h3 { font: 500 10.5px/1.3 var(--cv5-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); }
+html[data-lumen-canvas] .project-section-head h2, html[data-lumen-canvas] .project-section-head h3 { font: var(--canvas-type-label); letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); }
 
 /* ---------- Library */
 html[data-lumen-canvas] .doc-paper { border-color: var(--cv5-rim); border-radius: 14px; }
@@ -76,7 +82,7 @@ html[data-lumen-canvas] .hub-count { font: 500 11.5px var(--cv5-mono); letter-sp
 /* ---------- Settings: Canvas destinations list, display headings, mono group labels, rimmed cards. */
 html[data-lumen-canvas] .settings-title-main { font-family: var(--cv5-display); letter-spacing: -.02em; }
 html[data-lumen-canvas] .settings-heading h2 { font: 640 30px/1.12 var(--cv5-display); letter-spacing: -.03em; }
-html[data-lumen-canvas] .settings-group-title { font: 500 10.5px/1.3 var(--cv5-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); }
+html[data-lumen-canvas] .settings-group-title { font: var(--canvas-type-label); letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); }
 html[data-lumen-canvas] .settings-card { border-color: var(--cv5-rim); border-radius: 16px; background: var(--cv5-card); }
 html[data-lumen-canvas] .settings-card .setting-row { border-bottom-color: var(--cv5-rim); }
 html[data-lumen-canvas] .settings-tabs button { border-radius: 10px; }

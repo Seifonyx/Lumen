@@ -23,6 +23,8 @@
 
 ## Next action / owner decisions needed
 
+**Owner reporting preference (2026-10-23, standing):** every report to the owner ends with a plain summary of the features and changes implemented (what changed for users, per area), alongside test results and risks.
+
 **Current next action (2026-10-23, Phase 2 slice 2 correction in review):** The owner visually reviews the corrected drawer: actual-size Light/Dark boards with the glass look, 320/390/430, default/project/search/New-chat scope.<br>**Open owner decision:** should the bottom New chat follow the open chat's project instead of the sticky active project? Its current behaviour is unchanged and now labelled.<br>Known risk: the drawer doesn't grow with large text or Dynamic Type (this predates the slice).<br>No merge or deploy without explicit approval. Production stays Deploy #63. No new spending or public QA exposure. |
 
 **Owner decisions recorded (2026-10-22), replacing the P1 backlog questions:**

@@ -47,7 +47,7 @@ test('every flagged Composer branch keeps the ordinary expression as its alterna
   const statements = src.match(/if \(CANVAS_COMPOSER(?: && [^)]*\))?\) [^;]*;|CANVAS_COMPOSER \? useCanvasComposer\(/g) || [];
   assert.equal(spreads.length + ternaries.length + statements.length, uses, 'no unreviewed flag use');
   assert.equal(spreads.length, 3);
-  assert.equal(ternaries.length, 3);
+  assert.equal(ternaries.length, 4);
 });
 
 test('Canvas composer styles are scoped to the opted-in composer and load nothing', () => {

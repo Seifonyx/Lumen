@@ -181,3 +181,7 @@ html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn.voice-start 
   .composer-wrap[data-lumen-canvas-composer] .composer { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--canvas-surface); }
   .composer-wrap[data-lumen-canvas-composer] > .canvas-writing-scrim { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgb(0 0 0 / .6); }
 }
+
+/* Active context sits above the input as chips (rendered by the Canvas composer); the tool-row copies step aside. */
+.composer-wrap[data-lumen-canvas-composer] .composer .composer-chip { display: none; }
+.composer-wrap[data-lumen-canvas-composer] .cv-context-chips .ctx-chip { gap: 6px; }

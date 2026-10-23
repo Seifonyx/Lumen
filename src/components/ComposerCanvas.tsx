@@ -21,6 +21,8 @@ interface Options {
   attachments: number;
   title?: string;
   autosize: () => void;
+  /** What's in force for the next message, shown as chips above the input: web search, and the project a new chat starts in. */
+  context: { search: boolean; project: { id: string; name: string } | null; turnOffSearch: () => void; leaveProject: () => void };
 }
 
 const PHONE = '(max-width: 899px)';
@@ -31,8 +33,17 @@ const ExpandIcon = () => (
     <path d="M15 3h6v6" /><path d="m21 3-7 7" /><path d="m3 21 7-7" /><path d="M9 21H3v-6" />
   </svg>
 );
+// Globe, FolderKanban and X, inline for the same reason.
+const icon = (paths: string[], size = 13) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {paths.map((d) => <path key={d} d={d} />)}
+  </svg>
+);
+const GLOBE = ['M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20', 'M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20', 'M2 12h20'];
+const FOLDER = ['M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z', 'M8 10v4', 'M12 10v2', 'M16 10v6'];
+const CLOSE = ['M18 6 6 18', 'm6 6 12 12'];
 
-export function useCanvasComposer({ input, scope, value, attachments, title, autosize }: Options) {
+export function useCanvasComposer({ input, scope, value, attachments, title, autosize, context }: Options) {
   const form = useRef<HTMLFormElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   const [focused, setFocused] = useState(false);
@@ -119,6 +130,13 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
   return {
     state,
     expanded,
+    // Above the input: what the next message will use. The same choices stay removable with one tap.
+    chips: (context.search || context.project) ? (
+      <div className="repo-strip cv-context-chips">
+        {context.search && <span className="ctx-chip">{icon(GLOBE)} Web search<button type="button" className="icon-btn xs" aria-label="Turn off web search" onClick={context.turnOffSearch}>{icon(CLOSE, 12)}</button></span>}
+        {context.project && <span className="ctx-chip" title={`New chat in ${context.project.name}`}>{icon(FOLDER)} <span className="ctx-chip-name">{context.project.name}</span><button type="button" className="icon-btn xs" aria-label="Remove from project" onClick={context.leaveProject}>{icon(CLOSE, 12)}</button></span>}
+      </div>
+    ) : null,
     collapse: () => { if (expanded) collapse(); },
     wrap: {
       'data-lumen-canvas-foundation': '',

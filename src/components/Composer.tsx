@@ -158,7 +158,8 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
   useEffect(autosize, [text, interim, autosize]);
   // CP02 Canvas presentation: off (folded away) in the ordinary build, so the hook order is fixed per build.
   // Where it adds a piece, the ternaries below keep the ordinary branch's JSX unchanged.
-  const canvas = CANVAS_COMPOSER ? useCanvasComposer({ input, scope: attachmentScope, value: interim || text, attachments: visiblePending.length, title: chat?.title, autosize }) : null;
+  const canvas = CANVAS_COMPOSER ? useCanvasComposer({ input, scope: attachmentScope, value: interim || text, attachments: visiblePending.length, title: chat?.title, autosize,
+    context: { search: Boolean(settings.webSearch && (!info || info.search)), project: project && !chat?.messages.length ? project : null, turnOffSearch: () => updateSettings({ webSearch: false }), leaveProject: () => useStore.getState().setComposerProject(null) } }) : null;
 
   useEffect(() => {
     if (!isTouch()) input.current?.focus();
@@ -418,7 +419,7 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
         {CANVAS_COMPOSER ? <>{canvas!.head}{chat?.repo && <ChecksBar chat={chat} />}</> : chat?.repo && <ChecksBar chat={chat} />}
         {imageMode && <div className="repo-strip"><span className="ctx-chip image-chip"><ImageIcon size={13} /> Create image · describe it below<button type="button" className="icon-btn xs" aria-label="Stop creating an image" onClick={() => setImageMode(false)}><X size={12} /></button></span></div>}
         {deepResearch && <div className="repo-strip"><span className="ctx-chip research-chip"><Telescope size={13} /> Deep research · ask your question below<button type="button" className="icon-btn xs" aria-label="Turn off deep research" onClick={() => setDeepResearch(false)}><X size={12} /></button></span></div>}
-        {codeExecution && <div className="repo-strip"><span className="ctx-chip">Gemini calculation · runs on Google<button type="button" className="icon-btn xs" aria-label="Remove calculation tool" onClick={() => setCodeExecution(false)}><X size={12} /></button></span></div>}
+        {CANVAS_COMPOSER ? <>{codeExecution && <div className="repo-strip"><span className="ctx-chip">Gemini calculation · runs on Google<button type="button" className="icon-btn xs" aria-label="Remove calculation tool" onClick={() => setCodeExecution(false)}><X size={12} /></button></span></div>}{canvas!.chips}</> : codeExecution && <div className="repo-strip"><span className="ctx-chip">Gemini calculation · runs on Google<button type="button" className="icon-btn xs" aria-label="Remove calculation tool" onClick={() => setCodeExecution(false)}><X size={12} /></button></span></div>}
         {chat?.repo && (
           <div className="repo-strip">
             <button type="button" className="repo-chip" onClick={() => setUi({ workspaceOpen: true })} title="Open the repository panel">

@@ -147,7 +147,7 @@
 .app[data-lumen-canvas-shell] .cv-home-continue button > .cv-home-icon > svg { color: inherit; }
 .app[data-lumen-canvas-shell] .cv-home-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app[data-lumen-canvas-shell] .cv-home-when { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--canvas-muted); font-size: 12.5px; }
-.app[data-lumen-canvas-shell] .cv-home-none { margin: 0; padding: 14px 4px; border-top: 1px solid var(--canvas-rim); color: var(--canvas-muted); font-size: 13.5px; text-align: start; }
+.app[data-lumen-canvas-shell] .cv-home-none { max-width: none; margin: 0; padding: 14px 4px; border-top: 1px solid var(--canvas-rim); color: var(--canvas-muted); font-size: 13.5px; text-align: start; }
 @media (min-width: 900px) { .app[data-lumen-canvas-shell] .cv-home-continue { min-height: calc(var(--cv-home-row, 48px) * 3 + 20px); } }
 @media (max-width: 899px) {
   .app[data-lumen-canvas-shell] .cv-home-continue li:nth-child(n + 3) { display: none; }

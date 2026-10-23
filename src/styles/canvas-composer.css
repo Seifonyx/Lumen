@@ -206,10 +206,14 @@ html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn.voice-start 
   .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer > textarea { flex: 1 1 100%; }
   .composer-wrap[data-lumen-canvas-composer] .composer .composer-bar > .tool-btn:not(.shield-on) { width: 36px; height: 36px; }
 }
-/* The narrowest phones: the meter steps aside while writing (it stays in the writing sheet and in Settings → Usage). */
+/* The narrowest phones: while writing, too, the model shows its mark (announced by name; the writing sheet shows the
+   name), so every control keeps its place on the row, the usage meter included. */
 @media (max-width: 360px) {
-  .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .usage-meter:not(:has(> .usage-chip:is([aria-expanded='true'], [data-return]))) { display: none; }
-  .composer-wrap[data-lumen-canvas-composer] .composer .model-button { max-width: 120px; }
+  .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .model-button { max-width: none; min-width: 44px; height: 40px; min-height: 40px; gap: 2px; padding: 0 6px 0 8px; }
+  .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .model-button .model-name { overflow: visible; flex: none; }
+  .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .model-name :is(.pmark, > .auto-icon) { display: inline-grid; }
+  .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .model-name::before { display: none; }
+  .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .model-button .model-name-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 /* At rest the empty box keeps "Message Lumen" on one line: the model button shows its mark only (the name is still
    announced), and the name appears with the second row as soon as you write, before anything is sent. */

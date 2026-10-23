@@ -161,6 +161,24 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
     return () => observer.disconnect();
   }, [chat?.id, empty]);
 
+  // Canvas: reaching for older text stops the follow at once. The scroll handler measures once a frame, so a reply
+  // arriving in between could pull the view back under a finger or wheel that had just started moving up.
+  if (CANVAS_SHELL) useEffect(() => { // eslint-disable-line react-hooks/rules-of-hooks
+    const el = scroller.current;
+    if (!el) return;
+    let y = 0;
+    const away = () => { stick.current = false; cancelAnimationFrame(glide.current.frame); glide.current.frame = 0; };
+    const wheel = (e: WheelEvent) => { if (e.deltaY < 0) away(); };
+    const touchStart = (e: TouchEvent) => { y = e.touches[0]?.clientY ?? 0; };
+    const touchMove = (e: TouchEvent) => { if ((e.touches[0]?.clientY ?? 0) > y + 2) away(); };
+    const key = (e: KeyboardEvent) => { if (['PageUp', 'ArrowUp', 'Home'].includes(e.key)) away(); };
+    el.addEventListener('wheel', wheel, { passive: true });
+    el.addEventListener('touchstart', touchStart, { passive: true });
+    el.addEventListener('touchmove', touchMove, { passive: true });
+    el.addEventListener('keydown', key);
+    return () => { el.removeEventListener('wheel', wheel); el.removeEventListener('touchstart', touchStart); el.removeEventListener('touchmove', touchMove); el.removeEventListener('keydown', key); };
+  }, [chat?.id, projectWorkspaceOpen, empty]);
+
   useEffect(() => {
     const el = scroller.current;
     if (!el) return;

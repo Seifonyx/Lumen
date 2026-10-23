@@ -7,7 +7,11 @@
 .app[data-lumen-canvas-shell] .msg.assistant { margin-bottom: 0; }
 .app[data-lumen-canvas-shell] .message-row:not(:first-child):has(> .msg.user:not(.auto-files)) { padding-top: 22px; }
 /* The last block of an answer doesn't add its own margin before the actions line. */
-.app[data-lumen-canvas-shell] .markdown > :last-child, .app[data-lumen-canvas-shell] .markdown > div > :last-child { margin-bottom: 0; }
+/* Only the reply's own first and last blocks lose their outer margin. While a reply streams, each paragraph is a block
+   of its own; trimming every block's first child took the space above headings away until the reply finished, and
+   the text jumped when it did. */
+.app[data-lumen-canvas-shell] .markdown > :last-child, .app[data-lumen-canvas-shell] .markdown > div:last-child > :last-child { margin-bottom: 0; }
+.app[data-lumen-canvas-shell] .markdown > :first-child, .app[data-lumen-canvas-shell] .markdown > div:first-child > :first-child { margin-top: 0; }
 .app[data-lumen-canvas-shell] .msg.assistant > .msg-actions { margin-top: 2px; }
 
 /* ---------- Type: headings step up from the body, with more space above than below (they belong to what follows). */
@@ -16,7 +20,6 @@
 .app[data-lumen-canvas-shell] .markdown h2 { font-size: 1.24em; font-weight: 640; line-height: 1.28; letter-spacing: -.016em; margin: 1.75em 0 .45em; }
 .app[data-lumen-canvas-shell] .markdown h3 { font-size: 1.06em; font-weight: 640; line-height: 1.35; letter-spacing: -.008em; margin: 1.5em 0 .3em; }
 .app[data-lumen-canvas-shell] .markdown :is(h4, h5, h6) { font-size: 1em; font-weight: 640; line-height: 1.4; letter-spacing: 0; margin: 1.3em 0 .25em; }
-.app[data-lumen-canvas-shell] .markdown :is(h1, h2, h3, h4, h5, h6):first-child { margin-top: 0; }
 .app[data-lumen-canvas-shell] .markdown p { margin: .7em 0; }
 .app[data-lumen-canvas-shell] .markdown :is(ul, ol) { margin: .6em 0 .8em; padding-inline-start: 1.35em; }
 .app[data-lumen-canvas-shell] .markdown li { margin: .28em 0; padding-inline-start: .15em; }
@@ -112,7 +115,6 @@ html[data-lumen-canvas] .app[data-lumen-canvas-shell] .msg.assistant .error-box 
   .app[data-lumen-canvas-shell] .markdown h2 { font-size: 1.2em; margin: 1.55em 0 .4em; }
   .app[data-lumen-canvas-shell] .markdown h3 { font-size: 1.05em; margin: 1.35em 0 .3em; }
   .app[data-lumen-canvas-shell] .markdown :is(h4, h5, h6) { font-size: 1em; margin: 1.2em 0 .25em; }
-  .app[data-lumen-canvas-shell] .markdown :is(h1, h2, h3, h4, h5, h6):first-child { margin-top: 0; }
   /* Code and tables may run to the screen's edges, so more of them fits. */
   .app[data-lumen-canvas-shell] .markdown :is(.code-block, .table-wrap) { margin-inline: -6px; }
   .app[data-lumen-canvas-shell] .markdown .code-block pre { font-size: .8em; }

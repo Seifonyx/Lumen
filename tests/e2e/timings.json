@@ -41,6 +41,7 @@
  "settings.cjs": 5,
  "sidebar.cjs": 44,
  "smooth-chat.cjs": 12,
+ "streaming.cjs": 35,
  "sync.cjs": 42,
  "tasks-sync.cjs": 8,
  "tasks.cjs": 22,

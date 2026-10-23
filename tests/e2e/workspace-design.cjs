@@ -43,7 +43,8 @@ const matrix = [[1280,844,'light'],[320,740,'light'],[390,844,'dark'],[430,932,'
   await fits();await capture('project-context');await scan('project context');
   if(width<=960)await toggle.click();
   // New chat must open an ordinary composer rather than returning to the workspace.
-  if(width<900)await page.locator('.menu-btn').click();await page.locator('.sidebar .new-chat, .cv-dest-new, .cv-new-pill').click();
+  // Canvas: the project's own New chat (the global one is always general); the ordinary sidebar's starts in the project.
+  if(width<900)await page.locator('.menu-btn').click();await page.locator('.sidebar .new-chat, .cv-project:has(.cv-brief.active) .cv-new-here').click();
   await page.locator('.composer textarea').waitFor();assert.equal(await page.locator('.claude-project-view').count(),0);
   await page.locator('.composer textarea').fill('Summarize our protocol.');await page.locator('.send-btn').click();await page.locator('.msg.assistant .model-tag').waitFor();
   assert.equal(requests.length,1);assert.match(JSON.stringify(requests[0]),/PROJECT_DESIGN_REFERENCE/);assert.match(JSON.stringify(requests[0]),/PROJECT_DESIGN_INSTRUCTIONS/);

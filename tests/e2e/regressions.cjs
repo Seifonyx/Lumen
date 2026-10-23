@@ -234,7 +234,10 @@ async function run(browser, mobile) {
     await page.click('.sidebar .new-chat, .cv-dest-new, .cv-new-pill');
     await page.waitForSelector('.app:not(.app-skeleton) .main.is-empty');
     await page.click('.menu-btn');
-    await page.locator('.chat-open').last().click();
+    // The saved chat (Canvas: a global New chat is general, so the saved chat's project folder may be closed).
+    const folder = page.locator('.cv-project-row', { hasText: 'Study' });
+    if (await folder.count() && await folder.getAttribute('aria-expanded') === 'false') { await folder.click(); await page.waitForTimeout(300); }
+    await page.locator('.chat-row:not(.active) .chat-open').last().click();
     await page.waitForSelector('.msg.assistant .markdown');
     await page.locator('.composer textarea').focus();
     await page.evaluate(() => {

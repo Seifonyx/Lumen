@@ -164,16 +164,16 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
   const dailyLimit = freeOR ? usage?.openrouter.limit || null : u?.quota || null;
   const resetAt = current ? (freeOR && usage ? usage.openrouter.resetAt : nextReset(providerOf(current))) : 0;
 
-  // Canvas: no chip while context use is negligible; then honest words instead of a bare percentage.
-  if (CANVAS_COMPOSER && pct < 5 && !blockedUntil && !open) return null;
-  const words = CANVAS_COMPOSER ? (pct >= 10 ? `${pct}% of context` : `~${formatTokens(used)} tokens`) : '';
+  // Canvas: no number while context use is negligible (just the quiet ring, so usage stays one tap away); then
+  // honest words instead of a bare percentage.
+  const words = CANVAS_COMPOSER ? (pct >= 10 ? `${pct}% of context` : pct >= 5 ? `~${formatTokens(used)} tokens` : '') : '';
 
   return (
     <div className="usage-meter" ref={box}>
       {CANVAS_COMPOSER ? (
       <button type="button" ref={trigger} className={`usage-chip${level}${pct < 50 && !blockedUntil ? ' quiet' : ''}${pct < 10 && !blockedUntil && !open ? ' idle' : ''}`} onClick={() => { setSheet(isSheetScreen()); setOpen(!open); }} aria-expanded={open} aria-haspopup="dialog" aria-controls="usage-panel" title="Conversation capacity and daily usage">
         <svg className="usage-ring" viewBox="0 0 20 20" aria-hidden="true"><circle className="usage-ring-track" cx="10" cy="10" r="7" /><circle className="usage-ring-fill" cx="10" cy="10" r="7" strokeDasharray="43.98" strokeDashoffset={43.98 * (1 - pct / 100)} /></svg>
-        <span className="usage-chip-words">{words}<span className="sr-only"> used in this chat</span></span>{blockedUntil && <span className="usage-status"> · limit reached</span>}
+        {words ? <span className="usage-chip-words">{words}<span className="sr-only"> used in this chat</span></span> : <span className="sr-only">Usage</span>}{blockedUntil && <span className="usage-status"> · limit reached</span>}
         <ChevronDown size={12} aria-hidden="true" />
       </button>
       ) : (

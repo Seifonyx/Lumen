@@ -42,6 +42,7 @@
 /* The ring sits in the row instead of the box's corner, so nothing needs to leave room for it. */
 .composer-wrap[data-lumen-canvas-composer] .composer > :first-child:not(textarea):not(.composer-bar) { margin-inline-end: 0; }
 .composer-wrap[data-lumen-canvas-composer] .composer .usage-chip { min-height: 34px; border: 0; background: none; color: var(--canvas-muted); }
+.composer-wrap[data-lumen-canvas-composer] .composer .usage-chip:not(:has(.usage-chip-words)) > .lucide-chevron-down { display: none; }
 .composer-wrap[data-lumen-canvas-composer] .composer .usage-chip-words { font: 500 12px/1 var(--canvas-data-font); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .composer-wrap[data-lumen-canvas-composer] .composer .shield-on { order: 7; }
 .composer-wrap[data-lumen-canvas-composer] .composer .canvas-expand { order: 8; display: none; }

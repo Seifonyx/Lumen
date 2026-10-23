@@ -26,6 +26,8 @@ const url=process.env.MR_TEST_URL||'http://localhost:5190/';
   await page.locator('.composer textarea').fill('Keep this draft');
   await page.locator('.composer textarea').evaluate(el=>{el.focus();el.setSelectionRange(0,4);});
   assert.equal(await page.locator('.composer textarea').evaluate(el=>el.selectionEnd-el.selectionStart),4,'Input selection remains usable');
+  // Canvas phones fold your message's actions until the bubble is tapped (or the long-press menu opens).
+  if(await page.locator('.app[data-lumen-canvas-shell]').count()&&await page.locator('.msg.user .msg-actions').evaluate(el=>getComputedStyle(el).pointerEvents==='none'))await page.locator('.msg.user .bubble').click();
   await page.locator('.msg.user').getByRole('button',{name:'Select text',exact:true}).click();
   const dialog=page.getByRole('dialog',{name:'Select text',exact:true});await dialog.waitFor();
   assert.equal(await dialog.locator('.modal-title').evaluate(el=>getComputedStyle(el).webkitUserSelect),'none','Portal title cannot leave a native selection handle');

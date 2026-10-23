@@ -76,8 +76,11 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   const t0 = Date.now();
   await page.click('.send-btn');
   await page.waitForSelector('.msg.assistant >> nth=1 >> .model-tag', { timeout: 70000 });
-  const notice = await page.textContent('.msg.assistant >> nth=1 >> .notice').catch(() => '');
-  const tag2 = await page.textContent('.msg.assistant >> nth=1 >> .model-tag');
+  // Ordinary shows the switch as a notice; Canvas folds it into the model line ("Rerouted: <why>").
+  const reply2 = page.locator('.msg.assistant').nth(1);
+  const canvasLine = await reply2.locator('.cv-rerouted').count();
+  const notice = canvasLine ? `${await reply2.locator('.cv-rerouted .route-tag').textContent()} — switched` : await reply2.locator('.notice').first().textContent().catch(() => '');
+  const tag2 = await reply2.locator(canvasLine ? '.cv-rerouted .route-model' : '.model-tag').first().textContent();
   check(/didn't respond in time — switched/.test(notice) && !/Flash/.test(tag2), `hanging model replaced after ${Math.round((Date.now() - t0) / 1000)} s → ${tag2.trim()}`);
   hangFlash = false;
 

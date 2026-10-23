@@ -85,7 +85,9 @@ async function device(browser, mobile) {
   await A.page.fill('.composer textarea', 'first');
   await A.page.click('.send-btn');
   await A.page.waitForSelector('.msg.assistant .model-tag', { timeout: 15000 });
-  check(/hit its usage limit/.test(await A.page.textContent('.msg.assistant .notice')), 'switch notice on first limit');
+  // Ordinary shows the switch as a notice; Canvas folds it into the model line ("Rerouted: <why>").
+  const switchNote = (await A.page.$('.msg.assistant .cv-rerouted')) ? '.msg.assistant .cv-rerouted .route-tag' : '.msg.assistant .notice';
+  check(/hit its usage limit/.test(await A.page.textContent(switchNote)), 'switch notice on first limit');
   await A.page.waitForTimeout(1200);
   check(await A.page.$('.usage-warning.blocked'), 'warning shown above the message box');
 

@@ -8,7 +8,10 @@ export function installMessageActionTaps(): () => void {
     if (target?.closest('.msg.user .msg-actions')) return;
     const msg = target?.closest('.msg.user') || null;
     document.querySelectorAll('.msg.user[data-actions]').forEach((m) => { if (m !== msg) m.removeAttribute('data-actions'); });
-    if (msg && target?.closest('.bubble') && !window.getSelection()?.toString()) msg.toggleAttribute('data-actions');
+    // A text selection inside this message is a selection, not a tap; one elsewhere (say, in the composer) doesn't count.
+    const sel = window.getSelection();
+    const selecting = Boolean(sel && !sel.isCollapsed && sel.anchorNode && msg?.contains(sel.anchorNode));
+    if (msg && target?.closest('.bubble') && !selecting) msg.toggleAttribute('data-actions');
   };
   document.addEventListener('click', onClick);
   return () => document.removeEventListener('click', onClick);

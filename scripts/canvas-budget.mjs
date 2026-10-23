@@ -7,7 +7,9 @@ import { gzipSync } from 'node:zlib';
 
 const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // Kilobytes, gzipped. Raise one only with a reason in the commit; the point is that growth is a decision.
-const BUDGET = { startupJs: 6, startupCss: 14, routingCenter: 9, canvasCss: 16 };
+// startupJs 6 → 8 (2026-10-23): the approved Lumen identity's wordmark and mark ship inline (≈1.5 KB gz of vector art
+// plus ≈0.8 KB for the component), so the sidebar head draws with the first frame instead of after a request.
+const BUDGET = { startupJs: 8, startupCss: 14, routingCenter: 9, canvasCss: 16 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {
@@ -24,7 +26,7 @@ const rows = [
   ['Routing Center chunk (lazy)', rc.reduce((n, f) => n + gz(canvas, join('assets', f)), 0), BUDGET.routingCenter],
 ];
 // Canvas CSS on its own: the source files, minified roughly by collapsing whitespace and comments.
-const css = ['canvas.css', 'canvas-composer.css', 'canvas-shell.css', 'canvas-routing.css', 'canvas-screens.css']
+const css = ['canvas.css', 'canvas-composer.css', 'canvas-shell.css', 'canvas-routing.css', 'canvas-screens.css', 'brand-crease.css']
   .map((f) => readFileSync(join('src/styles', f), 'utf8')).join('\n').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ');
 rows.push(['Canvas CSS source (gz, approx.)', gzipSync(css).length / 1024, BUDGET.canvasCss]);
 if (!rc.length) rows.push(['Routing Center must stay a lazy chunk', 1, 0]);

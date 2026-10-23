@@ -1,0 +1,23 @@
+/* The Lumen identity (Crease) in the Canvas presentation: brand placements only. Loaded through
+ * src/lib/canvas-presentation.on.ts, so the ordinary build never carries it. The drawings use currentColor and inherit
+ * ink or paper from the theme. */
+
+/* Sidebar and drawer head: the integrated wordmark sits on the head's centre line, optically nudged so its
+   baseline (not its box) lines up with the collapse button. */
+.app[data-lumen-canvas-shell] .cv-brand .brand-wordmark { display: block; flex: none; color: var(--canvas-ink); margin-block-start: 1px; }
+
+/* Collapsed sidebar: the standalone mark leads the top bar, only while the expand button shows. */
+.cv-collapsed-mark { display: none; flex: none; color: var(--text); margin-inline: 8px 2px; }
+@media (min-width: 900px) {
+  .sidebar-collapsed .cv-collapsed-mark { display: block; }
+}
+
+/* Shared conversation header: the wordmark is the link's name ("Lumen"). */
+html[data-lumen-canvas] .shared-brand .brand-wordmark { display: block; color: var(--text); }
+
+/* Sign-in: the app icon is the brand moment. On Dark a hairline rim keeps the dark tile from melting into the page. */
+html[data-lumen-canvas] .login-card .logo { width: 56px; height: 56px; border-radius: 12.5px; }
+html[data-lumen-canvas][data-theme='dark'] .login-card .logo { box-shadow: 0 0 0 1px rgb(255 255 255 / .22); }
+@media (prefers-color-scheme: dark) {
+  html[data-lumen-canvas]:not([data-theme='light']) .login-card .logo { box-shadow: 0 0 0 1px rgb(255 255 255 / .22); }
+}

@@ -46,8 +46,8 @@ function canvasPresentation(): Plugin | false {
   };
 }
 
-/** Canvas build only: replaces public files with their Canvas versions (public-canvas/: the ink mark's icons and
- *  splash screens) and restyles the legal pages in ink and Geist. Runs after serviceWorker(), so the precache list
+/** Canvas build only: replaces public files with their Canvas versions (public-canvas/: the Lumen identity's icons,
+ *  favicon, manifest and launch screens, from scripts/brand-crease.mjs) and restyles the legal pages in ink and Geist. Runs after serviceWorker(), so the precache list
  *  keeps one entry per public file. The ordinary build never loads this plugin. */
 function canvasPublic(): Plugin | false {
   if (process.env.LUMEN_CANVAS !== '1') return false;
@@ -62,6 +62,8 @@ function canvasPublic(): Plugin | false {
         // Light and Dark only: a saved True black opens as Dark.
         .replace("if (s.theme === 'black') { root.dataset.theme = 'dark'; root.dataset.appearance = 'black'; }", "if (s.theme === 'black') root.dataset.theme = 'dark';")
         .replace("black: '#000000' }[s.theme]", "black: '#0d0f12' }[s.theme]")
+        // The Lumen mark's small-size drawing for the browser tab (public-canvas/favicon.svg).
+        .replace('<link rel="icon" href="/icon.svg" type="image/svg+xml" />', '<link rel="icon" href="/favicon.svg" type="image/svg+xml" />')
         .replace('<html ', '<html data-lumen-canvas data-lumen-canvas-foundation ')
         .replace('<div class="app app-skeleton"', '<div class="app app-skeleton" data-lumen-canvas-shell data-lumen-canvas-foundation')
         .replace('<div class="composer sk-composer">', '<div class="composer sk-composer" data-lumen-canvas-foundation data-lumen-canvas-composer>');

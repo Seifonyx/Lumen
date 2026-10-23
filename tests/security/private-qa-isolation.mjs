@@ -152,7 +152,10 @@ try {
     'src/components/RouteWhy.tsx', 'src/lib/route-words.ts', 'src/components/Logo.tsx', 'src/components/CanvasHome.tsx', 'src/components/SettingsModal.tsx', 'src/lib/settings.ts',
     'src/pwa/legal-ink.css', 'src/lib/press.ts', 'src/components/HubPage.tsx', 'src/lib/message-taps.ts', 'src/components/AllChats.tsx', 'src/components/CompareModelsModal.tsx', 'src/lib/model-traits.ts',
     'src/components/MessageItem.tsx', 'src/lib/reroute.ts', 'src/lib/chat-records.ts', 'src/lib/routing-transfer.ts', 'src/components/ContextRail.tsx',
-    'src/components/MessageThread.tsx', 'src/components/ProjectMemory.tsx', 'src/components/RoutingExtras.tsx'];
+    'src/components/MessageThread.tsx', 'src/components/ProjectMemory.tsx', 'src/components/RoutingExtras.tsx',
+    // The Lumen identity (Crease, owner-approved for release 2026-10-23): Canvas-only through the shared "on" module;
+    // the ordinary output stays byte-equal. CanvasHome keeps the greeting on one line at every width.
+    'src/components/BrandCrease.tsx', 'src/lib/brand-crease-art.ts', 'src/styles/brand-crease.css', 'src/components/SharedChatPage.tsx'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');

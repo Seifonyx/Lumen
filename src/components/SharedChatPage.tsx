@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FileText, Loader2 } from 'lucide-react';
 import Logo from './Logo';
+import { BrandWordmark } from '../lib/canvas-presentation';
 import { readShare, type SharedChat } from '../lib/share';
 import { segments } from '../lib/markdown';
 
@@ -19,7 +20,7 @@ export default function SharedChatPage({ id }: { id: string }) {
   return (
     <div className="shared-page">
       <header className="shared-top">
-        <a className="shared-brand" href="/"><Logo size={22} /> Lumen</a>
+        {BrandWordmark ? <a className="shared-brand" href="/"><BrandWordmark height={20} /></a> : <a className="shared-brand" href="/"><Logo size={22} /> Lumen</a>}
         <span className="shared-badge">Shared chat · read-only</span>
       </header>
       <main className="shared-main">

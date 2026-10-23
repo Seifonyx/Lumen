@@ -8,7 +8,10 @@ It is its own app. Don't copy another product's look (no serif "greeting" headin
 accent, no warm-brown dark mode, no ghost icon). When in doubt, remove.
 
 ## Mark
-Lumen's mark is the **Eclipse**: a dark moon ringed by lime light with one white flare (src/components/Logo.tsx, public/icon.svg; PNGs rendered from the same drawing). It is always a dark tile, in every theme.
+- **Ordinary build:** the **Eclipse**, a dark moon ringed by lime light with one white flare (src/components/Logo.tsx, public/icon.svg; PNGs rendered from the same drawing). It is always a dark tile, in every theme.
+- **Canvas build:** **Crease** (owner-approved 2026-10-23). The integrated Crease-as-L wordmark appears in the sidebar and drawer head and the shared header. The standalone mark appears in the collapsed bar, and as the app icon on sign-in, home screen, favicon and launch screens. It's drawn by `scripts/brand-crease.mjs` into `brand/crease/`, `public-canvas/` and `src/lib/brand-crease-art.ts`; components are in `src/components/BrandCrease.tsx` (through the Canvas "on" module). Rules are in `brand/crease/README.md`. Brand placements are `role="img"` labelled "Lumen"; ordinary text stays text.
+
+The Canvas foundation (type, colour, radii, lamplight selection, brand-to-interface rules) is written up in `docs/brand/DESIGN_FOUNDATION.md`. Where the sections below talk about lime "signal", that is the ordinary build; Canvas maps it to ink.
 
 ## Tokens (the Identity section of src/app.css is the source of truth)
 

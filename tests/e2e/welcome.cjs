@@ -2,9 +2,11 @@ const {chromium,webkit}=require('playwright'),assert=require('node:assert/strict
 const {profile}=require('./helpers/preview-profile.cjs');
 const all=[[1280,844,'light'],[320,740,'light'],[390,844,'dark'],[430,932,'black'],[844,390,'dark']];
 const matrix=process.env.MR_TEST_WIDTH?all.filter(v=>v[0]===Number(process.env.MR_TEST_WIDTH)):all;
+// A fixed clock: the greeting depends on the hour, so tests must not depend on when they run. 15:00 UTC is the longest one.
+const AFTERNOON=new Date('2026-10-23T15:00:00Z');
 (async()=>{const engine=process.env.MR_WEBKIT?webkit:chromium,browser=await engine.launch();fs.mkdirSync('.impeccable/review',{recursive:true});try{for(const [width,height,theme] of matrix){
- const ctx=await browser.newContext({viewport:{width,height},isMobile:width<900,hasTouch:width<900,serviceWorkers:'block',reducedMotion:'reduce',...(width<900?{userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1'}:{})});
- await profile(ctx,'preview-welcome-'+width,theme);await ctx.route('**/firestore.googleapis.com/**',r=>r.fulfill({status:403,headers:{'access-control-allow-origin':'*'},json:{error:{code:403,message:'Isolated fixture'}}}));
+ const ctx=await browser.newContext({viewport:{width,height},timezoneId:'UTC',isMobile:width<900,hasTouch:width<900,serviceWorkers:'block',reducedMotion:'reduce',...(width<900?{userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1'}:{})});
+ await ctx.clock.setFixedTime(AFTERNOON);await profile(ctx,'preview-welcome-'+width,theme);await ctx.route('**/firestore.googleapis.com/**',r=>r.fulfill({status:403,headers:{'access-control-allow-origin':'*'},json:{error:{code:403,message:'Isolated fixture'}}}));
  await ctx.addInitScript(()=>{if('serviceWorker' in navigator)navigator.serviceWorker.register=()=>Promise.reject(new Error('Isolated fixture'));});
  const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>{if(e.message.includes('firestore.googleapis.com')&&e.message.includes('due to access control checks'))return;errors.push(e.message)});
  await page.goto(process.env.MR_TEST_URL||'http://localhost:5190/?emulator');const input=page.locator('.composer textarea'),heading=page.locator('.empty h1');await input.waitFor();await heading.waitFor();await page.evaluate(()=>document.fonts.ready);
@@ -24,4 +26,20 @@ const matrix=process.env.MR_TEST_WIDTH?all.filter(v=>v[0]===Number(process.env.M
  if(width<900){await input.focus();const visible=Math.min(460,height-140);await page.evaluate(v=>{Object.defineProperty(visualViewport,'height',{configurable:true,value:v});Object.defineProperty(visualViewport,'offsetTop',{configurable:true,value:40});visualViewport.dispatchEvent(new Event('resize'))},visible);await page.waitForFunction(()=>document.documentElement.classList.contains('kb-open'));await page.waitForTimeout(250);assert.ok(await page.locator('.composer').evaluate((e,v)=>{const r=e.getBoundingClientRect();return r.top>=40&&r.bottom<=v+41},visible),'Composer hidden by keyboard');await page.screenshot({path:`.impeccable/review/welcome-${engine.name()}-${width}-${theme}-keyboard.png`});
  await input.blur();await page.evaluate(h=>{Object.defineProperty(visualViewport,'height',{configurable:true,value:h});Object.defineProperty(visualViewport,'offsetTop',{configurable:true,value:0});visualViewport.dispatchEvent(new Event('resize'))},height);await page.waitForFunction(()=>!document.documentElement.classList.contains('kb-open'));assert.ok(await page.locator('.composer').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight+1),'Composer restores after keyboard closes');}
  assert.deepEqual(errors,[]);console.log(`PASS welcome ${engine.name()} ${width}x${height} ${theme}: five single-line greetings, no cards/subtitle, stable draft, tools, accessibility and keyboard fit`);await ctx.close();
-}}finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});
+}
+ if(!process.env.MR_TEST_WIDTH||process.env.MR_TEST_WIDTH==='320')for(const [hour,first,font] of [[9,'Fixture','auto'],[15,'Fixture','auto'],[21,'Fixture','auto'],[15,'Bartholomew','auto'],[15,'Maximiliano-Alejandro','auto'],[15,'Fixture','large']]){
+  const ctx=await browser.newContext({viewport:{width:320,height:740},timezoneId:'UTC',isMobile:true,hasTouch:true,serviceWorkers:'block',reducedMotion:'reduce'});
+  await ctx.clock.setFixedTime(new Date(`2026-10-23T${String(hour).padStart(2,'0')}:00:00Z`));await profile(ctx,`preview-greet-${hour}-${first}-${font}`,'light',{fontSize:font});
+  await ctx.route('**/firestore.googleapis.com/**',r=>r.fulfill({status:403,headers:{'access-control-allow-origin':'*'},json:{error:{code:403,message:'Isolated fixture'}}}));
+  await ctx.addInitScript(n=>{const u=JSON.parse(localStorage.getItem('mr.preview_user')||'null');if(u&&u.displayName!==n){u.displayName=n;localStorage.setItem('mr.preview_user',JSON.stringify(u));}},first);
+  const page=await ctx.newPage();await page.goto(process.env.MR_TEST_URL||'http://localhost:5190/?emulator');await page.locator('.empty h1').waitFor();await page.evaluate(()=>document.fonts.ready);
+  if(!await page.locator('.cv-home').count()){await ctx.close();break;}
+  await page.waitForFunction(()=>{const e=document.querySelector('.empty h1'),r=e.getBoundingClientRect(),s=getComputedStyle(e);return e.scrollWidth<=e.clientWidth+1&&r.left>=0&&r.right<=innerWidth&&r.height<parseFloat(s.lineHeight)*1.1},null,{timeout:5000});
+  const text=(await page.locator('.empty h1').innerText()).trim(),part=hour<12?'Good morning':hour<18?'Good afternoon':'Good evening';
+  assert.ok(text.startsWith(part),`${hour}:00 greets with "${part}" (got "${text}")`);
+  // A name that fits stays; one that doesn't steps aside rather than being cut off.
+  assert.ok(text===`${part}, ${first}`||text===part,`320 px ${hour}:00 ${first} ${font}: whole greeting, never clipped (got "${text}")`);
+  if(first==='Fixture'&&font==='auto')assert.equal(text,`${part}, ${first}`,'a short name fits at 320 px');
+  console.log(`PASS welcome 320 px ${hour}:00 ${first} text ${font}: "${text}" on one line`);await ctx.close();
+ }
+}finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});

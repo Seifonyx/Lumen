@@ -12,8 +12,10 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
     for (const [width, height, mobile] of [[1280, 820, false], [390, 844, true], [320, 720, true]]) {
       for (const theme of ['light', 'dark', 'black']) {
         const label = `${width}px ${theme}`;
-        const ctx = await browser.newContext({ viewport: { width, height }, isMobile: mobile, hasTouch: mobile,
+        const ctx = await browser.newContext({ viewport: { width, height }, timezoneId: 'UTC', isMobile: mobile, hasTouch: mobile,
           ...(mobile ? { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1' } : {}) });
+        // A fixed clock: the greeting depends on the hour; 15:00 UTC gives the longest one, every run.
+        await ctx.clock.setFixedTime(new Date('2026-10-23T15:00:00Z'));
         await ctx.route('**/firestore.googleapis.com/**', (r) => r.abort());
         await ctx.route('**/api.github.com/**', (r) => r.fulfill({ json: [] }));
         await ctx.route('**/generativelanguage.googleapis.com/**', (r) => {
@@ -40,7 +42,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
           ? !document.documentElement.dataset.appearance && document.documentElement.dataset.theme === 'dark'
           : document.documentElement.dataset.appearance === 'black' && getComputedStyle(document.body).backgroundColor === 'rgb(0, 0, 0)'), `${label}: true black background survives reload`);
         check(inside(await page.locator('.composer').boundingBox(), width, height) && (await scan(page)).length === 0, `${label}: welcome screen and composer fit`);
-        check(await page.locator('.suggestion,.starter-actions,.empty p:not(.welcome-route):not(.cv-home-where):not(.cv-home-none)').count() === 0 && await page.locator('.empty h1').evaluate(el=>el.scrollWidth<=el.clientWidth), `${label}: short single-line greeting and routing status, without recommendations`);
+        check(await page.locator('.suggestion,.starter-actions,.empty p:not(.welcome-route):not(.cv-home-where):not(.cv-home-none)').count() === 0 && await page.waitForFunction(() => { const el = document.querySelector('.empty h1'); return el.scrollWidth <= el.clientWidth + 1; }, null, { timeout: 5000 }).then(() => true, () => false), `${label}: short single-line greeting and routing status, without recommendations`);
         if (!mobile) {
           await page.click('[aria-label="Collapse sidebar"]');
           check(!(await page.locator('.sidebar').isVisible()), `${label}: sidebar collapses`);

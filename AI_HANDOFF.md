@@ -1,5 +1,26 @@
 # Dynamic Model Picker operational handoff
 
+## Desktop & iPhone navigation, Phase 2 slice 2 — 23 October 2026
+
+Draft PR on `claude/lucid-dijkstra-541bbi`, from `main` `f16c6d1` (slice 1 is live as Deploy #63). Canvas only; the ordinary build is byte-identical to `main`. **Not approved for merge or deploy.**
+
+- **Tree:**
+  - Arrow keys come from `src/lib/tree-keys.ts`, loaded through the Canvas switch (`loadTreeKeys`) with the tree's first focus.
+  - Search: ArrowDown enters the tree, Enter opens the first result.
+  - Screen readers: lists are named after their project; the open chat gets `aria-current`; pinned chats get an `aria-describedby` "Pinned" (set as attributes by SidebarCanvas, so the shared ChatRow keeps one seam); the search count is announced.
+  - Focus rings are drawn inset.
+- **Drawer:**
+  - Closing returns focus to the opener: the chat, hub or Routing Center ☰.
+  - The open chat is revealed on open.
+  - At most 700px tall: places become a row of tiles.
+  - At most 360px wide: the drawer is `100vw − 40px`.
+- **Budget:** startup JS 8 → 8.5 KB (reason in `scripts/canvas-budget.mjs`); measured 8.2.
+- **Checks:**
+  - `npm test`; QA01/CP01 isolation; CP02–CP05 and the browser contract in Chromium (CP03 extended); the full Canvas in-app list run locally with emulators (see PR).
+  - WebKit runs in CI.
+  - The physical-iPhone checklist `docs/testing/phase2-navigation-iphone-checks.md` is **not run**.
+- The fixture gained a long-title chat (`tests/e2e/helpers/nav-fixture.cjs`).
+
 ## Desktop & iPhone navigation, Phase 2 — 23 October 2026
 
 Draft PR #44 on branch `claude/lucid-dijkstra-541bbi`, from `main` `1c574a4` (Phase 1 is live; CI is sharded since PR #43). Canvas only; the ordinary build is byte-identical to `main`. **Not approved for merge or deploy.**

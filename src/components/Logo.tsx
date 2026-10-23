@@ -9,8 +9,8 @@ export default function Logo({ size = 24, className = "" }: { size?: number; cla
   const id = useId().replace(/:/g, '');
   // Small marks (sidebar, shared pages) get a softer halo so they don't glow over the text beside them.
   const small = size <= 32;
-  // Canvas: no symbol until the real logo lands; the brand is the plain "Lumen" wordmark.
-  if (CANVAS_SHELL) return null;
+  // Canvas: the official folded-L mark (the same vector as the app icon, served as /icon.svg in this build).
+  if (CANVAS_SHELL) return <img className={`logo ${className}`} src="/icon.svg" width={size} height={size} alt="" aria-hidden="true" draggable={false} />;
   return (
     <svg ref={activity.ref} data-visual-active={activity.active} className={`logo animated-visual ${className}`} width={size} height={size} viewBox="0 0 512 512" aria-hidden="true">
       <defs>

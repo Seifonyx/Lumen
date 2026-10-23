@@ -17,6 +17,7 @@ import ProjectManager from './ProjectManager';
 import { AskChats, ChatRow, type SidebarProps } from './Sidebar';
 import { BrandWordmark, loadTreeKeys as loadKeys } from '../lib/canvas-presentation';
 import { newGeneralChat, newProjectChat } from '../lib/new-chat';
+import { useBackLayer } from '../lib/back-stack';
 
 const EMPTY_PROJECTS: Project[] = [];
 const LIMIT = 5;
@@ -32,7 +33,9 @@ function reveal(row: Element | null | undefined) {
   const tree = row?.closest<HTMLElement>('.cv-tree');
   if (!row || !tree) return;
   const r = row.getBoundingClientRect(), t = tree.getBoundingClientRect();
-  if (r.top < t.top) tree.scrollTop -= t.top - r.top + 8;
+  // The section header sticks to the top of the tree: a row is only in view below it.
+  const top = t.top + (tree.querySelector<HTMLElement>('.cv-section')?.offsetHeight ?? 0);
+  if (r.top < top) tree.scrollTop -= top - r.top + 8;
   else if (r.bottom > t.bottom) tree.scrollTop += r.bottom - t.bottom + 8;
 }
 // The arrow keys load with the tree's first focus (Tab, a click or a tap into it), before any key can reach them.
@@ -69,6 +72,8 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const [disclosure, setDisclosure] = useState<Open>(OPEN);
   const [more, setMore] = useState<Record<string, boolean>>({});
   const [allChats, setAllChats] = useState(false);
+  // Back (or Safari's edge swipe) closes All chats, as it closes the pages shown over the chat.
+  useBackLayer(allChats, () => setAllChats(false));
   const [asking, setAsking] = useState<string | null>(null);
   const [manager, setManager] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
@@ -108,13 +113,19 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   useEffect(() => { if (!phone) requestAnimationFrame(() => reveal(sidebarRef.current?.querySelector('.chat-row.active'))); }, [currentId, phone]);
   // ChatRow is shared with the ordinary sidebar (one seam there), so the tree adds its state as attributes: the open
   // chat is the current page, and a pinned chat is described as pinned (its pin icon is decorative).
+  // Slice 3: a chat holding unsent text (the composer keeps it per chat, mr.draft.<account>.<chat>) says "Draft", so a
+  // draft left behind by switching chats, a reload or a New chat is easy to find again.
   useLayoutEffect(() => {
-    sidebarRef.current?.querySelectorAll('.chat-row').forEach((row) => {
+    sidebarRef.current?.querySelectorAll<HTMLElement>('.chat-row').forEach((row) => {
       const button = row.querySelector('.chat-open');
       if (!button) return;
       button.toggleAttribute('aria-current', false);
       if (row.classList.contains('active')) button.setAttribute('aria-current', 'page');
-      if (row.querySelector('.pin-mark')) button.setAttribute('aria-describedby', `${ids}-pinned`); else button.removeAttribute('aria-describedby');
+      let draft = false;
+      try { draft = !row.classList.contains('active') && Boolean(localStorage.getItem(`mr.draft.${user?.uid}.${row.dataset.flip}`)); } catch { /* private mode */ }
+      row.toggleAttribute('data-draft', draft);
+      const described = [row.querySelector('.pin-mark') && `${ids}-pinned`, draft && `${ids}-draft`].filter(Boolean).join(' ');
+      if (described) button.setAttribute('aria-describedby', described); else button.removeAttribute('aria-describedby');
     });
   });
   // Another account starts from its own (default) disclosure, never the previous one's.
@@ -193,6 +204,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
             onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: isMac, ctrlKey: !isMac, bubbles: true }))}><kbd>{modKey}K</kbd></button>}
         </label>
         <span id={`${ids}-pinned`} hidden>Pinned</span>
+        <span id={`${ids}-draft`} hidden>Unsent draft</span>
         <span id={`${ids}-general`} hidden>Not in a project</span>
         {/* Screen readers hear how many conversations a search finds as it narrows. */}
         <p className="sr-only" role="status">{q ? (matches.length ? `${matches.length} ${matches.length === 1 ? 'conversation' : 'conversations'} found` : 'No conversations match') : ''}</p>

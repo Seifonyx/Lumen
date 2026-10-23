@@ -7,8 +7,9 @@
 // Per viewport (1440×960, 390×844, 320×568): folders and loose conversations from the canonical store; the open
 // chat's folder open; folder/section disclosure; project overview, new chat in a project; row actions (rename);
 // search over titles and messages with Ask; All chats; phone drawer open/close; collapsed rail, Back from a page
-// and focus return (Phase 2); tree keyboard, list names, current chat, announced pins and result count (slice 2); header breadcrumb; reading
-// measure; floating composer clear of the last answer (desktop); a second reviewer's isolated tree; axe; no request
+// and focus return (Phase 2); tree keyboard, list names, current chat, announced pins and result count (slice 2);
+// Back from Settings, a project overview and All chats, the unsent-draft marker and text size (slice 3); header
+// breadcrumb; reading measure; floating composer clear of the last answer (desktop); a second reviewer's isolated tree; axe; no request
 // leaving the review origin. Screenshots go to CP03_OUT.
 
 import assert from 'node:assert/strict';
@@ -303,6 +304,60 @@ try {
         await page.waitForFunction(() => document.activeElement?.closest('.cv-dest') && document.activeElement.textContent.includes('Tools'));
       }
       pass('drawer / collapse / rail / back / focus return');
+
+      // Slice 3 reliability: Back closes Settings, a project's overview and All chats (never leaving Lumen); a chat
+      // left with unsent text says so; the tree follows the text size.
+      const origin = new URL(page.url()).origin;
+      const ensureNav = async () => openNav(page, phone && !(await nav(page).evaluate((el) => el.classList.contains('open'))));
+      await ensureNav();
+      await nav(page).getByRole('button', { name: 'Settings', exact: true }).click();
+      await settle(page, 500);
+      await page.goBack();
+      await settle(page, 500);
+      assert.equal(await page.locator('.settings-page').count(), 0, 'Back closes Settings');
+      assert.equal(new URL(page.url()).origin, origin, 'and stays in Lumen');
+      await ensureNav();
+      await nav(page).getByRole('button', { name: /Offer, portfolio and first clients/ }).click();
+      await settle(page, 600);
+      assert.ok(await page.locator('.project-workspace-main').isVisible());
+      await page.goBack();
+      await settle(page, 500);
+      assert.equal(await page.locator('.project-workspace-main').count(), 0, 'Back closes the project overview');
+      await ensureNav();
+      await nav(page).getByRole('button', { name: /All chats/ }).click();
+      await settle(page, 500);
+      await page.goBack();
+      await settle(page, 500);
+      assert.equal(await page.getByRole('dialog', { name: 'All chats' }).count(), 0, 'Back closes All chats');
+      assert.equal(new URL(page.url()).origin, origin);
+      // A draft left in one chat is marked on its row (described as an unsent draft), and comes back with the chat.
+      await ensureNav();
+      await nav(page).locator('.chat-row', { hasText: 'Notes for a quieter workspace' }).locator('.chat-open').click();
+      await settle(page, 400);
+      await page.getByRole('textbox', { name: 'Message', exact: true }).fill('UNSENT_IN_NOTES');
+      await ensureNav();
+      await nav(page).locator('.cv-project', { hasText: 'Studio launch' }).locator('.chat-row', { hasText: 'A launch worth remembering' }).locator('.chat-open').click();
+      await settle(page, 400);
+      await ensureNav();
+      const notes = nav(page).locator('.chat-row', { hasText: 'Notes for a quieter workspace' });
+      assert.equal(await notes.getAttribute('data-draft'), '', 'the row is marked');
+      assert.ok((await notes.locator('.chat-open').evaluate((el) => (el.getAttribute('aria-describedby') || '').split(' ').map((id) => document.getElementById(id)?.textContent).join(','))).includes('Unsent draft'));
+      await notes.locator('.chat-open').click();
+      await settle(page, 400);
+      assert.equal(await page.getByRole('textbox', { name: 'Message', exact: true }).inputValue(), 'UNSENT_IN_NOTES');
+      await page.getByRole('textbox', { name: 'Message', exact: true }).fill('');
+      // Text size: the tree's titles and rows grow with --fs (Settings → Text size, or iOS Dynamic Type).
+      await ensureNav();
+      const size = () => nav(page).locator('.chat-open').first().evaluate((el) => ({ font: parseFloat(getComputedStyle(el).fontSize), height: el.getBoundingClientRect().height }));
+      const base = await size();
+      await page.evaluate(() => document.documentElement.style.setProperty('--fs', '23px'));
+      await settle(page, 200);
+      const big = await size();
+      assert.ok(big.font >= base.font + 7 && big.height > base.height, `titles and rows grow with the text size: ${JSON.stringify({ base, big })}`);
+      if (phone) assert.ok(base.height >= 44, 'phones keep 44pt rows');
+      await page.evaluate(() => document.documentElement.style.removeProperty('--fs'));
+      await closeNav(page, phone);
+      pass('back layers, draft marker, text size');
 
       await openNav(page, phone);
       const state = await page.evaluate(() => ({ csp: window.__cspViolations, blocked: window.__qaBlockedHosts || [], overflow: document.documentElement.scrollWidth - innerWidth }));

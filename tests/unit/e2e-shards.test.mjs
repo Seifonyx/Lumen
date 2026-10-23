@@ -1,4 +1,4 @@
-// CI splits the in-app tests across machines (E2E_SHARD=i/n): every selected file must run on exactly one machine,
+// CI splits the in-app tests across 5 machines (E2E_SHARD=i/n): every selected file must run on exactly one machine,
 // for the ordinary run and the Canvas list alike, and the machines' recorded work must stay balanced.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,10 +18,10 @@ test('parses i/n and rejects anything else', () => {
   for (const bad of ['0/4', '5/4', '1/0', '2', 'a/b', '1/4/2']) assert.throws(() => parseShard(bad), /E2E_SHARD/);
 });
 
-for (const [name, files] of [['ordinary run', all], ['Canvas list', canvas]]) {
-  test(`${name}: each file runs on exactly one of 4 machines, with balanced work`, () => {
+for (const [name, files, count] of [['ordinary run', all, 5], ['Canvas list', canvas, 5]]) {
+  test(`${name}: each file runs on exactly one of ${count} machines, with balanced work`, () => {
     const groups = [files.filter(usesEmulators), files.filter((f) => !usesEmulators(f))];
-    const shards = [1, 2, 3, 4].map((index) => shardFiles(groups, { index, count: 4 }, duration));
+    const shards = Array.from({ length: count }, (_, i) => shardFiles(groups, { index: i + 1, count }, duration));
     assert.deepEqual(shards.flat().sort(), [...files].sort(), 'every file once, none lost or repeated');
     const loads = shards.map((s) => s.reduce((n, f) => n + duration(f), 0));
     const longest = Math.max(...files.map(duration));

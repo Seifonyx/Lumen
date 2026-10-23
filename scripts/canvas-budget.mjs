@@ -11,7 +11,9 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // plus ≈0.8 KB for the component), so the sidebar head draws with the first frame instead of after a request.
 // startupJs 8 → 8.5 (Phase 2 slice 2): the tree's screen-reader state (current chat, pinned), the announced search
 // count and the drawer's focus return run before any interaction (≈0.5 KB gz); the arrow keys load lazily.
-const BUDGET = { startupJs: 8.5, startupCss: 14, routingCenter: 9, canvasCss: 16 };
+// startupJs 8.5 → 9 (Phase 2 slice 3): Back for Settings, a project's overview and All chats, and the unsent-draft
+// marker in the tree (≈0.3 KB gz); both must work before any interaction, so neither can load later.
+const BUDGET = { startupJs: 9, startupCss: 14, routingCenter: 9, canvasCss: 16 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

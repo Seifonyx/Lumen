@@ -30,6 +30,12 @@ else's data.
 12. Swipe through the drawer: a folder reads its name, chat count and expanded/collapsed; its chats are in a list named after the project; the open chat is announced as current; a pinned chat says "Pinned".
 13. Type in search: VoiceOver announces "N conversations found" (or "No conversations match").
 
+## Reliability and text size (slice 3)
+14. Back (or edge swipe) from Settings, from a project's overview and from All chats returns to where you were, and never leaves Lumen.
+15. Leave unsent text in a chat, open another: the first chat shows "DRAFT" in the drawer and VoiceOver says "Unsent draft"; opening it brings the text back. Also after closing and reopening the app.
+16. Settings → Accessibility → Display & Text Size → Larger Text (try an accessibility size), with Lumen's text size on Automatic: drawer text and rows grow; nothing overlaps; titles end in "…"; New chat stays on one line.
+17. Start a chat with "New chat in <project>", then the drawer's bottom New chat: the second is a general chat (no project chip), and the first keeps its draft and its project.
+
 ## Results
 | # | Device / iOS / Safari or app | Date | Result | Note |
 |---|---|---|---|---|

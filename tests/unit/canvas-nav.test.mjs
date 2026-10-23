@@ -16,7 +16,8 @@ test('CanvasNav is null in the ordinary switch and comes only from the "on" modu
 
 test('CanvasNav keeps one history entry for pages shown in place of the chat and reads no settings or data', () => {
   const src = readFileSync('src/components/CanvasNav.tsx', 'utf8');
-  assert.equal((src.match(/history\.pushState\(/g) || []).length, 1, 'one place adds an entry');
+  // One entry for whatever is open; Back that leaves something open underneath re-adds it (slice 3).
+  assert.equal((src.match(/history\.pushState\(/g) || []).length, 2, 'an entry is added on open, and again only for what Back left open');
   assert.match(src, /if \(!history\.state\?\.\[MARK\]\) history\.pushState/, 'moving between pages reuses the entry');
   assert.match(src, /ownPops\+\+; history\.back\(\)/, 'closing inside the app takes the entry back');
   assert.ok(!/localStorage|indexedDB|fetch\(|settings\./.test(src), 'presentation only');
@@ -36,7 +37,7 @@ test("the tree's arrow keys load lazily from SidebarCanvas only, and change no r
   assert.ok(!/setAttribute|removeAttribute|tabIndex|\.role\s*=/.test(keys), 'rows keep their button semantics');
   // The shared ChatRow keeps its single Canvas seam; the tree adds current/pinned state as attributes.
   assert.match(tree, /setAttribute\('aria-current', 'page'\)/);
-  assert.match(tree, /setAttribute\('aria-describedby', `\$\{ids\}-pinned`\)/);
+  assert.match(tree, /\[row\.querySelector\('\.pin-mark'\) && `\$\{ids\}-pinned`, draft && `\$\{ids\}-draft`\]/);
 });
 
 test('global New chat is always general; a project folder New chat is always that project (Canvas only)', () => {
@@ -55,4 +56,14 @@ test('global New chat is always general; a project folder New chat is always tha
   assert.match(tree, /className="cv-new-here" onClick=\{\(\) => newProjectChat\(p\.id\)\}/);
   assert.ok(!/[^.]newChat\b/.test(tree.replace(/newGeneralChat|newProjectChat/g, '')), 'the tree never calls the inheriting newChat');
   assert.match(readFileSync('src/components/CanvasRail.tsx', 'utf8'), /newGeneralChat\(\)/);
+});
+
+test('slice 3: Back covers Settings, a project overview and registered layers; the tree marks unsent drafts', () => {
+  const nav = readFileSync('src/components/CanvasNav.tsx', 'utf8');
+  assert.match(nav, /s\.settingsOpen \|\| s\.projectWorkspaceOpen \|\| routingCenterOpen\(\) \|\| backLayerOpen\(\)/);
+  assert.match(nav, /closeTopSurface\(\);\s*\n\s*\/\/ Something is still open underneath/, 'Back closes the topmost surface only');
+  const tree = readFileSync('src/components/SidebarCanvas.tsx', 'utf8');
+  assert.match(tree, /useBackLayer\(allChats, \(\) => setAllChats\(false\)\)/);
+  assert.match(tree, /localStorage\.getItem\(`mr\.draft\.\$\{user\?\.uid\}\.\$\{row\.dataset\.flip\}`\)/, 'reads the composer\'s own per-chat draft key');
+  assert.match(readFileSync('src/styles/canvas-shell.css', 'utf8'), /content: 'Draft' \/ ''/, 'visual word only; screen readers get the description');
 });

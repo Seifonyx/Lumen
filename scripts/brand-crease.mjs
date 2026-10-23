@@ -2,7 +2,8 @@
 // The live app keeps the shipped folded-L (public-canvas/, scripts/canvas-icons.mjs) until the owner approves a
 // replacement. Every file here is drawn from the numbers below, so changing a number and re-running rebuilds all.
 // Run from the repository root: node scripts/brand-crease.mjs
-// The wordmark outlines come from brand/crease/source/geist-600.json (scripts/brand-crease-glyphs.py).
+// The wordmark outlines come from brand/crease/source/geist-600.json and geist-660.json (scripts/brand-crease-glyphs.py).
+// Also writes src/lib/brand-crease-art.ts, the drawings for the app's brand components (preview build only).
 import { chromium } from 'playwright';
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 
@@ -96,6 +97,58 @@ function lockupBaseline(panel, floor, text, { height, gap, overshoot } = BASELIN
     ' role="img" aria-label="Lumen"');
 }
 
+// ---------- Phase 1C, the owner's chosen direction: the Crease IS the L of "Lumen".
+// A wordmark-only optical variant of the mark (the standalone master above is unchanged). Same idea and depth angle:
+// a standing screen with its top cut at S, a crease, and a base projecting down and to the right at the icon's
+// slope. Three things change so it sits in type:
+//   - the hinge and the base's front edge flatten (HINGE), so the base lies along the baseline instead of standing
+//     on a point: no hole at the baseline, and the u can come close;
+//   - the crease sits higher (a deeper base), so the screen is shorter and broader, as in the icon, and the whole
+//     letter is cap height (top-right corner just over it) instead of towering over the word;
+//   - the screen is 1.35x a stem of the letters, and the letters are Geist 660, so the weights meet.
+// The letters are Geist 660 "umen", tightened, with every stem that starts at the x-height (u twice, m, n) cut at
+// the hinge angle: the same cut as the screen's crease, carried through the word.
+// Font units, y-up, baseline 0. W screen width, HINGE hinge/front-edge slope, S top cut, DX/SD base projection,
+// G crease, TOP top-right corner, DIP how far the base's front point goes below the baseline, R corners.
+const WORD = { W: 176, HINGE: 0.36, S: MARK.S, DX: 330, SD: 0.62, G: 34, TOP: 722, DIP: 8, R: 8, GAP: 40, TRACK: -28 };
+// Below 28 px tall: a wider crease and looser letters, so the opening and the letters stay apart on the pixel grid.
+const WORD_SMALL = { ...WORD, G: 60, R: 5, GAP: 56, TRACK: -10 };
+const UMEN = JSON.parse(readFileSync(`${OUT}/source/geist-660.json`, 'utf8'));
+/** The wordmark's L: screen and base as two rounded polygons (y-up). */
+function creaseL({ W, HINGE, S, DX, SD, G, TOP, DIP, R }) {
+  const back = [0, DX * SD - DIP];                                       // base, back-left (under the screen)
+  const base = [back, [W, back[1] + W * HINGE], [W + DX, -DIP + W * HINGE], [DX, -DIP]];
+  const bottom = back[1] + G;                                            // screen, bottom-left
+  const screen = [[0, bottom], [W, bottom + W * HINGE], [W, TOP], [0, TOP - W * S]];
+  return { screen: rounded(screen, R), base: rounded(base, R), right: W + DX };
+}
+/** Cuts the flat stem tops at the x-height at slope s (rising right). Paths are absolute M/L/H/V/Q/Z. */
+function cutStems(d, s, xh = UMEN.xHeight) {
+  const cmds = [...d.matchAll(/([MLHVQZ])([^MLHVQZ]*)/g)].map((m) => [m[1], m[2].trim() ? m[2].trim().split(/[ ,]+/).map(Number) : []]);
+  let x = 0; const out = [];
+  for (let i = 0; i < cmds.length; i++) {
+    const [c, a] = cmds[i], next = cmds[i + 1];
+    // "up to the x-height, then right along it": the left corner drops, a line climbs to the right corner.
+    if (c === 'V' && Math.abs(a[0] - xh) < 2 && next?.[0] === 'H' && next[1][0] > x) {
+      out.push(`V${fmt(a[0] - (next[1][0] - x) * s)}L${next[1][0]} ${a[0]}`); x = next[1][0]; i++; continue;
+    }
+    out.push(c + a.join(' '));
+    if (c === 'M' || c === 'L') x = a[0]; else if (c === 'H') x = a[0]; else if (c === 'Q') x = a[2];
+  }
+  return out.join('');
+}
+/** The integrated wordmark: Crease-L + "umen". Returns y-down body (baseline at TOP), width and height. */
+export function lumenWordmark(o = WORD) {
+  const L = creaseL(o);
+  let x = L.right + o.GAP - 70; const paths = [`<path d="${L.screen}"/>`, `<path d="${L.base}"/>`];
+  for (const ch of 'umen') {
+    const g = UMEN.glyphs[ch];
+    paths.push(`<path transform="translate(${fmt(x)} 0)" d="${ch === 'e' ? g.d : cutStems(g.d, o.HINGE)}"/>`);
+    x += g.advance + o.TRACK;
+  }
+  return { body: `<g transform="translate(0 ${o.TOP}) scale(1 -1)">${paths.join('')}</g>`, width: x - o.TRACK, height: o.TOP + 12, baseline: o.TOP };
+}
+
 // ---------- Write
 for (const dir of ['svg', 'png', 'splash']) mkdirSync(`${OUT}/${dir}`, { recursive: true });
 const files = {};
@@ -123,6 +176,25 @@ put('app-icon-light.svg', tile({ bg: PAPER, panel: INK, floor: INK_SHADE, radius
 put('app-icon-mono.svg', tile({ bg: '#000', panel: '#fff', floor: '#fff', radius: 114 }));
 put('app-icon-mono-light.svg', tile({ bg: '#fff', panel: '#000', floor: '#000', radius: 114 }));
 put('favicon.svg', tile({ bg: INK, panel: LIT, floor: SHADE, radius: 112, fill: 0.7, geometry: SMALL }));
+// Phase 1C: the integrated wordmark (one colour; the letters and both planes share it), regular and small.
+for (const [suffix, o] of [['', WORD], ['-small', WORD_SMALL]]) {
+  const lw = lumenWordmark(o), vbw = `0 0 ${fmt(lw.width)} ${fmt(lw.height)}`, a11y = ' role="img" aria-label="Lumen"';
+  put(`lumen-wordmark${suffix}-ink.svg`, svg(vbw, `<title>Lumen</title><g fill="${INK}">${lw.body}</g>`, a11y));
+  put(`lumen-wordmark${suffix}-paper.svg`, svg(vbw, `<title>Lumen</title><g fill="${PAPER}">${lw.body}</g>`, a11y));
+  put(`lumen-wordmark${suffix}-mono.svg`, svg(vbw, `<title>Lumen</title><g fill="currentColor">${lw.body}</g>`, a11y));
+}
+// The colour icon on dark grounds inside the product (sign-in in Dark): a hairline rim keeps the tile's edge.
+put('app-icon-dark-rim.svg', tile({ bg: INK, panel: LIT, floor: SHADE, radius: 114, glow: true }).replace('</svg>', '<rect x=".75" y=".75" width="510.5" height="510.5" rx="113.25" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="1.5"/></svg>'));
+// The app's brand components read their drawings from one generated module (no network, no runtime font).
+{
+  const lw = lumenWordmark(WORD), ls = lumenWordmark(WORD_SMALL), sm = crease(SMALL);
+  // Plain literals (no spreads or calls), so a build with the preview off drops the module entirely.
+  const drawing = (viewBox, body) => body.replace(/^<g transform="([^"]+)">([\s\S]*)<\/g>$/, (_, t, p) => JSON.stringify({ viewBox, transform: t, d: [...p.matchAll(/<path(?: transform="([^"]+)")? d="([^"]+)"\/>/g)].map((m) => [m[1] || '', m[2]]) }));
+  writeFileSync('src/lib/brand-crease-art.ts', `// GENERATED by scripts/brand-crease.mjs: the Crease identity proposal's drawings for the app's brand components.\n// Do not edit by hand; change the numbers in the script and re-run it.\nexport type Drawing = { viewBox: string; transform: string; d: [transform: string, d: string][] };\n` +
+    `export const WORDMARK: Drawing = ${drawing(`0 0 ${fmt(lw.width)} ${fmt(lw.height)}`, lw.body)};\n` +
+    `export const WORDMARK_SMALL: Drawing = ${drawing(`0 0 ${fmt(ls.width)} ${fmt(ls.height)}`, ls.body)};\n` +
+    `export const MARK: Drawing = ${JSON.stringify({ viewBox: `0 0 ${fmt(sm.width)} ${fmt(sm.height)}`, transform: '', d: [['', sm.panel], ['', sm.floor]] })};\n`);
+}
 
 const browser = await chromium.launch();
 const page = await browser.newPage();

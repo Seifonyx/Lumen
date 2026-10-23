@@ -6,6 +6,96 @@ owner's approval of the final identity, and then separate approval for the merge
 
 ![Before and after](mockups/before-after.png)
 
+## Phase 1C (2026-10-23): the Crease is the L of Lumen — current proposal
+
+**Owner decision:** direction C. The laptop-like Crease is the first letter of a bespoke "Lumen" wordmark. The
+A′ recommendation below is history. **Status: proposal for the owner's review of the finished artwork.** It is not
+the official identity: nothing is merged or deployed, and the live app keeps the folded-L.
+
+![Before and after](mockups/phase-1c-before-after.png)
+
+### Two assets, one idea
+
+- **Standalone mark:** the Phase 1 Crease, unchanged (`svg/mark*.svg`, `svg/app-icon-*.svg`, `png/`, `splash/`).
+  It's the app icon, the favicon (small-size drawing) and the mark for the collapsed sidebar.
+- **Integrated wordmark:** `svg/lumen-wordmark-{ink,paper,mono}.svg`, plus `lumen-wordmark-small-*` below 28 px.
+  The L is the Crease redrawn as a letter. It keeps the standing screen with its top cut at the icon's 0.54 slope,
+  the crease, and the base projecting down and to the right at the icon's depth angle (0.62). It's followed by a
+  custom "umen".
+
+### How the four Phase 1B problems were solved
+
+| Problem in the first C | Change in the wordmark L |
+|---|---|
+| Too tall next to the letters | The crease sits higher (a deeper base), so the screen is shorter and broader, like the icon's. The whole letter is cap height: the top-right corner reaches 722 against a cap of 710, the overshoot a pointed corner needs. |
+| The bottom plane left a hole at the baseline | The hinge and the base's front edge flatten to a 0.36 slope, so the base lies along the baseline instead of standing on a point. The front point dips 8 units, like any pointed letter. |
+| Heavier than the letters | The screen is 1.35× a stem, and "umen" moves to Geist 660, so screen, base and stems carry the same weight. |
+| Looked separate from "umen" | The u starts one crease-width after the base's tip, so the gap repeats the crease's rhythm. The u (both stems), m and n have their stem tops cut at the hinge's 0.36 slope, so the word is visibly built from the same cut as the letter. |
+
+The silhouette stays the Crease: two separate planes, the opening between them, a sloped screen top and a base
+projecting toward you. It is not a stroked L, and there are no keys, hinges or bezels.
+
+### Construction and sizing rules
+
+![Construction](mockups/phase-1c-presentation.png)
+
+All numbers are in font units (cap 710), in `scripts/brand-crease.mjs`, `WORD`:
+
+| Parameter | Value | |
+|---|---|---|
+| `W` screen width | 176 | 1.35× a Geist 660 stem |
+| `HINGE` | 0.36 | crease, the base's front edge and the stem cuts on u, m and n |
+| `S` | 0.54 | the screen's top cut (the icon's slope) |
+| `DX`, `SD` | 330, 0.62 | the base's projection (the icon's depth angle) |
+| `G` | 34 (60 small) | the crease |
+| `TOP`, `DIP` | 722, 8 | top-right overshoot; the base's point below the baseline |
+| `GAP`, `TRACK` | 40, −28 (56, −10 small) | base to u; letter spacing |
+
+Rules:
+- **Size:** use the regular wordmark at 28 px tall and above, the small drawing from 16 to 28 px, and nothing
+  below 16 px; use the standalone mark there.
+- **Clear space:** one crease height (the screen's width) on every side.
+- **Colour:** one colour only (ink, paper or `currentColor`). Never two-tone in the wordmark; the icon keeps its
+  two tones.
+- **Placements:** the wordmark goes in the desktop sidebar head (20 px), the iPhone drawer head (24 px), the
+  shared-page header (20 px) and brand pages. The standalone mark goes in the collapsed sidebar (20 px), the
+  sign-in screen (app icon, 56 px, with a hairline rim on Dark) and the home screen.
+- **Accessibility:** the wordmark is `role="img"` with `aria-label="Lumen"` (`<title>` in the files). A
+  decorative copy beside a named control is `aria-hidden`. Ordinary text ("Sign in to Lumen", titles, body copy)
+  stays text.
+
+### In the app (preview only)
+
+![In the app](mockups/phase-1c-in-app.png)
+
+Build with `LUMEN_CANVAS=1 LUMEN_IDENTITY=crease npm run build` to see it in the real Canvas app. The switch
+works like this:
+- **What the build swaps:** `src/lib/brand-identity.ts` resolves to its "on" module, and the Canvas icons,
+  manifest and launch screens are replaced with this folder's.
+- **Without the switch:** every build is byte-identical to the PR's previous head.
+- **Guards:** no workflow sets it (unit-tested in `tests/unit/brand-identity.test.mjs`), and it refuses to build
+  without `LUMEN_CANVAS=1`.
+- **Components:** `src/components/BrandCrease.tsx` (`BrandWordmark`, `BrandMark`) draws from the generated
+  `src/lib/brand-crease-art.ts`.
+
+### Self-critique
+
+- **Does it read immediately as Lumen?** Yes, at every size tested (15–150 px). At 16–20 px the L reads like a
+  small-cap "ʟ" with a foot, which is still an L.
+- **Does the laptop survive?** Yes at display size: a standing screen, a projecting deck and the opening
+  between them. At 20 px it's mostly an L. The icon carries the laptop reading in small places.
+- **Is it integrated?** The weights match, the baseline is shared, the u nests against the base, and the stem cuts
+  repeat the hinge.
+- **Would you recognise the icon after seeing the wordmark?** Yes: same planes, same crease, same angles. The
+  icon's screen is broader because it isn't constrained by a cap height.
+- **Remaining weaknesses:**
+  - The base in the wordmark is longer and narrower than the icon's diamond floor. That's the price of lying on
+    a baseline.
+  - The cut stem tops are subtle below about 40 px.
+  - "umen" is Geist outlines with custom cuts, not fully drawn letters. A type designer could go further,
+    especially on e and n.
+  - Not checked on a physical iPhone yet.
+
 ## Phase 1B (2026-10-23): the open laptop, and which lockup
 
 The owner noticed that Crease reads as an **open laptop**: a standing screen, a projecting base and the opening

@@ -17,6 +17,7 @@ import ProjectManager from './ProjectManager';
 import ProjectWorkspace from './ProjectWorkspace';
 import CatalogErrorNotice from './CatalogErrorNotice';
 import { CANVAS_SHELL } from '../lib/canvas-presentation';
+import { BrandMark } from '../lib/brand-identity';
 import { ContextRail, RailToggle } from './ContextRail';
 import CanvasHome from './CanvasHome';
 
@@ -195,9 +196,12 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
           <button className="icon-btn menu-btn" onClick={() => setUi({ sidebarOpen: true })} aria-label="Open chats">
             <Menu size={20} />
           </button>
-          <button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title={`Expand sidebar (${modKey}⇧S)`}>
-            <PanelLeftOpen size={20} />
-          </button>
+          {/* Crease preview: the standalone mark leads the bar while the sidebar is collapsed. */}
+          {CANVAS_SHELL && BrandMark ? <><BrandMark height={20} decorative className="cv-collapsed-mark" /><button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title={`Expand sidebar (${modKey}⇧S)`}><PanelLeftOpen size={20} /></button></> : (
+            <button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title={`Expand sidebar (${modKey}⇧S)`}>
+              <PanelLeftOpen size={20} />
+            </button>
+          )}
           <button type="button" className="chat-heading project-crumb" onClick={() => setUi({ page: 'projects' })} title="All projects">Projects</button>
           <span className="project-crumb-sep" aria-hidden="true">/</span>
           <span className="project-crumb-name">{currentProject.name}</span>
@@ -222,9 +226,12 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
         <button className="icon-btn menu-btn" onClick={() => setUi({ sidebarOpen: true })} aria-label="Open chats">
           <Menu size={20} />
         </button>
-        <button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title={`Expand sidebar (${modKey}⇧S)`}>
-          <PanelLeftOpen size={20} />
-        </button>
+        {/* Crease preview: the standalone mark leads the bar while the sidebar is collapsed. */}
+        {CANVAS_SHELL && BrandMark ? <><BrandMark height={20} decorative className="cv-collapsed-mark" /><button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title={`Expand sidebar (${modKey}⇧S)`}><PanelLeftOpen size={20} /></button></> : (
+          <button className="icon-btn expand-sidebar" onClick={onExpandSidebar} aria-label="Expand sidebar" title={`Expand sidebar (${modKey}⇧S)`}>
+            <PanelLeftOpen size={20} />
+          </button>
+        )}
         <div className="topbar-center">
         {isTemporaryChat(chat) ? (
           <span className="topbar-route welcome-route" title="Incognito: not saved, memory off">

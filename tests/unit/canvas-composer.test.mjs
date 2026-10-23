@@ -45,7 +45,10 @@ test('every flagged Composer branch keeps the ordinary expression as its alterna
     assert.equal(inside.replace(/\{canvas!\.\w+\}/, '').replace(/^\{|\}$/g, ''), outside, `ordinary branch is unchanged in: ${t.trim()}`);
   }
   const statements = src.match(/if \(CANVAS_COMPOSER(?: && [^)]*\))?\) [^;]*;|CANVAS_COMPOSER \? useCanvasComposer\(/g) || [];
-  assert.equal(spreads.length + ternaries.length + statements.length, uses, 'no unreviewed flag use');
+  // Values: a Canvas value whose ordinary branch is the original string literal (the placeholder on narrow phones).
+  const values = src.match(/CANVAS_COMPOSER \? canvas!\.\w+ : '[^']*'/g) || [];
+  assert.deepEqual(values, ["CANVAS_COMPOSER ? canvas!.placeholder : 'Message Lumen'"]);
+  assert.equal(spreads.length + ternaries.length + statements.length + values.length, uses, 'no unreviewed flag use');
   assert.equal(spreads.length, 3);
   assert.equal(ternaries.length, 4);
 });

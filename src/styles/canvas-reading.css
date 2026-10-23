@@ -127,6 +127,9 @@ html[data-lumen-canvas] .app[data-lumen-canvas-shell] .msg.assistant .error-box 
   .app[data-lumen-canvas-shell] .msg-actions :is(.model-tag, .route-why-wrap) { flex: 0 1 auto; flex-basis: auto; min-width: 0; max-width: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .app[data-lumen-canvas-shell] .msg-actions .route-why-wrap .model-tag { max-width: 100%; }
   .app[data-lumen-canvas-shell] .msg-actions .route-why-btn .route-tag { display: none; }
+  /* With "Stopped" too there isn't room for everything: wrap the actions rather than cut the model's name. */
+  .app[data-lumen-canvas-shell] .msg.assistant > .msg-actions:has(.cv-stopped) { flex-wrap: wrap; }
+  .app[data-lumen-canvas-shell] .msg-actions:has(.cv-stopped) .model-tag { flex: none; }
   .app[data-lumen-canvas-shell] .msg-actions > :not(.model-tag, .route-why-wrap, .cv-rerouted) { flex: none; }
   .app[data-lumen-canvas-shell] .msg-actions .busy-hold { display: inline-flex; flex: none; }
   /* Attachments: a little smaller on phones. */

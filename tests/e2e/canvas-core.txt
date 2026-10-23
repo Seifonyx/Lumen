@@ -106,3 +106,4 @@ writing-tools
 reading
 composer
 streaming
+routing-providers

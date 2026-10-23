@@ -1,5 +1,16 @@
 # Dynamic Model Picker operational handoff
 
+## Current checkpoint — Phase 4, Slice 1 (Codex)
+
+- **Authority:** owner completed Phase 3 and authorized Phase 4. Work on `feat/phase4-routing-providers`; draft PR only. **No merge/deploy, no implicit release approval from green checks.** Optional Crease icon detailing remains deferred.
+- **Recovered release:** `main` `871bc1a647f36550e6f66e527b1252ac84437506`; PR #49 merged; Deploy #68 / Actions `40030589058` completed successfully with Canvas. No new production deployment or physical-iPhone verification in this session.
+- **Isolation of concurrent work:** old `/workspace/Lumen` QA01 uncommitted work and draft PR #34 were preserved untouched. Current work is a clean separate worktree `/workspace/Lumen-phase4` from released main. Do not copy the old unfinished QA01 implementation over current main’s existing private QA system.
+- **Implemented:** route-first overview with truthful recorded-answer evidence; provider readiness entry point; grouped saved connections and Explore providers; Needs attention filter; separate saved/enabled/catalog/reply facts; typed safe recovery; concise phone header, readable wrapping section labels, phone Back and desktop list/detail; lazy scoped RC stylesheet. Canonical model actions, credentials, permission, storage, routing and network owners are unchanged.
+- **Verification:** see `docs/testing/phase4-routing-providers.md` for actual checks, curated before/after review and remaining device gaps. Source commit and remote/CI state will be recorded there after synchronization. No claims of live-provider or real-iPhone testing.
+- **Progress:** previous/current Blackout baseline 21.5% → 21.5%, medium confidence, 78.5 remaining. Separate Model Picker 100% unchanged. No user-approval credit awarded for this slice.
+- **Next:** finish focused verification, exact-head CI and draft review; synchronize the canonical live checkpoint. Then stop for owner design review. Slice 2 is not implemented here. Historical release instructions below apply to their earlier milestones.
+
+
 ## Verification speed (owner request, 2026-10-23)
 
 - **CI layout:**

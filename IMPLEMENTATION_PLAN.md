@@ -1,5 +1,18 @@
 # Dynamic Model Picker implementation plan
 
+## Current design work — Phase 4, Slice 1
+
+Owner-authorized workstream: `feat/phase4-routing-providers`, based on released `871bc1a647f36550e6f66e527b1252ac84437506` (Phase 3 / PR #49 / successful Deploy #68). Develop, test, commit, push and draft PR only. **No merge or deployment without separate owner approval.** This instruction overrides older release authorization recorded below for previous milestones.
+
+| Task | Status | Acceptance / evidence |
+|---|---|---|
+| P4-S1 Routing Center & Providers | Implemented; final verification/review in progress | Canonical route overview, saved/enabled/discovery separation, safe recovery, responsive list/detail, focused Chromium/WebKit, ordinary parity, isolation and exact-head CI. See `docs/testing/phase4-routing-providers.md`. |
+| P4-S2 Model Discovery & Selection | Not started | Model inventory/picker/search/eligibility consistency; preserve canonical owners and drafts. |
+| P4-S3 Auto, Policies, Usage & Diagnostics | Not started | Real decision evidence and provenance; preserve routing, fallback and policy semantics. |
+
+Dependencies: S1 owner design review precedes any release; S2/S3 remain separate coherent slices. No icon detailing until all planned design phases are complete. Blackout baseline v1 stays **21.5% (medium confidence), 78.5 weighted work remaining**; this focused slice does not satisfy a whole weighted acceptance group or earn approval credit. The separate completed Model Picker baseline below remains **100%**. Do not mix the two ledgers or invent new weights.
+
+
 ## Independent usage-draft fix — 20 October 2026 (Africa/Cairo)
 
 The fix-only branch `fix/usage-draft-no-submit-20261020` contains source checkpoint `8a328bb` (cherry-pick of reviewed `1736a92`). Five UsageMeter buttons explicitly avoid form submission; the new pointer/Enter regression checks draft/message/network/focus behavior at 1440/390 in Chromium and Linux WebKit. Red/green reproduction, independent reruns, typecheck, 149 unit tests and production build passed; normal design regression also passed. See `docs/testing/usage-draft-regression.md`.

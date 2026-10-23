@@ -97,7 +97,8 @@ test('CP04 Routing Center loads only through the "on" module, lazily, and its st
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const RoutingCenter: ComponentType \| null = null;$/m);
   const on = readFileSync('src/lib/canvas-presentation.on.ts', 'utf8');
   assert.match(on, /^export const RoutingCenter = lazy\(\(\) => import\('\.\.\/components\/RoutingCenter'\)\);$/m);
-  assert.match(on, /^import '\.\.\/styles\/canvas-routing\.css';$/m);
+  assert.doesNotMatch(on, /^import '\.\.\/styles\/canvas-routing\.css';$/m);
+  assert.match(readFileSync('src/components/RoutingCenter.tsx', 'utf8'), /^import '\.\.\/styles\/canvas-routing\.css';$/m);
   for (const file of ['src/App.tsx', 'src/components/Sidebar.tsx', 'src/components/SidebarCanvas.tsx', 'src/components/ChatView.tsx', 'src/main.tsx']) {
     assert.ok(!/import\(['"][^'"]*RoutingCenter/.test(readFileSync(file, 'utf8')), `${file} never imports the Routing Center`);
   }

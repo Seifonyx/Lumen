@@ -127,3 +127,14 @@ Removed recommended layouts stay hidden. Omit the bulk restore control and its e
 ## Provider-error feedback
 
 Chat and Browse models use the shared CatalogErrorNotice with an accessible close button and a 44px touch target. Dismissal lasts across navigation for the current error; it does not clear the failure needed for reconnect recovery. A fresh catalogue result resets dismissal, and account changes clear the previous account's feedback.
+
+
+## Phase 4 — Routing Center and provider connections
+
+The Canvas Routing Center leads with the conversation’s selected routing mode, then recorded answer evidence and provider discovery readiness. Counts are a secondary ledger; unknown allowance remains unknown. All six sections remain directly reachable. Phone section labels wrap instead of truncating, and the repetitive page subtitle is omitted on phones to give details more room.
+
+Provider browsing groups saved connections before an expandable Explore providers list. Saved keys, explicit permission and model discovery are separate facts. Needs attention filters enabled saved connections with failed or stale discovery; a saved key alone never implies a working connection. Selection is grounded in the current route or an explicit choice, never alphabetical order; changing search/filter removes invisible detail selection. Desktop keeps list and detail together; phone detail has Back with focus return.
+
+Connection settings still use the canonical Keys surface. Check connection still refreshes enabled providers’ catalogs through the existing owner, with no new endpoint or inference request. The result says model-list discovery, never verified replies. Typed safe recovery copy replaces raw provider errors. Provider allowances preserve their source and unknown values; catalog and usage are not account-wide billing. Model actions retain the existing eligibility and selection owners.
+
+`canvas-routing.css` is owned by the lazy RoutingCenter module, not initial Canvas startup; every rule stays Canvas-scoped. No ordinary presentation, persistence, authentication, provider-network, selection or routing algorithm changes are included.

@@ -56,7 +56,8 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       await rc.getByRole('heading', { name: 'Routing Center', exact: true }).click();
       const shot = async name => {
         if ((width === 1440 || width === 390) && (!before || name === 'overview')) {
-          await page.screenshot({ path: path.join(out, `${width}-${theme}-${name}.png`) });
+          await page.evaluate(() => document.fonts.ready);
+          await page.screenshot({ path: path.join(out, `${width}-${theme}-${name}.png`), animations: 'disabled' });
         }
       };
       const tab = name => rc.getByRole('navigation', { name: 'Routing sections' }).getByRole('button', { name, exact: true }).click();

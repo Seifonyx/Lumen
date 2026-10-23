@@ -1,6 +1,6 @@
 # Phase 4, Slice 1 — Routing Center & Providers
 
-Status: implementation under final verification on `feat/phase4-routing-providers`; based on production main `871bc1a647f36550e6f66e527b1252ac84437506`. Owner permits draft review, not merge/deployment.
+Status: locally verified and ready for owner design review on `feat/phase4-routing-providers`; based on production main `871bc1a647f36550e6f66e527b1252ac84437506`. Owner permits draft review, not merge/deployment.
 
 ## What changed
 
@@ -21,13 +21,19 @@ Local checks run only on loopback with synthetic accounts and intercepted transp
 - `routing-providers.cjs`: Chromium 8/8 and Linux WebKit 8/8 pass. Four viewport sizes × Light/Dark; filter/selection consistency, permission off, auth failure clearing models, provider failure keeping cached models, 145-model pagination/search, unknown limits, only catalog GETs, preserved draft, keyboard focus, zero axe violations and overflow. At 320 px it additionally checks synthetic 150% text scaling. Matched baseline captures: 4/4.
 - `private-qa-isolation.mjs` with `QA01_BASELINE_DIST`: 8/8 audit groups pass, including byte-identical ordinary output, Canvas/ordinary graphs excluding QA, synthetic-only QA graph and planted negative controls. `canvas-build-isolation.mjs` passes (2,570 ordinary graph modules, 174 artifact hashes, 11 negative controls).
 - Both ordinary and Canvas builds pass. Budget unchanged: startup JS growth 9.1/9.5 KB gz; blocking CSS growth 13.1/16 KB; lazy Routing Center 8.1/9 KB; Canvas CSS source 15.9/16 KB. RC assets remain an existing lazy import rendered after App mounts; this change removes their CSS from the initial blocking stylesheet, not an on-open-only loading guarantee.
-- Existing committed QA Routing Center contracts and exact-head CI are checked after the clean source checkpoint; results will be added before delivery. Existing build warnings about static/dynamic sync imports remain; no new dependency or budget increase.
+- Existing `private-qa-routing-center.mjs`: Chromium 3/3 and Linux WebKit 3/3, 10 flow checks per viewport, zero axe/CSP violations, no off-origin requests. Includes real model selection, Layout cancel, Usage/Diagnostics, connection settings and return, drafts, account separation, Back/Escape/history navigation. The committed synthetic QA build identifies source `6d2255a519a1d6e37189991909dc3541e037b9da`, 157 files and audited graph; no publication.
+- Additional forced-glass Chromium checks: 390×844 Light/Dark, 2/2 pass. Motion is reduced in the new browser suite. Actual device Reduce Transparency/VoiceOver still needs the owner’s physical QA; existing solid Canvas tokens and reduced-transparency CSS remain unchanged.
+- Exact-head full CI runs on the draft PR after this delivery commit. Its result must be read from the PR checks / canonical live checkpoint; local results above do not substitute for CI. No merge or deployment is permitted by those checks. Existing static/dynamic sync-import build warnings remain; no new dependency or budget increase.
 
 ## Review and limits
 
-Curated portable before/after review will be linked here. The before build is the released source above; captures are actual rendered UI, not mockups. Ordinary screenshots exclude keyboard focus; focus is exercised separately.
+[Portable offline review](../reviews/phase4-routing-providers.html): download the single HTML file and open it locally. It embeds 16 curated screenshots, with no network resources: four matched before/after overview pairs and provider list/detail in desktop/phone Light/Dark. Click a capture to inspect original dimensions. Finite capture animations are completed for clean presentation; keyboard focus checks are separate. The before build is the released source above; captures are actual rendered UI, not mockups. Ordinary screenshots exclude keyboard focus; focus is exercised separately.
 
 Physical iPhone keyboard/VoiceOver, actual Dynamic Type, safe-area device behavior and live-provider connectivity remain unverified. Automated larger text is synthetic; Linux WebKit is not physical Safari. Early device review still uses the separately authorized private QA process; this slice creates no hosting or access infrastructure.
+
+Source checkpoint: `6d2255a519a1d6e37189991909dc3541e037b9da`. The following delivery commit contains only the capture-stability test change and documentation/review artifact; production source remains identical. Branch synchronization and exact final delivery SHA are recorded in the separate live checkpoint and PR, avoiding a self-referencing commit hash in this file.
+
+Known design limits: phone provider details still scroll to reach deeper inventory; advanced model and routing sections retain their current presentation until the next slices. Canvas CSS is close to its existing 16 KB source budget, so later slices should replace/refactor rules instead of accumulating overrides. No known failing local checks remain.
 
 Remaining Phase 4 work: Slice 2 (deep models/picker) and Slice 3 (Auto/policy/usage/diagnostics). Current overview preserves those existing sections without reopening their algorithms. No approval, merge or deployment is implied.
 

@@ -6,7 +6,7 @@ Owner-authorized workstream: `feat/phase4-routing-providers`, based on released 
 
 | Task | Status | Acceptance / evidence |
 |---|---|---|
-| P4-S1 Routing Center & Providers | Implemented; final verification/review in progress | Canonical route overview, saved/enabled/discovery separation, safe recovery, responsive list/detail, focused Chromium/WebKit, ordinary parity, isolation and exact-head CI. See `docs/testing/phase4-routing-providers.md`. |
+| P4-S1 Routing Center & Providers | Locally verified; owner review / exact-head CI gate | Canonical route overview, saved/enabled/discovery separation, safe recovery, responsive list/detail, Chromium/WebKit 8+8 new cases and 3+3 QA viewports, ordinary parity, isolation and budgets passed; exact-head PR CI is a separate gate. See `docs/testing/phase4-routing-providers.md`. |
 | P4-S2 Model Discovery & Selection | Not started | Model inventory/picker/search/eligibility consistency; preserve canonical owners and drafts. |
 | P4-S3 Auto, Policies, Usage & Diagnostics | Not started | Real decision evidence and provenance; preserve routing, fallback and policy semantics. |
 

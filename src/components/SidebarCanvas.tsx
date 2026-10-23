@@ -45,7 +45,6 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const { newChat, setUi, selectProject } = useStore.getState();
   const [phone, setPhone] = useState(() => window.matchMedia(PHONE).matches);
   const [query, setQuery] = useState('');
-  const [searching, setSearching] = useState(false);
   const [disclosure, setDisclosure] = useState<Open>(OPEN);
   const [more, setMore] = useState<Record<string, boolean>>({});
   const [allChats, setAllChats] = useState(false);
@@ -73,7 +72,6 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   }, [open, phone]);
   // Another account starts from its own (default) disclosure, never the previous one's.
   useEffect(() => { setDisclosure(OPEN); setMore({}); setQuery(''); }, [user?.uid]);
-  useEffect(() => { if (searching && phone) searchInput.current?.focus({ preventScroll: true }); }, [searching, phone]);
 
   const q = query.trim().toLowerCase();
   // Sidebar's semantics: saved chats with content (or the open one); searching matches titles and messages and
@@ -126,17 +124,17 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
       >
         <div className="cv-head">
           <span className="cv-brand"><Logo size={phone ? 26 : 22} /><span className="cv-wordmark">Lumen</span></span>
-          {phone && <button type="button" className="cv-head-btn" aria-label="Search chats" aria-expanded={searching} onClick={() => { if (searching) setQuery(''); setSearching(!searching); }}><Search size={18} /></button>}
           {phone
             ? <button type="button" className="cv-head-btn" aria-label="Close menu" onClick={() => setUi({ sidebarOpen: false })}><X size={18} /></button>
             : <button type="button" className="cv-head-btn collapse-sidebar" aria-label="Collapse sidebar" title={`Collapse sidebar (${modKey}⇧S)`} onClick={onCollapse}><PanelLeftClose size={17} /></button>}
         </div>
-        {(searching || !phone) && (
+        {/* Always in the drawer too: one tap to search, no extra step (phones don't focus it, so no keyboard). */}
+        {(
           <label className="search cv-search">
             <Search size={16} />
             <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} dir="auto"
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Escape' && (query || phone)) { e.stopPropagation(); setQuery(''); if (phone) setSearching(false); } }} />
+              onKeyDown={(e) => { if (e.key === 'Escape' && query) { e.stopPropagation(); setQuery(''); } }} />
           </label>
         )}
         {q.length > 1 && (

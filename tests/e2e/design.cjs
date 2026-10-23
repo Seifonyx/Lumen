@@ -37,7 +37,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         await page.waitForSelector('.app:not(.app-skeleton) .main.is-empty');
         if (theme === 'black') check(await page.evaluate(() => document.documentElement.dataset.appearance === 'black' && getComputedStyle(document.body).backgroundColor === 'rgb(0, 0, 0)'), `${label}: true black background survives reload`);
         check(inside(await page.locator('.composer').boundingBox(), width, height) && (await scan(page)).length === 0, `${label}: welcome screen and composer fit`);
-        check(await page.locator('.suggestion,.starter-actions,.empty p:not(.welcome-route)').count() === 0 && await page.locator('.empty h1').evaluate(el=>el.scrollWidth<=el.clientWidth), `${label}: short single-line greeting and routing status, without recommendations`);
+        check(await page.locator('.suggestion,.starter-actions,.empty p:not(.welcome-route):not(.cv-home-where)').count() === 0 && await page.locator('.empty h1').evaluate(el=>el.scrollWidth<=el.clientWidth), `${label}: short single-line greeting and routing status, without recommendations`);
         if (!mobile) {
           await page.click('[aria-label="Collapse sidebar"]');
           check(!(await page.locator('.sidebar').isVisible()), `${label}: sidebar collapses`);
@@ -59,16 +59,16 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         await page.keyboard.press('Escape'); await page.waitForSelector('.modal', { state: 'detached' });
         if (mobile) await page.click('.menu-btn');
         if (mobile) await page.waitForFunction(() => Math.abs(document.querySelector('.sidebar').getBoundingClientRect().left) < 1);
-        const newChatBox = await page.locator('.sidebar .new-chat').boundingBox();
-        const historyBox = await page.locator('.chat-list').boundingBox();
+        const newChatBox = await page.locator(mobile ? '.sidebar .new-chat, .cv-new-pill' : '.sidebar .new-chat, .cv-dest li:first-child button').boundingBox();
+        const historyBox = await page.locator(':is(.chat-list, .cv-chats, .cv-none)').first().boundingBox();
         if (mobile) {
           // Phones: New chat floats at the bottom of the drawer, clear of the account button.
-          const sideBox = await page.locator('.sidebar').boundingBox(), footBox = await page.locator('.sidebar-foot').boundingBox();
+          const sideBox = await page.locator('.sidebar').boundingBox(), footBox = await page.locator('.sidebar-foot, .cv-account').boundingBox();
           check(newChatBox.y + newChatBox.height >= sideBox.y + sideBox.height - 80 && (newChatBox.x >= footBox.x + footBox.width || newChatBox.x + newChatBox.width <= footBox.x), label + `: New chat floats at the bottom, clear of the account button ${JSON.stringify([newChatBox, footBox, sideBox])}`);
         } else check(newChatBox.y + newChatBox.height <= historyBox.y, label + ': New chat above history');
         check(await page.locator('#chat-search').count() === 1, label + ': search is always in the sidebar');
         await page.locator('#chat-search').fill('no-match');
-        check(await page.locator('.empty-list').textContent() === 'No chats match.' && await page.locator('#chat-search').evaluate(el => el === document.activeElement), label + ': search filters');
+        check(/^No (chats|loose conversations) match\.$/.test(await page.locator('.empty-list, .cv-none').textContent()) && await page.locator('#chat-search').evaluate(el => el === document.activeElement), label + ': search filters');
         await page.keyboard.press('Escape');
         check(await page.locator('#chat-search').count() === 1, label + ': chat search is always in the sidebar');
         if (mobile) await page.click('[aria-label="Close menu"]');
@@ -105,7 +105,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         check(await page.evaluate(text => window.__lastCopied === text, selectedReply), label + ': copies only the selected reply text');
         await page.keyboard.press('Escape'); await page.waitForSelector('.modal', { state: 'detached' });
         check(await page.evaluate(() => !window.getSelection()?.toString()), label + ': selection clears on closing');
-        await page.locator('.usage-chip').click();
+        await page.focus('.composer textarea'); await page.locator('.usage-chip').click();
         await page.waitForTimeout(500);
         check(await page.locator('.usage-ring').isVisible() && inside(await page.locator('.usage-pop').boundingBox(), width, height) && (await scan(page)).length === 0, `${label}: compact usage panel fits the screen`);
         check(await page.getByRole('meter', { name: 'How full this chat is' }).count() === 1 && (await page.locator('.usage-pop').textContent()).includes('Daily allowance unknown'), `${label}: usage distinguishes estimated context and unknown daily allowance`);

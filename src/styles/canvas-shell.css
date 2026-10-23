@@ -148,6 +148,8 @@
   .app[data-lumen-canvas-shell] .cv-home-when { display: none; }
 }
 @media (max-height: 640px) { .app[data-lumen-canvas-shell] .cv-home-continue { display: none; } }
+/* "Why this model" opens below the line when there's no room above it. */
+.app[data-lumen-canvas-shell] .route-why-wrap[data-below] .route-why-pop { top: calc(100% + 8px); bottom: auto; }
 /* Route line: the model name stays in mono, the reason reads as plain words. */
 .app[data-lumen-canvas-shell] .route-why-btn .route-model { font-family: var(--canvas-data-font); }
 .app[data-lumen-canvas-shell] .route-why-btn .route-tag { font-family: var(--canvas-body-font); letter-spacing: 0; }

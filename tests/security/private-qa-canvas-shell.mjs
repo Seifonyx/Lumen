@@ -149,14 +149,14 @@ try {
       pass('row actions');
 
       // Search: titles and message text, with Ask your chats.
-      if (phone) { await nav(page).getByRole('button', { name: 'Search chats', exact: true }).click(); await settle(page); }
+      // The search field is always in the tree, phones included (item 23).
+      assert.ok(await nav(page).getByRole('searchbox', { name: 'Search chats' }).isVisible(), 'search field shown without an extra step');
       await nav(page).getByRole('searchbox', { name: 'Search chats' }).fill('quiet days');
       await settle(page);
       assert.ok(await nav(page).getByText('Four quiet days in Lisbon').isVisible(), 'search finds a chat inside a folder');
       assert.ok(await nav(page).getByRole('button', { name: /Ask your chats/ }).isVisible());
       assert.equal(await nav(page).getByText('Notes for a quieter workspace').count(), 0, 'non-matching chats are hidden');
       await nav(page).getByRole('searchbox', { name: 'Search chats' }).fill('');
-      if (phone) await nav(page).getByRole('button', { name: 'Search chats', exact: true }).click();
       await settle(page);
       pass('search');
 

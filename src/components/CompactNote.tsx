@@ -1,6 +1,6 @@
 import { Exit, motionOff } from '../lib/motion';
 import { ChevronDown, Loader2, MessageSquarePlus, Shrink, Undo2, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { isSheetScreen, useSheetDrag } from '../lib/sheet-drag';
 import { useFocusScope } from '../lib/focus-scope';
@@ -81,6 +81,25 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
   const close = useRef<HTMLButtonElement>(null);
   const dialog = useRef<HTMLDivElement>(null);
   useFocusScope(dialog,open,()=>{setOpen(false);trigger.current?.focus({preventScroll:true})});
+  // Canvas: a phone sheet leaves the composer inert while open, so the immediate return of focus can miss; once it
+  // has closed, focus that went nowhere goes back to the chip.
+  if (CANVAS_COMPOSER) { // eslint-disable-next-line react-hooks/rules-of-hooks
+    const wasOpen = useRef(false); useLayoutEffect(() => { // eslint-disable-line react-hooks/rules-of-hooks
+      if (open) { wasOpen.current = true; return; }
+      if (!wasOpen.current) return;
+      wasOpen.current = false;
+      const back = () => {
+        const t = trigger.current;
+        if (!t || (document.activeElement && document.activeElement !== document.body)) return;
+        // (The resting composer hides the chip; it stays while it holds focus.)
+        t.setAttribute('data-return', ''); t.addEventListener('blur', () => t.removeAttribute('data-return'), { once: true });
+        t.focus({ preventScroll: true });
+      };
+      back();
+      const id = requestAnimationFrame(back);
+      return () => cancelAnimationFrame(id);
+    }, [open]);
+  }
   // Phones: usage slides up from the bottom as a sheet you can drag down to close.
   const [sheet, setSheet] = useState(false);
   const scrim = useRef<HTMLDivElement>(null);

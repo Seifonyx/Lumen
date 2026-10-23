@@ -64,6 +64,8 @@ html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn.voice-start 
 .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer > textarea { order: 0; flex-basis: 100%; min-height: 52px !important; padding: 6px 10px 4px !important; }
 .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .spacer { display: block; }
 .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .usage-meter { display: flex; }
+/* While its sheet is open (phones portal it outside the form) the chip stays, so closing returns focus to it. */
+.composer-wrap[data-lumen-canvas-composer] .composer .usage-meter:has(> .usage-chip:is([aria-expanded='true'], [data-return])) { display: flex; }
 .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .canvas-expand { display: inline-grid; }
 .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .dictation-btn { display: inline-flex; }
 

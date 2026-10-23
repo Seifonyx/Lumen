@@ -37,7 +37,7 @@ const mk = (id, title, at) => ({ id, title, createdAt: at, updatedAt: at, model:
     console.log('PASS search still finds archived chats');
 
     // All chats → Archived → Unarchive.
-    await page.click('.view-all-chats');
+    await page.click('.view-all-chats, .cv-all');
     await page.getByRole('tab', { name: /Archived · 1/ }).click();
     await page.locator('.all-chats-title', { hasText: 'Old project notes' }).waitFor();
     assert.equal(await page.locator('.all-chats-list li').count(), 1);

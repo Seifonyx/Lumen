@@ -1,5 +1,5 @@
 import { Exit } from '../lib/motion';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { modelLabel, useStore } from '../store';
 import type { Message } from '../types';
 import { CANVAS_SHELL } from '../lib/canvas-presentation';
@@ -18,6 +18,14 @@ export default function RouteWhy({ message }: { message: Message }) {
     document.addEventListener('pointerdown', away);
     document.addEventListener('keydown', key, true);
     return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', key, true); };
+  }, [open]);
+  // Canvas: an answer near the top (the first one, or a chat opened on its last question) has no room above the
+  // line, so the explanation opens below it instead of under the top bar.
+  if (CANVAS_SHELL) useLayoutEffect(() => { // eslint-disable-line react-hooks/rules-of-hooks
+    const el = root.current, pop = el?.querySelector<HTMLElement>('.route-why-pop');
+    if (!open || !el || !pop) return;
+    const bar = el.closest('.main')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom || 0;
+    el.toggleAttribute('data-below', el.getBoundingClientRect().top - Math.max(0, bar) < pop.offsetHeight + 16);
   }, [open]);
   const d = message.routeDetail;
   const name = modelLabel(catalog, message.model);

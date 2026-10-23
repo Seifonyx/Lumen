@@ -40,7 +40,7 @@ const vec = (t) => [/car|loan|vehicle|financ|money/i.test(t) ? 1 : 0, /cake|bake
 
     // Different words from the chat: "vehicle financing".
     await page.fill('#chat-search', 'what did I decide on vehicle financing');
-    await page.locator('.ask-chats-btn').click();
+    await page.locator('.ask-chats-btn, .cv-ask').click();
     await page.locator('.ask-answer').waitFor();
     assert.match(await page.locator('.ask-answer').textContent(), /5-year car loan/);
     assert.equal(embedded, 2, 'each exchange read once');

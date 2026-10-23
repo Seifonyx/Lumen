@@ -149,7 +149,7 @@ try {
     'src/lib/canvas-presentation.on.ts', 'vite.config.ts', '.github/workflows/deploy.yml', '.github/workflows/preview.yml', '.github/workflows/tests.yml',
     // Canvas polish (owner-approved 2026-10-22): flagged presentation in these files; the ordinary output stays byte-equal.
     'src/components/ModelPicker.tsx', 'src/components/CompactNote.tsx', 'src/components/ProjectWorkspace.tsx', 'src/lib/chat-preview.ts', 'src/lib/markdown.ts',
-    'src/components/RouteWhy.tsx', 'src/lib/route-words.ts', 'src/components/Logo.tsx', 'src/components/InkMark.tsx', 'src/components/CanvasHome.tsx',
+    'src/components/RouteWhy.tsx', 'src/lib/route-words.ts', 'src/components/Logo.tsx', 'src/components/CanvasHome.tsx',
     'src/pwa/legal-ink.css', 'src/lib/press.ts', 'src/components/HubPage.tsx', 'src/lib/message-taps.ts', 'src/components/AllChats.tsx', 'src/components/CompareModelsModal.tsx', 'src/lib/model-traits.ts',
     'src/components/MessageItem.tsx', 'src/lib/reroute.ts', 'src/lib/chat-records.ts', 'src/lib/routing-transfer.ts', 'src/components/ContextRail.tsx',
     'src/components/MessageThread.tsx', 'src/components/ProjectMemory.tsx', 'src/components/RoutingExtras.tsx'];

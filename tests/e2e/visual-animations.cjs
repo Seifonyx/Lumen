@@ -17,9 +17,10 @@ const ua='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605
   await page.goto(url);await page.locator('.composer textarea').waitFor();
   const moon=page.locator('.welcome-moon'),head=moon.locator('.orbit-head');
   if(await page.locator('.cv-home').count()){
-   // Canvas: the home shows the still ink mark (no orbit or sparkles); the draft and the no-inference rule still hold.
+   // Canvas: no symbol until the real logo lands, so the home has no mark, orbit or sparkles; the draft and the no-inference rule still hold.
    await page.waitForTimeout(600);
-   assert.equal(await page.locator('.welcome-mark').evaluate(el=>el.getAnimations({subtree:true}).filter(a=>a.playState==='running').length),0,'Canvas home mark is still');
+   assert.equal(await page.locator('.cv-home').evaluate(el=>el.closest('.empty').querySelectorAll('svg.ink-mark,.welcome-mark,.welcome-moon').length),0,'Canvas home shows no mark');
+   assert.equal(await page.locator('.cv-home').evaluate(el=>el.getAnimations({subtree:true}).filter(a=>a.playState==='running'&&a.effect?.getComputedTiming().iterations===Infinity).length),0,'Canvas home has no looping animation');
   }else{
   assert.equal(await head.count(),1,'Welcome moon has one orbiting light');
   await page.waitForTimeout(1500);

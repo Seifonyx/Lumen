@@ -204,3 +204,11 @@ html[data-lumen-canvas] .cv-memory-edit textarea { box-sizing: border-box; width
 html[data-lumen-canvas] .cv-memory-edit textarea:focus { outline: 2px solid color-mix(in srgb, var(--text) 35%, transparent); }
 html[data-lumen-canvas] .cv-memory-edit span { display: flex; gap: 8px; }
 @media (hover: none) { html[data-lumen-canvas] .cv-memory-actions .btn { min-height: 44px; } }
+
+/* ---------- No symbol until the real logo lands (Phase 2): the wait signal is a plain breathing ink dot, not a moon,
+   and the start-up frame drops the brand dot and welcome mark placeholders. */
+html[data-lumen-canvas] .moon-phase :is(.mp-shadow, .mp-glow) { display: none; }
+html[data-lumen-canvas] .moon-phase .mp-disc { fill: currentColor; transform-box: fill-box; transform-origin: center; transform: scale(.5); animation: cv-wait 1.4s ease-in-out infinite; }
+@keyframes cv-wait { 50% { transform: scale(.32); opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { html[data-lumen-canvas] .moon-phase .mp-disc { animation: none; } }
+html[data-lumen-canvas] .app-skeleton :is(.sk-brand .sk-dot, .sk-star) { display: none; }

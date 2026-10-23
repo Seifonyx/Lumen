@@ -19,7 +19,6 @@ import CatalogErrorNotice from './CatalogErrorNotice';
 import { CANVAS_SHELL } from '../lib/canvas-presentation';
 import { ContextRail, RailToggle } from './ContextRail';
 import CanvasHome from './CanvasHome';
-import InkMark from './InkMark';
 
 /** How far from the latest message you were in each chat (this session), to come back to the same spot. */
 type Anchor = { id: string; offset: number };
@@ -291,7 +290,6 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
       <div className="messages" ref={scroller} role="region" tabIndex={0} aria-label="Chat messages">
         {empty ? CANVAS_SHELL ? (
           <div className="empty">
-            <span className="welcome-mark" aria-hidden="true"><InkMark size={52} tile={false} /></span>
             <CanvasHome temporary={isTemporaryChat(chat)} />
           </div>
         ) : (

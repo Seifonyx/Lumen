@@ -13,7 +13,6 @@ import { closeRoutingCenter, openRoutingCenter, useRoutingCenter } from '../lib/
 import { useStore } from '../store';
 import type { Chat, Project } from '../types';
 import AllChats from './AllChats';
-import Logo from './Logo';
 import ProjectManager from './ProjectManager';
 import { AskChats, ChatRow, type SidebarProps } from './Sidebar';
 
@@ -123,7 +122,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         }}
       >
         <div className="cv-head">
-          <span className="cv-brand"><Logo size={phone ? 26 : 22} /><span className="cv-wordmark">Lumen</span></span>
+          <span className="cv-brand"><span className="cv-wordmark">Lumen</span></span>
           {phone
             ? <button type="button" className="cv-head-btn" aria-label="Close menu" onClick={() => setUi({ sidebarOpen: false })}><X size={18} /></button>
             : <button type="button" className="cv-head-btn collapse-sidebar" aria-label="Collapse sidebar" title={`Collapse sidebar (${modKey}⇧S)`} onClick={onCollapse}><PanelLeftClose size={17} /></button>}

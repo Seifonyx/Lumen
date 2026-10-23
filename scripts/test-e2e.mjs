@@ -7,9 +7,11 @@
 // data); the others are fully isolated and run side by side in the remaining lanes, longest first
 // (durations in tests/e2e/timings.json). E2E_LANES sets the number of lanes (default 3).
 // A file that fails is run once more on its own; it only counts as failed if it fails twice.
+// E2E_SHARD=i/n (CI) runs only this machine's share of the selected files, balanced by duration (scripts/e2e-shards.mjs).
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { parseShard, shardFiles } from './e2e-shards.mjs';
 
 const dir = 'tests/e2e';
 mkdirSync(join(dir, 'out'), { recursive: true });
@@ -17,11 +19,14 @@ const only = process.argv.slice(2);
 const available=readdirSync(dir).filter(f=>f.endsWith('.cjs'));
 const unknown=only.filter(name=>!available.includes(`${name}.cjs`));
 if(unknown.length) {console.error(`Unknown in-app test suite(s): ${unknown.join(', ')}`);process.exit(2);}
-const files = available.filter(f=>!only.length || only.includes(f.replace(/\.cjs$/, ''))).sort();
-if(!files.length) {console.error('No in-app test suites selected.');process.exit(2);}
+const selected = available.filter(f=>!only.length || only.includes(f.replace(/\.cjs$/, ''))).sort();
+if(!selected.length) {console.error('No in-app test suites selected.');process.exit(2);}
 const timingsFile = join(dir, 'timings.json');
 const timings = existsSync(timingsFile) ? JSON.parse(readFileSync(timingsFile, 'utf8')) : {};
 const usesEmulators = (f) => /127\.0\.0\.1:(8080|9099)|localhost:(8080|9099)|__testSignIn|emulator\/v1/.test(readFileSync(join(dir, f), 'utf8'));
+const shard = parseShard(process.env.E2E_SHARD);
+const files = shard ? shardFiles([selected.filter(usesEmulators), selected.filter((f) => !usesEmulators(f))], shard, (f) => timings[f] ?? 30) : selected;
+if (shard) console.log(`Shard ${shard.index}/${shard.count}: ${files.length} of ${selected.length} files (${files.reduce((n, f) => n + (timings[f] ?? 30), 0)} s recorded)`);
 const lanes = Math.max(1, Number(process.env.E2E_LANES) || 3);
 const byLength = (a, b) => (timings[b] ?? 30) - (timings[a] ?? 30) || a.localeCompare(b);
 const shared = files.filter(usesEmulators).sort(byLength);

@@ -1,8 +1,9 @@
 name: Tests
 
-# The repository is private, so GitHub's free plan gives a limited number of Actions minutes a month.
-# Keep runs cheap: skip changes that only touch documentation, cancel superseded runs, cache downloads,
-# and run independent in-app tests side by side (scripts/test-e2e.mjs) instead of on extra machines.
+# The repository is public, so GitHub's standard runners cost nothing. Runs are split for speed: the long in-app test runs
+# are spread over 4 machines each (E2E_SHARD, balanced by tests/e2e/timings.json), and Canvas contracts run Chromium and
+# WebKit side by side. Browser jobs run in Playwright's image, so no machine installs browsers or system libraries. Gate jobs keep the original check names. Documentation-only changes skip the run, and a newer
+# push cancels the older run.
 on:
   push:
     branches: [main]
@@ -38,10 +39,21 @@ jobs:
         run: node scripts/canvas-budget.mjs dist dist-canvas
       - run: npm run test:unit
 
-  in-app:
-    name: In-app tests (Chromium + Firebase emulators)
+  in-app-shard:
+    name: In-app tests (Chromium + Firebase emulators) ${{ matrix.shard }}/4
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    # Chromium and its system libraries come preinstalled in Playwright's image (same version as package.json): no apt
+    # install, which a slow package mirror once stretched to 11 minutes on some machines.
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      E2E_SHARD: ${{ matrix.shard }}/4
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -57,32 +69,35 @@ jobs:
         with:
           path: ~/.cache/firebase/emulators
           key: firebase-emulators-15.30.2
-      - uses: actions/cache@v5
-        id: browsers
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npm ci
-      - name: Browser
-        run: |
-          if [ "${{ steps.browsers.outputs.cache-hit }}" = "true" ]; then npx playwright install-deps chromium; else npx playwright install --with-deps chromium; fi
       - run: npm run build
       - run: npm run test:e2e:ci
       - name: Keep screenshots
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: screenshots
+          name: screenshots-${{ matrix.shard }}
           path: tests/e2e/out
           if-no-files-found: ignore
           retention-days: 7
 
-  in-app-canvas:
+  in-app-canvas-shard:
     # The same in-app tests against the Canvas build (what Deploy ships when canvas is chosen), for the suites listed in
     # tests/e2e/canvas-core.txt. The rest still look for the ordinary sidebar; the ordinary build keeps the full run above.
-    name: In-app tests on the Canvas build (Chromium + Firebase emulators)
+    name: In-app tests on the Canvas build (Chromium + Firebase emulators) ${{ matrix.shard }}/4
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    # Chromium and its system libraries come preinstalled in Playwright's image (same version as package.json): no apt
+    # install, which a slow package mirror once stretched to 11 minutes on some machines.
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      E2E_SHARD: ${{ matrix.shard }}/4
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -97,15 +112,7 @@ jobs:
         with:
           path: ~/.cache/firebase/emulators
           key: firebase-emulators-15.30.2
-      - uses: actions/cache@v5
-        id: browsers
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npm ci
-      - name: Browser
-        run: |
-          if [ "${{ steps.browsers.outputs.cache-hit }}" = "true" ]; then npx playwright install-deps chromium; else npx playwright install --with-deps chromium; fi
       - name: Build (Canvas presentation)
         run: npm run build -- --outDir dist-canvas
         env:
@@ -118,7 +125,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: canvas-screenshots
+          name: canvas-screenshots-${{ matrix.shard }}
           path: tests/e2e/out
           if-no-files-found: ignore
           retention-days: 7
@@ -173,10 +180,14 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  canvas:
-    name: Canvas presentation (isolation and contracts, Chromium + WebKit)
+  canvas-engine:
+    name: Canvas presentation (isolation and contracts, ${{ matrix.engine }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [Chromium, WebKit]
     container:
       image: mcr.microsoft.com/playwright:v1.56.1-noble
       options: --ipc=host
@@ -196,24 +207,51 @@ jobs:
       - name: Synthetic QA build (same "on" module as production Canvas)
         run: node scripts/qa/build.mjs --out "$QA_BUILD_DIR"
       - name: Isolation (ordinary, Canvas production and QA builds)
+        if: matrix.engine == 'Chromium'
         run: |
           node tests/security/private-qa-isolation.mjs
           node tests/security/canvas-build-isolation.mjs
         env:
           # Byte equality with the pre-activation release is checked when activation is reviewed, not on every run.
           QA01_ALLOW_NO_BASELINE: '1'
-      - name: Canvas contracts in Chromium
-        run: for t in canvas-composer canvas-shell routing-center canvas-screens browser; do node tests/security/private-qa-$t.mjs || exit 1; done
-      - name: Canvas contracts in WebKit
-        if: ${{ !cancelled() }}
+      - name: Canvas contracts in ${{ matrix.engine }}
         run: for t in canvas-composer canvas-shell routing-center canvas-screens browser; do node tests/security/private-qa-$t.mjs || exit 1; done
         env:
-          MR_WEBKIT: '1'
+          MR_WEBKIT: ${{ matrix.engine == 'WebKit' && '1' || '' }}
       - name: Keep Canvas evidence
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: canvas-evidence
+          name: canvas-evidence-${{ matrix.engine }}
           path: tests/e2e/out
           if-no-files-found: ignore
           retention-days: 7
+
+  # Gates: one check per suite under its original name (what branch protection and reviewers look for), green only when
+  # every machine of that suite passed.
+  in-app:
+    name: In-app tests (Chromium + Firebase emulators)
+    needs: in-app-shard
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - run: test "${{ needs.in-app-shard.result }}" = success
+
+  in-app-canvas:
+    name: In-app tests on the Canvas build (Chromium + Firebase emulators)
+    needs: in-app-canvas-shard
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - run: test "${{ needs.in-app-canvas-shard.result }}" = success
+
+  canvas:
+    name: Canvas presentation (isolation and contracts, Chromium + WebKit)
+    needs: canvas-engine
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - run: test "${{ needs.canvas-engine.result }}" = success

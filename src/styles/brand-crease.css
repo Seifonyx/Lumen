@@ -1,5 +1,6 @@
-/* Crease identity preview (owner review): brand placements only. Loaded through src/lib/brand-identity.on.ts, so no
- * other build carries it. The drawings use currentColor and inherit ink or paper from the theme. */
+/* The Lumen identity (Crease) in the Canvas presentation: brand placements only. Loaded through
+ * src/lib/canvas-presentation.on.ts, so the ordinary build never carries it. The drawings use currentColor and inherit
+ * ink or paper from the theme. */
 
 /* Sidebar and drawer head: the integrated wordmark sits on the head's centre line, optically nudged so its
    baseline (not its box) lines up with the collapse button. */

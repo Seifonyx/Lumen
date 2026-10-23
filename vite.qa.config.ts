@@ -9,7 +9,6 @@
 //   • the real Firebase, sync, service-worker and Firebase-configuration modules can never load.
 
 import { fileURLToPath } from 'node:url';
-import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -24,12 +23,6 @@ export const QA_REPLACEMENTS: Record<string, string> = {
   // CP02: the Canvas composer presentation is on in the review build only.
   [at('src/lib/canvas-presentation.ts')]: at('qa/iphone/adapters/canvas-presentation.ts'),
 };
-// Crease identity preview (owner review): only when the review opts in with the committed file
-// qa/iphone/review-identity.json; without it the review shows the shipped identity too.
-const REVIEW_IDENTITY = at('qa/iphone/review-identity.json');
-const QA_IDENTITY: string = existsSync(REVIEW_IDENTITY) ? JSON.parse(readFileSync(REVIEW_IDENTITY, 'utf8')).identity ?? '' : '';
-if (!['', 'crease'].includes(QA_IDENTITY)) throw new Error(`qa/iphone/review-identity.json: identity must be "crease", not "${QA_IDENTITY}"`);
-if (QA_IDENTITY === 'crease') QA_REPLACEMENTS[at('src/lib/brand-identity.ts')] = at('qa/iphone/adapters/brand-identity.ts');
 const SDK_STUB = at('qa/iphone/adapters/firebase-sdk.ts');
 const SDK_ENTRIES = new Set(['firebase/app', 'firebase/auth', 'firebase/firestore']);
 const TRANSPORT = at('qa/iphone/adapters/transport.ts');

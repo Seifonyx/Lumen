@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FileText, Loader2 } from 'lucide-react';
 import Logo from './Logo';
-import { BrandWordmark } from '../lib/brand-identity';
+import { BrandWordmark } from '../lib/canvas-presentation';
 import { readShare, type SharedChat } from '../lib/share';
 import { segments } from '../lib/markdown';
 

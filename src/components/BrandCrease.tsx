@@ -1,7 +1,8 @@
 import { MARK, WORDMARK, WORDMARK_SMALL, type Drawing } from '../lib/brand-crease-art';
-import type { BrandArtProps } from '../lib/brand-identity';
+import type { BrandArtProps } from '../lib/canvas-presentation';
 
-// The Crease identity preview's brand placements. Imported only by src/lib/brand-identity.on.ts, so only the preview build carries it. Drawn in currentColor, so they follow
+// The Lumen identity (Crease, approved 2026-10-23) in the Canvas presentation's brand placements. Imported only by
+// src/lib/canvas-presentation.on.ts, so the ordinary build carries none of it. Drawn in currentColor, so they follow
 // the theme. Labelled "Lumen" unless `decorative`, for a placement whose control already carries the name.
 function Art({ art, height, decorative, className }: { art: Drawing; height: number; decorative?: boolean; className?: string }) {
   const [, , w, h] = art.viewBox.split(' ').map(Number);

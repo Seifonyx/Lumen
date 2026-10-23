@@ -14,7 +14,6 @@
 .app[data-lumen-canvas-shell] .cv-nav button { font-family: var(--canvas-body-font); }
 .app[data-lumen-canvas-shell] .cv-head { display: flex; align-items: center; gap: 6px; padding: 2px 2px 12px 10px; }
 .app[data-lumen-canvas-shell] .cv-brand { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; color: var(--canvas-ink); }
-.app[data-lumen-canvas-shell] .cv-wordmark { font: 660 21px/1 var(--canvas-display-font); letter-spacing: -.045em; }
 .app[data-lumen-canvas-shell] .cv-head-btn { display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 10px; background: none; color: var(--canvas-secondary); cursor: pointer; }
 .app[data-lumen-canvas-shell] .cv-head-btn:hover { background: var(--canvas-fill); color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .cv-search { display: flex; align-items: center; gap: 8px; height: 38px; margin: 0 0 10px; padding: 0 12px; border: 0; border-radius: 12px; background: var(--canvas-fill); color: var(--canvas-muted); }
@@ -181,7 +180,6 @@
   .app[data-lumen-canvas-shell] { --cv-row: 44px; --cv-gap: 0px; --cv-fs: 15.5px; }
   .app[data-lumen-canvas-shell] .cv-nav { width: min(84vw, 340px); padding: calc(env(safe-area-inset-top) + 12px) 14px max(12px, env(safe-area-inset-bottom)); }
   .app[data-lumen-canvas-shell] .cv-head { min-height: 44px; padding: 4px 0 18px 10px; gap: 10px; }
-  .app[data-lumen-canvas-shell] .cv-wordmark { font-size: 29px; }
   .app[data-lumen-canvas-shell] .cv-head-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--canvas-fill); color: var(--canvas-ink); }
   .app[data-lumen-canvas-shell] .cv-search { height: 44px; margin: -6px 0 14px; border-radius: 14px; }
   .app[data-lumen-canvas-shell] .cv-search input { font-size: 16px; }
@@ -227,7 +225,6 @@
 }
 @media (max-width: 899px) and (max-height: 700px) {
   .app[data-lumen-canvas-shell] .cv-head { padding-bottom: 10px; }
-  .app[data-lumen-canvas-shell] .cv-wordmark { font-size: 26px; }
   .app[data-lumen-canvas-shell] .cv-dest { gap: 2px; padding-bottom: 10px; margin-bottom: 6px; }
   .app[data-lumen-canvas-shell] .cv-dest button { min-height: 46px; font-size: 17.5px; }
   .app[data-lumen-canvas-shell] .cv-new-pill { min-height: 46px; }

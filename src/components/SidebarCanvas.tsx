@@ -15,7 +15,7 @@ import type { Chat, Project } from '../types';
 import AllChats from './AllChats';
 import ProjectManager from './ProjectManager';
 import { AskChats, ChatRow, type SidebarProps } from './Sidebar';
-import { BrandWordmark } from '../lib/brand-identity';
+import { BrandWordmark } from '../lib/canvas-presentation';
 
 const EMPTY_PROJECTS: Project[] = [];
 const LIMIT = 5;

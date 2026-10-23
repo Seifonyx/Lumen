@@ -7,7 +7,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { build } from 'vite';
 import { makeManifest } from '../../server/private-qa/control.mjs';
@@ -20,10 +20,6 @@ const run = args.run ?? '0';
 const attempt = args.attempt ?? '1';
 const hours = Number(args.hours ?? 72);
 if (!(hours > 0 && hours <= 72)) throw new Error('--hours must be between 0 and 72.');
-
-// Reported only: qa/iphone/review-identity.json (committed with the branch) opts the review into the Crease identity
-// preview, and vite.qa.config.ts reads it. Absent, the review shows the shipped identity.
-const reviewIdentity = existsSync('qa/iphone/review-identity.json') ? JSON.parse(readFileSync('qa/iphone/review-identity.json', 'utf8')).identity ?? '' : '';
 
 const git = (...a) => execFileSync('git', a, { encoding: 'utf8' }).trim();
 const commit = git('rev-parse', 'HEAD');
@@ -58,6 +54,6 @@ const { bytes, digest, manifest } = await makeManifest({
   toolchain: `node ${process.version}; vite ${vite}`,
 });
 writeFileSync(join(out, 'manifest.json'), bytes);
-writeFileSync(join(out, 'graph.json'), JSON.stringify({ commit, identity: reviewIdentity || 'shipped', modules: relativeTo(root, modules).sort(), network }, null, 2));
+writeFileSync(join(out, 'graph.json'), JSON.stringify({ commit, modules: relativeTo(root, modules).sort(), network }, null, 2));
 const total = files.reduce((n, f) => n + f.bytes.byteLength, 0);
-console.log(`QA build ${manifest.buildId}${reviewIdentity ? ` (identity preview: ${reviewIdentity})` : ''}\n  files ${files.length}, ${(total / 1048576).toFixed(1)} MB, manifest sha256 ${digest}\n  graph ${modules.length} modules audited; ${network.length} reviewed third-party network chunks\n  expires ${new Date(manifest.expiresAt).toISOString()} — not published anywhere`);
+console.log(`QA build ${manifest.buildId}\n  files ${files.length}, ${(total / 1048576).toFixed(1)} MB, manifest sha256 ${digest}\n  graph ${modules.length} modules audited; ${network.length} reviewed third-party network chunks\n  expires ${new Date(manifest.expiresAt).toISOString()} — not published anywhere`);

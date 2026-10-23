@@ -46,34 +46,8 @@ function canvasPresentation(): Plugin | false {
   };
 }
 
-/** Crease identity PREVIEW for owner review: LUMEN_IDENTITY=crease (only with LUMEN_CANVAS=1) resolves
- *  src/lib/brand-identity.ts to its "on" module and swaps the Canvas icons, manifest and launch screens for the
- *  proposal's (brand/crease/). Unset leaves every build on the shipped identity; no workflow sets it. */
-function identityPreview(): Plugin | false {
-  const flag = process.env.LUMEN_IDENTITY ?? '';
-  if (!['', 'crease'].includes(flag)) throw new Error(`LUMEN_IDENTITY must be crease or unset, not "${flag}"`);
-  if (!flag) return false;
-  if (process.env.LUMEN_CANVAS !== '1') throw new Error('LUMEN_IDENTITY=crease previews the Canvas presentation; set LUMEN_CANVAS=1 too');
-  const off = resolve('src/lib/brand-identity.ts').replaceAll('\\', '/');
-  const on = resolve('src/lib/brand-identity.on.ts');
-  return {
-    name: 'lumen-identity-preview',
-    enforce: 'pre',
-    async resolveId(source, importer, options) {
-      if (!importer || source.startsWith('\0')) return null;
-      const resolved = await this.resolve(source, importer, { ...options, skipSelf: true });
-      return resolved && resolved.id.split('?')[0].replaceAll('\\', '/') === off ? on : null;
-    },
-  };
-}
-/** Public files the Crease preview replaces: the Canvas file name → the proposal's file. */
-const CREASE_PUBLIC = (file: string) => process.env.LUMEN_IDENTITY !== 'crease' ? file
-  : ({ 'icon.svg': 'brand/crease/svg/app-icon-dark.svg', 'apple-touch-icon.png': 'brand/crease/png/apple-touch-icon.png', 'icon-192.png': 'brand/crease/png/icon-192.png',
-    'icon-512.png': 'brand/crease/png/icon-512.png', 'icon-maskable-512.png': 'brand/crease/png/icon-maskable-512.png', 'manifest.webmanifest': 'brand/crease/manifest.webmanifest' } as Record<string, string>)[relative('public-canvas', file).replaceAll('\\', '/')]
-    ?? file.replace(/^public-canvas[\\/]splash/, 'brand/crease/splash');
-
-/** Canvas build only: replaces public files with their Canvas versions (public-canvas/: the ink mark's icons and
- *  splash screens) and restyles the legal pages in ink and Geist. Runs after serviceWorker(), so the precache list
+/** Canvas build only: replaces public files with their Canvas versions (public-canvas/: the Lumen identity's icons,
+ *  favicon, manifest and launch screens, from scripts/brand-crease.mjs) and restyles the legal pages in ink and Geist. Runs after serviceWorker(), so the precache list
  *  keeps one entry per public file. The ordinary build never loads this plugin. */
 function canvasPublic(): Plugin | false {
   if (process.env.LUMEN_CANVAS !== '1') return false;
@@ -88,13 +62,15 @@ function canvasPublic(): Plugin | false {
         // Light and Dark only: a saved True black opens as Dark.
         .replace("if (s.theme === 'black') { root.dataset.theme = 'dark'; root.dataset.appearance = 'black'; }", "if (s.theme === 'black') root.dataset.theme = 'dark';")
         .replace("black: '#000000' }[s.theme]", "black: '#0d0f12' }[s.theme]")
+        // The Lumen mark's small-size drawing for the browser tab (public-canvas/favicon.svg).
+        .replace('<link rel="icon" href="/icon.svg" type="image/svg+xml" />', '<link rel="icon" href="/favicon.svg" type="image/svg+xml" />')
         .replace('<html ', '<html data-lumen-canvas data-lumen-canvas-foundation ')
         .replace('<div class="app app-skeleton"', '<div class="app app-skeleton" data-lumen-canvas-shell data-lumen-canvas-foundation')
         .replace('<div class="composer sk-composer">', '<div class="composer sk-composer" data-lumen-canvas-foundation data-lumen-canvas-composer>');
     },
     generateBundle(_options, bundle) {
       for (const file of walk('public-canvas')) {
-        this.emitFile({ type: 'asset', fileName: relative('public-canvas', file).replaceAll('\\', '/'), source: readFileSync(CREASE_PUBLIC(file)) });
+        this.emitFile({ type: 'asset', fileName: relative('public-canvas', file).replaceAll('\\', '/'), source: readFileSync(file) });
       }
       const font = Object.keys(bundle).find((f) => /\/geist-latin-wght-normal-[^/]+\.woff2$/.test(f));
       const style = readFileSync('src/pwa/legal-ink.css', 'utf8').replace('__GEIST__', font ? `/${font}` : '');
@@ -107,7 +83,7 @@ function canvasPublic(): Plugin | false {
 }
 
 export default defineConfig({
-  plugins: [react(), canvasPresentation(), identityPreview(), serviceWorker(), canvasPublic()],
+  plugins: [react(), canvasPresentation(), serviceWorker(), canvasPublic()],
   server: {
     host: '0.0.0.0',
     port: 3000,

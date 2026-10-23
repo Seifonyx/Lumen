@@ -263,7 +263,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         <div className="cv-foot">
           {/* The global New chat: always a general conversation, outside projects (src/lib/new-chat.ts). A project's own
               New chat is inside its folder. */}
-          {phone && <button type="button" className="cv-new-pill" onClick={newGeneralChat} aria-describedby={`${ids}-general`}><MessageSquarePlus size={18} aria-hidden="true" />New chat</button>}
+          {phone && <button type="button" className="cv-new-pill" onClick={newGeneralChat} aria-label="New chat" aria-describedby={`${ids}-general`}><MessageSquarePlus size={18} aria-hidden="true" />New chat</button>}
           <button type="button" className="cv-account" aria-label="Settings" title={`Settings (${modKey},)`} onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })}>
             {user?.photo ? <img className="cv-avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="cv-avatar" aria-hidden="true">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
             {!phone && <span className="cv-account-text"><span className="cv-account-name">{user?.name || user?.email?.split('@')[0] || 'Account'}</span><span className="cv-account-sub">Settings &amp; keys</span></span>}

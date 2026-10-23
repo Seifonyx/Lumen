@@ -180,7 +180,11 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
     },
     // Escape in the message box is handled here (not by the focus scope) so an IME composition can cancel first.
     textarea: { 'data-local-escape': '' },
+    // Returns true when the key is fully handled here and must not reach Send.
     escape: (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      // Safari ends an IME composition before the Enter that confirms it arrives, so isComposing is already false;
+      // keyCode 229 still marks that Enter as the input method's. It confirms the text and never sends.
+      if (e.key === 'Enter' && (e.nativeEvent.isComposing || e.keyCode === 229)) return true;
       if (e.key !== 'Escape' || !expanded || e.nativeEvent.isComposing) return false;
       e.preventDefault();
       e.stopPropagation();
@@ -193,8 +197,8 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
         <div>
           <span className="canvas-sheet-label">Writing</span>
           <strong id={HEAD_ID}>{title || 'New chat'}</strong>
+          <span className="canvas-sheet-count">{words} {words === 1 ? 'word' : 'words'} · ~{formatTokens(estimateTokens(value))} {estimateTokens(value) === 1 ? 'token' : 'tokens'}</span>
         </div>
-        <span className="canvas-sheet-count">{words} {words === 1 ? 'word' : 'words'} · ~{formatTokens(estimateTokens(value))} {estimateTokens(value) === 1 ? 'token' : 'tokens'}</span>
         <button type="button" className="canvas-sheet-done" aria-label="Done, collapse writing" title="Collapse writing (Esc)" onClick={collapse}>Done</button>
       </div>
     ) : null,

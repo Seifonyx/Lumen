@@ -190,3 +190,50 @@ html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn.voice-start 
 @media (max-width: 899px) {
   .composer-wrap[data-lumen-canvas-composer] .usage-chip .usage-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
+
+/* ---------- Phase 3 slice 2, phones: every control fits its row. At rest one line (+ · message · model · voice/Send);
+ * while writing two (the text, then + · model … meter · expand · dictate · Send/Stop). The model's name shortens with
+ * an ellipsis before anything wraps, and the usage meter shows its ring (its words stay for VoiceOver). */
+@media (max-width: 899px) {
+  .composer-wrap[data-lumen-canvas-composer] .composer > textarea { flex: 1 1 0; min-width: 72px; }
+  .composer-wrap[data-lumen-canvas-composer] .composer .model-picker { min-width: 0; flex: 0 1 auto; }
+  .composer-wrap[data-lumen-canvas-composer] .composer .model-button { max-width: min(40vw, 168px); min-width: 0; }
+  .composer-wrap[data-lumen-canvas-composer] .composer .model-button :is(.model-name, .model-name-text) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .composer-wrap[data-lumen-canvas-composer] .composer .model-button > svg { flex: none; }
+  .composer-wrap[data-lumen-canvas-composer] .composer :is(.usage-meter, .canvas-expand, .dictation-btn, .send-btn, .shield-on, .composer-bar > .tool-btn) { flex: none; }
+  .composer-wrap[data-lumen-canvas-composer] .composer .usage-chip-words { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .composer-wrap[data-lumen-canvas-composer] .composer .usage-chip { min-width: 36px; justify-content: center; padding: 0 6px; }
+  .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer > textarea { flex: 1 1 100%; }
+  .composer-wrap[data-lumen-canvas-composer] .composer .composer-bar > .tool-btn:not(.shield-on) { width: 36px; height: 36px; }
+}
+/* The narrowest phones: the meter steps aside while writing (it stays in the writing sheet and in Settings → Usage). */
+@media (max-width: 360px) {
+  .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .usage-meter:not(:has(> .usage-chip:is([aria-expanded='true'], [data-return]))) { display: none; }
+  .composer-wrap[data-lumen-canvas-composer] .composer .model-button { max-width: 120px; }
+}
+/* At rest the empty box keeps "Message Lumen" on one line: the model button shows its mark only (the name is still
+   announced), and the name appears with the second row as soon as you write, before anything is sent. */
+@media (max-width: 899px) {
+  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer > textarea:placeholder-shown { white-space: nowrap; overflow: hidden; }
+  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .model-button { max-width: none; min-width: 44px; height: 40px; min-height: 40px; gap: 2px; padding: 0 6px 0 8px; }
+  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .model-button .model-name { overflow: visible; flex: none; }
+  .composer-wrap[data-lumen-canvas-composer] .composer .model-button :is(.pmark, .auto-icon) { flex: none; }
+  /* At rest the model is shown by its provider's mark (Auto: its sparkle) instead of the status dot. */
+  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .model-name :is(.pmark, > .auto-icon) { display: inline-grid; }
+  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .model-name::before { display: none; }
+  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .model-button .model-name-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+/* The writing sheet's title keeps the width; its count sits beneath it. */
+.composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head .canvas-sheet-count { display: block; margin-top: 2px; }
+/* Phones: small composer controls keep their look but answer a 44 pt touch (remove an attachment or a chip, expand). */
+@media (max-width: 899px) {
+  .composer-wrap[data-lumen-canvas-composer] .composer :is(.attachment > .icon-btn, .ctx-chip > .icon-btn, .canvas-expand) { position: relative; }
+  .composer-wrap[data-lumen-canvas-composer] .composer :is(.attachment > .icon-btn, .ctx-chip > .icon-btn, .canvas-expand)::after { content: ''; position: absolute; inset: 50% auto auto 50%; width: 44px; height: 44px; translate: -50% -50%; }
+}
+/* Phones at rest: the usage meter appears only to take focus back from its sheet. It floats over the empty end of the
+   message box rather than taking a place in the row, so when it leaves (on the next press) nothing moves under the
+   finger and the press lands where it was aimed. */
+@media (max-width: 899px) {
+  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer { position: relative; }
+  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .usage-meter { position: absolute; inset-inline-end: 96px; top: 50%; translate: 0 -50%; z-index: 1; }
+}

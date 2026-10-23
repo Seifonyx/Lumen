@@ -185,3 +185,8 @@ html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn.voice-start 
 /* Active context sits above the input as chips (rendered by the Canvas composer); the tool-row copies step aside. */
 .composer-wrap[data-lumen-canvas-composer] .composer .composer-chip { display: none; }
 .composer-wrap[data-lumen-canvas-composer] .cv-context-chips .ctx-chip { gap: 6px; }
+
+/* Phones: "limit reached" is announced, and shown in the notice above, so the tool row keeps one line. */
+@media (max-width: 899px) {
+  .composer-wrap[data-lumen-canvas-composer] .usage-chip .usage-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}

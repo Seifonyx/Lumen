@@ -181,3 +181,7 @@ html[data-lumen-canvas] .tool-needs:not(.ok)::before { content: '!'; display: in
   html[data-lumen-canvas] .hub-close.cv-chat-pill { justify-content: center; width: 44px; padding: 0; }
   html[data-lumen-canvas] .hub-close.cv-chat-pill > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
+
+/* Reply errors: a quiet card on paper; the state's colour stays on its icon and edge. */
+html[data-lumen-canvas] .error-box { border-color: color-mix(in srgb, var(--danger, #d14343) 35%, var(--cv5-rim, transparent)); background: color-mix(in srgb, var(--danger, #d14343) 5%, var(--bg)); color: var(--text); }
+html[data-lumen-canvas] .error-box > svg { color: var(--danger, #d14343); }

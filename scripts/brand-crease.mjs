@@ -84,6 +84,17 @@ function lockup(panel, floor, text) {
   return svg(`0 ${fmt(minY)} ${fmt(shift + w.width)} ${fmt(maxY - minY)}`,
     `<g transform="translate(0 ${fmt(top)}) scale(${fmt(k)})">${markBody(m, panel, floor)}</g><g transform="translate(${fmt(shift)} 0)" fill="${text}">${w.body}</g>`);
 }
+/** Phase 1B lockup (recommended): the unchanged mark stands on the word's baseline (floor tip on it, with a small
+ * overshoot), 1.1x the l's height, and sits closer to the word (0.42 of the mark's width). */
+const BASELINE = { height: 1.1, gap: 0.42, overshoot: 10 };
+function lockupBaseline(panel, floor, text, { height, gap, overshoot } = BASELINE) {
+  const m = crease(), w = wordmark();
+  const k = (ASC * height) / m.height, top = ASC - m.height * k + overshoot, shift = m.width * k * (1 + gap);
+  const minY = Math.min(top, 0), maxY = Math.max(ASC + overshoot, w.height);
+  return svg(`0 ${fmt(minY)} ${fmt(shift + w.width)} ${fmt(maxY - minY)}`,
+    `<title>Lumen</title><g transform="translate(0 ${fmt(top)}) scale(${fmt(k)})">${markBody(m, panel, floor)}</g><g transform="translate(${fmt(shift)} 0)" fill="${text}">${w.body}</g>`,
+    ' role="img" aria-label="Lumen"');
+}
 
 // ---------- Write
 for (const dir of ['svg', 'png', 'splash']) mkdirSync(`${OUT}/${dir}`, { recursive: true });
@@ -104,6 +115,9 @@ put('wordmark-mono.svg', svg(wvb, `<g fill="currentColor">${w.body}</g>`));
 put('lockup-on-light.svg', lockup(INK, INK_SHADE, INK));
 put('lockup-on-dark.svg', lockup(LIT, SHADE, PAPER));
 put('lockup-mono.svg', lockup('currentColor', 'currentColor', 'currentColor'));
+put('lockup-baseline-on-light.svg', lockupBaseline(INK, INK_SHADE, INK));
+put('lockup-baseline-on-dark.svg', lockupBaseline(LIT, SHADE, PAPER));
+put('lockup-baseline-mono.svg', lockupBaseline('currentColor', 'currentColor', 'currentColor'));
 put('app-icon-dark.svg', tile({ bg: INK, panel: LIT, floor: SHADE, radius: 114, glow: true }));
 put('app-icon-light.svg', tile({ bg: PAPER, panel: INK, floor: INK_SHADE, radius: 114 }));
 put('app-icon-mono.svg', tile({ bg: '#000', panel: '#fff', floor: '#fff', radius: 114 }));

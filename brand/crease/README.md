@@ -6,6 +6,48 @@ owner's approval of the final identity, and then separate approval for the merge
 
 ![Before and after](mockups/before-after.png)
 
+## Phase 1B (2026-10-23): the open laptop, and which lockup
+
+The owner noticed that Crease reads as an **open laptop**: a standing screen, a projecting base and the opening
+between them. That reading is now the primary one. The letter L is secondary. The mark is **unchanged** from
+Phase 1, with no straightening, merging or reshaping toward a typographic L. (Integrated-L letterforms were
+tried in a scratch exploration and set aside, because they turned the object into an ordinary L. They were never
+committed.)
+
+![Phase 1B comparison](mockups/phase-1b-compare.png)
+
+Three arrangements of the same mark were compared at display size, in the real desktop sidebar and in the iPhone drawer, in both themes:
+
+- **A, the Phase 1 lockup:** the mark beside "lumen", with the floor tip dropping below the baseline. It works, but it
+  floats a little and leaves a wide gap.
+- **B and C, Crease as the L of "umen":** the unchanged mark replaces the first letter. C sets "umen" in Geist 640 so
+  the letters carry the mark's weight, and tightens the spacing. At sidebar size it reads "Lumen" surprisingly well. At
+  display size it reads "[object] umen": the mark is a solid object, the letters are strokes, it stands taller than
+  the capitals, and the deck leaves a hole at the baseline. Making the letters fit would mean deforming the mark,
+  which is ruled out. A layout with the deck projecting under the word also fails: the deck's back corner rises
+  through the "u".
+- **A′, recommended:** the same mark and wordmark, composed better. The mark stands on the word's baseline (floor tip
+  on it, 10-unit overshoot) at 1.1× the l's height, 0.42 of its own width from the word. The word reads
+  unambiguously, the mark stays an object (the laptop), and the wordmark's l, cut at the mark's angle, echoes the
+  standing plane beside it. Files: `svg/lockup-baseline-on-light.svg`, `-on-dark.svg`, `-mono.svg` (with
+  `role="img"` and an accessible name).
+
+**Placements** ([context board](mockups/phase-1b-context.png)):
+- **Lockup A′:** the desktop sidebar head, the iPhone drawer head and the shared-page header.
+- **Standalone mark:** the collapsed sidebar, and the app icon on the sign-in screen and the home screen.
+
+Everything else stays text: headings such as "Sign in to Lumen", page titles and body copy are not replaced with
+SVG. When the lockup sits beside a visible "Lumen", it is `aria-hidden`.
+
+**Remaining weaknesses:**
+- At 16 px the crease closes up even with the small-size drawing. The icon still holds as a silhouette, but the
+  opening only reads from 24 px.
+- At sidebar size (about 22 px tall) the floor's two tones merge, so the mark reads as a dark L-shaped object.
+  That's acceptable, but it's the L reading, not the laptop.
+- On the dark sign-in screen, the dark tile nearly disappears into the page. On adoption, use the bare two-tone
+  mark there or give the tile a hairline rim.
+- The name risk from Phase 1 (other "Lumen" wordmarks) is unchanged.
+
 ## The idea in one line
 
 A sheet of light folded into a standing page and a floor. The gap between the two planes is the **crease**: the

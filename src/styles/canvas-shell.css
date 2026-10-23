@@ -352,3 +352,35 @@
 
 /* Keyboard focus in the tree is drawn inside each row, so the scrolling tree never clips it (Phase 2 slice 2). */
 .app[data-lumen-canvas-shell] .cv-nav :is(.cv-dest button, .cv-section-toggle, .cv-project-row, .cv-brief, .chat-open, .cv-more, .cv-new-here, .cv-all, .cv-empty, .cv-ask, .row-menu > .icon-btn, .cv-section-add):focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+
+/* Slice 3: a chat with unsent text says so (quietly, after its title). The word is for sight; screen readers hear
+   "Unsent draft" through the row's description, so the generated text has an empty alternative. */
+.app[data-lumen-canvas-shell] .cv-nav .chat-row[data-draft] .chat-open::after { content: 'Draft' / ''; order: 2; flex: none; margin-inline-start: 4px; color: var(--canvas-secondary); font: 500 11px/1 var(--canvas-data-font); letter-spacing: .04em; text-transform: uppercase; }
+
+/* ================= Text size (Phase 2 slice 3)
+ * The tree follows Lumen's text size: the Settings choice, and iOS Dynamic Type when it is Automatic (src/lib/settings.ts
+ * sets --fs from the system font). Sizes are offsets from --fs (15px by default, where they equal the values above), and
+ * rows grow with their text; phones keep their 44pt minimum. Long titles still end in "…" on one line. */
+.app[data-lumen-canvas-shell] { --cv-fs: calc(var(--fs, 15px) - 1.5px); --cv-row: max(32px, calc(var(--fs, 15px) * 1.4 + 11px)); }
+@media (max-width: 899px) {
+  .app[data-lumen-canvas-shell] { --cv-fs: calc(var(--fs, 15px) + .5px); --cv-row: max(44px, calc(var(--fs, 15px) * 1.45 + 22px)); }
+  .app[data-lumen-canvas-shell] .cv-dest button { min-height: var(--cv-row); font-size: calc(var(--fs, 15px) + 2px); }
+  .app[data-lumen-canvas-shell] .cv-dest button > svg { width: calc(var(--fs, 15px) + 6px); height: calc(var(--fs, 15px) + 6px); }
+  .app[data-lumen-canvas-shell] .cv-project-row { min-height: var(--cv-row); font-size: var(--cv-fs); }
+  .app[data-lumen-canvas-shell] .cv-mono { width: calc(var(--fs, 15px) + 7px); height: calc(var(--fs, 15px) + 7px); font-size: calc(var(--fs, 15px) - 3px); }
+  .app[data-lumen-canvas-shell] .cv-label { font-size: calc(var(--fs, 15px) - 3.5px); }
+  .app[data-lumen-canvas-shell] .cv-search { height: auto; min-height: var(--cv-row); }
+  .app[data-lumen-canvas-shell] .cv-search input { font-size: max(16px, calc(var(--fs, 15px) + 1px)); }
+  .app[data-lumen-canvas-shell] .cv-brief { min-height: var(--cv-row); }
+  .app[data-lumen-canvas-shell] .cv-brief-text { font-size: calc(var(--fs, 15px) - 1px); }
+  .app[data-lumen-canvas-shell] .cv-brief-meta { font-size: calc(var(--fs, 15px) - 2.5px); }
+  .app[data-lumen-canvas-shell] :is(.cv-more, .cv-new-here, .cv-empty, .cv-all, .cv-ask, .cv-section-toggle) { min-height: var(--cv-row); }
+  .app[data-lumen-canvas-shell] :is(.cv-more, .cv-empty) { font-size: calc(var(--fs, 15px) - 1px); }
+  .app[data-lumen-canvas-shell] :is(.cv-new-here, .cv-all, .cv-ask) { font-size: calc(var(--fs, 15px) - .5px); }
+  .app[data-lumen-canvas-shell] .cv-new-here-icon { width: calc(var(--fs, 15px) + 5px); height: calc(var(--fs, 15px) + 5px); }
+  .app[data-lumen-canvas-shell] .cv-nav .chat-row[data-draft] .chat-open::after { font-size: calc(var(--fs, 15px) - 4px); }
+  .app[data-lumen-canvas-shell] .cv-new-pill { min-height: max(50px, calc(var(--fs, 15px) * 1.4 + 29px)); font-size: calc(var(--fs, 15px) + 1.5px); white-space: nowrap; }
+  .app[data-lumen-canvas-shell] .cv-account { width: max(50px, calc(var(--fs, 15px) * 1.4 + 29px)); min-height: max(50px, calc(var(--fs, 15px) * 1.4 + 29px)); }
+  /* The glass look sets 16px titles in fixed 44px rows (glass.css): same at the default size, growing past it. */
+  html.glass .app[data-lumen-canvas-shell] .cv-nav .chat-row .chat-open { height: auto; min-height: var(--cv-row); font-size: calc(var(--fs, 15px) + 1px); }
+}

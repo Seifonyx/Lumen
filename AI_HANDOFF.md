@@ -1,5 +1,24 @@
 # Dynamic Model Picker operational handoff
 
+## Desktop & iPhone navigation, Phase 2 slice 3 — 23 October 2026
+
+Draft PR on `claude/lucid-dijkstra-541bbi` from `main` `a01856c` (slice 2 is live as Deploy #64). Canvas only; the ordinary build is byte-identical to `main`. **Not approved for merge or deploy.**
+
+- **Assessment** (`journeys.cjs` probe on the production build, desktop and 390 phone):
+  - Back left Lumen from Settings, a project overview and All chats.
+  - Drafts were kept per chat, including across a reload, but nothing showed where they were.
+  - The drawer ignored the text size (fixed px, plus glass.css's fixed 16px/44px rows).
+  - `reveal()` could leave keyboard-reached rows under the sticky section header.
+  - Already correct: project association on send (general chats carry no project instructions), and drafts across hubs, Back, the Routing Center and Settings.
+- **Changes:**
+  - `CanvasNav` treats `settingsOpen`, `projectWorkspaceOpen` and a back layer (`src/lib/back-stack.ts`, used for All chats) as surfaces. Back closes the topmost one and re-marks history if something is still open.
+  - SidebarCanvas marks rows whose `mr.draft.<uid>.<chat>` exists with `data-draft`; CSS `content: 'Draft' / ''`; described as "Unsent draft".
+  - The text-size block at the end of `canvas-shell.css`.
+  - `reveal()` subtracts the sticky header.
+- **Budget:** startup JS 8.5 → 9 KB (measured 8.6; reason in the script).
+- **Tests:** CP03 adds Back from Settings, the overview and All chats, the draft marker, and text-size growth. `tests/unit/canvas-nav.test.mjs` is extended. Helper: `tests/e2e/helpers/large-text-shots.cjs`.
+- **Phase 2 accessibility follow-up:** large text and Dynamic Type are addressed here. Real Dynamic Type needs a physical iPhone; Chromium can only simulate it via `--fs`.
+
 ## Desktop & iPhone navigation, Phase 2 slice 2 — 23 October 2026
 
 Draft PR on `claude/lucid-dijkstra-541bbi`, from `main` `f16c6d1` (slice 1 is live as Deploy #63). Canvas only; the ordinary build is byte-identical to `main`. **Not approved for merge or deploy.**

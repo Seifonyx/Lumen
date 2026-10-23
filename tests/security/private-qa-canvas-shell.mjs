@@ -186,8 +186,11 @@ try {
         await page.keyboard.press('ArrowRight');
         assert.equal(await lisbon.getAttribute('aria-expanded'), 'true', 'Right opens a folder');
         await page.keyboard.press('ArrowRight');
+        assert.ok(await page.evaluate(() => document.activeElement?.matches('.cv-brief')), 'Right enters the folder at its overview');
         await page.keyboard.press('ArrowDown');
-        assert.ok(await page.evaluate(() => document.activeElement?.closest('.cv-project')?.textContent.includes('Lisbon in spring') && document.activeElement.matches('.chat-open')), 'Right then Down reach a chat inside the folder');
+        assert.ok(await page.evaluate(() => document.activeElement?.matches('.cv-new-here')), 'then New chat in the project');
+        await page.keyboard.press('ArrowDown');
+        assert.ok(await page.evaluate(() => document.activeElement?.closest('.cv-project')?.textContent.includes('Lisbon in spring') && document.activeElement.matches('.chat-open')), 'then its chats');
         await page.keyboard.press('ArrowLeft');
         assert.ok(await lisbon.evaluate((el) => el === document.activeElement), 'Left returns to the folder');
         await page.keyboard.press('ArrowLeft');

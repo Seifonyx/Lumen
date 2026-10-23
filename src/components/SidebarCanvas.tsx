@@ -15,7 +15,7 @@ import type { Chat, Project } from '../types';
 import AllChats from './AllChats';
 import ProjectManager from './ProjectManager';
 import { AskChats, ChatRow, type SidebarProps } from './Sidebar';
-import { BrandWordmark } from '../lib/canvas-presentation';
+import { BrandWordmark, loadTreeKeys as loadKeys } from '../lib/canvas-presentation';
 
 const EMPTY_PROJECTS: Project[] = [];
 const LIMIT = 5;
@@ -35,8 +35,9 @@ function reveal(row: Element | null | undefined) {
   else if (r.bottom > t.bottom) tree.scrollTop += r.bottom - t.bottom + 8;
 }
 // The arrow keys load with the tree's first focus (Tab, a click or a tap into it), before any key can reach them.
+// (The loader comes through the Canvas switch, so the ordinary build has no chunk for it.)
 let treeKeys: typeof import('../lib/tree-keys').treeKeys | null = null;
-const loadTreeKeys = () => { if (!treeKeys) void import('../lib/tree-keys').then((m) => { treeKeys = m.treeKeys; }); };
+const loadTreeKeys = () => { if (!treeKeys) void loadKeys?.().then((m) => { treeKeys = m.treeKeys; }); };
 
 type Open = { projects: boolean; conversations: boolean; folders: Record<string, boolean> };
 const OPEN: Open = { projects: true, conversations: true, folders: {} };

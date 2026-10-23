@@ -28,8 +28,9 @@ test('CanvasNav keeps one history entry for pages shown in place of the chat and
 
 test("the tree's arrow keys load lazily from SidebarCanvas only, and change no roles", () => {
   const tree = readFileSync('src/components/SidebarCanvas.tsx', 'utf8');
-  assert.match(tree, /import\('\.\.\/lib\/tree-keys'\)/);
-  assert.ok(!/from '\.\.\/lib\/tree-keys'/.test(tree), 'no static import (startup stays lean)');
+  assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const loadTreeKeys: .+ \| null = null;$/m);
+  assert.match(readFileSync('src/lib/canvas-presentation.on.ts', 'utf8'), /^export const loadTreeKeys = \(\) => import\('\.\/tree-keys'\);$/m);
+  assert.ok(!/(?<!typeof )import\('\.\.\/lib\/tree-keys'\)|from '\.\.\/lib\/tree-keys'/.test(tree), 'only through the switch (no ordinary chunk), never static');
   for (const file of ['src/App.tsx', 'src/components/Sidebar.tsx', 'src/components/ChatView.tsx', 'src/main.tsx']) assert.ok(!readFileSync(file, 'utf8').includes('tree-keys'), file);
   const keys = readFileSync('src/lib/tree-keys.ts', 'utf8');
   assert.ok(!/setAttribute|removeAttribute|tabIndex|\.role\s*=/.test(keys), 'rows keep their button semantics');

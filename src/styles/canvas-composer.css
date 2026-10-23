@@ -42,6 +42,7 @@
 /* The ring sits in the row instead of the box's corner, so nothing needs to leave room for it. */
 .composer-wrap[data-lumen-canvas-composer] .composer > :first-child:not(textarea):not(.composer-bar) { margin-inline-end: 0; }
 .composer-wrap[data-lumen-canvas-composer] .composer .usage-chip { min-height: 34px; border: 0; background: none; color: var(--canvas-muted); }
+.composer-wrap[data-lumen-canvas-composer] .composer .usage-chip-words { font: 500 12px/1 var(--canvas-data-font); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .composer-wrap[data-lumen-canvas-composer] .composer .shield-on { order: 7; }
 .composer-wrap[data-lumen-canvas-composer] .composer .canvas-expand { order: 8; display: none; }
 .composer-wrap[data-lumen-canvas-composer] .composer .dictation-btn { order: 9; display: none; }
@@ -120,11 +121,12 @@ html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn.voice-start 
 }
 .composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head .sheet-grip { display: none; }
 
-/* Desktop sheet: centred over the conversation column, rising from the composer's place. */
+/* Desktop sheet: anchored to the window and centred over the conversation column, wherever the composer sat
+   (the centred new-chat composer would otherwise push its top off screen). */
 @media (min-width: 900px) {
   .composer-wrap[data-composer-state='expanded'][data-lumen-canvas-composer] .composer {
-    position: absolute; left: 50%; translate: -50% 0; bottom: 24px;
-    width: min(var(--canvas-sheet-width), calc(100% - 64px)); height: min(78dvh, 760px);
+    position: fixed; left: calc(var(--canvas-column-left, 0px) + var(--canvas-column-width, 100vw) / 2); translate: -50% 0; bottom: 24px;
+    width: min(var(--canvas-sheet-width), calc(var(--canvas-column-width, 100vw) - 64px)); height: min(78dvh, 760px, calc(100dvh - 48px));
   }
 }
 

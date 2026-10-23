@@ -39,6 +39,8 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
   const pressing = useRef(false);
   const [expanded, setExpanded] = useState(false);
   const [restHeight, setRestHeight] = useState(0);
+  // Desktop: the sheet is anchored to the window, centred on the conversation column it rose from.
+  const [column, setColumn] = useState<{ left: number; width: number } | null>(null);
   const [phone, setPhone] = useState(() => window.matchMedia(PHONE).matches);
   const selection = useRef<{ start: number; end: number; direction: 'forward' | 'backward' | 'none'; scroll: number } | null>(null);
   const restore = useRef(false);
@@ -51,14 +53,25 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
   }, []);
   useLayoutEffect(() => { restore.current = false; setExpanded(false); }, [scope]);
 
+  const measureColumn = useCallback(() => {
+    const r = form.current?.parentElement?.getBoundingClientRect();
+    if (r) setColumn({ left: Math.round(r.left), width: Math.round(r.width) });
+  }, []);
+  useEffect(() => {
+    if (!expanded) return;
+    window.addEventListener('resize', measureColumn);
+    return () => window.removeEventListener('resize', measureColumn);
+  }, [expanded, measureColumn]);
+
   const toggle = useCallback((open: boolean) => {
     const el = input.current;
     if (el) selection.current = { start: el.selectionStart, end: el.selectionEnd, direction: el.selectionDirection, scroll: el.scrollTop };
     // The composer leaves the page flow while it is a sheet: keep its place so the conversation doesn't move.
     if (open) setRestHeight(form.current?.parentElement?.offsetHeight || 0);
+    if (open) measureColumn();
     restore.current = true;
     setExpanded(open);
-  }, [input]);
+  }, [input, measureColumn]);
   const collapse = useCallback(() => toggle(false), [toggle]);
 
   // A press holds the state until it ends. Inside the composer that keeps its controls in place; elsewhere (a message's
@@ -107,7 +120,10 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
       'data-lumen-canvas-foundation': '',
       'data-lumen-canvas-composer': '',
       'data-composer-state': state,
-      style: expanded && restHeight ? ({ '--canvas-rest-h': `${restHeight}px` } as CSSProperties) : undefined,
+      style: expanded ? ({
+        ...(restHeight ? { '--canvas-rest-h': `${restHeight}px` } : {}),
+        ...(column ? { '--canvas-column-left': `${column.left}px`, '--canvas-column-width': `${column.width}px` } : {}),
+      } as CSSProperties) : undefined,
     },
     form: {
       ref: form,

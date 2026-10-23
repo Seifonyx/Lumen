@@ -93,6 +93,10 @@ html[data-lumen-canvas] :is(.tag, .chip, .badge) { border-radius: 999px; }
 /* ---------- Project workspace: monochrome monogram and a neutral hero, as in the tree and Projects. */
 html[data-lumen-canvas][data-lumen-canvas-foundation] .project-tile { background: var(--text); color: var(--bg); font-family: var(--cv5-display); }
 html[data-lumen-canvas][data-lumen-canvas-foundation] .project-hero { background: linear-gradient(180deg, var(--cv5-fill-strong), transparent); }
+/* One ink monogram everywhere: per-project hues (indigo by default) fold to ink, and the colour choice is hidden. */
+html[data-lumen-canvas] :is(.color-indigo, .color-emerald, .color-green, .color-amber, .color-rose, .color-cyan, .color-purple):not(.project-color-dot) { --pc: var(--text); }
+html[data-lumen-canvas][data-lumen-canvas-foundation] .project-page .project-tile, html[data-lumen-canvas][data-lumen-canvas-foundation] .project-tile { background: var(--text) !important; color: var(--bg) !important; box-shadow: none; }
+html[data-lumen-canvas] .pf-field:has(> .project-color-choices) { display: none; }
 
 /* ---------- Assistants: ink avatars instead of per-name hues; rimmed cards, display names. */
 html[data-lumen-canvas][data-lumen-canvas-foundation] .lib-card { --av-bg: var(--cv5-fill-strong); --av-fg: var(--text); border-color: var(--cv5-rim); border-radius: 18px; background: var(--cv5-card); }

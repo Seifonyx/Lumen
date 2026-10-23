@@ -203,7 +203,7 @@ export default function RoutingCenter() {
           <h1 id="rc-title" tabIndex={-1} ref={heading}>Routing Center</h1>
           <p>Your providers, models and routing rules.</p>
         </div>
-        <button type="button" className="rc-primary" aria-label="Connect a provider" onClick={() => openSettings('keys')}><Plus size={16} />Connect<span className="rc-wide">a provider</span></button>
+        <button type="button" className="rc-primary" aria-label="Connect a provider" onClick={() => openSettings('keys')}><Plus size={16} /><span>Connect<span className="rc-wide"> a provider</span></span></button>
       </header>
       <nav className="rc-tabs" aria-label="Routing sections">
         {SECTIONS.map(([id, label]) => <button type="button" key={id} aria-current={section === id ? 'page' : undefined} onClick={() => showRoutingSection(id)}>{label}</button>)}
@@ -214,7 +214,7 @@ export default function RoutingCenter() {
           <div className="rc-summary">
             <div><span>Models in this catalog</span><strong>{models.length}<small> models</small></strong><p>{config.enabledModels.length} enabled for selection</p></div>
             <div><span>Saved routing policies</span><strong>{layouts.length}<small> Layout{layouts.length === 1 ? '' : 's'}</small></strong><p>Auto-ranked or ordered, with explicit fallback scope</p></div>
-            <div><span>{routed ? 'Last answer allowance' : 'Selected model allowance'}</span><strong>{left === null ? 'Unknown' : left}<small>{left === null ? '' : ' requests left'}</small></strong><p>{left === null ? 'No request allowance is reported for this route.' : `For ${modelLabel(catalog, current)} only.${routed ? ' Auto and Layouts may choose another model.' : ''}`}</p></div>
+            <div><span>{routed ? 'Last answer allowance' : 'Selected model allowance'}</span>{left === null ? <strong className="rc-unknown">Unknown</strong> : <strong>{left}<small> requests left</small></strong>}<p>{left === null ? 'No request allowance is reported for this route.' : `For ${modelLabel(catalog, current)} only.${routed ? ' Auto and Layouts may choose another model.' : ''}`}</p></div>
           </div>
           <section className="rc-card">
             <span className="rc-label">This conversation</span>

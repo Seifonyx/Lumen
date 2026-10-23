@@ -5,6 +5,8 @@ import { readAttachment } from '../lib/files/read';
 import { formatBytes } from '../lib/util';
 import type { Attachment, Project } from '../types';
 import Modal from './Modal';
+import { CANVAS_SHELL } from '../lib/canvas-presentation';
+import { chatPreview } from '../lib/chat-preview';
 
 const MAX_FILES = 5;
 const FILE_TYPES = '.pdf,.docx,.xlsx,.xlsm,.pptx,.txt,.md,.csv,.tsv,.json,.html,.xml,.js,.ts,.py,.css,.sql,.log,.yaml,.yml,.srt,.tex';
@@ -154,7 +156,9 @@ export default function ProjectWorkspace({ project, onOpenSettings }: { project:
                       ) : (
                         <button type="button" className="project-chat-title claude-chat-row-title" title={c.title} onClick={() => selectChat(c.id)}>{c.title}</button>
                       )}
-                      <p className="project-chat-snippet" dir="auto">{last?.text?.replace(/\s+/g, ' ').slice(0, 120) || 'Empty chat'}</p>
+                      {CANVAS_SHELL
+                        ? <p className="project-chat-snippet" dir="auto">{chatPreview(last?.text, c.title)}</p>
+                        : <p className="project-chat-snippet" dir="auto">{last?.text?.replace(/\s+/g, ' ').slice(0, 120) || 'Empty chat'}</p>}
                     </div>
                     <span className="project-chat-time">{ago(c.updatedAt)}</span>
                     <div className="project-chat-menu">

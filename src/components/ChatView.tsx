@@ -91,6 +91,16 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
   useLayoutEffect(() => {
     const el = scroller.current;
     hold.current = (chat && positions.get(chat.id)) || null;
+    // Canvas: a chat opened fresh lands on your last question, so its answer reads from the start.
+    if (CANVAS_SHELL && !hold.current && el && chat && chat.messages.at(-1)?.role === 'assistant' && useStore.getState().streamingChatId !== chat.id) {
+      const question = [...chat.messages].reverse().find((m) => m.role === 'user');
+      if (question) {
+        hold.current = { id: question.id, offset: (parseFloat(getComputedStyle(el).paddingTop) || 0) + 8 };
+        stick.current = false;
+        if (!restoreAnchor(el, hold.current)) { el.scrollTop = el.scrollHeight; restoredTo = el.scrollTop; }
+        return;
+      }
+    }
     stick.current = hold.current === null;
     if (!el) return;
     // (Older messages fill in over the next frames; until the remembered one is there, start from the top.)

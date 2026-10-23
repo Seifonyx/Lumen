@@ -38,10 +38,15 @@
 .app[data-lumen-canvas-shell] .rc-summary > div, .app[data-lumen-canvas-shell] .rc-card { padding: 16px; border: 1px solid var(--canvas-rim); border-radius: 16px; background: color-mix(in srgb, var(--canvas-surface) 60%, transparent); }
 .app[data-lumen-canvas-shell] .rc-summary span { font-size: 12.5px; color: var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .rc-summary strong { display: block; margin: 6px 0 4px; font: 640 30px/1 var(--canvas-display-font); letter-spacing: -.03em; }
+/* An unknown value is a quiet statement, not a headline number. */
+.app[data-lumen-canvas-shell] .rc-summary strong.rc-unknown { margin: 8px 0 6px; font: 500 15px/1.3 var(--canvas-body-font); letter-spacing: 0; color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .rc-summary small { font: 500 13px var(--canvas-body-font); color: var(--canvas-secondary); letter-spacing: 0; }
 .app[data-lumen-canvas-shell] .rc-summary p { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .rc-card { display: grid; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
 .app[data-lumen-canvas-shell] .rc-card :is(.route-why-wrap, .route-why-btn) { max-width: 100%; white-space: normal; text-align: start; height: auto; }
+/* The route line reads as one sentence that wraps, never as two columns. */
+.app[data-lumen-canvas-shell] .rc-card .route-why-btn { display: block; padding-block: 6px; line-height: 1.45; }
+.app[data-lumen-canvas-shell] .rc-card .route-why-btn .route-tag { display: inline; white-space: normal; }
 .app[data-lumen-canvas-shell] .rc-card h2 { font: 620 20px/1.2 var(--canvas-display-font); letter-spacing: -.02em; }
 .app[data-lumen-canvas-shell] .rc-card h3 { display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 620; }
 .app[data-lumen-canvas-shell] .rc-actions { display: grid; border-top: 1px solid var(--canvas-rim); }

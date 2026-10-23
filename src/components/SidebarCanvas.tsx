@@ -191,7 +191,12 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
 
           {section('conversations', q ? 'Search results' : 'Conversations', Boolean(current && !hereProject && !isTemporaryChat(current)))}
           <Fold id={`${ids}-conversations`} open={sectionOpen('conversations')}>
-            {loose.length > 0 && <ul className="cv-chats cv-loose">{loose.map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}</ul>}
+            {loose.some((c) => !c.archived) && <ul className="cv-chats cv-loose">{loose.filter((c) => !c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}</ul>}
+            {/* Search also finds archived chats; they are marked as such, after the rest. */}
+            {loose.some((c) => c.archived) && <>
+              <p className="cv-archived-label" id={`${ids}-archived`}>Archived</p>
+              <ul className="cv-chats cv-loose cv-archived" aria-labelledby={`${ids}-archived`}>{loose.filter((c) => c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}</ul>
+            </>}
             {!loose.length && <p className="cv-none">{q ? 'No loose conversations match.' : 'Your chats will appear here.'}</p>}
             {!q && <button type="button" className="cv-all" onClick={() => setAllChats(true)}><MessageSquareText size={15} />All chats<ChevronRight size={13} aria-hidden="true" /></button>}
           </Fold>

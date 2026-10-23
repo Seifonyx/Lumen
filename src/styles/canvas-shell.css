@@ -62,6 +62,8 @@
 .app[data-lumen-canvas-shell] .cv-project-row { display: flex; align-items: center; gap: 8px; width: 100%; min-height: calc(var(--cv-row) + 2px); padding: 0 10px 0 8px; border: 0; border-radius: 10px; background: none; color: var(--canvas-ink); font-size: var(--cv-fs); font-weight: 560; text-align: start; cursor: pointer; }
 .app[data-lumen-canvas-shell] .cv-project-row > .cv-chev { color: var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .cv-project-row:hover { background: var(--canvas-fill); }
+.app[data-lumen-canvas-shell] .cv-archived-label { margin: 10px 10px 2px; font: 500 10.5px/1.3 var(--canvas-data-font); letter-spacing: .12em; text-transform: uppercase; color: var(--canvas-muted); }
+.app[data-lumen-canvas-shell] .cv-archived :is(.chat-open, .chat-title) { color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .cv-mono { display: inline-grid; place-items: center; flex: none; width: 20px; height: 20px; border-radius: 6px; background: var(--canvas-fill-strong); color: var(--canvas-ink); font: 650 11px/1 var(--canvas-display-font); }
 .app[data-lumen-canvas-shell] .cv-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app[data-lumen-canvas-shell] .cv-count { font: 500 11.5px var(--canvas-body-font); color: var(--canvas-muted); font-variant-numeric: tabular-nums; }
@@ -124,6 +126,13 @@
 .app[data-lumen-canvas-shell] .markdown { font-size: var(--canvas-reading-size); line-height: var(--canvas-reading-leading); }
 .app[data-lumen-canvas-shell] .markdown h2 { font: 620 27px/1.18 var(--canvas-display-font); letter-spacing: -.025em; margin: 6px 0 14px; }
 .app[data-lumen-canvas-shell] .markdown h3 { font-size: 17px; font-weight: 640; margin: 28px 0 6px; letter-spacing: -.01em; }
+/* "Scroll to latest" sits beside the message navigator, never over its last tick. */
+.app[data-lumen-canvas-shell] .conversation-area:has(.message-navigation) ~ .to-bottom { inset-inline-end: calc(max(4px, env(safe-area-inset-right)) + 52px); }
+/* Tables break only between words; a wide table scrolls inside its own frame instead of splitting words. */
+.app[data-lumen-canvas-shell] .markdown .table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+.app[data-lumen-canvas-shell] .markdown table { width: max-content; min-width: 100%; }
+.app[data-lumen-canvas-shell] .markdown :is(th, td) { overflow-wrap: normal; word-break: normal; hyphens: manual; min-width: 6.5em; max-width: 17em; }
+.app[data-lumen-canvas-shell] .markdown th { white-space: normal; }
 .app[data-lumen-canvas-shell] .msg.user { margin-bottom: 0; }
 .app[data-lumen-canvas-shell] .msg.user .bubble { font-size: 15.5px; line-height: 1.6; }
 

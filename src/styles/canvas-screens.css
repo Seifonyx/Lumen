@@ -205,9 +205,11 @@ html[data-lumen-canvas] .cv-memory-edit textarea:focus { outline: 2px solid colo
 html[data-lumen-canvas] .cv-memory-edit span { display: flex; gap: 8px; }
 @media (hover: none) { html[data-lumen-canvas] .cv-memory-actions .btn { min-height: 44px; } }
 
-/* ---------- No symbol until the real logo lands (Phase 2): the wait signal is a plain breathing ink dot, not a moon,
-   and the start-up frame drops the brand dot and welcome mark placeholders. */
+/* ---------- No brand symbol until the real logo lands (Phase 2): the wait signal is a plain breathing ink dot, not a moon,
+   and the start-up frame drops the brand dot placeholder. */
 html[data-lumen-canvas] .moon-phase :is(.mp-shadow, .mp-glow) { display: none; }
 html[data-lumen-canvas] .moon-phase .mp-disc { fill: currentColor; transform-box: fill-box; transform-origin: center; transform: scale(.45); animation: pulse 1.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { html[data-lumen-canvas] .moon-phase .mp-disc { animation: none; } }
-html[data-lumen-canvas] .app-skeleton :is(.sk-brand .sk-dot, .sk-star) { display: none; }
+html[data-lumen-canvas] .app-skeleton .sk-brand .sk-dot { display: none; }
+/* The new-chat moon with its two stars, in its own lime as before (the owner's choice); everything else stays ink. */
+html[data-lumen-canvas] .welcome-moon { --signal: #c2ef3a; --signal-strong: #c2ef3a; }

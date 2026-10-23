@@ -82,33 +82,35 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
 
     // ---- Drawer
     const sidebar = page.locator('.sidebar');
+    // Drawer swipes start on plain page content: a swipe that starts on a button (say a home screen row) is a tap, by design.
+    const Y = await page.evaluate(() => [420, 300, 520, 250, 600].find((y) => { const el = document.elementFromPoint(60, y); return el?.closest('.main') && !el.closest('button, a, label, .composer'); }));
     const width = (await sidebar.boundingBox()).width;
-    await touch(page, path(60, 420, 100, 420, 3, 36));
+    await touch(page, path(60, Y, 100, Y, 3, 36));
     await page.locator('.sidebar.open').waitFor({ timeout: 2000 });
     await page.waitForTimeout(600);
     assert.ok(Math.abs(await translateX(sidebar)) < 1, 'drawer: a quick short swipe opens it fully');
-    await touch(page, path(width + 20, 420, width + 140, 420, 12, 360), { hold: true });
+    await touch(page, path(width + 20, Y, width + 140, Y, 12, 360), { hold: true });
     const past = await translateX(sidebar);
     assert.ok(past > 2 && past < 60, `drawer: pulling past open resists (${past.toFixed(0)}px for 120px)`);
-    await lift(page, width + 140, 420);
+    await lift(page, width + 140, Y);
     await page.waitForTimeout(600);
     assert.ok(Math.abs(await translateX(sidebar)) < 1, 'drawer: settles back to open');
-    assert.match(await page.evaluate(() => document.elementFromPoint(360, 420)?.className), /scrim/, 'drawer: the dimmed area beside it can be tapped');
-    await page.mouse.click(360, 420);
+    assert.match(await page.evaluate((y) => document.elementFromPoint(360, y)?.className, Y), /scrim/, 'drawer: the dimmed area beside it can be tapped');
+    await page.mouse.click(360, Y);
     await page.waitForTimeout(600);
     assert.equal(await page.locator('.sidebar.open').count(), 0, 'drawer: tapping beside it closes it');
-    await touch(page, path(60, 420, 140, 420, 12, 600));
+    await touch(page, path(60, Y, 140, Y, 12, 600));
     await page.waitForTimeout(600);
     assert.equal(await page.locator('.sidebar.open').count(), 0, 'drawer: a slow partial swipe leaves it closed');
     await page.click('.menu-btn');
     await page.waitForTimeout(90);
     const sliding = await translateX(sidebar);
-    await touch(page, [[200, 420, 0]], { hold: true });
+    await touch(page, [[200, Y, 0]], { hold: true });
     const frozen = await translateX(sidebar);
     await page.waitForTimeout(150);
     const still = await translateX(sidebar);
     assert.ok(sliding < -10 && sliding > -width + 10 && Math.abs(frozen - sliding) < 40 && Math.abs(still - frozen) < 2, `drawer: caught while opening from a tap (${sliding.toFixed(0)} → ${frozen.toFixed(0)} → ${still.toFixed(0)})`);
-    await lift(page, 200, 420);
+    await lift(page, 200, Y);
     await page.waitForTimeout(600);
     console.log('PASS drawer: quick swipe opens, slow partial does not, past-open resists, caught mid-slide');
 

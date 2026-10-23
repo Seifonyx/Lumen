@@ -290,6 +290,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
       <div className="messages" ref={scroller} role="region" tabIndex={0} aria-label="Chat messages">
         {empty ? CANVAS_SHELL ? (
           <div className="empty">
+            <span className="welcome-mark" aria-hidden="true"><WelcomeStars /></span>
             <CanvasHome temporary={isTemporaryChat(chat)} />
           </div>
         ) : (

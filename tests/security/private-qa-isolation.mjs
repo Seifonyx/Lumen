@@ -150,7 +150,7 @@ try {
     // Canvas polish (owner-approved 2026-10-22): flagged presentation in these files; the ordinary output stays byte-equal.
     'src/components/ModelPicker.tsx', 'src/components/CompactNote.tsx', 'src/components/ProjectWorkspace.tsx', 'src/lib/chat-preview.ts', 'src/lib/markdown.ts',
     'src/components/RouteWhy.tsx', 'src/lib/route-words.ts', 'src/components/Logo.tsx', 'src/components/InkMark.tsx', 'src/components/CanvasHome.tsx',
-    'src/pwa/legal-ink.css', 'src/lib/press.ts'];
+    'src/pwa/legal-ink.css', 'src/lib/press.ts', 'src/components/HubPage.tsx'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');

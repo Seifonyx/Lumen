@@ -7,7 +7,7 @@
 import { BookOpen, ChevronRight, LayoutGrid, MessageSquarePlus, MessageSquareText, PanelLeftClose, Plus, Search, Settings2, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 import { Suspense, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
-import { modKey } from '../lib/util';
+import { isMac, modKey } from '../lib/util';
 import { useFocusScope } from '../lib/focus-scope';
 import { closeRoutingCenter, openRoutingCenter, useRoutingCenter } from '../lib/routing-center';
 import { useStore } from '../store';
@@ -129,14 +129,15 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
             : <button type="button" className="cv-head-btn collapse-sidebar" aria-label="Collapse sidebar" title={`Collapse sidebar (${modKey}⇧S)`} onClick={onCollapse}><PanelLeftClose size={17} /></button>}
         </div>
         {/* Always in the drawer too: one tap to search, no extra step (phones don't focus it, so no keyboard). */}
-        {(
-          <label className="search cv-search">
-            <Search size={16} />
-            <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} dir="auto"
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Escape' && query) { e.stopPropagation(); setQuery(''); } }} />
-          </label>
-        )}
+        <label className="search cv-search">
+          <Search size={16} />
+          <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} dir="auto"
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Escape' && query) { e.stopPropagation(); setQuery(''); } }} />
+          {/* Desktop: the command palette, one shortcut away (the same key press the app already listens for). */}
+          {!phone && !query && <button type="button" className="cv-kbd" title="Search and jump to anything" aria-label={`Search and jump to anything (${modKey}K)`}
+            onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: isMac, ctrlKey: !isMac, bubbles: true }))}><kbd>{modKey}K</kbd></button>}
+        </label>
         {q.length > 1 && (
           <button type="button" className="cv-ask" onClick={() => setAsking(query)} title="Find what you talked about, even with different words, and get an answer from it">
             <Sparkles size={15} /><span>Ask your chats: “<span dir="auto">{query.trim().slice(0, 40)}</span>”</span>

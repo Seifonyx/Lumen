@@ -156,3 +156,28 @@ html[data-lumen-canvas] .switch:not(:checked)::after { background: color-mix(in 
 @media (prefers-reduced-motion: reduce) {
   html[data-lumen-canvas] .settings-title-section { transition: none; }
 }
+
+/* Hub pages leave by the same "← Chat" pill as the Routing Center. */
+html[data-lumen-canvas] .hub-close.cv-chat-pill { display: inline-flex; align-items: center; gap: 6px; flex: none; margin-inline-start: auto; min-height: 36px; padding: 0 12px 0 8px; border: 0; border-radius: 999px; background: var(--canvas-fill); color: var(--canvas-ink); font: 500 13.5px var(--canvas-body-font); cursor: pointer; }
+html[data-lumen-canvas] .hub-close.cv-chat-pill:hover { background: var(--canvas-fill-strong); }
+@media (max-width: 899px) { html[data-lumen-canvas] .hub-close.cv-chat-pill { min-height: 44px; margin-inline: auto 8px; font-size: 15px; } }
+
+/* Tools: equal cards in a section, titles on one line (a badge moves under it), and a mark beside a warning. */
+html[data-lumen-canvas] .tools-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); grid-auto-rows: 1fr; }
+html[data-lumen-canvas] .tool-text { min-width: 0; }
+html[data-lumen-canvas] .tool-text strong { flex-wrap: wrap; row-gap: 4px; }
+html[data-lumen-canvas] .tool-needs:not(.ok) { display: inline-flex; align-items: center; gap: 5px; }
+html[data-lumen-canvas] .tool-needs:not(.ok)::before { content: '!'; display: inline-grid; place-items: center; flex: none; width: 13px; height: 13px; border: 1.5px solid currentColor; border-radius: 50%; font: 700 9px/1 var(--canvas-body-font); }
+@media (max-width: 899px) {
+  /* Phone: compact rows. */
+  html[data-lumen-canvas] .tools-grid { grid-template-columns: 1fr; grid-auto-rows: auto; gap: 8px; }
+  html[data-lumen-canvas] .tool-card { gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; }
+  html[data-lumen-canvas] .tool-card .tool-icon { width: 34px; height: 34px; border-radius: 10px; }
+  html[data-lumen-canvas] .tool-card .tool-icon svg { width: 18px; height: 18px; }
+  html[data-lumen-canvas] .tool-text > span:not(.tool-needs) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+}
+@media (max-width: 359px) {
+  /* The narrowest phones: the pill keeps its arrow and gives the centred title room. */
+  html[data-lumen-canvas] .hub-close.cv-chat-pill { justify-content: center; width: 44px; padding: 0; }
+  html[data-lumen-canvas] .hub-close.cv-chat-pill > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}

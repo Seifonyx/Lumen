@@ -26,6 +26,7 @@ interface Options {
 }
 
 const PHONE = '(max-width: 899px)';
+const NARROW = '(max-width: 379px)';
 const HEAD_ID = 'canvas-writing-title';
 // Lucide's Maximize2 drawn inline: an imported icon module is kept by the ordinary build even when unused.
 const ExpandIcon = () => (
@@ -54,6 +55,8 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
   // Desktop: the sheet is anchored to the window, centred on the conversation column it rose from.
   const [column, setColumn] = useState<{ left: number; width: number } | null>(null);
   const [phone, setPhone] = useState(() => window.matchMedia(PHONE).matches);
+  // Phones narrower than 380px: the empty box says "Message", so the model's name fits beside it at rest.
+  const [narrow, setNarrow] = useState(() => window.matchMedia(NARROW).matches);
   const selection = useRef<{ start: number; end: number; direction: 'forward' | 'backward' | 'none'; scroll: number } | null>(null);
   const restore = useRef(false);
 
@@ -78,10 +81,11 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
   }, []);
 
   useEffect(() => {
-    const query = window.matchMedia(PHONE);
-    const sync = () => setPhone(query.matches);
+    const query = window.matchMedia(PHONE), small = window.matchMedia(NARROW);
+    const sync = () => { setPhone(query.matches); setNarrow(small.matches); };
     query.addEventListener('change', sync);
-    return () => query.removeEventListener('change', sync);
+    small.addEventListener('change', sync);
+    return () => { query.removeEventListener('change', sync); small.removeEventListener('change', sync); };
   }, []);
   useLayoutEffect(() => { restore.current = false; setExpanded(false); }, [scope]);
 
@@ -147,6 +151,7 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
   return {
     state,
     expanded,
+    placeholder: narrow ? 'Message' : 'Message Lumen',
     // Above the input: what the next message will use. The same choices stay removable with one tap.
     chips: (context.search || context.project) ? (
       <div className="repo-strip cv-context-chips">

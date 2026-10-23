@@ -206,26 +206,16 @@ html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn.voice-start 
   .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer > textarea { flex: 1 1 100%; }
   .composer-wrap[data-lumen-canvas-composer] .composer .composer-bar > .tool-btn:not(.shield-on) { width: 36px; height: 36px; }
 }
-/* The narrowest phones: while writing, too, the model shows its mark (announced by name; the writing sheet shows the
-   name), so every control keeps its place on the row, the usage meter included. */
-@media (max-width: 360px) {
-  .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .model-button { max-width: none; min-width: 44px; height: 40px; min-height: 40px; gap: 2px; padding: 0 6px 0 8px; }
-  .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .model-button .model-name { overflow: visible; flex: none; }
-  .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .model-name :is(.pmark, > .auto-icon) { display: inline-grid; }
-  .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .model-name::before { display: none; }
-  .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .model-button .model-name-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-}
-/* At rest the empty box keeps "Message Lumen" on one line: the model button shows its mark only (the name is still
-   announced), and the name appears with the second row as soon as you write, before anything is sent. */
+/* At rest the empty box keeps "Message Lumen" on one line. */
 @media (max-width: 899px) {
   .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer > textarea:placeholder-shown { white-space: nowrap; overflow: hidden; }
-  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .model-button { max-width: none; min-width: 44px; height: 40px; min-height: 40px; gap: 2px; padding: 0 6px 0 8px; }
-  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .model-button .model-name { overflow: visible; flex: none; }
-  .composer-wrap[data-lumen-canvas-composer] .composer .model-button :is(.pmark, .auto-icon) { flex: none; }
-  /* At rest the model is shown by its provider's mark (Auto: its sparkle) instead of the status dot. */
-  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .model-name :is(.pmark, > .auto-icon) { display: inline-grid; }
-  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .model-name::before { display: none; }
-  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .model-button .model-name-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+/* Phones narrower than 380px (SE, mini): the model keeps its name, at rest and while writing, in a compact button (no
+   status dot, tighter padding), and the empty box says "Message" (Composer gets it from useCanvasComposer). */
+@media (max-width: 379px) {
+  .composer-wrap[data-lumen-canvas-composer] .composer .model-button { gap: 2px; padding: 0 4px 0 8px; }
+  .composer-wrap[data-lumen-canvas-composer] .composer .model-name::before { display: none; }
+  .composer-wrap[data-lumen-canvas-composer] .composer .model-button > svg { width: 14px; height: 14px; }
 }
 /* The writing sheet's title keeps the width; its count sits beneath it. */
 .composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head .canvas-sheet-count { display: block; margin-top: 2px; }
@@ -234,10 +224,9 @@ html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn.voice-start 
   .composer-wrap[data-lumen-canvas-composer] .composer :is(.attachment > .icon-btn, .ctx-chip > .icon-btn, .canvas-expand) { position: relative; }
   .composer-wrap[data-lumen-canvas-composer] .composer :is(.attachment > .icon-btn, .ctx-chip > .icon-btn, .canvas-expand)::after { content: ''; position: absolute; inset: 50% auto auto 50%; width: 44px; height: 44px; translate: -50% -50%; }
 }
-/* Phones at rest: the usage meter appears only to take focus back from its sheet. It floats over the empty end of the
-   message box rather than taking a place in the row, so when it leaves (on the next press) nothing moves under the
+/* Phones at rest: the usage meter appears only to take focus back from its sheet. It sits just after +, before the
+   message box, so when it leaves (on the next press) only the stretching box moves: the model and Send stay under the
    finger and the press lands where it was aimed. */
 @media (max-width: 899px) {
-  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer { position: relative; }
-  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .usage-meter { position: absolute; inset-inline-end: 96px; top: 50%; translate: 0 -50%; z-index: 1; }
+  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .usage-meter { order: 1; }
 }

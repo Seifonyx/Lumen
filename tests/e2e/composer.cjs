@@ -38,6 +38,10 @@ async function open(browser, width, height, { glass = false, theme = 'light' } =
         const lh = await box.evaluate((el) => parseFloat(getComputedStyle(el).lineHeight));
         assert.ok((await rect(box)).height <= lh + 24, `${tag}: placeholder on one line`);
         assert.equal(await page.getByRole('button', { name: /Gemini Flash/ }).count() >= 1, true, `${tag}: model button named`);
+        // The model's name is readable at rest at every width (narrower than 380 px the box says "Message").
+        const name = await page.locator('.composer .model-name-text').evaluate((el) => ({ w: el.clientWidth, full: el.scrollWidth <= el.clientWidth + 1 }));
+        assert.ok(name.w > 40 && name.full, `${tag}: the model's name is readable at rest`);
+        assert.equal(await box.getAttribute('placeholder'), width < 380 ? 'Message' : 'Message Lumen');
         const restSend = await rect(page.locator('.composer :is(.send-btn, .voice-start)').first());
         assert.ok(restSend.right <= rest.right && restSend.top >= rest.top, `${tag}: voice/Send inside the capsule`);
         // Writing: the text, then one row of controls with Send on it.
@@ -48,6 +52,7 @@ async function open(browser, width, height, { glass = false, theme = 'light' } =
         assert.ok(Math.abs(send.top - add.top) < 6, `${tag}: Send on the same row as + (${send.top} vs ${add.top})`);
         const engaged = await rect(form);
         assert.ok(engaged.height <= 124, `${tag}: two rows while writing (${engaged.height}px)`);
+        assert.ok(await page.locator('.composer .model-name-text').evaluate((el) => el.clientWidth > 40 && el.scrollWidth <= el.clientWidth + 1), `${tag}: the model's name is readable while writing`);
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${tag}: no page overflow`);
         // Small controls answer a 44 pt touch: the edges of a 44×44 square around Expand reach it.
         const ex = await rect(page.locator('.canvas-expand'));

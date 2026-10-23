@@ -47,8 +47,10 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
           await page.click('[aria-label="Collapse sidebar"]');
           check(!(await page.locator('.sidebar').isVisible()), `${label}: sidebar collapses`);
           await page.reload(); await page.waitForSelector('.app:not(.app-skeleton) .topbar');
-          check(!(await page.locator('.sidebar').isVisible()) && await page.locator('[aria-label="Expand sidebar"]').isVisible(), `${label}: focused layout persists after reload`);
-          await page.click('[aria-label="Expand sidebar"]');
+          // Role queries skip hidden copies (Canvas: the collapsed rail owns Expand, the top bar's steps aside).
+          const expand = page.getByRole('button', { name: 'Expand sidebar', exact: true });
+          check(!(await page.locator('.sidebar').isVisible()) && await expand.waitFor().then(() => true, () => false), `${label}: focused layout persists after reload`);
+          await expand.click();
         } else {
           await page.evaluate(() => { Object.defineProperty(window.visualViewport, 'height', { configurable: true, value: 460 }); window.visualViewport.dispatchEvent(new Event('resize')); });
           await page.waitForFunction(() => document.documentElement.classList.contains('kb-open'));

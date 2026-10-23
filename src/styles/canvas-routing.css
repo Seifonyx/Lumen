@@ -12,7 +12,11 @@
 .app[data-lumen-canvas-shell] .rc-label { display: block; font: 500 10.5px/1.3 var(--canvas-data-font); letter-spacing: .12em; text-transform: uppercase; color: var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .rc-muted { margin: 0; color: var(--canvas-muted); font-size: 13px; line-height: 1.5; }
 
-/* Head: back to chat, title, Connect. */
+/* Bar: the drawer (phones) and Chat at the end, as on Library, Tools and Projects. Head: title, Connect. */
+.app[data-lumen-canvas-shell] .rc-topbar { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+.app[data-lumen-canvas-shell] .rc-menu { display: none; place-items: center; inline-size: 44px; block-size: 44px; margin-inline-start: -10px; padding: 0; border: 0; border-radius: 12px; background: none; color: var(--canvas-ink); cursor: pointer; }
+.app[data-lumen-canvas-shell] .rc-topbar .rc-close { margin-inline-start: auto; }
+.app[data-lumen-canvas-shell].swipe-revealing > .rc-page { position: fixed; inset: 0; z-index: 41; }
 .app[data-lumen-canvas-shell] .rc-head { display: flex; align-items: flex-start; gap: 16px; padding: 6px 0 18px; }
 .app[data-lumen-canvas-shell] .rc-title { flex: 1; min-width: 0; }
 .app[data-lumen-canvas-shell] .rc-title h1 { margin-top: 4px; font: 640 32px/1.1 var(--canvas-display-font); letter-spacing: -.03em; outline: none; }
@@ -129,8 +133,9 @@
   .app[data-lumen-canvas-shell] .rc-title { order: 2; flex-basis: 100%; }
   .app[data-lumen-canvas-shell] .rc-title h1 { font-size: 30px; }
   .app[data-lumen-canvas-shell] .rc-close, .app[data-lumen-canvas-shell] .rc-primary { min-height: 44px; }
-  .app[data-lumen-canvas-shell] .rc-primary { margin-inline-start: auto; }
-  .app[data-lumen-canvas-shell] .rc-wide { display: none; }
+  .app[data-lumen-canvas-shell] .rc-menu { display: inline-grid; }
+  /* As Library's New document: the page's one action spans the column under its title. */
+  .app[data-lumen-canvas-shell] .rc-primary { order: 3; flex-basis: 100%; justify-content: center; }
   /* Every section in view: the segmented control becomes a 3 × 2 grid of 44pt targets (no hidden sideways strip). */
   .app[data-lumen-canvas-shell] .rc-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
   .app[data-lumen-canvas-shell] .rc-tabs button { min-width: 0; min-height: 44px; padding: 0 6px; overflow: hidden; text-overflow: ellipsis; }

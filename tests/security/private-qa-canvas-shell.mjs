@@ -228,10 +228,10 @@ try {
       assert.equal(await general.getAttribute('aria-label'), 'New chat');
       assert.equal(await nav(page).locator(`#${await general.getAttribute('aria-describedby')}`).textContent(), 'Not in a project');
       // From inside a project chat with a draft: global New chat is general, and the project chat keeps its draft.
-      await nav(page).locator('.cv-project', { hasText: 'Studio launch' }).locator('.chat-row').first().locator('.chat-open').click();
+      const projectChat = 'A launch worth remembering';
+      await nav(page).locator('.cv-project', { hasText: 'Studio launch' }).locator('.chat-row', { hasText: projectChat }).locator('.chat-open').click();
       await settle(page, 400);
       await page.getByRole('textbox', { name: 'Message', exact: true }).fill('DRAFT_IN_PROJECT');
-      const projectChat = await page.evaluate(() => document.querySelector('.chat-row.active')?.textContent);
       await openNav(page, phone);
       await general.click();
       await settle(page, 500);
@@ -247,11 +247,11 @@ try {
         assert.equal(await chip(), 0, 'the shortcut makes a general chat');
       }
       await openNav(page, phone);
-      await nav(page).locator('.chat-row', { hasText: projectChat.trim() }).first().locator('.chat-open').click();
+      await nav(page).locator('.chat-row', { hasText: projectChat }).first().locator('.chat-open').click();
       await settle(page, 400);
       assert.equal(await page.getByRole('textbox', { name: 'Message', exact: true }).inputValue(), 'DRAFT_IN_PROJECT', 'the project chat keeps its draft');
       await openNav(page, phone);
-      assert.ok(await nav(page).locator('.cv-project', { hasText: 'Studio launch' }).locator('.chat-row', { hasText: projectChat.trim() }).count() > 0, 'and stays in its project');
+      assert.ok(await nav(page).locator('.cv-project', { hasText: 'Studio launch' }).locator('.chat-row', { hasText: projectChat }).count() > 0, 'and stays in its project');
       await closeNav(page, phone);
       await page.getByRole('textbox', { name: 'Message', exact: true }).fill('');
       pass('project overview and new chat in project');

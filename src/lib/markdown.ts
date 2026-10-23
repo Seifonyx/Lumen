@@ -77,7 +77,10 @@ marked.use({
         }
       }
       const run = runLang(language || '') ? `<button type="button" class="code-copy code-run" data-run-code="${escapeHtml(language || '')}">▶ Run</button>` : '';
-      return `<div class="code-block"><div class="code-head"><span>${escapeHtml(language || 'text')}</span><span class="code-actions">${run}<button type="button" class="code-copy" data-copy-code>Copy</button></span></div><pre><code class="hljs">${html}</code></pre></div>`;
+      // Canvas: long lines scroll inside the block, so (as with tables) its code takes keyboard focus to scroll it.
+      return CANVAS_SHELL
+        ? `<div class="code-block"><div class="code-head"><span>${escapeHtml(language || 'text')}</span><span class="code-actions">${run}<button type="button" class="code-copy" data-copy-code>Copy</button></span></div><pre tabindex="0" role="region" aria-label="Code${language ? `, ${escapeHtml(language)}` : ''}"><code class="hljs">${html}</code></pre></div>`
+        : `<div class="code-block"><div class="code-head"><span>${escapeHtml(language || 'text')}</span><span class="code-actions">${run}<button type="button" class="code-copy" data-copy-code>Copy</button></span></div><pre><code class="hljs">${html}</code></pre></div>`;
     },
     link({ href, title, tokens }: Tokens.Link) {
       const text = this.parser.parseInline(tokens);

@@ -13,7 +13,9 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // count and the drawer's focus return run before any interaction (≈0.5 KB gz); the arrow keys load lazily.
 // startupJs 8.5 → 9 (Phase 2 slice 3): Back for Settings, a project's overview and All chats, and the unsent-draft
 // marker in the tree (≈0.3 KB gz); both must work before any interaction, so neither can load later.
-const BUDGET = { startupJs: 9, startupCss: 14, routingCenter: 9, canvasCss: 16 };
+// startupCss 14 → 16 (Phase 3 slice 1): the reading styles (canvas-reading.css: headings, quotes, tables, code, sources,
+// the reply line, attachments; ≈1.6 KB gz) style the first conversation on screen, so they cannot load later.
+const BUDGET = { startupJs: 9, startupCss: 16, routingCenter: 9, canvasCss: 16 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {
@@ -30,7 +32,7 @@ const rows = [
   ['Routing Center chunk (lazy)', rc.reduce((n, f) => n + gz(canvas, join('assets', f)), 0), BUDGET.routingCenter],
 ];
 // Canvas CSS on its own: the source files, minified roughly by collapsing whitespace and comments.
-const css = ['canvas.css', 'canvas-composer.css', 'canvas-shell.css', 'canvas-routing.css', 'canvas-screens.css', 'brand-crease.css']
+const css = ['canvas.css', 'canvas-composer.css', 'canvas-shell.css', 'canvas-reading.css', 'canvas-routing.css', 'canvas-screens.css', 'brand-crease.css']
   .map((f) => readFileSync(join('src/styles', f), 'utf8')).join('\n').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ');
 rows.push(['Canvas CSS source (gz, approx.)', gzipSync(css).length / 1024, BUDGET.canvasCss]);
 if (!rc.length) rows.push(['Routing Center must stay a lazy chunk', 1, 0]);

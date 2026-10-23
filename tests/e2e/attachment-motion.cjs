@@ -26,6 +26,12 @@ const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/6
    await page.locator('.composer textarea').fill('KEEP_ATTACHMENT_DRAFT');
    const input=page.locator('.composer input[type=file][multiple]').last();
    const file=(name)=>({name,mimeType:'text/plain',buffer:Buffer.from('ATTACHMENT_PREVIEW_MARKER '+name)});
+   // Compare the same typography and committed draft layout, not a fallback-font frame with a loaded-font frame.
+   await page.evaluate(async()=>{
+    await new Promise(resolve=>requestAnimationFrame(resolve));
+    await document.fonts.ready;
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+   });
    const composerHeight = await page.locator('.composer').evaluate(el=>el.offsetHeight);
    await input.setInputFiles([file('first.txt'),file('second.txt'),file('third.txt')]);
    await page.waitForFunction(()=>document.querySelectorAll('.attachment:not(.exit-ghost):not(.loading)').length===3);

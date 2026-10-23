@@ -3,7 +3,7 @@
 // Presentation only: it reads Lumen's existing catalog, keys, settings and usage and reuses its owners — manual
 // selection through setChatModel, Layouts through LayoutEditor, usage through UsageTab, decisions through RouteWhy,
 // connections through Settings → Keys. Send-time routing, eligibility and recovery are unchanged.
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, ChevronRight, Plus, Search, Shield, SlidersHorizontal, X } from 'lucide-react';
 import { modelLabel, selectCurrentChat, selectCurrentModel, useStore } from '../store';
 import { AI_PROVIDERS, providerEnabled } from '../lib/ai/provider-config.js';
@@ -19,6 +19,12 @@ import RouteWhy from './RouteWhy';
 import { routeWords } from '../lib/route-words';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import FilterMenu from './FilterMenu';
+// Tier 5 panels (usage history, request log, routing file, connection check) load on first use, in their own chunk.
+const extras = () => import('./RoutingExtras');
+const CheckConnection = lazy(() => extras().then((m) => ({ default: m.CheckConnection })));
+const UsageHistory = lazy(() => extras().then((m) => ({ default: m.UsageHistory })));
+const RequestLog = lazy(() => extras().then((m) => ({ default: m.RequestLog })));
+const RoutingFile = lazy(() => extras().then((m) => ({ default: m.RoutingFile })));
 
 const SECTIONS: [RoutingSection, string][] = [['overview', 'Overview'], ['providers', 'Providers'], ['models', 'Models'], ['policies', 'Policies'], ['usage', 'Usage'], ['diagnostics', 'Diagnostics']];
 const providerId = (model: ModelInfo) => (model.provider === 'google' ? 'gemini' : model.provider);
@@ -133,6 +139,7 @@ function Providers({ preferred }: { preferred?: string }) {
             <div><dt>Discovery</dt><dd>{discovery(active.status?.state)}{active.status?.lastSuccess ? ` · ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(active.status.lastSuccess)}` : ''}</dd></div>
           </dl>
           <p className="rc-notice">{problem ? `${problem} ` : ''}Discovery does not verify successful replies.</p>
+          {active.enabled && <Suspense fallback={null}><CheckConnection key={active.id} provider={active.id} /></Suspense>}
           <div className="rc-allowance"><span>Request allowance</span><strong>{sharedLeft !== null ? `${sharedLeft} requests remaining · shared free-model pool` : knownLimits.length ? 'Per-model limits below' : 'Unknown'}</strong></div>
           <ProviderModels key={active.id} models={active.models} />
           <details className="rc-provenance"><summary>Usage &amp; provenance</summary>
@@ -305,10 +312,11 @@ export default function RoutingCenter() {
             </article>
           ))}
           {!editing && !layouts.length && <p className="rc-muted">No saved policies yet. Auto chooses for each task until you add one.</p>}
+          {!editing && <Suspense fallback={null}><RoutingFile /></Suspense>}
         </div>
       )}
 
-      {section === 'usage' && <div className="rc-body"><h2 className="rc-h2">Usage &amp; quotas</h2><p className="rc-muted">Local account counters and provider-reported limits where available. Unknown values remain unknown.</p><UsageTab /></div>}
+      {section === 'usage' && <div className="rc-body"><h2 className="rc-h2">Usage &amp; quotas</h2><p className="rc-muted">Local account counters and provider-reported limits where available. Unknown values remain unknown.</p><Suspense fallback={null}><UsageHistory /></Suspense><UsageTab /></div>}
 
       {section === 'diagnostics' && (
         <div className="rc-body">
@@ -316,6 +324,7 @@ export default function RoutingCenter() {
           <p className="rc-muted">Existing decision evidence only. No request logger or health probes are added.</p>
           <div className="rc-grid">
             <section className="rc-card"><h3>Latest model choice</h3>{last?.route ? <RouteWhy message={last} /> : <p className="rc-muted">No route explanation is recorded.</p>}</section>
+            <Suspense fallback={null}><RequestLog /></Suspense>
             <section className="rc-card"><h3><Shield size={16} /> Privacy boundary</h3><p className="rc-muted">Provider credentials stay in Lumen’s existing account scope. No prompt bodies or credentials are added to a diagnostic history.</p></section>
             <section className="rc-card"><h3>Developer endpoint</h3><p className="rc-muted">Not available in browser Lumen. A local or server gateway would need a separately approved trust and deployment architecture.</p></section>
           </div>

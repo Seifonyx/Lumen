@@ -192,3 +192,15 @@ html[data-lumen-canvas] .comparison-answer .markdown :is(th, td) { overflow-wrap
   html[data-lumen-canvas] .compare-model-row { flex-wrap: wrap; row-gap: 0; padding-block: 8px; }
   html[data-lumen-canvas] .compare-model-row > small:not(:empty) { flex-basis: 100%; margin-inline-start: 54px; }
 }
+html[data-lumen-canvas] .cv-memory .project-memories { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+html[data-lumen-canvas] .cv-memory .project-memories > li { display: grid; gap: 4px; padding: 10px 0; border-top: 1px solid var(--cv5-rim); }
+html[data-lumen-canvas] .cv-memory .project-memories > li:first-child { border-top: 0; }
+html[data-lumen-canvas] .cv-memory .project-memories p { margin: 0; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+html[data-lumen-canvas] .cv-memory-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+html[data-lumen-canvas] .cv-memory-actions > .muted { margin-inline-end: auto; }
+html[data-lumen-canvas] .cv-memory-actions .btn { min-height: 36px; }
+html[data-lumen-canvas] .cv-memory-edit { display: grid; gap: 8px; margin: 4px 0 8px; }
+html[data-lumen-canvas] .cv-memory-edit textarea { box-sizing: border-box; width: 100%; padding: 10px 12px; border: 0; border-radius: 12px; background: var(--cv5-fill); color: var(--text); font: inherit; font-size: 14px; resize: vertical; }
+html[data-lumen-canvas] .cv-memory-edit textarea:focus { outline: 2px solid color-mix(in srgb, var(--text) 35%, transparent); }
+html[data-lumen-canvas] .cv-memory-edit span { display: flex; gap: 8px; }
+@media (hover: none) { html[data-lumen-canvas] .cv-memory-actions .btn { min-height: 44px; } }

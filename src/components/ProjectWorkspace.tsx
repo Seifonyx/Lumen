@@ -7,6 +7,7 @@ import type { Attachment, Project } from '../types';
 import Modal from './Modal';
 import { CANVAS_SHELL } from '../lib/canvas-presentation';
 import { chatPreview } from '../lib/chat-preview';
+import ProjectMemory from './ProjectMemory';
 
 const MAX_FILES = 5;
 const FILE_TYPES = '.pdf,.docx,.xlsx,.xlsm,.pptx,.txt,.md,.csv,.tsv,.json,.html,.xml,.js,.ts,.py,.css,.sql,.log,.yaml,.yml,.srt,.tex';
@@ -201,6 +202,7 @@ export default function ProjectWorkspace({ project, onOpenSettings }: { project:
               {instructions ? <p className="project-instructions" dir="auto">{instructions}</p> : <p className="project-empty">Tell models how to work in this project: tone, language, what to focus on.</p>}
             </section>
 
+            {CANVAS_SHELL ? <ProjectMemory projectId={project.id} memories={memories} /> : (
             <section className="project-card">
               <div className="project-card-head">
                 <h3>Memory <span className="project-count">{memories.length}</span></h3>
@@ -210,6 +212,7 @@ export default function ProjectWorkspace({ project, onOpenSettings }: { project:
                 <ul className="project-memories">{memories.slice(0, 4).map((m) => <li key={m.id} dir="auto">{m.text}</li>)}{memories.length > 4 && <li className="muted">+{memories.length - 4} more</li>}</ul>
               ) : <p className="project-empty">Facts that only matter here are kept for this project’s chats.</p>}
             </section>
+            )}
 
             <section className="project-card">
               <div className="project-card-head">

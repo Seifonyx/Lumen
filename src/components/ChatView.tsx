@@ -17,6 +17,7 @@ import ProjectManager from './ProjectManager';
 import ProjectWorkspace from './ProjectWorkspace';
 import CatalogErrorNotice from './CatalogErrorNotice';
 import { CANVAS_SHELL } from '../lib/canvas-presentation';
+import { ContextRail, RailToggle } from './ContextRail';
 import CanvasHome from './CanvasHome';
 import InkMark from './InkMark';
 
@@ -250,7 +251,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
         <div className="spacer" />
         <div className="topbar-trailing">
         {Boolean(chat?.documents?.length) && <button className="icon-btn" aria-label="Open canvas" title="Open canvas" onClick={() => useStore.getState().openCanvas()}><FileText size={18} /></button>}
-        {CANVAS_SHELL ? <>{chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}<button type="button" className="icon-btn cv-compose" aria-label="New chat" title={`New chat (${modKey}⇧O)`} onClick={() => useStore.getState().newChat()}><MessageSquarePlus size={19} /></button></> : chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}
+        {CANVAS_SHELL ? <>{chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}{!empty && <RailToggle />}<button type="button" className="icon-btn cv-compose" aria-label="New chat" title={`New chat (${modKey}⇧O)`} onClick={() => useStore.getState().newChat()}><MessageSquarePlus size={19} /></button></> : chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}
         {chat?.repo && (
           <button
             className={`icon-btn code-toggle${workspaceOpen ? ' on' : ''}`}
@@ -302,7 +303,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
           chat && <MessageThread key={chat.id} chat={chat} summary={summary} busy={streaming||canvasEditing} compacting={compacting} scroller={scroller} stick={stick} navigationHost={navigationHost}/>
         )}
       </div>
-      <div className="message-navigation-host" ref={navigationHost} />
+      {CANVAS_SHELL ? <><div className="message-navigation-host" ref={navigationHost} />{!empty && <ContextRail chat={chat} />}</> : <div className="message-navigation-host" ref={navigationHost} />}
       </div>
 
       {(showDown || unseen) && (

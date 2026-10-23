@@ -75,7 +75,9 @@ test('CP03 shell seams fold to the ordinary code and its styles stay scoped', ()
   const view = readFileSync('src/components/ChatView.tsx', 'utf8');
   const t = /\{CANVAS_SHELL \? <>(.+?)<\/> : (.+?)\}\n/.exec(view);
   assert.ok(t, 'ChatView: one ternary');
-  assert.equal(t[1].replace(/<button type="button" className="icon-btn cv-compose"[^]*?<\/button>/, '').replace(/^\{|\}$/g, ''), t[2], 'its ordinary branch is unchanged');
+  assert.equal(t[1].replace(/<button type="button" className="icon-btn cv-compose"[^]*?<\/button>/, '').replace('{!empty && <RailToggle />}', '').replace(/^\{|\}$/g, ''), t[2], 'its ordinary branch is unchanged');
+  // The context rail (1280 px and wider) adds only its toggle above and its panel beside the navigator host.
+  assert.match(view, /\{CANVAS_SHELL \? <><div className="message-navigation-host" ref=\{navigationHost\} \/>\{!empty && <ContextRail chat=\{chat\} \/>\}<\/> : <div className="message-navigation-host" ref=\{navigationHost\} \/>\}/);
   const root = postcss.parse(readFileSync('src/styles/canvas-shell.css', 'utf8'));
   let rules = 0;
   root.walkAtRules((rule) => assert.ok(['media', 'keyframes'].includes(rule.name), `no @${rule.name}`));

@@ -157,8 +157,8 @@
 /* "Why this model" opens below the line when there's no room above it. */
 .app[data-lumen-canvas-shell] .route-why-wrap[data-below] .route-why-pop { top: calc(100% + 8px); bottom: auto; }
 /* Route line: the model name stays in mono, the reason reads as plain words. */
-.app[data-lumen-canvas-shell] .route-why-btn .route-model { font-family: var(--canvas-data-font); }
-.app[data-lumen-canvas-shell] .route-why-btn .route-tag { font-family: var(--canvas-body-font); letter-spacing: 0; }
+.app[data-lumen-canvas-shell] :is(.route-why-btn, .cv-rerouted) .route-model { font-family: var(--canvas-data-font); }
+.app[data-lumen-canvas-shell] :is(.route-why-btn, .cv-rerouted) .route-tag { font-family: var(--canvas-body-font); letter-spacing: 0; }
 /* Tables break only between words; a wide table scrolls inside its own frame instead of splitting words. */
 .app[data-lumen-canvas-shell] .markdown .table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
 .app[data-lumen-canvas-shell] .markdown table { width: max-content; min-width: 100%; }
@@ -301,4 +301,26 @@
 }
 @media (max-width: 899px) {
   .app[data-lumen-canvas-shell] .msg-actions .msg-action { height: 44px; min-width: 44px; }
+}
+/* Context rail: 1280 px and wider only, beside the reading column; the composer and the navigator make room. */
+.app[data-lumen-canvas-shell] .cv-rail-toggle, .app[data-lumen-canvas-shell] .cv-rail { display: none; }
+@media (min-width: 1280px) {
+  .app[data-lumen-canvas-shell] .cv-rail-toggle { display: inline-grid; }
+  .app[data-lumen-canvas-shell] .cv-rail-toggle[aria-pressed="true"] { background: var(--canvas-fill); color: var(--canvas-ink); }
+  .app[data-lumen-canvas-shell] .cv-rail { position: absolute; z-index: 5; inset-block: 0; inset-inline-end: 0; display: flex; flex-direction: column; gap: 22px; inline-size: 300px; box-sizing: border-box; padding: 64px 18px 32px; overflow-y: auto; border-inline-start: 1px solid var(--canvas-rim); background: var(--canvas-paper); overscroll-behavior: contain; }
+  .app[data-lumen-canvas-shell][data-context-rail] .conversation-area > .messages { margin-inline-end: 300px; }
+  .app[data-lumen-canvas-shell][data-context-rail] .message-navigation-host { inset-inline-end: 300px; }
+  .app[data-lumen-canvas-shell][data-context-rail] .main > .composer-wrap, .app[data-lumen-canvas-shell][data-context-rail] .main > .to-bottom { margin-inline-end: 300px; }
+  .app[data-lumen-canvas-shell] .cv-rail header { display: flex; align-items: center; justify-content: space-between; }
+  .app[data-lumen-canvas-shell] .cv-rail h2 { flex: 1; margin: 0; font-size: 15px; font-weight: 600; white-space: nowrap; }
+  .app[data-lumen-canvas-shell] .cv-rail h3 { margin: 0 0 6px; color: var(--canvas-muted); font: 500 11px var(--canvas-data-font); letter-spacing: .08em; text-transform: uppercase; }
+  .app[data-lumen-canvas-shell] .cv-rail :is(ol, ul) { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+  .app[data-lumen-canvas-shell] .cv-rail p { margin: 0; color: var(--canvas-muted); font-size: 13px; }
+  .app[data-lumen-canvas-shell] .cv-rail :is(button, a) { display: grid; gap: 1px; inline-size: 100%; min-block-size: 36px; padding: 6px 8px; border: 0; border-radius: 8px; background: none; color: var(--canvas-ink); font: inherit; font-size: 13px; line-height: 1.4; text-align: start; text-decoration: none; cursor: pointer; }
+  .app[data-lumen-canvas-shell] .cv-rail header button { display: inline-grid; inline-size: 32px; min-block-size: 32px; place-items: center; padding: 0; }
+  .app[data-lumen-canvas-shell] .cv-rail :is(button, a):hover { background: var(--canvas-fill); }
+  .app[data-lumen-canvas-shell] .cv-rail section:first-of-type button { grid-template-columns: 22px 1fr; display: grid; overflow: hidden; }
+  .app[data-lumen-canvas-shell] .cv-rail section:first-of-type button span { color: var(--canvas-muted); font: 12px var(--canvas-data-font); }
+  .app[data-lumen-canvas-shell] .cv-rail strong { overflow: hidden; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+  .app[data-lumen-canvas-shell] .cv-rail small { overflow: hidden; color: var(--canvas-muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 }

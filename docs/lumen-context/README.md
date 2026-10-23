@@ -22,7 +22,7 @@
 
 Be a proactive project partner. Use connected tools when they actually exist and are authorized; complete routine actions rather than asking the owner to handle them manually. Reuse previous milestones and avoid re-reviewing whole codebases or full CI just to acknowledge routine agent reports. Verify narrowly where failure, conflicting evidence, real-world exposure, costs, privacy/auth/account boundaries, material regression or a mandatory Gate/release decision justifies it. Coding agents still run necessary scoped tests and protect existing functionality.
 
-Within approved scope, handle small polish and sequence tasks efficiently without unnecessary pause; **new phases, formal Gate approvals, production integration, merging, deployment, paid services and public network exposure still require their respective explicit owner authority**. The strict $0 incremental spending requirement for private iPhone QA is permanent until the owner changes it.
+Within approved quality/design scope, prioritize the best outcome: **already implemented or previously approved UI may be materially redesigned, simplified, removed or replaced when an evidenced improvement warrants it**. Do not impose a 'cosmetic polish only' rule or treat sunk implementation work as untouchable. Protect functionality and proportionate verification, sequence improvements without unnecessary pauses, and keep the active checkpoint's scope in view. **New phases, formal Gate approvals, production integration, merging, deployment, paid services and public network exposure still require their respective explicit owner authority**. The strict $0 incremental spending requirement for private iPhone QA is permanent until the owner changes it.
 
 ## Coding-branch documentation maintenance
 

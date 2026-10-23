@@ -128,6 +128,29 @@
 .app[data-lumen-canvas-shell] .markdown h3 { font-size: 17px; font-weight: 640; margin: 28px 0 6px; letter-spacing: -.01em; }
 /* "Scroll to latest" sits beside the message navigator, never over its last tick. */
 .app[data-lumen-canvas-shell] .conversation-area:has(.message-navigation) ~ .to-bottom { inset-inline-end: calc(max(4px, env(safe-area-inset-right)) + 52px); }
+/* Home: a time-aware line, where a new chat starts, and Continue (the last few chats). */
+.app[data-lumen-canvas-shell] .cv-home { display: flex; flex-direction: column; align-items: center; width: min(560px, 100%); margin-inline: auto; }
+.app[data-lumen-canvas-shell] .cv-home-where { margin: 0 0 4px; color: var(--canvas-secondary); font-size: 14.5px; text-align: center; text-wrap: balance; }
+.app[data-lumen-canvas-shell] .cv-home-where strong { color: var(--canvas-ink); font-weight: 600; }
+.app[data-lumen-canvas-shell] .cv-home-where button { margin-inline-start: 6px; padding: 0; border: 0; background: none; color: var(--canvas-muted); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.app[data-lumen-canvas-shell] .cv-home-continue { align-self: stretch; margin-top: 18px; }
+.app[data-lumen-canvas-shell] .cv-home-continue h2 { margin: 0 0 6px; font: 500 10.5px/1.3 var(--canvas-data-font); letter-spacing: .12em; text-transform: uppercase; color: var(--canvas-muted); text-align: start; }
+.app[data-lumen-canvas-shell] .cv-home-continue ul { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--canvas-rim); }
+.app[data-lumen-canvas-shell] .cv-home-continue button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 8px 4px; border: 0; border-bottom: 1px solid var(--canvas-rim); background: none; color: var(--canvas-ink); font: 500 14.5px var(--canvas-body-font); text-align: start; cursor: pointer; }
+.app[data-lumen-canvas-shell] .cv-home-continue button:hover { background: color-mix(in srgb, var(--text) 4%, transparent); }
+.app[data-lumen-canvas-shell] .cv-home-continue button > svg { flex: none; color: var(--canvas-muted); }
+.app[data-lumen-canvas-shell] .cv-home-icon { flex: none; display: inline-grid; place-items: center; width: 20px; height: 20px; color: var(--canvas-muted); }
+.app[data-lumen-canvas-shell] .cv-home-continue button > .cv-home-icon > svg { color: inherit; }
+.app[data-lumen-canvas-shell] .cv-home-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app[data-lumen-canvas-shell] .cv-home-when { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--canvas-muted); font-size: 12.5px; }
+@media (max-width: 899px) {
+  .app[data-lumen-canvas-shell] .cv-home-continue li:nth-child(n + 3) { display: none; }
+  .app[data-lumen-canvas-shell] .cv-home-when { display: none; }
+}
+@media (max-height: 640px) { .app[data-lumen-canvas-shell] .cv-home-continue { display: none; } }
+/* Route line: the model name stays in mono, the reason reads as plain words. */
+.app[data-lumen-canvas-shell] .route-why-btn .route-model { font-family: var(--canvas-data-font); }
+.app[data-lumen-canvas-shell] .route-why-btn .route-tag { font-family: var(--canvas-body-font); letter-spacing: 0; }
 /* Tables break only between words; a wide table scrolls inside its own frame instead of splitting words. */
 .app[data-lumen-canvas-shell] .markdown .table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
 .app[data-lumen-canvas-shell] .markdown table { width: max-content; min-width: 100%; }
@@ -156,6 +179,12 @@
 
 /* ================= iPhone: production glass drawer, 44pt+ rows, bottom actions in thumb reach */
 @media (max-width: 899px) {
+  /* In-answer headings at a phone scale: about 24 / 20 / 17 px. */
+  .app[data-lumen-canvas-shell] .markdown h1 { font: 640 24px/1.2 var(--canvas-display-font); letter-spacing: -.022em; margin: 6px 0 12px; }
+  .app[data-lumen-canvas-shell] .markdown h2 { font-size: 20px; line-height: 1.25; letter-spacing: -.018em; margin: 22px 0 8px; }
+  .app[data-lumen-canvas-shell] .markdown h2:first-child { margin-top: 4px; }
+  .app[data-lumen-canvas-shell] .markdown h3 { font-size: 17px; margin: 20px 0 6px; }
+  .app[data-lumen-canvas-shell] .markdown :is(h4, h5, h6) { font-size: 15.5px; font-weight: 640; margin: 16px 0 4px; }
   .app[data-lumen-canvas-shell] { --cv-row: 44px; --cv-gap: 0px; --cv-fs: 15.5px; }
   .app[data-lumen-canvas-shell] .cv-nav { width: min(84vw, 340px); padding: calc(env(safe-area-inset-top) + 12px) 14px max(12px, env(safe-area-inset-bottom)); }
   .app[data-lumen-canvas-shell] .cv-head { min-height: 44px; padding: 4px 0 18px 10px; gap: 10px; }

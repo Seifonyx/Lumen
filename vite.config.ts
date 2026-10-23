@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { readdirSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join, relative, resolve } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -46,8 +46,32 @@ function canvasPresentation(): Plugin | false {
   };
 }
 
+/** Canvas build only: replaces public files with their Canvas versions (public-canvas/: the ink mark's icons and
+ *  splash screens) and restyles the legal pages in ink and Geist. Runs after serviceWorker(), so the precache list
+ *  keeps one entry per public file. The ordinary build never loads this plugin. */
+function canvasPublic(): Plugin | false {
+  if (process.env.LUMEN_CANVAS !== '1') return false;
+  const walk = (dir: string): string[] => (existsSync(dir) ? readdirSync(dir, { withFileTypes: true }) : [])
+    .flatMap((e) => (e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]));
+  return {
+    name: 'lumen-canvas-public',
+    apply: 'build',
+    generateBundle(_options, bundle) {
+      for (const file of walk('public-canvas')) {
+        this.emitFile({ type: 'asset', fileName: relative('public-canvas', file).replaceAll('\\', '/'), source: readFileSync(file) });
+      }
+      const font = Object.keys(bundle).find((f) => /\/geist-latin-wght-normal-[^/]+\.woff2$/.test(f));
+      const style = readFileSync('src/pwa/legal-canvas.css', 'utf8').replace('__GEIST__', font ? `/${font}` : '');
+      for (const page of ['privacy.html', 'terms.html']) {
+        const html = readFileSync(join('public', page), 'utf8').replace(/<style>[\s\S]*?<\/style>/, `<style>${style}</style>`);
+        this.emitFile({ type: 'asset', fileName: page, source: html });
+      }
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), canvasPresentation(), serviceWorker()],
+  plugins: [react(), canvasPresentation(), serviceWorker(), canvasPublic()],
   server: {
     host: '0.0.0.0',
     port: 3000,

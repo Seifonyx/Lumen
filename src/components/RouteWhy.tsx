@@ -2,6 +2,8 @@ import { Exit } from '../lib/motion';
 import { useEffect, useRef, useState } from 'react';
 import { modelLabel, useStore } from '../store';
 import type { Message } from '../types';
+import { CANVAS_SHELL } from '../lib/canvas-presentation';
+import { routeWords } from '../lib/route-words';
 
 /** The model line under an Auto reply: tap to see why Auto chose it, what was next, and to keep it out of Auto. */
 export default function RouteWhy({ message }: { message: Message }) {
@@ -21,9 +23,15 @@ export default function RouteWhy({ message }: { message: Message }) {
   const name = modelLabel(catalog, message.model);
   return (
     <span className="route-why-wrap" ref={root}>
+      {CANVAS_SHELL ? (
+      <button type="button" className="model-tag route-why-btn" aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(!open)} title="Why Auto chose this model">
+        <span className="route-model">{name}</span><span className="route-tag"> · {routeWords(message.route)}</span>
+      </button>
+      ) : (
       <button type="button" className="model-tag route-why-btn" aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(!open)} title="Why Auto chose this model">
         {name}<span className="route-tag"> · Auto: {message.route}</span>
       </button>
+      )}
       {open && (<Exit kind="drop">
         <span className="route-why-pop" role="dialog" aria-label="Why this model">
           <span className="rw-title">Why {name}</span>

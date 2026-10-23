@@ -17,6 +17,8 @@ import ProjectManager from './ProjectManager';
 import ProjectWorkspace from './ProjectWorkspace';
 import CatalogErrorNotice from './CatalogErrorNotice';
 import { CANVAS_SHELL } from '../lib/canvas-presentation';
+import CanvasHome from './CanvasHome';
+import InkMark from './InkMark';
 
 /** How far from the latest message you were in each chat (this session), to come back to the same spot. */
 type Anchor = { id: string; offset: number };
@@ -286,7 +288,12 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
 
       <div className="conversation-area">
       <div className="messages" ref={scroller} role="region" tabIndex={0} aria-label="Chat messages">
-        {empty ? (
+        {empty ? CANVAS_SHELL ? (
+          <div className="empty">
+            <span className="welcome-mark" aria-hidden="true"><InkMark size={52} tile={false} /></span>
+            <CanvasHome temporary={isTemporaryChat(chat)} />
+          </div>
+        ) : (
           <div className="empty">
             <span className="welcome-mark" aria-hidden="true"><WelcomeStars /></span>
             <h1>{isTemporaryChat(chat)?'Incognito chat':user?.name&&welcomeSequence%(WELCOME_GREETINGS.length+1)===0?greeting:WELCOME_GREETINGS[(welcomeSequence+(user?.name?WELCOME_GREETINGS.length-1:0)) % WELCOME_GREETINGS.length]}</h1>

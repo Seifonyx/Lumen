@@ -35,6 +35,16 @@ html[data-lumen-canvas] :is(.hub-search, .search.project-search) { height: 40px;
 html[data-lumen-canvas] :is(.hub-search, .search.project-search):focus-within { box-shadow: 0 0 0 2px color-mix(in srgb, var(--text) 35%, transparent); }
 html[data-lumen-canvas] .hub-empty h2, html[data-lumen-canvas] .hub-empty h3 { font-family: var(--cv5-display); letter-spacing: -.015em; }
 html[data-lumen-canvas] .hub-empty-icon { background: var(--cv5-fill); color: var(--text); }
+/* Purposeful empty states: a faint preview of what the page will hold sits above the one starting action. */
+html[data-lumen-canvas] .hub-empty { position: relative; padding-top: 40px; }
+html[data-lumen-canvas] .hub-empty::before {
+  content: ''; display: block; width: 116px; height: 84px; margin: 0 auto 26px; border-radius: 14px;
+  border: 1px solid var(--cv5-rim); background: var(--cv5-card);
+  box-shadow: -128px 0 0 -1px var(--cv5-fill), 128px 0 0 -1px var(--cv5-fill);
+  -webkit-mask-image: linear-gradient(#000 30%, transparent); mask-image: linear-gradient(#000 30%, transparent);
+}
+html[data-lumen-canvas] .hub-empty .hub-empty-icon { margin-top: -74px; position: relative; box-shadow: 0 0 0 6px var(--bg); }
+@media (max-width: 360px) { html[data-lumen-canvas] .hub-empty::before { box-shadow: -122px 0 0 -1px var(--cv5-fill), 122px 0 0 -1px var(--cv5-fill); } }
 
 /* Actions: one solid ink pill per screen; others quiet. */
 html[data-lumen-canvas] .btn.primary { border: 0; border-radius: 999px; background: var(--text); color: var(--bg); box-shadow: none; }
@@ -97,6 +107,12 @@ html[data-lumen-canvas][data-lumen-canvas-foundation] .project-hero { background
 html[data-lumen-canvas] :is(.color-indigo, .color-emerald, .color-green, .color-amber, .color-rose, .color-cyan, .color-purple):not(.project-color-dot) { --pc: var(--text); }
 html[data-lumen-canvas][data-lumen-canvas-foundation] .project-page .project-tile, html[data-lumen-canvas][data-lumen-canvas-foundation] .project-tile { background: var(--text) !important; color: var(--bg) !important; box-shadow: none; }
 html[data-lumen-canvas] .pf-field:has(> .project-color-choices) { display: none; }
+/* One project visual language: the ink monogram and a header rule, no grey gradient covers. */
+html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-band { height: auto; padding: 18px 18px 0; background: none; }
+html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-card .proj-mono { position: static; width: 40px; height: 40px; border-radius: 12px; font-size: 17px; box-shadow: none; }
+html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-card .proj-body { padding-top: 12px; }
+html[data-lumen-canvas][data-lumen-canvas-foundation] .project-page > .project-hero { display: none; }
+html[data-lumen-canvas][data-lumen-canvas-foundation] .project-head { padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid var(--cv5-rim); }
 
 /* ---------- Assistants: ink avatars instead of per-name hues; rimmed cards, display names. */
 html[data-lumen-canvas][data-lumen-canvas-foundation] .lib-card { --av-bg: var(--cv5-fill-strong); --av-fg: var(--text); border-color: var(--cv5-rim); border-radius: 18px; background: var(--cv5-card); }

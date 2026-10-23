@@ -64,7 +64,7 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   await page.click('.send-btn');
   await page.waitForSelector('.msg.assistant .model-tag', { timeout: 15000 });
   const tag1 = await page.textContent('.msg.assistant .model-tag');
-  check(/Gemini Flash Latest · Auto: reads images/.test(tag1), `Auto picked a vision model and said why (${tag1.trim()})`);
+  check(/Gemini Flash Latest · (Auto: reads images|Picked by Auto for an image)/.test(tag1), `Auto picked a vision model and said why (${tag1.trim()})`);
   await page.screenshot({ path: path.join(__dirname, 'out', 'auto-reply.png') });
 
   // Flash now hangs: the app must give up on it and answer with another model.

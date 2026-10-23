@@ -41,6 +41,7 @@ const mk = (id, title, at) => ({ id, title, createdAt: at, updatedAt: at, model:
     await page.getByRole('tab', { name: /Archived · 1/ }).click();
     await page.locator('.all-chats-title', { hasText: 'Old project notes' }).waitFor();
     assert.equal(await page.locator('.all-chats-list li').count(), 1);
+    if (await page.locator('.all-chats-select').count()) await page.locator('.all-chats-select').click(); // Canvas: Select first
     await page.getByLabel('Select Old project notes').check();
     await page.locator('.all-chats-actions').getByRole('button', { name: 'Unarchive' }).click();
     await page.getByRole('tab', { name: 'Chats' }).click();

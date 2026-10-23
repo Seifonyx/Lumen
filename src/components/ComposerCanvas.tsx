@@ -8,6 +8,7 @@ import { useFocusScope } from '../lib/focus-scope';
 import { useSheetDrag } from '../lib/sheet-drag';
 import { estimateTokens } from '../lib/routing';
 import { formatTokens } from '../lib/usage';
+import { installMessageActionTaps } from '../lib/message-taps';
 
 export type ComposerPresentation = 'resting' | 'engaged' | 'expanded';
 
@@ -44,6 +45,9 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
   const [phone, setPhone] = useState(() => window.matchMedia(PHONE).matches);
   const selection = useRef<{ start: number; end: number; direction: 'forward' | 'backward' | 'none'; scroll: number } | null>(null);
   const restore = useRef(false);
+
+  // (Lives with the composer because Canvas always mounts it beside the conversation.)
+  useEffect(() => installMessageActionTaps(), []);
 
   useEffect(() => {
     const query = window.matchMedia(PHONE);

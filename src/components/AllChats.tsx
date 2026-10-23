@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { CANVAS_SHELL } from '../lib/canvas-presentation';
 import { installSwipeRows } from '../lib/swipe-row';
 import { exitGhost, useFlip } from '../lib/motion';
 import { Archive, ArchiveRestore, Download, FolderKanban, Pin, PinOff, Search, Trash2 } from 'lucide-react';
@@ -22,10 +23,10 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
   const [confirming, setConfirming] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   // iPhone glass look: like Mail or Notes, rows are plain until you tap Select; then each gets a round check and
-  // the actions appear in a bar at the bottom.
-  const [glassPhone] = useState(() => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches);
+  // the actions appear in a bar at the bottom. Canvas works this way at every size.
+  const [selectFirst] = useState(() => CANVAS_SHELL || (document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches));
   const [selectMode, setSelectMode] = useState(false);
-  const picking = !glassPhone || selectMode;
+  const picking = !selectFirst || selectMode;
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -94,7 +95,7 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal title="All chats" onClose={onClose}
-      actions={glassPhone && list.length > 0 && <button type="button" className="btn ghost small all-chats-select" onClick={() => { setSelectMode(!selectMode); setSelected(new Set()); setMoving(false); setConfirming(false); }}>{selectMode ? 'Done' : 'Select'}</button>}>
+      actions={selectFirst && list.length > 0 && <button type="button" className="btn ghost small all-chats-select" onClick={() => { setSelectMode(!selectMode); setSelected(new Set()); setMoving(false); setConfirming(false); }}>{selectMode ? 'Done' : 'Select'}</button>}>
       <div className={`all-chats${picking ? '' : ' browsing'}`}>
         <div className="list-toolbar">
           <label className="search"><Search size={16} /><input type="search" aria-label="Search all chats" placeholder="Search" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" /></label>
@@ -108,7 +109,7 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
         {picking && <div className="all-chats-head">
           <label className="all-chats-check">
             <input type="checkbox" checked={allShown} disabled={!list.length} onChange={() => setSelected(allShown ? new Set() : new Set(list.map((c) => c.id)))} aria-label="Select all chats" />
-            <span>{n ? `${n} selected` : glassPhone ? 'Select all' : `${plural(list.length)}`}</span>
+            <span>{n ? `${n} selected` : selectFirst ? 'Select all' : `${plural(list.length)}`}</span>
           </label>
         </div>}
         {list.length ? (
@@ -121,7 +122,7 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
                 </div>
                 <div className="swipe-face">
                   {picking && <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggle(c.id)} aria-label={`Select ${c.title}`} />}
-                  <button type="button" className="all-chats-open" onClick={() => { if (glassPhone && selectMode) { toggle(c.id); return; } selectChat(c.id); setUi({ sidebarOpen: false }); onClose(); }} dir="auto">
+                  <button type="button" className="all-chats-open" onClick={() => { if (selectFirst && selectMode) { toggle(c.id); return; } selectChat(c.id); setUi({ sidebarOpen: false }); onClose(); }} dir="auto">
                     <span className="all-chats-title">{c.title}</span>
                     <small>{[c.pinned ? 'Pinned' : '', projectName(c.projectId) || '', new Date(c.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(c.updatedAt).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' })].filter(Boolean).join(' · ')}</small>
                   </button>

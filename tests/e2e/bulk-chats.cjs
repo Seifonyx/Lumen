@@ -35,6 +35,8 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
       await page.click('.view-all-chats, .cv-all');
       const dialog = page.getByRole('dialog', { name: 'All chats' });
       await dialog.waitFor();
+      // (Canvas, and the iPhone glass look: rows are plain until you tap Select.)
+      if (await dialog.locator('.all-chats-select').count()) await dialog.locator('.all-chats-select').click();
       await dialog.getByLabel('Select all chats').check();
       assert.match(await dialog.locator('.all-chats-head').textContent(), /3 selected/);
       const [download] = await Promise.all([page.waitForEvent('download'), dialog.getByRole('button', { name: 'Export' }).click()]);

@@ -293,3 +293,12 @@
     animation: canvas-sweep-once .45s cubic-bezier(.4, 0, .2, 1) both;
   }
 }
+
+/* Phones: your message's actions fold away until you tap it (or focus reaches them); every action is a 44 pt target. */
+@media (max-width: 899px) and (hover: none) {
+  .app[data-lumen-canvas-shell] .msg.user > .user-actions { max-height: 0; overflow: hidden; opacity: 0; pointer-events: none; transition: max-height .2s var(--canvas-motion-easing), opacity .15s; }
+  .app[data-lumen-canvas-shell] .msg.user:is([data-actions], :focus-within) > .user-actions { max-height: 48px; opacity: 1; pointer-events: auto; }
+}
+@media (max-width: 899px) {
+  .app[data-lumen-canvas-shell] .msg-actions .msg-action { height: 44px; min-width: 44px; }
+}

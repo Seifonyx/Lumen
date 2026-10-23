@@ -2,7 +2,7 @@ name: Tests
 
 # The repository is public, so GitHub's standard runners cost nothing. Runs are split for speed: the long in-app test runs
 # are spread over 4 machines each (E2E_SHARD, balanced by tests/e2e/timings.json), and Canvas contracts run Chromium and
-# WebKit side by side. Gate jobs keep the original check names. Documentation-only changes skip the run, and a newer
+# WebKit side by side. Browser jobs run in Playwright's image, so no machine installs browsers or system libraries. Gate jobs keep the original check names. Documentation-only changes skip the run, and a newer
 # push cancels the older run.
 on:
   push:
@@ -42,6 +42,11 @@ jobs:
   in-app-shard:
     name: In-app tests (Chromium + Firebase emulators) ${{ matrix.shard }}/4
     runs-on: ubuntu-24.04
+    # Chromium and its system libraries come preinstalled in Playwright's image (same version as package.json): no apt
+    # install, which a slow package mirror once stretched to 11 minutes on some machines.
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
     timeout-minutes: 25
     strategy:
       fail-fast: false
@@ -64,15 +69,7 @@ jobs:
         with:
           path: ~/.cache/firebase/emulators
           key: firebase-emulators-15.30.2
-      - uses: actions/cache@v5
-        id: browsers
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npm ci
-      - name: Browser
-        run: |
-          if [ "${{ steps.browsers.outputs.cache-hit }}" = "true" ]; then npx playwright install-deps chromium; else npx playwright install --with-deps chromium; fi
       - run: npm run build
       - run: npm run test:e2e:ci
       - name: Keep screenshots
@@ -89,6 +86,11 @@ jobs:
     # tests/e2e/canvas-core.txt. The rest still look for the ordinary sidebar; the ordinary build keeps the full run above.
     name: In-app tests on the Canvas build (Chromium + Firebase emulators) ${{ matrix.shard }}/4
     runs-on: ubuntu-24.04
+    # Chromium and its system libraries come preinstalled in Playwright's image (same version as package.json): no apt
+    # install, which a slow package mirror once stretched to 11 minutes on some machines.
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
     timeout-minutes: 25
     strategy:
       fail-fast: false
@@ -110,15 +112,7 @@ jobs:
         with:
           path: ~/.cache/firebase/emulators
           key: firebase-emulators-15.30.2
-      - uses: actions/cache@v5
-        id: browsers
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npm ci
-      - name: Browser
-        run: |
-          if [ "${{ steps.browsers.outputs.cache-hit }}" = "true" ]; then npx playwright install-deps chromium; else npx playwright install --with-deps chromium; fi
       - name: Build (Canvas presentation)
         run: npm run build -- --outDir dist-canvas
         env:

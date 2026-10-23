@@ -159,7 +159,8 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
               </button>
             ) : (
               <button key={f.id} className={`file-chip${f.auto ? ' auto' : ''}`} title={f.auto ? `${f.name} — attached automatically: your message is about it` : f.name} onClick={e => f.text && setUi({ preview: { name: `${f.name}.txt`, content: f.text, from: e.currentTarget } })}>
-                <FileDown size={15} /> <span>{f.name}</span>
+                {/* Canvas: what the file is, at a glance (type and size). A ternary, so the ordinary build is unchanged. */}
+                <FileDown size={15} /> {CANVAS_SHELL ? <><span>{f.name}</span><small className="cv-file-meta">{[/\.([a-z0-9]{1,5})$/i.exec(f.name)?.[1].toUpperCase(), f.size ? (f.size < 1048576 ? `${Math.max(1, Math.round(f.size / 1024))} KB` : `${(f.size / 1048576).toFixed(1)} MB`) : ''].filter(Boolean).join(' · ')}</small></> : <span>{f.name}</span>}
                 {f.auto && <span className="chip-note">auto</span>}
               </button>
             ),
@@ -363,7 +364,11 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
             )}
           </span>
           )}
-          {message.text && (
+          {/* Canvas: a reply you stopped says so, instead of looking finished (a ternary keeps the ordinary build as is). */}
+          {CANVAS_SHELL ? <>
+            {message.status === 'stopped' && <span className="cv-stopped">Stopped</span>}
+            {message.text && <button className="msg-action" aria-label="Copy" title="Copy" onClick={async () => { if (await copyText(message.text)) { setCopied(true); setTimeout(() => setCopied(false), 1500); } }}>{copied ? <Check size={15} /> : <Copy size={15} />}</button>}
+          </> : message.text && (
             <>
               <button className="msg-action" aria-label="Copy" title="Copy" onClick={async () => { if (await copyText(message.text)) { setCopied(true); setTimeout(() => setCopied(false), 1500); } }}>
                 {copied ? <Check size={15} /> : <Copy size={15} />}

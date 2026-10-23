@@ -8,12 +8,41 @@
   - The Canvas contracts run in 3 balanced groups per engine, with the isolation audit in the shell/browser group.
   - Gates keep the original check names; the new Safari gate is "Safari engine (WebKit)".
   - 19 parallel jobs, within the 20-job limit for public repos.
-  - Expected: about 5 minutes instead of 8.
+  - Measured on PR #46: 6 min 22 s instead of 9 min 30 s. The slowest jobs are now two ordinary in-app shards (about 6.2 min against 4.3–4.7 for the others); rebalancing them by recorded time is the next speed step.
 - **Local verification policy for agents:** before a push, run only what the change touches: `npm test`, the ordinary byte check, the budget, the affected contract(s) and the affected in-app suites. Leave the full 103-file Canvas list (about 20 minutes on this 4-CPU container) to CI, which runs the same list in parallel. Run the full list locally only to diagnose a CI failure.
+
+## Chat, Reading & Composer, Phase 3 slice 1 — 23 October 2026
+
+Draft [PR #47](https://github.com/Seifonyx/Lumen/pull/47) on `claude/lucid-dijkstra-541bbi` from `main` `de78183` (Phase 2 slice 3 is live as Deploy #65). Canvas only; the ordinary build is byte-identical to `main`. **Not approved for merge or deploy.** Phase 2 was merged and deployed on the owner's instruction; its physical-iPhone checklist (`docs/testing/phase2-navigation-iphone-checks.md`) is still not run.
+
+- **Assessment** (synthetic `tests/e2e/helpers/chat-fixture.cjs`, screenshots by `chat-shots.cjs` at 1280/1440/1920 and 320/390/430, Light and Dark, actual size):
+  - Answer headings were 27 px against 15.5 px body text, in fixed px.
+  - Quotes were filled boxes with a heavy bar.
+  - On phones, the line under a reply took two or three rows.
+  - On computers, a model that Auto picked was hidden until hover, leaving an empty line.
+  - A stopped reply looked finished.
+  - On phones, every question held a hidden 28 px gap: `.msg-actions { min-height: 28px }` beat the folded `max-height: 0`.
+  - Scrolling code blocks were not keyboard-reachable (axe `scrollable-region-focusable`).
+  - The composer on phones puts the voice button alone on a second row (left for slice 2).
+- **Implemented:**
+  - `src/styles/canvas-reading.css`, loaded by the on-module after `canvas-shell.css`: em-based headings, quiet quotes, inline code, code and tables (with scroll shadows), sources (a swipeable line on phones), a calm error note, the one-line reply meta, attachment cards and the turn rhythm.
+  - `MessageItem.tsx`: "Stopped" (`.cv-stopped`) and file type and size (`.cv-file-meta`), behind `CANVAS_SHELL` ternaries.
+  - `markdown.ts`: a Canvas code `pre` with `tabindex="0" role="region" aria-label="Code, <lang>"`.
+  - Note: a constant-false `&&` inside JSX children leaves `!1` in the ordinary bundle. Use ternaries whose ordinary branch is the original markup.
+- **Checks:**
+  - `npm test` passes; the ordinary build matches `main` under `diff -r`.
+  - CP01 isolation passes, with the reading CSS added to its forbidden paths and sentinels.
+  - QA01 passes, with `canvas-reading.css` added to its allow-list.
+  - Budget: startup CSS 15.3 KB gz; the limit was raised from 14 to 16 with the reason recorded.
+  - CP03 and CP05 pass in Chromium.
+  - The new `tests/e2e/reading.cjs` passes (1440/390/320, Light and Dark, axe on `.messages`). It is listed in `canvas-core.txt` and skipped on the ordinary build.
+  - Ten message-related in-app suites pass on both builds.
+- **Not done:** a physical iPhone. Composer (slice 2) and streaming/scroll (slice 3) are not started.
+- **Next:** owner visual review of slice 1. Then slice 2, the composer: phone layout (the voice button alone on a second row), multiline and expanded writing, attachments, paste, IME and dictation, Send/Stop.
 
 ## Desktop & iPhone navigation, Phase 2 slice 3 — 23 October 2026
 
-Draft PR on `claude/lucid-dijkstra-541bbi` from `main` `a01856c` (slice 2 is live as Deploy #64). Canvas only; the ordinary build is byte-identical to `main`. **Not approved for merge or deploy.**
+Merged as PR #46 (`de78183`) and live as Deploy #65 (owner-approved, 2026-10-23; 180/180 files byte-identical to the live site).
 
 - **Assessment** (`journeys.cjs` probe on the production build, desktop and 390 phone):
   - Back left Lumen from Settings, a project overview and All chats.

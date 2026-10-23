@@ -60,6 +60,23 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
   // (Lives with the composer because Canvas always mounts it beside the conversation.)
   useEffect(() => installMessageActionTaps(), []);
 
+  // Computers: the composer floats over the end of the conversation and grows with the draft, so the conversation
+  // keeps exactly its height free below the last message (--cv-composer-h); a reader at the bottom stays there.
+  useLayoutEffect(() => {
+    const wrap = form.current?.parentElement, main = wrap?.closest<HTMLElement>('.main');
+    if (!wrap || !main) return;
+    const sync = () => {
+      const list = main.querySelector<HTMLElement>('.messages');
+      const atEnd = Boolean(list && list.scrollHeight - list.scrollTop - list.clientHeight < 8);
+      main.style.setProperty('--cv-composer-h', `${Math.ceil(wrap.getBoundingClientRect().height)}px`);
+      if (list && atEnd) list.scrollTop = list.scrollHeight;
+    };
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(wrap);
+    return () => { observer.disconnect(); main.style.removeProperty('--cv-composer-h'); };
+  }, []);
+
   useEffect(() => {
     const query = window.matchMedia(PHONE);
     const sync = () => setPhone(query.matches);

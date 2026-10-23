@@ -5,6 +5,7 @@
 import '../styles/canvas.css';
 import '../styles/canvas-composer.css';
 import '../styles/canvas-shell.css';
+import '../styles/canvas-reading.css';
 import '../styles/canvas-routing.css';
 import '../styles/canvas-screens.css';
 import '../styles/brand-crease.css';

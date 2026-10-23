@@ -164,7 +164,9 @@ try {
     // Owner decision: the global New chat is always general (Canvas only; shared callers through the switch).
     'src/lib/new-chat.ts', 'src/components/CommandPalette.tsx',
     // Phase 2 slice 3 (in review): Back for layers held in a component's state, such as All chats.
-    'src/lib/back-stack.ts'];
+    'src/lib/back-stack.ts',
+    // Phase 3 slice 1 (in review): Canvas reading styles; message markup in MessageItem/markdown stays behind the switch.
+    'src/styles/canvas-reading.css'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');

@@ -103,3 +103,4 @@ voice-mode
 welcome
 workspace-design
 writing-tools
+reading

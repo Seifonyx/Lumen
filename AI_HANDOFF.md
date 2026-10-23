@@ -12,7 +12,11 @@ Draft PR on `claude/lucid-dijkstra-541bbi`, from `main` `f16c6d1` (slice 1 is li
 - **Drawer:**
   - Closing returns focus to the opener: the chat, hub or Routing Center ☰.
   - The open chat is revealed on open.
-  - At most 700px tall: places become a row of tiles.
+  - **Owner correction (same day):** the tile row was rejected. Places are now quiet 44pt icon-and-label rows at every phone size.
+  - The two New chat actions say where they create: "New chat in <project>" sits first under the folder's overview, and the bottom pill shows "New chat / in <project>" when a project is active. The store's rule is unchanged: `newChat` uses `activeProjectId`, which stays set until the composer chip is removed.
+  - The overview row is highlighted only while the overview is open (`.cv-brief.open`; `.active` still marks the selected project for tests).
+  - Calmer surfaces: plain close and account buttons (glass discs on iOS), a transparent overview row, and a 44pt hit area for ⋯.
+  - Boards: `tests/e2e/helpers/drawer-shots.cjs`, with `GLASS=1` for the iOS default look.
   - At most 360px wide: the drawer is `100vw − 40px`.
 - **Budget:** startup JS 8 → 8.5 KB (reason in `scripts/canvas-budget.mjs`); measured 8.2.
 - **Checks:**

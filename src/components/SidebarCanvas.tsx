@@ -58,6 +58,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const currentId = useStore((s) => s.currentId);
   const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
   const activeProjectId = useStore((s) => s.activeProjectId);
+  const workspaceOpen = useStore((s) => s.projectWorkspaceOpen);
   const open = useStore((s) => s.sidebarOpen);
   const page = useStore((s) => s.page);
   const routing = useRoutingCenter().open;
@@ -132,6 +133,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const loose = newestFirst(matches.filter((c) => !c.projectId || !known.has(c.projectId)));
   const current = chats.find((c) => c.id === currentId);
   const hereProject = current?.projectId && known.has(current.projectId) ? current.projectId : activeProjectId;
+  const scope = projects.find((p) => p.id === activeProjectId);
 
   const sectionOpen = (s: 'projects' | 'conversations') => Boolean(q) || disclosure[s];
   const folderOpen = (p: Project) => Boolean(q) || (disclosure.folders[p.id] ?? p.id === hereProject);
@@ -227,13 +229,14 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
                   </button>
                   <Fold id={`${ids}-p-${p.id}`} open={isOpen}>
                     <ul className="cv-chats" aria-label={p.name}>
-                      <li><button type="button" className={`cv-brief${activeProjectId === p.id ? ' active' : ''}`} onClick={() => { setUi({ page: null, settingsOpen: false }); selectProject(p.id); }}>
+                      <li><button type="button" className={`cv-brief${activeProjectId === p.id ? ' active' : ''}${activeProjectId === p.id && workspaceOpen ? ' open' : ''}`} aria-current={activeProjectId === p.id && workspaceOpen ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false }); selectProject(p.id); }}>
                         <span className="cv-brief-text">{p.description || 'Project overview'}</span>
                         <span className="cv-brief-meta">{p.instructions?.trim() ? 'Instructions' : 'No instructions'} · {p.files?.length || 0} {p.files?.length === 1 ? 'file' : 'files'}<ChevronRight size={12} aria-hidden="true" /></span>
                       </button></li>
+                      {/* Inside the folder, so it reads as part of this project; the label names it too. */}
+                      {!q && <li><button type="button" className="cv-new-here" onClick={() => { selectProject(p.id); newChat(); }}><span className="cv-new-here-icon" aria-hidden="true"><Plus size={13} /></span><span className="cv-new-here-label">New chat in {p.name}</span></button></li>}
                       {shown.map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}
                       {list.length > shown.length && <li><button type="button" className="cv-more" onClick={() => setMore({ ...more, [p.id]: true })}>Show {list.length - shown.length} more</button></li>}
-                      {!q && <li><button type="button" className="cv-new-here" onClick={() => { selectProject(p.id); newChat(); }}><Plus size={14} />New chat in {p.name}</button></li>}
                     </ul>
                   </Fold>
                 </div>
@@ -257,7 +260,11 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         </div>
 
         <div className="cv-foot">
-          {phone && <button type="button" className="cv-new-pill" onClick={newChat}><MessageSquarePlus size={18} />New chat</button>}
+          {/* New chat starts in the active project when there is one (the store's rule, unchanged): the pill says so. */}
+          {phone && <button type="button" className="cv-new-pill" onClick={newChat} aria-label={scope ? `New chat in ${scope.name}` : 'New chat'}>
+            <MessageSquarePlus size={18} aria-hidden="true" />
+            <span className="cv-new-text"><span>New chat</span>{scope && <span className="cv-new-scope">in {scope.name}</span>}</span>
+          </button>}
           <button type="button" className="cv-account" aria-label="Settings" title={`Settings (${modKey},)`} onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })}>
             {user?.photo ? <img className="cv-avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="cv-avatar" aria-hidden="true">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
             {!phone && <span className="cv-account-text"><span className="cv-account-name">{user?.name || user?.email?.split('@')[0] || 'Account'}</span><span className="cv-account-sub">Settings &amp; keys</span></span>}

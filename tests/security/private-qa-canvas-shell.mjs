@@ -211,10 +211,23 @@ try {
       await settle(page, 600);
       assert.ok(await page.locator('.project-workspace-main').isVisible(), 'the brief opens the project workspace');
       await openNav(page, phone);
+      assert.equal(await nav(page).locator('.cv-brief.open[aria-current="page"]').count(), 1, 'the overview row is current while the overview shows');
       await nav(page).getByRole('button', { name: 'New chat in Studio launch', exact: true }).click();
       await settle(page, 600);
       assert.equal(await page.locator('.project-workspace-main').count(), 0);
       assert.equal(await page.locator('.composer-chip').filter({ hasText: 'Studio launch' }).count(), 1, 'the new chat starts in the project');
+      // Slice 2 correction: the two New chat actions say where they create. The store's rule is unchanged: New chat
+      // starts in the active project, and on phones the drawer's New chat names it.
+      await openNav(page, phone);
+      assert.equal(await nav(page).locator('.cv-brief.open').count(), 0, 'a chat on screen: the overview is no longer current');
+      if (phone) {
+        const pill = nav(page).locator('.cv-new-pill');
+        assert.equal(await pill.getAttribute('aria-label'), 'New chat in Studio launch');
+        assert.ok((await pill.textContent()).includes('in Studio launch'), 'the pill shows the project');
+        await pill.click();
+        await settle(page, 600);
+        assert.equal(await page.locator('.composer-chip').filter({ hasText: 'Studio launch' }).count(), 1, 'and creates there, as it says');
+      } else await closeNav(page, false);
       pass('project overview and new chat in project');
 
       // Phone drawer: opens as a dialog and closes; desktop: collapse and expand.

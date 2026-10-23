@@ -16,6 +16,8 @@ import type { ModelInfo } from '../types';
 import { LayoutEditor } from './LayoutsTab';
 import UsageTab from './UsageTab';
 import RouteWhy from './RouteWhy';
+import { routeWords } from '../lib/route-words';
+import { isTemporaryChat } from '../lib/temporary-chat';
 import FilterMenu from './FilterMenu';
 
 const SECTIONS: [RoutingSection, string][] = [['overview', 'Overview'], ['providers', 'Providers'], ['models', 'Models'], ['policies', 'Policies'], ['usage', 'Usage'], ['diagnostics', 'Diagnostics']];
@@ -168,6 +170,54 @@ function ProviderModels({ models }: { models: ModelInfo[] }) {
   );
 }
 
+const ago = (t: number) => {
+  const m = Math.round((Date.now() - t) / 60000);
+  return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`;
+};
+
+/** Overview: the latest answer in each of your recent chats, which model gave it and why; and the providers your
+ * catalog draws on right now. Read from this account's own chats, catalog and usage; nothing is estimated. */
+function RecentDecisions() {
+  const chats = useStore((s) => s.chats), catalog = useStore((s) => s.catalog), usage = useStore((s) => s.usage);
+  const recent = useMemo(() => chats.filter((c) => !isTemporaryChat(c)).map((c) => {
+    for (let i = c.messages.length - 1; i >= 0; i--) { const m = c.messages[i]; if (m.role === 'assistant' && m.model && m.status !== 'streaming') return { chat: c, m }; }
+    return null;
+  }).filter((x): x is NonNullable<typeof x> => Boolean(x)).sort((a, b) => b.m.createdAt - a.m.createdAt).slice(0, 5), [chats]);
+  const providers = useMemo(() => {
+    const now = Date.now(), by = new Map<string, { models: number; limited: number }>();
+    for (const m of catalog?.models || []) {
+      const p = by.get(m.provider) || { models: 0, limited: 0 };
+      p.models++; if ((usage?.models[m.id]?.blockedUntil || 0) > now) p.limited++;
+      by.set(m.provider, p);
+    }
+    return [...by].sort((a, b) => b[1].models - a[1].models);
+  }, [catalog, usage]);
+  const open = (id: string) => { closeRoutingCenter(); useStore.getState().selectChat(id); };
+  return (
+    <div className="rc-recent-grid">
+      <section className="rc-card rc-recent">
+        <span className="rc-label">Recent decisions</span>
+        {recent.length ? <ul>{recent.map(({ chat, m }) => (
+          <li key={chat.id}><button type="button" onClick={() => open(chat.id)}>
+            <span className="rc-recent-model">{modelLabel(catalog, m.model!)}</span>
+            <span className="rc-recent-why">{m.route ? routeWords(m.route) : 'No route recorded'}</span>
+            <span className="rc-recent-chat" dir="auto">{chat.title}<span> · {ago(m.createdAt)}</span></span>
+          </button></li>
+        ))}</ul> : <p className="rc-muted">Answers you get will show which model gave them and why.</p>}
+      </section>
+      <section className="rc-card rc-recent">
+        <span className="rc-label">Providers in your catalog</span>
+        {providers.length ? <ul>{providers.slice(0, 6).map(([id, p]) => (
+          <li key={id}><button type="button" onClick={() => showRoutingSection('providers')}>
+            <span className="rc-recent-model">{PROVIDER_NAMES[id as keyof typeof PROVIDER_NAMES] || id}</span>
+            <span className="rc-recent-why">{p.models} model{p.models === 1 ? '' : 's'}{p.limited ? ` · ${p.limited} temporarily limited` : ' · available'}</span>
+          </button></li>
+        ))}</ul> : <p className="rc-muted">No provider models yet. Connect a provider to fill your catalog.</p>}
+      </section>
+    </div>
+  );
+}
+
 export default function RoutingCenter() {
   const { open, section } = useRoutingCenter();
   const chat = useStore(selectCurrentChat), model = useStore(selectCurrentModel);
@@ -222,6 +272,7 @@ export default function RoutingCenter() {
             <p className="rc-muted">{model === 'auto' ? 'Task-aware choice at send.' : model.startsWith('layout:') ? 'Your saved routing policy.' : 'Fixed manual selection.'}</p>
             {last?.route ? <RouteWhy message={last} /> : <p className="rc-muted">No completed answer with a route record yet.</p>}
           </section>
+          <RecentDecisions />
           <div className="rc-actions">
             <button type="button" className="rc-row-link" onClick={() => showRoutingSection('providers')}>Browse providers<ArrowRight size={16} /></button>
             <button type="button" className="rc-row-link" onClick={() => showRoutingSection('policies')}>Policies &amp; fallbacks<ArrowRight size={16} /></button>

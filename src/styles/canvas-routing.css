@@ -154,3 +154,14 @@
 @media (prefers-reduced-motion: reduce) {
   .app[data-lumen-canvas-shell] .rc-fold svg { transition: none; }
 }
+
+/* Overview: recent decisions and provider state. */
+.app[data-lumen-canvas-shell] .rc-recent-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.app[data-lumen-canvas-shell] .rc-recent { align-content: start; }
+.app[data-lumen-canvas-shell] .rc-recent ul { margin: 0; padding: 0; list-style: none; }
+.app[data-lumen-canvas-shell] .rc-recent li + li { border-top: 1px solid var(--canvas-rim); }
+.app[data-lumen-canvas-shell] .rc-recent button { display: grid; gap: 2px; width: 100%; min-height: 44px; padding: 8px 0; border: 0; background: none; color: var(--canvas-ink); font: inherit; text-align: start; cursor: pointer; }
+.app[data-lumen-canvas-shell] .rc-recent-model { font: 500 12.5px var(--canvas-data-font); }
+.app[data-lumen-canvas-shell] .rc-recent-why { font-size: 13.5px; color: var(--canvas-secondary); }
+.app[data-lumen-canvas-shell] .rc-recent-chat { overflow: hidden; font-size: 12.5px; color: var(--canvas-muted); text-overflow: ellipsis; white-space: nowrap; }
+.app[data-lumen-canvas-shell] .rc-recent button:hover .rc-recent-why { color: var(--canvas-ink); }

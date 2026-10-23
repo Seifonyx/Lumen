@@ -219,18 +219,41 @@ try {
       await settle(page, 600);
       assert.equal(await page.locator('.project-workspace-main').count(), 0);
       assert.equal(await page.locator('.composer-chip').filter({ hasText: 'Studio launch' }).count(), 1, 'the new chat starts in the project');
-      // Slice 2 correction: the two New chat actions say where they create. The store's rule is unchanged: New chat
-      // starts in the active project, and on phones the drawer's New chat names it.
+      // Owner decision (slice 2): the global New chat is always a general conversation, never the remembered project
+      // or the open chat's; a project's own New chat is always in that project. Drafts and assignments are kept.
       await openNav(page, phone);
       assert.equal(await nav(page).locator('.cv-brief.open').count(), 0, 'a chat on screen: the overview is no longer current');
-      if (phone) {
-        const pill = nav(page).locator('.cv-new-pill');
-        assert.equal(await pill.getAttribute('aria-label'), 'New chat in Studio launch');
-        assert.ok((await pill.textContent()).includes('in Studio launch'), 'the pill shows the project');
-        await pill.click();
-        await settle(page, 600);
-        assert.equal(await page.locator('.composer-chip').filter({ hasText: 'Studio launch' }).count(), 1, 'and creates there, as it says');
-      } else await closeNav(page, false);
+      const chip = () => page.locator('.composer-chip').filter({ hasText: 'Studio launch' }).count();
+      const general = phone ? nav(page).locator('.cv-new-pill') : nav(page).locator('.cv-dest-new');
+      assert.equal(await general.getAttribute('aria-label'), 'New chat');
+      assert.equal(await nav(page).locator(`#${await general.getAttribute('aria-describedby')}`).textContent(), 'Not in a project');
+      // From inside a project chat with a draft: global New chat is general, and the project chat keeps its draft.
+      await nav(page).locator('.cv-project', { hasText: 'Studio launch' }).locator('.chat-row').first().locator('.chat-open').click();
+      await settle(page, 400);
+      await page.getByRole('textbox', { name: 'Message', exact: true }).fill('DRAFT_IN_PROJECT');
+      const projectChat = await page.evaluate(() => document.querySelector('.chat-row.active')?.textContent);
+      await openNav(page, phone);
+      await general.click();
+      await settle(page, 500);
+      assert.equal(await chip(), 0, 'global New chat: no project');
+      assert.equal(await page.evaluate(() => localStorage.getItem('mr.activeProject')), null, 'the remembered project is cleared');
+      if (!phone) {
+        // ⌘/Ctrl⇧O, after a project's New chat, is general too.
+        await nav(page).locator('.cv-project').getByRole('button', { name: 'New chat in Studio launch', exact: true }).click();
+        await settle(page, 400);
+        assert.equal(await chip(), 1, 'the folder\'s New chat is in the project');
+        await page.keyboard.press('Control+Shift+O'); // Linux engines: the app reads Ctrl
+        await settle(page, 400);
+        assert.equal(await chip(), 0, 'the shortcut makes a general chat');
+      }
+      await openNav(page, phone);
+      await nav(page).locator('.chat-row', { hasText: projectChat.trim() }).first().locator('.chat-open').click();
+      await settle(page, 400);
+      assert.equal(await page.getByRole('textbox', { name: 'Message', exact: true }).inputValue(), 'DRAFT_IN_PROJECT', 'the project chat keeps its draft');
+      await openNav(page, phone);
+      assert.ok(await nav(page).locator('.cv-project', { hasText: 'Studio launch' }).locator('.chat-row', { hasText: projectChat.trim() }).count() > 0, 'and stays in its project');
+      await closeNav(page, phone);
+      await page.getByRole('textbox', { name: 'Message', exact: true }).fill('');
       pass('project overview and new chat in project');
 
       // Phone drawer: opens as a dialog and closes; desktop: collapse and expand.

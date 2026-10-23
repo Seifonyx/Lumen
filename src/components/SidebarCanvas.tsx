@@ -16,6 +16,7 @@ import AllChats from './AllChats';
 import ProjectManager from './ProjectManager';
 import { AskChats, ChatRow, type SidebarProps } from './Sidebar';
 import { BrandWordmark, loadTreeKeys as loadKeys } from '../lib/canvas-presentation';
+import { newGeneralChat, newProjectChat } from '../lib/new-chat';
 
 const EMPTY_PROJECTS: Project[] = [];
 const LIMIT = 5;
@@ -62,7 +63,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const open = useStore((s) => s.sidebarOpen);
   const page = useStore((s) => s.page);
   const routing = useRoutingCenter().open;
-  const { newChat, setUi, selectProject } = useStore.getState();
+  const { setUi, selectProject } = useStore.getState();
   const [phone, setPhone] = useState(() => window.matchMedia(PHONE).matches);
   const [query, setQuery] = useState('');
   const [disclosure, setDisclosure] = useState<Open>(OPEN);
@@ -133,7 +134,6 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const loose = newestFirst(matches.filter((c) => !c.projectId || !known.has(c.projectId)));
   const current = chats.find((c) => c.id === currentId);
   const hereProject = current?.projectId && known.has(current.projectId) ? current.projectId : activeProjectId;
-  const scope = projects.find((p) => p.id === activeProjectId);
 
   const sectionOpen = (s: 'projects' | 'conversations') => Boolean(q) || disclosure[s];
   const folderOpen = (p: Project) => Boolean(q) || (disclosure.folders[p.id] ?? p.id === hereProject);
@@ -193,6 +193,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
             onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: isMac, ctrlKey: !isMac, bubbles: true }))}><kbd>{modKey}K</kbd></button>}
         </label>
         <span id={`${ids}-pinned`} hidden>Pinned</span>
+        <span id={`${ids}-general`} hidden>Not in a project</span>
         {/* Screen readers hear how many conversations a search finds as it narrows. */}
         <p className="sr-only" role="status">{q ? (matches.length ? `${matches.length} ${matches.length === 1 ? 'conversation' : 'conversations'} found` : 'No conversations match') : ''}</p>
         {q.length > 1 && (
@@ -204,7 +205,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         <div className="cv-tree" onFocus={loadTreeKeys} onKeyDown={(e) => treeKeys?.(e.nativeEvent, e.currentTarget, ROW, searchInput.current, reveal)}>
           {!q && (
             <ul className="cv-dest" aria-label="Places">
-              {!phone && <li><button type="button" className="cv-dest-new" aria-label="New chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}><MessageSquarePlus size={18} /><span>New chat</span><kbd>{modKey}⇧O</kbd></button></li>}
+              {!phone && <li><button type="button" className="cv-dest-new" aria-label="New chat" aria-describedby={`${ids}-general`} onClick={newGeneralChat} title={`New chat (${modKey}⇧O)`}><MessageSquarePlus size={18} /><span>New chat</span><kbd>{modKey}⇧O</kbd></button></li>}
               <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onClick={() => toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span></button></li>
               <li><button type="button" aria-current={page === 'tools' || page === 'assistants' || page === 'study' ? 'page' : undefined} onClick={() => toPage('tools')} title={`Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`}><LayoutGrid size={18} /><span>Tools</span></button></li>
               <li><button type="button" data-routing-center aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><SlidersHorizontal size={18} /><span>Models &amp; routing</span></button></li>
@@ -234,7 +235,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
                         <span className="cv-brief-meta">{p.instructions?.trim() ? 'Instructions' : 'No instructions'} · {p.files?.length || 0} {p.files?.length === 1 ? 'file' : 'files'}<ChevronRight size={12} aria-hidden="true" /></span>
                       </button></li>
                       {/* Inside the folder, so it reads as part of this project; the label names it too. */}
-                      {!q && <li><button type="button" className="cv-new-here" onClick={() => { selectProject(p.id); newChat(); }}><span className="cv-new-here-icon" aria-hidden="true"><Plus size={13} /></span><span className="cv-new-here-label">New chat in {p.name}</span></button></li>}
+                      {!q && <li><button type="button" className="cv-new-here" onClick={() => newProjectChat(p.id)}><span className="cv-new-here-icon" aria-hidden="true"><Plus size={13} /></span><span className="cv-new-here-label">New chat in {p.name}</span></button></li>}
                       {shown.map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}
                       {list.length > shown.length && <li><button type="button" className="cv-more" onClick={() => setMore({ ...more, [p.id]: true })}>Show {list.length - shown.length} more</button></li>}
                     </ul>
@@ -260,11 +261,9 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         </div>
 
         <div className="cv-foot">
-          {/* New chat starts in the active project when there is one (the store's rule, unchanged): the pill says so. */}
-          {phone && <button type="button" className="cv-new-pill" onClick={newChat} aria-label={scope ? `New chat in ${scope.name}` : 'New chat'}>
-            <MessageSquarePlus size={18} aria-hidden="true" />
-            <span className="cv-new-text"><span>New chat</span>{scope && <span className="cv-new-scope">in {scope.name}</span>}</span>
-          </button>}
+          {/* The global New chat: always a general conversation, outside projects (src/lib/new-chat.ts). A project's own
+              New chat is inside its folder. */}
+          {phone && <button type="button" className="cv-new-pill" onClick={newGeneralChat} aria-describedby={`${ids}-general`}><MessageSquarePlus size={18} aria-hidden="true" />New chat</button>}
           <button type="button" className="cv-account" aria-label="Settings" title={`Settings (${modKey},)`} onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })}>
             {user?.photo ? <img className="cv-avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="cv-avatar" aria-hidden="true">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
             {!phone && <span className="cv-account-text"><span className="cv-account-name">{user?.name || user?.email?.split('@')[0] || 'Account'}</span><span className="cv-account-sub">Settings &amp; keys</span></span>}

@@ -17,3 +17,4 @@ export type { BrandArtProps } from './canvas-presentation';
 export { BrandMark, BrandWordmark } from '../components/BrandCrease';
 export { default as CanvasNav } from '../components/CanvasNav';
 export const loadTreeKeys = () => import('./tree-keys');
+export { newGeneralChat } from './new-chat';

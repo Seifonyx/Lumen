@@ -38,3 +38,21 @@ test("the tree's arrow keys load lazily from SidebarCanvas only, and change no r
   assert.match(tree, /setAttribute\('aria-current', 'page'\)/);
   assert.match(tree, /setAttribute\('aria-describedby', `\$\{ids\}-pinned`\)/);
 });
+
+test('global New chat is always general; a project folder New chat is always that project (Canvas only)', () => {
+  const lib = readFileSync('src/lib/new-chat.ts', 'utf8');
+  assert.match(lib, /export function newGeneralChat\(\) \{[^]*?useStore\.setState\(\{ activeProjectId: null \}\)[^]*?newChat\(\);/, 'clears the remembered project first');
+  assert.ok(!/moveChatToProject|currentId/.test(lib), 'moves no chat');
+  assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const newGeneralChat: \(\(\) => void\) \| null = null;$/m);
+  assert.match(readFileSync('src/lib/canvas-presentation.on.ts', 'utf8'), /^export \{ newGeneralChat \} from '\.\/new-chat';$/m);
+  // Every global trigger goes through it: ⌘⇧O, the palette, the top bar, the sidebar, the drawer and the rail.
+  assert.match(readFileSync('src/App.tsx', 'utf8'), /if \(shortcut === 'new-chat'\) \{ if \(newGeneralChat\) newGeneralChat\(\); else s\.newChat\(\); \}/);
+  assert.match(readFileSync('src/components/CommandPalette.tsx', 'utf8'), /run: newGeneralChat \|\| newChat/);
+  assert.match(readFileSync('src/components/ChatView.tsx', 'utf8'), /className="icon-btn cv-compose"[^>]*onClick=\{\(\) => \(newGeneralChat \|\| useStore\.getState\(\)\.newChat\)\(\)\}/);
+  const tree = readFileSync('src/components/SidebarCanvas.tsx', 'utf8');
+  assert.match(tree, /className="cv-dest-new"[^>]*onClick=\{newGeneralChat\}/);
+  assert.match(tree, /className="cv-new-pill" onClick=\{newGeneralChat\}/);
+  assert.match(tree, /className="cv-new-here" onClick=\{\(\) => newProjectChat\(p\.id\)\}/);
+  assert.ok(!/[^.]newChat\b/.test(tree.replace(/newGeneralChat|newProjectChat/g, '')), 'the tree never calls the inheriting newChat');
+  assert.match(readFileSync('src/components/CanvasRail.tsx', 'utf8'), /newGeneralChat\(\)/);
+});

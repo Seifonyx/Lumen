@@ -6,6 +6,7 @@ import { savedChats } from '../lib/temporary-chat';
 import Modal from './Modal';
 import type { Project } from '../types';
 import { ANALYSIS_TEMPLATES } from '../lib/analysis';
+import { newGeneralChat } from '../lib/canvas-presentation';
 
 const EMPTY_PROJECTS: Project[] = [];
 
@@ -29,7 +30,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
   const norm = query.trim().toLowerCase();
   const items = useMemo(() => {
     const all: Item[] = [
-      { id: 'new-chat', label: 'New chat', detail: `${modKey}⇧O`, Icon: Plus, run: newChat },
+      { id: 'new-chat', label: 'New chat', detail: `${modKey}⇧O`, Icon: Plus, run: newGeneralChat || newChat },
       { id: 'library', label: 'Assistants', detail: 'Helpers with their own instructions', Icon: Sparkles, run: () => window.dispatchEvent(new Event('mr:library')) },
       { id: 'prompts', label: 'Saved prompts', detail: 'Start a message from a prompt', Icon: BookOpen, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'prompts' })) },
       { id: 'files', label: 'Files', detail: 'Documents and uploaded files', Icon: FileText, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'documents' })) },

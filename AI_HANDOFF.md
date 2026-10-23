@@ -17,6 +17,8 @@ Draft PR on `claude/lucid-dijkstra-541bbi`, from `main` `f16c6d1` (slice 1 is li
   - The overview row is highlighted only while the overview is open (`.cv-brief.open`; `.active` still marks the selected project for tests).
   - Calmer surfaces: plain close and account buttons (glass discs on iOS), a transparent overview row, and a 44pt hit area for ⋯.
   - Boards: `tests/e2e/helpers/drawer-shots.cjs`, with `GLASS=1` for the iOS default look.
+  - **Owner decision (New chat):** the global New chat (drawer bottom, desktop sidebar, rail, top bar, ⌘⇧O, palette) is always general. `src/lib/new-chat.ts` `newGeneralChat` clears `activeProjectId` and `mr.activeProject`, then calls `newChat`. Shared callers reach it through the switch, and the ordinary build stays byte-identical. "New chat in <project>" → `newProjectChat`. The old "in <project>" pill label is removed; the general actions are described as "Not in a project". CP03 covers the general/project switches, drafts and assignments.
+- **Phase 2 accessibility follow-up (owner, recorded):** support large text and Dynamic Type in the iPhone drawer. Its sizes are fixed px and ignore Lumen's text-size setting and iOS Dynamic Type. This is planned for Phase 2 slice 3.
   - At most 360px wide: the drawer is `100vw − 40px`.
 - **Budget:** startup JS 8 → 8.5 KB (reason in `scripts/canvas-budget.mjs`); measured 8.2.
 - **Checks:**

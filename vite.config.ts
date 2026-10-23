@@ -59,13 +59,10 @@ function canvasPublic(): Plugin | false {
     // The start-up frame wears the Canvas layout, so the message box appears where the real one will.
     transformIndexHtml(html) {
       return html
-        // Dark only: no saved theme, light splash screen or light status bar applies.
-        .replace('<html ', '<html data-theme="dark" data-lumen-canvas data-lumen-canvas-foundation ')
-        .replace("if (s.theme === 'light' || s.theme === 'dark') root.dataset.theme = s.theme;", '')
-        .replace("if (s.theme === 'black') { root.dataset.theme = 'dark'; root.dataset.appearance = 'black'; }", '')
-        .replace("var bar = { light: '#f6f7f9', dark: '#0d0f12', black: '#000000' }[s.theme];", "var bar = '';")
-        .replaceAll('content="#f6f7f9"', 'content="#0d0f12"')
-        .replaceAll('/splash/light-', '/splash/dark-')
+        // Light and Dark only: a saved True black opens as Dark.
+        .replace("if (s.theme === 'black') { root.dataset.theme = 'dark'; root.dataset.appearance = 'black'; }", "if (s.theme === 'black') root.dataset.theme = 'dark';")
+        .replace("black: '#000000' }[s.theme]", "black: '#0d0f12' }[s.theme]")
+        .replace('<html ', '<html data-lumen-canvas data-lumen-canvas-foundation ')
         .replace('<div class="app app-skeleton"', '<div class="app app-skeleton" data-lumen-canvas-shell data-lumen-canvas-foundation')
         .replace('<div class="composer sk-composer">', '<div class="composer sk-composer" data-lumen-canvas-foundation data-lumen-canvas-composer>');
     },

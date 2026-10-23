@@ -69,8 +69,8 @@ function applyPhoneTextSize(on: boolean) {
 const BAR = { light: '#f6f7f9', dark: '#0d0f12', black: '#000000' } as const;
 
 export function applyAppearance(s: Settings) {
-  // Canvas is dark only: the saved theme is kept but not applied.
-  if (CANVAS_SHELL) s = { ...s, theme: 'dark' };
+  // Canvas has Light and Dark only: a saved True black shows as Dark.
+  if (CANVAS_SHELL && s.theme === 'black') s = { ...s, theme: 'dark' };
   const root = document.documentElement;
   const before = `${root.dataset.theme || ''}|${root.dataset.appearance || ''}`;
   if (s.theme === 'system') delete root.dataset.theme;

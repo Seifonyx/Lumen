@@ -1,5 +1,6 @@
 @font-face{font-family:'Geist';font-style:normal;font-display:swap;font-weight:100 900;src:url(__GEIST__) format('woff2-variations')}
-:root{--bg:#0d0f12;--ink:#eceef1;--ink2:#a9b1bb;--line:rgba(236,238,241,.14);color-scheme:dark}
+:root{--bg:#f7f7f5;--ink:#0b0b0c;--ink2:#55565b;--line:rgba(11,11,12,.12);color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0d0f12;--ink:#eceef1;--ink2:#a9b1bb;--line:rgba(236,238,241,.14);color-scheme:dark}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.65 'Geist',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 main{max-width:680px;margin:0 auto;padding:40px max(20px,env(safe-area-inset-left)) 64px}
 header{display:flex;align-items:center;gap:10px;margin-bottom:36px;padding-bottom:16px;border-bottom:1px solid var(--line)}header img{width:28px;height:28px;border-radius:8px}

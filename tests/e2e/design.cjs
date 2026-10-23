@@ -35,7 +35,10 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         page.on('pageerror', (e) => errors.push(e.message));
         await page.goto(process.env.MR_TEST_URL || 'http://localhost:5190/?emulator', { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForSelector('.app:not(.app-skeleton) .main.is-empty');
-        if (theme === 'black') check(await page.evaluate(() => document.documentElement.dataset.appearance === 'black' && getComputedStyle(document.body).backgroundColor === 'rgb(0, 0, 0)'), `${label}: true black background survives reload`);
+        // Canvas has no True black: a saved one opens as Dark.
+        if (theme === 'black') check(await page.evaluate(() => document.documentElement.hasAttribute('data-lumen-canvas')
+          ? !document.documentElement.dataset.appearance && document.documentElement.dataset.theme === 'dark'
+          : document.documentElement.dataset.appearance === 'black' && getComputedStyle(document.body).backgroundColor === 'rgb(0, 0, 0)'), `${label}: true black background survives reload`);
         check(inside(await page.locator('.composer').boundingBox(), width, height) && (await scan(page)).length === 0, `${label}: welcome screen and composer fit`);
         check(await page.locator('.suggestion,.starter-actions,.empty p:not(.welcome-route):not(.cv-home-where):not(.cv-home-none)').count() === 0 && await page.locator('.empty h1').evaluate(el=>el.scrollWidth<=el.clientWidth), `${label}: short single-line greeting and routing status, without recommendations`);
         if (!mobile) {
@@ -128,7 +131,12 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
           await page.locator('.settings-tabs button').filter({ hasText: name }).first().click();
           const issues = await scan(page);
           check(issues.length === 0, `${label}: ${name} settings fit${issues.length ? ' ' + JSON.stringify(issues) : ''}`);
-          if (name === 'General') {
+          if (name === 'General' && await page.evaluate(() => document.documentElement.hasAttribute('data-lumen-canvas'))) {
+            // Canvas offers Light and Dark only; a saved True black shows as Dark.
+            check(await page.getByRole('radio', { name: 'True black', exact: true }).count() === 0, `${label}: no True black choice`);
+            await page.getByRole('radio', { name: theme === 'light' ? 'Light' : 'Dark', exact: true }).click();
+            check(await page.evaluate(() => !document.documentElement.dataset.appearance), `${label}: no black appearance`);
+          } else if (name === 'General') {
             await page.getByRole('radio', { name: 'True black', exact: true }).click();
             check(await page.evaluate(() => document.documentElement.dataset.appearance === 'black' && JSON.parse(localStorage.getItem('mr.settings')).theme === 'black'), `${label}: True black saves the appearance choice`);
             await page.getByRole('radio', { name: theme === 'black' ? 'True black' : theme === 'dark' ? 'Dark' : 'Light', exact: true }).click();

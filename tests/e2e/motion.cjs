@@ -69,8 +69,9 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
     await ctx.route(/\/assets\/index-.*\.js$/, (r) => r.abort());
     const page = await ctx.newPage();
     await page.goto(URL);
-    const pre = await page.evaluate(() => ({ theme: document.documentElement.dataset.theme, look: document.documentElement.dataset.appearance, bars: [...document.querySelectorAll('meta[name="theme-color"]')].map((m) => m.content) }));
-    assert.deepEqual(pre, { theme: 'dark', look: 'black', bars: ['#000000', '#000000'] }, JSON.stringify(pre));
+    const pre = await page.evaluate(() => ({ canvas: document.documentElement.hasAttribute('data-lumen-canvas'), theme: document.documentElement.dataset.theme, look: document.documentElement.dataset.appearance, bars: [...document.querySelectorAll('meta[name="theme-color"]')].map((m) => m.content) }));
+    // Canvas has no True black: a saved one opens as Dark, status bar included.
+    assert.deepEqual(pre, pre.canvas ? { canvas: true, theme: 'dark', look: undefined, bars: ['#0d0f12', '#0d0f12'] } : { canvas: false, theme: 'dark', look: 'black', bars: ['#000000', '#000000'] }, JSON.stringify(pre));
     console.log('PASS true black and the status-bar colour are set before the app code loads');
     await ctx.close();
   } finally { await browser.close(); }

@@ -28,12 +28,13 @@ test('only LUMEN_IDENTITY=crease with LUMEN_CANVAS=1 builds the preview, and no 
   assert.match(config, /if \(process\.env\.LUMEN_CANVAS !== '1'\) throw/);
   assert.match(config, /resolve\('src\/lib\/brand-identity\.on\.ts'\)/);
   for (const name of readdirSync('.github/workflows')) assert.ok(!/LUMEN_(?:QA_)?IDENTITY/.test(readFileSync(`.github/workflows/${name}`, 'utf8')), `${name} never builds the preview`);
-  // Private iPhone QA: the review shows the preview only when it opts in (qa/iphone/review-identity.json, read by
-  // scripts/qa/build.mjs), through an adapter that re-exports the same "on" module.
+  // Private iPhone QA: the review shows the preview only when it opts in (the committed qa/iphone/review-identity.json,
+  // read by vite.qa.config.ts), through an adapter that re-exports the same "on" module.
   const qa = readFileSync('vite.qa.config.ts', 'utf8');
   assert.match(qa, /if \(QA_IDENTITY === 'crease'\) QA_REPLACEMENTS\[at\('src\/lib\/brand-identity\.ts'\)\] = at\('qa\/iphone\/adapters\/brand-identity\.ts'\);/);
   assert.match(readFileSync('qa/iphone/adapters/brand-identity.ts', 'utf8'), /^export \* from '\.\.\/\.\.\/\.\.\/src\/lib\/brand-identity\.on';$/m);
-  assert.match(readFileSync('scripts/qa/build.mjs', 'utf8'), /qa\/iphone\/review-identity\.json/);
+  assert.match(qa, /const REVIEW_IDENTITY = at\('qa\/iphone\/review-identity\.json'\);/);
+  assert.equal(JSON.parse(readFileSync('qa/iphone/review-identity.json', 'utf8')).identity, 'crease', 'this draft branch opts its review in');
 });
 
 test('brand placements carry the name "Lumen" for assistive technology', () => {

@@ -21,11 +21,9 @@ const attempt = args.attempt ?? '1';
 const hours = Number(args.hours ?? 72);
 if (!(hours > 0 && hours <= 72)) throw new Error('--hours must be between 0 and 72.');
 
-// Review options committed with the branch: qa/iphone/review-identity.json opts this review into the Crease
-// identity preview (owner review only). Absent, the review shows the shipped identity.
-const reviewIdentity = existsSync('qa/iphone/review-identity.json') ? JSON.parse(readFileSync('qa/iphone/review-identity.json', 'utf8')).identity : '';
-if (!['', 'crease'].includes(reviewIdentity ?? '')) throw new Error(`qa/iphone/review-identity.json: identity must be "crease", not ${JSON.stringify(reviewIdentity)}`);
-if (reviewIdentity) process.env.LUMEN_QA_IDENTITY = reviewIdentity; else delete process.env.LUMEN_QA_IDENTITY;
+// Reported only: qa/iphone/review-identity.json (committed with the branch) opts the review into the Crease identity
+// preview, and vite.qa.config.ts reads it. Absent, the review shows the shipped identity.
+const reviewIdentity = existsSync('qa/iphone/review-identity.json') ? JSON.parse(readFileSync('qa/iphone/review-identity.json', 'utf8')).identity ?? '' : '';
 
 const git = (...a) => execFileSync('git', a, { encoding: 'utf8' }).trim();
 const commit = git('rev-parse', 'HEAD');

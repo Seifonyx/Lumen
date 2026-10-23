@@ -32,7 +32,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
       }
       const openMenu = async () => { if (width < 900) { await page.click('.menu-btn'); await page.locator('.sidebar.open').waitFor(); } };
       await openMenu();
-      await page.click('.view-all-chats');
+      await page.click('.view-all-chats, .cv-all');
       const dialog = page.getByRole('dialog', { name: 'All chats' });
       await dialog.waitFor();
       await dialog.getByLabel('Select all chats').check();
@@ -49,7 +49,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
       await dialog.locator('.all-chats-list li').nth(1).waitFor({ state: 'detached' });
       assert.deepEqual(await dialog.locator('.all-chats-title').allTextContents(), ['third chat']);
       await page.keyboard.press('Escape');
-      const titles = await page.locator('.chat-list .chat-title').allTextContents();
+      const titles = await page.locator(':is(.chat-list, .cv-nav) .chat-title').allTextContents();
       assert.deepEqual(titles.filter((t) => t !== 'New chat'), ['third chat'], titles.join('|'));
       assert.deepEqual(errors, []);
       console.log(`PASS ${width}px: several chats exported and deleted together`);

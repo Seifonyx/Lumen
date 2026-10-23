@@ -231,7 +231,7 @@ async function run(browser, mobile) {
       check(await page.locator('.composer').evaluate((el, offset) => el.getBoundingClientRect().bottom <= offset + 460 + 1, offset), `iOS simulation: composer fits after keyboard reopens at offset ${offset}`);
     }
     await page.click('.menu-btn');
-    await page.click('.sidebar .new-chat');
+    await page.click('.sidebar .new-chat, .cv-dest-new, .cv-new-pill');
     await page.waitForSelector('.app:not(.app-skeleton) .main.is-empty');
     await page.click('.menu-btn');
     await page.locator('.chat-open').last().click();

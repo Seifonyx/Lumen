@@ -146,7 +146,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         <div className="cv-tree">
           {!q && (
             <ul className="cv-dest" aria-label="Places">
-              {!phone && <li><button type="button" onClick={newChat} title={`New chat (${modKey}⇧O)`}><MessageSquarePlus size={18} /><span>New chat</span><kbd>{modKey}⇧O</kbd></button></li>}
+              {!phone && <li><button type="button" className="cv-dest-new" aria-label="New chat" onClick={newChat} title={`New chat (${modKey}⇧O)`}><MessageSquarePlus size={18} /><span>New chat</span><kbd>{modKey}⇧O</kbd></button></li>}
               <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onClick={() => toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span></button></li>
               <li><button type="button" aria-current={page === 'tools' || page === 'assistants' || page === 'study' ? 'page' : undefined} onClick={() => toPage('tools')} title={`Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`}><LayoutGrid size={18} /><span>Tools</span></button></li>
               <li><button type="button" data-routing-center aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><SlidersHorizontal size={18} /><span>Models &amp; routing</span></button></li>

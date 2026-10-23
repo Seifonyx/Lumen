@@ -112,6 +112,8 @@ const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/6
         await page.waitForTimeout(350);
         assert.equal(await page.locator('.composer textarea').inputValue(), 'KEEP_MY_DRAFT', 'Menu actions and dismissal preserve the draft');
         // An inactive row must also remain stable: ancestor :active used to tint it.
+        // (Canvas phones show ⋯ on the open chat, or with keyboard/VoiceOver focus; focus reaches it on both.)
+        await row().getByRole('button', { name: 'Chat options' }).focus();
         await row().getByRole('button', { name: 'Chat options' }).click();
         const inactiveMenu = row().getByRole('menu', { name: 'Chat options' });
         await inactiveMenu.waitFor();

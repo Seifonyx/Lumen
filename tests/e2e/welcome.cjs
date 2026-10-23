@@ -13,7 +13,8 @@ const matrix=process.env.MR_TEST_WIDTH?all.filter(v=>v[0]===Number(process.env.M
  await fit();
  assert.equal(await page.locator('.topbar-route').count(),0,'Model selection should not be repeated in the empty header');
  assert.equal(await page.locator('.sidebar .empty-moon').count(),0,'Empty history should not repeat the welcome illustration');
- if(width>=900){const newChat=await page.locator('.sidebar .new-chat').boundingBox(),search=await page.locator('.sidebar-search-field').boundingBox();assert.ok(newChat.y<search.y,'New chat should precede search');}
+ // (Canvas puts search first and New chat in its Places list, the approved tree; this order is the classic sidebar's.)
+ if(width>=900&&await page.locator('.sidebar-search-field').count()){const newChat=await page.locator('.sidebar .new-chat, .cv-dest-new, .cv-new-pill').boundingBox(),search=await page.locator('.sidebar-search-field').boundingBox();assert.ok(newChat.y<search.y,'New chat should precede search');}
  await page.evaluate(()=>(document.querySelector('.sidebar .new-chat, .cv-new-pill')||[...document.querySelectorAll('.cv-dest button')].find(b=>b.textContent.includes('New chat'))).click());await input.fill('KEEP_MY_DRAFT');const seen=new Set();
  for(let i=0;i<5;i++){const before=await heading.textContent();seen.add(before);await fit();await page.evaluate(()=>(document.querySelector('.sidebar .new-chat, .cv-new-pill')||[...document.querySelectorAll('.cv-dest button')].find(b=>b.textContent.includes('New chat'))).click());await page.waitForFunction(text=>document.querySelector('.empty h1').textContent!==text,before);assert.equal(await input.inputValue(),'KEEP_MY_DRAFT');}
  assert.equal(seen.size,5,'Greeting does not rotate through distinct messages');const stable=await heading.textContent();await input.fill('KEEP_MY_DRAFT updated');await page.waitForTimeout(250);assert.equal(await heading.textContent(),stable,'Typing changes greeting');

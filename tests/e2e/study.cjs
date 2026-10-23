@@ -33,7 +33,7 @@ const deck = { title: 'Cell basics', cards: [{ q: 'What makes ATP?', a: 'Mitocho
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
 
     // ---- Study remains available in Tools after removing the sidebar shortcut.
-    await page.click('.library-button:has-text("Tools")');
+    await page.click(':is(.library-button, .cv-dest button):has-text("Tools")');
     await page.locator('.tool-card').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
     await page.getByRole('button', { name: 'Make your first deck', exact: true }).click();
     await page.locator('.study-sources button', { hasText: 'Cell biology' }).click();
@@ -72,7 +72,7 @@ const deck = { title: 'Cell basics', cards: [{ q: 'What makes ATP?', a: 'Mitocho
     await page.keyboard.press('Escape'); // closes Study
     await page.locator('.hub-page').waitFor({ state: 'detached' });
     const before = requests;
-    await page.click('.library-button:has-text("Tools")');
+    await page.click(':is(.library-button, .cv-dest button):has-text("Tools")');
     await page.locator('.tool-card').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
     const item = page.locator('.study-deck', { hasText: 'Cell basics' });
     await item.waitFor();

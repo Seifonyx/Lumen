@@ -1,4 +1,5 @@
 // Real composer -> routing -> provider requests, with isolated accounts and mocked providers.
+const { openChat } = require('./helpers/open-chat.cjs');
 const { chromium, webkit } = require('playwright');
 const assert = require('node:assert/strict');
 const { profile, seed } = require('./helpers/preview-profile.cjs');
@@ -64,7 +65,7 @@ const fulfill = (route, response) => route.fulfill({...response,headers:{...cors
       await page.goto(url);
       await page.locator('.composer textarea').waitFor();
       if (width < 900) await page.locator('.menu-btn').click();
-      await page.locator('.chat-open').filter({hasText:'Decision test'}).click();
+      await openChat(page, 'Decision test');
       const prompt = mode === 'prose' ? 'Write an email about a Python bug' : mode === 'new-task' ? 'Yes, write a birthday poem instead' : search && mode !== 'offline' ? 'Fix this Python bug using current documentation' : mode === 'offline' ? 'Research supplied papers, do not use web search' : 'Summarize the provided text';
       await page.locator('.composer textarea').fill(prompt);
       assert.equal(await page.locator('.composer textarea').inputValue(),prompt,'rapid chat selection preserves the first input');

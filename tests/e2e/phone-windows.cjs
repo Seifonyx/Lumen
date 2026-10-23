@@ -26,7 +26,7 @@ const deck = { id: 'd1', title: 'A rather long deck title about cell biology and
         assert.deepEqual(await scan(page), [], `${width}px ${label} fits`);
       };
       await page.click('.menu-btn'); await page.waitForTimeout(400);
-      await page.click('.library-button:has-text("Tools")');
+      await page.click(':is(.library-button, .cv-dest button):has-text("Tools")');
       await page.locator('.tool-card').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
       await inset('.study-deck', 'Study decks');
       await page.getByRole('button', { name: 'Quiz' }).click();
@@ -34,7 +34,7 @@ const deck = { id: 'd1', title: 'A rather long deck title about cell biology and
       await page.goto(URL); await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
       await page.click('.menu-btn'); await page.waitForTimeout(400);
       await page.fill('#chat-search', 'anything at all');
-      await page.click('.ask-chats-btn');
+      await page.click('.ask-chats-btn, .cv-ask');
       await inset('.ask-form', 'Ask your chats');
       console.log(`PASS ${width}px: new windows keep their margins and fit`);
       await ctx.close();

@@ -1,4 +1,4 @@
-import { navigateBack } from '../lib/canvas-presentation';
+import { navigateBack, navigateScreen } from '../lib/canvas-presentation';
 // CP03 Canvas navigation (approved Canvas design, Gate 1). Reached only when CANVAS_SHELL is on
 // (src/lib/canvas-presentation.ts); the ordinary build folds it away.
 // One tree: projects are folders of their conversations; loose conversations are grouped by day. It is the same
@@ -245,7 +245,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
                   </button>
                   <Fold id={`${ids}-p-${p.id}`} open={isOpen}>
                     <ul className="cv-chats" aria-label={p.name}>
-                      <li><button type="button" className={`cv-brief${activeProjectId === p.id ? ' active' : ''}${activeProjectId === p.id && workspaceOpen ? ' open' : ''}`} aria-current={activeProjectId === p.id && workspaceOpen ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false }); selectProject(p.id); }}>
+                      <li><button type="button" className={`cv-brief${activeProjectId === p.id ? ' active' : ''}${activeProjectId === p.id && workspaceOpen ? ' open' : ''}`} aria-current={activeProjectId === p.id && workspaceOpen ? 'page' : undefined} onClick={() => navigateScreen!(() => { setUi({ page: null, settingsOpen: false }); selectProject(p.id); })}>
                         <span className="cv-brief-text">{p.description || 'Project overview'}</span>
                         <span className="cv-brief-meta">{p.instructions?.trim() ? 'Instructions' : 'No instructions'} · {p.files?.length || 0} {p.files?.length === 1 ? 'file' : 'files'}<ChevronRight size={12} aria-hidden="true" /></span>
                       </button></li>

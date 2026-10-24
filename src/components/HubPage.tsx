@@ -59,7 +59,7 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
         ) : phone ? (
           <button type="button" className="icon-btn hub-nav" aria-label="Open sidebar" onClick={() => useStore.getState().setUi({ sidebarOpen: true })}><Menu size={20} /></button>
         ) : null}
-        {!onBack && make && <button type="button" className="icon-btn hub-nav hub-new" aria-label={make.label} title={make.label} onClick={make.run}><Plus size={22} /></button>}
+        {!onBack && make && (!CANVAS_SHELL || phone) && <button type="button" className="icon-btn hub-nav hub-new" aria-label={make.label} title={make.label} onClick={make.run}><Plus size={22} /></button>}
         <h1 className="hub-bar-title hub-bar-heading">{label}</h1>
         <span className="hub-bar-title hub-bar-label" aria-hidden="true">{label}</span>
         {CANVAS_SHELL

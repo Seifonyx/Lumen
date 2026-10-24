@@ -8,7 +8,7 @@ import { ANALYSIS_TEMPLATES } from '../lib/analysis';
 import { BUILTIN_ASSISTANTS } from '../lib/assistants';
 import { useStore } from '../store';
 import HubPage from './HubPage';
-import { CANVAS_SHELL, useScreenMemory } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, navigateScreen, useScreenMemory } from '../lib/canvas-presentation';
 import AssistantLibrary from './AssistantLibrary';
 import { uid } from '../lib/util';
 import type { SavedAssistant } from '../types';
@@ -44,7 +44,7 @@ function ToolCard({ t }: { t: Tool }) {
       </span>
     </>;
     return t.run
-      ? <button type="button" className={`tool-card sec-${t.section}`} onClick={t.run}>{content}</button>
+      ? <button type="button" className={`tool-card sec-${t.section}`} onClick={CANVAS_SHELL ? () => navigateScreen!(t.run!) : t.run}>{content}</button>
       : <article className={`tool-card tool-contextual sec-${t.section}`}>{content}</article>;
 }
 
@@ -73,7 +73,7 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
     { id: 'prompts', section: 'create', name: 'Saved prompts', text: 'Start a message from a prompt you use often.', icon: <MessageSquareText size={20} />, run: () => library('prompts') },
     { id: 'analysis', section: 'analyze', name: 'Data analysis', text: 'Charts and answers from CSV and Excel files, run on your device.', icon: <BarChart3 size={20} />, run: () => s.setUi({ page: null, runner: { lang: 'python', code: ANALYSIS_TEMPLATES.overview.code, analysis: true } }) },
     { id: 'calc', section: 'analyze', name: 'Calculate', text: 'Exact maths with Python, shown step by step.', icon: <Calculator size={20} />, needs: 'Gemini key', ready: gemini, run: () => library('tools:calculation') },
-    { id: 'compare', section: 'analyze', name: 'Compare models', text: 'Ask two or three models at once, then combine their answers.', icon: <Columns2 size={20} />, run: () => { s.setUi({ page: null, sidebarOpen: false }); window.dispatchEvent(new CustomEvent('mr:composer-mode', { detail: 'compare' })); } },
+    { id: 'compare', section: 'analyze', name: 'Compare models', text: 'Ask two or three models at once, then combine their answers.', icon: <Columns2 size={20} />, run: () => { if (CANVAS_SHELL) s.setUi({sidebarOpen:false}); else s.setUi({ page: null, sidebarOpen: false }); window.dispatchEvent(new CustomEvent('mr:composer-mode', { detail: 'compare' })); } },
     { id: 'study', section: 'learn', name: 'Study', text: 'Flashcards and quizzes from any chat or document. Hard cards come back sooner.', icon: <GraduationCap size={20} />, run: () => s.setUi({ page: 'study', pageArg: undefined }) },
     { id: 'study-chat', section: 'learn', name: 'Study partner', text: 'An assistant that explains step by step and quizzes you.', icon: <BookOpenCheck size={20} />, run: () => { const a = BUILTIN_ASSISTANTS.find((x) => x.id === 'builtin-study'); if (a) { s.startAssistant(a); s.setUi({ page: null }); } } },
   ], [gemini, keys.cloudflare, settings.webSearch]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -130,7 +130,7 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
                   <div className="tools-grid">
                     {list.map((a) => (
                       <div key={a.id} className="tool-card-wrap">
-                        <button type="button" className="tool-card sec-assistants" onClick={() => { s.startAssistant(a); s.setUi({ page: null }); }}>
+                        <button type="button" className="tool-card sec-assistants" onClick={CANVAS_SHELL ? () => navigateScreen!(() => { s.startAssistant(a); s.setUi({page:null}); }) : () => { s.startAssistant(a); s.setUi({ page: null }); }}>
                           <span className="tool-icon" aria-hidden="true"><Sparkles size={20} /></span>
                           <span className="tool-text"><strong>{a.name}</strong><span>{a.description || 'Your custom assistant.'}</span></span>
                         </button>

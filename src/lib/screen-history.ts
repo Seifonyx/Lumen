@@ -15,13 +15,14 @@ export function replaceScreen(run: () => void) { if (replace) replace(run); else
 /** Complete an irreversible local action without retaining a stale confirmation in Forward history. */
 export function finishScreen(run: () => void) { replaceScreen(run); screenBack(); }
 /** Combine synchronous canonical UI operations into one visible navigation step. */
-export function navigateScreen(run: () => void) { applying = true; try { run(); } finally { applying = false; commit?.(); } }
+export function navigateScreen(run: () => void) { const outer = applying; applying = true; try { run(); } finally { applying = outer; if (!outer) commit?.(); } }
 let active = 0, serial = 0, applying = false;
 const session = /* @__PURE__ */ (() => Math.random().toString(36).slice(2))();
-const capture = () => { const s = useStore.getState(); return { layerKey: backLayerOpen() ? backLayerIdentity() : null, restoreLayer: backLayerRestore(), activeProjectId: s.activeProjectId, currentId: s.currentId, layer: backLayerOpen(), canvasOpen: s.canvasOpen, canvasDocumentId: s.canvasDocumentId, page: s.page, pageArg: s.pageArg, settingsOpen: s.settingsOpen, settingsTab: s.settingsTab, projectWorkspaceOpen: s.projectWorkspaceOpen, routing: getRoutingScreen() }; };
+const capture = () => { const s = useStore.getState(); return { layerKey: backLayerOpen() ? backLayerIdentity() : null, restoreLayer: backLayerRestore(), activeProjectId: s.activeProjectId, currentId: s.currentId, runner: s.runner, layer: backLayerOpen(), canvasOpen: s.canvasOpen, canvasDocumentId: s.canvasDocumentId, page: s.page, pageArg: s.pageArg, settingsOpen: s.settingsOpen, settingsTab: s.settingsTab, projectWorkspaceOpen: s.projectWorkspaceOpen, routing: getRoutingScreen() }; };
 type Screen = ReturnType<typeof capture>;
 // Compare UI references/primitives only. Streaming updates must not stringify Study inputs or other page data.
 const same = (a: Screen, b: Screen) => a.currentId === b.currentId && a.activeProjectId === b.activeProjectId
+ && Boolean(a.runner) === Boolean(b.runner)
  && a.canvasOpen === b.canvasOpen && a.canvasDocumentId === b.canvasDocumentId
  && a.page === b.page && a.pageArg === b.pageArg && a.settingsOpen === b.settingsOpen && a.settingsTab === b.settingsTab
  && a.projectWorkspaceOpen === b.projectWorkspaceOpen && a.layer === b.layer && a.layerKey === b.layerKey
@@ -46,11 +47,11 @@ export function installScreenHistory() {
   const saveView = () => views.set(active, { focus: document.activeElement instanceof HTMLElement ? document.activeElement : null, scrolls: scrollSelectors.map(selector => [selector, document.querySelector(selector)?.scrollTop || 0]) });
   const check = () => {
     if (applying) return;
-    if (owner !== useStore.getState().user?.uid) { owner = useStore.getState().user?.uid; applying = true; reconcileBackLayers(null); clearScreenMemory(); clearBackLayerRestore(); views.clear(); useStore.setState({ page: null, settingsOpen: false, projectWorkspaceOpen: false }); restoreRoutingScreen({ open: false, section: 'overview' }); remember(); previous = capture(); applying = false; return; }
+    if (owner !== useStore.getState().user?.uid) { owner = useStore.getState().user?.uid; applying = true; reconcileBackLayers(null); clearScreenMemory(); clearBackLayerRestore(); views.clear(); useStore.setState({ page: null, settingsOpen: false, projectWorkspaceOpen: false, runner: null }); restoreRoutingScreen({ open: false, section: 'overview' }); remember(); previous = capture(); applying = false; return; }
     const next = capture();
     if (same(next, previous)) { entries.set(active, next); return; }
     saveView();
-    const root = (value: typeof next) => !value.canvasOpen && !value.page && !value.settingsOpen && !value.projectWorkspaceOpen && !value.routing.open && !value.layer;
+    const root = (value: typeof next) => !value.runner && !value.canvasOpen && !value.page && !value.settingsOpen && !value.projectWorkspaceOpen && !value.routing.open && !value.layer;
     if (root(previous) && root(next)) { previous = next; entries.set(active, next); return; }
     previous = next;
     active = ++serial; entries.set(active, next);
@@ -70,7 +71,8 @@ export function installScreenHistory() {
     flushSync(() => {
       const mounted = reconcileBackLayers(layer ? _layerKey : null);
       if (layer && !mounted) restoreLayer?.();
-      useStore.setState(ui); restoreRoutingScreen(routing);
+      const pushed = ui.page || ui.settingsOpen || ui.canvasOpen || ui.projectWorkspaceOpen || routing.open;
+      useStore.setState(window.matchMedia?.('(max-width:899px)').matches && pushed ? {...ui,sidebarOpen:false} : ui); restoreRoutingScreen(routing);
     });
     previous = capture(); entries.set(active, previous); applying = false;
     const focusAtReplay = document.activeElement;

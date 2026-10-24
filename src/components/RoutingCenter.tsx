@@ -206,7 +206,7 @@ function ProviderDetail({ p, title, usage, enabledHere }: { p: ProviderRow; titl
   const knownLimits = observed.filter((m) => m.quota !== null);
   const sharedLeft = p.id === 'openrouter' && usage?.openrouter.limit != null ? Math.max(0, usage.openrouter.limit - usage.openrouter.used) : null;
   const listing = s?.state === 'ready' || s?.state === 'stale';
-  const settings = (text: string, primary: boolean) => <button type="button" className={primary ? 'rc-primary' : 'rc-quiet'} aria-label={primary ? undefined : `Connection settings for ${p.label}`} onClick={() => openSettings('keys')}>{text}<ArrowUpRight size={15} aria-hidden="true" /></button>;
+  const settings = (text: string, primary: boolean) => !primary && window.matchMedia(PHONE).matches ? null : <button type="button" className={primary ? 'rc-primary' : 'rc-quiet'} aria-label={primary ? undefined : `Connection settings for ${p.label}`} onClick={() => openSettings('keys')}>{text}<ArrowUpRight size={15} aria-hidden="true" /></button>;
   const refresh = (primary: boolean) => <Suspense fallback={null}><CheckConnection provider={p.id} primary={primary} /></Suspense>;
   // The next meaningful action, in plain words: fix what blocks the provider first; a refresh leads only when the model
   // list is missing or old; Settings stays one quiet step away.

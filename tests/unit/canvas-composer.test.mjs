@@ -48,7 +48,9 @@ test('every flagged Composer branch keeps the ordinary expression as its alterna
   // Values: a Canvas value whose ordinary branch is the original string literal (the placeholder on narrow phones).
   const values = src.match(/CANVAS_COMPOSER \? canvas!\.\w+ : '[^']*'/g) || [];
   assert.deepEqual(values, ["CANVAS_COMPOSER ? canvas!.placeholder : 'Message Lumen'"]);
-  assert.equal(spreads.length + ternaries.length + statements.length + values.length, uses, 'no unreviewed flag use');
+  const localModalCloses = src.match(/onClose=\{CANVAS_COMPOSER \? \(\) => navigateBack!\(\(\) => setCompareOpen\(false\)\) : \(\) => setCompareOpen\(false\)\}/g) || [];
+  assert.equal(localModalCloses.length,1,'reviewed comparison dismissal keeps its ordinary state setter');
+  assert.equal(spreads.length + ternaries.length + statements.length + values.length + localModalCloses.length, uses, 'no unreviewed flag use');
   assert.equal(spreads.length, 3);
   assert.equal(ternaries.length, 4);
 });

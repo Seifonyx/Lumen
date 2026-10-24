@@ -18,7 +18,7 @@ test('CanvasNav delegates browser history to the canonical UI adapter with opaqu
  const src = readFileSync('src/components/CanvasNav.tsx','utf8');
  const adapter=readFileSync('src/lib/screen-history.ts','utf8');
  assert.match(src,/useEffect\(\(\) => installScreenHistory\(\), \[\]\)/);
- assert.match(adapter,/useStore\.setState\(ui\)/);
+ assert.match(adapter,/useStore\.setState\(window\.matchMedia/);
  assert.match(adapter,/history\.pushState\(\{ \.\.\.history\.state, \[KEY\]: \{ session, id: active \} \}/);
  assert.match(adapter,/entries = new Map/);
  assert.match(adapter,/owner !== useStore\.getState\(\)\.user\?\.uid/);

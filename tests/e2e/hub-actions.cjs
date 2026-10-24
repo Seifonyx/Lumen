@@ -99,13 +99,14 @@ const models = ['gemini-flash-latest', 'gemini-2.5-pro'];
       await page.getByRole('button', { name: /^Compare models/ }).click();
       const dialog = page.getByRole('dialog', { name: 'Compare models', exact: true });
       await dialog.waitFor();
-      await page.locator('.hub-page').waitFor({ state: 'detached' });
+      if(canvas)await page.waitForFunction(()=>document.querySelector('.hub-page')?.closest('[inert]'));else await page.locator('.hub-page').waitFor({ state: 'detached' });
       const question = dialog.getByRole('textbox', { name: 'Question', exact: true });
       assert.equal(await question.inputValue(), 'PRESERVED_DRAFT');
       assert.equal(requests.length, 0, 'Opening setup never sends a model request');
       await question.fill('EDITED_DRAFT');
       await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
       await dialog.waitFor({ state: 'detached' });
+      if(canvas){await page.locator('.hub-page .phone-navigation [aria-label="Back"], .hub-page .hub-close').click();await page.locator('.hub-page').waitFor({state:'detached'});}
       assert.equal(await input.inputValue(), 'EDITED_DRAFT');
       assert.equal(await page.getByRole('button', { name: 'Remove reference.txt', exact: true }).count(), 1);
       assert.equal(requests.length, 0, 'Cancel preserves text/files without sending');

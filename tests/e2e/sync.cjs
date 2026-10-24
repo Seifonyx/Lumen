@@ -1,11 +1,7 @@
 // Two "devices" signed in as the same user (Firebase emulators), checking chats and settings sync.
 const { chromium } = require('playwright');
-const {openSettings,replyAction}=require('./helpers/ui.cjs');
+const {openSettings,replyAction,openSettingsSection:openTab,closeSettings}=require('./helpers/ui.cjs');
 // Settings is a page: on phones the section list shows first, and a section has a back arrow.
-async function openTab(page, name) {
-  if (await page.isVisible('.settings-back')) await page.click('.settings-back');
-  await page.click(`.settings-tabs >> text=${name}`);
-}
 const path = require('path');
 const OUT = path.join(__dirname, 'out');
 require('fs').mkdirSync(OUT, { recursive: true });
@@ -61,7 +57,7 @@ async function device(browser, name, email, mobile) {
   check(true, 'keys saved and models loaded');
   await openTab(A.page, 'Personalization');
   await A.page.fill('.field-block textarea', 'Use metric units.');
-  await A.page.click('.settings-page [aria-label="Close"]');
+  await closeSettings(A.page);
 
   // ---- Phone: chat with an image, rename + pin
   await A.page.setInputFiles('.composer input[type=file][multiple]', path.join(__dirname, 'fixtures', 'photo.png'));

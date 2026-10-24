@@ -45,7 +45,9 @@ exports.openSettingsSection = async (page, name) => {
 exports.closeSettings = async (page) => {
   const root = page.locator('.settings-page');
   if (!(await root.isVisible())) return;
-  // Escape is the dialog dismiss contract, distinct from iPhone Back through nested sections.
+  // Focus the Settings dialog itself so nested native menus/editors do not consume Escape.
+  // Escape dismisses the page; the phone header is the per-section Back control.
+  await root.focus();
   await page.keyboard.press('Escape');
   await root.waitFor({ state: 'hidden' });
 };

@@ -687,7 +687,12 @@ export default function SettingsModal() {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || useStore.getState().preview) return;
-      if (tab && window.matchMedia('(max-width: 720px), (pointer: coarse) and (max-width: 1100px)').matches) go('');
+      // If Settings owns Escape in Canvas, dismiss the entire dialog. The visible Back
+      // button (not Escape) handles the nested section. Menus and editors own their own Escape.
+      if (CANVAS_SHELL) {
+        if (e.defaultPrevented || document.querySelector('.modal-backdrop,.sheet-backdrop,.glass-select-menu,[role="menu"]')) return;
+        setUi({ settingsOpen: false });
+      } else if (tab && window.matchMedia('(max-width: 720px), (pointer: coarse) and (max-width: 1100px)').matches) go('');
       else close();
     };
     window.addEventListener('keydown', onKey);

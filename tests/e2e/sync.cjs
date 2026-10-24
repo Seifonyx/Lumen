@@ -126,7 +126,8 @@ async function device(browser, name, email, mobile) {
 
   // Saved helpers and their immutable chat instructions cross devices.
   await B.page.getByRole('button', { name: 'Tools', exact: true }).click();
-  await B.page.getByRole('button', { name: 'All assistants', exact: true }).click();
+  const Bcanvas=Boolean(await B.page.locator('[data-lumen-canvas-shell]').count());
+  if (!Bcanvas) await B.page.getByRole('button', { name: 'All assistants', exact: true }).click();
   await B.page.getByRole('button', { name: 'New assistant', exact: true }).click();
   await B.page.getByLabel('Library item name').fill('Synced helper');
   await B.page.getByLabel('Library instructions').fill('Use HELPER_SYNC_MARKER in your reply.');
@@ -144,7 +145,8 @@ async function device(browser, name, email, mobile) {
     await new Promise(resolve => setTimeout(resolve, 100));
   }
   if (!helperSaved) throw new Error('The saved helper did not reach Firestore within 15 seconds.');
-  await B.page.getByRole('button', { name: 'Start a chat with Synced helper', exact: true }).click();
+  if (Bcanvas) await B.page.locator('#tools-assistants .tool-card').filter({hasText:'Synced helper'}).click();
+  else await B.page.getByRole('button', { name: 'Start a chat with Synced helper', exact: true }).click();
   await B.page.fill('.composer textarea', 'Test helper sync');
   await B.page.click('.send-btn');
   await B.page.waitForSelector('.msg.assistant .model-tag');
@@ -153,8 +155,9 @@ async function device(browser, name, email, mobile) {
   await A.page.waitForSelector('.app:not(.app-skeleton) .topbar');
   await A.page.click('.menu-btn');
   await A.page.getByRole('button', { name: 'Tools', exact: true }).click();
-  await A.page.getByRole('button', { name: 'All assistants', exact: true }).click();
-  await A.page.locator('article.lib-card strong', { hasText: /^Synced helper$/ }).waitFor();
+  const Acanvas=Boolean(await A.page.locator('[data-lumen-canvas-shell]').count());
+  if (!Acanvas) await A.page.getByRole('button', { name: 'All assistants', exact: true }).click();
+  await (Acanvas ? A.page.locator('#tools-assistants .tool-card').filter({hasText:'Synced helper'}) : A.page.locator('article.lib-card strong', { hasText: /^Synced helper$/ })).waitFor();
   check(true, 'saved assistant library synced to phone');
   await A.page.locator('.hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label="Back"]').click();
   await A.page.click('.menu-btn');

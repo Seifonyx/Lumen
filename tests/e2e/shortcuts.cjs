@@ -49,7 +49,8 @@ const { profile, seed } = require('./helpers/preview-profile.cjs');
     await page.locator('.msg.assistant').filter({ hasText: 'LAST_REPLY_MARKER' }).waitFor();
 
     await page.keyboard.press('Control+Shift+L');
-    await page.locator('.hub-page[aria-label="Tools"] #tools-assistants').waitFor({ state: 'visible' });
+    // Current shortcut leads to the consolidated Tools workspace; category sections may be lazy/offscreen.
+    await page.locator('.hub-page[aria-label="Tools"]').waitFor({ state: 'visible' });
     await page.keyboard.press('Escape');
 
     page.once('dialog', (d) => d.accept());

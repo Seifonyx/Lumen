@@ -286,7 +286,12 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
           </button>
         </div>
       </aside>
-      {asking !== null && <Suspense fallback={null}><AskChats initial={asking} onClose={() => navigateBack!(() => setAsking(null))} onOpenChat={(chatId) => navigateScreen!(() => { setAsking(null); useStore.getState().selectChat(chatId); })} /></Suspense>}
+      {asking !== null && <Suspense fallback={null}><AskChats initial={asking} onClose={() => {
+        // Opening a citation already selected a different chat: keep that forward navigation.
+        // Dismissing the sheet without a new selection still follows Back history.
+        if (useStore.getState().currentId !== currentId) navigateScreen!(() => setAsking(null));
+        else navigateBack!(() => setAsking(null));
+      }} /></Suspense>}
       {allChats && <AllChats onClose={() => navigateBack!(() => setAllChats(false))} />}
       {manager && <ProjectManager createNewImmediately onClose={() => navigateBack!(() => setManager(false))} />}
     </>

@@ -30,6 +30,7 @@ exports.openSettingsSection = async (page, name) => {
   // Settings mounts asynchronously; checking a locator before the page exists misidentifies loading as nesting.
   await page.locator('.settings-page').waitFor({ state: 'visible' });
   const list = page.locator('.settings-page .settings-tabs');
+  await list.waitFor({ state: 'attached' });
   if (!(await list.isVisible())) {
     await exports.backSettingsSection(page);
     if (!(await page.locator('.settings-page').isVisible())) {
@@ -45,11 +46,19 @@ exports.openSettingsSection = async (page, name) => {
 exports.closeSettings = async (page) => {
   const root = page.locator('.settings-page');
   if (!(await root.isVisible())) return;
-  // Focus the Settings dialog itself so nested native menus/editors do not consume Escape.
-  // Escape dismisses the page; the phone header is the per-section Back control.
-  await root.focus();
-  await page.keyboard.press('Escape');
-  await root.waitFor({ state: 'hidden' });
+  // Desktop/ordinary Settings has an explicit Close. Canvas iPhone has a real
+  // hierarchical Back button. Exercise whichever control is visible rather than
+  // assuming a single Escape dismisses both a nested section and its parent.
+  for (let step = 0; step < 18 && await root.isVisible(); step++) {
+    const close = root.locator('.settings-top button[aria-label="Close"]');
+    const back = root.locator('.phone-navigation button[aria-label="Back"]');
+    if (await close.isVisible()) await close.click();
+    else if (await back.isVisible()) await back.click();
+    else { await root.focus(); await page.keyboard.press('Escape'); }
+    if (!(await root.isVisible())) break;
+    await root.waitFor({ state: 'hidden', timeout: 900 }).catch(() => {});
+  }
+  if (await root.isVisible()) throw new Error('Settings did not close after traversing its visible navigation hierarchy');
 };
 
 /** Canvas documents use the screen Back control on iPhone, the original Close on desktop/ordinary. */

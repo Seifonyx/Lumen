@@ -1,6 +1,6 @@
 // Two "devices" signed in as the same user (Firebase emulators), checking chats and settings sync.
 const { chromium } = require('playwright');
-const {openSettings,replyAction,openSettingsSection:openTab,closeSettings}=require('./helpers/ui.cjs');
+const {openSettings,replyAction,openSettingsSection:openTab,closeSettings,closeCanvas}=require('./helpers/ui.cjs');
 // Settings is a page: on phones the section list shows first, and a section has a back arrow.
 const path = require('path');
 const OUT = path.join(__dirname, 'out');
@@ -178,8 +178,8 @@ async function device(browser, name, email, mobile) {
   await A.page.fill('.canvas-text', 'CANVAS_FROM_PHONE');
   await B.page.waitForFunction(() => document.querySelector('.canvas-text')?.value === 'CANVAS_FROM_PHONE');
   check(true, 'canvas edits synced live back to laptop');
-  await A.page.getByRole('button', { name: 'Close canvas', exact: true }).click();
-  await B.page.getByRole('button', { name: 'Close canvas', exact: true }).click();
+  await closeCanvas(A.page);
+  await closeCanvas(B.page);
   await B.page.evaluate(()=>(document.querySelector('.sidebar .new-chat, .cv-new-pill')||[...document.querySelectorAll('.cv-dest button')].find(b=>b.textContent.includes('New chat'))).click());
   await B.page.keyboard.press('Control+k');
   await B.page.getByLabel('Search commands').fill('Open document canvas');

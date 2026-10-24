@@ -48,18 +48,19 @@ async function open(browser, mobile) {
   const P = await open(browser, true);
   // Onboarding can land directly in API Keys, without a previous Settings index entry.
   if (!(await P.page.locator('.settings-page').isVisible())) {
-    await P.page.waitForSelector('.app:not(.app-skeleton) .topbar');
+    await P.page.locator('.composer textarea').waitFor();
     await P.page.click('.menu-btn');
     await P.page.click('.sidebar-foot, .cv-account');
   }
+  // A first-sign-in deep link may show Keys; allow the lazy screen to mount before
+  // distinguishing an actual subsection from an index screen still rendering.
+  await P.page.locator('.settings-tabs').waitFor({ state: 'attached' });
   if (!(await P.page.locator('.settings-tabs').isVisible())) {
-    // A first-sign-in deep link opens Keys. Assert it has a real Back control, then dismiss
-    // via Escape and reopen Settings from the drawer to test its section list.
     check(await P.page.locator('.settings-page .phone-navigation button[aria-label="Back"], .settings-page .settings-back').isVisible(), 'phone: direct-entry settings subsection offers Back');
     await closeSettings(P.page);
   }
   if (!(await P.page.locator('.settings-page').isVisible())) {
-    await P.page.waitForSelector('.app:not(.app-skeleton) .topbar');
+    await P.page.locator('.composer textarea').waitFor();
     await P.page.click('.menu-btn');
     await P.page.click('.sidebar-foot, .cv-account');
   }
@@ -79,7 +80,8 @@ async function open(browser, mobile) {
   await P.page.screenshot({ path: require('path').join(__dirname, 'out', 'settings-phone-menu.png') });
   await P.page.click('.settings-tabs >> text=Usage');
   await closeSettings(P.page);
-  await P.page.waitForSelector('.app:not(.app-skeleton) .topbar');
+  await P.page.locator('.settings-page').waitFor({ state: 'hidden' });
+  await P.page.locator('.composer textarea').waitFor({ state: 'visible' });
   check(true, 'phone: close returns to the chat');
 
   check(![...D.errors, ...P.errors].length, `no page errors ${[...D.errors, ...P.errors].join(' | ')}`);

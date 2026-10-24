@@ -150,8 +150,9 @@ function Providers({ preferred, phone }: { preferred?: string; openDetail?: bool
   const connected = visible.filter((p) => p.keySaved || p.enabled), unconnected = visible.filter((p) => !p.keySaved && !p.enabled);
   const [all, setAll] = useState(() => Boolean(preferred) && !providers.some((p) => p.id === preferred && (p.keySaved || p.enabled)));
   const narrowed = Boolean(query.trim()) || filter !== 'all';
-  const folds = !narrowed && connected.length > 0 && unconnected.length > MANY;
-  const names = folds && !all ? unconnected.slice(0, MANY) : unconnected;
+  const previewCount = phone ? 3 : MANY;
+  const folds = !narrowed && unconnected.length > previewCount && (phone || connected.length > 0);
+  const names = folds && !all ? unconnected.slice(0, previewCount) : unconnected;
   const open = (id: string) => { setSelected(id); setDetail(true); };
   const change = (text: string, scope: typeof filter) => {
     setQuery(text); setFilter(scope);
@@ -180,7 +181,7 @@ function Providers({ preferred, phone }: { preferred?: string; openDetail?: bool
             <section className="rc-explore" aria-labelledby="rc-explore-title">
               <h3 className="rc-group-label" id="rc-explore-title">{connected.length ? 'Add a provider' : 'Connect a provider'} <span>{plural(unconnected.length, 'provider')} · no key saved</span></h3>
               <div className="rc-chips" id="rc-unconnected">{names.map((p) => <button type="button" key={p.id} className="rc-chip" data-provider={p.id} aria-current={shown?.id === p.id ? 'true' : undefined} onClick={() => open(p.id)}>{p.label}</button>)}</div>
-              {folds && <button type="button" className="rc-more" aria-expanded={all} aria-controls="rc-unconnected" onClick={() => setAll(!all)}>{all ? 'Show fewer' : `Show all ${unconnected.length}`}</button>}
+              {folds && <button type="button" className="rc-more" aria-expanded={all} aria-controls="rc-unconnected" onClick={() => setAll(!all)}>{all ? 'Show fewer providers' : `Show all ${unconnected.length} providers`}</button>}
             </section>
           )}
           {!visible.length && <div className="rc-empty"><p>No providers match.</p><button type="button" className="rc-link" onClick={() => { change('', 'all'); input.current?.focus(); }}>Reset provider filters</button></div>}
@@ -351,7 +352,7 @@ export default function RoutingCenter() {
 
       {section === 'overview' && (phone ? <div className="rc-phone-overview">
         <section className="rc-route" aria-label="Current routing mode"><p className="rc-kicker">This conversation</p><h2>{modelLabel(catalog, model)}</h2><p className="rc-route-line">{sentence}</p>{reach && <p className="rc-reach">{reach}</p>}</section>
-        <nav className="routing-directory" aria-label="Routing sections">{SECTIONS.filter(([id]) => id !== 'overview').map(([id, label]) => <button type="button" key={id} aria-label={label} aria-describedby={`routing-${id}-description`} onClick={() => go(id)}><span><strong>{label}</strong><small id={`routing-${id}-description`}>{id === 'providers' ? `${providers.filter(p => p.keySaved).length} keys saved` : id === 'models' ? `${models.length} catalog models · ${choices} enabled` : id === 'policies' ? `${layouts.length} saved Layouts` : id === 'usage' ? 'Local activity and reported limits' : last?.model ? `Recorded: ${modelLabel(catalog, last.model)}` : 'No recorded answer yet'}</small></span><ChevronRight size={18} /></button>)}</nav>
+        <nav className="routing-directory" aria-label="Routing sections">{SECTIONS.filter(([id]) => id !== 'overview').map(([id, label]) => <button type="button" key={id} aria-label={label} aria-describedby={`routing-${id}-description`} onClick={() => go(id)}><span><strong>{label}</strong><small id={`routing-${id}-description`}>{id === 'providers' ? `${plural(providers.filter(p => p.keySaved).length, 'key')} saved` : id === 'models' ? `${models.length} catalog models · ${choices} enabled` : id === 'policies' ? `${layouts.length} saved Layouts` : id === 'usage' ? 'Local activity and reported limits' : last?.model ? `Recorded: ${modelLabel(catalog, last.model)}` : 'No recorded answer yet'}</small></span><ChevronRight size={18} /></button>)}</nav>
         <Suspense fallback={null}><RecentAnswers /></Suspense>
       </div> : <div className="rc-body rc-overview">
           <div className="rc-col">

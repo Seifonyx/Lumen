@@ -117,6 +117,16 @@ try {
         if(phone){assert.equal(await page.locator('.phone-navigation h1').innerText(),'General');assert.equal(await page.locator('.settings-heading h2').isVisible(),false);}
         record.screens.settings = await axe(page, 'section.settings-page');
         await shot(page, join(out, `${tag}-settings.png`));
+        // A deliberately long synthetic address stresses narrow account-detail layout without changing an account.
+        if (phone) {
+          const address = page.locator('.account-row .setting-hint').first();
+          if (await address.count()) {
+            const original = await address.textContent();
+            await address.evaluate(el => { el.textContent = 'qa-synthetic-long-address-for-phone-layout@review-environment.example.invalid'; });
+            await shot(page, join(out, `${tag}-settings-long-email.png`));
+            await address.evaluate((el, value) => { el.textContent = value; }, original);
+          }
+        }
         await closeAll(page);
         pass('settings');
 
@@ -127,6 +137,19 @@ try {
           assert.ok(look.scoped && look.ink);
           record.screens[name] = await axe(page, 'main.hub-page');
           await shot(page, join(out, `${tag}-${name}.png`));
+          if (name === 'library') {
+            assert.ok(await page.locator('.coll-item.kind-documents').count() >= 3, 'populated QA Library shows representative documents');
+            assert.ok(await page.locator('.coll-item.kind-files').count() >= 2, 'populated QA Library shows mixed attachments');
+            const search = page.getByRole('searchbox', { name:'Search your library' });
+            await search.fill('Customer interview synthesis'); await settle(page, 200);
+            assert.equal(await page.locator('.coll-item.kind-documents').count(), 1, 'long-name search narrows documents');
+            await shot(page, join(out, `${tag}-library-search.png`));
+            await search.fill('');
+            await page.getByRole('button', { name:'Content type: Everything' }).click();
+            await page.getByRole('menu', { name:'Content type' }).getByRole('menuitemradio', { name:'Made by Lumen' }).click();
+            await settle(page, 200);
+            await shot(page, join(out, `${tag}-library-empty.png`));
+          }
           await closeAll(page);
         }
         await go(page, phone, 'All projects');
@@ -181,6 +204,12 @@ try {
         await go(page, phone, 'Models & routing');
         record.screens.routing = await axe(page, 'section.rc-page');
         await shot(page, join(out, `${tag}-routing.png`));
+        await page.getByRole('navigation', { name:'Routing sections' }).getByRole('button', { name:'Providers', exact:true }).click();
+        await page.locator('.rc-provider-list').waitFor();
+        await shot(page, join(out, `${tag}-providers.png`));
+        await page.locator('.rc-provider-list [data-provider="gemini"]').first().click();
+        await page.locator('.rc-provider-detail').waitFor();
+        await shot(page, join(out, `${tag}-provider-detail.png`));
         await closeAll(page);
         pass('routing center');
 

@@ -228,3 +228,19 @@
 .app[data-lumen-canvas-shell] .rc-phone-overview .rc-route h2 { font-size:32px; }
 .app[data-lumen-canvas-shell] .rc-phone-overview .rc-route-line { font-size:16px; }
 .app[data-lumen-canvas-shell] .routing-directory small { display:block; color:var(--canvas-secondary); font-size:13px; line-height:1.5; font-weight:400; }
+
+/* A phone provider directory is a short, scan-friendly list rather than a field of chips.
+   Only the first three unconnected entries show before an explicit expansion. */
+@media (max-width:899px) {
+ .app[data-lumen-canvas-shell] .rc-list-head h2 { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+ .app[data-lumen-canvas-shell] .rc-provider-list { gap:10px; }
+ .app[data-lumen-canvas-shell] .rc-provider-scroll { padding-top:0; }
+ .app[data-lumen-canvas-shell] .rc-explore { margin-top:14px; gap:6px; }
+ .app[data-lumen-canvas-shell] .rc-chips { display:grid; grid-template-columns:minmax(0,1fr); gap:0; border-top:1px solid var(--rc-rim); }
+ .app[data-lumen-canvas-shell] .rc-chip { display:flex; align-items:center; width:100%; min-width:0; min-height:48px; padding:10px 12px; border:0; border-radius:0; box-shadow:inset 0 -1px var(--rc-rim); background:none; text-align:start; line-height:1.3; overflow-wrap:anywhere; }
+ .app[data-lumen-canvas-shell] .rc-chip::after { content:"›"; margin-inline-start:auto; padding-inline-start:10px; color:var(--canvas-muted); font-size:24px; font-weight:300; }
+ .app[data-lumen-canvas-shell] .rc-more { margin-top:0; }
+ .app[data-lumen-canvas-shell] .rc-find { min-width:0; }
+ .app[data-lumen-canvas-shell] .rc-find .rc-search { flex:1 1 160px; min-width:0; }
+ .app[data-lumen-canvas-shell] .rc-find .filter-menu { flex:0 0 auto; }
+}

@@ -26,9 +26,8 @@
 .app[data-lumen-canvas-shell] .rc-tabs button { flex: none; padding: 0; border: 0; background: none; color: var(--canvas-secondary); font: 500 15px var(--canvas-body-font); cursor: pointer; white-space: nowrap; }
 .app[data-lumen-canvas-shell] .rc-tabs button:is(:hover, [aria-current='page']) { color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .rc-tabs [aria-current='page'] { box-shadow: inset 0 -2px; }
-.app[data-lumen-canvas-shell] :is(.rc-close, .rc-menu, .rc-up) { display: inline-flex; align-items: center; align-self: center; gap: 6px; min-height: 40px; border: 0; color: var(--canvas-ink); font: 500 15px var(--canvas-body-font); cursor: pointer; }
+.app[data-lumen-canvas-shell] .rc-close { display: inline-flex; align-items: center; align-self: center; gap: 6px; min-height: 40px; border: 0; color: var(--canvas-ink); font: 500 15px var(--canvas-body-font); cursor: pointer; }
 .app[data-lumen-canvas-shell] .rc-close { margin-inline-start: auto; padding: 0 14px 0 10px; border-radius: 999px; background: var(--canvas-fill); font-size: 14px; }
-.app[data-lumen-canvas-shell] :is(.rc-menu, .rc-up) { justify-self: start; gap: 0; min-height: 44px; margin-inline-start: -10px; padding: 0 10px 0 4px; border-radius: 12px; background: none; font-size: 17px; }
 
 /* ---------- Shared parts */
 .app[data-lumen-canvas-shell] .rc-body { display: grid; gap: 20px; }
@@ -69,8 +68,8 @@
 .app[data-lumen-canvas-shell] .rc-overview { grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); gap: 40px; align-items: start; }
 .app[data-lumen-canvas-shell] .rc-col { display: grid; gap: 32px; min-width: 0; }
 .app[data-lumen-canvas-shell] .rc-route {
-  --rc-on: color-mix(in srgb, var(--canvas-paper) 64%, transparent); --rc-line: color-mix(in srgb, var(--canvas-paper) 16%, transparent);
-  display: grid; justify-items: start; gap: 8px; padding: 28px 28px 0; overflow: hidden; border-radius: 26px; background: var(--canvas-ink); color: var(--canvas-paper);
+  --rc-on: var(--canvas-secondary); --rc-line: var(--canvas-rim);
+  display: grid; justify-items: start; gap: 8px; padding: 28px 28px 0; overflow: hidden; border-radius: 26px; background: var(--canvas-surface); color: var(--canvas-ink); border:1px solid var(--canvas-rim);
 }
 .app[data-lumen-canvas-shell] :is(.rc-kicker, .rc-reach) { margin: 0; color: var(--rc-on); font-size: 14.5px; line-height: 1.45; }
 .app[data-lumen-canvas-shell] .rc-page .rc-route h2 { color: inherit; font: 660 56px/1 var(--canvas-display-font); letter-spacing: -.045em; overflow-wrap: anywhere; }
@@ -196,11 +195,8 @@
 
 /* ---------- Phones: the drawer or Back, then Chat; a large title; the dock with four places. 44pt targets. */
 @media (max-width: 899px) {
-  .app[data-lumen-canvas-shell] .rc-page { padding: calc(env(safe-area-inset-top) + 6px) max(16px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 104px) max(16px, env(safe-area-inset-left)); }
+  .app[data-lumen-canvas-shell] .rc-page { padding: calc(env(safe-area-inset-top) + 6px) max(16px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 24px) max(16px, env(safe-area-inset-left)); }
   html[data-qa-review] .app[data-lumen-canvas-shell] .rc-page { padding-top: 6px; }
-  .app[data-lumen-canvas-shell] .rc-head { position: static; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 6px; min-height: 0; margin-bottom: 14px; box-shadow: none; }
-  .app[data-lumen-canvas-shell] .rc-head h1 { font-size: 18px; white-space: normal; }
-  .app[data-lumen-canvas-shell] .rc-close { grid-column: 3; min-height: 44px; }
   .app[data-lumen-canvas-shell] .rc-overview { grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .app[data-lumen-canvas-shell] .rc-col { display: contents; }
   .app[data-lumen-canvas-shell] .rc-answers { order: 1; }
@@ -218,10 +214,6 @@
   .app[data-lumen-canvas-shell] .rc-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .app[data-lumen-canvas-shell] :is(.rc-grid, .rc-policy) { grid-template-columns: minmax(0, 1fr); }
   /* The dock floats like the composer it replaces: four places, the current one filled. */
-  .app[data-lumen-canvas-shell] .rc-dock { position: fixed; z-index: 4; inset: auto max(12px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 10px) max(12px, env(safe-area-inset-left)); display: flex; padding: 5px; border-radius: 28px; background: var(--canvas-surface); box-shadow: 0 0 0 1px var(--rc-rim), 0 12px 32px rgb(0 0 0 / 14%); }
-  .app[data-lumen-canvas-shell] .rc-dock button { display: grid; flex: 1 1 0; justify-items: center; gap: 3px; min-width: 0; min-height: 54px; padding: 7px 2px 6px; border: 0; border-radius: 23px; background: none; color: var(--canvas-secondary); cursor: pointer; }
-  .app[data-lumen-canvas-shell] .rc-dock span { font: 600 11.5px/1.1 var(--canvas-body-font); }
-  .app[data-lumen-canvas-shell] .rc-dock :is([aria-current='page'], [data-within]) { background: var(--canvas-fill); color: var(--canvas-ink); }
 }
 @media (max-width: 360px) {
   .app[data-lumen-canvas-shell] .rc-page .rc-route h2 { font-size: 38px; }
@@ -231,3 +223,8 @@
   .app[data-lumen-canvas-shell] :is(.rc-summary > button, .rc-prov:not([aria-current='true']), .rc-recent button):hover { background-color: var(--rc-hover); }
   .app[data-lumen-canvas-shell] .rc-chip:not([aria-current='true']):hover { background: var(--rc-press); }
 }
+.app[data-lumen-canvas-shell] .rc-phone-overview { padding-block:16px; }
+.app[data-lumen-canvas-shell] .rc-phone-overview .rc-route { padding:20px; gap:6px; border-radius:16px; }
+.app[data-lumen-canvas-shell] .rc-phone-overview .rc-route h2 { font-size:32px; }
+.app[data-lumen-canvas-shell] .rc-phone-overview .rc-route-line { font-size:16px; }
+.app[data-lumen-canvas-shell] .routing-directory small { display:block; color:var(--canvas-secondary); font-size:13px; line-height:1.5; font-weight:400; }

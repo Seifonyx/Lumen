@@ -1,5 +1,18 @@
 # Dynamic Model Picker implementation plan
 
+## Current owner-directed iPhone navigation reset
+
+The new explicit owner direction supersedes earlier small-adjustment scope. See `docs/design/IPHONE_NAVIGATION_RESET.md` and the active handoff.
+
+| Milestone | Current evidence/status | Remaining acceptance |
+|---|---|---|
+| A — Shared navigation and Routing Center | Source implemented; focused Chromium journeys pass | Final browser/forward/swipe/account/accessibility and design review |
+| B — Library and Tools | Source implemented; type/search/document/editor return journeys pass | Dense/empty/error/menu/physical phone review |
+| C — Cross-app integration and finish | In progress; Settings/project/document headers integrated | Contract migration, exact-head CI, curated before/after, owner review |
+
+No overall program percentage is defined; do not reuse the historical Blackout/Model Picker scope scores as Lumen-wide completion. Phases1–3 shipped; Phase4 Slices2–3 remain; this advance Library/Tools work does not finish Phase5. No merge, deployment or design Gate approval is authorized.
+
+
 ## Current design work — Phase 4, Slice 1
 
 Owner-authorized workstream: `feat/phase4-routing-providers`, based on released `871bc1a647f36550e6f66e527b1252ac84437506` (Phase 3 / PR #49 / successful Deploy #68). Develop, test, commit, push and draft PR only. **No merge or deployment without separate owner approval.** This instruction overrides older release authorization recorded below for previous milestones.

@@ -62,7 +62,7 @@ import PrivacyTab from './PrivacyTab';
 import LayoutsSection, { LayoutEditor } from './LayoutsTab';
 import type { Layout } from '../lib/layouts';
 import CatalogErrorNotice from './CatalogErrorNotice';
-import { CANVAS_SHELL } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, navigateBack, PhoneNavigation } from '../lib/canvas-presentation';
 
 /** Settings sections: id, name, icon, one-line description */
 const TABS: [string, string, LucideIcon, string][] = [
@@ -672,10 +672,11 @@ export default function SettingsModal() {
   const dialog = useRef<HTMLElement>(null);
 
   const close = () => {
-    setUi({ settingsOpen: false });
+    if (CANVAS_SHELL && window.matchMedia('(max-width:899px)').matches) navigateBack!(() => setUi({ settingsOpen: false }));
+    else setUi({ settingsOpen: false });
   };
   useFocusScope(dialog,open,()=>{
-    if(tab && window.matchMedia('(max-width:720px), (pointer:coarse) and (max-width:1100px)').matches)setUi({settingsTab:''});else close();
+    if (CANVAS_SHELL) navigateBack!(() => setUi({settingsOpen:false})); else if(tab && window.matchMedia('(max-width:720px), (pointer:coarse) and (max-width:1100px)').matches)setUi({settingsTab:''});else close();
   });
 
   useEffect(() => {
@@ -698,9 +699,9 @@ export default function SettingsModal() {
     const page = dialog.current;
     if (!open || !page) return;
     const narrow = () => window.matchMedia('(max-width: 720px), (pointer: coarse) and (max-width: 1100px)').matches;
-    const section = installSwipeBack(page, () => narrow() && Boolean(useStore.getState().settingsTab), (copy) => copy.classList.remove('has-section'), () => setUi({ settingsTab: '' }));
+    const section = installSwipeBack(page, () => narrow() && Boolean(useStore.getState().settingsTab), (copy) => copy.classList.remove('has-section'), () => CANVAS_SHELL ? navigateBack!(() => setUi({ settingsTab: '' })) : setUi({ settingsTab: '' }));
     // iPhone glass look: from the list of sections, swiping right closes Settings and the chat slides back.
-    const root = installSwipeBack(page, () => narrow() && !useStore.getState().settingsTab && document.documentElement.classList.contains('glass'), () => {}, () => setUi({ settingsOpen: false }), { reveal: () => document.querySelector<HTMLElement>('.app > .main') });
+    const root = installSwipeBack(page, () => narrow() && !useStore.getState().settingsTab && document.documentElement.classList.contains('glass'), () => {}, () => CANVAS_SHELL ? navigateBack!(() => setUi({ settingsOpen: false })) : setUi({ settingsOpen: false }), { reveal: () => document.querySelector<HTMLElement>('.app > .main') });
     return () => { section(); root(); };
   }, [open, setUi]);
 
@@ -709,6 +710,7 @@ export default function SettingsModal() {
 
   // Phones: a section slides in from the right over the list (push); back slides it away (pop).
   function go(next: string) {
+    if (CANVAS_SHELL && !next && window.matchMedia('(max-width:899px)').matches) { navigateBack!(() => setUi({ settingsTab: '' })); return; }
     const narrow = window.matchMedia('(max-width: 720px), (pointer: coarse) and (max-width: 1100px)').matches;
     if (narrow && dialog.current && Boolean(next) !== Boolean(tab)) pageSwap(next ? 'push' : 'pop', dialog.current, () => dialog.current, () => setUi({ settingsTab: next }));
     else setUi({ settingsTab: next });
@@ -720,9 +722,9 @@ export default function SettingsModal() {
   return (
     // On computers the sidebar stays usable next to Settings; on phones Settings covers the screen.
     <section className={`settings-page${tab ? ' has-section' : ''}${scrolled ? ' scrolled' : ''}`} aria-label="Settings" role="dialog" aria-modal={window.matchMedia('(max-width: 899px)').matches || undefined} data-keep-sidebar="true" tabIndex={-1} ref={dialog}>
-      <header className="settings-top">
+      {CANVAS_SHELL && window.matchMedia('(max-width:899px)').matches && PhoneNavigation ? <PhoneNavigation title={tab ? label : 'Settings'} /> : <header className="settings-top">
         {tab ? (
-          <button className="icon-btn settings-back" onClick={() => go('')} aria-label="All settings">
+          <button className="icon-btn settings-back" onClick={() => go('')} aria-label={CANVAS_SHELL ? "Back" : "All settings"}>
             <ChevronLeft size={24} />
           </button>
         ) : null}
@@ -734,7 +736,7 @@ export default function SettingsModal() {
         <button className="icon-btn" onClick={close} aria-label="Close" title="Close (Esc)">
           <X size={18} />
         </button>
-      </header>
+      </header>}
 
       <div className="settings-scroll" ref={panel} tabIndex={0} onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 40)}>
         {/* iPhone glass look: an iOS large title that scrolls away (hidden otherwise) */}

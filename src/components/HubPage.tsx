@@ -2,7 +2,7 @@
 // large title, a line about what's here, the main action, optional tabs, and the content below.
 import { ArrowLeft, ChevronLeft, FolderKanban, LayoutGrid, Menu, MessageCircle, Plus, Shapes } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { CANVAS_SHELL } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, PhoneNavigation, navigateBack } from '../lib/canvas-presentation';
 import { useFocusScope } from '../lib/focus-scope';
 import { installSwipeBack } from '../lib/swipe-back';
 import { swapControl } from '../lib/motion';
@@ -27,9 +27,9 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
 }) {
   const root = useRef<HTMLElement>(null);
   const phone = typeof window !== 'undefined' && window.matchMedia('(max-width: 899px)').matches;
-  useFocusScope(root, phone, onBack || onClose);
+  useFocusScope(root, phone, CANVAS_SHELL && phone ? () => navigateBack!(onBack || onClose) : onBack || onClose);
   useEffect(() => {
-    const key = (e: KeyboardEvent) => { if (e.key === 'Escape' && !document.querySelector('.modal-backdrop')) { e.preventDefault(); (onBack || onClose)(); } };
+    const key = (e: KeyboardEvent) => { if ((CANVAS_SHELL ? !e.defaultPrevented : true) && e.key === 'Escape' && !document.querySelector('.modal-backdrop')) { e.preventDefault(); (CANVAS_SHELL ? () => navigateBack!(onBack || onClose) : onBack || onClose)(); } };
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
   }, [onBack, onClose]);
@@ -41,7 +41,7 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
   }, [label]);
   // Phones: swipe right to go back (a step inside the page goes back to the page; otherwise to the chat).
   const back = useRef(onBack || onClose);
-  back.current = onBack || onClose;
+  back.current = CANVAS_SHELL ? () => navigateBack!(onBack || onClose) : onBack || onClose;
   const stepped = Boolean(onBack);
   useEffect(() => {
     const page = root.current;
@@ -53,9 +53,9 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
   const make = bar?.create || create;
   return (
     <main ref={root} className={`hub-page${scrolled ? ' scrolled' : ''}${bar || compact ? ' has-bar' : ''}`} aria-label={label} tabIndex={-1} data-keep-sidebar="true">
-      <div className="hub-bar">
+      {CANVAS_SHELL && phone && PhoneNavigation ? <PhoneNavigation title={typeof title === 'string' ? title : label} onBack={onBack} actions={make && <button type="button" aria-label={make.label} onClick={make.run}><Plus size={22} /></button>} /> : <div className="hub-bar">
         {onBack ? (
-          <button type="button" className="icon-btn hub-nav" aria-label="Back" onClick={onBack}><ChevronLeft size={26} /></button>
+          <button type="button" className="icon-btn hub-nav" aria-label="Back" onClick={CANVAS_SHELL ? () => navigateBack!(onBack) : onBack}><ChevronLeft size={26} /></button>
         ) : phone ? (
           <button type="button" className="icon-btn hub-nav" aria-label="Open sidebar" onClick={() => useStore.getState().setUi({ sidebarOpen: true })}><Menu size={20} /></button>
         ) : null}
@@ -65,7 +65,7 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
         {CANVAS_SHELL
           ? <button type="button" className="hub-close cv-chat-pill" aria-label="Close" title="Back to chat" onClick={onClose}><ArrowLeft size={18} aria-hidden="true" /><span>Chat</span></button>
           : <button type="button" className="btn ghost small hub-close" aria-label="Close" onClick={onClose}><span className="hub-close-long">Back to chat</span><span className="hub-close-short">Done</span></button>}
-      </div>
+      </div>}
       <div className="hub-scroll" onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 56)}>
         <div className="hub-inner">
           <header className="hub-head">
@@ -89,7 +89,7 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
           <div className="hub-body">{children}</div>
         </div>
       </div>
-      {phone && !onBack && <GlassTabs bar={bar} />}
+      {CANVAS_SHELL ? null : phone && !onBack && <GlassTabs bar={bar} />}
     </main>
   );
 }

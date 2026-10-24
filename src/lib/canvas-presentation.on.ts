@@ -18,3 +18,12 @@ export { BrandMark, BrandWordmark } from '../components/BrandCrease';
 export { default as CanvasNav } from '../components/CanvasNav';
 export const loadTreeKeys = () => import('./tree-keys');
 export { newGeneralChat } from './new-chat';
+
+export { default as PhoneNavigation } from '../components/PhoneNavigation';
+export { screenBack as navigateBack } from './screen-history';
+export { useScreenMemory } from './screen-memory';
+export const CanvasFilterMenu = lazy(() => import('../components/FilterMenu'));
+export { useBackLayer as useScreenBackLayer } from './back-stack';
+export const CanvasLibraryActions = lazy(() => import('../components/CanvasLibraryActions'));
+export { navigateScreen } from './screen-history';
+export const CanvasScreenActions = lazy(() => import('../components/ScreenActions'));

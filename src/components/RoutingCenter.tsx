@@ -4,16 +4,17 @@
 // selection through setChatModel, Layouts through LayoutEditor, usage through UsageTab, decisions through RouteWhy,
 // connections through Settings → Keys. Send-time routing, eligibility and recovery are unchanged.
 import '../styles/canvas-routing.css';
+import PhoneNavigation from './PhoneNavigation';
+import { screenBack } from '../lib/screen-history';
 import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowUpRight, Boxes, ChevronLeft, ChevronRight, KeyRound, Layers, Menu, Plus, Search, Shield, SlidersHorizontal, Waypoints, X } from 'lucide-react';
-import { useBackLayer } from '../lib/back-stack';
+import { ArrowLeft, ArrowUpRight, ChevronRight, Plus, Search, Shield, SlidersHorizontal, X } from 'lucide-react';
 import { modelLabel, selectCurrentChat, selectCurrentModel, useStore } from '../store';
 import { AI_PROVIDERS, providerEnabled } from '../lib/ai/provider-config.js';
 import { modelProblem } from '../lib/ai/eligibility.js';
 import { PROVIDER_NAMES, providerOfId } from '../lib/util';
 import { formatTokens, remaining } from '../lib/usage';
 import { installSwipeBack } from '../lib/swipe-back';
-import { closeRoutingCenter, showRoutingSection, useRoutingCenter, type RoutingSection } from '../lib/routing-center';
+import { closeRoutingCenter, showRoutingSection, showRoutingProvider, useRoutingCenter, type RoutingSection } from '../lib/routing-center';
 import type { Layout } from '../lib/layouts';
 import type { ModelInfo } from '../types';
 import { LayoutEditor } from './LayoutsTab';
@@ -23,6 +24,7 @@ import { providerPresentation } from '../lib/provider-presentation';
 import { routeWords } from '../lib/route-words';
 import FilterMenu from './FilterMenu';
 // Tier 5 panels (usage history, request log, routing file, connection check) load on first use, in their own chunk.
+const ScreenActions = lazy(() => import('./ScreenActions'));
 const extras = () => import('./RoutingExtras');
 const CheckConnection = lazy(() => extras().then((m) => ({ default: m.CheckConnection })));
 const UsageHistory = lazy(() => extras().then((m) => ({ default: m.UsageHistory })));
@@ -31,9 +33,7 @@ const RoutingFile = lazy(() => extras().then((m) => ({ default: m.RoutingFile })
 const RecentAnswers = lazy(() => extras().then((m) => ({ default: m.RecentAnswers })));
 
 const SECTIONS: [RoutingSection, string][] = [['overview', 'Overview'], ['providers', 'Providers'], ['models', 'Models'], ['policies', 'Policies'], ['usage', 'Usage'], ['diagnostics', 'Diagnostics']];
-// Phones: the four places you manage live in a dock at the bottom; Usage and Diagnostics open from the overview's route
-// panel as pages over it (they explain the route), with Back in the bar.
-const DOCK = [['overview', 'Overview', Waypoints], ['providers', 'Providers', KeyRound], ['models', 'Models', Boxes], ['policies', 'Policies', Layers]] as const;
+// Phones use a feature index and pushed screens; canonical UI history owns every Back path.
 const providerId = (model: ModelInfo) => (model.provider === 'google' ? 'gemini' : model.provider);
 const providerLabel = (id: string) => (id === 'gemini' ? 'Google AI Studio' : PROVIDER_NAMES[providerOfId(id + ':')] || id);
 const openSettings = (tab: string) => useStore.getState().setUi({ settingsOpen: true, settingsTab: tab, sidebarOpen: false });
@@ -83,13 +83,13 @@ const ago = (t: number) => {
 };
 function verdictOf(p: ProviderRow): { word: string; line: string; light: Light } {
   const s = p.status;
-  if (!p.keySaved && !p.enabled) return { word: 'Not connected', line: 'No key saved', light: 'off' };
-  if (!p.enabled) return { word: 'Off', line: 'Key saved · permission off', light: 'off' };
+  if (!p.keySaved && !p.enabled) return { word: 'No key saved', line: 'No key saved', light: 'off' };
+  if (!p.enabled) return { word: 'Permission off', line: 'Key saved · permission off', light: 'off' };
   if (!p.keySaved) return { word: 'Unavailable', line: 'Permission on · no key saved', light: 'off' };
-  if (s?.state === 'ready') return p.models.length ? { word: 'Available', line: s.lastSuccess ? `Models listed ${ago(s.lastSuccess)}` : 'Models listed', light: 'on' } : { word: 'Unavailable', line: 'No compatible models listed', light: 'off' };
-  if (s?.state === 'stale') return { word: 'Available from cache', line: 'Last refresh failed', light: 'stale' };
+  if (s?.state === 'ready') return p.models.length ? { word: 'Catalog ready', line: s.lastSuccess ? `Models listed ${ago(s.lastSuccess)}` : 'Models listed', light: 'on' } : { word: 'No compatible models', line: 'Discovery completed', light: 'off' };
+  if (s?.state === 'stale') return { word: 'Cached catalog', line: s.errorKind ? 'Last refresh failed' : 'Refresh pending', light: 'stale' };
   // The typed reason is in the provider's note; a refused key is named here because its fix differs.
-  if (s?.state === 'error') return { word: 'Unavailable', line: s.errorKind === 'auth' ? 'Key refused by the provider' : 'Model listing failed', light: 'fail' };
+  if (s?.state === 'error') return { word: 'Discovery failed', line: s.errorKind === 'auth' ? 'Key refused by the provider' : 'Model listing failed', light: 'fail' };
   return { word: 'Not listed yet', line: 'Model list not requested yet', light: 'off' };
 }
 const LightDot = ({ light }: { light: Light }) => <span className={`rc-light rc-light-${light}`} aria-hidden="true" />;
@@ -128,10 +128,13 @@ function usePhone() {
 
 const MANY = 8;
 
-function Providers({ preferred, openDetail, phone, detailBack, onDetail }: { preferred?: string; openDetail?: boolean; phone: boolean; detailBack: React.MutableRefObject<(() => boolean) | null>; onDetail: (open: boolean) => void }) {
+function Providers({ preferred, phone }: { preferred?: string; openDetail?: boolean; phone: boolean }) {
   const usage = useStore((s) => s.usage), enabledModels = useStore((s) => s.settings.enabledModels);
   const providers = useProviderRows();
-  const [selected, setSelected] = useState<string | null>(preferred || null), [detail, setDetail] = useState(Boolean(openDetail && preferred));
+  const route = useRoutingCenter();
+  const selected = route.provider ?? preferred ?? null, detail = Boolean(route.provider);
+  const setSelected = (id: string | null) => showRoutingProvider(id);
+  const setDetail = (value: boolean) => { if (!value) showRoutingProvider(null); };
   const [query, setQuery] = useState(''), [filter, setFilter] = useState<'all' | 'saved' | 'enabled' | 'attention'>('all');
   const input = useRef<HTMLInputElement>(null), title = useRef<HTMLHeadingElement>(null), list = useRef<HTMLDivElement>(null);
   // Phones: a provider opens as its own page, from the top.
@@ -154,11 +157,7 @@ function Providers({ preferred, openDetail, phone, detailBack, onDetail }: { pre
     setQuery(text); setFilter(scope);
     if (!providers.some((p) => p.id === selected && matches(p, text, scope))) { setSelected(null); setDetail(false); }
   };
-  const back = () => { const id = active?.id; setDetail(false); requestAnimationFrame(() => list.current?.querySelector<HTMLButtonElement>(`[data-provider="${id}"]`)?.focus({ preventScroll: !phone })); };
-  // Phones: Back (or Safari's edge swipe) closes the provider first.
-  detailBack.current = () => { if (!(phone && detail && active)) return false; back(); return true; };
-  const showing = phone && detail && Boolean(active);
-  useEffect(() => { onDetail(showing); }, [showing, onDetail]);
+
 
   return (
     <section className={`rc-providers${shown ? ' has-detail' : ''}`} aria-label="Provider browser">
@@ -271,7 +270,7 @@ function ProviderModels({ models }: { models: ModelInfo[] }) {
 }
 
 export default function RoutingCenter() {
-  const { open, section } = useRoutingCenter();
+  const { open, section, provider } = useRoutingCenter();
   const chat = useStore(selectCurrentChat), model = useStore(selectCurrentModel);
   const catalog = useStore((s) => s.catalog), config = useStore((s) => s.settings), usage = useStore((s) => s.usage);
   const owner = useStore((s) => s.user?.uid), currentId = useStore((s) => s.currentId);
@@ -281,10 +280,10 @@ export default function RoutingCenter() {
   const [editing, setEditing] = useState<Layout | null>(null);
   const [query, setQuery] = useState('');
   // A provider opened from the overview: the Providers page opens on it.
-  const [focusProvider, setFocusProvider] = useState<string | null>(null);
+
   const page = useRef<HTMLElement>(null), heading = useRef<HTMLHeadingElement>(null);
-  const detailBack = useRef<(() => boolean) | null>(null), came = useRef<RoutingSection>('overview');
-  const [providerOpen, setProviderOpen] = useState(false);
+  const came = useRef<RoutingSection>('overview');
+  const providerOpen = Boolean(provider);
   // Another conversation or account is another context: the Routing Center closes.
   const opened = useRef({ owner, currentId });
   useEffect(() => { if (open) opened.current = { owner, currentId }; }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -292,7 +291,6 @@ export default function RoutingCenter() {
   useEffect(() => { if (open) heading.current?.focus({ preventScroll: true }); }, [open]);
   useEffect(() => {
     setEditing(null); if (page.current) page.current.scrollTop = 0;
-    if (section !== 'providers') setFocusProvider(null);
     // Phones show one place at a time: its heading takes focus; back from Usage or Diagnostics, the row that opened it.
     const from = came.current; came.current = section;
     if (!phone || !open) return;
@@ -301,13 +299,13 @@ export default function RoutingCenter() {
     else page.current?.querySelector<HTMLElement>(section === 'overview' ? '#rc-title' : '.rc-body h2')?.focus({ preventScroll: true });
   }, [section]); // eslint-disable-line react-hooks/exhaustive-deps
   // Phones: an open provider, Usage and Diagnostics are pages over their place. Back (or Safari's edge swipe) closes them.
-  const drill = phone && ((providerOpen && section === 'providers') || section === 'usage' || section === 'diagnostics');
-  useBackLayer(open && drill, () => { if (!detailBack.current?.()) showRoutingSection('overview'); });
+  const drill = phone && (providerOpen || section !== 'overview');
+  // Every section/provider is represented in the shared history adapter; no competing local Back layer.
   // Phones: elsewhere, swipe right to go back to the chat, as from the other pages shown in its place.
   useEffect(() => {
     const el = page.current;
     if (!open || !el) return;
-    return installSwipeBack(el, () => window.matchMedia(PHONE).matches && !el.matches('.rc-drill') && !el.querySelector('[role="dialog"]'), () => {}, closeRoutingCenter, { reveal: () => document.querySelector<HTMLElement>('.app > .main') });
+    return installSwipeBack(el, () => window.matchMedia(PHONE).matches && !el.querySelector('[role="dialog"]'), () => {}, () => screenBack(closeRoutingCenter), { reveal: () => document.querySelector<HTMLElement>('.app > .main') });
   }, [open]);
   if (!open) return null;
 
@@ -330,20 +328,16 @@ export default function RoutingCenter() {
   const reach = pool.length ? `${pool.slice(0, 3).join(layout?.mode === 'order' ? ' → ' : ' · ')}${pool.length > 3 ? ` +${pool.length - 3} more` : ''}`
     : picked ? `${providerLabel(providerId(picked))}${picked.context ? ` · ${formatTokens(picked.context)} context` : ''}` : '';
   const go = (id: RoutingSection) => showRoutingSection(id);
-  const openProvider = (id: string) => { setFocusProvider(id); go('providers'); };
+  const openProvider = (id: string) => { go('providers'); showRoutingProvider(id); };
   const sub = phone && section !== 'overview';
-  const up = !phone ? null : section === 'providers' && providerOpen ? { text: 'Providers', label: 'Back to providers', run: () => detailBack.current?.() }
-    : section === 'usage' || section === 'diagnostics' ? { text: 'Overview', label: 'Back to overview', run: () => go('overview') } : null;
+
 
   return (
-    <section ref={page} className={`rc-page${sub ? ' rc-sections-page' : ''}${drill ? ' rc-drill' : ''}`} hidden={covered} aria-labelledby="rc-title"
-      onKeyDown={(e) => { if (e.key === 'Escape' && !e.defaultPrevented && !(e.target as Element).closest('[role="dialog"], [role="menu"], [role="listbox"], input, textarea, select')) { e.preventDefault(); closeRoutingCenter(); } }}>
-      {/* One bar. Computers: the title, the six places and Chat on one line. Phones: the drawer, or Back inside a page
-          over its place (never both), and Chat at the end; the places are in the dock below. */}
+    <section ref={page} className={`rc-page${sub ? ' rc-sections-page' : ''}${drill ? ' rc-drill' : ''}`} hidden={covered} aria-label="Models and routing"
+      onKeyDown={(e) => { if (e.key === 'Escape' && !e.defaultPrevented && !(e.target as Element).closest('[role="dialog"], [role="menu"], [role="listbox"], input, textarea, select')) { e.preventDefault(); screenBack(closeRoutingCenter); } }}>
+      {/* Desktop retains split-view navigation; phone chrome is shared with Library, Tools and Settings. */}
+      {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : section === 'overview' ? 'Models & routing' : SECTIONS.find(([id]) => id === section)?.[1] || 'Routing'} actions={providerOpen ? <Suspense fallback={null}><ScreenActions actions={[{ label: 'Connection settings', run: () => openSettings('keys') }]} /></Suspense> : undefined} /> : (
       <header className={`rc-head${sub ? ' rc-head-sub' : ''}`}>
-        {phone && (up
-          ? <button type="button" className="rc-up" aria-label={up.label} onClick={up.run}><ChevronLeft size={20} aria-hidden="true" />{up.text}</button>
-          : <button type="button" className="rc-menu" aria-label="Open sidebar" onClick={() => useStore.getState().setUi({ sidebarOpen: true })}><Menu size={20} /></button>)}
         <h1 id="rc-title" tabIndex={-1} ref={heading}>Routing Center</h1>
         {!phone && (
           <nav className="rc-tabs" aria-label="Routing sections">
@@ -351,10 +345,15 @@ export default function RoutingCenter() {
           </nav>
         )}
         <button type="button" className="rc-close" aria-label="Back to chat" onClick={closeRoutingCenter}><ArrowLeft size={18} /><span>Chat</span></button>
-      </header>
+      </header>)}
 
-      {section === 'overview' && (
-        <div className="rc-body rc-overview">
+
+
+      {section === 'overview' && (phone ? <div className="rc-phone-overview">
+        <section className="rc-route" aria-label="Current routing mode"><p className="rc-kicker">This conversation</p><h2>{modelLabel(catalog, model)}</h2><p className="rc-route-line">{sentence}</p>{reach && <p className="rc-reach">{reach}</p>}</section>
+        <nav className="routing-directory" aria-label="Routing sections">{SECTIONS.filter(([id]) => id !== 'overview').map(([id, label]) => <button type="button" key={id} aria-label={label} aria-describedby={`routing-${id}-description`} onClick={() => go(id)}><span><strong>{label}</strong><small id={`routing-${id}-description`}>{id === 'providers' ? `${providers.filter(p => p.keySaved).length} keys saved` : id === 'models' ? `${models.length} catalog models · ${choices} enabled` : id === 'policies' ? `${layouts.length} saved Layouts` : id === 'usage' ? 'Local activity and reported limits' : last?.model ? `Recorded: ${modelLabel(catalog, last.model)}` : 'No recorded answer yet'}</small></span><ChevronRight size={18} /></button>)}</nav>
+        <Suspense fallback={null}><RecentAnswers /></Suspense>
+      </div> : <div className="rc-body rc-overview">
           <div className="rc-col">
             <section className="rc-route" aria-label="Current routing mode">
               <p className="rc-kicker">Next message in this chat</p>
@@ -385,7 +384,8 @@ export default function RoutingCenter() {
         </div>
       )}
 
-      {section === 'providers' && <div className="rc-body"><Providers key={`${owner || 'signed-out'}:${focusProvider || ''}`} preferred={focusProvider || current?.split(':')[0]} openDetail={Boolean(focusProvider)} phone={phone} detailBack={detailBack} onDetail={setProviderOpen} /></div>}
+
+      {section === 'providers' && <div className="rc-body"><Providers key={owner || 'signed-out'} preferred={current?.split(':')[0]} phone={phone} /></div>}
 
       {section === 'models' && (
         <div className="rc-body">
@@ -427,14 +427,7 @@ export default function RoutingCenter() {
         </div>
       )}
 
-      {phone && (
-        <nav className="rc-dock" aria-label="Routing sections">
-          {DOCK.map(([id, label, Icon]) => (
-            <button type="button" key={id} data-section={id} aria-current={section === id ? 'page' : undefined} data-within={id === 'overview' && (section === 'usage' || section === 'diagnostics') ? '' : undefined}
-              onClick={() => (id === section ? id === 'providers' && detailBack.current?.() : go(id))}><Icon size={20} aria-hidden="true" /><span>{label}</span></button>
-          ))}
-        </nav>
-      )}
+
     </section>
   );
 }

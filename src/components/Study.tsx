@@ -1,3 +1,4 @@
+import { useScreenBackLayer, CANVAS_SHELL, useScreenMemory } from '../lib/canvas-presentation';
 // Study: decks of flashcards and quizzes made from your chats and documents. Flashcards flip on tap; "Knew it"
 // sends a card further away, "Not yet" brings it back soon. The quiz keeps your scores.
 import { ArrowLeft, BookOpenCheck, Brain, Check, ChevronRight, FileText, GraduationCap, Layers, Loader2, MessageSquare, Plus, RotateCcw, Search, Trash2, X } from 'lucide-react';
@@ -21,7 +22,8 @@ export default function Study({ onClose, startFrom }: { onClose: () => void; sta
   const uid = useStore((s) => s.user?.uid);
   const store = useMemo(() => (uid ? new StudyStore(uid) : null), [uid]);
   const [decks, setDecks] = useState<StudyDeck[]>(() => store?.cached() || []);
-  const [view, setView] = useState<View>({ kind: 'list' });
+  const [view, setView] = CANVAS_SHELL ? useScreenMemory!<View>('study-view', { kind: 'list' }) : useState<View>({ kind: 'list' });
+  if (CANVAS_SHELL) useScreenBackLayer!(view.kind !== 'list', () => setView({ kind: 'list' }), () => setView(view), `${view.kind}:${'id' in view ? view.id : ''}`);
   const [making, setMaking] = useState<string | null>(null);
   useEffect(() => { if (store) void store.list().then((d) => d.length && setDecks(d)); }, [store]);
   const save = (deck: StudyDeck) => { setDecks((all) => [deck, ...all.filter((d) => d.id !== deck.id)]); void store?.put(deck); };

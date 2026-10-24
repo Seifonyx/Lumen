@@ -1,3 +1,4 @@
+import { useScreenBackLayer, CANVAS_SHELL } from '../lib/canvas-presentation';
 // Assistants: saved helpers with their own instructions and model. Start a chat with one, or make your own.
 // (Prompts live in the message box's + menu, tools there too, uploaded files in Files, schedules in Settings.)
 import { useState } from 'react';
@@ -15,7 +16,7 @@ const hue = (name: string) => HUES[[...name].reduce((n, c) => n + c.charCodeAt(0
 const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() || '').join('') || '?';
 
 /** With `onDone`, this is just the editor (opened from Tools on iPhone): Back, Save and Delete return there. */
-export default function AssistantLibrary({ onClose, startNew = false, startWith, onDone }: { onClose: () => void; startNew?: boolean; startWith?: SavedAssistant; onDone?: () => void }) {
+export default function AssistantLibrary({ onClose, startNew = false, startWith, onDone }: { onClose: () => void; startNew?: boolean; startWith?: SavedAssistant; onDone?: (draft?: SavedAssistant) => void }) {
   const settings = useStore((s) => s.settings);
   const catalog = useStore((s) => s.catalog);
   const { updateSettings, startAssistant, toast } = useStore.getState();
@@ -23,6 +24,7 @@ export default function AssistantLibrary({ onClose, startNew = false, startWith,
   const [query, setQuery] = useState('');
   const [editing, setEditingState] = useState<SavedAssistant | null>(() => startWith || (startNew ? { id: uid(), name: '', description: '', instructions: '', model: AUTO } : null));
   const setEditing = (next: SavedAssistant | null) => { if (!next && onDone) onDone(); else setEditingState(next); };
+  if (CANVAS_SHELL) useScreenBackLayer!(Boolean(editing), () => setEditing(null), () => { if (onDone) onDone(editing || undefined); else setEditingState(editing); }, editing?.id || 'assistants');
   const save = () => {
     const assistant = editing && normalizeAssistant(editing);
     if (!assistant) return;

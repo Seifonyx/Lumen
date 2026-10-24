@@ -17,7 +17,11 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // the reply line, attachments; ≈1.6 KB gz) style the first conversation on screen, so they cannot load later.
 // startupJs 9 → 9.5 (Phase 3 slice 3): a wheel, drag or Page Up stops following a streaming reply at once, and Stop
 // returns the keyboard to the message box (≈0.2 KB gz); both act on the first interaction, so neither can load later.
-const BUDGET = { startupJs: 9.5, startupCss: 16, routingCenter: 9, canvasCss: 16 };
+// iPhone navigation reset (owner-authorized 2026-10-24): a complete canonical UI history adapter and
+// shared phone navigation replace the single surface sentinel. Must run before the first navigation;
+// measured about +1.1 KB gz over the previous limit. Shared accessible phone bars/content rows add about0.8KB CSS for phone bars, content rows and anchored actions.
+// Provider action menus remain lazy; ordinary bytes and the startup CSS / Routing Center limits stay fixed.
+const BUDGET = { startupJs: 11, startupCss: 16, routingCenter: 9, canvasCss: 17 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

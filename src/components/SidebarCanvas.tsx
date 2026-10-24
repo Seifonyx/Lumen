@@ -73,7 +73,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const [more, setMore] = useState<Record<string, boolean>>({});
   const [allChats, setAllChats] = useState(false);
   // Back (or Safari's edge swipe) closes All chats, as it closes the pages shown over the chat.
-  useBackLayer(allChats, () => setAllChats(false));
+  useBackLayer(allChats, () => setAllChats(false), () => setAllChats(true));
   const [asking, setAsking] = useState<string | null>(null);
   const [manager, setManager] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);

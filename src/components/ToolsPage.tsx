@@ -8,6 +8,7 @@ import { ANALYSIS_TEMPLATES } from '../lib/analysis';
 import { BUILTIN_ASSISTANTS } from '../lib/assistants';
 import { useStore } from '../store';
 import HubPage from './HubPage';
+import { CANVAS_SHELL, useScreenMemory } from '../lib/canvas-presentation';
 import AssistantLibrary from './AssistantLibrary';
 import { uid } from '../lib/util';
 import type { SavedAssistant } from '../types';
@@ -50,10 +51,10 @@ function ToolCard({ t }: { t: Tool }) {
 export default function ToolsPage({ onClose, initial = 'research', newAssistant = false }: { onClose: () => void; initial?: Section; newAssistant?: boolean }) {
   const keys = useStore((s) => s.keys);
   const settings = useStore((s) => s.settings);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = CANVAS_SHELL ? useScreenMemory!('tools-query', '') : useState('');
   const [active, setActive] = useState<Section>(initial);
   // iPhone: an assistant is made or edited right here, and Back, Save or Delete return to this tab.
-  const [editingAssistant, setEditingAssistant] = useState<SavedAssistant | 'new' | null>(newAssistant ? 'new' : null);
+  const [editingAssistant, setEditingAssistant] = CANVAS_SHELL ? useScreenMemory!<SavedAssistant | 'new' | null>('tools-editor', newAssistant ? 'new' : null, newAssistant) : useState<SavedAssistant | 'new' | null>(newAssistant ? 'new' : null);
   // iPhone glass look: one category at a time, chosen in the bottom tab bar.
   const [glassPhone] = useState(() => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches);
   const scroller = useRef<HTMLDivElement>(null);
@@ -79,7 +80,7 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
 
   // (On iPhone this tab is the only list of assistants, so it shows them all.)
   const allAssistants = [...(settings.assistants || []), ...BUILTIN_ASSISTANTS];
-  const assistants = glassPhone ? allAssistants : allAssistants.slice(0, 6);
+  const assistants = CANVAS_SHELL ? allAssistants : glassPhone ? allAssistants : allAssistants.slice(0, 6);
   const q = query.trim().toLowerCase();
   const match = (t: { name: string; text: string }) => !q || `${t.name} ${t.text}`.toLowerCase().includes(q);
   // The category list follows the section you're reading.
@@ -102,15 +103,15 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
   const create = active === 'assistants' ? { label: 'New assistant', run: () => setEditingAssistant('new') } : undefined;
   const bar = glassPhone ? { label: 'Tool categories', active, onSelect: (id: string) => pick(id as Section), create, items: SECTIONS.map((sec) => ({ id: sec.id, label: sec.label, icon: ICONS[sec.id], hue: HUES[sec.id] })) } : undefined;
   // With the tab bar, only the chosen category shows, and the search looks only inside it.
-  const shownHere = (id: Section) => !glassPhone || id === active;
+  const shownHere = (id: Section) => CANVAS_SHELL || !glassPhone || id === active;
   const jump = (id: Section) => { setActive(id); document.getElementById(`tools-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
 
 
-  if (editingAssistant) return <AssistantLibrary key={typeof editingAssistant === 'string' ? 'new' : editingAssistant.id} startNew={editingAssistant === 'new'} startWith={typeof editingAssistant === 'string' ? undefined : editingAssistant} onClose={onClose} onDone={() => setEditingAssistant(null)} />;
+  if (editingAssistant) return <AssistantLibrary key={typeof editingAssistant === 'string' ? 'new' : editingAssistant.id} startNew={editingAssistant === 'new'} startWith={typeof editingAssistant === 'string' ? undefined : editingAssistant} onClose={onClose} onDone={CANVAS_SHELL ? (draft) => setEditingAssistant(draft || null) : () => setEditingAssistant(null)} />;
 
   return (
     <HubPage label="Tools" title="Tools" subtitle="Everything Lumen can do beyond a chat. The ones you use most are also in the + menu." onClose={onClose} bar={bar}
-      toolbar={<label className="hub-search"><Search size={16} /><input type="search" aria-label="Search tools" placeholder={glassPhone ? `Search ${SECTIONS.find((x) => x.id === active)?.label}` : 'Search tools'} value={query} onChange={(e) => setQuery(e.target.value)} /></label>}>
+      toolbar={CANVAS_SHELL ? <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search tools" placeholder={!CANVAS_SHELL && glassPhone ? `Search ${SECTIONS.find((x) => x.id === active)?.label}` : 'Search tools'} value={query} onChange={(e) => setQuery(e.target.value)} />{query && <button type="button" aria-label="Clear tool search" onClick={(e) => { setQuery(''); e.currentTarget.parentElement?.querySelector('input')?.focus(); }}>×</button>}</label> : <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search tools" placeholder={glassPhone ? `Search ${SECTIONS.find((x) => x.id === active)?.label}` : 'Search tools'} value={query} onChange={(e) => setQuery(e.target.value)} /></label>}>
       <div className="tools-layout" ref={scroller}>
         <nav className="tools-rail" aria-label="Tool categories">
           {SECTIONS.map((sec) => <button key={sec.id} type="button" className={active === sec.id ? 'active' : ''} aria-current={active === sec.id || undefined} onClick={() => jump(sec.id)}>{sec.label}</button>)}
@@ -123,7 +124,7 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
               if (q && !list.length) return null;
               return (
                 <section key={sec.id} id={`tools-${sec.id}`} className="tools-section">
-                  {!glassPhone && <header><h2>{sec.label}</h2><p>{sec.blurb}</p><button type="button" className="btn small" onClick={() => s.setUi({ page: 'assistants' })}>All assistants</button></header>}
+                  {(CANVAS_SHELL || !glassPhone) && <header><h2>{sec.label}</h2><p>{sec.blurb}</p><button type="button" className="btn small" onClick={() => CANVAS_SHELL ? setEditingAssistant('new') : s.setUi({ page: 'assistants' })}>{CANVAS_SHELL ? 'New assistant' : 'All assistants'}</button></header>}
                   <div className="tools-grid">
                     {list.map((a) => (
                       <div key={a.id} className="tool-card-wrap">
@@ -144,12 +145,12 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
             if (!list.length) return null;
             return (
               <section key={sec.id} id={`tools-${sec.id}`} className="tools-section">
-                {!glassPhone && <header><h2>{sec.label}</h2><p>{sec.blurb}</p></header>}
+                {(CANVAS_SHELL || !glassPhone) && <header><h2>{sec.label}</h2><p>{sec.blurb}</p></header>}
                 <div className="tools-grid">{list.map((t) => <ToolCard key={t.id} t={t} />)}</div>
               </section>
             );
           })}
-          {q && (glassPhone
+          {q && (!CANVAS_SHELL && glassPhone
             ? (active === 'assistants' ? !assistants.some((a) => match({ name: a.name, text: a.description })) : !tools.some((t) => t.section === active && match(t)))
             : !tools.some(match) && !assistants.some((a) => match({ name: a.name, text: a.description }))) && <p className="hub-none">No tools match “{query}”.</p>}
         </div>

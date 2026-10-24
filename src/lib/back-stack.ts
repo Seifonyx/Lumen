@@ -4,6 +4,11 @@
 // opens; a newer registration replaces an older one.
 import { useEffect, useRef } from 'react';
 
+let identity = 'layer';
+export const backLayerIdentity = () => identity;
+let reopen: (() => void) | null = null;
+export const backLayerRestore = () => reopen;
+export const clearBackLayerRestore = () => { reopen = null; };
 let layer: (() => void) | null = null;
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((fn) => fn());
@@ -21,13 +26,15 @@ export function closeTopBackLayer() {
 }
 
 /** Registers `open` as the Back layer; `close` is called when Back closes it. */
-export function useBackLayer(open: boolean, close: () => void) {
+export function useBackLayer(open: boolean, close: () => void, restore?: () => void, key = 'layer') {
   const latest = useRef(close);
   latest.current = close;
+  useEffect(() => { if (open && restore) { reopen = restore; identity = key; notify(); } }, [open, restore, key]);
   useEffect(() => {
     if (!open) return;
     const mine = () => latest.current();
     layer = mine;
+    if (restore) reopen = restore;
     notify();
     return () => { if (layer === mine) { layer = null; notify(); } };
   }, [open]);

@@ -259,7 +259,7 @@ function ProviderModels({ models, searchHost }: { models: ModelInfo[]; searchHos
   const [query, setQuery] = useState(''), [page, setPage] = useState(0);
   const filtered = useMemo(() => models.filter((m) => `${m.label} ${m.name}`.toLowerCase().includes(query.trim().toLowerCase())), [models, query]);
   const pages = Math.max(1, Math.ceil(filtered.length / 24)), current = Math.min(page, pages - 1);
-  const search = <div className="rc-search"><Search size={16} aria-hidden="true" /><input type="search" aria-label="Find a model" placeholder="Find a model" value={query} onChange={(e) => { setQuery(e.target.value); setPage(0); }} /></div>;
+  const search = <div className="rc-search"><Search size={16} aria-hidden="true" /><input type="search" aria-label="Find a model" placeholder="Find a model" value={query} onChange={(e) => { setQuery(e.target.value); setPage(0); }} />{query && <button type="button" aria-label="Clear provider model search" onClick={e => { setQuery(''); setPage(0); e.currentTarget.parentElement?.querySelector('input')?.focus(); }}><X size={16}/></button>}</div>;
 
   return (
     <section className="rc-provider-models" aria-label="Provider models">

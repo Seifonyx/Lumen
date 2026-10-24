@@ -144,7 +144,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         assert(providerRequests.every(r => r.method === 'GET' && new URL(r.url).pathname.endsWith('/models')), 'only catalog GETs, never inference');
       }
       await tab('Overview');
-      await (phone ? rc.locator('.phone-navigation').getByRole('button', { name:'Back', exact:true }) : rc.getByRole('button', { name:'Back to chat', exact:true })).click();
+      if(phone){for(let i=0;i<24 && await rc.isVisible();i++){await rc.locator('.phone-navigation').getByRole('button',{name:'Back',exact:true}).click();await page.waitForTimeout(120);}assert.equal(await rc.isVisible(),false,'all visited sections unwind through Back');}else await rc.getByRole('button',{name:'Back to chat',exact:true}).click();
       assert.equal(await page.locator('.composer textarea').inputValue(), draft);
       await open();
       // Keyboard-focus evidence is separate from ordinary presentation captures above.

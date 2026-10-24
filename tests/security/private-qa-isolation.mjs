@@ -171,6 +171,8 @@ try {
     // Required in the Canvas graph and forbidden in the ordinary graph above; no permission/network owner changes.
     'src/lib/provider-presentation.ts',
     // Owner-authorized shared iPhone navigation reset: UI-only owners, ordinary graph remains isolated.
+    // Reviewed feature-local section presentation and media subscription; no data/auth/network owner.
+    'src/components/PhoneSections.tsx', 'src/lib/phone-layout.ts',
     'src/components/PhoneNavigation.tsx', 'src/components/ScreenActions.tsx', 'src/components/CanvasLibraryActions.tsx',
     'src/components/RunPanel.tsx', 'src/components/ProjectManager.tsx', 'src/components/ProjectsPage.tsx', 'src/components/CollectionPage.tsx', 'src/components/ToolsPage.tsx', 'src/components/AssistantLibrary.tsx', 'src/components/Study.tsx',
     'src/components/CanvasPanel.tsx', 'src/components/ImageViewer.tsx', 'src/lib/sidebar-gesture.ts', 'src/lib/screen-history.ts', 'src/lib/screen-memory.ts'];

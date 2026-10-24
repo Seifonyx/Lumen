@@ -113,7 +113,7 @@ try {
       // Providers: filters, search, detail.
       await tab(page, 'Providers');
       await settle(page);
-      if (phone) { assert.equal(await rc(page).locator('.rc-dock').count(),0); assert.equal(await rc(page).locator('.phone-navigation h1').innerText(),'Providers'); }
+      if (phone) { assert.equal(await rc(page).locator('.rc-dock').count(),0); assert.equal(await rc(page).locator('.phone-navigation h1').innerText(),'Models & routing'); assert.equal(await rc(page).getByRole('navigation',{name:'Routing sections'}).getByRole('button',{name:'Providers',exact:true}).getAttribute('aria-current'),'page'); }
       assert.match(await rc(page).locator('.rc-count').innerText(), /^\d+ of \d+ providers$/);
       // Your providers form the ledger with one verdict each; the others are names to add, the first few shown until asked.
       const fold = rc(page).locator('.rc-more');

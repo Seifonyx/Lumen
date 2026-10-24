@@ -103,7 +103,8 @@ function Providers({ preferred, openDetail, phone, detailBack, onDetail }: { pre
   const [selected, setSelected] = useState<string | null>(preferred || null), [detail, setDetail] = useState(Boolean(openDetail && preferred));
   const [query, setQuery] = useState(''), [filter, setFilter] = useState<'all' | 'saved' | 'enabled' | 'attention'>('all');
   const input = useRef<HTMLInputElement>(null), title = useRef<HTMLHeadingElement>(null), list = useRef<HTMLDivElement>(null);
-  useEffect(() => { if (detail) title.current?.focus({ preventScroll: true }); }, [selected, detail]);
+  // Phones: a provider opens as its own page, from the top.
+  useEffect(() => { if (!detail) return; if (phone) title.current?.closest('.rc-page')?.scrollTo(0, 0); title.current?.focus({ preventScroll: true }); }, [selected, detail, phone]);
   const enabled = providers.filter((p) => p.enabled).length, saved = providers.filter((p) => p.keySaved).length;
   const matches = (p: ProviderRow, text: string, scope: typeof filter) => (scope === 'all' || (scope === 'saved' ? p.keySaved : scope === 'attention' ? p.presentation.attention : p.enabled)) && `${p.label} ${p.id}`.toLowerCase().includes(text.trim().toLowerCase());
   const visible = providers.filter((p) => matches(p, query, filter));
@@ -125,7 +126,7 @@ function Providers({ preferred, openDetail, phone, detailBack, onDetail }: { pre
     setQuery(text); setFilter(scope);
     if (!providers.some((p) => p.id === selected && matches(p, text, scope))) { setSelected(null); setDetail(false); }
   };
-  const back = () => { const id = active?.id; setDetail(false); requestAnimationFrame(() => list.current?.querySelector<HTMLButtonElement>(`[data-provider="${id}"]`)?.focus({ preventScroll: true })); };
+  const back = () => { const id = active?.id; setDetail(false); requestAnimationFrame(() => list.current?.querySelector<HTMLButtonElement>(`[data-provider="${id}"]`)?.focus({ preventScroll: !phone })); };
   // Phones: Back (or Safari's edge swipe) closes the provider first.
   detailBack.current = () => { if (!(phone && detail && active)) return false; back(); return true; };
   // Phones: the bar's back button leads to the list while a provider is open.
@@ -284,7 +285,7 @@ export default function RoutingCenter() {
     if (section !== 'providers') setFocusProvider(null);
     // Phones show one section at a time: its heading takes focus; back on the overview, the row you came from does.
     if (!phone || !open) return;
-    if (section === 'overview') page.current?.querySelector<HTMLElement>(`.rc-sections [data-section="${came.current}"]`)?.focus({ preventScroll: true });
+    if (section === 'overview') page.current?.querySelector<HTMLElement>(`.rc-sections [data-section="${came.current}"]`)?.focus();
     else { came.current = section; page.current?.querySelector<HTMLElement>('.rc-body h2')?.focus({ preventScroll: true }); }
   }, [section]); // eslint-disable-line react-hooks/exhaustive-deps
   // Phones: a section is a page over the overview. Back (or Safari's edge swipe) closes an open provider, then the section.

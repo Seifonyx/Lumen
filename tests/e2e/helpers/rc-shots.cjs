@@ -33,9 +33,17 @@ const CHATS = [
 
 (async () => {
   const browser = await chromium.launch();
-  for (const state of states) for (const theme of ['light', 'dark']) for (const [tag, w, h] of SIZES) {
+  // One retry per case: a busy machine can miss a first paint.
+  for (const state of states) for (const theme of ['light', 'dark']) for (const size of SIZES) {
+    try { await capture(browser, state, theme, size); } catch (e) { console.warn(`retry ${state} ${theme} ${size[0]}: ${e.message.split('\n')[0]}`); await capture(browser, state, theme, size); }
+  }
+  await browser.close();
+})().catch((e) => { console.error(e); process.exit(1); });
+
+async function capture(browser, state, theme, [tag, w, h]) {
+  {
     const name = (screen) => `${state}-${tag}-${theme}-${screen}.png`;
-    if (only && !['overview', 'providers', 'detail', 'detail-anthropic'].some((s) => only.test(name(s)))) continue;
+    if (only && !['overview', 'providers', 'detail', 'detail-anthropic'].some((s) => only.test(name(s)))) return;
     const phone = w < 900;
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: phone, hasTouch: phone, deviceScaleFactor: 1, reducedMotion: 'reduce', colorScheme: theme, serviceWorkers: 'block' });
     await ctx.route('**/*', (r) => new URL(r.request().url()).origin === new URL(base).origin || /^(data|blob):/.test(r.request().url()) ? r.continue() : r.abort());
@@ -49,6 +57,9 @@ const CHATS = [
     const page = await ctx.newPage();
     page.setDefaultTimeout(15000);
     await page.goto(base + '/');
+    // Without a key Lumen opens Settings → Keys first (its real first run); close it as a person would.
+    const settings = page.getByRole('dialog', { name: 'Settings' });
+    if (state === 'empty') { await settings.waitFor(); await settings.getByRole('button', { name: 'Close', exact: true }).first().click(); }
     await page.locator('.composer textarea').waitFor();
     if (state !== 'empty') { await seed(page, uid, CHATS); await page.reload(); await page.locator('.composer textarea').waitFor(); }
     if (state === 'dense') await page.evaluate(() => document.documentElement.style.setProperty('--fs', '19px'));
@@ -91,5 +102,4 @@ const CHATS = [
     }
     await ctx.close();
   }
-  await browser.close();
-})().catch((e) => { console.error(e); process.exit(1); });
+}

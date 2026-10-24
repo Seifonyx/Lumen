@@ -140,6 +140,45 @@ try {
           if (name === 'library') {
             assert.ok(await page.locator('.coll-item.kind-documents').count() >= 3, 'populated QA Library shows representative documents');
             assert.ok(await page.locator('.coll-item.kind-files').count() >= 2, 'populated QA Library shows mixed attachments');
+            // PDF/TXT thumbnail edges and painted filenames must stay separate at all iPhone widths,
+            // in Light/Dark on both Chromium and WebKit, with accessible action targets intact.
+            if (phone) {
+              const fileRows = await page.locator('.coll-item.kind-files').evaluateAll((rows) => rows.map((row) => {
+                const icon = row.querySelector('.coll-file');
+                const meta = row.querySelector('.doc-meta');
+                const name = row.querySelector('.doc-name');
+                const sub = row.querySelector('.doc-sub');
+                const open = row.querySelector('.doc-open');
+                const action = row.querySelector('.screen-actions > button');
+                const box = (element) => { const r = element.getBoundingClientRect(); return { left: r.left, right: r.right, width: r.width }; };
+                const glyph = document.createRange();
+                glyph.setStart(name.firstChild, 0);
+                glyph.setEnd(name.firstChild, 1);
+                return {
+                  filename: name.textContent,
+                  extension: row.querySelector('.coll-ext')?.textContent,
+                  icon: box(icon), meta: box(meta), name: box(name), sub: box(sub),
+                  firstGlyph: box(glyph), open: box(open), action: action ? box(action) : null,
+                  openLabel: open.getAttribute('aria-label'),
+                  actionLabel: action?.getAttribute('aria-label')
+                };
+              }));
+              assert.deepEqual(fileRows.map((row) => row.extension).sort(), ['PDF', 'TXT'], `${tag}: synthetic PDF and TXT are both present`);
+              for (const row of fileRows) {
+                assert.ok(row.icon.width >= 55 && row.icon.width <= 56.5, `${tag}: ${row.filename} stays in its 56px icon track: ${JSON.stringify(row)}`);
+                assert.ok(row.icon.right + 8 <= row.meta.left + 0.5, `${tag}: ${row.filename} icon and metadata are separate: ${JSON.stringify(row)}`);
+                assert.ok(row.icon.right + 8 <= row.firstGlyph.left + 0.5 && row.firstGlyph.width > 0,
+                  `${tag}: ${row.filename} first painted character clears the icon: ${JSON.stringify(row)}`);
+                assert.ok(row.name.width > 40 && row.sub.width > 40 && row.name.right <= row.open.right + 0.5,
+                  `${tag}: ${row.filename} text fits within the open button: ${JSON.stringify(row)}`);
+                assert.ok(row.action && row.open.right + 3.5 <= row.action.left && row.action.width >= 44,
+                  `${tag}: ${row.filename} actions retain a distinct tap target: ${JSON.stringify(row)}`);
+                assert.equal(row.openLabel, `Open ${row.filename}`, `${tag}: full accessible filename retained`);
+                assert.ok(row.actionLabel, `${tag}: file action remains named for assistive technology`);
+              }
+              await page.locator('.coll-item.kind-files').last().scrollIntoViewIfNeeded();
+              await shot(page, join(out, `${tag}-library-file-rows.png`));
+            }
             await page.getByRole('button', { name:'More for Launch brief.md' }).click();
             await page.getByRole('menu', { name:'Screen actions' }).waitFor();
             await shot(page, join(out, `${tag}-library-actions.png`));

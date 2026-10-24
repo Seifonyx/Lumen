@@ -7,8 +7,8 @@ Sidebar remains the established Canvas unified tree with upper Search. Library r
 | Task | Actual status | Remaining |
 |---|---|---|
 | Preserve drawer / shared glass | Implemented; SidebarCanvas diff againstad78 empty; rendered Light/Dark reviewed | Physical iPhone and owner visual acceptance |
-| Library/Routing strips + scoped Search | Implemented;16 focused Chromium/WebKit cases pass, including query/type/menu/draft/Back/keyboard-height/resize | Gated regression, exact-head CI and curated final artifact |
-| Security/performance/regression |92 units/type/both builds pass, budget pass, independent review fixes verified | Clean QA isolation, full CI; inherited audit findings remain |
+| Library/Routing strips + scoped Search | Implemented;16 focused Chromium/WebKit cases pass, including query/type/menu/draft/Back/keyboard-height/resize | Local gated regression and curated artifact completed; exact-head CI /owner review pending |
+| Security/performance/regression |92 units/type/both builds pass, budget pass, independent review fixes verified | Clean QA isolation passed; full exact-head CI pending; inherited audit findings remain |
 
 No overall program score exists; historic weights below are unchanged. No merge/deployment or automatic continuation.
 

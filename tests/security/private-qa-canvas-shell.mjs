@@ -68,7 +68,8 @@ async function shot(page, path) {
 const settle = (page, ms = 400) => page.waitForTimeout(ms);
 const nav = (page) => page.locator('aside.cv-nav');
 async function openNav(page, phone) {
-  if (!phone) return;
+  if (!phone || await nav(page).evaluate(el=>el.classList.contains('open'))) return;
+  while(await page.locator('.phone-navigation [aria-label="Back"]').isVisible()){await page.locator('.phone-navigation [aria-label="Back"]').click();await settle(page,250);}
   await page.getByRole('button', { name: 'Open chats', exact: true }).first().click();
   await settle(page, 600);
 }

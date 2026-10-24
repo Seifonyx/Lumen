@@ -44,6 +44,7 @@ const iphone='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit
   await page.setViewportSize({width,height:400});await page.getByLabel('Library instructions').focus();await page.getByRole('button',{name:'Save',exact:true}).scrollIntoViewIfNeeded();
   assert(await page.getByRole('button',{name:'Save',exact:true}).isVisible());await page.setViewportSize({width,height});
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+  console.log(`PASS pre-reload screen-state checks ${width}x${height}`);
   await page.reload();await page.locator('.composer textarea').waitFor();assert.equal(await page.locator('.phone-navigation').count(),0,'refresh starts at the real chat root');
   console.log(`PASS screen states ${width}x${height}: ${theme}, ${solid?'solid':'glass'}, ${large?'larger text':'default text'}, dense scroll, nested layers, single Back, scripted edge swipe, simulated keyboard, refresh`);
   await context.close();

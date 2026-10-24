@@ -70,9 +70,9 @@ async function openNav(page, phone) {
 async function go(page, phone, label) { await openNav(page, phone); await nav(page).getByRole('button', { name: label, exact: true }).click(); await settle(page, 700); }
 const closeAll = async (page) => {
  for(let i=0;i<24;i++){
-   const presented=await page.locator('.modal-backdrop:visible,.hub-page:visible,.settings-page:visible,.rc-page:visible,.canvas-panel:visible,.project-workspace-main:visible').count();
+   const presented=await page.locator('.modal-backdrop:visible,.hub-page:visible,.settings-page:visible,.rc-page:visible,.canvas-panel:visible,.project-workspace-main:visible,[role="dialog"]:visible,[role="menu"]:visible').count();
    if(!presented && await page.locator('.composer textarea').isVisible()) return;
-   if(await page.locator('.modal-backdrop:visible').count())await page.keyboard.press('Escape');else await page.goBack();
+   if(await page.locator('.modal-backdrop:visible,[role="dialog"]:visible,[role="menu"]:visible').count())await page.keyboard.press('Escape');else await page.goBack();
    await settle(page,200);
  }
  assert.fail('Could not return through the screen hierarchy to chat');

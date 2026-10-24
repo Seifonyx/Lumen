@@ -260,6 +260,37 @@ try {
         } else await go(page, phone, 'Prism');
         assert.ok(await page.getByRole('region',{name:'Current routing mode'}).isVisible(), 'Prism lands in Models');
         assert.equal(await page.getByRole('button',{name:'Overview',exact:true}).count(),0,'Overview is absent');
+        if (phone) {
+          const disclosure = page.locator('.rc-current-disclosure');
+          const summary = disclosure.locator('summary');
+          assert.equal(await disclosure.getAttribute('open'), null, 'routing details begin collapsed, not discarded');
+          assert.match(await summary.innerText(), /Next message in this chat/);
+          const detailText = await disclosure.locator('.rc-current-explanation').textContent();
+          assert.ok(detailText?.trim(), 'routing explanation is available without changing the canonical route');
+          // This checks a REAL selectable row/button, not just the top edge of the model inventory.
+          // Compare against the actual anchored search rather than the viewport alone.
+          const geometry = await page.evaluate(() => {
+            const root = document.querySelector('.rc-page:not([hidden])');
+            const row = root?.querySelector('.rc-models-body .rc-model:has(.rc-use button:not(:disabled))');
+            const use = row?.querySelector('.rc-use button:not(:disabled)');
+            const tabs = root?.querySelector('.phone-sections'), search = root?.querySelector('.rc-search-footer .rc-search');
+            if (!row || !use || !tabs || !search) return null;
+            const rect = el => { const r = el.getBoundingClientRect(); return { top:r.top, bottom:r.bottom, left:r.left, right:r.right, height:r.height }; };
+            return { row:rect(row), action:rect(use), tabs:rect(tabs), search:rect(search), viewport:{ width:innerWidth,height:innerHeight }, scroll:root.scrollTop, model:row.querySelector('h4')?.textContent };
+          });
+          assert.ok(geometry, 'fixture provides a selectable model and the contextual Search');
+          assert.equal(geometry.scroll, 0, 'Models landing has not been scrolled');
+          assert.ok(geometry.row.top >= geometry.tabs.bottom - 1, `model below navigation: ${JSON.stringify(geometry)}`);
+          assert.ok(geometry.row.bottom <= geometry.search.top - 2, `complete model row above contextual Search: ${JSON.stringify(geometry)}`);
+          assert.ok(geometry.action.top >= geometry.tabs.bottom && geometry.action.bottom <= geometry.search.top - 2, `usable Use model action above Search: ${JSON.stringify(geometry)}`);
+          assert.ok(geometry.action.left >= 0 && geometry.action.right <= geometry.viewport.width && geometry.action.height >= 40, `usable action geometry: ${JSON.stringify(geometry)}`);
+          await summary.click();
+          assert.equal(await disclosure.getAttribute('open'), '', 'routing explanation expands on demand');
+          assert.ok(await disclosure.locator('.rc-current-explanation').isVisible());
+          await summary.click();
+          assert.equal(await disclosure.getAttribute('open'), null, 'routing explanation collapses without losing content');
+          pass('Prism first model above search');
+        }
         record.screens.routing = await axe(page, 'section.rc-page');
         await shot(page, join(out, `${tag}-prism-models.png`));
         const prismNav = page.getByRole('navigation', { name:'Prism sections' });

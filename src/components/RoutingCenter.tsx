@@ -351,12 +351,24 @@ export default function RoutingCenter() {
       {section === 'providers' && <div className="rc-body"><Providers key={owner || 'signed-out'} preferred={current?.split(':')[0]} phone={phone} searchHost={searchHost} /></div>}
 
       {section === 'models' && (
-        <div className="rc-body">
+        <div className="rc-body rc-models-body">
           <section className="rc-current" aria-label="Current routing mode">
-            <p className="rc-kicker">Next message in this chat</p>
-            <h2>{modelLabel(catalog, model)}</h2>
-            <p className="rc-muted">{sentence}</p>
-            {reach && <p className="rc-muted rc-current-reach">{reach}</p>}
+            {phone ? (
+              <details className="rc-current-disclosure">
+                <summary>
+                  <span className="rc-current-identity"><span className="rc-kicker">Next message in this chat</span><strong className="rc-current-model">{modelLabel(catalog, model)}</strong></span>
+                  <span className="rc-current-more-label">Details <ChevronRight size={15} aria-hidden="true" /></span>
+                </summary>
+                <div className="rc-current-explanation"><p className="rc-muted">{sentence}</p>{reach && <p className="rc-muted rc-current-reach">{reach}</p>}</div>
+              </details>
+            ) : (
+              <>
+                <p className="rc-kicker">Next message in this chat</p>
+                <h2>{modelLabel(catalog, model)}</h2>
+                <p className="rc-muted">{sentence}</p>
+                {reach && <p className="rc-muted rc-current-reach">{reach}</p>}
+              </>
+            )}
             {!mine.length && <button type="button" className="rc-primary" onClick={() => openSettings('keys')}><Plus size={15} aria-hidden="true" />Connect a provider</button>}
           </section>
           <div className="rc-panel-title"><div><h2>Model inventory</h2><p className="rc-muted">{phone ? 'Models, providers & routing · ' : ''}Context limits and allowances from your catalog.</p></div><button type="button" className="rc-add" onClick={() => openSettings('models')}>Manage models <ArrowUpRight size={15} aria-hidden="true" /></button></div>

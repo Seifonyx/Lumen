@@ -110,3 +110,4 @@ routing-providers
 iphone-navigation
 iphone-navigation-states
 iphone-project-navigation
+iphone-edge-back

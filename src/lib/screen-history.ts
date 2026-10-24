@@ -79,7 +79,7 @@ export function installScreenHistory() {
       if (document.activeElement !== focusAtReplay && document.activeElement?.matches('button,input,textarea,select,[role="menuitem"],a[href]')) return;
       const view = views.get(active);
       view?.scrolls.forEach(([selector, top]) => document.querySelector(selector)?.scrollTo(0, top));
-      const focus = view?.focus?.isConnected ? view.focus : document.querySelector<HTMLElement>('.phone-navigation h1, .settings-page h1, .hub-bar h1, .menu-btn');
+      const focus = view?.focus?.isConnected && !view.focus.closest('[inert],[hidden],.exit-ghost') ? view.focus : document.querySelector<HTMLElement>('.phone-navigation h1, .settings-page h1, .hub-bar h1, .menu-btn');
       focus?.focus({ preventScroll: true });
     }));
   };

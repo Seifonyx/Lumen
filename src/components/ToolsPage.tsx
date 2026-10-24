@@ -40,7 +40,7 @@ function ToolCard({ t }: { t: Tool }) {
       <span className="tool-text">
         <strong>{t.name}{t.state && <span className={`tool-state${t.state === 'On' || t.state === 'Connected' ? ' on' : ''}`}>{t.state}</span>}</strong>
         <span>{t.text}</span>
-        {t.needs && <span className={`tool-needs${t.ready ? ' ok' : ''}`}>{t.ready ? '✓ ' : 'Needs a '}{t.ready ? t.needs.replace(' key', ' ready') : t.needs}</span>}
+        {t.needs && (CANVAS_SHELL ? <span className="tool-needs">{t.ready ? `${t.needs} saved` : `Needs a ${t.needs}`}</span> : <span className={`tool-needs${t.ready ? ' ok' : ''}`}>{t.ready ? '✓ ' : 'Needs a '}{t.ready ? t.needs.replace(' key', ' ready') : t.needs}</span>)}
       </span>
     </>;
     return t.run

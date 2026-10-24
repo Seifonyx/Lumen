@@ -1,7 +1,7 @@
 // Curated real-app captures. Synthetic content, no network/provider accounts.
 const { chromium }=require('playwright');const fs=require('node:fs');const {profile,seed}=require('./preview-profile.cjs');
 (async()=>{const browser=await chromium.launch();try{for(const [width,theme]of[[390,'light'],[390,'dark'],[1440,'light']]){
- const context=await browser.newContext({viewport:{width,height:width===390?844:960},hasTouch:width<900,serviceWorkers:'block',reducedMotion:'reduce'});
+ const context=await browser.newContext({viewport:{width,height:width===390?844:960},hasTouch:width<900,isMobile:width<900,...(width<900?{userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Version/18.5 Mobile/15E148 Safari/604.1'}:{}),serviceWorkers:'block',reducedMotion:'reduce'});
  const base=process.env.MR_TEST_URL;const uid=`preview-navigation-shots-${width}-${theme}`;
  await context.route('**/*',r=>new URL(r.request().url()).origin===new URL(base).origin?r.continue():r.abort());await profile(context,uid,theme,{defaultModel:'auto'});
  const page=await context.newPage();await page.goto(new URL('/privacy.html',base).href);
@@ -10,7 +10,7 @@ const { chromium }=require('playwright');const fs=require('node:fs');const {prof
  const enter=async(name)=>{await page.goto(base);await page.locator('.composer textarea').waitFor();if(width<900)await page.locator('.menu-btn').first().click();await page.locator('aside.cv-nav').getByRole('button',{name,exact:true}).click()};
  fs.mkdirSync(process.env.SHOTS_OUT,{recursive:true});
  await enter('Models & routing');await page.locator('.rc-page').waitFor();await shot('routing');
- if(!process.env.BEFORE&&width===390){await page.getByRole('navigation',{name:'Routing sections'}).getByRole('button',{name:'Providers',exact:true}).click();await page.locator('[data-provider="gemini"]').click();await page.getByRole('region',{name:'Provider detail'}).waitFor();await shot('provider');}
+ if(!process.env.BEFORE&&width===390){await page.getByRole('navigation',{name:'Routing sections'}).getByRole('button',{name:'Providers',exact:true}).click();await page.locator('[data-provider="gemini"]').click();await page.getByRole('region',{name:'Provider detail'}).waitFor();await page.getByRole('button',{name:'More actions',exact:true}).waitFor();await page.getByRole('button',{name:'Refresh model list',exact:true}).waitFor();await shot('provider');}
  await enter('Library');await page.getByRole('searchbox',{name:'Search your library'}).waitFor();await shot('library');if(!process.env.BEFORE&&width===390&&theme==='dark'){await page.getByRole('button',{name:'More for Launch brief.md',exact:true}).click();await page.getByRole('menu',{name:'Screen actions'}).waitFor();await shot('library-menu');await page.keyboard.press('Escape');await page.getByRole('button',{name:'Open Launch brief.md',exact:true}).click();await page.locator('.canvas-panel').waitFor();await shot('document');}
  await enter('Tools');await page.getByRole('searchbox',{name:'Search tools'}).waitFor();await shot('tools');await context.close();
  }}finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});

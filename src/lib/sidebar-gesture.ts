@@ -1,3 +1,4 @@
+import { CANVAS_SHELL } from './canvas-presentation';
 import { useStore } from '../store';
 import { rubberBand, springTo, Velocity, type Motion } from './spring';
 import { haptic } from './haptics';
@@ -55,6 +56,7 @@ export function installSidebarGestures(): () => void {
     clear();
     const state = useStore.getState();
     if (!phone.matches || event.touches.length !== 1 || state.settingsOpen || !state.authed || window.getSelection()?.toString()) return;
+    if (CANVAS_SHELL && state.projectWorkspaceOpen) return;
     const target = event.target;
     if (!(target instanceof Element) || document.querySelector('.modal-backdrop, .sheet-backdrop, .models-pop, .usage-pop')) return;
     if (target.closest('input, textarea, select, [contenteditable], pre, table, .menu')) return;

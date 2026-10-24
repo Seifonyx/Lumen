@@ -1,15 +1,8 @@
 import { installScreenHistory } from '../lib/screen-history';
-// Phase 2 Canvas navigation (reached only through src/lib/canvas-presentation.on.ts; the ordinary build has no import
-// of it). Three things the shell was missing:
-//  - Back: opening a page in place of the chat (Library, Tools, Projects, Study, Assistants, Routing Center, a project's
-//    overview), Settings, or a registered layer such as All chats (src/lib/back-stack.ts) adds one history entry, so
-//    the browser's Back (or the iPhone edge swipe in Safari) closes the topmost of them instead of leaving Lumen.
-//    Closing them any other way consumes that entry again. Moving between them reuses the one entry.
-//  - Focus: when such a page closes, focus returns to the control that opened it when it is still on screen (the
-//    sidebar destination on computers), otherwise to the menu button on phones (no keyboard pops up) or to the message
-//    box on computers. Collapsing or expanding the sidebar moves focus to the control that undoes it.
-//  - The collapsed rail (computers): with the sidebar collapsed, a slim column keeps the mark, expand, new chat,
-//    search and the destinations one click away (src/components/CanvasRail.tsx, loaded with the first collapse).
+// Canvas shell coordination, reached only through the presentation switch. screen-history adapts the canonical
+// store and Routing Center owners to a real Back/Forward hierarchy, with account-scoped local presentations.
+// Drafts stay with their existing owners. This component also restores collapse focus and lazy-loads the
+// desktop rail; phone roots retain the main drawer, while pushed screens use PhoneNavigation.
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 const CanvasRail = lazy(() => import('./CanvasRail'));

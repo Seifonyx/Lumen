@@ -371,7 +371,7 @@ export default function RoutingCenter() {
             )}
             {!mine.length && <button type="button" className="rc-primary" onClick={() => openSettings('keys')}><Plus size={15} aria-hidden="true" />Connect a provider</button>}
           </section>
-          <div className="rc-panel-title"><div><h2>Model inventory</h2><p className="rc-muted">{phone ? 'Models, providers & routing · ' : ''}Context limits and allowances from your catalog.</p></div><button type="button" className="rc-add" onClick={() => openSettings('models')}>Manage models <ArrowUpRight size={15} aria-hidden="true" /></button></div>
+          <div className="rc-panel-title"><div><h2>Model inventory</h2><p className="rc-muted">{phone ? 'Models, providers & routing · ' : ''}Context limits and allowances from your catalog.</p></div><button type="button" className="rc-add" aria-label="Manage models" onClick={() => openSettings('models')}><span>Manage<span className="rc-manage-noun"> models</span></span><ArrowUpRight size={15} aria-hidden="true" /></button></div>
           {phone ? searchHost && createPortal(modelSearch, searchHost) : modelSearch}
           {inventory.length ? <div className="rc-group">{inventory.map((m) => <ModelRow key={m.id} m={m} />)}</div> : <p className="rc-muted" role="status">No models match.</p>}
         </div>

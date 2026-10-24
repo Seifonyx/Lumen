@@ -1,5 +1,8 @@
 # Lumen design: "Switchboard"
 
+> **Current Canvas phone contract (owner correction,2026-10-24):** Keep the established sidebar identity, upper Search, unified project/conversation tree and footer. Library uses horizontal top content tabs and contained bottom Search; Routing uses top section shortcuts and contextual provider/model Search. Provider detail hides section shortcuts. Shared Back/contextual ellipsis use44pt circular glass surfaces with solid/reduced-motion fallbacks. These rules supersede older Canvas phone header/filter descriptions below; ordinary presentation rules are unchanged. Runtime owners and evidence: `docs/design/IPHONE_FINAL_PASS.md`.
+
+
 Lumen is a switchboard for free AI models: one place to talk, and the app routes each message to
 the right model. The design says that: calm ink-and-paper neutrals, and one **signal colour** that lights
 up wherever something is live, like the status light on a router.
@@ -127,3 +130,19 @@ Removed recommended layouts stay hidden. Omit the bulk restore control and its e
 ## Provider-error feedback
 
 Chat and Browse models use the shared CatalogErrorNotice with an accessible close button and a 44px touch target. Dismissal lasts across navigation for the current error; it does not clear the failure needed for reconnect recovery. A fresh catalogue result resets dismissal, and account changes clear the previous account's feedback.
+
+
+## Phase 4 — Routing Center and provider connections
+
+The Canvas Routing Center leads with the conversation’s selected routing mode, then recorded answer evidence and provider discovery readiness. Counts are a secondary ledger; unknown allowance remains unknown. All six sections remain directly reachable. Phone section labels wrap instead of truncating, and the repetitive page subtitle is omitted on phones to give details more room.
+
+Provider browsing groups saved connections before an expandable Explore providers list. Saved keys, explicit permission and model discovery are separate facts. Needs attention filters enabled saved connections with failed or stale discovery; a saved key alone never implies a working connection. Selection is grounded in the current route or an explicit choice, never alphabetical order; changing search/filter removes invisible detail selection. Desktop keeps list and detail together; phone detail has Back with focus return.
+
+Connection settings still use the canonical Keys surface. Check connection still refreshes enabled providers’ catalogs through the existing owner, with no new endpoint or inference request. The result says model-list discovery, never verified replies. Typed safe recovery copy replaces raw provider errors. Provider allowances preserve their source and unknown values; catalog and usage are not account-wide billing. Model actions retain the existing eligibility and selection owners.
+
+`canvas-routing.css` is owned by the lazy RoutingCenter module, not initial Canvas startup; every rule stays Canvas-scoped. No ordinary presentation, persistence, authentication, provider-network, selection or routing algorithm changes are included.
+
+
+## iPhone navigation reset (owner direction, 2026-10-24)
+
+Floating feature docks are rejected. Keep the primary app drawer and make feature/detail hierarchy explicit. Shared phone navigation has one leading chevron when actual history exists, otherwise a discoverable navigation entry. No trailing Chat pill. Contextual ellipsis carries only real screen actions; primary creation remains visible. Filters belong inside their feature, not in a miniature app tab bar. Library separates media collections from document/file rows; Tools exposes a searchable capability index. Desktop sidebar/split views remain useful. See `docs/design/IPHONE_NAVIGATION_RESET.md` for the screen map and canonical history/browsing-memory contract. Historical phone-tab gesture rules describe the retained ordinary presentation, not current Canvas direction. No design acceptance is inferred.

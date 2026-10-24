@@ -1,3 +1,4 @@
+const {closeCanvas}=require('./helpers/ui.cjs');
 const {chromium}=require('playwright');
 const {openSettings,replyAction}=require('./helpers/ui.cjs');
 const assert=require('node:assert/strict');
@@ -17,7 +18,7 @@ const fs=require('node:fs');
   });
   const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(process.env.MR_TEST_URL||'http://localhost:5190/?emulator');await page.waitForSelector('.composer textarea');await page.fill('.composer textarea','EXPORT_USER_MARKER');await page.click('.send-btn');await page.waitForSelector('.msg.assistant .model-tag');
-  await replyAction(page,'Edit in canvas','last');await page.fill('.canvas-text','CANVAS_EXPORT_MARKER');await page.getByRole('button',{name:'Close canvas',exact:true}).click();
+  await replyAction(page,'Edit in canvas','last');await page.fill('.canvas-text','CANVAS_EXPORT_MARKER');await closeCanvas(page);
   const open=async()=>{if(width<900)await page.click('.menu-btn');await page.getByRole('button',{name:'Chat options',exact:true}).first().click();await page.getByRole('menuitem',{name:'Share or export',exact:true}).click();await page.waitForSelector('.chat-export-panel');};
   const download=async(name)=>{const event=page.waitForEvent('download');await page.getByRole('button',{name:new RegExp(name)}).click();const item=await event;const stream=await item.createReadStream();const parts=[];for await(const part of stream)parts.push(part);return {name:item.suggestedFilename(),data:Buffer.concat(parts)};};
   await open();assert.ok(await page.locator('.modal').evaluate(el=>el.scrollWidth<=el.clientWidth+1));assert.ok((await page.locator('.modal').boundingBox()).width<=width);

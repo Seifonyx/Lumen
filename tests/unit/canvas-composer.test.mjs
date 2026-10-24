@@ -48,7 +48,9 @@ test('every flagged Composer branch keeps the ordinary expression as its alterna
   // Values: a Canvas value whose ordinary branch is the original string literal (the placeholder on narrow phones).
   const values = src.match(/CANVAS_COMPOSER \? canvas!\.\w+ : '[^']*'/g) || [];
   assert.deepEqual(values, ["CANVAS_COMPOSER ? canvas!.placeholder : 'Message Lumen'"]);
-  assert.equal(spreads.length + ternaries.length + statements.length + values.length, uses, 'no unreviewed flag use');
+  const localModalCloses = src.match(/onClose=\{CANVAS_COMPOSER \? \(\) => navigateBack!\(\(\) => setCompareOpen\(false\)\) : \(\) => setCompareOpen\(false\)\}/g) || [];
+  assert.equal(localModalCloses.length,1,'reviewed comparison dismissal keeps its ordinary state setter');
+  assert.equal(spreads.length + ternaries.length + statements.length + values.length + localModalCloses.length, uses, 'no unreviewed flag use');
   assert.equal(spreads.length, 3);
   assert.equal(ternaries.length, 4);
 });
@@ -73,7 +75,7 @@ test('CP03 shell seams fold to the ordinary code and its styles stay scoped', ()
   assert.equal((sidebar.match(/CANVAS_SHELL\b/g) || []).length - 1, 1, 'Sidebar: one early return, constant per build');
   assert.match(sidebar, /^  if \(CANVAS_SHELL\) return <SidebarCanvas onCollapse=\{onCollapse\} \/>;$/m);
   const app = readFileSync('src/App.tsx', 'utf8');
-  assert.equal((app.match(/CANVAS_SHELL\b/g) || []).length - 1, 3, 'App: the document scope, the app scope attributes and the Routing Center mount');
+  assert.equal((app.match(/CANVAS_SHELL\b/g) || []).length - 1, 8, 'App: Canvas scope, Routing Center and the two presented Tools layers');
   assert.match(app, /\{\.\.\.\(CANVAS_SHELL \? \{ 'data-lumen-canvas-shell': '', 'data-lumen-canvas-foundation': '' \} : undefined\)\}/);
   const view = readFileSync('src/components/ChatView.tsx', 'utf8');
   const t = /\{CANVAS_SHELL \? <>(.+?)<\/> : (.+?)\}\n/.exec(view);
@@ -97,7 +99,8 @@ test('CP04 Routing Center loads only through the "on" module, lazily, and its st
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const RoutingCenter: ComponentType \| null = null;$/m);
   const on = readFileSync('src/lib/canvas-presentation.on.ts', 'utf8');
   assert.match(on, /^export const RoutingCenter = lazy\(\(\) => import\('\.\.\/components\/RoutingCenter'\)\);$/m);
-  assert.match(on, /^import '\.\.\/styles\/canvas-routing\.css';$/m);
+  assert.doesNotMatch(on, /^import '\.\.\/styles\/canvas-routing\.css';$/m);
+  assert.match(readFileSync('src/components/RoutingCenter.tsx', 'utf8'), /^import '\.\.\/styles\/canvas-routing\.css';$/m);
   for (const file of ['src/App.tsx', 'src/components/Sidebar.tsx', 'src/components/SidebarCanvas.tsx', 'src/components/ChatView.tsx', 'src/main.tsx']) {
     assert.ok(!/import\(['"][^'"]*RoutingCenter/.test(readFileSync(file, 'utf8')), `${file} never imports the Routing Center`);
   }
@@ -105,7 +108,9 @@ test('CP04 Routing Center loads only through the "on" module, lazily, and its st
   assert.match(app, /\{CANVAS_SHELL \? <>(?:\{CanvasNav && <CanvasNav collapsed=\{sidebarCollapsed\} onExpand=\{toggleSidebar\} \/>\})?<ChatView onExpandSidebar=\{toggleSidebar\} \/>\{RoutingCenter && <Suspense fallback=\{null\}><RoutingCenter \/><\/Suspense>\}<\/> : <ChatView onExpandSidebar=\{toggleSidebar\} \/>\}/);
   const root = postcss.parse(readFileSync('src/styles/canvas-routing.css', 'utf8'));
   let rules = 0;
-  root.walkAtRules((rule) => assert.ok(['media'].includes(rule.name), `no @${rule.name}`));
+  // Media and container queries only (a container query lays model rows out by their own width; without support the
+  // stacked layout is the default). No imports, fonts or other at-rules.
+  root.walkAtRules((rule) => assert.ok(['media', 'container'].includes(rule.name), `no @${rule.name}`));
   root.walkRules((rule) => { rules++; for (const selector of rule.selectors) assert.match(selector, /^(?:html\[data-qa-review\] )?\.app\[data-lumen-canvas-shell\]/, `scoped: ${selector}`); });
   root.walkDecls((decl) => assert.ok(!/url\s*\(|@import/i.test(decl.value), 'no network/font dependency'));
   assert.ok(rules > 40);

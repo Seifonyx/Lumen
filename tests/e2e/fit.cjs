@@ -1,3 +1,4 @@
+const {openSettingsSection,closeSettings}=require('./helpers/ui.cjs');
 // Phone layout: at 320 and 390 px wide nothing spills past the screen or out of its box — long model
 // names, chat titles, links, words, tables, code and file names, the model menu and every settings section.
 const { chromium } = require('playwright');
@@ -58,9 +59,8 @@ async function run(browser, width) {
   await page.click('button:has-text("Save keys")');
   await page.waitForTimeout(1200);
   for (const name of ['General', 'API keys', 'Models', 'Usage', 'Personalization', 'Memory', 'Privacy & data']) {
-    if (await page.isVisible('.settings-back')) await page.click('.settings-back');
-    if (name === 'General') await look('settings menu');
-    await page.click(`.settings-tabs >> text=${name}`);
+    if (name === 'General' && await page.locator('.settings-tabs').isVisible()) await look('settings menu');
+    await openSettingsSection(page, name);
     await page.waitForTimeout(200);
     if (name === 'Models') {
       await page.locator('.models-nav button').filter({ hasText: 'Browse models' }).click();
@@ -70,15 +70,14 @@ async function run(browser, width) {
     await look(`settings: ${name}`);
     await shot(`settings-${name.replace(/\s/g, '')}`);
   }
-  if (await page.isVisible('.settings-back')) await page.click('.settings-back');
-  await page.click('.settings-tabs >> text=Models');
+  await openSettingsSection(page, 'Models');
   await page.locator('.models-nav button').filter({ hasText: 'Layouts' }).click();
   await page.click('[aria-label="Edit Everyday"]');
   await page.fill('.layout-editor input[placeholder*="Add a model"]', 'gemini');
   await look('layout editor');
   await shot('layout-editor');
   await page.click('.layout-editor >> text=Cancel');
-  await page.click('.settings-page [aria-label="Close"]');
+  await closeSettings(page);
 
   await page.waitForSelector('.app:not(.app-skeleton) .topbar');
   await look('new chat');

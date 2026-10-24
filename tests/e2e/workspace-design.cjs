@@ -21,9 +21,20 @@ const matrix = [[1280,844,'light'],[320,740,'light'],[390,844,'dark'],[430,932,'
   await page.goto(url);await page.locator('.composer textarea').waitFor();
   const capture=async name=>{await page.waitForTimeout(150);await page.screenshot({path:`.impeccable/review/${process.env.MR_WEBKIT?'webkit':'chromium'}-${width}-${theme}-${name}.png`})};
   const fits=async()=>assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Page overflow');
+  const openDrawer = async () => {
+    if(width>=900) return;
+    const menu=page.locator('.menu-btn');
+    const rootMenu=page.locator('.phone-navigation button[aria-label="Open navigation"]');
+    for(let step=0;step<8 && !(await menu.isVisible()) && !(await rootMenu.isVisible());step++){
+      await page.locator('.phone-navigation button[aria-label="Back"]').first().click();
+    }
+    if(await menu.isVisible())await menu.click();
+    else await rootMenu.click();
+    await page.locator('.sidebar.open').waitFor();
+  };
   const scan=async name=>{const a=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();assert.deepEqual(a.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})),[],`${width}/${theme} ${name}`)};
   await fits();await capture('chat');await scan('chat');
-  if(width<900)await page.locator('.menu-btn').click();
+  if(width<900)await openDrawer();
   await page.getByRole('button',{name:'New project',exact:true}).first().click();
   await page.getByLabel('Project name',{exact:true}).fill('Hospital reports & study');
   await page.getByLabel('Project description',{exact:true}).fill('Protocols, analysis and careful reporting.');
@@ -44,9 +55,16 @@ const matrix = [[1280,844,'light'],[320,740,'light'],[390,844,'dark'],[430,932,'
   if(width<=960)await toggle.click();
   // New chat must open an ordinary composer rather than returning to the workspace.
   // Canvas: the project's own New chat (the global one is always general); the ordinary sidebar's starts in the project.
-  if(width<900)await page.locator('.menu-btn').click();await page.locator('.sidebar .new-chat, .cv-project:has(.cv-brief.active) .cv-new-here').click();
+  if(width<900){
+    await page.getByLabel('Start a project conversation',{exact:true}).fill('Summarize our protocol.');
+    await page.getByRole('button',{name:'Send message (Enter)',exact:true}).click();
+  }else{
+    await page.locator('.sidebar .new-chat, .cv-project:has(.cv-brief.active) .cv-new-here').click();
+    await page.locator('.composer textarea').fill('Summarize our protocol.');
+    await page.locator('.send-btn').click();
+  }
   await page.locator('.composer textarea').waitFor();assert.equal(await page.locator('.claude-project-view').count(),0);
-  await page.locator('.composer textarea').fill('Summarize our protocol.');await page.locator('.send-btn').click();await page.locator('.msg.assistant .model-tag').waitFor();
+  await page.locator('.msg.assistant .model-tag').waitFor();
   assert.equal(requests.length,1);assert.match(JSON.stringify(requests[0]),/PROJECT_DESIGN_REFERENCE/);assert.match(JSON.stringify(requests[0]),/PROJECT_DESIGN_INSTRUCTIONS/);
   await fits();await capture('conversation');await scan('conversation');
   assert.ok(await page.locator('.composer .model-name-text').evaluate(e=>e.scrollWidth<=e.clientWidth+1),'Short model name must be readable');
@@ -56,13 +74,13 @@ const matrix = [[1280,844,'light'],[320,740,'light'],[390,844,'dark'],[430,932,'
   // Prompt path must retain context and send exactly once.
   await page.getByLabel('Start a project conversation',{exact:true}).fill('Write another brief report.');await page.getByRole('button',{name:'Send message (Enter)',exact:true}).click();await page.locator('.msg.assistant .model-tag').waitFor();assert.equal(requests.length,2);
   // Switching/creating projects must use the selected workspace, even with a different chat still selected.
-  if(width<900)await page.locator('.menu-btn').click();await page.getByRole('button',{name:'New project',exact:true}).first().click();
+  if(width<900)await openDrawer();await page.getByRole('button',{name:'New project',exact:true}).first().click();
   await page.getByLabel('Project name',{exact:true}).fill('Coding practice');await page.getByLabel('Project instructions',{exact:true}).fill('SECOND_PROJECT_ONLY: Explain the code.');await page.getByRole('button',{name:'Create project',exact:true}).click();
   assert.equal(await page.locator('.claude-project-title').textContent(),'Coding practice');
   await page.getByLabel('Start a project conversation',{exact:true}).fill('Write a function.');await page.getByRole('button',{name:'Send message (Enter)',exact:true}).click();await page.locator('.msg.assistant .model-tag').waitFor();assert.equal(requests.length,3);assert.match(JSON.stringify(requests[2]),/SECOND_PROJECT_ONLY/);assert.doesNotMatch(JSON.stringify(requests[2]),/PROJECT_DESIGN_REFERENCE|PROJECT_DESIGN_INSTRUCTIONS/);
-  if(width<900)await page.locator('.menu-btn').click();if(await page.locator('.cv-project-row').count()){const row=page.locator('.cv-project-row').filter({hasText:'Hospital reports & study'});if(await row.getAttribute('aria-expanded')!=='true')await row.click();await page.locator('.cv-project').filter({has:row}).locator('.cv-brief').click()}else await page.locator('.sidebar-project-item').filter({hasText:'Hospital reports & study'}).click();assert.equal(await page.locator('.claude-project-title').textContent(),'Hospital reports & study');
+  if(width<900)await openDrawer();if(await page.locator('.cv-project-row').count()){const row=page.locator('.cv-project-row').filter({hasText:'Hospital reports & study'});if(await row.getAttribute('aria-expanded')!=='true')await row.click();await page.locator('.cv-project').filter({has:row}).locator('.cv-brief').click()}else await page.locator('.sidebar-project-item').filter({hasText:'Hospital reports & study'}).click();assert.equal(await page.locator('.claude-project-title').textContent(),'Hospital reports & study');
   assert.equal(await page.locator('.claude-chat-row-title').count(),2,'Original project conversations preserved');
-  if(width<900)await page.locator('.menu-btn').click();await capture('sidebar');assert.ok(await page.locator('.sidebar-foot, .cv-account').evaluate(e=>{const r=e.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight+1}),'Account control must remain inside the viewport');await page.locator('.sidebar').getByRole('button',{name:'Settings',exact:true}).click();
+  if(width<900)await openDrawer();await capture('sidebar');assert.ok(await page.locator('.sidebar-foot, .cv-account').evaluate(e=>{const r=e.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight+1}),'Account control must remain inside the viewport');await page.locator('.sidebar').getByRole('button',{name:'Settings',exact:true}).click();
   await capture('settings');await fits();await scan('settings');
   assert.deepEqual(errors,[],'Unexpected app errors');console.log(`PASS workspace ${engine.name()} ${width}x${height} ${theme}`);await ctx.close();
  }}finally{await browser.close()}

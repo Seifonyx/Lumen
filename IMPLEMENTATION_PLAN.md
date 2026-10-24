@@ -1,5 +1,44 @@
 # Dynamic Model Picker implementation plan
 
+## Active owner correction — Phase4 final phone review
+
+Sidebar remains the established Canvas unified tree with upper Search. Library receives top content tabs + contained bottom Search; Routing receives top section shortcuts + contextual provider/model Search; provider detail hides section shortcuts. Shared phone Back/actions use restrained glass. See `docs/design/IPHONE_FINAL_PASS.md` for architecture, local evidence and known limits.
+
+| Task | Actual status | Remaining |
+|---|---|---|
+| Preserve drawer / shared glass | Implemented; SidebarCanvas diff againstad78 empty; rendered Light/Dark reviewed | Physical iPhone and owner visual acceptance |
+| Library/Routing strips + scoped Search | Implemented;16 focused Chromium/WebKit cases pass, including query/type/menu/draft/Back/keyboard-height/resize | Local gated regression and curated artifact completed; exact-head CI /owner review pending |
+| Security/performance/regression |92 units/type/both builds pass, budget pass, independent review fixes verified | Clean QA isolation passed; full exact-head CI pending; inherited audit findings remain |
+
+No overall program score exists; historic weights below are unchanged. No merge/deployment or automatic continuation.
+
+
+## Current owner-directed iPhone navigation reset
+
+The new explicit owner direction supersedes earlier small-adjustment scope. See `docs/design/IPHONE_NAVIGATION_RESET.md` and the active handoff.
+
+| Milestone | Current evidence/status | Remaining acceptance |
+|---|---|---|
+| A — Shared navigation and Routing Center | Source implemented; Chromium/WebKit navigation and canonical owner checks pass | Final browser/forward/swipe/account/accessibility and design review |
+| B — Library and Tools | Source implemented; type/search/scroll/document/assistant/project form journeys pass | Dense/empty/error/menu/physical phone review |
+| C — Cross-app integration and finish | In progress; Settings/project/document headers integrated | Contract migration, exact-head CI, curated before/after, owner review |
+
+No overall program percentage is defined; do not reuse the historical Blackout/Model Picker scope scores as Lumen-wide completion. Phases1–3 shipped; Phase4 Slices2–3 remain; this advance Library/Tools work does not finish Phase5. No merge, deployment or design Gate approval is authorized.
+
+
+## Current design work — Phase 4, Slice 1
+
+Owner-authorized workstream: `feat/phase4-routing-providers`, based on released `871bc1a647f36550e6f66e527b1252ac84437506` (Phase 3 / PR #49 / successful Deploy #68). Develop, test, commit, push and draft PR only. **No merge or deployment without separate owner approval.** This instruction overrides older release authorization recorded below for previous milestones.
+
+| Task | Status | Acceptance / evidence |
+|---|---|---|
+| P4-S1 Routing Center & Providers | Review 2 (owner did not approve review 1) locally verified on `claude/lucid-dijkstra-541bbi`; earlier: redesign (design reassessment) on the same branch, built on Codex's `feat/phase4-routing-providers` work (PR #50, kept intact); owner visual review / exact-head CI gate | Redesign: overview as the map on phones (sections open as pages with Back), connection path in provider detail, one status vocabulary, consolidated CSS within budget; see the redesign section of `docs/testing/phase4-routing-providers.md`. Earlier evidence: | Canonical route overview, saved/enabled/discovery separation, safe recovery, responsive list/detail, Chromium/WebKit 8+8 new cases and 3+3 QA viewports, ordinary parity, isolation and budgets passed; exact-head PR CI is a separate gate. See `docs/testing/phase4-routing-providers.md`. |
+| P4-S2 Model Discovery & Selection | Not started | Model inventory/picker/search/eligibility consistency; preserve canonical owners and drafts. |
+| P4-S3 Auto, Policies, Usage & Diagnostics | Not started | Real decision evidence and provenance; preserve routing, fallback and policy semantics. |
+
+Dependencies: S1 owner design review precedes any release; S2/S3 remain separate coherent slices. No icon detailing until all planned design phases are complete. **Seven-phase design/UX progress is recorded by phase, slice, tests, owner acceptance and release, with no approved overall weighted percentage.** Phases 1–3 shipped; Phase 4 S1 is in draft review, not accepted or deployed. Older Blackout weighted estimates and the separate, completed Model Picker v1 ledger below are **historical scope-specific records**, not estimates of current overall Lumen completion or remaining work. Preserve their underlying evidence; do not reuse their percentages or invent new weights.
+
+
 ## Independent usage-draft fix — 20 October 2026 (Africa/Cairo)
 
 The fix-only branch `fix/usage-draft-no-submit-20261020` contains source checkpoint `8a328bb` (cherry-pick of reviewed `1736a92`). Five UsageMeter buttons explicitly avoid form submission; the new pointer/Enter regression checks draft/message/network/focus behavior at 1440/390 in Chromium and Linux WebKit. Red/green reproduction, independent reruns, typecheck, 149 unit tests and production build passed; normal design regression also passed. See `docs/testing/usage-draft-regression.md`.

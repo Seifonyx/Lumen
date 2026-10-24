@@ -3,7 +3,7 @@ import { watchGlassInsets } from '../lib/glass';
 import { FolderGit2, FolderKanban, ArrowDown, FileText, Menu, PanelLeftOpen, EyeOff, MessageSquarePlus } from 'lucide-react';
 import WelcomeStars from './WelcomeStars';
 import { modKey } from '../lib/util';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { activeSummary } from '../lib/compact';
 import { formatUntil } from '../lib/usage';
@@ -16,7 +16,7 @@ import ModelPicker from './ModelPicker';
 import ProjectManager from './ProjectManager';
 import ProjectWorkspace from './ProjectWorkspace';
 import CatalogErrorNotice from './CatalogErrorNotice';
-import { BrandMark, CANVAS_SHELL, newGeneralChat } from '../lib/canvas-presentation';
+import { BrandMark, CANVAS_SHELL, PhoneNavigation, CanvasScreenActions, navigateBack, useScreenBackLayer, newGeneralChat } from '../lib/canvas-presentation';
 import { ContextRail, RailToggle } from './ContextRail';
 import CanvasHome from './CanvasHome';
 
@@ -72,6 +72,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
   // A reply that's being written or just finished below where you're reading.
   const [unseen, setUnseen] = useState(false);
   const [projectModalId, setProjectModalId] = useState<string | null>(null);
+  if (CANVAS_SHELL) useScreenBackLayer!(Boolean(projectModalId), () => setProjectModalId(null), () => setProjectModalId(projectModalId), 'project-settings');
   const [announcement,setAnnouncement]=useState('');
   const previousReply=useRef<{id?:string;streaming:boolean}>({streaming:false});
 
@@ -209,6 +210,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
   if (currentProject && projectWorkspaceOpen) {
     return (
       <main className="main project-workspace-main">
+        {CANVAS_SHELL && window.matchMedia('(max-width:899px)').matches && PhoneNavigation ? <PhoneNavigation title={currentProject.name} actions={CanvasScreenActions && <Suspense fallback={null}><CanvasScreenActions actions={[{ label:'Project settings',run:()=>setProjectModalId(currentProject.id) }]} /></Suspense>} /> : (
         <header className="topbar">
           <button className="icon-btn menu-btn" onClick={() => setUi({ sidebarOpen: true })} aria-label="Open chats">
             <Menu size={20} />
@@ -222,7 +224,8 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
           <button type="button" className="chat-heading project-crumb" onClick={() => setUi({ page: 'projects' })} title="All projects">Projects</button>
           <span className="project-crumb-sep" aria-hidden="true">/</span>
           <span className="project-crumb-name">{currentProject.name}</span>
-        </header>
+        </header>)}
+
         <ProjectWorkspace
           project={currentProject}
           onOpenSettings={() => setProjectModalId(currentProject.id)}
@@ -230,7 +233,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
         {projectModalId && (
           <ProjectManager
             initialProjectId={projectModalId}
-            onClose={() => setProjectModalId(null)}
+            onClose={CANVAS_SHELL ? () => navigateBack!(() => setProjectModalId(null)) : () => setProjectModalId(null)}
           />
         )}
       </main>
@@ -357,7 +360,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
       {projectModalId && (
         <ProjectManager
           initialProjectId={projectModalId}
-          onClose={() => setProjectModalId(null)}
+          onClose={CANVAS_SHELL ? () => navigateBack!(() => setProjectModalId(null)) : () => setProjectModalId(null)}
         />
       )}
     </main>

@@ -2,6 +2,10 @@
 
 Read this file and the authoritative project documentation at the start of each coding session or agent switch.
 
+## Scope-aware progress (owner clarification, 2026-10-24)
+
+The current seven-phase Lumen design/UX program is distinct from the historical Blackout and Dynamic Model Picker weighted baselines. **Do not report an old scoped percentage as overall Lumen completion.** Unless an approved, current scope-matching weighted baseline exists, give phase/slice states, verified delivery, owner acceptance and remaining work; label overall completion percentage **not defined for this program**. Preserve historical weighted ledgers and evidence without recomputing them as a new scope. The [live checkpoint](docs/lumen-context/CURRENT_STATUS.md) is on the separate `docs/lumen-live-context` branch, not necessarily present on this code branch.
+
 ## Permanent operating protocol
 
 - [PROJECT_CONTINUUM.md](PROJECT_CONTINUUM.md) — current autonomous development, verification, deployment, and cross-agent continuation rules.

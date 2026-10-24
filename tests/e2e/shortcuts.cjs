@@ -49,7 +49,10 @@ const { profile, seed } = require('./helpers/preview-profile.cjs');
     await page.locator('.msg.assistant').filter({ hasText: 'LAST_REPLY_MARKER' }).waitFor();
 
     await page.keyboard.press('Control+Shift+L');
-    await page.getByRole('heading', { name: 'Assistants', level: 1, exact: true }).waitFor();
+    // The legacy library shortcut opens Assistants in the ordinary presentation;
+    // Canvas presents that same destination inside Tools.
+    if (await page.locator('[data-lumen-canvas-shell]').count()) await page.locator('.hub-page[aria-label="Tools"]').waitFor({ state: 'visible' });
+    else await page.getByRole('heading', { name: 'Assistants', level: 1, exact: true }).waitFor();
     await page.keyboard.press('Escape');
 
     page.once('dialog', (d) => d.accept());

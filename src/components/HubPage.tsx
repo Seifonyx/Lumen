@@ -2,7 +2,8 @@
 // large title, a line about what's here, the main action, optional tabs, and the content below.
 import { ArrowLeft, ChevronLeft, FolderKanban, LayoutGrid, Menu, MessageCircle, Plus, Shapes } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { CANVAS_SHELL } from '../lib/canvas-presentation';
+import { usePhoneLayout } from '../lib/phone-layout';
+import { CANVAS_SHELL, PhoneNavigation, navigateBack } from '../lib/canvas-presentation';
 import { useFocusScope } from '../lib/focus-scope';
 import { installSwipeBack } from '../lib/swipe-back';
 import { swapControl } from '../lib/motion';
@@ -14,9 +15,10 @@ export interface HubBar { items: { id: string; label: string; icon: ReactNode; h
   /** The separate creation action for the chosen tab (e.g. "New document"). */
   create?: { label: string; run: () => void } }
 
-export default function HubPage<T extends string>({ title, subtitle, actions, tabs, tab, onTab, toolbar, onClose, onBack, children, label, bar, compact, create }: {
+export default function HubPage<T extends string>({ title, subtitle, actions, tabs, tab, onTab, toolbar, onClose, onBack, children, label, bar, compact, create, sectionNavigation, footer }: {
   title: ReactNode; subtitle?: ReactNode; actions?: ReactNode; label: string;
   bar?: HubBar;
+  sectionNavigation?: ReactNode; footer?: ReactNode;
   /** iPhone glass look without sections of its own (Projects): the same centred title and + as Tools. */
   compact?: boolean; create?: { label: string; run: () => void };
   tabs?: HubTab<T>[]; tab?: T; onTab?: (t: T) => void;
@@ -26,10 +28,11 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
   children: ReactNode;
 }) {
   const root = useRef<HTMLElement>(null);
-  const phone = typeof window !== 'undefined' && window.matchMedia('(max-width: 899px)').matches;
+  const phone = CANVAS_SHELL ? usePhoneLayout() : typeof window !== 'undefined' && window.matchMedia('(max-width: 899px)').matches;
+  // Escape exits the current Hub step directly; history-driven Back remains on the phone header and swipe.
   useFocusScope(root, phone, onBack || onClose);
   useEffect(() => {
-    const key = (e: KeyboardEvent) => { if (e.key === 'Escape' && !document.querySelector('.modal-backdrop')) { e.preventDefault(); (onBack || onClose)(); } };
+    const key = (e: KeyboardEvent) => { if ((CANVAS_SHELL ? !e.defaultPrevented : true) && e.key === 'Escape' && !document.querySelector('.modal-backdrop')) { e.preventDefault(); (onBack || onClose)(); } };
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
   }, [onBack, onClose]);
@@ -41,7 +44,7 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
   }, [label]);
   // Phones: swipe right to go back (a step inside the page goes back to the page; otherwise to the chat).
   const back = useRef(onBack || onClose);
-  back.current = onBack || onClose;
+  back.current = CANVAS_SHELL ? () => navigateBack!(onBack || onClose) : onBack || onClose;
   const stepped = Boolean(onBack);
   useEffect(() => {
     const page = root.current;
@@ -53,19 +56,20 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
   const make = bar?.create || create;
   return (
     <main ref={root} className={`hub-page${scrolled ? ' scrolled' : ''}${bar || compact ? ' has-bar' : ''}`} aria-label={label} tabIndex={-1} data-keep-sidebar="true">
-      <div className="hub-bar">
+      {CANVAS_SHELL && phone && PhoneNavigation ? <PhoneNavigation title={typeof title === 'string' ? title : label} onBack={onBack} actions={make && <button type="button" aria-label={make.label} onClick={make.run}><Plus size={22} /></button>} /> : <div className="hub-bar">
         {onBack ? (
-          <button type="button" className="icon-btn hub-nav" aria-label="Back" onClick={onBack}><ChevronLeft size={26} /></button>
+          <button type="button" className="icon-btn hub-nav" aria-label="Back" onClick={CANVAS_SHELL ? () => navigateBack!(onBack) : onBack}><ChevronLeft size={26} /></button>
         ) : phone ? (
           <button type="button" className="icon-btn hub-nav" aria-label="Open sidebar" onClick={() => useStore.getState().setUi({ sidebarOpen: true })}><Menu size={20} /></button>
         ) : null}
-        {!onBack && make && <button type="button" className="icon-btn hub-nav hub-new" aria-label={make.label} title={make.label} onClick={make.run}><Plus size={22} /></button>}
+        {!onBack && make && (!CANVAS_SHELL || phone) && <button type="button" className="icon-btn hub-nav hub-new" aria-label={make.label} title={make.label} onClick={make.run}><Plus size={22} /></button>}
         <h1 className="hub-bar-title hub-bar-heading">{label}</h1>
         <span className="hub-bar-title hub-bar-label" aria-hidden="true">{label}</span>
         {CANVAS_SHELL
-          ? <button type="button" className="hub-close cv-chat-pill" aria-label="Close" title="Back to chat" onClick={onClose}><ArrowLeft size={18} aria-hidden="true" /><span>Chat</span></button>
+          ? <button type="button" className="hub-close cv-chat-pill" aria-label="Close" title="Back to chat" onClick={() => navigateBack!(onClose)}><ArrowLeft size={18} aria-hidden="true" /><span>Chat</span></button>
           : <button type="button" className="btn ghost small hub-close" aria-label="Close" onClick={onClose}><span className="hub-close-long">Back to chat</span><span className="hub-close-short">Done</span></button>}
-      </div>
+      </div>}
+      {CANVAS_SHELL && phone && sectionNavigation}
       <div className="hub-scroll" onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 56)}>
         <div className="hub-inner">
           <header className="hub-head">
@@ -89,7 +93,8 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
           <div className="hub-body">{children}</div>
         </div>
       </div>
-      {phone && !onBack && <GlassTabs bar={bar} />}
+      {CANVAS_SHELL && phone && footer}
+      {CANVAS_SHELL ? null : phone && !onBack && <GlassTabs bar={bar} />}
     </main>
   );
 }

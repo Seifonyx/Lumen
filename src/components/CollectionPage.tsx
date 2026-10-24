@@ -1,8 +1,10 @@
+import { usePhoneLayout } from '../lib/phone-layout';
+import { CANVAS_SHELL, navigateScreen, CanvasLibraryActions, useScreenMemory, CanvasFilterMenu, CanvasPhoneSections } from '../lib/canvas-presentation';
 // Collection: everything you've added or made, from every chat: photos, files you attached, documents you wrote
 // in the canvas, images Lumen created, and files you uploaded for Lumen to search. Projects are the folders:
 // filter by one, or move an item's chat into one.
 import { Download, FileText, FolderKanban, Image as ImageIcon, MoreHorizontal, Plus, Search, Sparkles, Trash2, FileSearch, Paperclip, LayoutGrid } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Suspense, useId, useMemo, useState } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { saveBlob, safeFileName } from '../lib/util';
 import { useStore } from '../store';
@@ -12,7 +14,7 @@ import KnowledgeLibrary from './KnowledgeLibrary';
 import { openImage } from './ImageViewer';
 
 export type CollectionKind = 'all' | 'photos' | 'documents' | 'files' | 'generated' | 'searchable';
-type Item =
+export type Item =
   | { kind: 'photos' | 'generated' | 'files'; key: string; chat: Chat; file: Attachment; at: number }
   | { kind: 'documents'; key: string; chat: Chat; doc: CanvasDocument; at: number };
 
@@ -24,11 +26,13 @@ const imageSrc = (f: Attachment) => (f.data ? `data:${f.mime || 'image/jpeg'};ba
 const ext = (name: string) => (/\.([a-z0-9]{1,5})$/i.exec(name)?.[1] || 'file').toUpperCase();
 
 export default function CollectionPage({ onClose, initial = 'all' }: { onClose: () => void; initial?: CollectionKind }) {
+  const phone = CANVAS_SHELL ? usePhoneLayout() : false;
+  const panelId = CANVAS_SHELL ? useId() : undefined;
   const chats = useStore((s) => s.chats);
   const projects = useStore((s) => s.settings.projects) || NO_PROJECTS;
-  const [kind, setKind] = useState<CollectionKind>(initial);
-  const [project, setProject] = useState('');
-  const [query, setQuery] = useState('');
+  const [kind, setKind] = CANVAS_SHELL ? useScreenMemory!<CollectionKind>('library-kind', initial, initial !== 'all') : useState<CollectionKind>(initial);
+  const [project, setProject] = CANVAS_SHELL ? useScreenMemory!<string>('library-project', '') : useState('');
+  const [query, setQuery] = CANVAS_SHELL ? useScreenMemory!<string>('library-query', '') : useState('');
   const [menu, setMenu] = useState<string | null>(null);
   const [moving, setMoving] = useState<string | null>(null);
 
@@ -55,7 +59,7 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
 
   const openChat = (chatId: string) => useStore.getState().selectChat(chatId);
   const open = (i: Item, from?: Element | null) => {
-    if (i.kind === 'documents') { openChat(i.chat.id); useStore.getState().setUi({ canvasOpen: true, canvasDocumentId: i.doc.id }); }
+    if (i.kind === 'documents') { if (CANVAS_SHELL) navigateScreen!(() => { openChat(i.chat.id); useStore.getState().setUi({ canvasOpen: true, canvasDocumentId: i.doc.id }); }); else { openChat(i.chat.id); useStore.getState().setUi({ canvasOpen: true, canvasDocumentId: i.doc.id }); } }
     else if ((i.kind === 'photos' || i.kind === 'generated') && imageSrc(i.file)) openImage({ src: imageSrc(i.file), alt: i.file.name, name: i.file.name, from: from as HTMLElement | null });
     else openChat(i.chat.id);
   };
@@ -92,7 +96,7 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
     generated: 'Images Lumen creates for you show up here.',
     searchable: 'Files you upload for Lumen to search show up here.',
   };
-  const bar = glassPhone ? { label: 'Show', active: kind, onSelect: (id: string) => { setKind(id as CollectionKind); setQuery(''); }, create: CREATE[kind], items: FILTERS.filter((f) => f.id !== 'searchable').map((f) => ({ id: f.id, label: SHORT[f.id], icon: BIG[f.id] })) } : undefined;
+  const bar = (CANVAS_SHELL || glassPhone) ? { label: 'Show', active: kind, onSelect: (id: string) => { setKind(id as CollectionKind); setQuery(''); }, create: CREATE[kind], items: FILTERS.filter((f) => f.id !== 'searchable').map((f) => ({ id: f.id, label: SHORT[f.id], icon: BIG[f.id] })) } : undefined;
   // (On iPhone the Files tab also lists the files uploaded for search, so it's never shown as empty.)
   const emptyHere = kind !== 'all' && kind !== 'searchable' && !(glassPhone && kind === 'files') && !items.some((i) => i.kind === kind);
 
@@ -118,23 +122,30 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
 
   const sub = (i: Item) => [projectName(i.chat.projectId), i.chat.title, relTime(i.at)].filter(Boolean).join(' · ');
 
+  const librarySearch = CANVAS_SHELL && <label className="hub-search"><Search size={16} aria-hidden="true" /><input type="search" aria-label="Search your library" placeholder={kind === 'searchable' ? 'Find searchable files' : `Search ${kind === 'all' ? 'your library' : FILTERS.find(f => f.id === kind)?.label.toLowerCase()}`} value={query} onChange={e => setQuery(e.target.value)} dir="auto" />{query && <button type="button" aria-label="Clear library search" onClick={e => { setQuery(''); e.currentTarget.parentElement?.querySelector('input')?.focus(); }}>×</button>}</label>;
+  const phoneLabels: Record<CollectionKind, string> = { all:'Everything', documents:'Documents', photos:'Photos', files:'Files', generated:'Generated images', searchable:'Searchable' };
+  const phoneKinds: CollectionKind[] = ['all','documents','photos','files','generated','searchable'];
+  const panel = (content: React.ReactNode) => CANVAS_SHELL && phone ? <div id={panelId} role="tabpanel" aria-labelledby={`${panelId}-${kind}`}>{content}</div> : content;
+
   return (
     <HubPage label="Library" title="Library" subtitle="Your files, photos and documents from every chat. Find actions and assistants in Tools." onClose={onClose} bar={bar}
+      sectionNavigation={CANVAS_SHELL && CanvasPhoneSections && <Suspense fallback={null}><CanvasPhoneSections label="Library content types" panelId={panelId} active={kind} items={phoneKinds.map(id => ({ id, label:phoneLabels[id] }))} onSelect={id => setKind(id as CollectionKind)} /></Suspense>}
+      footer={CANVAS_SHELL && <footer className="phone-page-search" aria-label="Library search">{librarySearch}</footer>}
       actions={<button type="button" className="btn primary" onClick={newDoc}><Plus size={16} /> New document</button>}>
-      {!glassPhone && <div className="coll-filters" role="radiogroup" aria-label="Show">
+      {CANVAS_SHELL && phone ? null : CANVAS_SHELL && CanvasFilterMenu ? <CanvasFilterMenu label="Content type" value={kind} options={FILTERS.map(f => ({ value: f.id, label: f.label, count: counts[f.id] }))} onChange={setKind} /> : !glassPhone && <div className="coll-filters" role="radiogroup" aria-label="Show">
         {FILTERS.map((f) => (
           <button key={f.id} type="button" role="radio" aria-checked={kind === f.id} className="coll-chip" onClick={() => setKind(f.id)}>
             {f.icon}{f.label}{f.id !== 'searchable' && counts[f.id] ? <span className="hub-count">{counts[f.id]}</span> : null}
           </button>
         ))}
       </div>}
-      {kind === 'searchable' ? (
-        <div className="files-uploads"><p className="muted small coll-note">Files you’ve uploaded for Lumen to search. Replies quote them with page numbers.</p><KnowledgeLibrary onClose={onClose} /></div>
+      {panel(kind === 'searchable' ? (
+        <div className="files-uploads"><p className="muted small coll-note">Files you’ve uploaded for Lumen to search. Replies quote them with page numbers.</p><KnowledgeLibrary onClose={onClose} filter={CANVAS_SHELL && phone ? query : undefined} /></div>
       ) : (
         <>
-          {(items.length > 0 || glassPhone) && (
+          {(CANVAS_SHELL || items.length > 0 || glassPhone) && (
             <div className="hub-toolbar">
-              <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search your library" placeholder={glassPhone ? `Search ${FILTERS.find((f) => f.id === kind)?.label.toLowerCase()}` : 'Search names and documents'} value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" /></label>
+              {CANVAS_SHELL ? !phone && librarySearch : <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search your library" placeholder={glassPhone ? `Search ${FILTERS.find((f) => f.id === kind)?.label.toLowerCase()}` : 'Search names and documents'} value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" /></label>}
               {projects.length > 0 && (
                 <label className="coll-project"><FolderKanban size={15} /><select aria-label="Project" value={project} onChange={(e) => setProject(e.target.value)}><option value="">All projects</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
               )}
@@ -150,9 +161,9 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
                 <li key={i.key} className={`coll-item kind-${i.kind}`}>
                   <button type="button" className="doc-open" onClick={(e) => open(i, e.currentTarget.querySelector('img'))} aria-label={`Open ${i.kind === 'documents' ? i.doc.name : i.file.name}`}>
                     {i.kind === 'documents' ? (
-                      <span className="doc-paper" aria-hidden="true">
+                      CANVAS_SHELL ? <span className="coll-document-icon" aria-hidden="true"><FileText size={28} strokeWidth={1.4} /><span>DOC</span></span> : (<span className="doc-paper" aria-hidden="true">
                         {preview(i.doc.content).map((l, n) => <span key={n} className={n === 0 && heading(i.doc.content) ? 'doc-paper-h' : ''} dir="auto">{l || ' '}</span>)}
-                      </span>
+                      </span>)
                     ) : (i.kind === 'photos' || i.kind === 'generated') ? (
                       <span className="coll-photo">{imageSrc(i.file) ? <img src={i.file.thumb || imageSrc(i.file)} alt="" loading="lazy" /> : <span className="coll-away">On another device</span>}{i.kind === 'generated' && <span className="coll-badge"><Sparkles size={12} /> Made by Lumen</span>}</span>
                     ) : (
@@ -163,7 +174,7 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
                       <span className="doc-sub" dir="auto">{sub(i)}</span>
                     </span>
                   </button>
-                  <More i={i} />
+                  {CANVAS_SHELL && CanvasLibraryActions ? <Suspense fallback={null}><CanvasLibraryActions item={i} openChat={openChat} /></Suspense> : <More i={i} />}
                 </li>
               ))}
             </ul>
@@ -175,7 +186,7 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
             </section>
           )}
         </>
-      )}
+      ))}
     </HubPage>
   );
 }

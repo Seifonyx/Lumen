@@ -4,14 +4,18 @@
 import { useSyncExternalStore } from 'react';
 
 export type RoutingSection = 'overview' | 'providers' | 'models' | 'policies' | 'usage' | 'diagnostics';
-let state: { open: boolean; section: RoutingSection } = { open: false, section: 'overview' };
+let state: { open: boolean; section: RoutingSection; provider?: string | null } = { open: false, section: 'overview' };
 const listeners = new Set<() => void>();
 const set = (next: typeof state) => { state = next; listeners.forEach((fn) => fn()); };
 
 export const openRoutingCenter = (section: RoutingSection = 'overview') => set({ open: true, section });
 export const closeRoutingCenter = () => { if (state.open) set({ ...state, open: false }); };
-export const showRoutingSection = (section: RoutingSection) => set({ ...state, section });
+export const showRoutingSection = (section: RoutingSection) => set({ ...state, section, provider: null });
 const subscribe = (fn: () => void) => { listeners.add(fn); return () => { listeners.delete(fn); }; };
 export const routingCenterOpen = () => state.open;
 export const subscribeRoutingCenter = subscribe;
 export const useRoutingCenter = () => useSyncExternalStore(subscribe, () => state);
+
+export const getRoutingScreen = () => state;
+export const restoreRoutingScreen = (next: typeof state) => set(next);
+export const showRoutingProvider = (provider: string | null) => set({ ...state, provider });

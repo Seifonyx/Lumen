@@ -1,6 +1,6 @@
 // Visual and interaction regressions for the shared product design. Only local data / mocked AI.
 const { chromium } = require('playwright');
-const {openSettings,replyAction}=require('./helpers/ui.cjs');
+const {openSettings,replyAction,openSettingsSection,closeSettings}=require('./helpers/ui.cjs');
 const path = require('node:path');
 const { scan } = require('./helpers/fitscan.cjs');
 let failures = 0;
@@ -131,8 +131,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         await page.click('.sidebar-foot, .cv-account');
         if (mobile) await page.waitForFunction(() => document.querySelector('.sidebar').getBoundingClientRect().right <= 0);
         for (const name of ['General', 'API keys', 'Models', 'Usage', 'Personalization', 'Memory', 'Privacy & data']) {
-          if (await page.locator('.settings-back').isVisible()) await page.click('.settings-back');
-          await page.locator('.settings-tabs button').filter({ hasText: name }).first().click();
+          await openSettingsSection(page, name);
           const issues = await scan(page);
           check(issues.length === 0, `${label}: ${name} settings fit${issues.length ? ' ' + JSON.stringify(issues) : ''}`);
           if (name === 'General' && await page.evaluate(() => document.documentElement.hasAttribute('data-lumen-canvas'))) {

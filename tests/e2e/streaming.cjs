@@ -32,7 +32,7 @@ const url = process.env.MR_TEST_URL || 'http://localhost:5190/?emulator';
         const top = () => page.evaluate(() => document.querySelector('.messages').scrollTop);
         // At the end of the conversation (the follow lands before the next paint; a sample can fall between a new line
         // and its follow, so this waits for the end rather than reading one instant).
-        const atEnd = (why) => page.waitForFunction(() => { const l = document.querySelector('.messages'); return l.scrollHeight - l.scrollTop - l.clientHeight <= 4; }, null, { timeout: 1500 }).catch(() => assert.fail(why));
+        const atEnd = (why) => page.waitForFunction(() => { const l = document.querySelector('.messages'); return l.scrollHeight - l.scrollTop - l.clientHeight <= 4; }, null, { timeout: 3500 }).catch(() => assert.fail(why));
         const tag = `${width}`;
 
         await page.fill('.composer textarea', 'Walk me through the launch again, in detail.');

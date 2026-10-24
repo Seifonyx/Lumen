@@ -1,3 +1,4 @@
+const {closeSettings}=require('./helpers/ui.cjs');
 // Settings → Privacy & data → Delete my account and data removes the account's cloud data, its share
 // links and the sign-in record, then signs out. A second account's data is left alone.
 const { chromium } = require('playwright'), assert = require('node:assert/strict');
@@ -26,7 +27,7 @@ async function signedIn(browser, email) {
   await page.fill('input[placeholder="AIza…"]', 'g-key');
   await page.click('button:has-text("Save keys")');
   await page.waitForTimeout(1500);
-  await page.click('.settings-page [aria-label="Close"]');
+  await closeSettings(page);
   await page.fill('.composer textarea', `hello from ${email}`);
   await page.click('.send-btn');
   await page.locator('.msg.assistant', { hasText: 'Hello back.' }).waitFor();

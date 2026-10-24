@@ -1,10 +1,7 @@
 // Long chats: auto-compacting, what gets sent, divider, /compact, undo, new chat with summary, sync.
 const { chromium } = require('playwright');
 // Settings is a page: on phones the section list shows first, and a section has a back arrow.
-async function openTab(page, name) {
-  if (await page.isVisible('.settings-back')) await page.click('.settings-back');
-  await page.click(`.settings-tabs >> text=${name}`);
-}
+const { openSettingsSection: openTab, closeSettings } = require('./helpers/ui.cjs');
 const path = require('path');
 let failures = 0;
 const check = (c, l) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) failures++; };
@@ -66,7 +63,7 @@ async function send(page, text, n) {
   await page.waitForTimeout(1500);
   await openTab(page, 'General');
   check((await page.textContent('.settings-page')).includes('Compact long chats automatically'), 'setting is there');
-  await page.click('.settings-page [aria-label="Close"]');
+  await closeSettings(page);
 
   await send(page, big('OLD-1'), 0);
   check(Boolean(await page.$('.usage-chip')), 'usage meter is there from the first message');
@@ -122,7 +119,7 @@ async function send(page, text, n) {
   await page.click('.sidebar-foot, .cv-account');
   await openTab(page, 'General');
   await page.locator('.setting-row', { hasText: 'Compact long chats automatically' }).locator('input').click();
-  await page.click('.settings-page [aria-label="Close"]');
+  await closeSettings(page);
   const nBefore = (await page.$$('.msg.assistant')).length;
   await send(page, 'one more', nBefore);
   check(log.summaries.length === 2 && allText(log.chats.at(-1)).includes('OLD-1'), 'with auto off, the full chat is sent');

@@ -1,3 +1,4 @@
+const {openSettingsSection,closeSettings}=require('./helpers/ui.cjs');
 // Regression coverage for drafts, project reloads, comparison privacy, modal focus and phone layouts.
 const { chromium } = require('playwright');
 const path = require('node:path');
@@ -58,8 +59,7 @@ async function settings(page, name) {
     if (await page.locator('.menu-btn').isVisible() && !(await page.locator('.sidebar.open').isVisible())) await page.click('.menu-btn');
     await page.click('.sidebar-foot, .cv-account');
   }
-  if (await page.locator('.settings-back').isVisible()) await page.click('.settings-back');
-  await page.locator('.settings-tabs button').filter({ hasText: name }).first().click();
+  await openSettingsSection(page, name);
 }
 
 async function run(browser, mobile) {
@@ -75,8 +75,8 @@ async function run(browser, mobile) {
   await page.keyboard.press('Enter');
   // Settings loads its code the first time it opens.
   await page.locator('.settings-page').waitFor({ timeout: 5000 }).catch(() => {});
-  check(await page.locator('.settings-page').isVisible() && (await page.locator('.settings-title').textContent()).includes(mobile ? 'Memory' : 'Settings'), `${label}: command can open Memory using the keyboard`);
-  await page.locator('.settings-page [aria-label="Close"]').click();
+  check(await page.locator('.settings-page').isVisible() && (await page.locator(mobile && await page.locator('.phone-navigation h1').isVisible() ? '.phone-navigation h1' : '.settings-title').textContent()).includes(mobile ? 'Memory' : 'Settings'), `${label}: command can open Memory using the keyboard`);
+  await closeSettings(page);
 
   await page.reload();
   await page.waitForSelector('.app:not(.app-skeleton) .topbar');
@@ -123,7 +123,7 @@ async function run(browser, mobile) {
 
   await settings(page, 'Privacy');
   await page.locator('.setting-row').filter({ hasText: 'Restore real values in replies' }).locator('input.switch').uncheck();
-  await page.locator('.settings-page [aria-label="Close"]').click();
+  await closeSettings(page);
   check(await page.locator('.main').evaluate(el=>!el.inert), `${label}: chat is interactive after settings closes`);
   await page.fill('.composer textarea', `My email is ${EMAIL}; compare again.`);
   await page.getByRole('button',{name:/^Add (?:photos, )?files or a repository$/}).click();await page.getByRole('button',{name:'Compare models',exact:true}).click();
@@ -134,7 +134,7 @@ async function run(browser, mobile) {
 
   await settings(page, 'Privacy');
   await page.getByRole('radio', { name: 'Ask me', exact: true }).click();
-  await page.locator('.settings-page [aria-label="Close"]').click();
+  await closeSettings(page);
   await page.fill('.composer textarea', `Email ${EMAIL} in a comparison.`);
   await page.getByRole('button',{name:/^Add (?:photos, )?files or a repository$/}).click();await page.getByRole('button',{name:'Compare models',exact:true}).click();
   await page.click('.compare-picker-actions .primary');
@@ -192,8 +192,8 @@ async function run(browser, mobile) {
       return event.defaultPrevented;
     });
     check(!(await touch('.settings-scroll')) && !(await touch('.settings-panel textarea')), 'iOS simulation: settings and textarea scrolling allowed with keyboard open');
-    check(await touch('.settings-top'), 'iOS simulation: app chrome still blocks page panning');
-    await page.locator('.settings-page [aria-label="Close"]').click();
+    check(await touch(await page.locator('.settings-page .phone-navigation').isVisible() ? '.settings-page .phone-navigation' : '.settings-top'), 'iOS simulation: app chrome still blocks page panning');
+    await closeSettings(page);
     check(await touch('.composer textarea'), 'iOS simulation: composer drag still cannot pan the page');
     // A conversation that can scroll scrolls; one that can't (a new chat) mustn't pull the page down and show
     // the background above the app.

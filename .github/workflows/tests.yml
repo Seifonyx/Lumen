@@ -235,13 +235,39 @@ jobs:
         run: for t in ${{ matrix.contracts }}; do node tests/security/private-qa-$t.mjs || exit 1; done
         env:
           MR_WEBKIT: ${{ matrix.engine == 'WebKit' && '1' || '' }}
-      - name: Keep Canvas evidence
-        if: failure()
+          # PR52 visual review: cover smallest, typical, largest iPhone and desktop.
+          CP05_VIEWPORTS: '1440x960,430x932,390x844,320x568'
+          CP04_VIEWPORTS: '1440x960,430x932,390x844,320x568'
+      - name: Phone glass navigation in ${{ matrix.engine }}
+        if: matrix.group == 'shell-browser'
+        shell: bash
+        run: |
+          LUMEN_CANVAS=1 npm run build -- --outDir /tmp/phone-navigation-canvas
+          node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 5191 --strictPort --outDir /tmp/phone-navigation-canvas > /tmp/phone-navigation-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          node -e "(async()=>{for(let i=0;i<30;i++){try{if((await fetch('http://localhost:5191/')).ok)return}catch{}await new Promise(r=>setTimeout(r,500))}process.exit(1)})()"
+          node tests/e2e/iphone-glass-navigation.cjs
+        env:
+          MR_TEST_URL: http://localhost:5191/
+          MR_WEBKIT: ${{ matrix.engine == 'WebKit' && '1' || '' }}
+      - name: Stamp screenshot provenance
+        if: always()
+        run: |
+          mkdir -p tests/e2e/out
+          printf '%s\n' "$GITHUB_SHA" > tests/e2e/out/EXACT_HEAD.txt
+      - name: Keep Canvas visual review screenshots
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: canvas-evidence-${{ matrix.engine }}-${{ matrix.group }}
-          path: tests/e2e/out
-          if-no-files-found: ignore
+          path: |
+            tests/e2e/out/EXACT_HEAD.txt
+            tests/e2e/out/phone-navigation/**/*.png
+            tests/e2e/out/cp03/**/*.png
+            tests/e2e/out/cp04/**/*.png
+            tests/e2e/out/cp05/**/*.png
+          if-no-files-found: warn
           retention-days: 7
 
   # Gates: one check per suite under its original name (what branch protection and reviewers look for), green only when

@@ -1,3 +1,4 @@
+const { backSettingsSection, closeSettings } = require('./helpers/ui.cjs');
 // Settings page: desktop section list + panel; phone menu → section → back; Esc closes.
 const { chromium } = require('playwright');
 let failures = 0;
@@ -45,25 +46,42 @@ async function open(browser, mobile) {
 
   // Phone
   const P = await open(browser, true);
-  await P.page.waitForSelector('.app:not(.app-skeleton) .topbar');
-  await P.page.click('.menu-btn');
-  await P.page.click('.sidebar-foot, .cv-account');
-  await P.page.waitForSelector('.settings-tabs');
+  // Onboarding can land directly in API Keys, without a previous Settings index entry.
+  if (!(await P.page.locator('.settings-page').isVisible())) {
+    await P.page.locator('.composer textarea').waitFor();
+    await P.page.click('.menu-btn');
+    await P.page.click('.sidebar-foot, .cv-account');
+  }
+  // A first-sign-in deep link may show Keys; allow the lazy screen to mount before
+  // distinguishing an actual subsection from an index screen still rendering.
+  await P.page.locator('.settings-tabs').waitFor({ state: 'attached' });
+  if (!(await P.page.locator('.settings-tabs').isVisible())) {
+    check(await P.page.locator('.settings-page .phone-navigation button[aria-label="Back"], .settings-page .settings-back').isVisible(), 'phone: direct-entry settings subsection offers Back');
+    await closeSettings(P.page);
+  }
+  if (!(await P.page.locator('.settings-page').isVisible())) {
+    await P.page.locator('.composer textarea').waitFor();
+    await P.page.click('.menu-btn');
+    await P.page.click('.sidebar-foot, .cv-account');
+  }
+  await P.page.locator('.settings-tabs').waitFor({ state: 'visible' });
   const rows = await P.page.$$eval('.settings-tabs button', (b) => b.map((x) => x.querySelector('.tab-label').textContent));
   check(rows.length === 9 && rows.includes('Connectors') && rows[0] === 'General' && !rows.includes('Layouts'), `phone: section menu (${rows.join(', ')})`);
   check(!(await P.page.isVisible('.settings-panel')), 'phone: menu first, no sideways tabs');
   const box = await P.page.locator('.settings-tabs').boundingBox();
   check(box.width <= 390 && (await P.page.evaluate(() => document.querySelector('.settings-tabs').scrollWidth <= document.querySelector('.settings-tabs').clientWidth)), 'phone: nothing scrolls sideways');
   await P.page.click('.settings-tabs >> text=Models');
-  check(await P.page.isVisible('.settings-back') && (await P.page.textContent('.settings-title')).includes('Models') && !(await P.page.isVisible('.settings-tabs')), 'phone: section opens full screen with a back arrow');
+  const modern = await P.page.locator('.settings-page .phone-navigation').isVisible();
+  check((modern ? await P.page.locator('.settings-page .phone-navigation button[aria-label="Back"]').isVisible() && (await P.page.locator('.phone-navigation h1').textContent()).includes('Models') : await P.page.isVisible('.settings-back') && (await P.page.textContent('.settings-title')).includes('Models')) && !(await P.page.isVisible('.settings-tabs')), 'phone: section opens with contextual Back');
   await P.page.waitForTimeout(500);
   await P.page.screenshot({ path: require('path').join(__dirname, 'out', 'settings-phone-section.png') });
-  await P.page.click('.settings-back');
+  await backSettingsSection(P.page);
   check(await P.page.isVisible('.settings-tabs') && !(await P.page.isVisible('.settings-panel')), 'phone: back returns to the menu');
   await P.page.screenshot({ path: require('path').join(__dirname, 'out', 'settings-phone-menu.png') });
   await P.page.click('.settings-tabs >> text=Usage');
-  await P.page.click('.settings-page [aria-label="Close"]');
-  await P.page.waitForSelector('.app:not(.app-skeleton) .topbar');
+  await closeSettings(P.page);
+  await P.page.locator('.settings-page').waitFor({ state: 'hidden' });
+  await P.page.locator('.composer textarea').waitFor({ state: 'visible' });
   check(true, 'phone: close returns to the chat');
 
   check(![...D.errors, ...P.errors].length, `no page errors ${[...D.errors, ...P.errors].join(' | ')}`);

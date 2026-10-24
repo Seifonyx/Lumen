@@ -68,7 +68,8 @@ async function shot(page, path) {
 const settle = (page, ms = 400) => page.waitForTimeout(ms);
 const nav = (page) => page.locator('aside.cv-nav');
 async function openNav(page, phone) {
-  if (!phone) return;
+  if (!phone || await nav(page).evaluate(el=>el.classList.contains('open'))) return;
+  while(await page.locator('.phone-navigation [aria-label="Back"]').isVisible()){await page.locator('.phone-navigation [aria-label="Back"]').click();await settle(page,250);}
   await page.getByRole('button', { name: 'Open chats', exact: true }).first().click();
   await settle(page, 600);
 }
@@ -214,8 +215,8 @@ try {
       await nav(page).getByRole('button', { name: /Offer, portfolio and first clients/ }).click();
       await settle(page, 600);
       assert.ok(await page.locator('.project-workspace-main').isVisible(), 'the brief opens the project workspace');
-      await openNav(page, phone);
       assert.equal(await nav(page).locator('.cv-brief.open[aria-current="page"]').count(), 1, 'the overview row is current while the overview shows');
+      await openNav(page, phone);
       await nav(page).locator('.cv-project').getByRole('button', { name: 'New chat in Studio launch', exact: true }).click();
       await settle(page, 600);
       assert.equal(await page.locator('.project-workspace-main').count(), 0);
@@ -267,11 +268,9 @@ try {
         await openNav(page, true);
         await nav(page).getByRole('button', { name: 'Library', exact: true }).click();
         await page.getByRole('main', { name: 'Library' }).waitFor();
-        // The drawer opened from a page's own bar gives focus back to that button when it closes (slice 2).
-        await page.getByRole('button', { name: 'Open sidebar', exact: true }).click();
-        await settle(page, 500);
-        await page.keyboard.press('Escape');
-        await page.waitForFunction(() => document.activeElement?.matches('.hub-nav[aria-label="Open sidebar"]'));
+        // Nested phone screens expose a real Back, not a second drawer.
+        assert.equal(await page.locator('.phone-navigation [aria-label="Back"]').count(),1);
+        assert.equal(await page.getByRole('button',{name:'Open sidebar',exact:true}).count(),0);
         await page.goBack();
         await page.getByRole('main', { name: 'Library' }).waitFor({ state: 'detached' });
         await page.waitForFunction(() => document.activeElement?.matches('.menu-btn'));

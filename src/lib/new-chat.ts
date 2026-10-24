@@ -1,3 +1,4 @@
+import { navigateScreen } from './canvas-presentation';
 // Canvas New chat (Phase 2 slice 2, owner decision 2026-10-23). Reached only through canvas-presentation.on.ts.
 // Two kinds, never mixed:
 //  - General: the drawer's bottom New chat, the desktop sidebar's, the collapsed rail's, the top bar's, ⌘⇧O and the
@@ -8,15 +9,19 @@
 import { useStore } from '../store';
 
 export function newGeneralChat() {
+  navigateScreen!(() => {
   if (useStore.getState().activeProjectId) {
     try { localStorage.removeItem('mr.activeProject'); } catch { /* private mode */ }
     useStore.setState({ activeProjectId: null });
   }
   useStore.getState().newChat();
+  });
 }
 
 export function newProjectChat(projectId: string) {
+  navigateScreen!(() => {
   const s = useStore.getState();
   s.selectProject(projectId);
   s.newChat();
+  });
 }

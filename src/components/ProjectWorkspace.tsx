@@ -85,7 +85,7 @@ export default function ProjectWorkspace({ project, onOpenSettings }: { project:
       <header className="project-head">
         <span className={`project-tile color-${color}`} aria-hidden="true">{project.name.slice(0, 1).toUpperCase()}</span>
         <div className="project-head-text">
-          <h1 className="project-title claude-project-title">{project.name}</h1>
+          <h1 className="project-title claude-project-title" aria-hidden={CANVAS_SHELL && window.matchMedia('(max-width:899px)').matches || undefined}>{project.name}</h1>
           {project.description && <p className="project-desc">{project.description}</p>}
         </div>
         <button type="button" className="btn small project-edit-btn" onClick={onOpenSettings}>

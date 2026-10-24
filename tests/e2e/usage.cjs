@@ -1,10 +1,7 @@
 // Usage meter test: counts, learned limits, skipping limited models, OpenRouter pool, sync to a 2nd device.
 const { chromium, webkit } = require('playwright');
 // Settings is a page: on phones the section list shows first, and a section has a back arrow.
-async function openTab(page, name) {
-  if (await page.isVisible('.settings-back')) await page.click('.settings-back');
-  await page.click(`.settings-tabs >> text=${name}`);
-}
+const { openSettingsSection: openTab, closeSettings } = require('./helpers/ui.cjs');
 const path = require('path');
 const OUT = path.join(__dirname, 'out');
 require('fs').mkdirSync(OUT, { recursive: true });
@@ -77,7 +74,7 @@ async function device(browser, mobile) {
   }
   await A.page.locator('.models-nav button').filter({ hasText: 'Your models' }).click();
   await A.page.locator('.model-row', { hasText: 'gemini-3.5-flash' }).locator('.star').first().click();
-  await A.page.click('.settings-page [aria-label="Close"]');
+  await closeSettings(A.page);
 
   // 1st message: 3.5 is limited -> switches across providers to OpenRouter and learns limit 20.
   await A.page.click('.model-button');

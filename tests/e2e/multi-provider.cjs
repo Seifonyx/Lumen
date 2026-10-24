@@ -1,3 +1,4 @@
+const {openSettingsSection,closeSettings}=require('./helpers/ui.cjs');
 const { chromium, webkit } = require('playwright');
 const assert = require('node:assert/strict');
 const AxeBuilder = require('@axe-core/playwright').default;
@@ -18,9 +19,9 @@ const providers = {
 const openSettings = async page => {
   if (await page.locator('.menu-btn').isVisible()) await page.locator('.menu-btn').click();
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await page.locator('.settings-tabs').getByText('API keys', { exact: true }).click();
+  await openSettingsSection(page,'API keys');
 };
-const closeSettings = page => page.locator('.settings-page').getByRole('button', { name: 'Close', exact: true }).click();
+
 const sse = item => `data: ${JSON.stringify(item)}\n\ndata: [DONE]\n\n`;
 (async () => {
   fs.mkdirSync('tests/e2e/out', { recursive: true });

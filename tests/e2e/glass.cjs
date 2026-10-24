@@ -1,3 +1,4 @@
+const {selectLibraryType}=require('./helpers/ui.cjs');
 // 2.3: the iPhone glass look. Only iPhones get it (not Android, not computers), it can be switched off for a
 // device that stutters, the chat runs under the floating bars without hiding the first or last message, and
 // the floating tab bar moves between pages.
@@ -56,6 +57,32 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     assert.ok(top.first >= top.bar, `the first message (${Math.round(top.first)}) starts below the top bar (${Math.round(top.bar)})`);
     console.log('PASS the chat runs under the bars without hiding messages');
 
+    const canvas=await page.locator('.app[data-lumen-canvas-shell]').count();
+    if(canvas){
+      // The reset intentionally removes category/home docks from Canvas; ordinary still tests their gestures below.
+      const enter=async(id)=>{await page.evaluate(id=>window.dispatchEvent(new CustomEvent('mr:library',{detail:id})),id);await page.locator('.hub-page').waitFor();};
+      const leave=async()=>{await page.locator('.phone-navigation [aria-label="Back"]').click();await page.locator('.hub-page').waitFor({state:'detached'});};
+      await enter('projects');assert.equal(await page.locator('.glass-tabbar').count(),0);
+      assert.equal(await page.locator('.phone-navigation').getByRole('button',{name:'New project',exact:true}).count(),1);await leave();
+      await enter('tools-page');assert.equal(await page.locator('.glass-tabbar').count(),0);
+      await page.getByRole('searchbox',{name:'Search tools'}).fill('research');
+      assert.ok(await page.getByRole('button',{name:/Deep research/}).isVisible(),'search reaches capabilities across categories');
+      await page.getByRole('searchbox',{name:'Search tools'}).fill('');
+      await page.getByRole('button',{name:'New assistant',exact:true}).click();
+      const model=page.locator('select[aria-label="Assistant model"]');await model.tap();
+      await page.locator('.glass-select-menu [role="option"]').nth(1).click();
+      assert.equal(await model.inputValue(),'gemini:gemini-flash-latest');
+      await page.locator('.phone-navigation [aria-label="Back"]').click();await page.getByRole('searchbox',{name:'Search tools'}).waitFor();await leave();
+      await enter('collection');assert.equal(await page.locator('.glass-tabbar').count(),0);
+      await selectLibraryType(page,'Photos');
+      assert.ok(await page.locator('.phone-navigation').getByRole('button',{name:'Add photos',exact:true}).isVisible());
+      await selectLibraryType(page,'Searchable');
+      await page.locator('.files-uploads .knowledge-library').waitFor();
+      await page.evaluate(()=>document.documentElement.classList.add('kb-open'));
+      assert.ok(await page.locator('.phone-navigation [aria-label="Back"]').isVisible(),'Back stays reachable in simulated keyboard mode');
+      await page.evaluate(()=>document.documentElement.classList.remove('kb-open'));await leave();
+      console.log('PASS Canvas hierarchy, all-tools search, assistant model selection and Library filter without category docks');
+    }else{
     // Tab bar between pages (Projects shows the app's pages).
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'projects' })));
     await page.waitForSelector('.glass-tabbar');
@@ -165,7 +192,7 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     assert.ok(await page.locator('.hub-empty button', { hasText: 'Add photos' }).isVisible(), 'an empty tab offers to add something');
     // Files also holds the files uploaded for Lumen to search; the tab bar steps aside while typing.
     await page.locator('.glass-tabbar button', { hasText: 'Files' }).click();
-    await page.waitForSelector('.coll-searchable .knowledge-library');
+    await page.waitForSelector('.files-uploads .knowledge-library');
     assert.equal(await page.locator('.hub-new').getAttribute('aria-label'), 'Upload a file');
     await page.evaluate(() => document.documentElement.classList.add('kb-open'));
     assert.equal(await page.locator('.glass-tabbar').isVisible(), false, 'tab bar hidden while typing');
@@ -173,6 +200,8 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     await page.locator('.hub-close').click();
     await page.waitForSelector('.hub-page', { state: 'detached' });
     console.log('PASS the tab bar moves between pages');
+
+    }
 
     // 2.5.1: All chats has a Select mode (rows are plain until then) and iPhone sheets have no ✕.
     await page.click('.menu-btn'); await page.waitForTimeout(400);

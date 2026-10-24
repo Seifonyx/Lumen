@@ -1,3 +1,4 @@
+const {closeSettings}=require('./helpers/ui.cjs');
 // Isolated local accounts and mocked AI. Covers intent, finger tracking, cancellation and native scrolling.
 const { chromium } = require('playwright');
 const path = require('node:path');
@@ -111,7 +112,7 @@ const settled = page => page.waitForTimeout(320);
         await touch(page, '.settings-page', 'touchmove', start + sign * 150, y);
         await touch(page, '.settings-page', 'touchend', start + sign * 150, y);
         check(!(await isOpen()), `${label}: settings cannot trigger a hidden drawer`);
-        await page.click('.settings-page [aria-label="Close"]');
+        await closeSettings(page);
 
         await page.fill('.composer textarea', 'A long scroll test'); await page.click('.send-btn');
         await page.waitForSelector('.msg.assistant pre'); await page.locator('.send-btn.stop').waitFor({ state: 'hidden' });

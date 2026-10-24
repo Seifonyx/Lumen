@@ -1,5 +1,5 @@
 const { chromium } = require('playwright');
-const {openSettings,replyAction}=require('./helpers/ui.cjs');
+const {openSettings,replyAction,closeCanvas}=require('./helpers/ui.cjs');
 const assert = require('node:assert/strict');
 (async()=>{
  const browser=await chromium.launch();
@@ -40,8 +40,8 @@ const assert = require('node:assert/strict');
   failEdit=true;await page.getByRole('button',{name:'Select all',exact:true}).click();await page.getByLabel('Canvas edit instruction').fill('Shorten');await page.getByRole('button',{name:'Suggest',exact:true}).click();await page.getByRole('button',{name:'Mask and send',exact:true}).click();await page.waitForSelector('.canvas-error');assert.equal(await page.locator('.canvas-review').count(),0);assert.equal(await page.inputValue('.canvas-text'),'Call 01011112222.');failEdit=false;
   assert.ok(await page.locator('.canvas-panel').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
   const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'Download canvas document',exact:true}).click();assert.ok((await downloadPromise).suggestedFilename().endsWith('.md'));
-  await page.getByRole('button',{name:'Close canvas',exact:true}).click();await page.reload();await page.waitForSelector('.composer textarea');if(width<900)await page.click('.menu-btn');await page.locator('.chat-row .chat-open').first().click();await page.getByRole('button',{name:'Open canvas',exact:true}).click();assert.equal(await page.inputValue('.canvas-text'),'Call 01011112222.');
-  await ctx.setOffline(true);await page.fill('.canvas-text','Offline draft');await page.getByRole('button',{name:'Close canvas',exact:true}).click();await ctx.setOffline(false);await page.getByRole('button',{name:'Open canvas',exact:true}).click();assert.equal(await page.inputValue('.canvas-text'),'Offline draft');
+  await closeCanvas(page);await page.reload();await page.waitForSelector('.composer textarea');if(width<900)await page.click('.menu-btn');await page.locator('.chat-row .chat-open').first().click();await page.getByRole('button',{name:'Open canvas',exact:true}).click();assert.equal(await page.inputValue('.canvas-text'),'Call 01011112222.');
+  await ctx.setOffline(true);await page.fill('.canvas-text','Offline draft');await closeCanvas(page);await ctx.setOffline(false);await page.getByRole('button',{name:'Open canvas',exact:true}).click();assert.equal(await page.inputValue('.canvas-text'),'Offline draft');
   await page.locator('.canvas-panel input[type=file]').setInputFiles({name:'code.py',mimeType:'text/x-python',buffer:Buffer.from('print(1 + 1)')});await page.waitForFunction(()=>document.querySelector('.canvas-text').value==='print(1 + 1)');assert.ok(await page.locator('.canvas-text').evaluate(el=>el.classList.contains('code')));
   await page.getByRole('button',{name:'Preview',exact:true}).click();assert.ok((await page.locator('.canvas-preview').textContent()).includes('print(1 + 1)'));
   if(width<900){assert.ok(await page.locator('.main').evaluate(el=>el.inert));await page.setViewportSize({width,height:440});assert.ok(await page.locator('.canvas-panel').evaluate(el=>el.scrollWidth<=el.clientWidth+1));await page.setViewportSize({width,height:844});

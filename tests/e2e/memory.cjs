@@ -1,9 +1,6 @@
 const { chromium } = require('playwright');
 // Settings is a page: on phones the section list shows first, and a section has a back arrow.
-async function openTab(page, name) {
-  if (await page.isVisible('.settings-back')) await page.click('.settings-back');
-  await page.click(`.settings-tabs >> text=${name}`);
-}
+const { openSettingsSection: openTab, closeSettings }=require('./helpers/ui.cjs');
 const path = require('path');
 let failures = 0;
 const check = (c, l) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) failures++; };
@@ -59,7 +56,7 @@ async function openMemory(page) {
   await page.fill('input[placeholder="AIza…"]', 'g');
   await page.click('button:has-text("Save keys")');
   await page.waitForTimeout(1500);
-  await page.click('.settings-page [aria-label="Close"]');
+  await closeSettings(page);
 
   await send(page, 'hello', 0);
   check(sys(log).includes('# Memory') && sys(log).includes('no saved memories'), 'memory instructions sent (empty)');
@@ -112,7 +109,7 @@ async function openMemory(page) {
   // Turn memory off.
   await openMemory(page);
   await page.locator('.setting-row', { hasText: 'Use memory' }).locator('input').click();
-  await page.click('.settings-page [aria-label="Close"]');
+  await closeSettings(page);
   await send(page, 'and now?', 3);
   check(!sys(log).includes('# Memory'), 'memory off: nothing sent');
   await openMemory(page);
@@ -121,7 +118,7 @@ async function openMemory(page) {
   await page.getByRole('button',{name:'Clear all',exact:true}).click();
   await page.waitForTimeout(800);
   check((await page.textContent('.memory-tab')).includes('Remembered facts (0/200)') && (await page.textContent('.memory-tab')).includes('No memories saved yet'), 'delete all');
-  await page.click('.settings-page [aria-label="Close"]');
+  await closeSettings(page);
 
   // Reload: replies stay clean.
   await page.reload();

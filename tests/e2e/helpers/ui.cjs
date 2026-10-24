@@ -2,11 +2,11 @@
 
 /** Opens Settings (from the sidebar; on phones through the menu) and, optionally, one section. */
 exports.openSettings = async (page, tab) => {
-  if (await page.locator('.menu-btn').isVisible()) await page.click('.menu-btn');
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  if (!tab) return;
-  if (await page.locator('.settings-back').isVisible()) await page.locator('.settings-back').click();
-  await page.locator('.settings-tabs .tab-label').getByText(tab, { exact: true }).click();
+  if (!(await page.locator('.settings-page').isVisible())) {
+    if (await page.locator('.menu-btn').isVisible()) await page.click('.menu-btn');
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  }
+  if (tab) await exports.openSettingsSection(page, tab);
 };
 
 /** Runs one of a reply's less-used actions from its ⋯ menu (Read aloud, Share, Save as Word, Edit in canvas, Select text). */
@@ -51,4 +51,13 @@ exports.closeSettings = async (page) => {
     else await page.keyboard.press('Escape');
   }
   await root.waitFor({ state: 'hidden' });
+};
+
+/** Canvas documents use the screen Back control on iPhone, the original Close on desktop/ordinary. */
+exports.closeCanvas = async (page) => {
+  const legacy = page.getByRole('button', { name: 'Close canvas', exact: true });
+  if (await legacy.isVisible()) return legacy.click();
+  const back = page.locator('.canvas-panel .phone-navigation button[aria-label="Back"]');
+  await back.waitFor({ state: 'visible' });
+  await back.click();
 };

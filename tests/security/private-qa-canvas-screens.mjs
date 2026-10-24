@@ -70,11 +70,12 @@ async function openNav(page, phone) {
 async function go(page, phone, label) { await openNav(page, phone); await nav(page).getByRole('button', { name: label, exact: true }).click(); await settle(page, 700); }
 const closeAll = async (page) => {
  for(let i=0;i<24;i++){
-   const presented=await page.locator('.modal-backdrop:visible,.hub-page:visible,.settings-page:visible,.rc-page:visible,.canvas-panel:visible,.project-workspace-main:visible,[role="dialog"]:visible,[role="menu"]:visible').count();
+   const presented=await page.locator('.modal-backdrop:visible,.hub-page:visible,.settings-page:visible,.rc-page:visible,.canvas-panel:visible,.project-workspace-main:visible,[role="dialog"]:visible:not([inert]),[role="menu"]:visible:not([inert])').count();
    if(!presented && await page.locator('.composer textarea').isVisible()) return;
-   if(await page.locator('.modal-backdrop:visible,[role="dialog"]:visible,[role="menu"]:visible').count())await page.keyboard.press('Escape');else await page.goBack();
+   if(await page.locator('.modal-backdrop:visible,[role="dialog"]:visible:not([inert]),[role="menu"]:visible:not([inert])').count())await page.keyboard.press('Escape');else await page.goBack();
    await settle(page,200);
  }
+ console.error('Unclosed presentation',await page.locator('.modal-backdrop:visible,.hub-page:visible,.settings-page:visible,.rc-page:visible,.canvas-panel:visible,.project-workspace-main:visible,[role="dialog"]:visible:not([inert]),[role="menu"]:visible:not([inert])').evaluateAll(els=>els.map(el=>({tag:el.tagName,class:el.className,label:el.getAttribute('aria-label'),inert:el.inert}))));
  assert.fail('Could not return through the screen hierarchy to chat');
 };
 /** Ink accents and Canvas headings on the current screen. */
@@ -139,6 +140,8 @@ try {
         await page.getByRole('textbox', { name: 'Project name' }).fill(name);
         await page.getByRole('button', { name: 'Create project' }).click();
         await settle(page, 700);
+        assert.equal(await page.getByRole('textbox',{name:'Project name',exact:true}).count(),0,'successful creation dismisses its form');
+        assert.ok(await page.locator('.project-workspace-main').isVisible(),'successful creation retains the selected workspace');
         await openNav(page, phone);
         assert.ok(await nav(page).getByRole('button', { name: new RegExp(name) }).first().isVisible(), 'the new project is a folder in the tree');
         pass('create project');

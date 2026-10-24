@@ -445,3 +445,6 @@
 }
 
 @media(max-width:899px){ .app[data-lumen-canvas-shell] .settings-page.has-section:has(> .phone-navigation) .settings-heading h2{display:none;}}
+/* Fixed action menus must escape the card's clipping, including during keyboard scrolling. */
+.app[data-lumen-canvas-shell] .proj-card:has(> .screen-actions) { overflow:visible;position:relative; }
+.app[data-lumen-canvas-shell] .proj-card > .screen-actions { position:absolute;inset:10px 10px auto auto; }

@@ -9,9 +9,11 @@ let entries = new Map<number, ReturnType<typeof capture>>();
 const views = new Map<number, { focus: HTMLElement | null; scrolls: [string, number][] }>();
 const scrollSelectors = ['.hub-scroll', '.rc-page', '.settings-scroll'];
 let commit: (() => void) | null = null;
-let finish: ((run: () => void) => void) | null = null;
+let replace: ((run: () => void) => void) | null = null;
+/** Replace a completed form with its canonical destination; Cancel still traverses Back. */
+export function replaceScreen(run: () => void) { if (replace) replace(run); else run(); }
 /** Complete an irreversible local action without retaining a stale confirmation in Forward history. */
-export function finishScreen(run: () => void) { if (finish) finish(run); else run(); }
+export function finishScreen(run: () => void) { replaceScreen(run); screenBack(); }
 /** Combine synchronous canonical UI operations into one visible navigation step. */
 export function navigateScreen(run: () => void) { applying = true; try { run(); } finally { applying = false; commit?.(); } }
 let active = 0, serial = 0, applying = false;
@@ -25,6 +27,7 @@ const same = (a: Screen, b: Screen) => a.currentId === b.currentId && a.activePr
  && a.projectWorkspaceOpen === b.projectWorkspaceOpen && a.layer === b.layer && a.layerKey === b.layerKey
  && a.routing.open === b.routing.open && a.routing.section === b.routing.section && a.routing.provider === b.routing.provider;
 export function screenBack(fallback?: () => void) {
+  if (applying) { fallback?.(); return; }
   if (active > 0 && history.state?.[KEY]?.session === session) history.back();
   else fallback?.();
 }
@@ -59,6 +62,9 @@ export function installScreenHistory() {
     saveView(); active = marker.id; const next = entries.get(active)!;
     applying = true;
     const { routing, layer, layerKey: _layerKey, restoreLayer, ...ui } = next;
+    const fresh = useStore.getState();
+    if (ui.activeProjectId && !fresh.settings.projects?.some(p => p.id === ui.activeProjectId)) { ui.activeProjectId = null; ui.projectWorkspaceOpen = false; }
+    if (ui.currentId && !fresh.chats.some(c => c.id === ui.currentId)) ui.currentId = fresh.currentId;
     // Flush React's local-layer effects while replay is guarded, so WebKit cannot record
     // an intermediate unmount/reopen as another user navigation.
     flushSync(() => {
@@ -66,21 +72,23 @@ export function installScreenHistory() {
       if (layer && !mounted) restoreLayer?.();
       useStore.setState(ui); restoreRoutingScreen(routing);
     });
-    previous = next; applying = false;
+    previous = capture(); entries.set(active, previous); applying = false;
+    const focusAtReplay = document.activeElement;
     requestAnimationFrame(() => requestAnimationFrame(() => {
+      // A fast tap/keystroke after Back owns focus; delayed restoration must not dismiss its menu or steal typing.
+      if (document.activeElement !== focusAtReplay && document.activeElement?.matches('button,input,textarea,select,[role="menuitem"],a[href]')) return;
       const view = views.get(active);
       view?.scrolls.forEach(([selector, top]) => document.querySelector(selector)?.scrollTo(0, top));
       const focus = view?.focus?.isConnected ? view.focus : document.querySelector<HTMLElement>('.phone-navigation h1, .settings-page h1, .hub-bar h1, .menu-btn');
       focus?.focus({ preventScroll: true });
     }));
   };
-  finish = (run) => {
+  replace = (run) => {
     applying = true;
     try { flushSync(run); } finally { previous = capture(); entries.set(active, previous); applying = false; }
-    screenBack();
   };
   commit = check;
   const a = useStore.subscribe(check), b = subscribeRoutingCenter(check), c = subscribeBackLayers(check);
   window.addEventListener('popstate', pop);
-  return () => { finish = null; commit = null; a(); b(); c(); window.removeEventListener('popstate', pop); };
+  return () => { replace = null; commit = null; a(); b(); c(); window.removeEventListener('popstate', pop); };
 }

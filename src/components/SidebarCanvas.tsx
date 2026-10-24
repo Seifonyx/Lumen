@@ -259,7 +259,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
               );
             })}
             {!projects.length && !q && <button type="button" className="cv-empty" onClick={() => setManager(true)}>Group related chats, files and instructions in a project</button>}
-            {projects.length > 0 && !q && <button type="button" className="cv-more" onClick={() => toPage('projects')}>All projects<ChevronRight size={12} aria-hidden="true" /></button>}
+            {!q && <button type="button" className="cv-more" onClick={() => toPage('projects')}>All projects<ChevronRight size={12} aria-hidden="true" /></button>}
           </Fold>
 
           {section('conversations', q ? 'Search results' : 'Conversations', Boolean(current && !hereProject && !isTemporaryChat(current)))}

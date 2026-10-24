@@ -215,8 +215,8 @@ try {
       await nav(page).getByRole('button', { name: /Offer, portfolio and first clients/ }).click();
       await settle(page, 600);
       assert.ok(await page.locator('.project-workspace-main').isVisible(), 'the brief opens the project workspace');
-      await openNav(page, phone);
       assert.equal(await nav(page).locator('.cv-brief.open[aria-current="page"]').count(), 1, 'the overview row is current while the overview shows');
+      await openNav(page, phone);
       await nav(page).locator('.cv-project').getByRole('button', { name: 'New chat in Studio launch', exact: true }).click();
       await settle(page, 600);
       assert.equal(await page.locator('.project-workspace-main').count(), 0);

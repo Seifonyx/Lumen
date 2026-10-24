@@ -36,3 +36,8 @@ export const useScreenBackLayer: typeof import('./back-stack').useBackLayer | nu
 export const CanvasLibraryActions: typeof import('../components/CanvasLibraryActions').default | null = null;
 export const navigateScreen: typeof import('./screen-history').navigateScreen | null = null;
 export const CanvasScreenActions: typeof import('../components/ScreenActions').default | null = null;
+
+export const replaceScreen: typeof import('./screen-history').replaceScreen | null = null;
+export const finishScreen: typeof import('./screen-history').finishScreen | null = null;
+
+export const forgetScreenMemory: typeof import('./screen-memory').forgetScreenMemory | null = null;

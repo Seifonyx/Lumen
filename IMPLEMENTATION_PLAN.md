@@ -6,8 +6,8 @@ The new explicit owner direction supersedes earlier small-adjustment scope. See 
 
 | Milestone | Current evidence/status | Remaining acceptance |
 |---|---|---|
-| A — Shared navigation and Routing Center | Source implemented; focused Chromium journeys pass | Final browser/forward/swipe/account/accessibility and design review |
-| B — Library and Tools | Source implemented; type/search/document/editor return journeys pass | Dense/empty/error/menu/physical phone review |
+| A — Shared navigation and Routing Center | Source implemented; Chromium/WebKit navigation and canonical owner checks pass | Final browser/forward/swipe/account/accessibility and design review |
+| B — Library and Tools | Source implemented; type/search/scroll/document/assistant/project form journeys pass | Dense/empty/error/menu/physical phone review |
 | C — Cross-app integration and finish | In progress; Settings/project/document headers integrated | Contract migration, exact-head CI, curated before/after, owner review |
 
 No overall program percentage is defined; do not reuse the historical Blackout/Model Picker scope scores as Lumen-wide completion. Phases1–3 shipped; Phase4 Slices2–3 remain; this advance Library/Tools work does not finish Phase5. No merge, deployment or design Gate approval is authorized.

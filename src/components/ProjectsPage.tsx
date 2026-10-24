@@ -1,8 +1,8 @@
-import { CANVAS_SHELL, useScreenBackLayer, useScreenMemory, navigateBack, navigateScreen } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, CanvasScreenActions, useScreenBackLayer, useScreenMemory, navigateBack, navigateScreen } from '../lib/canvas-presentation';
 // Projects: each project is a workspace with its own instructions, files and memory, shared by every chat in
 // it. This page shows them all as cards, with what's inside and when it was last used.
 import { FolderKanban, MoreHorizontal, Pencil, Plus, Search, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { useStore } from '../store';
 import type { Project } from '../types';
 import HubPage, { HubEmpty, relTime } from './HubPage';
@@ -36,7 +36,7 @@ export default function ProjectsPage({ onClose }: { onClose: () => void }) {
 
   return (
     <HubPage label="Projects" title="Projects" subtitle="Workspaces with their own instructions, files and memory. Every chat in a project shares them." onClose={onClose}
-      compact={glassPhone} create={glassPhone ? { label: 'New project', run: create } : undefined}
+      compact={glassPhone} create={CANVAS_SHELL || glassPhone ? { label: 'New project', run: create } : undefined}
       actions={!glassPhone && <button type="button" className="btn primary" onClick={create}><Plus size={16} /> New project</button>}
       toolbar={projects.length > 0 && (
         <>
@@ -70,7 +70,7 @@ export default function ProjectsPage({ onClose }: { onClose: () => void }) {
                     <span className="proj-time">Updated {relTime(last(p))}</span>
                   </span>
                 </button>
-                <div className="doc-more">
+                {CANVAS_SHELL && CanvasScreenActions ? <Suspense fallback={null}><CanvasScreenActions label={`More for ${p.name}`} actions={[{ label:'Edit project', run:() => setEditing({id:p.id}) }, {label:'Delete project…',destructive:true,run:() => {if(confirm(`Delete the project “${p.name}”? Its chats stay, outside any project.`))void useStore.getState().deleteProject(p.id);}}]} /></Suspense> : (                <div className="doc-more">
                   <button type="button" className="icon-btn sm" aria-label={`More for ${p.name}`} aria-haspopup="menu" aria-expanded={menu === p.id} onClick={() => setMenu(menu === p.id ? null : p.id)}><MoreHorizontal size={16} /></button>
                   {menu === p.id && (
                     <div className="menu doc-menu" role="menu" onMouseLeave={() => setMenu(null)}>
@@ -78,7 +78,8 @@ export default function ProjectsPage({ onClose }: { onClose: () => void }) {
                       <button type="button" role="menuitem" className="danger" onClick={() => { setMenu(null); if (confirm(`Delete the project “${p.name}”? Its chats stay, outside any project.`)) void useStore.getState().deleteProject(p.id); }}><Trash2 size={15} /> Delete</button>
                     </div>
                   )}
-                </div>
+                </div>)}
+
               </li>
             );
           })}

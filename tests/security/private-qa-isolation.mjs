@@ -172,7 +172,7 @@ try {
     'src/lib/provider-presentation.ts',
     // Owner-authorized shared iPhone navigation reset: UI-only owners, ordinary graph remains isolated.
     'src/components/PhoneNavigation.tsx', 'src/components/ScreenActions.tsx', 'src/components/CanvasLibraryActions.tsx',
-    'src/components/ProjectsPage.tsx', 'src/components/CollectionPage.tsx', 'src/components/ToolsPage.tsx', 'src/components/AssistantLibrary.tsx', 'src/components/Study.tsx',
+    'src/components/ProjectManager.tsx', 'src/components/ProjectsPage.tsx', 'src/components/CollectionPage.tsx', 'src/components/ToolsPage.tsx', 'src/components/AssistantLibrary.tsx', 'src/components/Study.tsx',
     'src/components/CanvasPanel.tsx', 'src/components/ImageViewer.tsx', 'src/lib/screen-history.ts', 'src/lib/screen-memory.ts'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);

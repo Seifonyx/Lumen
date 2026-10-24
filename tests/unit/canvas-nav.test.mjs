@@ -75,6 +75,6 @@ test('direct-entry Settings section has a fallback to its section list on phones
   assert.match(source, /<PhoneNavigation title=\{tab \? label : 'Settings'\} backTarget=\{tab \? 'settings-index' : 'settings-exit'\}/);
   const adapter = readFileSync('src/lib/screen-history.ts', 'utf8');
   assert.match(adapter, /screenBackToSettings\(target: 'index' \| 'exit'/);
-  assert.match(adapter, /history\.go\(destination - here\)/);
+  assert.match(adapter, /history\.go\(destination\\.pos - here\)/);
   assert.match(adapter, /replaceScreen\(fallback\)/);
 });

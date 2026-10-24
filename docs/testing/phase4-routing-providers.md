@@ -2,6 +2,79 @@
 
 Status: locally verified and ready for owner design review on `feat/phase4-routing-providers`; based on production main `871bc1a647f36550e6f66e527b1252ac84437506`. Owner permits draft review, not merge/deployment.
 
+## Review 2: owner's second design review (Claude, 24 October 2026)
+
+The owner judged review 1 a meaningful improvement but not approved. Six problems were named:
+- Destinations fell below the first phone screen.
+- The overview let history bury navigation and actions.
+- Providers still felt like a settings list.
+- The four-step connection panel took phone space and implied a setup sequence.
+- Check connection and Connection settings competed.
+- The desktop workspace read as merely a correct two-column settings screen.
+
+**Structure chosen:**
+- **Navigation:**
+  - Phones get a floating dock with the four places you manage: Overview, Providers, Models and Policies. Its form follows the composer's floating capsule.
+  - Usage and Diagnostics explain the route, so they open from the route panel as pages over the overview. A provider opens over the list.
+  - The bar's leading control is the drawer button on a dock place, or Back on a page over it, never both. Chat stays at the end.
+  - Computers get one sticky header line: title, six tabs and Chat.
+  - Rejected alternatives:
+    - A five-item dock: labels collide at 320 and at larger text.
+    - A title-menu switcher: not discoverable enough.
+    - A sideways tab strip: hides places.
+- **Overview:**
+  - The route is the lit, inverted panel (ink in Light, paper in Dark). It shows:
+    - the mode
+    - one sentence from real counts
+    - what it can reach: Auto's enabled models, a Layout's models in order, or a chosen model's provider and context
+    - two rows: Diagnostics (the last answer and why) and Usage (the allowance, or Unknown)
+  - Then your providers as a ledger with Connect.
+  - Then models and policies, with Manage models.
+  - Recent answers come last, three of them, loaded with the other secondary panels.
+- **Providers:**
+  - Your providers form an editorial ledger: a light, the provider in display type, a verdict word with one fact, and the model count as a numeral.
+  - Verdicts answer "can Lumen choose its models?": Available, Available from cache, Unavailable, Off, Not connected, Not listed yet.
+  - Other providers are a field of name chips: eight shown, "Show all N" for the rest. All are shown when nothing is connected, or when you search or filter.
+- **Provider detail:**
+  - The verdict comes first.
+  - One primary action only when something needs fixing: Add a key, Turn on in Settings, Replace key, or Refresh model list when the list is missing or old. Otherwise both actions stay quiet.
+  - The typed guidance note appears only when attention is needed.
+  - Four independent facts in one grid: Key · permission, Models (count and time listed), Replies ("Not tested by model listing") and Allowance.
+  - Models come as rows that become columns (model, context, allowance, Use) when their container is wide.
+  - "Check connection" is now "Refresh model list". Its result says the list was refreshed or not, and that no message was sent.
+- **Desktop:** the header line is sticky. The provider shown first is one that works. Detail actions sit beside the verdict. Models read as a table.
+
+**Budgets and guards:**
+- No budget was raised. Canvas CSS source is 16.0/16 KB (16,357 of 16,384 B gz): `canvas-routing.css` was rewritten and consolidated.
+- The Routing Center chunk is 8.8/9 KB: recent answers moved to the lazy extras chunk.
+- Startup JS is 9.2/9.5 KB.
+- The stylesheet guard (`canvas-composer.test.mjs`) now allows `@container`, still scoped, with no imports or fonts.
+- `provider-presentation.ts` changes wording only: "refresh the model list" replaces "check again", and the reply label is now "Not tested by model listing". Its unit test was updated to match.
+
+**Verification (local, synthetic only, $0):**
+- `npm test` passes.
+- The ordinary build is byte-identical to `main`.
+- CP01 and QA01 isolation pass with the `main` baseline.
+- `routing-providers.cjs` passes in Chromium, 8/8 (four sizes in Light and Dark). Added checks:
+  - Usage and Diagnostics open from the route panel, and Back returns focus to the row that opened them.
+  - The drawer button and Back never show together.
+  - Verdicts, facts and the leading action: none for a working provider; Turn on in Settings for permission off; Replace key for a refused key.
+  - At 320 with 150% synthetic text, the dock, route rows and ledger rows keep their words inside and stay 44pt tall. The dock's labels keep a fixed size, as a tab bar's do.
+- CP04 passes in Chromium, 3/3. Every place, including Usage and Diagnostics on phones, is on the first screen and at least 44pt at 1440, 390 and 320×568.
+- The CP01, CP02, CP03 and CP05 contracts pass.
+- 8 in-app suites pass on Canvas: app-feel, gestures, glass, native-feel, sheet-drag, sidebar, hub-actions and routing-providers.
+- WebKit runs in CI.
+
+**Evidence:**
+- `rc-shots.cjs` captured both review 1 (`c19b2ab`) and review 2 at the same sizes and states.
+- The "larger text" state now adds 125% page zoom, what Safari's text-size control does; it is not Dynamic Type.
+
+**Limits and tradeoffs:**
+- Usage and Diagnostics are one step further on phones: through the route panel, not the dock.
+- At 125% zoom on a 320 phone (an effective 256 px), the dock's labels nearly touch.
+- The inverted route panel is the one strong surface; everything else stays quiet by design.
+- Not verified: physical iPhone, VoiceOver and Dynamic Type.
+
 ## Redesign after the owner's design reassessment (Claude, 24 October 2026)
 
 The owner judged the first slice-1 design underwhelming (three iPhone screens: Overview, Providers, Google AI Studio). This redesign builds on Codex's engineering in PR #50 (branch `feat/phase4-routing-providers`, untouched) on `claude/lucid-dijkstra-541bbi`; `provider-presentation.ts`, its unit tests and every canonical owner are unchanged. Draft review only: no merge, deployment or owner acceptance.

@@ -1,6 +1,34 @@
 # Dynamic Model Picker operational handoff
 
-## Current checkpoint — Phase 4, Slice 1 redesign (Claude), awaiting owner visual review
+## Current checkpoint — Phase 4, Slice 1 review 2 (Claude), awaiting owner visual review
+
+- **Authority:** the owner reviewed PR #51 (review 1) and did not approve it. They granted creative freedom to rethink navigation, the overview, providers, the provider detail, actions and the desktop workspace. **Draft only: do not merge or deploy, and do not claim acceptance; stop for the owner's visual review.** Crease icon detailing stays deferred until all planned phases are done.
+- **Branch:** `claude/lucid-dijkstra-541bbi` (draft PR #51), on top of review 1 (`c19b2ab`) and Codex's `0cdf5f4` (PR #50, untouched). Release base is still `main` `871bc1a` / Deploy #68. The exact pushed SHA and CI live in the PR and the live checkpoint.
+- **What changed:** see "Review 2" in `docs/testing/phase4-routing-providers.md`:
+  - phone dock with four places, plus Usage and Diagnostics drill-ins from the route panel
+  - the drawer button or Back, never both
+  - the lit route panel
+  - the provider ledger with verdicts and name chips
+  - provider detail as verdict, one contextual primary, four independent facts and a model table
+  - "Refresh model list" replaces "Check connection"
+  - one sticky desktop header line
+- **Files touched:** `RoutingCenter.tsx`, `RoutingExtras.tsx` (refresh button, recent answers), `canvas-routing.css`, `provider-presentation.ts` (wording) and the tests that pin those.
+- **Verified locally:**
+  - `npm test`
+  - ordinary parity with `main`
+  - CP01/QA01 isolation against `main`
+  - budgets with none raised
+  - `routing-providers` Chromium 8/8
+  - CP04 Chromium 3/3
+  - CP01/02/03/05 contracts
+  - 8 in-app suites on Canvas
+- **Not verified:** WebKit (CI covers it), physical iPhone, VoiceOver, Dynamic Type.
+- **Next:**
+  1. The owner's visual review of the review-1 versus review-2 boards.
+  2. Apply feedback on this branch.
+  3. Merge or deploy only with explicit approval; the owner chooses between #50 and #51.
+
+## Earlier checkpoint — Phase 4, Slice 1 redesign (Claude), awaiting owner visual review
 
 - **Authority:** the owner asked for a major design reassessment of the Routing Center overview, provider browser and provider detail. Draft PR only. **Do not merge or deploy, and do not claim owner acceptance; stop for the owner's visual review.**
 - **Branch:** `claude/lucid-dijkstra-541bbi`, built on Codex's `feat/phase4-routing-providers` head `0cdf5f4` (PR #50). Codex's branch was not modified; this branch adds the redesign on top. The released base is still `main` `871bc1a` (Deploy #68). The exact pushed SHA, the draft PR and CI state are in the PR and the live checkpoint `docs/lumen-context/CURRENT_STATUS.md` on `docs/lumen-live-context`.

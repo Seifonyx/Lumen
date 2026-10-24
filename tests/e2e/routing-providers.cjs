@@ -1,4 +1,6 @@
 // Actual Canvas UI, synthetic accounts/catalogs and intercepted transport. No live inference.
+// Sections: underline tabs on computers; on phones the overview lists them and each opens as its own page, with the bar's
+// back button leading to the overview (or, from a provider, to the provider list).
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -60,7 +62,15 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
           await page.screenshot({ path: path.join(out, `${width}-${theme}-${name}.png`), animations: 'disabled' });
         }
       };
-      const tab = name => rc.getByRole('navigation', { name: 'Routing sections' }).getByRole('button', { name, exact: true }).click();
+      const phone = width < 900;
+      const tab = async name => {
+        if (phone && name === 'Overview') {
+          if (await rc.getByRole('button', { name: 'Back to providers' }).isVisible()) await rc.getByRole('button', { name: 'Back to providers' }).click();
+          return rc.getByRole('button', { name: 'Routing Center', exact: true }).click();
+        }
+        // Phones name the section and its state ("Providers 1 ready · 1 off"); computers name the tab.
+        await rc.getByRole('navigation', { name: 'Routing sections' }).getByRole('button', { name: phone ? new RegExp(`^${name}\\b`) : name, exact: !phone }).click();
+      };
       await shot('overview');
       if (!before) await rc.getByRole('region', { name: 'Current routing mode' }).waitFor();
       await tab('Providers');
@@ -72,12 +82,13 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       await detail.getByRole('button', { name: 'Check connection', exact: true }).waitFor();
       await shot('detail');
       if (!before) {
-        assert.match(await detail.innerText(), /not verified by discovery/);
+        assert.match(await detail.innerText(), /Replies\s+Not verified by discovery/);
         assert.match(await detail.innerText(), /Catalog ready/);
-        assert.equal(await detail.getByRole('button', { name: 'Back to providers' }).isVisible(), width < 900);
+        assert.equal(await rc.getByRole('button', { name: 'Back to providers' }).isVisible(), phone);
+        assert.equal(await rc.locator('.rc-path [data-step]').count(), 4, 'the connection path shows key, permission, discovery and replies');
         assert.match(await detail.locator('.rc-allowance').innerText(), /Unknown/);
       }
-      if (width < 900) await detail.getByRole('button', { name: 'Back to providers' }).click();
+      if (phone) await rc.getByRole('button', { name: 'Back to providers' }).click();
       const search = rc.getByRole('searchbox', { name: 'Find a provider' });
       await search.fill('not-a-provider');
       await rc.locator('[data-provider]').first().waitFor({ state: 'hidden' });
@@ -90,7 +101,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       await detail.getByRole('heading', { name: 'Anthropic', exact: true }).waitFor();
       assert.match(await detail.innerText(), /Permission off/);
       if (!before) assert.match(await detail.innerText(), /not enabled/);
-      if (width < 900) await detail.getByRole('button', { name: 'Back to providers' }).click();
+      if (phone) await rc.getByRole('button', { name: 'Back to providers' }).click();
       await search.fill('');
       if (!before) {
         await rc.getByRole('button', { name: /Filter providers:/ }).click();
@@ -138,12 +149,15 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       if (!before && width === 320) {
         // Synthetic 150% text scaling, not an iOS Dynamic Type/VoiceOver claim.
         await rc.evaluate(el => {
-          for (const node of el.querySelectorAll('h1,h2,h3,p,button,label,small,.rc-label,.rc-tabs')) {
+          for (const node of el.querySelectorAll('h1,h2,h3,p,button,label,small,strong,.rc-label')) {
             node.style.fontSize = `${parseFloat(getComputedStyle(node).fontSize) * 1.5}px`;
           }
         });
-        for (const button of await rc.locator('.rc-tabs button').all()) {
-          assert(await button.evaluate(el => el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight), 'section label remains readable at larger text');
+        // Phones list the sections on the overview; each row keeps its name and state inside the row at larger text.
+        assert.equal(await rc.locator('.rc-sections [data-section]').count(), 5);
+        for (const button of await rc.locator('.rc-sections [data-section]').all()) {
+          assert(await button.evaluate(el => el.scrollWidth <= el.clientWidth && [...el.children].every(c => c.getBoundingClientRect().right <= el.getBoundingClientRect().right + 0.5)), 'section row remains readable at larger text');
+          assert((await button.boundingBox()).height >= 44);
         }
       }
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));

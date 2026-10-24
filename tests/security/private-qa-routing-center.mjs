@@ -68,7 +68,17 @@ async function openRouting(page, phone) {
   await rc(page).getByRole('heading', { name: 'Routing Center', level: 1 }).waitFor();
   await settle(page);
 }
-const tab = (page, name) => rc(page).getByRole('navigation', { name: 'Routing sections' }).getByRole('button', { name, exact: true }).click();
+// Computers: the section tabs. Phones: the overview lists the sections; each opens as its own page, and the bar's back
+// button leads to the overview (from a provider, to the provider list first).
+async function tab(page, name) {
+  const r = rc(page);
+  if (await r.locator('.rc-tabs').count()) return r.locator('.rc-tabs').getByRole('button', { name, exact: true }).click();
+  for (const back of ['Back to providers', 'Routing Center']) {
+    const b = r.getByRole('button', { name: back, exact: true });
+    if (await b.isVisible()) { await b.click(); await settle(page, 200); }
+  }
+  if (name !== 'Overview') await r.getByRole('navigation', { name: 'Routing sections' }).locator(`[data-section="${name.toLowerCase()}"]`).click();
+}
 
 try {
   for (const [width, height] of VIEWPORTS) {
@@ -89,22 +99,26 @@ try {
       assert.match(summary, /2\s*models/);
       assert.match(summary, /1\s*Layout/);
       assert.match(summary, /Unknown/);
+      // Every section is in view and a full touch target: six tabs on computers; on phones the overview is the first page
+      // and lists the other five, each a 44pt row that opens its own page.
+      const tabs = await rc(page).getByRole('navigation', { name: 'Routing sections' }).getByRole('button').evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { name: el.textContent, left: r.left, right: r.right, height: r.height, cut: el.scrollWidth > el.clientWidth }; }));
+      assert.equal(tabs.length, phone ? 5 : 6);
+      for (const t of tabs) assert.ok(t.left >= 0 && t.right <= width && !t.cut && (!phone || t.height >= 44), `section "${t.name}" fully visible: ${JSON.stringify(t)}`);
       await shot(page, join(out, `${tag}-1-overview.png`));
       pass('overview');
 
       // Providers: filters, search, detail.
       await tab(page, 'Providers');
       await settle(page);
-      // Every section is in view and a full touch target (phones: a 3 × 2 grid, not a hidden sideways strip).
-      const tabs = await rc(page).getByRole('navigation', { name: 'Routing sections' }).getByRole('button').evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { name: el.textContent, left: r.left, right: r.right, height: r.height, cut: el.scrollWidth > el.clientWidth }; }));
-      assert.equal(tabs.length, 6);
-      for (const t of tabs) assert.ok(t.left >= 0 && t.right <= width && !t.cut && (!phone || t.height >= 44), `section "${t.name}" fully visible: ${JSON.stringify(t)}`);
+      if (phone) assert.ok(await rc(page).getByRole('button', { name: 'Routing Center', exact: true }).isVisible(), 'phone: the bar leads back to the overview');
       assert.match(await rc(page).locator('.rc-count').innerText(), /^\d+ of \d+ providers$/);
       // Providers without a key or permission fold under one row; saved connections stay listed with their state.
       const fold = rc(page).locator('.rc-fold > button');
       assert.equal(await fold.getAttribute('aria-expanded'), 'false');
       assert.match(await fold.innerText(), /Explore providers\s+\d+ providers · no key saved/);
-      assert.match(await rc(page).locator('[data-provider="gemini"]').innerText(), /Key saved · enabled/);
+      // One status vocabulary: a key and permission in place read as the catalog state and its model count.
+      assert.match(await rc(page).locator('[data-provider="gemini"]').innerText(), /· \d+ models?$/m);
+      assert.doesNotMatch(await rc(page).locator('[data-provider="gemini"]').innerText(), /No key saved|permission off/);
       assert.equal(await rc(page).locator('[data-provider="groq"]').isVisible(), false, 'unconnected providers start folded');
       await shot(page, join(out, `${tag}-2-providers-folded.png`));
       await fold.click();
@@ -115,22 +129,25 @@ try {
       // A search reaches folded providers directly.
       await rc(page).getByRole('searchbox', { name: 'Find a provider' }).fill('groq');
       await settle(page, 200);
-      assert.equal(await rc(page).locator('.rc-provider-scroll > button').count(), 1);
+      assert.equal(await rc(page).locator('.rc-provider-scroll [data-provider]').count(), 1);
       await rc(page).getByRole('button', { name: 'Clear provider search' }).click();
       await rc(page).getByRole('button', { name: 'Filter providers' }).click();
       await page.getByRole('menuitemradio', { name: /Saved connections/ }).or(page.getByRole('option', { name: /Saved connections/ })).first().click();
       await settle(page, 200);
-      assert.equal(await rc(page).locator('.rc-provider-scroll > button').count(), 1, 'one saved connection (synthetic Google AI Studio)');
+      assert.equal(await rc(page).locator('.rc-provider-scroll [data-provider]').count(), 1, 'one saved connection (synthetic Google AI Studio)');
       await rc(page).locator('[data-provider="gemini"]').click();
       await settle(page);
       const detail = rc(page).getByRole('region', { name: 'Provider detail' });
       assert.ok(await detail.getByRole('heading', { name: 'Google AI Studio' }).isVisible());
-      assert.match(await detail.locator('.rc-facts').innerText(), /Key saved · Enabled/);
+      const steps = await detail.locator('.rc-path').innerText();
+      assert.match(steps, /Key\s+Saved/);
+      assert.match(steps, /Permission\s+Enabled/);
+      assert.match(steps, /Replies\s+Not verified by discovery/);
       assert.match(await detail.locator('.rc-allowance').innerText(), /Unknown/);
       await shot(page, join(out, `${tag}-2-provider.png`));
       if (phone) {
         assert.equal(await rc(page).locator('.rc-provider-list').isVisible(), false, 'phone: the detail replaces the list');
-        await detail.getByRole('button', { name: 'Back to providers' }).click();
+        await rc(page).getByRole('button', { name: 'Back to providers' }).click();
         await settle(page);
         assert.ok(await rc(page).locator('.rc-provider-list').isVisible());
         await rc(page).locator('[data-provider="gemini"]').click();

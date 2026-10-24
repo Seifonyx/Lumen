@@ -7,6 +7,7 @@ const iphone='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit
 (async()=>{
  const browser=await(process.env.MR_WEBKIT?webkit:chromium).launch();
  try { for(const [width,height,theme,solid,large] of [[320,568,'light',false,false],[390,844,'dark',true,false],[430,932,'light',false,true]]){
+  if(process.env.NAV_WIDTH && width!==Number(process.env.NAV_WIDTH))continue;
   const context=await browser.newContext({viewport:{width,height},hasTouch:true,userAgent:iphone,serviceWorkers:'block',reducedMotion:'reduce'});
   await context.route('**/*',r=>new URL(r.request().url()).origin===new URL(base).origin?r.continue():r.abort());
   await profile(context,`navigation-states-${width}`,theme);

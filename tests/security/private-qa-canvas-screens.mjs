@@ -176,8 +176,6 @@ try {
                 assert.equal(row.openLabel, `Open ${row.filename}`, `${tag}: full accessible filename retained`);
                 assert.ok(row.actionLabel, `${tag}: file action remains named for assistive technology`);
               }
-              await page.locator('.coll-item.kind-files').last().scrollIntoViewIfNeeded();
-              await shot(page, join(out, `${tag}-library-file-rows.png`));
             }
             await page.getByRole('button', { name:'More for Launch brief.md' }).click();
             await page.getByRole('menu', { name:'Screen actions' }).waitFor();
@@ -192,6 +190,15 @@ try {
             await page.getByRole('menu', { name:'Content type' }).getByRole('menuitemradio', { name:'Made by Lumen' }).click();
             await settle(page, 200);
             await shot(page, join(out, `${tag}-library-empty.png`));
+            // Capture file rows last: scrolling first can disturb the narrow-phone
+            // search/menu keyboard-history flow this same contract also verifies.
+            if (phone) {
+              await page.getByRole('button', { name:'Content type: Made by Lumen' }).click();
+              await page.getByRole('menu', { name:'Content type' }).getByRole('menuitemradio', { name:'Everything' }).click();
+              await settle(page, 200);
+              await page.locator('.coll-item.kind-files').last().scrollIntoViewIfNeeded();
+              await shot(page, join(out, `${tag}-library-file-rows.png`));
+            }
           }
           await closeAll(page);
         }

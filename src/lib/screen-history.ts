@@ -41,14 +41,17 @@ export function screenBack(fallback?: () => void) {
 export function screenBackToSettings(target: 'index' | 'exit', fallback: () => void) {
   const here = positions.get(active);
   if (!applying && here !== undefined && history.state?.[KEY]?.session === session) {
-    let destination = -1;
-    for (const [id, pos] of positions) {
-      const entry = entries.get(id);
-      if (!entry || pos >= here) continue;
-      const matches = target === 'index' ? entry.settingsOpen && !entry.settingsTab : !entry.settingsOpen;
-      if (matches && pos > destination) destination = pos;
-    }
-    if (destination >= 0) { history.go(destination - here); return; }
+    const ancestors = [...positions].map(([id, pos]) => ({ pos, entry: entries.get(id) }))
+      .filter(({ pos, entry }) => pos < here && Boolean(entry))
+      .sort((a, b) => b.pos - a.pos);
+    // A Settings visit starts after its nearest non-Settings ancestor. Do not jump
+    // into an older, unrelated Settings visit merely because it remains in history.
+    const origin = ancestors.find(({ entry }) => !entry!.settingsOpen);
+    const index = ancestors.find(({ pos, entry }) => pos > (origin?.pos ?? -1) && entry!.settingsOpen && !entry!.settingsTab);
+    // Connection Settings is a drill-down from Routing Center, not from the
+    // global Settings index. One Back must restore the same provider detail.
+    const destination = target === 'exit' ? origin : index || (origin?.entry?.routing.open ? origin : undefined);
+    if (destination) { history.go(destination.pos - here); return; }
   }
   replaceScreen(fallback);
 }

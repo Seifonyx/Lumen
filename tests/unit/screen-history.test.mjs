@@ -83,5 +83,15 @@ test('Settings Back skips transient Settings states and preserves the previous s
   context.backToSettings('exit', () => store.setState({ settingsOpen: false }));
   assert.equal(state.settingsOpen, false);
   assert.equal(cursor, 0);
+
+  // Connection Settings is reached from Routing's provider, never via the global
+  // Settings section list. Back must restore that provider in one gesture.
+  route = { open: true, section: 'providers', provider: 'gemini' };
+  routingListeners.forEach(fn => fn());
+  store.setState({ settingsOpen: true, settingsTab: 'keys' });
+  context.backToSettings('index', () => store.setState({ settingsTab: '' }));
+  assert.equal(state.settingsOpen, false, 'connection Settings Back restores Routing Center directly');
+  assert.equal(route.open, true, 'Routing remains open');
+  assert.equal(route.provider, 'gemini', 'the original provider is restored');
   cleanup();
 });

@@ -267,11 +267,9 @@ try {
         await openNav(page, true);
         await nav(page).getByRole('button', { name: 'Library', exact: true }).click();
         await page.getByRole('main', { name: 'Library' }).waitFor();
-        // The drawer opened from a page's own bar gives focus back to that button when it closes (slice 2).
-        await page.getByRole('button', { name: 'Open sidebar', exact: true }).click();
-        await settle(page, 500);
-        await page.keyboard.press('Escape');
-        await page.waitForFunction(() => document.activeElement?.matches('.hub-nav[aria-label="Open sidebar"]'));
+        // Nested phone screens expose a real Back, not a second drawer.
+        assert.equal(await page.locator('.phone-navigation [aria-label="Back"]').count(),1);
+        assert.equal(await page.getByRole('button',{name:'Open sidebar',exact:true}).count(),0);
         await page.goBack();
         await page.getByRole('main', { name: 'Library' }).waitFor({ state: 'detached' });
         await page.waitForFunction(() => document.activeElement?.matches('.menu-btn'));

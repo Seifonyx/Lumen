@@ -443,3 +443,5 @@
  .app[data-lumen-canvas-shell] .tools-browse nav { display:grid;padding-bottom:8px; }
  .app[data-lumen-canvas-shell] .tools-browse button { min-height:44px;text-align:start;border:0;border-radius:8px;padding:8px 12px;background:var(--canvas-fill);color:var(--canvas-ink);margin-bottom:4px; }
 }
+
+@media(max-width:899px){html[data-lumen-canvas] .app[data-lumen-canvas-shell] .settings-page:has(> .phone-navigation) .settings-heading h2{display:none;}}

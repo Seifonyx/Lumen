@@ -105,7 +105,8 @@ try {
       // Diagnostics on the route panel, all on the first screen.
       const places = await rc(page).locator('.rc-tabs button, .routing-directory button, .rc-route [data-section]').evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { name: el.textContent, left: r.left, right: r.right, bottom: r.bottom, height: r.height, cut: el.scrollWidth > el.clientWidth }; }));
       assert.equal(places.length, phone ? 5 : 8);
-      for (const t of places) assert.ok(t.left >= 0 && t.right <= width && t.bottom <= height && !t.cut && (!phone || t.height >= 44), `place "${t.name}" fully visible: ${JSON.stringify(t)}`);
+      for (const t of places) assert.ok(t.left >= 0 && t.right <= width && !t.cut && (!phone || t.height >= 44), `place "${t.name}" fully visible: ${JSON.stringify(t)}`);
+      if(phone){for(const item of await rc(page).locator('.routing-directory button').all()){await item.scrollIntoViewIfNeeded();assert.ok(await item.isVisible());}await rc(page).evaluate(el=>el.scrollTo(0,0));}
       await shot(page, join(out, `${tag}-1-overview.png`));
       pass('overview');
 

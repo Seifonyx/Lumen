@@ -1,4 +1,4 @@
-import { screenBack } from '../lib/screen-history';
+import { navigateBack } from '../lib/canvas-presentation';
 // CP03 Canvas navigation (approved Canvas design, Gate 1). Reached only when CANVAS_SHELL is on
 // (src/lib/canvas-presentation.ts); the ordinary build folds it away.
 // One tree: projects are folders of their conversations; loose conversations are grouped by day. It is the same
@@ -286,9 +286,9 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
           </button>
         </div>
       </aside>
-      {asking !== null && <Suspense fallback={null}><AskChats initial={asking} onClose={() => screenBack(() => setAsking(null))} /></Suspense>}
-      {allChats && <AllChats onClose={() => screenBack(() => setAllChats(false))} />}
-      {manager && <ProjectManager createNewImmediately onClose={() => screenBack(() => setManager(false))} />}
+      {asking !== null && <Suspense fallback={null}><AskChats initial={asking} onClose={() => navigateBack!(() => setAsking(null))} /></Suspense>}
+      {allChats && <AllChats onClose={() => navigateBack!(() => setAllChats(false))} />}
+      {manager && <ProjectManager createNewImmediately onClose={() => navigateBack!(() => setManager(false))} />}
     </>
   );
 }

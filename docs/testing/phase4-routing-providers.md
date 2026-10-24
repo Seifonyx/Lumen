@@ -2,7 +2,90 @@
 
 Status: locally verified and ready for owner design review on `feat/phase4-routing-providers`; based on production main `871bc1a647f36550e6f66e527b1252ac84437506`. Owner permits draft review, not merge/deployment.
 
-## What changed
+## Redesign after the owner's design reassessment (Claude, 24 October 2026)
+
+The owner judged the first slice-1 design underwhelming (three iPhone screens: Overview, Providers, Google AI Studio). This redesign builds on Codex's engineering in PR #50 (branch `feat/phase4-routing-providers`, untouched) on `claude/lucid-dijkstra-541bbi`; `provider-presentation.ts`, its unit tests and every canonical owner are unchanged. Draft review only: no merge, deployment or owner acceptance.
+
+**Critique of the reviewed design:**
+- Three stacked titles before content on phones.
+- Two prominent buttons to the same destination.
+- A hero reading "Send a message" while recorded answers existed.
+- Provider state said three times per row (badge, facts, sentence).
+- The same disclaimer repeated on every screen.
+- Mono uppercase labels everywhere.
+- Absences shown as headline numbers.
+- Generic letter tiles.
+- Grey-on-grey fills.
+- A selected tab that read as a hole in Dark.
+- Double borders on desktop.
+
+**Directions considered:**
+- (A) A refined persistent section switcher.
+- (B) "Map and pages", chosen. The phone overview is the map and each section opens as a page with Back. Computers get a quiet underline tab row.
+
+B was chosen for:
+- hierarchy, since there is one title per screen
+- iPhone usability: no sideways strip or 3 × 2 grid, and 44pt rows
+- space, since the first screen answers the main question
+
+**What changed:**
+- **Overview:**
+  - The route in large type, with one sentence built from real counts.
+  - "In this chat, X answered last" with its recorded reason.
+  - Recent answers, as a trail of the latest recorded answers across saved chats.
+  - Your connections, then section rows with their state on phones or "At a glance" on computers.
+  - Absent data stays "Unknown".
+- **Providers:**
+  - Inset grouped list: your connections first, the rest folded under Explore providers.
+  - One status vocabulary: a light (ready, cached, failed, off) and one line of words.
+  - Search, filter, empty state and fold are unchanged in behaviour.
+- **Provider detail:**
+  - Header and status line.
+  - One primary action where a fix is needed (Connection settings → Settings → Keys); Check connection beside it.
+  - A connection path: Key, Permission, Model discovery, then Replies, always "Not verified by discovery".
+  - Then the typed recovery note, Request allowance, Models (24 per page, search above 24) and provenance.
+- **Navigation:**
+  - On phones the bar's back button reads "‹ Routing Center", or "‹ Providers" while a provider is open, and system Back follows the same order.
+  - The h1 stays for assistive technology.
+  - Focus moves to the new page's heading and returns to the row you came from.
+  - Swipe-back to chat applies on the overview only.
+- **CSS:** `canvas-routing.css` was rewritten and consolidated rather than layered: shared tokens, one pill rule, hover only on pointer devices, one vertical path layout for narrow panes. Canvas CSS source is 16.0/16 KB gz with no budget raised. The lazy Routing Center chunk is 8.6/9 KB.
+
+**Verification (local, synthetic only, $0):**
+- `npm test`: typecheck and all unit tests pass.
+- The ordinary build is byte-identical to `main` (`diff -r`).
+- `canvas-build-isolation.mjs` passes with baseline equality, and `private-qa-isolation.mjs` passes with the `main` baseline.
+- `routing-providers.cjs`: Chromium 8/8 (4 sizes × Light/Dark). Updated for the new navigation; the contract is unchanged:
+  - the bar's "Back to providers" on phones only
+  - a four-step path
+  - the five phone section rows stay inside their row at synthetic 150% text, 44pt tall
+- CP04 `private-qa-routing-center.mjs`: Chromium 3/3, 10 checks per viewport. Updated as follows:
+  - six tabs on computers, five 44pt rows plus the overview on phones
+  - path steps instead of the old facts list
+  - a status line without "No key saved / permission off" for the enabled provider
+- CP01/CP02/CP03/CP05 browser, composer, shell and screens QA contracts pass in Chromium.
+- In-app suites pass on the Canvas build: app-feel, gestures, glass, native-feel, sheet-drag, sidebar and hub-actions.
+- WebKit is not installed in this container; exact-head CI runs the same contracts in WebKit.
+
+**Evidence:**
+- `tests/e2e/helpers/rc-shots.cjs` captures the actual Canvas UI on synthetic accounts with intercepted transport.
+- States: connected, empty, failed (401), stale (503 after ready) and dense (145 long model names, largest text).
+- Sizes: iPhone 320×568, 390×844 and 430×932, laptop 1280×800 and desktop 1440×900, in Light and Dark.
+- Screens: overview, providers, Google AI Studio detail and Anthropic (permission off).
+- The same helper captured the before build (PR #50 head) at the same sizes.
+
+**Not verified:**
+- Physical iPhone Safari, VoiceOver and real Dynamic Type.
+- Safe-area insets on a notched device.
+- Live provider connectivity.
+- Emulated touch in Chromium is not an iPhone.
+
+**Tradeoffs:**
+- On phones a section takes one extra tap from the overview, in exchange for a clear first screen.
+- The desktop overview no longer lists every catalog count, since Models shows them.
+- The route title can be long for a manual model with a long name; it wraps.
+
+## What changed (first slice-1 design, Codex)
 
 - The overview leads with the selected Auto/manual/Layout mode and recorded answer evidence, followed by provider discovery readiness. Counts are a secondary ledger. Unknown allowances stay unknown.
 - Provider browsing separates saved connections from exploration and offers Needs attention. Selection and filters remain consistent. Detail separates key/permission, discovery and reply verification; safe typed recovery never renders raw provider error strings.
@@ -29,7 +112,7 @@ Local checks run only on loopback with synthetic accounts and intercepted transp
 
 ## Review and limits
 
-[Portable offline review](../reviews/phase4-routing-providers.html): download the single HTML file and open it locally. It embeds 16 curated screenshots, with no network resources: four matched before/after overview pairs and provider list/detail in desktop/phone Light/Dark. Click a capture to inspect original dimensions. Finite capture animations are completed for clean presentation; keyboard focus checks are separate. The before build is the released source above; captures are actual rendered UI, not mockups. Ordinary screenshots exclude keyboard focus; focus is exercised separately.
+[Portable offline review](../reviews/phase4-routing-providers.html) (first slice-1 design; its "after" captures predate the redesign above, whose evidence is generated with `rc-shots.cjs`): download the single HTML file and open it locally. It embeds 16 curated screenshots, with no network resources: four matched before/after overview pairs and provider list/detail in desktop/phone Light/Dark. Click a capture to inspect original dimensions. Finite capture animations are completed for clean presentation; keyboard focus checks are separate. The before build is the released source above; captures are actual rendered UI, not mockups. Ordinary screenshots exclude keyboard focus; focus is exercised separately.
 
 Physical iPhone keyboard/VoiceOver, actual Dynamic Type, safe-area device behavior and live-provider connectivity remain unverified. Automated larger text is synthetic; Linux WebKit is not physical Safari. Early device review still uses the separately authorized private QA process; this slice creates no hosting or access infrastructure.
 

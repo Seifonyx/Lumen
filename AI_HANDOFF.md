@@ -1,6 +1,31 @@
 # Dynamic Model Picker operational handoff
 
-## Current checkpoint — Phase 4, Slice 1 (Codex)
+## Current checkpoint — Phase 4, Slice 1 redesign (Claude), awaiting owner visual review
+
+- **Authority:** the owner asked for a major design reassessment of the Routing Center overview, provider browser and provider detail. Draft PR only. **Do not merge or deploy, and do not claim owner acceptance; stop for the owner's visual review.**
+- **Branch:** `claude/lucid-dijkstra-541bbi`, built on Codex's `feat/phase4-routing-providers` head `0cdf5f4` (PR #50). Codex's branch was not modified; this branch adds the redesign on top. The released base is still `main` `871bc1a` (Deploy #68). The exact pushed SHA, the draft PR and CI state are in the PR and the live checkpoint `docs/lumen-context/CURRENT_STATUS.md` on `docs/lumen-live-context`.
+- **What changed:** see the redesign section of `docs/testing/phase4-routing-providers.md`. In short:
+  - The phone overview is the map, and sections open as pages with Back in the bar.
+  - Provider detail shows a connection path.
+  - One status vocabulary.
+  - Consolidated `canvas-routing.css`, with no budget raised (Canvas CSS source 16.0/16 KB).
+  - Only `RoutingCenter.tsx`, `canvas-routing.css`, the two Routing Center tests and a screenshot helper changed.
+- **Verified locally:**
+  - `npm test`
+  - ordinary byte parity with `main`
+  - CP01/QA01 isolation with the `main` baseline
+  - `routing-providers.cjs` Chromium 8/8
+  - CP04 Chromium 3/3
+  - CP01/CP02/CP03/CP05 contracts
+  - 7 navigation/gesture in-app suites on Canvas
+- **Not verified:** WebKit, which CI covers; physical iPhone, VoiceOver and Dynamic Type.
+- **Next:**
+  1. Owner visual review of the before/after evidence.
+  2. Apply the owner's feedback on this branch.
+  3. After explicit approval, decide with the owner how PR #50 and this PR combine. This PR contains #50's commits, so merging this one supersedes #50.
+- Phase 4 Slices 2 and 3 have not started.
+
+## Earlier checkpoint — Phase 4, Slice 1 (Codex)
 
 - **Authority:** owner completed Phase 3 and authorized Phase 4. Work on `feat/phase4-routing-providers`; draft PR only. **No merge/deploy, no implicit release approval from green checks.** Optional Crease icon detailing remains deferred.
 - **Recovered release:** `main` `871bc1a647f36550e6f66e527b1252ac84437506`; PR #49 merged; Deploy #68 / Actions `40030589058` completed successfully with Canvas. No new production deployment or physical-iPhone verification in this session.

@@ -10,7 +10,7 @@ Owner-authorized workstream: `feat/phase4-routing-providers`, based on released 
 | P4-S2 Model Discovery & Selection | Not started | Model inventory/picker/search/eligibility consistency; preserve canonical owners and drafts. |
 | P4-S3 Auto, Policies, Usage & Diagnostics | Not started | Real decision evidence and provenance; preserve routing, fallback and policy semantics. |
 
-Dependencies: S1 owner design review precedes any release; S2/S3 remain separate coherent slices. No icon detailing until all planned design phases are complete. Blackout baseline v1 stays **21.5% (medium confidence), 78.5 weighted work remaining**; this focused slice does not satisfy a whole weighted acceptance group or earn approval credit. The separate completed Model Picker baseline below remains **100%**. Do not mix the two ledgers or invent new weights.
+Dependencies: S1 owner design review precedes any release; S2/S3 remain separate coherent slices. No icon detailing until all planned design phases are complete. **Seven-phase design/UX progress is recorded by phase, slice, tests, owner acceptance and release, with no approved overall weighted percentage.** Phases 1–3 shipped; Phase 4 S1 is in draft review, not accepted or deployed. Older Blackout weighted estimates and the separate, completed Model Picker v1 ledger below are **historical scope-specific records**, not estimates of current overall Lumen completion or remaining work. Preserve their underlying evidence; do not reuse their percentages or invent new weights.
 
 
 ## Independent usage-draft fix — 20 October 2026 (Africa/Cairo)

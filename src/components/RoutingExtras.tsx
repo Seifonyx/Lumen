@@ -1,8 +1,11 @@
-// Canvas Routing Center, Tier 5 panels (loaded on first use): the connection check, usage history and request log read
+// Canvas Routing Center, Tier 5 panels (loaded on first use): the model-list refresh, usage history and request log read
 // from saved chats, and the routing file. All on this device: no server, no new storage, keys never read or shown.
 import { useMemo, useRef, useState } from 'react';
 import { Download, RefreshCw, Upload } from 'lucide-react';
 import { modelLabel, useStore } from '../store';
+import { closeRoutingCenter } from '../lib/routing-center';
+import { routeWords } from '../lib/route-words';
+import { isTemporaryChat } from '../lib/temporary-chat';
 import { answersByDay, recentRequests } from '../lib/chat-records';
 import { exportRouting, readRouting } from '../lib/routing-transfer';
 import type { ModelInfo, Settings } from '../types';
@@ -13,10 +16,11 @@ const ago = (t: number) => {
   return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`;
 };
 
-/** Check connection: asks the providers for their model lists again (the catalog refresh Lumen already runs; no message
- * is sent and nothing is spent) and reports this provider's result in words. Keys are never read or shown here. */
-export function CheckConnection({ provider }: { provider: string }) {
-  const [state, setState] = useState<{ busy: boolean; at?: number; result?: string; ok?: boolean }>({ busy: false });
+/** Refresh model list: asks the enabled providers for their model lists again (the catalog refresh Lumen already runs;
+ * no message is sent, nothing is spent, replies are not tested) and reports this provider's result in words. Keys are
+ * never read or shown here. The button leads when refreshing is the next useful step; otherwise it stays quiet. */
+export function CheckConnection({ provider, primary }: { provider: string; primary?: boolean }) {
+  const [state, setState] = useState<{ busy: boolean; result?: string; ok?: boolean }>({ busy: false });
   const run = async () => {
     const at = Date.now();
     setState({ busy: true });
@@ -24,15 +28,39 @@ export function CheckConnection({ provider }: { provider: string }) {
     const status = useStore.getState().catalog?.providerStatus?.[provider];
     const count = useStore.getState().catalog?.models.filter((m) => providerId(m) === provider).length || 0;
     const fresh = Boolean(status && status.lastAttempt >= at - 1000);
-    const words: Record<string, string> = { auth: 'The provider refused the key. Update it in Settings → Keys.', 'rate-limit': 'The provider is rate limiting requests right now. Try again in a minute.', timeout: 'The provider didn’t answer in time.', network: 'Couldn’t reach the provider. Check your connection.', provider: 'The provider had a problem listing its models.', invalid: 'The provider answered with something Lumen couldn’t read.' };
+    const words: Record<string, string> = { auth: 'The provider refused the key.', 'rate-limit': 'The provider is limiting requests. Try again in a minute.', timeout: 'The provider didn’t answer in time.', network: 'Couldn’t reach the provider.', provider: 'The provider had a problem listing its models.', invalid: 'The provider answered with something Lumen couldn’t read.' };
     const ok = fresh && status?.state === 'ready';
-    setState({ busy: false, at: Date.now(), ok, result: ok ? `Connected. ${count} ${count === 1 ? 'model' : 'models'} listed.` : !fresh ? 'No answer yet. Check again in a moment.' : words[status?.errorKind || ''] || 'The check didn’t complete.' });
+    setState({ busy: false, ok, result: ok ? `${count} ${count === 1 ? 'model' : 'models'} listed.` : !fresh ? 'No answer yet. Try again in a moment.' : words[status?.errorKind || ''] || 'The refresh didn’t complete.' });
   };
   return (
-    <div className="rc-check">
-      <button type="button" className="rc-link" disabled={state.busy} onClick={() => void run()}><RefreshCw size={15} className={state.busy ? 'spin' : undefined} />{state.busy ? 'Checking…' : 'Check connection'}</button>
-      <p className="rc-muted" role="status">{state.result ? <><span className={state.ok ? 'rc-ok' : 'rc-bad'}>{state.ok ? 'Working' : 'Not working'}</span> · {state.result}</> : 'Lists this provider’s models again. No message is sent.'}</p>
-    </div>
+    <>
+      <button type="button" className={primary ? 'rc-primary' : 'rc-quiet'} disabled={state.busy} onClick={() => void run()}><RefreshCw size={15} className={state.busy ? 'spin' : undefined} aria-hidden="true" />{state.busy ? 'Refreshing…' : 'Refresh model list'}</button>
+      <p className="rc-check" role="status">{state.result && <><span className={state.ok ? 'rc-ok' : 'rc-bad'}>{state.ok ? 'Model list refreshed' : 'Not refreshed'}</span> · {state.result} No message was sent.</>}</p>
+    </>
+  );
+}
+
+/** Recent answers: the latest answer in each of your recent chats, which model gave it and why. Read from this account's
+ * own chats; nothing is estimated. Kept short and last: the route and your providers come first. */
+export function RecentAnswers() {
+  const chats = useStore((s) => s.chats), catalog = useStore((s) => s.catalog);
+  const recent = useMemo(() => chats.filter((c) => !isTemporaryChat(c)).map((c) => {
+    for (let i = c.messages.length - 1; i >= 0; i--) { const m = c.messages[i]; if (m.role === 'assistant' && m.model && m.status !== 'streaming') return { chat: c, m }; }
+    return null;
+  }).filter((x): x is NonNullable<typeof x> => Boolean(x)).sort((a, b) => b.m.createdAt - a.m.createdAt).slice(0, 3), [chats]);
+  if (!recent.length) return null;
+  const open = (id: string) => { closeRoutingCenter(); useStore.getState().selectChat(id); };
+  return (
+    <section className="rc-block rc-answers" aria-labelledby="rc-answers-title">
+      <h3 className="rc-group-label" id="rc-answers-title">Recent answers</h3>
+      <ol className="rc-recent">{recent.map(({ chat, m }) => (
+        <li key={chat.id}><button type="button" onClick={() => open(chat.id)}>
+          <strong>{modelLabel(catalog, m.model!)}</strong>
+          <span>{m.route ? routeWords(m.route) : 'No route recorded'}</span>
+          <small dir="auto">{chat.title} · {ago(m.createdAt)}</small>
+        </button></li>
+      ))}</ol>
+    </section>
   );
 }
 

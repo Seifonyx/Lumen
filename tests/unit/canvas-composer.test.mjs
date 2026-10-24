@@ -97,7 +97,8 @@ test('CP04 Routing Center loads only through the "on" module, lazily, and its st
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const RoutingCenter: ComponentType \| null = null;$/m);
   const on = readFileSync('src/lib/canvas-presentation.on.ts', 'utf8');
   assert.match(on, /^export const RoutingCenter = lazy\(\(\) => import\('\.\.\/components\/RoutingCenter'\)\);$/m);
-  assert.match(on, /^import '\.\.\/styles\/canvas-routing\.css';$/m);
+  assert.doesNotMatch(on, /^import '\.\.\/styles\/canvas-routing\.css';$/m);
+  assert.match(readFileSync('src/components/RoutingCenter.tsx', 'utf8'), /^import '\.\.\/styles\/canvas-routing\.css';$/m);
   for (const file of ['src/App.tsx', 'src/components/Sidebar.tsx', 'src/components/SidebarCanvas.tsx', 'src/components/ChatView.tsx', 'src/main.tsx']) {
     assert.ok(!/import\(['"][^'"]*RoutingCenter/.test(readFileSync(file, 'utf8')), `${file} never imports the Routing Center`);
   }
@@ -105,7 +106,9 @@ test('CP04 Routing Center loads only through the "on" module, lazily, and its st
   assert.match(app, /\{CANVAS_SHELL \? <>(?:\{CanvasNav && <CanvasNav collapsed=\{sidebarCollapsed\} onExpand=\{toggleSidebar\} \/>\})?<ChatView onExpandSidebar=\{toggleSidebar\} \/>\{RoutingCenter && <Suspense fallback=\{null\}><RoutingCenter \/><\/Suspense>\}<\/> : <ChatView onExpandSidebar=\{toggleSidebar\} \/>\}/);
   const root = postcss.parse(readFileSync('src/styles/canvas-routing.css', 'utf8'));
   let rules = 0;
-  root.walkAtRules((rule) => assert.ok(['media'].includes(rule.name), `no @${rule.name}`));
+  // Media and container queries only (a container query lays model rows out by their own width; without support the
+  // stacked layout is the default). No imports, fonts or other at-rules.
+  root.walkAtRules((rule) => assert.ok(['media', 'container'].includes(rule.name), `no @${rule.name}`));
   root.walkRules((rule) => { rules++; for (const selector of rule.selectors) assert.match(selector, /^(?:html\[data-qa-review\] )?\.app\[data-lumen-canvas-shell\]/, `scoped: ${selector}`); });
   root.walkDecls((decl) => assert.ok(!/url\s*\(|@import/i.test(decl.value), 'no network/font dependency'));
   assert.ok(rules > 40);

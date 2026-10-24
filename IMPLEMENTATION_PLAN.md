@@ -1,5 +1,18 @@
 # Dynamic Model Picker implementation plan
 
+## Current design work — Phase 4, Slice 1
+
+Owner-authorized workstream: `feat/phase4-routing-providers`, based on released `871bc1a647f36550e6f66e527b1252ac84437506` (Phase 3 / PR #49 / successful Deploy #68). Develop, test, commit, push and draft PR only. **No merge or deployment without separate owner approval.** This instruction overrides older release authorization recorded below for previous milestones.
+
+| Task | Status | Acceptance / evidence |
+|---|---|---|
+| P4-S1 Routing Center & Providers | Locally verified; owner review / exact-head CI gate | Canonical route overview, saved/enabled/discovery separation, safe recovery, responsive list/detail, Chromium/WebKit 8+8 new cases and 3+3 QA viewports, ordinary parity, isolation and budgets passed; exact-head PR CI is a separate gate. See `docs/testing/phase4-routing-providers.md`. |
+| P4-S2 Model Discovery & Selection | Not started | Model inventory/picker/search/eligibility consistency; preserve canonical owners and drafts. |
+| P4-S3 Auto, Policies, Usage & Diagnostics | Not started | Real decision evidence and provenance; preserve routing, fallback and policy semantics. |
+
+Dependencies: S1 owner design review precedes any release; S2/S3 remain separate coherent slices. No icon detailing until all planned design phases are complete. **Seven-phase design/UX progress is recorded by phase, slice, tests, owner acceptance and release, with no approved overall weighted percentage.** Phases 1–3 shipped; Phase 4 S1 is in draft review, not accepted or deployed. Older Blackout weighted estimates and the separate, completed Model Picker v1 ledger below are **historical scope-specific records**, not estimates of current overall Lumen completion or remaining work. Preserve their underlying evidence; do not reuse their percentages or invent new weights.
+
+
 ## Independent usage-draft fix — 20 October 2026 (Africa/Cairo)
 
 The fix-only branch `fix/usage-draft-no-submit-20261020` contains source checkpoint `8a328bb` (cherry-pick of reviewed `1736a92`). Five UsageMeter buttons explicitly avoid form submission; the new pointer/Enter regression checks draft/message/network/focus behavior at 1440/390 in Chromium and Linux WebKit. Red/green reproduction, independent reruns, typecheck, 149 unit tests and production build passed; normal design regression also passed. See `docs/testing/usage-draft-regression.md`.

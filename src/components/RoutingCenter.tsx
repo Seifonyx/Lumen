@@ -3,6 +3,7 @@
 // Presentation only: it reads Lumen's existing catalog, keys, settings and usage and reuses its owners — manual
 // selection through setChatModel, Layouts through LayoutEditor, usage through UsageTab, decisions through RouteWhy,
 // connections through Settings → Keys. Send-time routing, eligibility and recovery are unchanged.
+import '../styles/canvas-routing.css';
 import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, ChevronRight, Menu, Plus, Search, Shield, SlidersHorizontal, X } from 'lucide-react';
 import { modelLabel, selectCurrentChat, selectCurrentModel, useStore } from '../store';
@@ -17,6 +18,7 @@ import type { ModelInfo } from '../types';
 import { LayoutEditor } from './LayoutsTab';
 import UsageTab from './UsageTab';
 import RouteWhy from './RouteWhy';
+import { providerPresentation } from '../lib/provider-presentation';
 import { routeWords } from '../lib/route-words';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import FilterMenu from './FilterMenu';
@@ -67,7 +69,7 @@ const UseModel = memo(function UseModel({ model }: { model: ModelInfo }) {
 function Providers({ preferred }: { preferred?: string }) {
   const keys = useStore((s) => s.keys), catalog = useStore((s) => s.catalog), usage = useStore((s) => s.usage);
   const [selected, setSelected] = useState<string | null>(preferred || null), [detail, setDetail] = useState(false);
-  const [query, setQuery] = useState(''), [filter, setFilter] = useState<'all' | 'saved' | 'enabled'>('all');
+  const [query, setQuery] = useState(''), [filter, setFilter] = useState<'all' | 'saved' | 'enabled' | 'attention'>('all');
   const input = useRef<HTMLInputElement>(null), title = useRef<HTMLHeadingElement>(null), list = useRef<HTMLDivElement>(null);
   useEffect(() => { if (detail) title.current?.focus({ preventScroll: true }); }, [selected, detail]);
   const providers = useMemo(() => {
@@ -76,10 +78,10 @@ function Providers({ preferred }: { preferred?: string }) {
     return AI_PROVIDERS.map((id) => {
       const raw = keys[id as keyof typeof keys];
       return { id, label: providerLabel(id), keySaved: typeof raw === 'string' && Boolean(raw.trim()), enabled: providerEnabled(id, keys), models: grouped.get(id) || [], status: catalog?.providerStatus?.[id] };
-    }).sort((a, b) => Number(b.keySaved) - Number(a.keySaved) || a.label.localeCompare(b.label));
+    }).map((p) => ({ ...p, presentation: providerPresentation({ ...p, modelCount: p.models.length }) })).sort((a, b) => Number(b.presentation.attention) - Number(a.presentation.attention) || Number(b.keySaved) - Number(a.keySaved) || a.label.localeCompare(b.label));
   }, [keys, catalog]);
   const enabled = providers.filter((p) => p.enabled).length, saved = providers.filter((p) => p.keySaved).length;
-  const matches = (p: typeof providers[number], text: string, scope: typeof filter) => (scope === 'all' || (scope === 'saved' ? p.keySaved : p.enabled)) && `${p.label} ${p.id}`.toLowerCase().includes(text.trim().toLowerCase());
+  const matches = (p: typeof providers[number], text: string, scope: typeof filter) => (scope === 'all' || (scope === 'saved' ? p.keySaved : scope === 'attention' ? p.presentation.attention : p.enabled)) && `${p.label} ${p.id}`.toLowerCase().includes(text.trim().toLowerCase());
   const visible = providers.filter((p) => matches(p, query, filter));
   const active = visible.find((p) => p.id === selected);
   // Providers with neither a saved key nor permission fold under one row, closed unless the current model's provider is
@@ -90,36 +92,35 @@ function Providers({ preferred }: { preferred?: string }) {
   const row = (p: typeof providers[number]) => (
     <button type="button" key={p.id} data-provider={p.id} aria-current={active?.id === p.id ? 'true' : undefined} onClick={() => { setSelected(p.id); setDetail(true); }}>
       <span className="rc-initial" aria-hidden="true">{p.label.slice(0, 1)}</span>
-      <span><strong>{p.label}</strong><small>{p.keySaved ? (p.enabled ? 'Key saved · enabled' : 'Key saved · permission off') : p.enabled ? 'No key saved · enabled' : 'No key saved'}</small><small className="rc-discovery">{discovery(p.status?.state)} · {p.models.length} models</small></span>
-      <ChevronRight size={16} aria-hidden="true" />
+      <span><strong>{p.label}</strong><small>{p.keySaved ? (p.enabled ? 'Key saved · enabled' : 'Key saved · permission off') : p.enabled ? 'No key saved · enabled' : 'No key saved'}</small><small className="rc-discovery">{p.models.length ? `${p.models.length} models in catalog` : p.keySaved ? p.presentation.catalogLabel : 'Connect to discover models'}</small></span>
+      <span className={`rc-state rc-state-${p.presentation.tone}`}>{p.presentation.attention ? 'Needs attention' : p.enabled && p.keySaved ? p.presentation.catalogLabel : p.presentation.setupLabel}</span><ChevronRight size={16} aria-hidden="true" />
     </button>
   );
   const change = (text: string, scope: typeof filter) => {
     setQuery(text); setFilter(scope);
     if (!providers.some((p) => p.id === selected && matches(p, text, scope))) { setSelected(null); setDetail(false); }
   };
-  const discovery = (state?: string) => (state === 'ready' ? 'Catalog ready' : state === 'stale' ? 'Cached catalog' : state === 'error' ? 'Discovery failed' : 'Not checked');
   const back = () => { setDetail(false); requestAnimationFrame(() => list.current?.querySelector<HTMLButtonElement>(`[data-provider="${selected}"]`)?.focus({ preventScroll: true })); };
   const observed = Object.values(usage?.models || {}).filter((m) => m.id.split(':')[0] === active?.id);
   const requests = observed.reduce((n, m) => n + m.requests, 0), tokens = observed.reduce((n, m) => n + m.input + m.output, 0);
   const knownLimits = observed.filter((m) => m.quota !== null);
   const sharedLeft = active?.id === 'openrouter' && usage?.openrouter.limit != null ? Math.max(0, usage.openrouter.limit - usage.openrouter.used) : null;
-  const problem = active?.status?.errorKind === 'auth' ? 'Connection refused. Update the saved key.' : active?.status?.state === 'stale' ? 'Cached models; discovery has not refreshed.' : active?.status?.state === 'error' ? 'Discovery did not complete. Check connection settings.' : null;
+
   return (
     <section className={`rc-providers${active && detail ? ' has-detail' : ''}`} aria-label="Provider browser">
       <div className="rc-provider-list" ref={list}>
         <div className="rc-panel-title">
-          <div><h2>Providers</h2><p className="rc-muted">{saved} {saved === 1 ? 'key' : 'keys'} saved · {enabled} enabled</p></div>
-          <FilterMenu<typeof filter> label="Filter providers" value={filter} onChange={(scope) => change(query, scope)} options={[{ value: 'all', label: 'All providers', count: providers.length }, { value: 'saved', label: 'Saved connections', count: saved }, { value: 'enabled', label: 'Enabled providers', count: enabled }]} />
+          <div><h2>Provider connections</h2><p className="rc-muted">{saved} {saved === 1 ? 'key' : 'keys'} saved · {enabled} enabled</p></div>
+          <FilterMenu<typeof filter> label="Filter providers" value={filter} onChange={(scope) => change(query, scope)} options={[{ value: 'all', label: 'All providers', count: providers.length }, { value: 'saved', label: 'Saved connections', count: saved }, { value: 'enabled', label: 'Enabled providers', count: enabled }, { value: 'attention', label: 'Needs attention', count: providers.filter((p) => p.presentation.attention).length }]} />
         </div>
         <div className="rc-search"><Search size={16} aria-hidden="true" /><input ref={input} type="search" aria-label="Find a provider" placeholder="Find a provider" value={query} onChange={(e) => change(e.target.value, filter)} />{query && <button type="button" aria-label="Clear provider search" onClick={() => { change('', filter); input.current?.focus(); }}><X size={16} /></button>}</div>
         <p className="rc-count" role="status">{visible.length} of {providers.length} providers</p>
         <div className="rc-provider-scroll">
-          {folding ? connected.map(row) : visible.map(row)}
+          {folding && <h3 className="rc-list-heading">Your connections</h3>}{folding ? connected.map(row) : visible.map(row)}
           {folding && (
             <div className="rc-fold">
               <button type="button" aria-expanded={unfolded} aria-controls="rc-unconnected" onClick={() => setUnfolded(!unfolded)}>
-                <span><strong>Not connected</strong><small>{unconnected.length} {unconnected.length === 1 ? 'provider' : 'providers'} · no key saved</small></span>
+                <span><strong>Explore providers</strong><small>{unconnected.length} {unconnected.length === 1 ? 'provider' : 'providers'} · no key saved</small></span>
                 <ChevronDown size={16} aria-hidden="true" />
               </button>
             </div>
@@ -132,14 +133,15 @@ function Providers({ preferred }: { preferred?: string }) {
         <section className="rc-provider-detail" aria-label="Provider detail">
           <button type="button" className="rc-link rc-back" onClick={back}><ArrowLeft size={16} /> Back to providers</button>
           <header className="rc-detail-head">
-            <div><span className="rc-label">Provider · {active.id}</span><h2 tabIndex={-1} ref={title}>{active.label}</h2></div>
-            <button type="button" className="rc-primary" aria-label={`Manage ${active.label} connection`} onClick={() => openSettings('keys')}>Manage <ArrowUpRight size={15} /></button>
+            <div><span className="rc-label">Provider connection</span><h2 tabIndex={-1} ref={title}>{active.label}</h2></div>
+            <button type="button" className="rc-primary" aria-label={`Connection settings for ${active.label}`} onClick={() => openSettings('keys')}>Connection settings <ArrowUpRight size={15} /></button>
           </header>
           <dl className="rc-facts">
             <div><dt>Connection</dt><dd>{active.keySaved ? 'Key saved' : 'No key saved'} · {active.enabled ? 'Enabled' : active.keySaved ? 'Permission off' : 'Not configured'}</dd></div>
-            <div><dt>Discovery</dt><dd>{discovery(active.status?.state)}{active.status?.lastSuccess ? ` · ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(active.status.lastSuccess)}` : ''}</dd></div>
+            <div><dt>Discovery</dt><dd>{active.presentation.catalogLabel}{active.status?.lastSuccess ? ` · ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(active.status.lastSuccess)}` : ''}</dd></div>
           </dl>
-          <p className="rc-notice">{problem ? `${problem} ` : ''}Discovery does not verify successful replies.</p>
+          {active.presentation.tone !== 'ready' && <div className={`rc-recovery rc-recovery-${active.presentation.tone}`} role={active.presentation.attention ? 'status' : undefined}><strong>{active.presentation.attention ? 'Needs attention' : active.presentation.catalogLabel}</strong><p>{active.presentation.guidance}</p></div>}
+          <p className="rc-verification"><Shield size={15} aria-hidden="true" /> Replies: {active.presentation.replyLabel.toLowerCase()}.</p>
           {active.enabled && <Suspense fallback={null}><CheckConnection key={active.id} provider={active.id} /></Suspense>}
           <div className="rc-allowance"><span>Request allowance</span><strong>{sharedLeft !== null ? `${sharedLeft} requests remaining · shared free-model pool` : knownLimits.length ? 'Per-model limits below' : 'Unknown'}</strong></div>
           <ProviderModels key={active.id} models={active.models} />
@@ -148,7 +150,7 @@ function Providers({ preferred }: { preferred?: string }) {
             <p className="rc-muted">{sharedLeft !== null ? `One shared allowance for OpenRouter free models: ${usage!.openrouter.used} of ${usage!.openrouter.limit} requests recorded. Paid models are excluded.` : knownLimits.length ? 'Known limits belong to individual models; they are not a combined provider balance.' : 'No provider allowance is reported in this account’s current usage data.'} Counts reflect Lumen activity, not account-wide billing or proof of successful replies.</p>
           </details>
         </section>
-      ) : <aside className="rc-provider-pick"><h3>Choose a provider</h3><p>Select a provider to inspect its connection, models and usage.</p></aside>}
+      ) : <aside className="rc-provider-pick"><Shield size={26} aria-hidden="true" /><h3>Your connections, clearly</h3><p>Choose a provider to see its saved-key status, permissions and model catalog.</p><p>A saved key is not a verified connection. Discovery lists models; it does not test replies.</p></aside>}
     </section>
   );
 }
@@ -218,7 +220,7 @@ function RecentDecisions() {
         {providers.length ? <ul>{providers.slice(0, 6).map(([id, p]) => (
           <li key={id}><button type="button" onClick={() => showRoutingSection('providers')}>
             <span className="rc-recent-model">{PROVIDER_NAMES[id as keyof typeof PROVIDER_NAMES] || id}</span>
-            <span className="rc-recent-why">{p.models} model{p.models === 1 ? '' : 's'}{p.limited ? ` · ${p.limited} temporarily limited` : ' · available'}</span>
+            <span className="rc-recent-why">{p.models} model{p.models === 1 ? '' : 's'}{p.limited ? ` · ${p.limited} temporarily limited` : ' · listed'}</span>
           </button></li>
         ))}</ul> : <p className="rc-muted">No provider models yet. Connect a provider to fill your catalog.</p>}
       </section>
@@ -229,7 +231,7 @@ function RecentDecisions() {
 export default function RoutingCenter() {
   const { open, section } = useRoutingCenter();
   const chat = useStore(selectCurrentChat), model = useStore(selectCurrentModel);
-  const catalog = useStore((s) => s.catalog), config = useStore((s) => s.settings), usage = useStore((s) => s.usage);
+  const catalog = useStore((s) => s.catalog), config = useStore((s) => s.settings), usage = useStore((s) => s.usage), keys = useStore((s) => s.keys);
   const owner = useStore((s) => s.user?.uid), currentId = useStore((s) => s.currentId);
   const covered = useStore((s) => s.settingsOpen || Boolean(s.page));
   const [editing, setEditing] = useState<Layout | null>(null);
@@ -249,11 +251,14 @@ export default function RoutingCenter() {
   }, [open]);
   if (!open) return null;
 
-  const last = chat?.messages.findLast((m) => m.role === 'assistant' && m.model);
+  const last = chat?.messages.findLast((m) => m.role === 'assistant' && m.model && m.status === 'done');
   const routed = model === 'auto' || model.startsWith('layout:');
   const current = routed ? last?.model : model;
   const left = current ? remaining(usage, current) : null;
   const models = catalog?.models || [], layouts = config.layouts || [];
+  const connected = AI_PROVIDERS.filter((id) => providerEnabled(id, keys));
+  const ready = connected.filter((id) => catalog?.providerStatus?.[id]?.state === 'ready').length;
+  const attention = connected.filter((id) => ['error', 'stale'].includes(catalog?.providerStatus?.[id]?.state || '')).length;
   const q = query.trim().toLowerCase();
   const inventory = models.filter((m) => `${m.label} ${m.name} ${m.provider}`.toLowerCase().includes(q));
 
@@ -279,17 +284,21 @@ export default function RoutingCenter() {
 
       {section === 'overview' && (
         <div className="rc-body">
+          <section className="rc-route-hero" aria-label="Current routing mode">
+            <div><span className="rc-label">Your next message</span><h2>{modelLabel(catalog, model)}</h2>
+              <p>{model === 'auto' ? 'Auto chooses a model for each task, within your enabled providers and preferences.' : model.startsWith('layout:') ? 'Your saved Layout defines the model set and fallback scope.' : 'This conversation uses your manual model choice.'}</p>
+              <button type="button" className="rc-link" onClick={() => showRoutingSection(model === 'auto' || model.startsWith('layout:') ? 'policies' : 'models')}>{routed ? 'Review routing policies' : 'Browse models'}<ArrowRight size={15} /></button>
+            </div>
+            <div className="rc-route-evidence"><span className="rc-label">Last recorded answer</span>{last?.model ? <><strong>{modelLabel(catalog, last.model)}</strong>{last.route ? <RouteWhy message={last} /> : <p className="rc-muted">No routing explanation was saved.</p>}</> : <p className="rc-muted">Send a message to see which model answered.</p>}</div>
+          </section>
+          <button type="button" className="rc-connection-brief" onClick={() => showRoutingSection('providers')}>
+            <Shield size={19} aria-hidden="true" /><span><strong>{ready ? `${ready} provider ${ready === 1 ? 'catalog' : 'catalogs'} ready` : connected.length ? 'Provider discovery needs a look' : 'Connect your first provider'}</strong><small>{attention ? `${attention} ${attention === 1 ? 'connection needs' : 'connections need'} attention` : connected.length ? `${connected.length} enabled · discovery does not verify replies` : 'Save a key, review permissions, then discover models'}</small></span><ArrowRight size={17} aria-hidden="true" />
+          </button>
           <div className="rc-summary">
             <div><span>Models in this catalog</span><strong>{models.length}<small> models</small></strong><p>{config.enabledModels.length} enabled for selection</p></div>
-            <div><span>Saved routing policies</span><strong>{layouts.length}<small> Layout{layouts.length === 1 ? '' : 's'}</small></strong><p>Auto-ranked or ordered, with explicit fallback scope</p></div>
+            <div><span>Saved routing policies</span><strong>{layouts.length}<small> Layout{layouts.length === 1 ? '' : 's'}</small></strong><p>Inspect the allowed set and fallback order</p></div>
             <div><span>{routed ? 'Last answer allowance' : 'Selected model allowance'}</span>{left === null ? <strong className="rc-unknown">Unknown</strong> : <strong>{left}<small> requests left</small></strong>}<p>{left === null ? 'No request allowance is reported for this route.' : `For ${modelLabel(catalog, current)} only.${routed ? ' Auto and Layouts may choose another model.' : ''}`}</p></div>
           </div>
-          <section className="rc-card">
-            <span className="rc-label">This conversation</span>
-            <h2>{modelLabel(catalog, model)}</h2>
-            <p className="rc-muted">{model === 'auto' ? 'Task-aware choice at send.' : model.startsWith('layout:') ? 'Your saved routing policy.' : 'Fixed manual selection.'}</p>
-            {last?.route ? <RouteWhy message={last} /> : <p className="rc-muted">No completed answer with a route record yet.</p>}
-          </section>
           <RecentDecisions />
           <div className="rc-actions">
             <button type="button" className="rc-row-link" onClick={() => showRoutingSection('providers')}>Browse providers<ArrowRight size={16} /></button>

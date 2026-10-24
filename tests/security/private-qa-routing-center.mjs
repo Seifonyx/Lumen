@@ -103,7 +103,7 @@ try {
       // Providers without a key or permission fold under one row; saved connections stay listed with their state.
       const fold = rc(page).locator('.rc-fold > button');
       assert.equal(await fold.getAttribute('aria-expanded'), 'false');
-      assert.match(await fold.innerText(), /Not connected\s+\d+ providers · no key saved/);
+      assert.match(await fold.innerText(), /Explore providers\s+\d+ providers · no key saved/);
       assert.match(await rc(page).locator('[data-provider="gemini"]').innerText(), /Key saved · enabled/);
       assert.equal(await rc(page).locator('[data-provider="groq"]').isVisible(), false, 'unconnected providers start folded');
       await shot(page, join(out, `${tag}-2-providers-folded.png`));
@@ -177,7 +177,7 @@ try {
       // Manage connection → Settings (keys); closing Settings returns to the Routing Center.
       await tab(page, 'Providers');
       await rc(page).locator('[data-provider="gemini"]').click();
-      await rc(page).getByRole('button', { name: 'Manage Google AI Studio connection' }).click();
+      await rc(page).getByRole('button', { name: 'Connection settings for Google AI Studio' }).click();
       await page.getByRole('dialog', { name: 'Settings' }).waitFor();
       assert.equal(await isOpen(page), false, 'hidden under Settings');
       await page.getByRole('dialog', { name: 'Settings' }).getByRole('button', { name: 'Close', exact: true }).first().click();

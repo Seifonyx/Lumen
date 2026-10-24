@@ -26,12 +26,12 @@ export function CheckConnection({ provider }: { provider: string }) {
     const fresh = Boolean(status && status.lastAttempt >= at - 1000);
     const words: Record<string, string> = { auth: 'The provider refused the key. Update it in Settings → Keys.', 'rate-limit': 'The provider is rate limiting requests right now. Try again in a minute.', timeout: 'The provider didn’t answer in time.', network: 'Couldn’t reach the provider. Check your connection.', provider: 'The provider had a problem listing its models.', invalid: 'The provider answered with something Lumen couldn’t read.' };
     const ok = fresh && status?.state === 'ready';
-    setState({ busy: false, at: Date.now(), ok, result: ok ? `Connected. ${count} ${count === 1 ? 'model' : 'models'} listed.` : !fresh ? 'No answer yet. Check again in a moment.' : words[status?.errorKind || ''] || 'The check didn’t complete.' });
+    setState({ busy: false, at: Date.now(), ok, result: ok ? `Catalog refreshed. ${count} ${count === 1 ? 'model' : 'models'} listed.` : !fresh ? 'No answer yet. Check again in a moment.' : words[status?.errorKind || ''] || 'The check didn’t complete.' });
   };
   return (
     <div className="rc-check">
       <button type="button" className="rc-link" disabled={state.busy} onClick={() => void run()}><RefreshCw size={15} className={state.busy ? 'spin' : undefined} />{state.busy ? 'Checking…' : 'Check connection'}</button>
-      <p className="rc-muted" role="status">{state.result ? <><span className={state.ok ? 'rc-ok' : 'rc-bad'}>{state.ok ? 'Working' : 'Not working'}</span> · {state.result}</> : 'Lists this provider’s models again. No message is sent.'}</p>
+      <p className="rc-muted" role="status">{state.result ? <><span className={state.ok ? 'rc-ok' : 'rc-bad'}>{state.ok ? 'Model list reached' : 'Not confirmed'}</span> · {state.result}</> : 'Refreshes enabled providers’ catalogs and shows this provider’s result. No message is sent.'}</p>
     </div>
   );
 }

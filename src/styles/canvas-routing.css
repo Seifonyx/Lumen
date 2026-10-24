@@ -39,7 +39,7 @@
 
 /* Overview. */
 .app[data-lumen-canvas-shell] .rc-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.app[data-lumen-canvas-shell] .rc-summary > div, .app[data-lumen-canvas-shell] .rc-card { padding: 16px; border: 1px solid var(--canvas-rim); border-radius: 16px; background: color-mix(in srgb, var(--canvas-surface) 60%, transparent); }
+.app[data-lumen-canvas-shell] .rc-card { padding: 16px; border: 1px solid var(--canvas-rim); border-radius: 16px; background: color-mix(in srgb, var(--canvas-surface) 60%, transparent); }
 .app[data-lumen-canvas-shell] .rc-summary span { font-size: 12.5px; color: var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .rc-summary strong { display: block; margin: 6px 0 4px; font: 640 30px/1 var(--canvas-display-font); letter-spacing: -.03em; }
 /* An unknown value is a quiet statement, not a headline number. */
@@ -132,13 +132,14 @@
   .app[data-lumen-canvas-shell] .rc-head { flex-wrap: wrap; gap: 12px; padding-bottom: 14px; }
   .app[data-lumen-canvas-shell] .rc-title { order: 2; flex-basis: 100%; }
   .app[data-lumen-canvas-shell] .rc-title h1 { font-size: 30px; }
+  .app[data-lumen-canvas-shell] .rc-title > :is(.rc-label, p) { display: none; }
   .app[data-lumen-canvas-shell] .rc-close, .app[data-lumen-canvas-shell] .rc-primary { min-height: 44px; }
   .app[data-lumen-canvas-shell] .rc-menu { display: inline-grid; }
   /* As Library's New document: the page's one action spans the column under its title. */
   .app[data-lumen-canvas-shell] .rc-primary { order: 3; flex-basis: 100%; justify-content: center; }
   /* Every section in view: the segmented control becomes a 3 × 2 grid of 44pt targets (no hidden sideways strip). */
-  .app[data-lumen-canvas-shell] .rc-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
-  .app[data-lumen-canvas-shell] .rc-tabs button { min-width: 0; min-height: 44px; padding: 0 6px; overflow: hidden; text-overflow: ellipsis; }
+  .app[data-lumen-canvas-shell] .rc-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.3em), 1fr)); overflow: visible; font-size: .875rem; }
+  .app[data-lumen-canvas-shell] .rc-tabs button { min-width: 0; min-height: 44px; padding: 8px 6px; font-size: inherit; white-space: normal; overflow-wrap: anywhere; }
   .app[data-lumen-canvas-shell] .rc-summary, .app[data-lumen-canvas-shell] .rc-grid { grid-template-columns: minmax(0, 1fr); }
   .app[data-lumen-canvas-shell] .rc-providers { grid-template-columns: minmax(0, 1fr); }
   .app[data-lumen-canvas-shell] .rc-providers.has-detail > .rc-provider-list, .app[data-lumen-canvas-shell] .rc-providers:not(.has-detail) > :is(.rc-provider-detail, .rc-provider-pick) { display: none; }
@@ -199,3 +200,58 @@
 .app[data-lumen-canvas-shell] .rc-import p, .app[data-lumen-canvas-shell] .rc-import ul { margin: 0; }
 .app[data-lumen-canvas-shell] .rc-import ul { padding-inline-start: 18px; }
 .app[data-lumen-canvas-shell] .rc-grid > .rc-log { grid-column: 1 / -1; margin-bottom: 0; }
+
+/* Phase 4: the route is the lead; counts form a quiet ledger, not three competing dashboard cards. */
+.app[data-lumen-canvas-shell] .rc-route-hero { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 28px; padding: 24px; border: 1px solid var(--canvas-rim); border-radius: var(--canvas-radius-card); background: var(--canvas-surface); }
+.app[data-lumen-canvas-shell] .rc-route-hero h2 { margin: 8px 0 10px; font: var(--canvas-type-display); letter-spacing: -.03em; overflow-wrap: anywhere; }
+.app[data-lumen-canvas-shell] .rc-route-hero p { max-width: 48ch; margin: 0 0 12px; color: var(--canvas-secondary); font-size: 14px; line-height: 1.55; }
+.app[data-lumen-canvas-shell] .rc-route-evidence { display: grid; align-content: start; justify-items: start; gap: 10px; padding-inline-start: 24px; border-inline-start: 1px solid var(--canvas-rim); }
+.app[data-lumen-canvas-shell] .rc-route-evidence > strong { font-size: 15px; overflow-wrap: anywhere; }
+.app[data-lumen-canvas-shell] .rc-summary { gap: 0; border-bottom: 1px solid var(--canvas-rim); }
+.app[data-lumen-canvas-shell] .rc-summary > div { padding: 10px 16px 16px 0; border: 0; border-radius: 0; background: none; }
+.app[data-lumen-canvas-shell] .rc-summary strong { font-size: 23px; }
+.app[data-lumen-canvas-shell] .rc-providers { grid-template-columns: minmax(270px, 360px) minmax(0, 1fr); gap: 28px; }
+.app[data-lumen-canvas-shell] .rc-provider-detail { border-radius: var(--canvas-radius-card); background: var(--canvas-surface); }
+.app[data-lumen-canvas-shell] .rc-provider-pick { min-height: 240px; align-content: center; justify-items: start; gap: 12px; padding: 28px; border-style: dashed; background: none; }
+.app[data-lumen-canvas-shell] .rc-provider-pick p { max-width: 38ch; font-size: 14px; line-height: 1.55; }
+.app[data-lumen-canvas-shell] .rc-list-heading { padding: 8px 10px 4px; font: 600 12.5px var(--canvas-body-font); color: var(--canvas-muted); }
+.app[data-lumen-canvas-shell] .rc-provider-scroll [data-provider] { display: grid; grid-template-columns: 32px minmax(0, 1fr) 16px; gap: 6px 10px; padding: 12px 10px; }
+.app[data-lumen-canvas-shell] .rc-provider-scroll [data-provider] > .rc-initial { grid-row: 1 / 3; align-self: start; }
+.app[data-lumen-canvas-shell] .rc-provider-scroll [data-provider] > span:nth-child(2) { grid-column: 2; gap: 3px; }
+.app[data-lumen-canvas-shell] .rc-provider-scroll [data-provider] > svg { grid-column: 3; grid-row: 1 / 3; align-self: center; }
+.app[data-lumen-canvas-shell] .rc-provider-scroll .rc-state { grid-column: 2; justify-self: start; padding: 3px 7px; border-radius: 6px; background: var(--canvas-fill); font-size: 11.5px; line-height: 1.4; color: var(--canvas-secondary); }
+.app[data-lumen-canvas-shell] .rc-provider-scroll .rc-state-attention { color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, transparent); }
+.app[data-lumen-canvas-shell] .rc-detail-head { align-items: start; flex-wrap: wrap; }
+.app[data-lumen-canvas-shell] .rc-detail-head > div { min-width: 140px; flex: 1; }
+.app[data-lumen-canvas-shell] .rc-detail-head h2 { overflow-wrap: anywhere; }
+.app[data-lumen-canvas-shell] .rc-detail-head .rc-primary { min-height: 44px; font-size: 13px; padding-inline: 12px; }
+.app[data-lumen-canvas-shell] .rc-recovery { display: grid; gap: 5px; padding: 14px; border-radius: var(--canvas-radius-control); background: var(--canvas-fill); font-size: 14px; line-height: 1.5; }
+.app[data-lumen-canvas-shell] .rc-recovery p { margin: 0; color: var(--canvas-secondary); }
+.app[data-lumen-canvas-shell] .rc-recovery-attention { border-inline-start: 3px solid var(--danger); }
+.app[data-lumen-canvas-shell] .rc-verification { display: flex; gap: 7px; align-items: start; margin: 0; color: var(--canvas-muted); font-size: 12.5px; line-height: 1.5; }
+.app[data-lumen-canvas-shell] .rc-verification svg { flex: none; margin-top: 2px; }
+.app[data-lumen-canvas-shell] .rc-facts dd { line-height: 1.5; }
+.app[data-lumen-canvas-shell] .rc-search:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; box-shadow: none; }
+@media (max-width: 899px) {
+  .app[data-lumen-canvas-shell] .rc-route-hero { grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 18px; }
+  .app[data-lumen-canvas-shell] .rc-route-hero h2 { font-size: 27px; }
+  .app[data-lumen-canvas-shell] .rc-route-evidence { border-inline-start: 0; border-top: 1px solid var(--canvas-rim); padding: 14px 0 0; gap: 8px; }
+  .app[data-lumen-canvas-shell] .rc-route-evidence p { margin-bottom: 0; }
+  .app[data-lumen-canvas-shell] .rc-summary > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--canvas-rim); }
+  .app[data-lumen-canvas-shell] .rc-summary > div:last-child { border: 0; }
+  .app[data-lumen-canvas-shell] .rc-summary strong, .app[data-lumen-canvas-shell] .rc-summary strong.rc-unknown { margin: 0; font-size: 17px; }
+  .app[data-lumen-canvas-shell] .rc-summary p { grid-column: 1 / -1; margin-top: 4px; }
+  .app[data-lumen-canvas-shell] .rc-providers { grid-template-columns: minmax(0, 1fr); }
+  .app[data-lumen-canvas-shell] .rc-provider-detail { background: none; }
+  .app[data-lumen-canvas-shell] .rc-search { min-height: 48px; height: auto; }
+  .app[data-lumen-canvas-shell] .rc-search input { min-height: 44px; font-size: 16px; }
+  .app[data-lumen-canvas-shell] .rc-search button { width: 44px; height: 44px; }
+  .app[data-lumen-canvas-shell] .rc-link { min-height: 44px; }
+  .app[data-lumen-canvas-shell] .rc-recent-grid { grid-template-columns: minmax(0, 1fr); }
+}
+.app[data-lumen-canvas-shell] .rc-connection-brief { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 0; border: 0; border-bottom: 1px solid var(--canvas-rim); background: none; color: var(--canvas-ink); text-align: start; cursor: pointer; }
+.app[data-lumen-canvas-shell] .rc-connection-brief > span { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.app[data-lumen-canvas-shell] .rc-connection-brief strong { font-size: 14px; font-weight: 600; }
+.app[data-lumen-canvas-shell] .rc-connection-brief small { font-size: 13px; line-height: 1.5; color: var(--canvas-secondary); }
+.app[data-lumen-canvas-shell] .rc-connection-brief > svg { flex: none; }
+.app[data-lumen-canvas-shell] .rc-connection-brief:hover strong { text-decoration: underline; text-underline-offset: 4px; }

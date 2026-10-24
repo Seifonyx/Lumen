@@ -50,9 +50,9 @@ try {
   } finally {
     if (previous === undefined) delete process.env.LUMEN_CANVAS; else process.env.LUMEN_CANVAS = previous;
   }
-  auditGraph(canvasIds, { forbidden: PRODUCTION_GRAPH_FORBIDDEN, required: ['src/lib/canvas-presentation.on.ts', 'src/styles/canvas-screens.css', 'src/components/RoutingCenter.tsx', 'src/components/SidebarCanvas.tsx'], root });
+  auditGraph(canvasIds, { forbidden: PRODUCTION_GRAPH_FORBIDDEN, required: ['src/lib/canvas-presentation.on.ts', 'src/styles/canvas-screens.css', 'src/components/RoutingCenter.tsx', 'src/components/SidebarCanvas.tsx', 'src/lib/provider-presentation.ts'], root });
   assert.ok(!canvasIds.some((id) => id.replaceAll('\\', '/').split('?')[0].endsWith('/src/lib/canvas-presentation.ts')), 'the Canvas build replaces the off switch');
-  assert.ok(!productionIds.some((id) => /canvas-presentation\.on\.ts|\/RoutingCenter\.tsx|\/styles\/canvas/.test(id)), 'the ordinary build never reaches the "on" module');
+  assert.ok(!productionIds.some((id) => /canvas-presentation\.on\.ts|provider-presentation\.ts|\/RoutingCenter\.tsx|\/styles\/canvas/.test(id)), 'the ordinary build never reaches the "on" module');
   pass('Canvas production build excludes QA code', `${canvasIds.length} modules`);
 
   // 2. Synthetic QA build.
@@ -166,7 +166,10 @@ try {
     // Phase 2 slice 3 (in review): Back for layers held in a component's state, such as All chats.
     'src/lib/back-stack.ts',
     // Phase 3 slice 1 (in review): Canvas reading styles; message markup in MessageItem/markdown stays behind the switch.
-    'src/styles/canvas-reading.css'];
+    'src/styles/canvas-reading.css',
+    // Phase 4 slice 1: safe connection/discovery copy, reached only by the lazy Canvas Routing Center.
+    // Required in the Canvas graph and forbidden in the ordinary graph above; no permission/network owner changes.
+    'src/lib/provider-presentation.ts'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');

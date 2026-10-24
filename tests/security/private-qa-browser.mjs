@@ -234,8 +234,12 @@ try {
     const { context, page } = await open(REVIEWERS.owner);
     await page.goto(gate.buildUrl);
     await composer(page).waitFor({ timeout: 20000 });
-    now = gate.manifest.expiresAt;
     await composer(page).fill('[synthetic:slow] after expiry');
+    // Finish focus/pageshow lease checks and wait for the real Send control before advancing the clock.
+    // Otherwise WebKit can correctly lock on focus before this test gets to exercise Send.
+    await page.getByRole('button', { name: 'Send', exact: true }).click({ trial: true });
+    await settle(page);
+    now = gate.manifest.expiresAt;
     await page.getByRole('button', { name: 'Send', exact: true }).click();
     await page.getByRole('alertdialog', { name: 'Review ended' }).waitFor({ timeout: 10000 });
     assert.equal(await page.getByText(/No live provider was contacted.*after expiry/).count(), 0, 'no reply is produced after expiry');

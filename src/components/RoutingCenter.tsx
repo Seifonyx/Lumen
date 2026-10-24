@@ -324,7 +324,6 @@ export default function RoutingCenter() {
   const reach = pool.length ? `${pool.slice(0, 3).join(layout?.mode === 'order' ? ' → ' : ' · ')}${pool.length > 3 ? ` +${pool.length - 3} more` : ''}`
     : picked ? `${providerLabel(providerId(picked))}${picked.context ? ` · ${formatTokens(picked.context)} context` : ''}` : '';
   const go = (id: RoutingSection) => showRoutingSection(id);
-  const openProvider = (id: string) => { go('providers'); showRoutingProvider(id); };
   const sub = phone && section !== 'models';
 
   const modelSearch = <div className="rc-search"><Search size={16} aria-hidden="true" /><input type="search" aria-label="Search models" placeholder="Search models or providers" value={query} onChange={e => setQuery(e.target.value)} />{query && <button type="button" aria-label="Clear model search" onClick={e => { setQuery(''); e.currentTarget.parentElement?.querySelector('input')?.focus(); }}><X size={16} /></button>}</div>;

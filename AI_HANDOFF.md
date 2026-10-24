@@ -1,6 +1,12 @@
 # Dynamic Model Picker operational handoff
 
-## Active checkpoint — corrected Phase4 phone pass (2026-10-24)
+## Active checkpoint — Phase 4 Slice 2, Prism checkpoint 1 (2026-10-24)
+
+This is the **active owner-authorized engineering scope only**. [Draft PR #53](https://github.com/Seifonyx/Lumen/pull/53) on `feat/phase4-prism-checkpoints`, branched from shipped `main` `2a169dc`. Prism replaces user-facing Models & routing in navigation and command search; its five sections are Models (default), Providers, Layouts, Usage, Diagnostics. Overview was removed; its route context moved to Models and recent answers to Diagnostics; old `overview` presentation states normalize to Models on entry/replay. The original sidebar, glass Back, canonical model/provider/credential/routing owners and $0 synthetic QA remain intact.
+
+First CI of the checkpoint (head `58eda181`) revealed one TypeScript unused-function cleanup and otherwise passed 22/23 jobs including synthetic Chromium/WebKit screens. The cleanup is part of the next checkpoint-1 code commit; **do not treat this note as final exact-head green**. Check the PR Actions results for the latest source SHA and review Light/Dark screenshots at 320/390/430/1440. No physical Safari/VoiceOver claim. **Stop for owner/planner design review after clean exact-head CI**; Checkpoints 2 and 3, merge, deploy, Gate, spend and provider-network changes are not authorized.
+
+## Historical checkpoint — corrected Phase4 phone pass (2026-10-24)
 
 Source checkpoint `764d2db49da31779f110b2550710a7e584f64789`; final evidence in `docs/testing/phase4-phone-sections.md` and `docs/reviews/phone-sections/review.html`. Final evidence commit is docs-only; exact PR head/CI and public-safe live status are synchronized separately. Isolation8/8, CP01 ordinary graph, gated RC3sizes and Canvas screens4cases passed locally. New source matrix8/8 per engine passed, including preference/resize/native-search fixes. No design acceptance or release.
 

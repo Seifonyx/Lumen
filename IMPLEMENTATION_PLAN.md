@@ -1,6 +1,12 @@
 # Dynamic Model Picker implementation plan
 
-## Active owner correction — Phase4 final phone review
+## Active — Phase 4 Slice 2, checkpoint 1: Prism (2026-10-24)
+
+Owner-authorized work is **one draft PR across three sequential checkpoints**, currently [PR #53](https://github.com/Seifonyx/Lumen/pull/53), `feat/phase4-prism-checkpoints` from shipped `main` `2a169dc`. Only **checkpoint 1** is authorized: in-app Prism name/branching icon across navigation/search, five sections starting with Models, remove Overview state, move truthful selection/routing summary to Models and recent answers to Diagnostics, normalize legacy history, preserve sidebar/back/provider settings/drafts. Scope is UI/state only; canonical registries, routing algorithms, credentials and production are unchanged. Synthetic Chromium/WebKit Light/Dark at 320/390/430/1440 plus real history/selection/unit/accessibility regressions are the review evidence.
+
+First checkpoint-1 CI was 22/23 with one unused-function TypeScript error (fixed for next CI); **latest exact-head green and owner visual acceptance pending**. Stop at this review boundary. **Do not begin provider or model integration checkpoints, merge/deploy, spend, approve Gate or enable real inference**. No defensible overall program percentage exists.
+
+## Historical owner correction — Phase4 final phone review
 
 Sidebar remains the established Canvas unified tree with upper Search. Library receives top content tabs + contained bottom Search; Routing receives top section shortcuts + contextual provider/model Search; provider detail hides section shortcuts. Shared phone Back/actions use restrained glass. See `docs/design/IPHONE_FINAL_PASS.md` for architecture, local evidence and known limits.
 

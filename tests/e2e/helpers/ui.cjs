@@ -26,6 +26,8 @@ exports.backSettingsSection = async (page) => {
 };
 
 exports.openSettingsSection = async (page, name) => {
+  // Settings mounts asynchronously; checking a locator before the page exists misidentifies loading as nesting.
+  await page.locator('.settings-page').waitFor({ state: 'visible' });
   const list = page.locator('.settings-page .settings-tabs');
   if (!(await list.isVisible())) {
     await exports.backSettingsSection(page);

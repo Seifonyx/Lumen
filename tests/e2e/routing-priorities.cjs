@@ -1,3 +1,4 @@
+const { openSettingsSection, closeSettings } = require('./helpers/ui.cjs');
 const {chromium,webkit}=require('playwright');
 const assert=require('node:assert/strict');
 const {profile}=require('./helpers/preview-profile.cjs');
@@ -25,11 +26,11 @@ const cors={'access-control-allow-origin':'*','access-control-allow-headers':'*'
   await page.goto(base);await page.locator('.composer textarea').waitFor();
   if(width<900)await page.locator('.menu-btn').click();
   await page.locator('.sidebar-foot, .cv-account').click();
-  await page.locator('.settings-tabs').getByRole('button',{name:'Models',exact:true}).click();
+  await openSettingsSection(page, 'Models');
   await page.getByLabel('Routing priority',{exact:true}).selectOption(priority==='prompt-override'?'quality':priority);
   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mr.settings')).routingPreference),priority==='prompt-override'?'quality':priority);
   if(priority==='quality')await page.screenshot({path:`tests/e2e/out/routing-priority-${process.env.MR_WEBKIT?'webkit':'chromium'}-${width}.png`});
-  await page.locator('.settings-page [aria-label="Close"]').click();
+  await closeSettings(page);
   await page.locator('.composer textarea').fill(priority==='prompt-override'?'Use the cheapest available model to write an email':'Hello');
   await page.locator('.send-btn').click();await page.getByText('PRIORITY_REPLY',{exact:true}).waitFor();
   assert.deepEqual(requests,[priority==='quality'?pro:priority==='speed'?lite:free]);

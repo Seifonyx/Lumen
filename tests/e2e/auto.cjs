@@ -1,10 +1,7 @@
 // In-app check: Auto option, "why" note, a hanging model replaced, manual text-only model + image rerouted.
 const { chromium } = require('playwright');
 // Settings is a page: on phones the section list shows first, and a section has a back arrow.
-async function openTab(page, name) {
-  if (await page.isVisible('.settings-back')) await page.click('.settings-back');
-  await page.click(`.settings-tabs >> text=${name}`);
-}
+const { openSettingsSection: openTab, closeSettings } = require('./helpers/ui.cjs');
 const path = require('path');
 let failures = 0;
 const check = (c, l) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) failures++; };
@@ -54,7 +51,7 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   }
   await page.locator('.models-nav button').filter({ hasText: 'Your models' }).click();
   check(await page.isChecked('.settings-section .switch >> nth=1'), 'Auto is on for new chats by default');
-  await page.click('.settings-page [aria-label="Close"]');
+  await closeSettings(page);
   check((await page.textContent('.model-button')).includes('Auto'), 'picker shows Auto');
 
   // Image question in Auto -> a model that reads images, with the reason shown.

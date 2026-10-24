@@ -1,9 +1,6 @@
 // Groq + Cerebras in the app: keys, models switched on, picker groups, chatting, usage.
 const { chromium } = require('playwright');
-async function openTab(page, name) {
-  if (await page.isVisible('.settings-back')) await page.click('.settings-back');
-  await page.click(`.settings-tabs >> text=${name}`);
-}
+const { openSettingsSection: openTab, closeSettings } = require('./helpers/ui.cjs');
 let failures = 0;
 const check = (c, l) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) failures++; };
 const sse = (chunks) => chunks.map((o) => `data: ${JSON.stringify(o)}\n\n`).join('') + 'data: [DONE]\n\n';
@@ -56,7 +53,7 @@ const sse = (chunks) => chunks.map((o) => `data: ${JSON.stringify(o)}\n\n`).join
   const yours = await page.textContent('.model-list:not(.add)');
   check(/GPT-OSS 20B/.test(yours) && /GPT-OSS 120B/.test(yours) && /Groq/.test(yours) && /Cerebras/.test(yours), 'new providers\' suggested models switched on');
   check(!(await page.textContent('.settings-panel')).includes('Whisper'), 'speech models not offered');
-  await page.click('.settings-page [aria-label="Close"]');
+  await closeSettings(page);
 
   await page.click('.model-button');
   const pop = await page.textContent('.models-pop');

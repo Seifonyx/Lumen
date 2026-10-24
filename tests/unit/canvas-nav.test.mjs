@@ -68,3 +68,9 @@ test('slice 3: Back covers Settings, a project overview and registered layers; t
   assert.match(tree, /localStorage\.getItem\(`mr\.draft\.\$\{user\?\.uid\}\.\$\{row\.dataset\.flip\}`\)/, 'reads the composer\'s own per-chat draft key');
   assert.match(readFileSync('src/styles/canvas-shell.css', 'utf8'), /content: 'Draft' \/ ''/, 'visual word only; screen readers get the description');
 });
+
+// A directly opened Settings subsection remains navigable when there is no prior screen marker.
+test('direct-entry Settings section has a fallback to its section list on phones', () => {
+  const source = readFileSync('src/components/SettingsModal.tsx', 'utf8');
+  assert.match(source, /<PhoneNavigation title=\{tab \? label : 'Settings'\} onBack=\{tab \? \(\) => setUi\(\{ settingsTab: '' \}\) : undefined\} \/>/);
+});

@@ -87,7 +87,7 @@ async function capture(browser, state, theme, [tag, w, h]) {
       status = 503;
       await rc.getByRole('button', { name: 'Check connection', exact: true }).first().click();
       await page.waitForTimeout(1200);
-      if (phone) { const back = rc.getByRole('button', { name: /Back to providers|Providers/ }).first(); if (await back.isVisible()) await back.click(); }
+      if (phone) { const back = rc.getByRole('button', { name: 'Back to providers', exact: true }).first(); if (await back.isVisible()) await back.click(); }
       await page.waitForTimeout(300);
     }
     await shot('providers');

@@ -1,3 +1,4 @@
+const {selectLibraryType}=require('./helpers/ui.cjs');
 // 2.3: the iPhone glass look. Only iPhones get it (not Android, not computers), it can be switched off for a
 // device that stutters, the chat runs under the floating bars without hiding the first or last message, and
 // the floating tab bar moves between pages.
@@ -73,11 +74,9 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
       assert.equal(await model.inputValue(),'gemini:gemini-flash-latest');
       await page.locator('.phone-navigation [aria-label="Back"]').click();await page.getByRole('searchbox',{name:'Search tools'}).waitFor();await leave();
       await enter('collection');assert.equal(await page.locator('.glass-tabbar').count(),0);
-      await page.getByRole('button',{name:'Content type: Everything',exact:true}).click();
-      await page.getByRole('menuitemradio',{name:/Photos/}).click();
+      await selectLibraryType(page,'Photos');
       assert.ok(await page.locator('.phone-navigation').getByRole('button',{name:'Add photos',exact:true}).isVisible());
-      await page.getByRole('button',{name:'Content type: Photos',exact:true}).click();
-      await page.getByRole('menuitemradio',{name:/Searchable/}).click();
+      await selectLibraryType(page,'Searchable');
       await page.locator('.files-uploads .knowledge-library').waitFor();
       await page.evaluate(()=>document.documentElement.classList.add('kb-open'));
       assert.ok(await page.locator('.phone-navigation [aria-label="Back"]').isVisible(),'Back stays reachable in simulated keyboard mode');

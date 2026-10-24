@@ -7,7 +7,7 @@ import { getRoutingScreen, restoreRoutingScreen, subscribeRoutingCenter } from '
 const KEY = 'lumenScreen';
 let entries = new Map<number, ReturnType<typeof capture>>();
 const views = new Map<number, { focus: HTMLElement | null; scrolls: [string, number][] }>();
-const scrollSelectors = ['.hub-scroll', '.rc-page', '.settings-scroll'];
+const scrollSelectors = ['.hub-scroll', '.rc-page', '.rc-scroll', '.settings-scroll'];
 let commit: (() => void) | null = null;
 let replace: ((run: () => void) => void) | null = null;
 /** Replace a completed form with its canonical destination; Cancel still traverses Back. */

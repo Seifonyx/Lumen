@@ -1,3 +1,5 @@
+import libraryUi from '../e2e/helpers/ui.cjs';
+const {selectLibraryType}=libraryUi;
 // CP05 browser contract: Canvas across the app (Library, Tools, Projects, project workspace, Settings, All chats,
 // picker, usage, + menu, Routing Center, Study, Assistants, Compare, document Canvas panel) in dark and light (Canvas has no True black), in a committed synthetic review build served through
 // the real QA gate on loopback, in Chromium or Linux WebKit (MR_WEBKIT=1). Not a physical-iPhone result.
@@ -186,15 +188,13 @@ try {
             assert.equal(await page.locator('.coll-item.kind-documents').count(), 1, 'long-name search narrows documents');
             await shot(page, join(out, `${tag}-library-search.png`));
             await search.fill('');
-            await page.getByRole('button', { name:'Content type: Everything' }).click();
-            await page.getByRole('menu', { name:'Content type' }).getByRole('menuitemradio', { name:'Made by Lumen' }).click();
+            await selectLibraryType(page,'Made by Lumen');
             await settle(page, 200);
             await shot(page, join(out, `${tag}-library-empty.png`));
             // Capture file rows last: scrolling first can disturb the narrow-phone
             // search/menu keyboard-history flow this same contract also verifies.
             if (phone) {
-              await page.getByRole('button', { name:'Content type: Made by Lumen' }).click();
-              await page.getByRole('menu', { name:'Content type' }).getByRole('menuitemradio', { name:'Everything' }).click();
+              await selectLibraryType(page,'Everything');
               await settle(page, 200);
               await page.locator('.coll-item.kind-files').last().scrollIntoViewIfNeeded();
               await shot(page, join(out, `${tag}-library-file-rows.png`));

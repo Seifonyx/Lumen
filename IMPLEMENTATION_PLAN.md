@@ -1,5 +1,18 @@
 # Dynamic Model Picker implementation plan
 
+## Active owner correction — Phase4 final phone review
+
+Sidebar remains the established Canvas unified tree with upper Search. Library receives top content tabs + contained bottom Search; Routing receives top section shortcuts + contextual provider/model Search; provider detail hides section shortcuts. Shared phone Back/actions use restrained glass. See `docs/design/IPHONE_FINAL_PASS.md` for architecture, local evidence and known limits.
+
+| Task | Actual status | Remaining |
+|---|---|---|
+| Preserve drawer / shared glass | Implemented; SidebarCanvas diff againstad78 empty; rendered Light/Dark reviewed | Physical iPhone and owner visual acceptance |
+| Library/Routing strips + scoped Search | Implemented;16 focused Chromium/WebKit cases pass, including query/type/menu/draft/Back/keyboard-height/resize | Gated regression, exact-head CI and curated final artifact |
+| Security/performance/regression |92 units/type/both builds pass, budget pass, independent review fixes verified | Clean QA isolation, full CI; inherited audit findings remain |
+
+No overall program score exists; historic weights below are unchanged. No merge/deployment or automatic continuation.
+
+
 ## Current owner-directed iPhone navigation reset
 
 The new explicit owner direction supersedes earlier small-adjustment scope. See `docs/design/IPHONE_NAVIGATION_RESET.md` and the active handoff.

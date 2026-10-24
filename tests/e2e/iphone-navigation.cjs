@@ -1,3 +1,4 @@
+const {selectLibraryType}=require('./helpers/ui.cjs');
 // Real Canvas shell, synthetic identity and intercepted model discovery. No provider inference.
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -46,7 +47,7 @@ const {profile,seed}=require('./helpers/preview-profile.cjs');
  assert.equal(await page.locator('.canvas-panel').count(),0);assert.equal(await page.getByRole('searchbox',{name:'Search your library'}).inputValue(),'Review');
  await page.getByRole('button',{name:'More for Review plan.md',exact:true}).click();await page.getByRole('menuitem',{name:'Delete document…',exact:true}).click();await page.getByRole('button',{name:'Delete document',exact:true}).click();
  await page.getByRole('dialog',{name:'Delete “Review plan.md”?' }).waitFor({state:'detached'});
- await page.getByRole('button',{name:'Content type: Everything',exact:true}).click();await page.getByRole('menuitemradio',{name:/Photos/}).click();await page.getByRole('button',{name:'Open Review image.png',exact:true}).click();await page.locator('.image-viewer').waitFor();await page.goBack();await page.locator('.image-viewer').waitFor({state:'detached'});assert.equal(await page.getByRole('button',{name:'Content type: Photos',exact:true}).count(),1);await page.getByRole('button',{name:'Content type: Photos',exact:true}).click();await page.getByRole('menuitemradio',{name:/Everything/}).click();
+ await selectLibraryType(page,'Photos');await page.getByRole('button',{name:'Open Review image.png',exact:true}).click();await page.locator('.image-viewer').waitFor();await page.goBack();await page.locator('.image-viewer').waitFor({state:'detached'});if(width<900)assert.equal(await page.getByRole('tab',{name:'Photos',exact:true}).getAttribute('aria-selected'),'true');else assert.equal(await page.getByRole('button',{name:'Content type: Photos',exact:true}).count(),1);await selectLibraryType(page,'Everything');
  await page.getByRole('searchbox',{name:'Search your library'}).fill('Remember this filter');
  assert.equal(await page.locator('.glass-tabbar').count(),0);
  await page.goBack();await page.locator('.composer textarea').waitFor();await page.goForward();

@@ -5,6 +5,9 @@
 // connections through Settings → Keys. Send-time routing, eligibility and recovery are unchanged.
 import '../styles/canvas-routing.css';
 import PhoneNavigation from './PhoneNavigation';
+import PhoneSections from './PhoneSections';
+import { usePhoneLayout } from '../lib/phone-layout';
+import { createPortal } from 'react-dom';
 import { screenBack } from '../lib/screen-history';
 import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowUpRight, ChevronRight, Plus, Search, Shield, SlidersHorizontal, X } from 'lucide-react';
@@ -120,15 +123,10 @@ function useProviderRows(): ProviderRow[] {
 }
 
 const PHONE = '(max-width: 899px)';
-function usePhone() {
-  const [phone, setPhone] = useState(() => window.matchMedia(PHONE).matches);
-  useEffect(() => { const m = window.matchMedia(PHONE), sync = () => setPhone(m.matches); m.addEventListener('change', sync); return () => m.removeEventListener('change', sync); }, []);
-  return phone;
-}
 
 const MANY = 8;
 
-function Providers({ preferred, phone }: { preferred?: string; openDetail?: boolean; phone: boolean }) {
+function Providers({ preferred, phone, searchHost }: { preferred?: string; openDetail?: boolean; phone: boolean; searchHost: HTMLElement | null }) {
   const usage = useStore((s) => s.usage), enabledModels = useStore((s) => s.settings.enabledModels);
   const providers = useProviderRows();
   const route = useRoutingCenter();
@@ -138,7 +136,7 @@ function Providers({ preferred, phone }: { preferred?: string; openDetail?: bool
   const [query, setQuery] = useState(''), [filter, setFilter] = useState<'all' | 'saved' | 'enabled' | 'attention'>('all');
   const input = useRef<HTMLInputElement>(null), title = useRef<HTMLHeadingElement>(null), list = useRef<HTMLDivElement>(null);
   // Phones: a provider opens as its own page, from the top.
-  useEffect(() => { if (!detail) return; if (phone) title.current?.closest('.rc-page')?.scrollTo(0, 0); title.current?.focus({ preventScroll: true }); }, [selected, detail, phone]);
+  useEffect(() => { if (!detail) return; if (phone) title.current?.closest('.rc-scroll')?.scrollTo(0, 0); title.current?.focus({ preventScroll: true }); }, [selected, detail, phone]);
   const enabled = providers.filter((p) => p.enabled).length, saved = providers.filter((p) => p.keySaved).length;
   const matches = (p: ProviderRow, text: string, scope: typeof filter) => (scope === 'all' || (scope === 'saved' ? p.keySaved : scope === 'attention' ? p.presentation.attention : p.enabled)) && `${p.label} ${p.id}`.toLowerCase().includes(text.trim().toLowerCase());
   const visible = providers.filter((p) => matches(p, query, filter));
@@ -160,6 +158,8 @@ function Providers({ preferred, phone }: { preferred?: string; openDetail?: bool
   };
 
 
+  const search = <div className="rc-search"><Search size={16} aria-hidden="true" /><input ref={input} type="search" aria-label="Find a provider" placeholder="Find a provider" value={query} onChange={(e) => change(e.target.value, filter)} />{query && <button type="button" aria-label="Clear provider search" onClick={() => { change('', filter); input.current?.focus(); }}><X size={16} /></button>}</div>;
+
   return (
     <section className={`rc-providers${shown ? ' has-detail' : ''}`} aria-label="Provider browser">
       <div className="rc-provider-list" ref={list}>
@@ -168,7 +168,7 @@ function Providers({ preferred, phone }: { preferred?: string; openDetail?: bool
           <button type="button" className="rc-add" aria-label="Connect a provider" onClick={() => openSettings('keys')}><Plus size={16} aria-hidden="true" /><span>Connect</span></button>
         </div>
         <div className="rc-find">
-          <div className="rc-search"><Search size={16} aria-hidden="true" /><input ref={input} type="search" aria-label="Find a provider" placeholder="Find a provider" value={query} onChange={(e) => change(e.target.value, filter)} />{query && <button type="button" aria-label="Clear provider search" onClick={() => { change('', filter); input.current?.focus(); }}><X size={16} /></button>}</div>
+          {phone ? !detail && searchHost && createPortal(search, searchHost) : search}
           <FilterMenu<typeof filter> label="Filter providers" value={filter} onChange={(scope) => change(query, scope)} options={[{ value: 'all', label: 'All providers', count: providers.length }, { value: 'saved', label: 'Saved connections', count: saved }, { value: 'enabled', label: 'Enabled providers', count: enabled }, { value: 'attention', label: 'Needs attention', count: providers.filter((p) => p.presentation.attention).length }]} />
         </div>
         <p className="rc-count" role="status">{visible.length} of {providers.length} providers</p>
@@ -187,7 +187,7 @@ function Providers({ preferred, phone }: { preferred?: string; openDetail?: bool
           {!visible.length && <div className="rc-empty"><p>No providers match.</p><button type="button" className="rc-link" onClick={() => { change('', 'all'); input.current?.focus(); }}>Reset provider filters</button></div>}
         </div>
       </div>
-      {shown ? <ProviderDetail key={shown.id} p={shown} title={title} usage={usage} enabledHere={enabledModels.filter((id) => shown.models.some((m) => m.id === id)).length} />
+      {shown ? <ProviderDetail key={shown.id} searchHost={phone ? searchHost : null} p={shown} title={title} usage={usage} enabledHere={enabledModels.filter((id) => shown.models.some((m) => m.id === id)).length} />
         : !phone && (
           <aside className="rc-provider-pick">
             <h3>{connected.length ? 'Choose a provider' : 'Connect your first provider'}</h3>
@@ -200,7 +200,7 @@ function Providers({ preferred, phone }: { preferred?: string; openDetail?: bool
 }
 
 /** A provider: the verdict, the one next step that matters, then the facts (independent of each other) and its models. */
-function ProviderDetail({ p, title, usage, enabledHere }: { p: ProviderRow; title: React.RefObject<HTMLHeadingElement | null>; usage: State['usage']; enabledHere: number }) {
+function ProviderDetail({ p, title, usage, enabledHere, searchHost }: { searchHost: HTMLElement | null; p: ProviderRow; title: React.RefObject<HTMLHeadingElement | null>; usage: State['usage']; enabledHere: number }) {
   const v = verdictOf(p), s = p.status, n = p.models.length;
   const observed = Object.values(usage?.models || {}).filter((m) => m.id.split(':')[0] === p.id);
   const requests = observed.reduce((t, m) => t + m.requests, 0), tokens = observed.reduce((t, m) => t + m.input + m.output, 0);
@@ -232,7 +232,7 @@ function ProviderDetail({ p, title, usage, enabledHere }: { p: ProviderRow; titl
       </header>
       {p.presentation.attention && <p className="rc-note" data-light={v.light} role="status">{p.presentation.guidance}</p>}
       <dl className="rc-facts">{facts.map(([k, value, light]) => <div key={k} data-fact={k} data-light={light}><dt>{k}</dt><dd>{value}</dd></div>)}</dl>
-      <ProviderModels models={p.models} />
+      <ProviderModels searchHost={searchHost} models={p.models} />
       <details className="rc-provenance"><summary>Usage &amp; provenance</summary>
         <div className="rc-usage-pair"><div><span>Requests recorded in Lumen</span><strong>{usage ? `${requests} requests` : 'Unknown'}</strong></div><div><span>Tokens recorded in Lumen</span><strong>{usage ? formatTokens(tokens) : 'Unknown'}</strong></div></div>
         <p className="rc-muted">{sharedLeft !== null ? `One shared allowance for OpenRouter free models: ${usage!.openrouter.used} of ${usage!.openrouter.limit} requests recorded. Paid models are excluded.` : knownLimits.length ? 'Known limits belong to individual models; they are not a combined provider balance.' : 'No provider allowance is reported in this account’s current usage data.'} Counts reflect Lumen activity, not account-wide billing or proof of successful replies.</p>
@@ -255,14 +255,16 @@ function ModelRow({ m }: { m: ModelInfo }) {
   );
 }
 
-function ProviderModels({ models }: { models: ModelInfo[] }) {
+function ProviderModels({ models, searchHost }: { models: ModelInfo[]; searchHost: HTMLElement | null }) {
   const [query, setQuery] = useState(''), [page, setPage] = useState(0);
   const filtered = useMemo(() => models.filter((m) => `${m.label} ${m.name}`.toLowerCase().includes(query.trim().toLowerCase())), [models, query]);
   const pages = Math.max(1, Math.ceil(filtered.length / 24)), current = Math.min(page, pages - 1);
+  const search = <div className="rc-search"><Search size={16} aria-hidden="true" /><input type="search" aria-label="Find a model" placeholder="Find a model" value={query} onChange={(e) => { setQuery(e.target.value); setPage(0); }} /></div>;
+
   return (
     <section className="rc-provider-models" aria-label="Provider models">
       <h3 className="rc-group-label">Models <span>{models.length} in catalog</span></h3>
-      {(models.length > 24 || query) && <div className="rc-search"><Search size={16} aria-hidden="true" /><input type="search" aria-label="Find a model" placeholder="Find a model" value={query} onChange={(e) => { setQuery(e.target.value); setPage(0); }} /></div>}
+      {(models.length > 24 || query) && (searchHost ? createPortal(search, searchHost) : search)}
       {filtered.length ? <div className="rc-group">{filtered.slice(current * 24, (current + 1) * 24).map((m) => <ModelRow key={m.id} m={m} />)}</div>
         : <p className="rc-empty">{models.length ? 'No models match.' : 'No models listed yet.'}</p>}
       {filtered.length > 24 && <nav className="rc-pages" aria-label="Model pages"><button type="button" disabled={current === 0} onClick={() => setPage(current - 1)}>Previous</button><span role="status">{current * 24 + 1}–{Math.min(filtered.length, (current + 1) * 24)} of {filtered.length}</span><button type="button" disabled={current + 1 === pages} onClick={() => setPage(current + 1)}>Next</button></nav>}
@@ -277,9 +279,10 @@ export default function RoutingCenter() {
   const owner = useStore((s) => s.user?.uid), currentId = useStore((s) => s.currentId);
   const covered = useStore((s) => s.settingsOpen || Boolean(s.page));
   const providers = useProviderRows();
-  const phone = usePhone();
+  const phone = usePhoneLayout();
   const [editing, setEditing] = useState<Layout | null>(null);
   const [query, setQuery] = useState('');
+  const [searchHost, setSearchHost] = useState<HTMLElement | null>(null);
   // A provider opened from the overview: the Providers page opens on it.
 
   const page = useRef<HTMLElement>(null), heading = useRef<HTMLHeadingElement>(null);
@@ -291,7 +294,7 @@ export default function RoutingCenter() {
   useEffect(() => { if (open && (opened.current.owner !== owner || opened.current.currentId !== currentId)) closeRoutingCenter(); }, [open, owner, currentId]);
   useEffect(() => { if (open) heading.current?.focus({ preventScroll: true }); }, [open]);
   useEffect(() => {
-    setEditing(null); if (page.current) page.current.scrollTop = 0;
+    setEditing(null); if (page.current) { page.current.scrollTop = 0; page.current.querySelector('.rc-scroll')?.scrollTo(0,0); }
     // Phones show one place at a time: its heading takes focus; back from Usage or Diagnostics, the row that opened it.
     const from = came.current; came.current = section;
     if (!phone || !open) return;
@@ -332,12 +335,14 @@ export default function RoutingCenter() {
   const openProvider = (id: string) => { go('providers'); showRoutingProvider(id); };
   const sub = phone && section !== 'overview';
 
+  const modelSearch = <div className="rc-search"><Search size={16} aria-hidden="true" /><input type="search" aria-label="Search models" placeholder="Search models or providers" value={query} onChange={e => setQuery(e.target.value)} />{query && <button type="button" aria-label="Clear model search" onClick={e => { setQuery(''); e.currentTarget.parentElement?.querySelector('input')?.focus(); }}><X size={16} /></button>}</div>;
+
 
   return (
     <section ref={page} className={`rc-page${sub ? ' rc-sections-page' : ''}${drill ? ' rc-drill' : ''}`} hidden={covered} aria-label="Models and routing"
       onKeyDown={(e) => { if (e.key === 'Escape' && !e.defaultPrevented && !(e.target as Element).closest('[role="dialog"], [role="menu"], [role="listbox"], input, textarea, select')) { e.preventDefault(); screenBack(closeRoutingCenter); } }}>
       {/* Desktop retains split-view navigation; phone chrome is shared with Library, Tools and Settings. */}
-      {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : section === 'overview' ? 'Models & routing' : SECTIONS.find(([id]) => id === section)?.[1] || 'Routing'} actions={providerOpen ? <Suspense fallback={null}><ScreenActions actions={[{ label: 'Connection settings', run: () => openSettings('keys') }]} /></Suspense> : undefined} /> : (
+      {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : 'Models & routing'} actions={providerOpen ? <Suspense fallback={null}><ScreenActions actions={[{ label: 'Connection settings', run: () => openSettings('keys') }]} /></Suspense> : undefined} /> : (
       <header className={`rc-head${sub ? ' rc-head-sub' : ''}`}>
         <h1 id="rc-title" tabIndex={-1} ref={heading}>Routing Center</h1>
         {!phone && (
@@ -350,9 +355,11 @@ export default function RoutingCenter() {
 
 
 
+      {phone && !providerOpen && <PhoneSections label="Routing sections" active={section} items={SECTIONS.map(([id,label]) => ({ id, label:id === 'policies' ? 'Layouts' : label }))} onSelect={id => go(id as RoutingSection)} />}
+      <div className="rc-scroll">
       {section === 'overview' && (phone ? <div className="rc-phone-overview">
         <section className="rc-route" aria-label="Current routing mode"><p className="rc-kicker">This conversation</p><h2>{modelLabel(catalog, model)}</h2><p className="rc-route-line">{sentence}</p>{reach && <p className="rc-reach">{reach}</p>}</section>
-        <nav className="routing-directory" aria-label="Routing sections">{SECTIONS.filter(([id]) => id !== 'overview').map(([id, label]) => <button type="button" key={id} aria-label={label} aria-describedby={`routing-${id}-description`} onClick={() => go(id)}><span><strong>{label}</strong><small id={`routing-${id}-description`}>{id === 'providers' ? `${plural(providers.filter(p => p.keySaved).length, 'key')} saved` : id === 'models' ? `${models.length} catalog models · ${choices} enabled` : id === 'policies' ? `${layouts.length} saved Layouts` : id === 'usage' ? 'Local activity and reported limits' : last?.model ? `Recorded: ${modelLabel(catalog, last.model)}` : 'No recorded answer yet'}</small></span><ChevronRight size={18} /></button>)}</nav>
+        <div className="rc-overview-links"><button type="button" onClick={() => go('providers')}><span>Your providers</span><strong>{plural(providers.filter(p => p.keySaved).length, 'key')} saved</strong><ChevronRight size={18}/></button><button type="button" onClick={() => go('models')}><span>Model inventory</span><strong>{choices} enabled · {models.length} listed</strong><ChevronRight size={18}/></button></div>
         <Suspense fallback={null}><RecentAnswers /></Suspense>
       </div> : <div className="rc-body rc-overview">
           <div className="rc-col">
@@ -386,19 +393,19 @@ export default function RoutingCenter() {
       )}
 
 
-      {section === 'providers' && <div className="rc-body"><Providers key={owner || 'signed-out'} preferred={current?.split(':')[0]} phone={phone} /></div>}
+      {section === 'providers' && <div className="rc-body"><Providers key={owner || 'signed-out'} preferred={current?.split(':')[0]} phone={phone} searchHost={searchHost} /></div>}
 
       {section === 'models' && (
         <div className="rc-body">
           <div className="rc-panel-title"><div><h2>Model inventory</h2><p className="rc-muted">Context limits and allowances from your catalog.</p></div><button type="button" className="rc-add" onClick={() => openSettings('models')}>Manage models <ArrowUpRight size={15} aria-hidden="true" /></button></div>
-          <div className="rc-search"><Search size={16} aria-hidden="true" /><input type="search" aria-label="Search models" placeholder="Search models or providers" value={query} onChange={(e) => setQuery(e.target.value)} /></div>
+          {phone ? searchHost && createPortal(modelSearch, searchHost) : modelSearch}
           {inventory.length ? <div className="rc-group">{inventory.map((m) => <ModelRow key={m.id} m={m} />)}</div> : <p className="rc-muted" role="status">No models match.</p>}
         </div>
       )}
 
       {section === 'policies' && (
         <div className="rc-body">
-          <div className="rc-panel-title"><div><h2>Policies &amp; fallback order</h2><p className="rc-muted">Layouts are Lumen’s named routing policies. Existing recovery and consent rules still apply.</p></div>
+          <div className="rc-panel-title"><div><h2>{phone ? 'Layouts & policies' : 'Policies & fallback order'}</h2><p className="rc-muted">Layouts are Lumen’s named routing policies. Existing recovery and consent rules still apply.</p></div>
             {!editing && <button type="button" className="rc-primary" onClick={() => setEditing({ id: crypto.randomUUID(), name: '', icon: 'layers', description: '', models: [], mode: 'order', fallback: 'layout' })}><Plus size={15} />New policy</button>}</div>
           {editing ? <div className="rc-editor"><LayoutEditor key={editing.id} start={editing} onDone={() => setEditing(null)} /></div> : layouts.map((l) => (
             <article className="rc-policy" key={l.id}>
@@ -428,7 +435,8 @@ export default function RoutingCenter() {
         </div>
       )}
 
-
+      </div>
+      {phone && <footer ref={setSearchHost} className="phone-page-search rc-search-footer" aria-label={section === 'providers' ? providerOpen ? 'Provider model search' : 'Provider search' : 'Model search'} />}
     </section>
   );
 }

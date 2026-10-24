@@ -31,3 +31,5 @@ export const CanvasScreenActions = lazy(() => import('../components/ScreenAction
 export { replaceScreen, finishScreen } from './screen-history';
 
 export { forgetScreenMemory } from './screen-memory';
+
+export const CanvasPhoneSections = lazy(() => import('../components/PhoneSections'));

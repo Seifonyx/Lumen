@@ -69,3 +69,12 @@ exports.closeCanvas = async (page) => {
   await back.waitFor({ state: 'visible' });
   await back.click();
 };
+
+/** Library's phone content tabs and desktop type selector share the same canonical filter. */
+exports.selectLibraryType = async (page, label) => {
+  const phoneLabel = { 'Attached files':'Files', 'Made by Lumen':'Generated images' }[label] || label;
+  const tab = page.getByRole('tablist', { name:'Library content types' }).getByRole('tab', { name:phoneLabel, exact:true });
+  if (await tab.isVisible()) { await tab.click(); return; }
+  await page.getByRole('button', { name:/^Content type:/ }).click();
+  await page.getByRole('menu', { name:'Content type' }).getByRole('menuitemradio', { name:new RegExp('^'+label+'(?:\\s|$)') }).click();
+};

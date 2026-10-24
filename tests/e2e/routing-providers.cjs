@@ -63,7 +63,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         }
       };
       const phone = width < 900;
-      const tab = async name => { if(phone){for(let i=0;i<10 && !await rc.locator('.routing-directory').isVisible();i++){await rc.locator('.phone-navigation').getByRole('button',{name:'Back',exact:true}).click();await page.waitForTimeout(80);}if(name==='Overview')return;} await rc.getByRole('navigation',{name:'Routing sections'}).getByRole('button',{name,exact:true}).click(); };
+      const tab = async name => { if(phone){for(let i=0;i<10 && !await rc.locator('.phone-sections').isVisible();i++){await rc.locator('.phone-navigation').getByRole('button',{name:'Back',exact:true}).click();await page.waitForTimeout(80);}} await rc.getByRole('navigation',{name:'Routing sections'}).getByRole('button',{name:phone && name==='Policies'?'Layouts':name,exact:true}).click(); };
       await shot('overview');
       if (!before) await rc.getByRole('region', { name: 'Current routing mode' }).waitFor();
       if (!before && phone) {
@@ -132,7 +132,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         assert.equal(await detail.locator('.rc-model').count(), 24);
         await detail.getByRole('button', { name: 'Next', exact: true }).click();
         assert.match(await detail.getByRole('navigation', { name: 'Model pages' }).innerText(), /25–48 of 145/);
-        await detail.getByRole('searchbox', { name: 'Find a model' }).fill('fixture-142');
+        await rc.getByRole('searchbox', { name: 'Find a model' }).fill('fixture-142');
         await page.waitForFunction(() => document.querySelectorAll('.rc-provider-detail .rc-model').length === 1);
         assert.equal(await detail.locator('.rc-model').count(), 1);
         failure = 503;
@@ -162,8 +162,9 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         // The dock keeps its four places in view (its labels keep a fixed size, as a tab bar's do); the overview's rows keep
         // their words inside the row at larger text.
         assert.equal(await rc.locator('.rc-dock').count(), 0);
-        assert.equal(await rc.locator('.routing-directory button').count(), 5);
-        for (const button of await rc.locator('.routing-directory button').all()) {
+        assert.equal(await rc.locator('.phone-sections button').count(), 6);
+        for (const button of await rc.locator('.phone-sections button').all()) {
+          await button.focus();
           assert(await button.evaluate(el => el.scrollWidth <= el.clientWidth && [...el.children].every(c => c.getBoundingClientRect().right <= el.getBoundingClientRect().right + 0.5)), 'row remains readable at larger text');
           assert((await button.boundingBox()).height >= 44);
         }

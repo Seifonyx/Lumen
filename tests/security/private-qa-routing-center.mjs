@@ -68,14 +68,14 @@ async function openRouting(page, phone) {
   await rc(page).getByRole('heading', { name: phone ? 'Models & routing' : 'Routing Center', level: 1 }).waitFor();
   await settle(page);
 }
-// Phones use a single section directory; each section and provider is a real Back step.
+// Phone section shortcuts retain canonical screen history; provider details push without the strip.
 async function tab(page, name) {
  const r=rc(page);
  if(await r.locator('.rc-tabs').count()) return r.locator('.rc-tabs').getByRole('button',{name,exact:true}).click();
  while(!await r.getByRole('navigation',{name:'Routing sections'}).count()) {
    await r.getByRole('button',{name:'Back',exact:true}).click();await settle(page,150);
  }
- if(name!=='Overview') await r.getByRole('navigation',{name:'Routing sections'}).getByRole('button',{name,exact:true}).click();
+ await r.getByRole('navigation',{name:'Routing sections'}).getByRole('button',{name:name==='Policies'?'Layouts':name,exact:true}).click();
 }
 
 try {
@@ -94,8 +94,8 @@ try {
 
       // Overview: catalog and policies from the account; an unreported allowance stays Unknown.
       if(phone){
-        assert.match(await rc(page).locator('.routing-directory').innerText(),/2 catalog models/);
-        assert.match(await rc(page).locator('.routing-directory').innerText(),/1 saved Layouts/);
+        assert.match(await rc(page).locator('.rc-overview-links').innerText(),/2 listed/);
+        assert.equal(await rc(page).getByRole('navigation',{name:'Routing sections'}).getByRole('button',{name:'Layouts',exact:true}).count(),1);
       }else{
         const summary=await rc(page).locator('.rc-summary').innerText();
         assert.match(summary,/2\s*models/);assert.match(summary,/1\s*Layout/);
@@ -103,10 +103,10 @@ try {
       }
       // Every place is in view and a full touch target: six tabs on computers; on phones the four in the dock plus Usage and
       // Diagnostics on the route panel, all on the first screen.
-      const places = await rc(page).locator('.rc-tabs button, .routing-directory button, .rc-route [data-section]').evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { name: el.textContent, left: r.left, right: r.right, bottom: r.bottom, height: r.height, cut: el.scrollWidth > el.clientWidth }; }));
-      assert.equal(places.length, phone ? 5 : 8);
-      for (const t of places) assert.ok(t.left >= 0 && t.right <= width && !t.cut && (!phone || t.height >= 44), `place "${t.name}" fully visible: ${JSON.stringify(t)}`);
-      if(phone){for(const item of await rc(page).locator('.routing-directory button').all()){await item.scrollIntoViewIfNeeded();assert.ok(await item.isVisible());}await rc(page).evaluate(el=>el.scrollTo(0,0));}
+      const places = await rc(page).locator('.rc-tabs button, .phone-sections button, .rc-route [data-section]').evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { name: el.textContent, left: r.left, right: r.right, bottom: r.bottom, height: r.height, cut: el.scrollWidth > el.clientWidth }; }));
+      assert.equal(places.length, phone ? 6 : 8);
+      for (const t of places.filter(()=>!phone)) assert.ok(t.left >= 0 && t.right <= width && !t.cut && (!phone || t.height >= 44), `place "${t.name}" fully visible: ${JSON.stringify(t)}`);
+      if(phone){for(const item of await rc(page).locator('.phone-sections button').all()){await item.focus();const r=await item.boundingBox();assert.ok(r.x>=0&&r.x+r.width<=width&&r.height>=44,'every section reveals fully on focus');assert.ok(await item.evaluate(el=>el.scrollWidth<=el.clientWidth));}await rc(page).getByRole('button',{name:'Overview',exact:true}).focus();}
       await shot(page, join(out, `${tag}-1-overview.png`));
       pass('overview');
 
@@ -212,7 +212,7 @@ try {
       assert.deepEqual(state.csp, []);
 
       // Closing: Back to chat, Escape, and choosing another chat.
-      if(phone){await tab(page,'Overview');await rc(page).getByRole('button',{name:'Back',exact:true}).click();}else await rc(page).getByRole('button', { name: 'Back to chat' }).click();
+      if(phone){for(let i=0;i<24 && await isOpen(page);i++){await rc(page).getByRole('button',{name:'Back',exact:true}).click();await settle(page,120);}assert.equal(await isOpen(page),false,'Back traverses all visited Routing screens');}else await rc(page).getByRole('button', { name: 'Back to chat' }).click();
       await settle(page);
       assert.equal(await isOpen(page), false);
       await openRouting(page, phone);

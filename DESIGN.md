@@ -1,5 +1,8 @@
 # Lumen design: "Switchboard"
 
+> **Current Canvas phone contract (owner correction,2026-10-24):** Keep the established sidebar identity, upper Search, unified project/conversation tree and footer. Library uses horizontal top content tabs and contained bottom Search; Routing uses top section shortcuts and contextual provider/model Search. Provider detail hides section shortcuts. Shared Back/contextual ellipsis use44pt circular glass surfaces with solid/reduced-motion fallbacks. These rules supersede older Canvas phone header/filter descriptions below; ordinary presentation rules are unchanged. Runtime owners and evidence: `docs/design/IPHONE_FINAL_PASS.md`.
+
+
 Lumen is a switchboard for free AI models: one place to talk, and the app routes each message to
 the right model. The design says that: calm ink-and-paper neutrals, and one **signal colour** that lights
 up wherever something is live, like the status light on a router.

@@ -41,3 +41,5 @@ export const replaceScreen: typeof import('./screen-history').replaceScreen | nu
 export const finishScreen: typeof import('./screen-history').finishScreen | null = null;
 
 export const forgetScreenMemory: typeof import('./screen-memory').forgetScreenMemory | null = null;
+
+export const CanvasPhoneSections: typeof import('../components/PhoneSections').default | null = null;

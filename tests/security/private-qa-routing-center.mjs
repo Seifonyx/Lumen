@@ -65,19 +65,17 @@ const isOpen = (page) => page.evaluate(() => { const el = document.querySelector
 async function openRouting(page, phone) {
   if (phone) { await page.getByRole('button', { name: 'Open chats', exact: true }).first().click(); await settle(page, 600); }
   await page.locator('aside.cv-nav').getByRole('button', { name: 'Models & routing', exact: true }).click();
-  await rc(page).getByRole('heading', { name: 'Routing Center', level: 1 }).waitFor();
+  await rc(page).getByRole('heading', { name: phone ? 'Models & routing' : 'Routing Center', level: 1 }).waitFor();
   await settle(page);
 }
-// Computers: the six tabs. Phones: Overview, Providers, Models and Policies are in the dock; Usage and Diagnostics open
-// from the overview's route panel as pages with Back in the bar.
+// Phones use a single section directory; each section and provider is a real Back step.
 async function tab(page, name) {
-  const r = rc(page), id = name.toLowerCase();
-  if (await r.locator('.rc-tabs').count()) return r.locator('.rc-tabs').getByRole('button', { name, exact: true }).click();
-  const dock = r.getByRole('navigation', { name: 'Routing sections' });
-  if (id !== 'usage' && id !== 'diagnostics') return dock.getByRole('button', { name, exact: true }).click();
-  await dock.getByRole('button', { name: 'Overview', exact: true }).click();
-  await settle(page, 200);
-  await r.locator(`.rc-route [data-section="${id}"]`).click();
+ const r=rc(page);
+ if(await r.locator('.rc-tabs').count()) return r.locator('.rc-tabs').getByRole('button',{name,exact:true}).click();
+ while(!await r.getByRole('navigation',{name:'Routing sections'}).count()) {
+   await r.getByRole('button',{name:'Back',exact:true}).click();await settle(page,150);
+ }
+ if(name!=='Overview') await r.getByRole('navigation',{name:'Routing sections'}).getByRole('button',{name,exact:true}).click();
 }
 
 try {
@@ -90,19 +88,23 @@ try {
       // A draft in the composer survives the visit.
       await page.getByRole('textbox', { name: 'Message', exact: true }).fill(DRAFT);
       await openRouting(page, phone);
-      assert.equal(await page.evaluate(() => document.activeElement?.id), 'rc-title', 'focus moves to the Routing Center heading');
+      assert.equal(await page.evaluate(() => document.activeElement?.tagName), 'H1', 'focus moves to the current screen heading');
       assert.equal(await page.locator('.main').isVisible(), false, 'it takes the main column’s place');
       pass('opens from navigation');
 
       // Overview: catalog and policies from the account; an unreported allowance stays Unknown.
-      const summary = await rc(page).locator('.rc-summary').innerText();
-      assert.match(summary, /2\s*models/);
-      assert.match(summary, /1\s*Layout/);
-      assert.match(await rc(page).locator('.rc-route').innerText(), /Allowance unknown/);
+      if(phone){
+        assert.match(await rc(page).locator('.routing-directory').innerText(),/2 catalog models/);
+        assert.match(await rc(page).locator('.routing-directory').innerText(),/1 saved Layouts/);
+      }else{
+        const summary=await rc(page).locator('.rc-summary').innerText();
+        assert.match(summary,/2\s*models/);assert.match(summary,/1\s*Layout/);
+        assert.match(await rc(page).locator('.rc-route').innerText(),/Allowance unknown/);
+      }
       // Every place is in view and a full touch target: six tabs on computers; on phones the four in the dock plus Usage and
       // Diagnostics on the route panel, all on the first screen.
-      const places = await rc(page).locator('.rc-tabs button, .rc-dock button, .rc-route [data-section]').evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { name: el.textContent, left: r.left, right: r.right, bottom: r.bottom, height: r.height, cut: el.scrollWidth > el.clientWidth }; }));
-      assert.equal(places.length, phone ? 6 : 8);
+      const places = await rc(page).locator('.rc-tabs button, .routing-directory button, .rc-route [data-section]').evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { name: el.textContent, left: r.left, right: r.right, bottom: r.bottom, height: r.height, cut: el.scrollWidth > el.clientWidth }; }));
+      assert.equal(places.length, phone ? 5 : 8);
       for (const t of places) assert.ok(t.left >= 0 && t.right <= width && t.bottom <= height && !t.cut && (!phone || t.height >= 44), `place "${t.name}" fully visible: ${JSON.stringify(t)}`);
       await shot(page, join(out, `${tag}-1-overview.png`));
       pass('overview');
@@ -110,13 +112,13 @@ try {
       // Providers: filters, search, detail.
       await tab(page, 'Providers');
       await settle(page);
-      if (phone) assert.equal(await rc(page).locator('.rc-dock [data-section="providers"]').getAttribute('aria-current'), 'page', 'phone: the dock shows where you are');
+      if (phone) { assert.equal(await rc(page).locator('.rc-dock').count(),0); assert.equal(await rc(page).locator('.phone-navigation h1').innerText(),'Providers'); }
       assert.match(await rc(page).locator('.rc-count').innerText(), /^\d+ of \d+ providers$/);
       // Your providers form the ledger with one verdict each; the others are names to add, the first few shown until asked.
       const fold = rc(page).locator('.rc-more');
       assert.equal(await fold.getAttribute('aria-expanded'), 'false');
       assert.match(await rc(page).locator('.rc-explore').innerText(), /\d+ providers · no key saved/);
-      assert.match(await rc(page).locator('[data-provider="gemini"]').innerText(), /Available/);
+      assert.match(await rc(page).locator('[data-provider="gemini"]').innerText(), /Catalog ready/);
       assert.doesNotMatch(await rc(page).locator('[data-provider="gemini"]').innerText(), /No key saved|permission off/);
       assert.equal(await rc(page).locator('[data-provider="groq"]').isVisible(), false, 'unconnected providers start folded');
       await shot(page, join(out, `${tag}-2-providers-folded.png`));
@@ -137,7 +139,7 @@ try {
       await rc(page).locator('[data-provider="gemini"]').click();
       await settle(page);
       const detail = rc(page).getByRole('region', { name: 'Provider detail' });
-      assert.ok(await detail.getByRole('heading', { name: 'Google AI Studio' }).isVisible());
+      assert.ok(await rc(page).getByRole('heading', { name: 'Google AI Studio',exact:true }).isVisible());
       // Independent facts, never a setup sequence; replies are never claimed.
       assert.match(await detail.locator('[data-fact="Key · permission"]').innerText(), /Saved · on/);
       assert.match(await detail.locator('[data-fact="Replies"]').innerText(), /Not tested by model listing/);
@@ -145,7 +147,7 @@ try {
       await shot(page, join(out, `${tag}-2-provider.png`));
       if (phone) {
         assert.equal(await rc(page).locator('.rc-provider-list').isVisible(), false, 'phone: the detail replaces the list');
-        await rc(page).getByRole('button', { name: 'Back to providers' }).click();
+        await rc(page).getByRole('button', { name: 'Back',exact:true }).click();
         await settle(page);
         assert.ok(await rc(page).locator('.rc-provider-list').isVisible());
         await rc(page).locator('[data-provider="gemini"]').click();
@@ -192,10 +194,10 @@ try {
       // Manage connection → Settings (keys); closing Settings returns to the Routing Center.
       await tab(page, 'Providers');
       await rc(page).locator('[data-provider="gemini"]').click();
-      await rc(page).getByRole('button', { name: 'Connection settings for Google AI Studio' }).click();
+      if(phone){await rc(page).getByRole('button',{name:'More actions',exact:true}).click();await page.getByRole('menuitem',{name:'Connection settings',exact:true}).click();}else await rc(page).getByRole('button', { name: 'Connection settings for Google AI Studio' }).click();
       await page.getByRole('dialog', { name: 'Settings' }).waitFor();
       assert.equal(await isOpen(page), false, 'hidden under Settings');
-      await page.getByRole('dialog', { name: 'Settings' }).getByRole('button', { name: 'Close', exact: true }).first().click();
+      await page.getByRole('dialog', { name: 'Settings' }).getByRole('button', { name: phone ? 'Back' : 'Close', exact: true }).first().click();
       await settle(page, 600);
       assert.equal(await isOpen(page), true, 'back to the Routing Center');
       pass('manage connection');
@@ -209,11 +211,11 @@ try {
       assert.deepEqual(state.csp, []);
 
       // Closing: Back to chat, Escape, and choosing another chat.
-      await rc(page).getByRole('button', { name: 'Back to chat' }).click();
+      if(phone){await tab(page,'Overview');await rc(page).getByRole('button',{name:'Back',exact:true}).click();}else await rc(page).getByRole('button', { name: 'Back to chat' }).click();
       await settle(page);
       assert.equal(await isOpen(page), false);
       await openRouting(page, phone);
-      await rc(page).getByRole('heading', { name: 'Routing Center', level: 1 }).focus();
+      await rc(page).getByRole('heading', { name: phone ? 'Models & routing' : 'Routing Center', level: 1 }).focus();
       await page.keyboard.press('Escape');
       await settle(page);
       assert.equal(await isOpen(page), false, 'Escape closes');
@@ -223,13 +225,12 @@ try {
       await settle(page);
       assert.equal(await isOpen(page), false, 'Back closes');
       assert.ok(page.url().startsWith(gate.origin), 'Back stays in Lumen');
-      // Computers: the tree stays beside it; phones reach it from the same bar button as Library and Tools.
-      // Either way, choosing another chat closes it.
+      // Nested phone screens return through Back; the drawer remains on the chat root.
       await openRouting(page, phone);
       if (phone) {
-        assert.equal(await rc(page).getByRole('button', { name: 'Open sidebar', exact: true }).isVisible(), true, 'phone: the drawer button leads the bar');
-        await rc(page).getByRole('button', { name: 'Open sidebar', exact: true }).click();
-        await settle(page, 600);
+        assert.equal(await rc(page).getByRole('button',{name:'Open sidebar',exact:true}).count(),0);
+        await rc(page).getByRole('button',{name:'Back',exact:true}).click();await settle(page,400);
+        await page.getByRole('button',{name:'Open chats',exact:true}).first().click();await settle(page,400);
       }
       await page.locator('aside.cv-nav').getByText('Notes for a quieter workspace').click();
       await settle(page, 600);

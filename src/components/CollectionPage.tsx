@@ -151,9 +151,9 @@ export default function CollectionPage({ onClose, initial = 'all' }: { onClose: 
                 <li key={i.key} className={`coll-item kind-${i.kind}`}>
                   <button type="button" className="doc-open" onClick={(e) => open(i, e.currentTarget.querySelector('img'))} aria-label={`Open ${i.kind === 'documents' ? i.doc.name : i.file.name}`}>
                     {i.kind === 'documents' ? (
-                      <span className="doc-paper" aria-hidden="true">
+                      CANVAS_SHELL ? <span className="coll-document-icon" aria-hidden="true"><FileText size={28} strokeWidth={1.4} /><span>DOC</span></span> : (<span className="doc-paper" aria-hidden="true">
                         {preview(i.doc.content).map((l, n) => <span key={n} className={n === 0 && heading(i.doc.content) ? 'doc-paper-h' : ''} dir="auto">{l || ' '}</span>)}
-                      </span>
+                      </span>)
                     ) : (i.kind === 'photos' || i.kind === 'generated') ? (
                       <span className="coll-photo">{imageSrc(i.file) ? <img src={i.file.thumb || imageSrc(i.file)} alt="" loading="lazy" /> : <span className="coll-away">On another device</span>}{i.kind === 'generated' && <span className="coll-badge"><Sparkles size={12} /> Made by Lumen</span>}</span>
                     ) : (

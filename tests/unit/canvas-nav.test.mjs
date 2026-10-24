@@ -62,7 +62,7 @@ test('slice 3: Back covers Settings, a project overview and registered layers; t
   const adapter=readFileSync('src/lib/screen-history.ts','utf8');
   assert.match(adapter,/settingsOpen: s\.settingsOpen/);
   assert.match(adapter,/projectWorkspaceOpen: s\.projectWorkspaceOpen/);
-  assert.match(adapter,/closeTopBackLayer\(\)/);
+  assert.match(adapter,/reconcileBackLayers\(/);
   const tree = readFileSync('src/components/SidebarCanvas.tsx', 'utf8');
   assert.match(tree, /useBackLayer\(allChats, \(\) => setAllChats\(false\), \(\) => setAllChats\(true\)\)/);
   assert.match(tree, /localStorage\.getItem\(`mr\.draft\.\$\{user\?\.uid\}\.\$\{row\.dataset\.flip\}`\)/, 'reads the composer\'s own per-chat draft key');

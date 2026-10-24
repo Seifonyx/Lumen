@@ -3,17 +3,18 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const base=process.env.MR_TEST_URL || 'http://localhost:5190/';
 const {chromium,webkit}=require('playwright');
+const AxeBuilder=require('@axe-core/playwright').default;
 const {profile,seed}=require('./helpers/preview-profile.cjs');
 (async()=>{
  const browser=await(process.env.MR_WEBKIT?webkit:chromium).launch();
  try {for(const width of [320,390,430,1440]) {
- const context=await browser.newContext({viewport:{width,height:width===320?568:width===1440?960:844},hasTouch:width<900,serviceWorkers:'block',reducedMotion:'reduce'});
+ const context=await browser.newContext({viewport:{width,height:width===320?568:width===1440?960:width===430?932:844},hasTouch:width<900,serviceWorkers:'block',reducedMotion:'reduce'});
  await context.route('**/*',r=>new URL(r.request().url()).origin===new URL(base).origin?r.continue():r.abort());
  await profile(context,'preview-navigation-reset',width===390?'dark':'light',{defaultModel:'auto'});
  const page=await context.newPage();await page.goto(new URL('/privacy.html',base).href);const now=Date.now();await seed(page,'preview-navigation-reset',[{id:'review-chat',title:'Review content',createdAt:now,updatedAt:now,messages:[],documents:[{id:'review-document',name:'Review plan.md',content:'# Review plan\n\nSynthetic document.',updatedAt:now}]}]);await page.goto(base);await page.locator('.composer textarea').waitFor();if(!await page.locator('.app[data-lumen-canvas-shell]').count()){await context.close();console.log('Not applicable to ordinary presentation');return;}await page.locator('.composer textarea').fill('Draft stays in its original chat');
  const drawer=async()=>{if(width<900)await page.locator('.menu-btn').first().click();};
  await drawer();await page.locator('aside.cv-nav').getByRole('button',{name:'Models & routing',exact:true}).click();
- await page.locator('.rc-page').waitFor();assert.equal(await page.locator('.rc-dock').count(),0);
+ await page.locator('.rc-page').waitFor();assert.deepEqual((await new AxeBuilder({page}).include('.rc-page').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})),[]);assert.equal(await page.locator('.rc-dock').count(),0);
  if(width<900){
  await page.getByRole('navigation',{name:'Routing sections'}).getByRole('button',{name:'Providers',exact:true}).click();
  await page.locator('[data-provider="gemini"]').click();
@@ -31,6 +32,7 @@ const {profile,seed}=require('./helpers/preview-profile.cjs');
  }else await page.getByRole('button',{name:'Back to chat',exact:true}).click();
  assert.equal(await page.locator('.composer textarea').inputValue(),'Draft stays in its original chat');
  await drawer();await page.locator('aside.cv-nav').getByRole('button',{name:'Library',exact:true}).click();
+ await page.locator('.hub-page').waitFor();assert.deepEqual((await new AxeBuilder({page}).include('.hub-page').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})),[]);
  await page.getByRole('searchbox',{name:'Search your library'}).fill('Review');
  await page.getByRole('button',{name:'More for Review plan.md',exact:true}).click();
  await page.getByRole('menu',{name:'Screen actions'}).waitFor();
@@ -42,11 +44,14 @@ const {profile,seed}=require('./helpers/preview-profile.cjs');
  await page.getByRole('button',{name:'Open Review plan.md',exact:true}).click();await page.locator('.canvas-panel').waitFor();
  await page.goBack();await page.getByRole('searchbox',{name:'Search your library'}).waitFor();
  assert.equal(await page.locator('.canvas-panel').count(),0);assert.equal(await page.getByRole('searchbox',{name:'Search your library'}).inputValue(),'Review');
+ await page.getByRole('button',{name:'More for Review plan.md',exact:true}).click();await page.getByRole('menuitem',{name:'Delete document…',exact:true}).click();await page.getByRole('button',{name:'Delete document',exact:true}).click();
+ await page.getByRole('dialog',{name:'Delete “Review plan.md”?' }).waitFor({state:'detached'});
  await page.getByRole('searchbox',{name:'Search your library'}).fill('Remember this filter');
  assert.equal(await page.locator('.glass-tabbar').count(),0);
  await page.goBack();await page.locator('.composer textarea').waitFor();await page.goForward();
  assert.equal(await page.getByRole('searchbox',{name:'Search your library'}).inputValue(),'Remember this filter');
  await page.goBack();await drawer();await page.locator('aside.cv-nav').getByRole('button',{name:'Tools',exact:true}).click();
+ await page.locator('.hub-page').waitFor();assert.deepEqual((await new AxeBuilder({page}).include('.hub-page').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})),[]);
  await page.getByRole('searchbox',{name:'Search tools'}).fill('Study');
 
  assert.equal(await page.locator('.glass-tabbar').count(),0);

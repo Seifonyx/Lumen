@@ -21,3 +21,9 @@ B: remove category docks, searchable Tools index and Library type selector; rest
 C: integrated browser journeys, focus/scroll, account boundaries, desktop and ordinary isolation, curated captures and exact-head CI. Physical iPhone/PWA/VoiceOver remain unverified until owner testing.
 
 No merge/deploy, identity changes, backend/auth/network changes or spending. This contract records the owner's explicit implementation direction; no extra approval cycle is inferred. Design acceptance remains owner-only. No defensible overall program percentage is defined.
+
+## History and presentation ownership
+Local sheets/editors register an ordered presentation stack with their canonical screen context. Browser replay reconciles to the target and flushes component effects under the replay guard; a covered editor cannot add a second Settings entry during unmount. Draft edits refresh restoration metadata without reordering presentations. A completed destructive action replaces its obsolete confirmation snapshot before returning, so Forward cannot restore a deleted row. This is in-memory presentation metadata, not a second persistent router.
+
+## Cost and checkpoints
+Ordinary output matches the PR51 baseline byte-for-byte (174 files). Canvas startup JavaScript growth is approximately11.2KB gz over ordinary; budget9.5→11.5KB documents the additional shared history/ownership behavior. Startup CSS14.0/16KB, lazy Routing Center8.7/9KB, Canvas CSS source16.8/17KB. No runtime speed improvement is claimed. Final private gate contracts and exact-head CI are separate verification gates, still pending at this source checkpoint.

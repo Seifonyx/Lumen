@@ -53,7 +53,7 @@ const open = async (page) => {
   );
 };
 const close = async (page) =>
-  page.locator('.hub-page [aria-label="Close"]').click();
+  page.locator('.hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label="Back"]').click();
 // The cited source opens in its own window.
 const closeSource = async (page) =>
   page

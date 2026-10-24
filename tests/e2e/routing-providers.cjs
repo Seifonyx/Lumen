@@ -54,8 +54,8 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       };
       await open();
       const rc = page.locator('.rc-page');
-      await rc.getByRole('heading', { name: 'Routing Center', exact: true }).waitFor();
-      await rc.getByRole('heading', { name: 'Routing Center', exact: true }).click();
+      await rc.getByRole('heading', { name: width < 900 ? 'Models & routing' : 'Routing Center', exact: true }).waitFor();
+      await rc.getByRole('heading', { name: width < 900 ? 'Models & routing' : 'Routing Center', exact: true }).click();
       const shot = async name => {
         if ((width === 1440 || width === 390) && (!before || name === 'overview')) {
           await page.evaluate(() => document.fonts.ready);
@@ -63,19 +63,17 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         }
       };
       const phone = width < 900;
-      const tab = name => rc.getByRole('navigation', { name: 'Routing sections' }).getByRole('button', { name, exact: true }).click();
+      const tab = async name => { if(phone){for(let i=0;i<10 && !await rc.locator('.routing-directory').isVisible();i++){await rc.locator('.phone-navigation').getByRole('button',{name:'Back',exact:true}).click();await page.waitForTimeout(80);}if(name==='Overview')return;} await rc.getByRole('navigation',{name:'Routing sections'}).getByRole('button',{name,exact:true}).click(); };
       await shot('overview');
       if (!before) await rc.getByRole('region', { name: 'Current routing mode' }).waitFor();
       if (!before && phone) {
-        // The two places outside the dock open from the route panel; Back returns to the row that opened them.
-        assert.equal(await rc.getByRole('button', { name: 'Open sidebar', exact: true }).isVisible(), true, 'the drawer leads the bar on a place in the dock');
+        assert.equal(await rc.locator('.rc-dock').count(),0);
         for (const [id, heading] of [['usage', 'Usage & quotas'], ['diagnostics', 'Routing, without hidden assumptions']]) {
-          await rc.locator(`.rc-route [data-section="${id}"]`).click();
-          await rc.getByRole('heading', { name: heading }).waitFor();
-          assert.equal(await rc.getByRole('button', { name: 'Open sidebar', exact: true }).count(), 0, 'Back replaces the drawer button, never both');
-          await rc.getByRole('button', { name: 'Back to overview' }).click();
-          await rc.getByRole('region', { name: 'Current routing mode' }).waitFor();
-          assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('data-section')), id, `focus returns to the ${id} row`);
+          await tab(id === 'usage' ? 'Usage' : 'Diagnostics');
+          await rc.getByRole('heading',{name:heading}).waitFor();
+          assert.equal(await rc.getByRole('button',{name:'Open sidebar',exact:true}).count(),0);
+          await tab('Overview');
+          await rc.getByRole('region',{name:'Current routing mode'}).waitFor();
         }
       }
       await tab('Providers');
@@ -83,19 +81,19 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       await shot('providers');
       await rc.locator('[data-provider="gemini"]').click();
       const detail = rc.getByRole('region', { name: 'Provider detail' });
-      await detail.getByRole('heading', { name: 'Google AI Studio', exact: true }).waitFor();
+      await (phone ? rc.locator('.phone-navigation') : detail).getByRole('heading', { name: 'Google AI Studio', exact: true }).waitFor();
       await detail.getByRole('button', { name: 'Refresh model list', exact: true }).waitFor();
       await shot('detail');
       if (!before) {
-        assert.match(await detail.locator('.rc-verdict').innerText(), /Available/);
+        assert.match(await detail.locator('.rc-verdict').innerText(), /Catalog ready/);
         assert.match(await detail.locator('[data-fact="Replies"]').innerText(), /Not tested by model listing/);
         assert.match(await detail.locator('[data-fact="Key · permission"]').innerText(), /Saved · on/);
         assert.match(await detail.locator('[data-fact="Allowance"]').innerText(), /Unknown/);
-        assert.equal(await rc.getByRole('button', { name: 'Back to providers' }).isVisible(), phone);
+        assert.equal(await rc.locator('.phone-navigation').getByRole('button', { name: 'Back', exact:true }).count(), phone ? 1 : 0);
         // A working provider has no fix to lead with: both actions stay quiet.
         assert.equal(await detail.locator('.rc-primary').count(), 0);
       }
-      if (phone) await rc.getByRole('button', { name: 'Back to providers' }).click();
+      if (phone) await rc.locator('.phone-navigation').getByRole('button', { name: 'Back', exact:true }).click();
       const search = rc.getByRole('searchbox', { name: 'Find a provider' });
       await search.fill('not-a-provider');
       await rc.locator('[data-provider]').first().waitFor({ state: 'hidden' });
@@ -105,10 +103,10 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       assert.equal(await search.inputValue(), '');
       await search.fill('anthropic');
       await rc.locator('[data-provider="anthropic"]').click();
-      await detail.getByRole('heading', { name: 'Anthropic', exact: true }).waitFor();
+      await (phone ? rc.locator('.phone-navigation') : detail).getByRole('heading', { name: 'Anthropic', exact: true }).waitFor();
       assert.match(await detail.innerText(), /permission off/i);
       if (!before) assert.equal(await detail.locator('.rc-primary').innerText(), 'Turn on in Settings', 'the fix leads');
-      if (phone) await rc.getByRole('button', { name: 'Back to providers' }).click();
+      if (phone) await rc.locator('.phone-navigation').getByRole('button', { name: 'Back', exact:true }).click();
       await search.fill('');
       if (!before) {
         await rc.getByRole('button', { name: /Filter providers:/ }).click();
@@ -140,13 +138,13 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         failure = 503;
         await detail.getByRole('button', { name: 'Refresh model list', exact: true }).click();
         await detail.locator('.rc-note').getByText(/could not list/).waitFor();
-        assert.match(await detail.innerText(), /Available from cache/);
+        assert.match(await detail.innerText(), /Cached catalog/);
         assert.equal(await detail.locator('.rc-model').count(), 1, 'non-auth failures preserve searchable cached models');
         assert(providerRequests.length >= 3);
         assert(providerRequests.every(r => r.method === 'GET' && new URL(r.url).pathname.endsWith('/models')), 'only catalog GETs, never inference');
       }
       await tab('Overview');
-      await rc.getByRole('button', { name: 'Back to chat', exact: true }).click();
+      await (phone ? rc.locator('.phone-navigation').getByRole('button', { name:'Back', exact:true }) : rc.getByRole('button', { name:'Back to chat', exact:true })).click();
       assert.equal(await page.locator('.composer textarea').inputValue(), draft);
       await open();
       // Keyboard-focus evidence is separate from ordinary presentation captures above.
@@ -163,8 +161,9 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         });
         // The dock keeps its four places in view (its labels keep a fixed size, as a tab bar's do); the overview's rows keep
         // their words inside the row at larger text.
-        assert.equal(await rc.locator('.rc-dock [data-section]').count(), 4);
-        for (const button of await rc.locator('.rc-dock [data-section], .rc-route-links button, .rc-prov').all()) {
+        assert.equal(await rc.locator('.rc-dock').count(), 0);
+        assert.equal(await rc.locator('.routing-directory button').count(), 5);
+        for (const button of await rc.locator('.routing-directory button').all()) {
           assert(await button.evaluate(el => el.scrollWidth <= el.clientWidth && [...el.children].every(c => c.getBoundingClientRect().right <= el.getBoundingClientRect().right + 0.5)), 'row remains readable at larger text');
           assert((await button.boundingBox()).height >= 44);
         }

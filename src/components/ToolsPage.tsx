@@ -96,6 +96,7 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
     root.querySelectorAll('.tools-section').forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, [query, glassPhone]);
+  if (CANVAS_SHELL) useEffect(() => { if (initial === 'assistants') document.getElementById('tools-assistants')?.scrollIntoView({ block:'start' }); }, [initial]);
   const pick = (id: Section) => { setActive(id); scroller.current?.closest('.hub-scroll')?.scrollTo({ top: 0 }); };
   const ICONS: Record<Section, ReactNode> = { research: <Telescope size={22} />, create: <Pencil size={22} />, analyze: <BarChart3 size={22} />, learn: <GraduationCap size={22} />, assistants: <Sparkles size={22} /> };
   const HUES: Record<Section, number> = { research: 212, create: 330, analyze: 160, learn: 40, assistants: 270 };
@@ -111,7 +112,8 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
 
   return (
     <HubPage label="Tools" title="Tools" subtitle="Everything Lumen can do beyond a chat. The ones you use most are also in the + menu." onClose={onClose} bar={bar}
-      toolbar={CANVAS_SHELL ? <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search tools" placeholder={!CANVAS_SHELL && glassPhone ? `Search ${SECTIONS.find((x) => x.id === active)?.label}` : 'Search tools'} value={query} onChange={(e) => setQuery(e.target.value)} />{query && <button type="button" aria-label="Clear tool search" onClick={(e) => { setQuery(''); e.currentTarget.parentElement?.querySelector('input')?.focus(); }}>×</button>}</label> : <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search tools" placeholder={glassPhone ? `Search ${SECTIONS.find((x) => x.id === active)?.label}` : 'Search tools'} value={query} onChange={(e) => setQuery(e.target.value)} /></label>}>
+      toolbar={CANVAS_SHELL ? <div className="tools-discovery"><label className="hub-search"><Search size={16} /><input type="search" aria-label="Search tools" placeholder={!CANVAS_SHELL && glassPhone ? `Search ${SECTIONS.find((x) => x.id === active)?.label}` : 'Search tools'} value={query} onChange={(e) => setQuery(e.target.value)} />{query && <button type="button" aria-label="Clear tool search" onClick={(e) => { setQuery(''); e.currentTarget.parentElement?.querySelector('input')?.focus(); }}>×</button>}</label><details className="tools-browse" data-local-escape onKeyDown={e => { if(e.key==='Escape' && e.currentTarget.open){e.stopPropagation();e.preventDefault();e.currentTarget.open=false;e.currentTarget.querySelector('summary')?.focus();} }}><summary>Browse capabilities</summary><nav aria-label="Browse tool categories">{SECTIONS.map(sec => <button type="button" key={sec.id} onClick={e => {const details=e.currentTarget.closest('details')!;details.open=false;requestAnimationFrame(()=>{const section=document.getElementById(`tools-${sec.id}`);section?.scrollIntoView({block:'start',behavior:'instant'});section?.querySelector<HTMLElement>('h2')?.focus({preventScroll:true});});}}>{sec.label}</button>)}</nav></details></div> : <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search tools" placeholder={glassPhone ? `Search ${SECTIONS.find((x) => x.id === active)?.label}` : 'Search tools'} value={query} onChange={(e) => setQuery(e.target.value)} /></label>}>
+
       <div className="tools-layout" ref={scroller}>
         <nav className="tools-rail" aria-label="Tool categories">
           {SECTIONS.map((sec) => <button key={sec.id} type="button" className={active === sec.id ? 'active' : ''} aria-current={active === sec.id || undefined} onClick={() => jump(sec.id)}>{sec.label}</button>)}
@@ -124,7 +126,7 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
               if (q && !list.length) return null;
               return (
                 <section key={sec.id} id={`tools-${sec.id}`} className="tools-section">
-                  {(CANVAS_SHELL || !glassPhone) && <header><h2>{sec.label}</h2><p>{sec.blurb}</p><button type="button" className="btn small" onClick={() => CANVAS_SHELL ? setEditingAssistant('new') : s.setUi({ page: 'assistants' })}>{CANVAS_SHELL ? 'New assistant' : 'All assistants'}</button></header>}
+                  {(CANVAS_SHELL || !glassPhone) && <header>{CANVAS_SHELL ? <h2 tabIndex={-1}>{sec.label}</h2> : <h2>{sec.label}</h2>}<p>{sec.blurb}</p><button type="button" className="btn small" onClick={() => CANVAS_SHELL ? setEditingAssistant('new') : s.setUi({ page: 'assistants' })}>{CANVAS_SHELL ? 'New assistant' : 'All assistants'}</button></header>}
                   <div className="tools-grid">
                     {list.map((a) => (
                       <div key={a.id} className="tool-card-wrap">
@@ -133,10 +135,10 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
                           <span className="tool-text"><strong>{a.name}</strong><span>{a.description || 'Your custom assistant.'}</span></span>
                         </button>
                         {/* iPhone: edit yours (or make your own copy of one of Lumen's) */}
-                        {glassPhone && <button type="button" className="icon-btn tool-card-edit" aria-label={a.id.startsWith('builtin-') ? `Customize ${a.name}` : `Edit ${a.name}`} onClick={() => setEditingAssistant(a.id.startsWith('builtin-') ? { ...a, id: uid() } : a)}><Pencil size={17} /></button>}
+                        {(CANVAS_SHELL || glassPhone) && <button type="button" className="icon-btn tool-card-edit" aria-label={a.id.startsWith('builtin-') ? `Customize ${a.name}` : `Edit ${a.name}`} onClick={() => setEditingAssistant(a.id.startsWith('builtin-') ? { ...a, id: uid() } : a)}><Pencil size={17} /></button>}
                       </div>
                     ))}
-                    {!q && !glassPhone && <button type="button" className="tool-card tool-new" onClick={() => s.setUi({ page: 'assistants' })}><span className="tool-icon" aria-hidden="true"><Plus size={20} /></span><span className="tool-text"><strong>Make an assistant</strong><span>Your own instructions and model, ready in every chat.</span></span></button>}
+                    {!CANVAS_SHELL && !q && !glassPhone && <button type="button" className="tool-card tool-new" onClick={() => s.setUi({ page: 'assistants' })}><span className="tool-icon" aria-hidden="true"><Plus size={20} /></span><span className="tool-text"><strong>Make an assistant</strong><span>Your own instructions and model, ready in every chat.</span></span></button>}
                   </div>
                 </section>
               );
@@ -145,7 +147,7 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
             if (!list.length) return null;
             return (
               <section key={sec.id} id={`tools-${sec.id}`} className="tools-section">
-                {(CANVAS_SHELL || !glassPhone) && <header><h2>{sec.label}</h2><p>{sec.blurb}</p></header>}
+                {(CANVAS_SHELL || !glassPhone) && <header>{CANVAS_SHELL ? <h2 tabIndex={-1}>{sec.label}</h2> : <h2>{sec.label}</h2>}<p>{sec.blurb}</p></header>}
                 <div className="tools-grid">{list.map((t) => <ToolCard key={t.id} t={t} />)}</div>
               </section>
             );

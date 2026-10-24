@@ -16,7 +16,7 @@ import ModelPicker from './ModelPicker';
 import ProjectManager from './ProjectManager';
 import ProjectWorkspace from './ProjectWorkspace';
 import CatalogErrorNotice from './CatalogErrorNotice';
-import { BrandMark, CANVAS_SHELL, PhoneNavigation, CanvasScreenActions, newGeneralChat } from '../lib/canvas-presentation';
+import { BrandMark, CANVAS_SHELL, PhoneNavigation, CanvasScreenActions, navigateBack, useScreenBackLayer, newGeneralChat } from '../lib/canvas-presentation';
 import { ContextRail, RailToggle } from './ContextRail';
 import CanvasHome from './CanvasHome';
 
@@ -72,6 +72,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
   // A reply that's being written or just finished below where you're reading.
   const [unseen, setUnseen] = useState(false);
   const [projectModalId, setProjectModalId] = useState<string | null>(null);
+  if (CANVAS_SHELL) useScreenBackLayer!(Boolean(projectModalId), () => setProjectModalId(null), () => setProjectModalId(projectModalId), 'project-settings');
   const [announcement,setAnnouncement]=useState('');
   const previousReply=useRef<{id?:string;streaming:boolean}>({streaming:false});
 
@@ -232,7 +233,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
         {projectModalId && (
           <ProjectManager
             initialProjectId={projectModalId}
-            onClose={() => setProjectModalId(null)}
+            onClose={CANVAS_SHELL ? () => navigateBack!(() => setProjectModalId(null)) : () => setProjectModalId(null)}
           />
         )}
       </main>
@@ -359,7 +360,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
       {projectModalId && (
         <ProjectManager
           initialProjectId={projectModalId}
-          onClose={() => setProjectModalId(null)}
+          onClose={CANVAS_SHELL ? () => navigateBack!(() => setProjectModalId(null)) : () => setProjectModalId(null)}
         />
       )}
     </main>

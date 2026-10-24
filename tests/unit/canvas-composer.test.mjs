@@ -73,7 +73,7 @@ test('CP03 shell seams fold to the ordinary code and its styles stay scoped', ()
   assert.equal((sidebar.match(/CANVAS_SHELL\b/g) || []).length - 1, 1, 'Sidebar: one early return, constant per build');
   assert.match(sidebar, /^  if \(CANVAS_SHELL\) return <SidebarCanvas onCollapse=\{onCollapse\} \/>;$/m);
   const app = readFileSync('src/App.tsx', 'utf8');
-  assert.equal((app.match(/CANVAS_SHELL\b/g) || []).length - 1, 3, 'App: the document scope, the app scope attributes and the Routing Center mount');
+  assert.equal((app.match(/CANVAS_SHELL\b/g) || []).length - 1, 8, 'App: Canvas scope, Routing Center and the two presented Tools layers');
   assert.match(app, /\{\.\.\.\(CANVAS_SHELL \? \{ 'data-lumen-canvas-shell': '', 'data-lumen-canvas-foundation': '' \} : undefined\)\}/);
   const view = readFileSync('src/components/ChatView.tsx', 'utf8');
   const t = /\{CANVAS_SHELL \? <>(.+?)<\/> : (.+?)\}\n/.exec(view);

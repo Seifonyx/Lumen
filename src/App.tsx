@@ -16,7 +16,7 @@ import { keepScreenAwake } from './lib/wakelock';
 import { installSidebarGestures } from './lib/sidebar-gesture';
 import TaskEngine from './components/TaskEngine';
 import { cancelKnowledge } from './lib/knowledge/engine';
-import { CANVAS_SHELL, CanvasNav, newGeneralChat, RoutingCenter } from './lib/canvas-presentation';
+import { CANVAS_SHELL, CanvasNav, newGeneralChat, navigateBack, useScreenBackLayer, RoutingCenter } from './lib/canvas-presentation';
 // CP05: the Canvas scope covers the whole document (pages and portalled dialogs/menus) while the shell switch is on;
 // the ordinary build folds this away.
 if (CANVAS_SHELL) { document.documentElement.setAttribute('data-lumen-canvas', ''); document.documentElement.setAttribute('data-lumen-canvas-foundation', ''); }
@@ -69,6 +69,8 @@ export default function App() {
   // Assistants, Files and Study open as pages in place of the chat; Prompts and Tools as windows.
   const [prompts, setPrompts] = useState(false);
   const [tools, setTools] = useState<null | 'youtube' | 'calculation' | 'reader'>(null);
+  if (CANVAS_SHELL) useScreenBackLayer!(Boolean(tools), () => setTools(null), () => setTools(tools), `tool:${tools}`);
+  if (CANVAS_SHELL) useScreenBackLayer!(prompts, () => setPrompts(false), () => setPrompts(true), 'saved-prompts');
   const page = useStore((s) => s.page);
   const pageArg = useStore((s) => s.pageArg);
   useEffect(() => {
@@ -205,7 +207,7 @@ export default function App() {
       {page && !settingsOpen && (
         <Suspense fallback={null}>
           {/* iPhone glass look: assistants live in Tools → Assistants (the separate Assistants page is computer-only). */}
-          {page === 'assistants' && glassPhone() ? <ToolsPage key={`${accountId}-tools-assistants-${String(pageArg || '')}`} initial="assistants" newAssistant={pageArg === 'new'} onClose={closePage} />
+          {page === 'assistants' && (CANVAS_SHELL || glassPhone()) ? <ToolsPage key={`${accountId}-tools-assistants-${String(pageArg || '')}`} initial="assistants" newAssistant={pageArg === 'new'} onClose={closePage} />
             : page === 'assistants' ? <AssistantLibrary key={`${accountId}-assistants-${String(pageArg || '')}`} startNew={pageArg === 'new'} onClose={closePage} />
             : page === 'collection' ? <CollectionPage key={`${accountId}-collection-${String(pageArg || '')}`} initial={typeof pageArg === 'string' ? pageArg as 'all' : 'all'} onClose={closePage} />
             : page === 'projects' ? <ProjectsPage key={`${accountId}-projects`} onClose={closePage} />
@@ -228,8 +230,8 @@ export default function App() {
           <RunPanel />
         </Suspense>
       )}
-      {prompts && <Suspense fallback={null}><PromptsModal onClose={() => setPrompts(false)} /></Suspense>}
-      {tools && <Suspense fallback={null}><ToolsModal initial={tools} onClose={() => setTools(null)} /></Suspense>}
+      {prompts && <Suspense fallback={null}><PromptsModal onClose={CANVAS_SHELL ? () => navigateBack!(() => setPrompts(false)) : () => setPrompts(false)} /></Suspense>}
+      {tools && <Suspense fallback={null}><ToolsModal initial={tools} onClose={CANVAS_SHELL ? () => navigateBack!(() => setTools(null)) : () => setTools(null)} /></Suspense>}
       <ImageViewerHost />
       <Suspense fallback={null}><SelectionTools /></Suspense>
       <Toasts />

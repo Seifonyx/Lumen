@@ -1,3 +1,4 @@
+import { screenBack } from '../lib/screen-history';
 // CP03 Canvas navigation (approved Canvas design, Gate 1). Reached only when CANVAS_SHELL is on
 // (src/lib/canvas-presentation.ts); the ordinary build folds it away.
 // One tree: projects are folders of their conversations; loose conversations are grouped by day. It is the same
@@ -76,6 +77,8 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   useBackLayer(allChats, () => setAllChats(false), () => setAllChats(true));
   const [asking, setAsking] = useState<string | null>(null);
   const [manager, setManager] = useState(false);
+  useBackLayer(manager, () => setManager(false), () => setManager(true), 'new-project');
+  useBackLayer(asking !== null, () => setAsking(null), () => setAsking(asking), 'ask-chats');
   const sidebarRef = useRef<HTMLElement>(null);
   const searchInput = useRef<HTMLInputElement>(null);
   const wasOpen = useRef(false);
@@ -283,9 +286,9 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
           </button>
         </div>
       </aside>
-      {asking !== null && <Suspense fallback={null}><AskChats initial={asking} onClose={() => setAsking(null)} /></Suspense>}
-      {allChats && <AllChats onClose={() => setAllChats(false)} />}
-      {manager && <ProjectManager createNewImmediately onClose={() => setManager(false)} />}
+      {asking !== null && <Suspense fallback={null}><AskChats initial={asking} onClose={() => screenBack(() => setAsking(null))} /></Suspense>}
+      {allChats && <AllChats onClose={() => screenBack(() => setAllChats(false))} />}
+      {manager && <ProjectManager createNewImmediately onClose={() => screenBack(() => setManager(false))} />}
     </>
   );
 }

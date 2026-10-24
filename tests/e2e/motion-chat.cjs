@@ -76,7 +76,7 @@ const now = Date.now();
         await page.locator('.composer textarea').fill('NEXT_DRAFT');
         if (width < 900) await page.locator('.menu-btn').click();
         await page.locator('.sidebar').getByRole('button', { name: 'Library', exact: true }).click();
-        await page.locator('.hub-page:not(.exit-ghost)').getByRole('button', { name: 'Close', exact: true }).click();
+        await page.locator('.hub-page:not(.exit-ghost)').locator('[aria-label="Close"], .phone-navigation [aria-label="Back"]').click();
         assert.equal(await page.locator('.composer textarea').inputValue(), 'NEXT_DRAFT');
         assert.equal(requests, 1, 'Motion does not trigger additional inference');
         assert.equal(await entranceCount(), reduced ? 0 : 1, 'Streaming and returning from Library never replay the reply entrance');

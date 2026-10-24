@@ -29,6 +29,7 @@ const models = ['gemini-flash-latest', 'gemini-2.5-pro'];
       await page.goto(process.env.MR_TEST_URL || 'http://localhost:5190/');
       const input = page.locator('.composer textarea');
       await input.waitFor();
+      const canvas=Boolean(await page.locator('.app[data-lumen-canvas-shell]').count());
       await input.fill('PRESERVED_DRAFT');
       await page.locator('.composer input[type="file"][accept*=".txt"]').setInputFiles({ name: 'reference.txt', mimeType: 'text/plain', buffer: Buffer.from('REFERENCE_MARKER') });
       await page.getByRole('button', { name: 'Remove reference.txt', exact: true }).waitFor();
@@ -38,7 +39,7 @@ const models = ['gemini-flash-latest', 'gemini-2.5-pro'];
         await page.getByRole('main', { name: 'Tools', exact: true }).waitFor();
       };
       const section = async name => {
-        if (phone) await page.locator('.glass-tabbar').getByRole('button', { name, exact: true }).click();
+        if (phone && !canvas) await page.locator('.glass-tabbar').getByRole('button', { name, exact: true }).click();
       };
       const structure = async name => {
         await page.locator('.hub-page').evaluate(async el => {
@@ -52,17 +53,24 @@ const models = ['gemini-flash-latest', 'gemini-2.5-pro'];
         const scan = await new AxeBuilder({ page }).analyze();
         assert.deepEqual(scan.violations.map(v => ({ id: v.id, targets: v.nodes.map(n => n.target) })), []);
         if (phone) {
-          const visible = await page.locator('.hub-bar').evaluate(el => {
-            const title = [...el.querySelectorAll('.hub-bar-title')].find(e => e.getClientRects().length)?.getBoundingClientRect();
+          const visible = await page.locator(canvas?'.phone-navigation':'.hub-bar').evaluate((el,canvas) => {
+            const title = [...el.querySelectorAll(canvas?'h1':'.hub-bar-title')].find(e => e.getClientRects().length)?.getBoundingClientRect();
             if (!title) return false;
             const buttons = [...el.querySelectorAll('button')].map(e => e.getBoundingClientRect());
             return buttons.every(r => r.width >= 44 && r.height >= 44 && (r.right <= title.left + 1 || r.left >= title.right - 1));
-          });
+          },canvas);
           assert.ok(visible, 'Header title and 44px actions do not overlap');
         }
       };
       await openTools();
       await structure('Tools');
+      if(phone&&canvas){
+        assert.equal(await page.locator('.glass-tabbar').count(),0);
+        await page.locator('.phone-navigation [aria-label="Back"]').click();await page.locator('.hub-page').waitFor({state:'detached'});
+        await page.locator('.menu-btn').click();await page.locator('.sidebar.open').waitFor();
+        await page.locator('.sidebar').getByRole('button',{name:'Library',exact:true}).click();await page.getByRole('main',{name:'Library',exact:true}).waitFor();await structure('Library');
+        await page.locator('.phone-navigation [aria-label="Back"]').click();await page.locator('.hub-page').waitFor({state:'detached'});await openTools();
+      }else{
       if (phone) {
         const menu = page.locator('.hub-bar').getByRole('button', { name: 'Open sidebar', exact: true });
         const start = await menu.boundingBox();
@@ -82,6 +90,7 @@ const models = ['gemini-flash-latest', 'gemini-2.5-pro'];
         await page.locator('.sidebar.open').waitFor();
         await page.locator('.sidebar').getByRole('button', { name: 'Tools', exact: true }).click();
         await page.getByRole('main', { name: 'Tools', exact: true }).waitFor();
+      }
       }
       await section('Create');
       assert.equal(await page.getByRole('button', { name: /^Writing tools/ }).count(), 0);

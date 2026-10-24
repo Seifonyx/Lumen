@@ -22,7 +22,7 @@ const VoiceMode = lazy(() => import('./VoiceMode'));
 import { ANALYSIS_TEMPLATES } from '../lib/analysis';
 import { toolModel } from '../lib/ai/tool-inputs.js';
 import { db } from '../lib/db';
-import { CANVAS_COMPOSER } from '../lib/canvas-presentation';
+import { CANVAS_COMPOSER, useScreenBackLayer, navigateBack, replaceScreen } from '../lib/canvas-presentation';
 import { useCanvasComposer } from './ComposerCanvas';
 
 interface Pending {
@@ -94,6 +94,7 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
   const [dragging, setDragging] = useState(false);
   const [check, setCheck] = useState<{ findings: Finding[]; unchecked: number; compareModels?: string[] } | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
+  if (CANVAS_COMPOSER) useScreenBackLayer!(compareOpen, () => setCompareOpen(false), () => setCompareOpen(true), 'comparison-setup');
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [imageMode, setImageMode] = useState(false);
   const input = useRef<HTMLTextAreaElement>(null);
@@ -346,7 +347,7 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
   const compare = (models: string[]) => {
     if (!canSend || codeExecution || pending.some(p => p.file?.videoUri)) return;
     if (!ensureOnline()) return;
-    setCompareOpen(false);
+    if (CANVAS_COMPOSER) replaceScreen!(() => { setCompareOpen(false); useStore.getState().setUi({page:null}); }); else setCompareOpen(false);
     const files = pending.map((p) => p.file!);
     if (settings.privacyShield && settings.privacyMode === 'ask') {
       const findings = [...scan(text), ...files.flatMap((f) => (f.text ? scan(f.text) : [])), ...scan(project?.instructions || ''), ...projectFiles.flatMap((f) => (f.text ? scan(f.text) : []))];
@@ -596,7 +597,7 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
       {CANVAS_COMPOSER ? <>{canvas!.scrim}{voiceOpen && <Suspense fallback={null}><VoiceMode onClose={() => setVoiceOpen(false)} /></Suspense>}</> : voiceOpen && <Suspense fallback={null}><VoiceMode onClose={() => setVoiceOpen(false)} /></Suspense>}
       {compareOpen && <CompareModelsModal prompt={text} onPromptChange={value => { setText(value); saveDraft(value); }} files={pending.flatMap((p) => p.file ? [p.file] : [])}
         unavailableReason={streaming ? 'Wait for the current reply to finish before comparing models.' : !ready ? 'Wait for attached files to finish loading.' : codeExecution ? 'Turn off data analysis in the composer before comparing models.' : pending.some(p => p.file?.videoUri) ? 'Remove the video attachment before comparing models.' : undefined}
-        onClose={() => setCompareOpen(false)} onCompare={compare} />}
+        onClose={CANVAS_COMPOSER ? () => navigateBack!(() => setCompareOpen(false)) : () => setCompareOpen(false)} onCompare={compare} />}
       {check && <PrivacyCheck findings={check.findings} unchecked={check.unchecked} onMask={() => dispatch()} onAsIs={() => dispatch({ privacy: 'asIs' })} onEdit={() => setCheck(null)} />}
       <p className="disclaimer">AI can make mistakes. Check important info.</p>
     </div>

@@ -1,3 +1,4 @@
+import { useScreenBackLayer, navigateBack, CANVAS_SHELL } from '../lib/canvas-presentation';
 // Assistants: saved helpers with their own instructions and model. Start a chat with one, or make your own.
 // (Prompts live in the message box's + menu, tools there too, uploaded files in Files, schedules in Settings.)
 import { useState } from 'react';
@@ -15,7 +16,7 @@ const hue = (name: string) => HUES[[...name].reduce((n, c) => n + c.charCodeAt(0
 const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() || '').join('') || '?';
 
 /** With `onDone`, this is just the editor (opened from Tools on iPhone): Back, Save and Delete return there. */
-export default function AssistantLibrary({ onClose, startNew = false, startWith, onDone }: { onClose: () => void; startNew?: boolean; startWith?: SavedAssistant; onDone?: () => void }) {
+export default function AssistantLibrary({ onClose, startNew = false, startWith, onDone }: { onClose: () => void; startNew?: boolean; startWith?: SavedAssistant; onDone?: (draft?: SavedAssistant) => void }) {
   const settings = useStore((s) => s.settings);
   const catalog = useStore((s) => s.catalog);
   const { updateSettings, startAssistant, toast } = useStore.getState();
@@ -23,13 +24,14 @@ export default function AssistantLibrary({ onClose, startNew = false, startWith,
   const [query, setQuery] = useState('');
   const [editing, setEditingState] = useState<SavedAssistant | null>(() => startWith || (startNew ? { id: uid(), name: '', description: '', instructions: '', model: AUTO } : null));
   const setEditing = (next: SavedAssistant | null) => { if (!next && onDone) onDone(); else setEditingState(next); };
+  if (CANVAS_SHELL) useScreenBackLayer!(Boolean(editing), () => setEditing(null), () => { if (onDone) onDone(editing || undefined); else setEditingState(editing); }, editing?.id || 'assistants');
   const save = () => {
     const assistant = editing && normalizeAssistant(editing);
     if (!assistant) return;
     const next = [...assistants.filter((a) => a.id !== assistant.id), assistant];
     if (!libraryFits(next, settings.prompts || [])) { toast('Limit reached: 25 assistants, 50 prompts or 100,000 characters in total.', 'error'); return; }
     updateSettings({ assistants: next });
-    setEditing(null);
+    if (CANVAS_SHELL) navigateBack!(() => setEditing(null)); else setEditing(null);
   };
   const remove = (id: string) => {
     if (!confirm('Delete this assistant? Chats that used it keep its instructions.')) return false;
@@ -50,7 +52,7 @@ export default function AssistantLibrary({ onClose, startNew = false, startWith,
           <label className="field-block"><span className="setting-label">Instructions</span><textarea aria-label="Library instructions" rows={10} maxLength={8000} value={editing.instructions} onChange={(e) => setEditing({ ...editing, instructions: e.target.value })} /></label>
           <div className="library-form-actions">
             {/* (Opened from Tools, the back arrow at the top already goes back; your own assistants can be deleted here.) */}
-            {onDone ? assistants.some((a) => a.id === editing.id) && <button className="btn danger-text" onClick={() => { if (remove(editing.id)) onDone(); }}><Trash2 size={15} /> Delete</button> : <button className="btn" onClick={() => setEditing(null)}>Back</button>}
+            {onDone ? assistants.some((a) => a.id === editing.id) && <button className="btn danger-text" onClick={() => { if (remove(editing.id)) { if (CANVAS_SHELL) navigateBack!(() => onDone()); else onDone(); } }}><Trash2 size={15} /> Delete</button> : <button className="btn" onClick={() => setEditing(null)}>Back</button>}
             <button className="btn primary" disabled={!editing.name.trim() || !editing.instructions.trim()} onClick={save}>Save</button>
           </div>
         </div>

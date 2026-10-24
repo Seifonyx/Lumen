@@ -1,3 +1,4 @@
+import { CANVAS_SHELL, navigateBack, replaceScreen } from '../lib/canvas-presentation';
 import { Download, FileSpreadsheet, Loader2, MessageSquarePlus, Play, Square, Trash2, Upload, X } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { htmlDocument, LANG_NAMES, releasePythonRunner, runCode, runLang, type OutLine, type Run, type RunArtifact } from '../lib/runner';
@@ -32,7 +33,7 @@ export default function RunPanel() {
   const outBox = useRef<HTMLDivElement>(null);
   const close = useCallback(() => {
     run.current?.stop();
-    setUi({ runner: null });
+    if (CANVAS_SHELL) navigateBack!(() => setUi({runner:null})); else setUi({ runner: null });
   }, [setUi]);
 
   const start = useCallback(() => {
@@ -116,7 +117,7 @@ export default function RunPanel() {
     ];
     if (analysis) insertPrompt(parts.filter(Boolean).join('\n\n'));
     else void send(parts.filter(Boolean).join('\n\n'), []);
-    close();
+    if (CANVAS_SHELL) replaceScreen!(() => { run.current?.stop(); setUi({runner:null,page:null}); }); else close();
   };
 
   return (

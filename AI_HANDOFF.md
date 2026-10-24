@@ -1,5 +1,85 @@
 # Dynamic Model Picker operational handoff
 
+## Active owner reset — shared iPhone navigation (Codex, 2026-10-24)
+
+- Owner rejects the floating feature docks and authorizes substantial shared navigation/Library/Tools work. **No design acceptance, merge or deployment.** PR50 and PR51 remain intact. Current branch `feat/iphone-navigation-reset` is isolated at `/workspace/Lumen-navigation-reset`, based on verified PR51 source `1b23b0d922b5ffd5bb5adb0cf3219244bccda988`; released main remains871bc1a / Deploy68.
+- Contract and navigation map: `docs/design/IPHONE_NAVIGATION_RESET.md`. Milestone A source implemented: shared phone bar; canonical UI snapshots with opaque browser markers; real section/provider history; contextual provider menu; drawer retained at root. Milestone B source implemented: Library type selector and list/media treatment, account-scoped browsing memory, accessible item actions/confirmed deletion; Tools searchable capability lists and assistant creation. Shared bars also applied to Settings, project detail and document canvas.
+- Independent review identified and prompted fixes for project context, departing scroll, local detail restoration, explicit Library destination priority and Escape/swipe consistency. History records semantic local-view keys and restore callbacks only in session memory; account changes clear them. Browsing cache is account-scoped and not persisted. No routing, provider-network, auth or persistent-schema owner changes.
+- Focused Chromium journeys passed four widths (320/390/430/1440): provider→settings→Back, browser Back/Forward, Library filter restoration, document return, draft retention and assistant draft restoration. Unit history adapter test covers canonical UI, layers, account invalidation and opaque history. Type/build/unit checks passed at earlier checkpoints; rerun for exact final source. Ordinary byte parity with PR51/released baseline has been verified repeatedly after correcting Canvas seams; must verify again at final checkpoint.
+- Latest source verification: typecheck, ordinary/Canvas builds, all92 unit files; Chromium main journeys4/4, screen-state journeys3/3, project create/edit/delete/draft journeys3/3; provider cases8/8, Hub actions4/4, glass and assistant CRUD3/3. Ordinary output exactly matches174 baseline files. QA01 isolation8/8 passed after correcting the static module seam. Private gated QA browser4/4 and Routing3/3 passed. Full gated shell/screens and exact-head CI remain pending at this checkpoint.
+- Independent review prompted atomic project Save (replace form with destination, distinct from Cancel), project draft cache, deleted-reference validation and menu clipping/focus-race corrections. Project creation succeeds from both drawer and Projects; edit/delete are covered. Ephemeral form drafts clear on successful save and account changes.
+- Linux WebKit1.56.1 crashes on reload following Back/Forward plus a new history branch; reproduced on a static page with no Lumen code. Diagnostic `tests/e2e/helpers/webkit-history-reload.cjs` retains the failure. Do not call the combined WebKit refresh matrix passed. Chromium refresh passes; primary WebKit journeys and project forms are tested separately.
+- Tool-return closure: comparison setup presents over Tools until explicit submission; local analysis runner participates in canonical history; chat-search drawer closes when Back restores Tools. Tool launch/project brief/New chat actions batch synchronous canonical mutations into one visible history step. Desktop document rows and action buttons are shared with phone, while media remains a collection.
+- **Milestone C is still in progress:** migrate tests that specifically assert the rejected docks/Chat pills; run final Chromium/WebKit/axe/isolation/budgets and exact-head CI; self-review curated actual captures. Do not call the reset complete or owner-approved merely from the focused journey. Physical iPhone, installed PWA, VoiceOver/Dynamic Type remain unverified.
+- Performance decision: shared first-interaction history requires about1.1–1.3KB gz more startup code; JS growth budget9.5→12KB (measured11.6KB); Canvas CSS source16→17KB (measured16.9KB) for shared phone chrome/content rows. Startup CSS16KB and lazy Routing Center9KB limits unchanged. Provider menus/Library actions/type filter load lazily. Report actual measurements, not fabricated speed improvements.
+- Program progress: Phases1–3 shipped; this owner-directed reset is in implementation/review; Phase4 Slices2–3 remain. Library/Tools work does not complete Phase5. No defensible overall program percentage is defined. Preserve historical scope ledgers below as history.
+- Exact next action: finish Milestone C regression migration and rendered review; commit/push coherent checkpoints to this branch and synchronize the separate live context. Never overwrite older WIP or merge/deploy without explicit owner approval.
+
+
+## Current checkpoint — Phase 4, Slice 1 review 2 (Claude), awaiting owner visual review
+
+- **Authority:** the owner reviewed PR #51 (review 1) and did not approve it. They granted creative freedom to rethink navigation, the overview, providers, the provider detail, actions and the desktop workspace. **Draft only: do not merge or deploy, and do not claim acceptance; stop for the owner's visual review.** Crease icon detailing stays deferred until all planned phases are done.
+- **Branch:** `claude/lucid-dijkstra-541bbi` (draft PR #51), on top of review 1 (`c19b2ab`) and Codex's `0cdf5f4` (PR #50, untouched). Release base is still `main` `871bc1a` / Deploy #68. The exact pushed SHA and CI live in the PR and the live checkpoint.
+- **What changed:** see "Review 2" in `docs/testing/phase4-routing-providers.md`:
+  - phone dock with four places, plus Usage and Diagnostics drill-ins from the route panel
+  - the drawer button or Back, never both
+  - the lit route panel
+  - the provider ledger with verdicts and name chips
+  - provider detail as verdict, one contextual primary, four independent facts and a model table
+  - "Refresh model list" replaces "Check connection"
+  - one sticky desktop header line
+- **Files touched:** `RoutingCenter.tsx`, `RoutingExtras.tsx` (refresh button, recent answers), `canvas-routing.css`, `provider-presentation.ts` (wording) and the tests that pin those.
+- **Verified locally:**
+  - `npm test`
+  - ordinary parity with `main`
+  - CP01/QA01 isolation against `main`
+  - budgets with none raised
+  - `routing-providers` Chromium 8/8
+  - CP04 Chromium 3/3
+  - CP01/02/03/05 contracts
+  - 8 in-app suites on Canvas
+- **Not verified:** WebKit (CI covers it), physical iPhone, VoiceOver, Dynamic Type.
+- **Next:**
+  1. The owner's visual review of the review-1 versus review-2 boards.
+  2. Apply feedback on this branch.
+  3. Merge or deploy only with explicit approval; the owner chooses between #50 and #51.
+
+## Earlier checkpoint — Phase 4, Slice 1 redesign (Claude), awaiting owner visual review
+
+- **Authority:** the owner asked for a major design reassessment of the Routing Center overview, provider browser and provider detail. Draft PR only. **Do not merge or deploy, and do not claim owner acceptance; stop for the owner's visual review.**
+- **Branch:** `claude/lucid-dijkstra-541bbi`, built on Codex's `feat/phase4-routing-providers` head `0cdf5f4` (PR #50). Codex's branch was not modified; this branch adds the redesign on top. The released base is still `main` `871bc1a` (Deploy #68). The exact pushed SHA, the draft PR and CI state are in the PR and the live checkpoint `docs/lumen-context/CURRENT_STATUS.md` on `docs/lumen-live-context`.
+- **What changed:** see the redesign section of `docs/testing/phase4-routing-providers.md`. In short:
+  - The phone overview is the map, and sections open as pages with Back in the bar.
+  - Provider detail shows a connection path.
+  - One status vocabulary.
+  - Consolidated `canvas-routing.css`, with no budget raised (Canvas CSS source 16.0/16 KB).
+  - Only `RoutingCenter.tsx`, `canvas-routing.css`, the two Routing Center tests and a screenshot helper changed.
+- **Verified locally:**
+  - `npm test`
+  - ordinary byte parity with `main`
+  - CP01/QA01 isolation with the `main` baseline
+  - `routing-providers.cjs` Chromium 8/8
+  - CP04 Chromium 3/3
+  - CP01/CP02/CP03/CP05 contracts
+  - 7 navigation/gesture in-app suites on Canvas
+- **Not verified:** WebKit, which CI covers; physical iPhone, VoiceOver and Dynamic Type.
+- **Next:**
+  1. Owner visual review of the before/after evidence.
+  2. Apply the owner's feedback on this branch.
+  3. After explicit approval, decide with the owner how PR #50 and this PR combine. This PR contains #50's commits, so merging this one supersedes #50.
+- Phase 4 Slices 2 and 3 have not started.
+
+## Earlier checkpoint — Phase 4, Slice 1 (Codex)
+
+- **Authority:** owner completed Phase 3 and authorized Phase 4. Work on `feat/phase4-routing-providers`; draft PR only. **No merge/deploy, no implicit release approval from green checks.** Optional Crease icon detailing remains deferred.
+- **Recovered release:** `main` `871bc1a647f36550e6f66e527b1252ac84437506`; PR #49 merged; Deploy #68 / Actions `40030589058` completed successfully with Canvas. No new production deployment or physical-iPhone verification in this session.
+- **Isolation of concurrent work:** old `/workspace/Lumen` QA01 uncommitted work and draft PR #34 were preserved untouched. Current work is a clean separate worktree `/workspace/Lumen-phase4` from released main. Do not copy the old unfinished QA01 implementation over current main’s existing private QA system.
+- **Implemented:** route-first overview with truthful recorded-answer evidence; provider readiness entry point; grouped saved connections and Explore providers; Needs attention filter; separate saved/enabled/catalog/reply facts; typed safe recovery; concise phone header, readable wrapping section labels, phone Back and desktop list/detail; lazy scoped RC stylesheet. Canonical model actions, credentials, permission, storage, routing and network owners are unchanged.
+- **Verification:** see `docs/testing/phase4-routing-providers.md` for actual checks, curated before/after review and remaining device gaps. Source checkpoint is `6d2255a519a1d6e37189991909dc3541e037b9da`; delivery commits add the review artifact/docs, stable screenshot capture and strengthened isolation declarations. Initial CI at `358cc71` found a missing reviewed-file declaration for the new helper; fixed by an exact filename plus Canvas-required/ordinary-forbidden graph checks and a planted negative control; both strengthened audits pass. CI at `61b2d74` then exposed attachment-font baseline and WebKit expiry-focus timing assumptions; corrected test preconditions retain strict original assertions, with released-source delayed-font reproduction and independent review. No product source changed. Local checks pass (90 unit files, Chromium/WebKit 8+8 new cases, 3+3 existing QA viewports, isolation and budgets). Exact pushed delivery SHA and post-push CI state live in the PR / canonical docs checkpoint; inspect them instead of assuming this local checkpoint is a release. No claims of live-provider or real-iPhone testing.
+- **Progress (current seven-phase Lumen design/UX program):** Phases 1–3 shipped and owner-declared complete; Phase 4 Slice 1 implemented and verified in draft PR #50 but awaiting owner design approval; Phase 4 Slices 2–3 and later phases remain. **No approved overall percentage for this program exists.** Historical Blackout and completed Dynamic Model Picker weighted scores apply only to their separate legacy scopes; never repeat them as overall Lumen completion or percentage remaining. No Phase 4 acceptance/merge/deploy credit is inferred from passing CI.
+- **Next:** publish the delivery commit/draft PR and verify exact-head CI; synchronize the canonical live checkpoint. Stop for owner design review before any merge or deployment. Slice 2 is not implemented here. Historical release instructions below apply to their earlier milestones.
+
+
 ## Verification speed (owner request, 2026-10-23)
 
 - **CI layout:**

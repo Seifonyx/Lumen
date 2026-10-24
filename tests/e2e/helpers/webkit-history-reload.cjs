@@ -1,0 +1,4 @@
+// Standalone Playwright 1.56.1 Linux WebKit diagnostic. No Lumen JS, provider or account data.
+// MR_WEBKIT=1 node tests/e2e/helpers/webkit-history-reload.cjs
+const {webkit}=require('playwright');
+(async()=>{const browser=await webkit.launch();try{for(const mode of ['plain','history']){const page=await browser.newPage();await page.route('**/*',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><title>Static history diagnostic</title><p>No application scripts.</p>'}));await page.goto('http://localhost:5190/history-diagnostic');if(mode==='history'){await page.evaluate(()=>{history.replaceState({test:0},'');history.pushState({test:1},'');history.pushState({test:2},'')});await page.goBack();await page.goForward();await page.goBack();await page.evaluate(()=>history.pushState({test:3},''));}await page.reload();console.log('PASS static page reload',mode);await page.close();}}finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});

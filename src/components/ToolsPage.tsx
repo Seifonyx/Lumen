@@ -8,6 +8,7 @@ import { ANALYSIS_TEMPLATES } from '../lib/analysis';
 import { BUILTIN_ASSISTANTS } from '../lib/assistants';
 import { useStore } from '../store';
 import HubPage from './HubPage';
+import { CANVAS_SHELL, navigateScreen, useScreenMemory } from '../lib/canvas-presentation';
 import AssistantLibrary from './AssistantLibrary';
 import { uid } from '../lib/util';
 import type { SavedAssistant } from '../types';
@@ -39,21 +40,21 @@ function ToolCard({ t }: { t: Tool }) {
       <span className="tool-text">
         <strong>{t.name}{t.state && <span className={`tool-state${t.state === 'On' || t.state === 'Connected' ? ' on' : ''}`}>{t.state}</span>}</strong>
         <span>{t.text}</span>
-        {t.needs && <span className={`tool-needs${t.ready ? ' ok' : ''}`}>{t.ready ? '✓ ' : 'Needs a '}{t.ready ? t.needs.replace(' key', ' ready') : t.needs}</span>}
+        {t.needs && (CANVAS_SHELL ? <span className="tool-needs">{t.ready ? `${t.needs} saved` : `Needs a ${t.needs}`}</span> : <span className={`tool-needs${t.ready ? ' ok' : ''}`}>{t.ready ? '✓ ' : 'Needs a '}{t.ready ? t.needs.replace(' key', ' ready') : t.needs}</span>)}
       </span>
     </>;
     return t.run
-      ? <button type="button" className={`tool-card sec-${t.section}`} onClick={t.run}>{content}</button>
+      ? <button type="button" className={`tool-card sec-${t.section}`} onClick={CANVAS_SHELL ? () => navigateScreen!(t.run!) : t.run}>{content}</button>
       : <article className={`tool-card tool-contextual sec-${t.section}`}>{content}</article>;
 }
 
 export default function ToolsPage({ onClose, initial = 'research', newAssistant = false }: { onClose: () => void; initial?: Section; newAssistant?: boolean }) {
   const keys = useStore((s) => s.keys);
   const settings = useStore((s) => s.settings);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = CANVAS_SHELL ? useScreenMemory!('tools-query', '') : useState('');
   const [active, setActive] = useState<Section>(initial);
   // iPhone: an assistant is made or edited right here, and Back, Save or Delete return to this tab.
-  const [editingAssistant, setEditingAssistant] = useState<SavedAssistant | 'new' | null>(newAssistant ? 'new' : null);
+  const [editingAssistant, setEditingAssistant] = CANVAS_SHELL ? useScreenMemory!<SavedAssistant | 'new' | null>('tools-editor', newAssistant ? 'new' : null, newAssistant) : useState<SavedAssistant | 'new' | null>(newAssistant ? 'new' : null);
   // iPhone glass look: one category at a time, chosen in the bottom tab bar.
   const [glassPhone] = useState(() => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches);
   const scroller = useRef<HTMLDivElement>(null);
@@ -72,14 +73,14 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
     { id: 'prompts', section: 'create', name: 'Saved prompts', text: 'Start a message from a prompt you use often.', icon: <MessageSquareText size={20} />, run: () => library('prompts') },
     { id: 'analysis', section: 'analyze', name: 'Data analysis', text: 'Charts and answers from CSV and Excel files, run on your device.', icon: <BarChart3 size={20} />, run: () => s.setUi({ page: null, runner: { lang: 'python', code: ANALYSIS_TEMPLATES.overview.code, analysis: true } }) },
     { id: 'calc', section: 'analyze', name: 'Calculate', text: 'Exact maths with Python, shown step by step.', icon: <Calculator size={20} />, needs: 'Gemini key', ready: gemini, run: () => library('tools:calculation') },
-    { id: 'compare', section: 'analyze', name: 'Compare models', text: 'Ask two or three models at once, then combine their answers.', icon: <Columns2 size={20} />, run: () => { s.setUi({ page: null, sidebarOpen: false }); window.dispatchEvent(new CustomEvent('mr:composer-mode', { detail: 'compare' })); } },
+    { id: 'compare', section: 'analyze', name: 'Compare models', text: 'Ask two or three models at once, then combine their answers.', icon: <Columns2 size={20} />, run: () => { if (CANVAS_SHELL) s.setUi({sidebarOpen:false}); else s.setUi({ page: null, sidebarOpen: false }); window.dispatchEvent(new CustomEvent('mr:composer-mode', { detail: 'compare' })); } },
     { id: 'study', section: 'learn', name: 'Study', text: 'Flashcards and quizzes from any chat or document. Hard cards come back sooner.', icon: <GraduationCap size={20} />, run: () => s.setUi({ page: 'study', pageArg: undefined }) },
     { id: 'study-chat', section: 'learn', name: 'Study partner', text: 'An assistant that explains step by step and quizzes you.', icon: <BookOpenCheck size={20} />, run: () => { const a = BUILTIN_ASSISTANTS.find((x) => x.id === 'builtin-study'); if (a) { s.startAssistant(a); s.setUi({ page: null }); } } },
   ], [gemini, keys.cloudflare, settings.webSearch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // (On iPhone this tab is the only list of assistants, so it shows them all.)
   const allAssistants = [...(settings.assistants || []), ...BUILTIN_ASSISTANTS];
-  const assistants = glassPhone ? allAssistants : allAssistants.slice(0, 6);
+  const assistants = CANVAS_SHELL ? allAssistants : glassPhone ? allAssistants : allAssistants.slice(0, 6);
   const q = query.trim().toLowerCase();
   const match = (t: { name: string; text: string }) => !q || `${t.name} ${t.text}`.toLowerCase().includes(q);
   // The category list follows the section you're reading.
@@ -95,6 +96,7 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
     root.querySelectorAll('.tools-section').forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, [query, glassPhone]);
+  if (CANVAS_SHELL) useEffect(() => { if (initial === 'assistants') document.getElementById('tools-assistants')?.scrollIntoView({ block:'start' }); }, [initial]);
   const pick = (id: Section) => { setActive(id); scroller.current?.closest('.hub-scroll')?.scrollTo({ top: 0 }); };
   const ICONS: Record<Section, ReactNode> = { research: <Telescope size={22} />, create: <Pencil size={22} />, analyze: <BarChart3 size={22} />, learn: <GraduationCap size={22} />, assistants: <Sparkles size={22} /> };
   const HUES: Record<Section, number> = { research: 212, create: 330, analyze: 160, learn: 40, assistants: 270 };
@@ -102,15 +104,16 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
   const create = active === 'assistants' ? { label: 'New assistant', run: () => setEditingAssistant('new') } : undefined;
   const bar = glassPhone ? { label: 'Tool categories', active, onSelect: (id: string) => pick(id as Section), create, items: SECTIONS.map((sec) => ({ id: sec.id, label: sec.label, icon: ICONS[sec.id], hue: HUES[sec.id] })) } : undefined;
   // With the tab bar, only the chosen category shows, and the search looks only inside it.
-  const shownHere = (id: Section) => !glassPhone || id === active;
+  const shownHere = (id: Section) => CANVAS_SHELL || !glassPhone || id === active;
   const jump = (id: Section) => { setActive(id); document.getElementById(`tools-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
 
 
-  if (editingAssistant) return <AssistantLibrary key={typeof editingAssistant === 'string' ? 'new' : editingAssistant.id} startNew={editingAssistant === 'new'} startWith={typeof editingAssistant === 'string' ? undefined : editingAssistant} onClose={onClose} onDone={() => setEditingAssistant(null)} />;
+  if (editingAssistant) return <AssistantLibrary key={typeof editingAssistant === 'string' ? 'new' : editingAssistant.id} startNew={editingAssistant === 'new'} startWith={typeof editingAssistant === 'string' ? undefined : editingAssistant} onClose={onClose} onDone={CANVAS_SHELL ? (draft) => setEditingAssistant(draft || null) : () => setEditingAssistant(null)} />;
 
   return (
     <HubPage label="Tools" title="Tools" subtitle="Everything Lumen can do beyond a chat. The ones you use most are also in the + menu." onClose={onClose} bar={bar}
-      toolbar={<label className="hub-search"><Search size={16} /><input type="search" aria-label="Search tools" placeholder={glassPhone ? `Search ${SECTIONS.find((x) => x.id === active)?.label}` : 'Search tools'} value={query} onChange={(e) => setQuery(e.target.value)} /></label>}>
+      toolbar={CANVAS_SHELL ? <div className="tools-discovery"><label className="hub-search"><Search size={16} /><input type="search" aria-label="Search tools" placeholder={!CANVAS_SHELL && glassPhone ? `Search ${SECTIONS.find((x) => x.id === active)?.label}` : 'Search tools'} value={query} onChange={(e) => setQuery(e.target.value)} />{query && <button type="button" aria-label="Clear tool search" onClick={(e) => { setQuery(''); e.currentTarget.parentElement?.querySelector('input')?.focus(); }}>×</button>}</label><details className="tools-browse" data-local-escape onKeyDown={e => { if(e.key==='Escape' && e.currentTarget.open){e.stopPropagation();e.preventDefault();e.currentTarget.open=false;e.currentTarget.querySelector('summary')?.focus();} }}><summary>Browse capabilities</summary><nav aria-label="Browse tool categories">{SECTIONS.map(sec => <button type="button" key={sec.id} onClick={e => {const details=e.currentTarget.closest('details')!;details.open=false;requestAnimationFrame(()=>{const section=document.getElementById(`tools-${sec.id}`);section?.scrollIntoView({block:'start',behavior:'instant'});section?.querySelector<HTMLElement>('h2')?.focus({preventScroll:true});});}}>{sec.label}</button>)}</nav></details></div> : <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search tools" placeholder={glassPhone ? `Search ${SECTIONS.find((x) => x.id === active)?.label}` : 'Search tools'} value={query} onChange={(e) => setQuery(e.target.value)} /></label>}>
+
       <div className="tools-layout" ref={scroller}>
         <nav className="tools-rail" aria-label="Tool categories">
           {SECTIONS.map((sec) => <button key={sec.id} type="button" className={active === sec.id ? 'active' : ''} aria-current={active === sec.id || undefined} onClick={() => jump(sec.id)}>{sec.label}</button>)}
@@ -123,19 +126,19 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
               if (q && !list.length) return null;
               return (
                 <section key={sec.id} id={`tools-${sec.id}`} className="tools-section">
-                  {!glassPhone && <header><h2>{sec.label}</h2><p>{sec.blurb}</p><button type="button" className="btn small" onClick={() => s.setUi({ page: 'assistants' })}>All assistants</button></header>}
+                  {(CANVAS_SHELL || !glassPhone) && <header>{CANVAS_SHELL ? <h2 tabIndex={-1}>{sec.label}</h2> : <h2>{sec.label}</h2>}<p>{sec.blurb}</p><button type="button" className="btn small" onClick={() => CANVAS_SHELL ? setEditingAssistant('new') : s.setUi({ page: 'assistants' })}>{CANVAS_SHELL ? 'New assistant' : 'All assistants'}</button></header>}
                   <div className="tools-grid">
                     {list.map((a) => (
                       <div key={a.id} className="tool-card-wrap">
-                        <button type="button" className="tool-card sec-assistants" onClick={() => { s.startAssistant(a); s.setUi({ page: null }); }}>
+                        <button type="button" className="tool-card sec-assistants" onClick={CANVAS_SHELL ? () => navigateScreen!(() => { s.startAssistant(a); s.setUi({page:null}); }) : () => { s.startAssistant(a); s.setUi({ page: null }); }}>
                           <span className="tool-icon" aria-hidden="true"><Sparkles size={20} /></span>
                           <span className="tool-text"><strong>{a.name}</strong><span>{a.description || 'Your custom assistant.'}</span></span>
                         </button>
                         {/* iPhone: edit yours (or make your own copy of one of Lumen's) */}
-                        {glassPhone && <button type="button" className="icon-btn tool-card-edit" aria-label={a.id.startsWith('builtin-') ? `Customize ${a.name}` : `Edit ${a.name}`} onClick={() => setEditingAssistant(a.id.startsWith('builtin-') ? { ...a, id: uid() } : a)}><Pencil size={17} /></button>}
+                        {(CANVAS_SHELL || glassPhone) && <button type="button" className="icon-btn tool-card-edit" aria-label={a.id.startsWith('builtin-') ? `Customize ${a.name}` : `Edit ${a.name}`} onClick={() => setEditingAssistant(a.id.startsWith('builtin-') ? { ...a, id: uid() } : a)}><Pencil size={17} /></button>}
                       </div>
                     ))}
-                    {!q && !glassPhone && <button type="button" className="tool-card tool-new" onClick={() => s.setUi({ page: 'assistants' })}><span className="tool-icon" aria-hidden="true"><Plus size={20} /></span><span className="tool-text"><strong>Make an assistant</strong><span>Your own instructions and model, ready in every chat.</span></span></button>}
+                    {!CANVAS_SHELL && !q && !glassPhone && <button type="button" className="tool-card tool-new" onClick={() => s.setUi({ page: 'assistants' })}><span className="tool-icon" aria-hidden="true"><Plus size={20} /></span><span className="tool-text"><strong>Make an assistant</strong><span>Your own instructions and model, ready in every chat.</span></span></button>}
                   </div>
                 </section>
               );
@@ -144,12 +147,12 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
             if (!list.length) return null;
             return (
               <section key={sec.id} id={`tools-${sec.id}`} className="tools-section">
-                {!glassPhone && <header><h2>{sec.label}</h2><p>{sec.blurb}</p></header>}
+                {(CANVAS_SHELL || !glassPhone) && <header>{CANVAS_SHELL ? <h2 tabIndex={-1}>{sec.label}</h2> : <h2>{sec.label}</h2>}<p>{sec.blurb}</p></header>}
                 <div className="tools-grid">{list.map((t) => <ToolCard key={t.id} t={t} />)}</div>
               </section>
             );
           })}
-          {q && (glassPhone
+          {q && (!CANVAS_SHELL && glassPhone
             ? (active === 'assistants' ? !assistants.some((a) => match({ name: a.name, text: a.description })) : !tools.some((t) => t.section === active && match(t)))
             : !tools.some(match) && !assistants.some((a) => match({ name: a.name, text: a.description }))) && <p className="hub-none">No tools match “{query}”.</p>}
         </div>

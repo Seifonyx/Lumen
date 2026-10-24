@@ -1,3 +1,4 @@
+const {closeSettings}=require('./helpers/ui.cjs');
 // Offline mode (the app opens and shows chats with no connection) and the "new version" prompt.
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -31,7 +32,7 @@ const original = fs.readFileSync(SW, 'utf8');
     await page.fill('input[placeholder="AIza…"]', 'g');
     await page.click('button:has-text("Save keys")');
     await page.waitForTimeout(1500);
-    await page.click('.settings-page [aria-label="Close"]');
+    await closeSettings(page);
     await page.fill('.composer textarea', 'hi');
     await page.click('.send-btn');
     await page.waitForSelector('.msg.assistant .model-tag', { timeout: 20000 });

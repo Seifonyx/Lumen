@@ -14,17 +14,15 @@ test('CanvasNav is null in the ordinary switch and comes only from the "on" modu
   assert.match(readFileSync('src/App.tsx', 'utf8'), /\{CANVAS_SHELL \? <>\{CanvasNav && <CanvasNav collapsed=\{sidebarCollapsed\} onExpand=\{toggleSidebar\} \/>\}<ChatView/);
 });
 
-test('CanvasNav keeps one history entry for pages shown in place of the chat and reads no settings or data', () => {
-  const src = readFileSync('src/components/CanvasNav.tsx', 'utf8');
-  // One entry for whatever is open; Back that leaves something open underneath re-adds it (slice 3).
-  assert.equal((src.match(/history\.pushState\(/g) || []).length, 2, 'an entry is added on open, and again only for what Back left open');
-  assert.match(src, /if \(!history\.state\?\.\[MARK\]\) history\.pushState/, 'moving between pages reuses the entry');
-  assert.match(src, /ownPops\+\+; history\.back\(\)/, 'closing inside the app takes the entry back');
-  assert.ok(!/localStorage|indexedDB|fetch\(|settings\./.test(src), 'presentation only');
-  // The rail is the same navigation, loaded with the first collapse: no chat list or project tree of its own.
-  assert.match(src, /const CanvasRail = lazy\(\(\) => import\('\.\/CanvasRail'\)\);/);
-  const rail = readFileSync('src/components/CanvasRail.tsx', 'utf8');
-  for (const file of [src, rail]) assert.ok(!/ChatRow|s\.chats|settings\.projects|localStorage|indexedDB|fetch\(/.test(file), 'no second copy of the tree, presentation only');
+test('CanvasNav delegates browser history to the canonical UI adapter with opaque entries', () => {
+ const src = readFileSync('src/components/CanvasNav.tsx','utf8');
+ const adapter=readFileSync('src/lib/screen-history.ts','utf8');
+ assert.match(src,/useEffect\(\(\) => installScreenHistory\(\), \[\]\)/);
+ assert.match(adapter,/useStore\.setState\(window\.matchMedia/);
+ assert.match(adapter,/history\.pushState\(\{ \.\.\.history\.state, \[KEY\]: \{ session, id: active \} \}/);
+ assert.match(adapter,/entries = new Map/);
+ assert.match(adapter,/owner !== useStore\.getState\(\)\.user\?\.uid/);
+ assert.doesNotMatch(adapter,/localStorage|indexedDB|fetch\(|s\.keys|s\.settings\./);
 });
 
 test("the tree's arrow keys load lazily from SidebarCanvas only, and change no roles", () => {
@@ -60,10 +58,19 @@ test('global New chat is always general; a project folder New chat is always tha
 
 test('slice 3: Back covers Settings, a project overview and registered layers; the tree marks unsent drafts', () => {
   const nav = readFileSync('src/components/CanvasNav.tsx', 'utf8');
-  assert.match(nav, /s\.settingsOpen \|\| s\.projectWorkspaceOpen \|\| routingCenterOpen\(\) \|\| backLayerOpen\(\)/);
-  assert.match(nav, /closeTopSurface\(\);\s*\n\s*\/\/ Something is still open underneath/, 'Back closes the topmost surface only');
+  assert.match(nav, /installScreenHistory/);
+  const adapter=readFileSync('src/lib/screen-history.ts','utf8');
+  assert.match(adapter,/settingsOpen: s\.settingsOpen/);
+  assert.match(adapter,/projectWorkspaceOpen: s\.projectWorkspaceOpen/);
+  assert.match(adapter,/reconcileBackLayers\(/);
   const tree = readFileSync('src/components/SidebarCanvas.tsx', 'utf8');
-  assert.match(tree, /useBackLayer\(allChats, \(\) => setAllChats\(false\)\)/);
+  assert.match(tree, /useBackLayer\(allChats, \(\) => setAllChats\(false\), \(\) => setAllChats\(true\)\)/);
   assert.match(tree, /localStorage\.getItem\(`mr\.draft\.\$\{user\?\.uid\}\.\$\{row\.dataset\.flip\}`\)/, 'reads the composer\'s own per-chat draft key');
   assert.match(readFileSync('src/styles/canvas-shell.css', 'utf8'), /content: 'Draft' \/ ''/, 'visual word only; screen readers get the description');
+});
+
+// A directly opened Settings subsection remains navigable when there is no prior screen marker.
+test('direct-entry Settings section has a fallback to its section list on phones', () => {
+  const source = readFileSync('src/components/SettingsModal.tsx', 'utf8');
+  assert.match(source, /<PhoneNavigation title=\{tab \? label : 'Settings'\} onBack=\{tab \? \(\) => setUi\(\{ settingsTab: '' \}\) : undefined\} \/>/);
 });

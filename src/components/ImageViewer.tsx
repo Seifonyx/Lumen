@@ -1,3 +1,4 @@
+import { CANVAS_SHELL, navigateBack, useScreenBackLayer } from '../lib/canvas-presentation';
 // Full-screen photo viewer, like the Photos app: the picture grows out of the one you tapped, pinch or
 // double-tap to zoom, drag to look around when zoomed, and swipe it down (or up) to put it back, with the
 // background fading as you go. Tap once to hide or show the buttons. Opened from anywhere with openImage().
@@ -26,7 +27,8 @@ export function ImageViewerHost() {
     window.addEventListener('mr:image', open);
     return () => window.removeEventListener('mr:image', open);
   }, []);
-  return req ? <ImageViewer key={req.src} req={req} onClose={() => setReq(null)} /> : null;
+  if (CANVAS_SHELL) useScreenBackLayer!(Boolean(req), () => setReq(null), () => setReq(req), 'image-viewer');
+  return req ? <ImageViewer key={req.src} req={req} onClose={CANVAS_SHELL ? () => navigateBack!(() => setReq(null)) : () => setReq(null)} /> : null;
 }
 
 function ImageViewer({ req, onClose }: { req: ImageRequest; onClose: () => void }) {

@@ -63,11 +63,21 @@ const settle = (page, ms = 450) => page.waitForTimeout(ms);
 const nav = (page) => page.locator('aside.cv-nav');
 async function openNav(page, phone) {
   if (!phone || await nav(page).evaluate((el) => el.classList.contains('open'))) return;
-  await page.getByRole('button', { name: /^(Open chats|Open sidebar)$/ }).first().click();
+  while(await page.locator('.phone-navigation [aria-label="Back"]').isVisible()){await page.locator('.phone-navigation [aria-label="Back"]').click();await settle(page,250);}
+  await page.getByRole('button', { name: /^(Open chats|Open sidebar|Open navigation)$/ }).first().click();
   await settle(page, 600);
 }
 async function go(page, phone, label) { await openNav(page, phone); await nav(page).getByRole('button', { name: label, exact: true }).click(); await settle(page, 700); }
-const closeAll = async (page) => { for (let i = 0; i < 3; i++) { await page.keyboard.press('Escape'); await settle(page, 200); } };
+const closeAll = async (page) => {
+ for(let i=0;i<24;i++){
+   const presented=await page.locator('.modal-backdrop:visible,.hub-page:visible,.settings-page:visible,.rc-page:visible,.canvas-panel:visible,.project-workspace-main:visible,[role="dialog"]:visible:not([inert]),[role="menu"]:visible:not([inert])').count();
+   if(!presented && await page.locator('.composer textarea').isVisible()) return;
+   if(await page.locator('.modal-backdrop:visible,[role="dialog"]:visible:not([inert]),[role="menu"]:visible:not([inert])').count())await page.keyboard.press('Escape');else await page.goBack();
+   await settle(page,200);
+ }
+ console.error('Unclosed presentation',await page.locator('.modal-backdrop:visible,.hub-page:visible,.settings-page:visible,.rc-page:visible,.canvas-panel:visible,.project-workspace-main:visible,[role="dialog"]:visible:not([inert]),[role="menu"]:visible:not([inert])').evaluateAll(els=>els.map(el=>({tag:el.tagName,class:el.className,label:el.getAttribute('aria-label'),inert:el.inert}))));
+ assert.fail('Could not return through the screen hierarchy to chat');
+};
 /** Ink accents and Canvas headings on the current screen. */
 const canvasLook = (page, heading) => page.evaluate((sel) => {
   const root = document.documentElement, h = sel ? document.querySelector(sel) : null;
@@ -103,12 +113,8 @@ try {
         let look = await canvasLook(page, '.settings-heading h2');
         assert.ok(look.scoped && look.ink, 'Canvas scope with ink accents');
         assert.match(look.headingFont, /Geist/); // owner decision: Geist stays the display face (no Archivo)
-        // Phones: the opened section shows its display heading; the bar's small title waits until it scrolls away.
-        if (phone) {
-          const head = await page.evaluate(() => { const h = document.querySelector('.settings-heading h2'), t = document.querySelector('.settings-title-section'); return { shown: Boolean(h && h.getBoundingClientRect().height), size: h ? parseFloat(getComputedStyle(h).fontSize) : 0, text: h?.textContent, bar: t ? getComputedStyle(t).opacity : null }; });
-          assert.ok(head.shown && head.size >= 28 && head.text === 'General', `section display heading: ${JSON.stringify(head)}`);
-          assert.equal(head.bar, '0', 'no duplicate small title while the heading is in view');
-        }
+        // A shared compact bar owns the phone title; the content must not repeat it.
+        if(phone){assert.equal(await page.locator('.phone-navigation h1').innerText(),'General');assert.equal(await page.locator('.settings-heading h2').isVisible(),false);}
         record.screens.settings = await axe(page, 'section.settings-page');
         await shot(page, join(out, `${tag}-settings.png`));
         await closeAll(page);
@@ -134,6 +140,8 @@ try {
         await page.getByRole('textbox', { name: 'Project name' }).fill(name);
         await page.getByRole('button', { name: 'Create project' }).click();
         await settle(page, 700);
+        assert.equal(await page.getByRole('textbox',{name:'Project name',exact:true}).count(),0,'successful creation dismisses its form');
+        assert.ok(await page.locator('.project-workspace-main').isVisible(),'successful creation retains the selected workspace');
         await openNav(page, phone);
         assert.ok(await nav(page).getByRole('button', { name: new RegExp(name) }).first().isVisible(), 'the new project is a folder in the tree');
         pass('create project');
@@ -194,9 +202,8 @@ try {
         await shot(page, join(out, `${tag}-study.png`));
         await closeAll(page);
         await go(page, phone, 'Tools');
-        await page.getByRole('button', { name: 'All assistants' }).first().click().catch(async () => { await page.locator('main.hub-page').getByRole('button', { name: /^Assistants$/ }).first().click(); });
-        await page.locator('.lib-avatar').first().waitFor();
-        assert.ok(await inkOf('.lib-avatar'), 'assistant avatars are ink, not per-name hues');
+        await page.getByRole('button',{name:'New assistant',exact:true}).click();
+        await page.getByLabel('Library item name').waitFor();
         record.screens.assistants = await axe(page, 'main.hub-page');
         await shot(page, join(out, `${tag}-assistants.png`));
         await closeAll(page);

@@ -1,3 +1,4 @@
+import { CANVAS_SHELL, replaceScreen, finishScreen, useScreenMemory, forgetScreenMemory } from '../lib/canvas-presentation';
 import { useEffect, useRef, useState } from 'react';
 import {
   FileSpreadsheet,
@@ -62,15 +63,17 @@ export default function ProjectManager({
     return null;
   });
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [instructions, setInstructions] = useState('');
-  const [defaultModel, setDefaultModel] = useState('');
-  const [color, setColor] = useState('indigo');
-  const [files, setFiles] = useState<Attachment[]>([]);
+  const draftKey = CANVAS_SHELL ? `project-form:${initialProjectId || 'new'}` : '';
+  const [name, setName] = CANVAS_SHELL ? useScreenMemory!(`${draftKey}:name`,selected?.name || '') : useState('');
+  const [description, setDescription] = CANVAS_SHELL ? useScreenMemory!(`${draftKey}:description`,selected?.description || '') : useState('');
+  const [instructions, setInstructions] = CANVAS_SHELL ? useScreenMemory!(`${draftKey}:instructions`,selected?.instructions || '') : useState('');
+  const [defaultModel, setDefaultModel] = CANVAS_SHELL ? useScreenMemory!(`${draftKey}:defaultModel`,selected?.defaultModel || '') : useState('');
+  const [color, setColor] = CANVAS_SHELL ? useScreenMemory!(`${draftKey}:color`,selected?.color || 'indigo') : useState('indigo');
+  const [files, setFiles] = CANVAS_SHELL ? useScreenMemory!<Attachment[]>(`${draftKey}:files`,selected?.files || []) : useState<Attachment[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (CANVAS_SHELL) return;
     if (!selected) return;
     setName(selected.name || '');
     setDescription(selected.description || '');
@@ -96,9 +99,13 @@ export default function ProjectManager({
       defaultModel: defaultModel || undefined,
       updatedAt: Date.now(),
     };
-    if (!saveProject(project)) return;
-    selectProject(project.id);
-    onClose();
+    if (CANVAS_SHELL) {
+      replaceScreen!(() => { if (!saveProject(project)) return; useStore.getState().setUi({page:null,settingsOpen:false}); selectProject(project.id); for(const field of ['name','description','instructions','defaultModel','color','files'])forgetScreenMemory!(`${draftKey}:${field}`); onClose(); });
+    } else {
+      if (!saveProject(project)) return;
+      selectProject(project.id);
+      onClose();
+    }
   };
 
   const addFiles = async (incoming: File[]) => {
@@ -186,7 +193,7 @@ export default function ProjectManager({
         </label>
         <div className="project-form-actions">
           {isEditingExisting && current && (
-            <button type="button" className="btn ghost danger" onClick={() => { if (confirm(`Delete the project “${current.name}”? Its chats stay in your chat list.`)) { deleteProject(current.id); onClose(); } }}>
+            <button type="button" className="btn ghost danger" onClick={CANVAS_SHELL ? () => { if (confirm(`Delete the project “${current.name}”? Its chats stay in your chat list.`)) finishScreen!(() => { deleteProject(current.id); onClose(); }); } : () => { if (confirm(`Delete the project “${current.name}”? Its chats stay in your chat list.`)) { deleteProject(current.id); onClose(); } }}>
               <Trash2 size={15} /> Delete
             </button>
           )}

@@ -1,11 +1,7 @@
 // Two "devices" signed in as the same user (Firebase emulators), checking chats and settings sync.
 const { chromium } = require('playwright');
-const {openSettings,replyAction}=require('./helpers/ui.cjs');
+const {openSettings,replyAction,openSettingsSection:openTab,closeSettings,closeCanvas}=require('./helpers/ui.cjs');
 // Settings is a page: on phones the section list shows first, and a section has a back arrow.
-async function openTab(page, name) {
-  if (await page.isVisible('.settings-back')) await page.click('.settings-back');
-  await page.click(`.settings-tabs >> text=${name}`);
-}
 const path = require('path');
 const OUT = path.join(__dirname, 'out');
 require('fs').mkdirSync(OUT, { recursive: true });
@@ -61,7 +57,7 @@ async function device(browser, name, email, mobile) {
   check(true, 'keys saved and models loaded');
   await openTab(A.page, 'Personalization');
   await A.page.fill('.field-block textarea', 'Use metric units.');
-  await A.page.click('.settings-page [aria-label="Close"]');
+  await closeSettings(A.page);
 
   // ---- Phone: chat with an image, rename + pin
   await A.page.setInputFiles('.composer input[type=file][multiple]', path.join(__dirname, 'fixtures', 'photo.png'));
@@ -130,7 +126,8 @@ async function device(browser, name, email, mobile) {
 
   // Saved helpers and their immutable chat instructions cross devices.
   await B.page.getByRole('button', { name: 'Tools', exact: true }).click();
-  await B.page.getByRole('button', { name: 'All assistants', exact: true }).click();
+  const Bcanvas=Boolean(await B.page.locator('[data-lumen-canvas-shell]').count());
+  if (!Bcanvas) await B.page.getByRole('button', { name: 'All assistants', exact: true }).click();
   await B.page.getByRole('button', { name: 'New assistant', exact: true }).click();
   await B.page.getByLabel('Library item name').fill('Synced helper');
   await B.page.getByLabel('Library instructions').fill('Use HELPER_SYNC_MARKER in your reply.');
@@ -148,7 +145,8 @@ async function device(browser, name, email, mobile) {
     await new Promise(resolve => setTimeout(resolve, 100));
   }
   if (!helperSaved) throw new Error('The saved helper did not reach Firestore within 15 seconds.');
-  await B.page.getByRole('button', { name: 'Start a chat with Synced helper', exact: true }).click();
+  if (Bcanvas) await B.page.locator('#tools-assistants .tool-card').filter({hasText:'Synced helper'}).click();
+  else await B.page.getByRole('button', { name: 'Start a chat with Synced helper', exact: true }).click();
   await B.page.fill('.composer textarea', 'Test helper sync');
   await B.page.click('.send-btn');
   await B.page.waitForSelector('.msg.assistant .model-tag');
@@ -157,10 +155,11 @@ async function device(browser, name, email, mobile) {
   await A.page.waitForSelector('.app:not(.app-skeleton) .topbar');
   await A.page.click('.menu-btn');
   await A.page.getByRole('button', { name: 'Tools', exact: true }).click();
-  await A.page.getByRole('button', { name: 'All assistants', exact: true }).click();
-  await A.page.locator('article.lib-card strong', { hasText: /^Synced helper$/ }).waitFor();
+  const Acanvas=Boolean(await A.page.locator('[data-lumen-canvas-shell]').count());
+  if (!Acanvas) await A.page.getByRole('button', { name: 'All assistants', exact: true }).click();
+  await (Acanvas ? A.page.locator('#tools-assistants .tool-card').filter({hasText:'Synced helper'}) : A.page.locator('article.lib-card strong', { hasText: /^Synced helper$/ })).waitFor();
   check(true, 'saved assistant library synced to phone');
-  await A.page.locator('.hub-page [aria-label="Close"]').click();
+  await A.page.locator('.hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label="Back"]').click();
   await A.page.click('.menu-btn');
   await A.page.locator('.sidebar').getByRole('button', { name: 'Synced Chat Title', exact: true }).click();
   await A.page.waitForSelector('.assistant-badge');
@@ -179,8 +178,8 @@ async function device(browser, name, email, mobile) {
   await A.page.fill('.canvas-text', 'CANVAS_FROM_PHONE');
   await B.page.waitForFunction(() => document.querySelector('.canvas-text')?.value === 'CANVAS_FROM_PHONE');
   check(true, 'canvas edits synced live back to laptop');
-  await A.page.getByRole('button', { name: 'Close canvas', exact: true }).click();
-  await B.page.getByRole('button', { name: 'Close canvas', exact: true }).click();
+  await closeCanvas(A.page);
+  await closeCanvas(B.page);
   await B.page.evaluate(()=>(document.querySelector('.sidebar .new-chat, .cv-new-pill')||[...document.querySelectorAll('.cv-dest button')].find(b=>b.textContent.includes('New chat'))).click());
   await B.page.keyboard.press('Control+k');
   await B.page.getByLabel('Search commands').fill('Open document canvas');

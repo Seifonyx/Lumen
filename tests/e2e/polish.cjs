@@ -1,3 +1,4 @@
+const {openSettingsSection,closeSettings}=require('./helpers/ui.cjs');
 // 1.5 on a phone: the app opens from this device's saved copy without waiting for the network; a reply that
 // arrives while you're scrolled up shows "Writing…" then "New reply" on the jump button, which takes you
 // there; dragging the conversation down hides the keyboard; the optional send sound plays only when turned
@@ -116,13 +117,13 @@ const long = Array.from({ length: 12 }, (_, i) => [
     assert.equal(await page.evaluate(() => window.__sounds), 0, 'no sound by default');
     await page.locator('.send-btn.stop').waitFor({ state: 'hidden', timeout: 8000 });
     await page.click('.menu-btn'); await page.waitForTimeout(500); await page.click('.sidebar-foot, .cv-account');
-    await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click();
+    await openSettingsSection(page,'General');
     await page.waitForTimeout(500);
     await page.locator('.settings-page:not(.exit-ghost)').getByLabel('Sound when sending').check();
     const preview = await page.evaluate(() => window.__sounds);
     assert.ok(preview > 0, 'turning it on plays it once');
     assert.ok(await page.locator('.settings-page:not(.exit-ghost)').getByRole('radio', { name: 'Auto' }).count() >= 1, 'text size has Auto');
-    await page.click('.settings-page [aria-label="Close"]');
+    await closeSettings(page);
     await page.waitForTimeout(400);
     await page.fill('.composer textarea', 'Now with sound');
     await page.click('.send-btn');

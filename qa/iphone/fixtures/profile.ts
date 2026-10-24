@@ -16,9 +16,9 @@ export const FIXTURE_PROJECTS = [
 // No external image URL, real person, provider request or production persistence.
 const QA_STUDIO_IMAGE = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240"><rect width="320" height="240" fill="#c6c0b2"/><rect x="28" y="28" width="264" height="184" rx="8" fill="#ece8df"/><rect x="58" y="56" width="88" height="122" rx="4" fill="#736d60"/><circle cx="210" cy="104" r="40" fill="#b7a78e"/><path d="M165 178h92" stroke="#807969" stroke-width="9"/></svg>');
 const QA_LIBRARY_DOCUMENTS = [
-  { id:'qa-launch-brief',name:'Launch brief.md',content:'# Launch brief\\n\\n## Positioning\\nA quiet, independent design studio for thoughtful digital products.\\n\\n- Clarify the offer\\n- Interview first clients\\n- Build a portfolio',updatedAt:NOW-2*3600000 },
-  { id:'qa-review-notes',name:'Customer interview synthesis — needs, objections, and next steps.md',content:'# Interview synthesis\\n\\nSynthetic notes across five fictional conversations.\\n\\n## Themes\\nReliability, clarity, accessibility.',updatedAt:NOW-4*3600000 },
-  { id:'qa-weekly-plan',name:'Week one roadmap.md',content:'# Week one\\n\\nMonday: Define a single promise.\\nTuesday: Sketch three examples.\\nWednesday: Review and iterate.',updatedAt:NOW-6*3600000 },
+  { id:'qa-launch-brief',name:'Launch brief.md',content:'# Launch brief\n\n## Positioning\nA quiet, independent design studio for thoughtful digital products.\n\n- Clarify the offer\n- Interview first clients\n- Build a portfolio',updatedAt:NOW-2*3600000 },
+  { id:'qa-review-notes',name:'Customer interview synthesis — needs, objections, and next steps.md',content:'# Interview synthesis\n\nSynthetic notes across five fictional conversations.\n\n## Themes\nReliability, clarity, accessibility.',updatedAt:NOW-4*3600000 },
+  { id:'qa-weekly-plan',name:'Week one roadmap.md',content:'# Week one\n\nMonday: Define a single promise.\nTuesday: Sketch three examples.\nWednesday: Review and iterate.',updatedAt:NOW-6*3600000 },
 ];
 const QA_LIBRARY_FILES = [
   { id:'qa-pdf',kind:'pdf',name:'Studio positioning overview — 2026.pdf',mime:'application/pdf',size:245760,text:'Synthetic concept deck. No real clients.' },

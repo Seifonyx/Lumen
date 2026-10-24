@@ -451,22 +451,20 @@
 .app[data-lumen-canvas-shell] .screen-actions > button { display:inline-grid;place-items:center;min-width:44px;min-height:44px;padding:8px;border:0;border-radius:10px;background:none;color:var(--canvas-ink);cursor:pointer; }
 .app[data-lumen-canvas-shell] .screen-actions > button:hover { background:var(--canvas-fill); }
 
-/* Phase 4 mobile hierarchy: the compact navigation bar already names each hub.
-   Do not leave the hidden large-title header's margins as blank space above discovery. */
-@media (max-width:899px) {
- .app[data-lumen-canvas-shell] .hub-page:where([aria-label="Tools"],[aria-label="Library"],[aria-label="Projects"]) .hub-head { display:none; }
- .app[data-lumen-canvas-shell] .tools-browse { margin-bottom:2px; }
- .app[data-lumen-canvas-shell] .tools-section:first-child > header { padding-top:12px; }
- .app[data-lumen-canvas-shell] .proj-open, .app[data-lumen-canvas-shell] .proj-body { min-width:0; }
- .app[data-lumen-canvas-shell] .proj-stats { flex-wrap:wrap; }
- .app[data-lumen-canvas-shell] .settings-page .account-row { min-width:0; }
- .app[data-lumen-canvas-shell] .settings-page .account-row .setting-text { min-width:0; flex:1 1 auto; overflow-wrap:anywhere; }
- .app[data-lumen-canvas-shell] .settings-page .account-row :is(.setting-label,.setting-hint) { overflow-wrap:anywhere; word-break:break-word; }
+/* Phase 4 phone pages have a single navigation title and room for their content. */
+@media(max-width:899px){
+.app[data-lumen-canvas-shell] .hub-page:is([aria-label="Tools"],[aria-label="Library"],[aria-label="Projects"]) .hub-head{display:none}
+.app[data-lumen-canvas-shell] .hub-page[aria-label="Tools"] .hub-toolbar{margin-bottom:6px}
+.app[data-lumen-canvas-shell] .tools-browse{margin-bottom:0}
+.app[data-lumen-canvas-shell] .tools-section:first-child>header{padding-top:6px}
+.app[data-lumen-canvas-shell] .project-page .project-title{display:none}
 }
-.app[data-lumen-canvas-shell] .tools-statusline { display:flex; flex-wrap:wrap; gap:4px 10px; margin:0; color:var(--canvas-secondary); font:400 12px/1.5 var(--canvas-body-font); }
-.app[data-lumen-canvas-shell] .tools-statusline span + span::before { content:"·"; margin-inline-end:10px; color:var(--canvas-muted); }
-@media (max-width:360px) {
- .app[data-lumen-canvas-shell] .coll-item:is(.kind-documents,.kind-files) .doc-open { grid-template-columns:44px minmax(0,1fr); gap:10px; }
- .app[data-lumen-canvas-shell] .coll-document-icon { min-width:44px; height:54px; }
- .app[data-lumen-canvas-shell] .proj-card .proj-body { padding-inline:14px; }
+@media(max-width:430px){
+.app[data-lumen-canvas-shell] .settings-page .account-row{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:start;gap:10px}
+.app[data-lumen-canvas-shell] .settings-page .account-row .setting-ctrl{grid-column:2;justify-content:flex-start;max-width:none}
+.app[data-lumen-canvas-shell] .settings-page .account-row .setting-text{min-width:0}
+.app[data-lumen-canvas-shell] .settings-page .account-row .setting-label{white-space:normal;overflow-wrap:anywhere}
+.app[data-lumen-canvas-shell] .settings-page .account-row .setting-hint{overflow-wrap:anywhere}
 }
+.app[data-lumen-canvas-shell] .tools-statusline{display:flex;flex-wrap:wrap;gap:8px;margin:0;color:var(--canvas-secondary);font-size:12px}
+.app[data-lumen-canvas-shell] .tools-statusline span+span::before{content:"· "}

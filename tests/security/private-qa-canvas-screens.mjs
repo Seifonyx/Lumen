@@ -209,6 +209,7 @@ try {
         await shot(page, join(out, `${tag}-providers.png`));
         await page.locator('.rc-provider-list [data-provider="gemini"]').first().click();
         await page.locator('.rc-provider-detail').waitFor();
+        if (phone) await page.getByRole('button', { name:'More actions', exact:true }).waitFor();
         await shot(page, join(out, `${tag}-provider-detail.png`));
         await closeAll(page);
         pass('routing center');

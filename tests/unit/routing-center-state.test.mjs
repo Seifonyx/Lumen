@@ -2,14 +2,12 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import ts from 'typescript';
+import sucrase from 'sucrase';
 
 // Run the actual presentation-state module without a browser. It depends on only
 // React's store subscription hook, which is inert for these imperative API tests.
 const source = readFileSync(new URL('../../src/lib/routing-center.ts', import.meta.url), 'utf8');
-const output = ts.transpileModule(source, { compilerOptions: {
-  module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,
-} }).outputText;
+const output = sucrase.transform(source, { transforms: ['typescript', 'imports'] }).code;
 const scope = { exports: {}, require: (id) => {
   assert.equal(id, 'react');
   return { useSyncExternalStore: (_subscribe, snapshot) => snapshot() };

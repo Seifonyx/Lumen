@@ -253,6 +253,7 @@ try {
         // Routing Center in this theme.
         if (phone) {
           await openNav(page, phone);
+          await nav(page).getByRole('button', { name:'Prism', exact:true }).scrollIntoViewIfNeeded();
           await shot(page, join(out, `${tag}-prism-drawer.png`));
           await nav(page).getByRole('button',{name:'Prism',exact:true}).click();
           await settle(page, 700);

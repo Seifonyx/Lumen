@@ -731,7 +731,7 @@ export default function SettingsModal() {
   return (
     // On computers the sidebar stays usable next to Settings; on phones Settings covers the screen.
     <section className={`settings-page${tab ? ' has-section' : ''}${scrolled ? ' scrolled' : ''}`} aria-label="Settings" role="dialog" aria-modal={window.matchMedia('(max-width: 899px)').matches || undefined} data-keep-sidebar="true" tabIndex={-1} ref={dialog}>
-      {CANVAS_SHELL && window.matchMedia('(max-width:899px)').matches && PhoneNavigation ? <PhoneNavigation title={tab ? label : 'Settings'} onBack={tab ? () => setUi({ settingsTab: '' }) : () => setUi({ settingsOpen: false })} /> : <header className="settings-top">
+      {CANVAS_SHELL && window.matchMedia('(max-width:899px)').matches && PhoneNavigation ? <PhoneNavigation title={tab ? label : 'Settings'} backTarget={tab ? 'settings-index' : 'settings-exit'} onBack={tab ? () => setUi({ settingsTab: '' }) : () => setUi({ settingsOpen: false })} /> : <header className="settings-top">
         {tab ? (
           <button className="icon-btn settings-back" onClick={() => go('')} aria-label={CANVAS_SHELL ? "Back" : "All settings"}>
             <ChevronLeft size={24} />

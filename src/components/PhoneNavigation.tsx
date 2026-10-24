@@ -1,10 +1,10 @@
 import { ChevronLeft, Menu } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
-import { screenBack, screenHasBack } from '../lib/screen-history';
+import { screenBack, screenBackToSettings, screenHasBack } from '../lib/screen-history';
 import { useStore } from '../store';
-export interface PhoneNavigationProps { title: string; onBack?: () => void; actions?: ReactNode }
+export interface PhoneNavigationProps { title: string; onBack?: () => void; actions?: ReactNode; backTarget?: 'settings-index' | 'settings-exit' }
 /** One leading navigation control; actions belong to the current screen, not a second app menu. */
-export default function PhoneNavigation({ title, onBack, actions }: PhoneNavigationProps) {
+export default function PhoneNavigation({ title, onBack, actions, backTarget }: PhoneNavigationProps) {
   const heading = useRef<HTMLHeadingElement>(null);
   useLayoutEffect(() => { if (!document.activeElement?.matches('input,textarea,select')) heading.current?.focus({ preventScroll:true }); }, [title]);
   useEffect(() => {
@@ -18,7 +18,7 @@ export default function PhoneNavigation({ title, onBack, actions }: PhoneNavigat
   }, []);
   const canBack = Boolean(onBack) || screenHasBack();
   return <header className="phone-navigation">
-    <button type="button" aria-label={canBack ? 'Back' : 'Open navigation'} onClick={() => canBack ? screenBack(onBack) : onBack ? onBack() : useStore.getState().setUi({ sidebarOpen: true })}>
+    <button type="button" aria-label={canBack ? 'Back' : 'Open navigation'} onClick={() => backTarget && onBack ? screenBackToSettings(backTarget === 'settings-index' ? 'index' : 'exit', onBack) : canBack ? screenBack(onBack) : useStore.getState().setUi({ sidebarOpen: true })}>
       {canBack ? <ChevronLeft size={28} /> : <Menu size={22} />}
     </button>
     <h1 ref={heading} tabIndex={-1}>{title}</h1><div className="phone-navigation-actions">{actions}</div>

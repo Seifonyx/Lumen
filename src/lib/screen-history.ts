@@ -16,6 +16,10 @@ export function replaceScreen(run: () => void) { if (replace) replace(run); else
 export function finishScreen(run: () => void) { replaceScreen(run); screenBack(); }
 /** Combine synchronous canonical UI operations into one visible navigation step. */
 export function navigateScreen(run: () => void) { const outer = applying; applying = true; try { run(); } finally { applying = outer; if (!outer) commit?.(); } }
+// Position tracks the actual browser stack independently of opaque, never-reused entry IDs.
+// After a Back and new push, the browser discards its Forward branch; prune our in-memory copy too.
+let positions = new Map<number, number>();
+let cursor = 0;
 let active = 0, serial = 0, applying = false;
 const session = /* @__PURE__ */ (() => Math.random().toString(36).slice(2))();
 const capture = () => { const s = useStore.getState(); return { layerKey: backLayerOpen() ? backLayerIdentity() : null, restoreLayer: backLayerRestore(), activeProjectId: s.activeProjectId, currentId: s.currentId, runner: s.runner, layer: backLayerOpen(), canvasOpen: s.canvasOpen, canvasDocumentId: s.canvasDocumentId, page: s.page, pageArg: s.pageArg, settingsOpen: s.settingsOpen, settingsTab: s.settingsTab, projectWorkspaceOpen: s.projectWorkspaceOpen, routing: getRoutingScreen() }; };
@@ -32,6 +36,22 @@ export function screenBack(fallback?: () => void) {
   if (active > 0 && history.state?.[KEY]?.session === session) history.back();
   else fallback?.();
 }
+/** Navigate to the nearest meaningful Settings ancestor, not every transient tab/editor snapshot.
+ * If Settings was the initial screen, replace its snapshot with the fallback (no phantom Back). */
+export function screenBackToSettings(target: 'index' | 'exit', fallback: () => void) {
+  const here = positions.get(active);
+  if (!applying && here !== undefined && history.state?.[KEY]?.session === session) {
+    let destination = -1;
+    for (const [id, pos] of positions) {
+      const entry = entries.get(id);
+      if (!entry || pos >= here) continue;
+      const matches = target === 'index' ? entry.settingsOpen && !entry.settingsTab : !entry.settingsOpen;
+      if (matches && pos > destination) destination = pos;
+    }
+    if (destination >= 0) { history.go(destination - here); return; }
+  }
+  replaceScreen(fallback);
+}
 export const screenHasBack = () => active > 0;
 export function installScreenHistory() {
   // A local layer on an unmounted/covered canonical screen must not become a second
@@ -40,7 +60,7 @@ export function installScreenHistory() {
   let owner = useStore.getState().user?.uid;
   let previous = capture();
   const remember = () => {
-    entries = new Map([[0, capture()]]); active = 0;
+    entries = new Map([[0, capture()]]); positions = new Map([[0, 0]]); cursor = 0; active = 0;
     history.replaceState({ ...history.state, [KEY]: { session, id: 0 } }, '');
   };
   remember();
@@ -54,13 +74,15 @@ export function installScreenHistory() {
     const root = (value: typeof next) => !value.runner && !value.canvasOpen && !value.page && !value.settingsOpen && !value.projectWorkspaceOpen && !value.routing.open && !value.layer;
     if (root(previous) && root(next)) { previous = next; entries.set(active, next); return; }
     previous = next;
-    active = ++serial; entries.set(active, next);
+    for (const [id, pos] of positions) if (pos > cursor) { positions.delete(id); entries.delete(id); views.delete(id); }
+    cursor += 1;
+    active = ++serial; entries.set(active, next); positions.set(active, cursor);
     history.pushState({ ...history.state, [KEY]: { session, id: active } }, '');
   };
   const pop = () => {
     const marker = history.state?.[KEY];
     if (marker?.session !== session || !entries.has(marker.id)) return;
-    saveView(); active = marker.id; const next = entries.get(active)!;
+    saveView(); active = marker.id; cursor = positions.get(active) ?? cursor; const next = entries.get(active)!;
     applying = true;
     const { routing, layer, layerKey: _layerKey, restoreLayer, ...ui } = next;
     const fresh = useStore.getState();

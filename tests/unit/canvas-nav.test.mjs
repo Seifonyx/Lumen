@@ -72,5 +72,9 @@ test('slice 3: Back covers Settings, a project overview and registered layers; t
 // A directly opened Settings subsection remains navigable when there is no prior screen marker.
 test('direct-entry Settings section has a fallback to its section list on phones', () => {
   const source = readFileSync('src/components/SettingsModal.tsx', 'utf8');
-  assert.match(source, /<PhoneNavigation title=\{tab \? label : 'Settings'\} onBack=\{tab \? \(\) => setUi\(\{ settingsTab: '' \}\) : undefined\} \/>/);
+  assert.match(source, /<PhoneNavigation title=\{tab \? label : 'Settings'\} backTarget=\{tab \? 'settings-index' : 'settings-exit'\}/);
+  const adapter = readFileSync('src/lib/screen-history.ts', 'utf8');
+  assert.match(adapter, /screenBackToSettings\(target: 'index' \| 'exit'/);
+  assert.match(adapter, /history\.go\(destination - here\)/);
+  assert.match(adapter, /replaceScreen\(fallback\)/);
 });

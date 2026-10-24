@@ -5,7 +5,7 @@
 //   empty     — no provider key saved.
 //   failed    — the Google catalog refuses the key (401).
 //   stale     — a ready catalog, then a check that fails (503): cached models remain.
-//   dense     — 145 models with long names, and larger text (Lumen's text size at its largest).
+//   dense     — 145 models with long names, and larger text (Lumen's largest text size and 125% page zoom).
 // Screens: overview, providers, detail (Google AI Studio) and detail-anthropic. Sizes: iPhone 320×568, 390×844, 430×932;
 // laptop 1280×800, desktop 1440×900; Light and Dark; one CSS px per image px. SHOTS=<regex> filters file names;
 // STATES=connected,empty,… limits states. Chromium with an emulated touch phone: not a physical-iPhone result.
@@ -62,7 +62,8 @@ async function capture(browser, state, theme, [tag, w, h]) {
     if (state === 'empty') { await settings.waitFor(); await settings.getByRole('button', { name: 'Close', exact: true }).first().click(); }
     await page.locator('.composer textarea').waitFor();
     if (state !== 'empty') { await seed(page, uid, CHATS); await page.reload(); await page.locator('.composer textarea').waitFor(); }
-    if (state === 'dense') await page.evaluate(() => document.documentElement.style.setProperty('--fs', '19px'));
+    // Larger text: Lumen's largest text size and 125% page zoom (what Safari's text-size control does; not Dynamic Type).
+    if (state === 'dense') await page.evaluate(() => { document.documentElement.style.setProperty('--fs', '19px'); document.documentElement.style.zoom = '1.25'; });
     await page.waitForTimeout(500);
     const shot = async (screen) => { if (only && !only.test(name(screen))) return; await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(250); await page.screenshot({ path: path.join(out, name(screen)), animations: 'disabled' }); };
     const rc = page.locator('.rc-page');

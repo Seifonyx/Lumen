@@ -1,6 +1,6 @@
 // Actual Canvas UI, synthetic accounts/catalogs and intercepted transport. No live inference.
-// Sections: one header line with six tabs on computers. Phones: a dock with Overview, Providers, Models and Policies;
-// Usage and Diagnostics open from the overview's route panel, and a provider from the list, as pages with Back in the bar.
+// Sections: one header line with five tabs on computers. Phones: five horizontally scrollable sections starting with Models;
+// Usage and Diagnostics are sections, and a provider from the list, as pages with Back in the bar.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -50,21 +50,21 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       await page.locator('.composer textarea').fill(draft);
       const open = async () => {
         if (width < 900) await page.getByRole('button', { name: 'Open chats', exact: true }).first().click();
-        await page.locator('aside.cv-nav').getByRole('button', { name: 'Models & routing', exact: true }).click();
+        await page.locator('aside.cv-nav').getByRole('button', { name: 'Prism', exact: true }).click();
       };
       await open();
       const rc = page.locator('.rc-page');
-      await rc.getByRole('heading', { name: width < 900 ? 'Models & routing' : 'Routing Center', exact: true }).waitFor();
-      await rc.getByRole('heading', { name: width < 900 ? 'Models & routing' : 'Routing Center', exact: true }).click();
+      await rc.getByRole('heading', { name: width < 900 ? 'Prism' : 'Prism', exact: true }).waitFor();
+      await rc.getByRole('heading', { name: width < 900 ? 'Prism' : 'Prism', exact: true }).click();
       const shot = async name => {
-        if ((width === 1440 || width === 390) && (!before || name === 'overview')) {
+        if ((width === 1440 || width === 390) && (!before || name === 'models')) {
           await page.evaluate(() => document.fonts.ready);
           await page.screenshot({ path: path.join(out, `${width}-${theme}-${name}.png`), animations: 'disabled' });
         }
       };
       const phone = width < 900;
-      const tab = async name => { if(phone){for(let i=0;i<10 && !await rc.locator('.phone-sections').isVisible();i++){await rc.locator('.phone-navigation').getByRole('button',{name:'Back',exact:true}).click();await page.waitForTimeout(80);}} await rc.getByRole('navigation',{name:'Routing sections'}).getByRole('button',{name:phone && name==='Policies'?'Layouts':name,exact:true}).click(); };
-      await shot('overview');
+      const tab = async name => { if(phone){for(let i=0;i<10 && !await rc.locator('.phone-sections').isVisible();i++){await rc.locator('.phone-navigation').getByRole('button',{name:'Back',exact:true}).click();await page.waitForTimeout(80);}} await rc.getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name,exact:true}).click(); };
+      await shot('models');
       if (!before) await rc.getByRole('region', { name: 'Current routing mode' }).waitFor();
       if (!before && phone) {
         assert.equal(await rc.locator('.rc-dock').count(),0);
@@ -72,7 +72,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
           await tab(id === 'usage' ? 'Usage' : 'Diagnostics');
           await rc.getByRole('heading',{name:heading}).waitFor();
           assert.equal(await rc.getByRole('button',{name:'Open sidebar',exact:true}).count(),0);
-          await tab('Overview');
+          await tab('Models');
           await rc.getByRole('region',{name:'Current routing mode'}).waitFor();
         }
       }
@@ -143,7 +143,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         assert(providerRequests.length >= 3);
         assert(providerRequests.every(r => r.method === 'GET' && new URL(r.url).pathname.endsWith('/models')), 'only catalog GETs, never inference');
       }
-      await tab('Overview');
+      await tab('Models');
       if(phone){for(let i=0;i<24 && await rc.isVisible();i++){await rc.locator('.phone-navigation').getByRole('button',{name:'Back',exact:true}).click();await page.waitForTimeout(120);}assert.equal(await rc.isVisible(),false,'all visited sections unwind through Back');}else await rc.getByRole('button',{name:'Back to chat',exact:true}).click();
       assert.equal(await page.locator('.composer textarea').inputValue(), draft);
       await open();
@@ -159,10 +159,10 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
             node.style.fontSize = `${parseFloat(getComputedStyle(node).fontSize) * 1.5}px`;
           }
         });
-        // The dock keeps its four places in view (its labels keep a fixed size, as a tab bar's do); the overview's rows keep
+        // The scroller reveals all five sections on keyboard focus (its labels keep a fixed size, as a tab bar's do); Models' rows keep
         // their words inside the row at larger text.
         assert.equal(await rc.locator('.rc-dock').count(), 0);
-        assert.equal(await rc.locator('.phone-sections button').count(), 6);
+        assert.equal(await rc.locator('.phone-sections button').count(), 5);
         for (const button of await rc.locator('.phone-sections button').all()) {
           await button.focus();
           assert(await button.evaluate(el => el.scrollWidth <= el.clientWidth && [...el.children].every(c => c.getBoundingClientRect().right <= el.getBoundingClientRect().right + 0.5)), 'row remains readable at larger text');

@@ -6,7 +6,7 @@
 //   failed    — the Google catalog refuses the key (401).
 //   stale     — a ready catalog, then a check that fails (503): cached models remain.
 //   dense     — 145 models with long names, and larger text (Lumen's largest text size and 125% page zoom).
-// Screens: overview, providers, detail (Google AI Studio) and detail-anthropic. Sizes: iPhone 320×568, 390×844, 430×932;
+// Screens: models, providers, detail (Google AI Studio) and detail-anthropic. Sizes: iPhone 320×568, 390×844, 430×932;
 // laptop 1280×800, desktop 1440×900; Light and Dark; one CSS px per image px. SHOTS=<regex> filters file names;
 // STATES=connected,empty,… limits states. Chromium with an emulated touch phone: not a physical-iPhone result.
 const { chromium } = require('playwright');
@@ -43,7 +43,7 @@ const CHATS = [
 async function capture(browser, state, theme, [tag, w, h]) {
   {
     const name = (screen) => `${state}-${tag}-${theme}-${screen}.png`;
-    if (only && !['overview', 'providers', 'detail', 'detail-anthropic'].some((s) => only.test(name(s)))) return;
+    if (only && !['models', 'providers', 'detail', 'detail-anthropic'].some((s) => only.test(name(s)))) return;
     const phone = w < 900;
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: phone, hasTouch: phone, deviceScaleFactor: 1, reducedMotion: 'reduce', colorScheme: theme, serviceWorkers: 'block' });
     await ctx.route('**/*', (r) => new URL(r.request().url()).origin === new URL(base).origin || /^(data|blob):/.test(r.request().url()) ? r.continue() : r.abort());
@@ -69,13 +69,13 @@ async function capture(browser, state, theme, [tag, w, h]) {
     const rc = page.locator('.rc-page');
     // Open from the navigation, as a person would.
     if (phone) { await page.getByRole('button', { name: 'Open chats', exact: true }).first().click(); await page.waitForTimeout(400); }
-    await page.locator('aside.cv-nav').getByRole('button', { name: 'Models & routing', exact: true }).click();
-    await rc.getByRole('heading', { name: 'Routing Center' }).first().waitFor();
+    await page.locator('aside.cv-nav').getByRole('button', { name: 'Prism', exact: true }).click();
+    await rc.getByRole('heading', { name: 'Prism' }).first().waitFor();
     await page.waitForTimeout(400);
-    await shot('overview');
+    await shot('models');
     // Sections: the redesign and the previous build both name them; try the navigation's button or tab.
     const section = async (label) => {
-      const nav = rc.getByRole('navigation', { name: 'Routing sections' });
+      const nav = rc.getByRole('navigation', { name: 'Prism sections' });
       const name = new RegExp(`^${label}\\b`);
       const target = nav.getByRole('tab', { name }).or(nav.getByRole('button', { name })).or(nav.getByRole('link', { name }));
       await target.first().click();

@@ -251,10 +251,30 @@ try {
         pass('dialogs');
 
         // Routing Center in this theme.
-        await go(page, phone, 'Models & routing');
+        if (phone) {
+          await openNav(page, phone);
+          await shot(page, join(out, `${tag}-prism-drawer.png`));
+          await nav(page).getByRole('button',{name:'Prism',exact:true}).click();
+          await settle(page, 700);
+        } else await go(page, phone, 'Prism');
+        assert.ok(await page.getByRole('region',{name:'Current routing mode'}).isVisible(), 'Prism lands in Models');
+        assert.equal(await page.getByRole('button',{name:'Overview',exact:true}).count(),0,'Overview is absent');
         record.screens.routing = await axe(page, 'section.rc-page');
-        await shot(page, join(out, `${tag}-routing.png`));
-        await page.getByRole('navigation', { name:'Routing sections' }).getByRole('button', { name:'Providers', exact:true }).click();
+        await shot(page, join(out, `${tag}-prism-models.png`));
+        const prismNav = page.getByRole('navigation', { name:'Prism sections' });
+        assert.deepEqual(await prismNav.locator('button').allTextContents(), ['Models','Providers','Layouts','Usage','Diagnostics']);
+        await prismNav.getByRole('button',{name:'Layouts',exact:true}).click();
+        await shot(page, join(out, `${tag}-prism-layouts.png`));
+        await prismNav.getByRole('button',{name:'Usage',exact:true}).click();
+        await shot(page, join(out, `${tag}-prism-usage.png`));
+        await prismNav.getByRole('button',{name:'Diagnostics',exact:true}).click();
+        await shot(page, join(out, `${tag}-prism-diagnostics.png`));
+        if (phone) {
+          const rail = page.locator('.phone-sections');
+          assert.ok(await rail.evaluate(el => el.scrollWidth > el.clientWidth), 'Prism sections scroll on phone');
+          await shot(page, join(out, `${tag}-prism-tabs-scrolled.png`));
+        }
+        await prismNav.getByRole('button', { name:'Providers', exact:true }).click();
         await page.locator('.rc-provider-list').waitFor();
         await shot(page, join(out, `${tag}-providers.png`));
         await page.locator('.rc-provider-list [data-provider="gemini"]').first().click();

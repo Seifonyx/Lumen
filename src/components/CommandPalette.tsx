@@ -1,12 +1,13 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { BarChart3, BookOpen, Boxes, Clock, FileText, FolderKanban, Keyboard, MessageSquare, Plus, Search, Settings, Sparkles, Wrench } from 'lucide-react';
+import { BarChart3, BookOpen, Boxes, Clock, FileText, FolderKanban, Keyboard, MessageSquare, Plus, Search, Settings, Sparkles, Wrench, GitFork } from 'lucide-react';
 import { modKey } from '../lib/util';
 import { modelLabel, useStore } from '../store';
 import { savedChats } from '../lib/temporary-chat';
 import Modal from './Modal';
 import type { Project } from '../types';
 import { ANALYSIS_TEMPLATES } from '../lib/analysis';
-import { newGeneralChat } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, newGeneralChat } from '../lib/canvas-presentation';
+import { openRoutingCenter } from '../lib/routing-center';
 
 const EMPTY_PROJECTS: Project[] = [];
 
@@ -31,6 +32,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
   const items = useMemo(() => {
     const all: Item[] = [
       { id: 'new-chat', label: 'New chat', detail: `${modKey}⇧O`, Icon: Plus, run: newGeneralChat || newChat },
+      ...(CANVAS_SHELL ? [{ id: 'prism', label: 'Prism', detail: 'Models, providers & routing', Icon: GitFork, run: () => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); } }] : []),
       { id: 'library', label: 'Assistants', detail: 'Helpers with their own instructions', Icon: Sparkles, run: () => window.dispatchEvent(new Event('mr:library')) },
       { id: 'prompts', label: 'Saved prompts', detail: 'Start a message from a prompt', Icon: BookOpen, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'prompts' })) },
       { id: 'files', label: 'Files', detail: 'Documents and uploaded files', Icon: FileText, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'documents' })) },

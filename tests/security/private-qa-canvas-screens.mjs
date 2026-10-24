@@ -140,6 +140,10 @@ try {
           if (name === 'library') {
             assert.ok(await page.locator('.coll-item.kind-documents').count() >= 3, 'populated QA Library shows representative documents');
             assert.ok(await page.locator('.coll-item.kind-files').count() >= 2, 'populated QA Library shows mixed attachments');
+            await page.getByRole('button', { name:'More for Launch brief.md' }).click();
+            await page.getByRole('menu', { name:'Screen actions' }).waitFor();
+            await shot(page, join(out, `${tag}-library-actions.png`));
+            await page.keyboard.press('Escape');
             const search = page.getByRole('searchbox', { name:'Search your library' });
             await search.fill('Customer interview synthesis'); await settle(page, 200);
             assert.equal(await page.locator('.coll-item.kind-documents').count(), 1, 'long-name search narrows documents');
@@ -211,6 +215,16 @@ try {
         await page.locator('.rc-provider-detail').waitFor();
         if (phone) await page.getByRole('button', { name:'More actions', exact:true }).waitFor();
         await shot(page, join(out, `${tag}-provider-detail.png`));
+        if (phone) {
+          await page.getByRole('button', { name:'More actions', exact:true }).click();
+          await page.getByRole('menu', { name:'Screen actions' }).waitFor();
+          await shot(page, join(out, `${tag}-provider-actions.png`));
+          await page.getByRole('menuitem', { name:'Connection settings', exact:true }).click();
+          await page.getByRole('dialog', { name:'Settings' }).waitFor();
+          await shot(page, join(out, `${tag}-provider-connection-settings.png`));
+          await page.locator('.settings-page > .phone-navigation').getByRole('button', { name:'Back', exact:true }).click();
+          await page.locator('.rc-provider-detail').waitFor();
+        }
         await closeAll(page);
         pass('routing center');
 

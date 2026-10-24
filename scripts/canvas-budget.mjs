@@ -23,7 +23,9 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // 11 → 11.5: nested presentation ownership and atomic Back replay add about0.2KB; bounded headroom avoids
 // hiding that explicit safety cost. Provider action menus remain lazy; ordinary bytes and the startup CSS / Routing Center limits stay fixed.
 // 11.5 → 12: comparison/analysis origin restoration and phone gesture/focus ownership measure about11.6KB total growth.
-const BUDGET = { startupJs: 12, startupCss: 16, routingCenter: 9, canvasCss: 17 };
+// Phase 4 iPhone visual refinement (2026-10-24): 17 → 17.5 KB for mobile provider rows,
+// shared hub hierarchy and long account details. Measured 17.2 KB gz; other limits remain unchanged.
+const BUDGET = { startupJs: 12, startupCss: 16, routingCenter: 9, canvasCss: 17.5 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

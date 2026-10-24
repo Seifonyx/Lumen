@@ -1,6 +1,6 @@
 // Actual Canvas UI, synthetic accounts/catalogs and intercepted transport. No live inference.
-// Sections: underline tabs on computers; on phones the overview lists them and each opens as its own page, with the bar's
-// back button leading to the overview (or, from a provider, to the provider list).
+// Sections: one header line with six tabs on computers. Phones: a dock with Overview, Providers, Models and Policies;
+// Usage and Diagnostics open from the overview's route panel, and a provider from the list, as pages with Back in the bar.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -63,30 +63,37 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         }
       };
       const phone = width < 900;
-      const tab = async name => {
-        if (phone && name === 'Overview') {
-          if (await rc.getByRole('button', { name: 'Back to providers' }).isVisible()) await rc.getByRole('button', { name: 'Back to providers' }).click();
-          return rc.getByRole('button', { name: 'Routing Center', exact: true }).click();
-        }
-        // Phones name the section and its state ("Providers 1 ready · 1 off"); computers name the tab.
-        await rc.getByRole('navigation', { name: 'Routing sections' }).getByRole('button', { name: phone ? new RegExp(`^${name}\\b`) : name, exact: !phone }).click();
-      };
+      const tab = name => rc.getByRole('navigation', { name: 'Routing sections' }).getByRole('button', { name, exact: true }).click();
       await shot('overview');
       if (!before) await rc.getByRole('region', { name: 'Current routing mode' }).waitFor();
+      if (!before && phone) {
+        // The two places outside the dock open from the route panel; Back returns to the row that opened them.
+        assert.equal(await rc.getByRole('button', { name: 'Open sidebar', exact: true }).isVisible(), true, 'the drawer leads the bar on a place in the dock');
+        for (const [id, heading] of [['usage', 'Usage & quotas'], ['diagnostics', 'Routing, without hidden assumptions']]) {
+          await rc.locator(`.rc-route [data-section="${id}"]`).click();
+          await rc.getByRole('heading', { name: heading }).waitFor();
+          assert.equal(await rc.getByRole('button', { name: 'Open sidebar', exact: true }).count(), 0, 'Back replaces the drawer button, never both');
+          await rc.getByRole('button', { name: 'Back to overview' }).click();
+          await rc.getByRole('region', { name: 'Current routing mode' }).waitFor();
+          assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('data-section')), id, `focus returns to the ${id} row`);
+        }
+      }
       await tab('Providers');
       await rc.locator('[data-provider="gemini"]').waitFor();
       await shot('providers');
       await rc.locator('[data-provider="gemini"]').click();
       const detail = rc.getByRole('region', { name: 'Provider detail' });
       await detail.getByRole('heading', { name: 'Google AI Studio', exact: true }).waitFor();
-      await detail.getByRole('button', { name: 'Check connection', exact: true }).waitFor();
+      await detail.getByRole('button', { name: 'Refresh model list', exact: true }).waitFor();
       await shot('detail');
       if (!before) {
-        assert.match(await detail.innerText(), /Replies\s+Not verified by discovery/);
-        assert.match(await detail.innerText(), /Catalog ready/);
+        assert.match(await detail.locator('.rc-verdict').innerText(), /Available/);
+        assert.match(await detail.locator('[data-fact="Replies"]').innerText(), /Not tested by model listing/);
+        assert.match(await detail.locator('[data-fact="Key · permission"]').innerText(), /Saved · on/);
+        assert.match(await detail.locator('[data-fact="Allowance"]').innerText(), /Unknown/);
         assert.equal(await rc.getByRole('button', { name: 'Back to providers' }).isVisible(), phone);
-        assert.equal(await rc.locator('.rc-path [data-step]').count(), 4, 'the connection path shows key, permission, discovery and replies');
-        assert.match(await detail.locator('.rc-allowance').innerText(), /Unknown/);
+        // A working provider has no fix to lead with: both actions stay quiet.
+        assert.equal(await detail.locator('.rc-primary').count(), 0);
       }
       if (phone) await rc.getByRole('button', { name: 'Back to providers' }).click();
       const search = rc.getByRole('searchbox', { name: 'Find a provider' });
@@ -99,8 +106,8 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       await search.fill('anthropic');
       await rc.locator('[data-provider="anthropic"]').click();
       await detail.getByRole('heading', { name: 'Anthropic', exact: true }).waitFor();
-      assert.match(await detail.innerText(), /Permission off/);
-      if (!before) assert.match(await detail.innerText(), /not enabled/);
+      assert.match(await detail.innerText(), /permission off/i);
+      if (!before) assert.equal(await detail.locator('.rc-primary').innerText(), 'Turn on in Settings', 'the fix leads');
       if (phone) await rc.getByRole('button', { name: 'Back to providers' }).click();
       await search.fill('');
       if (!before) {
@@ -113,15 +120,16 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         // Real catalog failure and recovery through the existing refresh owner; cached inventory stays reachable.
         await rc.locator('[data-provider="gemini"]').click();
         failure = 401;
-        await detail.getByRole('button', { name: 'Check connection', exact: true }).click();
-        await detail.locator('.rc-recovery').getByText(/provider refused/).waitFor();
-        assert.match(await detail.innerText(), /Discovery failed/);
+        await detail.getByRole('button', { name: 'Refresh model list', exact: true }).click();
+        await detail.locator('.rc-note').getByText(/provider refused/).waitFor();
+        assert.match(await detail.innerText(), /Listing failed/);
+        assert.equal(await detail.locator('.rc-primary').innerText(), 'Replace key', 'a refused key leads with replacing it');
         assert.equal(await detail.locator('.rc-model').count(), 0, 'authentication failure removes unsafe cached models');
         assert(!/RAW_SYNTHETIC_SECRET/.test(await rc.innerText()));
-        await detail.getByRole('button', { name: 'Check connection', exact: true }).waitFor({ state: 'visible' });
+        await detail.getByRole('button', { name: 'Refresh model list', exact: true }).waitFor({ state: 'visible' });
         failure = 0;
         large = true;
-        await detail.getByRole('button', { name: 'Check connection', exact: true }).click();
+        await detail.getByRole('button', { name: 'Refresh model list', exact: true }).click();
         await detail.getByText('145 in catalog', { exact: true }).waitFor();
         assert.equal(await detail.locator('.rc-model').count(), 24);
         await detail.getByRole('button', { name: 'Next', exact: true }).click();
@@ -130,9 +138,9 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         await page.waitForFunction(() => document.querySelectorAll('.rc-provider-detail .rc-model').length === 1);
         assert.equal(await detail.locator('.rc-model').count(), 1);
         failure = 503;
-        await detail.getByRole('button', { name: 'Check connection', exact: true }).click();
-        await detail.locator('.rc-recovery').getByText(/could not list/).waitFor();
-        assert.match(await detail.innerText(), /Cached catalog/);
+        await detail.getByRole('button', { name: 'Refresh model list', exact: true }).click();
+        await detail.locator('.rc-note').getByText(/could not list/).waitFor();
+        assert.match(await detail.innerText(), /Available from cache/);
         assert.equal(await detail.locator('.rc-model').count(), 1, 'non-auth failures preserve searchable cached models');
         assert(providerRequests.length >= 3);
         assert(providerRequests.every(r => r.method === 'GET' && new URL(r.url).pathname.endsWith('/models')), 'only catalog GETs, never inference');
@@ -153,10 +161,11 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
             node.style.fontSize = `${parseFloat(getComputedStyle(node).fontSize) * 1.5}px`;
           }
         });
-        // Phones list the sections on the overview; each row keeps its name and state inside the row at larger text.
-        assert.equal(await rc.locator('.rc-sections [data-section]').count(), 5);
-        for (const button of await rc.locator('.rc-sections [data-section]').all()) {
-          assert(await button.evaluate(el => el.scrollWidth <= el.clientWidth && [...el.children].every(c => c.getBoundingClientRect().right <= el.getBoundingClientRect().right + 0.5)), 'section row remains readable at larger text');
+        // The dock keeps its four places in view (its labels keep a fixed size, as a tab bar's do); the overview's rows keep
+        // their words inside the row at larger text.
+        assert.equal(await rc.locator('.rc-dock [data-section]').count(), 4);
+        for (const button of await rc.locator('.rc-dock [data-section], .rc-route-links button, .rc-prov').all()) {
+          assert(await button.evaluate(el => el.scrollWidth <= el.clientWidth && [...el.children].every(c => c.getBoundingClientRect().right <= el.getBoundingClientRect().right + 0.5)), 'row remains readable at larger text');
           assert((await button.boundingBox()).height >= 44);
         }
       }

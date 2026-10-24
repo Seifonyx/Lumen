@@ -63,7 +63,7 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
         <h1 className="hub-bar-title hub-bar-heading">{label}</h1>
         <span className="hub-bar-title hub-bar-label" aria-hidden="true">{label}</span>
         {CANVAS_SHELL
-          ? <button type="button" className="hub-close cv-chat-pill" aria-label="Close" title="Back to chat" onClick={onClose}><ArrowLeft size={18} aria-hidden="true" /><span>Chat</span></button>
+          ? <button type="button" className="hub-close cv-chat-pill" aria-label="Close" title="Back to chat" onClick={() => navigateBack!(onClose)}><ArrowLeft size={18} aria-hidden="true" /><span>Chat</span></button>
           : <button type="button" className="btn ghost small hub-close" aria-label="Close" onClick={onClose}><span className="hub-close-long">Back to chat</span><span className="hub-close-short">Done</span></button>}
       </div>}
       <div className="hub-scroll" onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 56)}>

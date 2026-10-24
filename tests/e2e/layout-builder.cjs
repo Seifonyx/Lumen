@@ -83,7 +83,7 @@ const g = (name, label) => ({ name: `models/${name}`, displayName: label, suppor
     await page.locator('.builder-picks li').first().waitFor();
     assert.equal(await page.locator('.builder-name input').inputValue(), 'Reading screenshots and photos');
     console.log('PASS a described task gets its own layout');
-    await page.getByRole('button',{name:'Back',exact:true}).click();
+    await page.getByRole('dialog', { name: 'Build a layout', exact: true }).getByRole('button', { name: 'Back', exact: true }).click();
     await page.getByLabel('Describe the work').fill('Research current sources and analyze screenshots');
     await page.getByRole('button',{name:'Build',exact:true}).click();
     await page.locator('.builder-picks li').first().waitFor();

@@ -27,9 +27,10 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
 }) {
   const root = useRef<HTMLElement>(null);
   const phone = typeof window !== 'undefined' && window.matchMedia('(max-width: 899px)').matches;
-  useFocusScope(root, phone, CANVAS_SHELL && phone ? () => navigateBack!(onBack || onClose) : onBack || onClose);
+  // Escape exits the current Hub step directly; history-driven Back remains on the phone header and swipe.
+  useFocusScope(root, phone, onBack || onClose);
   useEffect(() => {
-    const key = (e: KeyboardEvent) => { if ((CANVAS_SHELL ? !e.defaultPrevented : true) && e.key === 'Escape' && !document.querySelector('.modal-backdrop')) { e.preventDefault(); (CANVAS_SHELL ? () => navigateBack!(onBack || onClose) : onBack || onClose)(); } };
+    const key = (e: KeyboardEvent) => { if ((CANVAS_SHELL ? !e.defaultPrevented : true) && e.key === 'Escape' && !document.querySelector('.modal-backdrop')) { e.preventDefault(); (onBack || onClose)(); } };
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
   }, [onBack, onClose]);

@@ -7,7 +7,7 @@ import { useStore } from '../store';
 import Modal from './Modal';
 import { toPlainText } from '../lib/markdown';
 
-export default function AskChats({ initial, onClose }: { initial: string; onClose: () => void }) {
+export default function AskChats({ initial, onClose, onOpenChat }: { initial: string; onClose: () => void; onOpenChat?: (id: string) => void }) {
   const uid = useStore((s) => s.user?.uid);
   const index = useMemo(() => (uid ? new HistoryIndex(uid) : null), [uid]);
   const [question, setQuestion] = useState(initial);
@@ -45,7 +45,8 @@ export default function AskChats({ initial, onClose }: { initial: string; onClos
     }
   };
   useEffect(() => { if (initial.trim()) void run(initial); return () => abort.current?.abort(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const open = (chatId: string) => { useStore.getState().selectChat(chatId); onClose(); };
+  // Selecting a citation is a forward navigation, not a Back action that restores the old chat.
+  const open = (chatId: string) => { if (onOpenChat) onOpenChat(chatId); else { useStore.getState().selectChat(chatId); onClose(); } };
   const cite = (text: string) => text.split(/(\[\d{1,2}\])/).map((part, i) => {
     const n = /^\[(\d+)\]$/.exec(part)?.[1];
     const hit = n ? hits?.[Number(n) - 1] : undefined;

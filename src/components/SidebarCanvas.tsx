@@ -286,7 +286,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
           </button>
         </div>
       </aside>
-      {asking !== null && <Suspense fallback={null}><AskChats initial={asking} onClose={() => navigateBack!(() => setAsking(null))} /></Suspense>}
+      {asking !== null && <Suspense fallback={null}><AskChats initial={asking} onClose={() => navigateBack!(() => setAsking(null))} onOpenChat={(chatId) => navigateScreen!(() => { setAsking(null); useStore.getState().selectChat(chatId); })} /></Suspense>}
       {allChats && <AllChats onClose={() => navigateBack!(() => setAllChats(false))} />}
       {manager && <ProjectManager createNewImmediately onClose={() => navigateBack!(() => setManager(false))} />}
     </>

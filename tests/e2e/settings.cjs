@@ -52,7 +52,12 @@ async function open(browser, mobile) {
     await P.page.click('.menu-btn');
     await P.page.click('.sidebar-foot, .cv-account');
   }
-  if (!(await P.page.locator('.settings-tabs').isVisible())) await backSettingsSection(P.page);
+  if (!(await P.page.locator('.settings-tabs').isVisible())) {
+    // A first-sign-in deep link opens Keys. Assert it has a real Back control, then dismiss
+    // via Escape and reopen Settings from the drawer to test its section list.
+    check(await P.page.locator('.settings-page .phone-navigation button[aria-label="Back"], .settings-page .settings-back').isVisible(), 'phone: direct-entry settings subsection offers Back');
+    await closeSettings(P.page);
+  }
   if (!(await P.page.locator('.settings-page').isVisible())) {
     await P.page.waitForSelector('.app:not(.app-skeleton) .topbar');
     await P.page.click('.menu-btn');

@@ -192,7 +192,7 @@ async function run(browser, mobile) {
       return event.defaultPrevented;
     });
     check(!(await touch('.settings-scroll')) && !(await touch('.settings-panel textarea')), 'iOS simulation: settings and textarea scrolling allowed with keyboard open');
-    check(await touch('.settings-top'), 'iOS simulation: app chrome still blocks page panning');
+    check(await touch(await page.locator('.settings-page .phone-navigation').isVisible() ? '.settings-page .phone-navigation' : '.settings-top'), 'iOS simulation: app chrome still blocks page panning');
     await closeSettings(page);
     check(await touch('.composer textarea'), 'iOS simulation: composer drag still cannot pan the page');
     // A conversation that can scroll scrolls; one that can't (a new chat) mustn't pull the page down and show

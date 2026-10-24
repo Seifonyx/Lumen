@@ -21,8 +21,9 @@ exports.backSettingsSection = async (page) => {
   const legacy = page.locator('.settings-page .settings-back');
   if (await legacy.isVisible()) return legacy.click();
   const back = page.locator('.settings-page .phone-navigation button[aria-label="Back"]');
-  if (await back.isVisible()) return back.click();
-  throw new Error('Settings subsection has no Back control');
+  // The lazy Settings shell and history adapter can commit over separate frames.
+  await back.waitFor({ state: 'visible', timeout: 6000 });
+  await back.click();
 };
 
 exports.openSettingsSection = async (page, name) => {
@@ -43,13 +44,9 @@ exports.openSettingsSection = async (page, name) => {
 
 exports.closeSettings = async (page) => {
   const root = page.locator('.settings-page');
-  for (let i = 0; i < 5 && await root.isVisible(); i++) {
-    const close = root.locator('[aria-label="Close"]');
-    if (await close.isVisible()) { await close.click(); break; }
-    const back = root.locator('.phone-navigation button[aria-label="Back"]');
-    if (await back.isVisible()) await back.click();
-    else await page.keyboard.press('Escape');
-  }
+  if (!(await root.isVisible())) return;
+  // Escape is the dialog dismiss contract, distinct from iPhone Back through nested sections.
+  await page.keyboard.press('Escape');
   await root.waitFor({ state: 'hidden' });
 };
 

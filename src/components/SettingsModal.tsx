@@ -675,8 +675,12 @@ export default function SettingsModal() {
     if (CANVAS_SHELL && window.matchMedia('(max-width:899px)').matches) navigateBack!(() => setUi({ settingsOpen: false }));
     else setUi({ settingsOpen: false });
   };
+  // Escape dismisses Settings. The visible phone Back control and edge-swipe still traverse history.
+  // Replaying one history entry per changed Settings tab left the dialog open on desktop and in tests.
   useFocusScope(dialog,open,()=>{
-    if (CANVAS_SHELL) navigateBack!(() => setUi({settingsOpen:false})); else if(tab && window.matchMedia('(max-width:720px), (pointer:coarse) and (max-width:1100px)').matches)setUi({settingsTab:''});else close();
+    if (CANVAS_SHELL) setUi({ settingsOpen: false });
+    else if (tab && window.matchMedia('(max-width:720px), (pointer:coarse) and (max-width:1100px)').matches) setUi({ settingsTab: '' });
+    else close();
   });
 
   useEffect(() => {

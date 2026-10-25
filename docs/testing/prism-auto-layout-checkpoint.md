@@ -2,7 +2,7 @@
 
 ## Delivery and authority
 
-Draft [PR56](https://github.com/Seifonyx/Lumen/pull/56), `feat/phase4-prism-auto-layouts`. Runtime source **bc5d4472b3cf9bfe95527fcd6a546c949a6b307e**, based on released Canvas/main **05d2647e37919e7548ed397118cb28592a67a737**. This evidence/documentation increment changes capture framing only, not runtime source. The final delivery SHA, fresh exact-head Tests run and completion of remote/live readback are recorded in the PR and canonical `docs/lumen-live-context` branch. Do not infer their success from this pre-CI snapshot.
+Draft [PR56](https://github.com/Seifonyx/Lumen/pull/56), `feat/phase4-prism-auto-layouts`. Runtime source **39d50a02ff8cfee852158e9604a6bbd8193ea0e7**, based on released Canvas/main **05d2647e37919e7548ed397118cb28592a67a737**. This evidence/documentation increment changes capture framing only, not runtime source. The final delivery SHA, fresh exact-head Tests run and completion of remote/live readback are recorded in the PR and canonical `docs/lumen-live-context` branch. Do not infer their success from this pre-CI snapshot.
 
 **CP1 only. Stop for owner/planner review. No merge, deployment, CP2 Usage/Diagnostics, paid inference, new infrastructure or Gate approval.**
 

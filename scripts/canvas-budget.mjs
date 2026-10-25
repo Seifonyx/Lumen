@@ -29,7 +29,9 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // and contained search replace the old directory. CSS source limit17.5→18.5KB records this scoped material/
 // layout cost. The reactive phone breakpoint shared by Library/Hub/RC adds ~0.1KB gz;
 // startup JS12→12.25KB records that functional resize fix. Startup CSS and lazy RC limits are unchanged.
-const BUDGET = { startupJs: 12.25, startupCss: 16, routingCenter: 9, canvasCss: 18.5 };
+// Slice3 CP1:19.25KB source CSS includes the new lazy Auto/Layout stylesheet (measured total≈19.1KB).
+// It styles the substantive canonical editor/review workflow on demand; startup JS/CSS and RC limits stay fixed.
+const BUDGET = { startupJs: 12.25, startupCss: 16, routingCenter: 9, canvasCss: 19.25 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {
@@ -46,7 +48,7 @@ const rows = [
   ['Routing Center chunk (lazy)', rc.reduce((n, f) => n + gz(canvas, join('assets', f)), 0), BUDGET.routingCenter],
 ];
 // Canvas CSS on its own: the source files, minified roughly by collapsing whitespace and comments.
-const css = ['canvas.css', 'canvas-composer.css', 'canvas-shell.css', 'canvas-reading.css', 'canvas-routing.css', 'canvas-screens.css', 'brand-crease.css']
+const css = ['canvas.css', 'canvas-composer.css', 'canvas-shell.css', 'canvas-reading.css', 'canvas-routing.css', 'canvas-screens.css', 'brand-crease.css', 'canvas-routing-experience.css']
   .map((f) => readFileSync(join('src/styles', f), 'utf8')).join('\n').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ');
 rows.push(['Canvas CSS source (gz, approx.)', gzipSync(css).length / 1024, BUDGET.canvasCss]);
 if (!rc.length) rows.push(['Routing Center must stay a lazy chunk', 1, 0]);

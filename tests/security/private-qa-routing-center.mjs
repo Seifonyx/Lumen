@@ -178,12 +178,12 @@ try {
       await settle(page);
       assert.equal(await rc(page).locator('.rc-editor input[placeholder="e.g. Web apps"]').inputValue(), 'Launch writing');
       await rc(page).locator('.rc-editor').getByRole('button', { name: 'Cancel', exact: true }).click();
-      await rc(page).getByRole('button', { name: 'New policy' }).click();
+      await rc(page).getByRole('button', { name: 'New layout' }).click();
       await settle(page);
       assert.equal(await rc(page).locator('.rc-editor input[placeholder="e.g. Web apps"]').inputValue(), '');
       await rc(page).locator('.rc-editor').getByRole('button', { name: 'Cancel', exact: true }).click();
       await settle(page);
-      assert.equal(await rc(page).locator('.rc-policy').count(), 1, 'cancelling saves nothing');
+      assert.equal(await rc(page).locator('.rc-layouts > .rc-layout').count(), 1, 'cancelling saves nothing');
       pass('policies');
 
       // Usage (canonical UsageTab) and Diagnostics.

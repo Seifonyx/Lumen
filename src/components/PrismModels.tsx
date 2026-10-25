@@ -1,7 +1,7 @@
 // Lazy Prism model ledger: canonical catalog/settings only. No independent selection or eligibility owner.
 import { useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowUpRight, Check, Search, X } from 'lucide-react';
+import { ArrowUpRight, Search, X } from 'lucide-react';
 import { modelLabel, selectCurrentModel, useStore } from '../store';
 import { formatTokens, remaining } from '../lib/usage';
 import { modelCapabilities, selectionIndex, selectionProblem, withCurrentModel } from '../lib/model-discovery';
@@ -49,7 +49,7 @@ function ModelRow({ model: m, problem, selected }: { model: ModelInfo; problem: 
   const flags = [m.metadata?.verification === 'unchecked' && 'Declared, unchecked', m.metadata?.stale && 'Cached metadata', seen?.blockedUntil && seen.blockedUntil > Date.now() && 'Temporarily limited'].filter(Boolean);
   const capabilities = modelCapabilities(m);
   return <article className="rc-model" data-model={m.id} aria-label={m.label} aria-current={selected ? 'true' : undefined}>
-    <div><h4>{m.label}{selected && <span className="rc-model-selected"><Check size={13} aria-hidden="true" />Selected</span>}</h4><small>{modelProviderLabel(m)}</small>{m.metadata?.verification === 'unchecked' && <small>Declared, unchecked</small>}{m.metadata?.stale && <small>Cached metadata</small>}</div>
+    <div><h4>{m.label}{selected && <small> · Selected</small>}</h4><small>{modelProviderLabel(m)}</small>{m.metadata?.verification === 'unchecked' && <small>Declared, unchecked</small>}{m.metadata?.stale && <small>Cached metadata</small>}</div>
     <p><span>{m.context ? `${formatTokens(m.context)} context` : 'Context unknown'}</span>{left !== null && <span>{left} requests left{m.id.startsWith('openrouter:') && m.id.endsWith(':free') ? ' · shared pool' : ''}</span>}</p>
     <UseModel model={m} problem={problem} />
     {problem && <small className="rc-model-note" id={`rc-why-${m.id}`}>{problem}</small>}
@@ -67,7 +67,7 @@ export default function PrismModels({ models, searchHost }: { models: ModelInfo[
 }
 function Inventory({ models, searchHost, providerOnly = false }: { models: ModelInfo[]; searchHost: HTMLElement | null; providerOnly?: boolean }) {
   const [query, setQuery] = useState(''), [filter, setFilter] = useState<Filter>('all'), [page, setPage] = useState(0);
-  const input = useRef<HTMLInputElement>(null), heading = useRef<HTMLHeadingElement>(null), list = useRef<HTMLDivElement>(null);
+  const input = useRef<HTMLInputElement>(null), list = useRef<HTMLDivElement>(null);
   const keys = useStore(s => s.keys), catalog = useStore(s => s.catalog), settings = useStore(s => s.settings), authed = useStore(s => s.authed), user = useStore(s => s.user);
   const current = useStore(selectCurrentModel);
   const entries = useMemo(() => {
@@ -90,7 +90,7 @@ function Inventory({ models, searchHost, providerOnly = false }: { models: Model
   const changeQuery = (value: string) => { setQuery(value); setPage(0); };
   const search = <div className="rc-search"><Search size={16} aria-hidden="true" /><input ref={input} type="search" aria-label={providerOnly ? 'Find a model' : 'Search models'} placeholder="Search models or providers" value={query} onChange={e => changeQuery(e.target.value)} />{query && <button type="button" aria-label={providerOnly ? 'Clear provider model search' : 'Clear model search'} onClick={() => { changeQuery(''); input.current?.focus(); }}><X size={16} aria-hidden="true" /></button>}</div>;
   return <>
-    {!providerOnly && <div className="rc-model-toolbar"><h2 tabIndex={-1} ref={heading}>Models <span>{filtered.length}</span></h2><FilterMenu label="Filter models" value={filter} options={options.map(o => ({...o,count:matches.filter(e=>accepts(e,o.value)).length}))} onChange={value=>{setFilter(value);setPage(0);}} /><button type="button" className="rc-add" aria-label="Manage models" onClick={()=>useStore.getState().setUi({settingsOpen:true,settingsTab:'models'})}><ArrowUpRight size={16} aria-hidden="true" /></button></div>}
+    {!providerOnly && <div className="rc-model-toolbar"><h2>Models <small className="rc-muted">{filtered.length}</small></h2><FilterMenu label="Filter models" value={filter} options={options.map(o => ({...o,count:matches.filter(e=>accepts(e,o.value)).length}))} onChange={value=>{setFilter(value);setPage(0);}} /><button type="button" className="rc-add" aria-label="Manage models" onClick={()=>useStore.getState().setUi({settingsOpen:true,settingsTab:'models'})}><ArrowUpRight size={16} aria-hidden="true" /></button></div>}
     {(!providerOnly || models.length > PAGE || query) && (searchHost ? createPortal(search, searchHost) : search)}
     {filtered.length ? <div className="rc-group" role="group" aria-label="Model results" tabIndex={-1} ref={list}>{filtered.slice(index*PAGE,(index+1)*PAGE).map(e=><ModelRow key={e.model.id} {...e} selected={current===e.model.id} />)}</div> : <div className="rc-empty" role="status"><p>{models.length ? 'No models match.' : 'No models listed yet. Connect a provider to discover models.'}</p>{(query || filter!=='all') && <button type="button" className="rc-link" onClick={()=>{changeQuery('');setFilter('all');input.current?.focus();}}>Reset model filters</button>}</div>}
     {pages>1 && <nav className="rc-pages" aria-label="Model pages"><button type="button" disabled={!index} onClick={()=>changePage(index-1)}>Previous</button><span role="status">{index*PAGE+1}–{Math.min(filtered.length,(index+1)*PAGE)} of {filtered.length}</span><button type="button" disabled={index+1===pages} onClick={()=>changePage(index+1)}>Next</button></nav>}

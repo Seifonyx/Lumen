@@ -170,6 +170,8 @@ try {
     // Phase 4 slice 1: safe connection/discovery copy, reached only by the lazy Canvas Routing Center.
     // Required in the Canvas graph and forbidden in the ordinary graph above; no permission/network owner changes.
     'src/lib/provider-presentation.ts', 'src/lib/provider-settings-target.ts', 'src/components/ProviderConnections.tsx',
+    // CP3: lazy model ledger and pure shared catalog-search/manual-selection presentation. No network/state owner.
+    'src/components/PrismModels.tsx', 'src/lib/model-discovery.ts', 'src/lib/model-search.ts',
     // Owner-authorized shared iPhone navigation reset: UI-only owners, ordinary graph remains isolated.
     // Reviewed feature-local section presentation and media subscription; no data/auth/network owner.
     'src/components/PhoneSections.tsx', 'src/lib/phone-layout.ts',

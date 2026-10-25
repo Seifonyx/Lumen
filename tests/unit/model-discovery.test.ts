@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import {selectionProblem,modelCapabilities,withCurrentModel,type SelectionContext} from '../../src/lib/model-discovery';
+import { matchesModel, modelProviderLabel } from '../../src/lib/model-search';
+import type {ModelInfo} from '../../src/types';
+const model:ModelInfo={id:'gemini:gemini-2.5-pro',provider:'google',name:'gemini-2.5-pro',label:'Gemini 2.5 Pro',context:null,vision:true,pdf:false,thinking:false,search:false};
+const base:SelectionContext={authed:true,user:{uid:'a'},keys:{gemini:'synthetic',openrouter:'',groq:'',cerebras:'',github:''},catalog:{models:[model],providers:{google:true},defaults:[],errors:[]},settings:{enabledModels:[model.id]}};
+assert(matchesModel(model,'Google AI Studio pro'));assert(matchesModel(model,'GEMINI pro'));assert(!matchesModel(model,'Google unrelated'));assert.equal(modelProviderLabel(model),'Google AI Studio');
+assert.equal(selectionProblem(base,model),null);
+assert.match(selectionProblem({...base,user:null},model)!,/Sign in/);
+assert.match(selectionProblem({...base,keys:{...base.keys,gemini:''}},model)!,/Save a key/);
+assert.match(selectionProblem({...base,settings:{enabledModels:[]}},model)!,/Enable this model/);
+assert.match(selectionProblem({...base,settings:{...base.settings,unavailableModels:[model.id]}},model)!,/unavailable/);
+assert.match(selectionProblem({...base,catalog:{...base.catalog!,deniedModelIds:[model.id]}},model)!,/unavailable/);
+assert.match(selectionProblem({...base,catalog:{...base.catalog!,providerStatus:{gemini:{state:'error',errorKind:'auth',lastAttempt:1,lastSuccess:null,nextRefresh:2}}}},model)!,/connection/);
+assert.match(selectionProblem(base,{...model,streaming:false})!,/streamed/);
+const anth={...model,provider:'anthropic' as const,id:'anthropic:claude',label:'Claude'};
+assert.match(selectionProblem({...base,keys:{...base.keys,anthropic:'synthetic',providerAccess:{anthropic:false}}},anth)!,/enable this provider/);
+assert.deepEqual(modelCapabilities(model),['Images']);
+assert.deepEqual(modelCapabilities({...model,vision:false,tools:null}),[],'unknown does not claim support');
+assert.deepEqual(modelCapabilities({...model,pdf:true,search:true,thinking:true,tools:true}),['Images','PDFs','Web search','Reasoning','Tools']);
+console.log('PASS alias/token search, existing manual gates, permissions, unknown/capability provenance');
+
+const missing=withCurrentModel([],model.id,'Saved manual choice');
+assert.equal(missing[0].id,model.id);assert.equal(missing[0].context,null);assert.deepEqual(modelCapabilities(missing[0]),[]);assert.equal(missing[0].metadata?.fields?.vision,'unknown');
+assert.deepEqual(withCurrentModel([], 'auto', 'Auto'),[]);assert.deepEqual(withCurrentModel([], 'layout:pair', 'Pair'),[]);
+assert.match(selectionProblem({...base,catalog:{...base.catalog!,models:[]}},missing[0])!,/unavailable/);

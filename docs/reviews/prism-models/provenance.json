@@ -1,0 +1,102 @@
+{
+  "sourceCommit": "f8034665f3ed9f06f32f1c15d0f0fb089ad96d2d",
+  "sourceTree": "b26c533ddbb12215dee6f460664023d38e832b36",
+  "syntheticOnly": true,
+  "physicalIPhone": false,
+  "playwright": "1.56.1",
+  "buildIndexSha256": "49333fd61f3f54eb8273a35d75dd22ffc68c8f9d0273538eebe255eda4097037",
+  "runtimeFiles": {
+    "src/components/PrismModels.tsx": "15f561555713e52abd880961f81eb82efec3e51deda6e27a8a21380ad4c149a8",
+    "src/components/ModelPicker.tsx": "5d813c9a8228196f4ccde2124749a46e81bdde9dfa243b718ee32dee7330dd12",
+    "src/components/RoutingCenter.tsx": "a64ae321177c460acb28deaa299794a8f6f913d2a6fe680afc26a485e1f9988f",
+    "src/lib/model-discovery.ts": "7fda0bef217970cc4198fdf483529b5d7caafdfb953ea6ce3770ecfa6b2d21e7",
+    "src/lib/model-search.ts": "798268b52b6580fa9fdff2b926d84bebd931ca7980904b117b600ee4583ed76e",
+    "src/styles/canvas-routing.css": "e6cd7ffe5b1105c23ce79333405685eea8cecd77faefed6b3bd14ac31882d1d2"
+  },
+  "screenshots": [
+    {
+      "file": "before-phone.png",
+      "label": "Before \u00b7 320 \u00d7 568 \u00b7 Chromium Light",
+      "sourceCommit": "b619862707062cca75bd30f9678b9d4313f612fa",
+      "sha256": "1a0aeef25732de3533c4d02f786f784cc3f84ba31d7249c6bde4f4a187c393db",
+      "capturedAt": "2026-10-25T12:21:23.963913+00:00"
+    },
+    {
+      "file": "phone-light.png",
+      "label": "Models \u00b7 320 \u00d7 568 \u00b7 Chromium Light",
+      "sourceCommit": "f8034665f3ed9f06f32f1c15d0f0fb089ad96d2d",
+      "sha256": "0ecacaf59e3253c32588f80cfea9d8d1fb30b0b93fe9159bfec9a7c08d78b9be",
+      "capturedAt": "2026-10-25T12:35:26.403387+00:00"
+    },
+    {
+      "file": "phone-dark.png",
+      "label": "Models \u00b7 320 \u00d7 568 \u00b7 WebKit Dark",
+      "sourceCommit": "f8034665f3ed9f06f32f1c15d0f0fb089ad96d2d",
+      "sha256": "0be9c3b8844c7ae13e567997869e72a8521933c2a59184375e2a2173e6ebba5c",
+      "capturedAt": "2026-10-25T12:36:15.652386+00:00"
+    },
+    {
+      "file": "before-desktop.png",
+      "label": "Before \u00b7 1440 \u00d7 960 \u00b7 Chromium Dark",
+      "sourceCommit": "b619862707062cca75bd30f9678b9d4313f612fa",
+      "sha256": "9d0ab76b1b427b97d022b027b258331842a73b30cf954c4e40689cd401bb2873",
+      "capturedAt": "2026-10-25T12:21:29.419659+00:00"
+    },
+    {
+      "file": "desktop-dark.png",
+      "label": "Compact columns \u00b7 1440 \u00d7 960 \u00b7 WebKit Dark",
+      "sourceCommit": "f8034665f3ed9f06f32f1c15d0f0fb089ad96d2d",
+      "sha256": "7fbbde8a6bb810fcc34efa580db2fc559ae657f77432ec1deb87841c386d77dc",
+      "capturedAt": "2026-10-25T12:37:12.194458+00:00"
+    },
+    {
+      "file": "desktop-light.png",
+      "label": "Models \u00b7 1440 \u00d7 960 \u00b7 Chromium Light",
+      "sourceCommit": "f8034665f3ed9f06f32f1c15d0f0fb089ad96d2d",
+      "sha256": "8f01d45e0eca9cc3e2560aa3af6a94b3d33e3654a969e9196f61a7d9e136a2f2",
+      "capturedAt": "2026-10-25T12:36:14.137163+00:00"
+    },
+    {
+      "file": "picker.png",
+      "label": "Shared provider search \u00b7 390 \u00d7 844 \u00b7 WebKit Dark",
+      "sourceCommit": "f8034665f3ed9f06f32f1c15d0f0fb089ad96d2d",
+      "sha256": "cf7624ae7777410ea0c94a18378eda104d066dc1de9873218c95e58ea281f5eb",
+      "capturedAt": "2026-10-25T12:36:40.959912+00:00"
+    },
+    {
+      "file": "selected-chat.png",
+      "label": "Use model \u2192 original chat, draft and file \u00b7 390 \u00d7 844 \u00b7 Chromium Light",
+      "sourceCommit": "f8034665f3ed9f06f32f1c15d0f0fb089ad96d2d",
+      "sha256": "583dccc0210ecf87cd22510fdf3c0f9f6044f9db944d337e521a97109496d029",
+      "capturedAt": "2026-10-25T12:35:46.938430+00:00"
+    },
+    {
+      "file": "long-name.png",
+      "label": "Long name and honest recovery \u00b7 430 \u00d7 932 \u00b7 WebKit Light",
+      "sourceCommit": "f8034665f3ed9f06f32f1c15d0f0fb089ad96d2d",
+      "sha256": "67d9442c154aecaf3a95145cd846d41e08dd1364ea4b1990362bb94e2c4642b7",
+      "capturedAt": "2026-10-25T12:36:53.491324+00:00"
+    },
+    {
+      "file": "unknown.png",
+      "label": "Unknown / unchecked metadata \u00b7 320 \u00d7 568 \u00b7 WebKit Dark",
+      "sourceCommit": "f8034665f3ed9f06f32f1c15d0f0fb089ad96d2d",
+      "sha256": "48ac9a2fdfb24269cd4af066315d4883d62b50892222b40e703e27d63ae5f30b",
+      "capturedAt": "2026-10-25T12:37:24.025909+00:00"
+    },
+    {
+      "file": "missing-selected.png",
+      "label": "Missing current model \u00b7 320 \u00d7 568 \u00b7 WebKit Light",
+      "sourceCommit": "f8034665f3ed9f06f32f1c15d0f0fb089ad96d2d",
+      "sha256": "35b4fdb7de4ebbdc20c782412ad2b853266945b56655149dea77a0a42d230f2a",
+      "capturedAt": "2026-10-25T12:37:22.193994+00:00"
+    },
+    {
+      "file": "filtered.png",
+      "label": "Selectable filter \u00b7 390 \u00d7 844 \u00b7 Chromium Dark",
+      "sourceCommit": "f8034665f3ed9f06f32f1c15d0f0fb089ad96d2d",
+      "sha256": "8386605268accfa958aef120660d5d1224151278b71bc82188cb7268ab6016fd",
+      "capturedAt": "2026-10-25T12:35:52.274182+00:00"
+    }
+  ]
+}

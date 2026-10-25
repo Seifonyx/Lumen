@@ -96,7 +96,7 @@ try {
       assert.equal(await rc(page).getByRole('button', { name:'Overview', exact:true }).count(), 0);
       assert.ok(await rc(page).getByRole('region', { name:'Current routing mode' }).isVisible());
       assert.match(await rc(page).locator('.rc-current').innerText(), /Next message in this chat/);
-      assert.ok(await rc(page).getByRole('heading',{name:'Model inventory'}).isVisible());
+      assert.ok(await rc(page).getByRole('heading',{name:/^Models\s+\d+$/}).isVisible());
       const places = await rc(page).locator('.rc-tabs button, .phone-sections button').evaluateAll(els => els.map(el => {
         const r=el.getBoundingClientRect();return { name:el.textContent,left:r.left,right:r.right,height:r.height,cut:el.scrollWidth>el.clientWidth };
       }));

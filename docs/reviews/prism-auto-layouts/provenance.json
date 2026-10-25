@@ -68,7 +68,7 @@
       "caption": "Before you save · Effective fallback and requirements · 320 × 568 · Chromium Light",
       "runtimeSource": "39d50a02ff8cfee852158e9604a6bbd8193ea0e7",
       "sha256": "b2965289e0cdf33382fa686b0ff6140c246c19c978c39bbf0e71283f95b4295c",
-      "capturedAtUTC": "2026-10-25T17:39:37.525Z"
+      "capturedAtUTC": "2026-10-25T17:43:08.186Z"
     },
     {
       "file": "desktop-evidence.png",
@@ -99,7 +99,7 @@
       "capture": "exact-chromium/1440-light-preview.png",
       "caption": "Pre-save review and explicit Save/Cancel · 1440 × 960 · Chromium Light",
       "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
-      "sha256": "76db7211cd035b1314b35e2b6e4066da0bbcc8ccfd7aef9009bc0a770b85837c",
+      "sha256": "2295d8dec4254e6ff6ab845bb27844140f6a109093557629862069f577c47d43",
       "capturedAtUTC": "2026-10-25T16:46:23.197573+00:00"
     }
   ],

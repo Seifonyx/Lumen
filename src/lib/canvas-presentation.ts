@@ -43,3 +43,7 @@ export const finishScreen: typeof import('./screen-history').finishScreen | null
 export const forgetScreenMemory: typeof import('./screen-memory').forgetScreenMemory | null = null;
 
 export const CanvasPhoneSections: typeof import('../components/PhoneSections').default | null = null;
+
+export const useProviderSettingsTarget: typeof import('./provider-settings-target').useProviderSettingsTarget | null = null;
+
+export const clearProviderSettingsTarget: typeof import('./provider-settings-target').clearProviderSettingsTarget | null = null;

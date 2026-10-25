@@ -14,3 +14,15 @@ console.log('PASS saved/enabled/catalog/reply distinction and six failure recove
 const cached=providerPresentation({...base,status:{state:'stale',lastSuccess:1,lastAttempt:0,nextRefresh:0}});
 assert.match(cached.guidance,/cached/i);
 assert.doesNotMatch(cached.guidance,/No model list yet/);
+// One canonical presentation verdict drives both the directory and detail; never inference health.
+assert.equal(providerPresentation({...base,keySaved:false}).verdict, 'No key saved');
+assert.equal(providerPresentation({...base,enabled:false}).verdict, 'Permission off');
+assert.equal(providerPresentation({...base}).verdict, 'Not checked');
+assert.equal(providerPresentation({...base}).nextStep, 'Refresh model list');
+assert.equal(providerPresentation({...base}).attention, true, 'enabled unchecked provider needs a check');
+const empty = providerPresentation({...base,modelCount:0,status:{state:'ready',lastAttempt:1,lastSuccess:1,nextRefresh:2}});
+assert.equal(empty.verdict,'No compatible models');assert.equal(empty.tone,'attention');
+const auth = providerPresentation({...base,status:{state:'stale',errorKind:'auth',lastAttempt:1,lastSuccess:1,nextRefresh:2}});
+assert.equal(auth.verdict,'Key needs attention');assert.equal(auth.nextStep,'Review key');
+assert.equal(ready.verdict,'Catalog ready');assert.equal(ready.nextStep,'View models');
+assert.doesNotMatch(ready.guidance,/connection verified|inference verified|operational/i);

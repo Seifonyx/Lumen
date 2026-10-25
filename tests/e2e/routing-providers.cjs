@@ -57,9 +57,13 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       await rc.getByRole('heading', { name: width < 900 ? 'Prism' : 'Prism', exact: true }).waitFor();
       await rc.getByRole('heading', { name: width < 900 ? 'Prism' : 'Prism', exact: true }).click();
       const shot = async name => {
-        if ((width === 1440 || width === 390) && (!before || name === 'models')) {
+        if (!before || name === 'models') {
           await page.evaluate(() => document.fonts.ready);
           await page.screenshot({ path: path.join(out, `${width}-${theme}-${name}.png`), animations: 'disabled' });
+          if(!before && ['providers','detail','disabled','auth-error'].includes(name)){
+            const audit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();
+            assert.deepEqual(audit.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})),[]);
+          }
         }
       };
       const phone = width < 900;
@@ -86,12 +90,21 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       await shot('detail');
       if (!before) {
         assert.match(await detail.locator('.rc-verdict').innerText(), /Catalog ready/);
-        assert.match(await detail.locator('[data-fact="Replies"]').innerText(), /Not tested by model listing/);
-        assert.match(await detail.locator('[data-fact="Key · permission"]').innerText(), /Saved · on/);
-        assert.match(await detail.locator('[data-fact="Allowance"]').innerText(), /Unknown/);
+        assert.match(await detail.locator('[data-fact="Replies"]').textContent(), /Not tested by model listing/);
+        assert.match(await detail.locator('[data-fact="Key · permission"]').textContent(), /Saved · on/);
+        assert.match(await detail.locator('[data-fact="Allowance"]').textContent(), /Unknown/);
         assert.equal(await rc.locator('.phone-navigation').getByRole('button', { name: 'Back', exact:true }).count(), phone ? 1 : 0);
         // A working provider has no fix to lead with: both actions stay quiet.
         assert.equal(await detail.locator('.rc-primary').count(), 0);
+      }
+      if(phone){
+        await rc.locator('.phone-navigation').getByRole('button',{name:'More actions',exact:true}).click();
+        await rc.getByRole('menuitem',{name:'Connection settings',exact:true}).click();
+        const connection=page.getByRole('dialog',{name:'Settings',exact:true});
+        await connection.locator('.provider-connection[data-provider="gemini"][open]').waitFor();
+        assert.equal(await connection.locator('.provider-connection:visible').count(),1,'contextual menu targets the correct provider');
+        await connection.getByRole('button',{name:'Back',exact:true}).click();
+        await detail.waitFor();
       }
       if (phone) await rc.locator('.phone-navigation').getByRole('button', { name: 'Back', exact:true }).click();
       const search = rc.getByRole('searchbox', { name: 'Find a provider' });
@@ -105,7 +118,36 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       await rc.locator('[data-provider="anthropic"]').click();
       await (phone ? rc.locator('.phone-navigation') : detail).getByRole('heading', { name: 'Anthropic', exact: true }).waitFor();
       assert.match(await detail.innerText(), /permission off/i);
-      if (!before) assert.equal(await detail.locator('.rc-primary').innerText(), 'Turn on in Settings', 'the fix leads');
+      if (!before) assert.equal(await detail.locator('.rc-primary').innerText(), 'Enable provider', 'the fix leads');
+      await shot('disabled');
+      await detail.getByRole('button', {name:'Enable provider',exact:true}).click();
+      const settings = page.getByRole('dialog', {name:'Settings',exact:true});
+      const targeted = settings.locator('.provider-connection[data-provider="anthropic"]');
+      await targeted.waitFor();
+      assert.equal(await targeted.getAttribute('open') !== null,true);
+      assert.equal(await settings.locator('.provider-connection:visible').count(),1);
+      assert.equal(await targeted.locator('input[aria-label="Anthropic (Claude) API key"]').getAttribute('type'),'password');
+      assert.equal(await targeted.locator('input[aria-label="Anthropic (Claude) API key"]').inputValue(),'SYNTHETIC_ONLY');
+      assert.equal(await settings.locator('.provider-relay').count(),1, 'existing relay disclosure retained');
+      assert(!/SYNTHETIC_ONLY/.test(await settings.innerText()));
+      await page.evaluate(()=>document.activeElement?.blur());
+      await page.screenshot({path:path.join(out,`${width}-${theme}-specific-settings.png`),animations:'disabled'});
+      const settingsAudit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();
+      assert.deepEqual(settingsAudit.violations.map(v=>v.id),[]);
+      if(phone) await settings.getByRole('button',{name:'Back',exact:true}).click();
+      else await page.goBack();
+      await detail.waitFor();
+      await page.goForward();
+      await targeted.waitFor();
+      assert.equal(await settings.locator('.provider-connection:visible').count(),1,'Forward restores provider-specific settings');
+      await settings.getByRole('button',{name:'All providers',exact:true}).click();
+      assert(await settings.getByRole('searchbox',{name:'Search providers'}).isVisible());
+      assert((await settings.locator('.provider-connection').count())>1);
+      await page.goBack(); await detail.waitFor();
+      await page.goForward(); await settings.waitFor();
+      assert((await settings.locator('.provider-connection:visible').count())>1,'Forward preserves deliberate All providers expansion');
+      await page.goBack(); await detail.waitFor();
+      assert.equal(await detail.getByRole('button',{name:'Enable provider',exact:true}).count(),1);
       if (phone) await rc.locator('.phone-navigation').getByRole('button', { name: 'Back', exact:true }).click();
       await search.fill('');
       if (!before) {
@@ -120,9 +162,10 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         failure = 401;
         await detail.getByRole('button', { name: 'Refresh model list', exact: true }).click();
         await detail.locator('.rc-note').getByText(/provider refused/).waitFor();
-        assert.match(await detail.innerText(), /Listing failed/);
-        assert.equal(await detail.locator('.rc-primary').innerText(), 'Replace key', 'a refused key leads with replacing it');
+        assert.match(await detail.innerText(), /Key needs attention/);
+        assert.equal(await detail.locator('.rc-primary').innerText(), 'Review key', 'a refused key leads with reviewing its settings');
         assert.equal(await detail.locator('.rc-model').count(), 0, 'authentication failure removes unsafe cached models');
+        await shot('auth-error');
         assert(!/RAW_SYNTHETIC_SECRET/.test(await rc.innerText()));
         await detail.getByRole('button', { name: 'Refresh model list', exact: true }).waitFor({ state: 'visible' });
         failure = 0;
@@ -139,6 +182,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         await detail.getByRole('button', { name: 'Refresh model list', exact: true }).click();
         await detail.locator('.rc-note').getByText(/could not list/).waitFor();
         assert.match(await detail.innerText(), /Cached catalog/);
+        await shot('stale');
         assert.equal(await detail.locator('.rc-model').count(), 1, 'non-auth failures preserve searchable cached models');
         assert(providerRequests.length >= 3);
         assert(providerRequests.every(r => r.method === 'GET' && new URL(r.url).pathname.endsWith('/models')), 'only catalog GETs, never inference');

@@ -9,7 +9,7 @@ export type RoutingSection = 'models' | 'providers' | 'policies' | 'usage' | 'di
 const validSections = new Set<RoutingSection>(['models', 'providers', 'policies', 'usage', 'diagnostics']);
 export const normalizeRoutingSection = (section: RoutingSection | 'overview' | string): RoutingSection =>
   validSections.has(section as RoutingSection) ? section as RoutingSection : 'models';
-let state: { open: boolean; section: RoutingSection; provider?: string | null } = { open: false, section: 'models' };
+let state: { open: boolean; section: RoutingSection; provider?: string | null; settingsTarget?: { provider: string; owner: string } | null } = { open: false, section: 'models' };
 const listeners = new Set<() => void>();
 const set = (next: typeof state) => { state = next; listeners.forEach((fn) => fn()); };
 
@@ -25,3 +25,5 @@ export const getRoutingScreen = () => state;
 export const restoreRoutingScreen = (next: typeof state | { open: boolean; section: 'overview'; provider?: string | null }) =>
   set({ ...next, section: normalizeRoutingSection(next.section) });
 export const showRoutingProvider = (provider: string | null) => set({ ...state, provider });
+
+export const setRoutingSettingsTarget = (settingsTarget: typeof state.settingsTarget) => set({ ...state, settingsTarget });

@@ -33,3 +33,5 @@ export { replaceScreen, finishScreen } from './screen-history';
 export { forgetScreenMemory } from './screen-memory';
 
 export const CanvasPhoneSections = lazy(() => import('../components/PhoneSections'));
+
+export { useProviderSettingsTarget, clearProviderSettingsTarget } from './provider-settings-target';

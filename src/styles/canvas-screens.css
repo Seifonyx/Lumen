@@ -221,3 +221,6 @@ html[data-lumen-canvas] .app-skeleton .sk-brand .sk-dot { display: none; }
 html[data-lumen-canvas] .welcome-moon { --signal: #c2ef3a; --signal-strong: #3f6a00; }
 html[data-lumen-canvas][data-theme='dark'] .welcome-moon { --signal-strong: #c2ef3a; }
 @media (prefers-color-scheme: dark) { html[data-lumen-canvas]:not([data-theme='light']) .welcome-moon { --signal-strong: #c2ef3a; } }
+
+html[data-lumen-canvas] .provider-target-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+html[data-lumen-canvas] .provider-target-head .btn { flex:none; min-height:44px; }

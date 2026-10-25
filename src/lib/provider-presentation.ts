@@ -19,7 +19,15 @@ export function providerPresentation({ keySaved, enabled, status, modelCount }: 
     : status?.state === 'stale' ? 'A cached model list is available. Refresh the model list to update it.'
     : status?.state === 'error' ? 'Listing did not complete. Refresh the model list or review its settings.'
     : 'No model list yet. Refresh the model list to request it.';
-  return { setupLabel, catalogLabel, guidance, replyLabel: 'Not tested by model listing',
-    attention: Boolean(keySaved && enabled && status && status.state !== 'ready'),
-    tone: keySaved && enabled && status?.state === 'ready' ? 'ready' : keySaved && enabled && status?.state !== undefined ? 'attention' : 'neutral' };
+  const auth = status?.errorKind === 'auth';
+  const verdict = !keySaved ? 'No key saved' : !enabled ? 'Permission off' : auth ? 'Key needs attention'
+    : status?.state === 'ready' ? modelCount ? 'Catalog ready' : 'No compatible models'
+    : status?.state === 'stale' ? 'Cached catalog' : status?.state === 'error' ? 'Discovery failed' : 'Not checked';
+  const nextStep = !keySaved ? 'Add a key' : !enabled ? 'Enable provider' : auth ? 'Review key'
+    : status?.state === 'ready' && modelCount ? 'View models' : 'Refresh model list';
+  const attention = Boolean(keySaved && enabled && (status?.state !== 'ready' || !modelCount));
+  const light: 'on' | 'stale' | 'fail' | 'off' = !keySaved || !enabled ? 'off' : auth || status?.state === 'error' ? 'fail'
+    : status?.state === 'stale' ? 'stale' : status?.state === 'ready' && modelCount ? 'on' : 'off';
+  return { setupLabel, catalogLabel, guidance, verdict, nextStep, light, replyLabel: 'Not tested by model listing', attention,
+    tone: keySaved && enabled && !attention ? 'ready' : attention ? 'attention' : 'neutral' };
 }

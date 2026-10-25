@@ -510,10 +510,6 @@
  .app[data-lumen-canvas-shell] .rc-page > .phone-navigation { margin:0;position:relative;z-index:4; }
  .app[data-lumen-canvas-shell] .rc-scroll { display:block;flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px 16px 24px;max-width:none; }
  .app[data-lumen-canvas-shell] .rc-scroll > * { margin-inline:0; }
- .app[data-lumen-canvas-shell] .rc-overview-links { display:grid;margin-block:20px;border-block:1px solid var(--canvas-rim); }
- .app[data-lumen-canvas-shell] .rc-overview-links button { display:grid;grid-template-columns:1fr auto;gap:3px 12px;align-items:center;padding:16px 4px;min-height:64px;border:0;border-bottom:1px solid var(--canvas-rim);text-align:start;background:none;color:var(--canvas-ink);font:500 16px var(--canvas-body-font); }
- .app[data-lumen-canvas-shell] .rc-overview-links strong { grid-row:2;font:400 14px var(--canvas-body-font);color:var(--canvas-secondary); }
- .app[data-lumen-canvas-shell] .rc-overview-links svg { grid-column:2;grid-row:1 / 3; }
  .app[data-lumen-canvas-shell] .rc-find { flex-wrap:wrap; }
  .app[data-lumen-canvas-shell] .rc-find:has(> .filter-menu:only-child) { margin-bottom:12px; }
  .app[data-lumen-canvas-shell]:is(html.kb-open .app) .phone-page-search { padding-bottom:8px; }

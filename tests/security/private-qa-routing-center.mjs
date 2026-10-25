@@ -145,9 +145,9 @@ try {
       const detail = rc(page).getByRole('region', { name: 'Provider detail' });
       assert.ok(await rc(page).getByRole('heading', { name: 'Google AI Studio',exact:true }).isVisible());
       // Independent facts, never a setup sequence; replies are never claimed.
-      assert.match(await detail.locator('[data-fact="Key · permission"]').innerText(), /Saved · on/);
-      assert.match(await detail.locator('[data-fact="Replies"]').innerText(), /Not tested by model listing/);
-      assert.match(await detail.locator('[data-fact="Allowance"]').innerText(), /Unknown/);
+      assert.match(await detail.locator('[data-fact="Key · permission"]').textContent(), /Saved · on/);
+      assert.match(await detail.locator('[data-fact="Replies"]').textContent(), /Not tested by model listing/);
+      assert.match(await detail.locator('[data-fact="Allowance"]').textContent(), /Unknown/);
       await shot(page, join(out, `${tag}-2-provider.png`));
       if (phone) {
         assert.equal(await rc(page).locator('.rc-provider-list').isVisible(), false, 'phone: the detail replaces the list');

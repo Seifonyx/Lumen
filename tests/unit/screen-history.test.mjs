@@ -7,7 +7,7 @@ import { transform } from 'sucrase';
 test('screen history restores canonical nested UI, context, layers and account boundaries with opaque markers', () => {
  const listeners=new Set(), routingListeners=new Set(), layerListeners=new Set(), events=new Map();
  let state={user:{uid:'owner-a'},currentId:'chat-a',activeProjectId:'project-a',page:null,pageArg:undefined,settingsOpen:false,settingsTab:'',runner:null,settings:{projects:[{id:'project-a'},{id:'project-b'}]},chats:[{id:'chat-a'},{id:'chat-b'}],projectWorkspaceOpen:false};
- let route={open:false,section:'overview'}, layer=false, restored=0, cleared=0;
+ let route={open:false,section:'models'}, layer=false, restored=0, cleared=0;
  const store={getState:()=>state,setState:patch=>{state={...state,...patch};listeners.forEach(fn=>fn())},subscribe:fn=>{listeners.add(fn);return()=>listeners.delete(fn)}};
  const states=[],history={state:null,pushState(value){this.state=value;states.push(value)},replaceState(value){this.state=value;if(states.length)states[states.length-1]=value;else states.push(value)},back(){this.state=states[0];events.get('popstate')?.()}};
  const mock={configureBackLayerContext:()=>{},flushSync:fn=>fn(),useStore:store,getRoutingScreen:()=>route,restoreRoutingScreen:next=>{route=next;routingListeners.forEach(fn=>fn())},subscribeRoutingCenter:fn=>{routingListeners.add(fn);return()=>routingListeners.delete(fn)},reconcileBackLayers:key=>{if(!key)layer=false;return layer},backLayerOpen:()=>layer,backLayerIdentity:()=> 'all-chats',backLayerRestore:()=>()=>{layer=true;restored++},clearBackLayerRestore:()=>{},closeTopBackLayer:()=>{layer=false;layerListeners.forEach(fn=>fn())},subscribeBackLayers:fn=>{layerListeners.add(fn);return()=>layerListeners.delete(fn)},clearScreenMemory:()=>cleared++};
@@ -35,7 +35,7 @@ test('Settings Back skips transient Settings states and preserves the previous s
   let state = { user: { uid: 'qa' }, page: null, currentId: 'chat', activeProjectId: null, canvasOpen: false,
     settingsOpen: false, settingsTab: '', projectWorkspaceOpen: false, runner: null,
     settings: { projects: [] }, chats: [{ id: 'chat' }] };
-  let route = { open: false, section: 'overview' };
+  let route = { open: false, section: 'models' };
   const store = { getState: () => state, setState: patch => { state = { ...state, ...patch }; listeners.forEach(fn => fn()); },
     subscribe: fn => { listeners.add(fn); return () => listeners.delete(fn); } };
   const frames = []; let cursor = 0;

@@ -1,6 +1,12 @@
 # Dynamic Model Picker operational handoff
 
-## Active checkpoint — corrected Phase4 phone pass (2026-10-24)
+## Active checkpoint — Phase 4 Slice 2, Prism checkpoint 1 (2026-10-24)
+
+This is the **active owner-authorized engineering scope only**. [Draft PR #53](https://github.com/Seifonyx/Lumen/pull/53) on `feat/phase4-prism-checkpoints`, branched from shipped `main` `2a169dc`. Prism replaces user-facing Models & routing in navigation and command search; its five sections are Models (default), Providers, Layouts, Usage, Diagnostics. Overview was removed; its route context moved to Models and recent answers to Diagnostics; old `overview` presentation states normalize to Models on entry/replay. The original sidebar, glass Back, canonical model/provider/credential/routing owners and $0 synthetic QA remain intact.
+
+Checkpoint 1 initial head `d580c8b` passed **23/23 exact-head CI** ([run #40129492069](https://github.com/Seifonyx/Lumen/actions/runs/40129492069)); planner independently reviewed real Chromium/WebKit captures and requested one focused 320×568 correction. The Models current-route card is now a native disclosure on phones: selection remains visible; explanatory route/reach remains available on demand. At short heights the inventory title/Manage control share a row to bring the **entire first usable model row above the anchored Search**. `tests/security/private-qa-canvas-screens.mjs` asserts the actual bounding boxes of a non-disabled Use model button, its row and Search with scrollTop=0 across 320/390/430 Light/Dark on Chromium/WebKit. CSS source stays within its established limit by deleting dead Overview-era rules. **New exact-head CI and screenshots must be checked after the latest commit; no claim of green or owner acceptance until verified.** No physical Safari/VoiceOver claim. STOP at Checkpoint 1; Checkpoints 2/3, merge, deploy, Gate, spend and provider-network changes remain unauthorized.
+
+## Historical checkpoint — corrected Phase4 phone pass (2026-10-24)
 
 Source checkpoint `764d2db49da31779f110b2550710a7e584f64789`; final evidence in `docs/testing/phase4-phone-sections.md` and `docs/reviews/phone-sections/review.html`. Final evidence commit is docs-only; exact PR head/CI and public-safe live status are synchronized separately. Isolation8/8, CP01 ordinary graph, gated RC3sizes and Canvas screens4cases passed locally. New source matrix8/8 per engine passed, including preference/resize/native-search fixes. No design acceptance or release.
 

@@ -48,7 +48,7 @@ const SIZES = [['desktop', 1440, 900, false], ['iphone', 390, 844, true], ['se',
     await page.fill('#chat-search', 'plan'); await shot('search');
     await page.fill('#chat-search', '');
     if (phone) await page.keyboard.press('Escape');
-    for (const [name, label] of [['library', 'Library'], ['tools', 'Tools'], ['routing', 'Models & routing']]) {
+    for (const [name, label] of [['library', 'Library'], ['tools', 'Tools'], ['routing', 'Prism']]) {
       await drawer(); await page.locator('.cv-dest button', { hasText: label }).click(); await page.waitForTimeout(500); await shot(name);
       await page.keyboard.press('Escape');
     }

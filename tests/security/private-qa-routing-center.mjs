@@ -64,18 +64,18 @@ const rc = (page) => page.locator('section.rc-page');
 const isOpen = (page) => page.evaluate(() => { const el = document.querySelector('section.rc-page'); return Boolean(el && !el.hidden); });
 async function openRouting(page, phone) {
   if (phone) { await page.getByRole('button', { name: 'Open chats', exact: true }).first().click(); await settle(page, 600); }
-  await page.locator('aside.cv-nav').getByRole('button', { name: 'Models & routing', exact: true }).click();
-  await rc(page).getByRole('heading', { name: phone ? 'Models & routing' : 'Routing Center', level: 1 }).waitFor();
+  await page.locator('aside.cv-nav').getByRole('button', { name: 'Prism', exact: true }).click();
+  await rc(page).getByRole('heading', { name: phone ? 'Prism' : 'Prism', level: 1 }).waitFor();
   await settle(page);
 }
 // Phone section shortcuts retain canonical screen history; provider details push without the strip.
 async function tab(page, name) {
  const r=rc(page);
  if(await r.locator('.rc-tabs').count()) return r.locator('.rc-tabs').getByRole('button',{name,exact:true}).click();
- while(!await r.getByRole('navigation',{name:'Routing sections'}).count()) {
+ while(!await r.getByRole('navigation',{name:'Prism sections'}).count()) {
    await r.getByRole('button',{name:'Back',exact:true}).click();await settle(page,150);
  }
- await r.getByRole('navigation',{name:'Routing sections'}).getByRole('button',{name:name==='Policies'?'Layouts':name,exact:true}).click();
+ await r.getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name,exact:true}).click();
 }
 
 try {
@@ -92,28 +92,31 @@ try {
       assert.equal(await page.locator('.main').isVisible(), false, 'it takes the main column’s place');
       pass('opens from navigation');
 
-      // Overview: catalog and policies from the account; an unreported allowance stays Unknown.
-      if(phone){
-        assert.match(await rc(page).locator('.rc-overview-links').innerText(),/2 listed/);
-        assert.equal(await rc(page).getByRole('navigation',{name:'Routing sections'}).getByRole('button',{name:'Layouts',exact:true}).count(),1);
-      }else{
-        const summary=await rc(page).locator('.rc-summary').innerText();
-        assert.match(summary,/2\s*models/);assert.match(summary,/1\s*Layout/);
-        assert.match(await rc(page).locator('.rc-route').innerText(),/Allowance unknown/);
+      // Models is the default, and Overview must be absent from both navigation systems.
+      assert.equal(await rc(page).getByRole('button', { name:'Overview', exact:true }).count(), 0);
+      assert.ok(await rc(page).getByRole('region', { name:'Current routing mode' }).isVisible());
+      assert.match(await rc(page).locator('.rc-current').innerText(), /Next message in this chat/);
+      assert.ok(await rc(page).getByRole('heading',{name:'Model inventory'}).isVisible());
+      const places = await rc(page).locator('.rc-tabs button, .phone-sections button').evaluateAll(els => els.map(el => {
+        const r=el.getBoundingClientRect();return { name:el.textContent,left:r.left,right:r.right,height:r.height,cut:el.scrollWidth>el.clientWidth };
+      }));
+      assert.deepEqual(places.map(p=>p.name), ['Models','Providers','Layouts','Usage','Diagnostics']);
+      for (const t of places.filter(()=>!phone)) assert.ok(t.left>=0&&t.right<=width&&!t.cut, `visible desktop section: ${t.name}`);
+      if (phone) {
+        for (const item of await rc(page).locator('.phone-sections button').all()) {
+          await item.focus(); const r=await item.boundingBox();
+          assert.ok(r.x>=0&&r.x+r.width<=width&&r.height>=44,'phone section reveals fully on focus');
+          assert.ok(await item.evaluate(el=>el.scrollWidth<=el.clientWidth));
+        }
+        await rc(page).getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name:'Models',exact:true}).click();
       }
-      // Every place is in view and a full touch target: six tabs on computers; on phones the four in the dock plus Usage and
-      // Diagnostics on the route panel, all on the first screen.
-      const places = await rc(page).locator('.rc-tabs button, .phone-sections button, .rc-route [data-section]').evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { name: el.textContent, left: r.left, right: r.right, bottom: r.bottom, height: r.height, cut: el.scrollWidth > el.clientWidth }; }));
-      assert.equal(places.length, phone ? 6 : 8);
-      for (const t of places.filter(()=>!phone)) assert.ok(t.left >= 0 && t.right <= width && !t.cut && (!phone || t.height >= 44), `place "${t.name}" fully visible: ${JSON.stringify(t)}`);
-      if(phone){for(const item of await rc(page).locator('.phone-sections button').all()){await item.focus();const r=await item.boundingBox();assert.ok(r.x>=0&&r.x+r.width<=width&&r.height>=44,'every section reveals fully on focus');assert.ok(await item.evaluate(el=>el.scrollWidth<=el.clientWidth));}await rc(page).getByRole('button',{name:'Overview',exact:true}).focus();}
-      await shot(page, join(out, `${tag}-1-overview.png`));
-      pass('overview');
+      await shot(page, join(out, `${tag}-1-models.png`));
+      pass('Prism models landing');
 
       // Providers: filters, search, detail.
       await tab(page, 'Providers');
       await settle(page);
-      if (phone) { assert.equal(await rc(page).locator('.rc-dock').count(),0); assert.equal(await rc(page).locator('.phone-navigation h1').innerText(),'Models & routing'); assert.equal(await rc(page).getByRole('navigation',{name:'Routing sections'}).getByRole('button',{name:'Providers',exact:true}).getAttribute('aria-current'),'page'); }
+      if (phone) { assert.equal(await rc(page).locator('.rc-dock').count(),0); assert.equal(await rc(page).locator('.phone-navigation h1').innerText(),'Prism'); assert.equal(await rc(page).getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name:'Providers',exact:true}).getAttribute('aria-current'),'page'); }
       assert.match(await rc(page).locator('.rc-count').innerText(), /^\d+ of \d+ providers$/);
       // Your providers form the ledger with one verdict each; the others are names to add, the first few shown until asked.
       const fold = rc(page).locator('.rc-more');
@@ -167,7 +170,7 @@ try {
 
       // Policies: the real Layout editor, edit and new (cancelled, nothing saved).
       await openRouting(page, phone);
-      await tab(page, 'Policies');
+      await tab(page, 'Layouts');
       await settle(page);
       assert.ok(await rc(page).getByRole('heading', { name: 'Launch writing' }).isVisible());
       await shot(page, join(out, `${tag}-3-policies.png`));
@@ -190,6 +193,7 @@ try {
       await tab(page, 'Diagnostics');
       await settle(page);
       assert.ok(await rc(page).getByRole('heading', { name: 'Latest model choice' }).isVisible());
+      if (phone) await shot(page, join(out, `${tag}-5-sections-scrolled.png`));
       pass('usage and diagnostics');
 
       // Manage connection → Settings (keys); closing Settings returns to the Routing Center.
@@ -216,7 +220,7 @@ try {
       await settle(page);
       assert.equal(await isOpen(page), false);
       await openRouting(page, phone);
-      await rc(page).getByRole('heading', { name: phone ? 'Models & routing' : 'Routing Center', level: 1 }).focus();
+      await rc(page).getByRole('heading', { name: phone ? 'Prism' : 'Prism', level: 1 }).focus();
       await page.keyboard.press('Escape');
       await settle(page);
       assert.equal(await isOpen(page), false, 'Escape closes');
@@ -226,6 +230,11 @@ try {
       await settle(page);
       assert.equal(await isOpen(page), false, 'Back closes');
       assert.ok(page.url().startsWith(gate.origin), 'Back stays in Lumen');
+      await page.goForward(); await settle(page);
+      assert.equal(await isOpen(page), true, 'Forward restores Prism');
+      assert.ok(await rc(page).getByRole('region',{name:'Current routing mode'}).isVisible());
+      await page.goBack(); await settle(page);
+      assert.equal(await isOpen(page), false, 'Back restores chat after Forward');
       // Nested phone screens return through Back; the drawer remains on the chat root.
       await openRouting(page, phone);
       if (phone) {

@@ -1,7 +1,7 @@
 // The collapsed sidebar's rail (computers; Phase 2). Loaded by CanvasNav with the first collapse. The same
 // navigation as the sidebar, not a second copy of the tree: mark, expand, new chat, search, the destinations and the
 // account. A rail that arrives after its collapse takes focus when nothing else holds it.
-import { BookOpen, FolderKanban, LayoutGrid, MessageSquarePlus, PanelLeftOpen, Search, SlidersHorizontal } from 'lucide-react';
+import { BookOpen, FolderKanban, LayoutGrid, MessageSquarePlus, PanelLeftOpen, Search, GitFork } from 'lucide-react';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { BrandMark } from '../lib/canvas-presentation';
 import { closeRoutingCenter, openRoutingCenter, useRoutingCenter } from '../lib/routing-center';
@@ -24,7 +24,7 @@ export default function CanvasRail({ onExpand }: { onExpand: () => void }) {
     ['Library', 'Photos, files and documents from all your chats', <BookOpen size={19} />, page === 'collection', () => go('collection', 'all')],
     ['Tools', `Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`, <LayoutGrid size={19} />, page === 'tools' || page === 'assistants' || page === 'study', () => go('tools')],
     ['Projects', 'All projects', <FolderKanban size={19} />, page === 'projects', () => go('projects')],
-    ['Models & routing', 'Providers, models and routing rules', <SlidersHorizontal size={19} />, routing && !page, () => { setUi({ page: null, settingsOpen: false }); openRoutingCenter(); }],
+    ['Prism', 'Models, providers & routing', <GitFork size={19} strokeWidth={1.8} />, routing && !page, () => { setUi({ page: null, settingsOpen: false }); openRoutingCenter(); }],
   ];
   return (
     <nav className="cv-navrail" aria-label="Navigation">

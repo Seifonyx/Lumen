@@ -24,7 +24,6 @@ import { LayoutEditor } from './LayoutsTab';
 import UsageTab from './UsageTab';
 import RouteWhy from './RouteWhy';
 import { providerPresentation } from '../lib/provider-presentation';
-import { routeWords } from '../lib/route-words';
 import FilterMenu from './FilterMenu';
 // Tier 5 panels (usage history, request log, routing file, connection check) load on first use, in their own chunk.
 const ScreenActions = lazy(() => import('./ScreenActions'));
@@ -35,7 +34,7 @@ const RequestLog = lazy(() => extras().then((m) => ({ default: m.RequestLog })))
 const RoutingFile = lazy(() => extras().then((m) => ({ default: m.RoutingFile })));
 const RecentAnswers = lazy(() => extras().then((m) => ({ default: m.RecentAnswers })));
 
-const SECTIONS: [RoutingSection, string][] = [['overview', 'Overview'], ['providers', 'Providers'], ['models', 'Models'], ['policies', 'Policies'], ['usage', 'Usage'], ['diagnostics', 'Diagnostics']];
+const SECTIONS: [RoutingSection, string][] = [['models', 'Models'], ['providers', 'Providers'], ['policies', 'Layouts'], ['usage', 'Usage'], ['diagnostics', 'Diagnostics']];
 // Phones use a feature index and pushed screens; canonical UI history owns every Back path.
 const providerId = (model: ModelInfo) => (model.provider === 'google' ? 'gemini' : model.provider);
 const providerLabel = (id: string) => (id === 'gemini' ? 'Google AI Studio' : PROVIDER_NAMES[providerOfId(id + ':')] || id);
@@ -275,7 +274,7 @@ function ProviderModels({ models, searchHost }: { models: ModelInfo[]; searchHos
 export default function RoutingCenter() {
   const { open, section, provider } = useRoutingCenter();
   const chat = useStore(selectCurrentChat), model = useStore(selectCurrentModel);
-  const catalog = useStore((s) => s.catalog), config = useStore((s) => s.settings), usage = useStore((s) => s.usage);
+  const catalog = useStore((s) => s.catalog), config = useStore((s) => s.settings);
   const owner = useStore((s) => s.user?.uid), currentId = useStore((s) => s.currentId);
   const covered = useStore((s) => s.settingsOpen || Boolean(s.page));
   const providers = useProviderRows();
@@ -283,10 +282,8 @@ export default function RoutingCenter() {
   const [editing, setEditing] = useState<Layout | null>(null);
   const [query, setQuery] = useState('');
   const [searchHost, setSearchHost] = useState<HTMLElement | null>(null);
-  // A provider opened from the overview: the Providers page opens on it.
 
   const page = useRef<HTMLElement>(null), heading = useRef<HTMLHeadingElement>(null);
-  const came = useRef<RoutingSection>('overview');
   const providerOpen = Boolean(provider);
   // Another conversation or account is another context: the Routing Center closes.
   const opened = useRef({ owner, currentId });
@@ -295,15 +292,11 @@ export default function RoutingCenter() {
   useEffect(() => { if (open) heading.current?.focus({ preventScroll: true }); }, [open]);
   useEffect(() => {
     setEditing(null); if (page.current) { page.current.scrollTop = 0; page.current.querySelector('.rc-scroll')?.scrollTo(0,0); }
-    // Phones show one place at a time: its heading takes focus; back from Usage or Diagnostics, the row that opened it.
-    const from = came.current; came.current = section;
-    if (!phone || !open) return;
-    const row = section === 'overview' && page.current?.querySelector<HTMLElement>(`.rc-route [data-section="${from}"]`);
-    if (row) row.focus();
-    else page.current?.querySelector<HTMLElement>(section === 'overview' ? '#rc-title' : '.rc-body h2')?.focus({ preventScroll: true });
+    // The shared phone title is stable across sections; direct entry never invents a Back target.
+    if (phone && open) page.current?.querySelector<HTMLElement>('.phone-navigation h1')?.focus({ preventScroll: true });
   }, [section]); // eslint-disable-line react-hooks/exhaustive-deps
   // Phones: an open provider, Usage and Diagnostics are pages over their place. Back (or Safari's edge swipe) closes them.
-  const drill = phone && (providerOpen || section !== 'overview');
+  const drill = phone && (providerOpen || section !== 'models');
   // Every section/provider is represented in the shared history adapter; no competing local Back layer.
   // Phones: elsewhere, swipe right to go back to the chat, as from the other pages shown in its place.
   useEffect(() => {
@@ -316,7 +309,6 @@ export default function RoutingCenter() {
   const last = chat?.messages.findLast((m) => m.role === 'assistant' && m.model && m.status === 'done');
   const routed = model === 'auto' || model.startsWith('layout:');
   const current = routed ? last?.model : model;
-  const left = current ? remaining(usage, current) : null;
   const models = catalog?.models || [], layouts = config.layouts || [];
   const mine = providers.filter((p) => p.keySaved || p.enabled);
   const q = query.trim().toLowerCase();
@@ -332,21 +324,20 @@ export default function RoutingCenter() {
   const reach = pool.length ? `${pool.slice(0, 3).join(layout?.mode === 'order' ? ' → ' : ' · ')}${pool.length > 3 ? ` +${pool.length - 3} more` : ''}`
     : picked ? `${providerLabel(providerId(picked))}${picked.context ? ` · ${formatTokens(picked.context)} context` : ''}` : '';
   const go = (id: RoutingSection) => showRoutingSection(id);
-  const openProvider = (id: string) => { go('providers'); showRoutingProvider(id); };
-  const sub = phone && section !== 'overview';
+  const sub = phone && section !== 'models';
 
   const modelSearch = <div className="rc-search"><Search size={16} aria-hidden="true" /><input type="search" aria-label="Search models" placeholder="Search models or providers" value={query} onChange={e => setQuery(e.target.value)} />{query && <button type="button" aria-label="Clear model search" onClick={e => { setQuery(''); e.currentTarget.parentElement?.querySelector('input')?.focus(); }}><X size={16} /></button>}</div>;
 
 
   return (
-    <section ref={page} className={`rc-page${sub ? ' rc-sections-page' : ''}${drill ? ' rc-drill' : ''}`} hidden={covered} aria-label="Models and routing"
+    <section ref={page} className={`rc-page${sub ? ' rc-sections-page' : ''}${drill ? ' rc-drill' : ''}`} hidden={covered} aria-label="Prism — Models, providers & routing"
       onKeyDown={(e) => { if (e.key === 'Escape' && !e.defaultPrevented && !(e.target as Element).closest('[role="dialog"], [role="menu"], [role="listbox"], input, textarea, select')) { e.preventDefault(); screenBack(closeRoutingCenter); } }}>
       {/* Desktop retains split-view navigation; phone chrome is shared with Library, Tools and Settings. */}
-      {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : 'Models & routing'} actions={providerOpen ? <Suspense fallback={null}><ScreenActions actions={[{ label: 'Connection settings', run: () => openSettings('keys') }]} /></Suspense> : undefined} /> : (
+      {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : 'Prism'} actions={providerOpen ? <Suspense fallback={null}><ScreenActions actions={[{ label: 'Connection settings', run: () => openSettings('keys') }]} /></Suspense> : undefined} /> : (
       <header className={`rc-head${sub ? ' rc-head-sub' : ''}`}>
-        <h1 id="rc-title" tabIndex={-1} ref={heading}>Routing Center</h1>
+        <div className="rc-brand"><h1 id="rc-title" tabIndex={-1} ref={heading}>Prism</h1><p>Models, providers &amp; routing</p></div>
         {!phone && (
-          <nav className="rc-tabs" aria-label="Routing sections">
+          <nav className="rc-tabs" aria-label="Prism sections">
             {SECTIONS.map(([id, label]) => <button type="button" key={id} aria-current={section === id ? 'page' : undefined} onClick={() => go(id)}>{label}</button>)}
           </nav>
         )}
@@ -355,49 +346,32 @@ export default function RoutingCenter() {
 
 
 
-      {phone && !providerOpen && <PhoneSections label="Routing sections" active={section} items={SECTIONS.map(([id,label]) => ({ id, label:id === 'policies' ? 'Layouts' : label }))} onSelect={id => go(id as RoutingSection)} />}
+      {phone && !providerOpen && <PhoneSections label="Prism sections" active={section} items={SECTIONS.map(([id,label]) => ({ id, label }))} onSelect={id => go(id as RoutingSection)} />}
       <div className="rc-scroll">
-      {section === 'overview' && (phone ? <div className="rc-phone-overview">
-        <section className="rc-route" aria-label="Current routing mode"><p className="rc-kicker">This conversation</p><h2>{modelLabel(catalog, model)}</h2><p className="rc-route-line">{sentence}</p>{reach && <p className="rc-reach">{reach}</p>}</section>
-        <div className="rc-overview-links"><button type="button" onClick={() => go('providers')}><span>Your providers</span><strong>{plural(providers.filter(p => p.keySaved).length, 'key')} saved</strong><ChevronRight size={18}/></button><button type="button" onClick={() => go('models')}><span>Model inventory</span><strong>{choices} enabled · {models.length} listed</strong><ChevronRight size={18}/></button></div>
-        <Suspense fallback={null}><RecentAnswers /></Suspense>
-      </div> : <div className="rc-body rc-overview">
-          <div className="rc-col">
-            <section className="rc-route" aria-label="Current routing mode">
-              <p className="rc-kicker">Next message in this chat</p>
-              <h2>{modelLabel(catalog, model)}</h2>
-              <p className="rc-route-line">{sentence}</p>
-              {reach && <p className="rc-reach">{reach}</p>}
-              <div className="rc-route-links">
-                <button type="button" data-section="diagnostics" onClick={() => go('diagnostics')}><span>Diagnostics</span><strong>{last?.model ? `Last answer: ${modelLabel(catalog, last.model)}${last.route ? ` · ${routeWords(last.route)}` : ''}` : 'No answer in this chat yet'}</strong><ChevronRight size={16} aria-hidden="true" /></button>
-                <button type="button" data-section="usage" onClick={() => go('usage')}><span>Usage</span><strong>{left === null ? 'Allowance unknown' : `${left} requests left`}</strong><ChevronRight size={16} aria-hidden="true" /></button>
-              </div>
-            </section>
-            <Suspense fallback={null}><RecentAnswers /></Suspense>
-          </div>
-          <div className="rc-col">
-            <section className="rc-block" aria-labelledby="rc-conn-title">
-              <div className="rc-block-head"><h3 className="rc-group-label" id="rc-conn-title">Your providers</h3>{mine.length > 0 && <button type="button" className="rc-add" onClick={() => openSettings('keys')}><Plus size={16} aria-hidden="true" />Connect</button>}</div>
-              {mine.length ? <div className="rc-ledger">{mine.map((p) => <ProviderLine key={p.id} p={p} onOpen={() => openProvider(p.id)} />)}</div>
-                : <div className="rc-start"><p>No provider is connected yet. Save a key and turn it on; Lumen then lists its models for Auto and for you.</p><button type="button" className="rc-primary" onClick={() => openSettings('keys')}><Plus size={16} aria-hidden="true" />Connect a provider</button></div>}
-            </section>
-            <section className="rc-block" aria-labelledby="rc-manage-title">
-              <div className="rc-block-head"><h3 className="rc-group-label" id="rc-manage-title">Models &amp; policies</h3><button type="button" className="rc-add" onClick={() => openSettings('models')}>Manage models<ArrowUpRight size={15} aria-hidden="true" /></button></div>
-              <div className="rc-group rc-summary">
-                <button type="button" data-section="models" onClick={() => go('models')}><strong>Models</strong><span>{choices} of {plural(models.length, 'model')} enabled</span><ChevronRight size={16} aria-hidden="true" /></button>
-                <button type="button" data-section="policies" onClick={() => go('policies')}><strong>Policies</strong><span>{layouts.length ? plural(layouts.length, 'Layout') : 'No Layouts yet'}</span><ChevronRight size={16} aria-hidden="true" /></button>
-              </div>
-            </section>
-          </div>
-        </div>
-      )}
-
-
       {section === 'providers' && <div className="rc-body"><Providers key={owner || 'signed-out'} preferred={current?.split(':')[0]} phone={phone} searchHost={searchHost} /></div>}
 
       {section === 'models' && (
-        <div className="rc-body">
-          <div className="rc-panel-title"><div><h2>Model inventory</h2><p className="rc-muted">Context limits and allowances from your catalog.</p></div><button type="button" className="rc-add" onClick={() => openSettings('models')}>Manage models <ArrowUpRight size={15} aria-hidden="true" /></button></div>
+        <div className="rc-body rc-models-body">
+          <section className="rc-current" aria-label="Current routing mode">
+            {phone ? (
+              <details className="rc-current-disclosure">
+                <summary>
+                  <span className="rc-current-identity"><span className="rc-kicker">Next message in this chat</span><strong className="rc-current-model">{modelLabel(catalog, model)}</strong></span>
+                  <span className="rc-current-more-label">Details <ChevronRight size={15} aria-hidden="true" /></span>
+                </summary>
+                <div className="rc-current-explanation"><p className="rc-muted">{sentence}</p>{reach && <p className="rc-muted rc-current-reach">{reach}</p>}</div>
+              </details>
+            ) : (
+              <>
+                <p className="rc-kicker">Next message in this chat</p>
+                <h2>{modelLabel(catalog, model)}</h2>
+                <p className="rc-muted">{sentence}</p>
+                {reach && <p className="rc-muted rc-current-reach">{reach}</p>}
+              </>
+            )}
+            {!mine.length && <button type="button" className="rc-primary" onClick={() => openSettings('keys')}><Plus size={15} aria-hidden="true" />Connect a provider</button>}
+          </section>
+          <div className="rc-panel-title"><div><h2>Model inventory</h2><p className="rc-muted">{phone ? 'Models, providers & routing · ' : ''}Context limits and allowances from your catalog.</p></div><button type="button" className="rc-add" aria-label="Manage models" onClick={() => openSettings('models')}><span>Manage<span className="rc-manage-noun"> models</span></span><ArrowUpRight size={15} aria-hidden="true" /></button></div>
           {phone ? searchHost && createPortal(modelSearch, searchHost) : modelSearch}
           {inventory.length ? <div className="rc-group">{inventory.map((m) => <ModelRow key={m.id} m={m} />)}</div> : <p className="rc-muted" role="status">No models match.</p>}
         </div>
@@ -429,6 +403,7 @@ export default function RoutingCenter() {
           <div className="rc-grid">
             <section className="rc-card"><h3>Latest model choice</h3>{last?.route ? <RouteWhy message={last} /> : <p className="rc-muted">No route explanation is recorded.</p>}</section>
             <Suspense fallback={null}><RequestLog /></Suspense>
+            <Suspense fallback={null}><RecentAnswers /></Suspense>
             <section className="rc-card"><h3><Shield size={16} /> Privacy boundary</h3><p className="rc-muted">Provider credentials stay in Lumen’s existing account scope. No prompt bodies or credentials are added to a diagnostic history.</p></section>
             <section className="rc-card"><h3>Developer endpoint</h3><p className="rc-muted">Not available in browser Lumen. A local or server gateway would need a separately approved trust and deployment architecture.</p></section>
           </div>

@@ -5,7 +5,7 @@ import { navigateBack, navigateScreen } from '../lib/canvas-presentation';
 // sidebar element as Sidebar (one `sidebarOpen`, one collapse state, the same focus scope and drawer gesture
 // owner) and reuses its ChatRow (rename, pin, move, archive, side by side, share/export, delete, long press),
 // search semantics, AllChats, AskChats and ProjectManager. Folder disclosure is presentation only.
-import { BookOpen, ChevronRight, LayoutGrid, MessageSquarePlus, MessageSquareText, PanelLeftClose, Plus, Search, Settings2, SlidersHorizontal, Sparkles, X } from 'lucide-react';
+import { BookOpen, ChevronRight, LayoutGrid, MessageSquarePlus, MessageSquareText, PanelLeftClose, Plus, Search, Settings2, GitFork, Sparkles, X } from 'lucide-react';
 import { Suspense, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { isMac, modKey } from '../lib/util';
@@ -223,7 +223,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
               {!phone && <li><button type="button" className="cv-dest-new" aria-label="New chat" aria-describedby={`${ids}-general`} onClick={newGeneralChat} title={`New chat (${modKey}⇧O)`}><MessageSquarePlus size={18} /><span>New chat</span><kbd>{modKey}⇧O</kbd></button></li>}
               <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onClick={() => toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span></button></li>
               <li><button type="button" aria-current={page === 'tools' || page === 'assistants' || page === 'study' ? 'page' : undefined} onClick={() => toPage('tools')} title={`Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`}><LayoutGrid size={18} /><span>Tools</span></button></li>
-              <li><button type="button" data-routing-center aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><SlidersHorizontal size={18} /><span>Models &amp; routing</span></button></li>
+              <li><button type="button" title="Models, providers & routing" data-routing-center aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><GitFork size={18} strokeWidth={1.8} aria-hidden="true" /><span>Prism</span></button></li>
             </ul>
           )}
 

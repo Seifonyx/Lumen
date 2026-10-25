@@ -12,6 +12,12 @@ assert.equal(fallbackPresentation(undefined,true).title,'Enabled models permitte
 assert.equal(fallbackPresentation({...layout,fallback:'future-invalid'} as unknown as Layout,true).title,'No automatic fallback');
 const preview=layoutPreview({...layout,priority:'quality',requirements:{capabilities:['vision'],minContext:128000}}, {...DEFAULT_SETTINGS,autoSwitch:false,routingPreference:'speed'});
 assert.match(preview.mode,/saved order/);assert.equal(preview.priority,'Quality');assert.match(preview.requirements,/Images/);assert.match(preview.requirements,/128,000/);assert.match(preview.fallback.title,/off/);
+for (const autoSwitch of [false,true]) {
+  const ordered=layoutPreview({...layout,mode:'order',priority:'quality'},{...DEFAULT_SETTINGS,autoSwitch});
+  assert.equal(ordered.priorityExplanation,'Quality is saved but inactive in In order mode. Initial selection and any permitted fallback follow the saved model order.');
+  const matched=layoutPreview({...layout,mode:'auto',priority:'quality'},{...DEFAULT_SETTINGS,autoSwitch});
+  assert.equal(matched.priorityExplanation,'Quality guides initial model selection within this Layout. Automatic-switching permission is described separately.');
+}
 assert.equal(layout.models[0],'gemini:missing','presentation cannot remove/reorder saved assignments');
 const done:Message={id:'done',role:'assistant',text:'PRIVATE_BODY_DO_NOT_COPY',model:'gemini:flash',status:'done',createdAt:2,via:'An earlier Layout',notices:['Pro hit its usage limit — switched to Flash.']};
 const newer:Message={...done,id:'error',model:'gemini:pro',createdAt:3,status:'error'};

@@ -25,9 +25,13 @@ export function layoutPreview(layout: Layout, settings: Settings) {
     r?.minInputTokens && `room for ${r.minInputTokens.toLocaleString()} input tokens and a reply`,
     r?.noReasoning && 'excludes models that require lengthy reasoning',
   ].filter(Boolean).join(' · ');
+  const priority = priorityName(layout.priority || settings.routingPreference);
   return {
     mode: layout.mode === 'order' ? 'Tries models in your saved order, subject to availability, requirements and recovery rules.' : 'Chooses within the assigned set for each request. Task fit may override the displayed order.',
-    priority: priorityName(layout.priority || settings.routingPreference),
+    priority,
+    priorityExplanation: layout.mode === 'auto'
+      ? `${priority} guides initial model selection within this Layout. Automatic-switching permission is described separately.`
+      : `${priority} is saved but inactive in In order mode. Initial selection and any permitted fallback follow the saved model order.`,
     requirements: requirements || 'No extra Layout requirements.',
     fallback: fallbackPresentation(layout, settings.autoSwitch),
   };

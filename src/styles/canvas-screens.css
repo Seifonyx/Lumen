@@ -224,3 +224,5 @@ html[data-lumen-canvas][data-theme='dark'] .welcome-moon { --signal-strong: #c2e
 
 html[data-lumen-canvas] .provider-target-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
 html[data-lumen-canvas] .provider-target-head .btn { flex:none; min-height:44px; }
+/* Provider editor: an implicit auto track inherits the key input's intrinsic width and clips narrow cards. */
+html[data-lumen-canvas] .provider-connection-body { grid-template-columns: minmax(0, 1fr); }

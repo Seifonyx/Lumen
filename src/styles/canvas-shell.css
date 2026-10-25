@@ -508,7 +508,7 @@
  .app[data-lumen-canvas-shell] .phone-page-search :is(.hub-search,.rc-search):focus-within { outline:2px solid var(--focus);outline-offset:2px; }
  .app[data-lumen-canvas-shell] .rc-page:not([hidden]) { display:flex;flex-direction:column;padding:0;overflow:hidden; }
  .app[data-lumen-canvas-shell] .rc-page > .phone-navigation { margin:0;position:relative;z-index:4; }
- .app[data-lumen-canvas-shell] .rc-scroll { display:block;flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px 16px 24px;max-width:none; }
+ .app[data-lumen-canvas-shell] .rc-scroll { display:block;width:100%;box-sizing:border-box;flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px 16px 24px;max-width:none; }
  .app[data-lumen-canvas-shell] .rc-scroll > * { margin-inline:0; }
  .app[data-lumen-canvas-shell] .rc-find { flex-wrap:wrap; }
  .app[data-lumen-canvas-shell] .rc-find:has(> .filter-menu:only-child) { margin-bottom:12px; }

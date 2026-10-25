@@ -82,6 +82,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       }
       await tab('Providers');
       await rc.locator('[data-provider="gemini"]').waitFor();
+      if(phone){const box=await rc.locator('.rc-provider-list').boundingBox();assert(box.width>=width-34,'provider list uses phone width with 16px gutters');}
       await shot('providers');
       await rc.locator('[data-provider="gemini"]').click();
       const detail = rc.getByRole('region', { name: 'Provider detail' });

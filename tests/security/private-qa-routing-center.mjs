@@ -137,9 +137,9 @@ try {
       assert.equal(await rc(page).locator('.rc-provider-scroll [data-provider]').count(), 1);
       await rc(page).getByRole('button', { name: 'Clear provider search' }).click();
       await rc(page).getByRole('button', { name: 'Filter providers' }).click();
-      await page.getByRole('menuitemradio', { name: /Saved connections/ }).or(page.getByRole('option', { name: /Saved connections/ })).first().click();
+      await page.getByRole('menuitemradio', { name: /Saved keys/ }).or(page.getByRole('option', { name: /Saved keys/ })).first().click();
       await settle(page, 200);
-      assert.equal(await rc(page).locator('.rc-provider-scroll [data-provider]').count(), 1, 'one saved connection (synthetic Google AI Studio)');
+      assert.equal(await rc(page).locator('.rc-provider-scroll [data-provider]').count(), 1, 'one saved key (synthetic Google AI Studio)');
       await rc(page).locator('[data-provider="gemini"]').click();
       await settle(page);
       const detail = rc(page).getByRole('region', { name: 'Provider detail' });

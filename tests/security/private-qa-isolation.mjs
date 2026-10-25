@@ -169,7 +169,7 @@ try {
     'src/styles/canvas-reading.css',
     // Phase 4 slice 1: safe connection/discovery copy, reached only by the lazy Canvas Routing Center.
     // Required in the Canvas graph and forbidden in the ordinary graph above; no permission/network owner changes.
-    'src/lib/provider-presentation.ts',
+    'src/lib/provider-presentation.ts', 'src/lib/provider-settings-target.ts', 'src/components/ProviderConnections.tsx',
     // Owner-authorized shared iPhone navigation reset: UI-only owners, ordinary graph remains isolated.
     // Reviewed feature-local section presentation and media subscription; no data/auth/network owner.
     'src/components/PhoneSections.tsx', 'src/lib/phone-layout.ts',

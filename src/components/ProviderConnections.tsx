@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, ExternalLink, Eye, EyeOff, Search, X } from 'lucide-react';
 import type { ApiKeys } from '../lib/firebase';
 import FilterMenu from './FilterMenu';
@@ -13,7 +13,10 @@ type Filter = 'all' | 'free' | 'connected';
 const FREE = new Set<string>(['gemini', 'openrouter', 'groq', 'cerebras', 'mistral', 'cohere', 'nvidia', 'huggingface', 'cloudflare', ...Object.entries(EXTRA_PROVIDERS).filter(([, v]) => 'free' in v && v.free).map(([k]) => k)]);
 
 /** Every provider in one list, with filters. Built-in providers work as soon as a key is added; the others also need "Enable". */
-export default function ProviderConnections({ main, draft, setDraft, saved }: { main: MainProvider[]; draft: ApiKeys; setDraft: (value: ApiKeys) => void; saved: ApiKeys }) {
+export default function ProviderConnections({ main, draft, setDraft, saved, targetProvider, onShowAllProviders }: { targetProvider?: string | null; onShowAllProviders?: () => void; main: MainProvider[]; draft: ApiKeys; setDraft: (value: ApiKeys) => void; saved: ApiKeys }) {
+  const focused = targetProvider || null;
+  const target = useRef<HTMLDetailsElement>(null);
+  useEffect(() => { if (focused) { target.current?.querySelector<HTMLElement>('summary')?.focus({ preventScroll: true }); target.current?.scrollIntoView({ block: 'start' }); } }, [focused]);
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
   const [shown, setShown] = useState<Record<string, boolean>>({});
@@ -23,7 +26,7 @@ export default function ProviderConnections({ main, draft, setDraft, saved }: { 
   const connected = (id: string) => Boolean((saved[id as keyof ApiKeys] as string | undefined)?.trim()) && (!(id in EXTRA_PROVIDERS) || saved.providerAccess?.[id as ExtraId] === true);
   const all = [...main.map((p) => ({ id: p.id as string, label: p.label })), ...extras.map((id) => ({ id: id as string, label: EXTRA_PROVIDERS[id].label }))];
   const q = query.trim().toLowerCase();
-  const visible = all.filter((p) => (filter === 'all' || (filter === 'free' ? FREE.has(p.id) : connected(p.id))) && (!q || p.label.toLowerCase().includes(q)));
+  const visible = all.filter((p) => focused ? p.id === focused : (filter === 'all' || (filter === 'free' ? FREE.has(p.id) : connected(p.id))) && (!q || p.label.toLowerCase().includes(q)));
   const counts: Record<Filter, number> = { all: all.length, free: all.filter((p) => FREE.has(p.id)).length, connected: all.filter((p) => connected(p.id)).length };
 
   const keyInput = (id: string, label: string, placeholder?: string) => {
@@ -48,7 +51,7 @@ export default function ProviderConnections({ main, draft, setDraft, saved }: { 
   return (
     <section className="provider-connections" aria-labelledby="providers-heading">
       <h3 id="providers-heading" className="sr-only">Providers</h3>
-      {firstRun && (
+      {firstRun && !focused && (
         <div className="welcome-guide" role="note" aria-label="Getting started">
           <strong>Welcome to Lumen</strong>
           <p>It talks to free AI models using your own keys, which stay private to your account. One free key is enough to start:</p>
@@ -61,7 +64,8 @@ export default function ProviderConnections({ main, draft, setDraft, saved }: { 
           <p className="muted small">Groq, Cerebras and OpenRouter are free too and add more models; you can add them any time.</p>
         </div>
       )}
-      <div className="provider-toolbar">
+      {focused && <div className="provider-target-head"><p className="muted small">Connection settings · {all.find(p => p.id === focused)?.label}</p><button type="button" className="btn small" onClick={() => onShowAllProviders?.()}>All providers</button></div>}
+      {!focused && <div className="provider-toolbar">
         <label className="search provider-search">
           <Search size={14} />
           <input type="search" aria-label="Search providers" placeholder="Search providers" value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -69,19 +73,19 @@ export default function ProviderConnections({ main, draft, setDraft, saved }: { 
         <FilterMenu<Filter> label="Show providers" value={filter} onChange={setFilter} options={[
           { value: 'all', label: 'All providers', count: counts.all },
           { value: 'free', label: 'Free tier', count: counts.free },
-          { value: 'connected', label: 'Connected', count: counts.connected },
+          { value: 'connected', label: 'Enabled with key', count: counts.connected },
         ]} />
-      </div>
+      </div>}
 
       <div className="settings-card">
-        {visible.length === 0 && <p className="muted small provider-none">{filter === 'connected' && !q ? 'No providers connected yet. Add a key to any provider under All.' : 'No providers match.'}</p>}
+        {visible.length === 0 && <p className="muted small provider-none">{filter === 'connected' && !q ? 'No providers have a saved key and permission enabled. Add a key under All providers.' : 'No providers match.'}</p>}
         {visible.map(({ id }) => {
           const m = main.find((p) => p.id === id);
           if (m) {
             const on = Boolean((saved[m.id] || '').trim());
             return (
-              <details key={id} className="provider-connection key-provider-card" data-provider={id} open={firstRun || undefined}>
-                {summary(id, m.label, on ? 'Key entered' : 'Not set', on)}
+              <details key={id} className="provider-connection key-provider-card" data-provider={id} ref={focused === id ? target : undefined} open={focused === id || firstRun || undefined}>
+                {summary(id, m.label, (draft[m.id] || '') !== (saved[m.id] || '') ? 'Unsaved changes' : on ? 'Key saved' : 'Not set', on)}
                 <div className="provider-connection-body">
                   <p className="muted small">{m.hint} <a className="link-btn small inline" href={m.link} target="_blank" rel="noopener noreferrer">{m.linkText || 'Get a free key'} <ExternalLink size={12} /></a></p>
                   {keyInput(m.id, m.label, m.placeholder)}
@@ -91,9 +95,10 @@ export default function ProviderConnections({ main, draft, setDraft, saved }: { 
           }
           const x = id as ExtraId, provider = EXTRA_PROVIDERS[x];
           const enabled = draft.providerAccess?.[x] === true;
+          const unsaved = (draft[x] || '') !== (saved[x] || '') || enabled !== (saved.providerAccess?.[x] === true);
           return (
-            <details key={id} className="provider-connection" data-provider={id}>
-              {summary(id, provider.label, enabled && draft[x] ? 'Enabled' : draft[x] ? 'Saved · off' : 'Not set', Boolean(enabled && draft[x]))}
+            <details key={id} className="provider-connection" data-provider={id} ref={focused === id ? target : undefined} open={focused === id || undefined}>
+              {summary(id, provider.label, unsaved ? 'Unsaved changes' : enabled && saved[x] ? 'Key saved · on' : saved[x] ? 'Saved · off' : 'Not set', !unsaved && Boolean(enabled && saved[x]))}
               <div className="provider-connection-body">
                 <p className="muted small">{provider.hint} <a className="link-btn small inline" href={provider.link} target="_blank" rel="noopener noreferrer">Provider dashboard <ExternalLink size={12} /></a></p>
                 {keyInput(x, provider.label)}
@@ -114,7 +119,7 @@ export default function ProviderConnections({ main, draft, setDraft, saved }: { 
           <a className="link-btn small inline" href="https://github.com/Seifonyx/lumen/blob/main/server/provider-relay/README.md" target="_blank" rel="noopener noreferrer">Relay setup <ExternalLink size={12} /></a>
         </div>
       </details>
-      <p className="muted small provider-retired">GitHub Models was retired on July 30, 2026; your GitHub coding connection still works. <a className="link-btn small inline" href="https://docs.github.com/en/github-models" target="_blank" rel="noopener noreferrer">Notice <ExternalLink size={12} /></a></p>
+      {!focused && <p className="muted small provider-retired">GitHub Models was retired on July 30, 2026; your GitHub coding connection still works. <a className="link-btn small inline" href="https://docs.github.com/en/github-models" target="_blank" rel="noopener noreferrer">Notice <ExternalLink size={12} /></a></p>}
     </section>
   );
 }

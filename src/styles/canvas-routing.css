@@ -224,9 +224,20 @@
 
 /* Narrow provider browsing: three previews, full-width touch rows, deliberate expansion. */
 @media(max-width:899px){
-.app[data-lumen-canvas-shell] .rc-list-head h2{display:none}
+.app[data-lumen-canvas-shell] .rc-list-head h2{font-size:22px}
 .app[data-lumen-canvas-shell] .rc-explore{margin-top:14px}
 .app[data-lumen-canvas-shell] .rc-chips{display:grid;gap:0}
 .app[data-lumen-canvas-shell] .rc-chip{display:flex;align-items:center;width:100%;min-height:48px;padding:10px 12px;border-radius:0;background:none;box-shadow:inset 0 -1px var(--rc-rim);text-align:start}
 .app[data-lumen-canvas-shell] .rc-chip::after{content:"›";margin-inline-start:auto;color:var(--canvas-muted);font-size:22px}
+}
+
+/* Provider identity, a single verdict and the next step; secondary evidence stays inspectable. */
+.app[data-lumen-canvas-shell] .rc-provider-next { font-weight:500; }
+.app[data-lumen-canvas-shell] .rc-setup-line { margin:0; color:var(--canvas-secondary); font-size:13.5px; line-height:1.5; }
+.app[data-lumen-canvas-shell] .rc-setup-line span { display:block; }
+@media(max-width:899px){
+  .app[data-lumen-canvas-shell] .rc-provider-detail { gap:16px; }
+  .app[data-lumen-canvas-shell] .rc-detail-head h2 { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+  .app[data-lumen-canvas-shell] .rc-detail-head { gap:12px; }
+  .app[data-lumen-canvas-shell] .rc-verdict { margin-top:0; }
 }

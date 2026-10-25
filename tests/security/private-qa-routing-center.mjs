@@ -137,17 +137,17 @@ try {
       assert.equal(await rc(page).locator('.rc-provider-scroll [data-provider]').count(), 1);
       await rc(page).getByRole('button', { name: 'Clear provider search' }).click();
       await rc(page).getByRole('button', { name: 'Filter providers' }).click();
-      await page.getByRole('menuitemradio', { name: /Saved connections/ }).or(page.getByRole('option', { name: /Saved connections/ })).first().click();
+      await page.getByRole('menuitemradio', { name: /Saved keys/ }).or(page.getByRole('option', { name: /Saved keys/ })).first().click();
       await settle(page, 200);
-      assert.equal(await rc(page).locator('.rc-provider-scroll [data-provider]').count(), 1, 'one saved connection (synthetic Google AI Studio)');
+      assert.equal(await rc(page).locator('.rc-provider-scroll [data-provider]').count(), 1, 'one saved key (synthetic Google AI Studio)');
       await rc(page).locator('[data-provider="gemini"]').click();
       await settle(page);
       const detail = rc(page).getByRole('region', { name: 'Provider detail' });
       assert.ok(await rc(page).getByRole('heading', { name: 'Google AI Studio',exact:true }).isVisible());
       // Independent facts, never a setup sequence; replies are never claimed.
-      assert.match(await detail.locator('[data-fact="Key · permission"]').innerText(), /Saved · on/);
-      assert.match(await detail.locator('[data-fact="Replies"]').innerText(), /Not tested by model listing/);
-      assert.match(await detail.locator('[data-fact="Allowance"]').innerText(), /Unknown/);
+      assert.match(await detail.locator('[data-fact="Key · permission"]').textContent(), /Saved · on/);
+      assert.match(await detail.locator('[data-fact="Replies"]').textContent(), /Not tested by model listing/);
+      assert.match(await detail.locator('[data-fact="Allowance"]').textContent(), /Unknown/);
       await shot(page, join(out, `${tag}-2-provider.png`));
       if (phone) {
         assert.equal(await rc(page).locator('.rc-provider-list').isVisible(), false, 'phone: the detail replaces the list');

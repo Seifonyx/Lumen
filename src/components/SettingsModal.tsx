@@ -1,3 +1,4 @@
+import { useProviderSettingsTarget, clearProviderSettingsTarget } from '../lib/canvas-presentation';
 import ModelDeclarations from './ModelDeclarations';
 import { Clock,
   ArrowDown,
@@ -353,6 +354,8 @@ const KEY_FIELDS: { id: 'gemini' | 'openrouter' | 'groq' | 'cerebras' | 'github'
 
 function KeysTab() {
   const keys = useStore((s) => s.keys);
+  const owner = useStore((s) => s.user?.uid);
+  const targetProvider = useProviderSettingsTarget?.(owner) ?? null;
   const saveApiKeys = useStore((s) => s.saveApiKeys);
   const toast = useStore((s) => s.toast);
   const [draft, setDraft] = useState<ApiKeys>(() => normalizeKeys(keys) as unknown as ApiKeys);
@@ -366,7 +369,7 @@ function KeysTab() {
 
   return (
     <div className="settings-section">
-      <ProviderConnections main={KEY_FIELDS.filter((field): field is MainProvider => field.id !== 'github')} draft={draft} setDraft={setDraft} saved={keys} />
+      <ProviderConnections onShowAllProviders={clearProviderSettingsTarget || undefined} targetProvider={targetProvider} main={KEY_FIELDS.filter((field): field is MainProvider => field.id !== 'github')} draft={draft} setDraft={setDraft} saved={keys} />
       {validation && <p className="error-text" role="alert">{validation}</p>}
       <div className="settings-actions">
         <span className="muted small">Saved on this device, then synced privately to your account when connected.</span>

@@ -248,6 +248,9 @@ jobs:
           trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
           node -e "(async()=>{for(let i=0;i<30;i++){try{if((await fetch('http://localhost:5191/')).ok)return}catch{}await new Promise(r=>setTimeout(r,500))}process.exit(1)})()"
           node tests/e2e/iphone-glass-navigation.cjs
+          node tests/e2e/routing-providers.cjs
+          node tests/e2e/prism-provider-states.cjs
+          node tests/e2e/provider-settings-containment.cjs
         env:
           MR_TEST_URL: http://localhost:5191/
           MR_WEBKIT: ${{ matrix.engine == 'WebKit' && '1' || '' }}
@@ -264,6 +267,10 @@ jobs:
           path: |
             tests/e2e/out/EXACT_HEAD.txt
             tests/e2e/out/phone-navigation/**/*.png
+            tests/e2e/out/phase4/**/*.png
+            tests/e2e/out/prism-providers/**/*.png
+            tests/e2e/out/provider-wrap/**/*.png
+            tests/e2e/out/provider-wrap/**/*.json
             tests/e2e/out/cp03/**/*.png
             tests/e2e/out/cp04/**/*.png
             tests/e2e/out/cp05/**/*.png

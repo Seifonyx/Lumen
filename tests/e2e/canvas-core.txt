@@ -112,3 +112,5 @@ iphone-navigation-states
 iphone-project-navigation
 iphone-edge-back
 iphone-tool-return
+
+prism-provider-states

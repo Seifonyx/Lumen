@@ -24,6 +24,7 @@ let active = 0, serial = 0, applying = false;
 const session = /* @__PURE__ */ (() => Math.random().toString(36).slice(2))();
 const capture = () => { const s = useStore.getState(); return { layerKey: backLayerOpen() ? backLayerIdentity() : null, restoreLayer: backLayerRestore(), activeProjectId: s.activeProjectId, currentId: s.currentId, runner: s.runner, layer: backLayerOpen(), canvasOpen: s.canvasOpen, canvasDocumentId: s.canvasDocumentId, page: s.page, pageArg: s.pageArg, settingsOpen: s.settingsOpen, settingsTab: s.settingsTab, projectWorkspaceOpen: s.projectWorkspaceOpen, routing: getRoutingScreen() }; };
 type Screen = ReturnType<typeof capture>;
+// Settings target metadata updates the current snapshot without adding a navigation step.
 // Compare UI references/primitives only. Streaming updates must not stringify Study inputs or other page data.
 const same = (a: Screen, b: Screen) => a.currentId === b.currentId && a.activeProjectId === b.activeProjectId
  && Boolean(a.runner) === Boolean(b.runner)
@@ -71,6 +72,12 @@ export function installScreenHistory() {
   const check = () => {
     if (applying) return;
     if (owner !== useStore.getState().user?.uid) { owner = useStore.getState().user?.uid; applying = true; reconcileBackLayers(null); clearScreenMemory(); clearBackLayerRestore(); views.clear(); useStore.setState({ page: null, settingsOpen: false, projectWorkspaceOpen: false, runner: null }); restoreRoutingScreen({ open: false, section: 'overview' }); remember(); previous = capture(); applying = false; return; }
+    // A canceled/closed Settings visit cannot leave a provider target for a later general visit.
+    // Target metadata travels with the existing in-memory snapshot, never the browser payload.
+    const routing = getRoutingScreen();
+    if (!useStore.getState().settingsOpen && routing.settingsTarget) {
+      applying = true; restoreRoutingScreen({ ...routing, settingsTarget: null }); applying = false;
+    }
     const next = capture();
     if (same(next, previous)) { entries.set(active, next); return; }
     saveView();

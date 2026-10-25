@@ -8,7 +8,7 @@ import PhoneNavigation from './PhoneNavigation';
 import PhoneSections from './PhoneSections';
 import { usePhoneLayout } from '../lib/phone-layout';
 import { createPortal } from 'react-dom';
-import { screenBack } from '../lib/screen-history';
+import { navigateScreen, screenBack } from '../lib/screen-history';
 import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowUpRight, ChevronRight, Plus, Search, Shield, SlidersHorizontal, X } from 'lucide-react';
 import { modelLabel, selectCurrentChat, selectCurrentModel, useStore } from '../store';
@@ -24,6 +24,7 @@ import { LayoutEditor } from './LayoutsTab';
 import UsageTab from './UsageTab';
 import RouteWhy from './RouteWhy';
 import { providerPresentation } from '../lib/provider-presentation';
+import { requestProviderSettings } from '../lib/provider-settings-target';
 import FilterMenu from './FilterMenu';
 // Tier 5 panels (usage history, request log, routing file, connection check) load on first use, in their own chunk.
 const ScreenActions = lazy(() => import('./ScreenActions'));
@@ -39,6 +40,9 @@ const SECTIONS: [RoutingSection, string][] = [['models', 'Models'], ['providers'
 const providerId = (model: ModelInfo) => (model.provider === 'google' ? 'gemini' : model.provider);
 const providerLabel = (id: string) => (id === 'gemini' ? 'Google AI Studio' : PROVIDER_NAMES[providerOfId(id + ':')] || id);
 const openSettings = (tab: string) => useStore.getState().setUi({ settingsOpen: true, settingsTab: tab, sidebarOpen: false });
+const openProviderSettings = (provider: string) => {
+  navigateScreen(() => { if (requestProviderSettings(provider, useStore.getState().user?.uid)) openSettings('keys'); });
+};
 type State = ReturnType<typeof useStore.getState>;
 
 /** Why this account can't choose a model right now (same gates as the picker), or null. */
@@ -79,20 +83,8 @@ type ProviderRow = { id: string; label: string; keySaved: boolean; enabled: bool
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 // Today: the time; earlier: the date.
 const when = (t: number) => new Intl.DateTimeFormat(undefined, new Date(t).toDateString() === new Date().toDateString() ? { timeStyle: 'short' } : { dateStyle: 'medium' }).format(t);
-const ago = (t: number) => {
-  const m = Math.round((Date.now() - t) / 60000);
-  return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`;
-};
-function verdictOf(p: ProviderRow): { word: string; line: string; light: Light } {
-  const s = p.status;
-  if (!p.keySaved && !p.enabled) return { word: 'No key saved', line: 'No key saved', light: 'off' };
-  if (!p.enabled) return { word: 'Permission off', line: 'Key saved · permission off', light: 'off' };
-  if (!p.keySaved) return { word: 'Unavailable', line: 'Permission on · no key saved', light: 'off' };
-  if (s?.state === 'ready') return p.models.length ? { word: 'Catalog ready', line: s.lastSuccess ? `Models listed ${ago(s.lastSuccess)}` : 'Models listed', light: 'on' } : { word: 'No compatible models', line: 'Discovery completed', light: 'off' };
-  if (s?.state === 'stale') return { word: 'Cached catalog', line: s.errorKind ? 'Last refresh failed' : 'Refresh pending', light: 'stale' };
-  // The typed reason is in the provider's note; a refused key is named here because its fix differs.
-  if (s?.state === 'error') return { word: 'Discovery failed', line: s.errorKind === 'auth' ? 'Key refused by the provider' : 'Model listing failed', light: 'fail' };
-  return { word: 'Not listed yet', line: 'Model list not requested yet', light: 'off' };
+function verdictOf(p: ProviderRow): { word: string; light: Light } {
+  return { word: p.presentation.verdict, light: p.presentation.light };
 }
 const LightDot = ({ light }: { light: Light }) => <span className={`rc-light rc-light-${light}`} aria-hidden="true" />;
 
@@ -102,7 +94,7 @@ function ProviderLine({ p, current, onOpen }: { p: ProviderRow; current?: boolea
   return (
     <button type="button" className="rc-prov" data-provider={p.id} data-light={v.light} aria-current={current ? 'true' : undefined} onClick={onOpen}>
       <LightDot light={v.light} />
-      <span className="rc-prov-text"><strong>{p.label}</strong><small><b>{v.word}</b> · {v.line}</small></span>
+      <span className="rc-prov-text"><strong>{p.label}</strong><small><b>{v.word}</b></small><small className="rc-provider-next">{p.presentation.nextStep}</small></span>
       {n > 0 && <span className="rc-prov-n"><b>{n}</b> {n === 1 ? 'model' : 'models'}</span>}
       <ChevronRight size={16} aria-hidden="true" />
     </button>
@@ -140,7 +132,7 @@ function Providers({ preferred, phone, searchHost }: { preferred?: string; openD
   const matches = (p: ProviderRow, text: string, scope: typeof filter) => (scope === 'all' || (scope === 'saved' ? p.keySaved : scope === 'attention' ? p.presentation.attention : p.enabled)) && `${p.label} ${p.id}`.toLowerCase().includes(text.trim().toLowerCase());
   const visible = providers.filter((p) => matches(p, query, filter));
   // Computers show a provider beside the list from the start (the first of yours); phones open one on request.
-  const active = visible.find((p) => p.id === selected) || (!phone && !selected ? visible.find((p) => verdictOf(p).light === 'on') || visible.find((p) => p.keySaved || p.enabled) : undefined);
+  const active = visible.find((p) => p.id === selected);
   const shown = phone && !detail ? undefined : active;
   // Your providers form the ledger; the rest are a field of names to explore, the first few shown until you ask for all
   // (or search or filter, which shows every match).
@@ -168,12 +160,12 @@ function Providers({ preferred, phone, searchHost }: { preferred?: string; openD
         </div>
         <div className="rc-find">
           {phone ? !detail && searchHost && createPortal(search, searchHost) : search}
-          <FilterMenu<typeof filter> label="Filter providers" value={filter} onChange={(scope) => change(query, scope)} options={[{ value: 'all', label: 'All providers', count: providers.length }, { value: 'saved', label: 'Saved connections', count: saved }, { value: 'enabled', label: 'Enabled providers', count: enabled }, { value: 'attention', label: 'Needs attention', count: providers.filter((p) => p.presentation.attention).length }]} />
+          <FilterMenu<typeof filter> label="Filter providers" value={filter} onChange={(scope) => change(query, scope)} options={[{ value: 'all', label: 'All providers', count: providers.length }, { value: 'saved', label: 'Saved keys', count: saved }, { value: 'enabled', label: 'Enabled providers', count: enabled }, { value: 'attention', label: 'Needs attention', count: providers.filter((p) => p.presentation.attention).length }]} />
         </div>
         <p className="rc-count" role="status">{visible.length} of {providers.length} providers</p>
         <div className="rc-provider-scroll">
           {connected.length > 0 && <>
-            <h3 className="rc-group-label">Your providers <span>{saved} saved · {enabled} on</span></h3>
+            <h3 className="rc-group-label">Your providers <span>{saved} keys · {enabled} enabled</span></h3>
             <div className="rc-ledger">{connected.map((p) => <ProviderLine key={p.id} p={p} current={shown?.id === p.id} onOpen={() => open(p.id)} />)}</div>
           </>}
           {unconnected.length > 0 && (
@@ -206,12 +198,12 @@ function ProviderDetail({ p, title, usage, enabledHere, searchHost }: { searchHo
   const knownLimits = observed.filter((m) => m.quota !== null);
   const sharedLeft = p.id === 'openrouter' && usage?.openrouter.limit != null ? Math.max(0, usage.openrouter.limit - usage.openrouter.used) : null;
   const listing = s?.state === 'ready' || s?.state === 'stale';
-  const settings = (text: string, primary: boolean) => !primary && window.matchMedia(PHONE).matches ? null : <button type="button" className={primary ? 'rc-primary' : 'rc-quiet'} aria-label={primary ? undefined : `Connection settings for ${p.label}`} onClick={() => openSettings('keys')}>{text}<ArrowUpRight size={15} aria-hidden="true" /></button>;
+  const settings = (text: string, primary: boolean) => !primary && window.matchMedia(PHONE).matches ? null : <button type="button" className={primary ? 'rc-primary' : 'rc-quiet'} aria-label={primary ? undefined : `Connection settings for ${p.label}`} onClick={() => openProviderSettings(p.id)}>{text}<ArrowUpRight size={15} aria-hidden="true" /></button>;
   const refresh = (primary: boolean) => <Suspense fallback={null}><CheckConnection provider={p.id} primary={primary} /></Suspense>;
   // The next meaningful action, in plain words: fix what blocks the provider first; a refresh leads only when the model
   // list is missing or old; Settings stays one quiet step away.
-  const actions = !p.keySaved ? settings('Add a key', true) : !p.enabled ? settings('Turn on in Settings', true)
-    : s?.state === 'error' && s.errorKind === 'auth' ? <>{settings('Replace key', true)}{refresh(false)}</>
+  const actions = !p.keySaved ? settings('Add a key', true) : !p.enabled ? settings('Enable provider', true)
+    : s?.errorKind === 'auth' ? <>{settings('Review key', true)}{refresh(false)}</>
     : <>{refresh(s?.state !== 'ready')}{settings('Connection settings', false)}</>;
   // Four independent facts: a saved key and permission don't depend on a model list, and a list says nothing of replies.
   const facts: [string, string, Light?][] = [
@@ -225,14 +217,15 @@ function ProviderDetail({ p, title, usage, enabledHere, searchHost }: { searchHo
       <header className="rc-detail-head">
         <div>
           <h2 tabIndex={-1} ref={title}>{p.label}</h2>
-          <p className="rc-verdict" data-light={v.light}><LightDot light={v.light} /><strong>{v.word}</strong><span>{listing && n ? `${plural(n, 'model')} ${s?.state === 'stale' ? 'cached' : 'listed'} · ${enabledHere} enabled for Auto` : v.line}</span></p>
+          <p className="rc-verdict" data-light={v.light}><LightDot light={v.light} /><strong>{v.word}</strong><span>{listing && n ? `${plural(n, 'model')} ${s?.state === 'stale' ? 'cached' : 'listed'} · ${enabledHere} enabled in settings` : null}</span></p>
         </div>
         <div className="rc-detail-actions">{actions}</div>
       </header>
-      {p.presentation.attention && <p className="rc-note" data-light={v.light} role="status">{p.presentation.guidance}</p>}
-      <dl className="rc-facts">{facts.map(([k, value, light]) => <div key={k} data-fact={k} data-light={light}><dt>{k}</dt><dd>{value}</dd></div>)}</dl>
+      {(p.presentation.attention || (p.keySaved && !p.enabled)) && <p className="rc-note" data-light={v.light} role="status">{p.presentation.guidance}</p>}
+      <p className="rc-setup-line">{p.keySaved ? 'Key saved' : 'No saved key'} · {p.enabled ? 'Provider enabled' : 'Provider disabled'}<span>Catalog discovery does not test replies.</span></p>
       <ProviderModels searchHost={searchHost} models={p.models} />
-      <details className="rc-provenance"><summary>Usage &amp; provenance</summary>
+      <details className="rc-provenance"><summary>Connection details &amp; usage</summary>
+        <dl className="rc-facts">{facts.map(([k, value, light]) => <div key={k} data-fact={k} data-light={light}><dt>{k}</dt><dd>{value}</dd></div>)}</dl>
         <div className="rc-usage-pair"><div><span>Requests recorded in Lumen</span><strong>{usage ? `${requests} requests` : 'Unknown'}</strong></div><div><span>Tokens recorded in Lumen</span><strong>{usage ? formatTokens(tokens) : 'Unknown'}</strong></div></div>
         <p className="rc-muted">{sharedLeft !== null ? `One shared allowance for OpenRouter free models: ${usage!.openrouter.used} of ${usage!.openrouter.limit} requests recorded. Paid models are excluded.` : knownLimits.length ? 'Known limits belong to individual models; they are not a combined provider balance.' : 'No provider allowance is reported in this account’s current usage data.'} Counts reflect Lumen activity, not account-wide billing or proof of successful replies.</p>
       </details>
@@ -333,7 +326,7 @@ export default function RoutingCenter() {
     <section ref={page} className={`rc-page${sub ? ' rc-sections-page' : ''}${drill ? ' rc-drill' : ''}`} hidden={covered} aria-label="Prism — Models, providers & routing"
       onKeyDown={(e) => { if (e.key === 'Escape' && !e.defaultPrevented && !(e.target as Element).closest('[role="dialog"], [role="menu"], [role="listbox"], input, textarea, select')) { e.preventDefault(); screenBack(closeRoutingCenter); } }}>
       {/* Desktop retains split-view navigation; phone chrome is shared with Library, Tools and Settings. */}
-      {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : 'Prism'} actions={providerOpen ? <Suspense fallback={null}><ScreenActions actions={[{ label: 'Connection settings', run: () => openSettings('keys') }]} /></Suspense> : undefined} /> : (
+      {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : 'Prism'} actions={providerOpen ? <Suspense fallback={null}><ScreenActions actions={[{ label: 'Connection settings', run: () => openProviderSettings(provider!) }]} /></Suspense> : undefined} /> : (
       <header className={`rc-head${sub ? ' rc-head-sub' : ''}`}>
         <div className="rc-brand"><h1 id="rc-title" tabIndex={-1} ref={heading}>Prism</h1><p>Models, providers &amp; routing</p></div>
         {!phone && (

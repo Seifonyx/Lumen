@@ -9,13 +9,12 @@ import PhoneSections from './PhoneSections';
 import { usePhoneLayout } from '../lib/phone-layout';
 import { createPortal } from 'react-dom';
 import { navigateScreen, screenBack } from '../lib/screen-history';
-import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowUpRight, ChevronRight, Plus, Search, Shield, SlidersHorizontal, X } from 'lucide-react';
 import { modelLabel, selectCurrentChat, selectCurrentModel, useStore } from '../store';
 import { AI_PROVIDERS, providerEnabled } from '../lib/ai/provider-config.js';
-import { modelProblem } from '../lib/ai/eligibility.js';
 import { PROVIDER_NAMES, providerOfId } from '../lib/util';
-import { formatTokens, remaining } from '../lib/usage';
+import { formatTokens } from '../lib/usage';
 import { installSwipeBack } from '../lib/swipe-back';
 import { closeRoutingCenter, showRoutingSection, showRoutingProvider, useRoutingCenter, type RoutingSection } from '../lib/routing-center';
 import type { Layout } from '../lib/layouts';
@@ -26,6 +25,7 @@ import RouteWhy from './RouteWhy';
 import { providerPresentation } from '../lib/provider-presentation';
 import { requestProviderSettings } from '../lib/provider-settings-target';
 import FilterMenu from './FilterMenu';
+import { selectionProblem, withCurrentModel } from '../lib/model-discovery';
 // Tier 5 panels (usage history, request log, routing file, connection check) load on first use, in their own chunk.
 const ScreenActions = lazy(() => import('./ScreenActions'));
 const extras = () => import('./RoutingExtras');
@@ -34,6 +34,9 @@ const UsageHistory = lazy(() => extras().then((m) => ({ default: m.UsageHistory 
 const RequestLog = lazy(() => extras().then((m) => ({ default: m.RequestLog })));
 const RoutingFile = lazy(() => extras().then((m) => ({ default: m.RoutingFile })));
 const RecentAnswers = lazy(() => extras().then((m) => ({ default: m.RecentAnswers })));
+
+const PrismModels = lazy(() => import('./PrismModels'));
+const ProviderModels = lazy(() => import('./PrismModels').then(m => ({ default: m.ProviderModels })));
 
 const SECTIONS: [RoutingSection, string][] = [['models', 'Models'], ['providers', 'Providers'], ['policies', 'Layouts'], ['usage', 'Usage'], ['diagnostics', 'Diagnostics']];
 // Phones use a feature index and pushed screens; canonical UI history owns every Back path.
@@ -44,37 +47,6 @@ const openProviderSettings = (provider: string) => {
   navigateScreen(() => { if (requestProviderSettings(provider, useStore.getState().user?.uid)) openSettings('keys'); });
 };
 type State = ReturnType<typeof useStore.getState>;
-
-/** Why this account can't choose a model right now (same gates as the picker), or null. */
-function selectionProblem(state: State, model: ModelInfo) {
-  const id = providerId(model);
-  if (!state.authed || !state.user) return 'Sign in to choose a model.';
-  if (!providerEnabled(id, state.keys)) return 'Save a key and enable this provider first.';
-  if (!state.settings.enabledModels.includes(model.id)) return 'Enable this model in Settings → Models first.';
-  if (!state.catalog?.models.some((m) => m.id === model.id) || state.settings.unavailableModels?.includes(model.id) || state.catalog?.deniedModelIds?.includes(model.id)) return 'This model is unavailable for this account.';
-  if (state.catalog?.providerStatus?.[id]?.errorKind === 'auth') return 'Update this provider’s connection first.';
-  const problem = modelProblem(model);
-  return problem ? `This model ${problem}.` : null;
-}
-
-/** Choose a model for this conversation through the canonical manual selection; the account must not change. */
-const UseModel = memo(function UseModel({ model }: { model: ModelInfo }) {
-  const owner = useStore((s) => s.user?.uid);
-  const problem = useStore((s) => selectionProblem(s, model));
-  return (
-    <div className="rc-use">
-      <button type="button" disabled={Boolean(problem)} aria-label={`Use ${model.label}`} aria-describedby={problem ? `rc-why-${model.id}` : undefined} onClick={() => {
-        const fresh = useStore.getState();
-        if (fresh.user?.uid !== owner || selectionProblem(fresh, model)) return;
-        fresh.setChatModel(model.id);
-        closeRoutingCenter();
-        // Back in the conversation (draft untouched): say the choice took.
-        fresh.toast(`Now using ${model.label} in this chat`);
-      }}>Use model <ArrowUpRight size={14} /></button>
-      {problem && <small id={`rc-why-${model.id}`}>{problem}</small>}
-    </div>
-  );
-});
 
 /** One status vocabulary for providers, everywhere: can Lumen choose this provider's models? A model list is the
  * evidence; replies are never tested by listing. A light (lit, cached, failed or off), a word and one line of fact. */
@@ -223,7 +195,7 @@ function ProviderDetail({ p, title, usage, enabledHere, searchHost }: { searchHo
       </header>
       {(p.presentation.attention || (p.keySaved && !p.enabled)) && <p className="rc-note" data-light={v.light} role="status">{p.presentation.guidance}</p>}
       <p className="rc-setup-line">{p.keySaved ? 'Key saved' : 'No saved key'} · {p.enabled ? 'Provider enabled' : 'Provider disabled'}<span>Catalog discovery does not test replies.</span></p>
-      <ProviderModels searchHost={searchHost} models={p.models} />
+      <Suspense fallback={<p className="rc-muted" role="status">Loading models…</p>}><ProviderModels searchHost={searchHost} models={p.models} /></Suspense>
       <details className="rc-provenance"><summary>Connection details &amp; usage</summary>
         <dl className="rc-facts">{facts.map(([k, value, light]) => <div key={k} data-fact={k} data-light={light}><dt>{k}</dt><dd>{value}</dd></div>)}</dl>
         <div className="rc-usage-pair"><div><span>Requests recorded in Lumen</span><strong>{usage ? `${requests} requests` : 'Unknown'}</strong></div><div><span>Tokens recorded in Lumen</span><strong>{usage ? formatTokens(tokens) : 'Unknown'}</strong></div></div>
@@ -233,47 +205,16 @@ function ProviderDetail({ p, title, usage, enabledHere, searchHost }: { searchHo
   );
 }
 
-/** A model: name and id, then its context and allowance (columns on computers), and the canonical "Use model". */
-function ModelRow({ m }: { m: ModelInfo }) {
-  const usage = useStore((s) => s.usage);
-  const left = remaining(usage, m.id), seen = usage?.models[m.id];
-  const flags = [m.metadata?.verification === 'unchecked' && 'Declared, unchecked', m.metadata?.stale && 'Cached metadata', seen?.blockedUntil && seen.blockedUntil > Date.now() && 'Temporarily limited'].filter(Boolean).join(' · ');
-  return (
-    <article className="rc-model">
-      <div><h4>{m.label}</h4><code>{m.id}</code>{flags && <small>{flags}</small>}</div>
-      <p><span>{m.context ? `${formatTokens(m.context)} context` : 'Context unknown'}</span><span>{left === null ? 'Allowance unknown' : `${left} requests left${m.id.startsWith('openrouter:') && m.id.endsWith(':free') ? ' · shared pool' : ''}`}</span></p>
-      <UseModel model={m} />
-    </article>
-  );
-}
-
-function ProviderModels({ models, searchHost }: { models: ModelInfo[]; searchHost: HTMLElement | null }) {
-  const [query, setQuery] = useState(''), [page, setPage] = useState(0);
-  const filtered = useMemo(() => models.filter((m) => `${m.label} ${m.name}`.toLowerCase().includes(query.trim().toLowerCase())), [models, query]);
-  const pages = Math.max(1, Math.ceil(filtered.length / 24)), current = Math.min(page, pages - 1);
-  const search = <div className="rc-search"><Search size={16} aria-hidden="true" /><input type="search" aria-label="Find a model" placeholder="Find a model" value={query} onChange={(e) => { setQuery(e.target.value); setPage(0); }} />{query && <button type="button" aria-label="Clear provider model search" onClick={e => { setQuery(''); setPage(0); e.currentTarget.parentElement?.querySelector('input')?.focus(); }}><X size={16}/></button>}</div>;
-
-  return (
-    <section className="rc-provider-models" aria-label="Provider models">
-      <h3 className="rc-group-label">Models <span>{models.length} in catalog</span></h3>
-      {(models.length > 24 || query) && (searchHost ? createPortal(search, searchHost) : search)}
-      {filtered.length ? <div className="rc-group">{filtered.slice(current * 24, (current + 1) * 24).map((m) => <ModelRow key={m.id} m={m} />)}</div>
-        : <p className="rc-empty">{models.length ? 'No models match.' : 'No models listed yet.'}</p>}
-      {filtered.length > 24 && <nav className="rc-pages" aria-label="Model pages"><button type="button" disabled={current === 0} onClick={() => setPage(current - 1)}>Previous</button><span role="status">{current * 24 + 1}–{Math.min(filtered.length, (current + 1) * 24)} of {filtered.length}</span><button type="button" disabled={current + 1 === pages} onClick={() => setPage(current + 1)}>Next</button></nav>}
-    </section>
-  );
-}
-
 export default function RoutingCenter() {
   const { open, section, provider } = useRoutingCenter();
   const chat = useStore(selectCurrentChat), model = useStore(selectCurrentModel);
   const catalog = useStore((s) => s.catalog), config = useStore((s) => s.settings);
   const owner = useStore((s) => s.user?.uid), currentId = useStore((s) => s.currentId);
+  const authed = useStore(s => s.authed), user = useStore(s => s.user), keys = useStore(s => s.keys);
   const covered = useStore((s) => s.settingsOpen || Boolean(s.page));
   const providers = useProviderRows();
   const phone = usePhoneLayout();
   const [editing, setEditing] = useState<Layout | null>(null);
-  const [query, setQuery] = useState('');
   const [searchHost, setSearchHost] = useState<HTMLElement | null>(null);
 
   const page = useRef<HTMLElement>(null), heading = useRef<HTMLHeadingElement>(null);
@@ -304,11 +245,11 @@ export default function RoutingCenter() {
   const current = routed ? last?.model : model;
   const models = catalog?.models || [], layouts = config.layouts || [];
   const mine = providers.filter((p) => p.keySaved || p.enabled);
-  const q = query.trim().toLowerCase();
-  const inventory = models.filter((m) => `${m.label} ${m.name} ${m.provider}`.toLowerCase().includes(q));
   const choices = config.enabledModels.filter((id) => models.some((m) => m.id === id)).length;
   const layout = model.startsWith('layout:') ? layouts.find((l) => `layout:${l.id}` === model) : undefined;
-  const picked = !routed ? models.find((m) => m.id === model) : undefined;
+  const picked = !routed ? withCurrentModel(models, model, modelLabel(catalog, model)).find(m => m.id === model) : undefined;
+  const currentProblem = picked ? selectionProblem({ authed, user, keys, catalog, settings: config }, picked) : null;
+  const recovery = currentProblem && <p className="rc-muted">{currentProblem} <button type="button" className="rc-link" onClick={() => currentProblem.includes('provider') || currentProblem.includes('connection') ? openProviderSettings(providerId(picked!)) : openSettings('models')}>Review model settings</button></p>;
   const sentence = model === 'auto'
     ? (!mine.length ? 'Connect a provider so Auto has models to choose from.' : !choices ? 'Enable models in Settings so Auto has a choice.' : `Picks a model for each message from your ${plural(choices, 'enabled model')}.`)
     : layout ? `Follows your Layout ${layout.name}, ${layout.mode === 'order' ? 'trying its models in order' : 'choosing by task within its set'}.` : 'Every message in this chat uses this model.';
@@ -319,7 +260,7 @@ export default function RoutingCenter() {
   const go = (id: RoutingSection) => showRoutingSection(id);
   const sub = phone && section !== 'models';
 
-  const modelSearch = <div className="rc-search"><Search size={16} aria-hidden="true" /><input type="search" aria-label="Search models" placeholder="Search models or providers" value={query} onChange={e => setQuery(e.target.value)} />{query && <button type="button" aria-label="Clear model search" onClick={e => { setQuery(''); e.currentTarget.parentElement?.querySelector('input')?.focus(); }}><X size={16} /></button>}</div>;
+
 
 
   return (
@@ -349,24 +290,23 @@ export default function RoutingCenter() {
             {phone ? (
               <details className="rc-current-disclosure">
                 <summary>
-                  <span className="rc-current-identity"><span className="rc-kicker">Next message in this chat</span><strong className="rc-current-model">{modelLabel(catalog, model)}</strong></span>
+                  <span className="rc-current-identity"><span className="rc-kicker">{currentProblem ? 'Current choice · Needs setup' : 'Next message in this chat'}</span><strong className="rc-current-model">{modelLabel(catalog, model)}</strong></span>
                   <span className="rc-current-more-label">Details <ChevronRight size={15} aria-hidden="true" /></span>
                 </summary>
-                <div className="rc-current-explanation"><p className="rc-muted">{sentence}</p>{reach && <p className="rc-muted rc-current-reach">{reach}</p>}</div>
+                <div className="rc-current-explanation">{recovery}<p className="rc-muted">{sentence}</p>{reach && <p className="rc-muted rc-current-reach">{reach}</p>}</div>
               </details>
             ) : (
               <>
                 <p className="rc-kicker">Next message in this chat</p>
                 <h2>{modelLabel(catalog, model)}</h2>
+                {recovery}
                 <p className="rc-muted">{sentence}</p>
                 {reach && <p className="rc-muted rc-current-reach">{reach}</p>}
               </>
             )}
             {!mine.length && <button type="button" className="rc-primary" onClick={() => openSettings('keys')}><Plus size={15} aria-hidden="true" />Connect a provider</button>}
           </section>
-          <div className="rc-panel-title"><div><h2>Model inventory</h2><p className="rc-muted">{phone ? 'Models, providers & routing · ' : ''}Context limits and allowances from your catalog.</p></div><button type="button" className="rc-add" aria-label="Manage models" onClick={() => openSettings('models')}><span>Manage<span className="rc-manage-noun"> models</span></span><ArrowUpRight size={15} aria-hidden="true" /></button></div>
-          {phone ? searchHost && createPortal(modelSearch, searchHost) : modelSearch}
-          {inventory.length ? <div className="rc-group">{inventory.map((m) => <ModelRow key={m.id} m={m} />)}</div> : <p className="rc-muted" role="status">No models match.</p>}
+          <Suspense fallback={<p className="rc-muted" role="status">Loading models…</p>}><PrismModels models={models} searchHost={phone ? searchHost : null} /></Suspense>
         </div>
       )}
 

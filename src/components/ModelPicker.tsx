@@ -12,6 +12,7 @@ import { allLayouts, findLayout, isLayoutId, LAYOUT_PREFIX } from '../lib/layout
 import LayoutIcon from './LayoutIcon';
 import type { ModelInfo } from '../types';
 import { layoutModelProblem } from '../lib/layout-policy';
+import { matchesModel, modelProviderLabel } from '../lib/model-search';
 import { CANVAS_COMPOSER } from '../lib/canvas-presentation';
 
 export function Badges({ m }: { m?: ModelInfo }) {
@@ -135,7 +136,8 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
 
   const q = query.trim().toLowerCase();
   const savedIds=value && value!==AUTO && !isLayoutId(value) && !enabled.includes(value)?[value,...enabled]:enabled;
-  const models = savedIds.map((id) => catalog?.models.find((m) => m.id === id) || ({ id, label: modelLabel(catalog, id), name: id.split(':').slice(1).join(':'), provider: providerOfId(id) } as ModelInfo));
+  const catalogById = useMemo(() => new Map(catalog?.models.map(m => [m.id, m])), [catalog]);
+  const models = savedIds.map((id) => catalogById.get(id) || ({ id, label: modelLabel(catalog, id), name: id.split(':').slice(1).join(':'), provider: providerOfId(id) } as ModelInfo));
   const layouts = useMemo(
     () => allLayouts(catalog?.models || [], customLayouts, hiddenLayouts).filter((l) => l.models.length>0),
     [catalog, customLayouts, hiddenLayouts],
@@ -143,10 +145,10 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
   const current = isLayoutId(value) ? findLayout(value, catalog?.models || [], customLayouts, hiddenLayouts) : undefined;
   const shownLayouts = layouts.filter((l) => !q || `${l.name} ${l.description}`.toLowerCase().includes(q));
   const groups = (Object.keys(PROVIDER_NAMES) as ProviderId[])
-    .map((p) => [p, models.filter((m) => m.provider === p && (!q || `${m.label} ${m.name} ${PROVIDER_NAMES[p]}`.toLowerCase().includes(q)))] as [ProviderId, ModelInfo[]])
+    .map((p) => [p, models.filter((m) => m.provider === p && (!q || matchesModel(m, q)))] as [ProviderId, ModelInfo[]])
     .filter(([, list]) => list.length);
   const showAuto = !compact && models.length > 0 && (!q || 'auto best automatic'.includes(q));
-  const searchable = models.length + layouts.length > 5;
+  const searchable = models.length > 1 || layouts.length > 0;
   const nothing = !showAuto && !shownLayouts.length && !groups.length;
 
   // Arrow keys move between options; Enter picks (buttons do that themselves).
@@ -180,7 +182,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
       {searchable && (
         <div className="mp-search">
           <Search size={15} />
-          <input ref={search} type="search" placeholder="Search models and layouts" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={onSearchKeys} aria-label="Search models" />
+          <input ref={search} type="search" placeholder="Search models or providers" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={onSearchKeys} aria-label="Search models" />
         </div>
       )}
       <div className="mp-body" role="listbox" aria-label="Models and layouts">
@@ -226,9 +228,9 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
 
         {groups.map(([p, list]) => (
           <section key={p} className="mp-section">
-            <div className="mp-label">{PROVIDER_NAMES[p]}</div>
+            <div className="mp-label">{modelProviderLabel(list[0])}</div>
             {list.map((m) => {
-              const info = catalog?.models.find((x) => x.id === m.id);
+              const info = catalogById.get(m.id);
               const sub = [info?.context ? `${ctx(info.context)} context` : '', info?.preview ? 'preview' : '', info?.metadata?.verification==='unchecked'?'Declared · unchecked':'',info?.metadata?.stale?'Cached details':'', !info ? 'Not available right now' : ''].filter(Boolean).join(' · ') || m.name;
               return (
                 <button type="button" key={m.id} role="option" aria-selected={m.id === value} className={`mp-item${m.id === value ? ' selected' : ''}${info ? '' : ' unavailable'}`} onClick={() => pick(m.id)}>

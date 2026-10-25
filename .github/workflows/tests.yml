@@ -251,6 +251,8 @@ jobs:
           node tests/e2e/routing-providers.cjs
           node tests/e2e/prism-provider-states.cjs
           node tests/e2e/provider-settings-containment.cjs
+          node tests/e2e/prism-model-discovery.cjs
+          node tests/e2e/prism-model-states.cjs
         env:
           MR_TEST_URL: http://localhost:5191/
           MR_WEBKIT: ${{ matrix.engine == 'WebKit' && '1' || '' }}
@@ -271,6 +273,8 @@ jobs:
             tests/e2e/out/prism-providers/**/*.png
             tests/e2e/out/provider-wrap/**/*.png
             tests/e2e/out/provider-wrap/**/*.json
+            tests/e2e/out/prism-models/**/*.png
+            tests/e2e/out/prism-models/**/*.json
             tests/e2e/out/cp03/**/*.png
             tests/e2e/out/cp04/**/*.png
             tests/e2e/out/cp05/**/*.png

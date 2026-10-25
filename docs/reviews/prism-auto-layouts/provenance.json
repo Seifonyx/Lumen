@@ -10,7 +10,7 @@
       "file": "before-phone-editor.png",
       "capture": "before/320-editor.png",
       "caption": "Before · Layout editor · 320 × 568 · Chromium Light",
-      "runtimeSource": "39d50a02ff8cfee852158e9604a6bbd8193ea0e7",
+      "runtimeSource": "05d2647e37919e7548ed397118cb28592a67a737",
       "sha256": "5cb074609906bd654e6d7dde2f9840752bddc225200e20be967eafbd9960f174",
       "capturedAtUTC": "2026-10-25T13:25:04.944464+00:00"
     },
@@ -18,7 +18,7 @@
       "file": "phone-editor.png",
       "capture": "exact-chromium/320-light-editor.png",
       "caption": "After · Clear naming and selection mode · 320 × 568 · Chromium Light",
-      "runtimeSource": "39d50a02ff8cfee852158e9604a6bbd8193ea0e7",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "a9f62878267d542612a301c145cdebdfa228a86472b51f373bac28621aa3fd04",
       "capturedAtUTC": "2026-10-25T16:45:19.440660+00:00"
     },
@@ -26,7 +26,7 @@
       "file": "before-desktop-layouts.png",
       "capture": "before/1440-layouts.png",
       "caption": "Before · Policies and stored fallback · 1440 × 960 · Chromium Light",
-      "runtimeSource": "39d50a02ff8cfee852158e9604a6bbd8193ea0e7",
+      "runtimeSource": "05d2647e37919e7548ed397118cb28592a67a737",
       "sha256": "96be834feb517b7111c64f0663f3ae843a4f7c53b24e6c8a96a4b79c13cd32ba",
       "capturedAtUTC": "2026-10-25T13:25:08.648290+00:00"
     },
@@ -34,7 +34,7 @@
       "file": "desktop-layouts.png",
       "capture": "exact-chromium/1440-light-layouts.png",
       "caption": "After · Assignments, effective recovery and direct use · 1440 × 960 · Chromium Light",
-      "runtimeSource": "39d50a02ff8cfee852158e9604a6bbd8193ea0e7",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "0129c03c0dcc1305be7c9764d37f256a79cd8b5d772c8a327de545eb8fd40bd6",
       "capturedAtUTC": "2026-10-25T16:46:21.609650+00:00"
     },
@@ -42,7 +42,7 @@
       "file": "phone-models.png",
       "capture": "exact-webkit/320-dark-models.png",
       "caption": "Preserved · Complete usable Models row above Search · 320 × 568 · WebKit Dark",
-      "runtimeSource": "39d50a02ff8cfee852158e9604a6bbd8193ea0e7",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "fbe403009e241715450b861e23bbe5c92d924fb188de793492dea13348a82d22",
       "capturedAtUTC": "2026-10-25T16:45:59.722706+00:00"
     },
@@ -50,7 +50,7 @@
       "file": "phone-layouts.png",
       "capture": "exact-webkit/390-dark-layouts.png",
       "caption": "Saved order and missing assignment retained · 390 × 844 · WebKit Dark",
-      "runtimeSource": "39d50a02ff8cfee852158e9604a6bbd8193ea0e7",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "603362baecb6357f10101f95732f94a3eb2edd608fc216970dcaac8a7343a9b6",
       "capturedAtUTC": "2026-10-25T16:46:27.577365+00:00"
     },
@@ -58,7 +58,7 @@
       "file": "wide-phone-editor.png",
       "capture": "exact-webkit/430-light-editor.png",
       "caption": "Model ordering and editing · 430 × 932 · WebKit Light",
-      "runtimeSource": "39d50a02ff8cfee852158e9604a6bbd8193ea0e7",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "5210a86d84c1b092e8ba6448beef4fdd4f792c520547ce4f4124574169cdcb5f",
       "capturedAtUTC": "2026-10-25T16:46:42.700641+00:00"
     },
@@ -67,14 +67,14 @@
       "capture": "exact-chromium/320-light-preview.png",
       "caption": "Before you save · Effective fallback and requirements · 320 × 568 · Chromium Light",
       "runtimeSource": "39d50a02ff8cfee852158e9604a6bbd8193ea0e7",
-      "sha256": "a9f62878267d542612a301c145cdebdfa228a86472b51f373bac28621aa3fd04",
-      "capturedAtUTC": "2026-10-25T16:45:19.832641+00:00"
+      "sha256": "b2965289e0cdf33382fa686b0ff6140c246c19c978c39bbf0e71283f95b4295c",
+      "capturedAtUTC": "2026-10-25T17:39:37.525Z"
     },
     {
       "file": "desktop-evidence.png",
       "capture": "exact-chromium/1440-light-auto-record.png",
       "caption": "Current preference versus last completed answer · 1440 × 960 · Chromium Light",
-      "runtimeSource": "39d50a02ff8cfee852158e9604a6bbd8193ea0e7",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "4364c90774d0b4b155355ab5256ec58f9b189c450f46689530bf92c172a7dfe0",
       "capturedAtUTC": "2026-10-25T16:46:20.641696+00:00"
     },
@@ -82,7 +82,7 @@
       "file": "phone-evidence.png",
       "capture": "review-webkit/390-dark-auto-record.png",
       "caption": "Recorded recovery, not a prediction · 390 × 844 · WebKit Dark",
-      "runtimeSource": "39d50a02ff8cfee852158e9604a6bbd8193ea0e7",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "1bf19c8011032920ad36bf930eea61ad977c53563d4d35b30ce1ef1a5385f84d",
       "capturedAtUTC": "2026-10-25T16:49:07.325809+00:00"
     },
@@ -90,7 +90,7 @@
       "file": "desktop-alternatives.png",
       "capture": "exact-webkit/1440-dark-historical-notes.png",
       "caption": "Actual session alternatives from intercepted synthetic Send · 1440 × 960 · WebKit Dark",
-      "runtimeSource": "39d50a02ff8cfee852158e9604a6bbd8193ea0e7",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "95aadec9c1dbf6e7876187bb28612b73b21953eacb0b187a3a76c17ed2dd575f",
       "capturedAtUTC": "2026-10-25T16:47:57.209083+00:00"
     },
@@ -98,8 +98,8 @@
       "file": "desktop-editor.png",
       "capture": "exact-chromium/1440-light-preview.png",
       "caption": "Pre-save review and explicit Save/Cancel · 1440 × 960 · Chromium Light",
-      "runtimeSource": "39d50a02ff8cfee852158e9604a6bbd8193ea0e7",
-      "sha256": "2295d8dec4254e6ff6ab845bb27844140f6a109093557629862069f577c47d43",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
+      "sha256": "76db7211cd035b1314b35e2b6e4066da0bbcc8ccfd7aef9009bc0a770b85837c",
       "capturedAtUTC": "2026-10-25T16:46:23.197573+00:00"
     }
   ],

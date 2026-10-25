@@ -2,7 +2,7 @@
 
 ## Delivery and authority
 
-Draft [PR56](https://github.com/Seifonyx/Lumen/pull/56), `feat/phase4-prism-auto-layouts`. Runtime source **39d50a02ff8cfee852158e9604a6bbd8193ea0e7**, based on released Canvas/main **05d2647e37919e7548ed397118cb28592a67a737**. This evidence/documentation increment changes capture framing only, not runtime source. The final delivery SHA, fresh exact-head Tests run and completion of remote/live readback are recorded in the PR and canonical `docs/lumen-live-context` branch. Do not infer their success from this pre-CI snapshot.
+Draft [PR56](https://github.com/Seifonyx/Lumen/pull/56), `feat/phase4-prism-auto-layouts`. The corrected capture runtime is **39d50a02ff8cfee852158e9604a6bbd8193ea0e7**, based on released Canvas/main **05d2647e37919e7548ed397118cb28592a67a737**; the current delivery HEAD is **6903bb5182b5d3b4d0191e961a3a6f10170048de**. Capture provenance retains each baseline/earlier source commit separately. The final delivery-head CI result is recorded below.
 
 **CP1 only. Stop for owner/planner review. No merge, deployment, CP2 Usage/Diagnostics, paid inference, new infrastructure or Gate approval.**
 
@@ -40,11 +40,11 @@ All checks below passed on the committed runtime source unless a prior-build pre
 
 Committed QA build `bc5d447…-0-1`:175 files,2591 audited modules, manifest SHA256 `6425624a9da3f5ec246500e635c4852eba355b85499b8a1b8eff9b875c1da488`; private loopback gate only. No publication, port exposure, service purchase or real account/inference. Existing synthetic Google fixture returns intercepted catalogs and explicit SSE only. The supplemental test counts exactly one intended synthetic POST per case.
 
-Runtime-source exact-head [Tests40213090412](https://github.com/Seifonyx/Lumen/actions/runs/40213090412) completed **23/23 jobs successfully** at bc5d447. Final evidence-head CI is an additional required gate. Its actual result is authoritative in PR56 checks and the live checkpoint; earlier partial green jobs are not a passing run. CI uses the existing workflow/standard public-repository runners; no paid service was activated.
+Prior runtime-source exact-head [Tests40213090412](https://github.com/Seifonyx/Lumen/actions/runs/40213090412) completed **23/23 jobs successfully**. Final delivery-head [Tests40216088014](https://github.com/Seifonyx/Lumen/actions/runs/40216088014) completed **21/23**: WebKit composer geometry failed at an existing `154 → 156` assertion, and the downstream isolation sentinel failed. No assertion or isolation check was weakened. CI uses the existing workflow/standard public-repository runners; no paid service was activated.
 
 ## Visual evidence
 
-[Portable review](../reviews/prism-auto-layouts/review.html): **12 curated actual screenshots**, under1MB total, with [capture/build hashes](../reviews/prism-auto-layouts/provenance.json) and four machine-readable matrix results. Baseline uses the verified released05d2647 build; after captures use the committed bc5d447 runtime build (192 output files). Comparable synthetic journeys, not identical message/model counts. No generated mockups. Both engines, Light/Dark, phone and desktop are represented. The entire matrix stays in CI artifacts rather than hundreds of committed images.
+[Portable review](../reviews/prism-auto-layouts/review.html): **12 curated actual screenshots**, under1MB total, with [capture/build hashes](../reviews/prism-auto-layouts/provenance.json) and four machine-readable matrix results. Baseline captures use verified released05d2647; earlier after captures retain their original bc5d447 source; the corrected phone-preview capture uses39d50a. Comparable synthetic journeys, not identical message/model counts. No generated mockups. Both engines, Light/Dark, phone and desktop are represented. The entire matrix stays in CI artifacts rather than hundreds of committed images.
 
 Self-review corrected duplicated explanations, overly verbose card summaries and phone evidence framing; editor-start and pre-save captures are separate. Clean screenshots remove keyboard focus solely for presentation. Focus and axe contracts are tested separately. The top section strip intentionally scrolls; later labels may be partially visible until scrolled, preserving the accepted navigation architecture.
 

@@ -6,7 +6,7 @@ Owner approved CP2 release and delegated the conflicting PR sequence. PR54 at03e
 
 ## Chosen design and alternatives
 
-Keep the established five-section Prism and anchored phone Search. A compact model ledger adds provider attribution, current selection, one existing FilterMenu for real capability/state criteria, bounded24-row pages and useful recovery actions. Search matches all words across canonical ID, model name and actual provider aliases. Current/selectable models lead in catalog order, without quality rankings. Unknown metadata remains unknown. Model IDs and less common details stay in progressive disclosure.
+Keep the established five-section Prism and anchored phone Search. A compact model ledger adds provider attribution, current selection, one existing FilterMenu for real capability/state criteria, bounded24-row pages and useful recovery actions. Existing account-scoped screen memory retains query/filter/page through section navigation and Back, with separate conversation/provider scopes; no persistence or history payload. Search matches all words across canonical ID, model name and actual provider aliases. Current/selectable models lead in catalog order, without quality rankings. Unknown metadata remains unknown. Model IDs and less common details stay in progressive disclosure.
 
 A new multi-filter dashboard would repeat the removed Overview and crowd320px. A virtualized infinite list adds focus/scroll complexity where the existing provider pagination works. Reuse pagination and compact controls instead. No new dependencies.
 

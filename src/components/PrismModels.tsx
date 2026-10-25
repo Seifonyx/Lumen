@@ -1,11 +1,12 @@
 // Lazy Prism model ledger: canonical catalog/settings only. No independent selection or eligibility owner.
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowUpRight, Search, X } from 'lucide-react';
 import { modelLabel, selectCurrentModel, useStore } from '../store';
 import { formatTokens, remaining } from '../lib/usage';
 import { modelCapabilities, selectionIndex, selectionProblem, withCurrentModel } from '../lib/model-discovery';
 import { matchesModel, modelProvider, modelProviderLabel } from '../lib/model-search';
+import { useScreenMemory } from '../lib/screen-memory';
 import { navigateScreen } from '../lib/screen-history';
 import { closeRoutingCenter } from '../lib/routing-center';
 import { requestProviderSettings } from '../lib/provider-settings-target';
@@ -66,7 +67,13 @@ export default function PrismModels({ models, searchHost }: { models: ModelInfo[
   return <Inventory models={models} searchHost={searchHost} />;
 }
 function Inventory({ models, searchHost, providerOnly = false }: { models: ModelInfo[]; searchHost: HTMLElement | null; providerOnly?: boolean }) {
-  const [query, setQuery] = useState(''), [filter, setFilter] = useState<Filter>('all'), [page, setPage] = useState(0);
+  const conversation = useStore(s => s.currentId);
+  const scope = providerOnly ? `prism-provider-models:${models[0] ? modelProvider(models[0]) : 'empty'}` : `prism-models:${conversation || 'new'}`;
+  const [browse, setBrowse] = useScreenMemory(scope, { query: '', filter: 'all' as Filter, page: 0 });
+  const { query, filter, page } = browse;
+  const setPage = (value: number) => setBrowse(s => ({ ...s, page: value }));
+  const setQuery = (value: string) => setBrowse(s => ({ ...s, query: value }));
+  const setFilter = (value: Filter) => setBrowse(s => ({ ...s, filter: value }));
   const input = useRef<HTMLInputElement>(null), list = useRef<HTMLDivElement>(null);
   const keys = useStore(s => s.keys), catalog = useStore(s => s.catalog), settings = useStore(s => s.settings), authed = useStore(s => s.authed), user = useStore(s => s.user);
   const current = useStore(selectCurrentModel);

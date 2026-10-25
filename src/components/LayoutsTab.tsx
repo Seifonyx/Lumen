@@ -1,25 +1,32 @@
 import { ArrowDown, ArrowUp, Copy, Pencil, Plus, RotateCcw, Search, Sparkles, Star, Trash2, X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { allLayouts, LAYOUT_ICONS, LAYOUT_PREFIX, newLayoutId, type Layout } from '../lib/layouts';
 import { PROVIDER_NAMES } from '../lib/util';
 import { modelLabel, useStore } from '../store';
 import LayoutIcon from './LayoutIcon';
 import LayoutBuilder from './LayoutBuilder';
 import { layoutModelProblem } from '../lib/layout-policy';
+import { layoutPreview, layoutAssignmentProblem } from '../lib/routing-presentation';
+import { matchesModel } from '../lib/model-search';
 
-export function LayoutEditor({ start, onDone }: { start: Layout; onDone: () => void }) {
+export function LayoutEditor({ start, onDone, onDraftChange, presentation }: { start: Layout; onDone: (result?: 'saved' | 'cancelled') => void; onDraftChange?: (draft: Layout) => void; presentation?: 'prism' }) {
+  const canvas = presentation === 'prism';
   const catalog = useStore((s) => s.catalog);
-  const layouts = useStore((s) => s.settings.layouts) || [];
+  const settings = useStore(s => s.settings), owner = useStore(s => s.user?.uid);
+  const layouts = settings.layouts || [];
   const update = useStore((s) => s.updateSettings);
   const [l, setL] = useState<Layout>({ ...start, builtin: undefined, edited: undefined });
   const [query, setQuery] = useState('');
+  const errorId = useId();
+  const draftChange = useRef(onDraftChange); draftChange.current = onDraftChange;
+  useEffect(() => { draftChange.current?.(l); }, [l]);
   const top = useRef<HTMLDivElement>(null);
-  useEffect(() => { top.current?.scrollIntoView({ block: 'start' }); }, []);
+  useEffect(() => { top.current?.scrollIntoView({ block: 'start' }); if (canvas) top.current?.querySelector<HTMLElement>('h3')?.focus({ preventScroll: true }); }, []);
   const models = catalog?.models || [];
   const requirementError=[l.requirements?.minContext,l.requirements?.minInputTokens].some(n=>n!==undefined&&(!Number.isSafeInteger(n)||n<1));
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return models.filter((m) => !l.models.includes(m.id) && (!q || `${m.label} ${m.name} ${m.provider}`.toLowerCase().includes(q))).slice(0, 40);
+    return models.filter((m) => !l.models.includes(m.id) && (!q || matchesModel(m,q))).slice(0, 40);
   }, [models, l.models, query]);
   const move = (i: number, d: number) => {
     const next = [...l.models];
@@ -27,22 +34,15 @@ export function LayoutEditor({ start, onDone }: { start: Layout; onDone: () => v
     setL({ ...l, models: next });
   };
   const save = () => {
-    if(requirementError)return;
+    const fresh = useStore.getState();
+    if(requirementError || fresh.user?.uid !== owner)return;
+    const layouts = fresh.settings.layouts || [];
     const exists = layouts.some((x) => x.id === l.id),saved={...l,name:l.name.trim(),models:[...new Set(l.models)]};
     update({ layouts: exists ? layouts.map((x) => (x.id === l.id ? saved : x)) : [...layouts, saved] });
-    onDone();
+    onDone('saved');
   };
 
-  return (
-    <div className="layout-editor" ref={top}>
-      <div className="section-head">
-        <h3>{layouts.some((x) => x.id === start.id) || start.builtin ? `Edit “${start.name}”` : 'New layout'}</h3>
-      </div>
-      <label className="field-block">
-        <span className="setting-label">Name</span>
-        <input type="text" value={l.name} maxLength={40} onChange={(e) => setL({ ...l, name: e.target.value })} placeholder="e.g. Web apps" />
-      </label>
-      <div className="field-block">
+  const iconPicker = (<div className="field-block">
         <span className="setting-label">Icon</span>
         <div className="icon-pick">
           {LAYOUT_ICONS.map((icon) => (
@@ -51,7 +51,59 @@ export function LayoutEditor({ start, onDone }: { start: Layout; onDone: () => v
             </button>
           ))}
         </div>
+      </div>);
+  const assignedModels = (<div className="field-block">
+        <span className="setting-label">Models{l.mode === 'order' ? ' (first is used first)' : ''}</span>
+        <ul className="model-list">
+          {l.models.length === 0 && <li className="muted small pad">Add models below.</li>}
+          {l.models.map((id, i) => {
+            const m = models.find((x) => x.id === id);
+            return (
+              <li key={id} className="model-row" data-model={id}>
+                <span className="model-meta">
+                  <span className="model-title">{canvas ? `${i + 1}. ` : ''}{m?.label || modelLabel(catalog, id)}</span>
+                  <span className="model-sub">{m ? layoutAssignmentProblem(l,m) ? `This model ${layoutAssignmentProblem(l,m)}.` : PROVIDER_NAMES[m.provider] : 'Not in current catalog · kept in this Layout'}</span>
+                </span>
+                <button className="icon-btn sm" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up"><ArrowUp size={16} /></button>
+                <button className="icon-btn sm" onClick={() => move(i, 1)} disabled={i === l.models.length - 1} aria-label="Move down"><ArrowDown size={16} /></button>
+                <button className="icon-btn sm" onClick={() => setL({ ...l, models: l.models.filter((x) => x !== id) })} aria-label="Remove"><X size={16} /></button>
+              </li>
+            );
+          })}
+        </ul>
+        <label className="search">
+          <Search size={16} />
+          <input type="search" aria-label="Add a model" placeholder="Add a model (e.g. coder, flash, groq)" value={query} onChange={(e) => setQuery(e.target.value)} />
+        </label>
+        {(query || canvas) && (
+          <ul className="model-list add">
+            {matches.length === 0 && <li className="muted small pad">No matches.</li>}
+            {(query ? matches : matches.slice(0,6)).map((m) => (
+              <li key={m.id} className="model-row">
+                <span className="model-meta">
+                  <span className="model-title">{m.label}</span>
+                  <span className="model-sub">{PROVIDER_NAMES[m.provider]} · {m.name}</span>
+                  {layoutModelProblem(l,m) && <span className="model-sub">This model {layoutModelProblem(l,m)}.</span>}
+                </span>
+                <button className="icon-btn sm" disabled={Boolean(layoutModelProblem(l,m))} title={layoutModelProblem(l,m) || undefined} onClick={() => setL({ ...l, models: [...l.models, m.id] })} aria-label={`Add ${m.label}`}><Plus size={17} /></button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>);
+
+  const preview = layoutPreview(l, settings);
+
+  return (
+    <div className={`layout-editor${canvas ? ' cv-layout-editor' : ''}`} ref={top} role="form" aria-label="Layout editor">
+      <div className="section-head">
+        <h3 tabIndex={-1}>{layouts.some((x) => x.id === start.id) || start.builtin ? `Edit “${start.name}”` : 'New layout'}</h3>
       </div>
+      <label className="field-block">
+        <span className="setting-label">Name</span>
+        <input type="text" value={l.name} maxLength={40} onChange={(e) => setL({ ...l, name: e.target.value })} placeholder="e.g. Web apps" />
+      </label>
+      {!canvas && iconPicker}
       <label className="field-block">
         <span className="setting-label">Description</span>
         <input type="text" value={l.description} onChange={(e) => setL({ ...l, description: e.target.value })} placeholder="What it's for" />
@@ -61,11 +113,12 @@ export function LayoutEditor({ start, onDone }: { start: Layout; onDone: () => v
           <span className="setting-label">How models are used</span>
           <span className="setting-hint">{l.mode === 'auto' ? 'Auto chooses among these models for each message.' : 'Starts with the first model. Fallback rules control when another can answer.'}</span>
         </span>
-        <div className="segmented">
-          <button className={l.mode === 'order' ? 'active' : ''} onClick={() => setL({ ...l, mode: 'order' })}>In order</button>
-          <button className={l.mode === 'auto' ? 'active' : ''} onClick={() => setL({ ...l, mode: 'auto' })}>Best for each</button>
+        <div className="segmented" role="group" aria-label="How models are used">
+          <button type="button" aria-pressed={l.mode === 'order'} className={l.mode === 'order' ? 'active' : ''} onClick={() => setL({ ...l, mode: 'order' })}>In order</button>
+          <button type="button" aria-pressed={l.mode === 'auto'} className={l.mode === 'auto' ? 'active' : ''} onClick={() => setL({ ...l, mode: 'auto' })}>{canvas ? 'Match request' : 'Best for each'}</button>
         </div>
       </div>
+      {canvas && assignedModels}
       <label className="field-block"><span className="setting-label">Routing priority</span><select aria-label="Layout routing priority" value={l.priority || ''} onChange={e=>setL({...l,priority:e.target.value?e.target.value as Layout['priority']:undefined})}>
         <option value="">Use app setting</option><option value="balanced">Balanced</option><option value="quality">Quality</option><option value="speed">Speed</option><option value="cost">Cost</option>
       </select><span className="setting-hint">Used for automatic choices. Fixed model order stays authoritative.</span></label>
@@ -77,55 +130,24 @@ export function LayoutEditor({ start, onDone }: { start: Layout; onDone: () => v
         {(['vision','pdf','search'] as const).map(cap=><label key={cap} className="builder-default"><input type="checkbox" checked={Boolean(l.requirements?.capabilities?.includes(cap))} onChange={e=>setL({...l,requirements:{...l.requirements,capabilities:e.target.checked?[...new Set([...(l.requirements?.capabilities || []),cap])]:(l.requirements?.capabilities || []).filter(c=>c!==cap)}})} />{cap==='vision'?'Images':cap==='pdf'?'Native PDF input':'Web search'}</label>)}
         <label className="builder-default"><input type="checkbox" checked={Boolean(l.requirements?.noReasoning)} onChange={e=>setL({...l,requirements:{...l.requirements,noReasoning:e.target.checked}})} />Exclude models that require lengthy reasoning</label>
       </fieldset>
-      <label className="field-block"><span className="setting-label">Minimum context (tokens)</span><input type="number" min={1} step={1} value={l.requirements?.minContext ?? ''} onChange={e=>setL({...l,requirements:{...l.requirements,minContext:e.target.value===''?undefined:Number(e.target.value)}})} placeholder="No minimum" /></label>
-      <label className="field-block"><span className="setting-label">Input to fit (tokens)</span><input type="number" min={1} step={1} value={l.requirements?.minInputTokens ?? ''} onChange={e=>setL({...l,requirements:{...l.requirements,minInputTokens:e.target.value===''?undefined:Number(e.target.value)}})} placeholder="No minimum" /><span className="setting-hint">Reserves room for the input and a reply.</span></label>
+      <label className="field-block"><span className="setting-label">Minimum context (tokens)</span><input type="number" aria-invalid={requirementError || undefined} aria-describedby={requirementError ? errorId : undefined} min={1} step={1} value={l.requirements?.minContext ?? ''} onChange={e=>setL({...l,requirements:{...l.requirements,minContext:e.target.value===''?undefined:Number(e.target.value)}})} placeholder="No minimum" /></label>
+      <label className="field-block"><span className="setting-label">Input to fit (tokens)</span><input type="number" aria-invalid={requirementError || undefined} aria-describedby={requirementError ? errorId : undefined} min={1} step={1} value={l.requirements?.minInputTokens ?? ''} onChange={e=>setL({...l,requirements:{...l.requirements,minInputTokens:e.target.value===''?undefined:Number(e.target.value)}})} placeholder="No minimum" /><span className="setting-hint">Reserves room for the input and a reply.</span></label>
       </details>
-      {requirementError&&<p className="error-msg" role="alert">Context requirements must be positive whole numbers.</p>}
-      <div className="field-block">
-        <span className="setting-label">Models{l.mode === 'order' ? ' (first is used first)' : ''}</span>
-        <ul className="model-list">
-          {l.models.length === 0 && <li className="muted small pad">Add models below.</li>}
-          {l.models.map((id, i) => {
-            const m = models.find((x) => x.id === id);
-            return (
-              <li key={id} className="model-row">
-                <span className="model-meta">
-                  <span className="model-title">{m?.label || modelLabel(catalog, id)}</span>
-                  <span className="model-sub">{layoutModelProblem(l,m) || (m ? PROVIDER_NAMES[m.provider] : 'Not available with your keys')}</span>
-                </span>
-                <button className="icon-btn sm" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up"><ArrowUp size={16} /></button>
-                <button className="icon-btn sm" onClick={() => move(i, 1)} disabled={i === l.models.length - 1} aria-label="Move down"><ArrowDown size={16} /></button>
-                <button className="icon-btn sm" onClick={() => setL({ ...l, models: l.models.filter((x) => x !== id) })} aria-label="Remove"><X size={16} /></button>
-              </li>
-            );
-          })}
-        </ul>
-        <label className="search">
-          <Search size={16} />
-          <input type="search" placeholder="Add a model (e.g. coder, flash, groq)" value={query} onChange={(e) => setQuery(e.target.value)} />
-        </label>
-        {query && (
-          <ul className="model-list add">
-            {matches.length === 0 && <li className="muted small pad">No matches.</li>}
-            {matches.map((m) => (
-              <li key={m.id} className="model-row">
-                <span className="model-meta">
-                  <span className="model-title">{m.label}</span>
-                  <span className="model-sub">{PROVIDER_NAMES[m.provider]} · {m.name}</span>
-                </span>
-                <button className="icon-btn sm" disabled={Boolean(layoutModelProblem(l,m))} title={layoutModelProblem(l,m) || undefined} onClick={() => setL({ ...l, models: [...l.models, m.id] })} aria-label={`Add ${m.label}`}><Plus size={17} /></button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      <label className="field-block">
+      {requirementError&&<p id={errorId} className="error-msg" role="alert">Context requirements must be positive whole numbers.</p>}
+      {!canvas && assignedModels}
+      {canvas ? <details className="layout-instructions"><summary>Extra instructions</summary><label className="field-block">
         <span className="setting-label">Instructions (optional)</span>
         <span className="setting-hint">Added for every model in this layout, on top of your own instructions.</span>
         <textarea dir="auto" rows={4} value={l.instructions || ''} onChange={(e) => setL({ ...l, instructions: e.target.value })} style={{ minHeight: 0 }} />
-      </label>
+      </label></details> : (<label className="field-block">
+        <span className="setting-label">Instructions (optional)</span>
+        <span className="setting-hint">Added for every model in this layout, on top of your own instructions.</span>
+        <textarea dir="auto" rows={4} value={l.instructions || ''} onChange={(e) => setL({ ...l, instructions: e.target.value })} style={{ minHeight: 0 }} />
+      </label>)}
+      {canvas && <details className="layout-appearance"><summary>Appearance</summary>{iconPicker}</details>}
+      {canvas && <section className="layout-preview" aria-label="Layout preview"><h4>Before you save</h4><p>{preview.mode}</p><p><b>Automatic switching.</b> {preview.fallback.title}. {preview.fallback.description}</p><p><b>Saved priority.</b> {preview.priorityExplanation}</p><p><b>Required capabilities.</b> {preview.requirements}</p><p><b>Assignments.</b> {l.models.filter(id => layoutAssignmentProblem(l,models.find(m => m.id === id))).length} need attention. Assignments are retained unless you remove them.</p></section>}
       <div className="editor-actions">
-        <button className="btn ghost" onClick={onDone}>Cancel</button>
+        <button type="button" className="btn ghost" onClick={() => onDone('cancelled')}>Cancel</button>
         <button className="btn primary" disabled={!l.name.trim() || !l.models.length || requirementError} onClick={save}>Save layout</button>
       </div>
     </div>

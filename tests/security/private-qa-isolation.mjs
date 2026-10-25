@@ -50,7 +50,7 @@ try {
   } finally {
     if (previous === undefined) delete process.env.LUMEN_CANVAS; else process.env.LUMEN_CANVAS = previous;
   }
-  auditGraph(canvasIds, { forbidden: PRODUCTION_GRAPH_FORBIDDEN, required: ['src/lib/canvas-presentation.on.ts', 'src/styles/canvas-screens.css', 'src/components/RoutingCenter.tsx', 'src/components/SidebarCanvas.tsx', 'src/lib/provider-presentation.ts'], root });
+  auditGraph(canvasIds, { forbidden: PRODUCTION_GRAPH_FORBIDDEN, required: ['src/lib/canvas-presentation.on.ts', 'src/styles/canvas-screens.css', 'src/components/RoutingCenter.tsx', 'src/components/SidebarCanvas.tsx', 'src/lib/provider-presentation.ts', 'src/components/PrismLayouts.tsx', 'src/components/RoutingInsight.tsx', 'src/styles/canvas-routing-experience.css'], root });
   assert.ok(!canvasIds.some((id) => id.replaceAll('\\', '/').split('?')[0].endsWith('/src/lib/canvas-presentation.ts')), 'the Canvas build replaces the off switch');
   assert.ok(!productionIds.some((id) => /canvas-presentation\.on\.ts|provider-presentation\.ts|screen-history\.ts|screen-memory\.ts|\/RoutingCenter\.tsx|\/styles\/canvas/.test(id)), 'the ordinary build never reaches the "on" module');
   pass('Canvas production build excludes QA code', `${canvasIds.length} modules`);
@@ -172,6 +172,8 @@ try {
     'src/lib/provider-presentation.ts', 'src/lib/provider-settings-target.ts', 'src/components/ProviderConnections.tsx',
     // CP3: lazy model ledger and pure shared catalog-search/manual-selection presentation. No network/state owner.
     'src/components/PrismModels.tsx', 'src/lib/model-discovery.ts', 'src/lib/model-search.ts',
+    // Slice3 CP1: canonical editor presentation, read-only routing evidence and lazy scoped styling.
+    'src/components/PrismLayouts.tsx', 'src/components/RoutingInsight.tsx', 'src/components/LayoutsTab.tsx', 'src/lib/routing-presentation.ts', 'src/styles/canvas-routing-experience.css',
     // Owner-authorized shared iPhone navigation reset: UI-only owners, ordinary graph remains isolated.
     // Reviewed feature-local section presentation and media subscription; no data/auth/network owner.
     'src/components/PhoneSections.tsx', 'src/lib/phone-layout.ts',

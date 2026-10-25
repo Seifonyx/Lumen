@@ -10,21 +10,21 @@ import { usePhoneLayout } from '../lib/phone-layout';
 import { createPortal } from 'react-dom';
 import { navigateScreen, screenBack } from '../lib/screen-history';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowUpRight, ChevronRight, Plus, Search, Shield, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, ChevronRight, Plus, Search, Shield, X } from 'lucide-react';
 import { modelLabel, selectCurrentChat, selectCurrentModel, useStore } from '../store';
 import { AI_PROVIDERS, providerEnabled } from '../lib/ai/provider-config.js';
 import { PROVIDER_NAMES, providerOfId } from '../lib/util';
 import { formatTokens } from '../lib/usage';
 import { installSwipeBack } from '../lib/swipe-back';
 import { closeRoutingCenter, showRoutingSection, showRoutingProvider, useRoutingCenter, type RoutingSection } from '../lib/routing-center';
-import type { Layout } from '../lib/layouts';
+import { findLayout } from '../lib/layouts';
 import type { ModelInfo } from '../types';
-import { LayoutEditor } from './LayoutsTab';
 import UsageTab from './UsageTab';
 import RouteWhy from './RouteWhy';
 import { providerPresentation } from '../lib/provider-presentation';
 import { requestProviderSettings } from '../lib/provider-settings-target';
 import FilterMenu from './FilterMenu';
+import { currentRoutingPresentation } from '../lib/routing-presentation';
 import { selectionProblem, withCurrentModel } from '../lib/model-discovery';
 // Tier 5 panels (usage history, request log, routing file, connection check) load on first use, in their own chunk.
 const ScreenActions = lazy(() => import('./ScreenActions'));
@@ -32,7 +32,8 @@ const extras = () => import('./RoutingExtras');
 const CheckConnection = lazy(() => extras().then((m) => ({ default: m.CheckConnection })));
 const UsageHistory = lazy(() => extras().then((m) => ({ default: m.UsageHistory })));
 const RequestLog = lazy(() => extras().then((m) => ({ default: m.RequestLog })));
-const RoutingFile = lazy(() => extras().then((m) => ({ default: m.RoutingFile })));
+const PrismLayouts = lazy(() => import('./PrismLayouts'));
+const RoutingInsight = lazy(() => import('./RoutingInsight'));
 const RecentAnswers = lazy(() => extras().then((m) => ({ default: m.RecentAnswers })));
 
 const PrismModels = lazy(() => import('./PrismModels'));
@@ -214,7 +215,8 @@ export default function RoutingCenter() {
   const covered = useStore((s) => s.settingsOpen || Boolean(s.page));
   const providers = useProviderRows();
   const phone = usePhoneLayout();
-  const [editing, setEditing] = useState<Layout | null>(null);
+  const [insightOpen, setInsightOpen] = useState(false);
+  useEffect(() => { if (!open) setInsightOpen(false); }, [open]);
   const [searchHost, setSearchHost] = useState<HTMLElement | null>(null);
 
   const page = useRef<HTMLElement>(null), heading = useRef<HTMLHeadingElement>(null);
@@ -225,7 +227,7 @@ export default function RoutingCenter() {
   useEffect(() => { if (open && (opened.current.owner !== owner || opened.current.currentId !== currentId)) closeRoutingCenter(); }, [open, owner, currentId]);
   useEffect(() => { if (open) heading.current?.focus({ preventScroll: true }); }, [open]);
   useEffect(() => {
-    setEditing(null); if (page.current) { page.current.scrollTop = 0; page.current.querySelector('.rc-scroll')?.scrollTo(0,0); }
+    if (page.current) { page.current.scrollTop = 0; page.current.querySelector('.rc-scroll')?.scrollTo(0,0); }
     // The shared phone title is stable across sections; direct entry never invents a Back target.
     if (phone && open) page.current?.querySelector<HTMLElement>('.phone-navigation h1')?.focus({ preventScroll: true });
   }, [section]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -243,16 +245,13 @@ export default function RoutingCenter() {
   const last = chat?.messages.findLast((m) => m.role === 'assistant' && m.model && m.status === 'done');
   const routed = model === 'auto' || model.startsWith('layout:');
   const current = routed ? last?.model : model;
-  const models = catalog?.models || [], layouts = config.layouts || [];
+  const models = catalog?.models || [];
   const mine = providers.filter((p) => p.keySaved || p.enabled);
-  const choices = config.enabledModels.filter((id) => models.some((m) => m.id === id)).length;
-  const layout = model.startsWith('layout:') ? layouts.find((l) => `layout:${l.id}` === model) : undefined;
+  const layout = model.startsWith('layout:') ? findLayout(model, models, config.layouts, config.hiddenLayouts) : undefined;
   const picked = !routed ? withCurrentModel(models, model, modelLabel(catalog, model)).find(m => m.id === model) : undefined;
   const currentProblem = picked ? selectionProblem({ authed, user, keys, catalog, settings: config }, picked) : null;
   const recovery = currentProblem && <p className="rc-muted">{currentProblem} <button type="button" className="rc-link" onClick={() => currentProblem.includes('provider') || currentProblem.includes('connection') ? openProviderSettings(providerId(picked!)) : openSettings('models')}>Review model settings</button></p>;
-  const sentence = model === 'auto'
-    ? (!mine.length ? 'Connect a provider so Auto has models to choose from.' : !choices ? 'Enable models in Settings so Auto has a choice.' : `Picks a model for each message from your ${plural(choices, 'enabled model')}.`)
-    : layout ? `Follows your Layout ${layout.name}, ${layout.mode === 'order' ? 'trying its models in order' : 'choosing by task within its set'}.` : 'Every message in this chat uses this model.';
+  const sentence = currentRoutingPresentation(model, config, catalog).description;
   // Who the route can reach, in words: Auto's enabled models, a Layout's models in order, or a chosen model's provider.
   const pool = model === 'auto' ? models.filter((m) => config.enabledModels.includes(m.id)).map((m) => m.label) : layout ? layout.models.map((id) => modelLabel(catalog, id)) : [];
   const reach = pool.length ? `${pool.slice(0, 3).join(layout?.mode === 'order' ? ' → ' : ' · ')}${pool.length > 3 ? ` +${pool.length - 3} more` : ''}`
@@ -288,12 +287,12 @@ export default function RoutingCenter() {
         <div className="rc-body rc-models-body">
           <section className="rc-current" aria-label="Current routing mode">
             {phone ? (
-              <details className="rc-current-disclosure">
+              <details className="rc-current-disclosure" open={insightOpen} onToggle={e => setInsightOpen(e.currentTarget.open)}>
                 <summary>
                   <span className="rc-current-identity"><span className="rc-kicker">{currentProblem ? 'Current choice · Needs setup' : 'Next message in this chat'}</span><strong className="rc-current-model">{modelLabel(catalog, model)}</strong></span>
                   <span className="rc-current-more-label">Details <ChevronRight size={15} aria-hidden="true" /></span>
                 </summary>
-                <div className="rc-current-explanation">{recovery}<p className="rc-muted">{sentence}</p>{reach && <p className="rc-muted rc-current-reach">{reach}</p>}</div>
+                <div className="rc-current-explanation">{recovery}<p className="rc-muted">{sentence}</p>{reach && <p className="rc-muted rc-current-reach">{reach}</p>}{insightOpen && <Suspense fallback={<p className="rc-muted">Loading routing details…</p>}><RoutingInsight /></Suspense>}</div>
               </details>
             ) : (
               <>
@@ -302,6 +301,7 @@ export default function RoutingCenter() {
                 {recovery}
                 <p className="rc-muted">{sentence}</p>
                 {reach && <p className="rc-muted rc-current-reach">{reach}</p>}
+                <details open={insightOpen} onToggle={e => setInsightOpen(e.currentTarget.open)}><summary>Routing details</summary>{insightOpen && <Suspense fallback={<p className="rc-muted">Loading routing details…</p>}><RoutingInsight /></Suspense>}</details>
               </>
             )}
             {!mine.length && <button type="button" className="rc-primary" onClick={() => openSettings('keys')}><Plus size={15} aria-hidden="true" />Connect a provider</button>}
@@ -310,22 +310,7 @@ export default function RoutingCenter() {
         </div>
       )}
 
-      {section === 'policies' && (
-        <div className="rc-body">
-          <div className="rc-panel-title"><div><h2>{phone ? 'Layouts & policies' : 'Policies & fallback order'}</h2><p className="rc-muted">Layouts are Lumen’s named routing policies. Existing recovery and consent rules still apply.</p></div>
-            {!editing && <button type="button" className="rc-primary" onClick={() => setEditing({ id: crypto.randomUUID(), name: '', icon: 'layers', description: '', models: [], mode: 'order', fallback: 'layout' })}><Plus size={15} />New policy</button>}</div>
-          {editing ? <div className="rc-editor"><LayoutEditor key={editing.id} start={editing} onDone={() => setEditing(null)} /></div> : layouts.map((l) => (
-            <article className="rc-policy" key={l.id}>
-              <div><span className="rc-label">{l.mode === 'order' ? 'Ordered fallback' : 'Task-aware set'}</span><h3>{l.name}</h3>{l.description && <p className="rc-muted">{l.description}</p>}</div>
-              <ol>{l.models.map((id) => <li key={id}>{modelLabel(catalog, id)}</li>)}</ol>
-              <span className="rc-muted">Fallback: {l.fallback === 'none' ? 'None' : l.fallback === 'layout' ? 'Within this Layout' : 'Enabled models permitted'}</span>
-              <button type="button" className="rc-link" onClick={() => setEditing(l)}>Edit {l.name} <SlidersHorizontal size={15} /></button>
-            </article>
-          ))}
-          {!editing && !layouts.length && <p className="rc-muted">No saved policies yet. Auto chooses for each task until you add one.</p>}
-          {!editing && <Suspense fallback={null}><RoutingFile /></Suspense>}
-        </div>
-      )}
+      {section === 'policies' && <Suspense fallback={<p className="rc-muted" role="status">Loading Layouts…</p>}><PrismLayouts /></Suspense>}
 
       {section === 'usage' && <div className="rc-body"><h2 className="rc-h2">Usage &amp; quotas</h2><p className="rc-muted">Local account counters and provider-reported limits where available. Unknown values remain unknown.</p><Suspense fallback={null}><UsageHistory /></Suspense><UsageTab /></div>}
 

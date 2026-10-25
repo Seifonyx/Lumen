@@ -32,21 +32,21 @@ export default function RouteWhy({ message }: { message: Message }) {
   return (
     <span className="route-why-wrap" ref={root}>
       {CANVAS_SHELL ? (
-      <button type="button" className="model-tag route-why-btn" aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(!open)} title="Why Auto chose this model">
-        <span className="route-model">{name}</span><span className="route-tag"> · {routeWords(message.route)}</span>
+      <button type="button" className="model-tag route-why-btn" aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(!open)} title="Recorded routing details">
+        <span className="route-model">{name}</span><span className="route-tag"> · {message.via ? `Via ${message.via}` : routeWords(message.route)}</span>
       </button>
       ) : (
-      <button type="button" className="model-tag route-why-btn" aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(!open)} title="Why Auto chose this model">
+      <button type="button" className="model-tag route-why-btn" aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(!open)} title="Recorded routing details">
         {name}<span className="route-tag"> · Auto: {message.route}</span>
       </button>
       )}
       {open && (<Exit kind="drop">
         <span className="route-why-pop" role="dialog" aria-label="Why this model">
           <span className="rw-title">Why {name}</span>
-          <ul>{(d?.why?.length ? d.why : [message.route || 'best available']).map((w) => <li key={w}>{w}</li>)}</ul>
+          <ul>{(d?.why?.length ? d.why : [message.route || 'No selection reason was saved for this answer.']).map((w) => <li key={w}>{w}</li>)}</ul>
           <span className="muted small">Fit is estimated from capabilities and model-family hints. Answer quality is not guaranteed.</span>
           {!!d?.next?.length && <>
-            <span className="rw-title">Next in line</span>
+            <span className="rw-title">Recorded alternatives</span><span className="muted small">Candidates at that selection, not promised next models.</span>
             <ol>{d.next.map((id) => <li key={id}>{modelLabel(catalog, id)}</li>)}</ol>
           </>}
           <label className="rw-toggle">

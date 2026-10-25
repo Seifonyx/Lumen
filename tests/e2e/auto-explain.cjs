@@ -30,7 +30,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
       await why.click();
       const pop = page.getByRole('dialog', { name: 'Why this model' });
       await pop.waitFor();
-      assert.match(await pop.textContent(), /Next in line/);
+      assert.match(await pop.textContent(), /Recorded alternatives/);
       if (process.env.SHOT) await page.screenshot({ path: `${process.env.SHOT}-${width}.png` });
       assert.ok(await pop.evaluate((el) => { const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && r.top >= 0; }), 'popover fits the screen');
       const picked = await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('mr.settings')); return s; });

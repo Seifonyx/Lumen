@@ -1,6 +1,25 @@
 # Dynamic Model Picker implementation plan
 
-## Active — Phase 4 Slice 2 checkpoints (2026-10-25)
+## Active — Phase4 Slice3 CP1 Auto Routing & Layouts
+
+Production/main: **05d2647e37919e7548ed397118cb28592a67a737**, Slice2 released/owner-tested. Workstream `feat/phase4-prism-auto-layouts`; **new draft only, no merge/deploy or CP2**. [Design/ownership plan](docs/design/PRISM_AUTO_LAYOUT_CHECKPOINT.md). Existing original cloud WIP recovered and preserved. Historical ledgers below remain unchanged and cannot represent the current program.
+
+### CP1 delivery acceptance ledger v1 (scope only)
+
+No prior CP1 percentage/weight baseline existed. This explicit checkpoint ledger is introduced to answer the owner's request without inventing an overall-program percentage. Weights reflect implementation/integration and verification effort; total100. Credit only demonstrable sub-deliverables; implemented but unverified caps at0.75. Verified means acceptance below met, not owner design approval. Owner/planner acceptance, physical-device review, merge/release are **separate pending states**, not implied by delivery100%. Preserve these weights in subsequent continuation.
+
+| Stable task | Weight | Acceptance and evidence | Current earned fraction |
+|---|---:|---|---:|
+| S3C1-E |25| Current preference vs completed model/source/recovery/reasons/alternatives; unknown states, actual policy/metadata only; unit + both-engine tests. |1|
+| S3C1-L |35| Canonical Layout editor/index, pre-save explanation, order/missing IDs, create/edit/use, validation, Back/Forward/Cancel/Save, draft/file/account safety; both-engine tests. |1|
+| S3C1-V |30| Four viewport/two theme matrices, axe, first usable Models row, CP2 wrapping/CP3 regression, type/unit/ordinary+Canvas builds, isolation, budgets, independent review and fresh exact-head CI. |0.95|
+| S3C1-D |10| Reviewed curated exact-source before/after evidence, new draft PR/source push, current handoff and conflict-safe live checkpoint/readback. |0.9|
+
+Calculation at evidence-commit preparation: Σ(weight×fraction)=**97.5% CP1 engineering/delivery credit** (25+35+28.5+9). Prior recovery checkpoint62.5%→97.5%; confidence High for local evidence. Source and cross-engine/gated checks are complete; final delivery-head CI contributes the remaining1.5 weighted points, and final remote/live readback contributes1.0. **Final successful completion of both yields100% of authorized CP1 engineering/delivery scope, recorded with exact refs in PR56 and the separate live checkpoint.** That later operational record supersedes this pre-CI snapshot without inventing owner acceptance or creating a self-referential documentation/CI commit loop. Overall seven-phase completion remains **not defined**.
+
+Dependencies E/L→V→D; acceptance details and known limitations in the design plan/handoff. No routing scoring, eligibility, auth/network, credential, persistent schema, provider behavior or ordinary rollback migration. Source-CSS budget records the measured lazy editor cost (19.25KB cap); startup caps unchanged. Existing historical Slice2 engineering notes are archived below; their old pending statuses are not current authority.
+
+## Historical engineering record — Phase 4 Slice 2 checkpoints (2026-10-25)
 
 | Checkpoint | State | Evidence / next acceptance |
 |---|---|---|

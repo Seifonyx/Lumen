@@ -145,7 +145,7 @@ export function LayoutEditor({ start, onDone, onDraftChange, presentation }: { s
         <textarea dir="auto" rows={4} value={l.instructions || ''} onChange={(e) => setL({ ...l, instructions: e.target.value })} style={{ minHeight: 0 }} />
       </label>)}
       {canvas && <details className="layout-appearance"><summary>Appearance</summary>{iconPicker}</details>}
-      {canvas && <section className="layout-preview" aria-label="Layout preview"><h4>Before you save</h4><p>{preview.mode}</p><p><b>{preview.fallback.title}.</b> {preview.fallback.description}</p><p>{preview.priority} priority for automatic choices. {preview.requirements}</p><p>{l.models.filter(id => layoutAssignmentProblem(l,models.find(m => m.id === id))).length} assigned models need attention. Assignments are retained unless you remove them.</p></section>}
+      {canvas && <section className="layout-preview" aria-label="Layout preview"><h4>Before you save</h4><p>{preview.mode}</p><p><b>Automatic switching.</b> {preview.fallback.title}. {preview.fallback.description}</p><p><b>Saved priority.</b> {preview.priority}{!settings.autoSwitch && ' (inactive while automatic switching is off)'}. Fixed model order stays authoritative.</p><p><b>Required capabilities.</b> {preview.requirements}</p><p><b>Assignments.</b> {l.models.filter(id => layoutAssignmentProblem(l,models.find(m => m.id === id))).length} need attention. Assignments are retained unless you remove them.</p></section>}
       <div className="editor-actions">
         <button type="button" className="btn ghost" onClick={() => onDone('cancelled')}>Cancel</button>
         <button className="btn primary" disabled={!l.name.trim() || !l.models.length || requirementError} onClick={save}>Save layout</button>

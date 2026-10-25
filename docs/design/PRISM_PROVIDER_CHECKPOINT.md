@@ -14,12 +14,15 @@ Alternatives rejected: a new provider settings page would duplicate credential o
 
 ## Implementation and verification plan
 
-- [ ] Extend provider presentation tests first: no key/disabled/unchecked/ready-empty/ready/auth/stale and typed failures; no green inference claim or raw error rendering. Implement shared presentation verdict used by directory/detail.
-- [ ] Test provider-settings history target: canonical IDs only, restores exact settings visits, clears on cancellation and account mismatch. Add Canvas-only seam; existing KeysTab/ProviderConnections render selected provider directly with masked controls and original save.
-- [ ] Recompose directory/detail using existing canonical data. Preserve filters/search/history and Models landing geometry. Add focused browser tests before UI behavior changes.
-- [ ] Synthetic Chromium/WebKit Light/Dark320/390/430/1440: directory/detail/error/disabled/unchecked/empty/catalog-ready; settings target, Back/Forward, draft, masked secrets, search, accessibility, overflow. Capture curated before/after; no physical-iPhone claim.
-- [ ] Typecheck/full units, ordinary/Canvas builds, budgets and isolation; exact-head CI. Review complete diff, update handoff/live status, push new draft PR and STOP for provider review.
+- [x] Extend provider presentation tests first: no key/disabled/unchecked/ready-empty/ready/auth/stale and typed failures; no green inference claim or raw error rendering. Implement shared presentation verdict used by directory/detail.
+- [x] Test provider-settings history target: canonical IDs only, restores exact settings visits, clears on cancellation and account mismatch. Add Canvas-only seam; existing KeysTab/ProviderConnections render selected provider directly with masked controls and original save.
+- [x] Recompose directory/detail using existing canonical data. Preserve filters/search/history and Models landing geometry. Add focused browser tests before UI behavior changes.
+- [x] Synthetic Chromium/WebKit Light/Dark320/390/430/1440: directory/detail/error/disabled/unchecked/empty/catalog-ready; settings target, Back/Forward, draft, masked secrets, search, accessibility, overflow. Capture curated before/after; no physical-iPhone claim.
+- [x] Typecheck/full units, ordinary/Canvas builds, budgets and isolation; full local browser matrix and focused320 geometry.
+- [ ] Final exact-head CI, synchronize draft PR/live status and STOP for provider review. CI result belongs in the PR and canonical live checkpoint; no user approval inferred.
 
 ## Review risks
 
 No canonical inference-check result exists: UI must say so. Discovery refresh currently refreshes the canonical catalog, potentially all enabled providers; preserve behavior and accurately label it. Actual iPhone keyboard, edge gesture/PWA/VoiceOver remain device checks. No provider selection may leak to another account or hide the general directory permanently.
+
+Source checkpoints: coree0bd28f, full phone-width correctededb3511. Curated screenshots and verification details live in `docs/testing/prism-provider-checkpoint.md`. Final exact-head CI and owner review remain separate requirements; CP3 is blocked on explicit continuation.

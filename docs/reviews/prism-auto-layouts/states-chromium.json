@@ -1,0 +1,28 @@
+{
+  "engine": "chromium",
+  "syntheticOnly": true,
+  "physicalIPhone": false,
+  "results": [
+    {
+      "width": 320,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "theme": "dark",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "passed": true
+    }
+  ],
+  "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e"
+}

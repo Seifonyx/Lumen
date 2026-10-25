@@ -18,7 +18,7 @@ Alternatives rejected: a sixth Auto destination or rebuilt Overview would duplic
 
 - [x] **Evidence presentation:** write failing tests for current versus historical modes, done-only answer selection, missing reasons, recorded alternatives, fallback and legacy effective policy. Implement pure presentation helpers using existing findLayout/layoutPolicy and saved Message fields. Wire compact current disclosure and honest recorded details. No planner/inference calls.
 - [x] **Layouts workflow:** browser red tests pin Layout terminology, preview and Back preservation. Implement lazy PrismLayouts using canonical editor/store/history; typed optional draft/result callbacks. Preserve order, unknown IDs and save validation; explain blockers without silently dropping them. Focus/keyboard/Escape/account guards and empty states.
-- [ ] **Verification/review:** actual baseline captures exist at320/390/1440. Run full320/390/430/1440 Light/Dark Chromium/WebKit matrix, creation/editing/order/unknown/disabled states, current-vs-recorded evidence, Back/Forward, Save/Cancel, draft/file selection, account isolation and axe. Preserve CP3 first model row and CP2 provider containment suites. Type/unit/build/isolation/budget checks; independent review; curated exact-source before/after captures and fresh exact-head CI. Update source handoff/plan and separate live context, then STOP for owner/planner review.
+- [x] **Local verification/review:** actual baseline captures exist at320/390/1440. Run full320/390/430/1440 Light/Dark Chromium/WebKit matrix, creation/editing/order/unknown/disabled states, current-vs-recorded evidence, Back/Forward, Save/Cancel, draft/file selection, account isolation and axe. Preserve CP3 first model row and CP2 provider containment suites. Type/unit/build/isolation/budget checks; independent review; curated exact-source before/after captures and fresh exact-head CI. Update source handoff/plan and separate live context, then STOP for owner/planner review.
 
 ## Files / ownership
 
@@ -33,3 +33,7 @@ Alternatives rejected: a sixth Auto destination or rebuilt Overview would duplic
 5.320px default Models still exposes a complete usable row/action above contextual Search. Editor controls/text fit, all fields remain keyboard-accessible and long catalogs stay bounded.
 
 Physical iPhone/PWA/VoiceOver/OS keyboard/dictation/IME remain device checks; simulated browsers do not establish them. No overall program percentage defined; historical ledgers remain unchanged.
+
+## Delivery evidence
+
+Runtime bc5d447; [draft PR56](https://github.com/Seifonyx/Lumen/pull/56), [verification report](../testing/prism-auto-layout-checkpoint.md), [12-image portable review](../reviews/prism-auto-layouts/review.html). Local checklist above passed both engines. Final delivery-head CI/live readback are tracked in PR/live status, and remain separate from owner/planner acceptance. Source CSS measured19.1KB under explicit19.25KB cap; startup caps unchanged. The known DB routeDetail persistence limitation is disclosed, not silently changed. STOP at CP1 review.

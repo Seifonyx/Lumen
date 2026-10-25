@@ -10,12 +10,12 @@ No prior CP1 percentage/weight baseline existed. This explicit checkpoint ledger
 
 | Stable task | Weight | Acceptance and evidence | Current earned fraction |
 |---|---:|---|---:|
-| S3C1-E |25| Current preference vs completed model/source/recovery/reasons/alternatives; unknown states, actual policy/metadata only; unit + both-engine tests. |0.75|
-| S3C1-L |35| Canonical Layout editor/index, pre-save explanation, order/missing IDs, create/edit/use, validation, Back/Forward/Cancel/Save, draft/file/account safety; both-engine tests. |0.75|
-| S3C1-V |30| Four viewport/two theme matrices, axe, first usable Models row, CP2 wrapping/CP3 regression, type/unit/ordinary+Canvas builds, isolation, budgets, independent review and fresh exact-head CI. |0.5|
-| S3C1-D |10| Reviewed curated exact-source before/after evidence, new draft PR/source push, current handoff and conflict-safe live checkpoint/readback. |0.25|
+| S3C1-E |25| Current preference vs completed model/source/recovery/reasons/alternatives; unknown states, actual policy/metadata only; unit + both-engine tests. |1|
+| S3C1-L |35| Canonical Layout editor/index, pre-save explanation, order/missing IDs, create/edit/use, validation, Back/Forward/Cancel/Save, draft/file/account safety; both-engine tests. |1|
+| S3C1-V |30| Four viewport/two theme matrices, axe, first usable Models row, CP2 wrapping/CP3 regression, type/unit/ordinary+Canvas builds, isolation, budgets, independent review and fresh exact-head CI. |0.95|
+| S3C1-D |10| Reviewed curated exact-source before/after evidence, new draft PR/source push, current handoff and conflict-safe live checkpoint/readback. |0.9|
 
-Calculation: Σ(weight×fraction)=**62.5% verified delivery credit at recovery/final-check checkpoint**, not a claim about how much coding existed before recovery. Confidence Medium; source substantially implemented but final cross-engine/CI/publication incomplete. Final report must recalculate from this same ledger and actual evidence. Overall seven-phase completion remains **not defined**.
+Calculation at evidence-commit preparation: Σ(weight×fraction)=**97.5% CP1 engineering/delivery credit** (25+35+28.5+9). Prior recovery checkpoint62.5%→97.5%; confidence High for local evidence. Source and cross-engine/gated checks are complete; final delivery-head CI contributes the remaining1.5 weighted points, and final remote/live readback contributes1.0. **Final successful completion of both yields100% of authorized CP1 engineering/delivery scope, recorded with exact refs in PR56 and the separate live checkpoint.** That later operational record supersedes this pre-CI snapshot without inventing owner acceptance or creating a self-referential documentation/CI commit loop. Overall seven-phase completion remains **not defined**.
 
 Dependencies E/L→V→D; acceptance details and known limitations in the design plan/handoff. No routing scoring, eligibility, auth/network, credential, persistent schema, provider behavior or ordinary rollback migration. Source-CSS budget records the measured lazy editor cost (19.25KB cap); startup caps unchanged. Existing historical Slice2 engineering notes are archived below; their old pending statuses are not current authority.
 

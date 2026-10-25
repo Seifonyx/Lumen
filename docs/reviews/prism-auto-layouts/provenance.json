@@ -1,0 +1,877 @@
+{
+  "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
+  "baselineSource": "05d2647e37919e7548ed397118cb28592a67a737",
+  "presentation": "canvas",
+  "syntheticOnly": true,
+  "physicalIPhone": false,
+  "network": "Only loopback application plus explicitly intercepted synthetic catalog/reply fixtures; no live inference",
+  "captures": [
+    {
+      "file": "before-phone-editor.png",
+      "capture": "before/320-editor.png",
+      "caption": "Before \u00b7 Layout editor \u00b7 320 \u00d7 568 \u00b7 Chromium Light",
+      "runtimeSource": "05d2647e37919e7548ed397118cb28592a67a737",
+      "sha256": "5cb074609906bd654e6d7dde2f9840752bddc225200e20be967eafbd9960f174",
+      "capturedAtUTC": "2026-10-25T13:25:04.944464+00:00"
+    },
+    {
+      "file": "phone-editor.png",
+      "capture": "exact-chromium/320-light-editor.png",
+      "caption": "After \u00b7 Clear naming and selection mode \u00b7 320 \u00d7 568 \u00b7 Chromium Light",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
+      "sha256": "a9f62878267d542612a301c145cdebdfa228a86472b51f373bac28621aa3fd04",
+      "capturedAtUTC": "2026-10-25T16:45:19.440660+00:00"
+    },
+    {
+      "file": "before-desktop-layouts.png",
+      "capture": "before/1440-layouts.png",
+      "caption": "Before \u00b7 Policies and stored fallback \u00b7 1440 \u00d7 960 \u00b7 Chromium Light",
+      "runtimeSource": "05d2647e37919e7548ed397118cb28592a67a737",
+      "sha256": "96be834feb517b7111c64f0663f3ae843a4f7c53b24e6c8a96a4b79c13cd32ba",
+      "capturedAtUTC": "2026-10-25T13:25:08.648290+00:00"
+    },
+    {
+      "file": "desktop-layouts.png",
+      "capture": "exact-chromium/1440-light-layouts.png",
+      "caption": "After \u00b7 Assignments, effective recovery and direct use \u00b7 1440 \u00d7 960 \u00b7 Chromium Light",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
+      "sha256": "0129c03c0dcc1305be7c9764d37f256a79cd8b5d772c8a327de545eb8fd40bd6",
+      "capturedAtUTC": "2026-10-25T16:46:21.609650+00:00"
+    },
+    {
+      "file": "phone-models.png",
+      "capture": "exact-webkit/320-dark-models.png",
+      "caption": "Preserved \u00b7 Complete usable Models row above Search \u00b7 320 \u00d7 568 \u00b7 WebKit Dark",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
+      "sha256": "fbe403009e241715450b861e23bbe5c92d924fb188de793492dea13348a82d22",
+      "capturedAtUTC": "2026-10-25T16:45:59.722706+00:00"
+    },
+    {
+      "file": "phone-layouts.png",
+      "capture": "exact-webkit/390-dark-layouts.png",
+      "caption": "Saved order and missing assignment retained \u00b7 390 \u00d7 844 \u00b7 WebKit Dark",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
+      "sha256": "603362baecb6357f10101f95732f94a3eb2edd608fc216970dcaac8a7343a9b6",
+      "capturedAtUTC": "2026-10-25T16:46:27.577365+00:00"
+    },
+    {
+      "file": "wide-phone-editor.png",
+      "capture": "exact-webkit/430-light-editor.png",
+      "caption": "Model ordering and editing \u00b7 430 \u00d7 932 \u00b7 WebKit Light",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
+      "sha256": "5210a86d84c1b092e8ba6448beef4fdd4f792c520547ce4f4124574169cdcb5f",
+      "capturedAtUTC": "2026-10-25T16:46:42.700641+00:00"
+    },
+    {
+      "file": "phone-preview.png",
+      "capture": "exact-chromium/320-light-preview.png",
+      "caption": "Before you save \u00b7 Effective fallback and requirements \u00b7 320 \u00d7 568 \u00b7 Chromium Light",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
+      "sha256": "094c34bb13f1db78323b143bd54a832aa8be874433203afe756559562b1f6322",
+      "capturedAtUTC": "2026-10-25T16:45:19.832641+00:00"
+    },
+    {
+      "file": "desktop-evidence.png",
+      "capture": "exact-chromium/1440-light-auto-record.png",
+      "caption": "Current preference versus last completed answer \u00b7 1440 \u00d7 960 \u00b7 Chromium Light",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
+      "sha256": "4364c90774d0b4b155355ab5256ec58f9b189c450f46689530bf92c172a7dfe0",
+      "capturedAtUTC": "2026-10-25T16:46:20.641696+00:00"
+    },
+    {
+      "file": "phone-evidence.png",
+      "capture": "review-webkit/390-dark-auto-record.png",
+      "caption": "Recorded recovery, not a prediction \u00b7 390 \u00d7 844 \u00b7 WebKit Dark",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
+      "sha256": "1bf19c8011032920ad36bf930eea61ad977c53563d4d35b30ce1ef1a5385f84d",
+      "capturedAtUTC": "2026-10-25T16:49:07.325809+00:00"
+    },
+    {
+      "file": "desktop-alternatives.png",
+      "capture": "exact-webkit/1440-dark-historical-notes.png",
+      "caption": "Actual session alternatives from intercepted synthetic Send \u00b7 1440 \u00d7 960 \u00b7 WebKit Dark",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
+      "sha256": "95aadec9c1dbf6e7876187bb28612b73b21953eacb0b187a3a76c17ed2dd575f",
+      "capturedAtUTC": "2026-10-25T16:47:57.209083+00:00"
+    },
+    {
+      "file": "desktop-editor.png",
+      "capture": "exact-chromium/1440-light-preview.png",
+      "caption": "Pre-save review and explicit Save/Cancel \u00b7 1440 \u00d7 960 \u00b7 Chromium Light",
+      "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
+      "sha256": "76db7211cd035b1314b35e2b6e4066da0bbcc8ccfd7aef9009bc0a770b85837c",
+      "capturedAtUTC": "2026-10-25T16:46:23.197573+00:00"
+    }
+  ],
+  "runtimeBuildFiles": [
+    {
+      "file": "apple-touch-icon.png",
+      "sha256": "75b7c1a1ee017b434d4c526fbb1fc7fe16327071a5169ece830e501951f7c53d"
+    },
+    {
+      "file": "assets/AskChats-D-bkQ-HJ.js",
+      "sha256": "5ab1dd25f41e1d4362d3eb5359e0a098f33ee0c12d16429506d14f78e45edbf5"
+    },
+    {
+      "file": "assets/AssistantLibrary-wRfN4ib2.js",
+      "sha256": "6bbbf8ef5455da4cbfb373ce73aae2a1875082b233d6001866d3443ca89912e1"
+    },
+    {
+      "file": "assets/CanvasLibraryActions-B0Lu41sb.js",
+      "sha256": "1821edbe605294e3b1e60d95d32f3011a4e2958f9f278f57a6494c7ff5a4f8bf"
+    },
+    {
+      "file": "assets/CanvasPanel-B5sKkRdP.js",
+      "sha256": "a4621de45cd44e9988c89df8898bb630ec1821065c9545231a1813f7200148ed"
+    },
+    {
+      "file": "assets/CanvasRail-BI4komPp.js",
+      "sha256": "d7509e4f8bfa01660304d9eb5955463c96b73934b38ce5674c66133f5c99e3ce"
+    },
+    {
+      "file": "assets/ChatExportModal-udjCtrHu.js",
+      "sha256": "93e49055f67682b649665dad5501c0b1808c37027727e30edf9f828d3c80a698"
+    },
+    {
+      "file": "assets/CodeEditor-T82b4xA2.js",
+      "sha256": "ea80441660eb8d8f74cd0bdbcd79ae07729954020a9bcf7bbed846554d4a3398"
+    },
+    {
+      "file": "assets/CollectionPage-B-wjnq9d.js",
+      "sha256": "df4a0049598c4c085fec9cb12c8f0697819fba56125a47939d7e1dae63aa351a"
+    },
+    {
+      "file": "assets/CommandPalette-BP_IRHp_.js",
+      "sha256": "eaadc1482282a3e1670363660bf4f49c404963387bf5bbbd9531b7b365dec43c"
+    },
+    {
+      "file": "assets/ComparisonResultsModal-DLEag5iq.js",
+      "sha256": "df672b98d542c20f3f76491e80424aaaf1b4eea34318a0e9b2226be6a8194043"
+    },
+    {
+      "file": "assets/DeckPreview-U5bpy1YY.js",
+      "sha256": "5d96974e1a3429e54b01dd7aa396b0e3de1d31bd6860730dccfcfb1124fc5c06"
+    },
+    {
+      "file": "assets/FilterMenu-DXDpoEbA.js",
+      "sha256": "e7a497dc3184b468b79b6427f665623056c26a7a8906864bce830c86e9097699"
+    },
+    {
+      "file": "assets/HubPage-DY-sd8nw.js",
+      "sha256": "e99dd9167ecd4c2ed4d076b721caf0e4606f25925bbbe39ad29f3f1e8e6ca68c"
+    },
+    {
+      "file": "assets/KaTeX_AMS-Regular-BQhdFMY1.woff2",
+      "sha256": "0cdd387c9590a1a9f9794560022dbb59654a7d86f187aa0c81495ad42d3a7308"
+    },
+    {
+      "file": "assets/KaTeX_AMS-Regular-DMm9YOAa.woff",
+      "sha256": "30da91e84c893f875e252689faebdc590b2871145e8adc7f9a9d4dbd8ce0b251"
+    },
+    {
+      "file": "assets/KaTeX_AMS-Regular-DRggAlZN.ttf",
+      "sha256": "68534840bcfdd2bffb6f0e8deb48684dd01e7f04ea2813267577afb906de1d13"
+    },
+    {
+      "file": "assets/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf",
+      "sha256": "07d8e303ce4fc12b4bb54f1004170dd190a1f3db45d400fe68060df3e0897268"
+    },
+    {
+      "file": "assets/KaTeX_Caligraphic-Bold-BEiXGLvX.woff",
+      "sha256": "1ae6bd7475590e97e7f145a89e09ccde322f7a6bc0b91607b1c8b8ee28290fed"
+    },
+    {
+      "file": "assets/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2",
+      "sha256": "de7701e42cf1f4cf0b766c03fb27977207eee2f4fd5d76fa82188406da43ea4c"
+    },
+    {
+      "file": "assets/KaTeX_Caligraphic-Regular-CTRA-rTL.woff",
+      "sha256": "3398dd02302557a793f2863f88e02d96ce10df2abffa07c8e9fa90775116e65c"
+    },
+    {
+      "file": "assets/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2",
+      "sha256": "5d53e70ad607c2352162dec9e0923fb54ecdafaccbf604cd8dcf7d00facb989b"
+    },
+    {
+      "file": "assets/KaTeX_Caligraphic-Regular-wX97UBjC.ttf",
+      "sha256": "ed0b74372feefcbb9c0666b2e210da37b7e49fa7fbbf3eeb11db5f693dacfbb7"
+    },
+    {
+      "file": "assets/KaTeX_Fraktur-Bold-BdnERNNW.ttf",
+      "sha256": "9163df9c7122432e6495b4229fa9071cf9ae86a758ae5efc4924ec2e1a6dbce1"
+    },
+    {
+      "file": "assets/KaTeX_Fraktur-Bold-BsDP51OF.woff",
+      "sha256": "9be7ceb88004ab8ad124082246fbfcca4091e36385d4ec6ed1df67375dad50fb"
+    },
+    {
+      "file": "assets/KaTeX_Fraktur-Bold-CL6g_b3V.woff2",
+      "sha256": "74444efd593c005e3f4573b44524704c0af0a937fe911cca9e94068d0d140d3f"
+    },
+    {
+      "file": "assets/KaTeX_Fraktur-Regular-CB_wures.ttf",
+      "sha256": "1e6f9579e90e2cac37f8f60a597c436e075c114385652b7cbeb0dec0421291b3"
+    },
+    {
+      "file": "assets/KaTeX_Fraktur-Regular-CTYiF6lA.woff2",
+      "sha256": "51814d270d06ff0255dba0799994fa4d8c84d11f09951d47595f4abb1f3602dc"
+    },
+    {
+      "file": "assets/KaTeX_Fraktur-Regular-Dxdc4cR9.woff",
+      "sha256": "5e28753be717dac97f559f49bc10be9cf3c124ddcabda6659d11cb68febc6463"
+    },
+    {
+      "file": "assets/KaTeX_Main-Bold-Cx986IdX.woff2",
+      "sha256": "0f60d1b897938ec918c8ce073092411baf9438f6739465693ff18b0f9d20b021"
+    },
+    {
+      "file": "assets/KaTeX_Main-Bold-Jm3AIy58.woff",
+      "sha256": "c76c5d696297d51b9cb1639c7da4334f0e7dec81b42b11213b5e25ef671bb822"
+    },
+    {
+      "file": "assets/KaTeX_Main-Bold-waoOVXN0.ttf",
+      "sha256": "138ac28d1663b3037e9c5f52371fa5c63d8324f4a38d22cd573e6ea3a3fd0cf8"
+    },
+    {
+      "file": "assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2",
+      "sha256": "99cd42a3c072d918f2f44984a807cf7aa16e13545fd0875fc07c6c65f99e715b"
+    },
+    {
+      "file": "assets/KaTeX_Main-BoldItalic-DzxPMmG6.ttf",
+      "sha256": "70ee1f64a20f2048c21940ef46d0144fd215baa953ca69afd1e31e98544f708f"
+    },
+    {
+      "file": "assets/KaTeX_Main-BoldItalic-SpSLRI95.woff",
+      "sha256": "a6f7ec0d846ac7ad975adb8959c37ed49b94acbc4ae436db9ce9e20287e4a64c"
+    },
+    {
+      "file": "assets/KaTeX_Main-Italic-3WenGoN9.ttf",
+      "sha256": "0d85ae7cc30f23790a7f1a58c4a112fdca8aae769b6ba11429af1d98b1b6cb3a"
+    },
+    {
+      "file": "assets/KaTeX_Main-Italic-BMLOBm91.woff",
+      "sha256": "f1d6ef86f3b11a528bd5185199bd2443ecb2b0dead96d88674b5a2c12be24bdf"
+    },
+    {
+      "file": "assets/KaTeX_Main-Italic-NWA7e6Wa.woff2",
+      "sha256": "97479ca6cce906abc961ecac96faa5f9ca2e61b8e7670d475826bcdee9a7c267"
+    },
+    {
+      "file": "assets/KaTeX_Main-Regular-B22Nviop.woff2",
+      "sha256": "c2342cd8b869e01752a9321dc17213fc40d4d04c79688c1d43f2cf316abd7866"
+    },
+    {
+      "file": "assets/KaTeX_Main-Regular-Dr94JaBh.woff",
+      "sha256": "c6368d87e8a1a3a5d337623d83d8dc4b868f242a9ad476237d6f8d1e0f168cdc"
+    },
+    {
+      "file": "assets/KaTeX_Main-Regular-ypZvNtVU.ttf",
+      "sha256": "d0332f52868370fd83ae7fa46470f90c8f2eab2fcf12bc4f88080b340c95a830"
+    },
+    {
+      "file": "assets/KaTeX_Math-BoldItalic-B3XSjfu4.ttf",
+      "sha256": "f9377ab0271cda59af24bcffbd46a4d0c8a3572ffafdbb38de2ad5ea7b0d5ee5"
+    },
+    {
+      "file": "assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2",
+      "sha256": "dc47344dbb6cb5b655c8460d561f4df5f501b90c804ad3c6cec65fe322351ab1"
+    },
+    {
+      "file": "assets/KaTeX_Math-BoldItalic-iY-2wyZ7.woff",
+      "sha256": "850c0af5c2238497febaf5e461d880bf458c341f42f4f330f1b1ab5698b1998e"
+    },
+    {
+      "file": "assets/KaTeX_Math-Italic-DA0__PXp.woff",
+      "sha256": "8a8d244581371912b8f3f5a23e2437cb2a59cd9bcaebb0346e722c05737a2571"
+    },
+    {
+      "file": "assets/KaTeX_Math-Italic-flOr_0UB.ttf",
+      "sha256": "08ce98e51b04d58945a301e639e02b6998af29fdfd61a7b8afdd07bbfc479d4a"
+    },
+    {
+      "file": "assets/KaTeX_Math-Italic-t53AETM-.woff2",
+      "sha256": "7af58c5ec8f132a2ddde9027c6d7814decce4d3b822a11192a42a20e2e973264"
+    },
+    {
+      "file": "assets/KaTeX_SansSerif-Bold-CFMepnvq.ttf",
+      "sha256": "1ece03f79f95277d57dc7f6b435a74e1379b0d46104a8530286b60ff49369ea0"
+    },
+    {
+      "file": "assets/KaTeX_SansSerif-Bold-D1sUS0GD.woff2",
+      "sha256": "e99ae51144bf1232efcc1bfe5add36262c6866b0faab24fa75740e1b98577a62"
+    },
+    {
+      "file": "assets/KaTeX_SansSerif-Bold-DbIhKOiC.woff",
+      "sha256": "ece03cfd83e22c212cdef66feb8442d25a083beb988db3f1883f3f9738d750ba"
+    },
+    {
+      "file": "assets/KaTeX_SansSerif-Italic-C3H0VqGB.woff2",
+      "sha256": "00b26ac825e2095056396e0553b8ac26d3f8ad158c3826e28b4c45b385c4714a"
+    },
+    {
+      "file": "assets/KaTeX_SansSerif-Italic-DN2j7dab.woff",
+      "sha256": "91ee67500cc0129aa0ace3ac5c61ff1692102f0f31d02b69347fba35dcb75bf2"
+    },
+    {
+      "file": "assets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf",
+      "sha256": "3931dd81faed86ba021bb2bbdc36f5bed9a38d6b4f4077aca59b265aa1b02083"
+    },
+    {
+      "file": "assets/KaTeX_SansSerif-Regular-BNo7hRIc.ttf",
+      "sha256": "f36ea897e19f4a2e571d1e900e4e3710e438deb05a842486045ba0a3e616a4ad"
+    },
+    {
+      "file": "assets/KaTeX_SansSerif-Regular-CS6fqUqJ.woff",
+      "sha256": "11e4dc8a6471ff6d6ee561d53d10fde8f7489e798257ff449c5d37c197435605"
+    },
+    {
+      "file": "assets/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2",
+      "sha256": "68e8c73ef42afd3ccec58bf0fba302cce448938e7fc020a5e31f8a952eee1342"
+    },
+    {
+      "file": "assets/KaTeX_Script-Regular-C5JkGWo-.ttf",
+      "sha256": "1c67f068fea8bb09bf099c088b1cf64bd27516a6e07f4684344873564bb66a67"
+    },
+    {
+      "file": "assets/KaTeX_Script-Regular-D3wIWfF6.woff2",
+      "sha256": "036d4e95149b69ff9bcc0cd55771efeb25ffa3947293e69acd78d5ac328c684b"
+    },
+    {
+      "file": "assets/KaTeX_Script-Regular-D5yQViql.woff",
+      "sha256": "d96cdf2b3bdd4d64a8fd5f74a4c467f123a8a73931cd435889f08ffaf9bf947a"
+    },
+    {
+      "file": "assets/KaTeX_Size1-Regular-C195tn64.woff",
+      "sha256": "c943cc986384f59e86bea5fd7dc50a9c4dfe567a7c05eb40d6790720dead97c9"
+    },
+    {
+      "file": "assets/KaTeX_Size1-Regular-Dbsnue_I.ttf",
+      "sha256": "95b6d2f1a50173bfedb8c63e1d1c99b10427d0a4df4201cb44513b226951a22b"
+    },
+    {
+      "file": "assets/KaTeX_Size1-Regular-mCD8mA8B.woff2",
+      "sha256": "6b47c40166b6dbe21a5dfca7718413f2147fd2399be1ba605d8ad39cedf25dfe"
+    },
+    {
+      "file": "assets/KaTeX_Size2-Regular-B7gKUWhC.ttf",
+      "sha256": "a6b2099fb555c60e3a0db3a08842ebf1d732c6eb4e4bf44913613bed4fc4e39b"
+    },
+    {
+      "file": "assets/KaTeX_Size2-Regular-Dy4dx90m.woff2",
+      "sha256": "d04c54219f9eaec6d4d4fd42dfb28785975a4794d6b2fc71e566b9cd6db842dd"
+    },
+    {
+      "file": "assets/KaTeX_Size2-Regular-oD1tc_U0.woff",
+      "sha256": "2014c523c3210bcc166648c4d4cc57f05b747df07a24277bf71c51e67dc79e3d"
+    },
+    {
+      "file": "assets/KaTeX_Size3-Regular-CTq5MqoE.woff",
+      "sha256": "6ab6b62e9b62dae2c00dd90f791bd10950be0ecc3490d7d6045f51c2e8fe0949"
+    },
+    {
+      "file": "assets/KaTeX_Size3-Regular-DgpXs0kz.ttf",
+      "sha256": "500e04d54f0d51666332c9d2089aa803be22aa878eca539e59fa53c6e522b082"
+    },
+    {
+      "file": "assets/KaTeX_Size4-Regular-BF-4gkZK.woff",
+      "sha256": "99f9c6750b489c9462bf04900bd3f939df9b829339daaaaa99ef5495cdddea58"
+    },
+    {
+      "file": "assets/KaTeX_Size4-Regular-DWFBv043.ttf",
+      "sha256": "c647367d1dd4e162468717d020e1fc0f1dc5c26ebfdffbe55261713bf88c5877"
+    },
+    {
+      "file": "assets/KaTeX_Size4-Regular-Dl5lxZxV.woff2",
+      "sha256": "a4af7d414440a1c1790825cfb700cf9cf43b0f2c4b04f0ebc523011ad9853ec0"
+    },
+    {
+      "file": "assets/KaTeX_Typewriter-Regular-C0xS9mPB.woff",
+      "sha256": "e14fed02b1aba7ce9f5afd5844b5d0321b22351febc720e0de8b8723527609f7"
+    },
+    {
+      "file": "assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2",
+      "sha256": "71d517d67827787cfabdf186914cc3358eda539e37931941f2b2fd4a21f68c0b"
+    },
+    {
+      "file": "assets/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf",
+      "sha256": "f01f3e87d9c6a61c0c081ceb577abd864eb00a612f7ac1620dd6915fad2ef5aa"
+    },
+    {
+      "file": "assets/LayoutsTab-DZ03xsTg.js",
+      "sha256": "290cc30b12fa28d478c488006c94fcd0f26c8cce901d1a14c9e390b140bff617"
+    },
+    {
+      "file": "assets/PaneResizer-feHDEIjO.js",
+      "sha256": "6ce1afa499fe4cd1f8b285a44e1ea0b575784e606154baf9865738c721d9991d"
+    },
+    {
+      "file": "assets/PhoneSections-COxYmlfP.js",
+      "sha256": "8031ba10ef5f4b3affaa1dedf36e424e578b76cdf243b48f7801fac703d7aa80"
+    },
+    {
+      "file": "assets/PreviewModal-ClYGQFLB.js",
+      "sha256": "1b97fc7934c329c0348b4e85c9afd2834d01790d5671f654ce57500e02ead97f"
+    },
+    {
+      "file": "assets/PrismLayouts-D4MsMGJR.js",
+      "sha256": "7b7daabfd9d2c1fecda1f14cd3763092563d194f0ebbb99694623e163965fcd8"
+    },
+    {
+      "file": "assets/PrismModels-fqCP2j3Y.js",
+      "sha256": "c5c7d45aa1f041ec782227ff275e68a4c6eb6dbe01749642f28fa9a374010912"
+    },
+    {
+      "file": "assets/ProjectsPage-eYcvb7I9.js",
+      "sha256": "fd8dde94e2523b725220bc3ae61ddbcfe63311e2226a08ae64dfd7dbcd6bbfa2"
+    },
+    {
+      "file": "assets/PromptsModal-V_zOdr1d.js",
+      "sha256": "6de74fcac339d5be5a2b2f2e1bf5a21e3df6b21bfd6d5e4d29960dfa58d9a77a"
+    },
+    {
+      "file": "assets/RepoPicker-DjQE-ROQ.js",
+      "sha256": "cb92c3bc64d1be9b9720d9f69fc7be93723ee8b382efe41a242a20f38fb12db3"
+    },
+    {
+      "file": "assets/RoutingCenter-CVujICgL.js",
+      "sha256": "dc8ae8f0f7bcc90318cb85485900fe1f642e0bd36c4a3965f890f50c1697e87c"
+    },
+    {
+      "file": "assets/RoutingCenter-DJCSsAZw.css",
+      "sha256": "febf0f176944be5f427c842c177170e56dae7d4268a2b2c48b1c1618a49ae5f0"
+    },
+    {
+      "file": "assets/RoutingExtras-C1RBYu8B.js",
+      "sha256": "378102b91256e6c384f6d438b34c1cb40fa1bed6b281f9d4b31c811675bc6ab4"
+    },
+    {
+      "file": "assets/RoutingInsight-DqL6agKb.js",
+      "sha256": "76e7efaad119ca8fb72cd1f76e45d5dcb1abb9d34a5a29bd5328904cfd7b4571"
+    },
+    {
+      "file": "assets/RunPanel-xbjzoEXN.js",
+      "sha256": "ace6e386972a0d5f842853e89423952a128df45045c302dd648a83376ee0af6b"
+    },
+    {
+      "file": "assets/ScreenActions-Bh5mt9au.js",
+      "sha256": "41537920e75d4a1da367ad457ca33509213c2eedc5afad3ec935020e235017a4"
+    },
+    {
+      "file": "assets/SelectionTools-BSetFPES.js",
+      "sha256": "df66e392325bc06f41c4ebee2ed211ed8189293eb3ea8a630fbc1c377e32db66"
+    },
+    {
+      "file": "assets/SettingsModal-SUnu0o9v.js",
+      "sha256": "5f917253af5cb7a28adac71bd5dc66dfc343a9b987c2b976625c232662adb195"
+    },
+    {
+      "file": "assets/SharedChatPage-h_mqDcou.js",
+      "sha256": "8020032fe736a8936cbdeb461c811c62d5042dbf0dbb5c5c02a209adfac8a71a"
+    },
+    {
+      "file": "assets/SheetPreview-CQH0xh_S.js",
+      "sha256": "7e26741985ec2637a17399401666916a23c61cd326a8120fa210b446d25d9c89"
+    },
+    {
+      "file": "assets/ShortcutsModal-H8sgfcXh.js",
+      "sha256": "0595afeaedcb5a15a381f9e2ed9d801c287972ab2363727f9d1e53fa300fa4bb"
+    },
+    {
+      "file": "assets/SideChat-7YosCW6n.js",
+      "sha256": "f75f21babfc7c51b8b8e428fe63bea2ae1827103e4c4100025ae8307760ac673"
+    },
+    {
+      "file": "assets/Study-C9bMQ-pD.js",
+      "sha256": "ffb39af076b3733632d80a9be5c15081a10ef4978acd3ebd4ae9b771d657b5d1"
+    },
+    {
+      "file": "assets/ToolsModal-DJ5LLsdt.js",
+      "sha256": "abd3b5fa75974a38e320251d08cbe7cc99e33c1512beaeb31a74fffd84c7fc1d"
+    },
+    {
+      "file": "assets/ToolsPage-BNbX_nKz.js",
+      "sha256": "c29d28d733fcb771d90c3f12868bed08439a42b8a70155f70f478cea57196889"
+    },
+    {
+      "file": "assets/UsageTab-B30cjczT.js",
+      "sha256": "9090475ce21493e36c52bc5046fffa140a340b6c68ee9d5bc4ea61d2555ad92b"
+    },
+    {
+      "file": "assets/VoiceMode-DBiGYsZu.js",
+      "sha256": "9b483cede61d92943a3be9a2a2b1004c983d40a1b91e772ad4323c00b09882d8"
+    },
+    {
+      "file": "assets/__vite-browser-external-Cavc_B4G.js",
+      "sha256": "12919ba8c4ee3cff62e7c218161d8d8c59cdb7250ef3aaba93f2cf86d7929e9c"
+    },
+    {
+      "file": "assets/arrow-up-Dmlh63c-.js",
+      "sha256": "2752799831c0c1c01b1d027717fde087ab2aa3bd5194a8a0219a2d4970121df5"
+    },
+    {
+      "file": "assets/calculator-DDmtrQ5k.js",
+      "sha256": "b46fbdaeb0505d94ad437c411393ad8bf4370b98c090e189392d1e98ca6d5a57"
+    },
+    {
+      "file": "assets/canvas-routing-experience-06wX7acr.css",
+      "sha256": "3a0d5e82ce6a5f497f5a8613d1e7bb81a63b22b71afdf3bb2ad16888db569084"
+    },
+    {
+      "file": "assets/chart-CqKWSwTB.js",
+      "sha256": "9e4ac791ed068c914e65dade17755885376691ceac1d7980d67c335f900fccd6"
+    },
+    {
+      "file": "assets/chart-column-CZ1kWEvK.js",
+      "sha256": "10d01e0efdd8c1ce6e91ad4cccc23212720f3ae35d8c42d060f60fd115da45d1"
+    },
+    {
+      "file": "assets/clock-P6CQcerA.js",
+      "sha256": "4a80d16a87faf4f8e62ff0a2849ab4e2468a53af996d60f94853a6e76a5ecea6"
+    },
+    {
+      "file": "assets/createLucideIcon-B8yZ4Yrh.js",
+      "sha256": "9943c78429552683fab9f00a14c85fbe29c89a97d621127df9ee65d3f0a5129c"
+    },
+    {
+      "file": "assets/defineProperty-BbfpZ9Tg.js",
+      "sha256": "c2ae68c1ad7462e777ccd4e1e3f84b3bc07ab81458f0dd0ea042a9e1b4d23afb"
+    },
+    {
+      "file": "assets/docx-DHUSrE4W.js",
+      "sha256": "ada3b4e0730f10982b4d26a4f50ba261e81ccf1c721888b4e3ff54573f81ab3d"
+    },
+    {
+      "file": "assets/edit-BHKC_xl7.js",
+      "sha256": "6d259a5c995759841d5d46c33f1ae72b285714457009fec0638029d4e5eeb101"
+    },
+    {
+      "file": "assets/esm-BLrw0o6e.js",
+      "sha256": "55a3766cf5870034353a6f68c5a28cc89b69706267631a154c233546df97907f"
+    },
+    {
+      "file": "assets/file-search-DjXOZ4ff.js",
+      "sha256": "6f8e2f3ea41919a30654afadaedef1f4fcba3f6d9271b1dbef3efe828a89f6ca"
+    },
+    {
+      "file": "assets/formula-Du7sk-nG.js",
+      "sha256": "71eb8eab3fa40280ddea46d856a7214d5e84538f8b0f2bfe53512ef413bb6f5e"
+    },
+    {
+      "file": "assets/geist-cyrillic-ext-wght-normal-DjL33-gN.woff2",
+      "sha256": "2317fa4bb293c9c0b110e18315d529235c47a0ddd3338cea3d8c7955e927899e"
+    },
+    {
+      "file": "assets/geist-cyrillic-wght-normal-BEAKL7Jp.woff2",
+      "sha256": "6894439694946a589d157ece003086960a6a4013d74a813dab7602efdb3d8c09"
+    },
+    {
+      "file": "assets/geist-latin-ext-wght-normal-DC-KSUi6.woff2",
+      "sha256": "824f485b5d26e2f2da3c2b236132ece1bc8e4e43373452950bb0e40548b4313f"
+    },
+    {
+      "file": "assets/geist-latin-wght-normal-BgDaEnEv.woff2",
+      "sha256": "19f9c92546aa300c312235e3125af1b81394d8db9a4bc4a425cd5b641d2d54e1"
+    },
+    {
+      "file": "assets/geist-mono-cyrillic-ext-wght-normal-X_5orZeX.woff2",
+      "sha256": "cd8800999070b729e1cc0bf7a48da6c3ac096a044251171b9a7574b56d96d4b4"
+    },
+    {
+      "file": "assets/geist-mono-cyrillic-wght-normal-DiZS0aHC.woff2",
+      "sha256": "4866787fc952dbdbd591d6923d67bc21c2d894b93f34ab69d0cdf25d47bfb2df"
+    },
+    {
+      "file": "assets/geist-mono-latin-ext-wght-normal-Bwz-egvJ.woff2",
+      "sha256": "1a189eb997c3e2ece68373e387afaec9e8617424186c4b1ab3cff7c54ba6223b"
+    },
+    {
+      "file": "assets/geist-mono-latin-wght-normal-XN7g48iV.woff2",
+      "sha256": "684ad5b531f81d43c1e8c7038262d5db7cdc1f68006e04d6c7769efa8d33c8cc"
+    },
+    {
+      "file": "assets/geist-mono-symbols2-wght-normal-CO5SzqOn.woff2",
+      "sha256": "5bb66d8319ba1602bb2eb67dce8d79c2b4687be8ce183a0574433e949b3c60ad"
+    },
+    {
+      "file": "assets/geist-mono-vietnamese-wght-normal-DadHysG0.woff2",
+      "sha256": "d39b60889a94a527a7f73c7988a2d6efb6c081614aef683b0b386c02d74c2175"
+    },
+    {
+      "file": "assets/geist-vietnamese-wght-normal-6IgcOCM7.woff2",
+      "sha256": "8fa40e5d248247735eb97a0bd593b8852440430600d6ba01364c31fe0abc1fe1"
+    },
+    {
+      "file": "assets/graduation-cap-Csi5GMKa.js",
+      "sha256": "ec89862d642e142a92faf56b6a822a87497c947d450b19fe630b97b3e92d7823"
+    },
+    {
+      "file": "assets/haptics-CvaYf4P0.js",
+      "sha256": "d8244f48e836f0be26a21c2f7e4967cbab00bb9280b4a3d94e0f5a92ea3864a0"
+    },
+    {
+      "file": "assets/images-BoxHRGLW.js",
+      "sha256": "ef6e43ec0588d96e0654c57320c8df770742d6f903fa2e0bdb7b76be46c1086f"
+    },
+    {
+      "file": "assets/index-C2uu82wY.js",
+      "sha256": "ae22c065616981403606813967f820b712804650d6c234b4ab4acbee3e13122a"
+    },
+    {
+      "file": "assets/index-rKzzc4Rc.css",
+      "sha256": "4135e9809447b5a0f1096b8737d2dbba9b35c86b3cdf43b927911879ad2a1ad0"
+    },
+    {
+      "file": "assets/jsx-runtime-D3F0h15I.js",
+      "sha256": "5c7743f5464e4dc8a62c32e1337866303c5e2f7a6943e9423421c443b1261622"
+    },
+    {
+      "file": "assets/jszip.min-EAI7bj7o.js",
+      "sha256": "3dce6a52e0e2d13a113d43804c412af3561f1ff5598a1f430574c60302637bcc"
+    },
+    {
+      "file": "assets/key-round-CscRfaiK.js",
+      "sha256": "43a15bd1a5c53103e305682ab7d0085160ac55d995895d48344ad382be5c924d"
+    },
+    {
+      "file": "assets/lib-D2olVJIm.js",
+      "sha256": "9c817b7f04a852e767e4c4d7a0dd8fe21e25f26970747c0a240feafeae5a3c72"
+    },
+    {
+      "file": "assets/link-2-off-Cr9WDUwy.js",
+      "sha256": "4066c86b79e46e0c3a7564e3d748ffee2b8a13dce889a3fd51919716f3033e1b"
+    },
+    {
+      "file": "assets/markdown-extras-B3teVxAx.js",
+      "sha256": "6995f8d20145d1b8a5bbb7f242f139f28b295b0fe47eaaa6481784eaa8b99ba0"
+    },
+    {
+      "file": "assets/markdown-extras-D1Bj3pDB.css",
+      "sha256": "8b933318eae89d729e4629369402d3108039762f952508ccfb4398b97c599b26"
+    },
+    {
+      "file": "assets/message-square-iBatRBHI.js",
+      "sha256": "7880c534c4d88ff87f2fa9b46a77b726b2f1f836fd3b54c76e1c4ad817fe6612"
+    },
+    {
+      "file": "assets/pdf-CSTtyzLS.js",
+      "sha256": "4a3d1dd3695462183d90f34c939c52e1e06a8d0e671c8bf563bcbad42281f65b"
+    },
+    {
+      "file": "assets/pdf.worker.min-Dswkl-cV.mjs",
+      "sha256": "8ab0e5e30031b4a06ecfddd5ae9562f0227f830ee7ec9ed1a968b134243d2386"
+    },
+    {
+      "file": "assets/pdf.worker.min-zC6nfbxG.js",
+      "sha256": "6daffb35c9375447020d21ab4eae82a54a32b40c5e601e0b494e421d4b69b0cd"
+    },
+    {
+      "file": "assets/phone-layout-DAK40o9y.js",
+      "sha256": "49248f8dc2cfbb386f6d26a5804bd88be901470a813389adc2f6d8539e02f771"
+    },
+    {
+      "file": "assets/play-mHJwwCat.js",
+      "sha256": "f0dcecc32242f3d4de5580c79d41ea8ee555e82ac28d34a86495cb217d09d87d"
+    },
+    {
+      "file": "assets/pptx-DMOYjNKG.js",
+      "sha256": "5c8dd1a13a44391903a40fcdab48bee24c47b918e4f1b0b6cf5e1b6c61a5d110"
+    },
+    {
+      "file": "assets/preload-helper-BZ1Pz5am.js",
+      "sha256": "8820987e6a8afb54d776f21e305917e1ecf83cef678b4db38c2e5a405d04a8bf"
+    },
+    {
+      "file": "assets/provider-config-CStfFHwR.js",
+      "sha256": "fedde5138dbff235d5c3522f40a14061e9ba5de0d5ea613d9d697b71bae56f9a"
+    },
+    {
+      "file": "assets/rolldown-runtime-C0FnF6B9.js",
+      "sha256": "e0a79ad36c6ca1ffbc796c80aa5661803a9d1bc684e29d1587f48b4ba9a82714"
+    },
+    {
+      "file": "assets/search.worker-BnxpszHN.js",
+      "sha256": "8854f5297c820c5c459411075e69083ff0d524dd7b44204e6df5005f58e5e46e"
+    },
+    {
+      "file": "assets/spec-DqY5aTEv.js",
+      "sha256": "03ff6efb2f2149c9075e4a69282475f35f30393deedef5934f92db3bcb760ba1"
+    },
+    {
+      "file": "assets/store-DGoUr9jM.js",
+      "sha256": "d0ba88cc50d78353add83235fac86fd61431073114d20e31ff9d7077a90499cd"
+    },
+    {
+      "file": "assets/store-GJnAdBho.css",
+      "sha256": "3b06671d1d656188efcbac4b83bf0350457b831b38afa4fa4defa2fd8793bf1c"
+    },
+    {
+      "file": "assets/swipe-back-DoJBw7LK.js",
+      "sha256": "e5959f9cdfd202348d58e4151718d145805826cf01c1aa25de5af062dcf1c1fd"
+    },
+    {
+      "file": "assets/sync-CVHQttZG.js",
+      "sha256": "24f1b14eeb491a196b7b4abeeaf6327a4f6e4dd12fdded1c0e8fc7df45df696d"
+    },
+    {
+      "file": "assets/tree-keys-_hH3rVA2.js",
+      "sha256": "3c82ebb3bae770cd7ba83e0eb0955effe17ba4786d6b88663f15feca871cfe03"
+    },
+    {
+      "file": "assets/util-Dsxku1Uc.js",
+      "sha256": "933b18b36f4a8d2519acb30f70ef59e1e40692272197dbe44be8867c74e58e96"
+    },
+    {
+      "file": "assets/x-PEcWvTiJ.js",
+      "sha256": "53ba3282512466757d538bbcd8deb683df9a71e8501b97c6ad30235e8530dc3b"
+    },
+    {
+      "file": "assets/xlsx-CXFi_qiJ.js",
+      "sha256": "f3dc6f4652df474617066868da1d6f2ee9592510b5a866309564e0b00147d80b"
+    },
+    {
+      "file": "favicon.svg",
+      "sha256": "36bf2f1e2837801cf0ac51dc377af76db6a54c615b6a2714f90628dbb185c52e"
+    },
+    {
+      "file": "icon-192.png",
+      "sha256": "fa19d22da5a9b5125620fccd88d3b87b10029507759470d7e88d549bd34352d2"
+    },
+    {
+      "file": "icon-512.png",
+      "sha256": "581e2ab1d0f4da0e153010f6c03535eaab6ed27f27e67b820b186b1a4ed1c1e4"
+    },
+    {
+      "file": "icon-maskable-512.png",
+      "sha256": "65b4aad9d01c577c282f0a40d0179bfffe96db202aa118397877211f8cc7f1f2"
+    },
+    {
+      "file": "icon.svg",
+      "sha256": "8af814e80cc85444570ecd0d88f5b8ab63f459ace4eecd65111476d16acc40f3"
+    },
+    {
+      "file": "index.html",
+      "sha256": "fdf2d2a3fb0277b483a9dc9cef61f4bb3a5c9b3b2147c581d987637c64dc49f8"
+    },
+    {
+      "file": "manifest.webmanifest",
+      "sha256": "f0fb73a3646a28431af95cb169443cc2248251c37e40d6ec3b986c93b20d07b2"
+    },
+    {
+      "file": "privacy.html",
+      "sha256": "6ee3558d996a89c3ca52138fe294559c12bb8b64723fd447303c75dfb576193f"
+    },
+    {
+      "file": "python/README.md",
+      "sha256": "bfaae0dffa739e077b62e03f6dc1c42ac5044169e333a4e7650bea09b9c20fab"
+    },
+    {
+      "file": "python/et_xmlfile-2.0.0-py3-none-any.whl",
+      "sha256": "7a91720bc756843502c3b7504c77b8fe44217c85c537d85037f0f536151b2caa"
+    },
+    {
+      "file": "python/openpyxl-3.1.5-py2.py3-none-any.whl",
+      "sha256": "5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2"
+    },
+    {
+      "file": "python/xlrd-2.0.1-py2.py3-none-any.whl",
+      "sha256": "6a33ee89877bd9abc1158129f6e94be74e2679636b8a205b43b85206c3f0bbdd"
+    },
+    {
+      "file": "splash/dark-1125x2436.png",
+      "sha256": "a37582da8f3c0a03dc63ecbcff8a96fe539740cd24789c7f9b57ac1911d0a544"
+    },
+    {
+      "file": "splash/dark-1170x2532.png",
+      "sha256": "98402c836d521cbef3ce4b5250fb94d12fd5a27d433e4dfd81b94561d970403c"
+    },
+    {
+      "file": "splash/dark-1179x2556.png",
+      "sha256": "4181b656ee942c21632002094cf568612802abf2200c5b00694496e4a918becb"
+    },
+    {
+      "file": "splash/dark-1206x2622.png",
+      "sha256": "cd26b28be777034687bc78c443b4e4f4f547e02e5adfa927a122ceda86e17413"
+    },
+    {
+      "file": "splash/dark-1242x2208.png",
+      "sha256": "8e19dc10baf04abab72c9f7b1a59d058c8c90641b3987dea1f7f77a24941cde5"
+    },
+    {
+      "file": "splash/dark-1242x2688.png",
+      "sha256": "b19df7e0a6ba59aa7b7bdfc4a1f91289db573603ef52b302da091efef1e7e8f2"
+    },
+    {
+      "file": "splash/dark-1284x2778.png",
+      "sha256": "c8ca334e22fc873638cc621d577926ea3fd8fb0b4ebdd3501899cae60c898477"
+    },
+    {
+      "file": "splash/dark-1290x2796.png",
+      "sha256": "39420338057bb333deb94ea1ccf544661d5e4f7d9d0ad722c0c580814acf4970"
+    },
+    {
+      "file": "splash/dark-1320x2868.png",
+      "sha256": "9e87ec2eb90757fda93cd380a70b25514c1b36fdd8b10b3ac0c9949258700779"
+    },
+    {
+      "file": "splash/dark-750x1334.png",
+      "sha256": "e6f7fd86fa7170f8cd377e1625a17ca98d7aaace73d037b91eca41b857cfd1f2"
+    },
+    {
+      "file": "splash/dark-828x1792.png",
+      "sha256": "05e8c98f6a76f31b27684ba2cfaac66960d92526a80915fa120a3ab73ffd2317"
+    },
+    {
+      "file": "splash/light-1125x2436.png",
+      "sha256": "4494927823b45a2ee0cd5fd3ce7e155ce9146964ebc6c05f96edfcf41ce6ae05"
+    },
+    {
+      "file": "splash/light-1170x2532.png",
+      "sha256": "c88f4b1625c285005aa6bd4c310ba07b654f960aad2819a9b9b4f51e1b450d84"
+    },
+    {
+      "file": "splash/light-1179x2556.png",
+      "sha256": "404884df22ece1c1d50120df5585745f71ec7651ae254fe8d0c18bcac9e479df"
+    },
+    {
+      "file": "splash/light-1206x2622.png",
+      "sha256": "37ee4a269ada81070d8f03d7beaa9be025d3971e68d850da840b4d4e722e8649"
+    },
+    {
+      "file": "splash/light-1242x2208.png",
+      "sha256": "17cdebc0926884b06529d372b4310647ef3fe440c09a1e76bb44e6e4b9314591"
+    },
+    {
+      "file": "splash/light-1242x2688.png",
+      "sha256": "ac82b35fd2bfdaa9a7e6bc8d45180368c657eb376b57bec47f74c8ee3f116f7b"
+    },
+    {
+      "file": "splash/light-1284x2778.png",
+      "sha256": "d9ac15855086ab73a1df67d52b5d6e4e09681cc31cac2dcfcd29b247570212eb"
+    },
+    {
+      "file": "splash/light-1290x2796.png",
+      "sha256": "6bf93fc983695c93aa4e6ca6be6d2c20e11689ee2df1b7ccbb9536b893817099"
+    },
+    {
+      "file": "splash/light-1320x2868.png",
+      "sha256": "b6d6f52fecc799910f25baeadb10cd4f21ac4a2d5768f95923029392f1193d16"
+    },
+    {
+      "file": "splash/light-750x1334.png",
+      "sha256": "679f308335d0377b4838139684e2c81287b65951be97b2db3aa056042ef01538"
+    },
+    {
+      "file": "splash/light-828x1792.png",
+      "sha256": "6ab2b97ab85895f97b831bd3b348b5b110f9385799f6b421bdb48849dfd5f4f1"
+    },
+    {
+      "file": "sw.js",
+      "sha256": "00ef9891e8971c010028a7d855dde339f9957ab15af60b1318f16591af4ce5f7"
+    },
+    {
+      "file": "terms.html",
+      "sha256": "b9eeda7e22a8774fa137829e669bb7c263e2dd09518cc390243002caaf73a904"
+    }
+  ],
+  "note": "Final delivery commit adds review/docs and capture framing only. Runtime source is separately pinned. Before/after use comparable synthetic flows, not identical fixture message/model counts. Keyboard focus removed only for presentation screenshots; focus contracts tested separately."
+}

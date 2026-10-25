@@ -1,0 +1,56 @@
+{
+  "engine": "webkit",
+  "syntheticOnly": true,
+  "physicalIPhone": false,
+  "results": [
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "dark",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "height": 960,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "height": 960,
+      "theme": "dark",
+      "passed": true
+    }
+  ],
+  "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e"
+}

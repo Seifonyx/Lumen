@@ -1,5 +1,5 @@
 {
-  "runtimeSource": "39d50a02ff8cfee852158e9604a6bbd8193ea0e7",
+  "runtimeSource": "6fab54c9c15637c476c668196f1ddd0e8fd98de4",
   "baselineSource": "05d2647e37919e7548ed397118cb28592a67a737",
   "presentation": "canvas",
   "syntheticOnly": true,
@@ -9,7 +9,7 @@
     {
       "file": "before-phone-editor.png",
       "capture": "before/320-editor.png",
-      "caption": "Before · Layout editor · 320 × 568 · Chromium Light",
+      "caption": "Before \u00b7 Layout editor \u00b7 320 \u00d7 568 \u00b7 Chromium Light",
       "runtimeSource": "05d2647e37919e7548ed397118cb28592a67a737",
       "sha256": "5cb074609906bd654e6d7dde2f9840752bddc225200e20be967eafbd9960f174",
       "capturedAtUTC": "2026-10-25T13:25:04.944464+00:00"
@@ -17,7 +17,7 @@
     {
       "file": "phone-editor.png",
       "capture": "exact-chromium/320-light-editor.png",
-      "caption": "After · Clear naming and selection mode · 320 × 568 · Chromium Light",
+      "caption": "After \u00b7 Clear naming and selection mode \u00b7 320 \u00d7 568 \u00b7 Chromium Light",
       "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "a9f62878267d542612a301c145cdebdfa228a86472b51f373bac28621aa3fd04",
       "capturedAtUTC": "2026-10-25T16:45:19.440660+00:00"
@@ -25,7 +25,7 @@
     {
       "file": "before-desktop-layouts.png",
       "capture": "before/1440-layouts.png",
-      "caption": "Before · Policies and stored fallback · 1440 × 960 · Chromium Light",
+      "caption": "Before \u00b7 Policies and stored fallback \u00b7 1440 \u00d7 960 \u00b7 Chromium Light",
       "runtimeSource": "05d2647e37919e7548ed397118cb28592a67a737",
       "sha256": "96be834feb517b7111c64f0663f3ae843a4f7c53b24e6c8a96a4b79c13cd32ba",
       "capturedAtUTC": "2026-10-25T13:25:08.648290+00:00"
@@ -33,7 +33,7 @@
     {
       "file": "desktop-layouts.png",
       "capture": "exact-chromium/1440-light-layouts.png",
-      "caption": "After · Assignments, effective recovery and direct use · 1440 × 960 · Chromium Light",
+      "caption": "After \u00b7 Assignments, effective recovery and direct use \u00b7 1440 \u00d7 960 \u00b7 Chromium Light",
       "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "0129c03c0dcc1305be7c9764d37f256a79cd8b5d772c8a327de545eb8fd40bd6",
       "capturedAtUTC": "2026-10-25T16:46:21.609650+00:00"
@@ -41,7 +41,7 @@
     {
       "file": "phone-models.png",
       "capture": "exact-webkit/320-dark-models.png",
-      "caption": "Preserved · Complete usable Models row above Search · 320 × 568 · WebKit Dark",
+      "caption": "Preserved \u00b7 Complete usable Models row above Search \u00b7 320 \u00d7 568 \u00b7 WebKit Dark",
       "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "fbe403009e241715450b861e23bbe5c92d924fb188de793492dea13348a82d22",
       "capturedAtUTC": "2026-10-25T16:45:59.722706+00:00"
@@ -49,7 +49,7 @@
     {
       "file": "phone-layouts.png",
       "capture": "exact-webkit/390-dark-layouts.png",
-      "caption": "Saved order and missing assignment retained · 390 × 844 · WebKit Dark",
+      "caption": "Saved order and missing assignment retained \u00b7 390 \u00d7 844 \u00b7 WebKit Dark",
       "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "603362baecb6357f10101f95732f94a3eb2edd608fc216970dcaac8a7343a9b6",
       "capturedAtUTC": "2026-10-25T16:46:27.577365+00:00"
@@ -57,23 +57,23 @@
     {
       "file": "wide-phone-editor.png",
       "capture": "exact-webkit/430-light-editor.png",
-      "caption": "Model ordering and editing · 430 × 932 · WebKit Light",
+      "caption": "Model ordering and editing \u00b7 430 \u00d7 932 \u00b7 WebKit Light",
       "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "5210a86d84c1b092e8ba6448beef4fdd4f792c520547ce4f4124574169cdcb5f",
       "capturedAtUTC": "2026-10-25T16:46:42.700641+00:00"
     },
     {
       "file": "phone-preview.png",
-      "capture": "exact-chromium/320-light-preview.png",
-      "caption": "Before you save · Effective fallback and requirements · 320 × 568 · Chromium Light",
-      "runtimeSource": "39d50a02ff8cfee852158e9604a6bbd8193ea0e7",
-      "sha256": "b2965289e0cdf33382fa686b0ff6140c246c19c978c39bbf0e71283f95b4295c",
-      "capturedAtUTC": "2026-10-25T17:43:08.186Z"
+      "capture": "mode-preview-chromium-2/320-light-preview.png",
+      "caption": "Before you save \u00b7 Mode-specific initial selection and switching \u00b7 320 \u00d7 568 \u00b7 Chromium Light",
+      "runtimeSource": "6fab54c9c15637c476c668196f1ddd0e8fd98de4",
+      "sha256": "3848714c640d4329eb2f9314fabb4f5f04351fad3afe62ccf86d8ceceb7032b3",
+      "capturedAtUTC": "2026-10-25T18:14:53.376281+00:00"
     },
     {
       "file": "desktop-evidence.png",
       "capture": "exact-chromium/1440-light-auto-record.png",
-      "caption": "Current preference versus last completed answer · 1440 × 960 · Chromium Light",
+      "caption": "Current preference versus last completed answer \u00b7 1440 \u00d7 960 \u00b7 Chromium Light",
       "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "4364c90774d0b4b155355ab5256ec58f9b189c450f46689530bf92c172a7dfe0",
       "capturedAtUTC": "2026-10-25T16:46:20.641696+00:00"
@@ -81,7 +81,7 @@
     {
       "file": "phone-evidence.png",
       "capture": "review-webkit/390-dark-auto-record.png",
-      "caption": "Recorded recovery, not a prediction · 390 × 844 · WebKit Dark",
+      "caption": "Recorded recovery, not a prediction \u00b7 390 \u00d7 844 \u00b7 WebKit Dark",
       "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "1bf19c8011032920ad36bf930eea61ad977c53563d4d35b30ce1ef1a5385f84d",
       "capturedAtUTC": "2026-10-25T16:49:07.325809+00:00"
@@ -89,7 +89,7 @@
     {
       "file": "desktop-alternatives.png",
       "capture": "exact-webkit/1440-dark-historical-notes.png",
-      "caption": "Actual session alternatives from intercepted synthetic Send · 1440 × 960 · WebKit Dark",
+      "caption": "Actual session alternatives from intercepted synthetic Send \u00b7 1440 \u00d7 960 \u00b7 WebKit Dark",
       "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "95aadec9c1dbf6e7876187bb28612b73b21953eacb0b187a3a76c17ed2dd575f",
       "capturedAtUTC": "2026-10-25T16:47:57.209083+00:00"
@@ -97,7 +97,7 @@
     {
       "file": "desktop-editor.png",
       "capture": "exact-chromium/1440-light-preview.png",
-      "caption": "Pre-save review and explicit Save/Cancel · 1440 × 960 · Chromium Light",
+      "caption": "Pre-save review and explicit Save/Cancel \u00b7 1440 \u00d7 960 \u00b7 Chromium Light",
       "runtimeSource": "bc5d4472b3cf9bfe95527fcd6a546c949a6b307e",
       "sha256": "2295d8dec4254e6ff6ab845bb27844140f6a109093557629862069f577c47d43",
       "capturedAtUTC": "2026-10-25T16:46:23.197573+00:00"
@@ -109,56 +109,56 @@
       "sha256": "75b7c1a1ee017b434d4c526fbb1fc7fe16327071a5169ece830e501951f7c53d"
     },
     {
-      "file": "assets/AskChats-D-bkQ-HJ.js",
-      "sha256": "5ab1dd25f41e1d4362d3eb5359e0a098f33ee0c12d16429506d14f78e45edbf5"
+      "file": "assets/AskChats-UCS5gdAl.js",
+      "sha256": "180ba8172c70af5c4192dcaadad4e7e8e849eee006350e5bbeb015d798cd07f0"
     },
     {
-      "file": "assets/AssistantLibrary-wRfN4ib2.js",
-      "sha256": "6bbbf8ef5455da4cbfb373ce73aae2a1875082b233d6001866d3443ca89912e1"
+      "file": "assets/AssistantLibrary-d0yHE28X.js",
+      "sha256": "e19268dfa9b36a5adb9ec34503dee6f377d8dfbe4bfdeb77b58ce3e1ebebebc1"
     },
     {
-      "file": "assets/CanvasLibraryActions-B0Lu41sb.js",
-      "sha256": "1821edbe605294e3b1e60d95d32f3011a4e2958f9f278f57a6494c7ff5a4f8bf"
+      "file": "assets/CanvasLibraryActions-CGdCNutq.js",
+      "sha256": "bbffcbb8d4dc1b2dc8cf9f4301bf4008551453c8ad90cb69990e3749e072f57e"
     },
     {
-      "file": "assets/CanvasPanel-B5sKkRdP.js",
-      "sha256": "a4621de45cd44e9988c89df8898bb630ec1821065c9545231a1813f7200148ed"
+      "file": "assets/CanvasPanel-CRSLEXFx.js",
+      "sha256": "e3ffc4ea3204c79f04c7fe2c2c47d4e4f7925d4c3f1e90cba0eeac965ceeb19f"
     },
     {
-      "file": "assets/CanvasRail-BI4komPp.js",
-      "sha256": "d7509e4f8bfa01660304d9eb5955463c96b73934b38ce5674c66133f5c99e3ce"
+      "file": "assets/CanvasRail-BhdysCcI.js",
+      "sha256": "07bc774c48c63fbc7b908088b3550a5ae301361dc06e8769bc448c02eeb8a00d"
     },
     {
-      "file": "assets/ChatExportModal-udjCtrHu.js",
-      "sha256": "93e49055f67682b649665dad5501c0b1808c37027727e30edf9f828d3c80a698"
+      "file": "assets/ChatExportModal-DUeqZsYC.js",
+      "sha256": "2f0a50cdc9ecb4263aded0e2a47e375ae03bd980cfa7eb1ebf857a61cd9e405c"
     },
     {
       "file": "assets/CodeEditor-T82b4xA2.js",
       "sha256": "ea80441660eb8d8f74cd0bdbcd79ae07729954020a9bcf7bbed846554d4a3398"
     },
     {
-      "file": "assets/CollectionPage-B-wjnq9d.js",
-      "sha256": "df4a0049598c4c085fec9cb12c8f0697819fba56125a47939d7e1dae63aa351a"
+      "file": "assets/CollectionPage-OexBCSR5.js",
+      "sha256": "6ba272b76ffd7bd20c9f93fd80d8e05f74698943de0293482d86c36b9e9b3121"
     },
     {
-      "file": "assets/CommandPalette-BP_IRHp_.js",
-      "sha256": "eaadc1482282a3e1670363660bf4f49c404963387bf5bbbd9531b7b365dec43c"
+      "file": "assets/CommandPalette-B-cWkTWq.js",
+      "sha256": "d3127929d023904cbc2568ff47e5af1132ad01dc05d0ad5b5262b892b9f52f87"
     },
     {
-      "file": "assets/ComparisonResultsModal-DLEag5iq.js",
-      "sha256": "df672b98d542c20f3f76491e80424aaaf1b4eea34318a0e9b2226be6a8194043"
+      "file": "assets/ComparisonResultsModal-D0iAM6kD.js",
+      "sha256": "36d6a15b6abbd7be09b7b00f64c6deaf9b1399cd7693274c5fb3d81605e5f792"
     },
     {
-      "file": "assets/DeckPreview-U5bpy1YY.js",
-      "sha256": "5d96974e1a3429e54b01dd7aa396b0e3de1d31bd6860730dccfcfb1124fc5c06"
+      "file": "assets/DeckPreview-DZcDe27K.js",
+      "sha256": "b5d363a751334aea8f37ef95657e31f748fb3ec881ef8519627d692d7dda8b14"
     },
     {
-      "file": "assets/FilterMenu-DXDpoEbA.js",
-      "sha256": "e7a497dc3184b468b79b6427f665623056c26a7a8906864bce830c86e9097699"
+      "file": "assets/FilterMenu-dQkY6mUY.js",
+      "sha256": "0ad275b0580f62ff49d1619ffbed55d0372b3e635245891efbdec50a9d1b875f"
     },
     {
-      "file": "assets/HubPage-DY-sd8nw.js",
-      "sha256": "e99dd9167ecd4c2ed4d076b721caf0e4606f25925bbbe39ad29f3f1e8e6ca68c"
+      "file": "assets/HubPage-CqRf5ksT.js",
+      "sha256": "c2b1139a9dd143e04ef4ba58ad5d7aad16c688f391cbafd35b74cc7076cbbfc8"
     },
     {
       "file": "assets/KaTeX_AMS-Regular-BQhdFMY1.woff2",
@@ -397,8 +397,8 @@
       "sha256": "f01f3e87d9c6a61c0c081ceb577abd864eb00a612f7ac1620dd6915fad2ef5aa"
     },
     {
-      "file": "assets/LayoutsTab-DZ03xsTg.js",
-      "sha256": "290cc30b12fa28d478c488006c94fcd0f26c8cce901d1a14c9e390b140bff617"
+      "file": "assets/LayoutsTab-CozGz1y5.js",
+      "sha256": "9dbb7185c50c6bdacfa887ebc27eae90d43316f8c2adeaf6c0f684f981152c17"
     },
     {
       "file": "assets/PaneResizer-feHDEIjO.js",
@@ -409,96 +409,96 @@
       "sha256": "8031ba10ef5f4b3affaa1dedf36e424e578b76cdf243b48f7801fac703d7aa80"
     },
     {
-      "file": "assets/PreviewModal-ClYGQFLB.js",
-      "sha256": "1b97fc7934c329c0348b4e85c9afd2834d01790d5671f654ce57500e02ead97f"
+      "file": "assets/PreviewModal-DzxUjqH3.js",
+      "sha256": "56a80ffff22e149b33b0388df12517c928f8109440b1ede0396177f401dabe7b"
     },
     {
-      "file": "assets/PrismLayouts-D4MsMGJR.js",
-      "sha256": "7b7daabfd9d2c1fecda1f14cd3763092563d194f0ebbb99694623e163965fcd8"
+      "file": "assets/PrismLayouts-BJbdx7QV.js",
+      "sha256": "05ac3a80152a8e1811190b4983b12c6c229d1c930308ead8e8b75f1264310d8a"
     },
     {
-      "file": "assets/PrismModels-fqCP2j3Y.js",
-      "sha256": "c5c7d45aa1f041ec782227ff275e68a4c6eb6dbe01749642f28fa9a374010912"
+      "file": "assets/PrismModels-Mq6pIUB2.js",
+      "sha256": "a378610884dec1b425b9cffd5b7503c3709b43af6991bdf33d0c68a77bc3ff1b"
     },
     {
-      "file": "assets/ProjectsPage-eYcvb7I9.js",
-      "sha256": "fd8dde94e2523b725220bc3ae61ddbcfe63311e2226a08ae64dfd7dbcd6bbfa2"
+      "file": "assets/ProjectsPage-DgJgj1bb.js",
+      "sha256": "beafe012cc186135a8b11efeb0e81afd23ab51edb13d3f39fd8b0e815e926df7"
     },
     {
-      "file": "assets/PromptsModal-V_zOdr1d.js",
-      "sha256": "6de74fcac339d5be5a2b2f2e1bf5a21e3df6b21bfd6d5e4d29960dfa58d9a77a"
+      "file": "assets/PromptsModal-RU0EgBne.js",
+      "sha256": "512f9f968fe8d1abc078d3a1db4e0c7ddc79328063bf85af253d23bdf27eaa5a"
     },
     {
-      "file": "assets/RepoPicker-DjQE-ROQ.js",
-      "sha256": "cb92c3bc64d1be9b9720d9f69fc7be93723ee8b382efe41a242a20f38fb12db3"
-    },
-    {
-      "file": "assets/RoutingCenter-CVujICgL.js",
-      "sha256": "dc8ae8f0f7bcc90318cb85485900fe1f642e0bd36c4a3965f890f50c1697e87c"
+      "file": "assets/RepoPicker-pDCR-yn2.js",
+      "sha256": "1ede7a0ddf14be27a5002bd87829c1ec0f6c176cf6adfce9d9d5e32c6ecd8872"
     },
     {
       "file": "assets/RoutingCenter-DJCSsAZw.css",
       "sha256": "febf0f176944be5f427c842c177170e56dae7d4268a2b2c48b1c1618a49ae5f0"
     },
     {
-      "file": "assets/RoutingExtras-C1RBYu8B.js",
-      "sha256": "378102b91256e6c384f6d438b34c1cb40fa1bed6b281f9d4b31c811675bc6ab4"
+      "file": "assets/RoutingCenter-l0kNuK1l.js",
+      "sha256": "13dad63ab3d2ed5ffc24a3c5e6ef052dcc1991be57cf29f802cecda0c8befd7f"
     },
     {
-      "file": "assets/RoutingInsight-DqL6agKb.js",
-      "sha256": "76e7efaad119ca8fb72cd1f76e45d5dcb1abb9d34a5a29bd5328904cfd7b4571"
+      "file": "assets/RoutingExtras-CSwEen-8.js",
+      "sha256": "b6447fa4ca4be674e2766bfb1e2f7029eda3b12c2b9cebe4a47fd3bc4deaf8e2"
     },
     {
-      "file": "assets/RunPanel-xbjzoEXN.js",
-      "sha256": "ace6e386972a0d5f842853e89423952a128df45045c302dd648a83376ee0af6b"
+      "file": "assets/RoutingInsight-BkUA1HK2.js",
+      "sha256": "d537ee9e5d6b2b9074747dd08fd7a52ee202a5897511801c0d1577bacf5419a8"
     },
     {
-      "file": "assets/ScreenActions-Bh5mt9au.js",
-      "sha256": "41537920e75d4a1da367ad457ca33509213c2eedc5afad3ec935020e235017a4"
+      "file": "assets/RunPanel-C8TkiSd9.js",
+      "sha256": "24116226857faa0ee4525c00a458f1ee2e09b85f64bef539e3a4e2cc55b245a9"
     },
     {
-      "file": "assets/SelectionTools-BSetFPES.js",
-      "sha256": "df66e392325bc06f41c4ebee2ed211ed8189293eb3ea8a630fbc1c377e32db66"
+      "file": "assets/ScreenActions-fvuSve5c.js",
+      "sha256": "3c03de4b984f11d11a1068e16000320f03906d9f71ccedd0ffa7c9642912854e"
     },
     {
-      "file": "assets/SettingsModal-SUnu0o9v.js",
-      "sha256": "5f917253af5cb7a28adac71bd5dc66dfc343a9b987c2b976625c232662adb195"
+      "file": "assets/SelectionTools-COjYYV1L.js",
+      "sha256": "496848a5f5bb71ecb0913ba7236b90d7245aa271a43f171e815cdf6c06a3e2f0"
     },
     {
-      "file": "assets/SharedChatPage-h_mqDcou.js",
-      "sha256": "8020032fe736a8936cbdeb461c811c62d5042dbf0dbb5c5c02a209adfac8a71a"
+      "file": "assets/SettingsModal-BOFMlz7z.js",
+      "sha256": "13e2bb100cac55f4729ead4846ffb19bbbfcfd033a535c4c7b9f93d84ea030aa"
     },
     {
-      "file": "assets/SheetPreview-CQH0xh_S.js",
-      "sha256": "7e26741985ec2637a17399401666916a23c61cd326a8120fa210b446d25d9c89"
+      "file": "assets/SharedChatPage-ORk01QPl.js",
+      "sha256": "0b7f7c56b1b95be66689b4585e40b090fbd4dacea8b6bfba71dbc6c36e9cc04e"
     },
     {
-      "file": "assets/ShortcutsModal-H8sgfcXh.js",
-      "sha256": "0595afeaedcb5a15a381f9e2ed9d801c287972ab2363727f9d1e53fa300fa4bb"
+      "file": "assets/SheetPreview-BomqdRfa.js",
+      "sha256": "3708124ffd2b5c6f3eb318bc52d56bc0e96c93b7ac3a8a5eab6fec5f1adcecfb"
     },
     {
-      "file": "assets/SideChat-7YosCW6n.js",
-      "sha256": "f75f21babfc7c51b8b8e428fe63bea2ae1827103e4c4100025ae8307760ac673"
+      "file": "assets/ShortcutsModal-CQ035Jyv.js",
+      "sha256": "94e5b6eccd8ddc20d8ba5289e1cb710c281a80db089275af27606ab123343809"
     },
     {
-      "file": "assets/Study-C9bMQ-pD.js",
-      "sha256": "ffb39af076b3733632d80a9be5c15081a10ef4978acd3ebd4ae9b771d657b5d1"
+      "file": "assets/SideChat-WCfdhGol.js",
+      "sha256": "241b3501d10606f337345318890ecd2c647978ccfec5580c7ffb5d51afd34eed"
     },
     {
-      "file": "assets/ToolsModal-DJ5LLsdt.js",
-      "sha256": "abd3b5fa75974a38e320251d08cbe7cc99e33c1512beaeb31a74fffd84c7fc1d"
+      "file": "assets/Study-BACU7Cmd.js",
+      "sha256": "b58bbff6c11df2c3139f51643a37dee782e33946d0e986f0a3824b7f7a6ae38c"
     },
     {
-      "file": "assets/ToolsPage-BNbX_nKz.js",
-      "sha256": "c29d28d733fcb771d90c3f12868bed08439a42b8a70155f70f478cea57196889"
+      "file": "assets/ToolsModal-DGomkHSY.js",
+      "sha256": "89dd07ae7246b2d9d777beb6594259f74891f6ed728e752437b90bdd83114b6b"
     },
     {
-      "file": "assets/UsageTab-B30cjczT.js",
-      "sha256": "9090475ce21493e36c52bc5046fffa140a340b6c68ee9d5bc4ea61d2555ad92b"
+      "file": "assets/ToolsPage-Dxe4ylo0.js",
+      "sha256": "8492f230c6fb169dc3354062e08ceea7ed6af231951825a818efa921d52a489f"
     },
     {
-      "file": "assets/VoiceMode-DBiGYsZu.js",
-      "sha256": "9b483cede61d92943a3be9a2a2b1004c983d40a1b91e772ad4323c00b09882d8"
+      "file": "assets/UsageTab-CKcYNpI5.js",
+      "sha256": "489d7148542d47aef3d258f3a884187ebb703118b36960db2acfad05835af7fa"
+    },
+    {
+      "file": "assets/VoiceMode-CkTK9jjf.js",
+      "sha256": "de3ea5138392ec48d69a58bdea90f626ad9894ed5baa07c02ed07b9473bd4786"
     },
     {
       "file": "assets/__vite-browser-external-Cavc_B4G.js",
@@ -537,12 +537,12 @@
       "sha256": "c2ae68c1ad7462e777ccd4e1e3f84b3bc07ab81458f0dd0ea042a9e1b4d23afb"
     },
     {
-      "file": "assets/docx-DHUSrE4W.js",
-      "sha256": "ada3b4e0730f10982b4d26a4f50ba261e81ccf1c721888b4e3ff54573f81ab3d"
+      "file": "assets/docx-Cq2G_xHI.js",
+      "sha256": "948e0d1775bcc191d4c71e3fa627568b54cf79cad9355a61de85e07a183a54cc"
     },
     {
-      "file": "assets/edit-BHKC_xl7.js",
-      "sha256": "6d259a5c995759841d5d46c33f1ae72b285714457009fec0638029d4e5eeb101"
+      "file": "assets/edit-D9FnJCdk.js",
+      "sha256": "fea463bebd729b32e7aa35f5b1f1565e93b563ceace61602a0ad99a51f9dbf1e"
     },
     {
       "file": "assets/esm-BLrw0o6e.js",
@@ -553,8 +553,8 @@
       "sha256": "6f8e2f3ea41919a30654afadaedef1f4fcba3f6d9271b1dbef3efe828a89f6ca"
     },
     {
-      "file": "assets/formula-Du7sk-nG.js",
-      "sha256": "71eb8eab3fa40280ddea46d856a7214d5e84538f8b0f2bfe53512ef413bb6f5e"
+      "file": "assets/formula-DU7UDoP3.js",
+      "sha256": "01b138a56d76de9010fe949389257eb7bef5175fbb19609660ca40795c8102b9"
     },
     {
       "file": "assets/geist-cyrillic-ext-wght-normal-DjL33-gN.woff2",
@@ -605,16 +605,16 @@
       "sha256": "ec89862d642e142a92faf56b6a822a87497c947d450b19fe630b97b3e92d7823"
     },
     {
-      "file": "assets/haptics-CvaYf4P0.js",
-      "sha256": "d8244f48e836f0be26a21c2f7e4967cbab00bb9280b4a3d94e0f5a92ea3864a0"
+      "file": "assets/haptics-DBG-20Lp.js",
+      "sha256": "e69947fd1b7bbb40cca8aecd3086add7d958b44c347747b9f9607f0e011eebce"
     },
     {
       "file": "assets/images-BoxHRGLW.js",
       "sha256": "ef6e43ec0588d96e0654c57320c8df770742d6f903fa2e0bdb7b76be46c1086f"
     },
     {
-      "file": "assets/index-C2uu82wY.js",
-      "sha256": "ae22c065616981403606813967f820b712804650d6c234b4ab4acbee3e13122a"
+      "file": "assets/index-CDX-1x6k.js",
+      "sha256": "808c828d72f0274167a20dc5724baf8003159bc5bf99b37d84f9fe3c1cef5e99"
     },
     {
       "file": "assets/index-rKzzc4Rc.css",
@@ -697,16 +697,16 @@
       "sha256": "03ff6efb2f2149c9075e4a69282475f35f30393deedef5934f92db3bcb760ba1"
     },
     {
-      "file": "assets/store-DGoUr9jM.js",
-      "sha256": "d0ba88cc50d78353add83235fac86fd61431073114d20e31ff9d7077a90499cd"
+      "file": "assets/store-CIYRIGZj.js",
+      "sha256": "627daed7607b6c9d935e1188878d4dc1f7e73b39cbcc0bb270d0d93a5d9ed5d7"
     },
     {
       "file": "assets/store-GJnAdBho.css",
       "sha256": "3b06671d1d656188efcbac4b83bf0350457b831b38afa4fa4defa2fd8793bf1c"
     },
     {
-      "file": "assets/swipe-back-DoJBw7LK.js",
-      "sha256": "e5959f9cdfd202348d58e4151718d145805826cf01c1aa25de5af062dcf1c1fd"
+      "file": "assets/swipe-back-Df2LVAY7.js",
+      "sha256": "58b5766b3c44d281320e53c818fac8164276515708b947262b4fae636d404d7f"
     },
     {
       "file": "assets/sync-CVHQttZG.js",
@@ -725,8 +725,8 @@
       "sha256": "53ba3282512466757d538bbcd8deb683df9a71e8501b97c6ad30235e8530dc3b"
     },
     {
-      "file": "assets/xlsx-CXFi_qiJ.js",
-      "sha256": "f3dc6f4652df474617066868da1d6f2ee9592510b5a866309564e0b00147d80b"
+      "file": "assets/xlsx-Bkoh9aEU.js",
+      "sha256": "ae58332d72dd7587442e6b7ffc07d7919327ba239af826157128ddb9a706485e"
     },
     {
       "file": "favicon.svg",
@@ -750,7 +750,7 @@
     },
     {
       "file": "index.html",
-      "sha256": "fdf2d2a3fb0277b483a9dc9cef61f4bb3a5c9b3b2147c581d987637c64dc49f8"
+      "sha256": "019ac49afeb4775963821a7b1db15dfc3d6211f03e38b13a0ca4fb051c373678"
     },
     {
       "file": "manifest.webmanifest",
@@ -866,12 +866,12 @@
     },
     {
       "file": "sw.js",
-      "sha256": "00ef9891e8971c010028a7d855dde339f9957ab15af60b1318f16591af4ce5f7"
+      "sha256": "e05a0f974f36f7861d0d9d6dcaf6bd6f732a5068f04af05c886fe347db06e98c"
     },
     {
       "file": "terms.html",
       "sha256": "b9eeda7e22a8774fa137829e669bb7c263e2dd09518cc390243002caaf73a904"
     }
   ],
-  "note": "Final delivery commit adds review/docs and capture framing only. Runtime source is separately pinned. Before/after use comparable synthetic flows, not identical fixture message/model counts. Keyboard focus removed only for presentation screenshots; focus contracts tested separately."
+  "note": "Current runtime commit corrects the mode-sensitive preview only. Earlier captures retain their true source commits, hashes and timestamps. Before/after use comparable synthetic flows, not identical fixture message/model counts. Keyboard focus removed only for presentation screenshots; focus contracts tested separately."
 }

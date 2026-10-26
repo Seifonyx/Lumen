@@ -6,7 +6,7 @@ import { Marked, type Token, type Tokens } from 'marked';
 import { escapeHtml } from './util';
 import { EDIT_FENCE, normalizeEdits, replaceReadRequests } from './edits';
 import { replaceSearchRequests } from './repoindex';
-import { runLang } from './runner';
+import { runLang } from './run-language';
 import { CANVAS_SHELL } from './canvas-presentation';
 
 // Maths (KaTeX) and code colouring (highlight.js) are large and most replies don't need them, so they load on

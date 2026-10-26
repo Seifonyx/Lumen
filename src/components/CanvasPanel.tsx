@@ -1,4 +1,4 @@
-import { CANVAS_SHELL, PhoneNavigation, navigateBack, CanvasScreenActions, exitFeature, featureExitLabel } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, PhoneNavigation, navigateBack, CanvasScreenActions, exitFeature, featureExitLabel, useScreenMemory } from '../lib/canvas-presentation';
 import PaneResizer from './PaneResizer';
 import { Check, ChevronLeft, Download, Eye, FilePlus2, Loader2, Pencil, Plus, RotateCcw, Sparkles, Square, Trash2, Upload, X } from 'lucide-react';
 import { Suspense, useEffect, useRef, useState } from 'react';
@@ -17,6 +17,9 @@ import { scan, type Finding } from '../lib/privacy';
 import PrivacyCheck from './PrivacyCheck';
 import Markdown from './Markdown';
 
+type SaveState = { token?: symbol; status: 'saving' | 'saved' | 'failed' };
+const useSaveState = (key: string) => CANVAS_SHELL ? useScreenMemory!<SaveState>(key, { status: 'saved' }) : useState<SaveState>({ status: 'saved' });
+
 function CanvasEditor({ chat, doc }: { chat: Chat; doc: CanvasDocument }) {
   const settings = useStore(s => s.settings);
   const busy = useStore(s => s.canvasEditingChatId !== null);
@@ -25,32 +28,37 @@ function CanvasEditor({ chat, doc }: { chat: Chat; doc: CanvasDocument }) {
   const editor = useRef<HTMLTextAreaElement>(null);
   const aborter = useRef<AbortController | null>(null);
   const [preview, setPreview] = useState(false);
-  const [instruction, setInstruction] = useState('');
+  const memoryKey = `canvas-edit:${chat.id}:${doc.id}`;
+  const [instruction, setInstruction] = CANVAS_SHELL ? useScreenMemory!(`${memoryKey}:instruction`, '') : useState('');
   const [range, setRange] = useState({ start: 0, end: 0 });
-  const [proposal, setProposal] = useState<{ base: string; start: number; end: number; text: string; model: string } | null>(null);
+  type Proposal = { base: string; start: number; end: number; text: string; model: string } | null;
+  const [proposal, setProposal] = CANVAS_SHELL ? useScreenMemory!<Proposal>(`${memoryKey}:proposal`, null) : useState<Proposal>(null);
   const [undo, setUndo] = useState<{ before: string; after: string } | null>(null);
   const [check, setCheck] = useState<Finding[] | null>(null);
   const [error, setError] = useState('');
-  const [saving, setSaving] = useState(false);
-  const saveSequence = useRef(0);
-  const [saved, setSaved] = useState(true);
+  const [saveState, setSaveState] = useSaveState(`${memoryKey}:content-save`);
+  const saving = saveState.status === 'saving', saved = saveState.status === 'saved';
   useEffect(() => {
     if (!CANVAS_SHELL) return;
     const guard = (event: Event) => {
+      if (event.defaultPrevented) return;
       if (saving || !saved) {
         event.preventDefault();
         useStore.getState().toast(saving ? 'Wait for this document to finish saving.' : 'The document has not saved on this device. Keep it open and copy your text before leaving.', 'error');
-      } else if ((proposal || instruction.trim()) && !window.confirm('Leave this document? Your document text is saved, but the edit instruction and any unapplied suggestion will be discarded.')) event.preventDefault();
+      } else if (proposal || instruction.trim()) {
+        if (!window.confirm('Leave this document? Your document text is saved, but the edit instruction and any unapplied suggestion will be discarded.')) event.preventDefault();
+        else { setInstruction(''); setProposal(null); }
+      }
     };
     window.addEventListener('lumen:before-feature-exit', guard);
     return () => window.removeEventListener('lumen:before-feature-exit', guard);
   }, [saving, saved, proposal, instruction]);
   useEffect(() => () => aborter.current?.abort(), []);
   const save = async (content: string, expected?: string) => {
-    const sequence = ++saveSequence.current;
-    setSaving(true);
+    const token = Symbol('document-save');
+    setSaveState({ token, status: 'saving' });
     const ok = await saveCanvasDocument(chat.id, doc.id, { content }, expected);
-    if (sequence === saveSequence.current) { setSaving(false); setSaved(ok); }
+    setSaveState(previous => previous.token === token ? { token, status: ok ? 'saved' : 'failed' } : previous);
     return ok;
   };
   const selected = range.end > range.start;
@@ -117,20 +125,20 @@ export default function CanvasPanel() {
   const input = useRef<HTMLInputElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [nameSaving, setNameSaving] = useState(false), [nameFailed, setNameFailed] = useState(false);
-  const nameSequence = useRef(0);
+  const [nameState, setNameState] = useSaveState(`canvas-edit:${chat?.id}:${doc?.id}:name-save`);
+  const nameSaving = nameState.status === 'saving', nameFailed = nameState.status === 'failed';
   const saveName = async (name: string) => {
     if (!chat || !doc || name === doc.name) return;
-    const sequence = ++nameSequence.current;
-    setNameSaving(true);
+    const token = Symbol('name-save');
+    setNameState({ token, status: 'saving' });
     const ok = await saveCanvasDocument(chat.id, doc.id, { name });
-    if (sequence === nameSequence.current) { setNameSaving(false); setNameFailed(!ok); }
+    setNameState(previous => previous.token === token ? { token, status: ok ? 'saved' : 'failed' } : previous);
   };
   useEffect(() => {
     if (!CANVAS_SHELL) return;
     const guard = (event: Event) => { if (nameSaving || nameFailed || importing) { event.preventDefault(); toast(nameFailed ? 'The document name has not saved. Keep the document open and retry before leaving.' : 'Wait for the document operation to finish.', 'error'); } };
-    window.addEventListener('lumen:before-feature-exit', guard);
-    return () => window.removeEventListener('lumen:before-feature-exit', guard);
+    window.addEventListener('lumen:before-feature-exit', guard, true);
+    return () => window.removeEventListener('lumen:before-feature-exit', guard, true);
   }, [nameSaving, nameFailed, importing, toast]);
   const [phone, setPhone] = useState(() => window.matchMedia('(max-width:899px)').matches);
   useEffect(() => {

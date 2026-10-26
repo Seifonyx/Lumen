@@ -3,7 +3,9 @@
 // browser after the first time), and HTML in a sandboxed frame (see RunPanel). Nothing runs on a server.
 
 import type { AnalysisInput } from './analysis';
-export type RunLang = 'js' | 'ts' | 'python' | 'html';
+import type { RunLang } from './run-language';
+export type { RunLang } from './run-language';
+export { runLang, LANG_NAMES } from './run-language';
 export interface RunArtifact { name: string; data: Uint8Array }
 export interface PythonOptions { files?: AnalysisInput[]; analysis?: boolean; onArtifact?: (file: RunArtifact) => void }
 export interface OutLine {
@@ -11,14 +13,6 @@ export interface OutLine {
   text: string;
 }
 
-const LANGS: Record<string, RunLang> = {
-  js: 'js', javascript: 'js', mjs: 'js', cjs: 'js', node: 'js',
-  ts: 'ts', typescript: 'ts',
-  py: 'python', python: 'python', python3: 'python',
-  html: 'html', htm: 'html',
-};
-export const runLang = (lang: string): RunLang | null => LANGS[lang.trim().toLowerCase()] ?? null;
-export const LANG_NAMES: Record<RunLang, string> = { js: 'JavaScript', ts: 'TypeScript', python: 'Python', html: 'HTML' };
 
 /** Turns any value into readable text, like a console would. */
 const FORMAT = `

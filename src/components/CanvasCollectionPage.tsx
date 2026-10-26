@@ -28,15 +28,19 @@ const categories: {id:CollectionKind;label:string;description:string}[] = [
  {id:'searchable',label:'Knowledge',description:'Searchable references kept only on this device, separately from your chat attachments.'},
 ];
 const src = (item: LibraryItem) => 'file' in item && item.file.kind === 'image' ? item.file.data ? `data:${item.file.mime};base64,${item.file.data}` : item.file.thumb : undefined;
+// Cache only the parser function, never an account's content. Remounted history views
+// can restore generated detail keys synchronously after the first Library visit.
+let exportReader: ReadExports | undefined;
 export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()=>void;initial?:CollectionKind}) {
  const chats=useStore(s=>s.chats), projects=useStore(s=>s.settings.projects),phone=usePhoneLayout(),panel=useId();
  const [kind,setKind]=useScreenMemory<CollectionKind>('library-kind',initial,initial!=='all');
  const [query,setQuery]=useScreenMemory('library-query',''),[project,setProject]=useScreenMemory('library-project',''),[sort,setSort]=useScreenMemory<LibrarySort>('library-sort','newest');
- const [detail,setDetail]=useState<LibraryItem|null>(null);
- const [readExports,setReadExports]=useState<ReadExports>();
- useEffect(()=>{let live=true;void import('../lib/markdown').then(({segments})=>{if(live)setReadExports(()=> (text:string)=>segments(text,false).flatMap(part=>part.type==='file'&&part.complete?[{name:part.name,content:part.content}]:[]))});return()=>{live=false}},[]);
- useBackLayer(Boolean(detail),()=>setDetail(null),()=>setDetail(detail),detail?.key || 'library-detail');
+ const [detailKey,setDetailKey]=useScreenMemory<string|null>('library-detail',null);
+ const [readExports,setReadExports]=useState<ReadExports|undefined>(()=>exportReader),[discoveryError,setDiscoveryError]=useState(false);
+ useEffect(()=>{let live=true;void import('../lib/markdown').then(({segments})=>{exportReader=(text:string)=>segments(text,false).flatMap(part=>part.type==='file'&&part.complete?[{name:part.name,content:part.content}]:[]);if(live)setReadExports(()=>exportReader)}).catch(()=>{if(live)setDiscoveryError(true)});return()=>{live=false}},[]);
  const items=useMemo(()=>libraryItems(chats,readExports),[chats,readExports]);
+ const detail=items.find(item=>item.key===detailKey)||null;
+ useBackLayer(Boolean(detail),()=>setDetailKey(null),()=>setDetailKey(detailKey),detailKey || 'library-detail');
  const scoped=useMemo(()=>discoverItems(items,{kind,query,project,sort}),[items,kind,query,project,sort]);
  const category=categories.find(c=>c.id===kind)||categories[0];
  const openChat=(id:string)=>useStore.getState().selectChat(id);
@@ -46,7 +50,7 @@ export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()
  const open=(item:LibraryItem)=>{
   if(item.kind==='documents')navigateScreen(()=>{openChat(item.chat.id);useStore.getState().setUi({canvasOpen:true,canvasDocumentId:item.doc.id})});
   else if('file' in item && item.file.data && src(item))openImage({src:src(item)!,alt:itemName(item),name:itemName(item)});
-  else setDetail(item);
+  else setDetailKey(item.key);
  };
  const search=<label className="hub-search"><Search size={18} aria-hidden="true"/><input type="search" aria-label="Search your library" placeholder={kind==='searchable'?'Find Knowledge document names':'Search names, chats and documents'} value={query} onChange={e=>setQuery(e.target.value)} />{query&&<button type="button" aria-label="Clear library search" onClick={e=>{setQuery('');e.currentTarget.parentElement?.querySelector('input')?.focus()}}>×</button>}</label>;
  return <HubPage label="Library" title="Library" subtitle="Keep your work within reach." onClose={onClose} create={create}
@@ -56,6 +60,7 @@ export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()
   <div className="library-workspace">
    {!phone&&<PhoneSections label="Library content types" panelId={panel} active={kind} items={categories} onSelect={id=>setKind(id as CollectionKind)}/>}
    <section id={panel} role="tabpanel" aria-labelledby={`${panel}-${kind}`} className="library-panel">
+    {discoveryError&&<p role="alert">Generated file discovery could not load. Your other chat items remain available. Reopen Library to retry.</p>}
     <div className="library-section-head"><div><h2>{category.label==='Everything'?'From your chats':category.label}</h2><p>{category.description}</p></div>{kind!=='searchable'&&<span className="library-total" role="status">{scoped.length} {query||project?'matching ':''}chat {scoped.length===1?'item':'items'}</span>}</div>
     {kind==='searchable'?<div className="files-uploads">{!phone&&<div className="library-controls">{search}</div>}<KnowledgeLibrary onClose={onClose} filter={query}/></div>:<>
      <div className="library-controls">{!phone&&search}<label><span className="sr-only">Sort library</span><select aria-label="Sort library" value={sort} onChange={e=>setSort(e.target.value as LibrarySort)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="name">Name A–Z</option></select></label>{Boolean(projects?.length)&&<label><span className="sr-only">Project</span><select aria-label="Project" value={project} onChange={e=>setProject(e.target.value)}><option value="">All projects</option>{projects?.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}</div>
@@ -70,7 +75,7 @@ export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()
     </>}
    </section>
   </div>
-  {detail&&<LibraryDetail key={detail.key} item={detail} onClose={()=>screenBack(()=>setDetail(null))} openChat={openChat}/>}
+  {detail&&<LibraryDetail key={detail.key} item={detail} onClose={()=>screenBack(()=>setDetailKey(null))} openChat={openChat}/>}
  </HubPage>;
 }
 

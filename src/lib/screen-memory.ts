@@ -11,5 +11,5 @@ export function useScreenMemory<T>(screen: string, initial: T, explicit = false)
  const initialized = useRef<string | null>(null);
  if (initialized.current !== key) { if (explicit || !memory.has(key)) memory.set(key, initial); initialized.current = key; }
  const value = useSyncExternalStore(subscribe, () => memory.has(key) ? memory.get(key) as T : initial);
- return [value, (update: SetStateAction<T>) => { const previous = memory.has(key) ? memory.get(key) as T : initial; memory.set(key, typeof update === 'function' ? (update as (current: T) => T)(previous) : update); listeners.forEach(fn => fn()); }];
+ return [value, (update: SetStateAction<T>) => { if (useStore.getState().user?.uid !== owner) return; const previous = memory.has(key) ? memory.get(key) as T : initial; memory.set(key, typeof update === 'function' ? (update as (current: T) => T)(previous) : update); listeners.forEach(fn => fn()); }];
 }

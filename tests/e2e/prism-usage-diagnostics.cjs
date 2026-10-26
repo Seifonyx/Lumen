@@ -27,7 +27,19 @@ try{for(const[width,height]of sizes)for(const theme of['light','dark']){
  await page.keyboard.press('Shift+Tab');assert(await page.evaluate(()=>document.activeElement!==document.body),'keyboard focus remains visible in Diagnostics');
  const audit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();assert.deepEqual(audit.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})),[]);assert(await rc.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Diagnostics has no horizontal clipping');await page.evaluate(()=>{document.activeElement?.blur();window.scrollTo(0,0);const page=document.querySelector('.rc-page'),scroll=document.querySelector('.rc-scroll');if(page)page.scrollTop=0;if(scroll)scroll.scrollTop=0});await page.screenshot({path:path.join(out,`${engine}-${width}-${theme}-diagnostics.png`),animations:'disabled'});
  await page.goBack();await rc.getByRole('navigation',{name:'Prism sections'}).locator('[aria-current="page"]',{hasText:'Models'}).waitFor();await page.goForward();await rc.getByRole('heading',{name:'Diagnostics',exact:true}).waitFor();if(releaseHold){releaseHold();await page.waitForFunction(()=>document.querySelector('.send-btn')?.getAttribute('aria-label')!=='Stop');}
- if(width===320&&theme==='light'){await page.evaluate(()=>{localStorage.setItem('mr.preview_user',JSON.stringify({uid:'preview-prism-other-account',email:'other@local.invalid',displayName:'Other'}));localStorage.setItem('mr.account.preview-prism-other-account',JSON.stringify({geminiKey:'fixture',settings:{theme:'light',enabledModels:['gemini:gemini-flash-latest'],defaultModel:'gemini:gemini-flash-latest'}}));});await page.reload();await input.waitFor();await open();await page.locator('.rc-page').getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name:'Diagnostics',exact:true}).click();await page.getByText('No saved request evidence',{exact:true}).waitFor();assert.equal(await page.getByText('PRIVATE CHAT TITLE',{exact:true}).count(),0,'another account cannot see the first account evidence');}
+ if(width===320&&theme==='light'){await page.evaluate(()=>{localStorage.setItem('mr.preview_user',JSON.stringify({uid:'preview-prism-other-account',email:'other@local.invalid',displayName:'Other'}));localStorage.setItem('mr.account.preview-prism-other-account',JSON.stringify({geminiKey:'fixture',settings:{theme:'light',enabledModels:['gemini:gemini-flash-latest'],defaultModel:'gemini:gemini-flash-latest'}}));});// New tab, same browser context/storage: account switch remains real but does not
+  // reload an old branched-history WebKit document (a known Linux WebKit crash).
+  await page.close();
+  const other = await ctx.newPage();
+  other.on('pageerror',e=>errors.push(e.message));
+  await other.goto(base);
+  await other.locator('.composer textarea').waitFor();
+  if(width<900)await other.getByRole('button',{name:'Open chats',exact:true}).first().click();
+  await other.locator('aside.cv-nav').getByRole('button',{name:'Prism',exact:true}).click();
+  await other.locator('.rc-page').getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name:'Diagnostics',exact:true}).click();
+  await other.getByText('No saved request evidence',{exact:true}).waitFor();
+  assert.equal(await other.getByText('PRIVATE CHAT TITLE',{exact:true}).count(),0,'another account cannot see first account evidence');
+  await other.screenshot({path:path.join(out,`${engine}-${width}-${theme}-other-account-diagnostics.png`),animations:'disabled');}
  assert.deepEqual(errors,[]);results.push({width,height,theme,passed:true});console.log(`PASS Prism Usage/Diagnostics ${engine} ${width} ${theme}`);await ctx.close();
 }}finally{await browser.close();fs.writeFileSync(path.join(out,`results-${engine}.json`),JSON.stringify({engine,syntheticOnly:true,physicalIPhone:false,results},null,2));}
 })().catch(e=>{console.error(e);process.exit(1)});

@@ -21,7 +21,7 @@ export type UsageEvidence = {
 /** Pure presentation adapter. It adds no inference beyond evidence already held by UsageView. */
 export function usageEvidence(view: UsageView | null, modelIds: string[], now = Date.now()): UsageEvidence {
   if (!view) return { available: false, requests: null, tokens: null, blocked: 0, rows: [], knownResetAt: null };
-  const ids = [...new Set([...modelIds, ...Object.keys(view.models).filter((id) => view.models[id].requests > 0)])];
+  const ids = [...new Set([...modelIds, ...Object.keys(view.models).filter((id) => view.models[id].requests > 0 || (view.models[id].blockedUntil || 0) > now)])];
   const rows = ids.map((id): UsageEvidenceRow => {
     const usage = view.models[id] || null;
     const sharedOpenRouterBlock = id.startsWith('openrouter:') && id.endsWith(':free') && view.openrouter.limit !== null && view.openrouter.used >= view.openrouter.limit

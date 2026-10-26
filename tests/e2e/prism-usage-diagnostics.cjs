@@ -39,7 +39,7 @@ try{for(const[width,height]of sizes)for(const theme of['light','dark']){
   await other.locator('.rc-page').getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name:'Diagnostics',exact:true}).click();
   await other.getByText('No saved request evidence',{exact:true}).waitFor();
   assert.equal(await other.getByText('PRIVATE CHAT TITLE',{exact:true}).count(),0,'another account cannot see first account evidence');
-  await other.screenshot({path:path.join(out,`${engine}-${width}-${theme}-other-account-diagnostics.png`),animations:'disabled');}
+  await other.screenshot({path:path.join(out,`${engine}-${width}-${theme}-other-account-diagnostics.png`),animations:'disabled'});}
  assert.deepEqual(errors,[]);results.push({width,height,theme,passed:true});console.log(`PASS Prism Usage/Diagnostics ${engine} ${width} ${theme}`);await ctx.close();
 }}finally{await browser.close();fs.writeFileSync(path.join(out,`results-${engine}.json`),JSON.stringify({engine,syntheticOnly:true,physicalIPhone:false,results},null,2));}
 })().catch(e=>{console.error(e);process.exit(1)});

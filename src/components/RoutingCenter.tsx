@@ -20,7 +20,6 @@ import { closeRoutingCenter, showRoutingSection, showRoutingProvider, useRouting
 import { findLayout } from '../lib/layouts';
 import type { ModelInfo } from '../types';
 import UsageTab from './UsageTab';
-import RouteWhy from './RouteWhy';
 import { providerPresentation } from '../lib/provider-presentation';
 import { requestProviderSettings } from '../lib/provider-settings-target';
 import FilterMenu from './FilterMenu';
@@ -32,9 +31,9 @@ const extras = () => import('./RoutingExtras');
 const CheckConnection = lazy(() => extras().then((m) => ({ default: m.CheckConnection })));
 const UsageHistory = lazy(() => extras().then((m) => ({ default: m.UsageHistory })));
 const RequestLog = lazy(() => extras().then((m) => ({ default: m.RequestLog })));
+const LatestOutcome = lazy(() => extras().then((m) => ({ default: m.LatestOutcome })));
 const PrismLayouts = lazy(() => import('./PrismLayouts'));
 const RoutingInsight = lazy(() => import('./RoutingInsight'));
-const RecentAnswers = lazy(() => extras().then((m) => ({ default: m.RecentAnswers })));
 
 const PrismModels = lazy(() => import('./PrismModels'));
 const ProviderModels = lazy(() => import('./PrismModels').then(m => ({ default: m.ProviderModels })));
@@ -312,18 +311,15 @@ export default function RoutingCenter() {
 
       {section === 'policies' && <Suspense fallback={<p className="rc-muted" role="status">Loading Layouts…</p>}><PrismLayouts /></Suspense>}
 
-      {section === 'usage' && <div className="rc-body"><h2 className="rc-h2">Usage &amp; quotas</h2><p className="rc-muted">Local account counters and provider-reported limits where available. Unknown values remain unknown.</p><Suspense fallback={null}><UsageHistory /></Suspense><UsageTab /></div>}
+      {section === 'usage' && <div className="rc-body rc-usage"><div className="rc-page-intro"><p className="rc-kicker">Evidence from separate sources</p><h2 className="rc-h2">Usage</h2><p className="rc-muted">Lumen’s synced daily counters and history reconstructed from saved chats answer different questions. Provider limits appear only when known.</p></div><UsageTab context="prism" /><Suspense fallback={<p className="rc-muted" role="status">Loading saved-chat history…</p>}><UsageHistory /></Suspense></div>}
 
       {section === 'diagnostics' && (
         <div className="rc-body">
-          <h2 className="rc-h2">Routing, without hidden assumptions</h2>
-          <p className="rc-muted">Existing decision evidence only. No request logger or health probes are added.</p>
-          <div className="rc-grid">
-            <section className="rc-card"><h3>Latest model choice</h3>{last?.route ? <RouteWhy message={last} /> : <p className="rc-muted">No route explanation is recorded.</p>}</section>
-            <Suspense fallback={null}><RequestLog /></Suspense>
-            <Suspense fallback={null}><RecentAnswers /></Suspense>
+          <div className="rc-page-intro"><p className="rc-kicker">Saved evidence, kept private</p><h2 className="rc-h2">Diagnostics</h2><p className="rc-muted">See how recorded requests ended and what routing evidence exists. Lumen does not add probes or expose message content here.</p></div>
+          <div className="rc-grid rc-diagnostics">
+            <Suspense fallback={<p className="rc-muted" role="status">Loading latest outcome…</p>}><LatestOutcome /></Suspense>
+            <Suspense fallback={<p className="rc-muted" role="status">Loading request history…</p>}><RequestLog /></Suspense>
             <section className="rc-card"><h3><Shield size={16} /> Privacy boundary</h3><p className="rc-muted">Provider credentials stay in Lumen’s existing account scope. No prompt bodies or credentials are added to a diagnostic history.</p></section>
-            <section className="rc-card"><h3>Developer endpoint</h3><p className="rc-muted">Not available in browser Lumen. A local or server gateway would need a separately approved trust and deployment architecture.</p></section>
           </div>
         </div>
       )}

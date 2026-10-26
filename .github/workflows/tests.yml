@@ -255,6 +255,7 @@ jobs:
           node tests/e2e/prism-model-states.cjs
           node tests/e2e/prism-auto-layouts.cjs
           node tests/e2e/prism-routing-states.cjs
+          node tests/e2e/prism-usage-diagnostics.cjs
         env:
           MR_TEST_URL: http://localhost:5191/
           MR_WEBKIT: ${{ matrix.engine == 'WebKit' && '1' || '' }}
@@ -279,6 +280,8 @@ jobs:
             tests/e2e/out/prism-models/**/*.json
             tests/e2e/out/auto-layouts/**/*.png
             tests/e2e/out/auto-layouts/**/*.json
+            tests/e2e/out/prism-usage-diagnostics/**/*.png
+            tests/e2e/out/prism-usage-diagnostics/**/*.json
             tests/e2e/out/cp03/**/*.png
             tests/e2e/out/cp04/**/*.png
             tests/e2e/out/cp05/**/*.png

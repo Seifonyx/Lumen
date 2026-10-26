@@ -114,3 +114,4 @@ iphone-edge-back
 iphone-tool-return
 
 prism-provider-states
+prism-usage-diagnostics

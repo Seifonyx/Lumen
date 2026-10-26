@@ -174,6 +174,8 @@ try {
     'src/components/PrismModels.tsx', 'src/lib/model-discovery.ts', 'src/lib/model-search.ts',
     // Slice3 CP1: canonical editor presentation, read-only routing evidence and lazy scoped styling.
     'src/components/PrismLayouts.tsx', 'src/components/RoutingInsight.tsx', 'src/components/LayoutsTab.tsx', 'src/lib/routing-presentation.ts', 'src/styles/canvas-routing-experience.css',
+    // Slice3 CP2: read-only usage/diagnostic presentation over existing counters and saved-chat evidence.
+    'src/components/UsageTab.tsx', 'src/lib/usage-presentation.ts',
     // Owner-authorized shared iPhone navigation reset: UI-only owners, ordinary graph remains isolated.
     // Reviewed feature-local section presentation and media subscription; no data/auth/network owner.
     'src/components/PhoneSections.tsx', 'src/lib/phone-layout.ts',

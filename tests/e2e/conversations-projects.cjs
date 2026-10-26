@@ -4,7 +4,7 @@ const { execFileSync } = require('node:child_process'), { createHash } = require
 const { chromium, webkit } = require('playwright');
 const AxeBuilder = require('@axe-core/playwright').default;
 const { profile, seed } = require('./helpers/preview-profile.cjs');
-const base = process.env.MR_TEST_URL || 'http://localhost:5191/';
+const base = process.env.MR_TEST_URL || 'http://localhost:5190/';
 const before = process.env.CONVERSATIONS_BEFORE === '1', engine = process.env.MR_WEBKIT ? 'webkit' : 'chromium';
 const out = process.env.CONVERSATIONS_OUT || `tests/e2e/out/conversations-projects/${before ? 'before' : 'after'}/${engine}`;
 const source = process.env.CONVERSATIONS_SOURCE_SHA || process.env.GITHUB_SHA || execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();

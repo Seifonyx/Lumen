@@ -38,5 +38,5 @@ export function availability(file: Attachment) {
   if (file.stored) return 'Saved original · open to retrieve';
   if (file.text) return 'Extracted text available';
   if (file.thumb) return 'Preview only · original unavailable here';
-  return 'Original unavailable on this device';
+  return 'Original not loaded on this device';
 }

@@ -11,5 +11,5 @@ test('Discovery scopes full document text, chat title and project, with determin
  const items=libraryItems(chats);assert.equal(discoverItems(items,{kind:'all',query:'passage',project:'p',sort:'newest'})[0].kind,'documents');assert.equal(discoverItems(items,{kind:'all',query:'Second',project:'p',sort:'name'}).length,0);assert.equal(discoverItems(items,{kind:'all',query:'',project:'',sort:'oldest'})[0].at,10);
 });
 test('Availability distinguishes extracted text, thumbnail and saved original without promising sync',()=>{
- assert.equal(availability(file),'Extracted text available');assert.equal(availability({...file,text:undefined,thumb:'data:image/png;base64,AA=='}),'Preview only · original unavailable here');assert.equal(availability({...file,text:undefined,stored:true}),'Saved original · open to retrieve');assert.equal(availability({...file,text:undefined}),'Original unavailable on this device');
+ assert.equal(availability(file),'Extracted text available');assert.equal(availability({...file,text:undefined,thumb:'data:image/png;base64,AA=='}),'Preview only · original unavailable here');assert.equal(availability({...file,text:undefined,stored:true}),'Saved original · open to retrieve');assert.equal(availability({...file,text:undefined}),'Original not loaded on this device');
 });

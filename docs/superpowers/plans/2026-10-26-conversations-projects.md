@@ -45,3 +45,4 @@ Interfaces: consumes unchanged ChatRow and store navigation/actions; no changes 
 - Recovery: clean existing Library worktree; remote main and supplied SHA agree; former feature branch preserved; new branch `feat/conversations-projects-experience`. Separate Lumen main worktree untouched.
 - Scope: async owner explicitly chose Conversations & Projects first. Tools authorization is deferred by this clarification.
 - Baseline: npm.cmd test passed all unit files and typecheck. npm.ps1 is blocked by machine signing policy; use npm.cmd without changing policy.
+- Source sequence: e4355ac first delivery, b203cb2 restores the unchanged model-health heading requirement,7e5808b/b49b719 correct narrow Light metadata contrast and test provenance/build scoping. Final screenshots regenerated atb49b719. Initial CI40375825322 failures remain documented; final exact-head outcome lives in PR59 and live checkpoint. No existing test assertion or budget weakened.

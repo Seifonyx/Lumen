@@ -1,6 +1,19 @@
 # Dynamic Model Picker implementation plan
 
-## Active — Phase4 Slice3 CP1 Auto Routing & Layouts
+## Active — Phase 4 Slice 3 CP2: Prism Usage & Diagnostics
+
+**Only CP2** is owner-authorized; continue [draft PR #57](https://github.com/Seifonyx/Lumen/pull/57) on `feat/phase4-prism-usage-diagnostics`, preserving existing Codex source. [Implementation checklist](docs/superpowers/plans/2026-10-26-prism-usage-diagnostics.md), [approved design specification](docs/superpowers/specs/2026-10-26-prism-usage-diagnostics-design.md).
+
+| CP2 contract | Source already pushed by Codex | Continuation and acceptance |
+|---|---|---|
+| Daily usage/provenance | UsageTab, pure usageEvidence adapter, known allowances/resets and unknown states | Retain real token/request totals and synchronized temporary blocks; update stale integration copy checks without relaxing assertions |
+| Saved-chat outcomes | 14-day completed/stopped/failed history and latest outcome | Guard legacy missing-status messages from silently counting as completed; add focused unit checks |
+| Diagnostics/privacy | Latest-outcome card; request categories, time and opt-in titles | Preserve no prompt/reply/credential leakage, account isolation, axe and keyboard checks |
+| Review evidence | 8-case Chromium suite, synthetic phone/desktop fixtures; first exact-head CI red | Full Chromium/WebKit review, exact-head CI **not yet verified green**, source-tree/screenshot provenance, live status readback and planner review |
+
+First [CI run 40292154165](https://github.com/Seifonyx/Lumen/actions/runs/40292154165) passed 11/23: core typecheck/build/units and screen contracts passed; obsolete Usage/Diagnostics assertions failed and cascaded to sentinels. Remaining items: complete verification and evidence, update public-safe handoff, then stop. **No new schema/telemetry/provider traffic/auth/routing, spend, merge/deploy/Gate or CP3.** Physical iPhone/PWA/VoiceOver unverified; overall seven-phase completion percent not defined.
+
+## Historical — Phase4 Slice3 CP1 Auto Routing & Layouts
 
 Production/main: **05d2647e37919e7548ed397118cb28592a67a737**, Slice2 released/owner-tested. Workstream `feat/phase4-prism-auto-layouts`; **new draft only, no merge/deploy or CP2**. [Design/ownership plan](docs/design/PRISM_AUTO_LAYOUT_CHECKPOINT.md). Existing original cloud WIP recovered and preserved. Historical ledgers below remain unchanged and cannot represent the current program.
 

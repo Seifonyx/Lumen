@@ -24,6 +24,28 @@ let active = 0, serial = 0, applying = false;
 const session = /* @__PURE__ */ (() => Math.random().toString(36).slice(2))();
 const capture = () => { const s = useStore.getState(); return { layerKey: backLayerOpen() ? backLayerIdentity() : null, restoreLayer: backLayerRestore(), activeProjectId: s.activeProjectId, currentId: s.currentId, runner: s.runner, layer: backLayerOpen(), canvasOpen: s.canvasOpen, canvasDocumentId: s.canvasDocumentId, page: s.page, pageArg: s.pageArg, settingsOpen: s.settingsOpen, settingsTab: s.settingsTab, projectWorkspaceOpen: s.projectWorkspaceOpen, routing: getRoutingScreen() }; };
 type Screen = ReturnType<typeof capture>;
+// Feature ownership travels with the existing in-memory entries, never the browser payload.
+type Visit = { feature: string; origin: number; direct?: boolean };
+const visits = new Map<number, Visit>();
+let directExit: number | null = null;
+const closeFeature = () => { reconcileBackLayers(null); useStore.setState({ page: null, pageArg: undefined, canvasOpen: false, preview: null, runner: null, settingsOpen: false, projectWorkspaceOpen: false }); restoreRoutingScreen({ open: false, section: 'models' }); };
+const feature = (s: Screen) => s.page === 'collection' ? 'library' : ['tools','assistants','study'].includes(s.page || '') ? 'tools' : s.page || (s.routing.open ? 'prism' : s.projectWorkspaceOpen ? 'projects' : s.canvasOpen ? 'canvas' : s.runner ? 'tools' : s.settingsOpen ? 'settings' : s.layer ? 'overlay' : null);
+/** Exit the entire visit by traversing to its origin. Sequential browser history remains intact. */
+export function exitFeature(fallback?: () => void) {
+  if (!window.dispatchEvent(new Event('lumen:before-feature-exit', { cancelable: true }))) return;
+  const visit = visits.get(active), here = positions.get(active), there = visit && positions.get(visit.origin);
+  if (!applying && here !== undefined && there !== undefined && there < here && history.state?.[KEY]?.session === session) {
+    if (visit?.direct) directExit = visit.origin;
+    history.go(there - here); return;
+  }
+  replaceScreen(() => {
+    if (fallback) { reconcileBackLayers(null); fallback(); } else closeFeature();
+  });
+}
+export function featureExitLabel() {
+  const visit = visits.get(active), origin = visit && entries.get(visit.origin);
+  return origin && !visit?.direct && feature(origin) ? 'Return to previous screen' : 'Return to chat';
+}
 // Settings target metadata updates the current snapshot without adding a navigation step.
 // Compare UI references/primitives only. Streaming updates must not stringify Study inputs or other page data.
 const same = (a: Screen, b: Screen) => a.currentId === b.currentId && a.activeProjectId === b.activeProjectId
@@ -64,7 +86,11 @@ export function installScreenHistory() {
   let owner = useStore.getState().user?.uid;
   let previous = capture();
   const remember = () => {
+    visits.clear();
+    directExit = null;
     entries = new Map([[0, capture()]]); positions = new Map([[0, 0]]); cursor = 0; active = 0;
+    const initialFeature = feature(capture());
+    if (initialFeature) visits.set(0, { feature: initialFeature, origin: 0, direct: true });
     history.replaceState({ ...history.state, [KEY]: { session, id: 0 } }, '');
   };
   remember();
@@ -83,10 +109,14 @@ export function installScreenHistory() {
     saveView();
     const root = (value: typeof next) => !value.runner && !value.canvasOpen && !value.page && !value.settingsOpen && !value.projectWorkspaceOpen && !value.routing.open && !value.layer;
     if (root(previous) && root(next)) { previous = next; entries.set(active, next); return; }
+    const currentVisit = visits.get(active), nextFeature = feature(next);
+    const child = currentVisit && (nextFeature === currentVisit.feature || next.settingsOpen || next.layer || (previous.page && !next.page && (next.canvasOpen || next.runner)));
+    const visit = child ? currentVisit : nextFeature ? { feature: nextFeature, origin: active } : undefined;
     previous = next;
-    for (const [id, pos] of positions) if (pos > cursor) { positions.delete(id); entries.delete(id); views.delete(id); }
+    for (const [id, pos] of positions) if (pos > cursor) { positions.delete(id); entries.delete(id); views.delete(id); visits.delete(id); }
     cursor += 1;
     active = ++serial; entries.set(active, next); positions.set(active, cursor);
+    if (visit) visits.set(active, visit);
     history.pushState({ ...history.state, [KEY]: { session, id: active } }, '');
   };
   const pop = () => {
@@ -105,6 +135,7 @@ export function installScreenHistory() {
       if (layer && !mounted) restoreLayer?.();
       const pushed = ui.page || ui.settingsOpen || ui.canvasOpen || ui.projectWorkspaceOpen || routing.open;
       useStore.setState(window.matchMedia?.('(max-width:899px)').matches && pushed ? {...ui,sidebarOpen:false} : ui); restoreRoutingScreen(routing);
+      if (directExit === active) { directExit = null; closeFeature(); visits.delete(active); }
     });
     previous = capture(); entries.set(active, previous); applying = false;
     const focusAtReplay = document.activeElement;

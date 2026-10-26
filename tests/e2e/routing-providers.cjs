@@ -67,7 +67,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         }
       };
       const phone = width < 900;
-      const tab = async name => { if(phone){for(let i=0;i<10 && !await rc.locator('.phone-sections').isVisible();i++){await rc.locator('.phone-navigation').getByRole('button',{name:'Back',exact:true}).click();await page.waitForTimeout(80);}} await rc.getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name,exact:true}).click(); };
+      const tab = async name => { if(phone){for(let i=0;i<10 && !await rc.locator('.phone-sections').isVisible();i++){await page.goBack();await page.waitForTimeout(80);}} await rc.getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name,exact:true}).click(); };
       await shot('models');
       if (!before) await rc.getByRole('region', { name: 'Current routing mode' }).waitFor();
       if (!before && phone) {
@@ -94,7 +94,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         assert.match(await detail.locator('[data-fact="Replies"]').textContent(), /Not tested by model listing/);
         assert.match(await detail.locator('[data-fact="Key · permission"]').textContent(), /Saved · on/);
         assert.match(await detail.locator('[data-fact="Allowance"]').textContent(), /Unknown/);
-        assert.equal(await rc.locator('.phone-navigation').getByRole('button', { name: 'Back', exact:true }).count(), phone ? 1 : 0);
+        assert.equal(await rc.locator('.phone-navigation').getByRole('button', { name:'Return to chat',exact:true }).count(), phone ? 1 : 0);
         // A working provider has no fix to lead with: both actions stay quiet.
         assert.equal(await detail.locator('.rc-primary').count(), 0);
       }
@@ -104,10 +104,10 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         const connection=page.getByRole('dialog',{name:'Settings',exact:true});
         await connection.locator('.provider-connection[data-provider="gemini"][open]').waitFor();
         assert.equal(await connection.locator('.provider-connection:visible').count(),1,'contextual menu targets the correct provider');
-        await connection.getByRole('button',{name:'Back',exact:true}).click();
+        await page.goBack();
         await detail.waitFor();
       }
-      if (phone) await rc.locator('.phone-navigation').getByRole('button', { name: 'Back', exact:true }).click();
+      if (phone) await page.goBack();
       const search = rc.getByRole('searchbox', { name: 'Find a provider' });
       await search.fill('not-a-provider');
       await rc.locator('[data-provider]').first().waitFor({ state: 'hidden' });
@@ -135,7 +135,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       await page.screenshot({path:path.join(out,`${width}-${theme}-specific-settings.png`),animations:'disabled'});
       const settingsAudit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();
       assert.deepEqual(settingsAudit.violations.map(v=>v.id),[]);
-      if(phone) await settings.getByRole('button',{name:'Back',exact:true}).click();
+      if(phone) await page.goBack();
       else await page.goBack();
       await detail.waitFor();
       await page.goForward();
@@ -149,7 +149,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       assert((await settings.locator('.provider-connection:visible').count())>1,'Forward preserves deliberate All providers expansion');
       await page.goBack(); await detail.waitFor();
       assert.equal(await detail.getByRole('button',{name:'Enable provider',exact:true}).count(),1);
-      if (phone) await rc.locator('.phone-navigation').getByRole('button', { name: 'Back', exact:true }).click();
+      if (phone) await page.goBack();
       await search.fill('');
       if (!before) {
         await rc.getByRole('button', { name: /Filter providers:/ }).click();
@@ -189,7 +189,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         assert(providerRequests.every(r => r.method === 'GET' && new URL(r.url).pathname.endsWith('/models')), 'only catalog GETs, never inference');
       }
       await tab('Models');
-      if(phone){for(let i=0;i<24 && await rc.isVisible();i++){await rc.locator('.phone-navigation').getByRole('button',{name:'Back',exact:true}).click();await page.waitForTimeout(120);}assert.equal(await rc.isVisible(),false,'all visited sections unwind through Back');}else await rc.getByRole('button',{name:'Back to chat',exact:true}).click();
+      await rc.getByRole('button',{name:'Return to chat',exact:true}).click();await rc.waitFor({state:'hidden'});assert.equal(await rc.isVisible(),false,'one Exit leaves every visited section');
       assert.equal(await page.locator('.composer textarea').inputValue(), draft);
       await open();
       // Keyboard-focus evidence is separate from ordinary presentation captures above.

@@ -1,11 +1,12 @@
-import { Copy, Download, Loader2, Printer } from 'lucide-react';
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { ChevronLeft, Copy, Download, Loader2, Printer } from 'lucide-react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { buildFile, fileKind } from '../lib/generate';
 import { documentHtml, printDocument } from '../lib/generate/doc-html';
 import { renderMarkdown } from '../lib/markdown';
 import { copyText, extOf, saveBlob } from '../lib/util';
 import { useStore } from '../store';
 import Modal from './Modal';
+import { CANVAS_SHELL, useScreenBackLayer, navigateBack, exitFeature, featureExitLabel } from '../lib/canvas-presentation';
 
 const SheetPreview = lazy(() => import('./SheetPreview'));
 const DeckPreview = lazy(() => import('./DeckPreview'));
@@ -26,13 +27,19 @@ function CodeView({ name, content }: { name: string; content: string }) {
 
 export default function PreviewModal() {
   const preview = useStore((s) => s.preview);
+  if (CANVAS_SHELL) useScreenBackLayer!(Boolean(preview), () => useStore.getState().setUi({ preview: null }), () => useStore.getState().setUi({ preview }), 'file-preview');
+  // Record the parent overlay before creating a child browsing context. In
+  // WebKit, a still-loading srcdoc frame can otherwise commit after pushState
+  // and consume Back without changing the parent's screen marker.
+  const [presented, setPresented] = useState(!CANVAS_SHELL);
+  useEffect(() => { setPresented(true); }, []);
   const setUi = useStore((s) => s.setUi);
   const toast = useStore((s) => s.toast);
   const [busy, setBusy] = useState(false);
   if (!preview) return null;
   const { name, content } = preview;
   const { kind, label } = fileKind(name);
-  const close = () => setUi({ preview: null });
+  const close = CANVAS_SHELL ? () => navigateBack!(() => setUi({ preview: null })) : () => setUi({ preview: null });
 
   const save = async () => {
     if (kind === 'pdf') {
@@ -59,6 +66,7 @@ export default function PreviewModal() {
   return (
     <Modal
       full
+      leading={CANVAS_SHELL && <button type="button" className="icon-btn feature-exit" aria-label={featureExitLabel!()} onClick={()=>exitFeature!()}><ChevronLeft size={24}/></button>}
       origin={preview.from}
       onClose={close}
       title={
@@ -79,7 +87,7 @@ export default function PreviewModal() {
         </>
       }
     >
-      <Suspense fallback={<div className="center pad"><Loader2 className="spin" /></div>}>{body}</Suspense>
+      <Suspense fallback={<div className="center pad"><Loader2 className="spin" /></div>}>{presented ? body : <p className="muted" role="status">Opening preview…</p>}</Suspense>
     </Modal>
   );
 }

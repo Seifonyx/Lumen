@@ -29,7 +29,7 @@ const SIZES = [['desktop', 1440, 900, false], ['iphone', 390, 844, true], ['se',
     const drawer = async () => {
       if (!phone) return;
       const opener = page.locator('.hub-nav[aria-label="Open sidebar"]:visible, .menu-btn:visible, [data-nav-drawer]:visible').first();
-      if (!await opener.count()) { await page.locator('.hub-close:visible, [data-routing-close]:visible, button:visible:has-text("Chat")').first().click(); await page.waitForTimeout(400); }
+      if (!await opener.count()) { await page.locator(':is(.hub-close,.feature-exit):visible, [data-routing-close]:visible, button:visible:has-text("Chat")').first().click(); await page.waitForTimeout(400); }
       await page.locator('.hub-nav[aria-label="Open sidebar"]:visible, .menu-btn:visible, [data-nav-drawer]:visible').first().click();
       await page.waitForTimeout(400);
     };

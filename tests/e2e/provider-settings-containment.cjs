@@ -73,10 +73,10 @@ async function containment(card) {
      assert.equal(await card.locator('.key-status-pill').innerText(),'Unsaved changes');
      await settings.getByRole('button',{name:'Save keys',exact:true}).scrollIntoViewIfNeeded();assert(await settings.getByRole('button',{name:'Save keys',exact:true}).isVisible());if(provider==='anthropic')assert(await settings.getByRole('button',{name:'Save keys',exact:true}).isEnabled(),'valid unsaved edits enable Save keys');
      await settings.getByRole('button',{name:'All providers',exact:true}).click();assert.equal(await key.inputValue(),'SYNTHETIC_UNSAVED');assert(await permission.isChecked());
-     await settings.getByRole('button',{name:'Back',exact:true}).click();await rc.getByRole('region',{name:'Provider detail'}).waitFor();
+     await page.goBack();await rc.getByRole('region',{name:'Provider detail'}).waitFor();
      await page.goForward();await settings.waitFor();await settings.locator('.provider-connection').first().waitFor();assert((await settings.locator('.provider-connection').count())>1);
      await page.goBack();await rc.getByRole('region',{name:'Provider detail'}).waitFor();
-     await rc.locator('.phone-navigation').getByRole('button',{name:'Back',exact:true}).click();
+     await page.goBack();
     }
     assert.equal(await page.locator('.composer textarea').inputValue(),draft);assert.deepEqual(errors,[]);
    } finally {await context.close();}

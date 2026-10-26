@@ -19,12 +19,14 @@ export { default as CanvasNav } from '../components/CanvasNav';
 export const loadTreeKeys = () => import('./tree-keys');
 export { newGeneralChat } from './new-chat';
 
-export { default as PhoneNavigation } from '../components/PhoneNavigation';
+export const PhoneNavigation = lazy(() => import('../components/PhoneNavigation'));
 export { screenBack as navigateBack } from './screen-history';
+export { exitFeature, featureExitLabel } from './screen-history';
 export { useScreenMemory } from './screen-memory';
 export const CanvasFilterMenu = lazy(() => import('../components/FilterMenu'));
 export { useBackLayer as useScreenBackLayer } from './back-stack';
 export const CanvasLibraryActions = lazy(() => import('../components/CanvasLibraryActions'));
+export const CanvasCollectionPage = lazy(() => import('../components/CanvasCollectionPage'));
 export { navigateScreen } from './screen-history';
 export const CanvasScreenActions = lazy(() => import('../components/ScreenActions'));
 

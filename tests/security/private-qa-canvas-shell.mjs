@@ -69,7 +69,7 @@ const settle = (page, ms = 400) => page.waitForTimeout(ms);
 const nav = (page) => page.locator('aside.cv-nav');
 async function openNav(page, phone) {
   if (!phone || await nav(page).evaluate(el=>el.classList.contains('open'))) return;
-  while(await page.locator('.phone-navigation [aria-label="Back"]').isVisible()){await page.locator('.phone-navigation [aria-label="Back"]').click();await settle(page,250);}
+  while(await page.locator('.phone-navigation [aria-label^="Return to "]').isVisible()){await page.locator('.phone-navigation [aria-label^="Return to "]').click();await settle(page,250);}
   await page.getByRole('button', { name: 'Open chats', exact: true }).first().click();
   await settle(page, 600);
 }
@@ -269,7 +269,7 @@ try {
         await nav(page).getByRole('button', { name: 'Library', exact: true }).click();
         await page.getByRole('main', { name: 'Library' }).waitFor();
         // Nested phone screens expose a real Back, not a second drawer.
-        assert.equal(await page.locator('.phone-navigation [aria-label="Back"]').count(),1);
+        assert.equal(await page.locator('.phone-navigation [aria-label^="Return to "]').count(),1);
         assert.equal(await page.getByRole('button',{name:'Open sidebar',exact:true}).count(),0);
         await page.goBack();
         await page.getByRole('main', { name: 'Library' }).waitFor({ state: 'detached' });
@@ -299,7 +299,7 @@ try {
         // From the sidebar: a destination opened and closed with Chat returns focus to that destination.
         await nav(page).getByRole('button', { name: 'Tools', exact: true }).click();
         await page.getByRole('main', { name: 'Tools' }).waitFor();
-        await page.getByRole('button', { name: 'Close', exact: true }).click();
+        await page.getByRole('button', { name: 'Return to chat', exact: true }).click();
         await page.waitForFunction(() => document.activeElement?.closest('.cv-dest') && document.activeElement.textContent.includes('Tools'));
       }
       pass('drawer / collapse / rail / back / focus return');

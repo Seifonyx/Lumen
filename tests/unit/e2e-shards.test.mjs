@@ -10,7 +10,7 @@ const timings = JSON.parse(readFileSync(`${dir}/timings.json`, 'utf8'));
 const duration = (f) => timings[f] ?? 30;
 const usesEmulators = (f) => /127\.0\.0\.1:(8080|9099)|localhost:(8080|9099)|__testSignIn|emulator\/v1/.test(readFileSync(`${dir}/${f}`, 'utf8'));
 const all = readdirSync(dir).filter((f) => f.endsWith('.cjs')).sort();
-const canvas = readFileSync(`${dir}/canvas-core.txt`, 'utf8').split('\n').filter((l) => l && !l.startsWith('#')).map((n) => `${n}.cjs`).sort();
+const canvas = readFileSync(`${dir}/canvas-core.txt`, 'utf8').split(/\r?\n/).filter((l) => l && !l.startsWith('#')).map((n) => `${n}.cjs`).sort();
 
 test('parses i/n and rejects anything else', () => {
   assert.equal(parseShard(''), null);

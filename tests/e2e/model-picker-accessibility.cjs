@@ -6,6 +6,8 @@ const {profile}=require('./helpers/preview-profile.cjs');
  const engine=process.env.MR_WEBKIT?webkit:chromium,browser=await engine.launch();
  try {for(const width of [390,1280])for(const theme of ['light','dark']) {
   const ctx=await browser.newContext({viewport:{width,height:844},isMobile:width<900,hasTouch:width<900,reducedMotion:'reduce',serviceWorkers:'block'});
+  const origin=new URL(process.env.MR_TEST_URL||'http://localhost:5190/').origin;
+  await ctx.route('**/*',route=>new URL(route.request().url()).origin===origin?route.continue():route.abort());
   await profile(ctx,`preview-model-a11y-${engine.name()}-${width}-${theme}`,theme,{enabledModels:['gemini:gemini-flash-latest','gemini:gemini-2.5-pro']});
   let lists=0;
   await ctx.route('**/generativelanguage.googleapis.com/**',route=>{
@@ -15,17 +17,23 @@ const {profile}=require('./helpers/preview-profile.cjs');
   await ctx.addInitScript(()=>localStorage.setItem('mr.modelCheck.background',JSON.stringify(Date.now())));
   const page=await ctx.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
   const base=new URL(process.env.MR_TEST_URL||'http://localhost:5190/');if(width<900)base.searchParams.set('glass','1');
-  await page.clock.install();await page.goto(base.href);await page.locator('.composer textarea').waitFor();
+  // Date-only TTL expiry avoids fast-forwarding unrelated Firebase SDK timeout
+  // timers. Catalog interval scheduling is tested separately; this checks the real
+  // browser-focus refresh path and the picker's state throughout the refresh.
+  await page.clock.setFixedTime(new Date());await page.goto(base.href);await page.locator('.composer textarea').waitFor();
   const scan=async name=>{
    const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
    assert.deepEqual(result.violations.map(item=>({id:item.id,targets:item.nodes.map(node=>node.target)})),[],`${name} ${width}px ${theme}`);
   };
-  await page.locator('.model-button').click();const search=page.getByRole('searchbox',{name:'Search models',exact:true});await search.fill('flash');
-  const before=lists;await page.clock.fastForward(12*60_000);await page.waitForFunction(()=>document.querySelector('.models-pop input')?.value==='flash');
+  // Safari does not focus buttons on pointer click. Open by keyboard to exercise
+  // keyboard focus restoration, with the trigger as the real prior focus owner.
+  await page.locator('.model-button').focus();await page.locator('.model-button').press('Enter');const search=page.getByRole('searchbox',{name:'Search models',exact:true});await search.fill('flash');
+  const before=lists,refreshed=page.waitForResponse(response=>response.url().includes('generativelanguage.googleapis.com')&&response.url().includes('/models?'));await page.clock.setFixedTime(new Date(Date.now()+12*60_000));await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await refreshed;
+  await page.waitForFunction(()=>document.querySelector('.models-pop input')?.value==='flash');
   await page.waitForFunction(()=>document.activeElement===document.querySelector('.models-pop input'));
   assert(lists>before,'TTL refresh actually requested updated metadata while the picker stayed open');
   await scan('open searchable picker');await search.press('ArrowDown');assert.equal(await page.locator('[role="option"]:focus').count(),1);
-  await page.keyboard.press('Escape');assert.equal(await page.locator('.model-button').evaluate(node=>document.activeElement===node),true,'picker restores focus to its trigger');
+  await page.keyboard.press('Escape');await page.waitForFunction(()=>document.activeElement?.matches('.model-button'));assert.equal(await page.locator('.model-button').evaluate(node=>document.activeElement===node),true,'picker restores focus to its trigger');
   if(width<900)await page.locator('.menu-btn').click();await page.locator('.sidebar-foot, .cv-account').click();await page.locator('.settings-tabs').getByRole('button',{name:'Models',exact:true}).click();
   await page.getByRole('button',{name:'Add custom model',exact:true}).click();await page.getByLabel('Model ID',{exact:true}).fill('gemini-custom-a11y');
   if(width<900) {

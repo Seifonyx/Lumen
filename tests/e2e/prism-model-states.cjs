@@ -28,7 +28,7 @@ try{for(const width of [320,1440])for(const theme of ['light','dark'])for(const 
  // Exercise the real sign-out owner while nested, then verify another synthetic owner in a fresh tab.
  await restricted.getByRole('button',{name:'Manage model',exact:true}).click();
  const settings=page.getByRole('dialog',{name:'Settings',exact:true});await settings.waitFor();
- if(width<900){await settings.getByRole('button',{name:'Back',exact:true}).click();await rc.locator('.phone-navigation').getByRole('button',{name:'Back',exact:true}).click();await page.getByRole('button',{name:'Open chats',exact:true}).first().click();}
+ if(width<900){await settings.getByRole('button',{name:'Return to chat',exact:true}).click();await rc.waitFor({state:'hidden'});await page.getByRole('button',{name:'Open chats',exact:true}).first().click();}
  await page.locator('aside.cv-nav').getByRole('button',{name:'Settings',exact:true}).click();
  await settings.getByRole('navigation',{name:'Settings sections'}).getByRole('button',{name:/^General/}).click();
  await settings.getByRole('button',{name:'Sign out',exact:true}).click();await page.getByRole('button',{name:'Continue with Google',exact:true}).waitFor();

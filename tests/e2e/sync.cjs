@@ -159,7 +159,7 @@ async function device(browser, name, email, mobile) {
   if (!Acanvas) await A.page.getByRole('button', { name: 'All assistants', exact: true }).click();
   await (Acanvas ? A.page.locator('#tools-assistants .tool-card').filter({hasText:'Synced helper'}) : A.page.locator('article.lib-card strong', { hasText: /^Synced helper$/ })).waitFor();
   check(true, 'saved assistant library synced to phone');
-  await A.page.locator('.hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label="Back"]').click();
+  await A.page.locator('.hub-page > .hub-bar .feature-exit, .hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label^="Return to "]').click();
   await A.page.click('.menu-btn');
   await A.page.locator('.sidebar').getByRole('button', { name: 'Synced Chat Title', exact: true }).click();
   await A.page.waitForSelector('.assistant-badge');

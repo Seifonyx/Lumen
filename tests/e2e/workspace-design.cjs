@@ -26,7 +26,7 @@ const matrix = [[1280,844,'light'],[320,740,'light'],[390,844,'dark'],[430,932,'
     const menu=page.locator('.menu-btn');
     const rootMenu=page.locator('.phone-navigation button[aria-label="Open navigation"]');
     for(let step=0;step<8 && !(await menu.isVisible()) && !(await rootMenu.isVisible());step++){
-      await page.locator('.phone-navigation button[aria-label="Back"]').first().click();
+      await page.locator('.phone-navigation button[aria-label^="Return to "]').first().click();
     }
     if(await menu.isVisible())await menu.click();
     else await rootMenu.click();

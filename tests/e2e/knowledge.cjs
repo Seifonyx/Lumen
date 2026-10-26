@@ -47,14 +47,14 @@ const open = async (page) => {
   );
   // Searchable files live in Collection, under the "Searchable" filter.
   await page.locator(".hub-page .files-uploads .knowledge-library").waitFor();
-  if(await page.getByRole('tab',{name:'Searchable',exact:true}).isVisible()) { assert.equal(await page.getByRole('tab',{name:'Searchable',exact:true}).getAttribute('aria-selected'),'true'); } else if (await page.locator('.filter-trigger').count()) {
+  if(await page.getByRole('tab',{name:'Knowledge',exact:true}).isVisible()) { assert.equal(await page.getByRole('tab',{name:'Knowledge',exact:true}).getAttribute('aria-selected'),'true'); } else if (await page.locator('.filter-trigger').count()) {
     assert.match(await page.locator('.filter-trigger').getAttribute('aria-label'), /Content type: Searchable/);
   } else {
     assert.equal(await page.getByRole('radio', { name: 'Searchable', exact: true }).getAttribute('aria-checked'), 'true');
   }
 };
 const close = async (page) =>
-  page.locator('.hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label="Back"]').click();
+  page.locator('.hub-page > .hub-bar .feature-exit, .hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label^="Return to "]').click();
 // The cited source opens in its own window.
 const closeSource = async (page) =>
   page
@@ -208,7 +208,7 @@ const settings = async (page) => {
       await page.locator(".composer textarea").waitFor();
       await open(page);
       const phoneTabs=page.getByRole('tablist',{name:'Library content types'});
-      const filter = await phoneTabs.isVisible() ? phoneTabs.getByRole('tab',{name:'Searchable',exact:true}) : await page.locator('.filter-trigger').count() ? page.locator('.filter-trigger') : page.getByRole('radio', { name: 'Searchable', exact: true });
+      const filter = await phoneTabs.isVisible() ? phoneTabs.getByRole('tab',{name:'Knowledge',exact:true}) : await page.locator('.filter-trigger').count() ? page.locator('.filter-trigger') : page.getByRole('radio', { name: 'Searchable', exact: true });
       const tab = await filter.boundingBox();
       const strip = await (await phoneTabs.isVisible() ? phoneTabs : await page.locator('.filter-menu').count() ? page.locator('.filter-menu') : page.locator('.coll-filters')).boundingBox();
       assert.ok(

@@ -85,6 +85,11 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
   const attachments = useRef<HTMLDivElement>(null);
   const attachmentScope = getComposerScope();
   const pendingScope = useRef(attachmentScope);
+  // Selected files stay with their composer while a feature temporarily opens a different chat.
+  // Memory only; clear across accounts and never retain a departed incognito session.
+  const pendingDrafts = useRef(new Map<string, Pending[]>());
+  const pendingOwner = useRef(useStore.getState().user?.uid);
+  const pendingPrivate = useRef(isTemporaryChat(chat));
   const visiblePending = pendingScope.current === attachmentScope ? pending : [];
   useAttachmentMotion(attachments, visiblePending.map(p => `${p.key}:${Boolean(p.file)}`).join('|'), attachmentScope);
   const [codeExecution, setCodeExecution] = useState(false);
@@ -133,8 +138,17 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
   // can overwrite the first keystrokes after a fast chat switch.
   useLayoutEffect(() => {
     draftKeyRef.current = draftKey;
-    pendingScope.current = getComposerScope();
-    setPending([]);setInterim('');stopListening.current?.();setListening(false);
+    const nextScope = getComposerScope();
+    if (CANVAS_COMPOSER) {
+      if (pendingOwner.current !== accountId) pendingDrafts.current.clear();
+      else if (!pendingPrivate.current) pendingDrafts.current.set(pendingScope.current, pending);
+      else pendingDrafts.current.delete(pendingScope.current);
+      setPending(temporaryRef.current ? [] : pendingDrafts.current.get(nextScope) || []);
+    } else setPending([]);
+    pendingOwner.current = accountId;
+    pendingPrivate.current = temporaryRef.current;
+    pendingScope.current = nextScope;
+    setInterim('');stopListening.current?.();setListening(false);
     if(temporaryRef.current){setText('');return;}
     try {
       let value = localStorage.getItem(draftKey);
@@ -184,11 +198,11 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
     const onPrefill = (e: Event) => {
       const detail = (e as CustomEvent<string | { text: string; append: boolean; files?: Attachment[]; codeExecution?: boolean }>).detail;
       const current = input.current?.value || '';
-      const prefill = typeof detail === 'string' ? detail : `${detail.append && current ? current + '\n\n' : ''}${detail.text}`;
+      const prefill = typeof detail === 'string' ? detail : !detail.text && detail.files?.length ? current : `${detail.append && current ? current + '\n\n' : ''}${detail.text}`;
       setText(prefill);
       saveDraft(prefill);
       if (typeof detail !== 'string') {
-        if (detail.files?.length) setPending(previous => [...previous.filter(item=>!detail.files!.some(file=>file.knowledgeSources?.length)||!item.file?.knowledgeSources?.length), ...detail.files!.map(file => ({ key: file.id, name: file.name, file }))]);
+        if (detail.files?.length) setPending(previous => [...previous.filter(item=>!detail.files!.some(file=>file.id===item.file?.id)&&(!detail.files!.some(file=>file.knowledgeSources?.length)||!item.file?.knowledgeSources?.length)), ...detail.files!.map(file => ({ key: file.id, name: file.name, file }))]);
         if (detail.codeExecution) setCodeExecution(true);
       }
       requestAnimationFrame(() => {
@@ -210,19 +224,26 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
   const addFiles = useCallback(
     async (files: File[]) => {
       const owner = getComposerScope();
-      for (const file of files) {
-        if (owner !== getComposerScope()) return;
-        const key = `${file.name}-${file.size}-${Math.random()}`;
-        setPending((p) => [...p, { key, name: file.name }]);
+      const account = useStore.getState().user?.uid;
+      const privateOwner = isTemporaryChat(useStore.getState().chats.find(chat => chat.id === useStore.getState().currentId));
+      const selected = files.map(file => ({ file, key: `${file.name}-${file.size}-${Math.random()}`, name: file.name }));
+      setPending(previous => [...previous, ...selected.map(({ key, name }) => ({ key, name }))]);
+      const update = (change: (items: Pending[]) => Pending[]) => {
+        if (useStore.getState().user?.uid !== account) return;
+        if (owner === getComposerScope()) setPending(change);
+        else if (CANVAS_COMPOSER && !privateOwner && pendingDrafts.current.has(owner)) pendingDrafts.current.set(owner, change(pendingDrafts.current.get(owner)!));
+      };
+      for (const { file, key } of selected) {
+        if (useStore.getState().user?.uid !== account || (owner !== getComposerScope() && (!CANVAS_COMPOSER || privateOwner || !pendingDrafts.current.has(owner)))) return;
         try {
           const att = await readAttachment(file);
-          if (owner !== getComposerScope()) return;
+          if (useStore.getState().user?.uid !== account || (owner !== getComposerScope() && (!CANVAS_COMPOSER || privateOwner || !pendingDrafts.current.has(owner)))) return;
           // Keep the original Word/Excel file on this device so a reply can edit it in place.
-          if (isEditableOffice(file.name)) void saveOriginal(useStore.getState().user?.uid, att.id, file);
-          setPending((p) => p.map((x) => (x.key === key ? { ...x, file: att } : x)));
+          if (!privateOwner && isEditableOffice(file.name)) void saveOriginal(account, att.id, file);
+          update((p) => p.map((x) => (x.key === key ? { ...x, file: att } : x)));
         } catch (e) {
-          if (owner !== getComposerScope()) return;
-          setPending((p) => p.filter((x) => x.key !== key));
+          if (useStore.getState().user?.uid !== account || (owner !== getComposerScope() && (!CANVAS_COMPOSER || privateOwner || !pendingDrafts.current.has(owner)))) return;
+          update((p) => p.filter((x) => x.key !== key));
           toast((e as Error).message, 'error');
         }
       }

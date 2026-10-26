@@ -8,9 +8,9 @@ import PhoneNavigation from './PhoneNavigation';
 import PhoneSections from './PhoneSections';
 import { usePhoneLayout } from '../lib/phone-layout';
 import { createPortal } from 'react-dom';
-import { navigateScreen, screenBack } from '../lib/screen-history';
+import { navigateScreen, screenBack, exitFeature, featureExitLabel } from '../lib/screen-history';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowUpRight, ChevronRight, Plus, Search, Shield, X } from 'lucide-react';
+import { ChevronLeft, ArrowUpRight, ChevronRight, Plus, Search, Shield, X } from 'lucide-react';
 import { modelLabel, selectCurrentChat, selectCurrentModel, useStore } from '../store';
 import { AI_PROVIDERS, providerEnabled } from '../lib/ai/provider-config.js';
 import { PROVIDER_NAMES, providerOfId } from '../lib/util';
@@ -265,15 +265,15 @@ export default function RoutingCenter() {
     <section ref={page} className={`rc-page${sub ? ' rc-sections-page' : ''}${drill ? ' rc-drill' : ''}`} hidden={covered} aria-label="Prism — Models, providers & routing"
       onKeyDown={(e) => { if (e.key === 'Escape' && !e.defaultPrevented && !(e.target as Element).closest('[role="dialog"], [role="menu"], [role="listbox"], input, textarea, select')) { e.preventDefault(); screenBack(closeRoutingCenter); } }}>
       {/* Desktop retains split-view navigation; phone chrome is shared with Library, Tools and Settings. */}
-      {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : 'Prism'} actions={providerOpen ? <Suspense fallback={null}><ScreenActions actions={[{ label: 'Connection settings', run: () => openProviderSettings(provider!) }]} /></Suspense> : undefined} /> : (
+      {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : 'Prism'} onBack={closeRoutingCenter} actions={providerOpen ? <Suspense fallback={null}><ScreenActions actions={[{ label: 'Connection settings', run: () => openProviderSettings(provider!) }]} /></Suspense> : undefined} /> : (
       <header className={`rc-head${sub ? ' rc-head-sub' : ''}`}>
+        <button type="button" className="icon-btn feature-exit" aria-label={featureExitLabel()} onClick={() => exitFeature()}><ChevronLeft size={26} /></button>
         <div className="rc-brand"><h1 id="rc-title" tabIndex={-1} ref={heading}>Prism</h1><p>Models, providers &amp; routing</p></div>
         {!phone && (
           <nav className="rc-tabs" aria-label="Prism sections">
             {SECTIONS.map(([id, label]) => <button type="button" key={id} aria-current={section === id ? 'page' : undefined} onClick={() => go(id)}>{label}</button>)}
           </nav>
         )}
-        <button type="button" className="rc-close" aria-label="Back to chat" onClick={closeRoutingCenter}><ArrowLeft size={18} /><span>Chat</span></button>
       </header>)}
 
 

@@ -3,8 +3,10 @@
 // its styles are scoped to the opted-in composer, and Composer keeps the ordinary JSX in every flagged branch.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync as readSource } from 'node:fs';
 import postcss from 'postcss';
+// Source contracts are independent of the checkout's configured line endings.
+const readFileSync = (...args) => readSource(...args).replace(/\r\n/g, '\n');
 
 test('the Canvas flags are off in the ordinary build and on through one module shared by production and QA', () => {
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m);
@@ -49,8 +51,10 @@ test('every flagged Composer branch keeps the ordinary expression as its alterna
   const values = src.match(/CANVAS_COMPOSER \? canvas!\.\w+ : '[^']*'/g) || [];
   assert.deepEqual(values, ["CANVAS_COMPOSER ? canvas!.placeholder : 'Message Lumen'"]);
   const localModalCloses = src.match(/onClose=\{CANVAS_COMPOSER \? \(\) => navigateBack!\(\(\) => setCompareOpen\(false\)\) : \(\) => setCompareOpen\(false\)\}/g) || [];
+  const retainedFileGuards = src.match(/owner !== getComposerScope\(\) && \(!CANVAS_COMPOSER \|\| privateOwner \|\| !pendingDrafts.current.has\(owner\)\)/g) || [];
+  assert.equal(retainedFileGuards.length,3,'file batch, completed reads and errors all exclude departed private owners');
   assert.equal(localModalCloses.length,1,'reviewed comparison dismissal keeps its ordinary state setter');
-  assert.equal(spreads.length + ternaries.length + statements.length + values.length + localModalCloses.length, uses, 'no unreviewed flag use');
+  assert.equal(spreads.length + ternaries.length + statements.length + values.length + localModalCloses.length + retainedFileGuards.length, uses, 'no unreviewed flag use');
   assert.equal(spreads.length, 3);
   assert.equal(ternaries.length, 4);
 });

@@ -92,6 +92,10 @@ export default defineConfig({
     assetsInlineLimit: 0,
     // The preload polyfill would add its own fetch; Safari/Chromium support modulepreload natively.
     modulePreload: { polyfill: false },
+    // Keep the already-reviewed, worker-disabled runner source under its audited
+    // chunk name even when Library's Markdown reader changes the shared graph.
+    // Do not broaden the output network allowlist to unrelated UI chunks.
+    rolldownOptions: { output: { manualChunks: (id) => strip(id).endsWith('/src/lib/runner.ts') ? 'runner' : undefined } },
   },
   server: { host: '127.0.0.1', port: 5199, strictPort: true },
 });

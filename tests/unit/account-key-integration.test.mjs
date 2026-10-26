@@ -12,6 +12,7 @@ const output = 'node_modules/.cache/unit-tests/account-key-integration-fixture.m
 await build({ input: 'src/lib/firebase.ts', output: { file: output, format: 'esm' }, logLevel: 'silent', plugins: [{
   name: 'isolated-account-key-integration',
   resolveId(source, importer) {
+    importer = importer?.replaceAll('\\', '/');
     if (['firebase/app', 'firebase/auth', 'firebase/firestore'].includes(source)) return `\0${source}`;
     if (importer?.endsWith('/firebase.ts') && source === '../firebase-config.json') return '\0account-config';
     if (importer?.endsWith('/firebase.ts') && source === './quota') return '\0account-quota';

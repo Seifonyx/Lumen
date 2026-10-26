@@ -61,7 +61,7 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     if(canvas){
       // The reset intentionally removes category/home docks from Canvas; ordinary still tests their gestures below.
       const enter=async(id)=>{await page.evaluate(id=>window.dispatchEvent(new CustomEvent('mr:library',{detail:id})),id);await page.locator('.hub-page').waitFor();};
-      const leave=async()=>{await page.locator('.phone-navigation [aria-label="Back"]').click();await page.locator('.hub-page').waitFor({state:'detached'});};
+      const leave=async()=>{await page.locator('.phone-navigation [aria-label^="Return to "]').click();await page.locator('.hub-page').waitFor({state:'detached'});};
       await enter('projects');assert.equal(await page.locator('.glass-tabbar').count(),0);
       assert.equal(await page.locator('.phone-navigation').getByRole('button',{name:'New project',exact:true}).count(),1);await leave();
       await enter('tools-page');assert.equal(await page.locator('.glass-tabbar').count(),0);
@@ -72,14 +72,14 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
       const model=page.locator('select[aria-label="Assistant model"]');await model.tap();
       await page.locator('.glass-select-menu [role="option"]').nth(1).click();
       assert.equal(await model.inputValue(),'gemini:gemini-flash-latest');
-      await page.locator('.phone-navigation [aria-label="Back"]').click();await page.getByRole('searchbox',{name:'Search tools'}).waitFor();await leave();
+      await page.goBack();await page.getByRole('searchbox',{name:'Search tools'}).waitFor();await leave();
       await enter('collection');assert.equal(await page.locator('.glass-tabbar').count(),0);
       await selectLibraryType(page,'Photos');
       assert.ok(await page.locator('.phone-navigation').getByRole('button',{name:'Add photos',exact:true}).isVisible());
       await selectLibraryType(page,'Searchable');
       await page.locator('.files-uploads .knowledge-library').waitFor();
       await page.evaluate(()=>document.documentElement.classList.add('kb-open'));
-      assert.ok(await page.locator('.phone-navigation [aria-label="Back"]').isVisible(),'Back stays reachable in simulated keyboard mode');
+      assert.ok(await page.locator('.phone-navigation [aria-label^="Return to "]').isVisible(),'Back stays reachable in simulated keyboard mode');
       await page.evaluate(()=>document.documentElement.classList.remove('kb-open'));await leave();
       console.log('PASS Canvas hierarchy, all-tools search, assistant model selection and Library filter without category docks');
     }else{
@@ -166,12 +166,12 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     await page.waitForSelector('.glass-tabbar.page-sections');
     assert.equal(await page.locator('.glass-tabbar [aria-current="page"]').innerText(), 'Assistants', 'back in Tools → Assistants');
     assert.equal(await page.locator('.lib-section').count(), 0, 'not the old Assistants page');
-    await page.locator('.hub-close').click();
+    await page.locator(':is(.hub-close,.feature-exit)').click();
     await page.waitForSelector('.hub-page', { state: 'detached' });
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'assistants' })));
     await page.waitForSelector('.glass-tabbar.page-sections');
     assert.equal(await page.locator('.glass-tabbar [aria-current="page"]').innerText(), 'Assistants', 'the Assistants page opens as Tools → Assistants');
-    await page.locator('.hub-close').click();
+    await page.locator(':is(.hub-close,.feature-exit)').click();
     await page.waitForSelector('.hub-page', { state: 'detached' });
     // Collection's filters are its tab bar.
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'collection' })));
@@ -197,7 +197,7 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     await page.evaluate(() => document.documentElement.classList.add('kb-open'));
     assert.equal(await page.locator('.glass-tabbar').isVisible(), false, 'tab bar hidden while typing');
     await page.evaluate(() => document.documentElement.classList.remove('kb-open'));
-    await page.locator('.hub-close').click();
+    await page.locator(':is(.hub-close,.feature-exit)').click();
     await page.waitForSelector('.hub-page', { state: 'detached' });
     console.log('PASS the tab bar moves between pages');
 

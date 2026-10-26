@@ -176,6 +176,12 @@ try {
     'src/components/PrismLayouts.tsx', 'src/components/RoutingInsight.tsx', 'src/components/LayoutsTab.tsx', 'src/lib/routing-presentation.ts', 'src/styles/canvas-routing-experience.css',
     // Slice3 CP2: read-only usage/diagnostic presentation over existing counters and saved-chat evidence.
     'src/components/UsageTab.tsx', 'src/lib/usage-presentation.ts',
+    // Phase5 Slice1 (draft planner review): lazy Canvas Library, additive leading-modal/
+    // file-edit callbacks, canonical preview layers, and pure runner language labels.
+    // No auth/storage/provider/deployment boundary is added by these exact files.
+    'src/components/CanvasCollectionPage.tsx', 'src/components/canvas-library.css', 'src/lib/library-items.ts',
+    'src/components/FileCard.tsx', 'src/components/Modal.tsx', 'src/components/PreviewModal.tsx',
+    'src/lib/run-language.ts', 'src/lib/runner.ts',
     // Owner-authorized shared iPhone navigation reset: UI-only owners, ordinary graph remains isolated.
     // Reviewed feature-local section presentation and media subscription; no data/auth/network owner.
     'src/components/PhoneSections.tsx', 'src/lib/phone-layout.ts',

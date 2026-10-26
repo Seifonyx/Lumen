@@ -95,7 +95,7 @@ async function check(page, cdp, name, act, results) {
       } else await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click();
       await check(page, cdp, `${tag} theme crossfade`, async () => { await page.getByRole('radio', { name: theme === 'dark' ? 'Light' : 'Dark', exact: true }).click(); }, results);
       await check(page, cdp, `${tag} theme back`, async () => { await page.getByRole('radio', { name: theme === 'dark' ? 'Dark' : 'Light', exact: true }).click(); }, results);
-      if (phone) await check(page, cdp, `${tag} settings section pop`, async () => { await page.click('.settings-page .phone-navigation button[aria-label="Back"], .settings-back'); }, results);
+      if (phone) await check(page, cdp, `${tag} settings section pop`, async () => { if(await page.locator('[data-lumen-canvas-shell]').count())await page.goBack();else await page.click('.settings-back'); }, results);
       await check(page, cdp, `${tag} settings closes`, async () => { await page.keyboard.press('Escape'); await page.locator('.settings-page').waitFor({ state: 'hidden' }); }, results);
       await drawer();
       await check(page, cdp, `${tag} all chats opens`, async () => { await page.click('.view-all-chats, .cv-all'); await page.getByRole('dialog', { name: 'All chats' }).waitFor(); }, results);

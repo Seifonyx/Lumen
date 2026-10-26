@@ -1,0 +1,50 @@
+{
+  "sourceSha": "d78363466e6460ce63c8ec7ab7fe67a527f22f15",
+  "fixtureSha256": "6d3e2685f2e45800896353e84d150a8954df10a4b4084bf877aab5e7f85182e3",
+  "engine": "webkit",
+  "before": true,
+  "syntheticOnly": true,
+  "physicalIPhone": false,
+  "results": [
+    {
+      "width": 320,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "theme": "dark",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "theme": "dark",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "passed": true
+    }
+  ]
+}

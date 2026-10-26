@@ -73,7 +73,7 @@ async function tab(page, name) {
  const r=rc(page);
  if(await r.locator('.rc-tabs').count()) return r.locator('.rc-tabs').getByRole('button',{name,exact:true}).click();
  while(!await r.getByRole('navigation',{name:'Prism sections'}).count()) {
-   await r.getByRole('button',{name:'Back',exact:true}).click();await settle(page,150);
+   await page.goBack();await settle(page,150);
  }
  await r.getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name,exact:true}).click();
 }
@@ -151,7 +151,7 @@ try {
       await shot(page, join(out, `${tag}-2-provider.png`));
       if (phone) {
         assert.equal(await rc(page).locator('.rc-provider-list').isVisible(), false, 'phone: the detail replaces the list');
-        await rc(page).getByRole('button', { name: 'Back',exact:true }).click();
+        await page.goBack();
         await settle(page);
         assert.ok(await rc(page).locator('.rc-provider-list').isVisible());
         await rc(page).locator('[data-provider="gemini"]').click();
@@ -207,7 +207,7 @@ try {
       if(phone){await rc(page).getByRole('button',{name:'More actions',exact:true}).click();await page.getByRole('menuitem',{name:'Connection settings',exact:true}).click();}else await rc(page).getByRole('button', { name: 'Connection settings for Google AI Studio' }).click();
       await page.getByRole('dialog', { name: 'Settings' }).waitFor();
       assert.equal(await isOpen(page), false, 'hidden under Settings');
-      await page.getByRole('dialog', { name: 'Settings' }).getByRole('button', { name: phone ? 'Back' : 'Close', exact: true }).first().click();
+      await page.goBack();
       await settle(page, 600);
       assert.equal(await isOpen(page), true, 'back to the Routing Center');
       pass('manage connection');
@@ -221,7 +221,7 @@ try {
       assert.deepEqual(state.csp, []);
 
       // Closing: Back to chat, Escape, and choosing another chat.
-      if(phone){for(let i=0;i<24 && await isOpen(page);i++){await rc(page).getByRole('button',{name:'Back',exact:true}).click();await settle(page,120);}assert.equal(await isOpen(page),false,'Back traverses all visited Routing screens');}else await rc(page).getByRole('button', { name: 'Back to chat' }).click();
+      await rc(page).getByRole('button', { name:'Return to chat' }).click();await settle(page);assert.equal(await isOpen(page),false,'one Exit leaves all visited Routing screens');
       await settle(page);
       assert.equal(await isOpen(page), false);
       await openRouting(page, phone);
@@ -244,7 +244,7 @@ try {
       await openRouting(page, phone);
       if (phone) {
         assert.equal(await rc(page).getByRole('button',{name:'Open sidebar',exact:true}).count(),0);
-        await rc(page).getByRole('button',{name:'Back',exact:true}).click();await settle(page,400);
+        await page.goBack();await settle(page,400);
         await page.getByRole('button',{name:'Open chats',exact:true}).first().click();await settle(page,400);
       }
       await page.locator('aside.cv-nav').getByText('Notes for a quieter workspace').click();

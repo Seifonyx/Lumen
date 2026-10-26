@@ -11,12 +11,13 @@ interface Props {
   onClose: () => void;
   children: ReactNode;
   actions?: ReactNode;
+  leading?: ReactNode;
   wide?: boolean;
   full?: boolean;
   origin?: HTMLElement | null;
 }
 
-export default function Modal({ title, onClose, children, actions, wide, full, origin }: Props) {
+export default function Modal({ title, onClose, children, actions, leading, wide, full, origin }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const titleId=useId();
   const dismiss = usePreviewMotion(ref, origin, onClose);
@@ -32,6 +33,7 @@ export default function Modal({ title, onClose, children, actions, wide, full, o
       <div className={`modal${wide ? ' wide' : ''}${full ? ' full' : ''}${sheet ? ' is-sheet' : ''}${origin ? ' origin-preview' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} ref={ref}>
         {sheet && <div className="sheet-grip" aria-hidden="true" />}
         <header className="modal-head">
+          {leading}
           <h2 className="modal-title" id={titleId}>{title}</h2>
           <div className="modal-actions">
             {actions}

@@ -78,7 +78,7 @@ const sse = (chunks) => chunks.map((o) => `data: ${JSON.stringify(o)}\n\n`).join
   await openTab(page, 'Usage');
   const u = await page.textContent('.usage');
   check(JSON.stringify(titles)===JSON.stringify(['groq']), 'one enabled background title stays on Groq and is counted');
-  check(/GPT-OSS 20B.*2 requests · 52 in \/ 7 out/.test(u.replace(/\s+/g, ' ')) && /GPT-OSS 120B.*1 request · 30 in \/ 3 out/.test(u.replace(/\s+/g, ' ')) && /Groq and Cerebras limits reset/.test(u), 'usage counts each reply and the completed title with exact real tokens per model');
+  check(/GPT-OSS 20B.*2 requests · 52 in \/ 7 out/.test(u.replace(/\s+/g, ' ')) && /GPT-OSS 120B.*1 request · 30 in \/ 3 out/.test(u.replace(/\s+/g, ' ')) && /Known shared limits/.test(u) && /provider allowance unknown/.test(u), 'usage counts each reply and completed title with exact real tokens while provider allowances stay unknown');
   await page.screenshot({ path: require('path').join(__dirname, 'out', 'providers-usage.png') });
 
   check(!errors.length, `no page errors ${errors.join(' | ')}`);

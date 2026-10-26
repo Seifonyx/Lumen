@@ -31,11 +31,11 @@ const saved = chat('saved', [
 const temporary = chat('temporary-private', [assistant('temp', 'done', now - 500)]);
 
 const history = answersByDay([saved, temporary], 1, now);
-assert.deepEqual(history.days[0], { day: history.days[0].day, answers: 3, failed: 1, stopped: 1 });
-assert.deepEqual(history.models, [['gemini:flash', 3]], 'explicit and legacy completed answers contribute; stopped/failed requests do not');
+assert.deepEqual(history.days[0], { day: history.days[0].day, answers: 2, failed: 1, stopped: 1 });
+assert.deepEqual(history.models, [['gemini:flash', 2]], 'only explicitly completed answers contribute; stopped, failed and unknown-status requests do not');
 
 const requests = recentRequests([saved, temporary]);
-assert.deepEqual(requests.map((row) => row.outcome), ['failed', 'stopped', 'rerouted', 'answered', 'answered']);
+assert.deepEqual(requests.map((row) => row.outcome), ['failed', 'stopped', 'rerouted', 'answered'], 'legacy messages without a completion status are not presumed answered');
 assert.equal(requests[0].detail, 'Connection refused', 'provider error text is reduced to a safe category');
 assert(!JSON.stringify(requests).includes('private request data'));
 
@@ -49,6 +49,7 @@ assert.deepEqual(latestRequestEvidence([saved, temporary]), {
   route: null,
 });
 assert.equal(latestRequestEvidence([temporary]), null, 'temporary account-local work is not retained as history evidence');
+assert.equal(latestRequestEvidence([chat('status-unknown', [assistant('unknown', undefined, now)])]), null, 'unknown status cannot become an invented latest outcome');
 assert.equal(latestRequestEvidence([]), null, 'empty history remains missing evidence');
 
 const otherAccount = chat('other-account', [assistant('other', 'done', now + 10)]);

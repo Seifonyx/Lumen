@@ -192,7 +192,12 @@ try {
       assert.ok(await rc(page).locator('.settings-section.usage').isVisible(), 'the real usage view');
       await tab(page, 'Diagnostics');
       await settle(page);
-      assert.ok(await rc(page).getByRole('heading', { name: 'Latest model choice' }).isVisible());
+      // CP2 leads with recorded outcomes (or an honest no-record state), never an inferred model choice.
+      const latest = rc(page).locator('.rc-latest');
+      assert.ok(await latest.isVisible(), 'Diagnostics presents saved-outcome evidence');
+      assert.match(await latest.innerText(), /Latest recorded outcome|No saved request evidence/);
+      assert.equal(await rc(page).getByRole('heading', { name: 'Latest model choice' }).count(), 0, 'obsolete prediction panel is absent');
+      assert.equal(await rc(page).getByRole('checkbox', { name: 'Show chat titles' }).isChecked(), false);
       if (phone) await shot(page, join(out, `${tag}-5-sections-scrolled.png`));
       pass('usage and diagnostics');
 

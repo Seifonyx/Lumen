@@ -15,7 +15,7 @@ export function answersByDay(chats: Chat[], days = 14, now = Date.now()) {
   for (const c of chats) {
     if (isTemporaryChat(c)) continue;
     for (const m of c.messages) {
-      if (m.role !== 'assistant' || !m.model || m.createdAt < start || m.status === 'streaming') continue;
+      if (m.role !== 'assistant' || !m.model || m.createdAt < start || !['done', 'error', 'stopped'].includes(m.status || '')) continue;
       const slot = counts[Math.floor((dayStart(m.createdAt) - start) / DAY)];
       if (!slot) continue;
       if (m.status === 'error') slot.failed++;
@@ -44,7 +44,7 @@ export function recentRequests(chats: Chat[], limit = 20): RequestRecord[] {
   for (const c of chats) {
     if (isTemporaryChat(c)) continue;
     for (const m of c.messages) {
-      if (m.role !== 'assistant' || !m.model || m.status === 'streaming') continue;
+      if (m.role !== 'assistant' || !m.model || !['done', 'error', 'stopped'].includes(m.status || '')) continue;
       const reroute = rerouteReason(m.notices);
       const outcome = requestOutcome(m.status, reroute);
       if (outcome === 'in-progress') continue;
@@ -60,7 +60,7 @@ export function latestRequestEvidence(chats: Chat[]): RequestEvidence | null {
   for (const c of chats) {
     if (isTemporaryChat(c)) continue;
     for (const m of c.messages) {
-      if (m.role !== 'assistant' || !m.model) continue;
+      if (m.role !== 'assistant' || !m.model || !m.status) continue;
       const reroute = rerouteReason(m.notices);
       const outcome = requestOutcome(m.status, reroute);
       const record: RequestEvidence = {

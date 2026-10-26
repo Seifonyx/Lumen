@@ -127,7 +127,7 @@ async function device(browser, mobile) {
   const text = await A.page.textContent('.usage');
   console.log('      usage tab:', text.replace(/\s+/g, ' ').slice(0, 400));
   check(/3 of 50 today/.test(text), 'OpenRouter pool: two fallback requests plus title, 3 of 50');
-  check(/Limit reached/.test(text), 'limited model shown');
+  check(/Temporarily blocked · retry/.test(text), 'provider block is shown as a recorded temporary block, not a guaranteed status');
   check(/1 request · 1K in \/ 300 out tokens/.test(text) && A.calls.filter(c => c === 'gemini-flash-latest:title').length === 0, 'manual Gemini request counted once; title stays on the answered OpenRouter model');
   await A.page.screenshot({ path: path.join(OUT, 'usage-tab.png') });
 
@@ -138,10 +138,10 @@ async function device(browser, mobile) {
   await openTab(B.page, 'Usage');
   await B.page.waitForSelector('.usage-row');
   const textB = await B.page.textContent('.usage');
-  check(/Limit reached/.test(textB) && /3 of 50 today/.test(textB), 'usage + block synced to second device');
-  check(/0 requests · daily limit 20/.test(textB), 'blocked model retains its learned daily limit on the second device');
+  check(/Temporarily blocked · retry/.test(textB) && /3 of 50 today/.test(textB), 'usage + block synced to second device');
+  check(/0 requests · recorded daily allowance 20/.test(textB), 'blocked model retains its learned daily limit on the second device');
   const learned = await B.page.textContent('.usage'); console.log('      B usage:', learned.replace(/\s+/g, ' ').slice(0, 500));
-  check(/daily limit 20/.test(learned), 'learned daily limit shown');
+  check(/recorded daily allowance 20/.test(learned), 'learned daily allowance shown without promising availability');
 
   const errs = [...A.errors, ...B.errors];
   console.log('errors', errs);

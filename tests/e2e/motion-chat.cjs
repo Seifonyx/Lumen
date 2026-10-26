@@ -76,7 +76,7 @@ const now = Date.now();
         await page.locator('.composer textarea').fill('NEXT_DRAFT');
         if (width < 900) await page.locator('.menu-btn').click();
         await page.locator('.sidebar').getByRole('button', { name: 'Library', exact: true }).click();
-        await page.locator('.hub-page:not(.exit-ghost)').locator('[aria-label="Close"], .phone-navigation [aria-label^="Return to "]').click();
+        await page.locator('.hub-page:not(.exit-ghost)').locator('.hub-bar .feature-exit, [aria-label="Close"], .phone-navigation [aria-label^="Return to "]').click();
         // A leaving screen may keep an animated ghost composer mounted briefly.
         // Assert draft restoration only after the actual presentation is unique.
         await page.waitForFunction(() => document.querySelectorAll('.composer textarea').length === 1, null, { timeout: 5000 });

@@ -54,7 +54,7 @@ const open = async (page) => {
   }
 };
 const close = async (page) =>
-  page.locator('.hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label^="Return to "]').click();
+  page.locator('.hub-page > .hub-bar .feature-exit, .hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label^="Return to "]').click();
 // The cited source opens in its own window.
 const closeSource = async (page) =>
   page

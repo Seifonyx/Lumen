@@ -162,7 +162,7 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     await page.locator('.glass-select-menu [role="option"]').nth(1).click();
     await page.waitForSelector('.glass-select-menu', { state: 'detached' });
     assert.equal(await model.inputValue(), 'gemini:gemini-flash-latest', 'the choice reaches the app');
-    await page.locator('.hub-nav[aria-label^="Return to "]').click();
+    await page.locator('.hub-nav[aria-label="Back"]').click();
     await page.waitForSelector('.glass-tabbar.page-sections');
     assert.equal(await page.locator('.glass-tabbar [aria-current="page"]').innerText(), 'Assistants', 'back in Tools → Assistants');
     assert.equal(await page.locator('.lib-section').count(), 0, 'not the old Assistants page');

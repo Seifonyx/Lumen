@@ -21,9 +21,15 @@ exports.backSettingsSection = async (page) => {
   const legacy = page.locator('.settings-page .settings-back');
   if (await legacy.isVisible()) return legacy.click();
   const back = page.locator('.settings-page .phone-navigation button[aria-label^="Return to "]');
-  // The lazy Settings shell and history adapter can commit over separate frames.
+  // The chevron exits a feature. Inspect internal sections with actual browser
+  // Back; a direct-start section has no ancestor and uses Exit instead.
   await back.waitFor({ state: 'visible', timeout: 6000 });
-  await page.goBack();
+  for (let step=0;step<18;step++) {
+    if (await page.locator('.settings-tabs').isVisible() || !await page.locator('.settings-page:not(.exit-ghost)').isVisible()) return;
+    if (await page.evaluate(()=>Boolean(history.state?.lumenScreen?.id))) await page.goBack();
+    else await back.click();
+    await page.waitForFunction(()=>!document.querySelector('.settings-page:not(.exit-ghost)') || Boolean(document.querySelector('.settings-tabs')?.getClientRects().length));
+  }
 };
 
 exports.openSettingsSection = async (page, name) => {
@@ -35,6 +41,7 @@ exports.openSettingsSection = async (page, name) => {
     await exports.backSettingsSection(page);
     if (!(await page.locator('.settings-page').isVisible())) {
       const menu = page.locator('.menu-btn');
+      await page.locator('.composer textarea').waitFor({state:'visible'});
       if (await menu.isVisible()) await menu.click();
       await page.getByRole('button', { name: 'Settings', exact: true }).click();
     }

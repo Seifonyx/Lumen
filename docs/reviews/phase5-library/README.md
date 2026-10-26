@@ -8,7 +8,7 @@
 |---|---|
 | Before | Main `d78363466e6460ce63c8ec7ab7fe67a527f22f15`, built before product changes |
 | After Library captures | `dbf150bdb40a7210e63ddb9206e7fead353bcb3e`, actual production Canvas build |
-| Final code candidate | `57443d0` (full SHA in Git/PR); subsequent differences from the captures preserve pending composer files and stabilize a synthetic model-picker test. Library presentation source is unchanged. |
+| Final code candidate | PR58 HEAD (full SHA and CI in PR/live); subsequent differences from the captures preserve pending composer files, stabilize a synthetic model-picker test, and register the preview history layer before mounting its sandbox frame. Library presentation source is unchanged. |
 | Final delivery/CI | PR58 HEAD and the separately maintained [live checkpoint](https://github.com/Seifonyx/Lumen/blob/docs/lumen-live-context/docs/lumen-context/CURRENT_STATUS.md); exact-head CI uploads fresh browser evidence with `EXACT_HEAD.txt` |
 | Fixture | `tests/e2e/library-experience.cjs`; shared SHA256 `6d3e2685f2e45800896353e84d150a8954df10a4b4084bf877aab5e7f85182e3` |
 
@@ -41,7 +41,7 @@ Rendered review checked hierarchy, dense row readability, long filenames, separa
 | Privacy/compatibility | Incognito and attachment-motion regressions pass; same-account reads stay in their original draft and departed private/account reads are rejected. Original Office bytes are not cached from incognito. Ordinary/Canvas builds, QA graph/output and 9-check isolation audit, plus ordinary graph negative controls. No schema/auth/provider/routing/network permission changes. |
 | Shared regressions | Chromium CP03 shell (12 checks per viewport), CP04 Prism (10), CP05 screens (9 desktop/10 phone, both themes/four widths), and focused provider/model/layout/navigation suites. CI runs these contracts in both engines and ordinary/Canvas emulator suites. |
 
-Full unit suite and type checks pass. Windows baseline test fixes normalize paths/line endings without removing assertions. QA's reviewed network allowlist is unchanged: a pure language-label module separates Markdown from executable runner code, and QA pins worker-disabled runner source to its existing audited chunk name. Exact-head CI remains the required final operational gate; consult PR58/live for its actual result, not an older run.
+Full unit suite and type checks pass. Windows baseline test fixes normalize paths/line endings without removing assertions. QA's reviewed network allowlist is unchanged: a pure language-label module separates Markdown from executable runner code, and QA pins worker-disabled runner source to its existing audited chunk name. Run40342380724 exposed a Linux WebKit generated-preview Back race (21/23 jobs successful). Preview mounting is now deferred until its parent history layer is registered; regression assertions require one parent entry before the frame appears, immediate Back closure, rendered Forward restoration and no ghost entries. Both-engine local matrices pass. Exact-head CI remains the required final operational gate; consult PR58/live for its actual result, not an older run.
 
 ## Performance and limitations for planner review
 

@@ -247,6 +247,8 @@ jobs:
           preview_pid=$!
           trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
           node -e "(async()=>{for(let i=0;i<30;i++){try{if((await fetch('http://localhost:5191/')).ok)return}catch{}await new Promise(r=>setTimeout(r,500))}process.exit(1)})()"
+          node tests/e2e/feature-exit.cjs
+          node tests/e2e/library-experience.cjs
           node tests/e2e/iphone-glass-navigation.cjs
           node tests/e2e/routing-providers.cjs
           node tests/e2e/prism-provider-states.cjs
@@ -256,8 +258,6 @@ jobs:
           node tests/e2e/prism-auto-layouts.cjs
           node tests/e2e/prism-routing-states.cjs
           node tests/e2e/prism-usage-diagnostics.cjs
-          node tests/e2e/feature-exit.cjs
-          node tests/e2e/library-experience.cjs
         env:
           MR_TEST_URL: http://localhost:5191/
           MR_WEBKIT: ${{ matrix.engine == 'WebKit' && '1' || '' }}

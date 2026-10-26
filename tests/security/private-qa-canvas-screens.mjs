@@ -223,7 +223,7 @@ try {
         await closeAll(page);
         await go(page, phone, 'Library');
         await openNav(page, phone);
-        await nav(page).getByRole('button', { name: /Offer, portfolio and first clients/ }).click();
+        await nav(page).locator('.cv-project').filter({ has: page.locator('.cv-name', { hasText: 'Studio launch' }) }).getByRole('button', { name: 'Project overview', exact: true }).click();
         await settle(page, 700);
         assert.ok(await page.locator('.project-workspace-main').isVisible(), 'project workspace from a page');
         record.screens.project = await axe(page, '.project-workspace-main');

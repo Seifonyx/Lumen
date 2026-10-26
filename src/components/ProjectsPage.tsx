@@ -1,7 +1,7 @@
 import { CANVAS_SHELL, CanvasScreenActions, useScreenBackLayer, useScreenMemory, navigateBack, navigateScreen } from '../lib/canvas-presentation';
 // Projects: each project is a workspace with its own instructions, files and memory, shared by every chat in
 // it. This page shows them all as cards, with what's inside and when it was last used.
-import { FolderKanban, MoreHorizontal, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { Folder, FolderKanban, MoreHorizontal, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { Suspense, useMemo, useState } from 'react';
 import { useStore } from '../store';
 import type { Project } from '../types';
@@ -35,17 +35,18 @@ export default function ProjectsPage({ onClose }: { onClose: () => void }) {
   const [glassPhone] = useState(() => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches);
 
   return (
-    <HubPage label="Projects" title="Projects" subtitle="Workspaces with their own instructions, files and memory. Every chat in a project shares them." onClose={onClose}
+    <HubPage label="Projects" title="Projects" subtitle={CANVAS_SHELL ? 'A place for the work you keep coming back to.' : 'Workspaces with their own instructions, files and memory. Every chat in a project shares them.'} onClose={onClose}
       compact={glassPhone} create={CANVAS_SHELL || glassPhone ? { label: 'New project', run: create } : undefined}
       actions={!glassPhone && <button type="button" className="btn primary" onClick={create}><Plus size={16} /> New project</button>}
       toolbar={projects.length > 0 && (
         <>
-          <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search projects" placeholder="Search projects" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" /></label>
-          {!glassPhone && <div className="hub-seg" role="radiogroup" aria-label="Sort">
+          <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search projects" placeholder="Search projects" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" />{CANVAS_SHELL && query && <button type="button" aria-label="Clear project search" onClick={e => { setQuery(''); e.currentTarget.parentElement?.querySelector('input')?.focus(); }}><X size={16} /></button>}</label>
+          {CANVAS_SHELL ? <label className="projects-sort"><span className="sr-only">Sort projects</span><select aria-label="Sort projects" value={sort} onChange={e => setSort(e.target.value as Sort)}><option value="recent">Recently active</option><option value="name">Name</option></select></label> : !glassPhone && <div className="hub-seg" role="radiogroup" aria-label="Sort">
             {([['recent', 'Recent'], ['name', 'Name']] as const).map(([v, l]) => <button key={v} type="button" role="radio" aria-checked={sort === v} onClick={() => setSort(v)}>{l}</button>)}
           </div>}
         </>
       )}>
+      {CANVAS_SHELL && projects.length > 0 && <p className="projects-summary" role="status">{q ? `${shown.length} of ${projects.length} projects` : `${projects.length} ${projects.length === 1 ? 'project' : 'projects'}`}</p>}
       {projects.length === 0 ? (
         <HubEmpty icon={<FolderKanban size={26} />} title="No projects yet" text={glassPhone ? 'For anything ongoing, like a course, a client or a trip.' : 'Make a project for anything ongoing (a course, a client, a trip) and give it instructions and files. Every chat in it starts with them.'} action={<button type="button" className="btn primary" onClick={create}><Plus size={16} /> New project</button>} />
       ) : shown.length === 0 ? (
@@ -57,7 +58,7 @@ export default function ProjectsPage({ onClose }: { onClose: () => void }) {
             return (
               <li key={p.id} className={`proj-card color-${p.color || 'indigo'}`}>
                 <button type="button" className="proj-open" onClick={() => open(p.id)} aria-label={`Open ${p.name}`}>
-                  <span className="proj-band" aria-hidden="true"><span className="proj-mono">{p.name.trim().slice(0, 1).toUpperCase()}</span></span>
+                  <span className="proj-band" aria-hidden="true">{CANVAS_SHELL ? <Folder size={22} strokeWidth={1.6} /> : <span className="proj-mono">{p.name.trim().slice(0, 1).toUpperCase()}</span>}</span>
                   <span className="proj-body">
                     <strong dir="auto">{p.name}</strong>
                     <span className="proj-desc" dir="auto">{p.description || p.instructions.split('\n')[0] || 'No description yet.'}</span>

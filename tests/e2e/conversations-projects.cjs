@@ -7,7 +7,7 @@ const { profile, seed } = require('./helpers/preview-profile.cjs');
 const base = process.env.MR_TEST_URL || 'http://localhost:5191/';
 const before = process.env.CONVERSATIONS_BEFORE === '1', engine = process.env.MR_WEBKIT ? 'webkit' : 'chromium';
 const out = process.env.CONVERSATIONS_OUT || `tests/e2e/out/conversations-projects/${before ? 'before' : 'after'}/${engine}`;
-const source = process.env.CONVERSATIONS_SOURCE_SHA || execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+const source = process.env.CONVERSATIONS_SOURCE_SHA || process.env.GITHUB_SHA || execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 const now = 1793000000000;
 const projects = [
   { id: 'studio', name: 'Studio launch', description: 'A considered beginning for our next chapter.', instructions: 'Keep plans practical. Write with clarity.', color: 'indigo', files: [{ id: 'brief', kind: 'text', name: 'Creative brief.md', text: 'Synthetic project notes.', mime: 'text/plain', size: 24 }], createdAt: now - 9e8, updatedAt: now - 1000 },
@@ -37,6 +37,7 @@ const chats = [chat('origin', 'A quieter way to work'), chat('pinned', 'Ideas wo
       const page = await ctx.newPage(); page.setDefaultTimeout(10000);
       const errors = []; page.on('pageerror', e => errors.push(e.message));
       await page.goto(base); await page.locator('.composer textarea').waitFor();
+      if (!await page.locator('[data-lumen-canvas-shell]').count()) { console.log('Conversations & Projects: not applicable to ordinary presentation'); await ctx.close(); return; }
       await seed(page, 'conversations-projects', chats); await page.reload(); await page.locator('.composer textarea').waitFor();
       const drawer = page.locator('aside.cv-nav');
       const openDrawer = async () => { if (phone && !await drawer.evaluate(el => el.classList.contains('open'))) await page.locator('.menu-btn:visible, .hub-nav[aria-label="Open sidebar"]:visible').first().click(); };

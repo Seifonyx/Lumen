@@ -72,7 +72,7 @@ html[data-lumen-canvas] .proj-open { display: grid; grid-template-columns: 44px 
 html[data-lumen-canvas] .proj-open:hover { background: var(--cv5-fill); }
 html[data-lumen-canvas] .proj-open:focus-visible { outline: 2px solid var(--text); outline-offset: -2px; }
 html[data-lumen-canvas] .proj-stats { gap: 4px 14px; margin: 3px 0 0; }
-html[data-lumen-canvas] .proj-stats > span { padding: 0; background: none; border-radius: 0; color: var(--text-3); }
+html[data-lumen-canvas] .proj-stats > span { padding: 0; background: none; border-radius: 0; color: var(--text-2); }
 html[data-lumen-canvas] .proj-desc { min-height: 0; font-size: 14px; }
 html[data-lumen-canvas] .proj-time { margin: 2px 0 0; }
 html[data-lumen-canvas] .projects-summary { margin: 0 0 6px; color: var(--text-3); font-size: 13px; }

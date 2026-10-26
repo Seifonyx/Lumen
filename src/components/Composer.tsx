@@ -198,11 +198,11 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
     const onPrefill = (e: Event) => {
       const detail = (e as CustomEvent<string | { text: string; append: boolean; files?: Attachment[]; codeExecution?: boolean }>).detail;
       const current = input.current?.value || '';
-      const prefill = typeof detail === 'string' ? detail : `${detail.append && current ? current + '\n\n' : ''}${detail.text}`;
+      const prefill = typeof detail === 'string' ? detail : !detail.text && detail.files?.length ? current : `${detail.append && current ? current + '\n\n' : ''}${detail.text}`;
       setText(prefill);
       saveDraft(prefill);
       if (typeof detail !== 'string') {
-        if (detail.files?.length) setPending(previous => [...previous.filter(item=>!detail.files!.some(file=>file.knowledgeSources?.length)||!item.file?.knowledgeSources?.length), ...detail.files!.map(file => ({ key: file.id, name: file.name, file }))]);
+        if (detail.files?.length) setPending(previous => [...previous.filter(item=>!detail.files!.some(file=>file.id===item.file?.id)&&(!detail.files!.some(file=>file.knowledgeSources?.length)||!item.file?.knowledgeSources?.length)), ...detail.files!.map(file => ({ key: file.id, name: file.name, file }))]);
         if (detail.codeExecution) setCodeExecution(true);
       }
       requestAnimationFrame(() => {

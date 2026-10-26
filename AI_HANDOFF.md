@@ -1,6 +1,10 @@
 # Dynamic Model Picker operational handoff
 
-## Active - Phase 5 Slice 1: Library experience and feature Exit
+## Active — Conversations & Projects visual checkpoint (2026-10-26)
+
+Owner explicitly chose Conversations & Projects before Tools Slice2. [Draft PR59](https://github.com/Seifonyx/Lumen/pull/59), branch `feat/conversations-projects-experience`, from verified main `1e93777767c632dcc3f37faf8f831f583795ad4e`; final implementation source `b49b719bfcaf12ef10dfa42dbeefe95d7ae2ce13`. [Design](docs/superpowers/specs/2026-10-26-conversations-projects-design.md), [plan](docs/superpowers/plans/2026-10-26-conversations-projects.md), [real screenshots/provenance/results](docs/reviews/conversations-projects/README.md). Folder/tree hierarchy, responsive Projects list and project overview/context presentation improved; canonical navigation, actions, drafts and account owners reused. Initial CI40375825322 exposed heading hierarchy, small-phone contrast and new test provenance issues; fixes retain all original assertions and budgets. Final exact delivery HEAD/CI/planner outcome are maintained in PR59 and separate live checkpoint. Local limits and Windows WebKit failures are explicitly recorded in evidence. No release or acceptance claim. **STOP for planner review; no merge/deploy/Tools/Slice3/spending/protected infrastructure authority.** Overall seven-phase percentage remains undefined; historical ledgers unchanged. Separate Lumen main worktree and prior Library branch preserved.
+
+## Historical — Phase 5 Slice 1: Library experience and feature Exit (released as1e93777)
 
 [Draft PR58](https://github.com/Seifonyx/Lumen/pull/58), branch `feat/phase5-library-experience`, from main `d78363466e6460ce63c8ec7ab7fe67a527f22f15`. Source candidate includes `57443d0` composer safety and the subsequent preview mount-order repair; [design](docs/design/PHASE5_LIBRARY_EXPERIENCE.md), [implementation plan](docs/superpowers/plans/2026-10-26-phase5-library-experience.md), [screenshots and verification](docs/reviews/phase5-library/README.md). **STOP for planner review; no merge/deploy/Slice2/spend/protected infrastructure authority.** Overall completion percentage is not defined for this seven-phase program. All scope-specific weighted ledgers below are historical and unchanged.
 

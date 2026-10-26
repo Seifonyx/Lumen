@@ -212,7 +212,7 @@ try {
 
       // Project overview from the folder brief; new chat in a project carries the project.
       await openNav(page, phone && !(await nav(page).evaluate((el) => el.classList.contains('open'))));
-      await nav(page).getByRole('button', { name: /Offer, portfolio and first clients/ }).click();
+      await nav(page).locator('.cv-project').filter({ has: page.locator('.cv-name', { hasText: 'Studio launch' }) }).getByRole('button', { name: 'Project overview', exact: true }).click();
       await settle(page, 600);
       assert.ok(await page.locator('.project-workspace-main').isVisible(), 'the brief opens the project workspace');
       assert.equal(await nav(page).locator('.cv-brief.open[aria-current="page"]').count(), 1, 'the overview row is current while the overview shows');
@@ -316,7 +316,7 @@ try {
       assert.equal(await page.locator('.settings-page').count(), 0, 'Back closes Settings');
       assert.equal(new URL(page.url()).origin, origin, 'and stays in Lumen');
       await ensureNav();
-      await nav(page).getByRole('button', { name: /Offer, portfolio and first clients/ }).click();
+      await nav(page).locator('.cv-project').filter({ has: page.locator('.cv-name', { hasText: 'Studio launch' }) }).getByRole('button', { name: 'Project overview', exact: true }).click();
       await settle(page, 600);
       assert.ok(await page.locator('.project-workspace-main').isVisible());
       await page.goBack();

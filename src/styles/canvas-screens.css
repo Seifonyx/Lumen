@@ -66,14 +66,43 @@ html[data-lumen-canvas] .tools-section h2, html[data-lumen-canvas] .tools-sectio
 html[data-lumen-canvas] .tools-rail button[aria-current='true'], html[data-lumen-canvas] .tools-rail button.active { background: var(--cv5-fill-strong); color: var(--text); }
 
 /* ---------- Projects: neutral bands and monograms (the Canvas tree's look), rimmed cards. */
-html[data-lumen-canvas] .proj-card { border-color: var(--cv5-rim); border-radius: 18px; background: var(--cv5-card); overflow: hidden; }
-html[data-lumen-canvas] .proj-band { background: linear-gradient(135deg, var(--cv5-fill-strong), transparent 70%), var(--cv5-fill); }
-html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-card .proj-mono { background: var(--text); color: var(--bg); font-family: var(--cv5-display); box-shadow: 0 0 0 4px var(--bg); }
-html[data-lumen-canvas] .proj-card h2, html[data-lumen-canvas] .proj-card h3 { font-family: var(--cv5-display); letter-spacing: -.015em; }
-html[data-lumen-canvas] .proj-stats > * { border-radius: 999px; background: var(--cv5-fill); }
+html[data-lumen-canvas] .proj-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
+html[data-lumen-canvas] .proj-card { display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: center; border: 0; border-bottom: 1px solid var(--cv5-rim); border-radius: 0; background: none; overflow: visible; }
+html[data-lumen-canvas] .proj-open { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: start; gap: 18px; padding: 24px 10px; border: 0; border-radius: 12px; background: none; box-shadow: none; transform: none; }
+html[data-lumen-canvas] .proj-open:hover { background: var(--cv5-fill); }
+html[data-lumen-canvas] .proj-open:focus-visible { outline: 2px solid var(--text); outline-offset: -2px; }
+html[data-lumen-canvas] .proj-stats { gap: 4px 14px; margin: 3px 0 0; }
+html[data-lumen-canvas] .proj-stats > span { padding: 0; background: none; border-radius: 0; color: var(--text-2); }
+html[data-lumen-canvas] .proj-desc { min-height: 0; font-size: 14px; }
+html[data-lumen-canvas] .proj-time { margin: 2px 0 0; color: var(--text-2); }
+html[data-lumen-canvas] .projects-summary { margin: 0 0 6px; color: var(--text-3); font-size: 13px; }
+html[data-lumen-canvas] .projects-sort select { min-height: 44px; max-width: 100%; padding: 0 30px 0 12px; border: 1px solid var(--cv5-rim); border-radius: 12px; background: var(--bg); color: var(--text-2); font: inherit; }
+html[data-lumen-canvas] .hub-search:has(input[aria-label='Search projects']) { min-width: 0; min-height: 44px; height: auto; }
+html[data-lumen-canvas] .hub-search input[aria-label='Search projects'] { width: 0; min-width: 0; flex: 1; }
+html[data-lumen-canvas] .hub-search > button[aria-label='Clear project search'] { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 10px; background: none; color: var(--text-2); }
 html[data-lumen-canvas] .project-title { font: 640 30px/1.12 var(--cv5-display); letter-spacing: -.03em; }
-html[data-lumen-canvas] .project-card { border-color: var(--cv5-rim); border-radius: 16px; background: var(--cv5-card); }
-html[data-lumen-canvas] .project-section-head h2, html[data-lumen-canvas] .project-section-head h3 { font: var(--canvas-type-label); letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); }
+html[data-lumen-canvas] .project-card { border: 0; border-top: 1px solid var(--cv5-rim); border-radius: 0; background: none; padding: 18px 0; }
+html[data-lumen-canvas] .project-context-content { gap: 0; padding: 0 20px; border-radius: 16px; background: var(--cv5-fill); }
+html[data-lumen-canvas] .project-card:first-child { border-top: 0; }
+html[data-lumen-canvas] .project-context :is(.project-empty, .project-count, .project-file-size) { color: var(--text-2); }
+html[data-lumen-canvas] .project-composer { max-width: none; margin-bottom: 32px; border-radius: 20px; box-shadow: none; padding: 18px; }
+html[data-lumen-canvas] .project-composer-note { font-family: var(--font); }
+html[data-lumen-canvas] .project-grid { gap: 32px; }
+html[data-lumen-canvas] .project-chat { padding: 18px 8px; }
+html[data-lumen-canvas] .project-chat-title { font-size: 15px; }
+html[data-lumen-canvas] .project-chat-snippet { margin-top: 6px; line-height: 1.5; }
+html[data-lumen-canvas] .project-page :is(.project-send, .project-edit-btn, .project-card-head .btn, .project-chat-menu > button, .project-file-row .icon-btn) { min-width: 44px; min-height: 44px; }
+@media (max-width: 899px) {
+  html[data-lumen-canvas] .proj-open { gap: 12px; padding: 20px 2px; }
+  html[data-lumen-canvas] .proj-body strong { overflow-wrap: anywhere; line-height: 1.4; }
+  html[data-lumen-canvas] .projects-sort { margin-inline-start: auto; }
+  html[data-lumen-canvas] .projects-sort select { font-size: 16px; }
+  html[data-lumen-canvas] .project-grid { gap: 24px; }
+  html[data-lumen-canvas] .project-context-content { padding-inline: 14px; }
+  html[data-lumen-canvas] .project-file-row { flex-wrap: wrap; gap: 6px; }
+  html[data-lumen-canvas] .project-file-name { flex-basis: calc(100% - 28px); }
+}
+html[data-lumen-canvas] .project-section-head h2, html[data-lumen-canvas] .project-section-head h3 { font: 600 16px/1.4 var(--font); letter-spacing: -.01em; color: var(--text); }
 
 /* ---------- Library */
 html[data-lumen-canvas] .doc-paper { border-color: var(--cv5-rim); border-radius: 14px; }
@@ -114,11 +143,10 @@ html[data-lumen-canvas] :is(.color-indigo, .color-emerald, .color-green, .color-
 html[data-lumen-canvas][data-lumen-canvas-foundation] .project-page .project-tile, html[data-lumen-canvas][data-lumen-canvas-foundation] .project-tile { background: var(--text) !important; color: var(--bg) !important; box-shadow: none; }
 html[data-lumen-canvas] .pf-field:has(> .project-color-choices) { display: none; }
 /* One project visual language: the ink monogram and a header rule, no grey gradient covers. */
-html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-band { height: auto; padding: 18px 18px 0; background: none; }
-html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-card .proj-mono { position: static; width: 40px; height: 40px; border-radius: 12px; font-size: 17px; box-shadow: none; }
-html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-card .proj-body { padding-top: 12px; }
+html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-band { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 13px; background: var(--cv5-fill); color: var(--text-2); }
+html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-card .proj-body { min-width: 0; padding: 0; gap: 5px; }
 html[data-lumen-canvas][data-lumen-canvas-foundation] .project-page > .project-hero { display: none; }
-html[data-lumen-canvas][data-lumen-canvas-foundation] .project-head { padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid var(--cv5-rim); }
+html[data-lumen-canvas][data-lumen-canvas-foundation] .project-head { padding-bottom: 0; margin-bottom: 28px; border-bottom: 0; }
 
 /* ---------- Assistants: ink avatars instead of per-name hues; rimmed cards, display names. */
 html[data-lumen-canvas][data-lumen-canvas-foundation] .lib-card { --av-bg: var(--cv5-fill-strong); --av-fg: var(--text); border-color: var(--cv5-rim); border-radius: 18px; background: var(--cv5-card); }

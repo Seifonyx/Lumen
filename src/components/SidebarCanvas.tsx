@@ -5,7 +5,7 @@ import { navigateBack, navigateScreen } from '../lib/canvas-presentation';
 // sidebar element as Sidebar (one `sidebarOpen`, one collapse state, the same focus scope and drawer gesture
 // owner) and reuses its ChatRow (rename, pin, move, archive, side by side, share/export, delete, long press),
 // search semantics, AllChats, AskChats and ProjectManager. Folder disclosure is presentation only.
-import { BookOpen, ChevronRight, LayoutGrid, MessageSquarePlus, MessageSquareText, PanelLeftClose, Plus, Search, Settings2, GitFork, Sparkles, X } from 'lucide-react';
+import { BookOpen, ChevronRight, Folder, LayoutGrid, MessageSquarePlus, MessageSquareText, PanelLeftClose, Plus, Search, Settings2, GitFork, Sparkles, X } from 'lucide-react';
 import { Suspense, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { isMac, modKey } from '../lib/util';
@@ -238,16 +238,15 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
                 <div key={p.id} className="cv-project">
                   <button type="button" className={`cv-project-row${contains ? ' has-current' : ''}`} aria-expanded={isOpen} aria-controls={`${ids}-p-${p.id}`}
                     onClick={() => setDisclosure({ ...disclosure, folders: { ...disclosure.folders, [p.id]: !isOpen } })}>
-                    <ChevronRight size={14} className="cv-chev" aria-hidden="true" />
-                    <span className="cv-mono" aria-hidden="true">{p.name.slice(0, 1).toUpperCase()}</span>
+                    <Folder size={18} className="cv-folder-icon" aria-hidden="true" />
                     <span className="cv-name">{p.name}</span>
                     {!isOpen && contains ? here : <span className="cv-count" aria-label={`${list.length} chats`}>{list.length}</span>}
+                    <ChevronRight size={14} className="cv-chev" aria-hidden="true" />
                   </button>
                   <Fold id={`${ids}-p-${p.id}`} open={isOpen}>
                     <ul className="cv-chats" aria-label={p.name}>
                       <li><button type="button" className={`cv-brief${activeProjectId === p.id ? ' active' : ''}${activeProjectId === p.id && workspaceOpen ? ' open' : ''}`} aria-current={activeProjectId === p.id && workspaceOpen ? 'page' : undefined} onClick={() => navigateScreen!(() => { setUi({ page: null, settingsOpen: false }); selectProject(p.id); })}>
-                        <span className="cv-brief-text">{p.description || 'Project overview'}</span>
-                        <span className="cv-brief-meta">{p.instructions?.trim() ? 'Instructions' : 'No instructions'} · {p.files?.length || 0} {p.files?.length === 1 ? 'file' : 'files'}<ChevronRight size={12} aria-hidden="true" /></span>
+                        <span className="cv-brief-text">Project overview</span>
                       </button></li>
                       {/* Inside the folder, so it reads as part of this project; the label names it too. */}
                       {!q && <li><button type="button" className="cv-new-here" onClick={() => newProjectChat(p.id)}><span className="cv-new-here-icon" aria-hidden="true"><Plus size={13} /></span><span className="cv-new-here-label">New chat in {p.name}</span></button></li>}

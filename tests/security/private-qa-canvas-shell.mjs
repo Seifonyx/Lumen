@@ -299,7 +299,7 @@ try {
         // From the sidebar: a destination opened and closed with Chat returns focus to that destination.
         await nav(page).getByRole('button', { name: 'Tools', exact: true }).click();
         await page.getByRole('main', { name: 'Tools' }).waitFor();
-        await page.getByRole('button', { name: 'Close', exact: true }).click();
+        await page.getByRole('button', { name: 'Return to chat', exact: true }).click();
         await page.waitForFunction(() => document.activeElement?.closest('.cv-dest') && document.activeElement.textContent.includes('Tools'));
       }
       pass('drawer / collapse / rail / back / focus return');

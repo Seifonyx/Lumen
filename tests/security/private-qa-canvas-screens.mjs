@@ -158,7 +158,7 @@ try {
                 glyph.setEnd(name.firstChild, 1);
                 return {
                   filename: name.textContent,
-                  extension: row.querySelector('.library-row-copy>span')?.textContent.split(' ? ')[0],
+                  extension: row.querySelector('.library-row-copy>span')?.textContent.trim().split(/\s/)[0],
                   icon: box(icon), meta: box(meta), name: box(name), sub: box(sub),
                   firstGlyph: box(glyph), open: box(open), action: action ? box(action) : null,
                   openLabel: open.getAttribute('aria-label'),

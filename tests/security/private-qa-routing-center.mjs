@@ -207,7 +207,7 @@ try {
       if(phone){await rc(page).getByRole('button',{name:'More actions',exact:true}).click();await page.getByRole('menuitem',{name:'Connection settings',exact:true}).click();}else await rc(page).getByRole('button', { name: 'Connection settings for Google AI Studio' }).click();
       await page.getByRole('dialog', { name: 'Settings' }).waitFor();
       assert.equal(await isOpen(page), false, 'hidden under Settings');
-      await page.getByRole('dialog', { name: 'Settings' }).getByRole('button', { name: phone ? 'Back' : 'Close', exact: true }).first().click();
+      await page.goBack();
       await settle(page, 600);
       assert.equal(await isOpen(page), true, 'back to the Routing Center');
       pass('manage connection');

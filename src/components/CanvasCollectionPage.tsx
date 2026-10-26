@@ -8,6 +8,7 @@ import { exitFeature, featureExitLabel, navigateScreen, screenBack } from '../li
 import { availability, discoverItems, itemName, libraryItems, type LibraryItem, type LibrarySort, type ReadExports } from '../lib/library-items';
 import { formatBytes, safeFileName, saveBlob } from '../lib/util';
 import { loadOriginal } from '../lib/office/originals';
+import { fileKind } from '../lib/generate';
 import type { CollectionKind } from './CollectionPage';
 import HubPage, { HubEmpty, relTime } from './HubPage';
 import PhoneSections from './PhoneSections';
@@ -88,7 +89,7 @@ function LibraryDetail({item,onClose,openChat}:{item:LibraryItem;onClose:()=>voi
  };
  return <Modal title={itemName(item)} onClose={onClose} leading={<button type="button" className="icon-btn feature-exit" aria-label={featureExitLabel()} onClick={()=>exitFeature()}><ChevronLeft size={24}/></button>}>
   <div className="library-detail"><p className="library-detail-availability">{file?availability(file):'Generated file · export on demand'}</p>
-   <dl><div><dt>Source conversation</dt><dd dir="auto">{item.chat.title}</dd></div>{file&&<><div><dt>File type</dt><dd>{file.mime||'Not recorded'}</dd></div>{Number.isFinite(file.size)&&file.size>0&&<div><dt>Recorded size</dt><dd>{formatBytes(file.size)}</dd></div>}</>}<div><dt>{item.kind==='documents'?'Updated':'Added'}</dt><dd>{new Date(item.at).toLocaleString()}</dd></div></dl>
+   <dl><div><dt>Source conversation</dt><dd dir="auto">{item.chat.title}</dd></div>{file&&<><div><dt>File type</dt><dd>{fileKind(file.name).label}</dd></div>{Number.isFinite(file.size)&&file.size>0&&<div><dt>Recorded size</dt><dd>{formatBytes(file.size)}</dd></div>}</>}<div><dt>{item.kind==='documents'?'Updated':'Added'}</dt><dd>{new Date(item.at).toLocaleString()}</dd></div></dl>
    {file&&!file.data&&!file.stored&&<p className="muted">{file.text?'Extracted text is available here. The original formatting and file may be available only on the device where it was added.':'Open the source conversation on the original device to access the file. A thumbnail is not the original.'}</p>}
    {item.kind==='exports'&&<Suspense fallback={<p role="status">Opening file actions…</p>}><FileCard name={item.name} content={item.content} complete onEdit={()=>navigateScreen(()=>{openChat(item.chat.id);useStore.getState().openCanvas(item.name,item.content)})}/></Suspense>}
    {file?.text&&<details><summary>Inspect extracted text</summary><pre dir="auto">{file.text.slice(0,12000)}</pre>{file.text.length>12000&&<p>Showing the first 12,000 characters. Open the source conversation for the full context.</p>}</details>}

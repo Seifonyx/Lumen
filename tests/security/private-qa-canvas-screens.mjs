@@ -140,17 +140,17 @@ try {
           record.screens[name] = await axe(page, 'main.hub-page');
           await shot(page, join(out, `${tag}-${name}.png`));
           if (name === 'library') {
-            assert.ok(await page.locator('.coll-item.kind-documents').count() >= 3, 'populated QA Library shows representative documents');
-            assert.ok(await page.locator('.coll-item.kind-files').count() >= 2, 'populated QA Library shows mixed attachments');
+            assert.ok(await page.locator('.library-row.kind-documents').count() >= 3, 'populated QA Library shows representative documents');
+            assert.ok(await page.locator('.library-row.kind-files').count() >= 2, 'populated QA Library shows mixed attachments');
             // PDF/TXT thumbnail edges and painted filenames must stay separate at all iPhone widths,
             // in Light/Dark on both Chromium and WebKit, with accessible action targets intact.
             if (phone) {
-              const fileRows = await page.locator('.coll-item.kind-files').evaluateAll((rows) => rows.map((row) => {
-                const icon = row.querySelector('.coll-file');
-                const meta = row.querySelector('.doc-meta');
-                const name = row.querySelector('.doc-name');
-                const sub = row.querySelector('.doc-sub');
-                const open = row.querySelector('.doc-open');
+              const fileRows = await page.locator('.library-row.kind-files').evaluateAll((rows) => rows.map((row) => {
+                const icon = row.querySelector('.library-file-icon');
+                const meta = row.querySelector('.library-row-copy');
+                const name = row.querySelector('.library-row-copy strong');
+                const sub = row.querySelector('.library-row-source');
+                const open = row.querySelector('.library-open');
                 const action = row.querySelector('.screen-actions > button');
                 const box = (element) => { const r = element.getBoundingClientRect(); return { left: r.left, right: r.right, width: r.width }; };
                 const glyph = document.createRange();
@@ -158,7 +158,7 @@ try {
                 glyph.setEnd(name.firstChild, 1);
                 return {
                   filename: name.textContent,
-                  extension: row.querySelector('.coll-ext')?.textContent,
+                  extension: row.querySelector('.library-row-copy>span')?.textContent.split(' ? ')[0],
                   icon: box(icon), meta: box(meta), name: box(name), sub: box(sub),
                   firstGlyph: box(glyph), open: box(open), action: action ? box(action) : null,
                   openLabel: open.getAttribute('aria-label'),
@@ -167,7 +167,7 @@ try {
               }));
               assert.deepEqual(fileRows.map((row) => row.extension).sort(), ['PDF', 'TXT'], `${tag}: synthetic PDF and TXT are both present`);
               for (const row of fileRows) {
-                assert.ok(row.icon.width >= 55 && row.icon.width <= 56.5, `${tag}: ${row.filename} stays in its 56px icon track: ${JSON.stringify(row)}`);
+                assert.ok(row.icon.width >= 40 && row.icon.width <= 41.5, `${tag}: ${row.filename} stays in its 40px icon track: ${JSON.stringify(row)}`);
                 assert.ok(row.icon.right + 8 <= row.meta.left + 0.5, `${tag}: ${row.filename} icon and metadata are separate: ${JSON.stringify(row)}`);
                 assert.ok(row.icon.right + 8 <= row.firstGlyph.left + 0.5 && row.firstGlyph.width > 0,
                   `${tag}: ${row.filename} first painted character clears the icon: ${JSON.stringify(row)}`);
@@ -185,7 +185,7 @@ try {
             await page.keyboard.press('Escape');
             const search = page.getByRole('searchbox', { name:'Search your library' });
             await search.fill('Customer interview synthesis'); await settle(page, 200);
-            assert.equal(await page.locator('.coll-item.kind-documents').count(), 1, 'long-name search narrows documents');
+            assert.equal(await page.locator('.library-row.kind-documents').count(), 1, 'long-name search narrows documents');
             await shot(page, join(out, `${tag}-library-search.png`));
             await search.fill('');
             await selectLibraryType(page,'Made by Lumen');
@@ -196,7 +196,7 @@ try {
             if (phone) {
               await selectLibraryType(page,'Everything');
               await settle(page, 200);
-              await page.locator('.coll-item.kind-files').last().scrollIntoViewIfNeeded();
+              await page.locator('.library-row.kind-files').last().scrollIntoViewIfNeeded();
               await shot(page, join(out, `${tag}-library-file-rows.png`));
             }
           }

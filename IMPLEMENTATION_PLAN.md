@@ -1,6 +1,10 @@
 # Dynamic Model Picker implementation plan
 
-## Active - Phase 5 Slice 1: Library experience and feature Exit
+## Active — Conversations & Projects visual checkpoint (2026-10-26)
+
+Owner clarified Conversations & Projects first; Tools Slice2 deferred. Implemented source `e4355acea314ff72ac870f05b73442759ed342e8` on `feat/conversations-projects-experience` from main1e93777. [Scoped plan](docs/superpowers/plans/2026-10-26-conversations-projects.md) and [32 real-app captures/verification](docs/reviews/conversations-projects/README.md) own this checkpoint's acceptance/evidence. Draft delivery only; exact-head CI and planner outcome in PR/live checkpoint. No merge, deploy or owner visual acceptance inferred. Historical weighted ledgers unchanged; **overall completion percentage not defined for the current seven-phase program**.
+
+## Historical — Phase 5 Slice 1: Library experience and feature Exit (released as1e93777)
 
 [Draft PR58](https://github.com/Seifonyx/Lumen/pull/58), branch `feat/phase5-library-experience`, from main `d78363466e6460ce63c8ec7ab7fe67a527f22f15`. Source candidate includes `57443d0` composer safety and the subsequent preview mount-order repair; [design](docs/design/PHASE5_LIBRARY_EXPERIENCE.md), [implementation plan](docs/superpowers/plans/2026-10-26-phase5-library-experience.md), [screenshots and verification](docs/reviews/phase5-library/README.md). **STOP for planner review; no merge/deploy/Slice2/spend/protected infrastructure authority.** Overall completion percentage is not defined for this seven-phase program. All scope-specific weighted ledgers below are historical and unchanged.
 

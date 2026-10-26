@@ -19,24 +19,24 @@ Long names and text scaling must not overlap menus; closed folders must remain i
 
 Files: `tests/e2e/conversations-projects.cjs`, `.github/workflows/tests.yml`.
 Interfaces: consumes synthetic preview-profile/seed; produces repeatable screenshot/results fixtures for both source revisions.
-- [ ] Capture baseline at1e93777 with both engines and all widths/themes.
-- [ ] Add failing assertions for recognizable folder markup, compact overview and project list feedback/phone sorting. Run against baseline and preserve expected failure.
+- [x] Capture baseline at1e93777 with both engines and all widths/themes.
+- [x] Add failing assertions for recognizable folder markup, compact overview and project list feedback/phone sorting. Baseline RED observed for missing folder icon.
 
 ### Task2: Tree, collection and overview
 
 Files: `SidebarCanvas.tsx`, `ProjectsPage.tsx`, Canvas shell/screen CSS; minimal `ProjectWorkspace.tsx` markup only if necessary.
 Interfaces: consumes unchanged ChatRow and store navigation/actions; no changes to store or transport.
-- [ ] Implement folder tree hierarchy and compact overview entry.
-- [ ] Replace Canvas project cards with responsive ledger, search reset/results and sort on phones.
-- [ ] Improve overview/context layout and actions with Canvas CSS.
-- [ ] Run focused e2e RED→GREEN, inspect actual captures and correct defects.
-- [ ] Run existing project/navigation/featureExit checks; commit coherent source.
+- [x] Implement folder tree hierarchy and compact overview entry.
+- [x] Replace Canvas project cards with responsive ledger, search reset/results and sort on phones.
+- [x] Improve overview/context layout and actions with Canvas CSS.
+- [x] Run focused e2e RED→GREEN, inspect actual captures and correct contrast/clear-control defects.
+- [x] Run existing project/navigation/featureExit checks; commit coherent sourcee4355ac.
 
 ### Task3: Verification and review
 
-- [ ] Run npm test, both builds, budgets and isolation. No test weakening or raised caps.
-- [ ] Chromium/WebKit eight viewport/theme cases each, axe, screenshot geometry, synthetic network/privacy; existing canonical regressions.
-- [ ] Fresh whole-branch reviewer; resolve important findings with evidence.
+- [x] Run npm test, both builds, budgets and isolation. No test weakening or raised caps. Ordinary byte identity not claimed; existing CI graph policy used.
+- [x] Chromium/WebKit eight viewport/theme cases each, axe, screenshot geometry, synthetic network/privacy; existing canonical regressions. Local Windows-specific failure limits explicitly in review record.
+- [x] Fresh whole-branch reviewer; corrected clear-control geometry with failing test and updated three stale overview selectors without dropping behavior assertions.
 - [ ] Commit screenshots/provenance and handoff/plan; push isolated branch, open draft PR, verify exact-head CI.
 - [ ] Conflict-safe live checkpoint update/readback. STOP for planner review.
 

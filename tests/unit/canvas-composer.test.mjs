@@ -51,8 +51,10 @@ test('every flagged Composer branch keeps the ordinary expression as its alterna
   const values = src.match(/CANVAS_COMPOSER \? canvas!\.\w+ : '[^']*'/g) || [];
   assert.deepEqual(values, ["CANVAS_COMPOSER ? canvas!.placeholder : 'Message Lumen'"]);
   const localModalCloses = src.match(/onClose=\{CANVAS_COMPOSER \? \(\) => navigateBack!\(\(\) => setCompareOpen\(false\)\) : \(\) => setCompareOpen\(false\)\}/g) || [];
+  const retainedFileGuards = src.match(/owner !== getComposerScope\(\) && \(!CANVAS_COMPOSER \|\| privateOwner \|\| !pendingDrafts.current.has\(owner\)\)/g) || [];
+  assert.equal(retainedFileGuards.length,3,'file batch, completed reads and errors all exclude departed private owners');
   assert.equal(localModalCloses.length,1,'reviewed comparison dismissal keeps its ordinary state setter');
-  assert.equal(spreads.length + ternaries.length + statements.length + values.length + localModalCloses.length, uses, 'no unreviewed flag use');
+  assert.equal(spreads.length + ternaries.length + statements.length + values.length + localModalCloses.length + retainedFileGuards.length, uses, 'no unreviewed flag use');
   assert.equal(spreads.length, 3);
   assert.equal(ternaries.length, 4);
 });

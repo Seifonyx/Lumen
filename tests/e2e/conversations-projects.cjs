@@ -78,6 +78,8 @@ const chats = [chat('origin', 'A quieter way to work'), chat('pinned', 'Ideas wo
         await page.getByRole('combobox', { name: 'Sort projects', exact: true }).selectOption('name');
         await page.getByRole('status').filter({ hasText: '3 projects' }).waitFor();
         await audit('.hub-page'); assert(await page.locator('.hub-page').evaluate(el => el.scrollWidth <= el.clientWidth + 1));
+        await page.getByRole('button', { name: 'Open Studio launch', exact: true }).hover(); await audit('.hub-page');
+        await page.mouse.move(width - 1, height - 1);
       }
       await page.getByRole('button', { name: 'Open Studio launch', exact: true }).click();
       await page.locator('.project-page').waitFor(); await shot('overview');

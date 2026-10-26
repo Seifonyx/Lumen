@@ -74,7 +74,7 @@ html[data-lumen-canvas] .proj-open:focus-visible { outline: 2px solid var(--text
 html[data-lumen-canvas] .proj-stats { gap: 4px 14px; margin: 3px 0 0; }
 html[data-lumen-canvas] .proj-stats > span { padding: 0; background: none; border-radius: 0; color: var(--text-2); }
 html[data-lumen-canvas] .proj-desc { min-height: 0; font-size: 14px; }
-html[data-lumen-canvas] .proj-time { margin: 2px 0 0; }
+html[data-lumen-canvas] .proj-time { margin: 2px 0 0; color: var(--text-2); }
 html[data-lumen-canvas] .projects-summary { margin: 0 0 6px; color: var(--text-3); font-size: 13px; }
 html[data-lumen-canvas] .projects-sort select { min-height: 44px; max-width: 100%; padding: 0 30px 0 12px; border: 1px solid var(--cv5-rim); border-radius: 12px; background: var(--bg); color: var(--text-2); font: inherit; }
 html[data-lumen-canvas] .hub-search:has(input[aria-label='Search projects']) { min-width: 0; min-height: 44px; height: auto; }

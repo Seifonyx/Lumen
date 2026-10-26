@@ -85,6 +85,11 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
   const attachments = useRef<HTMLDivElement>(null);
   const attachmentScope = getComposerScope();
   const pendingScope = useRef(attachmentScope);
+  // Ready files stay with their composer while a feature temporarily opens a different chat.
+  // Memory only; clear across accounts and never retain a departed incognito session.
+  const pendingDrafts = useRef(new Map<string, Pending[]>());
+  const pendingOwner = useRef(useStore.getState().user?.uid);
+  const pendingPrivate = useRef(isTemporaryChat(chat));
   const visiblePending = pendingScope.current === attachmentScope ? pending : [];
   useAttachmentMotion(attachments, visiblePending.map(p => `${p.key}:${Boolean(p.file)}`).join('|'), attachmentScope);
   const [codeExecution, setCodeExecution] = useState(false);
@@ -133,8 +138,17 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
   // can overwrite the first keystrokes after a fast chat switch.
   useLayoutEffect(() => {
     draftKeyRef.current = draftKey;
-    pendingScope.current = getComposerScope();
-    setPending([]);setInterim('');stopListening.current?.();setListening(false);
+    const nextScope = getComposerScope();
+    if (CANVAS_COMPOSER) {
+      if (pendingOwner.current !== accountId) pendingDrafts.current.clear();
+      else if (!pendingPrivate.current) pendingDrafts.current.set(pendingScope.current, pending.filter(item => Boolean(item.file)));
+      else pendingDrafts.current.delete(pendingScope.current);
+      setPending(temporaryRef.current ? [] : pendingDrafts.current.get(nextScope) || []);
+    } else setPending([]);
+    pendingOwner.current = accountId;
+    pendingPrivate.current = temporaryRef.current;
+    pendingScope.current = nextScope;
+    setInterim('');stopListening.current?.();setListening(false);
     if(temporaryRef.current){setText('');return;}
     try {
       let value = localStorage.getItem(draftKey);

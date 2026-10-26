@@ -56,7 +56,7 @@ async function open(browser, mobile) {
   // distinguishing an actual subsection from an index screen still rendering.
   await P.page.locator('.settings-tabs').waitFor({ state: 'attached' });
   if (!(await P.page.locator('.settings-tabs').isVisible())) {
-    check(await P.page.locator('.settings-page .phone-navigation button[aria-label="Back"], .settings-page .settings-back').isVisible(), 'phone: direct-entry settings subsection offers Back');
+    check(await P.page.locator('.settings-page .phone-navigation button[aria-label^="Return to "], .settings-page .settings-back').isVisible(), 'phone: direct-entry settings subsection offers Back');
     await closeSettings(P.page);
   }
   if (!(await P.page.locator('.settings-page').isVisible())) {
@@ -72,7 +72,7 @@ async function open(browser, mobile) {
   check(box.width <= 390 && (await P.page.evaluate(() => document.querySelector('.settings-tabs').scrollWidth <= document.querySelector('.settings-tabs').clientWidth)), 'phone: nothing scrolls sideways');
   await P.page.click('.settings-tabs >> text=Models');
   const modern = await P.page.locator('.settings-page .phone-navigation').isVisible();
-  check((modern ? await P.page.locator('.settings-page .phone-navigation button[aria-label="Back"]').isVisible() && (await P.page.locator('.phone-navigation h1').textContent()).includes('Models') : await P.page.isVisible('.settings-back') && (await P.page.textContent('.settings-title')).includes('Models')) && !(await P.page.isVisible('.settings-tabs')), 'phone: section opens with contextual Back');
+  check((modern ? await P.page.locator('.settings-page .phone-navigation button[aria-label^="Return to "]').isVisible() && (await P.page.locator('.phone-navigation h1').textContent()).includes('Models') : await P.page.isVisible('.settings-back') && (await P.page.textContent('.settings-title')).includes('Models')) && !(await P.page.isVisible('.settings-tabs')), 'phone: section opens with contextual Back');
   await P.page.waitForTimeout(500);
   await P.page.screenshot({ path: require('path').join(__dirname, 'out', 'settings-phone-section.png') });
   await backSettingsSection(P.page);

@@ -65,7 +65,7 @@ const settle = (page, ms = 450) => page.waitForTimeout(ms);
 const nav = (page) => page.locator('aside.cv-nav');
 async function openNav(page, phone) {
   if (!phone || await nav(page).evaluate((el) => el.classList.contains('open'))) return;
-  while(await page.locator('.phone-navigation [aria-label="Back"]').isVisible()){await page.locator('.phone-navigation [aria-label="Back"]').click();await settle(page,250);}
+  while(await page.locator('.phone-navigation [aria-label^="Return to "]').isVisible()){await page.locator('.phone-navigation [aria-label^="Return to "]').click();await settle(page,250);}
   await page.getByRole('button', { name: /^(Open chats|Open sidebar|Open navigation)$/ }).first().click();
   await settle(page, 600);
 }
@@ -327,7 +327,7 @@ try {
           await page.getByRole('menuitem', { name:'Connection settings', exact:true }).click();
           await page.getByRole('dialog', { name:'Settings' }).waitFor();
           await shot(page, join(out, `${tag}-provider-connection-settings.png`));
-          await page.locator('.settings-page > .phone-navigation').getByRole('button', { name:'Back', exact:true }).click();
+          await page.goBack();
           await page.locator('.rc-provider-detail').waitFor();
         }
         await closeAll(page);

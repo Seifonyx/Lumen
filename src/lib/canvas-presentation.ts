@@ -30,10 +30,13 @@ export const newGeneralChat: (() => void) | null = null;
 
 export const PhoneNavigation: import('react').ComponentType<import('../components/PhoneNavigation').PhoneNavigationProps> | null = null;
 export const navigateBack: typeof import('./screen-history').screenBack | null = null;
+export const exitFeature: typeof import('./screen-history').exitFeature | null = null;
+export const featureExitLabel: typeof import('./screen-history').featureExitLabel | null = null;
 export const useScreenMemory: typeof import('./screen-memory').useScreenMemory | null = null;
 export const CanvasFilterMenu: typeof import('../components/FilterMenu').default | null = null;
 export const useScreenBackLayer: typeof import('./back-stack').useBackLayer | null = null;
 export const CanvasLibraryActions: typeof import('../components/CanvasLibraryActions').default | null = null;
+export const CanvasCollectionPage: typeof import('../components/CanvasCollectionPage').default | null = null;
 export const navigateScreen: typeof import('./screen-history').navigateScreen | null = null;
 export const CanvasScreenActions: typeof import('../components/ScreenActions').default | null = null;
 

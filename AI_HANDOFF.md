@@ -1,5 +1,19 @@
 # Dynamic Model Picker operational handoff
 
+## Active ? Phase 5 Slice 1: Library experience and whole-feature Exit
+
+Owner authorization2026-10-26; [draft PR58](https://github.com/Seifonyx/Lumen/pull/58), `feat/phase5-library-experience` from main `d78363466e6460ce63c8ec7ab7fe67a527f22f15`. **STOP for planner review after delivery; no merge/deploy/Slice2/spending/protected infrastructure changes.** Overall completion percentage is not defined for the seven-phase program. Historical weighted ledgers below retain their original scope.
+
+- Design/source map: [spec](docs/design/PHASE5_LIBRARY_EXPERIENCE.md), [plan](docs/superpowers/plans/2026-10-26-phase5-library-experience.md).
+- Implemented: whole-feature Exit traverses to the originating screen, distinct from browser Back/Forward/edge gestures; direct-start fallback replaces its origin; desktop/phone leading controls replace trailing Chat pills. Canonical history and account reset remain the owner.
+- Library: Canvas-only file ledger, explicit chat vs device-local Knowledge ownership, names/chat/document search, project filter, newest/oldest/name sorting, generated reply file blocks through canonical Markdown/FileCard, original/extracted-text availability and safe detail/reuse/download. Ordinary presentation remains supported.
+- Safety: composer ready attachments retained in ephemeral account-scoped memory through source-chat changes; incognito files excluded on departure. Canvas pending/failed name/content writes block Exit; unsent edit instructions/proposals require discard confirmation. Generated previews join canonical local layers. Original retrieval checks account again after await; no new provider/network/storage/auth permissions or schemas.
+- Verified so far: typecheck; full unit suite (including four preexisting Windows fixture failures corrected by path/newline normalization); Chromium whole-feature journeys390/1440 with text+file, Tools Canvas, failed rename and instruction safeguard; WebKit initial Exit journeys; Chromium Library phone/desktop Light/Dark axe/overflow plus scoped Prism/provider/auto-layout/history regressions. Remaining final both-engine matrix/build-isolation/exact-head CI and screenshots are tracked in PR58/live checkpoint.
+- Independent code-review skill found attachment loss, split Tools Canvas navigation, direct-entry fallback, preview ownership, filename saves and desktop Knowledge hidden query. Fixed; regression checks are running. Physical iPhone/PWA/VoiceOver/IME unverified.
+- Measured performance review item: startup growth13.2KB gz (previous cap12.25; bounded cap13.5 for origin/file safety); phone chrome deferred and export parser canonical/lazy. New lazy Library CSS is now counted in source audit20.1KB (cap21); startupCSS16/lazy Routing Center9KB unchanged. No speed improvement or planner acceptance claimed.
+- Operational base: live docs report owner-accepted Phase4 Canvas deployment40313326611 at `d783634`. No production change performed. Preserve both existing worktrees; main remains in sibling `D:/Development/Projects/Lumen` and this linked worktree owns the new feature branch.
+- Next: finish actual screenshot inspection, Chromium/WebKit/QA isolation and exact-head CI; fix failures without removing assertions, update PR/source evidence and conflict-safe live checkpoint, then stop.
+
 ## Active checkpoint — Phase 4 Slice 3 CP2, Prism Usage & Diagnostics (2026-10-26)
 
 - **Authority/branch:** Owner explicitly directed continuation of pushed Codex work on [draft PR #57](https://github.com/Seifonyx/Lumen/pull/57), `feat/phase4-prism-usage-diagnostics` from pushed `46bc329d23ff0103097c1441adf3be078fe72e49`. No other PR, merge, deployment, Gate approval, CP3, live inference or paid service. GitHub connector only in this execution environment; Codex's external/uncommitted workspace remains untouched and cannot be verified from this environment.

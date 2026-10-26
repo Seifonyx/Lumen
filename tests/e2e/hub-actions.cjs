@@ -66,10 +66,10 @@ const models = ['gemini-flash-latest', 'gemini-2.5-pro'];
       await structure('Tools');
       if(phone&&canvas){
         assert.equal(await page.locator('.glass-tabbar').count(),0);
-        await page.locator('.phone-navigation [aria-label="Back"]').click();await page.locator('.hub-page').waitFor({state:'detached'});
+        await page.locator('.phone-navigation [aria-label^="Return to "]').click();await page.locator('.hub-page').waitFor({state:'detached'});
         await page.locator('.menu-btn').click();await page.locator('.sidebar.open').waitFor();
         await page.locator('.sidebar').getByRole('button',{name:'Library',exact:true}).click();await page.getByRole('main',{name:'Library',exact:true}).waitFor();await structure('Library');
-        await page.locator('.phone-navigation [aria-label="Back"]').click();await page.locator('.hub-page').waitFor({state:'detached'});await openTools();
+        await page.locator('.phone-navigation [aria-label^="Return to "]').click();await page.locator('.hub-page').waitFor({state:'detached'});await openTools();
       }else{
       if (phone) {
         const menu = page.locator('.hub-bar').getByRole('button', { name: 'Open sidebar', exact: true });
@@ -106,7 +106,7 @@ const models = ['gemini-flash-latest', 'gemini-2.5-pro'];
       await question.fill('EDITED_DRAFT');
       await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
       await dialog.waitFor({ state: 'detached' });
-      if(canvas){await page.locator('.hub-page .phone-navigation [aria-label="Back"], .hub-page .hub-close').click();await page.locator('.hub-page').waitFor({state:'detached'});}
+      if(canvas){await page.locator('.hub-page .phone-navigation [aria-label^="Return to "], .hub-page :is(.hub-close,.feature-exit)').click();await page.locator('.hub-page').waitFor({state:'detached'});}
       assert.equal(await input.inputValue(), 'EDITED_DRAFT');
       assert.equal(await page.getByRole('button', { name: 'Remove reference.txt', exact: true }).count(), 1);
       assert.equal(requests.length, 0, 'Cancel preserves text/files without sending');

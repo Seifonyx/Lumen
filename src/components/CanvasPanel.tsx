@@ -1,6 +1,6 @@
-import { CANVAS_SHELL, PhoneNavigation, navigateBack, CanvasScreenActions } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, PhoneNavigation, navigateBack, CanvasScreenActions, exitFeature, featureExitLabel } from '../lib/canvas-presentation';
 import PaneResizer from './PaneResizer';
-import { Check, Download, Eye, FilePlus2, Loader2, Pencil, Plus, RotateCcw, Sparkles, Square, Trash2, Upload, X } from 'lucide-react';
+import { Check, ChevronLeft, Download, Eye, FilePlus2, Loader2, Pencil, Plus, RotateCcw, Sparkles, Square, Trash2, Upload, X } from 'lucide-react';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useFocusScope } from '../lib/focus-scope';
 import { useExit } from '../lib/motion';
@@ -34,6 +34,17 @@ function CanvasEditor({ chat, doc }: { chat: Chat; doc: CanvasDocument }) {
   const [saving, setSaving] = useState(false);
   const saveSequence = useRef(0);
   const [saved, setSaved] = useState(true);
+  useEffect(() => {
+    if (!CANVAS_SHELL) return;
+    const guard = (event: Event) => {
+      if (saving || !saved) {
+        event.preventDefault();
+        useStore.getState().toast(saving ? 'Wait for this document to finish saving.' : 'The document has not saved on this device. Keep it open and copy your text before leaving.', 'error');
+      } else if ((proposal || instruction.trim()) && !window.confirm('Leave this document? Your document text is saved, but the edit instruction and any unapplied suggestion will be discarded.')) event.preventDefault();
+    };
+    window.addEventListener('lumen:before-feature-exit', guard);
+    return () => window.removeEventListener('lumen:before-feature-exit', guard);
+  }, [saving, saved, proposal, instruction]);
   useEffect(() => () => aborter.current?.abort(), []);
   const save = async (content: string, expected?: string) => {
     const sequence = ++saveSequence.current;
@@ -106,6 +117,21 @@ export default function CanvasPanel() {
   const input = useRef<HTMLInputElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [nameSaving, setNameSaving] = useState(false), [nameFailed, setNameFailed] = useState(false);
+  const nameSequence = useRef(0);
+  const saveName = async (name: string) => {
+    if (!chat || !doc || name === doc.name) return;
+    const sequence = ++nameSequence.current;
+    setNameSaving(true);
+    const ok = await saveCanvasDocument(chat.id, doc.id, { name });
+    if (sequence === nameSequence.current) { setNameSaving(false); setNameFailed(!ok); }
+  };
+  useEffect(() => {
+    if (!CANVAS_SHELL) return;
+    const guard = (event: Event) => { if (nameSaving || nameFailed || importing) { event.preventDefault(); toast(nameFailed ? 'The document name has not saved. Keep the document open and retry before leaving.' : 'Wait for the document operation to finish.', 'error'); } };
+    window.addEventListener('lumen:before-feature-exit', guard);
+    return () => window.removeEventListener('lumen:before-feature-exit', guard);
+  }, [nameSaving, nameFailed, importing, toast]);
   const [phone, setPhone] = useState(() => window.matchMedia('(max-width:899px)').matches);
   useEffect(() => {
     const query = window.matchMedia('(max-width:899px)');
@@ -113,14 +139,14 @@ export default function CanvasPanel() {
     query.addEventListener('change', changed);
     return () => query.removeEventListener('change', changed);
   }, []);
-  const close = CANVAS_SHELL && phone ? () => navigateBack!(() => setUi({ canvasOpen: false })) : () => setUi({ canvasOpen: false });
+  const close = () => { if (CANVAS_SHELL && !window.dispatchEvent(new Event('lumen:before-feature-exit', { cancelable: true }))) return; if (CANVAS_SHELL && phone) navigateBack!(() => setUi({ canvasOpen: false })); else setUi({ canvasOpen: false }); };
   useFocusScope(root,phone,close);
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     root.current?.querySelector<HTMLButtonElement>('[aria-label="Close canvas"]')?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (document.querySelector('.modal-backdrop')) return;
-      if ((CANVAS_SHELL ? !event.defaultPrevented : true) && event.key === 'Escape') { event.preventDefault(); if (CANVAS_SHELL && phone) navigateBack!(() => setUi({ canvasOpen: false })); else setUi({ canvasOpen: false }); }
+      if ((CANVAS_SHELL ? !event.defaultPrevented : true) && event.key === 'Escape') { event.preventDefault(); close(); }
     };
     window.addEventListener('keydown', onKey);
     return () => { window.removeEventListener('keydown', onKey); if(!phone && previous?.isConnected)previous.focus(); };
@@ -146,10 +172,10 @@ export default function CanvasPanel() {
   };
   return <aside ref={root} className="canvas-panel" aria-label="Document canvas" role={phone ? 'dialog' : 'complementary'} aria-modal={phone || undefined} tabIndex={-1}>
     {!phone && <PaneResizer pane={root} storageKey="mr.canvasWidth" label="Resize document" />}
-    {CANVAS_SHELL && phone && PhoneNavigation ? <PhoneNavigation title={doc?.name || 'Document'} actions={CanvasScreenActions && <Suspense fallback={null}><CanvasScreenActions actions={[{ label: 'Download document', run: download }]} /></Suspense>} /> : <header className="canvas-head"><span><Pencil size={17} /><strong>Canvas</strong></span><button className="icon-btn" aria-label="Close canvas" onClick={close}><X size={18} /></button></header>}
+    {CANVAS_SHELL && phone && PhoneNavigation ? <PhoneNavigation title={doc?.name || 'Document'} onBack={close} actions={CanvasScreenActions && <Suspense fallback={null}><CanvasScreenActions actions={[{ label: 'Download document', run: download }]} /></Suspense>} /> : <header className="canvas-head">{CANVAS_SHELL && <button type="button" className="icon-btn feature-exit" aria-label={featureExitLabel!()} onClick={() => exitFeature!()}><ChevronLeft size={26} /></button>}<span><Pencil size={17} /><strong>Canvas</strong></span><button className="icon-btn" aria-label="Close canvas" onClick={close}><X size={18} /></button></header>}
     <div className={`canvas-document-toolbar${(chat?.documents?.length || 0) > 1 ? '' : ' single'}`}><select aria-label="Choose canvas document" value={doc?.id || ''} onChange={e => setUi({ canvasDocumentId: e.target.value })}>{chat?.documents?.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><button className="icon-btn sm" title="New document" aria-label="New canvas document" onClick={() => openCanvas(`Document ${1 + (chat?.documents?.length || 0)}.md`, '')}><Plus size={17} /></button><button className="icon-btn sm" disabled={importing} title="Import text draft" aria-label="Import canvas document" onClick={() => input.current?.click()}>{importing ? <Loader2 size={16} className="spin" /> : <Upload size={16} />}</button><button className="icon-btn sm" disabled={!doc || downloading} aria-label="Download canvas document" title="Download document" onClick={() => void download()}>{downloading ? <Loader2 size={16} className="spin" /> : <Download size={16} />}</button><button className="icon-btn sm" disabled={!doc} aria-label="Delete canvas document" title="Delete document" onClick={() => { if (chat && doc && confirm(`Delete ${doc.name}?`)) deleteCanvasDocument(chat.id, doc.id); }}><Trash2 size={16} /></button></div>
     <input ref={input} type="file" hidden accept=".txt,.md,.csv,.tsv,.json,.html,.xml,.js,.ts,.tsx,.jsx,.py,.css,.sql,.yaml,.yml,.docx,.pdf,.pptx,.xlsx,.xlsm" onChange={e => { const file = e.target.files?.[0]; if (file) void importFile(file); e.target.value = ''; }} />
-    {chat && doc ? <><label className="canvas-name"><span className="sr-only">Canvas filename</span><input aria-label="Canvas filename" value={doc.name} maxLength={120} onChange={e => void saveCanvasDocument(chat.id, doc.id, { name: e.target.value })} onBlur={e => void saveCanvasDocument(chat.id, doc.id, { name: safeFileName(e.target.value, 'Document.md') })} /></label><CanvasEditor key={`${chat.id}:${doc.id}`} chat={chat} doc={doc} /></> : <div className="canvas-empty"><FilePlus2 size={26} /><p>Start an editable document.</p><button className="btn" onClick={() => openCanvas('Document.md', '')}>New document</button></div>}
+    {chat && doc ? <><label className="canvas-name"><span className="sr-only">Canvas filename</span><input aria-label="Canvas filename" value={doc.name} maxLength={120} onChange={e => void saveName(e.target.value)} onBlur={e => void saveName(safeFileName(e.target.value, 'Document.md'))} /></label>{nameSaving&&<p role="status" className="muted small">Saving document name…</p>}{nameFailed&&<p role="alert" className="canvas-error">Document name could not be saved on this device. Change the name to retry before leaving.</p>}<CanvasEditor key={`${chat.id}:${doc.id}`} chat={chat} doc={doc} /></> : <div className="canvas-empty"><FilePlus2 size={26} /><p>Start an editable document.</p><button className="btn" onClick={() => openCanvas('Document.md', '')}>New document</button></div>}
     <footer className="canvas-footer muted small">Up to 5 documents per chat. Imported files become editable text; the original keeps its formatting.</footer>
   </aside>;
 }

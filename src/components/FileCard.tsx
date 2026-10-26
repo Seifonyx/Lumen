@@ -20,7 +20,7 @@ const ICONS: Record<FileKind, [typeof FileText, string]> = {
   unsupported: [FileText, 'gray'],
 };
 
-export default function FileCard({ name: rawName, content, complete }: { name: string; content: string; complete: boolean }) {
+export default function FileCard({ name: rawName, content, complete, onEdit }: { name: string; content: string; complete: boolean; onEdit?: () => void }) {
   const name = safeFileName(rawName, 'file.txt');
   const { kind, label } = fileKind(name);
   const [Icon, tone] = ICONS[kind];
@@ -76,7 +76,7 @@ export default function FileCard({ name: rawName, content, complete }: { name: s
       </div>
       {complete && kind !== 'unsupported' && (
         <div className="file-actions">
-          <button className="icon-btn sm" onClick={() => useStore.getState().openCanvas(name, content)} aria-label={`Edit ${name} in canvas`} title="Edit in canvas"><Pencil size={16} /></button>
+          <button className="icon-btn sm" onClick={onEdit || (() => useStore.getState().openCanvas(name, content))} aria-label={`Edit ${name} in canvas`} title="Edit in canvas"><Pencil size={16} /></button>
           <button className="btn ghost small" onClick={e => setUi({ preview: { name, content, from: e.currentTarget.closest<HTMLElement>('.file-card') } })} aria-label={`Preview ${name}`}>
             <Eye size={16} /> <span className="hide-xs">Preview</span>
           </button>

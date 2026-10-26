@@ -1,9 +1,9 @@
 // The layout shared by Library, Documents and Study: they open in place of the chat (the sidebar stays), with a
 // large title, a line about what's here, the main action, optional tabs, and the content below.
-import { ArrowLeft, ChevronLeft, FolderKanban, LayoutGrid, Menu, MessageCircle, Plus, Shapes } from 'lucide-react';
+import { ChevronLeft, FolderKanban, LayoutGrid, Menu, MessageCircle, Plus, Shapes } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { usePhoneLayout } from '../lib/phone-layout';
-import { CANVAS_SHELL, PhoneNavigation, navigateBack } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, PhoneNavigation, navigateBack, exitFeature, featureExitLabel } from '../lib/canvas-presentation';
 import { useFocusScope } from '../lib/focus-scope';
 import { installSwipeBack } from '../lib/swipe-back';
 import { swapControl } from '../lib/motion';
@@ -56,8 +56,8 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
   const make = bar?.create || create;
   return (
     <main ref={root} className={`hub-page${scrolled ? ' scrolled' : ''}${bar || compact ? ' has-bar' : ''}`} aria-label={label} tabIndex={-1} data-keep-sidebar="true">
-      {CANVAS_SHELL && phone && PhoneNavigation ? <PhoneNavigation title={typeof title === 'string' ? title : label} onBack={onBack} actions={make && <button type="button" aria-label={make.label} onClick={make.run}><Plus size={22} /></button>} /> : <div className="hub-bar">
-        {onBack ? (
+      {CANVAS_SHELL && phone && PhoneNavigation ? <PhoneNavigation title={typeof title === 'string' ? title : label} onBack={onClose} actions={make && <button type="button" aria-label={make.label} onClick={make.run}><Plus size={22} /></button>} /> : <div className="hub-bar">
+        {CANVAS_SHELL ? <button type="button" className="icon-btn hub-nav feature-exit" aria-label={featureExitLabel!()} onClick={() => exitFeature!()}><ChevronLeft size={26} /></button> : onBack ? (
           <button type="button" className="icon-btn hub-nav" aria-label="Back" onClick={CANVAS_SHELL ? () => navigateBack!(onBack) : onBack}><ChevronLeft size={26} /></button>
         ) : phone ? (
           <button type="button" className="icon-btn hub-nav" aria-label="Open sidebar" onClick={() => useStore.getState().setUi({ sidebarOpen: true })}><Menu size={20} /></button>
@@ -65,9 +65,7 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
         {!onBack && make && (!CANVAS_SHELL || phone) && <button type="button" className="icon-btn hub-nav hub-new" aria-label={make.label} title={make.label} onClick={make.run}><Plus size={22} /></button>}
         <h1 className="hub-bar-title hub-bar-heading">{label}</h1>
         <span className="hub-bar-title hub-bar-label" aria-hidden="true">{label}</span>
-        {CANVAS_SHELL
-          ? <button type="button" className="hub-close cv-chat-pill" aria-label="Close" title="Back to chat" onClick={() => navigateBack!(onClose)}><ArrowLeft size={18} aria-hidden="true" /><span>Chat</span></button>
-          : <button type="button" className="btn ghost small hub-close" aria-label="Close" onClick={onClose}><span className="hub-close-long">Back to chat</span><span className="hub-close-short">Done</span></button>}
+        {!CANVAS_SHELL && <button type="button" className="btn ghost small hub-close" aria-label="Close" onClick={onClose}><span className="hub-close-long">Back to chat</span><span className="hub-close-short">Done</span></button>}
       </div>}
       {CANVAS_SHELL && phone && sectionNavigation}
       <div className="hub-scroll" onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 56)}>

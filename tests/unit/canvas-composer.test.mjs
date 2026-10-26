@@ -3,8 +3,10 @@
 // its styles are scoped to the opted-in composer, and Composer keeps the ordinary JSX in every flagged branch.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync as readSource } from 'node:fs';
 import postcss from 'postcss';
+// Source contracts are independent of the checkout's configured line endings.
+const readFileSync = (...args) => readSource(...args).replace(/\r\n/g, '\n');
 
 test('the Canvas flags are off in the ordinary build and on through one module shared by production and QA', () => {
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m);

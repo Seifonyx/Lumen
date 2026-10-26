@@ -20,10 +20,10 @@ exports.replyAction = async (page, label, which = 'last') => {
 exports.backSettingsSection = async (page) => {
   const legacy = page.locator('.settings-page .settings-back');
   if (await legacy.isVisible()) return legacy.click();
-  const back = page.locator('.settings-page .phone-navigation button[aria-label="Back"]');
+  const back = page.locator('.settings-page .phone-navigation button[aria-label^="Return to "]');
   // The lazy Settings shell and history adapter can commit over separate frames.
   await back.waitFor({ state: 'visible', timeout: 6000 });
-  await back.click();
+  await page.goBack();
 };
 
 exports.openSettingsSection = async (page, name) => {
@@ -51,7 +51,7 @@ exports.closeSettings = async (page) => {
   // assuming a single Escape dismisses both a nested section and its parent.
   for (let step = 0; step < 18 && await root.isVisible(); step++) {
     const close = root.locator('.settings-top button[aria-label="Close"]');
-    const back = root.locator('.phone-navigation button[aria-label="Back"]');
+    const back = root.locator('.phone-navigation button[aria-label^="Return to "]');
     if (await close.isVisible()) await close.click();
     else if (await back.isVisible()) await back.click();
     else { await root.focus(); await page.keyboard.press('Escape'); }
@@ -65,14 +65,14 @@ exports.closeSettings = async (page) => {
 exports.closeCanvas = async (page) => {
   const legacy = page.getByRole('button', { name: 'Close canvas', exact: true });
   if (await legacy.isVisible()) return legacy.click();
-  const back = page.locator('.canvas-panel .phone-navigation button[aria-label="Back"]');
+  const back = page.locator('.canvas-panel .phone-navigation button[aria-label^="Return to "]');
   await back.waitFor({ state: 'visible' });
   await back.click();
 };
 
 /** Library's phone content tabs and desktop type selector share the same canonical filter. */
 exports.selectLibraryType = async (page, label) => {
-  const phoneLabel = { 'Attached files':'Files', 'Made by Lumen':'Generated images' }[label] || label;
+  const phoneLabel = { 'Searchable':'Knowledge', 'Files':'Attached files', 'Generated images':'Made by Lumen' }[label] || label;
   const tab = page.getByRole('tablist', { name:'Library content types' }).getByRole('tab', { name:phoneLabel, exact:true });
   if (await tab.isVisible()) { await tab.click(); return; }
   await page.getByRole('button', { name:/^Content type:/ }).click();

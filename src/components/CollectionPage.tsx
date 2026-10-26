@@ -1,5 +1,5 @@
 import { usePhoneLayout } from '../lib/phone-layout';
-import { CANVAS_SHELL, navigateScreen, CanvasLibraryActions, useScreenMemory, CanvasFilterMenu, CanvasPhoneSections } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, navigateScreen, CanvasLibraryActions, useScreenMemory, CanvasFilterMenu, CanvasPhoneSections, CanvasCollectionPage } from '../lib/canvas-presentation';
 // Collection: everything you've added or made, from every chat: photos, files you attached, documents you wrote
 // in the canvas, images Lumen created, and files you uploaded for Lumen to search. Projects are the folders:
 // filter by one, or move an item's chat into one.
@@ -26,6 +26,7 @@ const imageSrc = (f: Attachment) => (f.data ? `data:${f.mime || 'image/jpeg'};ba
 const ext = (name: string) => (/\.([a-z0-9]{1,5})$/i.exec(name)?.[1] || 'file').toUpperCase();
 
 export default function CollectionPage({ onClose, initial = 'all' }: { onClose: () => void; initial?: CollectionKind }) {
+  if (CANVAS_SHELL && CanvasCollectionPage) return <CanvasCollectionPage onClose={onClose} initial={initial}/>;
   const phone = CANVAS_SHELL ? usePhoneLayout() : false;
   const panelId = CANVAS_SHELL ? useId() : undefined;
   const chats = useStore((s) => s.chats);

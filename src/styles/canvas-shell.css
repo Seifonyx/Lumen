@@ -38,12 +38,12 @@
 
 /* Section headings: label + chevron (right = closed, down = open); "+" is a separate control. */
 .app[data-lumen-canvas-shell] .cv-section { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 4px; margin: 0 -10px; padding: 0 10px; background: var(--sidebar, var(--bg)); }
-.app[data-lumen-canvas-shell] .cv-section-h { flex: 1; min-width: 0; margin: 0; font: inherit; }
+.app[data-lumen-canvas-shell] .cv-section-h { flex: 1; min-width: 0; margin: 0; font: 600 max(13px, calc(var(--fs) - 2px))/1.4 var(--canvas-body-font); }
 .app[data-lumen-canvas-shell] .cv-section-toggle { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 34px; margin-top: 6px; padding: 0 10px; border: 0; border-radius: 8px; background: none; color: var(--canvas-muted); cursor: pointer; }
 .app[data-lumen-canvas-shell] .cv-section-toggle:hover:not(:disabled) { color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .cv-section-toggle:disabled { cursor: default; }
 .app[data-lumen-canvas-shell] .cv-section-toggle:disabled .cv-chev { opacity: .35; }
-.app[data-lumen-canvas-shell] .cv-label { font: 550 calc(var(--fs) - 2px)/1.4 var(--canvas-body-font); letter-spacing: 0; }
+.app[data-lumen-canvas-shell] .cv-label { font: 600 max(13px, calc(var(--fs) - 2px))/1.4 var(--canvas-body-font); letter-spacing: 0; }
 .app[data-lumen-canvas-shell] .cv-section-add { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; margin-top: 6px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--canvas-muted); cursor: pointer; }
 .app[data-lumen-canvas-shell] .cv-section-add:hover { background: var(--canvas-fill); color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .cv-chev { flex: none; transition: rotate var(--canvas-motion-duration) var(--canvas-motion-easing); }
@@ -201,7 +201,7 @@
   .app[data-lumen-canvas-shell] .cv-dest button > svg { width: 21px; height: 21px; color: var(--canvas-ink); stroke-width: 1.8; }
   .app[data-lumen-canvas-shell] .cv-section { margin: 0 -14px; padding: 0 14px; }
   .app[data-lumen-canvas-shell] .cv-section-toggle { min-height: 44px; margin-top: 2px; }
-  .app[data-lumen-canvas-shell] .cv-label { font-size: 11.5px; }
+  .app[data-lumen-canvas-shell] .cv-label { font-size: max(13px, calc(var(--fs) - 2px)); }
   .app[data-lumen-canvas-shell] .cv-section-add { width: 44px; height: 44px; margin-top: 2px; border-radius: 12px; }
   .app[data-lumen-canvas-shell] .cv-project-row { min-height: 44px; font-size: 15.5px; font-weight: 600; }
   .app[data-lumen-canvas-shell] .cv-mono { width: 22px; height: 22px; font-size: 12px; }
@@ -370,7 +370,7 @@
   .app[data-lumen-canvas-shell] .cv-dest button > svg { width: calc(var(--fs, 15px) + 6px); height: calc(var(--fs, 15px) + 6px); }
   .app[data-lumen-canvas-shell] .cv-project-row { min-height: var(--cv-row); font-size: var(--cv-fs); }
   .app[data-lumen-canvas-shell] .cv-mono { width: calc(var(--fs, 15px) + 7px); height: calc(var(--fs, 15px) + 7px); font-size: calc(var(--fs, 15px) - 3px); }
-  .app[data-lumen-canvas-shell] .cv-label { font-size: calc(var(--fs, 15px) - 3.5px); }
+  .app[data-lumen-canvas-shell] .cv-label { font-size: max(13px, calc(var(--fs, 15px) - 2px)); }
   .app[data-lumen-canvas-shell] .cv-search { height: auto; min-height: var(--cv-row); }
   .app[data-lumen-canvas-shell] .cv-search input { font-size: max(16px, calc(var(--fs, 15px) + 1px)); }
   .app[data-lumen-canvas-shell] .cv-brief { min-height: var(--cv-row); }

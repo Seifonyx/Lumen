@@ -30,6 +30,7 @@ export function ChatRow({ chat, active, detail }: { chat: Chat; active: boolean;
   const [title, setTitle] = useState(chat.title);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuKeyboard = useRef(false);
+  const topLayerMenu = Boolean(detail && typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype);
   const rowRef = useRef<HTMLLIElement>(null);
   // Phones: press and hold a chat for its options.
   const [held, setHeld] = useState(false);
@@ -39,7 +40,7 @@ export function ChatRow({ chat, active, detail }: { chat: Chat; active: boolean;
     return root ? installMenuScrub(root) : undefined;
   }, [menu]);
   useLayoutEffect(() => {
-    if (!detail || !menu) return;
+    if (!topLayerMenu || !menu) return;
     const popup = menuRef.current?.querySelector<HTMLElement>('.menu[popover]:not(.exit-ghost)');
     const anchor = menuRef.current?.querySelector<HTMLButtonElement>('button');
     if (!popup || !anchor) return;
@@ -56,7 +57,7 @@ export function ChatRow({ chat, active, detail }: { chat: Chat; active: boolean;
     window.addEventListener('resize', position);
     window.addEventListener('scroll', position, true);
     return () => { window.removeEventListener('resize', position); window.removeEventListener('scroll', position, true); };
-  }, [menu, moving, projects.length, detail]);
+  }, [menu, moving, projects.length, topLayerMenu]);
   const remove = () => { if (confirm(`Delete "${chat.title}"?`)) { if (rowRef.current) exitGhost(rowRef.current, 'row'); void deleteChat(chat.id); } };
 
   useEffect(() => {
@@ -110,7 +111,7 @@ export function ChatRow({ chat, active, detail }: { chat: Chat; active: boolean;
           <MoreHorizontal size={16} />
         </button>
         {menu && (<Exit kind="drop">
-          <div className="menu" popover={detail ? 'manual' : undefined} role="menu" aria-label="Chat options" tabIndex={-1} onKeyDown={e=>{
+          <div className="menu" popover={topLayerMenu ? 'manual' : undefined} role="menu" aria-label="Chat options" tabIndex={-1} onKeyDown={e=>{
             if(e.key==='Escape'){e.stopPropagation();setMenu(false);menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();return}
             if(!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
             e.preventDefault();const items=[...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')];const index=items.indexOf(document.activeElement as HTMLButtonElement);

@@ -161,6 +161,9 @@ try {
     'src/components/CanvasNav.tsx', 'src/components/CanvasRail.tsx',
     // Phase 2 slice 2 (in review): the Canvas tree's arrow keys, loaded by SidebarCanvas with the tree's first focus.
     'src/lib/tree-keys.ts',
+    // Approved drawer: exact pure relative-time formatter extracted unchanged from HubPage to avoid eager page UI.
+    // No request, storage, provider or permission boundary; all graph/output negative controls still apply.
+    'src/lib/relative-time.ts',
     // Owner decision: the global New chat is always general (Canvas only; shared callers through the switch).
     'src/lib/new-chat.ts', 'src/components/CommandPalette.tsx',
     // Phase 2 slice 3 (in review): Back for layers held in a component's state, such as All chats.

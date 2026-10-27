@@ -1,5 +1,5 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
-import { Archive, ArchiveRestore, ChevronRight, LayoutGrid, Shapes, Sparkles, Columns2, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Trash2, X } from 'lucide-react';
+import { Archive, ArchiveRestore, ChevronRight, LayoutGrid, Shapes, Sparkles, Columns2, Download, FolderKanban, MessageSquareText, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Trash2, X } from 'lucide-react';
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
@@ -18,7 +18,7 @@ export const AskChats = lazy(() => import('./AskChats'));
 
 const EMPTY_PROJECTS: Project[] = [];
 
-export function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
+export function ChatRow({ chat, active, detail }: { chat: Chat; active: boolean; detail?: string }) {
   const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
   const { selectChat, deleteChat, renameChat, togglePin, moveChatToProject } = useStore.getState();
   const streaming = useStore((s) => s.streamingChatId === chat.id);
@@ -30,6 +30,7 @@ export function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
   const [title, setTitle] = useState(chat.title);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuKeyboard = useRef(false);
+  const topLayerMenu = Boolean(detail && typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype);
   const rowRef = useRef<HTMLLIElement>(null);
   // Phones: press and hold a chat for its options.
   const [held, setHeld] = useState(false);
@@ -38,6 +39,25 @@ export function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
     const root = menu && menuRef.current?.querySelector<HTMLElement>('.menu:not(.exit-ghost)');
     return root ? installMenuScrub(root) : undefined;
   }, [menu]);
+  useLayoutEffect(() => {
+    if (!topLayerMenu || !menu) return;
+    const popup = menuRef.current?.querySelector<HTMLElement>('.menu[popover]:not(.exit-ghost)');
+    const anchor = menuRef.current?.querySelector<HTMLButtonElement>('button');
+    if (!popup || !anchor) return;
+    // The native top layer escapes the scrolling tree without leaving its DOM/focus scope.
+    popup.showPopover();
+    const position = () => {
+      const r = anchor.getBoundingClientRect();
+      // grow-in scales the painted box; layout dimensions also fit after the animation settles.
+      const box = { width: popup.offsetWidth, height: popup.offsetHeight };
+      popup.style.left = `${Math.max(12, Math.min(r.right - box.width, innerWidth - box.width - 12))}px`;
+      popup.style.top = `${Math.max(12, Math.min(r.bottom + 6, innerHeight - box.height - 12))}px`;
+    };
+    position();
+    window.addEventListener('resize', position);
+    window.addEventListener('scroll', position, true);
+    return () => { window.removeEventListener('resize', position); window.removeEventListener('scroll', position, true); };
+  }, [menu, moving, projects.length, topLayerMenu]);
   const remove = () => { if (confirm(`Delete "${chat.title}"?`)) { if (rowRef.current) exitGhost(rowRef.current, 'row'); void deleteChat(chat.id); } };
 
   useEffect(() => {
@@ -80,17 +100,18 @@ export function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
 
   return (
     <li className={`chat-row${active ? ' active' : ''}${menu ? ' menu-open' : ''}`} data-flip={chat.id} ref={rowRef}>
-      <button className="chat-open" onClick={() => selectChat(chat.id)} dir="auto" title={chat.title}>
+      <button className="chat-open" onClick={() => selectChat(chat.id)} dir="auto" title={chat.title} aria-label={detail ? chat.title : undefined}>
+        {detail && <MessageSquareText size={18} className="cv-chat-glyph" aria-hidden="true" />}
         {chat.pinned && <Pin size={13} className="pin-mark" />}
-        <span className="chat-title">{chat.title}</span>
+        {detail ? <span className="cv-chat-copy"><span className="chat-title">{chat.title}</span><span className="cv-chat-detail">{detail}</span></span> : <span className="chat-title">{chat.title}</span>}
         {streaming && <span className="dot-pulse" aria-label="Replying" />}
       </button>
       <div className="row-menu" ref={menuRef}>
-        <button className="icon-btn sm" aria-label="Chat options" aria-haspopup="menu" aria-expanded={menu} onClick={e => { menuKeyboard.current = e.detail === 0; setMenu(!menu); }} onKeyDown={e=>{if(e.key==='ArrowDown'){e.preventDefault();menuKeyboard.current=true;setMenu(true)}}}>
+        <button className="icon-btn sm" onMouseDown={e => { if (detail) { e.preventDefault(); e.currentTarget.focus({ preventScroll: true }); } }} aria-label="Chat options" aria-haspopup="menu" aria-expanded={menu} onClick={e => { menuKeyboard.current = e.detail === 0; setMenu(!menu); }} onKeyDown={e=>{if(e.key==='ArrowDown'){e.preventDefault();menuKeyboard.current=true;setMenu(true)}}}>
           <MoreHorizontal size={16} />
         </button>
         {menu && (<Exit kind="drop">
-          <div className="menu" role="menu" aria-label="Chat options" tabIndex={-1} onKeyDown={e=>{
+          <div className="menu" popover={topLayerMenu ? 'manual' : undefined} role="menu" aria-label="Chat options" tabIndex={-1} onKeyDown={e=>{
             if(e.key==='Escape'){e.stopPropagation();setMenu(false);menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();return}
             if(!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
             e.preventDefault();const items=[...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')];const index=items.indexOf(document.activeElement as HTMLButtonElement);

@@ -1,6 +1,10 @@
 # Dynamic Model Picker implementation plan
 
-## Active — Conversations & Projects visual checkpoint (2026-10-26)
+## Active — owner-approved drawer composition expansion (2026-10-27)
+
+Owner approved sourcef4dfdf4's actual390px Light drawer and authorized careful expansion on existing `feat/drawer-composition-pass2`, base released main828a05c. [Current plan](docs/superpowers/plans/2026-10-27-drawer-composition.md) and [design](docs/superpowers/specs/2026-10-27-drawer-composition-design.md). Shared phone/desktop styling, compact empty Projects and quiet creation/account footer are implemented at application sourceeec2ad2. [Draft PR60](https://github.com/Seifonyx/Lumen/pull/60) and [full capture/provenance gallery](docs/reviews/drawer-composition/README.md) own delivery evidence; final exact-head CI and live readback are maintained in PR60/live CURRENT_STATUS; consult them before any action. No new composition, merge/deploy, Tools, spending or schema/infrastructure changes. Historical weighted ledgers preserved; overall seven-phase completion percentage remains undefined.
+
+## Historical — Conversations & Projects visual checkpoint (2026-10-26, released in828a05c)
 
 Owner clarified Conversations & Projects first; Tools Slice2 deferred. Final source `b49b719bfcaf12ef10dfa42dbeefe95d7ae2ce13` on `feat/conversations-projects-experience` from main1e93777, [draft PR59](https://github.com/Seifonyx/Lumen/pull/59). [Scoped plan](docs/superpowers/plans/2026-10-26-conversations-projects.md) and [32 real-app captures/verification](docs/reviews/conversations-projects/README.md) own this checkpoint's acceptance/evidence. Initial CI failure and corrections recorded; final exact-head CI and planner outcome in PR/live checkpoint. No merge, deploy or owner visual acceptance inferred. Historical weighted ledgers unchanged; **overall completion percentage not defined for the current seven-phase program**.
 

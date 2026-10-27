@@ -4,7 +4,7 @@
  * materials stay in app.css/glass.css. Header and reading restyle the existing ChatView/MessageThread markup. */
 .app[data-lumen-canvas-shell] {
   --canvas-fill-strong: color-mix(in srgb, var(--text) 12%, transparent);
-  --cv-row: 36px; --cv-gap: 2px; --cv-fs: calc(var(--fs) - 1px); --cv-ico: 17px;
+  --cv-row: max(48px, calc(var(--fs,15px)*2.7 + 8px)); --cv-control: max(38px, calc(var(--fs,15px)*1.4 + 17px)); --cv-gap: 2px; --cv-fs: calc(var(--fs,15px) - 1px); --cv-ico: 17px; --cv-selection: rgb(83 132 230 / .11); --cv-selection-ink: #284b83;
 }
 @media (min-width: 900px) { .app[data-lumen-canvas-shell] { --sidebar-w: var(--canvas-nav-width); } }
 
@@ -12,39 +12,38 @@
 .app[data-lumen-canvas-shell] .cv-nav { padding: 14px 10px 10px; box-sizing: border-box; gap: 0; }
 .app[data-lumen-canvas-shell] .cv-nav ul { list-style: none; margin: 0; padding: 0; }
 .app[data-lumen-canvas-shell] .cv-nav button { font-family: var(--canvas-body-font); }
-.app[data-lumen-canvas-shell] .cv-head { display: flex; align-items: center; gap: 6px; padding: 2px 2px 12px 10px; }
+.app[data-lumen-canvas-shell] .cv-head { display: flex; align-items: center; gap: 8px; padding: 0 0 12px 6px; min-height: var(--cv-control); }
 .app[data-lumen-canvas-shell] .cv-brand { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; color: var(--canvas-ink); }
-.app[data-lumen-canvas-shell] .cv-head-btn { display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 10px; background: none; color: var(--canvas-secondary); cursor: pointer; }
+.app[data-lumen-canvas-shell] .cv-head-btn { display: inline-grid; place-items: center; flex: none; width: var(--cv-control); height: var(--cv-control); padding: 0; border: 0; border-radius: 10px; background: none; color: var(--canvas-secondary); cursor: pointer; margin: 0 -4px 0 0; box-shadow: none; }
 .app[data-lumen-canvas-shell] .cv-head-btn:hover { background: var(--canvas-fill); color: var(--canvas-ink); }
-.app[data-lumen-canvas-shell] .cv-search { display: flex; align-items: center; gap: 8px; height: 38px; margin: 0 0 10px; padding: 0 12px; border: 0; border-radius: 12px; background: var(--canvas-fill); color: var(--canvas-muted); }
-.app[data-lumen-canvas-shell] .cv-search input { flex: 1; min-width: 0; border: 0; background: none; outline: none; font: inherit; font-size: 14px; color: var(--canvas-ink); }
+.app[data-lumen-canvas-shell] .cv-search { display: flex; align-items: center; gap: 8px; height: auto; margin: 0 0 6px; padding: 0 12px; border: 0; border-radius: 13px; background: color-mix(in srgb, var(--canvas-ink) 5%, transparent); color: var(--canvas-muted); min-height: var(--cv-control); }
+.app[data-lumen-canvas-shell] .cv-search input { flex: 1; min-width: 0; border: 0; background: none; outline: none; font: inherit; font-size: max(14px, var(--fs,15px)); color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .cv-search:focus-within { box-shadow: 0 0 0 2px color-mix(in srgb, var(--canvas-ink) 35%, transparent); }
 .app[data-lumen-canvas-shell] .cv-kbd { flex: none; padding: 2px 6px; border: 1px solid var(--canvas-rim); border-radius: 6px; background: none; color: var(--canvas-muted); cursor: pointer; }
 .app[data-lumen-canvas-shell] .cv-kbd kbd { font: 500 11px var(--canvas-data-font); }
 .app[data-lumen-canvas-shell] .cv-kbd:hover { color: var(--canvas-ink); border-color: color-mix(in srgb, var(--canvas-ink) 30%, transparent); }
-.app[data-lumen-canvas-shell] .cv-ask { display: flex; align-items: center; gap: 8px; min-height: 36px; margin: 0 0 8px; padding: 0 10px; border: 0; border-radius: 10px; background: var(--canvas-fill); color: var(--canvas-secondary); font-size: 13px; text-align: start; cursor: pointer; }
+.app[data-lumen-canvas-shell] .cv-ask { box-sizing: border-box; display: flex; align-items: center; gap: 8px; min-height: var(--cv-control); margin: 0 0 8px; padding: 0 10px; border: 0; border-radius: 10px; background: var(--canvas-fill); color: var(--canvas-secondary); font-size: calc(var(--fs,15px) - 2px); text-align: start; cursor: pointer; }
 .app[data-lumen-canvas-shell] .cv-ask > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.app[data-lumen-canvas-shell] .cv-tree { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; margin: 0 -10px; padding: 0 10px 12px;
-  -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), transparent); }
+.app[data-lumen-canvas-shell] .cv-tree { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; margin: 0 -6px; padding: 0 6px 12px; -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), transparent); }
 
 /* Destinations: the places that aren't conversations; an inset hairline separates them from saved content. */
-.app[data-lumen-canvas-shell] .cv-dest { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 2px 0 12px; margin-bottom: 8px; }
-.app[data-lumen-canvas-shell] .cv-dest::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 1px; background: var(--canvas-rim); }
-.app[data-lumen-canvas-shell] .cv-dest button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 38px; padding: 0 10px; border: 0; border-radius: 10px; background: none; color: var(--canvas-ink); font-size: 14px; font-weight: 500; text-align: start; cursor: pointer; }
-.app[data-lumen-canvas-shell] .cv-dest button > svg { flex: none; width: 18px; height: 18px; color: var(--canvas-secondary); stroke-width: 1.9; }
+.app[data-lumen-canvas-shell] .cv-dest { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 0 14px; margin-bottom: 8px; margin: 0; }
+.app[data-lumen-canvas-shell] .cv-dest::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 1px; background: var(--canvas-rim); inset-inline: 4px; }
+.app[data-lumen-canvas-shell] .cv-dest button { display: flex; align-items: center; gap: 13px; width: 100%; min-height: var(--cv-control); padding: 0 10px; border: 0; border-radius: 10px; background: none; color: var(--canvas-ink); font-size: var(--fs,15px); font-weight: 500; text-align: start; cursor: pointer; }
+.app[data-lumen-canvas-shell] .cv-dest button > svg { flex: none; width: 20px; height: 20px; color: var(--canvas-secondary); stroke-width: 1.9; }
 .app[data-lumen-canvas-shell] .cv-dest button:hover { background: var(--canvas-fill); }
 .app[data-lumen-canvas-shell] .cv-dest button[aria-current='page'] { background: var(--canvas-fill-strong); }
 .app[data-lumen-canvas-shell] .cv-dest kbd { margin-inline-start: auto; font: 500 11px var(--canvas-data-font); color: var(--canvas-muted); }
 
 /* Section headings: label + chevron (right = closed, down = open); "+" is a separate control. */
-.app[data-lumen-canvas-shell] .cv-section { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 4px; margin: 0 -10px; padding: 0 10px; background: var(--sidebar, var(--bg)); }
+.app[data-lumen-canvas-shell] .cv-section { position: static; top: 0; z-index: 2; display: flex; align-items: center; gap: 4px; margin: 0; padding: 8px 0 2px; background: none; }
 .app[data-lumen-canvas-shell] .cv-section-h { flex: 1; min-width: 0; margin: 0; font: 600 max(13px, calc(var(--fs) - 2px))/1.4 var(--canvas-body-font); }
-.app[data-lumen-canvas-shell] .cv-section-toggle { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 34px; margin-top: 6px; padding: 0 10px; border: 0; border-radius: 8px; background: none; color: var(--canvas-muted); cursor: pointer; }
+.app[data-lumen-canvas-shell] .cv-section-toggle { display: flex; align-items: center; gap: 6px; width: 100%; min-height: var(--cv-control); padding: 0 6px; border: 0; border-radius: 8px; background: none; color: var(--canvas-ink); cursor: pointer; margin: 0; }
 .app[data-lumen-canvas-shell] .cv-section-toggle:hover:not(:disabled) { color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .cv-section-toggle:disabled { cursor: default; }
 .app[data-lumen-canvas-shell] .cv-section-toggle:disabled .cv-chev { opacity: .35; }
-.app[data-lumen-canvas-shell] .cv-label { font: 600 max(13px, calc(var(--fs) - 2px))/1.4 var(--canvas-body-font); letter-spacing: 0; }
-.app[data-lumen-canvas-shell] .cv-section-add { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; margin-top: 6px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--canvas-muted); cursor: pointer; }
+.app[data-lumen-canvas-shell] .cv-label { font: 600 max(13px, calc(var(--fs) - 2px))/1.4 var(--canvas-body-font); letter-spacing: 0; font-size: max(13px, calc(var(--fs,15px) - 2px)); font-weight: 600; }
+.app[data-lumen-canvas-shell] .cv-section-add { display: inline-grid; place-items: center; flex: none; width: var(--cv-control); height: var(--cv-control); padding: 0; border: 0; border-radius: 8px; background: none; color: var(--canvas-secondary); cursor: pointer; margin: 0 -5px 0 0; }
 .app[data-lumen-canvas-shell] .cv-section-add:hover { background: var(--canvas-fill); color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .cv-chev { flex: none; transition: rotate var(--canvas-motion-duration) var(--canvas-motion-easing); }
 .app[data-lumen-canvas-shell] [aria-expanded='true'] > .cv-chev { rotate: 90deg; }
@@ -62,65 +61,94 @@
 
 /* Project folders. */
 .app[data-lumen-canvas-shell] .cv-project { min-width: 0; }
-.app[data-lumen-canvas-shell] .cv-project-row { display: flex; align-items: center; gap: 8px; width: 100%; min-height: calc(var(--cv-row) + 2px); padding: 0 10px 0 8px; border: 0; border-radius: 10px; background: none; color: var(--canvas-ink); font-size: var(--cv-fs); font-weight: 560; text-align: start; cursor: pointer; }
+.app[data-lumen-canvas-shell] .cv-project-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: var(--cv-control); padding: 0 9px; border: 0; border-radius: 10px; background: none; color: var(--canvas-ink); font-size: var(--fs,15px); font-weight: 450; text-align: start; cursor: pointer; }
 .app[data-lumen-canvas-shell] .cv-project-row > .cv-chev { color: var(--canvas-muted); margin-inline-start: 2px; }
-.app[data-lumen-canvas-shell] .cv-folder-icon { flex: none; color: var(--canvas-secondary); stroke-width: 1.6; }
-.app[data-lumen-canvas-shell] .cv-project-row[aria-expanded='true'] { background: var(--canvas-fill); }
+.app[data-lumen-canvas-shell] .cv-folder-icon { flex: none; color: var(--canvas-secondary); stroke-width: 1.5; width: 21px; height: 21px; }
+.app[data-lumen-canvas-shell] .cv-project-row[aria-expanded='true'] { background: none; }
 .app[data-lumen-canvas-shell] .cv-project-row:hover { background: var(--canvas-fill); }
 .app[data-lumen-canvas-shell] .cv-archived-label { margin: 10px 10px 2px; font: 500 10.5px/1.3 var(--canvas-data-font); letter-spacing: .12em; text-transform: uppercase; color: var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .cv-archived :is(.chat-open, .chat-title) { color: var(--canvas-secondary); }
-.app[data-lumen-canvas-shell] .cv-mono { display: inline-grid; place-items: center; flex: none; width: 20px; height: 20px; border-radius: 6px; background: var(--canvas-fill-strong); color: var(--canvas-ink); font: 650 11px/1 var(--canvas-display-font); }
 .app[data-lumen-canvas-shell] .cv-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.app[data-lumen-canvas-shell] .cv-count { font: 500 11.5px var(--canvas-body-font); color: var(--canvas-muted); font-variant-numeric: tabular-nums; }
+.app[data-lumen-canvas-shell] .cv-count { font: 500 11.5px var(--canvas-body-font); color: var(--canvas-secondary); font-variant-numeric: tabular-nums; }
 .app[data-lumen-canvas-shell] .cv-project-row[aria-expanded='true'] .cv-count { opacity: 0; }
-.app[data-lumen-canvas-shell] .cv-project .cv-chats { margin: 4px 0 10px; margin-inline-start: 17px; padding-inline-start: 12px; border-inline-start: 1px solid var(--canvas-rim); }
-.app[data-lumen-canvas-shell] .cv-brief { display: flex; flex-direction: column; gap: 2px; width: 100%; margin: 2px 0; padding: 6px 10px; border: 0; border-radius: 10px; background: none; color: var(--canvas-secondary); line-height: 1.35; text-align: start; cursor: pointer; }
+.app[data-lumen-canvas-shell] .cv-project .cv-chats { margin: 4px 0 10px; margin-inline-start: 18px; padding-inline-start: 10px; border-inline-start: 1px solid var(--canvas-rim); }
+.app[data-lumen-canvas-shell] .cv-brief { min-height: var(--cv-control); box-sizing: border-box; justify-content: center; display: flex; flex-direction: column; gap: 2px; width: 100%; margin: 2px 0; padding: 6px 10px; border: 0; border-radius: 10px; background: none; color: var(--canvas-secondary); line-height: 1.35; text-align: start; cursor: pointer; }
 .app[data-lumen-canvas-shell] .cv-brief:hover { background: var(--canvas-fill); }
 /* Selected only while the project's overview is what's on screen (the project being active alone is shown by where
    New chat goes, not by a second highlighted row). */
 .app[data-lumen-canvas-shell] .cv-brief.open { background: var(--canvas-fill-strong); color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .cv-brief-text { font-size: calc(var(--fs) - 2px); line-height: 1.5; }
-.app[data-lumen-canvas-shell] .cv-brief-meta { display: flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 500; color: var(--canvas-secondary); }
-.app[data-lumen-canvas-shell] :is(.cv-more, .cv-new-here, .cv-empty) { display: flex; align-items: center; gap: 7px; width: 100%; min-height: 30px; padding: 0 10px; border: 0; border-radius: 9px; background: none; color: var(--canvas-muted); font-size: 12.5px; text-align: start; cursor: pointer; }
+.app[data-lumen-canvas-shell] :is(.cv-more, .cv-new-here, .cv-empty) { display: flex; align-items: center; gap: 7px; width: 100%; min-height: var(--cv-control); padding: 0 10px; border: 0; border-radius: 9px; background: none; color: var(--canvas-secondary); font-size: calc(var(--fs,15px) - 2.5px); text-align: start; cursor: pointer; }
 .app[data-lumen-canvas-shell] :is(.cv-more, .cv-new-here, .cv-empty):hover { background: var(--canvas-fill); color: var(--canvas-ink); }
 /* New chat in a project: a small outlined tile the size of the project monograms, so it reads as this folder's own. */
 .app[data-lumen-canvas-shell] .cv-new-here { color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .cv-new-here-icon { display: inline-grid; place-items: center; flex: none; width: 18px; height: 18px; border: 1px solid var(--canvas-rim); border-radius: 6px; color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .cv-new-here-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.app[data-lumen-canvas-shell] .cv-empty { min-height: 0; padding: 8px 10px; line-height: 1.4; }
+.app[data-lumen-canvas-shell] .cv-empty { min-height: var(--cv-control); padding: 8px 10px; line-height: 1.4; }
 
 /* Conversation rows: Sidebar's ChatRow, restyled; actions stay out of sight until needed. */
 .app[data-lumen-canvas-shell] .cv-loose { margin-top: 4px; }
-.app[data-lumen-canvas-shell] .cv-chats { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--cv-gap); }
-.app[data-lumen-canvas-shell] .cv-nav .chat-row { position: relative; display: flex; align-items: center; min-width: 0; margin: 0; padding: 0; border-radius: 9px; background: none; }
+.app[data-lumen-canvas-shell] .cv-chats { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
+.app[data-lumen-canvas-shell] .cv-nav .chat-row { position: relative; display: flex; align-items: center; min-width: 0; margin: 0; padding: 0; border-radius: 9px; background: none; min-height: var(--cv-row); height: auto; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-open { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; min-height: var(--cv-row); padding: 5px 10px; border: 0; border-radius: 9px; background: none; color: var(--canvas-ink); font-size: var(--cv-fs); font-weight: 400; text-align: start; cursor: pointer; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* The pin trails the title, so every title in a list starts on the same edge. */
 .app[data-lumen-canvas-shell] .cv-nav .pin-mark { flex: none; order: 1; width: 12px; height: 12px; color: var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row:is(:hover, .menu-open) .chat-open { background: var(--canvas-fill); color: var(--canvas-ink); }
-.app[data-lumen-canvas-shell] .cv-nav .chat-row.active .chat-open { background: var(--canvas-fill-strong); color: var(--canvas-ink); font-weight: 600; }
+.app[data-lumen-canvas-shell] .cv-nav .chat-row.active .chat-open { background: var(--cv-selection); color: var(--canvas-ink); font-weight: 600; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row::before, .app[data-lumen-canvas-shell] .cv-nav .chat-row::after { content: none; }
-.app[data-lumen-canvas-shell] .cv-nav .row-menu { position: absolute; inset-inline-end: 3px; top: 50%; translate: 0 -50%; opacity: 0; transition: opacity .12s; }
-.app[data-lumen-canvas-shell] .cv-nav .row-menu > .icon-btn { width: 28px; height: 28px; border-radius: 8px; color: var(--canvas-secondary); }
+.app[data-lumen-canvas-shell] .cv-nav .row-menu { position: absolute; inset-inline-end: 4px; top: 50%; translate: 0 -50%; opacity: 0; transition: opacity .12s; }
+.app[data-lumen-canvas-shell] .cv-nav .row-menu > .icon-btn { width: 36px; height: 36px; border-radius: 8px; color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row:is(:hover, :focus-within, .menu-open) .row-menu { opacity: 1; }
-.app[data-lumen-canvas-shell] .cv-nav .chat-row:is(:hover, :focus-within, .menu-open) .chat-open { padding-inline-end: 34px; }
+.app[data-lumen-canvas-shell] .cv-nav .chat-row:is(:hover, :focus-within, .menu-open) .chat-open { padding-inline-end: 44px; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row .menu { inset-inline-end: 0; inset-inline-start: auto; min-width: 212px; z-index: 30; }
+.app[data-lumen-canvas-shell] .cv-nav .chat-row .menu[popover] { position: fixed; inset: auto; margin: 0; box-sizing: border-box; max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); overflow: auto; overscroll-behavior: contain; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row.editing input { width: 100%; min-height: var(--cv-row); padding: 0 10px; border: 0; border-radius: 9px; background: var(--canvas-fill-strong); color: var(--canvas-ink); font: inherit; font-size: var(--cv-fs); outline: 2px solid color-mix(in srgb, var(--canvas-ink) 35%, transparent); }
-.app[data-lumen-canvas-shell] .cv-all { display: flex; align-items: center; gap: 9px; width: 100%; min-height: calc(var(--cv-row) + 2px); margin-top: 6px; padding: 0 10px; border: 0; border-radius: 9px; background: none; color: var(--canvas-secondary); font-size: 13px; font-weight: 500; cursor: pointer; }
-.app[data-lumen-canvas-shell] .cv-all > svg:last-child { margin-inline-start: auto; color: var(--canvas-muted); }
-.app[data-lumen-canvas-shell] .cv-all:hover { background: var(--canvas-fill); color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .cv-none { margin: 4px 10px; font-size: 12.5px; color: var(--canvas-muted); }
 
 /* Account footer. */
-.app[data-lumen-canvas-shell] .cv-foot { display: flex; align-items: center; gap: 10px; padding-top: 8px; border-top: 1px solid var(--canvas-rim); }
-.app[data-lumen-canvas-shell] .cv-account { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; min-height: 44px; padding: 0 8px; border: 0; border-radius: 12px; background: none; color: var(--canvas-ink); text-align: start; cursor: pointer; }
+.app[data-lumen-canvas-shell] .cv-foot { display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--canvas-rim); margin: 0; padding: 12px 0 0; min-height: var(--cv-control); }
+.app[data-lumen-canvas-shell] .cv-account { display: flex; align-items: center; gap: 10px; flex: none; justify-content: center; min-width: 0; min-height: var(--cv-control); padding: 0; border: 0; border-radius: 12px; background: none; color: var(--canvas-ink); text-align: start; cursor: pointer; width: var(--cv-control); margin: 0; box-shadow: none; }
 .app[data-lumen-canvas-shell] .cv-account:hover { background: var(--canvas-fill); }
-.app[data-lumen-canvas-shell] .cv-avatar { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--canvas-fill-strong); color: var(--canvas-ink); font: 650 12.5px var(--canvas-display-font); object-fit: cover; }
-.app[data-lumen-canvas-shell] .cv-account-text { display: grid; flex: 1; min-width: 0; line-height: 1.25; }
-.app[data-lumen-canvas-shell] .cv-account-name { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.app[data-lumen-canvas-shell] .cv-account-sub { font-size: 11.5px; color: var(--canvas-muted); }
-.app[data-lumen-canvas-shell] .cv-account:hover .cv-account-sub { color: var(--canvas-secondary); }
-.app[data-lumen-canvas-shell] .cv-account-gear { flex: none; color: var(--canvas-muted); }
+.app[data-lumen-canvas-shell] .cv-avatar { display: inline-grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--canvas-fill-strong); color: var(--canvas-ink); font: 650 12.5px var(--canvas-display-font); object-fit: cover; font-size: 13px; }
+.app[data-lumen-canvas-shell] .cv-dest button > .cv-place-chevron { margin-inline-start: auto; width: 14px; height: 14px; color: var(--canvas-muted); }
+.app[data-lumen-canvas-shell] .cv-section-toggle > .cv-chev { opacity: .45; width: 11px; height: 11px; }
+.app[data-lumen-canvas-shell] .cv-project-row.has-current { background: var(--cv-selection); }
+.app[data-lumen-canvas-shell] .cv-project-row.has-current .cv-folder-icon { color: #3475d6; fill: rgb(62 126 226 / .14); }
+.app[data-lumen-canvas-shell] .cv-more { min-height: var(--cv-control); font-size: calc(var(--fs,15px) - 3px); color: var(--canvas-secondary); }
+.app[data-lumen-canvas-shell] .cv-workspace-end { border-top: 1px solid var(--canvas-rim); }
+.app[data-lumen-canvas-shell] .cv-chats.cv-loose { margin: 2px 0 0; }
+.app[data-lumen-canvas-shell] .cv-nav .chat-row .chat-open { min-height: var(--cv-row); height: auto; padding: 7px 9px; gap: 12px; border-radius: 10px; font-size: var(--cv-fs); line-height: 1.35; font-weight: 450; }
+.app[data-lumen-canvas-shell] .cv-nav .chat-row:is(.active, :focus-within, .menu-open) .chat-open { padding-inline-end: 44px; }
+.app[data-lumen-canvas-shell] .cv-chat-glyph { flex: none; color: var(--canvas-secondary); width: 19px; height: 19px; stroke-width: 1.5; }
+.app[data-lumen-canvas-shell] .cv-chat-copy { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; text-align: start; }
+.app[data-lumen-canvas-shell] .cv-chat-copy .chat-title { display: block; flex: none; }
+.app[data-lumen-canvas-shell] .cv-chat-detail { color: var(--canvas-secondary); font-size: max(12px, calc(var(--fs,15px) - 3px)); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app[data-lumen-canvas-shell] .cv-nav .chat-row.active .cv-chat-glyph { color: var(--cv-selection-ink); }
+.app[data-lumen-canvas-shell] .cv-new-pill { display: flex; align-items: center; min-width: 0; cursor: pointer; flex: 1; justify-content: flex-start; gap: 12px; min-height: var(--cv-control); padding: 0 14px; border: 1px solid var(--canvas-rim); border-radius: 13px; background: color-mix(in srgb, var(--canvas-paper) 75%, transparent); color: var(--canvas-ink); font-size: calc(var(--fs,15px) - 1px); font-weight: 550; box-shadow: none; }
+
+@media(prefers-color-scheme:dark) { .app[data-lumen-canvas-shell]:not([data-theme='light'] *) { --cv-selection: rgb(100 151 240 / .10); --cv-selection-ink: #aac7f5; } }
+/* Approved reference: restrained selection, shared hierarchy; phone/desktop density only. */
+.app[data-lumen-canvas-shell]:is([data-theme='dark'] *,[data-theme='black'] *) { --cv-selection: rgb(100 151 240 / .10); --cv-selection-ink: #aac7f5; }
+.app[data-lumen-canvas-shell] .cv-nav .chat-row.active .row-menu { opacity: 1; }
+.app[data-lumen-canvas-shell] .cv-new-pill:hover { background: var(--canvas-fill); }
+.app[data-lumen-canvas-shell] .cv-new-pill > svg { flex: none; }
+.app[data-lumen-canvas-shell] .cv-place-chevron { margin-inline-start: auto; }
+@media(max-width:899px) {
+ .app[data-lumen-canvas-shell] { --cv-row: max(54px, calc(var(--fs,15px)*2.7 + 13px)); --cv-control: max(44px, calc(var(--fs,15px)*1.4 + 23px)); }
+ .app[data-lumen-canvas-shell] .cv-nav { width: min(360px, calc(100vw - 24px)); padding: calc(env(safe-area-inset-top) + 12px) 16px max(10px, env(safe-area-inset-bottom)); border-radius: 24px; }
+ .app[data-lumen-canvas-shell] .cv-head { padding-bottom: 14px; }
+ .app[data-lumen-canvas-shell] .cv-search input { font-size: max(16px, calc(var(--fs,15px) + 1px)); }
+ .app[data-lumen-canvas-shell] .cv-count { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+ .app[data-lumen-canvas-shell] .cv-nav .row-menu > .icon-btn { width: 44px; height: 44px; }
+ .app[data-lumen-canvas-shell] .cv-nav .row-menu { inset-inline-end: 0; }
+ .app[data-lumen-canvas-shell] .cv-nav .menu[popover] [role='menuitem'] { min-height: 44px; }
+ .app[data-lumen-canvas-shell] .cv-nav .chat-row:not(.active):not(:focus-within):not(.menu-open) .row-menu { opacity: 0; pointer-events: none; }
+ html.glass .app[data-lumen-canvas-shell] .cv-nav { background: linear-gradient(color-mix(in srgb,var(--bg) 94%,transparent),color-mix(in srgb,var(--bg) 94%,transparent)) padding-box,var(--glass-rim) border-box; -webkit-backdrop-filter: var(--glass-filter-strong); backdrop-filter: var(--glass-filter-strong); }
+}
+@media(forced-colors:active) {
+ .app[data-lumen-canvas-shell] .cv-nav .chat-row.active .chat-open, .app[data-lumen-canvas-shell] .cv-project-row.has-current { outline: 1px solid Highlight; outline-offset: -1px; }
+}
 
 /* ================= Header: breadcrumb (project › chat), quiet chrome */
 .app[data-lumen-canvas-shell] .main > .topbar { border: 0; }
@@ -187,51 +215,6 @@
   .app[data-lumen-canvas-shell] .markdown h2 { font-size: 20px; line-height: 1.25; letter-spacing: -.018em; margin: 22px 0 8px; }
   .app[data-lumen-canvas-shell] .markdown h3 { font-size: 17px; margin: 20px 0 6px; }
   .app[data-lumen-canvas-shell] .markdown :is(h4, h5, h6) { font-size: 15.5px; font-weight: 640; margin: 16px 0 4px; }
-  .app[data-lumen-canvas-shell] { --cv-row: 44px; --cv-gap: 0px; --cv-fs: 15.5px; }
-  .app[data-lumen-canvas-shell] .cv-nav { width: min(84vw, 340px); padding: calc(env(safe-area-inset-top) + 12px) 14px max(12px, env(safe-area-inset-bottom)); }
-  .app[data-lumen-canvas-shell] .cv-head { min-height: 44px; padding: 2px 0 12px 10px; gap: 10px; }
-  .app[data-lumen-canvas-shell] .cv-head-btn { width: 44px; height: 44px; margin-inline-end: -6px; border-radius: 50%; background: none; color: var(--canvas-secondary); }
-  .app[data-lumen-canvas-shell] .cv-search { height: 44px; margin: -6px 0 14px; border-radius: 14px; }
-  .app[data-lumen-canvas-shell] .cv-search input { font-size: 16px; }
-  .app[data-lumen-canvas-shell] .cv-tree { margin: 0 -14px; padding: 0 14px 24px; }
-  /* Places: one quiet list of 44pt rows, icons and labels on the same lines as the tree below (no tiles, no fills
-     until pressed or current). */
-  .app[data-lumen-canvas-shell] .cv-dest { gap: 0; padding: 0 0 10px; margin-bottom: 6px; }
-  .app[data-lumen-canvas-shell] .cv-dest button { gap: 14px; min-height: 44px; border-radius: 12px; font-size: 17px; font-weight: 500; letter-spacing: -.01em; }
-  .app[data-lumen-canvas-shell] .cv-dest button > svg { width: 21px; height: 21px; color: var(--canvas-ink); stroke-width: 1.8; }
-  .app[data-lumen-canvas-shell] .cv-section { margin: 0 -14px; padding: 0 14px; }
-  .app[data-lumen-canvas-shell] .cv-section-toggle { min-height: 44px; margin-top: 2px; }
-  .app[data-lumen-canvas-shell] .cv-label { font-size: max(13px, calc(var(--fs) - 2px)); }
-  .app[data-lumen-canvas-shell] .cv-section-add { width: 44px; height: 44px; margin-top: 2px; border-radius: 12px; }
-  .app[data-lumen-canvas-shell] .cv-project-row { min-height: 44px; font-size: 15.5px; font-weight: 600; }
-  .app[data-lumen-canvas-shell] .cv-mono { width: 22px; height: 22px; font-size: 12px; }
-  .app[data-lumen-canvas-shell] .cv-project .cv-chats { margin-inline-start: 16px; }
-  .app[data-lumen-canvas-shell] .cv-brief { min-height: 44px; justify-content: center; }
-  .app[data-lumen-canvas-shell] .cv-brief-text { font-size: 14px; -webkit-line-clamp: 1; line-clamp: 1; }
-  .app[data-lumen-canvas-shell] .cv-brief-meta { font-size: 12.5px; color: var(--canvas-muted); }
-  .app[data-lumen-canvas-shell] :is(.cv-more, .cv-new-here, .cv-empty) { min-height: 44px; font-size: 14px; }
-  .app[data-lumen-canvas-shell] .cv-new-here { gap: 8px; font-size: 14.5px; }
-  .app[data-lumen-canvas-shell] .cv-new-here-icon { width: 20px; height: 20px; }
-  .app[data-lumen-canvas-shell] .cv-nav .chat-open { border-radius: 12px; }
-  .app[data-lumen-canvas-shell] .cv-all { min-height: 44px; font-size: 14.5px; }
-  .app[data-lumen-canvas-shell] .cv-ask { min-height: 44px; font-size: 14.5px; }
-  /* Long press opens a chat's actions; ⋯ shows only on the open chat or for keyboard/VoiceOver focus. */
-  .app[data-lumen-canvas-shell] .cv-nav .row-menu > .icon-btn { position: relative; width: 36px; height: 36px; }
-  /* The ⋯ looks 36pt but answers a 44pt touch. */
-  .app[data-lumen-canvas-shell] .cv-nav .row-menu > .icon-btn::after { content: ''; position: absolute; inset: -4px; }
-  .app[data-lumen-canvas-shell] .cv-nav .chat-row:not(.active):not(:focus-within):not(.menu-open) .row-menu { opacity: 0; pointer-events: none; }
-  .app[data-lumen-canvas-shell] .cv-nav .chat-row:not(.active):not(:focus-within):not(.menu-open) .chat-open { padding-inline-end: 10px; }
-  .app[data-lumen-canvas-shell] .cv-nav .chat-row.active .row-menu { opacity: 1; }
-  .app[data-lumen-canvas-shell] .cv-nav .chat-row.active .chat-open { padding-inline-end: 44px; }
-  .app[data-lumen-canvas-shell] .cv-foot { gap: 12px; margin: 0 -14px; padding: 12px 14px 0; border-top: 1px solid color-mix(in srgb, var(--canvas-ink) 6%, transparent); }
-  .app[data-lumen-canvas-shell] .cv-new-pill { display: inline-flex; align-items: center; gap: 9px; min-width: 0; min-height: 50px; padding: 0 22px 0 18px; border: 0; border-radius: 999px; background: var(--canvas-ink); color: var(--canvas-paper); font-size: 16.5px; font-weight: 620; cursor: pointer; box-shadow: 0 6px 18px rgb(0 0 0 / .25); }
-  .app[data-lumen-canvas-shell] .cv-new-pill > svg { flex: none; }
-  .app[data-lumen-canvas-shell] .cv-account { flex: 0 0 auto; justify-content: center; width: 50px; min-height: 50px; margin-inline-start: auto; padding: 0; border-radius: 50%; background: none; }
-  .app[data-lumen-canvas-shell] .cv-avatar { width: 30px; height: 30px; font-size: 13.5px; }
-  html.glass .app[data-lumen-canvas-shell] .cv-nav { background: linear-gradient(color-mix(in srgb, var(--bg) 90%, transparent), color-mix(in srgb, var(--bg) 90%, transparent)) padding-box, var(--glass-rim) border-box; -webkit-backdrop-filter: var(--glass-filter-strong, blur(30px) saturate(1.6)); backdrop-filter: var(--glass-filter-strong, blur(30px) saturate(1.6)); }
-  html.glass .app[data-lumen-canvas-shell] .cv-section { background: color-mix(in srgb, var(--bg) 90%, transparent); }
-  html.glass .app[data-lumen-canvas-shell] :is(.cv-head-btn, .cv-account) { border: 1px solid transparent; background: var(--glass-sheen) padding-box, linear-gradient(var(--glass-tint), var(--glass-tint)) padding-box, var(--glass-rim) border-box; }
-
   /* Header: the title centred with its project beneath; a new-chat button opposite the menu. */
   .app[data-lumen-canvas-shell] .topbar-center { flex: 1; flex-direction: column; justify-content: center; gap: 0; line-height: 1.2; overflow: hidden; }
   .app[data-lumen-canvas-shell] .topbar-center .chat-heading { max-width: 100%; font-size: 16px; }
@@ -241,18 +224,11 @@
   .app[data-lumen-canvas-shell] .cv-compose { display: inline-grid; order: 10; }
   .app[data-lumen-canvas-shell] .thread { padding-top: 14px; }
 }
-@media (max-width: 899px) and (max-height: 700px) {
-  .app[data-lumen-canvas-shell] .cv-head { padding-bottom: 10px; }
-  .app[data-lumen-canvas-shell] .cv-new-pill { min-height: 46px; }
-  .app[data-lumen-canvas-shell] .cv-account { width: 46px; min-height: 46px; }
-}
-/* The narrowest phones: a little more drawer for titles, still 40px of the page to tap to close. */
-@media (max-width: 360px) {
-  .app[data-lumen-canvas-shell] .cv-nav { width: calc(100vw - 40px); }
-}
+
+
 /* Touch screens keep no "hover" fill after a tap (iOS Safari leaves :hover on the last tapped element). */
 @media (hover: none) {
-  .app[data-lumen-canvas-shell] :is(.cv-dest button:not([aria-current]), .cv-project-row, .cv-section-add, .cv-all, .cv-more, .cv-new-here):hover { background-color: transparent; }
+  .app[data-lumen-canvas-shell] :is(.cv-dest button:not([aria-current]), .cv-project-row:not(.has-current), .cv-section-add, .cv-all, .cv-more, .cv-new-here):hover { background-color: transparent; }
   .app[data-lumen-canvas-shell] .cv-nav .chat-row:not(.active):not(.menu-open):hover .chat-open { background: none; }
   /* A restrained press: the row tints while the finger is down, nothing lingers after. */
   .app[data-lumen-canvas-shell] :is(.cv-dest button, .cv-project-row, .cv-brief, .cv-new-here, .cv-more, .cv-all, .cv-section-add):active, .app[data-lumen-canvas-shell] .cv-nav .chat-row .chat-open:active { background-color: var(--canvas-fill); }
@@ -353,44 +329,11 @@
 @media (max-width: 899px) { .app[data-lumen-canvas-shell] .cv-search-clear { position: relative; } .app[data-lumen-canvas-shell] .cv-search-clear::after { content: ''; position: absolute; inset: -8px; } }
 
 /* Keyboard focus in the tree is drawn inside each row, so the scrolling tree never clips it (Phase 2 slice 2). */
-.app[data-lumen-canvas-shell] .cv-nav :is(.cv-dest button, .cv-section-toggle, .cv-project-row, .cv-brief, .chat-open, .cv-more, .cv-new-here, .cv-all, .cv-empty, .cv-ask, .row-menu > .icon-btn, .cv-section-add):focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.app[data-lumen-canvas-shell] .cv-nav :is(.cv-dest button, .cv-section-toggle, .cv-project-row, .cv-brief, .chat-open, .cv-more, .cv-new-here, .cv-all, .cv-empty, .cv-ask, .row-menu > .icon-btn, .cv-section-add, .cv-new-pill, .cv-account, .cv-head-btn):focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 
 /* Slice 3: a chat with unsent text says so (quietly, after its title). The word is for sight; screen readers hear
    "Unsent draft" through the row's description, so the generated text has an empty alternative. */
 .app[data-lumen-canvas-shell] .cv-nav .chat-row[data-draft] .chat-open::after { content: 'Draft' / ''; order: 2; flex: none; margin-inline-start: 4px; color: var(--canvas-secondary); font: 500 11px/1 var(--canvas-data-font); letter-spacing: .04em; text-transform: uppercase; }
-
-/* ================= Text size (Phase 2 slice 3)
- * The tree follows Lumen's text size: the Settings choice, and iOS Dynamic Type when it is Automatic (src/lib/settings.ts
- * sets --fs from the system font). Sizes are offsets from --fs (15px by default, where they equal the values above), and
- * rows grow with their text; phones keep their 44pt minimum. Long titles still end in "…" on one line. */
-.app[data-lumen-canvas-shell] { --cv-fs: calc(var(--fs, 15px) - 1px); --cv-row: max(36px, calc(var(--fs, 15px) * 1.4 + 13px)); }
-@media (max-width: 899px) {
-  .app[data-lumen-canvas-shell] { --cv-fs: calc(var(--fs, 15px) + .5px); --cv-row: max(44px, calc(var(--fs, 15px) * 1.45 + 22px)); }
-  .app[data-lumen-canvas-shell] .cv-dest button { min-height: var(--cv-row); font-size: calc(var(--fs, 15px) + 2px); }
-  .app[data-lumen-canvas-shell] .cv-dest button > svg { width: calc(var(--fs, 15px) + 6px); height: calc(var(--fs, 15px) + 6px); }
-  .app[data-lumen-canvas-shell] .cv-project-row { min-height: var(--cv-row); font-size: var(--cv-fs); }
-  .app[data-lumen-canvas-shell] .cv-mono { width: calc(var(--fs, 15px) + 7px); height: calc(var(--fs, 15px) + 7px); font-size: calc(var(--fs, 15px) - 3px); }
-  .app[data-lumen-canvas-shell] .cv-label { font-size: max(13px, calc(var(--fs, 15px) - 2px)); }
-  .app[data-lumen-canvas-shell] .cv-search { height: auto; min-height: var(--cv-row); }
-  .app[data-lumen-canvas-shell] .cv-search input { font-size: max(16px, calc(var(--fs, 15px) + 1px)); }
-  .app[data-lumen-canvas-shell] .cv-brief { min-height: var(--cv-row); }
-  .app[data-lumen-canvas-shell] .cv-brief-text { font-size: calc(var(--fs, 15px) - 1px); }
-  .app[data-lumen-canvas-shell] .cv-brief-meta { font-size: calc(var(--fs, 15px) - 2.5px); }
-  .app[data-lumen-canvas-shell] :is(.cv-more, .cv-new-here, .cv-empty, .cv-all, .cv-ask, .cv-section-toggle) { min-height: var(--cv-row); }
-  .app[data-lumen-canvas-shell] :is(.cv-more, .cv-empty) { font-size: calc(var(--fs, 15px) - 1px); }
-  .app[data-lumen-canvas-shell] :is(.cv-new-here, .cv-all, .cv-ask) { font-size: calc(var(--fs, 15px) - .5px); }
-  .app[data-lumen-canvas-shell] .cv-new-here-icon { width: calc(var(--fs, 15px) + 5px); height: calc(var(--fs, 15px) + 5px); }
-  .app[data-lumen-canvas-shell] .cv-nav .chat-row[data-draft] .chat-open::after { font-size: calc(var(--fs, 15px) - 4px); }
-  .app[data-lumen-canvas-shell] .cv-new-pill { min-height: max(50px, calc(var(--fs, 15px) * 1.4 + 29px)); font-size: calc(var(--fs, 15px) + 1.5px); white-space: nowrap; }
-  .app[data-lumen-canvas-shell] .cv-account { width: max(50px, calc(var(--fs, 15px) * 1.4 + 29px)); min-height: max(50px, calc(var(--fs, 15px) * 1.4 + 29px)); }
-  /* The glass look sets 16px titles in fixed 44px rows (glass.css): same at the default size, growing past it. */
-  html.glass .app[data-lumen-canvas-shell] .cv-nav .chat-row .chat-open { height: auto; min-height: var(--cv-row); font-size: calc(var(--fs, 15px) + 1px); }
-}
-@media (max-width: 899px) and (max-height: 700px) {
-  /* Short phones keep their slightly smaller footer, still growing with the text. */
-  .app[data-lumen-canvas-shell] .cv-new-pill { min-height: max(46px, calc(var(--fs, 15px) * 1.4 + 25px)); }
-  .app[data-lumen-canvas-shell] .cv-account { width: max(46px, calc(var(--fs, 15px) * 1.4 + 25px)); min-height: max(46px, calc(var(--fs, 15px) * 1.4 + 25px)); }
-}
 
 /* Screen hierarchy: one navigation bar, no nested home docks. */
 .app[data-lumen-canvas-shell] .phone-navigation { display:flex; align-items:center; flex:none; min-height:54px; padding:env(safe-area-inset-top) 8px 0; gap:8px; background:var(--canvas-paper); color:var(--canvas-ink); border-bottom:1px solid var(--canvas-rim); }

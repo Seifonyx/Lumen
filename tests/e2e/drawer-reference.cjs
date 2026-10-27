@@ -61,7 +61,8 @@ for (const state of ['empty', 'populated', 'dense', 'expanded']) fixtures[state]
         if (state === 'populated') {
           const hoverRow = nav.locator('.cv-loose .chat-row:not(.active)').first(); await hoverRow.locator('.chat-open').hover(); await audit();
           await page.screenshot({ path: path.join(out, `${width}-${theme}-${state}-hover.png`), animations: 'disabled' });
-          await page.keyboard.press('Tab'); await current.locator('.chat-open').focus(); assert.notEqual(await current.locator('.chat-open').evaluate(el => getComputedStyle(el).outlineStyle), 'none', 'keyboard focus remains visible');
+          await current.locator('.chat-open').focus(); await page.keyboard.press('Shift+Tab'); await page.keyboard.press('Tab');
+          assert(await current.locator('.chat-open').evaluate(el => el === document.activeElement), 'real Tab navigation reaches the current chat'); assert.notEqual(await current.locator('.chat-open').evaluate(el => getComputedStyle(el).outlineStyle), 'none', 'keyboard focus remains visible');
           await page.screenshot({ path: path.join(out, `${width}-${theme}-${state}-focus.png`), animations: 'disabled' });
           await current.getByRole('button', { name: 'Chat options', exact: true }).click(); await page.getByRole('menuitem', { name: 'Rename', exact: true }).waitFor();
           const menu = page.getByRole('menu', { name: 'Chat options', exact: true });

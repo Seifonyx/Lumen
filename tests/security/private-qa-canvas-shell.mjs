@@ -169,9 +169,9 @@ try {
       await openNav(page, phone && !(await nav(page).evaluate((el) => el.classList.contains('open'))));
       for (const name of ['Studio launch', 'Lisbon in spring']) assert.equal(await nav(page).getByRole('list', { name, exact: true }).count(), 1, `${name} list is named`);
       assert.equal(await nav(page).locator('.chat-open[aria-current="page"]').count(), 1, 'one current chat');
-      const pinned = await nav(page).locator('.chat-row:has(.pin-mark) .chat-open').evaluateAll((b) => b.map((x) => document.getElementById(x.getAttribute('aria-describedby') || '')?.textContent));
-      assert.ok(pinned.length > 0 && pinned.every((t) => t === 'Pinned'), `pins are announced: ${pinned}`);
-      assert.equal(await nav(page).locator('.chat-row:not(:has(.pin-mark)) .chat-open[aria-describedby]').count(), 0, 'only pinned chats say so');
+      const pinned = await nav(page).locator('.chat-row:has(.pin-mark) .chat-open').evaluateAll((b) => b.map((x) => (x.getAttribute('aria-describedby') || '').split(' ').map(id => document.getElementById(id)?.textContent).filter(Boolean)));
+      assert.ok(pinned.length > 0 && pinned.every((descriptions) => descriptions.includes('Pinned')), `pins are announced: ${pinned}`);
+      assert.ok(await nav(page).locator('.chat-row:not(:has(.pin-mark)) .chat-open').evaluateAll(buttons => buttons.every(button => !(button.getAttribute('aria-describedby') || '').split(' ').some(id => document.getElementById(id)?.textContent === 'Pinned'))), 'only pinned chats say so; other chats retain metadata descriptions');
       // Tree keyboard (computers): Down from search enters the tree, Right opens a folder and enters it, Left
       // returns to the folder and closes it, Up from the first row returns to search.
       if (!phone) {

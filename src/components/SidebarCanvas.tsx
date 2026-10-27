@@ -19,7 +19,7 @@ import { AskChats, ChatRow, type SidebarProps } from './Sidebar';
 import { BrandWordmark, loadTreeKeys as loadKeys } from '../lib/canvas-presentation';
 import { newGeneralChat, newProjectChat } from '../lib/new-chat';
 import { useBackLayer } from '../lib/back-stack';
-import { relTime } from './HubPage';
+import { relTime } from '../lib/relative-time';
 
 const EMPTY_PROJECTS: Project[] = [];
 const LIMIT = 5;

@@ -1,0 +1,1017 @@
+{
+  "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a",
+  "beforeSource": "828a05c79debbdeba606e441bf7bbc57f811ca38",
+  "approvedFirstGate": "f4dfdf41a4c1e94aefcea50c7fb256013bc7cf09",
+  "syntheticOnly": true,
+  "physicalIPhone": false,
+  "captures": [
+    {
+      "path": "before/chromium/1440-dark-dense.png",
+      "sha256": "6ea68515331a5cba1cc5bf1275fcdf0418b814f351da4203dfbadd977f4e52db",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/1440-dark-empty.png",
+      "sha256": "dcbfae143f211378865c0725d4b9c825119267fc3872c94827fa223b3e8574b2",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/1440-dark-expanded.png",
+      "sha256": "6327729332052043a88398b1fe2a0c23e1458b17b25eeefd7f0079379ca001dd",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/1440-dark-populated.png",
+      "sha256": "7bfe122a45d525e8a8c0043e40465b4790fb698d86a0a993784b2431c9c4cbaa",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/1440-light-dense.png",
+      "sha256": "d6591a598bbfe9b3cac26730cccf241756ba02ffd14bccf317d614856b703f62",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/1440-light-empty.png",
+      "sha256": "fa171a1142c4a55a9d8538a70703f1a66e52d6a10c05fa0e60561d59cbb9c65a",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/1440-light-expanded.png",
+      "sha256": "9df6c777db403021ca577d30986e4e09b1ae0291ebdf7ab8ee2ab4f45b61c7b2",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/1440-light-populated.png",
+      "sha256": "39ef89066a5b45aa3a4d5da088b5e27d8e994fdf6a46b936ad71e95cfa894d0d",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/320-dark-dense.png",
+      "sha256": "2bd6bc4837db88523bb55413aae54a12751964bbef5ea389c916f923f63821dd",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/320-dark-empty.png",
+      "sha256": "d82f7721bd2d4842e3eab75edf86451d174212ddbbf12edd7ff379554269f60d",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/320-dark-expanded.png",
+      "sha256": "ccd4efcf0941123802858c54fb75b47fa1dff0939a4c7556f3028b5577a925fc",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/320-dark-populated.png",
+      "sha256": "006c33c7c1dcd82fbe6569dedc34adbd1cba3b966b48c72e19a525602729a042",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/320-light-dense.png",
+      "sha256": "c5c226e852e422acf838b09742a283aa05c002a32ead2f41f339c84fec8498d9",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/320-light-empty.png",
+      "sha256": "e75cf33e65bcae7b04e6471854b167e10cf35cf66ade64d779ad2499bf5963e6",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/320-light-expanded.png",
+      "sha256": "6613e0a493a2a24b18246565f70b642c1ad80b4cee53a0854055deedb4305b69",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/320-light-populated.png",
+      "sha256": "1e495b32d94d7c6c6d0716f803a7938dc684b8279284d74eae04cadad0b4bd2b",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/390-dark-dense.png",
+      "sha256": "8cf2278a95c1eeb617988c67ccee5815935dc287391f8b13ff28f16d914410f2",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/390-dark-empty.png",
+      "sha256": "f4de19e244b750f6406804c7421ec2764bc4fd0c414daddbeae0b5d0945cf35a",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/390-dark-expanded.png",
+      "sha256": "83a9a1f1396c1880b8300cd5236b2a5351ab3f1175537a3a0f0ffd60a521a8c6",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/390-dark-populated.png",
+      "sha256": "6ff1c6eb90cfb50c62a5f826e507c07be9f8ef72735857fe0552fefcf64ea485",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/390-light-dense.png",
+      "sha256": "da3cc2251c11af1fe707e0df1ab7488f75a2d1901a572dd47596abae08b4b6e8",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/390-light-empty.png",
+      "sha256": "17f255bb6cf0c6bc59a090d5e4fd172b8098f264e125b74b0c5703aa72e80075",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/390-light-expanded.png",
+      "sha256": "3c0106afa6dbe84e980fa9295c67e9104b2ab66c3acd4e21ee9fe73829725384",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/390-light-populated.png",
+      "sha256": "9d3d5d9860541d9a0dda0d318edda39d6708b1329b3f6e7e51b52aadb7150978",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/430-dark-dense.png",
+      "sha256": "69793743f356cc4b81f9d5561cb79e4b3949ddeedc33c534a757391e3fec0eda",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/430-dark-empty.png",
+      "sha256": "eac86a4e70be9f2f37eab310a95c0baf3697cd9e2171bb5171310bcae50d2b4f",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/430-dark-expanded.png",
+      "sha256": "3495fe1804719dedd75e7459b82718a77c61bca5b395f01875d0e2562bb5e567",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/430-dark-populated.png",
+      "sha256": "04e7783517e0013009e3a52822fd9cc637c6e62320170848f28bf0f4364b51e0",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/430-light-dense.png",
+      "sha256": "111fc5416d81134f8aa7936dac6d43f1d1ab654f7d576503a5b89545a0f25ffb",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/430-light-empty.png",
+      "sha256": "33f8a78087e836467df19fbedce8f19132890e37a29ed72f06f28e42feac84f4",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/430-light-expanded.png",
+      "sha256": "5b906ddb28428e5c511b5ab8eebf50e41a03125c4a20cec92bbdc1a2de917140",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/chromium/430-light-populated.png",
+      "sha256": "b6e61e43b7a1a94507943c33c9273b80081d64a5bc34e7108b45bd5ceddc30a7",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/1440-dark-dense.png",
+      "sha256": "2f2b885252d503c20ea4f95f1176cd1f87ead16d8a6e0b28227ab0ff85cef949",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/1440-dark-empty.png",
+      "sha256": "6907ed99598d460dab3ba9054a1d2137c9b684be71fa8b680ec94999f83110b3",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/1440-dark-expanded.png",
+      "sha256": "6834fea37c153e9f45896aeb981866923c10fa801295ca999fa1633758fa5c27",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/1440-dark-populated.png",
+      "sha256": "4998878cce022aade8a3b38987ae5217e55dffaf629f7e1d2d5bb6705cfbe158",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/1440-light-dense.png",
+      "sha256": "0663af06f5dc7fd3d86c5be39d579ecb4cd0571c5bdcb98bcb6e6d1bfc41a1fc",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/1440-light-empty.png",
+      "sha256": "5fcc4e8f2442bf476c2dfef0be91c40013a665043895e14d894f04d7ecc3715a",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/1440-light-expanded.png",
+      "sha256": "127e874a8d225ab448fd177ead86d4d43e1d7d88e154c8ec9b8cc4aad8539247",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/1440-light-populated.png",
+      "sha256": "68f194020537fddb957dd410322a58a86ba5dabe7a7bf263e2a34ce457094ab3",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/320-dark-dense.png",
+      "sha256": "aee1903da02284ec589326b2de3d82c83975ae4c4109409ab316b4c3e0680a71",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/320-dark-empty.png",
+      "sha256": "667ae6eb858314a7e198f165b18859e3e0d9123b111a8dd539fa27f762090fc1",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/320-dark-expanded.png",
+      "sha256": "c265f1e558ef3d7ce61a144b0f8778444fc2c30155fcb8f60d3c43a23d2e9f67",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/320-dark-populated.png",
+      "sha256": "ca9652658d5bad5e8d74729bf8fe35f64b8f956738c0537d379e1657965cb60b",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/320-light-dense.png",
+      "sha256": "89fcf8e9bbd0cebfc0152bb2d021f169619a860abc0161403d644e06b057bfe6",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/320-light-empty.png",
+      "sha256": "edd19c9de2c7474b259ae67881653bba16e7e18575a1269f6863cc59bada7dde",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/320-light-expanded.png",
+      "sha256": "646b5724fdf96d696beb2a3fb6c8487a981ed341881fa4484e8d19de4fb03924",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/320-light-populated.png",
+      "sha256": "09894ff42f4c5bb32562232a71543958e6a1d8b57b444d31a35f2600711c9740",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/390-dark-dense.png",
+      "sha256": "96a47441f79664c2c512612f98242bd1a8acd6c5b33df6ad2767d3f39c7da8fc",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/390-dark-empty.png",
+      "sha256": "f1a8a8499616e7e6e4f6576a331d6efbb7afd18f75d80c378162b0de6f5c3b12",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/390-dark-expanded.png",
+      "sha256": "a7745e70d8fea27e820519eeed1df2e3c51f8cd0a4f1bd9b99a767b82b7629d8",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/390-dark-populated.png",
+      "sha256": "123f579d239436c845cd40e5868fbf4f305177c718d8b602a50257a18adb7ad7",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/390-light-dense.png",
+      "sha256": "0d062f65e6a7a7aae40f2ffe60dc6b83fa6ae19d806ad94bd19329870524b6d3",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/390-light-empty.png",
+      "sha256": "6d42507362d162416635e1abc4d3cf647a3afa93bdfeae480cffc20e6280b906",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/390-light-expanded.png",
+      "sha256": "35cb1afac53fd6feb1c5e22602c5145dedb599394bf52dd91645b793fd8e5047",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/390-light-populated.png",
+      "sha256": "950229a6b489050ed7dc9087b20c35d85877faba546712a4870761efe0ca0d54",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/430-dark-dense.png",
+      "sha256": "a19b4c4fc43bc33e5d01108f0bc84568ce7ee1ebc8f75c76e4bf8da2b6bd799a",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/430-dark-empty.png",
+      "sha256": "b4cae2d8475f7cea6c0937e648b7481f140062f066623d94da91b794b6a9a5a2",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/430-dark-expanded.png",
+      "sha256": "e6effd267a06bc2ec344d05f1dd1d2f8b9de39d4da2135b998a185cea8cb1122",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/430-dark-populated.png",
+      "sha256": "9b5060f75806ecfef1e7e009f22bdc3f2a634a940fba003cc77d53c53556409b",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/430-light-dense.png",
+      "sha256": "563c255346107f543389af9db31bb6d21cbff519e1280668fa828c025ec28a57",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/430-light-empty.png",
+      "sha256": "5afda38782efab6331afb2e9761aa0d4a1a410eeaaafac052b082cb30a946e98",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/430-light-expanded.png",
+      "sha256": "1afbba0977804b57c06c6c19f00b70ad0d335abb2c438e03655c47f457c6d0bd",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "before/webkit/430-light-populated.png",
+      "sha256": "07d2d9373c9d739fbb82d9f80420e1633c4bf01f3a4e3c30833a905b188cc82e",
+      "appSource": "828a05c79debbdeba606e441bf7bbc57f811ca38"
+    },
+    {
+      "path": "after/chromium/1440-dark-collapsed.png",
+      "sha256": "906313fb9d7fcd7187e4afc8ae12848b21fe249a2c38e9b5c1ed9dd826d6a9f0",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-dark-dense-scrolled.png",
+      "sha256": "58123974259a58de3838f58545a21017a52f9631f50389d390e51bb394d271ea",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-dark-dense.png",
+      "sha256": "13dcb7ad8256f275338abde0613d5bf45ac44272e2a7d0ff2f46a6428ea12030",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-dark-empty.png",
+      "sha256": "fbba514e8e018f8ca20699a22a412678ced0539ff09f27073e9a920278dd7e5c",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-dark-expanded.png",
+      "sha256": "d392b6262dee8551caf274203edff76d2a16216a1b64ab0ee8d06b1718143fb5",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-dark-populated-focus.png",
+      "sha256": "8579deb4f5ddd42a213bb39c278da2ad620b2a8f4db09a76ac614e5197e11776",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-dark-populated-hover.png",
+      "sha256": "03a3cbe43fc4bab1c70048f7c08e4f55cc8b303353ea7737b47bba0cd269f03f",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-dark-populated-menu.png",
+      "sha256": "22c633e3bcb5c7104f0bfab0ff79107ab315a27832cc0196bbc78302b12765f6",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-dark-populated.png",
+      "sha256": "ea397dbcc978fcc7093b5e23c2a2f8baaff22b0028eb0086594771341d6f66cc",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-light-collapsed.png",
+      "sha256": "20aaed367a9bfffea59e659cab44fc77e89d5bdfdfff651ded8f7ac3309008c2",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-light-dense-scrolled.png",
+      "sha256": "fbf0ba8fba35513b2b4fd6feee0fe1512767d71311a923a54c3eba80edac9a80",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-light-dense.png",
+      "sha256": "b6cd8dd331d4f286c0d77a6c547d48379a42788cd31926f8a0cdc17961b7caf8",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-light-empty.png",
+      "sha256": "eaed9b95e95946625dc05ce2817e84dab90b1a2924f5534aa17b53842221a7b1",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-light-expanded.png",
+      "sha256": "3dab446375a22b695c4ccdb9ae1114e49fe9de608085affe1041ee79c150e0a4",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-light-populated-focus.png",
+      "sha256": "fa9bd1cc283ff506044e1412875d739bcc2e73b0ec57fedd6eea15a7ed38c0b3",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-light-populated-hover.png",
+      "sha256": "9ea449e546fee445fc47b8ad6867a258c989d6a448f98e339342f40a3928aaca",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-light-populated-menu.png",
+      "sha256": "6c978971431be36f87b1ced738cc3314d3afe1c02541f33210e5639d6117f930",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/1440-light-populated.png",
+      "sha256": "c5f97bf882b82c5ada32944de73528f8838f1428742f47f19855ea817fc59884",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-dark-dense-scrolled.png",
+      "sha256": "ed826049ef05ad507d46cfc9c04b7ec5040daf19c7b6c237ccc4140290971761",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-dark-dense.png",
+      "sha256": "7c4fbb3815971899f73d0ba8aa9662609bbec3a9652d15ebc06d6f44aa230472",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-dark-empty.png",
+      "sha256": "db9157a144c0582d19b2a01c1c2faad48369391888ff91f9545f3729bbc083b0",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-dark-expanded.png",
+      "sha256": "954c12aa1cca12a7df31c3c6e6078247a0f27acd69ce1a1c2acc3adb7578ce90",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-dark-populated-focus.png",
+      "sha256": "a8559b10c6a644ea7f8a8861d91bb2d9655091f5b25556df80837196cf474941",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-dark-populated-hover.png",
+      "sha256": "9b7c489aa3052aa6e0cd533c9dda5ed61c24d5b5b9e45cd946924b128550686a",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-dark-populated-menu.png",
+      "sha256": "d74e30e8e2648eb039c3fb1a6e6040f23c9504fb4d0d76cf07f97df94db59eef",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-dark-populated.png",
+      "sha256": "7c4fbb3815971899f73d0ba8aa9662609bbec3a9652d15ebc06d6f44aa230472",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-light-dense-scrolled.png",
+      "sha256": "4aeb75625aecd533562a47fe11b44080665130705437b9f342bcf317cfd832b7",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-light-dense.png",
+      "sha256": "d47b446be90a80b0bb3d9e6a2a57db8e2e236e7f440f7f53476d1d767b5cb018",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-light-empty.png",
+      "sha256": "7ef4b2fbd21f013165287e2c13dfaa5e580635429ce814abfe52463d12f5a87c",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-light-expanded.png",
+      "sha256": "1c3e2f6e62665881da92813170d8775c19a26f6328c9fc653d62be7ec1fa0936",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-light-populated-focus.png",
+      "sha256": "adfd10659cec63f1923ddf013b064a2c06c4ee06a00f365eb762f244d7eccb7b",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-light-populated-hover.png",
+      "sha256": "73a78a6197e5013c4fd0b1360d9e897bea006a81272b696b8913c4f3911f6806",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-light-populated-menu.png",
+      "sha256": "9de0f409b590abc06d50fb80423ad160c7be8d359c963b8582c34668a741f547",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/320-light-populated.png",
+      "sha256": "d47b446be90a80b0bb3d9e6a2a57db8e2e236e7f440f7f53476d1d767b5cb018",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-dark-dense-scrolled.png",
+      "sha256": "5442501cf8c351ed66c9c10f6738f8bb3b846690adcc2f875e9461362718e3c3",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-dark-dense.png",
+      "sha256": "2243bf4a128c4f2ee3d6153d6ced16d56fccfc72850cabd3229bddf3ff55185d",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-dark-empty.png",
+      "sha256": "aa8d859f656327927f86c1ca10755466b2affa38f095ccfba19daf14f622c36c",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-dark-expanded.png",
+      "sha256": "d238ceaf39974cf5dda6b0a4789316d1ff462af517fddf2c10712047a50294b4",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-dark-populated-focus.png",
+      "sha256": "d9ac77f3852cdf33f178120ee91200b55c9106b5516e078ffad9a76ced74c0bc",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-dark-populated-forced-colors.png",
+      "sha256": "aae2d0b2483a7829d1f08963ea3259b44b264b6a7fd218633c439aa4a9255cd2",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-dark-populated-hover.png",
+      "sha256": "58d79d0fbddff748628d755d698da832b4e8a9e7fdfecc29864d3b9afeb8d011",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-dark-populated-menu.png",
+      "sha256": "0856d0efc84c161b71d0824d85db661bb69960c6783f60155c7e6d2509e47cfe",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-dark-populated.png",
+      "sha256": "58d79d0fbddff748628d755d698da832b4e8a9e7fdfecc29864d3b9afeb8d011",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-light-dense-scrolled.png",
+      "sha256": "44ecd767f541db355a16ad94ed5002617a0c6c013e5e5e43d2e154bfde21eed0",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-light-dense.png",
+      "sha256": "9ec8aecf57bff47e01b997d7cb8243d56fa89987a27e85f122d5363e8ad57faf",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-light-empty.png",
+      "sha256": "3e150e091ca79c530a8ad3ff462929ddfeea37fed9f8ebe13594399cad877434",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-light-expanded.png",
+      "sha256": "ae5eb15ff75b90acc9ca5e238553212766df6e4502cba72178b41685d1cf2ee9",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-light-populated-focus.png",
+      "sha256": "f058acf19a639a696de5d444985b022415a0f72b64c627021c5f92555dab093a",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-light-populated-hover.png",
+      "sha256": "e54488afb1775fb9584fdd9eb23be20af26d0b0e36c8efbc4c4070ad8f3df213",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-light-populated-menu.png",
+      "sha256": "0769cb950e710c68c590b469ad56e50d404d112089dc4238744a5564ffa69132",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/390-light-populated.png",
+      "sha256": "e54488afb1775fb9584fdd9eb23be20af26d0b0e36c8efbc4c4070ad8f3df213",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-dark-dense-scrolled.png",
+      "sha256": "18895a884e25f9bf7c7c79c60e2e397d6679950cbd3eae8c9946105d94ddbc7d",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-dark-dense.png",
+      "sha256": "38ca09aaa2d59d24861c04ef5f6f8a2b7211e15dfffaf50a8542f42e7644d498",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-dark-empty.png",
+      "sha256": "345cf7506c23e6484ee0c0033b1942612d6c9d5b3a007667592c5f78b1d9804d",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-dark-expanded.png",
+      "sha256": "7339484e72ae19dc59c24bebafb2b8ac616572a0ba41c6fd89d472689e5467ac",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-dark-populated-focus.png",
+      "sha256": "24148b9eb10ae96f66a237f584a39cd345d1255d3a46f321b8ae29736224f918",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-dark-populated-hover.png",
+      "sha256": "5c7f8141ad660f880d3ee55ac98de3aabbd32a7c823b8a32cf5a8e37545fe104",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-dark-populated-menu.png",
+      "sha256": "ac297515810676cb9bab163204adf7c1f092f9fc206a4d8f47c7c735d8de2d2b",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-dark-populated.png",
+      "sha256": "5c7f8141ad660f880d3ee55ac98de3aabbd32a7c823b8a32cf5a8e37545fe104",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-light-dense-large-text.png",
+      "sha256": "28abcbf5d3e8d26e4478e035e0814bc33a4f0a6899428a1a407f834f7203cff1",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-light-dense-scrolled.png",
+      "sha256": "9485381b23f80f086264ba45cb5f995f727c08b0ec5aadd5d444b81b65365bc9",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-light-dense.png",
+      "sha256": "2963df9d250eed5f20c9a5b9165f3177a50aab38f7ca4c4ee6d3653136edd2f7",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-light-empty.png",
+      "sha256": "67c0bd7a61ed464531465d9c70cc5b9425ddfef0968c7c66779d29be6ae7bf42",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-light-expanded.png",
+      "sha256": "f426836636808ea558d20a509b246f994a506e645ab94ca654c71e9857bb478b",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-light-populated-focus.png",
+      "sha256": "2831df7d56d5e4f8184e0b60071d67f7e05488ac1b60bed5b185fad1454d100e",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-light-populated-hover.png",
+      "sha256": "130b38bdb88bcb2362293d52b48cde45f5c815d57b8ad6f4e21c0b46c373eba0",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-light-populated-menu.png",
+      "sha256": "c68dddb2ac99ca563fd7683fbafb42a0d7a65cd14408213261487931151e87b3",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/chromium/430-light-populated.png",
+      "sha256": "130b38bdb88bcb2362293d52b48cde45f5c815d57b8ad6f4e21c0b46c373eba0",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-dark-collapsed.png",
+      "sha256": "3033600ef3bd55b419921c92e4525c588221c853e6d570279c81f270d3436460",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-dark-dense-scrolled.png",
+      "sha256": "18afa95279a497df154dffbcc3f7b6851a01d25d4b1921c0e199ef31820b52e0",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-dark-dense.png",
+      "sha256": "c6c23a63c5879896dbc04d69e14a06ca79a6381648eac5bc094f0b1c7c22012f",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-dark-empty.png",
+      "sha256": "7a405b78a0c354952869391f07a7ca9981ae4a6b0913d31f1a8fa1db69ea5dc0",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-dark-expanded.png",
+      "sha256": "87672c286fec36984427500311a594168c058c5b4848338e4f0970958b2126cc",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-dark-populated-focus.png",
+      "sha256": "b52a8720c20aff441ef3d26308a9c9eeff3035135ceff10c320a7a9cfe616a25",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-dark-populated-hover.png",
+      "sha256": "ba249d84a8429a0cb09828347da890a8df9d9f4e77880e46790fe4a06c2773b0",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-dark-populated-menu.png",
+      "sha256": "146e492a6b0ba20aaa4fd61b56e484b135246a600aa705b8d8d7533566ce523d",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-dark-populated.png",
+      "sha256": "5c3acc5798fc2efa124b04bbe25af389fddf3fc40cb349998840be2200548822",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-light-collapsed.png",
+      "sha256": "a5cce7e97035ca636e36a237fda9df6f495f43d3e0b53044cd21a23bb55bc572",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-light-dense-scrolled.png",
+      "sha256": "72713339ed514baebd1a77629bc8839e96c8e7e8b2f0ff3d869119c758d05eac",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-light-dense.png",
+      "sha256": "5aedf268950a8390ba2187a3d1c9c01eb53091fb9e04eaffa7e494c86aebfd6a",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-light-empty.png",
+      "sha256": "7c9ae059eb485bfbd2c9d5dd50db8afe21e380722c465f2865d1e823e1d7193f",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-light-expanded.png",
+      "sha256": "f6550bec4085380a518eb692d80b00334bbb92315f9228c1a3160cc1ec70cc69",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-light-populated-focus.png",
+      "sha256": "88e25d5c7c0a07e27d4f19e18eae53303b95b18a9884a6475d4dc5cfdfd69a1e",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-light-populated-hover.png",
+      "sha256": "b613a22a2fa8695712fedd710c6ef72a0c08226ccbe59e1419503602ced284db",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-light-populated-menu.png",
+      "sha256": "f2d9e87e0f0116b0f9fb4b7f02654a046540631806ce3b32c956482b9ed79490",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/1440-light-populated.png",
+      "sha256": "88e6af41e45ed586979bf875eaa56d8297ab4f485cbcb0b95b6b5184812a1326",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-dark-dense-scrolled.png",
+      "sha256": "c86f7af71b30a3c579cea098fdcbc4ea5447d05746bfca414382a05c040cc198",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-dark-dense.png",
+      "sha256": "6e9a4df26f0c1abd78f7acfdb0e63c5a767adc440174fff55eeede9132188361",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-dark-empty.png",
+      "sha256": "0e1c44600a4baf207f51ed0db20a192d8884acdb5ace2291fd6c3d192691ebda",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-dark-expanded.png",
+      "sha256": "b1035386fc69e390c3a08894fd972d3b99391bba470925a4f28dc8eb04ae1173",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-dark-populated-focus.png",
+      "sha256": "943c60c6546b4b21dd553f8c0d3a7deb935835acb7247a7f00873322bd6cc5a6",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-dark-populated-hover.png",
+      "sha256": "0f65de4d58c291ff0362954bdd021fe6e4e15b5ab0836f301f6af50b372e09aa",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-dark-populated-menu.png",
+      "sha256": "ed3313214ce9ffde987a96f6361ec83ff169297a241c16af96d20d97348baa60",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-dark-populated.png",
+      "sha256": "6e9a4df26f0c1abd78f7acfdb0e63c5a767adc440174fff55eeede9132188361",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-light-dense-scrolled.png",
+      "sha256": "673e64c5e2e526472ffedff8239ed96cea2da0bb4933bcb1ab680fc801b2fdef",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-light-dense.png",
+      "sha256": "c09be195fd8a735baa81d504fb7491bd1a8068467370bf7d6e93a1ef4344f8d3",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-light-empty.png",
+      "sha256": "282195cf6051698987d29063aa5c170b11606ab70299a84dbec041d542abc2a6",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-light-expanded.png",
+      "sha256": "511ead1f308835c6304f2a2029dc5c68992d43192e9974a53e309dba856d80e5",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-light-populated-focus.png",
+      "sha256": "be70d36362445d7f14aa979ef48810ca76195e013136f7824290c6fc30939529",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-light-populated-hover.png",
+      "sha256": "7139b54c8d7d0539586f315235e5aa096e949e0c463ab2a3e6745e2e469ba70d",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-light-populated-menu.png",
+      "sha256": "09147feb5586ec912c346d85fc59ba96ccb5cbac2bc546f04f702e2d34429118",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/320-light-populated.png",
+      "sha256": "c09be195fd8a735baa81d504fb7491bd1a8068467370bf7d6e93a1ef4344f8d3",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-dark-dense-scrolled.png",
+      "sha256": "19b1216500d2d0a62faf481f838a65f8da0c390f4516a17a8ed420177e0d938e",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-dark-dense.png",
+      "sha256": "e6e29d6f3b40b85c92c2727a2aaef170f6de85479e16fc1b9335c4acb6a1539a",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-dark-empty.png",
+      "sha256": "ca3f959f7aafea7bfacb62b519cf48aa3f2a2c2a5d546b3bb241d7b92e3d3466",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-dark-expanded.png",
+      "sha256": "d1dac344830716fbb7ae538796d68fa199b5cc091666574f92e3cdf50f9917ed",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-dark-populated-focus.png",
+      "sha256": "6037ef7cec6dc23a628bc840bfbd05c8062266a67a19d77c95dcea5fb50bfaa2",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-dark-populated-forced-colors.png",
+      "sha256": "57c3ab3eb21020ed87bcf57f83a3994d755f3ccf2dd9361995099cd77a124b46",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-dark-populated-hover.png",
+      "sha256": "3c1b32468e806b7dcf20659d56e60ce029a1c7786fd2fb99581766e7547b0b5c",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-dark-populated-menu.png",
+      "sha256": "a7eb2c21858b136b44b93411db8b4ccd5feb6706e985993886f1423638ba39cc",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-dark-populated.png",
+      "sha256": "3c1b32468e806b7dcf20659d56e60ce029a1c7786fd2fb99581766e7547b0b5c",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-light-dense-scrolled.png",
+      "sha256": "06f82d14064b4b784a4a0c5453184d8b4bdc585d3483329a254e31985aad9011",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-light-dense.png",
+      "sha256": "e1e17c595c850af2a6750e2468640a11787fdce64096864eac54ce3bfe13233a",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-light-empty.png",
+      "sha256": "bd6266ba155e7babf7549fcba6bb7473ce3f18114227502b0666d1e1f72c0b2a",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-light-expanded.png",
+      "sha256": "c96af73ca10bd9f04616bf2199ff460d36325c92b86a8c7b85a295a04a445de9",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-light-populated-focus.png",
+      "sha256": "8ffcbcfd6d0d87eb5c1ccf4dda38ebbe5bb1df08930b1f8805b2928dcc3b215c",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-light-populated-hover.png",
+      "sha256": "18c6d8af3d118e21686dff958cd8c8c18f634e7a325f46db2bf6d4f10f87266a",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-light-populated-menu.png",
+      "sha256": "d573ba324738c4d7ffe37a1d7848467663307e7a379f3c4d9b09a7a66fdbf09e",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/390-light-populated.png",
+      "sha256": "18c6d8af3d118e21686dff958cd8c8c18f634e7a325f46db2bf6d4f10f87266a",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-dark-dense-scrolled.png",
+      "sha256": "f928dee68c684af4f71844e9165d94fc9f1aee50054a55e236aea4e279529097",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-dark-dense.png",
+      "sha256": "013708f08ac0213bbf053cdf0dea79cf6f958ab67616cde097a98c7dec87431e",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-dark-empty.png",
+      "sha256": "05c16eb544063e63d6db6110760af534eec845dea57c3f7010dc9bcc9ba38725",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-dark-expanded.png",
+      "sha256": "6d59f908dede6f51841950e235e15df76892be5cafa90377cd10fda907938e53",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-dark-populated-focus.png",
+      "sha256": "2cd77aeff0ce1510bcde3c4724a14478e9a0237cefd9409b1a4c898976c159ab",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-dark-populated-hover.png",
+      "sha256": "c8ff87b9e3e6a732100ccd0a4637ade779df0fb381d2337fe1d5934d87a003a5",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-dark-populated-menu.png",
+      "sha256": "3032b9bb8e7aabef07b8bb93b18200240e7dfaa28fb422d6b825657e2314e0df",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-dark-populated.png",
+      "sha256": "c8ff87b9e3e6a732100ccd0a4637ade779df0fb381d2337fe1d5934d87a003a5",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-light-dense-large-text.png",
+      "sha256": "a7007525aa4e7e5d30c084d01abd25a77f7117286e0ebfcba9d986f62b8e2f7d",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-light-dense-scrolled.png",
+      "sha256": "3a0a90a5d8d662e790f55a294db963791190cf1e79581e33399f88a2b4732953",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-light-dense.png",
+      "sha256": "2267ae2d1aa35ce0b1b5c4e7f7714adda11d39820c467352195eab0ab0015cec",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-light-empty.png",
+      "sha256": "c286733d60416070421a21e11559dff4ac5091fff8cc9ed7453262b8a09d0b8f",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-light-expanded.png",
+      "sha256": "274c66b9d3ff9a9004b01b480e14aac823de13edc115bb1519cbde263d51349a",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-light-populated-focus.png",
+      "sha256": "00d824c4ff37e508a2ea1770311e61bf1229e2c5bfcff74c03848c505b323727",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-light-populated-hover.png",
+      "sha256": "d2818943adeacc1111314fdfc823c0aa5c0effd218f71c9de4db0448c6a256fb",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-light-populated-menu.png",
+      "sha256": "51b856bf519572741b75a2352c834534f7e8a9b88a2365bd9126741e6ad3a7eb",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    },
+    {
+      "path": "after/webkit/430-light-populated.png",
+      "sha256": "d2818943adeacc1111314fdfc823c0aa5c0effd218f71c9de4db0448c6a256fb",
+      "appSource": "31a7a347497fb94322bbf48dfcbc8ee5535d172a"
+    }
+  ],
+  "appFiles": {
+    "src/components/HubPage.tsx": "5a2309fad1c05c6f34c07d6b881b64fa91a612e8098666e429897945f17ec36d",
+    "src/components/Sidebar.tsx": "8d5a86dbfe09c4f364676f984e2ff75b8ac1e999c4d5b7b45a1788e84385678e",
+    "src/components/SidebarCanvas.tsx": "204085aa1144ba2ec5fda8df90001eb6bdf9b669c29ae750fb076935fc4335ec",
+    "src/lib/relative-time.ts": "d90fb14a2dde273d99e69588dafa2ff4c31c996d468e179b8a3e4546f41b2663",
+    "src/styles/canvas-shell.css": "eb05d7343d21aa2e953686bbc304cb92df2f56c76570260c9618f2b7e629b43e"
+  },
+  "fixtureSha256": "8db148c70abf485b5b5cc4a30c961a12e1eea68360ec626e1261ae552d8c95b7"
+}

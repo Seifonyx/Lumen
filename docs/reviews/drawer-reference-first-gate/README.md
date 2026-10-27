@@ -1,4 +1,6 @@
-# Owner-reference drawer — first visual approval gate
+# Owner-reference drawer — accepted first visual gate
+
+Owner approved this direction on2026-10-27. The historical single-capture record below is preserved; [expanded delivery](../drawer-composition/README.md) now owns the full matrix and review gate.
 
 Actual app capture at **390x844, iPhone width, Light, populated**. Local source checkpoint `f4dfdf41a4c1e94aefcea50c7fb256013bc7cf09`, branch `feat/drawer-composition-pass2`, from released main828a05c. [Focused capture/check results](results.json).
 

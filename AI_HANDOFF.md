@@ -1,10 +1,16 @@
-## Active owner-approved drawer expansion — 2026-10-27
+# Lumen operational handoff
 
-Continue existing `feat/drawer-composition-pass2` in Lumen-local, from verified remote main828a05c. Owner approved the actual390px Light reference capture at sourcef4dfdf4 and authorized expanding this composition only. Current implementation covers shared desktop/phone rows, compact empty Projects, quieter global New chat/account footer, spacing rhythm and restrained Dark selection. New `drawer-reference.cjs` covers32 states per Chromium/WebKit engine plus interactions. Full matrix, canonical regressions, clean committed QA gate, exact-head CI, draft PR and live status readback remain in progress. No merge/deploy/Tools/spend authority. Separate main worktree untouched. Overall seven-phase completion percentage is not defined; historical records below are preserved.
+## Active — approved drawer expansion / draft owner review
 
-# Dynamic Model Picker operational handoff
+Owner approved sourcef4dfdf4's actual390px Light drawer, then authorized careful responsive/state expansion on existing `feat/drawer-composition-pass2` in Lumen-local, base released main828a05c. Application source `31a7a347497fb94322bbf48dfcbc8ee5535d172a`; later evidence/test-only commits keep the same app files. [Draft PR60](https://github.com/Seifonyx/Lumen/pull/60), [200 actual captures, source hashes and verification limits](docs/reviews/drawer-composition/README.md), [plan](docs/superpowers/plans/2026-10-27-drawer-composition.md). Final exact pushed HEAD/CI and remote readback are maintained in PR60 and live CURRENT_STATUS on docs/lumen-live-context.
 
-## Active — owner-reference first visual gate (2026-10-27)
+Approved composition expanded to320/390/430/desktop, Light/Dark, empty/populated/dense/expanded, long/pinned/draft rows, hover/focus/menu/collapsed states. Search/nav gap and section rhythm refined; Dark selection restrained. Canonical menus escape clipping using the native top layer,44px phone actions and animation-safe viewport placement. Independent review findings fixed. Full units/type, both builds and unchanged budgets pass; canonical regressions, cross-engine screenshot/axe matrix, isolation and final exact-head CI are being reconciled for delivery. Known local Windows WebKit rail-focus limit is documented; Linux CI must certify the final pushed head before handoff.
+
+**STOP for owner review after final verification/readback. No merge/deploy/Tools/spend authority.** Preserve the isolated branch and separate main worktree. Whole-feature Exit, sequential history, drafts/attachments, account permissions and canonical data/execution owners are unchanged. Overall seven-phase completion percentage is not defined; historical weighted ledgers below are preserved.
+
+## Historical operational record
+
+## Historical — first visual gate (owner accepted 2026-10-27)
 
 On existing isolated `feat/drawer-composition-pass2`, from released main828a05c. The owner's newer concept sheet supersedes the shared-panel exploration. Current authorized deliverable is **only390px Light populated iPhone drawer**, followed by owner visual approval before other states/desktop or a new draft PR. Actual app capture and focused checks: `tests/e2e/helpers/drawer-reference-shot.cjs`; [staged design](docs/superpowers/specs/2026-10-27-drawer-composition-design.md), [plan](docs/superpowers/plans/2026-10-27-drawer-composition.md). Flat section hierarchy, thin dividers, blue current selection, genuine chat metadata and leading New chat/trailing avatar follow the reference. Original data/navigation/menus/draft owners preserved, no fake or duplicate entries. Typecheck/navigation/seam checks plus focused axe/44px/non-overlap/menu/draft capture passed. Full regression/budget/isolation/CI, other states/themes and desktop review are pending after approval. **STOP for visual approval. No merge/deploy/Tools/spending.** Overall program percentage undefined. Exact local source/evidence checkpoint is in the capture manifest and live context; older scope records below are historical.
 

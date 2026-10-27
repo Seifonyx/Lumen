@@ -19,8 +19,11 @@
 ## Approved expansion
 
 - [x] Expand approved direction to remaining phone states/themes, larger text and desktop. Tighten search-to-navigation gap; strengthen section rhythm; soften Dark selection; keep long rows contained.
-- [ ] Run proportionate full regressions, budgets/isolation and exact-head CI; independent review.
-- [ ] Package genuine before/after screenshots, open new draft PR and synchronize status. No merge/deploy.
+- [x] Independent review; secondary targets/descriptions/menu clipping and animation placement corrected.
+- [x] Full type/unit suite, both builds, budgets; canonical cross-engine navigation/project/Exit and screenshot checks.
+- [ ] Final exact-head CI, clean gated QA/isolation readback and delivery synchronization.
+- [x] Open draft PR60. Package200 genuine before/after images with file/source hashes and offline gallery.
+- [ ] Verify final remote PR/CI and live status; STOP for owner review. No merge/deploy.
 
 ## Recovery ledger
 

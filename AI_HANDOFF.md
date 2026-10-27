@@ -1,3 +1,7 @@
+## Active owner-approved drawer expansion — 2026-10-27
+
+Continue existing `feat/drawer-composition-pass2` in Lumen-local, from verified remote main828a05c. Owner approved the actual390px Light reference capture at sourcef4dfdf4 and authorized expanding this composition only. Current implementation covers shared desktop/phone rows, compact empty Projects, quieter global New chat/account footer, spacing rhythm and restrained Dark selection. New `drawer-reference.cjs` covers32 states per Chromium/WebKit engine plus interactions. Full matrix, canonical regressions, clean committed QA gate, exact-head CI, draft PR and live status readback remain in progress. No merge/deploy/Tools/spend authority. Separate main worktree untouched. Overall seven-phase completion percentage is not defined; historical records below are preserved.
+
 # Dynamic Model Picker operational handoff
 
 ## Active — owner-reference first visual gate (2026-10-27)

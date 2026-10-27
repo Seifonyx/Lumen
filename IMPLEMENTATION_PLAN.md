@@ -1,8 +1,8 @@
 # Dynamic Model Picker implementation plan
 
-## Active — owner-reference first visual gate (2026-10-27)
+## Active — owner-approved drawer composition expansion (2026-10-27)
 
-Existing branch `feat/drawer-composition-pass2`, base released main828a05c. Owner selected a supplied reference and narrowed execution to one actual390px Light populated drawer, then visual approval. [Current staged plan](docs/superpowers/plans/2026-10-27-drawer-composition.md) and [design](docs/superpowers/specs/2026-10-27-drawer-composition-design.md). Focused implementation/capture ready; other states/desktop/full CI and a new draft PR wait for approval. No merge/deploy, Tools, spending or new schema/infrastructure. Historical weighted ledgers preserved; overall seven-phase completion percentage remains undefined.
+Owner approved sourcef4dfdf4's actual390px Light drawer and authorized careful expansion on existing `feat/drawer-composition-pass2`, base released main828a05c. [Current plan](docs/superpowers/plans/2026-10-27-drawer-composition.md) and [design](docs/superpowers/specs/2026-10-27-drawer-composition-design.md). Shared phone/desktop styling, compact empty Projects and quiet creation/account footer are implemented; screenshot matrix/regressions and new draft PR are in progress. No new composition, merge/deploy, Tools, spending or schema/infrastructure changes. Historical weighted ledgers preserved; overall seven-phase completion percentage remains undefined.
 
 ## Historical — Conversations & Projects visual checkpoint (2026-10-26, released in828a05c)
 

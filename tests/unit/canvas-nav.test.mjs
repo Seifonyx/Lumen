@@ -49,8 +49,9 @@ test('global New chat is always general; a project folder New chat is always tha
   assert.match(readFileSync('src/components/CommandPalette.tsx', 'utf8'), /run: newGeneralChat \|\| newChat/);
   assert.match(readFileSync('src/components/ChatView.tsx', 'utf8'), /className="icon-btn cv-compose"[^>]*onClick=\{\(\) => \(newGeneralChat \|\| useStore\.getState\(\)\.newChat\)\(\)\}/);
   const tree = readFileSync('src/components/SidebarCanvas.tsx', 'utf8');
-  assert.match(tree, /className="cv-dest-new"[^>]*onClick=\{newGeneralChat\}/);
-  assert.match(tree, /className="cv-new-pill" onClick=\{newGeneralChat\} aria-label="New chat"/);
+  assert.match(tree, /className="cv-new-pill cv-dest-new"[^>]*onClick=\{newGeneralChat\}/);
+  assert.match(tree, /className="cv-new-pill cv-dest-new" onClick=\{newGeneralChat\} aria-label="New chat"/);
+  assert.equal((tree.match(/onClick=\{newGeneralChat\}/g) || []).length, 1, 'one canonical global New chat');
   assert.match(tree, /className="cv-new-here" onClick=\{\(\) => newProjectChat\(p\.id\)\}/);
   assert.ok(!/[^.]newChat\b/.test(tree.replace(/newGeneralChat|newProjectChat/g, '')), 'the tree never calls the inheriting newChat');
   assert.match(readFileSync('src/components/CanvasRail.tsx', 'utf8'), /newGeneralChat\(\)/);

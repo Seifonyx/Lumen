@@ -1,8 +1,8 @@
 # Drawer reference implementation plan
 
-> Execute inline; the owner now requires a visual approval gate before broader implementation.
+> Execute inline. Owner approved the actual390px Light capture and authorized careful expansion on this branch; do not reopen composition.
 
-**Goal:** Match the owner-selected reference in one populated390px Light iPhone drawer.
+**Goal:** Carry the owner-approved reference composition across phone/desktop, Light/Dark and realistic data states.
 **Base/branch:** main828a05c; existing `feat/drawer-composition-pass2` in Lumen-local.
 **Spec:** `docs/superpowers/specs/2026-10-27-drawer-composition-design.md`.
 
@@ -14,11 +14,11 @@
 - [x] Preserve desktop presentation and original chat accessibility names; no fake controls or duplicate chat entries.
 - [x] Capture actual390x844 Light populated app; verify axe,44px targets, non-overlapping rows, menu focus and draft restoration.
 - [x] Typecheck and existing navigation/seam unit checks.
-- [ ] Owner visually approves the displayed actual capture.
+- [x] Owner visually approves the displayed actual capture (2026-10-27).
 
-## After explicit visual approval only
+## Approved expansion
 
-- [ ] Expand approved direction to remaining phone states/themes, larger text and desktop.
+- [x] Expand approved direction to remaining phone states/themes, larger text and desktop. Tighten search-to-navigation gap; strengthen section rhythm; soften Dark selection; keep long rows contained.
 - [ ] Run proportionate full regressions, budgets/isolation and exact-head CI; independent review.
 - [ ] Package genuine before/after screenshots, open new draft PR and synchronize status. No merge/deploy.
 
@@ -28,4 +28,4 @@
 - Earlier generated alternatives/full-state tests belong to the superseded interrupted direction, preserved under ignored `tests/e2e/out/drawer-pass2/pre-reference-working/`.
 - First reference capture exposed overlap from inherited fixed-height row wrappers; row and button heights now agree, and a geometry regression prevents overlap.
 - New metadata initially changed accessible button names; explicit original names plus descriptions preserve canonical navigation/tests.
-- Only this first visual gate is ready. No approval, full regression certification, merge/deployment or overall completion percentage is claimed.
+- First visual gate accepted by owner. Expanded delivery and regression certification are in progress; owner review, merge and deployment remain separate. Overall seven-phase completion percentage is not defined.

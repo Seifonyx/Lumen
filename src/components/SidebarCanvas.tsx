@@ -1,11 +1,11 @@
 import { navigateBack, navigateScreen } from '../lib/canvas-presentation';
 // CP03 Canvas navigation (approved Canvas design, Gate 1). Reached only when CANVAS_SHELL is on
 // (src/lib/canvas-presentation.ts); the ordinary build folds it away.
-// One tree: projects are folders of their conversations; loose conversations are grouped by day. It is the same
+// One tree: projects are folders of their conversations; loose conversations are pinned first, then newest first. It is the same
 // sidebar element as Sidebar (one `sidebarOpen`, one collapse state, the same focus scope and drawer gesture
 // owner) and reuses its ChatRow (rename, pin, move, archive, side by side, share/export, delete, long press),
 // search semantics, AllChats, AskChats and ProjectManager. Folder disclosure is presentation only.
-import { BookOpen, ChevronRight, Folder, LayoutGrid, MessageSquarePlus, MessageSquareText, PanelLeftClose, Plus, Search, Settings2, GitFork, Sparkles, X } from 'lucide-react';
+import { BookOpen, ChevronRight, Folder, LayoutGrid, MessageSquarePlus, MessageSquareText, PanelLeftClose, Plus, Search, GitFork, Sparkles, X } from 'lucide-react';
 import { Suspense, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { isMac, modKey } from '../lib/util';
@@ -149,7 +149,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const loose = newestFirst(matches.filter((c) => !c.projectId || !known.has(c.projectId)));
   const current = chats.find((c) => c.id === currentId);
   const hereProject = current?.projectId && known.has(current.projectId) ? current.projectId : activeProjectId;
-  const chatDetail = (chat: Chat) => phone ? [projects.find(p => p.id === chat.projectId)?.name, relTime(chat.updatedAt)].filter(Boolean).join(' · ') : undefined;
+  const chatDetail = (chat: Chat) => [projects.find(p => p.id === chat.projectId)?.name, relTime(chat.updatedAt)].filter(Boolean).join(' · ');
 
   const sectionOpen = (s: 'projects' | 'conversations') => Boolean(q) || disclosure[s];
   const folderOpen = (p: Project) => Boolean(q) || (disclosure.folders[p.id] ?? p.id === hereProject);
@@ -222,14 +222,13 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         <div className="cv-tree" onFocus={loadTreeKeys} onKeyDown={(e) => treeKeys?.(e.nativeEvent, e.currentTarget, ROW, searchInput.current, reveal)}>
           {!q && (
             <ul className="cv-dest" aria-label="Places">
-              {!phone && <li><button type="button" className="cv-dest-new" aria-label="New chat" aria-describedby={`${ids}-general`} onClick={newGeneralChat} title={`New chat (${modKey}⇧O)`}><MessageSquarePlus size={18} /><span>New chat</span><kbd>{modKey}⇧O</kbd></button></li>}
-              <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onClick={() => toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span>{phone && <ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" />}</button></li>
-              <li><button type="button" aria-current={page === 'tools' || page === 'assistants' || page === 'study' ? 'page' : undefined} onClick={() => toPage('tools')} title={`Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`}><LayoutGrid size={18} /><span>Tools</span>{phone && <ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" />}</button></li>
-              <li><button type="button" title="Models, providers & routing" data-routing-center aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><GitFork size={18} strokeWidth={1.8} aria-hidden="true" /><span>Prism</span>{phone && <ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" />}</button></li>
+              <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onClick={() => toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
+              <li><button type="button" aria-current={page === 'tools' || page === 'assistants' || page === 'study' ? 'page' : undefined} onClick={() => toPage('tools')} title={`Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`}><LayoutGrid size={18} /><span>Tools</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
+              <li><button type="button" title="Models, providers & routing" data-routing-center aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><GitFork size={18} strokeWidth={1.8} aria-hidden="true" /><span>Prism</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
             </ul>
           )}
 
-          {section('projects', 'Projects', Boolean(hereProject), <>{phone && !q && <button type="button" className="cv-section-add" aria-label="All projects" title="All projects" onClick={() => toPage('projects')}><Folder size={16} aria-hidden="true" /></button>}<button type="button" className="cv-section-add" aria-label="New project" title="New project" onClick={() => setManager(true)}><Plus size={15} /></button></>)}
+          {section('projects', 'Projects', Boolean(hereProject), <>{!q && projects.length > 0 && <button type="button" className="cv-section-add" aria-label="All projects" title="All projects" onClick={() => toPage('projects')}><Folder size={16} aria-hidden="true" /></button>}{projects.length > 0 && <button type="button" className="cv-section-add" aria-label="New project" title="New project" onClick={() => setManager(true)}><Plus size={15} /></button>}</>)}
           <Fold id={`${ids}-projects`} open={sectionOpen('projects')}>
             {ordered.map((p) => {
               const list = matches.filter((c) => c.projectId === p.id).sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) || b.updatedAt - a.updatedAt);
@@ -259,12 +258,11 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
                 </div>
               );
             })}
-            {!projects.length && !q && <button type="button" className="cv-empty" onClick={() => setManager(true)}>Group related chats, files and instructions in a project</button>}
-            {!phone && !q && <button type="button" className="cv-more" onClick={() => toPage('projects')}>All projects<ChevronRight size={12} aria-hidden="true" /></button>}
+            {!projects.length && !q && <button type="button" className="cv-empty" aria-label="New project" onClick={() => setManager(true)}><Plus size={16} aria-hidden="true" />New project</button>}
           </Fold>
 
-          {phone && !q && <div className="cv-workspace-end" />}
-          {section('conversations', q ? 'Search results' : 'Conversations', Boolean(current && !hereProject && !isTemporaryChat(current)), phone && !q && <button type="button" className="cv-section-add cv-conversations-all" aria-label="All chats" title="All chats" onClick={() => setAllChats(true)}><MessageSquareText size={17} aria-hidden="true" /></button>)}
+          {!q && <div className="cv-workspace-end" />}
+          {section('conversations', q ? 'Search results' : 'Conversations', Boolean(current && !hereProject && !isTemporaryChat(current)), !q && <button type="button" className="cv-section-add cv-conversations-all" aria-label="All chats" title="All chats" onClick={() => setAllChats(true)}><MessageSquareText size={17} aria-hidden="true" /></button>)}
           <Fold id={`${ids}-conversations`} open={sectionOpen('conversations')}>
             {loose.some((c) => !c.archived) && <ul className="cv-chats cv-loose" aria-label={q ? 'Search results' : 'Conversations'}>{loose.filter((c) => !c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} detail={chatDetail(c)} />)}</ul>}
             {/* Search also finds archived chats; they are marked as such, after the rest. */}
@@ -273,18 +271,15 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
               <ul className="cv-chats cv-loose cv-archived" aria-labelledby={`${ids}-archived`}>{loose.filter((c) => c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} detail={chatDetail(c)} />)}</ul>
             </>}
             {!loose.length && <p className="cv-none">{q ? 'No loose conversations match.' : 'Your chats will appear here.'}</p>}
-            {!phone && !q && <button type="button" className="cv-all" onClick={() => setAllChats(true)}><MessageSquareText size={15} />All chats<ChevronRight size={13} aria-hidden="true" /></button>}
           </Fold>
         </div>
 
         <div className="cv-foot">
           {/* The global New chat: always a general conversation, outside projects (src/lib/new-chat.ts). A project's own
               New chat is inside its folder. */}
-          {phone && <button type="button" className="cv-new-pill" onClick={newGeneralChat} aria-label="New chat" aria-describedby={`${ids}-general`}><MessageSquarePlus size={18} aria-hidden="true" />New chat</button>}
+          <button type="button" className="cv-new-pill cv-dest-new" onClick={newGeneralChat} aria-label="New chat" aria-describedby={`${ids}-general`} title={`New chat (${modKey}⇧O)`}><MessageSquarePlus size={18} aria-hidden="true" />New chat</button>
           <button type="button" className="cv-account" aria-label="Settings" title={`Settings (${modKey},)`} onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })}>
             {user?.photo ? <img className="cv-avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="cv-avatar" aria-hidden="true">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
-            {!phone && <span className="cv-account-text"><span className="cv-account-name">{user?.name || user?.email?.split('@')[0] || 'Account'}</span><span className="cv-account-sub">Settings &amp; keys</span></span>}
-            {!phone && <Settings2 size={16} className="cv-account-gear" aria-hidden="true" />}
           </button>
         </div>
       </aside>

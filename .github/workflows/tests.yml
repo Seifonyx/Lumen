@@ -248,6 +248,7 @@ jobs:
           trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
           node -e "(async()=>{for(let i=0;i<30;i++){try{if((await fetch('http://localhost:5191/')).ok)return}catch{}await new Promise(r=>setTimeout(r,500))}process.exit(1)})()"
           node tests/e2e/feature-exit.cjs
+          node tests/e2e/drawer-reference.cjs
           node tests/e2e/conversations-projects.cjs
           node tests/e2e/library-experience.cjs
           node tests/e2e/iphone-glass-navigation.cjs
@@ -287,6 +288,8 @@ jobs:
             tests/e2e/out/prism-usage-diagnostics/**/*.json
             tests/e2e/out/library/**/*.png
             tests/e2e/out/library/**/*.json
+            tests/e2e/out/drawer-reference/**/*.png
+            tests/e2e/out/drawer-reference/**/*.json
             tests/e2e/out/conversations-projects/**/*.png
             tests/e2e/out/conversations-projects/**/*.json
             tests/e2e/out/cp03/**/*.png

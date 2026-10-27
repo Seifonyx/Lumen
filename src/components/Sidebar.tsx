@@ -46,7 +46,9 @@ export function ChatRow({ chat, active, detail }: { chat: Chat; active: boolean;
     // The native top layer escapes the scrolling tree without leaving its DOM/focus scope.
     popup.showPopover();
     const position = () => {
-      const r = anchor.getBoundingClientRect(), box = popup.getBoundingClientRect();
+      const r = anchor.getBoundingClientRect();
+      // grow-in scales the painted box; layout dimensions also fit after the animation settles.
+      const box = { width: popup.offsetWidth, height: popup.offsetHeight };
       popup.style.left = `${Math.max(12, Math.min(r.right - box.width, innerWidth - box.width - 12))}px`;
       popup.style.top = `${Math.max(12, Math.min(r.bottom + 6, innerHeight - box.height - 12))}px`;
     };

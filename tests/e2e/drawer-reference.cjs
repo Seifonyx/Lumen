@@ -59,7 +59,8 @@ for (const state of ['empty', 'populated', 'dense', 'expanded']) fixtures[state]
         if (state === 'populated') assert((await description(current.locator('.chat-open'))).includes('Pinned'));
 
         if (state === 'populated') {
-          await current.locator('.chat-open').hover(); await audit(); await shot('hover');
+          const hoverRow = nav.locator('.cv-loose .chat-row:not(.active)').first(); await hoverRow.locator('.chat-open').hover(); await audit();
+          await page.screenshot({ path: path.join(out, `${width}-${theme}-${state}-hover.png`), animations: 'disabled' });
           await page.keyboard.press('Tab'); await current.locator('.chat-open').focus(); assert.notEqual(await current.locator('.chat-open').evaluate(el => getComputedStyle(el).outlineStyle), 'none', 'keyboard focus remains visible');
           await page.screenshot({ path: path.join(out, `${width}-${theme}-${state}-focus.png`), animations: 'disabled' });
           await current.getByRole('button', { name: 'Chat options', exact: true }).click(); await page.getByRole('menuitem', { name: 'Rename', exact: true }).waitFor(); await shot('menu'); await page.keyboard.press('Escape');

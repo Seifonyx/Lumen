@@ -1,6 +1,10 @@
 # Dynamic Model Picker implementation plan
 
-## Active — Conversations & Projects visual checkpoint (2026-10-26)
+## Active — owner-reference first visual gate (2026-10-27)
+
+Existing branch `feat/drawer-composition-pass2`, base released main828a05c. Owner selected a supplied reference and narrowed execution to one actual390px Light populated drawer, then visual approval. [Current staged plan](docs/superpowers/plans/2026-10-27-drawer-composition.md) and [design](docs/superpowers/specs/2026-10-27-drawer-composition-design.md). Focused implementation/capture ready; other states/desktop/full CI and a new draft PR wait for approval. No merge/deploy, Tools, spending or new schema/infrastructure. Historical weighted ledgers preserved; overall seven-phase completion percentage remains undefined.
+
+## Historical — Conversations & Projects visual checkpoint (2026-10-26, released in828a05c)
 
 Owner clarified Conversations & Projects first; Tools Slice2 deferred. Final source `b49b719bfcaf12ef10dfa42dbeefe95d7ae2ce13` on `feat/conversations-projects-experience` from main1e93777, [draft PR59](https://github.com/Seifonyx/Lumen/pull/59). [Scoped plan](docs/superpowers/plans/2026-10-26-conversations-projects.md) and [32 real-app captures/verification](docs/reviews/conversations-projects/README.md) own this checkpoint's acceptance/evidence. Initial CI failure and corrections recorded; final exact-head CI and planner outcome in PR/live checkpoint. No merge, deploy or owner visual acceptance inferred. Historical weighted ledgers unchanged; **overall completion percentage not defined for the current seven-phase program**.
 

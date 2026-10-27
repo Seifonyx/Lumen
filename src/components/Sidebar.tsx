@@ -1,5 +1,5 @@
 import { isTemporaryChat } from '../lib/temporary-chat';
-import { Archive, ArchiveRestore, ChevronRight, LayoutGrid, Shapes, Sparkles, Columns2, Download, FolderKanban, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Trash2, X } from 'lucide-react';
+import { Archive, ArchiveRestore, ChevronRight, LayoutGrid, Shapes, Sparkles, Columns2, Download, FolderKanban, MessageSquareText, MoreHorizontal, PanelLeftClose, Pencil, Pin, PinOff, Plus, Search, Settings2, Trash2, X } from 'lucide-react';
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
@@ -18,7 +18,7 @@ export const AskChats = lazy(() => import('./AskChats'));
 
 const EMPTY_PROJECTS: Project[] = [];
 
-export function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
+export function ChatRow({ chat, active, detail }: { chat: Chat; active: boolean; detail?: string }) {
   const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
   const { selectChat, deleteChat, renameChat, togglePin, moveChatToProject } = useStore.getState();
   const streaming = useStore((s) => s.streamingChatId === chat.id);
@@ -80,9 +80,10 @@ export function ChatRow({ chat, active }: { chat: Chat; active: boolean }) {
 
   return (
     <li className={`chat-row${active ? ' active' : ''}${menu ? ' menu-open' : ''}`} data-flip={chat.id} ref={rowRef}>
-      <button className="chat-open" onClick={() => selectChat(chat.id)} dir="auto" title={chat.title}>
+      <button className="chat-open" onClick={() => selectChat(chat.id)} dir="auto" title={chat.title} aria-label={detail ? chat.title : undefined} aria-description={detail}>
+        {detail && <MessageSquareText size={18} className="cv-chat-glyph" aria-hidden="true" />}
         {chat.pinned && <Pin size={13} className="pin-mark" />}
-        <span className="chat-title">{chat.title}</span>
+        {detail ? <span className="cv-chat-copy"><span className="chat-title">{chat.title}</span><span className="cv-chat-detail">{detail}</span></span> : <span className="chat-title">{chat.title}</span>}
         {streaming && <span className="dot-pulse" aria-label="Replying" />}
       </button>
       <div className="row-menu" ref={menuRef}>

@@ -19,6 +19,7 @@ import { AskChats, ChatRow, type SidebarProps } from './Sidebar';
 import { BrandWordmark, loadTreeKeys as loadKeys } from '../lib/canvas-presentation';
 import { newGeneralChat, newProjectChat } from '../lib/new-chat';
 import { useBackLayer } from '../lib/back-stack';
+import { relTime } from './HubPage';
 
 const EMPTY_PROJECTS: Project[] = [];
 const LIMIT = 5;
@@ -148,6 +149,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const loose = newestFirst(matches.filter((c) => !c.projectId || !known.has(c.projectId)));
   const current = chats.find((c) => c.id === currentId);
   const hereProject = current?.projectId && known.has(current.projectId) ? current.projectId : activeProjectId;
+  const chatDetail = (chat: Chat) => phone ? [projects.find(p => p.id === chat.projectId)?.name, relTime(chat.updatedAt)].filter(Boolean).join(' · ') : undefined;
 
   const sectionOpen = (s: 'projects' | 'conversations') => Boolean(q) || disclosure[s];
   const folderOpen = (p: Project) => Boolean(q) || (disclosure.folders[p.id] ?? p.id === hereProject);
@@ -221,13 +223,13 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
           {!q && (
             <ul className="cv-dest" aria-label="Places">
               {!phone && <li><button type="button" className="cv-dest-new" aria-label="New chat" aria-describedby={`${ids}-general`} onClick={newGeneralChat} title={`New chat (${modKey}⇧O)`}><MessageSquarePlus size={18} /><span>New chat</span><kbd>{modKey}⇧O</kbd></button></li>}
-              <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onClick={() => toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span></button></li>
-              <li><button type="button" aria-current={page === 'tools' || page === 'assistants' || page === 'study' ? 'page' : undefined} onClick={() => toPage('tools')} title={`Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`}><LayoutGrid size={18} /><span>Tools</span></button></li>
-              <li><button type="button" title="Models, providers & routing" data-routing-center aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><GitFork size={18} strokeWidth={1.8} aria-hidden="true" /><span>Prism</span></button></li>
+              <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onClick={() => toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span>{phone && <ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" />}</button></li>
+              <li><button type="button" aria-current={page === 'tools' || page === 'assistants' || page === 'study' ? 'page' : undefined} onClick={() => toPage('tools')} title={`Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`}><LayoutGrid size={18} /><span>Tools</span>{phone && <ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" />}</button></li>
+              <li><button type="button" title="Models, providers & routing" data-routing-center aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><GitFork size={18} strokeWidth={1.8} aria-hidden="true" /><span>Prism</span>{phone && <ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" />}</button></li>
             </ul>
           )}
 
-          {section('projects', 'Projects', Boolean(hereProject), <button type="button" className="cv-section-add" aria-label="New project" title="New project" onClick={() => setManager(true)}><Plus size={15} /></button>)}
+          {section('projects', 'Projects', Boolean(hereProject), <>{phone && !q && <button type="button" className="cv-section-add" aria-label="All projects" title="All projects" onClick={() => toPage('projects')}><Folder size={16} aria-hidden="true" /></button>}<button type="button" className="cv-section-add" aria-label="New project" title="New project" onClick={() => setManager(true)}><Plus size={15} /></button></>)}
           <Fold id={`${ids}-projects`} open={sectionOpen('projects')}>
             {ordered.map((p) => {
               const list = matches.filter((c) => c.projectId === p.id).sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) || b.updatedAt - a.updatedAt);
@@ -250,7 +252,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
                       </button></li>
                       {/* Inside the folder, so it reads as part of this project; the label names it too. */}
                       {!q && <li><button type="button" className="cv-new-here" onClick={() => newProjectChat(p.id)}><span className="cv-new-here-icon" aria-hidden="true"><Plus size={13} /></span><span className="cv-new-here-label">New chat in {p.name}</span></button></li>}
-                      {shown.map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}
+                      {shown.map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} detail={chatDetail(c)} />)}
                       {list.length > shown.length && <li><button type="button" className="cv-more" onClick={() => setMore({ ...more, [p.id]: true })}>Show {list.length - shown.length} more</button></li>}
                     </ul>
                   </Fold>
@@ -258,19 +260,20 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
               );
             })}
             {!projects.length && !q && <button type="button" className="cv-empty" onClick={() => setManager(true)}>Group related chats, files and instructions in a project</button>}
-            {!q && <button type="button" className="cv-more" onClick={() => toPage('projects')}>All projects<ChevronRight size={12} aria-hidden="true" /></button>}
+            {!phone && !q && <button type="button" className="cv-more" onClick={() => toPage('projects')}>All projects<ChevronRight size={12} aria-hidden="true" /></button>}
           </Fold>
 
-          {section('conversations', q ? 'Search results' : 'Conversations', Boolean(current && !hereProject && !isTemporaryChat(current)))}
+          {phone && !q && <div className="cv-workspace-end" />}
+          {section('conversations', q ? 'Search results' : 'Conversations', Boolean(current && !hereProject && !isTemporaryChat(current)), phone && !q && <button type="button" className="cv-section-add cv-conversations-all" aria-label="All chats" title="All chats" onClick={() => setAllChats(true)}><MessageSquareText size={17} aria-hidden="true" /></button>)}
           <Fold id={`${ids}-conversations`} open={sectionOpen('conversations')}>
-            {loose.some((c) => !c.archived) && <ul className="cv-chats cv-loose" aria-label={q ? 'Search results' : 'Conversations'}>{loose.filter((c) => !c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}</ul>}
+            {loose.some((c) => !c.archived) && <ul className="cv-chats cv-loose" aria-label={q ? 'Search results' : 'Conversations'}>{loose.filter((c) => !c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} detail={chatDetail(c)} />)}</ul>}
             {/* Search also finds archived chats; they are marked as such, after the rest. */}
             {loose.some((c) => c.archived) && <>
               <p className="cv-archived-label" id={`${ids}-archived`}>Archived</p>
-              <ul className="cv-chats cv-loose cv-archived" aria-labelledby={`${ids}-archived`}>{loose.filter((c) => c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} />)}</ul>
+              <ul className="cv-chats cv-loose cv-archived" aria-labelledby={`${ids}-archived`}>{loose.filter((c) => c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} detail={chatDetail(c)} />)}</ul>
             </>}
             {!loose.length && <p className="cv-none">{q ? 'No loose conversations match.' : 'Your chats will appear here.'}</p>}
-            {!q && <button type="button" className="cv-all" onClick={() => setAllChats(true)}><MessageSquareText size={15} />All chats<ChevronRight size={13} aria-hidden="true" /></button>}
+            {!phone && !q && <button type="button" className="cv-all" onClick={() => setAllChats(true)}><MessageSquareText size={15} />All chats<ChevronRight size={13} aria-hidden="true" /></button>}
           </Fold>
         </div>
 

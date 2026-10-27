@@ -95,7 +95,7 @@
 /* The pin trails the title, so every title in a list starts on the same edge. */
 .app[data-lumen-canvas-shell] .cv-nav .pin-mark { flex: none; order: 1; width: 12px; height: 12px; color: var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row:is(:hover, .menu-open) .chat-open { background: var(--canvas-fill); color: var(--canvas-ink); }
-.app[data-lumen-canvas-shell] .cv-nav .chat-row.active .chat-open { background: var(--cv-selection); color: var(--canvas-ink); font-weight: 550; }
+.app[data-lumen-canvas-shell] .cv-nav .chat-row.active .chat-open { background: var(--cv-selection); color: var(--canvas-ink); font-weight: 600; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row::before, .app[data-lumen-canvas-shell] .cv-nav .chat-row::after { content: none; }
 .app[data-lumen-canvas-shell] .cv-nav .row-menu { position: absolute; inset-inline-end: 4px; top: 50%; translate: 0 -50%; opacity: 0; transition: opacity .12s; }
 .app[data-lumen-canvas-shell] .cv-nav .row-menu > .icon-btn { width: 36px; height: 36px; border-radius: 8px; color: var(--canvas-secondary); }

@@ -198,7 +198,7 @@ try {
         await page.keyboard.press('ArrowLeft');
         assert.equal(await lisbon.getAttribute('aria-expanded'), 'false', 'Left closes it');
         await page.keyboard.press('End');
-        assert.ok(await page.evaluate(() => document.activeElement?.matches('.cv-all')), 'End reaches the last row');
+        assert.ok(await page.evaluate(() => document.activeElement === document.querySelector('.cv-loose > .chat-row:last-child .chat-open')), 'End reaches the last conversation row; All chats is a section action');
       }
       pass('tree semantics and keyboard');
 

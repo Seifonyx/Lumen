@@ -35,7 +35,7 @@ test("the tree's arrow keys load lazily from SidebarCanvas only, and change no r
   assert.ok(!/setAttribute|removeAttribute|tabIndex|\.role\s*=/.test(keys), 'rows keep their button semantics');
   // The shared ChatRow keeps its single Canvas seam; the tree adds current/pinned state as attributes.
   assert.match(tree, /setAttribute\('aria-current', 'page'\)/);
-  assert.match(tree, /\[row\.querySelector\('\.pin-mark'\) && `\$\{ids\}-pinned`, draft && `\$\{ids\}-draft`\]/);
+  assert.match(tree, /\[row\.querySelector\('\.pin-mark'\) && `\$\{ids\}-pinned`, draft && `\$\{ids\}-draft`, detail\?\.id\]/);
 });
 
 test('global New chat is always general; a project folder New chat is always that project (Canvas only)', () => {

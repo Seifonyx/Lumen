@@ -45,7 +45,7 @@ for (const state of ['empty', 'populated', 'dense', 'expanded']) fixtures[state]
         const rects = await nav.locator('.cv-chats').evaluateAll(lists => lists.flatMap(list => { const rows = [...list.querySelectorAll(':scope > .chat-row .chat-open')].filter(el => !el.closest('[inert]')); return rows.map((el, i) => ({ title: el.title, height: el.getBoundingClientRect().height, overlap: i > 0 && el.getBoundingClientRect().top < rows[i - 1].getBoundingClientRect().bottom - .5 })); }));
         assert.deepEqual(rects.filter(r => r.overlap || r.height < (phone ? 44 : 36)), [], 'rows retain distinct hit areas');
         const titles = await nav.locator('.chat-open').evaluateAll(els => els.filter(el => !el.closest('[inert]')).map(el => el.getAttribute('title'))); assert.equal(new Set(titles).size, titles.length, 'a chat is not duplicated in visible sections');
-        if (phone) { const targets = await nav.locator('.cv-dest button, .cv-project-row, .cv-section-add, .cv-new-pill, .cv-account').evaluateAll(els => els.filter(el => !el.closest('[inert]')).map(el => ({ label: el.getAttribute('aria-label') || el.textContent, height: el.getBoundingClientRect().height }))); assert.deepEqual(targets.filter(t => t.height < 44), [], 'phone controls retain44px targets'); }
+        if (phone) { const targets = await nav.locator('.cv-dest button, .cv-project-row, .cv-section-add, .cv-new-pill, .cv-account, .cv-ask, .cv-more, .cv-new-here, .cv-empty, .cv-brief').evaluateAll(els => els.filter(el => !el.closest('[inert]')).map(el => ({ label: el.getAttribute('aria-label') || el.textContent, height: el.getBoundingClientRect().height }))); assert.deepEqual(targets.filter(t => t.height < 44), [], 'phone controls retain44px targets'); }
       };
       await nav.locator('.cv-tree').evaluate(el => el.scrollTop = 0);
       await shot('');
@@ -54,6 +54,10 @@ for (const state of ['empty', 'populated', 'dense', 'expanded']) fixtures[state]
         if (state === 'empty') { assert.equal(await nav.getByRole('button', { name: 'New project', exact: true }).count(), 1); assert.equal(await nav.getByText('Group related chats, files and instructions in a project', { exact: true }).count(), 0, 'empty Projects stays compact'); }
         await geometry(); await audit();
         const current = nav.locator('.chat-row.active'); await current.scrollIntoViewIfNeeded();
+        const description = async button => button.evaluate(el => (el.getAttribute('aria-describedby') || '').split(' ').map(id => document.getElementById(id)?.textContent || '').join(' '));
+        assert((await description(current.locator('.chat-open'))).includes(await current.locator('.cv-chat-detail').innerText()), 'spoken metadata is retained alongside pin/draft descriptions');
+        if (state === 'populated') assert((await description(current.locator('.chat-open'))).includes('Pinned'));
+
         if (state === 'populated') {
           await current.locator('.chat-open').hover(); await audit(); await shot('hover');
           await page.keyboard.press('Tab'); await current.locator('.chat-open').focus(); assert.notEqual(await current.locator('.chat-open').evaluate(el => getComputedStyle(el).outlineStyle), 'none', 'keyboard focus remains visible');
@@ -66,12 +70,12 @@ for (const state of ['empty', 'populated', 'dense', 'expanded']) fixtures[state]
           const folder = nav.locator('.cv-project-row').filter({ hasText: 'Fieldwork' }); await folder.focus(); await page.waitForFunction(() => performance.getEntriesByType('resource').some(e => /tree-keys/.test(e.name)));
           if (await folder.getAttribute('aria-expanded') === 'true') { await page.keyboard.press('ArrowLeft'); await page.waitForFunction(() => [...document.querySelectorAll('.cv-project-row')].find(el => el.textContent.includes('Fieldwork'))?.getAttribute('aria-expanded') === 'false'); }
           await page.keyboard.press('ArrowRight'); await page.waitForFunction(() => [...document.querySelectorAll('.cv-project-row')].find(el => el.textContent.includes('Fieldwork'))?.getAttribute('aria-expanded') === 'true');
-          await nav.getByRole('searchbox', { name: 'Search chats', exact: true }).fill('Archived field'); await nav.getByRole('button', { name: 'Archived field notes', exact: true }).waitFor(); await nav.getByRole('button', { name: 'Clear search', exact: true }).click();
+          await nav.getByRole('searchbox', { name: 'Search chats', exact: true }).fill('Archived field'); await nav.getByRole('button', { name: 'Archived field notes', exact: true }).waitFor(); await geometry(); if (phone) { await nav.evaluate(el => el.style.setProperty('--fs', '24px')); const ask = nav.locator('.cv-ask'); assert(Number(await ask.evaluate(el => getComputedStyle(el).fontSize.replace('px',''))) >= 22, 'search action follows text size'); await geometry(); await nav.evaluate(el => el.style.removeProperty('--fs')); } await nav.getByRole('button', { name: 'Clear search', exact: true }).click();
         }
         if (state === 'dense') { await nav.locator('.cv-tree').evaluate(el => el.scrollTop = el.scrollHeight); await shot('scrolled'); await geometry(); }
         if (width === 430 && theme === 'light' && state === 'dense') { await nav.evaluate(el => el.style.setProperty('--fs', '20px')); await geometry(); await audit(); await shot('large-text'); await nav.evaluate(el => el.style.removeProperty('--fs')); }
         if (width === 390 && theme === 'dark' && state === 'populated') { await page.emulateMedia({ forcedColors: 'active' }); await shot('forced-colors'); await page.emulateMedia({ forcedColors: 'none' }); }
-        await nav.getByRole('button', { name: 'New chat', exact: true }).click(); await page.locator('.composer textarea').waitFor(); await open(); await nav.getByRole('button', { name: 'Notes from the first visit', exact: true }).click(); assert.equal(await page.locator('.composer textarea').inputValue(), 'Keep the approved drawer draft.');
+        await nav.getByRole('button', { name: 'New chat', exact: true }).click(); await page.locator('.composer textarea').waitFor(); await open(); const origin = nav.getByRole('button', { name: 'Notes from the first visit', exact: true }); assert((await description(origin)).includes('Unsent draft')); assert((await description(origin)).includes(await origin.locator('.cv-chat-detail').innerText())); await origin.click(); assert.equal(await page.locator('.composer textarea').inputValue(), 'Keep the approved drawer draft.');
         assert.deepEqual(inference, []); assert.deepEqual(errors, []);
       }
       results.push({ width, height, theme, state, passed: true }); console.log('PASS approved drawer', before ? 'before' : 'after', engine, width, theme, state); await ctx.close();

@@ -128,7 +128,10 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
       let draft = false;
       try { draft = !row.classList.contains('active') && Boolean(localStorage.getItem(`mr.draft.${user?.uid}.${row.dataset.flip}`)); } catch { /* private mode */ }
       row.toggleAttribute('data-draft', draft);
-      const described = [row.querySelector('.pin-mark') && `${ids}-pinned`, draft && `${ids}-draft`].filter(Boolean).join(' ');
+      // aria-describedby takes precedence over aria-description: keep metadata, pins and drafts together.
+      const detail = row.querySelector<HTMLElement>('.cv-chat-detail');
+      if (detail) detail.id = `${ids}-detail-${row.dataset.flip}`;
+      const described = [row.querySelector('.pin-mark') && `${ids}-pinned`, draft && `${ids}-draft`, detail?.id].filter(Boolean).join(' ');
       if (described) button.setAttribute('aria-describedby', described); else button.removeAttribute('aria-describedby');
     });
   });
@@ -262,7 +265,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
           </Fold>
 
           {!q && <div className="cv-workspace-end" />}
-          {section('conversations', q ? 'Search results' : 'Conversations', Boolean(current && !hereProject && !isTemporaryChat(current)), !q && <button type="button" className="cv-section-add cv-conversations-all" aria-label="All chats" title="All chats" onClick={() => setAllChats(true)}><MessageSquareText size={17} aria-hidden="true" /></button>)}
+          {section('conversations', q ? 'Search results' : 'Conversations', Boolean(current && !hereProject && !isTemporaryChat(current)), !q && <button type="button" className="cv-section-add cv-conversations-all cv-all" aria-label="All chats" title="All chats" onClick={() => setAllChats(true)}><MessageSquareText size={17} aria-hidden="true" /></button>)}
           <Fold id={`${ids}-conversations`} open={sectionOpen('conversations')}>
             {loose.some((c) => !c.archived) && <ul className="cv-chats cv-loose" aria-label={q ? 'Search results' : 'Conversations'}>{loose.filter((c) => !c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} detail={chatDetail(c)} />)}</ul>}
             {/* Search also finds archived chats; they are marked as such, after the rest. */}

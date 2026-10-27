@@ -80,7 +80,7 @@ export function ChatRow({ chat, active, detail }: { chat: Chat; active: boolean;
 
   return (
     <li className={`chat-row${active ? ' active' : ''}${menu ? ' menu-open' : ''}`} data-flip={chat.id} ref={rowRef}>
-      <button className="chat-open" onClick={() => selectChat(chat.id)} dir="auto" title={chat.title} aria-label={detail ? chat.title : undefined} aria-description={detail}>
+      <button className="chat-open" onClick={() => selectChat(chat.id)} dir="auto" title={chat.title} aria-label={detail ? chat.title : undefined}>
         {detail && <MessageSquareText size={18} className="cv-chat-glyph" aria-hidden="true" />}
         {chat.pinned && <Pin size={13} className="pin-mark" />}
         {detail ? <span className="cv-chat-copy"><span className="chat-title">{chat.title}</span><span className="cv-chat-detail">{detail}</span></span> : <span className="chat-title">{chat.title}</span>}

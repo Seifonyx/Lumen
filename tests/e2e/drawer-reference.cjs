@@ -63,7 +63,16 @@ for (const state of ['empty', 'populated', 'dense', 'expanded']) fixtures[state]
           await page.screenshot({ path: path.join(out, `${width}-${theme}-${state}-hover.png`), animations: 'disabled' });
           await page.keyboard.press('Tab'); await current.locator('.chat-open').focus(); assert.notEqual(await current.locator('.chat-open').evaluate(el => getComputedStyle(el).outlineStyle), 'none', 'keyboard focus remains visible');
           await page.screenshot({ path: path.join(out, `${width}-${theme}-${state}-focus.png`), animations: 'disabled' });
-          await current.getByRole('button', { name: 'Chat options', exact: true }).click(); await page.getByRole('menuitem', { name: 'Rename', exact: true }).waitFor(); await shot('menu'); await page.keyboard.press('Escape');
+          await current.getByRole('button', { name: 'Chat options', exact: true }).click(); await page.getByRole('menuitem', { name: 'Rename', exact: true }).waitFor();
+          const menu = page.getByRole('menu', { name: 'Chat options', exact: true });
+          const menuFits = () => menu.evaluate(el => { const r = el.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth; });
+          assert(await menuFits(), 'the whole conversation menu escapes the tree and fits the viewport');
+          if (phone) assert(await menu.getByRole('menuitem').evaluateAll(items => items.every(el => el.getBoundingClientRect().height >= 44)), 'phone menu actions have44px touch targets');
+          await shot('menu');
+          await menu.getByRole('menuitem', { name: 'Move to project', exact: true }).click(); await page.getByRole('menuitem', { name: 'Fieldwork', exact: true }).waitFor();
+          assert(await menuFits(), 'expanded project choices stay bounded');
+          await menu.focus(); await page.keyboard.press('End'); assert(await menu.getByRole('menuitem', { name: 'Delete', exact: true }).evaluate(el => el === document.activeElement), 'the final action stays keyboard reachable');
+          await page.keyboard.press('Escape');
           assert(await current.getByRole('button', { name: 'Chat options', exact: true }).evaluate(el => el === document.activeElement));
           if (!phone) { await nav.getByRole('button', { name: 'Collapse sidebar', exact: true }).click(); const rail = page.getByRole('navigation', { name: 'Navigation', exact: true }); await rail.waitFor(); assert.equal(await rail.getByRole('button').count(), 8); await page.screenshot({ path: path.join(out, `${width}-${theme}-collapsed.png`), animations: 'disabled' }); await rail.getByRole('button', { name: 'Expand sidebar', exact: true }).click(); await nav.waitFor(); }
         }

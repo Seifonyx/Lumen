@@ -38,6 +38,23 @@ export function ChatRow({ chat, active, detail }: { chat: Chat; active: boolean;
     const root = menu && menuRef.current?.querySelector<HTMLElement>('.menu:not(.exit-ghost)');
     return root ? installMenuScrub(root) : undefined;
   }, [menu]);
+  useLayoutEffect(() => {
+    if (!detail || !menu) return;
+    const popup = menuRef.current?.querySelector<HTMLElement>('.menu[popover]');
+    const anchor = menuRef.current?.querySelector<HTMLButtonElement>('button');
+    if (!popup || !anchor) return;
+    // The native top layer escapes the scrolling tree without leaving its DOM/focus scope.
+    popup.showPopover();
+    const position = () => {
+      const r = anchor.getBoundingClientRect(), box = popup.getBoundingClientRect();
+      popup.style.left = `${Math.max(12, Math.min(r.right - box.width, innerWidth - box.width - 12))}px`;
+      popup.style.top = `${Math.max(12, Math.min(r.bottom + 6, innerHeight - box.height - 12))}px`;
+    };
+    position();
+    window.addEventListener('resize', position);
+    window.addEventListener('scroll', position, true);
+    return () => { window.removeEventListener('resize', position); window.removeEventListener('scroll', position, true); };
+  }, [menu, moving, projects.length, detail]);
   const remove = () => { if (confirm(`Delete "${chat.title}"?`)) { if (rowRef.current) exitGhost(rowRef.current, 'row'); void deleteChat(chat.id); } };
 
   useEffect(() => {
@@ -91,7 +108,7 @@ export function ChatRow({ chat, active, detail }: { chat: Chat; active: boolean;
           <MoreHorizontal size={16} />
         </button>
         {menu && (<Exit kind="drop">
-          <div className="menu" role="menu" aria-label="Chat options" tabIndex={-1} onKeyDown={e=>{
+          <div className="menu" popover={detail ? 'manual' : undefined} role="menu" aria-label="Chat options" tabIndex={-1} onKeyDown={e=>{
             if(e.key==='Escape'){e.stopPropagation();setMenu(false);menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();return}
             if(!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
             e.preventDefault();const items=[...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')];const index=items.indexOf(document.activeElement as HTMLButtonElement);

@@ -102,6 +102,7 @@
 .app[data-lumen-canvas-shell] .cv-nav .chat-row:is(:hover, :focus-within, .menu-open) .row-menu { opacity: 1; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row:is(:hover, :focus-within, .menu-open) .chat-open { padding-inline-end: 44px; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row .menu { inset-inline-end: 0; inset-inline-start: auto; min-width: 212px; z-index: 30; }
+.app[data-lumen-canvas-shell] .cv-nav .chat-row .menu[popover] { position: fixed; inset: auto; margin: 0; box-sizing: border-box; max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); overflow: auto; overscroll-behavior: contain; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row.editing input { width: 100%; min-height: var(--cv-row); padding: 0 10px; border: 0; border-radius: 9px; background: var(--canvas-fill-strong); color: var(--canvas-ink); font: inherit; font-size: var(--cv-fs); outline: 2px solid color-mix(in srgb, var(--canvas-ink) 35%, transparent); }
 .app[data-lumen-canvas-shell] .cv-none { margin: 4px 10px; font-size: 12.5px; color: var(--canvas-muted); }
 
@@ -141,6 +142,7 @@
  .app[data-lumen-canvas-shell] .cv-count { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
  .app[data-lumen-canvas-shell] .cv-nav .row-menu > .icon-btn { width: 44px; height: 44px; }
  .app[data-lumen-canvas-shell] .cv-nav .row-menu { inset-inline-end: 0; }
+ .app[data-lumen-canvas-shell] .cv-nav .menu[popover] [role='menuitem'] { min-height: 44px; }
  .app[data-lumen-canvas-shell] .cv-nav .chat-row:not(.active):not(:focus-within):not(.menu-open) .row-menu { opacity: 0; pointer-events: none; }
  html.glass .app[data-lumen-canvas-shell] .cv-nav { background: linear-gradient(color-mix(in srgb,var(--bg) 94%,transparent),color-mix(in srgb,var(--bg) 94%,transparent)) padding-box,var(--glass-rim) border-box; -webkit-backdrop-filter: var(--glass-filter-strong); backdrop-filter: var(--glass-filter-strong); }
 }

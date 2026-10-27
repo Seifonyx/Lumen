@@ -106,7 +106,7 @@ export function ChatRow({ chat, active, detail }: { chat: Chat; active: boolean;
         {streaming && <span className="dot-pulse" aria-label="Replying" />}
       </button>
       <div className="row-menu" ref={menuRef}>
-        <button className="icon-btn sm" aria-label="Chat options" aria-haspopup="menu" aria-expanded={menu} onClick={e => { menuKeyboard.current = e.detail === 0; setMenu(!menu); }} onKeyDown={e=>{if(e.key==='ArrowDown'){e.preventDefault();menuKeyboard.current=true;setMenu(true)}}}>
+        <button className="icon-btn sm" onMouseDown={e => { if (detail) { e.preventDefault(); e.currentTarget.focus({ preventScroll: true }); } }} aria-label="Chat options" aria-haspopup="menu" aria-expanded={menu} onClick={e => { menuKeyboard.current = e.detail === 0; setMenu(!menu); }} onKeyDown={e=>{if(e.key==='ArrowDown'){e.preventDefault();menuKeyboard.current=true;setMenu(true)}}}>
           <MoreHorizontal size={16} />
         </button>
         {menu && (<Exit kind="drop">

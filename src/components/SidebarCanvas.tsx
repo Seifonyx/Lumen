@@ -231,7 +231,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
             </ul>
           )}
 
-          {section('projects', 'Projects', Boolean(hereProject), <>{!q && projects.length > 0 && <button type="button" className="cv-section-add" aria-label="All projects" title="All projects" onClick={() => toPage('projects')}><Folder size={16} aria-hidden="true" /></button>}{projects.length > 0 && <button type="button" className="cv-section-add" aria-label="New project" title="New project" onClick={() => setManager(true)}><Plus size={15} /></button>}</>)}
+          {section('projects', 'Projects', Boolean(hereProject), <>{!q && <button type="button" className="cv-section-add" aria-label="All projects" title="All projects" onClick={() => toPage('projects')}><Folder size={16} aria-hidden="true" /></button>}{projects.length > 0 && <button type="button" className="cv-section-add" aria-label="New project" title="New project" onClick={() => setManager(true)}><Plus size={15} /></button>}</>)}
           <Fold id={`${ids}-projects`} open={sectionOpen('projects')}>
             {ordered.map((p) => {
               const list = matches.filter((c) => c.projectId === p.id).sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) || b.updatedAt - a.updatedAt);

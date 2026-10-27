@@ -40,7 +40,7 @@ export function ChatRow({ chat, active, detail }: { chat: Chat; active: boolean;
   }, [menu]);
   useLayoutEffect(() => {
     if (!detail || !menu) return;
-    const popup = menuRef.current?.querySelector<HTMLElement>('.menu[popover]');
+    const popup = menuRef.current?.querySelector<HTMLElement>('.menu[popover]:not(.exit-ghost)');
     const anchor = menuRef.current?.querySelector<HTMLButtonElement>('button');
     if (!popup || !anchor) return;
     // The native top layer escapes the scrolling tree without leaving its DOM/focus scope.

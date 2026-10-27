@@ -51,7 +51,7 @@ for (const state of ['empty', 'populated', 'dense', 'expanded']) fixtures[state]
       await shot('');
       if (!before) {
         assert(await nav.locator('.cv-chat-detail').count() > 0, 'the approved two-line chat treatment is present on phone and desktop');
-        if (state === 'empty') { assert.equal(await nav.getByRole('button', { name: 'New project', exact: true }).count(), 1); assert.equal(await nav.getByText('Group related chats, files and instructions in a project', { exact: true }).count(), 0, 'empty Projects stays compact'); }
+        if (state === 'empty') { assert.equal(await nav.getByRole('button', { name: 'All projects', exact: true }).count(), 1, 'the Projects destination remains available in an empty workspace'); assert.equal(await nav.getByRole('button', { name: 'New project', exact: true }).count(), 1); assert.equal(await nav.getByText('Group related chats, files and instructions in a project', { exact: true }).count(), 0, 'empty Projects stays compact'); }
         await geometry(); await audit();
         const current = nav.locator('.chat-row.active'); await current.scrollIntoViewIfNeeded();
         const description = async button => button.evaluate(el => (el.getAttribute('aria-describedby') || '').split(' ').map(id => document.getElementById(id)?.textContent || '').join(' '));
@@ -75,6 +75,9 @@ for (const state of ['empty', 'populated', 'dense', 'expanded']) fixtures[state]
           await menu.getByRole('menuitem', { name: 'Move to project', exact: true }).click(); await page.getByRole('menuitem', { name: 'Fieldwork', exact: true }).waitFor();
           assert(await menuFits(), 'expanded project choices stay bounded');
           await menu.focus(); await page.keyboard.press('End'); assert(await menu.getByRole('menuitem', { name: 'Delete', exact: true }).evaluate(el => el === document.activeElement), 'the final action stays keyboard reachable');
+          await page.keyboard.press('Escape');
+          await current.getByRole('button', { name: 'Chat options', exact: true }).press('ArrowDown');
+          assert(await menu.getByRole('menuitem', { name: 'Rename', exact: true }).evaluate(el => el === document.activeElement), 'rapid keyboard reopening targets the live menu rather than its fading copy');
           await page.keyboard.press('Escape'); await page.emulateMedia({ reducedMotion: 'reduce' });
           assert(await current.getByRole('button', { name: 'Chat options', exact: true }).evaluate(el => el === document.activeElement));
           if (!phone) { await nav.getByRole('button', { name: 'Collapse sidebar', exact: true }).click(); const rail = page.getByRole('navigation', { name: 'Navigation', exact: true }); await rail.waitFor(); assert.equal(await rail.getByRole('button').count(), 8); await page.screenshot({ path: path.join(out, `${width}-${theme}-collapsed.png`), animations: 'disabled' }); await rail.getByRole('button', { name: 'Expand sidebar', exact: true }).click(); await nav.waitFor(); }

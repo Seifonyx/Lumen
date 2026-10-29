@@ -192,6 +192,8 @@ try {
     // no-provider first run through setUi; the ordinary build never registers it. RepoPicker sends GitHub tokens to Connectors.
     'src/components/SettingsIndex.tsx', 'src/components/settings-index.css', 'src/lib/provider-icons.ts', 'src/lib/router-settings-route.ts',
     'src/components/KeysPanel.tsx', 'src/components/ModelSettings.tsx', 'src/components/SettingToggle.tsx', 'src/components/RepoPicker.tsx', 'src/store.ts',
+    // KeySafety: an opt-in safeCopy prop so Router's provider pages never render a provider's raw error text.
+    'src/components/KeySafety.tsx',
     'src/components/FileCard.tsx', 'src/components/Modal.tsx', 'src/components/PreviewModal.tsx',
     'src/lib/run-language.ts', 'src/lib/runner.ts',
     // Owner-authorized shared iPhone navigation reset: UI-only owners, ordinary graph remains isolated.

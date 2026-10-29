@@ -33,6 +33,8 @@ const iphone='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit
   // Exercise the actual gesture handler with a scripted edge touch sequence, in both engines.
   await page.locator('.hub-page').evaluate(async el=>{const dispatch=(type,x)=>{const e=new Event(type,{bubbles:true,cancelable:true});Object.defineProperty(e,'touches',{value:type==='touchend'?[]:[{identifier:1,clientX:x,clientY:180}]});el.dispatchEvent(e)};dispatch('touchstart',5);for(const x of [30,90,180,300]){dispatch('touchmove',x);await new Promise(r=>setTimeout(r,30))}dispatch('touchend',300)});
   await page.getByRole('searchbox',{name:'Search tools'}).waitFor();
+  // Back restores the Learn filter chosen above; assistants are created from their own area.
+  await page.getByRole('heading',{name:'Learn',exact:true}).waitFor();await page.getByRole('group',{name:'Tool areas'}).getByRole('button',{name:/^Assistants/}).click();
   await page.getByRole('button',{name:'New assistant',exact:true}).click();await page.getByLabel('Library item name').fill('Retained editor');await page.getByLabel('Library instructions').fill('Preserved across global sheets');
   const command=async(name)=>{await page.keyboard.press('Control+k');const search=page.getByRole('combobox',{name:'Search commands',exact:true});await search.fill(name);await search.press('Enter');};
   await command('Read a web page');await page.locator('.free-tools').waitFor();

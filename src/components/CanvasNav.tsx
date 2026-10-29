@@ -14,7 +14,9 @@ export const focusSettled = () => { const a = document.activeElement; return Boo
 export const later = (fn: () => void) => requestAnimationFrame(() => setTimeout(fn, 0));
 
 function useSurfaceHistoryAndFocus() {
-  useEffect(() => { installRouterSettingsRoute(); return installScreenHistory(); }, []);
+  // Router owns some Settings sections; requests for them are redirected before history records them.
+  useEffect(() => installRouterSettingsRoute(), []);
+  useEffect(() => installScreenHistory(), []);
 }
 
 function useCollapseFocus(collapsed: boolean) {

@@ -50,12 +50,12 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       await page.locator('.composer textarea').fill(draft);
       const open = async () => {
         if (width < 900) await page.getByRole('button', { name: 'Open chats', exact: true }).first().click();
-        await page.locator('aside.cv-nav').getByRole('button', { name: 'Prism', exact: true }).click();
+        await page.locator('aside.cv-nav').getByRole('button', { name: 'Router', exact: true }).click();
       };
       await open();
       const rc = page.locator('.rc-page');
-      await rc.getByRole('heading', { name: width < 900 ? 'Prism' : 'Prism', exact: true }).waitFor();
-      await rc.getByRole('heading', { name: width < 900 ? 'Prism' : 'Prism', exact: true }).click();
+      await rc.getByRole('heading', { name: width < 900 ? 'Router' : 'Router', exact: true }).waitFor();
+      await rc.getByRole('heading', { name: width < 900 ? 'Router' : 'Router', exact: true }).click();
       const shot = async name => {
         if (!before || name === 'models') {
           await page.evaluate(() => document.fonts.ready);
@@ -67,7 +67,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         }
       };
       const phone = width < 900;
-      const tab = async name => { if(phone){for(let i=0;i<10 && !await rc.locator('.phone-sections').isVisible();i++){await page.goBack();await page.waitForTimeout(80);}} await rc.getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name,exact:true}).click(); };
+      const tab = async name => { if(phone){for(let i=0;i<10 && !await rc.locator('.phone-sections').isVisible();i++){await page.goBack();await page.waitForTimeout(80);}} await rc.getByRole('navigation',{name:'Router sections'}).getByRole('button',{name,exact:true}).click(); };
       await shot('models');
       if (!before) await rc.getByRole('region', { name: 'Current routing mode' }).waitFor();
       if (!before && phone) {

@@ -64,18 +64,18 @@ const rc = (page) => page.locator('section.rc-page');
 const isOpen = (page) => page.evaluate(() => { const el = document.querySelector('section.rc-page'); return Boolean(el && !el.hidden); });
 async function openRouting(page, phone) {
   if (phone) { await page.getByRole('button', { name: 'Open chats', exact: true }).first().click(); await settle(page, 600); }
-  await page.locator('aside.cv-nav').getByRole('button', { name: 'Prism', exact: true }).click();
-  await rc(page).getByRole('heading', { name: phone ? 'Prism' : 'Prism', level: 1 }).waitFor();
+  await page.locator('aside.cv-nav').getByRole('button', { name: 'Router', exact: true }).click();
+  await rc(page).getByRole('heading', { name: phone ? 'Router' : 'Router', level: 1 }).waitFor();
   await settle(page);
 }
 // Phone section shortcuts retain canonical screen history; provider details push without the strip.
 async function tab(page, name) {
  const r=rc(page);
  if(await r.locator('.rc-tabs').count()) return r.locator('.rc-tabs').getByRole('button',{name,exact:true}).click();
- while(!await r.getByRole('navigation',{name:'Prism sections'}).count()) {
+ while(!await r.getByRole('navigation',{name:'Router sections'}).count()) {
    await page.goBack();await settle(page,150);
  }
- await r.getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name,exact:true}).click();
+ await r.getByRole('navigation',{name:'Router sections'}).getByRole('button',{name,exact:true}).click();
 }
 
 try {
@@ -108,7 +108,7 @@ try {
           assert.ok(r.x>=0&&r.x+r.width<=width&&r.height>=44,'phone section reveals fully on focus');
           assert.ok(await item.evaluate(el=>el.scrollWidth<=el.clientWidth));
         }
-        await rc(page).getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name:'Models',exact:true}).click();
+        await rc(page).getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Models',exact:true}).click();
       }
       await shot(page, join(out, `${tag}-1-models.png`));
       pass('Prism models landing');
@@ -116,7 +116,7 @@ try {
       // Providers: filters, search, detail.
       await tab(page, 'Providers');
       await settle(page);
-      if (phone) { assert.equal(await rc(page).locator('.rc-dock').count(),0); assert.equal(await rc(page).locator('.phone-navigation h1').innerText(),'Prism'); assert.equal(await rc(page).getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name:'Providers',exact:true}).getAttribute('aria-current'),'page'); }
+      if (phone) { assert.equal(await rc(page).locator('.rc-dock').count(),0); assert.equal(await rc(page).locator('.phone-navigation h1').innerText(),'Router'); assert.equal(await rc(page).getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Providers',exact:true}).getAttribute('aria-current'),'page'); }
       assert.match(await rc(page).locator('.rc-count').innerText(), /^\d+ of \d+ providers$/);
       // Your providers form the ledger with one verdict each; the others are names to add, the first few shown until asked.
       const fold = rc(page).locator('.rc-more');
@@ -225,7 +225,7 @@ try {
       await settle(page);
       assert.equal(await isOpen(page), false);
       await openRouting(page, phone);
-      await rc(page).getByRole('heading', { name: phone ? 'Prism' : 'Prism', level: 1 }).focus();
+      await rc(page).getByRole('heading', { name: phone ? 'Router' : 'Router', level: 1 }).focus();
       await page.keyboard.press('Escape');
       await settle(page);
       assert.equal(await isOpen(page), false, 'Escape closes');

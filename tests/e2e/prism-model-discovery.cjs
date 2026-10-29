@@ -25,7 +25,7 @@ try{for(const[width,height]of sizes)for(const theme of ['light','dark']){
  await page.locator('.composer input[type=file][multiple]').last().setInputFiles({name:'context.txt',mimeType:'text/plain',buffer:Buffer.from('Synthetic attachment context')});
  await page.getByText('context.txt',{exact:true}).first().waitFor();
  await input.evaluate(el=>{window.__prismInput=el;el.focus();el.setSelectionRange(5,19,'backward');});
- const open=async()=>{if(width<900)await page.getByRole('button',{name:'Open chats',exact:true}).first().click();await page.locator('aside.cv-nav').getByRole('button',{name:'Prism',exact:true}).click();};
+ const open=async()=>{if(width<900)await page.getByRole('button',{name:'Open chats',exact:true}).first().click();await page.locator('aside.cv-nav').getByRole('button',{name:'Router',exact:true}).click();};
  await open();const rc=page.locator('.rc-page');await rc.locator('.rc-model').first().waitFor();await page.evaluate(()=>document.fonts.ready);
  const shot=async name=>{await page.evaluate(()=>document.activeElement?.blur());await page.screenshot({path:path.join(out,`${width}-${theme}-${name}.png`),animations:'disabled'});};
  await shot('models');
@@ -48,12 +48,12 @@ try{for(const[width,height]of sizes)for(const theme of ['light','dark']){
  await page.locator('.model-button').click();await picker.getByRole('option',{name:/^Auto /}).click();assert.match(await page.locator('.model-button').innerText(),/Auto/);
  await page.locator('.model-button').click();await picker.getByRole('option',{name:/Writing pair/}).click();assert.match(await page.locator('.model-button').innerText(),/Writing pair/);assert.equal(await input.inputValue(),draft);
  // Refresh via existing provider action, then bound a large inventory and search to an off-page long name.
- await open();await rc.getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name:'Providers',exact:true}).click();await rc.locator('[data-provider="gemini"]').click();large=true;await rc.getByRole('button',{name:'Refresh model list',exact:true}).click();await rc.getByText('302 in catalog',{exact:true}).waitFor();
- if(width<900)await page.goBack();await rc.getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name:'Models',exact:true}).click();await rc.getByRole('navigation',{name:'Model pages',exact:true}).waitFor();assert.equal(await rc.locator('.rc-model').count(),24);
+ await open();await rc.getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Providers',exact:true}).click();await rc.locator('[data-provider="gemini"]').click();large=true;await rc.getByRole('button',{name:'Refresh model list',exact:true}).click();await rc.getByText('302 in catalog',{exact:true}).waitFor();
+ if(width<900)await page.goBack();await rc.getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Models',exact:true}).click();await rc.getByRole('navigation',{name:'Model pages',exact:true}).waitFor();assert.equal(await rc.locator('.rc-model').count(),24);
  await search.fill('fixture-299');assert.equal(await rc.locator('.rc-model').count(),1);assert.match(await rc.locator('.rc-model').innerText(),/Enable this model/);assert(await rc.getByRole('button',{name:'Use Synthetic research model 299 with a deliberately long multilingual title — دراسة النموذج',exact:true}).isDisabled());await shot('long-name');
  assert(await rc.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'model rows fit narrow screen');
  await rc.getByRole('button',{name:'Clear model search',exact:true}).click();await rc.getByRole('button',{name:'Next',exact:true}).click();assert.match(await rc.getByRole('navigation',{name:'Model pages'}).innerText(),/25–48 of 302/);
- await search.fill('fixture-299');await rc.getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name:'Usage',exact:true}).click();await page.goBack();await search.waitFor();assert.equal(await search.inputValue(),'fixture-299','Back restores Models search');
+ await search.fill('fixture-299');await rc.getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Usage',exact:true}).click();await page.goBack();await search.waitFor();assert.equal(await search.inputValue(),'fixture-299','Back restores Models search');
  assert(requests.every(m=>m==='GET'));assert.deepEqual(errors,[]);results.push({width,height,theme,passed:true});console.log(`PASS Prism Models ${engine} ${width} ${theme}`);
  }finally{await context.close();}
 }}finally{await browser.close();fs.writeFileSync(path.join(out,`results-${engine}.json`),JSON.stringify({engine,syntheticOnly:true,physicalIPhone:false,results},null,2));}

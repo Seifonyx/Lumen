@@ -11,7 +11,7 @@ try{for(const width of [320,1440])for(const theme of ['light','dark'])for(const 
  if(mode==='missing')await context.route('**/generativelanguage.googleapis.com/**',r=>{assert(r.request().url().includes('/models?'));return r.fulfill({json:{models:Array.from({length:32},(_,i)=>({name:`models/gemini-choice-${i}`,displayName:`Gemini Choice ${i}`,inputTokenLimit:128000,supportedGenerationMethods:['generateContent']}))}})});
  const page=await context.newPage();page.setDefaultTimeout(12000);try{
  await page.goto(base);const input=page.locator('.composer textarea');await input.waitFor();if(!await page.locator('.app[data-lumen-canvas-shell]').count())return;
- await input.fill('Account A private synthetic draft');if(width<900)await page.getByRole('button',{name:'Open chats',exact:true}).first().click();await page.locator('aside.cv-nav').getByRole('button',{name:'Prism',exact:true}).click();
+ await input.fill('Account A private synthetic draft');if(width<900)await page.getByRole('button',{name:'Open chats',exact:true}).first().click();await page.locator('aside.cv-nav').getByRole('button',{name:'Router',exact:true}).click();
  const rc=page.locator('.rc-page');
  if(mode==='missing'){
   await rc.locator('.rc-model').first().waitFor();

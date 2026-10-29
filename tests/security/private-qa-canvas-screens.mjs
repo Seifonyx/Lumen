@@ -253,11 +253,11 @@ try {
         // Routing Center in this theme.
         if (phone) {
           await openNav(page, phone);
-          await nav(page).getByRole('button', { name:'Prism', exact:true }).scrollIntoViewIfNeeded();
+          await nav(page).getByRole('button', { name:'Router', exact:true }).scrollIntoViewIfNeeded();
           await shot(page, join(out, `${tag}-prism-drawer.png`));
-          await nav(page).getByRole('button',{name:'Prism',exact:true}).click();
+          await nav(page).getByRole('button',{name:'Router',exact:true}).click();
           await settle(page, 700);
-        } else await go(page, phone, 'Prism');
+        } else await go(page, phone, 'Router');
         assert.ok(await page.getByRole('region',{name:'Current routing mode'}).isVisible(), 'Prism lands in Models');
         assert.equal(await page.getByRole('button',{name:'Overview',exact:true}).count(),0,'Overview is absent');
         if (phone) {
@@ -293,7 +293,7 @@ try {
         }
         record.screens.routing = await axe(page, 'section.rc-page');
         await shot(page, join(out, `${tag}-prism-models.png`));
-        const prismNav = page.getByRole('navigation', { name:'Prism sections' });
+        const prismNav = page.getByRole('navigation', { name:'Router sections' });
         assert.deepEqual(await prismNav.locator('button').allTextContents(), ['Models','Providers','Layouts','Usage','Diagnostics']);
         await prismNav.getByRole('button',{name:'Layouts',exact:true}).click();
         await shot(page, join(out, `${tag}-prism-layouts.png`));

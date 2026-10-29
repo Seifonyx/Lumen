@@ -24,8 +24,8 @@ fs.mkdirSync(out,{recursive:true});
    if(!await page.locator('.app[data-lumen-canvas-shell]').count()){console.log('Not applicable to ordinary presentation');return;}
    const draft='Provider setup draft — café';await page.locator('.composer textarea').fill(draft);
    await page.getByRole('button',{name:'Open chats',exact:true}).first().click();
-   await page.locator('aside.cv-nav').getByRole('button',{name:'Prism',exact:true}).click();
-   const rc=page.locator('.rc-page');await rc.getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name:'Providers',exact:true}).click();
+   await page.locator('aside.cv-nav').getByRole('button',{name:'Router',exact:true}).click();
+   const rc=page.locator('.rc-page');await rc.getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Providers',exact:true}).click();
    await rc.locator('[data-provider="gemini"]').click();const detail=rc.getByRole('region',{name:'Provider detail'});
    assert.match(await detail.innerText(),/Not checked/);assert.match(await detail.innerText(),/No model list yet/);
    await page.evaluate(()=>document.activeElement?.blur());

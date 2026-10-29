@@ -32,6 +32,8 @@ const open=async({width,theme,extra={assistants},keys={}})=>{
  return {ctx,page,hub,errors};
 };
 const shot=async(page,name)=>{await page.evaluate(()=>document.activeElement?.blur());await page.screenshot({path:path.join(out,name),animations:'disabled'});};
+// The redesign is Canvas-only; the ordinary in-app run (every suite in this folder) has nothing to check here.
+{const ctx=await browser.newContext();await ctx.route('**/*',r=>new URL(r.request().url()).origin===new URL(base).origin?r.continue():r.abort());await profile(ctx,'preview-tools-slice','light');const page=await ctx.newPage();await page.goto(base);await page.locator('.composer textarea').waitFor({state:'attached'});const canvas=await page.locator('[data-lumen-canvas-shell]').count();await ctx.close();if(!canvas){console.log('SKIP Tools fixture: not the Canvas presentation');return;}}
 for(const width of (process.env.TOOLS_WIDTHS||'320,390,430,1440').split(',').map(Number))for(const theme of (process.env.TOOLS_THEMES||'light,dark').split(',')){
  const {ctx,page,hub,errors}=await open({width,theme});
  await shot(page,`${width}-${theme}-tools.png`);

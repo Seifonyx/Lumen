@@ -274,6 +274,10 @@
 .app[data-lumen-canvas-shell] .sb-tile:active { background: var(--canvas-fill); }
 .app[data-lumen-canvas-shell] .sb-tile:focus-visible, .app[data-lumen-canvas-shell] .sb-refresh:focus-visible, .app[data-lumen-canvas-shell] .sb-back:focus-visible { outline: 2px solid var(--canvas-focus, var(--canvas-ink)); outline-offset: 2px; }
 .app[data-lumen-canvas-shell] .sb-mono { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: var(--canvas-fill-strong); color: var(--canvas-ink); font: 650 15px/1 var(--canvas-body-font); }
+.app[data-lumen-canvas-shell] .sb-mono svg { display: block; }
+.app[data-lumen-canvas-shell] .sb-detail-title { display: flex; align-items: center; gap: 14px; }
+.app[data-lumen-canvas-shell] .sb-detail-title .sb-mono { width: 44px; height: 44px; border-radius: 12px; }
+.app[data-lumen-canvas-shell] .sb-detail-title .sb-mono svg { width: 26px; height: 26px; }
 .app[data-lumen-canvas-shell] .sb-tile[data-light="none"] .sb-mono { background: none; box-shadow: inset 0 0 0 1px var(--canvas-rim); color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .sb-tile-text { flex: 1; min-width: 0; display: grid; gap: 3px; }
 .app[data-lumen-canvas-shell] .sb-tile-text strong { font: 600 14.5px/1.3 var(--canvas-body-font); overflow-wrap: anywhere; }

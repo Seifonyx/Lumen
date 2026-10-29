@@ -77,6 +77,22 @@ const PHONE = '(max-width: 899px)';
 // Free tiers or free models, from the provider registry; the rest bill your own provider account.
 const FREE_TIER = new Set(['gemini', 'openrouter', 'groq', 'cerebras', ...Object.entries(EXTRA_PROVIDERS).filter(([, v]) => (v as { free?: boolean }).free).map(([id]) => id)]);
 const monogram = (label: string) => label.replace(/[^A-Za-z0-9 ]/g, ' ').trim().charAt(0).toUpperCase();
+// Provider marks load in their own chunk the first time Providers shows; the letter stands in until then.
+type IconSet = typeof import('../lib/provider-icons').PROVIDER_ICONS;
+let iconSet: IconSet | null = null, iconLoad: Promise<IconSet> | null = null;
+function useProviderIcons() {
+  const [icons, setIcons] = useState(iconSet);
+  useEffect(() => { if (icons) return; let live = true; (iconLoad ??= import('../lib/provider-icons').then((m) => (iconSet = m.PROVIDER_ICONS))).then((set) => { if (live) setIcons(set); }).catch(() => {}); return () => { live = false; }; }, [icons]);
+  return icons;
+}
+function ProviderMark({ id, label }: { id: string; label: string }) {
+  const paths = useProviderIcons()?.[id];
+  return (
+    <span className="sb-mono" aria-hidden="true">
+      {paths ? <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" focusable="false">{paths.map(([d, evenodd, opacity], i) => <path key={i} d={d} fillRule={evenodd ? 'evenodd' : undefined} opacity={opacity} />)}</svg> : monogram(label)}
+    </span>
+  );
+}
 
 /** A provider tile: a neutral monogram, the name, and one line that says whether Lumen can use it. */
 function ProviderTile({ p, onOpen }: { p: ProviderRow; onOpen: () => void }) {
@@ -85,7 +101,7 @@ function ProviderTile({ p, onOpen }: { p: ProviderRow; onOpen: () => void }) {
   return (
     <li>
       <button type="button" className="sb-tile" data-provider={p.id} data-light={connected ? v.light : 'none'} onClick={onOpen} aria-labelledby={`sb-${p.id}-name`} aria-describedby={`sb-${p.id}-state`}>
-        <span className="sb-mono" aria-hidden="true">{monogram(p.label)}</span>
+        <ProviderMark id={p.id} label={p.label} />
         <span className="sb-tile-text"><strong id={`sb-${p.id}-name`}>{p.label}</strong><small id={`sb-${p.id}-state`}>{connected && <LightDot light={v.light} />}{line}</small></span>
       </button>
     </li>
@@ -178,7 +194,7 @@ function ProviderDetail({ p, title, usage, enabledHere, searchHost }: { searchHo
     <section className="rc-provider-detail" aria-label="Provider detail">
       <header className="rc-detail-head">
         <div>
-          <h2 tabIndex={-1} ref={title}>{p.label}</h2>
+          <div className="sb-detail-title"><ProviderMark id={p.id} label={p.label} /><h2 tabIndex={-1} ref={title}>{p.label}</h2></div>
           <p className="rc-verdict" data-light={v.light}><LightDot light={v.light} /><strong>{v.word}</strong><span>{listing && n ? `${plural(n, 'model')} ${s?.state === 'stale' ? 'cached' : 'listed'} · ${enabledHere} enabled in settings` : null}</span></p>
         </div>
         <div className="rc-detail-actions">{actions}</div>

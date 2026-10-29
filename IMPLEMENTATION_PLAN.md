@@ -1,6 +1,17 @@
 # Dynamic Model Picker implementation plan
 
-## Active — owner-approved drawer composition expansion (2026-10-27)
+## Active — Phase 5 Slice 2: Tools experience / draft owner review (2026-10-29)
+
+Branch `feat/phase5-tools-experience` from released main `2df3d60af43e4ed6686b501803e6662ba592b80f` in Lumen-local (separate main worktree untouched). Owner approved the actual 390px iPhone Light checkpoint and asked for expansion without routine approval pauses. App source `1c1634749db0767dd3a367625ffaa9f10d1d3ac4`; later commits add evidence/docs only. [Design](docs/design/PHASE5_TOOLS_EXPERIENCE.md), [72 real-app captures and verification](docs/reviews/phase5-tools/README.md). Draft PR and exact-head CI: see the PR and the live checkpoint.
+
+- Delivered (Canvas only): one Tools workspace with search, area filter with counts (screen memory), key readiness in words with Set up → Settings Keys, grouped lists stating where each tool lands, a real Web search switch, a non-interactive "In replies" row, Yours/From Lumen assistants with separate Edit/Customize, scoped no-match state; desktop sticky left column. Rows are named by the tool alone. Lazy via `canvas-presentation`; ordinary page unchanged.
+- Preserved: tool launch/toggle/editor closures and `navigateScreen` steps, providers, keys, assistants storage, drafts, whole-feature Exit, account scoping.
+- Verified locally: type + full unit; Tools fixture 320/390/430/1440 × Light/Dark in Chromium and WebKit; 15 Tools-touching Canvas suites (Chromium), 6 in WebKit, 4 ordinary; CP05 both engines; CP03 Chromium; QA01 9 checks; CP01 22 controls; budget (Canvas CSS source cap 21→22 KB, recorded).
+- Limits: physical iPhone/VoiceOver/IME unverified; Windows WebKit CP03 Library rail-focus limit unchanged; Study partner listed in Learn and Assistants.
+
+**STOP for owner review of the draft PR. No merge, deploy or next slice.** Overall seven-phase completion percentage is not defined.
+
+## Historical — (released in 2df3d60) owner-approved drawer composition expansion (2026-10-27)
 
 Owner approved sourcef4dfdf4's actual390px Light drawer and authorized careful expansion on existing `feat/drawer-composition-pass2`, base released main828a05c. [Current plan](docs/superpowers/plans/2026-10-27-drawer-composition.md) and [design](docs/superpowers/specs/2026-10-27-drawer-composition-design.md). Shared phone/desktop styling, compact empty Projects and quiet creation/account footer are implemented at application sourceeec2ad2. [Draft PR60](https://github.com/Seifonyx/Lumen/pull/60) and [full capture/provenance gallery](docs/reviews/drawer-composition/README.md) own delivery evidence; final exact-head CI and live readback are maintained in PR60/live CURRENT_STATUS; consult them before any action. No new composition, merge/deploy, Tools, spending or schema/infrastructure changes. Historical weighted ledgers preserved; overall seven-phase completion percentage remains undefined.
 

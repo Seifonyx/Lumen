@@ -28,8 +28,9 @@ function Steps({ title, children, open: startOpen }: { title: string; children: 
   );
 }
 
-/** Checks that the user's own AI keys can't be misused if they ever leak. */
-export default function KeySafety() {
+/** Checks that the user's own AI keys can't be misused if they ever leak. `safeCopy` (Router's provider pages) shows
+ * Lumen's own words instead of a provider's raw error text. */
+export default function KeySafety({ safeCopy = false }: { safeCopy?: boolean } = {}) {
   const keys = useStore((s) => s.keys);
   const [gemini, setGemini] = useState<Gemini>(null);
   const [openrouter, setOpenrouter] = useState<OpenRouter>(null);
@@ -102,8 +103,8 @@ export default function KeySafety() {
               <li>Save, wait about 5 minutes, then press <b>Check again</b>.</li>
             </Steps>
           )}
-          {gemini?.state === 'invalid' && <span className="setting-hint warn">Google says this key isn't valid: {gemini.message}</span>}
-          {gemini?.state === 'error' && gemini.message && <span className="setting-hint">{gemini.message}</span>}
+          {gemini?.state === 'invalid' && <span className="setting-hint warn">{safeCopy ? "Google says this key isn’t valid. Check it in Google AI Studio, then save it again." : <>Google says this key isn't valid: {gemini.message}</>}</span>}
+          {gemini?.state === 'error' && gemini.message && <span className="setting-hint">{safeCopy ? "Couldn’t check this key right now. Try Check again later." : gemini.message}</span>}
         </div>
       )}
 
@@ -139,7 +140,7 @@ export default function KeySafety() {
               <li>Come back and press <b>Check again</b>.</li>
             </Steps>
           )}
-          {openrouter?.state === 'error' && openrouter.message && <span className="setting-hint">{openrouter.message}</span>}
+          {openrouter?.state === 'error' && openrouter.message && <span className="setting-hint">{safeCopy ? "Couldn’t check this key right now. Try Check again later." : openrouter.message}</span>}
         </div>
       )}
     </div>

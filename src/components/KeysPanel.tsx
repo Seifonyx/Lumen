@@ -84,7 +84,8 @@ export default function KeysPanel({ provider }: { provider?: string } = {}) {
         </button>
       </div>
 
-      <KeySafety />
+      {/* Key safety checks Gemini and OpenRouter keys; on a provider page it appears only for those two. */}
+      {(!provider || provider === 'gemini' || provider === 'openrouter') && <KeySafety safeCopy={Boolean(provider)} />}
     </div>
   );
 }

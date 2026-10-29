@@ -8,9 +8,9 @@ import { ANALYSIS_TEMPLATES } from '../lib/analysis';
 import { BUILTIN_ASSISTANTS } from '../lib/assistants';
 import { useStore } from '../store';
 import HubPage from './HubPage';
-import { CANVAS_SHELL, navigateScreen, useScreenMemory } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, CanvasToolsWorkspace, navigateScreen, useScreenMemory } from '../lib/canvas-presentation';
 import AssistantLibrary from './AssistantLibrary';
-import ToolsWorkspace, { type ToolArea } from './ToolsWorkspace';
+import type { ToolArea } from './ToolsWorkspace';
 import { uid } from '../lib/util';
 import type { SavedAssistant } from '../types';
 
@@ -113,7 +113,8 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
 
   if (editingAssistant) return <AssistantLibrary key={typeof editingAssistant === 'string' ? 'new' : editingAssistant.id} startNew={editingAssistant === 'new'} startWith={typeof editingAssistant === 'string' ? undefined : editingAssistant} onClose={onClose} onDone={CANVAS_SHELL ? (draft) => setEditingAssistant(draft || null) : () => setEditingAssistant(null)} />;
 
-  if (CANVAS_SHELL) {
+  if (CANVAS_SHELL && CanvasToolsWorkspace) {
+    const ToolsWorkspace = CanvasToolsWorkspace;
     const keyFor = (needs: string) => tools.filter((t) => t.needs === needs).map((t) => t.name);
     return (
       <HubPage label="Tools" title="Tools" subtitle="What Lumen can do beyond a plain chat, and what each one needs." onClose={onClose}>

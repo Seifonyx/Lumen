@@ -27,6 +27,7 @@ export const CanvasFilterMenu = lazy(() => import('../components/FilterMenu'));
 export { useBackLayer as useScreenBackLayer } from './back-stack';
 export const CanvasLibraryActions = lazy(() => import('../components/CanvasLibraryActions'));
 export const CanvasCollectionPage = lazy(() => import('../components/CanvasCollectionPage'));
+export const CanvasToolsWorkspace = lazy(() => import('../components/ToolsWorkspace'));
 export { navigateScreen } from './screen-history';
 export const CanvasScreenActions = lazy(() => import('../components/ScreenActions'));
 

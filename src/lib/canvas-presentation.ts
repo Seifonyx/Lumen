@@ -37,6 +37,7 @@ export const CanvasFilterMenu: typeof import('../components/FilterMenu').default
 export const useScreenBackLayer: typeof import('./back-stack').useBackLayer | null = null;
 export const CanvasLibraryActions: typeof import('../components/CanvasLibraryActions').default | null = null;
 export const CanvasCollectionPage: typeof import('../components/CanvasCollectionPage').default | null = null;
+export const CanvasToolsWorkspace: typeof import('../components/ToolsWorkspace').default | null = null;
 export const navigateScreen: typeof import('./screen-history').navigateScreen | null = null;
 export const CanvasScreenActions: typeof import('../components/ScreenActions').default | null = null;
 

@@ -251,6 +251,7 @@ jobs:
           node tests/e2e/drawer-reference.cjs
           node tests/e2e/conversations-projects.cjs
           node tests/e2e/library-experience.cjs
+          node tests/e2e/tools-experience.cjs
           node tests/e2e/iphone-glass-navigation.cjs
           node tests/e2e/routing-providers.cjs
           node tests/e2e/prism-provider-states.cjs

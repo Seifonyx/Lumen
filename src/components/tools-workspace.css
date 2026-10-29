@@ -1,5 +1,5 @@
 /* Canvas Tools workspace: grouped quiet lists in the sidebar's restrained ink/paper language. */
-.app[data-lumen-canvas-shell] .tx { display: grid; gap: 18px; padding-bottom: 32px; }
+.app[data-lumen-canvas-shell] .tx { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding-bottom: 32px; }
 /* Phone: one column in reading order (search, areas, readiness, lists); the two wrappers only exist for desktop. */
 .app[data-lumen-canvas-shell] .tx-rail, .app[data-lumen-canvas-shell] .tx-main { display: contents; }
 .app[data-lumen-canvas-shell] .tx-search { order: 0; }

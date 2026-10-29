@@ -255,7 +255,7 @@
   .app[data-lumen-canvas-shell] .rc-verdict { margin-top:0; }
 }
 
-/* Switchboard providers: one grouped grid of quiet tiles; a tile opens the provider as its own page. */
+/* Router providers: one grouped grid of quiet tiles; a tile opens the provider as its own page. */
 .app[data-lumen-canvas-shell] .rc-providers.sb-providers, .app[data-lumen-canvas-shell] .rc-providers.sb-detail-page { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: start; }
 .app[data-lumen-canvas-shell] .sb-detail-page { gap: 18px; }
 .app[data-lumen-canvas-shell] .sb-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; }

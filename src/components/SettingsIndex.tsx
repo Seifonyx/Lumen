@@ -9,7 +9,7 @@ import './settings-index.css';
 export type SettingsSection = [string, string, LucideIcon, string];
 
 // Settings index for the Canvas presentation on phones: the account first, then short groups whose rows
-// state what is true now. Switchboard owns models and routing, so its link leaves Settings rather than copying it.
+// state what is true now. Router owns models and routing, so its link leaves Settings rather than copying it.
 const GROUPS: [string, string[]][] = [
   ['Connections', ['keys', 'connectors']],
   ['Models & usage', ['models', 'usage']],
@@ -82,7 +82,7 @@ export default function SettingsIndex({ sections, open }: { sections: SettingsSe
           <h2 id={`si-${title.replace(/\W+/g, '-')}`}>{title}</h2>
           <ul className="si-list">
             {ids.map((id) => { const [, label, Icon] = find(id); return <Row key={id} name={label} status={status[id]} detail={id === 'privacy' ? 'Backups, export and account deletion' : undefined} Icon={Icon} onClick={() => open(id)} />; })}
-            {title === 'Models & usage' && <Row name="Switchboard" status="Providers, routing and diagnostics" hint="Leaves Settings" Icon={GitFork} onClick={prism} trailing="leave" />}
+            {title === 'Models & usage' && <Row name="Router" status="Providers, routing and diagnostics" hint="Leaves Settings" Icon={GitFork} onClick={prism} trailing="leave" />}
           </ul>
         </section>
       ))}

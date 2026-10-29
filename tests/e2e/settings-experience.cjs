@@ -40,7 +40,7 @@ for(const width of (process.env.SETTINGS_WIDTHS||'390').split(',').map(Number))f
   }
   if(width<900){const small=await page.locator('.settings-page button:visible').evaluateAll(b=>b.map(e=>[e.getAttribute('aria-label')||e.textContent.trim(),e.getBoundingClientRect().height]).filter(([,h])=>h<44));assert.deepEqual(small,[],'phone targets are at least 44px');}
  }
- if(!before&&width<900){await page.locator('.si').getByRole('button',{name:'Prism',exact:true}).click();await page.locator('.rc-page:visible').waitFor();assert.equal(await page.locator('.settings-page').count(),0,'Prism leaves Settings');}
+ if(!before&&width<900){await page.locator('.si').getByRole('button',{name:'Router',exact:true}).click();await page.locator('.rc-page:visible').waitFor();assert.equal(await page.locator('.settings-page').count(),0,'Router leaves Settings');}
  assert.deepEqual(errors,[],'no page errors');console.log(`PASS settings ${before?'before':'after'} ${engine} ${width} ${theme}`);
  await ctx.close();
 }}finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});

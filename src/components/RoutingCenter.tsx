@@ -252,15 +252,15 @@ export default function RoutingCenter() {
 
 
   return (
-    <section ref={page} className={`rc-page${sub ? ' rc-sections-page' : ''}${drill ? ' rc-drill' : ''}`} hidden={covered} aria-label="Switchboard — Models, providers & routing"
+    <section ref={page} className={`rc-page${sub ? ' rc-sections-page' : ''}${drill ? ' rc-drill' : ''}`} hidden={covered} aria-label="Router — Models, providers & routing"
       onKeyDown={(e) => { if (e.key === 'Escape' && !e.defaultPrevented && !(e.target as Element).closest('[role="dialog"], [role="menu"], [role="listbox"], input, textarea, select')) { e.preventDefault(); screenBack(closeRoutingCenter); } }}>
       {/* Desktop retains split-view navigation; phone chrome is shared with Library, Tools and Settings. */}
-      {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : 'Switchboard'} onBack={closeRoutingCenter} actions={providerOpen ? <Suspense fallback={null}><ScreenActions actions={[{ label: 'Connection settings', run: () => openProviderSettings(provider!) }]} /></Suspense> : undefined} /> : (
+      {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : 'Router'} onBack={closeRoutingCenter} actions={providerOpen ? <Suspense fallback={null}><ScreenActions actions={[{ label: 'Connection settings', run: () => openProviderSettings(provider!) }]} /></Suspense> : undefined} /> : (
       <header className={`rc-head${sub ? ' rc-head-sub' : ''}`}>
         <button type="button" className="icon-btn feature-exit" aria-label={featureExitLabel()} onClick={() => exitFeature()}><ChevronLeft size={26} /></button>
-        <div className="rc-brand"><h1 id="rc-title" tabIndex={-1} ref={heading}>Switchboard</h1><p>Models, providers &amp; routing</p></div>
+        <div className="rc-brand"><h1 id="rc-title" tabIndex={-1} ref={heading}>Router</h1><p>Models, providers &amp; routing</p></div>
         {!phone && (
-          <nav className="rc-tabs" aria-label="Switchboard sections">
+          <nav className="rc-tabs" aria-label="Router sections">
             {SECTIONS.map(([id, label]) => <button type="button" key={id} aria-current={section === id ? 'page' : undefined} onClick={() => go(id)}>{label}</button>)}
           </nav>
         )}
@@ -268,7 +268,7 @@ export default function RoutingCenter() {
 
 
 
-      {phone && !providerOpen && <PhoneSections label="Switchboard sections" active={section} items={SECTIONS.map(([id,label]) => ({ id, label }))} onSelect={id => go(id as RoutingSection)} />}
+      {phone && !providerOpen && <PhoneSections label="Router sections" active={section} items={SECTIONS.map(([id,label]) => ({ id, label }))} onSelect={id => go(id as RoutingSection)} />}
       <div className="rc-scroll">
       {section === 'providers' && <div className="rc-body"><Providers key={owner || 'signed-out'} preferred={current?.split(':')[0]} phone={phone} searchHost={searchHost} /></div>}
 

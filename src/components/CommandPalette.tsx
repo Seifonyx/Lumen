@@ -32,7 +32,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
   const items = useMemo(() => {
     const all: Item[] = [
       { id: 'new-chat', label: 'New chat', detail: `${modKey}⇧O`, Icon: Plus, run: newGeneralChat || newChat },
-      ...(CANVAS_SHELL ? [{ id: 'prism', label: 'Switchboard', detail: 'Models, providers & routing', Icon: GitFork, run: () => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); } }] : []),
+      ...(CANVAS_SHELL ? [{ id: 'prism', label: 'Router', detail: 'Models, providers & routing', Icon: GitFork, run: () => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); } }] : []),
       { id: 'library', label: 'Assistants', detail: 'Helpers with their own instructions', Icon: Sparkles, run: () => window.dispatchEvent(new Event('mr:library')) },
       { id: 'prompts', label: 'Saved prompts', detail: 'Start a message from a prompt', Icon: BookOpen, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'prompts' })) },
       { id: 'files', label: 'Files', detail: 'Documents and uploaded files', Icon: FileText, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'documents' })) },

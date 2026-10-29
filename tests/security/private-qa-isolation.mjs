@@ -185,6 +185,13 @@ try {
     'src/components/CanvasCollectionPage.tsx', 'src/components/canvas-library.css', 'src/lib/library-items.ts',
     // Phase5 Slice2 (draft owner review): lazy Canvas Tools workspace presentation; launch actions stay in ToolsPage.
     'src/components/ToolsWorkspace.tsx', 'src/components/tools-workspace.css',
+    // Router + Settings consolidation (owner-requested 2026-10-29, draft review): lazy Canvas Settings index and Router
+    // provider marks (vendored MIT/CC0 paths, no fetch); the Settings key editor, model/routing settings and toggle are
+    // extracted unchanged into shared modules (KeysPanel, ModelSettings, SettingToggle) so Router can reuse the same owners.
+    // store.ts gains only an inert setUi hook that the Canvas switch registers (router-settings-route) and routes the
+    // no-provider first run through setUi; the ordinary build never registers it. RepoPicker sends GitHub tokens to Connectors.
+    'src/components/SettingsIndex.tsx', 'src/components/settings-index.css', 'src/lib/provider-icons.ts', 'src/lib/router-settings-route.ts',
+    'src/components/KeysPanel.tsx', 'src/components/ModelSettings.tsx', 'src/components/SettingToggle.tsx', 'src/components/RepoPicker.tsx', 'src/store.ts',
     'src/components/FileCard.tsx', 'src/components/Modal.tsx', 'src/components/PreviewModal.tsx',
     'src/lib/run-language.ts', 'src/lib/runner.ts',
     // Owner-authorized shared iPhone navigation reset: UI-only owners, ordinary graph remains isolated.

@@ -254,3 +254,41 @@
   .app[data-lumen-canvas-shell] .rc-detail-head { gap:12px; }
   .app[data-lumen-canvas-shell] .rc-verdict { margin-top:0; }
 }
+
+/* Switchboard providers: one grouped grid of quiet tiles; a tile opens the provider as its own page. */
+.app[data-lumen-canvas-shell] .rc-providers.sb-providers, .app[data-lumen-canvas-shell] .rc-providers.sb-detail-page { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: start; }
+.app[data-lumen-canvas-shell] .sb-detail-page { gap: 18px; }
+.app[data-lumen-canvas-shell] .sb-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; }
+.app[data-lumen-canvas-shell] .sb-head h2 { margin: 0; font: 600 22px/1.2 var(--canvas-body-font); color: var(--canvas-ink); }
+.app[data-lumen-canvas-shell] .sb-head .rc-count { margin: 4px 0 0; }
+.app[data-lumen-canvas-shell] .sb-head-tools { display: flex; align-items: center; gap: 8px; flex: 0 1 460px; min-width: 0; }
+.app[data-lumen-canvas-shell] .sb-group { display: grid; gap: 10px; }
+.app[data-lumen-canvas-shell] .sb-group-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }
+.app[data-lumen-canvas-shell] .sb-group h3 { margin: 0; font: 600 15px/1.3 var(--canvas-body-font); color: var(--canvas-ink); }
+.app[data-lumen-canvas-shell] .sb-group h3 span { margin-left: 6px; font: 500 12.5px/1 var(--canvas-data-font); color: var(--canvas-muted); font-variant-numeric: tabular-nums; }
+.app[data-lumen-canvas-shell] .sb-refresh { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border: 1px solid var(--canvas-rim); border-radius: 999px; background: none; color: var(--canvas-secondary); font: 500 13px/1 var(--canvas-body-font); cursor: pointer; }
+.app[data-lumen-canvas-shell] .sb-refresh:disabled { opacity: .6; cursor: default; }
+.app[data-lumen-canvas-shell] .sb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.app[data-lumen-canvas-shell] .sb-tile { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 12px 14px 12px 12px; border: 1px solid var(--canvas-rim); border-radius: 14px; background: var(--cv5-card, var(--canvas-surface)); color: var(--canvas-ink); font: inherit; text-align: start; cursor: pointer; }
+@media (hover: hover) { .app[data-lumen-canvas-shell] .sb-tile:hover { background: var(--canvas-fill); } }
+.app[data-lumen-canvas-shell] .sb-tile:active { background: var(--canvas-fill); }
+.app[data-lumen-canvas-shell] .sb-tile:focus-visible, .app[data-lumen-canvas-shell] .sb-refresh:focus-visible, .app[data-lumen-canvas-shell] .sb-back:focus-visible { outline: 2px solid var(--canvas-focus, var(--canvas-ink)); outline-offset: 2px; }
+.app[data-lumen-canvas-shell] .sb-mono { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: var(--canvas-fill-strong); color: var(--canvas-ink); font: 650 15px/1 var(--canvas-body-font); }
+.app[data-lumen-canvas-shell] .sb-tile[data-light="none"] .sb-mono { background: none; box-shadow: inset 0 0 0 1px var(--canvas-rim); color: var(--canvas-secondary); }
+.app[data-lumen-canvas-shell] .sb-tile-text { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.app[data-lumen-canvas-shell] .sb-tile-text strong { font: 600 14.5px/1.3 var(--canvas-body-font); overflow-wrap: anywhere; }
+.app[data-lumen-canvas-shell] .sb-tile-text small { display: flex; align-items: center; gap: 6px; font-size: 12.5px; line-height: 1.3; color: var(--canvas-secondary); }
+.app[data-lumen-canvas-shell] .sb-tile-text small .rc-light { width: 7px; height: 7px; }
+.app[data-lumen-canvas-shell] .sb-back { justify-self: start; display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 12px 0 8px; border: 0; border-radius: 999px; background: var(--canvas-fill); color: var(--canvas-ink); font: 500 13.5px/1 var(--canvas-body-font); cursor: pointer; }
+@media (max-width: 899px) {
+  .app[data-lumen-canvas-shell] .sb-head { align-items: center; }
+  .app[data-lumen-canvas-shell] .sb-head-tools { flex: none; }
+  /* Phones: one grouped list, as in Settings and Tools. */
+  .app[data-lumen-canvas-shell] .sb-grid { grid-template-columns: minmax(0, 1fr); gap: 0; border: 1px solid var(--canvas-rim); border-radius: 16px; background: var(--cv5-card, var(--canvas-surface)); overflow: hidden; }
+  .app[data-lumen-canvas-shell] .sb-grid > li { position: relative; }
+  .app[data-lumen-canvas-shell] .sb-grid > li + li::before { content: ""; position: absolute; top: 0; left: 60px; right: 0; border-top: 1px solid var(--canvas-rim); }
+  .app[data-lumen-canvas-shell] .sb-tile { min-height: 58px; padding: 10px 14px; border: 0; border-radius: 0; background: none; }
+  .app[data-lumen-canvas-shell] .sb-tile:focus-visible { outline-offset: -2px; }
+  .app[data-lumen-canvas-shell] .sb-refresh { min-height: 44px; }
+}
+@media (forced-colors: active) { .app[data-lumen-canvas-shell] .sb-tile, .app[data-lumen-canvas-shell] .sb-refresh { border-color: CanvasText; } }

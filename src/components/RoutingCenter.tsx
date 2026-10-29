@@ -10,9 +10,9 @@ import { usePhoneLayout } from '../lib/phone-layout';
 import { createPortal } from 'react-dom';
 import { navigateScreen, screenBack, exitFeature, featureExitLabel } from '../lib/screen-history';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ArrowUpRight, ChevronRight, Plus, Search, Shield, X } from 'lucide-react';
+import { ChevronLeft, ArrowUpRight, ChevronRight, Plus, RefreshCw, Search, Shield, X } from 'lucide-react';
 import { modelLabel, selectCurrentChat, selectCurrentModel, useStore } from '../store';
-import { AI_PROVIDERS, providerEnabled } from '../lib/ai/provider-config.js';
+import { AI_PROVIDERS, EXTRA_PROVIDERS, providerEnabled } from '../lib/ai/provider-config.js';
 import { PROVIDER_NAMES, providerOfId } from '../lib/util';
 import { formatTokens } from '../lib/usage';
 import { installSwipeBack } from '../lib/swipe-back';
@@ -60,19 +60,6 @@ function verdictOf(p: ProviderRow): { word: string; light: Light } {
 }
 const LightDot = ({ light }: { light: Light }) => <span className={`rc-light rc-light-${light}`} aria-hidden="true" />;
 
-/** A provider in the ledger: its verdict and, on the right, how many models it lists. */
-function ProviderLine({ p, current, onOpen }: { p: ProviderRow; current?: boolean; onOpen: () => void }) {
-  const v = verdictOf(p), n = p.models.length;
-  return (
-    <button type="button" className="rc-prov" data-provider={p.id} data-light={v.light} aria-current={current ? 'true' : undefined} onClick={onOpen}>
-      <LightDot light={v.light} />
-      <span className="rc-prov-text"><strong>{p.label}</strong><small><b>{v.word}</b></small><small className="rc-provider-next">{p.presentation.nextStep}</small></span>
-      {n > 0 && <span className="rc-prov-n"><b>{n}</b> {n === 1 ? 'model' : 'models'}</span>}
-      <ChevronRight size={16} aria-hidden="true" />
-    </button>
-  );
-}
-
 function useProviderRows(): ProviderRow[] {
   const keys = useStore((s) => s.keys), catalog = useStore((s) => s.catalog);
   return useMemo(() => {
@@ -87,77 +74,80 @@ function useProviderRows(): ProviderRow[] {
 
 const PHONE = '(max-width: 899px)';
 
-const MANY = 8;
+// Free tiers or free models, from the provider registry; the rest bill your own provider account.
+const FREE_TIER = new Set(['gemini', 'openrouter', 'groq', 'cerebras', ...Object.entries(EXTRA_PROVIDERS).filter(([, v]) => (v as { free?: boolean }).free).map(([id]) => id)]);
+const monogram = (label: string) => label.replace(/[^A-Za-z0-9 ]/g, ' ').trim().charAt(0).toUpperCase();
+
+/** A provider tile: a neutral monogram, the name, and one line that says whether Lumen can use it. */
+function ProviderTile({ p, onOpen }: { p: ProviderRow; onOpen: () => void }) {
+  const v = verdictOf(p), n = p.models.length, connected = p.keySaved || p.enabled;
+  const line = connected ? `${v.word}${n ? ` · ${plural(n, 'model')}` : ''}` : 'Not connected';
+  return (
+    <li>
+      <button type="button" className="sb-tile" data-provider={p.id} data-light={connected ? v.light : 'none'} onClick={onOpen} aria-labelledby={`sb-${p.id}-name`} aria-describedby={`sb-${p.id}-state`}>
+        <span className="sb-mono" aria-hidden="true">{monogram(p.label)}</span>
+        <span className="sb-tile-text"><strong id={`sb-${p.id}-name`}>{p.label}</strong><small id={`sb-${p.id}-state`}>{connected && <LightDot light={v.light} />}{line}</small></span>
+      </button>
+    </li>
+  );
+}
 
 function Providers({ preferred, phone, searchHost }: { preferred?: string; openDetail?: boolean; phone: boolean; searchHost: HTMLElement | null }) {
   const usage = useStore((s) => s.usage), enabledModels = useStore((s) => s.settings.enabledModels);
   const providers = useProviderRows();
   const route = useRoutingCenter();
-  const selected = route.provider ?? preferred ?? null, detail = Boolean(route.provider);
-  const setSelected = (id: string | null) => showRoutingProvider(id);
-  const setDetail = (value: boolean) => { if (!value) showRoutingProvider(null); };
+  const detail = Boolean(route.provider);
   const [query, setQuery] = useState(''), [filter, setFilter] = useState<'all' | 'saved' | 'enabled' | 'attention'>('all');
-  const input = useRef<HTMLInputElement>(null), title = useRef<HTMLHeadingElement>(null), list = useRef<HTMLDivElement>(null);
-  // Phones: a provider opens as its own page, from the top.
-  useEffect(() => { if (!detail) return; if (phone) title.current?.closest('.rc-scroll')?.scrollTo(0, 0); title.current?.focus({ preventScroll: true }); }, [selected, detail, phone]);
+  const [refreshing, setRefreshing] = useState(false);
+  const input = useRef<HTMLInputElement>(null), title = useRef<HTMLHeadingElement>(null);
+  // A provider opens as its own page, from the top.
+  useEffect(() => { if (!detail) return; title.current?.closest('.rc-scroll')?.scrollTo(0, 0); title.current?.focus({ preventScroll: true }); }, [route.provider, detail]);
   const enabled = providers.filter((p) => p.enabled).length, saved = providers.filter((p) => p.keySaved).length;
-  const matches = (p: ProviderRow, text: string, scope: typeof filter) => (scope === 'all' || (scope === 'saved' ? p.keySaved : scope === 'attention' ? p.presentation.attention : p.enabled)) && `${p.label} ${p.id}`.toLowerCase().includes(text.trim().toLowerCase());
-  const visible = providers.filter((p) => matches(p, query, filter));
-  // Computers show a provider beside the list from the start (the first of yours); phones open one on request.
-  const active = visible.find((p) => p.id === selected);
-  const shown = phone && !detail ? undefined : active;
-  // Your providers form the ledger; the rest are a field of names to explore, the first few shown until you ask for all
-  // (or search or filter, which shows every match).
-  const connected = visible.filter((p) => p.keySaved || p.enabled), unconnected = visible.filter((p) => !p.keySaved && !p.enabled);
-  const [all, setAll] = useState(() => Boolean(preferred) && !providers.some((p) => p.id === preferred && (p.keySaved || p.enabled)));
-  const narrowed = Boolean(query.trim()) || filter !== 'all';
-  const previewCount = phone ? 3 : MANY;
-  const folds = !narrowed && unconnected.length > previewCount && (phone || connected.length > 0);
-  const names = folds && !all ? unconnected.slice(0, previewCount) : unconnected;
-  const open = (id: string) => { setSelected(id); setDetail(true); };
-  const change = (text: string, scope: typeof filter) => {
-    setQuery(text); setFilter(scope);
-    if (!providers.some((p) => p.id === selected && matches(p, text, scope))) { setSelected(null); setDetail(false); }
-  };
+  const matches = (p: ProviderRow) => (filter === 'all' || (filter === 'saved' ? p.keySaved : filter === 'attention' ? p.presentation.attention : p.enabled)) && `${p.label} ${p.id}`.toLowerCase().includes(query.trim().toLowerCase());
+  const visible = providers.filter(matches);
+  const shown = detail ? providers.find((p) => p.id === route.provider) : undefined;
+  const connected = visible.filter((p) => p.keySaved || p.enabled);
+  const rest = visible.filter((p) => !p.keySaved && !p.enabled).sort((a, b) => a.label.localeCompare(b.label));
+  const groups: [string, string, ProviderRow[]][] = [
+    ['connected', 'Connected', connected],
+    ['free', 'Free to start', rest.filter((p) => FREE_TIER.has(p.id))],
+    ['paid', 'Uses your provider credits', rest.filter((p) => !FREE_TIER.has(p.id))],
+  ];
+  const open = (id: string) => showRoutingProvider(id);
+  // The same catalog refresh as each provider's "Refresh model list": it lists models and sends no message.
+  const refreshAll = async () => { setRefreshing(true); try { await useStore.getState().loadCatalog(true); } catch { /* each provider keeps its own status */ } finally { setRefreshing(false); } };
+  void preferred;
 
+  if (shown) return (
+    <section className="rc-providers sb-detail-page" aria-label="Provider detail page">
+      {!phone && <button type="button" className="sb-back" onClick={() => screenBack(() => showRoutingProvider(null))}><ChevronLeft size={16} aria-hidden="true" />All providers</button>}
+      <ProviderDetail key={shown.id} searchHost={phone ? searchHost : null} p={shown} title={title} usage={usage} enabledHere={enabledModels.filter((id) => shown.models.some((m) => m.id === id)).length} />
+    </section>
+  );
 
-  const search = <div className="rc-search"><Search size={16} aria-hidden="true" /><input ref={input} type="search" aria-label="Find a provider" placeholder="Find a provider" value={query} onChange={(e) => change(e.target.value, filter)} />{query && <button type="button" aria-label="Clear provider search" onClick={() => { change('', filter); input.current?.focus(); }}><X size={16} /></button>}</div>;
+  const search = <div className="rc-search"><Search size={16} aria-hidden="true" /><input ref={input} type="search" aria-label="Find a provider" placeholder="Find a provider" value={query} onChange={(e) => setQuery(e.target.value)} />{query && <button type="button" aria-label="Clear provider search" onClick={() => { setQuery(''); input.current?.focus(); }}><X size={16} /></button>}</div>;
 
   return (
-    <section className={`rc-providers${shown ? ' has-detail' : ''}`} aria-label="Provider browser">
-      <div className="rc-provider-list" ref={list}>
-        <div className="rc-list-head">
-          <h2>Providers</h2>
+    <section className="rc-providers sb-providers" aria-label="Provider browser">
+      <header className="sb-head">
+        <div className="sb-head-title"><h2>Providers</h2><p className="rc-count" role="status">{saved} {saved === 1 ? 'key' : 'keys'} saved · {enabled} enabled · {providers.length} available</p></div>
+        <div className="sb-head-tools">
+          {!phone && search}
+          <FilterMenu<typeof filter> label="Filter providers" value={filter} onChange={setFilter} options={[{ value: 'all', label: 'All providers', count: providers.length }, { value: 'saved', label: 'Saved keys', count: saved }, { value: 'enabled', label: 'Enabled providers', count: enabled }, { value: 'attention', label: 'Needs attention', count: providers.filter((p) => p.presentation.attention).length }]} />
           <button type="button" className="rc-add" aria-label="Connect a provider" onClick={() => openSettings('keys')}><Plus size={16} aria-hidden="true" /><span>Connect</span></button>
         </div>
-        <div className="rc-find">
-          {phone ? !detail && searchHost && createPortal(search, searchHost) : search}
-          <FilterMenu<typeof filter> label="Filter providers" value={filter} onChange={(scope) => change(query, scope)} options={[{ value: 'all', label: 'All providers', count: providers.length }, { value: 'saved', label: 'Saved keys', count: saved }, { value: 'enabled', label: 'Enabled providers', count: enabled }, { value: 'attention', label: 'Needs attention', count: providers.filter((p) => p.presentation.attention).length }]} />
-        </div>
-        <p className="rc-count" role="status">{visible.length} of {providers.length} providers</p>
-        <div className="rc-provider-scroll">
-          {connected.length > 0 && <>
-            <h3 className="rc-group-label">Your providers <span>{saved} keys · {enabled} enabled</span></h3>
-            <div className="rc-ledger">{connected.map((p) => <ProviderLine key={p.id} p={p} current={shown?.id === p.id} onOpen={() => open(p.id)} />)}</div>
-          </>}
-          {unconnected.length > 0 && (
-            <section className="rc-explore" aria-labelledby="rc-explore-title">
-              <h3 className="rc-group-label" id="rc-explore-title">{connected.length ? 'Add a provider' : 'Connect a provider'} <span>{plural(unconnected.length, 'provider')} · no key saved</span></h3>
-              <div className="rc-chips" id="rc-unconnected">{names.map((p) => <button type="button" key={p.id} className="rc-chip" data-provider={p.id} aria-current={shown?.id === p.id ? 'true' : undefined} onClick={() => open(p.id)}>{p.label}</button>)}</div>
-              {folds && <button type="button" className="rc-more" aria-expanded={all} aria-controls="rc-unconnected" onClick={() => setAll(!all)}>{all ? 'Show fewer providers' : `Show all ${unconnected.length} providers`}</button>}
-            </section>
-          )}
-          {!visible.length && <div className="rc-empty"><p>No providers match.</p><button type="button" className="rc-link" onClick={() => { change('', 'all'); input.current?.focus(); }}>Reset provider filters</button></div>}
-        </div>
-      </div>
-      {shown ? <ProviderDetail key={shown.id} searchHost={phone ? searchHost : null} p={shown} title={title} usage={usage} enabledHere={enabledModels.filter((id) => shown.models.some((m) => m.id === id)).length} />
-        : !phone && (
-          <aside className="rc-provider-pick">
-            <h3>{connected.length ? 'Choose a provider' : 'Connect your first provider'}</h3>
-            <p>{connected.length ? 'See whether Lumen can use it and what to do next.' : 'Save a key and turn it on; Lumen lists its models.'}</p>
-            {!connected.length && <button type="button" className="rc-primary" onClick={() => openSettings('keys')}><Plus size={16} aria-hidden="true" />Connect a provider</button>}
-          </aside>
-        )}
+      </header>
+      {phone && !detail && searchHost && createPortal(search, searchHost)}
+      {groups.map(([id, label, rows]) => rows.length > 0 && (
+        <section key={id} className="sb-group" aria-labelledby={`sb-group-${id}`}>
+          <div className="sb-group-head">
+            <h3 id={`sb-group-${id}`}>{label} <span>{rows.length}</span></h3>
+            {id === 'connected' && enabled > 0 && <button type="button" className="sb-refresh" disabled={refreshing} onClick={() => void refreshAll()}><RefreshCw size={14} className={refreshing ? 'spin' : undefined} aria-hidden="true" />{refreshing ? 'Refreshing…' : 'Refresh model lists'}</button>}
+          </div>
+          <ul className="sb-grid">{rows.map((p) => <ProviderTile key={p.id} p={p} onOpen={() => open(p.id)} />)}</ul>
+        </section>
+      ))}
+      {!visible.length && <div className="rc-empty"><p>No providers match.</p><button type="button" className="rc-link" onClick={() => { setQuery(''); setFilter('all'); input.current?.focus(); }}>Reset provider filters</button></div>}
     </section>
   );
 }
@@ -262,15 +252,15 @@ export default function RoutingCenter() {
 
 
   return (
-    <section ref={page} className={`rc-page${sub ? ' rc-sections-page' : ''}${drill ? ' rc-drill' : ''}`} hidden={covered} aria-label="Prism — Models, providers & routing"
+    <section ref={page} className={`rc-page${sub ? ' rc-sections-page' : ''}${drill ? ' rc-drill' : ''}`} hidden={covered} aria-label="Switchboard — Models, providers & routing"
       onKeyDown={(e) => { if (e.key === 'Escape' && !e.defaultPrevented && !(e.target as Element).closest('[role="dialog"], [role="menu"], [role="listbox"], input, textarea, select')) { e.preventDefault(); screenBack(closeRoutingCenter); } }}>
       {/* Desktop retains split-view navigation; phone chrome is shared with Library, Tools and Settings. */}
-      {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : 'Prism'} onBack={closeRoutingCenter} actions={providerOpen ? <Suspense fallback={null}><ScreenActions actions={[{ label: 'Connection settings', run: () => openProviderSettings(provider!) }]} /></Suspense> : undefined} /> : (
+      {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : 'Switchboard'} onBack={closeRoutingCenter} actions={providerOpen ? <Suspense fallback={null}><ScreenActions actions={[{ label: 'Connection settings', run: () => openProviderSettings(provider!) }]} /></Suspense> : undefined} /> : (
       <header className={`rc-head${sub ? ' rc-head-sub' : ''}`}>
         <button type="button" className="icon-btn feature-exit" aria-label={featureExitLabel()} onClick={() => exitFeature()}><ChevronLeft size={26} /></button>
-        <div className="rc-brand"><h1 id="rc-title" tabIndex={-1} ref={heading}>Prism</h1><p>Models, providers &amp; routing</p></div>
+        <div className="rc-brand"><h1 id="rc-title" tabIndex={-1} ref={heading}>Switchboard</h1><p>Models, providers &amp; routing</p></div>
         {!phone && (
-          <nav className="rc-tabs" aria-label="Prism sections">
+          <nav className="rc-tabs" aria-label="Switchboard sections">
             {SECTIONS.map(([id, label]) => <button type="button" key={id} aria-current={section === id ? 'page' : undefined} onClick={() => go(id)}>{label}</button>)}
           </nav>
         )}
@@ -278,7 +268,7 @@ export default function RoutingCenter() {
 
 
 
-      {phone && !providerOpen && <PhoneSections label="Prism sections" active={section} items={SECTIONS.map(([id,label]) => ({ id, label }))} onSelect={id => go(id as RoutingSection)} />}
+      {phone && !providerOpen && <PhoneSections label="Switchboard sections" active={section} items={SECTIONS.map(([id,label]) => ({ id, label }))} onSelect={id => go(id as RoutingSection)} />}
       <div className="rc-scroll">
       {section === 'providers' && <div className="rc-body"><Providers key={owner || 'signed-out'} preferred={current?.split(':')[0]} phone={phone} searchHost={searchHost} /></div>}
 

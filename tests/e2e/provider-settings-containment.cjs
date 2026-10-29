@@ -49,33 +49,33 @@ async function containment(card) {
      await rc.getByRole('searchbox',{name:'Find a provider'}).fill(provider);
      await rc.locator(`[data-provider="${provider}"]`).click();
      await rc.getByRole('region',{name:'Provider detail'}).getByRole('button',{name:'Enable provider',exact:true}).click();
-     const settings=page.getByRole('dialog',{name:'Settings',exact:true}),card=settings.locator(`.provider-connection[data-provider="${provider}"]`);
+     // Router: the provider's key editor is on its own page, inside Router's scroller.
+     const settings=rc.getByRole('region',{name:'Provider detail'}),card=settings.locator(`#sb-connection .provider-connection[data-provider="${provider}"]`);
      await card.waitFor();await page.evaluate(()=>document.fonts.ready);
      const diagnostic=await card.evaluate(el=>[el,...el.querySelectorAll('.provider-connection-body,p,.provider-consent,.provider-consent span,.key-input-wrap')].map(n=>{const s=getComputedStyle(n),r=n.getBoundingClientRect();return {node:n.tagName+'.'+n.className,width:r.width,right:r.right,scrollWidth:n.scrollWidth,clientWidth:n.clientWidth,display:s.display,minWidth:s.minWidth,grid:s.gridTemplateColumns,whiteSpace:s.whiteSpace,overflow:s.overflow}}));
      fs.writeFileSync(path.join(out,`${width}-${theme}-${provider}-layout.json`),JSON.stringify(diagnostic,null,2));
      for (const scale of [1,1.5]) {
       if(scale===1.5) await settings.evaluate(el=>{const sizes=[el,...el.querySelectorAll('*')].map(n=>[n,parseFloat(getComputedStyle(n).fontSize)]);for(const[n,size]of sizes)n.style.fontSize=`${size*1.5}px`;});
       await page.evaluate(()=>document.activeElement?.blur());
-      await settings.locator('.settings-scroll').evaluate(el=>el.scrollTop=0);
+      await rc.locator('.rc-scroll').evaluate(el=>el.scrollTop=0);
       if(scale===1)await page.screenshot({path:path.join(out,`${width}-${theme}-${provider}-overview.png`),animations:'disabled'});
       assert.equal(await card.getAttribute('open')!==null,true,'measure expanded provider content');
-      await card.evaluate(el=>{const scroll=el.closest('.settings-scroll');scroll.scrollTop+=el.getBoundingClientRect().top-scroll.getBoundingClientRect().top-12;});
+      await card.evaluate(el=>{const scroll=el.closest('.rc-scroll');scroll.scrollTop+=el.getBoundingClientRect().top-scroll.getBoundingClientRect().top-12;});
       await page.screenshot({path:path.join(out,`${width}-${theme}-${provider}-${scale===1?'normal':'large'}.png`),animations:'disabled'});
       assert.deepEqual(await containment(card),[],`${width}px ${theme} ${provider} ${scale}x text and controls must fit visible card`);
-      assert(await settings.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'settings cannot horizontally scroll');
+      assert(await rc.locator('.rc-scroll').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'the provider page cannot horizontally scroll');
       results.push({width,theme,provider,scale,passed:true});
      }
      const key=card.locator('input[type="password"]');assert.equal(await key.inputValue(),'SYNTHETIC_ONLY');
      await card.getByRole('link',{name:'Provider dashboard'}).scrollIntoViewIfNeeded();assert(await card.getByRole('link',{name:'Provider dashboard'}).isVisible());
      const permission=card.locator('input[type="checkbox"]');
-     if(width===320){await permission.evaluate(el=>{const label=el.closest('label'),scroll=el.closest('.settings-scroll');scroll.scrollTop+=label.getBoundingClientRect().top-scroll.getBoundingClientRect().top-12;});await page.screenshot({path:path.join(out,`${width}-${theme}-${provider}-permission-large.png`),animations:'disabled'});}
+     if(width===320){await permission.evaluate(el=>{const label=el.closest('label'),scroll=el.closest('.rc-scroll');scroll.scrollTop+=label.getBoundingClientRect().top-scroll.getBoundingClientRect().top-12;});await page.screenshot({path:path.join(out,`${width}-${theme}-${provider}-permission-large.png`),animations:'disabled'});}
      await permission.check();await key.fill('SYNTHETIC_UNSAVED');
      assert.equal(await card.locator('.key-status-pill').innerText(),'Unsaved changes');
      await settings.getByRole('button',{name:'Save keys',exact:true}).scrollIntoViewIfNeeded();assert(await settings.getByRole('button',{name:'Save keys',exact:true}).isVisible());if(provider==='anthropic')assert(await settings.getByRole('button',{name:'Save keys',exact:true}).isEnabled(),'valid unsaved edits enable Save keys');
-     await settings.getByRole('button',{name:'All providers',exact:true}).click();assert.equal(await key.inputValue(),'SYNTHETIC_UNSAVED');assert(await permission.isChecked());
-     await page.goBack();await rc.getByRole('region',{name:'Provider detail'}).waitFor();
-     await page.goForward();await settings.waitFor();await settings.locator('.provider-connection').first().waitFor();assert((await settings.locator('.provider-connection').count())>1);
-     await page.goBack();await rc.getByRole('region',{name:'Provider detail'}).waitFor();
+     assert(!/SYNTHETIC_UNSAVED|SYNTHETIC_ONLY/.test(await rc.innerText()),'keys are never shown as text');
+     await page.goBack();await rc.locator(`[data-provider="${provider}"]`).waitFor();
+     await page.goForward();await card.waitFor();assert.equal(await key.inputValue(),'SYNTHETIC_UNSAVED');assert(await permission.isChecked(),'Forward restores the unsaved permission');
      await page.goBack();
     }
     assert.equal(await page.locator('.composer textarea').inputValue(),draft);assert.deepEqual(errors,[]);

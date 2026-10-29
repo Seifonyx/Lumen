@@ -95,7 +95,7 @@ const geminiHtml = `<html><body><div class="outer-cell"><div class="content-cell
     console.log('PASS importing again updates; other files are refused');
 
     // The imported chat opens like any other.
-    await page.click('.settings-page [aria-label="Close"]');
+    await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
     await page.click('.chat-row:has-text("Trip to Rome") .chat-open');
     await page.locator('.msg.assistant:has-text("And the Pantheon.")').waitFor();
     console.log('PASS an imported chat opens and reads normally');

@@ -369,6 +369,9 @@ function PersonalizeTab() {
 // The Canvas presentation moves API keys, Models (with Layouts) and Usage into Router (src/lib/router-settings-route.ts).
 const SECTIONS = CANVAS_SHELL ? TABS.filter(([id]) => !['keys', 'models', 'usage'].includes(id)) : TABS;
 
+// Router reuses these through this chunk, so the shared editors keep one place in the bundle.
+export { KeysPanel, ModelsTab };
+
 export default function SettingsModal() {
   const open = useStore((s) => s.settingsOpen);
   const tab = useStore((s) => s.settingsTab);
@@ -410,6 +413,12 @@ export default function SettingsModal() {
   useEffect(() => {
     panel.current?.scrollTo({ top: 0 });
   }, [tab]);
+
+  // Canvas: Settings can open on a section Router now owns if that request came before the redirect hook was
+  // installed (a first sign-in). Hand it to Router; the hook replaces this history entry.
+  useEffect(() => {
+    if (CANVAS_SHELL && open && ['keys', 'models', 'layouts', 'usage'].includes(tab)) setUi({ settingsTab: tab });
+  }, [open, tab, setUi]);
 
   // Phones: swipe from the left edge of a section to go back to the list (follows the finger).
   useEffect(() => {

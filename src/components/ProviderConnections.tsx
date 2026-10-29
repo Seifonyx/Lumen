@@ -51,7 +51,7 @@ export default function ProviderConnections({ main, draft, setDraft, saved, targ
   return (
     <section className="provider-connections" aria-labelledby="providers-heading">
       <h3 id="providers-heading" className="sr-only">Providers</h3>
-      {firstRun && !focused && (
+      {firstRun && (!focused || (compact && focused === 'gemini')) && (
         <div className="welcome-guide" role="note" aria-label="Getting started">
           <strong>Welcome to Lumen</strong>
           <p>It talks to free AI models using your own keys, which stay private to your account. One free key is enough to start:</p>

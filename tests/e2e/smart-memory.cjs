@@ -39,7 +39,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     const settingsPage = page.locator('.settings-page:not(.exit-ghost)');
     await settingsPage.getByLabel('About me').fill('I build wooden boats.');
     await settingsPage.getByRole('button', { name: 'Save', exact: true }).click();
-    await page.click('.settings-page [aria-label="Close"]');
+    await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
 
     // ---- In a project chat: About me is sent; the project fact is kept for the project.
     await openChat(page, 'Alpha planning');
@@ -76,7 +76,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     console.log('PASS memories can change scope, and About me can be drafted from them');
 
     // ---- Deleting a chat forgets the memories saved in it (1.8 bug: a deleted chat's language stuck around).
-    await page.click('.settings-page [aria-label="Close"]');
+    await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
     page.once('dialog', (d) => d.accept());
     const row2 = page.locator('.chat-row:has-text("Alpha planning")');
     await row2.hover();

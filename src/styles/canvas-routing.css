@@ -255,7 +255,7 @@
   .app[data-lumen-canvas-shell] .sb-grid > li + li::before { content: ""; position: absolute; top: 0; left: 60px; right: 0; border-top: 1px solid var(--canvas-rim); }
   .app[data-lumen-canvas-shell] .sb-tile { min-height: 58px; padding: 10px 14px; border: 0; border-radius: 0; background: none; }
   .app[data-lumen-canvas-shell] .sb-tile:focus-visible { outline-offset: -2px; }
-  .app[data-lumen-canvas-shell] .sb-refresh { min-height: 44px; }
+  .app[data-lumen-canvas-shell] :is(.sb-refresh, .sb-back) { min-height: 44px; }
 }
 @media (forced-colors: active) { .app[data-lumen-canvas-shell] .sb-tile, .app[data-lumen-canvas-shell] .sb-refresh { border-color: CanvasText; } }
 
@@ -267,3 +267,7 @@
 .app[data-lumen-canvas-shell] .rc-routing-settings .settings-group-title .count-pill { font: 500 12.5px/1 var(--canvas-data-font); color: var(--canvas-muted); background: none; padding: 0; }
 .app[data-lumen-canvas-shell] .rc-routing-settings .settings-card { border: 1px solid var(--canvas-rim); border-radius: 16px; background: var(--cv5-card, var(--canvas-surface)); box-shadow: none; }
 .app[data-lumen-canvas-shell] .rc-routing-settings .models-back { justify-self: start; margin-bottom: 4px; }
+/* The provider page is one column that never grows past its place, at any text size. */
+.app[data-lumen-canvas-shell] .rc-provider-detail { grid-template-columns: minmax(0, 1fr); }
+.app[data-lumen-canvas-shell] .sb-connection :is(.key-row, .usage-row-head) { flex-wrap: wrap; }
+.app[data-lumen-canvas-shell] .sb-connection .status { white-space: normal; }

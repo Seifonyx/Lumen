@@ -1,7 +1,7 @@
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { clearProviderSettingsTarget, useProviderSettingsTarget } from '../lib/canvas-presentation';
-import { normalizeKeys, validAlibabaBase, validRelayUrl } from '../lib/ai/provider-config.js';
+import { clearProviderSettingsTarget, useProviderSettingsTarget, useScreenMemory } from '../lib/canvas-presentation';
+import { EXTRA_PROVIDERS, normalizeKeys, validAlibabaBase, validRelayUrl } from '../lib/ai/provider-config.js';
 import type { ApiKeys } from '../lib/firebase';
 import { useStore } from '../store';
 import KeySafety from './KeySafety';
@@ -22,6 +22,19 @@ const KEY_FIELDS: { id: 'gemini' | 'openrouter' | 'groq' | 'cerebras' | 'github'
   },
 ];
 
+// One provider's own fields: its key and permission, plus the endpoint, account ID or relay it alone depends on.
+const providerFields = (id: string): (keyof ApiKeys)[] => {
+  const extra = EXTRA_PROVIDERS[id as keyof typeof EXTRA_PROVIDERS] as { relay?: boolean; fallback?: boolean } | undefined;
+  return [id as keyof ApiKeys, ...(id === 'alibaba' ? ['alibabaBaseUrl' as const] : []), ...(id === 'cloudflare' ? ['cloudflareAccountId' as const] : []), ...(extra?.relay || extra?.fallback ? ['providerRelayUrl' as const] : [])];
+};
+/** The saved keys with only `id`'s fields taken from the draft, so a page never writes back another provider's key. */
+function withProvider(saved: ApiKeys, draft: ApiKeys, id: string): ApiKeys {
+  const next = { ...saved } as Record<string, unknown>;
+  for (const field of providerFields(id)) next[field] = draft[field];
+  if (id in EXTRA_PROVIDERS) next.providerAccess = { ...saved.providerAccess, [id]: draft.providerAccess?.[id as keyof typeof EXTRA_PROVIDERS] === true };
+  return next as unknown as ApiKeys;
+}
+
 /** The API key editor: every provider, or one provider (Router's provider page) when `provider` is set. */
 export default function KeysPanel({ provider }: { provider?: string } = {}) {
   const keys = useStore((s) => s.keys);
@@ -30,7 +43,13 @@ export default function KeysPanel({ provider }: { provider?: string } = {}) {
   const targetProvider = provider ?? linked;
   const saveApiKeys = useStore((s) => s.saveApiKeys);
   const toast = useStore((s) => s.toast);
-  const [draft, setDraft] = useState<ApiKeys>(() => normalizeKeys(keys) as unknown as ApiKeys);
+  const [local, setLocal] = useState<ApiKeys>(() => normalizeKeys(keys) as unknown as ApiKeys);
+  // A provider page keeps its unsaved edits across Back/Forward (screen memory: in memory only, per account) and is
+  // always rebased on the saved keys, so saving it changes that provider's fields and nothing else.
+  const remembered = useScreenMemory?.<ApiKeys | null>(`keys-draft:${provider ?? ''}`, null) ?? null;
+  const [stored, setStored] = remembered ?? [null, () => {}];
+  const draft = provider && remembered ? withProvider(keys, stored ?? keys, provider) : local;
+  const setDraft = (value: ApiKeys) => provider && remembered ? setStored(value) : setLocal(value);
   const [busy, setBusy] = useState(false);
   const changed = JSON.stringify(normalizeKeys(draft)) !== JSON.stringify(normalizeKeys(keys));
   const validation = draft.alibabaBaseUrl && !validAlibabaBase(draft.alibabaBaseUrl) ? 'Use an official Alibaba Cloud Model Studio base URL.'
@@ -52,6 +71,7 @@ export default function KeysPanel({ provider }: { provider?: string } = {}) {
             setBusy(true);
             try {
               await saveApiKeys(draft);
+              if (provider && remembered) setStored(null);
               toast('Keys saved on this device. Account sync continues when connected.', 'success');
             } catch (e) {
               toast(`Couldn't save keys: ${(e as Error).message}`, 'error');

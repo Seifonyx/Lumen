@@ -60,7 +60,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     const toggle = page.locator('.settings-page:not(.exit-ghost)').getByLabel('Notify me when a reply is ready');
     assert.ok(await toggle.isChecked());
     await toggle.uncheck();
-    await page.click('.settings-page [aria-label="Close"]');
+    await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
     await page.fill('.composer textarea', 'Once more?');
     await page.click('.send-btn');
     await page.evaluate(() => { document.hasFocus = () => false; });

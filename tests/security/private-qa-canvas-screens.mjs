@@ -294,7 +294,7 @@ try {
         record.screens.routing = await axe(page, 'section.rc-page');
         await shot(page, join(out, `${tag}-prism-models.png`));
         const prismNav = page.getByRole('navigation', { name:'Router sections' });
-        assert.deepEqual(await prismNav.locator('button').allTextContents(), ['Models','Providers','Layouts','Usage','Diagnostics']);
+        assert.deepEqual(await prismNav.locator('button').allTextContents(), ['Models','Providers','Routing','Layouts','Usage','Diagnostics']);
         await prismNav.getByRole('button',{name:'Layouts',exact:true}).click();
         await shot(page, join(out, `${tag}-prism-layouts.png`));
         await prismNav.getByRole('button',{name:'Usage',exact:true}).click();
@@ -314,22 +314,14 @@ try {
           await shot(page, join(out, `${tag}-prism-tabs-scrolled.png`));
         }
         await prismNav.getByRole('button', { name:'Providers', exact:true }).click();
-        await page.locator('.rc-provider-list').waitFor();
+        await page.locator('.sb-providers').waitFor();
         await shot(page, join(out, `${tag}-providers.png`));
-        await page.locator('.rc-provider-list [data-provider="gemini"]').first().click();
+        await page.locator('.sb-providers [data-provider="gemini"]').first().click();
         await page.locator('.rc-provider-detail').waitFor();
-        if (phone) await page.getByRole('button', { name:'More actions', exact:true }).waitFor();
+        // Router: the provider's key and connection are on its page (no menu into Settings).
+        await page.locator('.rc-provider-detail #sb-connection .provider-connection').waitFor();
+        assert.equal(await page.getByRole('dialog', { name:'Settings' }).count(), 0);
         await shot(page, join(out, `${tag}-provider-detail.png`));
-        if (phone) {
-          await page.getByRole('button', { name:'More actions', exact:true }).click();
-          await page.getByRole('menu', { name:'Screen actions' }).waitFor();
-          await shot(page, join(out, `${tag}-provider-actions.png`));
-          await page.getByRole('menuitem', { name:'Connection settings', exact:true }).click();
-          await page.getByRole('dialog', { name:'Settings' }).waitFor();
-          await shot(page, join(out, `${tag}-provider-connection-settings.png`));
-          await page.goBack();
-          await page.locator('.rc-provider-detail').waitFor();
-        }
         await closeAll(page);
         pass('routing center');
 

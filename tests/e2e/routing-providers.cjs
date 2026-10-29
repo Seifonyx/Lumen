@@ -82,7 +82,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       }
       await tab('Providers');
       await rc.locator('[data-provider="gemini"]').waitFor();
-      if(phone){const box=await rc.locator('.rc-provider-list').boundingBox();assert(box.width>=width-34,'provider list uses phone width with 16px gutters');}
+      if(phone){const box=await rc.locator('.sb-providers').boundingBox();assert(box.width>=width-34,'provider grid uses phone width with 16px gutters');}
       await shot('providers');
       await rc.locator('[data-provider="gemini"]').click();
       const detail = rc.getByRole('region', { name: 'Provider detail' });
@@ -98,16 +98,11 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         // A working provider has no fix to lead with: both actions stay quiet.
         assert.equal(await detail.locator('.rc-primary').count(), 0);
       }
-      if(phone){
-        await rc.locator('.phone-navigation').getByRole('button',{name:'More actions',exact:true}).click();
-        await rc.getByRole('menuitem',{name:'Connection settings',exact:true}).click();
-        const connection=page.getByRole('dialog',{name:'Settings',exact:true});
-        await connection.locator('.provider-connection[data-provider="gemini"][open]').waitFor();
-        assert.equal(await connection.locator('.provider-connection:visible').count(),1,'contextual menu targets the correct provider');
-        await page.goBack();
-        await detail.waitFor();
-      }
-      if (phone) await page.goBack();
+      // Router: the provider's key and connection are on its own page, scoped to that provider only.
+      const geminiKey=detail.locator('#sb-connection .provider-connection[data-provider="gemini"]');
+      await geminiKey.waitFor();
+      assert.equal(await detail.locator('#sb-connection .provider-connection').count(),1,'the key editor targets the correct provider');
+      await page.goBack();
       const search = rc.getByRole('searchbox', { name: 'Find a provider' });
       await search.fill('not-a-provider');
       await rc.locator('[data-provider]').first().waitFor({ state: 'hidden' });
@@ -122,34 +117,21 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       if (!before) assert.equal(await detail.locator('.rc-primary').innerText(), 'Enable provider', 'the fix leads');
       await shot('disabled');
       await detail.getByRole('button', {name:'Enable provider',exact:true}).click();
-      const settings = page.getByRole('dialog', {name:'Settings',exact:true});
-      const targeted = settings.locator('.provider-connection[data-provider="anthropic"]');
+      // The fix stays on this page: it moves to the provider's key and permission, never another account's or provider's.
+      const targeted = detail.locator('#sb-connection .provider-connection[data-provider="anthropic"]');
       await targeted.waitFor();
       assert.equal(await targeted.getAttribute('open') !== null,true);
-      assert.equal(await settings.locator('.provider-connection:visible').count(),1);
+      assert.equal(await detail.locator('#sb-connection .provider-connection:visible').count(),1);
       assert.equal(await targeted.locator('input[aria-label="Anthropic (Claude) API key"]').getAttribute('type'),'password');
       assert.equal(await targeted.locator('input[aria-label="Anthropic (Claude) API key"]').inputValue(),'SYNTHETIC_ONLY');
-      assert.equal(await settings.locator('.provider-relay').count(),1, 'existing relay disclosure retained');
-      assert(!/SYNTHETIC_ONLY/.test(await settings.innerText()));
+      assert(await page.evaluate(()=>Boolean(document.activeElement?.closest('#sb-connection'))),'Enable provider moves focus to the key and permission');
+      assert.equal(await detail.locator('.provider-relay').count(),0,'relay settings appear only for providers that use the relay');
+      assert(!/SYNTHETIC_ONLY/.test(await rc.innerText()));
       await page.evaluate(()=>document.activeElement?.blur());
       await page.screenshot({path:path.join(out,`${width}-${theme}-specific-settings.png`),animations:'disabled'});
       const settingsAudit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();
       assert.deepEqual(settingsAudit.violations.map(v=>v.id),[]);
-      if(phone) await page.goBack();
-      else await page.goBack();
-      await detail.waitFor();
-      await page.goForward();
-      await targeted.waitFor();
-      assert.equal(await settings.locator('.provider-connection:visible').count(),1,'Forward restores provider-specific settings');
-      await settings.getByRole('button',{name:'All providers',exact:true}).click();
-      assert(await settings.getByRole('searchbox',{name:'Search providers'}).isVisible());
-      assert((await settings.locator('.provider-connection').count())>1);
-      await page.goBack(); await detail.waitFor();
-      await page.goForward(); await settings.waitFor();
-      assert((await settings.locator('.provider-connection:visible').count())>1,'Forward preserves deliberate All providers expansion');
-      await page.goBack(); await detail.waitFor();
-      assert.equal(await detail.getByRole('button',{name:'Enable provider',exact:true}).count(),1);
-      if (phone) await page.goBack();
+      await page.goBack();
       await search.fill('');
       if (!before) {
         await rc.getByRole('button', { name: /Filter providers:/ }).click();
@@ -204,10 +186,10 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
             node.style.fontSize = `${parseFloat(getComputedStyle(node).fontSize) * 1.5}px`;
           }
         });
-        // The scroller reveals all five sections on keyboard focus (its labels keep a fixed size, as a tab bar's do); Models' rows keep
+        // The scroller reveals all six sections on keyboard focus (its labels keep a fixed size, as a tab bar's do); Models' rows keep
         // their words inside the row at larger text.
         assert.equal(await rc.locator('.rc-dock').count(), 0);
-        assert.equal(await rc.locator('.phone-sections button').count(), 5);
+        assert.equal(await rc.locator('.phone-sections button').count(), 6);
         for (const button of await rc.locator('.phone-sections button').all()) {
           await button.focus();
           assert(await button.evaluate(el => el.scrollWidth <= el.clientWidth && [...el.children].every(c => c.getBoundingClientRect().right <= el.getBoundingClientRect().right + 0.5)), 'row remains readable at larger text');

@@ -1,5 +1,10 @@
 # In-app suites that run on the Canvas build too (tests.yml, in-app-canvas). Add a suite here once it passes there:
 # MR_TEST_DIST=dist-canvas npm run test:e2e -- <suite>  (after LUMEN_CANVAS=1 npm run build -- --outDir dist-canvas).
+# Not on the Canvas build since Router took over Settings > API keys, Models, Layouts and Usage (2026-10-29): these
+# suites drive those Settings sections directly. They still run in full on the ordinary build; on Canvas the same
+# shared editors are covered through Router by routing-providers, prism-*, provider-settings-containment and
+# switchboard-experience. Port one back here once it drives Router instead:
+# auto catalog-lifecycle coding declared-background fit key-save-resilience knowledge layout-builder layout-policies layout-save-resilience model-declarations model-health model-picker-accessibility multi-provider providers quota removed-models roadmap routing-priorities settings usage
 accessibility
 account-isolation
 account-sync
@@ -11,30 +16,25 @@ ask-chats
 assistants
 attachment-motion
 attachment-sync
-auto
 auto-explain
 auto-intelligence
 background-check
 bulk-chats
 canvas
-catalog-lifecycle
 chat-export
 chat-menu
-coding
 coding-plan
 combine
 commit-undo
 compact
 comparison-recovery
 context-recovery
-declared-background
 deep-research
 delete-account
 design
 edit-review
 fast-route
 files
-fit
 free-tools
 gestures
 glass
@@ -43,24 +43,15 @@ images
 import-history
 incognito
 invite
-key-save-resilience
-knowledge
 layout
-layout-builder
-layout-policies
-layout-save-resilience
 long-history
 markdown-recovery
 memory
 message-navigation
-model-declarations
-model-health
-model-picker-accessibility
 more-motion
 motion
 motion-chat
 motion-controls
-multi-provider
 native-feel
 notifications
 office-edit
@@ -68,20 +59,14 @@ offline
 phone-windows
 polish
 privacy
-providers
 pull-review
-quota
 regressions
 reliability
-removed-models
 reply-status
-roadmap
-routing-priorities
 run
 safe-insets
 selection-boundaries
 selection-policy
-settings
 share-links
 sheet-drag
 shortcuts
@@ -96,7 +81,6 @@ tasks
 tasks-sync
 tool-card-stability
 transitions
-usage
 usage-draft
 visual-animations
 voice-mode

@@ -46,8 +46,18 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   await page.evaluate(() => window.__testSignIn('hebaghoneim8@gmail.com'));
   await page.waitForSelector('input[placeholder="AIza…"]');
   await page.fill('input[placeholder="AIza…"]', 'g');
-  await page.fill('input[placeholder="sk-or-…"]', 'o');
-  await page.click('button:has-text("Save keys")');
+  // Canvas: first run opens Router on Google AI Studio; OpenRouter's key goes on its own provider page.
+  if (await page.locator('.rc-page:not([hidden]) #sb-connection').count()) {
+    await page.click('button:has-text("Save keys")');
+    await page.getByText('Keys saved on this device', { exact: false }).first().waitFor();
+    await page.getByRole('button', { name: 'All providers', exact: true }).click();
+    await page.locator('.rc-page:not([hidden]) [data-provider="openrouter"]').click();
+    await page.fill('input[placeholder="sk-or-…"]', 'o');
+    await page.click('button:has-text("Save keys")');
+  } else {
+    await page.fill('input[placeholder="sk-or-…"]', 'o');
+    await page.click('button:has-text("Save keys")');
+  }
 
   // ---- Key safety
   await page.waitForSelector('.key-safety .status:not(.wait), .key-safety .status.blocked', { timeout: 10000 });
@@ -60,7 +70,7 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   await page.waitForFunction(() => document.querySelector('.key-safety')?.textContent.includes('Locked to this app'), null, { timeout: 10000 });
   check(true, 'locked Gemini key recognised');
   await page.screenshot({ path: require('path').join(__dirname, 'out', 'key-safety.png') });
-  await page.click('.settings-page [aria-label="Close"]');
+  await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
 
   const send = async (text) => {
     const n = (await page.$$('.msg.assistant')).length;
@@ -82,7 +92,7 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   check((await page.textContent('.privacy-preview')).includes('[NAME_1]') && (await page.textContent('.privacy-preview')).includes('[PHONE_1]'), 'settings preview shows what models would see');
   await page.locator('.setting-row', { hasText: 'Privacy shield' }).locator('input').click();
   check((await page.textContent('.privacy-tab')).includes('Ask me'), 'mode choice appears when on');
-  await page.click('.settings-page [aria-label="Close"]');
+  await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
   check(Boolean(await page.$('.shield-on')), 'shield icon in the message box');
 
   await page.evaluate(()=>(document.querySelector('.sidebar .new-chat, .cv-new-pill')||[...document.querySelectorAll('.cv-dest button')].find(b=>b.textContent.includes('New chat'))).click());
@@ -121,7 +131,7 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   await page.click('.sidebar-foot, .cv-account');
   await openTab(page, 'Privacy');
   await page.click('.privacy-tab .segmented >> text=Mask automatically');
-  await page.click('.settings-page [aria-label="Close"]');
+  await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
   n = await send('her national ID is 29001011234567');
   await waitReply(n);
   check(!(await page.$('.privacy-check')) && sent().includes('[NATIONAL_ID_1]') && !sent().includes('29001011234567'), 'auto mode masks without asking');

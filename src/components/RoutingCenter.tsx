@@ -20,7 +20,6 @@ import { closeRoutingCenter, showRoutingSection, showRoutingProvider, useRouting
 import { findLayout } from '../lib/layouts';
 import type { ModelInfo } from '../types';
 import UsageTab from './UsageTab';
-import KeysPanel from './KeysPanel';
 import { FREE as FREE_PROVIDERS } from './ProviderConnections';
 import { providerPresentation } from '../lib/provider-presentation';
 import FilterMenu from './FilterMenu';
@@ -34,7 +33,8 @@ const RequestLog = lazy(() => extras().then((m) => ({ default: m.RequestLog })))
 const LatestOutcome = lazy(() => extras().then((m) => ({ default: m.LatestOutcome })));
 const PrismLayouts = lazy(() => import('./PrismLayouts'));
 // Routing settings (priority, switching, fallback order, model health) are the same component Settings uses.
-const RoutingSettings = lazy(() => import('./ModelSettings'));
+const RoutingSettings = lazy(() => import('./SettingsModal').then((m) => ({ default: m.ModelsTab })));
+const KeysPanel = lazy(() => import('./SettingsModal').then((m) => ({ default: m.KeysPanel })));
 const RoutingInsight = lazy(() => import('./RoutingInsight'));
 
 const PrismModels = lazy(() => import('./PrismModels'));
@@ -136,10 +136,11 @@ function Providers({ preferred, phone, searchHost }: { preferred?: string; openD
   void preferred;
 
   if (shown) return (
-    <section className="rc-providers sb-detail-page" aria-label="Provider detail page">
-      {!phone && <button type="button" className="sb-back" onClick={() => screenBack(() => showRoutingProvider(null))}><ChevronLeft size={16} aria-hidden="true" />All providers</button>}
+    <div className="rc-providers sb-detail-page">
+      {/* Always reaches the grid, also when Router opened straight onto this provider (a first run). */}
+      <button type="button" className="sb-back" onClick={() => navigateScreen(() => showRoutingProvider(null))}><ChevronLeft size={16} aria-hidden="true" />All providers</button>
       <ProviderDetail key={shown.id} searchHost={phone ? searchHost : null} p={shown} title={title} usage={usage} enabledHere={enabledModels.filter((id) => shown.models.some((m) => m.id === id)).length} />
-    </section>
+    </div>
   );
 
   const search = <div className="rc-search"><Search size={16} aria-hidden="true" /><input ref={input} type="search" aria-label="Find a provider" placeholder="Find a provider" value={query} onChange={(e) => setQuery(e.target.value)} />{query && <button type="button" aria-label="Clear provider search" onClick={() => { setQuery(''); input.current?.focus(); }}><X size={16} /></button>}</div>;
@@ -192,7 +193,7 @@ function ProviderDetail({ p, title, usage, enabledHere, searchHost }: { searchHo
     ['Replies', p.presentation.replyLabel],
     ['Allowance', sharedLeft !== null ? `${sharedLeft} requests left · shared pool` : knownLimits.length ? 'Per model, below' : 'Unknown'],
   ];
-  const connection = <section id="sb-connection" className="sb-connection" aria-labelledby="sb-connection-title"><h3 id="sb-connection-title">Key &amp; connection</h3><KeysPanel provider={p.id} /></section>;
+  const connection = <section id="sb-connection" className="sb-connection" aria-labelledby="sb-connection-title"><h3 id="sb-connection-title">Key &amp; connection</h3><Suspense fallback={<p className="rc-muted" role="status">Loading key settings…</p>}><KeysPanel provider={p.id} /></Suspense></section>;
   const setUp = p.keySaved && p.enabled;
   return (
     <section className="rc-provider-detail" aria-label="Provider detail">

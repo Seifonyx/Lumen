@@ -100,7 +100,7 @@ try {
       const places = await rc(page).locator('.rc-tabs button, .phone-sections button').evaluateAll(els => els.map(el => {
         const r=el.getBoundingClientRect();return { name:el.textContent,left:r.left,right:r.right,height:r.height,cut:el.scrollWidth>el.clientWidth };
       }));
-      assert.deepEqual(places.map(p=>p.name), ['Models','Providers','Layouts','Usage','Diagnostics']);
+      assert.deepEqual(places.map(p=>p.name), ['Models','Providers','Routing','Layouts','Usage','Diagnostics']);
       for (const t of places.filter(()=>!phone)) assert.ok(t.left>=0&&t.right<=width&&!t.cut, `visible desktop section: ${t.name}`);
       if (phone) {
         for (const item of await rc(page).locator('.phone-sections button').all()) {
@@ -117,29 +117,22 @@ try {
       await tab(page, 'Providers');
       await settle(page);
       if (phone) { assert.equal(await rc(page).locator('.rc-dock').count(),0); assert.equal(await rc(page).locator('.phone-navigation h1').innerText(),'Router'); assert.equal(await rc(page).getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Providers',exact:true}).getAttribute('aria-current'),'page'); }
-      assert.match(await rc(page).locator('.rc-count').innerText(), /^\d+ of \d+ providers$/);
-      // Your providers form the ledger with one verdict each; the others are names to add, the first few shown until asked.
-      const fold = rc(page).locator('.rc-more');
-      assert.equal(await fold.getAttribute('aria-expanded'), 'false');
-      assert.match(await rc(page).locator('.rc-explore').innerText(), /\d+ providers · no key saved/);
+      assert.match(await rc(page).locator('.rc-count').innerText(), /^\d+ keys? saved · \d+ enabled · \d+ available$/);
+      // Router: one grid grouped Connected · Free to start · Uses your provider credits, every provider shown with one status line.
       assert.match(await rc(page).locator('[data-provider="gemini"]').innerText(), /Catalog ready/);
       assert.doesNotMatch(await rc(page).locator('[data-provider="gemini"]').innerText(), /No key saved|permission off/);
-      assert.equal(await rc(page).locator('[data-provider="groq"]').isVisible(), false, 'unconnected providers start folded');
+      assert.ok(await rc(page).locator('#sb-group-connected').isVisible());
+      assert.ok(await rc(page).locator('[data-provider="groq"]').isVisible(), 'unconnected providers are listed, not folded');
+      assert.match(await rc(page).locator('[data-provider="groq"]').innerText(), /Groq\s+Not connected/);
       await shot(page, join(out, `${tag}-2-providers-folded.png`));
-      await fold.click();
-      assert.equal(await fold.getAttribute('aria-expanded'), 'true');
-      assert.equal(await rc(page).locator('[data-provider="groq"]').innerText(), 'Groq');
-      await fold.click();
-      assert.equal(await rc(page).locator('[data-provider="groq"]').isVisible(), false);
-      // A search reaches folded providers directly.
       await rc(page).getByRole('searchbox', { name: 'Find a provider' }).fill('groq');
       await settle(page, 200);
-      assert.equal(await rc(page).locator('.rc-provider-scroll [data-provider]').count(), 1);
+      assert.equal(await rc(page).locator('.sb-providers [data-provider]').count(), 1);
       await rc(page).getByRole('button', { name: 'Clear provider search' }).click();
       await rc(page).getByRole('button', { name: 'Filter providers' }).click();
       await page.getByRole('menuitemradio', { name: /Saved keys/ }).or(page.getByRole('option', { name: /Saved keys/ })).first().click();
       await settle(page, 200);
-      assert.equal(await rc(page).locator('.rc-provider-scroll [data-provider]').count(), 1, 'one saved key (synthetic Google AI Studio)');
+      assert.equal(await rc(page).locator('.sb-providers [data-provider]').count(), 1, 'one saved key (synthetic Google AI Studio)');
       await rc(page).locator('[data-provider="gemini"]').click();
       await settle(page);
       const detail = rc(page).getByRole('region', { name: 'Provider detail' });
@@ -149,14 +142,13 @@ try {
       assert.match(await detail.locator('[data-fact="Replies"]').textContent(), /Not tested by model listing/);
       assert.match(await detail.locator('[data-fact="Allowance"]').textContent(), /Unknown/);
       await shot(page, join(out, `${tag}-2-provider.png`));
-      if (phone) {
-        assert.equal(await rc(page).locator('.rc-provider-list').isVisible(), false, 'phone: the detail replaces the list');
-        await page.goBack();
-        await settle(page);
-        assert.ok(await rc(page).locator('.rc-provider-list').isVisible());
-        await rc(page).locator('[data-provider="gemini"]').click();
-        await settle(page);
-      }
+      // The provider opens as its own page over the grid; Back returns to the grid.
+      assert.equal(await rc(page).locator('.sb-providers').count(), 0, 'the provider page replaces the grid');
+      await page.goBack();
+      await settle(page);
+      assert.ok(await rc(page).locator('.sb-providers').isVisible());
+      await rc(page).locator('[data-provider="gemini"]').click();
+      await settle(page);
       pass('providers');
 
       // Canonical manual selection: the conversation's model changes, the Routing Center closes with a confirmation, the draft stays.
@@ -201,15 +193,14 @@ try {
       if (phone) await shot(page, join(out, `${tag}-5-sections-scrolled.png`));
       pass('usage and diagnostics');
 
-      // Manage connection → Settings (keys); closing Settings returns to the Routing Center.
+      // Manage connection: the key and permission are on the provider's own page; Router stays open, Settings never opens.
       await tab(page, 'Providers');
       await rc(page).locator('[data-provider="gemini"]').click();
-      if(phone){await rc(page).getByRole('button',{name:'More actions',exact:true}).click();await page.getByRole('menuitem',{name:'Connection settings',exact:true}).click();}else await rc(page).getByRole('button', { name: 'Connection settings for Google AI Studio' }).click();
-      await page.getByRole('dialog', { name: 'Settings' }).waitFor();
-      assert.equal(await isOpen(page), false, 'hidden under Settings');
-      await page.goBack();
-      await settle(page, 600);
-      assert.equal(await isOpen(page), true, 'back to the Routing Center');
+      await settle(page);
+      if (!phone) await rc(page).getByRole('button', { name: 'Key and connection for Google AI Studio' }).click();
+      await rc(page).locator('#sb-connection .provider-connection[data-provider="gemini"]').waitFor();
+      assert.equal(await page.getByRole('dialog', { name: 'Settings' }).count(), 0);
+      assert.equal(await isOpen(page), true, 'still in Router');
       pass('manage connection');
 
       // Accessibility on the provider detail.

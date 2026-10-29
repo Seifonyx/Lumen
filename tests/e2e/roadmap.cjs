@@ -40,7 +40,7 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
     const add = page.locator('.model-list.add .model-row', { hasText: label }).locator('button').first();
     if (await add.count()) await add.click();
   }
-  await page.click('.settings-page [aria-label="Close"]');
+  await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
   await page.waitForSelector('.app:not(.app-skeleton) .topbar');
 
   await page.getByRole('button', { name: 'New project', exact: true }).first().click();

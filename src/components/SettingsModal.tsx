@@ -26,7 +26,7 @@ import { Clock,
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { VOICE_LANGS } from '../lib/speech';
 import { useFocusScope } from '../lib/focus-scope';
 import { PreviewTools } from './PreviewTools';
@@ -63,7 +63,7 @@ import PrivacyTab from './PrivacyTab';
 import LayoutsSection, { LayoutEditor } from './LayoutsTab';
 import type { Layout } from '../lib/layouts';
 import CatalogErrorNotice from './CatalogErrorNotice';
-import { CANVAS_SHELL, navigateBack, PhoneNavigation } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, CanvasSettingsIndex, navigateBack, PhoneNavigation } from '../lib/canvas-presentation';
 
 /** Settings sections: id, name, icon, one-line description */
 const TABS: [string, string, LucideIcon, string][] = [
@@ -754,7 +754,7 @@ export default function SettingsModal() {
         {/* iPhone glass look: an iOS large title that scrolls away (hidden otherwise) */}
         <p className="settings-large-title" aria-hidden="true">{tab ? label : 'Settings'}</p>
         <div className="settings-inner">
-          <nav className="settings-tabs" aria-label="Settings sections">
+          {CANVAS_SHELL && CanvasSettingsIndex && window.matchMedia('(max-width:899px)').matches ? <Suspense fallback={null}><CanvasSettingsIndex sections={TABS} open={go} /></Suspense> : <nav className="settings-tabs" aria-label="Settings sections">
             {TABS.map(([tid, tlabel, Icon, tblurb]) => (
               <button key={tid} aria-current={id === tid ? 'page' : undefined} className={id === tid ? 'active' : ''} onClick={() => go(tid)}>
                 <span className="tab-icon"><Icon size={16} /></span>
@@ -765,7 +765,7 @@ export default function SettingsModal() {
                 <ChevronRight size={16} className="tab-chev" />
               </button>
             ))}
-          </nav>
+          </nav>}
 
           <div className="settings-panel">
             <div className="settings-heading">

@@ -34,6 +34,20 @@ for(const [width,theme] of views){
   await hub.getByRole('button',{name:'Groq',exact:true}).first().click();await page.getByRole('heading',{name:'Groq',exact:true}).first().waitFor();await page.getByText('Loading models…').waitFor({state:'detached'}).catch(()=>{});await page.waitForTimeout(400);
   await page.screenshot({path:path.join(out,`${width}-${theme}-provider-detail.png`),animations:'disabled'});
   await page.goBack();await hub.getByRole('button',{name:'Google AI Studio',exact:true}).first().waitFor();
+  // Keys are added on the provider's page: a synthetic key for an unconnected provider moves it to Connected.
+  await hub.getByRole('button',{name:'Mistral',exact:true}).first().click();await page.getByRole('heading',{name:'Mistral',exact:true}).first().waitFor();
+  const conn=page.locator('#sb-connection');await conn.waitFor();
+  await page.screenshot({path:path.join(out,`${width}-${theme}-add-key.png`),animations:'disabled'});
+  await conn.getByRole('textbox',{name:'Mistral API key'}).fill('synthetic-fixture-key');
+  await conn.getByRole('checkbox').check();
+  await conn.getByRole('button',{name:'Save keys'}).click();
+  await page.goBack();
+  await page.locator('#sb-group-connected').locator('xpath=ancestor::section[1]').getByRole('button',{name:'Mistral',exact:true}).waitFor();
+  // Routing: priority, switching and the fallback order, the same controls Settings used to hold.
+  await hub.getByRole('button',{name:'Routing',exact:true}).first().click();await page.getByRole('combobox',{name:'Routing priority'}).waitFor();await page.waitForTimeout(300);
+  await page.screenshot({path:path.join(out,`${width}-${theme}-routing.png`),animations:'disabled'});
+  const axe2=await new AxeBuilder({page}).include('.rc-page:not([hidden])').withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+  assert.deepEqual(axe2.violations.map(v=>`${v.id}: ${v.nodes.map(n=>n.target).join(' ')}`),[],'Routing has no WCAG A/AA violations');
  }
  assert.deepEqual(errors,[],'no page errors');console.log(`PASS hub ${before?'before':'after'} ${engine} ${width} ${theme}`);
  await ctx.close();

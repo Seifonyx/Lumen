@@ -3,10 +3,10 @@
 // navigation can open it without loading the Routing Center itself.
 import { useSyncExternalStore } from 'react';
 
-export type RoutingSection = 'models' | 'providers' | 'policies' | 'usage' | 'diagnostics';
+export type RoutingSection = 'models' | 'providers' | 'routing' | 'policies' | 'usage' | 'diagnostics';
 /** Old in-session history snapshots may still contain Overview, which is now Models.
  * Normalize at both entry and replay: a removed section never becomes a phantom page. */
-const validSections = new Set<RoutingSection>(['models', 'providers', 'policies', 'usage', 'diagnostics']);
+const validSections = new Set<RoutingSection>(['models', 'providers', 'routing', 'policies', 'usage', 'diagnostics']);
 export const normalizeRoutingSection = (section: RoutingSection | 'overview' | string): RoutingSection =>
   validSections.has(section as RoutingSection) ? section as RoutingSection : 'models';
 let state: { open: boolean; section: RoutingSection; provider?: string | null; settingsTarget?: { provider: string; owner: string } | null } = { open: false, section: 'models' };

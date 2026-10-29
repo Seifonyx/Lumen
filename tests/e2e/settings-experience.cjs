@@ -28,7 +28,7 @@ for(const width of (process.env.SETTINGS_WIDTHS||'390').split(',').map(Number))f
   assert.deepEqual(axe.violations.map(v=>v.id),[],'Settings index has no WCAG A/AA violations');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'no horizontal overflow');
   if(width<900){
-   for(const [row,heading] of [['API keys','API keys'],['Privacy & data','Privacy & data'],['Fixture','General']]){
+   for(const [row,heading] of [['Connectors','Connectors'],['Privacy & data','Privacy & data'],['Fixture','General']]){
     await page.locator('.si').getByRole('button',{name:row,exact:false}).click();await page.locator('.settings-page.has-section').waitFor();assert.equal((await page.locator('.settings-heading h2').textContent()).trim(),heading,`${row} opens ${heading}`);
     await page.goBack();await page.locator('.si').waitFor();await page.locator('.settings-page.has-section').waitFor({state:'detached'});
    }
@@ -36,11 +36,18 @@ for(const width of (process.env.SETTINGS_WIDTHS||'390').split(',').map(Number))f
    await page.locator('.settings-page .phone-navigation > button').first().click();await page.locator('.settings-page').waitFor({state:'detached'});
    assert.equal(await page.locator('.composer textarea').inputValue(),'Retain my working draft','Exit from a section returns to the chat with its draft');
    if(width<900)await page.locator('.menu-btn:visible').first().click();await page.locator('.cv-account:visible').first().click();await page.locator('.si').waitFor();
-   assert.match(await page.locator('.si').getByRole('button',{name:'API keys',exact:true}).getAttribute('aria-describedby').then(id=>page.locator(`[id="${id}"]`).innerText()),/Gemini connected/,'key status is stated in words');
+   assert.match(await page.locator('.si').getByRole('button',{name:'Router',exact:true}).getAttribute('aria-describedby').then(id=>page.locator(`[id="${id}"]`).innerText()),/Gemini connected · 1 saved model/,'Router row states keys and models in words');
+   for(const gone of ['API keys','Models','Usage'])assert.equal(await page.locator('.si').getByRole('button',{name:gone,exact:true}).count(),0,`${gone} lives in Router, not Settings`);
   }
   if(width<900){const small=await page.locator('.settings-page button:visible').evaluateAll(b=>b.map(e=>[e.getAttribute('aria-label')||e.textContent.trim(),e.getBoundingClientRect().height]).filter(([,h])=>h<44));assert.deepEqual(small,[],'phone targets are at least 44px');}
  }
- if(!before&&width<900){await page.locator('.si').getByRole('button',{name:'Router',exact:true}).click();await page.locator('.rc-page:visible').waitFor();assert.equal(await page.locator('.settings-page').count(),0,'Router leaves Settings');}
+ if(!before&&width<900){await page.locator('.si').getByRole('button',{name:'Router',exact:true}).click();await page.locator('.rc-page:visible').waitFor();assert.equal(await page.locator('.settings-page').count(),0,'Router leaves Settings');
+  // A request for Settings → API keys (Tools' Set up) opens Router's Providers in one step; Back returns to Tools.
+  await page.goBack();await page.locator('.si').waitFor();await page.goBack();await page.locator('.settings-page').waitFor({state:'detached'});
+  if(width<900)await page.locator('.menu-btn:visible').first().click();await page.locator('aside.cv-nav').getByRole('button',{name:'Tools',exact:true}).click();
+  await page.getByRole('button',{name:/^Set up/}).first().click();await page.locator('.rc-page:visible .sb-providers').waitFor();
+  assert.equal(await page.locator('.settings-page').count(),0,'API keys requests open Router, not Settings');
+  await page.goBack();await page.locator('.hub-page:visible').waitFor();assert.equal(await page.locator('.rc-page:visible').count(),0,'one Back returns to Tools');}
  assert.deepEqual(errors,[],'no page errors');console.log(`PASS settings ${before?'before':'after'} ${engine} ${width} ${theme}`);
  await ctx.close();
 }}finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});

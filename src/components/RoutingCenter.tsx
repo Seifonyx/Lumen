@@ -10,9 +10,9 @@ import { usePhoneLayout } from '../lib/phone-layout';
 import { createPortal } from 'react-dom';
 import { navigateScreen, screenBack, exitFeature, featureExitLabel } from '../lib/screen-history';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ArrowUpRight, ChevronRight, Plus, RefreshCw, Search, Shield, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, RefreshCw, Search, Shield, X } from 'lucide-react';
 import { modelLabel, selectCurrentChat, selectCurrentModel, useStore } from '../store';
-import { AI_PROVIDERS, EXTRA_PROVIDERS, providerEnabled } from '../lib/ai/provider-config.js';
+import { AI_PROVIDERS, providerEnabled } from '../lib/ai/provider-config.js';
 import { PROVIDER_NAMES, providerOfId } from '../lib/util';
 import { formatTokens } from '../lib/usage';
 import { installSwipeBack } from '../lib/swipe-back';
@@ -20,32 +20,33 @@ import { closeRoutingCenter, showRoutingSection, showRoutingProvider, useRouting
 import { findLayout } from '../lib/layouts';
 import type { ModelInfo } from '../types';
 import UsageTab from './UsageTab';
+import KeysPanel from './KeysPanel';
+import { FREE as FREE_PROVIDERS } from './ProviderConnections';
 import { providerPresentation } from '../lib/provider-presentation';
-import { requestProviderSettings } from '../lib/provider-settings-target';
 import FilterMenu from './FilterMenu';
 import { currentRoutingPresentation } from '../lib/routing-presentation';
 import { selectionProblem, withCurrentModel } from '../lib/model-discovery';
 // Tier 5 panels (usage history, request log, routing file, connection check) load on first use, in their own chunk.
-const ScreenActions = lazy(() => import('./ScreenActions'));
 const extras = () => import('./RoutingExtras');
 const CheckConnection = lazy(() => extras().then((m) => ({ default: m.CheckConnection })));
 const UsageHistory = lazy(() => extras().then((m) => ({ default: m.UsageHistory })));
 const RequestLog = lazy(() => extras().then((m) => ({ default: m.RequestLog })));
 const LatestOutcome = lazy(() => extras().then((m) => ({ default: m.LatestOutcome })));
 const PrismLayouts = lazy(() => import('./PrismLayouts'));
+// Routing settings (priority, switching, fallback order, model health) are the same component Settings uses.
+const RoutingSettings = lazy(() => import('./ModelSettings'));
 const RoutingInsight = lazy(() => import('./RoutingInsight'));
 
 const PrismModels = lazy(() => import('./PrismModels'));
 const ProviderModels = lazy(() => import('./PrismModels').then(m => ({ default: m.ProviderModels })));
 
-const SECTIONS: [RoutingSection, string][] = [['models', 'Models'], ['providers', 'Providers'], ['policies', 'Layouts'], ['usage', 'Usage'], ['diagnostics', 'Diagnostics']];
+const SECTIONS: [RoutingSection, string][] = [['models', 'Models'], ['providers', 'Providers'], ['routing', 'Routing'], ['policies', 'Layouts'], ['usage', 'Usage'], ['diagnostics', 'Diagnostics']];
 // Phones use a feature index and pushed screens; canonical UI history owns every Back path.
 const providerId = (model: ModelInfo) => (model.provider === 'google' ? 'gemini' : model.provider);
 const providerLabel = (id: string) => (id === 'gemini' ? 'Google AI Studio' : PROVIDER_NAMES[providerOfId(id + ':')] || id);
-const openSettings = (tab: string) => useStore.getState().setUi({ settingsOpen: true, settingsTab: tab, sidebarOpen: false });
-const openProviderSettings = (provider: string) => {
-  navigateScreen(() => { if (requestProviderSettings(provider, useStore.getState().user?.uid)) openSettings('keys'); });
-};
+// Keys, models and routing live here; every hand-off that used to open Settings opens the matching place in Router.
+const openProviderSettings = (provider: string) => navigateScreen(() => { showRoutingSection('providers'); showRoutingProvider(provider); });
+const openProviders = () => navigateScreen(() => showRoutingSection('providers'));
 type State = ReturnType<typeof useStore.getState>;
 
 /** One status vocabulary for providers, everywhere: can Lumen choose this provider's models? A model list is the
@@ -74,8 +75,8 @@ function useProviderRows(): ProviderRow[] {
 
 const PHONE = '(max-width: 899px)';
 
-// Free tiers or free models, from the provider registry; the rest bill your own provider account.
-const FREE_TIER = new Set(['gemini', 'openrouter', 'groq', 'cerebras', ...Object.entries(EXTRA_PROVIDERS).filter(([, v]) => (v as { free?: boolean }).free).map(([id]) => id)]);
+// Free tiers: the same list the key editor labels "Free tier"; the rest bill your own provider account.
+const FREE_TIER = FREE_PROVIDERS;
 const monogram = (label: string) => label.replace(/[^A-Za-z0-9 ]/g, ' ').trim().charAt(0).toUpperCase();
 // Provider marks load in their own chunk the first time Providers shows; the letter stands in until then.
 type IconSet = typeof import('../lib/provider-icons').PROVIDER_ICONS;
@@ -150,7 +151,6 @@ function Providers({ preferred, phone, searchHost }: { preferred?: string; openD
         <div className="sb-head-tools">
           {!phone && search}
           <FilterMenu<typeof filter> label="Filter providers" value={filter} onChange={setFilter} options={[{ value: 'all', label: 'All providers', count: providers.length }, { value: 'saved', label: 'Saved keys', count: saved }, { value: 'enabled', label: 'Enabled providers', count: enabled }, { value: 'attention', label: 'Needs attention', count: providers.filter((p) => p.presentation.attention).length }]} />
-          <button type="button" className="rc-add" aria-label="Connect a provider" onClick={() => openSettings('keys')}><Plus size={16} aria-hidden="true" /><span>Connect</span></button>
         </div>
       </header>
       {phone && !detail && searchHost && createPortal(search, searchHost)}
@@ -176,13 +176,15 @@ function ProviderDetail({ p, title, usage, enabledHere, searchHost }: { searchHo
   const knownLimits = observed.filter((m) => m.quota !== null);
   const sharedLeft = p.id === 'openrouter' && usage?.openrouter.limit != null ? Math.max(0, usage.openrouter.limit - usage.openrouter.used) : null;
   const listing = s?.state === 'ready' || s?.state === 'stale';
-  const settings = (text: string, primary: boolean) => !primary && window.matchMedia(PHONE).matches ? null : <button type="button" className={primary ? 'rc-primary' : 'rc-quiet'} aria-label={primary ? undefined : `Connection settings for ${p.label}`} onClick={() => openProviderSettings(p.id)}>{text}<ArrowUpRight size={15} aria-hidden="true" /></button>;
+  // Keys are edited on this page; the action moves to the key field instead of leaving for Settings.
+  const toKey = () => { const el = document.getElementById('sb-connection'); el?.scrollIntoView({ block: 'start' }); el?.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true }); };
+  const settings = (text: string, primary: boolean) => !primary && window.matchMedia(PHONE).matches ? null : <button type="button" className={primary ? 'rc-primary' : 'rc-quiet'} aria-label={primary ? undefined : `Key and connection for ${p.label}`} onClick={toKey}>{text}</button>;
   const refresh = (primary: boolean) => <Suspense fallback={null}><CheckConnection provider={p.id} primary={primary} /></Suspense>;
   // The next meaningful action, in plain words: fix what blocks the provider first; a refresh leads only when the model
   // list is missing or old; Settings stays one quiet step away.
   const actions = !p.keySaved ? settings('Add a key', true) : !p.enabled ? settings('Enable provider', true)
     : s?.errorKind === 'auth' ? <>{settings('Review key', true)}{refresh(false)}</>
-    : <>{refresh(s?.state !== 'ready')}{settings('Connection settings', false)}</>;
+    : <>{refresh(s?.state !== 'ready')}{settings('Key & connection', false)}</>;
   // Four independent facts: a saved key and permission don't depend on a model list, and a list says nothing of replies.
   const facts: [string, string, Light?][] = [
     ['Key · permission', `${p.keySaved ? 'Saved' : 'None'} · ${p.enabled ? 'on' : 'off'}`, p.keySaved && !p.enabled ? 'fail' : undefined],
@@ -190,6 +192,8 @@ function ProviderDetail({ p, title, usage, enabledHere, searchHost }: { searchHo
     ['Replies', p.presentation.replyLabel],
     ['Allowance', sharedLeft !== null ? `${sharedLeft} requests left · shared pool` : knownLimits.length ? 'Per model, below' : 'Unknown'],
   ];
+  const connection = <section id="sb-connection" className="sb-connection" aria-labelledby="sb-connection-title"><h3 id="sb-connection-title">Key &amp; connection</h3><KeysPanel provider={p.id} /></section>;
+  const setUp = p.keySaved && p.enabled;
   return (
     <section className="rc-provider-detail" aria-label="Provider detail">
       <header className="rc-detail-head">
@@ -201,7 +205,9 @@ function ProviderDetail({ p, title, usage, enabledHere, searchHost }: { searchHo
       </header>
       {(p.presentation.attention || (p.keySaved && !p.enabled)) && <p className="rc-note" data-light={v.light} role="status">{p.presentation.guidance}</p>}
       <p className="rc-setup-line">{p.keySaved ? 'Key saved' : 'No saved key'} · {p.enabled ? 'Provider enabled' : 'Provider disabled'}<span>Catalog discovery does not test replies.</span></p>
+      {!setUp && connection}
       <Suspense fallback={<p className="rc-muted" role="status">Loading models…</p>}><ProviderModels searchHost={searchHost} models={p.models} /></Suspense>
+      {setUp && connection}
       <details className="rc-provenance"><summary>Connection details &amp; usage</summary>
         <dl className="rc-facts">{facts.map(([k, value, light]) => <div key={k} data-fact={k} data-light={light}><dt>{k}</dt><dd>{value}</dd></div>)}</dl>
         <div className="rc-usage-pair"><div><span>Requests recorded in Lumen</span><strong>{usage ? `${requests} requests` : 'Unknown'}</strong></div><div><span>Tokens recorded in Lumen</span><strong>{usage ? formatTokens(tokens) : 'Unknown'}</strong></div></div>
@@ -255,7 +261,7 @@ export default function RoutingCenter() {
   const layout = model.startsWith('layout:') ? findLayout(model, models, config.layouts, config.hiddenLayouts) : undefined;
   const picked = !routed ? withCurrentModel(models, model, modelLabel(catalog, model)).find(m => m.id === model) : undefined;
   const currentProblem = picked ? selectionProblem({ authed, user, keys, catalog, settings: config }, picked) : null;
-  const recovery = currentProblem && <p className="rc-muted">{currentProblem} <button type="button" className="rc-link" onClick={() => currentProblem.includes('provider') || currentProblem.includes('connection') ? openProviderSettings(providerId(picked!)) : openSettings('models')}>Review model settings</button></p>;
+  const recovery = currentProblem && <p className="rc-muted">{currentProblem} <button type="button" className="rc-link" onClick={() => currentProblem.includes('provider') || currentProblem.includes('connection') ? openProviderSettings(providerId(picked!)) : navigateScreen(() => showRoutingSection('routing'))}>Review model settings</button></p>;
   const sentence = currentRoutingPresentation(model, config, catalog).description;
   // Who the route can reach, in words: Auto's enabled models, a Layout's models in order, or a chosen model's provider.
   const pool = model === 'auto' ? models.filter((m) => config.enabledModels.includes(m.id)).map((m) => m.label) : layout ? layout.models.map((id) => modelLabel(catalog, id)) : [];
@@ -271,7 +277,7 @@ export default function RoutingCenter() {
     <section ref={page} className={`rc-page${sub ? ' rc-sections-page' : ''}${drill ? ' rc-drill' : ''}`} hidden={covered} aria-label="Router — Models, providers & routing"
       onKeyDown={(e) => { if (e.key === 'Escape' && !e.defaultPrevented && !(e.target as Element).closest('[role="dialog"], [role="menu"], [role="listbox"], input, textarea, select')) { e.preventDefault(); screenBack(closeRoutingCenter); } }}>
       {/* Desktop retains split-view navigation; phone chrome is shared with Library, Tools and Settings. */}
-      {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : 'Router'} onBack={closeRoutingCenter} actions={providerOpen ? <Suspense fallback={null}><ScreenActions actions={[{ label: 'Connection settings', run: () => openProviderSettings(provider!) }]} /></Suspense> : undefined} /> : (
+      {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : 'Router'} onBack={closeRoutingCenter} /> : (
       <header className={`rc-head${sub ? ' rc-head-sub' : ''}`}>
         <button type="button" className="icon-btn feature-exit" aria-label={featureExitLabel()} onClick={() => exitFeature()}><ChevronLeft size={26} /></button>
         <div className="rc-brand"><h1 id="rc-title" tabIndex={-1} ref={heading}>Router</h1><p>Models, providers &amp; routing</p></div>
@@ -309,11 +315,13 @@ export default function RoutingCenter() {
                 <details open={insightOpen} onToggle={e => setInsightOpen(e.currentTarget.open)}><summary>Routing details</summary>{insightOpen && <Suspense fallback={<p className="rc-muted">Loading routing details…</p>}><RoutingInsight /></Suspense>}</details>
               </>
             )}
-            {!mine.length && <button type="button" className="rc-primary" onClick={() => openSettings('keys')}><Plus size={15} aria-hidden="true" />Connect a provider</button>}
+            {!mine.length && <button type="button" className="rc-primary" onClick={openProviders}><Plus size={15} aria-hidden="true" />Connect a provider</button>}
           </section>
           <Suspense fallback={<p className="rc-muted" role="status">Loading models…</p>}><PrismModels models={models} searchHost={phone ? searchHost : null} /></Suspense>
         </div>
       )}
+
+      {section === 'routing' && <div className="rc-body rc-routing-settings"><div className="rc-page-intro"><h2 className="rc-h2">Routing</h2><p className="rc-muted">How Lumen picks a model for each message, and what it tries next when one fails or reaches its limit. The order of your models is the fallback order.</p></div><Suspense fallback={<p className="rc-muted" role="status">Loading routing…</p>}><RoutingSettings only="routing" /></Suspense></div>}
 
       {section === 'policies' && <Suspense fallback={<p className="rc-muted" role="status">Loading Layouts…</p>}><PrismLayouts /></Suspense>}
 

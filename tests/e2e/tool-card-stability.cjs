@@ -14,7 +14,7 @@ const {profile}=require('./helpers/preview-profile.cjs');
   await page.getByRole('button',{name:'Tools',exact:true}).click();
   const search=page.getByRole('searchbox',{name:'Search tools',exact:true});
   await search.fill(name);
-  const card=page.locator('button.tool-card').filter({has:page.locator('strong',{hasText:new RegExp(`^${name}$`)})});
+  const card=page.locator('button:is(.tool-card,.tx-hit)').filter({has:page.locator('strong',{hasText:new RegExp(`^${name}$`)})});
   await card.scrollIntoViewIfNeeded();
   const held=await card.elementHandle(),box=await card.boundingBox();
   await page.mouse.move(box.x+box.width/2,box.y+box.height/2);

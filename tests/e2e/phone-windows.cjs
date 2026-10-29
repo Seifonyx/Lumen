@@ -27,7 +27,7 @@ const deck = { id: 'd1', title: 'A rather long deck title about cell biology and
       };
       await page.click('.menu-btn'); await page.waitForTimeout(400);
       await page.click(':is(.library-button, .cv-dest button):has-text("Tools")');
-      await page.locator('.tool-card').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
+      await page.locator(':is(.tool-card,.tx-hit)').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
       await inset('.study-deck', 'Study decks');
       await page.getByRole('button', { name: 'Quiz' }).click();
       await inset('.quiz-option', 'quiz answers');

@@ -94,7 +94,7 @@ const models = ['gemini-flash-latest', 'gemini-2.5-pro'];
       }
       await section('Create');
       assert.equal(await page.getByRole('button', { name: /^Writing tools/ }).count(), 0);
-      assert.match(await page.locator('article.tool-contextual').innerText(), /Select text in a reply/);
+      assert.match(await page.locator(':is(article.tool-contextual,.tx-row.contextual)').innerText(), /Select text in a reply/);
       await section('Analyze');
       await page.getByRole('button', { name: /^Compare models/ }).click();
       const dialog = page.getByRole('dialog', { name: 'Compare models', exact: true });

@@ -29,47 +29,66 @@ export const AREAS: { id: ToolArea; label: string; blurb: string }[] = [
   { id: 'assistants', label: 'Assistants', blurb: 'Helpers with their own instructions and model.' },
 ];
 
+// Each row's accessible name is the tool's name alone; what it does, any missing key and where it lands are its
+// description, so lists read briefly and exact-name lookups keep working.
+function useRowIds() { const id = useId(); return { name: `${id}n`, desc: `${id}d`, meta: `${id}m`, described: `${id}d ${id}m` }; }
+
+function RowCopy({ ids, name, text, meta }: { ids: ReturnType<typeof useRowIds>; name: string; text: string; meta?: ReactNode }) {
+  return (
+    <span className="tx-copy">
+      <strong className="tx-name" id={ids.name}>{name}</strong>
+      <span className="tx-text" id={ids.desc}>{text}</span>
+      {meta && <span className="tx-meta" id={ids.meta}>{meta}</span>}
+    </span>
+  );
+}
+
 function ToolRow({ t }: { t: WorkspaceTool }) {
-  const descId = useId();
+  const ids = useRowIds();
   const unavailable = Boolean(t.needs && !t.ready);
   const body = <>
     <span className="tx-icon" aria-hidden="true">{t.icon}</span>
-    <span className="tx-copy">
-      <span className="tx-name">{t.name}</span>
-      <span className="tx-text" id={descId}>{t.text}</span>
-      <span className="tx-meta">
-        {unavailable && <span className="tx-state setup"><KeyRound size={12} aria-hidden="true" />Needs {t.needs}</span>}
-        {t.contextual ? <span className="tx-tag">In replies</span> : <span className="tx-lands">{t.lands}</span>}
-      </span>
-    </span>
+    <RowCopy ids={ids} name={t.name} text={t.text} meta={<>
+      {unavailable && <span className="tx-state setup"><KeyRound size={12} aria-hidden="true" />Needs {t.needs}</span>}
+      {t.contextual ? <span className="tx-tag">In replies</span> : <span className="tx-lands">{t.lands}</span>}
+    </>} />
   </>;
   if (t.contextual) return <li className="tx-row contextual"><div className="tx-hit">{body}</div></li>;
   if (t.toggle) return (
     <li className="tx-row">
-      <button type="button" role="switch" aria-checked={t.toggle.on} aria-describedby={descId} className="tx-hit" onClick={t.run}>
+      <button type="button" role="switch" aria-checked={t.toggle.on} aria-labelledby={ids.name} aria-describedby={ids.described} className="tx-hit" onClick={t.run}>
         {body}<span className={`tx-switch${t.toggle.on ? ' on' : ''}`} aria-hidden="true"><span /></span>
       </button>
     </li>
   );
   return (
     <li className={`tx-row${unavailable ? ' unavailable' : ''}`}>
-      <button type="button" className="tx-hit" aria-describedby={descId} onClick={t.run}>{body}<ChevronRight className="tx-go" size={17} aria-hidden="true" /></button>
+      <button type="button" className="tx-hit" aria-labelledby={ids.name} aria-describedby={ids.described} onClick={t.run}>{body}<ChevronRight className="tx-go" size={17} aria-hidden="true" /></button>
     </li>
   );
 }
 
 function AssistantRow({ a, builtin, onStart, onEdit }: { a: SavedAssistant; builtin: boolean; onStart: () => void; onEdit: () => void }) {
+  const ids = useRowIds();
   return (
     <li className="tx-row has-side">
-      <button type="button" className="tx-hit" onClick={onStart}>
+      <button type="button" className="tx-hit" aria-labelledby={ids.name} aria-describedby={ids.described} onClick={onStart}>
         <span className="tx-icon" aria-hidden="true"><Sparkles size={18} /></span>
-        <span className="tx-copy">
-          <span className="tx-name">{a.name}</span>
-          <span className="tx-text">{a.description || 'Your custom assistant.'}</span>
-          <span className="tx-meta"><span className="tx-lands">New chat</span></span>
-        </span>
+        <RowCopy ids={ids} name={a.name} text={a.description || 'Your custom assistant.'} meta={<span className="tx-lands">New chat</span>} />
       </button>
       <button type="button" className="tx-side" aria-label={builtin ? `Customize ${a.name}` : `Edit ${a.name}`} onClick={onEdit}><Pencil size={16} /></button>
+    </li>
+  );
+}
+
+function NewAssistantRow({ onClick }: { onClick: () => void }) {
+  const ids = useRowIds();
+  return (
+    <li className="tx-row">
+      <button type="button" className="tx-hit tx-new" aria-labelledby={ids.name} aria-describedby={ids.desc} onClick={onClick}>
+        <span className="tx-icon" aria-hidden="true"><Plus size={18} /></span>
+        <RowCopy ids={ids} name="New assistant" text="Your own instructions and model, ready in any chat." />
+      </button>
     </li>
   );
 }
@@ -101,7 +120,7 @@ export default function ToolsWorkspace({ tools, keys, mine, builtins, query, set
             {keys.map((k) => (
               <li key={k.name}>
                 <span className={`tx-dot${k.ready ? ' on' : ''}`} aria-hidden="true" />
-                <span className="tx-key-copy"><strong>{k.name} key</strong><span>{k.ready ? `Ready · powers ${k.uses.length} tools` : `Not set up · needed for ${k.uses.join(', ')}`}</span></span>
+                <span className="tx-key-copy"><strong>{k.name} key</strong><span>{k.ready ? `Ready · powers ${k.uses.length} tools` : `Not set up · needed for ${k.uses.length > 2 ? `${k.uses.length} tools` : k.uses.join(' and ')}`}</span></span>
               </li>
             ))}
           </ul>
@@ -133,7 +152,7 @@ export default function ToolsWorkspace({ tools, keys, mine, builtins, query, set
             <h3 className="tx-sub">Yours</h3>
             <ul className="tx-list">
               {shownMine.map((a) => <AssistantRow key={a.id} a={a} builtin={false} onStart={() => onStartAssistant(a)} onEdit={() => onEditAssistant(a, false)} />)}
-              {!q && <li className="tx-row"><button type="button" className="tx-hit tx-new" onClick={onNewAssistant}><span className="tx-icon" aria-hidden="true"><Plus size={18} /></span><span className="tx-copy"><span className="tx-name">New assistant</span><span className="tx-text">Your own instructions and model, ready in any chat.</span></span></button></li>}
+              {!q && <NewAssistantRow onClick={onNewAssistant} />}
             </ul>
           </>}
           {shownBuiltins.length > 0 && <>

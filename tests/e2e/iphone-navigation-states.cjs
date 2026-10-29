@@ -27,7 +27,7 @@ const iphone='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit
   assert.equal(await page.getByRole('searchbox',{name:'Search your library'}).inputValue(),'Document');
   assert(Math.abs(await page.locator('.hub-scroll').evaluate(el=>el.scrollTop)-scroll)<20,'Library restores previous scroll');
   await page.locator('.phone-navigation [aria-label^="Return to "]').click();await page.locator('.composer textarea').waitFor();
-  await enter('Tools');await page.getByText('Browse capabilities',{exact:true}).click();await page.getByRole('navigation',{name:'Browse tool categories'}).getByRole('button',{name:'Learn',exact:true}).click();await page.waitForFunction(()=>document.activeElement?.tagName==='H2'&&document.activeElement.textContent==='Learn');await page.locator('.tool-card').filter({has:page.locator('strong',{hasText:/^Study$/})}).click();
+  await enter('Tools');await page.getByRole('group',{name:'Tool areas'}).getByRole('button',{name:/^Learn/}).click();await page.getByRole('heading',{name:'Learn',exact:true}).waitFor();assert.equal(await page.getByRole('heading',{name:'Research',exact:true}).count(),0,'an area filter shows only that area');await page.locator(':is(.tool-card,.tx-hit)').filter({has:page.locator('strong',{hasText:/^Study$/})}).click();
   await page.locator('.phone-navigation h1').filter({hasText:'Study'}).waitFor();
   assert.equal(await page.locator('.phone-navigation [aria-label="Open sidebar"]').count(),0);
   // Exercise the actual gesture handler with a scripted edge touch sequence, in both engines.

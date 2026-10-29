@@ -34,7 +34,7 @@ const deck = { title: 'Cell basics', cards: [{ q: 'What makes ATP?', a: 'Mitocho
 
     // ---- Study remains available in Tools after removing the sidebar shortcut.
     await page.click(':is(.library-button, .cv-dest button):has-text("Tools")');
-    await page.locator('.tool-card').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
+    await page.locator(':is(.tool-card,.tx-hit)').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
     await page.getByRole('button', { name: 'Make your first deck', exact: true }).click();
     await page.locator('.study-sources button', { hasText: 'Cell biology' }).click();
     const card = page.locator('.flashcard');
@@ -73,7 +73,7 @@ const deck = { title: 'Cell basics', cards: [{ q: 'What makes ATP?', a: 'Mitocho
     await page.locator('.hub-page').waitFor({ state: 'detached' });
     const before = requests;
     await page.click(':is(.library-button, .cv-dest button):has-text("Tools")');
-    await page.locator('.tool-card').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
+    await page.locator(':is(.tool-card,.tx-hit)').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
     const item = page.locator('.study-deck', { hasText: 'Cell basics' });
     await item.waitFor();
     assert.match(await item.textContent(), /3 cards · 2 questions/);

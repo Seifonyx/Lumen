@@ -37,7 +37,9 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // Measured startup growth13.2KB; bounded13.5KB. The Library stylesheet is included in
 // the source audit too (lazy, about1.5KB), with21KB total; startup CSS/RC caps unchanged.
 // This measured cost is an explicit planner-review item, not a speed improvement claim.
-const BUDGET = { startupJs: 13.5, startupCss: 16, routingCenter: 9, canvasCss: 21 };
+// canvasCss 21 → 22 (Phase 5 slice 2): the lazy Tools workspace styles (tools-workspace.css, ≈1.1 KB gz) replace the
+// card/rail/browse rules removed from canvas-shell.css and canvas-screens.css (≈0.5 KB); startup CSS shrinks as a result.
+const BUDGET = { startupJs: 13.5, startupCss: 16, routingCenter: 9, canvasCss: 22 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {
@@ -55,7 +57,7 @@ const rows = [
 ];
 // Canvas CSS on its own: the source files, minified roughly by collapsing whitespace and comments.
 const css = ['canvas.css', 'canvas-composer.css', 'canvas-shell.css', 'canvas-reading.css', 'canvas-routing.css', 'canvas-screens.css', 'brand-crease.css', 'canvas-routing-experience.css']
-  .map((f) => readFileSync(join('src/styles', f), 'utf8')).concat(readFileSync('src/components/canvas-library.css', 'utf8')).join('\n').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ');
+  .map((f) => readFileSync(join('src/styles', f), 'utf8')).concat(['canvas-library.css', 'tools-workspace.css'].map((f) => readFileSync(join('src/components', f), 'utf8'))).join('\n').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ');
 rows.push(['Canvas CSS source (gz, approx.)', gzipSync(css).length / 1024, BUDGET.canvasCss]);
 if (!rc.length) rows.push(['Routing Center must stay a lazy chunk', 1, 0]);
 

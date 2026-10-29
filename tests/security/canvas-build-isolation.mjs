@@ -9,7 +9,7 @@ const out = resolve(process.env.CP01_OUT || 'tests/e2e/out/cp01');
 const output = join(out, 'production-dist');
 const root = process.cwd();
 // CP02: the Canvas composer styles and the QA adapter that turns it on must never reach the ordinary graph.
-const forbidden = /(?:^|\/)(?:docs\/blackout|tests|qa)(?:\/|$)|(?:^|\/)src\/(?:lib\/(?:workspace-presentation|canvas-presentation\.on|provider-presentation|provider-settings-target|library-items)\.ts|components\/canvas-library\.css|styles\/canvas(?:-composer|-shell|-reading|-routing|-routing-experience|-screens)?\.css|components\/(?:RoutingCenter|PrismModels|PrismLayouts|CanvasCollectionPage|RoutingInsight)\.tsx)(?:\?|$)/;
+const forbidden = /(?:^|\/)(?:docs\/blackout|tests|qa)(?:\/|$)|(?:^|\/)src\/(?:lib\/(?:workspace-presentation|canvas-presentation\.on|provider-presentation|provider-settings-target|library-items)\.ts|components\/(?:canvas-library|tools-workspace)\.css|styles\/canvas(?:-composer|-shell|-reading|-routing|-routing-experience|-screens)?\.css|components\/(?:RoutingCenter|PrismModels|PrismLayouts|CanvasCollectionPage|RoutingInsight|ToolsWorkspace)\.tsx)(?:\?|$)/;
 function assertIsolated(ids) {
   const leaked = ids.map(id => id.replaceAll('\\', '/')).filter(id => forbidden.test(id));
   assert.deepEqual(leaked, [], 'ordinary build must not reach proof, fixtures, test auth/transport, or Canvas foundation');
@@ -18,10 +18,10 @@ function assertIsolated(ids) {
 for (const id of ['/repo/docs/blackout/workspace-proofs/bootstrap.ts', '/repo/tests/e2e/helpers/preview-profile.cjs',
   '/repo/src/styles/canvas-composer.css', '/repo/src/styles/canvas-shell.css', '/repo/src/styles/canvas-reading.css', '/repo/src/components/RoutingCenter.tsx', '/repo/qa/iphone/adapters/canvas-presentation.ts',
   '/repo/src/styles/canvas.css?direct', 'C:\\repo\\docs\\blackout\\workspace-proofs\\proposals\\ProposalChrome.tsx',
-  '/repo/src/lib/workspace-presentation.ts', '/repo/src/lib/canvas-presentation.on.ts', '/repo/src/lib/provider-presentation.ts', '/repo/src/lib/provider-settings-target.ts', '/repo/src/components/PrismModels.tsx', '/repo/src/components/PrismLayouts.tsx', '/repo/src/components/RoutingInsight.tsx', '/repo/src/styles/canvas-routing-experience.css', '/repo/src/components/CanvasCollectionPage.tsx', '/repo/src/components/canvas-library.css', '/repo/src/lib/library-items.ts']) {
+  '/repo/src/lib/workspace-presentation.ts', '/repo/src/lib/canvas-presentation.on.ts', '/repo/src/lib/provider-presentation.ts', '/repo/src/lib/provider-settings-target.ts', '/repo/src/components/PrismModels.tsx', '/repo/src/components/PrismLayouts.tsx', '/repo/src/components/RoutingInsight.tsx', '/repo/src/styles/canvas-routing-experience.css', '/repo/src/components/CanvasCollectionPage.tsx', '/repo/src/components/canvas-library.css', '/repo/src/lib/library-items.ts', '/repo/src/components/ToolsWorkspace.tsx', '/repo/src/components/tools-workspace.css']) {
   assert.throws(() => assertIsolated(['/repo/src/main.tsx', id]), /ordinary build/);
 }
-const NEGATIVE_CONTROLS = 20;
+const NEGATIVE_CONTROLS = 22;
 let modules = [];
 await build({ build: { outDir: output }, plugins: [{ name: 'cp01-read-only-isolation-audit',
   generateBundle() { modules = [...this.getModuleIds()]; assertIsolated(modules); }

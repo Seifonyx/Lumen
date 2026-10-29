@@ -183,6 +183,8 @@ try {
     // file-edit callbacks, canonical preview layers, and pure runner language labels.
     // No auth/storage/provider/deployment boundary is added by these exact files.
     'src/components/CanvasCollectionPage.tsx', 'src/components/canvas-library.css', 'src/lib/library-items.ts',
+    // Phase5 Slice2 (draft owner review): lazy Canvas Tools workspace presentation; launch actions stay in ToolsPage.
+    'src/components/ToolsWorkspace.tsx', 'src/components/tools-workspace.css',
     'src/components/FileCard.tsx', 'src/components/Modal.tsx', 'src/components/PreviewModal.tsx',
     'src/lib/run-language.ts', 'src/lib/runner.ts',
     // Owner-authorized shared iPhone navigation reset: UI-only owners, ordinary graph remains isolated.

@@ -8,13 +8,14 @@ import { ANALYSIS_TEMPLATES } from '../lib/analysis';
 import { BUILTIN_ASSISTANTS } from '../lib/assistants';
 import { useStore } from '../store';
 import HubPage from './HubPage';
-import { CANVAS_SHELL, navigateScreen, useScreenMemory } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, CanvasToolsWorkspace, navigateScreen, useScreenMemory } from '../lib/canvas-presentation';
 import AssistantLibrary from './AssistantLibrary';
+import type { ToolArea } from './ToolsWorkspace';
 import { uid } from '../lib/util';
 import type { SavedAssistant } from '../types';
 
 type Section = 'research' | 'create' | 'analyze' | 'learn' | 'assistants';
-interface Tool { id: string; section: Section; name: string; text: string; icon: ReactNode; needs?: string; ready?: boolean; state?: string; run?: () => void }
+interface Tool { id: string; section: Section; name: string; text: string; icon: ReactNode; needs?: string; ready?: boolean; state?: string; run?: () => void; lands: string; toggle?: { on: boolean }; contextual?: boolean }
 
 const SECTIONS: { id: Section; label: string; blurb: string }[] = [
   { id: 'research', label: 'Research', blurb: 'Find things out, on the web and in your own history.' },
@@ -58,24 +59,26 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
   // iPhone glass look: one category at a time, chosen in the bottom tab bar.
   const [glassPhone] = useState(() => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches);
   const scroller = useRef<HTMLDivElement>(null);
+  // Canvas: the chosen area survives Back/Forward like the search does.
+  const [area, setArea] = CANVAS_SHELL ? useScreenMemory!<ToolArea | 'all'>('tools-area', initial === 'assistants' ? 'assistants' : 'all') : [null, () => {}];
   const gemini = Boolean(keys.gemini);
   const s = useStore.getState();
 
   const tools: Tool[] = useMemo(() => [
-    { id: 'research', section: 'research', name: 'Deep research', text: 'Several web searches, read and turned into one cited report.', icon: <Telescope size={20} />, needs: 'Gemini key', ready: gemini, run: () => composerMode('research') },
-    { id: 'ask', section: 'research', name: 'Ask your chats', text: 'Find what you talked about, even in other words, and get an answer from it.', icon: <Sparkles size={20} />, needs: 'Gemini key', ready: gemini, run: () => { s.setUi({ page: null, sidebarOpen: true }); setTimeout(() => document.querySelector<HTMLInputElement>('#chat-search')?.focus(), 350); } },
-    { id: 'web', section: 'research', name: 'Web search', text: 'Let replies look things up on Google.', icon: <Globe size={20} />, needs: 'Gemini key', ready: gemini, state: settings.webSearch ? 'On' : 'Off', run: () => { s.updateSettings({ webSearch: !settings.webSearch }); s.toast(settings.webSearch ? 'Web search off.' : 'Web search on for your messages.', 'success'); } },
-    { id: 'page', section: 'research', name: 'Read a web page', text: 'Bring a page’s text into the chat to summarize or ask about.', icon: <FileSearch size={20} />, run: () => library('tools:reader') },
-    { id: 'youtube', section: 'research', name: 'Summarize a YouTube video', text: 'Main points and timestamps from a public video.', icon: <PlayCircle size={20} />, needs: 'Gemini key', ready: gemini, run: () => library('tools:youtube') },
-    { id: 'canvas', section: 'create', name: 'Document canvas', text: 'Write and edit a document side by side with the chat.', icon: <Pencil size={20} />, run: () => { if (CANVAS_SHELL) navigateScreen!(() => { s.setUi({ page: null }); s.newChat(); s.openCanvas(); }); else { s.setUi({ page: null }); s.newChat(); setTimeout(() => useStore.getState().openCanvas(), 0); } } },
-    { id: 'image', section: 'create', name: 'Create an image', text: 'Describe it and Lumen draws it.', icon: <ImageIcon size={20} />, needs: 'Cloudflare key', ready: Boolean(keys.cloudflare), run: () => composerMode('image') },
-    { id: 'writing', section: 'create', name: 'Writing tools', text: 'Select text in a reply, then choose Writing tools to improve, shorten, change the tone or translate it.', icon: <TextCursorInput size={20} />, state: 'In replies' },
-    { id: 'prompts', section: 'create', name: 'Saved prompts', text: 'Start a message from a prompt you use often.', icon: <MessageSquareText size={20} />, run: () => library('prompts') },
-    { id: 'analysis', section: 'analyze', name: 'Data analysis', text: 'Charts and answers from CSV and Excel files, run on your device.', icon: <BarChart3 size={20} />, run: () => s.setUi({ page: null, runner: { lang: 'python', code: ANALYSIS_TEMPLATES.overview.code, analysis: true } }) },
-    { id: 'calc', section: 'analyze', name: 'Calculate', text: 'Exact maths with Python, shown step by step.', icon: <Calculator size={20} />, needs: 'Gemini key', ready: gemini, run: () => library('tools:calculation') },
-    { id: 'compare', section: 'analyze', name: 'Compare models', text: 'Ask two or three models at once, then combine their answers.', icon: <Columns2 size={20} />, run: () => { if (CANVAS_SHELL) s.setUi({sidebarOpen:false}); else s.setUi({ page: null, sidebarOpen: false }); window.dispatchEvent(new CustomEvent('mr:composer-mode', { detail: 'compare' })); } },
-    { id: 'study', section: 'learn', name: 'Study', text: 'Flashcards and quizzes from any chat or document. Hard cards come back sooner.', icon: <GraduationCap size={20} />, run: () => s.setUi({ page: 'study', pageArg: undefined }) },
-    { id: 'study-chat', section: 'learn', name: 'Study partner', text: 'An assistant that explains step by step and quizzes you.', icon: <BookOpenCheck size={20} />, run: () => { const a = BUILTIN_ASSISTANTS.find((x) => x.id === 'builtin-study'); if (a) { s.startAssistant(a); s.setUi({ page: null }); } } },
+    { id: 'research', lands: 'New chat', section: 'research', name: 'Deep research', text: 'Several web searches, read and turned into one cited report.', icon: <Telescope size={20} />, needs: 'Gemini key', ready: gemini, run: () => composerMode('research') },
+    { id: 'ask', lands: 'Searches your chats', section: 'research', name: 'Ask your chats', text: 'Find what you talked about, even in other words, and get an answer from it.', icon: <Sparkles size={20} />, needs: 'Gemini key', ready: gemini, run: () => { s.setUi({ page: null, sidebarOpen: true }); setTimeout(() => document.querySelector<HTMLInputElement>('#chat-search')?.focus(), 350); } },
+    { id: 'web', lands: 'Applies to every reply', toggle: { on: Boolean(settings.webSearch) }, section: 'research', name: 'Web search', text: 'Let replies look things up on Google.', icon: <Globe size={20} />, needs: 'Gemini key', ready: gemini, state: settings.webSearch ? 'On' : 'Off', run: () => { s.updateSettings({ webSearch: !settings.webSearch }); s.toast(settings.webSearch ? 'Web search off.' : 'Web search on for your messages.', 'success'); } },
+    { id: 'page', lands: 'Prepares a message', section: 'research', name: 'Read a web page', text: 'Bring a page’s text into the chat to summarize or ask about.', icon: <FileSearch size={20} />, run: () => library('tools:reader') },
+    { id: 'youtube', lands: 'Prepares a message', section: 'research', name: 'Summarize a YouTube video', text: 'Main points and timestamps from a public video.', icon: <PlayCircle size={20} />, needs: 'Gemini key', ready: gemini, run: () => library('tools:youtube') },
+    { id: 'canvas', lands: 'Opens beside a new chat', section: 'create', name: 'Document canvas', text: 'Write and edit a document side by side with the chat.', icon: <Pencil size={20} />, run: () => { if (CANVAS_SHELL) navigateScreen!(() => { s.setUi({ page: null }); s.newChat(); s.openCanvas(); }); else { s.setUi({ page: null }); s.newChat(); setTimeout(() => useStore.getState().openCanvas(), 0); } } },
+    { id: 'image', lands: 'New chat', section: 'create', name: 'Create an image', text: 'Describe it and Lumen draws it.', icon: <ImageIcon size={20} />, needs: 'Cloudflare key', ready: Boolean(keys.cloudflare), run: () => composerMode('image') },
+    { id: 'writing', lands: 'Select text in a reply', contextual: true, section: 'create', name: 'Writing tools', text: 'Select text in a reply, then choose Writing tools to improve, shorten, change the tone or translate it.', icon: <TextCursorInput size={20} />, state: 'In replies' },
+    { id: 'prompts', lands: 'Fills your message', section: 'create', name: 'Saved prompts', text: 'Start a message from a prompt you use often.', icon: <MessageSquareText size={20} />, run: () => library('prompts') },
+    { id: 'analysis', lands: 'Opens the analysis runner', section: 'analyze', name: 'Data analysis', text: 'Charts and answers from CSV and Excel files, run on your device.', icon: <BarChart3 size={20} />, run: () => s.setUi({ page: null, runner: { lang: 'python', code: ANALYSIS_TEMPLATES.overview.code, analysis: true } }) },
+    { id: 'calc', lands: 'Prepares a message', section: 'analyze', name: 'Calculate', text: 'Exact maths with Python, shown step by step.', icon: <Calculator size={20} />, needs: 'Gemini key', ready: gemini, run: () => library('tools:calculation') },
+    { id: 'compare', lands: 'In your current chat', section: 'analyze', name: 'Compare models', text: 'Ask two or three models at once, then combine their answers.', icon: <Columns2 size={20} />, run: () => { if (CANVAS_SHELL) s.setUi({sidebarOpen:false}); else s.setUi({ page: null, sidebarOpen: false }); window.dispatchEvent(new CustomEvent('mr:composer-mode', { detail: 'compare' })); } },
+    { id: 'study', lands: 'Opens Study', section: 'learn', name: 'Study', text: 'Flashcards and quizzes from any chat or document. Hard cards come back sooner.', icon: <GraduationCap size={20} />, run: () => s.setUi({ page: 'study', pageArg: undefined }) },
+    { id: 'study-chat', lands: 'New chat', section: 'learn', name: 'Study partner', text: 'An assistant that explains step by step and quizzes you.', icon: <BookOpenCheck size={20} />, run: () => { const a = BUILTIN_ASSISTANTS.find((x) => x.id === 'builtin-study'); if (a) { s.startAssistant(a); s.setUi({ page: null }); } } },
   ], [gemini, keys.cloudflare, settings.webSearch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // (On iPhone this tab is the only list of assistants, so it shows them all.)
@@ -109,6 +112,24 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
 
 
   if (editingAssistant) return <AssistantLibrary key={typeof editingAssistant === 'string' ? 'new' : editingAssistant.id} startNew={editingAssistant === 'new'} startWith={typeof editingAssistant === 'string' ? undefined : editingAssistant} onClose={onClose} onDone={CANVAS_SHELL ? (draft) => setEditingAssistant(draft || null) : () => setEditingAssistant(null)} />;
+
+  if (CANVAS_SHELL && CanvasToolsWorkspace) {
+    const ToolsWorkspace = CanvasToolsWorkspace;
+    const keyFor = (needs: string) => tools.filter((t) => t.needs === needs).map((t) => t.name);
+    return (
+      <HubPage label="Tools" title="Tools" subtitle="What Lumen can do beyond a plain chat, and what each one needs." onClose={onClose}>
+        <ToolsWorkspace
+          tools={tools.map((t) => ({ ...t, run: t.run && !t.toggle ? () => navigateScreen!(t.run!) : t.run }))}
+          keys={[{ name: 'Gemini', ready: gemini, uses: keyFor('Gemini key') }, { name: 'Cloudflare', ready: Boolean(keys.cloudflare), uses: keyFor('Cloudflare key') }]}
+          mine={settings.assistants || []} builtins={BUILTIN_ASSISTANTS}
+          query={query} setQuery={setQuery} area={area!} setArea={setArea}
+          onStartAssistant={(a) => navigateScreen!(() => { s.startAssistant(a); s.setUi({ page: null }); })}
+          onEditAssistant={(a, builtin) => setEditingAssistant(builtin ? { ...a, id: uid() } : a)}
+          onNewAssistant={() => setEditingAssistant('new')}
+          onSetUpKeys={() => s.setUi({ settingsOpen: true, settingsTab: 'keys' })} />
+      </HubPage>
+    );
+  }
 
   return (
     <HubPage label="Tools" title="Tools" subtitle="Everything Lumen can do beyond a chat. The ones you use most are also in the + menu." onClose={onClose} bar={bar}

@@ -59,11 +59,6 @@ html[data-lumen-canvas] .btn:not(.primary):not(.danger):not(.danger-fill) { bord
 html[data-lumen-canvas] .btn.ghost { border-color: var(--cv5-rim); }
 
 /* ---------- Tools: monochrome icons, rimmed cards. */
-html[data-lumen-canvas] .tool-card { border-color: var(--cv5-rim); border-radius: 16px; background: var(--cv5-card); }
-html[data-lumen-canvas] .tool-card:hover { border-color: color-mix(in srgb, var(--text) 18%, transparent); }
-html[data-lumen-canvas][data-lumen-canvas-foundation] .tool-card .tool-icon { background: var(--cv5-fill-strong); color: var(--text); }
-html[data-lumen-canvas] .tools-section h2, html[data-lumen-canvas] .tools-section > header h2 { font: var(--canvas-type-title); letter-spacing: var(--canvas-tracking-title); }
-html[data-lumen-canvas] .tools-rail button[aria-current='true'], html[data-lumen-canvas] .tools-rail button.active { background: var(--cv5-fill-strong); color: var(--text); }
 
 /* ---------- Projects: neutral bands and monograms (the Canvas tree's look), rimmed cards. */
 html[data-lumen-canvas] .proj-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
@@ -196,20 +191,6 @@ html[data-lumen-canvas] .hub-close.cv-chat-pill { display: inline-flex; align-it
 html[data-lumen-canvas] .hub-close.cv-chat-pill:hover { background: var(--canvas-fill-strong); }
 @media (max-width: 899px) { html[data-lumen-canvas] .hub-close.cv-chat-pill { min-height: 44px; margin-inline: auto 8px; font-size: 15px; } }
 
-/* Tools: equal cards in a section, titles on one line (a badge moves under it), and a mark beside a warning. */
-html[data-lumen-canvas] .tools-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); grid-auto-rows: 1fr; }
-html[data-lumen-canvas] .tool-text { min-width: 0; }
-html[data-lumen-canvas] .tool-text strong { flex-wrap: wrap; row-gap: 4px; }
-html[data-lumen-canvas] .tool-needs:not(.ok) { display: inline-flex; align-items: center; gap: 5px; }
-html[data-lumen-canvas] .tool-needs:not(.ok)::before { content: '!'; display: inline-grid; place-items: center; flex: none; width: 13px; height: 13px; border: 1.5px solid currentColor; border-radius: 50%; font: 700 9px/1 var(--canvas-body-font); }
-@media (max-width: 899px) {
-  /* Phone: compact rows. */
-  html[data-lumen-canvas] .tools-grid { grid-template-columns: 1fr; grid-auto-rows: auto; gap: 8px; }
-  html[data-lumen-canvas] .tool-card { gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; }
-  html[data-lumen-canvas] .tool-card .tool-icon { width: 34px; height: 34px; border-radius: 10px; }
-  html[data-lumen-canvas] .tool-card .tool-icon svg { width: 18px; height: 18px; }
-  html[data-lumen-canvas] .tool-text > span:not(.tool-needs) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-}
 @media (max-width: 359px) {
   /* The narrowest phones: the pill keeps its arrow and gives the centred title room. */
   html[data-lumen-canvas] .hub-close.cv-chat-pill { justify-content: center; width: 44px; padding: 0; }

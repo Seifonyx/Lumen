@@ -145,7 +145,7 @@ async function device(browser, name, email, mobile) {
     await new Promise(resolve => setTimeout(resolve, 100));
   }
   if (!helperSaved) throw new Error('The saved helper did not reach Firestore within 15 seconds.');
-  if (Bcanvas) await B.page.locator('#tools-assistants .tool-card').filter({hasText:'Synced helper'}).click();
+  if (Bcanvas) await B.page.locator('#tools-assistants :is(.tool-card,.tx-hit)').filter({hasText:'Synced helper'}).click();
   else await B.page.getByRole('button', { name: 'Start a chat with Synced helper', exact: true }).click();
   await B.page.fill('.composer textarea', 'Test helper sync');
   await B.page.click('.send-btn');
@@ -157,7 +157,7 @@ async function device(browser, name, email, mobile) {
   await A.page.getByRole('button', { name: 'Tools', exact: true }).click();
   const Acanvas=Boolean(await A.page.locator('[data-lumen-canvas-shell]').count());
   if (!Acanvas) await A.page.getByRole('button', { name: 'All assistants', exact: true }).click();
-  await (Acanvas ? A.page.locator('#tools-assistants .tool-card').filter({hasText:'Synced helper'}) : A.page.locator('article.lib-card strong', { hasText: /^Synced helper$/ })).waitFor();
+  await (Acanvas ? A.page.locator('#tools-assistants :is(.tool-card,.tx-hit)').filter({hasText:'Synced helper'}) : A.page.locator('article.lib-card strong', { hasText: /^Synced helper$/ })).waitFor();
   check(true, 'saved assistant library synced to phone');
   await A.page.locator('.hub-page > .hub-bar .feature-exit, .hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label^="Return to "]').click();
   await A.page.click('.menu-btn');

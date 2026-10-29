@@ -174,8 +174,6 @@
 .app[data-lumen-canvas-shell] .cv-home-where { max-width: 34em; margin: 0 0 4px; color: var(--canvas-secondary); font-size: 14.5px; text-align: center; text-wrap: balance; }
 .app[data-lumen-canvas-shell] .cv-home-where strong { color: var(--canvas-ink); font-weight: 600; }
 .app[data-lumen-canvas-shell] .cv-home-where button { margin-inline-start: 6px; padding: 0; border: 0; background: none; color: var(--canvas-muted); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-@media (max-width: 899px) {
-}
 /* "Why this model" opens below the line when there's no room above it. */
 .app[data-lumen-canvas-shell] .route-why-wrap[data-below] .route-why-pop { top: calc(100% + 8px); bottom: auto; }
 /* Route line: the model name stays in mono, the reason reads as plain words. */
@@ -344,11 +342,6 @@
  .app[data-lumen-canvas-shell] .hub-page.has-bar { padding-bottom:0; }
  .app[data-lumen-canvas-shell] .hub-head .hub-titles { display:none; }
  .app[data-lumen-canvas-shell] .hub-scroll { padding-bottom:env(safe-area-inset-bottom); }
- .app[data-lumen-canvas-shell] .tools-rail { display:none; }
- .app[data-lumen-canvas-shell] .tools-grid { grid-template-columns:minmax(0,1fr); gap:0; }
- .app[data-lumen-canvas-shell] .tool-card { border-radius:0; border:0; border-bottom:1px solid var(--canvas-rim); background:none; padding:16px 0; }
- .app[data-lumen-canvas-shell] .tools-section header { display:block; padding-top:24px; }
- .app[data-lumen-canvas-shell] .tools-section header h2 { font-size:22px; }
  .app[data-lumen-canvas-shell] .coll-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
  .app[data-lumen-canvas-shell] .rc-page { padding-top:0; padding-bottom:env(safe-area-inset-bottom); }
  .app[data-lumen-canvas-shell] .rc-page > .phone-navigation { margin-inline:-16px; max-width:none; position:sticky; top:0; z-index:4; }
@@ -363,20 +356,11 @@
  .app[data-lumen-canvas-shell] .hub-page:has(> .phone-navigation .phone-navigation-actions > button) .hub-actions { display:none; }
 }
 
-@media(max-width:899px) {
-}
 
 .app[data-lumen-canvas-shell] .coll-document-icon { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:56px;height:64px;border:1px solid var(--canvas-rim);border-radius:8px;background:var(--canvas-fill);color:var(--canvas-secondary);box-sizing:border-box; }
 .app[data-lumen-canvas-shell] .coll-document-icon > span { font:600 9px/1 var(--canvas-data-font);letter-spacing:.08em; }
 
 .app[data-lumen-canvas-shell] .hub-body > .filter-menu { margin-bottom:12px; }
-.app[data-lumen-canvas-shell] .tools-browse { display:none; }
-@media(max-width:899px){
- .app[data-lumen-canvas-shell] .tools-browse { display:block;margin-bottom:24px;border-bottom:1px solid var(--canvas-rim); }
- .app[data-lumen-canvas-shell] .tools-browse summary { padding:12px 0;min-height:44px;box-sizing:border-box;color:var(--canvas-secondary);cursor:pointer; }
- .app[data-lumen-canvas-shell] .tools-browse nav { display:grid;padding-bottom:8px; }
- .app[data-lumen-canvas-shell] .tools-browse button { min-height:44px;text-align:start;border:0;border-radius:8px;padding:8px 12px;background:var(--canvas-fill);color:var(--canvas-ink);margin-bottom:4px; }
-}
 
 @media(max-width:899px){ .app[data-lumen-canvas-shell] .settings-page.has-section:has(> .phone-navigation) .settings-heading h2{display:none;}}
 /* Fixed action menus must escape the card's clipping, including during keyboard scrolling. */
@@ -399,8 +383,6 @@
 @media(max-width:899px){
 .app[data-lumen-canvas-shell] .hub-page:is([aria-label="Tools"],[aria-label="Library"],[aria-label="Projects"]) .hub-head{display:none}
 .app[data-lumen-canvas-shell] .hub-page[aria-label="Tools"] .hub-toolbar{margin-bottom:6px}
-.app[data-lumen-canvas-shell] .tools-browse{margin-bottom:0}
-.app[data-lumen-canvas-shell] .tools-section:first-child>header{padding-top:6px}
 .app[data-lumen-canvas-shell] .project-page .project-title{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 }
 @media(max-width:430px){
@@ -410,8 +392,6 @@
 .app[data-lumen-canvas-shell] .settings-page .account-row .setting-label{white-space:normal;overflow-wrap:anywhere}
 .app[data-lumen-canvas-shell] .settings-page .account-row .setting-hint{overflow-wrap:anywhere}
 }
-.app[data-lumen-canvas-shell] .tools-statusline{display:flex;flex-wrap:wrap;gap:8px;margin:0;color:var(--canvas-secondary);font-size:12px}
-.app[data-lumen-canvas-shell] .tools-statusline span+span::before{content:"· "}
 
 /* Phone navigation material: one lens for Back/actions, a paper veil behind the bar.
    Blur belongs to the veil, not the header: fixed contextual menus keep viewport anchoring. */

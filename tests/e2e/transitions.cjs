@@ -91,8 +91,8 @@ async function check(page, cdp, name, act, results) {
       await drawer();
       await check(page, cdp, `${tag} settings opens`, async () => { await page.click('.sidebar-foot, .cv-account'); await page.locator('.settings-page').waitFor(); }, results);
       if (phone) {
-        await check(page, cdp, `${tag} settings section push`, async () => { await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click(); }, results);
-      } else await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click();
+        await check(page, cdp, `${tag} settings section push`, async () => { await page.locator(':is(.settings-tabs, .si)').getByRole('button', { name: /^(General|Account:)/ }).first().click(); }, results);
+      } else await page.locator(':is(.settings-tabs, .si)').getByRole('button', { name: /^(General|Account:)/ }).first().click();
       await check(page, cdp, `${tag} theme crossfade`, async () => { await page.getByRole('radio', { name: theme === 'dark' ? 'Light' : 'Dark', exact: true }).click(); }, results);
       await check(page, cdp, `${tag} theme back`, async () => { await page.getByRole('radio', { name: theme === 'dark' ? 'Dark' : 'Light', exact: true }).click(); }, results);
       if (phone) await check(page, cdp, `${tag} settings section pop`, async () => { if(await page.locator('[data-lumen-canvas-shell]').count())await page.goBack();else await page.click('.settings-back'); }, results);

@@ -40,7 +40,7 @@ const iphone='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit
   await command('Read a web page');await page.locator('.free-tools').waitFor();
   await page.goBack();await page.locator('.free-tools').waitFor({state:'detached'});assert.equal(await page.getByLabel('Library item name').inputValue(),'Retained editor');
   await page.goForward();await page.locator('.free-tools').waitFor();await page.goBack();await page.locator('.free-tools').waitFor({state:'detached'});
-  await command('Settings · API keys');await page.locator('.settings-page').waitFor();await page.goBack();await page.locator('.settings-page').waitFor({state:'detached'});
+  await command('Router · API keys');await page.locator('.rc-page:not([hidden]) .sb-providers, .rc-page:not([hidden]) #sb-connection').first().waitFor();assert.equal(await page.locator('.settings-page').count(),0);await page.goBack();await page.locator('.rc-page:not([hidden])').waitFor({state:'detached'});
   assert.equal(await page.getByLabel('Library instructions').inputValue(),'Preserved across global sheets','single Back restores editor from Settings');
   // A reduced viewport stands in for available keyboard space; it does not emulate Safari's keyboard.
   await page.setViewportSize({width,height:400});await page.getByLabel('Library instructions').focus();await page.getByRole('button',{name:'Save',exact:true}).scrollIntoViewIfNeeded();

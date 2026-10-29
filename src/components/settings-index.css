@@ -26,3 +26,10 @@
   .app[data-lumen-canvas-shell] .si-list, .app[data-lumen-canvas-shell] .si-account { border-color: CanvasText; }
   .app[data-lumen-canvas-shell] .si-hit:focus-visible, .app[data-lumen-canvas-shell] .si-account:focus-visible { outline-color: Highlight; }
 }
+
+/* The index settles in like other lists (item-in, the old section list's entrance), lightly staggered. */
+.app[data-lumen-canvas-shell] .si > * { animation: item-in .34s var(--ease) both; }
+.app[data-lumen-canvas-shell] .si > :nth-child(2) { animation-delay: .022s; }
+.app[data-lumen-canvas-shell] .si > :nth-child(3) { animation-delay: .044s; }
+.app[data-lumen-canvas-shell] .si > :nth-child(4) { animation-delay: .066s; }
+.app[data-lumen-canvas-shell] .si > :nth-child(n+5) { animation-delay: .088s; }

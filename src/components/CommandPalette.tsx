@@ -17,6 +17,8 @@ const sections = [
   ['connectors', 'Connectors'], ['general', 'General'], ['keys', 'API keys'], ['models', 'Models'], ['usage', 'Usage'],
   ['personalize', 'Personalization'], ['memory', 'Memory'], ['privacy', 'Privacy & data'],
 ] as const;
+// Canvas: these open Router (src/lib/router-settings-route.ts), so the palette names where they go.
+const ROUTER_LABELS: Partial<Record<string, string>> = { keys: 'API keys', models: 'Routing', usage: 'Usage' };
 
 export default function CommandPalette({ onClose }: { onClose: () => void }) {
   const chats = useStore((s) => s.chats);
@@ -45,7 +47,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
       { id: 'canvas', label: 'Open document canvas', detail: 'Write and edit', Icon: FileText, run: () => useStore.getState().openCanvas() },
       { id: 'analysis', label: 'Data analysis', detail: 'Python · CSV · Excel · charts', Icon: BarChart3, run: () => setUi({ runner: { lang: 'python', code: ANALYSIS_TEMPLATES.overview.code, analysis: true }, sidebarOpen: false }) },
       { id: 'shortcuts', label: 'Keyboard shortcuts', detail: `${modKey}/`, Icon: Keyboard, run: () => window.dispatchEvent(new Event('mr:shortcuts')) },
-      ...sections.map(([id, label]) => ({ id: `settings-${id}`, label: `Settings · ${label}`, detail: 'Settings', Icon: Settings, run: () => setUi({ settingsOpen: true, settingsTab: id, sidebarOpen: false }) })),
+      ...sections.map(([id, label]) => { const router = CANVAS_SHELL ? ROUTER_LABELS[id] : undefined; return { id: `settings-${id}`, label: router ? `Router · ${router}` : `Settings · ${label}`, detail: router ? 'Router' : 'Settings', Icon: Settings, run: () => setUi({ settingsOpen: true, settingsTab: id, sidebarOpen: false }) }; }),
       ...projects.map((project) => ({ id: `project-${project.id}`, label: project.name, detail: 'Project', Icon: FolderKanban, run: () => selectProject(project.id) })),
       ...enabled.map((id) => ({ id: `model-${id}`, label: modelLabel(catalog, id), detail: 'Set default model', Icon: Boxes, run: () => updateSettings({ defaultModel: id }) })),
       ...savedChats(chats).slice(0, 100).map((chat) => ({ id: `chat-${chat.id}`, label: chat.title, detail: 'Chat', Icon: MessageSquare, run: () => selectChat(chat.id) })),

@@ -150,7 +150,13 @@ export function installScreenHistory() {
   };
   replace = (run) => {
     applying = true;
-    try { flushSync(run); } finally { previous = capture(); entries.set(active, previous); applying = false; }
+    try { flushSync(run); } finally {
+      previous = capture(); entries.set(active, previous); applying = false;
+      // A replaced entry that now shows another feature (Settings handed to Router) belongs to that feature, so a
+      // later step inside it continues the same visit and Exit still returns to where the visit began.
+      const visit = visits.get(active), now = feature(previous);
+      if (visit && now && visit.feature !== now) visits.set(active, { ...visit, feature: now });
+    }
   };
   commit = check;
   const a = useStore.subscribe(check), b = subscribeRoutingCenter(check), c = subscribeBackLayers(check);

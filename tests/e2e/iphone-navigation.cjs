@@ -20,13 +20,11 @@ const {profile,seed}=require('./helpers/preview-profile.cjs');
  await page.getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Providers',exact:true}).click();
  await page.locator('[data-provider="gemini"]').click();
  await page.getByRole('region',{name:'Provider detail'}).waitFor();
- await page.getByRole('button',{name:'More actions',exact:true}).click();
- await page.getByRole('menuitem',{name:'Connection settings',exact:true}).click();
- await page.locator('.settings-page').waitFor();
+ // Router: the key and connection are on the provider's page, not behind a menu into Settings.
+ await page.locator('#sb-connection .provider-connection[data-provider="gemini"]').waitFor();
+ assert.equal(await page.locator('.settings-page').count(),0);
  await page.goBack();
- await page.getByRole('region',{name:'Provider detail'}).waitFor();
- await page.goBack();
- await page.waitForFunction(()=>!document.querySelector('.rc-providers.has-detail'));
+ await page.waitForFunction(()=>!document.querySelector('.rc-provider-detail'));
  await page.goForward();await page.getByRole('region',{name:'Provider detail'}).waitFor();
  await page.goBack();await page.goBack();await page.getByRole('navigation',{name:'Router sections'}).waitFor();
  await page.goBack();await page.locator('.composer textarea').waitFor();

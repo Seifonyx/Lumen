@@ -106,7 +106,7 @@ try {
         // Theme through the canonical Settings control.
         await go(page, phone, 'Settings');
         await page.getByRole('dialog', { name: 'Settings' }).waitFor();
-        if (phone) { await page.getByRole('dialog', { name: 'Settings' }).getByRole('button', { name: /^General/ }).first().click(); await settle(page); }
+        if (phone) { await page.getByRole('dialog', { name: 'Settings' }).getByRole('button', { name: /^(General|Account:)/ }).first().click(); await settle(page); }
         // Canvas offers Light and Dark (and Auto); True black is not a choice.
         assert.equal(await page.getByRole('radio', { name: 'True black', exact: true }).or(page.getByRole('button', { name: 'True black', exact: true })).count(), 0, `${tag}: no True black`);
         const themeLabel = { light: 'Light', dark: 'Dark' }[theme];

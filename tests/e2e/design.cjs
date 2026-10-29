@@ -130,7 +130,9 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         if (mobile) await page.click('.menu-btn');
         await page.click('.sidebar-foot, .cv-account');
         if (mobile) await page.waitForFunction(() => document.querySelector('.sidebar').getBoundingClientRect().right <= 0);
-        for (const name of ['General', 'API keys', 'Models', 'Usage', 'Personalization', 'Memory', 'Privacy & data']) {
+        // Canvas: API keys, Models and Usage live in Router (checked by its own suites).
+        const canvasShell = await page.locator('[data-lumen-canvas-shell]').count() > 0;
+        for (const name of ['General', 'API keys', 'Models', 'Usage', 'Personalization', 'Memory', 'Privacy & data'].filter((n) => !canvasShell || !['API keys', 'Models', 'Usage'].includes(n))) {
           await openSettingsSection(page, name);
           const issues = await scan(page);
           check(issues.length === 0, `${label}: ${name} settings fit${issues.length ? ' ' + JSON.stringify(issues) : ''}`);

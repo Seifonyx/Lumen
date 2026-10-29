@@ -32,7 +32,7 @@
 
 /* ---------- Shared parts */
 .app[data-lumen-canvas-shell] .rc-body { display: grid; gap: 20px; }
-.app[data-lumen-canvas-shell] :is(.rc-h2, .rc-panel-title h2, .rc-list-head h2) { font: 650 26px/1.15 var(--canvas-display-font); letter-spacing: -.025em; outline: none; }
+.app[data-lumen-canvas-shell] :is(.rc-h2, .rc-panel-title h2) { font: 650 26px/1.15 var(--canvas-display-font); letter-spacing: -.025em; outline: none; }
 .app[data-lumen-canvas-shell] .rc-panel-title { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .app[data-lumen-canvas-shell] .rc-panel-title h3 { font-size: 15px; font-weight: 620; }
 .app[data-lumen-canvas-shell] .rc-group-label { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; margin: 0 0 8px; font: 600 14px/1.3 var(--canvas-body-font); }
@@ -40,7 +40,6 @@
 /* Grouped rows on one quiet surface, hairlines between them. */
 .app[data-lumen-canvas-shell] .rc-group { display: flex; flex-direction: column; overflow: hidden; border-radius: 16px; background: var(--canvas-surface); box-shadow: 0 0 0 1px var(--rc-rim); container-type: inline-size; }
 .app[data-lumen-canvas-shell] .rc-group > * + * { box-shadow: inset 0 1px var(--rc-rim); }
-.app[data-lumen-canvas-shell] .rc-prov svg { flex: none; opacity: .5; }
 /* The light: lit when a model list is current, amber from cache, red when listing failed, an empty ring otherwise. */
 .app[data-lumen-canvas-shell] .rc-light { flex: none; width: 10px; height: 10px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .rc-light-on { --l: var(--green); }
@@ -54,7 +53,7 @@
 .app[data-lumen-canvas-shell] .rc-quiet { padding: 0 10px; background: none; color: var(--canvas-ink); font-weight: 500; }
 .app[data-lumen-canvas-shell] :is(.rc-add, .rc-quiet, .rc-close):hover:not(:disabled) { background: var(--rc-press); }
 .app[data-lumen-canvas-shell] :is(.rc-primary, .rc-quiet):disabled { opacity: .55; cursor: default; }
-.app[data-lumen-canvas-shell] :is(.rc-link, .rc-more) { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0; border: 0; background: none; color: var(--canvas-ink); font: 500 14.5px var(--canvas-body-font); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--canvas-ink) 30%, transparent); text-underline-offset: 4px; cursor: pointer; }
+.app[data-lumen-canvas-shell] :is(.rc-link) { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0; border: 0; background: none; color: var(--canvas-ink); font: 500 14.5px var(--canvas-body-font); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--canvas-ink) 30%, transparent); text-underline-offset: 4px; cursor: pointer; }
 .app[data-lumen-canvas-shell] .rc-empty { margin: 0; padding: 18px 16px; color: var(--canvas-secondary); font-size: 14px; }
 .app[data-lumen-canvas-shell] .rc-search { display: flex; flex: 1 1 180px; align-items: center; gap: 8px; min-width: 0; height: 44px; padding: 0 6px 0 14px; border-radius: 14px; background: var(--canvas-surface); box-shadow: 0 0 0 1px var(--rc-rim); color: var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .rc-search input { flex: 1; width: 0; min-width: 0; height: 100%; border: 0; background: none; outline: none; color: var(--canvas-ink); font: 400 15px var(--canvas-body-font); }
@@ -82,30 +81,7 @@
 .app[data-lumen-canvas-shell] .rc-recent :is(span, small) { overflow: hidden; color: var(--canvas-secondary); font-size: 13.5px; text-overflow: ellipsis; }
 
 /* ---------- Providers: a ledger of yours, a field of names to add; the provider beside it (computers) */
-.app[data-lumen-canvas-shell] .rc-providers { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 48px; align-items: start; }
-.app[data-lumen-canvas-shell] .rc-provider-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
-.app[data-lumen-canvas-shell] .rc-list-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.app[data-lumen-canvas-shell] .rc-find { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.app[data-lumen-canvas-shell] .rc-find .filter-trigger { min-height: 44px; border-radius: 14px; }
-.app[data-lumen-canvas-shell] .rc-provider-scroll { display: grid; padding-top: 8px; }
-.app[data-lumen-canvas-shell] .rc-ledger { display: grid; box-shadow: inset 0 1px var(--rc-rim); }
-.app[data-lumen-canvas-shell] .rc-prov { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 66px; padding: 10px 12px; border: 0; box-shadow: inset 0 -1px var(--rc-rim); background: none; color: var(--canvas-ink); font: inherit; text-align: start; cursor: pointer; }
-.app[data-lumen-canvas-shell] .rc-prov[aria-current='true'] { box-shadow: inset 3px 0 var(--canvas-ink), inset 0 -1px var(--rc-rim); background: var(--rc-hover); }
-.app[data-lumen-canvas-shell] .rc-prov-text { display: grid; flex: 1; gap: 3px; min-width: 0; }
-.app[data-lumen-canvas-shell] .rc-prov strong { font: 600 16.5px/1.25 var(--canvas-display-font); letter-spacing: -.012em; overflow-wrap: anywhere; }
-.app[data-lumen-canvas-shell] .rc-prov small { color: var(--canvas-secondary); font-size: 13.5px; line-height: 1.35; }
-.app[data-lumen-canvas-shell] .rc-prov small b { color: var(--canvas-ink); }
-.app[data-lumen-canvas-shell] :is(.rc-prov[data-light='fail'] small b, [data-light='fail'] > dd, .rc-verdict[data-light='fail'] strong) { color: var(--danger); }
-.app[data-lumen-canvas-shell] .rc-prov-n { display: grid; justify-items: end; color: var(--canvas-muted); font-size: 11.5px; line-height: 1.15; }
-.app[data-lumen-canvas-shell] .rc-prov-n b { color: var(--canvas-ink); font: 600 21px/1.05 var(--canvas-display-font); font-variant-numeric: tabular-nums; }
-.app[data-lumen-canvas-shell] .rc-explore { display: grid; gap: 4px; margin-top: 28px; }
-.app[data-lumen-canvas-shell] .rc-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.app[data-lumen-canvas-shell] .rc-chip { min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--canvas-surface); box-shadow: 0 0 0 1px var(--rc-rim); color: var(--canvas-ink); font: 500 14px var(--canvas-body-font); cursor: pointer; }
-.app[data-lumen-canvas-shell] .rc-chip[aria-current='true'] { background: var(--canvas-ink); color: var(--canvas-paper); }
-.app[data-lumen-canvas-shell] .rc-more { justify-self: start; margin-top: 6px; }
-.app[data-lumen-canvas-shell] .rc-provider-pick { display: grid; align-content: center; justify-items: start; gap: 14px; padding: 22px; border-radius: 20px; box-shadow: inset 0 0 0 1px var(--rc-rim); }
-.app[data-lumen-canvas-shell] .rc-provider-pick { min-height: 320px; padding: 40px; }
-.app[data-lumen-canvas-shell] .rc-provider-pick p { max-width: 42ch; margin: 0; color: var(--canvas-secondary); font-size: 15px; line-height: 1.55; }
+.app[data-lumen-canvas-shell] :is([data-light='fail'] > dd, .rc-verdict[data-light='fail'] strong) { color: var(--danger); }
 /* A provider: verdict and the next step first, then independent facts in one grid, then models. */
 .app[data-lumen-canvas-shell] .rc-provider-detail { display: grid; gap: 24px; min-width: 0; }
 .app[data-lumen-canvas-shell] .rc-detail-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 18px 24px; }
@@ -200,7 +176,6 @@
 
 /* ---------- Laptops */
 @media (max-width: 1180px) and (min-width: 900px) {
-  .app[data-lumen-canvas-shell] .rc-providers { grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 32px; }
   .app[data-lumen-canvas-shell] .rc-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
@@ -209,13 +184,11 @@
   .app[data-lumen-canvas-shell] .rc-page { padding: calc(env(safe-area-inset-top) + 6px) max(16px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 24px) max(16px, env(safe-area-inset-left)); }
   html[data-qa-review] .app[data-lumen-canvas-shell] .rc-page { padding-top: 6px; }
   .app[data-lumen-canvas-shell] .rc-current { padding:10px 14px; }
-  .app[data-lumen-canvas-shell] .rc-providers { grid-template-columns: minmax(0, 1fr); }
-  .app[data-lumen-canvas-shell] .rc-providers.has-detail > .rc-provider-list { display: none; }
-  .app[data-lumen-canvas-shell] :is(.rc-link, .rc-more) { min-height: 44px; }
+  .app[data-lumen-canvas-shell] :is(.rc-link) { min-height: 44px; }
   .app[data-lumen-canvas-shell] .rc-detail-head h2 { font-size: 32px; }
   .app[data-lumen-canvas-shell] .rc-detail-actions { flex: 1 1 100%; }
   .app[data-lumen-canvas-shell] .rc-detail-actions > .rc-primary { flex: 1 1 100%; }
-  .app[data-lumen-canvas-shell] :is(.rc-primary, .rc-add, .rc-quiet, .rc-chip, .rc-pages button, .rc-use button) { min-height: 44px; }
+  .app[data-lumen-canvas-shell] :is(.rc-primary, .rc-add, .rc-quiet, .rc-pages button, .rc-use button) { min-height: 44px; }
   .app[data-lumen-canvas-shell] .rc-model-details summary { min-height:44px; }
   .app[data-lumen-canvas-shell] .rc-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .app[data-lumen-canvas-shell] :is(.rc-grid, .rc-policy) { grid-template-columns: minmax(0, 1fr); }
@@ -231,21 +204,10 @@
   .app[data-lumen-canvas-shell] .rc-models-body > .rc-current { padding:8px 12px; }
 }
 @media (hover: hover) {
-  .app[data-lumen-canvas-shell] :is(.rc-prov:not([aria-current='true']), .rc-recent button):hover { background-color: var(--rc-hover); }
-  .app[data-lumen-canvas-shell] .rc-chip:not([aria-current='true']):hover { background: var(--rc-press); }
 }
 
-/* Narrow provider browsing: three previews, full-width touch rows, deliberate expansion. */
-@media(max-width:899px){
-.app[data-lumen-canvas-shell] .rc-list-head h2{font-size:22px}
-.app[data-lumen-canvas-shell] .rc-explore{margin-top:14px}
-.app[data-lumen-canvas-shell] .rc-chips{display:grid;gap:0}
-.app[data-lumen-canvas-shell] .rc-chip{display:flex;align-items:center;width:100%;min-height:48px;padding:10px 12px;border-radius:0;background:none;box-shadow:inset 0 -1px var(--rc-rim);text-align:start}
-.app[data-lumen-canvas-shell] .rc-chip::after{content:"›";margin-inline-start:auto;color:var(--canvas-muted);font-size:22px}
-}
 
 /* Provider identity, a single verdict and the next step; secondary evidence stays inspectable. */
-.app[data-lumen-canvas-shell] .rc-provider-next { font-weight:500; }
 .app[data-lumen-canvas-shell] .rc-setup-line { margin:0; color:var(--canvas-secondary); font-size:13.5px; line-height:1.5; }
 .app[data-lumen-canvas-shell] .rc-setup-line span { display:block; }
 @media(max-width:899px){

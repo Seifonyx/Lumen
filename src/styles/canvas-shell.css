@@ -435,8 +435,6 @@
  .app[data-lumen-canvas-shell] .rc-page > .phone-navigation { margin:0;position:relative;z-index:4; }
  .app[data-lumen-canvas-shell] .rc-scroll { display:block;width:100%;box-sizing:border-box;flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px 16px 24px;max-width:none; }
  .app[data-lumen-canvas-shell] .rc-scroll > * { margin-inline:0; }
- .app[data-lumen-canvas-shell] .rc-find { flex-wrap:wrap; }
- .app[data-lumen-canvas-shell] .rc-find:has(> .filter-menu:only-child) { margin-bottom:12px; }
  .app[data-lumen-canvas-shell]:is(html.kb-open .app) .phone-page-search { padding-bottom:8px; }
 }
 @media(forced-colors:active){ .app[data-lumen-canvas-shell] .phone-sections { scrollbar-width:auto;scrollbar-color:auto;mask-image:none;-webkit-mask-image:none; } }

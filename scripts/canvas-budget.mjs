@@ -57,7 +57,7 @@ const rows = [
 ];
 // Canvas CSS on its own: the source files, minified roughly by collapsing whitespace and comments.
 const css = ['canvas.css', 'canvas-composer.css', 'canvas-shell.css', 'canvas-reading.css', 'canvas-routing.css', 'canvas-screens.css', 'brand-crease.css', 'canvas-routing-experience.css']
-  .map((f) => readFileSync(join('src/styles', f), 'utf8')).concat(['canvas-library.css', 'tools-workspace.css'].map((f) => readFileSync(join('src/components', f), 'utf8'))).join('\n').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ');
+  .map((f) => readFileSync(join('src/styles', f), 'utf8')).concat(['canvas-library.css', 'tools-workspace.css', 'settings-index.css'].map((f) => readFileSync(join('src/components', f), 'utf8'))).join('\n').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ');
 rows.push(['Canvas CSS source (gz, approx.)', gzipSync(css).length / 1024, BUDGET.canvasCss]);
 if (!rc.length) rows.push(['Routing Center must stay a lazy chunk', 1, 0]);
 

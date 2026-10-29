@@ -1,5 +1,12 @@
 /* Canvas Tools workspace: grouped quiet lists in the sidebar's restrained ink/paper language. */
 .app[data-lumen-canvas-shell] .tx { display: grid; gap: 18px; padding-bottom: 32px; }
+/* Phone: one column in reading order (search, areas, readiness, lists); the two wrappers only exist for desktop. */
+.app[data-lumen-canvas-shell] .tx-rail, .app[data-lumen-canvas-shell] .tx-main { display: contents; }
+.app[data-lumen-canvas-shell] .tx-search { order: 0; }
+.app[data-lumen-canvas-shell] .tx-areas { order: 1; }
+.app[data-lumen-canvas-shell] .tx-keys { order: 2; }
+.app[data-lumen-canvas-shell] .tx-group, .app[data-lumen-canvas-shell] .tx-empty { order: 3; }
+@media (max-width: 899px) { .app[data-lumen-canvas-shell] .tx-keys.filtered { display: none; } }
 .app[data-lumen-canvas-shell] .hub-page[aria-label="Tools"] .hub-head { margin-bottom: 14px; }
 
 .app[data-lumen-canvas-shell] .tx-search { display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 6px 0 13px; border-radius: 13px; background: color-mix(in srgb, var(--canvas-ink) 5%, transparent); color: var(--canvas-muted); }
@@ -53,7 +60,7 @@
 .app[data-lumen-canvas-shell] .tx-row.unavailable .tx-icon { background: none; box-shadow: inset 0 0 0 1px var(--canvas-rim); color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .tx-go { flex: none; align-self: center; color: var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .tx-tag { padding: 2px 7px; border: 1px solid var(--canvas-rim); border-radius: 999px; font: 500 11.5px/1.2 var(--canvas-body-font); color: var(--canvas-secondary); }
-.app[data-lumen-canvas-shell] .tx-switch { flex: none; align-self: center; position: relative; width: 40px; height: 24px; border-radius: 12px; background: var(--canvas-fill-strong); transition: background var(--canvas-motion-duration, .2s); }
+.app[data-lumen-canvas-shell] .tx-switch { flex: none; align-self: center; position: relative; width: 40px; height: 24px; border-radius: 12px; background: var(--canvas-fill-strong); box-shadow: inset 0 0 0 1px var(--canvas-rim); transition: background var(--canvas-motion-duration, .2s); }
 .app[data-lumen-canvas-shell] .tx-switch span { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--canvas-paper, #fff); box-shadow: 0 1px 2px rgb(0 0 0 / .25); transition: transform var(--canvas-motion-duration, .2s); }
 .app[data-lumen-canvas-shell] .tx-switch.on { background: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .tx-switch.on span { transform: translateX(16px); }
@@ -72,3 +79,19 @@
   .app[data-lumen-canvas-shell] .tx-switch.on span { background: Highlight; }
 }
 @media (prefers-reduced-motion: reduce) { .app[data-lumen-canvas-shell] .tx-switch, .app[data-lumen-canvas-shell] .tx-switch span { transition: none; } }
+
+/* Desktop: a quiet sticky column with the areas and key readiness, and lists at a readable width. */
+@media (min-width: 900px) {
+  .app[data-lumen-canvas-shell] .tx { grid-template-columns: 208px minmax(0, 760px); gap: 40px; align-items: start; }
+  .app[data-lumen-canvas-shell] .tx-rail { position: sticky; top: 8px; display: grid; gap: 20px; }
+  .app[data-lumen-canvas-shell] .tx-main { display: grid; gap: 22px; min-width: 0; }
+  .app[data-lumen-canvas-shell] .tx-areas { display: grid; gap: 2px; margin: 0; padding: 0; overflow: visible; }
+  .app[data-lumen-canvas-shell] .tx-areas button { justify-content: space-between; min-height: 38px; padding: 0 12px; border: 0; border-radius: 10px; font-size: 14px; color: var(--canvas-secondary); }
+  .app[data-lumen-canvas-shell] .tx-areas button:hover { background: var(--canvas-fill); color: var(--canvas-ink); }
+  .app[data-lumen-canvas-shell] .tx-areas button[aria-pressed="true"] { background: var(--canvas-fill-strong); color: var(--canvas-ink); font-weight: 600; }
+  .app[data-lumen-canvas-shell] .tx-keys { flex-direction: column; align-items: stretch; padding: 14px; }
+  .app[data-lumen-canvas-shell] .tx-keys ul { gap: 12px; }
+  .app[data-lumen-canvas-shell] .tx-setup { align-self: flex-start; }
+  .app[data-lumen-canvas-shell] .tx-hit { padding: 14px 16px; }
+  .app[data-lumen-canvas-shell] .tx-row + .tx-row::before { left: 60px; }
+}

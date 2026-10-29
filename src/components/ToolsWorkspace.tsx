@@ -91,19 +91,12 @@ export default function ToolsWorkspace({ tools, keys, mine, builtins, query, set
 
   return (
     <div className="tx">
-      <label className="tx-search">
-        <Search size={17} aria-hidden="true" />
-        <input type="search" aria-label="Search tools" placeholder="Search tools" value={query} onChange={(e) => setQuery(e.target.value)} />
-        {query && <button type="button" aria-label="Clear tool search" onClick={(e) => { setQuery(''); e.currentTarget.parentElement?.querySelector('input')?.focus(); }}><X size={15} /></button>}
-      </label>
-
-      <div className="tx-areas" role="group" aria-label="Tool areas">
-        <button type="button" aria-pressed={area === 'all'} onClick={() => setArea('all')}>All<span className="tx-count">{total}</span></button>
-        {AREAS.map((a) => <button key={a.id} type="button" aria-pressed={area === a.id} onClick={() => setArea(a.id)}>{a.label}<span className="tx-count">{count(a.id)}</span></button>)}
-      </div>
-
-      {area === 'all' && !q && (
-        <section className="tx-keys" aria-label="Tool readiness">
+      <div className="tx-rail">
+        <div className="tx-areas" role="group" aria-label="Tool areas">
+          <button type="button" aria-pressed={area === 'all'} onClick={() => setArea('all')}>All<span className="tx-count">{total}</span></button>
+          {AREAS.map((a) => <button key={a.id} type="button" aria-pressed={area === a.id} onClick={() => setArea(a.id)}>{a.label}<span className="tx-count">{count(a.id)}</span></button>)}
+        </div>
+        <section className={`tx-keys${area === 'all' && !q ? '' : ' filtered'}`} aria-label="Tool readiness">
           <ul>
             {keys.map((k) => (
               <li key={k.name}>
@@ -114,7 +107,13 @@ export default function ToolsWorkspace({ tools, keys, mine, builtins, query, set
           </ul>
           {missing.length > 0 && <button type="button" className="tx-setup" onClick={onSetUpKeys}>Set up<ArrowUpRight size={14} aria-hidden="true" /></button>}
         </section>
-      )}
+      </div>
+      <div className="tx-main">
+      <label className="tx-search">
+        <Search size={17} aria-hidden="true" />
+        <input type="search" aria-label="Search tools" placeholder="Search tools" value={query} onChange={(e) => setQuery(e.target.value)} />
+        {query && <button type="button" aria-label="Clear tool search" onClick={(e) => { setQuery(''); e.currentTarget.parentElement?.querySelector('input')?.focus(); }}><X size={15} /></button>}
+      </label>
 
       {AREAS.filter((a) => a.id !== 'assistants').map((a) => {
         const list = shownTools.filter((t) => t.section === a.id);
@@ -151,6 +150,7 @@ export default function ToolsWorkspace({ tools, keys, mine, builtins, query, set
           <div>{area !== 'all' && <button type="button" onClick={() => setArea('all')}>Search all areas</button>}<button type="button" onClick={() => setQuery('')}>Clear search</button></div>
         </div>
       )}
+      </div>
     </div>
   );
 }

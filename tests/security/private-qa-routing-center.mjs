@@ -179,18 +179,21 @@ try {
       assert.equal(await rc(page).locator('.rc-layouts > .rc-layout').count(), 1, 'cancelling saves nothing');
       pass('policies');
 
-      // Usage (canonical UsageTab) and Diagnostics.
+      // Activity: Overview (Lumen's counters and saved-chat history), Logs (recorded outcomes), Quotas (real limits only).
       await tab(page, 'Activity');
       await settle(page);
-      assert.ok(await rc(page).locator('.settings-section.usage').isVisible(), 'the real usage view');
-      await rc(page).locator('#rc-diagnostics').scrollIntoViewIfNeeded();
+      assert.ok(await rc(page).locator('[data-evidence-source="app-counters"]').isVisible(), 'Overview shows Lumen’s own counters');
+      await rc(page).getByRole('tab', { name: 'Logs', exact: true }).click();
       await settle(page);
-      // CP2 leads with recorded outcomes (or an honest no-record state), never an inferred model choice.
-      const latest = rc(page).locator('.rc-latest');
-      assert.ok(await latest.isVisible(), 'Diagnostics presents saved-outcome evidence');
-      assert.match(await latest.innerText(), /Latest recorded outcome|No saved request evidence/);
+      const logs = rc(page).locator('[data-evidence-source="saved-request-outcomes"]');
+      assert.ok(await logs.isVisible(), 'Logs present saved-outcome evidence');
+      assert.match(await logs.innerText(), /events|No activity yet/);
       assert.equal(await rc(page).getByRole('heading', { name: 'Latest model choice' }).count(), 0, 'obsolete prediction panel is absent');
       assert.equal(await rc(page).getByRole('checkbox', { name: 'Show chat titles' }).isChecked(), false);
+      await rc(page).getByRole('tab', { name: 'Quotas', exact: true }).click();
+      await settle(page);
+      assert.match(await rc(page).locator('.ac-quotas').innerText(), /Sync reads/);
+      await rc(page).getByRole('tab', { name: 'Overview', exact: true }).click();
       if (phone) await shot(page, join(out, `${tag}-5-sections-scrolled.png`));
       pass('usage and diagnostics');
 

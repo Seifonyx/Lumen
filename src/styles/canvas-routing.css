@@ -140,33 +140,12 @@
 .app[data-lumen-canvas-shell] .rc-card :is(.route-why-wrap, .route-why-btn) { max-width: 100%; height: auto; white-space: normal; text-align: start; }
 .app[data-lumen-canvas-shell] .rc-card .route-why-btn { display: block; padding-block: 6px; line-height: 1.45; }
 .app[data-lumen-canvas-shell] .rc-card .route-why-btn .route-tag { display: inline; white-space: normal; }
-.app[data-lumen-canvas-shell] .rc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.app[data-lumen-canvas-shell] .rc-grid > .rc-log { grid-column: 1 / -1; margin-bottom: 0; }
-.app[data-lumen-canvas-shell] .rc-diagnostics > .rc-latest { grid-column:span 2; }
-.app[data-lumen-canvas-shell] .rc-latest .rc-evidence { grid-template-columns:repeat(2,minmax(0,1fr)); }
 .app[data-lumen-canvas-shell] .rc-editor { padding: 16px; border-radius: 18px; box-shadow: 0 0 0 1px var(--rc-rim); }
 .app[data-lumen-canvas-shell] .rc-ok { color: var(--green); font-weight: 600; }
 .app[data-lumen-canvas-shell] .rc-bad { color: var(--danger); font-weight: 600; }
-.app[data-lumen-canvas-shell] :is(.rc-history, .rc-log, .rc-transfer) { display: grid; gap: 12px; margin-bottom: 16px; }
-.app[data-lumen-canvas-shell] :is(.rc-history, .rc-log, .rc-transfer) h3 { margin: 0; font-size: 15px; }
-.app[data-lumen-canvas-shell] :is(.rc-history, .rc-log, .rc-transfer) > p.rc-muted { font-size: 13px; }
-.app[data-lumen-canvas-shell] .rc-bars { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; align-items: end; block-size: 120px; margin: 0; padding: 0; list-style: none; }
-.app[data-lumen-canvas-shell] .rc-bars li { display: grid; grid-template-rows: 1fr auto; gap: 4px; block-size: 100%; text-align: center; }
-.app[data-lumen-canvas-shell] .rc-bars small { color: var(--canvas-muted); font: 11px var(--canvas-data-font); }
-.app[data-lumen-canvas-shell] .rc-bar { position: relative; align-self: end; justify-self: center; inline-size: min(100%, 28px); display: flex; flex-direction: column; min-block-size: 2px; overflow: hidden; border-radius: 4px 4px 2px 2px; background: var(--canvas-ink); }
-.app[data-lumen-canvas-shell] .rc-bar > span { display:block; flex:none; }
-.app[data-lumen-canvas-shell] .rc-bar-failed { background:repeating-linear-gradient(135deg,var(--danger) 0 2px,var(--canvas-paper) 2px 4px); }
-.app[data-lumen-canvas-shell] .rc-bar-stopped { background:var(--warning); }
-.app[data-lumen-canvas-shell] .rc-history-models { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.app[data-lumen-canvas-shell] .rc-history-models li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 14px; }
-.app[data-lumen-canvas-shell] .rc-history-models strong { font: 500 13px var(--canvas-data-font); }
-.app[data-lumen-canvas-shell] .rc-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13.5px; color: var(--canvas-secondary); cursor: pointer; }
-.app[data-lumen-canvas-shell] .rc-log ol { margin: 0; padding: 0; list-style: none; }
-.app[data-lumen-canvas-shell] .rc-log li { display: grid; grid-template-columns: 80px 1fr auto; gap: 10px; align-items: baseline; padding: 8px 0; box-shadow: inset 0 1px var(--rc-rim); font-size: 14px; }
-.app[data-lumen-canvas-shell] .rc-log-outcome { font-size: 13px; color: var(--canvas-secondary); }
-.app[data-lumen-canvas-shell] .rc-log-main { display: grid; gap: 2px; min-width: 0; }
-.app[data-lumen-canvas-shell] .rc-log-main small { overflow: hidden; color: var(--canvas-muted); text-overflow: ellipsis; white-space: nowrap; }
-.app[data-lumen-canvas-shell] .rc-log time { font-size: 12.5px; white-space: nowrap; }
+.app[data-lumen-canvas-shell] :is(.rc-transfer) { display: grid; gap: 12px; margin-bottom: 16px; }
+.app[data-lumen-canvas-shell] :is(.rc-transfer) h3 { margin: 0; font-size: 15px; }
+.app[data-lumen-canvas-shell] :is(.rc-transfer) > p.rc-muted { font-size: 13px; }
 .app[data-lumen-canvas-shell] .rc-transfer-actions { display: inline-flex; flex-wrap: wrap; gap: 16px; align-items: center; }
 .app[data-lumen-canvas-shell] .rc-import { display: grid; gap: 8px; padding: 12px; border-radius: 12px; background: var(--canvas-fill); font-size: 14px; }
 .app[data-lumen-canvas-shell] .rc-import :is(p, ul) { margin: 0; }
@@ -180,14 +159,7 @@
   html[data-qa-review] .app[data-lumen-canvas-shell] .rc-page { padding-top: 6px; }
   .app[data-lumen-canvas-shell] :is(.rc-link) { min-height: 44px; }
   .app[data-lumen-canvas-shell] :is(.rc-primary, .rc-quiet, .rc-pages button, .rc-use button) { min-height: 44px; }
-  .app[data-lumen-canvas-shell] .rc-grid { grid-template-columns: minmax(0, 1fr); }
   .app[data-lumen-canvas-shell] .rc-model-details summary { min-height:44px; }
-  .app[data-lumen-canvas-shell] .rc-diagnostics > .rc-latest { grid-column:auto; }
-  .app[data-lumen-canvas-shell] .usage-prism .usage-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .app[data-lumen-canvas-shell] .usage-prism .usage-stat-main { grid-column:1 / -1; }
-  .app[data-lumen-canvas-shell] .usage-prism .usage-stat-label { white-space:normal; }
-  .app[data-lumen-canvas-shell] .rc-log li { grid-template-columns:72px minmax(0,1fr); align-items:start; }
-  .app[data-lumen-canvas-shell] .rc-log time { grid-column:2; }
 }
 /* Short iPhones keep a real model choice and its Use action above the anchored Search. */
 @media (max-width: 430px) and (max-height: 680px) {
@@ -276,7 +248,5 @@
 .app[data-lumen-canvas-shell] .sb-connection .settings-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin: 0; }
 .app[data-lumen-canvas-shell] .rc-provenance .key-safety { padding: 0; border: 0; background: none; box-shadow: none; }
 .app[data-lumen-canvas-shell] .rc-provenance .key-safety .btn { border: 0; background: none; }
-.app[data-lumen-canvas-shell] .rc-activity-part { display: grid; gap: 14px; scroll-margin-top: 80px; }
-.app[data-lumen-canvas-shell] .rc-activity-part > .rc-muted { display: flex; align-items: center; gap: 6px; }
 /* Filters read as text with a chevron until one is on. */
 .app[data-lumen-canvas-shell] .rc-page .filter-trigger:not(.filtered) { border-color: transparent; background: none; }

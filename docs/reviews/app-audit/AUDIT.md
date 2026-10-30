@@ -36,7 +36,7 @@ Priority: **Critical** breaks a task or loses data · **High** confusing or clea
 |---|---|---|---|---|---|---|---|
 | L1 | Library header (desktop) | Page title + tagline + "From your chats" section heading + paragraph + count before any item | Four lines of chrome push content below the fold | Keep the page title; drop the tagline and the section paragraph; the count moves into the result summary | High | Content first | Done (P2) |
 | L2 | Library (phone) | Same intro block plus two native selects | Same as L1 and S1 | As L1 and S1 | High | — | Done (P2) |
-| L3 | Library rows | Three lines per item (name, kind, chat · time) with a full-bleed divider and no container | Dense and unlike other lists | Two lines (name; kind · chat · time) in a grouped list | Medium | Faster scanning | Done (P2) |
+| L3 | Library rows | Three lines per item (name, kind, chat · time) with a full-bleed divider and no container | Dense and unlike other lists | Two lines (name; kind · chat · time) in a grouped list | Medium | Faster scanning | Partly done (P2): grouped list, lighter titles and smaller icons shipped; kind and source stay on separate lines because they are separate facts |
 
 ## Projects
 

@@ -1,6 +1,13 @@
 # Lumen operational handoff
 
-## Active — Activity, logs and quotas (Phase 1 of 2), standing merge/deploy authority (2026-10-30)
+## Active — Activity, logs, quotas and the app-wide polish: both phases released (2026-10-30)
+
+- **Phase 1** (PR #64) merged as main `4d4e7bb`, deployed (Deploy 41050157404); live assets matched; the Activity suite passed against production (synthetic local profile, other origins blocked).
+- **Phase 2** (PR #65) merged as main `970b355`, deployed (Deploy 41055151476); live assets matched and every changed chunk served 200. Against production: Activity, Router (switchboard), Settings, Library and feature Exit passed; Tools passed 320 Light/Dark and 390 Light, then two runs hit page-load timeouts from this network (the same build passes locally in Chromium and WebKit).
+- Audit with per-finding status: [docs/reviews/app-audit/AUDIT.md](docs/reviews/app-audit/AUDIT.md). Open: C2 (deferred, capture timing), L3 (partly done), physical iPhone/VoiceOver/Dynamic Type unverified, 21 Settings-driving suites still ordinary-build only.
+- Standing authority remains: test, merge, deploy, verify; escalate only consequential decisions.
+
+## Historical — Activity, logs and quotas (Phase 1 of 2), standing merge/deploy authority (2026-10-30)
 
 Owner instruction (2026-10-30, master prompt): rebuild Activity, add a logs system and quota tracking, audit the whole app (Phase 1); then fix the audit findings (Phase 2). **Standing authority: test, commit, merge and deploy completed work without asking**, verifying CI, deploy and the live site; escalate only irreversible data changes, security risks, major tradeoffs or permission blocks. PR #63 (Router + calm pass) merged as main `422e28d` and deployed (Deploy 41043449856; live assets matched a local Canvas build).
 

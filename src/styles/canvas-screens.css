@@ -498,6 +498,7 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(44 44 46 / .62
 
   /* The message box. */
   html.glass[data-lumen-canvas] .app .main > .composer-wrap[data-lumen-canvas-composer] { padding-inline: 20px; }
+  @media (max-width: 379px) { html.glass[data-lumen-canvas] .app .main > .composer-wrap[data-lumen-canvas-composer] { padding-inline: 10px; } }
   html.glass[data-lumen-canvas] .app .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer { min-height: 52px; padding: 6px 7px 6px 4px; border-radius: 26px; }
   html.glass[data-lumen-canvas] .app .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .model-picker:not(:has([aria-expanded='true'])) { display: none; }
   html.glass[data-lumen-canvas] .app .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .dictation-btn { display: inline-flex; }

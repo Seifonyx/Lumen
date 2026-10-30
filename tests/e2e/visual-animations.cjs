@@ -16,8 +16,11 @@ const ua='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605
   page.on('pageerror',e=>{if(!e.message.includes('firestore.googleapis.com'))errors.push(e.message);});
   await page.goto(url);await page.locator('.composer textarea').waitFor();
   const moon=page.locator('.welcome-moon'),head=moon.locator('.orbit-head');
-  // Both presentations show the same new-chat moon with its two stars.
-  {
+  // Canvas shows Lumen's mark (owner, 2026-10-30: it replaces the old lime moon); the ordinary build keeps the moon.
+  if(await page.locator('.welcome-native').count()){
+   assert.equal(await moon.count(),0,'Canvas new chat has no moon');
+   assert.equal(await page.locator('.welcome-native svg').count(),1,'Canvas new chat shows one mark');
+  }else{
   assert.equal(await head.count(),1,'Welcome moon has one orbiting light');
   await page.waitForTimeout(1500);
   const p=await head.boundingBox();await page.waitForTimeout(450);const q=await head.boundingBox();

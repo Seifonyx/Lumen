@@ -45,7 +45,10 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // UI audit fixes (2026-10-30): startupCss 16 → 16.5, canvasCss 24 → 25, startupJs 13.5 → 14. App-wide field, select,
 // button, label and chip rules (one style for dialogs and pages), phone table wrapping, the new-chat starters and the
 // on-screen menu positioning; measured startup CSS 16.3, Canvas CSS 24.8, startup JS 13.5 KB gz. Router chunk unchanged.
-const BUDGET = { startupJs: 14, startupCss: 16.5, routingCenter: 9, canvasCss: 25 };
+// iPhone design (owner, 2026-10-30): startupCss 16.5 → 18.5, canvasCss 25 → 27.5. iOS system colours for both themes,
+// the Liquid Glass material on the floating bar controls and composer, the scroll edge, and the solid fallback for
+// devices without glass (≈1.5 KB gz). Canvas builds only; the ordinary build is unchanged.
+const BUDGET = { startupJs: 14, startupCss: 18.5, routingCenter: 9, canvasCss: 27.5 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

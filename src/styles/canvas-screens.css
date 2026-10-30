@@ -234,10 +234,6 @@ html[data-lumen-canvas] .moon-phase :is(.mp-shadow, .mp-glow) { display: none; }
 html[data-lumen-canvas] .moon-phase .mp-disc { fill: currentColor; transform-box: fill-box; transform-origin: center; transform: scale(.45); animation: pulse 1.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { html[data-lumen-canvas] .moon-phase .mp-disc { animation: none; } }
 html[data-lumen-canvas] .app-skeleton .sk-brand .sk-dot { display: none; }
-/* The new-chat moon with its two stars, in its own lime as before (the owner's choice); everything else stays ink. */
-html[data-lumen-canvas] .welcome-moon { --signal: #c2ef3a; --signal-strong: #3f6a00; }
-html[data-lumen-canvas][data-theme='dark'] .welcome-moon { --signal-strong: #c2ef3a; }
-@media (prefers-color-scheme: dark) { html[data-lumen-canvas]:not([data-theme='light']) .welcome-moon { --signal-strong: #c2ef3a; } }
 
 html[data-lumen-canvas] .provider-target-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
 html[data-lumen-canvas] .provider-target-head .btn { flex:none; min-height:44px; }
@@ -310,3 +306,174 @@ html[data-lumen-canvas] :has(> .projects-sort) > .hub-search { flex: 1 1 auto; m
 html[data-lumen-canvas] .projects-sort { flex: none; margin-inline-start: 0; }
 /* Sign-in: the mark sits in a soft pool of Lamplight, the brand's one warm light. */
 html[data-lumen-canvas] .login { background: radial-gradient(520px 340px at 50% 38%, color-mix(in srgb, var(--canvas-lamplight) 60%, transparent), transparent 72%), var(--bg); }
+
+/* ================= Native iOS direction (design checkpoint, 2026-10-30, branch design/native-ios)
+ * Lumen's own identity (the Crease mark, ink accent, Lamplight selection) on iOS system materials: system colours and
+ * font, flat surfaces, a translucent bar, a plain composer and plain lists. Secondary greys are the AA-safe iOS
+ * values (#6c6c70 on white, #aeaeb2/#8e8e93 on black). */
+/* iPhone (glass) reads in the system font like every iOS app; elsewhere Lumen keeps Geist. */
+html.glass[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas] { --font: -apple-system, 'SF Pro Text', system-ui, 'Noto Sans Arabic', 'Geeza Pro', sans-serif; }
+html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas] {
+  --bg: #ffffff; --sidebar: #ffffff; --surface: #ffffff; --surface-2: #f2f2f7; --surface-3: #e5e5ea;
+  --text: #000000; --text-2: #3c3c43; --text-3: #6c6c70;
+  --border: #c6c6c8; --border-strong: #b4b4b8; --input-border: #d1d1d6;
+  --user-bubble: #f2f2f7; --code-bg: #f2f2f7; --link: #0a64d8;
+  --native-grouped: #f2f2f7; --native-fill: #f2f2f7; --native-fill-2: #e9e9ee; --native-sep: rgb(60 60 67 / .29);
+  --native-bar: rgb(249 249 249 / .82);
+}
+html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas][data-theme='dark']:not([data-appearance='black']) {
+  --bg: #000000; --sidebar: #000000; --surface: #1c1c1e; --surface-2: #2c2c2e; --surface-3: #3a3a3c; --elevated: #1c1c1e;
+  --text: #ffffff; --text-2: #ebebf5; --text-3: #98989f;
+  --border: #38383a; --border-strong: #48484a; --input-border: #3a3a3c;
+  --user-bubble: #2c2c2e; --code-bg: #1c1c1e; --link: #4aa3ff;
+  --native-grouped: #000000; --native-fill: #1c1c1e; --native-fill-2: #2c2c2e; --native-sep: rgb(84 84 88 / .6);
+  --native-bar: rgb(18 18 18 / .78);
+}
+@media (prefers-color-scheme: dark) {
+  html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas]:not([data-theme='light']):not([data-appearance='black']) {
+    --bg: #000000; --sidebar: #000000; --surface: #1c1c1e; --surface-2: #2c2c2e; --surface-3: #3a3a3c; --elevated: #1c1c1e;
+    --text: #ffffff; --text-2: #ebebf5; --text-3: #98989f;
+    --border: #38383a; --border-strong: #48484a; --input-border: #3a3a3c;
+    --user-bubble: #2c2c2e; --code-bg: #1c1c1e; --link: #4aa3ff;
+    --native-grouped: #000000; --native-fill: #1c1c1e; --native-fill-2: #2c2c2e; --native-sep: rgb(84 84 88 / .6);
+    --native-bar: rgb(18 18 18 / .78);
+  }
+}
+@media (max-width: 899px) {
+  /* Chat bar: translucent material with a hairline, 17 pt semibold title. */
+  html[data-lumen-canvas]:not(.glass) .app[data-lumen-canvas-shell] .main > .topbar { background: var(--native-bar); -webkit-backdrop-filter: saturate(1.8) blur(20px); backdrop-filter: saturate(1.8) blur(20px); box-shadow: 0 .5px 0 var(--native-sep); }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .chat-heading { font: 600 17px/1.25 var(--font); letter-spacing: -.01em; }
+  /* Conversation: body 17 pt; replies sit on the page; your messages in a soft bubble. */
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown { font-size: calc(var(--fs, 15px) + 2px); line-height: 1.47; letter-spacing: -.01em; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown :is(h1, h2) { font-size: 1.18em; font-weight: 600; letter-spacing: -.02em; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown h3 { font-size: 1em; font-weight: 600; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .msg.user .bubble { border: 0; border-radius: 20px; background: var(--user-bubble); font-size: calc(var(--fs, 15px) + 2px); line-height: 1.4; padding: 9px 14px; box-shadow: none; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown .table-wrap { border-color: var(--native-sep); border-width: .5px; }
+  /* Composer: one flat capsule on the system fill; a round ink send button; no shadow, no outline. */
+  html[data-lumen-canvas]:not(.glass) .app .composer-wrap[data-lumen-canvas-composer] .composer { border: 0; border-radius: 24px; background: var(--native-fill); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  html[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer textarea { font-size: 17px; }
+  html[data-lumen-canvas]:not(.glass) .app .composer-wrap[data-lumen-canvas-composer] .composer-bar > .icon-btn:first-child,
+  html[data-lumen-canvas]:not(.glass) .app .composer-wrap[data-lumen-canvas-composer] :is(.attach-btn, .plus-btn) { background: var(--native-fill-2); }
+  html[data-lumen-canvas]:not(.glass) .app .composer-wrap[data-lumen-canvas-composer] { background: linear-gradient(transparent, var(--bg) 30%); }
+  /* New chat: the mark alone, small and in ink; one line beneath; nothing else on the page. */
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-home h1 { font: 600 22px/1.25 var(--font); letter-spacing: -.02em; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-home-where { display: none; }
+  /* Sidebar: a plain list; chats without per-row icons; 17 pt titles; section labels in the secondary colour. */
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav { background: var(--bg); }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-open > svg:first-child { display: none; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-title, html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-open strong { font-size: 17px; font-weight: 400; letter-spacing: -.01em; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-dest button) { font-size: 17px; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-search { background: var(--native-fill-2); border-radius: 10px; }
+}
+/* The new-chat mark: the Crease in ink, no glow. */
+html[data-lumen-canvas] .welcome-native { display: grid; place-items: center; margin: 0 auto 14px; color: var(--text); }
+
+/* Model picker: a long layout description shortens with an ellipsis instead of pushing its row past the sheet. */
+html[data-lumen-canvas] .mp-layouts > .mp-layout { min-width: 0; }
+
+/* ================= iPhone Liquid Glass (owner, 2026-10-30): the controls float over the conversation as clear
+ * glass (iOS 26); the page itself stays plain. Glass is bright along its top edge, faintly tinted and lifted by a soft
+ * shadow; the conversation scrolls under it and blurs. Only under html.glass (lib/glass.ts): devices that cannot draw
+ * it smoothly keep the solid look above. */
+html.glass[data-lumen-canvas] {
+  --lg-tint: rgb(255 255 255 / .58);
+  --lg-tint-press: rgb(255 255 255 / .85);
+  --lg-filter: blur(12px) saturate(1.9) brightness(1.03);
+  --lg-edge: inset 0 0 0 .5px rgb(0 0 0 / .07), inset 0 1px .5px rgb(255 255 255 / .95), inset 0 -.5px .5px rgb(255 255 255 / .5);
+  --lg-lift: 0 10px 30px -6px rgb(0 0 0 / .12), 0 2px 6px rgb(0 0 0 / .05);
+  --lg-ink: #0b0b0c; --lg-on-ink: #fff;
+}
+html.glass[data-lumen-canvas][data-theme='dark'] {
+  --lg-tint: rgb(60 60 62 / .64);
+  --lg-tint-press: rgb(90 90 94 / .7);
+  --lg-filter: blur(12px) saturate(1.6) brightness(1.1);
+  --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 0 1px 0 rgb(255 255 255 / .14), inset 0 -1px 0 rgb(255 255 255 / .12);
+  --lg-lift: 0 0 0 transparent;
+  --lg-ink: #f5f5f7; --lg-on-ink: #000;
+}
+@media (prefers-color-scheme: dark) {
+  html.glass[data-lumen-canvas]:not([data-theme='light']) {
+    --lg-tint: rgb(60 60 62 / .64);
+    --lg-tint-press: rgb(90 90 94 / .7);
+    --lg-filter: blur(12px) saturate(1.6) brightness(1.1);
+    --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 0 1px 0 rgb(255 255 255 / .14), inset 0 -1px 0 rgb(255 255 255 / .12);
+    --lg-lift: 0 0 0 transparent;
+    --lg-ink: #f5f5f7; --lg-on-ink: #000;
+  }
+}
+@media (max-width: 899px) {
+  /* The material: the bar's buttons, the composer, "jump to latest". */
+  html.glass[data-lumen-canvas] .app .main > .topbar :is(.menu-btn, .topbar-trailing),
+  html.glass[data-lumen-canvas] .app .composer-wrap:not([data-composer-state='expanded'])[data-lumen-canvas-composer] .composer,
+  html.glass[data-lumen-canvas] .app .to-bottom {
+    border: 0; background: var(--lg-tint); box-shadow: var(--lg-edge), var(--lg-lift);
+    -webkit-backdrop-filter: var(--lg-filter); backdrop-filter: var(--lg-filter);
+  }
+  /* Bar (sizes from the iOS 26 reference): 44 pt circle and a 44 pt capsule of two 44 pt slots, 16 pt from the edges,
+     no strip behind them, only the soft scroll edge (glass.css). Glyphs in a slightly softened label colour. */
+  html.glass[data-lumen-canvas] .app .main > .topbar .menu-btn { width: 44px; height: 44px; }
+  html.glass[data-lumen-canvas] .app .main > .topbar .topbar-trailing { height: 44px; padding: 0 5px; gap: 0; }
+  html.glass[data-lumen-canvas] .app .main > .topbar .topbar-trailing :is(.icon-btn, .usage-chip) { width: 44px; height: 44px; }
+  html.glass[data-lumen-canvas] .app .main > .topbar :is(.menu-btn, .topbar-trailing .icon-btn) { color: color-mix(in srgb, var(--text) 86%, transparent); }
+  html.glass[data-lumen-canvas] .app .main > .topbar :is(.menu-btn, .topbar-trailing .icon-btn) svg { width: 21px; height: 21px; stroke-width: 1.8; }
+  html.glass[data-lumen-canvas] .app .main > .topbar :is(.menu-btn, .topbar-trailing .icon-btn):active { background: var(--lg-tint-press); }
+  /* The usage ring in the capsule: 21 pt, a thin track and the fill in ink (amber, then red, as it fills). */
+  html.glass[data-lumen-canvas] .app .main > .topbar .usage-meter { display: flex; align-self: center; margin: 0; top: auto; translate: none; }
+  html.glass[data-lumen-canvas] .app .main > .topbar .usage-chip { display: grid; place-items: center; min-height: 0; padding: 0; gap: 0; border: 0; border-radius: 50%; background: none; box-shadow: none; }
+  html.glass[data-lumen-canvas] .app .main > .topbar .usage-chip > svg:last-child { display: none; }
+  html.glass[data-lumen-canvas] .app .main > .topbar .usage-chip :is(.usage-chip-words, .usage-status) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  html.glass[data-lumen-canvas] .app .main > .topbar .usage-ring { width: 21px; height: 21px; stroke-width: 2.2; }
+  html.glass[data-lumen-canvas] .app .main > .topbar .usage-ring-track { stroke: color-mix(in srgb, var(--text) 22%, transparent); }
+  html.glass[data-lumen-canvas] .app .main > .topbar .usage-chip:not(.mid):not(.high) .usage-ring-fill { stroke: var(--text); }
+  /* Title 17 pt semibold; the project beneath it at 15 pt in the secondary colour. */
+  html.glass[data-lumen-canvas] .app .topbar-center .project-topbar-pill { font: 400 15px/1.2 var(--font); color: var(--text-3); }
+  html.glass[data-lumen-canvas] .app .topbar-center .project-topbar-pill svg { display: none; }
+  html.glass[data-lumen-canvas] .app .chat-heading { font: 600 17px/1.25 var(--font); letter-spacing: -.02em; }
+
+  /* Composer: one glass capsule floating over the conversation; + and the model are plain glyphs on the glass and
+     the action is a solid ink circle, the one heavy thing on screen. */
+  html.glass[data-lumen-canvas] .app .main > .composer-wrap[data-lumen-canvas-composer] { padding-inline: 12px; background: none; }
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer { border-radius: 26px; padding: 5px; }
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer { border-radius: 24px; padding: 10px 6px 6px; }
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer > textarea { font-size: 17px; letter-spacing: -.01em; }
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer > textarea::placeholder { color: color-mix(in srgb, var(--text) 45%, transparent); }
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer :is(.composer-bar > .tool-btn:not(.shield-on), .dictation-btn, .canvas-expand) { background: none; border: 0; box-shadow: none; color: var(--text); }
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer .composer-bar > .tool-btn:first-of-type { width: 42px; height: 42px; }
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer .composer-bar > .tool-btn:first-of-type svg { width: 22px; height: 22px; stroke-width: 1.8; }
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer .model-button { height: 34px; background: none; border: 0; box-shadow: none; gap: 3px; color: var(--text-2); font: 500 15px/1 var(--font); letter-spacing: -.01em; }
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer .model-button .pmark,
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer .model-name::before { display: none; }
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer .model-button > svg { width: 14px; height: 14px; opacity: .6; }
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer .send-btn { width: 42px; height: 42px; min-width: 42px; border: 0; border-radius: 50%; background: var(--lg-ink); color: var(--lg-on-ink); box-shadow: none; }
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer .send-btn:disabled { background: color-mix(in srgb, var(--text) 14%, transparent); color: color-mix(in srgb, var(--text) 40%, transparent); }
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer .send-btn svg { width: 20px; height: 20px; }
+
+  /* New chat: the Crease and the greeting, quiet. */
+  html.glass[data-lumen-canvas] .app .cv-home h1 { font: 600 24px/1.2 var(--font); letter-spacing: -.025em; }
+  html.glass[data-lumen-canvas] .app .msg.user .bubble { border-radius: 22px; padding: 10px 15px; }
+}
+@media (max-width: 899px) {
+  /* Scroll edge: what passes under the bar fades into the page and blurs, so the title never sits on text. */
+  html.glass[data-lumen-canvas] .app .main > .topbar::before {
+    inset: 0 0 -44px;
+    background: linear-gradient(to bottom, var(--bg) 0%, color-mix(in srgb, var(--bg) 92%, transparent) 45%, color-mix(in srgb, var(--bg) 60%, transparent) 72%, transparent);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent); mask-image: linear-gradient(to bottom, #000 62%, transparent);
+  }
+  /* Room for the taller composer while writing, so the last reply's actions clear the glass. */
+  html.glass[data-lumen-canvas] .app .main { --glass-bottom: 132px; }
+  /* The closed drawer casts nothing on the page. */
+  html.glass[data-lumen-canvas] .app .sidebar.cv-nav:not(.open) { box-shadow: none; }
+  /* Reply actions: small and quiet until needed. */
+  html.glass[data-lumen-canvas] .app .msg-actions .msg-action { color: var(--text-3); }
+  html.glass[data-lumen-canvas] .app .msg-actions .msg-action svg { width: 18px; height: 18px; }
+  html.glass[data-lumen-canvas] .app .msg-actions .model-tag { color: var(--text-3); font-size: 13px; }
+  /* Drawer: one weight for every row, secondary-coloured icons, a capsule New chat. */
+  html.glass[data-lumen-canvas] .app .cv-nav .cv-dest button { font-weight: 400; gap: 14px; }
+  html.glass[data-lumen-canvas] .app .cv-nav .cv-dest button > svg:first-child { color: var(--text-2); width: 21px; height: 21px; stroke-width: 1.7; }
+  html.glass[data-lumen-canvas] .app .cv-nav .cv-new-pill { border-radius: 999px; font-weight: 500; font-size: 16px; }
+  html.glass[data-lumen-canvas] .app .cv-nav .cv-search { border-radius: 12px; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  html.glass[data-lumen-canvas] { --lg-tint: var(--surface-2); --lg-filter: none; }
+}

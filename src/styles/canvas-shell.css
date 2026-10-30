@@ -240,8 +240,7 @@
 
 /* Start-up frame (index.html, Canvas build only): the message box sits where the Canvas home puts it. */
 @media (min-width: 900px) {
-  /* The greeting plus the row of starters under it, measured so the frame's message box lands on the real one. */
-  .app[data-lumen-canvas-shell].app-skeleton .sk-welcome { height: 282px; }
+  .app[data-lumen-canvas-shell].app-skeleton .sk-welcome { height: 177.8px; }
   .app[data-lumen-canvas-shell].app-skeleton .composer-wrap { min-height: 147px; }
   .app[data-lumen-canvas-shell].app-skeleton .sk-composer { min-height: 108px; max-width: 760px; border-radius: var(--canvas-composer-radius, 26px); }
 }
@@ -447,9 +446,3 @@
 .app[data-lumen-canvas-shell] .phone-page-search input::-webkit-search-cancel-button { display:none; }
 /* Document Canvas: the file name reads as the title; the document switcher stays quiet beside the tools. */
 .app[data-lumen-canvas-shell] .canvas-name input { font: 620 17px/1.3 var(--canvas-display-font); letter-spacing: -.015em; }
-/* New chat: a few ways to start under the greeting (they only fill the message box). */
-.app[data-lumen-canvas-shell] .cv-home-starters { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 560px; margin: 18px auto 0; padding: 0 16px; list-style: none; }
-.app[data-lumen-canvas-shell] .cv-home-starters button { min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--canvas-fill); color: var(--canvas-ink); font: 500 14px var(--canvas-body-font); cursor: pointer; }
-.app[data-lumen-canvas-shell] .cv-home-starters button:hover { background: var(--canvas-fill-strong); }
-.app[data-lumen-canvas-shell] .cv-home-starters button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-@media (max-width: 899px) { .app[data-lumen-canvas-shell] .cv-home-starters button { min-height: 44px; } }

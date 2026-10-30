@@ -2,22 +2,12 @@
 // CANVAS_SHELL is on; the ordinary build keeps its rotating greeting.
 import { useLayoutEffect, useRef } from 'react';
 import { useStore } from '../store';
-import { prefillComposer } from './Composer';
-
-// Starters: your own saved prompts first, then a few everyday ones. Each only fills the message box; nothing is sent.
-const STARTERS = [
-  { title: 'Plan my week', text: 'Help me plan my week. Here’s what I need to get done: ' },
-  { title: 'Explain simply', text: 'Explain this simply, with one example: ' },
-  { title: 'Draft an email', text: 'Draft a short, friendly email about ' },
-  { title: 'Brainstorm ideas', text: 'Give me ten ideas for ' },
-];
 
 export default function CanvasHome({ temporary }: { temporary: boolean }) {
   const user = useStore((s) => s.user);
   const projects = useStore((s) => s.settings.projects);
   const activeProjectId = useStore((s) => s.activeProjectId);
   const selectProject = useStore((s) => s.selectProject);
-  const saved = useStore((s) => s.settings.prompts);
   const hour = new Date().getHours();
   const part = hour >= 5 && hour < 12 ? 'Good morning' : hour >= 12 && hour < 18 ? 'Good afternoon' : 'Good evening';
   const name = user?.name?.split(' ')[0].slice(0, 20);
@@ -50,11 +40,6 @@ export default function CanvasHome({ temporary }: { temporary: boolean }) {
       {project
         ? <p className="cv-home-where">New chat in <strong dir="auto">{project.name}</strong> <button type="button" onClick={() => selectProject(null)}>Start outside it</button></p>
         : <p className="cv-home-where">Ask anything.</p>}
-      <ul className="cv-home-starters" aria-label="Ways to start">
-        {[...(saved || []).filter((p) => p.title && p.text).slice(0, 2).map((p) => ({ title: p.title, text: p.text })), ...STARTERS].slice(0, 4).map((s) => (
-          <li key={s.title}><button type="button" onClick={() => prefillComposer(s.text)}>{s.title}</button></li>
-        ))}
-      </ul>
     </div>
   );
 }

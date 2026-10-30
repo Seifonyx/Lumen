@@ -53,7 +53,8 @@ export default function AssistantLibrary({ onClose, startNew = false, startWith,
           <div className="library-form-actions">
             {/* (Opened from Tools, the back arrow at the top already goes back; your own assistants can be deleted here.) */}
             {onDone ? assistants.some((a) => a.id === editing.id) && <button className="btn danger-text" onClick={() => { if (remove(editing.id)) { if (CANVAS_SHELL) navigateBack!(() => onDone()); else onDone(); } }}><Trash2 size={15} /> Delete</button> : <button className="btn" onClick={() => setEditing(null)}>Back</button>}
-            <button className="btn primary" disabled={!editing.name.trim() || !editing.instructions.trim()} onClick={save}>Save</button>
+            {(!editing.name.trim() || !editing.instructions.trim()) && <span className="muted small library-form-hint" id="assistant-save-hint">{!editing.name.trim() && !editing.instructions.trim() ? 'Add a name and instructions to save.' : !editing.name.trim() ? 'Add a name to save.' : 'Add instructions to save.'}</span>}
+            <button className="btn primary" disabled={!editing.name.trim() || !editing.instructions.trim()} aria-describedby={!editing.name.trim() || !editing.instructions.trim() ? 'assistant-save-hint' : undefined} onClick={save}>Save</button>
           </div>
         </div>
       </HubPage>

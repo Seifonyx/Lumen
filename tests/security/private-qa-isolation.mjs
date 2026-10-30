@@ -201,6 +201,8 @@ try {
     'src/lib/activity/journal.ts', 'src/lib/activity/log.ts', 'src/lib/activity/metrics.ts', 'src/lib/activity/quotas.ts',
     // usage.ts: an optional onLimit listener and the exported reset time zone; types.ts: two optional quota settings.
     'src/lib/usage.ts', 'src/types.ts',
+    // Phase 2 polish (2026-10-30): an error boundary that keeps a failing Router screen inside its own panel.
+    'src/components/ScreenBoundary.tsx', 'src/components/Study.tsx', 'src/components/AssistantLibrary.tsx', 'src/components/ProjectsPage.tsx', 'src/components/CanvasCollectionPage.tsx',
     'src/components/FileCard.tsx', 'src/components/Modal.tsx', 'src/components/PreviewModal.tsx',
     'src/lib/run-language.ts', 'src/lib/runner.ts',
     // Owner-authorized shared iPhone navigation reset: UI-only owners, ordinary graph remains isolated.

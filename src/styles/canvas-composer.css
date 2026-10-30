@@ -112,7 +112,7 @@ html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn.voice-start 
 .composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head.sheet-grab { height: auto; border-radius: 0; background: none; cursor: default; }
 .composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head.sheet-grab::after { content: none; }
 .composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head > div { flex: 1; min-width: 0; }
-.composer-wrap[data-lumen-canvas-composer] .canvas-sheet-label { display: block; font: 500 10.5px/1.3 var(--canvas-data-font); letter-spacing: .12em; text-transform: uppercase; color: var(--canvas-muted); }
+.composer-wrap[data-lumen-canvas-composer] .canvas-sheet-label { display: block; font: 600 13px/1.3 var(--canvas-body-font); letter-spacing: 0; text-transform: none;  color: var(--canvas-muted); }
 .composer-wrap[data-lumen-canvas-composer] .canvas-sheet-head strong {
   display: block; font: 620 19px/1.25 var(--canvas-display-font); letter-spacing: -.02em; color: var(--canvas-ink);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;

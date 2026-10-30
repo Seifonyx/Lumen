@@ -17,19 +17,21 @@
 
 .app[data-lumen-canvas-shell] .tx-areas { display: flex; gap: 6px; margin: -2px 0 0; padding: 2px 0; overflow-x: auto; scrollbar-width: none; }
 .app[data-lumen-canvas-shell] .tx-areas::-webkit-scrollbar { display: none; }
-.app[data-lumen-canvas-shell] .tx-areas button { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 13px; border: 1px solid var(--canvas-rim); border-radius: 999px; background: none; color: var(--canvas-secondary); font: 500 14px/1 var(--canvas-body-font); cursor: pointer; }
-.app[data-lumen-canvas-shell] .tx-areas button[aria-pressed="true"] { border-color: var(--canvas-ink); background: var(--canvas-ink); color: var(--canvas-paper, var(--bg)); }
+.app[data-lumen-canvas-shell] .tx-areas button { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 13px; border: 0; border-radius: 999px; background: var(--canvas-fill); color: var(--canvas-secondary); font: 500 14px/1 var(--canvas-body-font); cursor: pointer; }
+.app[data-lumen-canvas-shell] .tx-areas button[aria-pressed="true"] { background: var(--canvas-lamplight, var(--canvas-fill-strong)); color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .tx-count { font: 500 12px/1 var(--canvas-data-font); opacity: .62; font-variant-numeric: tabular-nums; }
+.app[data-lumen-canvas-shell] .tx-areas button[aria-pressed="true"] .tx-count { opacity: 1; }
 
-.app[data-lumen-canvas-shell] .tx-keys { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px; border: 1px solid var(--canvas-rim); border-radius: 16px; }
+.app[data-lumen-canvas-shell] .tx-keys { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px; border: 1px solid transparent; border-radius: 16px; background: var(--canvas-surface); }
 .app[data-lumen-canvas-shell] .tx-keys ul { flex: 1; min-width: 0; display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
 .app[data-lumen-canvas-shell] .tx-keys li { display: flex; align-items: baseline; gap: 9px; }
 .app[data-lumen-canvas-shell] .tx-dot { flex: none; width: 7px; height: 7px; border: 1.5px solid var(--canvas-secondary); border-radius: 50%; transform: translateY(-1px); }
 .app[data-lumen-canvas-shell] .tx-dot.on { border-color: var(--canvas-ink); background: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .tx-key-copy { min-width: 0; display: grid; gap: 1px; font-size: 13px; line-height: 1.35; }
-.app[data-lumen-canvas-shell] .tx-key-copy strong { font-weight: 600; color: var(--canvas-ink); }
+.app[data-lumen-canvas-shell] .tx-key-copy strong { font-weight: 500; color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .tx-key-copy span { color: var(--canvas-secondary); }
-.app[data-lumen-canvas-shell] .tx-setup { flex: none; align-self: center; display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--canvas-fill-strong); color: var(--canvas-ink); font: 600 13px/1 var(--canvas-body-font); cursor: pointer; }
+.app[data-lumen-canvas-shell] .tx-setup { flex: none; align-self: center; display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 8px; border: 0; border-radius: 999px; background: none; color: var(--canvas-ink); font: 600 14px/1 var(--canvas-body-font); cursor: pointer; }
+.app[data-lumen-canvas-shell] .tx-setup:hover { background: var(--canvas-fill); }
 
 .app[data-lumen-canvas-shell] .tx-group { display: grid; gap: 8px; scroll-margin-top: 12px; }
 .app[data-lumen-canvas-shell] .tx-group > header { display: grid; gap: 2px; padding: 0 2px; }
@@ -39,7 +41,7 @@
 .app[data-lumen-canvas-shell] .tx-group > header p { margin: 0; font-size: 13px; color: var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .tx-sub { margin: 6px 2px 0; font: 500 12px/1.3 var(--canvas-body-font); color: var(--canvas-muted); }
 
-.app[data-lumen-canvas-shell] .tx-list { margin: 0; padding: 0; list-style: none; border-radius: 16px; background: var(--cv5-card, var(--canvas-surface)); border: 1px solid var(--canvas-rim); overflow: hidden; }
+.app[data-lumen-canvas-shell] .tx-list { margin: 0; padding: 0; list-style: none; border-radius: 16px; background: var(--canvas-surface); border: 1px solid transparent; overflow: hidden; }
 .app[data-lumen-canvas-shell] .tx-row { position: relative; display: flex; }
 .app[data-lumen-canvas-shell] .tx-row + .tx-row::before { content: ""; position: absolute; top: 0; left: 58px; right: 0; border-top: 1px solid var(--canvas-rim); }
 .app[data-lumen-canvas-shell] .tx-hit { flex: 1; min-width: 0; display: flex; align-items: flex-start; gap: 12px; min-height: 56px; padding: 13px 14px; border: 0; background: none; color: var(--canvas-ink); font: inherit; text-align: start; cursor: pointer; }
@@ -50,7 +52,7 @@
 .app[data-lumen-canvas-shell] .tx-icon { flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin-top: 1px; border-radius: 9px; background: var(--canvas-fill); color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .tx-icon svg { width: 17px; height: 17px; }
 .app[data-lumen-canvas-shell] .tx-copy { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.app[data-lumen-canvas-shell] .tx-name { font: 600 15px/1.3 var(--canvas-body-font); color: var(--canvas-ink); }
+.app[data-lumen-canvas-shell] .tx-name { font: 500 15px/1.3 var(--canvas-body-font); color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .tx-text { font-size: 13.5px; line-height: 1.4; color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .tx-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 3px; font: 500 12px/1.3 var(--canvas-body-font); color: var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .tx-meta:empty { display: none; }
@@ -58,7 +60,7 @@
 .app[data-lumen-canvas-shell] .tx-state.setup { padding: 2px 7px 2px 6px; border-radius: 6px; background: var(--canvas-fill-strong); color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .tx-row.unavailable .tx-icon { background: none; box-shadow: inset 0 0 0 1px var(--canvas-rim); color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .tx-go { flex: none; align-self: center; color: var(--canvas-muted); }
-.app[data-lumen-canvas-shell] .tx-tag { padding: 2px 7px; border: 1px solid var(--canvas-rim); border-radius: 999px; font: 500 11.5px/1.2 var(--canvas-body-font); color: var(--canvas-secondary); }
+.app[data-lumen-canvas-shell] .tx-tag { padding: 2px 8px; border: 0; background: var(--canvas-fill); border-radius: 999px; font: 500 11.5px/1.2 var(--canvas-body-font); color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .tx-switch { flex: none; align-self: center; position: relative; width: 40px; height: 24px; border-radius: 12px; background: var(--canvas-fill-strong); box-shadow: inset 0 0 0 1px var(--canvas-rim); transition: background var(--canvas-motion-duration, .2s); }
 .app[data-lumen-canvas-shell] .tx-switch span { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--canvas-paper, #fff); box-shadow: 0 1px 2px rgb(0 0 0 / .25); transition: transform var(--canvas-motion-duration, .2s); }
 .app[data-lumen-canvas-shell] .tx-switch.on { background: var(--canvas-ink); }
@@ -70,11 +72,12 @@
 .app[data-lumen-canvas-shell] .tx-empty { display: grid; gap: 4px; justify-items: start; padding: 22px 16px; border: 1px dashed var(--canvas-rim); border-radius: 16px; font-size: 14px; color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .tx-empty strong { color: var(--canvas-ink); font-weight: 600; }
 .app[data-lumen-canvas-shell] .tx-empty div { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.app[data-lumen-canvas-shell] .tx-empty button { min-height: 40px; padding: 0 14px; border: 1px solid var(--canvas-rim); border-radius: 999px; background: none; color: var(--canvas-ink); font: 500 14px var(--canvas-body-font); cursor: pointer; }
+.app[data-lumen-canvas-shell] .tx-empty button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--canvas-fill); color: var(--canvas-ink); font: 500 14px var(--canvas-body-font); cursor: pointer; }
 
 @media (forced-colors: active) {
   .app[data-lumen-canvas-shell] .tx-areas button[aria-pressed="true"] { border: 2px solid Highlight; }
   .app[data-lumen-canvas-shell] .tx-switch { border: 1px solid CanvasText; }
+  .app[data-lumen-canvas-shell] :is(.tx-keys, .tx-list) { border-color: CanvasText; }
   .app[data-lumen-canvas-shell] .tx-switch.on span { background: Highlight; }
 }
 @media (prefers-reduced-motion: reduce) { .app[data-lumen-canvas-shell] .tx-switch, .app[data-lumen-canvas-shell] .tx-switch span { transition: none; } }

@@ -48,7 +48,7 @@ export default function Study({ onClose, startFrom }: { onClose: () => void; sta
     : 'Flashcards and quizzes made from your chats and documents. Cards you find hard come back sooner.';
   return (
     <HubPage label="Study" title={making ? 'Making your deck' : title} subtitle={making ? 'Reading it and writing flashcards and a quiz…' : subtitle} onClose={onClose} onBack={making ? undefined : back}
-      actions={view.kind === 'list' && !making && <button type="button" className="btn primary" onClick={() => setView({ kind: 'new' })}><Plus size={16} /> New deck</button>}>
+      actions={view.kind === 'list' && !making && decks.length > 0 && <button type="button" className="btn primary" onClick={() => setView({ kind: 'new' })}><Plus size={16} /> New deck</button>}>
       <div className="study">
         {making && <div className="study-making" role="status"><Loader2 size={20} className="spin" /> Making flashcards and a quiz…</div>}
         {!making && view.kind === 'list' && (decks.length === 0 ? (

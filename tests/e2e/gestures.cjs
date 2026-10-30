@@ -118,7 +118,7 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
     if (!(await page.locator('.sidebar.open').count())) { await page.click('.menu-btn'); await page.locator('.sidebar.open').waitFor(); await page.waitForTimeout(400); }
     await page.click('.sidebar-foot, .cv-account');
     await page.locator('.settings-page').waitFor();
-    await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click();
+    await page.locator(':is(.settings-tabs, .si)').getByRole('button', { name: /^(General|Account:)/ }).first().click();
     await page.locator('.settings-page.has-section').waitFor();
     await touch(page, path(6, 500, 66, 500, 8, 480));
     await page.waitForTimeout(700);

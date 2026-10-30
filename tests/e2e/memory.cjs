@@ -54,7 +54,7 @@ async function openMemory(page) {
   const { page, errors } = await device(browser, log);
   await page.waitForSelector('input[placeholder="AIza…"]');
   await page.fill('input[placeholder="AIza…"]', 'g');
-  await page.click('button:has-text("Save keys")');
+  await page.click('button:has-text("Save key")');
   await page.waitForTimeout(1500);
   await closeSettings(page);
 

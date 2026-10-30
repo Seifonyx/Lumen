@@ -24,7 +24,7 @@ export default function CanvasRail({ onExpand }: { onExpand: () => void }) {
     ['Library', 'Photos, files and documents from all your chats', <BookOpen size={19} />, page === 'collection', () => go('collection', 'all')],
     ['Tools', `Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`, <LayoutGrid size={19} />, page === 'tools' || page === 'assistants' || page === 'study', () => go('tools')],
     ['Projects', 'All projects', <FolderKanban size={19} />, page === 'projects', () => go('projects')],
-    ['Prism', 'Models, providers & routing', <GitFork size={19} strokeWidth={1.8} />, routing && !page, () => { setUi({ page: null, settingsOpen: false }); openRoutingCenter(); }],
+    ['Router', 'Models, providers & routing', <GitFork size={19} strokeWidth={1.8} />, routing && !page, () => { setUi({ page: null, settingsOpen: false }); openRoutingCenter(); }],
   ];
   return (
     <nav className="cv-navrail" aria-label="Navigation">

@@ -32,9 +32,9 @@ const REPLY = [
   await page.evaluate(() => window.__testSignIn('hebaghoneim8@gmail.com'));
   await page.waitForSelector('input[placeholder="AIza…"]');
   await page.fill('input[placeholder="AIza…"]', 'g');
-  await page.click('button:has-text("Save keys")');
+  await page.click('button:has-text("Save key")');
   await page.waitForTimeout(1500);
-  await page.click('.settings-page [aria-label="Close"]');
+  await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
   await page.fill('.composer textarea', 'make me a report, a tracker and a deck');
   await page.click('.send-btn');
   await page.waitForSelector('.msg.assistant .model-tag', { timeout: 20000 });

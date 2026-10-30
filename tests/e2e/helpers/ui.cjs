@@ -25,17 +25,25 @@ exports.backSettingsSection = async (page) => {
   // Back; a direct-start section has no ancestor and uses Exit instead.
   await back.waitFor({ state: 'visible', timeout: 6000 });
   for (let step=0;step<18;step++) {
-    if (await page.locator('.settings-tabs').isVisible() || !await page.locator('.settings-page:not(.exit-ghost)').isVisible()) return;
+    if (await page.locator('.settings-page :is(.settings-tabs, .si)').isVisible() || !await page.locator('.settings-page:not(.exit-ghost)').isVisible()) return;
     if (await page.evaluate(()=>Boolean(history.state?.lumenScreen?.id))) await page.goBack();
     else await back.click();
-    await page.waitForFunction(()=>!document.querySelector('.settings-page:not(.exit-ghost)') || Boolean(document.querySelector('.settings-tabs')?.getClientRects().length));
+    await page.waitForFunction(()=>!document.querySelector('.settings-page:not(.exit-ghost)') || Boolean(document.querySelector('.settings-page :is(.settings-tabs, .si)')?.getClientRects().length));
   }
 };
 
 exports.openSettingsSection = async (page, name) => {
+  // Canvas: after a first-run key save the screen is Router, not Settings. Leave it and open Settings.
+  if (!(await page.locator('.settings-page').isVisible()) && await page.locator('.rc-page:not([hidden])').isVisible()) {
+    await exports.closeSettings(page);
+    const menu = page.locator('.menu-btn');
+    if (await menu.isVisible()) await menu.click();
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  }
   // Settings mounts asynchronously; checking a locator before the page exists misidentifies loading as nesting.
   await page.locator('.settings-page').waitFor({ state: 'visible' });
-  const list = page.locator('.settings-page .settings-tabs');
+  // Canvas phones show the grouped index (.si); its General row is the account card.
+  const list = page.locator('.settings-page :is(.settings-tabs, .si)');
   await list.waitFor({ state: 'attached' });
   if (!(await list.isVisible())) {
     await exports.backSettingsSection(page);
@@ -47,11 +55,18 @@ exports.openSettingsSection = async (page, name) => {
     }
   }
   await list.waitFor({ state: 'visible' });
-  await list.getByRole('button', { name: new RegExp('^' + name + '(?:\\s|$)') }).click();
+  await list.getByRole('button', { name: name === 'General' ? /^(General|Account:)/ : new RegExp('^' + name + '(?:\\s|$)') }).first().click();
 };
 
 exports.closeSettings = async (page) => {
   const root = page.locator('.settings-page');
+  // Canvas: API keys, models and usage open in Router instead; leaving it is its Exit control.
+  const router = page.locator('.rc-page:not([hidden])');
+  if (!(await root.isVisible()) && await router.isVisible()) {
+    await router.locator(':is(.rc-head .feature-exit, .phone-navigation > button)').first().click();
+    await router.waitFor({ state: 'hidden' });
+    return;
+  }
   if (!(await root.isVisible())) return;
   // Desktop/ordinary Settings has an explicit Close. Canvas iPhone has a real
   // hierarchical Back button. Exercise whichever control is visible rather than

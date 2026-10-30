@@ -32,9 +32,9 @@ async function device(browser, log) {
     const A = await device(browser, logA);
     await A.page.waitForSelector('input[placeholder="AIza…"]');
     await A.page.fill('input[placeholder="AIza…"]', 'fixture');
-    await A.page.getByRole('button', { name: 'Save keys', exact: true }).click();
+    await A.page.getByRole('button', { name: /^Save keys?$/ }).click();
     await A.page.waitForTimeout(800);
-    await A.page.locator('.settings-page [aria-label="Close"]').click();
+    await A.page.locator('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button').click();
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'att-'));
     fs.writeFileSync(path.join(dir, 'wound.png'), PNG);
     await A.page.locator('.composer input[type=file]').last().setInputFiles(path.join(dir, 'wound.png'));

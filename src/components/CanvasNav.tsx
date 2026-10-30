@@ -1,4 +1,5 @@
 import { installScreenHistory } from '../lib/screen-history';
+import { installRouterSettingsRoute } from '../lib/router-settings-route';
 // Canvas shell coordination, reached only through the presentation switch. screen-history adapts the canonical
 // store and Routing Center owners to a real Back/Forward hierarchy, with account-scoped local presentations.
 // Drafts stay with their existing owners. This component also restores collapse focus and lazy-loads the
@@ -13,6 +14,8 @@ export const focusSettled = () => { const a = document.activeElement; return Boo
 export const later = (fn: () => void) => requestAnimationFrame(() => setTimeout(fn, 0));
 
 function useSurfaceHistoryAndFocus() {
+  // Router owns some Settings sections; requests for them are redirected before history records them.
+  useEffect(() => installRouterSettingsRoute(), []);
   useEffect(() => installScreenHistory(), []);
 }
 

@@ -426,10 +426,10 @@ const settings = async (page) => {
         if (!(await firstKey.getAttribute("open"))) await firstKey.locator("summary").click();
         await firstKey.locator("input").fill("fixture-new-key");
         await page
-          .getByRole("button", { name: "Save keys", exact: true })
+          .getByRole("button", { name: /^Save keys?$/ })
           .click();
         await page
-          .getByRole("button", { name: "Save keys", exact: true })
+          .getByRole("button", { name: /^Save keys?$/ })
           .waitFor({ state: "visible" });
         await closeSettings(page);
         releaseHeld();

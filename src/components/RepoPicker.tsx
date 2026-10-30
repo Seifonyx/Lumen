@@ -40,13 +40,13 @@ export default function RepoPicker({ onClose }: { onClose: () => void }) {
         <div className="repo-picker pad">
           <p className="muted">
             To read your code and commit changes, Lumen needs a GitHub token (free). Create a <b>fine-grained token</b> for the repositories you want, with
-            <b> Contents</b> and <b>Pull requests</b> set to <b>Read and write</b> (and <b>Actions: Read</b> to see test results), then paste it under API keys.
+            <b> Contents</b> and <b>Pull requests</b> set to <b>Read and write</b> (and <b>Actions: Read</b> to see test results), then paste it under Settings → Connectors.
           </p>
           <div className="editor-actions">
             <a className="btn" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">
               Create a token
             </a>
-            <button className="btn primary" onClick={() => { onClose(); setUi({ settingsOpen: true, settingsTab: 'keys' }); }}>
+            <button className="btn primary" onClick={() => { onClose(); setUi({ settingsOpen: true, settingsTab: 'connectors' }); }}>
               <KeyRound size={15} /> Add it in Settings
             </button>
           </div>

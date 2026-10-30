@@ -282,7 +282,7 @@ try {
         const rail = page.getByRole('navigation', { name: 'Navigation', exact: true });
         await page.waitForFunction(() => document.activeElement?.matches('.cv-navrail-expand'));
         assert.deepEqual(await rail.getByRole('button').evaluateAll((b) => b.map((x) => x.getAttribute('aria-label'))),
-          ['Expand sidebar', 'New chat', 'Search chats', 'Library', 'Tools', 'Projects', 'Prism', 'Settings']);
+          ['Expand sidebar', 'New chat', 'Search chats', 'Library', 'Tools', 'Projects', 'Router', 'Settings']);
         await shot(page, join(out, `${tag}-rail.png`));
         await rail.getByRole('button', { name: 'Library', exact: true }).click();
         await page.getByRole('main', { name: 'Library' }).waitFor();

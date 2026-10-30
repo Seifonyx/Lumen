@@ -56,7 +56,7 @@ async function run(browser, width) {
 
   await look('API keys (first sign-in)');
   await page.fill('input[placeholder="AIza…"]', 'g');
-  await page.click('button:has-text("Save keys")');
+  await page.click('button:has-text("Save key")');
   await page.waitForTimeout(1200);
   for (const name of ['General', 'API keys', 'Models', 'Usage', 'Personalization', 'Memory', 'Privacy & data']) {
     if (name === 'General' && await page.locator('.settings-tabs').isVisible()) await look('settings menu');

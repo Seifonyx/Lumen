@@ -14,7 +14,7 @@ for(const width of [320,390,430,1440]){
  await page.locator('.composer input[type=file][multiple]').last().setInputFiles({name:'Keep attachment.txt',mimeType:'text/plain',buffer:Buffer.from('Synthetic unsent attachment')});await page.getByRole('button',{name:'Remove Keep attachment.txt',exact:true}).waitFor();
  const drawer=page.locator('aside.cv-nav');const open=async(name)=>{if(width<900)await page.locator('.menu-btn:visible').first().click();await drawer.getByRole('button',{name,exact:true}).click()};
  const exit=async()=>page.getByRole('button',{name:/^Return to (chat|previous screen)$/,exact:false}).filter({visible:true}).first().click();
- await open('Prism');await page.getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name:'Providers',exact:true}).click();await page.locator('[data-provider="gemini"]').click();await page.getByRole('region',{name:'Provider detail'}).waitFor();
+ await open('Router');await page.getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Providers',exact:true}).click();await page.locator('[data-provider="gemini"]').click();await page.getByRole('region',{name:'Provider detail'}).waitFor();
  await exit();await page.locator('.rc-page').waitFor({state:'hidden'});assert.equal(await input.inputValue(),'Keep my original draft');
  // The chevron traverses existing entries; Forward still restores intentional browser history.
  await page.goForward();await page.locator('.rc-page').waitFor({state:'visible'});await page.goBack();await input.waitFor();

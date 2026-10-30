@@ -87,7 +87,7 @@ const F = '````';
   await page.evaluate(() => window.__testSignIn('hebaghoneim8@gmail.com'));
   await page.waitForSelector('input[placeholder="AIza…"]');
   await page.fill('input[placeholder="AIza…"]', 'g');
-  await page.click('button:has-text("Save keys")');
+  await page.click('button:has-text("Save key")');
   await page.waitForTimeout(1500);
 
   await openTab(page, 'Connectors');
@@ -122,7 +122,7 @@ const F = '````';
   check(!(await page.$('.layout-card:has-text("Languages & translation")')), 'recommended layout removed');
   check(await page.getByRole('button', { name: /Bring back.*recommended layout/i }).count() === 0, 'recommended-layout restore control removed');
   await page.screenshot({ path: path.join(__dirname, 'out', 'layouts.png') });
-  await page.click('.settings-page [aria-label="Close"]');
+  await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
 
   await page.click('.model-button');
   check((await page.textContent('.models-pop')).includes('Max coding') && (await page.textContent('.models-pop')).includes('Web apps'), 'layouts in the model menu');
@@ -255,7 +255,7 @@ const F = '````';
   await openTab(page, 'Models');
   await page.locator('.models-nav button').filter({ hasText: 'Layouts' }).click();
   await page.locator('.layout-card', { hasText: 'Web apps' }).locator('[aria-label="Use for new chats"]').click();
-  await page.click('.settings-page [aria-label="Close"]');
+  await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
   await page.evaluate(()=>(document.querySelector('.sidebar .new-chat, .cv-new-pill')||[...document.querySelectorAll('.cv-dest button')].find(b=>b.textContent.includes('New chat'))).click());
   check((await page.textContent('.model-button')).includes('Web apps'), 'custom layout is the default for new chats');
 

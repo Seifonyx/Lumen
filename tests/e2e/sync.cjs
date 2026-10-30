@@ -37,7 +37,7 @@ async function device(browser, name, email, mobile) {
   await page.waitForSelector('.google-btn');
   await page.waitForFunction(() => typeof window.__testSignIn === 'function');
   await page.evaluate((e) => window.__testSignIn(e), email);
-  await page.waitForSelector('.app:not(.app-skeleton) .topbar:visible, .settings-page');
+  await page.waitForSelector('.app:not(.app-skeleton) .topbar:visible, .settings-page, .rc-page:not([hidden])');
   return { ctx, page, errors, log, name };
 }
 
@@ -49,10 +49,10 @@ async function device(browser, name, email, mobile) {
   // ---- Phone: first sign-in, enter keys
   const A = await device(browser, 'phone', 'hebaghoneim8@gmail.com', true);
   await A.page.waitForSelector('input[placeholder="AIza…"]');
-  check((await A.page.textContent('.settings-heading h2')) === 'API keys', 'first sign-in opens API keys');
+  check((await A.page.locator('.rc-page:not([hidden]) #sb-connection').count() ? await A.page.locator('.rc-page:not([hidden]) [data-provider="gemini"]').count()>0 : (await A.page.textContent('.settings-heading h2')) === 'API keys'), 'first sign-in opens API keys');
   await A.page.screenshot({ path: path.join(OUT, 'a1-keys.png') });
   await A.page.fill('input[placeholder="AIza…"]', 'test-gemini-key');
-  await A.page.click('button:has-text("Save keys")');
+  await A.page.click('button:has-text("Save key")');
   await A.page.waitForTimeout(1500);
   check(true, 'keys saved and models loaded');
   await openTab(A.page, 'Personalization');
@@ -88,7 +88,7 @@ async function device(browser, name, email, mobile) {
   await B.page.click('.sidebar-foot, .cv-account');
   await openTab(B.page, 'Personalization');
   check((await B.page.inputValue('.field-block textarea')) === 'Use metric units.', 'custom instructions synced');
-  await B.page.click('.settings-page [aria-label="Close"]');
+  await B.page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
 
   // ---- Laptop replies in the same chat; phone sees it live
   await B.page.fill('.composer textarea', 'Follow-up from laptop');

@@ -16,16 +16,14 @@ fs.mkdirSync(out,{recursive:true});
   let finishCatalog;const pendingCatalog=new Promise(resolve=>{finishCatalog=resolve});
   await context.route('**/generativelanguage.googleapis.com/**',async r=>{await pendingCatalog;await r.fulfill({json:{models:[]}}).catch(()=>{});});
   const page=await context.newPage();page.setDefaultTimeout(12000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
-   let releaseSettings,held=false;const heldRequest=new Promise(resolve=>releaseSettings=resolve);
-   await page.route('**/SettingsModal-*.js',async r=>{held=true;await heldRequest;await r.continue();});
 
   try{
    await page.goto(base);await page.locator('.composer textarea').waitFor();
    if(!await page.locator('.app[data-lumen-canvas-shell]').count()){console.log('Not applicable to ordinary presentation');return;}
    const draft='Provider setup draft — café';await page.locator('.composer textarea').fill(draft);
    await page.getByRole('button',{name:'Open chats',exact:true}).first().click();
-   await page.locator('aside.cv-nav').getByRole('button',{name:'Prism',exact:true}).click();
-   const rc=page.locator('.rc-page');await rc.getByRole('navigation',{name:'Prism sections'}).getByRole('button',{name:'Providers',exact:true}).click();
+   await page.locator('aside.cv-nav').getByRole('button',{name:'Router',exact:true}).click();
+   const rc=page.locator('.rc-page');await rc.getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Providers',exact:true}).click();
    await rc.locator('[data-provider="gemini"]').click();const detail=rc.getByRole('region',{name:'Provider detail'});
    assert.match(await detail.innerText(),/Not checked/);assert.match(await detail.innerText(),/No model list yet/);
    await page.evaluate(()=>document.activeElement?.blur());
@@ -37,33 +35,22 @@ fs.mkdirSync(out,{recursive:true});
    const search=rc.getByRole('searchbox',{name:'Find a provider'});await search.fill('Groq');await rc.locator('[data-provider="groq"]').click();
    assert.match(await detail.innerText(),/No key saved/);await detail.getByRole('button',{name:'Add a key',exact:true}).waitFor();
    await page.screenshot({path:path.join(out,`320-${theme}-no-key.png`),animations:'disabled'});
-   // Hold only the first local lazy editor chunk, cancel the actual history visit, then open general Keys.
+   // Router: Add a key stays on this page and moves to the provider's own key field.
    await detail.getByRole('button',{name:'Add a key',exact:true}).click();
-   for(let i=0;i<40&&!held;i++)await page.waitForTimeout(25);
-   assert(held,'the first Settings lazy load was held');
-   await page.goBack();releaseSettings();await detail.waitFor();
-   await page.goBack();
-   await rc.getByRole('button',{name:'Connect a provider',exact:true}).click();
-   const settings=page.getByRole('dialog',{name:'Settings',exact:true});await settings.locator('.provider-connection').first().waitFor();
-   assert((await settings.locator('.provider-connection:visible').count())>1,'canceled handoff cannot narrow a later general visit');
-   // Jump directly between two existing Keys history entries. The editor must follow the restored target
-   // while preserving unsaved credential edits within this account (nothing is saved or sent).
-   await page.keyboard.press('Escape'); await settings.waitFor({state:'hidden'});
-   await rc.locator('[data-provider="groq"]').click();
-   await detail.getByRole('button',{name:'Add a key',exact:true}).click();
-   const groq=settings.locator('.provider-connection[data-provider="groq"]');await groq.waitFor();
+   const groq=detail.locator('#sb-connection .provider-connection[data-provider="groq"]');await groq.waitFor();
+   assert.equal(await detail.locator('#sb-connection .provider-connection').count(),1,'the editor targets only this provider');
+   assert(await page.evaluate(()=>Boolean(document.activeElement?.closest('#sb-connection'))),'Add a key moves focus to the key field');
+   // Unsaved credential edits survive Back/Forward within this account (nothing is saved or sent) and are never shown as text.
    const key=groq.locator('input[aria-label="Groq API key"]');await key.fill('SYNTHETIC_UNSAVED');
    assert.equal(await groq.locator('.key-status-pill').innerText(),'Unsaved changes');
-   await page.evaluate(()=>history.go(-3));
-   await page.waitForFunction(()=>document.querySelectorAll('.settings-page .provider-connection').length>1);
-   assert.equal(await key.inputValue(),'SYNTHETIC_UNSAVED');
-   await page.evaluate(()=>history.go(3));
-   await page.waitForFunction(()=>document.querySelectorAll('.settings-page .provider-connection').length===1);
-   assert.equal(await groq.isVisible(),true);assert.equal(await key.inputValue(),'SYNTHETIC_UNSAVED');
+   assert.equal(await key.getAttribute('type'),'password');assert(!/SYNTHETIC_UNSAVED/.test(await rc.innerText()));
+   await page.goBack();await rc.locator('[data-provider="groq"]').waitFor();assert.equal(await detail.count(),0);
+   await page.goForward();await key.waitFor();assert.equal(await key.inputValue(),'SYNTHETIC_UNSAVED');
+   await page.goBack();await rc.locator('[data-provider="groq"]').click();await key.waitFor();assert.equal(await key.inputValue(),'SYNTHETIC_UNSAVED','reopening the provider keeps the unsaved edit');
    await page.goBack();await rc.waitFor();
    assert.equal(await page.locator('.composer textarea').inputValue(),draft);
    assert.deepEqual(errors,[]);cases++;
-  }finally{finishCatalog();releaseSettings();await context.close();}
+  }finally{finishCatalog();await context.close();}
  }}finally{await browser.close();}
- console.log(`PASS Prism unchecked/empty/no-key and canceled-lazy-settings ${cases}/2`);
+ console.log(`PASS Router unchecked/empty/no-key and in-page key draft ${cases}/2`);
 })().catch(e=>{console.error(e);process.exit(1)});

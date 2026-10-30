@@ -30,7 +30,7 @@ const original = fs.readFileSync(SW, 'utf8');
     await page.evaluate(() => window.__testSignIn('hebaghoneim8@gmail.com'));
     await page.waitForSelector('input[placeholder="AIza…"]');
     await page.fill('input[placeholder="AIza…"]', 'g');
-    await page.click('button:has-text("Save keys")');
+    await page.click('button:has-text("Save key")');
     await page.waitForTimeout(1500);
     await closeSettings(page);
     await page.fill('.composer textarea', 'hi');

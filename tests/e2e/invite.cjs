@@ -15,14 +15,14 @@ const check = (c, l) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) f
     await page.goto('http://localhost:5190/?emulator');
     await page.waitForFunction(() => typeof window.__testSignIn === 'function');
     await page.evaluate((e) => window.__testSignIn(e), email);
-    await page.waitForSelector('.app:not(.app-skeleton) .topbar:visible, .settings-page, .denied-icon', { timeout: 15000 });
+    await page.waitForSelector('.app:not(.app-skeleton) .topbar:visible, .settings-page, .rc-page:not([hidden]), .denied-icon', { timeout: 15000 });
     return { page, errors };
   };
   const ok = await run('HebaGhoneim8@gmail.com');
   check(await ok.page.$('.topbar'), 'invited account (any capitalisation) gets in');
   await ok.page.waitForSelector('input[placeholder="AIza…"]');
   await ok.page.fill('input[placeholder="AIza…"]', 'k');
-  await ok.page.click('button:has-text("Save keys")');
+  await ok.page.click('button:has-text("Save key")');
   await ok.page.waitForTimeout(1500);
   check(!(await ok.page.textContent('body')).includes("Couldn't save keys"), 'invited account can save keys');
   const other = await run('stranger@gmail.com');

@@ -27,6 +27,8 @@ html[data-lumen-canvas] { --canvas-lamplight: #f1e2b6; }
 html[data-lumen-canvas][data-theme='dark'] { --canvas-lamplight: #4d4130; }
 @media (prefers-color-scheme: dark) { html[data-lumen-canvas]:not([data-theme='light']) { --canvas-lamplight: #4d4130; } }
 html[data-lumen-canvas] ::selection { background: var(--canvas-lamplight); color: var(--text); }
+/* Phones: a toast arrives under the navigation bar, never over its Back button or title. */
+@media (max-width: 899px) { html[data-lumen-canvas] .toasts { top: calc(env(safe-area-inset-top) + 68px); } }
 
 /* ---------- Page shell (HubPage: Library, Tools, Projects, Study, Assistants…) */
 html[data-lumen-canvas] .hub-head h1, html.glass[data-lumen-canvas] .hub-head h1 { font: var(--canvas-type-display); letter-spacing: var(--canvas-tracking-display); }

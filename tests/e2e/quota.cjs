@@ -54,9 +54,9 @@ async function send(page, text) {
   const A = await device(browser);
   await A.page.waitForSelector('input[placeholder="AIza…"]');
   await A.page.fill('input[placeholder="AIza…"]', 'g');
-  await A.page.click('button:has-text("Save keys")');
+  await A.page.click('button:has-text("Save key")');
   await A.page.waitForTimeout(1500);
-  await A.page.click('.settings-page [aria-label="Close"]');
+  await A.page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
   // 6 chats x 4 messages.
   for (let c = 0; c < 6; c++) {
     if (c) await A.page.evaluate(()=>(document.querySelector('.sidebar .new-chat, .cv-new-pill')||[...document.querySelectorAll('.cv-dest button')].find(b=>b.textContent.includes('New chat'))).click());
@@ -136,7 +136,7 @@ async function send(page, text) {
   check(/Reads46,\d{3} \/ 50,000/.test(card.replace(/\s+/g, '')) || /46,\d{3}/.test(card), `usage card shows counts (${card.slice(0, 90)})`);
   check(card.includes('Sync paused'), 'usage card explains the pause');
   await A.page.screenshot({ path: path.join(__dirname, 'out', 'firebase-card.png') });
-  await A.page.click('.settings-page [aria-label="Close"]');
+  await A.page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
 
   // Reset → catches up.
   await setShared(0);

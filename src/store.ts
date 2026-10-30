@@ -71,6 +71,12 @@ export interface PreviewFile {
   content: string;
 }
 
+type UiPatch = Parameters<State['setUi']>[0];
+/** The Canvas presentation moves some Settings sections elsewhere (Router); it registers here and handles those
+ * requests itself, returning true. The ordinary build never registers, so Settings behaves as before. */
+let settingsRoute: ((patch: UiPatch, state: State) => boolean) | null = null;
+export const registerSettingsRoute = (route: typeof settingsRoute) => { settingsRoute = route; };
+
 interface State {
   tasks: ScheduledTask[];
   tasksReady: boolean;
@@ -1348,7 +1354,8 @@ export const useStore = create<State>((set, get) => {
         const { keys, user } = get();
         if(!user) return;
         if (!AI_PROVIDERS.some(p => providerEnabled(p, keys))) {
-          set({ catalog: null, catalogError: null, catalogErrorDismissed: false, settingsOpen: true, settingsTab: 'keys' });
+          set({ catalog: null, catalogError: null, catalogErrorDismissed: false });
+          get().setUi({ settingsOpen: true, settingsTab: 'keys' });
           return;
         }
         try {
@@ -1451,6 +1458,7 @@ export const useStore = create<State>((set, get) => {
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
     },
     setUi(patch) {
+      if (settingsRoute?.(patch, get())) return;
       const apply = () => set({ ...patch, ...(patch.workspaceOpen ? { canvasOpen: false, sideChatId: null } : {}), ...(patch.canvasOpen ? { workspaceOpen: false, sideChatId: null } : {}), ...(patch.sideChatId ? { canvasOpen: false, workspaceOpen: false } : {}), ...(patch.settingsOpen ? { page: null } : {}), ...(patch.page ? { settingsOpen: false, sidebarOpen: false } : {}) });
       // Opening or closing Settings by hand: a push/pop on phones, a crossfade on computers.
       const opening = patch.settingsOpen === true && !get().settingsOpen, closing = patch.settingsOpen === false && get().settingsOpen;

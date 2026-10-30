@@ -36,7 +36,9 @@ Semantic, monochrome, two themes (Light and Dark; Canvas has no True black).
 - **Fills and rims** are ink at fixed strengths: fill 7%, strong fill 12%, rim 10%. Hover uses the fill, the
   current item the strong fill, separators the rim.
 - **Lamplight** (`--canvas-lamplight`): the only warm colour in the interface, the light from the mark's crease.
-  Used for text selection only. Light `#f1e2b6`, Dark `#4d4130`.
+  Used for text selection and, since the calm pass (2026-10-30), for "this one is yours right now": the active
+  section in a phone section bar and the "Selected" chip on the model in use. Never for buttons, focus or text.
+  Light `#f1e2b6`, Dark `#4d4130`.
 - **Status colours** (green, red, orange, blue) keep their meanings from `app.css` and appear only for state.
 - **Exception, by owner decision:** the new-chat moon keeps its lime.
 
@@ -49,6 +51,21 @@ between rows; touch targets are 44 px on phones (`--canvas-touch-target`). Answe
 
 Depth comes from tone and hairlines; shadows only on floating things (composer, menus, dialogs, sheets), using
 `--layer-shadow`. Cards are translucent surface over the page (`--cv5-card`) with a rim.
+
+**Calm pass (2026-10-30), applied to Router and the phone Settings index; the rest of the app follows in a later
+phase:**
+
+- **One container per screen.** A grouped list is surface on paper, by tone alone: no outline, no card inside a
+  card. A forced-colours border stays for Windows High Contrast.
+- **Two kinds of button.** One solid ink pill for the screen's main action; everything else is plain text (with an
+  icon when it helps). No outlined pills.
+- **State facts, don't explain.** At most one short line under a row; longer explanations sit behind a disclosure
+  ("Advanced", "Details"). Rows that would only say "Not connected" say nothing; their group heading says it.
+- **Colour only for what needs you.** Status dots are small; a problem is one line with a coloured rule, not a
+  tinted banner.
+- **Four type steps in a page:** 28 (page title), 17 (section), 15 (rows and body), 13 (secondary and group
+  labels). Group labels are 13 / 600 in the secondary colour.
+- **One column on computers:** Router's content is at most 760 px wide, centred.
 
 Radius tokens are defined but not yet applied everywhere; this is the scale new and migrated styles should use.
 

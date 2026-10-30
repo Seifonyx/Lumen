@@ -28,7 +28,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     await sp.getByLabel('Reply language').selectOption('French');
     await sp.getByRole('radiogroup', { name: 'Answer length' }).getByRole('radio', { name: 'Short' }).click();
     assert.equal(await sp.getByRole('button', { name: '+ Egyptian Arabic' }).count(), 0);
-    await page.click('.settings-page [aria-label="Close"]');
+    await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
     await page.fill('.composer textarea', 'hello');
     await page.click('.send-btn');
     await page.locator('.msg.assistant:has-text("Bonjour.")').waitFor();
@@ -41,7 +41,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     await page.locator('.settings-tabs').getByRole('button', { name: /Personali[sz]ation/ }).click();
     await sp.getByLabel('Reply language').selectOption('');
     await sp.getByRole('radiogroup', { name: 'Answer length' }).getByRole('radio', { name: 'Auto' }).click();
-    await page.click('.settings-page [aria-label="Close"]');
+    await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
     await page.fill('.composer textarea', 'again');
     await page.click('.send-btn');
     await page.locator('.msg.assistant').nth(1).locator('.model-tag').waitFor();

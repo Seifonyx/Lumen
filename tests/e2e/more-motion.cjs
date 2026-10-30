@@ -45,7 +45,7 @@ const near = (a, b, d = 2) => Math.abs(a - b) <= d;
       const [thumb, active] = await Promise.all([theme.locator('.seg-thumb').boundingBox(), theme.getByRole('radio', { name, exact: true }).boundingBox()]);
       assert.ok(near(thumb.x, active.x) && near(thumb.width, active.width), `the selection slides to ${name} (${JSON.stringify([thumb, active])})`);
     }
-    await page.click('.settings-page [aria-label="Close"]');
+    await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
     console.log('PASS the Theme selection slides to the option you pick');
 
     // ---- The message navigator can be turned off (and back on).
@@ -56,7 +56,7 @@ const near = (a, b, d = 2) => Math.abs(a - b) <= d;
       await page.locator('.settings-tabs').getByRole('button', { name: 'General', exact: true }).click();
       const toggle = page.locator('.settings-page:not(.exit-ghost)').getByLabel('Message navigator');
       if (on) await toggle.check(); else await toggle.uncheck();
-      await page.click('.settings-page [aria-label="Close"]');
+      await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
       await page.waitForTimeout(400);
     };
     await nav(false);

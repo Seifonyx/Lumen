@@ -227,7 +227,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
             <ul className="cv-dest" aria-label="Places">
               <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onClick={() => toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
               <li><button type="button" aria-current={page === 'tools' || page === 'assistants' || page === 'study' ? 'page' : undefined} onClick={() => toPage('tools')} title={`Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`}><LayoutGrid size={18} /><span>Tools</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
-              <li><button type="button" title="Models, providers & routing" data-routing-center aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><GitFork size={18} strokeWidth={1.8} aria-hidden="true" /><span>Prism</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
+              <li><button type="button" title="Models, providers & routing" data-routing-center aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><GitFork size={18} strokeWidth={1.8} aria-hidden="true" /><span>Router</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
             </ul>
           )}
 

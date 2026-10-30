@@ -106,7 +106,7 @@ try {
         // Theme through the canonical Settings control.
         await go(page, phone, 'Settings');
         await page.getByRole('dialog', { name: 'Settings' }).waitFor();
-        if (phone) { await page.getByRole('dialog', { name: 'Settings' }).getByRole('button', { name: /^General/ }).first().click(); await settle(page); }
+        if (phone) { await page.getByRole('dialog', { name: 'Settings' }).getByRole('button', { name: /^(General|Account:)/ }).first().click(); await settle(page); }
         // Canvas offers Light and Dark (and Auto); True black is not a choice.
         assert.equal(await page.getByRole('radio', { name: 'True black', exact: true }).or(page.getByRole('button', { name: 'True black', exact: true })).count(), 0, `${tag}: no True black`);
         const themeLabel = { light: 'Light', dark: 'Dark' }[theme];
@@ -253,11 +253,11 @@ try {
         // Routing Center in this theme.
         if (phone) {
           await openNav(page, phone);
-          await nav(page).getByRole('button', { name:'Prism', exact:true }).scrollIntoViewIfNeeded();
+          await nav(page).getByRole('button', { name:'Router', exact:true }).scrollIntoViewIfNeeded();
           await shot(page, join(out, `${tag}-prism-drawer.png`));
-          await nav(page).getByRole('button',{name:'Prism',exact:true}).click();
+          await nav(page).getByRole('button',{name:'Router',exact:true}).click();
           await settle(page, 700);
-        } else await go(page, phone, 'Prism');
+        } else await go(page, phone, 'Router');
         assert.ok(await page.getByRole('region',{name:'Current routing mode'}).isVisible(), 'Prism lands in Models');
         assert.equal(await page.getByRole('button',{name:'Overview',exact:true}).count(),0,'Overview is absent');
         if (phone) {
@@ -274,11 +274,11 @@ try {
             const row = root?.querySelector('.rc-models-body .rc-model:has(.rc-use button:not(:disabled))');
             const use = row?.querySelector('.rc-use button:not(:disabled)');
             const tabs = root?.querySelector('.phone-sections'), search = root?.querySelector('.rc-search-footer .rc-search');
-            if (!row || !use || !tabs || !search) return null;
+            if (!row || !use || !tabs) return null;
             const rect = el => { const r = el.getBoundingClientRect(); return { top:r.top, bottom:r.bottom, left:r.left, right:r.right, height:r.height }; };
-            return { row:rect(row), action:rect(use), tabs:rect(tabs), search:rect(search), viewport:{ width:innerWidth,height:innerHeight }, scroll:root.scrollTop, model:row.querySelector('h4')?.textContent };
+            return { row:rect(row), action:rect(use), tabs:rect(tabs), search:search ? rect(search) : { top:innerHeight }, viewport:{ width:innerWidth,height:innerHeight }, scroll:root.scrollTop, model:row.querySelector('h4')?.textContent };
           });
-          assert.ok(geometry, 'fixture provides a selectable model and the contextual Search');
+          assert.ok(geometry, 'fixture provides a selectable model (Search appears only past eight models)');
           assert.equal(geometry.scroll, 0, 'Models landing has not been scrolled');
           assert.ok(geometry.row.top >= geometry.tabs.bottom - 1, `model below navigation: ${JSON.stringify(geometry)}`);
           assert.ok(geometry.row.bottom <= geometry.search.top - 2, `complete model row above contextual Search: ${JSON.stringify(geometry)}`);
@@ -293,16 +293,16 @@ try {
         }
         record.screens.routing = await axe(page, 'section.rc-page');
         await shot(page, join(out, `${tag}-prism-models.png`));
-        const prismNav = page.getByRole('navigation', { name:'Prism sections' });
-        assert.deepEqual(await prismNav.locator('button').allTextContents(), ['Models','Providers','Layouts','Usage','Diagnostics']);
+        const prismNav = page.getByRole('navigation', { name:'Router sections' });
+        assert.deepEqual(await prismNav.locator('button').allTextContents(), ['Models','Providers','Routing','Layouts','Activity']);
         await prismNav.getByRole('button',{name:'Layouts',exact:true}).click();
         await shot(page, join(out, `${tag}-prism-layouts.png`));
-        await prismNav.getByRole('button',{name:'Usage',exact:true}).click();
+        await prismNav.getByRole('button',{name:'Activity',exact:true}).click();
         await page.locator('.rc-page .rc-history[data-evidence-source="saved-chats"]').waitFor();
         assert.equal(await page.locator('.rc-page').getByText('Loading saved-chat history…').count(),0,'Usage capture shows loaded evidence');
         record.screens.prismUsage = await axe(page,'section.rc-page');
         await shot(page, join(out, `${tag}-prism-usage.png`));
-        await prismNav.getByRole('button',{name:'Diagnostics',exact:true}).click();
+        await page.locator('.rc-page #rc-diagnostics').scrollIntoViewIfNeeded();
         await page.locator('.rc-page .rc-latest').waitFor();
         await page.locator('.rc-page .rc-log').waitFor();
         assert.equal(await page.locator('.rc-page').getByText('Loading latest outcome…').count(),0,'Diagnostics capture shows loaded evidence');
@@ -314,22 +314,14 @@ try {
           await shot(page, join(out, `${tag}-prism-tabs-scrolled.png`));
         }
         await prismNav.getByRole('button', { name:'Providers', exact:true }).click();
-        await page.locator('.rc-provider-list').waitFor();
+        await page.locator('.sb-providers').waitFor();
         await shot(page, join(out, `${tag}-providers.png`));
-        await page.locator('.rc-provider-list [data-provider="gemini"]').first().click();
+        await page.locator('.sb-providers [data-provider="gemini"]').first().click();
         await page.locator('.rc-provider-detail').waitFor();
-        if (phone) await page.getByRole('button', { name:'More actions', exact:true }).waitFor();
+        // Router: the provider's key and connection are on its page (no menu into Settings).
+        await page.locator('.rc-provider-detail #sb-connection .provider-connection').waitFor();
+        assert.equal(await page.getByRole('dialog', { name:'Settings' }).count(), 0);
         await shot(page, join(out, `${tag}-provider-detail.png`));
-        if (phone) {
-          await page.getByRole('button', { name:'More actions', exact:true }).click();
-          await page.getByRole('menu', { name:'Screen actions' }).waitFor();
-          await shot(page, join(out, `${tag}-provider-actions.png`));
-          await page.getByRole('menuitem', { name:'Connection settings', exact:true }).click();
-          await page.getByRole('dialog', { name:'Settings' }).waitFor();
-          await shot(page, join(out, `${tag}-provider-connection-settings.png`));
-          await page.goBack();
-          await page.locator('.rc-provider-detail').waitFor();
-        }
         await closeAll(page);
         pass('routing center');
 

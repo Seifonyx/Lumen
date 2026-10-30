@@ -25,11 +25,11 @@ async function open(browser, mobile) {
   // Desktop
   const D = await open(browser, false);
   await D.page.waitForSelector('input[placeholder="AIza…"]');
-  check((await D.page.textContent('.settings-heading h2')) === 'API keys', 'first sign-in opens API keys as a page');
+  check((await D.page.locator('.rc-page:not([hidden]) #sb-connection').count() ? await D.page.locator('.rc-page:not([hidden]) [data-provider="gemini"]').count()>0 : (await D.page.textContent('.settings-heading h2')) === 'API keys'), 'first sign-in opens API keys as a page');
   check(await D.page.isVisible('.sidebar') && await D.page.isVisible('.settings-tabs'), 'desktop: sidebar and section list stay visible');
   check(!(await D.page.isVisible('.main')), 'desktop: chat hidden while settings is open');
   await D.page.fill('input[placeholder="AIza…"]', 'g');
-  await D.page.click('button:has-text("Save keys")');
+  await D.page.click('button:has-text("Save key")');
   await D.page.waitForTimeout(1200);
   await D.page.click('.settings-tabs >> text=Memory');
   check((await D.page.textContent('.settings-heading h2')) === 'Memory' && await D.page.isVisible('.memory-tab'), 'desktop: switching sections');
@@ -42,7 +42,7 @@ async function open(browser, mobile) {
   check((await D.page.textContent('.disclaimer')) === 'AI can make mistakes. Check important info.', 'warning under the message box has no "patient"');
   await D.page.click('.sidebar-foot, .cv-account');
   check((await D.page.textContent('.settings-heading h2')) === 'General', 'desktop: opening from the sidebar shows General');
-  await D.page.click('.settings-page [aria-label="Close"]');
+  await D.page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');
 
   // Phone
   const P = await open(browser, true);

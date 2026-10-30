@@ -230,3 +230,7 @@ html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn.voice-start 
 @media (max-width: 899px) {
   .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .usage-meter { order: 1; }
 }
+/* Context chips (a tool that's on, a file in context): one line in the body font, a quiet fill, no outline. */
+.composer-wrap[data-lumen-canvas-composer] :is(.ctx-chip, .repo-chip) { height: 28px; max-width: 100%; padding: 0 4px 0 10px; border: 0; border-radius: 999px; background: var(--canvas-fill, color-mix(in srgb, var(--text) 7%, transparent)); font: 500 13px/1 var(--canvas-body-font, var(--font)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.composer-wrap[data-lumen-canvas-composer] :is(.research-chip, .image-chip) { padding-inline-start: 8px; gap: 6px; }
+.composer-wrap[data-lumen-canvas-composer] .ctx-chip .icon-btn.xs { width: 24px; height: 24px; border-radius: 50%; }

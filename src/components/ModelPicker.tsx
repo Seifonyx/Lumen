@@ -19,9 +19,9 @@ export function Badges({ m }: { m?: ModelInfo }) {
   if (!m) return null;
   return (
     <span className="badges">
-      {m.vision && <Eye size={13} aria-label="Reads images" />}
-      {m.search && <Globe size={13} aria-label="Web search" />}
-      {m.thinking && <Brain size={13} aria-label="Thinks before answering" />}
+      {m.vision && <Eye size={13} aria-label="Reads images"><title>Reads images</title></Eye>}
+      {m.search && <Globe size={13} aria-label="Web search"><title>Web search</title></Globe>}
+      {m.thinking && <Brain size={13} aria-label="Thinks before answering"><title>Thinks before answering</title></Brain>}
     </span>
   );
 }
@@ -216,7 +216,10 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
                     <span className="mp-tile"><LayoutIcon icon={l.icon} size={15} /></span>
                     <span className="mp-text">
                       <span className="mp-title">{l.name}</span>
-                      <span className="mp-sub">{usable.length} available{usable.length<l.models.length?` · ${l.models.length-usable.length} unavailable`:''}</span>
+                      <span className="mp-sub">{CANVAS_COMPOSER
+                        // Canvas: say what the Layout is for (or who answers), not a count; flag only what's missing.
+                        ? (usable.length < l.models.length ? `${l.models.length - usable.length} unavailable` : l.description?.trim() || usable.slice(0, 2).map((m) => modelLabel(catalog, m)).join(' · ') || 'No models yet')
+                        : <>{usable.length} available{usable.length<l.models.length?` · ${l.models.length-usable.length} unavailable`:''}</>}</span>
                     </span>
                     {id === value && <Check size={14} className="mp-check" />}
                   </button>

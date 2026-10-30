@@ -21,12 +21,12 @@ import { prepareTool } from './Composer';
 import './canvas-library.css';
 
 const categories: {id:CollectionKind;label:string;description:string}[] = [
- {id:'all',label:'Everything',description:'Photos, attachments, editable documents and generated files from your saved chats.'},
- {id:'documents',label:'Documents',description:'Editable Canvas documents, saved with their conversations.'},
- {id:'photos',label:'Photos',description:'Images you attached to conversations. Originals may depend on the device where you added them.'},
- {id:'files',label:'Attached files',description:'Uploads attached to saved chats. Extracted text and original files are distinct.'},
- {id:'generated',label:'Made by Lumen',description:'Images and file blocks from replies. Exports are built when you choose Save; downloads are not tracked.'},
- {id:'searchable',label:'Knowledge',description:'Searchable references kept only on this device, separately from your chat attachments.'},
+ {id:'all',label:'Everything',description:'Everything from your saved chats: documents, photos, files and what Lumen made.'},
+ {id:'documents',label:'Documents',description:'Documents you write and edit with Lumen.'},
+ {id:'photos',label:'Photos',description:'Photos and images you added to chats.'},
+ {id:'files',label:'Attached files',description:'Files you attached to chats.'},
+ {id:'generated',label:'Made by Lumen',description:'Images and files Lumen made in replies.'},
+ {id:'searchable',label:'Knowledge',description:'Your reference library: Lumen searches it and cites pages. Kept only on this device.'},
 ];
 const src = (item: LibraryItem) => 'file' in item && item.file.kind === 'image' ? item.file.data ? `data:${item.file.mime};base64,${item.file.data}` : item.file.thumb : undefined;
 // Cache only the parser function, never an account's content. Remounted history views
@@ -62,7 +62,7 @@ export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()
    {!phone&&<PhoneSections label="Library content types" panelId={panel} active={kind} items={categories} onSelect={id=>setKind(id as CollectionKind)}/>}
    <section id={panel} role="tabpanel" aria-labelledby={`${panel}-${kind}`} className="library-panel">
     {discoveryError&&<p role="alert">Generated file discovery could not load. Your other chat items remain available. Reopen Library to retry.</p>}
-    <div className={`library-section-head${category.label==='Everything'?' is-all':''}`}><div><h2>{category.label==='Everything'?'From your chats':category.label}</h2><p>{category.description}</p></div>{kind!=='searchable'&&<span className="library-total" role="status">{scoped.length} {query||project?'matching ':''}chat {scoped.length===1?'item':'items'}</span>}</div>
+    <div className={`library-section-head${category.label==='Everything'?' is-all':''}`}><div><h2>{category.label==='Everything'?'From your chats':category.label}</h2><p>{category.description}</p></div>{kind!=='searchable'&&<span className="library-total" role="status">{scoped.length} {query||project?'matching ':''}{scoped.length===1?'item':'items'}</span>}</div>
     {kind==='searchable'?<div className="files-uploads">{!phone&&<div className="library-controls">{search}</div>}<KnowledgeLibrary onClose={onClose} filter={query}/></div>:<>
      <div className="library-controls">{!phone&&search}<label><span className="sr-only">Sort library</span><select aria-label="Sort library" value={sort} onChange={e=>setSort(e.target.value as LibrarySort)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="name">Name A–Z</option></select></label>{Boolean(projects?.length)&&<label><span className="sr-only">Project</span><select aria-label="Project" value={project} onChange={e=>setProject(e.target.value)}><option value="">All projects</option>{projects?.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}</div>
      {scoped.length?<ul className="library-ledger">{scoped.map(item=><li key={item.key} className={`library-row kind-${item.kind}`}>
@@ -71,8 +71,8 @@ export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()
        <span className="library-row-copy"><strong dir="auto">{itemName(item)}</strong><span>{item.kind==='documents'?'Canvas document':item.kind==='exports'?'Generated file · export on demand':`${item.file.name.split('.').pop()?.toUpperCase()||'File'}${Number.isFinite(item.file.size)&&item.file.size>0?` · ${formatBytes(item.file.size)}`:''} · ${availability(item.file)}`}</span><span className="library-row-source" dir="auto">{item.chat.title} · {relTime(item.at)}</span></span>
       </button>
       {item.kind!=='exports'&&<Suspense fallback={null}><CanvasLibraryActions item={item} openChat={openChat}/></Suspense>}
-     </li>)}</ul>:<HubEmpty icon={<FileText size={28}/>} title={query||project?'No matching items':'A little room for your work'} text={query||project?'Try another search or widen the category and project filters.':category.description} action={query||project?<button type="button" className="btn" onClick={()=>{setQuery('');setProject('');setKind('all')}}>Reset filters</button>:<button type="button" className="btn primary" onClick={newDoc}>New document</button>}/>}
-     <button type="button" className="library-knowledge-link" onClick={()=>setKind('searchable')}><BookOpen size={20}/><span><strong>Looking for searchable sources?</strong><span>Knowledge has its own device-local collection.</span></span><span aria-hidden="true">→</span></button>
+     </li>)}</ul>:<HubEmpty icon={<FileText size={28}/>} title={query||project?'No matching items':'A little room for your work'} text={query||project?'Try another search or widen the category and project filters.':category.description} action={query||project?<button type="button" className="btn" onClick={()=>{setQuery('');setProject('');setKind('all')}}>Reset filters</button>:<button type="button" className="btn primary" onClick={create.run}>{create.label}</button>}/>}
+     {kind==='all'&&<button type="button" className="library-knowledge-link" onClick={()=>setKind('searchable')}><BookOpen size={20}/><span><strong>Knowledge</strong><span>Your references, searched and cited by Lumen</span></span><span aria-hidden="true">→</span></button>}
     </>}
    </section>
   </div>

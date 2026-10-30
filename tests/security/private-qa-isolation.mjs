@@ -203,6 +203,9 @@ try {
     'src/lib/usage.ts', 'src/types.ts',
     // Phase 2 polish (2026-10-30): an error boundary that keeps a failing Router screen inside its own panel.
     'src/components/ScreenBoundary.tsx', 'src/components/Study.tsx', 'src/components/AssistantLibrary.tsx', 'src/components/ProjectsPage.tsx', 'src/components/CanvasCollectionPage.tsx',
+    // UI audit fixes (2026-10-30): presentation and wording only (menu positioning, labels, starters that prefill the
+    // composer, sidebar listing of empty chats, Settings Back); no data, auth, network or storage owner changes.
+    'src/components/MoreMenu.tsx', 'src/components/AttachSheet.tsx', 'src/components/CanvasHome.tsx', 'src/components/CanvasPanel.tsx', 'src/components/CommandPalette.tsx', 'src/components/CompactNote.tsx', 'src/components/FreeTools.tsx', 'src/components/KnowledgeLibrary.tsx', 'src/components/Login.tsx', 'src/components/ModelPicker.tsx', 'src/components/ProviderConnections.tsx', 'src/components/SidebarCanvas.tsx', 'src/components/SettingsModal.tsx', 'src/components/ChatView.tsx',
     'src/components/FileCard.tsx', 'src/components/Modal.tsx', 'src/components/PreviewModal.tsx',
     'src/lib/run-language.ts', 'src/lib/runner.ts',
     // Owner-authorized shared iPhone navigation reset: UI-only owners, ordinary graph remains isolated.

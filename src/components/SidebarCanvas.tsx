@@ -5,7 +5,7 @@ import { navigateBack, navigateScreen } from '../lib/canvas-presentation';
 // sidebar element as Sidebar (one `sidebarOpen`, one collapse state, the same focus scope and drawer gesture
 // owner) and reuses its ChatRow (rename, pin, move, archive, side by side, share/export, delete, long press),
 // search semantics, AllChats, AskChats and ProjectManager. Folder disclosure is presentation only.
-import { BookOpen, ChevronRight, Folder, LayoutGrid, MessageSquarePlus, MessageSquareText, PanelLeftClose, Plus, Search, GitFork, Sparkles, X } from 'lucide-react';
+import { BookOpen, ChevronRight, Folder, LayoutGrid, MessageSquarePlus, ListFilter, PanelLeftClose, Plus, Search, GitFork, Sparkles, X } from 'lucide-react';
 import { Suspense, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { isMac, modKey } from '../lib/util';
@@ -139,13 +139,15 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   useEffect(() => { setDisclosure(OPEN); setMore({}); setQuery(''); }, [user?.uid]);
 
   const q = query.trim().toLowerCase();
-  // Sidebar's semantics: saved chats with content (or the open one); searching matches titles and messages and
-  // also finds archived chats.
+  // Sidebar's semantics: saved chats with content, or an empty chat that holds an unsent draft (so a draft left behind
+  // is easy to find). A brand-new empty chat isn't listed until something is written in it. Searching matches titles
+  // and messages and also finds archived chats.
   const matches = useMemo(() => {
-    const visible = chats.filter((c) => !isTemporaryChat(c) && (c.messages.length > 0 || Boolean(c.documents?.length) || c.id === currentId));
+    const drafted = (id: string) => { try { return Boolean(localStorage.getItem(`mr.draft.${user?.uid}.${id}`)); } catch { return false; } };
+    const visible = chats.filter((c) => !isTemporaryChat(c) && (c.messages.length > 0 || Boolean(c.documents?.length) || Boolean(c.assistant) || drafted(c.id)));
     const listed = q ? visible : visible.filter((c) => !c.archived || c.id === currentId);
     return q ? listed.filter((c) => c.title.toLowerCase().includes(q) || c.messages.some((m) => m.text.toLowerCase().includes(q))) : listed;
-  }, [chats, q, currentId]);
+  }, [chats, q, currentId, user?.uid]);
   const recency = (p: Project) => Math.max(p.updatedAt, ...chats.filter((c) => c.projectId === p.id).map((c) => c.updatedAt));
   const ordered = useMemo(() => [...projects].sort((a, b) => recency(b) - recency(a)), [projects, chats]); // eslint-disable-line react-hooks/exhaustive-deps
   const known = new Set(projects.map((p) => p.id));
@@ -265,7 +267,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
           </Fold>
 
           {!q && <div className="cv-workspace-end" />}
-          {section('conversations', q ? 'Search results' : 'Conversations', Boolean(current && !hereProject && !isTemporaryChat(current)), !q && <button type="button" className="cv-section-add cv-conversations-all cv-all" aria-label="All chats" title="All chats" onClick={() => setAllChats(true)}><MessageSquareText size={17} aria-hidden="true" /></button>)}
+          {section('conversations', q ? 'Search results' : 'Conversations', Boolean(current && !hereProject && !isTemporaryChat(current)), !q && <button type="button" className="cv-section-add cv-conversations-all cv-all" aria-label="All chats" title="All chats" onClick={() => setAllChats(true)}><ListFilter size={17} aria-hidden="true" /></button>)}
           <Fold id={`${ids}-conversations`} open={sectionOpen('conversations')}>
             {loose.some((c) => !c.archived) && <ul className="cv-chats cv-loose" aria-label={q ? 'Search results' : 'Conversations'}>{loose.filter((c) => !c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} detail={chatDetail(c)} />)}</ul>}
             {/* Search also finds archived chats; they are marked as such, after the rest. */}

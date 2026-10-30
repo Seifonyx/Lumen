@@ -140,7 +140,7 @@ function Overview({ go }: { go: (v: ActivityView) => void }) {
         <div className="ac-tile"><span>Allowances</span><strong>{known.length ? `${urgent.length ? urgent.length : 'All'} ${urgent.length ? 'need attention' : 'fine'}` : '—'}</strong><small>{known.length ? `${known.length} with a known limit` : 'No known limits yet'}</small></div>
       </section>
       <section className="ac-card ac-trend" aria-labelledby="ac-trend-title" data-evidence-source="saved-chats">
-        <div className="ac-card-head"><h3 id="ac-trend-title" className="rc-h3">Requests, last 14 days</h3><span className="rc-muted">{change === null ? `${weekTotal} this week` : `${weekTotal} this week · ${change >= 0 ? '+' : ''}${change}% vs the week before`}</span></div>
+        <div className="ac-card-head"><h3 id="ac-trend-title" className="rc-h3">Requests, last 14 days</h3><span className="rc-muted">{!weekTotal ? 'No requests this week' : change === null ? `${weekTotal} this week` : `${weekTotal} this week · ${change >= 0 ? '+' : ''}${change}% vs the week before`}</span></div>
         <TrendChart days={days} />
         <p className="rc-muted ac-legend"><span><span className="ac-key ac-key-ok" />Completed</span><span><span className="ac-key ac-key-stopped" />Stopped</span><span><span className="ac-key ac-key-failed" />Failed</span><span>From this account’s saved chats</span></p>
       </section>
@@ -181,6 +181,7 @@ function TrendChart({ days }: { days: { day: number; answers: number; failed: nu
 // ---------- Logs
 type RangeKey = 'today' | '24h' | '7d' | '30d' | 'all' | 'custom';
 const PAGE = 50;
+const RANGE_WORDS: Record<RangeKey, string> = { today: 'today', '24h': 'in the last 24 hours', '7d': 'in the last 7 days', '30d': 'in the last 30 days', all: 'yet', custom: 'in these dates' };
 const toDay = (t: number) => new Date(t - new Date(t).getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const fromDay = (s: string, end = false) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d, end ? 23 : 0, end ? 59 : 0, end ? 59 : 0, end ? 999 : 0).getTime(); };
 
@@ -246,9 +247,9 @@ function Logs() {
         ))}
         {rows.length > q.shown && <div className="ac-more"><button type="button" className="rc-quiet" onClick={() => setQ((s) => ({ ...s, shown: s.shown + PAGE }))}>Show {Math.min(PAGE, rows.length - q.shown)} more</button><span className="rc-muted">Showing {q.shown} of {rows.length}</span></div>}
       </> : <div className="ac-empty-state" role="status">
-        <p><strong>{all.length ? 'No events match' : 'No activity yet'}</strong></p>
-        <p className="rc-muted">{all.length ? 'Try another search, type, status or time range.' : 'Requests from saved chats and events such as model-list refreshes, limits and sync changes will be listed here.'}</p>
-        {all.length > 0 && (filtered || q.range !== 'all') && <button type="button" className="rc-link" onClick={() => set({ text: '', category: 'all', level: 'all', range: 'all' })}>Show everything</button>}
+        <p><strong>{!all.length ? 'No activity yet' : filtered ? 'No events match' : `Nothing ${RANGE_WORDS[q.range]}`}</strong></p>
+        <p className="rc-muted">{!all.length ? 'Requests from saved chats and events such as model-list refreshes, limits and sync changes will be listed here.' : filtered ? 'Try another search, type, status or time range.' : `${all.length.toLocaleString()} earlier ${all.length === 1 ? 'event' : 'events'} in your history.`}</p>
+        {all.length > 0 && (filtered || q.range !== 'all') && <button type="button" className="rc-link" onClick={() => set({ text: '', category: 'all', level: 'all', range: 'all' })}>{filtered ? 'Show everything' : 'Show all time'}</button>}
       </div>}
       <p className="rc-muted ac-foot">Requests come from this account’s saved chats; other events are kept on this device for 30 days. Logs never include prompts, answers, provider replies or keys.</p>
       {open && <LogDetail entry={open} titles={q.titles} onClose={() => setOpen(null)} />}

@@ -1,6 +1,6 @@
 import { Exit } from '../lib/motion';
 import { MoreHorizontal } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 export interface MoreItem {
   label: string;
@@ -28,6 +28,26 @@ export default function MoreMenu({ items, label = 'More actions' }: { items: Mor
     document.addEventListener('pointerdown', down);
     document.addEventListener('keydown', key, true);
     return () => { document.removeEventListener('pointerdown', down); document.removeEventListener('keydown', key, true); };
+  }, [open]);
+  // Keep the open menu on screen: shift it in from the side edges. The menu mounts a frame after `open` (it animates
+  // in), so the measurement waits for it.
+  useLayoutEffect(() => {
+    if (!open) return;
+    let frame = 0, tries = 0;
+    const place = () => {
+      const menu = box.current?.querySelector<HTMLElement>('.more-menu-list');
+      if (!menu) { if (tries++ < 5) frame = requestAnimationFrame(place); return; }
+      menu.style.translate = ''; menu.style.top = ''; menu.style.bottom = '';
+      const r = menu.getBoundingClientRect(), gap = 8, vw = document.documentElement.clientWidth, vh = window.innerHeight;
+      const dx = r.right > vw - gap ? vw - gap - r.right : r.left < gap ? gap - r.left : 0;
+      if (dx) menu.style.translate = `${dx}px 0`;
+      // It opens upward; near the top of the screen it opens downward instead.
+      if (r.top < gap && r.bottom + r.height < vh - gap) { menu.style.top = 'calc(100% + 6px)'; menu.style.bottom = 'auto'; }
+    };
+    place();
+    // Measure again once the entrance animation has settled (it changes the menu's size while it runs).
+    const settle = setTimeout(place, 260);
+    return () => { cancelAnimationFrame(frame); clearTimeout(settle); };
   }, [open]);
   if (!items.length) return null;
   return (

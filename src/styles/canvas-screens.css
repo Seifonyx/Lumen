@@ -27,6 +27,11 @@ html[data-lumen-canvas] { --canvas-lamplight: #f1e2b6; }
 html[data-lumen-canvas][data-theme='dark'] { --canvas-lamplight: #4d4130; }
 @media (prefers-color-scheme: dark) { html[data-lumen-canvas]:not([data-theme='light']) { --canvas-lamplight: #4d4130; } }
 html[data-lumen-canvas] ::selection { background: var(--canvas-lamplight); color: var(--text); }
+/* "You are here" highlight: Lamplight paper with ink in Light; in Dark a neutral fill with Lamplight-coloured text, since
+ * a warm fill on charcoal reads as brown. */
+html[data-lumen-canvas] { --canvas-highlight-bg: var(--canvas-lamplight); --canvas-highlight-ink: var(--text); }
+html[data-lumen-canvas][data-theme='dark'] { --canvas-highlight-bg: color-mix(in srgb, var(--text) 13%, transparent); --canvas-highlight-ink: #f1e2b6; }
+@media (prefers-color-scheme: dark) { html[data-lumen-canvas]:not([data-theme='light']) { --canvas-highlight-bg: color-mix(in srgb, var(--text) 13%, transparent); --canvas-highlight-ink: #f1e2b6; } }
 /* Phones: a toast arrives under the navigation bar, never over its Back button or title. */
 @media (max-width: 899px) { html[data-lumen-canvas] .toasts { top: calc(env(safe-area-inset-top) + 68px); } }
 
@@ -74,7 +79,7 @@ html[data-lumen-canvas] .proj-stats > span { padding: 0; background: none; borde
 html[data-lumen-canvas] .proj-desc { min-height: 0; font-size: 14px; }
 html[data-lumen-canvas] .proj-time { margin: 2px 0 0; color: var(--text-2); }
 html[data-lumen-canvas] .projects-summary { margin: 0 0 6px; color: var(--text-3); font-size: 13px; }
-html[data-lumen-canvas] .projects-sort select { min-height: 44px; max-width: 100%; padding: 0 30px 0 12px; border: 1px solid var(--cv5-rim); border-radius: 12px; background: var(--bg); color: var(--text-2); font: inherit; }
+html[data-lumen-canvas] .projects-sort select { min-height: 44px; max-width: 100%; }
 html[data-lumen-canvas] .hub-search:has(input[aria-label='Search projects']) { min-width: 0; min-height: 44px; height: auto; }
 html[data-lumen-canvas] .hub-search input[aria-label='Search projects'] { width: 0; min-width: 0; flex: 1; }
 html[data-lumen-canvas] .hub-search > button[aria-label='Clear project search'] { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 10px; background: none; color: var(--text-2); }
@@ -240,19 +245,30 @@ html[data-lumen-canvas] .provider-target-head .btn { flex:none; min-height:44px;
 html[data-lumen-canvas] .provider-connection-body { grid-template-columns: minmax(0, 1fr); }
 
 /* ---------- Calm pass, app-wide (docs/brand/DESIGN_FOUNDATION.md): one field style, quiet secondary buttons. */
-html[data-lumen-canvas] .app select:not([multiple]):not(.rc-routing-settings select) {
-  appearance: none; -webkit-appearance: none; min-height: 40px; height: auto; max-width: 100%; padding: 0 32px 0 12px; border: 1px solid transparent; border-radius: 10px;
-  background: linear-gradient(45deg, transparent 50%, currentColor 50%) calc(100% - 16px) 50% / 5px 5px no-repeat, linear-gradient(135deg, currentColor 50%, transparent 50%) calc(100% - 11px) 50% / 5px 5px no-repeat, var(--cv5-fill);
-  color: var(--text); font: 500 14px var(--font); cursor: pointer;
+/* Selects: on iPhone the glass pop-up button (glass.css) owns them; elsewhere a quiet fill with a line chevron
+ * (two thin diagonal strokes, no image). */
+html[data-lumen-canvas]:not(.glass) select:not([multiple]):not(.rc-routing-settings select) {
+  appearance: none; -webkit-appearance: none; min-height: 40px; height: auto; max-width: 100%; padding: 0 34px 0 12px; border: 1px solid transparent; border-radius: 10px;
+  background:
+    linear-gradient(45deg, transparent calc(50% - .75px), currentColor calc(50% - .75px), currentColor calc(50% + .75px), transparent calc(50% + .75px)) right 17px center / 6px 6px no-repeat,
+    linear-gradient(-45deg, transparent calc(50% - .75px), currentColor calc(50% - .75px), currentColor calc(50% + .75px), transparent calc(50% + .75px)) right 11px center / 6px 6px no-repeat,
+    var(--cv5-fill);
+  color: var(--text); font: 500 14px var(--font); text-overflow: ellipsis; cursor: pointer;
 }
-html[data-lumen-canvas] .app select:not([multiple]):focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
-html[data-lumen-canvas] .app :is(.field-block input, .field-block textarea, .library-form input, .library-form textarea) { border-color: transparent; background: var(--surface); box-shadow: none; }
-html[data-lumen-canvas] .app :is(.field-block input, .field-block textarea):focus { outline: 2px solid var(--focus); outline-offset: 1px; }
+html[data-lumen-canvas]:not(.glass) select:not([multiple]):focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+/* Text fields everywhere, dialogs and sheets included: a quiet fill, no outline, a focus ring. Fields that live inside
+ * their own control (composer, search bars, the key field, code editors) keep their own look. */
+html[data-lumen-canvas] :where(input[type='text'], input[type='password'], input[type='email'], input[type='url'], input[type='time'], input[type='datetime-local'], input[type='number'], input:not([type]), textarea):not(:is(.composer, .hub-search, .search, .rc-search, .cv-search, .key-input-wrap, .phone-page-search, .cm-editor, .canvas-panel, .model-search) *) {
+  border-color: transparent; border-radius: 12px; background: var(--cv5-fill); box-shadow: none;
+}
+html[data-lumen-canvas] :where(input, textarea):not(:is(.composer, .hub-search, .search, .rc-search, .cv-search, .key-input-wrap, .phone-page-search, .cm-editor, .canvas-panel, .model-search) *):focus { border-color: transparent; background: var(--surface); box-shadow: 0 0 0 2px var(--focus); }
 html[data-lumen-canvas] .library-form-hint { align-self: center; margin-inline-end: auto; }
 html[data-lumen-canvas] .app :is(.btn.small.logout, .project-edit-btn, .all-chats-select) { border-color: transparent; background: var(--cv5-fill); box-shadow: none; }
 html[data-lumen-canvas] .app :is(.btn.small.logout, .project-edit-btn, .all-chats-select):hover { background: var(--cv5-fill-strong); }
-@media (max-width: 899px) { html[data-lumen-canvas] .app select:not([multiple]) { min-height: 44px; } }
-@media (forced-colors: active) { html[data-lumen-canvas] :is(.settings-card, .proj-grid) { border: 1px solid CanvasText; } html[data-lumen-canvas] .app select:not([multiple]) { border-color: CanvasText; } }
+@media (max-width: 899px) { html[data-lumen-canvas]:not(.glass) select:not([multiple]) { min-height: 44px; } }
+/* Settings → Memory on phones: the memory field gets the full width; where it applies and Add go underneath. */
+@media (max-width: 899px) { html[data-lumen-canvas] .memory-add > input { flex: 1 1 100%; } html[data-lumen-canvas] .memory-add > .memory-scope { flex: 1 1 auto; min-width: 0; } }
+@media (forced-colors: active) { html[data-lumen-canvas] :is(.settings-card, .proj-grid) { border: 1px solid CanvasText; } html[data-lumen-canvas] select:not([multiple]) { border-color: CanvasText; } }
 /* Project page: chats as one grouped list; the options button is a full 44 px target at readable contrast. */
 html[data-lumen-canvas] .project-chat-list { padding: 0; border-radius: 16px; background: var(--surface); overflow: hidden; }
 html[data-lumen-canvas] .project-chat-list > .project-chat { padding-inline: 14px 4px; border-bottom: 0; }
@@ -260,3 +276,37 @@ html[data-lumen-canvas] .project-chat-list > .project-chat + .project-chat { box
 html[data-lumen-canvas] .project-chat-menu > .icon-btn { min-width: 44px; min-height: 44px; color: var(--text-2); }
 /* Desktop Settings: the section title is enough; the one-line blurb stays on phones, where it's the page's intro. */
 @media (min-width: 900px) { html[data-lumen-canvas] .settings-heading p { display: none; } }
+/* Data analysis / Run: the code takes at most about half the window so the output is visible without scrolling. */
+html[data-lumen-canvas] .analysis-panel .run-code { max-height: min(42vh, 420px); overflow: auto; }
+html[data-lumen-canvas] .analysis-panel .run-toolbar { position: sticky; top: 0; z-index: 1; background: var(--surface); }
+/* Group labels in sentence case everywhere (model picker, attach menu, run output, tags), as in Settings and Router. */
+html[data-lumen-canvas] :is(.mp-label, .attach-menu-title, .run-out-head > span, .tag, .file-chip .chip-note) { text-transform: none; letter-spacing: 0; }
+html[data-lumen-canvas] :is(.mp-label, .attach-menu-title) { font: 600 13px/1.3 var(--font); color: var(--text-2); }
+html[data-lumen-canvas] .run-out-head { font: 600 13px var(--font); text-transform: none; letter-spacing: 0; color: var(--text-2); }
+html[data-lumen-canvas] .tag { font-size: 12px; font-weight: 500; border: 0; }
+/* Buttons in two kinds only: the ink pill for the one main action, a quiet fill for everything else (no outlines).
+ * Suggestion chips and status pills follow the same fill. */
+html[data-lumen-canvas] .btn:not(.primary):not(.danger):not(.danger-fill):not(.danger-text):not(.ghost):not(.link-btn) { border-color: transparent; background: var(--cv5-fill); box-shadow: none; }
+html[data-lumen-canvas] .btn:not(.primary):not(.danger):not(.danger-fill):not(.danger-text):not(.ghost):not(.link-btn):hover:not(:disabled) { background: var(--cv5-fill-strong); }
+html[data-lumen-canvas] :is(.preset-chip, .pf-preset, .key-status-pill, .quick-tool) { border-color: transparent; background: var(--cv5-fill); box-shadow: none; }
+html[data-lumen-canvas] :is(.preset-chip, .pf-preset):hover { background: var(--cv5-fill-strong); }
+@media (forced-colors: active) { html[data-lumen-canvas] :is(.btn, .preset-chip, .pf-preset) { border-color: ButtonText; } }
+/* Quick tools: tiles and the form by tone; the chosen tile uses the "you are here" highlight. */
+html[data-lumen-canvas] .free-tool-picker > button { border-color: transparent; background: var(--cv5-fill); box-shadow: none; }
+html[data-lumen-canvas] .free-tool-picker > button[aria-selected='true'] { background: var(--canvas-highlight-bg); color: var(--canvas-highlight-ink); }
+html[data-lumen-canvas] .free-tool-form { border-color: transparent; background: var(--cv5-fill); box-shadow: none; }
+/* Command palette: its top edge stays put while results change (no re-centring jump); readable key hints. */
+@media (min-width: 900px) { html[data-lumen-canvas] .modal-backdrop:has(.command-palette) { place-items: start center; padding-top: 14vh; } }
+html[data-lumen-canvas] .command-palette .command-hint { font-size: 12px; }
+/* Knowledge: the empty library by tone (no dashed outline); the indexing note is one line with details on tap. */
+html[data-lumen-canvas] .knowledge-empty { border-color: transparent; border-style: solid; background: var(--surface); border-radius: 16px; }
+html[data-lumen-canvas] .knowledge-disclosure { margin-top: 12px; color: var(--text-2); }
+html[data-lumen-canvas] .knowledge-disclosure > summary { cursor: pointer; min-height: 40px; line-height: 1.5; }
+html[data-lumen-canvas] .knowledge-disclosure > p { margin: 6px 0 0; }
+html[data-lumen-canvas] :is(.project-drop, .privacy-preview) { border-style: solid; border-color: transparent; }
+/* Projects: search and sort share one row. */
+html[data-lumen-canvas] :has(> .projects-sort) { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; }
+html[data-lumen-canvas] :has(> .projects-sort) > .hub-search { flex: 1 1 auto; min-width: 0; }
+html[data-lumen-canvas] .projects-sort { flex: none; margin-inline-start: 0; }
+/* Sign-in: the mark sits in a soft pool of Lamplight, the brand's one warm light. */
+html[data-lumen-canvas] .login { background: radial-gradient(520px 340px at 50% 38%, color-mix(in srgb, var(--canvas-lamplight) 60%, transparent), transparent 72%), var(--bg); }

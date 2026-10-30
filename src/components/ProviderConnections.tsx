@@ -34,7 +34,7 @@ export default function ProviderConnections({ main, draft, setDraft, saved, targ
     const visibleKey = Boolean(shown[id]);
     return (
       <div className="key-input-wrap">
-        <input type={visibleKey ? 'text' : 'password'} autoComplete="off" spellCheck={false} autoCapitalize="none" placeholder={placeholder} aria-label={`${label} API key`} value={val} onChange={(e) => setDraft({ ...draft, [id]: e.target.value })} />
+        <input type={visibleKey ? 'text' : 'password'} autoComplete="off" spellCheck={false} autoCapitalize="none" placeholder={placeholder ?? 'Paste your API key'} aria-label={`${label} API key`} value={val} onChange={(e) => setDraft({ ...draft, [id]: e.target.value })} />
         {val && <button className="icon-btn sm" onClick={() => setDraft({ ...draft, [id]: '' })} aria-label="Clear key" title="Clear"><X size={14} /></button>}
         <button className="icon-btn sm" onClick={() => setShown((s) => ({ ...s, [id]: !s[id] }))} aria-label={visibleKey ? 'Hide' : 'Reveal'} title={visibleKey ? 'Hide' : 'Reveal'}>{visibleKey ? <EyeOff size={14} /> : <Eye size={14} />}</button>
       </div>

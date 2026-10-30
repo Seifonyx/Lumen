@@ -18,7 +18,7 @@
 .app[data-lumen-canvas-shell] .tx-areas { display: flex; gap: 6px; margin: -2px 0 0; padding: 2px 0; overflow-x: auto; scrollbar-width: none; }
 .app[data-lumen-canvas-shell] .tx-areas::-webkit-scrollbar { display: none; }
 .app[data-lumen-canvas-shell] .tx-areas button { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 13px; border: 0; border-radius: 999px; background: var(--canvas-fill); color: var(--canvas-secondary); font: 500 14px/1 var(--canvas-body-font); cursor: pointer; }
-.app[data-lumen-canvas-shell] .tx-areas button[aria-pressed="true"] { background: var(--canvas-lamplight, var(--canvas-fill-strong)); color: var(--canvas-ink); }
+.app[data-lumen-canvas-shell] .tx-areas button[aria-pressed="true"] { background: var(--canvas-highlight-bg, var(--canvas-fill-strong)); color: var(--canvas-highlight-ink, var(--canvas-ink)); }
 .app[data-lumen-canvas-shell] .tx-count { font: 500 12px/1 var(--canvas-data-font); opacity: .62; font-variant-numeric: tabular-nums; }
 .app[data-lumen-canvas-shell] .tx-areas button[aria-pressed="true"] .tx-count { opacity: 1; }
 

@@ -109,7 +109,7 @@
 .app[data-lumen-canvas-shell] .rc-model { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:4px 12px; padding:14px 16px; }
 .app[data-lumen-canvas-shell] .rc-model > div { display:grid; gap:3px; min-width:0; }
 .app[data-lumen-canvas-shell] .rc-model h4 { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; font-size:15px; font-weight:600; overflow-wrap:anywhere; }
-.app[data-lumen-canvas-shell] .rc-model h4 .rc-selected { padding:1px 8px; border-radius:999px; background:var(--canvas-lamplight); color:var(--canvas-ink); font-size:12px; font-weight:500; }
+.app[data-lumen-canvas-shell] .rc-model h4 .rc-selected { padding:1px 8px; border-radius:999px; background:var(--canvas-highlight-bg); color:var(--canvas-highlight-ink); font-size:12px; font-weight:500; }
 .app[data-lumen-canvas-shell] .rc-model :is(small,p) { margin:0; color:var(--canvas-secondary); font-size:13px; line-height:1.4; }
 .app[data-lumen-canvas-shell] .rc-model code { font:12px var(--canvas-data-font); overflow-wrap:anywhere; }
 .app[data-lumen-canvas-shell] .rc-model > p { grid-column:1; display:flex; flex-wrap:wrap; gap:2px 12px; margin:0; }
@@ -233,7 +233,7 @@
 .app[data-lumen-canvas-shell] .rc-segmented span { display: grid; place-items: center; min-height: 38px; padding: 0 4px; border-radius: 9px; color: var(--canvas-secondary); font: 500 14px/1.2 var(--canvas-body-font); text-align: center; overflow-wrap: anywhere; }
 .app[data-lumen-canvas-shell] .rc-segmented input:checked + span { background: var(--canvas-surface); color: var(--canvas-ink); box-shadow: 0 1px 3px color-mix(in srgb, var(--canvas-ink) 14%, transparent); }
 .app[data-lumen-canvas-shell] .rc-segmented input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 1px; }
-.app[data-lumen-canvas-shell] .rc-routing-settings select { appearance: none; min-height: 40px; padding: 0 26px 0 8px; border: 0; background: linear-gradient(45deg, transparent 50%, currentColor 50%) calc(100% - 13px) 50% / 5px 5px no-repeat, linear-gradient(135deg, currentColor 50%, transparent 50%) calc(100% - 8px) 50% / 5px 5px no-repeat; color: var(--canvas-secondary); font: 500 15px var(--canvas-body-font); text-align: end; cursor: pointer; }
+.app[data-lumen-canvas-shell] .rc-routing-settings select { appearance: none; min-height: 40px; padding: 0 26px 0 8px; border: 0; background: linear-gradient(45deg, transparent calc(50% - .75px), currentColor calc(50% - .75px), currentColor calc(50% + .75px), transparent calc(50% + .75px)) right 15px center / 6px 6px no-repeat, linear-gradient(-45deg, transparent calc(50% - .75px), currentColor calc(50% - .75px), currentColor calc(50% + .75px), transparent calc(50% + .75px)) right 9px center / 6px 6px no-repeat; color: var(--canvas-secondary); font: 500 15px var(--canvas-body-font); text-align: end; cursor: pointer; }
 @media (max-width: 899px) { .app[data-lumen-canvas-shell] .rc-segmented span { min-height: 42px; } }
 @media (forced-colors: active) { .app[data-lumen-canvas-shell] .rc-segmented input:checked + span { outline: 2px solid Highlight; } }
 .app[data-lumen-canvas-shell] .rc-routing-settings .models-back { justify-self: start; margin-bottom: 4px; }
@@ -255,3 +255,12 @@
 .app[data-lumen-canvas-shell] .screen-failed { display: grid; gap: 8px; justify-items: start; padding: 20px 16px; border-radius: 16px; background: var(--canvas-surface); }
 .app[data-lumen-canvas-shell] .screen-failed p { margin: 0; color: var(--canvas-secondary); font-size: 15px; }
 .app[data-lumen-canvas-shell] .screen-failed span { display: flex; flex-wrap: wrap; gap: 8px; }
+/* One disclosure in Router: a thin chevron that turns, instead of the browser's triangle. */
+.app[data-lumen-canvas-shell] .rc-page details:not(.rc-current-disclosure) > summary { display: flex; align-items: center; gap: 10px; list-style: none; cursor: pointer; }
+.app[data-lumen-canvas-shell] .rc-page details:not(.rc-current-disclosure) > summary::-webkit-details-marker { display: none; }
+.app[data-lumen-canvas-shell] .rc-page details:not(.rc-current-disclosure) > summary::before { content: ''; flex: none; width: 6px; height: 6px; margin-inline: 2px 2px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform .2s var(--canvas-motion-easing); }
+.app[data-lumen-canvas-shell] .rc-page details[open]:not(.rc-current-disclosure) > summary::before { transform: rotate(45deg); }
+/* Layout editor: the same 760 px column as the rest of Router; the mode switch sits in its row. */
+.app[data-lumen-canvas-shell] .rc-page .cv-layout-editor { max-width: 760px; margin-inline: auto; }
+.app[data-lumen-canvas-shell] .cv-layout-editor .setting-row:has(> .segmented) { flex-wrap: wrap; align-items: center; gap: 10px 16px; border-bottom: 0; }
+.app[data-lumen-canvas-shell] .cv-layout-editor .setting-row > .segmented { flex: none; }

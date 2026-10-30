@@ -42,6 +42,8 @@ function restoreAnchor(el: HTMLElement, a: Anchor) {
   return true;
 }
 
+const glassPhone = () => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches;
+
 export interface ChatViewProps {
   onExpandSidebar: () => void;
 }
@@ -74,12 +76,20 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
   const [projectModalId, setProjectModalId] = useState<string | null>(null);
   if (CANVAS_SHELL) useScreenBackLayer!(Boolean(projectModalId), () => setProjectModalId(null), () => setProjectModalId(projectModalId), 'project-settings');
   const [announcement,setAnnouncement]=useState('');
+  // iPhone (Canvas, glass): the usage ring sits in the bar's glass capsule instead of the composer.
+  const [meterInBar,setMeterInBar]=useState(()=>CANVAS_SHELL&&glassPhone());
+  useEffect(()=>{
+    if(!CANVAS_SHELL)return;
+    const mq=window.matchMedia('(max-width: 899px)');const on=()=>setMeterInBar(glassPhone());
+    mq.addEventListener('change',on);return()=>mq.removeEventListener('change',on);
+  },[]);
   const previousReply=useRef<{id?:string;streaming:boolean}>({streaming:false});
 
   const messages = chat?.messages || [];
   const changeCount = Object.keys(chat?.changes || {}).length;
   const summary = chat ? activeSummary(chat) : null;
   const empty = messages.length === 0 && !summary && !chat?.repo;
+  const meter = chat && (messages.length > 0 || summary) ? <UsageMeter chat={chat} model={model} /> : null;
   const lastText = messages.length ? messages[messages.length - 1].text.length + (messages[messages.length - 1].thinking?.length || 0) : 0;
   useEffect(()=>{
     const previous=previousReply.current;
@@ -276,6 +286,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
         </div>
         <div className="spacer" />
         <div className="topbar-trailing">
+        {meterInBar && meter}
         {Boolean(chat?.documents?.length) && <button className="icon-btn" aria-label="Open canvas" title="Open canvas" onClick={() => useStore.getState().openCanvas()}><FileText size={18} /></button>}
         {CANVAS_SHELL ? <>{chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}{!empty && <RailToggle />}<button type="button" className="icon-btn cv-compose" aria-label="New chat" title={`New chat (${modKey}⇧O)`} onClick={() => (newGeneralChat || useStore.getState().newChat)()}><MessageSquarePlus size={19} /></button></> : chat?.assistant && <span className="assistant-badge" title={chat.assistant.description || chat.assistant.name}>{chat.assistant.name}</span>}
         {chat?.repo && (
@@ -356,7 +367,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
       <Composer
         model={model}
         modelPicker={<ModelPicker value={model} onChange={setChatModel} opensUp />}
-        meter={chat && (messages.length > 0 || summary) ? <UsageMeter chat={chat} model={model} /> : null}
+        meter={meterInBar ? null : meter}
       />
       {projectModalId && (
         <ProjectManager

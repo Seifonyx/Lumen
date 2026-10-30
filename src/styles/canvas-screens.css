@@ -384,20 +384,20 @@ html.glass[data-lumen-canvas] {
   --lg-ink: #0b0b0c; --lg-on-ink: #fff;
 }
 html.glass[data-lumen-canvas][data-theme='dark'] {
-  --lg-tint: rgb(44 44 48 / .5);
-  --lg-tint-press: rgb(70 70 76 / .6);
+  --lg-tint: rgb(60 60 62 / .64);
+  --lg-tint-press: rgb(90 90 94 / .7);
   --lg-filter: blur(12px) saturate(1.6) brightness(1.1);
-  --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 0 1px .5px rgb(255 255 255 / .2), inset 0 -.5px .5px rgb(255 255 255 / .06);
-  --lg-lift: 0 10px 30px -6px rgb(0 0 0 / .6), 0 2px 6px rgb(0 0 0 / .3);
+  --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 0 1px 0 rgb(255 255 255 / .14), inset 0 -1px 0 rgb(255 255 255 / .12);
+  --lg-lift: 0 0 0 transparent;
   --lg-ink: #f5f5f7; --lg-on-ink: #000;
 }
 @media (prefers-color-scheme: dark) {
   html.glass[data-lumen-canvas]:not([data-theme='light']) {
-    --lg-tint: rgb(44 44 48 / .5);
-    --lg-tint-press: rgb(70 70 76 / .6);
+    --lg-tint: rgb(60 60 62 / .64);
+    --lg-tint-press: rgb(90 90 94 / .7);
     --lg-filter: blur(12px) saturate(1.6) brightness(1.1);
-    --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 0 1px .5px rgb(255 255 255 / .2), inset 0 -.5px .5px rgb(255 255 255 / .06);
-    --lg-lift: 0 10px 30px -6px rgb(0 0 0 / .6), 0 2px 6px rgb(0 0 0 / .3);
+    --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 0 1px 0 rgb(255 255 255 / .14), inset 0 -1px 0 rgb(255 255 255 / .12);
+    --lg-lift: 0 0 0 transparent;
     --lg-ink: #f5f5f7; --lg-on-ink: #000;
   }
 }
@@ -409,12 +409,25 @@ html.glass[data-lumen-canvas][data-theme='dark'] {
     border: 0; background: var(--lg-tint); box-shadow: var(--lg-edge), var(--lg-lift);
     -webkit-backdrop-filter: var(--lg-filter); backdrop-filter: var(--lg-filter);
   }
-  /* Bar: no strip, only the soft scroll edge (glass.css) behind two floating controls; lighter icons. */
-  html.glass[data-lumen-canvas] .app .main > .topbar .menu-btn { width: 46px; height: 46px; }
-  html.glass[data-lumen-canvas] .app .main > .topbar .topbar-trailing { height: 46px; padding: 0 3px; gap: 0; }
-  html.glass[data-lumen-canvas] .app .main > .topbar .topbar-trailing .icon-btn { width: 42px; height: 42px; }
+  /* Bar (sizes from the iOS 26 reference): 44 pt circle and a 44 pt capsule of two 44 pt slots, 16 pt from the edges,
+     no strip behind them, only the soft scroll edge (glass.css). Glyphs in a slightly softened label colour. */
+  html.glass[data-lumen-canvas] .app .main > .topbar .menu-btn { width: 44px; height: 44px; }
+  html.glass[data-lumen-canvas] .app .main > .topbar .topbar-trailing { height: 44px; padding: 0 5px; gap: 0; }
+  html.glass[data-lumen-canvas] .app .main > .topbar .topbar-trailing :is(.icon-btn, .usage-chip) { width: 44px; height: 44px; }
+  html.glass[data-lumen-canvas] .app .main > .topbar :is(.menu-btn, .topbar-trailing .icon-btn) { color: color-mix(in srgb, var(--text) 86%, transparent); }
   html.glass[data-lumen-canvas] .app .main > .topbar :is(.menu-btn, .topbar-trailing .icon-btn) svg { width: 21px; height: 21px; stroke-width: 1.8; }
   html.glass[data-lumen-canvas] .app .main > .topbar :is(.menu-btn, .topbar-trailing .icon-btn):active { background: var(--lg-tint-press); }
+  /* The usage ring in the capsule: 21 pt, a thin track and the fill in ink (amber, then red, as it fills). */
+  html.glass[data-lumen-canvas] .app .main > .topbar .usage-meter { display: flex; align-self: center; margin: 0; top: auto; translate: none; }
+  html.glass[data-lumen-canvas] .app .main > .topbar .usage-chip { display: grid; place-items: center; min-height: 0; padding: 0; gap: 0; border: 0; border-radius: 50%; background: none; box-shadow: none; }
+  html.glass[data-lumen-canvas] .app .main > .topbar .usage-chip > svg:last-child { display: none; }
+  html.glass[data-lumen-canvas] .app .main > .topbar .usage-chip :is(.usage-chip-words, .usage-status) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  html.glass[data-lumen-canvas] .app .main > .topbar .usage-ring { width: 21px; height: 21px; stroke-width: 2.2; }
+  html.glass[data-lumen-canvas] .app .main > .topbar .usage-ring-track { stroke: color-mix(in srgb, var(--text) 22%, transparent); }
+  html.glass[data-lumen-canvas] .app .main > .topbar .usage-chip:not(.mid):not(.high) .usage-ring-fill { stroke: var(--text); }
+  /* Title 17 pt semibold; the project beneath it at 15 pt in the secondary colour. */
+  html.glass[data-lumen-canvas] .app .topbar-center .project-topbar-pill { font: 400 15px/1.2 var(--font); color: var(--text-3); }
+  html.glass[data-lumen-canvas] .app .topbar-center .project-topbar-pill svg { display: none; }
   html.glass[data-lumen-canvas] .app .chat-heading { font: 600 17px/1.25 var(--font); letter-spacing: -.02em; }
 
   /* Composer: one glass capsule floating over the conversation; + and the model are plain glyphs on the glass and

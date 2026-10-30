@@ -344,10 +344,10 @@ html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas][data-th
   html[data-lumen-canvas]:not(.glass) .app[data-lumen-canvas-shell] .main > .topbar { background: var(--native-bar); -webkit-backdrop-filter: saturate(1.8) blur(20px); backdrop-filter: saturate(1.8) blur(20px); box-shadow: 0 .5px 0 var(--native-sep); }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .chat-heading { font: 600 17px/1.25 var(--font); letter-spacing: -.01em; }
   /* Conversation: body 17 pt; replies sit on the page; your messages in a soft bubble. */
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown { font-size: 17px; line-height: 1.47; letter-spacing: -.01em; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown :is(h1, h2) { font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown h3 { font-size: 17px; font-weight: 600; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .msg.user .bubble { border: 0; border-radius: 20px; background: var(--user-bubble); font-size: 17px; line-height: 1.4; padding: 9px 14px; box-shadow: none; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown { font-size: calc(var(--fs, 15px) + 2px); line-height: 1.47; letter-spacing: -.01em; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown :is(h1, h2) { font-size: 1.18em; font-weight: 600; letter-spacing: -.02em; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown h3 { font-size: 1em; font-weight: 600; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .msg.user .bubble { border: 0; border-radius: 20px; background: var(--user-bubble); font-size: calc(var(--fs, 15px) + 2px); line-height: 1.4; padding: 9px 14px; box-shadow: none; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown .table-wrap { border-color: var(--native-sep); border-width: .5px; }
   /* Composer: one flat capsule on the system fill; a round ink send button; no shadow, no outline. */
   html[data-lumen-canvas]:not(.glass) .app .composer-wrap[data-lumen-canvas-composer] .composer { border: 0; border-radius: 24px; background: var(--native-fill); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }

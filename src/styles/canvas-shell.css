@@ -238,9 +238,10 @@
   html.glass .app[data-lumen-canvas-shell] .cv-nav { background: var(--sidebar, var(--bg)); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
-/* Start-up frame (index.html, Canvas build only): the message box sits where the Canvas home puts it. */
+/* Start-up frame (index.html, Canvas build only): the message box sits where the Canvas home puts it (161.5 since
+   Lumen's mark replaced the taller moon, 2026-10-30). */
 @media (min-width: 900px) {
-  .app[data-lumen-canvas-shell].app-skeleton .sk-welcome { height: 177.8px; }
+  .app[data-lumen-canvas-shell].app-skeleton .sk-welcome { height: 161.5px; }
   .app[data-lumen-canvas-shell].app-skeleton .composer-wrap { min-height: 147px; }
   .app[data-lumen-canvas-shell].app-skeleton .sk-composer { min-height: 108px; max-width: 760px; border-radius: var(--canvas-composer-radius, 26px); }
 }

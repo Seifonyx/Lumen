@@ -26,7 +26,7 @@ const categories: {id:CollectionKind;label:string;description:string}[] = [
  {id:'photos',label:'Photos',description:'Photos and images you added to chats.'},
  {id:'files',label:'Attached files',description:'Files you attached to chats.'},
  {id:'generated',label:'Made by Lumen',description:'Images and files Lumen made in replies.'},
- {id:'searchable',label:'Knowledge',description:'Your reference library: Lumen searches it and cites pages. Kept on this device.'},
+ {id:'searchable',label:'Knowledge',description:'Your reference library: Lumen searches it and cites pages. Kept only on this device.'},
 ];
 const src = (item: LibraryItem) => 'file' in item && item.file.kind === 'image' ? item.file.data ? `data:${item.file.mime};base64,${item.file.data}` : item.file.thumb : undefined;
 // Cache only the parser function, never an account's content. Remounted history views

@@ -417,7 +417,7 @@
 /* Feature-local horizontal sections and contained Search. The primary sidebar is unchanged. */
 .app[data-lumen-canvas-shell] .phone-sections { display:none; }
 .app[data-lumen-canvas-shell] .rc-scroll { display:contents; }
-.app[data-lumen-canvas-shell] .rc-scroll > * { max-width:1080px;margin-inline:auto; }
+.app[data-lumen-canvas-shell] .rc-scroll > * { max-width:760px;margin-inline:auto; }
 @media(max-width:899px){
  .app[data-lumen-canvas-shell] .phone-sections { display:flex;flex:none;gap:4px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scroll-padding-inline:12px;scrollbar-width:none;scrollbar-color:var(--canvas-rim) transparent;padding:8px 12px 10px;margin:0;max-width:none;mask-image:linear-gradient(90deg,transparent,#000 8px,#000 calc(100% - 12px),transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 8px,#000 calc(100% - 12px),transparent); }
  .app[data-lumen-canvas-shell] .phone-sections::-webkit-scrollbar { display:none; }
@@ -444,5 +444,3 @@
 @media(max-width:899px){ .app[data-lumen-canvas-shell] .rc-page > .phone-page-search { width:100%;margin-inline:0; } }
 /* Every contextual Search owns its clear action; Safari must not add a second glyph. */
 .app[data-lumen-canvas-shell] .phone-page-search input::-webkit-search-cancel-button { display:none; }
-/* Phones: a toast arrives under the navigation bar, never over its Back button or title. */
-@media (max-width: 899px) { html[data-lumen-canvas] .toasts { top: calc(env(safe-area-inset-top) + 68px); } }

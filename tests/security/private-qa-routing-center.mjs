@@ -123,7 +123,8 @@ try {
       assert.doesNotMatch(await rc(page).locator('[data-provider="gemini"]').innerText(), /No key saved|permission off/);
       assert.ok(await rc(page).locator('#sb-group-connected').isVisible());
       assert.ok(await rc(page).locator('[data-provider="groq"]').isVisible(), 'unconnected providers are listed, not folded');
-      assert.match(await rc(page).locator('[data-provider="groq"]').innerText(), /Groq\s+Not connected/);
+      assert.equal((await rc(page).locator('[data-provider="groq"]').innerText()).trim(), 'Groq', 'an unconnected provider shows its name only; its group says it is not connected');
+      assert.ok(await rc(page).locator('#sb-group-free').isVisible());
       await shot(page, join(out, `${tag}-2-providers-folded.png`));
       await rc(page).getByRole('searchbox', { name: 'Find a provider' }).fill('groq');
       await settle(page, 200);

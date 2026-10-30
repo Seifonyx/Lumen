@@ -1,6 +1,17 @@
 # Lumen operational handoff
 
-## Active — Phase 5 Slice 2: Tools experience / draft owner review (2026-10-29)
+## Active — Router (formerly Prism) and the calm pass / draft owner review (2026-10-30)
+
+Branch `feat/settings-account-experience`, [PR #63](https://github.com/Seifonyx/Lumen/pull/63) (draft) against `main` `532dbcf`. Owner-approved scope: rename Prism to **Router** and make it hold keys, models, routing, layouts, usage and diagnostics with no duplicates in Settings ([note](docs/reviews/switchboard-checkpoint/README.md)); then (2026-10-30) "do all of these now" for the cleanup proposal on Router and the phone Settings index, with the rest of the app in a later phase ([note](docs/reviews/calm-pass/README.md), rules in [DESIGN_FOUNDATION.md](docs/brand/DESIGN_FOUNDATION.md)).
+
+- Delivered (Canvas only; the ordinary build keeps today's Settings): Router with provider grid and icons, keys on each provider's page, Routing (fallback order), Activity (Usage + Diagnostics), first run on Google AI Studio; Settings index slimmed; calm pass (tone instead of outlines, text secondary actions, 28/17/15/13 type, 760 px column, Lamplight for the active section and the model in use, toasts below the phone bar).
+- Preserved: key storage and per-provider saves, in-memory drafts, routing/eligibility, history and Exit, every route into Router (`diagnostics` opens Activity at its part).
+- Verification and limits: see the PR body for the exact-head CI run; physical iPhone/VoiceOver/Dynamic Type unverified; 21 Settings-driving suites run only on the ordinary build (listed in `tests/e2e/canvas-core.txt`).
+- Next (owner-named, not started): the calm pass for Chat, Library, Tools and the rest of the app, as a later phase.
+
+**STOP for owner review of PR #63. No merge or deploy without the owner's word.** Overall seven-phase completion percentage is not defined.
+
+## Historical — Phase 5 Slice 2: Tools experience / draft owner review (2026-10-29)
 
 Branch `feat/phase5-tools-experience` from released main `2df3d60af43e4ed6686b501803e6662ba592b80f` in Lumen-local (separate main worktree untouched). Owner approved the actual 390px iPhone Light checkpoint and asked for expansion without routine approval pauses. App source `1c1634749db0767dd3a367625ffaa9f10d1d3ac4`; later commits add evidence/docs only. [Design](docs/design/PHASE5_TOOLS_EXPERIENCE.md), [72 real-app captures and verification](docs/reviews/phase5-tools/README.md). Draft PR and exact-head CI: see the PR and the live checkpoint.
 

@@ -274,11 +274,11 @@ try {
             const row = root?.querySelector('.rc-models-body .rc-model:has(.rc-use button:not(:disabled))');
             const use = row?.querySelector('.rc-use button:not(:disabled)');
             const tabs = root?.querySelector('.phone-sections'), search = root?.querySelector('.rc-search-footer .rc-search');
-            if (!row || !use || !tabs || !search) return null;
+            if (!row || !use || !tabs) return null;
             const rect = el => { const r = el.getBoundingClientRect(); return { top:r.top, bottom:r.bottom, left:r.left, right:r.right, height:r.height }; };
-            return { row:rect(row), action:rect(use), tabs:rect(tabs), search:rect(search), viewport:{ width:innerWidth,height:innerHeight }, scroll:root.scrollTop, model:row.querySelector('h4')?.textContent };
+            return { row:rect(row), action:rect(use), tabs:rect(tabs), search:search ? rect(search) : { top:innerHeight }, viewport:{ width:innerWidth,height:innerHeight }, scroll:root.scrollTop, model:row.querySelector('h4')?.textContent };
           });
-          assert.ok(geometry, 'fixture provides a selectable model and the contextual Search');
+          assert.ok(geometry, 'fixture provides a selectable model (Search appears only past eight models)');
           assert.equal(geometry.scroll, 0, 'Models landing has not been scrolled');
           assert.ok(geometry.row.top >= geometry.tabs.bottom - 1, `model below navigation: ${JSON.stringify(geometry)}`);
           assert.ok(geometry.row.bottom <= geometry.search.top - 2, `complete model row above contextual Search: ${JSON.stringify(geometry)}`);

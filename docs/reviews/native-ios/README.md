@@ -24,3 +24,17 @@ the branch now (iPhone UA, glass on; Windows font in the captures, San Francisco
 - System font on iPhone glass only; Geist everywhere else. Dark secondary grey #98989f (AA on selected rows).
 - Fixed: model-picker layout rows overflowed the sheet; the closed drawer's shadow showed along the left edge.
 - Light glass is tuned by eye (no light reference capture yet).
+
+## Round 3: measured against native captures (2026-10-31)
+
+Owner feedback with two iPhone screenshots (Lumen and a native iOS 26 AI app): a dark shadow at the top that blurs the
+buttons; remove the chat name; at rest the message box should hold +, the mic and talk, with the model once it opens.
+`round3/` shows the result.
+
+- The dark band came from the scroll-edge layer's blur behind the bar controls; it is now a plain fade into the page.
+- Glass on black measured at #1c1c1c with a bright 1 px top rim and a short sheen; Lumen now matches (tint
+  `rgb(44 44 46 / .62)` plus a 7% white sheen).
+- No chat title in the bar on iPhone (incognito keeps its label).
+- Message box: 20 pt from the edges (10 pt under 380 pt), 52 pt tall at rest: + · message · dictate · talk; the model
+  appears while writing.
+- Thinking row and file cards without outlines; the model name under replies in the system font, not monospace.

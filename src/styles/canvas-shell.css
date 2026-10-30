@@ -240,7 +240,8 @@
 
 /* Start-up frame (index.html, Canvas build only): the message box sits where the Canvas home puts it. */
 @media (min-width: 900px) {
-  .app[data-lumen-canvas-shell].app-skeleton .sk-welcome { height: 177.8px; }
+  /* The greeting plus the row of starters under it, measured so the frame's message box lands on the real one. */
+  .app[data-lumen-canvas-shell].app-skeleton .sk-welcome { height: 282px; }
   .app[data-lumen-canvas-shell].app-skeleton .composer-wrap { min-height: 147px; }
   .app[data-lumen-canvas-shell].app-skeleton .sk-composer { min-height: 108px; max-width: 760px; border-radius: var(--canvas-composer-radius, 26px); }
 }

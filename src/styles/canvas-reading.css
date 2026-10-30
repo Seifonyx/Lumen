@@ -148,3 +148,5 @@ html[data-lumen-canvas] .app[data-lumen-canvas-shell] .msg.assistant .error-box 
   .app[data-lumen-canvas-shell] .msg-actions { flex-wrap: wrap; row-gap: 2px; }
   .app[data-lumen-canvas-shell] .msg-actions :is(.model-tag, .route-why-wrap) { flex: 1 1 100%; white-space: normal; overflow: visible; }
 }
+/* Phones: the reply's ⋯ sits at the end of its row, so its menu opens from the right edge, inside the screen. */
+@media (max-width: 899px) { .app[data-lumen-canvas-shell] .msg-actions .more-menu-list { inset-inline-start: auto; inset-inline-end: 0; } }

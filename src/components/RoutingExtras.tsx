@@ -1,18 +1,11 @@
-// Canvas Routing Center, Tier 5 panels (loaded on first use): the model-list refresh, usage history and request log read
-// from saved chats, and the routing file. All on this device: no server, no new storage, keys never read or shown.
-import { useMemo, useRef, useState } from 'react';
-import { ArrowUpRight, Download, RefreshCw, Upload } from 'lucide-react';
-import { modelLabel, useStore } from '../store';
-import { closeRoutingCenter } from '../lib/routing-center';
-import { answersByDay, latestRequestEvidence, recentRequests } from '../lib/chat-records';
+// Canvas Routing Center, Tier 5 panels (loaded on first use): the model-list refresh and the routing file. All on this device: no server, no new storage, keys never read or shown.
+import { useRef, useState } from 'react';
+import { Download, RefreshCw, Upload } from 'lucide-react';
+import { useStore } from '../store';
 import { exportRouting, readRouting } from '../lib/routing-transfer';
 import type { ModelInfo, Settings } from '../types';
 
 const providerId = (model: ModelInfo) => (model.provider === 'google' ? 'gemini' : model.provider);
-const ago = (t: number) => {
-  const m = Math.round((Date.now() - t) / 60000);
-  return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`;
-};
 
 /** Refresh model list: asks the enabled providers for their model lists again (the catalog refresh Lumen already runs;
  * no message is sent, nothing is spent, replies are not tested) and reports this provider's result in words. Keys are
@@ -35,71 +28,6 @@ export function CheckConnection({ provider, primary }: { provider: string; prima
       <button type="button" className={primary ? 'rc-primary' : 'rc-quiet'} disabled={state.busy} onClick={() => void run()}><RefreshCw size={15} className={state.busy ? 'spin' : undefined} aria-hidden="true" />{state.busy ? 'Refreshing…' : 'Refresh model list'}</button>
       <p className="rc-check" role="status">{state.result && <><span className={state.ok ? 'rc-ok' : 'rc-bad'}>{state.ok ? 'Model list refreshed' : 'Not refreshed'}</span> · {state.result} No message was sent.</>}</p>
     </>
-  );
-}
-
-/** Latest saved request evidence. No prompt, response body or chat title is rendered. */
-export function LatestOutcome() {
-  const chats = useStore((s) => s.chats), catalog = useStore((s) => s.catalog);
-  const latest = useMemo(() => latestRequestEvidence(chats), [chats]);
-  const words = { answered: 'Answered', rerouted: 'Answered after rerouting', stopped: 'Stopped', failed: 'Failed', 'in-progress': 'In progress' } as const;
-  if (!latest) return <section className="rc-card rc-latest"><p className="rc-kicker">Latest recorded outcome</p><h3>No saved request evidence</h3><p className="rc-muted">A model and outcome will appear after this account records a request in a saved chat.</p></section>;
-  const open = () => { closeRoutingCenter(); useStore.getState().selectChat(latest.chatId); };
-  return (
-    <section className={`rc-card rc-latest rc-latest-${latest.outcome}`} data-evidence-source="saved-request-outcomes" aria-labelledby="rc-latest-title">
-      <p className="rc-kicker">Latest recorded outcome · {ago(latest.at)}</p>
-      <div className="rc-panel-title"><div><h3 id="rc-latest-title">{words[latest.outcome]}</h3><strong>{modelLabel(catalog, latest.model)}</strong></div><button type="button" className="rc-link" onClick={open}>Open chat <ArrowUpRight size={14} aria-hidden="true" /></button></div>
-      {latest.detail && <p className="rc-note">{latest.detail}</p>}
-      <dl className="rc-facts rc-evidence"><div><dt>Model evidence</dt><dd>{modelLabel(catalog, latest.model)}</dd></div><div><dt>Routing explanation</dt><dd>{latest.route || 'Not recorded'}</dd></div></dl>
-      <p className="rc-muted">This is saved outcome evidence, not a prediction of the next Auto choice.</p>
-    </section>
-  );
-}
-
-/** Usage history from saved chats: answers per day for two weeks and which models gave them. */
-export function UsageHistory() {
-  const chats = useStore((s) => s.chats), catalog = useStore((s) => s.catalog);
-  const { days, models } = useMemo(() => answersByDay(chats), [chats]);
-  const max = Math.max(1, ...days.map((d) => d.answers + d.failed + d.stopped));
-  const total = days.reduce((n, d) => n + d.answers, 0), failed = days.reduce((n, d) => n + d.failed, 0), stopped = days.reduce((n, d) => n + d.stopped, 0);
-  const label = (t: number) => new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric' }).format(t);
-  return (
-    <section className="rc-card rc-history" data-evidence-source="saved-chats" aria-label="Request outcomes in the last two weeks">
-      <div className="rc-panel-title"><div><p className="rc-kicker">Saved-chat history on this device</p><h3>Last 14 days</h3></div><span className="rc-muted">{total} completed · {stopped} stopped · {failed} failed</span></div>
-      {total || failed || stopped ? <>
-        <ol className="rc-bars">{days.map((d) => (
-          <li key={d.day} title={`${label(d.day)}: ${d.answers} completed, ${d.stopped} stopped, ${d.failed} failed`}>
-            <span className="rc-bar" style={{ blockSize: `${((d.answers + d.failed + d.stopped) / max) * 100}%` }}><span className="rc-bar-failed" style={{ blockSize: `${(d.failed / Math.max(1, d.answers + d.failed + d.stopped)) * 100}%` }} /><span className="rc-bar-stopped" style={{ blockSize: `${(d.stopped / Math.max(1, d.answers + d.failed + d.stopped)) * 100}%` }} /></span>
-            <small aria-hidden="true">{new Date(d.day).getDate()}</small>
-            <span className="sr-only">{label(d.day)}: {d.answers} completed, {d.stopped} stopped, {d.failed} failed</span>
-          </li>
-        ))}</ol>
-        <p className="rc-muted">Black: completed · amber: stopped · hatched red: failed</p>
-        <ul className="rc-history-models">{models.slice(0, 5).map(([id, n]) => <li key={id}><span>{modelLabel(catalog, id)}</span><strong>{n}</strong></li>)}</ul>
-      </> : <p className="rc-muted">No completed, stopped or failed requests are present in saved chats for this period.</p>}
-      <p className="rc-muted">Reconstructed from this account’s saved chats on this device. It can differ from synced daily counters; Incognito and deleted chats are not included.</p>
-    </section>
-  );
-}
-
-/** Diagnostics: how recent requests ended, from saved chats. No prompts or answers; chat titles only when asked. */
-export function RequestLog() {
-  const chats = useStore((s) => s.chats), catalog = useStore((s) => s.catalog);
-  const [titles, setTitles] = useState(false);
-  const rows = useMemo(() => recentRequests(chats), [chats]);
-  const words = { answered: 'Answered', rerouted: 'Rerouted', stopped: 'Stopped', failed: 'Failed' } as const;
-  return (
-    <section className="rc-card rc-log">
-      <div className="rc-panel-title"><h3>Recent requests</h3>{rows.length > 0 && <label className="rc-toggle"><input type="checkbox" checked={titles} onChange={(e) => setTitles(e.target.checked)} /> Show chat titles</label>}</div>
-      {rows.length ? <ol>{rows.map((r, i) => (
-        <li key={`${r.chatId}-${r.at}-${i}`}>
-          <span className={`rc-log-outcome rc-log-${r.outcome}${r.outcome === 'failed' ? ' rc-bad' : ''}`}>{words[r.outcome]}</span>
-          <span className="rc-log-main"><strong>{modelLabel(catalog, r.model)}</strong>{r.detail && <small>{r.detail}</small>}{titles && <small dir="auto">{r.chatTitle}</small>}</span>
-          <time className="rc-muted" dateTime={new Date(r.at).toISOString()}>{ago(r.at)}</time>
-        </li>
-      ))}</ol> : <p className="rc-muted">No completed, stopped or failed requests are recorded in saved chats.</p>}
-      <p className="rc-muted">Saved-chat evidence only. Shows model and outcome, never prompts, response bodies or credentials. Chat titles remain hidden unless you turn them on.</p>
-    </section>
   );
 }
 

@@ -323,6 +323,10 @@ export interface Settings {
   autoSwitch: boolean;
   /** Automated ranking preference; compatible manual and fixed assignments remain authoritative. */
   routingPreference?: 'balanced' | 'quality' | 'speed' | 'cost';
+  /** Activity → Quotas: warn at this share of a known limit (0.5–0.95; default 0.8). */
+  quotaWarnAt?: number;
+  /** Activity → Quotas: show a notice when an allowance crosses the warning level or runs out (default on). */
+  quotaAlerts?: boolean;
   webSearch: boolean;
   showThinking: boolean;
   customInstructions: string;

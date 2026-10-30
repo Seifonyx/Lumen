@@ -194,6 +194,13 @@ try {
     'src/components/KeysPanel.tsx', 'src/components/ModelSettings.tsx', 'src/components/SettingToggle.tsx', 'src/components/RepoPicker.tsx', 'src/store.ts',
     // KeySafety: an opt-in safeCopy prop so Router's provider pages never render a provider's raw error text.
     'src/components/KeySafety.tsx',
+    // Activity (owner-requested 2026-10-30): lazy Canvas Overview/Logs/Quotas, pure quota/log models, and a per-account
+    // device journal (localStorage `mr.activity.v1.<uid>`, removed with local account data). store.ts records Lumen's own
+    // wording at existing choke points and shows quota notices; no new network call, auth, rule or Firestore path.
+    'src/components/ActivityCenter.tsx', 'src/components/activity.css', 'src/lib/activity/alerts.ts', 'src/lib/activity/catalog-events.ts',
+    'src/lib/activity/journal.ts', 'src/lib/activity/log.ts', 'src/lib/activity/metrics.ts', 'src/lib/activity/quotas.ts',
+    // usage.ts: an optional onLimit listener and the exported reset time zone; types.ts: two optional quota settings.
+    'src/lib/usage.ts', 'src/types.ts',
     'src/components/FileCard.tsx', 'src/components/Modal.tsx', 'src/components/PreviewModal.tsx',
     'src/lib/run-language.ts', 'src/lib/runner.ts',
     // Owner-authorized shared iPhone navigation reset: UI-only owners, ordinary graph remains isolated.

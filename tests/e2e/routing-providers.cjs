@@ -72,7 +72,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       if (!before) await rc.getByRole('region', { name: 'Current routing mode' }).waitFor();
       if (!before && phone) {
         assert.equal(await rc.locator('.rc-dock').count(),0);
-        for (const [id, heading] of [['usage', 'Usage'], ['diagnostics', 'Diagnostics']]) {
+        for (const [id, heading] of [['usage', 'Activity']]) {
           await tab('Activity');
           await rc.getByRole('heading',{name:heading,exact:true}).waitFor();
           assert.equal(await rc.getByRole('button',{name:'Open sidebar',exact:true}).count(),0);

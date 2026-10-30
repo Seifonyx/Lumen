@@ -10,7 +10,7 @@ import { usePhoneLayout } from '../lib/phone-layout';
 import { createPortal } from 'react-dom';
 import { navigateScreen, screenBack, exitFeature, featureExitLabel } from '../lib/screen-history';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, RefreshCw, Search, Shield, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, RefreshCw, Search, X } from 'lucide-react';
 import { modelLabel, selectCurrentChat, selectCurrentModel, useStore } from '../store';
 import { AI_PROVIDERS, providerEnabled } from '../lib/ai/provider-config.js';
 import { PROVIDER_NAMES, providerOfId } from '../lib/util';
@@ -19,7 +19,6 @@ import { installSwipeBack } from '../lib/swipe-back';
 import { closeRoutingCenter, showRoutingSection, showRoutingProvider, useRoutingCenter, type RoutingSection } from '../lib/routing-center';
 import { findLayout } from '../lib/layouts';
 import type { ModelInfo } from '../types';
-import UsageTab from './UsageTab';
 import { FREE as FREE_PROVIDERS } from './ProviderConnections';
 import { providerPresentation } from '../lib/provider-presentation';
 import FilterMenu from './FilterMenu';
@@ -28,15 +27,14 @@ import { selectionProblem, withCurrentModel } from '../lib/model-discovery';
 // Tier 5 panels (usage history, request log, routing file, connection check) load on first use, in their own chunk.
 const extras = () => import('./RoutingExtras');
 const CheckConnection = lazy(() => extras().then((m) => ({ default: m.CheckConnection })));
-const UsageHistory = lazy(() => extras().then((m) => ({ default: m.UsageHistory })));
-const RequestLog = lazy(() => extras().then((m) => ({ default: m.RequestLog })));
-const LatestOutcome = lazy(() => extras().then((m) => ({ default: m.LatestOutcome })));
 const PrismLayouts = lazy(() => import('./PrismLayouts'));
 // Routing settings (priority, switching, fallback order, model health) are the same component Settings uses.
 const RoutingSettings = lazy(() => import('./SettingsModal').then((m) => ({ default: m.ModelsTab })));
 const KeysPanel = lazy(() => import('./SettingsModal').then((m) => ({ default: m.KeysPanel })));
 const KeySafety = lazy(() => import('./SettingsModal').then((m) => ({ default: m.KeySafety })));
 const RoutingInsight = lazy(() => import('./RoutingInsight'));
+// Activity (Overview, Logs, Quotas) loads on first use in its own chunk.
+const ActivityCenter = lazy(() => import('./ActivityCenter'));
 
 const PrismModels = lazy(() => import('./PrismModels'));
 const ProviderModels = lazy(() => import('./PrismModels').then(m => ({ default: m.ProviderModels })));
@@ -224,26 +222,6 @@ function ProviderDetail({ p, title, usage, enabledHere, searchHost }: { searchHo
   );
 }
 
-/** Activity: what was used (Lumen's counters and saved-chat history), then how requests ended. */
-function Activity({ jump }: { jump: boolean }) {
-  const part = useRef<HTMLElement>(null);
-  useEffect(() => { if (jump) part.current?.scrollIntoView({ block: 'start' }); }, [jump]);
-  return (
-    <div className="rc-body rc-usage rc-activity">
-      <div className="rc-page-intro"><h2 className="rc-h2">Activity</h2><p className="rc-muted">What Lumen used, and how your requests ended. Provider limits appear only when known.</p></div>
-      <section className="rc-activity-part" aria-labelledby="rc-usage-title"><h3 id="rc-usage-title" className="rc-h3">Usage</h3><UsageTab context="prism" /><Suspense fallback={<p className="rc-muted" role="status">Loading saved-chat history…</p>}><UsageHistory /></Suspense></section>
-      <section ref={part} id="rc-diagnostics" className="rc-activity-part" aria-labelledby="rc-diagnostics-title">
-        <h3 id="rc-diagnostics-title" className="rc-h3">Diagnostics</h3>
-        <div className="rc-grid rc-diagnostics">
-          <Suspense fallback={<p className="rc-muted" role="status">Loading latest outcome…</p>}><LatestOutcome /></Suspense>
-          <Suspense fallback={<p className="rc-muted" role="status">Loading request history…</p>}><RequestLog /></Suspense>
-        </div>
-        <p className="rc-muted"><Shield size={14} aria-hidden="true" /> Diagnostics never include your messages or keys.</p>
-      </section>
-    </div>
-  );
-}
-
 export default function RoutingCenter() {
   const { open, section, provider } = useRoutingCenter();
   const chat = useStore(selectCurrentChat), model = useStore(selectCurrentModel);
@@ -352,7 +330,7 @@ export default function RoutingCenter() {
 
       {section === 'policies' && <Suspense fallback={<p className="rc-muted" role="status">Loading Layouts…</p>}><PrismLayouts /></Suspense>}
 
-      {(section === 'usage' || section === 'diagnostics') && <Activity jump={section === 'diagnostics'} />}
+      {(section === 'usage' || section === 'diagnostics') && <Suspense fallback={<p className="rc-muted" role="status">Loading activity…</p>}><ActivityCenter start={section === 'diagnostics' ? 'logs' : undefined} /></Suspense>}
 
       </div>
       {phone && <footer ref={setSearchHost} className="phone-page-search rc-search-footer" aria-label={section === 'providers' ? providerOpen ? 'Provider model search' : 'Provider search' : 'Model search'} />}

@@ -1,6 +1,14 @@
 # Lumen operational handoff
 
-## Active — Router (formerly Prism) and the calm pass / draft owner review (2026-10-30)
+## Active — Activity, logs and quotas (Phase 1 of 2), standing merge/deploy authority (2026-10-30)
+
+Owner instruction (2026-10-30, master prompt): rebuild Activity, add a logs system and quota tracking, audit the whole app (Phase 1); then fix the audit findings (Phase 2). **Standing authority: test, commit, merge and deploy completed work without asking**, verifying CI, deploy and the live site; escalate only irreversible data changes, security risks, major tradeoffs or permission blocks. PR #63 (Router + calm pass) merged as main `422e28d` and deployed (Deploy 41043449856; live assets matched a local Canvas build).
+
+- Phase 1: branch `feat/activity-quotas`, [PR #64](https://github.com/Seifonyx/Lumen/pull/64). Activity = Overview / Logs / Quotas (`src/components/ActivityCenter.tsx`, `src/lib/activity/*`). Logs = saved-chat outcomes + per-account device journal (`mr.activity.v1.<uid>`); Quotas = one typed model over real data (provider-reported limits, Lumen counters, sync quota, device storage), labelled forecasts, alert settings. No new network call, Firestore path or rule (deploys ship Hosting only).
+- Audit and Phase 2 plan: [docs/reviews/app-audit/AUDIT.md](docs/reviews/app-audit/AUDIT.md).
+- Next: merge + deploy PR #64 after exact-head CI, verify live, then Phase 2 on a new branch working through the audit (High first).
+
+## Historical — Router (formerly Prism) and the calm pass (released 2026-10-30 as main `422e28d`)
 
 Branch `feat/settings-account-experience`, [PR #63](https://github.com/Seifonyx/Lumen/pull/63) (draft) against `main` `532dbcf`. Owner-approved scope: rename Prism to **Router** and make it hold keys, models, routing, layouts, usage and diagnostics with no duplicates in Settings ([note](docs/reviews/switchboard-checkpoint/README.md)); then (2026-10-30) "do all of these now" for the cleanup proposal on Router and the phone Settings index, with the rest of the app in a later phase ([note](docs/reviews/calm-pass/README.md), rules in [DESIGN_FOUNDATION.md](docs/brand/DESIGN_FOUNDATION.md)).
 
@@ -9,7 +17,7 @@ Branch `feat/settings-account-experience`, [PR #63](https://github.com/Seifonyx/
 - Verification and limits: see the PR body for the exact-head CI run; physical iPhone/VoiceOver/Dynamic Type unverified; 21 Settings-driving suites run only on the ordinary build (listed in `tests/e2e/canvas-core.txt`).
 - Next (owner-named, not started): the calm pass for Chat, Library, Tools and the rest of the app, as a later phase.
 
-**STOP for owner review of PR #63. No merge or deploy without the owner's word.** Overall seven-phase completion percentage is not defined.
+Merged and deployed 2026-10-30 under the owner's standing authority. Overall seven-phase completion percentage is not defined.
 
 ## Historical — Phase 5 Slice 2: Tools experience / draft owner review (2026-10-29)
 

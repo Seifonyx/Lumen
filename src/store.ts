@@ -27,6 +27,11 @@ import { Masker, scan } from './lib/privacy';
 import { cancelKnowledge } from './lib/knowledge/engine';
 import { normalizeKnowledgeSources } from './lib/knowledge/core';
 import { quota, type QuotaView } from './lib/quota';
+import { record as recordActivity, setJournalAccount } from './lib/activity/journal';
+import { logCatalogChanges } from './lib/activity/catalog-events';
+import { dueAlerts } from './lib/activity/alerts';
+import { metricsFrom } from './lib/activity/metrics';
+import { formatAmount } from './lib/activity/quotas';
 import { extractMemoryOps, findMemory, hideMemoryLines, MAX_MEMORIES, memoryInstructions, MemoryStore } from './lib/memory';
 import { AUTO, analyze, estimateTokens, planRoute, type RouteInput } from './lib/routing';
 import { buildInstructions } from './lib/ai/instructions.js';
@@ -311,6 +316,16 @@ export const useStore = create<State>((set, get) => {
   const currentChat = () => get().chats.find((c) => c.id === get().currentId) || null;
   const clearAssistantDraft = () => { try { localStorage.removeItem(`mr.assistantDraft.${get().user?.uid}`); } catch { /* private mode */ } };
   const currentProjectId = () => get().settings.projects?.some((p) => p.id === get().activeProjectId) ? get().activeProjectId : null;
+  // One notice per allowance per period when it nears or reaches its limit (Activity → Quotas has the switch).
+  const checkQuotaAlerts = () => {
+    const { user, settings } = get();
+    if (!user || settings.quotaAlerts === false) return;
+    for (const { metric: m, level } of dueAlerts(user.uid, metricsFrom(get()), settings.quotaWarnAt)) {
+      const who = m.label, amount = `${formatAmount(m.used || 0, m.unit)} of ${formatAmount(m.limit || 0, m.unit)} ${m.unit}`;
+      get().toast(level === 'exhausted' ? `${who}: today’s allowance is used up` : `${who}: ${amount} used today`, level === 'exhausted' ? 'error' : undefined);
+      recordActivity({ category: 'limit', level: level === 'exhausted' ? 'error' : 'warning', title: level === 'exhausted' ? 'Allowance used up' : 'Allowance nearly used', detail: `${who}: ${amount}`, ...(m.id.startsWith('requests:') && m.id.split(':').length > 2 && !m.id.endsWith('free-pool') ? { model: m.id.slice('requests:'.length) } : { provider: m.owner }) });
+    }
+  };
   const hideUnavailableModel = (id: string, reason = 'The provider refused it', by: 'check' | 'chat' | 'auto' = 'chat') => {
     const { settings, catalog } = get();
     if (settings.unavailableModels?.includes(id)) return;
@@ -318,6 +333,7 @@ export const useStore = create<State>((set, get) => {
     if (catalog) set({ catalog: { ...catalog, models: catalog.models.filter((m) => m.id !== id), defaults: catalog.defaults.filter((model) => model !== id) } });
     const info = { ...(settings.unavailableInfo || {}) };
     info[id] = { reason: reason.replace(/\s+/g, ' ').trim().slice(0, 140) || 'The provider refused it', at: Date.now(), ...(label ? { label } : {}), by };
+    recordActivity({ category: 'models', level: 'warning', title: by === 'check' ? 'Model removed after a check' : 'Model removed', detail: info[id].reason, model: id });
     get().updateSettings({
       unavailableModels: [...(settings.unavailableModels || []), id],
       unavailableInfo: info,
@@ -1053,7 +1069,12 @@ export const useStore = create<State>((set, get) => {
 
     async init() {
       applyAppearance(get().settings);
-      quota.subscribe((firebaseUsage) => set({ firebaseUsage }));
+      quota.subscribe((firebaseUsage) => {
+        const before = get().firebaseUsage.level;
+        if (firebaseUsage.level !== before) recordActivity(firebaseUsage.level === 'paused' ? { category: 'sync', level: 'error', title: 'Sync paused to stay on the free plan', detail: 'Chats keep saving on each device and sync after the daily reset.' } : firebaseUsage.level === 'slow' ? { category: 'sync', level: 'warning', title: 'Sync slowed to save quota', detail: 'Changes are sent in batches.' } : { category: 'sync', level: 'success', title: 'Sync back to normal' });
+        set({ firebaseUsage });
+        checkQuotaAlerts();
+      });
       registerServiceWorker((apply) => set({ updateReady: apply }));
       const onNet = () => {
         set({ online: navigator.onLine });
@@ -1105,6 +1126,7 @@ export const useStore = create<State>((set, get) => {
         sync = null;
         usage?.stop();
         usage = null;
+        setJournalAccount(null);
         memory?.stop();
         memory = null;
         taskStorage?.stop(); taskStorage = null;
@@ -1198,7 +1220,9 @@ export const useStore = create<State>((set, get) => {
           error: (msg) => { if (generation === accountGeneration) get().toast(msg, 'error'); },
         });
         sync.start();
-        usage = new UsageTracker(user.uid, (view) => { if (generation === accountGeneration) set({ usage: view }); });
+        setJournalAccount(user.uid);
+        usage = new UsageTracker(user.uid, (view) => { if (generation === accountGeneration) { set({ usage: view }); checkQuotaAlerts(); } });
+        usage.onLimit = (id, scope, until) => { if (generation === accountGeneration) recordActivity({ category: 'limit', level: 'warning', title: scope === 'day' ? 'Daily limit reached' : 'Rate limit reached', detail: `Paused until ${new Date(until).toLocaleString()}`, model: id }); };
         usage.start();
         memory = new MemoryStore(user.uid, (memories) => { if (generation === accountGeneration) set({ memories }); }, (msg) => { if (generation === accountGeneration) get().toast(msg, 'error'); });
         memory.start();
@@ -1252,6 +1276,10 @@ export const useStore = create<State>((set, get) => {
         get().updateSettings({ unavailableModels: (get().settings.unavailableModels || []).filter(keep), unavailableInfo: Object.fromEntries(Object.entries(get().settings.unavailableInfo || {}).filter(([id]) => keep(id))) });
       }
       set({ keys: clean });
+      for (const provider of changed) {
+        const had = providerEnabled(provider, before), has = providerEnabled(provider, clean);
+        recordActivity({ category: 'settings', level: 'info', provider, title: !had && has ? 'Provider connected' : had && !has ? 'Provider disconnected' : 'Connection settings changed' });
+      }
       if(changed.length) { loadedCatalogScope=null;set({catalog:null}); }
       if(changed.length || !get().catalog) await get().loadCatalog();
       if (get().user?.uid !== uid || saveGeneration!==keySaveGeneration) return;
@@ -1390,6 +1418,7 @@ export const useStore = create<State>((set, get) => {
           const wanted = settings.autoIntroduced ? settings.defaultModel : AUTO;
           const defaultModel = wanted === AUTO || parseModelId(wanted) || (isLayoutId(wanted) && findLayout(wanted, catalog.models, settings.layouts, settings.hiddenLayouts)) ? wanted : enabled[0] || '';
           const catalogError=catalog.errors.length?catalog.errors.join(' · '):null;
+          logCatalogChanges(get().catalog?.providerStatus, catalog.providerStatus, catalog.models, force);
           set({ catalog, catalogError, catalogErrorDismissed:!force && catalogError===get().catalogError?get().catalogErrorDismissed:false });
           get().updateSettings({ enabledModels: enabled, defaultModel, autoIntroduced: true });
         } catch (e) {

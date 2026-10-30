@@ -40,6 +40,9 @@ const DAY_FORMATTERS = Object.fromEntries(['UTC', 'America/Los_Angeles'].map(tim
   new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }),
 ]));
 
+/** The time zone a provider's daily allowances reset in. */
+export const resetTimeZone = (p: string) => TZ[p as Provider] || 'UTC';
+
 export const providerOf = (id: string): Provider => {
   const p = id.split(':')[0] as Provider;
   return PROVIDERS.includes(p) ? p : 'openrouter';
@@ -236,9 +239,13 @@ export class UsageTracker {
     }
   }
 
+  /** Told whenever a provider reports a limit, with when it lifts (the Activity journal listens). */
+  onLimit?: (id: string, scope: LimitInfo['scope'], until: number) => void;
+
   block(id: string, limit: LimitInfo) {
     const p = providerOf(id);
     const now = Date.now();
+    this.onLimit?.(id, limit.scope, limit.scope === 'day' ? (limit.resetAt && limit.resetAt > now ? limit.resetAt : nextReset(p)) : now + Math.max(15, limit.retryAfterSec || 60) * 1000);
     if (limit.scope === 'day') {
       const until = limit.resetAt && limit.resetAt > now ? limit.resetAt : nextReset(p);
       const key = this.currentDay(p);

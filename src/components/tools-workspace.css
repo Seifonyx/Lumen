@@ -20,6 +20,7 @@
 .app[data-lumen-canvas-shell] .tx-areas button { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 13px; border: 0; border-radius: 999px; background: var(--canvas-fill); color: var(--canvas-secondary); font: 500 14px/1 var(--canvas-body-font); cursor: pointer; }
 .app[data-lumen-canvas-shell] .tx-areas button[aria-pressed="true"] { background: var(--canvas-lamplight, var(--canvas-fill-strong)); color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .tx-count { font: 500 12px/1 var(--canvas-data-font); opacity: .62; font-variant-numeric: tabular-nums; }
+.app[data-lumen-canvas-shell] .tx-areas button[aria-pressed="true"] .tx-count { opacity: 1; }
 
 .app[data-lumen-canvas-shell] .tx-keys { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px; border: 1px solid transparent; border-radius: 16px; background: var(--canvas-surface); }
 .app[data-lumen-canvas-shell] .tx-keys ul { flex: 1; min-width: 0; display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }

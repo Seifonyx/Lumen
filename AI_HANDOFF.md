@@ -1,6 +1,13 @@
 # Lumen operational handoff
 
-## Active — iPhone design: native iOS with Liquid Glass, released (2026-10-30)
+## Active — iPhone glass round 3, released (2026-10-31)
+
+- Owner feedback with two iPhone captures: dark shadow at the top blurring the buttons; remove the chat name; resting message box with +, mic and talk, model once it opens. [PR #71](https://github.com/Seifonyx/Lumen/pull/71) merged `fae722f`, Deploy 41136803856 succeeded; live `index-htv-RfvI.js` matches a local Canvas build of `fae722f`. Notes: docs/reviews/native-ios/README.md (round 3).
+- Changed (iPhone glass only): plain scroll-edge fade (no blur layer behind the bar), glass matched to native on black, no chat title, 52 pt message box 20 pt from the edges (10 pt under 380 pt) with + · message · dictate · talk at rest, model while writing; thinking row and file cards without outlines; reply model name in the system font. composer.cjs follows the new resting layout; startupCss budget 18.5 → 19.
+- Pre-existing, not a gate: `canvas-integration.cjs` (not in CI) times out identically on main's build.
+- Still open: light glass tuned by eye; trailing bar capsule holds up to three controls when a chat has documents; blank first frame on the Settings section pop; Library/Tools/Router/Settings iOS pass; physical iPhone unverified.
+
+## Historical — iPhone design: native iOS with Liquid Glass, released (2026-10-30)
 
 - Owner direction (2026-10-30): no copying other apps; Lumen's own identity while feeling like a native iOS 26 AI app; suggestion pills removed. Warm-palette proposal (`design/premium-foundation`) rejected and unmerged.
 - PR #68 (pills removed) merged `9916a8c`, deployed. [PR #69](https://github.com/Seifonyx/Lumen/pull/69) merged `a7e49cc`, Deploy 41127758011 succeeded; live `index-Iqvbajuz.js` matches a local Canvas build of `a7e49cc`; the dark glass tint is in the live CSS.

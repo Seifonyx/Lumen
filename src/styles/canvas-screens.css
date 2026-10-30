@@ -311,8 +311,9 @@ html[data-lumen-canvas] .login { background: radial-gradient(520px 340px at 50% 
  * Lumen's own identity (the Crease mark, ink accent, Lamplight selection) on iOS system materials: system colours and
  * font, flat surfaces, a translucent bar, a plain composer and plain lists. Secondary greys are the AA-safe iOS
  * values (#6c6c70 on white, #aeaeb2/#8e8e93 on black). */
+/* iPhone (glass) reads in the system font like every iOS app; elsewhere Lumen keeps Geist. */
+html.glass[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas] { --font: -apple-system, 'SF Pro Text', system-ui, 'Noto Sans Arabic', 'Geeza Pro', sans-serif; }
 html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas] {
-  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, 'Noto Sans Arabic', 'Geeza Pro', sans-serif;
   --bg: #ffffff; --sidebar: #ffffff; --surface: #ffffff; --surface-2: #f2f2f7; --surface-3: #e5e5ea;
   --text: #000000; --text-2: #3c3c43; --text-3: #6c6c70;
   --border: #c6c6c8; --border-strong: #b4b4b8; --input-border: #d1d1d6;

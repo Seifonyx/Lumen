@@ -1,6 +1,15 @@
 # Lumen operational handoff
 
-## Active — Activity, logs, quotas and the app-wide polish: both phases released (2026-10-30)
+## Active — iPhone design: native iOS with Liquid Glass, released (2026-10-30)
+
+- Owner direction (2026-10-30): no copying other apps; Lumen's own identity while feeling like a native iOS 26 AI app; suggestion pills removed. Warm-palette proposal (`design/premium-foundation`) rejected and unmerged.
+- PR #68 (pills removed) merged `9916a8c`, deployed. [PR #69](https://github.com/Seifonyx/Lumen/pull/69) merged `a7e49cc`, Deploy 41127758011 succeeded; live `index-Iqvbajuz.js` matches a local Canvas build of `a7e49cc`; the dark glass tint is in the live CSS.
+- Delivered (Canvas): iOS system colours (both themes; dark secondary grey #98989f for AA); system font on iPhone glass only, Geist elsewhere; Lumen's Crease mark replaces the lime moon; Liquid Glass bar controls (44 pt circle + capsule, no strip, scroll-edge blur) and composer (ink action circle); usage ring moved to the bar capsule on iPhone glass; dark glass matched to an owner-supplied iOS 26 capture (`rgb(60 60 62 / .64)` tint, top/bottom rim, no lift). Fixes: model-picker layout rows overflowing the sheet, closed drawer shadow, reading text now follows the text-size setting. Notes and captures: [docs/reviews/native-ios/README.md](docs/reviews/native-ios/README.md).
+- Verified: exact-head CI 23/23 (one `smooth-chat` scroll-timing assertion failed once on CI, passed 4/4 locally and on re-run); unit, tsc, CP contracts, QA01, budget (raised and documented), 16 preview suites in Chromium and WebKit.
+- Test changes (documented in the files): `visual-animations` accepts the Canvas mark instead of the moon; `transitions` allows a 30 first-frame difference for the dark native Settings pop (measured 26.4; light stays under 14).
+- Open: light-mode glass is tuned by eye (no light reference capture yet); going back from a Settings section shows one blank frame before the list fades in (pre-existing, both themes, more visible on black); Library/Tools/Router/Settings pages not yet given the same iOS pass; physical iPhone/VoiceOver unverified.
+
+## Historical — Activity, logs, quotas and the app-wide polish: both phases released (2026-10-30)
 
 - **Phase 1** (PR #64) merged as main `4d4e7bb`, deployed (Deploy 41050157404); live assets matched; the Activity suite passed against production (synthetic local profile, other origins blocked).
 - **Phase 2** (PR #65) merged as main `970b355`, deployed (Deploy 41055151476); live assets matched and every changed chunk served 200. Against production: Activity, Router (switchboard), Settings, Library and feature Exit passed; Tools passed 320 Light/Dark and 390 Light, then two runs hit page-load timeouts from this network (the same build passes locally in Chromium and WebKit).

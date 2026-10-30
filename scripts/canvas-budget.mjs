@@ -48,7 +48,9 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // iPhone design (owner, 2026-10-30): startupCss 16.5 → 18.5, canvasCss 25 → 27.5. iOS system colours for both themes,
 // the Liquid Glass material on the floating bar controls and composer, the scroll edge, and the solid fallback for
 // devices without glass (≈1.5 KB gz). Canvas builds only; the ordinary build is unchanged.
-const BUDGET = { startupJs: 14, startupCss: 18.5, routingCenter: 9, canvasCss: 27.5 };
+// iPhone glass round 3 (owner, 2026-10-31): startupCss 18.5 → 19 for the measured glass, resting composer layout and
+// plain thinking/file rows on iPhone (measured 18.5 KB gz).
+const BUDGET = { startupJs: 14, startupCss: 19, routingCenter: 9, canvasCss: 27.5 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

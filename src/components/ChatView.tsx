@@ -317,7 +317,8 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
       <div className="messages" ref={scroller} role="region" tabIndex={0} aria-label="Chat messages">
         {empty ? CANVAS_SHELL ? (
           <div className="empty">
-            <span className="welcome-mark" aria-hidden="true"><WelcomeStars /></span>
+            {/* Lumen's mark replaces the old lime moon (owner, 2026-10-30). */}
+            <span className="welcome-mark welcome-native" aria-hidden="true">{BrandMark ? <BrandMark height={34} decorative /> : <WelcomeStars />}</span>
             <CanvasHome temporary={isTemporaryChat(chat)} />
           </div>
         ) : (

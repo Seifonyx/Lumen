@@ -234,10 +234,6 @@ html[data-lumen-canvas] .moon-phase :is(.mp-shadow, .mp-glow) { display: none; }
 html[data-lumen-canvas] .moon-phase .mp-disc { fill: currentColor; transform-box: fill-box; transform-origin: center; transform: scale(.45); animation: pulse 1.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { html[data-lumen-canvas] .moon-phase .mp-disc { animation: none; } }
 html[data-lumen-canvas] .app-skeleton .sk-brand .sk-dot { display: none; }
-/* The new-chat moon with its two stars, in its own lime as before (the owner's choice); everything else stays ink. */
-html[data-lumen-canvas] .welcome-moon { --signal: #c2ef3a; --signal-strong: #3f6a00; }
-html[data-lumen-canvas][data-theme='dark'] .welcome-moon { --signal-strong: #c2ef3a; }
-@media (prefers-color-scheme: dark) { html[data-lumen-canvas]:not([data-theme='light']) .welcome-moon { --signal-strong: #c2ef3a; } }
 
 html[data-lumen-canvas] .provider-target-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
 html[data-lumen-canvas] .provider-target-head .btn { flex:none; min-height:44px; }
@@ -310,3 +306,64 @@ html[data-lumen-canvas] :has(> .projects-sort) > .hub-search { flex: 1 1 auto; m
 html[data-lumen-canvas] .projects-sort { flex: none; margin-inline-start: 0; }
 /* Sign-in: the mark sits in a soft pool of Lamplight, the brand's one warm light. */
 html[data-lumen-canvas] .login { background: radial-gradient(520px 340px at 50% 38%, color-mix(in srgb, var(--canvas-lamplight) 60%, transparent), transparent 72%), var(--bg); }
+
+/* ================= Native iOS direction (design checkpoint, 2026-10-30, branch design/native-ios)
+ * Lumen's own identity (the Crease mark, ink accent, Lamplight selection) on iOS system materials: system colours and
+ * font, flat surfaces, a translucent bar, a plain composer and plain lists. Secondary greys are the AA-safe iOS
+ * values (#6c6c70 on white, #aeaeb2/#8e8e93 on black). */
+html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas] {
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, 'Noto Sans Arabic', 'Geeza Pro', sans-serif;
+  --bg: #ffffff; --sidebar: #ffffff; --surface: #ffffff; --surface-2: #f2f2f7; --surface-3: #e5e5ea;
+  --text: #000000; --text-2: #3c3c43; --text-3: #6c6c70;
+  --border: #c6c6c8; --border-strong: #b4b4b8; --input-border: #d1d1d6;
+  --user-bubble: #f2f2f7; --code-bg: #f2f2f7; --link: #0a64d8;
+  --native-grouped: #f2f2f7; --native-fill: #f2f2f7; --native-fill-2: #e9e9ee; --native-sep: rgb(60 60 67 / .29);
+  --native-bar: rgb(249 249 249 / .82);
+}
+html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas][data-theme='dark']:not([data-appearance='black']) {
+  --bg: #000000; --sidebar: #000000; --surface: #1c1c1e; --surface-2: #2c2c2e; --surface-3: #3a3a3c; --elevated: #1c1c1e;
+  --text: #ffffff; --text-2: #ebebf5; --text-3: #8e8e93;
+  --border: #38383a; --border-strong: #48484a; --input-border: #3a3a3c;
+  --user-bubble: #2c2c2e; --code-bg: #1c1c1e; --link: #4aa3ff;
+  --native-grouped: #000000; --native-fill: #1c1c1e; --native-fill-2: #2c2c2e; --native-sep: rgb(84 84 88 / .6);
+  --native-bar: rgb(18 18 18 / .78);
+}
+@media (prefers-color-scheme: dark) {
+  html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas]:not([data-theme='light']):not([data-appearance='black']) {
+    --bg: #000000; --sidebar: #000000; --surface: #1c1c1e; --surface-2: #2c2c2e; --surface-3: #3a3a3c; --elevated: #1c1c1e;
+    --text: #ffffff; --text-2: #ebebf5; --text-3: #8e8e93;
+    --border: #38383a; --border-strong: #48484a; --input-border: #3a3a3c;
+    --user-bubble: #2c2c2e; --code-bg: #1c1c1e; --link: #4aa3ff;
+    --native-grouped: #000000; --native-fill: #1c1c1e; --native-fill-2: #2c2c2e; --native-sep: rgb(84 84 88 / .6);
+    --native-bar: rgb(18 18 18 / .78);
+  }
+}
+@media (max-width: 899px) {
+  /* Chat bar: translucent material with a hairline, 17 pt semibold title. */
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .main > .topbar { background: var(--native-bar); -webkit-backdrop-filter: saturate(1.8) blur(20px); backdrop-filter: saturate(1.8) blur(20px); box-shadow: 0 .5px 0 var(--native-sep); }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .chat-heading { font: 600 17px/1.25 var(--font); letter-spacing: -.01em; }
+  /* Conversation: body 17 pt; replies sit on the page; your messages in a soft bubble. */
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown { font-size: 17px; line-height: 1.47; letter-spacing: -.01em; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown :is(h1, h2) { font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown h3 { font-size: 17px; font-weight: 600; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .msg.user .bubble { border: 0; border-radius: 20px; background: var(--user-bubble); font-size: 17px; line-height: 1.4; padding: 9px 14px; box-shadow: none; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown .table-wrap { border-color: var(--native-sep); border-width: .5px; }
+  /* Composer: one flat capsule on the system fill; a round ink send button; no shadow, no outline. */
+  html[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer,
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer { border: 0; border-radius: 24px; background: var(--native-fill); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  html[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer textarea { font-size: 17px; }
+  html[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer-bar > .icon-btn:first-child,
+  html[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] :is(.attach-btn, .plus-btn) { background: var(--native-fill-2); }
+  html[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] { background: linear-gradient(transparent, var(--bg) 30%); }
+  /* New chat: the mark alone, small and in ink; one line beneath; nothing else on the page. */
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-home h1 { font: 600 22px/1.25 var(--font); letter-spacing: -.02em; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-home-where { display: none; }
+  /* Sidebar: a plain list; chats without per-row icons; 17 pt titles; section labels in the secondary colour. */
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav { background: var(--bg); }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-open > svg:first-child { display: none; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-title, html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-open strong { font-size: 17px; font-weight: 400; letter-spacing: -.01em; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-dest button) { font-size: 17px; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-search { background: var(--native-fill-2); border-radius: 10px; }
+}
+/* The new-chat mark: the Crease in ink, no glow. */
+html[data-lumen-canvas] .welcome-native { display: grid; place-items: center; margin: 0 auto 14px; color: var(--text); }

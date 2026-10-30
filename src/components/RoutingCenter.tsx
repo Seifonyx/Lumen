@@ -6,6 +6,7 @@
 import '../styles/canvas-routing.css';
 import PhoneNavigation from './PhoneNavigation';
 import PhoneSections from './PhoneSections';
+import ScreenBoundary from './ScreenBoundary';
 import { usePhoneLayout } from '../lib/phone-layout';
 import { createPortal } from 'react-dom';
 import { navigateScreen, screenBack, exitFeature, featureExitLabel } from '../lib/screen-history';
@@ -297,6 +298,7 @@ export default function RoutingCenter() {
 
       {phone && !providerOpen && <PhoneSections label="Router sections" active={tabOf(section)} items={SECTIONS.map(([id,label]) => ({ id, label }))} onSelect={id => go(id as RoutingSection)} />}
       <div className="rc-scroll">
+      <ScreenBoundary key={section} label={SECTIONS.find(([id]) => id === tabOf(section))?.[1] || 'Router'}>
       {section === 'providers' && <div className="rc-body"><Providers key={owner || 'signed-out'} preferred={current?.split(':')[0]} phone={phone} searchHost={searchHost} /></div>}
 
       {section === 'models' && (
@@ -332,6 +334,7 @@ export default function RoutingCenter() {
 
       {(section === 'usage' || section === 'diagnostics') && <Suspense fallback={<p className="rc-muted" role="status">Loading activity…</p>}><ActivityCenter start={section === 'diagnostics' ? 'logs' : undefined} /></Suspense>}
 
+      </ScreenBoundary>
       </div>
       {phone && <footer ref={setSearchHost} className="phone-page-search rc-search-footer" aria-label={section === 'providers' ? providerOpen ? 'Provider model search' : 'Provider search' : 'Model search'} />}
     </section>

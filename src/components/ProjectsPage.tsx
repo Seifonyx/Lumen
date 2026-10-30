@@ -66,7 +66,7 @@ export default function ProjectsPage({ onClose }: { onClose: () => void }) {
                       <span>{s?.chats || 0} {s?.chats === 1 ? 'chat' : 'chats'}</span>
                       {files > 0 && <span>{files} {files === 1 ? 'file' : 'files'}</span>}
                       {mem > 0 && <span>{mem} {mem === 1 ? 'memory' : 'memories'}</span>}
-                      {p.instructions.trim() && <span>Instructions</span>}
+                      {p.instructions.trim() && <span>Has instructions</span>}
                     </span>
                     <span className="proj-time">Updated {relTime(last(p))}</span>
                   </span>

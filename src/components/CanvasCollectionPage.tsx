@@ -54,7 +54,7 @@ export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()
   else setDetailKey(item.key);
  };
  const search=<label className="hub-search"><Search size={18} aria-hidden="true"/><input type="search" aria-label="Search your library" placeholder={kind==='searchable'?'Find Knowledge document names':'Search names, chats and documents'} value={query} onChange={e=>setQuery(e.target.value)} />{query&&<button type="button" aria-label="Clear library search" onClick={e=>{setQuery('');e.currentTarget.parentElement?.querySelector('input')?.focus()}}>×</button>}</label>;
- return <HubPage label="Library" title="Library" subtitle="Keep your work within reach." onClose={onClose} create={create}
+ return <HubPage label="Library" title="Library" onClose={onClose} create={create}
   actions={<button type="button" className="btn primary" onClick={create.run}><Plus size={16}/>{create.label}</button>}
   sectionNavigation={<PhoneSections label="Library content types" panelId={panel} active={kind} items={categories} onSelect={id=>setKind(id as CollectionKind)}/>}
   footer={<footer className="phone-page-search" aria-label="Library search">{search}</footer>}>
@@ -62,7 +62,7 @@ export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()
    {!phone&&<PhoneSections label="Library content types" panelId={panel} active={kind} items={categories} onSelect={id=>setKind(id as CollectionKind)}/>}
    <section id={panel} role="tabpanel" aria-labelledby={`${panel}-${kind}`} className="library-panel">
     {discoveryError&&<p role="alert">Generated file discovery could not load. Your other chat items remain available. Reopen Library to retry.</p>}
-    <div className="library-section-head"><div><h2>{category.label==='Everything'?'From your chats':category.label}</h2><p>{category.description}</p></div>{kind!=='searchable'&&<span className="library-total" role="status">{scoped.length} {query||project?'matching ':''}chat {scoped.length===1?'item':'items'}</span>}</div>
+    <div className={`library-section-head${category.label==='Everything'?' is-all':''}`}><div><h2>{category.label==='Everything'?'From your chats':category.label}</h2><p>{category.description}</p></div>{kind!=='searchable'&&<span className="library-total" role="status">{scoped.length} {query||project?'matching ':''}chat {scoped.length===1?'item':'items'}</span>}</div>
     {kind==='searchable'?<div className="files-uploads">{!phone&&<div className="library-controls">{search}</div>}<KnowledgeLibrary onClose={onClose} filter={query}/></div>:<>
      <div className="library-controls">{!phone&&search}<label><span className="sr-only">Sort library</span><select aria-label="Sort library" value={sort} onChange={e=>setSort(e.target.value as LibrarySort)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="name">Name A–Z</option></select></label>{Boolean(projects?.length)&&<label><span className="sr-only">Project</span><select aria-label="Project" value={project} onChange={e=>setProject(e.target.value)}><option value="">All projects</option>{projects?.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}</div>
      {scoped.length?<ul className="library-ledger">{scoped.map(item=><li key={item.key} className={`library-row kind-${item.kind}`}>

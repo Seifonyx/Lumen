@@ -294,15 +294,15 @@ try {
         record.screens.routing = await axe(page, 'section.rc-page');
         await shot(page, join(out, `${tag}-prism-models.png`));
         const prismNav = page.getByRole('navigation', { name:'Router sections' });
-        assert.deepEqual(await prismNav.locator('button').allTextContents(), ['Models','Providers','Routing','Layouts','Usage','Diagnostics']);
+        assert.deepEqual(await prismNav.locator('button').allTextContents(), ['Models','Providers','Routing','Layouts','Activity']);
         await prismNav.getByRole('button',{name:'Layouts',exact:true}).click();
         await shot(page, join(out, `${tag}-prism-layouts.png`));
-        await prismNav.getByRole('button',{name:'Usage',exact:true}).click();
+        await prismNav.getByRole('button',{name:'Activity',exact:true}).click();
         await page.locator('.rc-page .rc-history[data-evidence-source="saved-chats"]').waitFor();
         assert.equal(await page.locator('.rc-page').getByText('Loading saved-chat history…').count(),0,'Usage capture shows loaded evidence');
         record.screens.prismUsage = await axe(page,'section.rc-page');
         await shot(page, join(out, `${tag}-prism-usage.png`));
-        await prismNav.getByRole('button',{name:'Diagnostics',exact:true}).click();
+        await page.locator('.rc-page #rc-diagnostics').scrollIntoViewIfNeeded();
         await page.locator('.rc-page .rc-latest').waitFor();
         await page.locator('.rc-page .rc-log').waitFor();
         assert.equal(await page.locator('.rc-page').getByText('Loading latest outcome…').count(),0,'Diagnostics capture shows loaded evidence');

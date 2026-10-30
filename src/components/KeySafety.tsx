@@ -29,9 +29,10 @@ function Steps({ title, children, open: startOpen }: { title: string; children: 
 }
 
 /** Checks that the user's own AI keys can't be misused if they ever leak. `safeCopy` (Router's provider pages) shows
- * Lumen's own words instead of a provider's raw error text. */
-export default function KeySafety({ safeCopy = false }: { safeCopy?: boolean } = {}) {
-  const keys = useStore((s) => s.keys);
+ * Lumen's own words instead of a provider's raw error text; `only` limits it to that provider's key. */
+export default function KeySafety({ safeCopy = false, only }: { safeCopy?: boolean; only?: 'gemini' | 'openrouter' } = {}) {
+  const all = useStore((s) => s.keys);
+  const keys = only ? { gemini: only === 'gemini' ? all.gemini : '', openrouter: only === 'openrouter' ? all.openrouter : '' } : all;
   const [gemini, setGemini] = useState<Gemini>(null);
   const [openrouter, setOpenrouter] = useState<OpenRouter>(null);
   const [busy, setBusy] = useState(false);
@@ -41,12 +42,12 @@ export default function KeySafety({ safeCopy = false }: { safeCopy?: boolean } =
     const current=++checkGeneration.current,version=keyVersion();
     setBusy(true);
     setGemini(null);setOpenrouter(null);
-    const [g, o] = await Promise.all([geminiKeyLock(), openRouterKeyInfo()]);
+    const [g, o] = await Promise.all([only === 'openrouter' ? null : geminiKeyLock(), only === 'gemini' ? null : openRouterKeyInfo()]);
     if(current!==checkGeneration.current || version!==keyVersion())return;
     setGemini(g as Gemini);
     setOpenrouter(o as OpenRouter);
     setBusy(false);
-  }, []);
+  }, [only]);
 
   useEffect(() => {
     if (keys.gemini || keys.openrouter) void check();
@@ -64,9 +65,9 @@ export default function KeySafety({ safeCopy = false }: { safeCopy?: boolean } =
           {busy ? <Loader2 size={14} className="spin" /> : <RefreshCw size={14} />} Check again
         </button>
       </div>
-      <p className="setting-hint">
+      {!only && <p className="setting-hint">
         If a key ever leaked, a locked key is useless anywhere else. Your keys are already private to your account; this adds a second lock.
-      </p>
+      </p>}
 
       {keys.gemini && (
         <div className="key-row">

@@ -62,8 +62,9 @@ export default function KeysPanel({ provider }: { provider?: string } = {}) {
     <div className="settings-section">
       <ProviderConnections compact={Boolean(provider)} onShowAllProviders={clearProviderSettingsTarget || undefined} targetProvider={targetProvider} main={KEY_FIELDS.filter((field): field is MainProvider => field.id !== 'github')} draft={draft} setDraft={setDraft} saved={keys} />
       {validation && <p className="error-text" role="alert">{validation}</p>}
-      <div className="settings-actions">
-        <span className="muted small">Saved on this device, then synced privately to your account when connected.</span>
+      {/* Router's provider page: Save sits with the field and appears once there is something to save. */}
+      {(!provider || changed || busy) && <div className="settings-actions">
+        <span className="muted small">{provider ? 'Stays private to your account.' : 'Saved on this device, then synced privately to your account when connected.'}</span>
         <button
           className="btn primary"
           disabled={busy || !changed || Boolean(validation)}
@@ -80,12 +81,12 @@ export default function KeysPanel({ provider }: { provider?: string } = {}) {
             }
           }}
         >
-          {busy && <Loader2 size={16} className="spin" />} Save keys
+          {busy && <Loader2 size={16} className="spin" />} {provider ? 'Save key' : 'Save keys'}
         </button>
-      </div>
+      </div>}
 
-      {/* Key safety checks Gemini and OpenRouter keys; on a provider page it appears only for those two. */}
-      {(!provider || provider === 'gemini' || provider === 'openrouter') && <KeySafety safeCopy={Boolean(provider)} />}
+      {/* Key safety checks Gemini and OpenRouter keys; Router shows it under a provider's Advanced. */}
+      {!provider && <KeySafety />}
     </div>
   );
 }

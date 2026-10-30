@@ -40,11 +40,11 @@ for(const [width,theme] of views){
   await page.screenshot({path:path.join(out,`${width}-${theme}-add-key.png`),animations:'disabled'});
   await conn.getByRole('textbox',{name:'Mistral API key'}).fill('synthetic-fixture-key');
   await conn.getByRole('checkbox').check();
-  await conn.getByRole('button',{name:'Save keys'}).click();
+  await conn.getByRole('button',{name:'Save key',exact:true}).click();
   await page.goBack();
   await page.locator('#sb-group-connected').locator('xpath=ancestor::section[1]').getByRole('button',{name:'Mistral',exact:true}).waitFor();
   // Routing: priority, switching and the fallback order, the same controls Settings used to hold.
-  await hub.getByRole('button',{name:'Routing',exact:true}).first().click();await page.getByRole('combobox',{name:'Routing priority'}).waitFor();await page.waitForTimeout(300);
+  await hub.getByRole('button',{name:'Routing',exact:true}).first().click();await page.getByRole('group',{name:'Routing priority'}).waitFor();await page.waitForTimeout(300);
   await page.screenshot({path:path.join(out,`${width}-${theme}-routing.png`),animations:'disabled'});
   const axe2=await new AxeBuilder({page}).include('.rc-page:not([hidden])').withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
   assert.deepEqual(axe2.violations.map(v=>`${v.id}: ${v.nodes.map(n=>n.target).join(' ')}`),[],'Routing has no WCAG A/AA violations');

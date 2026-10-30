@@ -18,6 +18,8 @@ const ctx = (n: number | null) => (n ? (n >= 1_000_000 ? `${Math.round(n / 1_000
 
 /** Saved models, routing and model health. Settings shows every view; Router's Routing section shows `only="routing"`
  * (no Layouts view, which Router has as its own section). Same store owners either way. */
+const PRIORITIES: [NonNullable<Settings['routingPreference']>, string][] = [['balanced', 'Balanced'], ['quality', 'Quality'], ['speed', 'Speed'], ['cost', 'Cost']];
+
 export default function ModelsTab({ only }: { only?: 'routing' } = {}) {
   const catalog = useStore((s) => s.catalog);
   const settings = useStore((s) => s.settings);
@@ -75,29 +77,37 @@ export default function ModelsTab({ only }: { only?: 'routing' } = {}) {
         <div className="settings-card">
           <Toggle
             label="Switch models automatically"
-            hint="Use the next model if a request fails or reaches its limit."
+            hint={only ? 'Try the next model when one fails.' : 'Use the next model if a request fails or reaches its limit.'}
             checked={settings.autoSwitch}
             onChange={(v) => update({ autoSwitch: v })}
           />
           <Toggle
             label="Auto for new chats"
-            hint="Choose the best saved model for each message."
+            hint={only ? undefined : 'Choose the best saved model for each message.'}
             checked={settings.defaultModel === 'auto'}
             onChange={(v) => update({ defaultModel: v ? 'auto' : enabled[0] || '' })}
           />
-          <div className="setting-row">
+          {only ? (
+            // Router: four choices, all visible, one tap each (native radios, so arrow keys work as usual).
+            <fieldset className="setting-row rc-segmented-row">
+              <legend className="setting-label">Routing priority</legend>
+              <span className="rc-segmented">{PRIORITIES.map(([value, label]) => (
+                <label key={value}><input type="radio" name="routing-priority" value={value} checked={choosePreference(settings.routingPreference) === value} onChange={() => update({ routingPreference: value })} /><span>{label}</span></label>
+              ))}</span>
+            </fieldset>
+          ) : <div className="setting-row">
             <span className="setting-text"><span className="setting-label">Routing priority</span><span className="setting-hint">Your request takes priority. Cost uses reported prices; missing prices stay unknown.</span></span>
             <span className="setting-ctrl"><select aria-label="Routing priority" value={choosePreference(settings.routingPreference)} onChange={e=>update({routingPreference:e.target.value as Settings['routingPreference']})}>
-              <option value="balanced">Balanced</option><option value="quality">Quality</option><option value="speed">Speed</option><option value="cost">Cost</option>
+              {PRIORITIES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select></span>
-          </div>
+          </div>}
           <div className="setting-row">
             <span className="setting-text">
-              <span className="setting-label">Auto prefers</span>
-              <span className="setting-hint">When models are close, lean towards this provider.{settings.autoExcluded?.length ? ` ${settings.autoExcluded.length} model${settings.autoExcluded.length === 1 ? ' is' : 's are'} kept out of Auto.` : ''}</span>
+              <span className="setting-label">{only ? 'Preferred provider' : 'Auto prefers'}</span>
+              {(!only || settings.autoExcluded?.length) ? <span className="setting-hint">{only ? '' : 'When models are close, lean towards this provider.'}{settings.autoExcluded?.length ? `${only ? '' : ' '}${settings.autoExcluded.length} model${settings.autoExcluded.length === 1 ? ' is' : 's are'} kept out of Auto.` : ''}</span> : null}
             </span>
             <span className="setting-ctrl">
-              <select aria-label="Provider Auto prefers" value={settings.autoPreferProvider || ''} onChange={(e) => update({ autoPreferProvider: e.target.value || undefined })}>
+              <select aria-label={only ? 'Preferred provider' : 'Provider Auto prefers'} value={settings.autoPreferProvider || ''} onChange={(e) => update({ autoPreferProvider: e.target.value || undefined })}>
                 <option value="">No preference</option>
                 {[...new Set(enabled.map((id) => id.split(':')[0]))].filter((p) => p !== 'auto' && !p.startsWith('layout')).map((p) => <option key={p} value={p}>{PROVIDER_NAMES[providerOfId(`${p}:x`)] || p}</option>)}
               </select>

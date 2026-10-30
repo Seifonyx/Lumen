@@ -59,7 +59,7 @@ async function containment(card) {
       await page.evaluate(()=>document.activeElement?.blur());
       await rc.locator('.rc-scroll').evaluate(el=>el.scrollTop=0);
       if(scale===1)await page.screenshot({path:path.join(out,`${width}-${theme}-${provider}-overview.png`),animations:'disabled'});
-      assert.equal(await card.getAttribute('open')!==null,true,'measure expanded provider content');
+      assert.equal(await card.locator('.provider-connection-body').isVisible(),true,'measure expanded provider content');
       await card.evaluate(el=>{const scroll=el.closest('.rc-scroll');scroll.scrollTop+=el.getBoundingClientRect().top-scroll.getBoundingClientRect().top-12;});
       await page.screenshot({path:path.join(out,`${width}-${theme}-${provider}-${scale===1?'normal':'large'}.png`),animations:'disabled'});
       assert.deepEqual(await containment(card),[],`${width}px ${theme} ${provider} ${scale}x text and controls must fit visible card`);
@@ -72,7 +72,7 @@ async function containment(card) {
      if(width===320){await permission.evaluate(el=>{const label=el.closest('label'),scroll=el.closest('.rc-scroll');scroll.scrollTop+=label.getBoundingClientRect().top-scroll.getBoundingClientRect().top-12;});await page.screenshot({path:path.join(out,`${width}-${theme}-${provider}-permission-large.png`),animations:'disabled'});}
      await permission.check();await key.fill('SYNTHETIC_UNSAVED');
      assert.equal(await card.locator('.key-status-pill').innerText(),'Unsaved changes');
-     await settings.getByRole('button',{name:'Save keys',exact:true}).scrollIntoViewIfNeeded();assert(await settings.getByRole('button',{name:'Save keys',exact:true}).isVisible());if(provider==='anthropic')assert(await settings.getByRole('button',{name:'Save keys',exact:true}).isEnabled(),'valid unsaved edits enable Save keys');
+     await settings.getByRole('button',{name:'Save key',exact:true}).scrollIntoViewIfNeeded();assert(await settings.getByRole('button',{name:'Save key',exact:true}).isVisible());if(provider==='anthropic')assert(await settings.getByRole('button',{name:'Save key',exact:true}).isEnabled(),'valid unsaved edits enable Save key');
      assert(!/SYNTHETIC_UNSAVED|SYNTHETIC_ONLY/.test(await rc.innerText()),'keys are never shown as text');
      await page.goBack();await rc.locator(`[data-provider="${provider}"]`).waitFor();
      await page.goForward();await card.waitFor();assert.equal(await key.inputValue(),'SYNTHETIC_UNSAVED');assert(await permission.isChecked(),'Forward restores the unsaved permission');

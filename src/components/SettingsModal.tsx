@@ -38,6 +38,7 @@ import { deleteCloudData, deleteLocalData, deleteSignIn } from '../lib/delete-ac
 import { forgetLocalAccount, isPreviewUser, signOutUser } from '../lib/firebase';
 import UsageTab from './UsageTab';
 import MemoryTab from './MemoryTab';
+import KeySafety from './KeySafety';
 import KeysPanel from './KeysPanel';
 import SharedLinks from './SharedLinks';
 import ImportChats from './ImportChats';
@@ -370,7 +371,7 @@ function PersonalizeTab() {
 const SECTIONS = CANVAS_SHELL ? TABS.filter(([id]) => !['keys', 'models', 'usage'].includes(id)) : TABS;
 
 // Router reuses these through this chunk, so the shared editors keep one place in the bundle.
-export { KeysPanel, ModelsTab };
+export { KeysPanel, ModelsTab, KeySafety };
 
 export default function SettingsModal() {
   const open = useStore((s) => s.settingsOpen);

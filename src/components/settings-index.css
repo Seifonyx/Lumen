@@ -1,14 +1,14 @@
 /* Canvas Settings index (phones): account first, then short grouped lists in the sidebar's ink/paper language. */
-.app[data-lumen-canvas-shell] .si { display: grid; gap: 22px; padding: 4px 16px 8px; }
+.app[data-lumen-canvas-shell] .si { display: grid; gap: 26px; padding: 4px 16px 8px; }
 .app[data-lumen-canvas-shell] .settings-page.has-section .si { display: none; }
 
-.app[data-lumen-canvas-shell] .si-account { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 72px; padding: 14px 14px 14px 16px; border: 1px solid var(--canvas-rim); border-radius: 18px; background: var(--cv5-card, var(--canvas-surface)); color: var(--canvas-ink); font: inherit; text-align: start; cursor: pointer; }
+.app[data-lumen-canvas-shell] .si-account { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 72px; padding: 14px 14px 14px 16px; border: 1px solid transparent; border-radius: 16px; background: var(--canvas-surface); color: var(--canvas-ink); font: inherit; text-align: start; cursor: pointer; }
 .app[data-lumen-canvas-shell] .si-avatar { flex: none; width: 46px; height: 46px; font-size: 18px; }
 .app[data-lumen-canvas-shell] .si-account-name { font: 600 17px/1.25 var(--canvas-body-font); color: var(--canvas-ink); overflow-wrap: anywhere; }
 
 .app[data-lumen-canvas-shell] .si-group { display: grid; gap: 8px; }
 .app[data-lumen-canvas-shell] .si-group h2 { margin: 0; padding: 0 4px; font: 600 13px/1.3 var(--canvas-body-font); letter-spacing: 0; color: var(--canvas-secondary); }
-.app[data-lumen-canvas-shell] .si-list { margin: 0; padding: 0; list-style: none; border: 1px solid var(--canvas-rim); border-radius: 16px; background: var(--cv5-card, var(--canvas-surface)); overflow: hidden; }
+.app[data-lumen-canvas-shell] .si-list { margin: 0; padding: 0; list-style: none; border: 1px solid transparent; border-radius: 16px; background: var(--canvas-surface); overflow: hidden; }
 .app[data-lumen-canvas-shell] .si-row { position: relative; }
 .app[data-lumen-canvas-shell] .si-row + .si-row::before { content: ""; position: absolute; top: 0; left: 60px; right: 0; border-top: 1px solid var(--canvas-rim); }
 .app[data-lumen-canvas-shell] .si-hit { display: flex; align-items: center; gap: 13px; width: 100%; min-height: 58px; padding: 10px 14px; border: 0; background: none; color: var(--canvas-ink); font: inherit; text-align: start; cursor: pointer; }
@@ -17,9 +17,8 @@
 .app[data-lumen-canvas-shell] .si-hit:focus-visible, .app[data-lumen-canvas-shell] .si-account:focus-visible { outline: 2px solid var(--canvas-focus, var(--canvas-ink)); outline-offset: -2px; border-radius: 15px; }
 .app[data-lumen-canvas-shell] .si-icon { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--canvas-fill); color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .si-copy { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.app[data-lumen-canvas-shell] .si-name { font: 600 15px/1.3 var(--canvas-body-font); color: var(--canvas-ink); }
-.app[data-lumen-canvas-shell] .si-status { font-size: 13.5px; line-height: 1.4; color: var(--canvas-secondary); overflow-wrap: anywhere; }
-.app[data-lumen-canvas-shell] .si-detail { display: block; font-size: 12.5px; color: var(--canvas-muted); }
+.app[data-lumen-canvas-shell] .si-name { font: 500 15px/1.3 var(--canvas-body-font); color: var(--canvas-ink); }
+.app[data-lumen-canvas-shell] .si-status { font-size: 13px; line-height: 1.4; color: var(--canvas-secondary); overflow-wrap: anywhere; }
 .app[data-lumen-canvas-shell] .si-go { flex: none; color: var(--canvas-muted); }
 
 @media (forced-colors: active) {

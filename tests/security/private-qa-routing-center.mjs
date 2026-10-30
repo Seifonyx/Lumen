@@ -100,7 +100,7 @@ try {
       const places = await rc(page).locator('.rc-tabs button, .phone-sections button').evaluateAll(els => els.map(el => {
         const r=el.getBoundingClientRect();return { name:el.textContent,left:r.left,right:r.right,height:r.height,cut:el.scrollWidth>el.clientWidth };
       }));
-      assert.deepEqual(places.map(p=>p.name), ['Models','Providers','Routing','Layouts','Usage','Diagnostics']);
+      assert.deepEqual(places.map(p=>p.name), ['Models','Providers','Routing','Layouts','Activity']);
       for (const t of places.filter(()=>!phone)) assert.ok(t.left>=0&&t.right<=width&&!t.cut, `visible desktop section: ${t.name}`);
       if (phone) {
         for (const item of await rc(page).locator('.phone-sections button').all()) {
@@ -179,10 +179,10 @@ try {
       pass('policies');
 
       // Usage (canonical UsageTab) and Diagnostics.
-      await tab(page, 'Usage');
+      await tab(page, 'Activity');
       await settle(page);
       assert.ok(await rc(page).locator('.settings-section.usage').isVisible(), 'the real usage view');
-      await tab(page, 'Diagnostics');
+      await rc(page).locator('#rc-diagnostics').scrollIntoViewIfNeeded();
       await settle(page);
       // CP2 leads with recorded outcomes (or an honest no-record state), never an inferred model choice.
       const latest = rc(page).locator('.rc-latest');

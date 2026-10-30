@@ -40,6 +40,11 @@ export default function ProviderConnections({ main, draft, setDraft, saved, targ
       </div>
     );
   };
+  // Router's provider page (compact): the fields sit flat on the page, under its own heading; a pill appears only
+  // while there are unsaved edits. Settings keeps one collapsible card per provider.
+  const card = (id: string, className: string, head: React.ReactNode, unsaved: boolean, body: React.ReactNode) => compact
+    ? <div key={id} className={`${className} sb-key`} data-provider={id}>{unsaved && <span className="key-status-pill unset">Unsaved changes</span>}{body}</div>
+    : <details key={id} className={className} data-provider={id} ref={focused === id ? target : undefined} open={focused === id || (className.includes('key-provider-card') && firstRun) || undefined}>{head}{body}</details>;
   const summary = (id: string, label: string, status: string, on: boolean) => (
     <summary>
       <span className="provider-name">{label}{FREE.has(id) && <span className="provider-free">Free tier</span>}</span>
@@ -77,37 +82,29 @@ export default function ProviderConnections({ main, draft, setDraft, saved, targ
         ]} />
       </div>}
 
-      <div className="settings-card">
+      <div className={compact ? 'sb-key-list' : 'settings-card'}>
         {visible.length === 0 && <p className="muted small provider-none">{filter === 'connected' && !q ? 'No providers have a saved key and permission enabled. Add a key under All providers.' : 'No providers match.'}</p>}
         {visible.map(({ id }) => {
           const m = main.find((p) => p.id === id);
           if (m) {
-            const on = Boolean((saved[m.id] || '').trim());
-            return (
-              <details key={id} className="provider-connection key-provider-card" data-provider={id} ref={focused === id ? target : undefined} open={focused === id || firstRun || undefined}>
-                {summary(id, m.label, (draft[m.id] || '') !== (saved[m.id] || '') ? 'Unsaved changes' : on ? 'Key saved' : 'Not set', on)}
+            const on = Boolean((saved[m.id] || '').trim()), unsaved = (draft[m.id] || '') !== (saved[m.id] || '');
+            return card(id, 'provider-connection key-provider-card', summary(id, m.label, unsaved ? 'Unsaved changes' : on ? 'Key saved' : 'Not set', on), unsaved,
                 <div className="provider-connection-body">
                   <p className="muted small">{m.hint} <a className="link-btn small inline" href={m.link} target="_blank" rel="noopener noreferrer">{m.linkText || 'Get a free key'} <ExternalLink size={12} /></a></p>
                   {keyInput(m.id, m.label, m.placeholder)}
-                </div>
-              </details>
-            );
+                </div>);
           }
           const x = id as ExtraId, provider = EXTRA_PROVIDERS[x];
           const enabled = draft.providerAccess?.[x] === true;
           const unsaved = (draft[x] || '') !== (saved[x] || '') || enabled !== (saved.providerAccess?.[x] === true);
-          return (
-            <details key={id} className="provider-connection" data-provider={id} ref={focused === id ? target : undefined} open={focused === id || undefined}>
-              {summary(id, provider.label, unsaved ? 'Unsaved changes' : enabled && saved[x] ? 'Key saved · on' : saved[x] ? 'Saved · off' : 'Not set', !unsaved && Boolean(enabled && saved[x]))}
+          return card(id, 'provider-connection', summary(id, provider.label, unsaved ? 'Unsaved changes' : enabled && saved[x] ? 'Key saved · on' : saved[x] ? 'Saved · off' : 'Not set', !unsaved && Boolean(enabled && saved[x])), unsaved,
               <div className="provider-connection-body">
                 <p className="muted small">{provider.hint} <a className="link-btn small inline" href={provider.link} target="_blank" rel="noopener noreferrer">Provider dashboard <ExternalLink size={12} /></a></p>
                 {keyInput(x, provider.label)}
                 {x === 'alibaba' && <label className="provider-field"><span>Model Studio endpoint</span><input type="url" autoCapitalize="none" spellCheck={false} aria-label="Alibaba Cloud endpoint" placeholder={EXTRA_PROVIDERS.alibaba.base} value={draft.alibabaBaseUrl || ''} onChange={(e) => setDraft({ ...draft, alibabaBaseUrl: e.target.value })} /><span className="muted small">Paste the official base URL from your Model Studio workspace. Leave blank for the legacy Singapore endpoint.</span></label>}
                 {x === 'cloudflare' && <label className="provider-field"><span>Cloudflare account ID</span><input aria-label="Cloudflare account ID" autoCapitalize="none" spellCheck={false} value={draft.cloudflareAccountId || ''} onChange={(e) => setDraft({ ...draft, cloudflareAccountId: e.target.value })} /></label>}
                 <label className="provider-consent"><input type="checkbox" checked={enabled} onChange={(e) => setDraft({ ...draft, providerAccess: { ...draft.providerAccess, [x]: e.target.checked } })} /><span>Enable {provider.label}. Its models may use credits or charges; set a spending limit in its dashboard.</span></label>
-              </div>
-            </details>
-          );
+              </div>);
         })}
       </div>
 

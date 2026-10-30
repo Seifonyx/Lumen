@@ -1,4 +1,4 @@
-import { ArrowUpRight, ChevronRight, GitFork, type LucideIcon } from 'lucide-react';
+import { ChevronRight, GitFork, type LucideIcon } from 'lucide-react';
 import { useId } from 'react';
 import { openRoutingCenter } from '../lib/routing-center';
 import { navigateScreen } from '../lib/screen-history';
@@ -10,10 +10,11 @@ export type SettingsSection = [string, string, LucideIcon, string];
 
 // Settings index for the Canvas presentation on phones: the account first, then short groups whose rows
 // state what is true now. Router owns API keys, models, routing, layouts and usage, so one row leaves Settings for it.
-const GROUPS: [string, string[]][] = [
+// A group of one needs no heading of its own: the row says it.
+const GROUPS: [string | null, string[]][] = [
   ['Connections', ['connectors']],
   ['Personal', ['personalize', 'memory', 'tasks']],
-  ['Privacy & data', ['privacy']],
+  [null, ['privacy']],
 ];
 
 const NOT_PROVIDER_KEYS = new Set(['github', 'providerAccess', 'cloudflareAccountId', 'alibabaBaseUrl', 'providerRelayUrl']);
@@ -37,7 +38,7 @@ function useStatus(): Record<string, string> {
   };
 }
 
-function Row({ name, status, detail, Icon, onClick, trailing = 'chevron', hint }: { name: string; status: string; detail?: string; Icon: LucideIcon; onClick: () => void; trailing?: 'chevron' | 'leave'; hint?: string }) {
+function Row({ name, status, Icon, onClick, hint }: { name: string; status: string; Icon: LucideIcon; onClick: () => void; hint?: string }) {
   const id = useId(), nameId = useId();
   return (
     <li className="si-row">
@@ -45,9 +46,9 @@ function Row({ name, status, detail, Icon, onClick, trailing = 'chevron', hint }
         <span className="si-icon" aria-hidden="true"><Icon size={17} /></span>
         <span className="si-copy">
           <span className="si-name" id={nameId}>{name}</span>
-          {status && <span className="si-status" id={id}>{status}{detail && <span className="si-detail">{detail}</span>}{hint && <span className="sr-only">. {hint}</span>}</span>}
+          {status && <span className="si-status" id={id}>{status}{hint && <span className="sr-only">. {hint}</span>}</span>}
         </span>
-        {trailing === 'leave' ? <ArrowUpRight size={17} className="si-go" aria-hidden="true" /> : <ChevronRight size={17} className="si-go" aria-hidden="true" />}
+        <ChevronRight size={17} className="si-go" aria-hidden="true" />
       </button>
     </li>
   );
@@ -69,19 +70,24 @@ export default function SettingsIndex({ sections, open }: { sections: SettingsSe
         </span>
         <span className="si-copy">
           <span className="si-account-name" id={accountName}><span className="sr-only">Account: </span>{name}</span>
-          <span className="si-status" id={accountId}>{user?.name && user.email ? <>{user.email}<br /></> : null}Account, appearance & chat</span>
+          <span className="si-status" id={accountId}>{user?.name && user.email ? user.email : 'Account, appearance & chat'}{user?.name && user.email ? <span className="sr-only">. Account, appearance & chat</span> : null}</span>
         </span>
         <ChevronRight size={17} className="si-go" aria-hidden="true" />
       </button>
-      {GROUPS.map(([title, ids]) => (
-        <section className="si-group" key={title} aria-labelledby={`si-${title.replace(/\W+/g, '-')}`}>
-          <h2 id={`si-${title.replace(/\W+/g, '-')}`}>{title}</h2>
+      {GROUPS.map(([title, ids]) => {
+        const list = (
           <ul className="si-list">
-            {title === 'Connections' && <Row name="Router" status={status.router} detail="API keys, models, routing, layouts and usage" hint="Leaves Settings" Icon={GitFork} onClick={prism} trailing="leave" />}
-            {ids.map((id) => { const [, label, Icon] = find(id); return <Row key={id} name={label} status={status[id]} detail={id === 'privacy' ? 'Backups, export and account deletion' : undefined} Icon={Icon} onClick={() => open(id)} />; })}
+            {title === 'Connections' && <Row name="Router" status={status.router} hint="API keys, models, routing, layouts and usage. Leaves Settings" Icon={GitFork} onClick={prism} />}
+            {ids.map((id) => { const [, label, Icon] = find(id); return <Row key={id} name={label} status={status[id]} hint={id === 'privacy' ? 'Backups, export and account deletion' : undefined} Icon={Icon} onClick={() => open(id)} />; })}
           </ul>
-        </section>
-      ))}
+        );
+        return title ? (
+          <section className="si-group" key={title} aria-labelledby={`si-${title.replace(/\W+/g, '-')}`}>
+            <h2 id={`si-${title.replace(/\W+/g, '-')}`}>{title}</h2>
+            {list}
+          </section>
+        ) : <div className="si-group" key={ids.join()}>{list}</div>;
+      })}
     </nav>
   );
 }

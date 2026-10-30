@@ -30,9 +30,9 @@ try{for(const[width,height]of sizes)for(const theme of ['light','dark']){
  const shot=async name=>{await page.evaluate(()=>document.activeElement?.blur());await page.screenshot({path:path.join(out,`${width}-${theme}-${name}.png`),animations:'disabled'});};
  await shot('models');
  if(process.env.PRISM_MODELS_CAPTURE_BASELINE==='1')continue; // Explicit capture-only baseline, never enabled in verification/CI.
- if(width===320){const geo=await rc.locator('.rc-model').first().evaluate(el=>{const a=el.getBoundingClientRect(),b=el.querySelector('button:not(:disabled)').getBoundingClientRect(),s=document.querySelector('.rc-search input').getBoundingClientRect();return{rowBottom:a.bottom,buttonBottom:b.bottom,searchTop:s.top,scroll:el.closest('.rc-scroll').scrollTop}});assert.equal(geo.scroll,0);assert(geo.rowBottom<geo.searchTop&&geo.buttonBottom<geo.searchTop,JSON.stringify(geo));}
- const search=rc.getByRole('searchbox',{name:'Search models',exact:true});await search.fill('Google AI Studio pro');assert.equal(await rc.locator('.rc-model').count(),1,'provider alias + model terms narrow inventory');assert.match(await rc.locator('.rc-model').innerText(),/2.5 Pro/);
- await rc.getByRole('button',{name:'Clear model search',exact:true}).click();
+ if(width===320){const geo=await rc.locator('.rc-model').first().evaluate(el=>{const a=el.getBoundingClientRect(),b=el.querySelector('button:not(:disabled)').getBoundingClientRect(),s=document.querySelector('.rc-search input')?.getBoundingClientRect();return{rowBottom:a.bottom,buttonBottom:b.bottom,searchTop:s?s.top:Infinity,scroll:el.closest('.rc-scroll').scrollTop}});assert.equal(geo.scroll,0);assert(geo.rowBottom<geo.searchTop&&geo.buttonBottom<geo.searchTop,JSON.stringify(geo));}
+ // Two models: no search bar yet (it appears past eight); the 300-model catalog below exercises search.
+ const search=rc.getByRole('searchbox',{name:'Search models',exact:true});assert.equal(await search.count(),0,'a short list has no search bar');
  await rc.getByRole('button',{name:'Filter models: All models',exact:true}).click();await rc.getByRole('menuitemradio',{name:/Selectable/}).click();assert.equal(await rc.locator('.rc-model').count(),2);
  await shot('filtered');
  await rc.getByRole('button',{name:'Filter models: Selectable',exact:true}).click();await rc.getByRole('menuitemradio',{name:/Reads images/}).click();assert.equal(await rc.locator('.rc-model').count(),2);
@@ -53,7 +53,7 @@ try{for(const[width,height]of sizes)for(const theme of ['light','dark']){
  await search.fill('fixture-299');assert.equal(await rc.locator('.rc-model').count(),1);assert.match(await rc.locator('.rc-model').innerText(),/Enable this model/);assert(await rc.getByRole('button',{name:'Use Synthetic research model 299 with a deliberately long multilingual title — دراسة النموذج',exact:true}).isDisabled());await shot('long-name');
  assert(await rc.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'model rows fit narrow screen');
  await rc.getByRole('button',{name:'Clear model search',exact:true}).click();await rc.getByRole('button',{name:'Next',exact:true}).click();assert.match(await rc.getByRole('navigation',{name:'Model pages'}).innerText(),/25–48 of 302/);
- await search.fill('fixture-299');await rc.getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Usage',exact:true}).click();await page.goBack();await search.waitFor();assert.equal(await search.inputValue(),'fixture-299','Back restores Models search');
+ await search.fill('fixture-299');await rc.getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Activity',exact:true}).click();await page.goBack();await search.waitFor();assert.equal(await search.inputValue(),'fixture-299','Back restores Models search');
  assert(requests.every(m=>m==='GET'));assert.deepEqual(errors,[]);results.push({width,height,theme,passed:true});console.log(`PASS Prism Models ${engine} ${width} ${theme}`);
  }finally{await context.close();}
 }}finally{await browser.close();fs.writeFileSync(path.join(out,`results-${engine}.json`),JSON.stringify({engine,syntheticOnly:true,physicalIPhone:false,results},null,2));}

@@ -422,7 +422,7 @@
  .app[data-lumen-canvas-shell] .phone-sections { display:flex;flex:none;gap:4px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scroll-padding-inline:12px;scrollbar-width:none;scrollbar-color:var(--canvas-rim) transparent;padding:8px 12px 10px;margin:0;max-width:none;mask-image:linear-gradient(90deg,transparent,#000 8px,#000 calc(100% - 12px),transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 8px,#000 calc(100% - 12px),transparent); }
  .app[data-lumen-canvas-shell] .phone-sections::-webkit-scrollbar { display:none; }
  .app[data-lumen-canvas-shell] .phone-sections button { flex:none;min-height:44px;padding:0 14px;border:1px solid transparent;border-radius:999px;scroll-snap-align:start;white-space:nowrap;background:none;color:var(--canvas-secondary);font:550 calc(var(--fs,15px) - .5px)/1.3 var(--canvas-body-font);cursor:pointer; }
- .app[data-lumen-canvas-shell] .phone-sections button:is([aria-selected='true'],[aria-current='page']) { color:var(--canvas-ink);border-color:var(--canvas-rim);background:var(--canvas-fill-strong); }
+ .app[data-lumen-canvas-shell] .phone-sections button:is([aria-selected='true'],[aria-current='page']) { color:var(--canvas-ink);background:var(--canvas-lamplight,var(--canvas-fill-strong)); }
  .app[data-lumen-canvas-shell] .phone-sections button:focus-visible { outline:2px solid var(--focus);outline-offset:-2px; }
  .app[data-lumen-canvas-shell] .phone-sections button:active { background:var(--canvas-fill); }
  .app[data-lumen-canvas-shell] .phone-page-search { flex:none;box-sizing:border-box;padding:10px 16px max(10px,env(safe-area-inset-bottom));margin:0;max-width:none;background:var(--canvas-paper);border-top:1px solid var(--canvas-rim); }
@@ -444,3 +444,5 @@
 @media(max-width:899px){ .app[data-lumen-canvas-shell] .rc-page > .phone-page-search { width:100%;margin-inline:0; } }
 /* Every contextual Search owns its clear action; Safari must not add a second glyph. */
 .app[data-lumen-canvas-shell] .phone-page-search input::-webkit-search-cancel-button { display:none; }
+/* Phones: a toast arrives under the navigation bar, never over its Back button or title. */
+@media (max-width: 899px) { html[data-lumen-canvas] .toasts { top: calc(env(safe-area-inset-top) + 68px); } }

@@ -73,8 +73,8 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       if (!before && phone) {
         assert.equal(await rc.locator('.rc-dock').count(),0);
         for (const [id, heading] of [['usage', 'Usage'], ['diagnostics', 'Diagnostics']]) {
-          await tab(id === 'usage' ? 'Usage' : 'Diagnostics');
-          await rc.getByRole('heading',{name:heading}).waitFor();
+          await tab('Activity');
+          await rc.getByRole('heading',{name:heading,exact:true}).waitFor();
           assert.equal(await rc.getByRole('button',{name:'Open sidebar',exact:true}).count(),0);
           await tab('Models');
           await rc.getByRole('region',{name:'Current routing mode'}).waitFor();
@@ -120,7 +120,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       // The fix stays on this page: it moves to the provider's key and permission, never another account's or provider's.
       const targeted = detail.locator('#sb-connection .provider-connection[data-provider="anthropic"]');
       await targeted.waitFor();
-      assert.equal(await targeted.getAttribute('open') !== null,true);
+      assert.equal(await targeted.locator('.provider-connection-body').isVisible(),true,'the key fields are open on the page');
       assert.equal(await detail.locator('#sb-connection .provider-connection:visible').count(),1);
       assert.equal(await targeted.locator('input[aria-label="Anthropic (Claude) API key"]').getAttribute('type'),'password');
       assert.equal(await targeted.locator('input[aria-label="Anthropic (Claude) API key"]').inputValue(),'SYNTHETIC_ONLY');
@@ -186,10 +186,10 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
             node.style.fontSize = `${parseFloat(getComputedStyle(node).fontSize) * 1.5}px`;
           }
         });
-        // The scroller reveals all six sections on keyboard focus (its labels keep a fixed size, as a tab bar's do); Models' rows keep
+        // The scroller reveals all five sections on keyboard focus (its labels keep a fixed size, as a tab bar's do); Models' rows keep
         // their words inside the row at larger text.
         assert.equal(await rc.locator('.rc-dock').count(), 0);
-        assert.equal(await rc.locator('.phone-sections button').count(), 6);
+        assert.equal(await rc.locator('.phone-sections button').count(), 5);
         for (const button of await rc.locator('.phone-sections button').all()) {
           await button.focus();
           assert(await button.evaluate(el => el.scrollWidth <= el.clientWidth && [...el.children].every(c => c.getBoundingClientRect().right <= el.getBoundingClientRect().right + 0.5)), 'row remains readable at larger text');

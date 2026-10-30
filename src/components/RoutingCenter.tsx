@@ -35,12 +35,16 @@ const PrismLayouts = lazy(() => import('./PrismLayouts'));
 // Routing settings (priority, switching, fallback order, model health) are the same component Settings uses.
 const RoutingSettings = lazy(() => import('./SettingsModal').then((m) => ({ default: m.ModelsTab })));
 const KeysPanel = lazy(() => import('./SettingsModal').then((m) => ({ default: m.KeysPanel })));
+const KeySafety = lazy(() => import('./SettingsModal').then((m) => ({ default: m.KeySafety })));
 const RoutingInsight = lazy(() => import('./RoutingInsight'));
 
 const PrismModels = lazy(() => import('./PrismModels'));
 const ProviderModels = lazy(() => import('./PrismModels').then(m => ({ default: m.ProviderModels })));
 
-const SECTIONS: [RoutingSection, string][] = [['models', 'Models'], ['providers', 'Providers'], ['routing', 'Routing'], ['policies', 'Layouts'], ['usage', 'Usage'], ['diagnostics', 'Diagnostics']];
+// Usage and Diagnostics share one Activity page: what was used, and how requests ended. 'diagnostics' stays a route
+// into the same page (scrolled to its part), so every existing link keeps working.
+const SECTIONS: [RoutingSection, string][] = [['models', 'Models'], ['providers', 'Providers'], ['routing', 'Routing'], ['policies', 'Layouts'], ['usage', 'Activity']];
+const tabOf = (section: RoutingSection) => section === 'diagnostics' ? 'usage' : section;
 // Phones use a feature index and pushed screens; canonical UI history owns every Back path.
 const providerId = (model: ModelInfo) => (model.provider === 'google' ? 'gemini' : model.provider);
 const providerLabel = (id: string) => (id === 'gemini' ? 'Google AI Studio' : PROVIDER_NAMES[providerOfId(id + ':')] || id);
@@ -98,12 +102,13 @@ function ProviderMark({ id, label }: { id: string; label: string }) {
 /** A provider tile: a neutral monogram, the name, and one line that says whether Lumen can use it. */
 function ProviderTile({ p, onOpen }: { p: ProviderRow; onOpen: () => void }) {
   const v = verdictOf(p), n = p.models.length, connected = p.keySaved || p.enabled;
-  const line = connected ? `${v.word}${n ? ` · ${plural(n, 'model')}` : ''}` : 'Not connected';
+  // The group already says a provider isn't connected; only connected ones carry a status line.
+  const line = connected ? (v.light === 'fail' ? 'Needs attention' : `${v.word}${n ? ` · ${plural(n, 'model')}` : ''}`) : '';
   return (
     <li>
-      <button type="button" className="sb-tile" data-provider={p.id} data-light={connected ? v.light : 'none'} onClick={onOpen} aria-labelledby={`sb-${p.id}-name`} aria-describedby={`sb-${p.id}-state`}>
+      <button type="button" className="sb-tile" data-provider={p.id} data-light={connected ? v.light : 'none'} onClick={onOpen} aria-labelledby={`sb-${p.id}-name`} aria-describedby={line ? `sb-${p.id}-state` : undefined}>
         <ProviderMark id={p.id} label={p.label} />
-        <span className="sb-tile-text"><strong id={`sb-${p.id}-name`}>{p.label}</strong><small id={`sb-${p.id}-state`}>{connected && <LightDot light={v.light} />}{line}</small></span>
+        <span className="sb-tile-text"><strong id={`sb-${p.id}-name`}>{p.label}</strong>{line && <small id={`sb-${p.id}-state`}><LightDot light={v.light} />{line}</small>}</span>
       </button>
     </li>
   );
@@ -128,7 +133,7 @@ function Providers({ preferred, phone, searchHost }: { preferred?: string; openD
   const groups: [string, string, ProviderRow[]][] = [
     ['connected', 'Connected', connected],
     ['free', 'Free to start', rest.filter((p) => FREE_TIER.has(p.id))],
-    ['paid', 'Uses your provider credits', rest.filter((p) => !FREE_TIER.has(p.id))],
+    ['paid', 'Pay as you go', rest.filter((p) => !FREE_TIER.has(p.id))],
   ];
   const open = (id: string) => showRoutingProvider(id);
   // The same catalog refresh as each provider's "Refresh model list": it lists models and sends no message.
@@ -159,7 +164,7 @@ function Providers({ preferred, phone, searchHost }: { preferred?: string; openD
         <section key={id} className="sb-group" aria-labelledby={`sb-group-${id}`}>
           <div className="sb-group-head">
             <h3 id={`sb-group-${id}`}>{label} <span>{rows.length}</span></h3>
-            {id === 'connected' && enabled > 0 && <button type="button" className="sb-refresh" disabled={refreshing} onClick={() => void refreshAll()}><RefreshCw size={14} className={refreshing ? 'spin' : undefined} aria-hidden="true" />{refreshing ? 'Refreshing…' : 'Refresh model lists'}</button>}
+            {id === 'connected' && enabled > 0 && <button type="button" className="sb-refresh" aria-label={refreshing ? undefined : 'Refresh model lists'} disabled={refreshing} onClick={() => void refreshAll()}><RefreshCw size={14} className={refreshing ? 'spin' : undefined} aria-hidden="true" />{refreshing ? 'Refreshing…' : 'Refresh'}</button>}
           </div>
           <ul className="sb-grid">{rows.map((p) => <ProviderTile key={p.id} p={p} onOpen={() => open(p.id)} />)}</ul>
         </section>
@@ -193,28 +198,49 @@ function ProviderDetail({ p, title, usage, enabledHere, searchHost }: { searchHo
     ['Replies', p.presentation.replyLabel],
     ['Allowance', sharedLeft !== null ? `${sharedLeft} requests left · shared pool` : knownLimits.length ? 'Per model, below' : 'Unknown'],
   ];
-  const connection = <section id="sb-connection" className="sb-connection" aria-labelledby="sb-connection-title"><h3 id="sb-connection-title">Key &amp; connection</h3><Suspense fallback={<p className="rc-muted" role="status">Loading key settings…</p>}><KeysPanel provider={p.id} /></Suspense></section>;
+  const connection = <section id="sb-connection" className="sb-connection" aria-labelledby="sb-connection-title"><h3 id="sb-connection-title">API key</h3><Suspense fallback={<p className="rc-muted" role="status">Loading key settings…</p>}><KeysPanel provider={p.id} /></Suspense></section>;
   const setUp = p.keySaved && p.enabled;
+  const safety = p.keySaved && (p.id === 'gemini' || p.id === 'openrouter');
   return (
     <section className="rc-provider-detail" aria-label="Provider detail">
+      {/* Who it is and whether Lumen can use it; then the key (first while it's missing), the models, and the rest. */}
       <header className="rc-detail-head">
-        <div>
-          <div className="sb-detail-title"><ProviderMark id={p.id} label={p.label} /><h2 tabIndex={-1} ref={title}>{p.label}</h2></div>
-          <p className="rc-verdict" data-light={v.light}><LightDot light={v.light} /><strong>{v.word}</strong><span>{listing && n ? `${plural(n, 'model')} ${s?.state === 'stale' ? 'cached' : 'listed'} · ${enabledHere} enabled in settings` : null}</span></p>
+        <div className="sb-detail-title"><ProviderMark id={p.id} label={p.label} />
+          <div><h2 tabIndex={-1} ref={title}>{p.label}</h2><p className="rc-verdict" data-light={v.light}><LightDot light={v.light} /><strong>{v.word}</strong>{listing && n ? <span>{plural(n, 'model')}{enabledHere ? ` · ${enabledHere} saved` : ''}</span> : null}</p></div>
         </div>
         <div className="rc-detail-actions">{actions}</div>
       </header>
       {(p.presentation.attention || (p.keySaved && !p.enabled)) && <p className="rc-note" data-light={v.light} role="status">{p.presentation.guidance}</p>}
-      <p className="rc-setup-line">{p.keySaved ? 'Key saved' : 'No saved key'} · {p.enabled ? 'Provider enabled' : 'Provider disabled'}<span>Catalog discovery does not test replies.</span></p>
       {!setUp && connection}
       <Suspense fallback={<p className="rc-muted" role="status">Loading models…</p>}><ProviderModels searchHost={searchHost} models={p.models} /></Suspense>
       {setUp && connection}
-      <details className="rc-provenance"><summary>Connection details &amp; usage</summary>
+      <details className="rc-provenance"><summary>Advanced</summary>
         <dl className="rc-facts">{facts.map(([k, value, light]) => <div key={k} data-fact={k} data-light={light}><dt>{k}</dt><dd>{value}</dd></div>)}</dl>
         <div className="rc-usage-pair"><div><span>Requests recorded in Lumen</span><strong>{usage ? `${requests} requests` : 'Unknown'}</strong></div><div><span>Tokens recorded in Lumen</span><strong>{usage ? formatTokens(tokens) : 'Unknown'}</strong></div></div>
-        <p className="rc-muted">{sharedLeft !== null ? `One shared allowance for OpenRouter free models: ${usage!.openrouter.used} of ${usage!.openrouter.limit} requests recorded. Paid models are excluded.` : knownLimits.length ? 'Known limits belong to individual models; they are not a combined provider balance.' : 'No provider allowance is reported in this account’s current usage data.'} Counts reflect Lumen activity, not account-wide billing or proof of successful replies.</p>
+        <p className="rc-muted">{sharedLeft !== null ? `One shared allowance for OpenRouter free models: ${usage!.openrouter.used} of ${usage!.openrouter.limit} requests recorded. Paid models are excluded.` : knownLimits.length ? 'Known limits belong to individual models, not a combined provider balance.' : 'No allowance reported for this provider.'} Counts are Lumen’s own, not your provider bill. Listing models doesn’t test replies.</p>
+        {safety && <Suspense fallback={null}><KeySafety only={p.id as 'gemini' | 'openrouter'} safeCopy /></Suspense>}
       </details>
     </section>
+  );
+}
+
+/** Activity: what was used (Lumen's counters and saved-chat history), then how requests ended. */
+function Activity({ jump }: { jump: boolean }) {
+  const part = useRef<HTMLElement>(null);
+  useEffect(() => { if (jump) part.current?.scrollIntoView({ block: 'start' }); }, [jump]);
+  return (
+    <div className="rc-body rc-usage rc-activity">
+      <div className="rc-page-intro"><h2 className="rc-h2">Activity</h2><p className="rc-muted">What Lumen used, and how your requests ended. Provider limits appear only when known.</p></div>
+      <section className="rc-activity-part" aria-labelledby="rc-usage-title"><h3 id="rc-usage-title" className="rc-h3">Usage</h3><UsageTab context="prism" /><Suspense fallback={<p className="rc-muted" role="status">Loading saved-chat history…</p>}><UsageHistory /></Suspense></section>
+      <section ref={part} id="rc-diagnostics" className="rc-activity-part" aria-labelledby="rc-diagnostics-title">
+        <h3 id="rc-diagnostics-title" className="rc-h3">Diagnostics</h3>
+        <div className="rc-grid rc-diagnostics">
+          <Suspense fallback={<p className="rc-muted" role="status">Loading latest outcome…</p>}><LatestOutcome /></Suspense>
+          <Suspense fallback={<p className="rc-muted" role="status">Loading request history…</p>}><RequestLog /></Suspense>
+        </div>
+        <p className="rc-muted"><Shield size={14} aria-hidden="true" /> Diagnostics never include your messages or keys.</p>
+      </section>
+    </div>
   );
 }
 
@@ -281,17 +307,17 @@ export default function RoutingCenter() {
       {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : 'Router'} onBack={closeRoutingCenter} /> : (
       <header className={`rc-head${sub ? ' rc-head-sub' : ''}`}>
         <button type="button" className="icon-btn feature-exit" aria-label={featureExitLabel()} onClick={() => exitFeature()}><ChevronLeft size={26} /></button>
-        <div className="rc-brand"><h1 id="rc-title" tabIndex={-1} ref={heading}>Router</h1><p>Models, providers &amp; routing</p></div>
+        <div className="rc-brand"><h1 id="rc-title" tabIndex={-1} ref={heading}>Router</h1></div>
         {!phone && (
           <nav className="rc-tabs" aria-label="Router sections">
-            {SECTIONS.map(([id, label]) => <button type="button" key={id} aria-current={section === id ? 'page' : undefined} onClick={() => go(id)}>{label}</button>)}
+            {SECTIONS.map(([id, label]) => <button type="button" key={id} aria-current={tabOf(section) === id ? 'page' : undefined} onClick={() => go(id)}>{label}</button>)}
           </nav>
         )}
       </header>)}
 
 
 
-      {phone && !providerOpen && <PhoneSections label="Router sections" active={section} items={SECTIONS.map(([id,label]) => ({ id, label }))} onSelect={id => go(id as RoutingSection)} />}
+      {phone && !providerOpen && <PhoneSections label="Router sections" active={tabOf(section)} items={SECTIONS.map(([id,label]) => ({ id, label }))} onSelect={id => go(id as RoutingSection)} />}
       <div className="rc-scroll">
       {section === 'providers' && <div className="rc-body"><Providers key={owner || 'signed-out'} preferred={current?.split(':')[0]} phone={phone} searchHost={searchHost} /></div>}
 
@@ -322,22 +348,11 @@ export default function RoutingCenter() {
         </div>
       )}
 
-      {section === 'routing' && <div className="rc-body rc-routing-settings"><div className="rc-page-intro"><h2 className="rc-h2">Routing</h2><p className="rc-muted">How Lumen picks a model for each message, and what it tries next when one fails or reaches its limit. The order of your models is the fallback order.</p></div><Suspense fallback={<p className="rc-muted" role="status">Loading routing…</p>}><RoutingSettings only="routing" /></Suspense></div>}
+      {section === 'routing' && <div className="rc-body rc-routing-settings"><div className="rc-page-intro"><h2 className="rc-h2">Routing</h2><p className="rc-muted">How Lumen picks a model, and what it tries next when one fails.</p></div><Suspense fallback={<p className="rc-muted" role="status">Loading routing…</p>}><RoutingSettings only="routing" /></Suspense></div>}
 
       {section === 'policies' && <Suspense fallback={<p className="rc-muted" role="status">Loading Layouts…</p>}><PrismLayouts /></Suspense>}
 
-      {section === 'usage' && <div className="rc-body rc-usage"><div className="rc-page-intro"><p className="rc-kicker">Evidence from separate sources</p><h2 className="rc-h2">Usage</h2><p className="rc-muted">Lumen’s synced daily counters and history reconstructed from saved chats answer different questions. Provider limits appear only when known.</p></div><UsageTab context="prism" /><Suspense fallback={<p className="rc-muted" role="status">Loading saved-chat history…</p>}><UsageHistory /></Suspense></div>}
-
-      {section === 'diagnostics' && (
-        <div className="rc-body">
-          <div className="rc-page-intro"><p className="rc-kicker">Saved evidence, kept private</p><h2 className="rc-h2">Diagnostics</h2><p className="rc-muted">See how recorded requests ended and what routing evidence exists. Lumen does not add probes or expose message content here.</p></div>
-          <div className="rc-grid rc-diagnostics">
-            <Suspense fallback={<p className="rc-muted" role="status">Loading latest outcome…</p>}><LatestOutcome /></Suspense>
-            <Suspense fallback={<p className="rc-muted" role="status">Loading request history…</p>}><RequestLog /></Suspense>
-            <section className="rc-card"><h3><Shield size={16} /> Privacy boundary</h3><p className="rc-muted">Provider credentials stay in Lumen’s existing account scope. No prompt bodies or credentials are added to a diagnostic history.</p></section>
-          </div>
-        </div>
-      )}
+      {(section === 'usage' || section === 'diagnostics') && <Activity jump={section === 'diagnostics'} />}
 
       </div>
       {phone && <footer ref={setSearchHost} className="phone-page-search rc-search-footer" aria-label={section === 'providers' ? providerOpen ? 'Provider model search' : 'Provider search' : 'Model search'} />}

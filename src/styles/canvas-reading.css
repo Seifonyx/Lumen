@@ -58,8 +58,8 @@
   background:
     linear-gradient(to right, var(--bg) 40%, transparent) left / 28px 100% no-repeat local,
     linear-gradient(to left, var(--bg) 40%, transparent) right / 28px 100% no-repeat local,
-    radial-gradient(farthest-side at 0 50%, color-mix(in srgb, var(--text) 24%, transparent), transparent) left / 14px 100% no-repeat scroll,
-    radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--text) 24%, transparent), transparent) right / 14px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 0 50%, color-mix(in srgb, var(--text) 30%, transparent), transparent) left / 18px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--text) 30%, transparent), transparent) right / 18px 100% no-repeat scroll,
     var(--bg);
   scrollbar-width: thin;
 }
@@ -68,6 +68,9 @@
 .app[data-lumen-canvas-shell] .markdown th,
 :root[data-theme] .app[data-lumen-canvas-shell] .markdown th { background: none; color: var(--text-2); font-size: .92em; font-weight: 600; letter-spacing: 0; border-bottom-color: color-mix(in srgb, var(--text) 14%, transparent); }
 .app[data-lumen-canvas-shell] .markdown tr:last-child td { border-bottom: 0; }
+/* Phones: headers may wrap and cells keep a readable minimum, so most tables fit the screen; wider ones still scroll
+ * with the edge shadow above. */
+@media (max-width: 899px) { .app[data-lumen-canvas-shell] .markdown th { white-space: normal; } .app[data-lumen-canvas-shell] .markdown :is(th, td) { min-width: 5.5em; padding: .55em .7em; } }
 
 /* ---------- Sources: quiet numbered chips; on phones one swipeable line instead of a wrapped stack. */
 .app[data-lumen-canvas-shell] .msg.assistant .sources { gap: 6px; margin-top: 4px; }
@@ -137,4 +140,11 @@ html[data-lumen-canvas] .app[data-lumen-canvas-shell] .msg.assistant .error-box 
   /* Attachments: a little smaller on phones. */
   .app[data-lumen-canvas-shell] .msg.user .msg-thumb { width: 84px; height: 84px; }
   .app[data-lumen-canvas-shell] .msg.user .file-chip { max-width: 220px; }
+}
+
+/* The line under a reply (which model answered and why) in the body font, not code; it may wrap on phones. */
+.app[data-lumen-canvas-shell] .msg-actions .model-tag { font: 500 12.5px/1.4 var(--canvas-body-font, var(--font)); letter-spacing: 0; }
+@media (max-width: 899px) {
+  .app[data-lumen-canvas-shell] .msg-actions { flex-wrap: wrap; row-gap: 2px; }
+  .app[data-lumen-canvas-shell] .msg-actions :is(.model-tag, .route-why-wrap) { flex: 1 1 100%; white-space: normal; overflow: visible; }
 }

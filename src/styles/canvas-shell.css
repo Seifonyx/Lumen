@@ -125,13 +125,13 @@
 .app[data-lumen-canvas-shell] .cv-chat-copy .chat-title { display: block; flex: none; }
 .app[data-lumen-canvas-shell] .cv-chat-detail { color: var(--canvas-secondary); font-size: max(12px, calc(var(--fs,15px) - 3px)); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row.active .cv-chat-glyph { color: var(--cv-selection-ink); }
-.app[data-lumen-canvas-shell] .cv-new-pill { display: flex; align-items: center; min-width: 0; cursor: pointer; flex: 1; justify-content: flex-start; gap: 12px; min-height: var(--cv-control); padding: 0 14px; border: 1px solid var(--canvas-rim); border-radius: 13px; background: color-mix(in srgb, var(--canvas-paper) 75%, transparent); color: var(--canvas-ink); font-size: calc(var(--fs,15px) - 1px); font-weight: 550; box-shadow: none; }
+.app[data-lumen-canvas-shell] .cv-new-pill { display: flex; align-items: center; min-width: 0; cursor: pointer; flex: 1; justify-content: flex-start; gap: 12px; min-height: var(--cv-control); padding: 0 14px; border: 1px solid transparent; border-radius: 13px; background: var(--canvas-fill); color: var(--canvas-ink); font-size: calc(var(--fs,15px) - 1px); font-weight: 550; box-shadow: none; }
 
 @media(prefers-color-scheme:dark) { .app[data-lumen-canvas-shell]:not([data-theme='light'] *) { --cv-selection: rgb(100 151 240 / .10); --cv-selection-ink: #aac7f5; } }
 /* Approved reference: restrained selection, shared hierarchy; phone/desktop density only. */
 .app[data-lumen-canvas-shell]:is([data-theme='dark'] *,[data-theme='black'] *) { --cv-selection: rgb(100 151 240 / .10); --cv-selection-ink: #aac7f5; }
 .app[data-lumen-canvas-shell] .cv-nav .chat-row.active .row-menu { opacity: 1; }
-.app[data-lumen-canvas-shell] .cv-new-pill:hover { background: var(--canvas-fill); }
+.app[data-lumen-canvas-shell] .cv-new-pill:hover { background: var(--canvas-fill-strong); }
 .app[data-lumen-canvas-shell] .cv-new-pill > svg { flex: none; }
 .app[data-lumen-canvas-shell] .cv-place-chevron { margin-inline-start: auto; }
 @media(max-width:899px) {
@@ -422,7 +422,7 @@
  .app[data-lumen-canvas-shell] .phone-sections { display:flex;flex:none;gap:4px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scroll-padding-inline:12px;scrollbar-width:none;scrollbar-color:var(--canvas-rim) transparent;padding:8px 12px 10px;margin:0;max-width:none;mask-image:linear-gradient(90deg,transparent,#000 8px,#000 calc(100% - 12px),transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 8px,#000 calc(100% - 12px),transparent); }
  .app[data-lumen-canvas-shell] .phone-sections::-webkit-scrollbar { display:none; }
  .app[data-lumen-canvas-shell] .phone-sections button { flex:none;min-height:44px;padding:0 14px;border:1px solid transparent;border-radius:999px;scroll-snap-align:start;white-space:nowrap;background:none;color:var(--canvas-secondary);font:550 calc(var(--fs,15px) - .5px)/1.3 var(--canvas-body-font);cursor:pointer; }
- .app[data-lumen-canvas-shell] .phone-sections button:is([aria-selected='true'],[aria-current='page']) { color:var(--canvas-ink);background:var(--canvas-lamplight,var(--canvas-fill-strong)); }
+ .app[data-lumen-canvas-shell] .phone-sections button:is([aria-selected='true'],[aria-current='page']) { color:var(--canvas-highlight-ink,var(--canvas-ink));background:var(--canvas-highlight-bg,var(--canvas-fill-strong)); }
  .app[data-lumen-canvas-shell] .phone-sections button:focus-visible { outline:2px solid var(--focus);outline-offset:-2px; }
  .app[data-lumen-canvas-shell] .phone-sections button:active { background:var(--canvas-fill); }
  .app[data-lumen-canvas-shell] .phone-page-search { flex:none;box-sizing:border-box;padding:10px 16px max(10px,env(safe-area-inset-bottom));margin:0;max-width:none;background:var(--canvas-paper);border-top:1px solid var(--canvas-rim); }
@@ -444,3 +444,11 @@
 @media(max-width:899px){ .app[data-lumen-canvas-shell] .rc-page > .phone-page-search { width:100%;margin-inline:0; } }
 /* Every contextual Search owns its clear action; Safari must not add a second glyph. */
 .app[data-lumen-canvas-shell] .phone-page-search input::-webkit-search-cancel-button { display:none; }
+/* Document Canvas: the file name reads as the title; the document switcher stays quiet beside the tools. */
+.app[data-lumen-canvas-shell] .canvas-name input { font: 620 17px/1.3 var(--canvas-display-font); letter-spacing: -.015em; }
+/* New chat: a few ways to start under the greeting (they only fill the message box). */
+.app[data-lumen-canvas-shell] .cv-home-starters { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 560px; margin: 18px auto 0; padding: 0 16px; list-style: none; }
+.app[data-lumen-canvas-shell] .cv-home-starters button { min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--canvas-fill); color: var(--canvas-ink); font: 500 14px var(--canvas-body-font); cursor: pointer; }
+.app[data-lumen-canvas-shell] .cv-home-starters button:hover { background: var(--canvas-fill-strong); }
+.app[data-lumen-canvas-shell] .cv-home-starters button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (max-width: 899px) { .app[data-lumen-canvas-shell] .cv-home-starters button { min-height: 44px; } }

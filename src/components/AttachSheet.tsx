@@ -38,9 +38,9 @@ export default function AttachSheet(p:Props){
   <button type="button" className="sheet-row" onClick={pick(p.onCanvas)}><Pencil size={18}/><span>Document canvas</span></button>
   <button type="button" className="sheet-row" onClick={pick(p.onAnalysis)}><ChartNoAxesCombined size={18}/><span>Data analysis</span></button>
   <button type="button" className="sheet-row" onClick={pick(p.onImage)}><ImageIcon size={18}/><span>Create image</span></button>
-  <button type="button" className="sheet-row compare-trigger" disabled={p.compareDisabled} onClick={pick(p.onCompare)}><Columns2 size={18}/><span>Compare models</span></button>
+  <button type="button" className="sheet-row compare-trigger" disabled={p.compareDisabled} aria-describedby={p.compareDisabled?'compare-why':undefined} onClick={pick(p.onCompare)}><Columns2 size={18}/><span>Compare models</span>{p.compareDisabled&&<span className="attach-menu-meta" id="compare-why" aria-hidden="true">Not available right now</span>}</button>
   {p.onPrompts&&<button type="button" className="sheet-row" onClick={pick(p.onPrompts)}><MessageSquareText size={18}/><span>Saved prompts</span></button>}
-  {p.onTool&&<button type="button" className="sheet-row" title="Summarize a YouTube video, read a web page, or calculate with Python" onClick={pick(()=>p.onTool!('youtube'))}><PlayCircle size={18}/><span>Video, web page or calculation</span></button>}
+  {p.onTool&&<button type="button" className="sheet-row" title="Summarize a YouTube video, read a web page, or calculate with Python" onClick={pick(()=>p.onTool!('youtube'))}><PlayCircle size={18}/><span>Quick tools</span><span className="attach-menu-meta" aria-hidden="true">Video · Web page · Calculate</span></button>}
   <button type="button" className="sheet-row all-tools" onClick={pick(()=>window.dispatchEvent(new CustomEvent('mr:library',{detail:'tools-page'})))}><LayoutGrid size={18}/><span>All tools</span><ChevronRight size={16}/></button>
  </div>
  </div></div>;

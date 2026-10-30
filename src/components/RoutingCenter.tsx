@@ -187,7 +187,9 @@ function ProviderDetail({ p, title, usage, enabledHere, searchHost }: { searchHo
   const refresh = (primary: boolean) => <Suspense fallback={null}><CheckConnection provider={p.id} primary={primary} /></Suspense>;
   // The next meaningful action, in plain words: fix what blocks the provider first; a refresh leads only when the model
   // list is missing or old; Settings stays one quiet step away.
-  const actions = !p.keySaved ? settings('Add a key', true) : !p.enabled ? settings('Enable provider', true)
+  // Without a key the field is the next thing on the page, so "Add a key" is a quiet shortcut rather than a second
+  // main action.
+  const actions = !p.keySaved ? <button type="button" className="rc-quiet" onClick={toKey}>Add a key</button> : !p.enabled ? settings('Enable provider', true)
     : s?.errorKind === 'auth' ? <>{settings('Review key', true)}{refresh(false)}</>
     : <>{refresh(s?.state !== 'ready')}{settings('Key & connection', false)}</>;
   // Four independent facts: a saved key and permission don't depend on a model list, and a list says nothing of replies.

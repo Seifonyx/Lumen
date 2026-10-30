@@ -67,7 +67,7 @@ export default function Login() {
             onClick={() => void loginPreview()}
             disabled={busy}
           >
-            Enter preview sandbox
+            Try it without an account
           </button>
         )}
         <p className="login-foot">

@@ -495,20 +495,22 @@ export default function KnowledgeLibrary({ onClose, filter = '' }: { onClose: ()
             </div>
           </div>
         ))}
-        <p className="knowledge-disclosure muted small">
-          Index meaning sends extracted text to Google using your Gemini key.{" "}
-          {settings.privacyShield
-            ? "Detected personal details are masked first."
-            : "Privacy shield is off; text is sent as written."}{" "}
-          Indexing runs while the app is open and visible, pauses during chat
-          replies and saves progress when a free limit is reached. It may take
-          several days for a large library. Originals and search indexes do not
-          sync between devices.
-        </p>
+        {/* The privacy fact stays visible in one line; how indexing behaves is one tap away. */}
+        <details className="knowledge-disclosure muted small">
+          <summary>
+            Indexing by meaning sends the text to Google with your Gemini key.{" "}
+            {settings.privacyShield ? "Personal details are masked first." : "Privacy shield is off."}
+          </summary>
+          <p>
+            Indexing runs while the app is open and visible, pauses during chat replies and saves progress when a free
+            limit is reached. It may take several days for a large library. Originals and search indexes stay on this
+            device and don’t sync.
+          </p>
+        </details>
         {!key && docs.length > 0 && (
           <p className="muted small">
-            Add a Gemini key in Settings → API keys to index meaning. Keyword
-            search is already available.
+            Add a Gemini key to index meaning. Keyword search already
+            works.
           </p>
         )}
       </section>

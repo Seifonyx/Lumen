@@ -455,14 +455,16 @@ export default function SettingsModal() {
             <ChevronLeft size={24} />
           </button>
         ) : null}
+        {/* Canvas: Settings leaves like every other destination, with Back at the leading edge. */}
+        {CANVAS_SHELL && <button className="icon-btn feature-exit settings-exit" onClick={close} aria-label="Close" title="Back to chat (Esc)"><ChevronLeft size={22} /></button>}
         <h1 className="settings-title">
           <span className="settings-title-main">Settings</span>
           {tab && <span className="settings-title-section">{label}</span>}
         </h1>
         <div className="spacer" />
-        <button className="icon-btn" onClick={close} aria-label="Close" title="Close (Esc)">
+        {!CANVAS_SHELL && <button className="icon-btn" onClick={close} aria-label="Close" title="Close (Esc)">
           <X size={18} />
-        </button>
+        </button>}
       </header>}
 
       <div className="settings-scroll" ref={panel} tabIndex={0} onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 40)}>

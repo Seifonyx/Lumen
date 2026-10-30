@@ -1,6 +1,6 @@
 import { Exit } from '../lib/motion';
 import { MoreHorizontal } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 export interface MoreItem {
   label: string;
@@ -28,6 +28,17 @@ export default function MoreMenu({ items, label = 'More actions' }: { items: Mor
     document.addEventListener('pointerdown', down);
     document.addEventListener('keydown', key, true);
     return () => { document.removeEventListener('pointerdown', down); document.removeEventListener('keydown', key, true); };
+  }, [open]);
+  // Keep the open menu on screen: shift it in from the side edges.
+  useLayoutEffect(() => {
+    const menu = open ? box.current?.querySelector<HTMLElement>('.more-menu-list') : null;
+    if (!menu) return;
+    menu.style.translate = ''; menu.style.top = ''; menu.style.bottom = '';
+    const r = menu.getBoundingClientRect(), gap = 8, vw = document.documentElement.clientWidth, vh = window.innerHeight;
+    const dx = r.right > vw - gap ? vw - gap - r.right : r.left < gap ? gap - r.left : 0;
+    if (dx) menu.style.translate = `${dx}px 0`;
+    // It opens upward; near the top of the screen it opens downward instead.
+    if (r.top < gap && r.bottom + r.height < vh - gap) { menu.style.top = 'calc(100% + 6px)'; menu.style.bottom = 'auto'; }
   }, [open]);
   if (!items.length) return null;
   return (

@@ -1,7 +1,7 @@
 .library-workspace { width:100%; min-width:0; }
 .app[data-lumen-canvas-shell] .library-workspace .phone-sections { display:flex; position:static; overflow-x:auto; gap:4px; padding:0 0 12px; border-bottom:1px solid var(--border); margin-bottom:28px; }
 .library-workspace .phone-sections button { flex:none; min-height:44px; padding:8px 14px; border:1px solid transparent; border-radius:999px; background:none; color:var(--text-2); font:550 13px var(--canvas-body-font); cursor:pointer; white-space:nowrap; }
-.library-workspace .phone-sections button[aria-selected='true'] { color:var(--text); background:var(--cv5-fill); border-color:var(--border); }
+.library-workspace .phone-sections button[aria-selected='true'] { color:var(--canvas-highlight-ink,var(--text)); background:var(--canvas-highlight-bg,var(--cv5-fill)); border-color:transparent; }
 .library-section-head { display:flex; align-items:baseline; justify-content:space-between; gap:4px 20px; margin-bottom:14px; }
 .library-section-head h2 { font:620 17px/1.3 var(--canvas-display-font); letter-spacing:-.015em; margin:0 0 2px; }
 .library-section-head p { max-width:540px; font-size:13px; line-height:1.5; color:var(--text-2); margin:0; }

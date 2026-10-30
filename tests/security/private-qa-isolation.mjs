@@ -199,6 +199,8 @@ try {
     // wording at existing choke points and shows quota notices; no new network call, auth, rule or Firestore path.
     'src/components/ActivityCenter.tsx', 'src/components/activity.css', 'src/lib/activity/alerts.ts', 'src/lib/activity/catalog-events.ts',
     'src/lib/activity/journal.ts', 'src/lib/activity/log.ts', 'src/lib/activity/metrics.ts', 'src/lib/activity/quotas.ts',
+    // usage.ts: an optional onLimit listener and the exported reset time zone; types.ts: two optional quota settings.
+    'src/lib/usage.ts', 'src/types.ts',
     'src/components/FileCard.tsx', 'src/components/Modal.tsx', 'src/components/PreviewModal.tsx',
     'src/lib/run-language.ts', 'src/lib/runner.ts',
     // Owner-authorized shared iPhone navigation reset: UI-only owners, ordinary graph remains isolated.

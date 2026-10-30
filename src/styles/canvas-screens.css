@@ -323,7 +323,7 @@ html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas] {
 }
 html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas][data-theme='dark']:not([data-appearance='black']) {
   --bg: #000000; --sidebar: #000000; --surface: #1c1c1e; --surface-2: #2c2c2e; --surface-3: #3a3a3c; --elevated: #1c1c1e;
-  --text: #ffffff; --text-2: #ebebf5; --text-3: #8e8e93;
+  --text: #ffffff; --text-2: #ebebf5; --text-3: #98989f;
   --border: #38383a; --border-strong: #48484a; --input-border: #3a3a3c;
   --user-bubble: #2c2c2e; --code-bg: #1c1c1e; --link: #4aa3ff;
   --native-grouped: #000000; --native-fill: #1c1c1e; --native-fill-2: #2c2c2e; --native-sep: rgb(84 84 88 / .6);
@@ -332,7 +332,7 @@ html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas][data-th
 @media (prefers-color-scheme: dark) {
   html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas]:not([data-theme='light']):not([data-appearance='black']) {
     --bg: #000000; --sidebar: #000000; --surface: #1c1c1e; --surface-2: #2c2c2e; --surface-3: #3a3a3c; --elevated: #1c1c1e;
-    --text: #ffffff; --text-2: #ebebf5; --text-3: #8e8e93;
+    --text: #ffffff; --text-2: #ebebf5; --text-3: #98989f;
     --border: #38383a; --border-strong: #48484a; --input-border: #3a3a3c;
     --user-bubble: #2c2c2e; --code-bg: #1c1c1e; --link: #4aa3ff;
     --native-grouped: #000000; --native-fill: #1c1c1e; --native-fill-2: #2c2c2e; --native-sep: rgb(84 84 88 / .6);

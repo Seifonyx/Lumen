@@ -30,7 +30,7 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   await page.evaluate(() => window.__testSignIn('hebaghoneim8@gmail.com'));
   await page.waitForSelector('input[placeholder="AIza…"]');
   await page.fill('input[placeholder="AIza…"]', 'g');
-  await page.click('button:has-text("Save keys")');
+  await page.click('button:has-text("Save key")');
   await page.waitForTimeout(1200);
 
   await page.click('.settings-tabs >> text=Models');

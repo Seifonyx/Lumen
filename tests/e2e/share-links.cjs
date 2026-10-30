@@ -20,7 +20,7 @@ const reply = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { pa
     await page.evaluate(() => window.__testSignIn('hebaghoneim8@gmail.com'));
     await page.waitForSelector('input[placeholder="AIza…"]');
     await page.fill('input[placeholder="AIza…"]', 'fixture');
-    await page.getByRole('button', { name: 'Save keys', exact: true }).click();
+    await page.getByRole('button', { name: /^Save keys?$/ }).click();
     await page.waitForTimeout(800);
     await page.locator('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button').click();
     await page.fill('.composer textarea', 'Patient: Mona Adel, phone 01012345678. Summarize the night.');

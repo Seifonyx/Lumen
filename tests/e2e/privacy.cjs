@@ -48,26 +48,43 @@ const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
   await page.fill('input[placeholder="AIza…"]', 'g');
   // Canvas: first run opens Router on Google AI Studio; OpenRouter's key goes on its own provider page.
   if (await page.locator('.rc-page:not([hidden]) #sb-connection').count()) {
-    await page.click('button:has-text("Save keys")');
+    await page.click('button:has-text("Save key")');
     await page.getByText('Keys saved on this device', { exact: false }).first().waitFor();
     await page.getByRole('button', { name: 'All providers', exact: true }).click();
     await page.locator('.rc-page:not([hidden]) [data-provider="openrouter"]').click();
     await page.fill('input[placeholder="sk-or-…"]', 'o');
-    await page.click('button:has-text("Save keys")');
+    await page.click('button:has-text("Save key")');
   } else {
     await page.fill('input[placeholder="sk-or-…"]', 'o');
-    await page.click('button:has-text("Save keys")');
+    await page.click('button:has-text("Save key")');
   }
 
-  // ---- Key safety
-  await page.waitForSelector('.key-safety .status:not(.wait), .key-safety .status.blocked', { timeout: 10000 });
-  await page.waitForFunction(() => !document.querySelector('.key-safety .spin'));
-  let ks = await page.textContent('.key-safety');
-  check(/Works on any website/.test(ks) && /Lock it/.test(ks), 'unlocked Gemini key is flagged with steps');
-  check(/Free models only \(\$0 limit\)/.test(ks), 'OpenRouter $0 cap recognised');
+  // ---- Key safety. Canvas: each provider page checks its own key, under Advanced.
+  const router = await page.locator('.rc-page:not([hidden]) #sb-connection').count();
+  const KS = router ? '.rc-page:not([hidden]) .key-safety' : '.key-safety';
+  // Settled: a status shows and no check is still running (a lone Gemini warning uses the .wait style).
+  const settled = async () => { await page.waitForSelector(`${KS} .status`, { timeout: 10000 }); await page.waitForFunction((ks) => { const el = document.querySelector(ks); return el && !el.querySelector('.spin') && !/Checking/.test(el.textContent); }, KS, { timeout: 10000 }); };
+  let ks;
+  if (router) {
+    await page.locator('.rc-provenance > summary').click();
+    await settled();
+    check(/Free models only \(\$0 limit\)/.test(await page.textContent(KS)), 'OpenRouter $0 cap recognised');
+    await page.getByRole('button', { name: 'All providers', exact: true }).click();
+    await page.locator('.rc-page:not([hidden]) [data-provider="gemini"]').click();
+    await page.locator('#sb-connection [data-provider="gemini"]').waitFor();
+    await page.locator('.rc-provenance > summary').click();
+    await settled();
+    ks = await page.textContent(KS);
+    check(/Works on any website/.test(ks) && /Lock it/.test(ks), 'unlocked Gemini key is flagged with steps');
+  } else {
+    await settled();
+    ks = await page.textContent(KS);
+    check(/Works on any website/.test(ks) && /Lock it/.test(ks), 'unlocked Gemini key is flagged with steps');
+    check(/Free models only \(\$0 limit\)/.test(ks), 'OpenRouter $0 cap recognised');
+  }
   keyLocked = true;
-  await page.click('.key-safety >> text=Check again');
-  await page.waitForFunction(() => document.querySelector('.key-safety')?.textContent.includes('Locked to this app'), null, { timeout: 10000 });
+  await page.click(`${KS} >> text=Check again`);
+  await page.waitForFunction((ks) => document.querySelector(ks)?.textContent.includes('Locked to this app'), KS, { timeout: 10000 });
   check(true, 'locked Gemini key recognised');
   await page.screenshot({ path: require('path').join(__dirname, 'out', 'key-safety.png') });
   await page.click('.settings-page [aria-label="Close"], .rc-page:not([hidden]) .rc-head .feature-exit, .rc-page:not([hidden]) .phone-navigation > button');

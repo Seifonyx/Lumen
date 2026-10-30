@@ -25,7 +25,7 @@ async function signedIn(browser, email) {
   await page.evaluate((e) => window.__testSignIn(e), email);
   await page.waitForSelector('input[placeholder="AIza…"]');
   await page.fill('input[placeholder="AIza…"]', 'g-key');
-  await page.click('button:has-text("Save keys")');
+  await page.click('button:has-text("Save key")');
   await page.waitForTimeout(1500);
   await closeSettings(page);
   await page.fill('.composer textarea', `hello from ${email}`);

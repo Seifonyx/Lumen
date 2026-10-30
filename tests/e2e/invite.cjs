@@ -22,7 +22,7 @@ const check = (c, l) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${l}`); if (!c) f
   check(await ok.page.$('.topbar'), 'invited account (any capitalisation) gets in');
   await ok.page.waitForSelector('input[placeholder="AIza…"]');
   await ok.page.fill('input[placeholder="AIza…"]', 'k');
-  await ok.page.click('button:has-text("Save keys")');
+  await ok.page.click('button:has-text("Save key")');
   await ok.page.waitForTimeout(1500);
   check(!(await ok.page.textContent('body')).includes("Couldn't save keys"), 'invited account can save keys');
   const other = await run('stranger@gmail.com');

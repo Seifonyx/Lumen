@@ -59,7 +59,7 @@ async function send(page, text, n) {
   const { page, errors } = await device(browser, log);
   await page.waitForSelector('input[placeholder="AIza…"]');
   await page.fill('input[placeholder="AIza…"]', 'g');
-  await page.click('button:has-text("Save keys")');
+  await page.click('button:has-text("Save key")');
   await page.waitForTimeout(1500);
   await openTab(page, 'General');
   check((await page.textContent('.settings-page')).includes('Compact long chats automatically'), 'setting is there');

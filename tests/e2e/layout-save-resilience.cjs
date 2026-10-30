@@ -25,7 +25,7 @@ async function openLayouts(page) {
   await page.goto('http://localhost:5190/?emulator');await page.waitForFunction(()=>typeof window.__testSignIn==='function');
   const uid=await page.evaluate(async()=>(await window.__testSignIn('hebaghoneim8@gmail.com')).user.uid);
   await page.getByPlaceholder('AIza…',{exact:true}).fill('synthetic-layout-save-key');
-  await page.getByRole('button',{name:'Save keys',exact:true}).click();
+  await page.getByRole('button',{name:/^Save keys?$/}).click();
   await page.locator('.settings-tabs').getByRole('button',{name:'Models',exact:true}).click();
   await page.locator('.model-row').first().waitFor();
   // Allow the initial account settings to reach the emulator before blocking subsequent writes.

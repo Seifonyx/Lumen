@@ -41,12 +41,12 @@ const sse = (chunks) => chunks.map((o) => `data: ${JSON.stringify(o)}\n\n`).join
   check(await page.isVisible('input[placeholder="gsk_…"]') && await page.isVisible('input[placeholder="csk-…"]'), 'Groq and Cerebras key fields');
   check(await page.isVisible('[aria-label="Getting started"] a[href*="aistudio.google.com"]'), 'first-run guide links to a free Gemini key');
   await page.fill('input[placeholder="AIza…"]', 'g');
-  await page.click('button:has-text("Save keys")');
+  await page.click('button:has-text("Save key")');
   await page.waitForTimeout(1500);
   // Add Groq + Cerebras later, like a user would.
   await page.fill('input[placeholder="gsk_…"]', 'gsk_test');
   await page.fill('input[placeholder="csk-…"]', 'csk-test');
-  await page.click('button:has-text("Save keys")');
+  await page.click('button:has-text("Save key")');
   await page.waitForTimeout(2000);
   check(seen.some((s) => s.url.endsWith('/openai/v1/models') && s.auth === 'Bearer gsk_test') && seen.some((s) => s.url.endsWith('/v1/models') && s.auth === 'Bearer csk-test'), 'model lists fetched with the keys');
   await openTab(page, 'Models');

@@ -1,3 +1,4 @@
+import { haptic } from '../lib/haptics';
 import CodingPlanCard from './CodingPlanCard';
 import { parsePlan } from '../lib/coding-plan';
 import KnowledgeSourceView from './KnowledgeSourceView';
@@ -189,7 +190,7 @@ function UserMessage({ message, busy }: { message: Message; busy: boolean }) {
       {!editing && !readOnly && (
         <div className="msg-actions user-actions">
           {message.text && <TextSelection text={message.text} />}
-          <button className="msg-action" onClick={async () => { if (await copyText(message.text)) { setCopied(true); setTimeout(() => setCopied(false), 1500); } }} aria-label="Copy" title="Copy">
+          <button className="msg-action" onClick={async () => { if (await copyText(message.text)) { haptic('success'); setCopied(true); setTimeout(() => setCopied(false), 1500); } }} aria-label="Copy" title="Copy">
             {copied ? <Check size={15} /> : <Copy size={15} />}
           </button>
           {/* While a reply streams these stay in place (dimmed, not usable) instead of disappearing and coming back. */}
@@ -367,10 +368,10 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
           {/* Canvas: a reply you stopped says so, instead of looking finished (a ternary keeps the ordinary build as is). */}
           {CANVAS_SHELL ? <>
             {message.status === 'stopped' && <span className="cv-stopped">Stopped</span>}
-            {message.text && <button className="msg-action" aria-label="Copy" title="Copy" onClick={async () => { if (await copyText(message.text)) { setCopied(true); setTimeout(() => setCopied(false), 1500); } }}>{copied ? <Check size={15} /> : <Copy size={15} />}</button>}
+            {message.text && <button className="msg-action" aria-label="Copy" title="Copy" onClick={async () => { if (await copyText(message.text)) { haptic('success'); setCopied(true); setTimeout(() => setCopied(false), 1500); } }}>{copied ? <Check size={15} /> : <Copy size={15} />}</button>}
           </> : message.text && (
             <>
-              <button className="msg-action" aria-label="Copy" title="Copy" onClick={async () => { if (await copyText(message.text)) { setCopied(true); setTimeout(() => setCopied(false), 1500); } }}>
+              <button className="msg-action" aria-label="Copy" title="Copy" onClick={async () => { if (await copyText(message.text)) { haptic('success'); setCopied(true); setTimeout(() => setCopied(false), 1500); } }}>
                 {copied ? <Check size={15} /> : <Copy size={15} />}
               </button>
             </>

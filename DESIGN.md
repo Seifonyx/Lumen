@@ -52,9 +52,12 @@ dark mode).
   focus or text. Status colours (green, red, orange, blue) only for state. Light and Dark; no True black in Canvas.
 - **Type:** Geist (system font on iPhone glass); Geist Mono only for data (code, shortcuts, counts). Four steps per
   page: 28 title, 17 section, 15 rows/body, 13 secondary. Reading 16.5/1.72 in a 720 px measure. Weights 400/500/600
-  and 620–640 for display only. Fields 16 px+ on touch screens.
-- **Space and shape:** 4 px grid (4, 8, 12, 16, 24). Radii: row 9, control 10, card 16, panel 20, composer 28,
-  pill 999. Depth from tone and hairlines; shadows (`--layer-shadow`) only on floating things.
+  and 620–640 for display only. Fields 16 px+ on touch screens. Section labels are sentence case, 13/600 secondary
+  (no mono uppercase).
+- **Space and shape:** 4 px grid (4, 8, 12, 16, 24). Radii through the `--canvas-radius-*` tokens only: row 10,
+  control/menu 14, card 18, panel/sheet 24, pill 999. A box exactly twice its radius tall (the 52 pt iPhone message box,
+  26) and tiny tags (≤ 6) are the only literals. Depth from tone and hairlines; shadows (`--layer-shadow`) only on
+  floating things.
 - **Icons:** Lucide outline, 17–18 px, stroke 1.9; secondary colour at rest, ink when active. No filled or coloured
   icons. Chevron (›) for navigation, never → .
 

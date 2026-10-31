@@ -60,7 +60,7 @@ html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn.voice-start 
 .composer-wrap[data-lumen-canvas-composer] .canvas-expand:hover { background: var(--canvas-fill); color: var(--canvas-ink); }
 
 /* ---------- Engaged: writing takes its own row; the tools needed now appear under it */
-.composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer { border-radius: 24px; padding: 8px 8px 6px; }
+.composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer { border-radius: var(--canvas-radius-panel); padding: 8px 8px 6px; }
 .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer > textarea { order: 0; flex-basis: 100%; min-height: 52px !important; padding: 6px 10px 4px !important; }
 .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .spacer { display: block; }
 .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer .usage-meter { display: flex; }
@@ -79,7 +79,7 @@ html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn.voice-start 
   /* Computers keep the writing shape at rest (text on its own row, + and the model under it), so focusing the box
      moves nothing under the pointer: the first click on + opens its menu, and the welcome doesn't jump. The meter,
      expand and dictation still appear only while writing, beside Send. */
-  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer { border-radius: 24px; padding: 8px 8px 6px; }
+  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer { border-radius: var(--canvas-radius-panel); padding: 8px 8px 6px; }
   .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer > textarea { order: 0; flex-basis: 100%; min-height: 52px !important; padding: 6px 10px 4px !important; }
   .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .spacer { display: block; }
 }
@@ -145,7 +145,7 @@ html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn.voice-start 
   .composer-wrap[data-lumen-canvas-composer] .composer .model-button { padding: 0 8px; }
   .composer-wrap[data-lumen-canvas-composer] .composer :is(.canvas-expand, .dictation-btn) { width: 36px; height: 36px; }
   html.glass .composer-wrap[data-lumen-canvas-composer] .composer { padding: 5px; border-radius: 26px; }
-  html.glass .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer { padding: 8px 8px 6px; border-radius: 24px; }
+  html.glass .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer { padding: 8px 8px 6px; border-radius: var(--canvas-radius-panel); }
   html.glass .composer-wrap[data-lumen-canvas-composer] .composer > textarea { font-size: 17px; }
 
   /* The sheet leaves room for the top bar; --canvas-sheet-offset-top lets a host add space above the app. */

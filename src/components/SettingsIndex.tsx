@@ -70,7 +70,7 @@ export default function SettingsIndex({ sections, open }: { sections: SettingsSe
         </span>
         <span className="si-copy">
           <span className="si-account-name" id={accountName}><span className="sr-only">Account: </span>{name}</span>
-          <span className="si-status" id={accountId}>{user?.name && user.email ? user.email : 'Account, appearance & chat'}{user?.name && user.email ? <span className="sr-only">. Account, appearance & chat</span> : null}</span>
+          <span className="si-status" id={accountId}>Appearance, chat and account</span>
         </span>
         <ChevronRight size={17} className="si-go" aria-hidden="true" />
       </button>

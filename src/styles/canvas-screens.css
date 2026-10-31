@@ -539,4 +539,8 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(44 44 46 / .62
 }
 @media (prefers-reduced-transparency: reduce) {
   html.glass[data-lumen-canvas] { --lg-tint: var(--surface-2); --lg-filter: none; }
+  /* Solid controls: no sheen and no backdrop blur on the glass bar buttons, page search and message box. */
+  html.glass[data-lumen-canvas] .app .main > .topbar :is(.menu-btn, .topbar-trailing),
+  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] :is(.phone-navigation > button, .phone-navigation-actions > button, .phone-navigation-actions > .screen-actions > button, .phone-page-search :is(.hub-search, .rc-search)),
+  html.glass[data-lumen-canvas] .app .composer-wrap:not([data-composer-state='expanded'])[data-lumen-canvas-composer] .composer { background: var(--surface-2); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }

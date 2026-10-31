@@ -51,8 +51,9 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // iPhone glass round 3 (owner, 2026-10-31): startupCss 18.5 → 19 for the measured glass, resting composer layout and
 // plain thinking/file rows on iPhone (measured 18.5 KB gz).
 // iPhone glass round 4 (owner, 2026-10-31): canvasCss 27.5 → 28 for Library/Tools/Router/Settings on the iOS grouped
-// background with glass bar buttons and page search, wrapping phone tables and the plain empty state (measured 27.6).
-const BUDGET = { startupJs: 14, startupCss: 19, routingCenter: 9, canvasCss: 28 };
+// background with glass bar buttons and page search, wrapping phone tables and the plain empty state (measured 27.6);
+// startupCss 19 → 19.5 for the solid Reduce Transparency controls (measured 19.0).
+const BUDGET = { startupJs: 14, startupCss: 19.5, routingCenter: 9, canvasCss: 28 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

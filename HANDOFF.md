@@ -10,46 +10,29 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `chore/cleanup-ux-pass` (from main `ebfe69c`).
-- **Task:** (1) repo and docs cleanup, done: 13 root docs and `docs/` (37 MB of old review captures) folded into
-  [AGENTS.md](AGENTS.md), this file and [DESIGN.md](DESIGN.md); dead code removed (InstallHint, ~120 unused CSS
-  selectors, stale scripts and config); self-updating live state added (`scripts/handoff.mjs`, `.githooks/`,
-  `.claude/settings.json`). (2) the UX audit fixes from 2026-10-31: implemented and checked in the production
-  Canvas build (desktop 1366 and phone 393, Chromium); verification and release in progress (Next).
+- **Branch:** none in progress. Start new work on a branch from `origin/main`.
+- **Task:** none. The owner asked for polish suggestions after the cleanup and audit release (2026-10-31); they were
+  proposed in chat and are listed under *Next* until the owner picks.
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next
 
-- [x] Audit fixes in code: phone message box keeps its width at rest (the model button is capped at 34vw); desktop message
-      box keeps one shape (nothing moves on focus); model picker measured unscaled so it stays on screen; sidebar
-      highlight off while Settings covers the page; catalogue banner in plain words with *Check key*; Tools shows a
-      rejected key; readable model names everywhere (`modelLabel` fallback); + menu wider, Web search switch;
-      Library/Tools/Router/Settings code loads on intent (pointer/focus on the place, phone drawer open; pages
-      then open in ~130 ms; not at idle start-up, which stalled streaming replies); tables: no ghost edge line,
-      phone columns ≥ 6.5em with a pinned first column, hover only with a pointer; Tools filter a quiet list on
-      desktop; Knowledge link chevron; Retry is an icon; drawer project rows at body size; desktop page name shows
-      in the bar once the title scrolls; iPhone: no double gap above Settings, deeper message-box blur, centred
-      jump-to-latest; no scrollbar flash on the welcome.
-- [x] Local checks: typecheck, unit, both builds, budget; full `canvas-core` run, then the 22 affected suites all
-      green on the final build. `streaming.cjs` fails first try on this Windows machine for main too (load-sensitive
-      long-task check); CI is the judge.
-- [ ] PR, exact-head CI, merge, Deploy (`presentation=canvas`), live asset check.
-- Checked and **not changed** (with reason): the "wrong welcome flash" was a mis-click during the audit, not a bug;
-  header icons already have tooltips; theme switching is already instant; Router "Loading models…" was slow dev
-  code loading, not a stuck state; "Ask anything." is the Canvas welcome's one line by design; Lamplight on the
-  active tab is an owner rule; iPhone pages keep centred titles (iOS pattern for pushed screens); Notify switch
-  already explains the blocked case.
-- Owner's call: the iPhone bar's usage ring can read as a spinner when nearly empty; options are to hide it until
-  the chat is half full or keep it as is.
+Polish candidates proposed 2026-10-31, awaiting the owner's pick (none started):
+
+- Usage ring in the iPhone bar reads as a spinner when nearly empty: hide it until the chat is half full, or keep.
+- Section labels: sentence case instead of mono uppercase (owner's view wanted).
+- Radius tokens: replace the hard-coded 8/9/10/12/14/16/22/24/26 px in Canvas CSS with the defined tokens.
+- Light-mode glass: tune against a real iOS 26 light capture.
+- iPhone feel: haptic-style press feedback on primary actions, swipe actions on chat rows, pull-down to search.
+- First run: a short, skippable key-setup path that ends in a first reply.
 
 ## Open (known, not scheduled)
 
-- Light-mode glass is tuned by eye; no native light iOS 26 capture to match yet.
 - Not verified on a physical iPhone: glass, VoiceOver, Dynamic Type, keyboard/IME, PWA.
 - `tests/e2e/canvas-integration.cjs` (not in CI) times out the same way on main.
+- `streaming.cjs` long-task check is load-sensitive on the owner's Windows machine (fails on main too); CI passes.
 - 21 Settings-driving e2e suites run on the ordinary build only (`tests/e2e/canvas-core.txt` lists the Canvas set).
-- Radius tokens are defined but some Canvas CSS still hard-codes 8/12/14/18 px.
-- Owner's view wanted: sentence-case section labels instead of mono uppercase.
+- Local e2e: check the port is free first; a stale preview on 5191 once served an old build to the suites.
 - Draft PR #34 (Blackout CP01, Oct 19) is still open on GitHub; close it if it is no longer wanted.
 - Local branches `design/premium-foundation` (rejected warm palette), `lc`, `live-ctx-4` are unmerged; delete
   when the owner agrees.
@@ -60,7 +43,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
   only irreversible data changes, security risks, major trade-offs or permission blocks.
 - **Deploy path:** merge to `main` → run the *Deploy* workflow with `presentation=canvas` (the default `ordinary` is
   the rollback) → confirm the live `index-*.js` matches a local `LUMEN_CANVAS=1` build of that commit. Hosting only;
-  Firestore rules deploy separately (`npm run deploy:rules`) and only when they changed.
+  Firestore rules deploy separately (`npm run deploy:rules`) and only when they changed. No `gh` on the owner's
+  machine: the GitHub REST API with git's stored credential works for PRs, merges and workflow dispatch.
 - Report progress as done / in progress / verified / remaining. There is no overall completion percentage.
 - iPhone: feel native to iOS 26 with Lumen's own identity; no copying other apps; no suggestion pills; the warm
   "premium" palette is rejected; floating feature docks are rejected; the three-control bar capsule stays; no chat
@@ -71,5 +55,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-10-31 Cleanup and UX audit (PR #75, merged `f42155c`, deployed Canvas): three living docs and live
+  `npm run handoff`; stable message box, readable model names, plain catalogue errors with *Check key*, picker hides
+  switched-off providers, on-intent page loading, calmer tables, iPhone Settings/blur/jump-to-latest fixes.
 - 2026-10-31 iPhone glass round 4 (PR #73, deployed `8aa07a1`): grouped iOS pages, glass bar buttons and Library
   search, tables fit phones, instant Back from Settings sections, Reduce Transparency fallbacks.

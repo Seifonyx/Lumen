@@ -194,17 +194,6 @@ html[data-lumen-canvas] .switch:not(:checked)::after { background: color-mix(in 
   html[data-lumen-canvas] .settings-title-section { transition: none; }
 }
 
-/* Hub pages leave by the same "← Chat" pill as the Routing Center. */
-html[data-lumen-canvas] .hub-close.cv-chat-pill { display: inline-flex; align-items: center; gap: 6px; flex: none; margin-inline-start: auto; min-height: 36px; padding: 0 12px 0 8px; border: 0; border-radius: 999px; background: var(--canvas-fill); color: var(--canvas-ink); font: 500 13.5px var(--canvas-body-font); cursor: pointer; }
-html[data-lumen-canvas] .hub-close.cv-chat-pill:hover { background: var(--canvas-fill-strong); }
-@media (max-width: 899px) { html[data-lumen-canvas] .hub-close.cv-chat-pill { min-height: 44px; margin-inline: auto 8px; font-size: 15px; } }
-
-@media (max-width: 359px) {
-  /* The narrowest phones: the pill keeps its arrow and gives the centred title room. */
-  html[data-lumen-canvas] .hub-close.cv-chat-pill { justify-content: center; width: 44px; padding: 0; }
-  html[data-lumen-canvas] .hub-close.cv-chat-pill > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-}
-
 /* Reply errors: a quiet card on paper; the state's colour stays on its icon and edge. */
 html[data-lumen-canvas] .error-box { border-color: color-mix(in srgb, var(--danger, #d14343) 35%, var(--cv5-rim, transparent)); background: color-mix(in srgb, var(--danger, #d14343) 5%, var(--bg)); color: var(--text); }
 html[data-lumen-canvas] .error-box > svg { color: var(--danger, #d14343); }
@@ -240,7 +229,7 @@ html[data-lumen-canvas] .provider-target-head .btn { flex:none; min-height:44px;
 /* Provider editor: an implicit auto track inherits the key input's intrinsic width and clips narrow cards. */
 html[data-lumen-canvas] .provider-connection-body { grid-template-columns: minmax(0, 1fr); }
 
-/* ---------- Calm pass, app-wide (docs/brand/DESIGN_FOUNDATION.md): one field style, quiet secondary buttons. */
+/* ---------- Calm pass, app-wide (DESIGN.md): one field style, quiet secondary buttons. */
 /* Selects: on iPhone the glass pop-up button (glass.css) owns them; elsewhere a quiet fill with a line chevron
  * (two thin diagonal strokes, no image). */
 html[data-lumen-canvas]:not(.glass) select:not([multiple]):not(.rc-routing-settings select) {
@@ -284,7 +273,6 @@ html[data-lumen-canvas] .tag { font-size: 12px; font-weight: 500; border: 0; }
  * Suggestion chips and status pills follow the same fill. */
 html[data-lumen-canvas] .btn:not(.primary):not(.danger):not(.danger-fill):not(.danger-text):not(.ghost):not(.link-btn) { border-color: transparent; background: var(--cv5-fill); box-shadow: none; }
 html[data-lumen-canvas] .btn:not(.primary):not(.danger):not(.danger-fill):not(.danger-text):not(.ghost):not(.link-btn):hover:not(:disabled) { background: var(--cv5-fill-strong); }
-html[data-lumen-canvas] :is(.preset-chip, .pf-preset, .key-status-pill, .quick-tool) { border-color: transparent; background: var(--cv5-fill); box-shadow: none; }
 html[data-lumen-canvas] :is(.preset-chip, .pf-preset):hover { background: var(--cv5-fill-strong); }
 @media (forced-colors: active) { html[data-lumen-canvas] :is(.btn, .preset-chip, .pf-preset) { border-color: ButtonText; } }
 /* Quick tools: tiles and the form by tone; the chosen tile uses the "you are here" highlight. */
@@ -352,8 +340,7 @@ html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas][data-th
   /* Composer: one flat capsule on the system fill; a round ink send button; no shadow, no outline. */
   html[data-lumen-canvas]:not(.glass) .app .composer-wrap[data-lumen-canvas-composer] .composer { border: 0; border-radius: 24px; background: var(--native-fill); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
   html[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer textarea { font-size: 17px; }
-  html[data-lumen-canvas]:not(.glass) .app .composer-wrap[data-lumen-canvas-composer] .composer-bar > .icon-btn:first-child,
-  html[data-lumen-canvas]:not(.glass) .app .composer-wrap[data-lumen-canvas-composer] :is(.attach-btn, .plus-btn) { background: var(--native-fill-2); }
+  html[data-lumen-canvas]:not(.glass) .app .composer-wrap[data-lumen-canvas-composer] .composer-bar > .icon-btn:first-child { background: var(--native-fill-2); }
   html[data-lumen-canvas]:not(.glass) .app .composer-wrap[data-lumen-canvas-composer] { background: linear-gradient(transparent, var(--bg) 30%); }
   /* New chat: the mark alone, small and in ink; one line beneath; nothing else on the page. */
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-home h1 { font: 600 22px/1.25 var(--font); letter-spacing: -.02em; }

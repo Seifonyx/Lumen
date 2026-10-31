@@ -4,7 +4,4 @@ dist
 .DS_Store
 *.log
 tests/e2e/out
-.impeccable/review
-dist-test
-dist-qa
-dist-canvas
+dist-*

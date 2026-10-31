@@ -33,7 +33,7 @@
   --canvas-glass-tint: var(--glass-tint, var(--surface));
   --canvas-motion-duration: 240ms;
   --canvas-motion-easing: cubic-bezier(.32, .72, 0, 1);
-  /* Foundation scales (docs/brand/DESIGN_FOUNDATION.md). Type: one display voice, tight and semibold; everything
+  /* Foundation scales (DESIGN.md). Type: one display voice, tight and semibold; everything
    * else is Geist at reading weights; mono only for data (model names, shortcuts, section labels). */
   --canvas-type-display: 640 32px/1.1 var(--canvas-display-font);   /* page titles: Library, Tools, Settings */
   --canvas-type-title: 620 19px/1.2 var(--canvas-display-font);     /* section headings inside a page */

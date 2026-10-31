@@ -47,6 +47,8 @@ async function open(browser, width, height, { glass = false, theme = 'light' } =
           const name = await page.locator('.composer .model-name-text').evaluate((el) => ({ w: el.clientWidth, full: el.scrollWidth <= el.clientWidth + 1 }));
           assert.ok(name.w > 40 && name.full, `${tag}: the model's name is readable at rest`);
         }
+        // The model's name never squeezes the empty box below its placeholder (audit 2026-10-31: "Message Lum").
+        assert.ok(await box.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), `${tag}: the placeholder fits the message box at rest`);
         assert.equal(await box.getAttribute('placeholder'), width < 380 ? 'Message' : 'Message Lumen');
         const restSend = await rect(page.locator('.composer :is(.send-btn, .voice-start)').first());
         assert.ok(restSend.right <= rest.right && restSend.top >= rest.top, `${tag}: voice/Send inside the capsule`);
@@ -89,7 +91,14 @@ async function open(browser, width, height, { glass = false, theme = 'light' } =
       try {
         if (!(await page.locator('[data-lumen-canvas-composer]').count())) return;
         const box = page.locator('.composer textarea');
-        await box.click(); await box.fill('こんにちは');
+        // One shape at rest and while writing: focusing the box moves nothing under the pointer.
+        const plus = page.locator('.composer .composer-bar > .tool-btn').first();
+        await page.evaluate(() => document.activeElement?.blur()); await page.waitForTimeout(250);
+        const restPlus = await rect(plus);
+        await box.click(); await page.waitForTimeout(250);
+        const focusPlus = await rect(plus);
+        assert.ok(Math.abs(restPlus.top - focusPlus.top) < 1 && Math.abs(restPlus.left - focusPlus.left) < 1, `+ stays put on focus (${restPlus.top} → ${focusPlus.top})`);
+        await box.fill('こんにちは');
         const before = await page.locator('.message-row').count();
         await box.evaluate((el) => {
           const e = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });

@@ -1,0 +1,4 @@
+#!/bin/sh
+# Reminds you to update HANDOFF.md when committing app code on a branch it does not describe (never blocks).
+node scripts/handoff.mjs --check
+exit 0

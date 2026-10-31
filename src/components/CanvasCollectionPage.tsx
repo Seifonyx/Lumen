@@ -1,4 +1,4 @@
-import { BookOpen, ChevronLeft, Download, FileText, Image as ImageIcon, Plus, Search } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, Download, FileText, Image as ImageIcon, Plus, Search } from 'lucide-react';
 import { Suspense, useEffect, useId, useMemo, useState } from 'react';
 import { useStore } from '../store';
 import { usePhoneLayout } from '../lib/phone-layout';
@@ -72,7 +72,7 @@ export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()
       </button>
       {item.kind!=='exports'&&<Suspense fallback={null}><CanvasLibraryActions item={item} openChat={openChat}/></Suspense>}
      </li>)}</ul>:<HubEmpty icon={<FileText size={28}/>} title={query||project?'No matching items':'A little room for your work'} text={query||project?'Try another search or widen the category and project filters.':category.description} action={query||project?<button type="button" className="btn" onClick={()=>{setQuery('');setProject('');setKind('all')}}>Reset filters</button>:<button type="button" className="btn primary" onClick={create.run}>{create.label}</button>}/>}
-     {kind==='all'&&<button type="button" className="library-knowledge-link" onClick={()=>setKind('searchable')}><BookOpen size={20}/><span><strong>Knowledge</strong><span>Your references, searched and cited by Lumen</span></span><span aria-hidden="true">→</span></button>}
+     {kind==='all'&&<button type="button" className="library-knowledge-link" onClick={()=>setKind('searchable')}><BookOpen size={20}/><span><strong>Knowledge</strong><span>Your references, searched and cited by Lumen</span></span><ChevronRight size={18} aria-hidden="true"/></button>}
     </>}
    </section>
   </div>

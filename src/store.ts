@@ -1,7 +1,7 @@
 import { markUnseen, notify } from './lib/notify';
 import { pageSwap, pageTransition } from './lib/motion';
 import { create } from 'zustand';
-import { keyVersion, providerSignal, openRouterDailyLimit, parseModelId, probeModel, restoreCatalog, resolveCatalog, setKeys } from './lib/ai/providers.js';
+import { keyVersion, prettyModelName, providerSignal, openRouterDailyLimit, parseModelId, probeModel, restoreCatalog, resolveCatalog, setKeys } from './lib/ai/providers.js';
 import { catalogScope, readCatalogCache, writeCatalogCache } from './lib/ai/catalog-cache.js';
 import { startCatalogRefresh } from './lib/ai/catalog-refresh.js';
 import { attachmentNeeds, modelProblem } from './lib/ai/eligibility.js';
@@ -2660,6 +2660,8 @@ export function modelInfo(catalog: Catalog | null, id?: string): ModelInfo | und
 export function modelLabel(catalog: Catalog | null, id?: string): string {
   if (id === AUTO) return 'Auto';
   if (isLayoutId(id)) return findLayout(id, catalog?.models || [], useStore.getState().settings.layouts, useStore.getState().settings.hiddenLayouts)?.name || 'Layout';
-  return modelInfo(catalog, id)?.label || modelShortName(id);
+  // Not in the catalogue (still loading, or the provider failed): a readable name, never the raw id.
+  const short = modelShortName(id);
+  return modelInfo(catalog, id)?.label || (short && prettyModelName(short.replace(/[-_](latest|preview|exp|it)$/i, '').replace(/:free$/, '')));
 }
 

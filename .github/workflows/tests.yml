@@ -7,9 +7,9 @@ name: Tests
 on:
   push:
     branches: [main]
-    paths-ignore: ['**.md', 'docs/**', '.impeccable/**']
+    paths-ignore: ['**.md', 'docs/**']
   pull_request:
-    paths-ignore: ['**.md', 'docs/**', '.impeccable/**']
+    paths-ignore: ['**.md', 'docs/**']
   workflow_dispatch:
 
 concurrency:
@@ -29,7 +29,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
-      - run: node scripts/project-progress.mjs
       - run: npm run build
       - name: Build the Canvas presentation too (what Deploy ships when canvas is chosen)
         run: npm run build -- --outDir dist-canvas

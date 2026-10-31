@@ -19,7 +19,7 @@ export interface WorkspaceTool {
   contextual?: boolean;
   run?: () => void;
 }
-export interface ToolKey { name: string; ready: boolean; uses: string[] }
+export interface ToolKey { name: string; ready: boolean; uses: string[]; /** Saved, but the provider refused it. */ rejected?: boolean }
 
 export const AREAS: { id: ToolArea; label: string; blurb: string }[] = [
   { id: 'research', label: 'Research', blurb: 'Find things out on the web and in your history.' },
@@ -105,7 +105,7 @@ export default function ToolsWorkspace({ tools, keys, mine, builtins, query, set
   const shownBuiltins = area === 'all' || area === 'assistants' ? builtins.filter((a) => match(a.name, a.description)) : [];
   const count = (id: ToolArea) => id === 'assistants' ? mine.length + builtins.length : tools.filter((t) => t.section === id).length;
   const total = tools.length + mine.length + builtins.length;
-  const missing = keys.filter((k) => !k.ready);
+  const missing = keys.filter((k) => !k.ready || k.rejected);
   const nothing = !shownTools.length && !shownMine.length && !shownBuiltins.length;
 
   return (
@@ -119,8 +119,8 @@ export default function ToolsWorkspace({ tools, keys, mine, builtins, query, set
           <ul>
             {keys.map((k) => (
               <li key={k.name}>
-                <span className={`tx-dot${k.ready ? ' on' : ''}`} aria-hidden="true" />
-                <span className="tx-key-copy"><strong>{k.name} key</strong><span>{k.ready ? `Ready · powers ${k.uses.length} tools` : `Not set up · needed for ${k.uses.length > 2 ? `${k.uses.length} tools` : k.uses.join(' and ')}`}</span></span>
+                <span className={`tx-dot${k.ready && !k.rejected ? ' on' : ''}`} aria-hidden="true" />
+                <span className="tx-key-copy"><strong>{k.name} key</strong><span>{k.rejected ? 'Saved, but not accepted · check the key' : k.ready ? `Ready · powers ${k.uses.length} tools` : `Not set up · needed for ${k.uses.length > 2 ? `${k.uses.length} tools` : k.uses.join(' and ')}`}</span></span>
               </li>
             ))}
           </ul>

@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { choosePreference } from '../lib/ai/preferences.js';
 import type { Layout } from '../lib/layouts';
 import { PROVIDER_NAMES, providerOfId, type ProviderId } from '../lib/util';
-import { useStore } from '../store';
+import { modelLabel, useStore } from '../store';
 import type { ModelInfo, Settings } from '../types';
 import CatalogErrorNotice from './CatalogErrorNotice';
 import FilterMenu from './FilterMenu';
@@ -161,7 +161,7 @@ export default function ModelsTab({ only }: { only?: 'routing' } = {}) {
                     <Star size={16} fill={settings.defaultModel === id ? 'currentColor' : 'none'} />
                   </button>
                   <span className="model-meta">
-                    <span className="model-title">{m?.label || id.split(':').slice(1).join(':')}</span>
+                    <span className="model-title">{m?.label || modelLabel(null, id)}</span>
                     <span className="model-sub">
                       {m ? PROVIDER_NAMES[m.provider] : 'Not available right now'}
                       {m?.context ? ` · ${ctx(m.context)} context` : ''}{m?.metadata?.verification==='unchecked'?' · Declared details · unchecked':''}{m?.metadata?.stale?' · Cached details':''}

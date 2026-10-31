@@ -11,7 +11,7 @@ import WorkspacePanel from './components/WorkspacePanel';
 import { listenForNotificationTaps } from './lib/notify';
 import { useStore } from './store';
 import { matchShortcut } from './lib/shortcuts';
-import { copyText } from './lib/util';
+import { copyText, prefetchWhenIdle } from './lib/util';
 import { keepScreenAwake } from './lib/wakelock';
 import { installSidebarGestures } from './lib/sidebar-gesture';
 import TaskEngine from './components/TaskEngine';
@@ -27,7 +27,7 @@ const ShortcutsModal = lazy(() => import('./components/ShortcutsModal'));
 const loadSettings = () => import('./components/SettingsModal');
 const SettingsModal = lazy(loadSettings);
 // Settings is opened often: fetch its code once the app is idle, so it slides in without waiting.
-if (typeof window !== 'undefined') window.addEventListener('load', () => (window.requestIdleCallback || setTimeout)(() => void loadSettings()), { once: true });
+prefetchWhenIdle([loadSettings]);
 const CommandPalette = lazy(() => import('./components/CommandPalette'));
 const RepoPicker = lazy(() => import('./components/RepoPicker'));
 const PreviewModal = lazy(() => import('./components/PreviewModal'));

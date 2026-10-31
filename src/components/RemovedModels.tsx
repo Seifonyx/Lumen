@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { RotateCcw, Search } from 'lucide-react';
 import Modal from './Modal';
 import FilterMenu from './FilterMenu';
-import { useStore } from '../store';
+import { modelLabel, useStore } from '../store';
 import { PROVIDER_NAMES, providerOfId } from '../lib/util';
 
 const NONE: string[] = [];
@@ -16,7 +16,7 @@ export default function RemovedModels({ onClose }: { onClose: () => void }) {
   const { restoreModel, updateSettings, loadCatalog } = useStore.getState();
   const [query, setQuery] = useState('');
   const [provider, setProvider] = useState('all');
-  const name = (id: string) => info[id]?.label || id.split(':').slice(1).join(':').replace(/:free$/, '');
+  const name = (id: string) => info[id]?.label || modelLabel(null, id);
   const providers = [...new Set(removed.map((id) => providerOfId(id)))];
   const rows = useMemo(() => removed
     .filter((id) => (provider === 'all' || providerOfId(id) === provider) && (!query.trim() || `${name(id)} ${info[id]?.reason || ''}`.toLowerCase().includes(query.trim().toLowerCase())))

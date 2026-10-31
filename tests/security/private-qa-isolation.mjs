@@ -213,7 +213,11 @@ try {
     'src/components/PhoneSections.tsx', 'src/lib/phone-layout.ts',
     'src/components/PhoneNavigation.tsx', 'src/components/ScreenActions.tsx', 'src/components/CanvasLibraryActions.tsx',
     'src/components/RunPanel.tsx', 'src/components/ProjectManager.tsx', 'src/components/ProjectsPage.tsx', 'src/components/CollectionPage.tsx', 'src/components/ToolsPage.tsx', 'src/components/AssistantLibrary.tsx', 'src/components/Study.tsx',
-    'src/components/CanvasPanel.tsx', 'src/components/ImageViewer.tsx', 'src/lib/sidebar-gesture.ts', 'src/lib/screen-history.ts', 'src/lib/screen-memory.ts'];
+    'src/components/CanvasPanel.tsx', 'src/components/ImageViewer.tsx', 'src/lib/sidebar-gesture.ts', 'src/lib/screen-history.ts', 'src/lib/screen-memory.ts',
+    // Cleanup and UX audit (owner-requested 2026-10-31): the unused InstallHint removed with its CSS; plain-words catalogue
+    // banner and readable model names; an idle-prefetch helper; `handoff`/`prepare` npm scripts (local git hook only).
+    // Presentation and wording only; no data, auth, network or storage owner changes.
+    'package.json', 'src/app.css', 'src/components/CatalogErrorNotice.tsx', 'src/components/InstallHint.tsx', 'src/components/RemovedModels.tsx', 'src/lib/util.ts'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');

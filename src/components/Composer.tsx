@@ -526,7 +526,7 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
             <button type="button" className={`tool-btn add-tool${chat?.repo ? ' on-repo' : ''}`} onClick={(e) => {
               const box = e.currentTarget.getBoundingClientRect();
               // Above the button, unless there's clearly more room below it (the message box mid-screen on a new chat).
-              const left = Math.max(12, Math.min(box.left, window.innerWidth - 300));
+              const left = Math.max(12, Math.min(box.left, window.innerWidth - 332));
               const above = box.top - 20, below = window.innerHeight - box.bottom - 20;
               setSheetAnchor(above < 560 && below > above ? { left, top: box.bottom + 8 } : { left, bottom: window.innerHeight - box.top + 8 });
               setSheet(true);

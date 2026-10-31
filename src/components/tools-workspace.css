@@ -88,7 +88,7 @@
   .app[data-lumen-canvas-shell] .tx-rail { position: sticky; top: 8px; display: grid; gap: 20px; }
   .app[data-lumen-canvas-shell] .tx-main { display: grid; gap: 22px; min-width: 0; }
   .app[data-lumen-canvas-shell] .tx-areas { display: grid; gap: 2px; margin: 0; padding: 0; overflow: visible; }
-  .app[data-lumen-canvas-shell] .tx-areas button { justify-content: space-between; min-height: 38px; padding: 0 12px; border: 0; border-radius: 10px; font-size: 14px; color: var(--canvas-secondary); }
+  .app[data-lumen-canvas-shell] .tx-areas button { justify-content: space-between; min-height: 38px; padding: 0 12px; border: 0; border-radius: 10px; background: none; font-size: 14px; color: var(--canvas-secondary); }
   .app[data-lumen-canvas-shell] .tx-areas button:hover { background: var(--canvas-fill); color: var(--canvas-ink); }
   .app[data-lumen-canvas-shell] .tx-areas button[aria-pressed="true"] { background: var(--canvas-fill-strong); color: var(--canvas-ink); font-weight: 600; }
   .app[data-lumen-canvas-shell] .tx-keys { flex-direction: column; align-items: stretch; padding: 14px; }

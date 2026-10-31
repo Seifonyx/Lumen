@@ -1,7 +1,0 @@
-{
-  "name": "Model Router",
-  "description": "Private chat with free AI models, files, documents, spreadsheets and slides.",
-  "capabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
-}

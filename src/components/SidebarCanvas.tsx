@@ -1,4 +1,4 @@
-import { navigateBack, navigateScreen } from '../lib/canvas-presentation';
+import { navigateBack, navigateScreen, prefetchPlace } from '../lib/canvas-presentation';
 // CP03 Canvas navigation (approved Canvas design, Gate 1). Reached only when CANVAS_SHELL is on
 // (src/lib/canvas-presentation.ts); the ordinary build folds it away.
 // One tree: projects are folders of their conversations; loose conversations are pinned first, then newest first. It is the same
@@ -66,7 +66,8 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const activeProjectId = useStore((s) => s.activeProjectId);
   const workspaceOpen = useStore((s) => s.projectWorkspaceOpen);
   const open = useStore((s) => s.sidebarOpen);
-  const page = useStore((s) => s.page);
+  // Settings covers whatever page was open; while it's up, none of the places is the one on screen.
+  const page = useStore((s) => (s.settingsOpen ? 'settings' : s.page));
   const routing = useRoutingCenter().open;
   const { setUi, selectProject } = useStore.getState();
   const [phone, setPhone] = useState(() => window.matchMedia(PHONE).matches);
@@ -115,6 +116,12 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   }, [open, phone]);
   // Computers: the open chat stays in view in the tree when it changes from elsewhere (palette, a page, a new chat).
   useEffect(() => { if (!phone) requestAnimationFrame(() => reveal(sidebarRef.current?.querySelector('.chat-row.active'))); }, [currentId, phone]);
+  // Phones: once the drawer has finished opening, load the places it offers so the next tap opens them at once.
+  useEffect(() => {
+    if (!phone || !open) return;
+    const timer = setTimeout(() => { for (const place of ['library', 'tools', 'router', 'settings'] as const) prefetchPlace?.(place); }, 500);
+    return () => clearTimeout(timer);
+  }, [phone, open]);
   // ChatRow is shared with the ordinary sidebar (one seam there), so the tree adds its state as attributes: the open
   // chat is the current page, and a pinned chat is described as pinned (its pin icon is decorative).
   // Slice 3: a chat holding unsent text (the composer keeps it per chat, mr.draft.<account>.<chat>) says "Draft", so a
@@ -227,9 +234,9 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         <div className="cv-tree" onFocus={loadTreeKeys} onKeyDown={(e) => treeKeys?.(e.nativeEvent, e.currentTarget, ROW, searchInput.current, reveal)}>
           {!q && (
             <ul className="cv-dest" aria-label="Places">
-              <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onClick={() => toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
-              <li><button type="button" aria-current={page === 'tools' || page === 'assistants' || page === 'study' ? 'page' : undefined} onClick={() => toPage('tools')} title={`Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`}><LayoutGrid size={18} /><span>Tools</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
-              <li><button type="button" title="Models, providers & routing" data-routing-center aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><GitFork size={18} strokeWidth={1.8} aria-hidden="true" /><span>Router</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
+              <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onPointerEnter={() => prefetchPlace?.('library')} onFocus={() => prefetchPlace?.('library')} onClick={() => toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
+              <li><button type="button" aria-current={page === 'tools' || page === 'assistants' || page === 'study' ? 'page' : undefined} onPointerEnter={() => prefetchPlace?.('tools')} onFocus={() => prefetchPlace?.('tools')} onClick={() => toPage('tools')} title={`Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`}><LayoutGrid size={18} /><span>Tools</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
+              <li><button type="button" title="Models, providers & routing" data-routing-center onPointerEnter={() => prefetchPlace?.('router')} onFocus={() => prefetchPlace?.('router')} aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><GitFork size={18} strokeWidth={1.8} aria-hidden="true" /><span>Router</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
             </ul>
           )}
 
@@ -283,7 +290,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
           {/* The global New chat: always a general conversation, outside projects (src/lib/new-chat.ts). A project's own
               New chat is inside its folder. */}
           <button type="button" className="cv-new-pill cv-dest-new" onClick={newGeneralChat} aria-label="New chat" aria-describedby={`${ids}-general`} title={`New chat (${modKey}⇧O)`}><MessageSquarePlus size={18} aria-hidden="true" />New chat</button>
-          <button type="button" className="cv-account" aria-label="Settings" title={`Settings (${modKey},)`} onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })}>
+          <button type="button" className="cv-account" aria-label="Settings" onPointerEnter={() => prefetchPlace?.('settings')} onFocus={() => prefetchPlace?.('settings')} title={`Settings (${modKey},)`} onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })}>
             {user?.photo ? <img className="cv-avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="cv-avatar" aria-hidden="true">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
           </button>
         </div>

@@ -1,6 +1,6 @@
 import { Exit } from '../lib/motion';
 import { useSheetDrag } from '../lib/sheet-drag';
-import { Brain, Check, ChevronDown, Cpu, Eye, Globe, Search, SlidersHorizontal, Sparkles, Waypoints, Zap } from 'lucide-react';
+import { Brain, Check, ChevronDown, Cpu, Eye, Globe, Repeat, Search, SlidersHorizontal, Sparkles, Waypoints, Zap } from 'lucide-react';
 import { AUTO } from '../lib/routing';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
@@ -14,6 +14,7 @@ import type { ModelInfo } from '../types';
 import { layoutModelProblem } from '../lib/layout-policy';
 import { matchesModel, modelProviderLabel } from '../lib/model-search';
 import { CANVAS_COMPOSER } from '../lib/canvas-presentation';
+import { EXTRA_PROVIDERS } from '../lib/ai/provider-config.js';
 
 export function Badges({ m }: { m?: ModelInfo }) {
   if (!m) return null;
@@ -64,6 +65,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
   const hiddenLayouts = useStore((s) => s.settings.hiddenLayouts);
   const setUi = useStore((s) => s.setUi);
   const usage = useStore((s) => s.usage);
+  const access = useStore((s) => s.keys.providerAccess);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   // Phones get a sheet from the bottom of the screen instead of a dropdown.
@@ -108,9 +110,10 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
       const bar = ref.current.closest('.main')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom || 0;
       el.style.maxHeight = `${Math.max(80, Math.min(560, ref.current.getBoundingClientRect().top - Math.max(window.visualViewport?.offsetTop || 0, bar) - 16))}px`;
     }
-    const r = el.getBoundingClientRect();
+    // Measured while its entrance animation scales it down from the left edge: use the layout width, not the scaled one.
+    const r = el.getBoundingClientRect(), right = r.left + el.offsetWidth;
     const W = document.documentElement.clientWidth;
-    const shift = r.right > W - 8 ? W - 8 - r.right : r.left < 8 ? 8 - r.left : 0;
+    const shift = right > W - 8 ? W - 8 - right : r.left < 8 ? 8 - r.left : 0;
     if (shift) el.style.translate = `${shift}px 0`;
   }, [open, sheet, opensUp]);
 
@@ -135,7 +138,9 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
   }, [open]);
 
   const q = query.trim().toLowerCase();
-  const savedIds=value && value!==AUTO && !isLayoutId(value) && !enabled.includes(value)?[value,...enabled]:enabled;
+  // A provider switched off in Settings takes its saved models out of the list until it is switched back on.
+  const savedIds=(value && value!==AUTO && !isLayoutId(value) && !enabled.includes(value)?[value,...enabled]:enabled)
+    .filter((id) => { const p = providerOfId(id); return !(p in EXTRA_PROVIDERS) || access?.[p as keyof typeof EXTRA_PROVIDERS] === true; });
   const catalogById = useMemo(() => new Map(catalog?.models.map(m => [m.id, m])), [catalog]);
   const models = savedIds.map((id) => catalogById.get(id) || ({ id, label: modelLabel(catalog, id), name: id.split(':').slice(1).join(':'), provider: providerOfId(id) } as ModelInfo));
   const layouts = useMemo(
@@ -271,8 +276,10 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
 
   return (
     <div className={`model-picker${compact ? ' compact' : ''}${opensUp ? ' opens-up' : ''}`} ref={ref}>
-      <button type="button" className={compact ? 'msg-action' : 'model-button'} onClick={toggle} aria-haspopup="dialog" aria-expanded={open}>
-        {label ?? (
+      <button type="button" className={compact ? 'msg-action' : 'model-button'} onClick={toggle} aria-haspopup="dialog" aria-expanded={open}
+        {...(compact && label ? { 'aria-label': label, title: label } : {})}>
+        {/* Under a reply it's one of the icon actions, named by its label (tooltip and screen readers). */}
+        {compact && label ? <Repeat size={15} aria-hidden="true" /> : label ?? (
           <span className="model-name">
             {value === AUTO && <Sparkles size={16} className="auto-icon" />}
             {current && <LayoutIcon icon={current.icon} size={16} className="auto-icon" />}

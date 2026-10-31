@@ -22,6 +22,7 @@ export type BrandArtProps = { height: number; decorative?: boolean; className?: 
 export const CANVAS_COMPOSER = false;
 export const CANVAS_SHELL = false;
 export const RoutingCenter: ComponentType | null = null;
+export const prefetchPlace: ((place: 'library' | 'tools' | 'router' | 'settings') => void) | null = null;
 export const BrandWordmark: ComponentType<BrandArtProps> | null = null;
 export const BrandMark: ComponentType<BrandArtProps> | null = null;
 export const CanvasNav: ComponentType<{ collapsed: boolean; onExpand: () => void }> | null = null;

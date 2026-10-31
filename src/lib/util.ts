@@ -107,3 +107,16 @@ export const providerOfId = (id: string): ProviderId => {
   const p = id.split(':')[0];
   return p === 'gemini' ? 'google' : Object.hasOwn(PROVIDER_NAMES, p) ? p as ProviderId : 'openrouter';
 };
+
+/** After the page has loaded, fetches the code of screens that open often, one per idle moment, so opening them
+ *  later doesn't wait on the network. Never while a reply streams (evaluating a chunk would stall the text). */
+export function prefetchWhenIdle(loads: (() => Promise<unknown>)[]): void {
+  if (typeof window === 'undefined') return;
+  const idle = (fn: () => void) => (window.requestIdleCallback ? window.requestIdleCallback(fn) : setTimeout(fn, 1500));
+  const next = () => idle(() => {
+    if (!loads.length) return;
+    if (document.documentElement.classList.contains('streaming') || document.visibilityState !== 'visible') { setTimeout(next, 3000); return; }
+    void loads.shift()!().catch(() => {}).finally(next);
+  });
+  window.addEventListener('load', next, { once: true });
+}

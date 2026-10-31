@@ -26,8 +26,12 @@ const ShortcutsModal = lazy(() => import('./components/ShortcutsModal'));
 // Screens opened on demand load their code the first time they open.
 const loadSettings = () => import('./components/SettingsModal');
 const SettingsModal = lazy(loadSettings);
-// Settings is opened often: fetch its code once the app is idle, so it slides in without waiting.
-if (typeof window !== 'undefined') window.addEventListener('load', () => (window.requestIdleCallback || setTimeout)(() => void loadSettings()), { once: true });
+const loadCollection = () => import('./components/CollectionPage');
+const loadTools = () => import('./components/ToolsPage');
+// Settings, Library and Tools are opened often: fetch their code once the app is idle, so they open without waiting.
+if (typeof window !== 'undefined') window.addEventListener('load', () => (window.requestIdleCallback || setTimeout)(() => {
+  for (const load of [loadSettings, loadCollection, loadTools]) void load().catch(() => {});
+}), { once: true });
 const CommandPalette = lazy(() => import('./components/CommandPalette'));
 const RepoPicker = lazy(() => import('./components/RepoPicker'));
 const PreviewModal = lazy(() => import('./components/PreviewModal'));
@@ -37,9 +41,9 @@ const CanvasPanel = lazy(() => import('./components/CanvasPanel'));
 const SideChat = lazy(() => import('./components/SideChat'));
 const SelectionTools = lazy(() => import('./components/SelectionTools'));
 const Study = lazy(() => import('./components/Study'));
-const CollectionPage = lazy(() => import('./components/CollectionPage'));
+const CollectionPage = lazy(loadCollection);
 const ProjectsPage = lazy(() => import('./components/ProjectsPage'));
-const ToolsPage = lazy(() => import('./components/ToolsPage'));
+const ToolsPage = lazy(loadTools);
 const PromptsModal = lazy(() => import('./components/PromptsModal'));
 const ToolsModal = lazy(() => import('./components/ToolsModal'));
 const ChatExportModal = lazy(() => import('./components/ChatExportModal'));

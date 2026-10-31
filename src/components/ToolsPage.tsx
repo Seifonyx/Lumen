@@ -8,6 +8,7 @@ import { ANALYSIS_TEMPLATES } from '../lib/analysis';
 import { BUILTIN_ASSISTANTS } from '../lib/assistants';
 import { useStore } from '../store';
 import HubPage from './HubPage';
+import { catalogProblem } from './CatalogErrorNotice';
 import { CANVAS_SHELL, CanvasToolsWorkspace, navigateScreen, useScreenMemory } from '../lib/canvas-presentation';
 import AssistantLibrary from './AssistantLibrary';
 import type { ToolArea } from './ToolsWorkspace';
@@ -62,6 +63,8 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
   // Canvas: the chosen area survives Back/Forward like the search does.
   const [area, setArea] = CANVAS_SHELL ? useScreenMemory!<ToolArea | 'all'>('tools-area', initial === 'assistants' ? 'assistants' : 'all') : [null, () => {}];
   const gemini = Boolean(keys.gemini);
+  const googleError = useStore((s) => s.catalogError)?.split(' · ').find((part) => part.startsWith('Google: '));
+  const geminiRejected = Boolean(gemini && googleError && catalogProblem(googleError).key);
   const s = useStore.getState();
 
   const tools: Tool[] = useMemo(() => [
@@ -120,7 +123,7 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
       <HubPage label="Tools" title="Tools" subtitle="What Lumen can do beyond a plain chat, and what each one needs." onClose={onClose}>
         <ToolsWorkspace
           tools={tools.map((t) => ({ ...t, run: t.run && !t.toggle ? () => navigateScreen!(t.run!) : t.run }))}
-          keys={[{ name: 'Gemini', ready: gemini, uses: keyFor('Gemini key') }, { name: 'Cloudflare', ready: Boolean(keys.cloudflare), uses: keyFor('Cloudflare key') }]}
+          keys={[{ name: 'Gemini', ready: gemini, rejected: geminiRejected, uses: keyFor('Gemini key') }, { name: 'Cloudflare', ready: Boolean(keys.cloudflare), uses: keyFor('Cloudflare key') }]}
           mine={settings.assistants || []} builtins={BUILTIN_ASSISTANTS}
           query={query} setQuery={setQuery} area={area!} setArea={setArea}
           onStartAssistant={(a) => navigateScreen!(() => { s.startAssistant(a); s.setUi({ page: null }); })}

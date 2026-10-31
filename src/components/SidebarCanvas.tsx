@@ -66,7 +66,8 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const activeProjectId = useStore((s) => s.activeProjectId);
   const workspaceOpen = useStore((s) => s.projectWorkspaceOpen);
   const open = useStore((s) => s.sidebarOpen);
-  const page = useStore((s) => s.page);
+  // Settings covers whatever page was open; while it's up, none of the places is the one on screen.
+  const page = useStore((s) => (s.settingsOpen ? 'settings' : s.page));
   const routing = useRoutingCenter().open;
   const { setUi, selectProject } = useStore.getState();
   const [phone, setPhone] = useState(() => window.matchMedia(PHONE).matches);

@@ -4,8 +4,27 @@
     {
       "name": "lumen-canvas",
       "runtimeExecutable": "cmd",
-      "runtimeArgs": ["/c", "set LUMEN_CANVAS=1&& npx vite --host 127.0.0.1 --port 3000 --strictPort"],
+      "runtimeArgs": [
+        "/c",
+        "set LUMEN_CANVAS=1&& npx vite --host 127.0.0.1 --port 3000 --strictPort"
+      ],
       "port": 3000
+    },
+    {
+      "name": "lumen-canvas-dist",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "preview",
+        "--outDir",
+        "dist-canvas",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "4173",
+        "--strictPort"
+      ],
+      "port": 4173
     }
   ]
 }

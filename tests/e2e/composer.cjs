@@ -37,16 +37,11 @@ async function open(browser, width, height, { glass = false, theme = 'light' } =
         assert.ok(rest.height <= 64, `${tag}: one row at rest (${rest.height}px)`);
         const lh = await box.evaluate((el) => parseFloat(getComputedStyle(el).lineHeight));
         assert.ok((await rect(box)).height <= lh + 24, `${tag}: placeholder on one line`);
-        if (glass) {
-          // iPhone glass (owner, 2026-10-30): at rest + · message · dictate · talk; the model appears once the box opens.
-          assert.equal(await page.locator('.composer .model-button').isVisible(), false, `${tag}: no model at rest`);
-          assert.ok(await page.locator('.composer .dictation-btn').isVisible(), `${tag}: dictate at rest`);
-        } else {
-          assert.equal(await page.getByRole('button', { name: /Gemini Flash/ }).count() >= 1, true, `${tag}: model button named`);
-          // The model's name is readable at rest at every width (narrower than 380 px the box says "Message").
-          const name = await page.locator('.composer .model-name-text').evaluate((el) => ({ w: el.clientWidth, full: el.scrollWidth <= el.clientWidth + 1 }));
-          assert.ok(name.w > 40 && name.full, `${tag}: the model's name is readable at rest`);
-        }
+        // Every phone (iPhone glass since 2026-10-30, the rest since the 2026-10-31 audit): at rest + · message · dictate ·
+        // talk, so the message box keeps its width; the model appears once the box opens.
+        assert.equal(await page.locator('.composer .model-button').isVisible(), false, `${tag}: no model at rest`);
+        assert.ok(await page.locator('.composer .dictation-btn').isVisible(), `${tag}: dictate at rest`);
+        assert.ok((await rect(box)).width >= 120, `${tag}: the message box keeps its width at rest`);
         assert.equal(await box.getAttribute('placeholder'), width < 380 ? 'Message' : 'Message Lumen');
         const restSend = await rect(page.locator('.composer :is(.send-btn, .voice-start)').first());
         assert.ok(restSend.right <= rest.right && restSend.top >= rest.top, `${tag}: voice/Send inside the capsule`);
@@ -89,7 +84,14 @@ async function open(browser, width, height, { glass = false, theme = 'light' } =
       try {
         if (!(await page.locator('[data-lumen-canvas-composer]').count())) return;
         const box = page.locator('.composer textarea');
-        await box.click(); await box.fill('こんにちは');
+        // One shape at rest and while writing: focusing the box moves nothing under the pointer.
+        const plus = page.locator('.composer .composer-bar > .tool-btn').first();
+        await page.evaluate(() => document.activeElement?.blur()); await page.waitForTimeout(250);
+        const restPlus = await rect(plus);
+        await box.click(); await page.waitForTimeout(250);
+        const focusPlus = await rect(plus);
+        assert.ok(Math.abs(restPlus.top - focusPlus.top) < 1 && Math.abs(restPlus.left - focusPlus.left) < 1, `+ stays put on focus (${restPlus.top} → ${focusPlus.top})`);
+        await box.fill('こんにちは');
         const before = await page.locator('.message-row').count();
         await box.evaluate((el) => {
           const e = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });

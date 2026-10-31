@@ -1,5 +1,5 @@
 import { useExit } from '../lib/motion';
-import { FolderGit2, Images, Image as ImageIcon, Camera, Pencil, ChartNoAxesCombined, Columns2, Globe, Check, Telescope, MessageSquareText, PlayCircle, LayoutGrid, FolderKanban, ChevronRight, Paperclip } from 'lucide-react';
+import { FolderGit2, Images, Image as ImageIcon, Camera, Pencil, ChartNoAxesCombined, Columns2, Globe, Telescope, MessageSquareText, PlayCircle, LayoutGrid, FolderKanban, ChevronRight, Paperclip } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useFocusScope } from '../lib/focus-scope';
 import { useSheetDrag } from '../lib/sheet-drag';
@@ -28,7 +28,7 @@ export default function AttachSheet(p:Props){
  {!p.anchor&&<div className="photo-actions"><button type="button" onClick={pick(p.onCamera)}><Camera size={24}/><span>Camera</span></button><button type="button" onClick={pick(p.onPhotos)}><Images size={24}/><span>Photos</span></button></div>}
  <div className="attach-menu-group">
   <button type="button" className="sheet-row" onClick={pick(p.onFiles)}><Paperclip size={18}/><span>Files and images</span></button>
-  <button type="button" className="sheet-row search-toggle" role="switch" aria-checked={p.searchEnabled} onClick={p.onSearch} title={p.searchAvailable?'Search the web with Gemini':'Web search works with Gemini models'}><Globe size={18}/><span>Web search</span>{p.searchEnabled&&<Check size={16} className="attach-menu-check"/>}</button>
+  <button type="button" className="sheet-row search-toggle" role="switch" aria-checked={p.searchEnabled} onClick={p.onSearch} title={p.searchAvailable?'Search the web with Gemini':'Web search works with Gemini models'}><Globe size={18}/><span>Web search</span><span className="menu-switch" aria-hidden="true"/></button>
   <button type="button" className="sheet-row" disabled={p.temporary} onClick={pick(p.onProject)}><FolderKanban size={18}/><span>Project</span><span className="attach-menu-meta">{p.projectName||'None'}</span><ChevronRight size={16}/></button>
   <button type="button" className="sheet-row" onClick={pick(p.onRepo)}><FolderGit2 size={18}/><span>{p.repoName?'Open repository':'GitHub repository'}</span></button>
  </div>
@@ -38,9 +38,9 @@ export default function AttachSheet(p:Props){
   <button type="button" className="sheet-row" onClick={pick(p.onCanvas)}><Pencil size={18}/><span>Document canvas</span></button>
   <button type="button" className="sheet-row" onClick={pick(p.onAnalysis)}><ChartNoAxesCombined size={18}/><span>Data analysis</span></button>
   <button type="button" className="sheet-row" onClick={pick(p.onImage)}><ImageIcon size={18}/><span>Create image</span></button>
-  <button type="button" className="sheet-row compare-trigger" disabled={p.compareDisabled} aria-describedby={p.compareDisabled?'compare-why':undefined} onClick={pick(p.onCompare)}><Columns2 size={18}/><span>Compare models</span>{p.compareDisabled&&<span className="attach-menu-meta" id="compare-why" aria-hidden="true">Not available right now</span>}</button>
+  <button type="button" className="sheet-row compare-trigger" disabled={p.compareDisabled} aria-describedby={p.compareDisabled?'compare-why':undefined} onClick={pick(p.onCompare)}><Columns2 size={18}/><span>Compare models</span>{p.compareDisabled&&<span className="attach-menu-meta" id="compare-why" aria-hidden="true">Unavailable now</span>}</button>
   {p.onPrompts&&<button type="button" className="sheet-row" onClick={pick(p.onPrompts)}><MessageSquareText size={18}/><span>Saved prompts</span></button>}
-  {p.onTool&&<button type="button" className="sheet-row" title="Summarize a YouTube video, read a web page, or calculate with Python" onClick={pick(()=>p.onTool!('youtube'))}><PlayCircle size={18}/><span>Quick tools</span><span className="attach-menu-meta" aria-hidden="true">Video · Web page · Calculate</span></button>}
+  {p.onTool&&<button type="button" className="sheet-row" title="Summarize a YouTube video, read a web page, or calculate with Python" onClick={pick(()=>p.onTool!('youtube'))}><PlayCircle size={18}/><span>Quick tools</span><span className="attach-menu-meta" aria-hidden="true">Video, web, maths</span></button>}
   <button type="button" className="sheet-row all-tools" onClick={pick(()=>window.dispatchEvent(new CustomEvent('mr:library',{detail:'tools-page'})))}><LayoutGrid size={18}/><span>All tools</span><ChevronRight size={16}/></button>
  </div>
  </div></div>;

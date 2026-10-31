@@ -56,8 +56,9 @@
 :root[data-theme] .app[data-lumen-canvas-shell] .markdown .table-wrap {
   margin: 1em 0; border: 1px solid color-mix(in srgb, var(--text) 10%, transparent); border-radius: 12px;
   background:
-    linear-gradient(to right, var(--bg) 40%, transparent) left / 28px 100% no-repeat local,
-    linear-gradient(to left, var(--bg) 40%, transparent) right / 28px 100% no-repeat local,
+    /* The covers are solid over the whole shadow (18px), so a table that doesn't scroll shows no edge line. */
+    linear-gradient(to right, var(--bg) 18px, transparent) left / 32px 100% no-repeat local,
+    linear-gradient(to left, var(--bg) 18px, transparent) right / 32px 100% no-repeat local,
     radial-gradient(farthest-side at 0 50%, color-mix(in srgb, var(--text) 30%, transparent), transparent) left / 18px 100% no-repeat scroll,
     radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--text) 30%, transparent), transparent) right / 18px 100% no-repeat scroll,
     var(--bg);
@@ -68,12 +69,15 @@
 .app[data-lumen-canvas-shell] .markdown th,
 :root[data-theme] .app[data-lumen-canvas-shell] .markdown th { background: none; color: var(--text-2); font-size: .92em; font-weight: 600; letter-spacing: 0; border-bottom-color: color-mix(in srgb, var(--text) 14%, transparent); }
 .app[data-lumen-canvas-shell] .markdown tr:last-child td { border-bottom: 0; }
-/* Phones: a table fits the screen and its text wraps (long words hyphenate) instead of running off the edge; only a
- * table too wide even then scrolls, with the edge shadow above. */
+/* Phones: a table fits the screen and its text wraps (long words hyphenate) instead of running off the edge. Columns
+ * keep room for a few words (no one-word-per-line columns); a table too wide even then scrolls with the edge shadow
+ * above, and its first column stays put so each row keeps its label. */
 @media (max-width: 899px) {
   .app[data-lumen-canvas-shell] .markdown table { width: 100%; table-layout: auto; }
   .app[data-lumen-canvas-shell] .markdown th { white-space: normal; }
   .app[data-lumen-canvas-shell] .markdown :is(th, td) { min-width: 0; padding: .5em .55em; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
+  .app[data-lumen-canvas-shell] .markdown :is(th, td):not(:first-child) { min-width: 6.5em; }
+  .app[data-lumen-canvas-shell] .markdown :is(th, td):first-child { position: sticky; inset-inline-start: 0; z-index: 1; background: var(--bg); }
 }
 
 /* ---------- Sources: quiet numbered chips; on phones one swipeable line instead of a wrapped stack. */

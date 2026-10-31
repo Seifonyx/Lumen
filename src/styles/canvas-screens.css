@@ -396,6 +396,9 @@ html.glass[data-lumen-canvas][data-theme='dark'] {
     border: 0; background: var(--lg-tint); box-shadow: var(--lg-edge), var(--lg-lift);
     -webkit-backdrop-filter: var(--lg-filter); backdrop-filter: var(--lg-filter);
   }
+  /* The message box sits over reading text: a deeper blur keeps the words behind it from reading through its
+     placeholder. While a reply streams it drops back to the bars' blur, which Safari redraws more cheaply. */
+  html.glass[data-lumen-canvas]:not(.streaming) .app .composer-wrap:not([data-composer-state='expanded'])[data-lumen-canvas-composer] .composer { -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8); }
   /* Bar (sizes from the iOS 26 reference): 44 pt circle and a 44 pt capsule of two 44 pt slots, 16 pt from the edges,
      no strip behind them, only the soft scroll edge (glass.css). Glyphs in a slightly softened label colour. */
   html.glass[data-lumen-canvas] .app .main > .topbar .menu-btn { width: 44px; height: 44px; }
@@ -530,4 +533,14 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(44 44 46 / .62
   html.glass[data-lumen-canvas] .app .main > .topbar :is(.menu-btn, .topbar-trailing),
   html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] :is(.phone-navigation > button, .phone-navigation-actions > button, .phone-navigation-actions > .screen-actions > button, .phone-page-search :is(.hub-search, .rc-search)),
   html.glass[data-lumen-canvas] .app .composer-wrap:not([data-composer-state='expanded'])[data-lumen-canvas-composer] .composer { background: var(--surface-2); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* iPhone glass: Canvas Settings has an in-flow bar, so the room the older floating bar needed would be a second gap. */
+@media (max-width: 899px) { html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .settings-page:has(> .phone-navigation) .settings-scroll { padding-top: 8px; } }
+/* iPhone glass: "jump to latest" sits centred just above the message box, clear of tables and code on the right. */
+@media (max-width: 899px) { html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .main .to-bottom:not(.labelled) { inset-inline: 0; margin-inline: auto; } }
+/* Computers: once a page's large title scrolls away, its name shows beside Back so you still know where you are. */
+@media (min-width: 900px) {
+  html[data-lumen-canvas] .hub-page .hub-bar .hub-bar-label { display: block; opacity: 0; font: 600 15px/1.3 var(--canvas-body-font); transition: opacity .2s; }
+  html[data-lumen-canvas] .hub-page.scrolled .hub-bar .hub-bar-label { opacity: 1; }
 }

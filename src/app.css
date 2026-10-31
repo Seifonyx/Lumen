@@ -455,6 +455,7 @@ input[type='search']::-webkit-search-cancel-button { -webkit-appearance: none; }
 }
 .catalog-error { display: flex; align-items: center; gap: 8px; }
 .catalog-error > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.catalog-error > .catalog-error-fix { flex: none; }
 .catalog-error.error-text { margin-block-end: 12px; }
 @media (pointer: coarse) {
   .catalog-error > .icon-btn { min-width: 44px; min-height: 44px; }
@@ -2273,7 +2274,7 @@ a { text-underline-offset: .18em; }
 .composer .model-name .pmark, .composer .model-name > .auto-icon { display: none; }
 .composer .model-button > svg { flex-shrink: 0; width: 14px; }
 .model-picker.opens-up > .models-pop { top: auto; bottom: calc(100% + 8px); }
-.sheet-popover-backdrop .attach-menu { width: min(288px, calc(100vw - 24px)); max-width: 288px; border-radius: 12px; overflow-y: auto; overscroll-behavior: contain; }
+.sheet-popover-backdrop .attach-menu { width: min(320px, calc(100vw - 24px)); max-width: 320px; border-radius: 12px; overflow-y: auto; overscroll-behavior: contain; }
 .attach-menu .attach-menu-group + .attach-menu-group { border-top: 1px solid var(--border); }
 .attach-menu .sheet-row { width: 100%; gap: 12px; border-radius: 6px; font-weight: 450; line-height: 1.4; justify-content: flex-start; }
 .attach-menu .compare-trigger span { display: inline; }
@@ -2326,7 +2327,13 @@ html.kb-open .sheet-backdrop { top: var(--vv-top, 0px); bottom: auto; height: va
 .attach-menu .attach-menu-group + .attach-menu-group {border:0;margin-top:0;padding-top:4px;}
 .attach-menu .sheet-row + .sheet-row {border-top:1px solid var(--border);border-radius:0;}
 .attach-menu .sheet-row {font-size:15px;min-height:52px;padding:12px 4px;}
-.attach-menu .attach-menu-meta {max-width:95px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;}
+.attach-menu .attach-menu-meta {max-width:128px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;}
+/* Web search in the + menu: a small switch that shows its state at a glance (the row is the switch). */
+.attach-menu .menu-switch { position: relative; flex: none; width: 30px; height: 18px; margin-inline-start: auto; border-radius: 9px; background: color-mix(in srgb, var(--text) 18%, transparent); transition: background .15s var(--ease); }
+.attach-menu .menu-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface, #fff); box-shadow: 0 1px 2px rgb(0 0 0 / .2); transition: translate .15s var(--ease); }
+.attach-menu [aria-checked="true"] > .menu-switch { background: var(--accent); }
+.attach-menu [aria-checked="true"] > .menu-switch::after { translate: 12px 0; }
+@media (prefers-reduced-motion: reduce) { .attach-menu .menu-switch, .attach-menu .menu-switch::after { transition: none; } }
 .connector-card h3{display:flex;gap:10px;align-items:center;margin:0;}
 .connector-card p{margin:0;line-height:1.6;}
 .connector-card input{width:100%;min-height:44px;}
@@ -2630,7 +2637,7 @@ input, textarea { caret-color: var(--text); }
 .markdown th { background: transparent; color: var(--text-3); font-weight: 600; font-size: .82em; letter-spacing: .01em; border-bottom: 1px solid var(--border); }
 .markdown td { border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent); }
 .markdown tr:last-child td { border-bottom: 0; }
-.markdown tbody tr:hover td { background: color-mix(in srgb, var(--surface-2) 60%, transparent); }
+@media (hover: hover) { .markdown tbody tr:hover td { background: color-mix(in srgb, var(--surface-2) 60%, transparent); } }
 .code-block { border: 1px solid var(--border); background: var(--code-bg); overflow: hidden; }
 .code-head { height: 34px; border-bottom: 1px solid var(--border); background: transparent; font: 500 11.5px var(--mono); color: var(--text-3); }
 .code-copy { font-size: 12px; color: var(--text-2); }

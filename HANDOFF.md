@@ -14,31 +14,30 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - **Task:** (1) repo and docs cleanup, done: 13 root docs and `docs/` (37 MB of old review captures) folded into
   [AGENTS.md](AGENTS.md), this file and [DESIGN.md](DESIGN.md); dead code removed (InstallHint, ~120 unused CSS
   selectors, stale scripts and config); self-updating live state added (`scripts/handoff.mjs`, `.githooks/`,
-  `.claude/settings.json`). (2) the UX audit fixes from 2026-10-31 (list under Next), in progress.
+  `.claude/settings.json`). (2) the UX audit fixes from 2026-10-31: implemented and checked in the production
+  Canvas build (desktop 1366 and phone 393, Chromium); verification and release in progress (Next).
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next
 
-UX audit (2026-10-31), owner said "fix all of these". Tick off as done:
-
-- [ ] Phone composer (non-glass): model chip squeezes the text field to ~112 px; show the model only while writing,
-      as glass does.
-- [ ] Model picker overflows the right edge by ~10 px on desktop; keep popovers inside the viewport.
-- [ ] Opening a saved chat flashes the "New chat in <project>" welcome before messages load.
-- [ ] Desktop composer jumps between one and two rows on focus (first click on + is lost, greeting jumps).
-- [ ] Sidebar highlight doesn't follow the page (Tools stays lit on Library/Settings).
-- [ ] Raw provider error text in the catalogue banner, no fix action; Tools says the key is "Ready" while the
-      catalogue rejects it; Router shows "Loading models…" forever after a failure.
-- [ ] Raw model ids (`gemini-flash-latest`) in the composer chip, under replies and as Router's heading.
-- [ ] + menu truncates ("Trip to Portu…", "Not available…"); Web search shows no switch.
-- [ ] Pages open with no immediate feedback (blank Tools, late Library); show the page shell at once, prefetch.
-- [ ] Tables: stray right-edge line on desktop; phone tables wrap one word per line (scroll with a fixed first
-      column instead); tapped row stays highlighted.
-- [ ] Polish: desktop hub pages (lone Back arrow, title scrolls away), Tools filter as a quiet list, Library count
-      position and Knowledge duplicate/→ arrow, reply actions in one style, drawer type sizes, "Ask anything."
-      subtitle on desktop, unlabelled header/folder icons, Notify switch explanation, instant theme change.
-- [ ] iPhone glass: large titles, composer glass legibility over text, jump-to-latest placement, usage ring meaning.
-- [ ] Verify (typecheck, unit, affected e2e, both builds, budget), PR, merge, deploy Canvas, check live.
+- [x] Audit fixes in code: phone message box keeps its width at rest (model shows while writing); desktop message
+      box keeps one shape (nothing moves on focus); model picker measured unscaled so it stays on screen; sidebar
+      highlight off while Settings covers the page; catalogue banner in plain words with *Check key*; Tools shows a
+      rejected key; readable model names everywhere (`modelLabel` fallback); + menu wider, Web search switch;
+      Library/Tools/Settings/Router code prefetched when idle (pages open in ~130 ms); tables: no ghost edge line,
+      phone columns ≥ 6.5em with a pinned first column, hover only with a pointer; Tools filter a quiet list on
+      desktop; Knowledge link chevron; Retry is an icon; drawer project rows at body size; desktop page name shows
+      in the bar once the title scrolls; iPhone: no double gap above Settings, deeper message-box blur, centred
+      jump-to-latest; no scrollbar flash on the welcome.
+- [ ] Canvas in-app suites (CI's `canvas-core` set) green locally, then PR, exact-head CI, merge, Deploy
+      (`presentation=canvas`), live asset check.
+- Checked and **not changed** (with reason): the "wrong welcome flash" was a mis-click during the audit, not a bug;
+  header icons already have tooltips; theme switching is already instant; Router "Loading models…" was slow dev
+  code loading, not a stuck state; "Ask anything." is the Canvas welcome's one line by design; Lamplight on the
+  active tab is an owner rule; iPhone pages keep centred titles (iOS pattern for pushed screens); Notify switch
+  already explains the blocked case.
+- Owner's call: the iPhone bar's usage ring can read as a spinner when nearly empty; options are to hide it until
+  the chat is half full or keep it as is.
 
 ## Open (known, not scheduled)
 

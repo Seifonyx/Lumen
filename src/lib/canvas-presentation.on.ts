@@ -12,7 +12,11 @@ import { lazy } from 'react';
 
 export const CANVAS_COMPOSER = true;
 export const CANVAS_SHELL = true;
-export const RoutingCenter = lazy(() => import('../components/RoutingCenter'));
+const loadRoutingCenter = () => import('../components/RoutingCenter');
+const loadCollection = () => import('../components/CanvasCollectionPage');
+const loadToolsWorkspace = () => import('../components/ToolsWorkspace');
+const loadSettingsIndex = () => import('../components/SettingsIndex');
+export const RoutingCenter = lazy(loadRoutingCenter);
 export type { BrandArtProps } from './canvas-presentation';
 export { BrandMark, BrandWordmark } from '../components/BrandCrease';
 export { default as CanvasNav } from '../components/CanvasNav';
@@ -26,9 +30,14 @@ export { useScreenMemory } from './screen-memory';
 export const CanvasFilterMenu = lazy(() => import('../components/FilterMenu'));
 export { useBackLayer as useScreenBackLayer } from './back-stack';
 export const CanvasLibraryActions = lazy(() => import('../components/CanvasLibraryActions'));
-export const CanvasCollectionPage = lazy(() => import('../components/CanvasCollectionPage'));
-export const CanvasToolsWorkspace = lazy(() => import('../components/ToolsWorkspace'));
-export const CanvasSettingsIndex = lazy(() => import('../components/SettingsIndex'));
+export const CanvasCollectionPage = lazy(loadCollection);
+export const CanvasToolsWorkspace = lazy(loadToolsWorkspace);
+export const CanvasSettingsIndex = lazy(loadSettingsIndex);
+// The sidebar's places open often: fetch their Canvas parts once the app is idle, so a tap shows the page at once
+// instead of a blank screen while its code arrives.
+if (typeof window !== 'undefined') window.addEventListener('load', () => (window.requestIdleCallback || setTimeout)(() => {
+  for (const load of [loadCollection, loadToolsWorkspace, loadSettingsIndex, loadRoutingCenter]) void load().catch(() => {});
+}), { once: true });
 export { navigateScreen } from './screen-history';
 export const CanvasScreenActions = lazy(() => import('../components/ScreenActions'));
 

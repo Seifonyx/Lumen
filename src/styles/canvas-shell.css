@@ -221,6 +221,8 @@
   .app[data-lumen-canvas-shell] .main:not(.is-empty) .topbar > .spacer { display: none; }
   .app[data-lumen-canvas-shell] .cv-compose { display: inline-grid; order: 10; }
   .app[data-lumen-canvas-shell] .thread { padding-top: 14px; }
+  /* Drawer: a project's own rows (overview, New chat in…) read at the size of the chats beside them. */
+  .app[data-lumen-canvas-shell] :is(.cv-brief-text, .cv-new-here) { font-size: var(--fs, 15px); }
 }
 
 
@@ -447,3 +449,6 @@
 .app[data-lumen-canvas-shell] .phone-page-search input::-webkit-search-cancel-button { display:none; }
 /* Document Canvas: the file name reads as the title; the document switcher stays quiet beside the tools. */
 .app[data-lumen-canvas-shell] .canvas-name input { font: 620 17px/1.3 var(--canvas-display-font); letter-spacing: -.015em; }
+/* The new-chat welcome never shows a scrollbar (its mark and greeting can overflow by a few pixels while they arrive). */
+.app[data-lumen-canvas-shell] .main.is-empty .messages { scrollbar-width: none; }
+.app[data-lumen-canvas-shell] .main.is-empty .messages::-webkit-scrollbar { display: none; }

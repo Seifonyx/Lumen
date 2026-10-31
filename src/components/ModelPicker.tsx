@@ -1,6 +1,6 @@
 import { Exit } from '../lib/motion';
 import { useSheetDrag } from '../lib/sheet-drag';
-import { Brain, Check, ChevronDown, Cpu, Eye, Globe, Search, SlidersHorizontal, Sparkles, Waypoints, Zap } from 'lucide-react';
+import { Brain, Check, ChevronDown, Cpu, Eye, Globe, Repeat, Search, SlidersHorizontal, Sparkles, Waypoints, Zap } from 'lucide-react';
 import { AUTO } from '../lib/routing';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
@@ -108,9 +108,10 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
       const bar = ref.current.closest('.main')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom || 0;
       el.style.maxHeight = `${Math.max(80, Math.min(560, ref.current.getBoundingClientRect().top - Math.max(window.visualViewport?.offsetTop || 0, bar) - 16))}px`;
     }
-    const r = el.getBoundingClientRect();
+    // Measured while its entrance animation scales it down from the left edge: use the layout width, not the scaled one.
+    const r = el.getBoundingClientRect(), right = r.left + el.offsetWidth;
     const W = document.documentElement.clientWidth;
-    const shift = r.right > W - 8 ? W - 8 - r.right : r.left < 8 ? 8 - r.left : 0;
+    const shift = right > W - 8 ? W - 8 - right : r.left < 8 ? 8 - r.left : 0;
     if (shift) el.style.translate = `${shift}px 0`;
   }, [open, sheet, opensUp]);
 
@@ -271,8 +272,10 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
 
   return (
     <div className={`model-picker${compact ? ' compact' : ''}${opensUp ? ' opens-up' : ''}`} ref={ref}>
-      <button type="button" className={compact ? 'msg-action' : 'model-button'} onClick={toggle} aria-haspopup="dialog" aria-expanded={open}>
-        {label ?? (
+      <button type="button" className={compact ? 'msg-action' : 'model-button'} onClick={toggle} aria-haspopup="dialog" aria-expanded={open}
+        {...(compact && label ? { 'aria-label': label, title: label } : {})}>
+        {/* Under a reply it's one of the icon actions, named by its label (tooltip and screen readers). */}
+        {compact && label ? <Repeat size={15} aria-hidden="true" /> : label ?? (
           <span className="model-name">
             {value === AUTO && <Sparkles size={16} className="auto-icon" />}
             {current && <LayoutIcon icon={current.icon} size={16} className="auto-icon" />}

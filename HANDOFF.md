@@ -10,20 +10,18 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/phone-polish` (from main `109215a`).
-- **Task:** owner-picked polish 2026-10-31 plus two iPhone reports: composer holds its state through Safari's late
-  blur/click (model and Expand no longer fold the box and lose the tap); short soft top fade (was a deep solid band);
-  sentence-case section labels; one corner scale (`--canvas-radius-*`); haptics on copy and model choice; reply icons
-  dim when pressed. Checked locally (full Canvas e2e set, builds, budget, guard); release in progress.
+- **Branch:** none in progress. Start new work on a branch from `origin/main`.
+- **Task:** none. Waiting on the owner's iPhone check (Next) and pick from the polish list.
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next
 
-- [ ] PR, exact-head CI, merge, Deploy (`presentation=canvas`), live asset check.
-- [ ] Owner to confirm on the iPhone: tapping the model and Expand while writing; the top fade. Neither reproduces in
-      Chromium or WebKit emulation (the fix targets Safari's event order; a regression test replays it).
+- [ ] Owner to confirm on the iPhone (PR #77, live): tapping the model and Expand while writing keeps the chat and
+      opens them; the top fade is no longer a band. Neither reproduced in Chromium or WebKit emulation; the fix targets
+      Safari's late blur/click order and `composer.cjs` replays it. If it still happens, get a screen recording.
+- Polish candidates proposed 2026-10-31 (owner to pick): usage ring as spinner; light-mode glass against a real
+  capture; first-run key path; plus the long list in that chat (search, empty states, motion, reading, Router, iPad).
 - Swipe actions stay on the All chats page only: in the drawer they would fight the swipe that closes it.
-- Long list of further polish proposed in chat 2026-10-31; owner to pick.
 
 ## Open (known, not scheduled)
 
@@ -54,6 +52,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-10-31 Phone polish (PR #77, merged `88a4594`, deployed Canvas): composer holds through Safari's late tap, soft
+  top fade, sentence-case labels, one corner scale, haptics on copy and model choice.
 - 2026-10-31 Cleanup and UX audit (PR #75, merged `f42155c`, deployed Canvas): three living docs and live
   `npm run handoff`; stable message box, readable model names, plain catalogue errors with *Check key*, picker hides
   switched-off providers, on-intent page loading, calmer tables, iPhone Settings/blur/jump-to-latest fixes.

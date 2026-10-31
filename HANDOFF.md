@@ -10,21 +10,20 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start new work on a branch from `origin/main`.
-- **Task:** none. The owner asked for polish suggestions after the cleanup and audit release (2026-10-31); they were
-  proposed in chat and are listed under *Next* until the owner picks.
+- **Branch:** `design/phone-polish` (from main `109215a`).
+- **Task:** owner-picked polish 2026-10-31 plus two iPhone reports: composer holds its state through Safari's late
+  blur/click (model and Expand no longer fold the box and lose the tap); short soft top fade (was a deep solid band);
+  sentence-case section labels; one corner scale (`--canvas-radius-*`); haptics on copy and model choice; reply icons
+  dim when pressed. Checked locally (full Canvas e2e set, builds, budget, guard); release in progress.
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next
 
-Polish candidates proposed 2026-10-31, awaiting the owner's pick (none started):
-
-- Usage ring in the iPhone bar reads as a spinner when nearly empty: hide it until the chat is half full, or keep.
-- Section labels: sentence case instead of mono uppercase (owner's view wanted).
-- Radius tokens: replace the hard-coded 8/9/10/12/14/16/22/24/26 px in Canvas CSS with the defined tokens.
-- Light-mode glass: tune against a real iOS 26 light capture.
-- iPhone feel: haptic-style press feedback on primary actions, swipe actions on chat rows, pull-down to search.
-- First run: a short, skippable key-setup path that ends in a first reply.
+- [ ] PR, exact-head CI, merge, Deploy (`presentation=canvas`), live asset check.
+- [ ] Owner to confirm on the iPhone: tapping the model and Expand while writing; the top fade. Neither reproduces in
+      Chromium or WebKit emulation (the fix targets Safari's event order; a regression test replays it).
+- Swipe actions stay on the All chats page only: in the drawer they would fight the swipe that closes it.
+- Long list of further polish proposed in chat 2026-10-31; owner to pick.
 
 ## Open (known, not scheduled)
 

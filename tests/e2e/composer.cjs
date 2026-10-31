@@ -52,6 +52,24 @@ async function open(browser, width, height, { glass = false, theme = 'light' } =
         assert.equal(await box.getAttribute('placeholder'), width < 380 ? 'Message' : 'Message Lumen');
         const restSend = await rect(page.locator('.composer :is(.send-btn, .voice-start)').first());
         assert.ok(restSend.right <= rest.right && restSend.top >= rest.top, `${tag}: voice/Send inside the capsule`);
+        // iPhone Safari's order for a tap on a control (owner, 2026-10-31: the model and Expand "closed the chat"): pointer
+        // up, then in a later task the box's blur and the click. The composer stays engaged until the click arrives,
+        // so the control is still there to receive it.
+        await box.click(); await page.waitForTimeout(250);
+        const held = await page.evaluate(async () => {
+          const wrap = document.querySelector('.composer-wrap'), btn = document.querySelector('.composer .model-button'), ta = document.querySelector('.composer textarea');
+          const opt = { bubbles: true, pointerType: 'touch', isPrimary: true };
+          btn.dispatchEvent(new PointerEvent('pointerdown', opt)); btn.dispatchEvent(new PointerEvent('pointerup', opt));
+          await new Promise((r) => setTimeout(r, 40));
+          ta.blur();
+          await new Promise((r) => setTimeout(r, 40));
+          const before = wrap.dataset.composerState, shown = getComputedStyle(btn).display !== 'none';
+          btn.click();
+          await new Promise((r) => setTimeout(r, 400));
+          return { before, shown, open: Boolean(document.querySelector('.models-pop')) };
+        });
+        assert.deepEqual(held, { before: 'engaged', shown: true, open: true }, `${tag}: a late Safari blur leaves the model in place for its click`);
+        await page.keyboard.press('Escape'); await page.waitForTimeout(300);
         // Writing: the text, then one row of controls with Send on it.
         await box.click(); await box.fill('Can you make it warmer?');
         await page.waitForTimeout(250);

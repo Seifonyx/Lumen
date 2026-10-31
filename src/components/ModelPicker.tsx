@@ -15,6 +15,7 @@ import { layoutModelProblem } from '../lib/layout-policy';
 import { matchesModel, modelProviderLabel } from '../lib/model-search';
 import { CANVAS_COMPOSER } from '../lib/canvas-presentation';
 import { EXTRA_PROVIDERS } from '../lib/ai/provider-config.js';
+import { haptic } from '../lib/haptics';
 
 export function Badges({ m }: { m?: ModelInfo }) {
   if (!m) return null;
@@ -95,6 +96,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
     setOpen(!open);
   };
   const pick = (id: string) => {
+    haptic();
     onChange(id);
     setOpen(false);
   };

@@ -30,7 +30,7 @@
 .app[data-lumen-canvas-shell] .cv-layout-editor :is(.model-title,.model-sub) { white-space:normal; overflow-wrap:anywhere; }
 .app[data-lumen-canvas-shell] .cv-layout-editor .model-list { margin-block:8px; }
 .app[data-lumen-canvas-shell] .cv-layout-editor .model-row { gap:8px; }
-.app[data-lumen-canvas-shell] .layout-preview { display:grid; gap:8px; padding:16px; border:1px solid var(--canvas-rim); border-radius:14px; background:var(--canvas-surface); }
+.app[data-lumen-canvas-shell] .layout-preview { display:grid; gap:8px; padding:16px; border:1px solid var(--canvas-rim); border-radius:var(--canvas-radius-control); background:var(--canvas-surface); }
 .app[data-lumen-canvas-shell] .layout-preview h4 { margin:0; font-size:16px; }
 .app[data-lumen-canvas-shell] .rc-editor h3:focus { outline:none; }
 @media (min-width:1000px) { .app[data-lumen-canvas-shell] .rc-routing-insight { grid-template-columns:1fr 1fr; gap:32px; } }

@@ -38,20 +38,20 @@ html[data-lumen-canvas][data-theme='dark'] { --canvas-highlight-bg: color-mix(in
 /* ---------- Page shell (HubPage: Library, Tools, Projects, Study, Assistants…) */
 html[data-lumen-canvas] .hub-head h1, html.glass[data-lumen-canvas] .hub-head h1 { font: var(--canvas-type-display); letter-spacing: var(--canvas-tracking-display); }
 html[data-lumen-canvas] .hub-head p { color: var(--text-2); font-size: 14.5px; }
-html[data-lumen-canvas] .hub-tabs { gap: 4px; padding: 4px; margin-bottom: 20px; border: 0; border-radius: 14px; background: var(--cv5-fill); }
-html[data-lumen-canvas] .hub-tabs button { margin: 0; padding: 0 14px; min-height: 34px; border: 0; border-radius: 10px; color: var(--text-2); }
+html[data-lumen-canvas] .hub-tabs { gap: 4px; padding: 4px; margin-bottom: 20px; border: 0; border-radius: var(--canvas-radius-control); background: var(--cv5-fill); }
+html[data-lumen-canvas] .hub-tabs button { margin: 0; padding: 0 14px; min-height: 34px; border: 0; border-radius: var(--canvas-radius-row); color: var(--text-2); }
 html[data-lumen-canvas] .hub-tabs button.active { background: var(--bg); color: var(--text); box-shadow: 0 1px 3px rgb(0 0 0 / .25); }
-html[data-lumen-canvas] .hub-seg { padding: 4px; border-radius: 12px; background: var(--cv5-fill); }
-html[data-lumen-canvas] .hub-seg button { border-radius: 9px; }
+html[data-lumen-canvas] .hub-seg { padding: 4px; border-radius: var(--canvas-radius-control); background: var(--cv5-fill); }
+html[data-lumen-canvas] .hub-seg button { border-radius: var(--canvas-radius-row); }
 html[data-lumen-canvas] .hub-seg button[aria-checked='true'] { background: var(--bg); box-shadow: 0 1px 3px rgb(0 0 0 / .25); }
-html[data-lumen-canvas] :is(.hub-search, .search) { height: 40px; border: 0; border-radius: 12px; background: var(--cv5-fill); box-shadow: none; }
+html[data-lumen-canvas] :is(.hub-search, .search) { height: 40px; border: 0; border-radius: var(--canvas-radius-control); background: var(--cv5-fill); box-shadow: none; }
 html[data-lumen-canvas] :is(.hub-search, .search):focus-within { box-shadow: 0 0 0 2px color-mix(in srgb, var(--text) 35%, transparent); }
 html[data-lumen-canvas] .hub-empty h2, html[data-lumen-canvas] .hub-empty h3 { font-family: var(--cv5-display); letter-spacing: -.015em; }
 html[data-lumen-canvas] .hub-empty-icon { background: var(--cv5-fill); color: var(--text); }
 /* Purposeful empty states: a faint preview of what the page will hold sits above the one starting action. */
 html[data-lumen-canvas] .hub-empty { position: relative; padding-top: 40px; }
 html[data-lumen-canvas] .hub-empty::before {
-  content: ''; display: block; width: 116px; height: 84px; margin: 0 auto 26px; border-radius: 14px;
+  content: ''; display: block; width: 116px; height: 84px; margin: 0 auto 26px; border-radius: var(--canvas-radius-control);
   border: 1px solid transparent; background: var(--surface);
   box-shadow: -128px 0 0 -1px var(--cv5-fill), 128px 0 0 -1px var(--cv5-fill);
   -webkit-mask-image: linear-gradient(#000 30%, transparent); mask-image: linear-gradient(#000 30%, transparent);
@@ -68,7 +68,7 @@ html[data-lumen-canvas] .btn.ghost { border-color: transparent; }
 /* ---------- Tools: monochrome icons, rimmed cards. */
 
 /* ---------- Projects: neutral bands and monograms (the Canvas tree's look), rimmed cards. */
-html[data-lumen-canvas] .proj-grid { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0; border-radius: 16px; background: var(--surface); overflow: hidden; }
+html[data-lumen-canvas] .proj-grid { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0; border-radius: var(--canvas-radius-card); background: var(--surface); overflow: hidden; }
 html[data-lumen-canvas] .proj-card { display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: center; border: 0; border-radius: 0; background: none; overflow: visible; }
 html[data-lumen-canvas] .proj-card + .proj-card { box-shadow: inset 0 1px var(--cv5-rim); }
 html[data-lumen-canvas] .proj-card:has(.proj-open:hover) { background: var(--cv5-fill); }
@@ -82,13 +82,13 @@ html[data-lumen-canvas] .projects-summary { margin: 0 0 6px; color: var(--text-3
 html[data-lumen-canvas] .projects-sort select { min-height: 44px; max-width: 100%; }
 html[data-lumen-canvas] .hub-search:has(input[aria-label='Search projects']) { min-width: 0; min-height: 44px; height: auto; }
 html[data-lumen-canvas] .hub-search input[aria-label='Search projects'] { width: 0; min-width: 0; flex: 1; }
-html[data-lumen-canvas] .hub-search > button[aria-label='Clear project search'] { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 10px; background: none; color: var(--text-2); }
+html[data-lumen-canvas] .hub-search > button[aria-label='Clear project search'] { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--canvas-radius-row); background: none; color: var(--text-2); }
 html[data-lumen-canvas] .project-title { font: 640 30px/1.12 var(--cv5-display); letter-spacing: -.03em; }
 html[data-lumen-canvas] .project-card { border: 0; border-top: 1px solid var(--cv5-rim); border-radius: 0; background: none; padding: 18px 0; }
-html[data-lumen-canvas] .project-context-content { gap: 0; padding: 0 20px; border-radius: 16px; background: var(--cv5-fill); }
+html[data-lumen-canvas] .project-context-content { gap: 0; padding: 0 20px; border-radius: var(--canvas-radius-card); background: var(--cv5-fill); }
 html[data-lumen-canvas] .project-card:first-child { border-top: 0; }
 html[data-lumen-canvas] .project-context :is(.project-empty, .project-count, .project-file-size) { color: var(--text-2); }
-html[data-lumen-canvas] .project-composer { max-width: none; margin-bottom: 32px; border-radius: 20px; box-shadow: none; padding: 18px; }
+html[data-lumen-canvas] .project-composer { max-width: none; margin-bottom: 32px; border-radius: var(--canvas-radius-panel); box-shadow: none; padding: 18px; }
 html[data-lumen-canvas] .project-composer-note { font-family: var(--font); }
 html[data-lumen-canvas] .project-grid { gap: 32px; }
 html[data-lumen-canvas] .project-chat { padding: 18px 8px; }
@@ -108,25 +108,27 @@ html[data-lumen-canvas] .project-page :is(.project-send, .project-edit-btn, .pro
 html[data-lumen-canvas] .project-section-head h2, html[data-lumen-canvas] .project-section-head h3 { font: 600 16px/1.4 var(--font); letter-spacing: -.01em; color: var(--text); }
 
 /* ---------- Library */
-html[data-lumen-canvas] .doc-paper { border-color: var(--cv5-rim); border-radius: 14px; }
+html[data-lumen-canvas] .doc-paper { border-color: var(--cv5-rim); border-radius: var(--canvas-radius-control); }
 html[data-lumen-canvas] .hub-count { font: 500 11.5px var(--cv5-mono); letter-spacing: .06em; color: var(--text-3); }
 
 /* ---------- Settings: Canvas destinations list, display headings, mono group labels, rimmed cards. */
 html[data-lumen-canvas] .settings-title-main { font-family: var(--cv5-display); letter-spacing: -.02em; }
 html[data-lumen-canvas] .settings-heading h2 { font: 640 30px/1.12 var(--cv5-display); letter-spacing: -.03em; }
 html[data-lumen-canvas] .settings-group-title { font: 600 13px/1.3 var(--font); letter-spacing: 0; text-transform: none; color: var(--text-2); }
-html[data-lumen-canvas] .settings-card { border-color: transparent; border-radius: 16px; background: var(--surface); box-shadow: none; }
+html[data-lumen-canvas] .settings-card { border-color: transparent; border-radius: var(--canvas-radius-card); background: var(--surface); box-shadow: none; }
 html[data-lumen-canvas] .settings-card .setting-row { border-bottom-color: var(--cv5-rim); }
-html[data-lumen-canvas] .settings-tabs button { border-radius: 10px; }
+html[data-lumen-canvas] .settings-tabs button { border-radius: var(--canvas-radius-row); }
 html[data-lumen-canvas] .settings-tabs button.active { background: var(--cv5-fill-strong); color: var(--text); font-weight: 600; }
 html[data-lumen-canvas] .settings-tabs .tab-icon { color: var(--text-2); }
-html[data-lumen-canvas] .seg, html[data-lumen-canvas] .segmented { border-radius: 12px; background: var(--cv5-fill); }
+html[data-lumen-canvas] .seg, html[data-lumen-canvas] .segmented { border-radius: var(--canvas-radius-control); background: var(--cv5-fill); }
 
 /* ---------- Dialogs, sheets and menus (portalled outside the app). */
-html[data-lumen-canvas] .modal { border-color: var(--cv5-rim); border-radius: 22px; }
+/* Section labels read as sentence case, as in iOS and macOS (owner, 2026-10-31). */
+html[data-lumen-canvas] :is(.mp-label, .attach-menu-title, .run-out-head, .flashcard-face small) { text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 600; }
+html[data-lumen-canvas] .modal { border-color: var(--cv5-rim); border-radius: var(--canvas-radius-panel); }
 html[data-lumen-canvas] .modal-title { font: 620 19px/1.25 var(--cv5-display); letter-spacing: -.015em; }
-html[data-lumen-canvas] :is(.menu, .popover) { border-color: var(--cv5-rim); border-radius: 14px; }
-html[data-lumen-canvas] .menu [role^='menuitem'] { border-radius: 9px; }
+html[data-lumen-canvas] :is(.menu, .popover) { border-color: var(--cv5-rim); border-radius: var(--canvas-radius-control); }
+html[data-lumen-canvas] .menu [role^='menuitem'] { border-radius: var(--canvas-radius-row); }
 html[data-lumen-canvas] .sheet { border-color: var(--cv5-rim); }
 html[data-lumen-canvas] :is(.tag, .chip, .badge) { border-radius: 999px; }
 
@@ -146,37 +148,37 @@ html[data-lumen-canvas] :is(.color-indigo, .color-emerald, .color-green, .color-
 html[data-lumen-canvas][data-lumen-canvas-foundation] .project-page .project-tile, html[data-lumen-canvas][data-lumen-canvas-foundation] .project-tile { background: var(--text) !important; color: var(--bg) !important; box-shadow: none; }
 html[data-lumen-canvas] .pf-field:has(> .project-color-choices) { display: none; }
 /* One project visual language: the ink monogram and a header rule, no grey gradient covers. */
-html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-band { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 13px; background: var(--cv5-fill); color: var(--text-2); }
+html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-band { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: var(--canvas-radius-control); background: var(--cv5-fill); color: var(--text-2); }
 html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-card .proj-body { min-width: 0; padding: 0; gap: 5px; }
 html[data-lumen-canvas][data-lumen-canvas-foundation] .project-page > .project-hero { display: none; }
 html[data-lumen-canvas][data-lumen-canvas-foundation] .project-head { padding-bottom: 0; margin-bottom: 28px; border-bottom: 0; }
 
 /* ---------- Assistants: ink avatars instead of per-name hues; rimmed cards, display names. */
-html[data-lumen-canvas][data-lumen-canvas-foundation] .lib-card { --av-bg: var(--cv5-fill-strong); --av-fg: var(--text); border-color: var(--cv5-rim); border-radius: 18px; background: var(--cv5-card); }
+html[data-lumen-canvas][data-lumen-canvas-foundation] .lib-card { --av-bg: var(--cv5-fill-strong); --av-fg: var(--text); border-color: var(--cv5-rim); border-radius: var(--canvas-radius-card); background: var(--cv5-card); }
 html[data-lumen-canvas] .lib-card:hover { border-color: color-mix(in srgb, var(--text) 18%, transparent); box-shadow: none; }
 html[data-lumen-canvas] .lib-card-text strong { font-family: var(--cv5-display); letter-spacing: -.015em; }
 html[data-lumen-canvas] .lib-section h2 { font: 600 13px/1.3 var(--font); letter-spacing: 0; text-transform: none; color: var(--text-2); }
-html[data-lumen-canvas] .lib-create { border-color: color-mix(in srgb, var(--text) 22%, transparent); border-radius: 18px; }
+html[data-lumen-canvas] .lib-create { border-color: color-mix(in srgb, var(--text) 22%, transparent); border-radius: var(--canvas-radius-card); }
 html[data-lumen-canvas] .lib-create-icon { background: var(--cv5-fill-strong); color: var(--text); }
 
 /* ---------- Study: ink progress rings and due chips (the ring track stays neutral), rimmed stats and decks. */
 html[data-lumen-canvas][data-lumen-canvas-foundation] .study-ring { background: conic-gradient(var(--text) calc(var(--p) * 1%), var(--cv5-fill-strong) 0); }
 html[data-lumen-canvas][data-lumen-canvas-foundation] .study-due { background: var(--cv5-fill-strong); color: var(--text); }
-html[data-lumen-canvas] .study-stats > div, html[data-lumen-canvas] .study-deck { border-color: var(--cv5-rim); border-radius: 16px; background: var(--cv5-card); }
+html[data-lumen-canvas] .study-stats > div, html[data-lumen-canvas] .study-deck { border-color: var(--cv5-rim); border-radius: var(--canvas-radius-card); background: var(--cv5-card); }
 html[data-lumen-canvas] .study-stats strong { font-family: var(--cv5-display); }
 
 /* ---------- Compare: ink checks. */
 html[data-lumen-canvas] .compare-check { color: var(--text); }
 html[data-lumen-canvas] .compare-model-row.selected .compare-check { border-color: var(--text); background: var(--cv5-fill-strong); }
-html[data-lumen-canvas] .compare-model-row { border-radius: 10px; }
+html[data-lumen-canvas] .compare-model-row { border-radius: var(--canvas-radius-row); }
 
 /* ---------- Document Canvas panel: the Canvas sheet head and quiet segmented view switch. */
 html[data-lumen-canvas] .canvas-head { border-bottom-color: var(--cv5-rim); }
 html[data-lumen-canvas] .canvas-head strong { font: 620 16px/1.2 var(--cv5-display); letter-spacing: -.01em; }
-html[data-lumen-canvas] .canvas-view-switch { border-radius: 11px; background: var(--cv5-fill); }
-html[data-lumen-canvas] .canvas-view-switch button { border-radius: 8px; }
+html[data-lumen-canvas] .canvas-view-switch { border-radius: var(--canvas-radius-row); background: var(--cv5-fill); }
+html[data-lumen-canvas] .canvas-view-switch button { border-radius: var(--canvas-radius-row); }
 html[data-lumen-canvas] .canvas-view-switch button.active { background: var(--bg); box-shadow: 0 1px 3px rgb(0 0 0 / .25); }
-html[data-lumen-canvas] .canvas-review { border-color: var(--cv5-rim); border-radius: 14px; }
+html[data-lumen-canvas] .canvas-review { border-color: var(--cv5-rim); border-radius: var(--canvas-radius-control); }
 html[data-lumen-canvas] .canvas-review pre { background: var(--cv5-fill); }
 
 /* ---------- Switches: a clear off state too (rimmed track), not only the ink on state. */
@@ -212,7 +214,7 @@ html[data-lumen-canvas] .cv-memory-actions { display: flex; flex-wrap: wrap; ali
 html[data-lumen-canvas] .cv-memory-actions > .muted { margin-inline-end: auto; }
 html[data-lumen-canvas] .cv-memory-actions .btn { min-height: 36px; }
 html[data-lumen-canvas] .cv-memory-edit { display: grid; gap: 8px; margin: 4px 0 8px; }
-html[data-lumen-canvas] .cv-memory-edit textarea { box-sizing: border-box; width: 100%; padding: 10px 12px; border: 0; border-radius: 12px; background: var(--cv5-fill); color: var(--text); font: inherit; font-size: 14px; resize: vertical; }
+html[data-lumen-canvas] .cv-memory-edit textarea { box-sizing: border-box; width: 100%; padding: 10px 12px; border: 0; border-radius: var(--canvas-radius-control); background: var(--cv5-fill); color: var(--text); font: inherit; font-size: 14px; resize: vertical; }
 html[data-lumen-canvas] .cv-memory-edit textarea:focus { outline: 2px solid color-mix(in srgb, var(--text) 35%, transparent); }
 html[data-lumen-canvas] .cv-memory-edit span { display: flex; gap: 8px; }
 @media (hover: none) { html[data-lumen-canvas] .cv-memory-actions .btn { min-height: 44px; } }
@@ -233,7 +235,7 @@ html[data-lumen-canvas] .provider-connection-body { grid-template-columns: minma
 /* Selects: on iPhone the glass pop-up button (glass.css) owns them; elsewhere a quiet fill with a line chevron
  * (two thin diagonal strokes, no image). */
 html[data-lumen-canvas]:not(.glass) select:not([multiple]):not(.rc-routing-settings select) {
-  appearance: none; -webkit-appearance: none; min-height: 40px; height: auto; max-width: 100%; padding: 0 34px 0 12px; border: 1px solid transparent; border-radius: 10px;
+  appearance: none; -webkit-appearance: none; min-height: 40px; height: auto; max-width: 100%; padding: 0 34px 0 12px; border: 1px solid transparent; border-radius: var(--canvas-radius-row);
   background:
     linear-gradient(45deg, transparent calc(50% - .75px), currentColor calc(50% - .75px), currentColor calc(50% + .75px), transparent calc(50% + .75px)) right 17px center / 6px 6px no-repeat,
     linear-gradient(-45deg, transparent calc(50% - .75px), currentColor calc(50% - .75px), currentColor calc(50% + .75px), transparent calc(50% + .75px)) right 11px center / 6px 6px no-repeat,
@@ -244,7 +246,7 @@ html[data-lumen-canvas]:not(.glass) select:not([multiple]):focus-visible { outli
 /* Text fields everywhere, dialogs and sheets included: a quiet fill, no outline, a focus ring. Fields that live inside
  * their own control (composer, search bars, the key field, code editors) keep their own look. */
 html[data-lumen-canvas] :where(input[type='text'], input[type='password'], input[type='email'], input[type='url'], input[type='time'], input[type='datetime-local'], input[type='number'], input:not([type]), textarea):not(:is(.composer, .hub-search, .search, .rc-search, .cv-search, .key-input-wrap, .phone-page-search, .cm-editor, .canvas-panel, .model-search) *) {
-  border-color: transparent; border-radius: 12px; background: var(--cv5-fill); box-shadow: none;
+  border-color: transparent; border-radius: var(--canvas-radius-control); background: var(--cv5-fill); box-shadow: none;
 }
 html[data-lumen-canvas] :where(input, textarea):not(:is(.composer, .hub-search, .search, .rc-search, .cv-search, .key-input-wrap, .phone-page-search, .cm-editor, .canvas-panel, .model-search) *):focus { border-color: transparent; background: var(--surface); box-shadow: 0 0 0 2px var(--focus); }
 html[data-lumen-canvas] .library-form-hint { align-self: center; margin-inline-end: auto; }
@@ -255,7 +257,7 @@ html[data-lumen-canvas] .app :is(.btn.small.logout, .project-edit-btn, .all-chat
 @media (max-width: 899px) { html[data-lumen-canvas] .memory-add > input { flex: 1 1 100%; } html[data-lumen-canvas] .memory-add > .memory-scope { flex: 1 1 auto; min-width: 0; } }
 @media (forced-colors: active) { html[data-lumen-canvas] :is(.settings-card, .proj-grid) { border: 1px solid CanvasText; } html[data-lumen-canvas] select:not([multiple]) { border-color: CanvasText; } }
 /* Project page: chats as one grouped list; the options button is a full 44 px target at readable contrast. */
-html[data-lumen-canvas] .project-chat-list { padding: 0; border-radius: 16px; background: var(--surface); overflow: hidden; }
+html[data-lumen-canvas] .project-chat-list { padding: 0; border-radius: var(--canvas-radius-card); background: var(--surface); overflow: hidden; }
 html[data-lumen-canvas] .project-chat-list > .project-chat { padding-inline: 14px 4px; border-bottom: 0; }
 html[data-lumen-canvas] .project-chat-list > .project-chat + .project-chat { box-shadow: inset 0 1px var(--cv5-rim); }
 html[data-lumen-canvas] .project-chat-menu > .icon-btn { min-width: 44px; min-height: 44px; color: var(--text-2); }
@@ -283,7 +285,7 @@ html[data-lumen-canvas] .free-tool-form { border-color: transparent; background:
 @media (min-width: 900px) { html[data-lumen-canvas] .modal-backdrop:has(.command-palette) { place-items: start center; padding-top: 14vh; } }
 html[data-lumen-canvas] .command-palette .command-hint { font-size: 12px; }
 /* Knowledge: the empty library by tone (no dashed outline); the indexing note is one line with details on tap. */
-html[data-lumen-canvas] .knowledge-empty { border-color: transparent; border-style: solid; background: var(--surface); border-radius: 16px; }
+html[data-lumen-canvas] .knowledge-empty { border-color: transparent; border-style: solid; background: var(--surface); border-radius: var(--canvas-radius-card); }
 html[data-lumen-canvas] .knowledge-disclosure { margin-top: 12px; color: var(--text-2); }
 html[data-lumen-canvas] .knowledge-disclosure > summary { cursor: pointer; min-height: 40px; line-height: 1.5; }
 html[data-lumen-canvas] .knowledge-disclosure > p { margin: 6px 0 0; }
@@ -335,10 +337,10 @@ html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas][data-th
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown { font-size: calc(var(--fs, 15px) + 2px); line-height: 1.47; letter-spacing: -.01em; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown :is(h1, h2) { font-size: 1.18em; font-weight: 600; letter-spacing: -.02em; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown h3 { font-size: 1em; font-weight: 600; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .msg.user .bubble { border: 0; border-radius: 20px; background: var(--user-bubble); font-size: calc(var(--fs, 15px) + 2px); line-height: 1.4; padding: 9px 14px; box-shadow: none; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .msg.user .bubble { border: 0; border-radius: var(--canvas-radius-panel); background: var(--user-bubble); font-size: calc(var(--fs, 15px) + 2px); line-height: 1.4; padding: 9px 14px; box-shadow: none; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown .table-wrap { border-color: var(--native-sep); border-width: .5px; }
   /* Composer: one flat capsule on the system fill; a round ink send button; no shadow, no outline. */
-  html[data-lumen-canvas]:not(.glass) .app .composer-wrap[data-lumen-canvas-composer] .composer { border: 0; border-radius: 24px; background: var(--native-fill); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  html[data-lumen-canvas]:not(.glass) .app .composer-wrap[data-lumen-canvas-composer] .composer { border: 0; border-radius: var(--canvas-radius-panel); background: var(--native-fill); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
   html[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer textarea { font-size: 17px; }
   html[data-lumen-canvas]:not(.glass) .app .composer-wrap[data-lumen-canvas-composer] .composer-bar > .icon-btn:first-child { background: var(--native-fill-2); }
   html[data-lumen-canvas]:not(.glass) .app .composer-wrap[data-lumen-canvas-composer] { background: linear-gradient(transparent, var(--bg) 30%); }
@@ -350,7 +352,7 @@ html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas][data-th
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-open > svg:first-child { display: none; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-title, html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-open strong { font-size: 17px; font-weight: 400; letter-spacing: -.01em; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-dest button) { font-size: 17px; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-search { background: var(--native-fill-2); border-radius: 10px; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-search { background: var(--native-fill-2); border-radius: var(--canvas-radius-row); }
 }
 /* The new-chat mark: the Crease in ink, no glow. */
 html[data-lumen-canvas] .welcome-native { display: grid; place-items: center; margin: 0 auto 14px; color: var(--text); }
@@ -424,7 +426,7 @@ html.glass[data-lumen-canvas][data-theme='dark'] {
      the action is a solid ink circle, the one heavy thing on screen. */
   html.glass[data-lumen-canvas] .app .main > .composer-wrap[data-lumen-canvas-composer] { padding-inline: 12px; background: none; }
   html.glass[data-lumen-canvas] .app .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer { border-radius: 26px; padding: 5px; }
-  html.glass[data-lumen-canvas] .app .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer { border-radius: 24px; padding: 10px 6px 6px; }
+  html.glass[data-lumen-canvas] .app .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer { border-radius: var(--canvas-radius-panel); padding: 10px 6px 6px; }
   html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer > textarea { font-size: 17px; letter-spacing: -.01em; }
   html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer > textarea::placeholder { color: color-mix(in srgb, var(--text) 45%, transparent); }
   html.glass[data-lumen-canvas] .app .composer-wrap[data-lumen-canvas-composer] .composer :is(.composer-bar > .tool-btn:not(.shield-on), .dictation-btn, .canvas-expand) { background: none; border: 0; box-shadow: none; color: var(--text); }
@@ -440,7 +442,7 @@ html.glass[data-lumen-canvas][data-theme='dark'] {
 
   /* New chat: the Crease and the greeting, quiet. */
   html.glass[data-lumen-canvas] .app .cv-home h1 { font: 600 24px/1.2 var(--font); letter-spacing: -.025em; }
-  html.glass[data-lumen-canvas] .app .msg.user .bubble { border-radius: 22px; padding: 10px 15px; }
+  html.glass[data-lumen-canvas] .app .msg.user .bubble { border-radius: var(--canvas-radius-panel); padding: 10px 15px; }
 }
 @media (max-width: 899px) {
   /* Scroll edge: what passes under the bar fades into the page and blurs, so the title never sits on text. */
@@ -457,12 +459,15 @@ html.glass[data-lumen-canvas][data-theme='dark'] {
   /* Reply actions: small and quiet until needed. */
   html.glass[data-lumen-canvas] .app .msg-actions .msg-action { color: var(--text-3); }
   html.glass[data-lumen-canvas] .app .msg-actions .msg-action svg { width: 18px; height: 18px; }
+  /* Pressed, an icon dims under the finger as iOS bar buttons do; it comes back as the finger lifts. */
+  html.glass[data-lumen-canvas] .app .msg-actions .msg-action:active { opacity: .4; transition: opacity 0s; }
+  html.glass[data-lumen-canvas] .app .msg-actions .msg-action { transition: opacity .25s; }
   html.glass[data-lumen-canvas] .app .msg-actions .model-tag { color: var(--text-3); font-size: 13px; }
   /* Drawer: one weight for every row, secondary-coloured icons, a capsule New chat. */
   html.glass[data-lumen-canvas] .app .cv-nav .cv-dest button { font-weight: 400; gap: 14px; }
   html.glass[data-lumen-canvas] .app .cv-nav .cv-dest button > svg:first-child { color: var(--text-2); width: 21px; height: 21px; stroke-width: 1.7; }
   html.glass[data-lumen-canvas] .app .cv-nav .cv-new-pill { border-radius: 999px; font-weight: 500; font-size: 16px; }
-  html.glass[data-lumen-canvas] .app .cv-nav .cv-search { border-radius: 12px; }
+  html.glass[data-lumen-canvas] .app .cv-nav .cv-search { border-radius: var(--canvas-radius-control); }
 }
 /* ================= iPhone glass, round 3 (owner, 2026-10-30), measured against owner-supplied iOS 26 captures.
  * On black a native glass control is #1c1c1c with a bright 1 px top rim and a short sheen fading into it; nothing
@@ -479,10 +484,11 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(44 44 46 / .62
     background: linear-gradient(180deg, var(--lg-sheen, rgb(255 255 255 / .45)), transparent 45%), linear-gradient(var(--lg-tint), var(--lg-tint));
     -webkit-backdrop-filter: blur(10px) saturate(1.6); backdrop-filter: blur(10px) saturate(1.6);
   }
-  /* No dark band: the scroll edge is a plain fade into the page, without a blur layer behind the controls. */
+  /* No band: the scroll edge is a short, soft fade behind the bar's buttons (owner, 2026-10-31: the deep solid fade
+     read as a black band whenever a chat scrolled under it). */
   html.glass[data-lumen-canvas] .app .main > .topbar::before {
-    inset: 0 0 -30px; -webkit-backdrop-filter: none; backdrop-filter: none; -webkit-mask-image: none; mask-image: none;
-    background: linear-gradient(to bottom, var(--bg) 0%, var(--bg) 52%, color-mix(in srgb, var(--bg) 70%, transparent) 78%, transparent);
+    inset: 0 0 -10px; -webkit-backdrop-filter: none; backdrop-filter: none; -webkit-mask-image: none; mask-image: none;
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 82%, transparent), color-mix(in srgb, var(--bg) 45%, transparent) 55%, transparent);
   }
   /* No chat name in the bar (incognito keeps its label). */
   html.glass[data-lumen-canvas] .app .main > .topbar .topbar-center > :not(.welcome-route) { display: none; }
@@ -505,7 +511,7 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(44 44 46 / .62
   html.glass[data-lumen-canvas] .app .thinking-toggle { padding: 0; height: 32px; width: auto; gap: 6px; font-size: 15px; color: var(--text-3); }
   html.glass[data-lumen-canvas] .app .thinking .chev { margin-inline-start: 2px; }
   html.glass[data-lumen-canvas] .app .thinking-body { border-top: 0; padding: 4px 0 10px 14px; border-inline-start: 2px solid var(--native-fill-2, var(--surface-2)); font-size: 15px; }
-  html.glass[data-lumen-canvas] .app .file-card { border-color: transparent; background: var(--native-fill, var(--surface-2)); border-radius: 18px; }
+  html.glass[data-lumen-canvas] .app .file-card { border-color: transparent; background: var(--native-fill, var(--surface-2)); border-radius: var(--canvas-radius-card); }
 }
 /* ================= iPhone glass, round 4 (owner, 2026-10-31): Library, Tools, Router and Settings follow the chat.
  * Settings-like pages sit on the iOS grouped background (#f2f2f7 in Light, black in Dark) so their white/#1c1c1e groups

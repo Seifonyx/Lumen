@@ -112,12 +112,27 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
 
   // A press holds the state until it ends. Inside the composer that keeps its controls in place; elsewhere (a message's
   // controls, while the box has focus) the composer would otherwise shrink mid-press, move the target and lose the click.
-  const press = useCallback(() => {
+  // iPhone Safari delivers a tap's mouse events, click and the box's blur after pointerup, in a later task: a press
+  // inside the composer holds until its click arrives (or briefly, if none does), and a control pressed while the box
+  // was engaged keeps it engaged when nothing else took focus, so the model or Expand is still there to receive it.
+  const press = useCallback((inside = false) => {
     pressing.current = true;
+    const engaged = focusedRef.current;
+    let timer = 0, done = false;
+    const finish = () => {
+      if (done) return;
+      done = true; clearTimeout(timer); window.removeEventListener('click', clicked, true);
+      pressing.current = false;
+      // After the click has been delivered: engaged while the message box (or a control after it) has focus.
+      const f = form.current, a = document.activeElement, idle = !a || a === document.body;
+      setFocused(Boolean(f && a && f.contains(a) && (a === input.current || focusedRef.current)) || (inside && engaged && idle));
+    };
+    const clicked = () => setTimeout(finish, 0);
     const settle = () => {
       window.removeEventListener('pointerup', settle, true); window.removeEventListener('pointercancel', settle, true);
-      // After the click has been delivered: engaged while the message box (or a control after it) has focus.
-      setTimeout(() => { pressing.current = false; const f = form.current, a = document.activeElement; setFocused(Boolean(f && a && f.contains(a) && (a === input.current || focusedRef.current))); }, 0);
+      if (!inside) { setTimeout(finish, 0); return; }
+      window.addEventListener('click', clicked, true);
+      timer = window.setTimeout(finish, 450);
     };
     window.addEventListener('pointerup', settle, true); window.addEventListener('pointercancel', settle, true);
   }, [input]);
@@ -194,7 +209,7 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
       // keeps it engaged, so the control it returns to stays on screen.
       onFocus: (e: FocusEvent<HTMLFormElement>) => { if ((e.target as Element) === input.current || (e.relatedTarget as Element | null)?.closest('[role="dialog"]')) setFocused(true); },
       onBlur: (e: FocusEvent<HTMLFormElement>) => { if (!pressing.current && !e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false); },
-      onPointerDown: press,
+      onPointerDown: () => press(true),
     },
     // Escape in the message box is handled here (not by the focus scope) so an IME composition can cancel first.
     textarea: { 'data-local-escape': '' },

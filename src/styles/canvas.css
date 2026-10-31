@@ -1,6 +1,5 @@
-/* CP01 foundation only. Explicitly loaded by isolated tests; never imported by production.
- * Palette/material owners stay in app.css/glass.css; only --canvas-* aliases live here.
- * Approved source: Blackout Canvas at bb29ffe. No component styles or new font requests.
+/* Canvas tokens (loaded by the Canvas presentation module). Palette/material owners stay in app.css/glass.css;
+ * only --canvas-* aliases live here. No component styles or new font requests.
  */
 [data-lumen-canvas-foundation] {
   --canvas-paper: var(--bg);
@@ -39,12 +38,11 @@
   --canvas-type-title: 620 19px/1.2 var(--canvas-display-font);     /* section headings inside a page */
   --canvas-tracking-display: -.03em;
   --canvas-tracking-title: -.015em;
-  --canvas-type-label: 500 10.5px/1.3 var(--canvas-data-font);      /* mono section labels, uppercase, .12em */
-  /* Radii: controls, rows, cards and floating panels step up together; pills are for actions and chips. */
-  --canvas-radius-control: 10px;
-  --canvas-radius-row: 9px;
-  --canvas-radius-card: 16px;
-  --canvas-radius-panel: 20px;
+  /* One corner scale: rows and small buttons, controls and menus, cards, panels and sheets, pills. */
+  --canvas-radius-row: 10px;
+  --canvas-radius-control: 14px;
+  --canvas-radius-card: 18px;
+  --canvas-radius-panel: 24px;
   --canvas-radius-pill: 999px;
 }
 @media (prefers-reduced-motion: reduce) {

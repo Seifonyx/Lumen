@@ -263,7 +263,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
                       </button></li>
                       {/* Inside the folder, so it reads as part of this project; the label names it too. */}
                       {!q && <li><button type="button" className="cv-new-here" onClick={() => newProjectChat(p.id)}><span className="cv-new-here-icon" aria-hidden="true"><Plus size={13} /></span><span className="cv-new-here-label">New chat in {p.name}</span></button></li>}
-                      {shown.map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} detail={chatDetail(c)} />)}
+                      {shown.map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} detail={relTime(c.updatedAt)} />)}
                       {list.length > shown.length && <li><button type="button" className="cv-more" onClick={() => setMore({ ...more, [p.id]: true })}>Show {list.length - shown.length} more</button></li>}
                     </ul>
                   </Fold>

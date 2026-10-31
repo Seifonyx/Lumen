@@ -3341,7 +3341,9 @@ input, textarea { caret-color: var(--text); }
 .all-chats-head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
 .all-chats-check { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-2); cursor: pointer; }
 .all-chats input[type="checkbox"] { width: 16px; height: 16px; margin: 0; flex: none; accent-color: var(--signal-strong); }
-.all-chats-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: min(52vh, 460px); overflow-y: auto; overscroll-behavior: contain; }
+/* Rows keep their height: a row clips its swipe actions (overflow: hidden), which would otherwise let the capped grid
+   squeeze every row to a sliver. */
+.all-chats-list { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-rows: max-content; gap: 2px; max-height: min(52vh, 460px); overflow-y: auto; overscroll-behavior: contain; }
 .all-chats-list li { position: relative; border-radius: 10px; overflow: hidden; }
 .all-chats-list .swipe-face { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; padding: 0 4px; border-radius: 10px; background: var(--surface); }
 .all-chats-list li:hover .swipe-face { background: color-mix(in srgb, var(--text) 5%, var(--surface)); }

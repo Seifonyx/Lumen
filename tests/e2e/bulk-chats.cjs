@@ -35,6 +35,9 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
       await page.click('.view-all-chats, .cv-all');
       const dialog = page.getByRole('dialog', { name: 'All chats' });
       await dialog.waitFor();
+      // A long list scrolls; it never squeezes its rows (2026-10-31: rows collapsed to 21 px once the list filled up).
+      const rowH = await dialog.locator('.all-chats-list').evaluate((l) => { const h = () => l.firstElementChild.getBoundingClientRect().height, full = h(); l.style.maxHeight = '40px'; const squeezed = h(); l.style.maxHeight = ''; return { full, squeezed }; });
+      assert.ok(rowH.full >= 40 && Math.abs(rowH.squeezed - rowH.full) < 1, `All chats rows keep their height in a full list (${JSON.stringify(rowH)})`);
       // (Canvas, and the iPhone glass look: rows are plain until you tap Select.)
       if (await dialog.locator('.all-chats-select').count()) await dialog.locator('.all-chats-select').click();
       await dialog.getByLabel('Select all chats').check();

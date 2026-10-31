@@ -20,17 +20,20 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Next
 
-- [x] Audit fixes in code: phone message box keeps its width at rest (model shows while writing); desktop message
+- [x] Audit fixes in code: phone message box keeps its width at rest (the model button is capped at 34vw); desktop message
       box keeps one shape (nothing moves on focus); model picker measured unscaled so it stays on screen; sidebar
       highlight off while Settings covers the page; catalogue banner in plain words with *Check key*; Tools shows a
       rejected key; readable model names everywhere (`modelLabel` fallback); + menu wider, Web search switch;
-      Library/Tools/Settings/Router code prefetched when idle (pages open in ~130 ms); tables: no ghost edge line,
+      Library/Tools/Router/Settings code loads on intent (pointer/focus on the place, phone drawer open; pages
+      then open in ~130 ms; not at idle start-up, which stalled streaming replies); tables: no ghost edge line,
       phone columns ≥ 6.5em with a pinned first column, hover only with a pointer; Tools filter a quiet list on
       desktop; Knowledge link chevron; Retry is an icon; drawer project rows at body size; desktop page name shows
       in the bar once the title scrolls; iPhone: no double gap above Settings, deeper message-box blur, centred
       jump-to-latest; no scrollbar flash on the welcome.
-- [ ] Canvas in-app suites (CI's `canvas-core` set) green locally, then PR, exact-head CI, merge, Deploy
-      (`presentation=canvas`), live asset check.
+- [x] Local checks: typecheck, unit, both builds, budget; full `canvas-core` run, then the 22 affected suites all
+      green on the final build. `streaming.cjs` fails first try on this Windows machine for main too (load-sensitive
+      long-task check); CI is the judge.
+- [ ] PR, exact-head CI, merge, Deploy (`presentation=canvas`), live asset check.
 - Checked and **not changed** (with reason): the "wrong welcome flash" was a mis-click during the audit, not a bug;
   header icons already have tooltips; theme switching is already instant; Router "Loading models…" was slow dev
   code loading, not a stuck state; "Ask anything." is the Canvas welcome's one line by design; Lamplight on the

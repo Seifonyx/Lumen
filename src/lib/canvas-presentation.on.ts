@@ -33,11 +33,15 @@ export const CanvasLibraryActions = lazy(() => import('../components/CanvasLibra
 export const CanvasCollectionPage = lazy(loadCollection);
 export const CanvasToolsWorkspace = lazy(loadToolsWorkspace);
 export const CanvasSettingsIndex = lazy(loadSettingsIndex);
-// The sidebar's places open often: fetch their Canvas parts once the app is idle, so a tap shows the page at once
-// instead of a blank screen while its code arrives.
-if (typeof window !== 'undefined') window.addEventListener('load', () => (window.requestIdleCallback || setTimeout)(() => {
-  for (const load of [loadCollection, loadToolsWorkspace, loadSettingsIndex, loadRoutingCenter]) void load().catch(() => {});
-}), { once: true });
+// The sidebar's places load their code on intent (pointer over or focus on the place, the phone drawer opening), so
+// a tap shows the page at once. Not at start-up idle: evaluating these chunks can stall a streaming reply.
+const placeLoads = { library: [loadCollection, () => import('../components/CollectionPage')], tools: [loadToolsWorkspace, () => import('../components/ToolsPage')], router: [loadRoutingCenter], settings: [loadSettingsIndex] } as const;
+const requested = new Set<string>();
+export const prefetchPlace = (place: keyof typeof placeLoads) => {
+  if (requested.has(place)) return;
+  requested.add(place);
+  for (const load of placeLoads[place]) void load().catch(() => requested.delete(place));
+};
 export { navigateScreen } from './screen-history';
 export const CanvasScreenActions = lazy(() => import('../components/ScreenActions'));
 

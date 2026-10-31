@@ -102,7 +102,7 @@ test('CP03 shell seams fold to the ordinary code and its styles stay scoped', ()
 test('CP04 Routing Center loads only through the "on" module, lazily, and its styles stay scoped', () => {
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const RoutingCenter: ComponentType \| null = null;$/m);
   const on = readFileSync('src/lib/canvas-presentation.on.ts', 'utf8');
-  // Lazy: a dynamic import (also prefetched once the app is idle), never a static import of the component.
+  // Lazy: a dynamic import (also loaded on intent from the sidebar), never a static import of the component.
   assert.match(on, /^const loadRoutingCenter = \(\) => import\('\.\.\/components\/RoutingCenter'\);$/m);
   assert.match(on, /^export const RoutingCenter = lazy\(loadRoutingCenter\);$/m);
   assert.doesNotMatch(on, /^import .*components\/RoutingCenter/m);

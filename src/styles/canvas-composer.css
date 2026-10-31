@@ -212,13 +212,11 @@ html .composer-wrap[data-lumen-canvas-composer] .composer .send-btn.voice-start 
   .composer-wrap[data-composer-state='engaged'][data-lumen-canvas-composer] .composer > textarea { flex: 1 1 100%; }
   .composer-wrap[data-lumen-canvas-composer] .composer .composer-bar > .tool-btn:not(.shield-on) { width: 36px; height: 36px; }
 }
-/* At rest the empty box keeps "Message Lumen" on one line. Phones show + · message · dictate · talk at rest and the
-   model once writing starts (as iPhone glass does), so the message box keeps its width instead of the model's name
-   squeezing it to "Message Lum". An open picker keeps its button. */
+/* At rest the empty box keeps "Message Lumen" on one line, and the model's name gives it room (a long name shortens
+   with an ellipsis rather than squeezing the box to "Message Lum"). */
 @media (max-width: 899px) {
   .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer > textarea:placeholder-shown { white-space: nowrap; overflow: hidden; }
-  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .model-picker:not(:has([aria-expanded='true'])) { display: none; }
-  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .dictation-btn { display: inline-flex; }
+  .composer-wrap[data-composer-state='resting'][data-lumen-canvas-composer] .composer .model-button { max-width: min(34vw, 140px); }
 }
 /* Phones narrower than 380px (SE, mini): the model keeps its name, at rest and while writing, in a compact button (no
    status dot, tighter padding), and the empty box says "Message" (Composer gets it from useCanvasComposer). */

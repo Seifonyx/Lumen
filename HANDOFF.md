@@ -19,8 +19,13 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - [ ] Owner to confirm on the iPhone (PR #77, live): tapping the model and Expand while writing keeps the chat and
       opens them; the top fade is no longer a band. Neither reproduced in Chromium or WebKit emulation; the fix targets
       Safari's late blur/click order and `composer.cjs` replays it. If it still happens, get a screen recording.
-- Polish candidates proposed 2026-10-31 (owner to pick): usage ring as spinner; light-mode glass against a real
-  capture; first-run key path; plus the long list in that chat (search, empty states, motion, reading, Router, iPad).
+- Polish backlog from the screen-by-screen audit of 2026-10-31 (each checked in the code and the production build;
+  owner to pick): usage ring reads as a spinner; text boxes show a resize grip on phones (`resize: vertical` in
+  app.css field-block, edit-box, memory-row); Tools "Set up" uses an external ↗ for an in-app page; the writing sheet
+  counts "tokens"; Library file lines are wordy ("Preview only · original unavailable here", library-items.ts);
+  inline code breaks mid-formula; All chats search and Chats/Archived share one cramped row on phones; no home-screen
+  shortcuts in either manifest; long code lines scroll with no wrap option; Router with one model is mostly empty
+  space; the incognito button is an unexplained crossed eye on phones (no hover).
 - Swipe actions stay on the All chats page only: in the drawer they would fight the swipe that closes it.
 
 ## Open (known, not scheduled)
@@ -52,6 +57,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-10-31 Audit fixes (PR #79, merged `1eb3dc3`, deployed Canvas): All chats rows no longer squeezed to 21 px (all
+  devices), project rows drop the repeated name, Settings account row says it holds Appearance.
 - 2026-10-31 Phone polish (PR #77, merged `88a4594`, deployed Canvas): composer holds through Safari's late tap, soft
   top fade, sentence-case labels, one corner scale, haptics on copy and model choice.
 - 2026-10-31 Cleanup and UX audit (PR #75, merged `f42155c`, deployed Canvas): three living docs and live

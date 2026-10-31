@@ -44,7 +44,10 @@ async function record(page, cdp, act) {
 
 async function check(page, cdp, name, act, results) {
   const { before, after, frames } = await record(page, cdp, act);
-  assert.ok(frames.length >= 3, `${name}: recorded frames (${frames.length})`);
+  // Back from a Settings section shows the list at once (round 4: no entrance replay), so the recorder may see a
+  // single changed frame; every other transition animates over several.
+  const instant = name.endsWith('settings section pop');
+  assert.ok(frames.length >= (instant ? 1 : 3), `${name}: recorded frames (${frames.length})`);
   const first = await compare(page, frames[0].src, before);
   const last = await compare(page, frames.at(-1).src, after);
   // A flash: a frame far from both neighbours while the neighbours are close to each other.

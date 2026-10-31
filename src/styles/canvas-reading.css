@@ -68,9 +68,13 @@
 .app[data-lumen-canvas-shell] .markdown th,
 :root[data-theme] .app[data-lumen-canvas-shell] .markdown th { background: none; color: var(--text-2); font-size: .92em; font-weight: 600; letter-spacing: 0; border-bottom-color: color-mix(in srgb, var(--text) 14%, transparent); }
 .app[data-lumen-canvas-shell] .markdown tr:last-child td { border-bottom: 0; }
-/* Phones: headers may wrap and cells keep a readable minimum, so most tables fit the screen; wider ones still scroll
- * with the edge shadow above. */
-@media (max-width: 899px) { .app[data-lumen-canvas-shell] .markdown th { white-space: normal; } .app[data-lumen-canvas-shell] .markdown :is(th, td) { min-width: 5.5em; padding: .55em .7em; } }
+/* Phones: a table fits the screen and its text wraps (long words hyphenate) instead of running off the edge; only a
+ * table too wide even then scrolls, with the edge shadow above. */
+@media (max-width: 899px) {
+  .app[data-lumen-canvas-shell] .markdown table { width: 100%; table-layout: auto; }
+  .app[data-lumen-canvas-shell] .markdown th { white-space: normal; }
+  .app[data-lumen-canvas-shell] .markdown :is(th, td) { min-width: 0; padding: .5em .55em; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
+}
 
 /* ---------- Sources: quiet numbered chips; on phones one swipeable line instead of a wrapped stack. */
 .app[data-lumen-canvas-shell] .msg.assistant .sources { gap: 6px; margin-top: 4px; }
@@ -121,7 +125,7 @@ html[data-lumen-canvas] .app[data-lumen-canvas-shell] .msg.assistant .error-box 
   /* Code and tables may run to the screen's edges, so more of them fits. */
   .app[data-lumen-canvas-shell] .markdown :is(.code-block, .table-wrap) { margin-inline: -6px; }
   .app[data-lumen-canvas-shell] .markdown .code-block pre { font-size: .8em; }
-  .app[data-lumen-canvas-shell] .markdown :is(th, td) { min-width: 5.5em; padding: .55em .8em; }
+  .app[data-lumen-canvas-shell] .markdown :is(th, td) { padding: .5em .55em; }
   /* Sources: one line you can swipe. */
   .app[data-lumen-canvas-shell] .msg.assistant .sources { flex-wrap: nowrap; overflow-x: auto; margin-inline-end: -18px; padding-inline-end: 18px; scrollbar-width: none; overscroll-behavior-x: contain; }
   .app[data-lumen-canvas-shell] .msg.assistant .sources::-webkit-scrollbar { display: none; }

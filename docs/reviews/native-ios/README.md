@@ -38,3 +38,17 @@ buttons; remove the chat name; at rest the message box should hold +, the mic an
 - Message box: 20 pt from the edges (10 pt under 380 pt), 52 pt tall at rest: + · message · dictate · talk; the model
   appears while writing.
 - Thinking row and file cards without outlines; the model name under replies in the system font, not monospace.
+
+## Round 4: the other pages, tables, Settings Back (2026-10-31)
+
+Owner follow-up to round 3 ("do all but the first one"; the three-button bar capsule stays). `round4/` shows the result.
+
+- Library, Tools, Router and Settings: Settings-like pages (Settings, Tools, Router) sit on the iOS grouped background
+  (#f2f2f7 in Light, black in Dark), so their white / #1c1c1e groups read as groups (they were white on white in Light).
+  Page bars have no hairline or blur band; Back, + and other bar buttons, and the Library search, use the chat's glass.
+  Section tabs fade over 40 pt where more wait off-screen. Empty states are a large grey symbol, title and one line;
+  an empty Library shows no count or sort.
+- Tables on phones fit the screen: text wraps and long words hyphenate; only a table too wide even then scrolls.
+- Back from a Settings section: the list was re-running its entrance stagger from blank (about 150 ms of black); after
+  a section has been visited it now shows at once.
+- Light glass: unchanged tokens; on the grouped pages it now has a grey page to sit on. Still no light native capture.

@@ -1,6 +1,14 @@
 # Lumen operational handoff
 
-## Active — iPhone glass round 3, released (2026-10-31)
+## Active — iPhone glass round 4, released (2026-10-31)
+
+- Owner: "do all but the first one" of the round 3 follow-ups (the three-control bar capsule stays, as native AI apps do). [PR #73](https://github.com/Seifonyx/Lumen/pull/73) merged `8aa07a1`, Deploy 41179118094 succeeded; live `index-MyLSz7kX.js` matches a local Canvas build of `8aa07a1`.
+- Changed: phone tables fit the screen (wrap, hyphenate; scroll only if still too wide); Back from a Settings section shows the list at once (it replayed its entrance stagger from black); Settings, Tools and Router on the iOS grouped background (#f2f2f7 Light / black Dark) so groups read in Light; page bars without hairline or blur band; bar buttons and the Library search use the chat's glass; longer section-tab fade; iOS-style empty state; empty Library hides count and sort; Reduce Transparency makes glass controls solid. Notes and captures: [docs/reviews/native-ios/README.md](docs/reviews/native-ios/README.md) (`round4/`).
+- Verified: exact-head CI 23/23; tsc, unit, budget (canvasCss 28, startupCss 19.5, documented); in-app e2e incl. glass, composer, transitions; 16 page suites in Chromium and WebKit; QA contracts canvas-screens, canvas-shell, canvas-composer, routing-center.
+- Test change: `transitions` accepts a single instant frame for the Settings section pop.
+- Still open: light glass tokens unchanged and unverified against a native light capture; physical iPhone/VoiceOver unverified; `canvas-integration.cjs` (not in CI) times out identically on main.
+
+## Historical — iPhone glass round 3, released (2026-10-31)
 
 - Owner feedback with two iPhone captures: dark shadow at the top blurring the buttons; remove the chat name; resting message box with +, mic and talk, model once it opens. [PR #71](https://github.com/Seifonyx/Lumen/pull/71) merged `fae722f`, Deploy 41136803856 succeeded; live `index-htv-RfvI.js` matches a local Canvas build of `fae722f`. Notes: docs/reviews/native-ios/README.md (round 3).
 - Changed (iPhone glass only): plain scroll-edge fade (no blur layer behind the bar), glass matched to native on black, no chat title, 52 pt message box 20 pt from the edges (10 pt under 380 pt) with + · message · dictate · talk at rest, model while writing; thinking row and file cards without outlines; reply model name in the system font. composer.cjs follows the new resting layout; startupCss budget 18.5 → 19.

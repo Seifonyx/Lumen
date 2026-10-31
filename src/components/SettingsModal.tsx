@@ -382,6 +382,7 @@ export default function SettingsModal() {
   const panel = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
   const dialog = useRef<HTMLElement>(null);
+  const returned = useRef(false);
 
   const close = () => {
     if (CANVAS_SHELL && window.matchMedia('(max-width:899px)').matches) navigateBack!(() => setUi({ settingsOpen: false }));
@@ -433,6 +434,9 @@ export default function SettingsModal() {
   }, [open, setUi]);
 
 
+  // Once a section has been visited, returning to the list shows it at once (it was underneath), without the rows'
+  // entrance stagger replaying from blank.
+  if (!open) returned.current = false; else if (tab) returned.current = true;
   if (!open) return null;
 
   // Phones: a section slides in from the right over the list (push); back slides it away (pop).
@@ -448,7 +452,7 @@ export default function SettingsModal() {
 
   return (
     // On computers the sidebar stays usable next to Settings; on phones Settings covers the screen.
-    <section className={`settings-page${tab ? ' has-section' : ''}${scrolled ? ' scrolled' : ''}`} aria-label="Settings" role="dialog" aria-modal={window.matchMedia('(max-width: 899px)').matches || undefined} data-keep-sidebar="true" tabIndex={-1} ref={dialog}>
+    <section className={`settings-page${tab ? ' has-section' : ''}${scrolled ? ' scrolled' : ''}${returned.current && !tab ? ' returned' : ''}`} aria-label="Settings" role="dialog" aria-modal={window.matchMedia('(max-width: 899px)').matches || undefined} data-keep-sidebar="true" tabIndex={-1} ref={dialog}>
       {CANVAS_SHELL && window.matchMedia('(max-width:899px)').matches && PhoneNavigation ? <PhoneNavigation title={tab ? label : 'Settings'} backTarget={tab ? 'settings-index' : 'settings-exit'} onBack={tab ? () => setUi({ settingsTab: '' }) : () => setUi({ settingsOpen: false })} /> : <header className="settings-top">
         {tab ? (
           <button className="icon-btn settings-back" onClick={() => go('')} aria-label={CANVAS_SHELL ? "Back" : "All settings"}>

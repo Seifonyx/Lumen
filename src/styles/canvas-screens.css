@@ -516,6 +516,32 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(44 44 46 / .62
   html.glass[data-lumen-canvas] .app .thinking-body { border-top: 0; padding: 4px 0 10px 14px; border-inline-start: 2px solid var(--native-fill-2, var(--surface-2)); font-size: 15px; }
   html.glass[data-lumen-canvas] .app .file-card { border-color: transparent; background: var(--native-fill, var(--surface-2)); border-radius: 18px; }
 }
+/* ================= iPhone glass, round 4 (owner, 2026-10-31): Library, Tools, Router and Settings follow the chat.
+ * Settings-like pages sit on the iOS grouped background (#f2f2f7 in Light, black in Dark) so their white/#1c1c1e groups
+ * read as groups; page bars carry no hairline or blur band; their buttons and the page search are the chat's glass. */
+@media (max-width: 899px) {
+  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] :is(.settings-page, .rc-page, .hub-page:has(.tx)) { --lg-page: var(--native-grouped, var(--bg)); background: var(--lg-page); }
+  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-navigation::before { box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--lg-page, var(--bg)); }
+  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] :is(.phone-navigation > button, .phone-navigation-actions > button, .phone-navigation-actions > .screen-actions > button),
+  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-page-search :is(.hub-search, .rc-search) {
+    border: 0; color: var(--text);
+    background: linear-gradient(180deg, var(--lg-sheen, rgb(255 255 255 / .45)), transparent 45%), linear-gradient(var(--lg-tint), var(--lg-tint));
+    box-shadow: var(--lg-edge), var(--lg-lift);
+    -webkit-backdrop-filter: blur(10px) saturate(1.6); backdrop-filter: blur(10px) saturate(1.6);
+  }
+  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-page-search { border-top: 0; background: var(--lg-page, var(--bg)); padding-inline: 20px; }
+  /* Section tabs: a longer fade where more tabs wait off-screen, instead of a word cut at the edge. */
+  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-sections { -webkit-mask-image: linear-gradient(90deg, transparent, #000 8px, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(90deg, transparent, #000 8px, #000 calc(100% - 40px), transparent); }
+  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-sections:dir(rtl) { -webkit-mask-image: linear-gradient(270deg, transparent, #000 8px, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(270deg, transparent, #000 8px, #000 calc(100% - 40px), transparent); }
+  /* Empty states as iOS draws them: a large grey symbol, the title and one line; no tile stack. An empty library shows
+   * no count or sort. */
+  html.glass[data-lumen-canvas] .app .hub-empty { padding-top: 28px; }
+  html.glass[data-lumen-canvas] .app .hub-empty::before { display: none; }
+  html.glass[data-lumen-canvas] .app .hub-empty .hub-empty-icon { margin-top: 0; box-shadow: none; background: none; color: var(--text-3); }
+  html.glass[data-lumen-canvas] .app .hub-empty .hub-empty-icon svg { width: 44px; height: 44px; stroke-width: 1.4; }
+  html.glass[data-lumen-canvas] .app .library-panel:has(> .hub-empty) :is(.library-total, .library-controls) { display: none; }
+  html.glass[data-lumen-canvas] .app .library-knowledge-link { border-color: transparent; background: var(--native-fill, var(--surface-2)); }
+}
 @media (prefers-reduced-transparency: reduce) {
   html.glass[data-lumen-canvas] { --lg-tint: var(--surface-2); --lg-filter: none; }
 }

@@ -32,3 +32,5 @@
 .app[data-lumen-canvas-shell] .si > :nth-child(3) { animation-delay: .044s; }
 .app[data-lumen-canvas-shell] .si > :nth-child(4) { animation-delay: .066s; }
 .app[data-lumen-canvas-shell] .si > :nth-child(n+5) { animation-delay: .088s; }
+/* Back from a section: the list is already there, so it does not fade in again. */
+.app[data-lumen-canvas-shell] .settings-page.returned .si > * { animation: none; }

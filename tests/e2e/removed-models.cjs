@@ -26,7 +26,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
     await page.getByRole('button', { name: 'Review', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Removed models' });
     await dialog.waitFor();
-    assert.match(await dialog.textContent(), /gemini-old-fixture[\s\S]*Removed before reasons were recorded/);
+    assert.match(await dialog.textContent(), /Gemini Old Fixture[\s\S]*Removed before reasons were recorded/);
     await dialog.getByRole('button', { name: 'Done' }).click();
     await dialog.waitFor({ state: 'detached' });
     assert.deepEqual(errors, []);

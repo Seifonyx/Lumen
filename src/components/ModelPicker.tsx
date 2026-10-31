@@ -14,6 +14,7 @@ import type { ModelInfo } from '../types';
 import { layoutModelProblem } from '../lib/layout-policy';
 import { matchesModel, modelProviderLabel } from '../lib/model-search';
 import { CANVAS_COMPOSER } from '../lib/canvas-presentation';
+import { EXTRA_PROVIDERS } from '../lib/ai/provider-config.js';
 
 export function Badges({ m }: { m?: ModelInfo }) {
   if (!m) return null;
@@ -64,6 +65,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
   const hiddenLayouts = useStore((s) => s.settings.hiddenLayouts);
   const setUi = useStore((s) => s.setUi);
   const usage = useStore((s) => s.usage);
+  const access = useStore((s) => s.keys.providerAccess);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   // Phones get a sheet from the bottom of the screen instead of a dropdown.
@@ -136,7 +138,9 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
   }, [open]);
 
   const q = query.trim().toLowerCase();
-  const savedIds=value && value!==AUTO && !isLayoutId(value) && !enabled.includes(value)?[value,...enabled]:enabled;
+  // A provider switched off in Settings takes its saved models out of the list until it is switched back on.
+  const savedIds=(value && value!==AUTO && !isLayoutId(value) && !enabled.includes(value)?[value,...enabled]:enabled)
+    .filter((id) => { const p = providerOfId(id); return !(p in EXTRA_PROVIDERS) || access?.[p as keyof typeof EXTRA_PROVIDERS] === true; });
   const catalogById = useMemo(() => new Map(catalog?.models.map(m => [m.id, m])), [catalog]);
   const models = savedIds.map((id) => catalogById.get(id) || ({ id, label: modelLabel(catalog, id), name: id.split(':').slice(1).join(':'), provider: providerOfId(id) } as ModelInfo));
   const layouts = useMemo(

@@ -484,6 +484,7 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(44 44 46 / .62
 }
 @media (max-width: 899px) {
   html.glass[data-lumen-canvas] .app .main > .topbar :is(.menu-btn, .topbar-trailing),
+  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] :is(.phone-navigation > button, .phone-navigation-actions > button, .phone-navigation-actions > .screen-actions > button, .phone-page-search :is(.hub-search, .rc-search)),
   html.glass[data-lumen-canvas] .app .composer-wrap:not([data-composer-state='expanded'])[data-lumen-canvas-composer] .composer {
     background: linear-gradient(180deg, var(--lg-sheen, rgb(255 255 255 / .45)), transparent 45%), linear-gradient(var(--lg-tint), var(--lg-tint));
     -webkit-backdrop-filter: blur(10px) saturate(1.6); backdrop-filter: blur(10px) saturate(1.6);
@@ -522,17 +523,11 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(44 44 46 / .62
 @media (max-width: 899px) {
   html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] :is(.settings-page, .rc-page, .hub-page:has(.tx)) { --lg-page: var(--native-grouped, var(--bg)); background: var(--lg-page); }
   html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-navigation::before { box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--lg-page, var(--bg)); }
-  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] :is(.phone-navigation > button, .phone-navigation-actions > button, .phone-navigation-actions > .screen-actions > button),
-  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-page-search :is(.hub-search, .rc-search) {
-    border: 0; color: var(--text);
-    background: linear-gradient(180deg, var(--lg-sheen, rgb(255 255 255 / .45)), transparent 45%), linear-gradient(var(--lg-tint), var(--lg-tint));
-    box-shadow: var(--lg-edge), var(--lg-lift);
-    -webkit-backdrop-filter: blur(10px) saturate(1.6); backdrop-filter: blur(10px) saturate(1.6);
-  }
+  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] :is(.phone-navigation > button, .phone-navigation-actions > button, .phone-navigation-actions > .screen-actions > button, .phone-page-search :is(.hub-search, .rc-search)) { border: 0; color: var(--text); box-shadow: var(--lg-edge), var(--lg-lift); }
   html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-page-search { border-top: 0; background: var(--lg-page, var(--bg)); padding-inline: 20px; }
   /* Section tabs: a longer fade where more tabs wait off-screen, instead of a word cut at the edge. */
-  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-sections { -webkit-mask-image: linear-gradient(90deg, transparent, #000 8px, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(90deg, transparent, #000 8px, #000 calc(100% - 40px), transparent); }
-  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-sections:dir(rtl) { -webkit-mask-image: linear-gradient(270deg, transparent, #000 8px, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(270deg, transparent, #000 8px, #000 calc(100% - 40px), transparent); }
+  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-sections { --fade: linear-gradient(var(--fade-to, 90deg), transparent, #000 8px, #000 calc(100% - 40px), transparent); -webkit-mask-image: var(--fade); mask-image: var(--fade); }
+  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-sections:dir(rtl) { --fade-to: 270deg; }
   /* Empty states as iOS draws them: a large grey symbol, the title and one line; no tile stack. An empty library shows
    * no count or sort. */
   html.glass[data-lumen-canvas] .app .hub-empty { padding-top: 28px; }

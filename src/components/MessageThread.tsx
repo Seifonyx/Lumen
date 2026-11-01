@@ -9,12 +9,34 @@ import MessageNavigation from './MessageNavigation';
 import { messageStops, stopAtIndex } from '../lib/message-navigation';
 import { useReplyEntrance } from '../lib/motion';
 import { CANVAS_SHELL } from '../lib/canvas-presentation';
+import { findIn } from '../lib/chat-search';
+import type { JumpRequest } from '../lib/message-jump';
 
 const FIRST_PAINT = 6;
 export const navigatorDefault = () => !(window.matchMedia('(pointer: coarse)').matches && window.matchMedia('(max-width: 899px)').matches);
 const BATCH = 12;
 
-export default function MessageThread({chat,summary,busy,compacting,scroller,stick,navigationHost}: {chat:Chat;summary:ChatSummary|null;busy:boolean;compacting:boolean;scroller:RefObject<HTMLDivElement|null>;stick:RefObject<boolean>;navigationHost:RefObject<HTMLDivElement|null>}) {
+/** The first place `key` appears in the readable text of a message row (its actions excluded). */
+function matchRange(row: HTMLElement, key: string): Range | null {
+  const walk = document.createTreeWalker(row, NodeFilter.SHOW_TEXT, { acceptNode: (n) => n.parentElement?.closest('.msg-actions, button, .sr-only, .thinking') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+    const at = findIn(n.nodeValue || '', key);
+    if (at) { const range = document.createRange(); range.setStart(n, at.index); range.setEnd(n, at.index + at.length); return range; }
+  }
+  return null;
+}
+let clearMark = 0;
+/** Marks the searched words for a moment, where the browser can (CSS Custom Highlight API). */
+function markMatch(range: Range | null) {
+  const registry = (CSS as unknown as { highlights?: Map<string, unknown> }).highlights;
+  clearTimeout(clearMark);
+  registry?.delete('lumen-search');
+  if (!range || !registry || typeof Highlight === 'undefined') return;
+  registry.set('lumen-search', new Highlight(range));
+  clearMark = window.setTimeout(() => registry.delete('lumen-search'), 2600);
+}
+
+export default function MessageThread({chat,summary,busy,compacting,scroller,stick,navigationHost,jump,onJumpTaken}: {chat:Chat;summary:ChatSummary|null;busy:boolean;compacting:boolean;scroller:RefObject<HTMLDivElement|null>;stick:RefObject<boolean>;navigationHost:RefObject<HTMLDivElement|null>;jump?:JumpRequest|null;onJumpTaken?:()=>void}) {
   const [full,setFull] = useState(false);
   const [pinned,setPinned] = useState<string[]>([]);
   const [focus,setFocus] = useState<string|null>(null);
@@ -34,6 +56,15 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
     const jump=(e:Event)=>{const id=(e as CustomEvent<string>).detail;if(messageData.current.some(m=>m.id===id)){stick.current=false;setJumpKeyboard(false);setJumpTarget(id)}};
     window.addEventListener('lumen:jump',jump);return()=>window.removeEventListener('lumen:jump',jump);
   },[stick]);
+  // A search result (ChatView passes it on once this chat is on screen): the same landing as the navigator's jumps.
+  const searchJump=useRef<JumpRequest|null>(null);
+  useLayoutEffect(()=>{
+    if(!jump)return;
+    onJumpTaken?.();
+    if(!messageData.current.some(m=>m.id===jump.messageId))return;
+    searchJump.current=jump;stick.current=false;setJumpKeyboard(jump.keyboard);setJumpTarget(jump.messageId);
+  },[jump]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(()=>()=>markMatch(null),[]);
   const stops=useMemo(()=>messageStops(messages),[messages]);
   const pinnedKeys=useMemo(()=>new Set([...pinned,...(focus?[focus]:[]),...(jumpTarget?[jumpTarget]:[])]),[pinned,focus,jumpTarget]);
   const enabled = messages.length > 120 && !full;
@@ -93,14 +124,16 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
     if(start>0){setFrom(0);return}
     const index=messages.findIndex(message=>message.id===jumpTarget);
     const parent=scroller.current;
-    if(index<0||!parent){setJumpTarget(null);return}
+    if(index<0||!parent){searchJump.current=null;setJumpTarget(null);return}
     stick.current=false;
+    // The iPhone glass bars float over the conversation: land below the top one (its scroll padding).
+    const inset=parseFloat(getComputedStyle(parent).scrollPaddingTop)||0;
     if(enabled)virtual.scrollToIndex(index,{align:'start',behavior:'auto'});
     let frame=0,attempt=0,stable=0;
     const settle=()=>{
       const row=[...(host.current?.querySelectorAll<HTMLElement>('[data-message-id]')||[])].find(el=>el.dataset.messageId===jumpTarget);
       if(row){
-        const target=Math.max(0,Math.min(parent.scrollHeight-parent.clientHeight,parent.scrollTop+row.getBoundingClientRect().top-parent.getBoundingClientRect().top-12));
+        const target=Math.max(0,Math.min(parent.scrollHeight-parent.clientHeight,parent.scrollTop+row.getBoundingClientRect().top-parent.getBoundingClientRect().top-12-inset));
         const delta=Math.abs(parent.scrollTop-target);
         // The DOM target already includes measured height changes. An absolute
         // virtualizer command discards deferred iOS size compensation so it cannot
@@ -110,7 +143,15 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
         stable=delta<2?stable+1:0;
         if(stable>=2||attempt>=11){
           row.focus({preventScroll:true});setLastJump(jumpTarget);setActiveStop(jumpTarget);
-          setAnnouncement(`Jumped to sent message ${stops.find(stop=>stop.id===jumpTarget)?.ordinal || ''}.`);
+          const found=searchJump.current?.messageId===jumpTarget?searchJump.current:null;searchJump.current=null;
+          if(found){
+            // A long reply: bring the searched words into view too, a third of the way down.
+            const range=matchRange(row,found.key),box=range?.getBoundingClientRect(),view=parent.getBoundingClientRect();
+            const bottom=view.bottom-(parseFloat(getComputedStyle(parent).scrollPaddingBottom)||0);
+            if(box&&box.bottom>bottom-24)parent.scrollTop+=box.top-view.top-inset-(bottom-view.top-inset)/3;
+            markMatch(range);
+            setAnnouncement(`Showing the matching ${messages[index].role==='user'?'message you sent':'reply'}.`);
+          }else setAnnouncement(`Jumped to sent message ${stops.find(stop=>stop.id===jumpTarget)?.ordinal || ''}.`);
           setJumpTarget(null);return;
         }
       }

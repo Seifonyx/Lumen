@@ -4,6 +4,8 @@ import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState }
 import { dayGroup, modKey } from '../lib/util';
 import { useStore } from '../store';
 import type { Chat, Project } from '../types';
+import { chatMatches, searchKey, type ChatMatch } from '../lib/chat-search';
+import { MatchExcerpt, matchLabel, openMatch } from './SearchMatch';
 import ProjectManager from './ProjectManager';
 import AllChats from './AllChats';
 import Logo from './Logo';
@@ -18,7 +20,7 @@ export const AskChats = lazy(() => import('./AskChats'));
 
 const EMPTY_PROJECTS: Project[] = [];
 
-export function ChatRow({ chat, active, detail }: { chat: Chat; active: boolean; detail?: string }) {
+export function ChatRow({ chat, active, detail, match, matchKey, place }: { chat: Chat; active: boolean; detail?: string; match?: ChatMatch | null; matchKey?: string; place?: string }) {
   const projects = useStore((s) => s.settings.projects) || EMPTY_PROJECTS;
   const { selectChat, deleteChat, renameChat, togglePin, moveChatToProject } = useStore.getState();
   const streaming = useStore((s) => s.streamingChatId === chat.id);
@@ -100,10 +102,10 @@ export function ChatRow({ chat, active, detail }: { chat: Chat; active: boolean;
 
   return (
     <li className={`chat-row${active ? ' active' : ''}${menu ? ' menu-open' : ''}`} data-flip={chat.id} ref={rowRef}>
-      <button className="chat-open" onClick={() => selectChat(chat.id)} dir="auto" title={chat.title} aria-label={detail ? chat.title : undefined}>
+      <button className="chat-open" onClick={(e) => match && matchKey ? openMatch(chat.id, match, matchKey, e.detail === 0) : selectChat(chat.id)} dir="auto" title={chat.title} aria-label={match ? matchLabel(chat.title, match, place) : detail ? chat.title : undefined}>
         {detail && <MessageSquareText size={18} className="cv-chat-glyph" aria-hidden="true" />}
         {chat.pinned && <Pin size={13} className="pin-mark" />}
-        {detail ? <span className="cv-chat-copy"><span className="chat-title">{chat.title}</span><span className="cv-chat-detail">{detail}</span></span> : <span className="chat-title">{chat.title}</span>}
+        {detail ? <span className="cv-chat-copy"><span className="chat-title">{chat.title}</span><span className="cv-chat-detail">{match ? <MatchExcerpt excerpt={match.excerpt} /> : detail}</span></span> : <span className="chat-title">{chat.title}</span>}
         {streaming && <span className="dot-pulse" aria-label="Replying" />}
       </button>
       <div className="row-menu" ref={menuRef}>
@@ -199,12 +201,12 @@ export default function Sidebar({ onCollapse }: SidebarProps) {
   }, [open, phone]);
 
   const groups = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = searchKey(query);
     const visible = chats.filter((c) => !isTemporaryChat(c) && (c.messages.length > 0 || Boolean(c.documents?.length) || c.id === currentId) );
     // Archived chats stay out of the list, but searching still finds them.
     const filtered = q ? visible : visible.filter((c) => !c.archived || c.id === currentId);
     const matches = q
-      ? filtered.filter((c) => c.title.toLowerCase().includes(q) || c.messages.some((m) => m.text.toLowerCase().includes(q)))
+      ? filtered.filter((c) => chatMatches(c, q))
       : filtered;
     const out: [string, Chat[]][] = [];
     const pinned = matches.filter((c) => c.pinned && !c.archived);

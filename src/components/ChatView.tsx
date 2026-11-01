@@ -6,6 +6,7 @@ import { modKey } from '../lib/util';
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { activeSummary } from '../lib/compact';
+import { JUMP_REQUEST, takeJump, takeJumpHere, type JumpRequest } from '../lib/message-jump';
 import { formatUntil } from '../lib/usage';
 import { selectCurrentChat,selectCurrentModel, useStore } from '../store';
 import { UsageMeter } from './CompactNote';
@@ -99,10 +100,27 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
     previousReply.current={id:chat?.id,streaming};
   },[streaming,chat?.id,messages]);
 
-  // Switching chats: back where you were in that chat (this session), otherwise on the latest message.
+  // A search result opens its chat at the matching message (src/lib/message-jump.ts): the thread scrolls there, so
+  // neither the remembered spot nor the latest message applies.
   const hold = useRef<Anchor | null>(null);
+  const [jump, setJump] = useState<JumpRequest | null>(null);
+  const viewed = useRef(chat);
+  viewed.current = chat;
+  useEffect(() => {
+    const take = () => {
+      const here = viewed.current, request = here && takeJumpHere(here, useStore.getState().user?.uid ?? null);
+      if (request) { hold.current = null; stick.current = false; setJump(request); }
+    };
+    window.addEventListener(JUMP_REQUEST, take);
+    return () => window.removeEventListener(JUMP_REQUEST, take);
+  }, []);
+
+  // Switching chats: back where you were in that chat (this session), otherwise on the latest message.
   useLayoutEffect(() => {
     const el = scroller.current;
+    const request = chat ? takeJump(chat, useStore.getState().user?.uid ?? null) : null;
+    setJump(request);
+    if (request) { hold.current = null; stick.current = false; return; }
     hold.current = (chat && positions.get(chat.id)) || null;
     // Canvas: a chat opened fresh lands on your last question, so its answer reads from the start.
     if (CANVAS_SHELL && !hold.current && el && chat && chat.messages.at(-1)?.role === 'assistant' && useStore.getState().streamingChatId !== chat.id) {
@@ -338,7 +356,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
             <h1>{isTemporaryChat(chat)?'Incognito chat':user?.name&&welcomeSequence%(WELCOME_GREETINGS.length+1)===0?greeting:WELCOME_GREETINGS[(welcomeSequence+(user?.name?WELCOME_GREETINGS.length-1:0)) % WELCOME_GREETINGS.length]}</h1>
           </div>
         ) : (
-          chat && <MessageThread key={chat.id} chat={chat} summary={summary} busy={streaming||canvasEditing} compacting={compacting} scroller={scroller} stick={stick} navigationHost={navigationHost}/>
+          chat && <MessageThread key={chat.id} chat={chat} summary={summary} busy={streaming||canvasEditing} compacting={compacting} scroller={scroller} stick={stick} navigationHost={navigationHost} jump={jump} onJumpTaken={() => setJump(null)}/>
         )}
       </div>
       {CANVAS_SHELL ? <><div className="message-navigation-host" ref={navigationHost} />{!empty && <ContextRail chat={chat} />}</> : <div className="message-navigation-host" ref={navigationHost} />}

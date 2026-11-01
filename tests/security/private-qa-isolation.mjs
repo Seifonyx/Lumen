@@ -223,7 +223,10 @@ try {
     'src/components/SearchMatch.tsx', 'src/lib/chat-search.ts', 'src/lib/message-jump.ts',
     // Answer details and Compare with… (owner-approved UX plan #3, 2026-11-01): a panel over what each reply already
     // recorded, and a request that opens the existing Compare sheet. No data, auth, network or storage owner changes.
-    'src/components/AnswerDetails.tsx', 'src/components/answer-details.css', 'src/lib/answer-details.ts'];
+    'src/components/AnswerDetails.tsx', 'src/components/answer-details.css', 'src/lib/answer-details.ts',
+    // Owner-approved 2026-11-01: loading a saved chat keeps Auto's recorded reasons and alternatives (`routeDetail`), a
+    // field the app already writes to this device. Read path only: no new field, no sync record, rules or auth change.
+    'src/lib/db.ts'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');

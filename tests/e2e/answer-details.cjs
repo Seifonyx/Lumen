@@ -75,10 +75,8 @@ async function open(browser, width, height, theme) {
 
         // Auto: recorded reasons, alternatives, sources reachable inside the panel, and the Auto exclusion.
         let text = await show('r-auto');
-        // Saved chats keep Auto's short reason; its longer reasons and alternatives exist only in the session that
-        // made the reply (src/lib/db.ts doesn't load them; auto-explain covers that live panel). Nothing is filled in.
-        assert.match(text, /Gemini Flash[\s\S]*Google AI Studio[\s\S]*Chosen by Auto[\s\S]*quick general question/, `${tag}: Auto's recorded reason`);
-        assert.doesNotMatch(text, /Recorded alternatives/, `${tag}: no alternatives are shown when none were loaded`);
+        // Loaded from this device's storage (the page was reloaded after seeding): reasons and alternatives as recorded.
+        assert.match(text, /Gemini Flash[\s\S]*Google AI Studio[\s\S]*Chosen by Auto[\s\S]*Quick general question: a fast model fits[\s\S]*Recorded alternatives[\s\S]*Gemini 2\.5 Pro/, `${tag}: Auto's recorded reasons and alternatives survive a reload`);
         assert.equal(await details.getByRole('link').count(), 2, `${tag}: both web sources are links in the panel`);
         assert.equal(await details.getByRole('link').first().getAttribute('href'), 'https://example.com/porto/transport');
         assert.ok(await details.getByRole('checkbox', { name: /Never use Gemini Flash in Auto/ }).count(), `${tag}: the Auto exclusion is kept`);

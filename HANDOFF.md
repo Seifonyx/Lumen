@@ -30,9 +30,6 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
       at that message below the glass bar. Chromium and WebKit emulation pass; no physical device yet.
 - [ ] Owner, on the iPhone (PR #83, live): tap the model name under a reply; the Answer details sheet sits clear of the
       home indicator and reads well with VoiceOver; Compare with… prefills that reply's question and keeps your draft.
-- Owner decision (found in PR #83): `src/lib/db.ts` `normalize` drops `routeDetail` when chats load, so after a reload
-  Auto replies show only the short reason (no longer reasons or alternatives). Keeping it on read is a one-line change
-  to a guarded storage file (isolation guard), so it waits for the owner; sync records never carry it.
 - UX plan (owner-accepted 2026-11-01, https://claude.ai/artifact/77duerrTr2f6vQCztDNFVv), remaining in order:
   #2 owner's 12-step iPhone check, then fixes (the glass message box lets reply text show through: ready, S);
   #4 save a reply or
@@ -69,6 +66,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-01 Auto's reasons and alternatives survive a reload (owner-approved): `src/lib/db.ts` keeps `routeDetail`
+  when loading chats on this device (read path only; sync records still don't carry it).
 - 2026-11-01 Answer details and Compare with… (PR #83, merged `721457a`, deployed Canvas): the model name under every
   finished reply opens one panel (`src/components/AnswerDetails.tsx`, lazy; rules in `src/lib/answer-details.ts`) with
   only recorded facts; Compare with… seeds the composer's Compare sheet with the reply's own question and sends only the

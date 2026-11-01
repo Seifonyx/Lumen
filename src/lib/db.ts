@@ -73,6 +73,8 @@ function normalize(raw: any): Chat {
     files: (m.files || []).map((f: any) => ({ id: f.id || uid(), size: f.size ?? (f.data?.length ?? f.text?.length ?? 0), mime: f.mime || 'text/plain', ...f })),
     model: m.model,
     route: m.route,
+    // Auto's recorded reasons and alternatives (Answer details); kept on this device, not synced.
+    routeDetail: m.routeDetail && Array.isArray(m.routeDetail.why) && Array.isArray(m.routeDetail.next) ? { why: m.routeDetail.why.filter((w: unknown) => typeof w === 'string'), next: m.routeDetail.next.filter((n: unknown) => typeof n === 'string') } : undefined,
     via: m.via,
     auto: m.auto,
     thinking: m.thinking,

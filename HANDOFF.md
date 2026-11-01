@@ -11,7 +11,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 ## Now
 
 - **Branch:** none in progress. Start new work on a branch from `origin/main`.
-- **Task:** none. Waiting on the owner's iPhone check (Next) and pick from the polish list.
+- **Task:** none. UX plan item #1 (search shows where it matched) shipped; items #2–#5 wait for the owner.
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next
@@ -26,6 +26,13 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
   inline code breaks mid-formula; All chats search and Chats/Archived share one cramped row on phones; no home-screen
   shortcuts in either manifest; long code lines scroll with no wrap option; Router with one model is mostly empty
   space; the incognito button is an unexplained crossed eye on phones (no hover).
+- [ ] Owner, on the iPhone (PR #81, live): search a word from an old message; the result shows the line and opens
+      at that message below the glass bar. Chromium and WebKit emulation pass; no physical device yet.
+- UX plan (owner-accepted 2026-11-01, https://claude.ai/artifact/77duerrTr2f6vQCztDNFVv), remaining in order:
+  #2 owner's 12-step iPhone check, then fixes (the glass message box lets reply text show through: ready, S);
+  #3 reply details for every reply + Compare with… (extend RouteWhy, reuse CompareModelsModal); #4 save a reply or
+  excerpt to a project (`Saved from chats.md` in project files; owner decision on synced size); #5 one search for
+  everything (projects, Library, Knowledge, Tools, models in the drawer search). Note: iOS ignores manifest shortcuts.
 - Swipe actions stay on the All chats page only: in the drawer they would fight the swipe that closes it.
 
 ## Open (known, not scheduled)
@@ -57,6 +64,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-01 Search shows where it matched (PR #81, merged `405d2b7`, deployed Canvas): drawer and Jump to share
+  `src/lib/chat-search.ts`; message matches show an excerpt and open at the newest matching message through
+  `src/lib/message-jump.ts` (one request, used once, 5 s, one account, message must exist). Jumps now land below the
+  floating top bar on computers too. Local Windows WebKit fails `message-navigation`'s outline check on main as well;
+  CI's Linux WebKit passes.
 - 2026-10-31 Audit fixes (PR #79, merged `1eb3dc3`, deployed Canvas): All chats rows no longer squeezed to 21 px (all
   devices), project rows drop the repeated name, Settings account row says it holds Appearance.
 - 2026-10-31 Phone polish (PR #77, merged `88a4594`, deployed Canvas): composer holds through Safari's late tap, soft

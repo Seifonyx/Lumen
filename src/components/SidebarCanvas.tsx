@@ -13,6 +13,7 @@ import { useFocusScope } from '../lib/focus-scope';
 import { closeRoutingCenter, openRoutingCenter, routingCenterOpen, useRoutingCenter } from '../lib/routing-center';
 import { useStore } from '../store';
 import type { Chat, Project } from '../types';
+import { chatMatches, messageMatch, searchKey } from '../lib/chat-search';
 import AllChats from './AllChats';
 import ProjectManager from './ProjectManager';
 import { AskChats, ChatRow, type SidebarProps } from './Sidebar';
@@ -145,7 +146,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   // Another account starts from its own (default) disclosure, never the previous one's.
   useEffect(() => { setDisclosure(OPEN); setMore({}); setQuery(''); }, [user?.uid]);
 
-  const q = query.trim().toLowerCase();
+  const q = searchKey(query);
   // Sidebar's semantics: saved chats with content, or an empty chat that holds an unsent draft (so a draft left behind
   // is easy to find). A brand-new empty chat isn't listed until something is written in it. Searching matches titles
   // and messages and also finds archived chats.
@@ -153,8 +154,10 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
     const drafted = (id: string) => { try { return Boolean(localStorage.getItem(`mr.draft.${user?.uid}.${id}`)); } catch { return false; } };
     const visible = chats.filter((c) => !isTemporaryChat(c) && (c.messages.length > 0 || Boolean(c.documents?.length) || Boolean(c.assistant) || drafted(c.id)));
     const listed = q ? visible : visible.filter((c) => !c.archived || c.id === currentId);
-    return q ? listed.filter((c) => c.title.toLowerCase().includes(q) || c.messages.some((m) => m.text.toLowerCase().includes(q))) : listed;
+    return q ? listed.filter((c) => chatMatches(c, q)) : listed;
   }, [chats, q, currentId, user?.uid]);
+  // Found through a message rather than the title: where it matched, so the row can show it and open there.
+  const found = useMemo(() => new Map(q ? matches.map((c) => [c.id, messageMatch(c, q)] as const) : []), [matches, q]);
   const recency = (p: Project) => Math.max(p.updatedAt, ...chats.filter((c) => c.projectId === p.id).map((c) => c.updatedAt));
   const ordered = useMemo(() => [...projects].sort((a, b) => recency(b) - recency(a)), [projects, chats]); // eslint-disable-line react-hooks/exhaustive-deps
   const known = new Set(projects.map((p) => p.id));
@@ -263,7 +266,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
                       </button></li>
                       {/* Inside the folder, so it reads as part of this project; the label names it too. */}
                       {!q && <li><button type="button" className="cv-new-here" onClick={() => newProjectChat(p.id)}><span className="cv-new-here-icon" aria-hidden="true"><Plus size={13} /></span><span className="cv-new-here-label">New chat in {p.name}</span></button></li>}
-                      {shown.map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} detail={relTime(c.updatedAt)} />)}
+                      {shown.map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} detail={relTime(c.updatedAt)} match={found.get(c.id)} matchKey={q} place={p.name} />)}
                       {list.length > shown.length && <li><button type="button" className="cv-more" onClick={() => setMore({ ...more, [p.id]: true })}>Show {list.length - shown.length} more</button></li>}
                     </ul>
                   </Fold>
@@ -276,11 +279,11 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
           {!q && <div className="cv-workspace-end" />}
           {section('conversations', q ? 'Search results' : 'Conversations', Boolean(current && !hereProject && !isTemporaryChat(current)), !q && <button type="button" className="cv-section-add cv-conversations-all cv-all" aria-label="All chats" title="All chats" onClick={() => setAllChats(true)}><ListFilter size={17} aria-hidden="true" /></button>)}
           <Fold id={`${ids}-conversations`} open={sectionOpen('conversations')}>
-            {loose.some((c) => !c.archived) && <ul className="cv-chats cv-loose" aria-label={q ? 'Search results' : 'Conversations'}>{loose.filter((c) => !c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} detail={chatDetail(c)} />)}</ul>}
+            {loose.some((c) => !c.archived) && <ul className="cv-chats cv-loose" aria-label={q ? 'Search results' : 'Conversations'}>{loose.filter((c) => !c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} detail={chatDetail(c)} match={found.get(c.id)} matchKey={q} />)}</ul>}
             {/* Search also finds archived chats; they are marked as such, after the rest. */}
             {loose.some((c) => c.archived) && <>
               <p className="cv-archived-label" id={`${ids}-archived`}>Archived</p>
-              <ul className="cv-chats cv-loose cv-archived" aria-labelledby={`${ids}-archived`}>{loose.filter((c) => c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} detail={chatDetail(c)} />)}</ul>
+              <ul className="cv-chats cv-loose cv-archived" aria-labelledby={`${ids}-archived`}>{loose.filter((c) => c.archived).map((c) => <ChatRow key={c.id} chat={c} active={c.id === currentId} detail={chatDetail(c)} match={found.get(c.id)} matchKey={q} />)}</ul>
             </>}
             {!loose.length && <p className="cv-none">{q ? 'No loose conversations match.' : 'Your chats will appear here.'}</p>}
           </Fold>

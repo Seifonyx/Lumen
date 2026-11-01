@@ -9,6 +9,7 @@ import { isTemporaryChat } from '../lib/temporary-chat';
 import { chatExportName, chatToMarkdown } from '../lib/chat-export';
 import { saveBlob, safeFileName } from '../lib/util';
 import type { Project } from '../types';
+import { chatMatches, searchKey } from '../lib/chat-search';
 
 const NO_PROJECTS: Project[] = [];
 
@@ -29,10 +30,10 @@ export default function AllChats({ onClose }: { onClose: () => void }) {
   const picking = !selectFirst || selectMode;
 
   const list = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = searchKey(query);
     return chats
       .filter((c) => !isTemporaryChat(c) && (c.messages.length > 0 || Boolean(c.documents?.length)) && Boolean(c.archived) === showArchived)
-      .filter((c) => !q || c.title.toLowerCase().includes(q) || c.messages.some((m) => m.text.toLowerCase().includes(q)))
+      .filter((c) => !q || chatMatches(c, q))
       .sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) || b.updatedAt - a.updatedAt);
   }, [chats, query, showArchived]);
   const archivedCount = useMemo(() => chats.filter((c) => c.archived && !isTemporaryChat(c)).length, [chats]);

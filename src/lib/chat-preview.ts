@@ -1,7 +1,15 @@
 // One quiet line of a chat for lists (Canvas): Markdown syntax stripped, and nothing when it would only repeat the
 // title. Text only; never parsed as HTML.
 export function chatPreview(text: string | undefined, title: string): string {
-  const plain = (text || '')
+  const plain = plainText(text);
+  const norm = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+  if (!plain || norm(plain) === norm(title)) return '';
+  return plain.slice(0, 120);
+}
+
+/** A message's words without its Markdown syntax, on one line (code blocks left out). */
+export function plainText(text: string | undefined): string {
+  return (text || '')
     .replace(/```[\s\S]*?(```|$)/g, ' ')
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
     .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
@@ -13,7 +21,4 @@ export function chatPreview(text: string | undefined, title: string): string {
     .replace(/`/g, '')
     .replace(/\s+/g, ' ')
     .trim();
-  const norm = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
-  if (!plain || norm(plain) === norm(title)) return '';
-  return plain.slice(0, 120);
 }

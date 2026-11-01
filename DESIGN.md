@@ -78,6 +78,10 @@ dark mode).
 - **Sidebar (desktop) / drawer (phone):** wordmark · Search · Library · Tools · Router · Projects tree · Conversations
   · New chat + avatar (opens Settings). Collapsed desktop sidebar is a 60 px rail. The highlight always follows the
   page on screen.
+- **Conversation search** is the drawer's Search (Jump to, ⌘/Ctrl K, is its keyboard shortcut, with the same chats from
+  `src/lib/chat-search.ts`). A chat found through a message shows one excerpt line, the match in text colour at 600
+  (no highlighter), and opens at that message (`src/lib/message-jump.ts`); a title match shows its time and opens as
+  usual. No other conversation search.
 - **Global New chat** always starts outside projects; "New chat in <project>" lives under the project.
 - **Top bar:** chat title (none on iPhone glass), project crumb, document/panel toggles; incognito eye only on a new
   chat. iPhone glass: a 44 pt circle (drawer) and a capsule (usage ring, documents, new chat).

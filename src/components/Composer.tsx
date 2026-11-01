@@ -17,6 +17,7 @@ import { scan, type Finding } from '../lib/privacy';
 import PrivacyCheck from './PrivacyCheck';
 import AttachSheet from './AttachSheet';
 import CompareModelsModal from './CompareModelsModal';
+import { COMPARE_FROM, compareSource } from '../lib/answer-details';
 import { isEditableOffice, saveOriginal } from '../lib/office/originals';
 const VoiceMode = lazy(() => import('./VoiceMode'));
 import { ANALYSIS_TEMPLATES } from '../lib/analysis';
@@ -24,6 +25,9 @@ import { toolModel } from '../lib/ai/tool-inputs.js';
 import { db } from '../lib/db';
 import { CANVAS_COMPOSER, useScreenBackLayer, navigateBack, replaceScreen } from '../lib/canvas-presentation';
 import { useCanvasComposer } from './ComposerCanvas';
+
+/** Compare with… under a reply: the question it answers, from that chat and account. */
+interface CompareSeed { chatId: string; account?: string; questionId: string; prompt: string; files: Attachment[]; model?: string }
 
 interface Pending {
   key: string;
@@ -97,8 +101,10 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
   const [listening, setListening] = useState(false);
   const [interim, setInterim] = useState('');
   const [dragging, setDragging] = useState(false);
-  const [check, setCheck] = useState<{ findings: Finding[]; unchecked: number; compareModels?: string[] } | null>(null);
+  const [check, setCheck] = useState<{ findings: Finding[]; unchecked: number; compareModels?: string[]; seed?: CompareSeed } | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
+  // Compare with… under a reply: that reply's own question, kept apart from the text and files in this box.
+  const [seed, setSeed] = useState<CompareSeed | null>(null);
   if (CANVAS_COMPOSER) useScreenBackLayer!(compareOpen, () => setCompareOpen(false), () => setCompareOpen(true), 'comparison-setup');
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [imageMode, setImageMode] = useState(false);
@@ -116,6 +122,24 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
 
   // Unsent text is kept per chat, so it survives switching chats, a reload, or the phone closing the page in the background.
   const accountId = useStore(state => state.user?.uid);
+  useEffect(() => {
+    const open = (event: Event) => {
+      const { chatId, messageId } = (event as CustomEvent<{ chatId: string; messageId: string }>).detail;
+      const state = useStore.getState(), chat = state.chats.find((c) => c.id === chatId);
+      if (!chat || state.currentId !== chatId) return;
+      const source = compareSource(chat, messageId);
+      if (!source.ok) { state.toast(source.reason, 'error'); return; }
+      setSeed({ chatId, account: state.user?.uid, questionId: source.question.id, prompt: source.prompt, files: source.files, model: chat.messages.find((m) => m.id === messageId)?.model });
+      setCompareOpen(true);
+    };
+    window.addEventListener(COMPARE_FROM, open);
+    return () => window.removeEventListener(COMPARE_FROM, open);
+  }, []);
+  // Another chat or account: that question doesn't belong here any more. Closing Compare, however it closes, forgets it.
+  useEffect(() => {
+    if (seed && (seed.chatId !== currentId || seed.account !== accountId)) setCompareOpen(false);
+  }, [currentId, accountId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!compareOpen) setSeed(null); }, [compareOpen]);
   const draftKey = `mr.draft.${accountId}.${currentId ?? 'new'}`;
   const draftKeyRef = useRef(draftKey);
   const saveDraft = useCallback((value: string) => {
@@ -351,6 +375,7 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
 
   const dispatch = (opts?: { privacy?: 'asIs' }) => {
     if (!ensureOnline()) return;
+    if (check?.seed && check.compareModels) { runSeed(check.seed, check.compareModels, opts); setCheck(null); return; }
     if ((codeExecution || deepResearch || pending.some(p => p.file?.videoUri)) && !settings.enabledModels.some(toolModel)) { toast(deepResearch ? 'Deep research searches with Gemini. Enable a Gemini model in Settings → Models first.' : 'Enable a Gemini model in Settings → Models first.', 'error'); return; }
     const compareWith = check?.compareModels;
     setCheck(null);
@@ -365,7 +390,22 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
     setDeepResearch(false);
   };
 
+  // The reply's question goes out as it was asked, with the conversation up to it (not after it); the draft stays.
+  const runSeed = (from: CompareSeed, models: string[], opts?: { privacy?: 'asIs' }) =>
+    void runComparison(from.prompt.trim(), from.files, models, { ...opts, before: from.questionId });
+  const compareSeed = (from: CompareSeed, models: string[]) => {
+    const state = useStore.getState();
+    if (streaming || !ensureOnline()) return;
+    if (state.currentId !== from.chatId || state.user?.uid !== from.account) { toast('The conversation changed. Choose Compare with… again.', 'error'); return; }
+    if (CANVAS_COMPOSER) replaceScreen!(() => { setCompareOpen(false); useStore.getState().setUi({page:null}); }); else setCompareOpen(false);
+    if (settings.privacyShield && settings.privacyMode === 'ask') {
+      const findings = [...scan(from.prompt), ...from.files.flatMap((f) => (f.text ? scan(f.text) : [])), ...scan(project?.instructions || ''), ...projectFiles.flatMap((f) => (f.text ? scan(f.text) : []))];
+      if (findings.length) { setCheck({ findings, unchecked: from.files.filter((f) => !f.text).length, compareModels: models, seed: from }); return; }
+    }
+    runSeed(from, models);
+  };
   const compare = (models: string[]) => {
+    if (seed) { compareSeed(seed, models); return; }
     if (!canSend || codeExecution || pending.some(p => p.file?.videoUri)) return;
     if (!ensureOnline()) return;
     if (CANVAS_COMPOSER) replaceScreen!(() => { setCompareOpen(false); useStore.getState().setUi({page:null}); }); else setCompareOpen(false);
@@ -616,8 +656,9 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
         />
       )}
       {CANVAS_COMPOSER ? <>{canvas!.scrim}{voiceOpen && <Suspense fallback={null}><VoiceMode onClose={() => setVoiceOpen(false)} /></Suspense>}</> : voiceOpen && <Suspense fallback={null}><VoiceMode onClose={() => setVoiceOpen(false)} /></Suspense>}
-      {compareOpen && <CompareModelsModal prompt={text} onPromptChange={value => { setText(value); saveDraft(value); }} files={pending.flatMap((p) => p.file ? [p.file] : [])}
-        unavailableReason={streaming ? 'Wait for the current reply to finish before comparing models.' : !ready ? 'Wait for attached files to finish loading.' : codeExecution ? 'Turn off data analysis in the composer before comparing models.' : pending.some(p => p.file?.videoUri) ? 'Remove the video attachment before comparing models.' : undefined}
+      {compareOpen && <CompareModelsModal prompt={seed ? seed.prompt : text} onPromptChange={seed ? value => setSeed((s) => s && { ...s, prompt: value }) : value => { setText(value); saveDraft(value); }} files={seed ? seed.files : pending.flatMap((p) => p.file ? [p.file] : [])}
+        initial={seed?.model} note={seed ? 'Fresh answers to this reply’s question, using the conversation up to it. The original reply stays as it is.' : undefined}
+        unavailableReason={streaming ? 'Wait for the current reply to finish before comparing models.' : seed ? undefined : !ready ? 'Wait for attached files to finish loading.' : codeExecution ? 'Turn off data analysis in the composer before comparing models.' : pending.some(p => p.file?.videoUri) ? 'Remove the video attachment before comparing models.' : undefined}
         onClose={CANVAS_COMPOSER ? () => navigateBack!(() => setCompareOpen(false)) : () => setCompareOpen(false)} onCompare={compare} />}
       {check && <PrivacyCheck findings={check.findings} unchecked={check.unchecked} onMask={() => dispatch()} onAsIs={() => dispatch({ privacy: 'asIs' })} onEdit={() => setCheck(null)} />}
       <p className="disclaimer">AI can make mistakes. Check important info.</p>

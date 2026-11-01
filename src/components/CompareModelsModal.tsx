@@ -8,12 +8,13 @@ import { estimateTokens } from '../lib/routing';
 import { CANVAS_SHELL } from '../lib/canvas-presentation';
 import { modelTraits } from '../lib/model-traits';
 
-export default function CompareModelsModal({ prompt, onPromptChange, files, unavailableReason, onClose, onCompare }: { prompt: string; onPromptChange: (value: string) => void; files: Attachment[]; unavailableReason?: string; onClose: () => void; onCompare: (models: string[]) => void }) {
+/** `initial` and `note`: Compare with… under a reply starts from the model that answered and says what it repeats. */
+export default function CompareModelsModal({ prompt, onPromptChange, files, unavailableReason, onClose, onCompare, initial, note }: { prompt: string; onPromptChange: (value: string) => void; files: Attachment[]; unavailableReason?: string; onClose: () => void; onCompare: (models: string[]) => void; initial?: string; note?: string }) {
   const enabled = useStore((s) => s.settings.enabledModels);
   const defaultModel = useStore((s) => s.settings.defaultModel);
   const catalog = useStore((s) => s.catalog);
   const [selected, setSelected] = useState(() => {
-    const first = enabled.includes(defaultModel) ? defaultModel : enabled[0];
+    const first = initial && enabled.includes(initial) ? initial : enabled.includes(defaultModel) ? defaultModel : enabled[0];
     const second = enabled.find((id) => id !== first);
     return [first, second].filter(Boolean) as string[];
   });
@@ -27,6 +28,7 @@ export default function CompareModelsModal({ prompt, onPromptChange, files, unav
   return (
     <Modal title="Compare models" onClose={onClose}>
       <div className="compare-picker">
+        {note && <p className="small compare-note">{note}</p>}
         <p className="muted small">Each selected model gets one request. Choose two or three for side-by-side answers. Models that cannot read an attached image or PDF are disabled.</p>
         <label className="field-block">
           <span className="setting-label">Question</span>

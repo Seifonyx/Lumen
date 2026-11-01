@@ -114,7 +114,9 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
       await menu.waitFor();
       assert.ok(await buzz() > before, `${theme}: a long press buzzes`);
       const items = (await menu.getByRole('menuitem').allTextContents()).filter((t) => !/Read aloud|Share/.test(t));
-      assert.deepEqual(items, ['Copy', 'Select text', 'Regenerate', 'Save as Word'], `${theme}: reply menu items`);
+      // Canvas adds Compare with… (the reply's own question in the Compare sheet).
+      const canvas = await page.locator('[data-lumen-canvas-shell]').count();
+      assert.deepEqual(items, ['Copy', 'Select text', 'Regenerate', 'Save as Word', ...(canvas ? ['Compare with…'] : [])], `${theme}: reply menu items`);
       await page.waitForTimeout(450);
       const preview = await page.locator('.ctx-preview').boundingBox();
       const menuBox = await menu.boundingBox();

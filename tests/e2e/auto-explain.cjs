@@ -28,7 +28,8 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
       const why = page.locator('.route-why-btn');
       await why.waitFor();
       await why.click();
-      const pop = page.getByRole('dialog', { name: 'Why this model' });
+      // Canvas: the same details live in Answer details (every reply); the ordinary build keeps "Why this model".
+      const pop = page.getByRole('dialog', { name: /^(Why this model|Answer details)$/ });
       await pop.waitFor();
       assert.match(await pop.textContent(), /Recorded alternatives/);
       if (process.env.SHOT) await page.screenshot({ path: `${process.env.SHOT}-${width}.png` });

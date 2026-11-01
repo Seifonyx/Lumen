@@ -3,8 +3,8 @@ import CodingPlanCard from './CodingPlanCard';
 import { parsePlan } from '../lib/coding-plan';
 import KnowledgeSourceView from './KnowledgeSourceView';
 import type { KnowledgeSource } from '../types';
-import { AlertTriangle, Share, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, GitBranch, Info, Pencil, RefreshCw, Repeat, Square, TextSelect, Volume2 } from 'lucide-react';
-import { createContext, memo, useContext, useEffect, useRef, useState } from 'react';
+import { AlertTriangle, Columns2, Share, FolderOpen, ShieldCheck, ShieldOff, Brain, BookmarkCheck, X as XIcon, Check, ChevronDown, Copy, FileDown, GitBranch, Info, Pencil, RefreshCw, Repeat, Square, TextSelect, Volume2 } from 'lucide-react';
+import { createContext, memo, Suspense, useContext, useEffect, useRef, useState } from 'react';
 import { useLongPress } from '../lib/long-press';
 import { useSmoothText } from '../lib/smooth-text';
 import ContextMenu, { type ContextItem } from './ContextMenu';
@@ -22,7 +22,9 @@ import type { Message } from '../types';
 import Markdown from './Markdown';
 import GeneratedImage from './GeneratedImage';
 import RouteWhy from './RouteWhy';
-import { CANVAS_SHELL } from '../lib/canvas-presentation';
+import { AnswerDetails, CANVAS_SHELL, prefetchAnswerDetails } from '../lib/canvas-presentation';
+import { answerSelection, requestCompareFrom } from '../lib/answer-details';
+import { routeWords } from '../lib/route-words';
 import { isReroute, rerouteReason } from '../lib/reroute';
 import ModelPicker from './ModelPicker';
 import TextSelection from './TextSelection';
@@ -254,6 +256,25 @@ function MemoryChip({ memory }: { memory: NonNullable<Message['memory']> }) {
   );
 }
 
+/** Canvas: the model name under a reply opens its Answer details (lazy; components/AnswerDetails.tsx). */
+function DetailsButton({ message, onSource }: { message: Message; onSource: (source: KnowledgeSource) => void }) {
+  const catalog = useStore((s) => s.catalog);
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLSpanElement>(null);
+  const selection = answerSelection(message);
+  const name = message.model ? modelLabel(catalog, message.model) : 'Answer details';
+  const tag = selection.kind === 'auto' ? routeWords(message.route) : selection.kind === 'layout' ? `Via ${selection.layout}` : selection.kind === 'fallback' ? `Rerouted: ${selection.switched}` : selection.kind === 'combined' ? 'Combined' : '';
+  const Panel = AnswerDetails!;
+  return (
+    <span className={`route-why-wrap${selection.kind === 'fallback' ? ' cv-rerouted' : ''}`} ref={root}>
+      <button type="button" className="model-tag route-why-btn answer-details-btn" aria-haspopup="dialog" aria-expanded={open} aria-label={`${name}${tag ? `, ${tag}` : ''}. Answer details`} onClick={() => setOpen(!open)} onPointerEnter={prefetchAnswerDetails!} onFocus={prefetchAnswerDetails!}>
+        <span className="route-model">{name}</span>{tag && <span className="route-tag"> · {tag}</span>}
+      </button>
+      {open && root.current && <Suspense fallback={null}><Panel message={message} anchor={root.current} onClose={() => setOpen(false)} onSource={onSource} /></Suspense>}
+    </span>
+  );
+}
+
 function AssistantMessage({ message, isLast, busy }: { message: Message; isLast: boolean; busy: boolean }) {
   const [source,setSource]=useState<KnowledgeSource|null>(null);
   const catalog = useStore((s) => s.catalog);
@@ -261,6 +282,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
   const continueReply = useStore((s) => s.continueReply);
   const toast = useStore((s) => s.toast);
   const chatTitle = useStore((s) => s.chats.find((c) => c.id === s.currentId)?.title || 'Reply');
+  const chatId = useStore((s) => s.currentId);
   const [copied, setCopied] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [selecting, setSelecting] = useState(false);
@@ -351,7 +373,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
 
       {!streaming && !readOnly && (
         <div className="msg-actions">
-          {message.route && !message.via && message.model ? <RouteWhy message={message} /> : CANVAS_SHELL && !message.via && rerouteReason(message.notices) ? (
+          {CANVAS_SHELL ? <DetailsButton message={message} onSource={setSource} /> : message.route && !message.via && message.model ? <RouteWhy message={message} /> : CANVAS_SHELL && !message.via && rerouteReason(message.notices) ? (
           <span className="model-tag cv-rerouted" title={`Auto switched models: ${rerouteReason(message.notices)}`}>
             <span className="route-model">{modelLabel(catalog, message.model)}</span><span className="route-tag"> · Rerouted: {rerouteReason(message.notices)}</span>
           </span>
@@ -393,6 +415,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
                 { label: 'Save as Word', icon: <FileDown size={15} />, onSelect: () => void saveWord() },
                 { label: 'Edit in canvas', icon: <Pencil size={15} />, onSelect: () => useStore.getState().openCanvas(`${safeFileName(chatTitle, 'Reply')}.md`, message.text) },
                 { label: 'Select text', icon: <TextSelect size={15} />, onSelect: () => setSelecting(true) },
+                ...(CANVAS_SHELL && chatId && !busy ? [{ label: 'Compare with…', icon: <Columns2 size={15} />, onSelect: () => requestCompareFrom(chatId, message.id) }] : []),
                 // iPhone glass look: "Retry with…" lives here instead of in the row, which keeps just the icons.
                 ...(!busy && document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches ? [{ label: 'Retry with…', icon: <Repeat size={15} />, onSelect: () => box.current?.querySelector<HTMLButtonElement>('.model-picker.compact > .msg-action')?.click() }] : []),
               ]}
@@ -410,6 +433,7 @@ function AssistantMessage({ message, isLast, busy }: { message: Message; isLast:
               } }] : []),
               ...(canShare ? [{ label: 'Share', icon: <Share size={17} />, onSelect: () => void shareReply() }] : []),
               { label: 'Save as Word', icon: <FileDown size={17} />, onSelect: () => void saveWord() },
+              ...(CANVAS_SHELL && chatId && !busy ? [{ label: 'Compare with…', icon: <Columns2 size={17} />, onSelect: () => requestCompareFrom(chatId, message.id) }] : []),
             ] satisfies ContextItem[]} />
           )}
           {truncated && isLast && !busy && (

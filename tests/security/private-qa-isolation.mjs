@@ -220,7 +220,10 @@ try {
     'package.json', 'src/app.css', 'src/components/CatalogErrorNotice.tsx', 'src/components/InstallHint.tsx', 'src/components/RemovedModels.tsx', 'src/lib/util.ts',
     // Search shows where it matched (owner-approved UX plan #1, 2026-11-01): a pure matcher and excerpt over chats already
     // in memory, the result row, and an in-memory open-at-message handoff. No data, auth, network or storage changes.
-    'src/components/SearchMatch.tsx', 'src/lib/chat-search.ts', 'src/lib/message-jump.ts'];
+    'src/components/SearchMatch.tsx', 'src/lib/chat-search.ts', 'src/lib/message-jump.ts',
+    // Answer details and Compare with… (owner-approved UX plan #3, 2026-11-01): a panel over what each reply already
+    // recorded, and a request that opens the existing Compare sheet. No data, auth, network or storage owner changes.
+    'src/components/AnswerDetails.tsx', 'src/components/answer-details.css', 'src/lib/answer-details.ts'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');

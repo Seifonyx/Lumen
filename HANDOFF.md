@@ -11,7 +11,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 ## Now
 
 - **Branch:** none in progress. Start new work on a branch from `origin/main`.
-- **Task:** none. UX plan item #1 (search shows where it matched) shipped; items #2–#5 wait for the owner.
+- **Task:** none. UX plan items #1 (search) and #3 (Answer details + Compare with…) shipped; #2, #4, #5 wait for the owner.
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next
@@ -28,9 +28,14 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
   space; the incognito button is an unexplained crossed eye on phones (no hover).
 - [ ] Owner, on the iPhone (PR #81, live): search a word from an old message; the result shows the line and opens
       at that message below the glass bar. Chromium and WebKit emulation pass; no physical device yet.
+- [ ] Owner, on the iPhone (PR #83, live): tap the model name under a reply; the Answer details sheet sits clear of the
+      home indicator and reads well with VoiceOver; Compare with… prefills that reply's question and keeps your draft.
+- Owner decision (found in PR #83): `src/lib/db.ts` `normalize` drops `routeDetail` when chats load, so after a reload
+  Auto replies show only the short reason (no longer reasons or alternatives). Keeping it on read is a one-line change
+  to a guarded storage file (isolation guard), so it waits for the owner; sync records never carry it.
 - UX plan (owner-accepted 2026-11-01, https://claude.ai/artifact/77duerrTr2f6vQCztDNFVv), remaining in order:
   #2 owner's 12-step iPhone check, then fixes (the glass message box lets reply text show through: ready, S);
-  #3 reply details for every reply + Compare with… (extend RouteWhy, reuse CompareModelsModal); #4 save a reply or
+  #4 save a reply or
   excerpt to a project (`Saved from chats.md` in project files; owner decision on synced size); #5 one search for
   everything (projects, Library, Knowledge, Tools, models in the drawer search). Note: iOS ignores manifest shortcuts.
 - Swipe actions stay on the All chats page only: in the drawer they would fight the swipe that closes it.
@@ -64,6 +69,10 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-01 Answer details and Compare with… (PR #83, merged `721457a`, deployed Canvas): the model name under every
+  finished reply opens one panel (`src/components/AnswerDetails.tsx`, lazy; rules in `src/lib/answer-details.ts`) with
+  only recorded facts; Compare with… seeds the composer's Compare sheet with the reply's own question and sends only the
+  conversation before it (`runComparison` `before`). Startup JS budget 14 → 14.5 KB gz (measured 14.1).
 - 2026-11-01 Search shows where it matched (PR #81, merged `405d2b7`, deployed Canvas): drawer and Jump to share
   `src/lib/chat-search.ts`; message matches show an excerpt and open at the newest matching message through
   `src/lib/message-jump.ts` (one request, used once, 5 s, one account, message must exist). Jumps now land below the

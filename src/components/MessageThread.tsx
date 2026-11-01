@@ -126,14 +126,14 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
     const parent=scroller.current;
     if(index<0||!parent){searchJump.current=null;setJumpTarget(null);return}
     stick.current=false;
-    // The iPhone glass bars float over the conversation: land below the top one (its scroll padding).
-    const inset=parseFloat(getComputedStyle(parent).scrollPaddingTop)||0;
+    // The top bar floats over the conversation (Canvas, iPhone glass): land below it, where the scroll memory does.
+    const inset=parseFloat(getComputedStyle(parent).paddingTop)||0;
     if(enabled)virtual.scrollToIndex(index,{align:'start',behavior:'auto'});
     let frame=0,attempt=0,stable=0;
     const settle=()=>{
       const row=[...(host.current?.querySelectorAll<HTMLElement>('[data-message-id]')||[])].find(el=>el.dataset.messageId===jumpTarget);
       if(row){
-        const target=Math.max(0,Math.min(parent.scrollHeight-parent.clientHeight,parent.scrollTop+row.getBoundingClientRect().top-parent.getBoundingClientRect().top-12-inset));
+        const target=Math.max(0,Math.min(parent.scrollHeight-parent.clientHeight,parent.scrollTop+row.getBoundingClientRect().top-parent.getBoundingClientRect().top-inset-8));
         const delta=Math.abs(parent.scrollTop-target);
         // The DOM target already includes measured height changes. An absolute
         // virtualizer command discards deferred iOS size compensation so it cannot

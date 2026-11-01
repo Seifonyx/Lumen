@@ -129,6 +129,8 @@ async function open(browser, width, height, theme) {
         await page.locator(`[data-message-id="${fx.LONG_HIT}"].message-jump-target`).waitFor();
         await page.waitForTimeout(300);
         assert.equal(await page.evaluate(() => document.activeElement?.dataset.messageId), fx.LONG_HIT, `${width}: keyboard focus lands on the message`);
+        const seen = await page.evaluate((id) => { const r = document.querySelector(`[data-message-id="${id}"]`).getBoundingClientRect(), bar = document.querySelector('.main > .topbar').getBoundingClientRect(); return { top: r.top, bar: bar.bottom }; }, fx.LONG_HIT);
+        assert.ok(seen.top >= seen.bar - 1, `${width}: the message starts below the top bar (${JSON.stringify(seen)})`);
         assert.equal(await page.locator(`[data-message-id="${fx.LONG_HIT}"]`).getAttribute('data-jump-keyboard'), 'true', `${width}: and shows its focus ring`);
         await page.screenshot({ path: `${out}/${width}-${theme}-opened.png` });
 

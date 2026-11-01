@@ -53,3 +53,6 @@ export const CanvasPhoneSections: typeof import('../components/PhoneSections').d
 export const useProviderSettingsTarget: typeof import('./provider-settings-target').useProviderSettingsTarget | null = null;
 
 export const clearProviderSettingsTarget: typeof import('./provider-settings-target').clearProviderSettingsTarget | null = null;
+
+export const AnswerDetails: typeof import('../components/AnswerDetails').default | null = null;
+export const prefetchAnswerDetails: (() => void) | null = null;

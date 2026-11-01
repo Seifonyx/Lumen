@@ -201,7 +201,8 @@ interface State {
   moveChatToProject(chatId: string, projectId: string | null): void;
   branchChatFrom(chatId: string, messageId: string): void;
   setChatTags(chatId: string, tags: string[]): void;
-  runComparison(text: string, files: Attachment[], models: string[], opts?: { privacy?: 'asIs' }): Promise<void>;
+  /** `before`: compare an earlier question (Compare with… under a reply); only the conversation before it is sent. */
+  runComparison(text: string, files: Attachment[], models: string[], opts?: { privacy?: 'asIs'; before?: string }): Promise<void>;
   retryComparison(model: string): Promise<void>;
   cancelComparison(): void;
   clearComparison(): void;
@@ -1813,6 +1814,9 @@ export const useStore = create<State>((set, get) => {
       const generation = accountGeneration, version = keyVersion();
       const chat = currentChat(), settings = get().settings;
       const chatId = chat?.id || null;
+      const history = chat ? liveMessages(chat) : [];
+      const cut = opts?.before ? history.findIndex((m) => m.id === opts.before) : history.length;
+      if (cut < 0) { get().toast('That question is no longer in this conversation.', 'error'); return; }
       const projectId = chat ? chat.projectId : currentProjectId();
       const project = settings.projects?.find(item => item.id === projectId);
       const projectFiles = project?.files?.filter(file => Boolean(file.text)) || [];
@@ -1828,7 +1832,7 @@ export const useStore = create<State>((set, get) => {
         asIs: opts?.privacy === 'asIs',
       };
       const wire: WireMessage[] = [
-        ...withSummary(chat ? activeSummary(chat) : null, (chat ? liveMessages(chat) : []).filter((m) => !m.error || m.text).map((m) => {
+        ...withSummary(chat ? activeSummary(chat) : null, history.slice(0, cut).filter((m) => !m.error || m.text).map((m) => {
           const usable = (m.files || []).filter((f) => f.data || f.text);
           const missing = (m.files || []).filter((f) => !f.data && !f.text).map((f) => f.name);
           return {

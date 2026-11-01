@@ -90,8 +90,14 @@ dark mode).
   rest and show the model only while writing. The model picker and menus stay inside the viewport.
 - **+ menu:** Files and images, Web search (switch), Project, GitHub repository; Tools: Deep research, Document
   canvas, Data analysis, Create image, Compare models, Saved prompts, Quick tools, All tools.
-- **Under a reply:** model name (opens "Why this model" on Auto), Copy, Regenerate, Retry with another model, ⋯ (Read
-  aloud, Share, Save as Word, Edit in canvas, Select text). Icons with tooltips/labels, one style.
+- **Under a reply:** model name, Copy, Regenerate, Retry with another model, ⋯ (Read aloud, Share, Save as Word, Edit
+  in canvas, Select text, Compare with…). Icons with tooltips/labels, one style. On Canvas the model name opens **Answer
+  details** (`src/components/AnswerDetails.tsx`, rules in `src/lib/answer-details.ts`; a popover on computers, a sheet
+  on phones) for every finished reply: the model and provider, how it was chosen (Auto's reasons and alternatives and
+  the Never-use switch, a layout, a recorded switch, or "no selection record"), sources, status, privacy and memory,
+  and Compare with…. Only what the reply recorded; never a guessed reason, cost or confidence. **Compare with…** opens
+  the composer's one Compare sheet with that reply's own question (the message right before it, refused when that
+  isn't clear or a file isn't on this device), sends nothing until Compare, and leaves the draft and attachments alone.
 - **Pages** (Library, Tools, Router, Projects, Settings) replace the chat and add one history entry; Back (and the
   iOS edge swipe) returns, focus goes back to the opener. Phones: glass Back circle, centred title, contextual + /
   ⋯. Desktop: the sidebar is the navigation; the page title stays visible while scrolling.

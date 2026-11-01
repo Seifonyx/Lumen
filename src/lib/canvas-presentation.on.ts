@@ -52,3 +52,8 @@ export { forgetScreenMemory } from './screen-memory';
 export const CanvasPhoneSections = lazy(() => import('../components/PhoneSections'));
 
 export { useProviderSettingsTarget, clearProviderSettingsTarget } from './provider-settings-target';
+
+// Answer details load on first open (or when the pointer or focus reaches a model name).
+const loadAnswerDetails = () => import('../components/AnswerDetails');
+export const AnswerDetails = lazy(loadAnswerDetails);
+export const prefetchAnswerDetails = () => { void loadAnswerDetails().catch(() => {}); };

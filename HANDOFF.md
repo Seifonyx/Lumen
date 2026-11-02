@@ -16,6 +16,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Next
 
+- [ ] Owner, on the iPhone (PR #97, live): swipe back from Browse all tools opened from + (should slide straight to the
+      chat, no + sheet); a partial swipe let go; a few open/close cycles.
 - [ ] Owner, on the iPhone (PR #95, live): + while typing (the keyboard should leave before the sheet rises); Library
       search with no matches and the keyboard up (Clear search stays visible); several image.jpg rows ("2 of 3 in this
       chat") with VoiceOver; Knowledge empty state. Keyboard states were checked with a stand-in, not iOS.
@@ -72,6 +74,9 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-03 Swiping back from Browse all tools no longer shows the old + sheet (PR #97, merged `0672509`, deployed
+  Canvas): Safari snapshots the previous screen when an entry is pushed, so the picker now opens one painted frame after
+  the + sheet has gone. Suite `picker-back` (Chromium + WebKit). Safari's native swipe itself is not automatable.
 - 2026-11-02 Library and + sheet quality pass (PR #95, merged `11b1da6`, deployed Canvas through the gated Deploy):
   compact no-match state kept above the keyboard, repeated-name cues, Knowledge empty state with one Import, keyboard
   leaves before the + sheet, no stacked sheets on Browse all tools, plain-icon picker with pinned area names.

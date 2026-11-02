@@ -1,0 +1,27 @@
+# In-app suites the Tests workflow also runs in WebKit (Safari engine jobs), besides welcome and layout.
+message-navigation
+hub-actions
+motion-controls
+motion-chat
+chat-menu
+attachment-motion
+visual-animations
+context-recovery
+layout-builder
+selection-boundaries
+fast-route
+auto-intelligence
+catalog-lifecycle
+selection-policy
+routing-priorities
+layout-policies
+model-declarations
+comparison-recovery
+declared-background
+model-picker-accessibility
+ask-chats
+smart-memory
+study
+writing-tools
+deep-research
+tool-card-stability

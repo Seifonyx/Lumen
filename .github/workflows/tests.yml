@@ -1,9 +1,13 @@
 name: Tests
 
-# The repository is public, so GitHub's standard runners cost nothing. Runs are split for speed: the long in-app test runs
-# are spread over 6 machines each (E2E_SHARD, balanced by tests/e2e/timings.json), and Canvas contracts run Chromium and
-# WebKit side by side. Browser jobs run in Playwright's image, so no machine installs browsers or system libraries. Gate jobs keep the original check names. Documentation-only changes skip the run, and a newer
-# push cancels the older run.
+# The repository is public, so GitHub's standard runners cost nothing; they run at most 20 jobs at once, so the long
+# jobs come first in this file. A short plan job decides what each run needs (scripts/ci-plan.mjs): pushes to main and
+# manual runs test everything (Deploy waits for that run to pass), a pull request runs only what its change can affect
+# unless it touches build/test machinery or shared app state. Suites are split across machines by recorded duration
+# (tests/e2e/timings.json). Browser jobs run in Playwright's image, so no machine installs browsers or system
+# libraries; node_modules is restored from a cache keyed by package-lock.json. Gate jobs keep the original check names
+# and pass when every part of their suite passed or had nothing to run. Documentation-only changes skip the run, and a
+# newer push cancels the older run.
 on:
   push:
     branches: [main]
@@ -17,234 +21,63 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  checks:
-    name: Type check, build, unit tests
+  plan:
+    name: Test plan
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm run build
-      - name: Build the Canvas presentation too (what Deploy ships when canvas is chosen)
-        run: npm run build -- --outDir dist-canvas
-        env:
-          LUMEN_CANVAS: '1'
-      - name: Canvas performance budget (startup JS/CSS growth, lazy Routing Center)
-        run: node scripts/canvas-budget.mjs dist dist-canvas
-      - run: npm run test:unit
-
-  in-app-shard:
-    name: In-app tests (Chromium + Firebase emulators) ${{ matrix.shard }}/6
-    runs-on: ubuntu-24.04
-    # Chromium and its system libraries come preinstalled in Playwright's image (same version as package.json): no apt
-    # install, which a slow package mirror once stretched to 11 minutes on some machines.
-    container:
-      image: mcr.microsoft.com/playwright:v1.56.1-noble
-      options: --ipc=host
-    timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4, 5, 6]
-    env:
-      E2E_SHARD: ${{ matrix.shard }}/6
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-      # The Firestore emulator runs on Java.
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 21
-      - uses: actions/cache@v5
-        with:
-          path: ~/.cache/firebase/emulators
-          key: firebase-emulators-15.30.2
-      - run: npm ci
-      - run: npm run build
-      - run: npm run test:e2e:ci
-      - name: Keep screenshots
-        if: failure()
-        uses: actions/upload-artifact@v6
-        with:
-          name: screenshots-${{ matrix.shard }}
-          path: tests/e2e/out
-          if-no-files-found: ignore
-          retention-days: 7
-
-  in-app-canvas-shard:
-    # The same in-app tests against the Canvas build (what Deploy ships when canvas is chosen), for the suites listed in
-    # tests/e2e/canvas-core.txt. The rest still look for the ordinary sidebar; the ordinary build keeps the full run above.
-    name: In-app tests on the Canvas build (Chromium + Firebase emulators) ${{ matrix.shard }}/6
-    runs-on: ubuntu-24.04
-    # Chromium and its system libraries come preinstalled in Playwright's image (same version as package.json): no apt
-    # install, which a slow package mirror once stretched to 11 minutes on some machines.
-    container:
-      image: mcr.microsoft.com/playwright:v1.56.1-noble
-      options: --ipc=host
-    timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4, 5, 6]
-    env:
-      E2E_SHARD: ${{ matrix.shard }}/6
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 21
-      - uses: actions/cache@v5
-        with:
-          path: ~/.cache/firebase/emulators
-          key: firebase-emulators-15.30.2
-      - run: npm ci
-      - name: Build (Canvas presentation)
-        run: npm run build -- --outDir dist-canvas
-        env:
-          LUMEN_CANVAS: '1'
-      - name: Core suites on the Canvas build
-        run: npx --yes firebase-tools@15.30.2 emulators:exec --only auth,firestore --project the-model-router "node scripts/test-e2e.mjs $(grep -v '^#' tests/e2e/canvas-core.txt | tr '\n' ' ')"
-        env:
-          MR_TEST_DIST: dist-canvas
-      - name: Keep screenshots
-        if: failure()
-        uses: actions/upload-artifact@v6
-        with:
-          name: canvas-screenshots-${{ matrix.shard }}
-          path: tests/e2e/out
-          if-no-files-found: ignore
-          retention-days: 7
-
-  webkit-part:
-    # Two machines (about 3 minutes each instead of 6): the first also runs welcome/layout and the tab bar, the long
-    # list below is split by recorded duration (E2E_SHARD, as the in-app jobs).
-    name: Safari engine (WebKit) ${{ matrix.part }}/2
-    runs-on: ubuntu-24.04
-    timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        part: [1, 2]
-    # WebKit and its system libraries come preinstalled in Playwright's image (same version as package.json), so the
-    # job no longer downloads them; that download was where it hung.
-    container:
-      image: mcr.microsoft.com/playwright:v1.56.1-noble
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - id: webkit_build
-        run: npm run build
-      - name: Welcome and responsive layout in WebKit
-        if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' && matrix.part == 1 }}
-        run: npm run test:e2e -- welcome layout
-        env:
-          MR_WEBKIT: '1'
-      - name: WebKit tab bar interactions
-        if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' && matrix.part == 1 }}
-        shell: bash
-        run: |
-          node node_modules/vite/bin/vite.js preview --port 5190 --strictPort > /tmp/vite-webkit.log 2>&1 &
-          preview_pid=$!
-          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
-          node -e "(async()=>{for(let i=0;i<30;i++){try{if((await fetch('http://localhost:5190/')).ok)return}catch{}await new Promise(r=>setTimeout(r,1000))}process.exit(1)})()"
-          node tests/webkit/tabbar.cjs
-      - name: Hub actions, motion and long-chat navigation in WebKit
-        if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' }}
-        run: npm run test:e2e -- message-navigation hub-actions motion-controls motion-chat chat-menu attachment-motion visual-animations context-recovery layout-builder selection-boundaries fast-route auto-intelligence catalog-lifecycle selection-policy routing-priorities layout-policies model-declarations comparison-recovery declared-background model-picker-accessibility ask-chats smart-memory study writing-tools deep-research tool-card-stability
-        env:
-          MR_WEBKIT: '1'
-          E2E_SHARD: ${{ matrix.part }}/2
-          # This suite seeds its own preview account and mocks provider requests.
-          MR_TEST_URL: http://localhost:5190/
-      - name: Keep WebKit evidence
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: webkit-evidence-${{ matrix.part }}
-          include-hidden-files: true
-          path: |
-            tests/e2e/out/webkit-*.png
-            .impeccable/review/*webkit*.png
-          if-no-files-found: ignore
-          retention-days: 7
-
-  canvas-engine:
-    # Three balanced groups per engine (measured 2026-10-23: screens 165 s; composer 90 + routing 58; shell 82 +
-    # browser 36 + the isolation audit), so the slowest machine takes under 3 minutes instead of 7.
-    name: Canvas presentation (${{ matrix.group }}, ${{ matrix.engine }})
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        engine: [Chromium, WebKit]
-        group: [screens-wide, screens-narrow, composer-routing, shell-browser]
-        include:
-          # The screens contract checks each viewport in turn; two machines split them (desktop and largest phone,
-          # then the two smaller phones).
-          - group: screens-wide
-            contracts: canvas-screens
-            viewports: '1440x960,430x932'
-          - group: screens-narrow
-            contracts: canvas-screens
-            viewports: '390x844,320x568'
-          - group: composer-routing
-            contracts: canvas-composer routing-center
-          - group: shell-browser
-            contracts: canvas-shell browser
-    container:
-      image: mcr.microsoft.com/playwright:v1.56.1-noble
-      options: --ipc=host
-    env:
-      QA_BUILD_DIR: /tmp/qa-build
+    timeout-minutes: 5
+    outputs:
+      mode: ${{ steps.plan.outputs.mode }}
+      inapp: ${{ steps.plan.outputs.inapp }}
+      inapp_matrix: ${{ steps.plan.outputs.inapp_matrix }}
+      inapp_n: ${{ steps.plan.outputs.inapp_n }}
+      canvas: ${{ steps.plan.outputs.canvas }}
+      canvas_matrix: ${{ steps.plan.outputs.canvas_matrix }}
+      canvas_n: ${{ steps.plan.outputs.canvas_n }}
+      webkit: ${{ steps.plan.outputs.webkit }}
+      webkit_welcome: ${{ steps.plan.outputs.webkit_welcome }}
+      webkit_tabbar: ${{ steps.plan.outputs.webkit_tabbar }}
+      webkit_matrix: ${{ steps.plan.outputs.webkit_matrix }}
+      webkit_n: ${{ steps.plan.outputs.webkit_n }}
+      phone: ${{ steps.plan.outputs.phone }}
+      phone_matrix: ${{ steps.plan.outputs.phone_matrix }}
+      engine_matrix: ${{ steps.plan.outputs.engine_matrix }}
     steps:
       - uses: actions/checkout@v5
         with:
-          # The isolation audit compares against the commit Canvas activation branched from.
           fetch-depth: 0
-      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Synthetic QA build (same "on" module as production Canvas)
-        run: node scripts/qa/build.mjs --out "$QA_BUILD_DIR"
-      - name: Isolation (ordinary, Canvas production and QA builds)
-        if: matrix.engine == 'Chromium' && matrix.group == 'shell-browser'
-        run: |
-          node tests/security/private-qa-isolation.mjs
-          node tests/security/canvas-build-isolation.mjs
-        env:
-          # Byte equality with the pre-activation release is checked when activation is reviewed, not on every run.
-          QA01_ALLOW_NO_BASELINE: '1'
-      - name: Canvas contracts in ${{ matrix.engine }}
-        run: for t in ${{ matrix.contracts }}; do node tests/security/private-qa-$t.mjs || exit 1; done
-        env:
-          MR_WEBKIT: ${{ matrix.engine == 'WebKit' && '1' || '' }}
-          # PR52 visual review: cover smallest, typical, largest iPhone and desktop.
-          CP05_VIEWPORTS: ${{ matrix.viewports || '1440x960,430x932,390x844,320x568' }}
-          CP04_VIEWPORTS: '1440x960,430x932,390x844,320x568'
-      - name: Phone glass navigation in ${{ matrix.engine }}
-        if: matrix.group == 'shell-browser'
+      - id: plan
+        run: node scripts/ci-plan.mjs
+
+  canvas-phone:
+    # Canvas phone and Router journeys, run directly against the Canvas build three at a time on each machine.
+    name: Canvas presentation (phone ${{ matrix.part }}/${{ matrix.of }}, ${{ matrix.engine }})
+    needs: plan
+    if: needs.plan.outputs.phone_matrix != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.phone_matrix) }}
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - id: deps
+        uses: actions/cache@v5
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-22-${{ hashFiles('package-lock.json') }}
+      - if: steps.deps.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: Phone and Router journeys in ${{ matrix.engine }}
         shell: bash
         run: |
           LUMEN_CANVAS=1 npm run build -- --outDir /tmp/phone-navigation-canvas
@@ -252,28 +85,11 @@ jobs:
           preview_pid=$!
           trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
           node -e "(async()=>{for(let i=0;i<30;i++){try{if((await fetch('http://localhost:5191/')).ok)return}catch{}await new Promise(r=>setTimeout(r,500))}process.exit(1)})()"
-          # Side by side, three at a time (each suite has its own browser and account); this step was the slowest in CI.
-          node scripts/run-parallel.mjs 3 \
-            tests/e2e/feature-exit.cjs \
-            tests/e2e/drawer-reference.cjs \
-            tests/e2e/conversations-projects.cjs \
-            tests/e2e/library-experience.cjs \
-            tests/e2e/tools-experience.cjs \
-            tests/e2e/iphone-glass-navigation.cjs \
-            tests/e2e/search-results.cjs \
-            tests/e2e/answer-details.cjs \
-            tests/e2e/plus-tools.cjs \
-            tests/e2e/routing-providers.cjs \
-            tests/e2e/prism-provider-states.cjs \
-            tests/e2e/provider-settings-containment.cjs \
-            tests/e2e/prism-model-discovery.cjs \
-            tests/e2e/prism-model-states.cjs \
-            tests/e2e/prism-auto-layouts.cjs \
-            tests/e2e/prism-routing-states.cjs \
-            tests/e2e/prism-usage-diagnostics.cjs
+          node scripts/run-parallel.mjs 3 $(for s in ${{ needs.plan.outputs.phone }}; do printf 'tests/e2e/%s.cjs ' "$s"; done)
         env:
           MR_TEST_URL: http://localhost:5191/
           MR_WEBKIT: ${{ matrix.engine == 'WebKit' && '1' || '' }}
+          RUN_SHARD: ${{ matrix.part }}/${{ matrix.of }}
       - name: Stamp screenshot provenance
         if: always()
         run: |
@@ -283,11 +99,10 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: canvas-evidence-${{ matrix.engine }}-${{ matrix.group }}
+          name: canvas-phone-evidence-${{ matrix.engine }}-${{ matrix.part }}
           path: |
             tests/e2e/out/EXACT_HEAD.txt
             tests/e2e/out/phone-navigation/**/*.png
-            tests/e2e/out/phase4/**/*.png
             tests/e2e/out/prism-providers/**/*.png
             tests/e2e/out/provider-wrap/**/*.png
             tests/e2e/out/provider-wrap/**/*.json
@@ -303,46 +118,316 @@ jobs:
             tests/e2e/out/drawer-reference/**/*.json
             tests/e2e/out/conversations-projects/**/*.png
             tests/e2e/out/conversations-projects/**/*.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+  canvas-engine:
+    # Canvas contracts on the synthetic QA build, per group and engine (the screens contract splits its viewports).
+    name: Canvas presentation (${{ matrix.group }}, ${{ matrix.engine }})
+    needs: plan
+    if: needs.plan.outputs.engine_matrix != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.engine_matrix) }}
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
+    env:
+      QA_BUILD_DIR: /tmp/qa-build
+    steps:
+      - uses: actions/checkout@v5
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - id: deps
+        uses: actions/cache@v5
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-22-${{ hashFiles('package-lock.json') }}
+      - if: steps.deps.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: Synthetic QA build (same "on" module as production Canvas)
+        run: node scripts/qa/build.mjs --out "$QA_BUILD_DIR"
+      - name: Canvas contracts in ${{ matrix.engine }}
+        run: for t in ${{ matrix.contracts }}; do node tests/security/private-qa-$t.mjs || exit 1; done
+        env:
+          MR_WEBKIT: ${{ matrix.engine == 'WebKit' && '1' || '' }}
+          # PR52 visual review: cover smallest, typical, largest iPhone and desktop.
+          CP05_VIEWPORTS: ${{ matrix.viewports || '1440x960,430x932,390x844,320x568' }}
+          CP04_VIEWPORTS: '1440x960,430x932,390x844,320x568'
+      - name: Stamp screenshot provenance
+        if: always()
+        run: |
+          mkdir -p tests/e2e/out
+          printf '%s\n' "$GITHUB_SHA" > tests/e2e/out/EXACT_HEAD.txt
+      - name: Keep Canvas visual review screenshots
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: canvas-evidence-${{ matrix.engine }}-${{ matrix.group }}
+          path: |
+            tests/e2e/out/EXACT_HEAD.txt
+            tests/e2e/out/phase4/**/*.png
             tests/e2e/out/cp03/**/*.png
             tests/e2e/out/cp04/**/*.png
             tests/e2e/out/cp05/**/*.png
-          if-no-files-found: warn
+          if-no-files-found: ignore
           retention-days: 7
 
-  # Gates: one check per suite under its original name (what branch protection and reviewers look for), green only when
-  # every machine of that suite passed.
+  in-app-shard:
+    name: In-app tests (Chromium + Firebase emulators) ${{ matrix.shard }}/${{ needs.plan.outputs.inapp_n }}
+    needs: plan
+    if: needs.plan.outputs.inapp_matrix != '[]'
+    runs-on: ubuntu-24.04
+    # Chromium and its system libraries come preinstalled in Playwright's image (same version as package.json): no apt
+    # install, which a slow package mirror once stretched to 11 minutes on some machines.
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.inapp_matrix) }}
+    env:
+      E2E_SHARD: ${{ matrix.shard }}/${{ needs.plan.outputs.inapp_n }}
+      # Empty runs every suite (a full run); otherwise only these.
+      E2E_ONLY: ${{ needs.plan.outputs.inapp }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      # The Firestore emulator runs on Java.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-15.30.2
+      - id: deps
+        uses: actions/cache@v5
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-22-${{ hashFiles('package-lock.json') }}
+      - if: steps.deps.outputs.cache-hit != 'true'
+        run: npm ci
+      - run: npm run build
+      - run: npm run test:e2e:ci
+      - name: Keep screenshots
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: screenshots-${{ matrix.shard }}
+          path: tests/e2e/out
+          if-no-files-found: ignore
+          retention-days: 7
+
+  in-app-canvas-shard:
+    # The same in-app tests against the Canvas build (what Deploy ships when canvas is chosen), for the suites listed in
+    # tests/e2e/canvas-core.txt. The rest still look for the ordinary sidebar; the ordinary build keeps the full run above.
+    name: In-app tests on the Canvas build (Chromium + Firebase emulators) ${{ matrix.shard }}/${{ needs.plan.outputs.canvas_n }}
+    needs: plan
+    if: needs.plan.outputs.canvas_matrix != '[]'
+    runs-on: ubuntu-24.04
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.canvas_matrix) }}
+    env:
+      E2E_SHARD: ${{ matrix.shard }}/${{ needs.plan.outputs.canvas_n }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-15.30.2
+      - id: deps
+        uses: actions/cache@v5
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-22-${{ hashFiles('package-lock.json') }}
+      - if: steps.deps.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: Build (Canvas presentation)
+        run: npm run build -- --outDir dist-canvas
+        env:
+          LUMEN_CANVAS: '1'
+      - name: Core suites on the Canvas build
+        run: npx --yes firebase-tools@15.30.2 emulators:exec --only auth,firestore --project the-model-router "node scripts/test-e2e.mjs ${{ needs.plan.outputs.canvas }}"
+        env:
+          MR_TEST_DIST: dist-canvas
+      - name: Keep screenshots
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: canvas-screenshots-${{ matrix.shard }}
+          path: tests/e2e/out
+          if-no-files-found: ignore
+          retention-days: 7
+
+  webkit-part:
+    # The Safari engine: welcome/layout and the tab bar, then the list in tests/e2e/webkit.txt split by recorded
+    # duration (E2E_SHARD, as the in-app jobs).
+    name: Safari engine (WebKit) ${{ matrix.part }}/${{ needs.plan.outputs.webkit_n }}
+    needs: plan
+    if: needs.plan.outputs.webkit_matrix != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        part: ${{ fromJSON(needs.plan.outputs.webkit_matrix) }}
+    # WebKit and its system libraries come preinstalled in Playwright's image (same version as package.json), so the
+    # job no longer downloads them; that download was where it hung.
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - id: deps
+        uses: actions/cache@v5
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-22-${{ hashFiles('package-lock.json') }}
+      - if: steps.deps.outputs.cache-hit != 'true'
+        run: npm ci
+      - id: webkit_build
+        run: npm run build
+      - name: Welcome and responsive layout in WebKit
+        if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' && matrix.part == 1 && needs.plan.outputs.webkit_welcome != '' }}
+        run: npm run test:e2e -- ${{ needs.plan.outputs.webkit_welcome }}
+        env:
+          MR_WEBKIT: '1'
+      - name: WebKit tab bar interactions
+        if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' && matrix.part == 1 && needs.plan.outputs.webkit_tabbar == 'true' }}
+        shell: bash
+        run: |
+          node node_modules/vite/bin/vite.js preview --port 5190 --strictPort > /tmp/vite-webkit.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          node -e "(async()=>{for(let i=0;i<30;i++){try{if((await fetch('http://localhost:5190/')).ok)return}catch{}await new Promise(r=>setTimeout(r,1000))}process.exit(1)})()"
+          node tests/webkit/tabbar.cjs
+      - name: Hub actions, motion and long-chat navigation in WebKit
+        if: ${{ !cancelled() && steps.webkit_build.outcome == 'success' && needs.plan.outputs.webkit != '' }}
+        run: npm run test:e2e -- ${{ needs.plan.outputs.webkit }}
+        env:
+          MR_WEBKIT: '1'
+          E2E_SHARD: ${{ matrix.part }}/${{ needs.plan.outputs.webkit_n }}
+          # This suite seeds its own preview account and mocks provider requests.
+          MR_TEST_URL: http://localhost:5190/
+      - name: Keep WebKit evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: webkit-evidence-${{ matrix.part }}
+          include-hidden-files: true
+          path: |
+            tests/e2e/out/webkit-*.png
+            .impeccable/review/*webkit*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
+  checks:
+    # Always runs in full: type check, both builds, size budget, unit tests, and the isolation audits.
+    name: Type check, build, unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      QA_BUILD_DIR: /tmp/qa-build
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The isolation audit compares against the commit Canvas activation branched from.
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - id: deps
+        uses: actions/cache@v5
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-22-${{ hashFiles('package-lock.json') }}
+      - if: steps.deps.outputs.cache-hit != 'true'
+        run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Build the Canvas presentation too (what Deploy ships when canvas is chosen)
+        run: npm run build -- --outDir dist-canvas
+        env:
+          LUMEN_CANVAS: '1'
+      - name: Canvas performance budget (startup JS/CSS growth, lazy Routing Center)
+        run: node scripts/canvas-budget.mjs dist dist-canvas
+      - run: npm run test:unit
+      - name: Synthetic QA build for the isolation audit
+        run: node scripts/qa/build.mjs --out "$QA_BUILD_DIR"
+      - name: Isolation (ordinary, Canvas production and QA builds)
+        run: |
+          node tests/security/private-qa-isolation.mjs
+          node tests/security/canvas-build-isolation.mjs
+        env:
+          # Byte equality with the pre-activation release is checked when activation is reviewed, not on every run.
+          QA01_ALLOW_NO_BASELINE: '1'
+
+  # Gates: one check per suite under its original name (what branch protection and reviewers look for). Green when the
+  # plan ran and every part of the suite passed, or the plan gave it nothing to run.
   in-app:
     name: In-app tests (Chromium + Firebase emulators)
-    needs: in-app-shard
+    needs: [plan, in-app-shard]
     if: always()
     runs-on: ubuntu-24.04
-    timeout-minutes: 2
+    # Generous: a trivial gate once took over 2 minutes to start and finish on a busy runner and was cancelled.
+    timeout-minutes: 5
     steps:
-      - run: test "${{ needs.in-app-shard.result }}" = success
+      - run: test "${{ needs.plan.result }}" = success && { test "${{ needs.in-app-shard.result }}" = success || test "${{ needs.in-app-shard.result }}" = skipped; }
 
   in-app-canvas:
     name: In-app tests on the Canvas build (Chromium + Firebase emulators)
-    needs: in-app-canvas-shard
+    needs: [plan, in-app-canvas-shard]
     if: always()
     runs-on: ubuntu-24.04
-    timeout-minutes: 2
+    # Generous: a trivial gate once took over 2 minutes to start and finish on a busy runner and was cancelled.
+    timeout-minutes: 5
     steps:
-      - run: test "${{ needs.in-app-canvas-shard.result }}" = success
+      - run: test "${{ needs.plan.result }}" = success && { test "${{ needs.in-app-canvas-shard.result }}" = success || test "${{ needs.in-app-canvas-shard.result }}" = skipped; }
 
   canvas:
     name: Canvas presentation (isolation and contracts, Chromium + WebKit)
-    needs: canvas-engine
+    needs: [plan, checks, canvas-engine, canvas-phone]
     if: always()
     runs-on: ubuntu-24.04
-    timeout-minutes: 2
+    # Generous: a trivial gate once took over 2 minutes to start and finish on a busy runner and was cancelled.
+    timeout-minutes: 5
     steps:
-      - run: test "${{ needs.canvas-engine.result }}" = success
+      - run: |
+          test "${{ needs.plan.result }}" = success && test "${{ needs.checks.result }}" = success
+          for r in "${{ needs.canvas-engine.result }}" "${{ needs.canvas-phone.result }}"; do test "$r" = success || test "$r" = skipped; done
 
   webkit:
     name: Safari engine (WebKit)
-    needs: webkit-part
+    needs: [plan, webkit-part]
     if: always()
     runs-on: ubuntu-24.04
-    timeout-minutes: 2
+    # Generous: a trivial gate once took over 2 minutes to start and finish on a busy runner and was cancelled.
+    timeout-minutes: 5
     steps:
-      - run: test "${{ needs.webkit-part.result }}" = success
+      - run: test "${{ needs.plan.result }}" = success && { test "${{ needs.webkit-part.result }}" = success || test "${{ needs.webkit-part.result }}" = skipped; }

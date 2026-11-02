@@ -1,0 +1,19 @@
+# Suites the Tests workflow runs directly against the Canvas build (Canvas presentation (phone, …) jobs), side by side.
+# They need no emulators. Add a suite here once it passes there.
+feature-exit
+drawer-reference
+conversations-projects
+library-experience
+tools-experience
+iphone-glass-navigation
+search-results
+answer-details
+plus-tools
+routing-providers
+prism-provider-states
+provider-settings-containment
+prism-model-discovery
+prism-model-states
+prism-auto-layouts
+prism-routing-states
+prism-usage-diagnostics

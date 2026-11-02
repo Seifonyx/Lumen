@@ -20,6 +20,9 @@ export default function AttachSheet(p:Props){
  useSheetDrag(ref,p.onClose,!p.anchor);
  const backdrop=useRef<HTMLDivElement>(null);
  // Handing over to Browse all tools: this sheet leaves at once, so the picker never rises over a fading copy of it.
+ // The picker opens (and adds its history entry) only after a frame without this sheet has been painted: Safari's back
+ // swipe slides over a snapshot of the previous entry taken at that moment, which must be the chat, not this sheet.
+ const openToolsAfterPaint=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>window.dispatchEvent(new CustomEvent('mr:library',{detail:'tools-page'}))));
  const [handoff,setHandoff]=useState(false);
  useExit(backdrop,'fade',[['.sheet',p.anchor?'drop':'sheet']],!handoff);
  // preventScroll: focusing the first control must not scroll the sheet's own content past its top.
@@ -53,7 +56,7 @@ export default function AttachSheet(p:Props){
   {p.onResearch&&quick('Deep research',<Telescope size={18}/>,p.onResearch,'gemini')}
   {quick('Create image',<ImageIcon size={18}/>,p.onImage,'image')}
   {quick('Document canvas',<Pencil size={18}/>,p.onCanvas)}
-  <button type="button" className="sheet-row all-tools" aria-haspopup="dialog" onClick={()=>{flushSync(()=>setHandoff(true));window.dispatchEvent(new CustomEvent('mr:library',{detail:'tools-page'}));p.onClose();}}><LayoutGrid size={18}/><span>Browse all tools</span><ChevronRight size={16}/></button>
+  <button type="button" className="sheet-row all-tools" aria-haspopup="dialog" onClick={()=>{flushSync(()=>setHandoff(true));p.onClose();openToolsAfterPaint();}}><LayoutGrid size={18}/><span>Browse all tools</span><ChevronRight size={16}/></button>
  </div>
  </>:<>
  <div className="sheet-grab" aria-hidden="true"/>

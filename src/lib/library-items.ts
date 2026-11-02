@@ -40,3 +40,15 @@ export function availability(file: Attachment) {
   if (file.thumb) return 'Preview only · original unavailable here';
   return 'Original not loaded on this device';
 }
+/** A row's few words on what is here, said only when it is less than the original (the detail view has the rest). */
+export function availabilityShort(file: Attachment) {
+  if (file.data || file.stored) return '';
+  if (file.text) return 'Text only';
+  if (file.thumb) return 'Preview only';
+  return 'Not on this device';
+}
+/** The extension a file tile shows ("PDF", "CSV"), or nothing when the name has none worth showing. */
+export function extensionOf(name: string) {
+  const ext = /\.([a-z0-9]{1,5})$/i.exec(name)?.[1];
+  return ext ? ext.toUpperCase() : '';
+}

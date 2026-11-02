@@ -11,13 +11,14 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 ## Now
 
 - **Branch:** none in progress. Start new work on a branch from `origin/main`.
-- **Task:** none. Library + Tools-in-+ (PR #86) and its density pass (PR #88) shipped.
+- **Task:** none. Library + Tools-in-+ (PR #86), its density pass (PR #88) and the quality pass (PR #95) shipped.
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next
 
-- [ ] Owner, on the iPhone (PR #86 + #88, live): the shorter + sheet (no title, flat rows) fits without scrolling;
-      Browse all tools keeps search and one row of areas above the keyboard; Library rows read well with VoiceOver.
+- [ ] Owner, on the iPhone (PR #95, live): + while typing (the keyboard should leave before the sheet rises); Library
+      search with no matches and the keyboard up (Clear search stays visible); several image.jpg rows ("2 of 3 in this
+      chat") with VoiceOver; Knowledge empty state. Keyboard states were checked with a stand-in, not iOS.
 - [ ] Owner to confirm on the iPhone (PR #77, live): tapping the model and Expand while writing keeps the chat and
       opens them; the top fade is no longer a band. Neither reproduced in Chromium or WebKit emulation; the fix targets
       Safari's late blur/click order and `composer.cjs` replays it. If it still happens, get a screen recording.
@@ -71,6 +72,9 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-02 Library and + sheet quality pass (PR #95, merged `11b1da6`, deployed Canvas through the gated Deploy):
+  compact no-match state kept above the keyboard, repeated-name cues, Knowledge empty state with one Import, keyboard
+  leaves before the + sheet, no stacked sheets on Browse all tools, plain-icon picker with pinned area names.
 - 2026-11-02 Fastest tests (PR #90, #92, #93): a Test plan job (`scripts/ci-plan.mjs`) runs only affected tests on
   pull requests (about 2 min for a small change when CI is idle) and everything on `main` (about 9 min, was 16–17);
   Deploy's gate (`scripts/wait-for-tests.mjs`) waited for and checked that run on `a6bd6a6`. Locally,

@@ -1,6 +1,7 @@
 import { useExit } from '../lib/motion';
 import { FolderGit2, Images, Image as ImageIcon, Camera, Pencil, ChartNoAxesCombined, Columns2, Globe, Telescope, MessageSquareText, PlayCircle, LayoutGrid, FolderKanban, ChevronRight, Paperclip } from 'lucide-react';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import { useFocusScope } from '../lib/focus-scope';
 import { CANVAS_SHELL, prefetchPlace } from '../lib/canvas-presentation';
 import { useStore } from '../store';
@@ -18,7 +19,9 @@ export default function AttachSheet(p:Props){
  useFocusScope(ref,true,p.onClose);
  useSheetDrag(ref,p.onClose,!p.anchor);
  const backdrop=useRef<HTMLDivElement>(null);
- useExit(backdrop,'fade',[['.sheet',p.anchor?'drop':'sheet']]);
+ // Handing over to Browse all tools: this sheet leaves at once, so the picker never rises over a fading copy of it.
+ const [handoff,setHandoff]=useState(false);
+ useExit(backdrop,'fade',[['.sheet',p.anchor?'drop':'sheet']],!handoff);
  // preventScroll: focusing the first control must not scroll the sheet's own content past its top.
  useEffect(()=>{ref.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus({preventScroll:true});},[]);
  useEffect(()=>{if(!p.anchor)return;const close=()=>p.onClose();window.addEventListener('resize',close);return()=>window.removeEventListener('resize',close);},[p.anchor,p.onClose]);
@@ -46,11 +49,11 @@ export default function AttachSheet(p:Props){
   <button type="button" className="sheet-row" onClick={pick(p.onRepo)}><FolderGit2 size={18}/><span>GitHub repository</span>{p.repoName&&<span className="attach-menu-meta" dir="auto">{p.repoName}</span>}</button>
  </div>
  <div className="attach-menu-group" role="group" aria-labelledby="attach-tools-title">
-  <p className="attach-menu-title" id="attach-tools-title">Tools</p>
+  <p className="attach-menu-title sr-only" id="attach-tools-title">Tools</p>
   {p.onResearch&&quick('Deep research',<Telescope size={18}/>,p.onResearch,'gemini')}
   {quick('Create image',<ImageIcon size={18}/>,p.onImage,'image')}
   {quick('Document canvas',<Pencil size={18}/>,p.onCanvas)}
-  <button type="button" className="sheet-row all-tools" aria-haspopup="dialog" onClick={pick(()=>window.dispatchEvent(new CustomEvent('mr:library',{detail:'tools-page'})))}><LayoutGrid size={18}/><span>Browse all tools</span><ChevronRight size={16}/></button>
+  <button type="button" className="sheet-row all-tools" aria-haspopup="dialog" onClick={()=>{flushSync(()=>setHandoff(true));window.dispatchEvent(new CustomEvent('mr:library',{detail:'tools-page'}));p.onClose();}}><LayoutGrid size={18}/><span>Browse all tools</span><ChevronRight size={16}/></button>
  </div>
  </>:<>
  <div className="sheet-grab" aria-hidden="true"/>

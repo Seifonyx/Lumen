@@ -204,6 +204,23 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
     if (!isTouch()) input.current?.focus();
   }, [currentId]);
 
+  // Canvas phones: + while typing lets the keyboard go first and raises the sheet once it has (or after 450 ms), so the
+  // keyboard, the message box and the sheet never share the screen. The draft stays as it is.
+  // Whether the message box had focus when + was pressed (the press itself may move focus before the click).
+  const typingAtPress = useRef(false);
+  const openAddSheet = () => {
+    const el = input.current, root = document.documentElement;
+    const typing = typingAtPress.current || document.activeElement === el;
+    typingAtPress.current = false;
+    if (!el || !typing || !root.classList.contains('kb-open')) { setSheet(true); return; }
+    let opened = false;
+    const open = () => { if (opened) return; opened = true; watch.disconnect(); clearTimeout(timer); setSheet(true); };
+    const watch = new MutationObserver(() => { if (!root.classList.contains('kb-open')) open(); });
+    watch.observe(root, { attributes: true, attributeFilter: ['class'] });
+    const timer = setTimeout(open, 450);
+    el.blur();
+  };
+
   // Tools share the composer's existing setup and draft instead of sending on launch.
   useEffect(() => {
     const onMode = (e: Event) => {
@@ -558,7 +575,7 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
           <input ref={fileInput} type="file" multiple hidden accept={ACCEPT} onChange={(e) => { void addFiles([...(e.target.files || [])]); e.target.value = ''; }} />
           {touch ? (
             <>
-              <button type="button" className={`tool-btn${chat?.repo ? ' on-repo' : ''}`} onClick={() => setSheet(true)} aria-label="Add photos, files or a repository" aria-haspopup="dialog">
+              <button type="button" className={`tool-btn${chat?.repo ? ' on-repo' : ''}`} onPointerDownCapture={() => { typingAtPress.current = document.activeElement === input.current; }} onClick={CANVAS_COMPOSER ? openAddSheet : () => setSheet(true)} aria-label="Add photos, files or a repository" aria-haspopup="dialog">
                 <Plus size={22} />
               </button>
             </>

@@ -103,3 +103,32 @@
 @keyframes tp-sheet { from { transform: translateY(100%); } }
 @media (prefers-reduced-motion: reduce) { .tool-picker-layer, .tool-picker { animation: none; } }
 @media (forced-colors: active) { .tool-picker { border: 1px solid CanvasText; } .tp-keys { border: 1px solid CanvasText; } }
+
+/* Density pass (2026-11-02, from the owner's iPhone screenshots): a lower header, one row of areas that scrolls on
+   phones, and rows of a name plus one short line. Metadata appears only when it changes what a tap does. */
+.tp-head { padding-block: 8px 2px; }
+.tp-head h2 { font-size: 17px; }
+.tp-top { gap: 8px; padding-bottom: 10px; }
+.app[data-lumen-canvas-shell] .tp-top .tx-search { min-height: 40px; }
+.app[data-lumen-canvas-shell] .tp-top .tx-search input { outline: none; border: 0; box-shadow: none; -webkit-appearance: none; appearance: none; padding: 0; min-height: 0; height: 38px; }
+.app[data-lumen-canvas-shell] .tp-top .tx-areas button { min-height: 36px; padding: 0 12px; font-size: 14px; }
+.tp-scroll { gap: 14px; padding-top: 10px; }
+.app[data-lumen-canvas-shell] .tp-scroll .tx-group { gap: 4px; }
+.app[data-lumen-canvas-shell] .tp-scroll .tx-hit { gap: 12px; min-height: 52px; padding: 9px 12px; align-items: center; }
+.app[data-lumen-canvas-shell] .tp-scroll .tx-icon { width: 30px; height: 30px; margin: 0; }
+.app[data-lumen-canvas-shell] .tp-scroll .tx-name { font-size: 15.5px; }
+.app[data-lumen-canvas-shell] .tp-scroll .tx-text { font-size: 13.5px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.app[data-lumen-canvas-shell] .tp-scroll .tx-meta { margin-top: 2px; }
+.app[data-lumen-canvas-shell] .tp-scroll .tx-row + .tx-row::before { left: 54px; }
+.app[data-lumen-canvas-shell] .tp-scroll .tx-side { width: 48px; }
+.tp-keys { padding: 6px 4px 6px 12px; font-size: 13px; }
+.tp-keys p { flex-basis: 160px; }
+@media (max-width: 899px) {
+  .app[data-lumen-canvas-shell] .tp-top .tx-areas { flex-wrap: nowrap; overflow-x: auto; margin-inline: -16px; padding-inline: 16px; scroll-padding-inline: 16px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .app[data-lumen-canvas-shell] .tp-top .tx-areas::-webkit-scrollbar { display: none; }
+  .app[data-lumen-canvas-shell] .tp-top .tx-areas[data-more~='end'] { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); }
+  .app[data-lumen-canvas-shell] .tp-top .tx-areas[data-more='start'] { -webkit-mask-image: linear-gradient(90deg, transparent, #000 40px); mask-image: linear-gradient(90deg, transparent, #000 40px); }
+  .app[data-lumen-canvas-shell] .tp-top .tx-areas[data-more='start end'] { -webkit-mask-image: linear-gradient(90deg, transparent, #000 32px, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(90deg, transparent, #000 32px, #000 calc(100% - 40px), transparent); }
+  .tool-picker-layer.is-sheet .tp-head { padding: 0 6px 0 18px; }
+}
+@media (forced-colors: active) { .app[data-lumen-canvas-shell] .tp-top .tx-areas { -webkit-mask-image: none; mask-image: none; } }

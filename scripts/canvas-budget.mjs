@@ -60,7 +60,9 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // (attach tiles, chat context, three quick tools with honest key states, Browse all tools; measured 15.0 KB gz);
 // canvasCss 28 → 29.5 for its styles in canvas-screens.css and the section-rail fade (measured 28.9). The picker itself
 // and the Library ledger load with their own lazy chunks; startup CSS stays within 19.5.
-const BUDGET = { startupJs: 15.5, startupCss: 19.5, routingCenter: 9, canvasCss: 29.5 };
+// + sheet density pass (owner, 2026-11-02): startupCss 19.5 → 20 for the compact iPhone + sheet (flat rows, short tiles,
+// screen-height cap) that overrides the shared glass card styles (measured 19.5).
+const BUDGET = { startupJs: 15.5, startupCss: 20, routingCenter: 9, canvasCss: 29.5 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

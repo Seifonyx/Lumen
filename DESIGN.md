@@ -88,12 +88,14 @@ dark mode).
 - **Composer:** + menu · model chip · active chips · context ring · dictate · Send / voice. One stable layout per
   breakpoint: desktop has two rows (text above, controls below) at all times; phones keep + · text · dictate · talk at
   rest and show the model only while writing. The model picker and menus stay inside the viewport.
-- **+ menu** (Canvas, owner decision 2026-11-02): phones Camera · Photos · Files tiles (computers: Files and images);
+- **+ menu** (Canvas, owner decision 2026-11-02): phones get a short sheet with no title, compact Camera · Photos · Files
+  tiles and flat rows on the sheet (no cards inside it) (computers: Files and images);
   this chat: Web search (switch), Project, GitHub repository; Tools: Deep research, Create image, Document canvas (a
   missing key says "Needs key" and opens key setup), then **Browse all tools**. Tools is no longer a sidebar place.
 - **Browse all tools** (`ToolsWorkspace.tsx`, opened as `page: 'tools'`/`'assistants'` so Back, Forward, ⌘⇧L, the
   command palette and `mr:library` `tools-page` all land on it): a searchable picker over the chat, a large sheet on
-  phones and a centred panel on computers, with All · Research · Create · Analyze · Learn · Assistants. Every former
+  phones and a centred panel on computers, with All · Research · Create · Analyze · Learn · Assistants (one scrolling row on
+  phones). Rows are a name and one short line; metadata only for a missing key or "In replies". Every former
   Tools action is here; choosing one closes the picker in the same history step; the draft is kept.
 - **Under a reply:** model name, Copy, Regenerate, Retry with another model, ⋯ (Read aloud, Share, Save as Word, Edit
   in canvas, Select text, Compare with…). Icons with tooltips/labels, one style. On Canvas the model name opens **Answer

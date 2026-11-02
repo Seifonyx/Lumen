@@ -34,7 +34,8 @@ const sizes={320:568,390:844,430:932,1280:800,1440:960};
  try{for(const width of widths)for(const theme of themes){
   const phone=width<900;
   const open=async({chats=exports.fixture,keys={}}={})=>{
-   const ctx=await browser.newContext({viewport:{width,height:sizes[width]||900},hasTouch:phone,isMobile:false,reducedMotion:'reduce',colorScheme:theme});
+   // Phones run as an iPhone (Safari user agent, touch, mobile viewport), so the app applies its iPhone glass look.
+   const ctx=await browser.newContext({viewport:{width,height:sizes[width]||900},hasTouch:phone,isMobile:phone&&process.env.SHOTS_ENGINE!=='webkit'?true:false,reducedMotion:'reduce',colorScheme:theme,...(phone?{userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1'}:{})});
    await ctx.addInitScript(()=>{if(window.top===window&&'serviceWorker'in navigator)navigator.serviceWorker.register=()=>Promise.reject(new Error('Disabled for synthetic QA'))});
    await ctx.route('**/*',r=>new URL(r.request().url()).origin===new URL(base).origin?r.continue():r.abort());
    await profile(ctx,'preview-redesign',theme,{projects,assistants},keys);
@@ -53,6 +54,8 @@ const sizes={320:568,390:844,430:932,1280:800,1440:960};
    if(want('library-search')){await page.locator('input[type=search]:visible').first().fill('quarterly forecast');await shot(page,'library-noresults');await page.locator('input[type=search]:visible').first().fill('');}
    if(want('knowledge')){await library(page,'knowledge');await shot(page,'knowledge');}
    if(want('tools')){await page.goto(base);await page.locator('.composer textarea').waitFor({state:'attached'});await tools(page);await shot(page,'tools');}
+   // Keyboard open: the picker's search focused with the visible viewport cut to what an iPhone keyboard leaves.
+   if(want('tools-keyboard')&&phone){const s=page.locator('.tool-picker input[type=search], .hub-page input[type=search]').first();await s.focus();await s.fill('re');const h=Math.round(sizes[width]*0.56);await page.evaluate(h=>{document.documentElement.style.setProperty('--vv-h',h+'px');document.documentElement.classList.add('kb-open')},h);await page.waitForTimeout(200);await page.screenshot({path:path.join(out,`${width}-${theme}-tools-keyboard.png`),clip:{x:0,y:0,width,height:h},animations:'disabled'});}
    await ctx.close();}
   if(want('empty')){const {ctx,page}=await open({chats:[]});await library(page,'collection');await shot(page,'library-empty');await ctx.close();}
   if(want('nokeys')){const {ctx,page}=await open({keys:{geminiKey:''}});await tools(page);await shot(page,'tools-nokeys');await ctx.close();}

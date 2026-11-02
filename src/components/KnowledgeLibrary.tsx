@@ -14,6 +14,7 @@ import {
   type KnowledgeSession,
 } from "../lib/knowledge/engine";
 import { prepareTool } from "./Composer";
+import { CANVAS_SHELL } from "../lib/canvas-presentation";
 import { uid } from "../lib/util";
 import Modal from "./Modal";
 import KnowledgeSourceView from "./KnowledgeSourceView";
@@ -414,7 +415,15 @@ export default function KnowledgeLibrary({ onClose, filter = '' }: { onClose: ()
         {loadingLibrary && (
           <SkeletonRows rows={3} label="Opening your library" />
         )}
-        {!loadingLibrary && !docs.length && !importing && (
+        {!loadingLibrary && !docs.length && !importing && (CANVAS_SHELL ? (
+          // Canvas: one short block with the one action. Formats, where documents live and offline search are said
+          // once here, indexing in the disclosure below; the page note and the Import row hide while it is empty.
+          <div className="knowledge-empty knowledge-empty-v2">
+            <h3>Your references, in one place</h3>
+            <p className="muted">PDF, text or Markdown, up to 75 MB each. Keyword search works offline right away. Kept only on this device, not synced to your account.</p>
+            <button className="btn primary" disabled={busy} onClick={() => input.current?.click()}><Plus size={16} />Import documents</button>
+          </div>
+        ) : (
           <div className="knowledge-empty">
             <FileText size={24} />
             <h3>Your references, in one place</h3>
@@ -423,7 +432,7 @@ export default function KnowledgeLibrary({ onClose, filter = '' }: { onClose: ()
               immediately and offline; optional indexing adds search by meaning.
             </p>
           </div>
-        )}
+        ))}
         {docs.filter((doc) => !filter.trim() || doc.name.toLowerCase().includes(filter.trim().toLowerCase())).map((doc) => (
           <div className="knowledge-document" key={doc.id}>
             <label className="knowledge-document-label">

@@ -88,8 +88,9 @@ dark mode).
 - **Composer:** + menu · model chip · active chips · context ring · dictate · Send / voice. One stable layout per
   breakpoint: desktop has two rows (text above, controls below) at all times; phones keep + · text · dictate · talk at
   rest and show the model only while writing. The model picker and menus stay inside the viewport.
-- **+ menu** (Canvas, owner decision 2026-11-02): phones get a short sheet with no title, compact Camera · Photos · Files
-  tiles and flat rows on the sheet (no cards inside it) (computers: Files and images);
+- **+ menu** (Canvas, owner decision 2026-11-02): phones get a short sheet with no title, one row of compact Camera ·
+  Photos · Files buttons and flat rows on the sheet, groups split by a hairline (computers: Files and images); + while
+  typing lets the keyboard close before the sheet rises;
   this chat: Web search (switch), Project, GitHub repository; Tools: Deep research, Create image, Document canvas (a
   missing key says "Needs key" and opens key setup), then **Browse all tools**. Tools is no longer a sidebar place.
 - **Browse all tools** (`ToolsWorkspace.tsx`, opened as `page: 'tools'`/`'assistants'` so Back, Forward, ⌘⇧L, the
@@ -112,7 +113,9 @@ dark mode).
   fades at the end with more), search, sort and project selects on one line, bottom search on phones. Rows lead with
   the name; a tile shows the photo, the extension or a document mark; the second line says Made by Lumen and limited
   availability (Text only, Preview only, Not on this device) only when true; computers show From and Added columns.
-  Knowledge has one Import (inside Knowledge) and says it is kept only on this device.  **Router:** models, providers (keys live on each provider page), routing, layouts, activity.
+  A name repeated within one chat says which it is ("2 of 3 in this chat"); names are never changed. No matches: a
+  short block with Clear search, kept above the keyboard. Knowledge has one Import (inside Knowledge; the empty state's
+  button) and says it is kept only on this device.  **Router:** models, providers (keys live on each provider page), routing, layouts, activity.
   **Settings:** General, Connectors, Personalization, Memory, Scheduled tasks, Privacy & data.
 - **Control owners:** native `select` (glass enhancement on iPhone) and `ModelPicker` for models; native date
   inputs; toasts through the store queue (`Toasts.tsx`), important field errors inline; dialogs share focus

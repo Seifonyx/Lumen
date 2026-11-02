@@ -11,13 +11,13 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 ## Now
 
 - **Branch:** none in progress. Start new work on a branch from `origin/main`.
-- **Task:** none. The Library redesign and Tools-in-+ shipped (PR #86).
+- **Task:** none. Library + Tools-in-+ (PR #86) and its density pass (PR #88) shipped.
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next
 
-- [ ] Owner, on the iPhone (PR #86, live): + shows Camera · Photos · Files, this chat, three tools and Browse all
-      tools; the picker sheet keeps its search above the keyboard; Library rows read well with VoiceOver.
+- [ ] Owner, on the iPhone (PR #86 + #88, live): the shorter + sheet (no title, flat rows) fits without scrolling;
+      Browse all tools keeps search and one row of areas above the keyboard; Library rows read well with VoiceOver.
 - [ ] Owner to confirm on the iPhone (PR #77, live): tapping the model and Expand while writing keeps the chat and
       opens them; the top fade is no longer a band. Neither reproduced in Chromium or WebKit emulation; the fix targets
       Safari's late blur/click order and `composer.cjs` replays it. If it still happens, get a screen recording.
@@ -68,6 +68,9 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-02 + sheet and Browse all tools density pass (PR #88, merged `e4ee271`, deployed Canvas), from the owner's
+  iPhone screenshots: untitled short + sheet with flat rows, one scrolling row of areas, name + one short line per tool.
+  Startup CSS budget 20 KB gz. `redesign-shots.cjs` now emulates an iPhone (glass) and captures the keyboard-open picker.
 - 2026-11-02 Library redesign and Tools in the composer's + (PR #86, merged `55a1bec`, deployed Canvas): Tools left the
   sidebar, drawer and rail; + has attach, this chat, Deep research / Create image / Document canvas (missing key →
   key setup) and Browse all tools, a searchable picker (`ToolsWorkspace.tsx`, still `page: 'tools'`). Choosing a tool

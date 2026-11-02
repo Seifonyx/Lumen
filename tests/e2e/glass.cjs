@@ -64,7 +64,7 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
       const leave=async()=>{await page.locator('.phone-navigation [aria-label^="Return to "]').click();await page.locator('.hub-page').waitFor({state:'detached'});};
       await enter('projects');assert.equal(await page.locator('.glass-tabbar').count(),0);
       assert.equal(await page.locator('.phone-navigation').getByRole('button',{name:'New project',exact:true}).count(),1);await leave();
-      await enter('tools-page');assert.equal(await page.locator('.glass-tabbar').count(),0);
+      await page.evaluate(()=>window.dispatchEvent(new CustomEvent('mr:library',{detail:'tools-page'})));await page.locator('.tool-picker').waitFor();assert.equal(await page.locator('.glass-tabbar').count(),0);
       await page.getByRole('searchbox',{name:'Search tools'}).fill('research');
       assert.ok(await page.getByRole('button',{name:/Deep research/}).isVisible(),'search reaches capabilities across categories');
       await page.getByRole('searchbox',{name:'Search tools'}).fill('');
@@ -72,7 +72,7 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
       const model=page.locator('select[aria-label="Assistant model"]');await model.tap();
       await page.locator('.glass-select-menu [role="option"]').nth(1).click();
       assert.equal(await model.inputValue(),'gemini:gemini-flash-latest');
-      await page.goBack();await page.getByRole('searchbox',{name:'Search tools'}).waitFor();await leave();
+      await page.goBack();await page.getByRole('searchbox',{name:'Search tools'}).waitFor();await page.getByRole('button',{name:'Close tools',exact:true}).click();await page.locator('.tool-picker').waitFor({state:'detached'});
       await enter('collection');assert.equal(await page.locator('.glass-tabbar').count(),0);
       await selectLibraryType(page,'Photos');
       assert.ok(await page.locator('.phone-navigation').getByRole('button',{name:'Add photos',exact:true}).isVisible());
@@ -248,7 +248,7 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     const desk = await ctx.newPage();
     await desk.goto(URL); await desk.waitForSelector('.composer textarea');
     await desk.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tools-page' })));
-    await desk.waitForSelector('.hub-page');
+    await desk.waitForSelector('.hub-page, .tool-picker');
     assert.equal(await desk.evaluate(() => document.documentElement.classList.contains('glass')), false);
     assert.equal(await desk.locator('.glass-tabbar').count(), 0, 'no tab bar on computers');
     console.log('PASS computers keep their look');

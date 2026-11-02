@@ -1,4 +1,5 @@
 const {selectLibraryType}=require('./helpers/ui.cjs');
+const { openTools } = require('./helpers/plus.cjs');
 // Real Canvas shell, synthetic identity and intercepted model discovery. No provider inference.
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -50,8 +51,8 @@ const {profile,seed}=require('./helpers/preview-profile.cjs');
  assert.equal(await page.locator('.glass-tabbar').count(),0);
  await page.goBack();await page.locator('.composer textarea').waitFor();await page.goForward();
  assert.equal(await page.getByRole('searchbox',{name:'Search your library'}).inputValue(),'Remember this filter');
- await page.goBack();await drawer();await page.locator('aside.cv-nav').getByRole('button',{name:'Tools',exact:true}).click();
- await page.locator('.hub-page').waitFor();assert.deepEqual((await new AxeBuilder({page}).include('.hub-page').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})),[]);
+ await page.goBack();await drawer();assert.equal(await page.locator('aside.cv-nav').getByRole('button',{name:'Tools',exact:true}).count(),0,'Tools is not a drawer place');await page.keyboard.press('Escape');await openTools(page);
+ await page.locator('.tool-picker').waitFor();assert.deepEqual((await new AxeBuilder({page}).include('.tool-picker').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})),[]);
  await page.getByRole('searchbox',{name:'Search tools'}).fill('Study');
 
  assert.equal(await page.locator('.glass-tabbar').count(),0);

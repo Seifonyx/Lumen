@@ -10,8 +10,9 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start new work on a branch from `origin/main`.
-- **Task:** none. UX plan items #1 (search) and #3 (Answer details + Compare with…) shipped; #2, #4, #5 wait for the owner.
+- **Branch:** `design/library-tools-plus` (owner-selected design, 2026-11-02): Library redesign and Tools moved from the
+  sidebar into the composer's + (three quick tools + Browse all tools, a searchable picker). Canvas only; the ordinary
+  build keeps its Tools page. Release under standing authority once exact-head CI is green.
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next

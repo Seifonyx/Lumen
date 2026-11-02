@@ -75,7 +75,7 @@ dark mode).
 
 ## Layout and ownership (one place for each thing)
 
-- **Sidebar (desktop) / drawer (phone):** wordmark · Search · Library · Tools · Router · Projects tree · Conversations
+- **Sidebar (desktop) / drawer (phone):** wordmark · Search · Library · Router · Projects tree · Conversations
   · New chat + avatar (opens Settings). Collapsed desktop sidebar is a 60 px rail. The highlight always follows the
   page on screen.
 - **Conversation search** is the drawer's Search (Jump to, ⌘/Ctrl K, is its keyboard shortcut, with the same chats from
@@ -88,8 +88,13 @@ dark mode).
 - **Composer:** + menu · model chip · active chips · context ring · dictate · Send / voice. One stable layout per
   breakpoint: desktop has two rows (text above, controls below) at all times; phones keep + · text · dictate · talk at
   rest and show the model only while writing. The model picker and menus stay inside the viewport.
-- **+ menu:** Files and images, Web search (switch), Project, GitHub repository; Tools: Deep research, Document
-  canvas, Data analysis, Create image, Compare models, Saved prompts, Quick tools, All tools.
+- **+ menu** (Canvas, owner decision 2026-11-02): phones Camera · Photos · Files tiles (computers: Files and images);
+  this chat: Web search (switch), Project, GitHub repository; Tools: Deep research, Create image, Document canvas (a
+  missing key says "Needs key" and opens key setup), then **Browse all tools**. Tools is no longer a sidebar place.
+- **Browse all tools** (`ToolsWorkspace.tsx`, opened as `page: 'tools'`/`'assistants'` so Back, Forward, ⌘⇧L, the
+  command palette and `mr:library` `tools-page` all land on it): a searchable picker over the chat, a large sheet on
+  phones and a centred panel on computers, with All · Research · Create · Analyze · Learn · Assistants. Every former
+  Tools action is here; choosing one closes the picker in the same history step; the draft is kept.
 - **Under a reply:** model name, Copy, Regenerate, Retry with another model, ⋯ (Read aloud, Share, Save as Word, Edit
   in canvas, Select text, Compare with…). Icons with tooltips/labels, one style. On Canvas the model name opens **Answer
   details** (`src/components/AnswerDetails.tsx`, rules in `src/lib/answer-details.ts`; a popover on computers, a sheet
@@ -98,12 +103,14 @@ dark mode).
   and Compare with…. Only what the reply recorded; never a guessed reason, cost or confidence. **Compare with…** opens
   the composer's one Compare sheet with that reply's own question (the message right before it, refused when that
   isn't clear or a file isn't on this device), sends nothing until Compare, and leaves the draft and attachments alone.
-- **Pages** (Library, Tools, Router, Projects, Settings) replace the chat and add one history entry; Back (and the
+- **Pages** (Library, Router, Projects, Settings, Study) replace the chat and add one history entry; Back (and the
   iOS edge swipe) returns, focus goes back to the opener. Phones: glass Back circle, centred title, contextual + /
   ⋯. Desktop: the sidebar is the navigation; the page title stays visible while scrolling.
-- **Library:** content tabs (Everything, Documents, Photos, Attached files, Made by Lumen, Knowledge), search + one
-  filter dropdown (`FilterMenu`), bottom search on phones. **Tools:** searchable index grouped by area with key
-  readiness. **Router:** models, providers (keys live on each provider page), routing, layouts, activity.
+- **Library:** content tabs (Everything, Documents, Photos, Attached files, Made by Lumen, Knowledge; the phone rail
+  fades at the end with more), search, sort and project selects on one line, bottom search on phones. Rows lead with
+  the name; a tile shows the photo, the extension or a document mark; the second line says Made by Lumen and limited
+  availability (Text only, Preview only, Not on this device) only when true; computers show From and Added columns.
+  Knowledge has one Import (inside Knowledge) and says it is kept only on this device.  **Router:** models, providers (keys live on each provider page), routing, layouts, activity.
   **Settings:** General, Connectors, Personalization, Memory, Scheduled tasks, Privacy & data.
 - **Control owners:** native `select` (glass enhancement on iPhone) and `ModelPicker` for models; native date
   inputs; toasts through the store queue (`Toasts.tsx`), important field errors inline; dialogs share focus

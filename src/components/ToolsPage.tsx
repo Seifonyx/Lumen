@@ -9,10 +9,14 @@ import { BUILTIN_ASSISTANTS } from '../lib/assistants';
 import { useStore } from '../store';
 import HubPage from './HubPage';
 import { catalogProblem } from './CatalogErrorNotice';
-import { CANVAS_SHELL, CanvasToolsWorkspace, navigateScreen, useScreenMemory } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, CanvasToolsWorkspace, forgetScreenMemory, navigateBack, navigateScreen, replaceScreen, useScreenMemory } from '../lib/canvas-presentation';
 import AssistantLibrary from './AssistantLibrary';
 import type { ToolArea } from './ToolsWorkspace';
 import { uid } from '../lib/util';
+import { imageProvider } from '../lib/images';
+
+// Images come from Cloudflare Workers AI or Hugging Face (src/lib/images.ts), so either key makes the tool ready.
+const IMAGE_KEY = 'Cloudflare or Hugging Face key';
 import type { SavedAssistant } from '../types';
 
 type Section = 'research' | 'create' | 'analyze' | 'learn' | 'assistants';
@@ -74,7 +78,7 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
     { id: 'page', lands: 'Prepares a message', section: 'research', name: 'Read a web page', text: 'Bring a page’s text into the chat to summarize or ask about.', icon: <FileSearch size={20} />, run: () => library('tools:reader') },
     { id: 'youtube', lands: 'Prepares a message', section: 'research', name: 'Summarize a YouTube video', text: 'Main points and timestamps from a public video.', icon: <PlayCircle size={20} />, needs: 'Gemini key', ready: gemini, run: () => library('tools:youtube') },
     { id: 'canvas', lands: 'Opens beside a new chat', section: 'create', name: 'Document canvas', text: 'Write and edit a document side by side with the chat.', icon: <Pencil size={20} />, run: () => { if (CANVAS_SHELL) navigateScreen!(() => { s.setUi({ page: null }); s.newChat(); s.openCanvas(); }); else { s.setUi({ page: null }); s.newChat(); setTimeout(() => useStore.getState().openCanvas(), 0); } } },
-    { id: 'image', lands: 'New chat', section: 'create', name: 'Create an image', text: 'Describe it and Lumen draws it.', icon: <ImageIcon size={20} />, needs: 'Cloudflare key', ready: Boolean(keys.cloudflare), run: () => composerMode('image') },
+    { id: 'image', lands: 'New chat', section: 'create', name: 'Create an image', text: 'Describe it and Lumen draws it.', icon: <ImageIcon size={20} />, needs: CANVAS_SHELL ? IMAGE_KEY : 'Cloudflare key', ready: CANVAS_SHELL ? Boolean(imageProvider(keys)) : Boolean(keys.cloudflare), run: () => composerMode('image') },
     { id: 'writing', lands: 'Select text in a reply', contextual: true, section: 'create', name: 'Writing tools', text: 'Select text in a reply, then choose Writing tools to improve, shorten, change the tone or translate it.', icon: <TextCursorInput size={20} />, state: 'In replies' },
     { id: 'prompts', lands: 'Fills your message', section: 'create', name: 'Saved prompts', text: 'Start a message from a prompt you use often.', icon: <MessageSquareText size={20} />, run: () => library('prompts') },
     { id: 'analysis', lands: 'Opens the analysis runner', section: 'analyze', name: 'Data analysis', text: 'Charts and answers from CSV and Excel files, run on your device.', icon: <BarChart3 size={20} />, run: () => s.setUi({ page: null, runner: { lang: 'python', code: ANALYSIS_TEMPLATES.overview.code, analysis: true } }) },
@@ -82,7 +86,7 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
     { id: 'compare', lands: 'In your current chat', section: 'analyze', name: 'Compare models', text: 'Ask two or three models at once, then combine their answers.', icon: <Columns2 size={20} />, run: () => { if (CANVAS_SHELL) s.setUi({sidebarOpen:false}); else s.setUi({ page: null, sidebarOpen: false }); window.dispatchEvent(new CustomEvent('mr:composer-mode', { detail: 'compare' })); } },
     { id: 'study', lands: 'Opens Study', section: 'learn', name: 'Study', text: 'Flashcards and quizzes from any chat or document. Hard cards come back sooner.', icon: <GraduationCap size={20} />, run: () => s.setUi({ page: 'study', pageArg: undefined }) },
     { id: 'study-chat', lands: 'New chat', section: 'learn', name: 'Study partner', text: 'An assistant that explains step by step and quizzes you.', icon: <BookOpenCheck size={20} />, run: () => { const a = BUILTIN_ASSISTANTS.find((x) => x.id === 'builtin-study'); if (a) { s.startAssistant(a); s.setUi({ page: null }); } } },
-  ], [gemini, keys.cloudflare, settings.webSearch]); // eslint-disable-line react-hooks/exhaustive-deps
+  ], [gemini, keys, settings.webSearch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // (On iPhone this tab is the only list of assistants, so it shows them all.)
   const allAssistants = [...(settings.assistants || []), ...BUILTIN_ASSISTANTS];
@@ -117,20 +121,27 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
   if (editingAssistant) return <AssistantLibrary key={typeof editingAssistant === 'string' ? 'new' : editingAssistant.id} startNew={editingAssistant === 'new'} startWith={typeof editingAssistant === 'string' ? undefined : editingAssistant} onClose={onClose} onDone={CANVAS_SHELL ? (draft) => setEditingAssistant(draft || null) : () => setEditingAssistant(null)} />;
 
   if (CANVAS_SHELL && CanvasToolsWorkspace) {
-    const ToolsWorkspace = CanvasToolsWorkspace;
+    // Canvas: Browse all tools, a picker over the chat (the + menu's second layer) rather than a page. Choosing a tool
+    // closes it in the same navigation step; a missing key leads to key setup instead of a tool that can't run.
+    const ToolPicker = CanvasToolsWorkspace;
     const keyFor = (needs: string) => tools.filter((t) => t.needs === needs).map((t) => t.name);
+    // Each visit starts with an empty search in All: leaving (a choice or a close) forgets what was typed.
+    const fresh = () => { forgetScreenMemory!('tools-query'); forgetScreenMemory!('tools-area'); };
+    const setUpKeys = () => replaceScreen!(() => { fresh(); s.setUi({ page: null }); s.setUi({ settingsOpen: true, settingsTab: 'keys' }); });
+    // The picker is a chooser, like a menu: the tool takes its place in history (a sheet the tool opens, such as Compare
+    // or Saved prompts, joins that same entry), so Back or closing the tool returns to where the picker was opened.
+    const launch = (run: () => void) => () => replaceScreen!(() => { fresh(); s.setUi({ page: null }); run(); });
     return (
-      <HubPage label="Tools" title="Tools" subtitle="What Lumen can do beyond a plain chat, and what each one needs." onClose={onClose}>
-        <ToolsWorkspace
-          tools={tools.map((t) => ({ ...t, run: t.run && !t.toggle ? () => navigateScreen!(t.run!) : t.run }))}
-          keys={[{ name: 'Gemini', ready: gemini, rejected: geminiRejected, uses: keyFor('Gemini key') }, { name: 'Cloudflare', ready: Boolean(keys.cloudflare), uses: keyFor('Cloudflare key') }]}
-          mine={settings.assistants || []} builtins={BUILTIN_ASSISTANTS}
-          query={query} setQuery={setQuery} area={area!} setArea={setArea}
-          onStartAssistant={(a) => navigateScreen!(() => { s.startAssistant(a); s.setUi({ page: null }); })}
-          onEditAssistant={(a, builtin) => setEditingAssistant(builtin ? { ...a, id: uid() } : a)}
-          onNewAssistant={() => setEditingAssistant('new')}
-          onSetUpKeys={() => s.setUi({ settingsOpen: true, settingsTab: 'keys' })} />
-      </HubPage>
+      <ToolPicker
+        tools={tools.map((t) => ({ ...t, run: t.run && (t.toggle ? t.run : t.needs && !t.ready ? setUpKeys : launch(t.run)) }))}
+        keys={[{ name: 'Gemini', ready: gemini, rejected: geminiRejected, uses: keyFor('Gemini key') }, { name: 'Cloudflare or Hugging Face', ready: Boolean(imageProvider(keys)), uses: keyFor(IMAGE_KEY) }]}
+        mine={settings.assistants || []} builtins={BUILTIN_ASSISTANTS}
+        query={query} setQuery={setQuery} area={area!} setArea={setArea}
+        onStartAssistant={(a) => replaceScreen!(() => { fresh(); s.startAssistant(a); s.setUi({ page: null }); })}
+        onEditAssistant={(a, builtin) => setEditingAssistant(builtin ? { ...a, id: uid() } : a)}
+        onNewAssistant={() => setEditingAssistant('new')}
+        onSetUpKeys={setUpKeys}
+        onClose={() => { fresh(); navigateBack!(onClose); }} />
     );
   }
 

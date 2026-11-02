@@ -1,6 +1,7 @@
 // 2.1.1: on phones the newer windows (Study, Ask your chats, Build a layout) keep a margin from the screen edges
 // and nothing in them spills off the screen.
 const { chromium } = require('playwright'), assert = require('node:assert/strict');
+const { openTools } = require('./helpers/plus.cjs');
 const { profile, previewUid } = require('./helpers/preview-profile.cjs');
 const { scan } = require('./helpers/fitscan.cjs');
 const URL = process.env.MR_TEST_URL || 'http://localhost:5190/';
@@ -25,8 +26,8 @@ const deck = { id: 'd1', title: 'A rather long deck title about cell biology and
         assert.ok(box.x >= 12 && box.x + box.width <= width - 12, `${width}px ${label}: ${Math.round(box.x)}–${Math.round(box.x + box.width)} keeps a margin`);
         assert.deepEqual(await scan(page), [], `${width}px ${label} fits`);
       };
-      await page.click('.menu-btn'); await page.waitForTimeout(400);
-      await page.click(':is(.library-button, .cv-dest button):has-text("Tools")');
+      if (await page.locator('[data-lumen-canvas-shell]').count()) await openTools(page);
+      else { await page.click('.menu-btn'); await page.waitForTimeout(400); await page.click(':is(.library-button, .cv-dest button):has-text("Tools")'); }
       await page.locator(':is(.tool-card,.tx-hit)').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
       await inset('.study-deck', 'Study decks');
       await page.getByRole('button', { name: 'Quiz' }).click();

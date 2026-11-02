@@ -1,4 +1,5 @@
 const {openSettingsSection,closeSettings}=require('./helpers/ui.cjs');
+const { plusItem, openTools, isCanvas } = require('./helpers/plus.cjs');
 // Regression coverage for drafts, project reloads, comparison privacy, modal focus and phone layouts.
 const { chromium } = require('playwright');
 const path = require('node:path');
@@ -98,7 +99,7 @@ async function run(browser, mobile) {
   await page.fill('.composer textarea', draft);
   await page.locator('.composer input[type=file][multiple][accept*=".pdf"]').setInputFiles({ name: 'draft.txt', mimeType: 'text/plain', buffer: Buffer.from('Unsent attachment') });
   await page.waitForSelector('.attachment:not(.loading)');
-  await page.getByRole('button',{name:/^Add (?:photos, )?files or a repository$/}).click();await page.getByRole('button',{name:'Compare models',exact:true}).click();
+  await plusItem(page,'Compare models');
   const before = requests.length;
   network.offline = true;
   await ctx.setOffline(true);
@@ -112,7 +113,7 @@ async function run(browser, mobile) {
   await page.getByRole('button', { name: 'Remove draft.txt', exact: true }).click();
 
   await page.fill('.composer textarea', `My email is ${EMAIL}; repeat it.`);
-  await page.getByRole('button',{name:/^Add (?:photos, )?files or a repository$/}).click();await page.getByRole('button',{name:'Compare models',exact:true}).click();
+  await plusItem(page,'Compare models');
   await page.click('.compare-picker-actions .primary');
   await page.waitForSelector('.comparison-save');
   await page.waitForFunction(() => document.querySelectorAll('.comparison-save').length === 2);
@@ -126,7 +127,7 @@ async function run(browser, mobile) {
   await closeSettings(page);
   check(await page.locator('.main').evaluate(el=>!el.inert), `${label}: chat is interactive after settings closes`);
   await page.fill('.composer textarea', `My email is ${EMAIL}; compare again.`);
-  await page.getByRole('button',{name:/^Add (?:photos, )?files or a repository$/}).click();await page.getByRole('button',{name:'Compare models',exact:true}).click();
+  await plusItem(page,'Compare models');
   await page.click('.compare-picker-actions .primary');
   await page.waitForFunction(() => document.querySelectorAll('.comparison-save').length === 2);
   check((await page.locator('.comparison-answer').allTextContents()).every((text) => text.includes('[EMAIL_1]') && !text.includes(EMAIL)), `${label}: disabling restoration keeps comparisons masked`);
@@ -136,7 +137,7 @@ async function run(browser, mobile) {
   await page.getByRole('radio', { name: 'Ask me', exact: true }).click();
   await closeSettings(page);
   await page.fill('.composer textarea', `Email ${EMAIL} in a comparison.`);
-  await page.getByRole('button',{name:/^Add (?:photos, )?files or a repository$/}).click();await page.getByRole('button',{name:'Compare models',exact:true}).click();
+  await plusItem(page,'Compare models');
   await page.click('.compare-picker-actions .primary');
   await page.waitForSelector('.privacy-check');
   network.offline = true;

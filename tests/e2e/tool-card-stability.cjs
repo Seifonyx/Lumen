@@ -1,5 +1,6 @@
 // A matching tool stays mounted while search/section state updates during a press.
 const {chromium,webkit}=require('playwright');
+const { plusItem, openTools, isCanvas } = require('./helpers/plus.cjs');
 const assert=require('node:assert/strict');
 const {profile}=require('./helpers/preview-profile.cjs');
 (async()=>{
@@ -11,7 +12,7 @@ const {profile}=require('./helpers/preview-profile.cjs');
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(process.env.MR_TEST_URL||'http://localhost:5190/');
   await page.locator('.composer textarea').waitFor();
-  await page.getByRole('button',{name:'Tools',exact:true}).click();
+  await openTools(page);
   const search=page.getByRole('searchbox',{name:'Search tools',exact:true});
   await search.fill(name);
   const card=page.locator('button:is(.tool-card,.tx-hit)').filter({has:page.locator('strong',{hasText:new RegExp(`^${name}$`)})});

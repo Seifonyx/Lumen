@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 
 export interface PhoneSectionsProps {
   label: string;
@@ -21,6 +21,23 @@ export default function PhoneSections({ label, items, active, onSelect, panelId 
     else if (b.right > r.right - 12) rail.scrollBy({ left: b.right - r.right + 12 });
   };
   useLayoutEffect(() => { reveal(root.current?.querySelector<HTMLElement>('[aria-selected="true"],[aria-current="page"]') || null); }, [active]);
+  // Says which ends have more sections out of view (data-more="start end"), so the rail fades only there and a cut-off
+  // label reads as "scroll for more" rather than as clipped text.
+  useEffect(() => {
+    const rail = root.current;
+    if (!rail) return;
+    const mark = () => {
+      const rtl = getComputedStyle(rail).direction === 'rtl', left = Math.abs(rail.scrollLeft), room = rail.scrollWidth - rail.clientWidth;
+      const more = [left > 2 && 'start', left < room - 2 && 'end'].filter(Boolean).join(' ');
+      if (more) rail.dataset.more = more; else delete rail.dataset.more;
+      rail.dataset.dir = rtl ? 'rtl' : 'ltr';
+    };
+    mark();
+    rail.addEventListener('scroll', mark, { passive: true });
+    const observer = new ResizeObserver(mark);
+    observer.observe(rail);
+    return () => { rail.removeEventListener('scroll', mark); observer.disconnect(); };
+  }, []);
   const Tag = panelId ? 'div' : 'nav';
   return <Tag ref={root as React.Ref<HTMLDivElement>} className="phone-sections" role={panelId ? 'tablist' : undefined} aria-label={label}
     onPointerDownCapture={() => { pointerFocus.current = true; }}

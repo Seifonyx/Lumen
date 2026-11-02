@@ -3,6 +3,7 @@
 const { chromium, webkit } = require('playwright');
 const assert = require('node:assert/strict');
 const { profile } = require('./helpers/preview-profile.cjs');
+const { plusItem } = require('./helpers/plus.cjs');
 
 const base = process.env.MR_TEST_URL || 'http://localhost:5190/';
 const a = 'gemini:gemini-flash-lite-latest';
@@ -25,8 +26,7 @@ const deferred = () => {
 
 async function compare(page, prompt) {
   await page.locator('.composer textarea').fill(prompt);
-  await page.getByRole('button', { name: /^Add (?:photos, )?files or a repository$/ }).click();
-  await page.getByRole('button', { name: 'Compare models', exact: true }).click();
+  await plusItem(page, 'Compare models');
   const picker = page.getByRole('dialog', { name: 'Compare models', exact: true });
   await picker.getByRole('button', { name: 'Compare', exact: true }).click();
   return page.getByRole('dialog', { name: 'Model comparison', exact: true });

@@ -16,7 +16,7 @@ import { keepScreenAwake } from './lib/wakelock';
 import { installSidebarGestures } from './lib/sidebar-gesture';
 import TaskEngine from './components/TaskEngine';
 import { cancelKnowledge } from './lib/knowledge/engine';
-import { CANVAS_SHELL, CanvasNav, newGeneralChat, navigateBack, useScreenBackLayer, RoutingCenter } from './lib/canvas-presentation';
+import { CANVAS_SHELL, CanvasNav, forgetScreenMemory, newGeneralChat, navigateBack, useScreenBackLayer, RoutingCenter } from './lib/canvas-presentation';
 // CP05: the Canvas scope covers the whole document (pages and portalled dialogs/menus) while the shell switch is on;
 // the ordinary build folds this away.
 if (CANVAS_SHELL) { document.documentElement.setAttribute('data-lumen-canvas', ''); document.documentElement.setAttribute('data-lumen-canvas-foundation', ''); }
@@ -91,7 +91,8 @@ export default function App() {
       if (requested === 'knowledge') setUi({ page: 'collection', pageArg: 'searchable' });
       else if (requested === 'documents') setUi({ page: 'collection', pageArg: 'documents' });
       else if (requested === 'collection') setUi({ page: 'collection', pageArg: 'all' });
-      else if (requested === 'tools-page') setUi({ page: 'tools' });
+      // Canvas: Browse all tools opens fresh (empty search, All); Back and Forward still restore a visit's own state.
+      else if (requested === 'tools-page') { if (CANVAS_SHELL) { forgetScreenMemory!('tools-query'); forgetScreenMemory!('tools-area'); } setUi({ page: 'tools' }); }
       else if (requested === 'projects') setUi({ page: 'projects' });
       else if (requested === 'tasks') setUi({ settingsOpen: true, settingsTab: 'tasks' });
       else if (requested === 'prompts') { setUi({ sidebarOpen: false }); setPrompts(true); }

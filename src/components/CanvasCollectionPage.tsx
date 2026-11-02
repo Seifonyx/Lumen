@@ -5,7 +5,7 @@ import { usePhoneLayout } from '../lib/phone-layout';
 import { useScreenMemory } from '../lib/screen-memory';
 import { useBackLayer } from '../lib/back-stack';
 import { exitFeature, featureExitLabel, navigateScreen, screenBack } from '../lib/screen-history';
-import { availability, discoverItems, itemName, libraryItems, type LibraryItem, type LibrarySort, type ReadExports } from '../lib/library-items';
+import { availability, availabilityShort, discoverItems, extensionOf, itemName, libraryItems, type LibraryItem, type LibrarySort, type ReadExports } from '../lib/library-items';
 import { formatBytes, safeFileName, saveBlob } from '../lib/util';
 import { loadOriginal } from '../lib/office/originals';
 import { fileKind } from '../lib/generate';
@@ -21,7 +21,7 @@ import { prepareTool } from './Composer';
 import './canvas-library.css';
 
 const categories: {id:CollectionKind;label:string;description:string}[] = [
- {id:'all',label:'Everything',description:'Everything from your saved chats: documents, photos, files and what Lumen made.'},
+ {id:'all',label:'Everything',description:'Documents, photos and files from your saved chats, and what Lumen made in them, appear here.'},
  {id:'documents',label:'Documents',description:'Documents you write and edit with Lumen.'},
  {id:'photos',label:'Photos',description:'Photos and images you added to chats.'},
  {id:'files',label:'Attached files',description:'Files you attached to chats.'},
@@ -47,37 +47,63 @@ export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()
  const openChat=(id:string)=>useStore.getState().selectChat(id);
  const newDoc=()=>navigateScreen(()=>{useStore.getState().newChat();useStore.getState().openCanvas()});
  const compose=(mode:'attach'|'image')=>{navigateScreen(()=>{useStore.getState().setUi({page:null});useStore.getState().newChat()});setTimeout(()=>window.dispatchEvent(new CustomEvent('mr:composer-mode',{detail:mode})),80)};
- const create=kind==='photos'?{label:'Add photos',run:()=>compose('attach')}:kind==='files'?{label:'Attach files',run:()=>compose('attach')}:kind==='generated'?{label:'Create an image',run:()=>compose('image')}:kind==='searchable'?{label:'Import Knowledge',run:()=>document.querySelector<HTMLInputElement>('.files-uploads input[type="file"]')?.click()}:{label:'New document',run:newDoc};
+ const create=kind==='photos'?{label:'Add photos',run:()=>compose('attach')}:kind==='files'?{label:'Attach files',run:()=>compose('attach')}:kind==='generated'?{label:'Create an image',run:()=>compose('image')}:kind==='searchable'?undefined:{label:'New document',run:newDoc};
  const open=(item:LibraryItem)=>{
   if(item.kind==='documents')navigateScreen(()=>{openChat(item.chat.id);useStore.getState().setUi({canvasOpen:true,canvasDocumentId:item.doc.id})});
   else if('file' in item && item.file.data && src(item))openImage({src:src(item)!,alt:itemName(item),name:itemName(item)});
   else setDetailKey(item.key);
  };
  const search=<label className="hub-search"><Search size={18} aria-hidden="true"/><input type="search" aria-label="Search your library" placeholder={kind==='searchable'?'Find Knowledge document names':'Search names, chats and documents'} value={query} onChange={e=>setQuery(e.target.value)} />{query&&<button type="button" aria-label="Clear library search" onClick={e=>{setQuery('');e.currentTarget.parentElement?.querySelector('input')?.focus()}}>×</button>}</label>;
+ const filtered=Boolean(query||project);
+ const total=<span className="library-total" role="status">{scoped.length} {filtered?'matching ':''}{scoped.length===1?'item':'items'}</span>;
  return <HubPage label="Library" title="Library" onClose={onClose} create={create}
-  actions={<button type="button" className="btn primary" onClick={create.run}><Plus size={16}/>{create.label}</button>}
+  actions={create&&<button type="button" className="btn library-create" onClick={create.run}><Plus size={16}/>{create.label}</button>}
   sectionNavigation={<PhoneSections label="Library content types" panelId={panel} active={kind} items={categories} onSelect={id=>setKind(id as CollectionKind)}/>}
   footer={<footer className="phone-page-search" aria-label="Library search">{search}</footer>}>
   <div className="library-workspace">
    {!phone&&<PhoneSections label="Library content types" panelId={panel} active={kind} items={categories} onSelect={id=>setKind(id as CollectionKind)}/>}
-   <section id={panel} role="tabpanel" aria-labelledby={`${panel}-${kind}`} className="library-panel">
+   <section id={panel} role="tabpanel" aria-labelledby={`${panel}-${kind}`} className={`library-panel kind-${kind}`}>
     {discoveryError&&<p role="alert">Generated file discovery could not load. Your other chat items remain available. Reopen Library to retry.</p>}
-    <div className={`library-section-head${category.label==='Everything'?' is-all':''}`}><div><h2>{category.label==='Everything'?'From your chats':category.label}</h2><p>{category.description}</p></div>{kind!=='searchable'&&<span className="library-total" role="status">{scoped.length} {query||project?'matching ':''}{scoped.length===1?'item':'items'}</span>}</div>
-    {kind==='searchable'?<div className="files-uploads">{!phone&&<div className="library-controls">{search}</div>}<KnowledgeLibrary onClose={onClose} filter={query}/></div>:<>
-     <div className="library-controls">{!phone&&search}<label><span className="sr-only">Sort library</span><select aria-label="Sort library" value={sort} onChange={e=>setSort(e.target.value as LibrarySort)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="name">Name A–Z</option></select></label>{Boolean(projects?.length)&&<label><span className="sr-only">Project</span><select aria-label="Project" value={project} onChange={e=>setProject(e.target.value)}><option value="">All projects</option>{projects?.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}</div>
-     {scoped.length?<ul className="library-ledger">{scoped.map(item=><li key={item.key} className={`library-row kind-${item.kind}`}>
-      <button type="button" className="library-open" aria-label={`Open ${itemName(item)}`} onClick={()=>open(item)}>
-       <span className="library-file-icon" aria-hidden="true">{src(item)?<img src={src(item)} alt="" loading="lazy"/>:'file'in item&&item.file.kind==='image'?<ImageIcon size={24}/>:<FileText size={24}/>}</span>
-       <span className="library-row-copy"><strong dir="auto">{itemName(item)}</strong><span>{item.kind==='documents'?'Canvas document':item.kind==='exports'?'Generated file · export on demand':`${item.file.name.split('.').pop()?.toUpperCase()||'File'}${Number.isFinite(item.file.size)&&item.file.size>0?` · ${formatBytes(item.file.size)}`:''} · ${availability(item.file)}`}</span><span className="library-row-source" dir="auto">{item.chat.title} · {relTime(item.at)}</span></span>
-      </button>
-      {item.kind!=='exports'&&<Suspense fallback={null}><CanvasLibraryActions item={item} openChat={openChat}/></Suspense>}
-     </li>)}</ul>:<HubEmpty icon={<FileText size={28}/>} title={query||project?'No matching items':'A little room for your work'} text={query||project?'Try another search or widen the category and project filters.':category.description} action={query||project?<button type="button" className="btn" onClick={()=>{setQuery('');setProject('');setKind('all')}}>Reset filters</button>:<button type="button" className="btn primary" onClick={create.run}>{create.label}</button>}/>}
-     {kind==='all'&&<button type="button" className="library-knowledge-link" onClick={()=>setKind('searchable')}><BookOpen size={20}/><span><strong>Knowledge</strong><span>Your references, searched and cited by Lumen</span></span><ChevronRight size={18} aria-hidden="true"/></button>}
+    <h2 className="sr-only">{category.label}</h2>
+    {kind==='searchable'?<div className="files-uploads"><p className="library-knowledge-note">Lumen searches these and cites their pages. Kept only on this device, not synced to your account.</p>{!phone&&<div className="library-controls">{search}</div>}<KnowledgeLibrary onClose={onClose} filter={query}/></div>:<>
+     <div className="library-controls">{!phone&&search}{phone&&total}<div className="library-sorts"><label><span className="sr-only">Sort library</span><select aria-label="Sort library" value={sort} onChange={e=>setSort(e.target.value as LibrarySort)}><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="name">Name A–Z</option></select></label>{Boolean(projects?.length)&&<label><span className="sr-only">Project</span><select aria-label="Project" value={project} onChange={e=>setProject(e.target.value)}><option value="">All projects</option>{projects?.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}</div></div>
+     {scoped.length?<>
+      {!phone&&<div className="library-cols">{total}<span aria-hidden="true">From</span><span aria-hidden="true">Added</span></div>}
+      <ul className="library-ledger">{scoped.map(item=><Row key={item.key} item={item} onOpen={()=>open(item)} openChat={openChat}/>)}</ul>
+     </>:<HubEmpty icon={<FileText size={28}/>} title={filtered?'No matching items':kind==='all'?'Nothing saved yet':`No ${category.label.toLowerCase()} yet`} text={filtered?'Try another search, or show every project.':category.description} action={filtered?<button type="button" className="btn" onClick={()=>{setQuery('');setProject('')}}>Clear search and filters</button>:undefined}/>}
+     {kind==='all'&&<p className="library-knowledge-link"><BookOpen size={18} aria-hidden="true"/><span>Knowledge isn’t listed here: it stays on this device.</span><button type="button" onClick={()=>setKind('searchable')}>Open Knowledge<ChevronRight size={16} aria-hidden="true"/></button></p>}
     </>}
    </section>
   </div>
   {detail&&<LibraryDetail key={detail.key} item={detail} onClose={()=>screenBack(()=>setDetailKey(null))} openChat={openChat}/>}
  </HubPage>;
+}
+
+/** One saved thing: a tile (photo, extension or document mark), its name, and what it is and where it came from. On
+ * computers the source chat and date sit in their own columns; on phones they share the second line. */
+function Row({item,onOpen,openChat}:{item:LibraryItem;onOpen:()=>void;openChat:(id:string)=>void}) {
+ const name=itemName(item),id=useId(),picture=src(item),file='file'in item?item.file:null;
+ const ext=item.kind==='documents'?'':extensionOf(name);
+ const type=item.kind==='documents'?'Document':`${ext||'File'}${file&&Number.isFinite(file.size)&&file.size>0?` · ${formatBytes(file.size)}`:''}`;
+ const made=item.kind==='generated'||item.kind==='exports'?'Made by Lumen':'';
+ const status=file?availabilityShort(file):'';
+ return <li className={`library-row kind-${item.kind}`}>
+  <button type="button" className="library-open" aria-label={`Open ${name}`} aria-describedby={id} onClick={onOpen}>
+   <span className="library-row-copy">
+    <span className="library-file-icon" aria-hidden="true">{picture?<img src={picture} alt="" loading="lazy"/>:item.kind==='documents'?<FileText size={20}/>:file?.kind==='image'?<ImageIcon size={20}/>:<span className="library-ext">{ext||<FileText size={20}/>}</span>}</span>
+    <strong dir="auto" title={name}>{name}</strong>
+    <span className="library-row-meta" id={id}>
+     <span className="lr-type">{type}</span>
+     {made&&<span className="lr-made">{made}</span>}
+     {status&&<span className="lr-status">{status}</span>}
+     <span className="lr-where"><bdi>{item.chat.title}</bdi> · {relTime(item.at)}</span>
+    </span>
+   </span>
+   <span className="library-col-from" aria-hidden="true" dir="auto">{item.chat.title}</span>
+   <span className="library-col-when" aria-hidden="true">{relTime(item.at)}</span>
+  </button>
+  {item.kind!=='exports'&&<Suspense fallback={null}><CanvasLibraryActions item={item} openChat={openChat}/></Suspense>}
+ </li>;
 }
 
 function LibraryDetail({item,onClose,openChat}:{item:LibraryItem;onClose:()=>void;openChat:(id:string)=>void}) {

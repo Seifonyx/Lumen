@@ -1,6 +1,7 @@
 // 2.1: Study makes flashcards and a quiz from a chat; cards flip, "Not yet" brings a card back in the same round,
 // "Knew it" schedules it later; the quiz shows right/wrong with the reason and keeps the score.
 const { chromium, webkit } = require('playwright'), assert = require('node:assert/strict');
+const { plusItem, openTools, isCanvas } = require('./helpers/plus.cjs');
 const { profile, seed } = require('./helpers/preview-profile.cjs');
 const URL = process.env.MR_TEST_URL || 'http://localhost:5190/';
 const now = Date.now();
@@ -33,7 +34,7 @@ const deck = { title: 'Cell basics', cards: [{ q: 'What makes ATP?', a: 'Mitocho
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
 
     // ---- Study remains available in Tools after removing the sidebar shortcut.
-    await page.click(':is(.library-button, .cv-dest button):has-text("Tools")');
+    await openTools(page);
     await page.locator(':is(.tool-card,.tx-hit)').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
     await page.getByRole('button', { name: 'Make your first deck', exact: true }).click();
     await page.locator('.study-sources button', { hasText: 'Cell biology' }).click();
@@ -72,7 +73,7 @@ const deck = { title: 'Cell basics', cards: [{ q: 'What makes ATP?', a: 'Mitocho
     await page.keyboard.press('Escape'); // closes Study
     await page.locator('.hub-page').waitFor({ state: 'detached' });
     const before = requests;
-    await page.click(':is(.library-button, .cv-dest button):has-text("Tools")');
+    await openTools(page);
     await page.locator(':is(.tool-card,.tx-hit)').filter({ has: page.locator('strong', { hasText: /^Study$/ }) }).click();
     const item = page.locator('.study-deck', { hasText: 'Cell basics' });
     await item.waitFor();

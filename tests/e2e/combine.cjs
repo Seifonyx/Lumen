@@ -1,6 +1,7 @@
 // 2.1: after comparing models, "Combine into one answer" has one model write the best answer from all of them
 // (with where they differed); it can be continued in the chat like any answer.
 const { chromium } = require('playwright'), assert = require('node:assert/strict');
+const { plusItem, openTools, isCanvas } = require('./helpers/plus.cjs');
 const { profile } = require('./helpers/preview-profile.cjs');
 const URL = process.env.MR_TEST_URL || 'http://localhost:5190/?emulator';
 const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { parts: [{ text }] }, finishReason: 'STOP' }] }) + '\n\n';
@@ -28,8 +29,7 @@ const sse = (text) => 'data: ' + JSON.stringify({ candidates: [{ content: { part
     await page.goto(URL);
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
     await page.fill('.composer textarea', 'How long to boil an egg?');
-    await page.getByRole('button', { name: /^Add (?:photos, )?files or a repository$/ }).click();
-    await page.getByRole('button', { name: 'Compare models', exact: true }).click();
+    await plusItem(page, 'Compare models');
     await page.click('.compare-picker-actions >> text=Compare');
     await page.waitForFunction(() => document.querySelectorAll('.comparison-card .comparison-save').length === 2);
 

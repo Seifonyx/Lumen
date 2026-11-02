@@ -56,7 +56,11 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // Answer details (2026-11-01): startupJs 14 → 14.5. Every finished reply's model name is now the Answer details button
 // (with its recorded short reason), and the reply menus gain Compare with… (measured 14.1 KB gz). The panel and its
 // styles load on first open as their own chunk (AnswerDetails-*.js/css); startup CSS and the other limits are unchanged.
-const BUDGET = { startupJs: 14.5, startupCss: 19.5, routingCenter: 9, canvasCss: 28 };
+// Library + tools in the + menu (owner-selected design, 2026-11-02): startupJs 14.5 → 15.5 for the composer's new + menu
+// (attach tiles, chat context, three quick tools with honest key states, Browse all tools; measured 15.0 KB gz);
+// canvasCss 28 → 29.5 for its styles in canvas-screens.css and the section-rail fade (measured 28.9). The picker itself
+// and the Library ledger load with their own lazy chunks; startup CSS stays within 19.5.
+const BUDGET = { startupJs: 15.5, startupCss: 19.5, routingCenter: 9, canvasCss: 29.5 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

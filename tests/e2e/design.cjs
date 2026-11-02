@@ -81,7 +81,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         if (mobile) await page.click('[aria-label="Close menu"]');
         const add = mobile ? '[aria-label="Add photos, files or a repository"]' : '[aria-label="Add files or a repository"]';
         await page.click(add);
-        check(await page.locator('.sheet-row').count() === 12 && await page.getByRole('switch', { name: 'Web search' }).isVisible() && await page.getByRole('button', { name: /GitHub repository/ }).isVisible() && await page.locator('.sheet').evaluate((el) => el.contains(document.activeElement)), `${label}: unified add menu has correct actions and keyboard focus`);
+        check(await page.locator('.sheet-row').count() === (await page.locator('[data-lumen-canvas-shell]').count() ? (mobile ? 7 : 8) : 12) && await page.getByRole('switch', { name: 'Web search' }).isVisible() && await page.getByRole('button', { name: /GitHub repository/ }).isVisible() && await page.locator('.sheet').evaluate((el) => el.contains(document.activeElement)), `${label}: unified add menu has correct actions and keyboard focus`);
         if (!mobile) check(await page.locator('.sheet-popover-backdrop').isVisible() && inside(await page.locator('.sheet').boundingBox(), width, height), `${label}: add menu opens beside the composer and fits on screen`);
         await page.keyboard.press('Shift+Tab');
         check(await page.locator('.sheet-row:not(:disabled)').last().evaluate((el) => el === document.activeElement), `${label}: add menu traps keyboard focus`);
@@ -94,7 +94,7 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
         if (mobile) await page.keyboard.press('Escape');
         await page.click(add);
         const chooser = page.waitForEvent('filechooser');
-        await page.getByRole('button', { name: /^Files and images$/ }).click();
+        await page.getByRole('button', { name: /^(Files and images|Files)$/ }).click();
         await (await chooser).setFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('Weekly review notes') });
         await page.waitForSelector('.attachment:not(.loading)');
         check(await page.locator('.attachment').count() === 1 && !(await page.locator('.sheet').isVisible()), `${label}: merged menu attaches files`);

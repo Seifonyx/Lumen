@@ -82,7 +82,7 @@ const rest = page => page.waitForFunction(() => !document.querySelector('.page-s
           }))).observe(document.querySelector('.app'), { childList: true, subtree: true });
         });
         if (width < 900) await page.locator('.menu-btn').click();
-        await page.locator('.sidebar').getByRole('button', { name: 'Tools', exact: true }).click();
+        await page.locator('.sidebar').getByRole('button', { name: 'Library', exact: true }).click();
         const hub = page.locator('.hub-page:not(.exit-ghost)');
         await hub.waitFor();
         if (!reduced) {

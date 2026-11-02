@@ -69,10 +69,12 @@ async function openNav(page, phone) {
   await page.getByRole('button', { name: /^(Open chats|Open sidebar|Open navigation)$/ }).first().click();
   await settle(page, 600);
 }
+// Tools is not a place since 2026-11-02: Browse all tools opens from the message box's + (and its app event).
+async function openTools(page) { await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tools-page' }))); await page.locator('.tool-picker').waitFor(); await settle(page, 500); }
 async function go(page, phone, label) { await openNav(page, phone); await nav(page).getByRole('button', { name: label, exact: true }).click(); await settle(page, 700); }
 const closeAll = async (page) => {
  for(let i=0;i<24;i++){
-   const presented=await page.locator('.modal-backdrop:visible,.hub-page:visible,.settings-page:visible,.rc-page:visible,.canvas-panel:visible,.project-workspace-main:visible,[role="dialog"]:visible:not([inert]),[role="menu"]:visible:not([inert])').count();
+   const presented=await page.locator('.modal-backdrop:visible,.tool-picker:visible,.hub-page:visible,.settings-page:visible,.rc-page:visible,.canvas-panel:visible,.project-workspace-main:visible,[role="dialog"]:visible:not([inert]),[role="menu"]:visible:not([inert])').count();
    if(!presented && await page.locator('.composer textarea').isVisible()) return;
    if(await page.locator('.modal-backdrop:visible,[role="dialog"]:visible:not([inert]),[role="menu"]:visible:not([inert])').count())await page.keyboard.press('Escape');else await page.goBack();
    await settle(page,200);
@@ -132,8 +134,8 @@ try {
         await closeAll(page);
         pass('settings');
 
-        // Library, Tools, Projects (HubPage shell).
-        for (const [label, name] of [['Library', 'library'], ['Tools', 'tools']]) {
+        // Library (HubPage shell); Browse all tools is checked below as the picker it is now.
+        for (const [label, name] of [['Library', 'library']]) {
           await go(page, phone, label);
           look = await canvasLook(page, '.hub-head h1');
           assert.ok(look.scoped && look.ink);
@@ -147,9 +149,9 @@ try {
             if (phone) {
               const fileRows = await page.locator('.library-row.kind-files').evaluateAll((rows) => rows.map((row) => {
                 const icon = row.querySelector('.library-file-icon');
-                const meta = row.querySelector('.library-row-copy');
+                const meta = row.querySelector('.library-row-meta');
                 const name = row.querySelector('.library-row-copy strong');
-                const sub = row.querySelector('.library-row-source');
+                const sub = row.querySelector('.library-row-meta');
                 const open = row.querySelector('.library-open');
                 const action = row.querySelector('.screen-actions > button');
                 const box = (element) => { const r = element.getBoundingClientRect(); return { left: r.left, right: r.right, width: r.width }; };
@@ -324,9 +326,14 @@ try {
         pass('routing center');
 
         // Study, Assistants, Compare and the document Canvas panel, reached the way people reach them (Tools).
+        await openTools(page);
+        record.screens.tools = await axe(page, '.tool-picker');
+        await shot(page, join(out, `${tag}-tools.png`));
+        await closeAll(page);
         const fromTools = async (name) => {
-          await go(page, phone, 'Tools');
-          await page.locator('main.hub-page').getByRole('button', { name: new RegExp('^' + name) }).first().click();
+          await openTools(page);
+          await page.getByRole('searchbox', { name: 'Search tools' }).fill(name);
+          await page.locator('.tool-picker').getByRole('button', { name: new RegExp('^' + name) }).first().click();
           await settle(page, 700);
         };
         const inkOf = (sel) => page.evaluate((q) => {
@@ -340,7 +347,7 @@ try {
         record.screens.study = await axe(page, 'main.hub-page');
         await shot(page, join(out, `${tag}-study.png`));
         await closeAll(page);
-        await go(page, phone, 'Tools');
+        await openTools(page);
         await page.getByRole('button',{name:'New assistant',exact:true}).click();
         await page.getByLabel('Library item name').waitFor();
         record.screens.assistants = await axe(page, 'main.hub-page');

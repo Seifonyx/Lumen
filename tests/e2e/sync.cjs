@@ -1,5 +1,6 @@
 // Two "devices" signed in as the same user (Firebase emulators), checking chats and settings sync.
 const { chromium } = require('playwright');
+const { openTools } = require('./helpers/plus.cjs');
 const {openSettings,replyAction,openSettingsSection:openTab,closeSettings,closeCanvas}=require('./helpers/ui.cjs');
 // Settings is a page: on phones the section list shows first, and a section has a back arrow.
 const path = require('path');
@@ -125,7 +126,7 @@ async function device(browser, name, email, mobile) {
   check(!(await B.page.textContent(':is(.chat-list, .cv-nav)')).includes('Renamed on laptop'), 'deleted chat stays deleted after reload');
 
   // Saved helpers and their immutable chat instructions cross devices.
-  await B.page.getByRole('button', { name: 'Tools', exact: true }).click();
+  await openTools(B.page);
   const Bcanvas=Boolean(await B.page.locator('[data-lumen-canvas-shell]').count());
   if (!Bcanvas) await B.page.getByRole('button', { name: 'All assistants', exact: true }).click();
   await B.page.getByRole('button', { name: 'New assistant', exact: true }).click();
@@ -153,13 +154,13 @@ async function device(browser, name, email, mobile) {
   await B.page.waitForTimeout(1800);
   await A.page.reload();
   await A.page.waitForSelector('.app:not(.app-skeleton) .topbar');
-  await A.page.click('.menu-btn');
-  await A.page.getByRole('button', { name: 'Tools', exact: true }).click();
+  if (await A.page.locator('[data-lumen-canvas-shell]').count()) await openTools(A.page);
+  else { await A.page.click('.menu-btn'); await A.page.getByRole('button', { name: 'Tools', exact: true }).click(); }
   const Acanvas=Boolean(await A.page.locator('[data-lumen-canvas-shell]').count());
   if (!Acanvas) await A.page.getByRole('button', { name: 'All assistants', exact: true }).click();
   await (Acanvas ? A.page.locator('#tools-assistants :is(.tool-card,.tx-hit)').filter({hasText:'Synced helper'}) : A.page.locator('article.lib-card strong', { hasText: /^Synced helper$/ })).waitFor();
   check(true, 'saved assistant library synced to phone');
-  await A.page.locator('.hub-page > .hub-bar .feature-exit, .hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label^="Return to "]').click();
+  await A.page.locator('.hub-page > .hub-bar .feature-exit, .hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label^="Return to "], .tool-picker .tp-close').first().click();
   await A.page.click('.menu-btn');
   await A.page.locator('.sidebar').getByRole('button', { name: 'Synced Chat Title', exact: true }).click();
   await A.page.waitForSelector('.assistant-badge');

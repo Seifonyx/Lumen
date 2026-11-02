@@ -9,7 +9,7 @@ import { BUILTIN_ASSISTANTS } from '../lib/assistants';
 import { useStore } from '../store';
 import HubPage from './HubPage';
 import { catalogProblem } from './CatalogErrorNotice';
-import { CANVAS_SHELL, CanvasToolsWorkspace, navigateBack, navigateScreen, replaceScreen, useScreenMemory } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, CanvasToolsWorkspace, forgetScreenMemory, navigateBack, navigateScreen, replaceScreen, useScreenMemory } from '../lib/canvas-presentation';
 import AssistantLibrary from './AssistantLibrary';
 import type { ToolArea } from './ToolsWorkspace';
 import { uid } from '../lib/util';
@@ -125,21 +125,23 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
     // closes it in the same navigation step; a missing key leads to key setup instead of a tool that can't run.
     const ToolPicker = CanvasToolsWorkspace;
     const keyFor = (needs: string) => tools.filter((t) => t.needs === needs).map((t) => t.name);
-    const setUpKeys = () => replaceScreen!(() => { s.setUi({ page: null }); s.setUi({ settingsOpen: true, settingsTab: 'keys' }); });
+    // Each visit starts with an empty search in All: leaving (a choice or a close) forgets what was typed.
+    const fresh = () => { forgetScreenMemory!('tools-query'); forgetScreenMemory!('tools-area'); };
+    const setUpKeys = () => replaceScreen!(() => { fresh(); s.setUi({ page: null }); s.setUi({ settingsOpen: true, settingsTab: 'keys' }); });
     // The picker is a chooser, like a menu: the tool takes its place in history (a sheet the tool opens, such as Compare
     // or Saved prompts, joins that same entry), so Back or closing the tool returns to where the picker was opened.
-    const launch = (run: () => void) => () => replaceScreen!(() => { s.setUi({ page: null }); run(); });
+    const launch = (run: () => void) => () => replaceScreen!(() => { fresh(); s.setUi({ page: null }); run(); });
     return (
       <ToolPicker
         tools={tools.map((t) => ({ ...t, run: t.run && (t.toggle ? t.run : t.needs && !t.ready ? setUpKeys : launch(t.run)) }))}
         keys={[{ name: 'Gemini', ready: gemini, rejected: geminiRejected, uses: keyFor('Gemini key') }, { name: 'Cloudflare or Hugging Face', ready: Boolean(imageProvider(keys)), uses: keyFor(IMAGE_KEY) }]}
         mine={settings.assistants || []} builtins={BUILTIN_ASSISTANTS}
         query={query} setQuery={setQuery} area={area!} setArea={setArea}
-        onStartAssistant={(a) => replaceScreen!(() => { s.startAssistant(a); s.setUi({ page: null }); })}
+        onStartAssistant={(a) => replaceScreen!(() => { fresh(); s.startAssistant(a); s.setUi({ page: null }); })}
         onEditAssistant={(a, builtin) => setEditingAssistant(builtin ? { ...a, id: uid() } : a)}
         onNewAssistant={() => setEditingAssistant('new')}
         onSetUpKeys={setUpKeys}
-        onClose={() => navigateBack!(onClose)} />
+        onClose={() => { fresh(); navigateBack!(onClose); }} />
     );
   }
 

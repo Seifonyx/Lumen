@@ -19,7 +19,8 @@ export default function AttachSheet(p:Props){
  useSheetDrag(ref,p.onClose,!p.anchor);
  const backdrop=useRef<HTMLDivElement>(null);
  useExit(backdrop,'fade',[['.sheet',p.anchor?'drop':'sheet']]);
- useEffect(()=>{ref.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();},[]);
+ // preventScroll: focusing the first control must not scroll the sheet's own content past its top.
+ useEffect(()=>{ref.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus({preventScroll:true});},[]);
  useEffect(()=>{if(!p.anchor)return;const close=()=>p.onClose();window.addEventListener('resize',close);return()=>window.removeEventListener('resize',close);},[p.anchor,p.onClose]);
  const pick=(action:()=>void)=>()=>{action();p.onClose();};
  // Canvas: a short first layer (attach, chat context, three quick tools) and Browse all tools for the full, searchable
@@ -37,7 +38,6 @@ export default function AttachSheet(p:Props){
 >
  {CANVAS_SHELL?<>
  <div className="sheet-grab" aria-hidden="true"/>
- {!p.anchor&&<header className="add-sheet-header"><h2>Add</h2></header>}
  {!p.anchor&&<div className="photo-actions"><button type="button" onClick={pick(p.onCamera)}><Camera size={22}/><span>Camera</span></button><button type="button" onClick={pick(p.onPhotos)}><Images size={22}/><span>Photos</span></button><button type="button" onClick={pick(p.onFiles)}><Paperclip size={22}/><span>Files</span></button></div>}
  <div className="attach-menu-group" role="group" aria-label="This chat">
   {p.anchor&&<button type="button" className="sheet-row" onClick={pick(p.onFiles)}><Paperclip size={18}/><span>Files and images</span></button>}

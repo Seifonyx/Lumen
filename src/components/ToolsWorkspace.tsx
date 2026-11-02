@@ -52,7 +52,7 @@ function ToolRow({ t }: { t: WorkspaceTool }) {
     <span className="tx-icon" aria-hidden="true">{t.icon}</span>
     <RowCopy ids={ids} name={t.name} text={t.text} meta={<>
       {unavailable ? <span className="tx-state setup"><KeyRound size={12} aria-hidden="true" />Needs {t.needs}</span>
-        : t.contextual ? <span className="tx-tag">In replies</span> : <span className="tx-lands">{t.lands}</span>}
+        : t.contextual ? <span className="tx-tag">In replies</span> : null}
     </>} />
   </>;
   if (t.contextual) return <li className="tx-row contextual"><div className="tx-hit">{body}</div></li>;
@@ -76,7 +76,7 @@ function AssistantRow({ a, builtin, onStart, onEdit }: { a: SavedAssistant; buil
     <li className="tx-row has-side">
       <button type="button" className="tx-hit" aria-labelledby={ids.name} aria-describedby={ids.described} onClick={onStart}>
         <span className="tx-icon" aria-hidden="true"><Sparkles size={18} /></span>
-        <RowCopy ids={ids} name={a.name} text={a.description || 'Your custom assistant.'} meta={<span className="tx-lands">New chat</span>} />
+        <RowCopy ids={ids} name={a.name} text={a.description || 'Your custom assistant.'} />
       </button>
       <button type="button" className="tx-side" aria-label={builtin ? `Customize ${a.name}` : `Edit ${a.name}`} onClick={onEdit}><Pencil size={16} /></button>
     </li>
@@ -124,6 +124,16 @@ export default function ToolPicker(props: ToolPickerProps) {
   const missing = keys.filter((k) => !k.ready || k.rejected);
   const nothing = !shownTools.length && !shownMine.length && !shownBuiltins.length;
   const pickArea = (next: ToolArea | 'all') => { setArea(next); dialog.current?.querySelector('.tp-scroll')?.scrollTo({ top: 0 }); };
+  // Phones: the areas are one scrolling row; it fades only at an end with more, and the chosen area is kept in view.
+  const areas = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const row = areas.current;
+    if (!row) return;
+    const mark = () => { const more = [row.scrollLeft > 2 && 'start', row.scrollLeft < row.scrollWidth - row.clientWidth - 2 && 'end'].filter(Boolean).join(' '); if (more) row.dataset.more = more; else delete row.dataset.more; };
+    row.querySelector<HTMLElement>('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    mark(); row.addEventListener('scroll', mark, { passive: true });
+    return () => row.removeEventListener('scroll', mark);
+  }, [area]);
 
   return (
     <div ref={layer} className={`tool-picker-layer${phone ? ' is-sheet' : ''}`} onPointerDown={(e) => { if (e.target === layer.current) onClose(); }}>
@@ -140,7 +150,7 @@ export default function ToolPicker(props: ToolPickerProps) {
               onKeyDown={(e) => { if (e.key === 'ArrowDown') { e.preventDefault(); dialog.current?.querySelector<HTMLElement>('.tp-scroll button')?.focus(); } }} />
             {query && <button type="button" aria-label="Clear tool search" onClick={() => { setQuery(''); search.current?.focus(); }}><X size={15} /></button>}
           </label>
-          <div className="tx-areas" role="group" aria-label="Tool areas">
+          <div className="tx-areas" role="group" aria-label="Tool areas" ref={areas}>
             <button type="button" aria-pressed={area === 'all'} onClick={() => pickArea('all')}>All</button>
             {AREAS.map((a) => <button key={a.id} type="button" aria-pressed={area === a.id} onClick={() => pickArea(a.id)}>{a.label}</button>)}
           </div>

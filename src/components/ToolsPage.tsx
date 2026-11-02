@@ -17,6 +17,17 @@ import { imageProvider } from '../lib/images';
 
 // Images come from Cloudflare Workers AI or Hugging Face (src/lib/images.ts), so either key makes the tool ready.
 const IMAGE_KEY = 'Cloudflare or Hugging Face key';
+
+// Browse all tools (Canvas) shows one short line per tool, so the list scans quickly on a phone.
+const SHORT: Record<string, string> = {
+  research: 'A cited report from several web searches.', ask: 'Find and answer from past conversations.',
+  web: 'Let replies look things up on Google.', page: 'Bring a page’s text into the chat.', youtube: 'Main points and timestamps.',
+  canvas: 'Write a document beside the chat.', image: 'Describe it and Lumen draws it.',
+  writing: 'Select text in a reply to rewrite or translate it.', prompts: 'Start from a prompt you use often.',
+  analysis: 'Charts from CSV and Excel, run on your device.', calc: 'Exact maths with Python, step by step.',
+  compare: 'Ask two or three models at once.', study: 'Flashcards and quizzes from chats and documents.',
+  'study-chat': 'Explains step by step and quizzes you.',
+};
 import type { SavedAssistant } from '../types';
 
 type Section = 'research' | 'create' | 'analyze' | 'learn' | 'assistants';
@@ -133,7 +144,7 @@ export default function ToolsPage({ onClose, initial = 'research', newAssistant 
     const launch = (run: () => void) => () => replaceScreen!(() => { fresh(); s.setUi({ page: null }); run(); });
     return (
       <ToolPicker
-        tools={tools.map((t) => ({ ...t, run: t.run && (t.toggle ? t.run : t.needs && !t.ready ? setUpKeys : launch(t.run)) }))}
+        tools={tools.map((t) => ({ ...t, text: SHORT[t.id] || t.text, run: t.run && (t.toggle ? t.run : t.needs && !t.ready ? setUpKeys : launch(t.run)) }))}
         keys={[{ name: 'Gemini', ready: gemini, rejected: geminiRejected, uses: keyFor('Gemini key') }, { name: 'Cloudflare or Hugging Face', ready: Boolean(imageProvider(keys)), uses: keyFor(IMAGE_KEY) }]}
         mine={settings.assistants || []} builtins={BUILTIN_ASSISTANTS}
         query={query} setQuery={setQuery} area={area!} setArea={setArea}

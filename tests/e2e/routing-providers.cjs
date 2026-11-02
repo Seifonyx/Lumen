@@ -2,6 +2,7 @@
 // Sections: one header line with five tabs on computers. Phones: five horizontally scrollable sections starting with Models;
 // Usage and Diagnostics are sections, and a provider from the list, as pages with Back in the bar.
 const assert = require('node:assert/strict');
+const { openPlace } = require('./helpers/nav.cjs');
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium, webkit } = require('playwright');
@@ -49,8 +50,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       const draft = 'Phase 4 draft: café 🌙';
       await page.locator('.composer textarea').fill(draft);
       const open = async () => {
-        if (width < 900) await page.getByRole('button', { name: 'Open chats', exact: true }).first().click();
-        await page.locator('aside.cv-nav').getByRole('button', { name: 'Router', exact: true }).click();
+        await openPlace(page, 'Router');
       };
       await open();
       const rc = page.locator('.rc-page');

@@ -1,5 +1,6 @@
 // CP3: actual Canvas + canonical synthetic profile/catalog. No live provider requests or accounts.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const { openPlace } = require('./helpers/nav.cjs');
 const {chromium,webkit}=require('playwright'),AxeBuilder=require('@axe-core/playwright').default;
 const {profile,seed}=require('./helpers/preview-profile.cjs');
 const base=process.env.MR_TEST_URL||'http://localhost:5190/',engine=process.env.MR_WEBKIT?'webkit':'chromium';
@@ -25,7 +26,7 @@ try{for(const[width,height]of sizes)for(const theme of ['light','dark']){
  await page.locator('.composer input[type=file][multiple]').last().setInputFiles({name:'context.txt',mimeType:'text/plain',buffer:Buffer.from('Synthetic attachment context')});
  await page.getByText('context.txt',{exact:true}).first().waitFor();
  await input.evaluate(el=>{window.__prismInput=el;el.focus();el.setSelectionRange(5,19,'backward');});
- const open=async()=>{if(width<900)await page.getByRole('button',{name:'Open chats',exact:true}).first().click();await page.locator('aside.cv-nav').getByRole('button',{name:'Router',exact:true}).click();};
+ const open=async()=>{await openPlace(page,'Router');};
  await open();const rc=page.locator('.rc-page');await rc.locator('.rc-model').first().waitFor();await page.evaluate(()=>document.fonts.ready);
  const shot=async name=>{await page.evaluate(()=>document.activeElement?.blur());await page.screenshot({path:path.join(out,`${width}-${theme}-${name}.png`),animations:'disabled'});};
  await shot('models');

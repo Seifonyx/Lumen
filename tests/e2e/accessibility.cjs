@@ -1,4 +1,5 @@
 const {selectLibraryType}=require('./helpers/ui.cjs');
+const { openPlace } = require('./helpers/nav.cjs');
 const { plusItem, openTools } = require('./helpers/plus.cjs');
 const {chromium}=require('playwright'),AxeBuilder=require('@axe-core/playwright').default,assert=require('node:assert/strict'),fs=require('node:fs');
 const {profile}=require('./helpers/preview-profile.cjs');
@@ -23,7 +24,7 @@ const {profile}=require('./helpers/preview-profile.cjs');
  if(canvas)await openTools(page);else{if(width<900)await page.click('.menu-btn');await page.getByRole('button',{name:'Tools',exact:true}).click();}await page.locator(':is(.hub-page,.tool-picker) :is(.tool-card,.tx-hit)').first().waitFor();await scan(canvas?'browse all tools':'tools page');
  if(!canvas)await page.getByRole('button',{name:'All assistants',exact:true}).click();await page.locator(canvas?'#tools-assistants':'.assistant-library').waitFor();await scan('assistants page');
  await page.getByRole('button',{name:'New assistant',exact:true}).click();await page.getByLabel('Library item name').waitFor();await scan('assistant editor');if(canvas){await page.goBack();await page.locator('.library-editor').waitFor({state:'detached'});await page.getByRole('button',{name:'Close tools',exact:true}).click();await page.locator('.tool-picker').waitFor({state:'detached'});}else await closePage();
- if(width<900)await page.click('.menu-btn');await page.getByRole('button',{name:'Library',exact:true}).click();await page.locator(canvas?'.phone-sections':'.coll-filters').first().waitFor();await scan('collection Everything');
+ await openPlace(page,'Library');await page.locator(canvas?'.phone-sections':'.coll-filters').first().waitFor();await scan('collection Everything');
  if(canvas){await selectLibraryType(page,'Searchable');await page.locator('.files-uploads .knowledge-library').waitFor();}else{await page.getByRole('radio',{name:'Searchable',exact:true}).click();await page.locator('.files-uploads .knowledge-library').waitFor();}await scan('collection Searchable');await closePage();
  await plusItem(page,'Saved prompts');await page.locator('.prompts-modal').waitFor();await scan('prompts window');await trap('.modal');await close();
  await plusItem(page,'Quick tools','Summarize a YouTube video');await page.locator('.free-tools').waitFor();await scan('quick tools window');await trap('.modal');await close();assert.ok(!await page.locator('.main').evaluate(el=>el.inert));

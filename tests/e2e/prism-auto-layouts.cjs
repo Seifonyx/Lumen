@@ -1,5 +1,6 @@
 // Slice3 CP1: canonical Auto evidence / Layout editor and history, synthetic-only catalog/account/transport.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const { openPlace } = require('./helpers/nav.cjs');
 const {chromium,webkit}=require('playwright'),AxeBuilder=require('@axe-core/playwright').default;
 const {profile,seed}=require('./helpers/preview-profile.cjs');
 const base=process.env.MR_TEST_URL||'http://localhost:5190/',engine=process.env.MR_WEBKIT?'webkit':'chromium',out=process.env.AUTO_LAYOUT_OUT||'tests/e2e/out/auto-layouts';fs.mkdirSync(out,{recursive:true});
@@ -17,7 +18,7 @@ try{for(const[width,height]of sizes)for(const theme of ['light','dark']){
  const now=Date.now();await seed(page,uid,[{id:'evidence',title:'Routing evidence',model:'auto',createdAt:now-5000,updatedAt:now,messages:[{id:'user',role:'user',text:'Synthetic request; must never appear in routing evidence.',createdAt:now-4000},{id:'reasoned',role:'assistant',text:'Earlier synthetic response.',model:pro,route:'strong writer',routeDetail:{why:['strong writer'],next:[flash]},status:'done',createdAt:now-3000},{id:'recovered',role:'assistant',text:'A completed synthetic response.',model:flash,via:'Earlier writing Layout',notices:['Gemini 2.5 Pro hit its usage limit — switched to Gemini Flash.'],status:'done',createdAt:now-2000},{id:'stopped',role:'assistant',text:'Stopped synthetic response.',model:pro,status:'stopped',createdAt:now-1000}]}]);await page.reload();await input.waitFor();
  if(width<900)await page.getByRole('button',{name:'Open chats',exact:true}).first().click();await page.locator('aside.cv-nav').getByRole('button',{name:/Routing evidence/}).click();
  const draft='Keep this Layout draft — café 🌙\nA second line.';await input.fill(draft);await page.locator('.composer input[type=file][multiple]').last().setInputFiles({name:'layout-context.txt',mimeType:'text/plain',buffer:Buffer.from('Synthetic file')});await page.getByText('layout-context.txt',{exact:true}).first().waitFor();await input.evaluate(el=>{window.__layoutInput=el;el.focus();el.setSelectionRange(4,15,'backward')});
- const open=async()=>{if(width<900)await page.getByRole('button',{name:'Open chats',exact:true}).first().click();await page.locator('aside.cv-nav').getByRole('button',{name:'Router',exact:true}).click()};
+ const open=async()=>{await openPlace(page,'Router')};
  await open();const rc=page.locator('.rc-page');await rc.locator('.rc-model').first().waitFor();await page.evaluate(()=>document.fonts.ready);
  const shot=async name=>{await page.evaluate(()=>document.activeElement?.blur());await page.screenshot({path:path.join(out,`${width}-${theme}-${name}.png`),animations:'disabled'})};
  await shot('models');

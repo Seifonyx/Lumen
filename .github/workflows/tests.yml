@@ -1,7 +1,7 @@
 name: Tests
 
 # The repository is public, so GitHub's standard runners cost nothing. Runs are split for speed: the long in-app test runs
-# are spread over 4 machines each (E2E_SHARD, balanced by tests/e2e/timings.json), and Canvas contracts run Chromium and
+# are spread over 6 machines each (E2E_SHARD, balanced by tests/e2e/timings.json), and Canvas contracts run Chromium and
 # WebKit side by side. Browser jobs run in Playwright's image, so no machine installs browsers or system libraries. Gate jobs keep the original check names. Documentation-only changes skip the run, and a newer
 # push cancels the older run.
 on:
@@ -39,7 +39,7 @@ jobs:
       - run: npm run test:unit
 
   in-app-shard:
-    name: In-app tests (Chromium + Firebase emulators) ${{ matrix.shard }}/5
+    name: In-app tests (Chromium + Firebase emulators) ${{ matrix.shard }}/6
     runs-on: ubuntu-24.04
     # Chromium and its system libraries come preinstalled in Playwright's image (same version as package.json): no apt
     # install, which a slow package mirror once stretched to 11 minutes on some machines.
@@ -50,9 +50,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5]
+        shard: [1, 2, 3, 4, 5, 6]
     env:
-      E2E_SHARD: ${{ matrix.shard }}/5
+      E2E_SHARD: ${{ matrix.shard }}/6
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -83,7 +83,7 @@ jobs:
   in-app-canvas-shard:
     # The same in-app tests against the Canvas build (what Deploy ships when canvas is chosen), for the suites listed in
     # tests/e2e/canvas-core.txt. The rest still look for the ordinary sidebar; the ordinary build keeps the full run above.
-    name: In-app tests on the Canvas build (Chromium + Firebase emulators) ${{ matrix.shard }}/5
+    name: In-app tests on the Canvas build (Chromium + Firebase emulators) ${{ matrix.shard }}/6
     runs-on: ubuntu-24.04
     # Chromium and its system libraries come preinstalled in Playwright's image (same version as package.json): no apt
     # install, which a slow package mirror once stretched to 11 minutes on some machines.
@@ -94,9 +94,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5]
+        shard: [1, 2, 3, 4, 5, 6]
     env:
-      E2E_SHARD: ${{ matrix.shard }}/5
+      E2E_SHARD: ${{ matrix.shard }}/6
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -196,10 +196,16 @@ jobs:
       fail-fast: false
       matrix:
         engine: [Chromium, WebKit]
-        group: [screens, composer-routing, shell-browser]
+        group: [screens-wide, screens-narrow, composer-routing, shell-browser]
         include:
-          - group: screens
+          # The screens contract checks each viewport in turn; two machines split them (desktop and largest phone,
+          # then the two smaller phones).
+          - group: screens-wide
             contracts: canvas-screens
+            viewports: '1440x960,430x932'
+          - group: screens-narrow
+            contracts: canvas-screens
+            viewports: '390x844,320x568'
           - group: composer-routing
             contracts: canvas-composer routing-center
           - group: shell-browser
@@ -235,7 +241,7 @@ jobs:
         env:
           MR_WEBKIT: ${{ matrix.engine == 'WebKit' && '1' || '' }}
           # PR52 visual review: cover smallest, typical, largest iPhone and desktop.
-          CP05_VIEWPORTS: '1440x960,430x932,390x844,320x568'
+          CP05_VIEWPORTS: ${{ matrix.viewports || '1440x960,430x932,390x844,320x568' }}
           CP04_VIEWPORTS: '1440x960,430x932,390x844,320x568'
       - name: Phone glass navigation in ${{ matrix.engine }}
         if: matrix.group == 'shell-browser'
@@ -246,23 +252,25 @@ jobs:
           preview_pid=$!
           trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
           node -e "(async()=>{for(let i=0;i<30;i++){try{if((await fetch('http://localhost:5191/')).ok)return}catch{}await new Promise(r=>setTimeout(r,500))}process.exit(1)})()"
-          node tests/e2e/feature-exit.cjs
-          node tests/e2e/drawer-reference.cjs
-          node tests/e2e/conversations-projects.cjs
-          node tests/e2e/library-experience.cjs
-          node tests/e2e/tools-experience.cjs
-          node tests/e2e/iphone-glass-navigation.cjs
-          node tests/e2e/search-results.cjs
-          node tests/e2e/answer-details.cjs
-          node tests/e2e/plus-tools.cjs
-          node tests/e2e/routing-providers.cjs
-          node tests/e2e/prism-provider-states.cjs
-          node tests/e2e/provider-settings-containment.cjs
-          node tests/e2e/prism-model-discovery.cjs
-          node tests/e2e/prism-model-states.cjs
-          node tests/e2e/prism-auto-layouts.cjs
-          node tests/e2e/prism-routing-states.cjs
-          node tests/e2e/prism-usage-diagnostics.cjs
+          # Side by side, three at a time (each suite has its own browser and account); this step was the slowest in CI.
+          node scripts/run-parallel.mjs 3 \
+            tests/e2e/feature-exit.cjs \
+            tests/e2e/drawer-reference.cjs \
+            tests/e2e/conversations-projects.cjs \
+            tests/e2e/library-experience.cjs \
+            tests/e2e/tools-experience.cjs \
+            tests/e2e/iphone-glass-navigation.cjs \
+            tests/e2e/search-results.cjs \
+            tests/e2e/answer-details.cjs \
+            tests/e2e/plus-tools.cjs \
+            tests/e2e/routing-providers.cjs \
+            tests/e2e/prism-provider-states.cjs \
+            tests/e2e/provider-settings-containment.cjs \
+            tests/e2e/prism-model-discovery.cjs \
+            tests/e2e/prism-model-states.cjs \
+            tests/e2e/prism-auto-layouts.cjs \
+            tests/e2e/prism-routing-states.cjs \
+            tests/e2e/prism-usage-diagnostics.cjs
         env:
           MR_TEST_URL: http://localhost:5191/
           MR_WEBKIT: ${{ matrix.engine == 'WebKit' && '1' || '' }}

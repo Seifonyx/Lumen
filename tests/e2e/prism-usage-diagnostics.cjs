@@ -1,5 +1,6 @@
 // Router > Activity (Overview, Logs, Quotas): truthful evidence and privacy, synthetic account/catalog/transport only.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const { openPlace } = require('./helpers/nav.cjs');
 const {chromium,webkit}=require('playwright'),AxeBuilder=require('@axe-core/playwright').default;
 const {profile,seed}=require('./helpers/preview-profile.cjs');
 const base=process.env.MR_TEST_URL||'http://localhost:5190/',engine=process.env.MR_WEBKIT?'webkit':'chromium',out=process.env.PRISM_EVIDENCE_OUT||'tests/e2e/out/prism-usage-diagnostics';fs.mkdirSync(out,{recursive:true});
@@ -14,7 +15,7 @@ try{for(const[width,height]of sizes)for(const theme of['light','dark']){
  const now=Date.now(),reply=(id,status,at,extra={})=>({id,role:'assistant',text:`PRIVATE_BODY_${id}`,model:flash,status,createdAt:at,...extra});
  await seed(page,uid,[{id:'evidence',title:'PRIVATE CHAT TITLE',model:flash,createdAt:now-10000,updatedAt:now,messages:[{id:'u',role:'user',text:'PRIVATE PROMPT',createdAt:now-9000},reply('done','done',now-8000,{route:'balanced'}),reply('rerouted','done',now-7000,{notices:['A model reached its limit — switched to Gemini Flash.']}),reply('stopped','stopped',now-6000),reply('failed','error',now-5000,{error:'401 private provider response'})]},{id:'temporary-secret',title:'TEMPORARY PRIVATE',model:flash,createdAt:now,updatedAt:now,messages:[reply('temp','done',now)]}]);
  await page.reload();await input.waitFor();await input.fill('Synthetic counter request');await page.locator('.send-btn').click();await page.getByText('Synthetic completed reply.',{exact:true}).waitFor();await page.waitForFunction(()=>document.querySelector('.send-btn')?.getAttribute('aria-label')!=='Stop');
- const open=async()=>{if(width<900)await page.getByRole('button',{name:'Open chats',exact:true}).first().click();await page.locator('aside.cv-nav').getByRole('button',{name:'Router',exact:true}).click();};await open();const rc=page.locator('.rc-page');await rc.locator('.rc-model').first().waitFor();const nav=rc.getByRole('navigation',{name:'Router sections'});
+ const open=async()=>{await openPlace(page,'Router');};await open();const rc=page.locator('.rc-page');await rc.locator('.rc-model').first().waitFor();const nav=rc.getByRole('navigation',{name:'Router sections'});
  const tab=name=>rc.getByRole('tablist',{name:'Activity views'}).getByRole('tab',{name,exact:true});
  await nav.getByRole('button',{name:'Activity',exact:true}).click();await tab('Overview').waitFor();assert.equal(await tab('Overview').getAttribute('aria-selected'),'true','Activity opens on its Overview');
  await rc.locator('[data-evidence-source="app-counters"]').waitFor();await rc.locator('[data-evidence-source="saved-chats"]').waitFor();

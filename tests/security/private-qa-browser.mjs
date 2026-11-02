@@ -126,8 +126,10 @@ try {
 
     // Surfaces reachable without leaving the device.
     if (width >= 900) {
+      // Tools is Browse all tools (a picker over the chat, opened from +), not a sidebar place.
       for (const name of ['Library', 'Tools']) {
-        await page.locator('.sidebar').getByRole('button', { name, exact: true }).first().click();
+        if (name === 'Tools') await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tools-page' })));
+        else await page.locator('.sidebar').getByRole('button', { name, exact: true }).first().click();
         await settle(page, 400);
         assert.ok((await overflow(page)) <= 0, `${name} overflow at ${width}`);
         await page.keyboard.press('Escape');

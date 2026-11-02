@@ -282,7 +282,7 @@ try {
         const rail = page.getByRole('navigation', { name: 'Navigation', exact: true });
         await page.waitForFunction(() => document.activeElement?.matches('.cv-navrail-expand'));
         assert.deepEqual(await rail.getByRole('button').evaluateAll((b) => b.map((x) => x.getAttribute('aria-label'))),
-          ['Expand sidebar', 'New chat', 'Search chats', 'Library', 'Tools', 'Projects', 'Router', 'Settings']);
+          ['Expand sidebar', 'New chat', 'Search chats', 'Library', 'Projects', 'Router', 'Settings']);
         await shot(page, join(out, `${tag}-rail.png`));
         await rail.getByRole('button', { name: 'Library', exact: true }).click();
         await page.getByRole('main', { name: 'Library' }).waitFor();
@@ -297,10 +297,10 @@ try {
         await page.waitForFunction(() => document.activeElement?.matches('.collapse-sidebar'));
         assert.equal(await rail.count(), 0, 'the rail leaves with the collapse');
         // From the sidebar: a destination opened and closed with Chat returns focus to that destination.
-        await nav(page).getByRole('button', { name: 'Tools', exact: true }).click();
-        await page.getByRole('main', { name: 'Tools' }).waitFor();
+        await nav(page).getByRole('button', { name: 'Library', exact: true }).click();
+        await page.getByRole('main', { name: 'Library' }).waitFor();
         await page.getByRole('button', { name: 'Return to chat', exact: true }).click();
-        await page.waitForFunction(() => document.activeElement?.closest('.cv-dest') && document.activeElement.textContent.includes('Tools'));
+        await page.waitForFunction(() => document.activeElement?.closest('.cv-dest') && document.activeElement.textContent.includes('Library'));
       }
       pass('drawer / collapse / rail / back / focus return');
 

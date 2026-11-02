@@ -55,6 +55,12 @@ export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()
  };
  const search=<label className="hub-search"><Search size={18} aria-hidden="true"/><input type="search" aria-label="Search your library" placeholder={kind==='searchable'?'Find Knowledge document names':'Search names, chats and documents'} value={query} onChange={e=>setQuery(e.target.value)} />{query&&<button type="button" aria-label="Clear library search" onClick={e=>{setQuery('');e.currentTarget.parentElement?.querySelector('input')?.focus()}}>×</button>}</label>;
  const filtered=Boolean(query||project);
+ // Phones name every photo "image.jpg": the same name more than once in one chat gets its place among them ("2 of 3
+ // in this chat"), so rows can be told apart without renaming anything.
+ const twins=useMemo(()=>{const groups=new Map<string,LibraryItem[]>();for(const item of scoped){const k=itemName(item).toLocaleLowerCase();groups.set(k,[...(groups.get(k)||[]),item])}
+  const out=new Map<string,{of:number;n:number}|null>();for(const list of groups.values()){if(list.length<2)continue;const byChat=new Map<string,LibraryItem[]>();for(const item of list)byChat.set(item.chat.id,[...(byChat.get(item.chat.id)||[]),item]);
+   for(const same of byChat.values()){const ordered=[...same].sort((a,b)=>a.at-b.at||a.key.localeCompare(b.key));ordered.forEach((item,i)=>out.set(item.key,same.length>1?{n:i+1,of:same.length}:null))}}
+  return out},[scoped]);
  const total=<span className="library-total" role="status">{scoped.length} {filtered?'matching ':''}{scoped.length===1?'item':'items'}</span>;
  return <HubPage label="Library" title="Library" onClose={onClose} create={create}
   actions={create&&<button type="button" className="btn library-create" onClick={create.run}><Plus size={16}/>{create.label}</button>}
@@ -66,11 +72,12 @@ export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()
     {discoveryError&&<p role="alert">Generated file discovery could not load. Your other chat items remain available. Reopen Library to retry.</p>}
     <h2 className="sr-only">{category.label}</h2>
     {kind==='searchable'?<div className="files-uploads"><p className="library-knowledge-note">Lumen searches these and cites their pages. Kept only on this device, not synced to your account.</p>{!phone&&<div className="library-controls">{search}</div>}<KnowledgeLibrary onClose={onClose} filter={query}/></div>:<>
-     <div className="library-controls">{!phone&&search}{phone&&total}<div className="library-sorts"><label><span className="sr-only">Sort library</span><select aria-label="Sort library" value={sort} onChange={e=>setSort(e.target.value as LibrarySort)}><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="name">Name A–Z</option></select></label>{Boolean(projects?.length)&&<label><span className="sr-only">Project</span><select aria-label="Project" value={project} onChange={e=>setProject(e.target.value)}><option value="">All projects</option>{projects?.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}</div></div>
+     <div className={`library-controls${!scoped.length&&filtered&&!project?' is-empty':''}`}>{!phone&&search}{phone&&total}<div className="library-sorts">{(scoped.length>0||!filtered)&&<label><span className="sr-only">Sort library</span><select aria-label="Sort library" value={sort} onChange={e=>setSort(e.target.value as LibrarySort)}><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="name">Name A–Z</option></select></label>}{Boolean(projects?.length)&&(scoped.length>0||!filtered||project)&&<label><span className="sr-only">Project</span><select aria-label="Project" value={project} onChange={e=>setProject(e.target.value)}><option value="">All projects</option>{projects?.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}</div></div>
      {scoped.length?<>
       {!phone&&<div className="library-cols">{total}<span aria-hidden="true">From</span><span aria-hidden="true">Added</span></div>}
-      <ul className="library-ledger">{scoped.map(item=><Row key={item.key} item={item} onOpen={()=>open(item)} openChat={openChat}/>)}</ul>
-     </>:<HubEmpty icon={<FileText size={28}/>} title={filtered?'No matching items':kind==='all'?'Nothing saved yet':`No ${category.label.toLowerCase()} yet`} text={filtered?'Try another search, or show every project.':category.description} action={filtered?<button type="button" className="btn" onClick={()=>{setQuery('');setProject('')}}>Clear search and filters</button>:undefined}/>}
+      <ul className="library-ledger">{scoped.map(item=><Row key={item.key} item={item} twin={twins.get(item.key)} onOpen={()=>open(item)} openChat={openChat}/>)}</ul>
+     </>:filtered?<div className="library-nomatch" role="status"><h3>No matching items</h3><p>{query?<>Nothing in {category.label==='Everything'?'your Library':category.label} matches “<bdi>{query.trim()}</bdi>”{project?' in this project':''}.</>:'Nothing in this project yet.'}</p><button type="button" className="btn small" onClick={()=>{setQuery('');setProject('')}}>{query&&project?'Clear search and filters':query?'Clear search':'Show every project'}</button></div>
+      :<HubEmpty icon={<FileText size={28}/>} title={kind==='all'?'Nothing saved yet':`No ${category.label.toLowerCase()} yet`} text={category.description}/>}
      {kind==='all'&&<p className="library-knowledge-link"><BookOpen size={18} aria-hidden="true"/><span>Knowledge isn’t listed here: it stays on this device.</span><button type="button" onClick={()=>setKind('searchable')}>Open Knowledge<ChevronRight size={16} aria-hidden="true"/></button></p>}
     </>}
    </section>
@@ -81,26 +88,29 @@ export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()
 
 /** One saved thing: a tile (photo, extension or document mark), its name, and what it is and where it came from. On
  * computers the source chat and date sit in their own columns; on phones they share the second line. */
-function Row({item,onOpen,openChat}:{item:LibraryItem;onOpen:()=>void;openChat:(id:string)=>void}) {
+function Row({item,twin,onOpen,openChat}:{item:LibraryItem;twin?:{of:number;n:number}|null;onOpen:()=>void;openChat:(id:string)=>void}) {
  const name=itemName(item),id=useId(),picture=src(item),file='file'in item?item.file:null;
  const ext=item.kind==='documents'?'':extensionOf(name);
  const type=item.kind==='documents'?'Document':`${ext||'File'}${file&&Number.isFinite(file.size)&&file.size>0?` · ${formatBytes(file.size)}`:''}`;
  const made=item.kind==='generated'||item.kind==='exports'?'Made by Lumen':'';
  const status=file?availabilityShort(file):'';
+ // twin: {n, of} when the name repeats within this chat (other chats already differ by their name on the row).
+ const when=relTime(item.at), place=twin?`${twin.n} of ${twin.of} in this chat`:'';
  return <li className={`library-row kind-${item.kind}`}>
-  <button type="button" className="library-open" aria-label={`Open ${name}`} aria-describedby={id} onClick={onOpen}>
+  <button type="button" className="library-open" aria-label={`Open ${name}${place?`, ${place}`:''}`} aria-describedby={id} onClick={onOpen}>
    <span className="library-row-copy">
     <span className="library-file-icon" aria-hidden="true">{picture?<img src={picture} alt="" loading="lazy"/>:item.kind==='documents'?<FileText size={20}/>:file?.kind==='image'?<ImageIcon size={20}/>:<span className="library-ext">{ext||<FileText size={20}/>}</span>}</span>
     <strong dir="auto" title={name}>{name}</strong>
     <span className="library-row-meta" id={id}>
      <span className="lr-type">{type}</span>
      {made&&<span className="lr-made">{made}</span>}
+     {place&&<span className="lr-place">{place}</span>}
      {status&&<span className="lr-status">{status}</span>}
-     <span className="lr-where"><bdi>{item.chat.title}</bdi> · {relTime(item.at)}</span>
+     <span className="lr-where"><bdi>{item.chat.title}</bdi> · {when}</span>
     </span>
    </span>
    <span className="library-col-from" aria-hidden="true" dir="auto">{item.chat.title}</span>
-   <span className="library-col-when" aria-hidden="true">{relTime(item.at)}</span>
+   <span className="library-col-when" aria-hidden="true">{when}</span>
   </button>
   {item.kind!=='exports'&&<Suspense fallback={null}><CanvasLibraryActions item={item} openChat={openChat}/></Suspense>}
  </li>;

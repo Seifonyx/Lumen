@@ -24,6 +24,11 @@ exports.fixture=[
    {id:'long',name:'Reading-programme-volunteer-handbook-final-revised-v3-with-appendices-and-contact-sheets.pdf',kind:'pdf',mime:'application/pdf',size:3481221,stored:true},
    {id:'rtl',name:'تقرير الميزانية السنوي.txt',kind:'text',mime:'text/plain',size:5120,text:'نص تجريبي'}]},
   {id:'a2',role:'assistant',status:'done',createdAt:now-7*day+1000,text:'Here is a cover image.',files:[{id:'gen',name:'Cover illustration.png',kind:'image',mime:'image/png',size:1178,data:picture}]}]},
+ {id:'lib-c',title:'Kitchen renovation',createdAt:now-3*3600000,updatedAt:now-3*3600000,messages:[
+  {id:'u3',role:'user',text:'Which cabinet colour?',createdAt:now-3*3600000,files:[{id:'k1',name:'image.jpg',kind:'image',mime:'image/jpeg',size:204800,data:picture},{id:'k2',name:'image.jpg',kind:'image',mime:'image/jpeg',size:198400,data:picture}]},
+  {id:'u4',role:'user',text:'And this one?',createdAt:now-2*3600000,files:[{id:'k3',name:'image.jpg',kind:'image',mime:'image/jpeg',size:211000,thumb:`data:image/png;base64,${picture}`}]}]},
+ {id:'lib-d',title:'Weekend in Porto',createdAt:now-4*day,updatedAt:now-4*day,messages:[
+  {id:'u5',role:'user',text:'Where was this?',createdAt:now-4*day,files:[{id:'p1',name:'image.jpg',kind:'image',mime:'image/jpeg',size:350000}]}]},
 ];
 const sizes={320:568,390:844,430:932,1280:800,1440:960};
 (async()=>{
@@ -45,6 +50,7 @@ const sizes={320:568,390:844,430:932,1280:800,1440:960};
    await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(300);
    return {ctx,page};
   };
+  const keyboard=(page,h)=>page.evaluate(h=>{const r=document.documentElement;if(h){r.style.setProperty('--vv-h',h+'px');r.classList.add('kb-open')}else{r.style.removeProperty('--vv-h');r.classList.remove('kb-open')}},h);
   const shot=async(page,name)=>{await page.waitForTimeout(250);await page.screenshot({path:path.join(out,`${width}-${theme}-${name}.png`),animations:'disabled'});};
   const library=async(page,kind)=>{await page.evaluate(k=>window.dispatchEvent(new CustomEvent('mr:library',{detail:k})),kind);await page.locator('.hub-page:visible').waitFor();await page.evaluate(()=>document.activeElement?.blur());};
   const tools=async page=>{await page.evaluate(()=>window.dispatchEvent(new CustomEvent('mr:library',{detail:'tools-page'})));await page.locator('.hub-page:visible, .tool-picker').first().waitFor();await page.evaluate(()=>document.activeElement?.blur());};
@@ -53,6 +59,13 @@ const sizes={320:568,390:844,430:932,1280:800,1440:960};
    if(want('library')){await library(page,'collection');await shot(page,'library');}
    if(want('library-search')){await page.locator('input[type=search]:visible').first().fill('quarterly forecast');await shot(page,'library-noresults');await page.locator('input[type=search]:visible').first().fill('');}
    if(want('knowledge')){await library(page,'knowledge');await shot(page,'knowledge');}
+   if(want('photos')){await library(page,'collection');await page.getByRole('tab',{name:'Photos',exact:true}).click();await page.waitForTimeout(200);await shot(page,'photos');}
+   if(want('library-search-kb')&&phone){await library(page,'collection');const s=page.locator('.phone-page-search input');await s.focus();await s.fill('quarterly forecast');const h=Math.round(sizes[width]*0.56);await keyboard(page,h);await page.screenshot({path:path.join(out,`${width}-${theme}-library-search-kb.png`),clip:{x:0,y:0,width,height:h},animations:'disabled'});await keyboard(page,0);}
+   if(want('plus-kb')&&phone){await page.goto(base);await page.locator('.composer textarea').waitFor({state:'attached'});const box=page.locator('.composer textarea');await box.focus();await box.fill('Plan the kitchen');const h=Math.round(sizes[width]*0.56);await keyboard(page,h);
+    // As on an iPhone, the keyboard leaves about a quarter second after the message box lets go of focus.
+    await page.evaluate(()=>document.querySelector('.composer textarea').addEventListener('blur',()=>setTimeout(()=>{const r=document.documentElement;r.style.removeProperty('--vv-h');r.classList.remove('kb-open')},250),{once:true}));
+    await page.locator('.composer .tool-btn').first().click();await page.waitForTimeout(120);await page.screenshot({path:path.join(out,`${width}-${theme}-plus-kb-mid.png`),animations:'disabled'});await page.waitForTimeout(700);await page.screenshot({path:path.join(out,`${width}-${theme}-plus-kb.png`),animations:'disabled'});await page.keyboard.press('Escape');}
+
    if(want('tools')){await page.goto(base);await page.locator('.composer textarea').waitFor({state:'attached'});await tools(page);await shot(page,'tools');}
    // Keyboard open: the picker's search focused with the visible viewport cut to what an iPhone keyboard leaves.
    if(want('tools-keyboard')&&phone){const s=page.locator('.tool-picker input[type=search], .hub-page input[type=search]').first();await s.focus();await s.fill('re');const h=Math.round(sizes[width]*0.56);await page.evaluate(h=>{document.documentElement.style.setProperty('--vv-h',h+'px');document.documentElement.classList.add('kb-open')},h);await page.waitForTimeout(200);await page.screenshot({path:path.join(out,`${width}-${theme}-tools-keyboard.png`),clip:{x:0,y:0,width,height:h},animations:'disabled'});}

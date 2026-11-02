@@ -54,7 +54,10 @@ test('every flagged Composer branch keeps the ordinary expression as its alterna
   const retainedFileGuards = src.match(/owner !== getComposerScope\(\) && \(!CANVAS_COMPOSER \|\| privateOwner \|\| !pendingDrafts.current.has\(owner\)\)/g) || [];
   assert.equal(retainedFileGuards.length,3,'file batch, completed reads and errors all exclude departed private owners');
   assert.equal(localModalCloses.length,1,'reviewed comparison dismissal keeps its ordinary state setter');
-  assert.equal(spreads.length + ternaries.length + statements.length + values.length + localModalCloses.length + retainedFileGuards.length, uses, 'no unreviewed flag use');
+  // Phones' +: Canvas lets the keyboard close before the sheet rises; the ordinary handler is unchanged.
+  const addSheetOpeners = src.match(/onClick=\{CANVAS_COMPOSER \? openAddSheet : \(\) => setSheet\(true\)\}/g) || [];
+  assert.equal(addSheetOpeners.length, 1, 'reviewed + opener keeps its ordinary handler');
+  assert.equal(spreads.length + ternaries.length + statements.length + values.length + localModalCloses.length + retainedFileGuards.length + addSheetOpeners.length, uses, 'no unreviewed flag use');
   assert.equal(spreads.length, 3);
   assert.equal(ternaries.length, 4);
 });

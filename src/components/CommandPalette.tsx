@@ -37,7 +37,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
   const items = useMemo(() => {
     const all: Item[] = [
       { id: 'new-chat', label: 'New chat', detail: `${modKey}⇧O`, Icon: Plus, run: newGeneralChat || newChat },
-      ...(CANVAS_SHELL ? [{ id: 'prism', label: 'Router', detail: 'Models, providers & routing', Icon: GitFork, run: () => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); } }] : []),
+      ...(CANVAS_SHELL ? [{ id: 'prism', label: 'Router', detail: 'Models, providers & routing', Icon: GitFork, run: () => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); } }, { id: 'tools', label: 'Browse all tools', detail: 'Research, create, analyze, learn and assistants', Icon: Wrench, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tools-page' })) }] : []),
       { id: 'library', label: 'Assistants', detail: 'Helpers with their own instructions', Icon: Sparkles, run: () => window.dispatchEvent(new Event('mr:library')) },
       { id: 'prompts', label: 'Saved prompts', detail: 'Start a message from a prompt', Icon: BookOpen, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'prompts' })) },
       { id: 'files', label: 'Library', detail: 'Documents, photos and files from your chats', Icon: FileText, run: () => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'documents' })) },

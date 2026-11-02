@@ -1,13 +1,4 @@
 /* Canvas Tools workspace: grouped quiet lists in the sidebar's restrained ink/paper language. */
-.app[data-lumen-canvas-shell] .tx { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding-bottom: 32px; }
-/* Phone: one column in reading order (search, areas, readiness, lists); the two wrappers only exist for desktop. */
-.app[data-lumen-canvas-shell] .tx-rail, .app[data-lumen-canvas-shell] .tx-main { display: contents; }
-.app[data-lumen-canvas-shell] .tx-search { order: 0; }
-.app[data-lumen-canvas-shell] .tx-areas { order: 1; }
-.app[data-lumen-canvas-shell] .tx-keys { order: 2; }
-.app[data-lumen-canvas-shell] .tx-group, .app[data-lumen-canvas-shell] .tx-empty { order: 3; }
-@media (max-width: 899px) { .app[data-lumen-canvas-shell] .tx-keys.filtered { display: none; } }
-.app[data-lumen-canvas-shell] .hub-page[aria-label="Tools"] .hub-head { margin-bottom: 14px; }
 
 .app[data-lumen-canvas-shell] .tx-search { display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 6px 0 13px; border-radius: var(--canvas-radius-control); background: color-mix(in srgb, var(--canvas-ink) 5%, transparent); color: var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .tx-search:focus-within { box-shadow: 0 0 0 2px color-mix(in srgb, var(--canvas-ink) 35%, transparent); }
@@ -22,14 +13,6 @@
 .app[data-lumen-canvas-shell] .tx-count { font: 500 12px/1 var(--canvas-data-font); opacity: .62; font-variant-numeric: tabular-nums; }
 .app[data-lumen-canvas-shell] .tx-areas button[aria-pressed="true"] .tx-count { opacity: 1; }
 
-.app[data-lumen-canvas-shell] .tx-keys { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px; border: 1px solid transparent; border-radius: var(--canvas-radius-card); background: var(--canvas-surface); }
-.app[data-lumen-canvas-shell] .tx-keys ul { flex: 1; min-width: 0; display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
-.app[data-lumen-canvas-shell] .tx-keys li { display: flex; align-items: baseline; gap: 9px; }
-.app[data-lumen-canvas-shell] .tx-dot { flex: none; width: 7px; height: 7px; border: 1.5px solid var(--canvas-secondary); border-radius: 50%; transform: translateY(-1px); }
-.app[data-lumen-canvas-shell] .tx-dot.on { border-color: var(--canvas-ink); background: var(--canvas-ink); }
-.app[data-lumen-canvas-shell] .tx-key-copy { min-width: 0; display: grid; gap: 1px; font-size: 13px; line-height: 1.35; }
-.app[data-lumen-canvas-shell] .tx-key-copy strong { font-weight: 500; color: var(--canvas-ink); }
-.app[data-lumen-canvas-shell] .tx-key-copy span { color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .tx-setup { flex: none; align-self: center; display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 8px; border: 0; border-radius: 999px; background: none; color: var(--canvas-ink); font: 600 14px/1 var(--canvas-body-font); cursor: pointer; }
 .app[data-lumen-canvas-shell] .tx-setup:hover { background: var(--canvas-fill); }
 
@@ -54,7 +37,7 @@
 .app[data-lumen-canvas-shell] .tx-copy { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .app[data-lumen-canvas-shell] .tx-name { font: 500 15px/1.3 var(--canvas-body-font); color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .tx-text { font-size: 13.5px; line-height: 1.4; color: var(--canvas-secondary); }
-.app[data-lumen-canvas-shell] .tx-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 3px; font: 500 12px/1.3 var(--canvas-body-font); color: var(--canvas-muted); }
+.app[data-lumen-canvas-shell] .tx-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 3px; font: 400 12px/1.3 var(--canvas-body-font); color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .tx-meta:empty { display: none; }
 .app[data-lumen-canvas-shell] .tx-state { display: inline-flex; align-items: center; gap: 4px; }
 .app[data-lumen-canvas-shell] .tx-state.setup { padding: 2px 7px 2px 6px; border-radius: 6px; background: var(--canvas-fill-strong); color: var(--canvas-ink); }
@@ -77,23 +60,46 @@
 @media (forced-colors: active) {
   .app[data-lumen-canvas-shell] .tx-areas button[aria-pressed="true"] { border: 2px solid Highlight; }
   .app[data-lumen-canvas-shell] .tx-switch { border: 1px solid CanvasText; }
-  .app[data-lumen-canvas-shell] :is(.tx-keys, .tx-list) { border-color: CanvasText; }
+  .app[data-lumen-canvas-shell] .tx-list { border-color: CanvasText; }
   .app[data-lumen-canvas-shell] .tx-switch.on span { background: Highlight; }
 }
 @media (prefers-reduced-motion: reduce) { .app[data-lumen-canvas-shell] .tx-switch, .app[data-lumen-canvas-shell] .tx-switch span { transition: none; } }
 
-/* Desktop: a quiet sticky column with the areas and key readiness, and lists at a readable width. */
+/* Computers: a little more room in each row. */
 @media (min-width: 900px) {
-  .app[data-lumen-canvas-shell] .tx { grid-template-columns: 208px minmax(0, 760px); gap: 40px; align-items: start; }
-  .app[data-lumen-canvas-shell] .tx-rail { position: sticky; top: 8px; display: grid; gap: 20px; }
-  .app[data-lumen-canvas-shell] .tx-main { display: grid; gap: 22px; min-width: 0; }
-  .app[data-lumen-canvas-shell] .tx-areas { display: grid; gap: 2px; margin: 0; padding: 0; overflow: visible; }
-  .app[data-lumen-canvas-shell] .tx-areas button { justify-content: space-between; min-height: 38px; padding: 0 12px; border: 0; border-radius: var(--canvas-radius-row); background: none; font-size: 14px; color: var(--canvas-secondary); }
-  .app[data-lumen-canvas-shell] .tx-areas button:hover { background: var(--canvas-fill); color: var(--canvas-ink); }
-  .app[data-lumen-canvas-shell] .tx-areas button[aria-pressed="true"] { background: var(--canvas-fill-strong); color: var(--canvas-ink); font-weight: 600; }
-  .app[data-lumen-canvas-shell] .tx-keys { flex-direction: column; align-items: stretch; padding: 14px; }
-  .app[data-lumen-canvas-shell] .tx-keys ul { gap: 12px; }
-  .app[data-lumen-canvas-shell] .tx-setup { align-self: flex-start; }
   .app[data-lumen-canvas-shell] .tx-hit { padding: 14px 16px; }
   .app[data-lumen-canvas-shell] .tx-row + .tx-row::before { left: 60px; }
 }
+
+/* Browse all tools: a picker over the chat. Computers: a centred panel. Phones: a large sheet whose height follows the
+   visible viewport, so the search field and results stay above the keyboard. The chat stays rendered behind it. */
+.app.page-open:has(> .tool-picker-layer) .main { display: flex; }
+.tool-picker-layer { position: fixed; inset: 0; z-index: 70; display: flex; justify-content: center; align-items: flex-start; padding: max(6vh, 24px) 24px 24px; background: rgb(0 0 0 / .32); animation: tp-fade .16s ease-out; }
+.tool-picker { display: flex; flex-direction: column; width: min(680px, 100%); height: min(760px, calc(100dvh - max(6vh, 24px) - 24px)); overflow: hidden; border-radius: 16px; background: var(--elevated, var(--canvas-paper, var(--bg))); color: var(--canvas-ink, var(--text)); box-shadow: 0 0 0 1px var(--canvas-rim), var(--float-shadow, 0 24px 60px rgb(0 0 0 / .25)); outline: none; animation: tp-rise .2s cubic-bezier(.2, .8, .2, 1); }
+.tp-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 12px 4px 20px; }
+.tp-head h2 { margin: 0; font: 620 18px/1.3 var(--canvas-display-font, var(--font)); letter-spacing: -.01em; }
+.tp-close { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; color: var(--canvas-secondary, var(--text-2)); cursor: pointer; }
+.tp-close:hover { background: var(--canvas-fill); }
+.tp-close:focus-visible { outline: 2px solid var(--canvas-focus, var(--canvas-ink)); outline-offset: -2px; }
+.tp-top { flex: none; display: grid; gap: 10px; padding: 6px 16px 12px; box-shadow: inset 0 -1px var(--canvas-rim); }
+.app[data-lumen-canvas-shell] .tp-top .tx-areas { flex-wrap: wrap; overflow: visible; margin: 0; padding: 0; }
+.tp-scroll { flex: 1; min-height: 0; display: grid; align-content: start; gap: 20px; padding: 16px 16px 28px; overflow-y: auto; overscroll-behavior: contain; scroll-padding-block: 12px; }
+.app[data-lumen-canvas-shell] .tp-scroll .tx-group h3 { margin: 0; font: 600 13px/1.3 var(--canvas-body-font); color: var(--canvas-secondary); }
+.app[data-lumen-canvas-shell] .tp-scroll .tx-sub { margin: 4px 2px 0; }
+.tp-keys { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; padding: 10px 6px 10px 14px; border-radius: var(--canvas-radius-card); background: var(--canvas-fill); font-size: 13px; line-height: 1.4; }
+.tp-keys p { flex: 1 1 220px; display: grid; gap: 3px; margin: 0; color: var(--canvas-ink); }
+.tp-keys p > span { display: block; }
+.tp-keys p svg { margin-inline-end: 6px; vertical-align: -2px; color: var(--canvas-secondary); }
+.tp-keys-uses { color: var(--canvas-secondary); }
+.app[data-lumen-canvas-shell] .tp-keys .tx-setup { margin-inline-start: auto; min-height: 44px; }
+.tool-picker-layer.is-sheet { align-items: flex-start; padding: calc(max(env(safe-area-inset-top), 12px) + 8px) 0 0; }
+.tool-picker-layer.is-sheet .tool-picker { width: 100%; height: calc(var(--vv-h, 100dvh) - max(env(safe-area-inset-top), 12px) - 8px); border-radius: 22px 22px 0 0; animation-name: tp-sheet; }
+.tool-picker-layer.is-sheet .sheet-grab { flex: none; margin: 8px auto 0; }
+.tool-picker-layer.is-sheet .tp-head { padding: 2px 8px 2px 18px; }
+.tool-picker-layer.is-sheet .tp-scroll { padding-bottom: max(28px, calc(env(safe-area-inset-bottom) + 16px)); }
+@media (max-width: 899px) { .app[data-lumen-canvas-shell] .tp-top .tx-areas button { min-height: 36px; padding: 0 12px; } }
+@keyframes tp-fade { from { opacity: 0; } }
+@keyframes tp-rise { from { opacity: 0; transform: translateY(8px) scale(.99); } }
+@keyframes tp-sheet { from { transform: translateY(100%); } }
+@media (prefers-reduced-motion: reduce) { .tool-picker-layer, .tool-picker { animation: none; } }
+@media (forced-colors: active) { .tool-picker { border: 1px solid CanvasText; } .tp-keys { border: 1px solid CanvasText; } }

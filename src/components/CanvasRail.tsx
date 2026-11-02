@@ -1,7 +1,7 @@
 // The collapsed sidebar's rail (computers; Phase 2). Loaded by CanvasNav with the first collapse. The same
 // navigation as the sidebar, not a second copy of the tree: mark, expand, new chat, search, the destinations and the
 // account. A rail that arrives after its collapse takes focus when nothing else holds it.
-import { BookOpen, FolderKanban, LayoutGrid, MessageSquarePlus, PanelLeftOpen, Search, GitFork } from 'lucide-react';
+import { BookOpen, FolderKanban, MessageSquarePlus, PanelLeftOpen, Search, GitFork } from 'lucide-react';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { BrandMark } from '../lib/canvas-presentation';
 import { closeRoutingCenter, openRoutingCenter, useRoutingCenter } from '../lib/routing-center';
@@ -18,11 +18,10 @@ export default function CanvasRail({ onExpand }: { onExpand: () => void }) {
   useEffect(() => { if (!focusSettled()) expand.current?.focus({ preventScroll: true }); }, []);
 
   const { setUi } = useStore.getState();
-  const go = (next: 'collection' | 'tools' | 'projects', pageArg?: string) => { closeRoutingCenter(); setUi({ page: next, settingsOpen: false, ...(pageArg ? { pageArg } : {}) }); };
+  const go = (next: 'collection' | 'projects', pageArg?: string) => { closeRoutingCenter(); setUi({ page: next, settingsOpen: false, ...(pageArg ? { pageArg } : {}) }); };
   const search = () => { onExpand(); later(() => document.querySelector<HTMLInputElement>('#chat-search')?.focus()); };
   const items: [string, string, ReactNode, boolean, () => void][] = [
     ['Library', 'Photos, files and documents from all your chats', <BookOpen size={19} />, page === 'collection', () => go('collection', 'all')],
-    ['Tools', `Research, create, analyze, study, assistants and connected apps (${modKey}⇧L)`, <LayoutGrid size={19} />, page === 'tools' || page === 'assistants' || page === 'study', () => go('tools')],
     ['Projects', 'All projects', <FolderKanban size={19} />, page === 'projects', () => go('projects')],
     ['Router', 'Models, providers & routing', <GitFork size={19} strokeWidth={1.8} />, routing && !page, () => { setUi({ page: null, settingsOpen: false }); openRoutingCenter(); }],
   ];

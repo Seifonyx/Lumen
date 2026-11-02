@@ -68,6 +68,9 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-02 Faster tests (PR #90): `npm run test:affected -- --run` checks only what a change can affect (about 6 min
+  here); CI's phone-glass suites run three at a time, in-app runs use 6 machines, the screens contract 2 — a full CI
+  run is about 11 min (was 16–17). Suites reach places through `tests/e2e/helpers/nav.cjs`; see AGENTS.md → Verify.
 - 2026-11-02 + sheet and Browse all tools density pass (PR #88, merged `e4ee271`, deployed Canvas), from the owner's
   iPhone screenshots: untitled short + sheet with flat rows, one scrolling row of areas, name + one short line per tool.
   Startup CSS budget 20 KB gz. `redesign-shots.cjs` now emulates an iPhone (glass) and captures the keyboard-open picker.

@@ -5,13 +5,19 @@
 import { spawn } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { basename } from 'node:path';
+import { parseShard, shardFiles } from './e2e-shards.mjs';
 
 const [lanesArg, ...files] = process.argv.slice(2);
 const lanes = Math.max(1, Number(lanesArg) || 1);
 if (!files.length) { console.error('usage: node scripts/run-parallel.mjs <lanes> <file>...'); process.exit(2); }
 const timings = existsSync('tests/e2e/timings.json') ? JSON.parse(readFileSync('tests/e2e/timings.json', 'utf8')) : {};
 const seconds = (f) => timings[basename(f)] ?? 60;
-const queue = [...files].sort((a, b) => seconds(b) - seconds(a));
+// RUN_SHARD=i/n: only this machine's share, balanced by recorded duration (the same split as the in-app runner).
+const shard = parseShard(process.env.RUN_SHARD);
+const mine = shard ? shardFiles([files], shard, seconds) : files;
+if (shard) console.log(`Shard ${shard.index}/${shard.count}: ${mine.length} of ${files.length} files`);
+if (!mine.length) process.exit(0);
+const queue = [...mine].sort((a, b) => seconds(b) - seconds(a));
 
 const run = (file) => new Promise((resolve) => {
   const started = Date.now(), out = [];
@@ -36,6 +42,6 @@ for (const file of [...failed]) {
   console.log(r.output.trimEnd());
   if (!r.code) { failed.splice(failed.indexOf(file), 1); retried.push(file); }
 }
-console.log(`\n${files.length} files in ${Math.round((Date.now() - started) / 1000)} s (${lanes} lanes)`);
+console.log(`\n${mine.length} files in ${Math.round((Date.now() - started) / 1000)} s (${lanes} lanes)`);
 if (retried.length) console.log(`⚠ passed on the second try: ${retried.map((f) => basename(f)).join(', ')}`);
 if (failed.length) { console.log(`✗ failed: ${failed.map((f) => basename(f)).join(', ')}`); process.exit(1); }

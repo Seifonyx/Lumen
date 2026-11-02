@@ -17,14 +17,18 @@ If the handoff and the code disagree, the code, tests and git history win; fix t
   control; don't duplicate an existing one. Canvas-only behaviour goes behind the Canvas presentation, and the
   ordinary build must keep building.
 - **Verify** before calling anything done, fastest first: `npm run test:affected -- --run` runs the type check, unit
-  tests, both builds, the size budget, then only the in-app suites and Canvas contracts that use the changed code
-  (`npm run test:affected` alone lists them and why). Then push: CI runs everything across its machines in about ten
-  minutes. Run a full or hand-picked list locally only to reproduce a CI failure (`npm run test:e2e -- <names>`), and
-  look in a browser at phone and desktop widths in Light and Dark. Say exactly what ran and what didn't (physical
-  iPhone is never verified by these). New suites reach places through `tests/e2e/helpers/nav.cjs` (`openPlace`,
-  `openTools`, `plusItem`) so a moved control means one helper to update, not every suite.
+  tests, the Canvas and ordinary builds, the size budget, then only the in-app suites and Canvas contracts that use
+  the changed code (`npm run test:affected` alone lists them and why; `--both` also repeats Canvas suites on the
+  ordinary build). Then push: on a pull request CI runs the same affected selection (or everything, for changes to
+  build/test machinery or shared app state; see `scripts/ci-plan.mjs`), and after merging it runs everything on
+  `main`. Run a hand-picked list locally only to reproduce a failure (`npm run test:e2e -- <names>`), and look in a
+  browser at phone and desktop widths in Light and Dark. Say exactly what ran and what didn't (physical iPhone is
+  never verified by these). Suites reach places through `tests/e2e/helpers/nav.cjs` (`openPlace`, `openTools`,
+  `plusItem`) so a moved control means one helper to update, not every suite.
 - **Ship** under the standing authority in HANDOFF.md → Decisions: PR → green CI on the exact head → merge →
   Deploy workflow (`presentation=canvas`) → confirm the live asset. Escalate only what the Decisions section says.
+  The Deploy workflow waits for the full Tests run on `main` for that commit and refuses to ship if it failed
+  (`scripts/wait-for-tests.mjs`); there is no need to wait for it yourself before dispatching.
 - **Hand off** whenever you finish a step or stop: update HANDOFF.md *Now* and *Next* (branch, what's done, what's
   next, anything half-done or unverified), commit and push. Keep it short; move finished work out.
 

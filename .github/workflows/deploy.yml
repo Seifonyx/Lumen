@@ -10,7 +10,28 @@ on:
         default: ordinary
 
 jobs:
+  # Pull requests run only the tests their change can affect; the full set runs on main after merging. Nothing ships
+  # until that full run has passed on the commit being deployed (scripts/wait-for-tests.mjs).
+  tests-passed:
+    name: Full tests passed on this commit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 50
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: node scripts/wait-for-tests.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
   deploy:
+    needs: tests-passed
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

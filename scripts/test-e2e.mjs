@@ -15,7 +15,8 @@ import { parseShard, shardFiles } from './e2e-shards.mjs';
 
 const dir = 'tests/e2e';
 mkdirSync(join(dir, 'out'), { recursive: true });
-const only = process.argv.slice(2);
+// Names on the command line, or E2E_ONLY (space-separated; the Tests workflow sets it from its plan). None: every suite.
+const only = process.argv.slice(2).length ? process.argv.slice(2) : (process.env.E2E_ONLY || '').split(/\s+/).filter(Boolean);
 const available=readdirSync(dir).filter(f=>f.endsWith('.cjs'));
 const unknown=only.filter(name=>!available.includes(`${name}.cjs`));
 if(unknown.length) {console.error(`Unknown in-app test suite(s): ${unknown.join(', ')}`);process.exit(2);}

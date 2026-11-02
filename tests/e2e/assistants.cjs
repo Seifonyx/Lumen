@@ -22,14 +22,14 @@ const assert=require('node:assert/strict');
   await page.goto(process.env.MR_TEST_URL||'http://localhost:5190/?emulator');
   await page.waitForSelector('.composer textarea');
   // Assistants: Tools page → All assistants. Prompts: the message box's + menu → Saved prompts.
-  const open=async()=>{if(width<900)await page.click('.menu-btn');await page.getByRole('button',{name:'Tools',exact:true}).click();if(!await page.locator('.app[data-lumen-canvas-shell]').count())await page.getByRole('button',{name:'All assistants',exact:true}).click();await page.locator(await page.locator('.app[data-lumen-canvas-shell]').count()?'#tools-assistants':'.assistant-library').waitFor();};
-  const prompts=async()=>{await page.getByRole('button',{name:/^Add (?:photos, )?files or a repository$/}).click();await page.getByRole('button',{name:'Saved prompts',exact:true}).click();await page.waitForSelector('.prompts-modal');};
+  const open=async()=>{if(await page.locator('.app[data-lumen-canvas-shell]').count())await page.evaluate(()=>window.dispatchEvent(new CustomEvent('mr:library',{detail:'tools-page'})));else{if(width<900)await page.click('.menu-btn');await page.getByRole('button',{name:'Tools',exact:true}).click();}if(!await page.locator('.app[data-lumen-canvas-shell]').count())await page.getByRole('button',{name:'All assistants',exact:true}).click();await page.locator(await page.locator('.app[data-lumen-canvas-shell]').count()?'#tools-assistants':'.assistant-library').waitFor();};
+  const prompts=async()=>{await page.getByRole('button',{name:/^Add (?:photos, )?files or a repository$/}).click();if(await page.locator('.app[data-lumen-canvas-shell]').count())await page.getByRole('button',{name:'Browse all tools',exact:true}).click();await page.getByRole('button',{name:'Saved prompts',exact:true}).click();await page.waitForSelector('.prompts-modal');};
   await open();await page.getByRole('button',{name:'New assistant',exact:true}).click();
   await page.getByLabel('Library item name').fill('Quality helper');
   await page.getByLabel('Library instructions').fill('Always use QUALITY_MARKER in your answer.');
   await page.getByLabel('Assistant model').selectOption('gemini:gemini-flash-latest');
   await page.getByRole('button',{name:'Save',exact:true}).click();
-  assert.ok(await page.locator('.hub-page').evaluate(el=>el.scrollWidth<=el.clientWidth+1));assert.ok(await page.locator('.assistant-library, .tools-sections, .tx').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
+  assert.ok(await page.locator('.hub-page, .tool-picker').first().evaluate(el=>el.scrollWidth<=el.clientWidth+1));assert.ok(await page.locator('.assistant-library, .tools-sections, .tp-scroll').first().evaluate(el=>el.scrollWidth<=el.clientWidth+1));
   const canvas=Boolean(await page.locator('.app[data-lumen-canvas-shell]').count());
   const card=page.locator(canvas?'.tx-row.has-side':'article.lib-card').filter({has:page.locator('strong',{hasText:/^Quality helper$/})});
   if(canvas)await card.locator('.tx-hit').click();else await card.getByRole('button',{name:'Start a chat with Quality helper',exact:true}).click();
@@ -40,7 +40,7 @@ const assert=require('node:assert/strict');
   assert.ok(JSON.stringify(calls[0]).includes('QUALITY_MARKER'));
   await open();if(canvas){await page.getByRole('button',{name:'Edit Quality helper',exact:true}).click();page.once('dialog',d=>d.accept());await page.getByRole('button',{name:'Delete',exact:true}).click();}else{page.once('dialog',d=>d.accept());await page.getByRole('button',{name:'Delete Quality helper',exact:true}).click();}
   await card.waitFor({state:'detached'});
-  await page.locator('.hub-page > .hub-bar .feature-exit, .hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label^="Return to "]').click();await page.locator('.hub-page').waitFor({state:'detached'});
+  await page.locator('.hub-page > .hub-bar .feature-exit, .hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label^="Return to "], .tool-picker .tp-close').first().click();await page.locator('.hub-page, .tool-picker').first().waitFor({state:'detached'});
   assert.ok(await page.locator('.assistant-badge').isVisible());
   await page.evaluate(()=>(document.querySelector('.sidebar .new-chat, .cv-new-pill')||[...document.querySelectorAll('.cv-dest button')].find(b=>b.textContent.includes('New chat'))).click());assert.equal(await page.locator('.assistant-badge').count(),0);
   await page.fill('.composer textarea','Existing draft');await prompts();

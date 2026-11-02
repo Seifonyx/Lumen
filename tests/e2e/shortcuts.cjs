@@ -51,7 +51,7 @@ const { profile, seed } = require('./helpers/preview-profile.cjs');
     await page.keyboard.press('Control+Shift+L');
     // The legacy library shortcut opens Assistants in the ordinary presentation;
     // Canvas presents that same destination inside Tools.
-    if (await page.locator('[data-lumen-canvas-shell]').count()) await page.locator('.hub-page[aria-label="Tools"]').waitFor({ state: 'visible' });
+    if (await page.locator('[data-lumen-canvas-shell]').count()) await page.getByRole('dialog', { name: 'Tools', exact: true }).waitFor({ state: 'visible' });
     else await page.getByRole('heading', { name: 'Assistants', level: 1, exact: true }).waitFor();
     await page.keyboard.press('Escape');
 

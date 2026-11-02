@@ -36,7 +36,13 @@ const models = ['gemini-flash-latest', 'gemini-2.5-pro'];
 
       const openTools = async () => {
         await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tools-page' })));
-        await page.getByRole('main', { name: 'Tools', exact: true }).waitFor();
+        // Canvas: Browse all tools is a picker over the chat rather than a page.
+        await (canvas ? page.getByRole('dialog', { name: 'Tools', exact: true }) : page.getByRole('main', { name: 'Tools', exact: true })).waitFor();
+      };
+      const picker = async () => {
+        const scan = await new AxeBuilder({ page }).include('.tool-picker').analyze();
+        assert.deepEqual(scan.violations.map(v => ({ id: v.id, targets: v.nodes.map(n => n.target) })), []);
+        assert.equal(await page.getByRole('heading', { name: 'Tools', level: 2, exact: true }).count(), 1);
       };
       const section = async name => {
         if (phone && !canvas) await page.locator('.glass-tabbar').getByRole('button', { name, exact: true }).click();
@@ -63,10 +69,10 @@ const models = ['gemini-flash-latest', 'gemini-2.5-pro'];
         }
       };
       await openTools();
-      await structure('Tools');
+      if (canvas) await picker(); else await structure('Tools');
       if(phone&&canvas){
         assert.equal(await page.locator('.glass-tabbar').count(),0);
-        await page.locator('.phone-navigation [aria-label^="Return to "]').click();await page.locator('.hub-page').waitFor({state:'detached'});
+        await page.getByRole('button',{name:'Close tools',exact:true}).click();await page.locator('.tool-picker').waitFor({state:'detached'});
         await page.locator('.menu-btn').click();await page.locator('.sidebar.open').waitFor();
         await page.locator('.sidebar').getByRole('button',{name:'Library',exact:true}).click();await page.getByRole('main',{name:'Library',exact:true}).waitFor();await structure('Library');
         await page.locator('.phone-navigation [aria-label^="Return to "]').click();await page.locator('.hub-page').waitFor({state:'detached'});await openTools();
@@ -99,14 +105,13 @@ const models = ['gemini-flash-latest', 'gemini-2.5-pro'];
       await page.getByRole('button', { name: /^Compare models/ }).click();
       const dialog = page.getByRole('dialog', { name: 'Compare models', exact: true });
       await dialog.waitFor();
-      if(canvas)await page.waitForFunction(()=>document.querySelector('.hub-page')?.closest('[inert]'));else await page.locator('.hub-page').waitFor({ state: 'detached' });
+      await page.locator(canvas ? '.tool-picker' : '.hub-page').waitFor({ state: 'detached' });
       const question = dialog.getByRole('textbox', { name: 'Question', exact: true });
       assert.equal(await question.inputValue(), 'PRESERVED_DRAFT');
       assert.equal(requests.length, 0, 'Opening setup never sends a model request');
       await question.fill('EDITED_DRAFT');
       await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
       await dialog.waitFor({ state: 'detached' });
-      if(canvas){await page.locator('.hub-page .phone-navigation [aria-label^="Return to "], .hub-page :is(.hub-close,.feature-exit)').click();await page.locator('.hub-page').waitFor({state:'detached'});}
       assert.equal(await input.inputValue(), 'EDITED_DRAFT');
       assert.equal(await page.getByRole('button', { name: 'Remove reference.txt', exact: true }).count(), 1);
       assert.equal(requests.length, 0, 'Cancel preserves text/files without sending');

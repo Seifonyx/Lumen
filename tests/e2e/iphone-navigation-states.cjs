@@ -1,4 +1,5 @@
 // Synthetic multi-screen regression matrix. Scripted touch and keyboard-height tests are not physical iPhone tests.
+const { openTools } = require('./helpers/plus.cjs');
 const assert = require('node:assert/strict');
 const {chromium,webkit} = require('playwright');
 const {profile,seed} = require('./helpers/preview-profile.cjs');
@@ -27,14 +28,15 @@ const iphone='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit
   assert.equal(await page.getByRole('searchbox',{name:'Search your library'}).inputValue(),'Document');
   assert(Math.abs(await page.locator('.hub-scroll').evaluate(el=>el.scrollTop)-scroll)<20,'Library restores previous scroll');
   await page.locator('.phone-navigation [aria-label^="Return to "]').click();await page.locator('.composer textarea').waitFor();
-  await enter('Tools');await page.getByRole('group',{name:'Tool areas'}).getByRole('button',{name:/^Learn/}).click();await page.getByRole('heading',{name:'Learn',exact:true}).waitFor();assert.equal(await page.getByRole('heading',{name:'Research',exact:true}).count(),0,'an area filter shows only that area');await page.locator(':is(.tool-card,.tx-hit)').filter({has:page.locator('strong',{hasText:/^Study$/})}).click();
+  await openTools(page);await page.getByRole('group',{name:'Tool areas'}).getByRole('button',{name:/^Learn/}).click();await page.getByRole('heading',{name:'Learn',exact:true}).waitFor();assert.equal(await page.getByRole('heading',{name:'Research',exact:true}).count(),0,'an area filter shows only that area');await page.locator(':is(.tool-card,.tx-hit)').filter({has:page.locator('strong',{hasText:/^Study$/})}).click();
   await page.locator('.phone-navigation h1').filter({hasText:'Study'}).waitFor();
   assert.equal(await page.locator('.phone-navigation [aria-label="Open sidebar"]').count(),0);
   // Exercise the actual gesture handler with a scripted edge touch sequence, in both engines.
   await page.locator('.hub-page').evaluate(async el=>{const dispatch=(type,x)=>{const e=new Event(type,{bubbles:true,cancelable:true});Object.defineProperty(e,'touches',{value:type==='touchend'?[]:[{identifier:1,clientX:x,clientY:180}]});el.dispatchEvent(e)};dispatch('touchstart',5);for(const x of [30,90,180,300]){dispatch('touchmove',x);await new Promise(r=>setTimeout(r,30))}dispatch('touchend',300)});
-  await page.getByRole('searchbox',{name:'Search tools'}).waitFor();
-  // Back restores the Learn filter chosen above; assistants are created from their own area.
-  await page.getByRole('heading',{name:'Learn',exact:true}).waitFor();await page.getByRole('group',{name:'Tool areas'}).getByRole('button',{name:/^Assistants/}).click();
+  // Study took the picker's place (Browse all tools is a chooser), so the edge swipe returns to the chat.
+  await page.locator('.composer textarea').waitFor();assert.equal(await page.locator('.tool-picker').count(),0);
+  // Assistants are created from their own area.
+  await openTools(page);await page.getByRole('group',{name:'Tool areas'}).getByRole('button',{name:/^Assistants/}).click();
   await page.getByRole('button',{name:'New assistant',exact:true}).click();await page.getByLabel('Library item name').fill('Retained editor');await page.getByLabel('Library instructions').fill('Preserved across global sheets');
   const command=async(name)=>{await page.keyboard.press('Control+k');const search=page.getByRole('combobox',{name:'Search commands',exact:true});await search.fill(name);await search.press('Enter');};
   await command('Read a web page');await page.locator('.free-tools').waitFor();

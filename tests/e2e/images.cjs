@@ -41,8 +41,17 @@ async function open(browser, uid, connect) {
   try {
     // No image provider: a clear message instead of a picture.
     const none = await open(browser, 'preview-images-none');
-    await none.create('a lime star');
-    await none.page.getByText('connect Cloudflare Workers AI or Hugging Face', { exact: false }).waitFor();
+    if (await none.page.locator('[data-lumen-canvas-shell]').count()) {
+      // Canvas: the + menu says a key is needed and Create image opens key setup instead of a request that can't run.
+      await none.page.getByRole('button', { name: /^Add (?:photos, )?files or a repository$/ }).click();
+      const row = none.page.getByRole('button', { name: 'Create image', exact: true });
+      assert.match(await row.getAttribute('aria-describedby').then((id) => none.page.locator(`#${id}`).textContent()), /Cloudflare or Hugging Face key/);
+      await row.click();
+      await none.page.locator('.settings-page:visible, .rc-page:not([hidden])').first().waitFor();
+    } else {
+      await none.create('a lime star');
+      await none.page.getByText('connect Cloudflare Workers AI or Hugging Face', { exact: false }).waitFor();
+    }
     assert.equal(none.calls.length, 0);
     assert.deepEqual(none.errors, []);
     await none.ctx.close();

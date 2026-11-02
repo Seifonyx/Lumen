@@ -10,13 +10,14 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/library-tools-plus` (owner-selected design, 2026-11-02): Library redesign and Tools moved from the
-  sidebar into the composer's + (three quick tools + Browse all tools, a searchable picker). Canvas only; the ordinary
-  build keeps its Tools page. Release under standing authority once exact-head CI is green.
+- **Branch:** none in progress. Start new work on a branch from `origin/main`.
+- **Task:** none. The Library redesign and Tools-in-+ shipped (PR #86).
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next
 
+- [ ] Owner, on the iPhone (PR #86, live): + shows Camera · Photos · Files, this chat, three tools and Browse all
+      tools; the picker sheet keeps its search above the keyboard; Library rows read well with VoiceOver.
 - [ ] Owner to confirm on the iPhone (PR #77, live): tapping the model and Expand while writing keeps the chat and
       opens them; the top fade is no longer a band. Neither reproduced in Chromium or WebKit emulation; the fix targets
       Safari's late blur/click order and `composer.cjs` replays it. If it still happens, get a screen recording.
@@ -67,6 +68,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-02 Library redesign and Tools in the composer's + (PR #86, merged `55a1bec`, deployed Canvas): Tools left the
+  sidebar, drawer and rail; + has attach, this chat, Deep research / Create image / Document canvas (missing key →
+  key setup) and Browse all tools, a searchable picker (`ToolsWorkspace.tsx`, still `page: 'tools'`). Choosing a tool
+  replaces the picker in history; each open starts with an empty search. Library rows are name-first with From/Added
+  columns on computers. Budgets: startup JS 15.5, Canvas CSS 29.5 KB gz. Test helper: `tests/e2e/helpers/plus.cjs`.
 - 2026-11-01 Auto's reasons and alternatives survive a reload (owner-approved): `src/lib/db.ts` keeps `routeDetail`
   when loading chats on this device (read path only; sync records still don't carry it).
 - 2026-11-01 Answer details and Compare with… (PR #83, merged `721457a`, deployed Canvas): the model name under every

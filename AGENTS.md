@@ -16,11 +16,13 @@ If the handoff and the code disagree, the code, tests and git history win; fix t
 - **Change:** smallest correct change, matching the surrounding code. Check DESIGN.md's ownership before adding a
   control; don't duplicate an existing one. Canvas-only behaviour goes behind the Canvas presentation, and the
   ordinary build must keep building.
-- **Verify** before calling anything done: `npm test` (typecheck + unit), `npm run build` and
-  `LUMEN_CANVAS=1 npm run build -- --outDir dist-canvas`, `node scripts/canvas-budget.mjs dist dist-canvas`, the
-  e2e suites that touch your change (`npm run test:e2e -- <names>`, see `tests/e2e/`), and a look in a browser at
-  phone and desktop widths in Light and Dark. Say exactly what ran and what didn't (physical iPhone is never
-  verified by these).
+- **Verify** before calling anything done, fastest first: `npm run test:affected -- --run` runs the type check, unit
+  tests, both builds, the size budget, then only the in-app suites and Canvas contracts that use the changed code
+  (`npm run test:affected` alone lists them and why). Then push: CI runs everything across its machines in about ten
+  minutes. Run a full or hand-picked list locally only to reproduce a CI failure (`npm run test:e2e -- <names>`), and
+  look in a browser at phone and desktop widths in Light and Dark. Say exactly what ran and what didn't (physical
+  iPhone is never verified by these). New suites reach places through `tests/e2e/helpers/nav.cjs` (`openPlace`,
+  `openTools`, `plusItem`) so a moved control means one helper to update, not every suite.
 - **Ship** under the standing authority in HANDOFF.md → Decisions: PR → green CI on the exact head → merge →
   Deploy workflow (`presentation=canvas`) → confirm the live asset. Escalate only what the Decisions section says.
 - **Hand off** whenever you finish a step or stop: update HANDOFF.md *Now* and *Next* (branch, what's done, what's
@@ -47,6 +49,7 @@ npm run handoff            # live state
 npm test                   # typecheck + unit
 npm run build              # ordinary build → dist/
 LUMEN_CANVAS=1 npx vite --port 3000   # Canvas dev server (production presentation)
+npm run test:affected -- --run        # fast local check: only what the change can affect
 npm run test:e2e -- welcome layout     # selected in-app suites (needs a build; emulators for some)
 ```
 

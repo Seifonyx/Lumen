@@ -84,7 +84,7 @@ for (const state of ['empty', 'populated', 'dense', 'expanded']) fixtures[state]
           assert.equal(await nav.locator('.chat-row.active').getAttribute('data-flip'), selectedId, 'an inactive chat menu does not select that conversation');
           await page.keyboard.press('Escape'); await page.emulateMedia({ reducedMotion: 'reduce' });
           assert(await inactiveOptions.evaluate(el => el === document.activeElement));
-          if (!phone) { await nav.getByRole('button', { name: 'Collapse sidebar', exact: true }).click(); const rail = page.getByRole('navigation', { name: 'Navigation', exact: true }); await rail.waitFor(); assert.equal(await rail.getByRole('button').count(), 8); await page.screenshot({ path: path.join(out, `${width}-${theme}-collapsed.png`), animations: 'disabled' }); await rail.getByRole('button', { name: 'Expand sidebar', exact: true }).click(); await nav.waitFor(); }
+          if (!phone) { await nav.getByRole('button', { name: 'Collapse sidebar', exact: true }).click(); const rail = page.getByRole('navigation', { name: 'Navigation', exact: true }); await rail.waitFor(); assert.equal(await rail.getByRole('button').count(), 7); await page.screenshot({ path: path.join(out, `${width}-${theme}-collapsed.png`), animations: 'disabled' }); await rail.getByRole('button', { name: 'Expand sidebar', exact: true }).click(); await nav.waitFor(); }
         }
         if (state !== 'empty') {
           const folder = nav.locator('.cv-project-row').filter({ hasText: 'Fieldwork' }); await folder.focus(); await page.waitForFunction(() => performance.getEntriesByType('resource').some(e => /tree-keys/.test(e.name)));

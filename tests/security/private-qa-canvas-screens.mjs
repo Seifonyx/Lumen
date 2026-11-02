@@ -332,6 +332,7 @@ try {
         await closeAll(page);
         const fromTools = async (name) => {
           await openTools(page);
+          await page.getByRole('searchbox', { name: 'Search tools' }).fill(name);
           await page.locator('.tool-picker').getByRole('button', { name: new RegExp('^' + name) }).first().click();
           await settle(page, 700);
         };

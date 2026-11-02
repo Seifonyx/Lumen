@@ -39,7 +39,9 @@ const e2eRun = (label, names, dist) => names.length && step(label, emulators ? '
   { MR_TEST_DIST: dist, E2E_LANES: lanes });
 e2eRun(`In-app suites on the Canvas build (${onCanvas.length})`, onCanvas, 'dist-canvas');
 e2eRun(`In-app suites on the ordinary build (${onOrdinary.length})`, onOrdinary, 'dist');
-// The QA build only builds an exact commit, so the contracts need the change committed.
+// The QA build only builds an exact commit, so the contracts need the change committed. The suites above rewrite the
+// tracked review screenshots in .impeccable/review; they are test output, so they are put back first.
+spawnSync('git', ['checkout', '--', '.impeccable/review']); spawnSync('git', ['clean', '-fq', '--', '.impeccable/review']);
 const dirty = spawnSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).stdout.trim();
 if (a.contracts.length && dirty) console.log(`\n⚠ Canvas contracts skipped (${a.contracts.join(', ')}): commit first, or let CI run them.`);
 else if (a.contracts.length) {

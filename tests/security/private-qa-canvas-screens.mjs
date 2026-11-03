@@ -272,17 +272,33 @@ try {
           // The approved browser exposes Inspect first; Use belongs to the pushed detail.
           const geometry = await page.evaluate(() => {
             const root = document.querySelector('.rc-page:not([hidden])');
-            const row = root?.querySelector('.rm-browser-list .rm-model .rm-choice');
+            const row = root?.querySelector('.rm-browser-list .rm-choice');
             const tabs = root?.querySelector('.phone-sections'), search = root?.querySelector('.rm-browser-head .rc-search');
             if (!row || !tabs || !search) return null;
             const rect = el => { const r = el.getBoundingClientRect(); return { top:r.top, bottom:r.bottom, left:r.left, right:r.right, height:r.height }; };
             return { action:rect(row), tabs:rect(tabs), search:rect(search), viewport:{ width:innerWidth,height:innerHeight }, scroll:root.scrollTop, label:row.getAttribute('aria-label') };
           });
-          assert.ok(geometry, 'fixture provides an inspectable catalog model and model search');
+          assert.ok(geometry, 'fixture provides an inspectable first choice and model search');
           assert.equal(geometry.scroll, 0, 'Models landing has not been scrolled');
           assert.ok(geometry.search.top >= geometry.tabs.bottom - 1, `search below navigation: ${JSON.stringify(geometry)}`);
-          assert.ok(geometry.action.top >= geometry.search.bottom && geometry.action.bottom <= geometry.viewport.height - 2, `complete first catalog model below Search and above viewport edge: ${JSON.stringify(geometry)}`);
+          assert.ok(geometry.action.top >= geometry.search.bottom && geometry.action.bottom <= geometry.viewport.height - 2, `complete first choice below Search and above viewport edge: ${JSON.stringify(geometry)}`);
           assert.ok(geometry.action.left >= 0 && geometry.action.right <= geometry.viewport.width && geometry.action.height >= 44, `usable Inspect target: ${JSON.stringify(geometry)}`);
+          // Auto is first in the approved browser. Provider models may follow below the short-phone fold;
+          // keyboard focus and scrolling must reveal a fully painted, usable catalog choice.
+          const catalogChoice = page.locator('.rc-page .rm-model .rm-choice').first();
+          await catalogChoice.focus();
+          await page.keyboard.press('Shift+Tab');
+          await page.keyboard.press('Tab');
+          assert.ok(await catalogChoice.evaluate(el => el === document.activeElement), 'catalog model is keyboard reachable');
+          await catalogChoice.evaluate(el => el.scrollIntoView({ block: 'center' }));
+          const catalogGeometry = await catalogChoice.evaluate(el => {
+            const r = el.getBoundingClientRect();
+            return { top:r.top, bottom:r.bottom, left:r.left, right:r.right, height:r.height, width:innerWidth, viewportHeight:innerHeight,
+              painted:el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)),
+              outline:getComputedStyle(el).outlineStyle, outlineWidth:parseFloat(getComputedStyle(el).outlineWidth) };
+          });
+          assert.ok(catalogGeometry.top >= 0 && catalogGeometry.bottom <= catalogGeometry.viewportHeight && catalogGeometry.left >= 0 && catalogGeometry.right <= catalogGeometry.width && catalogGeometry.height >= 44 && catalogGeometry.painted, `catalog model is fully reachable after scroll: ${JSON.stringify(catalogGeometry)}`);
+          assert.ok(catalogGeometry.outline !== 'none' && catalogGeometry.outlineWidth >= 2, 'catalog model retains visible keyboard focus');
           await summary.click();
           assert.equal(await disclosure.getAttribute('open'), '', 'routing explanation expands on demand');
           assert.ok(await disclosure.locator('.rc-current-explanation').isVisible());

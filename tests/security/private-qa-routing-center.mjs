@@ -124,6 +124,7 @@ try {
       await page.keyboard.press('Enter');
       const modelDetail = rc(page).getByRole('region', { name: 'Model detail', exact: true });
       await modelDetail.getByRole('heading', { name: 'Gemini 2.5 Pro (synthetic)', exact: true }).waitFor();
+      await page.waitForFunction(() => document.querySelector('.rm-detail') === document.activeElement);
       await page.waitForFunction(() => document.activeElement?.matches('.rm-detail'));
       assert.ok(await modelDetail.evaluate(el => el === document.activeElement), 'inspection focuses model detail');
       assert.equal(await rc(page).locator('.rc-current-model, .rc-current > h2').textContent(), currentBefore, 'inspection leaves the chat model unchanged');

@@ -38,6 +38,7 @@ html[data-lumen-canvas][data-theme='dark'] { --canvas-highlight-bg: color-mix(in
 /* ---------- Page shell (HubPage: Library, Tools, Projects, Study, Assistants…) */
 html[data-lumen-canvas] .hub-head h1, html.glass[data-lumen-canvas] .hub-head h1 { font: var(--canvas-type-display); letter-spacing: var(--canvas-tracking-display); }
 html[data-lumen-canvas] .hub-head p { color: var(--text-2); font-size: 14.5px; }
+html[data-lumen-canvas] .hub-scroll[tabindex]:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 html[data-lumen-canvas] .hub-tabs { gap: 4px; padding: 4px; margin-bottom: 20px; border: 0; border-radius: var(--canvas-radius-control); background: var(--cv5-fill); }
 html[data-lumen-canvas] .hub-tabs button { margin: 0; padding: 0 14px; min-height: 34px; border: 0; border-radius: var(--canvas-radius-row); color: var(--text-2); }
 html[data-lumen-canvas] .hub-tabs button.active { background: var(--bg); color: var(--text); box-shadow: 0 1px 3px rgb(0 0 0 / .25); }

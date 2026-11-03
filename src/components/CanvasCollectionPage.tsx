@@ -63,6 +63,7 @@ export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()
   return out},[scoped]);
  const total=<span className="library-total" role="status">{scoped.length} {filtered?'matching ':''}{scoped.length===1?'item':'items'}</span>;
  return <HubPage label="Library" title="Library" onClose={onClose} create={create}
+  scrollLabel={!scoped.length && !filtered && kind !== 'searchable' ? 'Library content' : undefined}
   actions={create&&<button type="button" className="btn library-create" onClick={create.run}><Plus size={16}/>{create.label}</button>}
   sectionNavigation={<PhoneSections label="Library content types" panelId={panel} active={kind} items={categories} onSelect={id=>setKind(id as CollectionKind)}/>}
   footer={<footer className="phone-page-search" aria-label="Library search">{search}</footer>}>

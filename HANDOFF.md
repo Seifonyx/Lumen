@@ -11,7 +11,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 ## Now
 
 - **Branch:** `codex/router-approved-redesign`, from verified main `fbb59bd`; Lumen-local was clean at takeover.
-- **Task:** integrate the owner-approved Router prototype into canonical Canvas components (Models, Providers, Routing, Layouts, Activity). Implementation prepared; release BLOCKED by unchanged CSS source budget (33.2KB vs29.5KB). Affected run passes type/unit and both builds; broader affected browser/contracts are not certified because the runner stops at this gate. No merge/deploy. Scope and rulings: `docs/router/IMPLEMENTATION.md`. Private reference package stays outside the public repository.
+- **Task:** integrate the owner-approved Router prototype into canonical Canvas components (Models, Providers, Routing, Layouts, Activity). Implementation prepared; release BLOCKED by unchanged CSS source budget (33.3KB vs29.5KB). Affected run passes type/unit and both builds; broader affected browser/contracts are not certified because the runner stops at this gate. No merge/deploy. Scope and rulings: `docs/router/IMPLEMENTATION.md`. Private reference package stays outside the public repository.
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next

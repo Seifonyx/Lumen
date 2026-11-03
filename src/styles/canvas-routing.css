@@ -332,3 +332,7 @@
 @media(min-width:900px){
 .app[data-lumen-canvas-shell] .rc-page[data-router-section=usage] .ac-page-intro { display:none; }
 }
+.app[data-lumen-canvas-shell] .rc-page { --router-paper:color-mix(in srgb,var(--canvas-paper) 97%,var(--canvas-ink));background:var(--router-paper); }
+.app[data-lumen-canvas-shell] .rc-head { background:var(--router-paper); }
+.app[data-lumen-canvas-shell]:is([data-theme='dark'] *) .rc-page { --router-paper:var(--canvas-paper); }
+@media(prefers-color-scheme:dark){.app[data-lumen-canvas-shell]:not([data-theme='light'] *) .rc-page { --router-paper:var(--canvas-paper); }}

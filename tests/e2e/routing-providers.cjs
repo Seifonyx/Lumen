@@ -54,8 +54,8 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       };
       await open();
       const rc = page.locator('.rc-page');
-      await rc.getByRole('heading', { name: width < 900 ? 'Router' : 'Router', exact: true }).waitFor();
-      await rc.getByRole('heading', { name: width < 900 ? 'Router' : 'Router', exact: true }).click();
+      await rc.getByRole('heading', { name: width < 900 ? 'Router' : 'Models', exact: true }).waitFor();
+      await rc.getByRole('heading', { name: width < 900 ? 'Router' : 'Models', exact: true }).click();
       const shot = async name => {
         if (!before || name === 'models') {
           await page.evaluate(() => document.fonts.ready);

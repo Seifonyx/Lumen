@@ -223,7 +223,7 @@ function ProviderDetail({ p, title, usage, enabledHere, searchHost }: { searchHo
       <Suspense fallback={<p className="rc-muted" role="status">Loading models…</p>}><ProviderModels searchHost={searchHost} models={p.models} /></Suspense>
       {setUp && connection}
       <details className="rc-provenance"><summary>Advanced</summary>
-        
+
         <div className="rc-usage-pair"><div><span>Requests recorded in Lumen</span><strong>{usage ? `${requests} requests` : 'Unknown'}</strong></div><div><span>Tokens recorded in Lumen</span><strong>{usage ? formatTokens(tokens) : 'Unknown'}</strong></div></div>
         <p className="rc-muted">{sharedLeft !== null ? `One shared allowance for OpenRouter free models: ${usage!.openrouter.used} of ${usage!.openrouter.limit} requests recorded. Paid models are excluded.` : knownLimits.length ? 'Known limits belong to individual models, not a combined provider balance.' : 'No allowance reported for this provider.'} Counts are Lumen’s own, not your provider bill. Listing models doesn’t test replies.</p>
         {safety && <Suspense fallback={null}><KeySafety only={p.id as 'gemini' | 'openrouter'} safeCopy /></Suspense>}

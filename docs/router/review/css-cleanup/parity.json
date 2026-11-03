@@ -1,0 +1,155 @@
+{
+  "beforeSource": "5cc77e6b5eb5c333b081be3e4f4f40901e067434",
+  "afterCss": {
+    "src/styles/canvas.css": "a0df45d335db881d4d3f81407e045a8d3f4387f092a426d30a4c9382b228fa44",
+    "src/styles/canvas-composer.css": "9e74d1c85f0731404840f162c3ec5060b7c05548cb20b2ebfc07c5d1a4884eb0",
+    "src/styles/canvas-shell.css": "868bfdbf6fcbc29f844ba2897f9829e46dfc9c6658ac11244e7933058d5362d8",
+    "src/styles/canvas-reading.css": "bd00c52bd82f4f7dbf082cd1c7cd090326a3666a553e603bddba431bde7a4b73",
+    "src/styles/canvas-routing.css": "9dbc595f4f0a5568cb9b5bc51909cb7eae620eedf5dc107d29bc30016cbdb772",
+    "src/styles/canvas-screens.css": "1516e8768708218015015ef2e45e1b538e93516be7cce19925d383d4072c5aaf",
+    "src/styles/brand-crease.css": "6d1393c73a7719e8fb050468c2343863d2208c6e131627d01ea599f04ec955d1",
+    "src/styles/canvas-routing-experience.css": "d72098dc44eebb7aea22f3917e4e311f8c4ec5732aa564ca23e721258eae4c9f",
+    "src/components/canvas-library.css": "ce03a2bba192a557e593f857d292c99f6301fe435c5b3561788236b028fc77a5",
+    "src/components/tools-workspace.css": "bcebfd55445fa4b8e860144f8be5743af289f9dd9a8e675812cc9ea388a6508b",
+    "src/components/settings-index.css": "e593d12626282a74df252916f700dc9a8457eb7a3824c31eeb3d29b099776d7b",
+    "src/components/activity.css": "8ea9704f0a0235e3f22777e25e16ec0cbc0dfbde9e0914de5d265f2f54fc2899",
+    "src/components/router-models.css": "fd2ac122fbfb31f78ccd412485b90cee5200a5142f328fdd0edb0dbd208a7887"
+  },
+  "engine": "Chromium",
+  "syntheticOnly": true,
+  "physicalIPhone": false,
+  "results": [
+    {
+      "file": "1024-light-models.png",
+      "differentPixels": 0,
+      "beforeSha256": "e2eeae7420b06bc2047f4b169032b0526050535067c3c6494dc71159af3601fb",
+      "afterSha256": "e2eeae7420b06bc2047f4b169032b0526050535067c3c6494dc71159af3601fb"
+    },
+    {
+      "file": "1440-dark-activity.png",
+      "differentPixels": 0,
+      "beforeSha256": "c74305254c934697bd0945cf926ce411693c7ff0a1b7c7bd2f1f234af3f64a84",
+      "afterSha256": "c74305254c934697bd0945cf926ce411693c7ff0a1b7c7bd2f1f234af3f64a84"
+    },
+    {
+      "file": "1440-dark-layouts.png",
+      "differentPixels": 0,
+      "beforeSha256": "08cb896817b3167b1351bb9506cdfb4a5142e02f6fd50b78a4894059186be3eb",
+      "afterSha256": "08cb896817b3167b1351bb9506cdfb4a5142e02f6fd50b78a4894059186be3eb"
+    },
+    {
+      "file": "1440-dark-models.png",
+      "differentPixels": 0,
+      "beforeSha256": "d99c99b71f10d3e05c2e983242cf68c2392fd5b9f0482da854980115821f21d8",
+      "afterSha256": "d99c99b71f10d3e05c2e983242cf68c2392fd5b9f0482da854980115821f21d8"
+    },
+    {
+      "file": "1440-dark-providers.png",
+      "differentPixels": 0,
+      "beforeSha256": "6852fc59871219012517bb01ec1614805b15a48391fc34dcfa3566ddc7b45cc0",
+      "afterSha256": "6852fc59871219012517bb01ec1614805b15a48391fc34dcfa3566ddc7b45cc0"
+    },
+    {
+      "file": "1440-dark-routing.png",
+      "differentPixels": 0,
+      "beforeSha256": "c7180507bcd26fe125d077925893c33c2ffef40deede3ed6ea3fa90920b04739",
+      "afterSha256": "c7180507bcd26fe125d077925893c33c2ffef40deede3ed6ea3fa90920b04739"
+    },
+    {
+      "file": "1440-light-activity.png",
+      "differentPixels": 0,
+      "beforeSha256": "b83da4b4f5de85f52cdd8ca5f69ee2fc27f6e71ed16e2c5663d08598bce01e83",
+      "afterSha256": "b83da4b4f5de85f52cdd8ca5f69ee2fc27f6e71ed16e2c5663d08598bce01e83"
+    },
+    {
+      "file": "1440-light-layouts.png",
+      "differentPixels": 0,
+      "beforeSha256": "ba08829f1b6271ac7671ebfed51ffa5db67cae5f2cf9a2876e9c782ab20a6526",
+      "afterSha256": "ba08829f1b6271ac7671ebfed51ffa5db67cae5f2cf9a2876e9c782ab20a6526"
+    },
+    {
+      "file": "1440-light-models.png",
+      "differentPixels": 0,
+      "beforeSha256": "cce41283cdb2869e683a26c11608c5ef1320cf4b13bd87fbb55bbba5b5e14372",
+      "afterSha256": "cce41283cdb2869e683a26c11608c5ef1320cf4b13bd87fbb55bbba5b5e14372"
+    },
+    {
+      "file": "1440-light-providers.png",
+      "differentPixels": 0,
+      "beforeSha256": "9cb780f454c0e8d244ddca6550f9509cae3e8a82b14904a4562525e90c5aa48c",
+      "afterSha256": "9cb780f454c0e8d244ddca6550f9509cae3e8a82b14904a4562525e90c5aa48c"
+    },
+    {
+      "file": "1440-light-routing.png",
+      "differentPixels": 0,
+      "beforeSha256": "092a757651deff7685daf8db8b9f04c77f7baa6e7fc5fbc0ffd845c227388428",
+      "afterSha256": "092a757651deff7685daf8db8b9f04c77f7baa6e7fc5fbc0ffd845c227388428"
+    },
+    {
+      "file": "320-light-models.png",
+      "differentPixels": 0,
+      "beforeSha256": "6867260bc59e06fefeaaf62cd440ca56ab04ad6bb81ec326f4fb4c1ed309793a",
+      "afterSha256": "6867260bc59e06fefeaaf62cd440ca56ab04ad6bb81ec326f4fb4c1ed309793a"
+    },
+    {
+      "file": "390-dark-activity.png",
+      "differentPixels": 0,
+      "beforeSha256": "0a4b7e347d59bc131b9cad6c847278519f4a07bba74b29757769973de862f189",
+      "afterSha256": "0a4b7e347d59bc131b9cad6c847278519f4a07bba74b29757769973de862f189"
+    },
+    {
+      "file": "390-dark-layouts.png",
+      "differentPixels": 0,
+      "beforeSha256": "154f2f58173abd7f60d7e0c2d5fb5e0cd1ce2ceaf7991e2d73c033db3afbfc1e",
+      "afterSha256": "154f2f58173abd7f60d7e0c2d5fb5e0cd1ce2ceaf7991e2d73c033db3afbfc1e"
+    },
+    {
+      "file": "390-dark-models.png",
+      "differentPixels": 0,
+      "beforeSha256": "4d22d07b8a0fdcb5501bc731417b38e2293c892cd5dd5fcbcb20357e52bc232a",
+      "afterSha256": "4d22d07b8a0fdcb5501bc731417b38e2293c892cd5dd5fcbcb20357e52bc232a"
+    },
+    {
+      "file": "390-dark-providers.png",
+      "differentPixels": 0,
+      "beforeSha256": "989075b932db12d4eaa17675a633d0f969feff79bb3cf1579479e2e5dbfa72fd",
+      "afterSha256": "989075b932db12d4eaa17675a633d0f969feff79bb3cf1579479e2e5dbfa72fd"
+    },
+    {
+      "file": "390-dark-routing.png",
+      "differentPixels": 0,
+      "beforeSha256": "949d947260caafa4d3f876f361c20f924f19d6213e89919d13b35df3100160a3",
+      "afterSha256": "949d947260caafa4d3f876f361c20f924f19d6213e89919d13b35df3100160a3"
+    },
+    {
+      "file": "390-light-activity.png",
+      "differentPixels": 0,
+      "beforeSha256": "0334efbb60a1126d7b8793050e71c48e9e42562026c551ddb767604e5e0b1b5d",
+      "afterSha256": "0334efbb60a1126d7b8793050e71c48e9e42562026c551ddb767604e5e0b1b5d"
+    },
+    {
+      "file": "390-light-layouts.png",
+      "differentPixels": 0,
+      "beforeSha256": "84ce11fe110e94e8e56e8ae79561771eb9a291c8a206062ac1b35437956bf8dc",
+      "afterSha256": "84ce11fe110e94e8e56e8ae79561771eb9a291c8a206062ac1b35437956bf8dc"
+    },
+    {
+      "file": "390-light-models.png",
+      "differentPixels": 0,
+      "beforeSha256": "956cca8e5aeabccbda0e44b9a8ee8c6e34e1a93dcd192bf9c8627302bf6ee636",
+      "afterSha256": "956cca8e5aeabccbda0e44b9a8ee8c6e34e1a93dcd192bf9c8627302bf6ee636"
+    },
+    {
+      "file": "390-light-providers.png",
+      "differentPixels": 0,
+      "beforeSha256": "b44b6a40cc7aa170d6407e72a5a70d4a4166214bab69e6364a6293b30e286cf8",
+      "afterSha256": "b44b6a40cc7aa170d6407e72a5a70d4a4166214bab69e6364a6293b30e286cf8"
+    },
+    {
+      "file": "390-light-routing.png",
+      "differentPixels": 0,
+      "beforeSha256": "9f43659aa51cda4cb9d4b6914903a8dedbf4aea3bfb2e63b649d9d991f2106e0",
+      "afterSha256": "9f43659aa51cda4cb9d4b6914903a8dedbf4aea3bfb2e63b649d9d991f2106e0"
+    }
+  ]
+}

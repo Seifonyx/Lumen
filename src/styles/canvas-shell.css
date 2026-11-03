@@ -347,7 +347,7 @@
  .app[data-lumen-canvas-shell] .hub-scroll { padding-bottom:env(safe-area-inset-bottom); }
  .app[data-lumen-canvas-shell] .coll-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
  .app[data-lumen-canvas-shell] .rc-page { padding-top:0; padding-bottom:env(safe-area-inset-bottom); }
- .app[data-lumen-canvas-shell] .rc-page > .phone-navigation { margin-inline:-16px; max-width:none; position:sticky; top:0; z-index:4; }
+ .app[data-lumen-canvas-shell] .rc-page > .phone-navigation { margin-inline:-16px; max-width:none; top:0; }
 }
 .app[data-lumen-canvas-shell] .screen-actions { position:relative; }
 .app[data-lumen-canvas-shell] .screen-actions .menu { position:absolute; inset-inline-end:0; top:100%; min-width:220px; }

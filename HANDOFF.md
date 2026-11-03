@@ -11,12 +11,12 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 ## Now
 
 - **Branch:** `codex/router-approved-redesign`, from verified main `fbb59bd`; Lumen-local was clean at takeover.
-- **Task:** integrate the owner-approved Router prototype into canonical Canvas components (Models, Providers, Routing, Layouts, Activity). Implementation prepared; release BLOCKED by unchanged CSS source budget (33.3KB vs29.5KB). Affected run passes type/unit and both builds; broader affected browser/contracts are not certified because the runner stops at this gate. No merge/deploy. Scope and rulings: `docs/router/IMPLEMENTATION.md`. Private reference package stays outside the public repository.
+- **Task:** approved Router integration prepared; release BLOCKED by unchanged CSS source budget (33.003KB vs29.5KB after removing superseded declarations; takeover33.303KB). Fresh affected run passes type/full units and both builds, then stops at this gate.22 fresh Chromium before/after captures are pixel-identical. Broader browser/contracts and desktop interaction replays remain uncertified. Measurements and alternatives: `docs/router/CSS_BUDGET.md`; scope: `docs/router/IMPLEMENTATION.md`. No merge/deploy. Private reference package stays outside the public repository.
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next
 
-- [ ] Router release blocker: consolidate the new/legacy Router styles to the unchanged29.5KB source budget, rerun `npm run test:affected -- --run`, resolve remaining stable desktop flow checks, then exact-head CI/merge/gated Canvas deploy. Do not raise the cap or bypass checks. See `docs/router/IMPLEMENTATION.md`.
+- [ ] Router release blocker: further shared-style consolidation must recover3.503KB without losing approved UI/functionality. Safe override cleanup saved0.300KB; full minification and experimental nesting also remain above29.5KB (31.174/30.150KB, not applied). See `docs/router/CSS_BUDGET.md`. After a passing budget, rerun complete affected browser/contracts and desktop recorded-source Routing/Activity flows, then exact-head CI/merge/gated Canvas deploy. Do not raise the cap, exclude inputs or bypass checks.
 
 - [ ] Owner, on the iPhone (PR #97, live): swipe back from Browse all tools opened from + (should slide straight to the
       chat, no + sheet); a partial swipe let go; a few open/close cycles.

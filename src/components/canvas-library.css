@@ -3,7 +3,6 @@
    width with the source chat and date in their own columns; phones use two-line rows. */
 .library-workspace { width:100%; min-width:0; max-width:920px; }
 .app[data-lumen-canvas-shell] .library-workspace .phone-sections { display:flex; position:static; overflow-x:auto; gap:2px; padding:0 0 10px; box-shadow:inset 0 -1px var(--canvas-rim); margin-bottom:20px; mask-image:none; -webkit-mask-image:none; }
-.library-sorts { gap:6px; }
 .library-workspace .phone-sections button { flex:none; min-height:40px; padding:8px 13px; border:1px solid transparent; border-radius:999px; background:none; color:var(--text-2); font:550 13.5px var(--canvas-body-font); cursor:pointer; white-space:nowrap; }
 .library-workspace .phone-sections button:hover { color:var(--text); background:var(--cv5-fill); }
 .library-workspace .phone-sections button[aria-selected='true'] { color:var(--canvas-highlight-ink,var(--text)); background:var(--canvas-highlight-bg,var(--cv5-fill)); border-color:transparent; }

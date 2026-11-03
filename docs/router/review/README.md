@@ -1,5 +1,7 @@
 # Router implementation review — release blocked
 
+Continuation: [CSS cleanup measurements and fresh screenshot parity](../CSS_BUDGET.md). Source33.303→33.003KB;22 new before/after captures are pixel-identical. The original checkpoint below remains historical evidence; the29.5KB release gate still fails.
+
 Actual synthetic Chromium screenshots from application source `f546e98ee004959b0cfab64b9d599ec2857a3636`. No private design package, real accounts or provider inference.22 captures cover all five sections at1440/390 in Light/Dark, plus Models at1024/320. These are visual evidence, not a complete browser/accessibility certification. [Capture results](results.json). Reproduce with `node tests/e2e/helpers/router-review.cjs` against a loopback Canvas server.
 
 ![Desktop Models](1440-light-models.png)

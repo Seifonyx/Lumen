@@ -98,7 +98,6 @@
 .tool-picker-layer.is-sheet .sheet-grab { flex: none; margin: 8px auto 0; }
 .tool-picker-layer.is-sheet .tp-head { padding: 2px 8px 2px 18px; }
 .tool-picker-layer.is-sheet .tp-scroll { padding-bottom: max(28px, calc(env(safe-area-inset-bottom) + 16px)); }
-@media (max-width: 899px) { .app[data-lumen-canvas-shell] .tp-top .tx-areas button { min-height: 36px; padding: 0 12px; } }
 @keyframes tp-fade { from { opacity: 0; } }
 @keyframes tp-rise { from { opacity: 0; transform: translateY(8px) scale(.99); } }
 @keyframes tp-sheet { from { transform: translateY(100%); } }

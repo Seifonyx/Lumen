@@ -8,10 +8,9 @@
   --rc-rim: color-mix(in srgb, var(--canvas-ink) 10%, transparent);
   --rc-hover: color-mix(in srgb, var(--canvas-ink) 5%, transparent);
   --rc-press: color-mix(in srgb, var(--canvas-ink) 12%, transparent);
-  flex: 1; min-width: 0; height: 100%; overflow: auto; overscroll-behavior: contain; box-sizing: border-box;
-  padding: 0 40px 64px; background: var(--canvas-paper); color: var(--canvas-ink); font-family: var(--canvas-body-font);
+  flex: 1; min-width: 0; height: 100%; overflow: auto; overscroll-behavior: contain; box-sizing: border-box; color: var(--canvas-ink); font-family: var(--canvas-body-font);
 }
-.app[data-lumen-canvas-shell] .rc-page > * { max-width: 760px; margin-inline: auto; }
+.app[data-lumen-canvas-shell] .rc-page > * { margin-inline: auto; }
 .app[data-lumen-canvas-shell] .rc-page :is(h1, h2, h3, h4) { margin: 0; color: var(--canvas-ink); }
 .app[data-lumen-canvas-shell] .rc-label { display: block; font: 500 12px/1.3 var(--canvas-body-font); color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .rc-muted { margin: 0; color: var(--canvas-secondary); font-size: 13px; line-height: 1.5; }
@@ -19,9 +18,9 @@
 .app[data-lumen-canvas-shell].swipe-revealing > .rc-page { position: fixed; inset: 0; z-index: 41; }
 
 /* ---------- Prism title, five sections and Chat on one line (computers) */
-.app[data-lumen-canvas-shell] .rc-head { position: sticky; top: 0; z-index: 3; display: flex; align-items: stretch; gap: 32px; min-height: 68px; margin-bottom: 36px; box-shadow: inset 0 -1px var(--rc-rim); background: var(--canvas-paper); }
-.app[data-lumen-canvas-shell] .rc-head h1 { align-self: flex-start; font: 650 21px/1.1 var(--canvas-display-font); letter-spacing: -.025em; white-space: nowrap; outline: none; }
-.app[data-lumen-canvas-shell] .rc-brand { display:flex; flex-direction:column; align-self:center; flex:none; gap:3px; }
+.app[data-lumen-canvas-shell] .rc-head { position: sticky; top: 0; z-index: 3; align-items: stretch; box-shadow: inset 0 -1px var(--rc-rim); }
+.app[data-lumen-canvas-shell] .rc-head h1 { align-self: flex-start; white-space: nowrap; outline: none; }
+.app[data-lumen-canvas-shell] .rc-brand { display:flex; flex-direction:column; flex:none; }
 .app[data-lumen-canvas-shell] .rc-brand p { margin:0; font-size:11.5px; line-height:1.2; color:var(--canvas-secondary); white-space:nowrap; }
 .app[data-lumen-canvas-shell] .rc-tabs { display: flex; gap: 24px; overflow-x: auto; scrollbar-width: none; }
 .app[data-lumen-canvas-shell] .rc-tabs button { flex: none; padding: 0; border: 0; background: none; color: var(--canvas-secondary); font: 500 15px var(--canvas-body-font); cursor: pointer; white-space: nowrap; }
@@ -155,18 +154,12 @@
 
 /* ---------- Phones: preserved sidebar and history-aware glass Back; five scrollable sections. */
 @media (max-width: 899px) {
-  .app[data-lumen-canvas-shell] .rc-page { padding: calc(env(safe-area-inset-top) + 6px) max(16px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 24px) max(16px, env(safe-area-inset-left)); }
   html[data-qa-review] .app[data-lumen-canvas-shell] .rc-page { padding-top: 6px; }
   .app[data-lumen-canvas-shell] :is(.rc-link) { min-height: 44px; }
   .app[data-lumen-canvas-shell] :is(.rc-primary, .rc-quiet, .rc-pages button, .rc-use button) { min-height: 44px; }
   .app[data-lumen-canvas-shell] .rc-model-details summary { min-height:44px; }
 }
 /* Short iPhones keep a real model choice and its Use action above the anchored Search. */
-@media (max-width: 430px) and (max-height: 680px) {
-
-}
-@media (hover: hover) {
-}
 
 
 @media(max-width:899px){

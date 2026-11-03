@@ -15,4 +15,6 @@ Scoped agent verification: Models Chromium320/390/1440 Light/Dark discovery; Web
 
 Remaining: CSS budget consolidation, complete affected browser/contract run and stable responsive screenshot review, exact-head CI. Merge/deploy blocked until all gates pass. Physical Safari/VoiceOver unverified. No private prototype package committed.
 
-Final review evidence: simple unused-selector pruning found no removable Router rules; reducing3.8KB needs deeper style consolidation, not an audit bypass. [22 actual screenshots](review/README.md) are attached. Draft PR99 preserves current implementation; release is blocked under the owner’s unchanged-budget requirement.
+Final review evidence: simple unused-selector pruning found no removable Router region. [22 actual screenshots](review/README.md) are attached. Draft PR99 preserves current implementation; release is blocked under the owner’s unchanged-budget requirement.
+
+Continuation from5cc77e6: removed superseded declarations across Router/Canvas; source audit33.303→33.003KB, unchanged29.5KB cap. Fresh type/full units and both builds pass; startup JS15.1KB, startup CSS19.3KB, lazy Router8.3KB pass. Fresh22 Chromium captures are pixel-identical to takeover. Representative desktop Routing/Activity screenshots inspected, but recorded-source desktop interaction replays and full affected browser/contracts remain outstanding because the budget still fails. [Measured alternatives, evidence and limits](CSS_BUDGET.md). No merge/deploy.

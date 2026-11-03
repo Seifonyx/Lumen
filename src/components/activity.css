@@ -121,15 +121,12 @@
 .app[data-lumen-canvas-shell] .ac-open-list small { color:var(--canvas-secondary); font-size:13px; font-weight:400; }
 
 @media (max-width: 899px) {
-.app[data-lumen-canvas-shell] .ac-tabs { justify-self:stretch; grid-auto-columns:minmax(0, 1fr); }
-.app[data-lumen-canvas-shell] .ac-tabs button { min-height:40px; }
 .app[data-lumen-canvas-shell] .ac-tiles { grid-template-columns:repeat(2, minmax(0, 1fr)); }
 .app[data-lumen-canvas-shell] .ac-split { grid-template-columns:minmax(0, 1fr); }
-.app[data-lumen-canvas-shell] .ac-chart ol { gap:3px; }
 .app[data-lumen-canvas-shell] .ac-fields > div { grid-template-columns:minmax(0, 1fr); }
 .app[data-lumen-canvas-shell] .ac-actions .ac-icon { inline-size:44px; }
 .app[data-lumen-canvas-shell] :is(.ac-actions .rc-quiet, .ac-check, .ac-settings > summary, .ac-dates :is(input, select), .ac-field select) { min-height:44px; }
-.app[data-lumen-canvas-shell] .ac-detail { margin-block-end:0; inline-size:100vw; max-inline-size:none; border-radius:var(--canvas-radius-panel) 20px 0 0; padding-bottom:calc(20px + env(safe-area-inset-bottom)); }
+.app[data-lumen-canvas-shell] .ac-detail { margin-block-end:0; inline-size:100vw; max-inline-size:none; padding-bottom:calc(20px + env(safe-area-inset-bottom)); }
 }
 @media (forced-colors: active) {
 .app[data-lumen-canvas-shell] :is(.ac-card, .ac-tile, .ac-log, .ac-quota-list, .ac-open-list, .ac-alerts ul, .ac-meter) { border:1px solid CanvasText; }

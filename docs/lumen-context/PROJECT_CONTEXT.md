@@ -20,7 +20,7 @@ Other products (including 9Router and ChatGPT) may be used as **functional inspi
 
 ## Owner's navigation and coding-handoff direction (updated 2026-10-26)
 
-**Top-left chevron (<) on feature flows means Exit, not sequential Back.** In Prism, Library, Tools and comparable hub/nested feature flows, it should leave the entire current feature and return to the originating chat/screen, preserving the draft, attachments and account boundaries. Never unwind section/filter/provider/editor actions one by one on this control. Label the control accessibly (for example, "Exit Prism" or "Return to chat"). Browser Back/Forward and edge-swipe history remain separate, predictable behaviors. This supersedes the earlier prior-screen-chevron rule.
+**Top-left chevron (<) on feature flows means Exit, not sequential Back.** In Router, Library, Tools and comparable hub/nested feature flows, it should leave the entire current feature and return to the originating chat/screen, preserving the draft, attachments and account boundaries. Never unwind section/filter/provider/editor actions one by one on this control. Label the control accessibly (for example, "Exit Router" or "Return to chat"). Browser Back/Forward and edge-swipe history remain separate, predictable behaviors. This supersedes the earlier prior-screen-chevron rule.
 
 **"Next step" means send the complete coding prompt immediately.** The owner grants standing permission to recommend the next bounded implementation and deliver a ready-to-copy agent prompt, with model/effort recommendation and appropriate scope and QA gates, without asking for repeated approval to prepare that prompt. This does not itself authorize running code, merging, deploying, spending money, altering protected infrastructure or declaring Gate acceptance.
 
@@ -28,11 +28,11 @@ Other products (including 9Router and ChatGPT) may be used as **functional inspi
 
 Maintain the unified projects/chat tree, contextual hub navigation, accessible scoped actions, no floating home-style tab bars, and safe desktop/iPhone parity. Preserve existing data/auth/security contracts.
 
-## Prism feature name and information architecture (owner direction, 2026-10-24)
+## Router name and information architecture (owner direction, 2026-11-03)
 
-The owner explicitly requests that the in-app **“Models & routing”** destination become **“Prism”**, paired with a distinctive routing/branch-path icon (not an AI sparkle), throughout user-facing iPhone and desktop navigation. Preserve clear discoverability with an understated **“Models, providers & routing”** descriptor in context and accessible labels/search metadata. Prism is a Lumen in-app area, not independently approved external branding; a separately marketed AI gateway also uses the Prism name, so product marketing/trademark clearance is a separate decision.
+The owner selected **Router** as the in-app user-facing name for the models, providers and routing workspace on 2026-11-03, expressly superseding the earlier **Prism** naming preference. The rename is an approved product direction, **not authorization to rename app code or deploy it during design exploration**. Preserve the routing/branch-path identity and an understated “Models, providers & routing” descriptor for discoverability; keep implementation/route aliases compatible until an explicitly authorized implementation.
 
-The owner also requests that **Overview be removed as a Prism navigation section**, because it duplicates the direct section tabs. Preserve unique, useful data rather than dropping capabilities: current selection/routing context in Models, provider readiness and setup in Providers, relevant recent-answer history in Diagnostics, and usage facts in Usage. Prefer **Models as the stable default landing section** with a truthful connection CTA when no usable model is available; don't build a disguised new Overview. Preserve canonical history, Back/Forward/edge gestures, deep links and root entry semantics when removing the former overview route. The owner requests this implementation in the next Phase 4 Slice 2 quality pass; separate merge/deploy/Gate authorization still applies.
+**Overview remains removed** because it duplicated the direct section tabs. Preserve current selection and routing context in Models, provider readiness and setup in Providers, recent-answer/routing evidence in Diagnostics, and usage facts in Usage. Prefer **Models** as the stable landing section with a truthful provider connection CTA when needed; don't reintroduce a disguised Overview. Preserve canonical history, Back/Forward/edge gestures, deep links, the top-left feature Exit and account/data protections.
 
 ## Progress reporting across distinct workstreams
 

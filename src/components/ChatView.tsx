@@ -17,7 +17,7 @@ import ModelPicker from './ModelPicker';
 import ProjectManager from './ProjectManager';
 import ProjectWorkspace from './ProjectWorkspace';
 import CatalogErrorNotice from './CatalogErrorNotice';
-import { BrandMark, CANVAS_SHELL, PhoneNavigation, CanvasScreenActions, navigateBack, useScreenBackLayer, newGeneralChat } from '../lib/canvas-presentation';
+import { BrandMark, CANVAS_SHELL, CanvasProjectWorkspace, PhoneNavigation, CanvasScreenActions, navigateBack, useScreenBackLayer, newGeneralChat } from '../lib/canvas-presentation';
 import { ContextRail, RailToggle } from './ContextRail';
 import CanvasHome from './CanvasHome';
 
@@ -254,10 +254,9 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
           <span className="project-crumb-name">{currentProject.name}</span>
         </header>)}
 
-        <ProjectWorkspace
-          project={currentProject}
-          onOpenSettings={() => setProjectModalId(currentProject.id)}
-        />
+        {CANVAS_SHELL && CanvasProjectWorkspace
+          ? <Suspense fallback={null}><CanvasProjectWorkspace project={currentProject} onOpenSettings={() => setProjectModalId(currentProject.id)} /></Suspense>
+          : <ProjectWorkspace project={currentProject} onOpenSettings={() => setProjectModalId(currentProject.id)} />}
         {projectModalId && (
           <ProjectManager
             initialProjectId={projectModalId}

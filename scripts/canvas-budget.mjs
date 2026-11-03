@@ -67,7 +67,10 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // reduced the full 13-file source audit33.303→33.003KB; compiler minification still measured31.174KB. Retain useful
 // Provider-detail, phone and accessibility rules. This is an explicit source-cost decision, not a startup allowance:
 // startup JS15.5, startup CSS20 and lazy Router9KB are unchanged. See docs/router/CSS_BUDGET.md.
-const BUDGET = { startupJs: 15.5, startupCss: 20, routingCenter: 9, canvasCss: 34 };
+// Projects redesign (owner-authorized, 2026-11-03): canvasCss 34 → 34.5. All projects and the workspace move to a lazy
+// stylesheet (components/canvas-projects.css, ≈2 KB gz) loaded with CanvasProjects.tsx; the old Projects rules left
+// canvas-screens.css/canvas-shell.css, so startup CSS fell 19.2 → 18.5 KB gz. Measured source total 34.1 KB gz.
+const BUDGET = { startupJs: 15.5, startupCss: 20, routingCenter: 9, canvasCss: 34.5 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {
@@ -85,7 +88,7 @@ const rows = [
 ];
 // Canvas CSS on its own: the source files, minified roughly by collapsing whitespace and comments.
 const css = ['canvas.css', 'canvas-composer.css', 'canvas-shell.css', 'canvas-reading.css', 'canvas-routing.css', 'canvas-screens.css', 'brand-crease.css', 'canvas-routing-experience.css']
-  .map((f) => readFileSync(join('src/styles', f), 'utf8')).concat(['canvas-library.css', 'tools-workspace.css', 'settings-index.css', 'activity.css', 'router-models.css'].map((f) => readFileSync(join('src/components', f), 'utf8'))).join('\n').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ');
+  .map((f) => readFileSync(join('src/styles', f), 'utf8')).concat(['canvas-library.css', 'tools-workspace.css', 'settings-index.css', 'activity.css', 'router-models.css', 'canvas-projects.css'].map((f) => readFileSync(join('src/components', f), 'utf8'))).join('\n').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ');
 rows.push(['Canvas CSS source (gz, approx.)', gzipSync(css).length / 1024, BUDGET.canvasCss]);
 if (!rc.length) rows.push(['Routing Center must stay a lazy chunk', 1, 0]);
 

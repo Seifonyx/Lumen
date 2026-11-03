@@ -241,9 +241,9 @@
 }
 
 /* Start-up frame (index.html, Canvas build only): the message box sits where the Canvas home puts it (161.5 since
-   Lumen's mark replaced the taller moon, 2026-10-30). */
+   Lumen's mark replaced the taller moon, 2026-10-30; 131.5 since the line under the greeting went, 2026-11-03). */
 @media (min-width: 900px) {
-  .app[data-lumen-canvas-shell].app-skeleton .sk-welcome { height: 161.5px; }
+  .app[data-lumen-canvas-shell].app-skeleton .sk-welcome { height: 131.5px; }
   .app[data-lumen-canvas-shell].app-skeleton .composer-wrap { min-height: 147px; }
   .app[data-lumen-canvas-shell].app-skeleton .sk-composer { min-height: 108px; max-width: 760px; border-radius: var(--canvas-composer-radius, 26px); }
 }
@@ -367,8 +367,6 @@
 
 @media(max-width:899px){ .app[data-lumen-canvas-shell] .settings-page.has-section:has(> .phone-navigation) .settings-heading{display:none;}}
 /* Fixed action menus must escape the card's clipping, including during keyboard scrolling. */
-.app[data-lumen-canvas-shell] .proj-card:has(> .screen-actions) { overflow:visible;position:relative; }
-.app[data-lumen-canvas-shell] .proj-card > .screen-actions { position:relative;inset:auto;align-self:center; }
 
 /* Content type, rather than device size, determines Library rows versus media collections. */
 .app[data-lumen-canvas-shell] .coll-item:is(.kind-documents,.kind-files) { grid-column:1 / -1; }
@@ -385,7 +383,6 @@
 /* Phase 4 phone pages have a single navigation title and room for their content. */
 @media(max-width:899px){
 .app[data-lumen-canvas-shell] .hub-page:is([aria-label="Tools"],[aria-label="Library"],[aria-label="Projects"]) .hub-head{display:none}
-.app[data-lumen-canvas-shell] .project-page .project-title{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 }
 @media(max-width:430px){
 .app[data-lumen-canvas-shell] .settings-page .account-row{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:start;gap:10px}

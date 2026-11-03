@@ -189,7 +189,7 @@ export default function MemoryTab({ Toggle }: { Toggle: (p: { checked: boolean; 
 
           {memories.length === 0 ? (
             <p className="muted small memory-empty">
-              No memories saved yet. Add one above, or say “remember that…” in a chat.
+              No memories yet.
             </p>
           ) : (
             <ul className="memory-list" style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>

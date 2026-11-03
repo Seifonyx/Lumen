@@ -155,7 +155,6 @@ export default function ProjectManager({
         </div>
         <label className="pf-field">
           <span className="pf-label">Instructions <em>optional</em></span>
-          <span className="pf-hint">How models should work here: tone, language, what to focus on.</span>
           <textarea aria-label="Project instructions" value={instructions} maxLength={12000} rows={5} onChange={(e) => setInstructions(e.target.value)} placeholder="e.g. Write formal reports for the management team. Use metric units." />
           <span className="pf-presets">
             <span className="pf-hint">Add:</span>
@@ -165,7 +164,7 @@ export default function ProjectManager({
           </span>
         </label>
         <div className="pf-field">
-          <span className="pf-label">Files <em>{files.length}/5 · every chat here can read them</em></span>
+          <span className="pf-label">Files <em>{files.length}/5</em></span>
           <input ref={fileInput} hidden type="file" multiple accept=".pdf,.docx,.xlsx,.xlsm,.pptx,.txt,.md,.csv,.tsv,.json,.html,.xml,.js,.ts,.py,.css,.sql,.log,.yaml,.yml,.srt,.tex" onChange={(e) => { void addFiles([...(e.target.files || [])]); e.target.value = ''; }} />
           {files.length > 0 && (
             <ul className="pf-files">

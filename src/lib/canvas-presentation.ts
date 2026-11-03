@@ -22,7 +22,7 @@ export type BrandArtProps = { height: number; decorative?: boolean; className?: 
 export const CANVAS_COMPOSER = false;
 export const CANVAS_SHELL = false;
 export const RoutingCenter: ComponentType | null = null;
-export const prefetchPlace: ((place: 'library' | 'tools' | 'router' | 'settings') => void) | null = null;
+export const prefetchPlace: ((place: 'library' | 'tools' | 'router' | 'settings' | 'projects') => void) | null = null;
 export const BrandWordmark: ComponentType<BrandArtProps> | null = null;
 export const BrandMark: ComponentType<BrandArtProps> | null = null;
 export const CanvasNav: ComponentType<{ collapsed: boolean; onExpand: () => void }> | null = null;
@@ -38,6 +38,8 @@ export const CanvasFilterMenu: typeof import('../components/FilterMenu').default
 export const useScreenBackLayer: typeof import('./back-stack').useBackLayer | null = null;
 export const CanvasLibraryActions: typeof import('../components/CanvasLibraryActions').default | null = null;
 export const CanvasCollectionPage: typeof import('../components/CanvasCollectionPage').default | null = null;
+export const CanvasProjectList: import('react').ComponentType<{ onClose: () => void }> | null = null;
+export const CanvasProjectWorkspace: import('react').ComponentType<{ project: import('../types').Project; onOpenSettings?: () => void }> | null = null;
 export const CanvasToolsWorkspace: typeof import('../components/ToolsWorkspace').default | null = null;
 export const CanvasSettingsIndex: typeof import('../components/SettingsIndex').default | null = null;
 export const navigateScreen: typeof import('./screen-history').navigateScreen | null = null;

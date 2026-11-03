@@ -117,7 +117,7 @@ async function openMemory(page) {
   // Delete all.
   await page.getByRole('button',{name:'Clear all',exact:true}).click();
   await page.waitForTimeout(800);
-  check((await page.textContent('.memory-tab')).includes('Remembered facts (0/200)') && (await page.textContent('.memory-tab')).includes('No memories saved yet'), 'delete all');
+  check((await page.textContent('.memory-tab')).includes('Remembered facts (0/200)') && (await page.textContent('.memory-tab')).includes('No memories yet'), 'delete all');
   await closeSettings(page);
 
   // Reload: replies stay clean.

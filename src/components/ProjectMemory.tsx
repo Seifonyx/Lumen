@@ -22,12 +22,12 @@ export default function ProjectMemory({ projectId, memories }: { projectId: stri
     </form>
   );
   return (
-    <section className="project-card cv-memory" aria-labelledby={`memory-${projectId}`}>
-      <div className="project-card-head">
-        <h3 id={`memory-${projectId}`}>Memory <span className="project-count">{memories.length}</span></h3>
-        {on && editing !== 'new' && <button type="button" className="btn ghost small" onClick={() => start('new', '')}>Add</button>}
+    <section className="pw-ctx cv-memory" aria-labelledby={`memory-${projectId}`}>
+      <div className="pw-ctx-head">
+        <h2 id={`memory-${projectId}`}>Memory <span className="pw-count">{memories.length}</span></h2>
+        {on && editing !== 'new' && <button type="button" className="pw-link" aria-label="Add a memory for this project" onClick={() => start('new', '')}>Add</button>}
       </div>
-      {!on && <p className="project-empty">Memory is off. Turn it on in Settings → Memory to keep facts for this project.</p>}
+      {!on && <p className="pw-empty">Memory is off in Settings → Memory.</p>}
       {editing === 'new' && editor('New memory for this project')}
       {memories.length ? (
         <ul className="project-memories">{memories.map((m) => (
@@ -48,7 +48,7 @@ export default function ProjectMemory({ projectId, memories }: { projectId: stri
             </>}
           </li>
         ))}</ul>
-      ) : on && editing !== 'new' && <p className="project-empty">Facts that only matter here are kept for this project’s chats. Add one, or a chat in this project can save them.</p>}
+      ) : null}
     </section>
   );
 }

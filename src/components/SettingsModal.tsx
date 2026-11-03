@@ -526,16 +526,16 @@ export default function SettingsModal() {
                 <div className="settings-group">
                   <span className="settings-group-title">Chat</span>
                   <div className="settings-card">
-                    <Toggle label="Enter sends the message" hint="On computers. Shift+Enter adds a new line. On phones, use the send button." checked={settings.enterToSend} onChange={(v) => update({ enterToSend: v })} />
-                    {isTouch() && <Toggle label="Vibration" hint="A light tap when you send, flip a switch, hold a message or swipe a chat." checked={settings.haptics !== false} onChange={(v) => update({ haptics: v })} />}
-                    <Toggle label="Sound when sending" hint="A soft sound when your message goes. On iPhone it follows the silent switch." checked={Boolean(settings.sendSound)} onChange={(v) => { update({ sendSound: v }); if (v) playSend(); }} />
+                    <Toggle label="Enter sends the message" hint="Shift+Enter adds a new line." checked={settings.enterToSend} onChange={(v) => update({ enterToSend: v })} />
+                    {isTouch() && <Toggle label="Vibration" checked={settings.haptics !== false} onChange={(v) => update({ haptics: v })} />}
+                    <Toggle label="Sound when sending" checked={Boolean(settings.sendSound)} onChange={(v) => { update({ sendSound: v }); if (v) playSend(); }} />
                     <NotifyToggle Toggle={Toggle} on={Boolean(settings.notifyReplies)} onChange={(v) => update({ notifyReplies: v })} />
-                    <Toggle label="Message navigator" hint="The lines on the right of long chats that jump between your messages." checked={settings.messageNavigator ?? navigatorDefault()} onChange={(v) => update({ messageNavigator: v })} />
-                    <Toggle label="Show thinking" hint="Show the model's reasoning (collapsed) when it thinks before answering." checked={settings.showThinking} onChange={(v) => update({ showThinking: v })} />
+                    <Toggle label="Message navigator" hint="Marks beside long chats for jumping between your messages." checked={settings.messageNavigator ?? navigatorDefault()} onChange={(v) => update({ messageNavigator: v })} />
+                    <Toggle label="Show thinking" checked={settings.showThinking} onChange={(v) => update({ showThinking: v })} />
                     <Toggle label="Name chats automatically" hint="Uses a light model to write a short title after the first reply." checked={settings.autoTitle} onChange={(v) => update({ autoTitle: v })} />
                     <Toggle
                       label="Compact long chats automatically"
-                      hint="When a chat gets long, older messages are summarized and the summary is sent instead — faster replies and fewer limits. You can also type /compact."
+                      hint="Older messages are summarized and the summary is sent instead. Type /compact to do it now."
                       checked={settings.autoCompact}
                       onChange={(v) => update({ autoCompact: v })}
                     />

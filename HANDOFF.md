@@ -10,9 +10,13 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `codex/native-ui-cleanup` from verified main `f3b2f00`.
-- **Task:** Canvas copy and density cleanup across core workspaces. Decision-making guidance stays with the relevant controls. Release follows affected checks, exact PR CI and the gated Canvas deploy.
-- **Authority:** standing (see Decisions): test, merge, deploy when verified.
+- **Branch:** `design/projects-quiet` from main `899d6e6` (PR #100 included).
+- **Task:** (1) remove the remaining product narration (settings hints, empty-state paragraphs, "Ask anything.");
+  (2) Projects redesign on Canvas: a name-first All projects list and a workspace with chats as the main column and
+  context (instructions, files, memory, model) beside it (`src/components/CanvasProjects.tsx` + `canvas-projects.css`,
+  a lazy chunk; the ordinary build keeps ProjectsPage/ProjectWorkspace). Release follows affected checks, exact PR CI
+  and the gated Canvas deploy.
+- **Authority:** owner-authorized 2026-11-03, plus standing (see Decisions): test, merge, deploy when verified.
 
 ## Next
 

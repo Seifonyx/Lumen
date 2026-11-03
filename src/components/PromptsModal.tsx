@@ -57,7 +57,6 @@ export default function PromptsModal({ onClose }: { onClose: () => void }) {
           </div>
         ) : (
           <>
-            {!glassPhone && <p className="muted small">Pick one to put it in the message box, add your details, then send.</p>}
             <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search prompts" placeholder="Search prompts" value={query} onChange={(e) => setQuery(e.target.value)} /></label>
             {mine.length > 0 && <section className="lib-section"><h2>Yours</h2><ul className="lib-rows">{mine.map((p) => <Row key={p.id} p={p} />)}</ul></section>}
             {lumen.length > 0 && <section className="lib-section"><h2>From Lumen</h2><ul className="lib-rows">{lumen.map((p) => <Row key={p.id} p={p} />)}</ul></section>}

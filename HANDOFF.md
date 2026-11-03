@@ -11,12 +11,12 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 ## Now
 
 - **Branch:** `codex/router-approved-redesign`, from verified main `fbb59bd`; Lumen-local was clean at takeover.
-- **Task:** finish approved Router release from31ac69e. Owner authorized documented total CSS source cap34KB after cleanup; all13 inputs and startup JS/CSS/lazy Router limits retained. Corrected obsolete master/detail contract expectations and one genuine Layout-editor secondary-text contrast issue. Full affected/browser/exact-head release verification in progress; no merge/deploy yet. Measurements: `docs/router/CSS_BUDGET.md`; scope: `docs/router/IMPLEMENTATION.md`. Private reference package stays outside the public repository.
+- **Task:** approved Router implementation and complete local affected verification done, including desktop Routing/Activity and focused Chromium/WebKit contracts. Owner-authorized source cap34KB retains all13 inputs and startup/lazy caps. Obsolete master/detail expectations corrected; genuine Layout-editor contrast fixed. Release follows exact-head green CI and gated Canvas deployment under standing authority; computed live state above identifies actual shipping status. Evidence: `docs/router/RELEASE_VERIFICATION.md`. Private reference package stays outside the public repository.
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next
 
-- [ ] Router: complete affected browser/contracts and desktop recorded-source Routing/Activity flows, inspect real screenshots, then require green exact-head CI, mark PR99 ready, merge/gated Canvas deploy and verify live asset under existing authority. Owner-authorized source cap34KB is documented; no other cap or audit input changed. Physical Safari/VoiceOver remain device checks.
+- [ ] Owner, on the iPhone (Router): native edge Back/Forward versus whole-feature Exit, Use→Chat draft/attachment/focus restoration, nested model/provider/Layout navigation, VoiceOver, keyboard/IME, Dynamic Type and PWA safe areas. Both browser engines and synthetic accessibility checks passed; these remain physical-device checks.
 
 - [ ] Owner, on the iPhone (PR #97, live): swipe back from Browse all tools opened from + (should slide straight to the
       chat, no + sheet); a partial swipe let go; a few open/close cycles.

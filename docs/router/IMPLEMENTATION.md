@@ -1,5 +1,7 @@
 # Approved Router implementation
 
+**Current release checkpoint:** owner authorized the documented34KB total source cap after cleanup; all13 inputs and startup/lazy caps retained. Updated obsolete master/detail contracts and fixed a scoped editor contrast defect. Complete local affected run and focused Chromium/WebKit Routing/Activity checks pass. [Release verification and fresh captures](RELEASE_VERIFICATION.md). Exact-head CI, merge and gated deployment are the remaining release operations; historical failed-budget checkpoints below describe earlier heads.
+
 Base: verified origin/main fbb59bd, clean Lumen-local. Owner explicitly authorizes implementation, exact-head PR CI, merge and gated Canvas deployment. Private approved reference is the owner-supplied Router review archive, extracted privately outside the repository; do not publish package.
 
 Plan: (1) responsive Router header/context and console foundation; (2) canonical Models list/detail browser; (3) Providers and Routing compositions; (4) canonical Layouts and Activity surfaces; (5) scoped affected tests, representative real screenshots, final review, exact-head CI, merge/gated deploy/live asset proof.

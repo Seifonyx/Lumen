@@ -1,7 +1,256 @@
-// Scripted touch regression of Lumen's real gesture handlers; not Safari hardware gesture verification.
-const assert=require('node:assert/strict');const {chromium,webkit}=require('playwright');const {profile,seed}=require('./helpers/preview-profile.cjs');const {openPlace}=require('./helpers/nav.cjs');
-(async()=>{const browser=await(process.env.MR_WEBKIT?webkit:chromium).launch();try{const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,serviceWorkers:'block',reducedMotion:'reduce'});await profile(context,'edge-back-reset','light');const page=await context.newPage(),base=process.env.MR_TEST_URL||'http://localhost:5190/';await page.goto(new URL('/privacy.html',base).href);const now=Date.now();await seed(page,'edge-back-reset',[{id:'source',title:'Gesture document',createdAt:now,updatedAt:now,messages:[],documents:[{id:'doc',name:'Gesture.md',content:'# Synthetic',updatedAt:now}]}]);await page.goto(base);await page.locator('.composer textarea').waitFor();if(!await page.locator('.app[data-lumen-canvas-shell]').count()){console.log('Not applicable to ordinary presentation');return;}
- const swipe=async selector=>{await page.locator(selector).evaluate(async el=>{const dispatch=(type,x)=>{const e=new Event(type,{bubbles:true,cancelable:true});Object.defineProperty(e,'touches',{value:type==='touchend'?[]:[{identifier:1,clientX:x,clientY:180}]});el.dispatchEvent(e)};dispatch('touchstart',5);for(const x of [30,90,180,300]){dispatch('touchmove',x);await new Promise(r=>setTimeout(r,30))}dispatch('touchend',300)});await page.waitForTimeout(800);};
- await openPlace(page,'Library');await page.getByRole('button',{name:'Open Gesture.md',exact:true}).click();await page.locator('.canvas-panel').waitFor();await swipe('.canvas-panel');assert.equal(await page.locator('.canvas-panel').count(),0,'edge swipe leaves the document');assert.ok(await page.getByRole('main',{name:'Library',exact:true}).isVisible(),'document returns to Library');
- await page.locator('.phone-navigation [aria-label^="Return to "]').click();await page.locator('.composer textarea').waitFor();await page.waitForFunction(()=>document.activeElement?.matches('.menu-btn'));await page.locator('.menu-btn').first().click();await page.locator('aside.cv-nav').getByRole('button',{name:'All projects',exact:true}).click();await page.getByRole('button',{name:'New project',exact:true}).first().click();await page.getByLabel('Project name',{exact:true}).fill('Gesture project');await page.getByRole('button',{name:'Create project',exact:true}).click();await page.locator('.project-workspace-main').waitFor();await swipe('.project-workspace-main');assert.ok(await page.getByRole('main',{name:'Projects',exact:true}).isVisible(),'project edge swipe returns to Projects');assert.equal(await page.locator('aside.cv-nav').evaluate(el=>el.classList.contains('open')),false,'project swipe must not open the drawer');
- await page.locator('.phone-navigation [aria-label^="Return to "]').click();await page.locator('.composer textarea').waitFor();await swipe('.app > .main');assert.ok(await page.locator('aside.cv-nav').evaluate(el=>el.classList.contains('open')),'root chat keeps its drawer swipe');console.log('PASS scripted document/project Back, root drawer gesture, phone focus return');await context.close();}finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});
+// Synthetic touches cover the app recognizer. Browser Back exercises popstate separately;
+// Playwright does not drive Safari's native interactive edge gesture.
+const assert = require('node:assert/strict');
+const path = require('node:path');
+const { chromium, webkit } = require('playwright');
+const { profile, seed } = require('./helpers/preview-profile.cjs');
+const { openPlace } = require('./helpers/nav.cjs');
+const base = process.env.MR_TEST_URL || 'http://localhost:5190/';
+const iphone = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Version/18.5 Mobile/15E148 Safari/604.1';
+const artifacts = '.swipe-under,.swipe-dim,.swipe-revealing,.page-swap-ghost';
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function exercise(browser, standalone) {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 }, hasTouch: true, userAgent: iphone, serviceWorkers: 'block',
+  });
+  try {
+    await context.route('**/*', r => new URL(r.request().url()).origin === new URL(base).origin ? r.continue() : r.abort());
+    const uid = 'swipe-back-' + standalone;
+    await profile(context, uid, standalone ? 'light' : 'dark');
+    await context.addInitScript(standalone => {
+      Object.defineProperty(navigator, 'standalone', { value: standalone });
+      window.trace = { requests: [], pops: [], pushes: [] };
+      for (const method of ['back', 'go', 'pushState']) {
+        const original = history[method].bind(history);
+        history[method] = (...args) => {
+          if (method === 'pushState') window.trace.pushes.push(args[0].lumenScreen.id);
+          else window.trace.requests.push(method === 'back' ? -1 : args[0]);
+          return original(...args);
+        };
+      }
+      window.addEventListener('popstate', e => window.trace.pops.push(e.state?.lumenScreen?.id));
+    }, standalone);
+    const page = await context.newPage();
+    page.setDefaultTimeout(8000);
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await page.goto(new URL('/privacy.html', base).href);
+    const now = Date.now();
+    await seed(page, uid, [{
+      id: 'source', title: 'Gesture document', createdAt: now, updatedAt: now, messages: [],
+      documents: [{ id: 'doc', name: 'Gesture.md', content: '# Synthetic', updatedAt: now }],
+    }]);
+    await page.goto(base);
+    const composer = page.locator('.composer textarea');
+    await composer.waitFor();
+    if (!await page.locator('[data-lumen-canvas-shell]').count()) return;
+    assert.equal(await page.locator('html').getAttribute('data-native-edge-back'), standalone ? null : '');
+    if (await page.evaluate(() => CSS.supports('overscroll-behavior-x', 'auto'))) {
+      assert.equal(await page.locator('html').evaluate(el => getComputedStyle(el).getPropertyValue('overscroll-behavior-x')), standalone ? 'none' : 'auto');
+    }
+    await composer.fill('Keep the unsent swipe draft');
+    const model = await page.locator('.composer .model-button').innerText();
+    await page.locator('.composer input[type=file][multiple]').last().setInputFiles({
+      name: 'Unsent notes.txt', mimeType: 'text/plain', buffer: Buffer.from('Synthetic attachment'),
+    });
+    const attachment = page.getByRole('button', { name: 'Remove Unsent notes.txt', exact: true });
+    await attachment.waitFor();
+
+    const entry = () => page.evaluate(() => history.state.lumenScreen.id);
+    const trace = () => page.evaluate(() => window.trace);
+    const root = await entry();
+    const drawer = page.locator('aside.cv-nav');
+    const focus = selector => page.waitForFunction(selector => document.activeElement?.matches(selector), selector);
+    const clean = async selector => {
+      assert.equal(await page.locator(artifacts).count(), 0, 'no ghost, underlay or dim layer');
+      assert.equal(await page.locator(selector).evaluate(el => getComputedStyle(el).transform), 'none');
+    };
+    const screenshot = name => {
+      if (process.env.SWIPE_EVIDENCE_DIR) return page.screenshot({
+        path: path.join(process.env.SWIPE_EVIDENCE_DIR, (process.env.MR_WEBKIT ? 'webkit-' : 'chromium-') + name + '.png'),
+        animations: 'disabled',
+      });
+    };
+    const swipe = (surface, options = {}) => page.locator(surface).evaluate(async (el, options) => {
+      const { start = 5, end = 295, finish = 'touchend', times = 1, step = 0 } = options;
+      const run = async id => {
+        const fire = (type, x) => {
+          const touch = { identifier: id, target: el, clientX: x, clientY: 180 };
+          const event = new Event(type, { bubbles: true, cancelable: true });
+          Object.defineProperties(event, {
+            touches: { value: ['touchend', 'touchcancel'].includes(type) ? [] : [touch] },
+            changedTouches: { value: [touch] },
+          });
+          return el.dispatchEvent(event);
+        };
+        fire('touchstart', start);
+        const moves = [];
+        for (const part of [0.25, 0.5, 0.75, 1]) {
+          moves.push(fire('touchmove', start + (end - start) * part));
+          if (step) await new Promise(r => setTimeout(r, step));
+        }
+        window.finishSwipe = () => fire('touchend', end);
+        if (finish) fire(finish, end);
+        return moves;
+      };
+      // Keep immediate repeats in the same JS task as the first history request.
+      const moves = run(1);
+      for (let i = 1; i < times; i++) run(i + 1);
+      return moves;
+    }, options);
+    const returnedToChat = async () => {
+      await composer.waitFor();
+      assert.equal(await entry(), root);
+      assert.equal(await composer.inputValue(), 'Keep the unsent swipe draft');
+      assert.equal(await page.locator('.composer .model-button').innerText(), model);
+      assert.equal(await attachment.count(), 1);
+      assert.equal(await drawer.evaluate(el => el.classList.contains('open')), false);
+    };
+    const checkTraversal = async (before, destination, scripted) => {
+      await page.waitForFunction(id => history.state.lumenScreen.id === id, destination);
+      const after = await trace();
+      assert.deepEqual(after.pops.slice(before.pops.length), [destination], 'one traversal to the preceding screen');
+      assert.deepEqual(after.requests.slice(before.requests.length), scripted ? [-1] : []);
+      assert.deepEqual(after.pushes, before.pushes, 'replay adds no history entry');
+    };
+    const back = async (surface, destination, options) => {
+      const before = await trace();
+      if (standalone) await swipe(surface, options);
+      else {
+        assert((await swipe(surface)).every(Boolean), 'browser edge touch was not intercepted');
+        assert.deepEqual(await trace(), before, 'no script traversal in an iOS tab');
+        await page.goBack();
+      }
+      await checkTraversal(before, destination, standalone);
+    };
+
+    // Library document exposes the same-screen clone and canceled traversal in the old build.
+    await openPlace(page, 'Library');
+    const library = page.getByRole('main', { name: 'Library', exact: true });
+    const libraryEntry = await entry();
+    const documentButton = page.getByRole('button', { name: 'Open Gesture.md', exact: true });
+    await documentButton.click();
+    const documentEntry = await entry();
+    const panel = '.canvas-panel';
+    await page.locator(panel).waitFor();
+    const before = await trace();
+    await swipe(panel, { end: 52, step: 100 }); // slow, partial release
+    await swipe(panel, { finish: 'touchcancel' }); // beyond the commit threshold
+    await delay(350);
+    assert.equal(await entry(), documentEntry);
+    assert.deepEqual(await trace(), before, 'partial and canceled gestures never traverse');
+    await swipe(panel, { finish: null });
+    await clean(panel);
+    await screenshot(standalone ? 'pwa-drag-held' : 'safari-edge-untouched');
+    await page.evaluate(() => window.finishSwipe());
+    if (standalone) {
+      await library.waitFor();
+      await checkTraversal(before, libraryEntry, true);
+    } else {
+      await delay(350);
+      assert.equal(await entry(), documentEntry);
+      assert.deepEqual(await trace(), before);
+      await back(panel, libraryEntry);
+    }
+    await library.waitFor();
+    await focus('.hub-page, .hub-page h1, .hub-page [aria-label="Open Gesture.md"]');
+    await clean('.hub-page');
+    await screenshot(standalone ? 'pwa-library-restored' : 'safari-library-restored');
+
+    // Browser Back during a held touch cancels the recognizer. A late lift cannot traverse again.
+    await page.goForward();
+    await page.locator(panel).waitFor();
+    assert.equal(await entry(), documentEntry);
+    await swipe(panel, { finish: null });
+    const beforeBrowser = await trace();
+    await page.goBack();
+    await library.waitFor();
+    await page.evaluate(() => window.finishSwipe());
+    await checkTraversal(beforeBrowser, libraryEntry, false);
+    await back('.hub-page', root);
+    await returnedToChat();
+    await focus('.menu-btn');
+
+    await openPlace(page, 'Router');
+    const router = page.locator('.rc-page');
+    await router.waitFor();
+    const routerRoot = await entry();
+    await page.getByRole('navigation', { name: 'Router sections' }).getByRole('button', { name: 'Providers', exact: true }).click();
+    const providersEntry = await entry();
+    await page.locator('[data-provider="gemini"]').click();
+    const detail = page.getByRole('region', { name: 'Provider detail' });
+    await detail.waitFor();
+    const providerDetail = await entry();
+    await screenshot(standalone ? 'pwa-provider-detail' : 'safari-provider-detail');
+    await back('.rc-page', providersEntry, { times: 2 });
+    await detail.waitFor({ state: 'hidden' });
+    assert(await page.locator('[data-provider="gemini"]').isVisible());
+    await clean('.rc-page');
+    await page.goForward();
+    await detail.waitFor();
+    assert.equal(await entry(), providerDetail);
+    await back('.rc-page', providersEntry);
+    await back('.rc-page', routerRoot);
+    await back('.rc-page', root);
+    await returnedToChat();
+
+    await openPlace(page, 'All projects');
+    const projects = page.getByRole('main', { name: 'Projects', exact: true });
+    await projects.waitFor();
+    const projectsEntry = await entry();
+    await page.getByRole('button', { name: 'New project', exact: true }).first().click();
+    await page.getByLabel('Project name', { exact: true }).fill('Gesture project');
+    await page.getByRole('button', { name: 'Create project', exact: true }).click();
+    await page.locator('.project-workspace-main').waitFor();
+    await back('.project-workspace-main', projectsEntry);
+    await projects.waitFor();
+    await clean('.hub-page');
+    await back('.hub-page', root);
+    await returnedToChat();
+
+    await page.locator('.menu-btn').first().click();
+    await drawer.locator('.cv-account').click();
+    await page.locator('.settings-page').waitFor();
+    const settingsEntry = await entry();
+    await page.locator(':is(.settings-tabs, .si)').getByRole('button', { name: /^(General|Account:)/ }).first().click();
+    await page.locator('.settings-page.has-section').waitFor();
+    await back('.settings-page', settingsEntry);
+    await page.locator('.settings-page.has-section').waitFor({ state: 'detached' });
+    await clean('.settings-page');
+    await back('.settings-page', root);
+    await returnedToChat();
+
+    await page.getByRole('button', { name: 'Add photos, files or a repository' }).click();
+    await page.getByRole('dialog', { name: 'Add to your message' }).getByRole('button', { name: 'Browse all tools' }).click();
+    const picker = page.getByRole('dialog', { name: 'Tools', exact: true });
+    await picker.waitFor();
+    const beforePickerBack = await trace();
+    await page.goBack();
+    await picker.waitFor({ state: 'detached' });
+    await checkTraversal(beforePickerBack, root, false);
+    await returnedToChat();
+    assert.equal(await page.locator('.attach-menu').count(), 0);
+    await clean('.app > .main');
+
+    if (!standalone) {
+      assert((await swipe('.app > .main')).every(Boolean), 'Safari edge also yields in chat');
+      assert.equal(await drawer.evaluate(el => el.classList.contains('open')), false);
+    }
+    await swipe('.app > .main', { start: 60 });
+    await page.locator('aside.cv-nav.open').waitFor();
+    assert.deepEqual(errors, []);
+    console.log('PASS ' + (standalone ? 'Home Screen' : 'iOS browser tab') + ' history, cancel, rapid Back/Forward, focus and draft');
+  } finally {
+    await context.close();
+  }
+}
+
+(async () => {
+  const browser = await (process.env.MR_WEBKIT ? webkit : chromium).launch();
+  try {
+    for (const standalone of [true, false]) await exercise(browser, standalone);
+  } finally {
+    await browser.close();
+  }
+})().catch(e => { console.error(e); process.exit(1); });

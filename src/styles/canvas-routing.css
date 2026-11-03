@@ -15,7 +15,6 @@
 .app[data-lumen-canvas-shell] .rc-label { display: block; font: 500 12px/1.3 var(--canvas-body-font); color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .rc-muted { margin: 0; color: var(--canvas-secondary); font-size: 13px; line-height: 1.5; }
 .app[data-lumen-canvas-shell] :is(.rc-count, .rc-head-sub h1) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.app[data-lumen-canvas-shell].swipe-revealing > .rc-page { position: fixed; inset: 0; z-index: 41; }
 
 /* ---------- Prism title, five sections and Chat on one line (computers) */
 .app[data-lumen-canvas-shell] .rc-head { position: sticky; top: 0; z-index: 3; align-items: stretch; box-shadow: inset 0 -1px var(--rc-rim); }

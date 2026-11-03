@@ -2,6 +2,7 @@ import { CANVAS_SHELL } from './canvas-presentation';
 import { useStore } from '../store';
 import { rubberBand, springTo, Velocity, type Motion } from './spring';
 import { haptic } from './haptics';
+import { isBrowserEdge } from './navigation-edge';
 
 /**
  * A phone drawer that follows the finger; vertical scrolling keeps its native behavior. Letting go keeps the
@@ -40,11 +41,12 @@ export function installSidebarGestures(): () => void {
     drag.scrim.style.opacity = String(drag.offset / drag.width);
   };
   const start = (event: TouchEvent) => {
+    if (event.touches.length !== 1 || isBrowserEdge(event.touches[0].clientX)) { clear(); return; }
     if (document.querySelector('.ctx-layer:not(.exit-ghost)')) { clear(); return; }
     // Caught mid-slide (after a release, or a tap that opened or closed it): continue from where it is.
     const onDrawer = event.target instanceof Element && Boolean(event.target.closest('.sidebar, .scrim'));
     const moving = anim?.running && onDrawer ? drag : null;
-    if (moving && event.touches.length === 1) {
+    if (moving) {
       moving.offset = anim!.stop(); anim = null;
       const t = event.touches[0];
       const open = useStore.getState().sidebarOpen;
@@ -55,7 +57,7 @@ export function installSidebarGestures(): () => void {
     }
     clear();
     const state = useStore.getState();
-    if (!phone.matches || event.touches.length !== 1 || state.settingsOpen || !state.authed || window.getSelection()?.toString()) return;
+    if (!phone.matches || state.settingsOpen || !state.authed || window.getSelection()?.toString()) return;
     if (CANVAS_SHELL && state.projectWorkspaceOpen) return;
     const target = event.target;
     if (!(target instanceof Element) || document.querySelector('.modal-backdrop, .sheet-backdrop, .models-pop, .usage-pop')) return;
@@ -137,6 +139,8 @@ export function installSidebarGestures(): () => void {
   document.addEventListener('touchcancel', clear);
   document.addEventListener('click', click, true);
   window.addEventListener('resize', clear);
+  window.addEventListener('popstate', clear);
+  window.addEventListener('pagehide', clear);
   phone.addEventListener('change', clear);
   return () => {
     clear();
@@ -146,6 +150,8 @@ export function installSidebarGestures(): () => void {
     document.removeEventListener('touchcancel', clear);
     document.removeEventListener('click', click, true);
     window.removeEventListener('resize', clear);
+    window.removeEventListener('popstate', clear);
+    window.removeEventListener('pagehide', clear);
     phone.removeEventListener('change', clear);
   };
 }

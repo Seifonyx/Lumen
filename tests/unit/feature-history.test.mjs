@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
 const state={user:{uid:'synthetic-owner'},chats:[{id:'origin'},{id:'source'}],currentId:'origin',activeProjectId:null,settings:{projects:[]},page:null,pageArg:undefined,runner:null,canvasOpen:false,canvasDocumentId:null,settingsOpen:false,settingsTab:'',projectWorkspaceOpen:false};
 const listeners=new Set();
 globalThis.__featureHistoryStore={getState:()=>state,setState:patch=>{Object.assign(state,patch);listeners.forEach(fn=>fn())},subscribe:fn=>{listeners.add(fn);return()=>listeners.delete(fn)}};
-const events=new EventTarget();globalThis.window={addEventListener:events.addEventListener.bind(events),removeEventListener:events.removeEventListener.bind(events),dispatchEvent:events.dispatchEvent.bind(events),matchMedia:()=>({matches:false})};
+const events=new EventTarget();globalThis.window={addEventListener:events.addEventListener.bind(events),removeEventListener:events.removeEventListener.bind(events),dispatchEvent:events.dispatchEvent.bind(events),matchMedia:()=>({matches:false}),setTimeout,clearTimeout};
 globalThis.document={activeElement:null,querySelector:()=>null};globalThis.HTMLElement=class{};globalThis.requestAnimationFrame=()=>0;
 let stack,cursor;
 globalThis.history={get state(){return stack[cursor]},replaceState(value){stack[cursor]=value},pushState(value){stack.splice(++cursor);stack[cursor]=value},back(){this.go(-1)},go(delta){const target=cursor+delta;if(target<0||target>=stack.length)return;cursor=target;events.dispatchEvent(new Event('popstate'))}};

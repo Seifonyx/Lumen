@@ -422,15 +422,17 @@ export default function SettingsModal() {
     if (CANVAS_SHELL && open && ['keys', 'models', 'layouts', 'usage'].includes(tab)) setUi({ settingsTab: tab });
   }, [open, tab, setUi]);
 
-  // Phones: swipe from the left edge of a section to go back to the list (follows the finger).
   useEffect(() => {
     const page = dialog.current;
     if (!open || !page) return;
     const narrow = () => window.matchMedia('(max-width: 720px), (pointer: coarse) and (max-width: 1100px)').matches;
-    const section = installSwipeBack(page, () => narrow() && Boolean(useStore.getState().settingsTab), (copy) => copy.classList.remove('has-section'), () => CANVAS_SHELL ? navigateBack!(() => setUi({ settingsTab: '' })) : setUi({ settingsTab: '' }));
-    // iPhone glass look: from the list of sections, swiping right closes Settings and the chat slides back.
-    const root = installSwipeBack(page, () => narrow() && !useStore.getState().settingsTab && document.documentElement.classList.contains('glass'), () => {}, () => CANVAS_SHELL ? navigateBack!(() => setUi({ settingsOpen: false })) : setUi({ settingsOpen: false }), { reveal: () => document.querySelector<HTMLElement>('.app > .main') });
-    return () => { section(); root(); };
+    return installSwipeBack(page,
+      () => narrow() && (Boolean(useStore.getState().settingsTab) || document.documentElement.classList.contains('glass')),
+      () => {
+        const fallback = () => setUi(useStore.getState().settingsTab ? { settingsTab: '' } : { settingsOpen: false });
+        if (CANVAS_SHELL) navigateBack!(fallback);
+        else fallback();
+      });
   }, [open, setUi]);
 
 

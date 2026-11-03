@@ -3,7 +3,7 @@ import { watchGlassInsets } from '../lib/glass';
 import { FolderGit2, FolderKanban, ArrowDown, FileText, Menu, PanelLeftOpen, EyeOff, MessageSquarePlus } from 'lucide-react';
 import WelcomeStars from './WelcomeStars';
 import { modKey } from '../lib/util';
-import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Activity, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { activeSummary } from '../lib/compact';
 import { JUMP_REQUEST, takeJump, takeJumpHere, type JumpRequest } from '../lib/message-jump';
@@ -235,9 +235,8 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
     return () => { clearTimeout(saveTimer); cancelAnimationFrame(queued); el.removeEventListener('scroll', onScroll); };
   }, [chat?.id, projectWorkspaceOpen, empty]);
 
-  if (currentProject && projectWorkspaceOpen) {
-    return (
-      <main className="main project-workspace-main">
+  const workspace = currentProject && projectWorkspaceOpen ? (
+    <>
         {CANVAS_SHELL && window.matchMedia('(max-width:899px)').matches && PhoneNavigation ? <PhoneNavigation title={currentProject.name} actions={CanvasScreenActions && <Suspense fallback={null}><CanvasScreenActions actions={[{ label:'Project settings',run:()=>setProjectModalId(currentProject.id) }]} /></Suspense>} /> : (
         <header className="topbar">
           <button className="icon-btn menu-btn" onClick={() => setUi({ sidebarOpen: true })} aria-label="Open chats">
@@ -257,18 +256,15 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
         {CANVAS_SHELL && CanvasProjectWorkspace
           ? <Suspense fallback={null}><CanvasProjectWorkspace project={currentProject} onOpenSettings={() => setProjectModalId(currentProject.id)} /></Suspense>
           : <ProjectWorkspace project={currentProject} onOpenSettings={() => setProjectModalId(currentProject.id)} />}
-        {projectModalId && (
-          <ProjectManager
-            initialProjectId={projectModalId}
-            onClose={CANVAS_SHELL ? () => navigateBack!(() => setProjectModalId(null)) : () => setProjectModalId(null)}
-          />
-        )}
-      </main>
-    );
-  }
+    </>
+  ) : null;
+  const composer = (
+    <Composer model={model} modelPicker={<ModelPicker value={model} onChange={setChatModel} opensUp />} meter={meterInBar ? null : meter} />
+  );
 
   return (
-    <main className={`main${empty ? ' is-empty' : ''}`}>
+    <main className={workspace ? 'main project-workspace-main' : `main${empty ? ' is-empty' : ''}`}>
+      {workspace || <>
       <header className="topbar">
         <button className="icon-btn menu-btn" onClick={() => setUi({ sidebarOpen: true })} aria-label="Open chats">
           <Menu size={20} />
@@ -381,11 +377,9 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
         </button>
       )}
 
-      <Composer
-        model={model}
-        modelPicker={<ModelPicker value={model} onChange={setChatModel} opensUp />}
-        meter={meterInBar ? null : meter}
-      />
+      </>}
+      {/* A workspace covers the Canvas chat. Keep its unsent files in the same composer. */}
+      {CANVAS_SHELL ? <Activity mode={workspace ? 'hidden' : 'visible'}>{composer}</Activity> : !workspace && composer}
       {projectModalId && (
         <ProjectManager
           initialProjectId={projectModalId}

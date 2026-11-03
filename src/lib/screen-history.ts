@@ -2,6 +2,7 @@ import { flushSync } from 'react-dom';
 // Browser adapter for existing canonical UI owners. History contains opaque IDs, never account data or drafts.
 import { configureBackLayerContext, reconcileBackLayers, backLayerOpen, backLayerIdentity, backLayerRestore, clearBackLayerRestore, subscribeBackLayers } from './back-stack';
 import { clearScreenMemory } from './screen-memory';
+import { cancelPageSwap } from './motion';
 import { useStore } from '../store';
 import { getRoutingScreen, restoreRoutingScreen, subscribeRoutingCenter } from './routing-center';
 const KEY = 'lumenScreen';
@@ -21,6 +22,15 @@ export function navigateScreen(run: () => void) { const outer = applying; applyi
 let positions = new Map<number, number>();
 let cursor = 0;
 let active = 0, serial = 0, applying = false;
+let traversalTimer: number | undefined;
+const clearTraversal = () => { window.clearTimeout(traversalTimer); traversalTimer = undefined; };
+// Back and Exit are asynchronous. Ignore another app traversal until the browser has settled.
+// Release the guard if the browser drops a traversal (for example, when throttling history calls).
+function traverse(delta: number) {
+  if (traversalTimer !== undefined) return;
+  traversalTimer = window.setTimeout(clearTraversal, 1000);
+  try { history.go(delta); } catch (error) { clearTraversal(); throw error; }
+}
 const session = /* @__PURE__ */ (() => Math.random().toString(36).slice(2))();
 const capture = () => { const s = useStore.getState(); return { layerKey: backLayerOpen() ? backLayerIdentity() : null, restoreLayer: backLayerRestore(), activeProjectId: s.activeProjectId, currentId: s.currentId, runner: s.runner, layer: backLayerOpen(), canvasOpen: s.canvasOpen, canvasDocumentId: s.canvasDocumentId, page: s.page, pageArg: s.pageArg, settingsOpen: s.settingsOpen, settingsTab: s.settingsTab, projectWorkspaceOpen: s.projectWorkspaceOpen, routing: getRoutingScreen() }; };
 type Screen = ReturnType<typeof capture>;
@@ -32,11 +42,11 @@ const closeFeature = () => { reconcileBackLayers(null); useStore.setState({ page
 const feature = (s: Screen) => s.page === 'collection' ? 'library' : ['tools','assistants','study'].includes(s.page || '') ? 'tools' : s.page || (s.routing.open ? 'prism' : s.projectWorkspaceOpen ? 'projects' : s.canvasOpen ? 'canvas' : s.runner ? 'tools' : s.settingsOpen ? 'settings' : s.layer ? 'overlay' : null);
 /** Exit the entire visit by traversing to its origin. Sequential browser history remains intact. */
 export function exitFeature(fallback?: () => void) {
-  if (!window.dispatchEvent(new Event('lumen:before-feature-exit', { cancelable: true }))) return;
+  if (traversalTimer !== undefined || !window.dispatchEvent(new Event('lumen:before-feature-exit', { cancelable: true }))) return;
   const visit = visits.get(active), here = positions.get(active), there = visit && positions.get(visit.origin);
   if (!applying && here !== undefined && there !== undefined && there < here && history.state?.[KEY]?.session === session) {
     if (visit?.direct) directExit = visit.origin;
-    history.go(there - here); return;
+    traverse(there - here); return;
   }
   replaceScreen(() => {
     if (fallback) { reconcileBackLayers(null); fallback(); } else closeFeature();
@@ -56,7 +66,7 @@ const same = (a: Screen, b: Screen) => a.currentId === b.currentId && a.activePr
  && a.routing.open === b.routing.open && a.routing.section === b.routing.section && a.routing.provider === b.routing.provider;
 export function screenBack(fallback?: () => void) {
   if (applying) { fallback?.(); return; }
-  if (active > 0 && history.state?.[KEY]?.session === session) history.back();
+  if (screenHasBack()) traverse(-1);
   else fallback?.();
 }
 /** Navigate to the nearest meaningful Settings ancestor, not every transient tab/editor snapshot.
@@ -74,18 +84,21 @@ export function screenBackToSettings(target: 'index' | 'exit', fallback: () => v
     // Connection Settings is a drill-down from Routing Center, not from the
     // global Settings index. One Back must restore the same provider detail.
     const destination = target === 'exit' ? origin : index || (origin?.entry?.routing.open ? origin : undefined);
-    if (destination) { history.go(destination.pos - here); return; }
+    if (destination) { traverse(destination.pos - here); return; }
   }
   replaceScreen(fallback);
 }
-export const screenHasBack = () => active > 0;
+export const screenHasBack = () => cursor > 0 && history.state?.[KEY]?.session === session;
 export function installScreenHistory() {
   // A local layer on an unmounted/covered canonical screen must not become a second
   // entry when its effect cleans up after Settings or another destination has opened.
   configureBackLayerContext(() => { const s = useStore.getState(); const r = getRoutingScreen(); return JSON.stringify([s.page, s.currentId, s.settingsOpen, s.settingsTab, s.projectWorkspaceOpen, s.canvasOpen, r.open, r.section, r.provider]); });
   let owner = useStore.getState().user?.uid;
   let previous = capture();
+  let replay = 0;
   const remember = () => {
+    ++replay;
+    clearTraversal();
     visits.clear();
     directExit = null;
     entries = new Map([[0, capture()]]); positions = new Map([[0, 0]]); cursor = 0; active = 0;
@@ -120,6 +133,9 @@ export function installScreenHistory() {
     history.pushState({ ...history.state, [KEY]: { session, id: active } }, '');
   };
   const pop = () => {
+    const revision = ++replay;
+    clearTraversal();
+    cancelPageSwap();
     const marker = history.state?.[KEY];
     if (marker?.session !== session || !entries.has(marker.id)) return;
     saveView(); active = marker.id; cursor = positions.get(active) ?? cursor; const next = entries.get(active)!;
@@ -138,8 +154,9 @@ export function installScreenHistory() {
       if (directExit === active) { directExit = null; closeFeature(); visits.delete(active); }
     });
     previous = capture(); entries.set(active, previous); applying = false;
-    const focusAtReplay = document.activeElement;
+    const focusAtReplay = document.activeElement, entryAtReplay = active;
     requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (revision !== replay || entryAtReplay !== active) return;
       // A fast tap/keystroke after Back owns focus; delayed restoration must not dismiss its menu or steal typing.
       if (document.activeElement !== focusAtReplay && document.activeElement?.matches('button,input,textarea,select,[role="menuitem"],a[href]')) return;
       const view = views.get(active);
@@ -161,5 +178,12 @@ export function installScreenHistory() {
   commit = check;
   const a = useStore.subscribe(check), b = subscribeRoutingCenter(check), c = subscribeBackLayers(check);
   window.addEventListener('popstate', pop);
-  return () => { replace = null; commit = null; a(); b(); c(); window.removeEventListener('popstate', pop); };
+  window.addEventListener('pagehide', clearTraversal);
+  return () => {
+    ++replay;
+    clearTraversal();
+    replace = null; commit = null; a(); b(); c();
+    window.removeEventListener('popstate', pop);
+    window.removeEventListener('pagehide', clearTraversal);
+  };
 }

@@ -1,4 +1,5 @@
 import { installScreenHistory } from '../lib/screen-history';
+import { browserOwnsEdges } from '../lib/navigation-edge';
 import { installRouterSettingsRoute } from '../lib/router-settings-route';
 // Canvas shell coordination, reached only through the presentation switch. screen-history adapts the canonical
 // store and Routing Center owners to a real Back/Forward hierarchy, with account-scoped local presentations.
@@ -17,6 +18,11 @@ function useSurfaceHistoryAndFocus() {
   // Router owns some Settings sections; requests for them are redirected before history records them.
   useEffect(() => installRouterSettingsRoute(), []);
   useEffect(() => installScreenHistory(), []);
+  useEffect(() => {
+    const root = document.documentElement;
+    root.toggleAttribute('data-native-edge-back', browserOwnsEdges());
+    return () => root.removeAttribute('data-native-edge-back');
+  }, []);
 }
 
 function useCollapseFocus(collapsed: boolean) {

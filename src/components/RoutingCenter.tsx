@@ -264,7 +264,7 @@ export default function RoutingCenter() {
   useEffect(() => {
     const el = page.current;
     if (!open || !el) return;
-    return installSwipeBack(el, () => window.matchMedia(PHONE).matches && !el.querySelector('[role="dialog"]'), () => {}, () => screenBack(closeRoutingCenter), { reveal: () => document.querySelector<HTMLElement>('.app > .main') });
+    return installSwipeBack(el, () => window.matchMedia(PHONE).matches && !el.querySelector('[role="dialog"]'), () => screenBack(closeRoutingCenter));
   }, [open]);
   if (!open) return null;
 

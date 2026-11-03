@@ -230,6 +230,9 @@ try {
     // workspace over the existing project, chat and memory actions, and shorter UI wording. No data, auth, network or
     // storage owner changes.
     'src/components/CanvasProjects.tsx', 'src/components/canvas-projects.css', 'src/components/AskChats.tsx', 'src/components/ConnectorsTab.tsx', 'src/components/MemoryTab.tsx', 'src/components/PromptsModal.tsx', 'src/components/TaskLibrary.tsx',
+    // P1 iPhone Back: reviewed UI-only gesture ownership, cleanup of page swaps, and removal of the fake underlay.
+    // No changes to auth, storage, transport, hosting, rules, relay, or workflows.
+    'src/glass.css', 'src/lib/motion.ts', 'src/lib/navigation-edge.ts', 'src/lib/swipe-back.ts',
     // Owner-approved 2026-11-01: loading a saved chat keeps Auto's recorded reasons and alternatives (`routeDetail`), a
     // field the app already writes to this device. Read path only: no new field, no sync record, rules or auth change.
     'src/lib/db.ts'];

@@ -342,11 +342,6 @@ html.glass .toast { border-radius: 999px; padding-inline: 18px; }
   html.glass * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
 
-/* Swipe-back (lib/swipe-back.ts): the chat shows under the page while it's being swiped away. */
-.app.swipe-revealing > .main { display: flex !important; }
-.app.swipe-revealing > .hub-page, .app.swipe-revealing > .settings-page { position: fixed; inset: 0; z-index: 41; }
-.swipe-dim { position: absolute; inset: 0; z-index: 30; background: #000; opacity: 0.08; pointer-events: none; }
-
 /* ---------------------------------------------------------- Long-press menus (iOS 26)
    The screen behind blurs more and dims less; the held item lifts with a deeper shadow; the menu is glass,
    with each action's name first and its icon at the far end, thin lines between them, as on iPhone. */

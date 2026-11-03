@@ -258,7 +258,7 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
   }, []);
 
   useEffect(() => { setCodeExecution(false); setCheck(null); setCompareOpen(false); setProjectMenu(false); }, [currentId]);
-  useEffect(() => { setCodeExecution(false); setPending([]); setCheck(null); setCompareOpen(false); }, [accountId]);
+  useEffect(() => { setCodeExecution(false); if (!CANVAS_COMPOSER) setPending([]); setCheck(null); setCompareOpen(false); }, [accountId]);
   const speechGeneration = useRef(0);
   useEffect(() => () => { speechGeneration.current++; stopListening.current?.(); }, []);
 

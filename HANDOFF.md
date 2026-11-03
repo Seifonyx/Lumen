@@ -10,15 +10,21 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/projects-quiet` from main `899d6e6` (PR #100 included).
-- **Task:** (1) remove the remaining product narration (settings hints, empty-state paragraphs, "Ask anything.");
-  (2) Projects redesign on Canvas: a name-first All projects list and a workspace with chats as the main column and
-  context (instructions, files, memory, model) beside it (`src/components/CanvasProjects.tsx` + `canvas-projects.css`,
-  a lazy chunk; the ordinary build keeps ProjectsPage/ProjectWorkspace). Release follows affected checks, exact PR CI
-  and the gated Canvas deploy.
-- **Authority:** owner-authorized 2026-11-03, plus standing (see Decisions): test, merge, deploy when verified.
+- **Branch:** `codex/iphone-back-ownership` from main `9803535` (PR #101 included).
+- **Task:** P1 iPhone Back. The baseline cloned the outgoing document during a held swipe and navigated on
+  `touchcancel`. Canvas iOS tabs yield Back/Forward to the browser. The Home Screen and other custom Back paths
+  keep the current screen in place until traversal, and browser replay clears stale page swaps. Projects keep the
+  same composer state while the workspace is open so unsent attachments survive.
+- **Authority:** owner-authorized to merge and deploy Canvas after exact-head CI, then request physical confirmation.
 
 ## Next
+
+- [ ] Physical iPhone: in Safari, write an unsent draft with a disposable attachment. Open Router > Providers > detail.
+  Start an edge swipe and return your finger to the edge before lifting. Repeat with a completed swipe to the Providers
+  list, then swipe Forward. Tap the feature chevron and verify that the original chat, draft, model and attachment return.
+  Repeat in Library > document, Projects > project, Settings > section and + > Browse all tools. Check for duplicate
+  screens, jumps and flashes. Repeat the cancel/commit sequence in the installed Home Screen app, which uses Lumen's
+  custom Back. For any failure, record iOS version, tab or Home Screen, screen pair and a privacy-safe recording.
 
 - [ ] Owner, on the iPhone (Router): native edge Back/Forward versus whole-feature Exit, Use→Chat draft/attachment/focus restoration, nested model/provider/Layout navigation, VoiceOver, keyboard/IME, Dynamic Type and PWA safe areas. Both browser engines and synthetic accessibility checks passed; these remain physical-device checks.
 

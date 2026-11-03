@@ -94,7 +94,6 @@ routing-providers
 iphone-navigation
 iphone-navigation-states
 iphone-project-navigation
-iphone-edge-back
 iphone-tool-return
 feature-exit
 library-experience

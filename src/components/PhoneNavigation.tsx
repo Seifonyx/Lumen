@@ -12,7 +12,7 @@ export default function PhoneNavigation({ title, onBack, actions }: PhoneNavigat
     if (!page) return; // HubPage, Routing Center and Settings already own their gestures.
     let disposed = false, stop: (() => void) | undefined;
     void import('../lib/swipe-back').then(({ installSwipeBack }) => {
-      if (!disposed) stop = installSwipeBack(page, () => screenHasBack() && !document.querySelector('.modal-backdrop,.sheet-backdrop,.models-pop,.ctx-layer'), () => {}, () => screenBack());
+      if (!disposed) stop = installSwipeBack(page, () => screenHasBack() && !document.querySelector('.modal-backdrop,.sheet-backdrop,.models-pop,.ctx-layer'), screenBack);
     });
     return () => { disposed = true; stop?.(); };
   }, []);

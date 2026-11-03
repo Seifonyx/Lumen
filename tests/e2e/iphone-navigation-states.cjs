@@ -12,6 +12,7 @@ const iphone='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit
   const context=await browser.newContext({viewport:{width,height},hasTouch:true,userAgent:iphone,serviceWorkers:'block',reducedMotion:'reduce'});
   await context.route('**/*',r=>new URL(r.request().url()).origin===new URL(base).origin?r.continue():r.abort());
   await profile(context,`navigation-states-${width}`,theme);
+  await context.addInitScript(() => Object.defineProperty(navigator, 'standalone', { value: true }));
   if(solid)await context.addInitScript(()=>localStorage.setItem('mr.glass','off'));
   const page=await context.newPage();page.setDefaultTimeout(15000);
   await page.goto(new URL('/privacy.html',base).href);
@@ -32,7 +33,7 @@ const iphone='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit
   await page.locator('.phone-navigation h1').filter({hasText:'Study'}).waitFor();
   assert.equal(await page.locator('.phone-navigation [aria-label="Open sidebar"]').count(),0);
   // Exercise the actual gesture handler with a scripted edge touch sequence, in both engines.
-  await page.locator('.hub-page').evaluate(async el=>{const dispatch=(type,x)=>{const e=new Event(type,{bubbles:true,cancelable:true});Object.defineProperty(e,'touches',{value:type==='touchend'?[]:[{identifier:1,clientX:x,clientY:180}]});el.dispatchEvent(e)};dispatch('touchstart',5);for(const x of [30,90,180,300]){dispatch('touchmove',x);await new Promise(r=>setTimeout(r,30))}dispatch('touchend',300)});
+  await page.locator('.hub-page').evaluate(async el=>{const dispatch=(type,x)=>{const touch={identifier:1,target:el,clientX:x,clientY:180};const e=new Event(type,{bubbles:true,cancelable:true});Object.defineProperties(e,{touches:{value:type==='touchend'?[]:[touch]},changedTouches:{value:[touch]}});el.dispatchEvent(e)};dispatch('touchstart',5);for(const x of [30,90,180,300]){dispatch('touchmove',x);await new Promise(r=>setTimeout(r,30))}dispatch('touchend',300)});
   // Study took the picker's place (Browse all tools is a chooser), so the edge swipe returns to the chat.
   await page.locator('.composer textarea').waitFor();assert.equal(await page.locator('.tool-picker').count(),0);
   // Assistants are created from their own area.
@@ -42,7 +43,7 @@ const iphone='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit
   await command('Read a web page');await page.locator('.free-tools').waitFor();
   await page.goBack();await page.locator('.free-tools').waitFor({state:'detached'});assert.equal(await page.getByLabel('Library item name').inputValue(),'Retained editor');
   await page.goForward();await page.locator('.free-tools').waitFor();await page.goBack();await page.locator('.free-tools').waitFor({state:'detached'});
-  await command('Router · API keys');await page.locator('.rc-page:not([hidden]) .sb-providers, .rc-page:not([hidden]) #sb-connection').first().waitFor();assert.equal(await page.locator('.settings-page').count(),0);await page.goBack();await page.locator('.rc-page:not([hidden])').waitFor({state:'detached'});
+  await command('API keys');await page.getByRole('region',{name:'Provider browser'}).or(page.getByRole('region',{name:'Provider detail'})).first().waitFor();assert.equal(await page.locator('.settings-page').count(),0);await page.goBack();await page.locator('.rc-page:not([hidden])').waitFor({state:'detached'});
   assert.equal(await page.getByLabel('Library instructions').inputValue(),'Preserved across global sheets','single Back restores editor from Settings');
   // A reduced viewport stands in for available keyboard space; it does not emulate Safari's keyboard.
   await page.setViewportSize({width,height:400});await page.getByLabel('Library instructions').focus();await page.getByRole('button',{name:'Save',exact:true}).scrollIntoViewIfNeeded();

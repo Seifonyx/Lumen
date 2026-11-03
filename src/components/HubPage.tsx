@@ -45,12 +45,11 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
   // Phones: swipe right to go back (a step inside the page goes back to the page; otherwise to the chat).
   const back = useRef(onBack || onClose);
   back.current = CANVAS_SHELL ? () => navigateBack!(onBack || onClose) : onBack || onClose;
-  const stepped = Boolean(onBack);
   useEffect(() => {
     const page = root.current;
     if (!page) return;
-    return installSwipeBack(page, () => window.matchMedia('(max-width: 899px)').matches, () => {}, () => back.current(), stepped ? {} : { reveal: () => document.querySelector<HTMLElement>('.app > .main') });
-  }, [stepped]);
+    return installSwipeBack(page, () => window.matchMedia('(max-width: 899px)').matches, () => back.current());
+  }, []);
   // iPhone glass look: the small title in the bar shows once the big one has scrolled away.
   const [scrolled, setScrolled] = useState(false);
   const make = bar?.create || create;

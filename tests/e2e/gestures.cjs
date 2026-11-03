@@ -71,7 +71,7 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
     const caught = await translateY(sheet);
     await page.waitForTimeout(120);
     const held = await translateY(sheet);
-    assert.ok(flying > 20 && Math.abs(caught - flying) < 25 && Math.abs(held - caught) < 2, `sheet: caught mid-flight without a jump (${flying.toFixed(0)} → ${caught.toFixed(0)} → ${held.toFixed(0)})`);
+    assert.ok(flying > 20 && Math.abs(caught - flying) < 25 && Math.abs(held - caught) < 2, `sheet: caught mid-flight without a jump (${flying.toFixed(0)} â†’ ${caught.toFixed(0)} â†’ ${held.toFixed(0)})`);
     await lift(page, cx, cy);
     await page.waitForTimeout(700);
 
@@ -109,7 +109,7 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
     const frozen = await translateX(sidebar);
     await page.waitForTimeout(150);
     const still = await translateX(sidebar);
-    assert.ok(sliding < -10 && sliding > -width + 10 && Math.abs(frozen - sliding) < 40 && Math.abs(still - frozen) < 2, `drawer: caught while opening from a tap (${sliding.toFixed(0)} → ${frozen.toFixed(0)} → ${still.toFixed(0)})`);
+    assert.ok(sliding < -10 && sliding > -width + 10 && Math.abs(frozen - sliding) < 40 && Math.abs(still - frozen) < 2, `drawer: caught while opening from a tap (${sliding.toFixed(0)} â†’ ${frozen.toFixed(0)} â†’ ${still.toFixed(0)})`);
     await lift(page, 200, Y);
     await page.waitForTimeout(600);
     console.log('PASS drawer: quick swipe opens, slow partial does not, past-open resists, caught mid-slide');
@@ -124,14 +124,13 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
     await page.waitForTimeout(700);
     assert.equal(await page.locator('.settings-page.has-section').count(), 1, 'settings: a short edge swipe stays in the section');
     await touch(page, path(6, 500, 150, 500, 10, 300), { hold: true });
-    const mid = await translateX(page.locator('.settings-page:not(.swipe-under)'));
-    assert.ok(mid > 100, `settings: the section follows the finger (${mid.toFixed(0)}px)`);
-    assert.ok(await page.locator('.settings-page.swipe-under').evaluate((el) => getComputedStyle(el).visibility === 'visible' && el.getBoundingClientRect().width > 300), 'settings: the list shows underneath while you swipe');
-    await touch(page, path(150, 500, 300, 500, 6, 60));
+    assert.ok(Math.abs(await translateX(page.locator('.settings-page'))) < 1, 'settings remains stable during the drag');
+    assert.equal(await page.locator('.swipe-under,.swipe-dim,.swipe-revealing').count(), 0, 'no fabricated preview');
+    await touch(page, path(6, 500, 300, 500, 6, 60));
     await page.waitForFunction(() => !document.querySelector('.settings-page.has-section'), null, { timeout: 2000 });
     await page.waitForTimeout(400);
     assert.ok(Math.abs(await translateX(page.locator('.settings-page:not(.swipe-under)'))) < 1 && await page.locator('.swipe-under').count() === 0, 'settings: back on the list, nothing left over');
-    console.log('PASS settings: edge swipe-back follows the finger, goes back past halfway, short swipe stays');
+    console.log('PASS settings: edge swipe-back goes back past halfway, short swipe stays, no duplicate screen');
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }
 })().catch((e) => { console.error(e); process.exit(1); });

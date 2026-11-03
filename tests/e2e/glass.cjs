@@ -134,7 +134,7 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
       await send(finish === 'cancel' ? 'touchCancel' : 'touchEnd');
       await page.waitForFunction(() => !document.querySelector('.glass-tabbar').classList.contains('held'));
       assert.equal(await nav.locator('[aria-current="page"]').innerText(), finish === 'release' ? await nav.locator('button').nth(indices.at(-1)).innerText() : before);
-      assert.equal(await page.locator('.app.swipe-revealing').count(), 0, 'Tab scrubbing must not trigger back navigation');
+      assert.ok(await nav.isVisible(), 'Tab scrubbing stays inside the current workspace');
     };
     // 2.4.14: Tools shows its categories in the tab bar, one at a time, and no Connected apps.
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('mr:library', { detail: 'tools-page' })));

@@ -25,7 +25,7 @@
 
 **Owner reporting preference (2026-10-23, standing):** every report to the owner ends with a plain summary of the features and changes implemented (what changed for users, per area), alongside test results and risks.
 
-**Current next action:** Owner iPhone check of PR97 (swipe back from Browse all tools opened from +; a partial swipe let go; repeated open/close). Remaining UX plan items (#4 Save to project, #5 unified search) await owner direction.
+**Current next action:** Owner selected a **review-only premium desktop design audit** (2026-11-03): Claude Code should capture current Canvas UI using authorized synthetic-only browser fixtures at representative desktop widths, both themes, and bundle the screenshots + evidence + independent-review notes into a private, downloadable ZIP for ChatGPT review. **No implementation, PR, deployment, account access, live inference, public screenshots or incremental spending authorized by this audit.** Separate physical iPhone confirmation of PR97 back-swipe (including partial swipe and repeated open/close) remains pending; #4 Save to project and #5 unified search remain unapproved feature work.
 
 **Owner decisions recorded (2026-10-22), replacing the P1 backlog questions:**
 - **Pinch zoom:** stays disabled in the main chat (native-app feel). Keep comfortable text sizes and system text-size support where feasible; the document Canvas may have its own zoom.

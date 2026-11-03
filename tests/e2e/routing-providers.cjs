@@ -54,8 +54,8 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       };
       await open();
       const rc = page.locator('.rc-page');
-      await rc.getByRole('heading', { name: width < 900 ? 'Router' : 'Router', exact: true }).waitFor();
-      await rc.getByRole('heading', { name: width < 900 ? 'Router' : 'Router', exact: true }).click();
+      await rc.getByRole('heading', { name: width < 900 ? 'Router' : 'Models', exact: true }).waitFor();
+      await rc.getByRole('heading', { name: width < 900 ? 'Router' : 'Models', exact: true }).click();
       const shot = async name => {
         if (!before || name === 'models') {
           await page.evaluate(() => document.fonts.ready);
@@ -92,7 +92,8 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       if (!before) {
         assert.match(await detail.locator('.rc-verdict').innerText(), /Catalog ready/);
         assert.match(await detail.locator('[data-fact="Replies"]').textContent(), /Not tested by model listing/);
-        assert.match(await detail.locator('[data-fact="Key · permission"]').textContent(), /Saved · on/);
+        assert.match(await detail.locator('[data-fact="Key"]').textContent(), /Saved/);
+        assert.match(await detail.locator('[data-fact="Permission"]').textContent(), /Enabled/);
         assert.match(await detail.locator('[data-fact="Allowance"]').textContent(), /Unknown/);
         assert.equal(await rc.locator('.phone-navigation').getByRole('button', { name:'Return to chat',exact:true }).count(), phone ? 1 : 0);
         // A working provider has no fix to lead with: both actions stay quiet.

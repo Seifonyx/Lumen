@@ -1,0 +1,183 @@
+{
+  "appSource": "f546e98ee004959b0cfab64b9d599ec2857a3636",
+  "syntheticOnly": true,
+  "physicalIPhone": false,
+  "results": [
+    {
+      "width": 1440,
+      "theme": "light",
+      "section": "Models",
+      "filename": "1440-light-models.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "section": "Providers",
+      "filename": "1440-light-providers.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "section": "Routing",
+      "filename": "1440-light-routing.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "section": "Layouts",
+      "filename": "1440-light-layouts.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "section": "Activity",
+      "filename": "1440-light-activity.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "section": "Models",
+      "filename": "1440-dark-models.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "section": "Providers",
+      "filename": "1440-dark-providers.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "section": "Routing",
+      "filename": "1440-dark-routing.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "section": "Layouts",
+      "filename": "1440-dark-layouts.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "section": "Activity",
+      "filename": "1440-dark-activity.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "section": "Models",
+      "filename": "390-light-models.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "section": "Providers",
+      "filename": "390-light-providers.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "section": "Routing",
+      "filename": "390-light-routing.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "section": "Layouts",
+      "filename": "390-light-layouts.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "section": "Activity",
+      "filename": "390-light-activity.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "section": "Models",
+      "filename": "390-dark-models.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "section": "Providers",
+      "filename": "390-dark-providers.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "section": "Routing",
+      "filename": "390-dark-routing.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "section": "Layouts",
+      "filename": "390-dark-layouts.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "section": "Activity",
+      "filename": "390-dark-activity.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 320,
+      "theme": "light",
+      "section": "Models",
+      "filename": "320-light-models.png",
+      "errors": [],
+      "contained": true
+    },
+    {
+      "width": 1024,
+      "theme": "light",
+      "section": "Models",
+      "filename": "1024-light-models.png",
+      "errors": [],
+      "contained": true
+    }
+  ]
+}

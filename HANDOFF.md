@@ -10,11 +10,13 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start new work on a branch from `origin/main`.
-- **Task:** none. Library + Tools-in-+ (PR #86), its density pass (PR #88) and the quality pass (PR #95) shipped.
+- **Branch:** `codex/router-approved-redesign`, from verified main `fbb59bd`; Lumen-local was clean at takeover.
+- **Task:** approved Router implementation and complete local affected verification done, including desktop Routing/Activity and focused Chromium/WebKit contracts. Owner-authorized source cap34KB retains all13 inputs and startup/lazy caps. Obsolete master/detail expectations corrected; genuine Layout-editor contrast fixed. Release follows exact-head green CI and gated Canvas deployment under standing authority; computed live state above identifies actual shipping status. Evidence: `docs/router/RELEASE_VERIFICATION.md`. Private reference package stays outside the public repository.
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next
+
+- [ ] Owner, on the iPhone (Router): native edge Back/Forward versus whole-feature Exit, Use→Chat draft/attachment/focus restoration, nested model/provider/Layout navigation, VoiceOver, keyboard/IME, Dynamic Type and PWA safe areas. Both browser engines and synthetic accessibility checks passed; these remain physical-device checks.
 
 - [ ] Owner, on the iPhone (PR #97, live): swipe back from Browse all tools opened from + (should slide straight to the
       chat, no + sheet); a partial swipe let go; a few open/close cycles.

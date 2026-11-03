@@ -75,7 +75,7 @@
 @media (max-width: 899px) {
   .app[data-lumen-canvas-shell] .markdown table { width: 100%; table-layout: auto; }
   .app[data-lumen-canvas-shell] .markdown th { white-space: normal; }
-  .app[data-lumen-canvas-shell] .markdown :is(th, td) { min-width: 0; padding: .5em .55em; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
+  .app[data-lumen-canvas-shell] .markdown :is(th, td) { min-width: 0; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
   .app[data-lumen-canvas-shell] .markdown :is(th, td):not(:first-child) { min-width: 6.5em; }
   .app[data-lumen-canvas-shell] .markdown :is(th, td):first-child { position: sticky; inset-inline-start: 0; z-index: 1; background: var(--bg); }
 }
@@ -137,7 +137,7 @@ html[data-lumen-canvas] .app[data-lumen-canvas-shell] .msg.assistant .error-box 
   /* Model and actions share one line (44 pt targets); the model name shortens before anything wraps. Why Auto chose it
      is one tap away on the name. */
   .app[data-lumen-canvas-shell] .msg.assistant > .msg-actions { flex-wrap: nowrap; min-width: 0; }
-  .app[data-lumen-canvas-shell] .msg-actions :is(.model-tag, .route-why-wrap) { flex: 0 1 auto; flex-basis: auto; min-width: 0; max-width: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .app[data-lumen-canvas-shell] .msg-actions :is(.model-tag, .route-why-wrap) { flex-basis: auto; min-width: 0; max-width: none; text-overflow: ellipsis; }
   .app[data-lumen-canvas-shell] .msg-actions .route-why-wrap .model-tag { max-width: 100%; }
   .app[data-lumen-canvas-shell] .msg-actions .route-why-btn .route-tag { display: none; }
   /* With "Stopped" too there isn't room for everything: wrap the actions rather than cut the model's name. */

@@ -10,16 +10,12 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/projects-quiet` from main `899d6e6` (PR #100 included).
-- **Task:** (1) remove the remaining product narration (settings hints, empty-state paragraphs, "Ask anything.");
-  (2) Projects redesign on Canvas: a name-first All projects list and a workspace with chats as the main column and
-  context (instructions, files, memory, model) beside it (`src/components/CanvasProjects.tsx` + `canvas-projects.css`,
-  a lazy chunk; the ordinary build keeps ProjectsPage/ProjectWorkspace). Release follows affected checks, exact PR CI
-  and the gated Canvas deploy.
-- **Authority:** owner-authorized 2026-11-03, plus standing (see Decisions): test, merge, deploy when verified.
+- **Branch:** none in progress. Start the next task from `origin/main`.
 
 ## Next
 
+- [ ] Owner, on the iPhone (PR #101, live): All projects and a project's workspace (Context row, file rows, the
+      "New chat in …" box keeps its draft when you leave and come back), with VoiceOver and the keyboard up.
 - [ ] Owner, on the iPhone (Router): native edge Back/Forward versus whole-feature Exit, Use→Chat draft/attachment/focus restoration, nested model/provider/Layout navigation, VoiceOver, keyboard/IME, Dynamic Type and PWA safe areas. Both browser engines and synthetic accessibility checks passed; these remain physical-device checks.
 
 - [ ] Owner, on the iPhone (PR #97, live): swipe back from Browse all tools opened from + (should slide straight to the
@@ -80,6 +76,13 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-03 Projects redesign and residual copy cleanup (PR #101, merged `9803535`, deployed Canvas, live
+  `index-CJLROoyc.js` matches the merge build): All projects is one name-first list (chats, last active, search, sort,
+  Clear search); a project's workspace has chats as the main column, a "New chat in …" box whose draft survives
+  navigation, and context (instructions, files x/5, memory, model) in a rail on wide screens or one Context disclosure.
+  Canvas-only lazy chunk `CanvasProjects.tsx` + `canvas-projects.css`; the ordinary build keeps its components.
+  Settings, Study, Tasks, Prompts, Connectors and home lost their narration. Canvas CSS source cap 34 → 34.5; startup
+  CSS 19.2 → 18.5. Before/after in `docs/projects-redesign/`. Not checked on a physical iPhone.
 - 2026-11-03 Swiping back from Browse all tools no longer shows the old + sheet (PR #97, merged `0672509`, deployed
   Canvas): Safari snapshots the previous screen when an entry is pushed, so the picker now opens one painted frame after
   the + sheet has gone. Suite `picker-back` (Chromium + WebKit). Safari's native swipe itself is not automatable.

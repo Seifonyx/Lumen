@@ -22,10 +22,11 @@ const iphone='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit
   if(large)await page.addStyleTag({content:'.app[data-lumen-canvas-shell] .hub-body,.app[data-lumen-canvas-shell] .doc-name,.app[data-lumen-canvas-shell] .doc-sub{font-size:20px}'});
   const enter=async(name)=>{await page.locator('.menu-btn').first().click();await page.locator('aside.cv-nav').getByRole('button',{name,exact:true}).click();};
   await enter('Library');await page.getByRole('searchbox',{name:'Search your library'}).fill('Document');
+  await page.getByRole('button',{name:'Clear library search',exact:true}).waitFor();
   const item=page.getByRole('button',{name:'Open Document 35 with a long readable title.md',exact:true});await item.scrollIntoViewIfNeeded();
   const scroll=await page.locator('.hub-scroll').evaluate(el=>el.scrollTop);assert(scroll>500);
   await item.click();await page.locator('.canvas-panel').waitFor();await page.goBack();
-  await page.getByRole('searchbox',{name:'Search your library'}).waitFor();await page.waitForTimeout(100);
+  await page.getByRole('button',{name:'Clear library search',exact:true}).waitFor();await page.waitForTimeout(100);
   assert.equal(await page.getByRole('searchbox',{name:'Search your library'}).inputValue(),'Document');
   assert(Math.abs(await page.locator('.hub-scroll').evaluate(el=>el.scrollTop)-scroll)<20,'Library restores previous scroll');
   await page.locator('.phone-navigation [aria-label^="Return to "]').click();await page.locator('.composer textarea').waitFor();

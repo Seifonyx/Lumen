@@ -57,7 +57,10 @@ test('every flagged Composer branch keeps the ordinary expression as its alterna
   // Phones' +: Canvas lets the keyboard close before the sheet rises; the ordinary handler is unchanged.
   const addSheetOpeners = src.match(/onClick=\{CANVAS_COMPOSER \? openAddSheet : \(\) => setSheet\(true\)\}/g) || [];
   assert.equal(addSheetOpeners.length, 1, 'reviewed + opener keeps its ordinary handler');
-  assert.equal(spreads.length + ternaries.length + statements.length + values.length + localModalCloses.length + retainedFileGuards.length + addSheetOpeners.length, uses, 'no unreviewed flag use');
+  const attachmentReset = src.match(/if \(!CANVAS_COMPOSER\) setPending\(\[\]\);/g) || [];
+  assert.equal(attachmentReset.length, 1, 'ordinary Composer clears attachments while Canvas uses its account-scoped layout effect');
+  assert.match(src, /if \(pendingOwner\.current !== accountId\) pendingDrafts\.current\.clear\(\)/);
+  assert.equal(spreads.length + ternaries.length + statements.length + values.length + localModalCloses.length + retainedFileGuards.length + addSheetOpeners.length + attachmentReset.length, uses, 'no unreviewed flag use');
   assert.equal(spreads.length, 3);
   assert.equal(ternaries.length, 4);
 });

@@ -1,5 +1,5 @@
 /* Let the browser own horizontal history gestures in iOS tabs. Keep vertical bounce suppressed. */
-html[data-native-edge-back], html[data-native-edge-back] body { overscroll-behavior-x: auto; }
+html[data-lumen-canvas][data-native-edge-back], html[data-lumen-canvas][data-native-edge-back] body { overscroll-behavior-x: auto; }
 
 /* CP05 Canvas across the app: Library, Tools, Projects, project workspace, Settings, dialogs, sheets and menus.
  * Loaded only with the Canvas presentation (never by the ordinary build). Scoped to html[data-lumen-canvas], which the

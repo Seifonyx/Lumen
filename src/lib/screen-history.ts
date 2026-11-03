@@ -3,7 +3,6 @@ import { flushSync } from 'react-dom';
 import { configureBackLayerContext, reconcileBackLayers, backLayerOpen, backLayerIdentity, backLayerRestore, clearBackLayerRestore, subscribeBackLayers } from './back-stack';
 import { clearScreenMemory } from './screen-memory';
 import { cancelPageSwap } from './motion';
-import { browserOwnsEdges } from './navigation-edge';
 import { useStore } from '../store';
 import { getRoutingScreen, restoreRoutingScreen, subscribeRoutingCenter } from './routing-center';
 const KEY = 'lumenScreen';
@@ -94,8 +93,6 @@ export function installScreenHistory() {
   // A local layer on an unmounted/covered canonical screen must not become a second
   // entry when its effect cleans up after Settings or another destination has opened.
   configureBackLayerContext(() => { const s = useStore.getState(); const r = getRoutingScreen(); return JSON.stringify([s.page, s.currentId, s.settingsOpen, s.settingsTab, s.projectWorkspaceOpen, s.canvasOpen, r.open, r.section, r.provider]); });
-  const root = document.documentElement;
-  root.toggleAttribute('data-native-edge-back', browserOwnsEdges());
   let owner = useStore.getState().user?.uid;
   let previous = capture();
   let replay = 0;
@@ -185,7 +182,6 @@ export function installScreenHistory() {
   return () => {
     ++replay;
     clearTraversal();
-    root.removeAttribute('data-native-edge-back');
     replace = null; commit = null; a(); b(); c();
     window.removeEventListener('popstate', pop);
     window.removeEventListener('pagehide', clearTraversal);

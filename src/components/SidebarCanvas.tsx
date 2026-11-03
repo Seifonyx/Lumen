@@ -120,7 +120,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   // Phones: once the drawer has finished opening, load the places it offers so the next tap opens them at once.
   useEffect(() => {
     if (!phone || !open) return;
-    const timer = setTimeout(() => { for (const place of ['library', 'tools', 'router', 'settings'] as const) prefetchPlace?.(place); }, 500);
+    const timer = setTimeout(() => { for (const place of ['library', 'tools', 'router', 'settings', 'projects'] as const) prefetchPlace?.(place); }, 500);
     return () => clearTimeout(timer);
   }, [phone, open]);
   // ChatRow is shared with the ordinary sidebar (one seam there), so the tree adds its state as attributes: the open

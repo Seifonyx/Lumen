@@ -1,4 +1,4 @@
-import { CANVAS_SHELL, CanvasScreenActions, useScreenBackLayer, useScreenMemory, navigateBack, navigateScreen } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, CanvasProjectList, CanvasScreenActions, useScreenBackLayer, useScreenMemory, navigateBack, navigateScreen } from '../lib/canvas-presentation';
 // Projects: each project is a workspace with its own instructions, files and memory, shared by every chat in
 // it. This page shows them all as cards, with what's inside and when it was last used.
 import { Folder, FolderKanban, MoreHorizontal, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
@@ -12,6 +12,8 @@ const NO_PROJECTS: Project[] = [];
 type Sort = 'recent' | 'name';
 
 export default function ProjectsPage({ onClose }: { onClose: () => void }) {
+  // Canvas: the name-first list in its own chunk (CanvasProjects.tsx). A build constant, so the hooks below never vary.
+  if (CANVAS_SHELL && CanvasProjectList) return <Suspense fallback={null}><CanvasProjectList onClose={onClose} /></Suspense>;
   const projects = useStore((s) => s.settings.projects) || NO_PROJECTS;
   const chats = useStore((s) => s.chats);
   const memories = useStore((s) => s.memories);

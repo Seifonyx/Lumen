@@ -16,6 +16,7 @@ const loadRoutingCenter = () => import('../components/RoutingCenter');
 const loadCollection = () => import('../components/CanvasCollectionPage');
 const loadToolsWorkspace = () => import('../components/ToolsWorkspace');
 const loadSettingsIndex = () => import('../components/SettingsIndex');
+const loadProjects = () => import('../components/CanvasProjects');
 export const RoutingCenter = lazy(loadRoutingCenter);
 export type { BrandArtProps } from './canvas-presentation';
 export { BrandMark, BrandWordmark } from '../components/BrandCrease';
@@ -33,9 +34,11 @@ export const CanvasLibraryActions = lazy(() => import('../components/CanvasLibra
 export const CanvasCollectionPage = lazy(loadCollection);
 export const CanvasToolsWorkspace = lazy(loadToolsWorkspace);
 export const CanvasSettingsIndex = lazy(loadSettingsIndex);
+export const CanvasProjectList = lazy(() => loadProjects().then((m) => ({ default: m.ProjectList })));
+export const CanvasProjectWorkspace = lazy(() => loadProjects().then((m) => ({ default: m.ProjectWorkspace })));
 // The sidebar's places load their code on intent (pointer over or focus on the place, the phone drawer opening), so
 // a tap shows the page at once. Not at start-up idle: evaluating these chunks can stall a streaming reply.
-const placeLoads = { library: [loadCollection, () => import('../components/CollectionPage')], tools: [loadToolsWorkspace, () => import('../components/ToolsPage')], router: [loadRoutingCenter], settings: [loadSettingsIndex] } as const;
+const placeLoads = { library: [loadCollection, () => import('../components/CollectionPage')], tools: [loadToolsWorkspace, () => import('../components/ToolsPage')], router: [loadRoutingCenter], settings: [loadSettingsIndex], projects: [loadProjects, () => import('../components/ProjectsPage')] } as const;
 const requested = new Set<string>();
 export const prefetchPlace = (place: keyof typeof placeLoads) => {
   if (requested.has(place)) return;

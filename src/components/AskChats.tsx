@@ -58,7 +58,7 @@ export default function AskChats({ initial, onClose }: { initial: string; onClos
           <label className="search"><Search size={16} /><input autoFocus dir="auto" aria-label="Question about your chats" placeholder="What did I decide about…" value={question} onChange={(e) => setQuestion(e.target.value)} /></label>
           <button type="submit" className="btn primary" disabled={!question.trim() || Boolean(status)}><Sparkles size={15} /> Ask</button>
         </form>
-        <p className="muted small">Finds what you talked about even if you don’t remember the exact words. Uses your Gemini key; the index stays on this device.</p>
+        <p className="muted small">Uses your Gemini key; the index stays on this device.</p>
         {status && <div className="ask-status" role="status"><Loader2 size={16} className="spin" /> {status}</div>}
         {error && <p className="ask-error" role="alert">{error}</p>}
         {answer && <div className="ask-answer" dir="auto">{cite(answer)}</div>}

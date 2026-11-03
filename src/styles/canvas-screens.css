@@ -68,44 +68,14 @@ html[data-lumen-canvas] .btn.ghost { border-color: transparent; }
 
 /* ---------- Tools: monochrome icons, rimmed cards. */
 
-/* ---------- Projects: neutral bands and monograms (the Canvas tree's look), rimmed cards. */
-html[data-lumen-canvas] .proj-grid { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0; border-radius: var(--canvas-radius-card); background: var(--surface); overflow: hidden; }
-html[data-lumen-canvas] .proj-card { display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: center; border: 0; border-radius: 0; background: none; overflow: visible; }
-html[data-lumen-canvas] .proj-card + .proj-card { box-shadow: inset 0 1px var(--cv5-rim); }
-html[data-lumen-canvas] .proj-card:has(.proj-open:hover) { background: var(--cv5-fill); }
-html[data-lumen-canvas] .proj-open { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: start; gap: 16px; padding: 16px 6px 16px 14px; border: 0; border-radius: 0; background: none; box-shadow: none; transform: none; }
-html[data-lumen-canvas] .proj-open:focus-visible { outline: 2px solid var(--text); outline-offset: -2px; }
-html[data-lumen-canvas] .proj-stats { gap: 4px 14px; margin: 3px 0 0; }
-html[data-lumen-canvas] .proj-stats > span { padding: 0; background: none; border-radius: 0; color: var(--text-2); }
-html[data-lumen-canvas] .proj-desc { min-height: 0; font-size: 14px; }
-html[data-lumen-canvas] .proj-time { margin: 2px 0 0; color: var(--text-2); }
-html[data-lumen-canvas] .projects-summary { margin: 0 0 6px; color: var(--text-3); font-size: 13px; }
+/* ---------- Projects: search and sort (the list and workspace styles are in components/canvas-projects.css). */
 html[data-lumen-canvas] .projects-sort select { min-height: 44px; max-width: 100%; }
 html[data-lumen-canvas] .hub-search:has(input[aria-label='Search projects']) { min-width: 0; min-height: 44px; height: auto; }
 html[data-lumen-canvas] .hub-search input[aria-label='Search projects'] { width: 0; min-width: 0; flex: 1; }
 html[data-lumen-canvas] .hub-search > button[aria-label='Clear project search'] { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--canvas-radius-row); background: none; color: var(--text-2); }
-html[data-lumen-canvas] .project-title { font: 640 30px/1.12 var(--cv5-display); letter-spacing: -.03em; }
-html[data-lumen-canvas] .project-card { border: 0; border-top: 1px solid var(--cv5-rim); border-radius: 0; background: none; padding: 18px 0; }
-html[data-lumen-canvas] .project-context-content { gap: 0; padding: 0 20px; border-radius: var(--canvas-radius-card); background: var(--cv5-fill); }
-html[data-lumen-canvas] .project-card:first-child { border-top: 0; }
-html[data-lumen-canvas] .project-context :is(.project-empty, .project-count, .project-file-size) { color: var(--text-2); }
-html[data-lumen-canvas] .project-composer { max-width: none; margin-bottom: 32px; border-radius: var(--canvas-radius-panel); box-shadow: none; padding: 18px; }
-html[data-lumen-canvas] .project-composer-note { font-family: var(--font); }
-html[data-lumen-canvas] .project-grid { gap: 32px; }
-html[data-lumen-canvas] .project-chat { padding: 18px 8px; }
-html[data-lumen-canvas] .project-chat-title { font-size: 15px; }
-html[data-lumen-canvas] .project-chat-snippet { margin-top: 6px; line-height: 1.5; }
-html[data-lumen-canvas] .project-page :is(.project-send, .project-edit-btn, .project-card-head .btn, .project-chat-menu > button, .project-file-row .icon-btn) { min-width: 44px; min-height: 44px; }
 @media (max-width: 899px) {
-  html[data-lumen-canvas] .proj-open { gap: 12px; padding: 20px 2px; }
-  html[data-lumen-canvas] .proj-body strong { overflow-wrap: anywhere; line-height: 1.4; }
   html[data-lumen-canvas] .projects-sort select { font-size: 16px; }
-  html[data-lumen-canvas] .project-grid { gap: 24px; }
-  html[data-lumen-canvas] .project-context-content { padding-inline: 14px; }
-  html[data-lumen-canvas] .project-file-row { flex-wrap: wrap; gap: 6px; }
-  html[data-lumen-canvas] .project-file-name { flex-basis: calc(100% - 28px); }
 }
-html[data-lumen-canvas] .project-section-head h2, html[data-lumen-canvas] .project-section-head h3 { font: 600 16px/1.4 var(--font); letter-spacing: -.01em; color: var(--text); }
 
 /* ---------- Library */
 html[data-lumen-canvas] .doc-paper { border-color: var(--cv5-rim); border-radius: var(--canvas-radius-control); }
@@ -140,18 +110,9 @@ html[data-lumen-canvas] :is(.tag, .chip, .badge) { border-radius: 999px; }
   html[data-lumen-canvas] .settings-heading h2 { font-size: 28px; }
 }
 
-/* ---------- Project workspace: monochrome monogram and a neutral hero, as in the tree and Projects. */
-html[data-lumen-canvas][data-lumen-canvas-foundation] .project-tile { background: var(--text); color: var(--bg); font-family: var(--cv5-display); }
-html[data-lumen-canvas][data-lumen-canvas-foundation] .project-hero { background: linear-gradient(180deg, var(--cv5-fill-strong), transparent); }
 /* One ink monogram everywhere: per-project hues (indigo by default) fold to ink, and the colour choice is hidden. */
 html[data-lumen-canvas] :is(.color-indigo, .color-emerald, .color-green, .color-amber, .color-rose, .color-cyan, .color-purple):not(.project-color-dot) { --pc: var(--text); }
-html[data-lumen-canvas][data-lumen-canvas-foundation] .project-page .project-tile, html[data-lumen-canvas][data-lumen-canvas-foundation] .project-tile { background: var(--text) !important; color: var(--bg) !important; box-shadow: none; }
 html[data-lumen-canvas] .pf-field:has(> .project-color-choices) { display: none; }
-/* One project visual language: the ink monogram and a header rule, no grey gradient covers. */
-html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-band { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: var(--canvas-radius-control); background: var(--cv5-fill); color: var(--text-2); }
-html[data-lumen-canvas][data-lumen-canvas-foundation] .proj-card .proj-body { min-width: 0; padding: 0; gap: 5px; }
-html[data-lumen-canvas][data-lumen-canvas-foundation] .project-page > .project-hero { display: none; }
-html[data-lumen-canvas][data-lumen-canvas-foundation] .project-head { padding-bottom: 0; margin-bottom: 28px; border-bottom: 0; }
 
 /* ---------- Assistants: ink avatars instead of per-name hues; rimmed cards, display names. */
 html[data-lumen-canvas][data-lumen-canvas-foundation] .lib-card { --av-bg: var(--cv5-fill-strong); --av-fg: var(--text); border-color: var(--cv5-rim); border-radius: var(--canvas-radius-card); background: var(--cv5-card); }
@@ -206,13 +167,6 @@ html[data-lumen-canvas] .comparison-answer .markdown :is(th, td) { overflow-wrap
   html[data-lumen-canvas] .compare-model-row { flex-wrap: wrap; row-gap: 0; padding-block: 8px; }
   html[data-lumen-canvas] .compare-model-row > small:not(:empty) { flex-basis: 100%; margin-inline-start: 54px; }
 }
-html[data-lumen-canvas] .cv-memory .project-memories { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
-html[data-lumen-canvas] .cv-memory .project-memories > li { display: grid; gap: 4px; padding: 10px 0; border-top: 1px solid var(--cv5-rim); }
-html[data-lumen-canvas] .cv-memory .project-memories > li:first-child { border-top: 0; }
-html[data-lumen-canvas] .cv-memory .project-memories p { margin: 0; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
-html[data-lumen-canvas] .cv-memory-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
-html[data-lumen-canvas] .cv-memory-actions > .muted { margin-inline-end: auto; }
-html[data-lumen-canvas] .cv-memory-actions .btn { min-height: 36px; }
 html[data-lumen-canvas] .cv-memory-edit { display: grid; gap: 8px; margin: 4px 0 8px; }
 html[data-lumen-canvas] .cv-memory-edit textarea { box-sizing: border-box; width: 100%; padding: 10px 12px; border: 0; border-radius: var(--canvas-radius-control); background: var(--cv5-fill); color: var(--text); font: inherit; font-size: 14px; resize: vertical; }
 html[data-lumen-canvas] .cv-memory-edit textarea:focus { outline: 2px solid color-mix(in srgb, var(--text) 35%, transparent); }
@@ -250,17 +204,12 @@ html[data-lumen-canvas] :where(input[type='text'], input[type='password'], input
 }
 html[data-lumen-canvas] :where(input, textarea):not(:is(.composer, .hub-search, .search, .rc-search, .cv-search, .key-input-wrap, .phone-page-search, .cm-editor, .canvas-panel, .model-search) *):focus { border-color: transparent; background: var(--surface); box-shadow: 0 0 0 2px var(--focus); }
 html[data-lumen-canvas] .library-form-hint { align-self: center; margin-inline-end: auto; }
-html[data-lumen-canvas] .app :is(.btn.small.logout, .project-edit-btn, .all-chats-select) { border-color: transparent; background: var(--cv5-fill); box-shadow: none; }
-html[data-lumen-canvas] .app :is(.btn.small.logout, .project-edit-btn, .all-chats-select):hover { background: var(--cv5-fill-strong); }
+html[data-lumen-canvas] .app :is(.btn.small.logout, .all-chats-select) { border-color: transparent; background: var(--cv5-fill); box-shadow: none; }
+html[data-lumen-canvas] .app :is(.btn.small.logout, .all-chats-select):hover { background: var(--cv5-fill-strong); }
 @media (max-width: 899px) { html[data-lumen-canvas]:not(.glass) select:not([multiple]) { min-height: 44px; } }
 /* Settings → Memory on phones: the memory field gets the full width; where it applies and Add go underneath. */
 @media (max-width: 899px) { html[data-lumen-canvas] .memory-add > input { flex: 1 1 100%; } html[data-lumen-canvas] .memory-add > .memory-scope { flex: 1 1 auto; min-width: 0; } }
-@media (forced-colors: active) { html[data-lumen-canvas] :is(.settings-card, .proj-grid) { border: 1px solid CanvasText; } html[data-lumen-canvas] select:not([multiple]) { border-color: CanvasText; } }
-/* Project page: chats as one grouped list; the options button is a full 44 px target at readable contrast. */
-html[data-lumen-canvas] .project-chat-list { padding: 0; border-radius: var(--canvas-radius-card); background: var(--surface); overflow: hidden; }
-html[data-lumen-canvas] .project-chat-list > .project-chat { padding-inline: 14px 4px; border-bottom: 0; }
-html[data-lumen-canvas] .project-chat-list > .project-chat + .project-chat { box-shadow: inset 0 1px var(--cv5-rim); }
-html[data-lumen-canvas] .project-chat-menu > .icon-btn { min-width: 44px; min-height: 44px; color: var(--text-2); }
+@media (forced-colors: active) { html[data-lumen-canvas] :is(.settings-card, .pl-list) { border: 1px solid CanvasText; } html[data-lumen-canvas] select:not([multiple]) { border-color: CanvasText; } }
 /* Desktop Settings: the section title is enough; the one-line blurb stays on phones, where it's the page's intro. */
 /* Data analysis / Run: the code takes at most about half the window so the output is visible without scrolling. */
 html[data-lumen-canvas] .analysis-panel .run-code { max-height: min(42vh, 420px); overflow: auto; }
@@ -288,7 +237,7 @@ html[data-lumen-canvas] .knowledge-empty { border-color: transparent; border-sty
 html[data-lumen-canvas] .knowledge-disclosure { margin-top: 12px; color: var(--text-2); }
 html[data-lumen-canvas] .knowledge-disclosure > summary { cursor: pointer; min-height: 40px; line-height: 1.5; }
 html[data-lumen-canvas] .knowledge-disclosure > p { margin: 6px 0 0; }
-html[data-lumen-canvas] :is(.project-drop, .privacy-preview) { border-style: solid; border-color: transparent; }
+html[data-lumen-canvas] :is(.privacy-preview) { border-style: solid; border-color: transparent; }
 /* Projects: search and sort share one row. */
 html[data-lumen-canvas] :has(> .projects-sort) { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; }
 html[data-lumen-canvas] :has(> .projects-sort) > .hub-search { flex: 1 1 auto; min-width: 0; }

@@ -46,7 +46,7 @@ const chats = [
     await shot('p2-workspace');
     await page.evaluate(() => document.querySelector('.project-page')?.scrollBy(0, 600));
     await shot('p3-workspace-scrolled');
-    const settingsBtn = page.locator('.project-edit-btn');
+    const settingsBtn = page.locator('.pw-edit, .project-edit-btn');
     if (await settingsBtn.count()) { await settingsBtn.click().catch(() => {}); await shot('p4-manager'); }
     await ctx.close();
   }

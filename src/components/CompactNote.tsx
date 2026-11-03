@@ -227,7 +227,7 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
           </div>
           {current && <p className="um-model"><span className="um-dot" aria-hidden="true" />{modelLabel(catalog, current)}{picked ? ' · last used here' : ''}</p>}
           {pct >= 85 && <p className="um-note um-warning">This chat is nearly full. Compact it to make room for your next messages.</p>}
-          {current && usage && !dailyLimit && <p className="um-note">Daily allowance unknown. A gauge appears once the provider reports a limit.</p>}
+          {current && usage && !dailyLimit && <p className="um-note">Daily allowance unknown.</p>}
           <details className="um-details">
             <summary>Details</summary>
             <div className="um-row"><span>Saved memories</span><span className="muted">{settings.memory ? `~${formatTokens(memoryTokens)} · ${memories.length} saved` : 'Off'}</span></div>

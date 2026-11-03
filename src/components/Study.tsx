@@ -52,7 +52,7 @@ export default function Study({ onClose, startFrom }: { onClose: () => void; sta
       <div className="study">
         {making && <div className="study-making" role="status"><Loader2 size={20} className="spin" /> Making flashcards and a quiz…</div>}
         {!making && view.kind === 'list' && (decks.length === 0 ? (
-          <HubEmpty icon={<GraduationCap size={26} />} title="No decks yet" text={CANVAS_SHELL ? "Flashcards and quizzes from chats and documents. Progress is saved to your account." : "Pick any chat or document and Lumen turns it into flashcards and a quiz. Your progress is saved to your account."} action={<button type="button" className="btn primary" onClick={() => setView({ kind: 'new' })}><Plus size={16} /> Make your first deck</button>} />
+          <HubEmpty icon={<GraduationCap size={26} />} title="No decks yet" text={CANVAS_SHELL ? undefined : "Pick any chat or document and Lumen turns it into flashcards and a quiz. Your progress is saved to your account."} action={<button type="button" className="btn primary" onClick={() => setView({ kind: 'new' })}><Plus size={16} /> Make your first deck</button>} />
         ) : (
           <>
             <div className="study-stats">

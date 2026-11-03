@@ -27,7 +27,7 @@ const only = (process.env.ONLY || '').split(',').filter(Boolean);
     const settings = async (t) => { await home(); await page.click('.menu-btn'); await page.waitForTimeout(300); await page.click('.sidebar-foot'); await page.waitForTimeout(400); if (t) { await page.locator('.settings-tabs button', { hasText: t }).first().click(); await page.waitForTimeout(400); } };
     const chat = async () => { await home(); await page.click('.menu-btn'); await page.waitForTimeout(300); await page.locator('.sidebar').getByText('A week in Lisbon').click(); await page.waitForTimeout(600); await page.evaluate(() => { const m = document.querySelector('.messages'); m.scrollTop = m.scrollHeight; }); };
     await step('projects', () => lib('projects'));
-    await step('project', async () => { await lib('projects'); await page.locator('.proj-open').first().click(); await page.waitForTimeout(700); });
+    await step('project', async () => { await lib('projects'); await page.locator('.pl-open, .proj-open').first().click(); await page.waitForTimeout(700); });
     await step('chat', chat);
     await step('more-menu', async () => { await chat(); await page.locator('.msg.assistant .more-menu .msg-action').last().click(); });
     await step('usage', () => settings('Usage'));

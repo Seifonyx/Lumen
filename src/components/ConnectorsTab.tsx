@@ -43,7 +43,6 @@ export default function ConnectorsTab() {
         <div className="connector-foot">
           <span className="setting-text">
             <span className="setting-label">Repositories</span>
-            <span className="setting-hint">Open one to browse files, run checks and edit code with a model.</span>
           </span>
           <button className="btn small" disabled={!keys.github} onClick={() => useStore.getState().setUi({ settingsOpen: false, repoPicker: true })}><Blocks size={15} /> Open repository</button>
         </div>

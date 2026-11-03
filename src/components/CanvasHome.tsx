@@ -39,7 +39,7 @@ export default function CanvasHome({ temporary }: { temporary: boolean }) {
       <h1 ref={heading}>{part}{name && <span ref={nameRef}>, {name}</span>}</h1>
       {project
         ? <p className="cv-home-where">New chat in <strong dir="auto">{project.name}</strong> <button type="button" onClick={() => selectProject(null)}>Start outside it</button></p>
-        : <p className="cv-home-where">Ask anything.</p>}
+        : null}
     </div>
   );
 }

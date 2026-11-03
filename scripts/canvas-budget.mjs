@@ -62,7 +62,12 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // and the Library ledger load with their own lazy chunks; startup CSS stays within 19.5.
 // + sheet density pass (owner, 2026-11-02): startupCss 19.5 → 20 for the compact iPhone + sheet (flat rows, short tiles,
 // screen-height cap) that overrides the shared glass card styles (measured 19.5).
-const BUDGET = { startupJs: 15.5, startupCss: 20, routingCenter: 9, canvasCss: 29.5 };
+// Approved Router release (owner, 2026-11-03): canvasCss 29.5 → 34 records the responsive Models browser/detail,
+// Layout master/detail/editor and Activity consoles across all five canonical destinations. Safe override cleanup
+// reduced the full 13-file source audit33.303→33.003KB; compiler minification still measured31.174KB. Retain useful
+// Provider-detail, phone and accessibility rules. This is an explicit source-cost decision, not a startup allowance:
+// startup JS15.5, startup CSS20 and lazy Router9KB are unchanged. See docs/router/CSS_BUDGET.md.
+const BUDGET = { startupJs: 15.5, startupCss: 20, routingCenter: 9, canvasCss: 34 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

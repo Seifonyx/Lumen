@@ -1,5 +1,11 @@
 # Router CSS consolidation checkpoint — 2026-11-03
 
+## Owner-authorized release budget decision (continuation after31ac69e)
+
+The owner explicitly authorized a measured source-budget adjustment to approximately34KB after reviewing the cleanup and alternatives below. Set the total source cap to **34KB**, retaining **all13 inputs**, their accounting and the startup JS15.5KB / startup CSS20KB / lazy Router9KB caps unchanged. This records the cost of the approved Models browser/detail, Layout master/detail/editor and Activity console compositions across the five canonical destinations, including phone behavior, Provider detail and accessibility. The audit after safe cleanup measures33.003KB, leaving about1KB bounded headroom. This is a deliberate source-cost increase; it does not assert faster startup or authorize future unmeasured growth. Actual delivered startup/lazy budgets remain independently enforced.
+
+The prior unchanged-cap checkpoint below is historical. Passing the adjusted source cap does not certify the outstanding browser/contracts; those must pass on the exact release head before merge/deploy.
+
 Continued PR99 from `5cc77e6b5eb5c333b081be3e4f4f40901e067434`, with no newer implementation commits at takeover. Approved composition, all five destinations and ordinary rollback retained. No audit inputs, budget limits or execution semantics changed.
 
 ## Applied cleanup

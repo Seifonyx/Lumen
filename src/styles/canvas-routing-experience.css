@@ -73,6 +73,7 @@
 .app[data-lumen-canvas-shell] .rc-layout-console > .rc-editor { padding:24px; }
 .app[data-lumen-canvas-shell] .cv-layout-editor { min-width:0; display:grid; max-width:none; gap:20px; }
 .app[data-lumen-canvas-shell] .cv-layout-editor .model-row { gap:8px; padding:12px; border-radius:var(--canvas-radius-row); background:var(--canvas-fill); }
+.app[data-lumen-canvas-shell] .cv-layout-editor .model-sub { color:var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .cv-layout-editor .model-list { margin-block:8px; display:grid; gap:4px; }
 .app[data-lumen-canvas-shell] .cv-layout-editor .segmented { display:flex; max-width:100%; width:100%; padding:4px; background:var(--canvas-fill); border-radius:var(--canvas-radius-control); }
 .app[data-lumen-canvas-shell] .cv-layout-editor .segmented button { min-height:44px; white-space:normal; flex:1; }

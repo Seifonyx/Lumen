@@ -11,12 +11,12 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 ## Now
 
 - **Branch:** `codex/router-approved-redesign`, from verified main `fbb59bd`; Lumen-local was clean at takeover.
-- **Task:** approved Router integration prepared; release BLOCKED by unchanged CSS source budget (33.003KB vs29.5KB after removing superseded declarations; takeover33.303KB). Fresh affected run passes type/full units and both builds, then stops at this gate.22 fresh Chromium before/after captures are pixel-identical. Broader browser/contracts and desktop interaction replays remain uncertified. Measurements and alternatives: `docs/router/CSS_BUDGET.md`; scope: `docs/router/IMPLEMENTATION.md`. No merge/deploy. Private reference package stays outside the public repository.
+- **Task:** finish approved Router release from31ac69e. Owner authorized documented total CSS source cap34KB after cleanup; all13 inputs and startup JS/CSS/lazy Router limits retained. Corrected obsolete master/detail contract expectations and one genuine Layout-editor secondary-text contrast issue. Full affected/browser/exact-head release verification in progress; no merge/deploy yet. Measurements: `docs/router/CSS_BUDGET.md`; scope: `docs/router/IMPLEMENTATION.md`. Private reference package stays outside the public repository.
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next
 
-- [ ] Router release blocker: further shared-style consolidation must recover3.503KB without losing approved UI/functionality. Safe override cleanup saved0.300KB; full minification and experimental nesting also remain above29.5KB (31.174/30.150KB, not applied). See `docs/router/CSS_BUDGET.md`. After a passing budget, rerun complete affected browser/contracts and desktop recorded-source Routing/Activity flows, then exact-head CI/merge/gated Canvas deploy. Do not raise the cap, exclude inputs or bypass checks.
+- [ ] Router: complete affected browser/contracts and desktop recorded-source Routing/Activity flows, inspect real screenshots, then require green exact-head CI, mark PR99 ready, merge/gated Canvas deploy and verify live asset under existing authority. Owner-authorized source cap34KB is documented; no other cap or audit input changed. Physical Safari/VoiceOver remain device checks.
 
 - [ ] Owner, on the iPhone (PR #97, live): swipe back from Browse all tools opened from + (should slide straight to the
       chat, no + sheet); a partial swipe let go; a few open/close cycles.

@@ -65,7 +65,7 @@ const isOpen = (page) => page.evaluate(() => { const el = document.querySelector
 async function openRouting(page, phone) {
   if (phone) { await page.getByRole('button', { name: 'Open chats', exact: true }).first().click(); await settle(page, 600); }
   await page.locator('aside.cv-nav').getByRole('button', { name: 'Router', exact: true }).click();
-  await rc(page).getByRole('heading', { name: phone ? 'Router' : 'Router', level: 1 }).waitFor();
+  await rc(page).getByRole('heading', { name: phone ? 'Router' : 'Models', level: 1 }).waitFor();
   await settle(page);
 }
 // Phone section shortcuts retain canonical screen history; provider details push without the strip.
@@ -96,7 +96,7 @@ try {
       assert.equal(await rc(page).getByRole('button', { name:'Overview', exact:true }).count(), 0);
       assert.ok(await rc(page).getByRole('region', { name:'Current routing mode' }).isVisible());
       assert.match(await rc(page).locator('.rc-current').innerText(), /Next message in this chat/);
-      assert.ok(await rc(page).getByRole('heading',{name:/^Models\s+\d+$/}).isVisible());
+      assert.ok(await rc(page).getByRole('heading',{name:/^Browse models\s+\d+$/}).isVisible());
       const places = await rc(page).locator('.rc-tabs button, .phone-sections button').evaluateAll(els => els.map(el => {
         const r=el.getBoundingClientRect();return { name:el.textContent,left:r.left,right:r.right,height:r.height,cut:el.scrollWidth>el.clientWidth };
       }));
@@ -112,6 +112,38 @@ try {
       }
       await shot(page, join(out, `${tag}-1-models.png`));
       pass('Prism models landing');
+
+      // Inspect is browse state; keyboard activation must not select until the explicit Use action.
+      const currentBefore = await rc(page).locator('.rc-current-model, .rc-current > h2').textContent();
+      const inspect = rc(page).getByRole('button', { name: 'Inspect Gemini 2.5 Pro (synthetic)', exact: true });
+      await inspect.focus();
+      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press('Tab');
+      assert.ok(await inspect.evaluate(el => el === document.activeElement), 'model row is keyboard reachable');
+      assert.ok(await inspect.evaluate(el => getComputedStyle(el).outlineStyle !== 'none' && parseFloat(getComputedStyle(el).outlineWidth) >= 2), 'model row has visible keyboard focus');
+      await page.keyboard.press('Enter');
+      const modelDetail = rc(page).getByRole('region', { name: 'Model detail', exact: true });
+      await modelDetail.getByRole('heading', { name: 'Gemini 2.5 Pro (synthetic)', exact: true }).waitFor();
+      await page.waitForFunction(() => document.activeElement?.matches('.rm-detail'));
+      assert.ok(await modelDetail.evaluate(el => el === document.activeElement), 'inspection focuses model detail');
+      assert.equal(await rc(page).locator('.rc-current-model, .rc-current > h2').textContent(), currentBefore, 'inspection leaves the chat model unchanged');
+      assert.equal(await isOpen(page), true, 'inspection keeps Router open');
+      assert.match(await modelDetail.innerText(), /A listing is not a tested reply/);
+      if (phone) {
+        assert.equal(await rc(page).getByRole('region', { name: 'Browse models', exact: true }).isVisible(), false, 'phone detail replaces the browser');
+        await page.keyboard.press('Escape');
+        await rc(page).getByRole('region', { name: 'Browse models', exact: true }).waitFor();
+        assert.equal(await isOpen(page), true, 'Escape leaves only the nested model detail');
+        await inspect.click();
+      }
+      await modelDetail.getByRole('button', { name: 'Use Gemini 2.5 Pro (synthetic)', exact: true }).click();
+      await settle(page);
+      assert.equal(await isOpen(page), false, 'Use returns to chat');
+      assert.match(await page.locator('.composer .model-name-text').innerText(), /Gemini 2\.5 Pro/);
+      assert.equal(await page.getByRole('textbox', { name: 'Message', exact: true }).inputValue(), DRAFT);
+      assert.ok(await page.getByRole('textbox', { name: 'Message', exact: true }).evaluate(el => el === document.activeElement), 'Use restores composer focus');
+      pass('keyboard inspection and canonical Use');
+      await openRouting(page, phone);
 
       // Providers: filters, search, detail.
       await tab(page, 'Providers');
@@ -166,18 +198,22 @@ try {
       await openRouting(page, phone);
       await tab(page, 'Layouts');
       await settle(page);
-      assert.ok(await rc(page).getByRole('heading', { name: 'Launch writing' }).isVisible());
+      const layoutIds = await rc(page).locator('.rc-layout-index [data-layout-option]').evaluateAll(els => els.map(el => el.dataset.layoutOption));
+      assert.ok(layoutIds.includes('launch-writing'), 'synthetic saved layout is retained alongside recommendations');
+      if (phone) await rc(page).getByRole('button', { name: /^Launch writing/ }).click();
+      assert.ok(await rc(page).getByRole('heading', { name: 'Launch writing', exact: true }).isVisible());
       await shot(page, join(out, `${tag}-3-policies.png`));
       await rc(page).getByRole('button', { name: 'Edit Launch writing' }).click();
       await settle(page);
       assert.equal(await rc(page).locator('.rc-editor input[placeholder="e.g. Web apps"]').inputValue(), 'Launch writing');
       await rc(page).locator('.rc-editor').getByRole('button', { name: 'Cancel', exact: true }).click();
-      await rc(page).getByRole('button', { name: 'New layout' }).click();
+      if (phone) await rc(page).getByRole('button', { name: 'All layouts', exact: true }).click();
+      await rc(page).getByRole('button', { name: 'New layout', exact: true }).click();
       await settle(page);
       assert.equal(await rc(page).locator('.rc-editor input[placeholder="e.g. Web apps"]').inputValue(), '');
       await rc(page).locator('.rc-editor').getByRole('button', { name: 'Cancel', exact: true }).click();
       await settle(page);
-      assert.equal(await rc(page).locator('.rc-layouts > .rc-layout').count(), 1, 'cancelling saves nothing');
+      assert.deepEqual(await rc(page).locator('.rc-layout-index [data-layout-option]').evaluateAll(els => els.map(el => el.dataset.layoutOption)), layoutIds, 'cancelling preserves all saved and recommended layouts');
       pass('policies');
 
       // Activity: Overview (Lumen's counters and saved-chat history), Logs (recorded outcomes), Quotas (real limits only).
@@ -221,7 +257,7 @@ try {
       await settle(page);
       assert.equal(await isOpen(page), false);
       await openRouting(page, phone);
-      await rc(page).getByRole('heading', { name: phone ? 'Router' : 'Router', level: 1 }).focus();
+      await rc(page).getByRole('heading', { name: phone ? 'Router' : 'Models', level: 1 }).focus();
       await page.keyboard.press('Escape');
       await settle(page);
       assert.equal(await isOpen(page), false, 'Escape closes');

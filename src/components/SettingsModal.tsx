@@ -491,7 +491,7 @@ export default function SettingsModal() {
           <div className="settings-panel">
             <div className="settings-heading">
               <h2>{label}</h2>
-              <p>{blurb}</p>
+              {!CANVAS_SHELL && <p>{blurb}</p>}
             </div>
 
             {id === 'general' && (

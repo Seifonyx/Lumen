@@ -264,7 +264,6 @@
 .app[data-lumen-canvas-shell] .rc-head .feature-exit { align-self:start; }
 .app[data-lumen-canvas-shell] .rc-head h1 { font:600 32px/1.2 var(--canvas-body-font);letter-spacing:-.03em; }
 .app[data-lumen-canvas-shell] .rc-brand { gap:8px;align-self:start; }
-.app[data-lumen-canvas-shell] .rc-brand .router-purpose { font-size:14px;white-space:normal;line-height:1.5; }
 .app[data-lumen-canvas-shell] .router-chat-context { display:grid;align-content:start;gap:6px;text-align:end;font-size:13px;min-width:0; }
 .app[data-lumen-canvas-shell] .router-chat-context :is(span,small) { color:var(--canvas-secondary);font-size:13px; }
 .app[data-lumen-canvas-shell] .router-chat-context strong { font-weight:500;overflow-wrap:anywhere; }

@@ -68,11 +68,11 @@ export default function PrismLayouts() {
     <div className="rc-layout-console" data-focused={phone && (focused || view.editing) || undefined}>
       <aside className="rc-layout-index" aria-label="Layouts">
         <div className="rc-panel-title"><h2>Layouts <small>{layouts.length}</small></h2><button type="button" className="rc-link" onClick={() => edit({ id: newLayoutId(), name: '', icon: 'layers', description: '', models: [], mode: 'order', fallback: 'layout' })}><Plus size={16} aria-hidden="true" />New layout</button></div>
-        {!saved.length && <section className="rc-layout-empty"><h3>Make a model set your own</h3><p>Choose a recommendation or create a layout.</p></section>}
+        {!saved.length && <section className="rc-layout-empty"><h3>No saved layouts</h3></section>}
         {([['Your layouts', saved], ['Recommended Layouts', recommended]] as [string, Layout[]][]).map(([title, items]) => items.length > 0 && <section key={title}><h3 className="rc-label">{title}<span>{items.length}</span></h3><ul>{items.map(l => <li key={l.id}><button type="button" className="rc-layout-option" data-layout-option={l.id} aria-current={!view.editing && chosen?.id === l.id ? 'true' : undefined} onClick={() => choose(l)}><span className="rc-layout-mark"><LayoutIcon icon={l.icon} size={18} /></span><span><strong>{l.name}</strong><small>{l.mode === 'order' ? 'In order' : 'Best for each message'} · {l.models.length} models{selected === LAYOUT_PREFIX + l.id ? ' · Current' : ''}</small></span><ChevronRight size={16} aria-hidden="true" /></button></li>)}</ul></section>)}
         <details className="rc-layout-file"><summary>Import or export routing settings</summary><Suspense fallback={null}><RoutingFile /></Suspense></details>
       </aside>
-      {view.editing && view.draft ? <div className="rc-editor"><LayoutEditor presentation="prism" key={view.draft.id} start={view.draft} onDraftChange={draft => { if (currentOwner()) setView(s => s.draft === draft ? s : { ...s, draft }); }} onDone={done} /></div> : chosen ? card(chosen) : <div className="rc-layout-welcome"><LayoutIcon icon="layers" size={28} /><h3>A model set for your work</h3><p className="rc-muted">Choose models, how they answer and the recovery rules you want.</p></div>}
+      {view.editing && view.draft ? <div className="rc-editor"><LayoutEditor presentation="prism" key={view.draft.id} start={view.draft} onDraftChange={draft => { if (currentOwner()) setView(s => s.draft === draft ? s : { ...s, draft }); }} onDone={done} /></div> : chosen ? card(chosen) : <div className="rc-layout-welcome"><LayoutIcon icon="layers" size={28} /><h3>Select a layout</h3></div>}
     </div>
   </div>;
 }

@@ -419,8 +419,8 @@ export default function KnowledgeLibrary({ onClose, filter = '' }: { onClose: ()
           // Canvas: one short block with the one action. Formats, where documents live and offline search are said
           // once here, indexing in the disclosure below; the page note and the Import row hide while it is empty.
           <div className="knowledge-empty knowledge-empty-v2">
-            <h3>Your references, in one place</h3>
-            <p className="muted">PDF, text or Markdown, up to 75 MB each. Keyword search works offline right away. Kept only on this device, not synced to your account.</p>
+            <h3>No documents yet</h3>
+            <p className="muted">PDF, text or Markdown · up to 75 MB each. Kept only on this device.</p>
             <button className="btn primary" disabled={busy} onClick={() => input.current?.click()}><Plus size={16} />Import documents</button>
           </div>
         ) : (

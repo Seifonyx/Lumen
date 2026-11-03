@@ -15,10 +15,10 @@ export interface HubBar { items: { id: string; label: string; icon: ReactNode; h
   /** The separate creation action for the chosen tab (e.g. "New document"). */
   create?: { label: string; run: () => void } }
 
-export default function HubPage<T extends string>({ title, subtitle, actions, tabs, tab, onTab, toolbar, onClose, onBack, children, label, bar, compact, create, sectionNavigation, footer }: {
+export default function HubPage<T extends string>({ title, subtitle, actions, tabs, tab, onTab, toolbar, onClose, onBack, children, label, bar, compact, create, sectionNavigation, footer, scrollLabel }: {
   title: ReactNode; subtitle?: ReactNode; actions?: ReactNode; label: string;
   bar?: HubBar;
-  sectionNavigation?: ReactNode; footer?: ReactNode;
+  sectionNavigation?: ReactNode; footer?: ReactNode; scrollLabel?: string;
   /** iPhone glass look without sections of its own (Projects): the same centred title and + as Tools. */
   compact?: boolean; create?: { label: string; run: () => void };
   tabs?: HubTab<T>[]; tab?: T; onTab?: (t: T) => void;
@@ -68,7 +68,7 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
         {!CANVAS_SHELL && <button type="button" className="btn ghost small hub-close" aria-label="Close" onClick={onClose}><span className="hub-close-long">Back to chat</span><span className="hub-close-short">Done</span></button>}
       </div>}
       {CANVAS_SHELL && phone && sectionNavigation}
-      <div className="hub-scroll" onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 56)}>
+      <div className="hub-scroll" tabIndex={scrollLabel ? 0 : undefined} role={scrollLabel ? "region" : undefined} aria-label={scrollLabel} onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 56)}>
         <div className="hub-inner">
           <header className="hub-head">
             <div className="hub-titles">
@@ -195,12 +195,12 @@ function GlassTabs({ bar }: { bar?: HubBar }) {
 }
 
 /** A friendly empty state: an icon, a line of what goes here, and how to start. */
-export function HubEmpty({ icon, title, text, action }: { icon: ReactNode; title: string; text: string; action?: ReactNode }) {
+export function HubEmpty({ icon, title, text, action }: { icon: ReactNode; title: string; text?: string; action?: ReactNode }) {
   return (
     <div className="hub-empty">
       <span className="hub-empty-icon" aria-hidden="true">{icon}</span>
       <h2>{title}</h2>
-      <p>{text}</p>
+      {text && <p>{text}</p>}
       {action}
     </div>
   );

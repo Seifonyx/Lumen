@@ -131,7 +131,7 @@ export default function ProjectWorkspace({ project, onOpenSettings }: { project:
             )}
           </div>
           {projectChats.length === 0 ? (
-            <p className="project-empty">No chats yet. Start one above; it will use this project’s instructions and files.</p>
+            <p className="project-empty">{CANVAS_SHELL ? 'No chats yet' : 'No chats yet. Start one above; it will use this project’s instructions and files.'}</p>
           ) : shown.length === 0 ? (
             <p className="project-empty">No chats match “{query}”.</p>
           ) : (

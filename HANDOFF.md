@@ -10,8 +10,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `codex/router-approved-redesign`, from verified main `fbb59bd`; Lumen-local was clean at takeover.
-- **Task:** approved Router implementation and complete local affected verification done, including desktop Routing/Activity and focused Chromium/WebKit contracts. Owner-authorized source cap34KB retains all13 inputs and startup/lazy caps. Obsolete master/detail expectations corrected; genuine Layout-editor contrast fixed. Release follows exact-head green CI and gated Canvas deployment under standing authority; computed live state above identifies actual shipping status. Evidence: `docs/router/RELEASE_VERIFICATION.md`. Private reference package stays outside the public repository.
+- **Branch:** `codex/native-ui-cleanup` from verified main `f3b2f00`.
+- **Task:** Canvas copy and density cleanup across core workspaces. Decision-making guidance stays with the relevant controls. Release follows affected checks, exact PR CI and the gated Canvas deploy.
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next

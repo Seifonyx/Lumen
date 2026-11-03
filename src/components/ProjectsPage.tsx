@@ -35,9 +35,9 @@ export default function ProjectsPage({ onClose }: { onClose: () => void }) {
   const [glassPhone] = useState(() => document.documentElement.classList.contains('glass') && window.matchMedia('(max-width: 899px)').matches);
 
   return (
-    <HubPage label="Projects" title="Projects" subtitle={CANVAS_SHELL ? 'A place for the work you keep coming back to.' : 'Workspaces with their own instructions, files and memory. Every chat in a project shares them.'} onClose={onClose}
-      compact={glassPhone} create={CANVAS_SHELL || glassPhone ? { label: 'New project', run: create } : undefined}
-      actions={!glassPhone && <button type="button" className="btn primary" onClick={create}><Plus size={16} /> New project</button>}
+    <HubPage label="Projects" title="Projects" subtitle={CANVAS_SHELL ? undefined : 'Workspaces with their own instructions, files and memory. Every chat in a project shares them.'} onClose={onClose}
+      compact={glassPhone} create={(CANVAS_SHELL ? projects.length > 0 : glassPhone) ? { label: 'New project', run: create } : undefined}
+      actions={!glassPhone && (!CANVAS_SHELL || projects.length > 0) && <button type="button" className="btn primary" onClick={create}><Plus size={16} /> New project</button>}
       toolbar={projects.length > 0 && (
         <>
           <label className="hub-search"><Search size={16} /><input type="search" aria-label="Search projects" placeholder="Search projects" value={query} onChange={(e) => setQuery(e.target.value)} dir="auto" />{CANVAS_SHELL && query && <button type="button" aria-label="Clear project search" onClick={e => { setQuery(''); e.currentTarget.parentElement?.querySelector('input')?.focus(); }}><X size={16} /></button>}</label>
@@ -48,7 +48,7 @@ export default function ProjectsPage({ onClose }: { onClose: () => void }) {
       )}>
       {CANVAS_SHELL && projects.length > 0 && <p className="projects-summary" role="status">{q ? `${shown.length} of ${projects.length} projects` : `${projects.length} ${projects.length === 1 ? 'project' : 'projects'}`}</p>}
       {projects.length === 0 ? (
-        <HubEmpty icon={<FolderKanban size={26} />} title="No projects yet" text={glassPhone ? 'For anything ongoing, like a course, a client or a trip.' : 'Make a project for anything ongoing (a course, a client, a trip) and give it instructions and files. Every chat in it starts with them.'} action={<button type="button" className="btn primary" onClick={create}><Plus size={16} /> New project</button>} />
+        <HubEmpty icon={<FolderKanban size={26} />} title="No projects yet" text={CANVAS_SHELL ? undefined : glassPhone ? 'For anything ongoing, like a course, a client or a trip.' : 'Make a project for anything ongoing (a course, a client, a trip) and give it instructions and files. Every chat in it starts with them.'} action={<button type="button" className="btn primary" onClick={create}><Plus size={16} /> New project</button>} />
       ) : shown.length === 0 ? (
         <p className="hub-none">No projects match “{query}”.</p>
       ) : (
@@ -61,7 +61,7 @@ export default function ProjectsPage({ onClose }: { onClose: () => void }) {
                   <span className="proj-band" aria-hidden="true">{CANVAS_SHELL ? <Folder size={22} strokeWidth={1.6} /> : <span className="proj-mono">{p.name.trim().slice(0, 1).toUpperCase()}</span>}</span>
                   <span className="proj-body">
                     <strong dir="auto">{p.name}</strong>
-                    <span className="proj-desc" dir="auto">{p.description || p.instructions.split('\n')[0] || 'No description yet.'}</span>
+                    {(!CANVAS_SHELL || p.description || p.instructions) && <span className="proj-desc" dir="auto">{p.description || p.instructions.split('\n')[0] || 'No description yet.'}</span>}
                     <span className="proj-stats">
                       <span>{s?.chats || 0} {s?.chats === 1 ? 'chat' : 'chats'}</span>
                       {files > 0 && <span>{files} {files === 1 ? 'file' : 'files'}</span>}

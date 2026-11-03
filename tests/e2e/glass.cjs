@@ -63,7 +63,14 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
       const enter=async(id)=>{await page.evaluate(id=>window.dispatchEvent(new CustomEvent('mr:library',{detail:id})),id);await page.locator('.hub-page').waitFor();};
       const leave=async()=>{await page.locator('.phone-navigation [aria-label^="Return to "]').click();await page.locator('.hub-page').waitFor({state:'detached'});};
       await enter('projects');assert.equal(await page.locator('.glass-tabbar').count(),0);
-      assert.equal(await page.locator('.phone-navigation').getByRole('button',{name:'New project',exact:true}).count(),1);await leave();
+      const create=page.getByRole('main',{name:'Projects',exact:true}).getByRole('button',{name:'New project',exact:true});
+      assert.equal(await create.count(),1,'empty Projects has one creation action');
+      assert.ok(await create.isVisible());
+      await create.click();
+      const projectForm=page.getByRole('dialog',{name:'New project',exact:true});
+      await projectForm.getByRole('textbox',{name:'Project name',exact:true}).waitFor();
+      await projectForm.getByRole('button',{name:'Cancel',exact:true}).click();
+      await projectForm.waitFor({state:'hidden'});await leave();
       await page.evaluate(()=>window.dispatchEvent(new CustomEvent('mr:library',{detail:'tools-page'})));await page.locator('.tool-picker').waitFor();assert.equal(await page.locator('.glass-tabbar').count(),0);
       await page.getByRole('searchbox',{name:'Search tools'}).fill('research');
       assert.ok(await page.getByRole('button',{name:/Deep research/}).isVisible(),'search reaches capabilities across categories');

@@ -92,7 +92,7 @@ export default function ActivityCenter({ start }: { start?: ActivityView }) {
   return (
     <div className="rc-body ac">
       <div className="ac-head">
-        <div className="rc-page-intro ac-page-intro"><h2 className="rc-h2">Activity</h2><p className="rc-muted">What Lumen recorded: how requests ended, and what was counted. Provider limits appear only when known.</p></div>
+        <div className="rc-page-intro ac-page-intro"><h2 className="rc-h2">Activity</h2></div>
         <div className="ac-tabs" role="tablist" aria-label="Activity views" ref={tabs} onKeyDown={onKey}>
           {VIEWS.map(([id, label]) => <button key={id} id={`ac-tab-${id}`} type="button" role="tab" aria-selected={view === id} aria-controls="ac-panel" tabIndex={view === id ? 0 : -1} onClick={() => setView(id)}>{label}</button>)}
         </div>
@@ -149,7 +149,7 @@ function Overview({ go }: { go: (v: ActivityView) => void }) {
         <section className="ac-card" aria-labelledby="ac-recent-title">
           <div className="ac-card-head"><h3 id="ac-recent-title" className="rc-h3">Recent activity</h3><button type="button" className="rc-link" onClick={() => go('logs')}>All logs <ChevronRight size={14} aria-hidden="true" /></button></div>
           {recent.length ? <ol className="ac-mini-log">{recent.map((e) => <li key={e.id} data-level={e.level}><LevelIcon level={e.level} /><span><strong>{e.title}</strong><small>{[e.model && modelLabel(catalog, e.model), !e.model && e.provider && providerName(e.provider), e.detail].filter(Boolean).join(' · ')}</small></span><time dateTime={new Date(e.at).toISOString()}>{ago(e.at, now)}</time></li>)}</ol>
-            : <p className="ac-empty">Nothing yet. Requests and provider events appear here as they happen.</p>}
+            : <p className="ac-empty">No recent activity</p>}
         </section>
         <section className="ac-card" aria-labelledby="ac-models-title">
           <div className="ac-card-head"><h3 id="ac-models-title" className="rc-h3">Most used models</h3><span className="rc-muted">14 days</span></div>
@@ -305,9 +305,9 @@ function Quotas() {
   return (
     <div className="ac-quotas">
       <section className="ac-card ac-counted" aria-labelledby="ac-counted-title" data-evidence-source="app-counters">
-        <div><h3 id="ac-counted-title" className="rc-h3">Counted by Lumen</h3><p className="rc-muted">Requests this app recorded. Not a provider bill.</p></div>
-        {counted.length ? <table><thead><tr><th scope="col">Measurement</th><th scope="col">Provider</th><th scope="col">Recorded</th><th scope="col">Period</th></tr></thead><tbody>{counted.map(metric => <tr key={metric.id}><th scope="row">{metric.label}</th><td>{providerName(metric.owner)}</td><td>{metric.used === null ? '—' : formatAmount(metric.used, metric.unit)} {metric.unit}</td><td>{metric.period.kind === 'day' ? 'Today' : metric.period.kind}</td></tr>)}</tbody></table> : <p className="ac-empty">No recorded requests yet.</p>}
-        <p className="rc-muted">Canonical app counters, not a provider bill. — means not recorded.</p>
+        <h3 id="ac-counted-title" className="rc-h3">Counted by Lumen</h3>
+        {counted.length ? <table><thead><tr><th scope="col">Measurement</th><th scope="col">Provider</th><th scope="col">Recorded</th><th scope="col">Period</th></tr></thead><tbody>{counted.map(metric => <tr key={metric.id}><th scope="row">{metric.label}</th><td>{providerName(metric.owner)}</td><td>{metric.used === null ? '—' : formatAmount(metric.used, metric.unit)} {metric.unit}</td><td>{metric.period.kind === 'day' ? 'Today' : metric.period.kind}</td></tr>)}</tbody></table> : <p className="ac-empty">No usage recorded yet.</p>}
+        <p className="rc-muted">Not a provider bill. — means no reading.</p>
       </section>
       <div className="ac-quota-main">
       <div className="ac-quota-summary">
@@ -333,7 +333,7 @@ function Quotas() {
         </section>
       )}
       </div><aside className="ac-card ac-provenance"><h3 className="rc-h3">What these numbers mean</h3><dl><div><dt>Counted by Lumen</dt><dd>Requests this app recorded. Use from other apps or devices on the same key isn’t included.</dd></div><div><dt>Provider limits</dt><dd>Reported by the provider or learned when a request reaches a limit. Unknown isn’t unlimited.</dd></div><div><dt>Browser estimate</dt><dd>Storage used by this site, as estimated by your browser.</dd></div><div><dt>Billing</dt><dd>Lumen doesn’t see provider bills or balances, so none are shown.</dd></div></dl></aside>
-      <p className="rc-muted ac-foot">Values come from provider reports, Lumen’s own counters and the browser. Forecasts are estimates from today’s pace. Lumen doesn’t see use from other apps on the same key, so counted figures can be lower than your provider’s.</p>
+      <p className="rc-muted ac-foot">Provider limits appear only when known. Values come from provider reports, Lumen’s own counters and the browser. Forecasts are estimates from today’s pace. Lumen doesn’t see use from other apps on the same key, so counted figures can be lower than your provider’s.</p>
     </div>
   );
 }

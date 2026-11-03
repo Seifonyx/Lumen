@@ -241,13 +241,13 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
             <div className="mp-label">{modelProviderLabel(list[0])}</div>
             {list.map((m) => {
               const info = catalogById.get(m.id);
-              const sub = [info?.context ? `${ctx(info.context)} context` : '', info?.preview ? 'preview' : '', info?.metadata?.verification==='unchecked'?'Declared · unchecked':'',info?.metadata?.stale?'Cached details':'', !info ? 'Not available right now' : ''].filter(Boolean).join(' · ') || m.name;
+              const sub = [info?.context ? `${ctx(info.context)} context` : '', info?.preview ? 'preview' : '', info?.metadata?.verification==='unchecked'?'Declared · unchecked':'',info?.metadata?.stale?'Cached details':'', !info ? 'Not available right now' : ''].filter(Boolean).join(' · ') || (CANVAS_COMPOSER && m.name === m.label ? '' : m.name);
               return (
                 <button type="button" key={m.id} role="option" aria-selected={m.id === value} className={`mp-item${m.id === value ? ' selected' : ''}${info ? '' : ' unavailable'}`} onClick={() => pick(m.id)}>
                   <ProviderMark provider={p} />
                   <span className="mp-text">
                     <span className="mp-title">{m.label}</span>
-                    <span className="mp-sub">{sub}</span>
+                    {sub && <span className="mp-sub">{sub}</span>}
                   </span>
                   {statusOf(m.id)}
                   <Badges m={info} />

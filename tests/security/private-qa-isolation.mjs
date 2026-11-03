@@ -224,6 +224,8 @@ try {
     // Answer details and Compare with… (owner-approved UX plan #3, 2026-11-01): a panel over what each reply already
     // recorded, and a request that opens the existing Compare sheet. No data, auth, network or storage owner changes.
     'src/components/AnswerDetails.tsx', 'src/components/answer-details.css', 'src/lib/answer-details.ts',
+    // Owner-approved Router (2026-11-03): lazy Canvas-only Models browser/detail CSS; no auth, network or state owner.
+    'src/components/router-models.css',
     // Owner-approved 2026-11-01: loading a saved chat keeps Auto's recorded reasons and alternatives (`routeDetail`), a
     // field the app already writes to this device. Read path only: no new field, no sync record, rules or auth change.
     'src/lib/db.ts'];

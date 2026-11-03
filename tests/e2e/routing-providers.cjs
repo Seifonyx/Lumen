@@ -92,7 +92,8 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
       if (!before) {
         assert.match(await detail.locator('.rc-verdict').innerText(), /Catalog ready/);
         assert.match(await detail.locator('[data-fact="Replies"]').textContent(), /Not tested by model listing/);
-        assert.match(await detail.locator('[data-fact="Key · permission"]').textContent(), /Saved · on/);
+        assert.match(await detail.locator('[data-fact="Key"]').textContent(), /Saved/);
+        assert.match(await detail.locator('[data-fact="Permission"]').textContent(), /Enabled/);
         assert.match(await detail.locator('[data-fact="Allowance"]').textContent(), /Unknown/);
         assert.equal(await rc.locator('.phone-navigation').getByRole('button', { name:'Return to chat',exact:true }).count(), phone ? 1 : 0);
         // A working provider has no fix to lead with: both actions stay quiet.

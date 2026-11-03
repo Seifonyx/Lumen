@@ -139,7 +139,8 @@ try {
       const detail = rc(page).getByRole('region', { name: 'Provider detail' });
       assert.ok(await rc(page).getByRole('heading', { name: 'Google AI Studio',exact:true }).isVisible());
       // Independent facts, never a setup sequence; replies are never claimed.
-      assert.match(await detail.locator('[data-fact="Key · permission"]').textContent(), /Saved · on/);
+      assert.match(await detail.locator('[data-fact="Key"]').textContent(), /Saved/);
+        assert.match(await detail.locator('[data-fact="Permission"]').textContent(), /Enabled/);
       assert.match(await detail.locator('[data-fact="Replies"]').textContent(), /Not tested by model listing/);
       assert.match(await detail.locator('[data-fact="Allowance"]').textContent(), /Unknown/);
       await shot(page, join(out, `${tag}-2-provider.png`));

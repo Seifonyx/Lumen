@@ -17,6 +17,7 @@ import { metricsFrom, providerName } from '../lib/activity/metrics';
 import { answersByDay } from '../lib/chat-records';
 import { formatTokens } from '../lib/usage';
 import FilterMenu from './FilterMenu';
+import { usePhoneLayout } from '../lib/phone-layout';
 
 export type ActivityView = 'overview' | 'logs' | 'quotas';
 const VIEWS: [ActivityView, string][] = [['overview', 'Overview'], ['logs', 'Logs'], ['quotas', 'Quotas']];
@@ -91,7 +92,7 @@ export default function ActivityCenter({ start }: { start?: ActivityView }) {
   return (
     <div className="rc-body ac">
       <div className="ac-head">
-        <div className="rc-page-intro"><h2 className="rc-h2">Activity</h2><p className="rc-muted">What Lumen used, how your requests ended, and how much is left. Provider limits appear only when known.</p></div>
+        <div className="rc-page-intro ac-page-intro"><h2 className="rc-h2">Activity</h2><p className="rc-muted">What Lumen recorded: how requests ended, and what was counted. Provider limits appear only when known.</p></div>
         <div className="ac-tabs" role="tablist" aria-label="Activity views" ref={tabs} onKeyDown={onKey}>
           {VIEWS.map(([id, label]) => <button key={id} id={`ac-tab-${id}`} type="button" role="tab" aria-selected={view === id} aria-controls="ac-panel" tabIndex={view === id ? 0 : -1} onClick={() => setView(id)}>{label}</button>)}
         </div>
@@ -139,7 +140,7 @@ function Overview({ go }: { go: (v: ActivityView) => void }) {
         <div className="ac-tile"><span>Completed, 7 days</span><strong>{success === null ? '—' : `${success}%`}</strong><small>{weekTotal ? `${week.ok} of ${weekTotal} requests` : 'No requests yet'}</small></div>
         <div className="ac-tile"><span>Allowances</span><strong>{known.length ? `${urgent.length ? urgent.length : 'All'} ${urgent.length ? 'need attention' : 'fine'}` : '—'}</strong><small>{known.length ? `${known.length} with a known limit` : 'No known limits yet'}</small></div>
       </section>
-      <section className="ac-card ac-trend" aria-labelledby="ac-trend-title" data-evidence-source="saved-chats">
+      <div className="ac-overview-main"><section className="ac-card ac-trend" aria-labelledby="ac-trend-title" data-evidence-source="saved-chats">
         <div className="ac-card-head"><h3 id="ac-trend-title" className="rc-h3">Requests, last 14 days</h3><span className="rc-muted">{!weekTotal ? 'No requests this week' : change === null ? `${weekTotal} this week` : `${weekTotal} this week · ${change >= 0 ? '+' : ''}${change}% vs the week before`}</span></div>
         <TrendChart days={days} />
         <p className="rc-muted ac-legend"><span><span className="ac-key ac-key-ok" />Completed</span><span><span className="ac-key ac-key-stopped" />Stopped</span><span><span className="ac-key ac-key-failed" />Failed</span><span>From this account’s saved chats</span></p>
@@ -155,7 +156,7 @@ function Overview({ go }: { go: (v: ActivityView) => void }) {
           {models.length ? <ol className="ac-rank">{models.slice(0, 5).map(([id, n]) => <li key={id}><span>{modelLabel(catalog, id)}</span><span className="ac-rank-bar" style={{ inlineSize: `${(n / models[0][1]) * 100}%` }} aria-hidden="true" /><strong>{n}</strong></li>)}</ol>
             : <p className="ac-empty">No completed requests in saved chats yet.</p>}
         </section>
-      </div>
+      </div></div>
     </div>
   );
 }
@@ -186,6 +187,7 @@ const toDay = (t: number) => new Date(t - new Date(t).getTimezoneOffset() * 6e4)
 const fromDay = (s: string, end = false) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d, end ? 23 : 0, end ? 59 : 0, end ? 59 : 0, end ? 999 : 0).getTime(); };
 
 function Logs() {
+  const phone = usePhoneLayout();
   const all = useLog(), catalog = useStore((s) => s.catalog), now = useNow(60_000);
   const [q, setQ] = useScreenMemory('activity-logs', { text: '', category: 'all' as LogCategory | 'all', level: 'all' as LogLevel | 'all', range: '7d' as RangeKey, from: toDay(Date.now() - 6 * 864e5), to: toDay(Date.now()), order: 'newest' as 'newest' | 'oldest', titles: false, shown: PAGE });
   const [open, setOpen] = useState<LogEntry | null>(null);
@@ -211,7 +213,9 @@ function Logs() {
   for (const r of visible) { const d = dayLabel(r.at, now); const g = groups.at(-1); if (g && g[0] === d) g[1].push(r); else groups.push([d, [r]]); }
   return (
     <div className="ac-logs" data-evidence-source="saved-request-outcomes">
+      <div className="ac-log-console" data-detail={Boolean(open) || undefined}>
       <div className="ac-toolbar">
+        <h3 className="rc-h3 ac-filter-heading">Filters</h3>
         <div className="rc-search ac-search"><Search size={16} aria-hidden="true" /><input type="search" aria-label="Search logs" placeholder="Search events, models, ids" value={q.text} onChange={(e) => set({ text: e.target.value })} />{q.text && <button type="button" aria-label="Clear log search" onClick={() => set({ text: '' })}><X size={16} aria-hidden="true" /></button>}</div>
         <div className="ac-filters">
           <FilterMenu<RangeKey> label="Time" value={q.range} onChange={(range) => set({ range })} options={[{ value: '7d', label: 'Last 7 days' }, { value: 'today', label: 'Today' }, { value: '24h', label: 'Last 24 hours' }, { value: '30d', label: 'Last 30 days' }, { value: 'all', label: 'All time' }, { value: 'custom', label: 'Custom dates' }]} />
@@ -221,7 +225,8 @@ function Logs() {
         </div>
         {q.range === 'custom' && <div className="ac-dates"><label>From <input type="date" value={q.from} max={q.to} onChange={(e) => e.target.value && set({ from: e.target.value })} /></label><label>To <input type="date" value={q.to} min={q.from} max={toDay(Date.now())} onChange={(e) => e.target.value && set({ to: e.target.value })} /></label></div>}
       </div>
-      <div className="ac-summary">
+      <div className="ac-log-content"><div className="ac-summary">
+        <h3 className="rc-h3">Request log</h3>
         <p role="status">{rows.length.toLocaleString()} {rows.length === 1 ? 'event' : 'events'}{errors ? ` · ${errors} ${errors === 1 ? 'error' : 'errors'}` : ''}{warnings ? ` · ${warnings} ${warnings === 1 ? 'warning' : 'warnings'}` : ''}</p>
         <div className="ac-actions">
           <label className="ac-check"><input type="checkbox" checked={q.titles} onChange={(e) => setQ((s) => ({ ...s, titles: e.target.checked }))} /> Show chat titles</label>
@@ -236,7 +241,7 @@ function Logs() {
             <h3 className="ac-label">{day}</h3>
             <ul className="ac-log">{list.map((e) => (
               <li key={e.id}>
-                <button type="button" className="ac-row" data-level={e.level} aria-haspopup="dialog" onClick={() => setOpen(e)}>
+                <button type="button" className="ac-row" data-level={e.level} aria-pressed={open?.id === e.id} aria-haspopup="dialog" onClick={() => setOpen(e)}>
                   <span className="ac-row-icon"><LevelIcon level={e.level} /><span className="sr-only">{LEVEL_LABEL[e.level]}: </span></span>
                   <span className="ac-row-main"><strong>{e.title}{e.count && e.count > 1 ? <small> ×{e.count}</small> : null}</strong><small>{[e.model ? label(e.model) : e.provider && providerName(e.provider), e.detail, q.titles && e.chatTitle].filter(Boolean).join(' · ') || CATEGORY_LABEL[e.category]}</small></span>
                   <span className="ac-row-meta"><span className="ac-tag">{CATEGORY_LABEL[e.category]}</span><time dateTime={new Date(e.at).toISOString()}>{time(e.at)}</time></span>
@@ -251,16 +256,17 @@ function Logs() {
         <p className="rc-muted">{!all.length ? 'Requests from saved chats and events such as model-list refreshes, limits and sync changes will be listed here.' : filtered ? 'Try another search, type, status or time range.' : `${all.length.toLocaleString()} earlier ${all.length === 1 ? 'event' : 'events'} in your history.`}</p>
         {all.length > 0 && (filtered || q.range !== 'all') && <button type="button" className="rc-link" onClick={() => set({ text: '', category: 'all', level: 'all', range: 'all' })}>{filtered ? 'Show everything' : 'Show all time'}</button>}
       </div>}
-      <p className="rc-muted ac-foot">Requests come from this account’s saved chats; other events are kept on this device for 30 days. Logs never include prompts, answers, provider replies or keys.</p>
-      {open && <LogDetail entry={open} titles={q.titles} onClose={() => setOpen(null)} />}
+      </div>
+      {open && <LogDetail key={`${open.id}:${phone}`} entry={open} titles={q.titles} inline={!phone} onClose={() => setOpen(null)} />}
+      </div><p className="rc-muted ac-foot">Requests come from this account’s saved chats; other events are kept on this device for 30 days. Logs never include prompts, answers, provider replies or keys.</p>
     </div>
   );
 }
 
-function LogDetail({ entry: e, titles, onClose }: { entry: LogEntry; titles: boolean; onClose: () => void }) {
+function LogDetail({ entry: e, titles, inline, onClose }: { entry: LogEntry; titles: boolean; inline: boolean; onClose: () => void }) {
   const catalog = useStore((s) => s.catalog);
   const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => { const d = dialog.current; if (d && !d.open) d.showModal(); }, []);
+  useEffect(() => { const d = dialog.current; if (d && !d.open) { if (inline) d.show(); else d.showModal(); } }, [inline]);
   const fields: [string, string, boolean?][] = [
     ['Status', LEVEL_LABEL[e.level]], ['Type', CATEGORY_LABEL[e.category]], ['When', clock(e.at)], ...(e.count && e.count > 1 ? [['Repeats', `${e.count} times within a minute`] as [string, string]] : []),
     ...(e.model ? [['Model', modelLabel(catalog, e.model)] as [string, string], ['Model id', e.model, true] as [string, string, boolean]] : []),
@@ -271,7 +277,7 @@ function LogDetail({ entry: e, titles, onClose }: { entry: LogEntry; titles: boo
     ['Source', e.source === 'saved-chat' ? 'Saved chat (synced with your account)' : 'This device'], ['Event id', e.id, true],
   ];
   return (
-    <dialog ref={dialog} className="ac-detail" aria-labelledby="ac-detail-title" onClose={onClose} onClick={(ev) => { if (ev.target === dialog.current) dialog.current?.close(); }}>
+    <dialog ref={dialog} className={`ac-detail${inline ? ' ac-detail-inline' : ''}`} aria-labelledby="ac-detail-title" onClose={onClose} onKeyDown={ev => { if (inline && ev.key === 'Escape') { ev.stopPropagation(); dialog.current?.close(); } }} onClick={(ev) => { if (!inline && ev.target === dialog.current) dialog.current?.close(); }}>
       <div className="ac-detail-head"><span className="ac-row-icon" data-level={e.level}><LevelIcon level={e.level} size={18} /></span><h3 id="ac-detail-title">{e.title}</h3><button type="button" className="ac-close" aria-label="Close event details" onClick={() => dialog.current?.close()}><X size={18} aria-hidden="true" /></button></div>
       <dl className="ac-fields">{fields.map(([k, v, copy]) => <div key={k}><dt>{k}</dt><dd><span dir="auto">{v}</span>{copy && <CopyButton value={v} label={k.toLowerCase()} />}</dd></div>)}</dl>
       {e.level === 'error' && e.category === 'request' && <p className="rc-muted">The provider’s own message isn’t shown, because it can quote what you asked.</p>}
@@ -287,6 +293,7 @@ function LogDetail({ entry: e, titles, onClose }: { entry: LogEntry; titles: boo
 // ---------- Quotas
 function Quotas() {
   const now = useNow(30_000), metrics = useMetrics(), t = useThresholds();
+  const counted = metrics.filter(metric => metric.source === 'counted');
   const settings = useStore((s) => s.settings);
   const [expanded, setExpanded] = useState<string | null>(null);
   const sorted = sortByUrgency(metrics, t, now);
@@ -297,6 +304,12 @@ function Quotas() {
   const urgent = limited.filter((m) => needsAttention(stateOf(m, t, now))).length;
   return (
     <div className="ac-quotas">
+      <section className="ac-card ac-counted" aria-labelledby="ac-counted-title" data-evidence-source="app-counters">
+        <div><h3 id="ac-counted-title" className="rc-h3">Counted by Lumen</h3><p className="rc-muted">Requests this app recorded. Not a provider bill.</p></div>
+        {counted.length ? <table><thead><tr><th scope="col">Measurement</th><th scope="col">Provider</th><th scope="col">Recorded</th><th scope="col">Period</th></tr></thead><tbody>{counted.map(metric => <tr key={metric.id}><th scope="row">{metric.label}</th><td>{providerName(metric.owner)}</td><td>{metric.used === null ? '—' : formatAmount(metric.used, metric.unit)} {metric.unit}</td><td>{metric.period.kind === 'day' ? 'Today' : metric.period.kind}</td></tr>)}</tbody></table> : <p className="ac-empty">No recorded requests yet.</p>}
+        <p className="rc-muted">Canonical app counters, not a provider bill. — means not recorded.</p>
+      </section>
+      <div className="ac-quota-main">
       <div className="ac-quota-summary">
         <p role="status"><strong>{urgent ? `${urgent} ${urgent === 1 ? 'allowance needs' : 'allowances need'} attention` : limited.length ? 'Everything is within its limit' : 'No known limits yet'}</strong><span className="rc-muted">{limited.length} with a known limit · {open.length} counted without one</span></p>
         <details className="ac-settings"><summary>Alert settings</summary>
@@ -319,6 +332,7 @@ function Quotas() {
           <ul className="ac-open-list">{open.map((m) => <li key={m.id}><span><strong>{m.label}</strong><small>{providerName(m.owner)} · {SOURCE_WORDS[m.source][0]}{m.period.kind === 'day' ? ` · resets in ${until(m.period.resetAt, now)}` : ''}</small></span><strong>{m.used === null ? '—' : formatAmount(m.used, m.unit)}<small> {m.unit === 'bytes' ? '' : m.unit}</small></strong></li>)}</ul>
         </section>
       )}
+      </div><aside className="ac-card ac-provenance"><h3 className="rc-h3">What these numbers mean</h3><dl><div><dt>Counted by Lumen</dt><dd>Requests this app recorded. Use from other apps or devices on the same key isn’t included.</dd></div><div><dt>Provider limits</dt><dd>Reported by the provider or learned when a request reaches a limit. Unknown isn’t unlimited.</dd></div><div><dt>Browser estimate</dt><dd>Storage used by this site, as estimated by your browser.</dd></div><div><dt>Billing</dt><dd>Lumen doesn’t see provider bills or balances, so none are shown.</dd></div></dl></aside>
       <p className="rc-muted ac-foot">Values come from provider reports, Lumen’s own counters and the browser. Forecasts are estimates from today’s pace. Lumen doesn’t see use from other apps on the same key, so counted figures can be lower than your provider’s.</p>
     </div>
   );

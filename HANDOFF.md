@@ -10,11 +10,13 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start new work on a branch from `origin/main`.
-- **Task:** none. Library + Tools-in-+ (PR #86), its density pass (PR #88) and the quality pass (PR #95) shipped.
+- **Branch:** `codex/router-approved-redesign`, from verified main `fbb59bd`; Lumen-local was clean at takeover.
+- **Task:** integrate the owner-approved Router prototype into canonical Canvas components (Models, Providers, Routing, Layouts, Activity). Implementation prepared; release BLOCKED by unchanged CSS source budget (33.2KB vs29.5KB). Affected run passes type/unit and both builds; broader affected browser/contracts are not certified because the runner stops at this gate. No merge/deploy. Scope and rulings: `docs/router/IMPLEMENTATION.md`. Private reference package stays outside the public repository.
 - **Authority:** standing (see Decisions): test, merge, deploy when verified.
 
 ## Next
+
+- [ ] Router release blocker: consolidate the new/legacy Router styles to the unchanged29.5KB source budget, rerun `npm run test:affected -- --run`, resolve remaining stable desktop flow checks, then exact-head CI/merge/gated Canvas deploy. Do not raise the cap or bypass checks. See `docs/router/IMPLEMENTATION.md`.
 
 - [ ] Owner, on the iPhone (PR #97, live): swipe back from Browse all tools opened from + (should slide straight to the
       chat, no + sheet); a partial swipe let go; a few open/close cycles.

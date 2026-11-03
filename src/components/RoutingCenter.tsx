@@ -295,7 +295,7 @@ export default function RoutingCenter() {
       {phone ? <PhoneNavigation title={providerOpen && provider ? providerLabel(provider) : 'Router'} onBack={closeRoutingCenter} /> : (
       <header className={`rc-head${sub ? ' rc-head-sub' : ''}`}>
         <button type="button" className="icon-btn feature-exit" aria-label={featureExitLabel()} onClick={() => exitFeature()}><ChevronLeft size={26} /></button>
-        <div className="rc-brand"><p>Router</p><h1 id="rc-title" tabIndex={-1} ref={heading}>{SECTIONS.find(([id]) => id === tabOf(section))?.[1] || 'Models'}</h1><p className="router-purpose">{section === 'models' ? 'Choose what answers the next message in this chat.' : section === 'providers' ? 'Connections, permissions and model availability.' : section === 'routing' ? 'How Lumen chooses, and what happens next.' : section === 'policies' ? 'Your models, organized around the work.' : 'Recorded activity, diagnostics and usage sources. Provider limits appear only when known.'}</p></div><div className="router-chat-context"><span>Next reply in</span><strong>{chat?.title || 'New chat'} · {modelLabel(catalog, model)}</strong><small>Draft and attachments kept</small></div>
+        <div className="rc-brand"><p>Router</p><h1 id="rc-title" tabIndex={-1} ref={heading}>{SECTIONS.find(([id]) => id === tabOf(section))?.[1] || 'Models'}</h1></div><div className="router-chat-context"><span>Next reply in</span><strong>{chat?.title || 'New chat'} · {modelLabel(catalog, model)}</strong></div>
         {!phone && (
           <nav className="rc-tabs" aria-label="Router sections">
             {SECTIONS.map(([id, label]) => <button type="button" key={id} aria-current={tabOf(section) === id ? 'page' : undefined} onClick={() => go(id)}>{label}</button>)}
@@ -337,7 +337,7 @@ export default function RoutingCenter() {
         </div>
       )}
 
-      {section === 'routing' && <div className="rc-body rc-routing-settings"><div className="rc-page-intro"><h2 className="rc-h2">Routing</h2><p className="rc-muted">How Lumen picks a model, and what it tries next when one fails.</p></div><div className="router-routing-console"><section aria-label="Routing preferences"><Suspense fallback={<p className="rc-muted" role="status">Loading routing…</p>}><RoutingSettings only="routing" /></Suspense></section><aside className="router-routing-context"><h3>When you send</h3><Suspense fallback={<p className="rc-muted">Loading routing context…</p>}><RoutingInsight /></Suspense></aside></div></div>}
+      {section === 'routing' && <div className="rc-body rc-routing-settings">{phone && <h2 className="rc-h2">Routing</h2>}<div className="router-routing-console"><section aria-label="Routing preferences"><Suspense fallback={<p className="rc-muted" role="status">Loading routing…</p>}><RoutingSettings only="routing" /></Suspense></section><aside className="router-routing-context"><h3>When you send</h3><Suspense fallback={<p className="rc-muted">Loading routing context…</p>}><RoutingInsight /></Suspense></aside></div></div>}
 
       {section === 'policies' && <Suspense fallback={<p className="rc-muted" role="status">Loading Layouts…</p>}><PrismLayouts /></Suspense>}
 

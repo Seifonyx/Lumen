@@ -84,7 +84,7 @@ export default function AssistantLibrary({ onClose, startNew = false, startWith,
   const mine = assistants.filter(match), lumen = BUILTIN_ASSISTANTS.filter(match);
 
   return (
-    <HubPage label="Assistants" title="Assistants" subtitle="Helpers with their own instructions and model. Start a chat with one, or make your own." onClose={onClose}
+    <HubPage label="Assistants" title="Assistants" subtitle={CANVAS_SHELL ? undefined : "Helpers with their own instructions and model. Start a chat with one, or make your own."} onClose={onClose}
       actions={<button className="btn primary" onClick={newItem}><Plus size={16} /> New assistant</button>}
       toolbar={<label className="hub-search"><Search size={16} /><input type="search" aria-label="Search assistants" placeholder="Search assistants" value={query} onChange={(e) => setQuery(e.target.value)} /></label>}>
       <div className="assistant-library">

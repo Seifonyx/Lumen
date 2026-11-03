@@ -21,7 +21,6 @@
 .app[data-lumen-canvas-shell] .tx-group h2 { margin: 0; font: 600 13px/1.3 var(--canvas-body-font); letter-spacing: 0; color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .tx-group h2:focus { outline: none; }
 .app[data-lumen-canvas-shell] .tx-group h2:focus-visible { outline: 2px solid var(--canvas-focus, var(--canvas-ink)); outline-offset: 3px; border-radius: 4px; }
-.app[data-lumen-canvas-shell] .tx-group > header p { margin: 0; font-size: 13px; color: var(--canvas-muted); }
 .app[data-lumen-canvas-shell] .tx-sub { margin: 6px 2px 0; font: 500 12px/1.3 var(--canvas-body-font); color: var(--canvas-muted); }
 
 .app[data-lumen-canvas-shell] .tx-list { margin: 0; padding: 0; list-style: none; border-radius: var(--canvas-radius-card); background: var(--canvas-surface); border: 1px solid transparent; overflow: hidden; }

@@ -261,7 +261,6 @@ html[data-lumen-canvas] .project-chat-list > .project-chat { padding-inline: 14p
 html[data-lumen-canvas] .project-chat-list > .project-chat + .project-chat { box-shadow: inset 0 1px var(--cv5-rim); }
 html[data-lumen-canvas] .project-chat-menu > .icon-btn { min-width: 44px; min-height: 44px; color: var(--text-2); }
 /* Desktop Settings: the section title is enough; the one-line blurb stays on phones, where it's the page's intro. */
-@media (min-width: 900px) { html[data-lumen-canvas] .settings-heading p { display: none; } }
 /* Data analysis / Run: the code takes at most about half the window so the output is visible without scrolling. */
 html[data-lumen-canvas] .analysis-panel .run-code { max-height: min(42vh, 420px); overflow: auto; }
 html[data-lumen-canvas] .analysis-panel .run-toolbar { position: sticky; top: 0; z-index: 1; background: var(--surface); }
@@ -517,7 +516,6 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(44 44 46 / .62
   html.glass[data-lumen-canvas] .app .hub-empty .hub-empty-icon { margin-top: 0; box-shadow: none; background: none; color: var(--text-3); }
   html.glass[data-lumen-canvas] .app .hub-empty .hub-empty-icon svg { width: 44px; height: 44px; stroke-width: 1.4; }
   html.glass[data-lumen-canvas] .app .library-panel:has(> .hub-empty) :is(.library-total, .library-controls) { display: none; }
-  html.glass[data-lumen-canvas] .app .library-knowledge-link { border-color: transparent; background: var(--native-fill, var(--surface-2)); }
 }
 @media (prefers-reduced-transparency: reduce) {
   html.glass[data-lumen-canvas] { --lg-tint: var(--surface-2); --lg-filter: none; }

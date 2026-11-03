@@ -43,16 +43,16 @@ export default function Study({ onClose, startFrom }: { onClose: () => void; sta
   const avg = allScores.length ? Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 100) : null;
   const back = view.kind === 'list' ? undefined : () => setView({ kind: 'list' });
   const title = view.kind === 'new' ? 'New deck' : deck ? deck.title : 'Study';
-  const subtitle = view.kind === 'new' ? 'Pick a chat or document. Lumen makes flashcards and a quiz from it.'
+  const subtitle = view.kind === 'new' ? (CANVAS_SHELL ? undefined : 'Pick a chat or document. Lumen makes flashcards and a quiz from it.')
     : deck ? `From “${deck.source.label}” · ${deck.cards.length} cards · ${deck.quiz.length} questions`
-    : 'Flashcards and quizzes made from your chats and documents. Cards you find hard come back sooner.';
+    : CANVAS_SHELL ? undefined : 'Flashcards and quizzes made from your chats and documents. Cards you find hard come back sooner.';
   return (
-    <HubPage label="Study" title={making ? 'Making your deck' : title} subtitle={making ? 'Reading it and writing flashcards and a quiz…' : subtitle} onClose={onClose} onBack={making ? undefined : back}
+    <HubPage label="Study" title={making ? 'Making your deck' : title} subtitle={making ? (CANVAS_SHELL ? undefined : 'Reading it and writing flashcards and a quiz…') : subtitle} onClose={onClose} onBack={making ? undefined : back}
       actions={view.kind === 'list' && !making && decks.length > 0 && <button type="button" className="btn primary" onClick={() => setView({ kind: 'new' })}><Plus size={16} /> New deck</button>}>
       <div className="study">
         {making && <div className="study-making" role="status"><Loader2 size={20} className="spin" /> Making flashcards and a quiz…</div>}
         {!making && view.kind === 'list' && (decks.length === 0 ? (
-          <HubEmpty icon={<GraduationCap size={26} />} title="No decks yet" text="Pick any chat or document and Lumen turns it into flashcards and a quiz. Your progress is saved to your account." action={<button type="button" className="btn primary" onClick={() => setView({ kind: 'new' })}><Plus size={16} /> Make your first deck</button>} />
+          <HubEmpty icon={<GraduationCap size={26} />} title="No decks yet" text={CANVAS_SHELL ? "Flashcards and quizzes from chats and documents. Progress is saved to your account." : "Pick any chat or document and Lumen turns it into flashcards and a quiz. Your progress is saved to your account."} action={<button type="button" className="btn primary" onClick={() => setView({ kind: 'new' })}><Plus size={16} /> Make your first deck</button>} />
         ) : (
           <>
             <div className="study-stats">

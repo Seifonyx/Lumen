@@ -23,23 +23,23 @@ export interface WorkspaceTool {
 }
 export interface ToolKey { name: string; ready: boolean; uses: string[]; /** Saved, but the provider refused it. */ rejected?: boolean }
 
-export const AREAS: { id: ToolArea; label: string; blurb: string }[] = [
-  { id: 'research', label: 'Research', blurb: 'Find things out on the web and in your history.' },
-  { id: 'create', label: 'Create', blurb: 'Write, draw and edit.' },
-  { id: 'analyze', label: 'Analyze', blurb: 'Numbers, data and second opinions.' },
-  { id: 'learn', label: 'Learn', blurb: 'Make what you read stick.' },
-  { id: 'assistants', label: 'Assistants', blurb: 'Helpers with their own instructions and model.' },
+export const AREAS: { id: ToolArea; label: string }[] = [
+  { id: 'research', label: 'Research' },
+  { id: 'create', label: 'Create' },
+  { id: 'analyze', label: 'Analyze' },
+  { id: 'learn', label: 'Learn' },
+  { id: 'assistants', label: 'Assistants' },
 ];
 
 // Each row's accessible name is the tool's name alone; what it does, any missing key and where it lands are its
 // description, so lists read briefly and exact-name lookups keep working.
-function useRowIds() { const id = useId(); return { name: `${id}n`, desc: `${id}d`, meta: `${id}m`, described: `${id}d ${id}m` }; }
+function useRowIds() { const id = useId(); return { name: `${id}n`, desc: `${id}d`, meta: `${id}m` }; }
 
-function RowCopy({ ids, name, text, meta }: { ids: ReturnType<typeof useRowIds>; name: string; text: string; meta?: ReactNode }) {
+function RowCopy({ ids, name, text, meta }: { ids: ReturnType<typeof useRowIds>; name: string; text?: string; meta?: ReactNode }) {
   return (
     <span className="tx-copy">
       <strong className="tx-name" id={ids.name}>{name}</strong>
-      <span className="tx-text" id={ids.desc}>{text}</span>
+      {text && <span className="tx-text" id={ids.desc}>{text}</span>}
       {meta && <span className="tx-meta" id={ids.meta}>{meta}</span>}
     </span>
   );
@@ -48,9 +48,11 @@ function RowCopy({ ids, name, text, meta }: { ids: ReturnType<typeof useRowIds>;
 function ToolRow({ t }: { t: WorkspaceTool }) {
   const ids = useRowIds();
   const unavailable = Boolean(t.needs && !t.ready);
+  const text = t.id === 'image' ? undefined : t.text;
+  const describedBy = [text && ids.desc, (unavailable || t.contextual) && ids.meta].filter(Boolean).join(' ');
   const body = <>
     <span className="tx-icon" aria-hidden="true">{t.icon}</span>
-    <RowCopy ids={ids} name={t.name} text={t.text} meta={<>
+    <RowCopy ids={ids} name={t.name} text={text} meta={(unavailable || t.contextual) && <>
       {unavailable ? <span className="tx-state setup"><KeyRound size={12} aria-hidden="true" />Needs {t.needs}</span>
         : t.contextual ? <span className="tx-tag">In replies</span> : null}
     </>} />
@@ -58,25 +60,26 @@ function ToolRow({ t }: { t: WorkspaceTool }) {
   if (t.contextual) return <li className="tx-row contextual"><div className="tx-hit">{body}</div></li>;
   if (t.toggle) return (
     <li className="tx-row">
-      <button type="button" role="switch" aria-checked={t.toggle.on} aria-labelledby={ids.name} aria-describedby={ids.described} className="tx-hit" onClick={t.run}>
+      <button type="button" role="switch" aria-checked={t.toggle.on} aria-labelledby={ids.name} aria-describedby={describedBy || undefined} className="tx-hit" onClick={t.run}>
         {body}<span className={`tx-switch${t.toggle.on ? ' on' : ''}`} aria-hidden="true"><span /></span>
       </button>
     </li>
   );
   return (
     <li className={`tx-row${unavailable ? ' unavailable' : ''}`}>
-      <button type="button" className="tx-hit" aria-labelledby={ids.name} aria-describedby={ids.described} onClick={t.run}>{body}<ChevronRight className="tx-go" size={17} aria-hidden="true" /></button>
+      <button type="button" className="tx-hit" aria-labelledby={ids.name} aria-describedby={describedBy || undefined} onClick={t.run}>{body}<ChevronRight className="tx-go" size={17} aria-hidden="true" /></button>
     </li>
   );
 }
 
 function AssistantRow({ a, builtin, onStart, onEdit }: { a: SavedAssistant; builtin: boolean; onStart: () => void; onEdit: () => void }) {
   const ids = useRowIds();
+  const describedBy = a.description ? ids.desc : undefined;
   return (
     <li className="tx-row has-side">
-      <button type="button" className="tx-hit" aria-labelledby={ids.name} aria-describedby={ids.described} onClick={onStart}>
+      <button type="button" className="tx-hit" aria-labelledby={ids.name} aria-describedby={describedBy || undefined} onClick={onStart}>
         <span className="tx-icon" aria-hidden="true"><Sparkles size={18} /></span>
-        <RowCopy ids={ids} name={a.name} text={a.description || 'Your custom assistant.'} />
+        <RowCopy ids={ids} name={a.name} text={a.description} />
       </button>
       <button type="button" className="tx-side" aria-label={builtin ? `Customize ${a.name}` : `Edit ${a.name}`} onClick={onEdit}><Pencil size={16} /></button>
     </li>
@@ -87,9 +90,9 @@ function NewAssistantRow({ onClick }: { onClick: () => void }) {
   const ids = useRowIds();
   return (
     <li className="tx-row">
-      <button type="button" className="tx-hit tx-new" aria-labelledby={ids.name} aria-describedby={ids.desc} onClick={onClick}>
+      <button type="button" className="tx-hit tx-new" aria-labelledby={ids.name} onClick={onClick}>
         <span className="tx-icon" aria-hidden="true"><Plus size={18} /></span>
-        <RowCopy ids={ids} name="New assistant" text="Your own instructions and model, ready in any chat." />
+        <RowCopy ids={ids} name="New assistant" />
       </button>
     </li>
   );
@@ -174,14 +177,14 @@ export default function ToolPicker(props: ToolPickerProps) {
             if (!list.length) return null;
             return (
               <section key={a.id} className="tx-group" id={`tools-${a.id}`} aria-labelledby={`tx-h-${a.id}`}>
-                <header><h3 id={`tx-h-${a.id}`}>{a.label}</h3>{area !== 'all' && <p>{a.blurb}</p>}</header>
+                <header><h3 id={`tx-h-${a.id}`}>{a.label}</h3></header>
                 <ul className="tx-list">{list.map((t) => <ToolRow key={t.id} t={t} />)}</ul>
               </section>
             );
           })}
           {(shownMine.length > 0 || shownBuiltins.length > 0 || (!q && (area === 'all' || area === 'assistants'))) && (
             <section className="tx-group" id="tools-assistants" aria-labelledby="tx-h-assistants">
-              <header><h3 id="tx-h-assistants">Assistants</h3>{area !== 'all' && <p>{AREAS[4].blurb}</p>}</header>
+              <header><h3 id="tx-h-assistants">Assistants</h3></header>
               {(shownMine.length > 0 || !q) && <>
                 <h4 className="tx-sub">Yours</h4>
                 <ul className="tx-list">

@@ -365,7 +365,7 @@
 
 .app[data-lumen-canvas-shell] .hub-body > .filter-menu { margin-bottom:12px; }
 
-@media(max-width:899px){ .app[data-lumen-canvas-shell] .settings-page.has-section:has(> .phone-navigation) .settings-heading h2{display:none;}}
+@media(max-width:899px){ .app[data-lumen-canvas-shell] .settings-page.has-section:has(> .phone-navigation) .settings-heading{display:none;}}
 /* Fixed action menus must escape the card's clipping, including during keyboard scrolling. */
 .app[data-lumen-canvas-shell] .proj-card:has(> .screen-actions) { overflow:visible;position:relative; }
 .app[data-lumen-canvas-shell] .proj-card > .screen-actions { position:relative;inset:auto;align-self:center; }

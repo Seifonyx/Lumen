@@ -195,12 +195,12 @@ function GlassTabs({ bar }: { bar?: HubBar }) {
 }
 
 /** A friendly empty state: an icon, a line of what goes here, and how to start. */
-export function HubEmpty({ icon, title, text, action }: { icon: ReactNode; title: string; text: string; action?: ReactNode }) {
+export function HubEmpty({ icon, title, text, action }: { icon: ReactNode; title: string; text?: string; action?: ReactNode }) {
   return (
     <div className="hub-empty">
       <span className="hub-empty-icon" aria-hidden="true">{icon}</span>
       <h2>{title}</h2>
-      <p>{text}</p>
+      {text && <p>{text}</p>}
       {action}
     </div>
   );

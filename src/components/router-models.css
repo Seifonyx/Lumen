@@ -7,7 +7,6 @@ html[data-lumen-canvas] .rm-browser-title { display:flex;align-items:center;just
 html[data-lumen-canvas] .rm-browser-title h2 { font-size:15px;font-weight:600; }
 html[data-lumen-canvas] .rm-browser-title h2 small { margin-left:5px;color:var(--canvas-secondary);font-size:13px;font-weight:400; }
 html[data-lumen-canvas] .rm-browser .rc-search { height:40px; }
-html[data-lumen-canvas] .rm-catalog-note { color:var(--canvas-secondary);font-size:13px;line-height:1.5;margin:12px 0 0; }
 html[data-lumen-canvas] .rm-browser-list { max-height:calc(100dvh - 390px);min-height:180px;overflow:auto;padding:6px;scrollbar-width:thin; }
 html[data-lumen-canvas] .rm-provider-group h3 { padding:16px 12px 8px;color:var(--canvas-secondary);font-size:13px;font-weight:500; }
 html[data-lumen-canvas] .rm-console .rm-model { display:block;padding:0;min-height:0;border:0;background:none;box-shadow:none; }

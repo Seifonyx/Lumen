@@ -19,13 +19,13 @@ try{for(const[width,height]of sizes)for(const theme of['light','dark']){
  const tab=name=>rc.getByRole('tablist',{name:'Activity views'}).getByRole('tab',{name,exact:true});
  await nav.getByRole('button',{name:'Activity',exact:true}).click();await tab('Overview').waitFor();assert.equal(await tab('Overview').getAttribute('aria-selected'),'true','Activity opens on its Overview');
  await rc.locator('[data-evidence-source="app-counters"]').waitFor();await rc.locator('[data-evidence-source="saved-chats"]').waitFor();
- const overview=await rc.innerText();assert.match(overview,/Requests today/);assert.match(overview,/Counted by Lumen/);assert.match(overview,/3 of 5 requests/);assert.match(overview,/Provider limits appear only when known/);assert.doesNotMatch(overview,/\bAvailable\b/);
+ const overview=await rc.innerText();assert.match(overview,/Requests today/);assert.match(overview,/Counted by Lumen/);assert.match(overview,/3 of 5 requests/);assert.match(overview,/with a known limit/);assert.doesNotMatch(overview,/\bAvailable\b/);
  for(const secret of['PRIVATE CHAT TITLE','PRIVATE PROMPT','PRIVATE_BODY','private provider response','TEMPORARY PRIVATE'])assert(!overview.includes(secret),`hidden overview content: ${secret}`);
  const flat=async()=>{assert(await rc.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Activity has no horizontal clipping');assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no page overflow');};
  const top=()=>page.evaluate(()=>{document.activeElement?.blur();window.scrollTo(0,0);const p=document.querySelector('.rc-page'),s=document.querySelector('.rc-scroll');if(p)p.scrollTop=0;if(s)s.scrollTop=0});
  await flat();await top();await page.screenshot({path:path.join(out,`${engine}-${width}-${theme}-overview.png`),animations:'disabled'});
  // Quotas: real counters only. Gemini has no reported limit (counted, unknown); cloud sync has the free plan's limits.
- await tab('Quotas').click();const quotas=rc.locator('.ac-quotas');await quotas.waitFor();const qText=await quotas.innerText();assert.match(qText,/Counted, no known limit/);assert.match(qText,/Sync reads/);assert.doesNotMatch(qText,/\bNaN\b|undefined/);
+ await tab('Quotas').click();const quotas=rc.locator('.ac-quotas');await quotas.waitFor();const qText=await quotas.innerText();assert.match(qText,/Counted, no known limit/);assert.match(qText,/Provider limits appear only when known/);assert.match(qText,/Sync reads/);assert.doesNotMatch(qText,/\bNaN\b|undefined/);
  const reads=quotas.locator('.ac-quota',{hasText:'Sync reads'}).locator('.ac-quota-hit');await reads.click();assert.equal(await reads.getAttribute('aria-expanded'),'true');assert.match(await quotas.innerText(),/Where this comes from/);
  await quotas.getByText('Alert settings',{exact:true}).click();await quotas.getByRole('combobox').selectOption('70');assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mr.settings')||'{}').quotaWarnAt),0.7,'the warning level is a saved setting');
  await flat();await top();await page.screenshot({path:path.join(out,`${engine}-${width}-${theme}-quotas.png`),animations:'disabled'});

@@ -35,7 +35,7 @@ for(const width of (process.env.LIBRARY_WIDTHS||'320,390,430,1440').split(',').m
   }
   const audit=await new AxeBuilder({page}).include('.hub-page').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();assert.deepEqual(audit.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})),[]);
   assert(await hub.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'no horizontal page clipping');
-  const nav=page.getByRole('tablist',{name:'Library content types'});await nav.getByRole('tab',{name:'Knowledge',exact:true}).click();await page.getByText('Your references, in one place',{exact:true}).waitFor();assert.match(await hub.innerText(),/only on this device/);await page.screenshot({path:path.join(out,`${width}-${theme}-knowledge.png`),animations:'disabled'});
+  const nav=page.getByRole('tablist',{name:'Library content types'});await nav.getByRole('tab',{name:'Knowledge',exact:true}).click();await page.getByRole('heading',{name:'No documents yet',exact:true}).waitFor();assert.match(await hub.innerText(),/only on this device/);await page.screenshot({path:path.join(out,`${width}-${theme}-knowledge.png`),animations:'disabled'});
   await page.emulateMedia({forcedColors:'active'});assert(await page.getByRole('button',{name:'Return to chat',exact:true}).isVisible());await page.emulateMedia({forcedColors:'none'});assert.deepEqual(errors,[]);
  }
  results.push({width,theme,passed:true});await ctx.close();console.log('PASS Library',before?'before':'after',engine,width,theme);

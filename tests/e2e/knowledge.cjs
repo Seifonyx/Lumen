@@ -533,7 +533,7 @@ const settings = async (page) => {
         .getByRole("button", { name: "Delete document", exact: true })
         .click();
       await page
-        .getByText("Your references, in one place", { exact: true })
+        .getByRole("heading", { name: /^(No documents yet|Your references, in one place)$/ })
         .waitFor();
       await close(page);
       await page.locator(".knowledge-citations button").first().click();

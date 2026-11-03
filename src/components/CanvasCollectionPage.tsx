@@ -1,4 +1,4 @@
-import { BookOpen, ChevronLeft, ChevronRight, Download, FileText, Image as ImageIcon, Plus, Search } from 'lucide-react';
+import { ChevronLeft, Download, FileText, Image as ImageIcon, Plus, Search } from 'lucide-react';
 import { Suspense, useEffect, useId, useMemo, useState } from 'react';
 import { useStore } from '../store';
 import { usePhoneLayout } from '../lib/phone-layout';
@@ -20,13 +20,13 @@ import { openImage } from './ImageViewer';
 import { prepareTool } from './Composer';
 import './canvas-library.css';
 
-const categories: {id:CollectionKind;label:string;description:string}[] = [
- {id:'all',label:'Everything',description:'Documents, photos and files from your saved chats, and what Lumen made in them, appear here.'},
- {id:'documents',label:'Documents',description:'Documents you write and edit with Lumen.'},
- {id:'photos',label:'Photos',description:'Photos and images you added to chats.'},
- {id:'files',label:'Attached files',description:'Files you attached to chats.'},
- {id:'generated',label:'Made by Lumen',description:'Images and files Lumen made in replies.'},
- {id:'searchable',label:'Knowledge',description:'Your reference library: Lumen searches it and cites pages. Kept only on this device.'},
+const categories: {id:CollectionKind;label:string}[] = [
+ {id:'all',label:'Everything'},
+ {id:'documents',label:'Documents'},
+ {id:'photos',label:'Photos'},
+ {id:'files',label:'Attached files'},
+ {id:'generated',label:'Made by Lumen'},
+ {id:'searchable',label:'Knowledge'},
 ];
 const src = (item: LibraryItem) => 'file' in item && item.file.kind === 'image' ? item.file.data ? `data:${item.file.mime};base64,${item.file.data}` : item.file.thumb : undefined;
 // Cache only the parser function, never an account's content. Remounted history views
@@ -71,14 +71,14 @@ export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()
    <section id={panel} role="tabpanel" aria-labelledby={`${panel}-${kind}`} className={`library-panel kind-${kind}`}>
     {discoveryError&&<p role="alert">Generated file discovery could not load. Your other chat items remain available. Reopen Library to retry.</p>}
     <h2 className="sr-only">{category.label}</h2>
-    {kind==='searchable'?<div className="files-uploads"><p className="library-knowledge-note">Lumen searches these and cites their pages. Kept only on this device, not synced to your account.</p>{!phone&&<div className="library-controls">{search}</div>}<KnowledgeLibrary onClose={onClose} filter={query}/></div>:<>
+    {kind==='searchable'?<div className="files-uploads"><p className="library-knowledge-note">Kept only on this device.</p>{!phone&&<div className="library-controls">{search}</div>}<KnowledgeLibrary onClose={onClose} filter={query}/></div>:<>
      <div className={`library-controls${!scoped.length&&filtered&&!project?' is-empty':''}`}>{!phone&&search}{phone&&total}<div className="library-sorts">{(scoped.length>0||!filtered)&&<label><span className="sr-only">Sort library</span><select aria-label="Sort library" value={sort} onChange={e=>setSort(e.target.value as LibrarySort)}><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="name">Name A–Z</option></select></label>}{Boolean(projects?.length)&&(scoped.length>0||!filtered||project)&&<label><span className="sr-only">Project</span><select aria-label="Project" value={project} onChange={e=>setProject(e.target.value)}><option value="">All projects</option>{projects?.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}</div></div>
      {scoped.length?<>
       {!phone&&<div className="library-cols">{total}<span aria-hidden="true">From</span><span aria-hidden="true">Added</span></div>}
       <ul className="library-ledger">{scoped.map(item=><Row key={item.key} item={item} twin={twins.get(item.key)} onOpen={()=>open(item)} openChat={openChat}/>)}</ul>
-     </>:filtered?<div className="library-nomatch" role="status"><h3>No matching items</h3><p>{query?<>Nothing in {category.label==='Everything'?'your Library':category.label} matches “<bdi>{query.trim()}</bdi>”{project?' in this project':''}.</>:'Nothing in this project yet.'}</p><button type="button" className="btn small" onClick={()=>{setQuery('');setProject('')}}>{query&&project?'Clear search and filters':query?'Clear search':'Show every project'}</button></div>
-      :<HubEmpty icon={<FileText size={28}/>} title={kind==='all'?'Nothing saved yet':`No ${category.label.toLowerCase()} yet`} text={category.description}/>}
-     {kind==='all'&&<p className="library-knowledge-link"><BookOpen size={18} aria-hidden="true"/><span>Knowledge isn’t listed here: it stays on this device.</span><button type="button" onClick={()=>setKind('searchable')}>Open Knowledge<ChevronRight size={16} aria-hidden="true"/></button></p>}
+     </>:filtered?<div className="library-nomatch" role="status"><h3>No matching items</h3><button type="button" className="btn small" onClick={()=>{setQuery('');setProject('')}}>{query&&project?'Clear search and filters':query?'Clear search':'Show every project'}</button></div>
+      :<HubEmpty icon={<FileText size={28}/>} title={kind==='all'?'No files yet':kind==='generated'?'No generated files yet':`No ${category.label.toLowerCase()} yet`}/>}
+
     </>}
    </section>
   </div>

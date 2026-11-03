@@ -25,7 +25,7 @@
 
 **Owner reporting preference (2026-10-23, standing):** every report to the owner ends with a plain summary of the features and changes implemented (what changed for users, per area), alongside test results and risks.
 
-**Current next action (2026-11-03):** Owner reviews PR101 live on the iPhone (All projects, workspace Context row and file rows, the project draft surviving navigation, VoiceOver, keyboard/IME) and picks the next phase. No implementation is in progress.
+**Current next action (2026-11-03):** PR101's implementation and gated Canvas deployment are complete; **docs-only [PR102](https://github.com/Seifonyx/Lumen/pull/102) remains open** after Claude Code hit its weekly usage limit during the handoff. PR102 changes only `HANDOFF.md` to clear the finished task, record the release and list the iPhone check. The next available coding agent should inspect PR102's **exact-head CI** and merge it if green and otherwise sound; do **not** redeploy the app for this docs-only PR. CI for PR102 is not independently certified by this checkpoint. Then the owner checks live PR101 on physical iPhone (All projects, workspace Context, file rows, project draft across navigation, VoiceOver and keyboard/IME) and reports any concrete issues before authorizing another product phase. No implementation stream is open.
 
 **Owner decisions recorded (2026-10-22), replacing the P1 backlog questions:**
 - **Pinch zoom:** stays disabled in the main chat (native-app feel). Keep comfortable text sizes and system text-size support where feasible; the document Canvas may have its own zoom.

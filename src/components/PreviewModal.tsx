@@ -6,7 +6,7 @@ import { renderMarkdown } from '../lib/markdown';
 import { copyText, extOf, saveBlob } from '../lib/util';
 import { useStore } from '../store';
 import Modal from './Modal';
-import { CANVAS_SHELL, useScreenBackLayer, navigateBack, exitFeature, featureExitLabel } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, useScreenBackLayer, navigateBack, screenUp } from '../lib/canvas-presentation';
 
 const SheetPreview = lazy(() => import('./SheetPreview'));
 const DeckPreview = lazy(() => import('./DeckPreview'));
@@ -66,7 +66,7 @@ export default function PreviewModal() {
   return (
     <Modal
       full
-      leading={CANVAS_SHELL && <button type="button" className="icon-btn feature-exit" aria-label={featureExitLabel!()} onClick={()=>exitFeature!()}><ChevronLeft size={24}/></button>}
+      leading={CANVAS_SHELL && <button type="button" className="icon-btn feature-exit" aria-label="Back" onClick={()=>screenUp!(close)}><ChevronLeft size={24}/></button>}
       origin={preview.from}
       onClose={close}
       title={

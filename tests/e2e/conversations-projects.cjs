@@ -1,4 +1,5 @@
 // Real application, identical synthetic content before/after; no external services/inference.
+const { leavePlace } = require('./helpers/nav.cjs');
 const assert = require('node:assert/strict'), fs = require('node:fs'), path = require('node:path');
 const { execFileSync } = require('node:child_process'), { createHash } = require('node:crypto');
 const { chromium, webkit } = require('playwright');
@@ -40,7 +41,7 @@ const chats = [chat('origin', 'A quieter way to work'), chat('pinned', 'Ideas wo
       if (!await page.locator('[data-lumen-canvas-shell]').count()) { console.log('Conversations & Projects: not applicable to ordinary presentation'); await ctx.close(); return; }
       await seed(page, 'conversations-projects', chats); await page.reload(); await page.locator('.composer textarea').waitFor();
       const drawer = page.locator('aside.cv-nav');
-      const openDrawer = async () => { if (phone && !await drawer.evaluate(el => el.classList.contains('open'))) await page.locator('.menu-btn:visible, .hub-nav[aria-label="Open sidebar"]:visible').first().click(); };
+      const openDrawer = async () => { if (phone && !await drawer.evaluate(el => el.classList.contains('open'))) await page.locator('.menu-btn:visible, .hub-nav[aria-label="Open sidebar"]:visible, .phone-navigation > button[aria-label="Open navigation"]:visible').first().click(); };
       await openDrawer(); await drawer.getByRole('button', { name: 'A quieter way to work', exact: true }).click();
       await page.locator('.composer textarea').fill('Keep my original draft exactly.');
       const shot = async name => { await page.evaluate(() => document.fonts.ready); if (!await page.locator('[role="menu"]:visible').count()) await page.mouse.move(width - 1, height - 1); await page.evaluate(() => { if (!document.activeElement?.closest('[role="menu"]')) document.activeElement?.blur(); }); await page.screenshot({ path: path.join(out, `${width}-${theme}-${name}.png`), animations: 'disabled' }); };
@@ -88,7 +89,7 @@ const chats = [chat('origin', 'A quieter way to work'), chat('pinned', 'Ideas wo
         assert(await page.locator('.project-page').evaluate(el => el.scrollWidth <= el.clientWidth + 1));
         if (phone) { await page.locator('.project-context-toggle').click(); await shot('context'); await audit('.project-page'); }
         // Opening a project must not consume the previous general-chat draft or send a request.
-        if (phone) await page.locator('.phone-navigation').getByRole('button', { name: 'Return to chat', exact: true }).click();
+        if (phone) await leavePlace(page, '.project-workspace-main');
         else { await openDrawer(); await drawer.getByRole('button', { name: 'A quieter way to work', exact: true }).click(); }
         assert.equal(await page.locator('.composer textarea').inputValue(), 'Keep my original draft exactly.');
         await openDrawer(); const active = drawer.locator('.chat-row.active');

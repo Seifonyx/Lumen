@@ -70,7 +70,10 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // Projects redesign (owner-authorized, 2026-11-03): canvasCss 34 → 34.5. All projects and the workspace move to a lazy
 // stylesheet (components/canvas-projects.css, ≈2 KB gz) loaded with CanvasProjects.tsx; the old Projects rules left
 // canvas-screens.css/canvas-shell.css, so startup CSS fell 19.2 → 18.5 KB gz. Measured source total 34.1 KB gz.
-const BUDGET = { startupJs: 15.5, startupCss: 20, routingCenter: 9, canvasCss: 34.5 };
+// iOS navigation model (owner, 2026-11-04: "do not hold back"): startupJs 15.5 → 16. The drawer becomes the root and Back
+// goes up one level, which the first screen needs at once (history roots, in-place tabs, the drawer step, the phone bar
+// following the history): +0.54 KB gz over main (measured 15.9). The gestures themselves stay in the lazy coordinator.
+const BUDGET = { startupJs: 16, startupCss: 20, routingCenter: 9, canvasCss: 34.5 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

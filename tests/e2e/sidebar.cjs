@@ -111,7 +111,11 @@ const settled = page => page.waitForTimeout(320);
         await touch(page, '.settings-page', 'touchstart', start, y);
         await touch(page, '.settings-page', 'touchmove', start + sign * 150, y);
         await touch(page, '.settings-page', 'touchend', start + sign * 150, y);
-        check(!(await isOpen()), `${label}: settings cannot trigger a hidden drawer`);
+        // Canvas: Settings chosen in the drawer is a root (iOS model), so its right swipe shows the drawer; the ordinary
+        // build keeps Settings' own swipe.
+        const canvasShell = await page.locator('[data-lumen-canvas-shell]').count() > 0;
+        check(canvasShell ? await isOpen() : !(await isOpen()), `${label}: settings ${canvasShell ? 'opens the drawer as a root' : 'cannot trigger a hidden drawer'}`);
+        if (canvasShell && await isOpen()) { await page.getByRole('button', { name: 'Close menu', exact: true }).click(); await settled(page); }
         await closeSettings(page);
 
         await page.fill('.composer textarea', 'A long scroll test'); await page.click('.send-btn');

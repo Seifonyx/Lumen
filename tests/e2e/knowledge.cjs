@@ -1,4 +1,5 @@
 const {openSettings,replyAction,openSettingsSection,closeSettings}=require('./helpers/ui.cjs');
+const { leavePlace } = require('./helpers/nav.cjs');
 const { chromium } = require("playwright"),
   assert = require("node:assert/strict"),
   AxeBuilder = require("@axe-core/playwright").default;
@@ -54,7 +55,7 @@ const open = async (page) => {
   }
 };
 const close = async (page) =>
-  page.locator('.hub-page > .hub-bar .feature-exit, .hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label^="Return to "]').click();
+  (await page.locator('.hub-page .phone-navigation').isVisible()) ? leavePlace(page, '.hub-page') : page.locator('.hub-page > .hub-bar .feature-exit, .hub-page [aria-label="Close"]').click();
 // The cited source opens in its own window.
 const closeSource = async (page) =>
   page

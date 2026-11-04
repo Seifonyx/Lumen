@@ -35,6 +35,8 @@ export const PhoneNavigation: import('react').ComponentType<import('../component
 export const navigateBack: typeof import('./screen-history').screenBack | null = null;
 export const exitFeature: typeof import('./screen-history').exitFeature | null = null;
 export const featureExitLabel: typeof import('./screen-history').featureExitLabel | null = null;
+export const screenUp: typeof import('./screen-history').screenUp | null = null;
+export const screenIsRoot: typeof import('./screen-history').screenIsRoot | null = null;
 export const useScreenMemory: typeof import('./screen-memory').useScreenMemory | null = null;
 export const CanvasFilterMenu: typeof import('../components/FilterMenu').default | null = null;
 export const useScreenBackLayer: typeof import('./back-stack').useBackLayer | null = null;
@@ -45,6 +47,7 @@ export const CanvasProjectWorkspace: import('react').ComponentType<{ project: im
 export const CanvasToolsWorkspace: typeof import('../components/ToolsWorkspace').default | null = null;
 export const CanvasSettingsIndex: typeof import('../components/SettingsIndex').default | null = null;
 export const navigateScreen: typeof import('./screen-history').navigateScreen | null = null;
+export const holdScreenStep: typeof import('./screen-history').holdScreenStep | null = null;
 export const CanvasScreenActions: typeof import('../components/ScreenActions').default | null = null;
 
 export const replaceScreen: typeof import('./screen-history').replaceScreen | null = null;

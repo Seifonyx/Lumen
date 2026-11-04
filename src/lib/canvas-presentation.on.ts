@@ -27,7 +27,7 @@ export { newGeneralChat } from './new-chat';
 
 export const PhoneNavigation = lazy(() => import('../components/PhoneNavigation'));
 export { screenBack as navigateBack } from './screen-history';
-export { exitFeature, featureExitLabel } from './screen-history';
+export { exitFeature, featureExitLabel, screenUp, screenIsRoot } from './screen-history';
 export { useScreenMemory } from './screen-memory';
 export const CanvasFilterMenu = lazy(() => import('../components/FilterMenu'));
 export { useBackLayer as useScreenBackLayer } from './back-stack';
@@ -46,7 +46,7 @@ export const prefetchPlace = (place: keyof typeof placeLoads) => {
   requested.add(place);
   for (const load of placeLoads[place]) void load().catch(() => requested.delete(place));
 };
-export { navigateScreen } from './screen-history';
+export { navigateScreen, holdScreenStep } from './screen-history';
 export const CanvasScreenActions = lazy(() => import('../components/ScreenActions'));
 
 export { replaceScreen, finishScreen } from './screen-history';

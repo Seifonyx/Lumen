@@ -1,4 +1,4 @@
-import { navigateBack, navigateScreen, prefetchPlace } from '../lib/canvas-presentation';
+import { holdScreenStep, navigateBack, navigateScreen, prefetchPlace } from '../lib/canvas-presentation';
 // CP03 Canvas navigation (approved Canvas design, Gate 1). Reached only when CANVAS_SHELL is on
 // (src/lib/canvas-presentation.ts); the ordinary build folds it away.
 // One tree: projects are folders of their conversations; loose conversations are pinned first, then newest first. It is the same
@@ -30,7 +30,7 @@ const PHONE = '(max-width: 899px)';
 const ROW = '.cv-dest button, .cv-section-toggle:not(:disabled), .cv-project-row, .cv-brief, .chat-open, .cv-more, .cv-new-here, .cv-all, .cv-empty, .cv-ask';
 const shown = (el: Element | null | undefined): el is HTMLElement => el instanceof HTMLElement && el.isConnected && el.getClientRects().length > 0 && !el.closest('[inert], [hidden]');
 /** The buttons that open the drawer on phones, by the bar that is showing (chat, a hub page, the Routing Center). */
-const DRAWER_OPENERS = '.menu-btn, .hub-nav[aria-label="Open sidebar"], .rc-menu';
+const DRAWER_OPENERS = '.menu-btn, .hub-nav[aria-label="Open sidebar"], .rc-menu, .phone-navigation button[aria-label="Open navigation"]';
 /** Scrolls only the tree (never the page) so `row` is in view. */
 function reveal(row: Element | null | undefined) {
   const tree = row?.closest<HTMLElement>('.cv-tree');
@@ -85,6 +85,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   const sidebarRef = useRef<HTMLElement>(null);
   const searchInput = useRef<HTMLInputElement>(null);
   const wasOpen = useRef(false);
+  const step = useRef<(() => void) | null>(null);
   const opener = useRef<{ el: HTMLElement | null; page: unknown; routing: boolean }>({ el: null, page: null, routing: false });
   const ids = useId();
 
@@ -104,6 +105,8 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         opener.current = { el: active instanceof HTMLElement && !sidebarRef.current?.contains(active) ? active : null, page: useStore.getState().page, routing: routingCenterOpen() };
         sidebarRef.current?.focus({ preventScroll: true });
         reveal(sidebarRef.current?.querySelector('.chat-row.active'));
+        // The places it lists load now, so a tap shows the page at once (a touch has no hover to start them earlier).
+        for (const place of ['router', 'library', 'settings', 'projects'] as const) prefetchPlace?.(place);
       } else if (wasOpen.current && !useStore.getState().settingsOpen) {
         // Closing to go somewhere else (a page, the Routing Center) leaves focus to that destination.
         const was = opener.current, s = useStore.getState();
@@ -193,12 +196,15 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         aria-hidden={(phone && !open) || undefined}
         inert={phone && !open}
         onClickCapture={(e) => {
+          // Everything one tap here does (leaving Settings or Router, then the item's own action) is one navigation step.
+          step.current = holdScreenStep?.() || null;
           // As in Sidebar: using the sidebar while Settings is open (computers) leaves Settings.
           const target = (e.target as HTMLElement).closest('button, a, [role="button"]');
           if (target && !target.closest('.cv-account, .row-menu, [role="menu"]') && useStore.getState().settingsOpen) setUi({ settingsOpen: false });
           // Going anywhere else from the tree leaves the Routing Center (the head's own buttons and row menus excepted).
           if (target && !target.closest('[data-routing-center], .cv-head, .cv-section-h, .cv-project-row, .row-menu, [role="menu"]')) closeRoutingCenter();
         }}
+        onClick={() => { step.current?.(); step.current = null; }}
       >
         <div className="cv-head">
           <span className="cv-brand">{BrandWordmark ? <BrandWordmark height={phone ? 24 : 20} /> : <span className="cv-wordmark">Lumen</span>}</span>

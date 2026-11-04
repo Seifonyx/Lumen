@@ -17,6 +17,16 @@ export function replaceScreen(run: () => void) { if (replace) replace(run); else
 export function finishScreen(run: () => void) { replaceScreen(run); screenBack(); }
 /** Combine synchronous canonical UI operations into one visible navigation step. */
 export function navigateScreen(run: () => void) { const outer = applying; applying = true; try { run(); } finally { applying = outer; if (!outer) commit?.(); } }
+/** One step across several handlers of the same tap (a drawer's capture handler and the item's own): returns the end,
+ * which also runs on its own after the event in case a handler stops it. */
+export function holdScreenStep() {
+  if (applying) return () => {};
+  applying = true;
+  let open = true;
+  const end = () => { if (!open) return; open = false; applying = false; commit?.(); };
+  window.setTimeout(end, 0);
+  return end;
+}
 // Position tracks the actual browser stack independently of opaque, never-reused entry IDs.
 // After a Back and new push, the browser discards its Forward branch; prune our in-memory copy too.
 let positions = new Map<number, number>();
@@ -43,9 +53,27 @@ export const screenEntry = () => entries.get(active);
 let pops: { before: (app: boolean) => void; after: () => void } | null = null;
 export const onScreenPop = (hooks: typeof pops) => { pops = hooks; };
 // Feature ownership travels with the existing in-memory entries, never the browser payload.
-type Visit = { feature: string; origin: number; direct?: boolean };
+// A root visit was chosen in the phone drawer (or began the session): like a place picked in an iOS app's sidebar, it
+// replaces the screen rather than being pushed over it, so its first screen has no Back (its swipe opens the drawer).
+type Visit = { feature: string; origin: number; direct?: boolean; root?: boolean };
 const visits = new Map<number, Visit>();
 let directExit: number | null = null;
+// Set while a tap in the open phone drawer is being handled: the drawer closes and a place opens in the same task.
+let fromDrawer = false;
+const phoneLayout = () => window.matchMedia?.('(max-width:899px)').matches;
+// Router's section tabs switch in place on phones, like a segmented control: one screen, not a step per tab (a sub-screen
+// of the tab being left goes with it). A link inside the content that changes section (Manage model) is still a step.
+let tapping = false;
+/** Runs a tap on a section tab: on phones it switches in place instead of adding a history step. */
+export function switchTab(run: () => void) { tapping = phoneLayout(); try { run(); } finally { tapping = false; } }
+const tabSwitch = (a: Screen, b: Screen) => tapping && a.routing.open && b.routing.open && !b.routing.provider && !b.layer
+ && a.routing.section !== b.routing.section && same({ ...a, layer: false, layerKey: null }, { ...b, routing: a.routing });
+const screenListeners = new Set<() => void>();
+/** Notified whenever the current screen entry changes (for controls that depend on where Back leads). */
+export const subscribeScreens = (fn: () => void) => { screenListeners.add(fn); return () => { screenListeners.delete(fn); }; };
+let screenVersion = 0;
+export const screenSnapshot = () => screenVersion;
+const screensChanged = () => { screenVersion++; screenListeners.forEach((fn) => fn()); };
 const closeFeature = () => { reconcileBackLayers(null); useStore.setState({ page: null, pageArg: undefined, canvasOpen: false, preview: null, runner: null, settingsOpen: false, projectWorkspaceOpen: false }); restoreRoutingScreen({ open: false, section: 'models' }); };
 const feature = (s: Screen) => s.page === 'collection' ? 'library' : ['tools','assistants','study'].includes(s.page || '') ? 'tools' : s.page || (s.routing.open ? 'prism' : s.projectWorkspaceOpen ? 'projects' : s.canvasOpen ? 'canvas' : s.runner ? 'tools' : s.settingsOpen ? 'settings' : s.layer ? 'overlay' : null);
 // Where Exit leads: the entry the visit began from, while it is still behind this one in this tab's history.
@@ -57,7 +85,9 @@ function exitTarget() {
 /** Exit the entire visit by traversing to its origin. Sequential browser history remains intact. */
 export function exitFeature(fallback?: () => void) {
   if (traversalTimer !== undefined || !window.dispatchEvent(new Event('lumen:before-feature-exit', { cancelable: true }))) return;
-  const target = exitTarget();
+  // A place chosen in the drawer replaced the screen before it: leaving it goes to the chat, not back to that screen.
+  const visit = visits.get(active);
+  const target = visit?.root && !visit.direct ? null : exitTarget();
   if (target) { if (target.direct) directExit = target.id; traverse(target.delta); return; }
   replaceScreen(() => {
     if (fallback) { reconcileBackLayers(null); fallback(); } else closeFeature();
@@ -103,22 +133,48 @@ export function screenBackToSettings(target: 'index' | 'exit', fallback: () => v
   if (destination) traverse(destination.delta);
   else replaceScreen(fallback);
 }
-// A screen's Back (its leading control and the Back swipe) goes up, not through every step of the visit: a Settings
-// section returns to the Settings list; anything else leaves its feature for where the visit began.
+// A screen's Back (its leading control and the Back swipe) goes up one level, as in an iOS navigation stack: a Settings
+// section returns to the Settings list, a drill-down (a provider, a document, a project) to the screen it was opened
+// from within the same place, and the first screen of a place pushed from a chat back to that chat. The first screen of
+// a place chosen in the drawer has no Back: it is a root, and its swipe opens the drawer.
 const upToSettings = (e: Screen | undefined) => Boolean(e?.settingsOpen && e.settingsTab);
-/** The screen Back leads to, as the Back swipe shows it underneath. Null when Back would not traverse history. */
-export function screenParent(): { id: number; entry: Screen } | null {
+function upTarget(): { id: number; delta: number; direct?: boolean } | null {
   const here = entries.get(active);
-  const target = upToSettings(here) ? settingsTarget('index') : exitTarget();
+  if (upToSettings(here)) return settingsTarget('index');
+  const visit = visits.get(active), pos = positions.get(active);
+  if (!visit || applying || pos === undefined || history.state?.[KEY]?.session !== session) return null;
+  // The nearest earlier screen of the same visit (sheets and dialogs are closed by their own controls, not by Back).
+  const level = [...positions].filter(([id, p]) => p < pos && visits.get(id)?.origin === visit.origin && !entries.get(id)?.layer).sort((a, b) => b[1] - a[1])[0];
+  if (level) return { id: level[0], delta: level[1] - pos };
+  if (visit.root) return null;
+  return exitTarget();
+}
+/** The screen Back leads to, as the Back swipe shows it underneath. Null on a root screen (the drawer owns its swipe). */
+export function screenParent(): { id: number; entry: Screen } | null {
+  const target = upTarget();
   const entry = target && entries.get(target.id);
   if (!target || !entry) return null;
-  // A visit that began the session (a deep link) exits to the chat, not to its own first screen.
-  return { id: target.id, entry: 'direct' in target && target.direct ? { ...entry, layer: false, layerKey: null, canvasOpen: false, page: null, pageArg: undefined, runner: null, settingsOpen: false, projectWorkspaceOpen: false, routing: { ...entry.routing, open: false } } : entry };
+  return { id: target.id, entry };
 }
-/** Back for the current screen: see screenParent. */
-export function screenUp() {
-  if (upToSettings(entries.get(active))) screenBackToSettings('index', () => useStore.getState().setUi({ settingsTab: '' }));
+/** True on a root screen: a conversation, or the first screen of a place chosen in the drawer. A Settings section never
+ * is: even opened directly, its Back returns to the Settings list. */
+export function screenIsRoot() {
+  if (upToSettings(entries.get(active))) return false;
+  const visit = visits.get(active);
+  return !visit || (Boolean(visit.root) && !upTarget());
+}
+/** Back for the current screen: see screenParent. False when the screen refused to be left (nothing happened). */
+export function screenUp(fallback?: () => void) {
+  if (upToSettings(entries.get(active))) { screenBackToSettings('index', () => useStore.getState().setUi({ settingsTab: '' })); return true; }
+  const target = upTarget();
+  // A screen that must not be left yet (an unsaved document name, an unsent edit) can refuse, as with Exit; the
+  // fallback and Exit paths ask it themselves.
+  if (target) {
+    if (traversalTimer !== undefined || !window.dispatchEvent(new Event('lumen:before-feature-exit', { cancelable: true }))) return false;
+    traverse(target.delta);
+  } else if (fallback) replaceScreen(fallback);
   else exitFeature();
+  return true;
 }
 export const screenHasBack = () => cursor > 0 && history.state?.[KEY]?.session === session;
 export function installScreenHistory() {
@@ -128,6 +184,7 @@ export function installScreenHistory() {
   let owner = useStore.getState().user?.uid;
   let previous = capture();
   let replay = 0;
+  let drawerOpen = useStore.getState().sidebarOpen;
   const remember = () => {
     ++replay;
     clearTraversal();
@@ -135,7 +192,8 @@ export function installScreenHistory() {
     directExit = null;
     entries = new Map([[0, capture()]]); positions = new Map([[0, 0]]); cursor = 0; active = 0; leave?.(-1, entries.get(0)!);
     const initialFeature = feature(capture());
-    if (initialFeature) visits.set(0, { feature: initialFeature, origin: 0, direct: true });
+    if (initialFeature) visits.set(0, { feature: initialFeature, origin: 0, direct: true, root: true });
+    screensChanged();
     history.replaceState({ ...history.state, [KEY]: { session, id: 0 } }, '');
   };
   remember();
@@ -149,14 +207,19 @@ export function installScreenHistory() {
     if (!useStore.getState().settingsOpen && routing.settingsTarget) {
       applying = true; restoreRoutingScreen({ ...routing, settingsTarget: null }); applying = false;
     }
+    const s = useStore.getState();
+    // The drawer closing in the same task as a place opening means the place was chosen in the drawer.
+    if (drawerOpen && !s.sidebarOpen && phoneLayout()) { fromDrawer = true; window.setTimeout(() => { fromDrawer = false; }, 0); }
+    drawerOpen = s.sidebarOpen;
     const next = capture();
     if (same(next, previous)) { entries.set(active, next); return; }
+    if (tabSwitch(previous, next)) { previous = next; entries.set(active, next); return; }
     saveView();
     const root = (value: typeof next) => !value.runner && !value.canvasOpen && !value.page && !value.settingsOpen && !value.projectWorkspaceOpen && !value.routing.open && !value.layer;
     if (root(previous) && root(next)) { previous = next; entries.set(active, next); return; }
-    const currentVisit = visits.get(active), nextFeature = feature(next);
-    const child = currentVisit && (nextFeature === currentVisit.feature || next.settingsOpen || next.layer || (previous.page && !next.page && (next.canvasOpen || next.runner)));
-    const visit = child ? currentVisit : nextFeature ? { feature: nextFeature, origin: active } : undefined;
+    const currentVisit = visits.get(active), nextFeature = feature(next), picked = fromDrawer || (s.sidebarOpen && phoneLayout());
+    const child = !picked && currentVisit && (nextFeature === currentVisit.feature || next.settingsOpen || next.layer || (previous.page && !next.page && (next.canvasOpen || next.runner)));
+    const visit = child ? currentVisit : nextFeature ? { feature: nextFeature, origin: active, ...(picked ? { root: true } : {}) } : undefined;
     previous = next;
     for (const [id, pos] of positions) if (pos > cursor) { positions.delete(id); entries.delete(id); views.delete(id); visits.delete(id); }
     leave?.(active, next);
@@ -164,6 +227,7 @@ export function installScreenHistory() {
     active = ++serial; entries.set(active, next); positions.set(active, cursor);
     if (visit) visits.set(active, visit);
     history.pushState({ ...history.state, [KEY]: { session, id: active } }, '');
+    screensChanged();
   };
   const pop = () => {
     const revision = ++replay, app = traversalTimer !== undefined;
@@ -187,7 +251,8 @@ export function installScreenHistory() {
       useStore.setState(window.matchMedia?.('(max-width:899px)').matches && pushed ? {...ui,sidebarOpen:false} : ui); restoreRoutingScreen(routing);
       if (directExit === active) { directExit = null; closeFeature(); visits.delete(active); }
     });
-    previous = capture(); entries.set(active, previous); applying = false;
+    previous = capture(); entries.set(active, previous); applying = false; drawerOpen = useStore.getState().sidebarOpen;
+    screensChanged();
     pops?.after();
     const focusAtReplay = document.activeElement, entryAtReplay = active;
     requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -208,6 +273,7 @@ export function installScreenHistory() {
       // later step inside it continues the same visit and Exit still returns to where the visit began.
       const visit = visits.get(active), now = feature(previous);
       if (visit && now && visit.feature !== now) visits.set(active, { ...visit, feature: now });
+      screensChanged();
     }
   };
   commit = check;

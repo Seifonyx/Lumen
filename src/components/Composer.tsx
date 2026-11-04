@@ -23,7 +23,7 @@ const VoiceMode = lazy(() => import('./VoiceMode'));
 import { ANALYSIS_TEMPLATES } from '../lib/analysis';
 import { toolModel } from '../lib/ai/tool-inputs.js';
 import { db } from '../lib/db';
-import { CANVAS_COMPOSER, useScreenBackLayer, navigateBack, replaceScreen } from '../lib/canvas-presentation';
+import { CANVAS_COMPOSER, useScreenBackLayer, navigateBack, replaceScreen, navigateScreen } from '../lib/canvas-presentation';
 import { useCanvasComposer } from './ComposerCanvas';
 
 /** Compare with… under a reply: the question it answers, from that chat and account. */
@@ -654,7 +654,7 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
           onConnectors={()=>setUi({settingsOpen:true,settingsTab:'connectors'})}
 
           onFiles={() => fileInput.current?.click()}
-          onCanvas={() => useStore.getState().openCanvas()}
+          onCanvas={() => navigateScreen ? navigateScreen(() => useStore.getState().openCanvas()) : useStore.getState().openCanvas()}
           onAnalysis={() => useStore.getState().setUi({ runner: { lang: 'python', code: ANALYSIS_TEMPLATES.overview.code, analysis: true } })}
           onRepo={() => setUi(chat?.repo ? { workspaceOpen: true } : { repoPicker: true })}
           repoName={chat?.repo ? `${chat.repo.owner}/${chat.repo.repo}` : undefined}

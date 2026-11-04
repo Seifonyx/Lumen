@@ -9,7 +9,7 @@ import PhoneSections from './PhoneSections';
 import ScreenBoundary from './ScreenBoundary';
 import { usePhoneLayout } from '../lib/phone-layout';
 import { createPortal } from 'react-dom';
-import { navigateScreen, screenBack, exitFeature, featureExitLabel } from '../lib/screen-history';
+import { navigateScreen, screenBack, exitFeature, featureExitLabel, switchTab } from '../lib/screen-history';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, RefreshCw, Search, X } from 'lucide-react';
 import { modelLabel, selectCurrentChat, selectCurrentModel, useStore } from '../store';
@@ -276,7 +276,7 @@ export default function RoutingCenter() {
   const pool = model === 'auto' ? models.filter((m) => config.enabledModels.includes(m.id)).map((m) => m.label) : layout ? layout.models.map((id) => modelLabel(catalog, id)) : [];
   const reach = pool.length ? `${pool.slice(0, 3).join(layout?.mode === 'order' ? ' → ' : ' · ')}${pool.length > 3 ? ` +${pool.length - 3} more` : ''}`
     : picked ? `${providerLabel(providerId(picked))}${picked.context ? ` · ${formatTokens(picked.context)} context` : ''}` : '';
-  const go = (id: RoutingSection) => showRoutingSection(id);
+  const go = (id: RoutingSection) => switchTab(() => showRoutingSection(id));
   const sub = phone && section !== 'models';
 
 

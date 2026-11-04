@@ -4,7 +4,7 @@ import { useStore } from '../store';
 import { usePhoneLayout } from '../lib/phone-layout';
 import { useScreenMemory } from '../lib/screen-memory';
 import { useBackLayer } from '../lib/back-stack';
-import { exitFeature, featureExitLabel, navigateScreen, screenBack } from '../lib/screen-history';
+import { exitFeature, navigateScreen, screenBack, screenUp } from '../lib/screen-history';
 import { availability, availabilityShort, discoverItems, extensionOf, itemName, libraryItems, type LibraryItem, type LibrarySort, type ReadExports } from '../lib/library-items';
 import { formatBytes, safeFileName, saveBlob } from '../lib/util';
 import { loadOriginal } from '../lib/office/originals';
@@ -124,7 +124,7 @@ function LibraryDetail({item,onClose,openChat}:{item:LibraryItem;onClose:()=>voi
   if(!file)return;setBusy(true);setError('');
   try{const original=file.data?new Blob([Uint8Array.from(atob(file.data),c=>c.charCodeAt(0))],{type:file.mime}):await loadOriginal(owner,file.id,Boolean(file.stored));if(useStore.getState().user?.uid!==owner)return;if(!original)throw Error('The original is unavailable here. Open this conversation on the device where you added it.');await saveBlob(original,safeFileName(file.name,'File'))}catch(e){if(useStore.getState().user?.uid===owner)setError((e as Error).message)}finally{setBusy(false)}
  };
- return <Modal title={itemName(item)} onClose={onClose} leading={<button type="button" className="icon-btn feature-exit" aria-label={featureExitLabel()} onClick={()=>exitFeature()}><ChevronLeft size={24}/></button>}>
+ return <Modal title={itemName(item)} onClose={onClose} leading={<button type="button" className="icon-btn feature-exit" aria-label="Back" onClick={()=>screenUp(onClose)}><ChevronLeft size={24}/></button>}>
   <div className="library-detail"><p className="library-detail-availability">{file?availability(file):'Generated file · export on demand'}</p>
    <dl><div><dt>Source conversation</dt><dd dir="auto">{item.chat.title}</dd></div>{file&&<><div><dt>File type</dt><dd>{fileKind(file.name).label}</dd></div>{Number.isFinite(file.size)&&file.size>0&&<div><dt>Recorded size</dt><dd>{formatBytes(file.size)}</dd></div>}</>}<div><dt>{item.kind==='documents'?'Updated':'Added'}</dt><dd>{new Date(item.at).toLocaleString()}</dd></div></dl>
    {file&&!file.data&&!file.stored&&<p className="muted">{file.text?'Extracted text is available here. The original formatting and file may be available only on the device where it was added.':'Open the source conversation on the original device to access the file. A thumbnail is not the original.'}</p>}

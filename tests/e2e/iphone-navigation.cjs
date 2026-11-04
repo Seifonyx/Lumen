@@ -27,7 +27,8 @@ const {profile,seed}=require('./helpers/preview-profile.cjs');
  await page.goBack();
  await page.waitForFunction(()=>!document.querySelector('.rc-provider-detail'));
  await page.goForward();await page.getByRole('region',{name:'Provider detail'}).waitFor();
- await page.goBack();await page.goBack();await page.getByRole('navigation',{name:'Router sections'}).waitFor();
+ // Router's tabs switch in place (no history step): one Back from the provider returns to Router.
+ await page.goBack();await page.getByRole('navigation',{name:'Router sections'}).waitFor();
  await page.goBack();await page.locator('.composer textarea').waitFor();
  }else await page.getByRole('button',{name:'Return to chat',exact:true}).click();
  assert.equal(await page.locator('.composer textarea').inputValue(),'Draft stays in its original chat');

@@ -1,4 +1,4 @@
-import { CANVAS_SHELL, navigateBack, useScreenBackLayer, exitFeature, featureExitLabel } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, navigateBack, useScreenBackLayer, screenUp } from '../lib/canvas-presentation';
 // Full-screen photo viewer, like the Photos app: the picture grows out of the one you tapped, pinch or
 // double-tap to zoom, drag to look around when zoomed, and swipe it down (or up) to put it back, with the
 // background fading as you go. Tap once to hide or show the buttons. Opened from anywhere with openImage().
@@ -225,7 +225,7 @@ function ImageViewer({ req, onClose }: { req: ImageRequest; onClose: () => void 
       <img ref={img} className="iv-img" src={req.src} alt={req.alt} draggable={false} onLoad={layout}
         style={fit ? { left: fit.left, top: fit.top, width: fit.width, height: fit.height } : { visibility: 'hidden' }} />
       <div className="iv-bar">
-        {CANVAS_SHELL && <button type="button" className="iv-btn feature-exit" aria-label={featureExitLabel!()} onClick={() => exitFeature!()}><ChevronLeft size={24}/></button>}
+        {CANVAS_SHELL && <button type="button" className="iv-btn feature-exit" aria-label="Back" onClick={() => screenUp!(onClose)}><ChevronLeft size={24}/></button>}
         <button type="button" className="iv-btn" aria-label="Close" onClick={() => close.current()}><X size={20} /></button>
         <button type="button" className="iv-btn" aria-label="Download" onClick={() => void download()}><Download size={19} /></button>
       </div>

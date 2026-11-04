@@ -301,8 +301,6 @@ html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas][data-th
   /* Sidebar: a plain list; chats without per-row icons; 17 pt titles; section labels in the secondary colour. */
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav { background: var(--bg); }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-open > svg:first-child { display: none; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-title, html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-open strong { font-size: 17px; font-weight: 400; letter-spacing: -.01em; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-dest button) { font-size: 17px; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-search { background: var(--native-fill-2); border-radius: var(--canvas-radius-row); }
 }
 /* The new-chat mark: the Crease in ink, no glow. */
@@ -404,7 +402,6 @@ html.glass[data-lumen-canvas][data-theme='dark'] {
   /* Drawer: one weight for every row, secondary-coloured icons, a capsule New chat. */
   html.glass[data-lumen-canvas] .app .cv-nav .cv-dest button { font-weight: 400; gap: 14px; }
   html.glass[data-lumen-canvas] .app .cv-nav .cv-dest button > svg:first-child { color: var(--text-2); width: 21px; height: 21px; stroke-width: 1.7; }
-  html.glass[data-lumen-canvas] .app .cv-nav .cv-new-pill { border-radius: 999px; font-weight: 500; font-size: 16px; }
   html.glass[data-lumen-canvas] .app .cv-nav .cv-search { border-radius: var(--canvas-radius-control); }
 }
 /* ================= iPhone glass, round 3 (owner, 2026-10-30), measured against owner-supplied iOS 26 captures.

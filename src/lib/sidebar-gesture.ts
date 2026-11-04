@@ -6,7 +6,7 @@ import { gestureOwner, isBrowserEdge } from './navigation-edge';
 
 // Canvas: every root screen (the chat, or a place chosen in the drawer) opens the drawer with a right swipe anywhere,
 // as in an iOS app whose sidebar is its root; pushed screens leave the swipe to Back (navigation-coordinator.ts).
-const ROOTS = '.main, .hub-page, .settings-page, .rc-page';
+const ROOTS = CANVAS_SHELL ? '.main, .hub-page, .settings-page, .rc-page' : '.main';
 /** The root screen on display, which slides aside with the drawer (Canvas phones; app.css keeps it there while open). */
 const rootScreen = () => CANVAS_SHELL ? document.querySelector<HTMLElement>('.app > :is(.hub-page, .settings-page, .rc-page:not([hidden]))') || document.querySelector<HTMLElement>('.app > .main') : null;
 
@@ -71,7 +71,7 @@ export function installSidebarGestures(): () => void {
     const target = event.target;
     if (!(target instanceof Element) || document.querySelector('.modal-backdrop, .sheet-backdrop, .models-pop, .usage-pop')) return;
     // An open menu or list owns the screen until it closes.
-    if (!state.sidebarOpen && [...document.querySelectorAll('[role="menu"], [role="listbox"]')].some((el) => el.getClientRects().length && !el.closest('.cv-nav'))) return;
+    if (!state.sidebarOpen && [...document.querySelectorAll('[role="menu"], [role="listbox"]')].some((el) => el.getClientRects().length && !el.closest('.sidebar'))) return;
     if (target.closest('input, textarea, select, [contenteditable], pre, table, .menu')) return;
     if (state.sidebarOpen ? !target.closest('.sidebar, .scrim') : CANVAS_SHELL ? !target.closest(ROOTS) || target.closest('.composer, .phone-page-search, [role="slider"], [role="switch"], .switch, .segmented, .swipe-row') : !target.closest('.main') || target.closest('button, a, label, .composer')) return;
     // Leave sideways code, tables and other horizontal scrollers to the browser.

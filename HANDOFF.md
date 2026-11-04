@@ -10,10 +10,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/drawer-polish` (owner recording, 2026-11-04 20:02): iOS 26 Home Screen apps have Safari's own
-  edge swipe, which went Back by itself over stale snapshots ("exits" and doubled drawers); the stack now lives in
-  memory there. The drawer has one gray highlight for what is on screen, at iOS sizes. New chat on an unsaved new chat
-  returns to it with its draft.
+- **Branch:** none in progress. Start the next task from `origin/main`.
 
 ## Next
 
@@ -92,6 +89,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - Excluded: Arabic interface, separate chat folders, message-list icon/count, chat-tag badges.
 
 ## Recently shipped
+
+- 2026-11-04 Home Screen app owns every swipe (PR #110, merged `98f255a`, deployed Canvas, live `index-s4ZUe1It.js`
+  matches the merge build): iOS 26 gives Home Screen apps Safari's own edge swipe, which went Back by itself over
+  stale snapshots; the stack now lives in memory there (one browser entry). Drawer: one gray highlight for what is on
+  screen, iOS sizes. The drawer's New chat returns to an unsaved new chat with its draft. Startup JS budget 16.5.
 
 - 2026-11-04 iPhone navigation follows iOS chat apps (PR #108, merged `70557c7`, deployed Canvas, live
   `index-BaCxtj64.js` matches the merge build): the drawer is the root (places chosen in it have the menu button; a

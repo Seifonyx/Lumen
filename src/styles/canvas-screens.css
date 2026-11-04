@@ -505,22 +505,22 @@ html[data-lumen-canvas] .sheet-backdrop:not(.sheet-popover-backdrop) .sheet.atta
    or boxes; projects and conversations as plain single lines (the date only while searching shows where it matched);
    hairline dividers; one solid ink capsule for New chat. After the glass drawer rules, which it outranks by order. */
 @media (max-width: 899px) {
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav { --cv-control: 52px; --cv-row: 48px; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav { --cv-control: max(52px, calc(var(--fs,15px)*1.4 + 31px)); --cv-row: max(48px, calc(var(--fs,15px)*2 + 18px)); }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-dest { padding-bottom: 12px; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-dest button { gap: 18px; padding: 0 12px; font-size: 20px; font-weight: 500; letter-spacing: -.01em; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-dest button { gap: 18px; padding: 0 12px; font-size: calc(var(--fs,15px) + 5px); font-weight: 500; letter-spacing: -.01em; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-dest button > svg:first-child, .cv-folder-icon) { width: 24px; height: 24px; stroke-width: 1.75; color: var(--canvas-ink); }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-place-chevron, .cv-project-row > .cv-chev) { display: none; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-project-row { gap: 18px; padding-inline: 12px; font-size: 18px; font-weight: 400; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-brief-text, .cv-new-here) { font-size: 17px; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-project-row { gap: 18px; padding-inline: 12px; font-size: calc(var(--fs,15px) + 3px); font-weight: 400; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-brief-text, .cv-new-here) { font-size: calc(var(--fs,15px) + 2px); }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-open { padding-inline: 12px; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.chat-title, .chat-open strong) { font-size: 18px; font-weight: 400; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.chat-open, .chat-title, .chat-open strong) { font-size: calc(var(--fs,15px) + 3px); font-weight: 400; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav:not([data-searching]) .cv-chat-detail { display: none; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-chat-detail { font-size: 15px; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-section-h, .cv-more) { font-size: 15px; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-search input { font-size: 17px; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-new-pill { flex: none; min-height: 52px; padding: 0 26px; gap: 10px; border-radius: 999px; background: var(--canvas-ink); color: var(--canvas-paper); font-size: 18px; font-weight: 600; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-chat-detail { font-size: var(--fs,15px); }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-section-h, .cv-more) { font-size: var(--fs,15px); }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-search input { font-size: max(16px, calc(var(--fs,15px) + 2px)); }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-new-pill { flex: none; min-height: var(--cv-control); padding: 0 26px; gap: 10px; border-radius: 999px; background: var(--canvas-ink); color: var(--canvas-paper); font-size: calc(var(--fs,15px) + 3px); font-weight: 600; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-new-pill > svg { width: 22px; height: 22px; color: inherit; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-foot { justify-content: space-between; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-account { width: 52px; height: 52px; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-account .cv-avatar { width: 44px; height: 44px; font-size: 17px; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-account .cv-avatar { width: 44px; height: 44px; font-size: calc(var(--fs,15px) + 2px); }
 }

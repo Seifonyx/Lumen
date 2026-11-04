@@ -65,7 +65,8 @@ const settle = (page, ms = 450) => page.waitForTimeout(ms);
 const nav = (page) => page.locator('aside.cv-nav');
 async function openNav(page, phone) {
   if (!phone || await nav(page).evaluate((el) => el.classList.contains('open'))) return;
-  while(await page.locator('.phone-navigation [aria-label^="Return to "]').isVisible()){await page.locator('.phone-navigation [aria-label^="Return to "]').click();await settle(page,250);}
+  // A pushed screen goes up with Back until a root, whose leading control opens the drawer (iOS model, 2026-11-04).
+  while(await page.locator('.phone-navigation [aria-label^="Back"]').isVisible()){await page.locator('.phone-navigation [aria-label^="Back"]').click();await settle(page,250);}
   await page.getByRole('button', { name: /^(Open chats|Open sidebar|Open navigation)$/ }).first().click();
   await settle(page, 600);
 }

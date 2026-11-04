@@ -27,7 +27,7 @@ export { newGeneralChat } from './new-chat';
 
 export const PhoneNavigation = lazy(() => import('../components/PhoneNavigation'));
 export { screenBack as navigateBack } from './screen-history';
-export { exitFeature, featureExitLabel, screenUp } from './screen-history';
+export { exitFeature, featureExitLabel, screenUp, screenIsRoot } from './screen-history';
 export { useScreenMemory } from './screen-memory';
 export const CanvasFilterMenu = lazy(() => import('../components/FilterMenu'));
 export { useBackLayer as useScreenBackLayer } from './back-stack';

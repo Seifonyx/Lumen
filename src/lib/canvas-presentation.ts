@@ -36,6 +36,7 @@ export const navigateBack: typeof import('./screen-history').screenBack | null =
 export const exitFeature: typeof import('./screen-history').exitFeature | null = null;
 export const featureExitLabel: typeof import('./screen-history').featureExitLabel | null = null;
 export const screenUp: typeof import('./screen-history').screenUp | null = null;
+export const screenIsRoot: typeof import('./screen-history').screenIsRoot | null = null;
 export const useScreenMemory: typeof import('./screen-memory').useScreenMemory | null = null;
 export const CanvasFilterMenu: typeof import('../components/FilterMenu').default | null = null;
 export const useScreenBackLayer: typeof import('./back-stack').useBackLayer | null = null;

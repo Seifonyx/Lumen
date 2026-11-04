@@ -1,9 +1,8 @@
-import { CANVAS_SHELL } from './canvas-presentation';
+import { CANVAS_SHELL, screenIsRoot } from './canvas-presentation';
 import { useStore } from '../store';
 import { rubberBand, springTo, Velocity, type Motion } from './spring';
 import { haptic } from './haptics';
 import { gestureOwner, isBrowserEdge } from './navigation-edge';
-import { screenIsRoot } from './screen-history';
 
 // Canvas: every root screen (the chat, or a place chosen in the drawer) opens the drawer with a right swipe anywhere,
 // as in an iOS app whose sidebar is its root; pushed screens leave the swipe to Back (navigation-coordinator.ts).
@@ -68,7 +67,7 @@ export function installSidebarGestures(): () => void {
     clear();
     const state = useStore.getState();
     if (!phone.matches || !state.authed || window.getSelection()?.toString()) return;
-    if (CANVAS_SHELL ? !state.sidebarOpen && !screenIsRoot() : state.settingsOpen) return;
+    if (CANVAS_SHELL ? !state.sidebarOpen && !screenIsRoot!() : state.settingsOpen) return;
     const target = event.target;
     if (!(target instanceof Element) || document.querySelector('.modal-backdrop, .sheet-backdrop, .models-pop, .usage-pop')) return;
     // An open menu or list owns the screen until it closes.

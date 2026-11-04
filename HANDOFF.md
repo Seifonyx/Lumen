@@ -10,16 +10,13 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/native-navigation` from main `854e982` (PR #103 included).
-- **Task:** owner-approved replacement of Canvas phone navigation: one gesture coordinator and one transition system
-  (`src/lib/navigation-coordinator.ts`, see DESIGN.md → Motion). Release follows affected checks, exact PR CI and the
-  gated Canvas deploy; native-feel acceptance waits for the owner's iPhone.
-- **Authority:** owner-authorized 2026-11-04, plus standing (see Decisions).
+- **Branch:** none in progress. Start the next task from `origin/main`.
 
 ## Next
 
-- [ ] Owner, on the installed Home Screen app (navigation redesign): see the acceptance sequence in the PR. Native feel
-      is not accepted until the owner confirms it on the device.
+- [ ] Owner, on the installed Home Screen app (PR #104, live): the seven-step acceptance sequence in PR #104 (Router
+      detail → Providers → Router → chat with a draft and photo; partial and quick swipes; Projects, Library, a document,
+      Settings; the drawer on the chat; tap Back; Reduce Motion and VoiceOver). Native feel is not accepted until then.
 - [ ] Physical iPhone: in Safari, write an unsent draft with a disposable attachment. Open Router > Providers > detail.
   Start an edge swipe and return your finger to the edge before lifting. Repeat with a completed swipe to the Providers
   list, then swipe Forward. Tap the feature chevron and verify that the original chat, draft, model and attachment return.
@@ -87,6 +84,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-04 Native-feeling phone navigation (PR #104, merged `09669d0`, deployed Canvas, live `index-MPQsLi3U.js`
+  matches the merge build): one coordinator (`src/lib/navigation-coordinator.ts`) owns Back and the drawer; the screen
+  follows the finger over the real or kept screen behind it; one traversal per swipe; taps share the slide; Safari tabs
+  keep native Back. Canvas computers crossfade with a view transition. Startup JS growth 15.5 → 15.0 KB gz. Suite
+  `native-navigation` (Chromium + WebKit). Filmstrips in `docs/native-navigation/`. Physical iPhone not yet checked.
 - 2026-11-03 Projects redesign and residual copy cleanup (PR #101, merged `9803535`, deployed Canvas, live
   `index-CJLROoyc.js` matched the merge build): name-first All projects, a workspace with chats first and context in a
   rail or one disclosure, less narration across the app. Before/after in `docs/projects-redesign/`.

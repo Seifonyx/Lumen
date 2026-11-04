@@ -105,8 +105,9 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         opener.current = { el: active instanceof HTMLElement && !sidebarRef.current?.contains(active) ? active : null, page: useStore.getState().page, routing: routingCenterOpen() };
         sidebarRef.current?.focus({ preventScroll: true });
         reveal(sidebarRef.current?.querySelector('.chat-row.active'));
-        // The places it lists load now, so a tap shows the page at once (a touch has no hover to start them earlier).
-        for (const place of ['router', 'library', 'settings', 'projects'] as const) prefetchPlace?.(place);
+        // The places it lists load once it has opened, so a tap shows the page at once (a touch has no hover to start
+        // them earlier) without the work landing on the opening itself.
+        window.setTimeout(() => { for (const place of ['router', 'library', 'settings', 'projects'] as const) prefetchPlace?.(place); }, 450);
       } else if (wasOpen.current && !useStore.getState().settingsOpen) {
         // Closing to go somewhere else (a page, the Routing Center) leaves focus to that destination.
         const was = opener.current, s = useStore.getState();
@@ -191,6 +192,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         className={`sidebar cv-nav${open ? ' open' : ''}`}
         // What is on screen, so only its row is highlighted: a place, a project's workspace, or the chat.
         data-here={page || routing ? 'place' : workspaceOpen ? 'project' : 'chat'}
+        data-searching={q ? '' : undefined}
         aria-label="Chats"
         role={phone ? 'dialog' : undefined}
         tabIndex={-1}
@@ -245,8 +247,8 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         <div className="cv-tree" onFocus={loadTreeKeys} onKeyDown={(e) => treeKeys?.(e.nativeEvent, e.currentTarget, ROW, searchInput.current, reveal)}>
           {!q && (
             <ul className="cv-dest" aria-label="Places">
-              <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onPointerEnter={() => prefetchPlace?.('library')} onFocus={() => prefetchPlace?.('library')} onClick={() => toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
-              <li><button type="button" title="Models, providers & routing" data-routing-center onPointerEnter={() => prefetchPlace?.('router')} onFocus={() => prefetchPlace?.('router')} aria-current={routing && !page ? 'page' : undefined} onClick={() => { setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><GitFork size={18} strokeWidth={1.8} aria-hidden="true" /><span>Router</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
+              <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onPointerEnter={() => prefetchPlace?.('library')} onFocus={() => prefetchPlace?.('library')} onClick={() => page === 'collection' ? setUi({ sidebarOpen: false }) : toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
+              <li><button type="button" title="Models, providers & routing" data-routing-center onPointerEnter={() => prefetchPlace?.('router')} onFocus={() => prefetchPlace?.('router')} aria-current={routing && !page ? 'page' : undefined} onClick={() => { if (routing && !page) { setUi({ sidebarOpen: false }); return; } setUi({ page: null, settingsOpen: false, sidebarOpen: false }); openRoutingCenter(); }}><GitFork size={18} strokeWidth={1.8} aria-hidden="true" /><span>Router</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>
             </ul>
           )}
 
@@ -268,7 +270,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
                   </button>
                   <Fold id={`${ids}-p-${p.id}`} open={isOpen}>
                     <ul className="cv-chats" aria-label={p.name}>
-                      <li><button type="button" className={`cv-brief${activeProjectId === p.id ? ' active' : ''}${activeProjectId === p.id && workspaceOpen ? ' open' : ''}`} aria-current={activeProjectId === p.id && workspaceOpen ? 'page' : undefined} onClick={() => navigateScreen!(() => { setUi({ page: null, settingsOpen: false }); selectProject(p.id); })}>
+                      <li><button type="button" className={`cv-brief${activeProjectId === p.id ? ' active' : ''}${activeProjectId === p.id && workspaceOpen ? ' open' : ''}`} aria-current={activeProjectId === p.id && workspaceOpen ? 'page' : undefined} onClick={() => activeProjectId === p.id && workspaceOpen && !page && !routing ? setUi({ sidebarOpen: false }) : navigateScreen!(() => { setUi({ page: null, settingsOpen: false }); selectProject(p.id); })}>
                         <span className="cv-brief-text">Project overview</span>
                       </button></li>
                       {/* Inside the folder, so it reads as part of this project; the label names it too. */}
@@ -300,7 +302,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
           {/* The global New chat: always a general conversation, outside projects (src/lib/new-chat.ts). A project's own
               New chat is inside its folder. */}
           <button type="button" className="cv-new-pill cv-dest-new" onClick={newGeneralChat} aria-label="New chat" aria-describedby={`${ids}-general`} title={`New chat (${modKey}⇧O)`}><MessageSquarePlus size={18} aria-hidden="true" />New chat</button>
-          <button type="button" className="cv-account" aria-label="Settings" onPointerEnter={() => prefetchPlace?.('settings')} onFocus={() => prefetchPlace?.('settings')} title={`Settings (${modKey},)`} onClick={() => setUi({ settingsOpen: true, settingsTab: '', sidebarOpen: false })}>
+          <button type="button" className="cv-account" aria-label="Settings" onPointerEnter={() => prefetchPlace?.('settings')} onFocus={() => prefetchPlace?.('settings')} title={`Settings (${modKey},)`} onClick={() => setUi(page === 'settings' ? { sidebarOpen: false } : { settingsOpen: true, settingsTab: '', sidebarOpen: false })}>
             {user?.photo ? <img className="cv-avatar" src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="cv-avatar" aria-hidden="true">{(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}</span>}
           </button>
         </div>

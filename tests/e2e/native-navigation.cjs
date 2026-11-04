@@ -180,6 +180,15 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
     assert.equal((await trace()).pushes, before.pushes, `${tag}: tabs add no history`);
     await drawerOpens('.rc-page');
     await drawerOpens('.rc-page', 80);
+    // Choosing the place already on screen only closes the drawer, as in iOS: no new step, still the root.
+    before = await trace();
+    await page.locator('.phone-navigation > button[aria-label="Open navigation"]').first().click();
+    await page.locator('aside.cv-nav.open').waitFor();
+    await page.locator('aside.cv-nav').getByRole('button', { name: 'Router', exact: true }).click();
+    await page.waitForFunction(() => !document.querySelector('aside.cv-nav.open')); await page.waitForTimeout(400);
+    assert.equal(await entry(), router, `${tag}: the place on screen is not opened again`);
+    assert.equal((await trace()).pushes, before.pushes);
+    assert.equal(await leading('.rc-page'), 'Open navigation', `${tag}: still the root`);
 
     // A provider is a drill-down: its Back (the button and the edge swipe) returns to the Providers list.
     const toDetail = async () => {

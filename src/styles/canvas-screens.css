@@ -301,8 +301,6 @@ html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas][data-th
   /* Sidebar: a plain list; chats without per-row icons; 17 pt titles; section labels in the secondary colour. */
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav { background: var(--bg); }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-open > svg:first-child { display: none; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-title, html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-open strong { font-size: 17px; font-weight: 400; letter-spacing: -.01em; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-dest button) { font-size: 17px; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-search { background: var(--native-fill-2); border-radius: var(--canvas-radius-row); }
 }
 /* The new-chat mark: the Crease in ink, no glow. */
@@ -404,7 +402,6 @@ html.glass[data-lumen-canvas][data-theme='dark'] {
   /* Drawer: one weight for every row, secondary-coloured icons, a capsule New chat. */
   html.glass[data-lumen-canvas] .app .cv-nav .cv-dest button { font-weight: 400; gap: 14px; }
   html.glass[data-lumen-canvas] .app .cv-nav .cv-dest button > svg:first-child { color: var(--text-2); width: 21px; height: 21px; stroke-width: 1.7; }
-  html.glass[data-lumen-canvas] .app .cv-nav .cv-new-pill { border-radius: 999px; font-weight: 500; font-size: 16px; }
   html.glass[data-lumen-canvas] .app .cv-nav .cv-search { border-radius: var(--canvas-radius-control); }
 }
 /* ================= iPhone glass, round 3 (owner, 2026-10-30), measured against owner-supplied iOS 26 captures.
@@ -501,11 +498,26 @@ html[data-lumen-canvas] .sheet.attach-menu-v2 .all-tools > svg:last-child { marg
 html[data-lumen-canvas] .sheet-popover-backdrop .sheet.attach-menu-v2 .sheet-row { min-height: 38px; padding: 8px 10px; font-size: 14px; border-radius: 8px; }
 html[data-lumen-canvas] .sheet-popover-backdrop .sheet.attach-menu-v2 .attach-menu-group + .attach-menu-group { margin-top: 4px; padding-top: 4px; }
 html[data-lumen-canvas] .sheet-backdrop:not(.sheet-popover-backdrop) .sheet.attach-menu-v2 { max-height: calc(var(--vv-h, 100dvh) - max(env(safe-area-inset-top, 0px), 20px) - 24px); }
-/* Drawer at iOS sizes (owner, 2026-11-04): 17 pt rows and fields, 15 pt details and section labels, 48 pt place rows,
-   22 pt icons. After the glass drawer rules, which it outranks by order. */
+/* Drawer in the native iOS manner (owner, 2026-11-04): places as large 20 pt rows with 24 pt outline icons, no chevrons
+   or boxes; projects and conversations as plain single lines (the date only while searching shows where it matched);
+   hairline dividers; one solid ink capsule for New chat. After the glass drawer rules, which it outranks by order. */
 @media (max-width: 899px) {
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav { --cv-control: max(48px, calc(var(--fs,15px)*1.4 + 27px)); }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-dest button, .cv-project-row, .cv-search input, .cv-new-pill, .cv-brief-text, .cv-new-here) { font-size: 17px; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-chat-detail, .cv-section-h, .cv-more) { font-size: 15px; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-dest button > svg:first-child, .cv-folder-icon) { width: 22px; height: 22px; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav { --cv-control: max(52px, calc(var(--fs,15px)*1.4 + 31px)); --cv-row: max(48px, calc(var(--fs,15px)*2 + 18px)); }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-dest { padding-bottom: 12px; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-dest button { gap: 18px; padding: 0 12px; font-size: calc(var(--fs,15px) + 5px); font-weight: 500; letter-spacing: -.01em; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-dest button > svg:first-child, .cv-folder-icon) { width: 24px; height: 24px; stroke-width: 1.75; color: var(--canvas-ink); }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-place-chevron, .cv-project-row > .cv-chev) { display: none; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-project-row { gap: 18px; padding-inline: 12px; font-size: calc(var(--fs,15px) + 3px); font-weight: 400; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-brief-text, .cv-new-here) { font-size: calc(var(--fs,15px) + 2px); }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .chat-open { padding-inline: 12px; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.chat-open, .chat-title, .chat-open strong) { font-size: calc(var(--fs,15px) + 3px); font-weight: 400; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav:not([data-searching]) .cv-chat-detail { display: none; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-chat-detail { font-size: var(--fs,15px); }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-section-h, .cv-more) { font-size: var(--fs,15px); }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-search input { font-size: max(16px, calc(var(--fs,15px) + 2px)); }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-new-pill { flex: 0 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-height: var(--cv-control); padding: 0 26px; gap: 10px; border-radius: 999px; background: var(--canvas-ink); color: var(--canvas-paper); font-size: calc(var(--fs,15px) + 3px); font-weight: 600; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-new-pill > svg { width: 22px; height: 22px; color: inherit; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-foot { justify-content: space-between; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-account { flex: none; width: 52px; height: 52px; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-account .cv-avatar { width: 44px; height: 44px; font-size: calc(var(--fs,15px) + 2px); }
 }

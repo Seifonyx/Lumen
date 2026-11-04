@@ -36,6 +36,7 @@ export function installSidebarGestures(): () => void {
     cancelAnimationFrame(frame);
     frame = 0;
     delete root.dataset.sidebarDragging;
+    document.querySelector('.app')?.removeAttribute('data-drawer-moving');
     drag?.sidebar.style.removeProperty('transform');
     drag?.scrim.style.removeProperty('opacity');
     if (drag?.screen) { drag.screen.style.removeProperty('transform'); void getComputedStyle(drag.screen).transform; drag.screen.style.removeProperty('transition'); }
@@ -90,7 +91,7 @@ export function installSidebarGestures(): () => void {
     // Still sliding from a tap: freeze it where it is and let the finger take over from there.
     if (onDrawer && Math.abs(at - rest) > 2 && sidebar.getAnimations().length) {
       drag.offset = at; drag.claimed = true; drag.x = t.clientX - (at - rest) * sign;
-      root.dataset.sidebarDragging = '';
+      root.dataset.sidebarDragging = ''; document.querySelector('.app')?.setAttribute('data-drawer-moving', '');
       paint();
     }
   };
@@ -109,7 +110,7 @@ export function installSidebarGestures(): () => void {
       if (Math.abs(dx) < 12 || Math.abs(dx) < dy * 1.5) return;
       if (!drag.open && dx < 0) { clear(); return; } // (open + rightward: allowed, it rubber-bands)
       drag.claimed = true;
-      root.dataset.sidebarDragging = '';
+      root.dataset.sidebarDragging = ''; document.querySelector('.app')?.setAttribute('data-drawer-moving', '');
     }
     speed.add(t.clientX * drag.sign);
     const raw = (drag.open ? drag.width : 0) + dx;

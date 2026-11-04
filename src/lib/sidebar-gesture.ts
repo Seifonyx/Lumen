@@ -3,6 +3,13 @@ import { useStore } from '../store';
 import { rubberBand, springTo, Velocity, type Motion } from './spring';
 import { haptic } from './haptics';
 import { gestureOwner, isBrowserEdge } from './navigation-edge';
+import { screenIsRoot } from './screen-history';
+
+// Canvas: every root screen (the chat, or a place chosen in the drawer) opens the drawer with a right swipe anywhere,
+// as in an iOS app whose sidebar is its root; pushed screens leave the swipe to Back (navigation-coordinator.ts).
+const ROOTS = '.main, .hub-page, .settings-page, .rc-page';
+/** The root screen on display, which slides aside with the drawer (Canvas phones; app.css keeps it there while open). */
+const rootScreen = () => CANVAS_SHELL ? document.querySelector<HTMLElement>('.app > :is(.hub-page, .settings-page, .rc-page:not([hidden]))') || document.querySelector<HTMLElement>('.app > .main') : null;
 
 /**
  * A phone drawer that follows the finger; vertical scrolling keeps its native behavior. Letting go keeps the
@@ -12,7 +19,7 @@ import { gestureOwner, isBrowserEdge } from './navigation-edge';
 export function installSidebarGestures(): () => void {
   const root = document.documentElement;
   const phone = window.matchMedia('(max-width: 899px)');
-  type Drag = { id: number; x: number; y: number; open: boolean; sign: number; width: number; offset: number; lastX: number; time: number; velocity: number; claimed: boolean; target: Element; sidebar: HTMLElement; scrim: HTMLElement };
+  type Drag = { id: number; x: number; y: number; open: boolean; sign: number; width: number; offset: number; lastX: number; time: number; velocity: number; claimed: boolean; target: Element; sidebar: HTMLElement; scrim: HTMLElement; screen: HTMLElement | null };
   let drag: Drag | null = null;
   let frame = 0;
   let suppressClickUntil = 0;
@@ -32,6 +39,7 @@ export function installSidebarGestures(): () => void {
     delete root.dataset.sidebarDragging;
     drag?.sidebar.style.removeProperty('transform');
     drag?.scrim.style.removeProperty('opacity');
+    if (drag?.screen) { drag.screen.style.removeProperty('transform'); void getComputedStyle(drag.screen).transform; drag.screen.style.removeProperty('transition'); }
     drag = null;
   };
   const paint = () => {
@@ -39,6 +47,8 @@ export function installSidebarGestures(): () => void {
     if (!drag?.claimed) return;
     drag.sidebar.style.transform = `translateX(${drag.sign * (drag.offset - drag.width)}px)`;
     drag.scrim.style.opacity = String(drag.offset / drag.width);
+    // The finger (then the spring) moves the screen: its own transition stays off until the drawer is at rest.
+    if (drag.screen) Object.assign(drag.screen.style, { transition: 'none', transform: `translateX(${drag.sign * drag.offset}px)` });
   };
   const start = (event: TouchEvent) => {
     if (event.touches.length !== 1 || isBrowserEdge(event.touches[0].clientX) || gestureOwner.current === 'back') { clear(); return; }
@@ -57,12 +67,14 @@ export function installSidebarGestures(): () => void {
     }
     clear();
     const state = useStore.getState();
-    if (!phone.matches || state.settingsOpen || !state.authed || window.getSelection()?.toString()) return;
-    if (CANVAS_SHELL && state.projectWorkspaceOpen) return;
+    if (!phone.matches || !state.authed || window.getSelection()?.toString()) return;
+    if (CANVAS_SHELL ? !state.sidebarOpen && !screenIsRoot() : state.settingsOpen) return;
     const target = event.target;
     if (!(target instanceof Element) || document.querySelector('.modal-backdrop, .sheet-backdrop, .models-pop, .usage-pop')) return;
+    // An open menu or list owns the screen until it closes.
+    if (!state.sidebarOpen && [...document.querySelectorAll('[role="menu"], [role="listbox"]')].some((el) => el.getClientRects().length && !el.closest('.cv-nav'))) return;
     if (target.closest('input, textarea, select, [contenteditable], pre, table, .menu')) return;
-    if (state.sidebarOpen ? !target.closest('.sidebar, .scrim') : !target.closest('.main') || target.closest('button, a, label, .composer')) return;
+    if (state.sidebarOpen ? !target.closest('.sidebar, .scrim') : CANVAS_SHELL ? !target.closest(ROOTS) || target.closest('.composer, .phone-page-search, [role="slider"], [role="switch"], .switch, .segmented, .swipe-row') : !target.closest('.main') || target.closest('button, a, label, .composer')) return;
     // Leave sideways code, tables and other horizontal scrollers to the browser.
     for (let el: Element | null = target; el && el !== document.body; el = el.parentElement) {
       if (el.scrollWidth > el.clientWidth + 2 && /auto|scroll/.test(getComputedStyle(el).overflowX)) return;
@@ -74,7 +86,7 @@ export function installSidebarGestures(): () => void {
     const width = sidebar.getBoundingClientRect().width;
     const sign = getComputedStyle(sidebar).direction === 'rtl' ? -1 : 1;
     const at = visualOffset(sidebar, width, sign), rest = state.sidebarOpen ? width : 0;
-    drag = { id: t.identifier, x: t.clientX, y: t.clientY, open: state.sidebarOpen, sign, width, offset: rest, lastX: t.clientX, time: performance.now(), velocity: 0, claimed: false, target, sidebar, scrim };
+    drag = { id: t.identifier, x: t.clientX, y: t.clientY, open: state.sidebarOpen, sign, width, offset: rest, lastX: t.clientX, time: performance.now(), velocity: 0, claimed: false, target, sidebar, scrim, screen: rootScreen() };
     speed.reset(); speed.add(t.clientX * sign);
     // Still sliding from a tap: freeze it where it is and let the finger take over from there.
     if (onDrawer && Math.abs(at - rest) > 2 && sidebar.getAnimations().length) {
@@ -88,7 +100,7 @@ export function installSidebarGestures(): () => void {
     // A long press can open a context menu after this touch began on a chat row.
     // Touch events retain that original target: hand the gesture over instead of dragging behind it.
     if (document.querySelector('.ctx-layer:not(.exit-ghost)')) { clear(); return; }
-    if (event.touches.length !== 1 || window.getSelection()?.toString() || useStore.getState().settingsOpen || document.querySelector('.modal-backdrop, .sheet-backdrop')) { clear(); return; }
+    if (event.touches.length !== 1 || window.getSelection()?.toString() || (!CANVAS_SHELL && useStore.getState().settingsOpen) || document.querySelector('.modal-backdrop, .sheet-backdrop')) { clear(); return; }
     const t = event.touches[0];
     if (t.identifier !== drag.id) { clear(); return; }
     const dx = (t.clientX - drag.x) * drag.sign;
@@ -123,7 +135,7 @@ export function installSidebarGestures(): () => void {
     cancelAnimationFrame(frame); frame = 0;
     const d = drag;
     // (Runs on the graphics thread: smooth even while the chat you picked is rendering.)
-    const frames = (x: number): [HTMLElement, Keyframe][] => [[d.sidebar, { transform: `translateX(${d.sign * (x - d.width)}px)` }], [d.scrim, { opacity: String(x / d.width) }]];
+    const frames = (x: number): [HTMLElement, Keyframe][] => [[d.sidebar, { transform: `translateX(${d.sign * (x - d.width)}px)` }], [d.scrim, { opacity: String(x / d.width) }], ...(d.screen ? [[d.screen, { transform: `translateX(${d.sign * x}px)` }] as [HTMLElement, Keyframe]] : [])];
     anim = springTo(d.offset, open ? d.width : 0, velocity, frames, () => { anim = null; d.offset = open ? d.width : 0; clear(); }, { stiffness: 900, damping: 60 });
   };
   const click = (event: MouseEvent) => {

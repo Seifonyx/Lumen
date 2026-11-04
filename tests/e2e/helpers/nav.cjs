@@ -5,12 +5,12 @@ const { openTools, plusItem, isCanvas } = require('./plus.cjs');
 const isPhone = (page) => page.evaluate(() => matchMedia('(max-width: 899px)').matches);
 
 /** Opens a sidebar place by its label: 'Library', 'Router', 'All projects', 'Settings'. On phones it opens the drawer
- *  first when it is closed. */
+ *  first when it is closed (from the chat, or from the menu button of a place chosen in the drawer). */
 async function openPlace(page, name) {
   const canvas = await isCanvas(page);
   const nav = page.locator(canvas ? 'aside.cv-nav' : '.sidebar').first();
   if (await isPhone(page) && !(await nav.evaluate((el) => el.classList.contains('open')))) {
-    await page.locator('.menu-btn:visible, [aria-label="Open chats"]:visible').first().click();
+    await page.locator('.menu-btn:visible, [aria-label="Open chats"]:visible, .phone-navigation button[aria-label="Open navigation"]:visible').first().click();
     await page.waitForFunction((el) => el.classList.contains('open'), await nav.elementHandle(), { timeout: 2000 }).catch(() => {});
   }
   await nav.getByRole('button', { name, exact: true }).first().click();

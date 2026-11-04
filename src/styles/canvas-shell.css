@@ -136,12 +136,18 @@
 .app[data-lumen-canvas-shell] .cv-place-chevron { margin-inline-start: auto; }
 @media(max-width:899px) {
  .app[data-lumen-canvas-shell] { --cv-row: max(54px, calc(var(--fs,15px)*2.7 + 13px)); --cv-control: max(44px, calc(var(--fs,15px)*1.4 + 23px)); }
- .app[data-lumen-canvas-shell] .cv-nav { width: min(360px, calc(100vw - 24px)); padding: calc(env(safe-area-inset-top) + 12px) 16px max(10px, env(safe-area-inset-bottom)); border-radius: var(--canvas-radius-panel); }
+ .app[data-lumen-canvas-shell] { --cv-drawer: min(360px, calc(100vw - 64px)); }
+ .app[data-lumen-canvas-shell] .cv-nav { width: var(--cv-drawer); padding: calc(env(safe-area-inset-top) + 12px) 16px max(10px, env(safe-area-inset-bottom)); border-radius: var(--canvas-radius-panel); }
  .app[data-lumen-canvas-shell] .cv-head { padding-bottom: 14px; }
  .app[data-lumen-canvas-shell] .cv-search input { font-size: max(16px, calc(var(--fs,15px) + 1px)); }
  .app[data-lumen-canvas-shell] .cv-count { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
  .app[data-lumen-canvas-shell] .cv-nav .row-menu > .icon-btn { width: 44px; height: 44px; }
  .app[data-lumen-canvas-shell] .cv-nav .row-menu { inset-inline-end: 0; }
+ /* The drawer is the app's root, as in iOS chat apps: the screen on display slides aside with it and stays in view on
+    the trailing side (tap or swipe it to come back). The gesture drives the same movement (lib/sidebar-gesture.ts). */
+ .app[data-lumen-canvas-shell] > :is(.main, .hub-page, .settings-page, .rc-page) { transition: transform .28s var(--ease); }
+ .app[data-lumen-canvas-shell]:has(> .cv-nav.open) > :is(.main, .hub-page, .settings-page, .rc-page) { transform: translateX(var(--cv-drawer)); }
+ [dir='rtl'] .app[data-lumen-canvas-shell]:has(> .cv-nav.open) > :is(.main, .hub-page, .settings-page, .rc-page) { transform: translateX(calc(-1 * var(--cv-drawer))); }
  .app[data-lumen-canvas-shell] .cv-nav .menu[popover] [role='menuitem'] { min-height: 44px; }
  .app[data-lumen-canvas-shell] .cv-nav .chat-row:not(.active):not(:focus-within):not(.menu-open) .row-menu { opacity: 0; pointer-events: none; }
  html.glass .app[data-lumen-canvas-shell] .cv-nav { background: linear-gradient(color-mix(in srgb,var(--bg) 94%,transparent),color-mix(in srgb,var(--bg) 94%,transparent)) padding-box,var(--glass-rim) border-box; -webkit-backdrop-filter: var(--glass-filter-strong); backdrop-filter: var(--glass-filter-strong); }
@@ -410,6 +416,7 @@
  html.glass .app[data-lumen-canvas-shell] :is(.phone-navigation > button,.phone-navigation-actions > button,.phone-navigation-actions > .screen-actions > button,.phone-navigation::before){background:var(--canvas-surface);-webkit-backdrop-filter:none;backdrop-filter:none;}
 }
 @media(prefers-reduced-motion:reduce){
+ .app[data-lumen-canvas-shell] > :is(.main, .hub-page, .settings-page, .rc-page) { transition: none; }
  .app[data-lumen-canvas-shell] :is(.phone-navigation > button,.phone-navigation-actions > button,.phone-navigation-actions > .screen-actions > button), .app[data-lumen-canvas-shell] :is(.phone-navigation > button,.phone-navigation-actions > button,.phone-navigation-actions > .screen-actions > button):active{transition:none;transform:none;}
 }
 

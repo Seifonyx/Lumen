@@ -10,14 +10,19 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start the next task from `origin/main`.
+- **Branch:** `design/ios-navigation`: iPhone navigation rebuilt on the iOS chat-app model from the owner's screen
+  recording (2026-11-04): the drawer is the root; places chosen in it have the menu button and swipe to the drawer;
+  drill-downs go up one level; Router tabs switch in place; near-edge and iOS-cancelled releases complete; one drawer
+  tap is one history step; a document from a new chat's + returns to that chat with its draft.
 
 ## Next
 
-- [ ] Owner, on the installed Home Screen app (PRs #104 and #106, live): the seven-step acceptance
-      sequence in PR #104, now with Back going up (Router detail → chat in one swipe with a draft and photo; a Settings
-      section → Settings list; a swipe across the content does nothing; partial and quick swipes; Projects, Library, a document,
-      Settings; the drawer on the chat; tap Back; Reduce Motion and VoiceOver). Native feel is not accepted until then.
+- [ ] Owner, on the installed Home Screen app (design/ios-navigation once live): from the drawer open Router, Library,
+      Projects and Settings; on each, swipe right (edge and mid-screen) to reveal the drawer with the screen peeking on the
+      right, then swipe left or tap the strip to return; switch Router tabs (no slide); open a provider, a document, a
+      Settings section and a project, and swipe back (one level up, also when released near the right edge); + →
+      Document canvas from a new chat with a draft, then Back. Reduce Motion and VoiceOver. Native feel is not accepted
+      until then.
 - [ ] Physical iPhone: in Safari, write an unsent draft with a disposable attachment. Open Router > Providers > detail.
   Start an edge swipe and return your finger to the edge before lifting. Repeat with a completed swipe to the Providers
   list, then swipe Forward. Tap the feature chevron and verify that the original chat, draft, model and attachment return.
@@ -76,6 +81,9 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
   everything for build/test machinery and shared app state); `main` runs everything after each merge, and Deploy waits
   for that run and refuses to ship if it failed. Dispatch Deploy right after merging; it waits by itself.
 - Report progress as done / in progress / verified / remaining. There is no overall completion percentage.
+- 2026-11-04 **iPhone navigation follows iOS chat apps:** the drawer is the root; swiping back on a place chosen in it
+  reveals the drawer (screen peeking on the right), not the chat; drill-downs go up one level. Do the best, complete
+  fix rather than the easy one.
 - iPhone: feel native to iOS 26 with Lumen's own identity; no copying other apps; no suggestion pills; the warm
   "premium" palette is rejected; floating feature docks are rejected; the three-control bar capsule stays; no chat
   title in the iPhone bar.

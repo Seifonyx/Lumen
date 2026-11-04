@@ -1,6 +1,8 @@
 // Native-feeling Back on the Canvas phone (lib/navigation-coordinator.ts): one gesture owner and one transition system.
-// Back goes up, as in an iOS app: from any screen of a feature (a Router section, a provider, a document) it leaves the
-// feature in one step, and a Settings section returns to the Settings list. It starts only at the leading edge.
+// The drawer is the app's root, as in iOS chat apps: a place chosen in it (Router, Library, Settings, Projects) replaces
+// the screen, has the menu button, and a right swipe on it slides it aside to show the drawer. Drill-downs inside a
+// place (a provider, a document, a Settings section, a project) and screens opened from the chat are pushed: their Back
+// goes up one level and starts only at the leading edge. Router's section tabs switch in place.
 // Synthetic touches drive the Home Screen app's recognizer with motion on. For each journey it checks what is on screen
 // at the start, middle and end of the gesture (the current screen follows the finger over the real or kept screen
 // behind it, never a wrong one), that one completed swipe makes exactly one history traversal and no new entry, that
@@ -12,7 +14,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const { chromium, webkit } = require('playwright');
 const { profile } = require('./helpers/preview-profile.cjs');
-const { openPlace } = require('./helpers/nav.cjs');
+const { openPlace, plusItem } = require('./helpers/nav.cjs');
 const base = process.env.MR_TEST_URL || 'http://localhost:5190/';
 const iphone = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Version/18.5 Mobile/15E148 Safari/604.1';
 const evidence = process.env.NAV_EVIDENCE_DIR;
@@ -126,93 +128,147 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
       return;
     }
 
-    // Router: chat → Router → Providers → Gemini detail; one Back from anywhere in it returns to the chat.
-    let providers;
+    const leading = (selector) => page.locator(`${selector} .phone-navigation button`).first().getAttribute('aria-label');
+    const drawerOpen = () => page.evaluate(() => Boolean(document.querySelector('aside.cv-nav.open')));
+    const closeDrawer = async () => {
+      await page.locator('.scrim').click({ position: { x: width - 10, y: 300 } });
+      await page.waitForFunction(() => !document.querySelector('aside.cv-nav.open'));
+      await page.waitForTimeout(400);
+    };
+    /** A right swipe on a root screen (from the edge or across the content) slides it aside to show the drawer, with the
+     *  screen still in view on the right; it never makes a history step. Tapping the screen brings it back. */
+    const drawerOpens = async (selector, from = 6) => {
+      const before = await trace(), here = await entry();
+      await drag(Math.round(width * 0.8), { from }); await lift(Math.round(width * 0.8));
+      await page.locator('aside.cv-nav.open').waitFor();
+      await page.waitForTimeout(500);
+      assert.equal(await gesture(), null, `${tag}: Back does not claim a root screen`);
+      assert.deepEqual(await trace(), before, `${tag}: the drawer is not a history step`);
+      const aside = await offset(selector);
+      assert(aside > width * 0.6 && aside < width - 40, `${tag}: ${selector} stays in view beside the drawer (${aside})`);
+      await shot(`drawer-over-${selector.replace(/\W+/g, '')}`);
+      await closeDrawer();
+      assert.equal(await offset(selector), 0, `${tag}: ${selector} is back in place`);
+      assert.equal(await entry(), here, `${tag}: the same screen after the drawer`);
+    };
+    const toRoot = async () => { for (let i = 0; i < 12 && await entry() !== root; i++) { await page.goBack(); await page.waitForTimeout(250); } assert.equal(await entry(), root); };
+
+    // Router chosen in the drawer is a root, as a place picked in an iOS app's sidebar: its leading control opens the
+    // drawer, its section tabs switch in place (no slide, no history), and a right swipe shows the drawer.
+    await openPlace(page, 'Router');
+    await page.locator('.rc-page').waitFor(); await page.waitForTimeout(400);
+    const router = await entry();
+    assert.equal(await leading('.rc-page'), 'Open navigation', `${tag}: Router from the drawer is a root`);
+    let before = await trace();
+    const sections = page.getByRole('navigation', { name: 'Router sections' });
+    for (const tab of ['Providers', 'Routing', 'Layouts', 'Models', 'Providers']) {
+      await sections.getByRole('button', { name: tab, exact: true }).click();
+      await page.waitForTimeout(60);
+      assert.equal(await page.locator('.nav-layer').count(), 0, `${tag}: ${tab} switches in place`);
+    }
+    assert.equal(await entry(), router, `${tag}: tabs stay on one screen`);
+    assert.equal((await trace()).pushes, before.pushes, `${tag}: tabs add no history`);
+    await drawerOpens('.rc-page');
+    await drawerOpens('.rc-page', 80);
+
+    // A provider is a drill-down: its Back (the button and the edge swipe) returns to the Providers list.
     const toDetail = async () => {
-      await openPlace(page, 'Router');
-      await page.locator('.rc-page').waitFor();
-      await page.getByRole('navigation', { name: 'Router sections' }).getByRole('button', { name: 'Providers', exact: true }).click();
-      providers = await entry();
       await page.locator('[data-provider="gemini"]').click();
       await page.getByRole('region', { name: 'Provider detail' }).waitFor();
       await page.waitForTimeout(500);
       return entry();
     };
     const detail = await toDetail();
+    assert.equal(await leading('.rc-page'), 'Back', `${tag}: a provider has Back`);
 
-    // Short, reversed, canceled and browser-interrupted gestures never navigate.
-    let before = await trace();
-    // A short, slow drag (a hesitant finger, well under a flick's speed) and a lift.
+    // Short, reversed, canceled-early and browser-interrupted gestures never navigate.
+    before = await trace();
     await drag(70, { wait: 60 }); await page.waitForTimeout(120); await lift(70); await clean('.rc-page');
     await drag(260); await touch('touchmove', 40); await page.waitForTimeout(16); await touch('touchmove', 20); await lift(20); await clean('.rc-page');
-    await drag(300); await lift(300, 'touchcancel'); await clean('.rc-page');
-    // A right swipe across the content (not from the edge) does nothing.
+    await drag(150); await lift(150, 'touchcancel'); await clean('.rc-page');
+    // A right swipe across a pushed screen's content is neither Back nor the drawer.
     await drag(Math.round(width * 0.8), { from: 80 }); await lift(Math.round(width * 0.8)); await page.waitForTimeout(300);
     assert.equal(await gesture(), null, `${tag}: a swipe across the content is not Back`);
+    assert.equal(await drawerOpen(), false, `${tag}: nor the drawer, on a pushed screen`);
     assert.equal(await entry(), detail); assert.deepEqual(await trace(), before, `${tag}: short, reversed, canceled and mid-screen drags stay`);
     await drag(250);
     await page.goBack();
-    await page.waitForFunction((id) => history.state?.lumenScreen?.id === id, providers);
+    await page.waitForFunction((id) => history.state?.lumenScreen?.id === id, router);
     await lift(250);
     await clean('.rc-page');
     await page.waitForTimeout(300);
-    assert.equal(await entry(), providers, `${tag}: a lift after browser Back does not traverse again`);
+    assert.equal(await entry(), router, `${tag}: a lift after browser Back does not traverse again`);
     await page.goForward(); await page.getByRole('region', { name: 'Provider detail' }).waitFor(); await page.waitForTimeout(300);
 
-    // Two complete swipes in one task: the second waits for the first; one traversal, out of Router.
+    // Two complete swipes in one task: the second waits for the first; one traversal, up to Providers.
     before = await trace();
     await page.evaluate(() => {
       const fire = (type, x) => { const t = { identifier: 9, target: document.querySelector('.rc-page'), clientX: x, clientY: 400 }; const e = new Event(type, { bubbles: true, cancelable: true }); Object.defineProperties(e, { touches: { value: type === 'touchend' ? [] : [t] }, changedTouches: { value: [t] } }); t.target.dispatchEvent(e); };
       for (let n = 0; n < 2; n++) { fire('touchstart', 6); for (const x of [60, 140, 220, 300]) fire('touchmove', x); fire('touchend', 300); }
     });
-    await committed(before, root, '.app > .main');
+    await committed(before, router, '.rc-page');
     await page.waitForTimeout(400);
-    assert.equal(await entry(), root, `${tag}: repeated swipes make one traversal`);
-    await backAtChat();
+    assert.equal(await entry(), router, `${tag}: repeated swipes make one traversal`);
+    assert.equal(await leading('.rc-page'), 'Open navigation', `${tag}: back at the root of Router`);
 
-    // Every frame from release to rest: the screen only moves on, and the chat behind it is on display throughout; the
-    // layers come off in the same frame the chat is in place.
+    // Every frame from release to rest: the screen only moves on, with the Providers list behind it throughout.
     await toDetail();
     before = await trace();
-    await held('.rc-page', Math.round(width * 0.55), { kind: 'live', text: /Message Lumen|Good (morning|afternoon|evening)/ }, 'router-detail-held');
-    await page.evaluate(() => { window.__frames = []; const loop = () => { const el = document.querySelector('.rc-page:not([hidden])'), main = document.querySelector('.app > .main'); const m = el ? new DOMMatrixReadOnly(getComputedStyle(el).transform === 'none' ? undefined : getComputedStyle(el).transform).m41 : null; window.__frames.push({ x: m, gesture: document.documentElement.dataset.navGesture || null, chat: getComputedStyle(main).display !== 'none' && main.getClientRects().length > 0, router: Boolean(el) }); if (window.__frames.length < 90) requestAnimationFrame(loop); }; requestAnimationFrame(loop); });
+    await held('.rc-page', Math.round(width * 0.55), { kind: 'kept', text: /Google AI Studio/ }, 'router-detail-held');
+    await page.evaluate(() => { window.__frames = []; const loop = () => { const el = document.querySelector('.rc-page:not([hidden])'); const m = el ? new DOMMatrixReadOnly(getComputedStyle(el).transform === 'none' ? undefined : getComputedStyle(el).transform).m41 : null; window.__frames.push({ x: m, gesture: document.documentElement.dataset.navGesture || null, under: Boolean(document.querySelector('.nav-layer[data-nav-entry]')), detail: Boolean(document.querySelector('.rc-provider-detail')) }); if (window.__frames.length < 90) requestAnimationFrame(loop); }; requestAnimationFrame(loop); });
     await lift(Math.round(width * 0.55));
-    await committed(before, root, '.app > .main');
+    await committed(before, router, '.rc-page');
     await page.waitForFunction(() => window.__frames.length >= 90);
     const frames = await page.evaluate(() => window.__frames);
-    const moving = frames.filter((f) => f.gesture && f.router);
+    const moving = frames.filter((f) => f.gesture && f.detail);
     for (let i = 1; i < moving.length; i++) assert(moving[i].x >= moving[i - 1].x - 0.5, `${tag}: the release never moves backwards (${moving[i - 1].x} → ${moving[i].x})`);
-    for (const f of frames) assert(f.chat && (f.gesture || !f.router), `${tag}: every frame shows the chat behind or the restored chat (${JSON.stringify(f)})`);
+    for (const f of moving) assert(f.under, `${tag}: every moving frame shows the Providers list behind (${JSON.stringify(f)})`);
     assert(frames.some((f) => !f.gesture), `${tag}: the transition finishes`);
-    await backAtChat();
+
+    // Released almost at the edge with the finger easing back a little, it still completes; so does a touch that iOS
+    // cancels past half way (both sprang back before).
+    await toDetail(); before = await trace();
+    await drag(Math.round(width * 0.93)); await touch('touchmove', Math.round(width * 0.92)); await lift(Math.round(width * 0.92));
+    await committed(before, router, '.rc-page');
+    await toDetail(); before = await trace();
+    await drag(Math.round(width * 0.7)); await lift(Math.round(width * 0.7), 'touchcancel');
+    await committed(before, router, '.rc-page');
 
     // Tapping Back slides like the gesture, with the same single traversal.
-    await openPlace(page, 'Router');
-    await page.locator('.rc-page').waitFor(); await page.waitForTimeout(400);
-    before = await trace();
+    await toDetail(); before = await trace();
     await page.locator('.rc-page .phone-navigation button').first().click();
     if (!reduce) { await page.waitForFunction(() => document.querySelector('.nav-layer'), null, { timeout: 1500 }).catch(() => {}); assert(await page.locator('.nav-layer').count() > 0, `${tag}: a tap Back slides`); await shot('tap-back-mid'); }
-    await committed(before, root, '.app > .main');
-    await backAtChat();
+    await committed(before, router, '.rc-page');
 
-    // Library → document → chat: the document belongs to the Library visit.
+    // Sideways content that can still scroll back keeps the drag on a root screen too.
+    const chips = page.locator('.rc-page .phone-sections').first();
+    if (await chips.count() && await chips.evaluate((el) => el.scrollWidth > el.clientWidth + 2)) {
+      await chips.evaluate((el) => { el.scrollLeft = 80; });
+      const box = await chips.boundingBox();
+      before = await trace();
+      await drag(Math.round(width * 0.7), { from: 120, y: Math.round(box.y + box.height / 2) }); await lift(Math.round(width * 0.7));
+      await page.waitForTimeout(300);
+      assert.equal(await drawerOpen(), false, `${tag}: a scrolled chip rail keeps its drag`); assert.deepEqual(await trace(), before);
+    }
+
+    // Library from the drawer replaces Router (another root); a document opened from it is pushed and goes back to it.
     await openPlace(page, 'Library');
     const library = page.getByRole('main', { name: 'Library', exact: true });
-    await library.waitFor(); await page.waitForTimeout(300);
+    await library.waitFor(); await page.waitForTimeout(400);
+    const libraryEntry = await entry();
+    assert.equal(await leading('.hub-page'), 'Open navigation', `${tag}: Library from the drawer is a root`);
+    await drawerOpens('.hub-page');
     await page.getByRole('button', { name: 'New document' }).first().click();
     await page.locator('.canvas-panel').waitFor(); await page.waitForTimeout(500);
-    // New document opened its own conversation, so the chat behind is not the one Back restores: the underlay is plain.
-    await back('.canvas-panel', root, { kind: 'none', next: '.app > .main' }, 'document-held');
-    await backAtChat();
-    await openPlace(page, 'Library'); await library.waitFor(); await page.waitForTimeout(300);
-    await back('.hub-page', root, { kind: 'live', text: /Message Lumen|Good (morning|afternoon|evening)/, next: '.app > .main' }, 'library-held');
-    await backAtChat();
+    assert.equal(await leading('.canvas-panel'), 'Back', `${tag}: a document has Back`);
+    await back('.canvas-panel', libraryEntry, { kind: 'none', next: '.hub-page' }, 'document-held');
+    await library.waitFor();
 
-    // Settings → General → index → chat; the section's Back button also returns to the list.
-    await page.locator('.menu-btn').first().click();
-    await page.locator('aside.cv-nav .cv-account').click();
-    await page.locator('.settings-page').waitFor();
+    // Settings from the drawer: the list is a root; a section is pushed over it and goes back to it.
+    await openPlace(page, 'Settings');
+    await page.locator('.settings-page').waitFor(); await page.waitForTimeout(400);
     const settings = await entry();
+    assert.equal(await leading('.settings-page'), 'Open navigation', `${tag}: Settings from the drawer is a root`);
     await page.locator(':is(.settings-tabs, .si)').getByRole('button', { name: /^(General|Account:)/ }).first().click();
     await page.locator('.settings-page.has-section').waitFor(); await page.waitForTimeout(400);
     before = await trace();
@@ -221,58 +277,47 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
     await page.locator(':is(.settings-tabs, .si)').getByRole('button', { name: /^(General|Account:)/ }).first().click();
     await page.locator('.settings-page.has-section').waitFor(); await page.waitForTimeout(400);
     await back('.settings-page', settings, { kind: 'kept', text: /Personalization|Privacy/ }, 'settings-held');
-    await back('.settings-page', root, { kind: 'live', text: /Message Lumen|Good (morning|afternoon|evening)/, next: '.app > .main' });
-    await backAtChat();
+    await drawerOpens('.settings-page');
 
-    // Projects → new project → workspace → chat, then Projects → chat.
+    // Projects from the drawer: a root; a new project's workspace is pushed over it.
     await openPlace(page, 'All projects');
-    await page.getByRole('main', { name: 'Projects', exact: true }).waitFor();
+    await page.getByRole('main', { name: 'Projects', exact: true }).waitFor(); await page.waitForTimeout(300);
+    const projects = await entry();
+    assert.equal(await leading('.hub-page'), 'Open navigation', `${tag}: Projects from the drawer is a root`);
     await page.getByRole('button', { name: 'New project', exact: true }).first().click();
     await page.getByLabel('Project name', { exact: true }).fill('Native project');
     await page.getByRole('button', { name: 'Create project', exact: true }).click();
     await page.locator('.project-workspace-main').waitFor(); await page.waitForTimeout(500);
-    // The project changed what the chat's kept screen drew from, so the underlay is plain, never stale.
-    await back('.app > .main', root, { kind: 'none', next: '.app > .main' }, 'workspace-held');
-    await backAtChat();
-    await openPlace(page, 'All projects');
-    await page.getByRole('main', { name: 'Projects', exact: true }).waitFor(); await page.waitForTimeout(300);
-    // An open menu owns the screen: Back never starts while it is up, and Escape still closes it.
+    assert.equal(await leading('.app > .main'), 'Back', `${tag}: a project opened from Projects has Back`);
+    // The new project changed what the kept Projects list drew from, so the screen behind is plain, never stale.
+    await back('.app > .main', projects, { kind: 'none', next: '.hub-page' }, 'workspace-held');
+    // An open menu owns the screen: neither Back nor the drawer starts while it is up, and Escape still closes it.
     await page.getByRole('button', { name: 'More for Native project', exact: true }).click();
     await page.getByRole('menu').waitFor();
     before = await trace();
     await drag(Math.round(width * 0.7)); await lift(Math.round(width * 0.7));
     await page.waitForTimeout(300);
-    assert.equal(await gesture(), null); assert.deepEqual(await trace(), before, `${tag}: an open menu keeps the gesture`);
+    assert.equal(await gesture(), null); assert.equal(await drawerOpen(), false); assert.deepEqual(await trace(), before, `${tag}: an open menu keeps the gesture`);
     await page.keyboard.press('Escape'); await page.getByRole('menu').waitFor({ state: 'detached' });
-    await back('.hub-page', root, { kind: 'live', text: /Message Lumen|Good (morning|afternoon|evening)/, next: '.app > .main' });
+    await drawerOpens('.hub-page');
+
+    // Back in the chat (browser Back through the visits): the draft, model and attachment are still there.
+    await toRoot();
     await backAtChat();
 
     // The root chat: a right swipe is the drawer's, and Back never claims it.
-    before = await trace();
-    await drag(Math.round(width * 0.7), { from: 60 }); await lift(Math.round(width * 0.7));
-    await page.locator('aside.cv-nav.open').waitFor();
-    assert.equal(await gesture(), null); assert.deepEqual(await trace(), before, `${tag}: the drawer owns the root chat`);
-    await page.locator('.scrim').click({ position: { x: width - 10, y: 200 } }).catch(() => {});
-    await page.waitForFunction(() => !document.querySelector('aside.cv-nav.open'));
+    await drawerOpens('.app > .main', 60);
 
-    await openPlace(page, 'Router'); await page.locator('.rc-page').waitFor(); await page.waitForTimeout(300);
-    await page.getByRole('navigation', { name: 'Router sections' }).getByRole('button', { name: 'Providers', exact: true }).click();
-    await page.waitForTimeout(300);
-    // Sideways content that can still scroll back keeps the drag; from the edge, Back still wins.
-    const chips = page.locator('.rc-page .phone-sections').first();
-    if (await chips.count() && await chips.evaluate((el) => el.scrollWidth > el.clientWidth + 2)) {
-      await chips.evaluate((el) => { el.scrollLeft = 80; });
-      const box = await chips.boundingBox();
-      before = await trace();
-      await drag(Math.round(width * 0.7), { from: 120, y: Math.round(box.y + box.height / 2) }); await lift(Math.round(width * 0.7));
-      await page.waitForTimeout(300);
-      assert.equal(await gesture(), null); assert.deepEqual(await trace(), before, `${tag}: a scrolled chip rail keeps its drag`);
-    }
-    await back('.rc-page', root, { kind: 'live', next: '.app > .main' });
+    // A document opened from a new chat's + gets a conversation of its own, pushed over the chat: Back shows the chat you
+    // left (as it was, since the one on display is now the document's) and lands on it, draft and attachment intact.
+    await plusItem(page, 'Document canvas');
+    await page.locator('.canvas-panel').waitFor(); await page.waitForTimeout(500);
+    assert.equal(await leading('.canvas-panel'), 'Back', `${tag}: a document from the chat has Back`);
+    await back('.canvas-panel', root, { kind: 'kept', text: /Good (morning|afternoon|evening)/, next: '.app > .main' }, 'canvas-held');
     await backAtChat();
 
     assert.deepEqual(errors, [], `${tag}: no page errors`);
-    console.log(`PASS ${tag}: Router, Library, document, Settings, Projects, drawer, menu and scroller ownership, tap Back`);
+    console.log(`PASS ${tag}: drawer roots, in-place tabs, drill-down Back, a document from the chat, menu and scroller ownership, tap Back`);
   } finally {
     await context.close();
   }

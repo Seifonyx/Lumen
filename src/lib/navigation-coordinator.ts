@@ -51,10 +51,12 @@ type Kept = { node: HTMLElement; rect: DOMRect; display: string; scrolls: [numbe
 // that changes data and navigates at once (New document) is then kept with the data it was actually showing.
 let painted = useStore.getState(), paintFrame = 0;
 const notePaint = () => { if (!paintFrame) paintFrame = requestAnimationFrame(() => { paintFrame = 0; painted = useStore.getState(); }); };
-const deps = (selector: string, s = useStore.getState()) => {
+const deps = (selector: string, s = useStore.getState(), entry?: Screen) => {
   return selector === '.rc-page:not([hidden])' ? [s.keys, s.catalog, s.settings, s.chats]
     : selector === '.settings-page' ? [s.settings, s.keys, s.memories, s.user]
     : selector === '.run-panel' ? [s.runner]
+    // A conversation's screen draws from that one chat (or none for a new chat): another chat being added is no change.
+    : selector === '.app > .main' && entry && !entry.projectWorkspaceOpen ? [entry.currentId ? s.chats.find((c) => c.id === entry.currentId) : null, s.settings, s.memories]
     : [s.chats, s.settings, s.memories];
 };
 const kept = new Map<number, Kept>();
@@ -78,7 +80,7 @@ function keep(el: HTMLElement, entry: Screen): Kept {
   node.removeAttribute('id');
   node.inert = true;
   node.setAttribute('aria-hidden', 'true');
-  return { node, rect: el.getBoundingClientRect(), display: getComputedStyle(el).display, scrolls, uid: useStore.getState().user?.uid, entry, deps: deps(screenFor(entry), painted) };
+  return { node, rect: el.getBoundingClientRect(), display: getComputedStyle(el).display, scrolls, uid: useStore.getState().user?.uid, entry, deps: deps(screenFor(entry), painted, entry) };
 }
 /** A kept screen is only shown if it still describes what Back will restore: same account, chat and project. */
 function trusted(k: Kept | undefined) {
@@ -87,7 +89,7 @@ function trusted(k: Kept | undefined) {
   if (k.uid !== s.user?.uid) return null;
   if (k.entry.currentId && !s.chats.some((c) => c.id === k.entry.currentId)) return null;
   if (k.entry.activeProjectId && !s.settings.projects?.some((p) => p.id === k.entry.activeProjectId)) return null;
-  const now = deps(screenFor(k.entry));
+  const now = deps(screenFor(k.entry), undefined, k.entry);
   return k.deps.every((d, i) => d === now[i]) ? k : null;
 }
 function mount(k: Kept, z: string) {
@@ -126,7 +128,12 @@ const lift = (el: HTMLElement, styles: Record<string, string>, opts: { inert?: b
 const drop = (l: Lift | null) => {
   if (!l) return;
   l.el.getAnimations().forEach((a) => a.cancel());
-  for (const [name, value, priority] of l.props) if (value) l.el.style.setProperty(name, value, priority); else l.el.style.removeProperty(name);
+  // Position first, with transitions still off, then the rest: a screen's own transition (it slides aside with the
+  // drawer) must not replay this module's movement as it is put back.
+  const put = ([name, value, priority]: [string, string, string]) => { if (value) l.el.style.setProperty(name, value, priority); else l.el.style.removeProperty(name); };
+  l.props.filter(([name]) => name !== 'transition').forEach(put);
+  void getComputedStyle(l.el).transform;
+  l.props.filter(([name]) => name === 'transition').forEach(put);
   if (l.inert) l.el.inert = false;
 };
 /** The current screen, raised above everything it moves over. */
@@ -232,8 +239,10 @@ function end(event: TouchEvent) {
   suppressUntil = performance.now() + 450; suppressTarget = event.target instanceof Element ? event.target : null;
   cancelAnimationFrame(frame); frame = 0;
   const v = speed.get(), p = g.dx / g.width;
-  // Far enough, or a deliberate flick; a reversed or hesitant release stays.
-  const commit = event.type === 'touchend' && Boolean(screenParent()) && ((p > 0.45 && v > -0.2) || (v > 0.6 && g.dx > 30));
+  // As UIKit decides: where the finger's speed would carry the screen, past half way, or a deliberate flick; a clear
+  // reversal stays. iOS may cancel a touch that reaches the screen's edge: well past half way, that still completes.
+  const projected = g.dx + v * 180;
+  const commit = Boolean(screenParent()) && (event.type === 'touchend' ? (projected > g.width / 2 && v > -0.3) || (v > 0.5 && g.dx > 30) : p > 0.5);
   settle(commit, v);
 }
 function settle(commit: boolean, v: number) {
@@ -352,6 +361,8 @@ function leaving(from: number, next: Screen) {
   kept.set(from, k);
   for (const id of [...kept.keys()].slice(0, Math.max(0, kept.size - KEEP))) kept.delete(id);
   if (motionOff() || swapControl.skip || !userAction()) return;
+  // A place chosen in the drawer replaces the screen: the drawer closes over it, with no push slide underneath.
+  if (document.querySelector('.sidebar.open, .cv-nav.open')) return;
   slide('push', mount(k, Z.top), screenFor(next));
 }
 /** Before history restores a screen (called by the history adapter, so order never depends on listeners): an app Back,

@@ -79,7 +79,9 @@ test('direct-entry Settings section has a fallback to its section list on phones
   assert.match(adapter, /delta: destination\.pos - here/);
   assert.match(adapter, /if \(destination\) traverse\(destination\.delta\)/);
   // The phone header's Back honours the section target: a section goes to the Settings list, not out of Settings.
-  assert.match(readFileSync('src/components/PhoneNavigation.tsx', 'utf8'), /canBack \? screenUp\(\)/);
-  assert.match(adapter, /upToSettings\(entries\.get\(active\)\)\) screenBackToSettings\('index'/);
+  assert.match(readFileSync('src/components/PhoneNavigation.tsx', 'utf8'), /root \? useStore\.getState\(\)\.setUi\(\{ sidebarOpen: true \}\) : screenUp\(onBack\)/);
+  // A section is never a root (a root's leading control opens the drawer instead of going back).
+  assert.match(adapter, /export function screenIsRoot\(\) \{\n  if \(upToSettings\(entries\.get\(active\)\)\) return false;/);
+  assert.match(adapter, /upToSettings\(entries\.get\(active\)\)\) \{ screenBackToSettings\('index'/);
   assert.match(adapter, /replaceScreen\(fallback\)/);
 });

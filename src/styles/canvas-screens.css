@@ -520,6 +520,7 @@ html[data-lumen-canvas] .sheet-backdrop:not(.sheet-popover-backdrop) .sheet.atta
 }
 /* The usage gauge fills like a pie, so a nearly empty one never reads as a spinner's arc. */
 html[data-lumen-canvas] .usage-pie .usage-ring-fill { stroke-linecap: butt; }
+html[data-lumen-canvas] .app .usage-pie .usage-ring-track { stroke: color-mix(in srgb, var(--text) 45%, transparent); }
 /* Phones have no hover title, so incognito says its name beside the crossed eye. */
 html[data-lumen-canvas] .incognito-label { display: none; }
 @media (max-width: 899px) {

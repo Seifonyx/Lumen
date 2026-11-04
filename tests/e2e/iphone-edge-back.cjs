@@ -21,6 +21,9 @@ async function exercise(browser, standalone) {
     await profile(context, uid, standalone ? 'light' : 'dark');
     await context.addInitScript(standalone => {
       Object.defineProperty(navigator, 'standalone', { value: standalone });
+      // Browser Back and Forward against the app's gestures need real history: as on Android, whose installed apps keep
+      // it (an iOS Home Screen app keeps its stack in memory; native-navigation.cjs covers that).
+      window.__mrRealHistory = true;
       window.trace = { requests: [], pops: [], pushes: [] };
       for (const method of ['back', 'go', 'pushState']) {
         const original = history[method].bind(history);

@@ -10,6 +10,9 @@ import { useStore } from '../store';
 
 export function newGeneralChat() {
   navigateScreen!(() => {
+  // Already on a general new chat that was never saved (where an unsent draft lives): New chat returns to it, intact.
+  const s = useStore.getState();
+  if (!s.currentId && !s.activeProjectId) { s.setUi({ page: null, settingsOpen: false, projectWorkspaceOpen: false, canvasOpen: false, sidebarOpen: false }); return; }
   if (useStore.getState().activeProjectId) {
     try { localStorage.removeItem('mr.activeProject'); } catch { /* private mode */ }
     useStore.setState({ activeProjectId: null });

@@ -5,6 +5,7 @@ import { clearScreenMemory } from './screen-memory';
 import { cancelPageSwap } from './motion';
 import { useStore } from '../store';
 import { getRoutingScreen, restoreRoutingScreen, subscribeRoutingCenter } from './routing-center';
+import { isIOS, isStandalone } from './device';
 const KEY = 'lumenScreen';
 let entries = new Map<number, ReturnType<typeof capture>>();
 const views = new Map<number, { focus: HTMLElement | null; scrolls: [string, number][] }>();
@@ -39,8 +40,25 @@ const clearTraversal = () => { window.clearTimeout(traversalTimer); traversalTim
 function traverse(delta: number) {
   if (traversalTimer !== undefined) return;
   traversalTimer = window.setTimeout(clearTraversal, 1000);
+  if (inMemory) {
+    // The stack is the app's own: move to the entry and replay it as the browser would, a task later.
+    const target = [...positions].find(([, pos]) => pos === cursor + delta);
+    if (!target) { clearTraversal(); return; }
+    window.setTimeout(() => {
+      history.replaceState({ ...history.state, [KEY]: { session, id: target[0] } }, '');
+      window.dispatchEvent(new PopStateEvent('popstate', { state: history.state }));
+    }, 0);
+    return;
+  }
   try { history.go(delta); } catch (error) { clearTraversal(); throw error; }
 }
+// iOS Home Screen web apps (iOS 26) have Safari's own edge swipe: it slides in a snapshot of the previous entry, taken
+// when it was left (often stale: the drawer still open over the chat), and goes Back by itself alongside the app's own
+// gestures. There the stack lives in memory over one browser entry, so the system swipe has nothing to go back to and
+// every swipe is the app's (navigation-coordinator.ts, sidebar-gesture.ts). Tests that drive browser Back and Forward
+// on a Home Screen app opt out (window.__mrRealHistory), as on Android, whose installed apps keep real history.
+let inMemory = false;
+export const screenStackInMemory = () => inMemory;
 const session = /* @__PURE__ */ (() => Math.random().toString(36).slice(2))();
 const capture = () => { const s = useStore.getState(); return { layerKey: backLayerOpen() ? backLayerIdentity() : null, restoreLayer: backLayerRestore(), activeProjectId: s.activeProjectId, currentId: s.currentId, runner: s.runner, layer: backLayerOpen(), canvasOpen: s.canvasOpen, canvasDocumentId: s.canvasDocumentId, page: s.page, pageArg: s.pageArg, settingsOpen: s.settingsOpen, settingsTab: s.settingsTab, projectWorkspaceOpen: s.projectWorkspaceOpen, routing: getRoutingScreen() }; };
 export type Screen = ReturnType<typeof capture>;
@@ -181,6 +199,7 @@ export function installScreenHistory() {
   // A local layer on an unmounted/covered canonical screen must not become a second
   // entry when its effect cleans up after Settings or another destination has opened.
   configureBackLayerContext(() => { const s = useStore.getState(); const r = getRoutingScreen(); return JSON.stringify([s.page, s.currentId, s.settingsOpen, s.settingsTab, s.projectWorkspaceOpen, s.canvasOpen, r.open, r.section, r.provider]); });
+  inMemory = isIOS() && isStandalone() && !(window as { __mrRealHistory?: boolean }).__mrRealHistory;
   let owner = useStore.getState().user?.uid;
   let previous = capture();
   let replay = 0;
@@ -226,7 +245,8 @@ export function installScreenHistory() {
     cursor += 1;
     active = ++serial; entries.set(active, next); positions.set(active, cursor);
     if (visit) visits.set(active, visit);
-    history.pushState({ ...history.state, [KEY]: { session, id: active } }, '');
+    const marker = { ...history.state, [KEY]: { session, id: active } };
+    if (inMemory) history.replaceState(marker, ''); else history.pushState(marker, '');
     screensChanged();
   };
   const pop = () => {

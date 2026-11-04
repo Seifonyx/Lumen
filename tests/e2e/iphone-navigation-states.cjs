@@ -13,7 +13,8 @@ const iphone='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit
   const context=await browser.newContext({viewport:{width,height},hasTouch:true,userAgent:iphone,serviceWorkers:'block',reducedMotion:'reduce'});
   await context.route('**/*',r=>new URL(r.request().url()).origin===new URL(base).origin?r.continue():r.abort());
   await profile(context,`navigation-states-${width}`,theme);
-  await context.addInitScript(() => Object.defineProperty(navigator, 'standalone', { value: true }));
+  // Real history for browser Back (as on Android); the iOS in-memory stack is covered by native-navigation.cjs.
+  await context.addInitScript(() => { Object.defineProperty(navigator, 'standalone', { value: true }); window.__mrRealHistory = true; });
   if(solid)await context.addInitScript(()=>localStorage.setItem('mr.glass','off'));
   const page=await context.newPage();page.setDefaultTimeout(15000);
   await page.goto(new URL('/privacy.html',base).href);

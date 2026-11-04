@@ -189,6 +189,8 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
       <aside
         ref={sidebarRef}
         className={`sidebar cv-nav${open ? ' open' : ''}`}
+        // What is on screen, so only its row is highlighted: a place, a project's workspace, or the chat.
+        data-here={page || routing ? 'place' : workspaceOpen ? 'project' : 'chat'}
         aria-label="Chats"
         role={phone ? 'dialog' : undefined}
         tabIndex={-1}

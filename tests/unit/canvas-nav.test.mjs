@@ -19,7 +19,9 @@ test('CanvasNav delegates browser history to the canonical UI adapter with opaqu
  const adapter=readFileSync('src/lib/screen-history.ts','utf8');
  assert.match(src,/useEffect\(\(\) => installScreenHistory\(\), \[\]\)/);
  assert.match(adapter,/useStore\.setState\(window\.matchMedia/);
- assert.match(adapter,/history\.pushState\(\{ \.\.\.history\.state, \[KEY\]: \{ session, id: active \} \}/);
+ assert.match(adapter,/const marker = \{ \.\.\.history\.state, \[KEY\]: \{ session, id: active \} \};\n    if \(inMemory\) history\.replaceState\(marker, ''\); else history\.pushState\(marker, ''\);/);
+ // An iOS Home Screen app keeps the stack in memory, so iOS's own edge swipe has no entry to go back to.
+ assert.match(adapter,/inMemory = isIOS\(\) && isStandalone\(\) && !\(window as \{ __mrRealHistory\?: boolean \}\)\.__mrRealHistory;/);
  assert.match(adapter,/entries = new Map/);
  assert.match(adapter,/owner !== useStore\.getState\(\)\.user\?\.uid/);
  assert.doesNotMatch(adapter,/localStorage|indexedDB|fetch\(|s\.keys|s\.settings\./);
@@ -41,7 +43,9 @@ test("the tree's arrow keys load lazily from SidebarCanvas only, and change no r
 test('global New chat is always general; a project folder New chat is always that project (Canvas only)', () => {
   const lib = readFileSync('src/lib/new-chat.ts', 'utf8');
   assert.match(lib, /export function newGeneralChat\(\) \{[^]*?useStore\.setState\(\{ activeProjectId: null \}\)[^]*?newChat\(\);/, 'clears the remembered project first');
-  assert.ok(!/moveChatToProject|currentId/.test(lib), 'moves no chat');
+  assert.ok(!/moveChatToProject|\.projectId\b/.test(lib), 'moves no chat and borrows no chat\'s project');
+  // On an unsaved general new chat (where an unsent draft lives) it returns there instead of starting another.
+  assert.match(lib, /if \(!s\.currentId && !s\.activeProjectId\) \{ s\.setUi\(\{ page: null,/);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const newGeneralChat: \(\(\) => void\) \| null = null;$/m);
   assert.match(readFileSync('src/lib/canvas-presentation.on.ts', 'utf8'), /^export \{ newGeneralChat \} from '\.\/new-chat';$/m);
   // Every global trigger goes through it: ⌘⇧O, the palette, the top bar, the sidebar, the drawer and the rail.

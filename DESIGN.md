@@ -123,8 +123,26 @@ dark mode).
 
 ## Motion
 
-Controls press in 1.5–3.5% and spring back; Reduce Motion keeps them still. Phone pages push/pop; desktop pages
-crossfade briefly. Only replies appended to the open chat animate in (220 ms); streaming text fades in over 240 ms.
+Controls press in 1.5–3.5% and spring back; Reduce Motion keeps them still. Desktop pages crossfade briefly (a view
+transition on Canvas).
+
+**Phone navigation (Canvas)** has one owner and one transition, `src/lib/navigation-coordinator.ts` (lazy, touch
+devices): every Back swipe and the drawer's swipe go through it, and the old per-screen swipe handlers are gone.
+- A swipe right on a pushed screen (pages, Router and its steps, Settings sections, a project's workspace, the document
+  panel) moves that screen with the finger; the root chat's swipe opens the drawer instead. iPhone glass: from anywhere
+  on the screen; elsewhere from the edge. An iOS browser tab leaves Back and Forward to Safari entirely.
+- Behind it is what Back restores: the real chat or workspace (still mounted, revealed), or the screen kept when you
+  left it (memory only, this account, never incognito or key fields) while the data it shows is unchanged; otherwise a
+  plain page. Never a wrong preview. The screen behind moves in from −28% under a 0.08 dim; the moving one has a shadow.
+- Release past about half the width, or a flick, commits: exactly one history traversal, and the layers come off once
+  the destination has painted. A short, reversed or canceled drag springs back; Browser Back, a resize or an account
+  change during a drag stops it with no navigation. Sheets, dialogs, menus, fields, selected text, sliders, swipe rows
+  and sideways content that can still scroll keep their own drags (a drag from the edge still wins over content).
+- Taps use the same slide: a new step pushes over the screen it leaves, and the app's own Back (the top-left button)
+  pops like the gesture. Reduce Motion keeps the finger tracking but drops the parallax and the slides.
+- Tests: `tests/e2e/native-navigation.cjs` (Chromium and WebKit, 390/320, Light/Dark, Reduce Motion, a Safari tab).
+
+Only replies appended to the open chat animate in (220 ms); streaming text fades in over 240 ms. Only replies appended to the open chat animate in (220 ms); streaming text fades in over 240 ms.
 Sheets track the finger. Decorative animation pauses offscreen, when hidden or under Reduce Motion. Theme changes
 switch instantly. SVG: animate an inner element, never one with a `transform` attribute.
 

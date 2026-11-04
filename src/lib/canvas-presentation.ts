@@ -27,6 +27,8 @@ export const BrandWordmark: ComponentType<BrandArtProps> | null = null;
 export const BrandMark: ComponentType<BrandArtProps> | null = null;
 export const CanvasNav: ComponentType<{ collapsed: boolean; onExpand: () => void }> | null = null;
 export const loadTreeKeys: (() => Promise<typeof import('./tree-keys')>) | null = null;
+/** Canvas phone navigation (gesture owner and transitions): loaded on touch devices only, never in the ordinary build. */
+export const loadNavigation: (() => Promise<typeof import('./navigation-coordinator')>) | null = null;
 export const newGeneralChat: (() => void) | null = null;
 
 export const PhoneNavigation: import('react').ComponentType<import('../components/PhoneNavigation').PhoneNavigationProps> | null = null;

@@ -7,7 +7,7 @@ const { profile, seed } = require('./helpers/preview-profile.cjs');
 const { openPlace } = require('./helpers/nav.cjs');
 const base = process.env.MR_TEST_URL || 'http://localhost:5190/';
 const iphone = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Version/18.5 Mobile/15E148 Safari/604.1';
-const artifacts = '.swipe-under,.swipe-dim,.swipe-revealing,.page-swap-ghost';
+const artifacts = '.nav-layer,.page-swap-ghost';
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 async function exercise(browser, standalone) {
@@ -63,6 +63,7 @@ async function exercise(browser, standalone) {
     const drawer = page.locator('aside.cv-nav');
     const focus = selector => page.waitForFunction(selector => document.activeElement?.matches(selector), selector);
     const clean = async selector => {
+      await page.waitForFunction(() => !document.documentElement.dataset.navGesture && !document.querySelector('.nav-layer'), null, { timeout: 4000 });
       assert.equal(await page.locator(artifacts).count(), 0, 'no ghost, underlay or dim layer');
       assert.equal(await page.locator(selector).evaluate(el => getComputedStyle(el).transform), 'none');
     };
@@ -72,7 +73,8 @@ async function exercise(browser, standalone) {
         animations: 'disabled',
       });
     };
-    const swipe = (surface, options = {}) => page.locator(surface).evaluate(async (el, options) => {
+    // The previous transition finishes before the next finger lands; kept screens (.nav-layer) are never the surface.
+    const swipe = async (surface, options = {}) => { await page.waitForFunction(() => !document.querySelector('.nav-layer'), null, { timeout: 4000 }); return page.locator(surface + ':not(.nav-layer)').first().evaluate(async (el, options) => {
       const { start = 5, end = 295, finish = 'touchend', times = 1, step = 0 } = options;
       const run = async id => {
         const fire = (type, x) => {
@@ -98,7 +100,7 @@ async function exercise(browser, standalone) {
       const moves = run(1);
       for (let i = 1; i < times; i++) run(i + 1);
       return moves;
-    }, options);
+    }, options); };
     const returnedToChat = async () => {
       await composer.waitFor();
       assert.equal(await entry(), root);
@@ -141,7 +143,10 @@ async function exercise(browser, standalone) {
     assert.equal(await entry(), documentEntry);
     assert.deepEqual(await trace(), before, 'partial and canceled gestures never traverse');
     await swipe(panel, { finish: null });
-    await clean(panel);
+    if (standalone) {
+      // A held Back follows the finger over the screen behind it (lib/navigation-coordinator.ts, native-navigation.cjs).
+      await page.waitForFunction(selector => document.documentElement.dataset.navGesture && getComputedStyle(document.querySelector(selector)).transform !== 'none', panel);
+    } else await clean(panel);
     await screenshot(standalone ? 'pwa-drag-held' : 'safari-edge-untouched');
     await page.evaluate(() => window.finishSwipe());
     if (standalone) {

@@ -2,7 +2,7 @@ import { CANVAS_SHELL } from './canvas-presentation';
 import { useStore } from '../store';
 import { rubberBand, springTo, Velocity, type Motion } from './spring';
 import { haptic } from './haptics';
-import { isBrowserEdge } from './navigation-edge';
+import { gestureOwner, isBrowserEdge } from './navigation-edge';
 
 /**
  * A phone drawer that follows the finger; vertical scrolling keeps its native behavior. Letting go keeps the
@@ -41,7 +41,7 @@ export function installSidebarGestures(): () => void {
     drag.scrim.style.opacity = String(drag.offset / drag.width);
   };
   const start = (event: TouchEvent) => {
-    if (event.touches.length !== 1 || isBrowserEdge(event.touches[0].clientX)) { clear(); return; }
+    if (event.touches.length !== 1 || isBrowserEdge(event.touches[0].clientX) || gestureOwner.current === 'back') { clear(); return; }
     if (document.querySelector('.ctx-layer:not(.exit-ghost)')) { clear(); return; }
     // Caught mid-slide (after a release, or a tap that opened or closed it): continue from where it is.
     const onDrawer = event.target instanceof Element && Boolean(event.target.closest('.sidebar, .scrim'));

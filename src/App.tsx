@@ -13,10 +13,10 @@ import { useStore } from './store';
 import { matchShortcut } from './lib/shortcuts';
 import { copyText, prefetchWhenIdle } from './lib/util';
 import { keepScreenAwake } from './lib/wakelock';
-import { installSidebarGestures } from './lib/sidebar-gesture';
 import TaskEngine from './components/TaskEngine';
 import { cancelKnowledge } from './lib/knowledge/engine';
-import { CANVAS_SHELL, CanvasNav, forgetScreenMemory, newGeneralChat, navigateBack, useScreenBackLayer, RoutingCenter } from './lib/canvas-presentation';
+import { installSidebarGestures } from './lib/sidebar-gesture';
+import { CANVAS_SHELL, CanvasNav, forgetScreenMemory, loadNavigation, newGeneralChat, navigateBack, useScreenBackLayer, RoutingCenter } from './lib/canvas-presentation';
 // CP05: the Canvas scope covers the whole document (pages and portalled dialogs/menus) while the shell switch is on;
 // the ordinary build folds this away.
 if (CANVAS_SHELL) { document.documentElement.setAttribute('data-lumen-canvas', ''); document.documentElement.setAttribute('data-lumen-canvas-foundation', ''); }
@@ -123,8 +123,17 @@ export default function App() {
     return () => keepScreenAwake(false);
   }, [working]);
 
+  // The phone drawer follows the finger. Canvas: the navigation coordinator installs it with Back (one owner for every
+  // horizontal touch, lib/navigation-coordinator.ts), so its code leaves the startup bundle.
   useEffect(() => {
-    if (authed) return installSidebarGestures();
+    if (authed && !CANVAS_SHELL) return installSidebarGestures();
+  }, [authed]);
+  // Canvas: one owner for Back gestures, the drawer and screen transitions on touch devices.
+  useEffect(() => {
+    if (!authed || !loadNavigation) return;
+    let stop: (() => void) | undefined, gone = false;
+    void loadNavigation().then((m) => { if (!gone) stop = m.installNavigation(); });
+    return () => { gone = true; stop?.(); };
   }, [authed]);
 
   // A tapped task notification opens that task's chat (once the chats have loaded).

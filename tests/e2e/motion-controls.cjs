@@ -6,7 +6,9 @@ const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/6
 const url = process.env.MR_TEST_URL || 'http://localhost:5190/';
 const only = process.env.MOTION_CASE;
 const run = name => !only || only === name;
-const rest = page => page.waitForFunction(() => !document.querySelector('.page-swap-ghost'));
+// Outgoing screens: pageSwap's copy (ordinary), the navigation coordinator's kept screen on Canvas phones (.nav-layer),
+// or a view transition on Canvas computers.
+const rest = page => page.waitForFunction(() => !document.querySelector('.page-swap-ghost, .nav-layer'));
 
 (async () => {
   const browser = await (process.env.MR_WEBKIT ? webkit : chromium).launch();
@@ -78,8 +80,10 @@ const rest = page => page.waitForFunction(() => !document.querySelector('.page-s
         await page.evaluate(() => {
           window.__outgoingSurfaces = 0;
           new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => {
-            if (node instanceof HTMLElement && node.classList.contains('page-swap-ghost') && node.inert && node.getAttribute('aria-hidden') === 'true') window.__outgoingSurfaces++;
+            if (node instanceof HTMLElement && (node.classList.contains('page-swap-ghost') || node.classList.contains('nav-layer')) && node.inert && node.getAttribute('aria-hidden') === 'true') window.__outgoingSurfaces++;
           }))).observe(document.querySelector('.app'), { childList: true, subtree: true });
+          const start = document.startViewTransition?.bind(document);
+          if (start && document.querySelector('[data-lumen-canvas-shell]')) document.startViewTransition = (cb) => { window.__outgoingSurfaces++; return start(cb); };
         });
         if (width < 900) await page.locator('.menu-btn').click();
         await page.locator('.sidebar').getByRole('button', { name: 'Library', exact: true }).click();
@@ -92,7 +96,7 @@ const rest = page => page.waitForFunction(() => !document.querySelector('.page-s
         await page.keyboard.press('Escape');
         await rest(page);
         await page.waitForTimeout(500);
-        assert.equal(await page.locator('.page-swap-ghost').count(), 0);
+        assert.equal(await page.locator('.page-swap-ghost, .nav-layer').count(), 0);
         assert.equal(await input.inputValue(), 'KEEP_MY_DRAFT');
         assert.ok(await input.isEditable(), 'The real composer is available after rapid back navigation');
         if (reduced) assert.equal(await page.locator('.exit-ghost').count(), 0, 'Reduced motion does not retain outgoing copies');

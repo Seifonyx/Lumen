@@ -19,3 +19,4 @@ prism-routing-states
 prism-usage-diagnostics
 picker-back
 iphone-edge-back
+native-navigation

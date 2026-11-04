@@ -445,7 +445,7 @@ export default function SettingsModal() {
   function go(next: string) {
     if (CANVAS_SHELL && !next && window.matchMedia('(max-width:899px)').matches) { navigateBack!(() => setUi({ settingsTab: '' })); return; }
     const narrow = window.matchMedia('(max-width: 720px), (pointer: coarse) and (max-width: 1100px)').matches;
-    if (narrow && dialog.current && Boolean(next) !== Boolean(tab)) pageSwap(next ? 'push' : 'pop', dialog.current, () => dialog.current, () => setUi({ settingsTab: next }));
+    if (!CANVAS_SHELL && narrow && dialog.current && Boolean(next) !== Boolean(tab)) pageSwap(next ? 'push' : 'pop', dialog.current, () => dialog.current, () => setUi({ settingsTab: next }));
     else setUi({ settingsTab: next });
   }
 

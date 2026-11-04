@@ -22,6 +22,7 @@ export type { BrandArtProps } from './canvas-presentation';
 export { BrandMark, BrandWordmark } from '../components/BrandCrease';
 export { default as CanvasNav } from '../components/CanvasNav';
 export const loadTreeKeys = () => import('./tree-keys');
+export const loadNavigation = () => import('./navigation-coordinator');
 export { newGeneralChat } from './new-chat';
 
 export const PhoneNavigation = lazy(() => import('../components/PhoneNavigation'));

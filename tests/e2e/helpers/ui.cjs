@@ -1,9 +1,12 @@
 // Shared steps for the in-app tests.
+// The phone drawer's button: on the chat, or on a place chosen in the drawer (Canvas iOS model).
+const DRAWER = '.menu-btn:visible, .phone-navigation > button[aria-label="Open navigation"]:visible';
 
 /** Opens Settings (from the sidebar; on phones through the menu) and, optionally, one section. */
 exports.openSettings = async (page, tab) => {
   if (!(await page.locator('.settings-page:not(.nav-layer)').isVisible())) {
-    if (await page.locator('.menu-btn').isVisible()) await page.click('.menu-btn');
+    const menu = page.locator(DRAWER).first();
+    if (await menu.isVisible()) await menu.click();
     await page.getByRole('button', { name: 'Settings', exact: true }).click();
   }
   if (tab) await exports.openSettingsSection(page, tab);
@@ -38,7 +41,7 @@ exports.openSettingsSection = async (page, name) => {
   // Canvas: after a first-run key save the screen is Router, not Settings. Leave it and open Settings.
   if (!(await page.locator('.settings-page:not(.nav-layer)').isVisible()) && await page.locator('.rc-page:not([hidden])').isVisible()) {
     await exports.closeSettings(page);
-    const menu = page.locator('.menu-btn');
+    const menu = page.locator(DRAWER).first();
     if (await menu.isVisible()) await menu.click();
     await page.getByRole('button', { name: 'Settings', exact: true }).click();
   }
@@ -50,7 +53,7 @@ exports.openSettingsSection = async (page, name) => {
   if (!(await list.isVisible())) {
     await exports.backSettingsSection(page);
     if (!(await page.locator('.settings-page:not(.nav-layer)').isVisible())) {
-      const menu = page.locator('.menu-btn');
+      const menu = page.locator(DRAWER).first();
       await page.locator('.composer textarea').waitFor({state:'visible'});
       if (await menu.isVisible()) await menu.click();
       await page.getByRole('button', { name: 'Settings', exact: true }).click();
@@ -60,11 +63,23 @@ exports.openSettingsSection = async (page, name) => {
   await list.getByRole('button', { name: name === 'General' ? /^(General|Account:)/ : new RegExp('^' + name + '(?:\\s|$)') }).first().click();
 };
 
+// Canvas phones (iOS model, 2026-11-04): a place chosen in the drawer is a root whose leading control opens the drawer;
+// tests leave it with browser Back, which returns to the screen it replaced (the chat they came from).
+const leaveRoot = async (page, screen) => {
+  for (let step = 0; step < 8 && await screen.isVisible(); step++) {
+    const up = screen.locator('.phone-navigation > button:is([aria-label="Back"], [aria-label^="Back to "], [aria-label^="Return to "])');
+    if (await up.isVisible()) await up.click(); else await page.goBack();
+    await screen.waitFor({ state: 'hidden', timeout: 900 }).catch(() => {});
+  }
+};
+const isRoot = (screen) => screen.locator('.phone-navigation > button[aria-label="Open navigation"]').isVisible();
+
 exports.closeSettings = async (page) => {
   const root = page.locator('.settings-page:not(.nav-layer)');
   // Canvas: API keys, models and usage open in Router instead; leaving it is its Exit control.
   const router = page.locator('.rc-page:not([hidden])');
   if (!(await root.isVisible()) && await router.isVisible()) {
+    if (await router.locator('.phone-navigation').isVisible()) { await leaveRoot(page, router); await router.waitFor({ state: 'hidden' }); return; }
     await router.locator(':is(.rc-head .feature-exit, .phone-navigation > button)').first().click();
     await router.waitFor({ state: 'hidden' });
     return;
@@ -79,6 +94,7 @@ exports.closeSettings = async (page) => {
     const back = root.locator('.phone-navigation button:is([aria-label="Back to Settings"], [aria-label^="Return to "])');
     if (await close.isVisible()) await close.click();
     else if (await back.isVisible()) await back.click();
+    else if (await isRoot(root)) await leaveRoot(page, root);
     else { await root.focus(); await page.keyboard.press('Escape'); }
     if (!(await root.isVisible())) break;
     await root.waitFor({ state: 'hidden', timeout: 900 }).catch(() => {});
@@ -90,7 +106,7 @@ exports.closeSettings = async (page) => {
 exports.closeCanvas = async (page) => {
   const legacy = page.getByRole('button', { name: 'Close canvas', exact: true });
   if (await legacy.isVisible()) return legacy.click();
-  const back = page.locator('.canvas-panel .phone-navigation button[aria-label^="Return to "]');
+  const back = page.locator('.canvas-panel .phone-navigation button:is([aria-label="Back"], [aria-label^="Return to "])');
   await back.waitFor({ state: 'visible' });
   await back.click();
 };

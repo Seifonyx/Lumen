@@ -1,4 +1,5 @@
 const {chromium}=require('playwright');
+const { leavePlace } = require('./helpers/nav.cjs');
 const assert=require('node:assert/strict');
 (async()=>{
  const browser=await chromium.launch();
@@ -40,7 +41,7 @@ const assert=require('node:assert/strict');
   assert.ok(JSON.stringify(calls[0]).includes('QUALITY_MARKER'));
   await open();if(canvas){await page.getByRole('button',{name:'Edit Quality helper',exact:true}).click();page.once('dialog',d=>d.accept());await page.getByRole('button',{name:'Delete',exact:true}).click();}else{page.once('dialog',d=>d.accept());await page.getByRole('button',{name:'Delete Quality helper',exact:true}).click();}
   await card.waitFor({state:'detached'});
-  await page.locator('.hub-page > .hub-bar .feature-exit, .hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label^="Return to "], .tool-picker .tp-close').first().click();await page.locator('.hub-page, .tool-picker').first().waitFor({state:'detached'});
+  if(await page.locator('.hub-page .phone-navigation').isVisible())await leavePlace(page,'.hub-page');else await page.locator('.hub-page > .hub-bar .feature-exit, .hub-page [aria-label="Close"], .tool-picker .tp-close').first().click();await page.locator('.hub-page, .tool-picker').first().waitFor({state:'detached'});
   assert.ok(await page.locator('.assistant-badge').isVisible());
   await page.evaluate(()=>(document.querySelector('.sidebar .new-chat, .cv-new-pill')||[...document.querySelectorAll('.cv-dest button')].find(b=>b.textContent.includes('New chat'))).click());assert.equal(await page.locator('.assistant-badge').count(),0);
   await page.fill('.composer textarea','Existing draft');await prompts();

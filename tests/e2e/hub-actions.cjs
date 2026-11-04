@@ -1,4 +1,5 @@
 // Hub navigation, direct tool setup, draft safety and accessible page structure.
+const { leavePlace } = require('./helpers/nav.cjs');
 const { chromium, webkit } = require('playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -75,7 +76,7 @@ const models = ['gemini-flash-latest', 'gemini-2.5-pro'];
         await page.getByRole('button',{name:'Close tools',exact:true}).click();await page.locator('.tool-picker').waitFor({state:'detached'});
         await page.locator('.menu-btn').click();await page.locator('.sidebar.open').waitFor();
         await page.locator('.sidebar').getByRole('button',{name:'Library',exact:true}).click();await page.getByRole('main',{name:'Library',exact:true}).waitFor();await structure('Library');
-        await page.locator('.phone-navigation [aria-label^="Return to "]').click();await page.locator('.hub-page').waitFor({state:'detached'});await openTools();
+        await leavePlace(page,'.hub-page');await openTools();
       }else{
       if (phone) {
         const menu = page.locator('.hub-bar').getByRole('button', { name: 'Open sidebar', exact: true });

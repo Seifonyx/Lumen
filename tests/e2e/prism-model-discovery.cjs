@@ -59,7 +59,7 @@ try{for(const[width,height]of sizes)for(const theme of ['light','dark']){
  assert(await rc.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'model rows fit narrow screen');
  if(width<900){await rc.getByRole('button',{name:'Browse models',exact:true}).click();await search.waitFor();}
  await rc.getByRole('button',{name:'Clear model search',exact:true}).click();await rc.getByRole('button',{name:'Next',exact:true}).click();assert.match(await rc.getByRole('navigation',{name:'Model pages'}).innerText(),/25–48 of 302/);
- await search.fill('fixture-299');await rc.getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Activity',exact:true}).click();await page.goBack();await search.waitFor();assert.equal(await search.inputValue(),'fixture-299','Back restores Models search');
+ await search.fill('fixture-299');await rc.getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Activity',exact:true}).click();if(width<900)await rc.getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Models',exact:true}).click();else await page.goBack();await search.waitFor();assert.equal(await search.inputValue(),'fixture-299',width<900?'switching back to Models keeps its search':'Back restores Models search');
  assert(requests.every(m=>m==='GET'));assert.deepEqual(errors,[]);results.push({width,height,theme,passed:true});console.log(`PASS Prism Models ${engine} ${width} ${theme}`);
  }catch(error){await page.screenshot({path:path.join(out,`${width}-${theme}-failure-${engine}.png`),animations:'disabled'});throw error;}finally{await context.close();}
 }}finally{await browser.close();fs.writeFileSync(path.join(out,`results-${engine}.json`),JSON.stringify({engine,syntheticOnly:true,physicalIPhone:false,results},null,2));}

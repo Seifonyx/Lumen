@@ -1,4 +1,5 @@
 // Fresh arrivals, restored history and a single Auto selection pulse, with real motion enabled.
+const { leavePlace } = require('./helpers/nav.cjs');
 const { chromium, webkit } = require('playwright');
 const assert = require('node:assert/strict');
 const { profile, seed } = require('./helpers/preview-profile.cjs');
@@ -76,7 +77,9 @@ const now = Date.now();
         await page.locator('.composer textarea').fill('NEXT_DRAFT');
         if (width < 900) await page.locator('.menu-btn').click();
         await page.locator('.sidebar').getByRole('button', { name: 'Library', exact: true }).click();
-        await page.locator('.hub-page:not(.exit-ghost)').locator('.hub-bar .feature-exit, [aria-label="Close"], .phone-navigation [aria-label^="Return to "]').click();
+        await page.locator('.hub-page:not(.exit-ghost)').waitFor();
+        if (await page.locator('.hub-page:not(.exit-ghost) .phone-navigation').isVisible()) await leavePlace(page, '.hub-page:not(.exit-ghost)');
+        else await page.locator('.hub-page:not(.exit-ghost)').locator('.hub-bar .feature-exit, [aria-label="Close"]').click();
         // A leaving screen may keep an animated ghost composer mounted briefly.
         // Assert draft restoration only after the actual presentation is unique.
         await page.waitForFunction(() => document.querySelectorAll('.composer textarea').length === 1, null, { timeout: 5000 });

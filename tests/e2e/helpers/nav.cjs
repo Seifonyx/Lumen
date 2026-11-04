@@ -16,4 +16,19 @@ async function openPlace(page, name) {
   await nav.getByRole('button', { name, exact: true }).first().click();
 }
 
-module.exports = { openPlace, openTools, plusItem, isCanvas, isPhone };
+/** The phone screen's leading Back (a pushed screen): 'Back', 'Back to Settings', or the older 'Return to …'. */
+const UP = '.phone-navigation:visible > button:is([aria-label="Back"], [aria-label^="Back to "], [aria-label^="Return to "])';
+/** Phones: leaves the place on screen (`selector`) for the screen it was opened from. Canvas follows iOS chat apps
+ *  (2026-11-04): drill-downs go up with Back; a place chosen in the drawer is a root (its control opens the drawer), so
+ *  browser Back returns to the screen it replaced. */
+async function leavePlace(page, selector) {
+  const screen = page.locator(selector).first();
+  for (let i = 0; i < 10 && await screen.isVisible(); i++) {
+    const up = page.locator(UP).first();
+    if (await up.isVisible()) await up.click(); else await page.goBack();
+    await screen.waitFor({ state: 'hidden', timeout: 1000 }).catch(() => {});
+  }
+  await screen.waitFor({ state: 'hidden' });
+}
+
+module.exports = { openPlace, openTools, plusItem, isCanvas, isPhone, leavePlace, UP };

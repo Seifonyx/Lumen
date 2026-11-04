@@ -1,4 +1,5 @@
 // Two "devices" signed in as the same user (Firebase emulators), checking chats and settings sync.
+const { leavePlace } = require('./helpers/nav.cjs');
 const { chromium } = require('playwright');
 const { openTools } = require('./helpers/plus.cjs');
 const {openSettings,replyAction,openSettingsSection:openTab,closeSettings,closeCanvas}=require('./helpers/ui.cjs');
@@ -160,7 +161,8 @@ async function device(browser, name, email, mobile) {
   if (!Acanvas) await A.page.getByRole('button', { name: 'All assistants', exact: true }).click();
   await (Acanvas ? A.page.locator('#tools-assistants :is(.tool-card,.tx-hit)').filter({hasText:'Synced helper'}) : A.page.locator('article.lib-card strong', { hasText: /^Synced helper$/ })).waitFor();
   check(true, 'saved assistant library synced to phone');
-  await A.page.locator('.hub-page > .hub-bar .feature-exit, .hub-page [aria-label="Close"], .hub-page .phone-navigation [aria-label^="Return to "], .tool-picker .tp-close').first().click();
+  if (await A.page.locator('.hub-page .phone-navigation').isVisible()) await leavePlace(A.page, '.hub-page');
+  else await A.page.locator('.hub-page > .hub-bar .feature-exit, .hub-page [aria-label="Close"], .tool-picker .tp-close').first().click();
   await A.page.click('.menu-btn');
   await A.page.locator('.sidebar').getByRole('button', { name: 'Synced Chat Title', exact: true }).click();
   await A.page.waitForSelector('.assistant-badge');

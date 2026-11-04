@@ -11,6 +11,8 @@ async function scan(page) {
       if (!r.width || !r.height || getComputedStyle(el).visibility === 'hidden') continue;
       if (r.right <= 0 || r.left >= W) continue; // off-canvas (the closed sidebar)
       if (el.closest('svg, .katex, .cm-editor, .sheet-preview, .deck-preview')) continue;
+      // Canvas phones: the screen beside the open drawer is moved aside on purpose and clipped by the app (iOS model).
+      if (document.querySelector('aside.cv-nav.open') && el.closest('.app > :is(.main, .hub-page, .settings-page, .rc-page)')) continue;
       // Inside a scroll/clip box that itself fits, being wider is fine (tables, code, diffs scroll).
       let clipped = false;
       for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {

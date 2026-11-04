@@ -2,7 +2,7 @@
 // Sections: one header line with five tabs on computers. Phones: five horizontally scrollable sections starting with Models;
 // Usage and Diagnostics are sections, and a provider from the list, as pages with Back in the bar.
 const assert = require('node:assert/strict');
-const { openPlace } = require('./helpers/nav.cjs');
+const { openPlace, leavePlace } = require('./helpers/nav.cjs');
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium, webkit } = require('playwright');
@@ -95,7 +95,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         assert.match(await detail.locator('[data-fact="Key"]').textContent(), /Saved/);
         assert.match(await detail.locator('[data-fact="Permission"]').textContent(), /Enabled/);
         assert.match(await detail.locator('[data-fact="Allowance"]').textContent(), /Unknown/);
-        assert.equal(await rc.locator('.phone-navigation').getByRole('button', { name:'Return to chat',exact:true }).count(), phone ? 1 : 0);
+        assert.equal(await rc.locator('.phone-navigation').getByRole('button', { name:'Back',exact:true }).count(), phone ? 1 : 0, 'a provider is a drill-down: Back goes up to Router');
         // A working provider has no fix to lead with: both actions stay quiet.
         assert.equal(await detail.locator('.rc-primary').count(), 0);
       }
@@ -172,7 +172,7 @@ const initialModels = [model('gemini-flash-latest', 'Gemini Flash'), model('gemi
         assert(providerRequests.every(r => r.method === 'GET' && new URL(r.url).pathname.endsWith('/models')), 'only catalog GETs, never inference');
       }
       await tab('Models');
-      await rc.getByRole('button',{name:'Return to chat',exact:true}).click();await rc.waitFor({state:'hidden'});assert.equal(await rc.isVisible(),false,'one Exit leaves every visited section');
+      if (phone) await leavePlace(page, '.rc-page:not([hidden])'); else await rc.getByRole('button',{name:'Return to chat',exact:true}).click();await rc.waitFor({state:'hidden'});assert.equal(await rc.isVisible(),false,'one Exit leaves every visited section');
       assert.equal(await page.locator('.composer textarea').inputValue(), draft);
       await open();
       // Keyboard-focus evidence is separate from ordinary presentation captures above.

@@ -61,11 +61,13 @@ let directExit: number | null = null;
 // Set while a tap in the open phone drawer is being handled: the drawer closes and a place opens in the same task.
 let fromDrawer = false;
 const phoneLayout = () => window.matchMedia?.('(max-width:899px)').matches;
-// Router's section tabs switch in place, like a segmented control: one screen, not a step per tab.
-const TABS = ['models', 'providers', 'routing', 'policies', 'usage', 'diagnostics'];
-const tabSwitch = (a: Screen, b: Screen) => a.routing.open && b.routing.open && !a.routing.provider && !b.routing.provider
- && a.routing.section !== b.routing.section && TABS.includes(a.routing.section) && TABS.includes(b.routing.section)
- && same(a, { ...b, routing: a.routing });
+// Router's section tabs switch in place on phones, like a segmented control: one screen, not a step per tab (a sub-screen
+// of the tab being left goes with it). A link inside the content that changes section (Manage model) is still a step.
+let tapping = false;
+/** Runs a tap on a section tab: on phones it switches in place instead of adding a history step. */
+export function switchTab(run: () => void) { tapping = phoneLayout(); try { run(); } finally { tapping = false; } }
+const tabSwitch = (a: Screen, b: Screen) => tapping && a.routing.open && b.routing.open && !b.routing.provider && !b.layer
+ && a.routing.section !== b.routing.section && same({ ...a, layer: false, layerKey: null }, { ...b, routing: a.routing });
 const screenListeners = new Set<() => void>();
 /** Notified whenever the current screen entry changes (for controls that depend on where Back leads). */
 export const subscribeScreens = (fn: () => void) => { screenListeners.add(fn); return () => { screenListeners.delete(fn); }; };

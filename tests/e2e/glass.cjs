@@ -1,4 +1,5 @@
 const {selectLibraryType}=require('./helpers/ui.cjs');
+const { leavePlace } = require('./helpers/nav.cjs');
 // 2.3: the iPhone glass look. Only iPhones get it (not Android, not computers), it can be switched off for a
 // device that stutters, the chat runs under the floating bars without hiding the first or last message, and
 // the floating tab bar moves between pages.
@@ -61,7 +62,7 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     if(canvas){
       // The reset intentionally removes category/home docks from Canvas; ordinary still tests their gestures below.
       const enter=async(id)=>{await page.evaluate(id=>window.dispatchEvent(new CustomEvent('mr:library',{detail:id})),id);await page.locator('.hub-page').waitFor();};
-      const leave=async()=>{await page.locator('.phone-navigation [aria-label^="Return to "]').click();await page.locator('.hub-page').waitFor({state:'detached'});};
+      const leave=async()=>{await leavePlace(page,'.hub-page');await page.locator('.hub-page').waitFor({state:'detached'});};
       await enter('projects');assert.equal(await page.locator('.glass-tabbar').count(),0);
       const create=page.getByRole('main',{name:'Projects',exact:true}).getByRole('button',{name:'New project',exact:true});
       assert.equal(await create.count(),1,'empty Projects has one creation action');
@@ -86,7 +87,7 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
       await selectLibraryType(page,'Searchable');
       await page.locator('.files-uploads .knowledge-library').waitFor();
       await page.evaluate(()=>document.documentElement.classList.add('kb-open'));
-      assert.ok(await page.locator('.phone-navigation [aria-label^="Return to "]').isVisible(),'Back stays reachable in simulated keyboard mode');
+      assert.ok(await page.locator('.phone-navigation > button').first().isVisible(),'the leading control stays reachable in simulated keyboard mode');
       await page.evaluate(()=>document.documentElement.classList.remove('kb-open'));await leave();
       console.log('PASS Canvas hierarchy, all-tools search, assistant model selection and Library filter without category docks');
     }else{

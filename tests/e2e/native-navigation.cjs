@@ -225,14 +225,15 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
     for (const f of moving) assert(f.under, `${tag}: every moving frame shows the Providers list behind (${JSON.stringify(f)})`);
     assert(frames.some((f) => !f.gesture), `${tag}: the transition finishes`);
 
-    // Released almost at the edge with the finger easing back a little, it still completes; so does a touch that iOS
-    // cancels past half way (both sprang back before).
+    // Released almost at the edge with the finger easing back a little, it still completes (it sprang back before);
+    // a touch the system cancels past half way stays, as in UIKit.
     await toDetail(); before = await trace();
     await drag(Math.round(width * 0.93)); await touch('touchmove', Math.round(width * 0.92)); await lift(Math.round(width * 0.92));
     await committed(before, router, '.rc-page');
     await toDetail(); before = await trace();
-    await drag(Math.round(width * 0.7)); await lift(Math.round(width * 0.7), 'touchcancel');
-    await committed(before, router, '.rc-page');
+    await drag(Math.round(width * 0.7)); await lift(Math.round(width * 0.7), 'touchcancel'); await clean('.rc-page');
+    assert.deepEqual(await trace(), before, `${tag}: a canceled touch past half way stays`);
+    await page.locator('.rc-page .phone-navigation button').first().click(); await page.waitForFunction((id) => history.state?.lumenScreen?.id === id, router); await clean('.rc-page');
 
     // Tapping Back slides like the gesture, with the same single traversal.
     await toDetail(); before = await trace();

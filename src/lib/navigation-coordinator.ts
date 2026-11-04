@@ -238,11 +238,11 @@ function end(event: TouchEvent) {
   // The lifted finger must not also press whatever it started on (iOS sends a click after an unprevented touchend).
   suppressUntil = performance.now() + 450; suppressTarget = event.target instanceof Element ? event.target : null;
   cancelAnimationFrame(frame); frame = 0;
-  const v = speed.get(), p = g.dx / g.width;
-  // As UIKit decides: where the finger's speed would carry the screen, past half way, or a deliberate flick; a clear
-  // reversal stays. iOS may cancel a touch that reaches the screen's edge: well past half way, that still completes.
+  const v = speed.get();
+  // As UIKit decides: where the finger's speed would carry the screen, past half way, or a deliberate flick. Easing back
+  // a little at the end still completes; a clear reversal stays, and so does a touch the system cancels.
   const projected = g.dx + v * 180;
-  const commit = Boolean(screenParent()) && (event.type === 'touchend' ? (projected > g.width / 2 && v > -0.3) || (v > 0.5 && g.dx > 30) : p > 0.5);
+  const commit = event.type === 'touchend' && Boolean(screenParent()) && ((projected > g.width / 2 && v > -0.3) || (v > 0.5 && g.dx > 30));
   settle(commit, v);
 }
 function settle(commit: boolean, v: number) {

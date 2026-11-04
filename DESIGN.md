@@ -143,8 +143,8 @@ devices): every Back swipe and the drawer's swipe go through it, and the old per
 - Behind it is what Back restores: the real chat or workspace (still mounted, revealed), or the screen kept when you
   left it (memory only, this account, never incognito or key fields) while the data it shows is unchanged; otherwise a
   plain page. Never a wrong preview. The screen behind moves in from −28% under a 0.08 dim; the moving one has a shadow.
-- Release where the finger's speed would carry it past half the width, or a flick, commits (a clear reversal stays; a
-  touch iOS cancels past half way still commits): exactly one history traversal, and the layers come off once
+- Release where the finger's speed would carry it past half the width, or a flick, commits (easing back a little at the
+  end still commits; a clear reversal or a touch the system cancels stays): exactly one history traversal, and the layers come off once
   the destination has painted. A short, reversed or canceled drag springs back; Browser Back, a resize or an account
   change during a drag stops it with no navigation. Sheets, dialogs, menus and selected text keep the edge too.
 - Taps use the same slide: a new step pushes over the screen it leaves, and the app's own Back (the top-left button)

@@ -155,12 +155,14 @@ async function exercise(browser, standalone) {
     await screenshot(standalone ? 'pwa-drag-held' : 'safari-edge-untouched');
     await page.evaluate(() => window.finishSwipe());
     if (standalone) {
-      // The document belongs to the Library visit: Back leaves the Library for the chat.
-      await checkTraversal(before, root, true);
-      await returnedToChat();
-      await clean('.app > .main');
-      await screenshot('pwa-document-to-chat');
-      // Forward still restores the Library and its document.
+      // The document was opened from Library (a root chosen in the drawer): Back goes up one level, to Library.
+      await checkTraversal(before, libraryEntry, true);
+      await library.waitFor();
+      await clean('.hub-page');
+      await screenshot('pwa-document-to-library');
+      // Forward restores the document; browser Back from Library still returns to the chat as it was.
+      await page.goForward(); await page.locator(panel).waitFor();
+      await page.goBack(); await library.waitFor(); await page.goBack(); await returnedToChat();
       await page.goForward(); await library.waitFor();
       await page.goForward(); await page.locator(panel).waitFor();
     } else {
@@ -184,7 +186,17 @@ async function exercise(browser, standalone) {
     await library.waitFor();
     await page.evaluate(() => window.finishSwipe());
     await checkTraversal(beforeBrowser, libraryEntry, false);
-    await back('.hub-page', root);
+    if (standalone) {
+      // Library chosen in the drawer is a root (iOS model): its swipe shows the drawer, never a history step; browser Back
+      // still returns to the chat it replaced.
+      const beforeRoot = await trace();
+      await swipe('.hub-page');
+      await page.locator('aside.cv-nav.open').waitFor();
+      assert.deepEqual(await trace(), beforeRoot, 'a root swipe is not a history step');
+      await page.getByRole('button', { name: 'Close menu', exact: true }).click();
+      await page.waitForFunction(() => !document.querySelector('aside.cv-nav.open'));
+      await page.goBack();
+    } else await back('.hub-page', root);
     await returnedToChat();
     await focus('.menu-btn');
 
@@ -199,26 +211,19 @@ async function exercise(browser, standalone) {
     await detail.waitFor();
     const providerDetail = await entry();
     await screenshot(standalone ? 'pwa-provider-detail' : 'safari-provider-detail');
-    if (standalone) {
-      // Two swipes at once still make one traversal, out of Router. Forward restores where it was.
-      await back('.rc-page', root, { times: 2 });
-      await returnedToChat();
-      await clean('.app > .main');
-      await page.goForward(); await router.waitFor();
-      assert.equal(await entry(), routerRoot);
-      await back('.rc-page', root);
-    } else {
-      await back('.rc-page', providersEntry, { times: 2 });
-      await detail.waitFor({ state: 'hidden' });
-      assert(await page.locator('[data-provider="gemini"]').isVisible());
-      await clean('.rc-page');
-      await page.goForward();
-      await detail.waitFor();
-      assert.equal(await entry(), providerDetail);
-      await back('.rc-page', providersEntry);
-      await back('.rc-page', routerRoot);
-      await back('.rc-page', root);
-    }
+    // Router's tabs switch in place (iOS model): the Providers list is Router's own screen, not a step.
+    assert.equal(providersEntry, routerRoot, 'a tab is not a history step');
+    // Two swipes at once still make one traversal, up one level to the providers list. Forward restores the provider.
+    await back('.rc-page', providersEntry, { times: 2 });
+    await detail.waitFor({ state: 'hidden' });
+    assert(await page.locator('[data-provider="gemini"]').isVisible());
+    await clean('.rc-page');
+    await page.goForward();
+    await detail.waitFor();
+    assert.equal(await entry(), providerDetail);
+    await back('.rc-page', providersEntry);
+    // Router chosen in the drawer is a root: its swipe shows the drawer, so browser Back returns to the chat.
+    if (standalone) await page.goBack(); else await back('.rc-page', root);
     await returnedToChat();
 
     await openPlace(page, 'All projects');
@@ -229,12 +234,11 @@ async function exercise(browser, standalone) {
     await page.getByLabel('Project name', { exact: true }).fill('Gesture project');
     await page.getByRole('button', { name: 'Create project', exact: true }).click();
     await page.locator('.project-workspace-main').waitFor();
-    await back('.project-workspace-main', root, {}, projectsEntry);
-    if (!standalone) {
-      await projects.waitFor();
-      await clean('.hub-page');
-      await back('.hub-page', root);
-    }
+    // A project opened from All projects is a drill-down: Back goes up to All projects (a root chosen in the drawer).
+    await back('.project-workspace-main', projectsEntry);
+    await projects.waitFor();
+    await clean('.hub-page');
+    if (standalone) await page.goBack(); else await back('.hub-page', root);
     await returnedToChat();
 
     await page.locator('.menu-btn').first().click();
@@ -246,7 +250,8 @@ async function exercise(browser, standalone) {
     await back('.settings-page', settingsEntry);
     await page.locator('.settings-page.has-section').waitFor({ state: 'detached' });
     await clean('.settings-page');
-    await back('.settings-page', root);
+    // The Settings list chosen in the drawer is a root: browser Back returns to the chat.
+    if (standalone) await page.goBack(); else await back('.settings-page', root);
     await returnedToChat();
 
     await page.getByRole('button', { name: 'Add photos, files or a repository' }).click();

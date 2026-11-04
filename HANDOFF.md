@@ -10,14 +10,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/consistent-look` (owner-approved design update, run 1 of 2: one consistent look + audit fixes).
-  Done: Router Models as a grouped list (no Browse models card, Lamplight only on the Selected chip), iOS large titles
-  (`LargeTitle`) on Library, Router, Projects and the Settings list with pinned section tabs, no repeated
-  Providers/Routing headings, tab rail end fade, `--type-row/detail/note/large-title` tokens, no resize grip on touch,
-  pie usage gauge, visible Incognito label on phones, no token count in the writing sheet, shorter Library availability
-  lines. Canvas CSS 34.43 → 34.37 KB gz (dead Canvas `coll-*` rules removed). Shots helper `tests/e2e/helpers/look-shots.cjs`.
-  Run 2 (later, not started): chat reading (model label, tables, jump-to-latest, code blocks, thought process) and
-  native interactions (long-press message menu, sheet detents, keyboard).
+- **Branch:** none in progress. Start the next task from `origin/main`. Next approved step: design update run 2
+  (chat reading: model label, tables, jump-to-latest, code blocks, thought process; native interactions: long-press
+  message menu, sheet detents, keyboard). Open accessibility items from run 1's audit: a Router section change
+  refocuses the unchanged "Router" title (screen readers don't hear the section), phone model search is last in Tab
+  order, the Selected state is exposed two ways; the drawer focus trap needs an in-browser check.
 
 ## Next
 
@@ -103,6 +100,12 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - Excluded: Arabic interface, separate chat folders, message-list icon/count, chat-tag badges.
 
 ## Recently shipped
+
+- 2026-11-05 One consistent look on phones, design run 1 (PR #115, merged `cc17ffc`, deployed Canvas, live `index-RBkyiEoj.js` matches the merge build):
+  Router Models as a grouped list (Lamplight only on the Selected chip, search in the bottom bar), iOS large titles on
+  Library/Router/Projects/Settings with pinned tabs (`LargeTitle`, own Suspense boundary: suspending blanked Settings
+  mid-pop), end-only tab fades, `--type-*` tokens, audit fixes (resize grip, pie usage gauge, Incognito label, no
+  token count, short Library lines). Canvas CSS 34.43 → 34.4 KB gz. Physical iPhone not yet checked.
 
 - 2026-11-04 Native iOS drawer (PR #112, merged `25b3b11`, deployed Canvas, live `index-CXpjvqO1.js` matches the merge
   build): 20 pt place rows, plain single-line projects and chats, ink New chat capsule, all scaling with text size;

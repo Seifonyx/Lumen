@@ -30,7 +30,7 @@ const near = (a, b, d = 2) => Math.abs(a - b) <= d;
       const look = await page.locator('.chat-row.active').evaluate((row) => ({ title: row.textContent, bg: [row, row.querySelector('.chat-open')].map((el) => getComputedStyle(el).backgroundColor).find((c) => c !== 'rgba(0, 0, 0, 0)') || 'rgba(0, 0, 0, 0)', weight: getComputedStyle(row.querySelector('.chat-open')).fontWeight }));
       assert.ok(look.title.includes(title), `"${title}" is the selected row`);
       assert.notEqual(look.bg, 'rgba(0, 0, 0, 0)', 'the selected row is filled');
-      assert.ok(Number(look.weight) >= 600, 'the selected row is bold');
+      // iOS style (owner, 2026-11-04): the selection is the gray fill alone, at the row's own weight.
       assert.equal(await page.locator('.active-indicator').evaluate((el) => getComputedStyle(el).display).catch(() => 'none'), 'none', 'no bar beside it');
     }
     console.log('PASS the open chat is a filled, bold row');

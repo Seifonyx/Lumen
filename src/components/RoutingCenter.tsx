@@ -16,7 +16,6 @@ import { modelLabel, selectCurrentChat, selectCurrentModel, useStore } from '../
 import { AI_PROVIDERS, providerEnabled } from '../lib/ai/provider-config.js';
 import { PROVIDER_NAMES, providerOfId } from '../lib/util';
 import { formatTokens } from '../lib/usage';
-import { installSwipeBack } from '../lib/swipe-back';
 import { closeRoutingCenter, showRoutingSection, showRoutingProvider, useRoutingCenter, type RoutingSection } from '../lib/routing-center';
 import { findLayout } from '../lib/layouts';
 import type { ModelInfo } from '../types';
@@ -259,13 +258,8 @@ export default function RoutingCenter() {
   }, [section]); // eslint-disable-line react-hooks/exhaustive-deps
   // Phones: an open provider, Usage and Diagnostics are pages over their place. Back (or Safari's edge swipe) closes them.
   const drill = phone && (providerOpen || section !== 'models');
-  // Every section/provider is represented in the shared history adapter; no competing local Back layer.
-  // Phones: elsewhere, swipe right to go back to the chat, as from the other pages shown in its place.
-  useEffect(() => {
-    const el = page.current;
-    if (!open || !el) return;
-    return installSwipeBack(el, () => window.matchMedia(PHONE).matches && !el.querySelector('[role="dialog"]'), () => screenBack(closeRoutingCenter));
-  }, [open]);
+  // Every section/provider is represented in the shared history adapter; Back gestures belong to the navigation
+  // coordinator (lib/navigation-coordinator.ts), like every other Canvas screen.
   if (!open) return null;
 
   const last = chat?.messages.findLast((m) => m.role === 'assistant' && m.model && m.status === 'done');

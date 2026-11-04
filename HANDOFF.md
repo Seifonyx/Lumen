@@ -10,15 +10,16 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `codex/iphone-back-ownership` from main `9803535` (PR #101 included).
-- **Task:** P1 iPhone Back. The baseline cloned the outgoing document during a held swipe and navigated on
-  `touchcancel`. Canvas iOS tabs yield Back/Forward to the browser. The Home Screen and other custom Back paths
-  keep the current screen in place until traversal, and browser replay clears stale page swaps. Projects keep the
-  same composer state while the workspace is open so unsent attachments survive.
-- **Authority:** owner-authorized to merge and deploy Canvas after exact-head CI, then request physical confirmation.
+- **Branch:** `design/native-navigation` from main `854e982` (PR #103 included).
+- **Task:** owner-approved replacement of Canvas phone navigation: one gesture coordinator and one transition system
+  (`src/lib/navigation-coordinator.ts`, see DESIGN.md → Motion). Release follows affected checks, exact PR CI and the
+  gated Canvas deploy; native-feel acceptance waits for the owner's iPhone.
+- **Authority:** owner-authorized 2026-11-04, plus standing (see Decisions).
 
 ## Next
 
+- [ ] Owner, on the installed Home Screen app (navigation redesign): see the acceptance sequence in the PR. Native feel
+      is not accepted until the owner confirms it on the device.
 - [ ] Physical iPhone: in Safari, write an unsent draft with a disposable attachment. Open Router > Providers > detail.
   Start an edge swipe and return your finger to the edge before lifting. Repeat with a completed swipe to the Providers
   list, then swipe Forward. Tap the feature chevron and verify that the original chat, draft, model and attachment return.
@@ -86,6 +87,9 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-03 Projects redesign and residual copy cleanup (PR #101, merged `9803535`, deployed Canvas, live
+  `index-CJLROoyc.js` matched the merge build): name-first All projects, a workspace with chats first and context in a
+  rail or one disclosure, less narration across the app. Before/after in `docs/projects-redesign/`.
 - 2026-11-03 Swiping back from Browse all tools no longer shows the old + sheet (PR #97, merged `0672509`, deployed
   Canvas): Safari snapshots the previous screen when an entry is pushed, so the picker now opens one painted frame after
   the + sheet has gone. Suite `picker-back` (Chromium + WebKit). Safari's native swipe itself is not automatable.

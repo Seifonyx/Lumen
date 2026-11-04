@@ -33,7 +33,22 @@ function traverse(delta: number) {
 }
 const session = /* @__PURE__ */ (() => Math.random().toString(36).slice(2))();
 const capture = () => { const s = useStore.getState(); return { layerKey: backLayerOpen() ? backLayerIdentity() : null, restoreLayer: backLayerRestore(), activeProjectId: s.activeProjectId, currentId: s.currentId, runner: s.runner, layer: backLayerOpen(), canvasOpen: s.canvasOpen, canvasDocumentId: s.canvasDocumentId, page: s.page, pageArg: s.pageArg, settingsOpen: s.settingsOpen, settingsTab: s.settingsTab, projectWorkspaceOpen: s.projectWorkspaceOpen, routing: getRoutingScreen() }; };
-type Screen = ReturnType<typeof capture>;
+export type Screen = ReturnType<typeof capture>;
+// The Canvas navigation coordinator (navigation-coordinator.ts) is told before each new step, while the leaving screen
+// is still on screen, and when history starts over (id -1: sign-in, account switch). It keeps no browser payload.
+let leave: ((from: number, next: Screen) => void) | null = null;
+export const onScreenLeave = (fn: typeof leave) => { leave = fn; };
+export const screenEntry = () => entries.get(active);
+// …and around each restore from history: before (true when the app itself asked for the traversal) and after.
+let pops: { before: (app: boolean) => void; after: () => void } | null = null;
+export const onScreenPop = (hooks: typeof pops) => { pops = hooks; };
+/** The entry directly behind the current one, if Back would reach it. */
+export function screenBehind() {
+  const here = positions.get(active);
+  if (here === undefined || !screenHasBack()) return null;
+  for (const [id, pos] of positions) if (pos === here - 1 && entries.has(id)) return { id, entry: entries.get(id)! };
+  return null;
+}
 // Feature ownership travels with the existing in-memory entries, never the browser payload.
 type Visit = { feature: string; origin: number; direct?: boolean };
 const visits = new Map<number, Visit>();
@@ -101,7 +116,7 @@ export function installScreenHistory() {
     clearTraversal();
     visits.clear();
     directExit = null;
-    entries = new Map([[0, capture()]]); positions = new Map([[0, 0]]); cursor = 0; active = 0;
+    entries = new Map([[0, capture()]]); positions = new Map([[0, 0]]); cursor = 0; active = 0; leave?.(-1, entries.get(0)!);
     const initialFeature = feature(capture());
     if (initialFeature) visits.set(0, { feature: initialFeature, origin: 0, direct: true });
     history.replaceState({ ...history.state, [KEY]: { session, id: 0 } }, '');
@@ -127,15 +142,17 @@ export function installScreenHistory() {
     const visit = child ? currentVisit : nextFeature ? { feature: nextFeature, origin: active } : undefined;
     previous = next;
     for (const [id, pos] of positions) if (pos > cursor) { positions.delete(id); entries.delete(id); views.delete(id); visits.delete(id); }
+    leave?.(active, next);
     cursor += 1;
     active = ++serial; entries.set(active, next); positions.set(active, cursor);
     if (visit) visits.set(active, visit);
     history.pushState({ ...history.state, [KEY]: { session, id: active } }, '');
   };
   const pop = () => {
-    const revision = ++replay;
+    const revision = ++replay, app = traversalTimer !== undefined;
     clearTraversal();
     cancelPageSwap();
+    pops?.before(app);
     const marker = history.state?.[KEY];
     if (marker?.session !== session || !entries.has(marker.id)) return;
     saveView(); active = marker.id; cursor = positions.get(active) ?? cursor; const next = entries.get(active)!;
@@ -154,6 +171,7 @@ export function installScreenHistory() {
       if (directExit === active) { directExit = null; closeFeature(); visits.delete(active); }
     });
     previous = capture(); entries.set(active, previous); applying = false;
+    pops?.after();
     const focusAtReplay = document.activeElement, entryAtReplay = active;
     requestAnimationFrame(() => requestAnimationFrame(() => {
       if (revision !== replay || entryAtReplay !== active) return;

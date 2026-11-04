@@ -233,6 +233,9 @@ try {
     // P1 iPhone Back: reviewed UI-only gesture ownership, cleanup of page swaps, and removal of the fake underlay.
     // No changes to auth, storage, transport, hosting, rules, relay, or workflows.
     'src/glass.css', 'src/lib/motion.ts', 'src/lib/navigation-edge.ts', 'src/lib/swipe-back.ts',
+    // Native-feeling phone navigation (owner-approved 2026-11-04): one gesture owner and transition system over the
+    // existing screen history. UI only: in-memory screen presentations, no data, auth, network or storage owner.
+    'src/lib/navigation-coordinator.ts',
     // Owner-approved 2026-11-01: loading a saved chat keeps Auto's recorded reasons and alternatives (`routeDetail`), a
     // field the app already writes to this device. Read path only: no new field, no sync record, rules or auth change.
     'src/lib/db.ts'];

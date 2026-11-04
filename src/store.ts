@@ -1,5 +1,6 @@
 import { markUnseen, notify } from './lib/notify';
 import { pageSwap, pageTransition } from './lib/motion';
+import { CANVAS_SHELL } from './lib/canvas-presentation';
 import { create } from 'zustand';
 import { keyVersion, prettyModelName, providerSignal, openRouterDailyLimit, parseModelId, probeModel, restoreCatalog, resolveCatalog, setKeys } from './lib/ai/providers.js';
 import { catalogScope, readCatalogCache, writeCatalogCache } from './lib/ai/catalog-cache.js';
@@ -1490,6 +1491,13 @@ export const useStore = create<State>((set, get) => {
     setUi(patch) {
       if (settingsRoute?.(patch, get())) return;
       const apply = () => set({ ...patch, ...(patch.workspaceOpen ? { canvasOpen: false, sideChatId: null } : {}), ...(patch.canvasOpen ? { workspaceOpen: false, sideChatId: null } : {}), ...(patch.sideChatId ? { canvasOpen: false, workspaceOpen: false } : {}), ...(patch.settingsOpen ? { page: null } : {}), ...(patch.page ? { settingsOpen: false, sidebarOpen: false } : {}) });
+      // Canvas: phones slide through the navigation coordinator (lib/navigation-coordinator.ts); computers crossfade.
+      if (CANVAS_SHELL) {
+        const changes = (typeof patch.settingsOpen === 'boolean' && patch.settingsOpen !== get().settingsOpen) || ('page' in patch && (patch.page ?? null) !== get().page);
+        if (changes && typeof document !== 'undefined' && (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation?.isActive && !window.matchMedia('(max-width: 899px)').matches) pageTransition('fade', apply);
+        else apply();
+        return;
+      }
       // Opening or closing Settings by hand: a push/pop on phones, a crossfade on computers.
       const opening = patch.settingsOpen === true && !get().settingsOpen, closing = patch.settingsOpen === false && get().settingsOpen;
       if ((opening || closing) && typeof document !== 'undefined' && (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation?.isActive) {

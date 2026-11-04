@@ -1,7 +1,7 @@
-// Custom phone Back. Leave the current screen intact until history restores the real destination.
+// Ordinary-presentation phone Back. Canvas has one owner for every Back gesture (navigation-coordinator.ts).
 import { CANVAS_SHELL } from './canvas-presentation';
 import { haptic } from './haptics';
-import { browserOwnsEdges, isBackEdge, isBrowserEdge } from './navigation-edge';
+import { isBackEdge, isBrowserEdge } from './navigation-edge';
 import { Velocity } from './spring';
 
 const IGNORE = 'input, textarea, select, [contenteditable="true"], .segmented, .swipe-row, .coll-filters, .hub-tabs, .tools-rail, pre, table, .switch, [role="slider"], .modal-backdrop, .sheet-backdrop, .ctx-layer, .glass-tabbar';
@@ -14,7 +14,7 @@ const scrollsSideways = (el: Element, root: Element) => {
 };
 
 export function installSwipeBack(page: HTMLElement, canGoBack: () => boolean, back: () => void) {
-  if (CANVAS_SHELL && browserOwnsEdges()) return;
+  if (CANVAS_SHELL) return;
   let start: { x: number; y: number; id: number } | null = null;
   let claimed = false;
   const speed = new Velocity();

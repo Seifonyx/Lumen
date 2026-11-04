@@ -20,10 +20,11 @@ exports.replyAction = async (page, label, which = 'last') => {
 exports.backSettingsSection = async (page) => {
   const legacy = page.locator('.settings-page .settings-back');
   if (await legacy.isVisible()) return legacy.click();
-  const back = page.locator('.settings-page .phone-navigation button[aria-label^="Return to "]');
-  // The chevron exits a feature. Inspect internal sections with actual browser
-  // Back; a direct-start section has no ancestor and uses Exit instead.
+  // Canvas iPhone: a section's chevron goes up to the Settings list ("Back to Settings"). Deeper steps inside a
+  // section use actual browser Back; a direct-start section has no ancestor and its chevron replaces it instead.
+  const back = page.locator('.settings-page .phone-navigation button:is([aria-label="Back to Settings"], [aria-label^="Return to "])');
   await back.waitFor({ state: 'visible', timeout: 6000 });
+  if (await page.locator('.settings-page .phone-navigation button[aria-label="Back to Settings"]').isVisible()) await back.click();
   for (let step=0;step<18;step++) {
     if (await page.locator('.settings-page :is(.settings-tabs, .si)').isVisible() || !await page.locator('.settings-page:not(.exit-ghost)').isVisible()) return;
     if (await page.evaluate(()=>Boolean(history.state?.lumenScreen?.id))) await page.goBack();
@@ -73,7 +74,8 @@ exports.closeSettings = async (page) => {
   // assuming a single Escape dismisses both a nested section and its parent.
   for (let step = 0; step < 18 && await root.isVisible(); step++) {
     const close = root.locator('.settings-top button[aria-label="Close"]');
-    const back = root.locator('.phone-navigation button[aria-label^="Return to "]');
+    // A section's Back goes to the Settings list first, then the list's Back leaves Settings.
+    const back = root.locator('.phone-navigation button:is([aria-label="Back to Settings"], [aria-label^="Return to "])');
     if (await close.isVisible()) await close.click();
     else if (await back.isVisible()) await back.click();
     else { await root.focus(); await page.keyboard.press('Escape'); }

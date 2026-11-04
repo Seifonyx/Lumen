@@ -1,5 +1,6 @@
 // Synthetic touches cover the app recognizer. Browser Back exercises popstate separately;
-// Playwright does not drive Safari's native interactive edge gesture.
+// Playwright does not drive Safari's native interactive edge gesture. In the Home Screen app Back goes up (out of a
+// feature in one step; a Settings section to the list); in an iOS tab Safari's own Back steps through history.
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { chromium, webkit } = require('playwright');
@@ -112,11 +113,15 @@ async function exercise(browser, standalone) {
     const checkTraversal = async (before, destination, scripted) => {
       await page.waitForFunction(id => history.state.lumenScreen.id === id, destination);
       const after = await trace();
-      assert.deepEqual(after.pops.slice(before.pops.length), [destination], 'one traversal to the preceding screen');
-      assert.deepEqual(after.requests.slice(before.requests.length), scripted ? [-1] : []);
+      assert.deepEqual(after.pops.slice(before.pops.length), [destination], 'one traversal to the destination');
+      const requests = after.requests.slice(before.requests.length);
+      assert.equal(requests.length, scripted ? 1 : 0, 'one history request');
+      assert(requests.every(delta => delta < 0), 'requests go back');
       assert.deepEqual(after.pushes, before.pushes, 'replay adds no history entry');
     };
-    const back = async (surface, destination, options) => {
+    // `destination` is where the app's Back goes; `tab` where Safari's one-step Back goes, when that differs.
+    const back = async (surface, destination, options, tab = destination) => {
+      if (!standalone) destination = tab;
       const before = await trace();
       if (standalone) await swipe(surface, options);
       else {
@@ -150,22 +155,28 @@ async function exercise(browser, standalone) {
     await screenshot(standalone ? 'pwa-drag-held' : 'safari-edge-untouched');
     await page.evaluate(() => window.finishSwipe());
     if (standalone) {
-      await library.waitFor();
-      await checkTraversal(before, libraryEntry, true);
+      // The document belongs to the Library visit: Back leaves the Library for the chat.
+      await checkTraversal(before, root, true);
+      await returnedToChat();
+      await clean('.app > .main');
+      await screenshot('pwa-document-to-chat');
+      // Forward still restores the Library and its document.
+      await page.goForward(); await library.waitFor();
+      await page.goForward(); await page.locator(panel).waitFor();
     } else {
       await delay(350);
       assert.equal(await entry(), documentEntry);
       assert.deepEqual(await trace(), before);
       await back(panel, libraryEntry);
+      await library.waitFor();
+      await focus('.hub-page, .hub-page h1, .hub-page [aria-label="Open Gesture.md"]');
+      await clean('.hub-page');
+      await screenshot('safari-library-restored');
+      await page.goForward();
+      await page.locator(panel).waitFor();
     }
-    await library.waitFor();
-    await focus('.hub-page, .hub-page h1, .hub-page [aria-label="Open Gesture.md"]');
-    await clean('.hub-page');
-    await screenshot(standalone ? 'pwa-library-restored' : 'safari-library-restored');
 
     // Browser Back during a held touch cancels the recognizer. A late lift cannot traverse again.
-    await page.goForward();
-    await page.locator(panel).waitFor();
     assert.equal(await entry(), documentEntry);
     await swipe(panel, { finish: null });
     const beforeBrowser = await trace();
@@ -188,16 +199,26 @@ async function exercise(browser, standalone) {
     await detail.waitFor();
     const providerDetail = await entry();
     await screenshot(standalone ? 'pwa-provider-detail' : 'safari-provider-detail');
-    await back('.rc-page', providersEntry, { times: 2 });
-    await detail.waitFor({ state: 'hidden' });
-    assert(await page.locator('[data-provider="gemini"]').isVisible());
-    await clean('.rc-page');
-    await page.goForward();
-    await detail.waitFor();
-    assert.equal(await entry(), providerDetail);
-    await back('.rc-page', providersEntry);
-    await back('.rc-page', routerRoot);
-    await back('.rc-page', root);
+    if (standalone) {
+      // Two swipes at once still make one traversal, out of Router. Forward restores where it was.
+      await back('.rc-page', root, { times: 2 });
+      await returnedToChat();
+      await clean('.app > .main');
+      await page.goForward(); await router.waitFor();
+      assert.equal(await entry(), routerRoot);
+      await back('.rc-page', root);
+    } else {
+      await back('.rc-page', providersEntry, { times: 2 });
+      await detail.waitFor({ state: 'hidden' });
+      assert(await page.locator('[data-provider="gemini"]').isVisible());
+      await clean('.rc-page');
+      await page.goForward();
+      await detail.waitFor();
+      assert.equal(await entry(), providerDetail);
+      await back('.rc-page', providersEntry);
+      await back('.rc-page', routerRoot);
+      await back('.rc-page', root);
+    }
     await returnedToChat();
 
     await openPlace(page, 'All projects');
@@ -208,10 +229,12 @@ async function exercise(browser, standalone) {
     await page.getByLabel('Project name', { exact: true }).fill('Gesture project');
     await page.getByRole('button', { name: 'Create project', exact: true }).click();
     await page.locator('.project-workspace-main').waitFor();
-    await back('.project-workspace-main', projectsEntry);
-    await projects.waitFor();
-    await clean('.hub-page');
-    await back('.hub-page', root);
+    await back('.project-workspace-main', root, {}, projectsEntry);
+    if (!standalone) {
+      await projects.waitFor();
+      await clean('.hub-page');
+      await back('.hub-page', root);
+    }
     await returnedToChat();
 
     await page.locator('.menu-btn').first().click();

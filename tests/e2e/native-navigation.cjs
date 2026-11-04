@@ -62,7 +62,7 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
       if (type === 'touchend' || type === 'touchcancel') window.__finger = null;
       return kept;
     }, { type, x, y });
-    const drag = async (to, { from = 6, steps = 8, y } = {}) => { const moved = [await touch('touchstart', from, y)]; for (let i = 1; i <= steps; i++) { moved.push(await touch('touchmove', from + (to - from) * i / steps, y)); await page.waitForTimeout(16); } await frame(); return moved; };
+    const drag = async (to, { from = 6, steps = 8, y, wait = 16 } = {}) => { const moved = [await touch('touchstart', from, y)]; for (let i = 1; i <= steps; i++) { moved.push(await touch('touchmove', from + (to - from) * i / steps, y)); await page.waitForTimeout(wait); } await frame(); return moved; };
     const lift = async (x, type = 'touchend') => { await touch(type, x); };
     const gesture = () => page.evaluate(() => document.documentElement.dataset.navGesture || null);
     const offset = (selector) => page.locator(selector).first().evaluate((el) => new DOMMatrixReadOnly(getComputedStyle(el).transform === 'none' ? undefined : getComputedStyle(el).transform).m41);
@@ -137,7 +137,8 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
 
     // Short, reversed, canceled and browser-interrupted gestures never navigate.
     let before = await trace();
-    await drag(70); await lift(70); await clean('.rc-page');
+    // A short, slow drag (a hesitant finger, well under a flick's speed) and a lift.
+    await drag(70, { wait: 60 }); await page.waitForTimeout(120); await lift(70); await clean('.rc-page');
     await drag(260); await touch('touchmove', 40); await page.waitForTimeout(16); await touch('touchmove', 20); await lift(20); await clean('.rc-page');
     await drag(300); await lift(300, 'touchcancel'); await clean('.rc-page');
     assert.equal(await entry(), detail); assert.deepEqual(await trace(), before, `${tag}: short, reversed and canceled drags stay`);

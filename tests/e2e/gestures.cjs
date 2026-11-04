@@ -124,12 +124,17 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
     await page.waitForTimeout(700);
     assert.equal(await page.locator('.settings-page.has-section').count(), 1, 'settings: a short edge swipe stays in the section');
     await touch(page, path(6, 500, 150, 500, 10, 300), { hold: true });
-    assert.ok(Math.abs(await translateX(page.locator('.settings-page'))) < 1, 'settings remains stable during the drag');
+    // Canvas: the held section follows the finger over the Settings list it returns to (lib/navigation-coordinator.ts);
+    // the ordinary build keeps its section still until release.
+    const canvas = await page.locator('[data-lumen-canvas-shell]').count();
+    if (canvas) assert.ok(await page.locator('.settings-page:not(.nav-layer)').evaluate(el => new DOMMatrixReadOnly(getComputedStyle(el).transform === 'none' ? undefined : getComputedStyle(el).transform).m41 > 20), 'settings follows the finger during the drag');
+    else assert.ok(Math.abs(await translateX(page.locator('.settings-page'))) < 1, 'settings remains stable during the drag');
     assert.equal(await page.locator('.swipe-under,.swipe-dim,.swipe-revealing').count(), 0, 'no fabricated preview');
     await touch(page, path(6, 500, 300, 500, 6, 60));
     await page.waitForFunction(() => !document.querySelector('.settings-page.has-section'), null, { timeout: 2000 });
     await page.waitForTimeout(400);
-    assert.ok(Math.abs(await translateX(page.locator('.settings-page:not(.swipe-under)'))) < 1 && await page.locator('.swipe-under').count() === 0, 'settings: back on the list, nothing left over');
+    await page.waitForFunction(() => !document.querySelector('.nav-layer'), null, { timeout: 2000 });
+    assert.ok(Math.abs(await translateX(page.locator('.settings-page:not(.swipe-under)'))) < 1 && await page.locator('.swipe-under, .nav-layer').count() === 0, 'settings: back on the list, nothing left over');
     console.log('PASS settings: edge swipe-back goes back past halfway, short swipe stays, no duplicate screen');
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }

@@ -27,7 +27,7 @@ const OVERLAYS = '.modal-backdrop, .sheet-backdrop, .models-pop, .usage-pop, .ct
 const FIELDS = 'input, textarea, select, [contenteditable="true"], [role="slider"], .cm-editor';
 const CONTENT = '.switch, .swipe-row, [data-gesture-owner]';
 const PARALLAX = 0.28, DIM = 0.08, SHADOW = '-8px 0 24px rgb(0 0 0 / .12)', EASE = 'cubic-bezier(.2, .8, .25, 1)';
-const Z = { back: '55', under: '56', dim: '58', top: '60' };
+const Z = { back: '55', under: '56', dim: '58', top: '60', drawer: '70' };
 
 const phone = () => matchMedia(PHONE).matches;
 const isLayer = (el: Element) => el.classList.contains(LAYER) || Boolean(el.closest(`.${LAYER}, .exit-ghost`));
@@ -246,7 +246,7 @@ function end(event: TouchEvent) {
   cancelAnimationFrame(frame); frame = 0;
   const v = speed.get(), p = g.dx / g.width;
   // Far enough, or a deliberate flick; a reversed or hesitant release stays.
-  const commit = event.type === 'touchend' && screenHasBack() && ((p > 0.45 && v > -0.2) || (v > 0.45 && g.dx > 24));
+  const commit = event.type === 'touchend' && screenHasBack() && ((p > 0.45 && v > -0.2) || (v > 0.6 && g.dx > 30));
   settle(commit, v);
 }
 function settle(commit: boolean, v: number) {
@@ -321,7 +321,10 @@ function slide(dir: 'push' | 'pop', outgoing: HTMLElement, selector: string) {
   let tries = 0, done = false;
   const extras: HTMLElement[] = [outgoing];
   let lifted: Lift | null = null;
-  const cleanup = () => { if (done) return; done = true; drop(lifted); extras.forEach((e) => e.remove()); if (swap?.cleanup === cleanup) swap = null; };
+  // Leaving from the open drawer: the drawer keeps closing on top of the slide, as it does on its own.
+  const drawer = document.querySelector<HTMLElement>('.sidebar.open, .cv-nav.open');
+  const above = drawer ? [lift(drawer, { zIndex: Z.drawer }), ...[...document.querySelectorAll<HTMLElement>('.scrim')].map((el) => lift(el, { zIndex: String(+Z.drawer - 1) }))] : [];
+  const cleanup = () => { if (done) return; done = true; drop(lifted); above.forEach(drop); extras.forEach((e) => e.remove()); if (swap?.cleanup === cleanup) swap = null; };
   swap = { cleanup };
   const begin = () => {
     if (done) return;
@@ -354,7 +357,8 @@ function leaving(from: number, next: Screen) {
   if (!phone()) return;
   if (phase !== 'idle') abort();
   const screen = currentScreen(), entry = screenEntry();
-  if (!screen || !entry) return;
+  // A dialog or sheet on top of the same screen is not a new screen: nothing to keep or slide.
+  if (!screen || !entry || next.layer || entry.layer) return;
   // An incognito conversation (the one being left, not the next) is never kept, not even for the slide.
   if (screen.matches('.app > .main') && entry.currentId && isTemporaryChat({ id: entry.currentId })) { kept.delete(from); return; }
   const k = keep(screen, entry);
@@ -371,9 +375,10 @@ function popping(app: boolean) {
   stopSwap();
   if (!phone() || motionOff() || !app) return;
   const screen = currentScreen(), entry = screenEntry();
-  if (!screen || !entry) return;
+  // Closing a dialog or sheet is that presentation's own exit, not a screen pop.
+  if (!screen || !entry || entry.layer) return;
   const ghost = mount(keep(screen, entry), Z.top);
-  requestAnimationFrame(() => { const now = screenEntry(); slide('pop', ghost, now ? screenFor(now) : '.app > .main'); });
+  requestAnimationFrame(() => { const now = screenEntry(); if (now?.layer) { ghost.remove(); return; } slide('pop', ghost, now ? screenFor(now) : '.app > .main'); });
 }
 function popped() { if (phase === 'commit') arrived(); }
 

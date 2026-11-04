@@ -14,6 +14,14 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Next
 
+- Planned (owner, 2026-11-04; not started): **background agents at no cost.** A second Cloudflare Worker beside the
+  provider relay, woken by a free Cron Trigger, advances each task one step per wake (models: the user's free key or
+  Workers AI's free allowance), and sends a free Web Push when done (Home Screen app, iOS 16.4+). Before any code:
+  verify Cloudflare's current free limits (Durable Objects/Workflows on Free are unclear; KV or D1 as fallback), then a
+  one-page plan for the owner covering the new endpoint, what is stored server-side (task text, results, a key; agent
+  tasks only, never incognito, deleted when done) and any Firestore rule change. Owner sign-off needed on all three.
+  Use high effort for the design and security parts. No paid services (owner cannot pay).
+
 - [ ] Owner, on the installed Home Screen app (PR #108, live): from the drawer open Router, Library,
       Projects and Settings; on each, swipe right (edge and mid-screen) to reveal the drawer with the screen peeking on the
       right, then swipe left or tap the strip to return; switch Router tabs (no slide); open a provider, a document, a

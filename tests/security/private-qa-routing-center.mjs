@@ -254,7 +254,14 @@ try {
       assert.deepEqual(state.csp, []);
 
       // Closing: Back to chat, Escape, and choosing another chat.
-      await rc(page).getByRole('button', { name:'Return to chat' }).click();await settle(page);assert.equal(await isOpen(page),false,'one Exit leaves all visited Routing screens');
+      if (phone) {
+        // Phones (iOS model): the provider's Back goes up to Router, a root chosen in the drawer; browser Back then leaves it.
+        await rc(page).locator('.phone-navigation').getByRole('button', { name: 'Back', exact: true }).click(); await settle(page);
+        assert.equal(await isOpen(page), true, 'Back goes up to Router');
+        assert.equal(await rc(page).locator('.phone-navigation').getByRole('button', { name: 'Open navigation', exact: true }).count(), 1);
+        for (let i = 0; i < 8 && await isOpen(page); i++) { await page.goBack(); await settle(page); }
+        assert.equal(await isOpen(page), false, 'history still leaves Router');
+      } else { await rc(page).getByRole('button', { name:'Return to chat' }).click();await settle(page);assert.equal(await isOpen(page),false,'one Exit leaves all visited Routing screens'); }
       await settle(page);
       assert.equal(await isOpen(page), false);
       await openRouting(page, phone);

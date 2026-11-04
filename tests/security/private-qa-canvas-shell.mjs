@@ -269,8 +269,8 @@ try {
         await openNav(page, true);
         await nav(page).getByRole('button', { name: 'Library', exact: true }).click();
         await page.getByRole('main', { name: 'Library' }).waitFor();
-        // Nested phone screens expose a real Back, not a second drawer.
-        assert.equal(await page.locator('.phone-navigation [aria-label^="Return to "]').count(),1);
+        // A place chosen in the drawer is a root (iOS model): one leading control, which opens the drawer, and no second one.
+        assert.equal(await page.locator('.phone-navigation [aria-label="Open navigation"]').count(),1);
         assert.equal(await page.getByRole('button',{name:'Open sidebar',exact:true}).count(),0);
         await page.goBack();
         await page.getByRole('main', { name: 'Library' }).waitFor({ state: 'detached' });

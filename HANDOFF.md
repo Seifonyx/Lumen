@@ -10,14 +10,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/ios-navigation`: iPhone navigation rebuilt on the iOS chat-app model from the owner's screen
-  recording (2026-11-04): the drawer is the root; places chosen in it have the menu button and swipe to the drawer;
-  drill-downs go up one level; Router tabs switch in place; near-edge and iOS-cancelled releases complete; one drawer
-  tap is one history step; a document from a new chat's + returns to that chat with its draft.
+- **Branch:** none in progress. Start the next task from `origin/main`.
 
 ## Next
 
-- [ ] Owner, on the installed Home Screen app (design/ios-navigation once live): from the drawer open Router, Library,
+- [ ] Owner, on the installed Home Screen app (PR #108, live): from the drawer open Router, Library,
       Projects and Settings; on each, swipe right (edge and mid-screen) to reveal the drawer with the screen peeking on the
       right, then swipe left or tap the strip to return; switch Router tabs (no slide); open a provider, a document, a
       Settings section and a project, and swipe back (one level up, also when released near the right edge); + →
@@ -92,6 +89,13 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - Excluded: Arabic interface, separate chat folders, message-list icon/count, chat-tag badges.
 
 ## Recently shipped
+
+- 2026-11-04 iPhone navigation follows iOS chat apps (PR #108, merged `70557c7`, deployed Canvas, live
+  `index-BaCxtj64.js` matches the merge build): the drawer is the root (places chosen in it have the menu button; a
+  right swipe slides the screen aside to show the drawer with a 64 pt peek); drill-downs and screens opened from a chat
+  go up one level, still guarded; Router tabs switch in place on phones; one drawer tap is one history step; UIKit-style
+  release; + Document canvas returns to the new chat with its draft. Startup JS budget 16 KB gz (measured 15.9).
+  Suites leave places through `helpers/nav.cjs` `leavePlace`. Physical iPhone not yet checked.
 
 - 2026-11-04 Phone Back goes up, like an app (PR #106, merged `a819d14`, deployed Canvas, live `index-DJ04GfTB.js`):
   one Back leaves a feature; a Settings section returns to the list; only the leading edge starts the swipe.

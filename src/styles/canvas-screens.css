@@ -515,9 +515,9 @@ html[data-lumen-canvas] .sheet-backdrop:not(.sheet-popover-backdrop) .sheet.atta
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-chat-detail { font-size: var(--fs,15px); }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-section-h, .cv-more) { font-size: var(--fs,15px); }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-search input { font-size: max(16px, calc(var(--fs,15px) + 2px)); }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-new-pill { flex: none; min-height: var(--cv-control); padding: 0 26px; gap: 10px; border-radius: 999px; background: var(--canvas-ink); color: var(--canvas-paper); font-size: calc(var(--fs,15px) + 3px); font-weight: 600; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-new-pill { flex: 0 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-height: var(--cv-control); padding: 0 26px; gap: 10px; border-radius: 999px; background: var(--canvas-ink); color: var(--canvas-paper); font-size: calc(var(--fs,15px) + 3px); font-weight: 600; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-new-pill > svg { width: 22px; height: 22px; color: inherit; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-foot { justify-content: space-between; }
-  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-account { width: 52px; height: 52px; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-account { flex: none; width: 52px; height: 52px; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-account .cv-avatar { width: 44px; height: 44px; font-size: calc(var(--fs,15px) + 2px); }
 }

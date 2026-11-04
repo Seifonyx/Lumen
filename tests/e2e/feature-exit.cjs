@@ -1,6 +1,9 @@
-// Real user journeys. Replacing Exit with sequential Back must fail at the deep-view assertions.
+// Real user journeys. Computers: replacing Exit with sequential Back must fail at the deep-view assertions. Phones follow
+// iOS chat apps (2026-11-04): Back goes up one level (and is guarded the same way), a place chosen in the drawer is a
+// root left for the chat it replaced; leaving a place returns the original chat, draft and attachments intact.
 const assert=require('node:assert/strict');
 const { plusItem, openTools } = require('./helpers/plus.cjs');
+const { leavePlace, UP } = require('./helpers/nav.cjs');
 const {chromium,webkit}=require('playwright');
 const {profile,seed}=require('./helpers/preview-profile.cjs');
 const base=process.env.MR_TEST_URL||'http://localhost:5190';
@@ -13,12 +16,14 @@ for(const width of [320,390,430,1440]){
  const now=Date.now();await seed(page,'preview-feature-exit',[{id:'document-chat',title:'Document source',createdAt:now,updatedAt:now,messages:[],documents:[{id:'doc',name:'Exit review.md',content:'# Saved content',updatedAt:now}]}]);await page.reload();
  const input=page.locator('.composer textarea');await input.fill('Keep my original draft');
  await page.locator('.composer input[type=file][multiple]').last().setInputFiles({name:'Keep attachment.txt',mimeType:'text/plain',buffer:Buffer.from('Synthetic unsent attachment')});await page.getByRole('button',{name:'Remove Keep attachment.txt',exact:true}).waitFor();
- const drawer=page.locator('aside.cv-nav');const open=async(name)=>{if(width<900)await page.locator('.menu-btn:visible').first().click();await drawer.getByRole('button',{name,exact:true}).click()};
- const exit=async()=>page.getByRole('button',{name:/^Return to (chat|previous screen)$/,exact:false}).filter({visible:true}).first().click();
+ const drawer=page.locator('aside.cv-nav');const open=async(name)=>{if(width<900)await page.locator('.menu-btn:visible, .phone-navigation > button[aria-label="Open navigation"]:visible').first().click();await drawer.getByRole('button',{name,exact:true}).click()};
+ // Phones: one step up (the screen's Back, or browser Back from a root); `leave` goes all the way to the chat.
+ const exit=async()=>{if(width<900){const up=page.locator(UP).first();return await up.isVisible()?up.click():page.goBack();}return page.getByRole('button',{name:/^Return to (chat|previous screen)$/,exact:false}).filter({visible:true}).first().click();};
+ const leave=async(selector)=>width<900?leavePlace(page,selector):exit();
  await open('Router');await page.getByRole('navigation',{name:'Router sections'}).getByRole('button',{name:'Providers',exact:true}).click();await page.locator('[data-provider="gemini"]').click();await page.getByRole('region',{name:'Provider detail'}).waitFor();
- await exit();await page.locator('.rc-page').waitFor({state:'hidden'});assert.equal(await input.inputValue(),'Keep my original draft');
+ await leave('.rc-page:not([hidden])');await page.locator('.rc-page').waitFor({state:'hidden'});assert.equal(await input.inputValue(),'Keep my original draft');
  // The chevron traverses existing entries; Forward still restores intentional browser history.
- await page.goForward();await page.locator('.rc-page').waitFor({state:'visible'});await page.goBack();await input.waitFor();
+ await page.goForward();await page.locator('.rc-page').waitFor({state:'visible'});await page.goBack();await input.waitFor();if(width<900)await page.locator('.rc-page').waitFor({state:'hidden'});
  if(width===390){await page.evaluate(()=>{window.__fileText=File.prototype.text;File.prototype.text=function(){const result=window.__fileText.call(this);return this.name==='Processing.txt'?new Promise(resolve=>{window.__releaseFile=()=>result.then(resolve)}):result}});await page.locator('.composer input[type=file][multiple]').last().setInputFiles([{name:'Processing.txt',mimeType:'text/plain',buffer:Buffer.from('Pending synthetic file')},{name:'Second selection.txt',mimeType:'text/plain',buffer:Buffer.from('Second synthetic file')}]);await page.waitForFunction(()=>Boolean(window.__releaseFile));}
  await open('Library');await page.getByRole('button',{name:'Open Exit review.md',exact:true}).click();await page.locator('.canvas-panel').waitFor();
  if(width===390)await page.evaluate(()=>{window.__releaseFile();File.prototype.text=window.__fileText});
@@ -30,10 +35,10 @@ for(const width of [320,390,430,1440]){
   await page.evaluate(()=>{IDBObjectStore.prototype.put=window.__realPut});await page.getByRole('textbox',{name:'Canvas filename',exact:true}).fill('Exit review.md');await page.getByRole('alert').filter({hasText:'Document name could not be saved'}).waitFor({state:'detached'});
   const instruction=page.getByRole('textbox',{name:'Canvas edit instruction',exact:true});await instruction.fill('A substantive unsent instruction');await page.goBack();await page.locator('.canvas-panel').waitFor({state:'detached'});await page.goForward();await instruction.waitFor();assert.equal(await instruction.inputValue(),'A substantive unsent instruction','browser Back/Forward preserves unsent edit instructions');page.once('dialog',dialog=>dialog.dismiss());await exit();assert(await editor.isVisible(),'declining discard keeps document instructions');await instruction.fill('');
  }
- await exit();await page.locator('.canvas-panel').waitFor({state:'detached'});await input.waitFor();assert.equal(await input.inputValue(),'Keep my original draft');assert.equal(await page.locator('.hub-page:visible').count(),0);
+ await leave(':is(.canvas-panel, .hub-page)');await page.locator('.canvas-panel').waitFor({state:'detached'});await input.waitFor();assert.equal(await input.inputValue(),'Keep my original draft');assert.equal(await page.locator('.hub-page:visible').count(),0);
  assert.equal(await page.getByRole('button',{name:'Remove Keep attachment.txt',exact:true}).count(),1,'whole-feature Exit restores the original chat attachment draft');
  if(width===390){await page.getByRole('button',{name:'Remove Processing.txt',exact:true}).waitFor();await page.getByRole('button',{name:'Remove Second selection.txt',exact:true}).waitFor();await page.waitForFunction(()=>!document.querySelector('.composer .attachment.loading'));}
- await open('Library');await page.getByRole('button',{name:'Open Exit review.md',exact:true}).click();assert.equal(await editor.inputValue(),'# Edited and retained');await exit();
+ await open('Library');await page.getByRole('button',{name:'Open Exit review.md',exact:true}).click();assert.equal(await editor.inputValue(),'# Edited and retained');await leave(':is(.canvas-panel, .hub-page)');
  await openTools(page);await page.locator(':is(.tool-card,.tx-hit)').filter({has:page.locator('strong',{hasText:/^Document canvas$/})}).click();await page.locator('.canvas-panel').waitFor();await exit();await input.waitFor();assert.equal(await input.inputValue(),'Keep my original draft','Tools Canvas exits to the original chat, not an intermediate new chat');assert.equal(await page.getByRole('button',{name:'Remove Keep attachment.txt',exact:true}).count(),1);
  await openTools(page);await page.getByRole('button',{name:'New assistant',exact:true}).click();await page.getByRole('textbox',{name:'Library item name'}).fill('An unsaved helper');await page.getByRole('textbox',{name:'Library instructions'}).fill('Preserve instructions');await exit();await input.waitFor();assert.equal(await input.inputValue(),'Keep my original draft');
  assert.equal(await page.locator('.cv-chat-pill:visible,.rc-close:visible').count(),0,'no redundant trailing chat pill');

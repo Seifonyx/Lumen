@@ -274,7 +274,8 @@ function traverse() {
   haptic();
   // If the browser drops the traversal, put the current screen back rather than leave it hidden.
   guard = window.setTimeout(() => { if (g === d && phase === 'commit') reset(); }, 1500);
-  screenUp();
+  // A screen that refuses to be left (an unsaved document name) slides back into place.
+  if (!screenUp()) { window.clearTimeout(guard); settle(false, 0); }
 }
 /** After history has restored the destination: wait until it has painted, then take every layer off. */
 function arrived() {

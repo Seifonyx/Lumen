@@ -198,7 +198,8 @@ async function exercise(browser, standalone) {
       await page.goBack();
     } else await back('.hub-page', root);
     await returnedToChat();
-    await focus('.menu-btn');
+    // The app's own Back hands focus to the drawer button (the Home Screen app left through browser Back above).
+    if (!standalone) await focus('.menu-btn');
 
     await openPlace(page, 'Router');
     const router = page.locator('.rc-page');
@@ -216,8 +217,8 @@ async function exercise(browser, standalone) {
     // Two swipes at once still make one traversal, up one level to the providers list. Forward restores the provider.
     await back('.rc-page', providersEntry, { times: 2 });
     await detail.waitFor({ state: 'hidden' });
-    assert(await page.locator('[data-provider="gemini"]').isVisible());
     await clean('.rc-page');
+    assert(await page.locator('.rc-page:not(.nav-layer) [data-provider="gemini"]').isVisible());
     await page.goForward();
     await detail.waitFor();
     assert.equal(await entry(), providerDetail);

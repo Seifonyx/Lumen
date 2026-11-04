@@ -42,6 +42,7 @@ exports.openSettingsSection = async (page, name) => {
   if (!(await page.locator('.settings-page:not(.nav-layer)').isVisible()) && await page.locator('.rc-page:not([hidden])').isVisible()) {
     await exports.closeSettings(page);
     const menu = page.locator(DRAWER).first();
+    if (await page.evaluate(() => matchMedia('(max-width: 899px)').matches)) await menu.waitFor({ timeout: 4000 }).catch(() => {});
     if (await menu.isVisible()) await menu.click();
     await page.getByRole('button', { name: 'Settings', exact: true }).click();
   }
@@ -65,13 +66,7 @@ exports.openSettingsSection = async (page, name) => {
 
 // Canvas phones (iOS model, 2026-11-04): a place chosen in the drawer is a root whose leading control opens the drawer;
 // tests leave it with browser Back, which returns to the screen it replaced (the chat they came from).
-const leaveRoot = async (page, screen) => {
-  for (let step = 0; step < 8 && await screen.isVisible(); step++) {
-    const up = screen.locator('.phone-navigation > button:is([aria-label="Back"], [aria-label^="Back to "], [aria-label^="Return to "])');
-    if (await up.isVisible()) await up.click(); else await page.goBack();
-    await screen.waitFor({ state: 'hidden', timeout: 900 }).catch(() => {});
-  }
-};
+const leaveRoot = (page, screen) => require('./nav.cjs').leavePlace(page, screen);
 const isRoot = (screen) => screen.locator('.phone-navigation > button[aria-label="Open navigation"]').isVisible();
 
 exports.closeSettings = async (page) => {

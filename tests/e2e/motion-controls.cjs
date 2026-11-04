@@ -89,8 +89,9 @@ const rest = page => page.waitForFunction(() => !document.querySelector('.page-s
         await page.locator('.sidebar').getByRole('button', { name: 'Library', exact: true }).click();
         const hub = page.locator('.hub-page:not(.exit-ghost)');
         await hub.waitFor();
-        if (!reduced) {
-          assert.ok(await page.evaluate(() => window.__outgoingSurfaces > 0), 'Opening a hub preserves a noninteractive outgoing surface on phone and desktop');
+        // Phones: a place chosen in the drawer is revealed in place as the drawer closes (iOS model), with no slide.
+        if (!reduced && width >= 900) {
+          assert.ok(await page.evaluate(() => window.__outgoingSurfaces > 0), 'Opening a hub preserves a noninteractive outgoing surface on desktop');
         }
         // Interrupt the entrance: the destination must remain usable, with no obsolete copied screens.
         await page.keyboard.press('Escape');

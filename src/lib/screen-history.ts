@@ -163,13 +163,18 @@ export function screenIsRoot() {
   const visit = visits.get(active);
   return !visit || (Boolean(visit.root) && !upTarget());
 }
-/** Back for the current screen: see screenParent. */
+/** Back for the current screen: see screenParent. False when the screen refused to be left (nothing happened). */
 export function screenUp(fallback?: () => void) {
-  if (upToSettings(entries.get(active))) { screenBackToSettings('index', () => useStore.getState().setUi({ settingsTab: '' })); return; }
+  if (upToSettings(entries.get(active))) { screenBackToSettings('index', () => useStore.getState().setUi({ settingsTab: '' })); return true; }
   const target = upTarget();
-  if (target) traverse(target.delta);
-  else if (fallback) replaceScreen(fallback);
+  // A screen that must not be left yet (an unsaved document name, an unsent edit) can refuse, as with Exit; the
+  // fallback and Exit paths ask it themselves.
+  if (target) {
+    if (traversalTimer !== undefined || !window.dispatchEvent(new Event('lumen:before-feature-exit', { cancelable: true }))) return false;
+    traverse(target.delta);
+  } else if (fallback) replaceScreen(fallback);
   else exitFeature();
+  return true;
 }
 export const screenHasBack = () => cursor > 0 && history.state?.[KEY]?.session === session;
 export function installScreenHistory() {

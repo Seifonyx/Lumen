@@ -198,7 +198,8 @@ async function run(browser, mobile) {
     check(await touch('.composer textarea'), 'iOS simulation: composer drag still cannot pan the page');
     // A conversation that can scroll scrolls; one that can't (a new chat) mustn't pull the page down and show
     // the background above the app.
-    const tall = (on) => page.locator('.messages').evaluate((el, on) => { const c = el.firstElementChild; if (c) c.style.minHeight = on ? '3000px' : ''; }, on);
+    // (The thread or the new-chat welcome: a conversation also starts with an invisible live region.)
+    const tall = (on) => page.locator('.messages').evaluate((el, on) => { const c = el.querySelector(':scope > .thread, :scope > .empty') || el.firstElementChild; if (c) c.style.minHeight = on ? '3000px' : ''; }, on);
     await tall(true);
     await page.waitForFunction(()=>{const el=document.querySelector('.messages');return el && el.scrollHeight>el.clientHeight+1;});
     check(!(await touch('.messages')), 'iOS simulation: chat history scrolling stays enabled');

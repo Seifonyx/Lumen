@@ -22,10 +22,16 @@ const UP = '.phone-navigation:visible > button:is([aria-label="Back"], [aria-lab
  *  (2026-11-04): drill-downs go up with Back; a place chosen in the drawer is a root (its control opens the drawer), so
  *  browser Back returns to the screen it replaced. */
 async function leavePlace(page, selector) {
-  const screen = page.locator(selector).first();
+  const screen = typeof selector === 'string' ? page.locator(selector).first() : selector;
   for (let i = 0; i < 10 && await screen.isVisible(); i++) {
     const up = page.locator(UP).first();
-    if (await up.isVisible()) await up.click(); else await page.goBack();
+    if (await up.isVisible()) await up.click();
+    // The session's first screen (a first-run key save opens Router) has nothing behind it: the drawer's New chat.
+    else if (!await page.evaluate(() => history.state?.lumenScreen?.id)) {
+      await page.locator('.phone-navigation:visible > button[aria-label="Open navigation"]').first().click();
+      await page.locator('aside.cv-nav.open').waitFor();
+      await page.locator('aside.cv-nav').getByRole('button', { name: 'New chat', exact: true }).click();
+    } else await page.goBack();
     await screen.waitFor({ state: 'hidden', timeout: 1000 }).catch(() => {});
   }
   await screen.waitFor({ state: 'hidden' });

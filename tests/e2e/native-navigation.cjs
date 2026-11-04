@@ -94,7 +94,8 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
       await page.waitForFunction((id) => history.state?.lumenScreen?.id === id, destination);
       const after = await trace();
       assert.deepEqual(after.pops.slice(before.pops.length), [destination], `${tag}: one traversal`);
-      assert.equal(after.go - before.go, 1, `${tag}: one history request`);
+      // The Home Screen app keeps its stack in memory: it never asks the browser to traverse (iOS's own swipe would).
+      assert.equal(after.go - before.go, standalone ? 0 : 1, `${tag}: ${standalone ? 'no browser traversal' : 'one history request'}`);
       assert.equal(after.pushes, before.pushes, `${tag}: no new entry`);
       await clean(selector);
     };
@@ -112,6 +113,8 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
     };
 
     const root = await entry();
+    // iOS 26 Home Screen apps have Safari's own edge swipe: with no entry behind this one it has nothing to go back to.
+    const browserEntries = await page.evaluate(() => history.length);
     if (!standalone) {
       // An iOS browser tab: Safari owns the edges and Back. The app never claims, prevents or traverses.
       await openPlace(page, 'Router');
@@ -151,7 +154,14 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
       assert.equal(await offset(selector), 0, `${tag}: ${selector} is back in place`);
       assert.equal(await entry(), here, `${tag}: the same screen after the drawer`);
     };
-    const toRoot = async () => { for (let i = 0; i < 12 && await entry() !== root; i++) { await page.goBack(); await page.waitForTimeout(250); } assert.equal(await entry(), root); };
+    // Back to the new chat the run began in: the drawer's New chat (a place chosen in the drawer is a root).
+    const toRoot = async () => {
+      await page.locator('.phone-navigation > button[aria-label="Open navigation"]:visible').first().click();
+      await page.locator('aside.cv-nav.open').waitFor();
+      await page.locator('aside.cv-nav').getByRole('button', { name: 'New chat', exact: true }).click();
+      await page.waitForFunction(() => !document.querySelector('aside.cv-nav.open'));
+      await page.waitForTimeout(400);
+    };
 
     // Router chosen in the drawer is a root, as a place picked in an iOS app's sidebar: its leading control opens the
     // drawer, its section tabs switch in place (no slide, no history), and a right swipe shows the drawer.
@@ -191,14 +201,15 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
     assert.equal(await gesture(), null, `${tag}: a swipe across the content is not Back`);
     assert.equal(await drawerOpen(), false, `${tag}: nor the drawer, on a pushed screen`);
     assert.equal(await entry(), detail); assert.deepEqual(await trace(), before, `${tag}: short, reversed, canceled and mid-screen drags stay`);
+    // A resize while the finger is down stops the gesture: lifting afterwards does not traverse.
     await drag(250);
-    await page.goBack();
-    await page.waitForFunction((id) => history.state?.lumenScreen?.id === id, router);
+    await page.setViewportSize({ width, height: height - 40 });
+    await page.waitForFunction(() => !document.documentElement.dataset.navGesture);
     await lift(250);
     await clean('.rc-page');
+    await page.setViewportSize({ width, height });
     await page.waitForTimeout(300);
-    assert.equal(await entry(), router, `${tag}: a lift after browser Back does not traverse again`);
-    await page.goForward(); await page.getByRole('region', { name: 'Provider detail' }).waitFor(); await page.waitForTimeout(300);
+    assert.equal(await entry(), detail, `${tag}: a lift after a resize does not traverse`);
 
     // Two complete swipes in one task: the second waits for the first; one traversal, up to Providers.
     before = await trace();
@@ -311,12 +322,14 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
 
     // A document opened from a new chat's + gets a conversation of its own, pushed over the chat: Back shows the chat you
     // left (as it was, since the one on display is now the document's) and lands on it, draft and attachment intact.
+    const chatEntry = await entry();
     await plusItem(page, 'Document canvas');
     await page.locator('.canvas-panel').waitFor(); await page.waitForTimeout(500);
     assert.equal(await leading('.canvas-panel'), 'Back', `${tag}: a document from the chat has Back`);
-    await back('.canvas-panel', root, { kind: 'kept', text: /Good (morning|afternoon|evening)/, next: '.app > .main' }, 'canvas-held');
+    await back('.canvas-panel', chatEntry, { kind: 'kept', text: /Good (morning|afternoon|evening)/, next: '.app > .main' }, 'canvas-held');
     await backAtChat();
 
+    assert.equal(await page.evaluate(() => history.length), browserEntries, `${tag}: the browser never gets an entry to swipe back to`);
     assert.deepEqual(errors, [], `${tag}: no page errors`);
     console.log(`PASS ${tag}: drawer roots, in-place tabs, drill-down Back, a document from the chat, menu and scroller ownership, tap Back`);
   } finally {

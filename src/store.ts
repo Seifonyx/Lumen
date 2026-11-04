@@ -1706,6 +1706,8 @@ export const useStore = create<State>((set, get) => {
       discardTemporary();
       clearAssistantDraft();
       set(s => ({ canvasOpen: false, canvasDocumentId: null, welcomeSequence: s.welcomeSequence + 1 }));
+      // Already on a new chat that was never saved (where an unsent draft lives): New chat returns to it, draft intact.
+      if (!get().currentId) { set({ projectWorkspaceOpen: false, sidebarOpen: false, settingsOpen: false, page: null }); return; }
       // Reuse an existing empty chat instead of piling them up.
       const projectId = currentProjectId();
       const empty = get().chats.find((c) => c.messages.length === 0 && !c.summary && !c.assistant && !c.documents?.length && (c.projectId || null) === projectId);

@@ -76,8 +76,11 @@ dark mode).
 ## Layout and ownership (one place for each thing)
 
 - **Sidebar (desktop) / drawer (phone):** wordmark · Search · Library · Router · Projects tree · Conversations
-  · New chat + avatar (opens Settings). Collapsed desktop sidebar is a 60 px rail. The highlight always follows the
-  page on screen.
+  · New chat + avatar (opens Settings). Collapsed desktop sidebar is a 60 px rail. One highlight, in gray (the
+  strong fill, never blue), on the row for what is on screen: a place, a project's overview, or the open chat only
+  while the chat itself is shown (`data-here` on the drawer). Phone drawer at iOS sizes: 17 pt rows and fields, 15 pt
+  details and section labels, 48 pt place rows, 22 pt icons. On an unsaved new chat, New chat returns to it (draft
+  intact).
 - **Conversation search** is the drawer's Search (Jump to, ⌘/Ctrl K, is its keyboard shortcut, with the same chats from
   `src/lib/chat-search.ts`). A chat found through a message shows one excerpt line, the match in text colour at 600
   (no highlighter), and opens at that message (`src/lib/message-jump.ts`); a title match shows its time and opens as
@@ -139,7 +142,10 @@ devices): every Back swipe and the drawer's swipe go through it, and the old per
   does (one level up, see Pages); a right swipe across its content does nothing. On a root screen (the chat, or a
   place chosen in the drawer) the swipe belongs to the drawer (`src/lib/sidebar-gesture.ts`): the drawer and the
   screen move together with the finger, and the screen keeps a 64 pt strip in view (`--cv-drawer`). An open menu or
-  list keeps both gestures off. An iOS browser tab leaves Back and Forward to Safari entirely.
+  list keeps both gestures off. An iOS browser tab leaves Back and Forward to Safari entirely. An iOS Home Screen app
+  (iOS 26 gives it Safari's own edge swipe, with stale snapshots) keeps its stack in memory over one browser entry
+  (`screen-history.ts`), so the system swipe has nothing to go back to and every swipe is Lumen's; other installed
+  apps (Android) keep real history.
 - Behind it is what Back restores: the real chat or workspace (still mounted, revealed), or the screen kept when you
   left it (memory only, this account, never incognito or key fields) while the data it shows is unchanged; otherwise a
   plain page. Never a wrong preview. The screen behind moves in from −28% under a 0.08 dim; the moving one has a shadow.

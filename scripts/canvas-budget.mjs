@@ -73,7 +73,10 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // iOS navigation model (owner, 2026-11-04: "do not hold back"): startupJs 15.5 → 16. The drawer becomes the root and Back
 // goes up one level, which the first screen needs at once (history roots, in-place tabs, the drawer step, the phone bar
 // following the history): +0.54 KB gz over main (measured 15.9). The gestures themselves stay in the lazy coordinator.
-const BUDGET = { startupJs: 16, startupCss: 20, routingCenter: 9, canvasCss: 34.5 };
+// iOS Home Screen stack (owner recording, 2026-11-04): startupJs 16 → 16.5. iOS 26 gives Home Screen apps Safari's own
+// edge swipe, which went Back by itself over stale snapshots; the stack now lives in memory there (screen-history.ts),
+// which the first screen needs (measured 15.98).
+const BUDGET = { startupJs: 16.5, startupCss: 20, routingCenter: 9, canvasCss: 34.5 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

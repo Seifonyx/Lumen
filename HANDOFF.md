@@ -10,7 +10,10 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start the next task from `origin/main`.
+- **Branch:** `design/drawer-polish` (owner recording, 2026-11-04 20:02): iOS 26 Home Screen apps have Safari's own
+  edge swipe, which went Back by itself over stale snapshots ("exits" and doubled drawers); the stack now lives in
+  memory there. The drawer has one gray highlight for what is on screen, at iOS sizes. New chat on an unsaved new chat
+  returns to it with its draft.
 
 ## Next
 

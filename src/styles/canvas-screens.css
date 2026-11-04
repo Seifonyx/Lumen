@@ -501,3 +501,11 @@ html[data-lumen-canvas] .sheet.attach-menu-v2 .all-tools > svg:last-child { marg
 html[data-lumen-canvas] .sheet-popover-backdrop .sheet.attach-menu-v2 .sheet-row { min-height: 38px; padding: 8px 10px; font-size: 14px; border-radius: 8px; }
 html[data-lumen-canvas] .sheet-popover-backdrop .sheet.attach-menu-v2 .attach-menu-group + .attach-menu-group { margin-top: 4px; padding-top: 4px; }
 html[data-lumen-canvas] .sheet-backdrop:not(.sheet-popover-backdrop) .sheet.attach-menu-v2 { max-height: calc(var(--vv-h, 100dvh) - max(env(safe-area-inset-top, 0px), 20px) - 24px); }
+/* Drawer at iOS sizes (owner, 2026-11-04): 17 pt rows and fields, 15 pt details and section labels, 48 pt place rows,
+   22 pt icons. After the glass drawer rules, which it outranks by order. */
+@media (max-width: 899px) {
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav { --cv-control: max(48px, calc(var(--fs,15px)*1.4 + 27px)); }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-dest button, .cv-project-row, .cv-search input, .cv-new-pill, .cv-brief-text, .cv-new-here) { font-size: 17px; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-chat-detail, .cv-section-h, .cv-more) { font-size: 15px; }
+  html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav :is(.cv-dest button > svg:first-child, .cv-folder-icon) { width: 22px; height: 22px; }
+}

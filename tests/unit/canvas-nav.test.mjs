@@ -19,7 +19,9 @@ test('CanvasNav delegates browser history to the canonical UI adapter with opaqu
  const adapter=readFileSync('src/lib/screen-history.ts','utf8');
  assert.match(src,/useEffect\(\(\) => installScreenHistory\(\), \[\]\)/);
  assert.match(adapter,/useStore\.setState\(window\.matchMedia/);
- assert.match(adapter,/history\.pushState\(\{ \.\.\.history\.state, \[KEY\]: \{ session, id: active \} \}/);
+ assert.match(adapter,/const marker = \{ \.\.\.history\.state, \[KEY\]: \{ session, id: active \} \};\n    if \(inMemory\) history\.replaceState\(marker, ''\); else history\.pushState\(marker, ''\);/);
+ // An iOS Home Screen app keeps the stack in memory, so iOS's own edge swipe has no entry to go back to.
+ assert.match(adapter,/inMemory = isIOS\(\) && isStandalone\(\) && !\(window as \{ __mrRealHistory\?: boolean \}\)\.__mrRealHistory;/);
  assert.match(adapter,/entries = new Map/);
  assert.match(adapter,/owner !== useStore\.getState\(\)\.user\?\.uid/);
  assert.doesNotMatch(adapter,/localStorage|indexedDB|fetch\(|s\.keys|s\.settings\./);

@@ -42,27 +42,23 @@ export const screenEntry = () => entries.get(active);
 // …and around each restore from history: before (true when the app itself asked for the traversal) and after.
 let pops: { before: (app: boolean) => void; after: () => void } | null = null;
 export const onScreenPop = (hooks: typeof pops) => { pops = hooks; };
-/** The entry directly behind the current one, if Back would reach it. */
-export function screenBehind() {
-  const here = positions.get(active);
-  if (here === undefined || !screenHasBack()) return null;
-  for (const [id, pos] of positions) if (pos === here - 1 && entries.has(id)) return { id, entry: entries.get(id)! };
-  return null;
-}
 // Feature ownership travels with the existing in-memory entries, never the browser payload.
 type Visit = { feature: string; origin: number; direct?: boolean };
 const visits = new Map<number, Visit>();
 let directExit: number | null = null;
 const closeFeature = () => { reconcileBackLayers(null); useStore.setState({ page: null, pageArg: undefined, canvasOpen: false, preview: null, runner: null, settingsOpen: false, projectWorkspaceOpen: false }); restoreRoutingScreen({ open: false, section: 'models' }); };
 const feature = (s: Screen) => s.page === 'collection' ? 'library' : ['tools','assistants','study'].includes(s.page || '') ? 'tools' : s.page || (s.routing.open ? 'prism' : s.projectWorkspaceOpen ? 'projects' : s.canvasOpen ? 'canvas' : s.runner ? 'tools' : s.settingsOpen ? 'settings' : s.layer ? 'overlay' : null);
+// Where Exit leads: the entry the visit began from, while it is still behind this one in this tab's history.
+function exitTarget() {
+  const visit = visits.get(active), here = positions.get(active), there = visit && positions.get(visit.origin);
+  if (applying || here === undefined || there === undefined || there >= here || history.state?.[KEY]?.session !== session) return null;
+  return { id: visit!.origin, delta: there - here, direct: Boolean(visit!.direct) };
+}
 /** Exit the entire visit by traversing to its origin. Sequential browser history remains intact. */
 export function exitFeature(fallback?: () => void) {
   if (traversalTimer !== undefined || !window.dispatchEvent(new Event('lumen:before-feature-exit', { cancelable: true }))) return;
-  const visit = visits.get(active), here = positions.get(active), there = visit && positions.get(visit.origin);
-  if (!applying && here !== undefined && there !== undefined && there < here && history.state?.[KEY]?.session === session) {
-    if (visit?.direct) directExit = visit.origin;
-    traverse(there - here); return;
-  }
+  const target = exitTarget();
+  if (target) { if (target.direct) directExit = target.id; traverse(target.delta); return; }
   replaceScreen(() => {
     if (fallback) { reconcileBackLayers(null); fallback(); } else closeFeature();
   });
@@ -84,24 +80,45 @@ export function screenBack(fallback?: () => void) {
   if (screenHasBack()) traverse(-1);
   else fallback?.();
 }
-/** Navigate to the nearest meaningful Settings ancestor, not every transient tab/editor snapshot.
+// The nearest meaningful Settings ancestor, not every transient tab/editor snapshot.
+function settingsTarget(target: 'index' | 'exit') {
+  const here = positions.get(active);
+  if (applying || here === undefined || history.state?.[KEY]?.session !== session) return null;
+  const ancestors = [...positions].map(([id, pos]) => ({ id, pos, entry: entries.get(id) }))
+    .filter(({ pos, entry }) => pos < here && Boolean(entry))
+    .sort((a, b) => b.pos - a.pos);
+  // A Settings visit starts after its nearest non-Settings ancestor. Do not jump
+  // into an older, unrelated Settings visit merely because it remains in history.
+  const origin = ancestors.find(({ entry }) => !entry!.settingsOpen);
+  const index = ancestors.find(({ pos, entry }) => pos > (origin?.pos ?? -1) && entry!.settingsOpen && !entry!.settingsTab);
+  // Connection Settings is a drill-down from Routing Center, not from the
+  // global Settings index. One Back must restore the same provider detail.
+  const destination = target === 'exit' ? origin : index || (origin?.entry?.routing.open ? origin : undefined);
+  return destination ? { id: destination.id, delta: destination.pos - here } : null;
+}
+/** Navigate to the nearest meaningful Settings ancestor.
  * If Settings was the initial screen, replace its snapshot with the fallback (no phantom Back). */
 export function screenBackToSettings(target: 'index' | 'exit', fallback: () => void) {
-  const here = positions.get(active);
-  if (!applying && here !== undefined && history.state?.[KEY]?.session === session) {
-    const ancestors = [...positions].map(([id, pos]) => ({ pos, entry: entries.get(id) }))
-      .filter(({ pos, entry }) => pos < here && Boolean(entry))
-      .sort((a, b) => b.pos - a.pos);
-    // A Settings visit starts after its nearest non-Settings ancestor. Do not jump
-    // into an older, unrelated Settings visit merely because it remains in history.
-    const origin = ancestors.find(({ entry }) => !entry!.settingsOpen);
-    const index = ancestors.find(({ pos, entry }) => pos > (origin?.pos ?? -1) && entry!.settingsOpen && !entry!.settingsTab);
-    // Connection Settings is a drill-down from Routing Center, not from the
-    // global Settings index. One Back must restore the same provider detail.
-    const destination = target === 'exit' ? origin : index || (origin?.entry?.routing.open ? origin : undefined);
-    if (destination) { traverse(destination.pos - here); return; }
-  }
-  replaceScreen(fallback);
+  const destination = settingsTarget(target);
+  if (destination) traverse(destination.delta);
+  else replaceScreen(fallback);
+}
+// A screen's Back (its leading control and the Back swipe) goes up, not through every step of the visit: a Settings
+// section returns to the Settings list; anything else leaves its feature for where the visit began.
+const upToSettings = (e: Screen | undefined) => Boolean(e?.settingsOpen && e.settingsTab);
+/** The screen Back leads to, as the Back swipe shows it underneath. Null when Back would not traverse history. */
+export function screenParent(): { id: number; entry: Screen } | null {
+  const here = entries.get(active);
+  const target = upToSettings(here) ? settingsTarget('index') : exitTarget();
+  const entry = target && entries.get(target.id);
+  if (!target || !entry) return null;
+  // A visit that began the session (a deep link) exits to the chat, not to its own first screen.
+  return { id: target.id, entry: 'direct' in target && target.direct ? { ...entry, layer: false, layerKey: null, canvasOpen: false, page: null, pageArg: undefined, runner: null, settingsOpen: false, projectWorkspaceOpen: false, routing: { ...entry.routing, open: false } } : entry };
+}
+/** Back for the current screen: see screenParent. */
+export function screenUp() {
+  if (upToSettings(entries.get(active))) screenBackToSettings('index', () => useStore.getState().setUi({ settingsTab: '' }));
+  else exitFeature();
 }
 export const screenHasBack = () => cursor > 0 && history.state?.[KEY]?.session === session;
 export function installScreenHistory() {

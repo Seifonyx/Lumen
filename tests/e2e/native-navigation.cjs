@@ -1,4 +1,6 @@
 // Native-feeling Back on the Canvas phone (lib/navigation-coordinator.ts): one gesture owner and one transition system.
+// Back goes up, as in an iOS app: from any screen of a feature (a Router section, a provider, a document) it leaves the
+// feature in one step, and a Settings section returns to the Settings list. It starts only at the leading edge.
 // Synthetic touches drive the Home Screen app's recognizer with motion on. For each journey it checks what is on screen
 // at the start, middle and end of the gesture (the current screen follows the finger over the real or kept screen
 // behind it, never a wrong one), that one completed swipe makes exactly one history traversal and no new entry, that
@@ -124,16 +126,19 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
       return;
     }
 
-    // Router: chat → Router → Providers → Gemini detail, then back one step at a time.
-    await openPlace(page, 'Router');
-    await page.locator('.rc-page').waitFor();
-    const router = await entry();
-    await page.getByRole('navigation', { name: 'Router sections' }).getByRole('button', { name: 'Providers', exact: true }).click();
-    const providers = await entry();
-    await page.locator('[data-provider="gemini"]').click();
-    await page.getByRole('region', { name: 'Provider detail' }).waitFor();
-    await page.waitForTimeout(500);
-    const detail = await entry();
+    // Router: chat → Router → Providers → Gemini detail; one Back from anywhere in it returns to the chat.
+    let providers;
+    const toDetail = async () => {
+      await openPlace(page, 'Router');
+      await page.locator('.rc-page').waitFor();
+      await page.getByRole('navigation', { name: 'Router sections' }).getByRole('button', { name: 'Providers', exact: true }).click();
+      providers = await entry();
+      await page.locator('[data-provider="gemini"]').click();
+      await page.getByRole('region', { name: 'Provider detail' }).waitFor();
+      await page.waitForTimeout(500);
+      return entry();
+    };
+    const detail = await toDetail();
 
     // Short, reversed, canceled and browser-interrupted gestures never navigate.
     let before = await trace();
@@ -141,7 +146,10 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
     await drag(70, { wait: 60 }); await page.waitForTimeout(120); await lift(70); await clean('.rc-page');
     await drag(260); await touch('touchmove', 40); await page.waitForTimeout(16); await touch('touchmove', 20); await lift(20); await clean('.rc-page');
     await drag(300); await lift(300, 'touchcancel'); await clean('.rc-page');
-    assert.equal(await entry(), detail); assert.deepEqual(await trace(), before, `${tag}: short, reversed and canceled drags stay`);
+    // A right swipe across the content (not from the edge) does nothing.
+    await drag(Math.round(width * 0.8), { from: 80 }); await lift(Math.round(width * 0.8)); await page.waitForTimeout(300);
+    assert.equal(await gesture(), null, `${tag}: a swipe across the content is not Back`);
+    assert.equal(await entry(), detail); assert.deepEqual(await trace(), before, `${tag}: short, reversed, canceled and mid-screen drags stay`);
     await drag(250);
     await page.goBack();
     await page.waitForFunction((id) => history.state?.lumenScreen?.id === id, providers);
@@ -151,30 +159,31 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
     assert.equal(await entry(), providers, `${tag}: a lift after browser Back does not traverse again`);
     await page.goForward(); await page.getByRole('region', { name: 'Provider detail' }).waitFor(); await page.waitForTimeout(300);
 
-    // Every frame from release to rest: the screen only moves on, and the screen behind (kept, then the real one) is
-    // on display throughout; the layers come off in the same frame the destination is in place.
-    before = await trace();
-    await held('.rc-page', Math.round(width * 0.55), { kind: 'kept', text: /Providers/ }, 'router-detail-held');
-    await page.evaluate(() => { window.__frames = []; const loop = () => { const el = document.querySelector('.rc-page'); const m = el ? new DOMMatrixReadOnly(getComputedStyle(el).transform === 'none' ? undefined : getComputedStyle(el).transform).m41 : null; window.__frames.push({ x: m, gesture: document.documentElement.dataset.navGesture || null, under: document.querySelectorAll('.nav-layer[data-nav-entry]').length, list: Boolean(el && el.querySelector('[data-provider="gemini"]')), detail: Boolean(el && el.querySelector('[aria-label="Provider detail"]')) }); if (window.__frames.length < 90) requestAnimationFrame(loop); }; requestAnimationFrame(loop); });
-    await lift(Math.round(width * 0.55));
-    await committed(before, providers, '.rc-page');
-    await page.waitForFunction(() => window.__frames.length >= 90);
-    const frames = await page.evaluate(() => window.__frames);
-    const moving = frames.filter((f) => f.gesture);
-    for (let i = 1; i < moving.length; i++) assert(moving[i].x >= moving[i - 1].x - 0.5, `${tag}: the release never moves backwards (${moving[i - 1].x} → ${moving[i].x})`);
-    for (const f of frames) assert(f.gesture ? (f.under > 0 || f.list) : (f.list && !f.detail && f.x === 0), `${tag}: every frame shows the screen behind or the restored one (${JSON.stringify(f)})`);
-    assert(frames.some((f) => !f.gesture), `${tag}: the transition finishes`);
-    assert(await page.locator('[data-provider="gemini"]').isVisible(), `${tag}: Providers is restored`);
-    // Two complete swipes in one task: the second waits for the first; one traversal only.
+    // Two complete swipes in one task: the second waits for the first; one traversal, out of Router.
     before = await trace();
     await page.evaluate(() => {
       const fire = (type, x) => { const t = { identifier: 9, target: document.querySelector('.rc-page'), clientX: x, clientY: 400 }; const e = new Event(type, { bubbles: true, cancelable: true }); Object.defineProperties(e, { touches: { value: type === 'touchend' ? [] : [t] }, changedTouches: { value: [t] } }); t.target.dispatchEvent(e); };
       for (let n = 0; n < 2; n++) { fire('touchstart', 6); for (const x of [60, 140, 220, 300]) fire('touchmove', x); fire('touchend', 300); }
     });
-    await committed(before, router, '.rc-page');
+    await committed(before, root, '.app > .main');
     await page.waitForTimeout(400);
-    assert.equal(await entry(), router, `${tag}: repeated swipes make one traversal`);
-    await back('.rc-page', root, { kind: 'live', text: /Message Lumen|Good (morning|afternoon|evening)/, next: '.app > .main' }, 'router-to-chat-held');
+    assert.equal(await entry(), root, `${tag}: repeated swipes make one traversal`);
+    await backAtChat();
+
+    // Every frame from release to rest: the screen only moves on, and the chat behind it is on display throughout; the
+    // layers come off in the same frame the chat is in place.
+    await toDetail();
+    before = await trace();
+    await held('.rc-page', Math.round(width * 0.55), { kind: 'live', text: /Message Lumen|Good (morning|afternoon|evening)/ }, 'router-detail-held');
+    await page.evaluate(() => { window.__frames = []; const loop = () => { const el = document.querySelector('.rc-page:not([hidden])'), main = document.querySelector('.app > .main'); const m = el ? new DOMMatrixReadOnly(getComputedStyle(el).transform === 'none' ? undefined : getComputedStyle(el).transform).m41 : null; window.__frames.push({ x: m, gesture: document.documentElement.dataset.navGesture || null, chat: getComputedStyle(main).display !== 'none' && main.getClientRects().length > 0, router: Boolean(el) }); if (window.__frames.length < 90) requestAnimationFrame(loop); }; requestAnimationFrame(loop); });
+    await lift(Math.round(width * 0.55));
+    await committed(before, root, '.app > .main');
+    await page.waitForFunction(() => window.__frames.length >= 90);
+    const frames = await page.evaluate(() => window.__frames);
+    const moving = frames.filter((f) => f.gesture && f.router);
+    for (let i = 1; i < moving.length; i++) assert(moving[i].x >= moving[i - 1].x - 0.5, `${tag}: the release never moves backwards (${moving[i - 1].x} → ${moving[i].x})`);
+    for (const f of frames) assert(f.chat && (f.gesture || !f.router), `${tag}: every frame shows the chat behind or the restored chat (${JSON.stringify(f)})`);
+    assert(frames.some((f) => !f.gesture), `${tag}: the transition finishes`);
     await backAtChat();
 
     // Tapping Back slides like the gesture, with the same single traversal.
@@ -186,39 +195,47 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
     await committed(before, root, '.app > .main');
     await backAtChat();
 
-    // Library → document → Library → chat.
+    // Library → document → chat: the document belongs to the Library visit.
     await openPlace(page, 'Library');
     const library = page.getByRole('main', { name: 'Library', exact: true });
     await library.waitFor(); await page.waitForTimeout(300);
-    const libraryEntry = await entry();
     await page.getByRole('button', { name: 'New document' }).first().click();
     await page.locator('.canvas-panel').waitFor(); await page.waitForTimeout(500);
-    // The document changed the Library, so its kept screen is not shown: the underlay is plain, never stale.
-    await back('.canvas-panel', libraryEntry, { kind: 'none', next: '.hub-page' }, 'document-held');
-    await library.waitFor();
+    // New document opened its own conversation, so the chat behind is not the one Back restores: the underlay is plain.
+    await back('.canvas-panel', root, { kind: 'none', next: '.app > .main' }, 'document-held');
+    await backAtChat();
+    await openPlace(page, 'Library'); await library.waitFor(); await page.waitForTimeout(300);
     await back('.hub-page', root, { kind: 'live', text: /Message Lumen|Good (morning|afternoon|evening)/, next: '.app > .main' }, 'library-held');
     await backAtChat();
 
-    // Settings → General → index → chat.
+    // Settings → General → index → chat; the section's Back button also returns to the list.
     await page.locator('.menu-btn').first().click();
     await page.locator('aside.cv-nav .cv-account').click();
     await page.locator('.settings-page').waitFor();
     const settings = await entry();
     await page.locator(':is(.settings-tabs, .si)').getByRole('button', { name: /^(General|Account:)/ }).first().click();
     await page.locator('.settings-page.has-section').waitFor(); await page.waitForTimeout(400);
+    before = await trace();
+    await page.locator('.settings-page .phone-navigation button').first().click();
+    await committed(before, settings, '.settings-page');
+    await page.locator(':is(.settings-tabs, .si)').getByRole('button', { name: /^(General|Account:)/ }).first().click();
+    await page.locator('.settings-page.has-section').waitFor(); await page.waitForTimeout(400);
     await back('.settings-page', settings, { kind: 'kept', text: /Personalization|Privacy/ }, 'settings-held');
     await back('.settings-page', root, { kind: 'live', text: /Message Lumen|Good (morning|afternoon|evening)/, next: '.app > .main' });
     await backAtChat();
 
-    // Projects → new project → workspace → Projects → chat.
+    // Projects → new project → workspace → chat, then Projects → chat.
     await openPlace(page, 'All projects');
     await page.getByRole('main', { name: 'Projects', exact: true }).waitFor();
-    const projects = await entry();
     await page.getByRole('button', { name: 'New project', exact: true }).first().click();
     await page.getByLabel('Project name', { exact: true }).fill('Native project');
     await page.getByRole('button', { name: 'Create project', exact: true }).click();
     await page.locator('.project-workspace-main').waitFor(); await page.waitForTimeout(500);
-    await back('.app > .main', projects, { kind: 'none', next: '.hub-page' }, 'workspace-held');
+    // The project changed what the chat's kept screen drew from, so the underlay is plain, never stale.
+    await back('.app > .main', root, { kind: 'none', next: '.app > .main' }, 'workspace-held');
+    await backAtChat();
+    await openPlace(page, 'All projects');
+    await page.getByRole('main', { name: 'Projects', exact: true }).waitFor(); await page.waitForTimeout(300);
     // An open menu owns the screen: Back never starts while it is up, and Escape still closes it.
     await page.getByRole('button', { name: 'More for Native project', exact: true }).click();
     await page.getByRole('menu').waitFor();
@@ -251,7 +268,6 @@ async function run(browser, { width, height, theme, standalone = true, reduce = 
       await page.waitForTimeout(300);
       assert.equal(await gesture(), null); assert.deepEqual(await trace(), before, `${tag}: a scrolled chip rail keeps its drag`);
     }
-    await back('.rc-page', await page.evaluate(() => history.state.lumenScreen.id) - 1, { kind: 'kept', text: /Models|Browse/ });
     await back('.rc-page', root, { kind: 'live', next: '.app > .main' });
     await backAtChat();
 

@@ -107,7 +107,9 @@ dark mode).
   the composer's one Compare sheet with that reply's own question (the message right before it, refused when that
   isn't clear or a file isn't on this device), sends nothing until Compare, and leaves the draft and attachments alone.
 - **Pages** (Library, Router, Projects, Settings, Study) replace the chat and add one history entry; Back (and the
-  iOS edge swipe) returns, focus goes back to the opener. Phones: glass Back circle, centred title, contextual + /
+  iOS edge swipe) returns, focus goes back to the opener. Back goes up, as in an iOS app: from anywhere in a feature
+  (a Router section, a provider, a document, a project) it leaves the feature in one step for where you opened it;
+  a Settings section returns to the Settings list. Browser Back and Forward still step through history. Phones: glass Back circle, centred title, contextual + /
   ⋯. Desktop: the sidebar is the navigation; the page title stays visible while scrolling.
 - **Library:** content tabs (Everything, Documents, Photos, Attached files, Made by Lumen, Knowledge; the phone rail
   fades at the end with more), search, sort and project selects on one line, bottom search on phones. Rows lead with
@@ -128,16 +130,16 @@ transition on Canvas).
 
 **Phone navigation (Canvas)** has one owner and one transition, `src/lib/navigation-coordinator.ts` (lazy, touch
 devices): every Back swipe and the drawer's swipe go through it, and the old per-screen swipe handlers are gone.
-- A swipe right on a pushed screen (pages, Router and its steps, Settings sections, a project's workspace, the document
-  panel) moves that screen with the finger; the root chat's swipe opens the drawer instead. iPhone glass: from anywhere
-  on the screen; elsewhere from the edge. An iOS browser tab leaves Back and Forward to Safari entirely.
+- A swipe from the leading edge on a pushed screen (pages, Router and its steps, Settings sections, a project's
+  workspace, the document panel) moves that screen with the finger and does what its top-left Back does (see Pages);
+  a right swipe across the content does nothing. The root chat's swipe opens the drawer instead. An iOS browser tab
+  leaves Back and Forward to Safari entirely.
 - Behind it is what Back restores: the real chat or workspace (still mounted, revealed), or the screen kept when you
   left it (memory only, this account, never incognito or key fields) while the data it shows is unchanged; otherwise a
   plain page. Never a wrong preview. The screen behind moves in from −28% under a 0.08 dim; the moving one has a shadow.
 - Release past about half the width, or a flick, commits: exactly one history traversal, and the layers come off once
   the destination has painted. A short, reversed or canceled drag springs back; Browser Back, a resize or an account
-  change during a drag stops it with no navigation. Sheets, dialogs, menus, fields, selected text, sliders, swipe rows
-  and sideways content that can still scroll keep their own drags (a drag from the edge still wins over content).
+  change during a drag stops it with no navigation. Sheets, dialogs, menus and selected text keep the edge too.
 - Taps use the same slide: a new step pushes over the screen it leaves, and the app's own Back (the top-left button)
   pops like the gesture. Reduce Motion keeps the finger tracking but drops the parallax and the slides.
 - Tests: `tests/e2e/native-navigation.cjs` (Chromium and WebKit, 390/320, Light/Dark, Reduce Motion, a Safari tab).

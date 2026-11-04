@@ -9,7 +9,7 @@
 // Taps use the same slide (push from onScreenLeave, pop when the app itself traverses), so both feel like one system.
 import { useStore } from '../store';
 import { gestureOwner, browserOwnsEdges, isBackEdge } from './navigation-edge';
-import { onScreenLeave, onScreenPop, screenBack, screenBehind, screenEntry, screenHasBack, type Screen } from './screen-history';
+import { onScreenLeave, onScreenPop, screenEntry, screenParent, screenUp, type Screen } from './screen-history';
 import { motionOff, swapControl } from './motion';
 import { haptic } from './haptics';
 import { Velocity } from './spring';
@@ -22,10 +22,6 @@ const LAYER = 'nav-layer';
 const SCREENS = ['.canvas-panel', '.settings-page', '.hub-page', '.run-panel', '.rc-page:not([hidden])', '.app > .main'];
 // Presentations that own their own gestures: Back never starts over them.
 const OVERLAYS = '.modal-backdrop, .sheet-backdrop, .models-pop, .usage-pop, .ctx-layer:not(.exit-ghost), .image-viewer, [role="dialog"], [role="menu"], [role="listbox"]';
-// Content that owns a horizontal drag of its own. A drag from the screen edge wins over both, as on iOS (never over
-// selected text, which is checked first).
-const FIELDS = 'input, textarea, select, [contenteditable="true"], [role="slider"], .cm-editor';
-const CONTENT = '.switch, .swipe-row, [data-gesture-owner]';
 const PARALLAX = 0.28, DIM = 0.08, SHADOW = '-8px 0 24px rgb(0 0 0 / .12)', EASE = 'cubic-bezier(.2, .8, .25, 1)';
 const Z = { back: '55', under: '56', dim: '58', top: '60', drawer: '70' };
 
@@ -139,9 +135,9 @@ const raise = (el: HTMLElement) => lift(el, { zIndex: Z.top, boxShadow: SHADOW, 
 const reveal = (main: HTMLElement) => lift(main, { position: 'fixed', inset: '0', width: '100%', height: '100%', zIndex: Z.under, pointerEvents: 'none', willChange: 'transform', transition: 'none', transform: '' }, { inert: true, display: 'flex' });
 
 type Under = { kind: 'live' | 'kept' | 'none'; el: HTMLElement | null; live: Lift | null; extra: HTMLElement[] };
-/** What Back would show, put underneath the current screen. */
+/** What Back would show (the screen's parent, not the previous step), put underneath the current screen. */
 function underlay(current: HTMLElement): Under | null {
-  const behind = screenBehind();
+  const behind = screenParent();
   if (!behind) return null;
   const s = useStore.getState(), b = behind.entry;
   const back = plain(Z.back);
@@ -155,8 +151,9 @@ function underlay(current: HTMLElement): Under | null {
   if (live && selector === '.hub-page' && b.page === s.page && b.pageArg === s.pageArg) {
     return { kind: 'live', el: live, live: lift(live, { zIndex: Z.under, willChange: 'transform', transition: 'none', transform: '' }, { inert: true }), extra: [back] };
   }
-  const k = trusted(kept.get(behind.id));
-  if (k) { const el = mount(k, Z.under); el.dataset.navEntry = String(behind.id); return { kind: 'kept', el, live: null, extra: [back] }; }
+  // Kept only if it is the screen Back now restores (a deep-linked visit exits past its own first screen).
+  const k = trusted(kept.get(behind.id)), match = k && screenFor(k.entry) === selector ? k : null;
+  if (match) { const el = mount(match, Z.under); el.dataset.navEntry = String(behind.id); return { kind: 'kept', el, live: null, extra: [back] }; }
   return { kind: 'none', el: null, live: null, extra: [back] };
 }
 const clearUnder = (u: Under | null) => { if (!u) return; drop(u.live); if (u.kind === 'kept') u.el?.remove(); u.extra.forEach((e) => e.remove()); };
@@ -172,24 +169,14 @@ let frame = 0, guard = 0, suppressUntil = 0, suppressTarget: Element | null = nu
 function eligible(event: TouchEvent): HTMLElement | null {
   if (phase !== 'idle' || event.touches.length !== 1 || !phone() || browserOwnsEdges()) return null;
   const s = useStore.getState(), entry = screenEntry();
-  if (!s.authed || s.sidebarOpen || !entry || isRoot(entry) || !screenHasBack() || !screenBehind()) return null;
+  if (!s.authed || s.sidebarOpen || !entry || isRoot(entry) || !screenParent()) return null;
   if (window.getSelection()?.toString()) return null;
   const target = event.target, screen = currentScreen();
   if (!(target instanceof Element) || !screen || !screen.contains(target)) return null;
   const overlay = [...document.querySelectorAll(OVERLAYS)].find((el) => onScreen(el) && el !== screen && !el.contains(screen));
   if (overlay) return null;
-  const x = event.touches[0].clientX, edge = isBackEdge(x);
-  if (!edge && target.closest(FIELDS)) return null;
-  // iPhone glass: a Back swipe starts anywhere (iOS); elsewhere from the edge, as the system does.
-  const anywhere = document.documentElement.classList.contains('glass');
-  if (!edge && !anywhere) return null;
-  if (!edge) {
-    if (target.closest(CONTENT)) return null;
-    // Sideways content that can still scroll back towards the start keeps the drag.
-    for (let el: Element | null = target; el && el !== screen.parentElement; el = el.parentElement) {
-      if (el.scrollLeft > 0 && el.scrollWidth > el.clientWidth + 2 && /auto|scroll/.test(getComputedStyle(el).overflowX)) return null;
-    }
-  }
+  // Back starts only from the screen's leading edge, as in iOS apps: a right swipe across the content does nothing.
+  if (!isBackEdge(event.touches[0].clientX)) return null;
   return screen;
 }
 
@@ -198,7 +185,7 @@ function start(event: TouchEvent) {
   const screen = eligible(event);
   if (!screen) return;
   const t = event.touches[0];
-  g = { id: t.identifier, x: t.clientX, y: t.clientY, dx: 0, width: window.innerWidth, screen, top: null, under: null, dim: null, behind: screenBehind()!.id };
+  g = { id: t.identifier, x: t.clientX, y: t.clientY, dx: 0, width: window.innerWidth, screen, top: null, under: null, dim: null, behind: screenParent()!.id };
   phase = 'track';
   gestureOwner.current = 'back';
   speed.reset(); speed.add(t.clientX);
@@ -246,7 +233,7 @@ function end(event: TouchEvent) {
   cancelAnimationFrame(frame); frame = 0;
   const v = speed.get(), p = g.dx / g.width;
   // Far enough, or a deliberate flick; a reversed or hesitant release stays.
-  const commit = event.type === 'touchend' && screenHasBack() && ((p > 0.45 && v > -0.2) || (v > 0.6 && g.dx > 30));
+  const commit = event.type === 'touchend' && Boolean(screenParent()) && ((p > 0.45 && v > -0.2) || (v > 0.6 && g.dx > 30));
   settle(commit, v);
 }
 function settle(commit: boolean, v: number) {
@@ -278,7 +265,7 @@ function traverse() {
   haptic();
   // If the browser drops the traversal, put the current screen back rather than leave it hidden.
   guard = window.setTimeout(() => { if (g === d && phase === 'commit') reset(); }, 1500);
-  screenBack();
+  screenUp();
 }
 /** After history has restored the destination: wait until it has painted, then take every layer off. */
 function arrived() {
@@ -309,7 +296,7 @@ function reset() {
 /** Browser Back, an account change or a resize during a gesture: stop at once, no traversal. */
 const abort = () => { if (phase !== 'commit') reset(); };
 const click = (event: MouseEvent) => {
-  if (performance.now() < suppressUntil && event.target instanceof Node && suppressTarget?.contains(event.target)) { event.preventDefault(); event.stopImmediatePropagation(); suppressUntil = 0; }
+  if (performance.now() < suppressUntil && event.target === suppressTarget) { event.preventDefault(); event.stopImmediatePropagation(); suppressUntil = 0; }
 };
 
 // ---- Taps: the same slide for a push (a new step) and for a pop the app itself asked for.

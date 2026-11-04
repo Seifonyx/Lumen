@@ -10,12 +10,18 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start the next task from `origin/main`.
+- **Branch:** `design/app-back`: owner's request (2026-11-04) that Back act like a real app. In the Home Screen app,
+  Back (the edge swipe and the top-left `<`) now goes up, not through every step: anywhere in a feature (Router
+  section or provider, Library document, project) it leaves the feature in one step; a Settings section returns to the
+  Settings list (the phone `<` used to leave Settings). A right swipe across the content no longer goes back; only the
+  leading edge does. Also: the click guard after a swipe swallowed the next tap on the restored chat's menu button.
+  `screenParent`/`screenUp` in screen-history.ts; native-navigation and iphone-edge-back updated. Safari tabs unchanged.
 
 ## Next
 
-- [ ] Owner, on the installed Home Screen app (PR #104, live): the seven-step acceptance sequence in PR #104 (Router
-      detail → Providers → Router → chat with a draft and photo; partial and quick swipes; Projects, Library, a document,
+- [ ] Owner, on the installed Home Screen app (PR #104, live, plus `design/app-back`): the seven-step acceptance
+      sequence in PR #104, now with Back going up (Router detail → chat in one swipe with a draft and photo; a Settings
+      section → Settings list; a swipe across the content does nothing; partial and quick swipes; Projects, Library, a document,
       Settings; the drawer on the chat; tap Back; Reduce Motion and VoiceOver). Native feel is not accepted until then.
 - [ ] Physical iPhone: in Safari, write an unsent draft with a disposable attachment. Open Router > Providers > detail.
   Start an edge swipe and return your finger to the edge before lifting. Repeat with a completed swipe to the Providers

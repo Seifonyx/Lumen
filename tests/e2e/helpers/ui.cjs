@@ -2,7 +2,7 @@
 
 /** Opens Settings (from the sidebar; on phones through the menu) and, optionally, one section. */
 exports.openSettings = async (page, tab) => {
-  if (!(await page.locator('.settings-page').isVisible())) {
+  if (!(await page.locator('.settings-page:not(.nav-layer)').isVisible())) {
     if (await page.locator('.menu-btn').isVisible()) await page.click('.menu-btn');
     await page.getByRole('button', { name: 'Settings', exact: true }).click();
   }
@@ -16,38 +16,40 @@ exports.replyAction = async (page, label, which = 'last') => {
   await page.getByRole('menuitem', { name: label, exact: true }).click();
 };
 
+// The Canvas slide keeps a copy of the outgoing screen (.nav-layer) for a moment; it is never the Settings page.
 /** Use the visible Settings hierarchy across ordinary and Canvas iPhone builds. */
 exports.backSettingsSection = async (page) => {
-  const legacy = page.locator('.settings-page .settings-back');
+  const legacy = page.locator('.settings-page:not(.nav-layer) .settings-back');
   if (await legacy.isVisible()) return legacy.click();
-  const back = page.locator('.settings-page .phone-navigation button[aria-label^="Return to "]');
-  // The chevron exits a feature. Inspect internal sections with actual browser
-  // Back; a direct-start section has no ancestor and uses Exit instead.
+  // Canvas iPhone: a section's chevron goes up to the Settings list ("Back to Settings"). Deeper steps inside a
+  // section use actual browser Back; a direct-start section has no ancestor and its chevron replaces it instead.
+  const back = page.locator('.settings-page:not(.nav-layer) .phone-navigation button:is([aria-label="Back to Settings"], [aria-label^="Return to "])');
   await back.waitFor({ state: 'visible', timeout: 6000 });
+  if (await page.locator('.settings-page:not(.nav-layer) .phone-navigation button[aria-label="Back to Settings"]').isVisible()) await back.click();
   for (let step=0;step<18;step++) {
-    if (await page.locator('.settings-page :is(.settings-tabs, .si)').isVisible() || !await page.locator('.settings-page:not(.exit-ghost)').isVisible()) return;
+    if (await page.locator('.settings-page:not(.nav-layer) :is(.settings-tabs, .si)').isVisible() || !await page.locator('.settings-page:not(.nav-layer):not(.exit-ghost)').isVisible()) return;
     if (await page.evaluate(()=>Boolean(history.state?.lumenScreen?.id))) await page.goBack();
     else await back.click();
-    await page.waitForFunction(()=>!document.querySelector('.settings-page:not(.exit-ghost)') || Boolean(document.querySelector('.settings-page :is(.settings-tabs, .si)')?.getClientRects().length));
+    await page.waitForFunction(()=>!document.querySelector('.settings-page:not(.nav-layer):not(.exit-ghost)') || Boolean(document.querySelector('.settings-page:not(.nav-layer) :is(.settings-tabs, .si)')?.getClientRects().length));
   }
 };
 
 exports.openSettingsSection = async (page, name) => {
   // Canvas: after a first-run key save the screen is Router, not Settings. Leave it and open Settings.
-  if (!(await page.locator('.settings-page').isVisible()) && await page.locator('.rc-page:not([hidden])').isVisible()) {
+  if (!(await page.locator('.settings-page:not(.nav-layer)').isVisible()) && await page.locator('.rc-page:not([hidden])').isVisible()) {
     await exports.closeSettings(page);
     const menu = page.locator('.menu-btn');
     if (await menu.isVisible()) await menu.click();
     await page.getByRole('button', { name: 'Settings', exact: true }).click();
   }
   // Settings mounts asynchronously; checking a locator before the page exists misidentifies loading as nesting.
-  await page.locator('.settings-page').waitFor({ state: 'visible' });
+  await page.locator('.settings-page:not(.nav-layer)').waitFor({ state: 'visible' });
   // Canvas phones show the grouped index (.si); its General row is the account card.
-  const list = page.locator('.settings-page :is(.settings-tabs, .si)');
+  const list = page.locator('.settings-page:not(.nav-layer) :is(.settings-tabs, .si)');
   await list.waitFor({ state: 'attached' });
   if (!(await list.isVisible())) {
     await exports.backSettingsSection(page);
-    if (!(await page.locator('.settings-page').isVisible())) {
+    if (!(await page.locator('.settings-page:not(.nav-layer)').isVisible())) {
       const menu = page.locator('.menu-btn');
       await page.locator('.composer textarea').waitFor({state:'visible'});
       if (await menu.isVisible()) await menu.click();
@@ -59,7 +61,7 @@ exports.openSettingsSection = async (page, name) => {
 };
 
 exports.closeSettings = async (page) => {
-  const root = page.locator('.settings-page');
+  const root = page.locator('.settings-page:not(.nav-layer)');
   // Canvas: API keys, models and usage open in Router instead; leaving it is its Exit control.
   const router = page.locator('.rc-page:not([hidden])');
   if (!(await root.isVisible()) && await router.isVisible()) {
@@ -73,7 +75,8 @@ exports.closeSettings = async (page) => {
   // assuming a single Escape dismisses both a nested section and its parent.
   for (let step = 0; step < 18 && await root.isVisible(); step++) {
     const close = root.locator('.settings-top button[aria-label="Close"]');
-    const back = root.locator('.phone-navigation button[aria-label^="Return to "]');
+    // A section's Back goes to the Settings list first, then the list's Back leaves Settings.
+    const back = root.locator('.phone-navigation button:is([aria-label="Back to Settings"], [aria-label^="Return to "])');
     if (await close.isVisible()) await close.click();
     else if (await back.isVisible()) await back.click();
     else { await root.focus(); await page.keyboard.press('Escape'); }

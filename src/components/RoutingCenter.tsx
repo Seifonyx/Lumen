@@ -4,7 +4,7 @@
 // selection through setChatModel, Layouts through LayoutEditor, usage through UsageTab, decisions through RouteWhy,
 // connections through Settings → Keys. Send-time routing, eligibility and recovery are unchanged.
 import '../styles/canvas-routing.css';
-import PhoneNavigation from './PhoneNavigation';
+import PhoneNavigation, { LargeTitle } from './PhoneNavigation';
 import PhoneSections from './PhoneSections';
 import ScreenBoundary from './ScreenBoundary';
 import { usePhoneLayout } from '../lib/phone-layout';
@@ -156,7 +156,7 @@ function Providers({ preferred, phone, searchHost }: { preferred?: string; openD
   return (
     <section className="rc-providers sb-providers" aria-label="Provider browser">
       <header className="sb-head">
-        <div className="sb-head-title"><h2>Providers</h2><p className="rc-count" role="status">{saved} {saved === 1 ? 'key' : 'keys'} saved · {enabled} enabled · {providers.length} available</p></div>
+        <div className="sb-head-title"><h2 className={phone ? 'sr-only' : undefined}>Providers</h2><p className="rc-count" role="status">{saved} {saved === 1 ? 'key' : 'keys'} saved · {enabled} enabled · {providers.length} available</p></div>
         <div className="sb-head-tools">
           {!phone && search}
           <FilterMenu<typeof filter> label="Filter providers" value={filter} onChange={setFilter} options={[{ value: 'all', label: 'All providers', count: providers.length }, { value: 'saved', label: 'Saved keys', count: saved }, { value: 'enabled', label: 'Enabled providers', count: enabled }, { value: 'attention', label: 'Needs attention', count: providers.filter((p) => p.presentation.attention).length }]} />
@@ -252,7 +252,9 @@ export default function RoutingCenter() {
   useEffect(() => { if (open && (opened.current.owner !== owner || opened.current.currentId !== currentId)) closeRoutingCenter(); }, [open, owner, currentId]);
   useEffect(() => { if (open) heading.current?.focus({ preventScroll: true }); }, [open]);
   useEffect(() => {
-    if (page.current) { page.current.scrollTop = 0; page.current.querySelector('.rc-scroll')?.scrollTo(0,0); }
+    // Phones keep a collapsed large title collapsed when the section changes, like iOS; otherwise the top.
+    const scroll = page.current?.querySelector<HTMLElement>('.rc-scroll'), large = scroll?.querySelector('.large-title');
+    if (page.current) { page.current.scrollTop = 0; scroll?.scrollTo(0, large ? Math.min(scroll.scrollTop, large.getBoundingClientRect().bottom - scroll.getBoundingClientRect().top + scroll.scrollTop) : 0); }
     // The shared phone title is stable across sections; direct entry never invents a Back target.
     if (phone && open) page.current?.querySelector<HTMLElement>('.phone-navigation h1')?.focus({ preventScroll: true });
   }, [section]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -299,8 +301,9 @@ export default function RoutingCenter() {
 
 
 
-      {phone && !providerOpen && <PhoneSections label="Router sections" active={tabOf(section)} items={SECTIONS.map(([id,label]) => ({ id, label }))} onSelect={id => go(id as RoutingSection)} />}
       <div className="rc-scroll">
+      {/* Phones: the large title scrolls away into the bar; the section tabs stay pinned below the bar. */}
+      {phone && !providerOpen && <><LargeTitle title="Router" /><div className="phone-sections-bar"><PhoneSections label="Router sections" active={tabOf(section)} items={SECTIONS.map(([id,label]) => ({ id, label }))} onSelect={id => go(id as RoutingSection)} /></div></>}
       <ScreenBoundary key={section} label={SECTIONS.find(([id]) => id === tabOf(section))?.[1] || 'Router'}>
       {section === 'providers' && <div className="rc-body"><Providers key={owner || 'signed-out'} preferred={current?.split(':')[0]} phone={phone} searchHost={searchHost} /></div>}
 
@@ -331,7 +334,7 @@ export default function RoutingCenter() {
         </div>
       )}
 
-      {section === 'routing' && <div className="rc-body rc-routing-settings">{phone && <h2 className="rc-h2">Routing</h2>}<div className="router-routing-console"><section aria-label="Routing preferences"><Suspense fallback={<p className="rc-muted" role="status">Loading routing…</p>}><RoutingSettings only="routing" /></Suspense></section><aside className="router-routing-context"><h3>When you send</h3><Suspense fallback={<p className="rc-muted">Loading routing context…</p>}><RoutingInsight /></Suspense></aside></div></div>}
+      {section === 'routing' && <div className="rc-body rc-routing-settings">{phone && <h2 className="sr-only">Routing</h2>}<div className="router-routing-console"><section aria-label="Routing preferences"><Suspense fallback={<p className="rc-muted" role="status">Loading routing…</p>}><RoutingSettings only="routing" /></Suspense></section><aside className="router-routing-context"><h3>When you send</h3><Suspense fallback={<p className="rc-muted">Loading routing context…</p>}><RoutingInsight /></Suspense></aside></div></div>}
 
       {section === 'policies' && <Suspense fallback={<p className="rc-muted" role="status">Loading Layouts…</p>}><PrismLayouts /></Suspense>}
 

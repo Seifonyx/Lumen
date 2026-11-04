@@ -34,11 +34,11 @@ export function discoverItems(items: LibraryItem[], {kind,query,project,sort}: {
     .sort((a,b) => (sort === 'name' ? itemName(a).localeCompare(itemName(b)) : sort === 'oldest' ? a.at-b.at : b.at-a.at) || a.key.localeCompare(b.key));
 }
 export function availability(file: Attachment) {
-  if (file.data) return 'Original available';
-  if (file.stored) return 'Saved original · open to retrieve';
-  if (file.text) return 'Extracted text available';
-  if (file.thumb) return 'Preview only · original unavailable here';
-  return 'Original not loaded on this device';
+  if (file.data) return 'Original on this device';
+  if (file.stored) return 'Saved original';
+  if (file.text) return 'Text only';
+  if (file.thumb) return 'Preview only';
+  return 'Not on this device';
 }
 /** A row's few words on what is here, said only when it is less than the original (the detail view has the rest). */
 export function availabilityShort(file: Attachment) {

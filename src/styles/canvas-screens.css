@@ -340,9 +340,9 @@ html.glass[data-lumen-canvas][data-theme='dark'] {
   html.glass[data-lumen-canvas] .app .main > .topbar :is(.menu-btn, .topbar-trailing),
   html.glass[data-lumen-canvas] .app .composer-wrap:not([data-composer-state='expanded'])[data-lumen-canvas-composer] .composer,
   html.glass[data-lumen-canvas] .app .to-bottom {
-    border: 0; background: var(--lg-tint); box-shadow: var(--lg-edge), var(--lg-lift);
-    -webkit-backdrop-filter: var(--lg-filter); backdrop-filter: var(--lg-filter);
+    border: 0; box-shadow: var(--lg-edge), var(--lg-lift);
   }
+  html.glass[data-lumen-canvas] .app .to-bottom { background: var(--lg-tint); -webkit-backdrop-filter: var(--lg-filter); backdrop-filter: var(--lg-filter); }
   /* The message box sits over reading text: a deeper blur keeps the words behind it from reading through its
      placeholder. While a reply streams it drops back to the bars' blur, which Safari redraws more cheaply. */
   html.glass[data-lumen-canvas]:not(.streaming) .app .composer-wrap:not([data-composer-state='expanded'])[data-lumen-canvas-composer] .composer { -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8); }
@@ -456,9 +456,6 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(44 44 46 / .62
   html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-navigation::before { box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--lg-page, var(--bg)); }
   html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] :is(.phone-navigation > button, .phone-navigation-actions > button, .phone-navigation-actions > .screen-actions > button, .phone-page-search :is(.hub-search, .rc-search)) { border: 0; color: var(--text); box-shadow: var(--lg-edge), var(--lg-lift); }
   html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-page-search { border-top: 0; background: var(--lg-page, var(--bg)); padding-inline: 20px; }
-  /* Section tabs: a longer fade where more tabs wait off-screen, instead of a word cut at the edge. */
-  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-sections { --fade: linear-gradient(var(--fade-to, 90deg), transparent, #000 8px, #000 calc(100% - 40px), transparent); -webkit-mask-image: var(--fade); mask-image: var(--fade); }
-  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .phone-sections:dir(rtl) { --fade-to: 270deg; }
   /* Empty states as iOS draws them: a large grey symbol, the title and one line; no tile stack. An empty library shows
    * no count or sort. */
   html.glass[data-lumen-canvas] .app .hub-empty { padding-top: 28px; }
@@ -520,4 +517,12 @@ html[data-lumen-canvas] .sheet-backdrop:not(.sheet-popover-backdrop) .sheet.atta
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-foot { justify-content: space-between; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-account { flex: none; width: 52px; height: 52px; }
   html[data-lumen-canvas] .app[data-lumen-canvas-shell] .cv-nav .cv-account .cv-avatar { width: 44px; height: 44px; font-size: calc(var(--fs,15px) + 2px); }
+}
+/* The usage gauge fills like a pie, so a nearly empty one never reads as a spinner's arc. */
+html[data-lumen-canvas] .usage-pie .usage-ring-fill { stroke-linecap: butt; }
+/* Phones have no hover title, so incognito says its name beside the crossed eye. */
+html[data-lumen-canvas] .incognito-label { display: none; }
+@media (max-width: 899px) {
+  html[data-lumen-canvas] .app .main > .topbar .topbar-trailing .new-chat-shortcut:has(.incognito-label) { display: inline-flex; align-items: center; width: auto; gap: 6px; padding-inline: 10px 12px; }
+  html[data-lumen-canvas] .incognito-label { display: inline; font: 500 15px/1 var(--font); }
 }

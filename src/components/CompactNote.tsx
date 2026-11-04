@@ -191,7 +191,8 @@ export function UsageMeter({ chat, model }: { chat: Chat; model: string }) {
     <div className="usage-meter" ref={box}>
       {CANVAS_COMPOSER ? (
       <button type="button" ref={trigger} className={`usage-chip${level}${pct < 50 && !blockedUntil ? ' quiet' : ''}${pct < 10 && !blockedUntil && !open ? ' idle' : ''}`} onClick={() => { setSheet(isSheetScreen()); setOpen(!open); }} aria-expanded={open} aria-haspopup="dialog" aria-controls="usage-panel" title="Conversation capacity and daily usage">
-        <svg className="usage-ring" viewBox="0 0 20 20" aria-hidden="true"><circle className="usage-ring-track" cx="10" cy="10" r="7" /><circle className="usage-ring-fill" cx="10" cy="10" r="7" strokeDasharray="43.98" strokeDashoffset={43.98 * (1 - pct / 100)} /></svg>
+        {/* A filled share inside a thin outline: reads as an amount (a gauge), never as a loading spinner's arc. */}
+        <svg className="usage-ring usage-pie" viewBox="0 0 20 20" aria-hidden="true"><circle className="usage-ring-track" cx="10" cy="10" r="8.5" strokeWidth="1.5" /><circle className="usage-ring-fill" cx="10" cy="10" r="3.5" strokeWidth="7" strokeDasharray="21.99" strokeDashoffset={21.99 * (1 - pct / 100)} /></svg>
         {words ? <span className="usage-chip-words">{words}<span className="sr-only"> used in this chat</span></span> : <span className="sr-only">Usage</span>}{blockedUntil && <span className="usage-status"> · limit reached</span>}
         <ChevronDown size={12} aria-hidden="true" />
       </button>

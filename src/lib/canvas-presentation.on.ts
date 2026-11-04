@@ -26,6 +26,7 @@ export const loadNavigation = () => import('./navigation-coordinator');
 export { newGeneralChat } from './new-chat';
 
 export const PhoneNavigation = lazy(() => import('../components/PhoneNavigation'));
+export const PhoneLargeTitle = lazy(() => import('../components/PhoneNavigation').then((m) => ({ default: m.LargeTitle })));
 export { screenBack as navigateBack } from './screen-history';
 export { exitFeature, featureExitLabel, screenUp, screenIsRoot } from './screen-history';
 export { useScreenMemory } from './screen-memory';

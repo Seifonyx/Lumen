@@ -6,8 +6,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type RefObject } from 'react';
 import { useFocusScope } from '../lib/focus-scope';
 import { useSheetDrag } from '../lib/sheet-drag';
-import { estimateTokens } from '../lib/routing';
-import { formatTokens } from '../lib/usage';
 import { installMessageActionTaps } from '../lib/message-taps';
 
 export type ComposerPresentation = 'resting' | 'engaged' | 'expanded';
@@ -230,7 +228,7 @@ export function useCanvasComposer({ input, scope, value, attachments, title, aut
         <div>
           <span className="canvas-sheet-label">Writing</span>
           <strong id={HEAD_ID}>{title || 'New chat'}</strong>
-          <span className="canvas-sheet-count">{words} {words === 1 ? 'word' : 'words'} · ~{formatTokens(estimateTokens(value))} {estimateTokens(value) === 1 ? 'token' : 'tokens'}</span>
+          <span className="canvas-sheet-count">{words} {words === 1 ? 'word' : 'words'}</span>
         </div>
         <button type="button" className="canvas-sheet-done" aria-label="Done, collapse writing" title="Collapse writing (Esc)" onClick={collapse}>Done</button>
       </div>

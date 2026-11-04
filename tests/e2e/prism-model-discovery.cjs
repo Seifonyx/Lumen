@@ -31,8 +31,9 @@ try{for(const[width,height]of sizes)for(const theme of ['light','dark']){
  const shot=async name=>{await page.evaluate(()=>document.activeElement?.blur());await page.screenshot({path:path.join(out,`${width}-${theme}-${name}.png`),animations:'disabled'});};
  await shot('models');
  if(process.env.PRISM_MODELS_CAPTURE_BASELINE==='1')continue; // Explicit capture-only baseline, never enabled in verification/CI.
- const search=rc.getByRole('searchbox',{name:'Search models',exact:true});assert(await search.isVisible(),'approved browser keeps search above its list');
- if(width===320){const geo=await search.evaluate(el=>({searchBottom:el.getBoundingClientRect().bottom,rowTop:document.querySelector('.rm-model').getBoundingClientRect().top}));assert(geo.searchBottom<geo.rowTop,JSON.stringify(geo));}
+ const search=rc.getByRole('searchbox',{name:'Search models',exact:true});assert(await search.isVisible(),'model search is on screen');
+ // Phones search from the page's bottom search (design/consistent-look), so it sits below the list, inside the viewport.
+ if(width===320){const geo=await search.evaluate(el=>({inFooter:Boolean(el.closest('.phone-page-search')),bottom:el.getBoundingClientRect().bottom,right:el.getBoundingClientRect().right,h:innerHeight,w:innerWidth}));assert(geo.inFooter&&geo.bottom<=geo.h&&geo.right<=geo.w,JSON.stringify(geo));}
  await rc.getByRole('button',{name:'Filter models: All models',exact:true}).click();await rc.getByRole('menuitemradio',{name:/Selectable/}).click();assert.equal(await rc.locator('.rc-model').count(),2);
  await shot('filtered');
  await rc.getByRole('button',{name:'Filter models: Selectable',exact:true}).click();await rc.getByRole('menuitemradio',{name:/Reads images/}).click();assert.equal(await rc.locator('.rc-model').count(),2);

@@ -62,7 +62,7 @@ export default function CanvasCollectionPage({onClose,initial='all'}:{onClose:()
    for(const same of byChat.values()){const ordered=[...same].sort((a,b)=>a.at-b.at||a.key.localeCompare(b.key));ordered.forEach((item,i)=>out.set(item.key,same.length>1?{n:i+1,of:same.length}:null))}}
   return out},[scoped]);
  const total=<span className="library-total" role="status">{scoped.length} {filtered?'matching ':''}{scoped.length===1?'item':'items'}</span>;
- return <HubPage label="Library" title="Library" onClose={onClose} create={create}
+ return <HubPage label="Library" title="Library" large onClose={onClose} create={create}
   scrollLabel={!scoped.length && !filtered && kind !== 'searchable' ? 'Library content' : undefined}
   actions={create&&<button type="button" className="btn library-create" onClick={create.run}><Plus size={16}/>{create.label}</button>}
   sectionNavigation={<PhoneSections label="Library content types" panelId={panel} active={kind} items={categories} onSelect={id=>setKind(id as CollectionKind)}/>}
@@ -125,7 +125,7 @@ function LibraryDetail({item,onClose,openChat}:{item:LibraryItem;onClose:()=>voi
   try{const original=file.data?new Blob([Uint8Array.from(atob(file.data),c=>c.charCodeAt(0))],{type:file.mime}):await loadOriginal(owner,file.id,Boolean(file.stored));if(useStore.getState().user?.uid!==owner)return;if(!original)throw Error('The original is unavailable here. Open this conversation on the device where you added it.');await saveBlob(original,safeFileName(file.name,'File'))}catch(e){if(useStore.getState().user?.uid===owner)setError((e as Error).message)}finally{setBusy(false)}
  };
  return <Modal title={itemName(item)} onClose={onClose} leading={<button type="button" className="icon-btn feature-exit" aria-label="Back" onClick={()=>screenUp(onClose)}><ChevronLeft size={24}/></button>}>
-  <div className="library-detail"><p className="library-detail-availability">{file?availability(file):'Generated file · export on demand'}</p>
+  <div className="library-detail"><p className="library-detail-availability">{file?availability(file):'Made by Lumen'}</p>
    <dl><div><dt>Source conversation</dt><dd dir="auto">{item.chat.title}</dd></div>{file&&<><div><dt>File type</dt><dd>{fileKind(file.name).label}</dd></div>{Number.isFinite(file.size)&&file.size>0&&<div><dt>Recorded size</dt><dd>{formatBytes(file.size)}</dd></div>}</>}<div><dt>{item.kind==='documents'?'Updated':'Added'}</dt><dd>{new Date(item.at).toLocaleString()}</dd></div></dl>
    {file&&!file.data&&!file.stored&&<p className="muted">{file.text?'Extracted text is available here. The original formatting and file may be available only on the device where it was added.':'Open the source conversation on the original device to access the file. A thumbnail is not the original.'}</p>}
    {item.kind==='exports'&&<Suspense fallback={<p role="status">Opening file actions…</p>}><FileCard name={item.name} content={item.content} complete onEdit={()=>navigateScreen(()=>{openChat(item.chat.id);useStore.getState().openCanvas(item.name,item.content)})}/></Suspense>}

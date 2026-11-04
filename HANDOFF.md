@@ -10,7 +10,14 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start the next task from `origin/main`.
+- **Branch:** `design/consistent-look` (owner-approved design update, run 1 of 2: one consistent look + audit fixes).
+  Done: Router Models as a grouped list (no Browse models card, Lamplight only on the Selected chip), iOS large titles
+  (`LargeTitle`) on Library, Router, Projects and the Settings list with pinned section tabs, no repeated
+  Providers/Routing headings, tab rail end fade, `--type-row/detail/note/large-title` tokens, no resize grip on touch,
+  pie usage gauge, visible Incognito label on phones, no token count in the writing sheet, shorter Library availability
+  lines. Canvas CSS 34.43 → 34.37 KB gz (dead Canvas `coll-*` rules removed). Shots helper `tests/e2e/helpers/look-shots.cjs`.
+  Run 2 (later, not started): chat reading (model label, tables, jump-to-latest, code blocks, thought process) and
+  native interactions (long-press message menu, sheet detents, keyboard).
 
 ## Next
 
@@ -46,12 +53,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
       opens them; the top fade is no longer a band. Neither reproduced in Chromium or WebKit emulation; the fix targets
       Safari's late blur/click order and `composer.cjs` replays it. If it still happens, get a screen recording.
 - Polish backlog from the screen-by-screen audit of 2026-10-31 (each checked in the code and the production build;
-  owner to pick): usage ring reads as a spinner; text boxes show a resize grip on phones (`resize: vertical` in
-  app.css field-block, edit-box, memory-row); Tools "Set up" uses an external ↗ for an in-app page; the writing sheet
-  counts "tokens"; Library file lines are wordy ("Preview only · original unavailable here", library-items.ts);
+  owner to pick; ring, resize grip, tokens wording, Library lines and incognito label done on `design/consistent-look`):
+  Tools "Set up" uses an external ↗ for an in-app page; Router Routing's "Balanced" segment breaks mid-word at 320 px;
   inline code breaks mid-formula; All chats search and Chats/Archived share one cramped row on phones; no home-screen
   shortcuts in either manifest; long code lines scroll with no wrap option; Router with one model is mostly empty
-  space; the incognito button is an unexplained crossed eye on phones (no hover).
+  space.
 - [ ] Owner, on the iPhone (PR #81, live): search a word from an old message; the result shows the line and opens
       at that message below the glass bar. Chromium and WebKit emulation pass; no physical device yet.
 - [ ] Owner, on the iPhone (PR #83, live): tap the model name under a reply; the Answer details sheet sits clear of the

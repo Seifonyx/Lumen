@@ -2468,6 +2468,12 @@ body { background: var(--bg); font-feature-settings: 'ss01' 1, 'cv11' 1; }
 ::selection { background: color-mix(in srgb, var(--signal) 45%, transparent); }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 input, textarea { caret-color: var(--text); }
+/* One type scale for list pages (rows, details, notes), following the text size (--fs). Phones read at iOS sizes
+   (17 / 15 / 13 at the default size); computers keep their denser 15 / 13 / 13. Large title: iOS's 34 on phones. */
+:root { --type-row: var(--fs); --type-detail: calc(var(--fs) - 2px); --type-note: calc(var(--fs) - 2px); --type-large-title: calc(var(--fs) + 19px); }
+@media (max-width: 899px) { :root { --type-row: calc(var(--fs) + 2px); --type-detail: var(--fs); } }
+/* Touch screens: text boxes grow with their text; a resize grip there is a desktop affordance. */
+@media (pointer: coarse) { :is(.edit-box, .field-block, .memory-row.editing) textarea { resize: none; } }
 /* ============================================================ Mark & wordmark */
 .logo { color: var(--text); }
 .sidebar-brand { display: inline-flex; align-items: center; gap: 9px; font: 600 15px/1 var(--font); letter-spacing: -0.02em; color: var(--text); min-width: 0; }

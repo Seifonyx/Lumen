@@ -1,5 +1,25 @@
 import { ChevronLeft, Menu } from 'lucide-react';
 import { useLayoutEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
+
+/** The iOS large title: the page's name at the top of its content. While it is in view the bar's own title stays
+ * hidden; once it scrolls away the bar title shows. The bar's h1 stays the page heading for assistive technology, so
+ * this copy is hidden from it. Place it first inside the page's scrolling area. */
+export function LargeTitle({ title }: { title: string }) {
+  const node = useRef<HTMLParagraphElement>(null);
+  useLayoutEffect(() => {
+    const el = node.current;
+    let bar: HTMLElement | null = null, scroller = el?.parentElement || null;
+    for (let p = el?.parentElement; p && !bar; p = p.parentElement) bar = p.querySelector<HTMLElement>(':scope > .phone-navigation');
+    while (scroller && !/auto|scroll/.test(getComputedStyle(scroller).overflowY)) scroller = scroller.parentElement;
+    if (!el || !bar) return;
+    const b = bar;
+    b.dataset.large = 'shown';
+    const watch = new IntersectionObserver(([e]) => { b.dataset.large = e.intersectionRatio > .5 ? 'shown' : 'away'; }, { root: scroller, threshold: [0, .5, 1] });
+    watch.observe(el);
+    return () => { watch.disconnect(); delete b.dataset.large; };
+  }, []);
+  return <p ref={node} className="large-title" aria-hidden="true">{title}</p>;
+}
 import { screenIsRoot, screenUp, screenSnapshot, subscribeScreens } from '../lib/screen-history';
 import { useStore } from '../store';
 export interface PhoneNavigationProps { title: string; onBack?: () => void; actions?: ReactNode; backTarget?: 'settings-index' | 'settings-exit' }

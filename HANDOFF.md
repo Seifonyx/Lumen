@@ -10,16 +10,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/app-back`: owner's request (2026-11-04) that Back act like a real app. In the Home Screen app,
-  Back (the edge swipe and the top-left `<`) now goes up, not through every step: anywhere in a feature (Router
-  section or provider, Library document, project) it leaves the feature in one step; a Settings section returns to the
-  Settings list (the phone `<` used to leave Settings). A right swipe across the content no longer goes back; only the
-  leading edge does. Also: the click guard after a swipe swallowed the next tap on the restored chat's menu button.
-  `screenParent`/`screenUp` in screen-history.ts; native-navigation and iphone-edge-back updated. Safari tabs unchanged.
+- **Branch:** none in progress. Start the next task from `origin/main`.
 
 ## Next
 
-- [ ] Owner, on the installed Home Screen app (PR #104, live, plus `design/app-back`): the seven-step acceptance
+- [ ] Owner, on the installed Home Screen app (PRs #104 and #106, live): the seven-step acceptance
       sequence in PR #104, now with Back going up (Router detail → chat in one swipe with a draft and photo; a Settings
       section → Settings list; a swipe across the content does nothing; partial and quick swipes; Projects, Library, a document,
       Settings; the drawer on the chat; tap Back; Reduce Motion and VoiceOver). Native feel is not accepted until then.
@@ -90,6 +85,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-04 Phone Back goes up, like an app (PR #106, merged `a819d14`, deployed Canvas, live `index-DJ04GfTB.js`):
+  one Back leaves a feature; a Settings section returns to the list; only the leading edge starts the swipe.
 - 2026-11-04 Native-feeling phone navigation (PR #104, merged `09669d0`, deployed Canvas, live `index-MPQsLi3U.js`
   matches the merge build): one coordinator (`src/lib/navigation-coordinator.ts`) owns Back and the drawer; the screen
   follows the finger over the real or kept screen behind it; one traversal per swipe; taps share the slide; Safari tabs

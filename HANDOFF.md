@@ -10,10 +10,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/native-drawer` (owner recording, 2026-11-04 21:24): choosing the place on screen in the drawer
-  made a new step with Back (now it only closes the drawer; visits have their own key); black frames as the drawer
-  opened over Router's Providers/Routing (a class instead of :has(), no live blur beside the drawer, prefetch after
-  opening). Drawer in the native iOS manner (owner's reference screenshot).
+- **Branch:** none in progress. Start the next task from `origin/main`.
 
 ## Next
 
@@ -92,6 +89,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - Excluded: Arabic interface, separate chat folders, message-list icon/count, chat-tag badges.
 
 ## Recently shipped
+
+- 2026-11-04 Native iOS drawer (PR #112, merged `25b3b11`, deployed Canvas, live `index-CXpjvqO1.js` matches the merge
+  build): 20 pt place rows, plain single-line projects and chats, ink New chat capsule, all scaling with text size;
+  choosing the place on screen only closes the drawer; drawer moves on a class (no :has()) with no live blur beside
+  it, against black frames over Router (needs the owner's iPhone to confirm).
 
 - 2026-11-04 Home Screen app owns every swipe (PR #110, merged `98f255a`, deployed Canvas, live `index-s4ZUe1It.js`
   matches the merge build): iOS 26 gives Home Screen apps Safari's own edge swipe, which went Back by itself over

@@ -10,7 +10,10 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start the next task from `origin/main`.
+- **Branch:** `design/native-drawer` (owner recording, 2026-11-04 21:24): choosing the place on screen in the drawer
+  made a new step with Back (now it only closes the drawer; visits have their own key); black frames as the drawer
+  opened over Router's Providers/Routing (a class instead of :has(), no live blur beside the drawer, prefetch after
+  opening). Drawer in the native iOS manner (owner's reference screenshot).
 
 ## Next
 

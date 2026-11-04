@@ -78,8 +78,10 @@ dark mode).
 - **Sidebar (desktop) / drawer (phone):** wordmark · Search · Library · Router · Projects tree · Conversations
   · New chat + avatar (opens Settings). Collapsed desktop sidebar is a 60 px rail. One highlight, in gray (the
   strong fill, never blue), on the row for what is on screen: a place, a project's overview, or the open chat only
-  while the chat itself is shown (`data-here` on the drawer). Phone drawer at iOS sizes: 17 pt rows and fields, 15 pt
-  details and section labels, 48 pt place rows, 22 pt icons. On an unsaved new chat, New chat returns to it (draft
+  while the chat itself is shown (`data-here` on the drawer). Phone drawer in the native iOS manner (owner,
+  2026-11-04): places as 20 pt rows with 24 pt outline icons and no chevrons or boxes; projects and conversations as
+  plain single lines (a chat's date only while searching); hairline dividers; one solid ink New chat capsule beside a
+  52 pt avatar. Choosing the place already on screen only closes the drawer. On an unsaved new chat, New chat returns to it (draft
   intact).
 - **Conversation search** is the drawer's Search (Jump to, ⌘/Ctrl K, is its keyboard shortcut, with the same chats from
   `src/lib/chat-search.ts`). A chat found through a message shows one excerpt line, the match in text colour at 600

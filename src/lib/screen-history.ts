@@ -73,7 +73,9 @@ export const onScreenPop = (hooks: typeof pops) => { pops = hooks; };
 // Feature ownership travels with the existing in-memory entries, never the browser payload.
 // A root visit was chosen in the phone drawer (or began the session): like a place picked in an iOS app's sidebar, it
 // replaces the screen rather than being pushed over it, so its first screen has no Back (its swipe opens the drawer).
-type Visit = { feature: string; origin: number; direct?: boolean; root?: boolean };
+// `key` names the visit: two visits can begin at the same entry (the session's first screen begins at itself).
+type Visit = { key: number; feature: string; origin: number; direct?: boolean; root?: boolean };
+let visitSerial = 0;
 const visits = new Map<number, Visit>();
 let directExit: number | null = null;
 // Set while a tap in the open phone drawer is being handled: the drawer closes and a place opens in the same task.
@@ -162,7 +164,7 @@ function upTarget(): { id: number; delta: number; direct?: boolean } | null {
   const visit = visits.get(active), pos = positions.get(active);
   if (!visit || applying || pos === undefined || history.state?.[KEY]?.session !== session) return null;
   // The nearest earlier screen of the same visit (sheets and dialogs are closed by their own controls, not by Back).
-  const level = [...positions].filter(([id, p]) => p < pos && visits.get(id)?.origin === visit.origin && !entries.get(id)?.layer).sort((a, b) => b[1] - a[1])[0];
+  const level = [...positions].filter(([id, p]) => p < pos && visits.get(id)?.key === visit.key && !entries.get(id)?.layer).sort((a, b) => b[1] - a[1])[0];
   if (level) return { id: level[0], delta: level[1] - pos };
   if (visit.root) return null;
   return exitTarget();
@@ -211,7 +213,7 @@ export function installScreenHistory() {
     directExit = null;
     entries = new Map([[0, capture()]]); positions = new Map([[0, 0]]); cursor = 0; active = 0; leave?.(-1, entries.get(0)!);
     const initialFeature = feature(capture());
-    if (initialFeature) visits.set(0, { feature: initialFeature, origin: 0, direct: true, root: true });
+    if (initialFeature) visits.set(0, { key: ++visitSerial, feature: initialFeature, origin: 0, direct: true, root: true });
     screensChanged();
     history.replaceState({ ...history.state, [KEY]: { session, id: 0 } }, '');
   };
@@ -238,7 +240,7 @@ export function installScreenHistory() {
     if (root(previous) && root(next)) { previous = next; entries.set(active, next); return; }
     const currentVisit = visits.get(active), nextFeature = feature(next), picked = fromDrawer || (s.sidebarOpen && phoneLayout());
     const child = !picked && currentVisit && (nextFeature === currentVisit.feature || next.settingsOpen || next.layer || (previous.page && !next.page && (next.canvasOpen || next.runner)));
-    const visit = child ? currentVisit : nextFeature ? { feature: nextFeature, origin: active, ...(picked ? { root: true } : {}) } : undefined;
+    const visit = child ? currentVisit : nextFeature ? { key: ++visitSerial, feature: nextFeature, origin: active, ...(picked ? { root: true } : {}) } : undefined;
     previous = next;
     for (const [id, pos] of positions) if (pos > cursor) { positions.delete(id); entries.delete(id); views.delete(id); visits.delete(id); }
     leave?.(active, next);

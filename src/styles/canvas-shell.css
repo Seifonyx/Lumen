@@ -143,8 +143,11 @@
  /* The drawer is the app's root, as in iOS chat apps: the screen on display slides aside with it and stays in view on
     the trailing side (tap or swipe it to come back). The gesture drives the same movement (lib/sidebar-gesture.ts). */
  .app[data-lumen-canvas-shell] > :is(.main, .hub-page, .settings-page, .rc-page) { transition: transform .28s var(--ease); }
- .app[data-lumen-canvas-shell]:has(> .cv-nav.open) > :is(.main, .hub-page, .settings-page, .rc-page) { transform: translateX(var(--cv-drawer)); }
- [dir='rtl'] .app[data-lumen-canvas-shell]:has(> .cv-nav.open) > :is(.main, .hub-page, .settings-page, .rc-page) { transform: translateX(calc(-1 * var(--cv-drawer))); }
+ /* A class, not :has(): WebKit restyles the whole app for a :has() toggle, late enough to paint black on a heavy page. */
+ .app[data-lumen-canvas-shell].drawer-open > :is(.main, .hub-page, .settings-page, .rc-page) { transform: translateX(var(--cv-drawer)); }
+ [dir='rtl'] .app[data-lumen-canvas-shell].drawer-open > :is(.main, .hub-page, .settings-page, .rc-page) { transform: translateX(calc(-1 * var(--cv-drawer))); }
+ /* Beside the drawer the screen sits under the scrim: no live blur to redraw while it moves. */
+ .app[data-lumen-canvas-shell]:is(.drawer-open, [data-drawer-moving]) > :is(.main, .hub-page, .settings-page, .rc-page) * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
  .app[data-lumen-canvas-shell] .cv-nav .menu[popover] [role='menuitem'] { min-height: 44px; }
  .app[data-lumen-canvas-shell] .cv-nav .chat-row:not(.active):not(:focus-within):not(.menu-open) .row-menu { opacity: 0; pointer-events: none; }
  html.glass .app[data-lumen-canvas-shell] .cv-nav { background: linear-gradient(color-mix(in srgb,var(--bg) 94%,transparent),color-mix(in srgb,var(--bg) 94%,transparent)) padding-box,var(--glass-rim) border-box; -webkit-backdrop-filter: var(--glass-filter-strong); backdrop-filter: var(--glass-filter-strong); }

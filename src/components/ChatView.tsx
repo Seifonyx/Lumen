@@ -315,7 +315,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
         )}
         {(empty || isTemporaryChat(chat)) && (
           <button className="icon-btn new-chat-shortcut" onClick={()=>useStore.getState().toggleTemporaryChat()} aria-label={isTemporaryChat(chat)?'End incognito chat':'Start incognito chat'} aria-pressed={isTemporaryChat(chat)} title="Incognito · not saved, memory off. Your AI provider still receives messages.">
-          <EyeOff size={19} />
+          <EyeOff size={19} />{CANVAS_SHELL && <span className="incognito-label" aria-hidden="true">Incognito</span>}
         </button>
         )}
         </div>

@@ -13,11 +13,11 @@ html[data-lumen-canvas] .rm-console .rm-model { display:block;padding:0;min-heig
 html[data-lumen-canvas] .rm-choice { display:flex;width:100%;align-items:center;gap:12px;min-height:64px;padding:10px 12px;border:0;border-radius:var(--canvas-radius-row);background:none;color:var(--canvas-ink);text-align:left;font:inherit;cursor:pointer; }
 html[data-lumen-canvas] .rm-choice:hover { background:var(--rc-hover); }
 html[data-lumen-canvas] .rm-choice[data-inspected='true'] { background:var(--rc-press); }
-html[data-lumen-canvas] .rm-choice:has(.rc-selected) { background:var(--canvas-lamplight); }
 html[data-lumen-canvas] .rm-choice > span:nth-child(2) { flex:1;min-width:0; }
-html[data-lumen-canvas] .rm-choice strong { display:block;font-size:15px;line-height:1.4;font-weight:500;overflow-wrap:anywhere; }
-html[data-lumen-canvas] .rm-choice small { display:block;font-size:13px;line-height:1.45;color:var(--canvas-secondary); }
-html[data-lumen-canvas] .rm-choice strong .rc-selected { display:inline-block;margin-left:6px;color:var(--canvas-ink);font-size:11px; }
+html[data-lumen-canvas] .rm-choice strong { display:block;font-size:var(--type-row);line-height:1.4;font-weight:500;overflow-wrap:anywhere; }
+html[data-lumen-canvas] .rm-choice small { display:block;font-size:var(--type-detail);line-height:1.45;color:var(--canvas-secondary); }
+/* The model in use carries the one warm mark (Lamplight); what is open for inspection is the quiet gray above. */
+html[data-lumen-canvas] .rm-console .rc-selected { display:inline-block;margin-inline-start:8px;padding:1px 8px;border-radius:var(--canvas-radius-pill);background:var(--canvas-lamplight);color:var(--canvas-ink);font:500 var(--type-note)/1.4 var(--canvas-body-font);vertical-align:2px; }
 html[data-lumen-canvas] .rm-choice > svg { flex:none;color:var(--canvas-secondary); }
 html[data-lumen-canvas] .rm-model-mark { display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:var(--canvas-radius-row);background:var(--canvas-fill);font-size:13px;font-weight:600; }
 html[data-lumen-canvas] .rm-detail-head { padding:24px 24px 20px; }
@@ -50,10 +50,20 @@ html[data-lumen-canvas] .rm-console :is(button,summary):focus-visible { outline:
   html[data-lumen-canvas] .rm-console:not([data-detail]) > .rm-detail { display:none; }
   html[data-lumen-canvas] .rm-console[data-detail] > .rm-browser { display:none; }
   html[data-lumen-canvas] .rc-models-body:has(.rm-console[data-detail]) > .rc-current { display:none; }
-  html[data-lumen-canvas] .rm-browser { position:static; }
-  html[data-lumen-canvas] .rm-browser-list { max-height:none; }
-  html[data-lumen-canvas] .rm-browser .rc-search { position:static; }
-  html[data-lumen-canvas] .rm-browser .rc-search input { font-size:16px; }
+  /* Phones: the Settings grouped list. No card around the browser; each group is one rounded list on the page. */
+  html[data-lumen-canvas] .rm-console > .rm-browser { position:static;background:none;box-shadow:none;border-radius:0;overflow:visible; }
+  html[data-lumen-canvas] .rm-browser-head { padding:0;border:0; }
+  html[data-lumen-canvas] .rm-browser-title { margin:0; }
+  html[data-lumen-canvas] :is(.rm-browser-title h2,.rm-provider-group h3) { padding:0 4px;color:var(--canvas-secondary);font:600 var(--type-note)/1.3 var(--canvas-body-font); }
+  html[data-lumen-canvas] .rm-browser-list { display:grid;gap:8px;max-height:none;min-height:0;padding:0;overflow:visible; }
+  html[data-lumen-canvas] .rm-provider-group { display:grid;gap:8px;margin-top:18px; }
+  html[data-lumen-canvas] .rm-rows { border-radius:var(--canvas-radius-card);background:var(--canvas-surface);overflow:hidden; }
+  html[data-lumen-canvas] .rm-rows > * { position:relative; }
+  html[data-lumen-canvas] .rm-rows > * + *::before { content:'';position:absolute;top:0;inset-inline:60px 0;border-top:1px solid var(--canvas-rim); }
+  html[data-lumen-canvas] .rm-choice { min-height:58px;padding:10px 14px;border-radius:0; }
+  html[data-lumen-canvas] .rm-choice strong { font-weight:400; }
+  html[data-lumen-canvas] .rm-choice[data-inspected='true']:not(:active) { background:none; }
+  html[data-lumen-canvas] .rm-console :is(button,summary):focus-visible { outline-offset:-2px; }
   html[data-lumen-canvas] .rm-detail-head { padding:20px 18px 24px; }
   html[data-lumen-canvas] .rm-detail-head h2 { font-size:24px; }
   html[data-lumen-canvas] .rm-facts { grid-template-columns:minmax(0,1fr);margin:0 0 12px; }

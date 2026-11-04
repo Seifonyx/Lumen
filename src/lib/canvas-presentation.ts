@@ -32,6 +32,7 @@ export const loadNavigation: (() => Promise<typeof import('./navigation-coordina
 export const newGeneralChat: (() => void) | null = null;
 
 export const PhoneNavigation: import('react').ComponentType<import('../components/PhoneNavigation').PhoneNavigationProps> | null = null;
+export const PhoneLargeTitle: import('react').ComponentType<{ title: string }> | null = null;
 export const navigateBack: typeof import('./screen-history').screenBack | null = null;
 export const exitFeature: typeof import('./screen-history').exitFeature | null = null;
 export const featureExitLabel: typeof import('./screen-history').featureExitLabel | null = null;

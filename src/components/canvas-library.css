@@ -7,9 +7,6 @@
 .library-workspace .phone-sections button:hover { color:var(--text); background:var(--cv5-fill); }
 .library-workspace .phone-sections button[aria-selected='true'] { color:var(--canvas-highlight-ink,var(--text)); background:var(--canvas-highlight-bg,var(--cv5-fill)); border-color:transparent; }
 /* A section rail with more out of view fades at that end only. */
-.app[data-lumen-canvas-shell] .phone-sections[data-more] { --fade-a:#000; --fade-b:#000; -webkit-mask-image:linear-gradient(90deg,var(--fade-a),#000 36px,#000 calc(100% - 44px),var(--fade-b)); mask-image:linear-gradient(90deg,var(--fade-a),#000 36px,#000 calc(100% - 44px),var(--fade-b)); }
-.app[data-lumen-canvas-shell] .phone-sections[data-more~='start'][data-dir='ltr'], .app[data-lumen-canvas-shell] .phone-sections[data-more~='end'][data-dir='rtl'] { --fade-a:transparent; }
-.app[data-lumen-canvas-shell] .phone-sections[data-more~='end'][data-dir='ltr'], .app[data-lumen-canvas-shell] .phone-sections[data-more~='start'][data-dir='rtl'] { --fade-b:transparent; }
 
 .library-total { flex:none; color:var(--text-2); font-size:13px; font-variant-numeric:tabular-nums; }
 .library-controls { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
@@ -32,8 +29,8 @@ html[data-lumen-canvas] .library-sorts select { max-width:200px; }
 .library-file-icon img { width:100%; height:100%; object-fit:cover; }
 .library-ext { font:650 10.5px/1 var(--canvas-data-font, var(--canvas-body-font)); letter-spacing:.04em; color:var(--text-2); }
 .library-row.kind-exports { padding-inline-end:52px; }
-.library-row-copy strong { text-align:match-parent; unicode-bidi:plaintext; min-width:0; font-size:15px; font-weight:500; line-height:1.35; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.library-row-meta { display:flex; flex-wrap:wrap; min-width:0; color:var(--text-2); font-size:13px; line-height:1.45; }
+.library-row-copy strong { text-align:match-parent; unicode-bidi:plaintext; min-width:0; font-size:var(--type-row); font-weight:500; line-height:1.35; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.library-row-meta { display:flex; flex-wrap:wrap; min-width:0; color:var(--text-2); font-size:var(--type-detail); line-height:1.45; }
 .library-row-meta > span:not(:first-child)::before { content:'·'; margin:0 6px; color:var(--text-3); }
 .library-row-meta .lr-status { color:var(--text); font-weight:500; }
 .library-row-meta .lr-where { display:none; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -58,7 +55,7 @@ html[data-lumen-canvas] .library-sorts select { max-width:200px; }
 html[data-lumen-canvas] .feature-exit { flex:none; min-width:44px; min-height:44px; }
 @media(max-width:899px) {
  .library-workspace { max-width:none; }
- .library-controls { gap:8px; margin:-4px 0 6px; }
+ .library-controls { gap:8px; margin:0 0 6px; }
  .library-sorts { gap:0; }
  html[data-lumen-canvas] .library-sorts select { max-width:min(40vw,170px); }
  .library-open { display:block; padding:10px 2px 10px 4px; }
@@ -86,7 +83,7 @@ html[data-lumen-canvas] .feature-exit { flex:none; min-width:44px; min-height:44
 html.kb-open .library-nomatch { padding-top:4px; }
 /* With nothing to sort, the phone's count and sort row gives its space to the no-match block (it says the same). While
    the keyboard is up for the Library search, the category rail steps aside too, so the way back stays in view. */
-@media(max-width:899px){ .library-controls.is-empty { display:none; } html.kb-open .app[data-lumen-canvas-shell] .hub-page:has(.library-workspace) > .phone-sections { display:none; } }
+@media(max-width:899px){ .library-controls.is-empty { display:none; } html.kb-open .app[data-lumen-canvas-shell] .hub-page:has(.library-workspace) .phone-sections-bar { display:none; } }
 /* Photos and pictures Lumen made show a larger preview, so same-named images are told apart at a glance. */
 .library-row-copy:has(.library-file-icon img) { grid-template-columns:52px minmax(0,1fr); }
 .library-row-copy .library-file-icon:has(img) { width:52px; height:52px; border-radius:10px; }
@@ -103,6 +100,5 @@ html.kb-open .library-nomatch { padding-top:4px; }
 @media(max-width:899px) {
  .library-row + .library-row:has(.library-file-icon img)::before { inset-inline-start:66px; }
  /* The category rail: clear of the bar above it, room to show the next category is there, ends that fade. */
- .app[data-lumen-canvas-shell] .hub-page > .phone-sections { padding:12px 16px 12px; gap:6px; scroll-padding-inline:16px; }
- .app[data-lumen-canvas-shell] .hub-page > .phone-sections button { min-height:40px; padding:0 14px; }
+ .app[data-lumen-canvas-shell] .hub-page .phone-sections-bar > .phone-sections { padding:8px 16px 12px; gap:6px; scroll-padding-inline:16px; }
 }

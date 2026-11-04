@@ -175,7 +175,7 @@
 .app[data-lumen-canvas-shell] .sb-head-tools { display: flex; align-items: center; gap: 8px; flex: 0 1 460px; min-width: 0; }
 .app[data-lumen-canvas-shell] .sb-group { display: grid; gap: 10px; }
 .app[data-lumen-canvas-shell] .sb-group-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }
-.app[data-lumen-canvas-shell] .sb-group h3 { margin: 0; padding: 0 4px; font: 600 13px/1.3 var(--canvas-body-font); color: var(--canvas-secondary); }
+.app[data-lumen-canvas-shell] .sb-group h3 { margin: 0; padding: 0 4px; font: 600 var(--type-note)/1.3 var(--canvas-body-font); color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .sb-group h3 span { margin-left: 6px; font: 500 12.5px/1 var(--canvas-data-font); color: var(--canvas-muted); font-variant-numeric: tabular-nums; }
 .app[data-lumen-canvas-shell] .sb-refresh { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 4px; border: 0; background: none; color: var(--canvas-ink); font: 500 13px/1 var(--canvas-body-font); cursor: pointer; }
 .app[data-lumen-canvas-shell] .sb-refresh:disabled { opacity: .6; cursor: default; }
@@ -191,8 +191,8 @@
 .app[data-lumen-canvas-shell] .sb-detail-title .sb-mono svg { width: 26px; height: 26px; }
 .app[data-lumen-canvas-shell] .sb-tile[data-light="none"] .sb-mono { color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .sb-tile-text { flex: 1; min-width: 0; display: grid; gap: 3px; }
-.app[data-lumen-canvas-shell] .sb-tile-text strong { font: 500 15px/1.3 var(--canvas-body-font); overflow-wrap: anywhere; }
-.app[data-lumen-canvas-shell] .sb-tile-text small { display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 1.3; color: var(--canvas-secondary); }
+.app[data-lumen-canvas-shell] .sb-tile-text strong { font: 400 var(--type-row)/1.3 var(--canvas-body-font); overflow-wrap: anywhere; }
+.app[data-lumen-canvas-shell] .sb-tile-text small { display: flex; align-items: center; gap: 6px; font-size: var(--type-detail); line-height: 1.3; color: var(--canvas-secondary); }
 .app[data-lumen-canvas-shell] .sb-tile-text small .rc-light { width: 7px; height: 7px; }
 .app[data-lumen-canvas-shell] .sb-back { justify-self: start; display: inline-flex; align-items: center; gap: 2px; min-height: 36px; margin-inline-start: -6px; padding: 0 8px 0 2px; border: 0; background: none; color: var(--canvas-secondary); font: 500 13px/1 var(--canvas-body-font); cursor: pointer; }
 @media (max-width: 899px) {
@@ -287,18 +287,14 @@
 .app[data-lumen-canvas-shell] .rc-providers.router-provider-console { grid-template-columns:220px minmax(0,1fr);gap:16px; }
 }
 @media(max-width:899px){
-.app[data-lumen-canvas-shell] .rc-page { padding:0; }
 .app[data-lumen-canvas-shell] .rc-page .rc-models-body > .rc-current { display:block; }
 .app[data-lumen-canvas-shell] .rc-providers.router-provider-console { display:block; }
 .app[data-lumen-canvas-shell] .router-provider-content { padding:0;background:none; }
-.app[data-lumen-canvas-shell] .rc-page > .phone-navigation { top:0; }
-.app[data-lumen-canvas-shell] .rc-page > .phone-sections { flex:none;padding-top:8px;padding-bottom:8px; }
-.app[data-lumen-canvas-shell] .rc-page .phone-sections button { min-height:44px; }
 .app[data-lumen-canvas-shell] .rc-page .rc-search input { font-size:16px; }
 .app[data-lumen-canvas-shell] .rc-page :is(.sb-tile,.rc-primary,.rc-quiet,.rc-link,.sb-back) { min-height:44px; }
 .app[data-lumen-canvas-shell] .rc-page .sb-head { gap:16px; }
 }
-.app[data-lumen-canvas-shell] .sb-tile[aria-current='page'] { background:var(--canvas-lamplight); }
+.app[data-lumen-canvas-shell] .sb-tile[aria-current='page'] { background:var(--canvas-fill-strong); }
 .app[data-lumen-canvas-shell] .router-readiness { display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:16px;margin-block:24px;padding-block:20px;border-block:1px solid var(--canvas-rim); }
 .app[data-lumen-canvas-shell] .router-readiness > div { min-width:0; }
 .app[data-lumen-canvas-shell] .router-readiness dt { font-size:13px;color:var(--canvas-secondary);margin-bottom:6px; }

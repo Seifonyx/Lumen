@@ -274,15 +274,16 @@ try {
           const geometry = await page.evaluate(() => {
             const root = document.querySelector('.rc-page:not([hidden])');
             const row = root?.querySelector('.rm-browser-list .rm-choice');
-            const tabs = root?.querySelector('.phone-sections'), search = root?.querySelector('.rm-browser-head .rc-search');
+            const tabs = root?.querySelector('.phone-sections'), search = root?.querySelector('.phone-page-search .rc-search');
             if (!row || !tabs || !search) return null;
             const rect = el => { const r = el.getBoundingClientRect(); return { top:r.top, bottom:r.bottom, left:r.left, right:r.right, height:r.height }; };
-            return { action:rect(row), tabs:rect(tabs), search:rect(search), viewport:{ width:innerWidth,height:innerHeight }, scroll:root.scrollTop, label:row.getAttribute('aria-label') };
+            return { action:rect(row), tabs:rect(tabs), search:rect(search), viewport:{ width:innerWidth,height:innerHeight }, scroll:root.querySelector('.rc-scroll')?.scrollTop ?? root.scrollTop, label:row.getAttribute('aria-label') };
           });
           assert.ok(geometry, 'fixture provides an inspectable first choice and model search');
           assert.equal(geometry.scroll, 0, 'Models landing has not been scrolled');
-          assert.ok(geometry.search.top >= geometry.tabs.bottom - 1, `search below navigation: ${JSON.stringify(geometry)}`);
-          assert.ok(geometry.action.top >= geometry.search.bottom && geometry.action.bottom <= geometry.viewport.height - 2, `complete first choice below Search and above viewport edge: ${JSON.stringify(geometry)}`);
+          // Phones search from the page's bottom search bar (design/consistent-look): below the list, inside the viewport.
+          assert.ok(geometry.search.top >= geometry.tabs.bottom - 1 && geometry.search.bottom <= geometry.viewport.height, `bottom search on screen: ${JSON.stringify(geometry)}`);
+          assert.ok(geometry.action.top >= geometry.tabs.bottom && geometry.action.bottom <= geometry.search.top, `complete first choice between the tabs and the bottom search: ${JSON.stringify(geometry)}`);
           assert.ok(geometry.action.left >= 0 && geometry.action.right <= geometry.viewport.width && geometry.action.height >= 44, `usable Inspect target: ${JSON.stringify(geometry)}`);
           // Auto is first in the approved browser. Provider models may follow below the short-phone fold;
           // keyboard focus and scrolling must reveal a fully painted, usable catalog choice.

@@ -21,8 +21,8 @@ html[data-lumen-canvas] :is(.pl-open, .pw-chat-open):focus-visible { outline: 2p
 html[data-lumen-canvas] .pl-mark { display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--canvas-radius-row); background: var(--cv5-fill); color: var(--text-2); font: 600 14px/1 var(--font); }
 html[data-lumen-canvas] .pl-text { display: grid; gap: 2px; min-width: 0; }
 html[data-lumen-canvas] :is(.pl-name, .pl-sub) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-html[data-lumen-canvas] .pl-name { font: 600 15px/1.35 var(--font); letter-spacing: -.005em; }
-html[data-lumen-canvas] .pl-sub { color: var(--text-2); font-size: 13px; line-height: 1.4; }
+html[data-lumen-canvas] .pl-name { font: 500 var(--type-row)/1.35 var(--font); letter-spacing: -.005em; }
+html[data-lumen-canvas] .pl-sub { color: var(--text-2); font-size: var(--type-detail); line-height: 1.4; }
 html[data-lumen-canvas] :is(.pl-count, .pl-when) { color: var(--text-2); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 html[data-lumen-canvas] :is(.pl-row, .pw-chat) > .screen-actions { position: relative; inset: auto; }
 html[data-lumen-canvas] .pl-none { display: grid; justify-items: center; gap: 12px; padding: 40px 16px; text-align: center; }

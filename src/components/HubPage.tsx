@@ -1,9 +1,9 @@
 // The layout shared by Library, Documents and Study: they open in place of the chat (the sidebar stays), with a
 // large title, a line about what's here, the main action, optional tabs, and the content below.
 import { ChevronLeft, FolderKanban, LayoutGrid, Menu, MessageCircle, Plus, Shapes } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import { usePhoneLayout } from '../lib/phone-layout';
-import { CANVAS_SHELL, PhoneNavigation, navigateBack, exitFeature, featureExitLabel } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, PhoneNavigation, PhoneLargeTitle, navigateBack, exitFeature, featureExitLabel } from '../lib/canvas-presentation';
 import { useFocusScope } from '../lib/focus-scope';
 import { installSwipeBack } from '../lib/swipe-back';
 import { swapControl } from '../lib/motion';
@@ -15,8 +15,10 @@ export interface HubBar { items: { id: string; label: string; icon: ReactNode; h
   /** The separate creation action for the chosen tab (e.g. "New document"). */
   create?: { label: string; run: () => void } }
 
-export default function HubPage<T extends string>({ title, subtitle, actions, tabs, tab, onTab, toolbar, onClose, onBack, children, label, bar, compact, create, sectionNavigation, footer, scrollLabel }: {
+export default function HubPage<T extends string>({ title, subtitle, actions, tabs, tab, onTab, toolbar, onClose, onBack, children, label, bar, compact, create, sectionNavigation, footer, scrollLabel, large }: {
   title: ReactNode; subtitle?: ReactNode; actions?: ReactNode; label: string;
+  /** Canvas phones: an iOS large title that scrolls into the bar (a place chosen in the drawer). */
+  large?: boolean;
   bar?: HubBar;
   sectionNavigation?: ReactNode; footer?: ReactNode; scrollLabel?: string;
   /** iPhone glass look without sections of its own (Projects): the same centred title and + as Tools. */
@@ -66,8 +68,9 @@ export default function HubPage<T extends string>({ title, subtitle, actions, ta
         <span className="hub-bar-title hub-bar-label" aria-hidden="true">{label}</span>
         {!CANVAS_SHELL && <button type="button" className="btn ghost small hub-close" aria-label="Close" onClick={onClose}><span className="hub-close-long">Back to chat</span><span className="hub-close-short">Done</span></button>}
       </div>}
-      {CANVAS_SHELL && phone && sectionNavigation}
       <div className="hub-scroll" tabIndex={scrollLabel ? 0 : undefined} role={scrollLabel ? "region" : undefined} aria-label={scrollLabel} onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 56)}>
+        {CANVAS_SHELL && phone && large && PhoneLargeTitle && <Suspense fallback={null}><PhoneLargeTitle title={label} /></Suspense>}
+        {CANVAS_SHELL && phone && sectionNavigation && <div className="phone-sections-bar">{sectionNavigation}</div>}
         <div className="hub-inner">
           <header className="hub-head">
             <div className="hub-titles">

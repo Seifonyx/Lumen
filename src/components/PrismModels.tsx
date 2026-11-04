@@ -22,6 +22,7 @@ import { requestProviderSettings } from '../lib/provider-settings-target';
 import FilterMenu from './FilterMenu';
 import type { ModelInfo } from '../types';
 
+const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;
 type Filter = 'all' | 'selectable' | 'selected' | 'vision' | 'pdf' | 'search' | 'thinking';
 const PAGE = 24, FEW = 8;
 
@@ -117,7 +118,7 @@ function Inventory({ models, searchHost, providerOnly = false }: { models: Model
 
 
 /** Browse focus is presentation state. Canonical selection only changes through Use. */
-function ModelsConsole({ models }: { models: ModelInfo[]; searchHost: HTMLElement | null }) {
+function ModelsConsole({ models, searchHost }: { models: ModelInfo[]; searchHost: HTMLElement | null }) {
   const conversation = useStore(s => s.currentId), owner = useStore(s => s.user?.uid);
   const keys = useStore(s => s.keys), catalog = useStore(s => s.catalog), settings = useStore(s => s.settings), authed = useStore(s => s.authed), user = useStore(s => s.user);
   const current = useStore(selectCurrentModel), phone = usePhoneLayout();
@@ -144,6 +145,7 @@ function ModelsConsole({ models }: { models: ModelInfo[]; searchHost: HTMLElemen
   const layout = focus.startsWith(LAYOUT_PREFIX) ? findLayout(focus, catalog?.models || [], settings.layouts, settings.hiddenLayouts) : undefined;
   const route = currentRoutingPresentation(focus, settings, catalog);
   const changeQuery = (query: string) => setBrowse(s => ({ ...s, query, page: 0 }));
+  const search = <div className="rc-search"><Search size={16} aria-hidden="true" /><input ref={input} type="search" aria-label="Search models" placeholder="Search models or providers" value={browse.query} onChange={e => changeQuery(e.target.value)} />{browse.query && <button type="button" aria-label="Clear model search" onClick={() => { changeQuery(''); input.current?.focus(); }}><X size={16} aria-hidden="true" /></button>}</div>;
   const useChoice = () => {
     const fresh = useStore.getState();
     if (!currentOwner() || !fresh.authed || !fresh.user) return;
@@ -159,13 +161,14 @@ function ModelsConsole({ models }: { models: ModelInfo[]; searchHost: HTMLElemen
   return <div className="rm-console" data-detail={phone && browse.pushed || undefined} onKeyDown={e => { if (phone && browse.pushed && e.key === 'Escape' && !e.defaultPrevented && !e.nativeEvent.isComposing) { e.preventDefault(); e.stopPropagation(); screenBack(close); } }}>
     <section className="rm-browser" aria-label="Browse models">
       <header className="rm-browser-head"><div className="rm-browser-title"><h2>Browse models <small>{filtered.length}</small></h2><FilterMenu label="Filter models" value={browse.filter} options={options.map(o => ({ ...o, count: matches.filter(e => accepts(e, o.value)).length }))} onChange={filter => setBrowse(s => ({ ...s, filter, page: 0 }))} /></div>
-        <div className="rc-search"><Search size={16} aria-hidden="true" /><input ref={input} type="search" aria-label="Search models" placeholder="Search models or providers" value={browse.query} onChange={e => changeQuery(e.target.value)} />{browse.query && <button type="button" aria-label="Clear model search" onClick={() => { changeQuery(''); input.current?.focus(); }}><X size={16} aria-hidden="true" /></button>}</div>
+        {/* Phones search from the page's bottom search, like Providers and Library. */}
+        {searchHost ? !browse.pushed && createPortal(search, searchHost) : search}
       </header>
       <div className="rm-browser-list" ref={list} tabIndex={-1}>
-        {!browse.query && browse.filter === 'all' && choiceRow('auto', 'Auto', 'Lumen picks for each message')}
-        {groups.map(provider => <section className="rm-provider-group" key={provider} aria-label={modelProviderLabel(visible.find(e => modelProvider(e.model) === provider)!.model)}><h3>{modelProviderLabel(visible.find(e => modelProvider(e.model) === provider)!.model)}</h3>{visible.filter(e => modelProvider(e.model) === provider).map(({ model, problem }) => <article key={model.id} className="rc-model rm-model" data-model={model.id} aria-label={model.label} aria-current={current === model.id ? 'true' : undefined}><button type="button" className="rm-choice" data-inspected={focus === model.id} onClick={() => inspect(model.id)} aria-label={`Inspect ${model.label}`}><span className="rm-model-mark" aria-hidden="true">{model.label.slice(0,1)}</span><span><strong>{model.label}{current === model.id && <small className="rc-selected">Selected</small>}</strong><small>{problem ? 'Needs attention' : model.metadata?.stale ? 'Cached listing' : 'Listed'}</small></span><ChevronRight size={16} aria-hidden="true" /></button></article>)}</section>)}
+        {!browse.query && browse.filter === 'all' && <div className="rm-rows">{choiceRow('auto', 'Auto', 'Lumen picks for each message')}</div>}
+        {groups.map(provider => <section className="rm-provider-group" key={provider} aria-label={modelProviderLabel(visible.find(e => modelProvider(e.model) === provider)!.model)}><h3>{modelProviderLabel(visible.find(e => modelProvider(e.model) === provider)!.model)}</h3><div className="rm-rows">{visible.filter(e => modelProvider(e.model) === provider).map(({ model, problem }) => <article key={model.id} className="rc-model rm-model" data-model={model.id} aria-label={model.label} aria-current={current === model.id ? 'true' : undefined}><button type="button" className="rm-choice" data-inspected={focus === model.id} onClick={() => inspect(model.id)} aria-label={`Inspect ${model.label}`}><span className="rm-model-mark" aria-hidden="true">{model.label.slice(0,1)}</span><span><strong>{model.label}{current === model.id && <small className="rc-selected">Selected</small>}</strong><small>{problem ? 'Needs attention' : model.metadata?.stale ? 'Cached listing' : 'Listed'}</small></span><ChevronRight size={16} aria-hidden="true" /></button></article>)}</div></section>)}
         {!filtered.length && <div className="rc-empty" role="status"><p>{models.length ? 'No models match.' : 'No models listed yet. Connect a provider to discover models.'}</p>{(browse.query || browse.filter !== 'all') && <button type="button" className="rc-link" onClick={() => { setBrowse(s => ({ ...s, query: '', filter: 'all', page: 0 })); input.current?.focus(); }}>Reset model filters</button>}</div>}
-        {!browse.query && browse.filter === 'all' && layouts.length > 0 && <section className="rm-provider-group" aria-label="Model layouts"><h3>Layouts</h3>{layouts.map(l => choiceRow(LAYOUT_PREFIX + l.id, l.name, `${l.models.length} models · ${l.mode === 'order' ? 'In saved order' : 'Match each request'}`))}</section>}
+        {!browse.query && browse.filter === 'all' && layouts.length > 0 && <section className="rm-provider-group" aria-label="Model layouts"><h3>Layouts</h3><div className="rm-rows">{layouts.map(l => choiceRow(LAYOUT_PREFIX + l.id, l.name, `${plural(l.models.length, 'model')} · ${l.mode === 'order' ? 'In saved order' : 'Match each request'}`))}</div></section>}
       </div>
       {pages > 1 && <nav className="rc-pages" aria-label="Model pages"><button type="button" disabled={!page} onClick={() => setBrowse(s => ({ ...s, page: page - 1 }))}>Previous</button><span role="status">{page * PAGE + 1}–{Math.min(filtered.length, (page + 1) * PAGE)} of {filtered.length}</span><button type="button" disabled={page + 1 === pages} onClick={() => setBrowse(s => ({ ...s, page: page + 1 }))}>Next</button></nav>}
     </section>

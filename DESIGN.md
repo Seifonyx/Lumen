@@ -51,7 +51,9 @@ dark mode).
   "this one is yours right now" (the active section tab, the Selected chip on the model in use). Never buttons,
   focus or text. Status colours (green, red, orange, blue) only for state. Light and Dark; no True black in Canvas.
 - **Type:** Geist (system font on iPhone glass); Geist Mono only for data (code, shortcuts, counts). Four steps per
-  page: 28 title, 17 section, 15 rows/body, 13 secondary. Reading 16.5/1.72 in a 720 px measure. Weights 400/500/600
+  page: 28 title, 17 section, 15 rows/body, 13 secondary. List pages share the tokens in `src/app.css` (identity):
+  `--type-row` / `--type-detail` / `--type-note` are 17 / 15 / 13 on phones and 15 / 13 / 13 on computers, and
+  `--type-large-title` is 34 on phones; all follow the text size (`--fs`). Reading 16.5/1.72 in a 720 px measure. Weights 400/500/600
   and 620–640 for display only. Fields 16 px+ on touch screens. Section labels are sentence case, 13/600 secondary
   (no mono uppercase).
 - **Space and shape:** 4 px grid (4, 8, 12, 16, 24). Radii through the `--canvas-radius-*` tokens only: row 10,
@@ -119,7 +121,9 @@ dark mode).
   project from All projects) and screens opened from a chat (a document from +, Browse all tools) are pushed: a glass
   Back circle that goes up one level, and the edge swipe does the same. Router's section tabs (and Library's content
   tabs) switch in place, like a segmented control: no slide and no history step. One tap in the drawer is one history
-  step. Browser Back and Forward still step through history. Centred title, contextual + / ⋯. Desktop: the sidebar is
+  step. Browser Back and Forward still step through history. Centred title, contextual + / ⋯. Library, Router, Projects
+  and the Settings list open with an iOS large title (`LargeTitle` in `PhoneNavigation.tsx`) that scrolls into the
+  centred bar title; their section tabs stay pinned below the bar. No visible heading repeats the selected tab. Desktop: the sidebar is
   the navigation; the page title stays visible while scrolling.
 - **Library:** content tabs (Everything, Documents, Photos, Attached files, Made by Lumen, Knowledge; the phone rail
   fades at the end with more), search, sort and project selects on one line, bottom search on phones. Rows lead with
@@ -127,7 +131,9 @@ dark mode).
   availability (Text only, Preview only, Not on this device) only when true; computers show From and Added columns.
   A name repeated within one chat says which it is ("2 of 3 in this chat"); names are never changed. No matches: a
   short block with Clear search, kept above the keyboard. Knowledge has one Import (inside Knowledge; the empty state's
-  button) and says it is kept only on this device.  **Router:** models, providers (keys live on each provider page), routing, layouts, activity.
+  button) and says it is kept only on this device.  **Router:** models, providers (keys live on each provider page), routing, layouts, activity. On phones Models is
+  the Settings grouped list (no card inside the page; search in the bottom search); the model in use carries the
+  Lamplight Selected chip, any other selection is the quiet gray.
   **Settings:** General, Connectors, Personalization, Memory, Scheduled tasks, Privacy & data.
 - **Control owners:** native `select` (glass enhancement on iPhone) and `ModelPicker` for models; native date
   inputs; toasts through the store queue (`Toasts.tsx`), important field errors inline; dialogs share focus

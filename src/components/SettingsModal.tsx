@@ -45,7 +45,7 @@ import ImportChats from './ImportChats';
 import TaskLibrary from './TaskLibrary';
 import NotifyToggle from './NotifyToggle';
 import PrivacyTab from './PrivacyTab';
-import { CANVAS_SHELL, CanvasSettingsIndex, navigateBack, PhoneNavigation } from '../lib/canvas-presentation';
+import { CANVAS_SHELL, CanvasSettingsIndex, navigateBack, PhoneNavigation, PhoneLargeTitle } from '../lib/canvas-presentation';
 
 /** Settings sections: id, name, icon, one-line description */
 const TABS: [string, string, LucideIcon, string][] = [
@@ -475,6 +475,8 @@ export default function SettingsModal() {
 
       <div className="settings-scroll" ref={panel} tabIndex={0} onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 40)}>
         {/* iPhone glass look: an iOS large title that scrolls away (hidden otherwise) */}
+        {/* Its own boundary: loading the title must never suspend (blank) the whole page mid-navigation. */}
+        {CANVAS_SHELL && !tab && PhoneLargeTitle && window.matchMedia('(max-width:899px)').matches && <Suspense fallback={null}><PhoneLargeTitle title="Settings" /></Suspense>}
         <p className="settings-large-title" aria-hidden="true">{tab ? label : 'Settings'}</p>
         <div className="settings-inner">
           {CANVAS_SHELL && CanvasSettingsIndex && window.matchMedia('(max-width:899px)').matches ? <Suspense fallback={null}><CanvasSettingsIndex sections={SECTIONS} open={go} /></Suspense> : <nav className="settings-tabs" aria-label="Settings sections">

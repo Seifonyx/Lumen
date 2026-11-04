@@ -345,15 +345,20 @@
 /* Screen hierarchy: one navigation bar, no nested home docks. */
 .app[data-lumen-canvas-shell] .phone-navigation { display:flex; align-items:center; flex:none; min-height:54px; padding:env(safe-area-inset-top) 8px 0; gap:8px; background:var(--canvas-paper); color:var(--canvas-ink); border-bottom:1px solid var(--canvas-rim); }
 .app[data-lumen-canvas-shell] .phone-navigation button { display:inline-grid; place-items:center; min-width:44px; min-height:44px; border:0; border-radius:var(--canvas-radius-row); background:none; color:inherit; }
-.app[data-lumen-canvas-shell] .phone-navigation h1 { flex:1; min-width:0; margin:0; font:600 17px/1.3 var(--canvas-body-font); text-align:center; overflow-wrap:anywhere; }
+.app[data-lumen-canvas-shell] .phone-navigation h1 { flex:1; min-width:0; margin:0; font:600 17px/1.3 var(--canvas-body-font); text-align:center; overflow-wrap:anywhere; transition:opacity .2s; }
+/* The title takes focus only so screen readers announce the page; it is not a control, so it draws no ring. */
+.app[data-lumen-canvas-shell] .phone-navigation h1:focus { outline:0; }
+/* iOS large title (LargeTitle): the bar's title waits until it has scrolled away; tabs stay pinned below the bar. */
+.app[data-lumen-canvas-shell] .phone-navigation[data-large='shown'] h1 { opacity:0; }
+.app[data-lumen-canvas-shell] .large-title { margin:0; padding:4px 20px 8px; font:700 var(--type-large-title)/1.2 var(--canvas-display-font); letter-spacing:-.01em; color:var(--canvas-ink); overflow-wrap:anywhere; }
+.app[data-lumen-canvas-shell] .phone-sections-bar { position:sticky; top:0; z-index:3; background:var(--lg-page,var(--router-paper,var(--canvas-paper))); }
+.app[data-lumen-canvas-shell] .rc-scroll > :is(.large-title,.phone-sections-bar) { margin-inline:-16px; }
+.app[data-lumen-canvas-shell] .rc-scroll:has(> .large-title) { padding-top:0; }
 .app[data-lumen-canvas-shell] .phone-navigation-actions { min-width:44px; }
 @media(max-width:899px) {
  .app[data-lumen-canvas-shell] .hub-page.has-bar { padding-bottom:0; }
  .app[data-lumen-canvas-shell] .hub-head .hub-titles { display:none; }
  .app[data-lumen-canvas-shell] .hub-scroll { padding-bottom:env(safe-area-inset-bottom); }
- .app[data-lumen-canvas-shell] .coll-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
- .app[data-lumen-canvas-shell] .rc-page { padding-top:0; padding-bottom:env(safe-area-inset-bottom); }
- .app[data-lumen-canvas-shell] .rc-page > .phone-navigation { margin-inline:-16px; max-width:none; top:0; }
 }
 .app[data-lumen-canvas-shell] .screen-actions { position:relative; }
 .app[data-lumen-canvas-shell] .screen-actions .menu { position:absolute; inset-inline-end:0; top:100%; min-width:220px; }
@@ -366,23 +371,12 @@
 }
 
 
-.app[data-lumen-canvas-shell] .coll-document-icon { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:56px;height:64px;border:1px solid var(--canvas-rim);border-radius:var(--canvas-radius-row);background:var(--canvas-fill);color:var(--canvas-secondary);box-sizing:border-box; }
-.app[data-lumen-canvas-shell] .coll-document-icon > span { font:600 9px/1 var(--canvas-data-font);letter-spacing:.08em; }
 
 .app[data-lumen-canvas-shell] .hub-body > .filter-menu { margin-bottom:12px; }
 
 @media(max-width:899px){ .app[data-lumen-canvas-shell] .settings-page.has-section:has(> .phone-navigation) .settings-heading{display:none;}}
 /* Fixed action menus must escape the card's clipping, including during keyboard scrolling. */
 
-/* Content type, rather than device size, determines Library rows versus media collections. */
-.app[data-lumen-canvas-shell] .coll-item:is(.kind-documents,.kind-files) { grid-column:1 / -1; }
-.app[data-lumen-canvas-shell] .coll-item.kind-documents .doc-open,.app[data-lumen-canvas-shell] .coll-item.kind-files .doc-open { display:grid; grid-template-columns:56px minmax(0,1fr); align-items:center; gap:12px; min-width:0; }
-/* The base media-tile aspect ratio otherwise widens a 64px-high file icon beyond its 56px row track. */
-.app[data-lumen-canvas-shell] .coll-item.kind-files .coll-file { box-sizing:border-box; width:100%; min-width:0; height:64px; aspect-ratio:auto; overflow:hidden; }
-.app[data-lumen-canvas-shell] .coll-item:is(.kind-documents,.kind-files) { display:grid; grid-template-columns:minmax(0,1fr) 44px; gap:8px; align-items:center; padding-block:12px; border-bottom:1px solid var(--canvas-rim); }
-.app[data-lumen-canvas-shell] .coll-item .doc-meta { padding:0; }
-.app[data-lumen-canvas-shell] .coll-item .doc-meta .doc-name { white-space:normal; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-.app[data-lumen-canvas-shell] .coll-item:is(.kind-photos,.kind-generated) .screen-actions { position:absolute; top:8px; inset-inline-end:8px; background:var(--canvas-surface); border-radius:var(--canvas-radius-row); }
 .app[data-lumen-canvas-shell] .screen-actions > button { display:inline-grid;place-items:center;min-width:44px;min-height:44px;padding:8px;border:0;border-radius:var(--canvas-radius-row);background:none;color:var(--canvas-ink);cursor:pointer; }
 .app[data-lumen-canvas-shell] .screen-actions > button:hover { background:var(--canvas-fill); }
 
@@ -416,7 +410,7 @@
  html.glass .app[data-lumen-canvas-shell] :is(.phone-navigation > button,.phone-navigation-actions > button,.phone-navigation-actions > .screen-actions > button,.phone-navigation::before){background:var(--canvas-surface);-webkit-backdrop-filter:none;backdrop-filter:none;}
 }
 @media(prefers-reduced-motion:reduce){
- .app[data-lumen-canvas-shell] > :is(.main, .hub-page, .settings-page, .rc-page) { transition: none; }
+ .app[data-lumen-canvas-shell] > :is(.main, .hub-page, .settings-page, .rc-page), .app[data-lumen-canvas-shell] .phone-navigation h1 { transition: none; }
  .app[data-lumen-canvas-shell] :is(.phone-navigation > button,.phone-navigation-actions > button,.phone-navigation-actions > .screen-actions > button), .app[data-lumen-canvas-shell] :is(.phone-navigation > button,.phone-navigation-actions > button,.phone-navigation-actions > .screen-actions > button):active{transition:none;transform:none;}
 }
 
@@ -425,7 +419,11 @@
 .app[data-lumen-canvas-shell] .rc-scroll { display:contents; }
 .app[data-lumen-canvas-shell] .rc-scroll > * { max-width:760px;margin-inline:auto; }
 @media(max-width:899px){
- .app[data-lumen-canvas-shell] .phone-sections { display:flex;flex:none;gap:4px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scroll-padding-inline:12px;scrollbar-width:none;scrollbar-color:var(--canvas-rim) transparent;padding:8px 12px 10px;margin:0;max-width:none;mask-image:linear-gradient(90deg,transparent,#000 8px,#000 calc(100% - 12px),transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 8px,#000 calc(100% - 12px),transparent); }
+ .app[data-lumen-canvas-shell] .phone-sections { display:flex;flex:none;gap:4px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scroll-padding-inline:12px;scrollbar-width:none;padding:8px 12px 10px;margin:0;max-width:none; }
+ /* Ends fade only where more tabs wait (PhoneSections sets data-more), wide enough that a part-shown tab reads as more. */
+ .app[data-lumen-canvas-shell] .phone-sections[data-more] { --a:#000;--b:#000;-webkit-mask-image:linear-gradient(90deg,var(--a),#000 32px,#000 calc(100% - 64px),var(--b));mask-image:linear-gradient(90deg,var(--a),#000 32px,#000 calc(100% - 64px),var(--b)); }
+ .app[data-lumen-canvas-shell] .phone-sections:is([data-more~='start'][data-dir='ltr'],[data-more~='end'][data-dir='rtl']) { --a:transparent; }
+ .app[data-lumen-canvas-shell] .phone-sections:is([data-more~='end'][data-dir='ltr'],[data-more~='start'][data-dir='rtl']) { --b:transparent; }
  .app[data-lumen-canvas-shell] .phone-sections::-webkit-scrollbar { display:none; }
  .app[data-lumen-canvas-shell] .phone-sections button { flex:none;min-height:44px;padding:0 14px;border:1px solid transparent;border-radius:999px;scroll-snap-align:start;white-space:nowrap;background:none;color:var(--canvas-secondary);font:550 calc(var(--fs,15px) - .5px)/1.3 var(--canvas-body-font);cursor:pointer; }
  .app[data-lumen-canvas-shell] .phone-sections button:is([aria-selected='true'],[aria-current='page']) { color:var(--canvas-highlight-ink,var(--canvas-ink));background:var(--canvas-highlight-bg,var(--canvas-fill-strong)); }
@@ -444,8 +442,7 @@
  .app[data-lumen-canvas-shell]:is(html.kb-open .app) .phone-page-search { padding-bottom:8px; }
 }
 @media(forced-colors:active){ .app[data-lumen-canvas-shell] .phone-sections { scrollbar-width:auto;scrollbar-color:auto;mask-image:none;-webkit-mask-image:none; } }
-@media(max-width:899px){ .app[data-lumen-canvas-shell] .rc-page > .phone-sections { width:100%;box-sizing:border-box; } }
-@media(max-width:899px){ .app[data-lumen-canvas-shell] .hub-page:has(> .phone-navigation) > .hub-scroll { padding-top:12px; } }
+@media(max-width:899px){ .app[data-lumen-canvas-shell] .hub-page:has(> .phone-navigation) > .hub-scroll { padding-top:12px; } .app[data-lumen-canvas-shell] .hub-page:has(> .phone-navigation) > .hub-scroll:has(> .large-title) { padding-top:0; } }
 
 @media(max-width:899px){ .app[data-lumen-canvas-shell] .rc-page > .phone-page-search { width:100%;margin-inline:0; } }
 /* Every contextual Search owns its clear action; Safari must not add a second glyph. */

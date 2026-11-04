@@ -56,7 +56,7 @@ export function ProjectList({ onClose }: { onClose: () => void }) {
   const any = projects.length > 0;
 
   return (
-    <HubPage label="Projects" title="Projects" onClose={onClose} compact={glassPhone} create={any ? { label: 'New project', run: create } : undefined}
+    <HubPage label="Projects" title="Projects" large onClose={onClose} compact={glassPhone} create={any ? { label: 'New project', run: create } : undefined}
       actions={!glassPhone && any && <button type="button" className="btn primary" onClick={create}><Plus size={16} /> New project</button>}
       toolbar={any && (
         <>

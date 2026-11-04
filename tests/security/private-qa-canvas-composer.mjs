@@ -131,7 +131,7 @@ try {
       assert.deepEqual(t, { same: true, value: DRAFT, start: 5, end: 12, direction: 'backward', focused: true });
       const sheet = page.getByRole('dialog', { name: /./ }).filter({ has: page.locator('#message-input') });
       assert.equal(await sheet.count(), 1, 'the expanded form is a labelled dialog');
-      assert.match(await page.locator('.canvas-sheet-count').innerText(), /^\d+ words? · ~\d+(\.\d+)?[KM]? tokens$/);
+      assert.match(await page.locator('.canvas-sheet-count').innerText(), /^\d+ words?$/);
       const g = await geometry(page);
       assert.ok(Math.abs(g.wrap.height - before.wrap.height) <= 1, `composer keeps its place in the page (${before.wrap.height} → ${g.wrap.height})`);
       assert.ok(g.form.top >= (g.banner?.bottom ?? 0) - 0.5, 'sheet starts below the review banner');

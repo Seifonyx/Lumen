@@ -58,7 +58,7 @@ function move(e: PointerEvent) {
  *  - card: a tall tile sinks slightly;
  *  - dim: a plain glyph or text button (reply actions, links, Back) dims.
  * Moving the finger far off a control (or scrolling it) lets go without acting, as in iOS. Styles: canvas-screens.css. */
-type Kind = 'grow' | 'row' | 'card' | 'dim';
+type Kind = 'grow' | 'lens' | 'row' | 'card' | 'dim';
 const TARGET = 'button, a[href], summary, [role="button"], [role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"], [role="option"], [role="tab"], [role="link"]';
 let touch: { el: HTMLElement; kind: Kind; id: number; x: number; y: number; at: number; timer: number; shown: boolean } | null = null;
 const fades = new WeakMap<HTMLElement, number>();
@@ -79,7 +79,10 @@ function kindOf(el: HTMLElement): Kind {
   if (wide && r.height > 96) return 'card';
   // A wide control is a list row unless it is a filled pill (a full-width "Continue" button grows like any button).
   if (wide && !(filled && parseFloat(s.borderRadius) >= r.height / 2 - 1)) return 'row';
-  if (filled || el.closest('.composer, .topbar-trailing, .phone-navigation, .phone-navigation-actions')) return 'grow';
+  if (filled) return 'grow';
+  // A bare glyph on a glass bar or in the message box (+, the microphone, a button in the top-right group) gets the
+  // lit circle iOS 26 draws under it, and swells with it.
+  if (el.closest('.composer, .topbar-trailing, .phone-navigation, .phone-navigation-actions, .glass-tabbar')) return 'lens';
   return 'dim';
 }
 
@@ -100,7 +103,9 @@ function show(t: NonNullable<typeof touch>) {
   t.shown = true;
   clearTimeout(fades.get(t.el));
   t.el.dataset.press = t.kind;
-  if (t.kind === 'grow') t.el.style.setProperty('--press-scale', String(growScale(t.el.getBoundingClientRect())));
+  if (t.kind === 'grow' || t.kind === 'lens') t.el.style.setProperty('--press-scale', String(growScale(t.el.getBoundingClientRect())));
+  // A row lights up over its own colour (a row on a card stays on its card).
+  if (t.kind === 'row') t.el.style.setProperty('--press-base', getComputedStyle(t.el).backgroundColor);
   t.el.classList.add('is-pressed');
 }
 
@@ -114,7 +119,7 @@ function letGo(after = 0) {
     t.el.style.removeProperty('--press-x');
     t.el.style.removeProperty('--press-y');
     // The attribute stays while the release animates, then goes.
-    fades.set(t.el, window.setTimeout(() => { if (!t.el.classList.contains('is-pressed')) { delete t.el.dataset.press; t.el.style.removeProperty('--press-scale'); } }, 600));
+    fades.set(t.el, window.setTimeout(() => { if (!t.el.classList.contains('is-pressed')) { delete t.el.dataset.press; t.el.style.removeProperty('--press-scale'); t.el.style.removeProperty('--press-base'); } }, 600));
   };
   if (after) window.setTimeout(off, after); else off();
 }
@@ -137,7 +142,7 @@ function touchMove(e: PointerEvent) {
   // A row lets go as soon as the finger travels (that is a scroll); a button follows the finger a little and lets go
   // once it is well off it.
   if (t.kind === 'row' || t.kind === 'card' ? far > 10 : far > 44) { letGo(); return; }
-  if (t.kind === 'grow' && t.shown) {
+  if ((t.kind === 'grow' || t.kind === 'lens') && t.shown) {
     const lean = (v: number) => Math.max(-4, Math.min(4, v * 0.15));
     t.el.style.setProperty('--press-x', `${lean(dx)}px`);
     t.el.style.setProperty('--press-y', `${lean(dy)}px`);

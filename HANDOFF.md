@@ -10,8 +10,12 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start the next task from `origin/main`. Waiting on the owner's iPhone: no band at
-  launch (#126 status-bar colour; device-only), the Browse all tools medium detent.
+- **Branch:** `design/dark-and-press`: Dark is a cool grey (#1f1f21) and phones get iOS 26 touch feedback from one
+  owner, `lib/press.ts` (swell, row light, card sink, dim; see DESIGN.md Motion). The first-touch blur hold (#122,
+  #124) is removed, since it didn't remove the launch band. Open: **the launch band is still there in Light and Dark**
+  on the owner's iPhone after #120, #122, #124 and #126. Not caused by the blurs or the status-bar colour; the next
+  step is removing the top scroll-edge fade entirely to rule it out (offered to the owner). After merge and deploy,
+  waiting on the owner's iPhone: the grey Dark, the touch feedback, the Browse all tools medium detent.
 
 ## Next
 

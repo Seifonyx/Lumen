@@ -66,8 +66,8 @@ function applyPhoneTextSize(on: boolean) {
   }
 }
 
-// Canvas pages are pure white and black, and the status bar matches them (a grey strip there read as a band).
-const BAR = CANVAS_SHELL ? { light: '#ffffff', dark: '#000000', black: '#000000' } as const : { light: '#f6f7f9', dark: '#0d0f12', black: '#000000' } as const;
+// Canvas pages are white and dark grey, and the status bar matches them (a different strip there read as a band).
+const BAR = CANVAS_SHELL ? { light: '#ffffff', dark: '#1f1f21', black: '#1f1f21' } as const : { light: '#f6f7f9', dark: '#0d0f12', black: '#000000' } as const;
 
 export function applyAppearance(s: Settings) {
   // Canvas has Light and Dark only: a saved True black shows as Dark.

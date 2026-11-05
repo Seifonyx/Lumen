@@ -35,8 +35,6 @@ const chat = { id: 'g1', title: 'Glass chat', createdAt: now, updatedAt: now, me
     t = await open(IPHONE, 'glass-on');
     const { page } = t;
     assert.equal(await t.glass(), true, 'iPhones get glass');
-    // (Canvas holds the screen's blurs until the first touch: Safari draws ones made at launch wrong.)
-    await page.evaluate(() => document.dispatchEvent(new PointerEvent('pointerdown')));
     const blur = await page.$eval('.composer', (e) => getComputedStyle(e).backdropFilter);
     assert.match(blur, /blur/, 'the message box is see-through glass');
     await seed(page, 'glass-on', [chat]);

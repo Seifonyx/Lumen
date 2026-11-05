@@ -56,9 +56,9 @@ dark mode).
   **Lamplight** (`--canvas-lamplight`, Light `#f1e2b6`, Dark `#4d4130`) is the only warm colour: text selection and
   "this one is yours right now" (the active section tab, the Selected chip on the model in use). Never buttons,
   focus or text. Status colours (green, red, orange, blue) only for state. Light and Dark; no True black in Canvas.
-  **Dark is a cool neutral grey, not black** (owner, 2026-11-05): page and drawer `#1f1f21`, raised fills step up
-  (`#2a2a2d` cards and code, `#333337` bubbles and second fills, `#3e3e42`), text `#f5f5f7` / `#e5e5ea` / `#a3a3aa`.
-  The status bar (`theme-color`), launch screens and manifest use the page colour (`#ffffff` / `#1f1f21`), so nothing at
+  **Dark is a cool neutral grey, not black** (owner, 2026-11-05, then darker): page and drawer `#161618`, raised fills
+  step up (`#202023` cards and code, `#2a2a2d` bubbles and second fills, `#353539`), text `#f5f5f7` / `#e5e5ea` / `#a3a3aa`.
+  The status bar (`theme-color`), launch screens and manifest use the page colour (`#ffffff` / `#161618`), so nothing at
   the top differs from the page. Never warm or brown.
 - **Type:** Geist (system font on iPhone glass); Geist Mono only for data (code, shortcuts, counts). Four steps per
   page: 28 title, 17 section, 15 rows/body, 13 secondary. List pages share the tokens in `src/app.css` (identity):

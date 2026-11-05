@@ -9,7 +9,7 @@ import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } fro
 
 const OUT = 'brand/crease';
 // Colour: ink and paper match Canvas; the warm light lives only in the mark.
-export const INK = '#0b0b0c', PAPER = '#f5f4f0', LIT = '#f4f1e8', SHADE = '#b9b3a7', INK_SHADE = '#5b5852', NIGHT = '#1f1f21', DAY = '#ffffff';
+export const INK = '#0b0b0c', PAPER = '#f5f4f0', LIT = '#f4f1e8', SHADE = '#b9b3a7', INK_SHADE = '#5b5852', NIGHT = '#161618', DAY = '#ffffff';
 
 // ---------- The mark: a sheet of light folded into a standing page and a floor. The gap between the two planes is
 // the crease, the opening ("lumen") the light comes through. Axonometric drawing on its own grid:

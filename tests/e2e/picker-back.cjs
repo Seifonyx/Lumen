@@ -57,6 +57,9 @@ const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/6
 
       // A partial downward drag of the picker sheet, let go early: it settles where it was and stays usable.
       await openFromPlus();
+      // Where the sheet rests (a transform at the medium detent), so a let-go drag can be checked against it.
+      await page.waitForTimeout(600);
+      const rest = await page.locator('.tool-picker').evaluate((el) => getComputedStyle(el).transform);
       const grab = await page.locator('.tool-picker .sheet-grab').boundingBox();
       const touch = await ctx.newCDPSession(page).catch(() => null);
       if (touch) {
@@ -74,7 +77,7 @@ const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/6
       }
       await page.waitForTimeout(700);
       await picker.waitFor();
-      assert.equal(await page.locator('.tool-picker').evaluate((el) => getComputedStyle(el).transform), 'none', 'a let-go partial drag settles back in place');
+      assert.equal(await page.locator('.tool-picker').evaluate((el) => getComputedStyle(el).transform), rest, `a let-go partial drag settles back in place (rest ${rest})`);
       await picker.getByRole('searchbox', { name: 'Search tools' }).fill('study');
       await picker.getByRole('button', { name: 'Study', exact: true }).waitFor();
       await page.goBack();

@@ -423,13 +423,15 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(120 120 128 / 
   /* iOS 26 scroll edge, top and bottom: what passes under the bar and behind the message box blurs and dims only
      lightly, so it never reads as a band (owner, 2026-10-31 and 2026-11-05 reference). No mask on the blurred layer:
      Safari painted a masked backdrop black at launch until the drawer forced a repaint (owner recording, 2026-11-05),
-     so the blur ends at the bar's edge, as in the reference. While a reply streams the blur pauses. */
+     so the blur ends at the bar's edge, as in the reference. Even unmasked, a blur that exists at launch still came
+     up black (owner, 2026-11-05 again), so the edges blur only from the first touch (data-edge-ready, glass.ts);
+     until then, and while a reply streams, they are the same light fade without the blur. */
   html.glass[data-lumen-canvas] .app .main > .topbar::before, html.glass[data-lumen-canvas] .app .main > .composer-wrap::before {
-    display: block; inset: 0; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); -webkit-mask-image: none; mask-image: none;
+    display: block; inset: 0; -webkit-backdrop-filter: none; backdrop-filter: none; -webkit-mask-image: none; mask-image: none;
     background: linear-gradient(var(--edge, 180deg), color-mix(in srgb, var(--bg) 45%, transparent), color-mix(in srgb, var(--bg) 10%, transparent));
   }
   html.glass[data-lumen-canvas] .app .main > .composer-wrap::before { --edge: 0deg; inset: -12px 0 0; }
-  html.glass[data-lumen-canvas].streaming .app .main > :is(.topbar, .composer-wrap)::before { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  html.glass[data-lumen-canvas][data-edge-ready]:not(.streaming) .app .main > :is(.topbar, .composer-wrap)::before { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
   /* No chat name in the bar (incognito keeps its label). */
   html.glass[data-lumen-canvas] .app .main > .topbar .topbar-center > :not(.welcome-route) { display: none; }
 

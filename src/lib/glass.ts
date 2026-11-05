@@ -34,6 +34,11 @@ export function initGlass(): void {
   const root = document.documentElement;
   if (!glassWanted()) return;
   root.classList.add('glass');
+  // Blurred scroll edges wait for the first touch: Safari can draw a blur that exists at launch as a black band
+  // until something makes it redraw (canvas-screens.css).
+  const events = ['pointerdown', 'touchstart', 'wheel', 'keydown'] as const;
+  const ready = () => { root.dataset.edgeReady = ''; events.forEach((e) => removeEventListener(e, ready, true)); };
+  events.forEach((e) => addEventListener(e, ready, { capture: true, passive: true }));
   if (/[?&]glass/.test(location.search)) return; // forced: never switch off by itself
 
   // Frame timing while something is moving. A frame over 34 ms is a visible hitch (two missed frames at 60 Hz).

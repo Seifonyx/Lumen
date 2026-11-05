@@ -3413,7 +3413,9 @@ html.kb-open .um-scrim { top: var(--vv-top, 0px); bottom: auto; height: var(--vv
    Off-screen message bodies skip layout and paint (the browser keeps their last size), so focusing a field,
    opening a menu or switching theme no longer re-lays out a whole long chat. Only the text body, never the
    row: menus and pop-ups that hang outside a row must not be clipped. The newest two stay fully live. */
-.thread:not(.virtual-thread) > .message-row:not(:nth-last-child(-n+2)) .markdown { content-visibility: auto; contain-intrinsic-size: auto 240px; }
+/* (That also clips what a body draws just outside its edges, such as the "10." of a long numbered list, so the
+   clipped box reaches 12 px past the text on each side; the text itself doesn't move.) */
+.thread:not(.virtual-thread) > .message-row:not(:nth-last-child(-n+2)) .markdown { content-visibility: auto; contain-intrinsic-size: auto 240px; padding-inline: 12px; margin-inline: -12px; }
 /* Message actions that can't be used while a reply streams: kept in place, dimmed. */
 .busy-hold { display: contents; }
 .busy-hold[inert] > * { opacity: .4; transition: opacity .2s var(--ease); }

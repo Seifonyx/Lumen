@@ -10,8 +10,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start the next task from `origin/main`. Waiting on the owner's iPhone: the launch fade
-  (fixed in #120, only reproducible on a device), the glass and scroll edge, the Browse all tools medium detent.
+- **Branch:** `design/launch-band-lists` (PR #122): the scroll-edge blur waits for the first touch (`data-edge-ready`,
+  glass.ts), because the black band at launch survived #120's mask removal; older replies no longer clip "10." in long
+  numbered lists (content-visibility box widened 12 px each side). After merge and deploy, nothing is in progress.
+  Waiting on the owner's iPhone: no band at cold launch (device-only), the glass and scroll edge, the Browse all tools
+  medium detent.
 
 ## Next
 

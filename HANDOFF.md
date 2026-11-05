@@ -10,11 +10,9 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/launch-band-lists` (PR #122): the scroll-edge blur waits for the first touch (`data-edge-ready`,
-  glass.ts), because the black band at launch survived #120's mask removal; older replies no longer clip "10." in long
-  numbered lists (content-visibility box widened 12 px each side). After merge and deploy, nothing is in progress.
-  Waiting on the owner's iPhone: no band at cold launch (device-only), the glass and scroll edge, the Browse all tools
-  medium detent.
+- **Branch:** none in progress. Start the next task from `origin/main`. Waiting on the owner's iPhone: no black band at
+  cold launch (#122 makes the scroll-edge blur wait for the first touch; device-only), the glass and scroll edge, the
+  Browse all tools medium detent.
 
 ## Next
 
@@ -96,6 +94,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-05 Launch band and list numbers (PR #122, merged `1bc289a`, deployed Canvas `index-CYQrjuRG.js`): scroll-edge
+  blur starts at the first touch; older replies no longer clip two-digit list numbers.
 - 2026-11-05 Design run 3 (PR #120, merged `d996ea4`, deployed Canvas, live `index-CeqKF8qz.js` matches the merge build):
   launch fade fixed (no mask on the scroll-edge blur; Safari painted it black until a repaint); Browse all tools opens at
   a medium detent (the model picker stays a plain sheet); Router tabs keep focus, model search first in Tab order,

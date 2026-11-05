@@ -158,11 +158,12 @@ which decides by what a control looks like, so a new control needs no list entry
   while held (×1.15 up to 56 pt, ×1.1 up to 120 pt, ×1.05 wider), lean up to 4 pt toward the finger, and spring back
   past their size when let go. A bare glyph on a glass bar or in the message box (+, the microphone, a button in the
   top-right group) does the same over a lit circle.
-- **List rows and menu items** light up (`--press-fill`, ink at 10%); inside a scrolling list only after 70 ms, so a
+- **List rows** light up (`--press-fill`, ink at 10%); inside a scrolling list only after 70 ms, so a
   scroll never flashes rows, while a quick tap still flashes. **Cards** (wide and taller than 96 pt) sink to 0.97.
   **Plain glyphs and text links** (reply actions, Back, small +) dim to 35%. **Switches** stretch their knob.
 - Sliding more than 10 pt off a row or 44 pt off a button, or scrolling its list, lets go without acting. Disabled
-  controls and `[data-no-press]` get nothing. Reduce Motion keeps the light and the dimming, no size change.
+  controls and `[data-no-press]` get nothing; menus keep their own highlight, which follows a finger sliding from item
+  to item. Reduce Motion keeps the light and the dimming, no size change.
 - Nothing else on phones scales a pressed control (no `:active` transforms). Tests: `tests/e2e/motion-controls.cjs`.
 
 On computers controls press in 1.5–3.5% and spring back; Reduce Motion keeps them still. Desktop pages crossfade

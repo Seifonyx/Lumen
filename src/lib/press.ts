@@ -74,8 +74,8 @@ function kindOf(el: HTMLElement): Kind {
   const s = getComputedStyle(el);
   const filled = visible(s.backgroundColor) || (s.backdropFilter && s.backdropFilter !== 'none') || s.backgroundImage !== 'none';
   const wide = r.width >= Math.min(240, innerWidth * 0.6);
-  // Menu and list choices light up like rows, however narrow the menu.
-  if (el.closest('[role="menu"], [role="listbox"], .menu, .ctx-menu')) return 'row';
+  // List choices light up like rows, however narrow the list.
+  if (el.closest('[role="listbox"]')) return 'row';
   if (wide && r.height > 96) return 'card';
   // A wide control is a list row unless it is a filled pill (a full-width "Continue" button grows like any button).
   if (wide && !(filled && parseFloat(s.borderRadius) >= r.height / 2 - 1)) return 'row';
@@ -127,7 +127,8 @@ function letGo(after = 0) {
 function touchDown(e: PointerEvent) {
   letGo();
   const el = (e.target as Element | null)?.closest<HTMLElement>(TARGET);
-  if (!el || el.matches(':disabled, [aria-disabled="true"], [data-no-press]') || el.closest('[data-no-press]')) return;
+  // Menus own their highlight: it follows the finger as it slides from item to item (chat-menu.cjs).
+  if (!el || el.matches(':disabled, [aria-disabled="true"], [data-no-press]') || el.closest('[data-no-press], [role="menu"], .menu, .ctx-menu')) return;
   const kind = kindOf(el);
   touch = { el, kind, id: e.pointerId, x: e.clientX, y: e.clientY, at: performance.now(), timer: 0, shown: false };
   // Rows in a scrolling list wait a moment, as iOS does, so starting a scroll never lights them.

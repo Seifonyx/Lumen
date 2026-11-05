@@ -10,13 +10,10 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/glass-scroll-edge` (design run 2, part 2). Part 1 shipped (PR #117, `319b6aa`, live
-  `index-BzioBKkG.js`): no Incognito text, new glass material, frameless tables, filled code blocks, quieter thinking,
-  drag-down dismisses the keyboard. Part 2, from the owner's iOS 26 reference screenshot (Claude app, reference only, not
-  to copy): progressive blur scroll edge at the top bar and behind the message box, glass tint slightly lighter in Dark.
-  Not done: sheet detents (medium/large). Glass blur is only judged on a device (Windows WebKit has no backdrop-filter). Open accessibility items from run 1's audit: a Router section change
-  refocuses the unchanged "Router" title (screen readers don't hear the section), phone model search is last in Tab
-  order, the Selected state is exposed two ways; the drawer focus trap needs an in-browser check.
+- **Branch:** none in progress. Start the next task from `origin/main`. Remaining from design run 2: sheet detents
+  (medium/large) and the owner's iPhone check of the new glass and scroll edge (blur cannot be judged off-device). Open
+  accessibility items from run 1: a Router section change refocuses the unchanged title, phone model search is last in
+  Tab order, the Selected state is exposed two ways, the drawer focus trap needs an in-browser check.
 
 ## Next
 
@@ -102,6 +99,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - Excluded: Arabic interface, separate chat folders, message-list icon/count, chat-tag badges.
 
 ## Recently shipped
+
+- 2026-11-05 Design run 2 (PR #117 `319b6aa`, live `index-BzioBKkG.js`; PR #118 `ce61ebb`, live `index-B_4xJFYL.js`, both
+  matching their merge builds): no Incognito text; iOS 26 glass material (clear tint, specular rim, inner edge glow;
+  frosted message box); progressive-blur scroll edge at the top bar and behind the message box (pauses while streaming);
+  frameless tables, filled code blocks, quieter thinking; drag-down dismisses the keyboard. Physical iPhone not yet checked.
 
 - 2026-11-05 One consistent look on phones, design run 1 (PR #115, merged `cc17ffc`, deployed Canvas, live `index-RBkyiEoj.js` matches the merge build):
   Router Models as a grouped list (Lamplight only on the Selected chip, search in the bottom bar), iOS large titles on

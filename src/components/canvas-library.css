@@ -37,8 +37,7 @@ html[data-lumen-canvas] .library-sorts select { max-width:200px; }
 .library-col-from, .library-col-when { min-width:0; color:var(--text-2); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .library-col-when { font-variant-numeric:tabular-nums; }
 .library-row .screen-actions>button { min-width:44px; min-height:44px; }
-.library-knowledge-note { display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin:20px 0 0; color:var(--text-2); font-size:13px; line-height:1.5; }
-.library-knowledge-note { margin:0 0 16px; }
+.library-knowledge-note { display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin:0 0 16px; color:var(--text-2); font-size:13px; line-height:1.5; }
 /* Knowledge: the page already says what it is and where it lives; the component's own intro would repeat it. */
 .library-panel.kind-searchable .knowledge-library > p.muted.small:first-child { display:none; }
 .library-detail { display:grid; gap:18px; padding:4px 16px 16px; }

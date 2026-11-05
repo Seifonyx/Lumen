@@ -314,11 +314,13 @@ html[data-lumen-canvas] .mp-layouts > .mp-layout { min-width: 0; }
  * shadow; the conversation scrolls under it and blurs. Only under html.glass (lib/glass.ts): devices that cannot draw
  * it smoothly keep the solid look above. */
 html.glass[data-lumen-canvas] {
-  --lg-tint: rgb(255 255 255 / .58);
+  /* iOS 26 Liquid Glass: a clear, even tint (no top sheen), a specular rim that is brightest top-left and fainter
+   * bottom-right, and a faint glow just inside the edge where the glass bends light; a light blur keeps it clear. */
+  --lg-tint: rgb(255 255 255 / .5);
   --lg-tint-press: rgb(255 255 255 / .85);
-  --lg-filter: blur(12px) saturate(1.9) brightness(1.03);
-  --lg-edge: inset 0 0 0 .5px rgb(0 0 0 / .07), inset 0 1px .5px rgb(255 255 255 / .95), inset 0 -.5px .5px rgb(255 255 255 / .5);
-  --lg-lift: 0 10px 30px -6px rgb(0 0 0 / .12), 0 2px 6px rgb(0 0 0 / .05);
+  --lg-filter: blur(10px) saturate(1.8) brightness(1.04);
+  --lg-edge: 0 0 0 .5px rgb(0 0 0 / .06), inset 1.5px 1.5px 1px -1px rgb(255 255 255 / .95), inset -1.5px -1.5px 1px -1px rgb(255 255 255 / .7), inset 0 0 12px rgb(255 255 255 / .4);
+  --lg-lift: 0 8px 24px -4px rgb(0 0 0 / .1), 0 1px 3px rgb(0 0 0 / .04);
   --lg-ink: #0b0b0c; --lg-on-ink: #fff;
 }
 html.glass[data-lumen-canvas][data-theme='dark'] {
@@ -408,16 +410,15 @@ html.glass[data-lumen-canvas][data-theme='dark'] {
  * On black a native glass control is #1c1c1c with a bright 1 px top rim and a short sheen fading into it; nothing
  * darkens or blurs around it. The bar carries no title. The message box floats 20 pt from the edges, 52 pt tall at
  * rest, with + · message · dictate · talk; the model appears once it opens for writing. */
-html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(44 44 46 / .62); --lg-edge: inset 0 1px 0 rgb(255 255 255 / .2), inset 0 0 0 .5px rgb(255 255 255 / .07); --lg-sheen: rgb(255 255 255 / .07); }
+html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(120 120 128 / .2); --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 1.5px 1.5px 1px -1px rgb(255 255 255 / .4), inset -1.5px -1.5px 1px -1px rgb(255 255 255 / .16), inset 0 0 14px rgb(255 255 255 / .05); }
 @media (prefers-color-scheme: dark) {
-  html.glass[data-lumen-canvas]:not([data-theme='light']) { --lg-tint: rgb(44 44 46 / .62); --lg-edge: inset 0 1px 0 rgb(255 255 255 / .2), inset 0 0 0 .5px rgb(255 255 255 / .07); --lg-sheen: rgb(255 255 255 / .07); }
+  html.glass[data-lumen-canvas]:not([data-theme='light']) { --lg-tint: rgb(120 120 128 / .2); --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 1.5px 1.5px 1px -1px rgb(255 255 255 / .4), inset -1.5px -1.5px 1px -1px rgb(255 255 255 / .16), inset 0 0 14px rgb(255 255 255 / .05); }
 }
 @media (max-width: 899px) {
   html.glass[data-lumen-canvas] .app .main > .topbar :is(.menu-btn, .topbar-trailing),
   html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] :is(.phone-navigation > button, .phone-navigation-actions > button, .phone-navigation-actions > .screen-actions > button, .phone-page-search :is(.hub-search, .rc-search)),
   html.glass[data-lumen-canvas] .app .composer-wrap:not([data-composer-state='expanded'])[data-lumen-canvas-composer] .composer {
-    background: linear-gradient(180deg, var(--lg-sheen, rgb(255 255 255 / .45)), transparent 45%), linear-gradient(var(--lg-tint), var(--lg-tint));
-    -webkit-backdrop-filter: blur(10px) saturate(1.6); backdrop-filter: blur(10px) saturate(1.6);
+    background: var(--lg-tint); -webkit-backdrop-filter: var(--lg-filter); backdrop-filter: var(--lg-filter);
   }
   /* No band: the scroll edge is a short, soft fade behind the bar's buttons (owner, 2026-10-31: the deep solid fade
      read as a black band whenever a chat scrolled under it). */
@@ -521,9 +522,18 @@ html[data-lumen-canvas] .sheet-backdrop:not(.sheet-popover-backdrop) .sheet.atta
 /* The usage gauge fills like a pie, so a nearly empty one never reads as a spinner's arc. */
 html[data-lumen-canvas] .usage-pie .usage-ring-fill { stroke-linecap: butt; }
 html[data-lumen-canvas] .app .usage-pie .usage-ring-track { stroke: color-mix(in srgb, var(--text) 45%, transparent); }
-/* Phones have no hover title, so incognito says its name beside the crossed eye. */
-html[data-lumen-canvas] .incognito-label { display: none; }
+/* iPhone glass reading (design run 2): code is one filled block with plain-text Run/Copy (44 pt); tables have no frame,
+ * only hairline rows; the thought process reads as an aside; the message box is the frosted (denser) glass. */
 @media (max-width: 899px) {
-  html[data-lumen-canvas] .app .main > .topbar .topbar-trailing .new-chat-shortcut:has(.incognito-label) { display: inline-flex; align-items: center; width: auto; gap: 6px; padding-inline: 10px 12px; }
-  html[data-lumen-canvas] .incognito-label { display: inline; font: 500 15px/1 var(--font); }
+  html.glass[data-lumen-canvas] .app .markdown .code-block { border: 0; background: var(--native-fill); border-radius: var(--canvas-radius-card); }
+  html.glass[data-lumen-canvas] .app .markdown .code-head { color: var(--text-3); }
+  html.glass[data-lumen-canvas] .app :is(.code-copy, .code-run) { height: 44px; padding: 0 10px; border-radius: var(--canvas-radius-row); background: none; color: var(--text); }
+  html.glass[data-lumen-canvas] .app .code-actions { gap: 0; }
+  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown .table-wrap { border: 0; border-radius: 0; margin-inline: 0; }
+  html.glass[data-lumen-canvas] .app .markdown :is(th, td) { border-bottom: .5px solid var(--native-sep); padding-inline: 0 1em; }
+  html.glass[data-lumen-canvas] .app .markdown th { color: var(--text-3); font-size: .86em; }
+  html.glass[data-lumen-canvas] .app .thinking-body { color: var(--text-2); }
+  html.glass[data-lumen-canvas] .app .composer-wrap .composer { --lg-tint: rgb(255 255 255 / .78); }
+  html.glass[data-lumen-canvas][data-theme='dark'] .app .composer-wrap .composer { --lg-tint: rgb(30 30 32 / .74); }
 }
+@media (max-width: 899px) and (prefers-color-scheme: dark) { html.glass[data-lumen-canvas]:not([data-theme='light']) .app .composer-wrap .composer { --lg-tint: rgb(30 30 32 / .74); } }

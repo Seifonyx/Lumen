@@ -55,9 +55,11 @@ const proxy = http.createServer(async (req, res) => {
     const loads = (p) => p.evaluate(() => Number(sessionStorage.getItem('__loads')));
     const alive = (p) => p.evaluate(() => window.__alive === true);
     const controlled = (p) => p.waitForFunction(() => Boolean(navigator.serviceWorker.controller), null, { timeout: 30000 });
+    // Waits for a newly downloaded version (not one that was already waiting before the server changed).
     const waiting = async (p) => {
+      await p.evaluate(async () => { window.__waitingBefore = (await navigator.serviceWorker.getRegistration())?.waiting || null; });
       for (let i = 0; i < 60; i++) {
-        if (await p.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await r?.update().catch(() => {}); return Boolean(r?.waiting); })) return;
+        if (await p.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await r?.update().catch(() => {}); return Boolean(r?.waiting && r.waiting !== window.__waitingBefore && !r.installing); })) return;
         await p.waitForTimeout(500);
       }
       throw new Error('no new version waiting');
@@ -152,6 +154,14 @@ const proxy = http.createServer(async (req, res) => {
       assert.ok((await settings(page).locator('.si-account').innerText()).includes('Update ready'), 'Settings says an update is ready on the row that leads to it');
       await settings(page).getByRole('button', { name: /^(General|Account:)/ }).first().click();
       assert.match(await about(page).innerText(), /new version is ready/);
+      // Playwright's Linux WebKit crashes reloading a page that pushed browser history (as Settings does in a tab; the
+      // known crash other suites avoid), so WebKit takes the other way to the new version: Lumen closed and opened
+      // again. The reload (location.reload, the same in every engine) is checked in Chromium.
+      if (process.env.MR_WEBKIT) {
+        await page.close(); await new Promise((r) => setTimeout(r, 2000));
+        page = await tab(); await page.goto(origin); await ready(page);
+        assert.equal(await build(page), '2', 'WebKit: opened again, the new version');
+      } else {
       const before = await loads(page);
       const button = settings(page).getByRole('button', { name: 'Update now' });
       await button.click(); await button.click({ timeout: 1000 }).catch(() => {});
@@ -169,6 +179,7 @@ const proxy = http.createServer(async (req, res) => {
       assert.ok(Math.abs(after.offset - spot.offset) <= 2, `at the same height (${spot.offset} → ${after.offset})`);
       assert.equal(await box.inputValue(), 'Draft kept across the update', 'the draft is kept');
       await box.fill('');
+      }
     } else {
       // Ordinary build: its bar's Reload goes through the same checks and reloads once.
       const before = await loads(page);
@@ -193,7 +204,7 @@ const proxy = http.createServer(async (req, res) => {
     const other = await tab(); await other.goto(origin); await ready(other);
     assert.equal(await build(other), '2', 'a window opening while another is open does not take the update over');
     assert.ok(await alive(page) && await build(page) === '2', 'nor is the first window reloaded');
-    if (canvas) {
+    if (canvas && !process.env.MR_WEBKIT) {
       await general(other);
       await settings(other).getByRole('button', { name: 'Update now' }).click();
       await other.waitForFunction(() => document.querySelector('meta[name="lumen-test-build"]')?.getAttribute('content') === '3', null, { timeout: 30000 });
@@ -217,8 +228,10 @@ const proxy = http.createServer(async (req, res) => {
     // A version waiting when the last Lumen window closes is used when Lumen next opens, with nothing to choose.
     server.version = 4;
     await waiting(page);
-    assert.equal(await build(page), canvas ? '3' : '2', 'the open window keeps running its version');
+    assert.equal(await build(page), canvas && !process.env.MR_WEBKIT ? '3' : '2', 'the open window keeps running its version');
     await page.close();
+    // (Opened again a moment later, as a person would: the browser hands over once it has seen the last window go.)
+    await new Promise((r) => setTimeout(r, 2000));
     page = await tab(); await page.goto(origin); await ready(page);
     assert.equal(await build(page), '4', 'opened again: the new version');
     const shown = await loads(page); await page.waitForTimeout(1500);

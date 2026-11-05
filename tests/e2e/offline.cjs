@@ -1,4 +1,5 @@
 const {closeSettings}=require('./helpers/ui.cjs');
+const { openPlace } = require('./helpers/nav.cjs');
 // Offline mode (the app opens and shows chats with no connection) and the "new version" prompt.
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -65,16 +66,32 @@ const original = fs.readFileSync(SW, 'utf8');
     await page.waitForFunction(() => !document.querySelector('.banner.offline'), null, { timeout: 5000 });
     check(true, 'banner goes away when back online');
 
-    // ---- New version
-    fs.writeFileSync(SW, original + '\n// next version\n');
+    // ---- New version: the ordinary build offers it in its bar; Canvas only in Settings → General (no banner).
+    fs.writeFileSync(SW, original + String.fromCharCode(10) + '// next version' + String.fromCharCode(10));
     await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
-    await page.waitForSelector('.update-bar', { timeout: 30000 });
-    check((await page.textContent('.update-bar')).includes('new version'), 'update prompt appears');
-    await page.screenshot({ path: path.join(__dirname, 'out', 'update-bar.png') });
-    await Promise.all([page.waitForEvent('load', { timeout: 20000 }), page.click('.update-bar >> text=Reload')]);
-    await page.waitForSelector('.app:not(.app-skeleton) .topbar', { timeout: 20000 });
-    const active = await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).waiting === null);
-    check(active && !(await page.$('.update-bar')), 'reload switches to the new version');
+    const canvas = await page.locator('[data-lumen-canvas-shell]').count() > 0;
+    if (canvas) {
+      for (let i = 0; i < 60 && !await page.evaluate(async () => Boolean((await navigator.serviceWorker.getRegistration())?.waiting)); i++) await page.waitForTimeout(500);
+      await page.waitForTimeout(500);
+      check(!(await page.$('.update-bar')), 'Canvas: no update banner');
+      await openPlace(page, 'Settings');
+      const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+      check((await settings.locator('.si-account').innerText()).includes('Update ready'), 'update offered in Settings');
+      await settings.getByRole('button', { name: /^(General|Account:)/ }).first().click();
+      await page.screenshot({ path: path.join(__dirname, 'out', 'update-settings.png') });
+      await Promise.all([page.waitForEvent('load', { timeout: 20000 }), settings.getByRole('button', { name: 'Update now' }).click()]);
+      await page.locator('.app:not(.app-skeleton) .composer textarea').waitFor({ state: 'attached', timeout: 20000 });
+      const active = await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).waiting === null);
+      check(active && !(await page.$('.update-bar')), 'Update now switches to the new version');
+    } else {
+      await page.waitForSelector('.update-bar', { timeout: 30000 });
+      check((await page.textContent('.update-bar')).includes('new version'), 'update prompt appears');
+      await page.screenshot({ path: path.join(__dirname, 'out', 'update-bar.png') });
+      await Promise.all([page.waitForEvent('load', { timeout: 20000 }), page.click('.update-bar >> text=Reload')]);
+      await page.waitForSelector('.app:not(.app-skeleton) .topbar', { timeout: 20000 });
+      const active = await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).waiting === null);
+      check(active && !(await page.$('.update-bar')), 'reload switches to the new version');
+    }
     check(!errors.length, `no page errors ${errors.join(' | ')}`);
   } finally {
     fs.writeFileSync(SW, original);

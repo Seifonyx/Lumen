@@ -10,9 +10,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start the next task from `origin/main`. Waiting on the owner's iPhone: no black band at
-  cold launch (#122 makes the scroll-edge blur wait for the first touch; device-only), the glass and scroll edge, the
-  Browse all tools medium detent.
+- **Branch:** `design/launch-glass`: every blur on the phone screen (bar buttons, message box, scroll edges) waits for
+  the first touch. The owner's 2026-11-05 recording showed launch-made blurs drawn wrong (dim rim on the glass buttons,
+  a faint haze across the top) until the drawer, which drops and re-creates them, opened. After merge and deploy,
+  nothing is in progress. Waiting on the owner's iPhone: no band or haze at cold launch (device-only), the Browse all
+  tools medium detent.
 
 ## Next
 

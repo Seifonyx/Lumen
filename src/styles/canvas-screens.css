@@ -432,6 +432,9 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(120 120 128 / 
   }
   html.glass[data-lumen-canvas] .app .main > .composer-wrap::before { --edge: 0deg; inset: -12px 0 0; }
   html.glass[data-lumen-canvas][data-edge-ready]:not(.streaming) .app .main > :is(.topbar, .composer-wrap)::before { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  /* Nor any other blur on the screen: one made at launch also came up wrong (a dim rim on the glass buttons and a haze
+     across the top) until made again, as closing the drawer does (canvas-shell.css; owner recording, 2026-11-05). */
+  html.glass[data-lumen-canvas]:not([data-edge-ready]) .app[data-lumen-canvas-shell] > :is(.main, .hub-page, .settings-page, .rc-page) * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
   /* No chat name in the bar (incognito keeps its label). */
   html.glass[data-lumen-canvas] .app .main > .topbar .topbar-center > :not(.welcome-route) { display: none; }
 

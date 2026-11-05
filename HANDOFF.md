@@ -10,15 +10,18 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start the next task from `origin/main`.
-- Waiting on the owner's iPhone (Home Screen app), PR #132 (live): read halfway through a long chat, leave Lumen for a
-  while or swipe it away in the app switcher, reopen: same paragraph, no movement. Same from Router or Library (menu
-  button, no Back). New chat or signing out, then relaunch: a new chat. Also still waiting: the darker grey Dark
-  (#130), the touch feedback (#128), the Browse all tools medium detent.
+- **Branch:** `feature/quiet-updates` (PR open; ships under standing authority once CI is green on its head). Quiet,
+  safe app updates (DESIGN.md → Product → Updates): no banner on Canvas, nothing reloads under your work, Update now in
+  Settings → General with a reason when it must wait. Verified: unit tests (incl. `sw.test.mjs`), `updates` with the
+  real service worker (Canvas Chromium + WebKit, ordinary Chromium), `resume` and navigation suites.
+  **Not verified on a physical iPhone:** see the procedure in the PR. Known limit: a refresh with the app open keeps
+  the running version (the browser only hands over once no window runs it); Update now covers it.
+- Waiting on the owner's iPhone: the darker grey Dark (#130), the touch feedback (#128), the Browse all tools medium
+  detent. #132 (where you left off) is owner-confirmed on the iPhone.
 - Open: **the launch band is still there in Light and Dark** on the owner's iPhone after #120, #122, #124 and #126.
   Next step offered: a diagnostic build that colours each candidate layer (audit N-06).
-- Native-iOS audit (2026-11-05, https://claude.ai/artifact/PK7jQcsYY8MEAzbibHivp7): Stage 1 next items are silent
-  updates (needs #132, now live), first-frame glass + band diagnostic, haptics/switch semantics, hardware-keyboard send.
+- Native-iOS audit (2026-11-05, https://claude.ai/artifact/PK7jQcsYY8MEAzbibHivp7): after this, Stage 1 has first-frame
+  glass + band diagnostic, haptics/switch semantics and hardware-keyboard send.
 
 ## Next
 

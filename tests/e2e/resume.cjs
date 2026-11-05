@@ -1,8 +1,10 @@
 // Where you left off (src/lib/resume.ts): a relaunch (iOS ending the Home Screen app, a refresh, a closed tab) opens
 // the same conversation at the same message, or the same place, without the view moving once it is drawn. Never across
 // accounts, after signing out or from incognito; New chat, a deleted chat and a missing message fall back as before.
-// Playwright cannot end an iOS process; a reload is the same cold start (the app is rebuilt from storage), and the
-// hidden-app write is driven with a visibilitychange. Synthetic accounts; every request off the preview origin is blocked.
+// Playwright cannot end an iOS process; a relaunch here closes the page and opens the app in a fresh tab of the same
+// browser profile: a new document with no history, built from what is stored on the device, as an iOS cold start is (and
+// it avoids the known Linux WebKit crash when reloading a document with pushed history). The hidden-app write is driven
+// with a visibilitychange. Synthetic accounts; every request off the preview origin is blocked.
 const assert = require('node:assert/strict');
 const { chromium, webkit } = require('playwright');
 const { profile, seed, previewUid } = require('./helpers/preview-profile.cjs');
@@ -46,8 +48,9 @@ const topOf = (page) => page.evaluate(() => {
       };
       requestAnimationFrame(tick);
     });
-    const page = await ctx.newPage(); page.setDefaultTimeout(10000);
-    const errors = []; page.on('pageerror', (e) => { errors.push(e.message); console.log('pageerror', e.message); });
+    const errors = [];
+    const tab = async () => { const p = await ctx.newPage(); p.setDefaultTimeout(10000); p.on('pageerror', (e) => { errors.push(e.message); console.log('pageerror', e.message); }); return p; };
+    let page = await tab();
     const ready = async () => { await page.locator('.app:not(.app-skeleton) .composer textarea').waitFor({ state: 'attached', timeout: 20000 }); await page.waitForTimeout(300); };
     const drawer = async () => {
       if (await page.locator('aside.cv-nav.open').count()) return;
@@ -57,9 +60,8 @@ const topOf = (page) => page.evaluate(() => {
     };
     const newChat = async () => { await drawer(); await page.locator('aside.cv-nav').getByRole('button', { name: 'New chat', exact: true }).click(); };
     const open = async (title) => { await drawer(); await openChat(page, title); await page.locator('aside.cv-nav.open').waitFor({ state: 'detached' }).catch(() => {}); await page.waitForTimeout(400); };
-    // A cold start is done when the app (not its start-up frame) shows its message box; the load event can trail behind
-    // lazy styles of a restored place on a busy machine, so it is not what is waited for.
-    const relaunch = async () => { await page.reload({ waitUntil: 'domcontentloaded' }); await ready(); await page.waitForTimeout(900); };
+    // A cold start is done when the app (not its start-up frame) shows its message box.
+    const relaunch = async () => { await page.close(); page = await tab(); await page.goto(base, { waitUntil: 'domcontentloaded' }); await ready(); await page.waitForTimeout(900); };
     await page.goto(base); await ready();
     if (!await page.locator('[data-lumen-canvas-shell]').count()) { console.log('SKIP resume: not the Canvas presentation'); return; }
     await seed(page, A, [long, short]);
@@ -90,12 +92,12 @@ const topOf = (page) => page.evaluate(() => {
 
     // 2. A place chosen in the drawer reopens as that place, a root (its control opens the drawer), with the chat under it.
     await openPlace(page, 'Router');
-    const router = page.locator('.rc-page:not([hidden])');
-    await router.waitFor();
+    const router = () => page.locator('.rc-page:not([hidden])');
+    await router().waitFor();
     await page.waitForTimeout(600);
     assert.equal((await snapshot(page, previewUid(A))).place?.kind, 'router', 'opening Router is saved shortly after');
     await relaunch();
-    await router.waitFor();
+    await router().waitFor();
     assert.equal(await page.locator('.phone-navigation:visible > button[aria-label="Open navigation"]').count(), 1, 'restored Router is a root: its control opens the drawer');
     assert.equal(await page.locator('.phone-navigation:visible > button[aria-label="Back"]').count(), 0, 'with no Back to a new chat');
     await newChat();
@@ -105,7 +107,7 @@ const topOf = (page) => page.evaluate(() => {
     assert.equal(await page.locator('.messages [data-message-id]').count(), 0, 'New chat shows an empty chat');
     await relaunch();
     assert.equal(await page.locator('.messages [data-message-id]').count(), 0, 'after New chat, a relaunch stays on a new chat');
-    assert.equal(await router.count(), 0, 'and Router is not reopened');
+    assert.equal(await router().count(), 0, 'and Router is not reopened');
 
     // 4. A deleted chat (or one this device no longer has) opens a new chat.
     await open('Second fixture chat');

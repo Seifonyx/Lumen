@@ -10,10 +10,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/status-bar-colour`: the Canvas status bar (`theme-color`, set in index.html and settings.ts) is
-  now the page's own #fff/#000, not the ordinary build's #f6f7f9/#0d0f12. The owner's band at launch measured as a
-  full-width strip of exactly that grey under the status bar, present for weeks, unaffected by the blur fixes (#120,
-  #122, #124). After merge and deploy, nothing is in progress. Waiting on the owner's iPhone: no band at launch.
+- **Branch:** none in progress. Start the next task from `origin/main`. Waiting on the owner's iPhone: no band at
+  launch (#126 status-bar colour; device-only), the Browse all tools medium detent.
 
 ## Next
 
@@ -95,6 +93,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-05 Status bar colour (PR #126, merged `363232f`, deployed Canvas `index-BzA_hr83.js`): Canvas `theme-color`
+  is the page's #fff/#000; the old #f6f7f9/#0d0f12 drew the launch band. (#120/#122/#124 blur changes didn't touch it.)
 - 2026-11-05 Launch glass (PR #124, merged `e27ba74`, deployed Canvas `index-B32Mc3uX.js`): every blur on the phone
   screen waits for the first touch (launch-made blurs drew a dim rim and a haze until the drawer re-created them).
 - 2026-11-05 Launch band and list numbers (PR #122, merged `1bc289a`, deployed Canvas `index-CYQrjuRG.js`): scroll-edge

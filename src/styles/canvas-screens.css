@@ -429,7 +429,7 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(120 120 128 / 
     -webkit-mask-image: linear-gradient(var(--edge, 180deg), #000 50%, transparent); mask-image: linear-gradient(var(--edge, 180deg), #000 50%, transparent);
   }
   html.glass[data-lumen-canvas] .app .main > .composer-wrap::before { --edge: 0deg; inset: -28px 0 0; }
-  html.glass.streaming[data-lumen-canvas] .app .main > :is(.topbar, .composer-wrap)::before { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  html.glass[data-lumen-canvas].streaming .app .main > :is(.topbar, .composer-wrap)::before { -webkit-backdrop-filter: none; backdrop-filter: none; }
   /* No chat name in the bar (incognito keeps its label). */
   html.glass[data-lumen-canvas] .app .main > .topbar .topbar-center > :not(.welcome-route) { display: none; }
 

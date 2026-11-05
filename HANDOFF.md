@@ -13,7 +13,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - **Branch:** none in progress. Start the next task from `origin/main`. Open: **the launch band is still there in Light
   and Dark** on the owner's iPhone after #120, #122, #124 and #126 (not the blurs, not the status-bar colour). Next
   step offered to the owner: remove the top scroll-edge fade entirely to rule it out. Waiting on the owner's iPhone: the
-  grey Dark and the touch feedback (#128), the Browse all tools medium detent.
+  darker grey Dark (#130) and the touch feedback (#128), the Browse all tools medium detent.
 
 ## Next
 
@@ -95,6 +95,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-05 Darker grey Dark (PR #130, merged `96169d7`, deployed Canvas `index-C1X7Fis1.js`): page #161618, fills
+  #202023 / #2a2a2d / #353539; status bar, launch screens and manifest follow.
 - 2026-11-05 Grey Dark and iOS touch feedback (PR #128, merged `63fb98f`, deployed Canvas `index-B0bJcQ4x.js`): Dark
   page #1f1f21; phones swell / light / sink / dim by look (`lib/press.ts`, DESIGN.md Motion); first-touch blur hold removed.
 - 2026-11-05 Status bar colour (PR #126, merged `363232f`, deployed Canvas `index-BzA_hr83.js`): Canvas `theme-color`

@@ -32,6 +32,17 @@ models routed per message. Phone and desktop are equal citizens. Live at https:/
   it is signing out, another account, incognito (saves nothing, clears it), New chat, or the chat or project being
   gone. Per account on this device: opaque ids and one scroll offset, never message text, drafts or keys. The spot is
   drawn in the first frame (no move once shown; Safari, which has no scroll anchoring, keeps it as older messages load).
+- **Updates** (`src/pwa/sw.js`, `src/pwa/register.ts`, `src/lib/update-safety.ts`): a new version downloads in the
+  background and waits; nothing reloads while Lumen is open, hidden or brought back, and no banner shows on Canvas.
+  It is used when Lumen next starts after no window was left running the old version (closed, or ended by iOS in the
+  background; the browser hands over), or at once from Settings → General → **Update now**, which the account row marks
+  "Update ready", like iOS's Software Update. A refresh with the app open keeps the running version.
+  Update now reloads back to the same screen, chat, reading position and draft, and waits with one short reason while
+  a reply, comparison, summary, document edit or save, scheduled task, code run, commit or Knowledge import is in
+  progress, or while attached files, dictation or an incognito message exist only in memory (owners register a check
+  with `useUpdateHold`). Another window's update never reloads this one; it offers Update now. The previous version's
+  files stay one release for windows still running it; a half-stored version is discarded. The ordinary build keeps
+  its bar, with the same checks.
 - **Excluded by the owner:** Arabic interface, separate chat folders, the message-list icon/count, chat-tag badges.
 
 ## Presentations

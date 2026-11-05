@@ -56,6 +56,8 @@ function Row({ name, status, Icon, onClick, hint }: { name: string; status: stri
 
 export default function SettingsIndex({ sections, open }: { sections: SettingsSection[]; open: (id: string) => void }) {
   const user = useStore((s) => s.user);
+  // A downloaded version waiting to be used is mentioned on the row that leads to it (General → About), not elsewhere.
+  const update = useStore((s) => Boolean(s.updateReady));
   const status = useStatus();
   const find = (id: string) => sections.find(([sid]) => sid === id)!;
   const accountId = useId(), accountName = useId();
@@ -70,7 +72,7 @@ export default function SettingsIndex({ sections, open }: { sections: SettingsSe
         </span>
         <span className="si-copy">
           <span className="si-account-name" id={accountName}><span className="sr-only">Account: </span>{name}</span>
-          <span className="si-status" id={accountId}>Appearance, chat and account</span>
+          <span className="si-status" id={accountId}>{update ? 'Update ready · ' : ''}Appearance, chat and account</span>
         </span>
         <ChevronRight size={17} className="si-go" aria-hidden="true" />
       </button>

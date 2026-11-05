@@ -202,7 +202,8 @@ export default function App() {
       <>
         <Login />
         <Toasts />
-        <UpdateBar />
+        {/* Canvas offers a new version in Settings only (General → About); the ordinary build keeps its bar. */}
+        {!CANVAS_SHELL && <UpdateBar />}
       </>
     );
   }
@@ -245,7 +246,7 @@ export default function App() {
       <ImageViewerHost />
       <Suspense fallback={null}><SelectionTools /></Suspense>
       <Toasts />
-      <UpdateBar />
+      {!CANVAS_SHELL && <UpdateBar />}
     </div>
   );
 }

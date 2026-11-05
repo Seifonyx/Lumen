@@ -25,6 +25,7 @@ import { toolModel } from '../lib/ai/tool-inputs.js';
 import { db } from '../lib/db';
 import { CANVAS_COMPOSER, useScreenBackLayer, navigateBack, replaceScreen, navigateScreen } from '../lib/canvas-presentation';
 import { useCanvasComposer } from './ComposerCanvas';
+import { useUpdateHold } from '../lib/update-hold';
 
 /** Compare with… under a reply: the question it answers, from that chat and account. */
 interface CompareSeed { chatId: string; account?: string; questionId: string; prompt: string; files: Attachment[]; model?: string }
@@ -195,6 +196,16 @@ export default function Composer({ model, meter, modelPicker }: ComposerProps) {
   }, []);
 
   useEffect(autosize, [text, interim, autosize]);
+  // An update waits while something here would be lost by a reload: attached files (kept in memory, for this chat and
+  // any other with files waiting), dictation, or an incognito message (never saved). A typed draft is saved as it is.
+  useUpdateHold(() => {
+    if (listening || interim) return 'Available once dictation stops.';
+    let files = pending.length;
+    for (const [scope, list] of pendingDrafts.current) if (scope !== pendingScope.current) files += list.length;
+    if (files) return 'Send or remove the attached files first.';
+    if (temporaryRef.current && text.trim()) return 'Send or clear your incognito message first.';
+    return null;
+  });
   // CP02 Canvas presentation: off (folded away) in the ordinary build, so the hook order is fixed per build.
   // Where it adds a piece, the ternaries below keep the ordinary branch's JSX unchanged.
   const canvas = CANVAS_COMPOSER ? useCanvasComposer({ input, scope: attachmentScope, value: interim || text, attachments: visiblePending.length, title: chat?.title, autosize,

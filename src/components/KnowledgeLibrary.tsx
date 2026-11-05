@@ -18,6 +18,7 @@ import { CANVAS_SHELL } from "../lib/canvas-presentation";
 import { uid } from "../lib/util";
 import Modal from "./Modal";
 import KnowledgeSourceView from "./KnowledgeSourceView";
+import { useUpdateHold } from '../lib/update-hold';
 
 function session(): KnowledgeSession {
   const state = useStore.getState(),
@@ -70,6 +71,7 @@ export default function KnowledgeLibrary({ onClose, filter = '' }: { onClose: ()
     [source, setSource] = useState<KnowledgeSource | null>(null),
     [deleting, setDeleting] = useState<KnowledgeDocument | null>(null),
     [preparing, setPreparing] = useState(false);
+  useUpdateHold(() => importing || preparing ? 'Available once Knowledge finishes importing.' : null);
   const input = useRef<HTMLInputElement>(null),
     operation = useRef<AbortController | null>(null),
     importOperation = useRef<AbortController | null>(null),

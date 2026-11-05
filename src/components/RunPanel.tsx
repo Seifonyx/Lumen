@@ -6,6 +6,7 @@ import { ANALYSIS_TEMPLATES, analysisFileName, analysisFilesFit, analysisMime, M
 import { insertPrompt } from './Composer';
 import { useStore } from '../store';
 import Modal from './Modal';
+import { useUpdateHold } from '../lib/update-hold';
 
 const CodeEditor = lazy(() => import('./CodeEditor'));
 const EXT = { js: 'js', ts: 'ts', python: 'py', html: 'html' } as const;
@@ -28,6 +29,7 @@ export default function RunPanel() {
   const [reading, setReading] = useState(false);
   const [artifacts, setArtifacts] = useState<RunArtifact[]>([]);
   const [downloads, setDownloads] = useState<{ name: string; url: string; bytes: number }[]>([]);
+  useUpdateHold(() => running || reading ? 'Available once the code finishes running.' : null);
   const mounted = useRef(true);
   const run = useRef<Run | null>(null);
   const outBox = useRef<HTMLDivElement>(null);

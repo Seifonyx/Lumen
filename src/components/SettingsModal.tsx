@@ -46,6 +46,7 @@ import TaskLibrary from './TaskLibrary';
 import NotifyToggle from './NotifyToggle';
 import PrivacyTab from './PrivacyTab';
 import { CANVAS_SHELL, CanvasSettingsIndex, navigateBack, PhoneNavigation, PhoneLargeTitle } from '../lib/canvas-presentation';
+import { applyUpdate } from '../lib/update-safety';
 
 /** Settings sections: id, name, icon, one-line description */
 const TABS: [string, string, LucideIcon, string][] = [
@@ -237,6 +238,16 @@ const DEVELOPERS = ['hebaghoneim8@gmail.com', 'seifeldingamal2021@gmail.com'];
 
 function AboutSection() {
   const updateReady = useStore((s) => s.updateReady);
+  // Like iOS's Software Update: a new version is offered here, never over what you're doing. Choosing it reloads into
+  // the new version and back to this screen, unless something in progress would be lost (then it says what to finish).
+  const [updateNote, setUpdateNote] = useState('');
+  const [updating, setUpdating] = useState(false);
+  const update = () => {
+    const reason = applyUpdate();
+    setUpdateNote(reason || ''); setUpdating(!reason);
+    // The reload follows the new version taking over; if the browser holds it back, it is used at the next start.
+    if (!reason) window.setTimeout(() => { setUpdating(false); setUpdateNote('Lumen will finish updating the next time it starts.'); }, 10_000);
+  };
   const developer = useStore((s) => DEVELOPERS.includes((s.user?.email || '').toLowerCase()) || isPreviewUser(s.user?.uid));
   const [devOpen, setDevOpen] = useState(false);
   return (
@@ -246,12 +257,12 @@ function AboutSection() {
         <div className="setting-row">
           <span className="setting-text">
             <span className="setting-label">Lumen <span className="tag" style={{ textTransform: 'none' }}>v{APP_VERSION}</span></span>
-            <span className="setting-hint">{updateReady ? 'A new version is ready to install.' : "You're on the latest version."}</span>
+            <span className="setting-hint" aria-live="polite">{!updateReady ? "You're on the latest version." : updating ? 'Updating…' : updateNote || 'A new version is ready. Lumen also moves to it the next time it starts.'}</span>
           </span>
           {updateReady && (
             <span className="setting-ctrl">
-              <button className="btn small primary" onClick={updateReady}>
-                <RefreshCw size={14} /> Update now
+              <button className="btn small primary" onClick={update} disabled={updating}>
+                <RefreshCw size={14} /> {updating ? 'Updating…' : 'Update now'}
               </button>
             </span>
           )}

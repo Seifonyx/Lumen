@@ -10,6 +10,7 @@ import type { Chat } from '../types';
 import DiffView from './DiffView';
 import PullReviewModal from './PullReviewModal';
 import CommitUndoModal from './CommitUndoModal';
+import { useUpdateHold } from '../lib/update-hold';
 
 const CodeEditor = lazy(() => import('./CodeEditor'));
 
@@ -185,6 +186,7 @@ function Changes({ chat }: { chat: Chat }) {
   const [branch, setBranch] = useState(suggestBranch(lastAsk));
   const [pr, setPr] = useState(true);
   const [busy, setBusy] = useState(false);
+  useUpdateHold(() => busy ? 'Available once the commit finishes.' : null);
   const [done, setDone] = useState<{ url: string; prUrl?: string } | null>(null);
   const [diff, setDiff] = useState<string | null>(null);
   const send = useStore((s) => s.send);

@@ -1083,6 +1083,7 @@ export const useStore = create<State>((set, get) => {
         set({ firebaseUsage });
         checkQuotaAlerts();
       });
+      // A new version is offered in Settings (no banner on Canvas) and otherwise used at the next start (src/pwa/register.ts).
       registerServiceWorker((apply) => set({ updateReady: apply }));
       const onNet = () => {
         set({ online: navigator.onLine });

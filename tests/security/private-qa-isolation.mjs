@@ -249,7 +249,14 @@ try {
     // message or the same place. One device-local snapshot per account (`mr.resume.<uid>`: opaque ids and one scroll
     // offset, no text, drafts or keys), cleared on sign-out and by incognito; ChatView's in-session reading memory moved
     // to a module. No auth, network, sync, rules or Firestore change.
-    'src/lib/resume.ts', 'src/lib/reading-position.ts'];
+    'src/lib/resume.ts', 'src/lib/reading-position.ts',
+    // Quiet updates (owner-assigned 2026-11-05, audit item N-03): same service worker scope, file list, hosting and
+    // endpoints. A half-stored version is removed; the previous version's files stay one release for windows still
+    // running it; a waiting version takes over at the next start (browser handover) or when Update is chosen in
+    // Settings after checking nothing in progress would be lost (in-memory holds; no new storage, auth or network).
+    // The synthetic QA build still replaces register.ts with its no-op adapter.
+    'src/pwa/sw.js', 'src/pwa/register.ts', 'src/lib/update-hold.ts', 'src/lib/update-safety.ts', 'src/components/UpdateBar.tsx',
+    'src/components/WorkspacePanel.tsx'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');

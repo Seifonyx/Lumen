@@ -21,3 +21,4 @@ picker-back
 iphone-edge-back
 native-navigation
 resume
+updates

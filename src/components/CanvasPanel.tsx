@@ -16,6 +16,7 @@ import { memoryInstructions } from '../lib/memory';
 import { scan, type Finding } from '../lib/privacy';
 import PrivacyCheck from './PrivacyCheck';
 import Markdown from './Markdown';
+import { useUpdateHold } from '../lib/update-hold';
 
 type SaveState = { token?: symbol; status: 'saving' | 'saved' | 'failed' };
 const useSaveState = (key: string) => CANVAS_SHELL ? useScreenMemory!<SaveState>(key, { status: 'saved' }) : useState<SaveState>({ status: 'saved' });
@@ -53,6 +54,8 @@ function CanvasEditor({ chat, doc }: { chat: Chat; doc: CanvasDocument }) {
     window.addEventListener('lumen:before-feature-exit', guard);
     return () => window.removeEventListener('lumen:before-feature-exit', guard);
   }, [saving, saved, proposal, instruction]);
+  // An update waits for this document as Leave does: saved, with no edit request or suggestion pending.
+  useUpdateHold(() => saving || !saved ? 'Available once this document has saved.' : proposal || instruction.trim() ? 'Finish or discard the document edit first.' : null);
   useEffect(() => () => aborter.current?.abort(), []);
   const save = async (content: string, expected?: string) => {
     const token = Symbol('document-save');

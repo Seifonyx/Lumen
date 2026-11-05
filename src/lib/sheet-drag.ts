@@ -20,8 +20,8 @@ function scrolledInside(el: Element | null, sheet: HTMLElement) {
 }
 
 // With `detent`, a tall sheet opens at iOS's medium detent (about half the screen): dragging up grows it to its full
-// height, dragging down goes from full to medium and from medium away. The position `y` is how far the sheet sits
-// below its full height: 0 is full, `m` shows its top part at about half the screen, beyond `m` it is leaving.
+// height, dragging down goes from full to medium and from medium away. The position `y` runs from 0 (full height)
+// through `m` (medium: the sheet is m px shorter, its content still scrolls) to beyond `m` (the medium sheet leaving).
 export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () => void, enabled = true, scrim?: RefObject<HTMLElement | null>, detent = false) {
   const close = useRef(onClose);
   close.current = onClose;
@@ -32,6 +32,13 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
     let y = 0, dragging = false, anim: Motion | null = null, closing = false;
     // Medium detent only for a sheet taller than about 70% of the screen.
     const full = el.offsetHeight, m = detent && full > innerHeight * 0.7 ? Math.round(full - innerHeight * 0.55) : 0;
+    // At medium the sheet is really shorter (its content still scrolls to the end). A sheet pinned at the top would
+    // shrink away from the bottom edge, so it also moves down by what its bottom rose (`drop`: m for a top-pinned
+    // sheet, 0 for one that sits on the bottom edge).
+    let drop = 0;
+    // (Layout offsets, not on-screen boxes: the sheet may still be sliding in.)
+    const bottom = () => el.offsetTop + el.offsetHeight;
+    if (m) { const before = bottom(); el.style.maxHeight = `${full - m}px`; drop = Math.max(0, before - bottom()); el.style.maxHeight = ''; }
     const speed = new Velocity();
     // The dimmed background lightens as the sheet goes, so nothing dark is left behind once it's gone. A
     // separate scrim fades; a backdrop that contains the sheet has its colour faded (its opacity would fade
@@ -50,7 +57,9 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
       const t = v - m;
       const k = t > 0 ? Math.max(0, 1 - t / (el.offsetHeight - m + 120)) : 1;
       const b = backdrop(), h = holder();
-      return [[el, { transform: `translateY(${v}px)` }], [b, { opacity: String(k) }], [h, { backgroundColor: h ? tint(h, k) : '' }]];
+      const shrink = m ? Math.min(m, Math.max(0, v)) : 0, move = v < 0 || !m ? v : drop * shrink / m + Math.max(0, v - m);
+      const sheetFrame: Keyframe = m ? { transform: `translateY(${move}px)`, maxHeight: `${full - shrink}px` } : { transform: `translateY(${v}px)` };
+      return [[el, sheetFrame], [b, { opacity: String(k) }], [h, { backgroundColor: h ? tint(h, k) : '' }]];
     };
     const set = (v: number) => {
       y = v;
@@ -58,7 +67,7 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
       const b = backdrop(), h = holder();
       if (b) b.style.transition = 'none';
       if (h) h.style.transition = 'none';
-      if (Math.abs(v) < 0.01) { el.style.transform = ''; if (b) b.style.opacity = ''; if (h) h.style.backgroundColor = ''; delete el.dataset.detent; return; }
+      if (Math.abs(v) < 0.01) { el.style.transform = ''; el.style.maxHeight = ''; if (b) b.style.opacity = ''; if (h) h.style.backgroundColor = ''; delete el.dataset.detent; return; }
       if (m) el.dataset.detent = v > 0 && v <= m + 1 ? 'medium' : 'moving';
       frames(v).forEach(([n, kf]) => { if (n) Object.assign(n.style, kf); });
     };

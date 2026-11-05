@@ -48,6 +48,9 @@ import { formatUntil, remaining, UsageTracker, type LimitInfo, type UsageView } 
 import { db } from './lib/db';
 import { stopSpeaking } from './lib/speech';
 import { isTemporaryChat } from './lib/temporary-chat';
+import { applyingResume, forgetResume, readResume, resumeTarget, writeResume, type ResumePlace } from './lib/resume';
+import { readingAnchor, readingPositions } from './lib/reading-position';
+import { getRoutingScreen, openRoutingCenter, subscribeRoutingCenter } from './lib/routing-center';
 import { branchChat, normalizeChatTags } from './lib/chat-tools';
 import { normalizeAssistant } from './lib/assistants';
 import { canvasFits, canvasEditPrompt, cleanCanvasReply } from './lib/canvas';
@@ -275,6 +278,9 @@ interface ComparisonSession {
   run(models: string[], aborter?: AbortController): Promise<void>;
 }
 
+// The account whose saved spot has been read this sign-in: nothing is saved for an account before that (it would
+// overwrite the spot about to be restored) or after signing out.
+let resumeOwner: string | null = null;
 export const useStore = create<State>((set, get) => {
   // Request bodies and restoration maps are ephemeral; never put them in saved chat state.
   let comparisonSession: ComparisonSession | null = null;
@@ -1091,6 +1097,55 @@ export const useStore = create<State>((set, get) => {
         if(current&&status)set({catalog:{...current,providerStatus:{...current.providerStatus,[provider]:{...status,nextRefresh:0}}}});
       }});
       try { localStorage.removeItem('mr.catalog'); } catch { /* obsolete unscoped cache */ }
+      // Where you left off (lib/resume.ts; Canvas, the ordinary build is the unchanged rollback): saved when the app is
+      // hidden or closed and shortly after each change of screen, applied while the account loads. Incognito saves
+      // nothing and clears what was there.
+      const saveWhereLeft = () => {
+        if (!CANVAS_SHELL) return;
+        const s = get(), uid = s.user?.uid;
+        if (!uid || uid !== resumeOwner || s.authed !== true || s.accessDenied) return;
+        if (s.currentId && isTemporaryChat({ id: s.currentId })) { forgetResume(uid); return; }
+        const routing = getRoutingScreen();
+        const place: ResumePlace | null = routing.open ? { kind: 'router', section: routing.section }
+          : s.settingsOpen ? { kind: 'settings', tab: s.settingsTab }
+          : s.page === 'collection' ? (typeof s.pageArg === 'string' ? { kind: 'library', tab: s.pageArg } : { kind: 'library' })
+          : s.page === 'projects' ? { kind: 'projects' } : null;
+        writeResume(uid, { v: 1, chat: s.currentId, workspace: s.projectWorkspaceOpen ? s.activeProjectId : null, place, anchor: readingAnchor(s.currentId) });
+      };
+      let screenKey = '', saveTimer = 0;
+      const screenChanged = () => {
+        const s = get(), r = getRoutingScreen();
+        const key = [s.user?.uid, s.authed, s.currentId, s.page, typeof s.pageArg === 'string' ? s.pageArg : '', s.settingsOpen, s.settingsTab, s.projectWorkspaceOpen, s.activeProjectId, r.open, r.section].join('|');
+        if (key === screenKey) return;
+        screenKey = key; clearTimeout(saveTimer); saveTimer = window.setTimeout(saveWhereLeft, 400);
+      };
+      if (CANVAS_SHELL) {
+        useStore.subscribe(screenChanged);
+        subscribeRoutingCenter(screenChanged);
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveWhereLeft(); });
+        window.addEventListener('pagehide', saveWhereLeft);
+      }
+      // Applied once per sign-in, as soon as this account's chats and settings are on the device and before its first
+      // screen is drawn: the conversation at the same message, a project's workspace or a place from the drawer.
+      const restoreWhereLeft = (uid: string) => {
+        if (!CANVAS_SHELL) return;
+        resumeOwner = uid;
+        const s = get();
+        const target = resumeTarget(readResume(uid), s.chats, s.settings.projects || []);
+        if (!target) return;
+        if (target.chat && target.anchor) readingPositions.set(target.chat, target.anchor);
+        const p = target.place;
+        applyingResume(() => {
+          set({
+            currentId: target.chat,
+            ...(target.workspace ? { activeProjectId: target.workspace, projectWorkspaceOpen: true } : {}),
+            page: p?.kind === 'library' ? 'collection' : p?.kind === 'projects' ? 'projects' : null,
+            pageArg: p?.kind === 'library' ? p.tab : undefined,
+            settingsOpen: p?.kind === 'settings', settingsTab: p?.kind === 'settings' ? p.tab : '',
+          });
+          if (p?.kind === 'router') openRoutingCenter(p.section as Parameters<typeof openRoutingCenter>[0]);
+        });
+      };
       watchAccountAccessDenied(uid => {
         if(get().user?.uid!==uid)return;
         accountGeneration++;keySaveGeneration++;
@@ -1151,7 +1206,8 @@ export const useStore = create<State>((set, get) => {
         // Opened on this device before: show the app at once from the saved copy and this device's chats; the
         // fresh copy below replaces it a moment later (and still turns away an account that's no longer invited).
         const saved = savedAccount(user.uid);
-        let openedSettings = '';
+        let openedSettings = '', resumed = false;
+        const resume = () => { if (resumed || generation !== accountGeneration) return; resumed = true; restoreWhereLeft(user.uid); };
         if (saved) {
           const chats = await db.useAccount(user.uid);
           if (generation !== accountGeneration) return;
@@ -1162,6 +1218,7 @@ export const useStore = create<State>((set, get) => {
           set({ settings: { ...DEFAULT_SETTINGS, ...(saved.settings || {}), voiceLang: get().settings.voiceLang } as Settings });
           get().updateSettings({});
           openedSettings = JSON.stringify(get().settings);
+          resume();
         }
         try {
           const [keys, remoteSettings] = await Promise.all([loadKeys(user.uid), loadRemoteSettings(user.uid)]);
@@ -1179,6 +1236,7 @@ export const useStore = create<State>((set, get) => {
             set({ settings: { ...DEFAULT_SETTINGS, ...(remoteSettings || {}), voiceLang: get().settings.voiceLang } as Settings });
             get().updateSettings({});
           }
+          resume();
           try {
             const draftId = localStorage.getItem(`mr.assistantDraft.${user.uid}`);
             if (draftId && get().chats.some((chat) => chat.id === draftId && chat.assistant && !chat.messages.length)) set({ currentId: draftId });
@@ -1203,6 +1261,7 @@ export const useStore = create<State>((set, get) => {
           const chats = await db.useAccount(user.uid).catch(() => []);
           if (generation !== accountGeneration) return;
           set({ chats });
+          resume();
         }
         if(!isPreviewUser(user.uid))void quota.start();
         sync = new ChatSync(user.uid, {
@@ -1245,6 +1304,9 @@ export const useStore = create<State>((set, get) => {
     logout() {
       get().stop();
       const id = get().user?.uid;
+      // Signing out ends where you left off: the next sign-in starts on a new chat.
+      resumeOwner = null;
+      forgetResume(id);
       if (id) forgetLocalAccount(id);
       void signOutUser();
     },

@@ -10,10 +10,14 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start the next task from `origin/main`. Open: **the launch band is still there in Light
-  and Dark** on the owner's iPhone after #120, #122, #124 and #126 (not the blurs, not the status-bar colour). Next
-  step offered to the owner: remove the top scroll-edge fade entirely to rule it out. Waiting on the owner's iPhone: the
-  darker grey Dark (#130) and the touch feedback (#128), the Browse all tools medium detent.
+- **Branch:** `feature/resume-where-you-left` (PR open; ships under standing authority once CI is green on its head).
+  A relaunch reopens where you left off (DESIGN.md → Product). Verified: unit tests, `resume` suite in Chromium and
+  WebKit on the Canvas build, related navigation/chat suites locally; CI runs everything (store/screen-history change).
+  **Not verified on a physical iPhone:** a Home Screen app ended by iOS (switch apps for a while, or swipe it away in the
+  app switcher) should reopen at the same message; a place (Router, Library, Settings) reopens with the menu button.
+- Still open: **the launch band is still there in Light and Dark** on the owner's iPhone after #120, #122, #124 and
+  #126. Next step offered to the owner: a diagnostic build (audit N-06). Waiting on the owner's iPhone: the darker grey
+  Dark (#130), the touch feedback (#128), the Browse all tools medium detent.
 
 ## Next
 

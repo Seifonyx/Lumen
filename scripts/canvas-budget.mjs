@@ -82,7 +82,10 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // iOS touch feedback and the grey Dark (owner, 2026-11-05): canvasCss 34.75 → 35.25 for the shared press styles
 // (swell, row light, card sink, dim, switch knob), measured 34.8; startupJs 16.5 → 17.5 for the touch engine
 // (lib/press.ts), which must be there for the first touch (measured 17.0).
-const BUDGET = { startupJs: 17.5, startupCss: 20, routingCenter: 9, canvasCss: 35.25 };
+// Where you left off (2026-11-05): startupJs 17.5 → 18.25. A relaunch reopens the same chat at the same message, or
+// the same place (src/lib/resume.ts, the store's save and restore, the remembered spot drawn in the first frame); it must
+// run while the account loads, before the first screen is drawn, so it cannot load later. Measured 18.1 (main 17.1).
+const BUDGET = { startupJs: 18.25, startupCss: 20, routingCenter: 9, canvasCss: 35.25 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

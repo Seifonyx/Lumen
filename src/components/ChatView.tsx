@@ -7,6 +7,7 @@ import { Activity, Suspense, useEffect, useLayoutEffect, useRef, useState } from
 import { isTemporaryChat } from '../lib/temporary-chat';
 import { activeSummary } from '../lib/compact';
 import { JUMP_REQUEST, takeJump, takeJumpHere, type JumpRequest } from '../lib/message-jump';
+import { readingPositions, setReadingProbe, type Anchor } from '../lib/reading-position';
 import { formatUntil } from '../lib/usage';
 import { selectCurrentChat,selectCurrentModel, useStore } from '../store';
 import { UsageMeter } from './CompactNote';
@@ -21,10 +22,9 @@ import { BrandMark, CANVAS_SHELL, CanvasProjectWorkspace, PhoneNavigation, Canva
 import { ContextRail, RailToggle } from './ContextRail';
 import CanvasHome from './CanvasHome';
 
-/** How far from the latest message you were in each chat (this session), to come back to the same spot. */
-type Anchor = { id: string; offset: number };
+// How far from the latest message you were in each chat (this session, and after a relaunch: lib/resume.ts).
 let restoredTo = -1;
-const positions = new Map<string, Anchor | null>();
+const positions = readingPositions;
 /** The message at the top of the view and how far its top is from the view's top. */
 function topAnchor(el: HTMLElement): Anchor | null {
   const top = el.getBoundingClientRect().top;
@@ -115,6 +115,9 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
     return () => window.removeEventListener(JUMP_REQUEST, take);
   }, []);
 
+  // iPhone glass look: the chat scrolls under the floating bars. Measured before the view is placed below (next effect),
+  // so a remembered spot lands under the real bar height, not the default's, and doesn't shift on the next frame.
+  useLayoutEffect(() => watchGlassInsets(scroller.current?.closest('.main') as HTMLElement | null), [projectWorkspaceOpen, chat?.id]);
   // Switching chats: back where you were in that chat (this session), otherwise on the latest message.
   useLayoutEffect(() => {
     const el = scroller.current;
@@ -145,8 +148,6 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
     document.documentElement.classList.toggle('streaming', streaming);
     return () => document.documentElement.classList.remove('streaming');
   }, [streaming]);
-  // iPhone glass look: the chat scrolls under the floating bars.
-  useEffect(() => watchGlassInsets(scroller.current?.closest('.main') as HTMLElement | null), [projectWorkspaceOpen, chat?.id]);
   // Phones, as in iOS Messages: dragging the conversation down while writing lets the keyboard go (the draft stays).
   useEffect(() => {
     const el = scroller.current;
@@ -159,6 +160,17 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
     return () => { el.removeEventListener('touchstart', start); el.removeEventListener('touchmove', move); };
   }, [chat?.id]);
   useEffect(() => setUnseen(false), [chat?.id]);
+  // Read when the app is hidden, so a relaunch returns to this spot (lib/resume.ts). Only while the conversation is on
+  // screen; under a place, the spot remembered when you left it stands.
+  useEffect(() => {
+    const id = chat?.id;
+    if (!id) return;
+    setReadingProbe(() => {
+      const el = scroller.current;
+      return el && el.clientHeight > 0 && !el.closest('[inert]') ? { chat: id, anchor: topAnchor(el) } : null;
+    });
+    return () => setReadingProbe(null);
+  }, [chat?.id]);
 
   // While a reply streams, the view glides after the new text instead of jumping down a line at a time.
   const glide = useRef({ frame: 0, ours: -1 });

@@ -11,8 +11,10 @@ import { useReplyEntrance } from '../lib/motion';
 import { CANVAS_SHELL } from '../lib/canvas-presentation';
 import { findIn } from '../lib/chat-search';
 import type { JumpRequest } from '../lib/message-jump';
+import { readingPositions } from '../lib/reading-position';
 
 const FIRST_PAINT = 6;
+const NATIVE_ANCHORING = typeof CSS !== 'undefined' && CSS.supports('overflow-anchor', 'auto');
 export const navigatorDefault = () => !(window.matchMedia('(pointer: coarse)').matches && window.matchMedia('(max-width: 899px)').matches);
 const BATCH = 12;
 
@@ -66,15 +68,31 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
   },[jump]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(()=>()=>markMatch(null),[]);
   const stops=useMemo(()=>messageStops(messages),[messages]);
-  const pinnedKeys=useMemo(()=>new Set([...pinned,...(focus?[focus]:[]),...(jumpTarget?[jumpTarget]:[])]),[pinned,focus,jumpTarget]);
+  // A remembered spot (switching back, or a relaunch: lib/reading-position.ts) is in the first paint, so the view opens
+  // on it rather than on the newest messages and then moving once older ones arrive.
+  const [held] = useState(()=>{const a=readingPositions.get(chat.id);return a?a.id:null});
+  // …and drawn in full from that first frame: older replies otherwise wait a frame as placeholders (content-visibility),
+  // and the view would show them grow under the remembered spot.
+  const [keepFrom] = useState(()=>held?messages.findIndex(m=>m.id===held):-1);
+  const pinnedKeys=useMemo(()=>new Set([...pinned,...(focus?[focus]:[]),...(jumpTarget?[jumpTarget]:[]),...(held?[held]:[])]),[pinned,focus,jumpTarget,held]);
   const enabled = messages.length > 120 && !full;
   const count = messages.length;
   // Opening a chat shows the newest messages first and adds older ones a few at a time in the background,
   // so the chat appears at once and taps stay responsive (the view stays pinned to the latest message).
-  const [from,setFrom] = useState(()=>enabled?0:Math.max(0,count-FIRST_PAINT));
+  const [from,setFrom] = useState(()=>{const at=held?messages.findIndex(m=>m.id===held):-1;return enabled?0:Math.max(0,Math.min(count-FIRST_PAINT,at<0?count:at))});
   const start = enabled ? 0 : Math.min(from,count);
-  // Older messages added above stay out of view: keep the latest in place before the browser paints.
-  useLayoutEffect(()=>{const el=scroller.current;if(el&&stick.current)el.scrollTop=el.scrollHeight},[start,scroller,stick]);
+  // Older messages added above stay out of view: keep the latest in place before the browser paints. Away from the
+  // latest (a remembered spot), Safari has no scroll anchoring, so the added height is scrolled past here, in the same
+  // frame; other engines keep the spot themselves (overflow-anchor).
+  const before=useRef(start);
+  useLayoutEffect(()=>{
+    const el=scroller.current,was=before.current;before.current=start;
+    if(!el)return;
+    if(stick.current){el.scrollTop=el.scrollHeight;return}
+    if(start>=was||NATIVE_ANCHORING)return;
+    const rows=host.current;const a=rows?.querySelector<HTMLElement>(`[data-message-index="${start}"]`),b=rows?.querySelector<HTMLElement>(`[data-message-index="${was}"]`);
+    if(a&&b)el.scrollTop+=b.offsetTop-a.offsetTop;
+  },[start,scroller,stick]);
   const firstStart=useRef(start);
   useEffect(()=>{
     if(start===0)return;
@@ -193,7 +211,7 @@ export default function MessageThread({chat,summary,busy,compacting,scroller,sti
     {count>120 && <div className="history-controls"><span className="muted small">{count.toLocaleString()} messages</span><button className="btn ghost small" aria-pressed={full} title="Show all messages for browser search and screen-reader reading" onClick={()=>setFull(!full)}>{full?'Use faster scrolling':'Show full conversation'}</button></div>}
     {summary?.upTo===null && <div className="thread-summary"><CompactNote chat={chat} summary={summary}/></div>}
     <div ref={host} className={`thread${enabled?' virtual-thread':''}`} role={count?'feed':'region'} aria-label="Conversation" aria-busy={busy} aria-live="off" style={enabled?{height:virtual.getTotalSize()}:undefined}>
-      {(enabled?virtual.getVirtualItems().map(item=>({index:item.index,start:item.start})):messages.slice(start).map((_,k)=>({index:start+k,start:0}))).map(({index,start})=><article key={messages[index].id} data-index={index} data-message-index={index} data-message-id={messages[index].id} data-jump-keyboard={lastJump===messages[index].id && jumpKeyboard || undefined} tabIndex={-1} ref={enabled?virtual.measureElement:undefined} className={`message-row${lastJump===messages[index].id?' message-jump-target':''}${index<firstStart.current?' backfill':''}`} aria-label={`${messages[index].role==='user'?'You':'Assistant'}, message ${index+1}`} aria-posinset={index+1} aria-setsize={count}
+      {(enabled?virtual.getVirtualItems().map(item=>({index:item.index,start:item.start})):messages.slice(start).map((_,k)=>({index:start+k,start:0}))).map(({index,start})=><article key={messages[index].id} data-index={index} data-message-index={index} data-message-id={messages[index].id} data-keep={keepFrom>=0&&index>=keepFrom&&index<keepFrom+10||undefined} data-jump-keyboard={lastJump===messages[index].id && jumpKeyboard || undefined} tabIndex={-1} ref={enabled?virtual.measureElement:undefined} className={`message-row${lastJump===messages[index].id?' message-jump-target':''}${index<firstStart.current?' backfill':''}`} aria-label={`${messages[index].role==='user'?'You':'Assistant'}, message ${index+1}`} aria-posinset={index+1} aria-setsize={count}
         onFocusCapture={()=>setFocus(messages[index].id)} onBlurCapture={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node))setFocus(null)}} style={enabled?{position:'absolute',top:start-margin,left:0,width:'100%'}:undefined}>
         {render(index)}
       </article>)}

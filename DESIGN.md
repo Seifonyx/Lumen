@@ -25,6 +25,13 @@ models routed per message. Phone and desktop are equal citizens. Live at https:/
   embeddings with the user's key. Citations keep page/section references.
 - **Long chats.** Above 120 messages a window renders; "Show full conversation" or Ctrl/Cmd+F mounts everything.
   The line navigator on the right jumps between questions.
+- **Where you left off** (Canvas, `src/lib/resume.ts`): a relaunch (iOS ending the Home Screen app in the background, a
+  refresh, a closed tab) opens the same conversation at the same message, a project's workspace, or the place chosen
+  in the drawer (Library, All projects, Router's section, Settings or a section of it) as a root. Pushed screens (a
+  provider, a document, a tool, a sheet) reopen as their parent. No time limit, as in iOS state restoration; what ends
+  it is signing out, another account, incognito (saves nothing, clears it), New chat, or the chat or project being
+  gone. Per account on this device: opaque ids and one scroll offset, never message text, drafts or keys. The spot is
+  drawn in the first frame (no move once shown; Safari, which has no scroll anchoring, keeps it as older messages load).
 - **Excluded by the owner:** Arabic interface, separate chat folders, the message-list icon/count, chat-tag badges.
 
 ## Presentations

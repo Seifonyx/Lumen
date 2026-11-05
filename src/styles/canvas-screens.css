@@ -251,7 +251,8 @@ html[data-lumen-canvas] .login { background: radial-gradient(520px 340px at 50% 
 /* ================= Native iOS direction (design checkpoint, 2026-10-30, branch design/native-ios)
  * Lumen's own identity (the Crease mark, ink accent, Lamplight selection) on iOS system materials: system colours and
  * font, flat surfaces, a translucent bar, a plain composer and plain lists. Secondary greys are the AA-safe iOS
- * values (#6c6c70 on white, #aeaeb2/#8e8e93 on black). */
+ * values (#6c6c70 on white, #a3a3aa on the dark grey). Dark is a cool neutral grey, not black (owner, 2026-11-05: "a
+ * lighter shade of black or gray"): page #1f1f21, raised fills step up from it. */
 /* iPhone (glass) reads in the system font like every iOS app; elsewhere Lumen keeps Geist. */
 html.glass[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas] { --font: -apple-system, 'SF Pro Text', system-ui, 'Noto Sans Arabic', 'Geeza Pro', sans-serif; }
 html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas] {
@@ -263,21 +264,21 @@ html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas] {
   --native-bar: rgb(249 249 249 / .82);
 }
 html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas][data-theme='dark']:not([data-appearance='black']) {
-  --bg: #000000; --sidebar: #000000; --surface: #1c1c1e; --surface-2: #2c2c2e; --surface-3: #3a3a3c; --elevated: #1c1c1e;
-  --text: #ffffff; --text-2: #ebebf5; --text-3: #98989f;
-  --border: #38383a; --border-strong: #48484a; --input-border: #3a3a3c;
-  --user-bubble: #2c2c2e; --code-bg: #1c1c1e; --link: #4aa3ff;
-  --native-grouped: #000000; --native-fill: #1c1c1e; --native-fill-2: #2c2c2e; --native-sep: rgb(84 84 88 / .6);
-  --native-bar: rgb(18 18 18 / .78);
+  --bg: #1f1f21; --sidebar: #1f1f21; --surface: #2a2a2d; --surface-2: #333337; --surface-3: #3e3e42; --elevated: #2a2a2d;
+  --text: #f5f5f7; --text-2: #e5e5ea; --text-3: #a3a3aa;
+  --border: #3b3b3f; --border-strong: #4b4b50; --input-border: #424246;
+  --user-bubble: #333337; --code-bg: #2a2a2d; --link: #5aabff;
+  --native-grouped: #1f1f21; --native-fill: #2a2a2d; --native-fill-2: #333337; --native-sep: rgb(84 84 88 / .55);
+  --native-bar: rgb(31 31 33 / .8);
 }
 @media (prefers-color-scheme: dark) {
   html[data-lumen-canvas][data-lumen-canvas-foundation][data-lumen-canvas]:not([data-theme='light']):not([data-appearance='black']) {
-    --bg: #000000; --sidebar: #000000; --surface: #1c1c1e; --surface-2: #2c2c2e; --surface-3: #3a3a3c; --elevated: #1c1c1e;
-    --text: #ffffff; --text-2: #ebebf5; --text-3: #98989f;
-    --border: #38383a; --border-strong: #48484a; --input-border: #3a3a3c;
-    --user-bubble: #2c2c2e; --code-bg: #1c1c1e; --link: #4aa3ff;
-    --native-grouped: #000000; --native-fill: #1c1c1e; --native-fill-2: #2c2c2e; --native-sep: rgb(84 84 88 / .6);
-    --native-bar: rgb(18 18 18 / .78);
+    --bg: #1f1f21; --sidebar: #1f1f21; --surface: #2a2a2d; --surface-2: #333337; --surface-3: #3e3e42; --elevated: #2a2a2d;
+    --text: #f5f5f7; --text-2: #e5e5ea; --text-3: #a3a3aa;
+    --border: #3b3b3f; --border-strong: #4b4b50; --input-border: #424246;
+    --user-bubble: #333337; --code-bg: #2a2a2d; --link: #5aabff;
+    --native-grouped: #1f1f21; --native-fill: #2a2a2d; --native-fill-2: #333337; --native-sep: rgb(84 84 88 / .55);
+    --native-bar: rgb(31 31 33 / .8);
   }
 }
 @media (max-width: 899px) {
@@ -324,14 +325,14 @@ html.glass[data-lumen-canvas] {
   --lg-ink: #0b0b0c; --lg-on-ink: #fff;
 }
 html.glass[data-lumen-canvas][data-theme='dark'] {
-  --lg-tint-press: rgb(90 90 94 / .7);
+  --lg-tint-press: rgb(118 118 124 / .62);
   --lg-filter: blur(12px) saturate(1.6) brightness(1.1);
   --lg-lift: 0 0 0 transparent;
   --lg-ink: #f5f5f7; --lg-on-ink: #000;
 }
 @media (prefers-color-scheme: dark) {
   html.glass[data-lumen-canvas]:not([data-theme='light']) {
-    --lg-tint-press: rgb(90 90 94 / .7);
+    --lg-tint-press: rgb(118 118 124 / .62);
     --lg-filter: blur(12px) saturate(1.6) brightness(1.1);
     --lg-lift: 0 0 0 transparent;
     --lg-ink: #f5f5f7; --lg-on-ink: #000;
@@ -410,9 +411,9 @@ html.glass[data-lumen-canvas][data-theme='dark'] {
  * On black a native glass control is #1c1c1c with a bright 1 px top rim and a short sheen fading into it; nothing
  * darkens or blurs around it. The bar carries no title. The message box floats 20 pt from the edges, 52 pt tall at
  * rest, with + · message · dictate · talk; the model appears once it opens for writing. */
-html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(120 120 128 / .26); --lg-frost: rgb(30 30 32 / .74); --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 1.5px 1.5px 1px -1px rgb(255 255 255 / .4), inset -1.5px -1.5px 1px -1px rgb(255 255 255 / .16), inset 0 0 14px rgb(255 255 255 / .05); }
+html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(120 120 128 / .26); --lg-frost: rgb(54 54 58 / .8); --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 1.5px 1.5px 1px -1px rgb(255 255 255 / .4), inset -1.5px -1.5px 1px -1px rgb(255 255 255 / .16), inset 0 0 14px rgb(255 255 255 / .05); }
 @media (prefers-color-scheme: dark) {
-  html.glass[data-lumen-canvas]:not([data-theme='light']) { --lg-tint: rgb(120 120 128 / .26); --lg-frost: rgb(30 30 32 / .74); --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 1.5px 1.5px 1px -1px rgb(255 255 255 / .4), inset -1.5px -1.5px 1px -1px rgb(255 255 255 / .16), inset 0 0 14px rgb(255 255 255 / .05); }
+  html.glass[data-lumen-canvas]:not([data-theme='light']) { --lg-tint: rgb(120 120 128 / .26); --lg-frost: rgb(54 54 58 / .8); --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 1.5px 1.5px 1px -1px rgb(255 255 255 / .4), inset -1.5px -1.5px 1px -1px rgb(255 255 255 / .16), inset 0 0 14px rgb(255 255 255 / .05); }
 }
 @media (max-width: 899px) {
   html.glass[data-lumen-canvas] .app .main > .topbar :is(.menu-btn, .topbar-trailing),
@@ -423,18 +424,14 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(120 120 128 / 
   /* iOS 26 scroll edge, top and bottom: what passes under the bar and behind the message box blurs and dims only
      lightly, so it never reads as a band (owner, 2026-10-31 and 2026-11-05 reference). No mask on the blurred layer:
      Safari painted a masked backdrop black at launch until the drawer forced a repaint (owner recording, 2026-11-05),
-     so the blur ends at the bar's edge, as in the reference. Even unmasked, a blur that exists at launch still came
-     up black (owner, 2026-11-05 again), so the edges blur only from the first touch (data-edge-ready, glass.ts);
-     until then, and while a reply streams, they are the same light fade without the blur. */
+     so the blur ends at the bar's edge, as in the reference. While a reply streams the blur pauses. (Holding blurs until
+     the first touch, #122/#124, did not remove the owner's launch band and was taken out.) */
   html.glass[data-lumen-canvas] .app .main > .topbar::before, html.glass[data-lumen-canvas] .app .main > .composer-wrap::before {
-    display: block; inset: 0; -webkit-backdrop-filter: none; backdrop-filter: none; -webkit-mask-image: none; mask-image: none;
+    display: block; inset: 0; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); -webkit-mask-image: none; mask-image: none;
     background: linear-gradient(var(--edge, 180deg), color-mix(in srgb, var(--bg) 45%, transparent), color-mix(in srgb, var(--bg) 10%, transparent));
   }
   html.glass[data-lumen-canvas] .app .main > .composer-wrap::before { --edge: 0deg; inset: -12px 0 0; }
-  html.glass[data-lumen-canvas][data-edge-ready]:not(.streaming) .app .main > :is(.topbar, .composer-wrap)::before { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-  /* Nor any other blur on the screen: one made at launch also came up wrong (a dim rim on the glass buttons and a haze
-     across the top) until made again, as closing the drawer does (canvas-shell.css; owner recording, 2026-11-05). */
-  html.glass[data-lumen-canvas]:not([data-edge-ready]) .app[data-lumen-canvas-shell] > :is(.main, .hub-page, .settings-page, .rc-page) * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  html.glass[data-lumen-canvas].streaming .app .main > :is(.topbar, .composer-wrap)::before { -webkit-backdrop-filter: none; backdrop-filter: none; }
   /* No chat name in the bar (incognito keeps its label). */
   html.glass[data-lumen-canvas] .app .main > .topbar .topbar-center > :not(.welcome-route) { display: none; }
 
@@ -542,4 +539,27 @@ html[data-lumen-canvas] .app .usage-pie .usage-ring-track { stroke: color-mix(in
   html.glass[data-lumen-canvas] .app .markdown th { color: var(--text-3); font-size: .86em; }
   html.glass[data-lumen-canvas] .app .thinking-body { color: var(--text-2); }
   html.glass[data-lumen-canvas] .app .composer-wrap .composer { --lg-tint: var(--lg-frost, rgb(255 255 255 / .78)); }
+}
+
+/* ================= Touch feedback on phones (owner, 2026-11-05: "like actual iOS apps"). lib/press.ts sorts every
+ * control by how it looks and marks it while the finger is down (data-press + .is-pressed); nothing else on phones
+ * scales a pressed control. Filled and glass controls swell, lean toward the finger and spring back past their size;
+ * rows light up and fade; cards sink; plain glyphs and links dim. Reduce Motion keeps the light and dimming only. */
+html[data-lumen-canvas] { --press-fill: color-mix(in srgb, var(--text) 10%, transparent); }
+@media (max-width: 899px) {
+  html[data-lumen-canvas] [data-press] { transition: scale .62s cubic-bezier(.3, 1.6, .5, 1), translate .62s cubic-bezier(.3, 1.6, .5, 1), opacity .32s ease, background-color .38s ease; }
+  html[data-lumen-canvas] [data-press].is-pressed { transition: scale .22s cubic-bezier(.25, 1.3, .5, 1), translate .12s ease-out, opacity 0s, background-color 0s; }
+  html[data-lumen-canvas] :is([data-press='grow'], [data-press='lens']).is-pressed { scale: var(--press-scale, 1.1); translate: var(--press-x, 0) var(--press-y, 0); z-index: 1; }
+  html[data-lumen-canvas] [data-press='lens'] { border-radius: 999px; }
+  html[data-lumen-canvas] [data-press='lens'].is-pressed { background-color: var(--press-fill) !important; }
+  html[data-lumen-canvas] [data-press='card'].is-pressed { scale: .97; }
+  html[data-lumen-canvas] [data-press='dim'].is-pressed { opacity: .35; }
+  html[data-lumen-canvas] [data-press='row'].is-pressed { background-color: color-mix(in srgb, var(--text) 10%, var(--press-base, transparent)) !important; }
+  html[data-lumen-canvas] [data-press]:active { transform: none !important; }
+  /* Switches: the knob stretches under the finger, as in iOS. */
+  html[data-lumen-canvas] .switch::after { transition: inset-inline-start .3s cubic-bezier(.3, 1.3, .5, 1), scale .3s cubic-bezier(.3, 1.3, .5, 1), background .2s; }
+  html[data-lumen-canvas] .switch:active::after { scale: 1.3 1.05; }
+}
+@media (max-width: 899px) and (prefers-reduced-motion: reduce) {
+  html[data-lumen-canvas] [data-press].is-pressed, html[data-lumen-canvas] .switch:active::after { scale: none; translate: none; }
 }

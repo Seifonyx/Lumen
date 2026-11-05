@@ -26,16 +26,19 @@ const rest = page => page.waitForFunction(() => !document.querySelector('.page-s
 
       if (run('press')) {
         const controls = ['.composer button[aria-label^="Add"]', '.composer .send-btn', ...(width >= 900 ? ['.sidebar .new-chat, .cv-dest-new, .cv-new-pill'] : [])];
+        // Canvas on phones answers like iOS 26: a filled control swells while held (lib/press.ts); elsewhere it presses in.
+        const swells = width < 900 && await page.evaluate(() => document.documentElement.hasAttribute('data-lumen-canvas'));
+        const [lo, hi] = swells ? [1.04, 1.2] : [.94, .99];
         for (const selector of controls) {
           const add = page.locator(selector).first();
           const box = await add.boundingBox();
           await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
           await page.mouse.down();
-          if (!reduced) await page.waitForFunction(selector => {
+          if (!reduced) await page.waitForFunction(([selector, lo, hi]) => {
             const el = document.querySelector(selector);
             const scale = Number(getComputedStyle(el).scale.split(' ')[0]);
-            return scale >= .94 && scale <= .99;
-          }, selector, { timeout: 3000 });
+            return scale >= lo && scale <= hi;
+          }, [selector, lo, hi], { timeout: 3000 });
           await page.waitForTimeout(180);
           const pressed = await add.evaluate(el => {
             const style = getComputedStyle(el);
@@ -44,6 +47,7 @@ const rest = page => page.waitForFunction(() => !document.querySelector('.page-s
           });
           const scale = Number(pressed.scale.split(' ')[0]);
           if (reduced) assert.ok(pressed.scale === 'none' || scale === 1, 'Reduced motion keeps the control stationary');
+          else if (swells) assert.ok(scale >= lo && scale <= hi, `A held control swells, boundedly (${pressed.scale})`);
           else assert.ok(scale >= .94 && scale < 1, `A bounded press-in, without swelling (${pressed.scale})`);
           assert.ok(pressed.translate === 'none' || pressed.translate === '0px', 'Buttons stay under the finger');
           assert.ok(Math.abs(pressed.transformScale - 1) < .003, `The shared press must not compound with older :active transforms (${pressed.transformScale})`);

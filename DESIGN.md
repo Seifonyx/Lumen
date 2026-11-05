@@ -56,6 +56,10 @@ dark mode).
   **Lamplight** (`--canvas-lamplight`, Light `#f1e2b6`, Dark `#4d4130`) is the only warm colour: text selection and
   "this one is yours right now" (the active section tab, the Selected chip on the model in use). Never buttons,
   focus or text. Status colours (green, red, orange, blue) only for state. Light and Dark; no True black in Canvas.
+  **Dark is a cool neutral grey, not black** (owner, 2026-11-05): page and drawer `#1f1f21`, raised fills step up
+  (`#2a2a2d` cards and code, `#333337` bubbles and second fills, `#3e3e42`), text `#f5f5f7` / `#e5e5ea` / `#a3a3aa`.
+  The status bar (`theme-color`), launch screens and manifest use the page colour (`#ffffff` / `#1f1f21`), so nothing at
+  the top differs from the page. Never warm or brown.
 - **Type:** Geist (system font on iPhone glass); Geist Mono only for data (code, shortcuts, counts). Four steps per
   page: 28 title, 17 section, 15 rows/body, 13 secondary. List pages share the tokens in `src/app.css` (identity):
   `--type-row` / `--type-detail` / `--type-note` are 17 / 15 / 13 on phones and 15 / 13 / 13 on computers, and
@@ -147,8 +151,23 @@ dark mode).
 
 ## Motion
 
-Controls press in 1.5–3.5% and spring back; Reduce Motion keeps them still. Desktop pages crossfade briefly (a view
-transition on Canvas).
+**Touch feedback on phones (Canvas, owner 2026-11-05: "like actual iOS apps")** has one owner, `src/lib/press.ts`,
+which decides by what a control looks like, so a new control needs no list entry (styles at the end of
+`canvas-screens.css`):
+- **Filled or glass controls** (bar buttons, the message box's buttons, pills, chips, the selected segment) swell
+  while held (×1.15 up to 56 pt, ×1.1 up to 120 pt, ×1.05 wider), lean up to 4 pt toward the finger, and spring back
+  past their size when let go. A bare glyph on a glass bar or in the message box (+, the microphone, a button in the
+  top-right group) does the same over a lit circle.
+- **List rows** light up (`--press-fill`, ink at 10%); inside a scrolling list only after 70 ms, so a
+  scroll never flashes rows, while a quick tap still flashes. **Cards** (wide and taller than 96 pt) sink to 0.97.
+  **Plain glyphs and text links** (reply actions, Back, small +) dim to 35%. **Switches** stretch their knob.
+- Sliding more than 10 pt off a row or 44 pt off a button, or scrolling its list, lets go without acting. Disabled
+  controls and `[data-no-press]` get nothing; menus keep their own highlight, which follows a finger sliding from item
+  to item. Reduce Motion keeps the light and the dimming, no size change.
+- Nothing else on phones scales a pressed control (no `:active` transforms). Tests: `tests/e2e/motion-controls.cjs`.
+
+On computers controls press in 1.5–3.5% and spring back; Reduce Motion keeps them still. Desktop pages crossfade
+briefly (a view transition on Canvas).
 
 **Phone navigation (Canvas)** has one owner and one transition, `src/lib/navigation-coordinator.ts` (lazy, touch
 devices): every Back swipe and the drawer's swipe go through it, and the old per-screen swipe handlers are gone.

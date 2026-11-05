@@ -522,3 +522,18 @@ html[data-lumen-canvas] .sheet-backdrop:not(.sheet-popover-backdrop) .sheet.atta
 /* The usage gauge fills like a pie, so a nearly empty one never reads as a spinner's arc. */
 html[data-lumen-canvas] .usage-pie .usage-ring-fill { stroke-linecap: butt; }
 html[data-lumen-canvas] .app .usage-pie .usage-ring-track { stroke: color-mix(in srgb, var(--text) 45%, transparent); }
+/* iPhone glass reading (design run 2): code is one filled block with plain-text Run/Copy (44 pt); tables have no frame,
+ * only hairline rows; the thought process reads as an aside; the message box is the frosted (denser) glass. */
+@media (max-width: 899px) {
+  html.glass[data-lumen-canvas] .app .markdown .code-block { border: 0; background: var(--native-fill); border-radius: var(--canvas-radius-card); }
+  html.glass[data-lumen-canvas] .app .markdown .code-head { color: var(--text-3); }
+  html.glass[data-lumen-canvas] .app :is(.code-copy, .code-run) { height: 44px; padding: 0 10px; border-radius: var(--canvas-radius-row); background: none; color: var(--text); }
+  html.glass[data-lumen-canvas] .app .code-actions { gap: 0; }
+  html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown .table-wrap { border: 0; border-radius: 0; margin-inline: 0; }
+  html.glass[data-lumen-canvas] .app .markdown :is(th, td) { border-bottom: .5px solid var(--native-sep); padding-inline: 0 1em; }
+  html.glass[data-lumen-canvas] .app .markdown th { color: var(--text-3); font-size: .86em; }
+  html.glass[data-lumen-canvas] .app .thinking-body { color: var(--text-2); }
+  html.glass[data-lumen-canvas] .app .composer-wrap .composer { --lg-tint: rgb(255 255 255 / .78); }
+  html.glass[data-lumen-canvas][data-theme='dark'] .app .composer-wrap .composer { --lg-tint: rgb(30 30 32 / .74); }
+}
+@media (max-width: 899px) and (prefers-color-scheme: dark) { html.glass[data-lumen-canvas]:not([data-theme='light']) .app .composer-wrap .composer { --lg-tint: rgb(30 30 32 / .74); } }

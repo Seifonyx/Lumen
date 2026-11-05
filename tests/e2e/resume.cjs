@@ -47,8 +47,8 @@ const topOf = (page) => page.evaluate(() => {
       requestAnimationFrame(tick);
     });
     const page = await ctx.newPage(); page.setDefaultTimeout(10000);
-    const errors = []; page.on('pageerror', (e) => errors.push(e.message));
-    const ready = async () => { await page.locator('.app:not(.app-skeleton) .composer textarea').waitFor({ state: 'attached' }); await page.waitForTimeout(300); };
+    const errors = []; page.on('pageerror', (e) => { errors.push(e.message); console.log('pageerror', e.message); });
+    const ready = async () => { await page.locator('.app:not(.app-skeleton) .composer textarea').waitFor({ state: 'attached', timeout: 20000 }); await page.waitForTimeout(300); };
     const drawer = async () => {
       if (await page.locator('aside.cv-nav.open').count()) return;
       await page.locator('.phone-navigation:visible > button[aria-label="Open navigation"], .menu-btn:visible').first().click();
@@ -57,7 +57,9 @@ const topOf = (page) => page.evaluate(() => {
     };
     const newChat = async () => { await drawer(); await page.locator('aside.cv-nav').getByRole('button', { name: 'New chat', exact: true }).click(); };
     const open = async (title) => { await drawer(); await openChat(page, title); await page.locator('aside.cv-nav.open').waitFor({ state: 'detached' }).catch(() => {}); await page.waitForTimeout(400); };
-    const relaunch = async () => { await page.reload(); await ready(); await page.waitForTimeout(900); };
+    // A cold start is done when the app (not its start-up frame) shows its message box; the load event can trail behind
+    // lazy styles of a restored place on a busy machine, so it is not what is waited for.
+    const relaunch = async () => { await page.reload({ waitUntil: 'domcontentloaded' }); await ready(); await page.waitForTimeout(900); };
     await page.goto(base); await ready();
     if (!await page.locator('[data-lumen-canvas-shell]').count()) { console.log('SKIP resume: not the Canvas presentation'); return; }
     await seed(page, A, [long, short]);

@@ -10,11 +10,9 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/launch-glass`: every blur on the phone screen (bar buttons, message box, scroll edges) waits for
-  the first touch. The owner's 2026-11-05 recording showed launch-made blurs drawn wrong (dim rim on the glass buttons,
-  a faint haze across the top) until the drawer, which drops and re-creates them, opened. After merge and deploy,
-  nothing is in progress. Waiting on the owner's iPhone: no band or haze at cold launch (device-only), the Browse all
-  tools medium detent.
+- **Branch:** none in progress. Start the next task from `origin/main`. Waiting on the owner's iPhone: no band or haze
+  at cold launch and the glass buttons at full brightness from the start (#124; device-only), the Browse all tools
+  medium detent.
 
 ## Next
 
@@ -96,6 +94,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-05 Launch glass (PR #124, merged `e27ba74`, deployed Canvas `index-B32Mc3uX.js`): every blur on the phone
+  screen waits for the first touch (launch-made blurs drew a dim rim and a haze until the drawer re-created them).
 - 2026-11-05 Launch band and list numbers (PR #122, merged `1bc289a`, deployed Canvas `index-CYQrjuRG.js`): scroll-edge
   blur starts at the first touch; older replies no longer clip two-digit list numbers.
 - 2026-11-05 Design run 3 (PR #120, merged `d996ea4`, deployed Canvas, live `index-CeqKF8qz.js` matches the merge build):

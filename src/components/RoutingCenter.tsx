@@ -256,7 +256,9 @@ export default function RoutingCenter() {
     const scroll = page.current?.querySelector<HTMLElement>('.rc-scroll'), large = scroll?.querySelector('.large-title');
     if (page.current) { page.current.scrollTop = 0; scroll?.scrollTo(0, large ? Math.min(scroll.scrollTop, large.getBoundingClientRect().bottom - scroll.getBoundingClientRect().top + scroll.scrollTop) : 0); }
     // The shared phone title is stable across sections; direct entry never invents a Back target.
-    if (phone && open) page.current?.querySelector<HTMLElement>('.phone-navigation h1')?.focus({ preventScroll: true });
+    // A section chosen from the tabs keeps focus on its tab (VoiceOver says which section is selected); arriving from
+    // elsewhere, focus goes to the page title.
+    if (phone && open && !document.activeElement?.closest('.phone-sections')) page.current?.querySelector<HTMLElement>('.phone-navigation h1')?.focus({ preventScroll: true });
   }, [section]); // eslint-disable-line react-hooks/exhaustive-deps
   // Phones: an open provider, Usage and Diagnostics are pages over their place. Back (or Safari's edge swipe) closes them.
   const drill = phone && (providerOpen || section !== 'models');
@@ -301,6 +303,8 @@ export default function RoutingCenter() {
 
 
 
+      {/* Before the list in Tab and reading order (search, then results); CSS shows it at the bottom. */}
+      {phone && <footer ref={setSearchHost} className="phone-page-search rc-search-footer" aria-label={section === 'providers' ? providerOpen ? 'Provider model search' : 'Provider search' : 'Model search'} />}
       <div className="rc-scroll">
       {/* Phones: the large title scrolls away into the bar; the section tabs stay pinned below the bar. */}
       {phone && !providerOpen && <><LargeTitle title="Router" /><div className="phone-sections-bar"><PhoneSections label="Router sections" active={tabOf(section)} items={SECTIONS.map(([id,label]) => ({ id, label }))} onSelect={id => go(id as RoutingSection)} /></div></>}
@@ -342,7 +346,6 @@ export default function RoutingCenter() {
 
       </ScreenBoundary>
       </div>
-      {phone && <footer ref={setSearchHost} className="phone-page-search rc-search-footer" aria-label={section === 'providers' ? providerOpen ? 'Provider model search' : 'Provider search' : 'Model search'} />}
     </section>
   );
 }

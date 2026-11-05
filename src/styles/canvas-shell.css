@@ -444,7 +444,7 @@
 @media(forced-colors:active){ .app[data-lumen-canvas-shell] .phone-sections { scrollbar-width:auto;scrollbar-color:auto;mask-image:none;-webkit-mask-image:none; } }
 @media(max-width:899px){ .app[data-lumen-canvas-shell] .hub-page:has(> .phone-navigation) > .hub-scroll { padding-top:12px; } .app[data-lumen-canvas-shell] .hub-page:has(> .phone-navigation) > .hub-scroll:has(> .large-title) { padding-top:0; } }
 
-@media(max-width:899px){ .app[data-lumen-canvas-shell] .rc-page > .phone-page-search { width:100%;margin-inline:0; } }
+@media(max-width:899px){ .app[data-lumen-canvas-shell] .rc-page > .phone-page-search { width:100%;margin-inline:0;order:1; } }
 /* Every contextual Search owns its clear action; Safari must not add a second glyph. */
 .app[data-lumen-canvas-shell] .phone-page-search input::-webkit-search-cancel-button { display:none; }
 /* Document Canvas: the file name reads as the title; the document switcher stays quiet beside the tools. */

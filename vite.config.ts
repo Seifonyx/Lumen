@@ -63,9 +63,9 @@ function canvasPublic(): Plugin | false {
         .replace("if (s.theme === 'black') { root.dataset.theme = 'dark'; root.dataset.appearance = 'black'; }", "if (s.theme === 'black') root.dataset.theme = 'dark';")
         // The status bar is the page's own white or dark grey: iOS fills the strip under it with theme-color, and the
         // ordinary build's greys showed there as a band over the Canvas page (owner, 2026-11-05).
-        .replace("{ light: '#f6f7f9', dark: '#0d0f12', black: '#000000' }[s.theme]", "{ light: '#ffffff', dark: '#1f1f21', black: '#1f1f21' }[s.theme]")
+        .replace("{ light: '#f6f7f9', dark: '#0d0f12', black: '#000000' }[s.theme]", "{ light: '#ffffff', dark: '#161618', black: '#161618' }[s.theme]")
         .replace('<meta name="theme-color" content="#f6f7f9"', '<meta name="theme-color" content="#ffffff"')
-        .replace('<meta name="theme-color" content="#0d0f12"', '<meta name="theme-color" content="#1f1f21"')
+        .replace('<meta name="theme-color" content="#0d0f12"', '<meta name="theme-color" content="#161618"')
         // The Lumen mark's small-size drawing for the browser tab (public-canvas/favicon.svg).
         .replace('<link rel="icon" href="/icon.svg" type="image/svg+xml" />', '<link rel="icon" href="/favicon.svg" type="image/svg+xml" />')
         .replace('<html ', '<html data-lumen-canvas data-lumen-canvas-foundation ')

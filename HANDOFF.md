@@ -10,14 +10,15 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `feature/resume-where-you-left` (PR open; ships under standing authority once CI is green on its head).
-  A relaunch reopens where you left off (DESIGN.md → Product). Verified: unit tests, `resume` suite in Chromium and
-  WebKit on the Canvas build, related navigation/chat suites locally; CI runs everything (store/screen-history change).
-  **Not verified on a physical iPhone:** a Home Screen app ended by iOS (switch apps for a while, or swipe it away in the
-  app switcher) should reopen at the same message; a place (Router, Library, Settings) reopens with the menu button.
-- Still open: **the launch band is still there in Light and Dark** on the owner's iPhone after #120, #122, #124 and
-  #126. Next step offered to the owner: a diagnostic build (audit N-06). Waiting on the owner's iPhone: the darker grey
-  Dark (#130), the touch feedback (#128), the Browse all tools medium detent.
+- **Branch:** none in progress. Start the next task from `origin/main`.
+- Waiting on the owner's iPhone (Home Screen app), PR #132 (live): read halfway through a long chat, leave Lumen for a
+  while or swipe it away in the app switcher, reopen: same paragraph, no movement. Same from Router or Library (menu
+  button, no Back). New chat or signing out, then relaunch: a new chat. Also still waiting: the darker grey Dark
+  (#130), the touch feedback (#128), the Browse all tools medium detent.
+- Open: **the launch band is still there in Light and Dark** on the owner's iPhone after #120, #122, #124 and #126.
+  Next step offered: a diagnostic build that colours each candidate layer (audit N-06).
+- Native-iOS audit (2026-11-05, https://claude.ai/artifact/PK7jQcsYY8MEAzbibHivp7): Stage 1 next items are silent
+  updates (needs #132, now live), first-frame glass + band diagnostic, haptics/switch semantics, hardware-keyboard send.
 
 ## Next
 
@@ -98,6 +99,13 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - Excluded: Arabic interface, separate chat folders, message-list icon/count, chat-tag badges.
 
 ## Recently shipped
+
+- 2026-11-05 Where you left off (PR #132, merged `510d7fe`, deployed Canvas, live `index-BppjgJv8.js` matches the merge
+  build): a relaunch reopens the same chat at the same message, or the same workspace or drawer place, as a root
+  (`src/lib/resume.ts`; DESIGN.md → Product). No time limit; sign-out, other accounts, incognito, New chat and deleted
+  chats end it. Remembered spot drawn in the first frame; Safari keeps it while older messages load. Startup JS budget
+  18.25 (measured 18.1). Suite `resume` (Canvas phone, Chromium + WebKit; relaunch = fresh tab, the known Linux WebKit
+  reload crash). Physical iPhone not yet checked.
 
 - 2026-11-05 Darker grey Dark (PR #130, merged `96169d7`, deployed Canvas `index-C1X7Fis1.js`): page #161618, fills
   #202023 / #2a2a2d / #353539; status bar, launch screens and manifest follow.

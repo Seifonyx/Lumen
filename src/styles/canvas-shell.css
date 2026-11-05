@@ -148,9 +148,6 @@
  [dir='rtl'] .app[data-lumen-canvas-shell].drawer-open > :is(.main, .hub-page, .settings-page, .rc-page) { transform: translateX(calc(-1 * var(--cv-drawer))); }
  /* Beside the drawer the screen sits under the scrim: no live blur to redraw while it moves. */
  .app[data-lumen-canvas-shell]:is(.drawer-open, [data-drawer-moving]) > :is(.main, .hub-page, .settings-page, .rc-page) * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
- /* Nor before the first touch: Safari draws a blur made at launch wrong (a dim rim on the glass buttons and a haze, or a
-    black band, across the top) until it is made again, as closing the drawer does (owner recordings, 2026-11-05). */
- html.glass:not([data-edge-ready]) .app[data-lumen-canvas-shell] > :is(.main, .hub-page, .settings-page, .rc-page) * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
  .app[data-lumen-canvas-shell] .cv-nav .menu[popover] [role='menuitem'] { min-height: 44px; }
  .app[data-lumen-canvas-shell] .cv-nav .chat-row:not(.active):not(:focus-within):not(.menu-open) .row-menu { opacity: 0; pointer-events: none; }
  html.glass .app[data-lumen-canvas-shell] .cv-nav { background: linear-gradient(color-mix(in srgb,var(--bg) 94%,transparent),color-mix(in srgb,var(--bg) 94%,transparent)) padding-box,var(--glass-rim) border-box; -webkit-backdrop-filter: var(--glass-filter-strong); backdrop-filter: var(--glass-filter-strong); }

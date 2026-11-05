@@ -80,8 +80,9 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // code-block Wrap toggle and the phone All chats toolbar (measured 34.59). Runs 1–3 first removed every dead or
 // overridden rule found (old Library grid, settings-content, tx-count, duplicates), which paid for runs 1 and 2.
 // iOS touch feedback and the grey Dark (owner, 2026-11-05): canvasCss 34.75 → 35.25 for the shared press styles
-// (swell, row light, card sink, dim, switch knob), measured 34.8.
-const BUDGET = { startupJs: 16.5, startupCss: 20, routingCenter: 9, canvasCss: 35.25 };
+// (swell, row light, card sink, dim, switch knob), measured 34.8; startupJs 16.5 → 17.5 for the touch engine
+// (lib/press.ts), which must be there for the first touch (measured 17.0).
+const BUDGET = { startupJs: 17.5, startupCss: 20, routingCenter: 9, canvasCss: 35.25 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

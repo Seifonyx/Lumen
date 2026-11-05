@@ -420,15 +420,15 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(120 120 128 / 
   html.glass[data-lumen-canvas] .app .composer-wrap:not([data-composer-state='expanded'])[data-lumen-canvas-composer] .composer {
     background: var(--lg-tint); -webkit-backdrop-filter: var(--lg-filter); backdrop-filter: var(--lg-filter);
   }
-  /* iOS 26 scroll edge, top and bottom: what passes under the bar and behind the message box blurs progressively and
-     dims only lightly, so it never reads as a band (owner, 2026-10-31 and 2026-11-05 reference). The blur fades out
-     through a mask; while a reply streams the edges drop the blur, which Safari would redraw on every word. */
+  /* iOS 26 scroll edge, top and bottom: what passes under the bar and behind the message box blurs and dims only
+     lightly, so it never reads as a band (owner, 2026-10-31 and 2026-11-05 reference). No mask on the blurred layer:
+     Safari painted a masked backdrop black at launch until the drawer forced a repaint (owner recording, 2026-11-05),
+     so the blur ends at the bar's edge, as in the reference. While a reply streams the blur pauses. */
   html.glass[data-lumen-canvas] .app .main > .topbar::before, html.glass[data-lumen-canvas] .app .main > .composer-wrap::before {
-    display: block; inset: 0 0 -24px; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    background: linear-gradient(var(--edge, 180deg), color-mix(in srgb, var(--bg) 55%, transparent), transparent);
-    -webkit-mask-image: linear-gradient(var(--edge, 180deg), #000 50%, transparent); mask-image: linear-gradient(var(--edge, 180deg), #000 50%, transparent);
+    display: block; inset: 0; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); -webkit-mask-image: none; mask-image: none;
+    background: linear-gradient(var(--edge, 180deg), color-mix(in srgb, var(--bg) 45%, transparent), color-mix(in srgb, var(--bg) 10%, transparent));
   }
-  html.glass[data-lumen-canvas] .app .main > .composer-wrap::before { --edge: 0deg; inset: -28px 0 0; }
+  html.glass[data-lumen-canvas] .app .main > .composer-wrap::before { --edge: 0deg; inset: -12px 0 0; }
   html.glass[data-lumen-canvas].streaming .app .main > :is(.topbar, .composer-wrap)::before { -webkit-backdrop-filter: none; backdrop-filter: none; }
   /* No chat name in the bar (incognito keeps its label). */
   html.glass[data-lumen-canvas] .app .main > .topbar .topbar-center > :not(.welcome-route) { display: none; }

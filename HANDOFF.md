@@ -10,10 +10,12 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start the next task from `origin/main`. Remaining from design run 2: sheet detents
-  (medium/large) and the owner's iPhone check of the new glass and scroll edge (blur cannot be judged off-device). Open
-  accessibility items from run 1: a Router section change refocuses the unchanged title, phone model search is last in
-  Tab order, the Selected state is exposed two ways, the drawer focus trap needs an in-browser check.
+- **Branch:** `design/run3-finish` (owner, 2026-11-05: "do all" + a black fade at the top on first launch that
+  disappears after opening the drawer). Done: scroll edge without a mask (the masked backdrop painted black at launch);
+  medium sheet detent (model picker, Browse all tools); Router tabs keep focus, model search first in Tab order,
+  Selected exposed once (aria-current); drawer focus trap verified in a browser (no change); "Balanced" fits at 320;
+  short inline code stays on one line; code Wrap toggle; All chats search on its own line on phones. Already done
+  earlier: Tools "Set up" chevron, one-model Router. Canvas CSS budget 34.5 → 34.75 (recorded in canvas-budget.mjs).
 
 ## Next
 
@@ -48,12 +50,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - [ ] Owner to confirm on the iPhone (PR #77, live): tapping the model and Expand while writing keeps the chat and
       opens them; the top fade is no longer a band. Neither reproduced in Chromium or WebKit emulation; the fix targets
       Safari's late blur/click order and `composer.cjs` replays it. If it still happens, get a screen recording.
-- Polish backlog from the screen-by-screen audit of 2026-10-31 (each checked in the code and the production build;
-  owner to pick; ring, resize grip, tokens wording, Library lines and incognito label done on `design/consistent-look`):
-  Tools "Set up" uses an external ↗ for an in-app page; Router Routing's "Balanced" segment breaks mid-word at 320 px;
-  inline code breaks mid-formula; All chats search and Chats/Archived share one cramped row on phones; no home-screen
-  shortcuts in either manifest; long code lines scroll with no wrap option; Router with one model is mostly empty
-  space.
+- Polish backlog from the 2026-10-31 audit: all done except home-screen shortcuts in the manifests (iOS ignores them).
 - [ ] Owner, on the iPhone (PR #81, live): search a word from an old message; the result shows the line and opens
       at that message below the glass bar. Chromium and WebKit emulation pass; no physical device yet.
 - [ ] Owner, on the iPhone (PR #83, live): tap the model name under a reply; the Answer details sheet sits clear of the

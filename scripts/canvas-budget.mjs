@@ -76,7 +76,10 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // iOS Home Screen stack (owner recording, 2026-11-04): startupJs 16 → 16.5. iOS 26 gives Home Screen apps Safari's own
 // edge swipe, which went Back by itself over stale snapshots; the stack now lives in memory there (screen-history.ts),
 // which the first screen needs (measured 15.98).
-const BUDGET = { startupJs: 16.5, startupCss: 20, routingCenter: 9, canvasCss: 34.5 };
+// Design run 3 (owner, 2026-11-05: "do all"): canvasCss 34.5 → 34.75 for short inline code kept on one line, the
+// code-block Wrap toggle and the phone All chats toolbar (measured 34.59). Runs 1–3 first removed every dead or
+// overridden rule found (old Library grid, settings-content, tx-count, duplicates), which paid for runs 1 and 2.
+const BUDGET = { startupJs: 16.5, startupCss: 20, routingCenter: 9, canvasCss: 34.75 };
 
 const gz = (dir, file) => gzipSync(readFileSync(join(dir, file))).length / 1024;
 function startup(dir) {

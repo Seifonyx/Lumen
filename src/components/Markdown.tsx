@@ -80,6 +80,9 @@ function Markdown({ text, streaming, messageId,knowledgeSources,onSource }: { te
       setUi({ runner: { lang: runBtn.dataset.runCode || '', code } });
       return;
     }
+    // Long lines: Wrap fits them to the screen instead of scrolling sideways (pressed again, they scroll).
+    const wrap = (e.target as HTMLElement).closest('[data-wrap-code]') as HTMLButtonElement | null;
+    if (wrap) { const on = wrap.getAttribute('aria-pressed') !== 'true'; wrap.setAttribute('aria-pressed', String(on)); wrap.closest('.code-block')?.classList.toggle('wrapped', on); return; }
     const btn = (e.target as HTMLElement).closest('[data-copy-code]') as HTMLButtonElement | null;
     if (!btn) return;
     const code = btn.closest('.code-block')?.querySelector('code')?.textContent || '';

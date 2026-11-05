@@ -19,7 +19,10 @@ function scrolledInside(el: Element | null, sheet: HTMLElement) {
   return false;
 }
 
-export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () => void, enabled = true, scrim?: RefObject<HTMLElement | null>) {
+// With `detent`, a tall sheet opens at iOS's medium detent (about half the screen): dragging up grows it to its full
+// height, dragging down goes from full to medium and from medium away. The position `y` runs from 0 (full height)
+// through `m` (medium: the sheet is m px shorter, its content still scrolls) to beyond `m` (the medium sheet leaving).
+export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () => void, enabled = true, scrim?: RefObject<HTMLElement | null>, detent = false) {
   const close = useRef(onClose);
   close.current = onClose;
   useEffect(() => {
@@ -27,6 +30,18 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
     if (!enabled || !el) return;
     let start: { y: number; x: number; id: number; handle: boolean; base: number } | null = null;
     let y = 0, dragging = false, anim: Motion | null = null, closing = false;
+    // Medium detent only for a sheet taller than about 70% of the screen. Measured at its own height: when this
+    // effect runs again over the same sheet, a medium sheet's inline size is cleared first (and medium restored).
+    const at = el.dataset.detent;
+    if (detent && at) { el.style.maxHeight = ''; el.style.transform = ''; }
+    const full = el.offsetHeight, m = detent && full > innerHeight * 0.7 ? Math.round(full - innerHeight * 0.55) : 0;
+    // At medium the sheet is really shorter (its content still scrolls to the end). A sheet pinned at the top would
+    // shrink away from the bottom edge, so it also moves down by what its bottom rose (`drop`: m for a top-pinned
+    // sheet, 0 for one that sits on the bottom edge).
+    let drop = 0;
+    // (Layout offsets, not on-screen boxes: the sheet may still be sliding in.)
+    const bottom = () => el.offsetTop + el.offsetHeight;
+    if (m) { const before = bottom(); el.style.maxHeight = `${full - m}px`; drop = Math.max(0, before - bottom()); el.style.maxHeight = ''; }
     const speed = new Velocity();
     // The dimmed background lightens as the sheet goes, so nothing dark is left behind once it's gone. A
     // separate scrim fades; a backdrop that contains the sheet has its colour faded (its opacity would fade
@@ -41,9 +56,13 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
     };
     const frames = (v: number): [HTMLElement | null, Keyframe][] => {
       // Keep the background depth connected to the sheet until it has fully left the screen.
-      const k = v > 0 ? Math.max(0, 1 - v / (el.offsetHeight + 120)) : 1;
+      // (The background stays fully dimmed down to the medium detent.)
+      const t = v - m;
+      const k = t > 0 ? Math.max(0, 1 - t / (el.offsetHeight - m + 120)) : 1;
       const b = backdrop(), h = holder();
-      return [[el, { transform: `translateY(${v}px)` }], [b, { opacity: String(k) }], [h, { backgroundColor: h ? tint(h, k) : '' }]];
+      const shrink = m ? Math.min(m, Math.max(0, v)) : 0, move = v < 0 || !m ? v : drop * shrink / m + Math.max(0, v - m);
+      const sheetFrame: Keyframe = m ? { transform: `translateY(${move}px)`, maxHeight: `${full - shrink}px` } : { transform: `translateY(${v}px)` };
+      return [[el, sheetFrame], [b, { opacity: String(k) }], [h, { backgroundColor: h ? tint(h, k) : '' }]];
     };
     const set = (v: number) => {
       y = v;
@@ -51,7 +70,8 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
       const b = backdrop(), h = holder();
       if (b) b.style.transition = 'none';
       if (h) h.style.transition = 'none';
-      if (Math.abs(v) < 0.01) { el.style.transform = ''; if (b) b.style.opacity = ''; if (h) h.style.backgroundColor = ''; return; }
+      if (Math.abs(v) < 0.01) { el.style.transform = ''; el.style.maxHeight = ''; if (b) b.style.opacity = ''; if (h) h.style.backgroundColor = ''; if (m) el.dataset.detent = 'full'; else delete el.dataset.detent; return; }
+      if (m) el.dataset.detent = v > 0 && v <= m + 1 ? 'medium' : 'moving';
       frames(v).forEach(([n, kf]) => { if (n) Object.assign(n.style, kf); });
     };
     // Released: the rest of the motion runs on the graphics thread (see springTo).
@@ -80,7 +100,8 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
       if (!dragging) {
         if (Math.abs(x - start.x) > Math.abs(ddy) || Math.abs(ddy) < 6) { if (Math.abs(x - start.x) > 10) start = null; return; }
         // Upward from the content scrolls it; upward from the grab bar or header rubber-bands.
-        if (ddy < 0 && !start.handle) { start = null; return; }
+        // At the medium detent, an upward drag anywhere grows the sheet, as in iOS.
+        if (ddy < 0 && !start.handle && !(m && start.base > 0)) { start = null; return; }
         dragging = true;
         // Dragging from a field: no keyboard popping up as the sheet goes.
         if (document.activeElement instanceof HTMLInputElement && el.contains(document.activeElement)) document.activeElement.blur();
@@ -96,18 +117,26 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
       start = null; dragging = false;
       if (!was) return;
       const v = speed.get();
-      const h = el.offsetHeight;
+      const h = full - m;
       const projected = y + v * PROJECT_MS;
-      if (y > 0 && (projected > h * 0.5 || (v > FLICK && y > 8))) {
+      // From a detent, dismissing takes a firmer flick than changing height.
+      const away = m ? FLICK * 1.5 : FLICK;
+      // Detents: a flick moves one step (full, medium, away); otherwise the stop nearest to where it would land.
+      if (m && y <= m && !(v > away && y > m - 8) && projected < m + full * 0.5) {
+        const to = v < -FLICK ? 0 : v > FLICK ? m : projected < m / 2 ? 0 : m;
+        settle(to, v, () => set(to));
+        return;
+      }
+      if (y > m && (projected > m + full * 0.5 || (v > away && y > m + 8)) || (m && v > away && y > m - 8)) {
         closing = true;
         haptic();
         // (No blur behind it while it goes: Safari can draw a fading blurred layer as a black flash.)
         const hb = holder();
         if (hb) { hb.style.setProperty('backdrop-filter', 'none'); hb.style.setProperty('-webkit-backdrop-filter', 'none'); }
         // (Well past its height: a sheet floating above the bottom edge must leave the screen completely.)
-        settle(h + 120, Math.max(v, 1.2), () => { if (closing) close.current(); }, { stiffness: 380, damping: 36 });
+        settle(m + h + 120, Math.max(v, 1.2), () => { if (closing) close.current(); }, { stiffness: 380, damping: 36 });
       } else {
-        settle(0, v, () => set(0));
+        settle(m, v, () => set(m));
       }
     };
     // An interrupted gesture restores the sheet even beyond the normal dismissal threshold.
@@ -116,8 +145,13 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
       start = null; dragging = false; closing = false;
       anim?.stop(); anim = null;
       speed.reset();
-      settle(0, 0, () => set(0));
+      const to = m && y > m / 2 ? m : 0;
+      settle(to, 0, () => set(to));
     };
+    if (m) set(at === 'full' ? 0 : m);
+    // Typing in a medium sheet (its search) grows it to full height, so the keyboard never covers what you type.
+    const grow = (e: FocusEvent) => { if (m && y > 0 && !dragging && (e.target as Element)?.matches?.('input, textarea')) settle(0, 0, () => set(0)); };
+    el.addEventListener('focusin', grow);
     const ts = (e: TouchEvent) => { const t = e.touches[0]; if (e.touches.length === 1) down(t.clientX, t.clientY, t.identifier, e.target); else cancel(); };
     const tm = (e: TouchEvent) => { const t = [...e.touches].find((x) => x.identifier === start?.id); if (t) move(t.clientX, t.clientY, e); };
     // Mouse: only from the grab bar or header (so text can still be selected).
@@ -135,6 +169,7 @@ export function useSheetDrag(sheet: RefObject<HTMLElement | null>, onClose: () =
     window.addEventListener('blur', cancel);
     return () => {
       anim?.stop();
+      el.removeEventListener('focusin', grow);
       el.removeEventListener('touchstart', ts);
       el.removeEventListener('touchmove', tm);
       el.removeEventListener('touchend', up);

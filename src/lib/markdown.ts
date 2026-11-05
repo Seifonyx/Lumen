@@ -79,8 +79,12 @@ marked.use({
       const run = runLang(language || '') ? `<button type="button" class="code-copy code-run" data-run-code="${escapeHtml(language || '')}">▶ Run</button>` : '';
       // Canvas: long lines scroll inside the block, so (as with tables) its code takes keyboard focus to scroll it.
       return CANVAS_SHELL
-        ? `<div class="code-block"><div class="code-head"><span>${escapeHtml(language || 'text')}</span><span class="code-actions">${run}<button type="button" class="code-copy" data-copy-code>Copy</button></span></div><pre tabindex="0" role="region" aria-label="Code${language ? `, ${escapeHtml(language)}` : ''}"><code class="hljs">${html}</code></pre></div>`
+        ? `<div class="code-block"><div class="code-head"><span>${escapeHtml(language || 'text')}</span><span class="code-actions">${run}<button type="button" class="code-copy code-wrap" data-wrap-code aria-pressed="false">Wrap</button><button type="button" class="code-copy" data-copy-code>Copy</button></span></div><pre tabindex="0" role="region" aria-label="Code${language ? `, ${escapeHtml(language)}` : ''}"><code class="hljs">${html}</code></pre></div>`
         : `<div class="code-block"><div class="code-head"><span>${escapeHtml(language || 'text')}</span><span class="code-actions">${run}<button type="button" class="code-copy" data-copy-code>Copy</button></span></div><pre><code class="hljs">${html}</code></pre></div>`;
+    },
+    // Canvas: short inline code (a formula, a name) never breaks across lines; longer code still wraps.
+    codespan({ text }: Tokens.Codespan) {
+      return CANVAS_SHELL && text.length <= 32 ? `<code class="nb">${escapeHtml(text)}</code>` : false;
     },
     link({ href, title, tokens }: Tokens.Link) {
       const text = this.parser.parseInline(tokens);

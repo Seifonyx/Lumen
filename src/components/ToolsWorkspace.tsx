@@ -114,7 +114,7 @@ export default function ToolPicker(props: ToolPickerProps) {
   const dialog = useRef<HTMLDivElement>(null), layer = useRef<HTMLDivElement>(null), search = useRef<HTMLInputElement>(null);
   const [phone] = useState(() => window.matchMedia('(max-width: 899px)').matches);
   useFocusScope(dialog, true, onClose);
-  useSheetDrag(dialog, onClose, phone);
+  useSheetDrag(dialog, onClose, phone, undefined, true);
   // Computers: straight into the search. Phones: no keyboard until the field is tapped, so the list stays in view.
   useLayoutEffect(() => { if (!phone && !window.matchMedia('(pointer: coarse)').matches) search.current?.focus({ preventScroll: true }); }, [phone]);
   // Opened from the + menu, whose row is gone by now: focus goes back to + when the picker closes.

@@ -10,12 +10,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/run3-finish` (owner, 2026-11-05: "do all" + a black fade at the top on first launch that
-  disappears after opening the drawer). Done: scroll edge without a mask (the masked backdrop painted black at launch);
-  medium sheet detent (model picker, Browse all tools); Router tabs keep focus, model search first in Tab order,
-  Selected exposed once (aria-current); drawer focus trap verified in a browser (no change); "Balanced" fits at 320;
-  short inline code stays on one line; code Wrap toggle; All chats search on its own line on phones. Already done
-  earlier: Tools "Set up" chevron, one-model Router. Canvas CSS budget 34.5 → 34.75 (recorded in canvas-budget.mjs).
+- **Branch:** none in progress. Start the next task from `origin/main`. Waiting on the owner's iPhone: the launch fade
+  (fixed in #120, only reproducible on a device), the glass and scroll edge, the Browse all tools medium detent.
 
 ## Next
 
@@ -96,6 +92,12 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - Excluded: Arabic interface, separate chat folders, message-list icon/count, chat-tag badges.
 
 ## Recently shipped
+
+- 2026-11-05 Design run 3 (PR #120, merged `d996ea4`, deployed Canvas, live `index-CeqKF8qz.js` matches the merge build):
+  launch fade fixed (no mask on the scroll-edge blur; Safari painted it black until a repaint); Browse all tools opens at
+  a medium detent (the model picker stays a plain sheet); Router tabs keep focus, model search first in Tab order,
+  Selected via aria-current; drawer focus trap verified; "Balanced" fits at 320; short inline code on one line; code
+  Wrap toggle; All chats search on its own line. Canvas CSS budget 34.75 KB gz. Physical iPhone not yet checked.
 
 - 2026-11-05 Design run 2 (PR #117 `319b6aa`, live `index-BzioBKkG.js`; PR #118 `ce61ebb`, live `index-B_4xJFYL.js`, both
   matching their merge builds): no Incognito text; iOS 26 glass material (clear tint, specular rim, inner edge glow;

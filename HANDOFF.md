@@ -10,12 +10,10 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/dark-and-press`: Dark is a cool grey (#1f1f21) and phones get iOS 26 touch feedback from one
-  owner, `lib/press.ts` (swell, row light, card sink, dim; see DESIGN.md Motion). The first-touch blur hold (#122,
-  #124) is removed, since it didn't remove the launch band. Open: **the launch band is still there in Light and Dark**
-  on the owner's iPhone after #120, #122, #124 and #126. Not caused by the blurs or the status-bar colour; the next
-  step is removing the top scroll-edge fade entirely to rule it out (offered to the owner). After merge and deploy,
-  waiting on the owner's iPhone: the grey Dark, the touch feedback, the Browse all tools medium detent.
+- **Branch:** none in progress. Start the next task from `origin/main`. Open: **the launch band is still there in Light
+  and Dark** on the owner's iPhone after #120, #122, #124 and #126 (not the blurs, not the status-bar colour). Next
+  step offered to the owner: remove the top scroll-edge fade entirely to rule it out. Waiting on the owner's iPhone: the
+  grey Dark and the touch feedback (#128), the Browse all tools medium detent.
 
 ## Next
 
@@ -97,6 +95,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Recently shipped
 
+- 2026-11-05 Grey Dark and iOS touch feedback (PR #128, merged `63fb98f`, deployed Canvas `index-B0bJcQ4x.js`): Dark
+  page #1f1f21; phones swell / light / sink / dim by look (`lib/press.ts`, DESIGN.md Motion); first-touch blur hold removed.
 - 2026-11-05 Status bar colour (PR #126, merged `363232f`, deployed Canvas `index-BzA_hr83.js`): Canvas `theme-color`
   is the page's #fff/#000; the old #f6f7f9/#0d0f12 drew the launch band. (#120/#122/#124 blur changes didn't touch it.)
 - 2026-11-05 Launch glass (PR #124, merged `e27ba74`, deployed Canvas `index-B32Mc3uX.js`): every blur on the phone

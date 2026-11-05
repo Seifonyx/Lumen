@@ -172,8 +172,8 @@ devices): every Back swipe and the drawer's swipe go through it, and the old per
 - Tests: `tests/e2e/native-navigation.cjs` (Chromium and WebKit, 390/320, Light/Dark, Reduce Motion, a Safari tab).
 
 Only replies appended to the open chat animate in (220 ms); streaming text fades in over 240 ms. Only replies appended to the open chat animate in (220 ms); streaming text fades in over 240 ms.
-Sheets track the finger. Tall sheets (the model picker, Browse all tools) open at iOS's medium detent (about half the
-screen; an upward drag or focusing their search grows them to full height, a downward drag goes full → medium → away). Decorative animation pauses offscreen, when hidden or under Reduce Motion. Theme changes
+Sheets track the finger. Browse all tools (the one tall sheet) opens at iOS's medium detent (about half the
+screen; an upward drag or focusing its search grows it to full height, a downward drag goes full → medium → away). Decorative animation pauses offscreen, when hidden or under Reduce Motion. Theme changes
 switch instantly. SVG: animate an inner element, never one with a `transform` attribute.
 
 ## Where styles live

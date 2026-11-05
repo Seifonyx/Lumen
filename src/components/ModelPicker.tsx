@@ -76,7 +76,7 @@ export default function ModelPicker({ value, onChange, label, compact, align = '
   const search = useRef<HTMLInputElement>(null);
   useFocusScope(pop,open,()=>setOpen(false));
   const scrim = useRef<HTMLDivElement>(null);
-  useSheetDrag(pop, () => setOpen(false), open && sheet, scrim, true);
+  useSheetDrag(pop, () => setOpen(false), open && sheet, scrim);
 
   const statusOf = (id: string) => {
     const u = usage?.models[id];

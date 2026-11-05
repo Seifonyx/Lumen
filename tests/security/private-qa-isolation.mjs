@@ -244,7 +244,12 @@ try {
     'src/components/Markdown.tsx', 'src/lib/sheet-drag.ts',
     // Owner, 2026-11-05 (black band at launch): glass marks the first touch on <html> so the scroll-edge blur starts
     // then. UI only: one attribute on the page, no data, auth, network or storage owner changes.
-    'src/lib/glass.ts'];
+    'src/lib/glass.ts',
+    // Where you left off (owner-assigned 2026-11-05, audit item N-02): a relaunch reopens the same chat at the same
+    // message or the same place. One device-local snapshot per account (`mr.resume.<uid>`: opaque ids and one scroll
+    // offset, no text, drafts or keys), cleared on sign-out and by incognito; ChatView's in-session reading memory moved
+    // to a module. No auth, network, sync, rules or Firestore change.
+    'src/lib/resume.ts', 'src/lib/reading-position.ts'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');

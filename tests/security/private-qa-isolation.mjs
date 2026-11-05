@@ -241,7 +241,10 @@ try {
     'src/lib/db.ts',
     // Design run 3 (owner, 2026-11-05): the code block's Wrap toggle (a class on the rendered block) and the iOS medium
     // sheet detent in the shared sheet drag. UI only: no data, auth, network or storage owner changes.
-    'src/components/Markdown.tsx', 'src/lib/sheet-drag.ts'];
+    'src/components/Markdown.tsx', 'src/lib/sheet-drag.ts',
+    // Owner, 2026-11-05 (black band at launch): glass marks the first touch on <html> so the scroll-edge blur starts
+    // then. UI only: one attribute on the page, no data, auth, network or storage owner changes.
+    'src/lib/glass.ts'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');

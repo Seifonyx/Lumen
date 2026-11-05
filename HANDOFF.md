@@ -10,9 +10,10 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start the next task from `origin/main`. Waiting on the owner's iPhone: no band or haze
-  at cold launch and the glass buttons at full brightness from the start (#124; device-only), the Browse all tools
-  medium detent.
+- **Branch:** `design/status-bar-colour`: the Canvas status bar (`theme-color`, set in index.html and settings.ts) is
+  now the page's own #fff/#000, not the ordinary build's #f6f7f9/#0d0f12. The owner's band at launch measured as a
+  full-width strip of exactly that grey under the status bar, present for weeks, unaffected by the blur fixes (#120,
+  #122, #124). After merge and deploy, nothing is in progress. Waiting on the owner's iPhone: no band at launch.
 
 ## Next
 

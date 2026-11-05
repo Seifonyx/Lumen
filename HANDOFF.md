@@ -10,18 +10,18 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `feature/quiet-updates` (PR open; ships under standing authority once CI is green on its head). Quiet,
-  safe app updates (DESIGN.md → Product → Updates): no banner on Canvas, nothing reloads under your work, Update now in
-  Settings → General with a reason when it must wait. Verified: unit tests (incl. `sw.test.mjs`), `updates` with the
-  real service worker (Canvas Chromium + WebKit, ordinary Chromium), `resume` and navigation suites.
-  **Not verified on a physical iPhone:** see the procedure in the PR. Known limit: a refresh with the app open keeps
-  the running version (the browser only hands over once no window runs it); Update now covers it.
-- Waiting on the owner's iPhone: the darker grey Dark (#130), the touch feedback (#128), the Browse all tools medium
-  detent. #132 (where you left off) is owner-confirmed on the iPhone.
+- **Branch:** none in progress. Start the next task from `origin/main`.
+- Waiting on the owner's iPhone (Home Screen app), PR #134 (live): after the next deploy, no banner appears; Settings
+  shows "Update ready" on the account row; Update now during a reply waits and says why; when idle it returns to
+  Settings → General up to date, and the chat opens at the same place; with an update waiting, swiping Lumen away and
+  reopening opens the new version with no prompt. (This deploy itself is the first one users get quietly only from
+  the next release on: today's installed copies still run the old update code once.)
+- Also waiting on the iPhone: the darker grey Dark (#130), the touch feedback (#128), the Browse all tools medium
+  detent. #132 (where you left off) is owner-confirmed.
 - Open: **the launch band is still there in Light and Dark** on the owner's iPhone after #120, #122, #124 and #126.
   Next step offered: a diagnostic build that colours each candidate layer (audit N-06).
-- Native-iOS audit (2026-11-05, https://claude.ai/artifact/PK7jQcsYY8MEAzbibHivp7): after this, Stage 1 has first-frame
-  glass + band diagnostic, haptics/switch semantics and hardware-keyboard send.
+- Native-iOS audit (2026-11-05, https://claude.ai/artifact/PK7jQcsYY8MEAzbibHivp7): Stage 1 remaining: first-frame glass +
+  band diagnostic, haptics/switch semantics, hardware-keyboard send.
 
 ## Next
 
@@ -102,6 +102,14 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - Excluded: Arabic interface, separate chat folders, message-list icon/count, chat-tag badges.
 
 ## Recently shipped
+
+- 2026-11-06 Quiet, safe updates (PR #134, merged `fe54c21`, deployed Canvas, live `index-ClWumcuP.js` and `sw.js`
+  version `7c176d3cf709` match the merge build): no banner on Canvas; a new version waits and is used at the next start
+  after no window runs the old one, or from Settings → General → Update now, which waits with a reason while work exists
+  only in memory (`src/lib/update-safety.ts`, owners register `useUpdateHold`). The previous version's files stay one
+  release for windows still running it. A start-up takeover was tried and dropped (Chromium holds it until the page
+  closes). Suites `updates` (real service worker behind a local proxy; WebKit through a dead proxy, so nothing leaves
+  the machine) and `offline`; `tests/unit/sw.test.mjs`. Physical iPhone not yet checked.
 
 - 2026-11-05 Where you left off (PR #132, merged `510d7fe`, deployed Canvas, live `index-BppjgJv8.js` matches the merge
   build): a relaunch reopens the same chat at the same message, or the same workspace or drawer place, as a root

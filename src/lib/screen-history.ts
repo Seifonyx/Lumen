@@ -6,6 +6,7 @@ import { cancelPageSwap } from './motion';
 import { useStore } from '../store';
 import { getRoutingScreen, restoreRoutingScreen, subscribeRoutingCenter } from './routing-center';
 import { isIOS, isStandalone } from './device';
+import { onResumed, resumeInProgress } from './resume';
 const KEY = 'lumenScreen';
 let entries = new Map<number, ReturnType<typeof capture>>();
 const views = new Map<number, { focus: HTMLElement | null; scrolls: [string, number][] }>();
@@ -220,7 +221,7 @@ export function installScreenHistory() {
   remember();
   const saveView = () => views.set(active, { focus: document.activeElement instanceof HTMLElement ? document.activeElement : null, scrolls: scrollSelectors.map(selector => [selector, document.querySelector(selector)?.scrollTop || 0]) });
   const check = () => {
-    if (applying) return;
+    if (applying || resumeInProgress()) return;
     if (owner !== useStore.getState().user?.uid) { owner = useStore.getState().user?.uid; applying = true; reconcileBackLayers(null); clearScreenMemory(); clearBackLayerRestore(); views.clear(); useStore.setState({ page: null, settingsOpen: false, projectWorkspaceOpen: false, runner: null }); restoreRoutingScreen({ open: false, section: 'overview' }); remember(); previous = capture(); applying = false; return; }
     // A canceled/closed Settings visit cannot leave a provider target for a later general visit.
     // Target metadata travels with the existing in-memory snapshot, never the browser payload.
@@ -299,13 +300,16 @@ export function installScreenHistory() {
     }
   };
   commit = check;
+  // A relaunch that reopens where you left off (resume.ts) starts the history there: the restored screen is the
+  // session's first, a root like a place chosen in the drawer, with no Back to the new chat it replaced.
+  onResumed(() => { if (applying || owner !== useStore.getState().user?.uid) return; remember(); previous = capture(); drawerOpen = useStore.getState().sidebarOpen; });
   const a = useStore.subscribe(check), b = subscribeRoutingCenter(check), c = subscribeBackLayers(check);
   window.addEventListener('popstate', pop);
   window.addEventListener('pagehide', clearTraversal);
   return () => {
     ++replay;
     clearTraversal();
-    replace = null; commit = null; a(); b(); c();
+    replace = null; commit = null; onResumed(null); a(); b(); c();
     window.removeEventListener('popstate', pop);
     window.removeEventListener('pagehide', clearTraversal);
   };

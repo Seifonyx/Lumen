@@ -553,7 +553,7 @@ html[data-lumen-canvas] { --press-fill: color-mix(in srgb, var(--text) 10%, tran
   html[data-lumen-canvas] [data-press='card'].is-pressed { scale: .97; }
   html[data-lumen-canvas] [data-press='dim'].is-pressed { opacity: .35; }
   html[data-lumen-canvas] [data-press='row'].is-pressed { box-shadow: inset 0 0 0 100vmax var(--press-fill); }
-  html[data-lumen-canvas] [data-press]:active { transform: none; }
+  html[data-lumen-canvas] [data-press]:active { transform: none !important; }
   /* Switches: the knob stretches under the finger, as in iOS. */
   html[data-lumen-canvas] .switch::after { transition: inset-inline-start .3s cubic-bezier(.3, 1.3, .5, 1), scale .3s cubic-bezier(.3, 1.3, .5, 1), background .2s; }
   html[data-lumen-canvas] .switch:active::after { scale: 1.3 1.05; }

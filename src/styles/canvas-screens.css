@@ -410,9 +410,9 @@ html.glass[data-lumen-canvas][data-theme='dark'] {
  * On black a native glass control is #1c1c1c with a bright 1 px top rim and a short sheen fading into it; nothing
  * darkens or blurs around it. The bar carries no title. The message box floats 20 pt from the edges, 52 pt tall at
  * rest, with + · message · dictate · talk; the model appears once it opens for writing. */
-html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(120 120 128 / .2); --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 1.5px 1.5px 1px -1px rgb(255 255 255 / .4), inset -1.5px -1.5px 1px -1px rgb(255 255 255 / .16), inset 0 0 14px rgb(255 255 255 / .05); }
+html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(120 120 128 / .26); --lg-frost: rgb(30 30 32 / .74); --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 1.5px 1.5px 1px -1px rgb(255 255 255 / .4), inset -1.5px -1.5px 1px -1px rgb(255 255 255 / .16), inset 0 0 14px rgb(255 255 255 / .05); }
 @media (prefers-color-scheme: dark) {
-  html.glass[data-lumen-canvas]:not([data-theme='light']) { --lg-tint: rgb(120 120 128 / .2); --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 1.5px 1.5px 1px -1px rgb(255 255 255 / .4), inset -1.5px -1.5px 1px -1px rgb(255 255 255 / .16), inset 0 0 14px rgb(255 255 255 / .05); }
+  html.glass[data-lumen-canvas]:not([data-theme='light']) { --lg-tint: rgb(120 120 128 / .26); --lg-frost: rgb(30 30 32 / .74); --lg-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), inset 1.5px 1.5px 1px -1px rgb(255 255 255 / .4), inset -1.5px -1.5px 1px -1px rgb(255 255 255 / .16), inset 0 0 14px rgb(255 255 255 / .05); }
 }
 @media (max-width: 899px) {
   html.glass[data-lumen-canvas] .app .main > .topbar :is(.menu-btn, .topbar-trailing),
@@ -420,12 +420,16 @@ html.glass[data-lumen-canvas][data-theme='dark'] { --lg-tint: rgb(120 120 128 / 
   html.glass[data-lumen-canvas] .app .composer-wrap:not([data-composer-state='expanded'])[data-lumen-canvas-composer] .composer {
     background: var(--lg-tint); -webkit-backdrop-filter: var(--lg-filter); backdrop-filter: var(--lg-filter);
   }
-  /* No band: the scroll edge is a short, soft fade behind the bar's buttons (owner, 2026-10-31: the deep solid fade
-     read as a black band whenever a chat scrolled under it). */
-  html.glass[data-lumen-canvas] .app .main > .topbar::before {
-    inset: 0 0 -10px; -webkit-backdrop-filter: none; backdrop-filter: none; -webkit-mask-image: none; mask-image: none;
-    background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 82%, transparent), color-mix(in srgb, var(--bg) 45%, transparent) 55%, transparent);
+  /* iOS 26 scroll edge, top and bottom: what passes under the bar and behind the message box blurs progressively and
+     dims only lightly, so it never reads as a band (owner, 2026-10-31 and 2026-11-05 reference). The blur fades out
+     through a mask; while a reply streams the edges drop the blur, which Safari would redraw on every word. */
+  html.glass[data-lumen-canvas] .app .main > .topbar::before, html.glass[data-lumen-canvas] .app .main > .composer-wrap::before {
+    display: block; inset: 0 0 -24px; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    background: linear-gradient(var(--edge, 180deg), color-mix(in srgb, var(--bg) 55%, transparent), transparent);
+    -webkit-mask-image: linear-gradient(var(--edge, 180deg), #000 50%, transparent); mask-image: linear-gradient(var(--edge, 180deg), #000 50%, transparent);
   }
+  html.glass[data-lumen-canvas] .app .main > .composer-wrap::before { --edge: 0deg; inset: -28px 0 0; }
+  html.glass.streaming[data-lumen-canvas] .app .main > :is(.topbar, .composer-wrap)::before { -webkit-backdrop-filter: none; backdrop-filter: none; }
   /* No chat name in the bar (incognito keeps its label). */
   html.glass[data-lumen-canvas] .app .main > .topbar .topbar-center > :not(.welcome-route) { display: none; }
 
@@ -528,12 +532,9 @@ html[data-lumen-canvas] .app .usage-pie .usage-ring-track { stroke: color-mix(in
   html.glass[data-lumen-canvas] .app .markdown .code-block { border: 0; background: var(--native-fill); border-radius: var(--canvas-radius-card); }
   html.glass[data-lumen-canvas] .app .markdown .code-head { color: var(--text-3); }
   html.glass[data-lumen-canvas] .app :is(.code-copy, .code-run) { height: 44px; padding: 0 10px; border-radius: var(--canvas-radius-row); background: none; color: var(--text); }
-  html.glass[data-lumen-canvas] .app .code-actions { gap: 0; }
   html.glass[data-lumen-canvas] .app[data-lumen-canvas-shell] .markdown .table-wrap { border: 0; border-radius: 0; margin-inline: 0; }
   html.glass[data-lumen-canvas] .app .markdown :is(th, td) { border-bottom: .5px solid var(--native-sep); padding-inline: 0 1em; }
   html.glass[data-lumen-canvas] .app .markdown th { color: var(--text-3); font-size: .86em; }
   html.glass[data-lumen-canvas] .app .thinking-body { color: var(--text-2); }
-  html.glass[data-lumen-canvas] .app .composer-wrap .composer { --lg-tint: rgb(255 255 255 / .78); }
-  html.glass[data-lumen-canvas][data-theme='dark'] .app .composer-wrap .composer { --lg-tint: rgb(30 30 32 / .74); }
+  html.glass[data-lumen-canvas] .app .composer-wrap .composer { --lg-tint: var(--lg-frost, rgb(255 255 255 / .78)); }
 }
-@media (max-width: 899px) and (prefers-color-scheme: dark) { html.glass[data-lumen-canvas]:not([data-theme='light']) .app .composer-wrap .composer { --lg-tint: rgb(30 30 32 / .74); } }

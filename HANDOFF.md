@@ -10,11 +10,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `design/phase2-reading` (design run 2, owner 2026-11-05: "remove the incognito text", the glass "does not
-  look native"). Done: Incognito label removed; new glass material (clear tint, specular rim, inner edge glow, lighter
-  blur; frosted message box); frameless tables, filled code blocks with plain Run/Copy, quieter thought process;
-  drag-down dismisses the keyboard. Not done: sheet detents (medium/large); the owner's second reference screenshot never
-  arrived; glass blur is only judged on a device (Windows WebKit has no backdrop-filter). Open accessibility items from run 1's audit: a Router section change
+- **Branch:** `design/glass-scroll-edge` (design run 2, part 2). Part 1 shipped (PR #117, `319b6aa`, live
+  `index-BzioBKkG.js`): no Incognito text, new glass material, frameless tables, filled code blocks, quieter thinking,
+  drag-down dismisses the keyboard. Part 2, from the owner's iOS 26 reference screenshot (Claude app, reference only, not
+  to copy): progressive blur scroll edge at the top bar and behind the message box, glass tint slightly lighter in Dark.
+  Not done: sheet detents (medium/large). Glass blur is only judged on a device (Windows WebKit has no backdrop-filter). Open accessibility items from run 1's audit: a Router section change
   refocuses the unchanged "Router" title (screen readers don't hear the section), phone model search is last in Tab
   order, the Selected state is exposed two ways; the drawer focus trap needs an in-browser check.
 

@@ -36,7 +36,9 @@ with blur support) Canvas adds **glass** (`html.glass`, `src/lib/glass.ts`, `src
 composer in the iOS 26 style, the system font, and iOS grouped backgrounds. The material (`--lg-*` in
 `canvas-screens.css`) is an even clear tint with a specular rim (bright top-left, softer bottom-right) and a faint glow
 inside the edge, never a top sheen or a flat gray; small bar buttons are clear, the larger message box is frosted
-(denser tint) so a reply never reads through it. Reading on glass: code blocks are one filled block with plain-text
+(denser tint) so a reply never reads through it. At the top bar and behind the message box, the iOS 26 scroll edge:
+what passes under blurs progressively (a masked 8 px blur) and dims only lightly, so it never reads as a band; the
+blur pauses while a reply streams. Reading on glass: code blocks are one filled block with plain-text
 Run/Copy, tables have no frame (hairline rows), and dragging the conversation down while writing lets the keyboard go.
 
 ## Identity

@@ -147,6 +147,17 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
   }, [streaming]);
   // iPhone glass look: the chat scrolls under the floating bars.
   useEffect(() => watchGlassInsets(scroller.current?.closest('.main') as HTMLElement | null), [projectWorkspaceOpen, chat?.id]);
+  // Phones, as in iOS Messages: dragging the conversation down while writing lets the keyboard go (the draft stays).
+  useEffect(() => {
+    const el = scroller.current;
+    if (!CANVAS_SHELL || !el) return;
+    let y0: number | null = null;
+    const start = (e: TouchEvent) => { y0 = e.touches.length === 1 && document.activeElement?.matches('.composer textarea') ? e.touches[0].clientY : null; };
+    const move = (e: TouchEvent) => { if (y0 !== null && e.touches[0].clientY - y0 > 28) { y0 = null; (document.activeElement as HTMLElement | null)?.blur(); } };
+    el.addEventListener('touchstart', start, { passive: true });
+    el.addEventListener('touchmove', move, { passive: true });
+    return () => { el.removeEventListener('touchstart', start); el.removeEventListener('touchmove', move); };
+  }, [chat?.id]);
   useEffect(() => setUnseen(false), [chat?.id]);
 
   // While a reply streams, the view glides after the new text instead of jumping down a line at a time.
@@ -315,7 +326,7 @@ export default function ChatView({ onExpandSidebar }: ChatViewProps) {
         )}
         {(empty || isTemporaryChat(chat)) && (
           <button className="icon-btn new-chat-shortcut" onClick={()=>useStore.getState().toggleTemporaryChat()} aria-label={isTemporaryChat(chat)?'End incognito chat':'Start incognito chat'} aria-pressed={isTemporaryChat(chat)} title="Incognito · not saved, memory off. Your AI provider still receives messages.">
-          <EyeOff size={19} />{CANVAS_SHELL && <span className="incognito-label" aria-hidden="true">Incognito</span>}
+          <EyeOff size={19} />
         </button>
         )}
         </div>

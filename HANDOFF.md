@@ -10,9 +10,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start the next task from `origin/main`. Next approved step: design update run 2
-  (chat reading: model label, tables, jump-to-latest, code blocks, thought process; native interactions: long-press
-  message menu, sheet detents, keyboard). Open accessibility items from run 1's audit: a Router section change
+- **Branch:** `design/phase2-reading` (design run 2, owner 2026-11-05: "remove the incognito text", the glass "does not
+  look native"). Done: Incognito label removed; new glass material (clear tint, specular rim, inner edge glow, lighter
+  blur; frosted message box); frameless tables, filled code blocks with plain Run/Copy, quieter thought process;
+  drag-down dismisses the keyboard. Not done: sheet detents (medium/large); the owner's second reference screenshot never
+  arrived; glass blur is only judged on a device (Windows WebKit has no backdrop-filter). Open accessibility items from run 1's audit: a Router section change
   refocuses the unchanged "Router" title (screen readers don't hear the section), phone model search is last in Tab
   order, the Selected state is exposed two ways; the drawer focus trap needs an in-browser check.
 

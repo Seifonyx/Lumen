@@ -9,7 +9,7 @@ const now = Date.now(), day = 864e5;
 const fixture = [
   { id: 'c1', title: 'A week in Lisbon', createdAt: now - day, updatedAt: now - day, messages: [
     { id: 'u1', role: 'user', text: 'Plan a week in Lisbon', createdAt: now - day, files: [{ id: 'f1', name: 'Field notes.docx', kind: 'text', mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', size: 20480 }, { id: 'f2', name: 'Budget.csv', kind: 'text', mime: 'text/csv', size: 128, text: 'a,b' }] },
-    { id: 'a1', role: 'assistant', status: 'done', model: 'gemini:gemini-flash-latest', createdAt: now - day + 1000, text: 'Day 1: Alfama. Day 2: Belem.' }] },
+    { id: 'a1', role: 'assistant', status: 'done', model: 'gemini:gemini-flash-latest', createdAt: now - day + 1000, thinking: 'They want a relaxed pace, so one area a day. Sintra needs a full day; Belem fits a rainy morning.', text: ['## A week in Lisbon','','Here is a relaxed plan that mixes the classic sights with quieter neighbourhoods.','','**Day 1: Alfama.** Walk up to the castle in the morning, then lose yourself in the lanes on the way down.','','| Day | Area | Pace |','|---|---|---|','| 1 | Alfama | Easy |','| 2 | Belem | Easy |','| 3 | Sintra | Busy |','','```js','const days = ["Alfama", "Belem", "Sintra"].map((area, i) => ({ day: i + 1, area, pace: i === 2 ? "busy" : "easy" }));','```','','**Day 2: Belem.** The monastery, the tower and the custard tarts. Go early to beat the queues.','','**Day 3: Sintra.** A day trip by train: palaces, gardens and forest paths. Wear good shoes.','','- Buy a travel card for trams and trains.','- Tram 28 is lovely but crowded; ride it early.','- Many museums are free on Sunday mornings.'].join(String.fromCharCode(10)) }] },
   { id: 'c2', title: 'Kitchen renovation', createdAt: now - 2 * day, updatedAt: now - 2 * day, messages: [{ id: 'u2', role: 'user', text: 'hi', createdAt: now - 2 * day }] },
 ];
 const base = process.env.MR_TEST_URL || 'http://localhost:3000', out = process.env.SHOTS_OUT || 'tests/e2e/out/look';
@@ -38,6 +38,7 @@ const heights = { 320: 568, 390: 844 };
       }
     };
     if (want('chat')) await shot('chat');
+    if (want('conversation')) { await home(); if (width < 900) { await page.locator('.menu-btn:visible').first().click(); await page.waitForTimeout(300); } await page.locator('.cv-nav, .sidebar').first().getByText('A week in Lisbon', { exact: true }).first().click(); await page.waitForSelector('.msg.assistant'); await page.waitForTimeout(500); await page.evaluate(() => { const m = document.querySelector('.messages'); if (m) m.scrollTop = 120; }); await shot('conversation'); await page.evaluate(() => { const m = document.querySelector('.messages'); if (m) m.scrollTop = m.scrollHeight; }); await page.waitForTimeout(400); await shot('conversation-end'); await page.evaluate(() => { const m = document.querySelector('.messages'); if (m) m.scrollTop = 0; }); await page.locator('.thinking-toggle').first().click().catch(() => {}); await page.waitForTimeout(500); await shot('conversation-top'); }
     const place = async (name, sel) => { await home(); await openPlace(page, name); await page.waitForSelector(sel); await page.waitForTimeout(400); };
     if (want('router-models') || want('router-providers') || want('router-routing')) {
       await place('Router', '.rc-page');

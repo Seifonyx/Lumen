@@ -33,7 +33,11 @@ Two builds from one source. **Canvas** (`LUMEN_CANVAS=1`) is production. The **o
 it building and working, but design work targets Canvas. Canvas-only code sits behind `src/lib/canvas-presentation.ts`
 (swapped for its `.on.ts` module at build time) and Canvas-scoped CSS (`html[data-lumen-canvas]`). On iPhone (iOS 16+
 with blur support) Canvas adds **glass** (`html.glass`, `src/lib/glass.ts`, `src/glass.css`): Liquid Glass bars and
-composer in the iOS 26 style, the system font, and iOS grouped backgrounds.
+composer in the iOS 26 style, the system font, and iOS grouped backgrounds. The material (`--lg-*` in
+`canvas-screens.css`) is an even clear tint with a specular rim (bright top-left, softer bottom-right) and a faint glow
+inside the edge, never a top sheen or a flat gray; small bar buttons are clear, the larger message box is frosted
+(denser tint) so a reply never reads through it. Reading on glass: code blocks are one filled block with plain-text
+Run/Copy, tables have no frame (hairline rows), and dragging the conversation down while writing lets the keyboard go.
 
 ## Identity
 

@@ -11,20 +11,15 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 ## Now
 
 - **Branch:** none in progress. Start the next task from `origin/main`.
-- Waiting on the owner's iPhone (Home Screen app), PR #134 (live): after the next deploy, no banner appears; Settings
-  shows "Update ready" on the account row; Update now during a reply waits and says why; when idle it returns to
-  Settings → General up to date, and the chat opens at the same place; with an update waiting, swiping Lumen away and
-  reopening opens the new version with no prompt. (This deploy itself is the first one users get quietly only from
-  the next release on: today's installed copies still run the old update code once.)
-- Also waiting on the iPhone: the darker grey Dark (#130), the touch feedback (#128), the Browse all tools medium
-  detent. #132 (where you left off) is owner-confirmed.
-- **Branch:** `fix/launch-band` (PR open): the iPhone launch band. Cause: iOS 26 colours a Home Screen app's opaque
-  status bar from the page (a fixed top layer, else the page background), ignores `theme-color`, and re-samples only
-  when such a layer appears or disappears, which is why the drawer cleared it. Fix: `src/lib/status-bar.ts` (DESIGN.md
-  → Identity → Status bar). Verified in Chromium and WebKit (suite `status-bar`); iOS's own sampling needs the owner's
-  iPhone.
-- Native-iOS audit (2026-11-05, https://claude.ai/artifact/PK7jQcsYY8MEAzbibHivp7): Stage 1 remaining: first-frame glass +
-  band diagnostic, haptics/switch semantics, hardware-keyboard send.
+- Waiting on the owner's iPhone (Home Screen app), PR #136 (live): cold launch shows no band under the status bar in
+  Light and Dark; Router and Settings get a status bar the same grey as the page, the chat white (Light) or grey
+  (Dark); switching the iPhone between Light and Dark with Lumen open, the bar follows; relaunching into a restored
+  Router shows no band. If the band remains, record iOS version and a screen recording: the next step would be a private
+  diagnostic page (never production), since iOS's sampling cannot be emulated.
+- Also waiting on the iPhone: #134 quiet updates (from the next release), #130 darker grey Dark, #128 touch feedback,
+  the Browse all tools medium detent. #132 (where you left off) is owner-confirmed.
+- Native-iOS audit (2026-11-05, https://claude.ai/artifact/PK7jQcsYY8MEAzbibHivp7): Stage 1 remaining: haptics/switch
+  semantics, hardware-keyboard send.
 
 ## Next
 
@@ -105,6 +100,12 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - Excluded: Arabic interface, separate chat folders, message-list icon/count, chat-tag badges.
 
 ## Recently shipped
+
+- 2026-11-06 iPhone status bar / launch band (PR #136, merged `71f4b32`, deployed Canvas, live `index-C_loOs_L.js`,
+  `sw.js` `2456c4f28b94` match the merge build). Cause: iOS 26 colours a Home Screen app's opaque status bar from the
+  page (a fixed top layer, else the page background), ignores theme-color, and re-samples only when such a layer appears
+  or disappears (the drawer cleared the band). `src/lib/status-bar.ts` keeps the page background the screen's colour and
+  briefly shows a 6 px strip when it changes. Suite `status-bar`. Physical iPhone not yet checked.
 
 - 2026-11-06 Quiet, safe updates (PR #134, merged `fe54c21`, deployed Canvas, live `index-ClWumcuP.js` and `sw.js`
   version `7c176d3cf709` match the merge build): no banner on Canvas; a new version waits and is used at the next start

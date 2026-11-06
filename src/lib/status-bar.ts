@@ -9,7 +9,7 @@
 // background, so that is kept the colour of the screen on show too (Router and Settings are a grouped grey in Light,
 // the chat white). It runs once Lumen's own first frame is on screen, when the screen or the theme (in Lumen or on the
 // iPhone) changes and when the page comes back from the back-forward cache, and shows the strip only when the colour
-// changed. Canvas only (canvas-presentation.on.ts loads this), and only in an iPhone Home Screen app: in a Safari tab,
+// changed. Canvas only (CanvasNav loads this with Lumen's first frame), and only in an iPhone Home Screen app: in a Safari tab,
 // Safari colours its own bars.
 // (iPhone and Home Screen are checked here as in device.ts, without importing it: sharing that module with this lazy
 // one would split it out of the start-up bundle into a file of its own.)
@@ -72,19 +72,24 @@ const watchApp = () => {
   if (app) screens.observe(app, { childList: true, attributes: true, attributeFilter: ['hidden'], subtree: false });
 };
 
-export function installStatusBarSampling() {
-  if (!homeScreenIPhone()) return;
-  // Lumen's own first frame: the account's screen (or sign-in) in place of the start-up frame, then painted.
-  const started = () => { const first = document.getElementById('root')?.firstElementChild; return Boolean(first && !first.classList.contains('app-skeleton')); };
-  const until = performance.now() + 15_000;
-  const wait = () => {
-    if (!started()) { if (performance.now() < until) requestAnimationFrame(wait); return; }
-    afterPaint(); watchApp();
-    // (The app's container is replaced on signing in and out.)
-    new MutationObserver(() => { watchApp(); afterPaint(); }).observe(document.getElementById('root')!, { childList: true });
-  };
-  wait();
+/** Starts once Lumen's own first frame is mounted (CanvasNav); returns how to stop (signing out unmounts it). */
+export function installStatusBarSampling(): () => void {
+  if (!homeScreenIPhone()) return () => {};
+  synced = '';
+  afterPaint(); watchApp();
+  // (The app's container is replaced on signing in and out.)
+  const root = new MutationObserver(() => { watchApp(); afterPaint(); });
+  const rootEl = document.getElementById('root');
+  if (rootEl) root.observe(rootEl, { childList: true });
+  const media = matchMedia('(prefers-color-scheme: dark)');
+  const restored = (event: PageTransitionEvent) => { if (event.persisted) { synced = ''; afterPaint(); } };
   window.addEventListener('lumen:appearance', afterPaint);
-  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', afterPaint);
-  window.addEventListener('pageshow', (event) => { if (event.persisted) { synced = ''; afterPaint(); } });
+  media.addEventListener?.('change', afterPaint);
+  window.addEventListener('pageshow', restored);
+  return () => {
+    root.disconnect(); screens.disconnect(); watched = null;
+    window.removeEventListener('lumen:appearance', afterPaint);
+    media.removeEventListener?.('change', afterPaint);
+    window.removeEventListener('pageshow', restored);
+  };
 }

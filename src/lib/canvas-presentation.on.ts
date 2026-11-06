@@ -23,8 +23,6 @@ export { BrandMark, BrandWordmark } from '../components/BrandCrease';
 export { default as CanvasNav } from '../components/CanvasNav';
 export const loadTreeKeys = () => import('./tree-keys');
 export const loadNavigation = () => import('./navigation-coordinator');
-// The iPhone Home Screen app's status bar takes its colour from the page again after launch (status-bar.ts).
-export const loadStatusBar = () => import('./status-bar');
 export { newGeneralChat } from './new-chat';
 
 export const PhoneNavigation = lazy(() => import('../components/PhoneNavigation'));

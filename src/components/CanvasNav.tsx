@@ -18,6 +18,9 @@ function useSurfaceHistoryAndFocus() {
   // Router owns some Settings sections; requests for them are redirected before history records them.
   useEffect(() => installRouterSettingsRoute(), []);
   useEffect(() => installScreenHistory(), []);
+  // iPhone Home Screen app: the status bar takes its colour from the screen on show (lib/status-bar.ts; loaded lazily,
+  // and doing nothing elsewhere). This mounts with Lumen's own first frame.
+  useEffect(() => { let stop: (() => void) | undefined, gone = false; void import('../lib/status-bar').then((m) => { if (!gone) stop = m.installStatusBarSampling(); }).catch(() => {}); return () => { gone = true; stop?.(); }; }, []);
   useEffect(() => {
     const root = document.documentElement;
     root.toggleAttribute('data-native-edge-back', browserOwnsEdges());

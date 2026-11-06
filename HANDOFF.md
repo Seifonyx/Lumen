@@ -18,8 +18,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
   the next release on: today's installed copies still run the old update code once.)
 - Also waiting on the iPhone: the darker grey Dark (#130), the touch feedback (#128), the Browse all tools medium
   detent. #132 (where you left off) is owner-confirmed.
-- Open: **the launch band is still there in Light and Dark** on the owner's iPhone after #120, #122, #124 and #126.
-  Next step offered: a diagnostic build that colours each candidate layer (audit N-06).
+- **Branch:** `fix/launch-band` (PR open): the iPhone launch band. Cause: iOS 26 colours a Home Screen app's opaque
+  status bar from the page (a fixed top layer, else the page background), ignores `theme-color`, and re-samples only
+  when such a layer appears or disappears, which is why the drawer cleared it. Fix: `src/lib/status-bar.ts` (DESIGN.md
+  → Identity → Status bar). Verified in Chromium and WebKit (suite `status-bar`); iOS's own sampling needs the owner's
+  iPhone.
 - Native-iOS audit (2026-11-05, https://claude.ai/artifact/PK7jQcsYY8MEAzbibHivp7): Stage 1 remaining: first-frame glass +
   band diagnostic, haptics/switch semantics, hardware-keyboard send.
 

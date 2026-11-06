@@ -22,3 +22,4 @@ iphone-edge-back
 native-navigation
 resume
 updates
+status-bar

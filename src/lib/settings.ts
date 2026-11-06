@@ -87,6 +87,8 @@ export function applyAppearance(s: Settings) {
   // Switching theme repaints everything in one frame: no element fades on its own and leaves the page
   // half light, half dark for a moment.
   if (before !== `${root.dataset.theme || ''}|${root.dataset.appearance || ''}`) {
+    // (The iPhone Home Screen app's status bar is coloured again once the new theme is painted: lib/status-bar.ts.)
+    window.dispatchEvent(new Event('lumen:appearance'));
     root.classList.add('theme-switching');
     requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('theme-switching')));
   }

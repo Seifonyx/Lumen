@@ -76,8 +76,13 @@ dark mode).
   focus or text. Status colours (green, red, orange, blue) only for state. Light and Dark; no True black in Canvas.
   **Dark is a cool neutral grey, not black** (owner, 2026-11-05, then darker): page and drawer `#161618`, raised fills
   step up (`#202023` cards and code, `#2a2a2d` bubbles and second fills, `#353539`), text `#f5f5f7` / `#e5e5ea` / `#a3a3aa`.
-  The status bar (`theme-color`), launch screens and manifest use the page colour (`#ffffff` / `#161618`), so nothing at
-  the top differs from the page. Never warm or brown.
+  Launch screens and `theme-color` use the page colour (`#ffffff` / `#161618`). Never warm or brown.
+- **Status bar (iPhone Home Screen app).** With `apple-mobile-web-app-status-bar-style: default`, iOS 26 draws an opaque
+  bar and colours it from the page: a full-width fixed layer at the top, otherwise the page background. It ignores
+  `theme-color`, and takes the colour again only when such a layer appears or disappears (why the owner's launch band
+  went away once the drawer opened). `src/lib/status-bar.ts` (Canvas, Home Screen app only) keeps the page background
+  the colour at the top of the screen on show (Router and Settings are grouped grey in Light) and, when that colour
+  changes (first frame, screen, theme), shows a 6 px fixed strip in it for 600 ms so iOS takes it.
 - **Type:** Geist (system font on iPhone glass); Geist Mono only for data (code, shortcuts, counts). Four steps per
   page: 28 title, 17 section, 15 rows/body, 13 secondary. List pages share the tokens in `src/app.css` (identity):
   `--type-row` / `--type-detail` / `--type-note` are 17 / 15 / 13 on phones and 15 / 13 / 13 on computers, and

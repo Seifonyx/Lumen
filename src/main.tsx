@@ -10,6 +10,7 @@ import { installGlassSelect } from './lib/glass-select';
 import { installKeyboardDismiss } from './lib/keyboard-dismiss';
 import { loadMarkdownExtras } from './lib/markdown';
 import { shareIdFromPath } from './lib/share';
+import { loadStatusBar } from './lib/canvas-presentation';
 const SharedChatPage = lazy(() => import('./components/SharedChatPage'));
 const sharedId = shareIdFromPath();
 
@@ -34,6 +35,9 @@ createRoot(document.getElementById('root')!).render(
     {sharedId ? <Suspense fallback={null}><SharedChatPage id={sharedId} /></Suspense> : <App />}
   </StrictMode>,
 );
+
+// Canvas, iPhone Home Screen app: the status bar takes its colour from Lumen's own first frame (lib/status-bar.ts).
+void loadStatusBar?.().then((m) => m.installStatusBarSampling()).catch(() => {});
 
 // Maths and code colouring load once the app is idle, so they're ready before most replies need them.
 const idle = (fn: () => void) => ('requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 5000 }) : setTimeout(fn, 2500));

@@ -563,3 +563,6 @@ html[data-lumen-canvas] { --press-fill: color-mix(in srgb, var(--text) 10%, tran
 @media (max-width: 899px) and (prefers-reduced-motion: reduce) {
   html[data-lumen-canvas] [data-press].is-pressed, html[data-lumen-canvas] .switch:active::after { scale: none; translate: none; }
 }
+/* iPhone Home Screen app: the strip that makes iOS colour the status bar from the page again (lib/status-bar.ts). Thin
+   enough to stay above the bar's buttons, in the colour already there, for a moment; never touched or read aloud. */
+html[data-lumen-canvas] .status-bar-sample { position: fixed; top: 0; left: 0; right: 0; height: 6px; z-index: 2147483000; pointer-events: none; }

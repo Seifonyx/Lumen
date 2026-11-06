@@ -2,6 +2,10 @@
 
 > **Evergreen principles, not a status report.** Current phase, PR/commit, active agent, work authorization, Gate decisions, test outcome and next action live in [CURRENT_STATUS.md](CURRENT_STATUS.md). Follow the agent workflow in [README.md](README.md). Do not append temporary milestone updates here.
 
+## Owner communication preference (permanent, 2026-11-06)
+
+**Use the shortest complete answer by default to save tokens.** Be direct, concise and low-repetition; omit filler, not important facts, decisions, limitations, risks or next actions. **Do not trade completeness or accuracy for brevity.** Long, thorough prompts, specifications and deliverables are explicitly welcome when the task requires them. This applies to future planning, review, status and coding-agent handoff responses; follow any more specific owner instruction for a particular request.
+
 ## Product and design philosophy
 
 Lumen is an independent, premium AI workspace for conversation, reading, sustained writing, projects, model selection/routing, providers, usage context and tools. Prioritize **original identity**, clear visual hierarchy, excellent desktop and real-iPhone interaction, accessibility and reliable feature parity.

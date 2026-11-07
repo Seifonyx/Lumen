@@ -1,0 +1,65 @@
+name: iOS unsigned demo IPA
+
+on:
+  workflow_dispatch:
+  # Initial isolated build. GitHub cannot dispatch a workflow absent from the default branch.
+  push:
+    branches: [experiment/ios-sideload]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-demo-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Standard public-repository runner only. Never select -large or -xlarge.
+    if: github.repository == 'Seifonyx/Lumen' && github.event.repository.private == false
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            native/package-lock.json
+      - run: npm ci
+      - run: npm ci --prefix native --ignore-scripts
+      - name: Build isolated Canvas demo
+        run: node native/scripts/build.mjs
+      - name: Validate native seam and offline bundle
+        run: |
+          node node_modules/typescript/bin/tsc --noEmit -p native/tsconfig.json
+          node native/scripts/verify.mjs
+      - name: Generate and sync native project
+        run: node native/scripts/prepare-ios.mjs
+      - name: Build and verify unsigned real-device IPA
+        run: bash native/scripts/build-ipa.sh
+      - name: Upload unsigned IPA and public metadata
+        uses: actions/upload-artifact@v6
+        with:
+          name: Lumen-unsigned-IPA
+          path: |
+            native/artifacts/Lumen.ipa
+            native/artifacts/Lumen.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Launch and exercise the Simulator WKWebView
+        timeout-minutes: 20
+        run: bash native/scripts/simulator-smoke.sh
+      - name: Simulator evidence and build logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: Lumen-ios-smoke-evidence
+          path: |
+            native/artifacts/simulator/
+            native/build-device.log
+            native/build-simulator.log
+          if-no-files-found: ignore
+          retention-days: 7

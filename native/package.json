@@ -1,0 +1,16 @@
+{
+  "name": "lumen-ios-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "prepare:ios": "node scripts/prepare-ios.mjs"
+  },
+  "dependencies": {
+    "@capacitor/core": "8.6.0",
+    "@capacitor/ios": "8.6.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.0"
+  }
+}

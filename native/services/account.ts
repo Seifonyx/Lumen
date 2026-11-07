@@ -4,6 +4,7 @@ import {onIdTokenChanged,signInWithCredential,signOut,GoogleAuthProvider,type Au
 import {registerPlugin} from '@capacitor/core';
 import {RealSession,type NativeCredential} from '../integration/real-session';
 import {verifyNativeGoogleToken} from '../integration/google-token';
+import {authFailure} from '../integration/auth-errors';
 import config from 'lumen:service-config';
 import {accountScope} from '../integration/runtime';
 import type {AccountKeyCache} from '../../src/lib/account-key-persistence';
@@ -15,16 +16,17 @@ function coordinator(auth:Auth){
  if(!session)session=new RealSession<User>({current:()=>auth.currentUser,watch:fn=>onIdTokenChanged(auth,fn),
   signIn:async c=>{
    const idToken=await verifyNativeGoogleToken(c,config.webClientId);
-   return (await signInWithCredential(auth,GoogleAuthProvider.credential(idToken))).user;
+   try{return (await signInWithCredential(auth,GoogleAuthProvider.credential(idToken))).user;}
+   catch(error){throw authFailure('firebase',error);}
   },
   signOut:()=>signOut(auth)},
-  {credential:restore=>restore?google.restore():google.signIn(),signOut:()=>google.signOut(),cancel:()=>google.cancel()});
+  {credential:async restore=>{try{return await (restore?google.restore():google.signIn());}catch(error){throw authFailure('google',error);}},signOut:()=>google.signOut(),cancel:()=>google.cancel()});
  return session;
 }
 let restored=false;
 export function watchNativeUser(auth:Auth,callback:(user:User|null)=>void){
  const c=coordinator(auth),off=c.watch(user=>{const next=user?.uid||null;if(accountScope.uid!==next){if(accountScope.uid)localStorage.removeItem(consentKey(accountScope.uid));accounts.clear();accountScope.set(next);}callback(user);});
- if(!restored){restored=true;void c.signIn(true).catch(()=>{/* signed out, never a demo fallback */});}
+ if(!restored){restored=true;void c.restore().catch(()=>{/* signed out, never a demo fallback */});}
  return off;
 }
 export const signInNative=(auth:Auth)=>coordinator(auth).signIn();

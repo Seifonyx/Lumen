@@ -21,3 +21,8 @@ test('reject tokens for a different Firebase OAuth client and stale or missing n
  await assert.rejects(verifyNativeGoogleToken({signedIn:false,idToken:jwt(claims()),rawNonce:nonce},client));
  await assert.rejects(verifyNativeGoogleToken({signedIn:true,idToken:'not.a.jwt',rawNonce:nonce},client));
 });
+
+test('rejected token stages are actionable while nonce, client and expiry validation stay strict',async()=>{
+ for(const [overrides,code] of [[{nonce:'wrong'},'AUTH_NONCE'],[{aud:'foreign'},'AUTH_TOKEN_CLIENT'],[{exp:now-1},'AUTH_TOKEN_EXPIRED']])
+  await assert.rejects(verifyNativeGoogleToken({signedIn:true,idToken:jwt({...claims(),...overrides}),rawNonce:nonce},client),{code});
+});

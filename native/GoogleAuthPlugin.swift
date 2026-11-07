@@ -24,9 +24,20 @@ final class LumenGoogleAuthPlugin: CAPPlugin, CAPBridgedPlugin {
         return c
     }
     private func allowed(_ call: CAPPluginCall) -> Bool {
+        if let c = Bundle.main.object(forInfoDictionaryKey: "LumenTestServices") as? [String: String],
+           c["mode"] == "isolated-test", c["signedBundleId"] != Bundle.main.bundleIdentifier {
+            call.reject("Installed signing identity does not match the approved test configuration.", "AUTH_SIGNING"); return false
+        }
         guard configuration != nil else {
             let test = (Bundle.main.object(forInfoDictionaryKey: "LumenTestServices") as? [String: String])?["mode"] == "isolated-test"
             call.reject(test ? "Test sign-in configuration does not match this installed app." : "Real sign-in is disabled in the offline demo.", test ? "AUTH_CONFIG" : "OFFLINE_DEMO"); return false
+        }
+        let c = configuration!
+        let schemes = (Bundle.main.object(forInfoDictionaryKey: "CFBundleURLTypes") as? [[String: Any]])?
+            .flatMap { $0["CFBundleURLSchemes"] as? [String] ?? [] } ?? []
+        let expected = c["iosClientId"]!.components(separatedBy: ".").reversed().joined(separator: ".")
+        guard c["callbackScheme"] == expected, schemes.contains(expected) else {
+            call.reject("The configured Google callback is not registered in this app.", "AUTH_CALLBACK_CONFIG"); return false
         }
         guard bridge?.webView?.url?.scheme == "capacitor", bridge?.webView?.url?.host == "localhost" else {
             call.reject("Untrusted authentication caller.", "AUTH_ORIGIN"); return false
@@ -47,10 +58,17 @@ final class LumenGoogleAuthPlugin: CAPPlugin, CAPBridgedPlugin {
         guard let call = pending else { return }; pending = nil
         guard error == nil, let user = user, let owner = user.userID, let token = user.idToken?.tokenString else {
             // Do not expose SDK error details, callback URLs or credentials to logs/UI.
-            let code = (error as NSError?)?.code
-            if code == -4 { call.resolve(["signedIn": false]); return }
+            let sdkError = error as NSError?
+            let code = sdkError?.domain == "com.google.GIDSignIn" ? sdkError?.code : nil
+            if code == -4, nonce == nil { call.resolve(["signedIn": false]); return }
             GIDSignIn.sharedInstance.signOut()
-            call.reject(code == -5 ? "Google sign-in canceled." : "Google sign-in could not be completed.", code == -5 ? "AUTH_CANCELED" : "AUTH_FAILED"); return
+            let failure: String
+            if code == -5 { failure = "AUTH_CANCELED" }
+            else if code == -2 { failure = "AUTH_STORAGE" }
+            else if code == -6 { failure = "AUTH_GOOGLE_POLICY" }
+            else if sdkError?.domain == NSURLErrorDomain || (sdkError?.userInfo[NSUnderlyingErrorKey] as? NSError)?.domain == NSURLErrorDomain { failure = "AUTH_GOOGLE_NETWORK" }
+            else { failure = "AUTH_GOOGLE" }
+            call.reject("Google sign-in could not be completed.", failure); return
         }
         do {
             let raw: String?
@@ -65,7 +83,8 @@ final class LumenGoogleAuthPlugin: CAPPlugin, CAPBridgedPlugin {
     }
     @objc func signIn(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
-            guard let ticket = self.begin(call), let presenter = self.bridge?.viewController else { return }
+            guard let presenter = self.bridge?.viewController else { call.reject("Google sign-in cannot be presented.", "AUTH_PRESENTATION"); return }
+            guard let ticket = self.begin(call) else { return }
             let nonce = UUID().uuidString + UUID().uuidString
             let hash = SHA256.hash(data: Data(nonce.utf8)).map { String(format: "%02x", $0) }.joined()
             GIDSignIn.sharedInstance.signIn(withPresenting: presenter, hint: nil, additionalScopes: nil, nonce: hash) { result, error in

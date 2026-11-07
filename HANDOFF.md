@@ -27,14 +27,15 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - Targeted Chromium/WebKit tests exercise canonical Firebase/ChatSync using loopback emulators: claims/provider/UID
   denials, settings/projects, chat/offline/conflict/delete/restart/logout/Incognito. Isolated Login fails closed and
   retains Demo data. Test fixtures never enter packaged native graph. See native/docs/PHASE3_TEST_ENVIRONMENT.md.
-- **Current milestone:** usable private RC with user-configured free OpenRouter AI. Native key saving now merges
-  only the canonical private openrouterKey field after explicit per-account/device consent and $0 metadata checks.
-  No developer approval file or embedded key. Free-only price ceilings, no paid/plugins/BYOK, scoped keys,
-  canonical streaming/Use-to-Chat/Stop and lifecycle cancellation preserved; permission revocation retains cloud key.
-  Native initial enableNetwork-on-already-online caused a reproduced Firestore assertion; actual-pause resume fixes it.
-  Focused actual Canvas Chromium/WebKit emulator/mocked-provider journey passes. No live inference or real key used.
-  Preserve earlier connected IPA38690fe; build and privately deliver updated RC, require exact-head CI.
-  See native/docs/REAL_AI.md. No mandatory physical iPhone checklist; keep PR141 draft, no merge/deploy/spending.
+- **Current milestone:** first physical-iPhone sign-in failure. Owner confirms Lumen Test launch and old generic
+  failure; actual device failure stage unknown. Reproduced startup restore versus Sign-in race before Google opens;
+  serialized interactive login, preserved cancel/logout generation checks and added safe stage codes for signing,
+  callback setup, Google/Keychain, nonce/client/expiry and Firebase exchange. No identity guard or token/rules relaxation.
+  Actual Canvas Login/account flow passes Chromium/WebKit synthetic bridge + mocked Firebase rejection;13 focused
+  auth tests/native typecheck pass. See native/docs/AUTHENTICATION_DIAGNOSTICS.md. Build encrypted connected update
+  and confirm exact-head CI; keep previous RC/installed identity and data. No manual device checklist or live inference.
+- Prior RC delivered user-configured free-only OpenRouter with canonical private key save, model selection,
+  streaming/Stop and fresh $0/no-BYOK enforcement. Earlier connected IPA and offline Demo A/B remain preserved.
 - Waiting on the owner's iPhone (Home Screen app), PR #136 (live): cold launch shows no band under the status bar in
   Light and Dark; Router and Settings get a status bar the same grey as the page, the chat white (Light) or grey
   (Dark); switching the iPhone between Light and Dark with Lumen open, the bar follows; relaunching into a restored

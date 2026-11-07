@@ -23,7 +23,7 @@ jobs:
       - run: npm ci
       - run: npm ci --prefix native --ignore-scripts
       - name: Focused native free-provider contracts (no provider network)
-        run: node --experimental-strip-types --test native/tests/free-provider.test.mjs native/tests/native-ai-gate.test.mjs native/tests/ai-consent.test.mjs
+        run: node --experimental-strip-types --test native/tests/free-provider.test.mjs native/tests/native-ai-gate.test.mjs native/tests/ai-consent.test.mjs native/tests/auth-errors.test.mjs native/tests/real-session.test.mjs native/tests/google-token.test.mjs native/tests/plugin-bridge.test.mjs
       - run: node node_modules/typescript/bin/tsc --noEmit -p native/tsconfig.json
       - name: Prepare approved private configuration and recipient key
         env:
@@ -97,5 +97,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+      - name: Native sign-in startup and safe failure classifications (synthetic, no external traffic)
+        run: node --experimental-strip-types native/scripts/browser-auth.mjs
       - name: Actual native Canvas setup and chat contracts (emulators and mocked provider only)
         run: node node_modules/firebase-tools/lib/bin/firebase.js emulators:exec --only auth,firestore --project lumen-ios-test --config native/firebase-emulators.json "node --experimental-strip-types native/scripts/browser-rc.mjs"

@@ -27,11 +27,13 @@ async function run() {
     await capture('chat');
     const store=useStore.getState();
     store.newChat();
+    // Let React commit the new chat before addressing its composer (the old node is replaced).
+    await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
     const input=document.querySelector<HTMLTextAreaElement>('.composer textarea')!;
     // Use the real React input path and submit handler.
     Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(input,'Synthetic native smoke');
     input.dispatchEvent(new Event('input',{bubbles:true}));
-    await delay(200);
+    await until(()=>document.querySelector<HTMLButtonElement>('.send-btn')?.disabled===false);
     document.querySelector<HTMLButtonElement>('.send-btn')!.click();
     await until(()=>Boolean(document.querySelector('.message-row')?.textContent?.includes('Synthetic native smoke')));
     await until(()=>document.body.textContent!.includes('Offline demonstration.'));

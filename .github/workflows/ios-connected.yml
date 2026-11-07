@@ -22,15 +22,19 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm ci --prefix native --ignore-scripts
+      - name: Focused native free-provider contracts (no provider network)
+        run: node --experimental-strip-types --test native/tests/free-provider.test.mjs native/tests/native-ai-gate.test.mjs
       - name: Prepare approved private configuration and recipient key
         env:
           SDK_CONFIG: ${{ secrets.LUMEN_IOS_TEST_CONFIG }}
           DELIVERY_KEY: ${{ secrets.LUMEN_IOS_DELIVERY_PUBLIC_KEY }}
+          AI_APPROVAL: ${{ secrets.LUMEN_IOS_AI_APPROVAL }}
         run: |
           node --input-type=module <<'JS'
           import {writeFileSync,mkdirSync,appendFileSync} from 'node:fs';
           import {createPublicKey} from 'node:crypto';
           import {validateServiceConfig} from './native/services/config.mjs';
+          import {validateAiApproval} from './native/services/free-provider.ts';
           const input=JSON.parse(process.env.SDK_CONFIG||'null');
           const c=validateServiceConfig(input);
           if(c.projectId!=='lumen-ios-test')throw Error('Approved test project required');
@@ -40,6 +44,12 @@ jobs:
           writeFileSync(configPath,JSON.stringify(input),{mode:0o600});
           appendFileSync(process.env.GITHUB_ENV,'LUMEN_NATIVE_SERVICE_CONFIG='+configPath+'\n');
           writeFileSync(process.env.RUNNER_TEMP+'/recipient.pem',process.env.DELIVERY_KEY,{mode:0o600});
+          if(process.env.AI_APPROVAL){
+            let ai;try{ai=validateAiApproval(JSON.parse(process.env.AI_APPROVAL));}catch{throw Error('Invalid private AI approval');}
+            const aiPath=process.env.RUNNER_TEMP+'/lumen-ai-approval.json';
+            writeFileSync(aiPath,JSON.stringify(ai),{mode:0o600});
+            appendFileSync(process.env.GITHUB_ENV,'LUMEN_NATIVE_AI_APPROVAL='+aiPath+'\n');
+          }
           mkdirSync(process.env.RUNNER_TEMP+'/private-delivery',{recursive:true});
           JS
       - name: Build connected Canvas assets
@@ -74,6 +84,6 @@ jobs:
       - name: Remove private runner inputs and plaintext
         if: always()
         run: |
-          rm -f "$LUMEN_NATIVE_SERVICE_CONFIG" "$RUNNER_TEMP/recipient.pem" "$RUNNER_TEMP/delivery.zip"
+          rm -f "$RUNNER_TEMP/lumen-ai-approval.json" "$LUMEN_NATIVE_SERVICE_CONFIG" "$RUNNER_TEMP/recipient.pem" "$RUNNER_TEMP/delivery.zip"
           rm -rf "$RUNNER_TEMP/private-delivery" native/www native/ios native/build native/artifacts/Payload
           rm -f native/artifacts/Lumen.ipa native/artifacts/Lumen.json native/build-device.log

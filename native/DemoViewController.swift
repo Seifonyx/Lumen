@@ -86,7 +86,9 @@ final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler 
     override func viewDidLoad() {
         var rules = #"[{"trigger":{"url-filter":"^https?://"},"action":{"type":"block"}},{"trigger":{"url-filter":"^wss?://"},"action":{"type":"block"}}]"#
         if let c = Bundle.main.object(forInfoDictionaryKey: "LumenTestServices") as? [String: String], c["mode"] == "isolated-test" {
-            let hosts = ["identitytoolkit.googleapis.com", "securetoken.googleapis.com", "firestore.googleapis.com"]
+            var hosts = ["identitytoolkit.googleapis.com", "securetoken.googleapis.com", "firestore.googleapis.com"]
+            // Compiled owner approval only; saving a key or browsing never opens this destination.
+            if c["projectId"] == "lumen-ios-test", c["aiProvider"] == "openrouter" { hosts.append("openrouter.ai") }
             var entries = (try? JSONSerialization.jsonObject(with: Data(rules.utf8))) as? [[String: Any]] ?? []
             for host in hosts {
                 entries.append(["trigger": ["url-filter": "^https://" + NSRegularExpression.escapedPattern(for: host) + "/"], "action": ["type": "ignore-previous-rules"]])

@@ -1,9 +1,14 @@
+import aiApproval from 'lumen:native-ai-approval';
+import {FreeNativeProvider} from './free-provider';
+import {accountScope} from '../integration/runtime';
 import config from 'lumen:service-config';
 import {requestAllowed} from './config.mjs';
 const nativeFetch=globalThis.fetch.bind(globalThis);
+const ai=new FreeNativeProvider(accountScope,aiApproval,nativeFetch);
 function allowed(url:URL){return url.origin===location.origin||url.protocol==='data:'||url.protocol==='blob:'||requestAllowed(config,url.href);}
 export const testFetch:typeof fetch=async(input,init)=>{
  const url=new URL(input instanceof Request?input.url:String(input),location.href);
+ if(url.origin==='https://openrouter.ai')return ai.request(input,init);
  if(!allowed(url))throw new Error('This service is not enabled in the isolated test build.');
  return nativeFetch(input,init);
 };

@@ -27,14 +27,14 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - Targeted Chromium/WebKit tests exercise canonical Firebase/ChatSync using loopback emulators: claims/provider/UID
   denials, settings/projects, chat/offline/conflict/delete/restart/logout/Incognito. Isolated Login fails closed and
   retains Demo data. Test fixtures never enter packaged native graph. See native/docs/PHASE3_TEST_ENVIRONMENT.md.
-- **Current deliverable:** owner now requires the actual connected IPA, not more offline demos or manual QA.
-  Approved test config is held in GitHub Actions secrets; recipient private key stays ignored on Windows. The
-  connected workflow builds isolated-test + GoogleSignIn and uploads encrypted IPA/diagnostics only. Decrypt locally;
-  never upload plaintext config/IPA to public artifacts. Native callback/Keychain remains physically unverified.
-  Connected iphoneos/arm64 build38690fe succeeded; decrypted IPA is ignored at
-  native/artifacts/connected-delivery/Lumen-connected.ipa (real approved SDK config and linked Google SDK verified).
-  Exact-source PR CI caught the new workflow allowlist; narrowly authorize that reviewed path and keep privacy guards.
-  No inference, spending, merge or deployment. Finish that CI blocker; no manual iPhone testing requested.
+- **Current milestone:** real AI path implemented but disabled pending separate owner activation approval.
+  Native transport reuses canonical OpenRouter streaming; only explicit :free variants and zero-price catalogue rows,
+  hard0 price ceilings, no paid/plugin fallback, approved test UID/key hash and account/lifecycle cancellation.
+  No AI approval file/secret, provider key or provider request created. Dedicated free/no-BYOK OpenRouter test account
+  and key are the remaining activation dependency; see native/docs/REAL_AI.md. Do not use Firebase/admin keys.
+  Completed connected IPA38690fe is preserved at native/artifacts/connected-delivery/Lumen-connected.ipa with same
+  hash/bundle.14 focused checks and native typecheck/connected-assets build pass. No native/offline rebuild or manual
+  iPhone QA requested. Keep PR141 draft/unmerged, $0, no production/inference activation without owner approval.
 - Waiting on the owner's iPhone (Home Screen app), PR #136 (live): cold launch shows no band under the status bar in
   Light and Dark; Router and Settings get a status bar the same grey as the page, the chat white (Light) or grey
   (Dark); switching the iPhone between Light and Dark with Lumen open, the bar follows; relaunching into a restored

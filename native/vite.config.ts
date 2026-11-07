@@ -3,9 +3,12 @@ import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
+import {validateAiApproval} from './services/free-provider';
 import {loadServiceConfig} from './services/build-config.mjs';
 import {patchFirebase,patchSync} from './services/patches.mjs';
 const services=loadServiceConfig();
+const aiApproval=process.env.LUMEN_NATIVE_AI_APPROVAL?validateAiApproval(JSON.parse(readFileSync(process.env.LUMEN_NATIVE_AI_APPROVAL,'utf8'))):null;
+if(aiApproval&&(!services||services.projectId!=='lumen-ios-test'))throw Error('AI approval must target the isolated test application');
 const output=process.env.LUMEN_NATIVE_OUT_DIR||'native/www';
 if(!['native/www','native/service-qa'].includes(output))throw Error('Native build output must stay in its isolated workspace');
 const root = resolve(fileURLToPath(new URL('..', import.meta.url))).replaceAll(String.fromCharCode(92), '/');
@@ -26,11 +29,11 @@ function demoIsolation(): Plugin {
     name:'lumen-native-isolation', enforce:'pre',
     transformIndexHtml:{order:'pre',handler(html){
       if(!services)return html;
-      return html.replace('./demo/main.ts','./services/main.ts').replace("connect-src 'self' data: blob:", "connect-src 'self' data: blob: https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com").replace('<title>Lumen Demo</title>','<title>Lumen Test</title>');
+      return (aiApproval?html.replace("connect-src 'self' data: blob:","connect-src 'self' data: blob: https://openrouter.ai"):html).replace('./demo/main.ts','./services/main.ts').replace("connect-src 'self' data: blob:", "connect-src 'self' data: blob: https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com").replace('<title>Lumen Demo</title>','<title>Lumen Test</title>');
     }},
     async resolveId(source, importer, options) {
       if(services){
-        if(source==='lumen:test-config'||source==='lumen:service-config')return '\0'+source;
+        if(source==='lumen:test-config'||source==='lumen:service-config'||source==='lumen:native-ai-approval')return '\0'+source;
         if(source==='lumen:native-account')return at('native/services/account.ts');
         if(source==='lumen:canonical-sync')return at('src/lib/sync.ts')+'?lumen-real';
       }
@@ -44,6 +47,7 @@ function demoIsolation(): Plugin {
     },
     load(id) {
       if(services&&id==='\0lumen:test-config')return 'export default '+JSON.stringify({projectId:services.projectId,apiKey:services.apiKey,appId:services.appId,authDomain:services.authDomain});
+      if(services&&id==='\0lumen:native-ai-approval')return 'export default '+JSON.stringify(aiApproval);
       if(services&&id==='\0lumen:service-config')return 'export default '+JSON.stringify(services);
       if(services&&/\/node_modules\/(?:@firebase|firebase)\//.test(strip(id)))return null;
       if (/\/native\/authorization\/|\/(?:tests|server)\/|\/qa\/iphone\/(?:fixtures|main)|\/src\/firebase-config.json|\/node_modules\/(?:@firebase|firebase)\//.test(strip(id))) this.error('Forbidden native demo module '+id);
@@ -70,7 +74,7 @@ function demoIsolation(): Plugin {
       // The Canvas mark (Logo renders /icon.svg). publicDir is off, so the one approved Crease file is packaged here;
       // without it the demo's first screen showed a broken image in the Simulator.
       this.emitFile({type:'asset',fileName:'icon.svg',source:readFileSync(at('public-canvas/icon.svg'))});
-      this.emitFile({type:'asset',fileName:'demo-build.json',source:JSON.stringify({presentation:'canvas',mode:services?'isolated-test':'offline-demo',serviceConfig:services||undefined,modules:modules.filter(p=>p.startsWith(root)).map(p=>p.slice(root.length+1))},null,2)});
+      this.emitFile({type:'asset',fileName:'demo-build.json',source:JSON.stringify({presentation:'canvas',mode:services?'isolated-test':'offline-demo',aiApproval:aiApproval||undefined,serviceConfig:services||undefined,modules:modules.filter(p=>p.startsWith(root)).map(p=>p.slice(root.length+1))},null,2)});
     }
   };
 }

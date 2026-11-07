@@ -23,8 +23,8 @@ The workflow uses the standard `macos-26` public-repository runner, refuses priv
 2. Connect the iPhone by USB. Unlock it and accept **Trust This Computer**. Open Sideloadly and select the connected iPhone.
 3. Drag the extracted **Lumen.ipa** into Sideloadly. Choose normal **Apple ID Sideload** installation. Leave tweak injection and bundle modification options off.
 4. Enter a free Apple Account in Sideloadly on this PC. Press **Start**, then complete password and two-factor prompts locally. No Apple Account details belong in GitHub, repository files, workflow inputs or this app.
-5. After installation, on iPhone open **Settings → General → VPN & Device Management**, select the developer entry for that Apple Account, and trust it.
-6. If iOS requires Developer Mode, enable **Settings → Privacy & Security → Developer Mode**, restart the phone and confirm. The option may appear only after the first developer app installation.
+5. After installation, on iPhone open **Settings â†’ General â†’ VPN & Device Management**, select the developer entry for that Apple Account, and trust it.
+6. If iOS requires Developer Mode, enable **Settings â†’ Privacy & Security â†’ Developer Mode**, restart the phone and confirm. The option may appear only after the first developer app installation.
 7. Open **Lumen Demo**. The first screen states that real sign-in is unavailable. Choose Demo A, send a sample message, open Router/Library/Projects, then sign out and open Demo B to check separation.
 8. Test Airplane Mode launch. The packaged UI and local synthetic reply should work without a website connection.
 
@@ -37,7 +37,7 @@ Sideloadly signs the unsigned IPA locally. Free Personal Team provisioning expir
 - The production Canvas and ordinary build configurations and their dependencies are untouched. All Capacitor packages live under `native/` with a separate lockfile.
 - `native/vite.config.ts` selects the canonical Canvas module, replaces auth/sync/PWA/device/login at build time, and rewrites application requests to a local synthetic transport. It reuses the existing stateless no-cloud SDK/sync/worker adapters, but imports no private QA fixtures, gate, lease or QA entry.
 - The IPA contains only bundled hashed assets, fonts and public demonstration code. It loads `capacitor://localhost`, with no remote server URL. Firebase configuration and SDK code are excluded.
-- CSP restricts connections to packaged assets. Before the first document loads, WKWebView installs content rules blocking HTTP(S)/WS(S) traffic. Native navigation delegates reject external destinations and popups. No permission descriptions for camera, microphone or photos are added, and media capture requests are denied.
+- CSP restricts connections to packaged assets. Before the first document loads, WKWebView installs content rules blocking HTTP(S)/WS(S) traffic. Native navigation delegates reject external destinations and popups. The built-in native HTTP bridge is replaced by a local rejection for every method; disabling Capacitor fetch patching alone would not block direct native RPC calls. No permission descriptions for camera, microphone or photos are added, and media capture requests are denied.
 - Safe areas remain owned by the existing viewport-fit and CSS layout. Native UIKit owns the status bar. The PWA-only status-bar sampling workaround is excluded. Keyboard sizing uses the canonical visualViewport handler, with no extra keyboard plugin.
 - No service worker is emitted or registered. Offline availability comes from the IPA, and updating requires a new sideload. The production PWA's update mechanism is unchanged.
 - Local app-owned navigation is used, as in the existing installed PWA. Native WKWebView edge history is disabled to avoid competing gesture owners.
@@ -46,7 +46,7 @@ Sideloadly signs the unsigned IPA locally. Free Personal Team provisioning expir
 - Simulator smoke uses programmatic actions in the real WKWebView. It records launch, a synthetic reply, Router, Library, Settings and profile separation, and captures application views. It does not establish hardware touch, keyboard/IME, physical safe areas, VoiceOver, background lifecycle or Sideloadly installation.
 - The browser smoke separately checks Chromium/WebKit with external requests blocked. No real provider request is permitted.
 
-## Protected authentication plan — approval required before implementation
+## Protected authentication plan â€” approval required before implementation
 
 Current `src/lib/firebase.ts` uses Google web popup/redirect auth and same-site hosting assumptions.
 Google prohibits embedded WKWebView OAuth. The demo substitutes a local account adapter and never opens that flow.

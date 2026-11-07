@@ -22,7 +22,8 @@ open -a Simulator --args -CurrentDeviceUDID "$device"
 xcrun simctl boot "$device" || true
 python3 - "$device" <<'PY'
 import subprocess,sys
-subprocess.run(["xcrun","simctl","bootstatus",sys.argv[1],"-b"],timeout=240,check=True)
+# A fresh hosted runtime performs Apple's data migration before any app can launch.
+subprocess.run(["xcrun","simctl","bootstatus",sys.argv[1],"-b"],timeout=600,check=True)
 PY
 xcrun simctl install "$device" build/simulator/Build/Products/Debug-iphonesimulator/App.app
 xcrun simctl launch "$device" io.github.seifonyx.lumen.demo --demo-smoke

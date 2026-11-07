@@ -50,7 +50,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Launch and exercise the Simulator WKWebView
-        timeout-minutes: 10
+        timeout-minutes: 20
         run: bash native/scripts/simulator-smoke.sh
       - name: Simulator evidence and build logs
         if: always()

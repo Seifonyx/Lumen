@@ -2,6 +2,23 @@ import UIKit
 import WebKit
 import Capacitor
 
+// The CapacitorHttp setting disables fetch patching, not direct native RPC calls.
+// Replace the built-in HTTP bridge too, so demonstration traffic cannot bypass WebKit's policy.
+@objc(OfflineHttpPlugin)
+final class OfflineHttpPlugin: CAPPlugin, CAPBridgedPlugin {
+    let identifier = "OfflineHttpPlugin"
+    let jsName = "CapacitorHttp"
+    let pluginMethods = ["request", "get", "post", "put", "patch", "delete"].map {
+        CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise)
+    }
+    @objc func request(_ call: CAPPluginCall) { call.reject("Native networking is unavailable in this offline demo.", "OFFLINE_DEMO") }
+    @objc func get(_ call: CAPPluginCall) { request(call) }
+    @objc func post(_ call: CAPPluginCall) { request(call) }
+    @objc func put(_ call: CAPPluginCall) { request(call) }
+    @objc func patch(_ call: CAPPluginCall) { request(call) }
+    @objc func delete(_ call: CAPPluginCall) { request(call) }
+}
+
 // Retain Capacitor's lifecycle, dialogs and scroll delegation, while denying external navigation and capture.
 final class OfflineDelegate: NSObject, WKNavigationDelegate, WKUIDelegate {
     weak var navigation: WKNavigationDelegate?
@@ -36,6 +53,7 @@ final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler 
     private let offlineDelegate = OfflineDelegate()
     private let smoke = ProcessInfo.processInfo.arguments.contains("--demo-smoke")
     override func capacitorDidLoad() {
+        bridge?.registerPluginInstance(OfflineHttpPlugin())
         guard let webView = webView else { return }
         offlineDelegate.navigation = webView.navigationDelegate
         offlineDelegate.ui = webView.uiDelegate

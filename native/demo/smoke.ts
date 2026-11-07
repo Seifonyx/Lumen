@@ -16,6 +16,13 @@ async function capture(stage: string) {
 }
 async function run() {
   try {
+    const capacitor=(window as unknown as {Capacitor:{nativePromise:(plugin:string,method:string,options:object)=>Promise<unknown>}}).Capacitor;
+    for(const method of ['request','get','post','put','patch','delete']) {
+      let denied=false;
+      try { await capacitor.nativePromise('CapacitorHttp',method,{url:'not-a-url'}); }
+      catch(error) { denied=(error as {code?:string}).code==='OFFLINE_DEMO'; }
+      if(!denied) throw new Error('Native HTTP bridge is not default-deny: '+method);
+    }
     await until(()=>Boolean(document.querySelector('.composer textarea')));
     await capture('chat');
     const store=useStore.getState();
@@ -49,7 +56,7 @@ async function run() {
     if(useStore.getState().user?.uid===ownerA || useStore.getState().chats.some(c=>c.messages.some(m=>m.text.includes('Synthetic native smoke')))) throw new Error('Demo account isolation failed');
     await capture('profile-b');
     if(blocked.length) throw new Error('Unexpected blocked application request');
-    report({done:true,passed:true,checks:['bundled launch','Canvas navigation','local synthetic reply','profile separation'],limitations:['programmatic interaction, not hardware keyboard or VoiceOver']});
+    report({done:true,passed:true,checks:['native HTTP bridge denied','bundled launch','Canvas navigation','local synthetic reply','profile separation'],limitations:['programmatic interaction, not hardware keyboard or VoiceOver']});
   } catch(error) { report({done:true,passed:false,error:String(error)}); }
 }
 void run();

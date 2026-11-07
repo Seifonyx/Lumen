@@ -1,13 +1,16 @@
-# Real integration and update architecture
+# Lumen native integration and update architecture
 
-Current Phase3: owner-approved Spark `lumen-ios-test` is provisioned with Google/iOS+web clients and strict
-account-scoped Firestore. See [current evidence and external authorization boundary](PHASE3_TEST_ENVIRONMENT.md).
-Default offline build is retained; no real Google test-identity consent, production access or inference verified.
-Earlier Phase1/2 design/approval notes below are historical and do not revoke the latest owner authorization.
+## Active owner-directed delivery (2026-11-08)
 
-2026-11-07. No endpoint, remote executable update, auth configuration, permission, Keychain plugin or provider
-integration is activated by Phase 1. The React/Canvas application remains the product; native SwiftUI/UIKit
-improvements come after functional parity. See FEATURE_PARITY.md for actual packaged/blocked features.
+The current goal is **to connect the native app with the actual existing Lumen Canvas product and deliver a genuinely usable private iPhone app now**, then iterate. Codex owns execution. Reuse canonical production React/Canvas routing, accounts, projects, drafts, model/provider selection, streaming, Send/Stop and privacy rather than constructing a separate AI system. The earlier Spark-only `lumen-ios-test` work and connected RC are implementation evidence, not the end-state. The owner has not yet confirmed successful physical Google sign-in or real native AI inference; neither is to be fabricated.
+
+Treat the owner-directed native rollout as active work without creating more preliminary phases or a broad mandatory manual QA campaign. Inspect the existing app and the exact integration seam, preserve data/signing identity and account isolation, and run focused security/regression checks plus exact-head CI. Do not infer permission to weaken production Firebase rules, access another user's data, add billing, expose private ports/keys or silently deploy unrelated infrastructure. Report exactly which native build is shipped, installed and functioning, and which live behaviors remain unverified.
+
+Once usable, prioritize secure OTA updates for compatible packaged web assets, then native UIKit/SwiftUI Liquid Glass guided by real-device observations. OTA cannot replace native code, entitlements or Apple signing, and the first OTA-capable install requires a new IPA.
+
+## Historical phased exploration and approval checklist (not the active delivery target)
+
+The earlier Phase1/2/3 scope below records past design and test-only boundaries. It does **not** supersede the latest owner instruction or assert that production release has already occurred.
 
 ## Real-account foundation: explicit approvals before implementation
 

@@ -1,5 +1,7 @@
 # Native release candidate: user-configured free AI
 
+> **Status and next product target (2026-11-08):** This describes the implemented **isolated connected-test RC** at the last verified coding head, not proof of a working installed production-connected Lumen. The owner has directed Codex to link the real existing Canvas app and launch the native version now, reusing its canonical model/provider/routing and streaming. Free-only/$0 safeguards and private per-account credential controls must be retained. Real model inference and native physical sign-in have not yet been verified; do not claim either. Compatible OTA updates and native Liquid Glass follow initial usable delivery.
+
 The iPhone app reuses canonical Router/catalogue/model selection, private per-account Firebase credentials,
 streaming, Send/Stop and error handling. No separate inference service or built-in API key.
 

@@ -1,5 +1,7 @@
 # Native Google sign-in: first physical-iPhone blocker
 
+> **Newer owner direction (2026-11-08):** Codex has been asked to integrate and roll out the real Lumen Canvas native app rather than prolong the test-only RC. These diagnostic findings and the already implemented focused fix remain valid evidence; they are not a requirement for another prelaunch QA campaign. The owner's actual installed Google sign-in stage remains unverified until new device evidence is available. Do not bypass nonce, callback, bundle identity or Firebase account checks.
+
 2026-11-08. PR141 remains draft; production, OAuth clients, Firebase rules and signing identity are unchanged.
 
 ## Evidence and bounded fix

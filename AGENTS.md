@@ -1,5 +1,7 @@
 # Lumen: instructions for coding agents
 
+At startup also read the public live context on branch `docs/lumen-live-context`: `docs/lumen-context/README.md`, `PROJECT_CONTEXT.md`, and especially `CURRENT_STATUS.md`. The owner's newest direct instructions outrank stale documentation. Keep rollout decisions and the active next action synchronized there without copying private data.
+
 Three documents run this project. Read them in this order at the start of every session:
 
 1. `npm run handoff` (Claude Code runs it for you at session start): the live state from git, GitHub and the live

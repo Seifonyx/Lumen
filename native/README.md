@@ -1,23 +1,18 @@
-# Lumen iOS foundation - Windows quick start
+# Lumen native iPhone app — current delivery and historic demo guide
 
-PR #141 / `experiment/ios-sideload` remains an **offline, synthetic-only experimental app**. The full Canvas UI is
-packaged, but real Google/Firebase accounts, cloud sync and live AI/services are not enabled. No SwiftUI redesign.
-Choose Demo A or Demo B. Two local demo models stream fixed replies; Study creates clearly labeled sample cards.
+> **Owner direction (2026-11-08):** Codex is integrating the *actual existing Lumen Canvas product* into the native iPhone app for usable private rollout now, followed by incremental fixes and updates. The previously isolated test app is a stepping stone, **not the target product**. The assignment is not a claim that the real-app connection or production login already works. See the live [execution checkpoint](../docs/lumen-context/CURRENT_STATUS.md) on `docs/lumen-live-context`, not this older branch's historical examples.
 
-The owner confirms that the earlier installed IPA launches, basic navigation/keyboard work, profiles stay separate
-and chats survive reopening. Agent browser/Simulator results and new physical upgrade acceptance are separate.
-See the [feature matrix](docs/FEATURE_PARITY.md) and [integration/update plan](docs/INTEGRATION_AND_UPDATES.md).
+**Last verified native build:** PR #141's connected test RC/sign-in fix at `13ffc52`: compiled, encrypted and delivered privately; automated auth/Canvas browser contracts and exact-head CI passed. Owner's physical screenshot shows Lumen Test launched but Google sign-in failed; the repair addresses a reproduced startup restore/login race, not independently verified success on the installed iPhone. Existing user data, signing identity and demo namespaces must be preserved.
 
-Phase2 adds synthetic auth/session lifecycle, isolated memory synchronization and background cancellation.
-Real authentication, cloud sync and providers remain disabled. The Keychain facility is inactive.
-See [Phase2 scope, remaining approvals and device checklist](docs/PHASE2_INTEGRATION.md).
+**Launch requirements:** reuse canonical Canvas navigation, projects, drafts, real AI/model routing, user-scoped credentials, streaming and Stop; preserve account isolation and privacy. Build an actual private iPhone candidate with an unchanged compatible bundle/signing identity wherever feasible. Do not uninstall the prior app to troubleshoot. No secrets in IPA/source/artifacts, no paid services or paid fallback. Do not claim a build, merge, Firebase Hosting deploy and iPhone installation are the same event.
 
-Phase3 test services are now provisioned in the separate Spark-only `lumen-ios-test` project. The default IPA
-stays offline; explicit isolated-service builds use verified private SDK metadata. No real Google test identity
-has authorized sign-in, so positive live OAuth/cloud round-trip is not claimed. This round requires no new
-installation, screenshots or manual demo checklist. See [current test environment](docs/PHASE3_TEST_ENVIRONMENT.md).
+**After launch:** secure OTA delivery for compatible React/CSS/web assets, then verified native UIKit/SwiftUI Liquid Glass improvements and regular bug fixes; Swift/plugins/entitlements/signing still require a new IPA.
 
-## Download and update the installed app
+## Historical offline-demo build / signing instructions
+
+The instructions below describe the **old offline demo artifact**, not the active connected-release candidate or new real-app rollout. Use the dedicated encrypted connected-iPhone workflow for the native release and its private delivery process.
+
+## Offline demo download and update (historical reference)
 
 1. Open [iOS unsigned demo IPA runs](https://github.com/Seifonyx/Lumen/actions/workflows/ios-demo.yml).
    Choose the latest `experiment/ios-sideload` run matching PR141's head. Check native build/Simulator **and** browser

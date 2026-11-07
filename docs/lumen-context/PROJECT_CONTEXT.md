@@ -6,6 +6,12 @@
 
 **Use the shortest complete answer by default to save tokens.** Be direct, concise and low-repetition; omit filler, not important facts, decisions, limitations, risks or next actions. **Do not trade completeness or accuracy for brevity.** Long, thorough prompts, specifications and deliverables are explicitly welcome when the task requires them. This applies to future planning, review, status and coding-agent handoff responses; follow any more specific owner instruction for a particular request.
 
+## App-first planning and recommendations (permanent owner rule, 2026-11-07)
+
+**Before recommending any Lumen feature, UX, visual, performance or engineering change, inspect the latest running application in the relevant flow and device/layout state.** Read code, agent audits, screenshots, PRs and CI as supporting evidence, **not substitutes for checking the actual UI/behavior**. Use available browser/device access or authorized private, synthetic-only local QA, within strict $0 incremental spending and without real accounts, secrets, live inference or public QA ports. For iPhone-only phenomena, distinguish simulated WebKit from an actual installed iPhone; incorporate documented owner device results, and ask for a device check only where it is genuinely necessary.
+
+**Evidence gate:** Clearly identify what was personally observed in the app, what is supported only by code/agent reports, and what remains hypothetical. Recommend a specific implementation only after identifying an actual, reproducible problem or an owner-confirmed product need; do not recycle old audit findings as current defects. If live app access is unavailable, say so and recommend an **inspection-first task** rather than inventing or confidently assigning a fix. The purpose is product quality, not perpetual audits: inspect narrowly and proportionately, preserve good work, and do not re-test already settled flows absent a concrete reason.
+
 ## Product and design philosophy
 
 Lumen is an independent, premium AI workspace for conversation, reading, sustained writing, projects, model selection/routing, providers, usage context and tools. Prioritize **original identity**, clear visual hierarchy, excellent desktop and real-iPhone interaction, accessibility and reliable feature parity.

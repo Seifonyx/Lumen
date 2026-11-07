@@ -1,19 +1,16 @@
+import {DEMO_MODELS,replyText,replyStream} from './synthetic';
 const assetFetch = globalThis.fetch.bind(globalThis);
-const models = [
-  {name:'models/gemini-flash-latest',displayName:'Local demo reply',inputTokenLimit:128000,outputTokenLimit:8192,supportedGenerationMethods:['generateContent']}
-];
 export const blocked: string[] = [];
 export const demoFetch: typeof fetch = async (input,init) => {
   const raw = input instanceof Request ? input.url : String(input);
   const url = new URL(raw,document.baseURI);
-  if(url.hostname==='generativelanguage.googleapis.com') {
-    if(url.pathname.endsWith('/models')) return Response.json({models});
-    if(/:streamGenerateContent$/.test(url.pathname)) {
-      if(init?.signal?.aborted) throw new DOMException('Stopped','AbortError');
-      const event={candidates:[{content:{role:'model',parts:[{text:'**Offline demonstration.** This reply was created locally from a fixed template. No model or account service was contacted. You can test navigation, drafts, files and projects here.'}]},finishReason:'STOP'}]};
-      return new Response('data: '+JSON.stringify(event)+'\n\n',{headers:{'content-type':'text/event-stream'}});
-    }
-    if(/:generateContent$/.test(url.pathname)) return Response.json({candidates:[{content:{parts:[{text:'Offline demonstration reply.'}]},finishReason:'STOP'}]});
+  const signal=init?.signal || (input instanceof Request ? input.signal : undefined);
+  if(signal?.aborted) throw new DOMException('Stopped','AbortError');
+  if(url.protocol==='https:' && url.hostname==='generativelanguage.googleapis.com') {
+    if(url.pathname.endsWith('/models')) return Response.json({models:DEMO_MODELS});
+    const body=typeof init?.body==='string' ? init.body : '';
+    if(/:streamGenerateContent$/.test(url.pathname)) return new Response(replyStream(replyText(body),signal),{headers:{'content-type':'text/event-stream'}});
+    if(/:generateContent$/.test(url.pathname)) return Response.json({candidates:[{content:{parts:[{text:replyText(body)}]},finishReason:'STOP'}]});
   }
   const local = url.protocol===location.protocol && url.host===location.host;
   const method = (init?.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();

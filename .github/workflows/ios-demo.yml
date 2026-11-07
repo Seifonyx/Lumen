@@ -30,6 +30,8 @@ jobs:
             native/package-lock.json
       - run: npm ci
       - run: npm ci --prefix native --ignore-scripts
+      - name: Native foundation regression tests
+        run: node --experimental-strip-types --test native/tests/*.test.mjs
       - name: Build isolated Canvas demo
         run: node native/scripts/build.mjs
       - name: Validate native seam and offline bundle
@@ -62,4 +64,32 @@ jobs:
             native/build-device.log
             native/build-simulator.log
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 3
+      - name: Build and verification summary
+        if: always()
+        run: node native/scripts/summary.mjs
+
+  browser:
+    if: github.repository == 'Seifonyx/Lumen' && github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit
+      - run: node native/scripts/build.mjs
+      - run: node native/scripts/verify.mjs
+      - run: node native/scripts/browser-smoke.mjs
+      - run: node native/scripts/browser-foundation.mjs
+      - name: Offline browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: Lumen-offline-browser-evidence
+          path: |
+            tests/e2e/out/native-demo-*.png
+            tests/e2e/out/native-foundation-*.png
+          retention-days: 3

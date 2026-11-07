@@ -1,6 +1,8 @@
 import { useStore } from '../../src/store';
 import { openRoutingCenter, closeRoutingCenter, showRoutingSection } from '../../src/lib/routing-center';
 import { blocked } from './transport';
+import { db } from '../../src/lib/db';
+import { StudyStore,grade } from '../../src/lib/study';
 import { selectDemo, signInPreview, signOutUser } from './account';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve,ms));
@@ -38,6 +40,30 @@ async function run() {
     await until(()=>Boolean(document.querySelector('.message-row')?.textContent?.includes('Synthetic native smoke')));
     await until(()=>document.body.textContent!.includes('Offline demonstration.'));
     await capture('reply');
+    await until(()=>!useStore.getState().streamingChatId);
+    const savedId=useStore.getState().currentId!;
+    const project={id:'native-smoke-project',name:'Native sample project',instructions:'Synthetic local sample only.',createdAt:Date.now(),updatedAt:Date.now()};
+    if(!useStore.getState().saveProject(project)) throw new Error('Local project save failed');
+    useStore.getState().moveChatToProject(savedId,project.id);
+    useStore.getState().openCanvas('Native sample.md','Synthetic local sample document. '.repeat(12));
+    await until(()=>Boolean(useStore.getState().chats.find(c=>c.id===savedId)?.documents?.length));
+    const sampleDocument=useStore.getState().chats.find(c=>c.id===savedId)!.documents![0];
+    await capture('document');
+    useStore.getState().setUi({canvasOpen:false});
+    const deck=await useStore.getState().makeStudyDeck(savedId,sampleDocument.id);
+    if(!deck || !deck.title.includes('sample')) throw new Error('Synthetic Study generation failed');
+    deck.cards[0]=grade(deck.cards[0],true);
+    await new StudyStore(useStore.getState().user!.uid).put(deck);
+    useStore.getState().setUi({page:'study'});
+    await until(()=>Boolean(window.document.querySelector('.study-decks')));
+    await capture('study');
+    useStore.getState().setUi({page:null});
+    useStore.getState().toggleTemporaryChat();
+    await useStore.getState().send('Native private smoke marker',[]);
+    const persisted=await db.all();
+    if(persisted.some(c=>c.messages.some(m=>m.text.includes('Native private smoke marker')))) throw new Error('Incognito content persisted');
+    useStore.getState().toggleTemporaryChat();
+    useStore.getState().selectChat(savedId);
     openRoutingCenter();
     await until(()=>Boolean(document.querySelector('.rc-page')));
     showRoutingSection('providers');
@@ -55,10 +81,10 @@ async function run() {
     await until(()=>!useStore.getState().authed);
     selectDemo('b'); signInPreview();
     await until(()=>Boolean(useStore.getState().authed));
-    if(useStore.getState().user?.uid===ownerA || useStore.getState().chats.some(c=>c.messages.some(m=>m.text.includes('Synthetic native smoke')))) throw new Error('Demo account isolation failed');
+    if(useStore.getState().settings.projects?.some(p=>p.id===project.id) || (await new StudyStore(useStore.getState().user!.uid).list()).length || useStore.getState().user?.uid===ownerA || useStore.getState().chats.some(c=>c.messages.some(m=>m.text.includes('Synthetic native smoke')))) throw new Error('Demo account isolation failed');
     await capture('profile-b');
     if(blocked.length) throw new Error('Unexpected blocked application request');
-    report({done:true,passed:true,checks:['native HTTP bridge denied','bundled launch','Canvas navigation','local synthetic reply','profile separation'],limitations:['programmatic interaction, not hardware keyboard or VoiceOver']});
+    report({done:true,passed:true,checks:['native HTTP bridge denied','bundled launch','Canvas navigation','local synthetic streaming reply','local project/document/Study','Incognito not persisted','profile separation'],limitations:['programmatic interaction, not hardware keyboard or VoiceOver']});
   } catch(error) { report({done:true,passed:false,error:String(error)}); }
 }
 void run();

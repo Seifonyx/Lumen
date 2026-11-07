@@ -53,6 +53,7 @@ final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler 
     private let offlineDelegate = OfflineDelegate()
     private let smoke = ProcessInfo.processInfo.arguments.contains("--demo-smoke")
     override func capacitorDidLoad() {
+        NSLog("LumenDemo custom controller loaded")
         bridge?.registerPluginInstance(OfflineHttpPlugin())
         guard let webView = webView else { return }
         offlineDelegate.navigation = webView.navigationDelegate
@@ -105,7 +106,7 @@ final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler 
         }
         if message.name == "nativeDownload", let name = data["name"] as? String,
            let base64 = data["data"] as? String, base64.count <= 14_000_000,
-           let bytes = Data(base64Encoded: base64) {
+           let bytes = Data(base64Encoded: base64), bytes.count <= 10_000_000 {
             let safeName = URL(fileURLWithPath: name).lastPathComponent
             guard !safeName.isEmpty, !safeName.hasPrefix(".") else { return }
             let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

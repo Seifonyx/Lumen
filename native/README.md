@@ -1,80 +1,95 @@
-# Lumen iOS sideload experiment
+# Lumen iOS foundation - Windows quick start
 
-This branch builds **Lumen Demo**, a real Capacitor WKWebView application containing the current Canvas UI.
-The bundle identifier is `io.github.seifonyx.lumen.demo`. The deployment target is iOS 16.
-Its app icon and Light/Dark launch image reuse the approved Crease assets.
+PR #141 / `experiment/ios-sideload` remains an **offline, synthetic-only experimental app**. The full Canvas UI is
+packaged, but real Google/Firebase accounts, cloud sync and live AI/services are not enabled. No SwiftUI redesign.
+Choose Demo A or Demo B. Two local demo models stream fixed replies; Study creates clearly labeled sample cards.
 
-The application is an offline demonstration. Choose **Open Demo A** or **Open Demo B**.
-Chats, drafts, projects and settings use the app's local per-profile stores. Sending produces a fixed local reply.
-Sign out in Settings to switch demo profiles. Use sample text and files. No real account, key or inference is needed.
+The owner confirms that the earlier installed IPA launches, basic navigation/keyboard work, profiles stay separate
+and chats survive reopening. Agent browser/Simulator results and new physical upgrade acceptance are separate.
+See the [feature matrix](docs/FEATURE_PARITY.md) and [integration/update plan](docs/INTEGRATION_AND_UPDATES.md).
 
-## Build and download on Windows
+## Download and update the installed app
 
-1. Open the PR's **Checks** or the repository's **Actions** page. Select **iOS unsigned demo IPA** and the latest successful run for `experiment/ios-sideload`.
-2. Open that run's summary. Under **Artifacts**, download **Lumen-unsigned-IPA**. Extract the downloaded ZIP to obtain **Lumen.ipa** and **Lumen.json**.
-3. The artifact expires after seven days. To rebuild this experimental branch, open a previous run and choose **Re-run all jobs**. A push to this exact branch also builds it. The workflow has `workflow_dispatch`, but GitHub only exposes **Run workflow** after the workflow exists on the default branch. This experiment is intentionally unmerged, so use the branch run's rerun action now.
-4. Confirm the commit shown on the run matches the PR head. `Lumen.json` records the IPA SHA-256, device platform, architecture and minimum iOS version. In PowerShell, `Get-FileHash .\Lumen.ipa -Algorithm SHA256` verifies the download.
+1. Open [iOS unsigned demo IPA runs](https://github.com/Seifonyx/Lumen/actions/workflows/ios-demo.yml).
+   Choose the latest `experiment/ios-sideload` run matching PR141's head. Check native build/Simulator **and** browser
+   job results. A downloadable IPA alone proves compilation, not successful runtime verification.
+2. Under **Artifacts**, download **Lumen-unsigned-IPA**, unzip it and find `Lumen.ipa` plus `Lumen.json`.
+   Metadata gives source commit, unsigned iPhoneOS arm64 architecture and SHA-256. On Windows:
+   `Get-FileHash .\Lumen.ipa -Algorithm SHA256`. Artifacts expire after seven days; keep a local copy.
+3. Open [Sideloadly for Windows](https://sideloadly.io/). Use the Apple iTunes/iCloud device components linked there.
+   Connect the trusted/unlocked iPhone by USB. Load the IPA in normal Apple ID Sideload mode.
+4. **For an upgrade, keep exactly the same Apple Account, signed bundle ID and Sideloadly bundle options as your
+   working installation. Overwrite it. Do not uninstall/reset the app or choose a new identity.** Source bundle ID
+   stays `io.github.seifonyx.lumen.demo`; confirm any Sideloadly-specific suffix/custom ID matches your installed one.
+   Leave tweak injection off. Enter Apple credentials/2FA only locally in Sideloadly, never GitHub or Lumen.
+5. First install only: trust the developer in iPhone Settings > General > VPN & Device Management. Enable
+   Settings > Privacy & Security > Developer Mode if prompted, then restart/confirm. Existing installs keep their setup.
+6. Launch Lumen Demo; check your prior sample chat/project, draft and A/B separation before creating new samples.
+   Test Airplane Mode launch, typing, Stop, navigation, Study and Save to Files. New native upgrade/keyboard/VoiceOver
+   and share-sheet acceptance still needs the physical iPhone. Report any failed overwrite without deleting app data.
 
-The workflow uses the standard `macos-26` public-repository runner, refuses private-repository execution, and has read-only repository permission. It uses no signing credentials, provisioning profiles or deployment steps. Node and Capacitor dependencies are installed from their lockfiles. Capacitor core, iOS and CLI are pinned to 8.6.0. Xcode's version is recorded in the logs. The iPhoneOS build and Simulator build have separate output directories.
+`capacitor://localhost`, both demo UIDs and canonical local database/schema names are unchanged. Compatible overwrite
+is intended to preserve the sandbox; changing signing identity, deleting/offloading/resetting or OS storage loss can
+invalidate that expectation. Export important sample chats with the existing chat export where available first.
+A browser same-origin update check is useful evidence, not proof of physical Sideloadly overwrite or recovery.
 
-## Install through Sideloadly
+## Free signing and refresh
 
-1. On Windows, download the free Windows build from [Sideloadly](https://sideloadly.io/). Install the Apple device support, iTunes and iCloud components its Windows setup instructions require. Use its linked supported installers if it reports missing Apple components.
-2. Connect the iPhone by USB. Unlock it and accept **Trust This Computer**. Open Sideloadly and select the connected iPhone.
-3. Drag the extracted **Lumen.ipa** into Sideloadly. Choose normal **Apple ID Sideload** installation. Leave tweak injection and bundle modification options off.
-4. Enter a free Apple Account in Sideloadly on this PC. Press **Start**, then complete password and two-factor prompts locally. No Apple Account details belong in GitHub, repository files, workflow inputs or this app.
-5. After installation, on iPhone open **Settings â†’ General â†’ VPN & Device Management**, select the developer entry for that Apple Account, and trust it.
-6. If iOS requires Developer Mode, enable **Settings â†’ Privacy & Security â†’ Developer Mode**, restart the phone and confirm. The option may appear only after the first developer app installation.
-7. Open **Lumen Demo**. The first screen states that real sign-in is unavailable. Choose Demo A, send a sample message, open Router/Library/Projects, then sign out and open Demo B to check separation.
-8. Test Airplane Mode launch. The packaged UI and local synthetic reply should work without a website connection.
+Free Personal Team signing lasts **seven days**, not indefinitely. Apple documents up to **3 apps per device**,
+**3 registered devices** and **10 App IDs**, with periodic expiration/reprovisioning. Don't create new bundle IDs
+for each build. [Apple limits](https://developer.apple.com/help/account/basics/about-your-developer-account/)
 
-Sideloadly signs the unsigned IPA locally. Free Personal Team provisioning expires after seven days. Before expiry, reconnect to the same PC and re-sign/reinstall the same IPA with the same Apple Account and bundle settings. Sideloadly's optional refresh daemon can automate this when its required device connection is available. Keep the existing installed app when refreshing to preserve local demo data. If the signature expires, refresh from Windows before opening it again. Removing the app deletes its local demo data.
+Enable Sideloadly's **automatic refresh** when sideloading. Its daemon must run on an awake Windows PC with internet
+and the iPhone detected over USB or paired Wi-Fi. For Wi-Fi, initially use USB, enable iTunes > device > Summary >
+Options > Sync with this iDevice over Wi-Fi, then Sync/Done. Use the same local network; an unlocked/awake device
+may be needed for discovery. If refresh misses, connect USB and refresh manually before expiry. A sleeping/off PC,
+isolated Wi-Fi/VPN/firewall or unavailable device can prevent it. If expired, re-sign from Windows; don't delete Lumen.
+Update the daemon's cached IPA by sideloading the new IPA with the same Apple/bundle ID and refresh enabled.
+Refresh re-signs the stored IPA; it does **not** automatically build/download the latest GitHub code or install native
+changes without a new IPA. [Official Sideloadly FAQ](https://sideloadly.io/faq.html)
 
-[Apple's Personal Team limits](https://developer.apple.com/help/account/basics/about-your-developer-account/) and [Sideloadly's free account and refresh support](https://sideloadly.io/) describe the signing conditions. Windows signing and physical installation remain owner validation steps.
+## Free builds, limits and failure recovery
 
-## Isolation and capability limits
+The workflow uses standard **public-repository** macos-26 and Ubuntu runners, read-only contents permission,
+locked dependencies, no Apple/signing secrets and no deployment. GitHub documents standard public runner compute
+as free; larger runners are billed and are never selected. GitHub Free lists **500 MB shared artifact storage** and
+**10 GB repository cache allowance**; don't assume unlimited retained files or account-wide spare capacity. Evidence
+retention is short, IPAs are small and expire in seven days. Never enable billing/paid runners or raise storage limits.
+If a free limit blocks uploads, keep the last local IPA and wait/clean up only explicitly approved expendable artifacts;
+do not buy capacity. Public runner availability/queues are not a guaranteed service level.
+[GitHub billing and limits](https://docs.github.com/en/billing/concepts/product-billing/github-actions)
 
-- The production Canvas and ordinary build configurations and their dependencies are untouched. All Capacitor packages live under `native/` with a separate lockfile.
-- `native/vite.config.ts` selects the canonical Canvas module, replaces auth/sync/PWA/device/login at build time, and rewrites application requests to a local synthetic transport. It reuses the existing stateless no-cloud SDK/sync/worker adapters, but imports no private QA fixtures, gate, lease or QA entry.
-- The IPA contains only bundled hashed assets, fonts and public demonstration code. It loads `capacitor://localhost`, with no remote server URL. Firebase configuration and SDK code are excluded.
-- CSP restricts connections to packaged assets. Before the first document loads, WKWebView installs content rules blocking HTTP(S)/WS(S) traffic. Native navigation delegates reject external destinations and popups. The built-in native HTTP bridge is replaced by a local rejection for every method; disabling Capacitor fetch patching alone would not block direct native RPC calls. No permission descriptions for camera, microphone or photos are added, and media capture requests are denied.
-- Safe areas remain owned by the existing viewport-fit and CSS layout. Native UIKit owns the status bar. The PWA-only status-bar sampling workaround is excluded. Keyboard sizing uses the canonical visualViewport handler, with no extra keyboard plugin.
-- No service worker is emitted or registered. Offline availability comes from the IPA, and updating requires a new sideload. The production PWA's update mechanism is unchanged.
-- Local app-owned navigation is used, as in the existing installed PWA. Native WKWebView edge history is disabled to avoid competing gesture owners.
-- Document/file exports up to 10 MB open the native share sheet through a narrow local download bridge. Choose Save to Files there. This does not require photo-library permission. Share sheet usability and large/native file-picker workflows need physical testing.
-- Local imported files, document editing and the canonical UI remain available. Model discovery/replies are synthetic. Web research, sync, GitHub operations, embeddings, voice capture, Python/code execution and remote workers are unavailable. Worker creation fails visibly. Packaging a worker file does not establish that WKWebView supports its custom-scheme execution.
-- Simulator smoke uses programmatic actions in the real WKWebView. It records launch, a synthetic reply, Router, Library, Settings and profile separation, and captures application views. It does not establish hardware touch, keyboard/IME, physical safe areas, VoiceOver, background lifecycle or Sideloadly installation.
-- The browser smoke separately checks Chromium/WebKit with external requests blocked. No real provider request is permitted.
+To rebuild, rerun a branch run in Actions or push to this exact branch. The workflow supports manual dispatch,
+but GitHub exposes Run workflow only once a workflow is on the default branch. No merge is needed to rerun this
+experiment's existing run. There is no schedule wasting free runner time. Native and browser jobs show individual
+failed steps; the native summary distinguishes IPA compilation from Simulator pass. Download smoke evidence for
+screenshots/report/logs. A failed boot is different from an app exception; don't claim both work from one artifact.
 
-## Protected authentication plan â€” approval required before implementation
+## Safety and remaining gaps
 
-Current `src/lib/firebase.ts` uses Google web popup/redirect auth and same-site hosting assumptions.
-Google prohibits embedded WKWebView OAuth. The demo substitutes a local account adapter and never opens that flow.
-Changing a user agent would not make it a supported integration. [Google OAuth policy](https://developers.google.com/identity/protocols/oauth2/policies#disallowed_user_agents)
+- Canonical React/Canvas screens and local data owners are reused. Production PWA/ordinary builds stay unchanged.
+- Native SceneDelegate now selects the custom guarded controller; runtime smoke must prove this, not just compile.
+- CSP/WebKit rules deny external resources; native HTTP RPC rejects locally. No real Firebase SDK/config or keys.
+- No service worker/remote executable updates. All JS/lazy chunks/fonts are bundled; updates currently need a new IPA.
+- No camera/mic/photo permission or new native dependency. Native exports use a scoped <=10 MB blob/share bridge.
+- Worker execution, semantic embeddings, external research/GitHub/image services, cloud sharing/sync, arbitrary
+  iframe preview and real voice remain unavailable or require further native compatibility work. UI is retained.
+- Protected native authentication/network/credential integration and future signed web updates are **design only**:
+  [approval boundaries and next phase](docs/INTEGRATION_AND_UPDATES.md). Do not use real accounts or enter real keys.
 
-The proposed next integration requires owner approval for all of these items.
-
-1. Decide the permanent bundle identifier and verify what Sideloadly actually signs on the owner's device. If it rewrites the identifier, native OAuth registration must match the installed application.
-2. Register the iOS application in the existing Firebase project or an approved separate test project, and create its iOS Google OAuth client. Obtain the matching `GoogleService-Info.plist` and reversed-client-ID URL scheme. No client secret, certificate, profile or Apple Account credential is committed.
-3. Add a reviewed native GoogleSignIn iOS SDK bridge using the system authentication session. Handle the reversed-client-ID callback in the application scene and bridge only the resulting Google token to the existing Firebase credential sign-in owner. Decide explicitly whether Firebase session ownership is web or native to avoid two divergent sessions.
-4. Review allowed redirect/domain configuration, the existing invite-only authorization, logout, revocation, account switching, incognito and per-account persistence. Approve the exact network allowlist required to replace the demo's default-deny mode.
-5. Test with an approved test account and signing identity, first outside production. Confirm real request/pricing consent before enabling provider use.
-
-This experiment makes none of those production changes. [Firebase's native Google sign-in guide](https://firebase.google.com/docs/auth/ios/google-signin) documents the native SDK and URL-scheme requirements.
-
-## Local checks
-
-From the repository root on Windows, install root dependencies and then run these commands.
+## Developer checks (Windows, repository root)
 
 ```powershell
-npm ci
-npm ci --prefix native --ignore-scripts
+npm.cmd ci
+npm.cmd ci --prefix native --ignore-scripts
+node --experimental-strip-types --test native/tests/*.test.mjs
 node native/scripts/build.mjs
+node native/scripts/verify.mjs
 node native/scripts/browser-smoke.mjs
-npm run test:affected -- --run
+node native/scripts/browser-foundation.mjs
+npm.cmd run test:affected -- --run
 ```
 
-On the macOS runner, `prepare-ios.mjs` generates/syncs the project. `build-ipa.sh` compiles the device application,
-packages Payload/Lumen.app, and validates Mach-O platform/architecture and bundled assets. `simulator-smoke.sh`
-builds independently for Simulator, launches it, and waits for the app's smoke report. A compiled IPA can be uploaded
-even if Simulator smoke fails. Check both the job result and the evidence artifact before interpreting it as verified.
+`prepare-ios.mjs` generates ignored Xcode source on the macOS runner. It fails closed on an unrecognized scene
+controller template and can be run repeatedly. `build-ipa.sh` validates the unsigned real-device app and embedded
+frameworks. Simulator tests execute only with explicit smoke launch arguments and use public synthetic samples.

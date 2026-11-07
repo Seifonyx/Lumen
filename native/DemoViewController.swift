@@ -8,7 +8,7 @@ import Capacitor
 final class OfflineHttpPlugin: CAPPlugin, CAPBridgedPlugin {
     let identifier = "OfflineHttpPlugin"
     let jsName = "CapacitorHttp"
-    let pluginMethods = ["request", "get", "post", "put", "patch", "delete"].map {
+    let pluginMethods: [CAPPluginMethod] = ["request", "get", "post", "put", "patch", "delete"].compactMap {
         CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise)
     }
     @objc func request(_ call: CAPPluginCall) { call.reject("Native networking is unavailable in this offline demo.", "OFFLINE_DEMO") }

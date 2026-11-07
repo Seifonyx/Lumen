@@ -33,6 +33,10 @@ jobs:
       - run: npm ci --prefix native --ignore-scripts
       - name: Build isolated Canvas demo
         run: node native/scripts/build.mjs
+      - name: Validate native seam and offline bundle
+        run: |
+          node node_modules/typescript/bin/tsc --noEmit -p native/tsconfig.json
+          node native/scripts/verify.mjs
       - name: Generate and sync native project
         run: node native/scripts/prepare-ios.mjs
       - name: Build and verify unsigned real-device IPA

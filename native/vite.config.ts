@@ -2,7 +2,7 @@ import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
-const root = fileURLToPath(new URL('..', import.meta.url)).replaceAll(String.fromCharCode(92), '/');
+const root = resolve(fileURLToPath(new URL('..', import.meta.url))).replaceAll(String.fromCharCode(92), '/');
 const at = (p: string) => resolve(root, p).replaceAll(String.fromCharCode(92), '/');
 const replacements: Record<string,string> = {
   [at('src/lib/firebase.ts')]: at('native/demo/account.ts'),

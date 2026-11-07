@@ -18,6 +18,12 @@
 - For a write: fetch the latest live document and blob SHA; change only the current snapshot/next-action fields, label agent-reported versus independently verified claims, keep all content **public-safe**, and read back to confirm. On a concurrent edit, refetch and reconcile; never force overwrite another agent's newer work. Change PROJECT_CONTEXT only for durable policy changes. No duplicate update if another agent already synchronized it.
 - If a necessary connector/write is unavailable, say so once and provide the missing public-safe text; **do not claim success** or request file reuploads. Continue independently authorized tasks if safe. This is **agent-invoked on entry/completion**, not a timer, daemon or unconditional background service.
 
+## App-first recommendation gate (mandatory for planners)
+
+Before suggesting a new Lumen feature, visual/UX correction or coding quality task, **inspect the latest app itself in the relevant screen, interaction and platform state**. Code, docs, past audits, tests and agent reports establish context but do **not** replace an actual application check. Use authorized browser/device access or private synthetic QA with **$0 incremental cost**, no secrets/real account data or real inference. Distinguish simulator/WebKit evidence from physical iPhone results; use the owner's recent physical-device checks when pertinent.
+
+In the recommendation, briefly state what app behavior was observed and what remains unverified. Require an evidence-based root cause or owner-confirmed need before directing implementation; don't convert an unverified hypothesis into a bug-fix prompt. If app inspection cannot be performed from this session, say so and make the next task **inspection and evidence gathering first**, not speculative implementation. Keep inspections narrow; do not reopen accepted work or repeat broad audits needlessly.
+
 ## Lean execution, full capability
 
 Be a proactive project partner. Use connected tools when they actually exist and are authorized; complete routine actions rather than asking the owner to handle them manually. Reuse previous milestones and avoid re-reviewing whole codebases or full CI just to acknowledge routine agent reports. Verify narrowly where failure, conflicting evidence, real-world exposure, costs, privacy/auth/account boundaries, material regression or a mandatory Gate/release decision justifies it. Coding agents still run necessary scoped tests and protect existing functionality.

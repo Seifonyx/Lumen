@@ -4,7 +4,8 @@
     "demo",
     "vite.config.ts",
     "integration",
-    "services"
+    "services",
+    "authorization"
   ],
   "exclude": [
     "ios",

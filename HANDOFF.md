@@ -18,16 +18,17 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - Firebase plugin provisioned separate `lumen-ios-test`, verified billing disabled. Google provider + matching web/iOS
   clients configured; free-tier Standard Firestore in europe-west1 and strict Google/custom-claim/per-UID rules
   published/read back. SDK config is private under ignored native/artifacts/test-admin, never source/secrets in CI.
-- Source baseline5c7d0da passed32/32 PR checks and actual GoogleSignIn SDK compile with synthetic metadata. No live
-  Google test identity has been authorized, so positive real OAuth/cloud roundtrip is still blocked, not claimed.
+- Previous head64408cd passed32/32 PR checks plus native IPA/Simulator/browser/emulator jobs. GoogleSignIn SDK
+  compilation passed at5c7d0da. The owner-approved test identity is linked/claimed; Google app consent is still pending.
 - Current fixes: Capacitor bridge logging disabled; native pending deletions reuse the durable canonical queue until
   server ACK, survive restart, suppress resurrection; native catch-up waits for server data to prevent cache-first
   rollback of a newer remote revision. Both defects reproduced with emulators before fixes. Production source unchanged.
 - Targeted Chromium/WebKit tests exercise canonical Firebase/ChatSync using loopback emulators: claims/provider/UID
   denials, settings/projects, chat/offline/conflict/delete/restart/logout/Incognito. Isolated Login fails closed and
   retains Demo data. Test fixtures never enter packaged native graph. See native/docs/PHASE3_TEST_ENVIRONMENT.md.
-- **Next:** finish exact-head CI, preserve test-only configuration, report external Google test-identity consent as
-  the remaining live-auth dependency. Do not use the authenticated Firebase administrator as an app test user.
+- **Next:** private Windows consent helper uses supported Firebase Google popup, memory-only session, temporary
+  test-cloud sample; no administrative credentials. Localhost authorized on test project only. Complete current CI,
+  then only the approved identity's Google account/consent click is external. Native callback remains unverified.
   No new iPhone installation, screenshot or repeated manual demo checklist. No live inference activation.
 - Waiting on the owner's iPhone (Home Screen app), PR #136 (live): cold launch shows no band under the status bar in
   Light and Dark; Router and Settings get a status bar the same grey as the page, the chat white (Light) or grey

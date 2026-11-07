@@ -46,7 +46,7 @@ function demoIsolation(): Plugin {
       if(services&&id==='\0lumen:test-config')return 'export default '+JSON.stringify({projectId:services.projectId,apiKey:services.apiKey,appId:services.appId,authDomain:services.authDomain});
       if(services&&id==='\0lumen:service-config')return 'export default '+JSON.stringify(services);
       if(services&&/\/node_modules\/(?:@firebase|firebase)\//.test(strip(id)))return null;
-      if (/\/(?:tests|server)\/|\/qa\/iphone\/(?:fixtures|main)|\/src\/firebase-config.json|\/node_modules\/(?:@firebase|firebase)\//.test(strip(id))) this.error('Forbidden native demo module '+id);
+      if (/\/native\/authorization\/|\/(?:tests|server)\/|\/qa\/iphone\/(?:fixtures|main)|\/src\/firebase-config.json|\/node_modules\/(?:@firebase|firebase)\//.test(strip(id))) this.error('Forbidden native demo module '+id);
     },
     transform(code,id) {
       if (!strip(id).startsWith(at('src/'))) return null;

@@ -90,6 +90,8 @@ jobs:
       - run: node native/scripts/verify.mjs
       - run: node native/scripts/browser-smoke.mjs
       - run: node native/scripts/browser-foundation.mjs
+      - name: Private Google consent listener contracts (synthetic, no authorization)
+        run: node native/scripts/test-authorization.mjs
       - run: node native/scripts/browser-service.mjs
       - uses: actions/setup-java@v5
         with:

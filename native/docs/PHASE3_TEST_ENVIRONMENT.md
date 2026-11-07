@@ -67,17 +67,50 @@ not imported by packaged app entry and the native graph denies tests/fixtures. N
 Local cloud tests failed on restart deletion and stale-cache conflict before fixes, pass Chromium/WebKit after.
 Ordinary/Canvas affected checks and unchanged budgets, native type/config tests and exact-head CI remain required.
 
-## Remaining genuine external dependency
+## App-client authorization: one supported, user-consented step
 
-A dedicated, authorized Google **test identity** has not completed Google consent. The authenticated Firebase
-administrator is not an app test user and was never signed into Lumen. Do not use production identities or forge a
-Google token to claim real sign-in. Grant `lumenIosTest:true` only to an explicitly approved synthetic Google test
-identity after its Firebase UID/provider ownership is established. Never grant it based on a client document field.
+The owner explicitly approved a Google identity for this isolated project. Its verified Google subject is linked
+in test Firebase with the administrator-issued test claim. That permission does not itself complete Google OAuth.
+Administrative Firebase/CLI credentials must never be exchanged for an app session. The earlier administrative
+credential exchange was rejected and is retired; native nonce/audience checks remain unchanged.
 
-Consequently live Google login/restoration/revocation and positive authenticated cloud roundtrip remain unverified.
-Client IDs, backend availability, negative access and compile/mock/emulator checks cannot substitute for consent.
-The signed installation's bundle identity must match the selected iOS OAuth client; native mismatches fail closed.
-No device/manual testing is requested now. If completing live authorization requires the owner's interaction,
-request only dedicated-test-account authorization, never passwords/tokens or production credentials.
+The test project's authorized domains now include localhost (existing Firebase domains retained). The reserved
+Firebase auth handler is available without deploying an app or enabling billing. No production configuration changed.
+
+Run from the repository on Windows:
+
+```powershell
+node native/scripts/authorize-test.mjs
+```
+
+The command uses ignored test SDK metadata and the already-approved identity's email metadata. It never loads
+administrative credentials, passwords or client secrets. Open its printed `http://localhost:5213/<session>/` URL
+in the Windows browser; click **Continue with Google**, select the approved identity and complete Google's consent.
+This Google-owned account/consent interaction cannot be automated or replaced by administrative authorization.
+Do not forward this private port, copy tokens, change user agents or use an iPhone for this step. The session
+expires after20 minutes; rerun for a fresh link. Close the browser page and stop the command if interrupted.
+
+Firebase's supported `signInWithPopup` flow owns OAuth handling; authentication is memory-only. After verifying
+Google provider, exact approved identity, test-project audience and the server-issued claim, the page creates,
+server-reads and deletes one uniquely named synthetic chat sample under its own UID. It does not read existing
+settings, provider keys or production data. It signs out, destroys the Firebase app and reports only fixed status
+booleans to loopback. Cloud operations have deadlines; stalled work terminates Firestore and signs out. Only a
+random pending sample ID (no identity/token) is kept in sessionStorage for same-tab retry/reload cleanup after
+approved sign-in. Keep that tab open if deletion is unconfirmed. The ignored report contains no identity or credentials. The helper is excluded from the IPA
+module graph; it is never a WKWebView sign-in workaround or an alternative native session.
+
+The report is a local browser self-report, not an authentication credential or server-side proof accepted by the
+app. A successful run verifies this web app-client consent and cloud sample only. Native GoogleSignIn callback,
+installed signing-bundle compatibility, Keychain restoration/revocation and physical iPhone remain separately
+unverified. No manual device test is requested this round. No consent success is claimed before the user completes it.
+
+`node native/scripts/test-authorization.mjs` checks Chromium/WebKit with all external traffic denied: opening the
+page starts no sign-in/network and writes no localStorage. It also rejects wrong origin/session/Host and unexpected
+result fields. Native tests, native typecheck, offline build verification and ordinary/Canvas affected checks remain
+required; this synthetic test does not prove live OAuth.
+
+Primary references: [Firebase Google popup sign-in](https://firebase.google.com/docs/auth/web/google-signin),
+[in-memory persistence](https://firebase.google.com/docs/auth/web/auth-state-persistence),
+[custom Auth dependencies](https://firebase.google.com/docs/auth/web/custom-dependencies).
 
 No real provider networking/inference, production-connected mode or executable updates enabled. No new spending.

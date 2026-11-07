@@ -1,0 +1,18 @@
+// Only for the separate, billing-disabled lumen-ios-test Firebase project.
+// Not the production rules. Never deploy this file to a production project.
+// Access remains denied until an administrator grants a synthetic test identity
+// the lumenIosTest custom claim in the test Firebase Auth project.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function approvedTestIdentity() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider == 'google.com'
+        && request.auth.token.lumenIosTest == true;
+    }
+    match /modelRouter/{uid}/{document=**} {
+      allow read, write: if approvedTestIdentity() && request.auth.uid == uid;
+    }
+    // All other collections, including public shares, are denied.
+  }
+}

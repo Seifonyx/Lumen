@@ -15,6 +15,37 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
   `native/README.md` records installation and the protected auth plan. A macOS workflow builds unsigned iPhoneOS IPA
   and exercises the Simulator. Report native compile, simulator and physical-device evidence separately.
 
+- **Resume checkpoint (2026-11-07, owner requested saving progress):** draft PR #141,
+  https://github.com/Seifonyx/Lumen/pull/141. Last source commit `234d7d53c2366cd72179c546f5cc14e4d373b1ab`.
+  Local source is committed and pushed. Any following checkpoint commit changes documentation only.
+- Verified locally: `npm run test:affected -- --run` (typecheck, unit tests, Canvas/ordinary builds, unchanged budgets);
+  native TypeScript, `node native/scripts/build.mjs`, `node native/scripts/verify.mjs`, and
+  `node native/scripts/browser-smoke.mjs` in Chromium/WebKit. Browser smoke covers a fixed local reply, Router Exit,
+  retained draft, profile A/B separation, zero external traffic and zero service workers. Screenshots are in
+  `tests/e2e/out/native-demo-*.png` locally. This is not physical iPhone evidence.
+- **Continue with Actions:** native run https://github.com/Seifonyx/Lumen/actions/runs/42375300067 and PR CI
+  https://github.com/Seifonyx/Lumen/actions/runs/42375305000 target the source commit above. They were still running/
+  queued at checkpoint. An earlier native compile failed on an ambiguous Swift WKNavigationDelegate selector;
+  commit 234d7d5 replaces it with its explicit Objective-C selector and disables PWA-only status-bar sampling.
+  Verify the new compile result before claiming an IPA exists. Do not interpret the earlier failed run as final.
+- Native generation and build are entirely under `native/`. Read `native/README.md` first. `native/ios/`,
+  `native/www/`, build output and Capacitor dependencies are ignored and reproducible. Workflow
+  `.github/workflows/ios-demo.yml` runs on this exact branch's native changes and supports workflow_dispatch.
+  GitHub cannot manually dispatch a workflow absent from main, so initial runs use branch push; successful runs can
+  be rerun in Actions without merging. Standard public macos-26 only, no paid runners/secrets/signing.
+- **Remaining:** fix native compile/package/simulator failures if any, inspect actual Simulator captures, verify
+  device arm64 iPhoneOS IPA and framework embedding, obtain green PR CI for the final source, update PR/body and this
+  handoff plus live context with verified artifact links. Consider adding explicit @rpath framework validation to
+  `native/scripts/validate-ipa.py` if Xcode embeds dynamic frameworks. The existing validator checks device platform,
+  architecture, unsigned state, no profiles, IPA layout, local fonts/lazy chunks and no service worker.
+  Final report must give PR/commit, workflow/artifact location, Windows Sideloadly steps, seven-day refresh and limits.
+- **Authorization:** keep PR #141 experimental and unmerged. Never deploy it or modify production auth/network/schema.
+  Real Google/Firebase native sign-in requires the separate owner approval plan in `native/README.md`.
+  Demo profiles and synthetic replies are intentionally public sample data. Strict $0, no real credentials,
+  real accounts or real inference. Physical Sideloadly install, keyboard/IME, VoiceOver and Safari/PWA differences
+  remain explicitly unverified. The native smoke uses programmatic actions inside the real Simulator WKWebView.
+
+
 - Waiting on the owner's iPhone (Home Screen app), PR #136 (live): cold launch shows no band under the status bar in
   Light and Dark; Router and Settings get a status bar the same grey as the page, the chat white (Light) or grey
   (Dark); switching the iPhone between Light and Dark with Lumen open, the bar follows; relaunching into a restored

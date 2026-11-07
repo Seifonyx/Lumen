@@ -1,3 +1,4 @@
+const { openSidebarSearch } = require('./helpers/sidebar-search.cjs');
 // Conversation search (Canvas): the drawer and Jump to find the same chats; a chat found through a message shows an
 // excerpt with the match set off and opens at that message, including deep in a long (virtualized) chat, below the
 // iPhone glass bar, with focus on the message. Title matches, archived chats, project grouping, drafts and other
@@ -39,7 +40,7 @@ async function open(browser, width, height, theme) {
         if (!(await page.locator('[data-lumen-canvas-shell]').count())) { console.log('SKIP search-results: Canvas only (the ordinary build has the older drawer)'); return; }
         const drawer = page.locator('aside.cv-nav');
         const openDrawer = async () => { if (!(await drawer.evaluate((el) => el.classList.contains('open')))) { await page.locator('.menu-btn:visible').first().click(); await page.waitForTimeout(350); } };
-        const search = async (q) => { await openDrawer(); await page.fill('#chat-search', q); await page.waitForTimeout(250); };
+        const search = async (q) => { await openDrawer(); await openSidebarSearch(page); await page.fill('#chat-search', q); await page.waitForTimeout(250); };
         const row = (title) => drawer.locator('.chat-open', { hasText: title });
         const topbarBottom = () => page.evaluate(() => document.querySelector('.main > .topbar').getBoundingClientRect().bottom);
         const landed = async (id) => {
@@ -106,7 +107,7 @@ async function open(browser, width, height, theme) {
         // The draft is still there; the draft-only chat is listed as before but its draft isn't searched.
         await search('rain jacket');
         assert.equal(await drawer.locator('.cv-tree .chat-open').count(), 0, `${theme}: drafts are not searched`);
-        await page.fill('#chat-search', ''); await row('Birthday gift ideas').click(); await page.waitForTimeout(400);
+        await openSidebarSearch(page); await page.fill('#chat-search', ''); await row('Birthday gift ideas').click(); await page.waitForTimeout(400);
         assert.equal(await page.locator('.composer textarea').inputValue(), DRAFT, `${theme}: the draft is kept`);
         assert.deepEqual(errors, []);
         console.log(`PASS search-results ${engine} 390 ${theme}`);
@@ -118,7 +119,7 @@ async function open(browser, width, height, theme) {
       const { ctx, page, errors } = await open(browser, width, height, theme);
       try {
         const drawer = page.locator('aside.cv-nav');
-        await page.locator('#chat-search').focus();
+        await openSidebarSearch(page); await page.locator('#chat-search').focus();
         await page.keyboard.type('douro');
         await page.waitForTimeout(250);
         // Down goes into the tree (the project folder first, as before), then on to the result.
@@ -135,7 +136,7 @@ async function open(browser, width, height, theme) {
         await page.screenshot({ path: `${out}/${width}-${theme}-opened.png` });
 
         // Jump to finds the same chats as the drawer for the same query.
-        await page.locator('#chat-search').fill('tram'); await page.waitForTimeout(250);
+        await openSidebarSearch(page); await page.locator('#chat-search').fill('tram'); await page.waitForTimeout(250);
         const drawerChats = (await drawer.locator('.cv-tree .chat-title').allTextContents()).sort();
         await page.keyboard.press(process.platform === 'darwin' ? 'Meta+k' : 'Control+k');
         const box = page.getByRole('combobox', { name: 'Search commands' });

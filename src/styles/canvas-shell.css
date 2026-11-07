@@ -451,3 +451,14 @@
 /* The new-chat welcome never shows a scrollbar (its mark and greeting can overflow by a few pixels while they arrive). */
 .app[data-lumen-canvas-shell] .main.is-empty .messages { scrollbar-width: none; }
 .app[data-lumen-canvas-shell] .main.is-empty .messages::-webkit-scrollbar { display: none; }
+
+.app[data-lumen-canvas-shell] .cv-search[hidden] { display: none; }
+.app[data-lumen-canvas-shell] .cv-search-button { margin-inline-start: auto; border-radius: 50%; }
+@media (max-width: 899px) {
+  html.glass .app[data-lumen-canvas-shell] .cv-search-button {
+    background: var(--lg-tint); color: var(--canvas-ink);
+    -webkit-backdrop-filter: var(--lg-filter); backdrop-filter: var(--lg-filter);
+    box-shadow: var(--lg-edge), var(--lg-lift);
+  }
+  html.glass .app[data-lumen-canvas-shell] .cv-search-button:active { background: var(--lg-tint-press); }
+}

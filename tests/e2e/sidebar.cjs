@@ -1,3 +1,4 @@
+const { closeSidebar } = require('./helpers/sidebar-search.cjs');
 const {closeSettings}=require('./helpers/ui.cjs');
 // Isolated local accounts and mocked AI. Covers intent, finger tracking, cancellation and native scrolling.
 const { chromium } = require('playwright');
@@ -62,7 +63,7 @@ const settled = page => page.waitForTimeout(320);
         await touch(page, '.messages', 'touchend', start + sign * 36, y);
         await settled(page);
         check(await isOpen(), `${label}: a quick short fling opens the drawer`);
-        await page.getByRole('button', { name: 'Close menu', exact: true }).click(); await settled(page);
+        await closeSidebar(page); await settled(page);
 
         await touch(page, '.messages', 'touchstart', start, y);
         await touch(page, '.messages', 'touchmove', start + sign * 130, y + 3);
@@ -76,7 +77,7 @@ const settled = page => page.waitForTimeout(320);
         check(await isOpen() && (await scan(page)).length === 0 && await page.locator('.main').evaluate(el => el.inert), `${label}: swipe from the chat area opens a fitting modal drawer`);
         await page.screenshot({ path: path.join(__dirname, 'out', `sidebar-${width}-${rtl ? 'rtl' : 'ltr'}.png`) });
         await page.locator('.sidebar-foot, .cv-account').focus(); await page.keyboard.press('Tab');
-        check(await page.locator('.close-sidebar, .cv-nav [aria-label="Close menu"]').evaluate(el => el === document.activeElement), `${label}: drawer keyboard focus stays inside`);
+        check(await page.locator('.close-sidebar, .cv-search-button').evaluate(el => el === document.activeElement), `${label}: drawer keyboard focus stays inside`);
 
         const closeX = rtl ? width - 230 : 230;
         await touch(page, ':is(.chat-list, .cv-nav)', 'touchstart', closeX, y);
@@ -115,7 +116,7 @@ const settled = page => page.waitForTimeout(320);
         // build keeps Settings' own swipe.
         const canvasShell = await page.locator('[data-lumen-canvas-shell]').count() > 0;
         check(canvasShell ? await isOpen() : !(await isOpen()), `${label}: settings ${canvasShell ? 'opens the drawer as a root' : 'cannot trigger a hidden drawer'}`);
-        if (canvasShell && await isOpen()) { await page.getByRole('button', { name: 'Close menu', exact: true }).click(); await settled(page); }
+        if (canvasShell && await isOpen()) { await closeSidebar(page); await settled(page); }
         await closeSettings(page);
 
         await page.fill('.composer textarea', 'A long scroll test'); await page.click('.send-btn');

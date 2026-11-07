@@ -1,3 +1,4 @@
+const { closeSidebar } = require('./helpers/sidebar-search.cjs');
 // The "feels like an app" layer on phones (1.3), with real touch sequences and motion on:
 //  long press: a message or chat sinks, then a menu opens over a dimmed background with a lifted copy and a
 //              buzz; a quick tap or a scroll doesn't open it, and the lift doesn't also tap what's underneath;
@@ -187,7 +188,7 @@ const translateX = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComput
       await page.waitForTimeout(400);
 
       // ---- Send: the message flies in; streamed words fade in, then are plain text
-      if (await page.locator('.sidebar.open').count()) { await page.click('.close-sidebar, .cv-nav [aria-label="Close menu"]'); await page.waitForTimeout(500); }
+      if (await page.locator('.sidebar.open').count()) { await closeSidebar(page); await page.waitForTimeout(500); }
       await page.click('text=Garden ideas').catch(() => {});
       const sendBuzz = await buzz();
       await page.fill('.composer textarea', 'And how often should I water?');

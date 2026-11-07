@@ -10,7 +10,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start the next task from `origin/main`.
+- **Branch:** `feat/sidebar-search-button`. Replace the persistent drawer search field and phone close icon with an on-demand search button using the existing iOS glass material. Verification and release pending.
 - Waiting on the owner's iPhone (Home Screen app), PR #136 (live): cold launch shows no band under the status bar in
   Light and Dark; Router and Settings get a status bar the same grey as the page, the chat white (Light) or grey
   (Dark); switching the iPhone between Light and Dark with Lumen open, the bar follows; relaunching into a restored

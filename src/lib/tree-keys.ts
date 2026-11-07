@@ -13,7 +13,7 @@ function parentRow(el: HTMLElement): HTMLElement | null {
   }
   return el.closest('.cv-fold')?.previousElementSibling?.querySelector<HTMLElement>('.cv-section-toggle') ?? null;
 }
-export function treeKeys(e: KeyboardEvent, tree: HTMLElement, ROW: string, search: HTMLInputElement | null, reveal: (row: Element) => void) {
+export function treeKeys(e: KeyboardEvent, tree: HTMLElement, ROW: string, search: HTMLElement | null, reveal: (row: Element) => void) {
   if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
   const target = e.target as HTMLElement;
   if (!target.matches(ROW) || target.closest('[role="menu"], .row-menu')) return;

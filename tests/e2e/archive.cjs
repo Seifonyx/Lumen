@@ -1,3 +1,4 @@
+const { openSidebarSearch } = require('./helpers/sidebar-search.cjs');
 // 2.1: archiving hides a chat from the sidebar without deleting it; search still finds it; All chats has an
 // Archived view to bring chats back, one or several at a time.
 const { chromium } = require('playwright'), assert = require('node:assert/strict');
@@ -30,10 +31,10 @@ const mk = (id, title, at) => ({ id, title, createdAt: at, updatedAt: at, model:
     await page.locator('.toast', { hasText: 'Archived' }).waitFor();
     console.log('PASS archiving hides a chat from the sidebar');
 
-    await page.fill('#chat-search', 'zebra');
+    await openSidebarSearch(page); await page.fill('#chat-search', 'zebra');
     await page.locator('.chat-row:has-text("Old project notes")').waitFor();
     assert.ok(await page.locator('.sidebar :text("Archived")').first().isVisible(), 'shown under Archived in search results');
-    await page.fill('#chat-search', '');
+    await openSidebarSearch(page); await page.fill('#chat-search', '');
     console.log('PASS search still finds archived chats');
 
     // All chats → Archived → Unarchive.

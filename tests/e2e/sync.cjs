@@ -1,3 +1,4 @@
+const { closeSidebar } = require('./helpers/sidebar-search.cjs');
 // Two "devices" signed in as the same user (Firebase emulators), checking chats and settings sync.
 const { leavePlace } = require('./helpers/nav.cjs');
 const { chromium } = require('playwright');
@@ -73,7 +74,7 @@ async function device(browser, name, email, mobile) {
   check((await A.page.textContent(':is(.chat-list, .cv-nav)')).includes('Synced Chat Title'), 'chat titled on phone');
   await A.page.click('.chat-row [aria-label="Chat options"]');
   await A.page.click('.menu >> text=Pin');
-  await A.page.click('.sidebar [aria-label="Close menu"]');
+  await closeSidebar(A.page);
   await A.page.waitForTimeout(1500);
 
   // ---- Laptop: same account

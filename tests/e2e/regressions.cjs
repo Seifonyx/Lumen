@@ -1,3 +1,4 @@
+const { closeSidebar } = require('./helpers/sidebar-search.cjs');
 const {openSettingsSection,closeSettings}=require('./helpers/ui.cjs');
 const { plusItem, openTools, isCanvas } = require('./helpers/plus.cjs');
 // Regression coverage for drafts, project reloads, comparison privacy, modal focus and phone layouts.
@@ -83,7 +84,7 @@ async function run(browser, mobile) {
   await page.waitForSelector('.app:not(.app-skeleton) .topbar');
   if (mobile) await page.click('.menu-btn');
   check(await page.locator('.sidebar-project-item[aria-current="page"], .cv-project:has(.cv-brief.active) .cv-name').textContent().then(t=>t.includes('Study')), `${label}: project selection survives reload`);
-  if (mobile) await page.locator('.sidebar [aria-label="Close menu"]').click();
+  if (mobile) await closeSidebar(page);
   check((await page.locator('.model-button').textContent()).includes('Gemini 2.5 Pro'), `${label}: project default model is shown before the first message`);
   await page.fill('.composer textarea', 'Use the project references after reload.');
   await page.click('.send-btn');
@@ -93,7 +94,7 @@ async function run(browser, mobile) {
   await page.waitForSelector('.app:not(.app-skeleton) .topbar');
   if (mobile) await page.click('.menu-btn');
   check(await page.locator('.chat-row').count() === 1, `${label}: the saved chat stays inside the selected project's list`);
-  if (mobile) await page.locator('.sidebar [aria-label="Close menu"]').click();
+  if (mobile) await closeSidebar(page);
 
   const draft = 'Keep this offline comparison draft';
   await page.fill('.composer textarea', draft);

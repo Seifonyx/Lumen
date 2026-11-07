@@ -76,7 +76,7 @@ async function openNav(page, phone) {
 }
 async function closeNav(page, phone) {
   if (!phone) return;
-  if (await nav(page).evaluate((el) => el.classList.contains('open'))) { await nav(page).getByRole('button', { name: 'Close menu', exact: true }).click(); await settle(page, 500); }
+  if (await nav(page).evaluate((el) => el.classList.contains('open'))) { if (await nav(page).locator('.cv-search:visible').count()) await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await settle(page, 500); }
 }
 
 try {
@@ -154,7 +154,10 @@ try {
 
       // Search: titles and message text, with Ask your chats.
       // The search field is always in the tree, phones included (item 23).
-      assert.ok(await nav(page).getByRole('searchbox', { name: 'Search chats' }).isVisible(), 'search field shown without an extra step');
+      assert.ok(await nav(page).getByRole('searchbox', { name: 'Search chats' }).isHidden(), 'resting drawer has no search field');
+      const searchButton = nav(page).getByRole('button', { name: 'Search chats', exact: true });
+      await searchButton.click();
+      assert.ok(await nav(page).getByRole('searchbox', { name: 'Search chats' }).evaluate(el => el === document.activeElement), 'search button reveals and focuses search');
       await nav(page).getByRole('searchbox', { name: 'Search chats' }).fill('quiet days');
       await settle(page);
       assert.ok(await nav(page).getByText('Four quiet days in Lisbon').isVisible(), 'search finds a chat inside a folder');

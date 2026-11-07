@@ -64,7 +64,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - [ ] Owner, on the installed Home Screen app (PR #108, live): from the drawer open Router, Library,
       Projects and Settings; on each, swipe right (edge and mid-screen) to reveal the drawer with the screen peeking on the
       right, then swipe left or tap the strip to return; switch Router tabs (no slide); open a provider, a document, a
-      Settings section and a project, and swipe back (one level up, also when released near the right edge); + ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢
+      Settings section and a project, and swipe back (one level up, also when released near the right edge); + Ã¢â€ â€™
       Document canvas from a new chat with a draft, then Back. Reduce Motion and VoiceOver. Native feel is not accepted
       until then.
 - [ ] Physical iPhone: in Safari, write an unsent draft with a disposable attachment. Open Router > Providers > detail.
@@ -74,7 +74,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
   screens, jumps and flashes. Repeat the cancel/commit sequence in the installed Home Screen app, which uses Lumen's
   custom Back. For any failure, record iOS version, tab or Home Screen, screen pair and a privacy-safe recording.
 
-- [ ] Owner, on the iPhone (Router): native edge Back/Forward versus whole-feature Exit, UseÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢Chat draft/attachment/focus restoration, nested model/provider/Layout navigation, VoiceOver, keyboard/IME, Dynamic Type and PWA safe areas. Both browser engines and synthetic accessibility checks passed; these remain physical-device checks.
+- [ ] Owner, on the iPhone (Router): native edge Back/Forward versus whole-feature Exit, UseÃ¢â€ â€™Chat draft/attachment/focus restoration, nested model/provider/Layout navigation, VoiceOver, keyboard/IME, Dynamic Type and PWA safe areas. Both browser engines and synthetic accessibility checks passed; these remain physical-device checks.
 
 - [ ] Owner, on the iPhone (PR #97, live): swipe back from Browse all tools opened from + (should slide straight to the
       chat, no + sheet); a partial swipe let go; a few open/close cycles.
@@ -88,7 +88,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - [ ] Owner, on the iPhone (PR #81, live): search a word from an old message; the result shows the line and opens
       at that message below the glass bar. Chromium and WebKit emulation pass; no physical device yet.
 - [ ] Owner, on the iPhone (PR #83, live): tap the model name under a reply; the Answer details sheet sits clear of the
-      home indicator and reads well with VoiceOver; Compare withÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ prefills that reply's question and keeps your draft.
+      home indicator and reads well with VoiceOver; Compare withÃ¢â‚¬Â¦ prefills that reply's question and keeps your draft.
 - UX plan (owner-accepted 2026-11-01, https://claude.ai/artifact/77duerrTr2f6vQCztDNFVv), remaining in order:
   #2 owner's 12-step iPhone check, then fixes (the glass message box lets reply text show through: ready, S);
   #4 save a reply or
@@ -111,8 +111,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 - 2026-10-30 **Standing authority:** test, commit, merge and deploy finished, verified work without asking. Escalate
   only irreversible data changes, security risks, major trade-offs or permission blocks.
-- **Deploy path:** merge to `main` ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ run the *Deploy* workflow with `presentation=canvas` (the default `ordinary` is
-  the rollback) ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ confirm the live `index-*.js` matches a local `LUMEN_CANVAS=1` build of that commit. Hosting only;
+- **Deploy path:** merge to `main` Ã¢â€ â€™ run the *Deploy* workflow with `presentation=canvas` (the default `ordinary` is
+  the rollback) Ã¢â€ â€™ confirm the live `index-*.js` matches a local `LUMEN_CANVAS=1` build of that commit. Hosting only;
   Firestore rules deploy separately (`npm run deploy:rules`) and only when they changed. No `gh` on the owner's
   machine: the GitHub REST API with git's stored credential works for PRs, merges and workflow dispatch.
 - 2026-11-02 **Testing (owner: fastest possible):** pull requests run only the tests their change can affect (or
@@ -139,7 +139,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 - 2026-11-06 Quiet, safe updates (PR #134, merged `fe54c21`, deployed Canvas, live `index-ClWumcuP.js` and `sw.js`
   version `7c176d3cf709` match the merge build): no banner on Canvas; a new version waits and is used at the next start
-  after no window runs the old one, or from Settings ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ General ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Update now, which waits with a reason while work exists
+  after no window runs the old one, or from Settings Ã¢â€ â€™ General Ã¢â€ â€™ Update now, which waits with a reason while work exists
   only in memory (`src/lib/update-safety.ts`, owners register `useUpdateHold`). The previous version's files stay one
   release for windows still running it. A start-up takeover was tried and dropped (Chromium holds it until the page
   closes). Suites `updates` (real service worker behind a local proxy; WebKit through a dead proxy, so nothing leaves
@@ -147,7 +147,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 - 2026-11-05 Where you left off (PR #132, merged `510d7fe`, deployed Canvas, live `index-BppjgJv8.js` matches the merge
   build): a relaunch reopens the same chat at the same message, or the same workspace or drawer place, as a root
-  (`src/lib/resume.ts`; DESIGN.md ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Product). No time limit; sign-out, other accounts, incognito, New chat and deleted
+  (`src/lib/resume.ts`; DESIGN.md Ã¢â€ â€™ Product). No time limit; sign-out, other accounts, incognito, New chat and deleted
   chats end it. Remembered spot drawn in the first frame; Safari keeps it while older messages load. Startup JS budget
   18.25 (measured 18.1). Suite `resume` (Canvas phone, Chromium + WebKit; relaunch = fresh tab, the known Linux WebKit
   reload crash). Physical iPhone not yet checked.
@@ -177,7 +177,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
   Router Models as a grouped list (Lamplight only on the Selected chip, search in the bottom bar), iOS large titles on
   Library/Router/Projects/Settings with pinned tabs (`LargeTitle`, own Suspense boundary: suspending blanked Settings
   mid-pop), end-only tab fades, `--type-*` tokens, audit fixes (resize grip, pie usage gauge, Incognito label, no
-  token count, short Library lines). Canvas CSS 34.43 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ 34.4 KB gz. Physical iPhone not yet checked.
+  token count, short Library lines). Canvas CSS 34.43 Ã¢â€ â€™ 34.4 KB gz. Physical iPhone not yet checked.
 
 - 2026-11-04 Native iOS drawer (PR #112, merged `25b3b11`, deployed Canvas, live `index-CXpjvqO1.js` matches the merge
   build): 20 pt place rows, plain single-line projects and chats, ink New chat capsule, all scaling with text size;
@@ -201,7 +201,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - 2026-11-04 Native-feeling phone navigation (PR #104, merged `09669d0`, deployed Canvas, live `index-MPQsLi3U.js`
   matches the merge build): one coordinator (`src/lib/navigation-coordinator.ts`) owns Back and the drawer; the screen
   follows the finger over the real or kept screen behind it; one traversal per swipe; taps share the slide; Safari tabs
-  keep native Back. Canvas computers crossfade with a view transition. Startup JS growth 15.5 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ 15.0 KB gz. Suite
+  keep native Back. Canvas computers crossfade with a view transition. Startup JS growth 15.5 Ã¢â€ â€™ 15.0 KB gz. Suite
   `native-navigation` (Chromium + WebKit). Filmstrips in `docs/native-navigation/`. Physical iPhone not yet checked.
 - 2026-11-03 Projects redesign and residual copy cleanup (PR #101, merged `9803535`, deployed Canvas, live
   `index-CJLROoyc.js` matched the merge build): name-first All projects, a workspace with chats first and context in a
@@ -213,7 +213,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
   compact no-match state kept above the keyboard, repeated-name cues, Knowledge empty state with one Import, keyboard
   leaves before the + sheet, no stacked sheets on Browse all tools, plain-icon picker with pinned area names.
 - 2026-11-02 Fastest tests (PR #90, #92, #93): a Test plan job (`scripts/ci-plan.mjs`) runs only affected tests on
-  pull requests (about 2 min for a small change when CI is idle) and everything on `main` (about 9 min, was 16ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ17);
+  pull requests (about 2 min for a small change when CI is idle) and everything on `main` (about 9 min, was 16Ã¢â‚¬â€œ17);
   Deploy's gate (`scripts/wait-for-tests.mjs`) waited for and checked that run on `a6bd6a6`. Locally,
   `npm run test:affected -- --run` (53 s for a one-suite change). Measured durations for 131 suites balance machines;
   suite lists live in `tests/e2e/canvas-phone.txt` and `webkit.txt`. GitHub runs 20 jobs at once here, which sets the
@@ -222,16 +222,16 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
   iPhone screenshots: untitled short + sheet with flat rows, one scrolling row of areas, name + one short line per tool.
   Startup CSS budget 20 KB gz. `redesign-shots.cjs` now emulates an iPhone (glass) and captures the keyboard-open picker.
 - 2026-11-02 Library redesign and Tools in the composer's + (PR #86, merged `55a1bec`, deployed Canvas): Tools left the
-  sidebar, drawer and rail; + has attach, this chat, Deep research / Create image / Document canvas (missing key ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢
+  sidebar, drawer and rail; + has attach, this chat, Deep research / Create image / Document canvas (missing key Ã¢â€ â€™
   key setup) and Browse all tools, a searchable picker (`ToolsWorkspace.tsx`, still `page: 'tools'`). Choosing a tool
   replaces the picker in history; each open starts with an empty search. Library rows are name-first with From/Added
   columns on computers. Budgets: startup JS 15.5, Canvas CSS 29.5 KB gz. Test helper: `tests/e2e/helpers/plus.cjs`.
 - 2026-11-01 Auto's reasons and alternatives survive a reload (owner-approved): `src/lib/db.ts` keeps `routeDetail`
   when loading chats on this device (read path only; sync records still don't carry it).
-- 2026-11-01 Answer details and Compare withÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ (PR #83, merged `721457a`, deployed Canvas): the model name under every
+- 2026-11-01 Answer details and Compare withÃ¢â‚¬Â¦ (PR #83, merged `721457a`, deployed Canvas): the model name under every
   finished reply opens one panel (`src/components/AnswerDetails.tsx`, lazy; rules in `src/lib/answer-details.ts`) with
-  only recorded facts; Compare withÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ seeds the composer's Compare sheet with the reply's own question and sends only the
-  conversation before it (`runComparison` `before`). Startup JS budget 14 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ 14.5 KB gz (measured 14.1).
+  only recorded facts; Compare withÃ¢â‚¬Â¦ seeds the composer's Compare sheet with the reply's own question and sends only the
+  conversation before it (`runComparison` `before`). Startup JS budget 14 Ã¢â€ â€™ 14.5 KB gz (measured 14.1).
 - 2026-11-01 Search shows where it matched (PR #81, merged `405d2b7`, deployed Canvas): drawer and Jump to share
   `src/lib/chat-search.ts`; message matches show an excerpt and open at the newest matching message through
   `src/lib/message-jump.ts` (one request, used once, 5 s, one account, message must exist). Jumps now land below the

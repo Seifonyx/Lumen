@@ -70,6 +70,9 @@ jobs:
       - name: Build and verification summary
         if: always()
         run: node native/scripts/summary.mjs
+      - name: Compile real Google SDK in synthetic isolated mode (no service calls)
+        if: contains(github.event.head_commit.message, '[verify-google-sdk]')
+        run: bash native/scripts/compile-isolated-sdk.sh
 
   browser:
     if: github.repository == 'Seifonyx/Lumen' && github.event.repository.private == false

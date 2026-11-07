@@ -2,6 +2,7 @@
 """Validate a genuine unsigned device app before packaging. macOS/Xcode only."""
 import hashlib
 import json
+import os
 import pathlib
 import plistlib
 import subprocess
@@ -20,6 +21,11 @@ arch = subprocess.check_output(["lipo", "-archs", str(binary)], text=True).strip
 assert arch == "arm64", arch
 platform = subprocess.check_output(["xcrun", "vtool", "-show-build", str(binary)], text=True)
 assert "platform IOS" in platform and "IOSSIMULATOR" not in platform
+for name in ("Capacitor", "Cordova"):
+    framework = app / "Frameworks" / (name + ".framework") / name
+    assert framework.is_file(), "Missing embedded framework " + name
+    build = subprocess.check_output(["xcrun", "vtool", "-show-build", str(framework)], text=True)
+    assert "platform IOS" in build and "IOSSIMULATOR" not in build, name
 assert not list(app.rglob("embedded.mobileprovision"))
 assert not list(app.rglob("*.p12"))
 assert not (app / "_CodeSignature").exists(), "App must be unsigned"
@@ -30,7 +36,7 @@ assert list((app / "public/assets").glob("RoutingCenter-*.js")), "Lazy Canvas sc
 with zipfile.ZipFile(ipa) as archive:
     assert "Payload/Lumen.app/Info.plist" in archive.namelist()
     assert all(n.startswith("Payload/") or n.startswith("__MACOSX/") for n in archive.namelist())
-metadata = dict(bundle=info["CFBundleIdentifier"], displayName=info["CFBundleDisplayName"],
+metadata = dict(sourceCommit=os.environ.get("GITHUB_SHA"), bundle=info["CFBundleIdentifier"], displayName=info["CFBundleDisplayName"],
                 platform=info["DTPlatformName"], architecture=arch, minimumIOS=info["MinimumOSVersion"],
                 signed=False, bytes=ipa.stat().st_size, sha256=hashlib.sha256(ipa.read_bytes()).hexdigest())
 ipa.with_suffix(".json").write_text(json.dumps(metadata, indent=2))

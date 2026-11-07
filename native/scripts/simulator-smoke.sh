@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-device=$(xcrun simctl list devices available -j | python3 -c '
-import json,sys
-devices=json.load(sys.stdin)["devices"]
-print(next(d["udid"] for runtime,items in devices.items() if "iOS" in runtime for d in items if d["name"].startswith("iPhone")))
+mkdir -p artifacts/simulator
+xcrun simctl list devices available -j > artifacts/simulator/devices.json
+device=$(python3 -c '
+import json,re
+items=json.load(open("artifacts/simulator/devices.json"))["devices"]
+runtimes=sorted((r for r in items if "iOS" in r),key=lambda r:tuple(map(int,re.findall(r"[0-9]+",r))),reverse=True)
+print(next(d["udid"] for r in runtimes for d in items[r] if d["name"].startswith("iPhone")))
 ')
+trap 'xcrun simctl io "$device" screenshot artifacts/simulator/simulator.png || true; xcrun simctl spawn "$device" log show --last 3m --style compact --predicate '''process == "App"''' > artifacts/simulator/device.log 2>&1 || true' EXIT
+open -a Simulator --args -CurrentDeviceUDID "$device"
 xcrun simctl boot "$device" || true
-xcrun simctl bootstatus "$device" -b
+python3 - "$device" <<'PY'
+import subprocess,sys
+subprocess.run(["xcrun","simctl","bootstatus",sys.argv[1],"-b"],timeout=240,check=True)
+PY
 xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
   -sdk iphonesimulator -destination "id=$device" -derivedDataPath build/simulator \
   CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=16.0 build > build-simulator.log 2>&1 || { tail -100 build-simulator.log; exit 1; }

@@ -5,7 +5,6 @@ on:
   # Initial isolated build. GitHub cannot dispatch a workflow absent from the default branch.
   push:
     branches: [experiment/ios-sideload]
-    paths: ['native/**', '.github/workflows/ios-demo.yml']
 
 permissions:
   contents: read
@@ -51,6 +50,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Launch and exercise the Simulator WKWebView
+        timeout-minutes: 10
         run: bash native/scripts/simulator-smoke.sh
       - name: Simulator evidence and build logs
         if: always()

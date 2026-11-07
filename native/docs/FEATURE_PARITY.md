@@ -1,8 +1,9 @@
-# iOS feature-parity matrix (Phases 1–2)
+# iOS feature-parity matrix (Phases 1–3)
 
 Audited 2026-11-07 against production Canvas source `12dc99a` and PR141 starting source `5e4116b`.
-The owner independently confirms installed IPA launch, basic navigation/keyboard, Demo A/B separation and
-conversation persistence after reopen. These are owner reports, not agent physical-device tests.
+The owner reports Phase2 IPA overwrite, prior data, account separation, stream cancellation, background/resume,
+keyboard and exports all passed. VoiceOver and new real-service native flows are unverified. These are owner
+reports, not agent physical-device tests. No manual/device testing is requested this round.
 
 Agent inspection: ran the native bundle in loopback Chromium/WebKit with all external requests denied;
 local reply, Router return, draft and A/B separation passed. Ran the production Canvas build locally using its
@@ -17,7 +18,7 @@ listed as a native-only replacement in `../vite.config.ts`.
 
 | Feature | Canonical implementation | Phase 1 / native dependencies and change needed | Risk and verification |
 |---|---|---|---|
-| Google sign-in | lib/firebase.ts, Login.tsx | Blocked; native local account/Login adapter. System-browser Google SDK + approved Firebase iOS config required | OAuth/session boundary; staged sign-in/logout/revocation and callback tests |
+| Google sign-in | lib/firebase.ts, Login.tsx | Offline by default; isolated build uses native Google SDK + configured test clients; Google test consent pending | OAuth/session boundary; staged sign-in/logout/revocation and callback tests |
 | Invite/access denial | firebase.ts, NotInvited.tsx, Firestore rules | Real checks excluded; no demo can become a real account | Must preserve production invite authorization; negative access tests after approval |
 | Account selection/logout | store.ts, firebase.ts | Local fixed Demo A/B identities, same existing UIDs; no SDK or cloud | Browser/native A->B->A, no prior surface or draft leaks |
 | Delete account/reauth | lib/delete-account.ts, SettingsModal.tsx | Real deletion blocked by SDK stub; destructive UI remains | Needs approved native reauth; never simulate a successful production deletion |
@@ -33,8 +34,8 @@ listed as a native-only replacement in `../vite.config.ts`.
 | Drafts/model/attachments in navigation | Composer.tsx, chat-records.ts, screen-history.ts | Local canonical ownership; unsent attachment Files remain memory-only | Navigate/return preserves in-session; termination cannot restore unsent Files |
 | Resume/reading position | lib/resume.ts, reading-position.ts | Canonical account-scoped local restoration | Reopen chat/project; invalid/missing resources; Incognito excluded |
 | Account chat database | lib/db.ts | Same `model-router-account-preview-native-demo-a/b`, schema v2 | No schema/reset/origin change; preserve data on overwrite upgrade |
-| Cloud sync/conflicts/history pull | lib/sync.ts | Blocked; existing stateless no-cloud adapter | No real Firestore SDK/config in graph; approved future reconnect/conflict tests |
-| Chat export/import | ChatExportModal.tsx, ImportChats.tsx, chat-export.ts, import-chats.ts | Local JSON/Markdown/HTML; native share-sheet download <=10MB | Native controller must actually load; Files/open/import and roundtrip; physical pending |
+| Cloud sync/conflicts/history pull | lib/sync.ts | Offline demo is synthetic; isolated build reuses canonical Firebase/ChatSync, emulator-verified; live authorized roundtrip pending | Real SDK in isolated graph only; offline/conflict/delete/restart tests pass; no production config |
+| Chat export/import | ChatExportModal.tsx, ImportChats.tsx, chat-export.ts, import-chats.ts | Local JSON/Markdown/HTML; native share-sheet download <=10MB | Native controller must actually load; Files/open/import and roundtrip; owner reports Phase2 exports passed; further format/import coverage remains partial |
 | Public share links | SharedLinks.tsx, share.ts, SharedChatPage.tsx | Blocked; remote Firestore stub rejects | Do not present capacitor:// links as working public shares; approval + access/privacy tests |
 | Projects CRUD/chat membership | CanvasProjects.tsx, ProjectWorkspace.tsx, store.ts | Local preview settings/project data; full UI retained | Create/edit/delete/project conversation; account switch/reopen |
 | Project files/instructions/memory | ProjectWorkspace.tsx, ProjectMemory.tsx, memory.ts | Local editing; any AI memory generation synthetic | Local content lifecycle, deletion and isolation; production limits unchanged |
@@ -70,6 +71,18 @@ listed as a native-only replacement in `../vite.config.ts`.
 | Voice/dictation/read-aloud | speech.ts, VoiceMode.tsx | Browser capability-dependent; media capture denied, no mic permission | No promise of offline/private STT; native permission/data-flow approval first |
 | PWA/offline/update lifecycle | pwa/register.ts, update-safety.ts | PWA registration replaced; all app assets packaged, not remotely refreshed | No SW on capacitor scheme; existing web/ordinary builds unchanged |
 | Native controller/bridge | native/DemoViewController.swift, scripts/prepare-ios.mjs | Phase1 fixes SceneDelegate constructing stock CAPBridgeViewController | Runtime marker + actual HTTP denial + guarded WebKit smoke, not source-only assurance |
+
+## Phase 3 activation delta
+
+See [test environment, fixes and exact remaining authorization](PHASE3_TEST_ENVIRONMENT.md).
+The owner-approved Spark project `lumen-ios-test` now exists with Google provider, iOS/web clients, free-tier
+Firestore and deployed strict Google/custom-claim/per-UID rules. Billing disabled verified. Test SDK metadata stays
+private; default installed/build mode remains offline. Google SDK compilation passed; live end-to-end Google
+consent and authenticated cloud sync are not verified without a dedicated test identity. No production access.
+
+Native real-service sync now retains offline deletion intent across restart until server ACK and reconciles the
+initial server snapshot before uploads, preserving newer remote revisions. Both regressions proved by real
+canonical Firestore/ChatSync emulator tests. Bridge payload logging disabled; no root app/schema changes.
 
 ## Phase 2 delta
 

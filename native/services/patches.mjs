@@ -21,3 +21,23 @@ function keepLocal(uid:string,patch:Account){return writeNativeAccount(uid,patch
  code=code.slice(0,save)+`export async function saveKeys(_uid:string,_keys:ApiKeys):Promise<void>{throw Error('Configure test provider credentials through the approved test backend. Native key saving is disabled.');}\n`;
  return code;
 }
+
+/** Native-only durability around the canonical driver's unchanged cloud/deletion protocol. */
+export function patchSync(code){
+ code=code.replaceAll('\r\n','\n');
+ const flush='    save(`mr.sync.deletes.${this.uid}`, []);';
+ const id='            const id = c.doc.id;';
+ const listen='    this.unsub = onSnapshot(\n      q,\n      (snap) => {';
+ const changes='        const changes = snap.docChanges().filter((c) => !c.doc.metadata.hasPendingWrites);';
+ const start=code.indexOf('  private async removeNow(id: string)');
+ const end=code.indexOf('  /**',start+1);
+ if(!code.includes(flush)||!code.includes(id)||!code.includes(listen)||!code.includes(changes)||start<0||end<0)throw Error('Unknown canonical sync deletion boundary');
+ const segment=code.slice(start,end),ack='    save(`mr.sync.revs.${this.uid}`, this.synced);';
+ if(!segment.includes(ack))throw Error('Unknown canonical sync acknowledgment');
+ const updated=segment.replace(ack,ack+'\n    save(`mr.sync.deletes.${this.uid}`, load<string[]>(`mr.sync.deletes.${this.uid}`, []).filter(value => value !== id));');
+ return (code.slice(0,start)+updated+code.slice(end))
+  .replace(listen,'    this.unsub = onSnapshot(\n      q,\n      {includeMetadataChanges:true},\n      (snap) => {')
+  .replace(changes,'        // Native reconnect must reconcile authoritative server data before uploading local revisions.\n        if (snap.metadata.fromCache) return;\n        const changes = (first ? snap.docs.map(doc => ({doc,type: "added"})) : snap.docChanges()).filter((c) => !c.doc.metadata.hasPendingWrites);')
+  .replace(flush,'    // Native: keep the durable queue until removeNow receives a server acknowledgment.')
+  .replace(id,id+'\n            if (!data.deleted && load<string[]>(`mr.sync.deletes.${this.uid}`, []).includes(id)) continue;');
+}

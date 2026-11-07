@@ -1,5 +1,10 @@
 # Real integration and update architecture
 
+Current Phase3: owner-approved Spark `lumen-ios-test` is provisioned with Google/iOS+web clients and strict
+account-scoped Firestore. See [current evidence and external authorization boundary](PHASE3_TEST_ENVIRONMENT.md).
+Default offline build is retained; no real Google test-identity consent, production access or inference verified.
+Earlier Phase1/2 design/approval notes below are historical and do not revoke the latest owner authorization.
+
 2026-11-07. No endpoint, remote executable update, auth configuration, permission, Keychain plugin or provider
 integration is activated by Phase 1. The React/Canvas application remains the product; native SwiftUI/UIKit
 improvements come after functional parity. See FEATURE_PARITY.md for actual packaged/blocked features.

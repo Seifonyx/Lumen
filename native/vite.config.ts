@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import {loadServiceConfig} from './services/build-config.mjs';
-import {patchFirebase} from './services/patches.mjs';
+import {patchFirebase,patchSync} from './services/patches.mjs';
 const services=loadServiceConfig();
 const output=process.env.LUMEN_NATIVE_OUT_DIR||'native/www';
 if(!['native/www','native/service-qa'].includes(output))throw Error('Native build output must stay in its isolated workspace');
@@ -52,6 +52,8 @@ function demoIsolation(): Plugin {
       if (!strip(id).startsWith(at('src/'))) return null;
       const changedFirebase=Boolean(services&&strip(id)===at('src/lib/firebase.ts'));
       if(changedFirebase)code=patchFirebase(code);
+      const changedSync=Boolean(services&&strip(id)===at('src/lib/sync.ts'));
+      if(changedSync)code=patchSync(code);
       if (/\bnew\s+(?:XMLHttpRequest|WebSocket|EventSource|SharedWorker)\b|\.sendBeacon\s*\(/.test(code)) this.error('Unreviewed network primitive '+id);
       let next=code.replace(/(?<![\w$.])fetch\s*\(/g,'__demoFetch(');
       const imports=[];
@@ -60,7 +62,7 @@ function demoIsolation(): Plugin {
         next=next.replace(/\bnew\s+Worker\s*\(\s*new\s+URL\s*\(\s*(['"`])[^'"`]+\1\s*,\s*import\.meta\.url\s*\)/g,'__demoWorker(null').replace(/\bnew\s+Worker\s*\(/g,'__demoWorker(');
         imports.push('import { disabledWorker as __demoWorker } from '+JSON.stringify(at('qa/iphone/adapters/worker-disabled.ts'))+';');
       }
-      return imports.length||changedFirebase ? {code:imports.join('\n')+'\n'+next,map:null}:null;
+      return imports.length||changedFirebase||changedSync ? {code:imports.join('\n')+'\n'+next,map:null}:null;
     },
     generateBundle() {
       const modules=[...this.getModuleIds()].map(strip);

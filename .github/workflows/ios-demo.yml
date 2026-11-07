@@ -89,6 +89,13 @@ jobs:
       - run: node native/scripts/verify.mjs
       - run: node native/scripts/browser-smoke.mjs
       - run: node native/scripts/browser-foundation.mjs
+      - run: node native/scripts/browser-service.mjs
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Native cloud and account contracts (loopback emulators only)
+        run: node node_modules/firebase-tools/lib/bin/firebase.js emulators:exec --only auth,firestore --project demo-lumen-ios-test --config native/firebase-emulators.json "node native/scripts/browser-cloud.mjs"
       - name: Offline browser screenshots
         if: always()
         uses: actions/upload-artifact@v6

@@ -10,22 +10,25 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `experiment/ios-sideload`, draft PR141. Phase1 baseline653071d passed32/32 PR CI and actual
-  Simulator/browser workflow. Owner authorizes Phase2 synthetic-only integration groundwork now; installing Phase1
-  first is not a gate. No real auth/cloud/provider network, secrets, spending, native redesign, merge or deployment.
-- Preserve bundle `io.github.seifonyx.lumen.demo`, `capacitor://localhost`, Demo A/B UIDs and all existing stores.
-  Owner physically verified earlier135af6b launch/navigation/keyboard/account separation/reopen persistence only.
-  Newer IPA overwrite, native lifecycle, keyboard/IME, safe areas, share sheets and VoiceOver remain physical gaps.
-- Phase2 adds account/lifecycle request leases, cancelable state-bound auth/session interfaces, memory-only sync and
-  account settings adapters, scoped synthetic streaming, typed UIKit background bridge, inactive native Keychain.
-  No callback scheme, Google/Firebase SDK/session, credential bridge, native permission or network activation.
-- Reproduced native local projects disappearing on A/B/A: logout deleted the only demo account settings record.
-  Native logout now clears identity/visible state while retaining owned sample data; browser regression passes.
-- Tests/architecture/limitations: `native/docs/PHASE2_PLAN.md`, `PHASE2_INTEGRATION.md`, `FEATURE_PARITY.md`.
-  Install/overwrite instructions: `native/README.md`. Memory replica is simulated, not cross-device/cloud durability.
-- **Next:** finish exact-head CI/native iPhoneOS artifact and actual WKWebView smoke, inspect final evidence, deliver
-  source/artifact to owner. Keep PR141 draft/unmerged. Separate explicit approval required for real SDK/config,
-  callback/session bridge, test cloud/schema/egress or provider requests. Do not uninstall the working installation.
+- **Branch:** `experiment/ios-sideload`, draft PR141. Current work: owner-approved Phase3 Google/Firebase test
+  integration. Keep draft/unmerged; no app deployment, production account/data/config, inference or spending.
+- Owner reports Phase2 physical overwrite/data retention, account separation, streaming Stop, background/resume,
+  keyboard and exports passed. VoiceOver and real-service native sign-in remain unverified. No manual/device tests
+  requested this round. Preserve installed bundle/origin, Demo A/B stores and offline build.
+- Firebase plugin provisioned separate `lumen-ios-test`, verified billing disabled. Google provider + matching web/iOS
+  clients configured; free-tier Standard Firestore in europe-west1 and strict Google/custom-claim/per-UID rules
+  published/read back. SDK config is private under ignored native/artifacts/test-admin, never source/secrets in CI.
+- Source baseline5c7d0da passed32/32 PR checks and actual GoogleSignIn SDK compile with synthetic metadata. No live
+  Google test identity has been authorized, so positive real OAuth/cloud roundtrip is still blocked, not claimed.
+- Current fixes: Capacitor bridge logging disabled; native pending deletions reuse the durable canonical queue until
+  server ACK, survive restart, suppress resurrection; native catch-up waits for server data to prevent cache-first
+  rollback of a newer remote revision. Both defects reproduced with emulators before fixes. Production source unchanged.
+- Targeted Chromium/WebKit tests exercise canonical Firebase/ChatSync using loopback emulators: claims/provider/UID
+  denials, settings/projects, chat/offline/conflict/delete/restart/logout/Incognito. Isolated Login fails closed and
+  retains Demo data. Test fixtures never enter packaged native graph. See native/docs/PHASE3_TEST_ENVIRONMENT.md.
+- **Next:** finish exact-head CI, preserve test-only configuration, report external Google test-identity consent as
+  the remaining live-auth dependency. Do not use the authenticated Firebase administrator as an app test user.
+  No new iPhone installation, screenshot or repeated manual demo checklist. No live inference activation.
 - Waiting on the owner's iPhone (Home Screen app), PR #136 (live): cold launch shows no band under the status bar in
   Light and Dark; Router and Settings get a status bar the same grey as the page, the chat white (Light) or grey
   (Dark); switching the iPhone between Light and Dark with Lumen open, the bar follows; relaunching into a restored

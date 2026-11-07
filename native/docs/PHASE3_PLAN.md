@@ -1,4 +1,4 @@
-# Phase 3 implementation plan
+# Phase 3 implementation plan (initial design; current activation below)
 
 Owner authorizes real auth/cloud/provider integration development, isolated test services only, $0.
 Baseline2e39d07; PR141 stays draft/unmerged. Owner reports Phase2 overwrite/data/accounts/stream/background/
@@ -35,3 +35,10 @@ short-lived ID credential in memory only, never refresh tokens. No native Fireba
 
 Primary implementation sources: GoogleSignIn10.1.0 headers and integration guide, Firebase web memory persistence
 and Google credential exchange documentation. Dependencies pinned; no account/OAuth/Firestore console mutation.
+
+## Current activation milestone
+
+The separate owner-authorized `lumen-ios-test` Spark project is provisioned, billing disabled verified, Google
+provider/iOS+web clients and strict per-UID test Firestore rules read back. See PHASE3_TEST_ENVIRONMENT.md.
+Initial missing-project note above is historical. Dedicated Google test-identity consent is still unavailable;
+no live account sign-in or positive cloud roundtrip claim. No manual/iPhone tests this iteration.

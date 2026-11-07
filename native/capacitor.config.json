@@ -2,6 +2,7 @@
   "appId": "io.github.seifonyx.lumen.demo",
   "appName": "Lumen Demo",
   "webDir": "www",
+  "loggingBehavior": "none",
   "ios": {
     "path": "ios",
     "contentInset": "never",

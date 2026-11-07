@@ -12,6 +12,11 @@ Phase2 adds synthetic auth/session lifecycle, isolated memory synchronization an
 Real authentication, cloud sync and providers remain disabled. The Keychain facility is inactive.
 See [Phase2 scope, remaining approvals and device checklist](docs/PHASE2_INTEGRATION.md).
 
+Phase3 test services are now provisioned in the separate Spark-only `lumen-ios-test` project. The default IPA
+stays offline; explicit isolated-service builds use verified private SDK metadata. No real Google test identity
+has authorized sign-in, so positive live OAuth/cloud round-trip is not claimed. This round requires no new
+installation, screenshots or manual demo checklist. See [current test environment](docs/PHASE3_TEST_ENVIRONMENT.md).
+
 ## Download and update the installed app
 
 1. Open [iOS unsigned demo IPA runs](https://github.com/Seifonyx/Lumen/actions/workflows/ios-demo.yml).
@@ -69,7 +74,7 @@ experiment's existing run. There is no schedule wasting free runner time. Native
 failed steps; the native summary distinguishes IPA compilation from Simulator pass. Download smoke evidence for
 screenshots/report/logs. A failed boot is different from an app exception; don't claim both work from one artifact.
 
-## Safety and remaining gaps
+## Offline build safety and remaining gaps
 
 - Canonical React/Canvas screens and local data owners are reused. Production PWA/ordinary builds stay unchanged.
 - Native SceneDelegate now selects the custom guarded controller; runtime smoke must prove this, not just compile.

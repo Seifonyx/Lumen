@@ -3,6 +3,7 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 const config=JSON.parse(readFileSync('native/capacitor.config.json','utf8'));
 assert.equal(config.appId,'io.github.seifonyx.lumen.demo');
 assert.equal(config.webDir,'www');
+assert.equal(config.loggingBehavior,'none');
 assert.equal(config.server.iosScheme,'capacitor');
 assert.equal(config.server.url,undefined);
 assert.equal(config.plugins.CapacitorHttp.enabled,false);

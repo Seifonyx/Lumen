@@ -19,3 +19,9 @@ test('Google SDK bridge supplies hashed nonce and keeps only its raw counterpart
  assert.match(source,/vault\.store\(owner: owner, data: Data\(nonce\.utf8\)\)/);
  assert.match(source,/\["rawNonce"\] = raw/);
 });
+
+test('native authentication bridge credentials cannot be logged by Capacitor',()=>{
+ const config=JSON.parse(read('../capacitor.config.json'));
+ assert.equal(config.loggingBehavior,'none');
+ assert.equal(config.ios.loggingBehavior,undefined,'do not override the global no-logging policy');
+});

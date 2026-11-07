@@ -1,6 +1,8 @@
-import {onIdTokenChanged,signInWithCredential,signOut,OAuthProvider,type Auth,type User} from 'firebase/auth';
+import {onIdTokenChanged,signInWithCredential,signOut,GoogleAuthProvider,type Auth,type User} from 'firebase/auth';
 import {registerPlugin} from '@capacitor/core';
 import {RealSession,type NativeCredential} from '../integration/real-session';
+import {verifyNativeGoogleToken} from '../integration/google-token';
+import config from 'lumen:service-config';
 import {accountScope} from '../integration/runtime';
 import type {AccountKeyCache} from '../../src/lib/account-key-persistence';
 interface GoogleBridge {signIn():Promise<NativeCredential>;restore():Promise<NativeCredential>;signOut():Promise<void>;cancel():Promise<void>}
@@ -9,7 +11,10 @@ let session:RealSession<User>|null=null;
 const accounts=new Map<string,AccountKeyCache>();
 function coordinator(auth:Auth){
  if(!session)session=new RealSession<User>({current:()=>auth.currentUser,watch:fn=>onIdTokenChanged(auth,fn),
-  signIn:async c=>{const credential=new OAuthProvider('google.com').credential({idToken:c.idToken,rawNonce:c.rawNonce});return(await signInWithCredential(auth,credential)).user;},
+  signIn:async c=>{
+   const idToken=await verifyNativeGoogleToken(c,config.webClientId);
+   return (await signInWithCredential(auth,GoogleAuthProvider.credential(idToken))).user;
+  },
   signOut:()=>signOut(auth)},
   {credential:restore=>restore?google.restore():google.signIn(),signOut:()=>google.signOut(),cancel:()=>google.cancel()});
  return session;

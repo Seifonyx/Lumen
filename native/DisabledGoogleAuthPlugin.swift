@@ -7,7 +7,8 @@ import Capacitor
 final class LumenGoogleAuthPlugin: CAPPlugin, CAPBridgedPlugin {
     let identifier = "LumenGoogleAuthPlugin"
     let jsName = "LumenGoogleAuth"
-    let pluginMethods = ["signIn", "restore", "signOut", "revoke", "cancel"].map {
+    // CAPPluginMethod has a failable initializer; Capacitor requires a non-optional method array.
+    let pluginMethods: [CAPPluginMethod] = ["signIn", "restore", "signOut", "revoke", "cancel"].compactMap {
         CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise)
     }
     private func reject(_ call: CAPPluginCall) {

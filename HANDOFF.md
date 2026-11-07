@@ -10,10 +10,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** none in progress. Start the next task from `origin/main`.
-- Sidebar search (PR #138): top-right Search replaces the phone X, revealing and focusing the field on demand.
-  Escape hides search and restores the icon focus; swipe, scrim and Escape close the drawer. Desktop retains Collapse.
-  Chromium/WebKit search, focus and Light/Dark captures passed. Physical iPhone glass appearance awaits the owner.
+- **Branch:** `experiment/ios-sideload`, isolated native-wrapper proof of concept. No production merge or deploy.
+- Capacitor 8.6.0 with bundled Canvas and two public local demo profiles. Real Firebase/Google sign-in is excluded.
+  `native/README.md` records installation and the protected auth plan. A macOS workflow builds unsigned iPhoneOS IPA
+  and exercises the Simulator. Report native compile, simulator and physical-device evidence separately.
+
 - Waiting on the owner's iPhone (Home Screen app), PR #136 (live): cold launch shows no band under the status bar in
   Light and Dark; Router and Settings get a status bar the same grey as the page, the chat white (Light) or grey
   (Dark); switching the iPhone between Light and Dark with Lumen open, the bar follows; relaunching into a restored

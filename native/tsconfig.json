@@ -1,0 +1,5 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["demo", "vite.config.ts"],
+  "exclude": ["ios", "www", "node_modules"]
+}

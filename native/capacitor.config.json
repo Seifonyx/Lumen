@@ -1,0 +1,15 @@
+{
+  "appId": "io.github.seifonyx.lumen.demo",
+  "appName": "Lumen Demo",
+  "webDir": "www",
+  "ios": {
+    "path": "ios",
+    "contentInset": "never",
+    "allowsLinkPreview": false,
+    "scrollEnabled": false,
+    "backgroundColor": "#ffffff",
+    "preferredContentMode": "mobile"
+  },
+  "server": { "hostname": "localhost", "iosScheme": "capacitor" },
+  "plugins": { "CapacitorHttp": { "enabled": false } }
+}

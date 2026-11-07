@@ -3,3 +3,6 @@ www/
 ios/
 build/
 artifacts/
+
+*.private.json
+service-qa/

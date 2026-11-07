@@ -3,7 +3,8 @@
   "include": [
     "demo",
     "vite.config.ts",
-    "integration"
+    "integration",
+    "services"
   ],
   "exclude": [
     "ios",

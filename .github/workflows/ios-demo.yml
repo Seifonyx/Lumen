@@ -39,7 +39,9 @@ jobs:
           node node_modules/typescript/bin/tsc --noEmit -p native/tsconfig.json
           node native/scripts/verify.mjs
       - name: Generate and sync native project
-        run: node native/scripts/prepare-ios.mjs
+        run: |
+          swift --version
+          node native/scripts/prepare-ios.mjs
       - name: Build and verify unsigned real-device IPA
         run: bash native/scripts/build-ipa.sh
       - name: Upload unsigned IPA and public metadata

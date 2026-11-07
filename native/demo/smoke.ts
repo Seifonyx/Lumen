@@ -26,6 +26,11 @@ async function run() {
       catch(error) { denied=(error as {code?:string}).code==='OFFLINE_DEMO'; }
       if(!denied) throw new Error('Native HTTP bridge is not default-deny: '+method);
     }
+    for(const method of ['signIn','restore']) {
+      let denied=false;
+      try {await capacitor.nativePromise('LumenGoogleAuth',method,{});}catch(error){denied=(error as {code?:string}).code==='OFFLINE_DEMO';}
+      if(!denied)throw new Error('Google SDK bridge escaped offline mode');
+    }
     await until(()=>Boolean(document.querySelector('.composer textarea')));
     await capture('chat');
     const store=useStore.getState();

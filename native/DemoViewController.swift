@@ -57,6 +57,7 @@ final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler 
     override func capacitorDidLoad() {
         NSLog("LumenDemo custom controller loaded")
         bridge?.registerPluginInstance(OfflineHttpPlugin())
+        bridge?.registerPluginInstance(LumenGoogleAuthPlugin())
         guard let webView = webView else { return }
         offlineDelegate.navigation = webView.navigationDelegate
         offlineDelegate.ui = webView.uiDelegate
@@ -83,7 +84,16 @@ final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler 
     }
     // No document loads until WebKit has installed a default-deny network rule.
     override func viewDidLoad() {
-        let rules = #"[{"trigger":{"url-filter":"^https?://"},"action":{"type":"block"}},{"trigger":{"url-filter":"^wss?://"},"action":{"type":"block"}}]"#
+        var rules = #"[{"trigger":{"url-filter":"^https?://"},"action":{"type":"block"}},{"trigger":{"url-filter":"^wss?://"},"action":{"type":"block"}}]"#
+        if let c = Bundle.main.object(forInfoDictionaryKey: "LumenTestServices") as? [String: String], c["mode"] == "isolated-test" {
+            let hosts = ["identitytoolkit.googleapis.com", "securetoken.googleapis.com", "firestore.googleapis.com"]
+            var entries = (try? JSONSerialization.jsonObject(with: Data(rules.utf8))) as? [[String: Any]] ?? []
+            for host in hosts {
+                entries.append(["trigger": ["url-filter": "^https://" + NSRegularExpression.escapedPattern(for: host) + "/"], "action": ["type": "ignore-previous-rules"]])
+            }
+            guard let data = try? JSONSerialization.data(withJSONObject: entries), let text = String(data: data, encoding: .utf8) else { return }
+            rules = text
+        }
         WKContentRuleListStore.default().compileContentRuleList(forIdentifier: "LumenOfflineDemo", encodedContentRuleList: rules) { [weak self] rule, _ in
             guard let self = self else { return }
             guard let rule = rule else {

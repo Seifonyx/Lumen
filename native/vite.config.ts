@@ -8,6 +8,7 @@ const replacements: Record<string,string> = {
   [at('src/lib/firebase.ts')]: at('native/demo/account.ts'),
   [at('src/lib/sync.ts')]: at('qa/iphone/adapters/sync.ts'),
   [at('src/pwa/register.ts')]: at('qa/iphone/adapters/pwa-register.ts'),
+  [at('src/lib/status-bar.ts')]: at('native/demo/status-bar.ts'),
   [at('src/lib/device.ts')]: at('native/demo/device.ts'),
   [at('src/lib/canvas-presentation.ts')]: at('src/lib/canvas-presentation.on.ts'),
   [at('src/components/Login.tsx')]: at('native/demo/Login.tsx'),

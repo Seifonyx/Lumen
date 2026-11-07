@@ -20,7 +20,7 @@ final class OfflineDelegate: NSObject, WKNavigationDelegate, WKUIDelegate {
             decisionHandler(.cancel)
             return
         }
-        if navigation?.responds(to: #selector(WKNavigationDelegate.webView(_:decidePolicyFor:decisionHandler:))) == true {
+        if navigation?.responds(to: NSSelectorFromString("webView:decidePolicyForNavigationAction:decisionHandler:")) == true {
             navigation?.webView?(webView, decidePolicyFor: action, decisionHandler: decisionHandler)
         } else {
             decisionHandler(.allow)

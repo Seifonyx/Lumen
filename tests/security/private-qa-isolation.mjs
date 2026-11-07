@@ -141,7 +141,7 @@ try {
   // CP02/CP03 (owner-authorized) add the flagged Canvas composer and shell in exactly these source files. The flags
   // stay off in the ordinary build, and section 1's byte equality proves its output is still the pre-QA01 baseline.
   // Owner-requested isolated unsigned iOS demo builder. No production deployment or secrets.
-  const cp02 = ['.github/workflows/ios-demo.yml','src/components/Composer.tsx', 'src/components/ComposerCanvas.tsx', 'src/lib/canvas-presentation.ts', 'src/styles/canvas-composer.css',
+  const cp02 = ['.github/workflows/ios-demo.yml','.github/workflows/ios-connected.yml','src/components/Composer.tsx', 'src/components/ComposerCanvas.tsx', 'src/lib/canvas-presentation.ts', 'src/styles/canvas-composer.css',
     'src/App.tsx', 'src/components/Sidebar.tsx', 'src/components/SidebarCanvas.tsx', 'src/components/ChatView.tsx', 'src/styles/canvas-shell.css',
     'src/components/RoutingCenter.tsx', 'src/lib/routing-center.ts', 'src/styles/canvas-routing.css',
     'src/styles/canvas-screens.css', 'src/styles/canvas.css', 'src/lib/workspace-presentation.ts',
@@ -268,6 +268,19 @@ try {
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_SHELL = false;$/m, 'the Canvas shell stays off in the ordinary build');
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const RoutingCenter: ComponentType \| null = null;$/m, 'the ordinary build has no Routing Center loader');
   pass('production entry, hosting/rules/relay unchanged; only the reviewed Canvas files (switch off by default) changed', `since ${base.slice(0, 12)}`);
+
+  // Owner-authorized connected test IPA: private configuration and plaintext must never be public artifacts.
+  const connectedBuild = readFileSync('.github/workflows/ios-connected.yml', 'utf8');
+  assert.match(connectedBuild, /runs-on: macos-26/, 'standard free public runner only');
+  assert.match(connectedBuild, /github\.event\.repository\.private == false/);
+  assert.match(connectedBuild, /LUMEN_NATIVE_MODE: isolated-test/);
+  assert.match(connectedBuild, /secrets\.LUMEN_IOS_TEST_CONFIG/);
+  assert.match(connectedBuild, /seal-delivery\.mjs seal/);
+  assert.match(connectedBuild, /path: native\/artifacts\/Lumen-connected\.enc/);
+  assert.doesNotMatch(connectedBuild, /path:\s*[^\n]*(?:Lumen\.ipa|Payload|private-delivery)/, 'plaintext upload refused');
+  assert.match(connectedBuild, /contents: read/);
+  assert.doesNotMatch(connectedBuild, /firebase deploy|presentation=canvas|secrets\.[A-Z_]*PRIVATE_KEY/);
+  pass('reviewed connected test workflow keeps private input and encrypted-only delivery');
 
   // 5. No-publication contract for the local tooling.
   const tooling = ['server/private-qa/gate.mjs', 'server/private-qa/control.mjs', 'server/private-qa/access-jwt.mjs', 'server/private-qa/paths.mjs', 'scripts/qa/build.mjs', 'scripts/qa/verify.mjs', 'scripts/qa/audit.mjs'];

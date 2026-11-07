@@ -15,15 +15,15 @@ capture_debug() {
   xcrun simctl shutdown "$device" || true
 }
 trap capture_debug EXIT
+xcodebuild -jobs 2 -project ios/App/App.xcodeproj -scheme App -configuration Debug \
+  -sdk iphonesimulator -destination "id=$device" -derivedDataPath build/simulator \
+  CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=16.0 build > build-simulator.log 2>&1 || { tail -100 build-simulator.log; exit 1; }
 open -a Simulator --args -CurrentDeviceUDID "$device"
 xcrun simctl boot "$device" || true
 python3 - "$device" <<'PY'
 import subprocess,sys
 subprocess.run(["xcrun","simctl","bootstatus",sys.argv[1],"-b"],timeout=240,check=True)
 PY
-xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
-  -sdk iphonesimulator -destination "id=$device" -derivedDataPath build/simulator \
-  CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=16.0 build > build-simulator.log 2>&1 || { tail -100 build-simulator.log; exit 1; }
 xcrun simctl install "$device" build/simulator/Build/Products/Debug-iphonesimulator/App.app
 xcrun simctl launch "$device" io.github.seifonyx.lumen.demo --demo-smoke
 container=$(xcrun simctl get_app_container "$device" io.github.seifonyx.lumen.demo data)

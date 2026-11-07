@@ -24,6 +24,10 @@ Before suggesting a new Lumen feature, visual/UX correction or coding quality ta
 
 In the recommendation, briefly state what app behavior was observed and what remains unverified. Require an evidence-based root cause or owner-confirmed need before directing implementation; don't convert an unverified hypothesis into a bug-fix prompt. If app inspection cannot be performed from this session, say so and make the next task **inspection and evidence gathering first**, not speculative implementation. Keep inspections narrow; do not reopen accepted work or repeat broad audits needlessly.
 
+## Shipping-first product execution
+
+When the owner explicitly directs a working native or production rollout, treat it as the active delivery objective instead of extending isolated previews indefinitely. Build on the existing Canvas application and canonical routing/account systems; preserve safety and test proportionately, then improve the installed app incrementally. Consult `CURRENT_STATUS.md` for the latest specific release scope and authority. Do not conflate an IPA build, private iPhone install, PR merge and production website deployment, or claim any occurred without evidence. Preserve $0 incremental spending and protected account, identity and privacy boundaries.
+
 ## Lean execution, full capability
 
 Be a proactive project partner. Use connected tools when they actually exist and are authorized; complete routine actions rather than asking the owner to handle them manually. Reuse previous milestones and avoid re-reviewing whole codebases or full CI just to acknowledge routine agent reports. Verify narrowly where failure, conflicting evidence, real-world exposure, costs, privacy/auth/account boundaries, material regression or a mandatory Gate/release decision justifies it. Coding agents still run necessary scoped tests and protect existing functionality.

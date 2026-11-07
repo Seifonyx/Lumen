@@ -69,6 +69,12 @@ Ordinary/Canvas affected checks and unchanged budgets, native type/config tests 
 
 ## App-client authorization: one supported, user-consented step
 
+**Observed completion (2026-11-07):** owner completed the Google-owned account/consent interaction. At21:16:20 UTC
+the private helper emitted its fixed PASS and sanitized completion report: fresh Google popup sign-in, authenticated
+synthetic sample create/server-read/delete/confirmed absence, then Firebase sign-out. No administrative credential
+was exchanged for this session. This is observed helper execution plus owner confirmation, not an independent
+server attestation or verification of installed iOS GoogleSignIn/Keychain. No further owner action requested now.
+
 The owner explicitly approved a Google identity for this isolated project. Its verified Google subject is linked
 in test Firebase with the administrator-issued test claim. That permission does not itself complete Google OAuth.
 Administrative Firebase/CLI credentials must never be exchanged for an app session. The earlier administrative

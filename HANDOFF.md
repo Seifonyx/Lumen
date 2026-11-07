@@ -18,8 +18,9 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - Firebase plugin provisioned separate `lumen-ios-test`, verified billing disabled. Google provider + matching web/iOS
   clients configured; free-tier Standard Firestore in europe-west1 and strict Google/custom-claim/per-UID rules
   published/read back. SDK config is private under ignored native/artifacts/test-admin, never source/secrets in CI.
-- Previous head64408cd passed32/32 PR checks plus native IPA/Simulator/browser/emulator jobs. GoogleSignIn SDK
-  compilation passed at5c7d0da. The owner-approved test identity is linked/claimed; Google app consent is still pending.
+- Source97c173b passed32/32 PR checks,37 native tests and browser/emulator CI; device IPA and actual Simulator passed.
+  Owner completed supported Google popup consent: test cloud sample create/server-read/delete/absence and sign-out
+  reported successfully. This verifies the web app-client, not installed native callback/Keychain. SDK compile passed5c7d0da.
 - Current fixes: Capacitor bridge logging disabled; native pending deletions reuse the durable canonical queue until
   server ACK, survive restart, suppress resurrection; native catch-up waits for server data to prevent cache-first
   rollback of a newer remote revision. Both defects reproduced with emulators before fixes. Production source unchanged.
@@ -27,8 +28,8 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
   denials, settings/projects, chat/offline/conflict/delete/restart/logout/Incognito. Isolated Login fails closed and
   retains Demo data. Test fixtures never enter packaged native graph. See native/docs/PHASE3_TEST_ENVIRONMENT.md.
 - **Next:** private Windows consent helper uses supported Firebase Google popup, memory-only session, temporary
-  test-cloud sample; no administrative credentials. Localhost authorized on test project only. Complete current CI,
-  then only the approved identity's Google account/consent click is external. Native callback remains unverified.
+  test-cloud sample; no administrative credentials. Localhost authorized on test project only. Consent is complete;
+  no additional owner action is requested. Automated native/browser/emulator verification passed; installed native callback remains unverified.
   No new iPhone installation, screenshot or repeated manual demo checklist. No live inference activation.
 - Waiting on the owner's iPhone (Home Screen app), PR #136 (live): cold launch shows no band under the status bar in
   Light and Dark; Router and Settings get a status bar the same grey as the page, the chat white (Light) or grey

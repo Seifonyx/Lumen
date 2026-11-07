@@ -1,10 +1,7 @@
 import {execFileSync} from 'node:child_process';
 import {join} from 'node:path';
-import {validateAiApproval} from '../services/free-provider.ts';
 import {validateServiceConfig} from '../services/config.mjs';
-export function patchServiceProject(app,config,approval=null){
- const ai=validateAiApproval(approval);
- if(ai&&config?.projectId!=='lumen-ios-test')throw Error('Invalid isolated AI target');
+export function patchServiceProject(app,config){
  let clean=null;
  if(config){const {callbackScheme,authDomain,...input}=config;clean=validateServiceConfig(input);if(callbackScheme!==clean.callbackScheme||authDomain!==clean.authDomain)throw Error('Invalid compiled service configuration');}
  // stdlib plist parser: no pbxproj editing, signing material or platform dependencies on Windows.
@@ -17,8 +14,8 @@ p.pop('LumenTestServices',None)
 p.pop('CFBundleURLTypes',None)
 if c:
  p['LumenTestServices']={k:str(c[k]) for k in ['mode','projectId','bundleId','iosClientId','webClientId','callbackScheme','signedBundleId']}
- if json.loads(sys.argv[3]): p['LumenTestServices']['aiProvider']='openrouter'
+ if c['projectId']=='lumen-ios-test': p['LumenTestServices']['aiProvider']='openrouter'
  p['CFBundleURLTypes']=[{'CFBundleURLSchemes':[c['callbackScheme']]}]
 with open(path,'wb') as f: plistlib.dump(p,f,sort_keys=False)
-`,join(app,'Info.plist'),JSON.stringify(clean),JSON.stringify(Boolean(ai))],{stdio:'pipe'});
+`,join(app,'Info.plist'),JSON.stringify(clean)],{stdio:'pipe'});
 }

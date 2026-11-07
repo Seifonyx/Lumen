@@ -10,18 +10,21 @@ export function validateAiApproval(value:unknown):AiApproval|null {
 }
 const freeId=(id:unknown):id is string=>typeof id==='string'&&id.length<200&&/^[\w.-]+\/[\w.-]+:free$/.test(id)&&!id.includes('..');
 const zero=(n:unknown)=>(typeof n==='number'||typeof n==='string'&&n.trim()!=='')&&Number.isFinite(Number(n))&&Number(n)===0;
+export const zeroBudgetAccount=(data:unknown)=>{const d=data as {limit?:unknown;is_free_tier?:unknown;byok_usage?:unknown}|null;return d?.limit===0&&d?.is_free_tier===true&&d?.byok_usage===0;};
 const abort=()=>new DOMException('Provider request stopped','AbortError');
 const denied=(message:string)=>Object.assign(Error(message),{status:403,code:'NATIVE_AI_DISABLED'});
 
 /** Uses the canonical provider's HTTP/SSE implementation; adds native consent, cost and lifecycle boundaries. */
 export class FreeNativeProvider {
- private scope:AccountScope;private approval:AiApproval|null;private io:typeof fetch;private pending=0;
- constructor(scope:AccountScope,approval:AiApproval|null,io:typeof fetch){this.scope=scope;this.approval=validateAiApproval(approval);this.io=io;}
+ private scope:AccountScope;private approval:AiApproval|null|(()=>AiApproval|null);private io:typeof fetch;private pending=0;private permission=new AbortController();
+ constructor(scope:AccountScope,approval:AiApproval|null|(()=>AiApproval|null),io:typeof fetch){this.scope=scope;this.approval=typeof approval==='function'?approval:validateAiApproval(approval);this.io=io;}
+ invalidate(){this.permission.abort();this.permission=new AbortController();}
  get inFlight(){return this.pending;}
  async request(input:RequestInfo|URL,init?:RequestInit):Promise<Response>{
-  if(!this.approval)throw denied('Real AI requires owner approval. No provider request was sent.');
-  if(this.scope.uid!==this.approval.uid)throw denied('AI is limited to the approved account.');
-  const originLease=this.scope.capture();
+  const approval=validateAiApproval(typeof this.approval==='function'?this.approval():this.approval);
+  if(!approval)throw denied('Enable free-only OpenRouter in this account’s provider settings. No request was sent.');
+  if(this.scope.uid!==approval.uid)throw denied('AI is limited to the approved account.');
+  const originLease=this.scope.capture(),permission=this.permission.signal;
   const url=new URL(input instanceof Request?input.url:String(input));
   if(url.origin!=='https://openrouter.ai'||url.username||url.password||url.search||url.hash)throw denied('Provider destination denied.');
   const req=new Request(url,input instanceof Request?new Request(input,init):init);
@@ -33,7 +36,7 @@ export class FreeNativeProvider {
   if(!globalThis.crypto?.subtle)throw denied('Secure provider key verification is unavailable. No request was sent.');
   const key=(req.headers.get('authorization')||'').slice(7);
   const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(key))),n=>n.toString(16).padStart(2,'0')).join('');
-  if(digest!==this.approval.keySha256)throw denied('Provider key does not match the approved free test credential.');
+  if(digest!==approval.keySha256)throw denied('Provider key does not match the approved free test credential.');
   let body:string|undefined;
   if(chat){
    let b;try{b=JSON.parse(await req.text());}catch{throw denied('Invalid free chat request.');}
@@ -47,18 +50,25 @@ export class FreeNativeProvider {
    body=JSON.stringify(b);
   }
   if(!originLease.valid())throw abort();
-  const lease=this.scope.request(req.signal);this.pending++;
+  const lease=this.scope.request(AbortSignal.any([req.signal,permission]));this.pending++;
   let released=false,streaming=false;
   const release=()=>{if(released)return;released=true;this.pending--;lease.dispose();};
   try{
    lease.signal.throwIfAborted();
+   if(chat){
+    const check=await waitFor(this.io('https://openrouter.ai/api/v1/key',{headers:{authorization:req.headers.get('authorization')!},signal:lease.signal,credentials:'omit',redirect:'error'}),lease.signal);
+    if(!lease.valid()){void check.body?.cancel().catch(()=>{});throw abort();}
+    if(!check.ok){void check.body?.cancel().catch(()=>{});return Response.json({error:{code:check.status,message:check.status===429?'OpenRouter is rate limited. Try later.':'OpenRouter key verification failed.'}},{status:check.status});}
+    const data=await waitFor(check.json(),lease.signal);if(!lease.valid())throw abort();
+    if(!zeroBudgetAccount(data.data))return Response.json({error:{message:'Use a free OpenRouter account with a $0 key credit limit and no BYOK usage.',code:403}},{status:403});
+   }
    const work=this.io(url.href,{method:req.method,headers:req.headers,body,signal:lease.signal,credentials:'omit',redirect:'error'}).then(response=>{if(!lease.valid()){void response.body?.cancel().catch(()=>{});throw abort();}return response;});
    const response=await waitFor(work,lease.signal);
    if(!lease.valid()){void response.body?.cancel().catch(()=>{});throw abort();}
    if(catalog&&response.ok){
     const data=await waitFor(response.json(),lease.signal);if(!lease.valid())throw abort();
     if(!Array.isArray(data.data))throw Error('OpenRouter catalogue unavailable.');
-    return Response.json({data:data.data.filter((m:{id?:unknown;pricing?:Record<string,unknown>})=>freeId(m.id)&&m.pricing&&zero(m.pricing.prompt)&&zero(m.pricing.completion)&&Object.values(m.pricing).every(zero))});
+    return Response.json({data:data.data.filter((m:{id?:unknown;pricing?:Record<string,unknown>})=>freeId(m.id)&&(!('architecture' in m)||((m as {architecture?:{output_modalities?:string[];input_modalities?:string[]}}).architecture?.output_modalities||['text']).includes('text'))&&m.pricing&&zero(m.pricing.prompt)&&zero(m.pricing.completion)&&Object.values(m.pricing).every(zero)).map((m:Record<string,unknown>)=>({...m,architecture:{...(m.architecture as object||{}),input_modalities:['text'],output_modalities:['text']},supported_parameters:[]}))});
    }
    if(!response.body)return response;
    const reader=response.body.getReader();let finished=false,controller:ReadableStreamDefaultController<Uint8Array>;

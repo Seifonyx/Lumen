@@ -1,10 +1,24 @@
-import aiApproval from 'lumen:native-ai-approval';
+import {NativeAiConsent,zeroBudgetAccount} from './ai-consent';
 import {FreeNativeProvider} from './free-provider';
 import {accountScope} from '../integration/runtime';
 import config from 'lumen:service-config';
 import {requestAllowed} from './config.mjs';
 const nativeFetch=globalThis.fetch.bind(globalThis);
-const ai=new FreeNativeProvider(accountScope,aiApproval,nativeFetch);
+export const nativeAiConsent=new NativeAiConsent(accountScope,localStorage,config.projectId);
+const ai=new FreeNativeProvider(accountScope,()=>nativeAiConsent.current(),nativeFetch);
+nativeAiConsent.subscribe(()=>ai.invalidate());
+export async function enableFreeOpenRouter(key:string,confirmed:boolean){
+ if(!confirmed||config.projectId!=='lumen-ios-test')throw Error('Confirm free-only OpenRouter use.');
+ if(!/^sk-or-\S{8,512}$/.test(key))throw Error('Enter an OpenRouter test key.');
+ const lease=accountScope.request(AbortSignal.timeout(15000));
+ try{
+  const response=await nativeFetch('https://openrouter.ai/api/v1/key',{headers:{authorization:'Bearer '+key},signal:lease.signal,credentials:'omit',redirect:'error'});
+  if(!response.ok)throw Error(response.status===429?'OpenRouter is rate limited. Try later.':'OpenRouter could not verify this key.');
+  const data=await response.json();if(!lease.valid())throw Error('The account changed.');
+  if(!zeroBudgetAccount(data.data))throw Error('Use a free account, set the key credit limit to $0, and remove BYOK usage.');
+  await nativeAiConsent.enable(key,true);
+ }finally{lease.dispose();}
+}
 function allowed(url:URL){return url.origin===location.origin||url.protocol==='data:'||url.protocol==='blob:'||requestAllowed(config,url.href);}
 export const testFetch:typeof fetch=async(input,init)=>{
  const url=new URL(input instanceof Request?input.url:String(input),location.href);
@@ -23,4 +37,11 @@ for(const name of ['WebSocket','EventSource','SharedWorker','Worker'] as const){
 }
 navigator.sendBeacon=()=>false;
 window.open=()=>null;
-document.addEventListener('click',e=>{const a=(e.target as Element)?.closest?.('a[href]');if(a&&!(a as HTMLAnchorElement).download&&!allowed(new URL((a as HTMLAnchorElement).href,location.href))){e.preventDefault();e.stopImmediatePropagation();}},true);
+document.addEventListener('click',e=>{
+ const a=(e.target as Element)?.closest?.('a[href]') as HTMLAnchorElement|null;
+ if(a?.href==='https://openrouter.ai/keys'&&e.isTrusted&&config.projectId==='lumen-ios-test'){
+  e.preventDefault();e.stopImmediatePropagation();
+  (window as unknown as {webkit?:{messageHandlers?:{nativeProviderSetup?:{postMessage:(data:object)=>void}}}}).webkit?.messageHandlers?.nativeProviderSetup?.postMessage({open:true});return;
+ }
+ if(a&&!a.download&&!allowed(new URL(a.href,location.href))){e.preventDefault();e.stopImmediatePropagation();}
+},true);

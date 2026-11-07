@@ -6,12 +6,12 @@ import {openStream,setKeys} from '../../src/lib/ai/providers.js';
 const approved=()=>({approved:true,provider:'openrouter',projectId:'lumen-ios-test',uid:'test-a',policy:'free-variants-only',noByok:true,keySha256:createHash('sha256').update('synthetic-test-key').digest('hex')});
 const url='https://openrouter.ai/api/v1/chat/completions';
 const payload=(extra={})=>({method:'POST',headers:{authorization:'Bearer synthetic-test-key'},body:JSON.stringify({model:'fixture/text:free',stream:true,messages:[{role:'user',content:'Synthetic sample'}],...extra})});
-const setup=(fetcher,approval=approved())=>{const scope=new AccountScope();scope.set('test-a');return {scope,p:new FreeNativeProvider(scope,approval,fetcher)};};
+const setup=(fetcher,approval=approved())=>{const scope=new AccountScope();scope.set('test-a');return {scope,p:new FreeNativeProvider(scope,approval,(url,init)=>url.endsWith('/key')?Promise.resolve(Response.json({data:{limit:0,is_free_tier:true,byok_usage:0}})):fetcher(url,init))};};
 const sse=v=>'data: '+JSON.stringify(v)+'\n\n';
-test('approval is absent by default and is account/test-project scoped',async()=>{
+test('consent is absent by default and is account/test-project scoped',async()=>{
  assert.equal(validateAiApproval(null),null);assert.throws(()=>validateAiApproval({...approved(),projectId:'lumen-chat'}));
  let calls=0;const {p}=setup(async()=>{calls++;return Response.json({});},null);
- await assert.rejects(p.request(url,payload()),/approval/);assert.equal(calls,0);
+ await assert.rejects(p.request(url,payload()),/Enable free-only/);assert.equal(calls,0);
  const mismatch=setup(async()=>{calls++;return Response.json({});});
  await assert.rejects(mismatch.p.request(url,{...payload(),headers:{authorization:'Bearer wrong-test-key'}}),/credential/);assert.equal(calls,0);
  const other=setup(async()=>{calls++;return Response.json({});});other.scope.set('test-b');
@@ -65,4 +65,18 @@ test('stalled headers cancel promptly; a late uncooperative response body is dis
  const {p,scope}=setup(()=>{entered();return delayed;});const work=p.request(url,payload());
  await started;scope.pause();await assert.rejects(work,{name:'AbortError'});assert.equal(p.inFlight,0);
  resolve(new Response(new ReadableStream({cancel(){canceled=true;}})));await new Promise(r=>setImmediate(r));assert(canceled);
+});
+
+test('fresh zero-budget check blocks changed or unknown metadata before inference',async()=>{
+ for(const data of [{limit:1,is_free_tier:true,byok_usage:0},{limit:0,is_free_tier:false,byok_usage:0},{limit:0,is_free_tier:true,byok_usage:1},{}]){
+  const scope=new AccountScope();scope.set('test-a');let calls=0;
+  const p=new FreeNativeProvider(scope,approved(),async path=>{if(path.endsWith('/key'))return Response.json({data});calls++;return new Response('must not send');});
+  assert.equal((await p.request(url,payload())).status,403);assert.equal(calls,0);
+ }
+});
+test('consent revocation cancels pending provider IO without rotating the cloud account',async()=>{
+ const scope=new AccountScope();scope.set('test-a');const cloud=scope.capture();let approval=approved(),entered;
+ const started=new Promise(r=>entered=r);const p=new FreeNativeProvider(scope,()=>approval,async path=>{if(path.endsWith('/key'))return Response.json({data:{limit:0,is_free_tier:true,byok_usage:0}});entered();return new Promise(()=>{});});
+ const work=p.request(url,payload());await started;approval=null;p.invalidate();await assert.rejects(work,{name:'AbortError'});assert(cloud.valid());assert.equal(p.inFlight,0);
+ await assert.rejects(p.request(url,payload()),/Enable free-only/);
 });

@@ -2,7 +2,7 @@ function between(code,start,end,replacement){const a=code.indexOf(start),b=code.
 /** Checked build-only adaptation of canonical account persistence; production source remains untouched. */
 export function patchFirebase(code){
  code=code.replace('GoogleAuthProvider, browserLocalPersistence,','GoogleAuthProvider, inMemoryPersistence, initializeAuth,');
- code=code.replace("import config from '../firebase-config.json';", "import config from 'lumen:test-config';\nimport {watchNativeUser,signInNative,signOutNative,readNativeAccount,writeNativeAccount,clearNativeAccount} from 'lumen:native-account';");
+ code=code.replace("import config from '../firebase-config.json';", "import config from 'lumen:test-config';\nimport {watchNativeUser,signInNative,signOutNative,readNativeAccount,writeNativeAccount,clearNativeAccount,saveNativeProviderKeys} from 'lumen:native-account';");
  code=between(code,'const SAME_SITE_AUTH_HOSTS:', 'export interface PreviewUser',`const app = initializeApp(config);
 export const auth = initializeAuth(app, {persistence: inMemoryPersistence});
 export const db = initializeFirestore(app, {ignoreUndefinedProperties: true});`);
@@ -17,8 +17,9 @@ export const signOutUser = async()=>{await signOutNative(auth);};`);
 function keepLocal(uid:string,patch:Account){return writeNativeAccount(uid,patch);}`);
  code=between(code,'export function forgetLocalAccount(', '// Keys and settings live', 'export function forgetLocalAccount(uid:string){clearNativeAccount(uid);}');
  code=between(code,'export function savedAccount(', 'export async function loadKeys(', 'export function savedAccount(_uid:string): {keys:ApiKeys;settings:Record<string,unknown>|null}|null{return null;}');
+ code=code.replace("return normalizeKeys({ ...d.providerConnections, gemini: d.geminiKey || '', openrouter: d.openrouterKey || '', groq: d.groqKey || '', cerebras: d.cerebrasKey || '', github: d.githubKey || '' })","return normalizeKeys({openrouter: d.openrouterKey || ''})");
  const save=code.indexOf('export async function saveKeys(');if(save<0)throw Error('Unknown canonical key save boundary');
- code=code.slice(0,save)+`export async function saveKeys(_uid:string,_keys:ApiKeys):Promise<void>{throw Error('Configure test provider credentials through the approved test backend. Native key saving is disabled.');}\n`;
+ code=code.slice(0,save)+`export async function saveKeys(uid:string,keys:ApiKeys):Promise<void>{await saveNativeProviderKeys(db,uid,keys);accountRead=null;}\n`;
  return code;
 }
 

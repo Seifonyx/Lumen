@@ -1,3 +1,5 @@
+import {doc,setDoc,type Firestore} from 'firebase/firestore';
+import {NativeAiConsent,consentKey} from './ai-consent';
 import {onIdTokenChanged,signInWithCredential,signOut,GoogleAuthProvider,type Auth,type User} from 'firebase/auth';
 import {registerPlugin} from '@capacitor/core';
 import {RealSession,type NativeCredential} from '../integration/real-session';
@@ -21,7 +23,7 @@ function coordinator(auth:Auth){
 }
 let restored=false;
 export function watchNativeUser(auth:Auth,callback:(user:User|null)=>void){
- const c=coordinator(auth),off=c.watch(user=>{const next=user?.uid||null;if(accountScope.uid!==next){accounts.clear();accountScope.set(next);}callback(user);});
+ const c=coordinator(auth),off=c.watch(user=>{const next=user?.uid||null;if(accountScope.uid!==next){if(accountScope.uid)localStorage.removeItem(consentKey(accountScope.uid));accounts.clear();accountScope.set(next);}callback(user);});
  if(!restored){restored=true;void c.signIn(true).catch(()=>{/* signed out, never a demo fallback */});}
  return off;
 }
@@ -40,4 +42,21 @@ export function writeNativeAccount(uid:string,patch:AccountKeyCache):boolean{
  const disk={settings:current.settings,settingsRevision:current.settingsRevision,pendingSettingsRevision:current.pendingSettingsRevision};
  try{localStorage.setItem('mr.account.'+uid,JSON.stringify(disk));return true;}catch{return false;}
 }
-export function clearNativeAccount(uid:string){accounts.delete(uid);}
+export function clearNativeAccount(uid:string){accounts.delete(uid);localStorage.removeItem(consentKey(uid));}
+
+/** Same canonical private account field; raw keys never enter native localStorage or the app bundle. */
+export async function saveNativeProviderKeys(db:Firestore,uid:string,keys:{openrouter?:string}){
+ const lease=accountScope.capture();
+ if(uid!==lease.uid||config.projectId!=='lumen-ios-test')throw Error('Provider setup is limited to this test account.');
+ const key=(keys.openrouter||'').trim();
+ if(key){
+  const permission=new NativeAiConsent(accountScope,localStorage,config.projectId).current();
+  const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(key))),n=>n.toString(16).padStart(2,'0')).join('');
+  if(!lease.valid()||permission?.keySha256!==hash||new NativeAiConsent(accountScope,localStorage,config.projectId).current()?.keySha256!==hash)throw Error('Confirm free-only consent before saving this key.');
+ }
+ let timer:ReturnType<typeof setTimeout>;
+ try{await Promise.race([setDoc(doc(db,'modelRouter',uid),{openrouterKey:key},{merge:true}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Key sync could not be confirmed. Reconnect and retry.')),15000);})]);}
+ finally{clearTimeout(timer!);}
+ if(!lease.valid())throw Error('The account changed.');
+ writeNativeAccount(uid,{openrouterKey:key});
+}

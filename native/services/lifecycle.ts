@@ -4,17 +4,19 @@ import {useStore} from '../../src/store';
 import {accountScope} from '../integration/runtime';
 import {signOutNative} from './account';
 export function installServiceLifecycle(){
- let active=(window as unknown as {__lumenNativeActive?:boolean}).__lumenNativeActive!==false,epoch=0;
- const pause=()=>{epoch++;accountScope.pause();useStore.getState().stop();void disableNetwork(db).catch(()=>{});};
+ let active=(window as unknown as {__lumenNativeActive?:boolean}).__lumenNativeActive!==false,epoch=0,networkDisabled=false;
+ const disable=()=>{networkDisabled=true;return disableNetwork(db);};
+ const pause=()=>{epoch++;accountScope.pause();useStore.getState().stop();void disable().catch(()=>{});};
  const resume=async()=>{
   const ticket=++epoch,user=auth.currentUser;
   if(!user){accountScope.resume();return;}
-  if(!navigator.onLine){accountScope.resume();await disableNetwork(db);return;}
+  if(!navigator.onLine){accountScope.resume();await disable();return;}
   try{
    await user.getIdToken(true);
    if(ticket!==epoch||!active||document.hidden||auth.currentUser?.uid!==user.uid)return;
-   await enableNetwork(db);
-   if(ticket===epoch&&active&&!document.hidden)accountScope.resume();else await disableNetwork(db);
+   // A newly initialized Firestore client is already online. Resume only an actual pause.
+   if(networkDisabled){await enableNetwork(db);networkDisabled=false;}
+   if(ticket===epoch&&active&&!document.hidden)accountScope.resume();else await disable();
   }catch(error){
    if(ticket!==epoch)return;
    const code=(error as {code?:string}).code;

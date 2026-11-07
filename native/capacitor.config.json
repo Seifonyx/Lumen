@@ -1,6 +1,6 @@
 {
   "appId": "io.github.seifonyx.lumen.demo",
-  "appName": "Lumen Demo",
+  "appName": "Lumen Test",
   "webDir": "www",
   "loggingBehavior": "none",
   "ios": {

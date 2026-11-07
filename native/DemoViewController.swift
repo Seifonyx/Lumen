@@ -73,6 +73,7 @@ final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler 
             })
         }
         controller.add(self, name: "nativeDownload")
+        controller.add(self, name: "nativeProviderSetup")
         if smoke {
             // Diagnostic: proves the launch argument reached the app (Simulator evidence, smoke builds only).
             let marker = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("smoke-launched.txt")
@@ -87,7 +88,7 @@ final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler 
         var rules = #"[{"trigger":{"url-filter":"^https?://"},"action":{"type":"block"}},{"trigger":{"url-filter":"^wss?://"},"action":{"type":"block"}}]"#
         if let c = Bundle.main.object(forInfoDictionaryKey: "LumenTestServices") as? [String: String], c["mode"] == "isolated-test" {
             var hosts = ["identitytoolkit.googleapis.com", "securetoken.googleapis.com", "firestore.googleapis.com"]
-            // Compiled owner approval only; saving a key or browsing never opens this destination.
+            // Host capability only: JS still requires per-account in-app consent and free-only validation.
             if c["projectId"] == "lumen-ios-test", c["aiProvider"] == "openrouter" { hosts.append("openrouter.ai") }
             var entries = (try? JSONSerialization.jsonObject(with: Data(rules.utf8))) as? [[String: Any]] ?? []
             for host in hosts {
@@ -115,6 +116,12 @@ final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.frameInfo.isMainFrame, message.frameInfo.securityOrigin.protocol == "capacitor",
               message.frameInfo.securityOrigin.host == "localhost", let data = message.body as? [String: Any] else { return }
+        if message.name == "nativeProviderSetup", data["open"] as? Bool == true,
+           let c = Bundle.main.object(forInfoDictionaryKey: "LumenTestServices") as? [String: String],
+           c["projectId"] == "lumen-ios-test", let url = URL(string: "https://openrouter.ai/keys") {
+            UIApplication.shared.open(url)
+            return
+        }
         if message.name == "nativeSmoke", smoke {
             let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             if let stage = data["stage"] as? String, stage.range(of: "^[a-z-]+$", options: .regularExpression) != nil {

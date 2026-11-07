@@ -22,7 +22,7 @@ if(isolated){
  manifest=linkGoogleSignIn(manifest,true);
  writeFileSync(packagePath,manifest);
 }
-patchServiceProject(app,isolated?built.serviceConfig:null,isolated?built.aiApproval:null);
+patchServiceProject(app,isolated?built.serviceConfig:null);
 const assets=app+'Assets.xcassets/';
 if(process.platform==='darwin') {
   execFileSync('sips',['-z','1024','1024','../public-canvas/icon-512.png','--out',assets+'AppIcon.appiconset/AppIcon-512@2x.png']);

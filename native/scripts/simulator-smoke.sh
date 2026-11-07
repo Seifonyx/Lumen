@@ -9,7 +9,12 @@ items=json.load(open("artifacts/simulator/devices.json"))["devices"]
 runtimes=sorted((r for r in items if "iOS" in r),key=lambda r:tuple(map(int,re.findall(r"[0-9]+",r))),reverse=True)
 print(next(d["udid"] for r in runtimes for d in items[r] if d["name"].startswith("iPhone")))
 ')
-trap 'xcrun simctl io "$device" screenshot artifacts/simulator/simulator.png || true; xcrun simctl spawn "$device" log show --last 3m --style compact --predicate '''process == "App"''' > artifacts/simulator/device.log 2>&1 || true' EXIT
+capture_debug() {
+  xcrun simctl io "$device" screenshot artifacts/simulator/simulator.png || true
+  xcrun simctl spawn "$device" log show --last 3m --style compact --predicate 'process == "App"' > artifacts/simulator/device.log 2>&1 || true
+  xcrun simctl shutdown "$device" || true
+}
+trap capture_debug EXIT
 open -a Simulator --args -CurrentDeviceUDID "$device"
 xcrun simctl boot "$device" || true
 python3 - "$device" <<'PY'
@@ -30,6 +35,4 @@ mkdir -p artifacts/simulator
 cp "$container/Documents/"*.png artifacts/simulator/ || true
 cp "$container/Documents/native-smoke.json" artifacts/simulator/
 python3 -c 'import json; r=json.load(open("artifacts/simulator/native-smoke.json")); print(r); assert r["passed"],r'
-xcrun simctl io "$device" screenshot artifacts/simulator/simulator.png
 xcrun simctl terminate "$device" io.github.seifonyx.lumen.demo
-xcrun simctl shutdown "$device"

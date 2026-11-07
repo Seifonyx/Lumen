@@ -48,6 +48,7 @@ async function run() {
     useStore.getState().openCanvas('Native sample.md','Synthetic local sample document. '.repeat(12));
     await until(()=>Boolean(useStore.getState().chats.find(c=>c.id===savedId)?.documents?.length));
     const sampleDocument=useStore.getState().chats.find(c=>c.id===savedId)!.documents![0];
+    await until(()=>Boolean(document.querySelector('textarea[aria-label="Canvas document"]')));
     await capture('document');
     useStore.getState().setUi({canvasOpen:false});
     const deck=await useStore.getState().makeStudyDeck(savedId,sampleDocument.id);

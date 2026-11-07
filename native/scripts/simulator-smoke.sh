@@ -10,7 +10,9 @@ runtimes=sorted((r for r in items if "iOS" in r),key=lambda r:tuple(map(int,re.f
 print(next(d["udid"] for r in runtimes for d in items[r] if d["name"].startswith("iPhone")))
 ')
 capture_debug() {
-  xcrun simctl io "$device" screenshot artifacts/simulator/simulator.png || true
+  if ! test -f artifacts/simulator/simulator.png; then
+    xcrun simctl io "$device" screenshot artifacts/simulator/simulator.png || true
+  fi
   xcrun simctl spawn "$device" log show --last 3m --style compact --predicate 'process == "App"' > artifacts/simulator/device.log 2>&1 || true
   xcrun simctl shutdown "$device" || true
 }
@@ -37,4 +39,5 @@ cp "$container/Documents/"*.png artifacts/simulator/ || true
 cp "$container/Documents/smoke-launched.txt" artifacts/simulator/ || echo 'smoke-launched.txt missing: the app never saw --demo-smoke'
 cp "$container/Documents/native-smoke.json" artifacts/simulator/
 python3 -c 'import json; r=json.load(open("artifacts/simulator/native-smoke.json")); print(r); assert r["passed"],r'
+xcrun simctl io "$device" screenshot artifacts/simulator/simulator.png
 xcrun simctl terminate "$device" io.github.seifonyx.lumen.demo

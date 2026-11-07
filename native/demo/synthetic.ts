@@ -24,11 +24,11 @@ export function replyText(body: string): string {
  return '**Offline demonstration.** This reply was created locally from a fixed template. No model or account service was contacted. You can test navigation, drafts, files and projects here.';
 }
 /** Real incremental local SSE, so the canonical streaming and Stop paths can be exercised. */
-export function replyStream(text: string,signal?: AbortSignal|null,interval=80): ReadableStream<Uint8Array> {
+export function replyStream(text: string,signal?: AbortSignal|null,interval=80,onClose:()=>void=()=>{}): ReadableStream<Uint8Array> {
  let timer:ReturnType<typeof setTimeout>|undefined,stopped=false;
  const encoder=new TextEncoder();let offset=0;
  let abort:()=>void=()=>{};
- const cleanup=()=>{stopped=true;clearTimeout(timer);signal?.removeEventListener('abort',abort);};
+ const cleanup=()=>{if(stopped)return;stopped=true;clearTimeout(timer);signal?.removeEventListener('abort',abort);onClose();};
  return new ReadableStream({
   start(controller) {
    abort=()=>{if(stopped)return;cleanup();controller.error(new DOMException('Stopped','AbortError'));};

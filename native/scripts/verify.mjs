@@ -11,7 +11,7 @@ for(const version of Object.values({...dependencies.dependencies,...dependencies
 const graph=JSON.parse(readFileSync('native/www/demo-build.json','utf8'));
 assert.equal(graph.presentation,'canvas');
 assert(graph.modules.some(p=>p==='src/lib/canvas-presentation.on.ts'));
-assert(graph.modules.some(p=>p==='native/demo/account.ts'));
+for(const module of ['native/demo/account.ts','native/demo/sync.ts','native/demo/lifecycle.ts','native/integration/auth.ts','native/integration/provider.ts','native/integration/sync.ts'])assert(graph.modules.includes(module),module);
 assert(graph.modules.every(p=>!/^qa\/iphone\/(fixtures|main)/.test(p)));
 assert(graph.modules.every(p=>!/^src\/lib\/(firebase|sync)\.ts$|^src\/firebase-config\.json$|^src\/pwa\/register\.ts$/.test(p)));
 assert(!existsSync('native/www/sw.js'));

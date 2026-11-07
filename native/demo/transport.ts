@@ -1,4 +1,6 @@
-import {DEMO_MODELS,replyText,replyStream} from './synthetic';
+import {SyntheticProvider} from '../integration/provider';
+import {accountScope} from '../integration/runtime';
+export const syntheticProvider=new SyntheticProvider(accountScope);
 const assetFetch = globalThis.fetch.bind(globalThis);
 export const blocked: string[] = [];
 export const demoFetch: typeof fetch = async (input,init) => {
@@ -7,10 +9,8 @@ export const demoFetch: typeof fetch = async (input,init) => {
   const signal=init?.signal || (input instanceof Request ? input.signal : undefined);
   if(signal?.aborted) throw new DOMException('Stopped','AbortError');
   if(url.protocol==='https:' && url.hostname==='generativelanguage.googleapis.com') {
-    if(url.pathname.endsWith('/models')) return Response.json({models:DEMO_MODELS});
     const body=typeof init?.body==='string' ? init.body : '';
-    if(/:streamGenerateContent$/.test(url.pathname)) return new Response(replyStream(replyText(body),signal),{headers:{'content-type':'text/event-stream'}});
-    if(/:generateContent$/.test(url.pathname)) return Response.json({candidates:[{content:{parts:[{text:replyText(body)}]},finishReason:'STOP'}]});
+    if(url.pathname.endsWith('/models')||/:streamGenerateContent$|:generateContent$/.test(url.pathname))return syntheticProvider.request(url.pathname,body,signal);
   }
   const local = url.protocol===location.protocol && url.host===location.host;
   const method = (init?.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();

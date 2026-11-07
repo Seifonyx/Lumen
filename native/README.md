@@ -8,6 +8,10 @@ The owner confirms that the earlier installed IPA launches, basic navigation/key
 and chats survive reopening. Agent browser/Simulator results and new physical upgrade acceptance are separate.
 See the [feature matrix](docs/FEATURE_PARITY.md) and [integration/update plan](docs/INTEGRATION_AND_UPDATES.md).
 
+Phase2 adds synthetic auth/session lifecycle, isolated memory synchronization and background cancellation.
+Real authentication, cloud sync and providers remain disabled. The Keychain facility is inactive.
+See [Phase2 scope, remaining approvals and device checklist](docs/PHASE2_INTEGRATION.md).
+
 ## Download and update the installed app
 
 1. Open [iOS unsigned demo IPA runs](https://github.com/Seifonyx/Lumen/actions/workflows/ios-demo.yml).

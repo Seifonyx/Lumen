@@ -1,4 +1,4 @@
-# Real integration and update architecture (design only)
+# Real integration and update architecture
 
 2026-11-07. No endpoint, remote executable update, auth configuration, permission, Keychain plugin or provider
 integration is activated by Phase 1. The React/Canvas application remains the product; native SwiftUI/UIKit
@@ -10,7 +10,8 @@ The current demo aliases out Firebase SDK/config and uses local preview UIDs. Ne
 real cloud accounts. Preserve their local databases as separate sample data; real Firebase UIDs use separate stores.
 The existing invite-only authorization is not replaced by possession of a Google token.
 
-Proposed integration, to be approved as one precisely scoped Phase 2 ticket:
+Phase2 synthetic-only groundwork is now implemented; see [PHASE2_INTEGRATION.md](PHASE2_INTEGRATION.md).
+The following **real integration activation** remains a separate approval, not an installation prerequisite:
 
 1. Verify the actual identifier signed by Sideloadly. Keep `io.github.seifonyx.lumen.demo` for compatible demo upgrades;
    changing the installed identifier/team/origin can create another sandbox. Do not delete the working installation.
@@ -110,7 +111,7 @@ as the reliable fallback and never promise App Store-equivalent automatic binary
 
 ## Prioritized next phase
 
-1. Finish physical overwrite-upgrade acceptance on the same installed demo: chat/project/Study/draft intact, native
+1. Owner: finish physical overwrite-upgrade acceptance on the same installed demo: chat/project/Study/draft intact, native
    share sheet, normal navigation, keyboard/IME and no wrong-account surfaces. Use sample files only; don't uninstall.
 2. Approve and spike the exact Google/Firebase/Keychain/session/network design above, isolated from production.
    Require denied-invite/revocation/logout/late-callback and account switch tests before enabling real accounts.

@@ -1,5 +1,16 @@
 {
   "extends": "../tsconfig.json",
-  "include": ["demo", "vite.config.ts"],
-  "exclude": ["ios", "www", "node_modules"]
+  "include": [
+    "demo",
+    "vite.config.ts",
+    "integration"
+  ],
+  "exclude": [
+    "ios",
+    "www",
+    "node_modules"
+  ],
+  "compilerOptions": {
+    "allowImportingTsExtensions": true
+  }
 }

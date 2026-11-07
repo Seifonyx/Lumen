@@ -1,6 +1,7 @@
 import { useStore } from '../../src/store';
 import { openRoutingCenter, closeRoutingCenter, showRoutingSection } from '../../src/lib/routing-center';
-import { blocked } from './transport';
+import { blocked,syntheticProvider } from './transport';
+import {accountScope,sessionLifetime} from '../integration/runtime';
 import { db } from '../../src/lib/db';
 import { StudyStore,grade } from '../../src/lib/study';
 import { selectDemo, signInPreview, signOutUser } from './account';
@@ -84,8 +85,28 @@ async function run() {
     await until(()=>Boolean(useStore.getState().authed));
     if(useStore.getState().settings.projects?.some(p=>p.id===project.id) || (await new StudyStore(useStore.getState().user!.uid).list()).length || useStore.getState().user?.uid===ownerA || useStore.getState().chats.some(c=>c.messages.some(m=>m.text.includes('Synthetic native smoke')))) throw new Error('Demo account isolation failed');
     await capture('profile-b');
+    await signOutUser();await until(()=>!useStore.getState().authed);
+    selectDemo('a');signInPreview();await until(()=>Boolean(useStore.getState().authed));
+    await until(()=>useStore.getState().settings.projects?.some(p=>p.id===project.id)===true);
+    if(!useStore.getState().chats.some(c=>c.id===savedId))throw new Error('A conversation lost after account return');
+    const request=useStore.getState().send('Background interruption sample',[]);
+    await until(()=>Boolean(useStore.getState().streamingChatId));
+    window.dispatchEvent(new CustomEvent('lumen:native-lifecycle',{detail:{active:false}}));
+    await request;
+    if(accountScope.active||syntheticProvider.inFlight||useStore.getState().streamingChatId)throw new Error('Background did not stop owned work');
+    window.dispatchEvent(new CustomEvent('lumen:native-lifecycle',{detail:{active:'invalid'}}));
+    if(accountScope.active)throw new Error('Malformed bridge event resumed the app');
+    window.dispatchEvent(new CustomEvent('lumen:native-lifecycle',{detail:{active:true}}));
+    await useStore.getState().send('Foreground retry sample',[]);
+    if(syntheticProvider.inFlight)throw new Error('Completed request leaked an account lease');
+    sessionLifetime.adopt(ownerA!,Date.now()+30);
+    await until(()=>!useStore.getState().authed);
+    if(accountScope.uid!==null||localStorage.getItem('mr.preview_user'))throw new Error('Expired session was retained');
+    selectDemo('a');signInPreview();await until(()=>Boolean(useStore.getState().authed));
+    await until(()=>useStore.getState().settings.projects?.some(p=>p.id===project.id)===true);
+    await capture('session-recovery');
     if(blocked.length) throw new Error('Unexpected blocked application request');
-    report({done:true,passed:true,checks:['native HTTP bridge denied','bundled launch','Canvas navigation','local synthetic streaming reply','local project/document/Study','Incognito not persisted','profile separation'],limitations:['programmatic interaction, not hardware keyboard or VoiceOver']});
+    report({done:true,passed:true,checks:['native HTTP bridge denied','bundled launch','Canvas navigation','local synthetic streaming reply','local project/document/Study','Incognito not persisted','profile separation','A/B/A chat and project persistence','typed lifecycle interruption and retry','malformed bridge rejection','session expiry and recovery'],limitations:['programmatic lifecycle events, not real OS backgrounding','inactive Keychain facility compiled only, not runtime credential storage','programmatic interaction, not hardware keyboard or VoiceOver']});
   } catch(error) { report({done:true,passed:false,error:String(error)}); }
 }
 void run();

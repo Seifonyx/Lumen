@@ -9,6 +9,7 @@ async function boot() {
     selectDemo('a'); signInPreview();
   }
   await import('../../src/main');
+  const {installAppLifecycle}=await import('./lifecycle');installAppLifecycle();
   if(smoke) await import('./smoke');
 }
 void boot();

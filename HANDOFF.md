@@ -10,37 +10,22 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `experiment/ios-sideload`, draft PR141. Owner authorizes iOS Phase 1 offline/synthetic foundation,
-  full feature inventory and free Windows workflow. No real auth/network, inference, native redesign, merge/deploy.
-- Owner physically verified installed baseline `135af6b`: launch, basic navigation/keyboard, Demo A/B separation,
-  conversation persistence after reopen. Preserve bundle `io.github.seifonyx.lumen.demo`, origin `capacitor://localhost`,
-  existing demo UIDs/storage. Never tell the owner to uninstall/reset the working app.
-- Matrix/scope: `native/docs/FEATURE_PARITY.md`; plan: `native/docs/PHASE1_PLAN.md`; install guide: `native/README.md`.
-- Confirmed old smoke failure: pinned Capacitor SceneDelegate creates stock CAPBridgeViewController directly,
-  bypassing the custom controller. Native-only generation now patches the scene, checks the template and is
-  idempotent (including CRLF). Actual-template regression failed before fix and passes after.
-- Phase1 also adds two clearly named local synthetic models, incremental cancelable SSE, and an explicitly sample
-  Study deck through canonical parsing/storage. Native smoke exercises project/document/Study and Incognito isolation.
-  Production source/config/dependencies, schema/UID/origin stay unchanged; advanced service/worker gaps documented.
-- Prior head `5e4116b` passed full PR CI but its native run 42380811019 generated IPA while runtime smoke did not activate.
-  New exact-head Actions + real WKWebView smoke must prove the controller/guards and be inspected before delivery.
-- Phase1 source `06a6523` passed all 32 PR CI jobs (42383471586), macOS device build and actual WKWebView smoke,
-  plus both browser contracts (42383467478). Native evidence artifact13578328238 contains passing JSON, controller
-  launch marker/log and real screenshots. HTTP RPC rejection, project/document/Study storage, Incognito non-persistence
-  and profile separation passed; browser baseline-to-current update preserved chats/drafts. Native images inspected.
-- Follow-up fixes detached Router/Activity exports in the native-only bridge, with attached/detached/user-click
-  exact-payload browser regression; it failed before fix and passes Chromium/WebKit after. Independent review found
-  no Critical/Important defect. Smoke now waits for lazy document editor before its screenshot; OS screenshot is
-  taken before app termination. Verify latest exact-head native/browser workflow and full PR CI for this revision.
-- Full parity matrix, free Windows overwrite/refresh guide and inactive real-integration/signed-update architecture
-  are committed under native/. All local affected checks/both builds/unchanged budgets passed again. No root app,
-  storage schema, UIDs, bundle identity, origin, dependency or permissions change in Phase1.
-- **Next:** once exact-head checks are green, deliver latest IPA/source metadata and evidence links. Keep PR141 draft,
-  unmerged/undeployed for owner review. Owner must check compatible overwrite without deleting the installed app,
-  existing sample data, actual keyboard/IME, safe areas, share sheet and VoiceOver. Next implementation requires
-  separate approval of the exact auth/session/Keychain/provider network plan; do not turn on real services. Refer
-  to current PR/Actions/live checkpoint for final run results rather than duplicating changing GitHub state here.
-
+- **Branch:** `experiment/ios-sideload`, draft PR141. Phase1 baseline653071d passed32/32 PR CI and actual
+  Simulator/browser workflow. Owner authorizes Phase2 synthetic-only integration groundwork now; installing Phase1
+  first is not a gate. No real auth/cloud/provider network, secrets, spending, native redesign, merge or deployment.
+- Preserve bundle `io.github.seifonyx.lumen.demo`, `capacitor://localhost`, Demo A/B UIDs and all existing stores.
+  Owner physically verified earlier135af6b launch/navigation/keyboard/account separation/reopen persistence only.
+  Newer IPA overwrite, native lifecycle, keyboard/IME, safe areas, share sheets and VoiceOver remain physical gaps.
+- Phase2 adds account/lifecycle request leases, cancelable state-bound auth/session interfaces, memory-only sync and
+  account settings adapters, scoped synthetic streaming, typed UIKit background bridge, inactive native Keychain.
+  No callback scheme, Google/Firebase SDK/session, credential bridge, native permission or network activation.
+- Reproduced native local projects disappearing on A/B/A: logout deleted the only demo account settings record.
+  Native logout now clears identity/visible state while retaining owned sample data; browser regression passes.
+- Tests/architecture/limitations: `native/docs/PHASE2_PLAN.md`, `PHASE2_INTEGRATION.md`, `FEATURE_PARITY.md`.
+  Install/overwrite instructions: `native/README.md`. Memory replica is simulated, not cross-device/cloud durability.
+- **Next:** finish exact-head CI/native iPhoneOS artifact and actual WKWebView smoke, inspect final evidence, deliver
+  source/artifact to owner. Keep PR141 draft/unmerged. Separate explicit approval required for real SDK/config,
+  callback/session bridge, test cloud/schema/egress or provider requests. Do not uninstall the working installation.
 - Waiting on the owner's iPhone (Home Screen app), PR #136 (live): cold launch shows no band under the status bar in
   Light and Dark; Router and Settings get a status bar the same grey as the page, the chat white (Light) or grey
   (Dark); switching the iPhone between Light and Dark with Lumen open, the bar follows; relaunching into a restored

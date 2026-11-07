@@ -1,4 +1,4 @@
-# iOS Phase 1 feature-parity matrix
+# iOS feature-parity matrix (Phases 1–2)
 
 Audited 2026-11-07 against production Canvas source `12dc99a` and PR141 starting source `5e4116b`.
 The owner independently confirms installed IPA launch, basic navigation/keyboard, Demo A/B separation and
@@ -70,6 +70,21 @@ listed as a native-only replacement in `../vite.config.ts`.
 | Voice/dictation/read-aloud | speech.ts, VoiceMode.tsx | Browser capability-dependent; media capture denied, no mic permission | No promise of offline/private STT; native permission/data-flow approval first |
 | PWA/offline/update lifecycle | pwa/register.ts, update-safety.ts | PWA registration replaced; all app assets packaged, not remotely refreshed | No SW on capacitor scheme; existing web/ordinary builds unchanged |
 | Native controller/bridge | native/DemoViewController.swift, scripts/prepare-ios.mjs | Phase1 fixes SceneDelegate constructing stock CAPBridgeViewController | Runtime marker + actual HTTP denial + guarded WebKit smoke, not source-only assurance |
+
+## Phase 2 delta
+
+Phase1 completed at653071d (32/32 PR CI; native device/Simulator/browser workflow passed). This preserves that
+baseline; installing its IPA is not a gate for Phase2. See [implemented foundation and protected activation
+proposal](PHASE2_INTEGRATION.md) for exact contracts, evidence, simulation limitations and owner test sequence.
+
+| Existing matrix area | Phase2 safe change | Remaining gap |
+|---|---|---|
+| Auth/session/logout | Attempt/state/callback/cancel/expiry ports, synthetic adapter | No Google/Firebase, registered callback, SDK credential exchange or real invite authorization |
+| Conversations/history/Incognito | Scoped ChatSync-shaped memory replica and replay; canonical local persistence | No real cloud, durable distributed retry or cross-device sync |
+| Projects/preferences | Retain authoritative per-UID records at logout; synthetic settings port | No project/settings remote service |
+| AI models/stream/Stop | Owner-scoped synthetic request lifecycle, errors/retry/abort | No real inference, keys or provider networking |
+| Background/native bridge | UIKit+visibility lifecycle, stale callback cancellation | Actual suspension/lock/upgrade still physical tests |
+| Credential storage | Inactive native Keychain facility and opaque-reference contract | Not connected, no runtime credentials or real SDK session tested |
 
 ## Phase 1 scope and acceptance
 

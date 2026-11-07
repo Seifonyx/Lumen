@@ -10,7 +10,7 @@ async function start(outDir){
 }
 async function stop(){if(server&&server.exitCode===null){const exited=once(server,'exit');server.kill();await exited;}server=null;}
 async function logout(page){
- await page.locator('.menu-btn').first().click();await page.locator('.cv-account').click();
+ if(!await page.locator('aside.cv-nav.open').count())await page.locator('.menu-btn:visible, [aria-label="Open navigation"]:visible').first().click();await page.locator('.cv-account').click();
  await page.getByRole('button',{name:/^Account:/}).click();await page.getByRole('button',{name:'Sign out',exact:true}).click();
 }
 try{
@@ -42,6 +42,26 @@ try{
    await page.getByRole('button',{name:'Stop',exact:true}).waitFor({state:'hidden'});
    await page.waitForTimeout(100);const stopped=await page.locator('.message-row').last().innerText();
    await page.waitForTimeout(600);assert.equal(await page.locator('.message-row').last().innerText(),stopped);
+   // Exercise the same typed bridge delivered by UIKit; actual OS backgrounding is a separate device check.
+   await input.fill('Lifecycle interruption sample');await page.getByRole('button',{name:'Send',exact:true}).click();
+   await page.getByRole('button',{name:'Stop',exact:true}).waitFor();
+   await page.evaluate(()=>window.dispatchEvent(new CustomEvent('lumen:native-lifecycle',{detail:{active:false}})));
+   await page.getByRole('button',{name:'Stop',exact:true}).waitFor({state:'hidden'});
+   const interrupted=await page.locator('.message-row').last().innerText();
+   await page.waitForTimeout(600);assert.equal(await page.locator('.message-row').last().innerText(),interrupted);
+   await page.evaluate(()=>window.dispatchEvent(new CustomEvent('lumen:native-lifecycle',{detail:{active:true}})));
+   await page.context().setOffline(true);
+   const beforeRetry=await page.locator('.message-row').count();
+   await input.fill('Reply after resume');await page.getByRole('button',{name:'Send',exact:true}).click();
+   await page.getByText("You're offline",{exact:false}).first().waitFor();
+   assert.equal(await input.inputValue(),'Reply after resume');assert.equal(await page.locator('.message-row').count(),beforeRetry);
+   await page.context().setOffline(false);
+   await page.getByRole('button',{name:'Send',exact:true}).click();
+   await page.locator('.message-row').getByText('Reply after resume',{exact:true}).waitFor();
+   await page.getByRole('button',{name:'Stop',exact:true}).waitFor();
+   await page.getByRole('button',{name:'Stop',exact:true}).waitFor({state:'hidden'});
+   assert.equal(await page.locator('.message-row').count(),beforeRetry+2);
+   await page.locator('.message-row').last().getByText('Offline demonstration.',{exact:false}).waitFor();
    for(const colorScheme of ['light','dark']){await page.emulateMedia({colorScheme});await page.waitForTimeout(250);await page.screenshot({path:`tests/e2e/out/native-foundation-${engine.name()}-${colorScheme}.png`});}
    // Router policy and Activity use detached anchors; ordinary files use attached ones.
    await page.evaluate(()=>{
@@ -57,14 +77,23 @@ try{
    assert.deepEqual(exports.map(x=>x.name).sort(),['activity.csv','manual.txt','policy.json']);
    assert(exports.every(x=>Buffer.from(x.data,'base64').toString()==='Synthetic export.'));
    await page.locator('#native-export-click').evaluate(el=>el.remove());
+   await page.locator('.menu-btn').first().click();
+   await page.locator('aside.cv-nav').getByRole('button',{name:'New project',exact:true}).click();
+   await page.getByRole('textbox',{name:'Project name',exact:true}).fill('Saved local project A');
+   await page.getByRole('button',{name:'Create project',exact:true}).click();
+   await page.getByRole('heading',{name:'Saved local project A',exact:true}).waitFor();
    await logout(page);await page.getByRole('button',{name:'Open Demo B',exact:true}).click();await input.waitFor();
-   assert.equal(await input.inputValue(),'');assert.equal(await page.getByText('Saved before compatible update',{exact:true}).count(),0);
+   assert.equal(await input.inputValue(),'');assert.equal(await page.getByText('Saved local project A',{exact:true}).count(),0);assert.equal(await page.getByText('Saved before compatible update',{exact:true}).count(),0);
    assert.equal(await page.getByText('native-sample.txt',{exact:true}).count(),0);
    await logout(page);await page.getByRole('button',{name:'Open Demo A',exact:true}).click();
-   await page.locator('.menu-btn').first().click();await page.locator('aside.cv-nav .chat-row .chat-open').first().click();
+   await page.locator('.menu-btn').first().click();
+   await page.locator('aside.cv-nav').getByText('Saved local project A',{exact:true}).waitFor();
+   await page.waitForTimeout(450);
+   await page.screenshot({path:`tests/e2e/out/native-foundation-${engine.name()}-projects.png`});
+   await page.locator('aside.cv-nav .chat-row .chat-open').first().click();
    await page.getByText('Saved before compatible update',{exact:true}).waitFor();
    assert.deepEqual(outgoing,[]);assert.deepEqual(errors,[]);
-   console.log('PASS',engine.name(),process.env.LUMEN_NATIVE_BASELINE?'baseline-to-current same-origin update':'same-build reload','chat/draft persistence, attachment navigation, Stop, attached/detached export IPC, A/B/A, Light/Dark, no external traffic');
+   console.log('PASS',engine.name(),process.env.LUMEN_NATIVE_BASELINE?'baseline-to-current same-origin update':'same-build reload','chat/draft persistence, attachment navigation, Stop/background interruption/resume, project persistence, attached/detached export IPC, A/B/A, Light/Dark, no external traffic');
   }finally{await browser.close();await stop();}
  }
 }finally{await stop();}

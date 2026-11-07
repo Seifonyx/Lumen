@@ -51,6 +51,8 @@ final class OfflineDelegate: NSObject, WKNavigationDelegate, WKUIDelegate {
 @objc(DemoViewController)
 final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler {
     private let offlineDelegate = OfflineDelegate()
+    private var lifecycleObservers: [NSObjectProtocol] = []
+    deinit { for observer in lifecycleObservers { NotificationCenter.default.removeObserver(observer) } }
     private let smoke = ProcessInfo.processInfo.arguments.contains("--demo-smoke")
     override func capacitorDidLoad() {
         NSLog("LumenDemo custom controller loaded")
@@ -62,6 +64,13 @@ final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler 
         webView.uiDelegate = offlineDelegate
         webView.allowsBackForwardNavigationGestures = false
         let controller = webView.configuration.userContentController
+        controller.addUserScript(WKUserScript(source: "window.__lumenNativeActive=true;", injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        for (name, active) in [(UIApplication.didEnterBackgroundNotification, false), (UIApplication.didBecomeActiveNotification, true)] {
+            lifecycleObservers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                let literal = active ? "true" : "false"
+                self?.webView?.evaluateJavaScript("window.__lumenNativeActive=\(literal);window.dispatchEvent(new CustomEvent('lumen:native-lifecycle',{detail:{active:\(literal)}}));", completionHandler: nil)
+            })
+        }
         controller.add(self, name: "nativeDownload")
         if smoke {
             // Diagnostic: proves the launch argument reached the app (Simulator evidence, smoke builds only).

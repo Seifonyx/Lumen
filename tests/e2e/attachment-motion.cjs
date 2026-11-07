@@ -32,6 +32,10 @@ const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/6
     await document.fonts.ready;
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
    });
+   // Engaging the composer transitions padding. Compare settled geometry at both ends.
+   await page.locator('.composer').evaluate(async el => {
+    await Promise.all(el.getAnimations().map(animation => animation.finished.catch(() => {})));
+   });
    const composerHeight = await page.locator('.composer').evaluate(el=>el.offsetHeight);
    await input.setInputFiles([file('first.txt'),file('second.txt'),file('third.txt')]);
    await page.waitForFunction(()=>document.querySelectorAll('.attachment:not(.exit-ghost):not(.loading)').length===3);

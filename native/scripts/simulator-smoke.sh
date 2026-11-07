@@ -28,12 +28,13 @@ PY
 xcrun simctl install "$device" build/simulator/Build/Products/Debug-iphonesimulator/App.app
 xcrun simctl launch "$device" io.github.seifonyx.lumen.demo --demo-smoke
 container=$(xcrun simctl get_app_container "$device" io.github.seifonyx.lumen.demo data)
-for attempt in $(seq 1 90); do
+for attempt in $(seq 1 150); do
   if test -f "$container/Documents/native-smoke.json"; then break; fi
   sleep 2
 done
 mkdir -p artifacts/simulator
 cp "$container/Documents/"*.png artifacts/simulator/ || true
+cp "$container/Documents/smoke-launched.txt" artifacts/simulator/ || echo 'smoke-launched.txt missing: the app never saw --demo-smoke'
 cp "$container/Documents/native-smoke.json" artifacts/simulator/
 python3 -c 'import json; r=json.load(open("artifacts/simulator/native-smoke.json")); print(r); assert r["passed"],r'
 xcrun simctl terminate "$device" io.github.seifonyx.lumen.demo

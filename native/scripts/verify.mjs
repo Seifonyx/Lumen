@@ -16,6 +16,8 @@ assert(graph.modules.every(p=>!/^qa\/iphone\/(fixtures|main)/.test(p)));
 assert(graph.modules.every(p=>!/^src\/lib\/(firebase|sync)\.ts$|^src\/firebase-config\.json$|^src\/pwa\/register\.ts$/.test(p)));
 assert(!existsSync('native/www/sw.js'));
 assert(readdirSync('native/www/assets').some(n=>n.endsWith('.woff2')));
+// The Canvas mark Logo loads as /icon.svg must be packaged (a missing file shows a broken image at launch).
+assert(existsSync('native/www/icon.svg') && readFileSync('native/www/icon.svg','utf8').includes('<svg'));
 const html=readFileSync('native/www/index.html','utf8');
 assert(html.includes("connect-src 'self' data: blob:"));
 assert(!html.includes('https://'));

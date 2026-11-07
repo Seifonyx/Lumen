@@ -63,6 +63,10 @@ final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler 
         let controller = webView.configuration.userContentController
         controller.add(self, name: "nativeDownload")
         if smoke {
+            // Diagnostic: proves the launch argument reached the app (Simulator evidence, smoke builds only).
+            let marker = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("smoke-launched.txt")
+            try? Data("launched".utf8).write(to: marker)
+            NSLog("LumenDemo smoke mode")
             controller.add(self, name: "nativeSmoke")
             controller.addUserScript(WKUserScript(source: "window.__nativeSmoke=true;", injectionTime: .atDocumentStart, forMainFrameOnly: true))
         }

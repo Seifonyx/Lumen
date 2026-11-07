@@ -2,6 +2,7 @@ import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
 const root = resolve(fileURLToPath(new URL('..', import.meta.url))).replaceAll(String.fromCharCode(92), '/');
 const at = (p: string) => resolve(root, p).replaceAll(String.fromCharCode(92), '/');
 const replacements: Record<string,string> = {
@@ -44,6 +45,9 @@ function demoIsolation(): Plugin {
     generateBundle() {
       const modules=[...this.getModuleIds()].map(strip);
       for(const target of Object.keys(replacements)) if(modules.includes(target)) this.error('Canonical module escaped replacement '+target);
+      // The Canvas mark (Logo renders /icon.svg). publicDir is off, so the one approved Crease file is packaged here;
+      // without it the demo's first screen showed a broken image in the Simulator.
+      this.emitFile({type:'asset',fileName:'icon.svg',source:readFileSync(at('public-canvas/icon.svg'))});
       this.emitFile({type:'asset',fileName:'demo-build.json',source:JSON.stringify({presentation:'canvas',mode:'offline-demo',modules:modules.filter(p=>p.startsWith(root)).map(p=>p.slice(root.length+1))},null,2)});
     }
   };

@@ -3,7 +3,11 @@ import './download';
 import { selectDemo, signInPreview } from './account';
 async function boot() {
   const smoke=(window as unknown as {__nativeSmoke?:boolean}).__nativeSmoke;
-  if(smoke) { selectDemo('a'); signInPreview(); }
+  if(smoke) {
+    // Diagnostic: a "boot" screenshot proves the page saw the smoke flag, before any other smoke step.
+    (window as unknown as {webkit?:{messageHandlers:{nativeSmoke:{postMessage:(v:object)=>void}}}}).webkit?.messageHandlers.nativeSmoke.postMessage({stage:'boot'});
+    selectDemo('a'); signInPreview();
+  }
   await import('../../src/main');
   if(smoke) await import('./smoke');
 }

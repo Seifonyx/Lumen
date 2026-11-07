@@ -84,6 +84,9 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
   useBackLayer(asking !== null, () => setAsking(null), () => setAsking(asking), 'ask-chats');
   const sidebarRef = useRef<HTMLElement>(null);
   const searchInput = useRef<HTMLInputElement>(null);
+  const searchButton = useRef<HTMLButtonElement>(null);
+  const [searching, setSearching] = useState(false);
+  useLayoutEffect(() => { if (searching) searchInput.current?.focus({ preventScroll: true }); }, [searching]);
   const wasOpen = useRef(false);
   const step = useRef<(() => void) | null>(null);
   const opener = useRef<{ el: HTMLElement | null; page: unknown; routing: boolean }>({ el: null, page: null, routing: false });
@@ -212,17 +215,16 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
       >
         <div className="cv-head">
           <span className="cv-brand">{BrandWordmark ? <BrandWordmark height={phone ? 24 : 20} /> : <span className="cv-wordmark">Lumen</span>}</span>
-          {phone
-            ? <button type="button" className="cv-head-btn" aria-label="Close menu" onClick={() => setUi({ sidebarOpen: false })}><X size={18} /></button>
-            : <button type="button" className="cv-head-btn collapse-sidebar" aria-label="Collapse sidebar" title={`Collapse sidebar (${modKey}⇧S)`} onClick={onCollapse}><PanelLeftClose size={17} /></button>}
+          <button ref={searchButton} type="button" className="cv-head-btn cv-search-button" aria-label="Search chats" aria-expanded={searching} aria-controls="sidebar-chat-search"
+            onClick={() => { setSearching(true); searchInput.current?.focus({ preventScroll: true }); }}><Search size={20} /></button>
+          {!phone && <button type="button" className="cv-head-btn collapse-sidebar" aria-label="Collapse sidebar" title={`Collapse sidebar (${modKey}⇧S)`} onClick={onCollapse}><PanelLeftClose size={17} /></button>}
         </div>
-        {/* Always in the drawer too: one tap to search, no extra step (phones don't focus it, so no keyboard). */}
-        <label className="search cv-search">
+        <label id="sidebar-chat-search" className="search cv-search" hidden={!searching}>
           <Search size={16} />
           <input ref={searchInput} id="chat-search" data-local-escape type="search" aria-label="Search chats" placeholder="Search chats" value={query} dir="auto"
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Escape' && query) { e.stopPropagation(); setQuery(''); }
+              if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setQuery(''); setSearching(false); searchButton.current?.focus({ preventScroll: true }); }
               // Down moves into the tree (the first result while searching); Return opens the first result.
               else if (e.key === 'ArrowDown') { const first = [...(sidebarRef.current?.querySelectorAll<HTMLElement>(`.cv-tree :is(${ROW})`) || [])].find(shown); if (first) { e.preventDefault(); first.focus(); reveal(first); } }
               else if (e.key === 'Enter' && q && !e.nativeEvent.isComposing) { const first = sidebarRef.current?.querySelector<HTMLElement>('.cv-tree .chat-open'); if (first) { e.preventDefault(); first.click(); } }
@@ -244,7 +246,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
           </button>
         )}
 
-        <div className="cv-tree" onFocus={loadTreeKeys} onKeyDown={(e) => treeKeys?.(e.nativeEvent, e.currentTarget, ROW, searchInput.current, reveal)}>
+        <div className="cv-tree" onFocus={loadTreeKeys} onKeyDown={(e) => treeKeys?.(e.nativeEvent, e.currentTarget, ROW, searching ? searchInput.current : searchButton.current, reveal)}>
           {!q && (
             <ul className="cv-dest" aria-label="Places">
               <li><button type="button" aria-current={page === 'collection' ? 'page' : undefined} onPointerEnter={() => prefetchPlace?.('library')} onFocus={() => prefetchPlace?.('library')} onClick={() => page === 'collection' ? setUi({ sidebarOpen: false }) : toPage('collection', 'all')} title="Photos, files and documents from all your chats"><BookOpen size={18} /><span>Library</span><ChevronRight size={15} className="cv-place-chevron" aria-hidden="true" /></button></li>

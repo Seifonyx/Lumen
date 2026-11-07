@@ -1,3 +1,4 @@
+const { openSidebarSearch, closeSidebar } = require('./helpers/sidebar-search.cjs');
 // Visual and interaction regressions for the shared product design. Only local data / mocked AI.
 const { chromium } = require('playwright');
 const {openSettings,replyAction,openSettingsSection,closeSettings}=require('./helpers/ui.cjs');
@@ -74,11 +75,11 @@ const inside = (box, width, height) => box && box.x >= -1 && box.y >= -1 && box.
           check(newChatBox.y + newChatBox.height >= sideBox.y + sideBox.height - 80 && (newChatBox.x >= footBox.x + footBox.width || newChatBox.x + newChatBox.width <= footBox.x), label + `: New chat floats at the bottom, clear of the account button ${JSON.stringify([newChatBox, footBox, sideBox])}`);
         } else check(newChatBox.y + newChatBox.height <= historyBox.y, label + ': New chat above history');
         check(await page.locator('#chat-search').count() === 1, label + ': search is always in the sidebar');
-        await page.locator('#chat-search').fill('no-match');
+        await openSidebarSearch(page); await page.locator('#chat-search').fill('no-match');
         check(/^No (chats|loose conversations) match\.$/.test(await page.locator('.empty-list, .cv-none').textContent()) && await page.locator('#chat-search').evaluate(el => el === document.activeElement), label + ': search filters');
         await page.keyboard.press('Escape');
         check(await page.locator('#chat-search').count() === 1, label + ': chat search is always in the sidebar');
-        if (mobile) await page.click('[aria-label="Close menu"]');
+        if (mobile) await closeSidebar(page);
         const add = mobile ? '[aria-label="Add photos, files or a repository"]' : '[aria-label="Add files or a repository"]';
         await page.click(add);
         check(await page.locator('.sheet-row').count() === (await page.locator('[data-lumen-canvas-shell]').count() ? (mobile ? 7 : 8) : 12) && await page.getByRole('switch', { name: 'Web search' }).isVisible() && await page.getByRole('button', { name: /GitHub repository/ }).isVisible() && await page.locator('.sheet').evaluate((el) => el.contains(document.activeElement)), `${label}: unified add menu has correct actions and keyboard focus`);

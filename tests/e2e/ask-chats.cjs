@@ -1,3 +1,4 @@
+const { openSidebarSearch } = require('./helpers/sidebar-search.cjs');
 // 2.1: Ask your chats finds chats by meaning (different words), answers from them with numbered links that open
 // the chat, and only re-reads chats that changed.
 const { chromium, webkit } = require('playwright'), assert = require('node:assert/strict');
@@ -39,7 +40,7 @@ const vec = (t) => [/car|loan|vehicle|financ|money/i.test(t) ? 1 : 0, /cake|bake
     await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
 
     // Different words from the chat: "vehicle financing".
-    await page.fill('#chat-search', 'what did I decide on vehicle financing');
+    await openSidebarSearch(page); await page.fill('#chat-search', 'what did I decide on vehicle financing');
     await page.locator('.ask-chats-btn, .cv-ask').click();
     await page.locator('.ask-answer').waitFor();
     assert.match(await page.locator('.ask-answer').textContent(), /5-year car loan/);

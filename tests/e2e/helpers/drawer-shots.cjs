@@ -1,3 +1,4 @@
+const { openSidebarSearch } = require('../helpers/sidebar-search.cjs');
 // iPhone drawer screenshots (not a test): node tests/e2e/helpers/drawer-shots.cjs <outDir> [url]
 // Synthetic nav-fixture account, Canvas build. Sizes 320×568 (SE), 390×844 and 430×932; Light and Dark; states:
 // default, expanded project, search active (with the keyboard's height simulated), and after "New chat in Studio
@@ -29,10 +30,10 @@ const SIZES = [['320', 320, 568], ['390', 390, 844], ['430', 430, 932]];
     await page.locator('.chat-row', { hasText: 'A better project brief' }).click(); await page.waitForTimeout(400);
     await open(); await shot('2-project');
     // Search with the keyboard up (iOS shrinks the visual viewport; the drawer stays full height underneath).
-    await page.fill('#chat-search', 'plan'); await page.focus('#chat-search');
+    await openSidebarSearch(page); await page.fill('#chat-search', 'plan'); await page.focus('#chat-search');
     await page.evaluate((kb) => { Object.defineProperty(window.visualViewport, 'height', { configurable: true, value: kb }); window.visualViewport.dispatchEvent(new Event('resize')); }, Math.round(h * 0.55));
     await shot('3-search');
-    await page.fill('#chat-search', ''); await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+    await openSidebarSearch(page); await page.fill('#chat-search', ''); await page.keyboard.press('Escape'); await page.waitForTimeout(300);
     if (await page.locator('.cv-nav.open').count() === 0) await open();
     await page.locator('.cv-new-here', { hasText: 'Studio launch' }).click(); await page.waitForTimeout(400);
     await open(); await page.locator('.cv-tree').evaluate((t) => { t.scrollTop = 0; }); await shot('4-in-project-scope');

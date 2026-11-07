@@ -1,3 +1,4 @@
+const { openSidebarSearch } = require('./helpers/sidebar-search.cjs');
 // 2.1.1: on phones the newer windows (Study, Ask your chats, Build a layout) keep a margin from the screen edges
 // and nothing in them spills off the screen.
 const { chromium } = require('playwright'), assert = require('node:assert/strict');
@@ -34,7 +35,7 @@ const deck = { id: 'd1', title: 'A rather long deck title about cell biology and
       await inset('.quiz-option', 'quiz answers');
       await page.goto(URL); await page.waitForSelector('.app:not(.app-skeleton) .composer textarea');
       await page.click('.menu-btn'); await page.waitForTimeout(400);
-      await page.fill('#chat-search', 'anything at all');
+      await openSidebarSearch(page); await page.fill('#chat-search', 'anything at all');
       await page.click('.ask-chats-btn, .cv-ask');
       await inset('.ask-form', 'Ask your chats');
       console.log(`PASS ${width}px: new windows keep their margins and fit`);

@@ -1,3 +1,4 @@
+const { openSidebarSearch } = require('./helpers/sidebar-search.cjs');
 // Real application, identical synthetic content before/after; no external services/inference.
 const { leavePlace } = require('./helpers/nav.cjs');
 const assert = require('node:assert/strict'), fs = require('node:fs'), path = require('node:path');
@@ -61,7 +62,7 @@ const chats = [chat('origin', 'A quieter way to work'), chat('pinned', 'Ideas wo
         await page.waitForFunction(() => performance.getEntriesByType('resource').some(e => /tree-keys/.test(e.name)));
         await page.keyboard.press('ArrowLeft'); await page.waitForFunction(() => [...document.querySelectorAll('.cv-project-row')].find(e => e.textContent.includes('Studio launch'))?.getAttribute('aria-expanded') === 'false');
         await page.keyboard.press('ArrowRight'); await page.waitForFunction(() => [...document.querySelectorAll('.cv-project-row')].find(e => e.textContent.includes('Studio launch'))?.getAttribute('aria-expanded') === 'true');
-        await drawer.getByRole('searchbox', { name: 'Search chats', exact: true }).fill('Archived field');
+        await openSidebarSearch(page); await drawer.getByRole('searchbox', { name: 'Search chats', exact: true }).fill('Archived field');
         await drawer.getByRole('button', { name: 'Archived field notes', exact: true }).waitFor();
         await drawer.getByText('Archived', { exact: true }).waitFor();
         await drawer.getByRole('button', { name: 'Clear search', exact: true }).click();

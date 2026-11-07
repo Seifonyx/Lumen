@@ -1,3 +1,4 @@
+const { openSidebarSearch } = require('../helpers/sidebar-search.cjs');
 // Phase 2 navigation screenshots (not a test): node tests/e2e/helpers/nav-shots.cjs <outDir> [url]
 // Desktop 1440 and iPhone 390/320, light and dark, on the synthetic nav-fixture account (Canvas build).
 const engine = require('playwright')[process.env.BROWSER || 'chromium'];
@@ -45,8 +46,8 @@ const SIZES = [['desktop', 1440, 900, false], ['iphone', 390, 844, true], ['se',
     if (phone) await page.keyboard.press('Escape');
     await chat('A better project brief', 'Studio launch'); await shot('chat-in-project');
     await drawer(); await shot('nav-in-project');
-    await page.fill('#chat-search', 'plan'); await shot('search');
-    await page.fill('#chat-search', '');
+    await openSidebarSearch(page); await page.fill('#chat-search', 'plan'); await shot('search');
+    await openSidebarSearch(page); await page.fill('#chat-search', '');
     if (phone) await page.keyboard.press('Escape');
     for (const [name, label] of [['library', 'Library'], ['tools', 'Tools'], ['routing', 'Prism']]) {
       await drawer(); await page.locator('.cv-dest button', { hasText: label }).click(); await page.waitForTimeout(500); await shot(name);

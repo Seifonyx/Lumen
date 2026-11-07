@@ -1,3 +1,4 @@
+const { closeSidebar } = require('./helpers/sidebar-search.cjs');
 // Synthetic touches cover the app recognizer. Browser Back exercises popstate separately;
 // Playwright does not drive Safari's native interactive edge gesture. In the Home Screen app Back goes up (out of a
 // feature in one step; a Settings section to the list); in an iOS tab Safari's own Back steps through history.
@@ -196,7 +197,7 @@ async function exercise(browser, standalone) {
       await swipe('.hub-page');
       await page.locator('aside.cv-nav.open').waitFor();
       assert.deepEqual(await trace(), beforeRoot, 'a root swipe is not a history step');
-      await page.getByRole('button', { name: 'Close menu', exact: true }).click();
+      await closeSidebar(page);
       await page.waitForFunction(() => !document.querySelector('aside.cv-nav.open'));
       await page.goBack();
     } else await back('.hub-page', root);

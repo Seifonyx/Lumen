@@ -1,3 +1,4 @@
+const { openSidebarSearch } = require('./helpers/sidebar-search.cjs');
 // Owner-corrected scope: original drawer, feature-local top strips/bottom search, shared glass controls.
 const { leavePlace } = require('./helpers/nav.cjs');
 // Real Canvas components, synthetic accounts/transport only. No live provider calls.
@@ -23,7 +24,7 @@ try{for(const [width,height]of sizes)for(const theme of['light','dark']){
  const glass=async()=>{if(!phone)return;const b=page.locator('.phone-navigation:visible > button'),r=await b.evaluate(box);assert(r.width>=44&&r.height>=44);const s=await b.evaluate(el=>{const c=getComputedStyle(el);return{radius:parseFloat(c.borderRadius),background:c.backgroundImage!=='none'?c.backgroundImage:c.backgroundColor,shadow:c.boxShadow}});assert(s.radius>=22&&!['none','transparent','rgba(0, 0, 0, 0)'].includes(s.background)&&s.shadow!=='none','shared tactile glass');};
  const back=async()=>{if(phone)await leavePlace(page,':is(.hub-page, .rc-page:not([hidden]), .settings-page, .canvas-panel)');else await page.locator(':is(.hub-close,.feature-exit):visible,:is(.rc-close,.feature-exit):visible').click();};
  await open();assert.equal(await drawer.locator('.cv-destinations').count(),0,'no rejected sidebar strip');assert(await drawer.locator('.cv-foot .cv-new-pill').isVisible()||!phone);
- const chatSearch=drawer.getByRole('searchbox',{name:'Search chats',exact:true});assert((await chatSearch.evaluate(box)).bottom<(await drawer.locator('.cv-tree').evaluate(box)).y+2,'original Search at top');await shot('sidebar');
+ await openSidebarSearch(page);const chatSearch=drawer.getByRole('searchbox',{name:'Search chats',exact:true});assert((await chatSearch.evaluate(box)).bottom<(await drawer.locator('.cv-tree').evaluate(box)).y+2,'original Search at top');await shot('sidebar');
  await chatSearch.fill('conference');await drawer.locator('.chat-open',{hasText:'Old: conference talk outline'}).waitFor();assert(await drawer.getByText('Archived',{exact:true}).isVisible());assert(await drawer.getByRole('button',{name:/Ask your chats/}).isVisible());await drawer.getByRole('button',{name:'Clear search',exact:true}).click();assert.equal(await chatSearch.inputValue(),'');
  await drawer.getByRole('button',{name:'Library',exact:true}).click();await page.getByRole('searchbox',{name:'Search your library',exact:true}).waitFor();await glass();
  if(phone){

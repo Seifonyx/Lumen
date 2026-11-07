@@ -216,7 +216,7 @@ export default function SidebarCanvas({ onCollapse }: SidebarProps) {
         <div className="cv-head">
           <span className="cv-brand">{BrandWordmark ? <BrandWordmark height={phone ? 24 : 20} /> : <span className="cv-wordmark">Lumen</span>}</span>
           <button ref={searchButton} type="button" className="cv-head-btn cv-search-button" aria-label="Search chats" aria-expanded={searching} aria-controls="sidebar-chat-search"
-            onClick={() => { setSearching(true); searchInput.current?.focus({ preventScroll: true }); }}><Search size={20} /></button>
+            onClick={() => { loadTreeKeys(); setSearching(true); searchInput.current?.focus({ preventScroll: true }); }}><Search size={20} /></button>
           {!phone && <button type="button" className="cv-head-btn collapse-sidebar" aria-label="Collapse sidebar" title={`Collapse sidebar (${modKey}⇧S)`} onClick={onCollapse}><PanelLeftClose size={17} /></button>}
         </div>
         <label id="sidebar-chat-search" className="search cv-search" hidden={!searching}>

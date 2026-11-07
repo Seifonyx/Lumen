@@ -1,0 +1,79 @@
+name: iOS connected private IPA
+on:
+  push:
+    branches: [experiment/ios-sideload]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ios-connected-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  connected:
+    if: github.repository == 'Seifonyx/Lumen' && github.event.repository.private == false && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[connected-ios]'))
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      LUMEN_NATIVE_MODE: isolated-test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm ci --prefix native --ignore-scripts
+      - name: Prepare approved private configuration and recipient key
+        env:
+          SDK_CONFIG: ${{ secrets.LUMEN_IOS_TEST_CONFIG }}
+          DELIVERY_KEY: ${{ secrets.LUMEN_IOS_DELIVERY_PUBLIC_KEY }}
+        run: |
+          node --input-type=module <<'JS'
+          import {writeFileSync,mkdirSync,appendFileSync} from 'node:fs';
+          import {createPublicKey} from 'node:crypto';
+          import {validateServiceConfig} from './native/services/config.mjs';
+          const input=JSON.parse(process.env.SDK_CONFIG||'null');
+          const c=validateServiceConfig(input);
+          if(c.projectId!=='lumen-ios-test')throw Error('Approved test project required');
+          const key=createPublicKey(process.env.DELIVERY_KEY||'');
+          if(key.asymmetricKeyType!=='rsa'||key.asymmetricKeyDetails.modulusLength<3072)throw Error('Recipient RSA3072 key required');
+          const configPath=process.env.RUNNER_TEMP+'/lumen-connected.json';
+          writeFileSync(configPath,JSON.stringify(input),{mode:0o600});
+          appendFileSync(process.env.GITHUB_ENV,'LUMEN_NATIVE_SERVICE_CONFIG='+configPath+'\n');
+          writeFileSync(process.env.RUNNER_TEMP+'/recipient.pem',process.env.DELIVERY_KEY,{mode:0o600});
+          mkdirSync(process.env.RUNNER_TEMP+'/private-delivery',{recursive:true});
+          JS
+      - name: Build connected Canvas assets
+        run: |
+          node native/scripts/build.mjs > "$RUNNER_TEMP/private-delivery/assets.log" 2>&1 || { echo 'Connected assets failed; inspect encrypted diagnostics.'; exit 1; }
+      - name: Prepare native Google SDK and callback
+        run: |
+          swift --version
+          node native/scripts/prepare-ios.mjs > "$RUNNER_TEMP/private-delivery/prepare.log" 2>&1 || { echo 'Connected native preparation failed; inspect encrypted diagnostics.'; exit 1; }
+      - name: Compile real connected iPhoneOS IPA
+        run: |
+          bash native/scripts/build-ipa.sh > "$RUNNER_TEMP/private-delivery/package.log" 2>&1 || { echo 'Connected Xcode build failed; inspect encrypted diagnostics.'; exit 1; }
+          python3 native/scripts/verify-connected.py
+      - name: Encrypt private IPA or failure diagnostics
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/private-delivery"
+          for file in native/build-device.log native/artifacts/Lumen.ipa native/artifacts/Lumen.json; do
+            if test -f "$file"; then cp "$file" "$RUNNER_TEMP/private-delivery/"; fi
+          done
+          ditto -c -k --keepParent "$RUNNER_TEMP/private-delivery" "$RUNNER_TEMP/delivery.zip"
+          mkdir -p native/artifacts
+          node native/scripts/seal-delivery.mjs seal "$RUNNER_TEMP/delivery.zip" "$RUNNER_TEMP/recipient.pem" native/artifacts/Lumen-connected.enc
+      - name: Upload encrypted delivery only
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: Lumen-connected-encrypted
+          path: native/artifacts/Lumen-connected.enc
+          if-no-files-found: error
+          retention-days: 1
+      - name: Remove private runner inputs and plaintext
+        if: always()
+        run: |
+          rm -f "$LUMEN_NATIVE_SERVICE_CONFIG" "$RUNNER_TEMP/recipient.pem" "$RUNNER_TEMP/delivery.zip"
+          rm -rf "$RUNNER_TEMP/private-delivery" native/www native/ios native/build native/artifacts/Payload
+          rm -f native/artifacts/Lumen.ipa native/artifacts/Lumen.json native/build-device.log

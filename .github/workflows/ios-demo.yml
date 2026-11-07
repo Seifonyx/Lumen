@@ -16,7 +16,7 @@ concurrency:
 jobs:
   build:
     # Standard public-repository runner only. Never select -large or -xlarge.
-    if: github.repository == 'Seifonyx/Lumen' && github.event.repository.private == false
+    if: github.repository == 'Seifonyx/Lumen' && github.event.repository.private == false && !contains(github.event.head_commit.message, '[connected-ios]')
     runs-on: macos-26
     timeout-minutes: 30
     steps:
@@ -75,7 +75,7 @@ jobs:
         run: bash native/scripts/compile-isolated-sdk.sh
 
   browser:
-    if: github.repository == 'Seifonyx/Lumen' && github.event.repository.private == false
+    if: github.repository == 'Seifonyx/Lumen' && github.event.repository.private == false && !contains(github.event.head_commit.message, '[connected-ios]')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

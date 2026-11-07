@@ -27,10 +27,11 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - Targeted Chromium/WebKit tests exercise canonical Firebase/ChatSync using loopback emulators: claims/provider/UID
   denials, settings/projects, chat/offline/conflict/delete/restart/logout/Incognito. Isolated Login fails closed and
   retains Demo data. Test fixtures never enter packaged native graph. See native/docs/PHASE3_TEST_ENVIRONMENT.md.
-- **Next:** private Windows consent helper uses supported Firebase Google popup, memory-only session, temporary
-  test-cloud sample; no administrative credentials. Localhost authorized on test project only. Consent is complete;
-  no additional owner action is requested. Automated native/browser/emulator verification passed; installed native callback remains unverified.
-  No new iPhone installation, screenshot or repeated manual demo checklist. No live inference activation.
+- **Current deliverable:** owner now requires the actual connected IPA, not more offline demos or manual QA.
+  Approved test config is held in GitHub Actions secrets; recipient private key stays ignored on Windows. The
+  connected workflow builds isolated-test + GoogleSignIn and uploads encrypted IPA/diagnostics only. Decrypt locally;
+  never upload plaintext config/IPA to public artifacts. Native callback/Keychain remains physically unverified.
+  No inference, spending, merge or deployment. Finish the connected build and deliver the local IPA.
 - Waiting on the owner's iPhone (Home Screen app), PR #136 (live): cold launch shows no band under the status bar in
   Light and Dark; Router and Settings get a status bar the same grey as the page, the chat white (Light) or grey
   (Dark); switching the iPhone between Light and Dark with Lumen open, the bar follows; relaunching into a restored

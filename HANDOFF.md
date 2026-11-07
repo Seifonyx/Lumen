@@ -27,18 +27,22 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 - The following revision allows ten minutes for initial Simulator migration (bounded twenty-minute smoke step),
   and explicitly replaces Capacitor's direct HTTP bridge with a rejecting implementation. Disabling fetch patching
   alone does not disable direct native HTTP calls. Simulator smoke asserts all six native HTTP methods reject locally.
-- **Owner-requested Claude handoff (2026-11-07):** latest implementation source is
-  `8394ace51260a56128aa552844daf45220a48936`; this checkpoint changes documentation only. Continue PR #141,
-  do not restart. Its source native run is 42377674301 and source CI is 42377678751 (running/queued at handoff).
-  A docs checkpoint push also starts fresh exact-head runs: inspect the latest branch runs before editing.
-- Offline HTTP method descriptors now use explicit `[CAPPluginMethod]` and `compactMap` because the Objective-C
-  initializer is optional (fixed an observed Xcode protocol-conformance error). Native smoke waits two animation
-  frames after New Chat before typing, then waits for enabled Send. Its full sequence passes in a local WebKit
-  harness with simulated native IPC; this validates the harness, NOT native HTTP denial or actual Simulator launch.
-  Latest native TypeScript/build/config checks and independent Chromium/WebKit demo smoke pass.
-- **Continue/verify:** inspect the latest exact-head native workflow and PR CI, download the IPA/evidence artifacts,
-  review actual native screenshots and report runtime versus compile evidence separately. If Simulator remains
-  unavailable, record its precise environmental failure; never claim physical-device verification from compilation.
+- **Claude → Codex handoff (2026-11-07, after `135af6b`):**
+  - `135af6b` packages the Canvas mark (`/icon.svg`; the native build has `publicDir: false`, so the first screen showed
+    a broken image in the Simulator) and `native/scripts/verify.mjs` requires it. Owner received this IPA:
+    artifact 13576807180, run 42379087553, SHA-256 `7734a845b853c450a5ebe09cec703fae0cdaa00a42e2542ba952728855ea654c`.
+  - PR CI at `135af6b`: all 32 jobs passed (run 42379092051). Earlier `318b6d4`: all passed (run 42377764443).
+  - **Runtime evidence:** run 42377760522 (`318b6d4`) booted the Simulator (6 min migration), installed and **launched
+    Lumen Demo in WKWebView**; its screenshot shows the demo sign-in screen rendered (broken mark, now fixed).
+  - **Open:** the Simulator smoke never started. In run 42379087553 the app launched (pid 20393) but did not write
+    `Documents/smoke-launched.txt`, which `DemoViewController.capacitorDidLoad()` writes when `--demo-smoke` is set; no
+    `boot` stage image either. Capacitor 8.6 does call `capacitorDidLoad()` from `loadView()`. So either the launch
+    argument is not reaching `ProcessInfo` or `DemoViewController` is not the controller in use (the storyboard is
+    patched to `customClass="DemoViewController" customModule="App"` by `prepare-ios.mjs`). If the latter, the native
+    offline guards installed there (OfflineHttpPlugin, navigation/UI delegates) are not active either: verify first.
+    Next diagnostic: after launch, capture `xcrun simctl spawn "$device" log show --last 10m --predicate 'process == "App"'`
+    into the evidence (look for `LumenDemo smoke mode` and `Unknown class DemoViewController`), and try passing the flag
+    also as `SIMCTL_CHILD_LUMEN_DEMO_SMOKE=1` read via `ProcessInfo.processInfo.environment`.
 - `native/README.md` gives Windows Sideloadly installation, seven-day signing refresh, limitations and protected auth
   plan. Native project/build/dependencies/artifacts are ignored and reproducible. Workflow `iOS unsigned demo IPA`
   runs on this exact branch and supports workflow_dispatch; until present on main, use a branch push or rerun an

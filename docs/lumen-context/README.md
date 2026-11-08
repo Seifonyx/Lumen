@@ -26,7 +26,7 @@ In the recommendation, briefly state what app behavior was observed and what rem
 
 ## Shipping-first product execution
 
-When the owner explicitly directs a working native or production rollout, treat it as the active delivery objective instead of extending isolated previews indefinitely. Build on the existing Canvas application and canonical routing/account systems; preserve safety and test proportionately, then improve the installed app incrementally. Consult `CURRENT_STATUS.md` for the latest specific release scope and authority. Do not conflate an IPA build, private iPhone install, PR merge and production website deployment, or claim any occurred without evidence. Preserve $0 incremental spending and protected account, identity and privacy boundaries.
+When the owner explicitly directs a working native or production rollout, treat it as the active delivery objective instead of extending isolated previews indefinitely. Follow the owner's latest native-first direction: build SwiftUI/UIKit iPhone screens incrementally on the established Lumen account, cloud and provider systems, using the web Canvas as a functional reference rather than the permanent iOS presentation; preserve safety and test proportionately on simulator and physical iPhone. Consult `CURRENT_STATUS.md` for the latest specific release scope and authority. Do not conflate an IPA build, private iPhone install, PR merge and production website deployment, or claim any occurred without evidence. Preserve $0 incremental spending and protected account, identity and privacy boundaries.
 
 ## Lean execution, full capability
 

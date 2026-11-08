@@ -14,7 +14,9 @@ for field in config:
     assert graph['serviceConfig'][field] == config[field], 'Packaged configuration mismatch'
 native = info['LumenTestServices']
 assert native['mode'] == config['mode'] and native['projectId'] == config['projectId']
-assert info['CFBundleIdentifier'] == config['bundleId'] == config.get('signedBundleId', config['bundleId'])
+# CI package is unsigned: Sideloadly preserves the source ID, then rewrites it during signing.
+assert info['CFBundleIdentifier'] == config['bundleId']
+assert native['signedBundleId'] == config.get('signedBundleId', config['bundleId'])
 for field in ['iosClientId', 'webClientId']:
     assert native[field] == config[field]
 scheme = '.'.join(reversed(config['iosClientId'].split('.')))

@@ -10,6 +10,13 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
+- **Signing blocker:** Sideloadly installations.db proves a rewritten installed bundle ID. Private account SDK
+  configuration now expects that exact ID and its newly registered matching Google iOS client; source bundle stays
+  unchanged for automatic in-place signing. Swift equality/nonce/callback checks remain intact. CI unsigned-package
+  validation now distinguishes source identity from installed identity. Final signed IPA/profile still needs actual
+  inspection; do not claim the unsigned CI package verifies post-sign configuration or device login.
+
+
 - **Latest owner directive (2026-11-08):** Codex is instructed to **link the native iPhone app to the actual existing Lumen Canvas product and roll out a usable native app now**, then improve it incrementally. This supersedes isolated-test-only delivery as the target; it does not claim completed integration, a working installed production app, a merge/deployment, or verified inference. Use existing routing, AI/providers, session and app functionality rather than rebuilding them. Keep strict $0, account/privacy/credential safety and prior user data.
 - **Branch:** `experiment/ios-sideload`, PR141. Owner now authorizes normal existing Lumen web accounts/cloud data,
   superseding test-only native access. Deliver a private account-connected IPA, then improve incrementally. Preserve

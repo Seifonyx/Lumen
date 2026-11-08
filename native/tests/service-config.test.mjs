@@ -24,3 +24,9 @@ test('existing-account release requires explicit production mode and preserves e
  assert.throws(()=>validateServiceConfig({...production,mode:'isolated-test',approvedTestEnvironment:true}));
  assert.throws(()=>validateServiceConfig({...production,bundleId:'new.install.identity'}));
 });
+
+test('unsigned source identity and explicit installed signing identity remain distinct',()=>{
+ const c=validateServiceConfig({...sample(),signedBundleId:'io.github.seifonyx.lumen.demo.EXAMPLE123'});
+ assert.equal(c.bundleId,'io.github.seifonyx.lumen.demo');assert.equal(c.signedBundleId,'io.github.seifonyx.lumen.demo.EXAMPLE123');
+ assert.throws(()=>validateServiceConfig({...sample(),signedBundleId:'bad/id'}));
+});

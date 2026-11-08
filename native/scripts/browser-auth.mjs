@@ -29,6 +29,7 @@ const fixture={name:'synthetic-native-auth-only',enforce:'pre',transformIndexHtm
  if(id.endsWith('/native/services/account.ts')){const from="const google=registerPlugin<GoogleBridge>('LumenGoogleAuth');";assert(code.includes(from));return code.replace(from,'const google:GoogleBridge=(window as any).authBridge;');}
 }};
 await build({...config,configFile:false,plugins:[fixture,...config.plugins],logLevel:'error',build:{...config.build,target:'esnext'}});
+assert.equal(JSON.parse(readFileSync('native/service-qa/demo-build.json','utf8')).mode,sdkConfig.mode,'Packaged mode must match approved backend');
 const server=await preview({configFile:false,root:'native',build:{outDir:resolve('native/service-qa')},preview:{host:'127.0.0.1',port:5217,strictPort:true}});
 try{for(const engine of [chromium,webkit]){
  const browser=await engine.launch();try{

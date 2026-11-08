@@ -75,7 +75,7 @@ function demoIsolation(): Plugin {
       // The Canvas mark (Logo renders /icon.svg). publicDir is off, so the one approved Crease file is packaged here;
       // without it the demo's first screen showed a broken image in the Simulator.
       this.emitFile({type:'asset',fileName:'icon.svg',source:readFileSync(at('public-canvas/icon.svg'))});
-      this.emitFile({type:'asset',fileName:'demo-build.json',source:JSON.stringify({presentation:'canvas',mode:services?'isolated-test':'offline-demo',freeAi,serviceConfig:services||undefined,modules:modules.filter(p=>p.startsWith(root)).map(p=>p.slice(root.length+1))},null,2)});
+      this.emitFile({type:'asset',fileName:'demo-build.json',source:JSON.stringify({presentation:'canvas',mode:services?.mode||'offline-demo',freeAi,serviceConfig:services||undefined,modules:modules.filter(p=>p.startsWith(root)).map(p=>p.slice(root.length+1))},null,2)});
     }
   };
 }

@@ -12,7 +12,8 @@ export function patchProject(app,swift) {
   scene=scene.replace('SceneDelegateProxy.shared.scene(scene, openURLContexts: URLContexts)', 'let remaining = Set(URLContexts.filter { !LumenHandleGoogleURL($0.url) })\n        if !remaining.isEmpty { SceneDelegateProxy.shared.scene(scene, openURLContexts: remaining) }');
   scene=scene.replace('SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)', 'if !connectionOptions.urlContexts.contains(where: { LumenHandleGoogleURL($0.url) }) {\n            SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)\n        }');
  }
- if (!scene.includes('import SwiftUI')) scene = 'import SwiftUI\n' + scene;\n write('SceneDelegate.swift',scene);
+ if (!scene.includes('import SwiftUI')) scene = 'import SwiftUI\n' + scene;
+ write('SceneDelegate.swift',scene);
  const delegate=read('AppDelegate.swift');
  const clean=delegate.split(marker)[0].split('\nimport UIKit\nimport WebKit\nimport Capacitor')[0].trimEnd();
  write('AppDelegate.swift',clean+'\n\n'+marker+'\n'+swift.replaceAll('\r\n','\n'));

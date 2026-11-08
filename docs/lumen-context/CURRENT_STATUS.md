@@ -1,6 +1,6 @@
 # Lumen — CURRENT execution checkpoint (PUBLIC-SAFE)
 
-> **Current blocker (2026-11-08):** Owner confirms physical AUTH_SIGNING on the account-connected IPA. Latest branch source remains cbcbe8a. Local Sideloadly cached IPA and Downloads IPA were inspected: both are unsigned and retain the original bundle ID, so neither proves the installed signing identity. Available daemon log, account-app-ID quota metadata and registry settings do not reveal the rewritten bundle ID. No credentials/certificates were read. Exact installed ID or final signed IPA is required before a safe configuration/OAuth correction; no equality/nonce/callback checks bypassed, code changes, new OAuth registration, merge, deployment or spending.
+> **Signing fix in progress:** Physical AUTH_SIGNING was traced to Sideloadly's recorded rewritten bundle identity. Private build configuration and a matching Google iOS registration now use that exact installed identity; source bundle and all runtime equality/nonce/callback checks remain unchanged. Fix pushed at8d0dfe8; focused checks/typecheck pass. Exact-head CI42471233508 and encrypted build42471229602 running. No final signed package/profile found locally, so post-sign configuration and physical login remain unverified. No rules/data changes, billing, merge or deployment.
 
 
 

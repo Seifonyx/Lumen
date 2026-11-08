@@ -7,25 +7,34 @@ Updated: 2026-11-08. This is the current continuation point; agent update guidan
 - **Branch:** `main`.
 - **Goal:** plan the owner's fresh native iOS app; Foundation has not started.
 - **Done:** minimal-documentation cleanup merged in [PR #144](https://github.com/Seifonyx/Lumen/pull/144).
-  The owner rejected the proposed bottom tab bar; the native navigation needs to follow Lumen's chat workflow.
+  Revised the proposed native roadmap around a chat-first shell and an early real, account-connected conversation.
 - **Verification:** the cleanup passed all 32 CI checks before merge. This update only changes the checkpoint.
-- **Next action:** refine the chat-first native screen flow, then begin Foundation when the owner requests it.
+- **Next action:** build Phase 0's installable chat-first shell and delivery pipeline when the owner asks to start.
 
 ## Next
 
 The owner requested a fresh SwiftUI iOS 26 app in `ios/`, with GitHub macOS builds, simulator screenshots,
 unsigned IPA downloads and SideStore installation. This session proposes the phases; native code has not started.
 
-Proposed sequence (details in the current chat):
-0. Chat-first native shell without a bottom tab bar, system Liquid Glass controls, simulator checks and an installable IPA.
-1. Native Google/Firebase sign-in and the existing account's data; verify on the SideStore-installed app.
-2. Everyday chat: streaming, drafts, attachments, history, editing, retry and incognito.
-3. Model/provider setup, routing, layouts, comparison and usage; test Swift behavior against shared fixtures.
-4. Projects, Library, memory, search and offline/sync behavior.
-5. Documents, knowledge, research, image generation, Study and assistant tools.
-6. Data analysis/code execution and GitHub coding, including review, commits/PRs and undo.
-7. Native voice, settings, accessibility and iPhone integrations.
-8. Feature parity, reliability and native-app cutover; web retained as a stable fallback is the recommendation.
+Layout proposal: the conversation and composer are the main screen. A sidebar opens history, search,
+projects and Library; the model control opens model/provider options; the composer opens attachments/tools;
+settings live in the sidebar/profile. Use native navigation, sheets and system materials; no bottom tab bar.
+
+Proposed build sequence:
+0. Fresh `ios/` SwiftUI iOS 26 shell: chat/composer/sidebar, native controls, Light/Dark and keyboard layout.
+   GitHub builds, simulator screenshots, versioned unsigned IPA and SideStore installation work end to end.
+1. A real connected conversation: native Google/Firebase sign-in, existing account data, one working provider,
+   streaming/Stop, saved messages and reopening the same chat. Verify the SideStore-installed app.
+2. Complete everyday chat: history/search, editing/retry, attachments, incognito, drafts, long chats and restoration.
+3. Router: provider/key setup, model discovery, manual/Auto selection, fallbacks, layouts, comparisons and usage.
+4. Workspace: projects, instructions, memory, Library/files, search and account-scoped offline/sync behavior.
+5. Documents/knowledge and AI tools: editing/import/export, citations, research, images, Study and assistants.
+6. Analysis and coding: sandboxed Python/JavaScript, charts/downloads, GitHub browsing/diffs/commits/PRs/reverts.
+7. Native finish and full parity: voice, settings, accessibility, supported iPhone integrations, performance,
+   reliability and native-app cutover. Keeping the web app stable with fixes is a recommendation, not a confirmed choice.
+
+Check document editing/export and the code-execution runtime early to settle feasibility. Background/scheduled
+agents need their own execution and delivery design because iOS can suspend the app.
 
 Earlier ideas remain backlog: $0 background agents (free quotas/storage/delivery need investigation), save
 reply excerpts into projects (synced size undecided), unified search and native haptics/keyboard improvements.

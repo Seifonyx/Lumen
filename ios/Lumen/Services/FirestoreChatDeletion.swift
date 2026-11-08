@@ -13,12 +13,12 @@ import LumenCore
         try await chat(chatID).setData(["deleted": true, "updatedAt": now, "rev": now, "srv": FieldValue.serverTimestamp()])
     }
     func deleteMessageBatch(chatID: String) async throws -> Bool {
-        let snapshot = try await chat(chatID).collection("messages").limit(to: 400).getDocuments(source: .server)
+        let snapshot = try await chat(chatID).collection("messages").limit(to: 50).getDocuments(source: .server)
         return try await remove(snapshot.documents)
     }
     func deleteOriginalBatch(chatID: String) async throws -> Bool {
         let snapshot = try await db.collection("modelRouter").document(userID).collection("files")
-            .whereField("chatId", isEqualTo: chatID).limit(to: 400).getDocuments(source: .server)
+            .whereField("chatId", isEqualTo: chatID).limit(to: 50).getDocuments(source: .server)
         return try await remove(snapshot.documents)
     }
     private func remove(_ documents: [QueryDocumentSnapshot]) async throws -> Bool {

@@ -3,6 +3,11 @@ import Testing
 @testable import LumenCore
 
 @Suite struct WebChatCodecTests {
+    @Test func aNotYetUploadedDocumentIsNotARemoteDeletion() {
+        #expect(!WebChatCodec.isTombstone(nil))
+        #expect(!WebChatCodec.isTombstone([:]))
+        #expect(WebChatCodec.isTombstone(["deleted": true]))
+    }
     @Test func readsWebIDsMillisecondsAndStoppedReplies() throws {
         let fields: [String: Any] = ["title": "From the web", "createdAt": 1700000000000.0, "updatedAt": 1700000001000.0, "ids": ["web-u", "web-a"], "model": "gpt-4.1", "projectId": "keep-project"]
         let chat = try WebChatCodec.conversation(id: "arbitrary-web-id", fields: fields)

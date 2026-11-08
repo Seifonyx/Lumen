@@ -114,15 +114,19 @@ import LumenCore
                       let ticket = engine.historyLoadTicket(chatID: chatID) else { return }
                 let before = try await reference.getDocument(source: .server)
                 guard epoch == session else { return }
-                guard let fields = before.data(), fields["deleted"] as? Bool != true else {
-                    engine.applyRemoteDeletion(chatID: chatID)
+                if WebChatCodec.isTombstone(before.data()) { engine.applyRemoteDeletion(chatID: chatID); return }
+                guard let fields = before.data() else {
+                    // A locally accepted chat may not have reached Firestore yet. Absence is not deletion.
+                    if !(engine.pendingMessages[chatID] ?? []).isEmpty { schedule(); return }
+                    errorMessage = "Cloud history is not available for this chat yet. Your saved messages are kept."
                     return
                 }
                 let snapshot = try await reference.collection("messages").order(by: "index").getDocuments(source: .server)
                 let after = try await reference.getDocument(source: .server)
                 guard epoch == session else { return }
-                guard let latest = after.data(), latest["deleted"] as? Bool != true else {
-                    engine.applyRemoteDeletion(chatID: chatID)
+                if WebChatCodec.isTombstone(after.data()) { engine.applyRemoteDeletion(chatID: chatID); return }
+                guard let latest = after.data() else {
+                    errorMessage = "Cloud history is not available for this chat yet. Your saved messages are kept."
                     return
                 }
                 // Metadata and messages are separate reads. Retry if a writer moved the boundary.

@@ -31,7 +31,6 @@ extension ProviderCatalog: ModelCatalogClient {}
         return keys[model.providerId]
     }
     public func savedKey(provider: AIProviderID) -> String { keys[provider.rawValue] ?? "" }
-    public var recoveredKey: String { (try? keyStore.key(providerID: "legacy", accountID: "device")) ?? "" }
 
     public func activateAccount(to id: String) {
         epoch = UUID()

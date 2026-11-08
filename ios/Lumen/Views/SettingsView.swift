@@ -134,7 +134,7 @@ private struct ProviderConnectionView: View {
         }
         .navigationTitle(provider.name)
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { key = connections.savedKey(provider: provider).isEmpty ? connections.recoveredKey : connections.savedKey(provider: provider) }
+        .onAppear { key = connections.savedKey(provider: provider) }
         .confirmationDialog("Remove the \(provider.name) key from this iPhone?", isPresented: $removeConfirmation, titleVisibility: .visible) {
             Button("Remove key", role: .destructive) { connections.disconnect(provider: provider); key = "" }
         }

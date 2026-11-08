@@ -22,6 +22,7 @@ public enum WebChatCodec {
     private static func date(_ value: Any?) -> Date {
         Date(timeIntervalSince1970: ((value as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970 * 1000) / 1000)
     }
+    public static func isTombstone(_ fields: [String: Any]?) -> Bool { fields?["deleted"] as? Bool == true }
     public static func revision(_ fields: [String: Any]) -> Double {
         (fields["rev"] as? NSNumber)?.doubleValue ?? (fields["updatedAt"] as? NSNumber)?.doubleValue ?? 0
     }

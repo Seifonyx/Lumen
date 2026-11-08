@@ -4,59 +4,35 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 
 ## Now
 
-- Branch `codex/phase1-ready`; owner authorized fixing Phase 1 completely and shipping the native IPA.
-  PR146 remains open/unmerged; its original head is `85e4222`. Native first, web gets fixes only.
-- Real Firebase registrations verified for `io.github.seifonyx.lumen` and `.M2WDSAZ2A5` in
-  `the-model-router`. Nickname Lumen is valid. Public client configurations now bundled; no rules/data changed.
-- Core generation ownership and immediate submitted-turn persistence repaired. Provider-specific streaming
-  implemented for OpenAI, Groq, Gemini, Anthropic, with bounded fragmented SSE decoding.
-  Regression run42530407507 passes all16 core tests. Mac app compile found nonexistent GoogleSignInSwiftUI
-  product; removed. Firebase13.1.1/GoogleSignIn10.1.0 pinned. Version bumped0.2.0.
-- Preview login removed. SDK-independent AuthEngine now restores/listens to actual platform sessions,
-  rejects late sign-in after sign-out, and never trusts cached profiles. Five replacement auth tests pass
-  locally after first observing the missing-interface failure. App Firebase/Google SDK adapter implemented,
-  pending Mac compile and real SDK emulator verification. Actual phone Google login remains user testing.
-- Account-scoped protected atomic cache and durable pending-message/deletion outbox now implemented.
-  Send is accepted only after a successful save; switching accounts stops old streams and drops visible data.
-  String IDs match web history. Web codec appends only new native messages, preserves unrelated metadata,
-  detects tombstones/conflicts and follows web ordering. Core24 tests passed after cache/isolation work;
-  Web codec27 tests passed. Provider discovery and Keychain adapter are implemented, tests in progress.
-- Cloud SDK adapter now listens to account chat metadata, lazily fetches messages, imports supported account
-  keys, and transactionally appends pending turns. Pending Mac compile/integration testing; not release-ready.
-- Auth Mac compile found Swift-imported error enum name mismatch; now checks documented Google domain/-5.
-- Account/cloud/provider state is now wired into the native UI. Loading/errors/retry, Keychain-backed provider
-  forms, discovered models, durable Send, Stop, account draft isolation and readable/selectable replies are
-  implemented. All32 current core tests pass locally. Mac compile found the iOS Data protection option
-  spelling; corrected to completeFileProtectionUntilFirstUserAuthentication, pending next build.
-- Connected QA is now implemented: real Firebase Auth/Firestore SDKs against local emulators with the
-  existing rules, HTTP streaming fixture, UI send/Stop/reopen/sign-out/rejected-key journeys on two iPhones.
-  Fixtures are DEBUG+simulator only; packaging now rejects their marker strings in Release (test observed
-  failing first, then passing). Local35 Swift tests and12 Python packaging/Git checks pass. Full Mac run
-  is next; compile/UI/emulator results are not established yet. Auth listener teardown uses isolated deinit.
-- Mac full run42532762635 stopped at core transport tests: Darwin URLProtocol represents POST bodies as
-  httpBodyStream. Test capture now reads that stream; no production transport change needed. Model identity
-  now matches provider+ID rather than display name (new regression observed failing, then fixed).
-  Release notes and native README now describe Phase1. Local36 Swift and12 packaging checks are next.
-- Fresh whole-branch review of e310139 returned3 Important findings. One fix pass is implemented:
-  versioned/account-session history tickets reject delayed fetches after submit/ack; web rev changes
-  invalidate same-ID messages; cloud deletion now durably retries tombstone/messages/original cleanup.
-  Tests were observed failing before the new interfaces/behavior, then all41 Swift tests passed. New
-  emulator UI journey independently verifies deleted metadata/messages/originals are gone. No second review
-  is required by executing-plans; the fixes are verified with the new regressions and the full suite.
-- Mac run42532990830 passed36 core tests, then app build found DEBUG config needed MainActor; corrected.
-  Local emulator smoke passed Google-credential identity, production rules, own-account read, cross-account
-  denial and provider fixture. Emulator CLI disallows rules outside its project directory; build now stages
-  an exact copy of current production rules into ignored build/emulators, with no deployment/rule changes.
-- Remaining: rerun full Mac app/emulator/UI/screenshots/IPA; inspect screenshots, remove temporary helper/
-  workflow, update PR146, merge and verify main publication0.2.0 and SideStore source. Physical Google
-  chooser and actual SideStore signing are user-device checks; no live account/provider request was tested.
-- Local Swift6.2.3: `/workspace/scratch/swift-6.2/usr/bin/swift`. Linux6.0.3 had upstream Observation
-  linker bug; do not use. No local Xcode. Use GitHub macOS26/Xcode26.6 for app/UI/IPA.
-- Original review evidence: three Mac probes proved wrong provider endpoint, unsaved submitted turn, and
-  new-chat streaming crash (run42525884673). Original Google login fabricated a profile, keys used prefs,
-  storage was global UserDefaults and no cloud sync existed. Original0.1.0 cannot be republished with new source.
-- Next: push auth work to compile in CI, then implement account cache/cloud boundary. Remove temporary
-  development inspection workflow/helper before final PR. Never deploy web or modify Firebase rules.
+- Branch `codex/phase1-ready`; owner authorized fixing all Phase1 defects and shipping the native IPA.
+  PR146 (`feat/phase1-connected-chat`) is being updated to the repaired branch. Main is still Phase0
+  `14bf502`. Do not merge until final Native iOS CI and screenshot inspection pass.
+- Both fresh Firebase iOS apps are verified in `the-model-router`: `io.github.seifonyx.lumen` and
+  `io.github.seifonyx.lumen.M2WDSAZ2A5`. Nickname Lumen is valid. Public config is bundled. Real Google/
+  Firebase SDK auth replaces the preview login; Firebase owns tokens/refresh/Keychain. Rules/data unchanged.
+- Native Phase1 now has account-isolated protected cache/outbox, live web history, merge-safe transactional
+  sync, Groq/Gemini/OpenAI/Anthropic transports, bounded SSE parsing, Keychain keys and model discovery.
+  Send accepts only after saving, Stop keeps partial text, and account/chat switches reject late stream data.
+- Fresh final review of e310139 found3 Important issues, repaired in one pass: stale refreshes removing
+  acknowledged turns; same-ID web edits not refreshing; deletion retaining remote messages/originals.
+  Opaque mutation/session tickets, remote revisions and durable deletion cleanup cover these, with new
+  failing-then-passing tests. No minors or second review required. Later phases/physical checks remain scoped
+  as recorded in ios/README.md and release notes.
+- Follow-ups preserve an unuploaded local chat when server metadata is absent (only tombstones delete),
+  bound deletion reads to50 docs per batch, and prevent untyped legacy keys autofilling other providers.
+  Phase0 draft migration is covered and already worked. Local43 Swift tests and12 packaging/Git checks pass.
+- Local emulator smoke passes Google-credential identity, current rules, own-history read, cross-account
+  denial and HTTP fixture. Exact current rules are staged under ignored build/emulators, never deployed.
+- Mac development run42534088538 at e517b4f is still running full app/Release/SDK emulator/UI/screenshots.
+  Earlier Mac failures (Swift API naming, actor isolation, Darwin HTTP body test representation) are fixed.
+  Final PR Native iOS run must include latest follow-ups, then inspect screenshots and verify deletion roundtrip.
+- Temporary development workflow and Firebase inspector are removed in this update. Version0.2.0 and
+  current release notes are ready. Next: official PR CI, fix any runtime/UI failures, merge, verify main IPA
+  publication and public SideStore source. Actual Google chooser/SideStore signing need the owner's phone.
+- Local Swift6.2.3: `/workspace/scratch/swift-6.2/usr/bin/swift`. No local Xcode. Old6.0.3 toolchain was
+  removed (upstream Linux Observation linker bug). Use GitHub macOS26/Xcode26.6 for native checks.
+- Review/fix evidence and plan are under `/workspace/scratch/lumen-final-review`,
+  `/workspace/scratch/lumen-phase1-fix-plan.md`, and test logs. Preserve actual pass/fail limits.
 
 ## Next
 

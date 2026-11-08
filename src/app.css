@@ -1,7 +1,7 @@
 /*
  * Lumen styles: one file, read top to bottom. Later sections win over earlier ones.
  * Colours and type tokens live in :root near the top of the Identity section; put new
- * look-and-feel rules at the end of that section. See DESIGN.md.
+ * look-and-feel rules at the end of that section.
  */
 
 /* ################ Base: tokens, reset and core components ################ */

@@ -1,4 +1,4 @@
 #!/bin/sh
-# Reminds you to update HANDOFF.md when committing app code on a branch it does not describe (never blocks).
+# Prints a non-blocking checkpoint reminder when a commit omits HANDOFF.md.
 node scripts/handoff.mjs --check
 exit 0

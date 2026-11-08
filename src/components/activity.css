@@ -1,5 +1,4 @@
-/* Router → Activity (Overview, Logs, Quotas). Lazy with ActivityCenter; Canvas only. Follows the calm-pass rules in
- * DESIGN.md: tone instead of outlines, 28/17/15/13 type, one ink action, colour only for state. */
+/* Router → Activity (Overview, Logs, Quotas). Lazy with ActivityCenter; Canvas only. */
 .app[data-lumen-canvas-shell] .ac { gap:20px; }
 .app[data-lumen-canvas-shell] .ac-tabs button:focus-visible { outline:2px solid var(--focus); outline-offset:1px; }
 .app[data-lumen-canvas-shell] .ac-panel { display:grid; gap:20px; min-width:0; }

@@ -72,9 +72,17 @@ def read_public_ipa(asset):
         if any(n.endswith(('.p8', '.p12', '.key')) or '/.env' in n for n in names):
             fail('IPA contains private key or environment file paths')
         # Defense in depth, not a replacement for human artifact-content review.
-        suspect = (b'-----BEGIN PRIVATE KEY-----', b'sk-or-v1-', b'sk-proj-',
-                   b'ghp_', b'gho_', b'github_pat_', b'AKIA')
-        if any(any(marker in zf.read(item) for marker in suspect)
+        # Match complete credential-looking values rather than prefixes that can
+        # occur legitimately in an app's key-validation source code.
+        patterns = (
+            rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----',
+            rb'sk-or-v1-[A-Za-z0-9_-]{32,}',
+            rb'sk-proj-[A-Za-z0-9_-]{32,}',
+            rb'(?<![A-Za-z0-9_])ghp_[A-Za-z0-9]{36}',
+            rb'github_pat_[A-Za-z0-9_]{40}',
+            rb'(?<![A-Z0-9])AKIA[A-Z0-9]{16}(?![A-Z0-9])',
+        )
+        if any(any(re.search(pattern, zf.read(item)) for pattern in patterns)
                for item in names if item.endswith(('.js', '.json', '.plist', '.html', '.txt', '.env'))):
             fail('IPA text resources contain a potential private credential')
         info = plistlib.loads(zf.read(plists[0]))

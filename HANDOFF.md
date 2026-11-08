@@ -1,45 +1,31 @@
 # Lumen checkpoint
 
-Updated: 2026-11-09. This is the current continuation point; agent update guidance is in [AGENTS.md](AGENTS.md).
+Updated: 2026-11-09. Read the user's current request; update this checkpoint after meaningful work.
 
 ## Now
 
-- **Branch:** `codex/phase1-ready`. Owner authorized fixing every Phase 1 blocker and shipping a new IPA.
-  Implementation is proceeding inline; the diagnostic branch preserves failing tests as the baseline.
-  Existing Google config and SideStore team `M2WDSAZ2A5` are available. Firebase registration via the
-  existing CI credential returns 403. Browser startup is unavailable. Asked owner to register iOS apps
-  `io.github.seifonyx.lumen` and `io.github.seifonyx.lumen.M2WDSAZ2A5` in the existing project.
-  Owner now confirms registrations are done; nickname is “Lumen” (valid). Fetch and verify both bundle IDs next.
-  Work continues independently; no data/rules changed. Local Swift 6.2.3 is installed and runs tests; 6.0.3 had an upstream Linux Observation linker bug. Docker image was removed after VFS disk overuse.
-- **Review baseline:** review completed for [PR #146](https://github.com/Seifonyx/Lumen/pull/146)
-  at `85e4222`, against Phase 0 `14bf502`. **Verdict: needs changes; Phase 1 is not ready for release.**
-  The original PR is unchanged and unmerged. Fix branch now has uncommitted engine generation/persistence
-  changes and portable provider transport; SSE parser tests are being brought through failing/passing states.
-- **Fix verification:** local Swift 6.2.3 runs all 16 current core tests successfully, including the three
-  formerly failing probes and four SSE parser tests observed failing before implementation. Native SDK
-  packages are pinned (Firebase 13.1.1, GoogleSignIn 10.1.0); app compilation is now checked in CI.
-- **Original verification:** [native CI](https://github.com/Seifonyx/Lumen/actions/runs/42522817455) passed
-  9 core tests and the 4 existing shell UI journeys on each iPhone profile. Its screenshots were inspected.
-  The auth tests exercise preview identity; no live Google/account sync/provider conversation was verified.
-- **New verification:** [isolated Mac probes](https://github.com/Seifonyx/Lumen/actions/runs/42525884673)
-  reran the original 9 core tests successfully and reproduced 3 failures: OpenAI selection requests Groq,
-  submitted chat is absent from persisted state while streaming, and New Chat during streaming traps
-  with `Fatal error: Index out of range` (`ChatEngine.swift:98`). Probe failures are intentional review evidence.
-  The 11 Python packaging/Git checks also pass locally.
-- **Phase 1 gaps:** Google button calls `signInPreview()` and fabricates a local profile (`SettingsView:53`,
-  `AuthEngine:75`); no real auth flow invokes Firebase. Conversation storage is a global UserDefaults blob,
-  with no existing web account data/sync (`ChatEngine:135` versus web `modelRouter/{uid}/chats/...`).
-  `AIProvider:37` routes all selected models/keys to Groq, despite offering Gemini/OpenAI/Anthropic.
-- **Other improvements:** provider key uses plain AppStorage (`SettingsView:10`); use Keychain. Stream state
-  needs conversation/message ownership and cancellation guards; persist the submitted turn before networking.
-- **Release blocker:** marketing version is still 0.1.0, already released. The actual publish guard was
-  exercised against the downloaded PR artifact and existing tag metadata; it rejects the changed source.
-  Bump the version and update foundation-only release notes before publishing the repaired Phase 1.
-- **Next action:** repair real Google/Firebase auth and account-compatible storage, validate one provider,
-  fix the reproduced streaming/persistence bugs and credential storage, then test the connected flows and
-  build a new version for SideStore. No application fixes or Phase 1 release were made during this review.
-- **Local evidence:** `/workspace/scratch/lumen-phase1-qa` and `/workspace/scratch/lumen-phase1-review-probes.log`.
-
+- Branch `codex/phase1-ready`; owner authorized fixing Phase 1 completely and shipping the native IPA.
+  PR146 remains open/unmerged; its original head is `85e4222`. Native first, web gets fixes only.
+- Real Firebase registrations verified for `io.github.seifonyx.lumen` and `.M2WDSAZ2A5` in
+  `the-model-router`. Nickname Lumen is valid. Public client configurations now bundled; no rules/data changed.
+- Core generation ownership and immediate submitted-turn persistence repaired. Provider-specific streaming
+  implemented for OpenAI, Groq, Gemini, Anthropic, with bounded fragmented SSE decoding.
+  Regression run42530407507 passes all16 core tests. Mac app compile found nonexistent GoogleSignInSwiftUI
+  product; removed. Firebase13.1.1/GoogleSignIn10.1.0 pinned. Version bumped0.2.0.
+- Preview login removed. SDK-independent AuthEngine now restores/listens to actual platform sessions,
+  rejects late sign-in after sign-out, and never trusts cached profiles. Five replacement auth tests pass
+  locally after first observing the missing-interface failure. App Firebase/Google SDK adapter implemented,
+  pending Mac compile and real SDK emulator verification. Actual phone Google login remains user testing.
+- Remaining: protected account-scoped chat cache, compatible web Firestore history/sync, provider keys in
+  Keychain and model discovery, connected UI/error states, meaningful connected-flow tests, final fresh
+  whole-branch review, merge and publish0.2.0 to SideStore. Do not claim Phase1 ready yet.
+- Local Swift6.2.3: `/workspace/scratch/swift-6.2/usr/bin/swift`. Linux6.0.3 had upstream Observation
+  linker bug; do not use. No local Xcode. Use GitHub macOS26/Xcode26.6 for app/UI/IPA.
+- Original review evidence: three Mac probes proved wrong provider endpoint, unsaved submitted turn, and
+  new-chat streaming crash (run42525884673). Original Google login fabricated a profile, keys used prefs,
+  storage was global UserDefaults and no cloud sync existed. Original0.1.0 cannot be republished with new source.
+- Next: push auth work to compile in CI, then implement account cache/cloud boundary. Remove temporary
+  development inspection workflow/helper before final PR. Never deploy web or modify Firebase rules.
 
 ## Next
 

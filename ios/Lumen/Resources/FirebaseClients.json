@@ -1,0 +1,21 @@
+{
+  "webClientID": "318861546094-hqd9p3if41slauq6gb20bcrbmfoi97dq.apps.googleusercontent.com",
+  "clients": [
+    {
+      "GOOGLE_APP_ID": "1:318861546094:ios:0e50dfd88e897ed3ae0c7f",
+      "BUNDLE_ID": "io.github.seifonyx.lumen",
+      "PROJECT_ID": "the-model-router",
+      "CLIENT_ID": "318861546094-5lh19vnoqeq1th0ldakj7n630i9qutfa.apps.googleusercontent.com",
+      "REVERSED_CLIENT_ID": "com.googleusercontent.apps.318861546094-5lh19vnoqeq1th0ldakj7n630i9qutfa",
+      "API_KEY": "AIzaSyC99Vz60at-_po_0t0Fm-TQrtevTkmG7x8"
+    },
+    {
+      "GOOGLE_APP_ID": "1:318861546094:ios:968185c740c152bfae0c7f",
+      "BUNDLE_ID": "io.github.seifonyx.lumen.M2WDSAZ2A5",
+      "PROJECT_ID": "the-model-router",
+      "CLIENT_ID": "318861546094-0jij3rdis6efb09khejff2tuv6vn9k4f.apps.googleusercontent.com",
+      "REVERSED_CLIENT_ID": "com.googleusercontent.apps.318861546094-0jij3rdis6efb09khejff2tuv6vn9k4f",
+      "API_KEY": "AIzaSyC99Vz60at-_po_0t0Fm-TQrtevTkmG7x8"
+    }
+  ]
+}

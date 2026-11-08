@@ -51,7 +51,7 @@ struct SettingsView: View {
                         Label("Not signed in", systemImage: "person.crop.circle")
                             .foregroundStyle(.secondary)
                         Button("Sign in with Google") {
-                            auth.signInPreview()
+                            Task { await auth.signIn() }
                         }
                     }
                 }

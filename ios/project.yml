@@ -38,8 +38,6 @@ targets:
         product: FirebaseFirestore
       - package: GoogleSignIn
         product: GoogleSignIn
-      - package: GoogleSignIn
-        product: GoogleSignInSwiftUI
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.github.seifonyx.lumen
@@ -50,6 +48,8 @@ targets:
       path: build/Generated/Info.plist
       properties:
         CFBundleDisplayName: Lumen
+        CFBundleURLTypes:
+          - CFBundleURLSchemes: ["com.googleusercontent.apps.318861546094-5lh19vnoqeq1th0ldakj7n630i9qutfa", "com.googleusercontent.apps.318861546094-0jij3rdis6efb09khejff2tuv6vn9k4f"]
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSRequiresIPhoneOS: true

@@ -1,105 +1,76 @@
 import Foundation
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 import Observation
 
-public protocol AuthClient: Sendable {
-    func signInWithCustomToken(_ token: String) async throws -> UserProfile
+/// The platform adapter owns authentication and secure token storage.
+@MainActor public protocol AuthClient: AnyObject {
+    var currentUser: UserProfile? { get }
+    func restoreSession() async throws -> UserProfile?
+    func signIn() async throws -> UserProfile
+    func signOut() throws
+    func userChanges() -> AsyncStream<UserProfile?>
 }
 
-public struct FirebaseAuthClient: AuthClient {
-    private let apiKey: String
-    private let urlSession: URLSession
-
-    public init(
-        apiKey: String = "AIzaSyA6rgzI585XESdkYGy3_Yz8tdun7rtbJZ8",
-        urlSession: URLSession = .shared
-    ) {
-        self.apiKey = apiKey
-        self.urlSession = urlSession
-    }
-
-    public func signInWithCustomToken(_ token: String) async throws -> UserProfile {
-        let url = URL(string: "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=\(apiKey)")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let body: [String: Any] = [
-            "token": token,
-            "returnSecureToken": true
-        ]
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-        let finalRequest = request
-        let session = self.urlSession
-
-        let (data, response) = try await session.data(for: finalRequest)
-        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-            let status = (response as? HTTPURLResponse)?.statusCode ?? -1
-            throw NSError(domain: "LumenCore.Auth", code: status, userInfo: [NSLocalizedDescriptionKey: "Authentication failed (\(status))"])
-        }
-
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let uid = json["localId"] as? String else {
-            throw NSError(domain: "LumenCore.Auth", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid server response"])
-        }
-
-        let idToken = json["idToken"] as? String
-        return UserProfile(id: uid, email: "", displayName: "Lumen User", idToken: idToken)
-    }
-}
-
-@MainActor @Observable
-public final class AuthEngine {
-    public var currentUser: UserProfile?
-    public var isLoading: Bool = false
+@MainActor @Observable public final class AuthEngine {
+    public private(set) var currentUser: UserProfile?
+    public private(set) var isLoading = false
     public var errorMessage: String?
+    public var isSignedIn: Bool { currentUser != nil }
+    @ObservationIgnored private let client: any AuthClient
+    @ObservationIgnored private var listener: Task<Void, Never>?
+    @ObservationIgnored private var operation = UUID()
+    @ObservationIgnored private var started = false
 
-    public var isSignedIn: Bool {
-        currentUser != nil
+    public init(client: any AuthClient) { self.client = client }
+
+    public func start() async {
+        guard !started else { return }
+        started = true
+        let changes = client.userChanges()
+        listener = Task { [weak self] in
+            for await user in changes {
+                guard !Task.isCancelled else { return }
+                self?.currentUser = user
+            }
+        }
+        let ticket = operation
+        do {
+            let user = try await client.restoreSession()
+            guard operation == ticket else { return }
+            currentUser = user
+        } catch {
+            guard operation == ticket else { return }
+            errorMessage = "Your session could not be restored. Sign in again."
+        }
     }
 
-    @ObservationIgnored private let client: AuthClient
-    @ObservationIgnored private let defaults: UserDefaults
-
-    private static let userKey = "lumen.auth-user"
-
-    public init(
-        client: AuthClient = FirebaseAuthClient(),
-        defaults: UserDefaults = .standard
-    ) {
-        self.client = client
-        self.defaults = defaults
-        loadPersistedUser()
-    }
-
-    public func signInPreview(email: String = "seif@lumen.app", name: String = "Seif") {
-        let user = UserProfile(
-            id: "preview-\(email.lowercased())",
-            email: email,
-            displayName: name
-        )
-        self.currentUser = user
-        persistUser()
+    public func signIn() async {
+        guard !isLoading else { return }
+        let ticket = UUID()
+        operation = ticket
+        isLoading = true
+        errorMessage = nil
+        do {
+            let user = try await client.signIn()
+            guard operation == ticket else { return }
+            currentUser = user
+        } catch is CancellationError {
+            // Closing Google's sheet is a normal user action.
+        } catch {
+            guard operation == ticket else { return }
+            errorMessage = "Google sign-in could not finish. Check your connection and try again."
+        }
+        if operation == ticket { isLoading = false }
     }
 
     public func signOut() {
-        self.currentUser = nil
-        defaults.removeObject(forKey: Self.userKey)
+        operation = UUID()
+        isLoading = false
+        errorMessage = nil
+        do {
+            try client.signOut()
+            currentUser = nil
+        } catch { errorMessage = "Sign-out could not finish. Please try again." }
     }
 
-    private func persistUser() {
-        if let user = currentUser, let data = try? JSONEncoder().encode(user) {
-            defaults.set(data, forKey: Self.userKey)
-        }
-    }
-
-    private func loadPersistedUser() {
-        if let data = defaults.data(forKey: Self.userKey),
-           let user = try? JSONDecoder().decode(UserProfile.self, from: data) {
-            self.currentUser = user
-        }
-    }
+    deinit { listener?.cancel() }
 }

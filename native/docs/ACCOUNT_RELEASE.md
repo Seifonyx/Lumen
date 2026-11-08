@@ -47,7 +47,7 @@ prelaunch checklist is substituted for that limitation.
 
 ## Build and installation
 
-Workflow **iOS existing-account private IPA** (`ios-account.yml`), triggered manually or by `[account-ios]` pushes,
+Workflow **iOS connected private IPA** (`ios-connected.yml`, connection `account-connected`), triggered manually or by `[account-ios]` pushes,
 uses standard free macOS/Xcode, private SDK metadata in an Actions secret and the existing recipient public key.
 Only encrypted delivery is uploaded. The private RSA key stays on the owner's Windows PC. Native test and offline
 workflows/configuration remain separate; account-tagged pushes skip unnecessary offline builds.

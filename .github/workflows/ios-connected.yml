@@ -3,18 +3,24 @@ on:
   push:
     branches: [experiment/ios-sideload]
   workflow_dispatch:
+    inputs:
+      connection:
+        description: Firebase account backend
+        type: choice
+        options: [account-connected, isolated-test]
+        default: account-connected
 permissions:
   contents: read
+env:
+  LUMEN_NATIVE_MODE: ${{ (inputs.connection == 'account-connected' || contains(github.event.head_commit.message, '[account-ios]')) && 'account-connected' || 'isolated-test' }}
 concurrency:
   group: ios-connected-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   connected:
-    if: github.repository == 'Seifonyx/Lumen' && github.event.repository.private == false && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[connected-ios]'))
+    if: github.repository == 'Seifonyx/Lumen' && github.event.repository.private == false && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[connected-ios]') || contains(github.event.head_commit.message, '[account-ios]'))
     runs-on: macos-26
     timeout-minutes: 30
-    env:
-      LUMEN_NATIVE_MODE: isolated-test
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -23,20 +29,22 @@ jobs:
       - run: npm ci
       - run: npm ci --prefix native --ignore-scripts
       - name: Focused native free-provider contracts (no provider network)
-        run: node --experimental-strip-types --test native/tests/free-provider.test.mjs native/tests/native-ai-gate.test.mjs native/tests/ai-consent.test.mjs native/tests/auth-errors.test.mjs native/tests/real-session.test.mjs native/tests/google-token.test.mjs native/tests/plugin-bridge.test.mjs
+        run: node --experimental-strip-types --test native/tests/free-provider.test.mjs native/tests/native-ai-gate.test.mjs native/tests/ai-consent.test.mjs native/tests/storage-namespace.test.mjs native/tests/account-build.test.mjs native/tests/service-config.test.mjs native/tests/auth-errors.test.mjs native/tests/real-session.test.mjs native/tests/google-token.test.mjs native/tests/plugin-bridge.test.mjs
       - run: node node_modules/typescript/bin/tsc --noEmit -p native/tsconfig.json
       - name: Prepare approved private configuration and recipient key
         env:
-          SDK_CONFIG: ${{ secrets.LUMEN_IOS_TEST_CONFIG }}
+          TEST_CONFIG: ${{ secrets.LUMEN_IOS_TEST_CONFIG }}
+          ACCOUNT_CONFIG: ${{ secrets.LUMEN_IOS_ACCOUNT_CONFIG }}
           DELIVERY_KEY: ${{ secrets.LUMEN_IOS_DELIVERY_PUBLIC_KEY }}
         run: |
           node --input-type=module <<'JS'
           import {writeFileSync,mkdirSync,appendFileSync} from 'node:fs';
           import {createPublicKey} from 'node:crypto';
           import {validateServiceConfig} from './native/services/config.mjs';
-          const input=JSON.parse(process.env.SDK_CONFIG||'null');
+          const mode=process.env.LUMEN_NATIVE_MODE;
+          const input=JSON.parse((mode==='account-connected'?process.env.ACCOUNT_CONFIG:process.env.TEST_CONFIG)||'null');
           const c=validateServiceConfig(input);
-          if(c.projectId!=='lumen-ios-test')throw Error('Approved test project required');
+          if(c.mode!==mode||c.projectId!==(mode==='account-connected'?'the-model-router':'lumen-ios-test'))throw Error('Approved backend configuration required');
           const key=createPublicKey(process.env.DELIVERY_KEY||'');
           if(key.asymmetricKeyType!=='rsa'||key.asymmetricKeyDetails.modulusLength<3072)throw Error('Recipient RSA3072 key required');
           const configPath=process.env.RUNNER_TEMP+'/lumen-connected.json';
@@ -82,7 +90,7 @@ jobs:
           rm -f native/artifacts/Lumen.ipa native/artifacts/Lumen.json native/build-device.log
 
   browser-rc:
-    if: github.repository == 'Seifonyx/Lumen' && github.event.repository.private == false && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[connected-ios]'))
+    if: github.repository == 'Seifonyx/Lumen' && github.event.repository.private == false && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[connected-ios]') || contains(github.event.head_commit.message, '[account-ios]'))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -93,11 +101,31 @@ jobs:
       - run: npm ci
       - run: npm ci --prefix native --ignore-scripts
       - run: npx playwright install --with-deps chromium webkit
+      - name: Prepare account metadata for synthetic sign-in checks only
+        if: env.LUMEN_NATIVE_MODE == 'account-connected'
+        env:
+          SDK_CONFIG: ${{ secrets.LUMEN_IOS_ACCOUNT_CONFIG }}
+        run: |
+          node --input-type=module <<'JS'
+          import {writeFileSync,appendFileSync} from 'node:fs';
+          import {validateServiceConfig} from './native/services/config.mjs';
+          const input=JSON.parse(process.env.SDK_CONFIG||'null');
+          if(validateServiceConfig(input).mode!=='account-connected')throw Error('Account configuration required');
+          const file=process.env.RUNNER_TEMP+'/lumen-account-browser.json';writeFileSync(file,JSON.stringify(input),{mode:0o600});
+          appendFileSync(process.env.GITHUB_ENV,'LUMEN_NATIVE_SERVICE_CONFIG='+file+'\n');
+          JS
+      - name: Native Login startup, account cache and safe failure classifications (synthetic, no external traffic)
+        env:
+          LUMEN_NATIVE_QA_ACCOUNT: ${{ env.LUMEN_NATIVE_MODE == 'account-connected' && '1' || '0' }}
+        run: node --experimental-strip-types native/scripts/browser-auth.mjs
       - uses: actions/setup-java@v5
+        if: env.LUMEN_NATIVE_MODE == 'isolated-test'
         with:
           distribution: temurin
           java-version: 21
-      - name: Native sign-in startup and safe failure classifications (synthetic, no external traffic)
-        run: node --experimental-strip-types native/scripts/browser-auth.mjs
       - name: Actual native Canvas setup and chat contracts (emulators and mocked provider only)
+        if: env.LUMEN_NATIVE_MODE == 'isolated-test'
         run: node node_modules/firebase-tools/lib/bin/firebase.js emulators:exec --only auth,firestore --project lumen-ios-test --config native/firebase-emulators.json "node --experimental-strip-types native/scripts/browser-rc.mjs"
+      - name: Remove private browser configuration
+        if: always() && env.LUMEN_NATIVE_MODE == 'account-connected'
+        run: rm -f "$LUMEN_NATIVE_SERVICE_CONFIG"

@@ -1,7 +1,7 @@
 # Lumen iPhone — Windows quick start
 
 The owner now authorizes the iPhone app to use the **existing Lumen Google accounts and cloud data**.
-Use the **iOS existing-account private IPA** workflow and encrypted delivery described in
+Use the **iOS connected private IPA** workflow and encrypted delivery described in
 [the account release guide](docs/ACCOUNT_RELEASE.md). The native app displays Lumen; its installed bundle identity
 is preserved. Install over the current app using the same Sideloadly Apple account and bundle options; do not uninstall.
 

@@ -36,6 +36,13 @@ private actor HeldCatalog: ModelCatalogClient {
         #expect(providers.models.isEmpty)
         #expect(store.values["account:groq"] == nil)
     }
+    @Test func aDisplayNameChangeDoesNotDisconnectASavedModel() async {
+        let providers = ProviderConnections(keyStore: TestProviderKeyStore(), catalog: FixedCatalog())
+        await providers.connect(provider: .groq, key: "fixture-secret")
+        let saved = AIModel(id: "live-model", name: "Previous display name", providerId: "groq")
+        #expect(providers.key(for: saved) == "fixture-secret")
+    }
+
     @Test func keychainFailureDoesNotPretendProviderIsConnected() async {
         let store = TestProviderKeyStore(); store.failWrites = true
         let providers = ProviderConnections(keyStore: store, catalog: FixedCatalog())

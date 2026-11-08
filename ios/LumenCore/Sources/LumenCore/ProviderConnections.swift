@@ -27,7 +27,7 @@ extension ProviderCatalog: ModelCatalogClient {}
         self.catalog = catalog
     }
     public func key(for model: AIModel?) -> String? {
-        guard let model, connected.contains(model.providerId), models.contains(model) else { return nil }
+        guard let model, connected.contains(model.providerId), models.contains(where: { $0.id == model.id && $0.providerId == model.providerId }) else { return nil }
         return keys[model.providerId]
     }
     public func savedKey(provider: AIProviderID) -> String { keys[provider.rawValue] ?? "" }

@@ -33,6 +33,10 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
   Fixtures are DEBUG+simulator only; packaging now rejects their marker strings in Release (test observed
   failing first, then passing). Local35 Swift tests and12 Python packaging/Git checks pass. Full Mac run
   is next; compile/UI/emulator results are not established yet. Auth listener teardown uses isolated deinit.
+- Mac full run42532762635 stopped at core transport tests: Darwin URLProtocol represents POST bodies as
+  httpBodyStream. Test capture now reads that stream; no production transport change needed. Model identity
+  now matches provider+ID rather than display name (new regression observed failing, then fixed).
+  Release notes and native README now describe Phase1. Local36 Swift and12 packaging checks are next.
 - Remaining: Mac connected/emulator tests and screenshot inspection,
   fresh whole-branch review, merge and publish0.2.0 to SideStore. Actual phone Google login is user testing.
 - Local Swift6.2.3: `/workspace/scratch/swift-6.2/usr/bin/swift`. Linux6.0.3 had upstream Observation

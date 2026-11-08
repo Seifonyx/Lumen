@@ -94,7 +94,7 @@ struct ModelSheet: View {
                                     HStack {
                                         Text(model.name).foregroundStyle(.primary)
                                         Spacer()
-                                        if engine.selectedModel == model { Image(systemName: "checkmark").bold() }
+                                        if engine.selectedModel?.id == model.id && engine.selectedModel?.providerId == model.providerId { Image(systemName: "checkmark").bold() }
                                     }
                                     .padding(.vertical, 5)
                                 }

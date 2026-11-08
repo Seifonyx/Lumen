@@ -18,6 +18,7 @@ def main():
     parser.add_argument('--artifacts', type=Path, required=True)
     args = parser.parse_args()
     repository = os.environ['GITHUB_REPOSITORY']
+    release_notes = json.loads(Path('ios/release-notes.json').read_text())
     ipa = args.artifacts / 'release' / 'Lumen.ipa'
     manifest_file = args.artifacts / 'release' / 'build-manifest.json'
     manifest = json.loads(manifest_file.read_text())
@@ -36,9 +37,7 @@ def main():
         with tempfile.TemporaryDirectory() as temp:
             notes = Path(temp) / 'notes.md'
             notes.write_text(
-                'Fresh SwiftUI iOS 26 foundation: chat-first shell, sidebar, local draft restoration, '
-                'appearance settings and native sheets.\n\n'
-                'This build has no account sign-in or AI provider connection yet.\n\n'
+                '\n\n'.join(release_notes['notes']) + '\n\n' +
                 f'Source: `{manifest["sourceCommit"]}`\n'
                 f'IPA SHA-256: `{manifest["sha256"]}`\n\n'
                 'Install Lumen.ipa with SideStore. Simulator captures are in native-screenshots.zip.\n')
@@ -47,7 +46,7 @@ def main():
             shutil.make_archive(str(screenshots_zip.with_suffix('')), 'zip', args.artifacts / 'screenshots')
             gh('release', 'create', tag, str(ipa), str(manifest_file), str(screenshots_zip),
                '--repo', repository, '--target', manifest['sourceCommit'],
-               '--title', f'Lumen iOS {manifest["version"]} · Native foundation',
+               '--title', f'Lumen iOS {manifest["version"]} · {release_notes["title"]}',
                '--notes-file', str(notes), '--prerelease', '--latest=false')
     release = json.loads(gh('api', f'repos/{repository}/releases/tags/{tag}'))
     asset = next(a for a in release['assets'] if a['name'] == 'Lumen.ipa')
@@ -61,13 +60,13 @@ def main():
         'version': manifest['version'], 'date': release['published_at'][:10],
         'downloadURL': asset['browser_download_url'], 'size': asset['size'],
         'minOSVersion': manifest['minimumOSVersion'],
-        'localizedDescription': 'Chat-first native foundation. Account and AI connections follow in Phase 1.',
+        'localizedDescription': release_notes['description'],
     })
     versions.sort(key=lambda v: tuple(int(p) for p in v['version'].split('.')), reverse=True)
     source['apps'] = [{
         'name': 'Lumen', 'bundleIdentifier': manifest['bundleIdentifier'], 'developerName': 'Lumen',
         'subtitle': 'Your native AI workspace',
-        'localizedDescription': 'A fresh native Lumen for iPhone.',
+        'localizedDescription': 'Native AI conversations with your Lumen account and your choice of provider.',
         'iconURL': f'https://raw.githubusercontent.com/{repository}/main/public-canvas/icon-512.png',
         'tintColor': '0b0b0c', 'versions': versions,
         'appPermissions': {'entitlements': [], 'privacy': {}},

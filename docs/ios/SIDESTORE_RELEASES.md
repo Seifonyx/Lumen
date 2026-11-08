@@ -1,4 +1,8 @@
-# SideStore releases
+# Legacy SideStore releases
+
+For the fresh SwiftUI app, use [Native Lumen](../../ios/README.md) and its
+[new SideStore source](https://raw.githubusercontent.com/Seifonyx/Lumen/main/ios/sidestore-source.json).
+The instructions below apply to the older `.demo` app.
 
 Source URL: https://raw.githubusercontent.com/Seifonyx/Lumen/main/sidestore-source.json
 

@@ -4,31 +4,29 @@ Updated: 2026-11-08. This is the current continuation point; agent update guidan
 
 ## Now
 
-- **Branch:** `codex/ios-native-foundation`, based on `main` at `9a09a34`.
-- **Goal:** Phase 0: fresh SwiftUI iOS 26 chat-first shell, GitHub simulator checks/screenshots,
-  unsigned IPA packaging and SideStore delivery.
-- **Done:** shell/sidebar/native sheets, persistent draft and appearance settings; project generation,
-  core/UI tests, device-IPA validation and independent native build/release workflow implemented.
-- **Verification:** 11 local packaging/Git checks pass; Mac core tests, compilation, device archive and IPA
-  validation passed (0.1.0, arm64, minimum iOS 26). All four compact journeys and three regular journeys
-  passed, including keyboard geometry, restoration and explicit Cancel/Discard. Regular capture exposed
-  a missed Projects row tap: actual video/hierarchy showed the drawer stayed open. Replaced the plain
-  Label with an explicit full-width row button style and pressed feedback; UI coverage taps its trailing
-  empty area. Both-phone rerun pending. The reviewed feed-push race has real-Git regression coverage.
-- **Next action:** rerun both profiles, inspect regular-phone Light/Dark captures, then publish.
-  [PR #145](https://github.com/Seifonyx/Lumen/pull/145); artifacts `/workspace/scratch/lumen-native-keyboard-qa`.
+- **Branch:** `main`. Fresh native foundation merged in [PR #145](https://github.com/Seifonyx/Lumen/pull/145),
+  commit `5ae3029`. Phase 0 implementation and PR verification are complete; public release is in progress.
+- **Done:** SwiftUI iOS 26 chat/composer/sidebar, native sheets and controls, app icon, persistent unsent
+  draft and appearance settings. Fresh bundle `io.github.seifonyx.lumen`; account and AI connections start in Phase 1.
+- **Verified:** 11 packaging/Git checks, 3 Swift core tests, all 4 UI journeys on both iPhone SE (3rd generation)
+  and iPhone 17 Pro, iOS 26.5; [native run](https://github.com/Seifonyx/Lumen/actions/runs/42509114335).
+  Light/Dark captures inspected; downloaded unsigned arm64 device IPA revalidated. All 32 web checks passed.
+- **Next action:** monitor [main build/publication](https://github.com/Seifonyx/Lumen/actions/runs/42511043876). Confirm public `native-ios-v0.1.0`
+  assets and `ios/sidestore-source.json`, then update this checkpoint with the release and run links.
+  Actual SideStore installation/opening on the owner's iPhone remains unverified.
+- **Local evidence:** `/workspace/scratch/lumen-native-verified-qa` (PR build 6 and both-phone captures).
 
 ## Next
 
 The owner requested a fresh SwiftUI iOS 26 app in `ios/`, with GitHub macOS builds, simulator screenshots,
-unsigned IPA downloads and SideStore installation. Phase 0 is authorized and in progress; account and provider integration begins in Phase 1.
+unsigned IPA downloads and SideStore installation. Phase 0 is merged and awaiting publication; account and provider integration begins in Phase 1.
 
 Layout proposal: the conversation and composer are the main screen. A sidebar opens history, search,
 projects and Library; the model control opens model/provider options; the composer opens attachments/tools;
 settings live in the sidebar/profile. Use native navigation, sheets and system materials; no bottom tab bar.
 
 Proposed build sequence:
-0. Fresh `ios/` SwiftUI iOS 26 shell: chat/composer/sidebar, native controls, Light/Dark and keyboard layout.
+0. Implemented; publication/device check pending. Fresh `ios/` SwiftUI iOS 26 shell: chat/composer/sidebar, native controls, Light/Dark and keyboard layout.
    GitHub builds, simulator screenshots, versioned unsigned IPA and SideStore installation work end to end.
 1. A real connected conversation: native Google/Firebase sign-in, existing account data, one working provider,
    streaming/Stop, saved messages and reopening the same chat. Verify the SideStore-installed app.
@@ -67,7 +65,7 @@ reply excerpts into projects (synced size undecided), unified search and native 
   replacing the previous detailed agent workflow and design rules.
 - Canvas (`LUMEN_CANVAS=1`) is the production presentation; the ordinary build is the existing fallback.
   This documentation cleanup does not need an application deployment.
-- `sidestore-source.json` lists native iOS 1.1.0 (2026-11-08). Its release process is documented in
-  [SideStore releases](docs/ios/SIDESTORE_RELEASES.md); the IPA was not tested during this cleanup.
+- Root `sidestore-source.json` and `ios-v…` releases belong to the legacy `.demo` app; see
+  [legacy release guide](docs/ios/SIDESTORE_RELEASES.md). Use `ios/README.md` for the fresh native app.
 - `npm run handoff` reports current branch, PR and deployment facts. Earlier shipped work and deleted
   documents remain available in git history.

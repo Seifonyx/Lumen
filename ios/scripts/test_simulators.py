@@ -28,6 +28,7 @@ def main():
         'regular': ['iPhone 17 Pro', 'iPhone 17', 'iPhone 16 Pro'],
     }
     provenance = []
+    failed = []
     for profile, candidates in profiles.items():
         device_type = next((t for name in candidates for t in types if t['name'] == name), None)
         if not device_type:
@@ -55,13 +56,15 @@ def main():
                 ], stdout=stream, stderr=subprocess.STDOUT)
             print(log.read_text()[-16000:], flush=True)
             if test.returncode:
-                raise subprocess.CalledProcessError(test.returncode, 'xcodebuild test-without-building')
+                failed.append(profile)
         finally:
             if result.exists():
                 run('xcrun', 'xcresulttool', 'export', 'attachments', '--path', str(result),
                     '--output-path', str(screenshots))
             subprocess.run(['xcrun', 'simctl', 'shutdown', device], check=False)
             subprocess.run(['xcrun', 'simctl', 'delete', device], check=False)
+    if failed:
+        raise SystemExit('UI journeys failed on: ' + ', '.join(failed))
 
 
 if __name__ == '__main__':

@@ -44,11 +44,17 @@ final class LumenUITests: XCTestCase {
         add(attachment)
     }
 
+    private func enterDraft(_ text: String) {
+        composer.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5),
+                      "The software keyboard must be ready before typing")
+        composer.typeText(text)
+    }
+
     func testDraftSurvivesWorkspaceNavigationAndRelaunch() {
         launchCleanChat()
         defer { app.terminate() }
-        composer.tap()
-        composer.typeText("Keep this draft")
+        enterDraft("Keep this draft")
         app.buttons["openSidebar"].tap()
         app.buttons["sidebar-library"].tap()
         XCTAssertTrue(app.navigationBars["Library"].waitForExistence(timeout: 3))
@@ -63,8 +69,7 @@ final class LumenUITests: XCTestCase {
     func testNewChatCanCancelOrDiscardAnUnsentDraft() {
         launchCleanChat()
         defer { app.terminate() }
-        composer.tap()
-        composer.typeText("Unsent question")
+        enterDraft("Unsent question")
         app.buttons["newChat"].tap()
         XCTAssertTrue(app.buttons["Discard draft"].waitForExistence(timeout: 3))
         capture("discard-confirmation")
@@ -82,8 +87,7 @@ final class LumenUITests: XCTestCase {
     func testComposerStaysAboveKeyboardAndDoesNotSubmitWithoutAModel() {
         launchCleanChat()
         defer { app.terminate() }
-        composer.tap()
-        composer.typeText("A draft above the keyboard")
+        enterDraft("A draft above the keyboard")
         let keyboard = app.keyboards.firstMatch
         XCTAssertTrue(keyboard.waitForExistence(timeout: 3))
         XCTAssertTrue(composer.isHittable)

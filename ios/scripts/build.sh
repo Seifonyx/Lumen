@@ -2,6 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p build/logs build/release
+defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false
 
 xcodebuild -version
 swift test --package-path LumenCore 2>&1 | tee build/logs/core-tests.log

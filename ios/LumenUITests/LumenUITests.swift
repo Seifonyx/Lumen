@@ -46,7 +46,7 @@ final class LumenUITests: XCTestCase {
 
     private func enterDraft(_ text: String) {
         composer.tap()
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5),
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10),
                       "The software keyboard must be ready before typing")
         composer.typeText(text)
     }

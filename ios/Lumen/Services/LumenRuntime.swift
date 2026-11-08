@@ -11,12 +11,30 @@ import LumenCore
     private var activeAccount: String?
 
     init() {
+        #if DEBUG && targetEnvironment(simulator)
+        if DebugIntegration.enabled {
+            let keys = KeychainProviderKeys(service: "io.github.seifonyx.lumen.integration-keys")
+            composer = DraftState(defaults: UserDefaults(suiteName: "lumen.integration")!)
+            engine = ChatEngine(client: OpenAICompatibleStreamingClient(baseURL: DebugIntegration.providerURL),
+                                store: FileConversationStore(directory: DebugIntegration.directory(), legacyDefaults: nil))
+            auth = AuthEngine(client: FirebaseSession(credentialSource: DebugIntegration.credential))
+            connections = ProviderConnections(keyStore: keys, catalog: ProviderCatalog(baseURL: DebugIntegration.providerURL))
+        } else {
+            let keys = KeychainProviderKeys()
+            keys.migrateLegacyKey()
+            composer = DraftState()
+            engine = ChatEngine()
+            auth = AuthEngine(client: FirebaseSession())
+            connections = ProviderConnections(keyStore: keys)
+        }
+        #else
         let keys = KeychainProviderKeys()
         keys.migrateLegacyKey()
         composer = DraftState()
         engine = ChatEngine()
         auth = AuthEngine(client: FirebaseSession())
         connections = ProviderConnections(keyStore: keys)
+        #endif
         sync = CloudChatSync(engine: engine)
         sync.receiveKeys = { [weak connections] uid, keys in
             Task { @MainActor [weak connections] in

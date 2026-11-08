@@ -14,6 +14,8 @@ def run(*args):
 
 
 def main():
+    from native_test_server import start
+    server = start()
     root = Path(__file__).resolve().parents[1]
     inventory = json.loads(output('xcrun', 'simctl', 'list', '--json'))
     runtimes = [r for r in inventory['runtimes']
@@ -63,6 +65,12 @@ def main():
                     '--output-path', str(screenshots))
             subprocess.run(['xcrun', 'simctl', 'shutdown', device], check=False)
             subprocess.run(['xcrun', 'simctl', 'delete', device], check=False)
+    if not failed:
+        from native_test_server import verify_roundtrip
+        checks = verify_roundtrip()
+        (root / 'build' / 'logs' / 'connected-roundtrip.json').write_text(json.dumps(checks, indent=2) + '\n')
+        print(json.dumps(checks), flush=True)
+    server.shutdown()
     if failed:
         raise SystemExit('UI journeys failed on: ' + ', '.join(failed))
 

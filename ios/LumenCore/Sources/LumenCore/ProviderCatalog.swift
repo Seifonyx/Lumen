@@ -13,7 +13,8 @@ public enum AIProviderID: String, CaseIterable, Identifiable, Sendable {
 
 public struct ProviderCatalog: Sendable {
     private let configuration: URLSessionConfiguration
-    public init(urlSession: URLSession = .shared) { configuration = urlSession.configuration }
+    private let baseURL: URL?
+    public init(urlSession: URLSession = .shared, baseURL: URL? = nil) { configuration = urlSession.configuration; self.baseURL = baseURL }
     public func models(provider: AIProviderID, apiKey: String) async throws -> [AIModel] {
         let endpoint: String
         switch provider {
@@ -22,7 +23,7 @@ public struct ProviderCatalog: Sendable {
         case .gemini: endpoint = "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000"
         case .anthropic: endpoint = "https://api.anthropic.com/v1/models?limit=100"
         }
-        var request = URLRequest(url: URL(string: endpoint)!)
+        var request = URLRequest(url: baseURL?.appendingPathComponent("models") ?? URL(string: endpoint)!)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         switch provider {
         case .gemini: request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")

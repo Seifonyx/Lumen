@@ -53,6 +53,8 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSRequiresIPhoneOS: true
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         UIApplicationSupportsIndirectInputEvents: true
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false

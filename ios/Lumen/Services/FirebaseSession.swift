@@ -2,6 +2,7 @@ import Foundation
 import UIKit
 import FirebaseCore
 import FirebaseAuth
+import FirebaseFirestore
 import GoogleSignIn
 import LumenCore
 
@@ -10,6 +11,9 @@ struct FirebaseClientConfiguration: Decodable {
     let clients: [[String: String]]
 
     static func configure() -> FirebaseClientConfiguration {
+        #if DEBUG && targetEnvironment(simulator)
+        if DebugIntegration.enabled { return DebugIntegration.configure() }
+        #endif
         guard let url = Bundle.main.url(forResource: "FirebaseClients", withExtension: "json"),
               let data = try? Data(contentsOf: url),
               let config = try? JSONDecoder().decode(Self.self, from: data),
@@ -36,16 +40,18 @@ struct FirebaseClientConfiguration: Decodable {
     private let changes: AsyncStream<UserProfile?>
     private let continuation: AsyncStream<UserProfile?>.Continuation
     private var operation: UUID?
+    private var signInActive = false
+    private let credentialSource: @MainActor () async throws -> AuthCredential
     var currentUser: UserProfile? { Self.profile(auth.currentUser) }
 
-    init(auth: Auth = Auth.auth()) {
+    init(auth: Auth = Auth.auth(), credentialSource: (@MainActor () async throws -> AuthCredential)? = nil) {
+        self.credentialSource = credentialSource ?? Self.googleCredential
         self.auth = auth
         (changes, continuation) = AsyncStream.makeStream(bufferingPolicy: .bufferingNewest(1))
         handle = auth.addStateDidChangeListener { [weak self] _, user in
-            let profile = Self.profile(user)
             Task { @MainActor [weak self] in
-                guard let self, self.operation == nil else { return }
-                self.continuation.yield(profile)
+                guard let self, !self.signInActive else { return }
+                self.continuation.yield(Self.profile(self.auth.currentUser))
             }
         }
     }
@@ -58,20 +64,27 @@ struct FirebaseClientConfiguration: Decodable {
     func restoreSession() async throws -> UserProfile? { currentUser }
     func userChanges() -> AsyncStream<UserProfile?> { changes }
 
-    func signIn() async throws -> UserProfile {
+    private static func googleCredential() async throws -> AuthCredential {
         guard let window = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene })
             .flatMap(\.windows).first(where: \.isKeyWindow), var presenter = window.rootViewController else {
             throw CocoaError(.userCancelled)
         }
         while let presented = presenter.presentedViewController { presenter = presented }
-        let ticket = UUID()
-        operation = ticket
-        defer { if operation == ticket { operation = nil } }
         let result: GIDSignInResult
         do { result = try await GIDSignIn.sharedInstance.signIn(withPresenting: presenter) }
         catch let error as NSError where error.domain == kGIDSignInErrorDomain && error.code == -5 { throw CancellationError() }
-        guard operation == ticket, let token = result.user.idToken?.tokenString else { throw CancellationError() }
-        let credential = GoogleAuthProvider.credential(withIDToken: token, accessToken: result.user.accessToken.tokenString)
+        guard let token = result.user.idToken?.tokenString else { throw CancellationError() }
+        return GoogleAuthProvider.credential(withIDToken: token, accessToken: result.user.accessToken.tokenString)
+    }
+
+    func signIn() async throws -> UserProfile {
+        guard !signInActive else { throw CancellationError() }
+        signInActive = true
+        let ticket = UUID()
+        operation = ticket
+        defer { signInActive = false; if operation == ticket { operation = nil } }
+        let credential = try await credentialSource()
+        guard operation == ticket else { throw CancellationError() }
         let signedIn = try await auth.signIn(with: credential)
         guard operation == ticket else {
             try? auth.signOut()
@@ -89,7 +102,7 @@ struct FirebaseClientConfiguration: Decodable {
         continuation.yield(nil)
     }
 
-    deinit {
+    isolated deinit {
         if let handle { auth.removeStateDidChangeListener(handle) }
         continuation.finish()
     }

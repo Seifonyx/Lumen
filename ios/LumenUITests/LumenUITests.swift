@@ -9,8 +9,9 @@ final class LumenUITests: XCTestCase {
 
     private func launchCleanChat() {
         continueAfterFailure = false
-        app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launchArguments = ["--lumen-integration", "--lumen-reset-qa", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
+        app.launchArguments.removeAll { $0 == "--lumen-reset-qa" }
         XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 10))
         newChat()
     }
@@ -124,4 +125,99 @@ final class LumenUITests: XCTestCase {
             app.buttons["Done"].tap()
         }
     }
+    private func signInAndChooseModel() {
+        settings()
+        let signIn = app.buttons["googleSignIn"]
+        XCTAssertTrue(signIn.waitForExistence(timeout: 5))
+        signIn.tap()
+        XCTAssertTrue(app.staticTexts["Native QA"].waitForExistence(timeout: 15))
+        app.buttons["Done"].tap()
+        app.buttons["chooseModel"].tap()
+        let model = app.buttons["model-groq-fixture-model"]
+        XCTAssertTrue(model.waitForExistence(timeout: 20))
+        model.tap()
+    }
+
+    func testConnectedSendWebHistorySyncAndSignOut() {
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        enterDraft("A native question")
+        XCTAssertTrue(app.buttons["sendMessage"].isEnabled)
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        XCTAssertNotEqual(composer.value as? String, "A native question")
+        capture("connected-reply")
+        app.buttons["openSidebar"].tap()
+        let webChat = app.buttons["history-web-fixture"]
+        XCTAssertTrue(webChat.waitForExistence(timeout: 10))
+        webChat.tap()
+        XCTAssertTrue(app.staticTexts["An existing web reply."].waitForExistence(timeout: 15))
+        enterDraft("Native follow-up")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        settings()
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 15))
+        app.buttons["Done"].tap()
+        capture("web-history-with-native-reply")
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 10))
+        app.buttons["openSidebar"].tap()
+        XCTAssertTrue(webChat.waitForExistence(timeout: 15))
+        webChat.tap()
+        XCTAssertTrue(app.staticTexts["Native follow-up"].waitForExistence(timeout: 15))
+        settings()
+        app.buttons["signOut"].tap()
+        XCTAssertTrue(app.buttons["googleSignIn"].waitForExistence(timeout: 5))
+        app.buttons["Done"].tap()
+        app.buttons["openSidebar"].tap()
+        XCTAssertFalse(webChat.exists, "Signed-out history must not expose the account's chats")
+        capture("signed-out-private-history")
+    }
+
+    func testConnectedStopPersistsPartialReplyAfterRelaunch() {
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        enterDraft("Stop this reply")
+        app.buttons["sendMessage"].tap()
+        let partial = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Partial reply.")).firstMatch
+        XCTAssertTrue(partial.waitForExistence(timeout: 10))
+        app.buttons["stopStreaming"].tap()
+        XCTAssertTrue(app.staticTexts["Stopped"].waitForExistence(timeout: 3))
+        capture("stopped-reply")
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 10))
+        app.buttons["openSidebar"].tap()
+        let history = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Stop this reply")).firstMatch
+        XCTAssertTrue(history.waitForExistence(timeout: 15))
+        history.tap()
+        XCTAssertTrue(app.staticTexts["Stopped"].waitForExistence(timeout: 10))
+        XCTAssertTrue(partial.exists)
+        XCTAssertFalse(app.buttons["stopStreaming"].exists)
+    }
+
+    func testRejectedProviderKeyShowsErrorAndKeepsTheDraft() {
+        launchCleanChat()
+        defer { app.terminate() }
+        enterDraft("Keep my question")
+        settings()
+        app.buttons["providerSettings"].tap()
+        app.buttons["provider-groq"].tap()
+        let key = app.secureTextFields["apiKeyField"]
+        XCTAssertTrue(key.waitForExistence(timeout: 5))
+        key.tap()
+        key.typeText("fixture-invalid-key")
+        app.buttons["connectProvider"].tap()
+        XCTAssertTrue(app.staticTexts["Groq rejected the API key. Check it in Settings."].waitForExistence(timeout: 10))
+        capture("provider-rejected-key")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.buttons["Done"].tap()
+        XCTAssertEqual(composer.value as? String, "Keep my question")
+        XCTAssertFalse(app.buttons["sendMessage"].isEnabled)
+    }
+
 }

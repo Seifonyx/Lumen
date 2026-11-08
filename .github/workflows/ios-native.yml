@@ -4,7 +4,7 @@ on:
   pull_request:
     paths: ['ios/**', '!ios/README.md', '!ios/sidestore-source.json', '.github/workflows/ios-native.yml']
   push:
-    branches: [main, 'feat/**']
+    branches: [main]
     paths: ['ios/**', '!ios/README.md', '!ios/sidestore-source.json', '.github/workflows/ios-native.yml']
   workflow_dispatch:
     inputs:
@@ -30,6 +30,17 @@ jobs:
       IOS_BUILD_NUMBER: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/cache@v4
+        with:
+          path: ios/build/DerivedData/SourcePackages
+          key: native-packages-${{ runner.os }}-${{ hashFiles('ios/project.yml') }}
       - name: Packaging tests
         run: python3 -m unittest discover -s ios/tests -v
       - name: Project generator

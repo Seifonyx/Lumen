@@ -28,7 +28,12 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
   forms, discovered models, durable Send, Stop, account draft isolation and readable/selectable replies are
   implemented. All32 current core tests pass locally. Mac compile found the iOS Data protection option
   spelling; corrected to completeFileProtectionUntilFirstUserAuthentication, pending next build.
-- Remaining: meaningful connected/emulator tests and screenshots,
+- Connected QA is now implemented: real Firebase Auth/Firestore SDKs against local emulators with the
+  existing rules, HTTP streaming fixture, UI send/Stop/reopen/sign-out/rejected-key journeys on two iPhones.
+  Fixtures are DEBUG+simulator only; packaging now rejects their marker strings in Release (test observed
+  failing first, then passing). Local35 Swift tests and12 Python packaging/Git checks pass. Full Mac run
+  is next; compile/UI/emulator results are not established yet. Auth listener teardown uses isolated deinit.
+- Remaining: Mac connected/emulator tests and screenshot inspection,
   fresh whole-branch review, merge and publish0.2.0 to SideStore. Actual phone Google login is user testing.
 - Local Swift6.2.3: `/workspace/scratch/swift-6.2/usr/bin/swift`. Linux6.0.3 had upstream Observation
   linker bug; do not use. No local Xcode. Use GitHub macOS26/Xcode26.6 for app/UI/IPA.

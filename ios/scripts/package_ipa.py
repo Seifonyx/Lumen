@@ -58,6 +58,8 @@ def validate_app(app):
         raise ValueError('Executable must target an iOS device, not a simulator')
     if binary_minimum is None or binary_minimum < 26 << 16:
         raise ValueError('Executable deployment target must be iOS 26 or newer')
+    if any(marker in binary for marker in [b'--lumen-integration', b'fixture-native-user', b'fixture-provider-key', b'demo-lumen-native']):
+        raise ValueError('Release executable contains a simulator test fixture')
     for resource in app.rglob('*'):
         if resource.is_symlink():
             raise ValueError('Unexpected symlink inside the native app')

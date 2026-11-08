@@ -3,7 +3,8 @@ import Security
 import LumenCore
 
 @MainActor final class KeychainProviderKeys: ProviderKeyStore {
-    private let service = "io.github.seifonyx.lumen.provider-keys"
+    private let service: String
+    init(service: String = "io.github.seifonyx.lumen.provider-keys") { self.service = service }
     private func query(providerID: String, accountID: String) -> [String: Any] {
         [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
          kSecAttrAccount as String: accountID + ":" + providerID,

@@ -36,7 +36,7 @@ Proposed build sequence:
 5. Documents/knowledge and AI tools: editing/import/export, citations, research, images, Study and assistants.
 6. Analysis and coding: sandboxed Python/JavaScript, charts/downloads, GitHub browsing/diffs/commits/PRs/reverts.
 7. Native finish and full parity: voice, settings, accessibility, supported iPhone integrations, performance,
-   reliability and native-app cutover. Keeping the web app stable with fixes is a recommendation, not a confirmed choice.
+   reliability and native-app cutover. The owner confirmed: new features go into native iOS; the web app gets fixes only.
 
 Check document editing/export and the code-execution runtime early to settle feasibility. Background/scheduled
 agents need their own execution and delivery design because iOS can suspend the app.
@@ -57,6 +57,8 @@ reply excerpts into projects (synced size undecided), unified search and native 
 
 ## Decisions
 
+- 2026-11-08: owner confirmed native development takes priority. Add new features to native iOS;
+  maintain the web app with fixes only.
 - Phase 0 is authorized. Fresh native bundle: `io.github.seifonyx.lumen`; legacy `.demo` stays separate.
   New releases use `native-ios-v…` and `ios/sidestore-source.json`. No credentials or account integration in Phase 0.
 - 2026-11-08: the owner liked Setpoint's Swift/GitHub/SideStore development and delivery workflow, and rejected

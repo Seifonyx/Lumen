@@ -68,6 +68,14 @@ jobs:
         run: |
           python3 native/scripts/audit-public-ipa.py --self-test
           python3 native/scripts/audit-public-ipa.py native/artifacts/Lumen.ipa
+      - name: Upload audited public candidate only for explicit iOS release commits
+        if: success() && github.event_name == 'push' && env.LUMEN_NATIVE_MODE == 'account-connected' && contains(github.event.head_commit.message, '[release-ios]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: Lumen-reviewed-public-IPA
+          path: native/artifacts/Lumen.ipa
+          if-no-files-found: error
+          retention-days: 1
       - name: Encrypt private IPA or failure diagnostics
         if: always()
         run: |
@@ -133,3 +141,76 @@ jobs:
       - name: Remove private browser configuration
         if: always() && env.LUMEN_NATIVE_MODE == 'account-connected'
         run: rm -f "$LUMEN_NATIVE_SERVICE_CONFIG"
+
+  publish-reviewed-ios:
+    name: Publish reviewed SideStore release
+    needs: [connected, browser-rc]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/experiment/ios-sideload' && contains(github.event.head_commit.message, '[release-ios]') && contains(github.event.head_commit.message, '[account-ios]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    permissions:
+      contents: write
+    steps:
+      - name: Download the exact IPA already scanned inside the connected job
+        uses: actions/download-artifact@v4
+        with:
+          name: Lumen-reviewed-public-IPA
+          path: release-candidate
+      - name: Independently validate released app identity and exact version
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile,plistlib,json,hashlib
+          ipa=Path("release-candidate/Lumen.ipa")
+          assert ipa.is_file() and 0 < ipa.stat().st_size < 150_000_000
+          with zipfile.ZipFile(ipa) as f:
+              assert f.testzip() is None
+              info=plistlib.loads(f.read("Payload/Lumen.app/Info.plist"))
+              graph=json.loads(f.read("Payload/Lumen.app/public/demo-build.json"))
+          assert info["CFBundleIdentifier"] == "io.github.seifonyx.lumen.demo"
+          assert info["CFBundleShortVersionString"] == "1.1.0"
+          assert info["CFBundleVersion"] == "2"
+          assert info["CFBundleSupportedPlatforms"] == ["iPhoneOS"]
+          assert graph["mode"] == "account-connected"
+          print("PASS public release boundary: version 1.1.0 build 2, same bundle, real account mode")
+          print("SHA256=" + hashlib.sha256(ipa.read_bytes()).hexdigest())
+          PY
+      - name: Publish GitHub release only once, without any native build secrets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: Seifonyx/Lumen
+        run: |
+          if gh release view ios-v1.1.0 > /dev/null 2>&1; then
+            echo 'Refusing to overwrite an existing iOS release.'
+            exit 1
+          fi
+          cat > /tmp/lumen-release-notes.md <<'EOF'
+          First native iOS 26+ SwiftUI/Liquid Glass foundation with a Home screen and preserved Lumen workspace.
+
+          Built from the owner-approved account-connected Lumen configuration and reviewed for public IPA packaging. Google login and native Firebase continuity are preserved in the build; physical-device operation of this new version still requires user confirmation. Previous missing web conversations and OpenRouter-only restrictions are not claimed fixed.
+
+          SideStore-public-IPA-reviewed: YES
+          EOF
+          gh release create ios-v1.1.0 release-candidate/Lumen.ipa --target "$GITHUB_SHA" --title "Lumen 1.1.0 — Native foundation" --notes-file /tmp/lumen-release-notes.md --prerelease
+      - name: Check out the stable SideStore source on main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: source-main
+          persist-credentials: true
+      - name: Verify anonymous download and update existing SideStore feed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LUMEN_RELEASE_TAG: ios-v1.1.0
+        run: |
+          cd source-main
+          python3 scripts/ios/update-sidestore-source.py
+          if git diff --quiet -- sidestore-source.json; then
+            echo "SideStore source already current."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sidestore-source.json
+          git commit -m 'chore(ios): publish Lumen 1.1.0 in SideStore source'
+          git push origin HEAD:main

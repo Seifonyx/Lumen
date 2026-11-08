@@ -4,20 +4,31 @@ Updated: 2026-11-08. This is the current continuation point; agent update guidan
 
 ## Now
 
-- **Branch:** `codex/review-native-phase1`, reviewing PR #146 at `85e4222` against Phase 0 `14bf502`.
-- **Current goal:** independently assess Antigravity's Phase 1 before any merge/release. The PR remains unchanged.
-- **Review so far:** Google sign-in calls a fabricated preview profile; conversations only use global local
-  preferences, without the existing account's web data; all selected providers route to Groq. Core cancellation
-  and persistence concerns are being checked with isolated review probes. Build version is still 0.1.0,
-  which is already published and will block a different source commit from reusing the release tag.
-- **Probe branch:** adds diagnostic tests/workflow only; no application implementation changes.
-- **Phase 0:** Published: [Lumen native 0.1.0, build 7](https://github.com/Seifonyx/Lumen/releases/tag/native-ios-v0.1.0).
-- **Phase 1 In Progress:**
-  - `LumenCore`: Implemented `ChatMessage`, `Conversation`, `AIProvider` (`AIModel`, `OpenAICompatibleStreamingClient`), `ChatEngine` (`send`, `stopStreaming`, conversation switching, persistence), `UserProfile`, and `AuthEngine` (Firebase Auth REST, preview sign-in, session persistence).
-  - `LumenCoreTests`: Added `ChatEngineTests` and `AuthEngineTests` covering async streaming, stop cancellation, persistence, and auth state restoration.
-  - `Lumen UI`: Wired `ChatEngine` and `AuthEngine` into `ChatView` (live bubbles, auto-scroll, Send/Stop buttons, model picker), `SidebarView` (saved chat history, account status), `ModelSheet` (model selection), and `SettingsView` (API key configuration, account sign-in/sign-out).
-- **Checks:** `SourceCommitTests` passed (3/3 tests). Packaging guardrails verified.
-- **Next action:** run isolated Mac review probes, inspect the PR screenshots/artifact, and return an evidence-based verdict.
+- **Branch:** `codex/review-native-phase1`. Review completed for [PR #146](https://github.com/Seifonyx/Lumen/pull/146)
+  at `85e4222`, against Phase 0 `14bf502`. **Verdict: needs changes; Phase 1 is not ready for release.**
+  The original PR is unchanged and unmerged. This branch adds review tests/workflow and this checkpoint only.
+- **Original verification:** [native CI](https://github.com/Seifonyx/Lumen/actions/runs/42522817455) passed
+  9 core tests and the 4 existing shell UI journeys on each iPhone profile. Its screenshots were inspected.
+  The auth tests exercise preview identity; no live Google/account sync/provider conversation was verified.
+- **New verification:** [isolated Mac probes](https://github.com/Seifonyx/Lumen/actions/runs/42525884673)
+  reran the original 9 core tests successfully and reproduced 3 failures: OpenAI selection requests Groq,
+  submitted chat is absent from persisted state while streaming, and New Chat during streaming traps
+  with `Fatal error: Index out of range` (`ChatEngine.swift:98`). Probe failures are intentional review evidence.
+  The 11 Python packaging/Git checks also pass locally.
+- **Phase 1 gaps:** Google button calls `signInPreview()` and fabricates a local profile (`SettingsView:53`,
+  `AuthEngine:75`); no real auth flow invokes Firebase. Conversation storage is a global UserDefaults blob,
+  with no existing web account data/sync (`ChatEngine:135` versus web `modelRouter/{uid}/chats/...`).
+  `AIProvider:37` routes all selected models/keys to Groq, despite offering Gemini/OpenAI/Anthropic.
+- **Other improvements:** provider key uses plain AppStorage (`SettingsView:10`); use Keychain. Stream state
+  needs conversation/message ownership and cancellation guards; persist the submitted turn before networking.
+- **Release blocker:** marketing version is still 0.1.0, already released. The actual publish guard was
+  exercised against the downloaded PR artifact and existing tag metadata; it rejects the changed source.
+  Bump the version and update foundation-only release notes before publishing the repaired Phase 1.
+- **Next action:** repair real Google/Firebase auth and account-compatible storage, validate one provider,
+  fix the reproduced streaming/persistence bugs and credential storage, then test the connected flows and
+  build a new version for SideStore. No application fixes or Phase 1 release were made during this review.
+- **Local evidence:** `/workspace/scratch/lumen-phase1-qa` and `/workspace/scratch/lumen-phase1-review-probes.log`.
+
 
 ## Next
 

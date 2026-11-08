@@ -10,11 +10,12 @@ Updated: 2026-11-08. This is the current continuation point; agent update guidan
 - **Done:** shell/sidebar/native sheets, persistent draft and appearance settings; project generation,
   core/UI tests, device-IPA validation and independent native build/release workflow implemented.
 - **Verification:** eight packaging checks and three real-Git source-update checks passed locally after RED;
-  syntax/configuration checks passed. The first Mac run passed all three core tests, then found a Swift 6
-  XCTest setup isolation error. Replaced lifecycle overrides with actor-isolated per-test setup/cleanup.
+  syntax/configuration checks passed. Mac rerun passed all three core tests, compiled the app/UI test bundle
+  and produced the unsigned device archive. Packaging caught XcodeGen's default version; wired Info.plist
+  to MARKETING_VERSION/CURRENT_PROJECT_VERSION. XCTest setup isolation was fixed in the prior run.
   Review also found a concurrent-main feed push race; bounded fetch/rebase retry now has regression coverage.
-- **Next action:** rerun native CI, inspect actual simulator captures, then publish the IPA. Native compilation,
-  UI journeys and installable artifact are not yet verified. Work is in [PR #145](https://github.com/Seifonyx/Lumen/pull/145).
+- **Next action:** rerun native CI, inspect actual simulator captures, then publish the IPA. UI journeys and
+  the final installable artifact are not yet verified. Work is in [PR #145](https://github.com/Seifonyx/Lumen/pull/145).
 
 ## Next
 

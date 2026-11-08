@@ -30,7 +30,7 @@ def validate_app(app):
     version = info.get('CFBundleShortVersionString', '')
     build = info.get('CFBundleVersion', '')
     if not re.fullmatch(r'\d+\.\d+\.\d+', version) or not re.fullmatch(r'[1-9]\d*', build):
-        raise ValueError('Expected semantic marketing version and positive numeric build')
+        raise ValueError(f'Expected semantic marketing version and positive numeric build; got {version!r}, {build!r}')
     name = info.get('CFBundleExecutable', '')
     if not name or Path(name).name != name or name in {'.', '..'}:
         raise ValueError('Invalid app executable name')

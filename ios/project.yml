@@ -33,6 +33,8 @@ targets:
       path: build/Generated/Info.plist
       properties:
         CFBundleDisplayName: Lumen
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSRequiresIPhoneOS: true
         UIApplicationSupportsIndirectInputEvents: true
         UIApplicationSceneManifest:

@@ -1,9 +1,9 @@
 import {doc,setDoc,type Firestore} from 'firebase/firestore';
 import {NativeAiConsent,consentKey} from './ai-consent';
-import {onIdTokenChanged,signInWithCredential,signOut,GoogleAuthProvider,type Auth,type User} from 'firebase/auth';
+import {onIdTokenChanged,signInWithCredential,signOut,type Auth,type User} from 'firebase/auth';
 import {registerPlugin} from '@capacitor/core';
 import {RealSession,type NativeCredential} from '../integration/real-session';
-import {verifyNativeGoogleToken} from '../integration/google-token';
+import {nativeFirebaseCredential} from './google-credential';
 import {authFailure} from '../integration/auth-errors';
 import config from 'lumen:service-config';
 import {accountScope} from '../integration/runtime';
@@ -15,8 +15,8 @@ const accounts=new Map<string,AccountKeyCache>();
 function coordinator(auth:Auth){
  if(!session)session=new RealSession<User>({current:()=>auth.currentUser,watch:fn=>onIdTokenChanged(auth,fn),
   signIn:async c=>{
-   const idToken=await verifyNativeGoogleToken(c,config.webClientId);
-   try{return (await signInWithCredential(auth,GoogleAuthProvider.credential(idToken))).user;}
+   const credential=await nativeFirebaseCredential(c,config.webClientId);
+   try{return (await signInWithCredential(auth,credential)).user;}
    catch(error){throw authFailure('firebase',error);}
   },
   signOut:()=>signOut(auth)},

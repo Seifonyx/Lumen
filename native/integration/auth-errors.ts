@@ -35,6 +35,7 @@ function codeOf(error:unknown):string {
 }
 const firebaseCodes:Record<string,AuthCode>={
  'auth/network-request-failed':'AUTH_FIREBASE_NETWORK',
+ 'auth/missing-or-invalid-nonce':'AUTH_NONCE',
  'auth/invalid-credential':'AUTH_FIREBASE_CREDENTIAL','auth/invalid-idp-response':'AUTH_FIREBASE_CREDENTIAL',
  'auth/user-disabled':'AUTH_ACCOUNT_DISABLED',
  'auth/operation-not-allowed':'AUTH_FIREBASE_CONFIG','auth/invalid-api-key':'AUTH_FIREBASE_CONFIG','auth/app-not-authorized':'AUTH_FIREBASE_CONFIG'

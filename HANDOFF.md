@@ -10,6 +10,13 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
+- Latest physical screenshot reaches AUTH_FIREBASE, beyond signing/native token validation. Found a concrete
+  handoff defect: GoogleAuthProvider.credential dropped rawNonce after local nonce validation. Native exchange now
+  uses Firebase OAuthProvider google.com with idToken + rawNonce; local checks stay strict. Focused SDK tests and
+  Chromium/WebKit assert the actual Firebase postBody carries nonce, and invalid nonce never reaches exchange.
+  Generic device error does not independently prove the server's exact error; no real credentials used in QA.
+
+
 - **Signing blocker:** Sideloadly installations.db proves a rewritten installed bundle ID. Private account SDK
   configuration now expects that exact ID and its newly registered matching Google iOS client; source bundle stays
   unchanged for automatic in-place signing. Swift equality/nonce/callback checks remain intact. CI unsigned-package

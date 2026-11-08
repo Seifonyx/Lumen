@@ -36,7 +36,7 @@ try{for(const engine of [chromium,webkit]){
   const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'}),outside=[],errors=[];let exchanges=0;
   page.on('pageerror',e=>errors.push(e.message));
   await page.route('**/*',r=>{const u=new URL(r.request().url());if(u.origin==='http://127.0.0.1:5217')return r.continue();
-   if(u.hostname==='identitytoolkit.googleapis.com'&&u.pathname==='/v1/accounts:signInWithIdp'){exchanges++;return r.fulfill({status:400,json:{error:{code:400,message:'INVALID_IDP_RESPONSE : NEVER_SHOW_TOKEN_CALLBACK_OR_IDENTITY'}}});}
+   if(u.hostname==='identitytoolkit.googleapis.com'&&u.pathname==='/v1/accounts:signInWithIdp'){const body=JSON.parse(r.request().postData()||'{}');assert.equal(new URLSearchParams(body.postBody).get('nonce'),'ABCDEF12-1234-1234-1234-ABCDEF123456'.repeat(2),'Firebase exchange must retain validated raw nonce');exchanges++;return r.fulfill({status:400,json:{error:{code:400,message:'INVALID_IDP_RESPONSE : NEVER_SHOW_TOKEN_CALLBACK_OR_IDENTITY'}}});}
    outside.push(u.origin);return r.abort();});
   await page.addInitScript(()=>{const raw=localStorage;raw.setItem('mr.account.preview-native-demo-a',JSON.stringify({settings:{projects:[{id:'retained',name:'Demo preserved'}]}}));window.authLegacyRead=()=>raw.getItem('mr.account.preview-native-demo-a');});
   await page.goto('http://127.0.0.1:5217');

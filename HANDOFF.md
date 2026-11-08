@@ -10,7 +10,10 @@ Updated: 2026-11-08. This is the current continuation point; agent update guidan
   removed the design rulebook and historical UI/Router reports. Kept setup, release and licence references.
 - **Verification:** Markdown links/commands, preserved licences, Node/shell syntax and offline handoff passed;
   seven reminder smoke checks passed. Independent read-only review found no material issues.
-  Application-file edits only remove comments referencing deleted documents; full app suites were not rerun.
+  CI passed typecheck, builds, budgets and units, then flagged a stale historical allowlist. Added only the
+  existing SideStore listing workflow and the relay README to that list; see
+  [PR #144](https://github.com/Seifonyx/Lumen/pull/144) for the current CI result.
+  Application-file edits only remove comments referencing deleted documents; no application deployment is needed.
 - **Next action:** review the proposed phases in this chat, then begin Foundation when the owner requests it.
 
 ## Next

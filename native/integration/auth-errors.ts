@@ -16,6 +16,7 @@ const messages = {
  AUTH_TOKEN_CLIENT: 'Google returned a credential for a different client. This build needs its sign-in configuration corrected.',
  AUTH_TOKEN_EXPIRED: 'The Google sign-in expired. Check the iPhone date and time, then try again.',
  AUTH_NONCE: 'The sign-in security check failed. Close Google sign-in and try a fresh sign-in.',
+ AUTH_FIREBASE_KEY_POLICY: 'Firebase rejected this app’s key configuration. Install the updated Lumen build.',
  AUTH_FIREBASE_NETWORK: 'Google completed, but Lumen could not connect to account sign-in. Check your connection and retry.',
  AUTH_FIREBASE_CREDENTIAL: 'The sign-in service rejected the Google credential. Try a fresh sign-in.',
  AUTH_ACCOUNT_DISABLED: 'This account is disabled. Use an authorized Lumen account.',
@@ -42,6 +43,7 @@ const firebaseCodes:Record<string,AuthCode>={
 };
 export function authFailure(stage:'google'|'firebase'|'session',error:unknown):NativeAuthError {
  const code=codeOf(error);
+ if(stage==='firebase'&&/^auth\/(?:api-key-(?:http-referrer|ios-app|service)-blocked|requests-from-(?:referer|this-ios-client-application)-|requests-to-this-api-)/.test(code))return new NativeAuthError('AUTH_FIREBASE_KEY_POLICY');
  if(Object.hasOwn(messages,code))return new NativeAuthError(code as AuthCode);
  if(stage==='firebase'&&Object.hasOwn(firebaseCodes,code))return new NativeAuthError(firebaseCodes[code]);
  if(stage==='google'&&['UNIMPLEMENTED','UNAVAILABLE'].includes(code))return new NativeAuthError('AUTH_BRIDGE');

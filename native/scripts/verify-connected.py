@@ -26,6 +26,10 @@ assert native.get('aiProvider') == 'openrouter'
 if account: assert info['CFBundleDisplayName'] == 'Lumen'
 for module in ['native/services/main.ts', 'native/services/account.ts', 'native/services/sync.ts', 'native/services/KeysPanel.tsx', 'native/services/ai-consent.ts']:
     assert module in graph['modules'], 'Missing real-service entry'
+if config.get('nativeApiKey'):
+    assert config['nativeApiKey'] != config['apiKey']
+    assert config['nativeApiKeyBundleId'] == native['signedBundleId']
+    assert 'native/services/firebase-request.ts' in graph['modules'], 'Missing native key restriction transport'
 assert any('node_modules/@firebase/auth/' in m for m in graph['modules'])
 assert any('node_modules/@firebase/firestore/' in m for m in graph['modules'])
 assert not any(m.startswith('.qa-build/') for m in graph['modules'])

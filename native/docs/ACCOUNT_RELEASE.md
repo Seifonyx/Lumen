@@ -15,6 +15,11 @@ An iOS registration and matching Google iOS client were added to the existing Lu
 Google provider/server client reused; no rules, schema, web hosting, billing plan or account records changed.
 Administrative tooling reads configuration metadata only. It never signs into the app or reads user documents.
 
+The native runtime selects the existing iOS-restricted Firebase API key, bound to the independently verified installed
+bundle, instead of the website's referrer-restricted key. Guarded Firebase requests carry the trusted iOS bundle
+header; browser-key restrictions and all existing native key API targets remain. Only the exact installed identity
+was added to the existing iOS allowlist. Canonical website config remains pinned and unchanged.
+
 ## User behavior
 
 Sign in with the same authorized Google account used on Lumen's web app. Firebase remains the identity owner,
@@ -40,8 +45,10 @@ remote research, image generation, embeddings and worker/CDN execution remain un
 must not be treated as proof of native execution. These are future incremental compatibility work, not a reason
 to activate unrestricted networking or paid fallback for this release. Preserve canonical web capabilities unchanged.
 
-The original physical-iPhone Google failure's stage is still unknown. Startup restore/login ordering is fixed,
-with safe signing/callback/Keychain/nonce/Firebase error codes preserved. A production iOS client does not itself
+The latest physical report reaches Firebase exchange, beyond native signing and token checks. A no-referrer
+synthetic invalid-token probe reproduces rejection by the old website key before credential validation. Native
+key/header probes now reach credential validation, with startup ordering and nonce handoff corrections retained.
+Safe signing/callback/Keychain/nonce/Firebase error codes are preserved. An iOS client does not itself
 prove that Sideloadly signing, native callback or Keychain works on the owner's device. No success claim or manual
 prelaunch checklist is substituted for that limitation.
 
@@ -58,7 +65,8 @@ are unchanged. No web deployment or PR merge is necessary to install the native 
 
 ## Verification
 
-All QA uses synthetic identities, mocked Firebase credential rejection or loopback emulators. No real Google
+QA uses synthetic identities, mocked Firebase credential rejection or loopback emulators. Fixed invalid-token
+backend probes verify only key policy; no account is signed in/created and no user data is requested. No real Google
 sign-in, production conversation read/write, provider credential or live inference is used by automation. Focused
 checks cover canonical build pinning, explicit mode approval, token/nonce checks, project/account consent isolation,
 legacy-cache preservation, actual Chromium/WebKit Login and namespaced IndexedDB, plus existing native regressions.

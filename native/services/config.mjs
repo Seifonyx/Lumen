@@ -1,4 +1,4 @@
-const fields=new Set(['mode','projectId','projectNumber','apiKey','appId','iosClientId','webClientId','bundleId','signedBundleId','approvedTestEnvironment','approvedExistingAccounts']);
+const fields=new Set(['mode','projectId','projectNumber','apiKey','appId','iosClientId','webClientId','bundleId','signedBundleId','approvedTestEnvironment','approvedExistingAccounts','nativeApiKey','nativeApiKeyBundleId']);
 export const freeAiProject=project=>['lumen-ios-test','the-model-router'].includes(project);
 export function validateServiceConfig(input){
  if(!input||typeof input!=='object'||Object.keys(input).some(k=>!fields.has(k)))throw Error('Only non-secret isolated test SDK configuration is accepted');
@@ -13,13 +13,16 @@ export function validateServiceConfig(input){
  if(c.bundleId!=='io.github.seifonyx.lumen.demo')throw Error('Installed bundle identity must be preserved');
  const signedBundleId=c.signedBundleId||c.bundleId;
  if(typeof signedBundleId!=='string'||signedBundleId.length>160||!/^([A-Za-z0-9-]+\.)+[A-Za-z0-9-]+$/.test(signedBundleId))throw Error('Invalid installed signing bundle ID');
+ if(c.nativeApiKey!==undefined||c.nativeApiKeyBundleId!==undefined){
+  if(!account||typeof c.nativeApiKey!=='string'||!c.nativeApiKey||c.nativeApiKey.length>256||c.nativeApiKey===c.apiKey||c.nativeApiKeyBundleId!==signedBundleId)throw Error('Native Firebase key must be distinct and bound to the approved installed app');
+ }
  return Object.freeze({...c,signedBundleId,callbackScheme:c.iosClientId.split('.').reverse().join('.'),authDomain:c.projectId+'.firebaseapp.com'});
 }
 export function requestAllowed(c,raw){
  try{
   const u=new URL(raw);if(u.protocol!=='https:'||u.username||u.password||u.port)return false;
-  if(u.hostname==='identitytoolkit.googleapis.com')return /^\/v1\/accounts:(signInWithIdp|lookup)$/.test(u.pathname)&&u.searchParams.get('key')===c.apiKey;
-  if(u.hostname==='securetoken.googleapis.com')return u.pathname==='/v1/token'&&u.searchParams.get('key')===c.apiKey;
+  if(u.hostname==='identitytoolkit.googleapis.com')return /^\/v1\/accounts:(signInWithIdp|lookup)$/.test(u.pathname)&&u.searchParams.get('key')===(c.nativeApiKey||c.apiKey);
+  if(u.hostname==='securetoken.googleapis.com')return u.pathname==='/v1/token'&&u.searchParams.get('key')===(c.nativeApiKey||c.apiKey);
   if(u.hostname==='firestore.googleapis.com'){
    const db='projects/'+c.projectId+'/databases/(default)';
    return u.pathname.startsWith('/v1/'+db+'/')||/^\/google\.firestore\.v1\.Firestore\/(Listen|Write)\/channel$/.test(u.pathname)&&u.searchParams.get('database')===db;

@@ -10,3 +10,9 @@ test('stage-specific messages never reveal SDK descriptions, tokens or callback 
  assert.equal(signInProblem(new DOMException(secret,'AbortError')).code,'AUTH_CANCELED');
  assert.equal(signInProblem({code:'__proto__',message:secret}).code,'AUTH_UNKNOWN');
 });
+
+test('Firebase application-key policy errors never expose a referrer or installed identity',()=>{
+ for(const code of ['auth/requests-from-referer-https://private.invalid/token-are-blocked.','auth/requests-from-this-ios-client-application-private-id-are-blocked.','auth/api-key-http-referrer-blocked']){
+  const out=signInProblem(authFailure('firebase',{code,message:'private token details'}));assert.equal(out.code,'AUTH_FIREBASE_KEY_POLICY');assert(!JSON.stringify(out).includes('private'));
+ }
+});

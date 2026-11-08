@@ -3,7 +3,8 @@ import {FreeNativeProvider} from './free-provider';
 import {accountScope} from '../integration/runtime';
 import config from 'lumen:service-config';
 import {requestAllowed,freeAiProject} from './config.mjs';
-const nativeFetch=globalThis.fetch.bind(globalThis);
+import {nativeFirebaseFetch,installNativeFirebaseXHR} from './firebase-request';
+const nativeFetch=nativeFirebaseFetch(config,globalThis.fetch.bind(globalThis));
 export const nativeAiConsent=new NativeAiConsent(accountScope,localStorage,config.projectId);
 const ai=new FreeNativeProvider(accountScope,()=>nativeAiConsent.current(),nativeFetch);
 nativeAiConsent.subscribe(()=>ai.invalidate());
@@ -32,6 +33,7 @@ XMLHttpRequest.prototype.open=function(method:string,url:string|URL,async:boolea
  if(user||password||!allowed(new URL(String(url),location.href)))throw new Error('Test network destination denied.');
  open.call(this,method,url,async,user,password);
 };
+installNativeFirebaseXHR(config);
 for(const name of ['WebSocket','EventSource','SharedWorker','Worker'] as const){
  Object.defineProperty(globalThis,name,{configurable:true,value:class{constructor(){throw new Error('This network/runtime facility is not enabled in the test build.');}}});
 }

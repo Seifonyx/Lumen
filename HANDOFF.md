@@ -5,7 +5,7 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 ## Now
 
 - Branch `codex/phase1-ready`; owner authorized fixing all Phase1 defects and shipping the native IPA.
-  PR146 (`feat/phase1-connected-chat`) is being updated to the repaired branch. Main is still Phase0
+  PR146 (`feat/phase1-connected-chat`) now points to repaired head `4494dba`. Main is still Phase0
   `14bf502`. Do not merge until final Native iOS CI and screenshot inspection pass.
 - Both fresh Firebase iOS apps are verified in `the-model-router`: `io.github.seifonyx.lumen` and
   `io.github.seifonyx.lumen.M2WDSAZ2A5`. Nickname Lumen is valid. Public config is bundled. Real Google/
@@ -25,7 +25,10 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
   denial and HTTP fixture. Exact current rules are staged under ignored build/emulators, never deployed.
 - Mac development run42534088538 at e517b4f is still running full app/Release/SDK emulator/UI/screenshots.
   Earlier Mac failures (Swift API naming, actor isolation, Darwin HTTP body test representation) are fixed.
-  Final PR Native iOS run must include latest follow-ups, then inspect screenshots and verify deletion roundtrip.
+  Official PR run42535460827 at4494dba is being superseded by a timeout-only update to50 minutes, matching
+  the development run. Baseline4 shell journeys ×2 phones took18 minutes; Phase1 doubles journeys and adds
+  SDK/emulator builds. Inspect final screenshots/deletion roundtrip before merge. Dev job128894417675
+  continues unaffected; the official run at the next PR head is the merge gate.
 - Temporary development workflow and Firebase inspector are removed in this update. Version0.2.0 and
   current release notes are ready. Next: official PR CI, fix any runtime/UI failures, merge, verify main IPA
   publication and public SideStore source. Actual Google chooser/SideStore signing need the owner's phone.

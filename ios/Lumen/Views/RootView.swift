@@ -4,6 +4,7 @@ import LumenCore
 struct RootView: View {
     @Bindable var composer: DraftState
     @Bindable var engine: ChatEngine
+    @Bindable var auth: AuthEngine
     @State private var path: [WorkspaceRoute] = []
     @State private var sidebarOpen = false
     @State private var settingsOpen = false
@@ -65,6 +66,7 @@ struct RootView: View {
 
                     SidebarView(
                         engine: engine,
+                        auth: auth,
                         newChat: requestNewChat,
                         open: { route in
                             sidebarOpen = false
@@ -90,7 +92,7 @@ struct RootView: View {
             }
             .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: sidebarOpen)
         }
-        .sheet(isPresented: $settingsOpen) { SettingsView(composer: composer, engine: engine) }
+        .sheet(isPresented: $settingsOpen) { SettingsView(composer: composer, engine: engine, auth: auth) }
         .sheet(isPresented: $modelsOpen) { ModelSheet(engine: engine) }
         .alert("Start a new chat?", isPresented: $discardConfirmation) {
             Button("Discard draft", role: .destructive) { startNewChat() }

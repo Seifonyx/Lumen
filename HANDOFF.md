@@ -7,11 +7,11 @@ Updated: 2026-11-08. This is the current continuation point; agent update guidan
 - **Branch:** `feat/phase1-connected-chat`. Phase 1 implementation underway.
 - **Phase 0:** Published: [Lumen native 0.1.0, build 7](https://github.com/Seifonyx/Lumen/releases/tag/native-ios-v0.1.0).
 - **Phase 1 In Progress:**
-  - `LumenCore`: Implemented `ChatMessage`, `Conversation`, `AIProvider` (`AIModel`, `OpenAICompatibleStreamingClient`), and `ChatEngine` (`send`, `stopStreaming`, conversation switching, persistence).
-  - `LumenCoreTests`: Added `ChatEngineTests` covering async streaming, stop cancellation, conversation history, and persistence.
-  - `Lumen UI`: Wired `ChatEngine` into `ChatView` (live bubbles, auto-scroll, Send/Stop buttons, model picker), `SidebarView` (saved chat history), `ModelSheet` (model selection), and `SettingsView` (API key configuration).
+  - `LumenCore`: Implemented `ChatMessage`, `Conversation`, `AIProvider` (`AIModel`, `OpenAICompatibleStreamingClient`), `ChatEngine` (`send`, `stopStreaming`, conversation switching, persistence), `UserProfile`, and `AuthEngine` (Firebase Auth REST, preview sign-in, session persistence).
+  - `LumenCoreTests`: Added `ChatEngineTests` and `AuthEngineTests` covering async streaming, stop cancellation, persistence, and auth state restoration.
+  - `Lumen UI`: Wired `ChatEngine` and `AuthEngine` into `ChatView` (live bubbles, auto-scroll, Send/Stop buttons, model picker), `SidebarView` (saved chat history, account status), `ModelSheet` (model selection), and `SettingsView` (API key configuration, account sign-in/sign-out).
 - **Checks:** `SourceCommitTests` passed (3/3 tests). Packaging guardrails verified.
-- **Next implementation:** Push `feat/phase1-connected-chat` to trigger GitHub Actions PR checks, verify simulator test suite, and wire Firebase Auth / account sync.
+- **Next implementation:** Push changes, monitor GitHub Actions PR checks on PR #146, and verify build artifacts.
 
 ## Next
 

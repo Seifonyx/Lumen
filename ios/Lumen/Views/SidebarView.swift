@@ -3,6 +3,7 @@ import LumenCore
 
 struct SidebarView: View {
     @Bindable var engine: ChatEngine
+    @Bindable var auth: AuthEngine
     var newChat: () -> Void
     var open: (WorkspaceRoute) -> Void
     var selectConversation: (Conversation) -> Void
@@ -74,9 +75,26 @@ struct SidebarView: View {
             }
 
             Divider()
-            row("Settings", icon: "person.crop.circle", action: settings)
-                .accessibilityIdentifier("openSettings")
-                .padding(16)
+            Button(action: settings) {
+                HStack(spacing: 12) {
+                    Image(systemName: "person.crop.circle")
+                        .frame(width: 24)
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(auth.currentUser?.displayName ?? "Settings")
+                            .font(.body)
+                        if let email = auth.currentUser?.email, !email.isEmpty {
+                            Text(email)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer(minLength: 0)
+                }
+            }
+            .buttonStyle(SidebarRowStyle())
+            .accessibilityIdentifier("openSettings")
+            .padding(16)
         }
         .accessibilityElement(children: .contain)
         .accessibilityAction(.escape, close)

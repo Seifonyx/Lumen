@@ -1,9 +1,12 @@
-const fields=new Set(['mode','projectId','projectNumber','apiKey','appId','iosClientId','webClientId','bundleId','signedBundleId','approvedTestEnvironment']);
+const fields=new Set(['mode','projectId','projectNumber','apiKey','appId','iosClientId','webClientId','bundleId','signedBundleId','approvedTestEnvironment','approvedExistingAccounts']);
+export const freeAiProject=project=>['lumen-ios-test','the-model-router'].includes(project);
 export function validateServiceConfig(input){
  if(!input||typeof input!=='object'||Object.keys(input).some(k=>!fields.has(k)))throw Error('Only non-secret isolated test SDK configuration is accepted');
  const c={...input};
- if(c.mode!=='isolated-test'||c.approvedTestEnvironment!==true)throw Error('Explicit isolated-test configuration approval is required');
- if(typeof c.projectId!=='string'||!/^[a-z][a-z0-9-]{5,29}$/.test(c.projectId)||['the-model-router','lumen-chat','model-router'].includes(c.projectId))throw Error('Production or invalid Firebase project refused');
+ const account=c.mode==='account-connected';
+ if(account){if(c.approvedExistingAccounts!==true||c.approvedTestEnvironment!==undefined||c.projectId!=='the-model-router')throw Error('Explicit existing-account configuration approval is required');}
+ else if(c.mode!=='isolated-test'||c.approvedTestEnvironment!==true||c.approvedExistingAccounts!==undefined)throw Error('Explicit isolated-test configuration approval is required');
+ if(typeof c.projectId!=='string'||!/^[a-z][a-z0-9-]{5,29}$/.test(c.projectId)||!account&&['the-model-router','lumen-chat','model-router'].includes(c.projectId))throw Error('Production or invalid Firebase project refused');
  if(!/^\d+$/.test(c.projectNumber)||typeof c.apiKey!=='string'||!c.apiKey||c.apiKey.length>256)throw Error('Missing test Firebase SDK configuration');
  if(!new RegExp('^1:'+c.projectNumber+':web:[a-zA-Z0-9]+$').test(c.appId))throw Error('Firebase app does not match test project number');
  for(const name of ['iosClientId','webClientId'])if(typeof c[name]!=='string'||!new RegExp('^'+c.projectNumber+'-[a-zA-Z0-9_-]+\\.apps\\.googleusercontent\\.com$').test(c[name]))throw Error('OAuth client does not match test project number');

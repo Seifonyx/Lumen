@@ -18,19 +18,19 @@ final class LumenGoogleAuthPlugin: CAPPlugin, CAPBridgedPlugin {
     private let vault = NativeSessionVault()
     private var configuration: [String: String]? {
         guard let c = Bundle.main.object(forInfoDictionaryKey: "LumenTestServices") as? [String: String],
-              c["mode"] == "isolated-test", c["projectId"] != "the-model-router",
+              ((c["mode"] == "isolated-test" && c["projectId"] != "the-model-router") || (c["mode"] == "account-connected" && c["projectId"] == "the-model-router")),
               c["bundleId"] == "io.github.seifonyx.lumen.demo", c["signedBundleId"] == Bundle.main.bundleIdentifier,
               c["iosClientId"]?.hasSuffix(".apps.googleusercontent.com") == true else { return nil }
         return c
     }
     private func allowed(_ call: CAPPluginCall) -> Bool {
         if let c = Bundle.main.object(forInfoDictionaryKey: "LumenTestServices") as? [String: String],
-           c["mode"] == "isolated-test", c["signedBundleId"] != Bundle.main.bundleIdentifier {
-            call.reject("Installed signing identity does not match the approved test configuration.", "AUTH_SIGNING"); return false
+           ["isolated-test", "account-connected"].contains(c["mode"] ?? ""), c["signedBundleId"] != Bundle.main.bundleIdentifier {
+            call.reject("Installed signing identity does not match the approved sign-in configuration.", "AUTH_SIGNING"); return false
         }
         guard configuration != nil else {
-            let test = (Bundle.main.object(forInfoDictionaryKey: "LumenTestServices") as? [String: String])?["mode"] == "isolated-test"
-            call.reject(test ? "Test sign-in configuration does not match this installed app." : "Real sign-in is disabled in the offline demo.", test ? "AUTH_CONFIG" : "OFFLINE_DEMO"); return false
+            let test = (Bundle.main.object(forInfoDictionaryKey: "LumenTestServices") as? [String: String]).map { ["isolated-test", "account-connected"].contains($0["mode"] ?? "") } == true
+            call.reject(test ? "Sign-in configuration does not match this installed app." : "Real sign-in is disabled in the offline demo.", test ? "AUTH_CONFIG" : "OFFLINE_DEMO"); return false
         }
         let c = configuration!
         let schemes = (Bundle.main.object(forInfoDictionaryKey: "CFBundleURLTypes") as? [[String: Any]])?
@@ -130,7 +130,7 @@ final class LumenGoogleAuthPlugin: CAPPlugin, CAPBridgedPlugin {
 // Consume SDK-owned callbacks even if invalid/replayed; never forward credential-bearing URLs to Canvas.
 func LumenHandleGoogleURL(_ url: URL) -> Bool {
     guard let c = Bundle.main.object(forInfoDictionaryKey: "LumenTestServices") as? [String: String],
-          c["mode"] == "isolated-test", url.scheme == c["callbackScheme"] else { return false }
+          ((c["mode"] == "isolated-test" && c["projectId"] != "the-model-router") || (c["mode"] == "account-connected" && c["projectId"] == "the-model-router")), url.scheme == c["callbackScheme"] else { return false }
     guard url.host == nil || url.host == "", url.path == "/oauth2callback", url.fragment == nil,
           let parts = URLComponents(url: url, resolvingAgainstBaseURL: false),
           parts.queryItems?.filter({ $0.name == "state" }).count == 1 else { return true }

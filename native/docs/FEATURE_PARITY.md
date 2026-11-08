@@ -1,4 +1,11 @@
-# iOS feature-parity matrix (Phases 1–3)
+# iOS feature-parity matrix
+
+**Current account-release delta (2026-11-08):** Existing web accounts/data are now explicitly authorized.
+A separate account-connected package reuses the production project, native Google SDK and canonical cloud paths;
+normal Lumen login replaces the test-only screen. Added project-separated local cache/consent, preserving Demo stores.
+Free-only OpenRouter is available through explicit in-app consent; other native network/worker paths remain blocked.
+See [account release scope and verification](ACCOUNT_RELEASE.md). Physical native sign-in/sync is not yet verified.
+The table below records the earlier audit and is not a claim that its Phase1 service statuses are current.
 
 Audited 2026-11-07 against production Canvas source `12dc99a` and PR141 starting source `5e4116b`.
 The owner reports Phase2 IPA overwrite, prior data, account separation, stream cancellation, background/resume,

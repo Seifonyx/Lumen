@@ -2,13 +2,13 @@ import {NativeAiConsent,zeroBudgetAccount} from './ai-consent';
 import {FreeNativeProvider} from './free-provider';
 import {accountScope} from '../integration/runtime';
 import config from 'lumen:service-config';
-import {requestAllowed} from './config.mjs';
+import {requestAllowed,freeAiProject} from './config.mjs';
 const nativeFetch=globalThis.fetch.bind(globalThis);
 export const nativeAiConsent=new NativeAiConsent(accountScope,localStorage,config.projectId);
 const ai=new FreeNativeProvider(accountScope,()=>nativeAiConsent.current(),nativeFetch);
 nativeAiConsent.subscribe(()=>ai.invalidate());
 export async function enableFreeOpenRouter(key:string,confirmed:boolean){
- if(!confirmed||config.projectId!=='lumen-ios-test')throw Error('Confirm free-only OpenRouter use.');
+ if(!confirmed||!freeAiProject(config.projectId))throw Error('Confirm free-only OpenRouter use.');
  if(!/^sk-or-\S{8,512}$/.test(key))throw Error('Enter an OpenRouter test key.');
  const lease=accountScope.request(AbortSignal.timeout(15000));
  try{
@@ -39,7 +39,7 @@ navigator.sendBeacon=()=>false;
 window.open=()=>null;
 document.addEventListener('click',e=>{
  const a=(e.target as Element)?.closest?.('a[href]') as HTMLAnchorElement|null;
- if(a?.href==='https://openrouter.ai/keys'&&e.isTrusted&&config.projectId==='lumen-ios-test'){
+ if(a?.href==='https://openrouter.ai/keys'&&e.isTrusted&&freeAiProject(config.projectId)){
   e.preventDefault();e.stopImmediatePropagation();
   (window as unknown as {webkit?:{messageHandlers?:{nativeProviderSetup?:{postMessage:(data:object)=>void}}}}).webkit?.messageHandlers?.nativeProviderSetup?.postMessage({open:true});return;
  }

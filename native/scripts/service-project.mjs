@@ -13,8 +13,9 @@ c=json.loads(sys.argv[2])
 p.pop('LumenTestServices',None)
 p.pop('CFBundleURLTypes',None)
 if c:
+ if c['mode']=='account-connected': p['CFBundleDisplayName']='Lumen'
  p['LumenTestServices']={k:str(c[k]) for k in ['mode','projectId','bundleId','iosClientId','webClientId','callbackScheme','signedBundleId']}
- if c['projectId']=='lumen-ios-test': p['LumenTestServices']['aiProvider']='openrouter'
+ if c['projectId'] in ['lumen-ios-test','the-model-router']: p['LumenTestServices']['aiProvider']='openrouter'
  p['CFBundleURLTypes']=[{'CFBundleURLSchemes':[c['callbackScheme']]}]
 with open(path,'wb') as f: plistlib.dump(p,f,sort_keys=False)
 `,join(app,'Info.plist'),JSON.stringify(clean)],{stdio:'pipe'});

@@ -10,8 +10,8 @@ if(!existsSync('ios/App')) execFileSync(process.execPath,[cap,'add','ios'],{stdi
 execFileSync(process.execPath,[cap,'sync','ios'],{stdio:'inherit'});
 const app='ios/App/App/';
 const built=JSON.parse(readFileSync('www/demo-build.json','utf8'));
-if(!['offline-demo','isolated-test'].includes(built.mode))throw Error('Unreviewed native mode refused');
-const isolated=built.mode==='isolated-test';
+if(!['offline-demo','isolated-test','account-connected'].includes(built.mode))throw Error('Unreviewed native mode refused');
+const isolated=built.mode!=='offline-demo';
 const authSource=isolated?'GoogleAuthPlugin.swift':'DisabledGoogleAuthPlugin.swift';
 patchProject(app,readFileSync('DemoViewController.swift','utf8')+'\n'+readFileSync('NativeSessionVault.swift','utf8')+'\n'+readFileSync(authSource,'utf8'));
 // A normal offline build must not depend on the Google SDK or fetch external Swift packages.

@@ -25,7 +25,7 @@ function coordinator(auth:Auth){
 }
 let restored=false;
 export function watchNativeUser(auth:Auth,callback:(user:User|null)=>void){
- const c=coordinator(auth),off=c.watch(user=>{const next=user?.uid||null;if(accountScope.uid!==next){if(accountScope.uid)localStorage.removeItem(consentKey(accountScope.uid));accounts.clear();accountScope.set(next);}callback(user);});
+ const c=coordinator(auth),off=c.watch(user=>{const next=user?.uid||null;if(accountScope.uid!==next){if(accountScope.uid)localStorage.removeItem(consentKey(accountScope.uid,config.projectId));accounts.clear();accountScope.set(next);}callback(user);});
  if(!restored){restored=true;void c.restore().catch(()=>{/* signed out, never a demo fallback */});}
  return off;
 }
@@ -44,12 +44,12 @@ export function writeNativeAccount(uid:string,patch:AccountKeyCache):boolean{
  const disk={settings:current.settings,settingsRevision:current.settingsRevision,pendingSettingsRevision:current.pendingSettingsRevision};
  try{localStorage.setItem('mr.account.'+uid,JSON.stringify(disk));return true;}catch{return false;}
 }
-export function clearNativeAccount(uid:string){accounts.delete(uid);localStorage.removeItem(consentKey(uid));}
+export function clearNativeAccount(uid:string){accounts.delete(uid);localStorage.removeItem(consentKey(uid,config.projectId));}
 
 /** Same canonical private account field; raw keys never enter native localStorage or the app bundle. */
 export async function saveNativeProviderKeys(db:Firestore,uid:string,keys:{openrouter?:string}){
  const lease=accountScope.capture();
- if(uid!==lease.uid||config.projectId!=='lumen-ios-test')throw Error('Provider setup is limited to this test account.');
+ if(uid!==lease.uid||!['lumen-ios-test','the-model-router'].includes(config.projectId))throw Error('Provider setup requires the current Lumen account.');
  const key=(keys.openrouter||'').trim();
  if(key){
   const permission=new NativeAiConsent(accountScope,localStorage,config.projectId).current();

@@ -14,3 +14,10 @@ test('account changes while hashing cannot grant another account; revoke notifie
  const {c,scope}=setup();const pending=c.enable(key,true);scope.set('b');await assert.rejects(pending);assert.equal(c.current(),null);
  scope.set('a');await c.enable(key,true);let invalidated=false;c.subscribe(()=>invalidated=true);const lease=scope.capture();c.revoke();assert(invalidated);assert(lease.valid());
 });
+
+test('test and real-account consent never cross projects even for the same UID',async()=>{
+ const {c,map,scope}=setup(),storage={getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)};
+ const prod=new NativeAiConsent(scope,storage,'the-model-router');await c.enable(key,true);assert.equal(prod.current(),null);
+ await prod.enable(key,true);assert.equal(prod.current().projectId,'the-model-router');assert.equal(c.current().projectId,'lumen-ios-test');
+ prod.revoke();assert.equal(prod.current(),null);assert(c.current());
+});

@@ -86,10 +86,10 @@ final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler 
     // No document loads until WebKit has installed a default-deny network rule.
     override func viewDidLoad() {
         var rules = #"[{"trigger":{"url-filter":"^https?://"},"action":{"type":"block"}},{"trigger":{"url-filter":"^wss?://"},"action":{"type":"block"}}]"#
-        if let c = Bundle.main.object(forInfoDictionaryKey: "LumenTestServices") as? [String: String], c["mode"] == "isolated-test" {
+        if let c = Bundle.main.object(forInfoDictionaryKey: "LumenTestServices") as? [String: String], ["isolated-test", "account-connected"].contains(c["mode"] ?? "") {
             var hosts = ["identitytoolkit.googleapis.com", "securetoken.googleapis.com", "firestore.googleapis.com"]
             // Host capability only: JS still requires per-account in-app consent and free-only validation.
-            if c["projectId"] == "lumen-ios-test", c["aiProvider"] == "openrouter" { hosts.append("openrouter.ai") }
+            if ["lumen-ios-test", "the-model-router"].contains(c["projectId"] ?? ""), c["aiProvider"] == "openrouter" { hosts.append("openrouter.ai") }
             var entries = (try? JSONSerialization.jsonObject(with: Data(rules.utf8))) as? [[String: Any]] ?? []
             for host in hosts {
                 entries.append(["trigger": ["url-filter": "^https://" + NSRegularExpression.escapedPattern(for: host) + "/"], "action": ["type": "ignore-previous-rules"]])
@@ -118,7 +118,7 @@ final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler 
               message.frameInfo.securityOrigin.host == "localhost", let data = message.body as? [String: Any] else { return }
         if message.name == "nativeProviderSetup", data["open"] as? Bool == true,
            let c = Bundle.main.object(forInfoDictionaryKey: "LumenTestServices") as? [String: String],
-           c["projectId"] == "lumen-ios-test", let url = URL(string: "https://openrouter.ai/keys") {
+           ["lumen-ios-test", "the-model-router"].contains(c["projectId"] ?? ""), let url = URL(string: "https://openrouter.ai/keys") {
             UIApplication.shared.open(url)
             return
         }

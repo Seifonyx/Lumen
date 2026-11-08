@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import {loadServiceConfig} from './services/build-config.mjs';
 import {patchFirebase,patchSync} from './services/patches.mjs';
 const services=loadServiceConfig();
-const freeAi=services?.projectId==='lumen-ios-test';
+const freeAi=Boolean(services&&['lumen-ios-test','the-model-router'].includes(services.projectId));
 const output=process.env.LUMEN_NATIVE_OUT_DIR||'native/www';
 if(!['native/www','native/service-qa'].includes(output))throw Error('Native build output must stay in its isolated workspace');
 const root = resolve(fileURLToPath(new URL('..', import.meta.url))).replaceAll(String.fromCharCode(92), '/');
@@ -27,7 +27,7 @@ function demoIsolation(): Plugin {
     name:'lumen-native-isolation', enforce:'pre',
     transformIndexHtml:{order:'pre',handler(html){
       if(!services)return html;
-      return (freeAi?html.replace("connect-src 'self' data: blob:","connect-src 'self' data: blob: https://openrouter.ai"):html).replace('./demo/main.ts','./services/main.ts').replace("connect-src 'self' data: blob:", "connect-src 'self' data: blob: https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com").replace('<title>Lumen Demo</title>','<title>Lumen Test</title>');
+      return (freeAi?html.replace("connect-src 'self' data: blob:","connect-src 'self' data: blob: https://openrouter.ai"):html).replace('./demo/main.ts','./services/main.ts').replace("connect-src 'self' data: blob:", "connect-src 'self' data: blob: https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com").replace('<title>Lumen Demo</title>',services.mode==='account-connected'?'<title>Lumen</title>':'<title>Lumen Test</title>');
     }},
     async resolveId(source, importer, options) {
       if(services){

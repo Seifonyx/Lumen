@@ -1,3 +1,4 @@
+import './account-storage';
 import './transport';
 import '../demo/download';
 async function boot(){

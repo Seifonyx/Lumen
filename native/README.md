@@ -1,21 +1,15 @@
-# Lumen iOS foundation - Windows quick start
+# Lumen iPhone — Windows quick start
 
-PR #141 / `experiment/ios-sideload` remains an **offline, synthetic-only experimental app**. The full Canvas UI is
-packaged, but real Google/Firebase accounts, cloud sync and live AI/services are not enabled. No SwiftUI redesign.
-Choose Demo A or Demo B. Two local demo models stream fixed replies; Study creates clearly labeled sample cards.
+The owner now authorizes the iPhone app to use the **existing Lumen Google accounts and cloud data**.
+Use the **iOS existing-account private IPA** workflow and encrypted delivery described in
+[the account release guide](docs/ACCOUNT_RELEASE.md). The native app displays Lumen; its installed bundle identity
+is preserved. Install over the current app using the same Sideloadly Apple account and bundle options; do not uninstall.
 
-The owner confirms that the earlier installed IPA launches, basic navigation/keyboard work, profiles stay separate
-and chats survive reopening. Agent browser/Simulator results and new physical upgrade acceptance are separate.
-See the [feature matrix](docs/FEATURE_PARITY.md) and [integration/update plan](docs/INTEGRATION_AND_UPDATES.md).
+The release reuses Canvas, native Google sign-in and canonical Firebase synchronization. Free-only OpenRouter remains
+explicitly user-controlled; unavailable native service/worker paths are documented, not represented as complete parity.
+No physical sign-in success is claimed by automated checks. The ordinary web/PWA and existing test/offline builds remain.
 
-Phase2 adds synthetic auth/session lifecycle, isolated memory synchronization and background cancellation.
-Real authentication, cloud sync and providers remain disabled. The Keychain facility is inactive.
-See [Phase2 scope, remaining approvals and device checklist](docs/PHASE2_INTEGRATION.md).
-
-Phase3 test services are now provisioned in the separate Spark-only `lumen-ios-test` project. The default IPA
-stays offline; explicit isolated-service builds use verified private SDK metadata. No real Google test identity
-has authorized sign-in, so positive live OAuth/cloud round-trip is not claimed. This round requires no new
-installation, screenshots or manual demo checklist. See [current test environment](docs/PHASE3_TEST_ENVIRONMENT.md).
+The instructions below describe the optional **offline demo workflow**, not the current account-connected release.
 
 ## Download and update the installed app
 

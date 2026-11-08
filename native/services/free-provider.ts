@@ -1,11 +1,11 @@
 import type {AccountScope} from '../integration/scope.ts';
 import {waitFor} from '../../src/lib/ai/abort.js';
 
-export type AiApproval={approved:true;provider:'openrouter';projectId:'lumen-ios-test';uid:string;policy:'free-variants-only';noByok:true;keySha256:string};
+export type AiApproval={approved:true;provider:'openrouter';projectId:'lumen-ios-test'|'the-model-router';uid:string;policy:'free-variants-only';noByok:true;keySha256:string};
 export function validateAiApproval(value:unknown):AiApproval|null {
  if(value===null||value===undefined)return null;
  const a=value as AiApproval;
- if(Object.keys(a).sort().join(',')!=='approved,keySha256,noByok,policy,projectId,provider,uid'||a.approved!==true||a.provider!=='openrouter'||a.projectId!=='lumen-ios-test'||a.policy!=='free-variants-only'||typeof a.uid!=='string'||!a.uid||a.uid.length>128||a.noByok!==true||typeof a.keySha256!=='string'||!/^[a-f0-9]{64}$/.test(a.keySha256))throw Error('Explicit isolated test AI approval required');
+ if(Object.keys(a).sort().join(',')!=='approved,keySha256,noByok,policy,projectId,provider,uid'||a.approved!==true||a.provider!=='openrouter'||!['lumen-ios-test','the-model-router'].includes(a.projectId)||a.policy!=='free-variants-only'||typeof a.uid!=='string'||!a.uid||a.uid.length>128||a.noByok!==true||typeof a.keySha256!=='string'||!/^[a-f0-9]{64}$/.test(a.keySha256))throw Error('Explicit account-scoped free AI approval required');
  return Object.freeze({...a});
 }
 const freeId=(id:unknown):id is string=>typeof id==='string'&&id.length<200&&/^[\w.-]+\/[\w.-]+:free$/.test(id)&&!id.includes('..');

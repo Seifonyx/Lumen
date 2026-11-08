@@ -10,8 +10,14 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
-- **Branch:** `experiment/ios-sideload`, draft PR141. Current work: owner-approved Phase3 Google/Firebase test
-  integration. Keep draft/unmerged; no app deployment, production account/data/config, inference or spending.
+- **Branch:** `experiment/ios-sideload`, PR141. Owner now authorizes normal existing Lumen web accounts/cloud data,
+  superseding test-only native access. Deliver a private account-connected IPA, then improve incrementally. Preserve
+  $0, app identity/data, existing access rules, ordinary/PWA and separate test/offline builds. No web deployment.
+- Added an iOS registration/client to the existing Firebase project (billing disabled), reused its Google server
+  client and canonical Firebase configuration; no user documents, auth rules or schemas modified. Native mode pins
+  reviewed config; Login displays Lumen, same account/cloud paths. New account-local namespace preserves legacy
+  Demo/test data and prevents cross-project UID cache adoption; WebKit IDBFactory-wrapper difference reproduced/fixed.
+  Free-only OpenRouter remains user-controlled, no paid activation. See native/docs/ACCOUNT_RELEASE.md for scope/limits.
 - Owner reports Phase2 physical overwrite/data retention, account separation, streaming Stop, background/resume,
   keyboard and exports passed. VoiceOver and real-service native sign-in remain unverified. No manual/device tests
   requested this round. Preserve installed bundle/origin, Demo A/B stores and offline build.

@@ -1,3 +1,7 @@
+> Existing-account release update2026-11-08: the same guarded free-only OpenRouter path is available in the
+> owner-approved account-connected package. Consent is project-scoped and does not transfer from test accounts.
+> No paid provider activation, live agent inference or production account QA is implied. See ACCOUNT_RELEASE.md.
+
 # Native release candidate: user-configured free AI
 
 The iPhone app reuses canonical Router/catalogue/model selection, private per-account Firebase credentials,

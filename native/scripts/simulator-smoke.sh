@@ -28,6 +28,12 @@ import subprocess,sys
 subprocess.run(["xcrun","simctl","bootstatus",sys.argv[1],"-b"],timeout=600,check=True)
 PY
 xcrun simctl install "$device" build/simulator/Build/Products/Debug-iphonesimulator/App.app
+# Capture native SwiftUI launch before the older WebView smoke (which can time out).
+xcrun simctl launch "$device" io.github.seifonyx.lumen.demo --native-shell-smoke
+sleep 4
+xcrun simctl io "$device" screenshot artifacts/simulator/native-home.png
+test -s artifacts/simulator/native-home.png
+xcrun simctl terminate "$device" io.github.seifonyx.lumen.demo
 xcrun simctl launch "$device" io.github.seifonyx.lumen.demo --demo-smoke
 container=$(xcrun simctl get_app_container "$device" io.github.seifonyx.lumen.demo data)
 for attempt in $(seq 1 150); do
@@ -41,3 +47,4 @@ cp "$container/Documents/native-smoke.json" artifacts/simulator/
 python3 -c 'import json; r=json.load(open("artifacts/simulator/native-smoke.json")); print(r); assert r["passed"],r'
 xcrun simctl io "$device" screenshot artifacts/simulator/simulator.png
 xcrun simctl terminate "$device" io.github.seifonyx.lumen.demo
+

@@ -6,12 +6,13 @@ export function patchProject(app,swift) {
  const read=name=>readFileSync(join(app,name),'utf8').replaceAll('\r\n','\n');
  const write=(name,text)=>writeFileSync(join(app,name),text);
  // Capacitor 8's SceneDelegate creates its controller directly; storyboard changes alone are ignored.
- let scene=read('SceneDelegate.swift').replace('rootViewController = CAPBridgeViewController()', 'rootViewController = DemoViewController()');
- if(!scene.includes('rootViewController = DemoViewController()')) throw new Error('Unknown Capacitor scene template; native protection cannot be installed safely.');
+ let scene=read('SceneDelegate.swift').replace('rootViewController = CAPBridgeViewController()', 'rootViewController = UIHostingController(rootView: LumenRootView())');
+ if(!scene.includes('rootViewController = UIHostingController(rootView: LumenRootView())')) throw new Error('Unknown Capacitor scene template; native protection cannot be installed safely.');
  if(!scene.includes('LumenHandleGoogleURL')) {
   scene=scene.replace('SceneDelegateProxy.shared.scene(scene, openURLContexts: URLContexts)', 'let remaining = Set(URLContexts.filter { !LumenHandleGoogleURL($0.url) })\n        if !remaining.isEmpty { SceneDelegateProxy.shared.scene(scene, openURLContexts: remaining) }');
   scene=scene.replace('SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)', 'if !connectionOptions.urlContexts.contains(where: { LumenHandleGoogleURL($0.url) }) {\n            SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)\n        }');
  }
+ if (!scene.includes('import SwiftUI')) scene = 'import SwiftUI\n' + scene;
  write('SceneDelegate.swift',scene);
  const delegate=read('AppDelegate.swift');
  const clean=delegate.split(marker)[0].split('\nimport UIKit\nimport WebKit\nimport Capacitor')[0].trimEnd();

@@ -54,11 +54,25 @@ struct SidebarView: View {
 
     private func row(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Label(title, systemImage: icon)
-                .font(.body)
-                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                .contentShape(Rectangle())
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .frame(width: 24)
+                    .accessibilityHidden(true)
+                Text(title)
+                Spacer(minLength: 0)
+            }
+            .font(.body)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SidebarRowStyle())
+    }
+}
+
+private struct SidebarRowStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .background(configuration.isPressed ? Color.primary.opacity(0.08) : .clear,
+                        in: .rect(cornerRadius: 8))
+            .contentShape(.interaction, Rectangle())
     }
 }

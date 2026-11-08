@@ -112,7 +112,10 @@ final class LumenUITests: XCTestCase {
             app.buttons["openSidebar"].tap()
             XCTAssertTrue(app.buttons["sidebar-projects"].waitForExistence(timeout: 3))
             capture("sidebar-\(theme.lowercased())")
-            app.buttons["sidebar-projects"].tap()
+            let projects = app.buttons["sidebar-projects"]
+            XCTAssertTrue(projects.isHittable)
+            // The empty trailing part must work just like the icon and title.
+            projects.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
             XCTAssertTrue(app.navigationBars["Projects"].waitForExistence(timeout: 3))
             capture("projects-\(theme.lowercased())")
             app.navigationBars.buttons.element(boundBy: 0).tap()

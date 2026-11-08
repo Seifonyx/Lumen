@@ -10,12 +10,13 @@ Updated: 2026-11-08. This is the current continuation point; agent update guidan
 - **Done:** shell/sidebar/native sheets, persistent draft and appearance settings; project generation,
   core/UI tests, device-IPA validation and independent native build/release workflow implemented.
 - **Verification:** 11 local packaging/Git checks pass; Mac core tests, compilation, device archive and IPA
-  validation passed (0.1.0, arm64, minimum iOS 26). Compact draft restoration, Light/Dark and explicit
-  Cancel/Discard pass. Earlier keyboard-geometry run passed; latest cold simulator showed a caret but no
-  software keyboard. Disabled its hardware-keyboard connection and require keyboard readiness before typing.
-  Actual compact captures inspected. The reviewed feed-push race has real-Git regression coverage.
-- **Next action:** rerun both profiles (both now run even if one fails), inspect regular-phone captures,
-  then publish. [PR #145](https://github.com/Seifonyx/Lumen/pull/145); local artifacts `/workspace/scratch/lumen-native-alert-qa`.
+  validation passed (0.1.0, arm64, minimum iOS 26). All four compact journeys and three regular journeys
+  passed, including keyboard geometry, restoration and explicit Cancel/Discard. Regular capture exposed
+  a missed Projects row tap: actual video/hierarchy showed the drawer stayed open. Replaced the plain
+  Label with an explicit full-width row button style and pressed feedback; UI coverage taps its trailing
+  empty area. Both-phone rerun pending. The reviewed feed-push race has real-Git regression coverage.
+- **Next action:** rerun both profiles, inspect regular-phone Light/Dark captures, then publish.
+  [PR #145](https://github.com/Seifonyx/Lumen/pull/145); artifacts `/workspace/scratch/lumen-native-keyboard-qa`.
 
 ## Next
 

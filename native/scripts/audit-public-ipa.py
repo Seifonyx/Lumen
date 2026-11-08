@@ -143,7 +143,7 @@ if __name__ == "__main__":
             if config.get("mode") != "account-connected" or config.get("bundleId") != BUNDLE:
                 reject("incorrect approved build configuration")
             approved_signed = config.get("signedBundleId") or BUNDLE
-            if not isinstance(approved_signed, str) or not re.fullmatch(r"(?:[A-Za-z0-9-]+\\.)+[A-Za-z0-9-]+", approved_signed):
+            if not isinstance(approved_signed, str) or not re.fullmatch(r"(?:[A-Za-z0-9-]+\.)+[A-Za-z0-9-]+", approved_signed):
                 reject("invalid approved signing identity")
             digest = verify(data, os.environ.get("LUMEN_IOS_VERSION", "1.1.0"), approved_signed)
             print(f"PASS connected IPA package audit: SHA256={digest}; no blocked secrets/paths; version and auth identity match")

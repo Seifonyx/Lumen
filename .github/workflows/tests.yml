@@ -11,9 +11,9 @@ name: Tests
 on:
   push:
     branches: [main]
-    paths-ignore: ['**.md', 'docs/**']
+    paths-ignore: ['**.md', 'docs/**', 'ios/**', '.github/workflows/ios-native.yml']
   pull_request:
-    paths-ignore: ['**.md', 'docs/**']
+    paths-ignore: ['**.md', 'docs/**', 'ios/**', '.github/workflows/ios-native.yml']
   workflow_dispatch:
 
 concurrency:

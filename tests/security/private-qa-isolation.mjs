@@ -262,7 +262,9 @@ try {
     // the page. Presentation only: no storage, auth, network, hosting or rules change.
     'src/lib/status-bar.ts',
     // Existing SideStore listing workflow on main, and the relay setup guide shortened in the Markdown cleanup.
-    '.github/workflows/sidestore-release-source.yml', 'server/provider-relay/README.md'];
+    '.github/workflows/sidestore-release-source.yml', 'server/provider-relay/README.md',
+    // Fresh native iOS build/release workflow; independent of the web and synthetic QA builds.
+    '.github/workflows/ios-native.yml'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');

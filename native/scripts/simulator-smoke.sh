@@ -41,3 +41,10 @@ cp "$container/Documents/native-smoke.json" artifacts/simulator/
 python3 -c 'import json; r=json.load(open("artifacts/simulator/native-smoke.json")); print(r); assert r["passed"],r'
 xcrun simctl io "$device" screenshot artifacts/simulator/simulator.png
 xcrun simctl terminate "$device" io.github.seifonyx.lumen.demo
+# Capture the actual SwiftUI/Liquid Glass launch tab after the existing web smoke.
+xcrun simctl launch "$device" io.github.seifonyx.lumen.demo --native-shell-smoke
+sleep 4
+xcrun simctl io "$device" screenshot artifacts/simulator/native-home.png
+test -s artifacts/simulator/native-home.png
+xcrun simctl terminate "$device" io.github.seifonyx.lumen.demo
+

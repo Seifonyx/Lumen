@@ -1,0 +1,51 @@
+name: iOS Phase 0 - Native SwiftUI shell
+
+on:
+  push:
+    branches:
+      - feature/ios-swiftui-phase0
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-phase0-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator-and-ipa:
+    if: github.repository == 'Seifonyx/Lumen'
+    runs-on: macos-26
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm ci --prefix native --ignore-scripts
+      - name: Native architecture and bridge tests
+        run: node --test native/tests/swiftui-foundation.test.mjs
+      - name: Build isolated synthetic Canvas assets
+        run: node native/scripts/build.mjs
+      - name: Prepare generated Xcode project
+        run: node native/scripts/prepare-ios.mjs
+      - name: Compile unsigned iPhoneOS IPA
+        run: bash native/scripts/build-ipa.sh
+      - name: Boot simulator and capture native + existing workspace
+        timeout-minutes: 23
+        run: bash native/scripts/simulator-smoke.sh
+      - name: Save the unsigned IPA and simulator screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lumen-phase0-synthetic-build
+          path: |
+            native/artifacts/Lumen.ipa
+            native/artifacts/Lumen.json
+            native/artifacts/simulator/
+            native/build-device.log
+            native/build-simulator.log
+          if-no-files-found: warn
+          retention-days: 3

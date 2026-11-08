@@ -13,7 +13,7 @@ const built=JSON.parse(readFileSync('www/demo-build.json','utf8'));
 if(!['offline-demo','isolated-test','account-connected'].includes(built.mode))throw Error('Unreviewed native mode refused');
 const isolated=built.mode!=='offline-demo';
 const authSource=isolated?'GoogleAuthPlugin.swift':'DisabledGoogleAuthPlugin.swift';
-patchProject(app,readFileSync('DemoViewController.swift','utf8')+'\n'+readFileSync('NativeSessionVault.swift','utf8')+'\n'+readFileSync(authSource,'utf8'));
+patchProject(app,readFileSync('DemoViewController.swift','utf8')+'\n'+readFileSync('NativeSessionVault.swift','utf8')+'\n'+readFileSync(authSource,'utf8')+'\n'+readFileSync('SwiftUIFoundation.swift','utf8'));
 // A normal offline build must not depend on the Google SDK or fetch external Swift packages.
 // Only a reviewed, explicitly configured test build links GoogleSignIn.
 if(isolated){

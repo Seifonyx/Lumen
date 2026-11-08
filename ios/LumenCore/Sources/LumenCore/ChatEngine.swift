@@ -72,7 +72,7 @@ public final class ChatEngine {
         errorMessage = nil
         _ = currentConversation.appendUserMessage(trimmed)
 
-        var assistantMessage = ChatMessage(
+        let assistantMessage = ChatMessage(
             role: .assistant,
             content: "",
             status: .streaming

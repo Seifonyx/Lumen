@@ -61,11 +61,13 @@ public struct OpenAICompatibleStreamingClient: AIStreamingClient {
         ]
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let finalRequest = request
+        let session = self.urlSession
 
         return AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    let (bytes, response) = try await urlSession.bytes(for: request)
+                    let (bytes, response) = try await session.bytes(for: finalRequest)
                     guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
                         let status = (response as? HTTPURLResponse)?.statusCode ?? -1
                         continuation.finish(throwing: NSError(domain: "LumenCore.AIStreaming", code: status, userInfo: [NSLocalizedDescriptionKey: "HTTP \(status)"]))

@@ -1,0 +1,40 @@
+name: Phase 1 review probes
+on:
+  push:
+    branches: [codex/review-native-phase1]
+    paths: [ios/LumenCore/Tests/LumenCoreTests/Phase1ReviewProbes.swift, .github/workflows/ios-phase1-review-probes.yml]
+permissions:
+  contents: read
+jobs:
+  probes:
+    runs-on: macos-26
+    timeout-minutes: 8
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v5
+      - name: Existing core tests
+        run: swift test --package-path ios/LumenCore --filter 'AuthEngineTests|ChatEngineTests|DraftStateTests'
+      - name: Provider routing probe
+        id: routing
+        continue-on-error: true
+        run: swift test --package-path ios/LumenCore --filter providerSelectionRoutesToTheSelectedService
+      - name: Mid-stream relaunch probe
+        id: persistence
+        continue-on-error: true
+        run: swift test --package-path ios/LumenCore --filter submittedConversationSurvivesRelaunchBeforeTheReplyFinishes
+      - name: New chat during streaming probe
+        id: cancellation
+        continue-on-error: true
+        run: swift test --package-path ios/LumenCore --filter switchingChatsDuringStreamingKeepsTheNewChatSafe
+      - name: Report review probes
+        if: always()
+        env:
+          ROUTING: ${{ steps.routing.outcome }}
+          PERSISTENCE: ${{ steps.persistence.outcome }}
+          CANCELLATION: ${{ steps.cancellation.outcome }}
+        run: |
+          echo "Provider routing: $ROUTING"
+          echo "Mid-stream relaunch: $PERSISTENCE"
+          echo "New chat during streaming: $CANCELLATION"
+          test "$ROUTING" = success && test "$PERSISTENCE" = success && test "$CANCELLATION" = success

@@ -4,14 +4,20 @@ Updated: 2026-11-08. This is the current continuation point; agent update guidan
 
 ## Now
 
-- **Branch:** `feat/phase1-connected-chat`. Phase 1 implementation underway.
+- **Branch:** `codex/review-native-phase1`, reviewing PR #146 at `85e4222` against Phase 0 `14bf502`.
+- **Current goal:** independently assess Antigravity's Phase 1 before any merge/release. The PR remains unchanged.
+- **Review so far:** Google sign-in calls a fabricated preview profile; conversations only use global local
+  preferences, without the existing account's web data; all selected providers route to Groq. Core cancellation
+  and persistence concerns are being checked with isolated review probes. Build version is still 0.1.0,
+  which is already published and will block a different source commit from reusing the release tag.
+- **Probe branch:** adds diagnostic tests/workflow only; no application implementation changes.
 - **Phase 0:** Published: [Lumen native 0.1.0, build 7](https://github.com/Seifonyx/Lumen/releases/tag/native-ios-v0.1.0).
 - **Phase 1 In Progress:**
   - `LumenCore`: Implemented `ChatMessage`, `Conversation`, `AIProvider` (`AIModel`, `OpenAICompatibleStreamingClient`), `ChatEngine` (`send`, `stopStreaming`, conversation switching, persistence), `UserProfile`, and `AuthEngine` (Firebase Auth REST, preview sign-in, session persistence).
   - `LumenCoreTests`: Added `ChatEngineTests` and `AuthEngineTests` covering async streaming, stop cancellation, persistence, and auth state restoration.
   - `Lumen UI`: Wired `ChatEngine` and `AuthEngine` into `ChatView` (live bubbles, auto-scroll, Send/Stop buttons, model picker), `SidebarView` (saved chat history, account status), `ModelSheet` (model selection), and `SettingsView` (API key configuration, account sign-in/sign-out).
 - **Checks:** `SourceCommitTests` passed (3/3 tests). Packaging guardrails verified.
-- **Next implementation:** Push changes, monitor GitHub Actions PR checks on PR #146, and verify build artifacts.
+- **Next action:** run isolated Mac review probes, inspect the PR screenshots/artifact, and return an evidence-based verdict.
 
 ## Next
 

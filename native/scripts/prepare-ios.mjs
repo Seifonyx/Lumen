@@ -34,4 +34,4 @@ writeFileSync(splash+'Contents.json',JSON.stringify({images:[
  {idiom:'universal',filename:'lumen-light.png'},
  {idiom:'universal',filename:'lumen-dark.png',appearances:[{appearance:'luminosity',value:'dark'}]}
 ],info:{version:1,author:'xcode'}},null,2));
-console.log(isolated?'Prepared isolated iOS test. No production services, signing or live inference.':'Prepared isolated iOS demo. Signing and native authentication remain disabled.');
+console.log(built.mode==='account-connected'?'Prepared existing-account iOS app. No deployment, signing or inference performed.':isolated?'Prepared isolated iOS test. No production services, signing or live inference.':'Prepared isolated iOS demo. Signing and native authentication remain disabled.');

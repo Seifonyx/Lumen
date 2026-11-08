@@ -273,14 +273,22 @@ try {
   const connectedBuild = readFileSync('.github/workflows/ios-connected.yml', 'utf8');
   assert.match(connectedBuild, /runs-on: macos-26/, 'standard free public runner only');
   assert.match(connectedBuild, /github\.event\.repository\.private == false/);
-  assert.match(connectedBuild, /LUMEN_NATIVE_MODE: isolated-test/);
+  // Owner2026-11-08 explicitly approved existing web accounts. Keep mode/secret selection fail-closed,
+  // while synthetic QA below/above still never receives a production account or cloud data.
+  assert.match(connectedBuild, /options: \[account-connected, isolated-test\]/);
+  assert.match(connectedBuild, /LUMEN_NATIVE_MODE: \$\{\{ \(inputs\.connection == 'account-connected' \|\| contains\(github\.event\.head_commit\.message, '\[account-ios\]'\)\) && 'account-connected' \|\| 'isolated-test' \}\}/);
+  assert.match(connectedBuild, /mode==='account-connected'\?process\.env\.ACCOUNT_CONFIG:process\.env\.TEST_CONFIG/);
+  assert.match(connectedBuild, /c\.mode!==mode\|\|c\.projectId!==\(mode==='account-connected'\?'the-model-router':'lumen-ios-test'\)/);
+  assert.match(connectedBuild, /secrets\.LUMEN_IOS_ACCOUNT_CONFIG/);
+  assert.match(connectedBuild, /native\/scripts\/browser-auth\.mjs/);
+  assert.match(connectedBuild, /if: env\.LUMEN_NATIVE_MODE == 'isolated-test'[\s\S]*emulators:exec/);
   assert.match(connectedBuild, /secrets\.LUMEN_IOS_TEST_CONFIG/);
   assert.match(connectedBuild, /seal-delivery\.mjs seal/);
   assert.match(connectedBuild, /path: native\/artifacts\/Lumen-connected\.enc/);
   assert.doesNotMatch(connectedBuild, /path:\s*[^\n]*(?:Lumen\.ipa|Payload|private-delivery)/, 'plaintext upload refused');
   assert.match(connectedBuild, /contents: read/);
   assert.doesNotMatch(connectedBuild, /firebase deploy|presentation=canvas|secrets\.[A-Z_]*PRIVATE_KEY/);
-  pass('reviewed connected test workflow keeps private input and encrypted-only delivery');
+  pass('reviewed native workflow keeps explicit account/test boundaries, private input and encrypted-only delivery');
 
   // 5. No-publication contract for the local tooling.
   const tooling = ['server/private-qa/gate.mjs', 'server/private-qa/control.mjs', 'server/private-qa/access-jwt.mjs', 'server/private-qa/paths.mjs', 'scripts/qa/build.mjs', 'scripts/qa/verify.mjs', 'scripts/qa/audit.mjs'];

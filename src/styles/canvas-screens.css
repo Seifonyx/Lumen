@@ -188,7 +188,7 @@ html[data-lumen-canvas] .provider-target-head .btn { flex:none; min-height:44px;
 /* Provider editor: an implicit auto track inherits the key input's intrinsic width and clips narrow cards. */
 html[data-lumen-canvas] .provider-connection-body { grid-template-columns: minmax(0, 1fr); }
 
-/* ---------- Calm pass, app-wide (DESIGN.md): one field style, quiet secondary buttons. */
+/* ---------- Shared field styling and secondary buttons. */
 /* Selects: on iPhone the glass pop-up button (glass.css) owns them; elsewhere a quiet fill with a line chevron
  * (two thin diagonal strokes, no image). */
 html[data-lumen-canvas]:not(.glass) select:not([multiple]):not(.rc-routing-settings select) {

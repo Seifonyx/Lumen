@@ -66,7 +66,7 @@ const [ordinary = 'dist', canvas = 'dist-canvas'] = process.argv.slice(2);
 // Layout master/detail/editor and Activity consoles across all five canonical destinations. Safe override cleanup
 // reduced the full 13-file source audit33.303→33.003KB; compiler minification still measured31.174KB. Retain useful
 // Provider-detail, phone and accessibility rules. This is an explicit source-cost decision, not a startup allowance:
-// startup JS15.5, startup CSS20 and lazy Router9KB are unchanged. See docs/router/CSS_BUDGET.md.
+// startup JS15.5, startup CSS20 and lazy Router9KB are unchanged.
 // Projects redesign (owner-authorized, 2026-11-03): canvasCss 34 → 34.5. All projects and the workspace move to a lazy
 // stylesheet (components/canvas-projects.css, ≈2 KB gz) loaded with CanvasProjects.tsx; the old Projects rules left
 // canvas-screens.css/canvas-shell.css, so startup CSS fell 19.2 → 18.5 KB gz. Measured source total 34.1 KB gz.

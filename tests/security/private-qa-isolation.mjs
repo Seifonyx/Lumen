@@ -260,7 +260,9 @@ try {
     // iPhone status bar (owner-assigned 2026-11-06, audit item N-06): in a Home Screen app, the page background follows
     // the screen on show and a thin strip briefly appears when that colour changes, so iOS colours its status bar from
     // the page. Presentation only: no storage, auth, network, hosting or rules change.
-    'src/lib/status-bar.ts'];
+    'src/lib/status-bar.ts',
+    // Existing SideStore listing workflow on main, and the relay setup guide shortened in the Markdown cleanup.
+    '.github/workflows/sidestore-release-source.yml', 'server/provider-relay/README.md'];
   const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
   assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');

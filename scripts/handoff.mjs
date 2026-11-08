@@ -2,10 +2,10 @@
 //
 //   npm run handoff                    branch, main, production deploy, open PRs, stray branches
 //   node scripts/handoff.mjs --offline git only (no GitHub API or live-site check)
-//   node scripts/handoff.mjs --check   pre-commit reminder when HANDOFF.md's "Now" is about another branch
+//   node scripts/handoff.mjs --check   non-blocking reminder when a commit omits HANDOFF.md
 //
-// Agents get this printed at session start (.claude/settings.json; AGENTS.md tells other agents to run it).
-// HANDOFF.md holds what git cannot know: the current task, next steps, open problems and owner decisions.
+// Claude Code prints this at session start (.claude/settings.json); other agents can run it on demand.
+// HANDOFF.md is the current checkpoint; AGENTS.md asks agents to update it as they work.
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
@@ -19,12 +19,10 @@ const short = (sha) => (sha || '').slice(0, 7);
 const handoffBranch = () => readFileSync(new URL('../HANDOFF.md', import.meta.url), 'utf8').match(/^- \*\*Branch:\*\* `([^`]+)`/m)?.[1];
 
 if (args.has('--check')) {
-  // Non-blocking: a commit of app code on a branch the handoff doesn't describe gets a reminder.
-  const branch = git('rev-parse', '--abbrev-ref', 'HEAD');
+  // Remind on every branch, including main and an already-described branch; never block a commit.
   const staged = git('diff', '--cached', '--name-only').split('\n').filter(Boolean);
-  const code = staged.some((f) => /^(src|tests|scripts|qa|server|public|\.github)\//.test(f));
-  if (code && !staged.includes('HANDOFF.md') && handoffBranch() !== branch && branch !== 'main')
-    console.error(`\nhandoff: HANDOFF.md "Now" describes \`${handoffBranch() || 'nothing'}\`, not \`${branch}\`. Update its Now/Next before you stop.\n`);
+  if (staged.length && !staged.includes('HANDOFF.md'))
+    console.error('\nhandoff: update HANDOFF.md with progress, checks and the next action before you stop.\n');
   process.exit(0);
 }
 
@@ -80,5 +78,5 @@ if (hub) out.push(`Open PRs    ${hub.pulls.length ? hub.pulls.map((p) => `#${p.n
 out.push(`Unmerged    ${unmerged.length ? unmerged.join(', ') : 'none'} (local branches not in main)`);
 const described = handoffBranch();
 out.push(`HANDOFF.md  "Now" describes ${described ? `\`${described}\`` : 'no branch'}${described && described !== branch && branch !== 'main' ? ' — not this branch; it may be out of date' : ''}`);
-out.push('', 'Recent main:', recent || '  unknown', '', 'Next: read HANDOFF.md (Now, Next, Open, Decisions) and AGENTS.md before changing anything.');
+out.push('', 'Recent main:', recent || '  unknown', '', 'Next: read AGENTS.md and HANDOFF.md; keep the checkpoint current as you work.');
 console.log(out.join('\n'));

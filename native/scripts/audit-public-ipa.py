@@ -65,7 +65,7 @@ def verify(ipa_bytes: bytes, expected_version: str = "1.1.0") -> str:
                 reject("user Documents mistakenly bundled")
             if "private-delivery" in parts or ".qa-build" in parts:
                 reject("private QA or delivery data packaged")
-            if not name.startswith(("Payload/Lumen.app/", "__MACOSX/")):
+            if name not in ("Payload/", "Payload/Lumen.app/") and not name.startswith(("Payload/Lumen.app/", "__MACOSX/")):
                 reject("unexpected root in IPA")
             if name.endswith("/"):
                 continue

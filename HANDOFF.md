@@ -6,8 +6,9 @@ Updated: 2026-11-08. This is the current continuation point; agent update guidan
 
 - **Branch:** `codex/phase1-ready`. Owner authorized fixing every Phase 1 blocker and shipping a new IPA.
   Implementation is proceeding inline; the diagnostic branch preserves failing tests as the baseline.
-  First checking existing public Google/iOS config and Firestore edition through the existing CI credential.
-  No account data/rules are being changed by that inspection. Local Docker Swift setup is in progress.
+  Existing Google configuration and SideStore team identity are available. Registering the fresh native app
+  through the existing CI credential; account data/rules remain unchanged. Installing a standalone local
+  Swift toolchain for fast core tests (Docker VFS consumed too much disk; its task image was removed).
 - **Review baseline:** review completed for [PR #146](https://github.com/Seifonyx/Lumen/pull/146)
   at `85e4222`, against Phase 0 `14bf502`. **Verdict: needs changes; Phase 1 is not ready for release.**
   The original PR is unchanged and unmerged. This branch adds review tests/workflow and this checkpoint only.

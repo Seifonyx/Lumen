@@ -22,15 +22,38 @@ if service:
         json.loads(service), scopes=['https://www.googleapis.com/auth/cloud-platform'])
     credentials.refresh(Request())
 
-    def get(url):
-        request = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + credentials.token})
+    def get(url, body=None):
+        request = urllib.request.Request(url, data=json.dumps(body).encode() if body is not None else None,
+                                         headers={'Authorization': 'Bearer ' + credentials.token, 'Content-Type': 'application/json'})
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
                 return json.load(response)
         except urllib.error.HTTPError as error:
             return {'httpStatus': error.code, 'error': json.load(error).get('error', {}).get('message', 'Request failed')}
 
-    apps = get('https://firebase.googleapis.com/v1beta1/projects/the-model-router/iosApps')
+    apps_url = 'https://firebase.googleapis.com/v1beta1/projects/the-model-router/iosApps'
+    apps = get(apps_url)
+    if os.environ.get('LUMEN_REGISTER_NATIVE') == '1' and 'apps' in apps:
+        import time
+        targets = ['io.github.seifonyx.lumen']
+        old_signed = legacy.get('signedBundleId', '')
+        old_base = legacy.get('bundleId', '')
+        if old_base and old_signed.startswith(old_base + '.'):
+            targets.append('io.github.seifonyx.lumen' + old_signed[len(old_base):])
+        for target in targets:
+            if any(app.get('bundleId') == target for app in apps['apps']):
+                continue
+            operation = get(apps_url, {'bundleId': target, 'displayName': 'Lumen native iOS'})
+            if 'error' in operation:
+                print('Native registration result:', target, json.dumps(operation))
+                continue
+            for _ in range(20):
+                operation = get('https://firebase.googleapis.com/v1beta1/' + operation['name'])
+                if operation.get('done'):
+                    break
+                time.sleep(1)
+            print('Native registration completed:', target, bool(operation.get('done')), 'error' in operation)
+        apps = get(apps_url)
     public['iosApps'] = [{key: app.get(key) for key in ['name', 'appId', 'bundleId']} for app in apps.get('apps', [])]
     if 'error' in apps:
         public['appsError'] = apps

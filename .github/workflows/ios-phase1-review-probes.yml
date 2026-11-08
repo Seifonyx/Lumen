@@ -16,6 +16,7 @@ jobs:
         env:
           LUMEN_FIREBASE_SERVICE: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           LUMEN_ACCOUNT_CONFIG: ${{ secrets.LUMEN_IOS_ACCOUNT_CONFIG }}
+          LUMEN_REGISTER_NATIVE: '1'
         run: python3 ios/scripts/inspect_firebase_setup.py
       - uses: actions/upload-artifact@v6
         with:

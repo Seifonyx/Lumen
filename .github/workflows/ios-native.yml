@@ -4,7 +4,7 @@ on:
   pull_request:
     paths: ['ios/**', '!ios/README.md', '!ios/sidestore-source.json', '.github/workflows/ios-native.yml']
   push:
-    branches: [main]
+    branches: [main, 'feat/**']
     paths: ['ios/**', '!ios/README.md', '!ios/sidestore-source.json', '.github/workflows/ios-native.yml']
   workflow_dispatch:
     inputs:
@@ -18,7 +18,7 @@ permissions:
 
 concurrency:
   group: native-ios-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.ref != 'refs/heads/main' }}
 
 jobs:
   build:

@@ -1,0 +1,62 @@
+name: Lumen
+options:
+  bundleIdPrefix: io.github.seifonyx
+  deploymentTarget:
+    iOS: '26.0'
+  xcodeVersion: '26.0'
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: '6.0'
+    IPHONEOS_DEPLOYMENT_TARGET: '26.0'
+    CODE_SIGNING_ALLOWED: NO
+    TARGETED_DEVICE_FAMILY: '1'
+    MARKETING_VERSION: '0.1.0'
+    CURRENT_PROJECT_VERSION: '1'
+packages:
+  LumenCore:
+    path: LumenCore
+targets:
+  Lumen:
+    type: application
+    platform: iOS
+    sources: [Lumen]
+    dependencies:
+      - package: LumenCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.seifonyx.lumen
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
+    info:
+      path: build/Generated/Info.plist
+      properties:
+        CFBundleDisplayName: Lumen
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSRequiresIPhoneOS: true
+        UIApplicationSupportsIndirectInputEvents: true
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+  LumenUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [LumenUITests]
+    dependencies:
+      - target: Lumen
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.seifonyx.lumen.uitests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  Lumen:
+    build:
+      targets:
+        Lumen: all
+        LumenUITests: [test]
+    test:
+      targets: [LumenUITests]
+      gatherCoverageData: true

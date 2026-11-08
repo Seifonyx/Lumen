@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   update-source:
-    if: github.repository == 'Seifonyx/Lumen'
+    if: github.repository == 'Seifonyx/Lumen' && (github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'ios-v'))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

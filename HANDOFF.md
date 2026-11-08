@@ -4,17 +4,24 @@ Updated: 2026-11-08. This is the current continuation point; agent update guidan
 
 ## Now
 
-- **Branch:** `main`.
-- **Goal:** plan the owner's fresh native iOS app; Foundation has not started.
-- **Done:** minimal-documentation cleanup merged in [PR #144](https://github.com/Seifonyx/Lumen/pull/144).
-  Revised the proposed native roadmap around a chat-first shell and an early real, account-connected conversation.
-- **Verification:** the cleanup passed all 32 CI checks before merge. This update only changes the checkpoint.
-- **Next action:** build Phase 0's installable chat-first shell and delivery pipeline when the owner asks to start.
+- **Branch:** `codex/ios-native-foundation`, based on `main` at `9a09a34`.
+- **Goal:** Phase 0: fresh SwiftUI iOS 26 chat-first shell, GitHub simulator checks/screenshots,
+  unsigned IPA packaging and SideStore delivery.
+- **Done:** shell/sidebar/native sheets, persistent draft and appearance settings; project generation,
+  core/UI tests, device-IPA validation and independent native build/release workflow implemented.
+- **Verification:** 11 local packaging/Git checks pass; Mac core tests, compilation, device archive and IPA
+  validation passed (0.1.0, arm64, minimum iOS 26). All four compact journeys and three regular journeys
+  passed, including keyboard geometry, restoration and explicit Cancel/Discard. Regular capture exposed
+  a missed Projects row tap: actual video/hierarchy showed the drawer stayed open. Replaced the plain
+  Label with an explicit full-width row button style and pressed feedback; UI coverage taps its trailing
+  empty area. Both-phone rerun pending. The reviewed feed-push race has real-Git regression coverage.
+- **Next action:** rerun both profiles, inspect regular-phone Light/Dark captures, then publish.
+  [PR #145](https://github.com/Seifonyx/Lumen/pull/145); artifacts `/workspace/scratch/lumen-native-keyboard-qa`.
 
 ## Next
 
 The owner requested a fresh SwiftUI iOS 26 app in `ios/`, with GitHub macOS builds, simulator screenshots,
-unsigned IPA downloads and SideStore installation. This session proposes the phases; native code has not started.
+unsigned IPA downloads and SideStore installation. Phase 0 is authorized and in progress; account and provider integration begins in Phase 1.
 
 Layout proposal: the conversation and composer are the main screen. A sidebar opens history, search,
 projects and Library; the model control opens model/provider options; the composer opens attachments/tools;
@@ -52,6 +59,8 @@ reply excerpts into projects (synced size undecided), unified search and native 
 
 ## Decisions
 
+- Phase 0 is authorized. Fresh native bundle: `io.github.seifonyx.lumen`; legacy `.demo` stays separate.
+  New releases use `native-ios-v…` and `ios/sidestore-source.json`. No credentials or account integration in Phase 0.
 - 2026-11-08: the owner liked Setpoint's Swift/GitHub/SideStore development and delivery workflow, and rejected
   copying its bottom-tab navigation into Lumen. Design for an AI chat app; detailed navigation is still a proposal.
 - 2026-11-08: the owner requested minimal project documentation and an automatically maintained handoff,

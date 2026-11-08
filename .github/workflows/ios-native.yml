@@ -1,0 +1,78 @@
+name: Native iOS
+
+on:
+  pull_request:
+    paths: ['ios/**', '!ios/README.md', '!ios/sidestore-source.json', '.github/workflows/ios-native.yml']
+  push:
+    branches: [main]
+    paths: ['ios/**', '!ios/README.md', '!ios/sidestore-source.json', '.github/workflows/ios-native.yml']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish a verified version from main
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-ios-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: iPhone build, tests and screenshots
+    runs-on: macos-26
+    timeout-minutes: 35
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      IOS_BUILD_NUMBER: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Packaging tests
+        run: python3 -m unittest discover -s ios/tests -v
+      - name: Project generator
+        run: |
+          if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
+          xcodegen --version
+      - name: Build native app, test on iPhones and capture screens
+        run: bash ios/scripts/build.sh
+      - name: Keep IPA, screenshots, manifest and logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: native-ios-${{ github.sha }}
+          path: |
+            ios/build/release/
+            ios/build/screenshots/
+            ios/build/qa-devices.json
+            ios/build/logs/
+          retention-days: 7
+          if-no-files-found: error
+
+  publish:
+    name: Publish native SideStore build
+    needs: build
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.publish)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/download-artifact@v5
+        with:
+          name: native-ios-${{ github.sha }}
+          path: native-artifacts
+      - name: Publish verified IPA and source listing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 ios/scripts/publish.py --artifacts native-artifacts
+      - name: Save SideStore source when changed
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python3 ios/scripts/save_source.py

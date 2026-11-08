@@ -34,7 +34,7 @@ SECRET_PATTERNS = [
 def reject(message):
     raise ValueError(message)
 
-def verify(ipa_bytes: bytes, expected_version: str = "1.1.0") -> str:
+def verify(ipa_bytes: bytes, expected_version: str = "1.1.0", approved_signed_bundle: str = BUNDLE) -> str:
     if not ipa_bytes or len(ipa_bytes) > MAX_ARCHIVE_BYTES:
         reject("IPA missing or unexpectedly large")
     with zipfile.ZipFile(io.BytesIO(ipa_bytes)) as ipa:
@@ -90,8 +90,8 @@ def verify(ipa_bytes: bytes, expected_version: str = "1.1.0") -> str:
         services = info.get("LumenTestServices", {})
         if services.get("mode") != "account-connected" or services.get("projectId") != "the-model-router":
             reject("wrong packaged Firebase account project")
-        if services.get("bundleId") != BUNDLE or services.get("signedBundleId") != BUNDLE:
-            reject("Google sign-in identity mismatch")
+        if services.get("bundleId") != BUNDLE or services.get("signedBundleId") != approved_signed_bundle:
+            reject("Google sign-in identity mismatch with the approved SideStore signing configuration")
         if services.get("callbackScheme") not in [
             scheme for item in info.get("CFBundleURLTypes", [])
             for scheme in item.get("CFBundleURLSchemes", [])
@@ -136,7 +136,16 @@ if __name__ == "__main__":
         elif len(sys.argv) == 2:
             path = pathlib.Path(sys.argv[1])
             data = path.read_bytes()
-            digest = verify(data, os.environ.get("LUMEN_IOS_VERSION", "1.1.0"))
+            config_path = os.environ.get("LUMEN_NATIVE_SERVICE_CONFIG")
+            if not config_path:
+                reject("approved private native config is required")
+            config = json.loads(pathlib.Path(config_path).read_text())
+            if config.get("mode") != "account-connected" or config.get("bundleId") != BUNDLE:
+                reject("incorrect approved build configuration")
+            approved_signed = config.get("signedBundleId") or BUNDLE
+            if not isinstance(approved_signed, str) or not re.fullmatch(r"(?:[A-Za-z0-9-]+\\.)+[A-Za-z0-9-]+", approved_signed):
+                reject("invalid approved signing identity")
+            digest = verify(data, os.environ.get("LUMEN_IOS_VERSION", "1.1.0"), approved_signed)
             print(f"PASS connected IPA package audit: SHA256={digest}; no blocked secrets/paths; version and auth identity match")
         else:
             reject("expected IPA path or --self-test")

@@ -1,0 +1,46 @@
+name: Publish SideStore source from approved iOS release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing publicly reviewed iOS release tag (ios-vX.Y)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lumen-sidestore-source-main
+  cancel-in-progress: false
+
+jobs:
+  update-source:
+    if: github.repository == 'Seifonyx/Lumen'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout canonical source branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+      - name: Verify public release and refresh AltSource
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LUMEN_RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}
+        run: python3 scripts/ios/update-sidestore-source.py
+      - name: Commit source listing when changed
+        run: |
+          if git diff --quiet -- sidestore-source.json; then
+            echo 'Source already up to date.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sidestore-source.json
+          git commit -m 'chore(ios): publish verified SideStore release listing'
+          git push origin HEAD:main

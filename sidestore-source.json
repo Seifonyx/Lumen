@@ -2,5 +2,24 @@
   "name": "Lumen",
   "identifier": "io.github.seifonyx.lumen.source",
   "sourceURL": "https://raw.githubusercontent.com/Seifonyx/Lumen/main/sidestore-source.json",
-  "apps": []
+  "apps": [
+    {
+      "name": "Lumen",
+      "bundleIdentifier": "io.github.seifonyx.lumen.demo",
+      "developerName": "Lumen",
+      "subtitle": "An independent AI workspace for iPhone",
+      "localizedDescription": "A native iPhone experience for Lumen. Chat, projects, models, and your connected workspace.",
+      "iconURL": "https://raw.githubusercontent.com/Seifonyx/Lumen/main/public-canvas/icon-512.png",
+      "tintColor": "0b0b0c",
+      "versions": [
+        {
+          "version": "1.1.0",
+          "date": "2026-11-08",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/ios-v1.1.0/Lumen.ipa",
+          "size": 4822046,
+          "localizedDescription": "Lumen 1.1.0 — Native foundation"
+        }
+      ]
+    }
+  ]
 }

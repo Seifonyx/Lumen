@@ -4,6 +4,8 @@
 
 
 
+**Deferred owner decision (2026-11-08 — public launch):** Once the main Lumen changes are completed, open Google registration to everyone without an invitation-only email list. Lumen is free to use; each user brings their **own free models/API keys**. Do not subsidize inference with the owner's credentials or activate paid fallback. Maintain per-user Firestore isolation, key secrecy, safe onboarding, quota and abuse safeguards. **Do not implement or deploy public access yet.** The current immediate work remains the physical iPhone `AUTH_SIGNING` fix and real-app usability; public release comes later as its own scoped change.
+
 ## Current state — update this section in place
 
 | Subject | Latest recorded position |

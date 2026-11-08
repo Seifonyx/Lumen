@@ -41,55 +41,84 @@ enum WorkspaceRoute: String, CaseIterable, Identifiable, Hashable {
 struct WorkspaceView: View {
     let route: WorkspaceRoute
     var body: some View {
-        ContentUnavailableView(route.emptyTitle, systemImage: route.icon, description: Text(route.detail))
+        ContentUnavailableView(route.title, systemImage: route.icon, description: Text("Coming in a later native update. Your existing web content stays in your account."))
             .navigationTitle(route.title)
             .navigationBarTitleDisplayMode(.inline)
     }
 }
 
+struct HistorySearchView: View {
+    @Bindable var engine: ChatEngine
+    var select: (Conversation) -> Void
+    @State private var query = ""
+    private var results: [Conversation] {
+        engine.savedConversations.filter { $0.archived != true && (query.isEmpty || $0.title.localizedCaseInsensitiveContains(query)) }
+    }
+    var body: some View {
+        List(results) { chat in
+            Button { select(chat) } label: {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(chat.title).foregroundStyle(.primary)
+                    Text(chat.updatedAt, style: .date).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        }
+        .overlay { if results.isEmpty { ContentUnavailableView.search(text: query) } }
+        .searchable(text: $query, prompt: "Search chat titles")
+        .navigationTitle("Search")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
 struct ModelSheet: View {
     @Bindable var engine: ChatEngine
+    @Bindable var connections: ProviderConnections
+    @Bindable var sync: CloudChatSync
     @Environment(\.dismiss) private var dismiss
-
+    @State private var query = ""
     var body: some View {
         NavigationStack {
             List {
-                Section("Available Models") {
-                    ForEach(AIModel.defaults) { model in
-                        Button {
-                            engine.selectModel(model)
-                            dismiss()
-                        } label: {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(model.name)
-                                        .font(.headline)
-                                        .foregroundStyle(.primary)
-                                    if !model.description.isEmpty {
-                                        Text(model.description)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
+                if !connections.loading.isEmpty {
+                    HStack { ProgressView(); Text("Loading your models…").foregroundStyle(.secondary) }
+                }
+                ForEach(AIProviderID.allCases) { provider in
+                    let models = connections.models.filter { $0.providerId == provider.rawValue && (query.isEmpty || $0.name.localizedCaseInsensitiveContains(query)) }
+                    if !models.isEmpty {
+                        Section(provider.name) {
+                            ForEach(models) { model in
+                                Button {
+                                    engine.selectModel(model)
+                                    dismiss()
+                                } label: {
+                                    HStack {
+                                        Text(model.name).foregroundStyle(.primary)
+                                        Spacer()
+                                        if engine.selectedModel == model { Image(systemName: "checkmark").bold() }
                                     }
+                                    .padding(.vertical, 5)
                                 }
-                                Spacer()
-                                if engine.selectedModel?.id == model.id {
-                                    Image(systemName: "checkmark")
-                                        .foregroundStyle(.tint)
-                                        .bold()
-                                }
+                                .accessibilityIdentifier("model-" + model.providerId + "-" + model.id)
                             }
                         }
-                        .buttonStyle(.plain)
+                    }
+                }
+                if connections.models.isEmpty && connections.loading.isEmpty {
+                    Section {
+                        Text("Connect a provider to choose from the models available with your API key.")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Section {
+                    NavigationLink { ProvidersView(connections: connections, sync: sync) } label: {
+                        Label("Connect a provider", systemImage: "plus.circle")
                     }
                 }
             }
+            .searchable(text: $query, prompt: "Find a model")
             .navigationTitle("Models")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                }
-            }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)

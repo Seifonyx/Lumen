@@ -5,13 +5,47 @@ struct SettingsView: View {
     @Bindable var composer: DraftState
     @Bindable var engine: ChatEngine
     @Bindable var auth: AuthEngine
+    @Bindable var connections: ProviderConnections
+    @Bindable var sync: CloudChatSync
     @Environment(\.dismiss) private var dismiss
     @AppStorage("lumen.appearance") private var appearance = "system"
-    @AppStorage("lumen.api-key") private var apiKey = ""
 
     var body: some View {
         NavigationStack {
             Form {
+                Section("Account") {
+                    if let user = auth.currentUser {
+                        Label {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(user.displayName).font(.headline)
+                                Text(user.email).font(.subheadline).foregroundStyle(.secondary)
+                            }
+                        } icon: { Image(systemName: "person.crop.circle.fill").font(.title) }
+                        Text(sync.status).font(.footnote).foregroundStyle(.secondary)
+                        Button("Sign out", role: .destructive) { auth.signOut() }.accessibilityIdentifier("signOut")
+                    } else {
+                        Text("Sign in with the same Google account you use on the web to open your saved chats.")
+                            .foregroundStyle(.secondary)
+                        Button { Task { await auth.signIn() } } label: {
+                            HStack {
+                                Label("Sign in with Google", systemImage: "person.crop.circle.badge.checkmark")
+                                if auth.isLoading { Spacer(); ProgressView() }
+                            }
+                        }
+                        .disabled(auth.isLoading)
+                        .accessibilityIdentifier("googleSignIn")
+                    }
+                    if let error = auth.errorMessage { Text(error).foregroundStyle(.red).font(.footnote) }
+                    if let error = sync.errorMessage {
+                        Text(error).foregroundStyle(.red).font(.footnote)
+                        Button("Retry cloud sync") { sync.retry() }
+                    }
+                }
+                Section {
+                    NavigationLink { ProvidersView(connections: connections, sync: sync) } label: {
+                        Label("Models & providers", systemImage: "cpu")
+                    }.accessibilityIdentifier("providerSettings")
+                }
                 Section("Appearance") {
                     Picker("Appearance", selection: $appearance) {
                         Text("System").tag("system")
@@ -21,41 +55,6 @@ struct SettingsView: View {
                     .pickerStyle(.segmented)
                     .accessibilityIdentifier("appearancePicker")
                 }
-
-                Section("AI Provider API Key") {
-                    SecureField("Enter API Key (Groq / OpenAI / Gemini)", text: $apiKey)
-                        .accessibilityIdentifier("apiKeyField")
-                    if let model = engine.selectedModel {
-                        LabeledContent("Selected Model", value: model.name)
-                    }
-                }
-
-                Section("Account") {
-                    if let user = auth.currentUser {
-                        HStack(spacing: 12) {
-                            Image(systemName: "person.crop.circle.fill")
-                                .font(.title)
-                                .foregroundStyle(.tint)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(user.displayName)
-                                    .font(.headline)
-                                Text(user.email)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        Button("Sign out", role: .destructive) {
-                            auth.signOut()
-                        }
-                    } else {
-                        Label("Not signed in", systemImage: "person.crop.circle")
-                            .foregroundStyle(.secondary)
-                        Button("Sign in with Google") {
-                            Task { await auth.signIn() }
-                        }
-                    }
-                }
-
                 Section("About") {
                     LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")
                     LabeledContent("Build", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "")
@@ -63,11 +62,81 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+        }
+    }
+}
+
+struct ProvidersView: View {
+    @Bindable var connections: ProviderConnections
+    @Bindable var sync: CloudChatSync
+    var body: some View {
+        List {
+            Section {
+                ForEach(AIProviderID.allCases) { provider in
+                    NavigationLink { ProviderConnectionView(provider: provider, connections: connections) } label: {
+                        HStack {
+                            Text(provider.name)
+                            Spacer()
+                            if connections.loading.contains(provider.rawValue) { ProgressView() }
+                            else if connections.connected.contains(provider.rawValue) { Image(systemName: "checkmark.circle.fill").foregroundStyle(.green).accessibilityLabel("Connected") }
+                        }
+                    }.accessibilityIdentifier("provider-" + provider.rawValue)
+                }
+            } footer: {
+                Text("Keys are saved in this iPhone's Keychain. Messages go directly to the provider you choose.")
+            }
+            if connections.accountID != "device" {
+                Section {
+                    Button("Load keys from my Lumen account") { Task { await sync.refreshKeys() } }
                 }
             }
+        }
+        .navigationTitle("Models & providers")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+private struct ProviderConnectionView: View {
+    let provider: AIProviderID
+    @Bindable var connections: ProviderConnections
+    @State private var key = ""
+    @State private var removeConfirmation = false
+    @FocusState private var keyFocused: Bool
+    var body: some View {
+        Form {
+            Section("API key") {
+                SecureField(provider.name + " API key", text: $key)
+                    .textContentType(.password)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .focused($keyFocused)
+                    .accessibilityIdentifier("apiKeyField")
+                Button {
+                    keyFocused = false
+                    Task { await connections.connect(provider: provider, key: key) }
+                } label: {
+                    HStack {
+                        Text("Connect and refresh models")
+                        if connections.loading.contains(provider.rawValue) { Spacer(); ProgressView() }
+                    }
+                }
+                .disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || connections.loading.contains(provider.rawValue))
+                .accessibilityIdentifier("connectProvider")
+                if let error = connections.errors[provider.rawValue] { Text(error).font(.footnote).foregroundStyle(.red) }
+            }
+            if connections.connected.contains(provider.rawValue) {
+                Section {
+                    LabeledContent("Available models", value: String(connections.models.filter { $0.providerId == provider.rawValue }.count))
+                    Button("Remove saved key", role: .destructive) { removeConfirmation = true }
+                }
+            }
+        }
+        .navigationTitle(provider.name)
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { key = connections.savedKey(provider: provider).isEmpty ? connections.recoveredKey : connections.savedKey(provider: provider) }
+        .confirmationDialog("Remove the \(provider.name) key from this iPhone?", isPresented: $removeConfirmation, titleVisibility: .visible) {
+            Button("Remove key", role: .destructive) { connections.disconnect(provider: provider); key = "" }
         }
     }
 }

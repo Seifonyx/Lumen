@@ -26,13 +26,15 @@ extension ProviderCatalog: ModelCatalogClient {}
         self.keyStore = keyStore
         self.catalog = catalog
     }
-    public func key(for model: AIModel?) -> String? { model.flatMap { keys[$0.providerId] } }
+    public func key(for model: AIModel?) -> String? {
+        guard let model, connected.contains(model.providerId), models.contains(model) else { return nil }
+        return keys[model.providerId]
+    }
     public func savedKey(provider: AIProviderID) -> String { keys[provider.rawValue] ?? "" }
     public var recoveredKey: String { (try? keyStore.key(providerID: "legacy", accountID: "device")) ?? "" }
 
-    public func switchAccount(to id: String) async {
+    public func activateAccount(to id: String) {
         epoch = UUID()
-        let ticket = epoch
         accountID = id
         keys = [:]; models = []; connected = []; loading = []; errors = [:]; operations = [:]
         for provider in AIProviderID.allCases {
@@ -40,6 +42,15 @@ extension ProviderCatalog: ModelCatalogClient {}
                 if let key = try keyStore.key(providerID: provider.rawValue, accountID: id), !key.isEmpty { keys[provider.rawValue] = key }
             } catch { errors[provider.rawValue] = "The saved key could not be read from Keychain. Unlock your iPhone and try again." }
         }
+    }
+
+    public func switchAccount(to id: String) async {
+        activateAccount(to: id)
+        await refresh()
+    }
+
+    public func refresh() async {
+        let ticket = epoch
         for provider in AIProviderID.allCases {
             guard epoch == ticket else { return }
             if let key = keys[provider.rawValue] { await connect(provider: provider, key: key) }

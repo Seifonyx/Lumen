@@ -24,7 +24,11 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 - Cloud SDK adapter now listens to account chat metadata, lazily fetches messages, imports supported account
   keys, and transactionally appends pending turns. Pending Mac compile/integration testing; not release-ready.
 - Auth Mac compile found Swift-imported error enum name mismatch; now checks documented Google domain/-5.
-- Remaining: wire account/cloud/provider state into UI, meaningful connected/emulator tests and screenshots,
+- Account/cloud/provider state is now wired into the native UI. Loading/errors/retry, Keychain-backed provider
+  forms, discovered models, durable Send, Stop, account draft isolation and readable/selectable replies are
+  implemented. All32 current core tests pass locally. Mac compile found the iOS Data protection option
+  spelling; corrected to completeFileProtectionUntilFirstUserAuthentication, pending next build.
+- Remaining: meaningful connected/emulator tests and screenshots,
   fresh whole-branch review, merge and publish0.2.0 to SideStore. Actual phone Google login is user testing.
 - Local Swift6.2.3: `/workspace/scratch/swift-6.2/usr/bin/swift`. Linux6.0.3 had upstream Observation
   linker bug; do not use. No local Xcode. Use GitHub macOS26/Xcode26.6 for app/UI/IPA.

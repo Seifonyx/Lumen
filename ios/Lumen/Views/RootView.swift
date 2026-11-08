@@ -5,11 +5,14 @@ struct RootView: View {
     @Bindable var composer: DraftState
     @Bindable var engine: ChatEngine
     @Bindable var auth: AuthEngine
+    @Bindable var connections: ProviderConnections
+    @Bindable var sync: CloudChatSync
     @State private var path: [WorkspaceRoute] = []
     @State private var sidebarOpen = false
     @State private var settingsOpen = false
     @State private var modelsOpen = false
     @State private var discardConfirmation = false
+    @State private var pendingConversation: Conversation?
     @FocusState private var composerFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -20,6 +23,8 @@ struct RootView: View {
                     ChatView(
                         composer: composer,
                         engine: engine,
+                        connections: connections,
+                        sync: sync,
                         focused: $composerFocused,
                         chooseModel: { modelsOpen = true }
                     )
@@ -47,7 +52,9 @@ struct RootView: View {
                         }
                     }
                     .navigationDestination(for: WorkspaceRoute.self) { route in
-                        WorkspaceView(route: route)
+                        if route == .router { ProvidersView(connections: connections, sync: sync) }
+                        else if route == .search { HistorySearchView(engine: engine, select: openConversation) }
+                        else { WorkspaceView(route: route) }
                     }
                 }
                 .allowsHitTesting(!sidebarOpen)
@@ -73,8 +80,8 @@ struct RootView: View {
                             path.append(route)
                         },
                         selectConversation: { conv in
-                            sidebarOpen = false
-                            engine.selectConversation(id: conv.id)
+                            if composer.hasContent { pendingConversation = conv; discardConfirmation = true }
+                            else { openConversation(conv) }
                         },
                         settings: {
                             sidebarOpen = false
@@ -92,17 +99,36 @@ struct RootView: View {
             }
             .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: sidebarOpen)
         }
-        .sheet(isPresented: $settingsOpen) { SettingsView(composer: composer, engine: engine, auth: auth) }
-        .sheet(isPresented: $modelsOpen) { ModelSheet(engine: engine) }
-        .alert("Start a new chat?", isPresented: $discardConfirmation) {
-            Button("Discard draft", role: .destructive) { startNewChat() }
-            Button("Cancel", role: .cancel) {}
+        .onChange(of: engine.isStreaming) { _, streaming in
+            if !streaming, engine.currentConversation.historyLoaded == false { Task { await sync.loadMessages(chatID: engine.currentConversation.id) } }
+        }
+        .sheet(isPresented: $settingsOpen) { SettingsView(composer: composer, engine: engine, auth: auth, connections: connections, sync: sync) }
+        .sheet(isPresented: $modelsOpen) { ModelSheet(engine: engine, connections: connections, sync: sync) }
+        .alert("Discard this draft?", isPresented: $discardConfirmation) {
+            Button("Discard draft", role: .destructive) {
+                composer.discardDraft()
+                if let chat = pendingConversation { openConversation(chat) }
+                else { startNewChat() }
+                pendingConversation = nil
+            }
+            Button("Cancel", role: .cancel) { pendingConversation = nil }
         } message: {
             Text("Your unsent draft will be cleared.")
         }
     }
 
+    private func openConversation(_ chat: Conversation) {
+        sidebarOpen = false
+        path.removeAll()
+        engine.selectConversation(id: chat.id)
+        if let model = connections.models.first(where: { $0.id == chat.selectedModelId && (chat.selectedProviderId == nil || $0.providerId == chat.selectedProviderId) }) {
+            engine.selectModel(model)
+        } else { engine.clearSelectedModel() }
+        Task { await sync.loadMessages(chatID: chat.id) }
+    }
+
     private func requestNewChat() {
+        pendingConversation = nil
         if composer.hasContent { discardConfirmation = true }
         else { startNewChat() }
     }

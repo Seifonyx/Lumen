@@ -14,7 +14,7 @@ import LumenCore
     private var listener: ListenerRegistration?
     private var draining: Task<Void, Never>?
     private var loading: Set<String> = []
-    var receiveKeys: (([String: String]) -> Void)?
+    var receiveKeys: ((String, [String: String]) -> Void)?
 
     init(engine: ChatEngine, db: Firestore = Firestore.firestore()) {
         self.engine = engine
@@ -95,7 +95,7 @@ import LumenCore
                 let key = fields[id + "Key"] as? String ?? extra[id] as? String ?? ""
                 if !key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { keys[id] = key }
             }
-            receiveKeys?(keys)
+            receiveKeys?(userID, keys)
         } catch {
             guard epoch == ticket else { return }
             errorMessage = "Account provider keys could not load. You can connect a provider in Settings."

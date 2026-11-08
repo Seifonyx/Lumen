@@ -48,7 +48,7 @@ struct SidebarView: View {
                             .padding(.top, 8)
                     } else {
                         VStack(alignment: .leading, spacing: 4) {
-                            ForEach(engine.savedConversations) { conv in
+                            ForEach(engine.savedConversations.filter { $0.archived != true }) { conv in
                                 Button {
                                     selectConversation(conv)
                                 } label: {
@@ -66,6 +66,7 @@ struct SidebarView: View {
                                     .background(engine.currentConversation.id == conv.id ? Color.primary.opacity(0.08) : .clear, in: .rect(cornerRadius: 8))
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityIdentifier("history-" + conv.id)
                             }
                         }
                         .padding(.top, 8)

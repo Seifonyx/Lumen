@@ -1,6 +1,6 @@
 # Lumen — CURRENT execution checkpoint (PUBLIC-SAFE)
 
-> **Signing fix in progress:** Physical AUTH_SIGNING was traced to Sideloadly's recorded rewritten bundle identity. Private build configuration and a matching Google iOS registration now use that exact installed identity; source bundle and all runtime equality/nonce/callback checks remain unchanged. Fix pushed at8d0dfe8; focused checks/typecheck pass. Exact-head CI42471233508 and encrypted build42471229602 running. No final signed package/profile found locally, so post-sign configuration and physical login remain unverified. No rules/data changes, billing, merge or deployment.
+> **Signing fix implemented; delivery externally blocked:** Source8d0dfe8 binds private native configuration and a newly registered matching Google iOS client to the actual Sideloadly-recorded installed identity, retaining the original unsigned source ID and all runtime equality/nonce/callback checks. Focused tests/native typecheck and browser contracts pass. Encrypted native build42471229602 failed twice before compilation because official Capacitor8.6.0 framework downloads return GitHub HTTP504. Exact-head CI42471233508 also has a GitHub504 artifact-download failure, not green. No replacement IPA delivered or final signed package verified. Existing app/data/artifacts retained; no billing, merge, web deployment or rules changes.
 
 
 
@@ -29,7 +29,7 @@
 
 **Owner reporting preference (2026-10-23, standing):** every report to the owner ends with a plain summary of the features and changes implemented (what changed for users, per area), alongside test results and risks.
 
-**Current next action — signing evidence required:** Obtain the final Sideloadly-signed IPA or its exact installed bundle identifier. Preserve the existing Apple account/bundle settings and installation; do not uninstall or choose a new ID. Current local files establish only unsigned source identity. Once actual signed identity is established, compare plist, provisioning identity and Google iOS client/callback before proposing any necessary production OAuth registration. Do not guess a suffix or copy the runtime bundle ID into the trusted configuration as a bypass. No replacement IPA or physical sign-in success claimed this round.
+**Current next action — external build dependency blocker:** Retry the failed native/CI jobs at8d0dfe8 after GitHub artifact/release downloads recover; do not bypass gates, downgrade dependencies or reuse an older IPA as a completed fix. Then verify the actual configured package and privately deliver the encrypted replacement for the same Sideloadly Apple account/automatic bundle settings, no uninstall. Installed identity is verified from Sideloadly installations.db; final signed plist/profile is still unavailable and must not be claimed verified. Owner has authorized necessary matching OAuth registration; no further routine approval needed. Source Swift authentication checks are unchanged.
 
 **Owner decisions recorded (2026-10-22), replacing the P1 backlog questions:**
 - **Pinch zoom:** stays disabled in the main chat (native-app feel). Keep comfortable text sizes and system text-size support where feasible; the document Canvas may have its own zoom.

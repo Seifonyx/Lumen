@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 import Testing
 @testable import LumenCore
 
@@ -26,7 +29,7 @@ private final class ReviewRequestCapture: @unchecked Sendable {
     func read() -> URLRequest? { lock.withLock { value } }
 }
 
-private final class ReviewURLProtocol: URLProtocol, @unchecked Sendable {
+private final class ReviewURLProtocol: URLProtocol {
     static let capture = ReviewRequestCapture()
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
@@ -41,6 +44,10 @@ private final class ReviewURLProtocol: URLProtocol, @unchecked Sendable {
     }
     override func stopLoading() {}
 }
+
+#if !canImport(FoundationNetworking)
+extension ReviewURLProtocol: @unchecked Sendable {}
+#endif
 
 @Suite(.serialized) @MainActor
 struct Phase1ReviewProbes {

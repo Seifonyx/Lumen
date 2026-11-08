@@ -1,17 +1,23 @@
 # Lumen checkpoint
 
-Updated: 2026-11-08. This is the current continuation point; agent update guidance is in [AGENTS.md](AGENTS.md).
+Updated: 2026-11-09. This is the current continuation point; agent update guidance is in [AGENTS.md](AGENTS.md).
 
 ## Now
 
 - **Branch:** `codex/phase1-ready`. Owner authorized fixing every Phase 1 blocker and shipping a new IPA.
   Implementation is proceeding inline; the diagnostic branch preserves failing tests as the baseline.
-  Existing Google configuration and SideStore team identity are available. Registering the fresh native app
-  through the existing CI credential; account data/rules remain unchanged. Installing a standalone local
-  Swift toolchain for fast core tests (Docker VFS consumed too much disk; its task image was removed).
+  Existing Google config and SideStore team `M2WDSAZ2A5` are available. Firebase registration via the
+  existing CI credential returns 403. Browser startup is unavailable. Asked owner to register iOS apps
+  `io.github.seifonyx.lumen` and `io.github.seifonyx.lumen.M2WDSAZ2A5` in the existing project.
+  Owner now confirms registrations are done; nickname is “Lumen” (valid). Fetch and verify both bundle IDs next.
+  Work continues independently; no data/rules changed. Local Swift 6.2.3 is installed and runs tests; 6.0.3 had an upstream Linux Observation linker bug. Docker image was removed after VFS disk overuse.
 - **Review baseline:** review completed for [PR #146](https://github.com/Seifonyx/Lumen/pull/146)
   at `85e4222`, against Phase 0 `14bf502`. **Verdict: needs changes; Phase 1 is not ready for release.**
-  The original PR is unchanged and unmerged. This branch adds review tests/workflow and this checkpoint only.
+  The original PR is unchanged and unmerged. Fix branch now has uncommitted engine generation/persistence
+  changes and portable provider transport; SSE parser tests are being brought through failing/passing states.
+- **Fix verification:** local Swift 6.2.3 runs all 16 current core tests successfully, including the three
+  formerly failing probes and four SSE parser tests observed failing before implementation. Native SDK
+  packages are pinned (Firebase 13.1.1, GoogleSignIn 10.1.0); app compilation is now checked in CI.
 - **Original verification:** [native CI](https://github.com/Seifonyx/Lumen/actions/runs/42522817455) passed
   9 core tests and the 4 existing shell UI journeys on each iPhone profile. Its screenshots were inspected.
   The auth tests exercise preview identity; no live Google/account sync/provider conversation was verified.

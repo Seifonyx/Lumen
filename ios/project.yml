@@ -11,11 +11,18 @@ settings:
     IPHONEOS_DEPLOYMENT_TARGET: '26.0'
     CODE_SIGNING_ALLOWED: NO
     TARGETED_DEVICE_FAMILY: '1'
-    MARKETING_VERSION: '0.1.0'
+    MARKETING_VERSION: '0.2.0'
     CURRENT_PROJECT_VERSION: '1'
+    OTHER_LDFLAGS: '$(inherited) -ObjC'
 packages:
   LumenCore:
     path: LumenCore
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    exactVersion: 13.1.1
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    exactVersion: 10.1.0
 targets:
   Lumen:
     type: application
@@ -23,6 +30,16 @@ targets:
     sources: [Lumen]
     dependencies:
       - package: LumenCore
+      - package: Firebase
+        product: FirebaseCore
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: GoogleSignIn
+        product: GoogleSignIn
+      - package: GoogleSignIn
+        product: GoogleSignInSwiftUI
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.github.seifonyx.lumen

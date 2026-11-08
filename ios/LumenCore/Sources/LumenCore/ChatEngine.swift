@@ -10,6 +10,7 @@ public final class ChatEngine {
     public var errorMessage: String?
 
     @ObservationIgnored private var streamingTask: Task<Void, Never>?
+    @ObservationIgnored private var generation: UUID?
     @ObservationIgnored private let client: AIStreamingClient
     @ObservationIgnored private let defaults: UserDefaults
 
@@ -54,6 +55,7 @@ public final class ChatEngine {
     }
 
     public func deleteConversation(id: UUID) {
+        if currentConversation.id == id { stopStreaming() }
         savedConversations.removeAll(where: { $0.id == id })
         if currentConversation.id == id {
             currentConversation = Conversation(selectedModelId: selectedModel?.id)
@@ -62,10 +64,15 @@ public final class ChatEngine {
     }
 
     public func send(prompt: String, apiKey: String) async {
+        guard !isStreaming else { return }
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         guard let model = selectedModel else {
             errorMessage = "Please select a model first."
+            return
+        }
+        guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = "Add a key for \(model.providerId) in Settings before sending."
             return
         }
 
@@ -78,32 +85,48 @@ public final class ChatEngine {
             status: .streaming
         )
         currentConversation.messages.append(assistantMessage)
-        let assistantIndex = currentConversation.messages.count - 1
-
+        let conversationID = currentConversation.id
+        let messageID = assistantMessage.id
+        let requestMessages = Array(currentConversation.messages.dropLast())
+        let ticket = UUID()
+        generation = ticket
         isStreaming = true
+        saveCurrentIfNeeded()
 
         streamingTask = Task {
+            var lastCheckpoint = Date.distantPast
             do {
                 let stream = try await client.stream(
-                    messages: currentConversation.messages.dropLast(),
+                    messages: requestMessages,
                     model: model,
                     apiKey: apiKey
                 )
 
                 for try await token in stream {
-                    if Task.isCancelled { break }
-                    currentConversation.messages[assistantIndex].content += token
+                    guard !Task.isCancelled, generation == ticket,
+                          currentConversation.id == conversationID,
+                          let index = currentConversation.messages.firstIndex(where: { $0.id == messageID }) else { return }
+                    currentConversation.messages[index].content += token
+                    if Date().timeIntervalSince(lastCheckpoint) >= 0.5 {
+                        saveCurrentIfNeeded()
+                        lastCheckpoint = Date()
+                    }
                 }
-
-                currentConversation.messages[assistantIndex].status = .completed
+                guard !Task.isCancelled, generation == ticket,
+                      currentConversation.id == conversationID,
+                      let index = currentConversation.messages.firstIndex(where: { $0.id == messageID }) else { return }
+                currentConversation.messages[index].status = .completed
                 currentConversation.updatedAt = Date()
             } catch {
-                if !Task.isCancelled {
-                    currentConversation.messages[assistantIndex].status = .error(error.localizedDescription)
-                    errorMessage = error.localizedDescription
-                }
+                guard !Task.isCancelled, generation == ticket,
+                      currentConversation.id == conversationID,
+                      let index = currentConversation.messages.firstIndex(where: { $0.id == messageID }) else { return }
+                currentConversation.messages[index].status = .error(error.localizedDescription)
+                errorMessage = error.localizedDescription
             }
-
+            guard generation == ticket else { return }
+            generation = nil
+            streamingTask = nil
             isStreaming = false
             saveCurrentIfNeeded()
         }
@@ -112,6 +135,7 @@ public final class ChatEngine {
     }
 
     public func stopStreaming() {
+        generation = nil
         streamingTask?.cancel()
         streamingTask = nil
         isStreaming = false

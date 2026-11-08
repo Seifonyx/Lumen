@@ -1,8 +1,11 @@
 import SwiftUI
+import LumenCore
 
 struct SidebarView: View {
+    @Bindable var engine: ChatEngine
     var newChat: () -> Void
     var open: (WorkspaceRoute) -> Void
+    var selectConversation: (Conversation) -> Void
     var settings: () -> Void
     var close: () -> Void
     @AccessibilityFocusState private var headingFocused: Bool
@@ -30,14 +33,42 @@ struct SidebarView: View {
                         row(route.title, icon: route.icon) { open(route) }
                             .accessibilityIdentifier("sidebar-\(route.rawValue)")
                     }
+
                     Divider().padding(.vertical, 18)
+
                     Text("Conversations")
                         .font(.subheadline.weight(.semibold))
                         .accessibilityAddTraits(.isHeader)
-                    Text("Your chats will appear here.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+
+                    if engine.savedConversations.isEmpty {
+                        Text("Your chats will appear here.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 8)
+                    } else {
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(engine.savedConversations) { conv in
+                                Button {
+                                    selectConversation(conv)
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "bubble.left")
+                                            .frame(width: 20)
+                                            .foregroundStyle(.secondary)
+                                        Text(conv.title)
+                                            .lineLimit(1)
+                                            .font(.subheadline)
+                                        Spacer()
+                                    }
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 8)
+                                    .background(engine.currentConversation.id == conv.id ? Color.primary.opacity(0.08) : .clear, in: .rect(cornerRadius: 8))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
                         .padding(.top, 8)
+                    }
                 }
                 .padding(20)
             }

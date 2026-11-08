@@ -1,4 +1,5 @@
 import SwiftUI
+import LumenCore
 
 enum WorkspaceRoute: String, CaseIterable, Identifiable, Hashable {
     case search, projects, library, router
@@ -47,18 +48,48 @@ struct WorkspaceView: View {
 }
 
 struct ModelSheet: View {
+    @Bindable var engine: ChatEngine
     @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         NavigationStack {
-            ContentUnavailableView("No models connected", systemImage: "cpu",
-                description: Text("Your connected models will appear here."))
-                .navigationTitle("Models")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { dismiss() }
+            List {
+                Section("Available Models") {
+                    ForEach(AIModel.defaults) { model in
+                        Button {
+                            engine.selectModel(model)
+                            dismiss()
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(model.name)
+                                        .font(.headline)
+                                        .foregroundStyle(.primary)
+                                    if !model.description.isEmpty {
+                                        Text(model.description)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                Spacer()
+                                if engine.selectedModel?.id == model.id {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.tint)
+                                        .bold()
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
+            }
+            .navigationTitle("Models")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)

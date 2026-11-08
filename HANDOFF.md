@@ -4,23 +4,14 @@ Updated: 2026-11-08. This is the current continuation point; agent update guidan
 
 ## Now
 
-- **Branch:** `main`. Phase 0 is published: [Lumen native 0.1.0, build 7](https://github.com/Seifonyx/Lumen/releases/tag/native-ios-v0.1.0).
-  Implementation merged in [PR #145](https://github.com/Seifonyx/Lumen/pull/145), source commit `5ae3029`.
-- **Shipped:** fresh SwiftUI iOS 26 chat/composer/sidebar, native sheets and Liquid Glass controls,
-  icon, persistent unsent draft and appearance settings. Bundle `io.github.seifonyx.lumen`.
-  Account sign-in, AI connections and real workspace data begin in Phase 1.
-- **Verified:** [main build and publication](https://github.com/Seifonyx/Lumen/actions/runs/42511043876) passed
-  all 34 checks: native build/publication and 32 web checks. Native coverage includes 11 packaging/Git checks,
-  3 Swift core tests and all 4 UI journeys on each of two iPhone profiles. Light/Dark captures inspected.
-  Public IPA, manifest, screenshots and source downloaded anonymously; device binary, identity and digest verified.
-- **Install:** [Lumen.ipa](https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.1.0/Lumen.ipa) in SideStore,
-  or add [the native source](https://raw.githubusercontent.com/Seifonyx/Lumen/main/ios/sidestore-source.json).
-  Actual installation/opening on the owner's iPhone remains the final physical-device check.
-- **Device follow-up:** owner confirmed the SideStore source now works. No feed change was needed.
-  The earlier import error is resolved; actual installation and launch of Lumen have not yet been reported.
-- **Next implementation:** Phase 1: existing account/sign-in, one provider, streaming/Stop, saved chats and reopening.
-  Phase 1 has not started. Bump `MARKETING_VERSION` for the next native release; setup is in `ios/README.md`.
-- **Local evidence:** `/workspace/scratch/lumen-native-release-0.1.0` (published IPA, metadata and screenshots).
+- **Branch:** `feat/phase1-connected-chat`. Phase 1 implementation underway.
+- **Phase 0:** Published: [Lumen native 0.1.0, build 7](https://github.com/Seifonyx/Lumen/releases/tag/native-ios-v0.1.0).
+- **Phase 1 In Progress:**
+  - `LumenCore`: Implemented `ChatMessage`, `Conversation`, `AIProvider` (`AIModel`, `OpenAICompatibleStreamingClient`), and `ChatEngine` (`send`, `stopStreaming`, conversation switching, persistence).
+  - `LumenCoreTests`: Added `ChatEngineTests` covering async streaming, stop cancellation, conversation history, and persistence.
+  - `Lumen UI`: Wired `ChatEngine` into `ChatView` (live bubbles, auto-scroll, Send/Stop buttons, model picker), `SidebarView` (saved chat history), `ModelSheet` (model selection), and `SettingsView` (API key configuration).
+- **Checks:** `SourceCommitTests` passed (3/3 tests). Packaging guardrails verified.
+- **Next implementation:** Push `feat/phase1-connected-chat` to trigger GitHub Actions PR checks, verify simulator test suite, and wire Firebase Auth / account sync.
 
 ## Next
 

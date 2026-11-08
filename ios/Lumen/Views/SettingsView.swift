@@ -3,8 +3,10 @@ import LumenCore
 
 struct SettingsView: View {
     @Bindable var composer: DraftState
+    @Bindable var engine: ChatEngine
     @Environment(\.dismiss) private var dismiss
     @AppStorage("lumen.appearance") private var appearance = "system"
+    @AppStorage("lumen.api-key") private var apiKey = ""
 
     var body: some View {
         NavigationStack {
@@ -17,6 +19,13 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.segmented)
                     .accessibilityIdentifier("appearancePicker")
+                }
+                Section("AI Provider API Key") {
+                    SecureField("Enter API Key (Groq / OpenAI / Gemini)", text: $apiKey)
+                        .accessibilityIdentifier("apiKeyField")
+                    if let model = engine.selectedModel {
+                        LabeledContent("Selected Model", value: model.name)
+                    }
                 }
                 Section("Account") {
                     Label("Not signed in", systemImage: "person.crop.circle")

@@ -1,11 +1,27 @@
-name: Phase 1 review probes
+name: Phase 1 development checks
 on:
   push:
-    branches: [codex/review-native-phase1]
-    paths: [ios/LumenCore/Tests/LumenCoreTests/Phase1ReviewProbes.swift, .github/workflows/ios-phase1-review-probes.yml]
+    branches: [codex/review-native-phase1, codex/phase1-ready]
+    paths: ['ios/LumenCore/**', ios/scripts/inspect_firebase_setup.py, .github/workflows/ios-phase1-review-probes.yml]
 permissions:
   contents: read
 jobs:
+  firebase-configuration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - run: python3 -m pip install google-auth requests
+      - name: Inspect existing native Firebase configuration
+        env:
+          LUMEN_FIREBASE_SERVICE: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          LUMEN_ACCOUNT_CONFIG: ${{ secrets.LUMEN_IOS_ACCOUNT_CONFIG }}
+        run: python3 ios/scripts/inspect_firebase_setup.py
+      - uses: actions/upload-artifact@v6
+        with:
+          name: firebase-public-configuration
+          path: ${{ runner.temp }}/lumen-firebase-public/public-configuration.json
+          retention-days: 1
   probes:
     runs-on: macos-26
     timeout-minutes: 8

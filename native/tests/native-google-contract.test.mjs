@@ -7,9 +7,13 @@ const read=rel=>readFileSync(fileURLToPath(new URL(rel,import.meta.url)),'utf8')
 
 test('native sign-in exchanges only checked Google ID token with Firebase',()=>{
  const source=read('../services/account.ts');
- assert.match(source,/verifyNativeGoogleToken\(c,config\.webClientId\)/);
- assert.match(source,/GoogleAuthProvider\.credential\(idToken\)/);
- assert.doesNotMatch(source,/new OAuthProvider\('google\.com'\)/);
+ assert.match(source,/await nativeFirebaseCredential\(c,config\.webClientId\)/);
+ assert.match(source,/signInWithCredential\(auth,credential\)/);
+ const helper=read('../services/google-credential.ts');
+ assert.match(helper,/await verifyNativeGoogleToken\(input,client\)/);
+ assert.match(helper,/new OAuthProvider\('google\.com'\)\.credential\(\{idToken,rawNonce:input\.rawNonce\}\)/);
+ assert(helper.indexOf('await verifyNativeGoogleToken')<helper.indexOf("new OAuthProvider"),'validate before constructing Firebase credential');
+ assert.doesNotMatch(source,/GoogleAuthProvider\.credential\(idToken\)/,'must not drop the verified nonce');
 });
 
 test('Google SDK bridge supplies hashed nonce and keeps only its raw counterpart in the vault',()=>{

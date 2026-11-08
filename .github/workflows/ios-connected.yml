@@ -29,7 +29,7 @@ jobs:
       - run: npm ci
       - run: npm ci --prefix native --ignore-scripts
       - name: Focused native free-provider contracts (no provider network)
-        run: node --experimental-strip-types --test native/tests/free-provider.test.mjs native/tests/native-ai-gate.test.mjs native/tests/ai-consent.test.mjs native/tests/storage-namespace.test.mjs native/tests/account-build.test.mjs native/tests/service-config.test.mjs native/tests/auth-errors.test.mjs native/tests/real-session.test.mjs native/tests/google-token.test.mjs native/tests/firebase-credential.test.mjs native/tests/plugin-bridge.test.mjs
+        run: node --experimental-strip-types --test native/tests/free-provider.test.mjs native/tests/native-ai-gate.test.mjs native/tests/ai-consent.test.mjs native/tests/storage-namespace.test.mjs native/tests/account-build.test.mjs native/tests/service-config.test.mjs native/tests/auth-errors.test.mjs native/tests/real-session.test.mjs native/tests/google-token.test.mjs native/tests/firebase-credential.test.mjs native/tests/native-google-contract.test.mjs native/tests/plugin-bridge.test.mjs
       - run: node node_modules/typescript/bin/tsc --noEmit -p native/tsconfig.json
       - name: Prepare approved private configuration and recipient key
         env:

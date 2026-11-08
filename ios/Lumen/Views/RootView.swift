@@ -81,7 +81,7 @@ struct RootView: View {
         }
         .sheet(isPresented: $settingsOpen) { SettingsView(composer: composer) }
         .sheet(isPresented: $modelsOpen) { ModelSheet() }
-        .confirmationDialog("Start a new chat?", isPresented: $discardConfirmation, titleVisibility: .visible) {
+        .alert("Start a new chat?", isPresented: $discardConfirmation) {
             Button("Discard draft", role: .destructive) { startNewChat() }
             Button("Cancel", role: .cancel) {}
         } message: {

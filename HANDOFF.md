@@ -9,13 +9,13 @@ Updated: 2026-11-08. This is the current continuation point; agent update guidan
   unsigned IPA packaging and SideStore delivery.
 - **Done:** shell/sidebar/native sheets, persistent draft and appearance settings; project generation,
   core/UI tests, device-IPA validation and independent native build/release workflow implemented.
-- **Verification:** eight packaging checks and three real-Git source-update checks passed locally after RED;
-  syntax/configuration checks passed. Mac rerun passed all three core tests, compiled the app/UI test bundle
-  and produced the unsigned device archive. Packaging caught XcodeGen's default version; wired Info.plist
-  to MARKETING_VERSION/CURRENT_PROJECT_VERSION. XCTest setup isolation was fixed in the prior run.
-  Review also found a concurrent-main feed push race; bounded fetch/rebase retry now has regression coverage.
-- **Next action:** rerun native CI, inspect actual simulator captures, then publish the IPA. UI journeys and
-  the final installable artifact are not yet verified. Work is in [PR #145](https://github.com/Seifonyx/Lumen/pull/145).
+- **Verification:** 11 local packaging/Git checks pass; Mac core tests, simulator compilation, device archive
+  and IPA validation passed (0.1.0, arm64, minimum iOS 26). Compact iPhone passed keyboard, draft restoration
+  and Light/Dark screen journeys; actual captures inspected. Discard confirmation failed because the system
+  popover omits Cancel; replaced it with a native alert, keeping the existing regression test unchanged.
+  The reviewed feed-push race has fetch/rebase retry and real-Git regression coverage.
+- **Next action:** rerun both phone profiles, verify explicit Cancel/Discard, then publish the IPA. Work is in
+  [PR #145](https://github.com/Seifonyx/Lumen/pull/145). Local review artifacts: `/workspace/scratch/lumen-native-qa`.
 
 ## Next
 

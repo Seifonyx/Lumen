@@ -64,6 +64,10 @@ jobs:
         run: |
           bash native/scripts/build-ipa.sh > "$RUNNER_TEMP/private-delivery/package.log" 2>&1 || { echo 'Connected Xcode build failed; inspect encrypted diagnostics.'; exit 1; }
           python3 native/scripts/verify-connected.py
+      - name: Audit real connected IPA before encrypting (no keys in logs)
+        run: |
+          python3 native/scripts/audit-public-ipa.py --self-test
+          python3 native/scripts/audit-public-ipa.py native/artifacts/Lumen.ipa
       - name: Encrypt private IPA or failure diagnostics
         if: always()
         run: |

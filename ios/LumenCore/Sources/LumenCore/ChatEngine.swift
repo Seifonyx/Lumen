@@ -1,137 +1,151 @@
 import Foundation
 import Observation
 
-@MainActor @Observable
-public final class ChatEngine {
-    public var currentConversation: Conversation
-    public var savedConversations: [Conversation] = []
-    public var selectedModel: AIModel?
-    public var isStreaming: Bool = false
+@MainActor @Observable public final class ChatEngine {
+    public var currentConversation = Conversation()
+    public private(set) var savedConversations: [Conversation] = []
+    public private(set) var selectedModel: AIModel?
+    public private(set) var isStreaming = false
     public var errorMessage: String?
-
+    public private(set) var accountID = "device"
+    public private(set) var pendingMessages: [String: Set<String>] = [:]
+    public private(set) var pendingDeletions: Set<String> = []
+    @ObservationIgnored public var onChange: (() -> Void)?
+    @ObservationIgnored private let client: any AIStreamingClient
+    @ObservationIgnored private let store: any ConversationStore
     @ObservationIgnored private var streamingTask: Task<Void, Never>?
     @ObservationIgnored private var generation: UUID?
-    @ObservationIgnored private let client: AIStreamingClient
-    @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored private var cacheReadable = true
 
-    private static let savedConversationsKey = "lumen.saved-conversations"
-    private static let selectedModelKey = "lumen.selected-model-id"
-
-    public init(
-        client: AIStreamingClient = OpenAICompatibleStreamingClient(),
-        defaults: UserDefaults = .standard
-    ) {
+    public init(client: any AIStreamingClient = OpenAICompatibleStreamingClient(),
+                store: any ConversationStore = FileConversationStore()) {
         self.client = client
-        self.defaults = defaults
-        self.currentConversation = Conversation()
+        self.store = store
+        loadAccount()
+    }
 
-        loadPersistedState()
+    public func switchAccount(to id: String) {
+        guard accountID != id else { return }
+        stopStreaming()
+        accountID = id
+        loadAccount()
     }
 
     public func selectModel(_ model: AIModel) {
         selectedModel = model
         currentConversation.selectedModelId = model.id
-        defaults.set(model.id, forKey: Self.selectedModelKey)
+        currentConversation.selectedProviderId = model.providerId
+        _ = saveCurrent()
+    }
+
+    public func clearSelectedModel() {
+        selectedModel = nil
+        _ = write()
     }
 
     public func startNewConversation() {
         stopStreaming()
-        saveCurrentIfNeeded()
+        _ = saveCurrent()
         currentConversation = Conversation(selectedModelId: selectedModel?.id)
+        currentConversation.selectedProviderId = selectedModel?.providerId
         errorMessage = nil
     }
 
-    public func selectConversation(id: UUID) {
+    public func selectConversation(id: String) {
         stopStreaming()
-        saveCurrentIfNeeded()
-        if let found = savedConversations.first(where: { $0.id == id }) {
-            currentConversation = found
-            if let modelId = found.selectedModelId,
-               let model = AIModel.defaults.first(where: { $0.id == modelId }) {
-                selectedModel = model
-            }
-        }
+        _ = saveCurrent()
+        guard let chat = savedConversations.first(where: { $0.id == id }) else { return }
+        currentConversation = chat
         errorMessage = nil
     }
 
-    public func deleteConversation(id: UUID) {
+    public func deleteConversation(id: String) {
         if currentConversation.id == id { stopStreaming() }
-        savedConversations.removeAll(where: { $0.id == id })
-        if currentConversation.id == id {
-            currentConversation = Conversation(selectedModelId: selectedModel?.id)
-        }
-        persistConversations()
+        savedConversations.removeAll { $0.id == id }
+        pendingMessages[id] = nil
+        pendingDeletions.insert(id)
+        if currentConversation.id == id { currentConversation = Conversation(selectedModelId: selectedModel?.id) }
+        _ = write()
     }
 
-    public func send(prompt: String, apiKey: String) async {
-        guard !isStreaming else { return }
-        let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        guard let model = selectedModel else {
-            errorMessage = "Please select a model first."
-            return
+    /// Returns a task only after the accepted turn and outbox are durable. The caller can then clear its draft.
+    @discardableResult public func submit(prompt: String, apiKey: String) -> Task<Void, Never>? {
+        guard !isStreaming else { return nil }
+        let text = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return nil }
+        guard currentConversation.historyLoaded != false else {
+            errorMessage = "Wait for this conversation to finish loading before sending."
+            return nil
         }
+        guard let model = selectedModel else { errorMessage = "Choose a connected model first."; return nil }
         guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Add a key for \(model.providerId) in Settings before sending."
-            return
+            errorMessage = "Connect \(model.providerId) in Settings before sending."
+            return nil
         }
-
+        let before = currentConversation
+        let savedBefore = savedConversations
+        let pendingBefore = pendingMessages
+        currentConversation.selectedModelId = model.id
+        currentConversation.selectedProviderId = model.providerId
+        let user = currentConversation.appendUserMessage(text)
+        let reply = ChatMessage(role: .assistant, content: "", status: .streaming)
+        currentConversation.messages.append(reply)
+        pendingMessages[currentConversation.id, default: []].insert(user.id)
+        guard saveCurrent() else {
+            currentConversation = before
+            savedConversations = savedBefore
+            pendingMessages = pendingBefore
+            return nil
+        }
         errorMessage = nil
-        _ = currentConversation.appendUserMessage(trimmed)
-
-        let assistantMessage = ChatMessage(
-            role: .assistant,
-            content: "",
-            status: .streaming
-        )
-        currentConversation.messages.append(assistantMessage)
-        let conversationID = currentConversation.id
-        let messageID = assistantMessage.id
-        let requestMessages = Array(currentConversation.messages.dropLast())
+        let chatID = currentConversation.id
+        let account = accountID
+        let requestMessages = Array(currentConversation.messages.dropLast()).filter {
+            // Failed/empty assistant placeholders are not conversation context.
+            $0.role != .assistant || !$0.content.isEmpty
+        }
         let ticket = UUID()
         generation = ticket
         isStreaming = true
-        saveCurrentIfNeeded()
-
-        streamingTask = Task {
-            var lastCheckpoint = Date.distantPast
+        streamingTask = Task { [weak self] in
+            guard let self else { return }
+            var checkpoint = Date.distantPast
             do {
-                let stream = try await client.stream(
-                    messages: requestMessages,
-                    model: model,
-                    apiKey: apiKey
-                )
-
+                let stream = try await client.stream(messages: requestMessages, model: model, apiKey: apiKey)
                 for try await token in stream {
-                    guard !Task.isCancelled, generation == ticket,
-                          currentConversation.id == conversationID,
-                          let index = currentConversation.messages.firstIndex(where: { $0.id == messageID }) else { return }
-                    currentConversation.messages[index].content += token
-                    if Date().timeIntervalSince(lastCheckpoint) >= 0.5 {
-                        saveCurrentIfNeeded()
-                        lastCheckpoint = Date()
+                    guard owns(ticket, chatID: chatID, account: account),
+                          let i = currentConversation.messages.firstIndex(where: { $0.id == reply.id }) else { return }
+                    currentConversation.messages[i].content += token
+                    if Date().timeIntervalSince(checkpoint) >= 0.5 {
+                        _ = saveCurrent()
+                        checkpoint = Date()
                     }
                 }
-                guard !Task.isCancelled, generation == ticket,
-                      currentConversation.id == conversationID,
-                      let index = currentConversation.messages.firstIndex(where: { $0.id == messageID }) else { return }
-                currentConversation.messages[index].status = .completed
-                currentConversation.updatedAt = Date()
+                guard owns(ticket, chatID: chatID, account: account),
+                      let i = currentConversation.messages.firstIndex(where: { $0.id == reply.id }) else { return }
+                currentConversation.messages[i].status = .completed
             } catch {
-                guard !Task.isCancelled, generation == ticket,
-                      currentConversation.id == conversationID,
-                      let index = currentConversation.messages.firstIndex(where: { $0.id == messageID }) else { return }
-                currentConversation.messages[index].status = .error(error.localizedDescription)
-                errorMessage = error.localizedDescription
+                guard owns(ticket, chatID: chatID, account: account),
+                      let i = currentConversation.messages.firstIndex(where: { $0.id == reply.id }) else { return }
+                let message = error.localizedDescription
+                currentConversation.messages[i].status = .error(message)
+                errorMessage = message
             }
             guard generation == ticket else { return }
             generation = nil
             streamingTask = nil
             isStreaming = false
-            saveCurrentIfNeeded()
+            currentConversation.updatedAt = Date()
+            pendingMessages[chatID, default: []].insert(reply.id)
+            _ = saveCurrent()
         }
+        return streamingTask
+    }
 
-        await streamingTask?.value
+    public func send(prompt: String, apiKey: String) async { await submit(prompt: prompt, apiKey: apiKey)?.value }
+
+    private func owns(_ ticket: UUID, chatID: String, account: String) -> Bool {
+        !Task.isCancelled && generation == ticket && currentConversation.id == chatID && accountID == account
     }
 
     public func stopStreaming() {
@@ -139,37 +153,117 @@ public final class ChatEngine {
         streamingTask?.cancel()
         streamingTask = nil
         isStreaming = false
-        if let lastIndex = currentConversation.messages.indices.last,
-           case .streaming = currentConversation.messages[lastIndex].status {
-            currentConversation.messages[lastIndex].status = .completed
+        if let i = currentConversation.messages.indices.last, currentConversation.messages[i].status == .streaming {
+            currentConversation.messages[i].status = .stopped
+            pendingMessages[currentConversation.id, default: []].insert(currentConversation.messages[i].id)
+            currentConversation.updatedAt = Date()
         }
-        saveCurrentIfNeeded()
+        _ = saveCurrent()
     }
 
-    private func saveCurrentIfNeeded() {
-        guard !currentConversation.messages.isEmpty else { return }
-        if let idx = savedConversations.firstIndex(where: { $0.id == currentConversation.id }) {
-            savedConversations[idx] = currentConversation
-        } else {
-            savedConversations.insert(currentConversation, at: 0)
+    public func applyRemoteMetadata(_ remote: Conversation) {
+        guard !pendingDeletions.contains(remote.id) else { return }
+        var merged = remote
+        if let local = savedConversations.first(where: { $0.id == remote.id }) {
+            merged.messages = local.messages
+            let existingIDs = local.remoteMessageIDs
+            merged.historyLoaded = existingIDs == remote.remoteMessageIDs ? local.historyLoaded : false
+            if !(pendingMessages[remote.id] ?? []).isEmpty {
+                merged.updatedAt = max(local.updatedAt, remote.updatedAt)
+            }
         }
-        persistConversations()
+        upsert(merged)
+        if currentConversation.id == merged.id {
+            // Never replace an active generation with an asynchronous snapshot.
+            if !isStreaming { currentConversation = merged }
+        }
+        _ = write()
     }
 
-    private func persistConversations() {
-        if let encoded = try? JSONEncoder().encode(savedConversations) {
-            defaults.set(encoded, forKey: Self.savedConversationsKey)
+    public func applyRemoteMessages(chatID: String, messages: [ChatMessage], orderedIDs: [String]) {
+        guard var chat = savedConversations.first(where: { $0.id == chatID }), !pendingDeletions.contains(chatID) else { return }
+        let remote = Dictionary(messages.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
+        var merged = orderedIDs.compactMap { remote[$0] }
+        let retained = pendingMessages[chatID] ?? []
+        let local = currentConversation.id == chatID ? currentConversation.messages : chat.messages
+        for message in local where retained.contains(message.id) || message.status == .streaming {
+            if !merged.contains(where: { $0.id == message.id }) { merged.append(message) }
+        }
+        chat.messages = merged
+        chat.remoteMessageIDs = orderedIDs
+        chat.historyLoaded = true
+        upsert(chat)
+        if currentConversation.id == chatID { currentConversation = chat }
+        _ = write()
+    }
+
+    public func applyRemoteDeletion(chatID: String) {
+        if currentConversation.id == chatID { stopStreaming(); currentConversation = Conversation(selectedModelId: selectedModel?.id) }
+        savedConversations.removeAll { $0.id == chatID }
+        pendingMessages[chatID] = nil
+        pendingDeletions.remove(chatID)
+        _ = write()
+    }
+
+    public func acknowledge(chatID: String, messageIDs: Set<String>) {
+        pendingMessages[chatID]?.subtract(messageIDs)
+        if pendingMessages[chatID]?.isEmpty == true { pendingMessages[chatID] = nil }
+        _ = write()
+    }
+
+    public func acknowledgeDeletion(chatID: String) { pendingDeletions.remove(chatID); _ = write() }
+
+    private func upsert(_ chat: Conversation) {
+        if let i = savedConversations.firstIndex(where: { $0.id == chat.id }) { savedConversations[i] = chat }
+        else { savedConversations.append(chat) }
+        savedConversations.sort { $0.pinned == $1.pinned ? $0.updatedAt > $1.updatedAt : $0.pinned == true }
+    }
+
+    @discardableResult private func saveCurrent() -> Bool {
+        if !currentConversation.messages.isEmpty { upsert(currentConversation) }
+        return write()
+    }
+
+    @discardableResult private func write() -> Bool {
+        guard cacheReadable else { errorMessage = "The saved chat cache could not be read. Free storage and reopen Lumen before sending."; return false }
+        do {
+            try store.save(ChatSnapshot(conversations: savedConversations, selectedModel: selectedModel,
+                                        pendingMessages: pendingMessages, pendingDeletions: pendingDeletions), accountID: accountID)
+            onChange?()
+            return true
+        } catch {
+            errorMessage = "This iPhone could not save the chat. Check available storage and try again. Your draft has been kept."
+            return false
         }
     }
 
-    private func loadPersistedState() {
-        if let data = defaults.data(forKey: Self.savedConversationsKey),
-           let list = try? JSONDecoder().decode([Conversation].self, from: data) {
-            savedConversations = list
-        }
-        if let savedModelId = defaults.string(forKey: Self.selectedModelKey),
-           let match = AIModel.defaults.first(where: { $0.id == savedModelId }) {
-            selectedModel = match
+    private func loadAccount() {
+        currentConversation = Conversation()
+        savedConversations = []
+        pendingMessages = [:]
+        pendingDeletions = []
+        selectedModel = nil
+        errorMessage = nil
+        cacheReadable = true
+        do {
+            let snapshot = try store.load(accountID: accountID)
+            savedConversations = snapshot.conversations
+            selectedModel = snapshot.selectedModel
+            pendingMessages = snapshot.pendingMessages
+            pendingDeletions = snapshot.pendingDeletions
+            for ci in savedConversations.indices {
+                for mi in savedConversations[ci].messages.indices where savedConversations[ci].messages[mi].status == .streaming {
+                    savedConversations[ci].messages[mi].status = .stopped
+                    pendingMessages[savedConversations[ci].id, default: []].insert(savedConversations[ci].messages[mi].id)
+                }
+            }
+            currentConversation.selectedModelId = selectedModel?.id
+            currentConversation.selectedProviderId = selectedModel?.providerId
+        } catch {
+            cacheReadable = false
+            errorMessage = "Lumen could not read this account's saved chats. Reopen the app before sending; the existing cache has been kept."
         }
     }
+
+    deinit { streamingTask?.cancel() }
 }

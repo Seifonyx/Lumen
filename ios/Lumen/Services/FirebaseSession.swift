@@ -69,7 +69,7 @@ struct FirebaseClientConfiguration: Decodable {
         defer { if operation == ticket { operation = nil } }
         let result: GIDSignInResult
         do { result = try await GIDSignIn.sharedInstance.signIn(withPresenting: presenter) }
-        catch let error as NSError where error.code == GIDSignInErrorCode.canceled.rawValue { throw CancellationError() }
+        catch let error as NSError where error.domain == kGIDSignInErrorDomain && error.code == -5 { throw CancellationError() }
         guard operation == ticket, let token = result.user.idToken?.tokenString else { throw CancellationError() }
         let credential = GoogleAuthProvider.credential(withIDToken: token, accessToken: result.user.accessToken.tokenString)
         let signedIn = try await auth.signIn(with: credential)

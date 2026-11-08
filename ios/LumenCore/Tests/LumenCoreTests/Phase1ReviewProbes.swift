@@ -65,7 +65,8 @@ struct Phase1ReviewProbes {
         let defaults = UserDefaults(suiteName: name)!
         defer { defaults.removePersistentDomain(forName: name) }
         let client = WaitingReviewClient()
-        let engine = ChatEngine(client: client, defaults: defaults)
+        let store = MemoryConversationStore()
+        let engine = ChatEngine(client: client, store: store)
         engine.selectModel(AIModel.defaults[0])
         let send = Task { await engine.send(prompt: "Review prompt", apiKey: "fake-review-key") }
         try await waitForPartial(engine, client: client)
@@ -80,11 +81,12 @@ struct Phase1ReviewProbes {
         let defaults = UserDefaults(suiteName: name)!
         defer { defaults.removePersistentDomain(forName: name) }
         let client = WaitingReviewClient()
-        let engine = ChatEngine(client: client, defaults: defaults)
+        let store = MemoryConversationStore()
+        let engine = ChatEngine(client: client, store: store)
         engine.selectModel(AIModel.defaults[0])
         let send = Task { await engine.send(prompt: "Must survive relaunch", apiKey: "fake-review-key") }
         try await waitForPartial(engine, client: client)
-        let reloaded = ChatEngine(client: client, defaults: defaults)
+        let reloaded = ChatEngine(client: client, store: store)
         #expect(reloaded.savedConversations.contains {
             $0.messages.contains { $0.role == .user && $0.content == "Must survive relaunch" }
         }, "The submitted user turn must be durable while the response is still streaming")

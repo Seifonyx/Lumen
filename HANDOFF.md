@@ -16,9 +16,16 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
   rejects late sign-in after sign-out, and never trusts cached profiles. Five replacement auth tests pass
   locally after first observing the missing-interface failure. App Firebase/Google SDK adapter implemented,
   pending Mac compile and real SDK emulator verification. Actual phone Google login remains user testing.
-- Remaining: protected account-scoped chat cache, compatible web Firestore history/sync, provider keys in
-  Keychain and model discovery, connected UI/error states, meaningful connected-flow tests, final fresh
-  whole-branch review, merge and publish0.2.0 to SideStore. Do not claim Phase1 ready yet.
+- Account-scoped protected atomic cache and durable pending-message/deletion outbox now implemented.
+  Send is accepted only after a successful save; switching accounts stops old streams and drops visible data.
+  String IDs match web history. Web codec appends only new native messages, preserves unrelated metadata,
+  detects tombstones/conflicts and follows web ordering. Core24 tests passed after cache/isolation work;
+  Web codec27 tests passed. Provider discovery and Keychain adapter are implemented, tests in progress.
+- Cloud SDK adapter now listens to account chat metadata, lazily fetches messages, imports supported account
+  keys, and transactionally appends pending turns. Pending Mac compile/integration testing; not release-ready.
+- Auth Mac compile found Swift-imported error enum name mismatch; now checks documented Google domain/-5.
+- Remaining: wire account/cloud/provider state into UI, meaningful connected/emulator tests and screenshots,
+  fresh whole-branch review, merge and publish0.2.0 to SideStore. Actual phone Google login is user testing.
 - Local Swift6.2.3: `/workspace/scratch/swift-6.2/usr/bin/swift`. Linux6.0.3 had upstream Observation
   linker bug; do not use. No local Xcode. Use GitHub macOS26/Xcode26.6 for app/UI/IPA.
 - Original review evidence: three Mac probes proved wrong provider endpoint, unsaved submitted turn, and

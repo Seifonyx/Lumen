@@ -1,15 +1,20 @@
 import Foundation
 
 public struct Conversation: Identifiable, Codable, Sendable, Equatable {
-    public let id: UUID
+    public let id: String
     public var title: String
     public var messages: [ChatMessage]
     public var selectedModelId: String?
+    public var selectedProviderId: String?
+    public var remoteMessageIDs: [String]?
+    public var historyLoaded: Bool?
+    public var archived: Bool?
+    public var pinned: Bool?
     public let createdAt: Date
     public var updatedAt: Date
 
     public init(
-        id: UUID = UUID(),
+        id: String = UUID().uuidString,
         title: String = "New conversation",
         messages: [ChatMessage] = [],
         selectedModelId: String? = nil,

@@ -58,7 +58,7 @@ struct ChatEngineTests {
     @Test func engineStreamsAssistantResponse() async {
         await withDefaults { defaults in
             let mock = MockStreamingClient(tokens: ["Swift", "UI", " is", " great."], delayNanoseconds: 0)
-            let engine = ChatEngine(client: mock, defaults: defaults)
+            let engine = ChatEngine(client: mock, store: MemoryConversationStore())
             let model = AIModel.defaults[0]
             engine.selectModel(model)
 
@@ -81,7 +81,7 @@ struct ChatEngineTests {
     @Test func stopStreamingHaltsActiveGeneration() async {
         await withDefaults { defaults in
             let mock = MockStreamingClient(tokens: ["Word1", "Word2", "Word3", "Word4"], delayNanoseconds: 50_000_000)
-            let engine = ChatEngine(client: mock, defaults: defaults)
+            let engine = ChatEngine(client: mock, store: MemoryConversationStore())
             engine.selectModel(AIModel.defaults[0])
 
             let sendTask = Task {
@@ -95,21 +95,22 @@ struct ChatEngineTests {
 
             #expect(engine.isStreaming == false)
             #expect(engine.currentConversation.messages.count == 2)
-            #expect(engine.currentConversation.messages[1].status == .completed)
+            #expect(engine.currentConversation.messages[1].status == .stopped)
         }
     }
 
     @Test func savedConversationsSurviveReloadingState() async {
         await withDefaults { defaults in
             let mock = MockStreamingClient()
-            let engine1 = ChatEngine(client: mock, defaults: defaults)
+            let store = MemoryConversationStore()
+            let engine1 = ChatEngine(client: mock, store: store)
             engine1.selectModel(AIModel.defaults[0])
             _ = engine1.currentConversation.appendUserMessage("Saved topic")
             engine1.startNewConversation()
 
             #expect(engine1.savedConversations.count == 1)
 
-            let engine2 = ChatEngine(client: mock, defaults: defaults)
+            let engine2 = ChatEngine(client: mock, store: store)
             #expect(engine2.savedConversations.count == 1)
             #expect(engine2.savedConversations[0].title == "Saved topic")
             #expect(engine2.selectedModel?.id == AIModel.defaults[0].id)

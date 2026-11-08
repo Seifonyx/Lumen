@@ -38,11 +38,11 @@ private struct MockStreamingClient: AIStreamingClient {
 
 @Suite @MainActor
 struct ChatEngineTests {
-    private func withDefaults(_ body: (UserDefaults) -> Void) {
+    private func withDefaults(_ body: (UserDefaults) async throws -> Void) async rethrows {
         let name = "LumenTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: name)!
         defer { defaults.removePersistentDomain(forName: name) }
-        body(defaults)
+        try await body(defaults)
     }
 
     @Test func conversationAppendsUserMessageAndSetsTitle() {
@@ -56,7 +56,7 @@ struct ChatEngineTests {
     }
 
     @Test func engineStreamsAssistantResponse() async {
-        withDefaults { defaults in
+        await withDefaults { defaults in
             let mock = MockStreamingClient(tokens: ["Swift", "UI", " is", " great."], delayNanoseconds: 0)
             let engine = ChatEngine(client: mock, defaults: defaults)
             let model = AIModel.defaults[0]
@@ -79,7 +79,7 @@ struct ChatEngineTests {
     }
 
     @Test func stopStreamingHaltsActiveGeneration() async {
-        withDefaults { defaults in
+        await withDefaults { defaults in
             let mock = MockStreamingClient(tokens: ["Word1", "Word2", "Word3", "Word4"], delayNanoseconds: 50_000_000)
             let engine = ChatEngine(client: mock, defaults: defaults)
             engine.selectModel(AIModel.defaults[0])
@@ -99,8 +99,8 @@ struct ChatEngineTests {
         }
     }
 
-    @Test func savedConversationsSurviveReloadingState() {
-        withDefaults { defaults in
+    @Test func savedConversationsSurviveReloadingState() async {
+        await withDefaults { defaults in
             let mock = MockStreamingClient()
             let engine1 = ChatEngine(client: mock, defaults: defaults)
             engine1.selectModel(AIModel.defaults[0])

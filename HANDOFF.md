@@ -16,6 +16,10 @@ Updated: 2026-11-08. This is the current continuation point; agent update guidan
 - **Install:** [Lumen.ipa](https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.1.0/Lumen.ipa) in SideStore,
   or add [the native source](https://raw.githubusercontent.com/Seifonyx/Lumen/main/ios/sidestore-source.json).
   Actual installation/opening on the owner's iPhone remains the final physical-device check.
+- **Device follow-up:** owner reports “nothing happens” when adding the source; screenshot shows the URL form.
+  Source still returns HTTP 200 JSON. Current SideStore code supports the listing fields; its keyboard Done
+  reveals preview/errors, preview **+** selects a source, and the top **✓** commits selected sources.
+  Awaiting the phone outcome/error after those steps; no feed defect or successful physical install confirmed.
 - **Next implementation:** Phase 1: existing account/sign-in, one provider, streaming/Stop, saved chats and reopening.
   Phase 1 has not started. Bump `MARKETING_VERSION` for the next native release; setup is in `ios/README.md`.
 - **Local evidence:** `/workspace/scratch/lumen-native-release-0.1.0` (published IPA, metadata and screenshots).

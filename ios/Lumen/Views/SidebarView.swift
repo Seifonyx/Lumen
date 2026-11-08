@@ -10,6 +10,7 @@ struct SidebarView: View {
     var settings: () -> Void
     var close: () -> Void
     @AccessibilityFocusState private var headingFocused: Bool
+    @State private var pendingDeletion: Conversation?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -67,6 +68,9 @@ struct SidebarView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .accessibilityIdentifier("history-" + conv.id)
+                                .contextMenu {
+                                    Button("Delete chat", systemImage: "trash", role: .destructive) { pendingDeletion = conv }
+                                }
                             }
                         }
                         .padding(.top, 8)
@@ -100,6 +104,14 @@ struct SidebarView: View {
         .accessibilityElement(children: .contain)
         .accessibilityAction(.escape, close)
         .onAppear { headingFocused = true }
+        .alert("Delete chat?", isPresented: Binding(get: { pendingDeletion != nil }, set: { if !$0 { pendingDeletion = nil } })) {
+            Button("Delete", role: .destructive) {
+                if let chat = pendingDeletion { _ = engine.deleteConversation(id: chat.id) }
+                pendingDeletion = nil
+                close()
+            }
+            Button("Cancel", role: .cancel) { pendingDeletion = nil }
+        } message: { Text("This removes the conversation and its saved attachments from your Lumen account.") }
     }
 
     private func row(_ title: String, icon: String, action: @escaping () -> Void) -> some View {

@@ -7,6 +7,7 @@ public struct Conversation: Identifiable, Codable, Sendable, Equatable {
     public var selectedModelId: String?
     public var selectedProviderId: String?
     public var remoteMessageIDs: [String]?
+    public var remoteRevision: Double?
     public var historyLoaded: Bool?
     public var archived: Bool?
     public var pinned: Bool?

@@ -5,6 +5,7 @@ import threading
 import time
 import urllib.parse
 import urllib.request
+import urllib.error
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PROJECT = 'demo-lumen-native'
@@ -36,6 +37,10 @@ def document(path, data):
 
 
 def seed():
+    # Each simulator profile gets a fresh, local-only database.
+    assert PROJECT.startswith('demo-')
+    reset = urllib.request.Request(f'http://127.0.0.1:18080/emulator/v1/projects/{PROJECT}/databases/(default)/documents', method='DELETE')
+    with urllib.request.urlopen(reset, timeout=15): pass
     def b64(value): return base64.urlsafe_b64encode(json.dumps(value, separators=(',', ':')).encode()).decode().rstrip('=')
     token = b64({'alg': 'none', 'typ': 'JWT'}) + '.' + b64({
         'sub': 'fixture-native-user', 'email': 'seifeldingamal2021@gmail.com', 'email_verified': True,
@@ -52,6 +57,14 @@ def seed():
         document(f'modelRouter/{uid}/chats/web-fixture/messages/{mid}', {
             'id': mid, 'role': role, 'text': text, 'index': index, 'createdAt': 1700000000000 + index * 1000,
             'status': 'done', 'sources': [{'title': 'preserve-citation', 'url': 'https://example.com'}]})
+    document(f'modelRouter/{uid}/chats/delete-fixture', {
+        'title': 'Delete fixture chat', 'createdAt': 1700000000000, 'updatedAt': 1700000001000,
+        'ids': ['private-message'], 'count': 1, 'rev': 1700000001000, 'deleted': False})
+    document(f'modelRouter/{uid}/chats/delete-fixture/messages/private-message', {
+        'id': 'private-message', 'role': 'user', 'text': 'Private deletion fixture', 'index': 0,
+        'createdAt': 1700000000000, 'files': [{'id': 'delete-original', 'name': 'private.txt'}]})
+    document(f'modelRouter/{uid}/files/delete-original', {
+        'chatId': 'delete-fixture', 'name': 'private.txt', 'mime': 'text/plain', 'data': 'cHJpdmF0ZQ=='})
     return uid
 
 
@@ -115,7 +128,20 @@ def verify_roundtrip():
         old_fields = json.load(response)['fields']
     assert old_fields['sources']['arrayValue']['values'][0]['mapValue']['fields']['title']['stringValue'] == 'preserve-citation'
     assert any(r.get('model') == 'fixture-model' and any(m.get('content') == 'An existing web reply.' for m in r.get('messages', [])) for r in REQUESTS), 'Provider did not receive reopened web context'
-    return {'firebaseSDKRoundtrip': True, 'unknownMetadataPreserved': True, 'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True, 'providerRequests': len(REQUESTS)}
+    deleted_url = url.removesuffix('web-fixture') + 'delete-fixture'
+    with urllib.request.urlopen(urllib.request.Request(deleted_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+        deleted = json.load(response)['fields']
+    assert deleted['deleted']['booleanValue'] is True
+    assert 'title' not in deleted and 'ids' not in deleted, 'Deletion retained private chat metadata'
+    with urllib.request.urlopen(urllib.request.Request(deleted_url + '/messages', headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+        assert not json.load(response).get('documents'), 'Deleted message documents remain'
+    original_url = url.split('/chats/')[0] + '/files/delete-original'
+    try:
+        urllib.request.urlopen(urllib.request.Request(original_url, headers={'Authorization': 'Bearer owner'}), timeout=15)
+        raise AssertionError('Deleted attachment original remains')
+    except urllib.error.HTTPError as error:
+        assert error.code == 404
+    return {'firebaseSDKRoundtrip': True, 'deletedContentCleaned': True, 'unknownMetadataPreserved': True, 'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True, 'providerRequests': len(REQUESTS)}
 
 
 def seed_user_id():

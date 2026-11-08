@@ -14,7 +14,7 @@ def run(*args):
 
 
 def main():
-    from native_test_server import start
+    from native_test_server import start, seed
     server = start()
     root = Path(__file__).resolve().parents[1]
     inventory = json.loads(output('xcrun', 'simctl', 'list', '--json'))
@@ -32,6 +32,7 @@ def main():
     provenance = []
     failed = []
     for profile, candidates in profiles.items():
+        seed()
         device_type = next((t for name in candidates for t in types if t['name'] == name), None)
         if not device_type:
             raise SystemExit(f'No supported simulator device type for {profile}')

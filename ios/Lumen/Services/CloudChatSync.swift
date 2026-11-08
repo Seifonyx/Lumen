@@ -104,27 +104,45 @@ import LumenCore
 
     func loadMessages(chatID: String) async {
         guard let accountID, !loading.contains(chatID), !engine.isStreaming else { return }
-        let ticket = epoch
+        let session = epoch
         loading.insert(chatID)
-        defer { if epoch == ticket { loading.remove(chatID) } }
+        defer { if epoch == session { loading.remove(chatID) } }
         do {
             let reference = chats(accountID).document(chatID)
-            // Re-read metadata so ordering and tombstones agree with the fetched message set.
-            let metadata = try await reference.getDocument(source: .server)
-            guard epoch == ticket else { return }
-            guard let fields = metadata.data(), fields["deleted"] as? Bool != true else {
-                engine.applyRemoteDeletion(chatID: chatID)
-                return
+            for _ in 0..<3 {
+                guard epoch == session, !engine.isStreaming,
+                      let ticket = engine.historyLoadTicket(chatID: chatID) else { return }
+                let before = try await reference.getDocument(source: .server)
+                guard epoch == session else { return }
+                guard let fields = before.data(), fields["deleted"] as? Bool != true else {
+                    engine.applyRemoteDeletion(chatID: chatID)
+                    return
+                }
+                let snapshot = try await reference.collection("messages").order(by: "index").getDocuments(source: .server)
+                let after = try await reference.getDocument(source: .server)
+                guard epoch == session else { return }
+                guard let latest = after.data(), latest["deleted"] as? Bool != true else {
+                    engine.applyRemoteDeletion(chatID: chatID)
+                    return
+                }
+                // Metadata and messages are separate reads. Retry if a writer moved the boundary.
+                guard WebChatCodec.revision(fields) == WebChatCodec.revision(latest),
+                      fields["ids"] as? [String] == latest["ids"] as? [String] else {
+                    if let metadata = try? WebChatCodec.conversation(id: chatID, fields: latest) { engine.applyRemoteMetadata(metadata) }
+                    continue
+                }
+                let messages = try snapshot.documents.map { try WebChatCodec.message(id: $0.documentID, fields: $0.data()) }
+                let ids = latest["ids"] as? [String] ?? messages.map(\.id)
+                guard Set(ids).isSubset(of: Set(messages.map(\.id))) else { throw WebSyncError.invalid }
+                if engine.applyRemoteMessages(chatID: chatID, messages: messages, orderedIDs: ids,
+                                              ticket: ticket, revision: WebChatCodec.revision(latest)) {
+                    errorMessage = nil
+                    return
+                }
             }
-            let snapshot = try await reference.collection("messages").order(by: "index").getDocuments(source: .server)
-            guard epoch == ticket else { return }
-            let messages = try snapshot.documents.map { try WebChatCodec.message(id: $0.documentID, fields: $0.data()) }
-            let ids = fields["ids"] as? [String] ?? messages.map(\.id)
-            guard Set(ids).isSubset(of: Set(messages.map(\.id))) else { throw WebSyncError.invalid }
-            engine.applyRemoteMessages(chatID: chatID, messages: messages, orderedIDs: ids)
-            errorMessage = nil
+            errorMessage = "This chat changed while loading. Tap Retry to load its latest messages."
         } catch {
-            guard epoch == ticket else { return }
+            guard epoch == session else { return }
             errorMessage = "This chat could not finish loading. Your saved messages are kept; try again when connected."
         }
     }
@@ -141,8 +159,8 @@ import LumenCore
                 while epoch == ticket, !Task.isCancelled {
                     if let chatID = engine.pendingDeletions.first {
                         status = "Syncing…"
-                        let now = Date().timeIntervalSince1970 * 1000
-                        try await chats(accountID).document(chatID).setData(["deleted": true, "updatedAt": now, "rev": now, "srv": FieldValue.serverTimestamp()], merge: true)
+                        let backend = FirestoreChatDeletion(db: db, userID: accountID)
+                        try await ChatDeletion.run(chatID: chatID, backend: backend)
                         guard epoch == ticket else { return }
                         engine.acknowledgeDeletion(chatID: chatID)
                     } else if let (chatID, ids) = engine.pendingMessages.first(where: { !$0.value.isEmpty }),

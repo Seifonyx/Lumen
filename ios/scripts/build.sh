@@ -29,4 +29,7 @@ python3 scripts/package_ipa.py \
   --output build/release/Lumen.ipa \
   --source-commit "${GITHUB_SHA:-$(git rev-parse HEAD)}"
 
-npx --yes firebase-tools@15.33.0 emulators:exec --config tests/firebase.json --project demo-lumen-native --only auth,firestore "python3 scripts/test_simulators.py"
+mkdir -p build/emulators
+cp ../firestore.rules build/emulators/firestore.rules
+cp tests/firebase.json build/emulators/firebase.json
+npx --yes firebase-tools@15.33.0 emulators:exec --config build/emulators/firebase.json --project demo-lumen-native --only auth,firestore "python3 scripts/test_simulators.py"

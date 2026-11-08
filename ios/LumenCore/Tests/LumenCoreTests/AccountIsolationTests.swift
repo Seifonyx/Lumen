@@ -64,7 +64,7 @@ private actor HoldingAccountClient: AIStreamingClient {
         chat.historyLoaded = false
         engine.applyRemoteMetadata(chat)
         engine.selectConversation(id: chat.id)
-        engine.applyRemoteMessages(chatID: chat.id, messages: [ChatMessage(id: "a", role: .assistant, content: "second"), ChatMessage(id: "b", role: .user, content: "first")], orderedIDs: ["b", "a"])
+        engine.applyRemoteMessages(chatID: chat.id, messages: [ChatMessage(id: "a", role: .assistant, content: "second"), ChatMessage(id: "b", role: .user, content: "first")], orderedIDs: ["b", "a"], ticket: try #require(engine.historyLoadTicket(chatID: chat.id)), revision: nil)
         #expect(engine.currentConversation.messages.map(\.id) == ["b", "a"])
         #expect(engine.currentConversation.historyLoaded == true)
     }

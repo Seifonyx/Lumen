@@ -1,6 +1,12 @@
 import Foundation
 import Observation
 
+public struct HistoryLoadTicket: Sendable {
+    fileprivate let session: UUID
+    fileprivate let chatID: String
+    fileprivate let version: UInt64
+}
+
 @MainActor @Observable public final class ChatEngine {
     public var currentConversation = Conversation()
     public private(set) var savedConversations: [Conversation] = []
@@ -16,6 +22,8 @@ import Observation
     @ObservationIgnored private var streamingTask: Task<Void, Never>?
     @ObservationIgnored private var generation: UUID?
     @ObservationIgnored private var cacheReadable = true
+    @ObservationIgnored private var cacheSession = UUID()
+    @ObservationIgnored private var mutationVersions: [String: UInt64] = [:]
 
     public init(client: any AIStreamingClient = OpenAICompatibleStreamingClient(),
                 store: any ConversationStore = FileConversationStore()) {
@@ -59,13 +67,25 @@ import Observation
         errorMessage = nil
     }
 
-    public func deleteConversation(id: String) {
+    @discardableResult public func deleteConversation(id: String) -> Bool {
         if currentConversation.id == id { stopStreaming() }
+        let previous = currentConversation
+        let savedBefore = savedConversations
+        let messagesBefore = pendingMessages
+        let deletionsBefore = pendingDeletions
         savedConversations.removeAll { $0.id == id }
         pendingMessages[id] = nil
         pendingDeletions.insert(id)
         if currentConversation.id == id { currentConversation = Conversation(selectedModelId: selectedModel?.id) }
-        _ = write()
+        guard write() else {
+            currentConversation = previous
+            savedConversations = savedBefore
+            pendingMessages = messagesBefore
+            pendingDeletions = deletionsBefore
+            return false
+        }
+        mutationVersions[id, default: 0] &+= 1
+        return true
     }
 
     /// Returns a task only after the accepted turn and outbox are durable. The caller can then clear its draft.
@@ -167,7 +187,7 @@ import Observation
         if let local = savedConversations.first(where: { $0.id == remote.id }) {
             merged.messages = local.messages
             let existingIDs = local.remoteMessageIDs
-            merged.historyLoaded = existingIDs == remote.remoteMessageIDs ? local.historyLoaded : false
+            merged.historyLoaded = existingIDs == remote.remoteMessageIDs && local.remoteRevision == remote.remoteRevision ? local.historyLoaded : false
             if !(pendingMessages[remote.id] ?? []).isEmpty {
                 merged.updatedAt = max(local.updatedAt, remote.updatedAt)
             }
@@ -176,12 +196,25 @@ import Observation
         if currentConversation.id == merged.id {
             // Never replace an active generation with an asynchronous snapshot.
             if !isStreaming { currentConversation = merged }
+            else {
+                currentConversation.remoteMessageIDs = merged.remoteMessageIDs
+                currentConversation.remoteRevision = merged.remoteRevision
+                currentConversation.historyLoaded = merged.historyLoaded
+            }
         }
         _ = write()
     }
 
-    public func applyRemoteMessages(chatID: String, messages: [ChatMessage], orderedIDs: [String]) {
-        guard var chat = savedConversations.first(where: { $0.id == chatID }), !pendingDeletions.contains(chatID) else { return }
+    public func historyLoadTicket(chatID: String) -> HistoryLoadTicket? {
+        guard savedConversations.contains(where: { $0.id == chatID }) else { return nil }
+        return HistoryLoadTicket(session: cacheSession, chatID: chatID, version: mutationVersions[chatID] ?? 0)
+    }
+
+    @discardableResult public func applyRemoteMessages(chatID: String, messages: [ChatMessage], orderedIDs: [String],
+                                                       ticket: HistoryLoadTicket, revision: Double?) -> Bool {
+        guard ticket.session == cacheSession, ticket.chatID == chatID,
+              ticket.version == mutationVersions[chatID] ?? 0,
+              var chat = savedConversations.first(where: { $0.id == chatID }), !pendingDeletions.contains(chatID) else { return false }
         let remote = Dictionary(messages.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
         var merged = orderedIDs.compactMap { remote[$0] }
         let retained = pendingMessages[chatID] ?? []
@@ -191,17 +224,20 @@ import Observation
         }
         chat.messages = merged
         chat.remoteMessageIDs = orderedIDs
+        chat.remoteRevision = revision
         chat.historyLoaded = true
         upsert(chat)
         if currentConversation.id == chatID { currentConversation = chat }
         _ = write()
+        return true
     }
 
     public func applyRemoteDeletion(chatID: String) {
         if currentConversation.id == chatID { stopStreaming(); currentConversation = Conversation(selectedModelId: selectedModel?.id) }
         savedConversations.removeAll { $0.id == chatID }
         pendingMessages[chatID] = nil
-        pendingDeletions.remove(chatID)
+        // Our tombstone listener must not acknowledge unfinished remote content cleanup.
+        mutationVersions[chatID, default: 0] &+= 1
         _ = write()
     }
 
@@ -214,9 +250,13 @@ import Observation
     public func acknowledgeDeletion(chatID: String) { pendingDeletions.remove(chatID); _ = write() }
 
     private func upsert(_ chat: Conversation) {
-        if let i = savedConversations.firstIndex(where: { $0.id == chat.id }) { savedConversations[i] = chat }
-        else { savedConversations.append(chat) }
-        savedConversations.sort { $0.pinned == $1.pinned ? $0.updatedAt > $1.updatedAt : $0.pinned == true }
+        if let i = savedConversations.firstIndex(where: { $0.id == chat.id }) {
+            if savedConversations[i] != chat { mutationVersions[chat.id, default: 0] &+= 1 }
+            savedConversations[i] = chat
+        } else { savedConversations.append(chat); mutationVersions[chat.id, default: 0] &+= 1 }
+        savedConversations.sort {
+            ($0.pinned == true) == ($1.pinned == true) ? $0.updatedAt > $1.updatedAt : $0.pinned == true
+        }
     }
 
     @discardableResult private func saveCurrent() -> Bool {
@@ -238,6 +278,8 @@ import Observation
     }
 
     private func loadAccount() {
+        cacheSession = UUID()
+        mutationVersions = [:]
         currentConversation = Conversation()
         savedConversations = []
         pendingMessages = [:]

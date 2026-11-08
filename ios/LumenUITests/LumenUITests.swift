@@ -138,6 +138,26 @@ final class LumenUITests: XCTestCase {
         model.tap()
     }
 
+    func testConnectedDeleteCleansTheCloudConversation() {
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        app.buttons["openSidebar"].tap()
+        let target = app.buttons["history-delete-fixture"]
+        XCTAssertTrue(target.waitForExistence(timeout: 10))
+        target.press(forDuration: 1)
+        app.buttons["Delete chat"].tap()
+        XCTAssertTrue(app.alerts["Delete chat?"].waitForExistence(timeout: 3))
+        capture("delete-confirmation")
+        app.alerts.buttons["Delete"].tap()
+        settings()
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 15))
+        app.buttons["Done"].tap()
+        app.buttons["openSidebar"].tap()
+        XCTAssertFalse(target.exists)
+        capture("deleted-chat-history")
+    }
+
     func testConnectedSendWebHistorySyncAndSignOut() {
         launchCleanChat()
         defer { app.terminate() }

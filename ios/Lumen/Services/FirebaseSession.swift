@@ -10,7 +10,7 @@ struct FirebaseClientConfiguration: Decodable {
     let webClientID: String
     let clients: [[String: String]]
 
-    static func configure() -> FirebaseClientConfiguration {
+    @MainActor static func configure() -> FirebaseClientConfiguration {
         #if DEBUG && targetEnvironment(simulator)
         if DebugIntegration.enabled { return DebugIntegration.configure() }
         #endif

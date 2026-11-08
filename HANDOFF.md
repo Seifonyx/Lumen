@@ -37,8 +37,19 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
   httpBodyStream. Test capture now reads that stream; no production transport change needed. Model identity
   now matches provider+ID rather than display name (new regression observed failing, then fixed).
   Release notes and native README now describe Phase1. Local36 Swift and12 packaging checks are next.
-- Remaining: Mac connected/emulator tests and screenshot inspection,
-  fresh whole-branch review, merge and publish0.2.0 to SideStore. Actual phone Google login is user testing.
+- Fresh whole-branch review of e310139 returned3 Important findings. One fix pass is implemented:
+  versioned/account-session history tickets reject delayed fetches after submit/ack; web rev changes
+  invalidate same-ID messages; cloud deletion now durably retries tombstone/messages/original cleanup.
+  Tests were observed failing before the new interfaces/behavior, then all41 Swift tests passed. New
+  emulator UI journey independently verifies deleted metadata/messages/originals are gone. No second review
+  is required by executing-plans; the fixes are verified with the new regressions and the full suite.
+- Mac run42532990830 passed36 core tests, then app build found DEBUG config needed MainActor; corrected.
+  Local emulator smoke passed Google-credential identity, production rules, own-account read, cross-account
+  denial and provider fixture. Emulator CLI disallows rules outside its project directory; build now stages
+  an exact copy of current production rules into ignored build/emulators, with no deployment/rule changes.
+- Remaining: rerun full Mac app/emulator/UI/screenshots/IPA; inspect screenshots, remove temporary helper/
+  workflow, update PR146, merge and verify main publication0.2.0 and SideStore source. Physical Google
+  chooser and actual SideStore signing are user-device checks; no live account/provider request was tested.
 - Local Swift6.2.3: `/workspace/scratch/swift-6.2/usr/bin/swift`. Linux6.0.3 had upstream Observation
   linker bug; do not use. No local Xcode. Use GitHub macOS26/Xcode26.6 for app/UI/IPA.
 - Original review evidence: three Mac probes proved wrong provider endpoint, unsaved submitted turn, and

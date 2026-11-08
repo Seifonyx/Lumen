@@ -22,6 +22,9 @@ public enum WebChatCodec {
     private static func date(_ value: Any?) -> Date {
         Date(timeIntervalSince1970: ((value as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970 * 1000) / 1000)
     }
+    public static func revision(_ fields: [String: Any]) -> Double {
+        (fields["rev"] as? NSNumber)?.doubleValue ?? (fields["updatedAt"] as? NSNumber)?.doubleValue ?? 0
+    }
     public static func conversation(id: String, fields: [String: Any]) throws -> Conversation {
         guard fields["deleted"] as? Bool != true else { throw WebSyncError.deleted }
         var result = Conversation(id: id, title: fields["title"] as? String ?? "New conversation",
@@ -29,6 +32,7 @@ public enum WebChatCodec {
                                   createdAt: date(fields["createdAt"]), updatedAt: date(fields["updatedAt"]))
         result.selectedProviderId = fields["nativeProvider"] as? String
         result.remoteMessageIDs = fields["ids"] as? [String]
+        result.remoteRevision = revision(fields)
         result.historyLoaded = false
         result.archived = fields["archived"] as? Bool
         result.pinned = fields["pinned"] as? Bool

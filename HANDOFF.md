@@ -10,6 +10,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Now
 
+- **Latest owner directive (2026-11-08):** Codex is instructed to **link the native iPhone app to the actual existing Lumen Canvas product and roll out a usable native app now**, then improve it incrementally. This supersedes isolated-test-only delivery as the target; it does not claim completed integration, a working installed production app, a merge/deployment, or verified inference. Use existing routing, AI/providers, session and app functionality rather than rebuilding them. Keep strict $0, account/privacy/credential safety and prior user data.
 - **Branch:** `experiment/ios-sideload`, PR141. Owner now authorizes normal existing Lumen web accounts/cloud data,
   superseding test-only native access. Deliver a private account-connected IPA, then improve incrementally. Preserve
   $0, app identity/data, existing access rules, ordinary/PWA and separate test/offline builds. No web deployment.
@@ -53,6 +54,10 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
   semantics, hardware-keyboard send.
 
 ## Next
+
+- **Codex — immediate delivery:** inspect the actual native build and canonical production Canvas behavior, integrate the native shell with Lumen's existing real accounts, AI/routing, projects, drafts and streaming without duplicated services or migration-by-guesswork. Fix the confirmed authentication blocker as part of achieving usable sign-in; preserve safe signing and account boundaries. Run focused automated checks and exact-head release CI, privately deliver an updated IPA for an overwrite (no uninstall), and report precisely what is installed/verified vs unverified. Do not change production Firebase rules/auth policy, expose credentials, spend money, merge a mixed experimental PR or deploy unrelated infrastructure by implication. Incremental secure OTA web assets and genuine native Liquid Glass come **after** first usable release.
+
+## Deferred backlog (not native rollout prerequisites)
 
 - Planned (owner, 2026-11-04; not started): **background agents at no cost.** A second Cloudflare Worker beside the
   provider relay, woken by a free Cron Trigger, advances each task one step per wake (models: the user's free key or
@@ -110,6 +115,7 @@ on a branch that *Now* doesn't describe. Never let this file grow into a log.
 
 ## Decisions (owner; these override DESIGN.md and any older note)
 
+- **2026-11-08 native release-first direction:** Replace indefinitely iterating on an isolated Lumen Test RC with Codex-led integration and private rollout of the **actual Canvas Lumen app**, followed by iterative bug fixes, secure OTA compatibility and native Liquid Glass. Owner wants routine agent decisions and no repeat manual prelaunch QA loops. This is a release work assignment, not proof that production data/access, a merge or a deployment already changed. Keep strict $0/security; clarify only truly consequential unknown changes.
 - 2026-10-30 **Standing authority:** test, commit, merge and deploy finished, verified work without asking. Escalate
   only irreversible data changes, security risks, major trade-offs or permission blocks.
 - **Deploy path:** merge to `main` Ã¢â€ â€™ run the *Deploy* workflow with `presentation=canvas` (the default `ordinary` is

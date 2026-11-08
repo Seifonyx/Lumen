@@ -7,7 +7,11 @@ Free-only OpenRouter is available through explicit in-app consent; other native 
 See [account release scope and verification](ACCOUNT_RELEASE.md). Physical native sign-in/sync is not yet verified.
 The table below records the earlier audit and is not a claim that its Phase1 service statuses are current.
 
-Audited 2026-11-07 against production Canvas source `12dc99a` and PR141 starting source `5e4116b`.
+> **Active instruction, 2026-11-08:** Codex is connecting the *actual Lumen Canvas application* to the native iPhone shell for an immediately usable private release, followed by incremental updates. This table is the earlier Phase1–3 **audit baseline**, not an up-to-date statement that features remain permanently blocked in the current branch. The isolated Firebase RC and free-only OpenRouter setup were implemented; the owner physically launched Lumen Test but native Google login failed and its specific stage was not established. A focused restore/login race fix passed automated checks, but on-device sign-in success and live inference have not been verified. Determine actual parity from the latest app/code, avoid inventing missing functionality, and prioritize real chat/accounts/projects/drafts/AI with existing canonical contracts. Preserve $0 and account/credential boundaries. See live CURRENT_STATUS on `docs/lumen-live-context`.
+
+## Historical audit table — do not use as the current launch to-do list
+
+Historical audit, 2026-11-07, against production Canvas source `12dc99a` and PR141 starting source `5e4116b`.
 The owner reports Phase2 IPA overwrite, prior data, account separation, stream cancellation, background/resume,
 keyboard and exports all passed. VoiceOver and new real-service native flows are unverified. These are owner
 reports, not agent physical-device tests. No manual/device testing is requested this round.

@@ -1,5 +1,7 @@
 # Phase 3 test environment and verification
 
+> **Historical isolated-test environment, not the current launch destination.** On 2026-11-08 the owner directed Codex to connect the native app to the actual Lumen Canvas product and deliver a usable private version now, followed by incremental updates. Preserve the specific Phase3 evidence below, but read the live CURRENT_STATUS for current rollout/production authorization. Do not assert physical Google success, provider inference or a shipped native production integration based on this test-project record.
+
 2026-11-07. Owner explicitly approves a separate Spark-only `lumen-ios-test` Firebase project, Google Auth,
 iOS/web clients and strict per-account Firestore. No production account/data/config, billing, app deployment,
 PR merge or inference. The existing offline installation and Demo A/B namespaces remain unchanged.

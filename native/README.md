@@ -9,9 +9,16 @@ The release reuses Canvas, native Google sign-in and canonical Firebase synchron
 explicitly user-controlled; unavailable native service/worker paths are documented, not represented as complete parity.
 No physical sign-in success is claimed by automated checks. The ordinary web/PWA and existing test/offline builds remain.
 
-The instructions below describe the optional **offline demo workflow**, not the current account-connected release.
+> **Owner direction (2026-11-08):** Codex is integrating the *actual existing Lumen Canvas product* into the native iPhone app for usable private rollout now, followed by incremental fixes and updates. The previously isolated test app is a stepping stone, **not the target product**. The assignment is not a claim that the real-app connection or production login already works. See the live [execution checkpoint](https://github.com/Seifonyx/Lumen/blob/docs/lumen-live-context/docs/lumen-context/CURRENT_STATUS.md) on `docs/lumen-live-context`, not this older branch's historical examples.
 
-## Download and update the installed app
+
+**After launch:** secure OTA delivery for compatible React/CSS/web assets, then verified native UIKit/SwiftUI Liquid Glass improvements and regular bug fixes; Swift/plugins/entitlements/signing still require a new IPA.
+
+## Historical offline-demo build / signing instructions
+
+The instructions below describe the **old offline demo artifact**, not the active connected-release candidate or new real-app rollout. Use the dedicated encrypted connected-iPhone workflow for the native release and its private delivery process.
+
+## Offline demo download and update (historical reference)
 
 1. Open [iOS unsigned demo IPA runs](https://github.com/Seifonyx/Lumen/actions/workflows/ios-demo.yml).
    Choose the latest `experiment/ios-sideload` run matching PR141's head. Check native build/Simulator **and** browser

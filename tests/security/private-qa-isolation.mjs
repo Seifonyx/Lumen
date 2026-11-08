@@ -141,7 +141,9 @@ try {
   // CP02/CP03 (owner-authorized) add the flagged Canvas composer and shell in exactly these source files. The flags
   // stay off in the ordinary build, and section 1's byte equality proves its output is still the pre-QA01 baseline.
   // Owner-requested isolated unsigned iOS demo builder. No production deployment or secrets.
-  const cp02 = ['.github/workflows/ios-demo.yml','.github/workflows/ios-connected.yml','src/components/Composer.tsx', 'src/components/ComposerCanvas.tsx', 'src/lib/canvas-presentation.ts', 'src/styles/canvas-composer.css',
+  // Owner-authorized native SwiftUI Phase 0: synthetic-only macOS compile/simulator screenshot workflow.
+  // This is not a production deployment or a secret-bearing account-connected release.
+  const cp02 = ['.github/workflows/ios-demo.yml','.github/workflows/ios-connected.yml','.github/workflows/ios-phase0.yml','src/components/Composer.tsx', 'src/components/ComposerCanvas.tsx', 'src/lib/canvas-presentation.ts', 'src/styles/canvas-composer.css',
     'src/App.tsx', 'src/components/Sidebar.tsx', 'src/components/SidebarCanvas.tsx', 'src/components/ChatView.tsx', 'src/styles/canvas-shell.css',
     'src/components/RoutingCenter.tsx', 'src/lib/routing-center.ts', 'src/styles/canvas-routing.css',
     'src/styles/canvas-screens.css', 'src/styles/canvas.css', 'src/lib/workspace-presentation.ts',

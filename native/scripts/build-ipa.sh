@@ -15,6 +15,9 @@ xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
   IPHONEOS_DEPLOYMENT_TARGET=16.0 MARKETING_VERSION="$LUMEN_IOS_VERSION" CURRENT_PROJECT_VERSION="$LUMEN_IOS_BUILD" build > build-device.log 2>&1 || { tail -100 build-device.log; exit 1; }
 mkdir -p artifacts/Payload
 ditto build/device/Build/Products/Release-iphoneos/App.app artifacts/Payload/Lumen.app
+plist='artifacts/Payload/Lumen.app/Info.plist'
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist")" == "$LUMEN_IOS_VERSION" ]] || { echo 'IPA version does not match requested release'; exit 1; }
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$plist")" == "$LUMEN_IOS_BUILD" ]] || { echo 'IPA build number does not match requested release'; exit 1; }
 (cd artifacts && ditto -c -k --sequesterRsrc --keepParent Payload Lumen.ipa)
 python3 scripts/validate-ipa.py artifacts/Payload/Lumen.app artifacts/Lumen.ipa
 echo "Unsigned iPhoneOS IPA ready. Sideloadly must sign it locally before installation."

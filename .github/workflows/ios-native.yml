@@ -73,9 +73,6 @@ jobs:
         run: python3 ios/scripts/publish.py --artifacts native-artifacts
       - name: Save SideStore source when changed
         run: |
-          if git diff --quiet -- ios/sidestore-source.json; then exit 0; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ios/sidestore-source.json
-          git commit -m 'Update native Lumen SideStore listing'
-          git push origin HEAD:main
+          python3 ios/scripts/save_source.py

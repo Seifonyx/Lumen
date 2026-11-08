@@ -7,15 +7,13 @@ final class LumenUITests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: "messageComposer").firstMatch
     }
 
-    override func setUpWithError() throws {
+    private func launchCleanChat() {
         continueAfterFailure = false
         app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
         XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 10))
         newChat()
     }
-
-    override func tearDownWithError() throws { app.terminate() }
 
     private func newChat() {
         app.buttons["newChat"].tap()
@@ -47,6 +45,8 @@ final class LumenUITests: XCTestCase {
     }
 
     func testDraftSurvivesWorkspaceNavigationAndRelaunch() {
+        launchCleanChat()
+        defer { app.terminate() }
         composer.tap()
         composer.typeText("Keep this draft")
         app.buttons["openSidebar"].tap()
@@ -61,6 +61,8 @@ final class LumenUITests: XCTestCase {
     }
 
     func testNewChatCanCancelOrDiscardAnUnsentDraft() {
+        launchCleanChat()
+        defer { app.terminate() }
         composer.tap()
         composer.typeText("Unsent question")
         app.buttons["newChat"].tap()
@@ -78,6 +80,8 @@ final class LumenUITests: XCTestCase {
     }
 
     func testComposerStaysAboveKeyboardAndDoesNotSubmitWithoutAModel() {
+        launchCleanChat()
+        defer { app.terminate() }
         composer.tap()
         composer.typeText("A draft above the keyboard")
         let keyboard = app.keyboards.firstMatch
@@ -92,6 +96,8 @@ final class LumenUITests: XCTestCase {
     }
 
     func testNativeScreensInLightAndDark() {
+        launchCleanChat()
+        defer { app.terminate() }
         for theme in ["Light", "Dark"] {
             appearance(theme)
             capture("chat-\(theme.lowercased())")

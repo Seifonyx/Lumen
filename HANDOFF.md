@@ -9,9 +9,12 @@ Updated: 2026-11-08. This is the current continuation point; agent update guidan
   unsigned IPA packaging and SideStore delivery.
 - **Done:** shell/sidebar/native sheets, persistent draft and appearance settings; project generation,
   core/UI tests, device-IPA validation and independent native build/release workflow implemented.
-- **Verification:** eight packaging tests passed locally (observed failing before implementation);
-  YAML/JSON/privacy and script syntax checks passed. Swift compilation and simulator journeys await macOS CI.
-- **Next action:** run native CI, fix any build/test failures, inspect actual simulator captures, then publish the IPA.
+- **Verification:** eight packaging checks and three real-Git source-update checks passed locally after RED;
+  syntax/configuration checks passed. The first Mac run passed all three core tests, then found a Swift 6
+  XCTest setup isolation error. Replaced lifecycle overrides with actor-isolated per-test setup/cleanup.
+  Review also found a concurrent-main feed push race; bounded fetch/rebase retry now has regression coverage.
+- **Next action:** rerun native CI, inspect actual simulator captures, then publish the IPA. Native compilation,
+  UI journeys and installable artifact are not yet verified. Work is in [PR #145](https://github.com/Seifonyx/Lumen/pull/145).
 
 ## Next
 

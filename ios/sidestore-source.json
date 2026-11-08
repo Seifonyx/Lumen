@@ -2,5 +2,29 @@
   "name": "Lumen Native",
   "identifier": "io.github.seifonyx.lumen.native.source",
   "sourceURL": "https://raw.githubusercontent.com/Seifonyx/Lumen/main/ios/sidestore-source.json",
-  "apps": []
+  "apps": [
+    {
+      "name": "Lumen",
+      "bundleIdentifier": "io.github.seifonyx.lumen",
+      "developerName": "Lumen",
+      "subtitle": "Your native AI workspace",
+      "localizedDescription": "A fresh native Lumen for iPhone.",
+      "iconURL": "https://raw.githubusercontent.com/Seifonyx/Lumen/main/public-canvas/icon-512.png",
+      "tintColor": "0b0b0c",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "date": "2026-11-08",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.1.0/Lumen.ipa",
+          "size": 254212,
+          "minOSVersion": "26.0",
+          "localizedDescription": "Chat-first native foundation. Account and AI connections follow in Phase 1."
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {}
+      }
+    }
+  ]
 }

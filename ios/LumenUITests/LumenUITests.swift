@@ -156,6 +156,9 @@ final class LumenUITests: XCTestCase {
     }
 
     func testNativeScreensInLightAndDark() {
+        // Capture both themes and navigate every screen without XCTest killing
+        // the journey during slower hosted simulator accessibility operations.
+        executionTimeAllowance = 240
         launchCleanChat()
         defer { app.terminate() }
         for theme in ["Light", "Dark"] {
@@ -353,6 +356,10 @@ final class LumenUITests: XCTestCase {
     }
 
     func testConnectedStopPersistsPartialReplyAfterRelaunch() {
+        // Cold simulator process shutdown and restart can exceed XCTest's global
+        // 120s limit. Preserve the real stop/relaunch assertions instead of
+        // treating normal iOS process lifecycle work as a failed app test.
+        executionTimeAllowance = 240
         launchCleanChat()
         defer { app.terminate() }
         signInAndChooseModel()

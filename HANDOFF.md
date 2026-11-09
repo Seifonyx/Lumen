@@ -4,35 +4,14 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 
 ## Now
 
-- Latest owner instruction: recover and back up all unfinished Phase2 work. **Do not merge or publish.**
-  Earlier authorization to keep releasing is paused. No release workflow is active.
-- This worktree contains **Part2.5**, branch `codex/phase2-recovery`. Paged long chats, bounded context, interruption restoration, independent retries and simulator preparation; staged changes now being committed.
-  93 Swift tests and19 Python tests passed before recovery; native runtime pending. This backup is not a claim of release readiness.
-- The three cumulative branches are `codex/phase2-drafts` (2.3), `codex/phase2-attachments` (2.4),
-  and `codex/phase2-recovery` (2.5). Preserve their commit histories and worktree files.
-- Part2.3 review found two Important save-failure issues; fixes and regressions are retained:
-  engine/composer identity alignment and account-keyed in-memory draft recovery.
-- Part2.4 review found two Important issues; fixes and regressions are retained:
-  reference-aware original cleanup after durable removal and correctly named PDF text derivatives.
-  Cleanup is blocked when the chat cache cannot be read or its last write failed.
-- **Part2.5 still has two Important review findings, not fixed:**
-  1. `applyRemoteMetadata` clears local `inheritedMessageIDs`; preserve it across metadata refresh/restart
-     so a later fork batch cannot reconstruct messages after the source is deleted.
-  2. Loading only the newest60 messages omits early system instructions; hydrate authoritative
-     instruction messages independently and retain them in reply context.
-  Reproduction and review/test evidence are archived on the2.5 branch under `recovery/phase2/`.
-- Local before-recovery snapshots, binary patch and file hashes are at
-  `/workspace/lumen-phase2-backup-20261109T1711Z/`. No source or test files were discarded.
-- Existing public release0.3.1 completed before this recovery request: native CI42628171164 from2cbb614.
-  The separate web Tests run42628171124 failed and remains uninvestigated; preserve it for follow-up.
-  Main/source must stay untouched during backup. Google chooser, SideStore signing, real picker behavior
-  and live provider inference still require the owner's iPhone.
-- Recovery commits are pushed to all three separate GitHub branches. Their original histories and
-  every preexisting source/test file are retained; each worktree is clean. File-hash audits and a
-  verified Git bundle are saved in the local backup directory. Remote tips/trees are checked again
-  after the final checkpoint push. Main and the published source are untouched by this recovery.
-- Next implementation work, only after the owner resumes it: fix Part2.5's two documented Important
-  findings, then run native UI/backend checks. Do not merge or publish under this recovery request.
+- Current request: prepare an **unmerged, unpublished Phase 2 completion PR** for owner testing. Do not merge to main, deploy the web app, or publish an iOS SideStore release without subsequent owner approval.
+- Work branch: `codex/phase2-completion-review`, built from the preserved `codex/phase2-recovery` backup. Parts 2.3 (durable per-chat drafts/temporary chats), 2.4 (protected images/files and cleanup), and 2.5 (paged history, bounded context, interrupted-reply restoration and independent retries) are present.
+- Live production source still lists 0.3.1 (Parts 2.1 and 2.2); proposed native version is 0.3.4 **for review only**. Prior 77/86/93 Swift and 16/16/19 Python core-test counts were recorded before the backup; these are **not** new CI results.
+- Review fixes added: preserve local `inheritedMessageIDs` and hydrated system messages across Firestore metadata refreshes; independently load authoritative old system messages for provider context without inserting them into the visible 60-message page. Added `Phase2CompletionTests.swift` for deleted-parent fork prevention after restart and old-instruction provider context after paging/restart.
+- Web CI blocker addressed on the review branch: the QA-only Firebase adapter now exports the `limit` query constraint used by account deletion.
+- The three recovery-only evidence files were removed from the *review* branch to keep the PR focused; they remain preserved on `codex/phase2-recovery`.
+- Check pending: run PR Native iOS CI on compact/regular iPhones (including real Firebase SDK emulator paths and artifacts) and web CI. The physical Google chooser, SideStore signing, native picker UX, and real provider inference require owner phone testing.
+- Next: open draft PR to `main`, inspect CI and review outcomes, fix any failures, then give the owner the unsigned IPA artifact for manual installation. Do **not** release until owner explicitly approves.
 
 ## Next
 

@@ -4,49 +4,35 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 
 ## Now
 
-- Owner authorized the entire Phase2 in one continuous run, releasing each part to the existing source.
-  Current branch `codex/phase2-history`, starting from fb1ea81. Parts:2.1 controls0.3.0;
-  2.2 history0.3.1;2.3 drafts/temporary0.3.2;2.4 attachments0.3.3;2.5 long chats/recovery0.3.4.
-  Plan/ledger: `/workspace/scratch/lumen-phase2/{plan,progress}.md`. Baseline44 Swift+16 Python pass.
-  Task1 shipped0.3.0 build28 from52ab376. CI42623415183 passes both device/UI/backend/artifact jobs.
-  Anonymous IPA/feed verification passes:6,521,671 bytes, SHA2561da7a066b27f70bfdb8d0e3862bd803a719b1112743ea829cb44a720551244b2.
-  Source https://raw.githubusercontent.com/Seifonyx/Lumen/main/ios/sidestore-source.json now lists0.3.0.
-  Task2 history passed one fresh review and one fix pass:68 Swift+16 Python checks, TypeScript and web
-  unit tests pass. Ordered metadata outbox IDs survive failed ACK/restart/new fields, with bounded
-  native/web marker cleanup. Archived view/search and group actions are ready for device CI.
-  Task2 is entering Native CI for0.3.1; publication pending. Task3 drafts/temporary and Task4 attachments
-  are implemented/reviewed on isolated worktrees (77/86 Core tests); Task5 paging/recovery is in progress.
-  Publish sequentially and verify every public feed update.
-  Preserve originals and group versions as one history item. Do not stop after the first release.
-  Develop later parts while CI runs, and publish sequentially after prior source update succeeds.
-
-- Native Phase1 is shipped: **0.2.0, build26**, from main commit `732b4df1f543129242766d66e9e7257b9e5dca1c`.
-  [PR146](https://github.com/Seifonyx/Lumen/pull/146) is merged. Local branch `codex/phase1-shipping`
-  follows main; source-listing bot commit is `5fba2be`. Phase1 shipping is complete; Phase2 work is now active.
-- Release: https://github.com/Seifonyx/Lumen/releases/tag/native-ios-v0.2.0
-  SideStore: https://raw.githubusercontent.com/Seifonyx/Lumen/main/ios/sidestore-source.json
-  Anonymous download and canonical JSON verified; newest version, size and URL match the release/manifest.
-  IPA:6,477,724 bytes; SHA256 `d601591daa0dd8d5b8a4203a97419779d568119d3ad161540188afc7925292ba`.
-- [Final CI42576882912](https://github.com/Seifonyx/Lumen/actions/runs/42576882912) is fully green:
-  44 Swift tests,16 Python packaging/artifact checks,9 UI journeys on each of2 iPhone sizes (18 total).
-  Real Firebase Auth/Firestore SDK emulator roundtrips, deletion cleanup, unknown metadata/message fields,
-  web ordering and4 provider requests per phone pass. Paired IPA/source/version/hash verification and
-  publishing pass. Inspected final compact keyboard/Stop and regular dark/web-history screenshots.
-- Phase1 now uses real Google/Firebase auth; account-scoped protected cache, durable outbox and Keychain;
-  safe web chat reads/appends/deletion; Groq/Gemini/OpenAI/Anthropic transports, discovered models,
-  streamed replies and Stop. Chat is the main screen with sidebar navigation, no bottom tabs.
-- Firebase project `the-model-router` has the correct clients for `io.github.seifonyx.lumen` and
-  `io.github.seifonyx.lumen.M2WDSAZ2A5`; nickname Lumen is valid. Bundled configuration is public.
-  Native sync reuses the existing web schema. Further workspace/router/tool parity remains later phases.
-- Runtime details behind verified fixes: Firestore transaction callbacks are explicitly @Sendable because
-  the SDK executes updates off the main actor. SDK13.1.1 emulator setup explicitly disables local TLS only
-  in DEBUG simulator fixtures. CI waits for actual input readiness, targets the visible sidebar X and gives
-  the long history/relaunch/sign-out journey180s. Release excludes all fixture identity/key markers.
-- Next physical check: update through SideStore, sign in with the existing Lumen Google account, choose a
-  connected model, send/Stop, then reopen a web chat. Google's real chooser, SideStore signing and live
-  provider inference require the owner's iPhone; automation used local emulators/HTTP fixtures.
-- Local Swift6.2.3 is `/workspace/scratch/swift-6.2/usr/bin/swift`; no local Xcode. Native checks use the
-  committed `ios/scripts/build.sh` on GitHub macOS26/Xcode26.6. Current setup is in `ios/README.md`.
+- Latest owner instruction: recover and back up all unfinished Phase2 work. **Do not merge or publish.**
+  Earlier authorization to keep releasing is paused. No release workflow is active.
+- This is the root checkpoint on `codex/phase2-history`; implementation is preserved in the three separate worktrees and remote branches below.
+  Part2.3 previously passed77 Swift tests;2.4 passed86;2.5 passed93 plus19 Python checks. Native checks for these parts remain pending. Backups are not claims of release readiness.
+- The three cumulative branches are `codex/phase2-drafts` (2.3), `codex/phase2-attachments` (2.4),
+  and `codex/phase2-recovery` (2.5). Preserve their commit histories and worktree files.
+- Part2.3 review found two Important save-failure issues; fixes and regressions are retained:
+  engine/composer identity alignment and account-keyed in-memory draft recovery.
+- Part2.4 review found two Important issues; fixes and regressions are retained:
+  reference-aware original cleanup after durable removal and correctly named PDF text derivatives.
+  Cleanup is blocked when the chat cache cannot be read or its last write failed.
+- **Part2.5 still has two Important review findings, not fixed:**
+  1. `applyRemoteMetadata` clears local `inheritedMessageIDs`; preserve it across metadata refresh/restart
+     so a later fork batch cannot reconstruct messages after the source is deleted.
+  2. Loading only the newest60 messages omits early system instructions; hydrate authoritative
+     instruction messages independently and retain them in reply context.
+  Reproduction and review/test evidence are archived on the2.5 branch under `recovery/phase2/`.
+- Local before-recovery snapshots, binary patch and file hashes are at
+  `/workspace/lumen-phase2-backup-20261109T1711Z/`. No source or test files were discarded.
+- Existing public release0.3.1 completed before this recovery request: native CI42628171164 from2cbb614.
+  The separate web Tests run42628171124 failed and remains uninvestigated; preserve it for follow-up.
+  Main/source must stay untouched during backup. Google chooser, SideStore signing, real picker behavior
+  and live provider inference still require the owner's iPhone.
+- Recovery commits are pushed to all three separate GitHub branches. Their original histories and
+  every preexisting source/test file are retained; each worktree is clean. File-hash audits and a
+  verified Git bundle are saved in the local backup directory. Remote tips/trees are checked again
+  after the final checkpoint push. Main and the published source are untouched by this recovery.
+- Next implementation work, only after the owner resumes it: fix Part2.5's two documented Important
+  findings, then run native UI/backend checks. Do not merge or publish under this recovery request.
 
 ## Next
 

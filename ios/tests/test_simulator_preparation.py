@@ -67,8 +67,8 @@ class SimulatorSelectionTests(unittest.TestCase):
         runtime, device_type = module.select_device(inventory, 'regular')
         hosted = {'udid': 'stuck-hosted', 'state': 'Booted'}
         timed_out = subprocess.TimeoutExpired(['xcrun', 'simctl', 'bootstatus'], 240)
-        with patch.object(module, 'existing_hosted_device', return_value=hosted), \\
-             patch.object(module.subprocess, 'check_output', return_value='fresh-qa\\n') as create, \\
+        with patch.object(module, 'existing_hosted_device', return_value=hosted), \
+             patch.object(module.subprocess, 'check_output', return_value='fresh-qa\n') as create, \
              patch.object(module.subprocess, 'run', side_effect=[timed_out, None, None, None]) as run:
             identifier, reused = module.prepare_qa_device(inventory, 'regular', runtime, device_type)
         self.assertEqual((identifier, reused), ('fresh-qa', False))
@@ -87,8 +87,8 @@ class SimulatorSelectionTests(unittest.TestCase):
         inventory = self.inventory()
         runtime, device_type = module.select_device(inventory, 'compact')
         hosted = {'udid': 'ready-hosted', 'state': 'Booted'}
-        with patch.object(module, 'existing_hosted_device', return_value=hosted), \\
-             patch.object(module.subprocess, 'check_output') as create, \\
+        with patch.object(module, 'existing_hosted_device', return_value=hosted), \
+             patch.object(module.subprocess, 'check_output') as create, \
              patch.object(module.subprocess, 'run') as run:
             identifier, reused = module.prepare_qa_device(inventory, 'compact', runtime, device_type)
         self.assertEqual((identifier, reused), ('ready-hosted', True))

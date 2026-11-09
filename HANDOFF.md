@@ -36,6 +36,9 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 - App and Release archive at4494dba succeeded; its IPA independently passed hash/version/iOS26/both
   Google callback/client checks and contained linked auth SDKs with no DEBUG identity. Latest official
   run42536499740 atb2a7524 will be superseded by these runtime/test/pipeline fixes. Do not merge/publish yet.
+- Head83e33c3 contained a workflow edit error (publish input matched while replacing the publish job).
+  Corrected whole file; YAML graph check and actionlint pass before the next push. Intended graph is isolated
+  compact/regular Mac matrix → Linux verification of both artifacts → publish onmain. App code unchanged.
 - Temporary development workflow and Firebase inspector are removed in this update. Version0.2.0 and
   current release notes are ready. Next: official PR CI, fix any runtime/UI failures, merge, verify main IPA
   publication and public SideStore source. Actual Google chooser/SideStore signing need the owner's phone.

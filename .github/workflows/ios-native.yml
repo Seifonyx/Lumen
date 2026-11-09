@@ -8,7 +8,66 @@ on:
     paths: ['ios/**', '!ios/README.md', '!ios/sidestore-source.json', '.github/workflows/ios-native.yml']
   workflow_dispatch:
     inputs:
-      verify:
+      publish:
+        description: Publish a verified version from main
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-ios-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.ref != 'refs/heads/main' }}
+
+jobs:
+  build:
+    name: iPhone ${{ matrix.profile }} build, tests and screenshots
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [compact, regular]
+    runs-on: macos-26
+    timeout-minutes: 50
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      IOS_BUILD_NUMBER: ${{ github.run_number }}
+      LUMEN_QA_PROFILE: ${{ matrix.profile }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/cache@v4
+        with:
+          path: ios/build/DerivedData/SourcePackages
+          key: native-packages-${{ runner.os }}-${{ hashFiles('ios/project.yml') }}
+      - name: Packaging tests
+        run: python3 -m unittest discover -s ios/tests -v
+      - name: Project generator
+        run: |
+          if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
+          xcodegen --version
+      - name: Build native app, test on iPhone and capture screens
+        run: bash ios/scripts/build.sh
+      - name: Keep IPA, screenshots, manifest and logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: native-ios-${{ github.sha }}-${{ matrix.profile }}
+          path: |
+            ios/build/release/
+            ios/build/screenshots/
+            ios/build/qa-devices.json
+            ios/build/logs/
+          retention-days: 7
+          if-no-files-found: error
+
+  verify:
     name: Verify both iPhone results
     needs: build
     runs-on: ubuntu-24.04

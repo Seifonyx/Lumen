@@ -45,6 +45,46 @@ class SimulatorSelectionTests(unittest.TestCase):
         self.assertFalse(prepared_device_is_live({**prepared, 'runtimeIdentifier': 'wrong'}, inventory, 'compact', runtime, device))
         self.assertFalse(prepared_device_is_live(None, inventory, 'compact', runtime, device))
 
+    def test_two_ui_shards_cover_all_xctest_methods_once_on_each_iphone(self):
+        import re
+        import sys
+        scripts = str(Path(__file__).resolve().parents[1] / 'scripts')
+        if scripts not in sys.path: sys.path.insert(0, scripts)
+        from test_simulators import SHARDS
+        ui = (Path(__file__).resolve().parents[1] / 'LumenUITests/LumenUITests.swift').read_text()
+        actual = re.findall(r'    func (test\w+)\(', ui)
+        assigned = [name for names in SHARDS.values() for name in names]
+        self.assertEqual(len(SHARDS), 2)
+        self.assertEqual(len(actual), 14)
+        self.assertEqual(len(assigned), len(set(assigned)), 'a UI method cannot run twice')
+        self.assertEqual(set(assigned), set(actual), 'every UI method must run on both device sizes')
+        self.assertEqual({name: len(names) for name, names in SHARDS.items()},
+                         {'sync': 6, 'features': 8})
+
+    def test_hosted_simulator_reuse_never_touches_local_or_wrong_devices(self):
+        import os
+        from unittest.mock import patch
+        inventory = self.inventory()
+        runtime, device_type = module.select_device(inventory, 'regular')
+        matches = [
+            {'udid': 'shutdown', 'state': 'Shutdown', 'isAvailable': True,
+             'deviceTypeIdentifier': device_type['identifier']},
+            {'udid': 'booted', 'state': 'Booted', 'isAvailable': True,
+             'deviceTypeIdentifier': device_type['identifier']},
+            {'udid': 'unavailable', 'state': 'Booted', 'isAvailable': False,
+             'deviceTypeIdentifier': device_type['identifier']},
+        ]
+        inventory['devices'] = {runtime['identifier']: matches}
+        with patch.dict(os.environ, {'GITHUB_ACTIONS': 'true'}):
+            self.assertEqual(module.existing_hosted_device(inventory, runtime, device_type)['udid'], 'booted')
+            inventory['devices'][runtime['identifier']] = [matches[0]]
+            self.assertEqual(module.existing_hosted_device(inventory, runtime, device_type)['udid'], 'shutdown')
+            inventory['devices'][runtime['identifier']] = [matches[2]]
+            self.assertIsNone(module.existing_hosted_device(inventory, runtime, device_type))
+        with patch.dict(os.environ, {'GITHUB_ACTIONS': ''}):
+            inventory['devices'][runtime['identifier']] = matches
+            self.assertIsNone(module.existing_hosted_device(inventory, runtime, device_type))
+
     def test_missing_runtime_or_profile_fails_instead_of_testing_another_device(self):
         with self.assertRaises(ValueError): module.select_device(self.inventory(), 'other')
         inventory = self.inventory(); inventory['runtimes'] = []

@@ -33,10 +33,38 @@ def prepared_device_is_live(prepared, inventory, profile, runtime, device_type):
     )
 
 
+# Measured baseline on both iPhone sizes: each group takes about half of the
+# former 12–13 minute, 14-test serial suite. Every method runs exactly once on
+# each size, with its own isolated Firebase emulator and fixture provider.
+SHARDS = {
+    'sync': (
+        'testALongHistoryLoadsOlderAndSendsOnlyBoundedRecentContext',
+        'testAttachmentsPreviewRestoreAndSendActualTextAndImageBytes',
+        'testConnectedSendWebHistorySyncAndSignOut',
+        'testHistoryRenamePinArchiveAndSearchCachedMessages',
+        'testDraftSurvivesWorkspaceNavigationAndRelaunch',
+        'testComposerStaysAboveKeyboardAndDoesNotSubmitWithoutAModel',
+    ),
+    'features': (
+        'testConnectedDeleteCleansTheCloudConversation',
+        'testEditRegenerateAndReturnToTheOriginalVersion',
+        'testTemporaryConversationClearsOnLeavingAndNeverAppearsInHistory',
+        'testConnectedStopPersistsPartialReplyAfterRelaunch',
+        'testConnectProviderWithAValidKeyAndSend',
+        'testNativeScreensInLightAndDark',
+        'testNewChatKeepsAnIndependentDraftAndRestoresIt',
+        'testRejectedProviderKeyShowsErrorAndKeepsTheDraft',
+    ),
+}
+
+
 def main():
     from native_test_server import start, seed
     server = start()
     root = Path(__file__).resolve().parents[1]
+    shard = os.environ.get('LUMEN_QA_SHARD', 'all')
+    if shard not in {*SHARDS, 'all'}:
+        raise SystemExit(f'Unknown native UI shard: {shard}')
     inventory = json.loads(output('xcrun', 'simctl', 'list', '--json'))
     from prepare_simulator import PROFILES, select_device
     profiles = PROFILES
@@ -63,7 +91,8 @@ def main():
             device = prepared['id']
         else:
             device = output('xcrun', 'simctl', 'create', f'Lumen {profile}', device_type['identifier'], runtime['identifier']).strip()
-        provenance.append({'profile': profile, 'device': device_type['name'], 'runtime': runtime['version'], 'id': device})
+        provenance.append({'profile': profile, 'shard': shard,
+                           'device': device_type['name'], 'runtime': runtime['version'], 'id': device})
         (root / 'build' / 'qa-devices.json').write_text(json.dumps(provenance, indent=2) + '\n')
         result = root / 'build' / f'{profile}.xcresult'
         screenshots = root / 'build' / 'screenshots' / profile
@@ -80,19 +109,32 @@ def main():
             run('xcrun', 'simctl', 'install', device, str(app))
             run('xcrun', 'simctl', 'launch', device, 'io.github.seifonyx.lumen', '--lumen-integration', '--lumen-reset-qa', timeout=300)
             subprocess.run(['xcrun', 'simctl', 'terminate', device, 'io.github.seifonyx.lumen'], check=False, timeout=30)
+            args = [
+                'xcodebuild', 'test-without-building', '-project', str(root / 'Lumen.xcodeproj'),
+                '-scheme', 'Lumen', '-destination', f'id={device}',
+                '-derivedDataPath', str(root / 'build' / 'DerivedData'),
+                '-resultBundlePath', str(result), '-parallel-testing-enabled', 'NO',
+                '-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', '120',
+                '-maximum-test-execution-time-allowance', '600',
+                'CODE_SIGNING_ALLOWED=YES', 'CODE_SIGNING_REQUIRED=NO', 'CODE_SIGN_IDENTITY=-',
+            ]
+            if shard != 'all':
+                args += [f'-only-testing:LumenUITests/LumenUITests/{name}' for name in SHARDS[shard]]
+            print(f'Testing {profile}/{shard}: {len(SHARDS.get(shard, ()))} selected methods', flush=True)
             with log.open('w') as stream:
-                test = subprocess.run([
-                    'xcodebuild', 'test-without-building', '-project', str(root / 'Lumen.xcodeproj'),
-                    '-scheme', 'Lumen', '-destination', f'id={device}',
-                    '-derivedDataPath', str(root / 'build' / 'DerivedData'),
-                    '-resultBundlePath', str(result), '-parallel-testing-enabled', 'NO',
-                    '-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', '120',
-                    '-maximum-test-execution-time-allowance', '600',
-                    'CODE_SIGNING_ALLOWED=YES', 'CODE_SIGNING_REQUIRED=NO', 'CODE_SIGN_IDENTITY=-',
-                ], stdout=stream, stderr=subprocess.STDOUT, timeout=2000)
-            print(log.read_text()[-16000:], flush=True)
+                test = subprocess.run(args, stdout=stream, stderr=subprocess.STDOUT, timeout=2000)
+            output_text = log.read_text()
+            print(output_text[-16000:], flush=True)
             if test.returncode:
                 failed.append(profile)
+            elif shard != 'all':
+                # Xcode can exit 0 if -only-testing accidentally matches zero tests.
+                # Require each intended XCTest method to report a successful result.
+                missing = [name for name in SHARDS[shard]
+                           if f'{name}]\' passed (' not in output_text]
+                if missing:
+                    failed.append(profile)
+                    print(f'Missing XCTest passes for {profile}/{shard}: {missing}', flush=True)
         except subprocess.TimeoutExpired as error:
             failed.append(profile)
             print(f'{profile} timed out after {error.timeout}s: {error.cmd}', flush=True)
@@ -113,7 +155,10 @@ def main():
             subprocess.run(['xcrun', 'simctl', 'delete', device], check=False)
     if not failed:
         from native_test_server import verify_roundtrip
-        checks = verify_roundtrip()
+        checks = verify_roundtrip(shard)
+        tests = [name for group in SHARDS.values() for name in group] if shard == 'all' else list(SHARDS[shard])
+        checks['uiTestCount'] = len(tests)
+        checks['uiTestNames'] = tests
         (root / 'build' / 'logs' / 'connected-roundtrip.json').write_text(json.dumps(checks, indent=2) + '\n')
         print(json.dumps(checks), flush=True)
     server.shutdown()

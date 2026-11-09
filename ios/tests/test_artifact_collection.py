@@ -16,25 +16,38 @@ class ArtifactCollectionTests(unittest.TestCase):
         self.source = self.root / 'artifacts'
         self.destination = self.root / 'verified'
         self.sha = 'a' * 40
-        for profile in ['compact', 'regular']:
-            folder = self.source / f'native-ios-{self.sha}-{profile}'
-            folder.mkdir(parents=True)
-            if profile == 'regular':
-                (folder / 'release').mkdir()
-                data = ('verified-' + profile).encode()
-                (folder / 'release/Lumen.ipa').write_bytes(data)
-                manifest = {'sourceCommit': self.sha, 'version': '0.2.0', 'build': '19',
-                            'bundleIdentifier': 'io.github.seifonyx.lumen', 'minimumOSVersion': '26.0',
-                            'architecture': 'arm64', 'platform': 'iPhoneOS',
-                            'size': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
-                (folder / 'release/build-manifest.json').write_text(json.dumps(manifest))
-            (folder / f'screenshots/{profile}').mkdir(parents=True)
-            (folder / f'screenshots/{profile}/capture.png').write_bytes(b'capture')
-            (folder / 'qa-devices.json').write_text(json.dumps([{'profile': profile, 'runtime': '26.5'}]))
-            (folder / 'logs').mkdir()
-            (folder / 'logs/connected-roundtrip.json').write_text(json.dumps({
-                'firebaseSDKRoundtrip': True, 'deletedContentCleaned': True, 'unknownMetadataPreserved': True,
-                'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True, 'revisionVersionsPreserved': True, 'longHistoryPreserved': True, 'attachmentRoundtrip': True, 'temporaryContentAbsent': True, 'metadataRoundtrip': True}))
+        self.checks = {
+            'sync': ('firebaseSDKRoundtrip', 'unknownMetadataPreserved',
+                     'existingMessageFieldsPreserved', 'webOrderingPreserved',
+                     'attachmentRoundtrip', 'longHistoryPreserved', 'metadataRoundtrip'),
+            'features': ('deletedContentCleaned', 'revisionVersionsPreserved', 'temporaryContentAbsent'),
+        }
+        self.counts = {'sync': 6, 'features': 8}
+        for profile in ('compact', 'regular'):
+            for shard in ('sync', 'features'):
+                folder = self.source / f'native-ios-{self.sha}-{profile}-{shard}'
+                (folder / f'screenshots/{profile}').mkdir(parents=True)
+                (folder / f'screenshots/{profile}/capture-{shard}.png').write_bytes(b'capture')
+                (folder / 'qa-devices.json').write_text(json.dumps([{
+                    'profile': profile, 'shard': shard, 'id': f'{profile}-{shard}',
+                    'runtime': '26.5',
+                }]))
+                (folder / 'logs').mkdir()
+                checks = {name: True for name in self.checks[shard]}
+                checks['uiTestCount'] = self.counts[shard]
+                checks['uiTestNames'] = [f'test-{shard}-{i}' for i in range(self.counts[shard])]
+                (folder / 'logs/connected-roundtrip.json').write_text(json.dumps(checks))
+        release = self.source / f'native-ios-{self.sha}-release'
+        (release / 'release').mkdir(parents=True)
+        (release / 'logs').mkdir()
+        (release / 'logs/device-build.log').write_text('archive succeeded')
+        data = b'verified single device release'
+        (release / 'release/Lumen.ipa').write_bytes(data)
+        manifest = {'sourceCommit': self.sha, 'version': '0.3.4', 'build': '19',
+                    'bundleIdentifier': 'io.github.seifonyx.lumen', 'minimumOSVersion': '26.0',
+                    'architecture': 'arm64', 'platform': 'iPhoneOS',
+                    'size': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
+        (release / 'release/build-manifest.json').write_text(json.dumps(manifest))
 
     def collect(self):
         spec = importlib.util.spec_from_file_location('native_collect', SCRIPT)
@@ -42,29 +55,56 @@ class ArtifactCollectionTests(unittest.TestCase):
         spec.loader.exec_module(module)
         module.collect(self.source, self.destination, self.sha)
 
-    def test_collects_matching_profiles_without_mixing_their_ipa_and_manifest(self):
+    def test_collects_four_independent_shards_and_one_release(self):
         self.collect()
         manifest = json.loads((self.destination / 'release/build-manifest.json').read_text())
-        self.assertEqual(hashlib.sha256((self.destination / 'release/Lumen.ipa').read_bytes()).hexdigest(), manifest['sha256'])
-        self.assertTrue((self.destination / 'screenshots/compact/capture.png').exists())
-        self.assertTrue((self.destination / 'screenshots/regular/capture.png').exists())
-        self.assertEqual(len(json.loads((self.destination / 'qa-devices.json').read_text())), 2)
-
-    def test_compact_screenshots_and_checks_remain_required_without_a_second_ipa(self):
-        self.collect()
-        self.assertFalse((self.source / f'native-ios-{self.sha}-compact/release').exists())
-        self.assertTrue((self.destination / 'release/Lumen.ipa').exists())
+        ipa = (self.destination / 'release/Lumen.ipa').read_bytes()
+        self.assertEqual(hashlib.sha256(ipa).hexdigest(), manifest['sha256'])
+        for profile in ('compact', 'regular'):
+            for shard in ('sync', 'features'):
+                self.assertTrue((self.destination / f'screenshots/{profile}/capture-{shard}.png').exists())
+                self.assertTrue((self.destination / f'logs/{profile}/{shard}/connected-roundtrip.json').exists())
+        self.assertEqual(len(json.loads((self.destination / 'qa-devices.json').read_text())), 4)
 
     def test_rejects_a_mismatched_source(self):
-        path = self.source / f'native-ios-{self.sha}-regular/release/build-manifest.json'
-        manifest = json.loads(path.read_text()); manifest['sourceCommit'] = 'b' * 40
+        path = self.source / f'native-ios-{self.sha}-release/release/build-manifest.json'
+        manifest = json.loads(path.read_text())
+        manifest['sourceCommit'] = 'b' * 40
         path.write_text(json.dumps(manifest))
-        with self.assertRaises(ValueError): self.collect()
+        with self.assertRaises(ValueError):
+            self.collect()
 
     def test_rejects_a_corrupted_ipa(self):
-        (self.source / f'native-ios-{self.sha}-regular/release/Lumen.ipa').write_bytes(b'changed')
-        with self.assertRaises(ValueError): self.collect()
+        (self.source / f'native-ios-{self.sha}-release/release/Lumen.ipa').write_bytes(b'changed')
+        with self.assertRaises(ValueError):
+            self.collect()
 
-    def test_rejects_missing_connected_checks(self):
-        (self.source / f'native-ios-{self.sha}-regular/logs/connected-roundtrip.json').unlink()
-        with self.assertRaises((ValueError, FileNotFoundError)): self.collect()
+    def test_rejects_a_missing_ui_shard(self):
+        import shutil
+        shutil.rmtree(self.source / f'native-ios-{self.sha}-compact-sync')
+        with self.assertRaisesRegex(ValueError, 'Missing verified'):
+            self.collect()
+
+    def test_rejects_missing_shard_specific_firebase_checks(self):
+        path = self.source / f'native-ios-{self.sha}-regular-features/logs/connected-roundtrip.json'
+        data = json.loads(path.read_text())
+        data['deletedContentCleaned'] = False
+        path.write_text(json.dumps(data))
+        with self.assertRaisesRegex(ValueError, 'Connected integration'):
+            self.collect()
+
+    def test_rejects_missing_ui_method_coverage(self):
+        path = self.source / f'native-ios-{self.sha}-compact-sync/logs/connected-roundtrip.json'
+        data = json.loads(path.read_text())
+        data['uiTestNames'].pop()
+        path.write_text(json.dumps(data))
+        with self.assertRaisesRegex(ValueError, 'Incomplete XCTest'):
+            self.collect()
+
+    def test_rejects_duplicate_simulator_provenance(self):
+        path = self.source / f'native-ios-{self.sha}-regular-features/qa-devices.json'
+        data = json.loads(path.read_text())
+        data[0]['id'] = 'compact-sync'
+        path.write_text(json.dumps(data))
+        with self.assertRaisesRegex(ValueError, 'distinct'):
+            self.collect()

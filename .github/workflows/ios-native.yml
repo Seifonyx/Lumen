@@ -22,11 +22,13 @@ concurrency:
 
 jobs:
   core:
-    name: Swift core unit tests
+    name: Core Swift and packaging tests
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
+      - name: Packaging and simulator selection regressions
+        run: python3 -m unittest discover -s ios/tests -v
       - uses: swift-actions/setup-swift@v2
         with:
           swift-version: '6.2'
@@ -34,17 +36,19 @@ jobs:
         run: swift test --package-path ios/LumenCore
 
   build:
-    name: iPhone ${{ matrix.profile }} build, tests and screenshots
+    name: iPhone ${{ matrix.profile }} / ${{ matrix.shard }} UI and Firebase
     strategy:
       fail-fast: false
       matrix:
         profile: [compact, regular]
+        shard: [sync, features]
     runs-on: macos-26
-    timeout-minutes: 50
+    timeout-minutes: 40
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
       IOS_BUILD_NUMBER: ${{ github.run_number }}
       LUMEN_QA_PROFILE: ${{ matrix.profile }}
+      LUMEN_QA_SHARD: ${{ matrix.shard }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -58,31 +62,57 @@ jobs:
         with:
           path: ios/build/DerivedData/SourcePackages
           key: native-packages-${{ runner.os }}-${{ hashFiles('ios/project.yml') }}
-      - name: Packaging tests
-        run: python3 -m unittest discover -s ios/tests -v
       - name: Project generator
         run: |
           if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
           xcodegen --version
-      - name: Build native app, test on iPhone and capture screens
-        # UI runs on both iPhone sizes; only regular archives an IPA in parallel.
+      - name: Run independent UI and Firebase shard
         run: bash ios/scripts/build.sh
-      - name: Keep IPA, screenshots, manifest and logs
+      - name: Keep shard screenshots, provenance, checks and logs
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: native-ios-${{ github.sha }}-${{ matrix.profile }}
+          name: native-ios-${{ github.sha }}-${{ matrix.profile }}-${{ matrix.shard }}
           path: |
-            ios/build/release/
             ios/build/screenshots/
             ios/build/qa-devices.json
             ios/build/logs/
           retention-days: 7
           if-no-files-found: error
 
+  package:
+    name: Archive one release IPA
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      IOS_BUILD_NUMBER: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/cache@v4
+        with:
+          path: ios/build/DerivedData/SourcePackages
+          key: native-packages-${{ runner.os }}-${{ hashFiles('ios/project.yml') }}
+      - name: Project generator
+        run: |
+          if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
+          xcodegen --version
+      - name: Build and validate unsigned device IPA
+        run: bash ios/scripts/build_release.sh
+      - name: Keep release IPA, checksum manifest and build log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: native-ios-${{ github.sha }}-release
+          path: |
+            ios/build/release/
+            ios/build/logs/
+          retention-days: 7
+          if-no-files-found: error
+
   verify:
-    name: Verify both iPhone results
-    needs: [core, build]
+    name: Verify all four iPhone shards and release IPA
+    needs: [core, build, package]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -91,7 +121,7 @@ jobs:
         with:
           pattern: native-ios-${{ github.sha }}-*
           path: native-artifacts
-      - name: Verify and collect both iPhone artifacts
+      - name: Verify coverage, emulator data, screenshots and IPA SHA-256
         run: python3 ios/scripts/collect_artifacts.py --artifacts native-artifacts --output native-verified --source-commit "${{ github.sha }}"
       - uses: actions/upload-artifact@v6
         with:

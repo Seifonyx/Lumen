@@ -8,10 +8,18 @@
       "bundleIdentifier": "io.github.seifonyx.lumen",
       "developerName": "Lumen",
       "subtitle": "Your native AI workspace",
-      "localizedDescription": "A fresh native Lumen for iPhone.",
+      "localizedDescription": "Native AI conversations with your Lumen account and your choice of provider.",
       "iconURL": "https://raw.githubusercontent.com/Seifonyx/Lumen/main/public-canvas/icon-512.png",
       "tintColor": "0b0b0c",
       "versions": [
+        {
+          "version": "0.2.0",
+          "date": "2026-11-09",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.2.0/Lumen.ipa",
+          "size": 6477724,
+          "minOSVersion": "26.0",
+          "localizedDescription": "Google sign-in, existing Lumen history, secure provider connections, streamed replies and Stop."
+        },
         {
           "version": "0.1.0",
           "date": "2026-11-08",

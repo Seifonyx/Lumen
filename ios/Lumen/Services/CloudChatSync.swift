@@ -97,7 +97,7 @@ import LumenCore
         keyErrorMessage = nil
         defer { if epoch == ticket { isLoadingKeys = false } }
         #if DEBUG && targetEnvironment(simulator)
-        DebugIntegration.record("cloud-key-start", fields: ["host": db.settings.host, "project": db.app.options.projectID ?? ""])
+        DebugIntegration.record("cloud-key-start", fields: ["host": db.settings.host, "ssl": String(db.settings.isSSLEnabled), "project": db.app.options.projectID ?? ""])
         #endif
         do {
             let snapshot = try await db.collection("modelRouter").document(userID).getDocument(source: .server)

@@ -5,56 +5,36 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 ## Now
 
 - Branch `codex/phase1-ready`; owner authorized fixing all Phase1 defects and shipping the native IPA.
-  PR146 (`feat/phase1-connected-chat`) now points to repaired head `288bfeb`. Main is still Phase0
-  `14bf502`. Do not merge until final Native iOS CI and screenshot inspection pass.
+  PR146 (`feat/phase1-connected-chat`) is open. Main remains Phase0 `14bf502`.
+  Merge after final native CI and screenshot inspection; then verify public IPA and SideStore publication.
 - Both fresh Firebase iOS apps are verified in `the-model-router`: `io.github.seifonyx.lumen` and
-  `io.github.seifonyx.lumen.M2WDSAZ2A5`. Nickname Lumen is valid. Public config is bundled. Real Google/
-  Firebase SDK auth replaces the preview login; Firebase owns tokens/refresh/Keychain. Rules/data unchanged.
-- Native Phase1 now has account-isolated protected cache/outbox, live web history, merge-safe transactional
-  sync, Groq/Gemini/OpenAI/Anthropic transports, bounded SSE parsing, Keychain keys and model discovery.
-  Send accepts only after saving, Stop keeps partial text, and account/chat switches reject late stream data.
-- Fresh final review of e310139 found3 Important issues, repaired in one pass: stale refreshes removing
-  acknowledged turns; same-ID web edits not refreshing; deletion retaining remote messages/originals.
-  Opaque mutation/session tickets, remote revisions and durable deletion cleanup cover these, with new
-  failing-then-passing tests. No minors or second review required. Later phases/physical checks remain scoped
-  as recorded in ios/README.md and release notes.
-- Follow-ups preserve an unuploaded local chat when server metadata is absent (only tombstones delete),
-  bound deletion reads to50 docs per batch, and prevent untyped legacy keys autofilling other providers.
-  Phase0 draft migration is covered and already worked. Local43 Swift tests and12 packaging/Git checks pass.
-- Local emulator smoke passes Google-credential identity, current rules, own-history read, cross-account
-  denial and HTTP fixture. Exact current rules are staged under ignored build/emulators, never deployed.
-- Mac dev run42534088538 finished/canceled at50m: compact shell4 journeys passed, real Google SDK emulator
-  sign-in and cloud status worked, but all3 connected cases lacked the discovered Groq model (line137).
-  Root cause still being traced; safe DEBUG counters now record cloud key presence/import and Keychain OS
-  status only. The iOS-unneeded DataProtectionKeychain selector was removed for compatibility; do not yet
-  claim that fixed model loading. Keychain save errors now clearly say Keychain (new RED→GREEN test).
-- Rejected-key UI test reached expected401. Its back taps incorrectly hit underlying main nav bar;
-  now scoped to Groq/Models & providers/Settings bars. Regular simulator then timed out launching;
-  profiles now run on separate Mac runners with warm launch and bounded tests, avoiding retained-first-
-  simulator resource pressure. This is a pipeline change, pending CI.16 Python checks verify artifact pairing,
-  hashes, source/version agreement and both connected results before the new verify/publish jobs.
-- App and Release archive at4494dba succeeded; its IPA independently passed hash/version/iOS26/both
-  Google callback/client checks and contained linked auth SDKs with no DEBUG identity. Latest official
-  run42536499740 atb2a7524 will be superseded by these runtime/test/pipeline fixes. Do not merge/publish yet.
-- Head83e33c3 contained a workflow edit error (publish input matched while replacing the publish job).
-  Corrected whole file; YAML graph check and actionlint pass before the next push. Intended graph is isolated
-  compact/regular Mac matrix → Linux verification of both artifacts → publish onmain. App code unchanged.
-- Isolated official run42565159526 at288bfeb is active: compact job128989979118, regular128989979444.
-  Both compile/archive/SDK/UI jobs must pass, then Linux verify must combine their matching artifacts.
-  Safe fixture diagnostics survive per-test resets under Application Support/IntegrationDiagnostics.json
-  and are copied into each artifact's logs. Read those if model import still fails; do not guess/claim fixed.
-- Isolated regular job128989979444 completed:5 shell/manual-error journeys passed including fixed nav;
-  connected3 still fail at model selection. No diagnostics file was captured. Keychain selector removal is
-  NOT proven to address this. Next update records configuration/key-read start/failure via safe OSLog +file,
-  exports diagnostics by search, exposes durable key-load errors/loading state, and adds a direct valid-key
-  send journey to separate cloud import from Keychain/HTTP. Do not claim connected chat is verified.
-- Temporary development workflow and Firebase inspector are removed in this update. Version0.2.0 and
-  current release notes are ready. Next: official PR CI, fix any runtime/UI failures, merge, verify main IPA
-  publication and public SideStore source. Actual Google chooser/SideStore signing need the owner's phone.
-- Local Swift6.2.3: `/workspace/scratch/swift-6.2/usr/bin/swift`. No local Xcode. Old6.0.3 toolchain was
-  removed (upstream Linux Observation linker bug). Use GitHub macOS26/Xcode26.6 for native checks.
-- Review/fix evidence and plan are under `/workspace/scratch/lumen-final-review`,
-  `/workspace/scratch/lumen-phase1-fix-plan.md`, and test logs. Preserve actual pass/fail limits.
+  `io.github.seifonyx.lumen.M2WDSAZ2A5`. Nickname Lumen is valid. Bundled public configuration and real
+  Google/Firebase SDK auth replace preview identity. Production rules/data and web deployment are unchanged.
+- Phase1 includes account-isolated protected cache/outbox, merge-safe live web history, provider-specific
+  Groq/Gemini/OpenAI/Anthropic transports, bounded streaming/Stop, model discovery and account Keychain.
+  Submitted turns save before acceptance; account/chat switches reject late stream and history results.
+  Final review's3 Important findings are fixed: stale history overwrite, same-ID web edits and complete
+  remote deletion of messages/originals. Later-phase features remain explicit in ios/README.md/release notes.
+- Run42568526207 at6811df6: both isolated iPhone jobs failed the3 automatic cloud-key/history journeys.
+  Compact passed6 journeys including real Firebase emulator login, manual valid-key Keychain save and
+  streaming reply, keyboard/themes/restoration and rejected key. Missing imported model traced to Firestore
+  gRPC error14, not model parsing or Keychain. Source inspection of pinned SDK13.1.1 proves `useEmulator`
+  sets host but leaves TLS enabled. Current fix explicitly disables TLS only in DEBUG simulator fixtures;
+  production retains TLS. Existing failed connected journeys are the regression test; Mac rerun pending.
+- Local44 Swift tests and16 Python packaging/artifact checks pass after this change; actionlint and
+  git diff --check also pass. The additional real ProviderCatalog + secure-store account-import test uses
+  the exact HTTP fixture model/key.
+  Emulator REST smoke passed Google-credential identity, root-key/history reads and cross-account denial
+  against exact current rules. Production credentials and paid inference are never used by these tests.
+- Version0.2.0 and release notes are ready; temporary diagnostic workflow/Firebase inspector removed.
+  Release IPA previously passed independent hash/version/iOS26/both-client/callback/SDK checks and excludes
+  DEBUG identity strings, but connected simulator QA must pass before shipping. Actual Google chooser,
+  SideStore signing and live provider inference remain owner's physical-device checks.
+- CI runs compact/regular on separate Mac runners, then verifies paired commit/version/hashes and both
+  connected results before main can publish. Use `/workspace/scratch/actionlint` for workflow validation.
+  Local Swift6.2.3: `/workspace/scratch/swift-6.2/usr/bin/swift`. No local Xcode; native runs use GitHub
+  macOS26/Xcode26.6. Review evidence/plan: `/workspace/scratch/lumen-final-review` and
+  `/workspace/scratch/lumen-phase1-fix-plan.md`.
 
 ## Next
 

@@ -17,7 +17,12 @@ import LumenCore
         options.bundleID = Bundle.main.bundleIdentifier!
         FirebaseApp.configure(options: options)
         Auth.auth().useEmulator(withHost: "127.0.0.1", port: 19099)
-        Firestore.firestore().useEmulator(withHost: "127.0.0.1", port: 18080)
+        let firestore = Firestore.firestore()
+        firestore.useEmulator(withHost: "127.0.0.1", port: 18080)
+        // SDK 13.1.1 changes the host only; the local emulator does not serve TLS.
+        let settings = firestore.settings
+        settings.isSSLEnabled = false
+        firestore.settings = settings
         if ProcessInfo.processInfo.arguments.contains("--lumen-reset-qa") {
             let previousUID = Auth.auth().currentUser?.uid
             try? Auth.auth().signOut()

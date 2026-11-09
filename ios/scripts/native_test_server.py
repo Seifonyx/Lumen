@@ -57,6 +57,17 @@ def seed():
         document(f'modelRouter/{uid}/chats/web-fixture/messages/{mid}', {
             'id': mid, 'role': role, 'text': text, 'index': index, 'createdAt': 1700000000000 + index * 1000,
             'status': 'done', 'sources': [{'title': 'preserve-citation', 'url': 'https://example.com'}]})
+    document(f'modelRouter/{uid}/chats/revision-fixture', {
+        'title': 'Original revision question', 'createdAt': 1700000000000, 'updatedAt': 1700000001000,
+        'ids': ['revision-user', 'revision-assistant'], 'count': 2, 'model': 'fixture-model', 'rev': 1700000001000,
+        'deleted': False, 'projectId': 'revision-project'})
+    document(f'modelRouter/{uid}/chats/revision-fixture/messages/revision-user', {
+        'id': 'revision-user', 'role': 'user', 'text': 'Original revision question', 'index': 0,
+        'createdAt': 1700000000000, 'status': 'done', 'futureMessageField': 'preserve-through-revisions',
+        'files': [{'id': 'revision-file', 'name': 'notes.txt', 'mime': 'text/plain', 'text': 'preserved attachment'}]})
+    document(f'modelRouter/{uid}/chats/revision-fixture/messages/revision-assistant', {
+        'id': 'revision-assistant', 'role': 'assistant', 'text': 'A native streamed reply.', 'index': 1,
+        'createdAt': 1700000001000, 'status': 'done'})
     document(f'modelRouter/{uid}/chats/delete-fixture', {
         'title': 'Delete fixture chat', 'createdAt': 1700000000000, 'updatedAt': 1700000001000,
         'ids': ['private-message'], 'count': 1, 'rev': 1700000001000, 'deleted': False})
@@ -141,7 +152,28 @@ def verify_roundtrip():
         raise AssertionError('Deleted attachment original remains')
     except urllib.error.HTTPError as error:
         assert error.code == 404
-    return {'firebaseSDKRoundtrip': True, 'deletedContentCleaned': True, 'unknownMetadataPreserved': True, 'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True, 'providerRequests': len(REQUESTS)}
+    chats_url = url.removesuffix('web-fixture')
+    with urllib.request.urlopen(urllib.request.Request(chats_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+        all_chats = json.load(response).get('documents', [])
+    original_chat = next(d for d in all_chats if d['fields'].get('title', {}).get('stringValue') == 'Original revision question')
+    root_id = original_chat['name'].rsplit('/', 1)[-1]
+    branches = [d for d in all_chats if d['fields'].get('nativeRoot', {}).get('stringValue') == root_id]
+    for branch in branches:
+        assert branch['fields']['projectId']['stringValue'] == 'revision-project'
+        branch_ids = [v['stringValue'] for v in branch['fields']['ids']['arrayValue']['values']]
+        message_url = chats_url + branch['name'].rsplit('/', 1)[-1] + '/messages/' + branch_ids[0]
+        with urllib.request.urlopen(urllib.request.Request(message_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+            message_fields = json.load(response)['fields']
+        assert message_fields['files']['arrayValue']['values'][0]['mapValue']['fields']['text']['stringValue'] == 'preserved attachment'
+        assert message_fields['futureMessageField']['stringValue'] == 'preserve-through-revisions'
+    assert len(branches) >= 2, 'Edited and regenerated versions were not synced'
+    original_ids = [v['stringValue'] for v in original_chat['fields']['ids']['arrayValue']['values']]
+    assert len(original_ids) == 2, 'Revision changed the original conversation'
+    original_message_url = chats_url + root_id + '/messages/' + original_ids[0]
+    with urllib.request.urlopen(urllib.request.Request(original_message_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+        assert json.load(response)['fields']['text']['stringValue'] == 'Original revision question'
+    assert any(any(m.get('content') == 'Edited revision question' for m in r.get('messages', [])) for r in REQUESTS), 'Provider never received the edited prompt'
+    return {'firebaseSDKRoundtrip': True, 'deletedContentCleaned': True, 'unknownMetadataPreserved': True, 'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True, 'revisionVersionsPreserved': True, 'providerRequests': len(REQUESTS)}
 
 
 def seed_user_id():

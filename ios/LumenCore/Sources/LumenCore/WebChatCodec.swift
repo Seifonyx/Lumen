@@ -19,6 +19,10 @@ public struct WebChatAppendPlan {
 
 /// The existing web schema. Mutations deliberately patch only fields owned by native chat.
 public enum WebChatCodec {
+    private static func documentID(_ value: Any?) -> String? {
+        guard let value = value as? String, !value.isEmpty, !value.contains("/") else { return nil }
+        return value
+    }
     private static func date(_ value: Any?) -> Date {
         Date(timeIntervalSince1970: ((value as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970 * 1000) / 1000)
     }
@@ -37,6 +41,9 @@ public enum WebChatCodec {
         result.historyLoaded = false
         result.archived = fields["archived"] as? Bool
         result.pinned = fields["pinned"] as? Bool
+        result.lineageRootID = documentID(fields["nativeRoot"])
+        result.parentConversationID = documentID(fields["nativeParent"])
+        result.revisionLabel = fields["nativeVersionLabel"] as? String
         return result
     }
     public static func message(id: String, fields: [String: Any]) throws -> ChatMessage {
@@ -53,8 +60,11 @@ public enum WebChatCodec {
                            attachmentNames: (fields["files"] as? [[String: Any]])?.compactMap { $0["name"] as? String }, status: status)
     }
     public static func append(chat: Conversation, messageIDs: Set<String>, remote: [String: Any]?,
-                              existingMessages: [String: [String: Any]]) throws -> WebChatAppendPlan {
+                              existingMessages: [String: [String: Any]], sourceMetadata: [String: Any]? = nil,
+                              inheritedMessages: [String: [String: Any]] = [:]) throws -> WebChatAppendPlan {
         if remote?["deleted"] as? Bool == true { throw WebSyncError.deleted }
+        if remote == nil, chat.parentConversationID != nil, sourceMetadata == nil { throw WebSyncError.conflict }
+        if remote == nil, isTombstone(sourceMetadata) { throw WebSyncError.conflict }
         if remote != nil, remote?["ids"] == nil, (remote?["count"] as? Int ?? 0) > 0 { throw WebSyncError.unsupported }
         var ids = remote?["ids"] as? [String] ?? []
         var writes: [String: [String: Any]] = [:]
@@ -64,6 +74,13 @@ public enum WebChatCodec {
                 continue
             }
             guard !ids.contains(message.id) else { throw WebSyncError.conflict }
+            let inherited = inheritedMessages[message.id]
+            if let inherited {
+                guard inherited["role"] as? String == message.role.rawValue else { throw WebSyncError.conflict }
+                if message.sourceMessageID == nil, inherited["text"] as? String != message.content { throw WebSyncError.conflict }
+            } else if (sourceMetadata?["ids"] as? [String])?.contains(message.sourceMessageID ?? message.id) == true {
+                throw WebSyncError.conflict
+            }
             let index = ids.count
             ids.append(message.id)
             let status: String
@@ -73,10 +90,12 @@ public enum WebChatCodec {
             case .error: status = "error"
             default: throw WebSyncError.invalid // Never upload a partial assistant as a completed reply.
             }
-            var fields: [String: Any] = ["id": message.id, "role": message.role.rawValue, "text": message.content,
-                                        "createdAt": message.timestamp.timeIntervalSince1970 * 1000,
-                                        "index": index, "status": status]
-            if let model = chat.selectedModelId { fields["model"] = model }
+            var fields = inherited ?? [:]
+            fields.merge(["id": message.id, "role": message.role.rawValue, "text": message.content,
+                          "createdAt": message.timestamp.timeIntervalSince1970 * 1000,
+                          "index": index, "status": status]) { _, new in new }
+            if let model = chat.selectedModelId, fields["model"] == nil || message.sourceMessageID != nil { fields["model"] = model }
+            if case .error = message.status {} else { fields.removeValue(forKey: "error") }
             if case .error(let error) = message.status { fields["error"] = error }
             writes[message.id] = fields
         }
@@ -84,11 +103,17 @@ public enum WebChatCodec {
         var metadata: [String: Any] = ["ids": ids, "count": ids.count, "updatedAt": now,
                                         "rev": max(now, ((remote?["rev"] as? NSNumber)?.doubleValue ?? 0) + 1)]
         if remote == nil {
+            for key in ["projectId", "assistant", "documents", "context", "repo", "tags"] {
+                if let value = sourceMetadata?[key] { metadata[key] = value }
+            }
             metadata["title"] = chat.title
             metadata["createdAt"] = chat.createdAt.timeIntervalSince1970 * 1000
             metadata["pinned"] = chat.pinned ?? false
             metadata["archived"] = chat.archived ?? false
             metadata["deleted"] = false
+            if let root = chat.lineageRootID { metadata["nativeRoot"] = root }
+            if let parent = chat.parentConversationID { metadata["nativeParent"] = parent }
+            if let label = chat.revisionLabel { metadata["nativeVersionLabel"] = label }
         }
         if let model = chat.selectedModelId { metadata["model"] = model }
         if let provider = chat.selectedProviderId { metadata["nativeProvider"] = provider }

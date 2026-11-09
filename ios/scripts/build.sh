@@ -11,6 +11,7 @@ xcodegen generate --spec project.yml
 xcodebuild build-for-testing \
   -project Lumen.xcodeproj -scheme Lumen -configuration Debug \
   -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+  ARCHS="$(uname -m)" ONLY_ACTIVE_ARCH=YES \
   -derivedDataPath build/DerivedData \
   CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=- \
   CURRENT_PROJECT_VERSION="${IOS_BUILD_NUMBER:-1}" \

@@ -52,7 +52,7 @@ struct HistorySearchView: View {
     var select: (Conversation) -> Void
     @State private var query = ""
     private var results: [Conversation] {
-        engine.savedConversations.filter { $0.archived != true && (query.isEmpty || $0.title.localizedCaseInsensitiveContains(query)) }
+        engine.historyConversations.filter { $0.archived != true && (query.isEmpty || $0.title.localizedCaseInsensitiveContains(query)) }
     }
     var body: some View {
         List(results) { chat in

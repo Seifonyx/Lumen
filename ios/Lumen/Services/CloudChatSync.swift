@@ -188,8 +188,8 @@ import LumenCore
                         try await ChatDeletion.run(chatID: chatID, backend: backend)
                         guard epoch == ticket else { return }
                         engine.acknowledgeDeletion(chatID: chatID)
-                    } else if let (chatID, ids) = engine.pendingMessages.first(where: { !$0.value.isEmpty }),
-                              let chat = engine.savedConversations.first(where: { $0.id == chatID }) {
+                    } else if let chat = engine.nextPendingConversation(), let ids = engine.pendingMessages[chat.id] {
+                        let chatID = chat.id
                         status = "Syncing…"
                         do { try await append(chat: chat, ids: ids, uid: accountID) }
                         catch WebSyncError.deleted {
@@ -200,6 +200,7 @@ import LumenCore
                         guard epoch == ticket else { return }
                         engine.acknowledge(chatID: chatID, messageIDs: ids)
                     } else {
+                        if engine.pendingMessages.values.contains(where: { !$0.isEmpty }) { throw WebSyncError.conflict }
                         status = "Up to date"
                         break
                     }
@@ -219,12 +220,23 @@ import LumenCore
             db.runTransaction({ @Sendable transaction, errorPointer in
                 do {
                     let remote = try transaction.getDocument(reference)
+                    let sourceReference = !remote.exists ? chat.parentConversationID.map {
+                        reference.parent.document($0)
+                    } : nil
+                    let sourceMetadata = try sourceReference.map { try transaction.getDocument($0).data() }
                     var existing: [String: [String: Any]] = [:]
+                    var inherited: [String: [String: Any]] = [:]
                     for id in ids {
                         let message = try transaction.getDocument(reference.collection("messages").document(id))
                         if let fields = message.data() { existing[id] = fields }
+                        else if let sourceReference,
+                                let local = chat.messages.first(where: { $0.id == id }),
+                                let fields = try transaction.getDocument(sourceReference.collection("messages").document(local.sourceMessageID ?? id)).data() {
+                            inherited[id] = fields
+                        }
                     }
-                    let plan = try WebChatCodec.append(chat: chat, messageIDs: ids, remote: remote.data(), existingMessages: existing)
+                    let plan = try WebChatCodec.append(chat: chat, messageIDs: ids, remote: remote.data(), existingMessages: existing,
+                                                      sourceMetadata: sourceMetadata ?? nil, inheritedMessages: inherited)
                     for (id, var fields) in plan.messages {
                         fields["srv"] = FieldValue.serverTimestamp()
                         transaction.setData(fields, forDocument: reference.collection("messages").document(id), merge: true)

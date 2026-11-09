@@ -51,6 +51,79 @@ public struct HistoryLoadTicket: Sendable {
         _ = write()
     }
 
+    /// One visible history item per conversation, including its immutable earlier versions.
+    public var historyConversations: [Conversation] {
+        var latest: [String: Conversation] = [:]
+        for chat in savedConversations {
+            let root = chat.lineageRootID ?? chat.id
+            if latest[root] == nil || latest[root]!.createdAt < chat.createdAt { latest[root] = chat }
+        }
+        if !currentConversation.messages.isEmpty {
+            latest[currentConversation.lineageRootID ?? currentConversation.id] = currentConversation
+        }
+        return latest.values.sorted {
+            ($0.pinned == true) == ($1.pinned == true) ? $0.updatedAt > $1.updatedAt : $0.pinned == true
+        }
+    }
+
+    public func versions(for chatID: String) -> [Conversation] {
+        guard let chat = savedConversations.first(where: { $0.id == chatID }) else { return [] }
+        let root = chat.lineageRootID ?? chat.id
+        return savedConversations.filter { ($0.lineageRootID ?? $0.id) == root }.sorted {
+            $0.createdAt == $1.createdAt ? $0.id < $1.id : $0.createdAt < $1.createdAt
+        }
+    }
+
+    @discardableResult public func editAndResend(messageID: String, text: String, apiKey: String) -> Task<Void, Never>? {
+        revise(messageID: messageID, editedText: text, apiKey: apiKey)
+    }
+
+    @discardableResult public func regenerate(messageID: String, apiKey: String) -> Task<Void, Never>? {
+        revise(messageID: messageID, editedText: nil, apiKey: apiKey)
+    }
+
+    private func revise(messageID: String, editedText: String?, apiKey: String) -> Task<Void, Never>? {
+        guard !isStreaming, currentConversation.historyLoaded != false,
+              let model = selectedModel, !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let index = currentConversation.messages.firstIndex(where: { $0.id == messageID }) else { return nil }
+        let original = currentConversation
+        let selected = original.messages[index]
+        guard editedText == nil ? selected.role == .assistant : selected.role == .user else { return nil }
+        let text = editedText?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let text, text.isEmpty { return nil }
+        var prefix = original.messages.prefix(index).map { message in
+            var copy = message
+            // Unchanged messages belong to the immediate parent under their current IDs.
+            copy.sourceMessageID = nil
+            return copy
+        }
+        if let text {
+            prefix.append(ChatMessage(role: .user, content: text, attachmentNames: selected.attachmentNames,
+                                      sourceMessageID: selected.id))
+        }
+        guard prefix.contains(where: { $0.role == .user }) else { return nil }
+        let savedBefore = savedConversations, pendingBefore = pendingMessages
+        var revision = Conversation(title: original.title, messages: prefix, selectedModelId: model.id)
+        revision.selectedProviderId = model.providerId
+        revision.lineageRootID = original.lineageRootID ?? original.id
+        revision.parentConversationID = original.id
+        revision.revisionLabel = editedText == nil ? "New response" : "Edited message"
+        revision.pinned = original.pinned
+        revision.archived = original.archived
+        revision.historyLoaded = true
+        if index == 0, let text, original.title == String(selected.content.prefix(32)) { revision.title = String(text.prefix(32)) }
+        let reply = ChatMessage(role: .assistant, content: "", status: .streaming)
+        revision.messages.append(reply)
+        currentConversation = revision
+        pendingMessages[revision.id] = Set(prefix.map(\.id))
+        guard saveCurrent() else {
+            currentConversation = original; savedConversations = savedBefore; pendingMessages = pendingBefore
+            return nil
+        }
+        errorMessage = nil
+        return startReply(model: model, apiKey: apiKey, replyID: reply.id)
+    }
+
     public func startNewConversation() {
         stopStreaming()
         _ = saveCurrent()
@@ -68,15 +141,21 @@ public struct HistoryLoadTicket: Sendable {
     }
 
     @discardableResult public func deleteConversation(id: String) -> Bool {
-        if currentConversation.id == id { stopStreaming() }
+        let target = savedConversations.first(where: { $0.id == id })
+        let root = target?.lineageRootID ?? id
+        let deleted = Set(savedConversations.filter { ($0.lineageRootID ?? $0.id) == root }.map(\.id)).union([id])
+        if deleted.contains(currentConversation.id) { stopStreaming() }
         let previous = currentConversation
         let savedBefore = savedConversations
         let messagesBefore = pendingMessages
         let deletionsBefore = pendingDeletions
-        savedConversations.removeAll { $0.id == id }
-        pendingMessages[id] = nil
-        pendingDeletions.insert(id)
-        if currentConversation.id == id { currentConversation = Conversation(selectedModelId: selectedModel?.id) }
+        savedConversations.removeAll { deleted.contains($0.id) }
+        for id in deleted { pendingMessages[id] = nil }
+        pendingDeletions.formUnion(deleted)
+        if deleted.contains(currentConversation.id) {
+            currentConversation = Conversation(selectedModelId: selectedModel?.id)
+            currentConversation.selectedProviderId = selectedModel?.providerId
+        }
         guard write() else {
             currentConversation = previous
             savedConversations = savedBefore
@@ -84,8 +163,16 @@ public struct HistoryLoadTicket: Sendable {
             pendingDeletions = deletionsBefore
             return false
         }
-        mutationVersions[id, default: 0] &+= 1
+        for id in deleted { mutationVersions[id, default: 0] &+= 1 }
         return true
+    }
+
+    public func nextPendingConversation() -> Conversation? {
+        savedConversations.filter { chat in
+            guard !(pendingMessages[chat.id] ?? []).isEmpty, !pendingDeletions.contains(chat.id) else { return false }
+            if let parent = chat.parentConversationID, !(pendingMessages[parent] ?? []).isEmpty { return false }
+            return true
+        }.sorted { $0.createdAt == $1.createdAt ? $0.id < $1.id : $0.createdAt < $1.createdAt }.first
     }
 
     /// Returns a task only after the accepted turn and outbox are durable. The caller can then clear its draft.
@@ -118,11 +205,17 @@ public struct HistoryLoadTicket: Sendable {
             return nil
         }
         errorMessage = nil
+        return startReply(model: model, apiKey: apiKey, replyID: reply.id)
+    }
+
+    private func startReply(model: AIModel, apiKey: String, replyID: String) -> Task<Void, Never> {
         let chatID = currentConversation.id
         let account = accountID
         let requestMessages = Array(currentConversation.messages.dropLast()).filter {
             // Failed/empty assistant placeholders are not conversation context.
-            $0.role != .assistant || !$0.content.isEmpty
+            if $0.role != .assistant { return true }
+            if case .error = $0.status { return false }
+            return !$0.content.isEmpty
         }
         let ticket = UUID()
         generation = ticket
@@ -134,7 +227,7 @@ public struct HistoryLoadTicket: Sendable {
                 let stream = try await client.stream(messages: requestMessages, model: model, apiKey: apiKey)
                 for try await token in stream {
                     guard owns(ticket, chatID: chatID, account: account),
-                          let i = currentConversation.messages.firstIndex(where: { $0.id == reply.id }) else { return }
+                          let i = currentConversation.messages.firstIndex(where: { $0.id == replyID }) else { return }
                     currentConversation.messages[i].content += token
                     if Date().timeIntervalSince(checkpoint) >= 0.5 {
                         _ = saveCurrent()
@@ -142,11 +235,11 @@ public struct HistoryLoadTicket: Sendable {
                     }
                 }
                 guard owns(ticket, chatID: chatID, account: account),
-                      let i = currentConversation.messages.firstIndex(where: { $0.id == reply.id }) else { return }
+                      let i = currentConversation.messages.firstIndex(where: { $0.id == replyID }) else { return }
                 currentConversation.messages[i].status = .completed
             } catch {
                 guard owns(ticket, chatID: chatID, account: account),
-                      let i = currentConversation.messages.firstIndex(where: { $0.id == reply.id }) else { return }
+                      let i = currentConversation.messages.firstIndex(where: { $0.id == replyID }) else { return }
                 let message = error.localizedDescription
                 currentConversation.messages[i].status = .error(message)
                 errorMessage = message
@@ -156,10 +249,10 @@ public struct HistoryLoadTicket: Sendable {
             streamingTask = nil
             isStreaming = false
             currentConversation.updatedAt = Date()
-            pendingMessages[chatID, default: []].insert(reply.id)
+            pendingMessages[chatID, default: []].insert(replyID)
             _ = saveCurrent()
         }
-        return streamingTask
+        return streamingTask!
     }
 
     public func send(prompt: String, apiKey: String) async { await submit(prompt: prompt, apiKey: apiKey)?.value }

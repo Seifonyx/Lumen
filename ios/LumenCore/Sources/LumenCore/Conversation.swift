@@ -11,6 +11,9 @@ public struct Conversation: Identifiable, Codable, Sendable, Equatable {
     public var historyLoaded: Bool?
     public var archived: Bool?
     public var pinned: Bool?
+    public var lineageRootID: String?
+    public var parentConversationID: String?
+    public var revisionLabel: String?
     public let createdAt: Date
     public var updatedAt: Date
 

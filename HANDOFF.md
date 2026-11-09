@@ -4,9 +4,20 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 
 ## Now
 
+- Owner authorized the entire Phase2 in one continuous run, releasing each part to the existing source.
+  Current branch `codex/phase2-message-controls`, starting from fb1ea81. Parts:2.1 controls0.3.0;
+  2.2 history0.3.1;2.3 drafts/temporary0.3.2;2.4 attachments0.3.3;2.5 long chats/recovery0.3.4.
+  Plan/ledger: `/workspace/scratch/lumen-phase2/{plan,progress}.md`. Baseline44 Swift+16 Python pass.
+  Task1 implementation is ready for review: immutable selectable conversation versions for edit/regenerate/retry,
+  native copy/share, version grouping and clone-safe cloud transactions.58 Swift tests+16 Python checks pass;
+  fresh review found2 Important provenance/dependency issues, repaired with RED→GREEN tests; grouped
+  deletion now removes all versions atomically. UI Swift parses. Native CI/publication still pending.
+  Preserve originals and group versions as one history item. Do not stop after the first release.
+  Develop later parts while CI runs, and publish sequentially after prior source update succeeds.
+
 - Native Phase1 is shipped: **0.2.0, build26**, from main commit `732b4df1f543129242766d66e9e7257b9e5dca1c`.
   [PR146](https://github.com/Seifonyx/Lumen/pull/146) is merged. Local branch `codex/phase1-shipping`
-  follows main; source-listing bot commit is `5fba2be`. Shipping work is complete.
+  follows main; source-listing bot commit is `5fba2be`. Phase1 shipping is complete; Phase2 work is now active.
 - Release: https://github.com/Seifonyx/Lumen/releases/tag/native-ios-v0.2.0
   SideStore: https://raw.githubusercontent.com/Seifonyx/Lumen/main/ios/sidestore-source.json
   Anonymous download and canonical JSON verified; newest version, size and URL match the release/manifest.

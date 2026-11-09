@@ -26,7 +26,8 @@ struct RootView: View {
                         connections: connections,
                         sync: sync,
                         focused: $composerFocused,
-                        chooseModel: { modelsOpen = true }
+                        chooseModel: { modelsOpen = true },
+                        selectVersion: requestOpenConversation
                     )
                     .navigationTitle(engine.currentConversation.messages.isEmpty ? "Lumen" : engine.currentConversation.title)
                     .navigationBarTitleDisplayMode(.inline)
@@ -79,10 +80,7 @@ struct RootView: View {
                             sidebarOpen = false
                             path.append(route)
                         },
-                        selectConversation: { conv in
-                            if composer.hasContent { pendingConversation = conv; discardConfirmation = true }
-                            else { openConversation(conv) }
-                        },
+                        selectConversation: requestOpenConversation,
                         settings: {
                             sidebarOpen = false
                             settingsOpen = true
@@ -115,6 +113,11 @@ struct RootView: View {
         } message: {
             Text("Your unsent draft will be cleared.")
         }
+    }
+
+    private func requestOpenConversation(_ chat: Conversation) {
+        if composer.hasContent { pendingConversation = chat; discardConfirmation = true }
+        else { openConversation(chat) }
     }
 
     private func openConversation(_ chat: Conversation) {

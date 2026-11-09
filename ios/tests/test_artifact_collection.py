@@ -32,7 +32,7 @@ class ArtifactCollectionTests(unittest.TestCase):
             (folder / 'logs').mkdir()
             (folder / 'logs/connected-roundtrip.json').write_text(json.dumps({
                 'firebaseSDKRoundtrip': True, 'deletedContentCleaned': True, 'unknownMetadataPreserved': True,
-                'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True}))
+                'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True, 'revisionVersionsPreserved': True}))
 
     def collect(self):
         spec = importlib.util.spec_from_file_location('native_collect', SCRIPT)

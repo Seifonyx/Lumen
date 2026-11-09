@@ -287,6 +287,46 @@ final class LumenUITests: XCTestCase {
         XCTAssertFalse(app.buttons["stopStreaming"].exists)
     }
 
+    func testEditRegenerateAndReturnToTheOriginalVersion() {
+        executionTimeAllowance = 240
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        app.buttons["openSidebar"].tap()
+        app.buttons["history-revision-fixture"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        let edit = app.buttons["Edit message"].firstMatch
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: edit)
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 20), .completed)
+        edit.tap()
+        let editor = app.textViews["editedPrompt"]
+        XCTAssertTrue(editor.waitForExistence(timeout: 5))
+        editor.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.08)).tap()
+        editor.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "Original revision question".count))
+        editor.typeText("Edited revision question")
+        app.buttons["sendEditedPrompt"].tap()
+        XCTAssertTrue(app.staticTexts["Edited revision question"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        capture("edited-conversation")
+        let regenerate = app.buttons["Regenerate response"].firstMatch
+        let synced = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: regenerate)
+        XCTAssertEqual(XCTWaiter.wait(for: [synced], timeout: 20), .completed)
+        regenerate.tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        if app.buttons["hideKeyboard"].exists { app.buttons["hideKeyboard"].tap() }
+        let versions = app.buttons["conversationVersions"]
+        XCTAssertTrue(versions.waitForExistence(timeout: 10))
+        let done = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: versions)
+        XCTAssertEqual(XCTWaiter.wait(for: [done], timeout: 20), .completed)
+        versions.tap()
+        app.buttons["Version 1 · Original"].tap()
+        XCTAssertTrue(app.staticTexts["Original revision question"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.staticTexts["Edited revision question"].exists)
+        capture("message-versions-original")
+        settings()
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 15))
+    }
+
     func testRejectedProviderKeyShowsErrorAndKeepsTheDraft() {
         launchCleanChat()
         defer { app.terminate() }

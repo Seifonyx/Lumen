@@ -21,6 +21,7 @@ public struct ChatMessage: Identifiable, Codable, Sendable, Equatable {
     public let timestamp: Date
     public var attachmentNames: [String]?
     public var status: MessageStatus
+    public var sourceMessageID: String?
 
     public init(
         id: String = UUID().uuidString,
@@ -28,7 +29,8 @@ public struct ChatMessage: Identifiable, Codable, Sendable, Equatable {
         content: String,
         timestamp: Date = Date(),
         attachmentNames: [String]? = nil,
-        status: MessageStatus = .completed
+        status: MessageStatus = .completed,
+        sourceMessageID: String? = nil
     ) {
         self.id = id
         self.role = role
@@ -36,5 +38,6 @@ public struct ChatMessage: Identifiable, Codable, Sendable, Equatable {
         self.timestamp = timestamp
         self.attachmentNames = attachmentNames
         self.status = status
+        self.sourceMessageID = sourceMessageID
     }
 }

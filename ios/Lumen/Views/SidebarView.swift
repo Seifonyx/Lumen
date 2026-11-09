@@ -50,7 +50,7 @@ struct SidebarView: View {
                             .padding(.top, 8)
                     } else {
                         VStack(alignment: .leading, spacing: 4) {
-                            ForEach(engine.savedConversations.filter { $0.archived != true }) { conv in
+                            ForEach(engine.historyConversations.filter { $0.archived != true }) { conv in
                                 Button {
                                     selectConversation(conv)
                                 } label: {
@@ -112,7 +112,7 @@ struct SidebarView: View {
                 close()
             }
             Button("Cancel", role: .cancel) { pendingDeletion = nil }
-        } message: { Text("This removes the conversation and its saved attachments from your Lumen account.") }
+        } message: { Text("This removes the conversation, all its versions and their saved attachments from your Lumen account.") }
     }
 
     private func row(_ title: String, icon: String, action: @escaping () -> Void) -> some View {

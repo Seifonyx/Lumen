@@ -8,7 +8,13 @@ struct ChatView: View {
     @Bindable var sync: CloudChatSync
     var focused: FocusState<Bool>.Binding
     var chooseModel: () -> Void
+    var selectVersion: (Conversation) -> Void
     @State private var followsReply = true
+    @State private var editingMessage: ChatMessage?
+    @State private var editingAccount = ""
+    @State private var editingConversation = ""
+    private var versions: [Conversation] { engine.versions(for: engine.currentConversation.id) }
+    private var canRevise: Bool { !engine.isStreaming && engine.currentConversation.historyLoaded != false && connections.key(for: engine.selectedModel) != nil }
     private var canSend: Bool { composer.hasContent && connections.key(for: engine.selectedModel) != nil && engine.currentConversation.historyLoaded != false }
 
     var body: some View {
@@ -27,10 +33,32 @@ struct ChatView: View {
                     .containerRelativeFrame(.vertical)
                 } else {
                     LazyVStack(alignment: .leading, spacing: 24) {
+                        if versions.count > 1 {
+                            Menu {
+                                ForEach(Array(versions.enumerated()), id: \.element.id) { index, chat in
+                                    Button("Version \(index + 1) · \(chat.revisionLabel ?? "Original")") { selectVersion(chat) }
+                                        .accessibilityIdentifier("version-" + chat.id)
+                                }
+                            } label: {
+                                Label("Version \((versions.firstIndex { $0.id == engine.currentConversation.id } ?? 0) + 1) of \(versions.count)", systemImage: "clock.arrow.circlepath")
+                            }
+                            .font(.caption).foregroundStyle(.secondary)
+                            .disabled(engine.isStreaming)
+                            .accessibilityIdentifier("conversationVersions")
+                        }
                         if engine.currentConversation.historyLoaded == false {
                             HStack { ProgressView(); Text("Loading conversation…").foregroundStyle(.secondary) }
                         }
-                        ForEach(engine.currentConversation.messages) { message in MessageRow(message: message).id(message.id) }
+                        ForEach(engine.currentConversation.messages) { message in
+                            MessageRow(message: message, canRevise: canRevise, edit: {
+                                editingAccount = engine.accountID
+                                editingConversation = engine.currentConversation.id
+                                editingMessage = message
+                            }, regenerate: {
+                                guard let key = connections.key(for: engine.selectedModel) else { return }
+                                _ = engine.regenerate(messageID: message.id, apiKey: key)
+                            }).id(message.id)
+                        }
                         Color.clear.frame(height: 1).id("conversationBottom")
                     }
                     .padding(.horizontal, 20)
@@ -109,51 +137,14 @@ struct ChatView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
         }
-    }
-}
-
-private struct MessageRow: View {
-    let message: ChatMessage
-    var body: some View {
-        HStack(alignment: .top) {
-            if message.role == .user { Spacer(minLength: 40) }
-            VStack(alignment: .leading, spacing: 10) {
-                if let names = message.attachmentNames {
-                    ForEach(Array(names.enumerated()), id: \.offset) { _, name in Label(name, systemImage: "doc").font(.footnote).foregroundStyle(.secondary) }
-                }
-                if message.content.isEmpty && message.status == .streaming { ProgressView().accessibilityLabel("Writing a reply") }
-                else { MessageContent(text: message.content) }
-                if case .error(let error) = message.status { Label(error, systemImage: "exclamationmark.circle").font(.footnote).foregroundStyle(.secondary) }
-                if message.status == .stopped { Text("Stopped").font(.caption).foregroundStyle(.secondary) }
-            }
-            .padding(message.role == .user ? 14 : 0)
-            .background(message.role == .user ? Color(uiColor: .secondarySystemBackground) : .clear, in: .rect(cornerRadius: 20))
-            .frame(maxWidth: .infinity, alignment: message.role == .user ? .trailing : .leading)
-            if message.role != .user { Spacer(minLength: 12) }
-        }
-        .accessibilityIdentifier(message.role.rawValue + "Message")
-    }
-}
-
-private struct MessageContent: View {
-    let text: String
-    var body: some View {
-        let sections = text.components(separatedBy: "```")
-        VStack(alignment: .leading, spacing: 12) {
-            ForEach(Array(sections.enumerated()), id: \.offset) { index, section in
-                if index.isMultiple(of: 2) {
-                    Text((try? AttributedString(markdown: section, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(section))
-                        .font(.body).textSelection(.enabled)
-                } else {
-                    let lines = section.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false)
-                    VStack(alignment: .leading, spacing: 8) {
-                        if let language = lines.first, !language.isEmpty { Text(language).font(.caption).foregroundStyle(.secondary) }
-                        ScrollView(.horizontal) { Text(lines.count > 1 ? String(lines[1]) : section).font(.system(.subheadline, design: .monospaced)).textSelection(.enabled) }
-                    }
-                    .padding(12)
-                    .background(Color(uiColor: .tertiarySystemFill), in: .rect(cornerRadius: 12))
-                }
+        .sheet(item: $editingMessage) { message in
+            EditMessageSheet(message: message) { text in
+                guard engine.accountID == editingAccount, engine.currentConversation.id == editingConversation,
+                      let key = connections.key(for: engine.selectedModel) else { return false }
+                return engine.editAndResend(messageID: message.id, text: text, apiKey: key) != nil
             }
         }
+        .onChange(of: engine.accountID) { _, _ in editingMessage = nil }
+        .onChange(of: engine.currentConversation.id) { _, _ in editingMessage = nil }
     }
 }

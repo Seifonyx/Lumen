@@ -5,13 +5,18 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 ## Now
 
 - Owner authorized the entire Phase2 in one continuous run, releasing each part to the existing source.
-  Current branch `codex/phase2-message-controls`, starting from fb1ea81. Parts:2.1 controls0.3.0;
+  Current branch `codex/phase2-history`, starting from fb1ea81. Parts:2.1 controls0.3.0;
   2.2 history0.3.1;2.3 drafts/temporary0.3.2;2.4 attachments0.3.3;2.5 long chats/recovery0.3.4.
   Plan/ledger: `/workspace/scratch/lumen-phase2/{plan,progress}.md`. Baseline44 Swift+16 Python pass.
-  Task1 main f658e6f built on both iPhones; all10 UI journeys passed on compact. Regular hit a
- 90s simctl warm-launch timeout before XCTest, and compact's independent verifier rejected its
- trailing-slash Firestore collection URL (HTTP400). Fixing the verifier and allowing300s cold launch;
- command-specific diagnostics now identify each stage.58 Swift+16 Python pass. Publication pending.
+  Task1 shipped0.3.0 build28 from52ab376. CI42623415183 passes both device/UI/backend/artifact jobs.
+  Anonymous IPA/feed verification passes:6,521,671 bytes, SHA2561da7a066b27f70bfdb8d0e3862bd803a719b1112743ea829cb44a720551244b2.
+  Source https://raw.githubusercontent.com/Seifonyx/Lumen/main/ios/sidestore-source.json now lists0.3.0.
+  Task2 history passed one fresh review and one fix pass:68 Swift+16 Python checks, TypeScript and web
+  unit tests pass. Ordered metadata outbox IDs survive failed ACK/restart/new fields, with bounded
+  native/web marker cleanup. Archived view/search and group actions are ready for device CI.
+  Task2 is entering Native CI for0.3.1; publication pending. Task3 drafts/temporary and Task4 attachments
+  are implemented/reviewed on isolated worktrees (77/86 Core tests); Task5 paging/recovery is in progress.
+  Publish sequentially and verify every public feed update.
   Preserve originals and group versions as one history item. Do not stop after the first release.
   Develop later parts while CI runs, and publish sequentially after prior source update succeeds.
 

@@ -199,6 +199,22 @@ import LumenCore
                         }
                         guard epoch == ticket else { return }
                         engine.acknowledge(chatID: chatID, messageIDs: ids)
+                    } else if let (chatID, patches) = engine.pendingMetadata.sorted(by: { $0.key < $1.key }).first, let patch = patches.first {
+                        status = "Syncing…"
+                        do { try await applyMetadata(patch, chatID: chatID, uid: accountID) }
+                        catch WebSyncError.deleted {
+                            guard epoch == ticket else { return }
+                            engine.applyRemoteDeletion(chatID: chatID)
+                            continue
+                        }
+                        guard epoch == ticket else { return }
+                        if !engine.acknowledgeMetadata(chatID: chatID, operationID: patch.id) { throw CocoaError(.fileWriteOutOfSpace) }
+                        let latest = try await chats(accountID).document(chatID).getDocument(source: .server)
+                        guard epoch == ticket else { return }
+                        if WebChatCodec.isTombstone(latest.data()) { engine.applyRemoteDeletion(chatID: chatID) }
+                        else if let fields = latest.data(), let chat = try? WebChatCodec.conversation(id: chatID, fields: fields) {
+                            engine.applyRemoteMetadata(chat)
+                        }
                     } else {
                         if engine.pendingMessages.values.contains(where: { !$0.isEmpty }) { throw WebSyncError.conflict }
                         status = "Up to date"
@@ -210,6 +226,29 @@ import LumenCore
                 status = "Saved on this iPhone"
                 errorMessage = (error as? WebSyncError)?.errorDescription ?? "Cloud sync is paused. Your messages are saved on this iPhone. Tap Retry when connected."
             }
+        }
+    }
+
+    private func applyMetadata(_ patch: ChatMetadataPatch, chatID: String, uid: String) async throws {
+        let reference = chats(uid).document(chatID)
+        let operation = reference.collection("nativeMetadataOps").document(patch.id)
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+            db.runTransaction({ @Sendable transaction, errorPointer in
+                do {
+                    // A durable marker prevents a replayed local outbox from undoing a later edit.
+                    if try transaction.getDocument(operation).exists { return nil }
+                    let remote = try transaction.getDocument(reference)
+                    var fields = try WebChatCodec.metadataPatch(patch, remote: remote.data())
+                    if !fields.isEmpty {
+                        fields["srv"] = FieldValue.serverTimestamp()
+                        transaction.setData(fields, forDocument: reference, merge: true)
+                    }
+                    transaction.setData(["appliedAt": FieldValue.serverTimestamp()], forDocument: operation)
+                } catch { errorPointer?.pointee = error as NSError }
+                return nil
+            }, completion: { @Sendable _, error in
+                if let error { continuation.resume(throwing: error) } else { continuation.resume() }
+            })
         }
     }
 

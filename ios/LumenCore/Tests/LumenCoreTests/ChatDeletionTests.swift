@@ -3,6 +3,10 @@ import Testing
 @testable import LumenCore
 
 @MainActor private final class TestDeletionBackend: ChatDeletionBackend {
+    var operations = 2
+    func deleteOperationBatch(chatID: String) async throws -> Bool {
+        guard operations > 0 else { return false }; operations -= 1; return true
+    }
     var messages = 3
     var originals = 2
     var tombstoned = false
@@ -39,6 +43,7 @@ import Testing
         restored.acknowledgeDeletion(chatID: "delete-chat")
         #expect(backend.messages == 0)
         #expect(backend.originals == 0)
+        #expect(backend.operations == 0)
         #expect(store.accounts["account"]?.pendingDeletions.isEmpty == true)
     }
     @Test func failedDurableDeleteKeepsTheVisibleChatAndDoesNotQueueCloudDeletion() {

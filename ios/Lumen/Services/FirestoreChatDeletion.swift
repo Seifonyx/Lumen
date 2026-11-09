@@ -21,6 +21,10 @@ import LumenCore
             .whereField("chatId", isEqualTo: chatID).limit(to: 50).getDocuments(source: .server)
         return try await remove(snapshot.documents)
     }
+    func deleteOperationBatch(chatID: String) async throws -> Bool {
+        let snapshot = try await chat(chatID).collection("nativeMetadataOps").limit(to: 50).getDocuments(source: .server)
+        return try await remove(snapshot.documents)
+    }
     private func remove(_ documents: [QueryDocumentSnapshot]) async throws -> Bool {
         guard !documents.isEmpty else { return false }
         let batch = db.batch()

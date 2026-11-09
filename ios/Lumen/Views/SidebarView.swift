@@ -11,6 +11,7 @@ struct SidebarView: View {
     var close: () -> Void
     @AccessibilityFocusState private var headingFocused: Bool
     @State private var pendingDeletion: Conversation?
+    @State private var renaming: Conversation?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -58,6 +59,7 @@ struct SidebarView: View {
                                         Image(systemName: "bubble.left")
                                             .frame(width: 20)
                                             .foregroundStyle(.secondary)
+                                        if conv.pinned == true { Image(systemName: "pin.fill").font(.caption2).foregroundStyle(.secondary) }
                                         Text(conv.title)
                                             .lineLimit(1)
                                             .font(.subheadline)
@@ -70,7 +72,7 @@ struct SidebarView: View {
                                 .buttonStyle(.plain)
                                 .accessibilityIdentifier("history-" + conv.id)
                                 .contextMenu {
-                                    Button("Delete chat", systemImage: "trash", role: .destructive) { pendingDeletion = conv }
+                                    ConversationActions(chat: conv, engine: engine, rename: { renaming = conv }, delete: { pendingDeletion = conv })
                                 }
                             }
                         }
@@ -105,6 +107,8 @@ struct SidebarView: View {
         .accessibilityElement(children: .contain)
         .accessibilityAction(.escape, close)
         .onAppear { headingFocused = true }
+        .sheet(item: $renaming) { RenameConversationSheet(chat: $0, engine: engine) }
+        .onChange(of: engine.accountID) { _, _ in renaming = nil; pendingDeletion = nil }
         .alert("Delete chat?", isPresented: Binding(get: { pendingDeletion != nil }, set: { if !$0 { pendingDeletion = nil } })) {
             Button("Delete", role: .destructive) {
                 if let chat = pendingDeletion { _ = engine.deleteConversation(id: chat.id) }

@@ -13,6 +13,14 @@
       "tintColor": "0b0b0c",
       "versions": [
         {
+          "version": "0.3.0",
+          "date": "2026-11-09",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.3.0/Lumen.ipa",
+          "size": 6521671,
+          "minOSVersion": "26.0",
+          "localizedDescription": "Edit and resend, regenerate and retry replies, switch conversation versions, and copy or share messages."
+        },
+        {
           "version": "0.2.0",
           "date": "2026-11-09",
           "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.2.0/Lumen.ipa",

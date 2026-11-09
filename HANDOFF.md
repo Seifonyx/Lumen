@@ -4,6 +4,8 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 
 ## Now
 
+- Latest update: web Tests run 42687314660 failed on both Chromium E2E shard 3/6 variants because `tests/e2e/attachment-sync.cjs` still expected per-chat deletion to remove its cloud original. The application correctly retains shared originals for surviving forks. Updated the E2E to create an actual Firestore fork with the same image ID, delete the parent, and assert the parent tombstone, surviving fork reference, and unchanged original bytes. Native iOS run 42687314624 was still in progress during diagnosis. Rerun both checks after commit; do not merge or release.
+
 - Request: fix last PR #147 native CI failure and shorten the ~30–36 min iPhone jobs, **without merging or publishing**. Work on draft branch `codex/phase2-completion-review` (previous head `6c9f7b0ca0b6`).
 - Diagnosed artifact logs from Native iOS run 42679208498: both iPhone sizes compiled successfully and ran 14 UI tests with 13 passes / 1 failure. The identical failure is `testLongHistoryLoadsOlderAndSendsOnlyBoundedRecentContext` at `LumenUITests.swift:276`: expected `60 of 180` but received `0 of 180` immediately after selecting a chat. The Firestore metadata (180 IDs) had arrived before the first 60 message documents. This was a UI/readiness test race.
 - Fix: don't display 'Load earlier messages' until the latest page is loaded; wait explicitly for the first 60 messages before asserting. Rename the long-chat UI test to sort first, so any recurrence fails early rather than after 10+ other iPhone journeys.

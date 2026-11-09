@@ -5,8 +5,8 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 ## Now
 
 - Branch `codex/phase1-ready`; owner authorized fixing all Phase1 defects and shipping the native IPA.
-  PR146 (`feat/phase1-connected-chat`) is open; the last pushed head is7204350. Main remains Phase0 `14bf502`.
-  Merge after final native CI and screenshot inspection; then verify public IPA and SideStore publication.
+  PR146 (`feat/phase1-connected-chat`) is open; final QA corrections are being committed afteracd8ef5. Main remains Phase0 `14bf502`.
+  The final main build must pass native CI, backend/artifact checks and publication verification.
 - Both fresh Firebase iOS apps are verified in `the-model-router`: `io.github.seifonyx.lumen` and
   `io.github.seifonyx.lumen.M2WDSAZ2A5`. Nickname Lumen is valid. Bundled public configuration and real
   Google/Firebase SDK auth replace preview identity. Production rules/data and web deployment are unchanged.
@@ -15,21 +15,26 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
   Submitted turns save before acceptance; account/chat switches reject late stream and history results.
   Final review's3 Important findings are fixed: stale history overwrite, same-ID web edits and complete
   remote deletion of messages/originals. Later-phase features remain explicit in ios/README.md/release notes.
-- Run42571091182 at7204350: both native builds/Release archives and44 Core tests passed; UI still failed.
-  Compact video shows Apple's boot overlay swallowing input despite successful `simctl bootstatus`.
-  Current harness waits for an observed sidebar response on the first launch (bounded300s), captures the
-  full screen on failure, and keeps ordinary journeys bounded120s. Regular proved Firestore key read/import
-  and Keychain/discovery succeed after disabling TLS only for the local emulator; production keeps TLS.
-  Its first cold connection returned14 once; the test now exercises the existing Load account providers
-  recovery action when that error occurs, then still requires the real discovered model.
-- Regular send/Stop then exposed a real Swift6 runtime trap: `_dispatch_assert_queue_fail` in
-  `CloudChatSync.append`'s transaction callback. SDK runs that callback on a background queue, but the
-  closure inherited MainActor. Explicit @Sendable update/completion closures capture only Sendable values
-  (including SDK DocumentReference); existing failing real-SDK connected journeys are the regression test.
-  Native rerun pending. Crash reports/videos: `/workspace/scratch/lumen-tls-regular`; compact boot evidence:
-  `/workspace/scratch/lumen-tls-compact`. Do not merge or claim connected chat passes yet.
-- Screenshot inspection also corrected user-bubble alignment to the trailing edge. Assistant replies retain
-  leading alignment. Include in the next native run and inspect final connected screenshots.
+- Run42573958752 atacd8ef5: both Mac builds/Release archives and44 Core tests passed. Compact8/9 UI
+  journeys passed, including all connected SDK flows; regular7/9 passed. No app crash reports. Reviewed
+  connected reply, web follow-up/history, Stop and both phone layouts. Both candidate IPAs independently
+  pass SHA/device/iOS26/public Google clients/callbacks/no-fixture checks; source is PR merge35adfd7.
+- Remaining failures are in QA: the new boot preflight tapped the full-screen sidebar backdrop at an
+  obscured point, leaving the drawer open for the first keyboard test. Final correction gives the visible
+  X button `sidebarCloseButton`, taps it and waits for Settings to disappear plus a hittable main button.
+  The regular send/history/relaunch/sign-out journey executed all assertions and captured signed-out
+  privacy at131s, but crossed the default120s test budget; it now has a bounded180s allowance.
+  These final test corrections and the accessibility identifier parse cleanly;16 Python checks pass.
+- Production Firestore sync now uses explicit @Sendable transaction/completion callbacks: crash reports
+  proved Swift6 actor isolation trapped SDK background callbacks. Standalone Swift6.2 actor-check probe
+  traps before and passes after; real connected SDK journeys now run without crashes. Emulator config
+  explicitly disables TLS only for local DEBUG fixtures; real Firebase keeps TLS. A cold provider load can
+  exercise the visible recovery action. Boot preflight requires actual input response, not just bootstatus.
+- Next: merge the reviewed app plus the final harness corrections, then require the exact main commit's
+  complete9 journeys on each phone, independent backend checks and paired artifact verification before
+  publication. Main CI gates all publishing; do not claim shipped/green until it succeeds. This avoids a
+  redundant extra pre-merge run of test-only corrections while preserving the complete release gate.
+  Evidence: `/workspace/scratch/lumen-transaction-{compact,regular}` and earlier `lumen-tls-*` crash/boot logs.
 - Local44 Swift tests and16 Python packaging/artifact checks pass after this change; actionlint and
   git diff --check also pass. The additional real ProviderCatalog + secure-store account-import test uses
   the exact HTTP fixture model/key.

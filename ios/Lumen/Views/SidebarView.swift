@@ -23,6 +23,7 @@ struct SidebarView: View {
                 Button("Close sidebar", systemImage: "xmark", action: close)
                     .labelStyle(.iconOnly)
                     .frame(minWidth: 44, minHeight: 44)
+                    .accessibilityIdentifier("sidebarCloseButton")
             }
             .padding(.horizontal, 20)
             .padding(.top, 8)

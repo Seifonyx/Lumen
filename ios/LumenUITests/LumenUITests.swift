@@ -24,8 +24,9 @@ final class LumenUITests: XCTestCase {
                 if app.buttons["openSettings"].waitForExistence(timeout: 5) { break }
             }
             XCTAssertTrue(app.buttons["openSettings"].exists, "The simulator did not become interactive after boot")
-            app.buttons["closeSidebar"].tap()
-            XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 5))
+            app.buttons["sidebarCloseButton"].tap()
+            XCTAssertTrue(app.buttons["openSettings"].waitForNonExistence(timeout: 5))
+            XCTAssertTrue(app.buttons["openSidebar"].isHittable)
             Self.verifiedSimulatorInput = true
         }
         newChat()
@@ -225,6 +226,7 @@ final class LumenUITests: XCTestCase {
     }
 
     func testConnectedSendWebHistorySyncAndSignOut() {
+        executionTimeAllowance = 180
         launchCleanChat()
         defer { app.terminate() }
         signInAndChooseModel()

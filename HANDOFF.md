@@ -27,9 +27,12 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
   The separate web Tests run42628171124 failed and remains uninvestigated; preserve it for follow-up.
   Main/source must stay untouched during backup. Google chooser, SideStore signing, real picker behavior
   and live provider inference still require the owner's iPhone.
-- Next action for this request: verify all three pushed branch tips and trees against local commits,
-  confirm preexisting source/test file hashes, and report backup completion. Resume implementation
-  or publishing only when the owner asks.
+- Recovery commits are pushed to all three separate GitHub branches. Their original histories and
+  every preexisting source/test file are retained; each worktree is clean. File-hash audits and a
+  verified Git bundle are saved in the local backup directory. Remote tips/trees are checked again
+  after the final checkpoint push. Main and the published source are untouched by this recovery.
+- Next implementation work, only after the owner resumes it: fix Part2.5's two documented Important
+  findings, then run native UI/backend checks. Do not merge or publish under this recovery request.
 
 ## Next
 

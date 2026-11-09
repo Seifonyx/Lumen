@@ -134,7 +134,11 @@ final class LumenUITests: XCTestCase {
         app.buttons["Done"].tap()
         app.buttons["chooseModel"].tap()
         let model = app.buttons["model-groq-fixture-model"]
-        XCTAssertTrue(model.waitForExistence(timeout: 20))
+        if !model.waitForExistence(timeout: 20) {
+            capture("model-import-failure")
+            XCTFail("Connected model unavailable: " + app.debugDescription)
+            return
+        }
         model.tap()
     }
 
@@ -233,9 +237,9 @@ final class LumenUITests: XCTestCase {
         app.buttons["connectProvider"].tap()
         XCTAssertTrue(app.staticTexts["Groq rejected the API key. Check it in Settings."].waitForExistence(timeout: 10))
         capture("provider-rejected-key")
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        app.buttons["Done"].tap()
+        app.navigationBars["Groq"].buttons["BackButton"].tap()
+        app.navigationBars["Models & providers"].buttons["BackButton"].tap()
+        app.navigationBars["Settings"].buttons["Done"].tap()
         XCTAssertEqual(composer.value as? String, "Keep my question")
         XCTAssertFalse(app.buttons["sendMessage"].isEnabled)
     }

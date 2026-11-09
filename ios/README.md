@@ -11,7 +11,8 @@ Native cloud writes preserve unrelated web chat/message fields. Projects, Librar
 advanced routing remain later phases. New features go into native; the web app gets fixes only.
 
 The **Native iOS** workflow uses Xcode 26.6 to build, test on two iPhones, export screenshots and package
-an unsigned arm64 IPA. Successful native changes on main publish a versioned GitHub prerelease and
+an unsigned arm64 IPA. Each phone profile runs on its own Mac runner; a separate job verifies both
+results and keeps the selected IPA paired with its own manifest before publishing. Successful native changes on main publish a versioned GitHub prerelease and
 update the separate SideStore source. Increment `MARKETING_VERSION` in `project.yml` for each release;
 build numbers come from Actions. Release notes are in `release-notes.json`.
 

@@ -7,8 +7,7 @@ import LumenCore
     init(service: String = "io.github.seifonyx.lumen.provider-keys") { self.service = service }
     private func query(providerID: String, accountID: String) -> [String: Any] {
         [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
-         kSecAttrAccount as String: accountID + ":" + providerID,
-         kSecUseDataProtectionKeychain as String: true]
+         kSecAttrAccount as String: accountID + ":" + providerID]
     }
     func key(providerID: String, accountID: String) throws -> String? {
         var query = query(providerID: providerID, accountID: accountID)
@@ -30,8 +29,14 @@ import LumenCore
         let attributes: [String: Any] = [kSecValueData as String: Data(key.utf8),
                                          kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly]
         let status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+        #if DEBUG && targetEnvironment(simulator)
+        DebugIntegration.record("keychain-update", fields: ["provider": providerID, "status": String(status)])
+        #endif
         if status == errSecItemNotFound {
             let status = SecItemAdd(query.merging(attributes) { _, new in new } as CFDictionary, nil)
+            #if DEBUG && targetEnvironment(simulator)
+            DebugIntegration.record("keychain-add", fields: ["provider": providerID, "status": String(status)])
+            #endif
             guard status == errSecSuccess else { throw KeychainError(status: status) }
         } else if status != errSecSuccess { throw KeychainError(status: status) }
     }

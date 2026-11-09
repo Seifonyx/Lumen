@@ -49,7 +49,7 @@ private actor HeldCatalog: ModelCatalogClient {
         await providers.connect(provider: .groq, key: "fixture-secret")
         #expect(providers.connected.isEmpty)
         #expect(providers.models.isEmpty)
-        #expect(providers.errors["groq"] != nil)
+        #expect(providers.errors["groq"]?.contains("Keychain") == true)
     }
     @Test func lateDiscoveryCannotImportThePreviousAccountsKey() async throws {
         let store = TestProviderKeyStore(), catalog = HeldCatalog()

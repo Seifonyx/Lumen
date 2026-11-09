@@ -95,6 +95,9 @@ import LumenCore
                 let key = fields[id + "Key"] as? String ?? extra[id] as? String ?? ""
                 if !key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { keys[id] = key }
             }
+            #if DEBUG && targetEnvironment(simulator)
+            DebugIntegration.record("cloud-key-read", fields: ["exists": String(snapshot.exists), "count": String(keys.count)])
+            #endif
             receiveKeys?(userID, keys)
         } catch {
             guard epoch == ticket else { return }

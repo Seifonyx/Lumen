@@ -77,7 +77,11 @@ extension ProviderCatalog: ModelCatalogClient {}
         do {
             let available = try await catalog.models(provider: provider, apiKey: clean)
             guard epoch == ticket, operations[id] == operation else { return }
-            try keyStore.setKey(clean, providerID: id, accountID: accountID)
+            do { try keyStore.setKey(clean, providerID: id, accountID: accountID) }
+            catch {
+                errors[id] = "This key could not be saved in Keychain. Unlock your iPhone and try again."
+                return
+            }
             keys[id] = clean
             connected.insert(id)
             models.removeAll { $0.providerId == id }

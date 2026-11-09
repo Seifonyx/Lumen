@@ -40,6 +40,16 @@ import LumenCore
         ]) + "."
         return GoogleAuthProvider.credential(withIDToken: token, accessToken: "fixture-access-token")
     }
+    static func record(_ event: String, fields: [String: String]) {
+        guard enabled else { return }
+        // Only fixture counters/status codes; never tokens, keys, or message contents.
+        let root = directory().deletingLastPathComponent()
+        try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let file = root.appendingPathComponent("IntegrationDiagnostics.json")
+        var events = (try? Data(contentsOf: file)).flatMap { try? JSONDecoder().decode([[String: String]].self, from: $0) } ?? []
+        events.append(fields.merging(["event": event]) { _, new in new })
+        if let data = try? JSONEncoder().encode(Array(events.suffix(100))) { try? data.write(to: file, options: .atomic) }
+    }
     static func directory() -> URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("IntegrationQA")
     }

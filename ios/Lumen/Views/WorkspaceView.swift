@@ -107,6 +107,9 @@ struct ModelSheet: View {
                     Section {
                         Text("Connect a provider to choose from the models available with your API key.")
                             .foregroundStyle(.secondary)
+                        ForEach(connections.errors.keys.sorted(), id: \.self) { id in
+                            if let error = connections.errors[id] { Text(error).font(.footnote).foregroundStyle(.red) }
+                        }
                     }
                 }
                 Section {

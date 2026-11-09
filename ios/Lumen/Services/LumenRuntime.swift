@@ -38,8 +38,14 @@ import LumenCore
         sync = CloudChatSync(engine: engine)
         sync.receiveKeys = { [weak connections] uid, keys in
             Task { @MainActor [weak connections] in
+                #if DEBUG && targetEnvironment(simulator)
+                DebugIntegration.record("cloud-key-import", fields: ["accountMatches": String(connections?.accountID == uid), "count": String(keys.count)])
+                #endif
                 guard let connections, connections.accountID == uid else { return }
                 await connections.importAccountKeys(keys)
+                #if DEBUG && targetEnvironment(simulator)
+                DebugIntegration.record("cloud-import-complete", fields: ["modelCount": String(connections.models.count), "errorCount": String(connections.errors.count)])
+                #endif
             }
         }
     }

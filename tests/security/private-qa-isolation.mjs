@@ -268,8 +268,19 @@ try {
     '.github/workflows/sidestore-release-source.yml', 'server/provider-relay/README.md',
     // Fresh native iOS build/release workflow; independent of the web and synthetic QA builds.
     '.github/workflows/ios-native.yml'];
-  const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' }).trim().split('\n').filter((f) => f && !cp02.includes(f));
-  assert.deepEqual(changed, [], `only the reviewed Canvas files may change production entry, hosting, rules, relay or workflows:\n${changed.join('\n')}`);
+  // Phase 2 native cross-client data safety requires one production web sync change:
+  // keep shared cloud originals after deleting the uploading chat. Pin the full Git
+  // blob hash, so no other sync/transport changes can silently bypass this audit.
+  const reviewedSharedOriginalFix = new Map([
+    ['src/lib/sync.ts', '265a50107955a21ff2cf4b85f885a52e69115dc0'],
+  ]);
+  for (const [file, expectedBlob] of reviewedSharedOriginalFix) {
+    const blob = execFileSync('git', ['hash-object', file], { encoding: 'utf8' }).trim();
+    assert.equal(blob, expectedBlob, `${file} differs from reviewed cloud-original retention fix`);
+  }
+  const changed = execFileSync('git', ['diff', '--name-only', base, '--', ...guarded], { encoding: 'utf8' })
+    .trim().split('\n').filter((f) => f && !cp02.includes(f) && !reviewedSharedOriginalFix.has(f));
+  assert.deepEqual(changed, [], `only reviewed Canvas files and the hash-pinned original-retention fix may change protected owners:\n${changed.join('\n')}`);
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_COMPOSER = false;$/m, 'the Canvas composer stays off in the ordinary build');
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const CANVAS_SHELL = false;$/m, 'the Canvas shell stays off in the ordinary build');
   assert.match(readFileSync('src/lib/canvas-presentation.ts', 'utf8'), /^export const RoutingCenter: ComponentType \| null = null;$/m, 'the ordinary build has no Routing Center loader');

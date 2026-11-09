@@ -18,14 +18,16 @@ class ArtifactCollectionTests(unittest.TestCase):
         self.sha = 'a' * 40
         for profile in ['compact', 'regular']:
             folder = self.source / f'native-ios-{self.sha}-{profile}'
-            (folder / 'release').mkdir(parents=True)
-            data = ('verified-' + profile).encode()
-            (folder / 'release/Lumen.ipa').write_bytes(data)
-            manifest = {'sourceCommit': self.sha, 'version': '0.2.0', 'build': '19',
-                        'bundleIdentifier': 'io.github.seifonyx.lumen', 'minimumOSVersion': '26.0',
-                        'architecture': 'arm64', 'platform': 'iPhoneOS',
-                        'size': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
-            (folder / 'release/build-manifest.json').write_text(json.dumps(manifest))
+            folder.mkdir(parents=True)
+            if profile == 'regular':
+                (folder / 'release').mkdir()
+                data = ('verified-' + profile).encode()
+                (folder / 'release/Lumen.ipa').write_bytes(data)
+                manifest = {'sourceCommit': self.sha, 'version': '0.2.0', 'build': '19',
+                            'bundleIdentifier': 'io.github.seifonyx.lumen', 'minimumOSVersion': '26.0',
+                            'architecture': 'arm64', 'platform': 'iPhoneOS',
+                            'size': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
+                (folder / 'release/build-manifest.json').write_text(json.dumps(manifest))
             (folder / f'screenshots/{profile}').mkdir(parents=True)
             (folder / f'screenshots/{profile}/capture.png').write_bytes(b'capture')
             (folder / 'qa-devices.json').write_text(json.dumps([{'profile': profile, 'runtime': '26.5'}]))
@@ -48,6 +50,11 @@ class ArtifactCollectionTests(unittest.TestCase):
         self.assertTrue((self.destination / 'screenshots/regular/capture.png').exists())
         self.assertEqual(len(json.loads((self.destination / 'qa-devices.json').read_text())), 2)
 
+    def test_compact_screenshots_and_checks_remain_required_without_a_second_ipa(self):
+        self.collect()
+        self.assertFalse((self.source / f'native-ios-{self.sha}-compact/release').exists())
+        self.assertTrue((self.destination / 'release/Lumen.ipa').exists())
+
     def test_rejects_a_mismatched_source(self):
         path = self.source / f'native-ios-{self.sha}-regular/release/build-manifest.json'
         manifest = json.loads(path.read_text()); manifest['sourceCommit'] = 'b' * 40
@@ -55,7 +62,7 @@ class ArtifactCollectionTests(unittest.TestCase):
         with self.assertRaises(ValueError): self.collect()
 
     def test_rejects_a_corrupted_ipa(self):
-        (self.source / f'native-ios-{self.sha}-compact/release/Lumen.ipa').write_bytes(b'changed')
+        (self.source / f'native-ios-{self.sha}-regular/release/Lumen.ipa').write_bytes(b'changed')
         with self.assertRaises(ValueError): self.collect()
 
     def test_rejects_missing_connected_checks(self):

@@ -13,23 +13,12 @@ CHECKS = ('firebaseSDKRoundtrip', 'deletedContentCleaned', 'unknownMetadataPrese
 
 def collect(source, destination, expected_commit):
     selected = {}
-    manifests = {}
     devices = []
     for profile in PROFILES:
         folders = list(source.glob(f'native-ios-*-{profile}'))
         if len(folders) != 1:
             raise ValueError(f'Expected one verified {profile} artifact')
         folder = folders[0]
-        manifest = json.loads((folder / 'release/build-manifest.json').read_text())
-        ipa = folder / 'release/Lumen.ipa'
-        if manifest['sourceCommit'] != expected_commit:
-            raise ValueError('Artifact source does not match the publishing commit')
-        if manifest['bundleIdentifier'] != 'io.github.seifonyx.lumen' or manifest['platform'] != 'iPhoneOS' or manifest['architecture'] != 'arm64':
-            raise ValueError('Not a native Lumen iPhone artifact')
-        if tuple(map(int, manifest['minimumOSVersion'].split('.'))) < (26, 0):
-            raise ValueError('Invalid native deployment target')
-        if ipa.stat().st_size != manifest['size'] or hashlib.sha256(ipa.read_bytes()).hexdigest() != manifest['sha256']:
-            raise ValueError('IPA does not match its own build manifest')
         checks = json.loads((folder / 'logs/connected-roundtrip.json').read_text())
         if not all(checks.get(key) is True for key in CHECKS):
             raise ValueError(f'Connected checks did not pass for {profile}')
@@ -40,12 +29,23 @@ def collect(source, destination, expected_commit):
             raise ValueError('Simulator provenance does not match the artifact')
         devices.extend(inventory)
         selected[profile] = folder
-        manifests[profile] = manifest
-    common = ('sourceCommit', 'version', 'build', 'bundleIdentifier', 'minimumOSVersion', 'architecture', 'platform')
-    if any(manifests['compact'][key] != manifests['regular'][key] for key in common):
-        raise ValueError('The iPhone jobs did not build the same release')
+
+    # Archive once, on the regular runner, while both runners execute their
+    # independently seeded simulator journeys. Still verify the exact commit,
+    # bundle, architecture, OS and SHA-256 before releasing the single IPA.
+    release = selected['regular'] / 'release'
+    manifest = json.loads((release / 'build-manifest.json').read_text())
+    ipa = release / 'Lumen.ipa'
+    if manifest['sourceCommit'] != expected_commit:
+        raise ValueError('Artifact source does not match the publishing commit')
+    if manifest['bundleIdentifier'] != 'io.github.seifonyx.lumen' or manifest['platform'] != 'iPhoneOS' or manifest['architecture'] != 'arm64':
+        raise ValueError('Not a native Lumen iPhone artifact')
+    if tuple(map(int, manifest['minimumOSVersion'].split('.'))) < (26, 0):
+        raise ValueError('Invalid native deployment target')
+    if ipa.stat().st_size != manifest['size'] or hashlib.sha256(ipa.read_bytes()).hexdigest() != manifest['sha256']:
+        raise ValueError('IPA does not match its own build manifest')
     destination.mkdir(parents=True, exist_ok=False)
-    shutil.copytree(selected['compact'] / 'release', destination / 'release')
+    shutil.copytree(release, destination / 'release')
     for profile, folder in selected.items():
         shutil.copytree(folder / f'screenshots/{profile}', destination / f'screenshots/{profile}')
         shutil.copytree(folder / 'logs', destination / f'logs/{profile}')

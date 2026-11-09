@@ -21,6 +21,18 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' || github.ref != 'refs/heads/main' }}
 
 jobs:
+  core:
+    name: Swift core unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.2'
+      - name: Test native chat logic and recovery
+        run: swift test --package-path ios/LumenCore
+
   build:
     name: iPhone ${{ matrix.profile }} build, tests and screenshots
     strategy:
@@ -53,6 +65,7 @@ jobs:
           if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
           xcodegen --version
       - name: Build native app, test on iPhone and capture screens
+        # UI runs on both iPhone sizes; only regular archives an IPA in parallel.
         run: bash ios/scripts/build.sh
       - name: Keep IPA, screenshots, manifest and logs
         if: always()
@@ -69,7 +82,7 @@ jobs:
 
   verify:
     name: Verify both iPhone results
-    needs: build
+    needs: [core, build]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

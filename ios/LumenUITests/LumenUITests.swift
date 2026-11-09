@@ -263,7 +263,7 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
     }
 
-    func testLongHistoryLoadsOlderAndSendsOnlyBoundedRecentContext() {
+    func testALongHistoryLoadsOlderAndSendsOnlyBoundedRecentContext() {
         executionTimeAllowance = 240
         launchCleanChat()
         defer { app.terminate() }
@@ -271,14 +271,16 @@ final class LumenUITests: XCTestCase {
         app.buttons["openSidebar"].tap()
         let history = app.buttons["history-long-fixture"]
         XCTAssertTrue(history.waitForExistence(timeout: 10)); history.tap()
+        // The history row is visible as soon as Firestore metadata arrives, but the
+        // first 60 message documents load asynchronously. Wait for real page readiness.
         let older = app.buttons["loadEarlierMessages"]
-        XCTAssertTrue(older.waitForExistence(timeout: 15))
-        XCTAssertEqual(app.staticTexts["loadedMessageCount"].label, "60 of 180")
-        older.tap()
+        XCTAssertTrue(older.waitForExistence(timeout: 45), "The latest history page never became ready")
         let count = app.staticTexts["loadedMessageCount"]
-        XCTAssertTrue(NSPredicate(format: "label == %@", "120 of 180").evaluate(with: count) || count.waitForExistence(timeout: 10))
-        let loaded = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "120 of 180"), object: count)
-        XCTAssertEqual(XCTWaiter.wait(for: [loaded], timeout: 15), .completed)
+        let firstPage = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "60 of 180"), object: count)
+        XCTAssertEqual(XCTWaiter.wait(for: [firstPage], timeout: 15), .completed)
+        older.tap()
+        let secondPage = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "120 of 180"), object: count)
+        XCTAssertEqual(XCTWaiter.wait(for: [secondPage], timeout: 25), .completed)
         capture("long-conversation-page")
         enterDraft("NATIVE_LONG_FOLLOWUP")
         app.buttons["sendMessage"].tap()

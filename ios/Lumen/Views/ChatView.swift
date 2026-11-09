@@ -80,7 +80,7 @@ struct ChatView: View {
                 geometry.contentSize.height - geometry.contentOffset.y - geometry.containerSize.height < 140
             } action: { _, nearBottom in followsReply = nearBottom }
             .safeAreaInset(edge: .top, spacing: 0) {
-                if engine.hasOlderMessages(chatID: engine.currentConversation.id) {
+                if engine.currentConversation.historyLoaded == true && engine.hasOlderMessages(chatID: engine.currentConversation.id) {
                     HStack {
                         Button("Load earlier messages") {
                             followsReply = false; olderAnchor = engine.currentConversation.messages.first?.id

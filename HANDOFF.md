@@ -4,13 +4,12 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 
 ## Now
 
-- Fix and publish native Lumen 0.3.4 from draft [PR #147](https://github.com/Seifonyx/Lumen/pull/147) once release checks pass. The release combines protected per-chat drafts, memory-only temporary chats, attachments and long-chat recovery.
-- Reply context is prepared before accepting a send or edit. Oversized turns leave the draft and outbox intact. Historical file omissions preserve the surrounding text and do not consume the image budget. Revisions preserve the parent's cloud file references even if an older original is unavailable.
-- History refresh keeps cached pages, makes gaps loadable and blocks incomplete revisions. Previously loaded instructions are refreshed from authoritative records. Reselecting an interrupted reply preserves its stopped state.
-- Individual chat deletion clears chat content and operation markers. Both clients retain cloud originals because another conversation may share them. Full account deletion removes originals. Native CI checks a surviving reference and its original bytes. Simulator reuse checks the live device model, runtime, boot state and availability.
-- Local verification passed 107 Swift tests, 20 Python packaging checks, web typecheck and web unit tests. New Swift and simulator cases reproduced the regressions before their fixes.
-- Next action is exact-head PR native CI on both iPhone profiles, artifact verification and web CI. After merge, deploy and verify the Canvas web retention fix before publishing native. Then verify the native publish job, public SideStore feed and IPA checksum. Physical sign-in, SideStore signing and live providers require an iPhone.
-
+- Request: fix last PR #147 native CI failure and shorten the ~30–36 min iPhone jobs, **without merging or publishing**. Work on draft branch `codex/phase2-completion-review` (previous head `6c9f7b0ca0b6`).
+- Diagnosed artifact logs from Native iOS run 42679208498: both iPhone sizes compiled successfully and ran 14 UI tests with 13 passes / 1 failure. The identical failure is `testLongHistoryLoadsOlderAndSendsOnlyBoundedRecentContext` at `LumenUITests.swift:276`: expected `60 of 180` but received `0 of 180` immediately after selecting a chat. The Firestore metadata (180 IDs) had arrived before the first 60 message documents. This was a UI/readiness test race.
+- Fix: don't display 'Load earlier messages' until the latest page is loaded; wait explicitly for the first 60 messages before asserting. Rename the long-chat UI test to sort first, so any recurrence fails early rather than after 10+ other iPhone journeys.
+- Speed: run 107+ native core Swift unit tests in an independent **required Ubuntu CI job** concurrently with iPhone jobs (instead of recompiling them on both macOS runners). Build a single signed-off release IPA on the regular macOS runner, overlapping archive/package with its simulator UI journey; compact still executes all the UI and Firebase checks. Verification requires both complete simulator journeys, core tests, SHA-256 of exact-commit regular IPA and both profiles' screenshots/provenance. Python packaging coverage tests updated.
+- Observed old critical path: 6m Swift core + 6m simulator build + 5m device archive + 14m UI journeys. The revised workflow is **not yet timed or verified**; CI must establish actual savings and correctness. Parallel archive could affect simulator responsiveness, so inspect both profiles carefully.
+- Previous web workflow 42679208413 passed at the old SHA. Rerun web and native CI on new head. `main` and live SideStore (0.3.1) must remain untouched; physical iPhone approval is still required.
 ## Next
 
 The owner requested a fresh SwiftUI iOS 26 app in `ios/`, with GitHub macOS builds, simulator screenshots,

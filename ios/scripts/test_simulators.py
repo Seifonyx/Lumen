@@ -16,6 +16,18 @@ def run(*args, timeout=300):
     subprocess.run(args, check=True, timeout=timeout)
 
 
+def stop_warmup_app(device):
+    """Best-effort cleanup before XCTest, which manages its own app lifecycle."""
+    try:
+        subprocess.run(['xcrun', 'simctl', 'terminate', device, 'io.github.seifonyx.lumen'],
+                       check=False, timeout=30)
+    except subprocess.TimeoutExpired:
+        # A cold/overloaded hosted simulator may hang in simctl even after a
+        # successful app launch. Do not skip the real XCTest suite because an
+        # optional warm-up cleanup failed; XCTest re-launches the app itself.
+        print('Warm-up app termination timed out; proceeding to XCTest', flush=True)
+
+
 def prepared_device_is_live(prepared, inventory, profile, runtime, device_type):
     """A cached setup file is only a hint, never proof a simulator still exists."""
     return (
@@ -108,7 +120,7 @@ def main():
             app = root / 'build/DerivedData/Build/Products/Debug-iphonesimulator/Lumen.app'
             run('xcrun', 'simctl', 'install', device, str(app))
             run('xcrun', 'simctl', 'launch', device, 'io.github.seifonyx.lumen', '--lumen-integration', '--lumen-reset-qa', timeout=300)
-            subprocess.run(['xcrun', 'simctl', 'terminate', device, 'io.github.seifonyx.lumen'], check=False, timeout=30)
+            stop_warmup_app(device)
             args = [
                 'xcodebuild', 'test-without-building', '-project', str(root / 'Lumen.xcodeproj'),
                 '-scheme', 'Lumen', '-destination', f'id={device}',

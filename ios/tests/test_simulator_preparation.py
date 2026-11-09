@@ -45,6 +45,21 @@ class SimulatorSelectionTests(unittest.TestCase):
         self.assertFalse(prepared_device_is_live({**prepared, 'runtimeIdentifier': 'wrong'}, inventory, 'compact', runtime, device))
         self.assertFalse(prepared_device_is_live(None, inventory, 'compact', runtime, device))
 
+    def test_warmup_terminate_timeout_still_allows_xctest(self):
+        import subprocess
+        import sys
+        from unittest.mock import patch
+        scripts = str(Path(__file__).resolve().parents[1] / 'scripts')
+        if scripts not in sys.path: sys.path.insert(0, scripts)
+        from test_simulators import stop_warmup_app
+        command = ['xcrun', 'simctl', 'terminate', 'sim-1', 'io.github.seifonyx.lumen']
+        with patch('test_simulators.subprocess.run', side_effect=subprocess.TimeoutExpired(command, 30)) as mock_run:
+            stop_warmup_app('sim-1')
+        mock_run.assert_called_once_with(command, check=False, timeout=30)
+        # An actual failure of the simulator utility is not silently swallowed.
+        with patch('test_simulators.subprocess.run', side_effect=OSError('simctl missing')):
+            with self.assertRaises(OSError): stop_warmup_app('sim-1')
+
     def test_two_ui_shards_cover_all_xctest_methods_once_on_each_iphone(self):
         import re
         import sys

@@ -4,56 +4,38 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 
 ## Now
 
-- Branch `codex/phase1-ready`; owner authorized fixing all Phase1 defects and shipping the native IPA.
-  PR146 (`feat/phase1-connected-chat`) is open; final QA corrections are being committed afteracd8ef5. Main remains Phase0 `14bf502`.
-  The final main build must pass native CI, backend/artifact checks and publication verification.
-- Both fresh Firebase iOS apps are verified in `the-model-router`: `io.github.seifonyx.lumen` and
-  `io.github.seifonyx.lumen.M2WDSAZ2A5`. Nickname Lumen is valid. Bundled public configuration and real
-  Google/Firebase SDK auth replace preview identity. Production rules/data and web deployment are unchanged.
-- Phase1 includes account-isolated protected cache/outbox, merge-safe live web history, provider-specific
-  Groq/Gemini/OpenAI/Anthropic transports, bounded streaming/Stop, model discovery and account Keychain.
-  Submitted turns save before acceptance; account/chat switches reject late stream and history results.
-  Final review's3 Important findings are fixed: stale history overwrite, same-ID web edits and complete
-  remote deletion of messages/originals. Later-phase features remain explicit in ios/README.md/release notes.
-- Run42573958752 atacd8ef5: both Mac builds/Release archives and44 Core tests passed. Compact8/9 UI
-  journeys passed, including all connected SDK flows; regular7/9 passed. No app crash reports. Reviewed
-  connected reply, web follow-up/history, Stop and both phone layouts. Both candidate IPAs independently
-  pass SHA/device/iOS26/public Google clients/callbacks/no-fixture checks; source is PR merge35adfd7.
-- Remaining failures are in QA: the new boot preflight tapped the full-screen sidebar backdrop at an
-  obscured point, leaving the drawer open for the first keyboard test. Final correction gives the visible
-  X button `sidebarCloseButton`, taps it and waits for Settings to disappear plus a hittable main button.
-  The regular send/history/relaunch/sign-out journey executed all assertions and captured signed-out
-  privacy at131s, but crossed the default120s test budget; it now has a bounded180s allowance.
-  These final test corrections and the accessibility identifier parse cleanly;16 Python checks pass.
-- Production Firestore sync now uses explicit @Sendable transaction/completion callbacks: crash reports
-  proved Swift6 actor isolation trapped SDK background callbacks. Standalone Swift6.2 actor-check probe
-  traps before and passes after; real connected SDK journeys now run without crashes. Emulator config
-  explicitly disables TLS only for local DEBUG fixtures; real Firebase keeps TLS. A cold provider load can
-  exercise the visible recovery action. Boot preflight requires actual input response, not just bootstatus.
-- Next: merge the reviewed app plus the final harness corrections, then require the exact main commit's
-  complete9 journeys on each phone, independent backend checks and paired artifact verification before
-  publication. Main CI gates all publishing; do not claim shipped/green until it succeeds. This avoids a
-  redundant extra pre-merge run of test-only corrections while preserving the complete release gate.
-  Evidence: `/workspace/scratch/lumen-transaction-{compact,regular}` and earlier `lumen-tls-*` crash/boot logs.
-- Local44 Swift tests and16 Python packaging/artifact checks pass after this change; actionlint and
-  git diff --check also pass. The additional real ProviderCatalog + secure-store account-import test uses
-  the exact HTTP fixture model/key.
-  Emulator REST smoke passed Google-credential identity, root-key/history reads and cross-account denial
-  against exact current rules. Production credentials and paid inference are never used by these tests.
-- Version0.2.0 and release notes are ready; temporary diagnostic workflow/Firebase inspector removed.
-  Release IPA previously passed independent hash/version/iOS26/both-client/callback/SDK checks and excludes
-  DEBUG identity strings, but connected simulator QA must pass before shipping. Actual Google chooser,
-  SideStore signing and live provider inference remain owner's physical-device checks.
-- CI runs compact/regular on separate Mac runners, then verifies paired commit/version/hashes and both
-  connected results before main can publish. Use `/workspace/scratch/actionlint` for workflow validation.
-  Local Swift6.2.3: `/workspace/scratch/swift-6.2/usr/bin/swift`. No local Xcode; native runs use GitHub
-  macOS26/Xcode26.6. Review evidence/plan: `/workspace/scratch/lumen-final-review` and
-  `/workspace/scratch/lumen-phase1-fix-plan.md`.
+- Native Phase1 is shipped: **0.2.0, build26**, from main commit `732b4df1f543129242766d66e9e7257b9e5dca1c`.
+  [PR146](https://github.com/Seifonyx/Lumen/pull/146) is merged. Local branch `codex/phase1-shipping`
+  follows main; source-listing bot commit is `5fba2be`. Shipping work is complete.
+- Release: https://github.com/Seifonyx/Lumen/releases/tag/native-ios-v0.2.0
+  SideStore: https://raw.githubusercontent.com/Seifonyx/Lumen/main/ios/sidestore-source.json
+  Anonymous download and canonical JSON verified; newest version, size and URL match the release/manifest.
+  IPA:6,477,724 bytes; SHA256 `d601591daa0dd8d5b8a4203a97419779d568119d3ad161540188afc7925292ba`.
+- [Final CI42576882912](https://github.com/Seifonyx/Lumen/actions/runs/42576882912) is fully green:
+  44 Swift tests,16 Python packaging/artifact checks,9 UI journeys on each of2 iPhone sizes (18 total).
+  Real Firebase Auth/Firestore SDK emulator roundtrips, deletion cleanup, unknown metadata/message fields,
+  web ordering and4 provider requests per phone pass. Paired IPA/source/version/hash verification and
+  publishing pass. Inspected final compact keyboard/Stop and regular dark/web-history screenshots.
+- Phase1 now uses real Google/Firebase auth; account-scoped protected cache, durable outbox and Keychain;
+  safe web chat reads/appends/deletion; Groq/Gemini/OpenAI/Anthropic transports, discovered models,
+  streamed replies and Stop. Chat is the main screen with sidebar navigation, no bottom tabs.
+- Firebase project `the-model-router` has the correct clients for `io.github.seifonyx.lumen` and
+  `io.github.seifonyx.lumen.M2WDSAZ2A5`; nickname Lumen is valid. Bundled configuration is public.
+  Native sync reuses the existing web schema. Further workspace/router/tool parity remains later phases.
+- Runtime details behind verified fixes: Firestore transaction callbacks are explicitly @Sendable because
+  the SDK executes updates off the main actor. SDK13.1.1 emulator setup explicitly disables local TLS only
+  in DEBUG simulator fixtures. CI waits for actual input readiness, targets the visible sidebar X and gives
+  the long history/relaunch/sign-out journey180s. Release excludes all fixture identity/key markers.
+- Next physical check: update through SideStore, sign in with the existing Lumen Google account, choose a
+  connected model, send/Stop, then reopen a web chat. Google's real chooser, SideStore signing and live
+  provider inference require the owner's iPhone; automation used local emulators/HTTP fixtures.
+- Local Swift6.2.3 is `/workspace/scratch/swift-6.2/usr/bin/swift`; no local Xcode. Native checks use the
+  committed `ios/scripts/build.sh` on GitHub macOS26/Xcode26.6. Current setup is in `ios/README.md`.
 
 ## Next
 
 The owner requested a fresh SwiftUI iOS 26 app in `ios/`, with GitHub macOS builds, simulator screenshots,
-unsigned IPA downloads and SideStore installation. Phase 0 is published; account and provider integration begins in Phase 1.
+unsigned IPA downloads and SideStore installation. Phases 0 and 1 are published; the next code phase is everyday chat. The owner performs the physical sign-in/install check.
 
 Layout proposal: the conversation and composer are the main screen. A sidebar opens history, search,
 projects and Library; the model control opens model/provider options; the composer opens attachments/tools;
@@ -62,8 +44,8 @@ settings live in the sidebar/profile. Use native navigation, sheets and system m
 Proposed build sequence:
 0. Published; physical install/open check pending. Fresh `ios/` SwiftUI iOS 26 shell: chat/composer/sidebar, native controls, Light/Dark and keyboard layout.
    GitHub builds, simulator screenshots, versioned unsigned IPA and SideStore installation work end to end.
-1. A real connected conversation: native Google/Firebase sign-in, existing account data, one working provider,
-   streaming/Stop, saved messages and reopening the same chat. Verify the SideStore-installed app.
+1. Published0.2.0; automated checks pass. Native Google/Firebase sign-in, existing account data, provider
+   connections, streaming/Stop, saved messages and reopening the same chat. Physical SideStore check remains.
 2. Complete everyday chat: history/search, editing/retry, attachments, incognito, drafts, long chats and restoration.
 3. Router: provider/key setup, model discovery, manual/Auto selection, fallbacks, layouts, comparisons and usage.
 4. Workspace: projects, instructions, memory, Library/files, search and account-scoped offline/sync behavior.

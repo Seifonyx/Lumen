@@ -29,8 +29,15 @@ class SimulatorSelectionTests(unittest.TestCase):
         prepared = {'profile': 'compact', 'device': device['name'],
                     'runtimeIdentifier': runtime['identifier'], 'id': 'sim-1'}
         self.assertFalse(prepared_device_is_live(prepared, inventory, 'compact', runtime, device))
-        inventory['devices'] = {runtime['identifier']: [{'udid': 'sim-1', 'state': 'Booted'}]}
+        live = {'udid': 'sim-1', 'state': 'Booted', 'deviceTypeIdentifier': 'compact', 'isAvailable': True}
+        inventory['devices'] = {runtime['identifier']: [live]}
         self.assertTrue(prepared_device_is_live(prepared, inventory, 'compact', runtime, device))
+        live['deviceTypeIdentifier'] = 'regular'
+        self.assertFalse(prepared_device_is_live(prepared, inventory, 'compact', runtime, device))
+        live['deviceTypeIdentifier'] = 'compact'
+        live['isAvailable'] = False
+        self.assertFalse(prepared_device_is_live(prepared, inventory, 'compact', runtime, device))
+        live['isAvailable'] = True
         inventory['devices'][runtime['identifier']][0]['state'] = 'Shutdown'
         self.assertFalse(prepared_device_is_live(prepared, inventory, 'compact', runtime, device))
         inventory['devices'][runtime['identifier']][0]['state'] = 'Booted'

@@ -321,6 +321,9 @@ import LumenCore
         let reference = chats(uid).document(chat.id)
         var unique: [String: ChatAttachment] = [:]
         for message in chat.messages where ids.contains(message.id) {
+            // The transaction copies inherited file references from the parent.
+            // A fork must still sync if an older web original was never uploaded.
+            guard chat.inheritedMessageIDs?.contains(message.id) != true else { continue }
             for file in message.attachments ?? [] {
                 if file.kind == .text { unique[file.id] = file }
                 else if file.kind == .image { unique[file.id] = try engine.attachmentForSync(id: file.id) }

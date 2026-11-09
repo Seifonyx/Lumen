@@ -23,8 +23,13 @@ def prepared_device_is_live(prepared, inventory, profile, runtime, device_type):
         and prepared.get('profile') == profile
         and prepared.get('device') == device_type['name']
         and prepared.get('runtimeIdentifier') == runtime['identifier']
-        and any(d.get('udid') == prepared.get('id') and d.get('state') == 'Booted'
-                for d in inventory.get('devices', {}).get(runtime['identifier'], []))
+        and any(
+            d.get('udid') == prepared.get('id')
+            and d.get('state') == 'Booted'
+            and d.get('isAvailable') is True
+            and d.get('deviceTypeIdentifier') == device_type['identifier']
+            for d in inventory.get('devices', {}).get(runtime['identifier'], [])
+        )
     )
 
 

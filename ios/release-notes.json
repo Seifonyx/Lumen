@@ -1,9 +1,10 @@
 {
-  "title": "Long chats and recovery \u00b7 Phase 2.5",
-  "description": "Paged long conversations, bounded reply context, interruption restoration and automatic independent sync retries.",
+  "title": "Everyday chat \u00b7 Phase 2",
+  "description": "Per-chat drafts, temporary chats, attachments and long-chat recovery for native Lumen.",
   "notes": [
-    "Long chats load the newest60 messages, with Load earlier messages for older pages and a Latest control. Earlier history stays on your account, while each reply uses a bounded recent context. Load all earlier pages before editing/regenerating an earlier transcript.",
-    "Pending turns and authoritative message ordering survive page loads and restarts. Interrupted replies restore as Stopped, and backgrounding checkpoints the current reply.",
-    "A failed chat no longer blocks independent pending changes. Sync retries with bounded backoff and resumes when the network returns or Lumen becomes active. Original-bearing writes are bounded to one message per transaction."
+    "Drafts follow each conversation. Temporary chats stay in memory and out of synced history.",
+    "Attach photos and supported files. Chat deletion preserves cloud originals that another conversation may need. Full account deletion removes those originals.",
+    "Open older pages in long chats, continue interrupted replies and sync independent chats with automatic retries.",
+    "Oversized turns keep their drafts, earlier unavailable attachments do not block replies, and refreshed history preserves pages and system instructions."
   ]
 }

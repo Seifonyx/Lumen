@@ -5,9 +5,11 @@ public enum HistoryPaging {
     public static func pageIDs(orderedIDs: [String], loadedIDs: [String], older: Bool, limit: Int = pageSize) throws -> [String] {
         guard limit > 0, Set(orderedIDs).count == orderedIDs.count,
               orderedIDs.allSatisfy({ !$0.isEmpty && !$0.contains("/") && $0.utf8.count <= 1500 }) else { throw WebSyncError.invalid }
+        guard older else { return Array(orderedIDs.suffix(limit)) }
         let loaded = Set(loadedIDs)
-        let end = older ? orderedIDs.firstIndex(where: loaded.contains) ?? orderedIDs.count : orderedIDs.count
-        return Array(orderedIDs[max(0, end - limit)..<end])
+        // A latest refresh may leave a gap between cached pages. Fill the newest
+        // missing IDs first and return them in transcript order.
+        return Array(orderedIDs.reversed().lazy.filter { !loaded.contains($0) }.prefix(limit).reversed())
     }
 }
 

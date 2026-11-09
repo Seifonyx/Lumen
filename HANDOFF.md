@@ -4,15 +4,12 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 
 ## Now
 
-- User requested targeted safety rework on existing **draft PR #147** (`codex/phase2-completion-review`). Do not merge to `main`, deploy web, or publish to SideStore without subsequent physical iPhone approval. `main` remains published at native 0.3.1; the PR proposes 0.3.4.
-- Keep: protected per-chat drafts, temporary chats, restored fork provenance. Address identified P1/P2 blockers before any live release.
-- P1 shared originals: the web and native individual-chat deletion paths must **not** remove cloud originals by their uploading chat's `chatId`. Those originals can be reused by surviving version forks. Until a transactionally consistent cross-client reference index exists, retain originals on chat deletion; explicit full-account deletion still removes `modelRouter/{uid}/files`. This is intentionally conservative (orphaned originals may remain until account removal).
-- P1 historical files: validate *only the newly attached files* strictly before accepting a send. Best-effort sanitize older request-context file references (unsupported PDFs, missing originals, unsupported images), retain message text, and expose a visible count of historical files omitted from the reply.
-- P2 chat switching: reselect the stopped, saved snapshot after cancelling an active stream; never restore stale `.streaming` to the queued outbox. Refreshing a latest history page retains previously loaded older messages still present in authoritative IDs. Provider system instructions are ordered by authoritative message IDs, not Firestore query return order.
-- P2 simulator preparation: clear a prior setup marker at build start and preparer start; validate cached UUID against a booted, matching simulator and create a new device if stale or malformed.
-- Regression coverage added in `Phase2CompletionTests.swift`, `test_simulator_preparation.py`, and a web unit safety contract `cloud-original-retention.test.mjs`.
-- Last previously verified PR head before these edits: `a25712d9c8e57e0ff1b270fc61eb4bbc1a719219`. Earlier PR web CI passed; native compact/regular builds were running. **New changes must get fresh PR CI**, with both iPhone sizes, artifact verification, web typecheck/unit/isolation, and Python packaging checks. No new CI results are claimed yet.
-- After CI succeeds, owner must manually test the PR IPA on physical iPhone: parent/fork image survival, old PDF follow-up, mid-stream chat selection, paged history/instructions, drafts and temporary chats. Do not publish automatically.
+- Fix and publish native Lumen 0.3.4 from draft [PR #147](https://github.com/Seifonyx/Lumen/pull/147) once release checks pass. The release combines protected per-chat drafts, memory-only temporary chats, attachments and long-chat recovery.
+- Reply context is prepared before accepting a send or edit. Oversized turns leave the draft and outbox intact. Historical file omissions preserve the surrounding text and do not consume the image budget. Revisions preserve the parent's cloud file references even if an older original is unavailable.
+- History refresh keeps cached pages, makes gaps loadable and blocks incomplete revisions. Previously loaded instructions are refreshed from authoritative records. Reselecting an interrupted reply preserves its stopped state.
+- Individual chat deletion clears chat content and operation markers. Both clients retain cloud originals because another conversation may share them. Full account deletion removes originals. Native CI checks a surviving reference and its original bytes. Simulator reuse checks the live device model, runtime, boot state and availability.
+- Local verification passed 105 Swift tests, 20 Python packaging checks, web typecheck and web unit tests. New Swift and simulator cases reproduced the regressions before their fixes.
+- Next action is exact-head PR native CI on both iPhone profiles, artifact verification and web CI. After merge, verify the native publish job, public SideStore feed and the Canvas Hosting deploy that carries the web retention fix. Physical sign-in, SideStore signing and live providers require an iPhone.
 
 ## Next
 

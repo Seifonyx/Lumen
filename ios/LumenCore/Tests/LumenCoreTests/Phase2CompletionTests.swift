@@ -77,7 +77,7 @@ private actor Phase2ContextClient: AIStreamingClient {
         store.accounts["device"] = try JSONDecoder().decode(ChatSnapshot.self, from: JSONEncoder().encode(saved))
         let restored = ChatEngine(client: client, store: store)
         restored.selectConversation(id: chat.id)
-        await try #require(restored.submit(prompt: "New question", apiKey: "fixture")).value
+        try await #require(restored.submit(prompt: "New question", apiKey: "fixture")).value
         let request = try #require(await client.requests.last)
         #expect(request.first?.id == instruction.id)
         #expect(request.filter { $0.id == instruction.id }.count == 1)
@@ -98,7 +98,7 @@ private actor Phase2ContextClient: AIStreamingClient {
                                                  selectedConversationID: chat.id)
         let client = Phase2ContextClient()
         let engine = ChatEngine(client: client, store: store)
-        await try #require(engine.submit(prompt: "A plain text follow-up", apiKey: "fixture")).value
+        try await #require(engine.submit(prompt: "A plain text follow-up", apiKey: "fixture")).value
         let request = try #require(await client.requests.last)
         #expect(request.first?.content == "Summarize earlier")
         #expect(request.first?.attachments == nil)
@@ -173,10 +173,130 @@ private actor Phase2ContextClient: AIStreamingClient {
             messages: [ChatMessage(id: "latest-question", role: .user, content: "Recent")],
             orderedIDs: ids, ticket: try #require(engine.historyLoadTicket(chatID: chat.id)),
             revision: 4, reset: true, systemMessages: [instructionB, instructionA]))
-        await try #require(engine.submit(prompt: "Follow up", apiKey: "fixture")).value
+        try await #require(engine.submit(prompt: "Follow up", apiKey: "fixture")).value
         let request = try #require(await client.requests.last)
         #expect(request.prefix(2).map(\.id) == ["first-system", "second-system"])
         #expect(request.last?.content == "Follow up")
     }
 
+    @Test func oversizedLatestPromptOrAttachmentDoesNotEnterTheOutbox() async throws {
+        for useAttachment in [false, true] {
+            let client = Phase2ContextClient()
+            let engine = ChatEngine(client: client, store: MemoryConversationStore(), attachmentStore: MemoryAttachmentStore())
+            engine.selectModel(AIModel.defaults[0])
+            let file = ChatAttachment(name: "notes.txt", kind: .text, mime: "text/plain", text: String(repeating: "a", count: 50_000))
+            if useAttachment { try engine.storeAttachment(file) }
+            let prompt = useAttachment ? "Review this" : String(repeating: "a", count: 49_000)
+            let reply = engine.submit(prompt: prompt, attachmentIDs: useAttachment ? [file.id] : [], apiKey: "fixture")
+            #expect(reply == nil)
+            let messageCount = engine.currentConversation.messages.count
+            #expect(messageCount == 0)
+            #expect(engine.pendingMessages.isEmpty)
+            #expect(engine.errorMessage == ContextWindowError.latestTurnTooLarge.errorDescription)
+            await reply?.value
+            #expect(await client.requests.isEmpty)
+        }
+    }
+
+    @Test func oversizedEditLeavesOriginalConversationSelected() async throws {
+        let original = Conversation(id: "original", messages: [
+            ChatMessage(id: "question", role: .user, content: "Original question"),
+            ChatMessage(role: .assistant, content: "Original answer")
+        ])
+        let store = MemoryConversationStore()
+        store.accounts["device"] = ChatSnapshot(conversations: [original], selectedModel: AIModel.defaults[0],
+                                                 selectedConversationID: original.id)
+        let client = Phase2ContextClient()
+        let engine = ChatEngine(client: client, store: store)
+        let reply = engine.editAndResend(messageID: "question", text: String(repeating: "a", count: 49_000), apiKey: "fixture")
+        #expect(reply == nil)
+        #expect(engine.currentConversation.id == original.id)
+        #expect(engine.currentConversation.messages.map(\.id) == original.messages.map(\.id))
+        #expect(engine.pendingMessages.isEmpty)
+        await reply?.value
+        #expect(await client.requests.isEmpty)
+    }
+
+    @Test func attachmentOnlyHistoryDoesNotProduceAnEmptyProviderTurn() async throws {
+        let pdf = ChatAttachment(id: "web-pdf", name: "report.pdf", kind: .unsupported, mime: "application/pdf")
+        let chat = Conversation(id: "file-only", messages: [
+            ChatMessage(id: "file-turn", role: .user, content: "", attachments: [pdf]),
+            ChatMessage(role: .assistant, content: "Earlier summary")
+        ])
+        let store = MemoryConversationStore()
+        store.accounts["device"] = ChatSnapshot(conversations: [chat], selectedModel: AIModel.defaults[4],
+                                                 selectedConversationID: chat.id)
+        let client = Phase2ContextClient()
+        let engine = ChatEngine(client: client, store: store)
+        try await #require(engine.submit(prompt: "Continue the summary", apiKey: "fixture")).value
+        let request = try #require(await client.requests.last)
+        #expect(request.allSatisfy { !$0.content.isEmpty || !($0.attachments ?? []).isEmpty })
+        #expect(engine.contextOmittedAttachmentCount == 1)
+        #expect(engine.currentConversation.messages.first?.content == "")
+    }
+
+    @Test func unavailableImagesDoNotConsumeTheImageBudgetOrDiscardEarlierText() async throws {
+        let missing = (0..<4).map { ChatAttachment(id: "missing-\($0)", name: "missing.jpg", kind: .image, mime: "image/jpeg") }
+        let chat = Conversation(id: "images", messages: [
+            ChatMessage(role: .user, content: "Keep this earlier question", attachments: missing),
+            ChatMessage(role: .assistant, content: "Earlier answer")
+        ])
+        let store = MemoryConversationStore()
+        store.accounts["device"] = ChatSnapshot(conversations: [chat], selectedModel: AIModel.defaults[0],
+                                                 selectedConversationID: chat.id)
+        let client = Phase2ContextClient()
+        let engine = ChatEngine(client: client, store: store, attachmentStore: MemoryAttachmentStore())
+        let fresh = ChatAttachment(id: "new-image", name: "new.jpg", kind: .image, mime: "image/jpeg", data: Data([0xff, 0xd8, 0xff, 0xd9]))
+        try engine.storeAttachment(fresh)
+        try await #require(engine.submit(prompt: "Compare this image", attachmentIDs: [fresh.id], apiKey: "fixture")).value
+        let request = try #require(await client.requests.last)
+        #expect(request.first?.content == "Keep this earlier question")
+        #expect(request.first?.attachments == nil)
+        #expect(request.last?.attachments?.first?.data == fresh.data)
+        #expect(engine.contextOmittedAttachmentCount == 4)
+    }
+
+    @Test func latestRefreshMakesMiddleGapLoadableAndBlocksIncompleteRevision() throws {
+        let ids = (0..<121).map { "m\($0)" }
+        func message(_ id: String) -> ChatMessage { ChatMessage(id: id, role: .user, content: id) }
+        var chat = Conversation(id: "long", messages: ids.prefix(60).map(message))
+        chat.remoteMessageIDs = Array(ids.prefix(60))
+        chat.historyLoaded = true
+        let store = MemoryConversationStore()
+        store.accounts["device"] = ChatSnapshot(conversations: [chat], selectedModel: AIModel.defaults[0],
+                                                 selectedConversationID: chat.id)
+        let engine = ChatEngine(client: Phase2ContextClient(), store: store)
+        #expect(engine.applyRemotePage(chatID: chat.id, messages: ids.suffix(60).map(message), orderedIDs: ids,
+                                      ticket: try #require(engine.historyLoadTicket(chatID: chat.id)), revision: 2, reset: true))
+        #expect(engine.hasOlderMessages(chatID: chat.id))
+        #expect(engine.editAndResend(messageID: "m120", text: "Updated", apiKey: "fixture") == nil)
+        #expect(engine.currentConversation.id == chat.id)
+        let gap = try HistoryPaging.pageIDs(orderedIDs: ids, loadedIDs: engine.currentConversation.messages.map(\.id), older: true)
+        #expect(gap == ["m60"])
+        #expect(engine.applyRemotePage(chatID: chat.id, messages: gap.map(message), orderedIDs: ids,
+                                      ticket: try #require(engine.historyLoadTicket(chatID: chat.id)), revision: 2, reset: false))
+        #expect(!engine.hasOlderMessages(chatID: chat.id))
+        #expect(engine.currentConversation.messages.map(\.id) == ids)
+    }
+
+    @Test func freshSystemInstructionsReplacePreviouslyPagedCopies() async throws {
+        let stale = ChatMessage(id: "system", role: .system, content: "Old instructions")
+        let latest = ChatMessage(id: "question", role: .user, content: "Earlier question")
+        var chat = Conversation(id: "instruction-refresh", messages: [stale, latest])
+        chat.remoteMessageIDs = [stale.id, latest.id]
+        chat.historyLoaded = true
+        let store = MemoryConversationStore()
+        store.accounts["device"] = ChatSnapshot(conversations: [chat], selectedModel: AIModel.defaults[0],
+                                                 selectedConversationID: chat.id)
+        let client = Phase2ContextClient()
+        let engine = ChatEngine(client: client, store: store)
+        let fresh = ChatMessage(id: stale.id, role: .system, content: "Fresh instructions")
+        #expect(engine.applyRemotePage(chatID: chat.id, messages: [latest], orderedIDs: [fresh.id, latest.id],
+                                      ticket: try #require(engine.historyLoadTicket(chatID: chat.id)), revision: 2, reset: true,
+                                      systemMessages: [fresh]))
+        #expect(engine.currentConversation.messages.first?.content == "Fresh instructions")
+        try await #require(engine.submit(prompt: "Follow up", apiKey: "fixture")).value
+        let request = try #require(await client.requests.last)
+        #expect(request.first?.content == "Fresh instructions")
+    }
 }

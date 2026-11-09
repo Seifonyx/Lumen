@@ -137,7 +137,7 @@ struct SidebarView: View {
                 close()
             }
             Button("Cancel", role: .cancel) { pendingDeletion = nil }
-        } message: { Text("This removes the conversation, all its versions and their saved attachments from your Lumen account.") }
+        } message: { Text("This removes the conversation and its versions. Uploaded file originals stay in your account until you delete the account.") }
     }
 
     private func row(_ title: String, icon: String, action: @escaping () -> Void) -> some View {

@@ -64,7 +64,10 @@ def seed():
     document(f'modelRouter/{uid}/chats/revision-fixture/messages/revision-user', {
         'id': 'revision-user', 'role': 'user', 'text': 'Original revision question', 'index': 0,
         'createdAt': 1700000000000, 'status': 'done', 'futureMessageField': 'preserve-through-revisions',
-        'files': [{'id': 'revision-file', 'name': 'notes.txt', 'mime': 'text/plain', 'text': 'preserved attachment'}]})
+        'files': [
+            {'id': 'revision-file', 'name': 'notes.txt', 'mime': 'text/plain', 'text': 'preserved attachment'},
+            {'id': 'missing-revision-image', 'name': 'old.jpg', 'mime': 'image/jpeg', 'kind': 'image', 'size': 4, 'stored': True}
+        ]})
     document(f'modelRouter/{uid}/chats/revision-fixture/messages/revision-assistant', {
         'id': 'revision-assistant', 'role': 'assistant', 'text': 'A native streamed reply.', 'index': 1,
         'createdAt': 1700000001000, 'status': 'done'})
@@ -88,11 +91,19 @@ def seed():
     document(f'modelRouter/{uid}/chats/delete-fixture', {
         'title': 'Delete fixture chat', 'createdAt': 1700000000000, 'updatedAt': 1700000001000,
         'ids': ['private-message'], 'count': 1, 'rev': 1700000001000, 'deleted': False})
+    shared_file = {'id': 'delete-original', 'name': 'private.txt', 'mime': 'text/plain', 'kind': 'text',
+                   'size': 7, 'text': 'private', 'stored': True}
     document(f'modelRouter/{uid}/chats/delete-fixture/messages/private-message', {
         'id': 'private-message', 'role': 'user', 'text': 'Private deletion fixture', 'index': 0,
-        'createdAt': 1700000000000, 'files': [{'id': 'delete-original', 'name': 'private.txt'}]})
+        'createdAt': 1700000000000, 'files': [shared_file]})
     document(f'modelRouter/{uid}/files/delete-original', {
         'chatId': 'delete-fixture', 'name': 'private.txt', 'mime': 'text/plain', 'data': 'cHJpdmF0ZQ=='})
+    document(f'modelRouter/{uid}/chats/shared-original-fixture', {
+        'title': 'Shared attachment fixture', 'createdAt': 1700000000000, 'updatedAt': 1700000001000,
+        'ids': ['shared-message'], 'count': 1, 'rev': 1700000001000, 'deleted': False})
+    document(f'modelRouter/{uid}/chats/shared-original-fixture/messages/shared-message', {
+        'id': 'shared-message', 'role': 'user', 'text': 'Keep this attachment', 'index': 0,
+        'createdAt': 1700000000000, 'files': [shared_file]})
     return uid
 
 
@@ -164,12 +175,15 @@ def verify_roundtrip():
     assert 'title' not in deleted and 'ids' not in deleted, 'Deletion retained private chat metadata'
     with urllib.request.urlopen(urllib.request.Request(deleted_url + '/messages', headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
         assert not json.load(response).get('documents'), 'Deleted message documents remain'
-    original_url = url.split('/chats/')[0] + '/files/delete-original'
-    try:
-        urllib.request.urlopen(urllib.request.Request(original_url, headers={'Authorization': 'Bearer owner'}), timeout=15)
-        raise AssertionError('Deleted attachment original remains')
-    except urllib.error.HTTPError as error:
-        assert error.code == 404
+    shared_url = url.removesuffix('web-fixture') + 'shared-original-fixture/messages/shared-message'
+    with urllib.request.urlopen(urllib.request.Request(shared_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+        shared_fields = json.load(response)['fields']
+    original_id = shared_fields['files']['arrayValue']['values'][0]['mapValue']['fields']['id']['stringValue']
+    assert original_id == 'delete-original', 'Surviving chat lost its attachment reference'
+    original_url = url.split('/chats/')[0] + '/files/' + original_id
+    with urllib.request.urlopen(urllib.request.Request(original_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+        original = json.load(response)['fields']
+    assert original['data']['stringValue'] == 'cHJpdmF0ZQ==', 'Surviving chat lost the shared original'
     chats_url = url.removesuffix('web-fixture')
     with urllib.request.urlopen(urllib.request.Request(chats_url.rstrip('/'), headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
         all_chats = json.load(response).get('documents', [])
@@ -188,7 +202,9 @@ def verify_roundtrip():
         message_url = chats_url + branch['name'].rsplit('/', 1)[-1] + '/messages/' + branch_ids[0]
         with urllib.request.urlopen(urllib.request.Request(message_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
             message_fields = json.load(response)['fields']
-        assert message_fields['files']['arrayValue']['values'][0]['mapValue']['fields']['text']['stringValue'] == 'preserved attachment'
+        attachments = [value['mapValue']['fields'] for value in message_fields['files']['arrayValue']['values']]
+        assert attachments[0]['text']['stringValue'] == 'preserved attachment'
+        assert attachments[1]['id']['stringValue'] == 'missing-revision-image', 'Revision discarded the historical image reference'
         assert message_fields['futureMessageField']['stringValue'] == 'preserve-through-revisions'
     assert len(branches) >= 2, 'Edited and regenerated versions were not synced'
     original_ids = [v['stringValue'] for v in original_chat['fields']['ids']['arrayValue']['values']]

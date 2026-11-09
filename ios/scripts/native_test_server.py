@@ -161,7 +161,7 @@ def verify_roundtrip():
     except urllib.error.HTTPError as error:
         assert error.code == 404
     chats_url = url.removesuffix('web-fixture')
-    with urllib.request.urlopen(urllib.request.Request(chats_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+    with urllib.request.urlopen(urllib.request.Request(chats_url.rstrip('/'), headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
         all_chats = json.load(response).get('documents', [])
     original_chat = next(d for d in all_chats if d['fields'].get('title', {}).get('stringValue') == 'Original revision question')
     root_id = original_chat['name'].rsplit('/', 1)[-1]

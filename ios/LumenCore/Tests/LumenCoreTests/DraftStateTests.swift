@@ -20,6 +20,15 @@ struct DraftStateTests {
         }
     }
 
+    @Test func legacyDraftSurvivesMigrationWithoutAnyEdit() {
+        withDefaults { defaults in
+            defaults.set("Keep the Phase 0 draft", forKey: "lumen.unsent-draft")
+            #expect(DraftState(defaults: defaults).draft == "Keep the Phase 0 draft")
+            #expect(DraftState(defaults: defaults).draft == "Keep the Phase 0 draft")
+            #expect(defaults.string(forKey: "lumen.unsent-draft") == nil)
+        }
+    }
+
     @Test func discardingDraftPersistsAndKeepsOtherPreferences() {
         withDefaults { defaults in
             defaults.set("dark", forKey: "lumen.appearance")

@@ -1,26 +1,54 @@
 # Lumen checkpoint
 
-Updated: 2026-11-08. This is the current continuation point; agent update guidance is in [AGENTS.md](AGENTS.md).
+Updated: 2026-11-09. Read the user's current request; update this checkpoint after meaningful work.
 
 ## Now
 
-- **Branch:** `main`. Phase 0 is published: [Lumen native 0.1.0, build 7](https://github.com/Seifonyx/Lumen/releases/tag/native-ios-v0.1.0).
-  Implementation merged in [PR #145](https://github.com/Seifonyx/Lumen/pull/145), source commit `5ae3029`.
-- **Shipped:** fresh SwiftUI iOS 26 chat/composer/sidebar, native sheets and Liquid Glass controls,
-  icon, persistent unsent draft and appearance settings. Bundle `io.github.seifonyx.lumen`.
-  Account sign-in, AI connections and real workspace data begin in Phase 1.
-- **Verified:** [main build and publication](https://github.com/Seifonyx/Lumen/actions/runs/42511043876) passed
-  all 34 checks: native build/publication and 32 web checks. Native coverage includes 11 packaging/Git checks,
-  3 Swift core tests and all 4 UI journeys on each of two iPhone profiles. Light/Dark captures inspected.
-  Public IPA, manifest, screenshots and source downloaded anonymously; device binary, identity and digest verified.
-- **Install:** [Lumen.ipa](https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.1.0/Lumen.ipa) in SideStore,
-  or add [the native source](https://raw.githubusercontent.com/Seifonyx/Lumen/main/ios/sidestore-source.json).
-  Actual installation/opening on the owner's iPhone remains the final physical-device check.
-- **Device follow-up:** owner confirmed the SideStore source now works. No feed change was needed.
-  The earlier import error is resolved; actual installation and launch of Lumen have not yet been reported.
-- **Next implementation:** Phase 1: existing account/sign-in, one provider, streaming/Stop, saved chats and reopening.
-  Phase 1 has not started. Bump `MARKETING_VERSION` for the next native release; setup is in `ios/README.md`.
-- **Local evidence:** `/workspace/scratch/lumen-native-release-0.1.0` (published IPA, metadata and screenshots).
+- Branch `codex/phase1-ready`; owner authorized fixing all Phase1 defects and shipping the native IPA.
+  PR146 (`feat/phase1-connected-chat`) is open; final QA corrections are being committed afteracd8ef5. Main remains Phase0 `14bf502`.
+  The final main build must pass native CI, backend/artifact checks and publication verification.
+- Both fresh Firebase iOS apps are verified in `the-model-router`: `io.github.seifonyx.lumen` and
+  `io.github.seifonyx.lumen.M2WDSAZ2A5`. Nickname Lumen is valid. Bundled public configuration and real
+  Google/Firebase SDK auth replace preview identity. Production rules/data and web deployment are unchanged.
+- Phase1 includes account-isolated protected cache/outbox, merge-safe live web history, provider-specific
+  Groq/Gemini/OpenAI/Anthropic transports, bounded streaming/Stop, model discovery and account Keychain.
+  Submitted turns save before acceptance; account/chat switches reject late stream and history results.
+  Final review's3 Important findings are fixed: stale history overwrite, same-ID web edits and complete
+  remote deletion of messages/originals. Later-phase features remain explicit in ios/README.md/release notes.
+- Run42573958752 atacd8ef5: both Mac builds/Release archives and44 Core tests passed. Compact8/9 UI
+  journeys passed, including all connected SDK flows; regular7/9 passed. No app crash reports. Reviewed
+  connected reply, web follow-up/history, Stop and both phone layouts. Both candidate IPAs independently
+  pass SHA/device/iOS26/public Google clients/callbacks/no-fixture checks; source is PR merge35adfd7.
+- Remaining failures are in QA: the new boot preflight tapped the full-screen sidebar backdrop at an
+  obscured point, leaving the drawer open for the first keyboard test. Final correction gives the visible
+  X button `sidebarCloseButton`, taps it and waits for Settings to disappear plus a hittable main button.
+  The regular send/history/relaunch/sign-out journey executed all assertions and captured signed-out
+  privacy at131s, but crossed the default120s test budget; it now has a bounded180s allowance.
+  These final test corrections and the accessibility identifier parse cleanly;16 Python checks pass.
+- Production Firestore sync now uses explicit @Sendable transaction/completion callbacks: crash reports
+  proved Swift6 actor isolation trapped SDK background callbacks. Standalone Swift6.2 actor-check probe
+  traps before and passes after; real connected SDK journeys now run without crashes. Emulator config
+  explicitly disables TLS only for local DEBUG fixtures; real Firebase keeps TLS. A cold provider load can
+  exercise the visible recovery action. Boot preflight requires actual input response, not just bootstatus.
+- Next: merge the reviewed app plus the final harness corrections, then require the exact main commit's
+  complete9 journeys on each phone, independent backend checks and paired artifact verification before
+  publication. Main CI gates all publishing; do not claim shipped/green until it succeeds. This avoids a
+  redundant extra pre-merge run of test-only corrections while preserving the complete release gate.
+  Evidence: `/workspace/scratch/lumen-transaction-{compact,regular}` and earlier `lumen-tls-*` crash/boot logs.
+- Local44 Swift tests and16 Python packaging/artifact checks pass after this change; actionlint and
+  git diff --check also pass. The additional real ProviderCatalog + secure-store account-import test uses
+  the exact HTTP fixture model/key.
+  Emulator REST smoke passed Google-credential identity, root-key/history reads and cross-account denial
+  against exact current rules. Production credentials and paid inference are never used by these tests.
+- Version0.2.0 and release notes are ready; temporary diagnostic workflow/Firebase inspector removed.
+  Release IPA previously passed independent hash/version/iOS26/both-client/callback/SDK checks and excludes
+  DEBUG identity strings, but connected simulator QA must pass before shipping. Actual Google chooser,
+  SideStore signing and live provider inference remain owner's physical-device checks.
+- CI runs compact/regular on separate Mac runners, then verifies paired commit/version/hashes and both
+  connected results before main can publish. Use `/workspace/scratch/actionlint` for workflow validation.
+  Local Swift6.2.3: `/workspace/scratch/swift-6.2/usr/bin/swift`. No local Xcode; native runs use GitHub
+  macOS26/Xcode26.6. Review evidence/plan: `/workspace/scratch/lumen-final-review` and
+  `/workspace/scratch/lumen-phase1-fix-plan.md`.
 
 ## Next
 

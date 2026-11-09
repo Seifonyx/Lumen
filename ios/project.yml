@@ -11,11 +11,18 @@ settings:
     IPHONEOS_DEPLOYMENT_TARGET: '26.0'
     CODE_SIGNING_ALLOWED: NO
     TARGETED_DEVICE_FAMILY: '1'
-    MARKETING_VERSION: '0.1.0'
+    MARKETING_VERSION: '0.2.0'
     CURRENT_PROJECT_VERSION: '1'
+    OTHER_LDFLAGS: '$(inherited) -ObjC'
 packages:
   LumenCore:
     path: LumenCore
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    exactVersion: 13.1.1
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    exactVersion: 10.1.0
 targets:
   Lumen:
     type: application
@@ -23,6 +30,14 @@ targets:
     sources: [Lumen]
     dependencies:
       - package: LumenCore
+      - package: Firebase
+        product: FirebaseCore
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: GoogleSignIn
+        product: GoogleSignIn
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.github.seifonyx.lumen
@@ -33,9 +48,13 @@ targets:
       path: build/Generated/Info.plist
       properties:
         CFBundleDisplayName: Lumen
+        CFBundleURLTypes:
+          - CFBundleURLSchemes: ["com.googleusercontent.apps.318861546094-5lh19vnoqeq1th0ldakj7n630i9qutfa", "com.googleusercontent.apps.318861546094-0jij3rdis6efb09khejff2tuv6vn9k4f"]
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSRequiresIPhoneOS: true
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         UIApplicationSupportsIndirectInputEvents: true
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false

@@ -48,6 +48,13 @@ class PackagingTests(unittest.TestCase):
             '--source-commit', 'a' * 40,
         ], capture_output=True, text=True)
 
+    def test_rejects_simulator_auth_fixtures_in_release_binary(self):
+        executable = self.app / 'Lumen'
+        executable.write_bytes(executable.read_bytes() + b'--lumen-integration')
+        result = self.package()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('test fixture', result.stderr)
+
     def test_packages_device_app_and_records_actual_metadata(self):
         result = self.package()
         self.assertEqual(result.returncode, 0, result.stderr)

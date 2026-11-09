@@ -18,31 +18,47 @@ permissions:
 
 concurrency:
   group: native-ios-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
-    name: iPhone build, tests and screenshots
+    name: iPhone ${{ matrix.profile }} build, tests and screenshots
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [compact, regular]
     runs-on: macos-26
-    timeout-minutes: 35
+    timeout-minutes: 50
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
       IOS_BUILD_NUMBER: ${{ github.run_number }}
+      LUMEN_QA_PROFILE: ${{ matrix.profile }}
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/cache@v4
+        with:
+          path: ios/build/DerivedData/SourcePackages
+          key: native-packages-${{ runner.os }}-${{ hashFiles('ios/project.yml') }}
       - name: Packaging tests
         run: python3 -m unittest discover -s ios/tests -v
       - name: Project generator
         run: |
           if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
           xcodegen --version
-      - name: Build native app, test on iPhones and capture screens
+      - name: Build native app, test on iPhone and capture screens
         run: bash ios/scripts/build.sh
       - name: Keep IPA, screenshots, manifest and logs
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: native-ios-${{ github.sha }}
+          name: native-ios-${{ github.sha }}-${{ matrix.profile }}
           path: |
             ios/build/release/
             ios/build/screenshots/
@@ -51,9 +67,28 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+  verify:
+    name: Verify both iPhone results
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: native-ios-${{ github.sha }}-*
+          path: native-artifacts
+      - name: Verify and collect both iPhone artifacts
+        run: python3 ios/scripts/collect_artifacts.py --artifacts native-artifacts --output native-verified --source-commit "${{ github.sha }}"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: verified-native-ios-${{ github.sha }}
+          path: native-verified/
+          retention-days: 7
+
   publish:
     name: Publish native SideStore build
-    needs: build
+    needs: verify
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.publish)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -65,12 +100,12 @@ jobs:
           ref: main
       - uses: actions/download-artifact@v5
         with:
-          name: native-ios-${{ github.sha }}
-          path: native-artifacts
+          name: verified-native-ios-${{ github.sha }}
+          path: native-verified
       - name: Publish verified IPA and source listing
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 ios/scripts/publish.py --artifacts native-artifacts
+        run: python3 ios/scripts/publish.py --artifacts native-verified
       - name: Save SideStore source when changed
         run: |
           git config user.name 'github-actions[bot]'

@@ -1,0 +1,12 @@
+{
+  "title": "Connected chat",
+  "description": "Google sign-in, existing Lumen history, secure provider connections, streamed replies and Stop.",
+  "notes": [
+    "Phase 1 brings a real connected conversation to the native iOS 26 app.",
+    "Sign in with your existing Lumen Google account to reopen web chats and sync new messages. Account histories stay separate, with protected local storage and a durable sync queue.",
+    "Connect Groq, Google Gemini, OpenAI or Anthropic. API keys stay in Keychain, and model choices come from the provider's current catalog. Supported keys from your existing Lumen account can be loaded after sign-in.",
+    "Replies stream in the conversation, Stop keeps the partial reply, and submitted messages are saved before a request starts. Failed connections and paused cloud sync show recovery actions.",
+    "Projects, Library, attachments, advanced routing and other web features follow in later native phases.",
+    "Automated checks exercise Firebase's real Auth and Firestore SDKs against local emulators, provider request formats, two iPhone simulator sizes and Release packaging. Google's account chooser and SideStore signing require a real-device check."
+  ]
+}

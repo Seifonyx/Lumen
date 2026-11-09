@@ -2,6 +2,7 @@ import XCTest
 
 @MainActor
 final class LumenUITests: XCTestCase {
+    private static var verifiedSimulatorInput = false
     private let app = XCUIApplication()
     private var composer: XCUIElement {
         app.descendants(matching: .any).matching(identifier: "messageComposer").firstMatch
@@ -9,10 +10,36 @@ final class LumenUITests: XCTestCase {
 
     private func launchCleanChat() {
         continueAfterFailure = false
-        app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launchArguments = ["--lumen-integration", "--lumen-reset-qa", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
+        app.launchArguments.removeAll { $0 == "--lumen-reset-qa" }
         XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 10))
+        if !Self.verifiedSimulatorInput {
+            // On a fresh runtime, bootstatus may finish while Apple's boot overlay still swallows taps.
+            // Require an observed response to input before starting the journeys, rather than sleeping.
+            executionTimeAllowance = 600
+            let deadline = Date().addingTimeInterval(300)
+            while !app.buttons["openSettings"].exists && Date() < deadline {
+                app.buttons["openSidebar"].tap()
+                if app.buttons["openSettings"].waitForExistence(timeout: 5) { break }
+            }
+            XCTAssertTrue(app.buttons["openSettings"].exists, "The simulator did not become interactive after boot")
+            app.buttons["sidebarCloseButton"].tap()
+            XCTAssertTrue(app.buttons["openSettings"].waitForNonExistence(timeout: 5))
+            XCTAssertTrue(app.buttons["openSidebar"].isHittable)
+            Self.verifiedSimulatorInput = true
+        }
         newChat()
+    }
+
+    override func tearDown() {
+        if (testRun?.failureCount ?? 0) > 0 {
+            let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+            screenshot.name = "failure-screen"
+            screenshot.lifetime = .keepAlways
+            add(screenshot)
+        }
+        super.tearDown()
     }
 
     private func newChat() {
@@ -46,7 +73,7 @@ final class LumenUITests: XCTestCase {
 
     private func enterDraft(_ text: String) {
         composer.tap()
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5),
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10),
                       "The software keyboard must be ready before typing")
         composer.typeText(text)
     }
@@ -124,4 +151,161 @@ final class LumenUITests: XCTestCase {
             app.buttons["Done"].tap()
         }
     }
+    func testConnectProviderWithAValidKeyAndSend() {
+        launchCleanChat()
+        defer { app.terminate() }
+        settings()
+        app.buttons["providerSettings"].tap()
+        app.buttons["provider-groq"].tap()
+        let key = app.secureTextFields["apiKeyField"]
+        XCTAssertTrue(key.waitForExistence(timeout: 5))
+        key.tap()
+        key.typeText("fixture-provider-key")
+        app.buttons["connectProvider"].tap()
+        if !app.staticTexts["Available models"].waitForExistence(timeout: 15) {
+            capture("direct-provider-failure")
+            XCTFail("Direct provider connection unavailable: " + app.debugDescription)
+            return
+        }
+        capture("direct-provider-connected")
+        app.navigationBars["Groq"].buttons["BackButton"].tap()
+        app.navigationBars["Models & providers"].buttons["BackButton"].tap()
+        app.navigationBars["Settings"].buttons["Done"].tap()
+        app.buttons["chooseModel"].tap()
+        let model = app.buttons["model-groq-fixture-model"]
+        XCTAssertTrue(model.waitForExistence(timeout: 5))
+        model.tap()
+        enterDraft("Manual provider check")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 10))
+        capture("direct-provider-reply")
+    }
+
+    private func signInAndChooseModel() {
+        settings()
+        let signIn = app.buttons["googleSignIn"]
+        XCTAssertTrue(signIn.waitForExistence(timeout: 5))
+        signIn.tap()
+        XCTAssertTrue(app.staticTexts["Native QA"].waitForExistence(timeout: 15))
+        app.buttons["Done"].tap()
+        app.buttons["chooseModel"].tap()
+        let model = app.buttons["model-groq-fixture-model"]
+        // A cold emulator connection can report unavailable once; exercise the visible recovery action.
+        let reload = app.buttons["Load account providers"]
+        let deadline = Date().addingTimeInterval(25)
+        while !model.exists && !reload.exists && Date() < deadline {
+            if model.waitForExistence(timeout: 1) { break }
+        }
+        if !model.exists && reload.exists { reload.tap() }
+        if !model.waitForExistence(timeout: 20) {
+            capture("model-import-failure")
+            XCTFail("Connected model unavailable: " + app.debugDescription)
+            return
+        }
+        model.tap()
+    }
+
+    func testConnectedDeleteCleansTheCloudConversation() {
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        app.buttons["openSidebar"].tap()
+        let target = app.buttons["history-delete-fixture"]
+        XCTAssertTrue(target.waitForExistence(timeout: 10))
+        target.press(forDuration: 1)
+        app.buttons["Delete chat"].tap()
+        XCTAssertTrue(app.alerts["Delete chat?"].waitForExistence(timeout: 3))
+        capture("delete-confirmation")
+        app.alerts.buttons["Delete"].tap()
+        settings()
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 15))
+        app.buttons["Done"].tap()
+        app.buttons["openSidebar"].tap()
+        XCTAssertFalse(target.exists)
+        capture("deleted-chat-history")
+    }
+
+    func testConnectedSendWebHistorySyncAndSignOut() {
+        executionTimeAllowance = 180
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        enterDraft("A native question")
+        XCTAssertTrue(app.buttons["sendMessage"].isEnabled)
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        XCTAssertNotEqual(composer.value as? String, "A native question")
+        capture("connected-reply")
+        app.buttons["openSidebar"].tap()
+        let webChat = app.buttons["history-web-fixture"]
+        XCTAssertTrue(webChat.waitForExistence(timeout: 10))
+        webChat.tap()
+        XCTAssertTrue(app.staticTexts["An existing web reply."].waitForExistence(timeout: 15))
+        enterDraft("Native follow-up")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        settings()
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 15))
+        app.buttons["Done"].tap()
+        capture("web-history-with-native-reply")
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 10))
+        app.buttons["openSidebar"].tap()
+        XCTAssertTrue(webChat.waitForExistence(timeout: 15))
+        webChat.tap()
+        XCTAssertTrue(app.staticTexts["Native follow-up"].waitForExistence(timeout: 15))
+        settings()
+        app.buttons["signOut"].tap()
+        XCTAssertTrue(app.buttons["googleSignIn"].waitForExistence(timeout: 5))
+        app.buttons["Done"].tap()
+        app.buttons["openSidebar"].tap()
+        XCTAssertFalse(webChat.exists, "Signed-out history must not expose the account's chats")
+        capture("signed-out-private-history")
+    }
+
+    func testConnectedStopPersistsPartialReplyAfterRelaunch() {
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        enterDraft("Stop this reply")
+        app.buttons["sendMessage"].tap()
+        let partial = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Partial reply.")).firstMatch
+        XCTAssertTrue(partial.waitForExistence(timeout: 10))
+        app.buttons["stopStreaming"].tap()
+        XCTAssertTrue(app.staticTexts["Stopped"].waitForExistence(timeout: 3))
+        capture("stopped-reply")
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 10))
+        app.buttons["openSidebar"].tap()
+        let history = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Stop this reply")).firstMatch
+        XCTAssertTrue(history.waitForExistence(timeout: 15))
+        history.tap()
+        XCTAssertTrue(app.staticTexts["Stopped"].waitForExistence(timeout: 10))
+        XCTAssertTrue(partial.exists)
+        XCTAssertFalse(app.buttons["stopStreaming"].exists)
+    }
+
+    func testRejectedProviderKeyShowsErrorAndKeepsTheDraft() {
+        launchCleanChat()
+        defer { app.terminate() }
+        enterDraft("Keep my question")
+        settings()
+        app.buttons["providerSettings"].tap()
+        app.buttons["provider-groq"].tap()
+        let key = app.secureTextFields["apiKeyField"]
+        XCTAssertTrue(key.waitForExistence(timeout: 5))
+        key.tap()
+        key.typeText("fixture-invalid-key")
+        app.buttons["connectProvider"].tap()
+        XCTAssertTrue(app.staticTexts["Groq rejected the API key. Check it in Settings."].waitForExistence(timeout: 10))
+        capture("provider-rejected-key")
+        app.navigationBars["Groq"].buttons["BackButton"].tap()
+        app.navigationBars["Models & providers"].buttons["BackButton"].tap()
+        app.navigationBars["Settings"].buttons["Done"].tap()
+        XCTAssertEqual(composer.value as? String, "Keep my question")
+        XCTAssertFalse(app.buttons["sendMessage"].isEnabled)
+    }
+
 }

@@ -1,11 +1,16 @@
 import SwiftUI
+import LumenCore
 
 struct SidebarView: View {
+    @Bindable var engine: ChatEngine
+    @Bindable var auth: AuthEngine
     var newChat: () -> Void
     var open: (WorkspaceRoute) -> Void
+    var selectConversation: (Conversation) -> Void
     var settings: () -> Void
     var close: () -> Void
     @AccessibilityFocusState private var headingFocused: Bool
+    @State private var pendingDeletion: Conversation?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -18,6 +23,7 @@ struct SidebarView: View {
                 Button("Close sidebar", systemImage: "xmark", action: close)
                     .labelStyle(.iconOnly)
                     .frame(minWidth: 44, minHeight: 44)
+                    .accessibilityIdentifier("sidebarCloseButton")
             }
             .padding(.horizontal, 20)
             .padding(.top, 8)
@@ -30,26 +36,83 @@ struct SidebarView: View {
                         row(route.title, icon: route.icon) { open(route) }
                             .accessibilityIdentifier("sidebar-\(route.rawValue)")
                     }
+
                     Divider().padding(.vertical, 18)
+
                     Text("Conversations")
                         .font(.subheadline.weight(.semibold))
                         .accessibilityAddTraits(.isHeader)
-                    Text("Your chats will appear here.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+
+                    if engine.savedConversations.isEmpty {
+                        Text("Your chats will appear here.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 8)
+                    } else {
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(engine.savedConversations.filter { $0.archived != true }) { conv in
+                                Button {
+                                    selectConversation(conv)
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "bubble.left")
+                                            .frame(width: 20)
+                                            .foregroundStyle(.secondary)
+                                        Text(conv.title)
+                                            .lineLimit(1)
+                                            .font(.subheadline)
+                                        Spacer()
+                                    }
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 8)
+                                    .background(engine.currentConversation.id == conv.id ? Color.primary.opacity(0.08) : .clear, in: .rect(cornerRadius: 8))
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityIdentifier("history-" + conv.id)
+                                .contextMenu {
+                                    Button("Delete chat", systemImage: "trash", role: .destructive) { pendingDeletion = conv }
+                                }
+                            }
+                        }
                         .padding(.top, 8)
+                    }
                 }
                 .padding(20)
             }
 
             Divider()
-            row("Settings", icon: "person.crop.circle", action: settings)
-                .accessibilityIdentifier("openSettings")
-                .padding(16)
+            Button(action: settings) {
+                HStack(spacing: 12) {
+                    Image(systemName: "person.crop.circle")
+                        .frame(width: 24)
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(auth.currentUser?.displayName ?? "Settings")
+                            .font(.body)
+                        if let email = auth.currentUser?.email, !email.isEmpty {
+                            Text(email)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer(minLength: 0)
+                }
+            }
+            .buttonStyle(SidebarRowStyle())
+            .accessibilityIdentifier("openSettings")
+            .padding(16)
         }
         .accessibilityElement(children: .contain)
         .accessibilityAction(.escape, close)
         .onAppear { headingFocused = true }
+        .alert("Delete chat?", isPresented: Binding(get: { pendingDeletion != nil }, set: { if !$0 { pendingDeletion = nil } })) {
+            Button("Delete", role: .destructive) {
+                if let chat = pendingDeletion { _ = engine.deleteConversation(id: chat.id) }
+                pendingDeletion = nil
+                close()
+            }
+            Button("Cancel", role: .cancel) { pendingDeletion = nil }
+        } message: { Text("This removes the conversation and its saved attachments from your Lumen account.") }
     }
 
     private func row(_ title: String, icon: String, action: @escaping () -> Void) -> some View {

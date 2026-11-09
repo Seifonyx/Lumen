@@ -161,7 +161,7 @@ def verify_roundtrip():
     except urllib.error.HTTPError as error:
         assert error.code == 404
     chats_url = url.removesuffix('web-fixture')
-    with urllib.request.urlopen(urllib.request.Request(chats_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+    with urllib.request.urlopen(urllib.request.Request(chats_url.rstrip('/'), headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
         all_chats = json.load(response).get('documents', [])
     assert any(any(m.get('content') == 'LUMEN_TEMPORARY_SECRET' for m in r.get('messages', [])) for r in REQUESTS), 'Temporary journey never reached provider'
     assert 'LUMEN_TEMPORARY_SECRET' not in json.dumps(all_chats), 'Temporary metadata leaked to cloud'

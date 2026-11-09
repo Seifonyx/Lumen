@@ -5,20 +5,16 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 ## Now
 
 - Owner authorized the entire Phase2 in one continuous run, releasing each part to the existing source.
-  Current branch `codex/phase2-history`, starting from fb1ea81. Parts:2.1 controls0.3.0;
+  Current branch `codex/phase2-drafts`, starting from fb1ea81. Parts:2.1 controls0.3.0;
   2.2 history0.3.1;2.3 drafts/temporary0.3.2;2.4 attachments0.3.3;2.5 long chats/recovery0.3.4.
   Plan/ledger: `/workspace/scratch/lumen-phase2/{plan,progress}.md`. Baseline44 Swift+16 Python pass.
-  Task1 implementation is ready for review: immutable selectable conversation versions for edit/regenerate/retry,
-  native copy/share, version grouping and clone-safe cloud transactions.58 Swift tests+16 Python checks pass;
-  fresh review found2 Important provenance/dependency issues, repaired with RED→GREEN tests; grouped
-  deletion now removes all versions atomically. UI Swift parses. Part1 main commit f658e6f is in Native CI; publication still pending.
-  Task2 history management passed review after one fix pass locally while Part1 builds:68 Swift+16 Python tests pass;
-  rename/pin/archive ordered outbox, durable replay markers, archived view and cached-message search are implemented. Do not publish Task2 until0.3.0
-  is verified in the public source. Review found1 Important (coalescing reassigned applied fields a new ID)
-  and1 Minor (web deletion marker cleanup); both fixed. Regression failed before the ordered queue fix,
-  then all68 tests passed. Operation identities now survive failed ACK/restart/new fields; web deletion
-  cleans marker collections in bounded batches. Web TypeScript and unit checks pass.
-  Part1 rerun commit52ab376 fixes cold simulator startup allowance and invalid verifier URL.
+  Task1 main52ab376 is in Native CI after fixing a cold simctl launch timeout and a verifier URL.
+  The original compact run passed all10 UI journeys; native app/device builds succeeded on both sizes.
+  Publication of0.3.0 remains pending.
+  Task2 history passed one fresh review and one fix pass:68 Swift+16 Python checks, TypeScript and web
+  unit tests pass. Ordered metadata outbox IDs survive failed ACK/restart/new fields, with bounded
+  native/web marker cleanup. Archived view/search and group actions are ready for device CI.
+  Do not publish Task2 until0.3.0 is verified in the public source.
   Task3 in progress on codex/phase2-drafts worktree:77 Swift tests pass after draft/temp tests observed RED.
   Protected per-account/per-chat drafts, selected-chat restoration and volatile-only temporary versions
   implemented; native UI/backend journeys added. Fresh review found2 Important save-failure issues; both fixed with regression coverage:

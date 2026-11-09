@@ -5,7 +5,7 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 ## Now
 
 - Branch `codex/phase1-ready`; owner authorized fixing all Phase1 defects and shipping the native IPA.
-  PR146 (`feat/phase1-connected-chat`) is open. Main remains Phase0 `14bf502`.
+  PR146 (`feat/phase1-connected-chat`) is open; the last pushed head is7204350. Main remains Phase0 `14bf502`.
   Merge after final native CI and screenshot inspection; then verify public IPA and SideStore publication.
 - Both fresh Firebase iOS apps are verified in `the-model-router`: `io.github.seifonyx.lumen` and
   `io.github.seifonyx.lumen.M2WDSAZ2A5`. Nickname Lumen is valid. Bundled public configuration and real
@@ -15,12 +15,21 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
   Submitted turns save before acceptance; account/chat switches reject late stream and history results.
   Final review's3 Important findings are fixed: stale history overwrite, same-ID web edits and complete
   remote deletion of messages/originals. Later-phase features remain explicit in ios/README.md/release notes.
-- Run42568526207 at6811df6: both isolated iPhone jobs failed the3 automatic cloud-key/history journeys.
-  Compact passed6 journeys including real Firebase emulator login, manual valid-key Keychain save and
-  streaming reply, keyboard/themes/restoration and rejected key. Missing imported model traced to Firestore
-  gRPC error14, not model parsing or Keychain. Source inspection of pinned SDK13.1.1 proves `useEmulator`
-  sets host but leaves TLS enabled. Current fix explicitly disables TLS only in DEBUG simulator fixtures;
-  production retains TLS. Existing failed connected journeys are the regression test; Mac rerun pending.
+- Run42571091182 at7204350: both native builds/Release archives and44 Core tests passed; UI still failed.
+  Compact video shows Apple's boot overlay swallowing input despite successful `simctl bootstatus`.
+  Current harness waits for an observed sidebar response on the first launch (bounded300s), captures the
+  full screen on failure, and keeps ordinary journeys bounded120s. Regular proved Firestore key read/import
+  and Keychain/discovery succeed after disabling TLS only for the local emulator; production keeps TLS.
+  Its first cold connection returned14 once; the test now exercises the existing Load account providers
+  recovery action when that error occurs, then still requires the real discovered model.
+- Regular send/Stop then exposed a real Swift6 runtime trap: `_dispatch_assert_queue_fail` in
+  `CloudChatSync.append`'s transaction callback. SDK runs that callback on a background queue, but the
+  closure inherited MainActor. Explicit @Sendable update/completion closures capture only Sendable values
+  (including SDK DocumentReference); existing failing real-SDK connected journeys are the regression test.
+  Native rerun pending. Crash reports/videos: `/workspace/scratch/lumen-tls-regular`; compact boot evidence:
+  `/workspace/scratch/lumen-tls-compact`. Do not merge or claim connected chat passes yet.
+- Screenshot inspection also corrected user-bubble alignment to the trailing edge. Assistant replies retain
+  leading alignment. Include in the next native run and inspect final connected screenshots.
 - Local44 Swift tests and16 Python packaging/artifact checks pass after this change; actionlint and
   git diff --check also pass. The additional real ProviderCatalog + secure-store account-import test uses
   the exact HTTP fixture model/key.

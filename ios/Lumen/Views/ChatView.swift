@@ -128,7 +128,7 @@ private struct MessageRow: View {
             }
             .padding(message.role == .user ? 14 : 0)
             .background(message.role == .user ? Color(uiColor: .secondarySystemBackground) : .clear, in: .rect(cornerRadius: 20))
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: message.role == .user ? .trailing : .leading)
             if message.role != .user { Spacer(minLength: 12) }
         }
         .accessibilityIdentifier(message.role.rawValue + "Message")

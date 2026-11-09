@@ -215,7 +215,8 @@ import LumenCore
     private func append(chat: Conversation, ids: Set<String>, uid: String) async throws {
         let reference = chats(uid).document(chat.id)
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            db.runTransaction({ transaction, errorPointer in
+            // Firestore executes transaction updates off the main actor, including retries.
+            db.runTransaction({ @Sendable transaction, errorPointer in
                 do {
                     let remote = try transaction.getDocument(reference)
                     var existing: [String: [String: Any]] = [:]
@@ -233,7 +234,7 @@ import LumenCore
                     transaction.setData(fields, forDocument: reference, merge: true)
                 } catch { errorPointer?.pointee = error as NSError }
                 return nil
-            }, completion: { _, error in
+            }, completion: { @Sendable _, error in
                 if let error { continuation.resume(throwing: error) }
                 else { continuation.resume() }
             })

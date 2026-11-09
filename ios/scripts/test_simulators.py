@@ -67,9 +67,9 @@ def main():
                     '-derivedDataPath', str(root / 'build' / 'DerivedData'),
                     '-resultBundlePath', str(result), '-parallel-testing-enabled', 'NO',
                     '-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', '120',
-                    '-maximum-test-execution-time-allowance', '180',
+                    '-maximum-test-execution-time-allowance', '600',
                     'CODE_SIGNING_ALLOWED=YES', 'CODE_SIGNING_REQUIRED=NO', 'CODE_SIGN_IDENTITY=-',
-                ], stdout=stream, stderr=subprocess.STDOUT, timeout=1000)
+                ], stdout=stream, stderr=subprocess.STDOUT, timeout=1300)
             print(log.read_text()[-16000:], flush=True)
             if test.returncode:
                 failed.append(profile)

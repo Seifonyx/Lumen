@@ -2,6 +2,7 @@ import XCTest
 
 @MainActor
 final class LumenUITests: XCTestCase {
+    private static var verifiedSimulatorInput = false
     private let app = XCUIApplication()
     private var composer: XCUIElement {
         app.descendants(matching: .any).matching(identifier: "messageComposer").firstMatch
@@ -13,7 +14,31 @@ final class LumenUITests: XCTestCase {
         app.launch()
         app.launchArguments.removeAll { $0 == "--lumen-reset-qa" }
         XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 10))
+        if !Self.verifiedSimulatorInput {
+            // On a fresh runtime, bootstatus may finish while Apple's boot overlay still swallows taps.
+            // Require an observed response to input before starting the journeys, rather than sleeping.
+            executionTimeAllowance = 600
+            let deadline = Date().addingTimeInterval(300)
+            while !app.buttons["openSettings"].exists && Date() < deadline {
+                app.buttons["openSidebar"].tap()
+                if app.buttons["openSettings"].waitForExistence(timeout: 5) { break }
+            }
+            XCTAssertTrue(app.buttons["openSettings"].exists, "The simulator did not become interactive after boot")
+            app.buttons["closeSidebar"].tap()
+            XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 5))
+            Self.verifiedSimulatorInput = true
+        }
         newChat()
+    }
+
+    override func tearDown() {
+        if (testRun?.failureCount ?? 0) > 0 {
+            let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+            screenshot.name = "failure-screen"
+            screenshot.lifetime = .keepAlways
+            add(screenshot)
+        }
+        super.tearDown()
     }
 
     private func newChat() {
@@ -164,6 +189,13 @@ final class LumenUITests: XCTestCase {
         app.buttons["Done"].tap()
         app.buttons["chooseModel"].tap()
         let model = app.buttons["model-groq-fixture-model"]
+        // A cold emulator connection can report unavailable once; exercise the visible recovery action.
+        let reload = app.buttons["Load account providers"]
+        let deadline = Date().addingTimeInterval(25)
+        while !model.exists && !reload.exists && Date() < deadline {
+            if model.waitForExistence(timeout: 1) { break }
+        }
+        if !model.exists && reload.exists { reload.tap() }
         if !model.waitForExistence(timeout: 20) {
             capture("model-import-failure")
             XCTFail("Connected model unavailable: " + app.debugDescription)

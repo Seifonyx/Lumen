@@ -51,7 +51,7 @@ enum AttachmentImporter {
             text = string
         }
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw AttachmentError.unsupported }
-        let file = ChatAttachment(name: String(name.prefix(160)), kind: .text, mime: "text/plain", text: text)
+        let file = ChatAttachment(name: type?.conforms(to: .pdf) == true ? ChatAttachment.extractedTextName(name) : String(name.prefix(160)), kind: .text, mime: "text/plain", text: text)
         try file.validate(); return file
     }
 }

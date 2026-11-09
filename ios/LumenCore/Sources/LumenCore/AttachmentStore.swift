@@ -3,6 +3,7 @@ import Foundation
 @MainActor public protocol AttachmentStore {
     func load(id: String, accountID: String) throws -> ChatAttachment
     func save(_ attachment: ChatAttachment, accountID: String) throws
+    func prune(keeping ids: Set<String>, accountID: String) throws
 }
 
 @MainActor public final class FileAttachmentStore: AttachmentStore {
@@ -39,4 +40,13 @@ import Foundation
         var url = directory, values = URLResourceValues(); values.isExcludedFromBackup = true
         try url.setResourceValues(values)
     }
+    public func prune(keeping ids: Set<String>, accountID: String) throws {
+        let root = folder(accountID)
+        guard FileManager.default.fileExists(atPath: root.path) else { return }
+        for file in try FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil) where file.pathExtension == "json" {
+            let id = file.deletingPathExtension().lastPathComponent
+            if !ids.contains(id) { try FileManager.default.removeItem(at: file) }
+        }
+    }
+
 }

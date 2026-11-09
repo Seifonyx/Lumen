@@ -50,6 +50,14 @@ struct SidebarView: View {
                         ForEach(composer.savedDrafts) { draft in
                             row(draft.text.isEmpty ? "Attachment draft" : String(draft.text.prefix(48)), icon: "pencil.line") { openDraft(draft.conversationID) }
                                 .accessibilityIdentifier("draft-" + draft.conversationID)
+                                .contextMenu {
+                                    Button("Delete draft", role: .destructive) {
+                                        if composer.removeDrafts(conversationIDs: [draft.conversationID]) {
+                                            do { try engine.pruneAttachments(keepingDraftIDs: composer.attachmentReferences) }
+                                            catch { engine.errorMessage = "Unused attachment files could not be removed. Reopen Lumen to retry." }
+                                        }
+                                    }
+                                }
                         }
                         Divider().padding(.vertical, 12)
                     }

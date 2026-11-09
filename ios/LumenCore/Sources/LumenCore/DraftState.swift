@@ -94,6 +94,22 @@ import Observation
         return true
     }
 
+    public var attachmentReferences: Set<String> { Set(records.values.flatMap(\.attachmentIDs)) }
+
+    @discardableResult public func removeDrafts(conversationIDs: Set<String>) -> Bool {
+        guard readable else { return false }
+        var next = records
+        for id in conversationIDs { next[id] = nil }
+        do {
+            try store.save(next, accountID: accountID)
+            records = next; recovery[accountID] = nil; errorMessage = nil
+            if conversationIDs.contains(conversationID), !isTemporary {
+                suppressSaving = true; draft = ""; attachmentIDs = []; suppressSaving = false
+            }
+            return true
+        } catch { errorMessage = "The draft could not be deleted. Its saved files are kept. Tap Retry before leaving."; return false }
+    }
+
     private func load(accountID: String, conversationID: String) {
         suppressSaving = true; defer { suppressSaving = false }
         do { records = try store.load(accountID: accountID) }

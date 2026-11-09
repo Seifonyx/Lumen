@@ -69,6 +69,34 @@ import Testing
         #expect(engine.submit(prompt: "Continue", apiKey: "key") == nil)
     }
 
+    @Test func durableRemovalCleansOriginalsButOtherDraftsAndRevisionsKeepTheirReferences() throws {
+        let files = MemoryAttachmentStore(), chats = MemoryConversationStore()
+        let file = ChatAttachment(id: "shared", name: "notes.txt", kind: .text, mime: "text/plain", text: "Sensitive contents")
+        try files.save(file, accountID: "device")
+        var chat = Conversation(id: "chat", messages: [ChatMessage(role: .user, content: "Read", attachments: [file])])
+        chat.historyLoaded = true
+        chats.accounts["device"] = ChatSnapshot(conversations: [chat])
+        let engine = ChatEngine(store: chats, attachmentStore: files)
+        chats.failWrites = true
+        #expect(!engine.deleteConversation(id: "chat"))
+        try engine.pruneAttachments(keepingDraftIDs: [])
+        #expect(files.accounts["device"]?[file.id] != nil)
+        chats.failWrites = false
+        #expect(engine.deleteConversation(id: "chat"))
+        try engine.pruneAttachments(keepingDraftIDs: [file.id])
+        #expect(files.accounts["device"]?[file.id] != nil)
+        try engine.pruneAttachments(keepingDraftIDs: [])
+        #expect(files.accounts["device"]?[file.id] == nil)
+    }
+
+    @Test func textDerivativesDownloadWithATextNameAndMatchingMIME() throws {
+        let name = ChatAttachment.extractedTextName("report.pdf")
+        #expect(name == "report.pdf.txt")
+        let file = ChatAttachment(name: name, kind: .text, mime: "text/plain", text: "Extracted PDF text")
+        #expect(file.webFields["name"] as? String == "report.pdf.txt")
+        #expect(file.webFields["mime"] as? String == "text/plain")
+    }
+
     @Test func temporaryAttachmentBytesNeverEnterTheFileStore() throws {
         let files = MemoryAttachmentStore()
         let engine = ChatEngine(store: MemoryConversationStore(), attachmentStore: files)
@@ -89,4 +117,5 @@ import Testing
         return file
     }
     func save(_ file: ChatAttachment, accountID: String) throws { accounts[accountID, default: [:]][file.id] = file }
+    func prune(keeping ids: Set<String>, accountID: String) throws { accounts[accountID] = accounts[accountID]?.filter { ids.contains($0.key) } }
 }

@@ -29,6 +29,10 @@ public struct ChatAttachment: Identifiable, Codable, Sendable, Equatable {
         self.id = id; self.name = name; self.kind = kind; self.mime = mime; self.text = text; self.data = data
         self.size = size ?? data?.count ?? text?.utf8.count ?? 0
     }
+    public static func extractedTextName(_ name: String) -> String {
+        let base = String(name.prefix(156))
+        return base.lowercased().hasSuffix(".txt") ? base : base + ".txt"
+    }
     public static func validID(_ id: String) -> Bool {
         !id.isEmpty && id.count <= 128 && id != "." && id != ".." && id.unicodeScalars.allSatisfy { CharacterSet.alphanumerics.contains($0) || "_-.".contains(Character($0)) }
     }

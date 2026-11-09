@@ -270,6 +270,11 @@ public struct HistoryLoadTicket: Sendable {
         return try attachmentStore.load(id: id, accountID: accountID)
     }
 
+    public func pruneAttachments(keepingDraftIDs: Set<String>) throws {
+        let referenced = Set(savedConversations.flatMap { $0.messages }.flatMap { $0.attachments ?? [] }.map(\.id))
+        try attachmentStore.prune(keeping: referenced.union(keepingDraftIDs), accountID: accountID)
+    }
+
     public func attachmentForSync(id: String) throws -> ChatAttachment { try attachmentStore.load(id: id, accountID: accountID) }
     public func cacheAttachment(_ file: ChatAttachment) throws { try attachmentStore.save(file, accountID: accountID) }
 

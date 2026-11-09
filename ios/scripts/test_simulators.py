@@ -12,6 +12,7 @@ def output(*args):
 
 
 def run(*args, timeout=300):
+    print("Running: " + " ".join(map(str, args)), flush=True)
     subprocess.run(args, check=True, timeout=timeout)
 
 
@@ -58,7 +59,7 @@ def main():
             # Warm the app's dyld/SDK startup once before XCTest attaches to a fresh simulator.
             app = root / 'build/DerivedData/Build/Products/Debug-iphonesimulator/Lumen.app'
             run('xcrun', 'simctl', 'install', device, str(app))
-            run('xcrun', 'simctl', 'launch', device, 'io.github.seifonyx.lumen', '--lumen-integration', '--lumen-reset-qa', timeout=90)
+            run('xcrun', 'simctl', 'launch', device, 'io.github.seifonyx.lumen', '--lumen-integration', '--lumen-reset-qa', timeout=300)
             subprocess.run(['xcrun', 'simctl', 'terminate', device, 'io.github.seifonyx.lumen'], check=False, timeout=30)
             with log.open('w') as stream:
                 test = subprocess.run([
@@ -73,9 +74,9 @@ def main():
             print(log.read_text()[-16000:], flush=True)
             if test.returncode:
                 failed.append(profile)
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as error:
             failed.append(profile)
-            print(f'{profile} simulator exceeded its bounded test time', flush=True)
+            print(f'{profile} timed out after {error.timeout}s: {error.cmd}', flush=True)
         finally:
             try:
                 container = output('xcrun', 'simctl', 'get_app_container', device, 'io.github.seifonyx.lumen', 'data').strip()

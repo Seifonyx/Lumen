@@ -8,10 +8,10 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
   Current branch `codex/phase2-message-controls`, starting from fb1ea81. Parts:2.1 controls0.3.0;
   2.2 history0.3.1;2.3 drafts/temporary0.3.2;2.4 attachments0.3.3;2.5 long chats/recovery0.3.4.
   Plan/ledger: `/workspace/scratch/lumen-phase2/{plan,progress}.md`. Baseline44 Swift+16 Python pass.
-  Task1 implementation is ready for review: immutable selectable conversation versions for edit/regenerate/retry,
-  native copy/share, version grouping and clone-safe cloud transactions.58 Swift tests+16 Python checks pass;
-  fresh review found2 Important provenance/dependency issues, repaired with RED→GREEN tests; grouped
-  deletion now removes all versions atomically. UI Swift parses. Native CI/publication still pending.
+  Task1 main f658e6f built on both iPhones; all10 UI journeys passed on compact. Regular hit a
+ 90s simctl warm-launch timeout before XCTest, and compact's independent verifier rejected its
+ trailing-slash Firestore collection URL (HTTP400). Fixing the verifier and allowing300s cold launch;
+ command-specific diagnostics now identify each stage.58 Swift+16 Python pass. Publication pending.
   Preserve originals and group versions as one history item. Do not stop after the first release.
   Develop later parts while CI runs, and publish sequentially after prior source update succeeds.
 

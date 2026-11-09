@@ -163,6 +163,12 @@ def verify_roundtrip():
     chats_url = url.removesuffix('web-fixture')
     with urllib.request.urlopen(urllib.request.Request(chats_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
         all_chats = json.load(response).get('documents', [])
+    assert any(any(m.get('content') == 'LUMEN_TEMPORARY_SECRET' for m in r.get('messages', [])) for r in REQUESTS), 'Temporary journey never reached provider'
+    assert 'LUMEN_TEMPORARY_SECRET' not in json.dumps(all_chats), 'Temporary metadata leaked to cloud'
+    for chat in all_chats:
+        chat_id = chat['name'].rsplit('/', 1)[-1]
+        with urllib.request.urlopen(urllib.request.Request(chats_url + chat_id + '/messages', headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+            assert 'LUMEN_TEMPORARY_SECRET' not in response.read().decode(), 'Temporary messages leaked to cloud'
     original_chat = next(d for d in all_chats if d['fields'].get('title', {}).get('stringValue') == 'Original revision question')
     root_id = original_chat['name'].rsplit('/', 1)[-1]
     branches = [d for d in all_chats if d['fields'].get('nativeRoot', {}).get('stringValue') == root_id]
@@ -191,7 +197,7 @@ def verify_roundtrip():
     assert [v['stringValue'] for v in managed['ids']['arrayValue']['values']] == ['metadata-user']
     with urllib.request.urlopen(urllib.request.Request(deleted_url + '/nativeMetadataOps', headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
         assert not json.load(response).get('documents'), 'Deleted metadata operation markers remain'
-    return {'firebaseSDKRoundtrip': True, 'deletedContentCleaned': True, 'unknownMetadataPreserved': True, 'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True, 'revisionVersionsPreserved': True, 'metadataRoundtrip': True, 'providerRequests': len(REQUESTS)}
+    return {'firebaseSDKRoundtrip': True, 'deletedContentCleaned': True, 'unknownMetadataPreserved': True, 'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True, 'revisionVersionsPreserved': True, 'metadataRoundtrip': True, 'temporaryContentAbsent': True, 'providerRequests': len(REQUESTS)}
 
 
 def seed_user_id():

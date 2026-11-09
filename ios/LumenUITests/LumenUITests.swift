@@ -93,22 +93,51 @@ final class LumenUITests: XCTestCase {
         XCTAssertEqual(composer.value as? String, "Keep this draft")
     }
 
-    func testNewChatCanCancelOrDiscardAnUnsentDraft() {
+    func testNewChatKeepsAnIndependentDraftAndRestoresIt() {
         launchCleanChat()
         defer { app.terminate() }
-        enterDraft("Unsent question")
+        enterDraft("First independent draft")
         app.buttons["newChat"].tap()
-        XCTAssertTrue(app.buttons["Discard draft"].waitForExistence(timeout: 3))
-        capture("discard-confirmation")
-        app.buttons["Cancel"].tap()
-        XCTAssertEqual(composer.value as? String, "Unsent question")
-        app.buttons["newChat"].tap()
-        app.buttons["Discard draft"].tap()
-        XCTAssertNotEqual(composer.value as? String, "Unsent question")
-        app.terminate()
-        app.launch()
+        XCTAssertNotEqual(composer.value as? String, "First independent draft")
+        enterDraft("Second independent draft")
+        app.buttons["openSidebar"].tap()
+        app.buttons["First independent draft"].tap()
+        XCTAssertEqual(composer.value as? String, "First independent draft")
+        capture("restored-conversation-draft")
+        app.terminate(); app.launch()
         XCTAssertTrue(composer.waitForExistence(timeout: 10))
-        XCTAssertNotEqual(composer.value as? String, "Unsent question")
+        XCTAssertEqual(composer.value as? String, "First independent draft")
+        app.buttons["openSidebar"].tap()
+        app.buttons["Second independent draft"].tap()
+        XCTAssertEqual(composer.value as? String, "Second independent draft")
+    }
+
+    func testTemporaryConversationClearsOnLeavingAndNeverAppearsInHistory() {
+        executionTimeAllowance = 180
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        app.buttons["openSidebar"].tap()
+        app.buttons["newTemporaryChat"].tap()
+        XCTAssertTrue(app.staticTexts["temporaryChatIndicator"].waitForExistence(timeout: 5))
+        enterDraft("LUMEN_TEMPORARY_SECRET")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        capture("temporary-conversation")
+        app.buttons["newChat"].tap()
+        XCTAssertTrue(app.alerts["Leave temporary chat?"].waitForExistence(timeout: 3))
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.staticTexts["LUMEN_TEMPORARY_SECRET"].exists)
+        app.buttons["newChat"].tap(); app.buttons["Leave and clear"].tap()
+        XCTAssertFalse(app.staticTexts["LUMEN_TEMPORARY_SECRET"].exists)
+        app.terminate(); app.launch()
+        XCTAssertTrue(composer.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.staticTexts["temporaryChatIndicator"].exists)
+        app.buttons["openSidebar"].tap()
+        XCTAssertFalse(app.buttons["LUMEN_TEMPORARY_SECRET"].exists)
+        app.buttons["sidebarCloseButton"].tap()
+        settings()
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 15))
     }
 
     func testComposerStaysAboveKeyboardAndDoesNotSubmitWithoutAModel() {

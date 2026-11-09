@@ -12,6 +12,9 @@ public struct HistoryLoadTicket: Sendable {
     public private(set) var savedConversations: [Conversation] = []
     public private(set) var selectedModel: AIModel?
     public private(set) var isStreaming = false
+    public private(set) var isTemporary = false
+    @ObservationIgnored private var temporaryVersions: [Conversation] = []
+    @ObservationIgnored private var regularSelectedID: String?
     public var errorMessage: String?
     public private(set) var accountID = "device"
     public private(set) var pendingMessages: [String: Set<String>] = [:]
@@ -32,6 +35,8 @@ public struct HistoryLoadTicket: Sendable {
         self.store = store
         loadAccount()
     }
+
+    @discardableResult public func checkpoint() -> Bool { saveCurrent() }
 
     public func switchAccount(to id: String) {
         guard accountID != id else { return }
@@ -59,7 +64,7 @@ public struct HistoryLoadTicket: Sendable {
             let root = chat.lineageRootID ?? chat.id
             if latest[root] == nil || latest[root]!.createdAt < chat.createdAt { latest[root] = chat }
         }
-        if !currentConversation.messages.isEmpty {
+        if !isTemporary, !currentConversation.messages.isEmpty {
             latest[currentConversation.lineageRootID ?? currentConversation.id] = currentConversation
         }
         return latest.values.sorted {
@@ -68,9 +73,10 @@ public struct HistoryLoadTicket: Sendable {
     }
 
     public func versions(for chatID: String) -> [Conversation] {
-        guard let chat = savedConversations.first(where: { $0.id == chatID }) else { return [] }
+        let source = isTemporary ? temporaryVersions : savedConversations
+        guard let chat = source.first(where: { $0.id == chatID }) else { return [] }
         let root = chat.lineageRootID ?? chat.id
-        return savedConversations.filter { ($0.lineageRootID ?? $0.id) == root }.sorted {
+        return source.filter { ($0.lineageRootID ?? $0.id) == root }.sorted {
             $0.createdAt == $1.createdAt ? $0.id < $1.id : $0.createdAt < $1.createdAt
         }
     }
@@ -166,7 +172,7 @@ public struct HistoryLoadTicket: Sendable {
         let reply = ChatMessage(role: .assistant, content: "", status: .streaming)
         revision.messages.append(reply)
         currentConversation = revision
-        pendingMessages[revision.id] = Set(prefix.map(\.id))
+        if !isTemporary { pendingMessages[revision.id] = Set(prefix.map(\.id)) }
         guard saveCurrent() else {
             currentConversation = original; savedConversations = savedBefore; pendingMessages = pendingBefore
             return nil
@@ -175,20 +181,37 @@ public struct HistoryLoadTicket: Sendable {
         return startReply(model: model, apiKey: apiKey, replyID: reply.id)
     }
 
-    public func startNewConversation() {
+    @discardableResult public func startNewConversation(id: String? = nil) -> Bool {
         stopStreaming()
-        _ = saveCurrent()
+        guard saveCurrent() else { return false }
+        isTemporary = false; temporaryVersions = []
+        currentConversation = Conversation(id: id ?? UUID().uuidString, selectedModelId: selectedModel?.id)
+        currentConversation.selectedProviderId = selectedModel?.providerId
+        errorMessage = nil
+        return write()
+    }
+
+    @discardableResult public func startTemporaryConversation() -> Bool {
+        stopStreaming()
+        guard saveCurrent() else { return false }
+        if !isTemporary { regularSelectedID = currentConversation.id }
+        isTemporary = true; temporaryVersions = []
         currentConversation = Conversation(selectedModelId: selectedModel?.id)
         currentConversation.selectedProviderId = selectedModel?.providerId
         errorMessage = nil
+        return true
     }
 
-    public func selectConversation(id: String) {
+    @discardableResult public func selectConversation(id: String) -> Bool {
+        guard let chat = (isTemporary ? temporaryVersions : []).first(where: { $0.id == id }) ?? savedConversations.first(where: { $0.id == id }) else { return false }
+        let selectingTemporary = temporaryVersions.contains { $0.id == id }
         stopStreaming()
-        _ = saveCurrent()
-        guard let chat = savedConversations.first(where: { $0.id == id }) else { return }
+        guard saveCurrent() else { return false }
+        isTemporary = selectingTemporary
+        if !isTemporary { temporaryVersions = [] }
         currentConversation = chat
         errorMessage = nil
+        return isTemporary || write()
     }
 
     @discardableResult public func deleteConversation(id: String) -> Bool {
@@ -250,7 +273,7 @@ public struct HistoryLoadTicket: Sendable {
         let user = currentConversation.appendUserMessage(text)
         let reply = ChatMessage(role: .assistant, content: "", status: .streaming)
         currentConversation.messages.append(reply)
-        pendingMessages[currentConversation.id, default: []].insert(user.id)
+        if !isTemporary { pendingMessages[currentConversation.id, default: []].insert(user.id) }
         guard saveCurrent() else {
             currentConversation = before
             savedConversations = savedBefore
@@ -302,7 +325,7 @@ public struct HistoryLoadTicket: Sendable {
             streamingTask = nil
             isStreaming = false
             currentConversation.updatedAt = Date()
-            pendingMessages[chatID, default: []].insert(replyID)
+            if !isTemporary { pendingMessages[chatID, default: []].insert(replyID) }
             _ = saveCurrent()
         }
         return streamingTask!
@@ -321,7 +344,7 @@ public struct HistoryLoadTicket: Sendable {
         isStreaming = false
         if let i = currentConversation.messages.indices.last, currentConversation.messages[i].status == .streaming {
             currentConversation.messages[i].status = .stopped
-            pendingMessages[currentConversation.id, default: []].insert(currentConversation.messages[i].id)
+            if !isTemporary { pendingMessages[currentConversation.id, default: []].insert(currentConversation.messages[i].id) }
             currentConversation.updatedAt = Date()
         }
         _ = saveCurrent()
@@ -340,7 +363,7 @@ public struct HistoryLoadTicket: Sendable {
         }
         for patch in pendingMetadata[remote.id] ?? [] { patch.apply(to: &merged) }
         upsert(merged)
-        if currentConversation.id == merged.id {
+        if !isTemporary, currentConversation.id == merged.id {
             // Never replace an active generation with an asynchronous snapshot.
             if !isStreaming { currentConversation = merged }
             else {
@@ -374,13 +397,13 @@ public struct HistoryLoadTicket: Sendable {
         chat.remoteRevision = revision
         chat.historyLoaded = true
         upsert(chat)
-        if currentConversation.id == chatID { currentConversation = chat }
+        if !isTemporary, currentConversation.id == chatID { currentConversation = chat }
         _ = write()
         return true
     }
 
     public func applyRemoteDeletion(chatID: String) {
-        if currentConversation.id == chatID { stopStreaming(); currentConversation = Conversation(selectedModelId: selectedModel?.id) }
+        if !isTemporary, currentConversation.id == chatID { stopStreaming(); currentConversation = Conversation(selectedModelId: selectedModel?.id) }
         savedConversations.removeAll { $0.id == chatID }
         pendingMessages[chatID] = nil
         pendingMetadata[chatID] = nil
@@ -408,6 +431,11 @@ public struct HistoryLoadTicket: Sendable {
     }
 
     @discardableResult private func saveCurrent() -> Bool {
+        if isTemporary {
+            if let index = temporaryVersions.firstIndex(where: { $0.id == currentConversation.id }) { temporaryVersions[index] = currentConversation }
+            else if !currentConversation.messages.isEmpty { temporaryVersions.append(currentConversation) }
+            return true
+        }
         if !currentConversation.messages.isEmpty { upsert(currentConversation) }
         return write()
     }
@@ -417,7 +445,7 @@ public struct HistoryLoadTicket: Sendable {
         do {
             try store.save(ChatSnapshot(conversations: savedConversations, selectedModel: selectedModel,
                                         pendingMessages: pendingMessages, pendingDeletions: pendingDeletions,
-                                        pendingMetadata: pendingMetadata), accountID: accountID)
+                                        pendingMetadata: pendingMetadata, selectedConversationID: isTemporary ? regularSelectedID : currentConversation.id), accountID: accountID)
             onChange?()
             return true
         } catch {
@@ -427,6 +455,7 @@ public struct HistoryLoadTicket: Sendable {
     }
 
     private func loadAccount() {
+        isTemporary = false; temporaryVersions = []; regularSelectedID = nil
         cacheSession = UUID()
         mutationVersions = [:]
         currentConversation = Conversation()
@@ -450,8 +479,14 @@ public struct HistoryLoadTicket: Sendable {
                     pendingMessages[savedConversations[ci].id, default: []].insert(savedConversations[ci].messages[mi].id)
                 }
             }
-            currentConversation.selectedModelId = selectedModel?.id
-            currentConversation.selectedProviderId = selectedModel?.providerId
+            if let selectedID = snapshot.selectedConversationID {
+                currentConversation = savedConversations.first { $0.id == selectedID } ?? Conversation(id: selectedID, selectedModelId: selectedModel?.id)
+            }
+            if currentConversation.messages.isEmpty {
+                currentConversation.selectedModelId = selectedModel?.id
+                currentConversation.selectedProviderId = selectedModel?.providerId
+            }
+            regularSelectedID = currentConversation.id
         } catch {
             cacheReadable = false
             errorMessage = "Lumen could not read this account's saved chats. Reopen the app before sending; the existing cache has been kept."

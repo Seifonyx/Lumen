@@ -3,8 +3,11 @@ import LumenCore
 
 struct SidebarView: View {
     @Bindable var engine: ChatEngine
+    @Bindable var composer: DraftState
     @Bindable var auth: AuthEngine
     var newChat: () -> Void
+    var temporaryChat: () -> Void
+    var openDraft: (String) -> Void
     var open: (WorkspaceRoute) -> Void
     var selectConversation: (Conversation) -> Void
     var settings: () -> Void
@@ -33,6 +36,8 @@ struct SidebarView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     row("New chat", icon: "square.and.pencil", action: newChat)
                         .accessibilityIdentifier("sidebarNewChat")
+                    row("Temporary chat", icon: "bubble.left.and.text.bubble.right", action: temporaryChat)
+                        .accessibilityIdentifier("newTemporaryChat")
                     ForEach(WorkspaceRoute.allCases) { route in
                         row(route.title, icon: route.icon) { open(route) }
                             .accessibilityIdentifier("sidebar-\(route.rawValue)")
@@ -40,6 +45,14 @@ struct SidebarView: View {
 
                     Divider().padding(.vertical, 18)
 
+                    if !composer.savedDrafts.isEmpty {
+                        Text("Drafts").font(.subheadline.weight(.semibold)).accessibilityAddTraits(.isHeader)
+                        ForEach(composer.savedDrafts) { draft in
+                            row(draft.text.isEmpty ? "Attachment draft" : String(draft.text.prefix(48)), icon: "pencil.line") { openDraft(draft.conversationID) }
+                                .accessibilityIdentifier("draft-" + draft.conversationID)
+                        }
+                        Divider().padding(.vertical, 12)
+                    }
                     Text("Conversations")
                         .font(.subheadline.weight(.semibold))
                         .accessibilityAddTraits(.isHeader)

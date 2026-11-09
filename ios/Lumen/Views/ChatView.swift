@@ -15,7 +15,10 @@ struct ChatView: View {
     @State private var editingConversation = ""
     private var versions: [Conversation] { engine.versions(for: engine.currentConversation.id) }
     private var canRevise: Bool { !engine.isStreaming && engine.currentConversation.historyLoaded != false && connections.key(for: engine.selectedModel) != nil }
-    private var canSend: Bool { composer.hasContent && connections.key(for: engine.selectedModel) != nil && engine.currentConversation.historyLoaded != false }
+    private var composerAligned: Bool {
+        composer.accountID == engine.accountID && composer.conversationID == engine.currentConversation.id && composer.isTemporary == engine.isTemporary
+    }
+    private var canSend: Bool { composerAligned && composer.hasContent && connections.key(for: engine.selectedModel) != nil && engine.currentConversation.historyLoaded != false }
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -81,11 +84,17 @@ struct ChatView: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 10) {
-                if let error = engine.errorMessage ?? sync.errorMessage {
+                if engine.isTemporary {
+                    Label("Temporary · Not saved to history", systemImage: "eye.slash")
+                        .font(.footnote).foregroundStyle(.secondary).accessibilityIdentifier("temporaryChatIndicator")
+                    Text("Your AI provider still receives these messages.").font(.caption2).foregroundStyle(.secondary)
+                }
+                if let error = composer.errorMessage ?? engine.errorMessage ?? sync.errorMessage {
                     HStack(alignment: .top, spacing: 10) {
                         Image(systemName: "exclamationmark.circle")
                         Text(error).font(.footnote).frame(maxWidth: .infinity, alignment: .leading)
-                        if sync.errorMessage != nil { Button("Retry") { sync.retry() }.font(.footnote.weight(.semibold)) }
+                        if composer.errorMessage != nil { Button("Retry") { _ = composer.save() }.font(.footnote.weight(.semibold)) }
+                        else if sync.errorMessage != nil { Button("Retry") { sync.retry() }.font(.footnote.weight(.semibold)) }
                         else { Button("Dismiss", systemImage: "xmark") { engine.errorMessage = nil }.labelStyle(.iconOnly) }
                     }
                     .padding(12)
@@ -93,7 +102,8 @@ struct ChatView: View {
                     .accessibilityIdentifier("chatError")
                 }
                 VStack(alignment: .leading, spacing: 12) {
-                    TextField("Message Lumen", text: $composer.draft, axis: .vertical)
+                    TextField("Message Lumen", text: Binding(get: { composerAligned ? composer.draft : "" }, set: { if composerAligned { composer.draft = $0 } }), axis: .vertical)
+                        .disabled(!composerAligned)
                         .lineLimit(1...6)
                         .font(.body)
                         .focused(focused)
@@ -120,7 +130,7 @@ struct ChatView: View {
                                 .accessibilityIdentifier("stopStreaming")
                         } else {
                             Button("Send", systemImage: "arrow.up.circle.fill") {
-                                guard let key = connections.key(for: engine.selectedModel), engine.submit(prompt: composer.draft, apiKey: key) != nil else { return }
+                                guard composerAligned, composer.save(), let key = connections.key(for: engine.selectedModel), engine.submit(prompt: composer.draft, apiKey: key) != nil else { return }
                                 composer.discardDraft()
                             }
                             .font(.system(size: 34)).labelStyle(.iconOnly)

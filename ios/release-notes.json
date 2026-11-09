@@ -1,10 +1,9 @@
 {
-  "title": "History and search \u00b7 Phase 2.2",
-  "description": "Rename, pin and archive conversations, reopen archived chats, and search downloaded message text.",
+  "title": "Drafts and temporary chats \u00b7 Phase 2.3",
+  "description": "Independent protected drafts for each conversation and memory-only temporary chats.",
   "notes": [
-    "Phase 2.2 adds native history management and search.",
-    "Rename, pin or archive a conversation from its history menu. Earlier versions stay together, and archived conversations remain available from Archived chats.",
-    "Search titles and downloaded message text, including earlier conversation versions, with pinned and archived filters. Message search includes chats opened on this iPhone.",
-    "Metadata changes save locally and sync field by field, preserving unrelated web settings and newer queued changes. Durable operation markers prevent completed mutations being replayed after a failed local acknowledgement."
+    "Ordinary conversation drafts are kept separately, including after switching chats or reopening Lumen. Unsent new chats are available in Drafts in the sidebar.",
+    "Drafts use protected, account-scoped files and migrate older drafts without deleting their original until the protected save succeeds.",
+    "Start Temporary chat from the sidebar. Its messages, versions and drafts remain in memory and are excluded from local history, cloud sync and restoration. Leaving asks before clearing; your chosen AI provider still receives the messages."
   ]
 }

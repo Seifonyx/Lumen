@@ -17,8 +17,13 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
   is verified in the public source. Review found1 Important (coalescing reassigned applied fields a new ID)
   and1 Minor (web deletion marker cleanup); both fixed. Regression failed before the ordered queue fix,
   then all68 tests passed. Operation identities now survive failed ACK/restart/new fields; web deletion
-  cleans marker collections in bounded batches. Web checks pending dependency installation.
+  cleans marker collections in bounded batches. Web TypeScript and unit checks pass.
   Part1 rerun commit52ab376 fixes cold simulator startup allowance and invalid verifier URL.
+  Task3 in progress on codex/phase2-drafts worktree:77 Swift tests pass after draft/temp tests observed RED.
+  Protected per-account/per-chat drafts, selected-chat restoration and volatile-only temporary versions
+  implemented; native UI/backend journeys added. Fresh review found2 Important save-failure issues; both fixed with regression coverage:
+  required engine/composer transitions align mode even if previous saves fail, typing/sending is guarded
+  by matching identities, and failed account drafts stay in account-keyed RAM for recovery. Device CI pending.
   Preserve originals and group versions as one history item. Do not stop after the first release.
   Develop later parts while CI runs, and publish sequentially after prior source update succeeds.
 

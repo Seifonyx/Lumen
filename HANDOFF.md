@@ -22,9 +22,9 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
   by matching identities, and failed account drafts stay in account-keyed RAM for recovery. Device CI pending.
   Task4 attachments in progress: native photo/file importing and previews; protected originals and draft
   refs, RAM-only temporary files; images for supported vision models and extracted text/PDF input.
-  Core/provider tests85 pass, including legacy attachment cache reload and pre-acceptance validation.
+  Core/provider tests86 pass, including legacy attachment cache reload and pre-acceptance validation.
   Fresh review found2 Important cleanup/PDF-download issues; reference-aware cleanup after durable
-  removal and explicit .pdf.txt derivatives fix them.85 Core tests,16 Python pass; Mac runtime pending.
+  removal and explicit .pdf.txt derivatives fix them. Cleanup is blocked when cache reads/writes fail.86 Core tests,16 Python pass; Mac runtime pending.
   Preserve originals and group versions as one history item. Do not stop after the first release.
   Develop later parts while CI runs, and publish sequentially after prior source update succeeds.
 

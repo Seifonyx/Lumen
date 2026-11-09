@@ -97,6 +97,15 @@ import Testing
         #expect(file.webFields["mime"] as? String == "text/plain")
     }
 
+    @Test func anUnreadableConversationCacheCannotTriggerOriginalCleanup() throws {
+        let files = MemoryAttachmentStore()
+        let file = ChatAttachment(id: "keep", name: "keep.txt", kind: .text, mime: "text/plain", text: "Keep protected original")
+        try files.save(file, accountID: "device")
+        let engine = ChatEngine(store: UnreadableAttachmentChats(), attachmentStore: files)
+        try engine.pruneAttachments(keepingDraftIDs: [])
+        #expect(files.accounts["device"]?[file.id] != nil)
+    }
+
     @Test func temporaryAttachmentBytesNeverEnterTheFileStore() throws {
         let files = MemoryAttachmentStore()
         let engine = ChatEngine(store: MemoryConversationStore(), attachmentStore: files)
@@ -118,4 +127,9 @@ import Testing
     }
     func save(_ file: ChatAttachment, accountID: String) throws { accounts[accountID, default: [:]][file.id] = file }
     func prune(keeping ids: Set<String>, accountID: String) throws { accounts[accountID] = accounts[accountID]?.filter { ids.contains($0.key) } }
+}
+
+@MainActor private final class UnreadableAttachmentChats: ConversationStore {
+    func load(accountID: String) throws -> ChatSnapshot { throw CocoaError(.fileReadCorruptFile) }
+    func save(_ snapshot: ChatSnapshot, accountID: String) throws {}
 }

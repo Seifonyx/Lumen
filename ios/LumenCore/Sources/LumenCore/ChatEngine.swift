@@ -28,6 +28,7 @@ public struct HistoryLoadTicket: Sendable {
     @ObservationIgnored private var streamingTask: Task<Void, Never>?
     @ObservationIgnored private var generation: UUID?
     @ObservationIgnored private var cacheReadable = true
+    @ObservationIgnored private var lastWriteSucceeded = true
     @ObservationIgnored private var cacheSession = UUID()
     @ObservationIgnored private var mutationVersions: [String: UInt64] = [:]
 
@@ -271,6 +272,7 @@ public struct HistoryLoadTicket: Sendable {
     }
 
     public func pruneAttachments(keepingDraftIDs: Set<String>) throws {
+        guard cacheReadable, lastWriteSucceeded else { return }
         let referenced = Set(savedConversations.flatMap { $0.messages }.flatMap { $0.attachments ?? [] }.map(\.id))
         try attachmentStore.prune(keeping: referenced.union(keepingDraftIDs), accountID: accountID)
     }
@@ -508,9 +510,11 @@ public struct HistoryLoadTicket: Sendable {
             try store.save(ChatSnapshot(conversations: savedConversations, selectedModel: selectedModel,
                                         pendingMessages: pendingMessages, pendingDeletions: pendingDeletions,
                                         pendingMetadata: pendingMetadata, selectedConversationID: isTemporary ? regularSelectedID : currentConversation.id), accountID: accountID)
+            lastWriteSucceeded = true
             onChange?()
             return true
         } catch {
+            lastWriteSucceeded = false
             errorMessage = "This iPhone could not save the chat. Check available storage and try again. Your draft has been kept."
             return false
         }
@@ -527,7 +531,7 @@ public struct HistoryLoadTicket: Sendable {
         pendingMetadata = [:]
         selectedModel = nil
         errorMessage = nil
-        cacheReadable = true
+        cacheReadable = true; lastWriteSucceeded = true
         do {
             let snapshot = try store.load(accountID: accountID)
             savedConversations = snapshot.conversations

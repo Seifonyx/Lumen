@@ -5,7 +5,7 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 ## Now
 
 - Branch `codex/phase1-ready`; owner authorized fixing all Phase1 defects and shipping the native IPA.
-  PR146 (`feat/phase1-connected-chat`) now points to repaired head `b2a7524`. Main is still Phase0
+  PR146 (`feat/phase1-connected-chat`) now points to repaired head `288bfeb`. Main is still Phase0
   `14bf502`. Do not merge until final Native iOS CI and screenshot inspection pass.
 - Both fresh Firebase iOS apps are verified in `the-model-router`: `io.github.seifonyx.lumen` and
   `io.github.seifonyx.lumen.M2WDSAZ2A5`. Nickname Lumen is valid. Public config is bundled. Real Google/
@@ -39,6 +39,15 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 - Head83e33c3 contained a workflow edit error (publish input matched while replacing the publish job).
   Corrected whole file; YAML graph check and actionlint pass before the next push. Intended graph is isolated
   compact/regular Mac matrix → Linux verification of both artifacts → publish onmain. App code unchanged.
+- Isolated official run42565159526 at288bfeb is active: compact job128989979118, regular128989979444.
+  Both compile/archive/SDK/UI jobs must pass, then Linux verify must combine their matching artifacts.
+  Safe fixture diagnostics survive per-test resets under Application Support/IntegrationDiagnostics.json
+  and are copied into each artifact's logs. Read those if model import still fails; do not guess/claim fixed.
+- Isolated regular job128989979444 completed:5 shell/manual-error journeys passed including fixed nav;
+  connected3 still fail at model selection. No diagnostics file was captured. Keychain selector removal is
+  NOT proven to address this. Next update records configuration/key-read start/failure via safe OSLog +file,
+  exports diagnostics by search, exposes durable key-load errors/loading state, and adds a direct valid-key
+  send journey to separate cloud import from Keychain/HTTP. Do not claim connected chat is verified.
 - Temporary development workflow and Firebase inspector are removed in this update. Version0.2.0 and
   current release notes are ready. Next: official PR CI, fix any runtime/UI failures, merge, verify main IPA
   publication and public SideStore source. Actual Google chooser/SideStore signing need the owner's phone.

@@ -79,7 +79,7 @@ struct ModelSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                if !connections.loading.isEmpty {
+                if sync.isLoadingKeys || !connections.loading.isEmpty {
                     HStack { ProgressView(); Text("Loading your models…").foregroundStyle(.secondary) }
                 }
                 ForEach(AIProviderID.allCases) { provider in
@@ -103,10 +103,14 @@ struct ModelSheet: View {
                         }
                     }
                 }
-                if connections.models.isEmpty && connections.loading.isEmpty {
+                if connections.models.isEmpty && connections.loading.isEmpty && !sync.isLoadingKeys {
                     Section {
                         Text("Connect a provider to choose from the models available with your API key.")
                             .foregroundStyle(.secondary)
+                        if let error = sync.keyErrorMessage { Text(error).font(.footnote).foregroundStyle(.red) }
+                        if connections.accountID != "device" {
+                            Button("Load account providers") { Task { await sync.refreshKeys() } }
+                        }
                         ForEach(connections.errors.keys.sorted(), id: \.self) { id in
                             if let error = connections.errors[id] { Text(error).font(.footnote).foregroundStyle(.red) }
                         }

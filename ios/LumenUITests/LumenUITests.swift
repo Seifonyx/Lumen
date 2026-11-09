@@ -125,6 +125,36 @@ final class LumenUITests: XCTestCase {
             app.buttons["Done"].tap()
         }
     }
+    func testConnectProviderWithAValidKeyAndSend() {
+        launchCleanChat()
+        defer { app.terminate() }
+        settings()
+        app.buttons["providerSettings"].tap()
+        app.buttons["provider-groq"].tap()
+        let key = app.secureTextFields["apiKeyField"]
+        XCTAssertTrue(key.waitForExistence(timeout: 5))
+        key.tap()
+        key.typeText("fixture-provider-key")
+        app.buttons["connectProvider"].tap()
+        if !app.staticTexts["Available models"].waitForExistence(timeout: 15) {
+            capture("direct-provider-failure")
+            XCTFail("Direct provider connection unavailable: " + app.debugDescription)
+            return
+        }
+        capture("direct-provider-connected")
+        app.navigationBars["Groq"].buttons["BackButton"].tap()
+        app.navigationBars["Models & providers"].buttons["BackButton"].tap()
+        app.navigationBars["Settings"].buttons["Done"].tap()
+        app.buttons["chooseModel"].tap()
+        let model = app.buttons["model-groq-fixture-model"]
+        XCTAssertTrue(model.waitForExistence(timeout: 5))
+        model.tap()
+        enterDraft("Manual provider check")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 10))
+        capture("direct-provider-reply")
+    }
+
     private func signInAndChooseModel() {
         settings()
         let signIn = app.buttons["googleSignIn"]

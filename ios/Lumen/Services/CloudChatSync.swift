@@ -7,6 +7,8 @@ import LumenCore
     private(set) var isLoading = false
     private(set) var errorMessage: String?
     private(set) var status = "Saved on this iPhone"
+    private(set) var keyErrorMessage: String?
+    private(set) var isLoadingKeys = false
     private let db: Firestore
     private let engine: ChatEngine
     private var accountID: String?
@@ -26,6 +28,9 @@ import LumenCore
     }
 
     func connect(userID: String?) {
+        #if DEBUG && targetEnvironment(simulator)
+        DebugIntegration.record("cloud-connect", fields: ["signedIn": String(userID != nil)])
+        #endif
         listener?.remove()
         listener = nil
         draining?.cancel()
@@ -34,6 +39,8 @@ import LumenCore
         epoch = UUID()
         accountID = userID
         errorMessage = nil
+        keyErrorMessage = nil
+        isLoadingKeys = false
         isLoading = userID != nil
         status = userID == nil ? "Saved on this iPhone" : "Loading your chats…"
         engine.switchAccount(to: userID ?? "device")
@@ -85,6 +92,13 @@ import LumenCore
     }
 
     private func refreshKeys(ticket: UUID, userID: String) async {
+        guard epoch == ticket else { return }
+        isLoadingKeys = true
+        keyErrorMessage = nil
+        defer { if epoch == ticket { isLoadingKeys = false } }
+        #if DEBUG && targetEnvironment(simulator)
+        DebugIntegration.record("cloud-key-start", fields: ["host": db.settings.host, "project": db.app.options.projectID ?? ""])
+        #endif
         do {
             let snapshot = try await db.collection("modelRouter").document(userID).getDocument(source: .server)
             guard epoch == ticket else { return }
@@ -101,7 +115,11 @@ import LumenCore
             receiveKeys?(userID, keys)
         } catch {
             guard epoch == ticket else { return }
-            errorMessage = "Account provider keys could not load. You can connect a provider in Settings."
+            keyErrorMessage = "Account providers could not load. Try loading them again, or connect a provider in Settings."
+            #if DEBUG && targetEnvironment(simulator)
+            let failure = error as NSError
+            DebugIntegration.record("cloud-key-failed", fields: ["domain": failure.domain, "code": String(failure.code)])
+            #endif
         }
     }
 

@@ -79,9 +79,13 @@ def main():
         finally:
             try:
                 container = output('xcrun', 'simctl', 'get_app_container', device, 'io.github.seifonyx.lumen', 'data').strip()
-                trace = Path(container) / 'Library/Application Support/IntegrationDiagnostics.json'
-                if trace.exists(): shutil.copyfile(trace, root / 'build/logs' / f'{profile}-fixture-diagnostics.json')
+                traces = list(Path(container).rglob('IntegrationDiagnostics.json'))
+                if traces: shutil.copyfile(traces[0], root / 'build/logs' / f'{profile}-fixture-diagnostics.json')
             except (subprocess.CalledProcessError, OSError): pass
+            with (root / 'build/logs' / f'{profile}-fixture-console.log').open('w') as console:
+                subprocess.run(['xcrun', 'simctl', 'spawn', device, 'log', 'show', '--last', '30m', '--info',
+                                '--style', 'compact', '--predicate', 'subsystem == "io.github.seifonyx.lumen.qa"'],
+                               stdout=console, stderr=subprocess.STDOUT, check=False, timeout=60)
             if result.exists():
                 subprocess.run(['xcrun', 'xcresulttool', 'export', 'attachments', '--path', str(result),
                                 '--output-path', str(screenshots)], check=False, timeout=180)

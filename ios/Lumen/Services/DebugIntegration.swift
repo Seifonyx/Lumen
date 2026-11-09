@@ -1,5 +1,6 @@
 #if DEBUG && targetEnvironment(simulator)
 import Foundation
+import OSLog
 import FirebaseCore
 import FirebaseAuth
 import FirebaseFirestore
@@ -27,6 +28,7 @@ import LumenCore
                 for user in ["device", previousUID ?? ""] { try? keys.setKey(nil, providerID: provider.rawValue, accountID: user) }
             }
         }
+        record("configured", fields: ["project": options.projectID ?? ""])
         return FirebaseClientConfiguration(webClientID: "fixture-client", clients: [])
     }
     static func credential() async throws -> AuthCredential {
@@ -43,6 +45,8 @@ import LumenCore
     static func record(_ event: String, fields: [String: String]) {
         guard enabled else { return }
         // Only fixture counters/status codes; never tokens, keys, or message contents.
+        Logger(subsystem: "io.github.seifonyx.lumen.qa", category: "fixture")
+            .notice("\(event, privacy: .public) \(fields.description, privacy: .public)")
         let root = directory().deletingLastPathComponent()
         try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         let file = root.appendingPathComponent("IntegrationDiagnostics.json")

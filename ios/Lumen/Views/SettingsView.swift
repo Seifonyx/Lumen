@@ -89,6 +89,7 @@ struct ProvidersView: View {
             if connections.accountID != "device" {
                 Section {
                     Button("Load keys from my Lumen account") { Task { await sync.refreshKeys() } }
+                    if let error = sync.keyErrorMessage { Text(error).font(.footnote).foregroundStyle(.red) }
                 }
             }
         }

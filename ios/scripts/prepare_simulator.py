@@ -41,6 +41,35 @@ def existing_hosted_device(inventory, runtime, device_type):
     return sorted(matches, key=lambda d: d['state'] != 'Booted')[0] if matches else None
 
 
+def prepare_qa_device(inventory, profile, runtime, device_type):
+    """Require a fully booted iPhone; replace a stuck hosted simulator once."""
+    existing = existing_hosted_device(inventory, runtime, device_type)
+    if existing:
+        identifier = existing['udid']
+        try:
+            if existing['state'] != 'Booted':
+                subprocess.run(['xcrun', 'simctl', 'boot', identifier], check=True, timeout=300)
+            # A preinstalled image is a speed optimization, not a prerequisite.
+            # On macOS runners it can hang in Apple's first-boot data migration.
+            subprocess.run(['xcrun', 'simctl', 'bootstatus', identifier, '-b'], check=True, timeout=240)
+            return identifier, True
+        except subprocess.TimeoutExpired:
+            print(f'Hosted {profile} simulator {identifier} stalled during boot; trying a fresh QA device', flush=True)
+            try:
+                subprocess.run(['xcrun', 'simctl', 'shutdown', identifier], check=False, timeout=30)
+            except subprocess.TimeoutExpired:
+                print(f'Hosted simulator {identifier} did not shut down promptly; continuing with a new device', flush=True)
+
+    identifier = subprocess.check_output(
+        ['xcrun', 'simctl', 'create', f'Lumen {profile}', device_type['identifier'], runtime['identifier']],
+        text=True,
+    ).strip()
+    subprocess.run(['xcrun', 'simctl', 'boot', identifier], check=True, timeout=300)
+    # Never bypass boot readiness or claim a simulator test passed on a hung device.
+    subprocess.run(['xcrun', 'simctl', 'bootstatus', identifier, '-b'], check=True, timeout=600)
+    return identifier, False
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', required=True, choices=PROFILES)
@@ -50,16 +79,10 @@ def main():
     args.output.unlink(missing_ok=True)
     inventory = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', '--json'], text=True))
     runtime, device = select_device(inventory, args.profile)
-    existing = existing_hosted_device(inventory, runtime, device)
-    identifier = (existing['udid'] if existing else
-                  subprocess.check_output(['xcrun', 'simctl', 'create', f'Lumen {args.profile}',
-                                           device['identifier'], runtime['identifier']], text=True).strip())
-    if not existing or existing['state'] != 'Booted':
-        subprocess.run(['xcrun', 'simctl', 'boot', identifier], check=True, timeout=300)
-    subprocess.run(['xcrun', 'simctl', 'bootstatus', identifier, '-b'], check=True, timeout=600)
+    identifier, reused_hosted_device = prepare_qa_device(inventory, args.profile, runtime, device)
     args.output.write_text(json.dumps({'profile': args.profile, 'device': device['name'], 'runtime': runtime['version'],
                                      'runtimeIdentifier': runtime['identifier'], 'id': identifier,
-                                     'reusedHostedDevice': bool(existing)}) + '\n')
+                                     'reusedHostedDevice': reused_hosted_device}) + '\n')
 
 
 if __name__ == '__main__':

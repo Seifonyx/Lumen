@@ -60,6 +60,42 @@ class SimulatorSelectionTests(unittest.TestCase):
         with patch('test_simulators.subprocess.run', side_effect=OSError('simctl missing')):
             with self.assertRaises(OSError): stop_warmup_app('sim-1')
 
+    def test_stalled_hosted_boot_falls_back_to_fresh_ready_device(self):
+        import subprocess
+        from unittest.mock import patch, call
+        inventory = self.inventory()
+        runtime, device_type = module.select_device(inventory, 'regular')
+        hosted = {'udid': 'stuck-hosted', 'state': 'Booted'}
+        timed_out = subprocess.TimeoutExpired(['xcrun', 'simctl', 'bootstatus'], 240)
+        with patch.object(module, 'existing_hosted_device', return_value=hosted), \\
+             patch.object(module.subprocess, 'check_output', return_value='fresh-qa\\n') as create, \\
+             patch.object(module.subprocess, 'run', side_effect=[timed_out, None, None, None]) as run:
+            identifier, reused = module.prepare_qa_device(inventory, 'regular', runtime, device_type)
+        self.assertEqual((identifier, reused), ('fresh-qa', False))
+        create.assert_called_once_with(
+            ['xcrun', 'simctl', 'create', 'Lumen regular', device_type['identifier'], runtime['identifier']],
+            text=True)
+        self.assertEqual(run.call_args_list, [
+            call(['xcrun', 'simctl', 'bootstatus', 'stuck-hosted', '-b'], check=True, timeout=240),
+            call(['xcrun', 'simctl', 'shutdown', 'stuck-hosted'], check=False, timeout=30),
+            call(['xcrun', 'simctl', 'boot', 'fresh-qa'], check=True, timeout=300),
+            call(['xcrun', 'simctl', 'bootstatus', 'fresh-qa', '-b'], check=True, timeout=600),
+        ])
+
+    def test_ready_hosted_simulator_is_reused_without_creating_one(self):
+        from unittest.mock import patch
+        inventory = self.inventory()
+        runtime, device_type = module.select_device(inventory, 'compact')
+        hosted = {'udid': 'ready-hosted', 'state': 'Booted'}
+        with patch.object(module, 'existing_hosted_device', return_value=hosted), \\
+             patch.object(module.subprocess, 'check_output') as create, \\
+             patch.object(module.subprocess, 'run') as run:
+            identifier, reused = module.prepare_qa_device(inventory, 'compact', runtime, device_type)
+        self.assertEqual((identifier, reused), ('ready-hosted', True))
+        create.assert_not_called()
+        run.assert_called_once_with(
+            ['xcrun', 'simctl', 'bootstatus', 'ready-hosted', '-b'], check=True, timeout=240)
+
     def test_two_ui_shards_cover_all_xctest_methods_once_on_each_iphone(self):
         import re
         import sys

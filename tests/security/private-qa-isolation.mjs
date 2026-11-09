@@ -19,8 +19,11 @@ import { verifyBuild } from '../../scripts/qa/verify.mjs';
 import { qaIsolation } from '../../vite.qa.config.ts';
 
 const root = process.cwd();
-// The main commit Canvas activation branched from (needs full history: fetch-depth 0 in CI).
-const base = process.env.QA01_BASE || '655438f0ec8d2e3594595252af4a99e6c58627a0';
+// Last reviewed main after native 0.3.1 shipped. Phase 2.2 legitimately updated web sync
+// and account-deletion compatibility; compare future changes against that reviewed release,
+// while preserving every guarded production entry, storage, transport and workflow check.
+// CI checks out full history (fetch-depth: 0) so this commit remains resolvable.
+const base = process.env.QA01_BASE || 'c58df5c1dc24316b60e8a71f2a409e91709bcb04';
 const work = mkdtempSync(join(tmpdir(), 'lumen-qa01-isolation-'));
 const report = { base, checks: [] };
 const pass = (name, detail = '') => { report.checks.push(name); console.log(`PASS ${name}${detail ? ` — ${detail}` : ''}`); };

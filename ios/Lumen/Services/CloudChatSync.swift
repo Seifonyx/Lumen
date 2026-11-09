@@ -167,6 +167,14 @@ import LumenCore
                     let snapshot = try await reference.collection("messages").whereField(FieldPath.documentID(), in: ids).getDocuments(source: .server)
                     messages += try snapshot.documents.map { try WebChatCodec.message(id: $0.documentID, fields: $0.data()) }
                 }
+                // System instructions may fall outside the latest 60 visible messages.
+                // Fetch them separately and retain only authoritative IDs from this snapshot.
+                let instructionDocs = try await reference.collection("messages")
+                    .whereField("role", isEqualTo: MessageRole.system.rawValue).getDocuments(source: .server)
+                let authoritativeIDs = Set(ordered)
+                let instructions = try instructionDocs.documents
+                    .filter { authoritativeIDs.contains($0.documentID) }
+                    .map { try WebChatCodec.message(id: $0.documentID, fields: $0.data()) }
                 let after = try await reference.getDocument(source: .server)
                 guard epoch == session else { return }
                 if WebChatCodec.isTombstone(after.data()) { engine.applyRemoteDeletion(chatID: chatID); return }
@@ -193,7 +201,8 @@ import LumenCore
                     }
                 }
                 if engine.applyRemotePage(chatID: chatID, messages: messages, orderedIDs: ids,
-                                          ticket: ticket, revision: WebChatCodec.revision(latest), reset: !older) {
+                                          ticket: ticket, revision: WebChatCodec.revision(latest), reset: !older,
+                                          systemMessages: instructions) {
                     errorMessage = nil
                     return
                 }

@@ -8,8 +8,8 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 - Reply context is prepared before accepting a send or edit. Oversized turns leave the draft and outbox intact. Historical file omissions preserve the surrounding text and do not consume the image budget. Revisions preserve the parent's cloud file references even if an older original is unavailable.
 - History refresh keeps cached pages, makes gaps loadable and blocks incomplete revisions. Previously loaded instructions are refreshed from authoritative records. Reselecting an interrupted reply preserves its stopped state.
 - Individual chat deletion clears chat content and operation markers. Both clients retain cloud originals because another conversation may share them. Full account deletion removes originals. Native CI checks a surviving reference and its original bytes. Simulator reuse checks the live device model, runtime, boot state and availability.
-- Local verification passed 105 Swift tests, 20 Python packaging checks, web typecheck and web unit tests. New Swift and simulator cases reproduced the regressions before their fixes.
-- Next action is exact-head PR native CI on both iPhone profiles, artifact verification and web CI. After merge, verify the native publish job, public SideStore feed and the Canvas Hosting deploy that carries the web retention fix. Physical sign-in, SideStore signing and live providers require an iPhone.
+- Local verification passed 107 Swift tests, 20 Python packaging checks, web typecheck and web unit tests. New Swift and simulator cases reproduced the regressions before their fixes.
+- Next action is exact-head PR native CI on both iPhone profiles, artifact verification and web CI. After merge, deploy and verify the Canvas web retention fix before publishing native. Then verify the native publish job, public SideStore feed and IPA checksum. Physical sign-in, SideStore signing and live providers require an iPhone.
 
 ## Next
 

@@ -235,6 +235,49 @@ private actor Phase2ContextClient: AIStreamingClient {
         #expect(engine.currentConversation.messages.first?.content == "")
     }
 
+    @Test func cachedWebHistoryWithAnUnsupportedFileRemainsUsableAfterRestart() async throws {
+        let message = try WebChatCodec.message(id: "webp", fields: [
+            "role": "user", "text": "Earlier question",
+            "files": [["id": "webp-file", "name": "photo.webp", "mime": "image/webp", "size": 10]]
+        ])
+        #expect(message.attachments?.isEmpty == true)
+        #expect(message.attachmentNames == ["photo.webp"])
+        var chat = Conversation(id: "cached-web", messages: [message])
+        chat.historyLoaded = true
+        chat.remoteMessageIDs = [message.id]
+        let store = MemoryConversationStore()
+        let snapshot = ChatSnapshot(conversations: [chat], selectedModel: AIModel.defaults[0], selectedConversationID: chat.id)
+        store.accounts["device"] = try JSONDecoder().decode(ChatSnapshot.self, from: JSONEncoder().encode(snapshot))
+        let client = Phase2ContextClient()
+        let engine = ChatEngine(client: client, store: store)
+        #expect(engine.currentConversation.historyLoaded == true)
+        try await #require(engine.submit(prompt: "Follow up", apiKey: "fixture")).value
+        #expect(await client.requests.last?.first?.content == "Earlier question")
+        #expect(engine.contextOmittedAttachmentCount == 1)
+    }
+
+    @Test func assistantImageOnlyHistoryKeepsItsPlaceWithoutSendingAssistantImageBytes() async throws {
+        let image = ChatAttachment(id: "generated-image", name: "result.jpg", kind: .image,
+                                   mime: "image/jpeg", data: Data([0xff, 0xd8, 0xff, 0xd9]))
+        let chat = Conversation(id: "generated", messages: [
+            ChatMessage(role: .user, content: "Create an image"),
+            ChatMessage(id: "generated-reply", role: .assistant, content: "", attachments: [image.metadata])
+        ])
+        let store = MemoryConversationStore(), files = MemoryAttachmentStore()
+        try files.save(image, accountID: "device")
+        store.accounts["device"] = ChatSnapshot(conversations: [chat], selectedModel: AIModel.defaults[0],
+                                                 selectedConversationID: chat.id)
+        let client = Phase2ContextClient()
+        let engine = ChatEngine(client: client, store: store, attachmentStore: files)
+        try await #require(engine.submit(prompt: "Describe the result", apiKey: "fixture")).value
+        let request = try #require(await client.requests.last)
+        let previous = try #require(request.first { $0.id == "generated-reply" })
+        #expect(previous.role == .assistant)
+        #expect(previous.content == "[Earlier attachment unavailable.]")
+        #expect(previous.attachments == nil)
+        #expect(engine.contextOmittedAttachmentCount == 1)
+    }
+
     @Test func unavailableImagesDoNotConsumeTheImageBudgetOrDiscardEarlierText() async throws {
         let missing = (0..<4).map { ChatAttachment(id: "missing-\($0)", name: "missing.jpg", kind: .image, mime: "image/jpeg") }
         let chat = Conversation(id: "images", messages: [

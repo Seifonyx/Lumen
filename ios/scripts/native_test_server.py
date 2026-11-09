@@ -66,8 +66,10 @@ def seed():
         'createdAt': 1700000000000, 'status': 'done', 'futureMessageField': 'preserve-through-revisions',
         'files': [
             {'id': 'revision-file', 'name': 'notes.txt', 'mime': 'text/plain', 'text': 'preserved attachment'},
-            {'id': 'missing-revision-image', 'name': 'old.jpg', 'mime': 'image/jpeg', 'kind': 'image', 'size': 4, 'stored': True}
+            {'id': 'unavailable-revision-image', 'name': 'old.jpg', 'mime': 'image/jpeg', 'kind': 'image', 'size': 12, 'stored': True}
         ]})
+    document(f'modelRouter/{uid}/files/unavailable-revision-image', {
+        'chatId': 'revision-fixture', 'name': 'old.jpg', 'mime': 'image/jpeg', 'data': 'bm90IGFuIGltYWdl'})
     document(f'modelRouter/{uid}/chats/revision-fixture/messages/revision-assistant', {
         'id': 'revision-assistant', 'role': 'assistant', 'text': 'A native streamed reply.', 'index': 1,
         'createdAt': 1700000001000, 'status': 'done'})
@@ -204,7 +206,7 @@ def verify_roundtrip():
             message_fields = json.load(response)['fields']
         attachments = [value['mapValue']['fields'] for value in message_fields['files']['arrayValue']['values']]
         assert attachments[0]['text']['stringValue'] == 'preserved attachment'
-        assert attachments[1]['id']['stringValue'] == 'missing-revision-image', 'Revision discarded the historical image reference'
+        assert attachments[1]['id']['stringValue'] == 'unavailable-revision-image', 'Revision discarded the historical image reference'
         assert message_fields['futureMessageField']['stringValue'] == 'preserve-through-revisions'
     assert len(branches) >= 2, 'Edited and regenerated versions were not synced'
     original_ids = [v['stringValue'] for v in original_chat['fields']['ids']['arrayValue']['values']]

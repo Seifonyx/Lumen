@@ -193,11 +193,12 @@ import LumenCore
                 // Originals are fetched only for supported image references; extracted text travels with metadata.
                 for file in messages.flatMap({ $0.attachments ?? [] }) where file.kind == .image {
                     if (try? engine.attachmentForSync(id: file.id)) != nil { continue }
-                    let original = try await db.collection("modelRouter").document(accountID).collection("files").document(file.id).getDocument(source: .server)
+                    let original = try? await db.collection("modelRouter").document(accountID).collection("files").document(file.id).getDocument(source: .server)
                     guard epoch == session else { return }
-                    if let base64 = original.data()?["data"] as? String, base64.count <= 820_000, let bytes = Data(base64Encoded: base64) {
+                    if let base64 = original?.data()?["data"] as? String, base64.count <= 820_000, let bytes = Data(base64Encoded: base64) {
                         var hydrated = file; hydrated.data = bytes
-                        try engine.cacheAttachment(hydrated)
+                        // Originals are optional for loading the transcript.
+                        try? engine.cacheAttachment(hydrated)
                     }
                 }
                 if engine.applyRemotePage(chatID: chatID, messages: messages, orderedIDs: ids,

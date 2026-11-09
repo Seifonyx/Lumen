@@ -374,10 +374,10 @@ public struct HistoryLoadTicket: Sendable {
     /// Prepare the request before the caller commits the turn or clears its draft.
     private func prepareReply(for chat: Conversation, model: AIModel, newMessageID: String? = nil) throws -> ReplyContext {
         let messages = messagesForContext(chat).filter {
-            // Failed and empty assistant placeholders are excluded from context.
+            // Keep file-only assistant turns from web history.
             if $0.role != .assistant { return true }
             if case .error = $0.status { return false }
-            return !$0.content.isEmpty
+            return !$0.content.isEmpty || $0.attachments?.isEmpty == false || $0.attachmentNames?.isEmpty == false
         }
         // Cap the candidate count before reading originals. Apply byte and image
         // budgets after removing unavailable historical files.
@@ -387,8 +387,9 @@ public struct HistoryLoadTicket: Sendable {
             let references = candidates[index].attachments ?? []
             let referenceCount = max(references.count, candidates[index].attachmentNames?.count ?? 0)
             guard referenceCount > 0 else { continue }
+            let acceptsImages = candidates[index].role == .user && model.supportsImages
             let available = references.compactMap { reference -> ChatAttachment? in
-                guard reference.kind != .unsupported, reference.kind != .image || model.supportsImages else { return nil }
+                guard reference.kind != .unsupported, reference.kind != .image || acceptsImages else { return nil }
                 do {
                     let file = reference.kind == .text ? reference : try attachment(id: reference.id)
                     try file.validate()
@@ -639,7 +640,9 @@ public struct HistoryLoadTicket: Sendable {
             pendingDeletions = snapshot.pendingDeletions
             pendingMetadata = snapshot.pendingMetadata ?? [:]
             for ci in savedConversations.indices {
-                if savedConversations[ci].messages.contains(where: { ($0.attachmentNames?.count ?? 0) > ($0.attachments?.count ?? 0) }) {
+                // Older caches had names without an attachment field. A decoded empty
+                // list already records that the web references could not be used here.
+                if savedConversations[ci].messages.contains(where: { $0.attachmentNames?.isEmpty == false && $0.attachments == nil }) {
                     savedConversations[ci].historyLoaded = false
                 }
                 for mi in savedConversations[ci].messages.indices where savedConversations[ci].messages[mi].status == .streaming {

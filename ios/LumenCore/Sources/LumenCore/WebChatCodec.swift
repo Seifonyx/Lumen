@@ -59,6 +59,17 @@ public enum WebChatCodec {
                            timestamp: date(fields["createdAt"]),
                            attachmentNames: (fields["files"] as? [[String: Any]])?.compactMap { $0["name"] as? String }, status: status)
     }
+    public static func metadataPatch(_ patch: ChatMetadataPatch, remote: [String: Any]?) throws -> [String: Any] {
+        guard let remote else { throw WebSyncError.conflict }
+        guard !isTombstone(remote) else { throw WebSyncError.deleted }
+        if remote["nativeMetadataOp"] as? String == patch.id { return [:] }
+        let now = Date().timeIntervalSince1970 * 1000
+        var fields: [String: Any] = ["updatedAt": now, "rev": max(now, revision(remote) + 1), "nativeMetadataOp": patch.id]
+        if let title = patch.title { fields["title"] = title }
+        if let pinned = patch.pinned { fields["pinned"] = pinned }
+        if let archived = patch.archived { fields["archived"] = archived }
+        return fields
+    }
     public static func append(chat: Conversation, messageIDs: Set<String>, remote: [String: Any]?,
                               existingMessages: [String: [String: Any]], sourceMetadata: [String: Any]? = nil,
                               inheritedMessages: [String: [String: Any]] = [:]) throws -> WebChatAppendPlan {

@@ -68,6 +68,14 @@ def seed():
     document(f'modelRouter/{uid}/chats/revision-fixture/messages/revision-assistant', {
         'id': 'revision-assistant', 'role': 'assistant', 'text': 'A native streamed reply.', 'index': 1,
         'createdAt': 1700000001000, 'status': 'done'})
+    document(f'modelRouter/{uid}/chats/metadata-fixture', {
+        'title': 'History management fixture', 'createdAt': 1700000000000, 'updatedAt': 1700000001000,
+        'ids': ['metadata-user'], 'count': 1, 'model': 'fixture-model', 'rev': 1700000001000,
+        'deleted': False, 'projectId': 'preserve-metadata-project', 'customFutureField': 'preserve-metadata-field'})
+    document(f'modelRouter/{uid}/chats/metadata-fixture/messages/metadata-user', {
+        'id': 'metadata-user', 'role': 'user', 'text': 'Recovery notes from last winter', 'index': 0,
+        'createdAt': 1700000000000, 'status': 'done'})
+    document(f'modelRouter/{uid}/chats/delete-fixture/nativeMetadataOps/old-operation', {'appliedAt': 1700000000000})
     document(f'modelRouter/{uid}/chats/delete-fixture', {
         'title': 'Delete fixture chat', 'createdAt': 1700000000000, 'updatedAt': 1700000001000,
         'ids': ['private-message'], 'count': 1, 'rev': 1700000001000, 'deleted': False})
@@ -173,7 +181,17 @@ def verify_roundtrip():
     with urllib.request.urlopen(urllib.request.Request(original_message_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
         assert json.load(response)['fields']['text']['stringValue'] == 'Original revision question'
     assert any(any(m.get('content') == 'Edited revision question' for m in r.get('messages', [])) for r in REQUESTS), 'Provider never received the edited prompt'
-    return {'firebaseSDKRoundtrip': True, 'deletedContentCleaned': True, 'unknownMetadataPreserved': True, 'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True, 'revisionVersionsPreserved': True, 'providerRequests': len(REQUESTS)}
+    metadata_url = chats_url + 'metadata-fixture'
+    with urllib.request.urlopen(urllib.request.Request(metadata_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+        managed = json.load(response)['fields']
+    assert managed['title']['stringValue'] == 'Renamed training chat'
+    assert managed['pinned']['booleanValue'] is True and managed['archived']['booleanValue'] is False
+    assert managed['projectId']['stringValue'] == 'preserve-metadata-project'
+    assert managed['customFutureField']['stringValue'] == 'preserve-metadata-field'
+    assert [v['stringValue'] for v in managed['ids']['arrayValue']['values']] == ['metadata-user']
+    with urllib.request.urlopen(urllib.request.Request(deleted_url + '/nativeMetadataOps', headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+        assert not json.load(response).get('documents'), 'Deleted metadata operation markers remain'
+    return {'firebaseSDKRoundtrip': True, 'deletedContentCleaned': True, 'unknownMetadataPreserved': True, 'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True, 'revisionVersionsPreserved': True, 'metadataRoundtrip': True, 'providerRequests': len(REQUESTS)}
 
 
 def seed_user_id():

@@ -5,13 +5,20 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 ## Now
 
 - Owner authorized the entire Phase2 in one continuous run, releasing each part to the existing source.
-  Current branch `codex/phase2-message-controls`, starting from fb1ea81. Parts:2.1 controls0.3.0;
+  Current branch `codex/phase2-history`, starting from fb1ea81. Parts:2.1 controls0.3.0;
   2.2 history0.3.1;2.3 drafts/temporary0.3.2;2.4 attachments0.3.3;2.5 long chats/recovery0.3.4.
   Plan/ledger: `/workspace/scratch/lumen-phase2/{plan,progress}.md`. Baseline44 Swift+16 Python pass.
   Task1 implementation is ready for review: immutable selectable conversation versions for edit/regenerate/retry,
   native copy/share, version grouping and clone-safe cloud transactions.58 Swift tests+16 Python checks pass;
   fresh review found2 Important provenance/dependency issues, repaired with RED→GREEN tests; grouped
-  deletion now removes all versions atomically. UI Swift parses. Native CI/publication still pending.
+  deletion now removes all versions atomically. UI Swift parses. Part1 main commit f658e6f is in Native CI; publication still pending.
+  Task2 history management passed review after one fix pass locally while Part1 builds:68 Swift+16 Python tests pass;
+  rename/pin/archive ordered outbox, durable replay markers, archived view and cached-message search are implemented. Do not publish Task2 until0.3.0
+  is verified in the public source. Review found1 Important (coalescing reassigned applied fields a new ID)
+  and1 Minor (web deletion marker cleanup); both fixed. Regression failed before the ordered queue fix,
+  then all68 tests passed. Operation identities now survive failed ACK/restart/new fields; web deletion
+  cleans marker collections in bounded batches. Web checks pending dependency installation.
+  Part1 rerun commit52ab376 fixes cold simulator startup allowance and invalid verifier URL.
   Preserve originals and group versions as one history item. Do not stop after the first release.
   Develop later parts while CI runs, and publish sequentially after prior source update succeeds.
 

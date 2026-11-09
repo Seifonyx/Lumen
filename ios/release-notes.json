@@ -1,11 +1,10 @@
 {
-  "title": "Message controls \u00b7 Phase 2.1",
-  "description": "Edit and resend, regenerate and retry replies, switch conversation versions, and copy or share messages.",
+  "title": "History and search \u00b7 Phase 2.2",
+  "description": "Rename, pin and archive conversations, reopen archived chats, and search downloaded message text.",
   "notes": [
-    "Phase 2.1 adds native message controls to Lumen.",
-    "Edit a prompt and resend it, regenerate a response, or retry a failed reply. Earlier transcripts stay available through the Versions control, and related versions appear together in history.",
-    "Copy messages or share them using the iPhone share sheet. Revisions save before a request starts and remain separate between accounts.",
-    "Cloud revisions retain existing project context, file metadata and citations while preserving the original conversation.",
-    "Includes two-size iPhone simulator journeys and Firebase SDK roundtrip checks for the original and revised transcripts."
+    "Phase 2.2 adds native history management and search.",
+    "Rename, pin or archive a conversation from its history menu. Earlier versions stay together, and archived conversations remain available from Archived chats.",
+    "Search titles and downloaded message text, including earlier conversation versions, with pinned and archived filters. Message search includes chats opened on this iPhone.",
+    "Metadata changes save locally and sync field by field, preserving unrelated web settings and newer queued changes. Durable operation markers prevent completed mutations being replayed after a failed local acknowledgement."
   ]
 }

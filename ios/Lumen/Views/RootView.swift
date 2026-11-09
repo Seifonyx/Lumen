@@ -54,7 +54,7 @@ struct RootView: View {
                     }
                     .navigationDestination(for: WorkspaceRoute.self) { route in
                         if route == .router { ProvidersView(connections: connections, sync: sync) }
-                        else if route == .search { HistorySearchView(engine: engine, select: openConversation) }
+                        else if route == .search || route == .archive { HistorySearchView(engine: engine, initialScope: route == .archive ? .archived : .active, select: requestOpenConversation) }
                         else { WorkspaceView(route: route) }
                     }
                 }

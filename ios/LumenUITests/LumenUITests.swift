@@ -327,6 +327,50 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 15))
     }
 
+    func testHistoryRenamePinArchiveAndSearchCachedMessages() {
+        executionTimeAllowance = 240
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        app.buttons["openSidebar"].tap()
+        let row = app.buttons["history-metadata-fixture"]
+        XCTAssertTrue(row.waitForExistence(timeout: 10))
+        row.tap()
+        XCTAssertTrue(app.staticTexts["Recovery notes from last winter"].waitForExistence(timeout: 15))
+        app.buttons["openSidebar"].tap()
+        row.press(forDuration: 1)
+        app.buttons["Rename"].tap()
+        let name = app.textFields["conversationName"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        name.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
+        name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "History management fixture".count))
+        name.typeText("Renamed training chat")
+        app.buttons["saveConversationName"].tap()
+        XCTAssertTrue(app.staticTexts["Renamed training chat"].waitForExistence(timeout: 5))
+        row.press(forDuration: 1)
+        app.buttons["Pin"].tap()
+        row.press(forDuration: 1)
+        app.buttons["Archive"].tap()
+        XCTAssertTrue(row.waitForNonExistence(timeout: 5))
+        app.buttons["sidebar-archive"].tap()
+        XCTAssertTrue(app.navigationBars["Archived chats"].waitForExistence(timeout: 5))
+        let result = app.buttons["search-chat-metadata-fixture"]
+        XCTAssertTrue(result.waitForExistence(timeout: 5))
+        capture("archived-and-renamed-chat")
+        result.press(forDuration: 1)
+        app.buttons["Unarchive"].tap()
+        app.segmentedControls.buttons["Chats"].tap()
+        let search = app.searchFields.firstMatch
+        search.tap()
+        search.typeText("winter")
+        XCTAssertTrue(result.waitForExistence(timeout: 5))
+        capture("history-message-search")
+        result.tap()
+        XCTAssertTrue(app.staticTexts["Recovery notes from last winter"].waitForExistence(timeout: 5))
+        settings()
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
+    }
+
     func testRejectedProviderKeyShowsErrorAndKeepsTheDraft() {
         launchCleanChat()
         defer { app.terminate() }

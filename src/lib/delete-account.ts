@@ -2,7 +2,7 @@
 // this device, then the sign-in record itself. Firestore has no "delete with sub-collections" from a
 // browser, so each collection is listed and removed in batches.
 import { deleteUser, GoogleAuthProvider, reauthenticateWithPopup } from 'firebase/auth';
-import { collection, deleteDoc, doc, getDocs, query, where, writeBatch, type DocumentReference } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, query, where, writeBatch, limit, type DocumentReference } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
 const SUBCOLLECTIONS = ['files', 'memory', 'memories', 'usage', 'tasks'];
@@ -19,7 +19,15 @@ async function removeAll(refs: DocumentReference[]) {
 export async function deleteCloudData(uid: string) {
   const root = doc(db, 'modelRouter', uid);
   const chats = await getDocs(collection(root, 'chats'));
-  for (const chat of chats.docs) await removeAll((await getDocs(collection(chat.ref, 'messages'))).docs.map((d) => d.ref));
+  for (const chat of chats.docs) {
+    for (const name of ['messages', 'nativeMetadataOps']) {
+      for (;;) {
+        const page = await getDocs(query(collection(chat.ref, name), limit(100)));
+        if (page.empty) break;
+        await removeAll(page.docs.map((d) => d.ref));
+      }
+    }
+  }
   await removeAll(chats.docs.map((d) => d.ref));
   for (const name of SUBCOLLECTIONS) await removeAll((await getDocs(collection(root, name))).docs.map((d) => d.ref));
   await removeAll((await getDocs(query(collection(db, 'modelRouterShares'), where('owner', '==', uid)))).docs.map((d) => d.ref));

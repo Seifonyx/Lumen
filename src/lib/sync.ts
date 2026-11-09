@@ -11,7 +11,7 @@
 // only the messages that changed (the chat's `ids` list gives the order and shows deletions).
 
 import {
-  collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, setDoc, orderBy, query, serverTimestamp, Timestamp, where, writeBatch,
+  collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, setDoc, orderBy, query, limit, serverTimestamp, Timestamp, where, writeBatch,
   type DocumentData, type Query, type Unsubscribe,
 } from 'firebase/firestore';
 import { isTemporaryChat } from './temporary-chat';
@@ -329,6 +329,14 @@ export class ChatSync {
     for (const b of batches) await b.commit();
     quota.count('deletes', ids.size);
     quota.count('writes', 1);
+    const markers = collection(doc(chatsCol(this.uid), id), 'nativeMetadataOps');
+    for (;;) {
+      const page = await getDocs(query(markers, limit(100)));
+      if (page.empty) break;
+      const cleanup = writeBatch(db);
+      page.docs.forEach((entry) => cleanup.delete(entry.ref));
+      await cleanup.commit();
+    }
     await this.removeOriginals(id);
     this.known.delete(id);
     this.synced[id] = rev;

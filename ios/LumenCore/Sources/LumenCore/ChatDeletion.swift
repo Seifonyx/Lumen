@@ -5,6 +5,11 @@ import Foundation
     /// Delete a bounded batch; return false only when no documents remain.
     func deleteMessageBatch(chatID: String) async throws -> Bool
     func deleteOriginalBatch(chatID: String) async throws -> Bool
+    func deleteOperationBatch(chatID: String) async throws -> Bool
+}
+
+extension ChatDeletionBackend {
+    public func deleteOperationBatch(chatID: String) async throws -> Bool { false }
 }
 
 public enum ChatDeletion {
@@ -19,6 +24,10 @@ public enum ChatDeletion {
         while true {
             try Task.checkCancellation()
             if try await !backend.deleteOriginalBatch(chatID: chatID) { break }
+        }
+        while true {
+            try Task.checkCancellation()
+            if try await !backend.deleteOperationBatch(chatID: chatID) { break }
         }
     }
 }

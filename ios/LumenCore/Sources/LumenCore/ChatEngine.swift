@@ -16,6 +16,7 @@ public struct HistoryLoadTicket: Sendable {
     public private(set) var accountID = "device"
     public private(set) var pendingMessages: [String: Set<String>] = [:]
     public private(set) var pendingDeletions: Set<String> = []
+    public private(set) var pendingMetadata: [String: [ChatMetadataPatch]] = [:]
     @ObservationIgnored public var onChange: (() -> Void)?
     @ObservationIgnored private let client: any AIStreamingClient
     @ObservationIgnored private let store: any ConversationStore
@@ -72,6 +73,56 @@ public struct HistoryLoadTicket: Sendable {
         return savedConversations.filter { ($0.lineageRootID ?? $0.id) == root }.sorted {
             $0.createdAt == $1.createdAt ? $0.id < $1.id : $0.createdAt < $1.createdAt
         }
+    }
+
+    public func searchConversations(query: String, scope: HistoryScope = .active) -> [ConversationSearchResult] {
+        ConversationSearch.results(query: query, scope: scope, conversations: savedConversations, visible: historyConversations)
+    }
+
+    @discardableResult public func renameConversation(id: String, title: String) -> Bool {
+        let value = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty, value.count <= 120 else {
+            errorMessage = "Use a conversation name between 1 and 120 characters."
+            return false
+        }
+        return updateMetadata(id: id, patch: ChatMetadataPatch(title: value))
+    }
+
+    @discardableResult public func setPinned(id: String, pinned: Bool) -> Bool {
+        updateMetadata(id: id, patch: ChatMetadataPatch(pinned: pinned))
+    }
+
+    @discardableResult public func setArchived(id: String, archived: Bool) -> Bool {
+        updateMetadata(id: id, patch: ChatMetadataPatch(archived: archived))
+    }
+
+    private func updateMetadata(id: String, patch: ChatMetadataPatch) -> Bool {
+        guard let target = savedConversations.first(where: { $0.id == id }) else { return false }
+        let root = target.lineageRootID ?? target.id
+        let members = savedConversations.filter { ($0.lineageRootID ?? $0.id) == root }
+        let previous = currentConversation, savedBefore = savedConversations, pendingBefore = pendingMetadata
+        for var chat in members {
+            if currentConversation.id == chat.id { chat = currentConversation }
+            patch.apply(to: &chat)
+            chat.updatedAt = Date()
+            pendingMetadata[chat.id, default: []].append(patch)
+            upsert(chat)
+            if currentConversation.id == chat.id { currentConversation = chat }
+        }
+        guard write() else {
+            currentConversation = previous; savedConversations = savedBefore; pendingMetadata = pendingBefore
+            return false
+        }
+        errorMessage = nil
+        return true
+    }
+
+    @discardableResult public func acknowledgeMetadata(chatID: String, operationID: String) -> Bool {
+        guard let patches = pendingMetadata[chatID], patches.contains(where: { $0.id == operationID }) else { return true }
+        let remaining = patches.filter { $0.id != operationID }
+        pendingMetadata[chatID] = remaining.isEmpty ? nil : remaining
+        guard write() else { pendingMetadata[chatID] = patches; return false }
+        return true
     }
 
     @discardableResult public func editAndResend(messageID: String, text: String, apiKey: String) -> Task<Void, Never>? {
@@ -149,8 +200,9 @@ public struct HistoryLoadTicket: Sendable {
         let savedBefore = savedConversations
         let messagesBefore = pendingMessages
         let deletionsBefore = pendingDeletions
+        let metadataBefore = pendingMetadata
         savedConversations.removeAll { deleted.contains($0.id) }
-        for id in deleted { pendingMessages[id] = nil }
+        for id in deleted { pendingMessages[id] = nil; pendingMetadata[id] = nil }
         pendingDeletions.formUnion(deleted)
         if deleted.contains(currentConversation.id) {
             currentConversation = Conversation(selectedModelId: selectedModel?.id)
@@ -161,6 +213,7 @@ public struct HistoryLoadTicket: Sendable {
             savedConversations = savedBefore
             pendingMessages = messagesBefore
             pendingDeletions = deletionsBefore
+            pendingMetadata = metadataBefore
             return false
         }
         for id in deleted { mutationVersions[id, default: 0] &+= 1 }
@@ -281,10 +334,11 @@ public struct HistoryLoadTicket: Sendable {
             merged.messages = local.messages
             let existingIDs = local.remoteMessageIDs
             merged.historyLoaded = existingIDs == remote.remoteMessageIDs && local.remoteRevision == remote.remoteRevision ? local.historyLoaded : false
-            if !(pendingMessages[remote.id] ?? []).isEmpty {
+            if !(pendingMessages[remote.id] ?? []).isEmpty || pendingMetadata[remote.id] != nil {
                 merged.updatedAt = max(local.updatedAt, remote.updatedAt)
             }
         }
+        for patch in pendingMetadata[remote.id] ?? [] { patch.apply(to: &merged) }
         upsert(merged)
         if currentConversation.id == merged.id {
             // Never replace an active generation with an asynchronous snapshot.
@@ -329,6 +383,7 @@ public struct HistoryLoadTicket: Sendable {
         if currentConversation.id == chatID { stopStreaming(); currentConversation = Conversation(selectedModelId: selectedModel?.id) }
         savedConversations.removeAll { $0.id == chatID }
         pendingMessages[chatID] = nil
+        pendingMetadata[chatID] = nil
         // Our tombstone listener must not acknowledge unfinished remote content cleanup.
         mutationVersions[chatID, default: 0] &+= 1
         _ = write()
@@ -361,7 +416,8 @@ public struct HistoryLoadTicket: Sendable {
         guard cacheReadable else { errorMessage = "The saved chat cache could not be read. Free storage and reopen Lumen before sending."; return false }
         do {
             try store.save(ChatSnapshot(conversations: savedConversations, selectedModel: selectedModel,
-                                        pendingMessages: pendingMessages, pendingDeletions: pendingDeletions), accountID: accountID)
+                                        pendingMessages: pendingMessages, pendingDeletions: pendingDeletions,
+                                        pendingMetadata: pendingMetadata), accountID: accountID)
             onChange?()
             return true
         } catch {
@@ -377,6 +433,7 @@ public struct HistoryLoadTicket: Sendable {
         savedConversations = []
         pendingMessages = [:]
         pendingDeletions = []
+        pendingMetadata = [:]
         selectedModel = nil
         errorMessage = nil
         cacheReadable = true
@@ -386,6 +443,7 @@ public struct HistoryLoadTicket: Sendable {
             selectedModel = snapshot.selectedModel
             pendingMessages = snapshot.pendingMessages
             pendingDeletions = snapshot.pendingDeletions
+            pendingMetadata = snapshot.pendingMetadata ?? [:]
             for ci in savedConversations.indices {
                 for mi in savedConversations[ci].messages.indices where savedConversations[ci].messages[mi].status == .streaming {
                     savedConversations[ci].messages[mi].status = .stopped

@@ -313,7 +313,7 @@ public struct HistoryLoadTicket: Sendable {
         do {
             guard attachmentIDs.count <= 4 else { throw AttachmentError.tooMany }
             files = try attachmentIDs.map { try attachment(id: $0) }
-            try validateAttachments(in: ContextWindow.select(messages: currentConversation.messages + [ChatMessage(role: .user, content: text, attachments: files)]).messages, model: model)
+            try validateAttachments(in: ContextWindow.select(messages: messagesForContext(currentConversation) + [ChatMessage(role: .user, content: text, attachments: files)]).messages, model: model)
         } catch { errorMessage = error.localizedDescription; return nil }
         let before = currentConversation
         let savedBefore = savedConversations
@@ -337,10 +337,21 @@ public struct HistoryLoadTicket: Sendable {
         return startReply(model: model, apiKey: apiKey, replyID: reply.id)
     }
 
+    /// Restore authoritative instructions without inserting old messages into the visible 60-message page.
+    private func messagesForContext(_ chat: Conversation) -> [ChatMessage] {
+        let visible = Set(chat.messages.map(\.id))
+        let ordered = Set(chat.remoteMessageIDs ?? [])
+        let earlier = (chat.hydratedSystemMessages ?? []).filter {
+            $0.role == .system && !visible.contains($0.id) &&
+            (chat.remoteMessageIDs == nil || ordered.contains($0.id))
+        }
+        return earlier + chat.messages
+    }
+
     private func startReply(model: AIModel, apiKey: String, replyID: String) -> Task<Void, Never> {
         let chatID = currentConversation.id
         let account = accountID
-        var requestMessages = Array(currentConversation.messages.dropLast()).filter {
+        var requestMessages = Array(messagesForContext(currentConversation).dropLast()).filter {
             // Failed/empty assistant placeholders are not conversation context.
             if $0.role != .assistant { return true }
             if case .error = $0.status { return false }
@@ -427,6 +438,10 @@ public struct HistoryLoadTicket: Sendable {
         var merged = remote
         if let local = savedConversations.first(where: { $0.id == remote.id }) {
             merged.messages = local.messages
+            // These values are local-only: Firestore metadata cannot reconstruct a partially uploaded fork
+            // or the instruction messages fetched independently of the visible page.
+            merged.inheritedMessageIDs = local.inheritedMessageIDs
+            merged.hydratedSystemMessages = local.hydratedSystemMessages
             let existingIDs = local.remoteMessageIDs
             merged.historyLoaded = existingIDs == remote.remoteMessageIDs && local.remoteRevision == remote.remoteRevision ? local.historyLoaded : false
             if !(pendingMessages[remote.id] ?? []).isEmpty || pendingMetadata[remote.id] != nil {
@@ -464,11 +479,16 @@ public struct HistoryLoadTicket: Sendable {
     }
 
     @discardableResult public func applyRemotePage(chatID: String, messages: [ChatMessage], orderedIDs: [String],
-                                                   ticket: HistoryLoadTicket, revision: Double?, reset: Bool) -> Bool {
+                                                   ticket: HistoryLoadTicket, revision: Double?, reset: Bool,
+                                                   systemMessages: [ChatMessage]? = nil) -> Bool {
         guard ticket.session == cacheSession, ticket.chatID == chatID,
               ticket.version == mutationVersions[chatID] ?? 0,
               var chat = savedConversations.first(where: { $0.id == chatID }), !pendingDeletions.contains(chatID),
               Set(orderedIDs).count == orderedIDs.count, Set(messages.map(\.id)).isSubset(of: Set(orderedIDs)) else { return false }
+        if let systemMessages {
+            guard Set(systemMessages.map(\.id)).count == systemMessages.count,
+                  systemMessages.allSatisfy({ $0.role == .system && orderedIDs.contains($0.id) }) else { return false }
+        }
         let retained = pendingMessages[chatID] ?? []
         let local = !isTemporary && currentConversation.id == chatID ? currentConversation.messages : chat.messages
         var remote = reset ? [:] : Dictionary(local.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
@@ -479,6 +499,8 @@ public struct HistoryLoadTicket: Sendable {
             if !merged.contains(where: { $0.id == message.id }) { merged.append(message) }
         }
         chat.messages = merged; chat.remoteMessageIDs = orderedIDs; chat.remoteRevision = revision
+        // A complete refresh replaces stale instructions; older pages preserve a prior hydration.
+        chat.hydratedSystemMessages = systemMessages ?? (reset ? nil : chat.hydratedSystemMessages)
         chat.historyLoaded = orderedIDs.last.map { last in
             messages.contains(where: { $0.id == last }) || (!reset && chat.historyLoaded == true && remote[last] != nil)
         } ?? true

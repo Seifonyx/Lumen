@@ -7,6 +7,7 @@ struct MessageRow: View {
     let canRevise: Bool
     let edit: () -> Void
     let regenerate: () -> Void
+    var openAttachment: ((ChatAttachment) -> Void)? = nil
     @State private var copied = false
     private var isUser: Bool { message.role == .user }
     private var failed: Bool { if case .error = message.status { true } else { false } }
@@ -16,7 +17,12 @@ struct MessageRow: View {
             if isUser { Spacer(minLength: 40) }
             VStack(alignment: isUser ? .trailing : .leading, spacing: 10) {
                 VStack(alignment: .leading, spacing: 10) {
-                    if let names = message.attachmentNames {
+                    if let files = message.attachments, !files.isEmpty {
+                        ForEach(files) { file in
+                            Button { openAttachment?(file) } label: { Label(file.name, systemImage: file.kind == .image ? "photo" : "doc").font(.footnote) }
+                                .frame(minHeight: 44).accessibilityIdentifier("messageAttachment-" + file.id)
+                        }
+                    } else if let names = message.attachmentNames {
                         ForEach(Array(names.enumerated()), id: \.offset) { _, name in Label(name, systemImage: "doc").font(.footnote).foregroundStyle(.secondary) }
                     }
                     if message.content.isEmpty && message.status == .streaming { ProgressView().accessibilityLabel("Writing a reply") }

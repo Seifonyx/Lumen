@@ -57,7 +57,8 @@ public enum WebChatCodec {
         }
         return ChatMessage(id: id, role: role, content: fields["text"] as? String ?? "",
                            timestamp: date(fields["createdAt"]),
-                           attachmentNames: (fields["files"] as? [[String: Any]])?.compactMap { $0["name"] as? String }, status: status)
+                           attachmentNames: (fields["files"] as? [[String: Any]])?.compactMap { $0["name"] as? String }, status: status,
+                           attachments: (fields["files"] as? [[String: Any]])?.compactMap(ChatAttachment.web))
     }
     public static func metadataPatch(_ patch: ChatMetadataPatch, remote: [String: Any]?) throws -> [String: Any] {
         guard let remote else { throw WebSyncError.conflict }
@@ -108,6 +109,9 @@ public enum WebChatCodec {
             if let model = chat.selectedModelId, fields["model"] == nil || message.sourceMessageID != nil { fields["model"] = model }
             if case .error = message.status {} else { fields.removeValue(forKey: "error") }
             if case .error(let error) = message.status { fields["error"] = error }
+            if let attachments = message.attachments, !attachments.isEmpty, fields["files"] == nil {
+                fields["files"] = attachments.map(\.webFields)
+            }
             writes[message.id] = fields
         }
         let now = Date().timeIntervalSince1970 * 1000

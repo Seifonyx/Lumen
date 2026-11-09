@@ -9,8 +9,10 @@ struct ChatView: View {
     var focused: FocusState<Bool>.Binding
     var chooseModel: () -> Void
     var selectVersion: (Conversation) -> Void
+    @State private var attachmentImporting = false
     @State private var followsReply = true
     @State private var editingMessage: ChatMessage?
+    @State private var previewAttachment: ChatAttachment?
     @State private var editingAccount = ""
     @State private var editingConversation = ""
     private var versions: [Conversation] { engine.versions(for: engine.currentConversation.id) }
@@ -18,7 +20,7 @@ struct ChatView: View {
     private var composerAligned: Bool {
         composer.accountID == engine.accountID && composer.conversationID == engine.currentConversation.id && composer.isTemporary == engine.isTemporary
     }
-    private var canSend: Bool { composerAligned && composer.hasContent && connections.key(for: engine.selectedModel) != nil && engine.currentConversation.historyLoaded != false }
+    private var canSend: Bool { composerAligned && !attachmentImporting && composer.hasContent && connections.key(for: engine.selectedModel) != nil && engine.currentConversation.historyLoaded != false }
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -60,6 +62,9 @@ struct ChatView: View {
                             }, regenerate: {
                                 guard let key = connections.key(for: engine.selectedModel) else { return }
                                 _ = engine.regenerate(messageID: message.id, apiKey: key)
+                            }, openAttachment: { file in
+                                if file.kind == .text { previewAttachment = file }
+                                else { do { previewAttachment = try engine.attachment(id: file.id) } catch { engine.errorMessage = error.localizedDescription } }
                             }).id(message.id)
                         }
                         Color.clear.frame(height: 1).id("conversationBottom")
@@ -102,6 +107,7 @@ struct ChatView: View {
                     .accessibilityIdentifier("chatError")
                 }
                 VStack(alignment: .leading, spacing: 12) {
+                    ComposerAttachments(composer: composer, engine: engine, importing: $attachmentImporting)
                     TextField("Message Lumen", text: Binding(get: { composerAligned ? composer.draft : "" }, set: { if composerAligned { composer.draft = $0 } }), axis: .vertical)
                         .disabled(!composerAligned)
                         .lineLimit(1...6)
@@ -130,7 +136,7 @@ struct ChatView: View {
                                 .accessibilityIdentifier("stopStreaming")
                         } else {
                             Button("Send", systemImage: "arrow.up.circle.fill") {
-                                guard composerAligned, composer.save(), let key = connections.key(for: engine.selectedModel), engine.submit(prompt: composer.draft, apiKey: key) != nil else { return }
+                                guard composerAligned, composer.save(), let key = connections.key(for: engine.selectedModel), engine.submit(prompt: composer.draft, attachmentIDs: composer.attachmentIDs, apiKey: key) != nil else { return }
                                 composer.discardDraft()
                             }
                             .font(.system(size: 34)).labelStyle(.iconOnly)
@@ -154,7 +160,8 @@ struct ChatView: View {
                 return engine.editAndResend(messageID: message.id, text: text, apiKey: key) != nil
             }
         }
-        .onChange(of: engine.accountID) { _, _ in editingMessage = nil }
-        .onChange(of: engine.currentConversation.id) { _, _ in editingMessage = nil }
+        .sheet(item: $previewAttachment) { AttachmentPreview(file: $0) }
+        .onChange(of: engine.accountID) { _, _ in editingMessage = nil; previewAttachment = nil }
+        .onChange(of: engine.currentConversation.id) { _, _ in editingMessage = nil; previewAttachment = nil }
     }
 }

@@ -75,25 +75,16 @@ public struct OpenAICompatibleStreamingClient: AIStreamingClient {
         }
         let base = baseURL ?? URL(string: defaultURL)!
         var endpoint: URL
-        var body: [String: Any]
-        let conversation = messages.filter { $0.role != .system }.map { ["role": $0.role.rawValue, "content": $0.content] }
-        let system = messages.filter { $0.role == .system }.map(\.content).joined(separator: "\n")
         switch provider {
         case "gemini":
             endpoint = base.appendingPathComponent("models").appendingPathComponent(model.id + ":streamGenerateContent")
             var parts = URLComponents(url: endpoint, resolvingAgainstBaseURL: false)!
             parts.queryItems = [URLQueryItem(name: "alt", value: "sse")]
             endpoint = parts.url!
-            body = ["contents": conversation.map { ["role": $0["role"] == "assistant" ? "model" : "user", "parts": [["text": $0["content"]!]]] }]
-            if !system.isEmpty { body["systemInstruction"] = ["parts": [["text": system]]] }
-        case "anthropic":
-            endpoint = base.appendingPathComponent("messages")
-            body = ["model": model.id, "messages": conversation, "stream": true, "max_tokens": 8192]
-            if !system.isEmpty { body["system"] = system }
-        default:
-            endpoint = base.appendingPathComponent("chat/completions")
-            body = ["model": model.id, "messages": messages.map { ["role": $0.role.rawValue, "content": $0.content] }, "stream": true]
+        case "anthropic": endpoint = base.appendingPathComponent("messages")
+        default: endpoint = base.appendingPathComponent("chat/completions")
         }
+        let body = try ProviderInput.body(messages: messages, model: model)
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.httpBody = try JSONSerialization.data(withJSONObject: body)

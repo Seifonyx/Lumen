@@ -16,7 +16,8 @@ import LumenCore
             let keys = KeychainProviderKeys(service: "io.github.seifonyx.lumen.integration-keys")
             composer = DraftState(store: FileDraftStore(directory: DebugIntegration.directory().appendingPathComponent("Drafts")), defaults: UserDefaults(suiteName: "lumen.integration")!)
             engine = ChatEngine(client: OpenAICompatibleStreamingClient(baseURL: DebugIntegration.providerURL),
-                                store: FileConversationStore(directory: DebugIntegration.directory(), legacyDefaults: nil))
+                                store: FileConversationStore(directory: DebugIntegration.directory(), legacyDefaults: nil),
+                                attachmentStore: FileAttachmentStore(directory: DebugIntegration.directory().appendingPathComponent("Attachments")))
             auth = AuthEngine(client: FirebaseSession(credentialSource: DebugIntegration.credential))
             connections = ProviderConnections(keyStore: keys, catalog: ProviderCatalog(baseURL: DebugIntegration.providerURL))
         } else {

@@ -159,6 +159,16 @@ import LumenCore
                 let messages = try snapshot.documents.map { try WebChatCodec.message(id: $0.documentID, fields: $0.data()) }
                 let ids = latest["ids"] as? [String] ?? messages.map(\.id)
                 guard Set(ids).isSubset(of: Set(messages.map(\.id))) else { throw WebSyncError.invalid }
+                // Originals are fetched only for supported image references; extracted text travels with metadata.
+                for file in messages.flatMap({ $0.attachments ?? [] }) where file.kind == .image {
+                    if (try? engine.attachmentForSync(id: file.id)) != nil { continue }
+                    let original = try await db.collection("modelRouter").document(accountID).collection("files").document(file.id).getDocument(source: .server)
+                    guard epoch == session else { return }
+                    if let base64 = original.data()?["data"] as? String, base64.count <= 820_000, let bytes = Data(base64Encoded: base64) {
+                        var hydrated = file; hydrated.data = bytes
+                        try engine.cacheAttachment(hydrated)
+                    }
+                }
                 if engine.applyRemoteMessages(chatID: chatID, messages: messages, orderedIDs: ids,
                                               ticket: ticket, revision: WebChatCodec.revision(latest)) {
                     errorMessage = nil
@@ -254,6 +264,15 @@ import LumenCore
 
     private func append(chat: Conversation, ids: Set<String>, uid: String) async throws {
         let reference = chats(uid).document(chat.id)
+        var unique: [String: ChatAttachment] = [:]
+        for message in chat.messages where ids.contains(message.id) {
+            for file in message.attachments ?? [] {
+                if file.kind == .text { unique[file.id] = file }
+                else if file.kind == .image { unique[file.id] = try engine.attachmentForSync(id: file.id) }
+            }
+        }
+        let originals = Array(unique.values)
+        let files = db.collection("modelRouter").document(uid).collection("files")
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
             // Firestore executes transaction updates off the main actor, including retries.
             db.runTransaction({ @Sendable transaction, errorPointer in
@@ -276,6 +295,17 @@ import LumenCore
                     }
                     let plan = try WebChatCodec.append(chat: chat, messageIDs: ids, remote: remote.data(), existingMessages: existing,
                                                       sourceMetadata: sourceMetadata ?? nil, inheritedMessages: inherited)
+                    var missing: [ChatAttachment] = []
+                    for file in originals {
+                        if try !transaction.getDocument(files.document(file.id)).exists { missing.append(file) }
+                    }
+                    for file in missing {
+                        try file.validate()
+                        let bytes = file.data ?? Data((file.text ?? "").utf8)
+                        transaction.setData(["chatId": chat.lineageRootID ?? chat.id, "name": file.name, "mime": file.mime,
+                                             "kind": file.kind.rawValue, "data": bytes.base64EncodedString(),
+                                             "srv": FieldValue.serverTimestamp()], forDocument: files.document(file.id))
+                    }
                     for (id, var fields) in plan.messages {
                         fields["srv"] = FieldValue.serverTimestamp()
                         transaction.setData(fields, forDocument: reference.collection("messages").document(id), merge: true)

@@ -234,6 +234,35 @@ final class LumenUITests: XCTestCase {
         model.tap()
     }
 
+    func testAttachmentsPreviewRestoreAndSendActualTextAndImageBytes() {
+        executionTimeAllowance = 240
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        app.buttons["attachFile"].tap(); app.buttons["attachFixtureText"].tap()
+        let preview = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "previewAttachment-")).firstMatch
+        XCTAssertTrue(preview.waitForExistence(timeout: 10))
+        preview.tap()
+        XCTAssertTrue(app.staticTexts["NATIVE_ATTACHMENT_FILE_CONTENT"].waitForExistence(timeout: 5))
+        capture("attachment-text-preview")
+        app.buttons["Done"].tap()
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.buttons["attachFile"].waitForExistence(timeout: 10))
+        XCTAssertTrue(preview.exists)
+        app.buttons["attachFile"].tap(); app.buttons["attachFixturePhoto"].tap()
+        let chips = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "previewAttachment-"))
+        XCTAssertTrue(chips.element(boundBy: 1).waitForExistence(timeout: 10))
+        app.buttons["chooseModel"].tap()
+        let vision = app.buttons["model-groq-meta-llama/llama-4-scout-17b-16e-instruct"]
+        XCTAssertTrue(vision.waitForExistence(timeout: 10)); vision.tap()
+        enterDraft("Review these native attachments")
+        capture("attachment-composer")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        settings()
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
+    }
+
     func testConnectedDeleteCleansTheCloudConversation() {
         launchCleanChat()
         defer { app.terminate() }

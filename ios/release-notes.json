@@ -1,9 +1,9 @@
 {
-  "title": "Drafts and temporary chats \u00b7 Phase 2.3",
-  "description": "Independent protected drafts for each conversation and memory-only temporary chats.",
+  "title": "Attachments \u00b7 Phase 2.4",
+  "description": "Native photo and file picking, previews, restored attachments and supported vision-model sending.",
   "notes": [
-    "Ordinary conversation drafts are kept separately, including after switching chats or reopening Lumen. Unsent new chats are available in Drafts in the sidebar.",
-    "Drafts use protected, account-scoped files and migrate older drafts without deleting their original until the protected save succeeds.",
-    "Start Temporary chat from the sidebar. Its messages, versions and drafts remain in memory and are excluded from local history, cloud sync and restoration. Leaving asks before clearing; your chosen AI provider still receives the messages."
+    "Attach up to four photos, UTF-8 text files, or PDFs with selectable text. Images resize before sending; documents use extracted text. Unsupported files and models show an error before the draft is accepted.",
+    "Preview and remove attachments before sending. Draft references and originals are saved in protected account-scoped files. Temporary attachment bytes stay in memory.",
+    "Vision requests use native image formats for supported OpenAI, Gemini, Anthropic and Groq models. Small originals reuse the web file schema; unknown existing message fields remain preserved."
   ]
 }

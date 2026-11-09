@@ -22,6 +22,8 @@ public struct HistoryLoadTicket: Sendable {
     public private(set) var pendingMetadata: [String: [ChatMetadataPatch]] = [:]
     @ObservationIgnored public var onChange: (() -> Void)?
     @ObservationIgnored private let client: any AIStreamingClient
+    @ObservationIgnored private let attachmentStore: any AttachmentStore
+    @ObservationIgnored private var volatileAttachments: [String: ChatAttachment] = [:]
     @ObservationIgnored private let store: any ConversationStore
     @ObservationIgnored private var streamingTask: Task<Void, Never>?
     @ObservationIgnored private var generation: UUID?
@@ -30,9 +32,10 @@ public struct HistoryLoadTicket: Sendable {
     @ObservationIgnored private var mutationVersions: [String: UInt64] = [:]
 
     public init(client: any AIStreamingClient = OpenAICompatibleStreamingClient(),
-                store: any ConversationStore = FileConversationStore()) {
+                store: any ConversationStore = FileConversationStore(), attachmentStore: any AttachmentStore = FileAttachmentStore()) {
         self.client = client
         self.store = store
+        self.attachmentStore = attachmentStore
         loadAccount()
     }
 
@@ -156,9 +159,11 @@ public struct HistoryLoadTicket: Sendable {
         }
         if let text {
             prefix.append(ChatMessage(role: .user, content: text, attachmentNames: selected.attachmentNames,
-                                      sourceMessageID: selected.id))
+                                      sourceMessageID: selected.id, attachments: selected.attachments))
         }
         guard prefix.contains(where: { $0.role == .user }) else { return nil }
+        do { try validateAttachments(in: prefix, model: model) }
+        catch { errorMessage = error.localizedDescription; return nil }
         let savedBefore = savedConversations, pendingBefore = pendingMessages
         var revision = Conversation(title: original.title, messages: prefix, selectedModelId: model.id)
         revision.selectedProviderId = model.providerId
@@ -184,7 +189,7 @@ public struct HistoryLoadTicket: Sendable {
     @discardableResult public func startNewConversation(id: String? = nil) -> Bool {
         stopStreaming()
         guard saveCurrent() else { return false }
-        isTemporary = false; temporaryVersions = []
+        isTemporary = false; temporaryVersions = []; volatileAttachments = [:]
         currentConversation = Conversation(id: id ?? UUID().uuidString, selectedModelId: selectedModel?.id)
         currentConversation.selectedProviderId = selectedModel?.providerId
         errorMessage = nil
@@ -195,7 +200,7 @@ public struct HistoryLoadTicket: Sendable {
         stopStreaming()
         guard saveCurrent() else { return false }
         if !isTemporary { regularSelectedID = currentConversation.id }
-        isTemporary = true; temporaryVersions = []
+        isTemporary = true; temporaryVersions = []; volatileAttachments = [:]
         currentConversation = Conversation(selectedModelId: selectedModel?.id)
         currentConversation.selectedProviderId = selectedModel?.providerId
         errorMessage = nil
@@ -208,7 +213,7 @@ public struct HistoryLoadTicket: Sendable {
         stopStreaming()
         guard saveCurrent() else { return false }
         isTemporary = selectingTemporary
-        if !isTemporary { temporaryVersions = [] }
+        if !isTemporary { temporaryVersions = []; volatileAttachments = [:] }
         currentConversation = chat
         errorMessage = nil
         return isTemporary || write()
@@ -251,11 +256,41 @@ public struct HistoryLoadTicket: Sendable {
         }.sorted { $0.createdAt == $1.createdAt ? $0.id < $1.id : $0.createdAt < $1.createdAt }.first
     }
 
+    public func storeAttachment(_ attachment: ChatAttachment) throws {
+        try attachment.validate()
+        if isTemporary { volatileAttachments[attachment.id] = attachment }
+        else { try attachmentStore.save(attachment, accountID: accountID) }
+    }
+
+    public func attachment(id: String) throws -> ChatAttachment {
+        if isTemporary {
+            guard let file = volatileAttachments[id] else { throw AttachmentError.unavailable }
+            return file
+        }
+        return try attachmentStore.load(id: id, accountID: accountID)
+    }
+
+    public func attachmentForSync(id: String) throws -> ChatAttachment { try attachmentStore.load(id: id, accountID: accountID) }
+    public func cacheAttachment(_ file: ChatAttachment) throws { try attachmentStore.save(file, accountID: accountID) }
+
+    private func validateAttachments(in messages: [ChatMessage], model: AIModel) throws {
+        for message in messages {
+            guard (message.attachmentNames?.count ?? 0) <= (message.attachments?.count ?? 0) else { throw AttachmentError.unavailable }
+            guard (message.attachments?.count ?? 0) <= 4 else { throw AttachmentError.tooMany }
+            for file in message.attachments ?? [] {
+                if file.kind == .unsupported { throw AttachmentError.unsupported }
+                if file.kind == .image, !model.supportsImages { throw AttachmentError.modelCannotReadImages }
+                if file.kind == .text { try file.validate() }
+                else { let hydrated = try attachment(id: file.id); try hydrated.validate() }
+            }
+        }
+    }
+
     /// Returns a task only after the accepted turn and outbox are durable. The caller can then clear its draft.
-    @discardableResult public func submit(prompt: String, apiKey: String) -> Task<Void, Never>? {
+    @discardableResult public func submit(prompt: String, attachmentIDs: [String] = [], apiKey: String) -> Task<Void, Never>? {
         guard !isStreaming else { return nil }
         let text = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return nil }
+        guard !text.isEmpty || !attachmentIDs.isEmpty else { return nil }
         guard currentConversation.historyLoaded != false else {
             errorMessage = "Wait for this conversation to finish loading before sending."
             return nil
@@ -265,12 +300,21 @@ public struct HistoryLoadTicket: Sendable {
             errorMessage = "Connect \(model.providerId) in Settings before sending."
             return nil
         }
+        let files: [ChatAttachment]
+        do {
+            guard attachmentIDs.count <= 4 else { throw AttachmentError.tooMany }
+            files = try attachmentIDs.map { try attachment(id: $0) }
+            try validateAttachments(in: currentConversation.messages + [ChatMessage(role: .user, content: text, attachments: files)], model: model)
+        } catch { errorMessage = error.localizedDescription; return nil }
         let before = currentConversation
         let savedBefore = savedConversations
         let pendingBefore = pendingMessages
         currentConversation.selectedModelId = model.id
         currentConversation.selectedProviderId = model.providerId
-        let user = currentConversation.appendUserMessage(text)
+        var user = currentConversation.appendUserMessage(text)
+        user.attachments = files.map(\.metadata); user.attachmentNames = files.isEmpty ? nil : files.map(\.name)
+        currentConversation.messages[currentConversation.messages.count - 1] = user
+        if text.isEmpty, let first = files.first { currentConversation.title = String(first.name.prefix(32)) }
         let reply = ChatMessage(role: .assistant, content: "", status: .streaming)
         currentConversation.messages.append(reply)
         if !isTemporary { pendingMessages[currentConversation.id, default: []].insert(user.id) }
@@ -287,12 +331,24 @@ public struct HistoryLoadTicket: Sendable {
     private func startReply(model: AIModel, apiKey: String, replyID: String) -> Task<Void, Never> {
         let chatID = currentConversation.id
         let account = accountID
-        let requestMessages = Array(currentConversation.messages.dropLast()).filter {
+        var requestMessages = Array(currentConversation.messages.dropLast()).filter {
             // Failed/empty assistant placeholders are not conversation context.
             if $0.role != .assistant { return true }
             if case .error = $0.status { return false }
             return !$0.content.isEmpty
         }
+        let preparationError: (any Error)?
+        do {
+            try validateAttachments(in: requestMessages, model: model)
+            for index in requestMessages.indices {
+                requestMessages[index].attachments = try requestMessages[index].attachments?.map { reference in
+                    if reference.kind == .text { try reference.validate(); return reference }
+                    return try attachment(id: reference.id)
+                }
+            }
+            preparationError = nil
+        } catch { preparationError = error }
+        let preparedMessages = requestMessages
         let ticket = UUID()
         generation = ticket
         isStreaming = true
@@ -300,7 +356,8 @@ public struct HistoryLoadTicket: Sendable {
             guard let self else { return }
             var checkpoint = Date.distantPast
             do {
-                let stream = try await client.stream(messages: requestMessages, model: model, apiKey: apiKey)
+                if let preparationError { throw preparationError }
+                let stream = try await client.stream(messages: preparedMessages, model: model, apiKey: apiKey)
                 for try await token in stream {
                     guard owns(ticket, chatID: chatID, account: account),
                           let i = currentConversation.messages.firstIndex(where: { $0.id == replyID }) else { return }
@@ -455,7 +512,7 @@ public struct HistoryLoadTicket: Sendable {
     }
 
     private func loadAccount() {
-        isTemporary = false; temporaryVersions = []; regularSelectedID = nil
+        isTemporary = false; temporaryVersions = []; volatileAttachments = [:]; regularSelectedID = nil
         cacheSession = UUID()
         mutationVersions = [:]
         currentConversation = Conversation()
@@ -474,6 +531,9 @@ public struct HistoryLoadTicket: Sendable {
             pendingDeletions = snapshot.pendingDeletions
             pendingMetadata = snapshot.pendingMetadata ?? [:]
             for ci in savedConversations.indices {
+                if savedConversations[ci].messages.contains(where: { ($0.attachmentNames?.count ?? 0) > ($0.attachments?.count ?? 0) }) {
+                    savedConversations[ci].historyLoaded = false
+                }
                 for mi in savedConversations[ci].messages.indices where savedConversations[ci].messages[mi].status == .streaming {
                     savedConversations[ci].messages[mi].status = .stopped
                     pendingMessages[savedConversations[ci].id, default: []].insert(savedConversations[ci].messages[mi].id)

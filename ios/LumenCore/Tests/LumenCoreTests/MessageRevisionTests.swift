@@ -15,7 +15,7 @@ private actor RevisionClient: AIStreamingClient {
         var chat = Conversation(id: "source", title: "Original title", messages: [
             ChatMessage(id: "u1", role: .user, content: "Earlier question"),
             ChatMessage(id: "a1", role: .assistant, content: "Earlier answer"),
-            ChatMessage(id: "u2", role: .user, content: "Later question", attachmentNames: ["notes.txt"]),
+            ChatMessage(id: "u2", role: .user, content: "Later question", attachments: [ChatAttachment(name: "notes.txt", kind: .text, mime: "text/plain", text: "Preserved notes")]),
             ChatMessage(id: "a2", role: .assistant, content: "Later answer")
         ])
         chat.historyLoaded = true

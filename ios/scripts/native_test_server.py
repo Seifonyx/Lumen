@@ -99,12 +99,13 @@ class Handler(BaseHTTPRequestHandler):
     def authorized(self): return self.headers.get('Authorization') == 'Bearer fixture-provider-key'
     def do_GET(self):
         if not self.authorized(): return self.response(401, {'error': 'fixture rejected'})
-        return self.response(200, {'data': [{'id': 'fixture-model', 'active': True}]})
+        return self.response(200, {'data': [{'id': 'fixture-model', 'active': True}, {'id': 'meta-llama/llama-4-scout-17b-16e-instruct', 'active': True}]})
     def do_POST(self):
         if not self.authorized(): return self.response(401, {'error': 'fixture rejected'})
         body = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
         REQUESTS.append(body)
         prompt = body.get('messages', [{}])[-1].get('content', '')
+        if isinstance(prompt, list): prompt = ' '.join(str(p.get('text', '')) for p in prompt)
         if 'Fail this request' in prompt: return self.response(503, {'error': 'provider fixture failure'})
         self.send_response(200)
         self.send_header('Content-Type', 'text/event-stream')
@@ -186,7 +187,24 @@ def verify_roundtrip():
     original_message_url = chats_url + root_id + '/messages/' + original_ids[0]
     with urllib.request.urlopen(urllib.request.Request(original_message_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
         assert json.load(response)['fields']['text']['stringValue'] == 'Original revision question'
-    assert any(any(m.get('content') == 'Edited revision question' for m in r.get('messages', [])) for r in REQUESTS), 'Provider never received the edited prompt'
+    assert any(any(isinstance(m.get('content'), str) and m['content'].startswith('Edited revision question') for m in r.get('messages', [])) for r in REQUESTS), 'Provider never received the edited prompt'
+    attachment_requests = [r for r in REQUESTS if 'NATIVE_ATTACHMENT_FILE_CONTENT' in json.dumps(r)]
+    assert attachment_requests, 'Attachment text never reached provider'
+    assert any('data:image/jpeg;base64,' in json.dumps(r) for r in attachment_requests), 'Actual image bytes never reached vision provider'
+    attachment_chat = next(d for d in all_chats if d['fields'].get('title', {}).get('stringValue') == 'Review these native attachments')
+    attachment_url = chats_url + attachment_chat['name'].rsplit('/', 1)[-1] + '/messages'
+    with urllib.request.urlopen(urllib.request.Request(attachment_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+        saved = json.load(response)['documents']
+    user = next(d['fields'] for d in saved if d['fields']['role']['stringValue'] == 'user')
+    files = user['files']['arrayValue']['values']
+    assert len(files) == 2
+    for entry in files:
+        file = entry['mapValue']['fields']
+        assert 'data' not in file, 'Original bytes duplicated in message document'
+        original = url.split('/chats/')[0] + '/files/' + file['id']['stringValue']
+        with urllib.request.urlopen(urllib.request.Request(original, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+            data = base64.b64decode(json.load(response)['fields']['data']['stringValue'])
+        assert data, 'Attachment original missing'
     metadata_url = chats_url + 'metadata-fixture'
     with urllib.request.urlopen(urllib.request.Request(metadata_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
         managed = json.load(response)['fields']
@@ -197,7 +215,7 @@ def verify_roundtrip():
     assert [v['stringValue'] for v in managed['ids']['arrayValue']['values']] == ['metadata-user']
     with urllib.request.urlopen(urllib.request.Request(deleted_url + '/nativeMetadataOps', headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
         assert not json.load(response).get('documents'), 'Deleted metadata operation markers remain'
-    return {'firebaseSDKRoundtrip': True, 'deletedContentCleaned': True, 'unknownMetadataPreserved': True, 'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True, 'revisionVersionsPreserved': True, 'metadataRoundtrip': True, 'temporaryContentAbsent': True, 'providerRequests': len(REQUESTS)}
+    return {'firebaseSDKRoundtrip': True, 'deletedContentCleaned': True, 'unknownMetadataPreserved': True, 'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True, 'revisionVersionsPreserved': True, 'metadataRoundtrip': True, 'temporaryContentAbsent': True, 'attachmentRoundtrip': True, 'providerRequests': len(REQUESTS)}
 
 
 def seed_user_id():

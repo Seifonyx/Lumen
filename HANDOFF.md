@@ -5,7 +5,7 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 ## Now
 
 - Owner authorized the entire Phase2 in one continuous run, releasing each part to the existing source.
-  Current branch `codex/phase2-drafts`, starting from fb1ea81. Parts:2.1 controls0.3.0;
+  Current branch `codex/phase2-attachments`, starting from fb1ea81. Parts:2.1 controls0.3.0;
   2.2 history0.3.1;2.3 drafts/temporary0.3.2;2.4 attachments0.3.3;2.5 long chats/recovery0.3.4.
   Plan/ledger: `/workspace/scratch/lumen-phase2/{plan,progress}.md`. Baseline44 Swift+16 Python pass.
   Task1 main52ab376 is in Native CI after fixing a cold simctl launch timeout and a verifier URL.
@@ -20,6 +20,10 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
   implemented; native UI/backend journeys added. Fresh review found2 Important save-failure issues; both fixed with regression coverage:
   required engine/composer transitions align mode even if previous saves fail, typing/sending is guarded
   by matching identities, and failed account drafts stay in account-keyed RAM for recovery. Device CI pending.
+  Task4 attachments in progress: native photo/file importing and previews; protected originals and draft
+  refs, RAM-only temporary files; images for supported vision models and extracted text/PDF input.
+  Core/provider tests83 pass, including legacy attachment cache reload and pre-acceptance validation.
+  Real SDK attachment roundtrip journey added; fresh review and device execution pending.
   Preserve originals and group versions as one history item. Do not stop after the first release.
   Develop later parts while CI runs, and publish sequentially after prior source update succeeds.
 

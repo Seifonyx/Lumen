@@ -70,7 +70,7 @@ def main():
                     '-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', '120',
                     '-maximum-test-execution-time-allowance', '600',
                     'CODE_SIGNING_ALLOWED=YES', 'CODE_SIGNING_REQUIRED=NO', 'CODE_SIGN_IDENTITY=-',
-                ], stdout=stream, stderr=subprocess.STDOUT, timeout=1300)
+                ], stdout=stream, stderr=subprocess.STDOUT, timeout=2000)
             print(log.read_text()[-16000:], flush=True)
             if test.returncode:
                 failed.append(profile)

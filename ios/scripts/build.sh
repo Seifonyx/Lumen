@@ -8,6 +8,8 @@ xcodebuild -version
 # A fresh iOS runtime finishes data migration while the device and simulator targets build.
 simulator_prep_pid=""
 if [[ -n "${LUMEN_QA_PROFILE:-}" ]]; then
+  # Do not let an archived build directory supply a deleted simulator's UUID.
+  rm -f "build/prepared-$LUMEN_QA_PROFILE.json"
   python3 scripts/prepare_simulator.py --profile "$LUMEN_QA_PROFILE" --output "build/prepared-$LUMEN_QA_PROFILE.json" > build/logs/simulator-preparation.log 2>&1 &
   simulator_prep_pid=$!
 fi

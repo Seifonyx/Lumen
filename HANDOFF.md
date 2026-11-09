@@ -4,14 +4,15 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 
 ## Now
 
-- Current request: prepare an **unmerged, unpublished Phase 2 completion PR** for owner testing. Do not merge to main, deploy the web app, or publish an iOS SideStore release without subsequent owner approval.
-- Work branch: `codex/phase2-completion-review`, built from the preserved `codex/phase2-recovery` backup. Parts 2.3 (durable per-chat drafts/temporary chats), 2.4 (protected images/files and cleanup), and 2.5 (paged history, bounded context, interrupted-reply restoration and independent retries) are present.
-- Live production source still lists 0.3.1 (Parts 2.1 and 2.2); proposed native version is 0.3.4 **for review only**. Prior 77/86/93 Swift and 16/16/19 Python core-test counts were recorded before the backup; these are **not** new CI results.
-- Review fixes added: preserve local `inheritedMessageIDs` and hydrated system messages across Firestore metadata refreshes; independently load authoritative old system messages for provider context without inserting them into the visible 60-message page. Added `Phase2CompletionTests.swift` for deleted-parent fork prevention after restart and old-instruction provider context after paging/restart.
-- Web CI blocker addressed on the review branch: the QA-only Firebase adapter now exports the `limit` query constraint used by account deletion.
-- The three recovery-only evidence files were removed from the *review* branch to keep the PR focused; they remain preserved on `codex/phase2-recovery`.
-- Check pending: run PR Native iOS CI on compact/regular iPhones (including real Firebase SDK emulator paths and artifacts) and web CI. The physical Google chooser, SideStore signing, native picker UX, and real provider inference require owner phone testing.
-- Next: open draft PR to `main`, inspect CI and review outcomes, fix any failures, then give the owner the unsigned IPA artifact for manual installation. Do **not** release until owner explicitly approves.
+- User requested targeted safety rework on existing **draft PR #147** (`codex/phase2-completion-review`). Do not merge to `main`, deploy web, or publish to SideStore without subsequent physical iPhone approval. `main` remains published at native 0.3.1; the PR proposes 0.3.4.
+- Keep: protected per-chat drafts, temporary chats, restored fork provenance. Address identified P1/P2 blockers before any live release.
+- P1 shared originals: the web and native individual-chat deletion paths must **not** remove cloud originals by their uploading chat's `chatId`. Those originals can be reused by surviving version forks. Until a transactionally consistent cross-client reference index exists, retain originals on chat deletion; explicit full-account deletion still removes `modelRouter/{uid}/files`. This is intentionally conservative (orphaned originals may remain until account removal).
+- P1 historical files: validate *only the newly attached files* strictly before accepting a send. Best-effort sanitize older request-context file references (unsupported PDFs, missing originals, unsupported images), retain message text, and expose a visible count of historical files omitted from the reply.
+- P2 chat switching: reselect the stopped, saved snapshot after cancelling an active stream; never restore stale `.streaming` to the queued outbox. Refreshing a latest history page retains previously loaded older messages still present in authoritative IDs. Provider system instructions are ordered by authoritative message IDs, not Firestore query return order.
+- P2 simulator preparation: clear a prior setup marker at build start and preparer start; validate cached UUID against a booted, matching simulator and create a new device if stale or malformed.
+- Regression coverage added in `Phase2CompletionTests.swift`, `test_simulator_preparation.py`, and a web unit safety contract `cloud-original-retention.test.mjs`.
+- Last previously verified PR head before these edits: `a25712d9c8e57e0ff1b270fc61eb4bbc1a719219`. Earlier PR web CI passed; native compact/regular builds were running. **New changes must get fresh PR CI**, with both iPhone sizes, artifact verification, web typecheck/unit/isolation, and Python packaging checks. No new CI results are claimed yet.
+- After CI succeeds, owner must manually test the PR IPA on physical iPhone: parent/fork image survival, old PDF follow-up, mid-stream chat selection, paged history/instructions, drafts and temporary chats. Do not publish automatically.
 
 ## Next
 

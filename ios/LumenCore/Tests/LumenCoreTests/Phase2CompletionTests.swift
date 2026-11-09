@@ -84,4 +84,99 @@ private actor Phase2ContextClient: AIStreamingClient {
         #expect(request.last?.content == "New question")
         #expect(request.count <= 40)
     }
+    @Test func historicalPDFIsOmittedWithoutBlockingPlainTextReply() async throws {
+        let store = MemoryConversationStore()
+        let unsupported = ChatAttachment(id: "old-web-pdf", name: "report.pdf", kind: .unsupported,
+                                         mime: "application/pdf")
+        var chat = Conversation(id: "web-chat", messages: [
+            ChatMessage(id: "old-question", role: .user, content: "Summarize earlier",
+                        attachments: [unsupported]),
+            ChatMessage(id: "old-answer", role: .assistant, content: "Earlier answer")
+        ])
+        chat.historyLoaded = true
+        store.accounts["device"] = ChatSnapshot(conversations: [chat], selectedModel: AIModel.defaults[0],
+                                                 selectedConversationID: chat.id)
+        let client = Phase2ContextClient()
+        let engine = ChatEngine(client: client, store: store)
+        await try #require(engine.submit(prompt: "A plain text follow-up", apiKey: "fixture")).value
+        let request = try #require(await client.requests.last)
+        #expect(request.first?.content == "Summarize earlier")
+        #expect(request.first?.attachments == nil)
+        #expect(request.last?.content == "A plain text follow-up")
+        #expect(engine.contextOmittedAttachmentCount == 1)
+        #expect(engine.currentConversation.messages.first?.attachments?.first?.name == "report.pdf")
+        #expect(throws: AttachmentError.self) { try engine.storeAttachment(unsupported) }
+    }
+
+    @Test func reselectingActiveChatCannotResurrectStreamingOutboxEntry() async throws {
+        let store = MemoryConversationStore()
+        let engine = ChatEngine(client: Phase2ContextClient(), store: store)
+        engine.selectModel(AIModel.defaults[0])
+        let running = try #require(engine.submit(prompt: "Stop on reselection", apiKey: "fixture"))
+        let id = engine.currentConversation.id
+        let response = try #require(engine.currentConversation.messages.last?.id)
+        #expect(engine.isStreaming)
+        #expect(engine.selectConversation(id: id))
+        #expect(engine.currentConversation.messages.last?.status == .stopped)
+        #expect(engine.pendingMessages[id]?.contains(response) == true)
+        await running.value
+        #expect(engine.savedConversations.first(where: { $0.id == id })?.messages.last?.status == .stopped)
+        let snapshot = try #require(store.accounts["device"])
+        store.accounts["device"] = try JSONDecoder().decode(ChatSnapshot.self, from: JSONEncoder().encode(snapshot))
+        #expect(ChatEngine(store: store).savedConversations.first(where: { $0.id == id })?.messages.last?.status == .stopped)
+    }
+
+    @Test func refreshPreservesPreviouslyLoadedPagesButHonorsDeletedIDs() throws {
+        let ids = (0..<145).map { "m\($0)" }
+        var chat = Conversation(id: "paged-chat")
+        chat.remoteMessageIDs = ids; chat.historyLoaded = false
+        let store = MemoryConversationStore()
+        store.accounts["device"] = ChatSnapshot(conversations: [chat])
+        let engine = ChatEngine(store: store)
+        engine.selectConversation(id: chat.id)
+        let newest = Array(ids.suffix(60))
+        #expect(engine.applyRemotePage(chatID: chat.id,
+            messages: newest.map { ChatMessage(id: $0, role: .user, content: $0) },
+            orderedIDs: ids, ticket: try #require(engine.historyLoadTicket(chatID: chat.id)),
+            revision: 1, reset: true))
+        let previous = Array(ids[25..<85])
+        #expect(engine.applyRemotePage(chatID: chat.id,
+            messages: previous.map { ChatMessage(id: $0, role: .user, content: $0) },
+            orderedIDs: ids, ticket: try #require(engine.historyLoadTicket(chatID: chat.id)),
+            revision: 1, reset: false))
+        var remote = Conversation(id: chat.id)
+        remote.remoteMessageIDs = ids.filter { $0 != "m30" }; remote.remoteRevision = 2
+        engine.applyRemoteMetadata(remote)
+        let authoritative = remote.remoteMessageIDs!
+        #expect(engine.applyRemotePage(chatID: chat.id,
+            messages: newest.map { ChatMessage(id: $0, role: .user, content: $0) },
+            orderedIDs: authoritative, ticket: try #require(engine.historyLoadTicket(chatID: chat.id)),
+            revision: 2, reset: true))
+        #expect(engine.currentConversation.messages.first?.id == "m25")
+        #expect(engine.currentConversation.messages.count == 119)
+        #expect(!engine.currentConversation.messages.contains { $0.id == "m30" })
+        #expect(engine.currentConversation.messages.last?.id == "m144")
+    }
+
+    @Test func historicalSystemMessagesUseAuthoritativeOrderNotQueryOrder() async throws {
+        let ids = ["first-system", "old-question", "second-system", "latest-question"]
+        var chat = Conversation(id: "instructions")
+        chat.remoteMessageIDs = ids; chat.historyLoaded = false
+        let store = MemoryConversationStore()
+        store.accounts["device"] = ChatSnapshot(conversations: [chat], selectedModel: AIModel.defaults[0])
+        let client = Phase2ContextClient()
+        let engine = ChatEngine(client: client, store: store)
+        engine.selectConversation(id: chat.id)
+        let instructionB = ChatMessage(id: "second-system", role: .system, content: "B")
+        let instructionA = ChatMessage(id: "first-system", role: .system, content: "A")
+        #expect(engine.applyRemotePage(chatID: chat.id,
+            messages: [ChatMessage(id: "latest-question", role: .user, content: "Recent")],
+            orderedIDs: ids, ticket: try #require(engine.historyLoadTicket(chatID: chat.id)),
+            revision: 4, reset: true, systemMessages: [instructionB, instructionA]))
+        await try #require(engine.submit(prompt: "Follow up", apiKey: "fixture")).value
+        let request = try #require(await client.requests.last)
+        #expect(request.prefix(2).map(\.id) == ["first-system", "second-system"])
+        #expect(request.last?.content == "Follow up")
+    }
+
 }

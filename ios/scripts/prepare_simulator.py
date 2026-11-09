@@ -30,6 +30,8 @@ def main():
     parser.add_argument('--profile', required=True, choices=PROFILES)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
+    # A failed preparation must not leave yesterday's simulator UUID as valid input.
+    args.output.unlink(missing_ok=True)
     inventory = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', '--json'], text=True))
     runtime, device = select_device(inventory, args.profile)
     identifier = subprocess.check_output(['xcrun', 'simctl', 'create', f'Lumen {args.profile}', device['identifier'], runtime['identifier']], text=True).strip()

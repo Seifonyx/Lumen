@@ -13,6 +13,8 @@ public struct HistoryLoadTicket: Sendable {
     public private(set) var selectedModel: AIModel?
     public private(set) var isStreaming = false
     public private(set) var contextOmittedMessageCount = 0
+    /// Number of historical file references left out of the most recent provider request.
+    public private(set) var contextOmittedAttachmentCount = 0
     public private(set) var isTemporary = false
     @ObservationIgnored private var temporaryVersions: [Conversation] = []
     @ObservationIgnored private var regularSelectedID: String?
@@ -164,8 +166,8 @@ public struct HistoryLoadTicket: Sendable {
                                       sourceMessageID: selected.id, attachments: selected.attachments))
         }
         guard prefix.contains(where: { $0.role == .user }) else { return nil }
-        do { try validateAttachments(in: ContextWindow.select(messages: prefix).messages, model: model) }
-        catch { errorMessage = error.localizedDescription; return nil }
+        // A revision inherits earlier attachments; obsolete or unsupported historical
+        // files are omitted from provider context rather than blocking a text edit.
         let savedBefore = savedConversations, pendingBefore = pendingMessages
         var revision = Conversation(title: original.title, messages: prefix, selectedModelId: model.id)
         revision.selectedProviderId = model.providerId
@@ -195,6 +197,7 @@ public struct HistoryLoadTicket: Sendable {
         isTemporary = false; temporaryVersions = []; volatileAttachments = [:]
         currentConversation = Conversation(id: id ?? UUID().uuidString, selectedModelId: selectedModel?.id)
         currentConversation.selectedProviderId = selectedModel?.providerId
+        contextOmittedAttachmentCount = 0
         errorMessage = nil
         return write()
     }
@@ -206,18 +209,25 @@ public struct HistoryLoadTicket: Sendable {
         isTemporary = true; temporaryVersions = []; volatileAttachments = [:]
         currentConversation = Conversation(selectedModelId: selectedModel?.id)
         currentConversation.selectedProviderId = selectedModel?.providerId
+        contextOmittedAttachmentCount = 0
         errorMessage = nil
         return true
     }
 
     @discardableResult public func selectConversation(id: String) -> Bool {
-        guard let chat = (isTemporary ? temporaryVersions : []).first(where: { $0.id == id }) ?? savedConversations.first(where: { $0.id == id }) else { return false }
+        guard ((isTemporary ? temporaryVersions : []).contains { $0.id == id }) ||
+              savedConversations.contains(where: { $0.id == id }) else { return false }
         let selectingTemporary = temporaryVersions.contains { $0.id == id }
         stopStreaming()
         guard saveCurrent() else { return false }
+        // A stopped reply is checkpointed by stopStreaming. Never reselect the stale
+        // pre-stop snapshot: its .streaming assistant cannot be uploaded by the outbox.
+        guard let chat = (isTemporary ? temporaryVersions : []).first(where: { $0.id == id }) ??
+                savedConversations.first(where: { $0.id == id }) else { return false }
         isTemporary = selectingTemporary
         if !isTemporary { temporaryVersions = []; volatileAttachments = [:] }
         currentConversation = chat
+        contextOmittedAttachmentCount = 0
         errorMessage = nil
         return isTemporary || write()
     }
@@ -313,7 +323,9 @@ public struct HistoryLoadTicket: Sendable {
         do {
             guard attachmentIDs.count <= 4 else { throw AttachmentError.tooMany }
             files = try attachmentIDs.map { try attachment(id: $0) }
-            try validateAttachments(in: ContextWindow.select(messages: messagesForContext(currentConversation) + [ChatMessage(role: .user, content: text, attachments: files)]).messages, model: model)
+            // Validate only files explicitly attached to this new message. Older files
+            // may be unsupported on iPhone and should not block a plain-text reply.
+            try validateAttachments(in: [ChatMessage(role: .user, content: text, attachments: files)], model: model)
         } catch { errorMessage = error.localizedDescription; return nil }
         let before = currentConversation
         let savedBefore = savedConversations
@@ -337,15 +349,47 @@ public struct HistoryLoadTicket: Sendable {
         return startReply(model: model, apiKey: apiKey, replyID: reply.id)
     }
 
-    /// Restore authoritative instructions without inserting old messages into the visible 60-message page.
+    /// Include old instructions without displaying them in the paged transcript. Firestore
+    /// does not guarantee query order, so system instructions follow authoritative IDs.
     private func messagesForContext(_ chat: Conversation) -> [ChatMessage] {
         let visible = Set(chat.messages.map(\.id))
-        let ordered = Set(chat.remoteMessageIDs ?? [])
-        let earlier = (chat.hydratedSystemMessages ?? []).filter {
+        let ordered = chat.remoteMessageIDs
+        let order = Dictionary(uniqueKeysWithValues: (ordered ?? []).enumerated().map { ($0.element, $0.offset) })
+        let hydrated = (chat.hydratedSystemMessages ?? []).filter {
             $0.role == .system && !visible.contains($0.id) &&
-            (chat.remoteMessageIDs == nil || ordered.contains($0.id))
+            (ordered == nil || order[$0.id] != nil)
         }
-        return earlier + chat.messages
+        let systems = (hydrated + chat.messages.filter { $0.role == .system }).enumerated()
+            .sorted { lhs, rhs in
+                let left = order[lhs.element.id] ?? Int.max, right = order[rhs.element.id] ?? Int.max
+                return left == right ? lhs.offset < rhs.offset : left < right
+            }.map(\.element)
+        return systems + chat.messages.filter { $0.role != .system }
+    }
+
+    /// A new upload is validated at send time. Files inherited from older web messages
+    /// are best-effort: a missing PDF/image is skipped but its surrounding text is kept.
+    private func prepareHistoricalAttachments(in messages: [ChatMessage], model: AIModel) -> (messages: [ChatMessage], omitted: Int) {
+        var prepared = messages
+        var omitted = 0
+        for index in prepared.indices {
+            let references = prepared[index].attachments ?? []
+            omitted += max(0, (prepared[index].attachmentNames?.count ?? 0) - references.count)
+            var available: [ChatAttachment] = []
+            for reference in references {
+                do {
+                    if reference.kind == .unsupported { throw AttachmentError.unsupported }
+                    if reference.kind == .image && !model.supportsImages { throw AttachmentError.modelCannotReadImages }
+                    let hydrated = reference.kind == .text ? reference : try attachment(id: reference.id)
+                    try hydrated.validate()
+                    available.append(hydrated)
+                } catch {
+                    omitted += 1
+                }
+            }
+            prepared[index].attachments = available.isEmpty ? nil : available
+        }
+        return (prepared, omitted)
     }
 
     private func startReply(model: AIModel, apiKey: String, replyID: String) -> Task<Void, Never> {
@@ -361,14 +405,9 @@ public struct HistoryLoadTicket: Sendable {
         do {
             let window = try ContextWindow.select(messages: requestMessages)
             contextOmittedMessageCount = window.omittedCount + max(0, (currentConversation.remoteMessageIDs?.count ?? 0) - currentConversation.messages.filter { $0.status != .streaming }.count)
-            requestMessages = window.messages
-            try validateAttachments(in: requestMessages, model: model)
-            for index in requestMessages.indices {
-                requestMessages[index].attachments = try requestMessages[index].attachments?.map { reference in
-                    if reference.kind == .text { try reference.validate(); return reference }
-                    return try attachment(id: reference.id)
-                }
-            }
+            let prepared = prepareHistoricalAttachments(in: window.messages, model: model)
+            requestMessages = prepared.messages
+            contextOmittedAttachmentCount = prepared.omitted
             preparationError = nil
         } catch { preparationError = error }
         let preparedMessages = requestMessages
@@ -491,7 +530,11 @@ public struct HistoryLoadTicket: Sendable {
         }
         let retained = pendingMessages[chatID] ?? []
         let local = !isTemporary && currentConversation.id == chatID ? currentConversation.messages : chat.messages
-        var remote = reset ? [:] : Dictionary(local.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
+        // Keep already loaded older pages across a metadata refresh. Only retain IDs
+        // still in the authoritative transcript; fetched pages overwrite cached content.
+        let authoritative = Set(orderedIDs)
+        var remote = Dictionary(local.filter { authoritative.contains($0.id) }
+            .map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
         for message in messages { remote[message.id] = message }
         for message in local where retained.contains(message.id) || message.status == .streaming { remote[message.id] = message }
         var merged = orderedIDs.compactMap { remote[$0] }
@@ -500,7 +543,10 @@ public struct HistoryLoadTicket: Sendable {
         }
         chat.messages = merged; chat.remoteMessageIDs = orderedIDs; chat.remoteRevision = revision
         // A complete refresh replaces stale instructions; older pages preserve a prior hydration.
-        chat.hydratedSystemMessages = systemMessages ?? (reset ? nil : chat.hydratedSystemMessages)
+        chat.hydratedSystemMessages = systemMessages?.sorted { left, right in
+            guard let l = orderedIDs.firstIndex(of: left.id), let r = orderedIDs.firstIndex(of: right.id) else { return false }
+            return l < r
+        } ?? (reset ? nil : chat.hydratedSystemMessages)
         chat.historyLoaded = orderedIDs.last.map { last in
             messages.contains(where: { $0.id == last }) || (!reset && chat.historyLoaded == true && remote[last] != nil)
         } ?? true
@@ -575,6 +621,7 @@ public struct HistoryLoadTicket: Sendable {
         pendingMetadata = [:]
         selectedModel = nil
         contextOmittedMessageCount = 0
+        contextOmittedAttachmentCount = 0
         errorMessage = nil
         cacheReadable = true; lastWriteSucceeded = true
         do {

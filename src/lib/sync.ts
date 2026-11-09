@@ -11,7 +11,7 @@
 // only the messages that changed (the chat's `ids` list gives the order and shows deletions).
 
 import {
-  collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, setDoc, orderBy, query, limit, serverTimestamp, Timestamp, where, writeBatch,
+  collection, doc, getDoc, getDocs, onSnapshot, setDoc, orderBy, query, limit, serverTimestamp, Timestamp, where, writeBatch,
   type DocumentData, type Query, type Unsubscribe,
 } from 'firebase/firestore';
 import { isTemporaryChat } from './temporary-chat';
@@ -337,7 +337,10 @@ export class ChatSync {
       page.docs.forEach((entry) => cleanup.delete(entry.ref));
       await cleanup.commit();
     }
-    await this.removeOriginals(id);
+    // Cloud file originals can be shared with surviving native forks. Their owner
+    // chatId is not a reference count. Do not delete them here: without an atomic
+    // cross-client reference index, even a scan races with another device's fork.
+    // Explicit account deletion removes all originals from modelRouter/{uid}/files.
     this.known.delete(id);
     this.synced[id] = rev;
     save(`mr.sync.revs.${this.uid}`, this.synced);
@@ -360,15 +363,6 @@ export class ChatSync {
       } catch { /* try again on the next sync */ }
     }
     save(key, [...done].slice(-2000));
-  }
-
-  private async removeOriginals(chatId: string) {
-    try {
-      const snap = await getDocs(query(filesCol(this.uid), where('chatId', '==', chatId)));
-      quota.count('reads', Math.max(1, snap.size));
-      await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
-      quota.count('deletes', snap.size);
-    } catch { /* leftovers are harmless; they're only readable by this account */ }
   }
 
   private async remoteIds(chatId: string): Promise<Set<string>> {

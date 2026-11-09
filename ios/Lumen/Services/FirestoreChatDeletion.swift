@@ -17,9 +17,10 @@ import LumenCore
         return try await remove(snapshot.documents)
     }
     func deleteOriginalBatch(chatID: String) async throws -> Bool {
-        let snapshot = try await db.collection("modelRouter").document(userID).collection("files")
-            .whereField("chatId", isEqualTo: chatID).limit(to: 50).getDocuments(source: .server)
-        return try await remove(snapshot.documents)
+        // Originals may be shared by a surviving version fork on another device.
+        // The original owner's chatId does not prove exclusive ownership. Retain
+        // until explicit account deletion or a future atomic reference-index GC.
+        false
     }
     func deleteOperationBatch(chatID: String) async throws -> Bool {
         let snapshot = try await chat(chatID).collection("nativeMetadataOps").limit(to: 50).getDocuments(source: .server)

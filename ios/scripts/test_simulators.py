@@ -16,6 +16,18 @@ def run(*args, timeout=300):
     subprocess.run(args, check=True, timeout=timeout)
 
 
+def prepared_device_is_live(prepared, inventory, profile, runtime, device_type):
+    """A cached setup file is only a hint, never proof a simulator still exists."""
+    return (
+        isinstance(prepared, dict)
+        and prepared.get('profile') == profile
+        and prepared.get('device') == device_type['name']
+        and prepared.get('runtimeIdentifier') == runtime['identifier']
+        and any(d.get('udid') == prepared.get('id') and d.get('state') == 'Booted'
+                for d in inventory.get('devices', {}).get(runtime['identifier'], []))
+    )
+
+
 def main():
     from native_test_server import start, seed
     server = start()
@@ -33,13 +45,17 @@ def main():
         seed()
         runtime, device_type = select_device(inventory, profile)
         prepared_file = root / 'build' / f'prepared-{profile}.json'
-        prepared = json.loads(prepared_file.read_text()) if prepared_file.exists() else None
+        try:
+            prepared = json.loads(prepared_file.read_text()) if prepared_file.exists() else None
+        except (OSError, ValueError):
+            prepared = None
+        if not prepared_device_is_live(prepared, inventory, profile, runtime, device_type):
+            if prepared_file.exists():
+                print(f'Ignoring stale prepared simulator for {profile}; creating a new one', flush=True)
+                prepared_file.unlink(missing_ok=True)
+            prepared = None
         if prepared:
-            if prepared['profile'] != profile or prepared['device'] != device_type['name'] or prepared['runtimeIdentifier'] != runtime['identifier']:
-                raise SystemExit('Prepared simulator provenance does not match requested profile')
             device = prepared['id']
-            if not any(d['udid'] == device and d['state'] == 'Booted' for d in inventory['devices'].get(runtime['identifier'], [])):
-                raise SystemExit('Prepared iPhone is not booted')
         else:
             device = output('xcrun', 'simctl', 'create', f'Lumen {profile}', device_type['identifier'], runtime['identifier']).strip()
         provenance.append({'profile': profile, 'device': device_type['name'], 'runtime': runtime['version'], 'id': device})

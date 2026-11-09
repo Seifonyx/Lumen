@@ -118,6 +118,10 @@ struct ChatView: View {
                     Text("Reply context uses recent messages. Earlier messages stay in your history.")
                         .font(.caption2).foregroundStyle(.secondary).accessibilityIdentifier("boundedContextNotice")
                 }
+                if engine.contextOmittedAttachmentCount > 0 {
+                    Text("\(engine.contextOmittedAttachmentCount) earlier file(s) unavailable or unsupported on this iPhone were omitted from the last reply. Message text was kept.")
+                        .font(.caption2).foregroundStyle(.secondary).accessibilityIdentifier("historicalAttachmentsOmittedNotice")
+                }
                 if engine.isTemporary {
                     Label("Temporary · Not saved to history", systemImage: "eye.slash")
                         .font(.footnote).foregroundStyle(.secondary).accessibilityIdentifier("temporaryChatIndicator")

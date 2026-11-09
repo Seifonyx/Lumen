@@ -263,6 +263,34 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
     }
 
+    func testLongHistoryLoadsOlderAndSendsOnlyBoundedRecentContext() {
+        executionTimeAllowance = 240
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        app.buttons["openSidebar"].tap()
+        let history = app.buttons["history-long-fixture"]
+        XCTAssertTrue(history.waitForExistence(timeout: 10)); history.tap()
+        let older = app.buttons["loadEarlierMessages"]
+        XCTAssertTrue(older.waitForExistence(timeout: 15))
+        XCTAssertEqual(app.staticTexts["loadedMessageCount"].label, "60 of 180")
+        older.tap()
+        let count = app.staticTexts["loadedMessageCount"]
+        XCTAssertTrue(NSPredicate(format: "label == %@", "120 of 180").evaluate(with: count) || count.waitForExistence(timeout: 10))
+        let loaded = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "120 of 180"), object: count)
+        XCTAssertEqual(XCTWaiter.wait(for: [loaded], timeout: 15), .completed)
+        capture("long-conversation-page")
+        enterDraft("NATIVE_LONG_FOLLOWUP")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.staticTexts["boundedContextNotice"].exists)
+        capture("long-conversation-bounded-context")
+        app.terminate(); app.launch()
+        XCTAssertTrue(composer.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["NATIVE_LONG_FOLLOWUP"].waitForExistence(timeout: 15))
+        settings(); XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
+    }
+
     func testConnectedDeleteCleansTheCloudConversation() {
         launchCleanChat()
         defer { app.terminate() }

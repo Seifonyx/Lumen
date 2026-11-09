@@ -12,6 +12,7 @@ public struct HistoryLoadTicket: Sendable {
     public private(set) var savedConversations: [Conversation] = []
     public private(set) var selectedModel: AIModel?
     public private(set) var isStreaming = false
+    public private(set) var contextOmittedMessageCount = 0
     public private(set) var isTemporary = false
     @ObservationIgnored private var temporaryVersions: [Conversation] = []
     @ObservationIgnored private var regularSelectedID: String?
@@ -145,7 +146,7 @@ public struct HistoryLoadTicket: Sendable {
 
     private func revise(messageID: String, editedText: String?, apiKey: String) -> Task<Void, Never>? {
         guard !isStreaming, currentConversation.historyLoaded != false,
-              let model = selectedModel, !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !hasOlderMessages(chatID: currentConversation.id), let model = selectedModel, !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               let index = currentConversation.messages.firstIndex(where: { $0.id == messageID }) else { return nil }
         let original = currentConversation
         let selected = original.messages[index]
@@ -163,13 +164,14 @@ public struct HistoryLoadTicket: Sendable {
                                       sourceMessageID: selected.id, attachments: selected.attachments))
         }
         guard prefix.contains(where: { $0.role == .user }) else { return nil }
-        do { try validateAttachments(in: prefix, model: model) }
+        do { try validateAttachments(in: ContextWindow.select(messages: prefix).messages, model: model) }
         catch { errorMessage = error.localizedDescription; return nil }
         let savedBefore = savedConversations, pendingBefore = pendingMessages
         var revision = Conversation(title: original.title, messages: prefix, selectedModelId: model.id)
         revision.selectedProviderId = model.providerId
         revision.lineageRootID = original.lineageRootID ?? original.id
         revision.parentConversationID = original.id
+        revision.inheritedMessageIDs = Set(prefix.map(\.id))
         revision.revisionLabel = editedText == nil ? "New response" : "Edited message"
         revision.pinned = original.pinned
         revision.archived = original.archived
@@ -249,9 +251,9 @@ public struct HistoryLoadTicket: Sendable {
         return true
     }
 
-    public func nextPendingConversation() -> Conversation? {
+    public func nextPendingConversation(excluding blocked: Set<String> = []) -> Conversation? {
         savedConversations.filter { chat in
-            guard !(pendingMessages[chat.id] ?? []).isEmpty, !pendingDeletions.contains(chat.id) else { return false }
+            guard !blocked.contains(chat.id), !(pendingMessages[chat.id] ?? []).isEmpty, !pendingDeletions.contains(chat.id) else { return false }
             if let parent = chat.parentConversationID, !(pendingMessages[parent] ?? []).isEmpty { return false }
             return true
         }.sorted { $0.createdAt == $1.createdAt ? $0.id < $1.id : $0.createdAt < $1.createdAt }.first
@@ -311,7 +313,7 @@ public struct HistoryLoadTicket: Sendable {
         do {
             guard attachmentIDs.count <= 4 else { throw AttachmentError.tooMany }
             files = try attachmentIDs.map { try attachment(id: $0) }
-            try validateAttachments(in: currentConversation.messages + [ChatMessage(role: .user, content: text, attachments: files)], model: model)
+            try validateAttachments(in: ContextWindow.select(messages: currentConversation.messages + [ChatMessage(role: .user, content: text, attachments: files)]).messages, model: model)
         } catch { errorMessage = error.localizedDescription; return nil }
         let before = currentConversation
         let savedBefore = savedConversations
@@ -346,6 +348,9 @@ public struct HistoryLoadTicket: Sendable {
         }
         let preparationError: (any Error)?
         do {
+            let window = try ContextWindow.select(messages: requestMessages)
+            contextOmittedMessageCount = window.omittedCount + max(0, (currentConversation.remoteMessageIDs?.count ?? 0) - currentConversation.messages.filter { $0.status != .streaming }.count)
+            requestMessages = window.messages
             try validateAttachments(in: requestMessages, model: model)
             for index in requestMessages.indices {
                 requestMessages[index].attachments = try requestMessages[index].attachments?.map { reference in
@@ -362,12 +367,15 @@ public struct HistoryLoadTicket: Sendable {
         streamingTask = Task { [weak self] in
             guard let self else { return }
             var checkpoint = Date.distantPast
+            var replyBytes = 0
             do {
                 if let preparationError { throw preparationError }
                 let stream = try await client.stream(messages: preparedMessages, model: model, apiKey: apiKey)
                 for try await token in stream {
                     guard owns(ticket, chatID: chatID, account: account),
                           let i = currentConversation.messages.firstIndex(where: { $0.id == replyID }) else { return }
+                    replyBytes += token.utf8.count
+                    guard replyBytes <= 240_000 else { throw ProviderRequestError.responseTooLarge }
                     currentConversation.messages[i].content += token
                     if Date().timeIntervalSince(checkpoint) >= 0.5 {
                         _ = saveCurrent()
@@ -444,22 +452,36 @@ public struct HistoryLoadTicket: Sendable {
         return HistoryLoadTicket(session: cacheSession, chatID: chatID, version: mutationVersions[chatID] ?? 0)
     }
 
+    public func hasOlderMessages(chatID: String) -> Bool {
+        guard let chat = savedConversations.first(where: { $0.id == chatID }), let ids = chat.remoteMessageIDs else { return false }
+        let loaded = Set(chat.messages.map(\.id))
+        return ids.firstIndex(where: loaded.contains).map { $0 > 0 } ?? !ids.isEmpty
+    }
+
     @discardableResult public func applyRemoteMessages(chatID: String, messages: [ChatMessage], orderedIDs: [String],
                                                        ticket: HistoryLoadTicket, revision: Double?) -> Bool {
+        applyRemotePage(chatID: chatID, messages: messages, orderedIDs: orderedIDs, ticket: ticket, revision: revision, reset: true)
+    }
+
+    @discardableResult public func applyRemotePage(chatID: String, messages: [ChatMessage], orderedIDs: [String],
+                                                   ticket: HistoryLoadTicket, revision: Double?, reset: Bool) -> Bool {
         guard ticket.session == cacheSession, ticket.chatID == chatID,
               ticket.version == mutationVersions[chatID] ?? 0,
-              var chat = savedConversations.first(where: { $0.id == chatID }), !pendingDeletions.contains(chatID) else { return false }
-        let remote = Dictionary(messages.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
-        var merged = orderedIDs.compactMap { remote[$0] }
+              var chat = savedConversations.first(where: { $0.id == chatID }), !pendingDeletions.contains(chatID),
+              Set(orderedIDs).count == orderedIDs.count, Set(messages.map(\.id)).isSubset(of: Set(orderedIDs)) else { return false }
         let retained = pendingMessages[chatID] ?? []
-        let local = currentConversation.id == chatID ? currentConversation.messages : chat.messages
+        let local = !isTemporary && currentConversation.id == chatID ? currentConversation.messages : chat.messages
+        var remote = reset ? [:] : Dictionary(local.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
+        for message in messages { remote[message.id] = message }
+        for message in local where retained.contains(message.id) || message.status == .streaming { remote[message.id] = message }
+        var merged = orderedIDs.compactMap { remote[$0] }
         for message in local where retained.contains(message.id) || message.status == .streaming {
             if !merged.contains(where: { $0.id == message.id }) { merged.append(message) }
         }
-        chat.messages = merged
-        chat.remoteMessageIDs = orderedIDs
-        chat.remoteRevision = revision
-        chat.historyLoaded = true
+        chat.messages = merged; chat.remoteMessageIDs = orderedIDs; chat.remoteRevision = revision
+        chat.historyLoaded = orderedIDs.last.map { last in
+            messages.contains(where: { $0.id == last }) || (!reset && chat.historyLoaded == true && remote[last] != nil)
+        } ?? true
         upsert(chat)
         if !isTemporary, currentConversation.id == chatID { currentConversation = chat }
         _ = write()
@@ -530,6 +552,7 @@ public struct HistoryLoadTicket: Sendable {
         pendingDeletions = []
         pendingMetadata = [:]
         selectedModel = nil
+        contextOmittedMessageCount = 0
         errorMessage = nil
         cacheReadable = true; lastWriteSucceeded = true
         do {

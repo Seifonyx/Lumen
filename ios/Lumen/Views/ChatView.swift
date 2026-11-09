@@ -10,13 +10,14 @@ struct ChatView: View {
     var chooseModel: () -> Void
     var selectVersion: (Conversation) -> Void
     @State private var attachmentImporting = false
+    @State private var olderAnchor: String?
     @State private var followsReply = true
     @State private var editingMessage: ChatMessage?
     @State private var previewAttachment: ChatAttachment?
     @State private var editingAccount = ""
     @State private var editingConversation = ""
     private var versions: [Conversation] { engine.versions(for: engine.currentConversation.id) }
-    private var canRevise: Bool { !engine.isStreaming && engine.currentConversation.historyLoaded != false && connections.key(for: engine.selectedModel) != nil }
+    private var canRevise: Bool { !engine.hasOlderMessages(chatID: engine.currentConversation.id) && !engine.isStreaming && engine.currentConversation.historyLoaded != false && connections.key(for: engine.selectedModel) != nil }
     private var composerAligned: Bool {
         composer.accountID == engine.accountID && composer.conversationID == engine.currentConversation.id && composer.isTemporary == engine.isTemporary
     }
@@ -78,7 +79,31 @@ struct ChatView: View {
             .onScrollGeometryChange(for: Bool.self) { geometry in
                 geometry.contentSize.height - geometry.contentOffset.y - geometry.containerSize.height < 140
             } action: { _, nearBottom in followsReply = nearBottom }
-            .onChange(of: engine.currentConversation.id) { _, _ in followsReply = true }
+            .safeAreaInset(edge: .top, spacing: 0) {
+                if engine.hasOlderMessages(chatID: engine.currentConversation.id) {
+                    HStack {
+                        Button("Load earlier messages") {
+                            followsReply = false; olderAnchor = engine.currentConversation.messages.first?.id
+                            Task { await sync.loadMessages(chatID: engine.currentConversation.id, older: true) }
+                        }.disabled(engine.isStreaming || sync.isLoadingMessages(chatID: engine.currentConversation.id))
+                            .accessibilityIdentifier("loadEarlierMessages")
+                        Spacer()
+                        if sync.isLoadingMessages(chatID: engine.currentConversation.id) { ProgressView() }
+                        Text("\(engine.currentConversation.messages.count) of \(engine.currentConversation.remoteMessageIDs?.count ?? 0)")
+                            .foregroundStyle(.secondary).accessibilityIdentifier("loadedMessageCount")
+                    }.font(.caption).padding(.horizontal, 20).padding(.vertical, 10).background(.bar)
+                }
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if !followsReply {
+                    Button("Latest", systemImage: "arrow.down") { followsReply = true; proxy.scrollTo("conversationBottom", anchor: .bottom) }
+                        .padding(10).glassEffect(.regular, in: .capsule).padding(12).accessibilityIdentifier("scrollToLatest")
+                }
+            }
+            .onChange(of: engine.currentConversation.messages.first?.id) { _, _ in
+                if let anchor = olderAnchor { proxy.scrollTo(anchor, anchor: .top); olderAnchor = nil }
+            }
+            .onChange(of: engine.currentConversation.id) { _, _ in followsReply = true; olderAnchor = nil }
             .onChange(of: engine.currentConversation.messages.count) { _, _ in
                 if engine.currentConversation.messages.last?.role == .user || engine.isStreaming { followsReply = true }
                 if followsReply { proxy.scrollTo("conversationBottom", anchor: .bottom) }
@@ -89,6 +114,10 @@ struct ChatView: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 10) {
+                if engine.contextOmittedMessageCount > 0 {
+                    Text("Reply context uses recent messages. Earlier messages stay in your history.")
+                        .font(.caption2).foregroundStyle(.secondary).accessibilityIdentifier("boundedContextNotice")
+                }
                 if engine.isTemporary {
                     Label("Temporary · Not saved to history", systemImage: "eye.slash")
                         .font(.footnote).foregroundStyle(.secondary).accessibilityIdentifier("temporaryChatIndicator")

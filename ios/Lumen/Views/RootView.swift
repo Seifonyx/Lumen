@@ -17,6 +17,7 @@ struct RootView: View {
     private enum Destination { case new, temporary, conversation(Conversation), draft(String) }
     @State private var pendingDestination: Destination?
     @FocusState private var composerFocused: Bool
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -102,6 +103,10 @@ struct RootView: View {
                 }
             }
             .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: sidebarOpen)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { sync.retry() }
+            else if phase == .background { engine.stopStreaming(); _ = composer.save(); _ = engine.checkpoint() }
         }
         .onChange(of: engine.isStreaming) { _, streaming in
             if !streaming, engine.currentConversation.historyLoaded == false { Task { await sync.loadMessages(chatID: engine.currentConversation.id) } }

@@ -21,17 +21,8 @@ def main():
     server = start()
     root = Path(__file__).resolve().parents[1]
     inventory = json.loads(output('xcrun', 'simctl', 'list', '--json'))
-    runtimes = [r for r in inventory['runtimes']
-                if r.get('isAvailable') and '.iOS-' in r['identifier']
-                and int(r['version'].split('.')[0]) >= 26]
-    if not runtimes:
-        raise SystemExit('No available iOS 26 simulator runtime')
-    runtime = max(runtimes, key=lambda r: tuple(int(x) for x in r['version'].split('.')))
-    types = inventory['devicetypes']
-    profiles = {
-        'compact': ['iPhone SE (3rd generation)', 'iPhone 16e', 'iPhone 16'],
-        'regular': ['iPhone 17 Pro', 'iPhone 17', 'iPhone 16 Pro'],
-    }
+    from prepare_simulator import PROFILES, select_device
+    profiles = PROFILES
     requested = os.environ.get('LUMEN_QA_PROFILE')
     if requested:
         if requested not in profiles: raise SystemExit('Unknown iPhone QA profile')
@@ -40,17 +31,24 @@ def main():
     failed = []
     for profile, candidates in profiles.items():
         seed()
-        device_type = next((t for name in candidates for t in types if t['name'] == name), None)
-        if not device_type:
-            raise SystemExit(f'No supported simulator device type for {profile}')
-        device = output('xcrun', 'simctl', 'create', f'Lumen {profile}', device_type['identifier'], runtime['identifier']).strip()
+        runtime, device_type = select_device(inventory, profile)
+        prepared_file = root / 'build' / f'prepared-{profile}.json'
+        prepared = json.loads(prepared_file.read_text()) if prepared_file.exists() else None
+        if prepared:
+            if prepared['profile'] != profile or prepared['device'] != device_type['name'] or prepared['runtimeIdentifier'] != runtime['identifier']:
+                raise SystemExit('Prepared simulator provenance does not match requested profile')
+            device = prepared['id']
+            if not any(d['udid'] == device and d['state'] == 'Booted' for d in inventory['devices'].get(runtime['identifier'], [])):
+                raise SystemExit('Prepared iPhone is not booted')
+        else:
+            device = output('xcrun', 'simctl', 'create', f'Lumen {profile}', device_type['identifier'], runtime['identifier']).strip()
         provenance.append({'profile': profile, 'device': device_type['name'], 'runtime': runtime['version'], 'id': device})
         (root / 'build' / 'qa-devices.json').write_text(json.dumps(provenance, indent=2) + '\n')
         result = root / 'build' / f'{profile}.xcresult'
         screenshots = root / 'build' / 'screenshots' / profile
         screenshots.mkdir(parents=True, exist_ok=True)
         try:
-            run('xcrun', 'simctl', 'boot', device)
+            if not prepared: run('xcrun', 'simctl', 'boot', device)
             run('xcrun', 'simctl', 'bootstatus', device, '-b', timeout=600)
             run('xcrun', 'simctl', 'status_bar', device, 'override', '--time', '9:41',
                 '--dataNetwork', 'wifi', '--wifiMode', 'active', '--wifiBars', '3',

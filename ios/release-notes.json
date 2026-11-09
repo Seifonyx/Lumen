@@ -1,9 +1,9 @@
 {
-  "title": "Attachments \u00b7 Phase 2.4",
-  "description": "Native photo and file picking, previews, restored attachments and supported vision-model sending.",
+  "title": "Long chats and recovery \u00b7 Phase 2.5",
+  "description": "Paged long conversations, bounded reply context, interruption restoration and automatic independent sync retries.",
   "notes": [
-    "Attach up to four photos, UTF-8 text files, or PDFs with selectable text. Images resize before sending; documents use extracted text. Unsupported files and models show an error before the draft is accepted.",
-    "Preview and remove attachments before sending. Draft references and originals are saved in protected account-scoped files. Temporary attachment bytes stay in memory.",
-    "Vision requests use native image formats for supported OpenAI, Gemini, Anthropic and Groq models. Small originals reuse the web file schema; unknown existing message fields remain preserved."
+    "Long chats load the newest60 messages, with Load earlier messages for older pages and a Latest control. Earlier history stays on your account, while each reply uses a bounded recent context. Load all earlier pages before editing/regenerating an earlier transcript.",
+    "Pending turns and authoritative message ordering survive page loads and restarts. Interrupted replies restore as Stopped, and backgrounding checkpoints the current reply.",
+    "A failed chat no longer blocks independent pending changes. Sync retries with bounded backoff and resumes when the network returns or Lumen becomes active. Original-bearing writes are bounded to one message per transaction."
   ]
 }

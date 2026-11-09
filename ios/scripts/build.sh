@@ -5,6 +5,13 @@ mkdir -p build/logs build/release
 defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false
 
 xcodebuild -version
+# A fresh iOS runtime finishes data migration while the device and simulator targets build.
+simulator_prep_pid=""
+if [[ -n "${LUMEN_QA_PROFILE:-}" ]]; then
+  python3 scripts/prepare_simulator.py --profile "$LUMEN_QA_PROFILE" --output "build/prepared-$LUMEN_QA_PROFILE.json" > build/logs/simulator-preparation.log 2>&1 &
+  simulator_prep_pid=$!
+fi
+trap 'if [[ -n "${simulator_prep_pid:-}" ]]; then kill "$simulator_prep_pid" 2>/dev/null || true; fi' EXIT
 swift test --package-path LumenCore 2>&1 | tee build/logs/core-tests.log
 xcodegen generate --spec project.yml
 
@@ -30,6 +37,10 @@ python3 scripts/package_ipa.py \
   --output build/release/Lumen.ipa \
   --source-commit "${GITHUB_SHA:-$(git rev-parse HEAD)}"
 
+if [[ -n "$simulator_prep_pid" ]]; then
+  wait "$simulator_prep_pid"
+  simulator_prep_pid=""
+fi
 mkdir -p build/emulators
 cp ../firestore.rules build/emulators/firestore.rules
 cp tests/firebase.json build/emulators/firebase.json

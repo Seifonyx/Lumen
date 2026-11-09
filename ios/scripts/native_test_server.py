@@ -75,6 +75,15 @@ def seed():
     document(f'modelRouter/{uid}/chats/metadata-fixture/messages/metadata-user', {
         'id': 'metadata-user', 'role': 'user', 'text': 'Recovery notes from last winter', 'index': 0,
         'createdAt': 1700000000000, 'status': 'done'})
+    long_ids = [f'long-{i}' for i in range(180)]
+    document(f'modelRouter/{uid}/chats/long-fixture', {
+        'title': 'Long conversation fixture', 'createdAt': 1700000000000, 'updatedAt': 1700000001000,
+        'ids': long_ids, 'count': len(long_ids), 'model': 'fixture-model', 'rev': 1700000001000,
+        'deleted': False, 'customFutureField': 'preserve-long-history'})
+    for index, mid in enumerate(long_ids):
+        document(f'modelRouter/{uid}/chats/long-fixture/messages/{mid}', {
+            'id': mid, 'role': 'user' if index % 2 == 0 else 'assistant', 'text': f'Long history message {index}',
+            'index': index, 'createdAt': 1700000000000 + index, 'status': 'done'})
     document(f'modelRouter/{uid}/chats/delete-fixture/nativeMetadataOps/old-operation', {'appliedAt': 1700000000000})
     document(f'modelRouter/{uid}/chats/delete-fixture', {
         'title': 'Delete fixture chat', 'createdAt': 1700000000000, 'updatedAt': 1700000001000,
@@ -205,6 +214,15 @@ def verify_roundtrip():
         with urllib.request.urlopen(urllib.request.Request(original, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
             data = base64.b64decode(json.load(response)['fields']['data']['stringValue'])
         assert data, 'Attachment original missing'
+    long_requests = [r for r in REQUESTS if any(m.get('content') == 'NATIVE_LONG_FOLLOWUP' for m in r.get('messages', []))]
+    assert long_requests and all(len(r['messages']) <= 40 for r in long_requests), 'Long context is not bounded'
+    assert any(m.get('content') == 'Long history message 179' for m in long_requests[-1]['messages']), 'Newest history missing from reply context'
+    assert all(m.get('content') != 'Long history message 0' for m in long_requests[-1]['messages']), 'Oldest history was sent beyond context budget'
+    with urllib.request.urlopen(urllib.request.Request(chats_url + 'long-fixture', headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+        long_chat = json.load(response)['fields']
+    assert long_chat['customFutureField']['stringValue'] == 'preserve-long-history'
+    long_ids = [v['stringValue'] for v in long_chat['ids']['arrayValue']['values']]
+    assert long_ids[:180] == [f'long-{i}' for i in range(180)] and len(long_ids) >= 182, 'Long history was truncated in storage'
     metadata_url = chats_url + 'metadata-fixture'
     with urllib.request.urlopen(urllib.request.Request(metadata_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
         managed = json.load(response)['fields']
@@ -215,7 +233,7 @@ def verify_roundtrip():
     assert [v['stringValue'] for v in managed['ids']['arrayValue']['values']] == ['metadata-user']
     with urllib.request.urlopen(urllib.request.Request(deleted_url + '/nativeMetadataOps', headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
         assert not json.load(response).get('documents'), 'Deleted metadata operation markers remain'
-    return {'firebaseSDKRoundtrip': True, 'deletedContentCleaned': True, 'unknownMetadataPreserved': True, 'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True, 'revisionVersionsPreserved': True, 'metadataRoundtrip': True, 'temporaryContentAbsent': True, 'attachmentRoundtrip': True, 'providerRequests': len(REQUESTS)}
+    return {'firebaseSDKRoundtrip': True, 'deletedContentCleaned': True, 'unknownMetadataPreserved': True, 'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True, 'revisionVersionsPreserved': True, 'metadataRoundtrip': True, 'temporaryContentAbsent': True, 'attachmentRoundtrip': True, 'longHistoryPreserved': True, 'providerRequests': len(REQUESTS)}
 
 
 def seed_user_id():

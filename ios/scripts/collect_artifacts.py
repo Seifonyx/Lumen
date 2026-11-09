@@ -8,7 +8,7 @@ from pathlib import Path
 
 PROFILES = ('compact', 'regular')
 CHECKS = ('firebaseSDKRoundtrip', 'deletedContentCleaned', 'unknownMetadataPreserved',
-          'existingMessageFieldsPreserved', 'webOrderingPreserved', 'revisionVersionsPreserved', 'attachmentRoundtrip', 'temporaryContentAbsent', 'metadataRoundtrip')
+          'existingMessageFieldsPreserved', 'webOrderingPreserved', 'revisionVersionsPreserved', 'longHistoryPreserved', 'attachmentRoundtrip', 'temporaryContentAbsent', 'metadataRoundtrip')
 
 
 def collect(source, destination, expected_commit):

@@ -87,6 +87,9 @@ public enum WebChatCodec {
             }
             guard !ids.contains(message.id) else { throw WebSyncError.conflict }
             let inherited = inheritedMessages[message.id]
+            if chat.inheritedMessageIDs?.contains(message.id) == true {
+                guard sourceMetadata != nil, !isTombstone(sourceMetadata), inherited != nil else { throw WebSyncError.conflict }
+            }
             if let inherited {
                 guard inherited["role"] as? String == message.role.rawValue else { throw WebSyncError.conflict }
                 if message.sourceMessageID == nil, inherited["text"] as? String != message.content { throw WebSyncError.conflict }

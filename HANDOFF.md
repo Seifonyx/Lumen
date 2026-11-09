@@ -4,6 +4,10 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 
 ## Now
 
+- 2026-11-09 owner explicitly authorized: **fix current failure and publish latest 0.3.4 to SideStore**, but *only after* the updated draft PR passes all required web/native CI and exact-commit IPA verification. On passing checks, mark PR ready and merge to main; main native CI alone publishes the version. Never bypass failed checks.
+- Diagnosis: native run 42700477434 failed ONLY the compact/sync UI test `testHistoryRenamePinArchiveAndSearchCachedMessages` at line 427. Its captured accessibility hierarchy shows `Loading conversation…` still on screen (metadata loaded, message not yet). Regular sync and both feature shards, core, release archive and web passed.
+- Fix candidate: for a full one-page chat, don't issue a separate Firestore system-instruction query (the page already includes every system message). For a paginated chat, retain separate authoritative instruction hydration. Raise UI wait from 15s to 60s; xcodebuild retries failed UI methods once, not the whole suite, retaining hard failure on repeat. The new code must pass CI before publishing.
+
 - Owner request: make PR #147 native CI as fast as reasonably possible **without reducing release verification**. Keep `codex/phase2-completion-review` as an unmerged draft. Do not publish to SideStore or deploy web.
 - Baseline: successful Native iOS run 42690244621 at commit `3cb7b6c` lasted ~35 min. On both iPhone sizes, XCTest's 14 serial UI journeys alone took 12–13 min; fresh simulator preparation reported 8m50s on regular. Core Swift 107 tests and web tests had passed.
 - New workflow is designed for the standard GitHub-hosted **five simultaneous macOS job** limit: 4 independent, balanced UI/Firebase shards (compact + regular x sync + features), plus 1 separate concurrent unsigned device IPA archive. A required Ubuntu job runs all Python packaging/CI checks and all 107+ Swift core tests. Each size still executes **every one of the 14 UI tests**, with independently seeded real Firebase Auth/Firestore emulators.

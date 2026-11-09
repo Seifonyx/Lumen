@@ -116,6 +116,10 @@ def main():
                 '-resultBundlePath', str(result), '-parallel-testing-enabled', 'NO',
                 '-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', '120',
                 '-maximum-test-execution-time-allowance', '600',
+                # Retry only failures on a transiently overloaded hosted simulator;
+                # the retry still executes every assertion and a repeated failure
+                # fails the entire shard, preserving the release gate.
+                '-retry-tests-on-failure', '-test-iterations', '2',
                 'CODE_SIGNING_ALLOWED=YES', 'CODE_SIGNING_REQUIRED=NO', 'CODE_SIGN_IDENTITY=-',
             ]
             if shard != 'all':

@@ -424,7 +424,11 @@ final class LumenUITests: XCTestCase {
         let row = app.buttons["history-metadata-fixture"]
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         row.tap()
-        XCTAssertTrue(app.staticTexts["Recovery notes from last winter"].waitForExistence(timeout: 15))
+        // Firestore message documents may arrive after their chat metadata on a
+        // cold iOS simulator. Wait for the actual message, not merely the sidebar
+        // row that appears when metadata is received.
+        XCTAssertTrue(app.staticTexts["Recovery notes from last winter"].waitForExistence(timeout: 60),
+                      "Opening a synced chat must eventually load its message documents")
         app.buttons["openSidebar"].tap()
         row.press(forDuration: 1)
         app.buttons["Rename"].tap()

@@ -167,14 +167,23 @@ import LumenCore
                     let snapshot = try await reference.collection("messages").whereField(FieldPath.documentID(), in: ids).getDocuments(source: .server)
                     messages += try snapshot.documents.map { try WebChatCodec.message(id: $0.documentID, fields: $0.data()) }
                 }
-                // System instructions may fall outside the latest 60 visible messages.
-                // Fetch them separately and retain only authoritative IDs from this snapshot.
-                let instructionDocs = try await reference.collection("messages")
-                    .whereField("role", isEqualTo: MessageRole.system.rawValue).getDocuments(source: .server)
-                let authoritativeIDs = Set(ordered)
-                let instructions = try instructionDocs.documents
-                    .filter { authoritativeIDs.contains($0.documentID) }
-                    .map { try WebChatCodec.message(id: $0.documentID, fields: $0.data()) }
+                // A complete one-page transcript already contains every system
+                // instruction; don't issue an unnecessary second query. This also
+                // avoids holding small chats in "Loading conversation" while that
+                // independent Firestore query waits for an index/server response.
+                let instructions: [ChatMessage]
+                if page.count == ordered.count && Set(page) == Set(ordered) {
+                    instructions = messages.filter { $0.role == .system }
+                } else {
+                    // A paged chat can have instructions older than the visible page.
+                    // Only accept independently fetched IDs belonging to this snapshot.
+                    let instructionDocs = try await reference.collection("messages")
+                        .whereField("role", isEqualTo: MessageRole.system.rawValue).getDocuments(source: .server)
+                    let authoritativeIDs = Set(ordered)
+                    instructions = try instructionDocs.documents
+                        .filter { authoritativeIDs.contains($0.documentID) }
+                        .map { try WebChatCodec.message(id: $0.documentID, fields: $0.data()) }
+                }
                 let after = try await reference.getDocument(source: .server)
                 guard epoch == session else { return }
                 if WebChatCodec.isTombstone(after.data()) { engine.applyRemoteDeletion(chatID: chatID); return }

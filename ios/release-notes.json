@@ -1,10 +1,10 @@
 {
-  "title": "Lumen visual refinement · Phase 2",
-  "description": "Refined native Light and Dark appearance, gesture-driven sidebar and more discoverable chat controls.",
+  "title": "Compact chat composer · 0.3.6",
+  "description": "A simpler, focus-expanding chat bar with icon-only attachments and clearer model labels.",
   "notes": [
-    "Polished conversations, message actions, composer, attachment chips, history search and settings.",
-    "Open the sidebar with an edge swipe or handle; close with a left swipe or tap outside.",
-    "Search lives in the sidebar header. Archived chats live in the search filters and Settings → Chats & data.",
-    "The provider hub is now Router, and temporary chat lives beside New chat in the chat toolbar."
+    "The chat bar rests as a compact row with an attachment plus, message field and Send or Stop.",
+    "Tap the message field to expand the model picker; dismiss the keyboard to collapse the bar again without losing drafts.",
+    "The expanded bar displays short provider labels such as Gemini, Claude, OpenAI and Groq, while the picker shows full model names.",
+    "The plus menu retains Photos, Files, attachment previews and existing file safeguards."
   ]
 }

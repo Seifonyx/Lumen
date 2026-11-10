@@ -69,6 +69,18 @@ final class LumenUITests: XCTestCase {
         XCTAssertFalse(app.buttons["openSettings"].exists)
     }
 
+    private func openModelPicker() {
+        let picker = app.buttons["chooseModel"]
+        if !picker.exists {
+            // The model row is intentionally hidden in the resting one-line composer.
+            // Focusing the message field expands it without losing any draft.
+            composer.tap()
+            XCTAssertTrue(picker.waitForExistence(timeout: 5),
+                          "Focusing the composer must reveal the model picker")
+        }
+        picker.tap()
+    }
+
     private func newChat() {
         app.buttons["newChat"].tap()
         if app.buttons["Discard draft"].waitForExistence(timeout: 1) {
@@ -170,15 +182,22 @@ final class LumenUITests: XCTestCase {
     func testComposerStaysAboveKeyboardAndDoesNotSubmitWithoutAModel() {
         launchCleanChat()
         defer { app.terminate() }
+        XCTAssertTrue(app.buttons["attachFile"].exists, "The collapsed composer must show the plus button")
+        XCTAssertTrue(app.buttons["sendMessage"].exists, "The collapsed composer must show Send")
+        XCTAssertFalse(app.buttons["chooseModel"].exists, "The compact composer must hide its model row")
         enterDraft("A draft above the keyboard")
         let keyboard = app.keyboards.firstMatch
         XCTAssertTrue(keyboard.waitForExistence(timeout: 3))
         XCTAssertTrue(composer.isHittable)
+        XCTAssertTrue(app.buttons["chooseModel"].waitForExistence(timeout: 5),
+                      "Focusing the composer must expand the model row")
         XCTAssertLessThanOrEqual(composer.frame.maxY, keyboard.frame.minY + 2)
         XCTAssertFalse(app.buttons["sendMessage"].isEnabled)
         XCTAssertEqual(app.tabBars.count, 0)
         capture("chat-keyboard")
         app.buttons["hideKeyboard"].tap()
+        XCTAssertTrue(app.buttons["chooseModel"].waitForNonExistence(timeout: 5),
+                      "Hiding the keyboard must collapse the model row without clearing the draft")
         XCTAssertEqual(composer.value as? String, "A draft above the keyboard")
     }
 
@@ -190,8 +209,14 @@ final class LumenUITests: XCTestCase {
         defer { app.terminate() }
         for theme in ["Light", "Dark"] {
             appearance(theme)
+            XCTAssertTrue(app.buttons["attachFile"].exists)
+            XCTAssertTrue(app.buttons["sendMessage"].exists)
+            XCTAssertFalse(app.buttons["chooseModel"].exists)
             capture("chat-\(theme.lowercased())")
-            app.buttons["chooseModel"].tap()
+            composer.tap()
+            XCTAssertTrue(app.buttons["chooseModel"].waitForExistence(timeout: 5))
+            capture("composer-expanded-\(theme.lowercased())")
+            openModelPicker()
             XCTAssertTrue(app.navigationBars["Models"].waitForExistence(timeout: 3))
             capture("models-\(theme.lowercased())")
             app.buttons["Done"].tap()
@@ -239,7 +264,7 @@ final class LumenUITests: XCTestCase {
         app.navigationBars["Groq"].buttons["BackButton"].tap()
         app.navigationBars["Router"].buttons["BackButton"].tap()
         app.navigationBars["Settings"].buttons["Done"].tap()
-        app.buttons["chooseModel"].tap()
+        openModelPicker()
         let model = app.buttons["model-groq-fixture-model"]
         XCTAssertTrue(model.waitForExistence(timeout: 5))
         model.tap()
@@ -258,9 +283,7 @@ final class LumenUITests: XCTestCase {
         app.buttons["Done"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForNonExistence(timeout: 10),
                       "Account setup must close before opening the model picker")
-        let chooseModel = app.buttons["chooseModel"]
-        XCTAssertTrue(chooseModel.waitForExistence(timeout: 10))
-        chooseModel.tap()
+        openModelPicker()
         XCTAssertTrue(app.navigationBars["Models"].waitForExistence(timeout: 10),
                       "Model picker must be visible before checking imported account models")
         let model = app.buttons["model-groq-fixture-model"]
@@ -292,7 +315,12 @@ final class LumenUITests: XCTestCase {
         launchCleanChat()
         defer { app.terminate() }
         signInAndChooseModel()
-        app.buttons["attachFile"].tap(); app.buttons["attachFixtureText"].tap()
+        XCTAssertTrue(app.buttons["attachFile"].exists)
+        XCTAssertFalse(app.staticTexts["Attach"].exists, "The plus button must not display an Attach label")
+        app.buttons["attachFile"].tap()
+        XCTAssertTrue(app.buttons["attachFixtureText"].waitForExistence(timeout: 5),
+                      "Plus must expose files and photos menu actions")
+        app.buttons["attachFixtureText"].tap()
         let preview = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "previewAttachment-")).firstMatch
         XCTAssertTrue(preview.waitForExistence(timeout: 10))
         preview.tap()
@@ -302,10 +330,12 @@ final class LumenUITests: XCTestCase {
         app.terminate(); app.launch()
         XCTAssertTrue(app.buttons["attachFile"].waitForExistence(timeout: 10))
         XCTAssertTrue(preview.exists)
-        app.buttons["attachFile"].tap(); app.buttons["attachFixturePhoto"].tap()
+        app.buttons["attachFile"].tap()
+        XCTAssertTrue(app.buttons["attachFixturePhoto"].waitForExistence(timeout: 5))
+        app.buttons["attachFixturePhoto"].tap()
         let chips = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "previewAttachment-"))
         XCTAssertTrue(chips.element(boundBy: 1).waitForExistence(timeout: 10))
-        app.buttons["chooseModel"].tap()
+        openModelPicker()
         let vision = app.buttons["model-groq-meta-llama/llama-4-scout-17b-16e-instruct"]
         XCTAssertTrue(vision.waitForExistence(timeout: 10)); vision.tap()
         enterDraft("Review these native attachments")

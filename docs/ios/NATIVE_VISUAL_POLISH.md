@@ -49,3 +49,11 @@ Changes should be reviewable in draft PRs with before/after screenshots. No rele
 Every feature proposal must define its **states and interactions** together with its functionality: entry, empty/loading/success/error, recovery, Light/Dark, Dynamic Type, VoiceOver, motion, keyboard/gestures and responsiveness. Submit polished UI and functionality together, with screenshot-based review and automated regression coverage where practicable. An unstyled functional placeholder is *not* a finished feature.
 
 Do not publish to SideStore or deploy the web app from this plan. New feature development remains native-first; web changes are fixes only.
+
+## 2026-11-10 implementation scope, owner-authorized
+
+- Replace the sidebar's top-right X with a search icon; remove search, archive and temporary-chat rows. Gesture/edge-handle + outside tap close remain available, including accessibility escape.
+- Place Archived chats under Search → Archived, with a second entry in Settings → Chats & data.
+- Move Temporary chat beside New chat in the chat toolbar, retaining its memory-only privacy behavior and leave confirmation.
+- Rename the provider hub from Models & providers to Router without changing secure API keys or the separate model picker.
+- Complete 2.2–2.6 native UI polish with no lost features or test coverage. Planned version 0.3.5 after full CI and real device review.

@@ -24,7 +24,7 @@ final class LumenUITests: XCTestCase {
                 if app.buttons["openSettings"].waitForExistence(timeout: 5) { break }
             }
             XCTAssertTrue(app.buttons["openSettings"].exists, "The simulator did not become interactive after boot")
-            app.buttons["sidebarCloseButton"].tap()
+            closeSidebarBySwiping()
             XCTAssertTrue(app.buttons["openSettings"].waitForNonExistence(timeout: 5))
             XCTAssertTrue(app.buttons["openSidebar"].isHittable)
             Self.verifiedSimulatorInput = true
@@ -40,6 +40,14 @@ final class LumenUITests: XCTestCase {
             add(screenshot)
         }
         super.tearDown()
+    }
+
+    private func closeSidebarBySwiping() {
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.65, dy: 0.42))
+        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.10, dy: 0.42))
+        start.press(forDuration: 0.12, thenDragTo: end)
+        XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["openSettings"].exists)
     }
 
     private func newChat() {
@@ -117,7 +125,7 @@ final class LumenUITests: XCTestCase {
         launchCleanChat()
         defer { app.terminate() }
         signInAndChooseModel()
-        app.buttons["openSidebar"].tap()
+        XCTAssertTrue(app.buttons["newTemporaryChat"].exists)
         app.buttons["newTemporaryChat"].tap()
         XCTAssertTrue(app.staticTexts["temporaryChatIndicator"].waitForExistence(timeout: 5))
         enterDraft("LUMEN_TEMPORARY_SECRET")
@@ -135,7 +143,7 @@ final class LumenUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["temporaryChatIndicator"].exists)
         app.buttons["openSidebar"].tap()
         XCTAssertFalse(app.buttons["LUMEN_TEMPORARY_SECRET"].exists)
-        app.buttons["sidebarCloseButton"].tap()
+        closeSidebarBySwiping()
         settings()
         XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 15))
     }
@@ -171,6 +179,11 @@ final class LumenUITests: XCTestCase {
             app.buttons["openSidebar"].tap()
             XCTAssertTrue(app.buttons["sidebar-projects"].waitForExistence(timeout: 3))
             capture("sidebar-\(theme.lowercased())")
+            XCTAssertTrue(app.buttons["sidebarSearchButton"].exists)
+            XCTAssertTrue(app.buttons["sidebar-router"].exists)
+            XCTAssertFalse(app.buttons["sidebarCloseButton"].exists)
+            XCTAssertFalse(app.buttons["sidebar-search"].exists)
+            XCTAssertFalse(app.buttons["sidebar-archive"].exists)
             let projects = app.buttons["sidebar-projects"]
             XCTAssertTrue(projects.isHittable)
             // The empty trailing part must work just like the icon and title.
@@ -201,7 +214,7 @@ final class LumenUITests: XCTestCase {
         }
         capture("direct-provider-connected")
         app.navigationBars["Groq"].buttons["BackButton"].tap()
-        app.navigationBars["Models & providers"].buttons["BackButton"].tap()
+        app.navigationBars["Router"].buttons["BackButton"].tap()
         app.navigationBars["Settings"].buttons["Done"].tap()
         app.buttons["chooseModel"].tap()
         let model = app.buttons["model-groq-fixture-model"]
@@ -451,7 +464,9 @@ final class LumenUITests: XCTestCase {
         row.press(forDuration: 1)
         app.buttons["Archive"].tap()
         XCTAssertTrue(row.waitForNonExistence(timeout: 5))
-        app.buttons["sidebar-archive"].tap()
+        app.buttons["sidebarSearchButton"].tap()
+        XCTAssertTrue(app.navigationBars["Search"].waitForExistence(timeout: 5))
+        app.segmentedControls.buttons["Archived"].tap()
         XCTAssertTrue(app.navigationBars["Archived chats"].waitForExistence(timeout: 5))
         let result = app.buttons["search-chat-metadata-fixture"]
         XCTAssertTrue(result.waitForExistence(timeout: 5))
@@ -485,7 +500,7 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Groq rejected the API key. Check it in Settings."].waitForExistence(timeout: 10))
         capture("provider-rejected-key")
         app.navigationBars["Groq"].buttons["BackButton"].tap()
-        app.navigationBars["Models & providers"].buttons["BackButton"].tap()
+        app.navigationBars["Router"].buttons["BackButton"].tap()
         app.navigationBars["Settings"].buttons["Done"].tap()
         XCTAssertEqual(composer.value as? String, "Keep my question")
         XCTAssertFalse(app.buttons["sendMessage"].isEnabled)

@@ -1,21 +1,20 @@
 # Lumen checkpoint
 
-Updated: 2026-11-10.
+Updated: 2026-11-10. Owner requested complete Phase 2 native visual polish, specific navigation changes and SideStore publication once verified.
 
 ## Current work
 
-- The owner installed native 0.3.4 and authorized **Phase 2.1 visual foundation** implementation, requesting *actual simulator screenshots viewable on an iPhone* before any release.
-- Branch `codex/phase2-visual-polish-plan`, draft [PR #148](https://github.com/Seifonyx/Lumen/pull/148). This is an unpublished implementation, not an approved design or a published SideStore update.
-- Added `ios/Lumen/Views/LumenDesignSystem.swift` with dynamic Light/Dark palette (graphite/off-white, cool-silver-blue accent), shared typography, radii, spacing, card surface and reduced-motion-aware button/row styles.
-- Applied semantic styling to app tint, root/sidebar overlay, logo header, selected history row, account footer, empty chat, composer, model/send controls, error notice, user messages, code blocks, attachment chips, settings/provider forms, model picker and search/history. Existing actions, accessibility IDs and data behavior are retained.
-- Required next verification: web checks, Swift core, four iOS simulator Firebase/UI shards, IPA packaging and exact-commit artifact verification. The existing `testNativeScreensInLightAndDark` captures chat, models, sidebar, projects and settings on iPhone in both appearances. **Collect screenshots from the new commit before showing a result.** No fabricated screenshots.
-- **Next step:** inspect CI, fix failures without bypassing tests; collect actual PNG screenshots (Dark/Light, compact/regular) in phone-viewable form and send to owner. Keep PR draft and unmerged until owner reviews. Do not publish to SideStore.
+- Branch `codex/phase2-visual-polish-plan`, draft PR #148. Phase 2.1 visual foundation is already implemented; this update completes Phase 2.2–2.6 polishing for sidebar, chat, composer, message actions, attachments, search/history and settings.
+- Navigation: sidebar header Search replaces X; sidebar rows no longer contain Search, Archived chats or Temporary chat. Edge swipe/handle opens, swipe left or outside tap closes. Archived chats available in Search → Archived and Settings → Chats & data. Temporary chat resides beside New chat in the top-right chat toolbar. Models & providers renamed Router.
+- All 14 XCTest journeys remain; update old button paths, maintain fixtures, archive search, temporary privacy and screenshot assertions.
+- 0.3.5 is the planned native version. Release not yet published.
+- Early CI gate: Linux core job runs packaging/regression tests and Swift source syntax check before expensive iPhone jobs. If one simulator job transiently fails, retry only that job AFTER workflow completes. Source fixes create new SHA and necessarily require full required CI rerun.
+- **Next concrete actions:** check PR head's core/Linux, all four real UI Firebase shards, macOS IPA, exact-commit artifact verification, web checks. Diagnose failure, fix/retry without dropping assertions. Once all pass, mark PR ready and merge to main; main CI must pass again to publish SideStore 0.3.5. Confirm release asset and source feed. Do not claim publication before verification.
+- Actual simulator screenshot artifacts from the new version should be made viewable on phone for owner.
 
-## Roadmap / design contract
+## Standing decisions
 
-- Phase 2.1: design foundation (implemented, awaiting CI screenshots and owner review).
-- Phase 2.2: sidebar/navigation deep polish; 2.3: chat/messages; 2.4: composer/attachments; 2.5: history/drafts/temporary/editing; 2.6: settings/provider forms/accessibility and complete consistency.
-- Phase 3 (router) starts **only after** existing UI polish is approved. Every future feature must include full visual and interaction polish.
-- Maintain familiar AI-chat characteristics and Lumen's light-inspired, restrained identity. Native features only; web fixes only.
-- Live iOS bundle `io.github.seifonyx.lumen`, SideStore source `ios/sidestore-source.json`. Publish only verified changes from main after required CI and owner approval.
-- Detailed acceptance requirements: `docs/ios/NATIVE_VISUAL_POLISH.md`. Keep this checkpoint concise and current.
+- Native iOS features only; web receives fixes. Preserve conventional AI chat workflow plus a distinct restrained light-inspired Lumen appearance.
+- From Phase 3 onward every feature must ship with complete visual polish, dark/light and accessibility states. Phase 7 is not a deferred UI cleanup.
+- Bundle `io.github.seifonyx.lumen`, native SideStore feed `ios/sidestore-source.json`; legacy demo release remains separate.
+- Acceptance document `docs/ios/NATIVE_VISUAL_POLISH.md`. No release from a failing/draft/unverified build.

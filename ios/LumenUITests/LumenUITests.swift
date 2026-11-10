@@ -68,6 +68,11 @@ final class LumenUITests: XCTestCase {
         app.swipeUp()
         XCTAssertFalse(sidebarContent.exists,
                        "A vertical chat scroll must not be recognized as a sidebar swipe")
+        let diagonalStart = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        let diagonalEnd = app.coordinate(withNormalizedOffset: CGVector(dx: 0.78, dy: 0.7))
+        diagonalStart.press(forDuration: 0.2, thenDragTo: diagonalEnd)
+        XCTAssertFalse(sidebarContent.exists,
+                       "A diagonal scroll with only slightly dominant horizontal movement must not open the sidebar")
         let chatCenter = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
         let shortOpen = app.coordinate(withNormalizedOffset: CGVector(dx: 0.57, dy: 0.5))
         chatCenter.press(forDuration: 0.2, thenDragTo: shortOpen)

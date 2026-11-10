@@ -142,6 +142,19 @@ struct SidebarView: View {
             .padding(.vertical, 10)
         }
         .background(LumenPalette.canvas)
+        .contentShape(Rectangle())
+        // The ScrollView owns most touch events. Attach the horizontal dismiss
+        // gesture to the actual panel, not only to RootView's outer ZStack:
+        // UI tests and real drag touches start inside this content.
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 20)
+                .onEnded { gesture in
+                    let delta = gesture.translation
+                    guard delta.width < -70,
+                          abs(delta.width) > abs(delta.height) * 1.25 else { return }
+                    close()
+                }
+        )
         .accessibilityElement(children: .contain)
         .accessibilityAction(.escape, close)
         .onAppear { headingFocused = true }

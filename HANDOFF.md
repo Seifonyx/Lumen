@@ -9,6 +9,7 @@ Updated: 2026-11-10. Owner requested complete Phase 2 native visual polish, spec
 - All 14 XCTest journeys remain; update old button paths, maintain fixtures, archive search, temporary privacy and screenshot assertions.
 - 0.3.5 is the planned native version. Release not yet published.
 - Early CI gate: Linux core job runs packaging/regression tests and Swift source syntax check before expensive iPhone jobs. If one simulator job transiently fails, retry only that job AFTER workflow completes. Source fixes create new SHA and necessarily require full required CI rerun.
+- 2026-11-10 CI triage: run #42805393513 on bbfef3 fails 3 iPhone shards (both compact + regular sync) in XCTest helper `closeSidebarBySwiping` at line 49; **same root cause**: the actual sidebar ScrollView didn't recognize the outer ZStack's horizontal close gesture. Fix attaches a simultaneous horizontal drag handler to the panel itself and makes XCTest drag explicitly inside `sidebarPanel`, still asserting the sidebar closes. No coverage removed. Verify next commit before release.
 - **Next concrete actions:** check PR head's core/Linux, all four real UI Firebase shards, macOS IPA, exact-commit artifact verification, web checks. Diagnose failure, fix/retry without dropping assertions. Once all pass, mark PR ready and merge to main; main CI must pass again to publish SideStore 0.3.5. Confirm release asset and source feed. Do not claim publication before verification.
 - Actual simulator screenshot artifacts from the new version should be made viewable on phone for owner.
 

@@ -43,10 +43,16 @@ final class LumenUITests: XCTestCase {
     }
 
     private func closeSidebarBySwiping() {
-        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.65, dy: 0.42))
-        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.10, dy: 0.42))
+        // Drag inside the actual sidebar panel so the gesture cannot start on
+        // the dimmed backdrop, system navigation area or an unrelated sheet.
+        let panel = app.descendants(matching: .any)
+            .matching(identifier: "sidebarPanel").firstMatch
+        XCTAssertTrue(panel.waitForExistence(timeout: 5))
+        let start = panel.coordinate(withNormalizedOffset: CGVector(dx: 0.82, dy: 0.42))
+        let end = panel.coordinate(withNormalizedOffset: CGVector(dx: 0.12, dy: 0.42))
         start.press(forDuration: 0.12, thenDragTo: end)
-        XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 5),
+                      "A left swipe within the sidebar must close it")
         XCTAssertFalse(app.buttons["openSettings"].exists)
     }
 

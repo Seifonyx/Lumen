@@ -28,7 +28,7 @@ struct ComposerAttachments: View {
                                     composer.attachmentIDs.removeAll { $0 == id }
                                 }.labelStyle(.iconOnly).frame(minWidth: 44, minHeight: 44)
                                     .accessibilityIdentifier("removeAttachment-" + id)
-                            }.font(.footnote).padding(.leading, 10).background(.quaternary, in: .capsule)
+                            }.font(.footnote).padding(.leading, 10).background(LumenPalette.elevated, in: .capsule)
                         }
                     }
                 }.scrollIndicators(.hidden)

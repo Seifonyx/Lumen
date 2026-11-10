@@ -29,7 +29,7 @@ struct ChatView: View {
                 if engine.currentConversation.messages.isEmpty && engine.currentConversation.historyLoaded != false {
                     VStack(spacing: 18) {
                         Image("LumenMark").resizable().scaledToFit().frame(width: 44, height: 62).accessibilityHidden(true)
-                        Text("Start a conversation").font(.title2.weight(.semibold))
+                        Text("Start a conversation").font(LumenType.brand)
                         Text(connections.key(for: engine.selectedModel) != nil ? "Ready with \(engine.selectedModel?.name ?? "your model")" : "Choose a connected model to begin.")
                             .foregroundStyle(.secondary)
                     }
@@ -75,7 +75,7 @@ struct ChatView: View {
                 }
             }
             .scrollDismissesKeyboard(.interactively)
-            .background(Color(uiColor: .systemBackground))
+            .background(LumenPalette.canvas)
             .onScrollGeometryChange(for: Bool.self) { geometry in
                 geometry.contentSize.height - geometry.contentOffset.y - geometry.containerSize.height < 140
             } action: { _, nearBottom in followsReply = nearBottom }
@@ -136,7 +136,7 @@ struct ChatView: View {
                         else { Button("Dismiss", systemImage: "xmark") { engine.errorMessage = nil }.labelStyle(.iconOnly) }
                     }
                     .padding(12)
-                    .background(Color(uiColor: .secondarySystemBackground), in: .rect(cornerRadius: 14))
+                    .lumenSurface(radius: LumenRadius.compact)
                     .accessibilityIdentifier("chatError")
                 }
                 VStack(alignment: .leading, spacing: 12) {
@@ -156,7 +156,8 @@ struct ChatView: View {
                                 Text(engine.selectedModel?.name ?? "Choose model").lineLimit(1)
                                 Image(systemName: "chevron.down").font(.caption2.weight(.semibold))
                             }
-                            .font(.subheadline.weight(.medium))
+                            .font(LumenType.control)
+                            .foregroundStyle(LumenPalette.accent)
                             .padding(.vertical, 7)
                             .frame(minHeight: 44)
                         }
@@ -173,6 +174,7 @@ struct ChatView: View {
                                 composer.discardDraft()
                             }
                             .font(.system(size: 34)).labelStyle(.iconOnly)
+                            .foregroundStyle(canSend ? LumenPalette.accent : LumenPalette.muted)
                             .frame(minWidth: 44, minHeight: 44)
                             .disabled(!canSend)
                             .accessibilityHint(canSend ? "Send message" : "Choose a connected model before sending.")
@@ -181,7 +183,8 @@ struct ChatView: View {
                     }
                 }
                 .padding(16)
-                .glassEffect(.regular, in: .rect(cornerRadius: 26))
+                .lumenSurface(radius: LumenRadius.composer)
+                .shadow(color: .black.opacity(0.06), radius: 12, y: 3)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)

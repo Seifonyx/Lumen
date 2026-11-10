@@ -60,6 +60,8 @@ struct SettingsView: View {
                     LabeledContent("Build", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "")
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(LumenPalette.canvas)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
@@ -93,6 +95,8 @@ struct ProvidersView: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(LumenPalette.canvas)
         .navigationTitle("Models & providers")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -133,6 +137,8 @@ private struct ProviderConnectionView: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(LumenPalette.canvas)
         .navigationTitle(provider.name)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { key = connections.savedKey(provider: provider) }

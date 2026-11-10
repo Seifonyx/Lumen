@@ -46,6 +46,8 @@ struct WorkspaceView: View {
     let route: WorkspaceRoute
     var body: some View {
         ContentUnavailableView(route.title, systemImage: route.icon, description: Text("Coming in a later native update. Your existing web content stays in your account."))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(LumenPalette.canvas)
             .navigationTitle(route.title)
             .navigationBarTitleDisplayMode(.inline)
     }
@@ -105,6 +107,8 @@ struct ModelSheet: View {
                 }
             }
             .searchable(text: $query, prompt: "Find a model")
+            .scrollContentBackground(.hidden)
+            .background(LumenPalette.canvas)
             .navigationTitle("Models")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }

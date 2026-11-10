@@ -36,6 +36,8 @@ struct RenameConversationSheet: View {
                 TextField("Conversation name", text: $title).accessibilityIdentifier("conversationName")
                 if let error { Text(error).foregroundStyle(.red) }
             }
+            .scrollContentBackground(.hidden)
+            .background(LumenPalette.canvas)
             .navigationTitle("Rename chat").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
@@ -109,6 +111,8 @@ struct HistorySearchView: View {
                     .allowsHitTesting(false)
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(LumenPalette.canvas)
         .searchable(text: $query, prompt: "Search conversations")
         .navigationTitle(scope == .archived ? "Archived chats" : "Search")
         .navigationBarTitleDisplayMode(.inline)

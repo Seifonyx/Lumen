@@ -16,7 +16,7 @@ struct MessageContent: View {
                         ScrollView(.horizontal) { Text(lines.count > 1 ? String(lines[1]) : section).font(.system(.subheadline, design: .monospaced)).textSelection(.enabled) }
                     }
                     .padding(12)
-                    .background(Color(uiColor: .tertiarySystemFill), in: .rect(cornerRadius: 12))
+                    .background(LumenPalette.elevated, in: .rect(cornerRadius: LumenRadius.compact))
                 }
             }
         }

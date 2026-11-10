@@ -31,7 +31,7 @@ struct MessageRow: View {
                     if message.status == .stopped { Text("Stopped").font(.caption).foregroundStyle(.secondary) }
                 }
                 .padding(isUser ? 14 : 0)
-                .background(isUser ? Color(uiColor: .secondarySystemBackground) : .clear, in: .rect(cornerRadius: 20))
+                .background(isUser ? LumenPalette.elevated : .clear, in: .rect(cornerRadius: LumenRadius.message))
                 if message.status != .streaming {
                     HStack(spacing: 18) {
                         if !message.content.isEmpty {

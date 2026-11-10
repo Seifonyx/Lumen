@@ -19,3 +19,7 @@ Updated: 2026-11-10. Owner requested complete Phase 2 native visual polish, spec
 - From Phase 3 onward every feature must ship with complete visual polish, dark/light and accessibility states. Phase 7 is not a deferred UI cleanup.
 - Bundle `io.github.seifonyx.lumen`, native SideStore feed `ios/sidestore-source.json`; legacy demo release remains separate.
 - Acceptance document `docs/ios/NATIVE_VISUAL_POLISH.md`. No release from a failing/draft/unverified build.
+
+## 2026-11-10 latest sidebar regression follow-up
+
+Run #42809180573 on `40b945702f76ea50c81eda61be013b156c83c668` failed all four UI shards at the *same* assertion in `closeSidebarBySwiping` (line 54). UIKit/SwiftUI nested scrolling still intercepts free-form drag. Next fix adds a visible and accessible trailing-edge drag/tap control that receives a high-priority leftward swipe, retains generic swipe-on-sidebar as a secondary option, and separates the UX swipe assertion inside the existing two-theme UI journey. All other journeys use the existing tap-outside/backdrop close mechanism, so a gesture failure is isolated to the feature shard; no UI tests are removed. Required exact-commit CI and owner review remain release gates. Do not publish until verified.

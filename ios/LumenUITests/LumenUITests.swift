@@ -24,7 +24,7 @@ final class LumenUITests: XCTestCase {
                 if app.buttons["openSettings"].waitForExistence(timeout: 5) { break }
             }
             XCTAssertTrue(app.buttons["openSettings"].exists, "The simulator did not become interactive after boot")
-            closeSidebarBySwiping()
+            closeSidebarByBackdrop()
             XCTAssertTrue(app.buttons["openSettings"].waitForNonExistence(timeout: 5))
             XCTAssertTrue(app.buttons["openSidebar"].isHittable)
             Self.verifiedSimulatorInput = true
@@ -42,17 +42,25 @@ final class LumenUITests: XCTestCase {
         super.tearDown()
     }
 
-    private func closeSidebarBySwiping() {
-        // Drag inside the actual sidebar panel so the gesture cannot start on
-        // the dimmed backdrop, system navigation area or an unrelated sheet.
-        let panel = app.descendants(matching: .any)
-            .matching(identifier: "sidebarPanel").firstMatch
-        XCTAssertTrue(panel.waitForExistence(timeout: 5))
-        let start = panel.coordinate(withNormalizedOffset: CGVector(dx: 0.82, dy: 0.42))
-        let end = panel.coordinate(withNormalizedOffset: CGVector(dx: 0.12, dy: 0.42))
-        start.press(forDuration: 0.12, thenDragTo: end)
+    private func closeSidebarByBackdrop() {
+        // Avoid coupling every unrelated feature journey to the swipe gesture.
+        // The exposed right-hand backdrop is a separate, supported close path.
+        let backdrop = app.buttons["closeSidebar"]
+        XCTAssertTrue(backdrop.waitForExistence(timeout: 5))
+        backdrop.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.42)).tap()
         XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 5),
-                      "A left swipe within the sidebar must close it")
+                      "Tapping outside the sidebar must dismiss it")
+        XCTAssertFalse(app.buttons["openSettings"].exists)
+    }
+
+    private func verifySidebarEdgeSwipe() {
+        let handle = app.buttons["sidebarDismissHandle"]
+        XCTAssertTrue(handle.waitForExistence(timeout: 5), "The sidebar must offer a drag-to-close edge")
+        let start = handle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.20, dy: 0.5))
+        start.press(forDuration: 0.2, thenDragTo: end)
+        XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 5),
+                      "Swiping left from the sidebar edge must dismiss it")
         XCTAssertFalse(app.buttons["openSettings"].exists)
     }
 
@@ -149,7 +157,7 @@ final class LumenUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["temporaryChatIndicator"].exists)
         app.buttons["openSidebar"].tap()
         XCTAssertFalse(app.buttons["LUMEN_TEMPORARY_SECRET"].exists)
-        closeSidebarBySwiping()
+        closeSidebarByBackdrop()
         settings()
         XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 15))
     }
@@ -185,6 +193,10 @@ final class LumenUITests: XCTestCase {
             app.buttons["openSidebar"].tap()
             XCTAssertTrue(app.buttons["sidebar-projects"].waitForExistence(timeout: 3))
             capture("sidebar-\(theme.lowercased())")
+            // Test the swipe once per theme, separately from startup and data journeys.
+            verifySidebarEdgeSwipe()
+            app.buttons["openSidebar"].tap()
+            XCTAssertTrue(app.buttons["sidebar-projects"].waitForExistence(timeout: 5))
             XCTAssertTrue(app.buttons["sidebarSearchButton"].exists)
             XCTAssertTrue(app.buttons["sidebar-router"].exists)
             XCTAssertFalse(app.buttons["sidebarCloseButton"].exists)

@@ -74,6 +74,7 @@ struct ModelSheet: View {
                                 } label: {
                                     HStack {
                                         Text(model.name).foregroundStyle(.primary)
+                                        if model.supportsImages { Label("Images", systemImage: "photo").font(.caption).foregroundStyle(.secondary) }
                                         Spacer()
                                         if engine.selectedModel?.id == model.id && engine.selectedModel?.providerId == model.providerId { Image(systemName: "checkmark").bold() }
                                     }

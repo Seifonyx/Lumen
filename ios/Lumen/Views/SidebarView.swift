@@ -3,8 +3,11 @@ import LumenCore
 
 struct SidebarView: View {
     @Bindable var engine: ChatEngine
+    @Bindable var composer: DraftState
     @Bindable var auth: AuthEngine
     var newChat: () -> Void
+    var temporaryChat: () -> Void
+    var openDraft: (String) -> Void
     var open: (WorkspaceRoute) -> Void
     var selectConversation: (Conversation) -> Void
     var settings: () -> Void
@@ -33,6 +36,8 @@ struct SidebarView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     row("New chat", icon: "square.and.pencil", action: newChat)
                         .accessibilityIdentifier("sidebarNewChat")
+                    row("Temporary chat", icon: "bubble.left.and.text.bubble.right", action: temporaryChat)
+                        .accessibilityIdentifier("newTemporaryChat")
                     ForEach(WorkspaceRoute.allCases) { route in
                         row(route.title, icon: route.icon) { open(route) }
                             .accessibilityIdentifier("sidebar-\(route.rawValue)")
@@ -40,6 +45,22 @@ struct SidebarView: View {
 
                     Divider().padding(.vertical, 18)
 
+                    if !composer.savedDrafts.isEmpty {
+                        Text("Drafts").font(.subheadline.weight(.semibold)).accessibilityAddTraits(.isHeader)
+                        ForEach(composer.savedDrafts) { draft in
+                            row(draft.text.isEmpty ? "Attachment draft" : String(draft.text.prefix(48)), icon: "pencil.line") { openDraft(draft.conversationID) }
+                                .accessibilityIdentifier("draft-" + draft.conversationID)
+                                .contextMenu {
+                                    Button("Delete draft", role: .destructive) {
+                                        if composer.removeDrafts(conversationIDs: [draft.conversationID]) {
+                                            do { try engine.pruneAttachments(keepingDraftIDs: composer.attachmentReferences) }
+                                            catch { engine.errorMessage = "Unused attachment files could not be removed. Reopen Lumen to retry." }
+                                        }
+                                    }
+                                }
+                        }
+                        Divider().padding(.vertical, 12)
+                    }
                     Text("Conversations")
                         .font(.subheadline.weight(.semibold))
                         .accessibilityAddTraits(.isHeader)
@@ -116,7 +137,7 @@ struct SidebarView: View {
                 close()
             }
             Button("Cancel", role: .cancel) { pendingDeletion = nil }
-        } message: { Text("This removes the conversation, all its versions and their saved attachments from your Lumen account.") }
+        } message: { Text("This removes the conversation and its versions. Uploaded file originals stay in your account until you delete the account.") }
     }
 
     private func row(_ title: String, icon: String, action: @escaping () -> Void) -> some View {

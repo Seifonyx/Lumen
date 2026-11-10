@@ -93,22 +93,51 @@ final class LumenUITests: XCTestCase {
         XCTAssertEqual(composer.value as? String, "Keep this draft")
     }
 
-    func testNewChatCanCancelOrDiscardAnUnsentDraft() {
+    func testNewChatKeepsAnIndependentDraftAndRestoresIt() {
         launchCleanChat()
         defer { app.terminate() }
-        enterDraft("Unsent question")
+        enterDraft("First independent draft")
         app.buttons["newChat"].tap()
-        XCTAssertTrue(app.buttons["Discard draft"].waitForExistence(timeout: 3))
-        capture("discard-confirmation")
-        app.buttons["Cancel"].tap()
-        XCTAssertEqual(composer.value as? String, "Unsent question")
-        app.buttons["newChat"].tap()
-        app.buttons["Discard draft"].tap()
-        XCTAssertNotEqual(composer.value as? String, "Unsent question")
-        app.terminate()
-        app.launch()
+        XCTAssertNotEqual(composer.value as? String, "First independent draft")
+        enterDraft("Second independent draft")
+        app.buttons["openSidebar"].tap()
+        app.buttons["First independent draft"].tap()
+        XCTAssertEqual(composer.value as? String, "First independent draft")
+        capture("restored-conversation-draft")
+        app.terminate(); app.launch()
         XCTAssertTrue(composer.waitForExistence(timeout: 10))
-        XCTAssertNotEqual(composer.value as? String, "Unsent question")
+        XCTAssertEqual(composer.value as? String, "First independent draft")
+        app.buttons["openSidebar"].tap()
+        app.buttons["Second independent draft"].tap()
+        XCTAssertEqual(composer.value as? String, "Second independent draft")
+    }
+
+    func testTemporaryConversationClearsOnLeavingAndNeverAppearsInHistory() {
+        executionTimeAllowance = 180
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        app.buttons["openSidebar"].tap()
+        app.buttons["newTemporaryChat"].tap()
+        XCTAssertTrue(app.staticTexts["temporaryChatIndicator"].waitForExistence(timeout: 5))
+        enterDraft("LUMEN_TEMPORARY_SECRET")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        capture("temporary-conversation")
+        app.buttons["newChat"].tap()
+        XCTAssertTrue(app.alerts["Leave temporary chat?"].waitForExistence(timeout: 3))
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.staticTexts["LUMEN_TEMPORARY_SECRET"].exists)
+        app.buttons["newChat"].tap(); app.buttons["Leave and clear"].tap()
+        XCTAssertFalse(app.staticTexts["LUMEN_TEMPORARY_SECRET"].exists)
+        app.terminate(); app.launch()
+        XCTAssertTrue(composer.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.staticTexts["temporaryChatIndicator"].exists)
+        app.buttons["openSidebar"].tap()
+        XCTAssertFalse(app.buttons["LUMEN_TEMPORARY_SECRET"].exists)
+        app.buttons["sidebarCloseButton"].tap()
+        settings()
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 15))
     }
 
     func testComposerStaysAboveKeyboardAndDoesNotSubmitWithoutAModel() {
@@ -127,6 +156,9 @@ final class LumenUITests: XCTestCase {
     }
 
     func testNativeScreensInLightAndDark() {
+        // Capture both themes and navigate every screen without XCTest killing
+        // the journey during slower hosted simulator accessibility operations.
+        executionTimeAllowance = 240
         launchCleanChat()
         defer { app.terminate() }
         for theme in ["Light", "Dark"] {
@@ -205,6 +237,65 @@ final class LumenUITests: XCTestCase {
         model.tap()
     }
 
+    func testAttachmentsPreviewRestoreAndSendActualTextAndImageBytes() {
+        executionTimeAllowance = 240
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        app.buttons["attachFile"].tap(); app.buttons["attachFixtureText"].tap()
+        let preview = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "previewAttachment-")).firstMatch
+        XCTAssertTrue(preview.waitForExistence(timeout: 10))
+        preview.tap()
+        XCTAssertTrue(app.staticTexts["NATIVE_ATTACHMENT_FILE_CONTENT"].waitForExistence(timeout: 5))
+        capture("attachment-text-preview")
+        app.buttons["Done"].tap()
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.buttons["attachFile"].waitForExistence(timeout: 10))
+        XCTAssertTrue(preview.exists)
+        app.buttons["attachFile"].tap(); app.buttons["attachFixturePhoto"].tap()
+        let chips = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "previewAttachment-"))
+        XCTAssertTrue(chips.element(boundBy: 1).waitForExistence(timeout: 10))
+        app.buttons["chooseModel"].tap()
+        let vision = app.buttons["model-groq-meta-llama/llama-4-scout-17b-16e-instruct"]
+        XCTAssertTrue(vision.waitForExistence(timeout: 10)); vision.tap()
+        enterDraft("Review these native attachments")
+        capture("attachment-composer")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        settings()
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
+    }
+
+    func testALongHistoryLoadsOlderAndSendsOnlyBoundedRecentContext() {
+        executionTimeAllowance = 240
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        app.buttons["openSidebar"].tap()
+        let history = app.buttons["history-long-fixture"]
+        XCTAssertTrue(history.waitForExistence(timeout: 10)); history.tap()
+        // The history row is visible as soon as Firestore metadata arrives, but the
+        // first 60 message documents load asynchronously. Wait for real page readiness.
+        let older = app.buttons["loadEarlierMessages"]
+        XCTAssertTrue(older.waitForExistence(timeout: 45), "The latest history page never became ready")
+        let count = app.staticTexts["loadedMessageCount"]
+        let firstPage = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "60 of 180"), object: count)
+        XCTAssertEqual(XCTWaiter.wait(for: [firstPage], timeout: 15), .completed)
+        older.tap()
+        let secondPage = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "120 of 180"), object: count)
+        XCTAssertEqual(XCTWaiter.wait(for: [secondPage], timeout: 25), .completed)
+        capture("long-conversation-page")
+        enterDraft("NATIVE_LONG_FOLLOWUP")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.staticTexts["boundedContextNotice"].exists)
+        capture("long-conversation-bounded-context")
+        app.terminate(); app.launch()
+        XCTAssertTrue(composer.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["NATIVE_LONG_FOLLOWUP"].waitForExistence(timeout: 15))
+        settings(); XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
+    }
+
     func testConnectedDeleteCleansTheCloudConversation() {
         launchCleanChat()
         defer { app.terminate() }
@@ -265,6 +356,10 @@ final class LumenUITests: XCTestCase {
     }
 
     func testConnectedStopPersistsPartialReplyAfterRelaunch() {
+        // Cold simulator process shutdown and restart can exceed XCTest's global
+        // 120s limit. Preserve the real stop/relaunch assertions instead of
+        // treating normal iOS process lifecycle work as a failed app test.
+        executionTimeAllowance = 240
         launchCleanChat()
         defer { app.terminate() }
         signInAndChooseModel()
@@ -336,7 +431,11 @@ final class LumenUITests: XCTestCase {
         let row = app.buttons["history-metadata-fixture"]
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         row.tap()
-        XCTAssertTrue(app.staticTexts["Recovery notes from last winter"].waitForExistence(timeout: 15))
+        // Firestore message documents may arrive after their chat metadata on a
+        // cold iOS simulator. Wait for the actual message, not merely the sidebar
+        // row that appears when metadata is received.
+        XCTAssertTrue(app.staticTexts["Recovery notes from last winter"].waitForExistence(timeout: 60),
+                      "Opening a synced chat must eventually load its message documents")
         app.buttons["openSidebar"].tap()
         row.press(forDuration: 1)
         app.buttons["Rename"].tap()

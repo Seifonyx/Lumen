@@ -13,6 +13,9 @@ public struct Conversation: Identifiable, Codable, Sendable, Equatable {
     public var pinned: Bool?
     public var lineageRootID: String?
     public var parentConversationID: String?
+    public var inheritedMessageIDs: Set<String>?
+    /// Authoritative system instructions outside the visible history page. Kept only in the protected local cache.
+    public var hydratedSystemMessages: [ChatMessage]?
     public var revisionLabel: String?
     public let createdAt: Date
     public var updatedAt: Date

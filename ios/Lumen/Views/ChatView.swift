@@ -9,13 +9,19 @@ struct ChatView: View {
     var focused: FocusState<Bool>.Binding
     var chooseModel: () -> Void
     var selectVersion: (Conversation) -> Void
+    @State private var attachmentImporting = false
+    @State private var olderAnchor: String?
     @State private var followsReply = true
     @State private var editingMessage: ChatMessage?
+    @State private var previewAttachment: ChatAttachment?
     @State private var editingAccount = ""
     @State private var editingConversation = ""
     private var versions: [Conversation] { engine.versions(for: engine.currentConversation.id) }
-    private var canRevise: Bool { !engine.isStreaming && engine.currentConversation.historyLoaded != false && connections.key(for: engine.selectedModel) != nil }
-    private var canSend: Bool { composer.hasContent && connections.key(for: engine.selectedModel) != nil && engine.currentConversation.historyLoaded != false }
+    private var canRevise: Bool { !engine.hasOlderMessages(chatID: engine.currentConversation.id) && !engine.isStreaming && engine.currentConversation.historyLoaded != false && connections.key(for: engine.selectedModel) != nil }
+    private var composerAligned: Bool {
+        composer.accountID == engine.accountID && composer.conversationID == engine.currentConversation.id && composer.isTemporary == engine.isTemporary
+    }
+    private var canSend: Bool { composerAligned && !attachmentImporting && composer.hasContent && connections.key(for: engine.selectedModel) != nil && engine.currentConversation.historyLoaded != false }
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -57,6 +63,9 @@ struct ChatView: View {
                             }, regenerate: {
                                 guard let key = connections.key(for: engine.selectedModel) else { return }
                                 _ = engine.regenerate(messageID: message.id, apiKey: key)
+                            }, openAttachment: { file in
+                                if file.kind == .text { previewAttachment = file }
+                                else { do { previewAttachment = try engine.attachment(id: file.id) } catch { engine.errorMessage = error.localizedDescription } }
                             }).id(message.id)
                         }
                         Color.clear.frame(height: 1).id("conversationBottom")
@@ -70,7 +79,31 @@ struct ChatView: View {
             .onScrollGeometryChange(for: Bool.self) { geometry in
                 geometry.contentSize.height - geometry.contentOffset.y - geometry.containerSize.height < 140
             } action: { _, nearBottom in followsReply = nearBottom }
-            .onChange(of: engine.currentConversation.id) { _, _ in followsReply = true }
+            .safeAreaInset(edge: .top, spacing: 0) {
+                if engine.currentConversation.historyLoaded == true && engine.hasOlderMessages(chatID: engine.currentConversation.id) {
+                    HStack {
+                        Button("Load earlier messages") {
+                            followsReply = false; olderAnchor = engine.currentConversation.messages.first?.id
+                            Task { await sync.loadMessages(chatID: engine.currentConversation.id, older: true) }
+                        }.disabled(engine.isStreaming || sync.isLoadingMessages(chatID: engine.currentConversation.id))
+                            .accessibilityIdentifier("loadEarlierMessages")
+                        Spacer()
+                        if sync.isLoadingMessages(chatID: engine.currentConversation.id) { ProgressView() }
+                        Text("\(engine.currentConversation.messages.count) of \(engine.currentConversation.remoteMessageIDs?.count ?? 0)")
+                            .foregroundStyle(.secondary).accessibilityIdentifier("loadedMessageCount")
+                    }.font(.caption).padding(.horizontal, 20).padding(.vertical, 10).background(.bar)
+                }
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if !followsReply {
+                    Button("Latest", systemImage: "arrow.down") { followsReply = true; proxy.scrollTo("conversationBottom", anchor: .bottom) }
+                        .padding(10).glassEffect(.regular, in: .capsule).padding(12).accessibilityIdentifier("scrollToLatest")
+                }
+            }
+            .onChange(of: engine.currentConversation.messages.first?.id) { _, _ in
+                if let anchor = olderAnchor { proxy.scrollTo(anchor, anchor: .top); olderAnchor = nil }
+            }
+            .onChange(of: engine.currentConversation.id) { _, _ in followsReply = true; olderAnchor = nil }
             .onChange(of: engine.currentConversation.messages.count) { _, _ in
                 if engine.currentConversation.messages.last?.role == .user || engine.isStreaming { followsReply = true }
                 if followsReply { proxy.scrollTo("conversationBottom", anchor: .bottom) }
@@ -81,11 +114,25 @@ struct ChatView: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 10) {
-                if let error = engine.errorMessage ?? sync.errorMessage {
+                if engine.contextOmittedMessageCount > 0 {
+                    Text("Reply context uses recent messages. Earlier messages stay in your history.")
+                        .font(.caption2).foregroundStyle(.secondary).accessibilityIdentifier("boundedContextNotice")
+                }
+                if engine.contextOmittedAttachmentCount > 0 {
+                    Text("\(engine.contextOmittedAttachmentCount) earlier file(s) unavailable or unsupported on this iPhone were omitted from the last reply. Message text was kept.")
+                        .font(.caption2).foregroundStyle(.secondary).accessibilityIdentifier("historicalAttachmentsOmittedNotice")
+                }
+                if engine.isTemporary {
+                    Label("Temporary · Not saved to history", systemImage: "eye.slash")
+                        .font(.footnote).foregroundStyle(.secondary).accessibilityIdentifier("temporaryChatIndicator")
+                    Text("Your AI provider still receives these messages.").font(.caption2).foregroundStyle(.secondary)
+                }
+                if let error = composer.errorMessage ?? engine.errorMessage ?? sync.errorMessage {
                     HStack(alignment: .top, spacing: 10) {
                         Image(systemName: "exclamationmark.circle")
                         Text(error).font(.footnote).frame(maxWidth: .infinity, alignment: .leading)
-                        if sync.errorMessage != nil { Button("Retry") { sync.retry() }.font(.footnote.weight(.semibold)) }
+                        if composer.errorMessage != nil { Button("Retry") { _ = composer.save() }.font(.footnote.weight(.semibold)) }
+                        else if sync.errorMessage != nil { Button("Retry") { sync.retry() }.font(.footnote.weight(.semibold)) }
                         else { Button("Dismiss", systemImage: "xmark") { engine.errorMessage = nil }.labelStyle(.iconOnly) }
                     }
                     .padding(12)
@@ -93,7 +140,9 @@ struct ChatView: View {
                     .accessibilityIdentifier("chatError")
                 }
                 VStack(alignment: .leading, spacing: 12) {
-                    TextField("Message Lumen", text: $composer.draft, axis: .vertical)
+                    ComposerAttachments(composer: composer, engine: engine, importing: $attachmentImporting)
+                    TextField("Message Lumen", text: Binding(get: { composerAligned ? composer.draft : "" }, set: { if composerAligned { composer.draft = $0 } }), axis: .vertical)
+                        .disabled(!composerAligned)
                         .lineLimit(1...6)
                         .font(.body)
                         .focused(focused)
@@ -120,7 +169,7 @@ struct ChatView: View {
                                 .accessibilityIdentifier("stopStreaming")
                         } else {
                             Button("Send", systemImage: "arrow.up.circle.fill") {
-                                guard let key = connections.key(for: engine.selectedModel), engine.submit(prompt: composer.draft, apiKey: key) != nil else { return }
+                                guard composerAligned, composer.save(), let key = connections.key(for: engine.selectedModel), engine.submit(prompt: composer.draft, attachmentIDs: composer.attachmentIDs, apiKey: key) != nil else { return }
                                 composer.discardDraft()
                             }
                             .font(.system(size: 34)).labelStyle(.iconOnly)
@@ -144,7 +193,8 @@ struct ChatView: View {
                 return engine.editAndResend(messageID: message.id, text: text, apiKey: key) != nil
             }
         }
-        .onChange(of: engine.accountID) { _, _ in editingMessage = nil }
-        .onChange(of: engine.currentConversation.id) { _, _ in editingMessage = nil }
+        .sheet(item: $previewAttachment) { AttachmentPreview(file: $0) }
+        .onChange(of: engine.accountID) { _, _ in editingMessage = nil; previewAttachment = nil }
+        .onChange(of: engine.currentConversation.id) { _, _ in editingMessage = nil; previewAttachment = nil }
     }
 }

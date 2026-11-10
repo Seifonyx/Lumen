@@ -14,9 +14,10 @@ import LumenCore
         #if DEBUG && targetEnvironment(simulator)
         if DebugIntegration.enabled {
             let keys = KeychainProviderKeys(service: "io.github.seifonyx.lumen.integration-keys")
-            composer = DraftState(defaults: UserDefaults(suiteName: "lumen.integration")!)
+            composer = DraftState(store: FileDraftStore(directory: DebugIntegration.directory().appendingPathComponent("Drafts")), defaults: UserDefaults(suiteName: "lumen.integration")!)
             engine = ChatEngine(client: OpenAICompatibleStreamingClient(baseURL: DebugIntegration.providerURL),
-                                store: FileConversationStore(directory: DebugIntegration.directory(), legacyDefaults: nil))
+                                store: FileConversationStore(directory: DebugIntegration.directory(), legacyDefaults: nil),
+                                attachmentStore: FileAttachmentStore(directory: DebugIntegration.directory().appendingPathComponent("Attachments")))
             auth = AuthEngine(client: FirebaseSession(credentialSource: DebugIntegration.credential))
             connections = ProviderConnections(keyStore: keys, catalog: ProviderCatalog(baseURL: DebugIntegration.providerURL))
         } else {
@@ -59,9 +60,9 @@ import LumenCore
         let id = auth.currentUser?.id ?? "device"
         guard activeAccount != id else { return }
         activeAccount = id
-        composer.switchAccount(to: id)
         connections.activateAccount(to: id)
         sync.connect(userID: auth.currentUser?.id)
+        composer.synchronize(accountID: id, conversationID: engine.currentConversation.id, temporary: engine.isTemporary)
         Task { await connections.refresh() }
     }
 }

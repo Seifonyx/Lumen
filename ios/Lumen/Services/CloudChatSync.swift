@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import Network
 import FirebaseFirestore
 import LumenCore
 
@@ -16,6 +17,12 @@ import LumenCore
     private var listener: ListenerRegistration?
     private var draining: Task<Void, Never>?
     private var loading: Set<String> = []
+    private var retryState = SyncRetryQueue()
+    private var retryTask: Task<Void, Never>?
+    private let network = NWPathMonitor()
+    private enum Operation { case deletion(String), append(Conversation, Set<String>), metadata(String, ChatMetadataPatch)
+        var chatID: String { switch self { case .deletion(let id), .metadata(let id, _): id; case .append(let chat, _): chat.id } }
+    }
     var receiveKeys: ((String, [String: String]) -> Void)?
 
     init(engine: ChatEngine, db: Firestore = Firestore.firestore()) {
@@ -25,6 +32,10 @@ import LumenCore
         settings.cacheSettings = MemoryCacheSettings()
         db.settings = settings
         engine.onChange = { [weak self] in self?.schedule() }
+        network.pathUpdateHandler = { [weak self] path in
+            if path.status == .satisfied { Task { @MainActor [weak self] in self?.retry() } }
+        }
+        network.start(queue: DispatchQueue(label: "lumen.cloud-connectivity"))
     }
 
     func connect(userID: String?) {
@@ -33,6 +44,7 @@ import LumenCore
         #endif
         listener?.remove()
         listener = nil
+        retryTask?.cancel(); retryTask = nil; retryState.reset()
         draining?.cancel()
         draining = nil
         loading = []
@@ -82,6 +94,7 @@ import LumenCore
     func retry() {
         guard accountID != nil else { return }
         errorMessage = nil
+        retryTask?.cancel(); retryTask = nil; retryState.reset()
         schedule()
         if engine.currentConversation.historyLoaded == false { Task { await loadMessages(chatID: engine.currentConversation.id) } }
     }
@@ -123,7 +136,9 @@ import LumenCore
         }
     }
 
-    func loadMessages(chatID: String) async {
+    func isLoadingMessages(chatID: String) -> Bool { loading.contains(chatID) }
+
+    func loadMessages(chatID: String, older: Bool = false) async {
         guard let accountID, !loading.contains(chatID), !engine.isStreaming else { return }
         let session = epoch
         loading.insert(chatID)
@@ -142,7 +157,33 @@ import LumenCore
                     errorMessage = "Cloud history is not available for this chat yet. Your saved messages are kept."
                     return
                 }
-                let snapshot = try await reference.collection("messages").order(by: "index").getDocuments(source: .server)
+                guard let ordered = fields["ids"] as? [String] else { throw WebSyncError.unsupported }
+                let loaded = engine.savedConversations.first { $0.id == chatID }?.messages.map(\.id) ?? []
+                let page = try HistoryPaging.pageIDs(orderedIDs: ordered, loadedIDs: loaded, older: older)
+                var messages: [ChatMessage] = []
+                // Firestore IN queries accept30 document IDs; bound each page to two reads.
+                for start in stride(from: 0, to: page.count, by: 30) {
+                    let ids = Array(page[start..<min(start + 30, page.count)])
+                    let snapshot = try await reference.collection("messages").whereField(FieldPath.documentID(), in: ids).getDocuments(source: .server)
+                    messages += try snapshot.documents.map { try WebChatCodec.message(id: $0.documentID, fields: $0.data()) }
+                }
+                // A complete one-page transcript already contains every system
+                // instruction; don't issue an unnecessary second query. This also
+                // avoids holding small chats in "Loading conversation" while that
+                // independent Firestore query waits for an index/server response.
+                let instructions: [ChatMessage]
+                if page.count == ordered.count && Set(page) == Set(ordered) {
+                    instructions = messages.filter { $0.role == .system }
+                } else {
+                    // A paged chat can have instructions older than the visible page.
+                    // Only accept independently fetched IDs belonging to this snapshot.
+                    let instructionDocs = try await reference.collection("messages")
+                        .whereField("role", isEqualTo: MessageRole.system.rawValue).getDocuments(source: .server)
+                    let authoritativeIDs = Set(ordered)
+                    instructions = try instructionDocs.documents
+                        .filter { authoritativeIDs.contains($0.documentID) }
+                        .map { try WebChatCodec.message(id: $0.documentID, fields: $0.data()) }
+                }
                 let after = try await reference.getDocument(source: .server)
                 guard epoch == session else { return }
                 if WebChatCodec.isTombstone(after.data()) { engine.applyRemoteDeletion(chatID: chatID); return }
@@ -156,11 +197,22 @@ import LumenCore
                     if let metadata = try? WebChatCodec.conversation(id: chatID, fields: latest) { engine.applyRemoteMetadata(metadata) }
                     continue
                 }
-                let messages = try snapshot.documents.map { try WebChatCodec.message(id: $0.documentID, fields: $0.data()) }
-                let ids = latest["ids"] as? [String] ?? messages.map(\.id)
-                guard Set(ids).isSubset(of: Set(messages.map(\.id))) else { throw WebSyncError.invalid }
-                if engine.applyRemoteMessages(chatID: chatID, messages: messages, orderedIDs: ids,
-                                              ticket: ticket, revision: WebChatCodec.revision(latest)) {
+                let ids = latest["ids"] as? [String] ?? []
+                guard Set(page) == Set(messages.map(\.id)) else { throw WebSyncError.invalid }
+                // Originals are fetched only for supported image references; extracted text travels with metadata.
+                for file in messages.flatMap({ $0.attachments ?? [] }) where file.kind == .image {
+                    if (try? engine.attachmentForSync(id: file.id)) != nil { continue }
+                    let original = try? await db.collection("modelRouter").document(accountID).collection("files").document(file.id).getDocument(source: .server)
+                    guard epoch == session else { return }
+                    if let base64 = original?.data()?["data"] as? String, base64.count <= 820_000, let bytes = Data(base64Encoded: base64) {
+                        var hydrated = file; hydrated.data = bytes
+                        // Originals are optional for loading the transcript.
+                        try? engine.cacheAttachment(hydrated)
+                    }
+                }
+                if engine.applyRemotePage(chatID: chatID, messages: messages, orderedIDs: ids,
+                                          ticket: ticket, revision: WebChatCodec.revision(latest), reset: !older,
+                                          systemMessages: instructions) {
                     errorMessage = nil
                     return
                 }
@@ -168,11 +220,30 @@ import LumenCore
             errorMessage = "This chat changed while loading. Tap Retry to load its latest messages."
         } catch {
             guard epoch == session else { return }
-            errorMessage = "This chat could not finish loading. Your saved messages are kept; try again when connected."
+            errorMessage = (error as? WebSyncError)?.errorDescription ?? "This chat could not finish loading. Your saved messages are kept; try again when connected."
+            scheduleRetry(after: 15)
         }
     }
 
     private func chats(_ uid: String) -> CollectionReference { db.collection("modelRouter").document(uid).collection("chats") }
+
+    private func nextOperation() -> Operation? {
+        let blocked = retryState.blockedIDs()
+        if let id = engine.pendingDeletions.sorted().first(where: { !blocked.contains($0) }) { return .deletion(id) }
+        if let chat = engine.nextPendingConversation(excluding: blocked), let ids = engine.pendingMessages[chat.id],
+           let message = chat.messages.first(where: { ids.contains($0.id) }) {
+            // One original-bearing message per transaction keeps even four images below Firestore's size limit.
+            return .append(chat, [message.id])
+        }
+        if let (id, queue) = engine.pendingMetadata.sorted(by: { $0.key < $1.key }).first(where: {
+            !blocked.contains($0.key) && (engine.pendingMessages[$0.key] ?? []).isEmpty
+        }), let patch = queue.first { return .metadata(id, patch) }
+        return nil
+    }
+
+    private var hasPendingWork: Bool {
+        !engine.pendingDeletions.isEmpty || engine.pendingMessages.values.contains(where: { !$0.isEmpty }) || !engine.pendingMetadata.isEmpty
+    }
 
     private func schedule() {
         guard let accountID, engine.accountID == accountID, draining == nil else { return }
@@ -180,52 +251,56 @@ import LumenCore
         draining = Task { [weak self] in
             guard let self else { return }
             defer { if epoch == ticket { draining = nil } }
-            do {
-                while epoch == ticket, !Task.isCancelled {
-                    if let chatID = engine.pendingDeletions.first {
-                        status = "Syncing…"
-                        let backend = FirestoreChatDeletion(db: db, userID: accountID)
-                        try await ChatDeletion.run(chatID: chatID, backend: backend)
+            while epoch == ticket, !Task.isCancelled, let operation = nextOperation() {
+                status = "Syncing…"
+                do {
+                    switch operation {
+                    case .deletion(let id):
+                        try await ChatDeletion.run(chatID: id, backend: FirestoreChatDeletion(db: db, userID: accountID))
                         guard epoch == ticket else { return }
-                        engine.acknowledgeDeletion(chatID: chatID)
-                    } else if let chat = engine.nextPendingConversation(), let ids = engine.pendingMessages[chat.id] {
-                        let chatID = chat.id
-                        status = "Syncing…"
-                        do { try await append(chat: chat, ids: ids, uid: accountID) }
-                        catch WebSyncError.deleted {
-                            guard epoch == ticket else { return }
-                            engine.applyRemoteDeletion(chatID: chatID)
-                            continue
-                        }
+                        engine.acknowledgeDeletion(chatID: id)
+                    case .append(let chat, let ids):
+                        try await append(chat: chat, ids: ids, uid: accountID)
                         guard epoch == ticket else { return }
-                        engine.acknowledge(chatID: chatID, messageIDs: ids)
-                    } else if let (chatID, patches) = engine.pendingMetadata.sorted(by: { $0.key < $1.key }).first, let patch = patches.first {
-                        status = "Syncing…"
-                        do { try await applyMetadata(patch, chatID: chatID, uid: accountID) }
-                        catch WebSyncError.deleted {
-                            guard epoch == ticket else { return }
-                            engine.applyRemoteDeletion(chatID: chatID)
-                            continue
-                        }
+                        engine.acknowledge(chatID: chat.id, messageIDs: ids)
+                    case .metadata(let id, let patch):
+                        try await applyMetadata(patch, chatID: id, uid: accountID)
                         guard epoch == ticket else { return }
-                        if !engine.acknowledgeMetadata(chatID: chatID, operationID: patch.id) { throw CocoaError(.fileWriteOutOfSpace) }
-                        let latest = try await chats(accountID).document(chatID).getDocument(source: .server)
+                        if !engine.acknowledgeMetadata(chatID: id, operationID: patch.id) { throw CocoaError(.fileWriteOutOfSpace) }
+                        let latest = try await chats(accountID).document(id).getDocument(source: .server)
                         guard epoch == ticket else { return }
-                        if WebChatCodec.isTombstone(latest.data()) { engine.applyRemoteDeletion(chatID: chatID) }
-                        else if let fields = latest.data(), let chat = try? WebChatCodec.conversation(id: chatID, fields: fields) {
-                            engine.applyRemoteMetadata(chat)
-                        }
-                    } else {
-                        if engine.pendingMessages.values.contains(where: { !$0.isEmpty }) { throw WebSyncError.conflict }
-                        status = "Up to date"
-                        break
+                        if WebChatCodec.isTombstone(latest.data()) { engine.applyRemoteDeletion(chatID: id) }
+                        else if let fields = latest.data(), let chat = try? WebChatCodec.conversation(id: id, fields: fields) { engine.applyRemoteMetadata(chat) }
                     }
+                    retryState.succeeded(chatID: operation.chatID)
+                } catch WebSyncError.deleted {
+                    guard epoch == ticket else { return }
+                    engine.applyRemoteDeletion(chatID: operation.chatID)
+                    retryState.succeeded(chatID: operation.chatID)
+                } catch {
+                    guard epoch == ticket else { return }
+                    retryState.failed(chatID: operation.chatID)
+                    errorMessage = (error as? WebSyncError)?.errorDescription ?? "Some changes are waiting to sync. They are saved on this iPhone and will retry automatically."
                 }
-            } catch {
-                guard epoch == ticket else { return }
-                status = "Saved on this iPhone"
-                errorMessage = (error as? WebSyncError)?.errorDescription ?? "Cloud sync is paused. Your messages are saved on this iPhone. Tap Retry when connected."
             }
+            guard epoch == ticket else { return }
+            if hasPendingWork {
+                status = "Waiting to sync"
+                if let delay = retryState.nextDelay() { scheduleRetry(after: delay) }
+                else { errorMessage = "A conversation version is waiting for its original to sync. Tap Retry when connected." }
+            } else { status = "Up to date"; errorMessage = nil }
+        }
+    }
+
+    private func scheduleRetry(after seconds: TimeInterval) {
+        guard accountID != nil, retryTask == nil else { return }
+        let session = epoch
+        retryTask = Task { [weak self] in
+            do { try await Task.sleep(for: .seconds(seconds)) } catch { return }
+            guard let self, epoch == session else { return }
+            retryTask = nil
+            schedule()
+            if engine.currentConversation.historyLoaded == false { await loadMessages(chatID: engine.currentConversation.id) }
         }
     }
 
@@ -254,14 +329,24 @@ import LumenCore
 
     private func append(chat: Conversation, ids: Set<String>, uid: String) async throws {
         let reference = chats(uid).document(chat.id)
+        var unique: [String: ChatAttachment] = [:]
+        for message in chat.messages where ids.contains(message.id) {
+            // The transaction copies inherited file references from the parent.
+            // A fork must still sync if an older web original was never uploaded.
+            guard chat.inheritedMessageIDs?.contains(message.id) != true else { continue }
+            for file in message.attachments ?? [] {
+                if file.kind == .text { unique[file.id] = file }
+                else if file.kind == .image { unique[file.id] = try engine.attachmentForSync(id: file.id) }
+            }
+        }
+        let originals = Array(unique.values)
+        let files = db.collection("modelRouter").document(uid).collection("files")
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
             // Firestore executes transaction updates off the main actor, including retries.
             db.runTransaction({ @Sendable transaction, errorPointer in
                 do {
                     let remote = try transaction.getDocument(reference)
-                    let sourceReference = !remote.exists ? chat.parentConversationID.map {
-                        reference.parent.document($0)
-                    } : nil
+                    let sourceReference = chat.parentConversationID.map { reference.parent.document($0) }
                     let sourceMetadata = try sourceReference.map { try transaction.getDocument($0).data() }
                     var existing: [String: [String: Any]] = [:]
                     var inherited: [String: [String: Any]] = [:]
@@ -276,6 +361,17 @@ import LumenCore
                     }
                     let plan = try WebChatCodec.append(chat: chat, messageIDs: ids, remote: remote.data(), existingMessages: existing,
                                                       sourceMetadata: sourceMetadata ?? nil, inheritedMessages: inherited)
+                    var missing: [ChatAttachment] = []
+                    for file in originals {
+                        if try !transaction.getDocument(files.document(file.id)).exists { missing.append(file) }
+                    }
+                    for file in missing {
+                        try file.validate()
+                        let bytes = file.data ?? Data((file.text ?? "").utf8)
+                        transaction.setData(["chatId": chat.lineageRootID ?? chat.id, "name": file.name, "mime": file.mime,
+                                             "kind": file.kind.rawValue, "data": bytes.base64EncodedString(),
+                                             "srv": FieldValue.serverTimestamp()], forDocument: files.document(file.id))
+                    }
                     for (id, var fields) in plan.messages {
                         fields["srv"] = FieldValue.serverTimestamp()
                         transaction.setData(fields, forDocument: reference.collection("messages").document(id), merge: true)

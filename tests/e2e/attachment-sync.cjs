@@ -1,5 +1,5 @@
-// Small attachment originals sync: device A attaches an image, device B continues the chat and the model
-// still receives the image; deleting the chat removes the stored copy.
+// Small attachment originals sync: another device can reuse an image. A surviving fork
+// keeps its shared cloud original even after the original uploading chat is deleted.
 const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs'), path = require('node:path'), os = require('node:os');
 const base = 'http://127.0.0.1:8080/v1/projects/the-model-router/databases/(default)/documents';
 const app = process.env.MR_TEST_URL || 'http://localhost:5190/?emulator';
@@ -62,11 +62,57 @@ async function device(browser, log) {
     assert.ok(sent.includes(image), 'device B sent the image it never had locally');
     assert.doesNotMatch(sent, /Attached on another device/);
 
-    // Deleting the chat removes the stored original.
+    // A native revision can reuse the same original while the upload owner's
+    // chatId stays unchanged. Write a separate surviving fork through the real
+    // Firestore emulator, then delete only the uploading chat on the web.
+    const sharedOriginal = files.documents[0];
+    const originalID = sharedOriginal.name.split('/').at(-1);
+    const uploadOwner = sharedOriginal.fields.chatId.stringValue;
+    const forkID = 'surviving-image-fork';
+    const auth = { Authorization: 'Bearer owner', 'Content-Type': 'application/json' };
+    const forkURL = `${base}/modelRouter/${uid}/chats/${forkID}`;
+    const str = (value) => ({ stringValue: value });
+    const number = (value) => ({ integerValue: String(value) });
+    const now = Date.now();
+    const forkChat = await fetch(forkURL, {
+      method: 'PATCH', headers: auth, body: JSON.stringify({ fields: {
+        title: str('Surviving image fork'), createdAt: number(now),
+        updatedAt: number(now), rev: number(now), deleted: { booleanValue: false },
+        nativeRoot: str(uploadOwner), nativeParent: str(uploadOwner),
+        ids: { arrayValue: { values: [str('fork-image')] } }, count: number(1),
+      } }),
+    });
+    assert.ok(forkChat.ok, 'surviving fork metadata was saved');
+    const forkMessage = await fetch(forkURL + '/messages/fork-image', {
+      method: 'PATCH', headers: auth, body: JSON.stringify({ fields: {
+        id: str('fork-image'), role: str('user'), text: str('Keep this image after parent deletion'),
+        index: number(0), createdAt: number(now), status: str('done'),
+        files: { arrayValue: { values: [{ mapValue: { fields: {
+          id: str(originalID), name: str('wound.png'), mime: str('image/png'),
+          kind: str('image'), stored: { booleanValue: true },
+        } } }] } },
+      } }),
+    });
+    assert.ok(forkMessage.ok, 'surviving fork keeps the shared attachment reference');
+
     await A.page.getByRole('button', { name: 'Chat options', exact: true }).first().click();
     await A.page.getByRole('menuitem', { name: /Delete/ }).click();
-    for (let i = 0; i < 30 && files.documents?.length; i++) { await A.page.waitForTimeout(500); files = await (await fetch(`${base}/modelRouter/${uid}/files`, { headers: { Authorization: 'Bearer owner' } })).json(); }
-    assert.ok(!files.documents?.length, 'stored original removed with the chat');
-    console.log('PASS small attachment originals sync between devices and are removed with the chat');
+    let tombstone;
+    for (let i = 0; i < 30; i++) {
+      const response = await fetch(`${base}/modelRouter/${uid}/chats/${uploadOwner}`, { headers: auth });
+      tombstone = response.ok ? (await response.json()).fields : null;
+      if (tombstone?.deleted?.booleanValue === true) break;
+      await A.page.waitForTimeout(500);
+    }
+    assert.equal(tombstone?.deleted?.booleanValue, true, 'uploading parent chat is tombstoned');
+    const survivor = await (await fetch(forkURL + '/messages/fork-image', { headers: auth })).json();
+    assert.equal(survivor.fields.files.arrayValue.values[0].mapValue.fields.id.stringValue, originalID,
+      'surviving fork still references the original');
+    const originalResponse = await fetch(`${base}/modelRouter/${uid}/files/${originalID}`, { headers: auth });
+    assert.ok(originalResponse.ok, 'deleting the parent did not remove the shared cloud original');
+    const originalAfter = await originalResponse.json();
+    assert.equal(originalAfter.fields.data.stringValue, sharedOriginal.fields.data.stringValue,
+      'surviving fork can still load the original bytes');
+    console.log('PASS images sync across devices and a surviving fork retains its original after parent deletion');
   } finally { await browser.close(); }
 })().catch((e) => { console.error(e); process.exit(1); });

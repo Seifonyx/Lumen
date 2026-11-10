@@ -4,49 +4,22 @@ Updated: 2026-11-09. Read the user's current request; update this checkpoint aft
 
 ## Now
 
-- Owner authorized the entire Phase2 in one continuous run, releasing each part to the existing source.
-  Current branch `codex/phase2-history`, starting from fb1ea81. Parts:2.1 controls0.3.0;
-  2.2 history0.3.1;2.3 drafts/temporary0.3.2;2.4 attachments0.3.3;2.5 long chats/recovery0.3.4.
-  Plan/ledger: `/workspace/scratch/lumen-phase2/{plan,progress}.md`. Baseline44 Swift+16 Python pass.
-  Task1 shipped0.3.0 build28 from52ab376. CI42623415183 passes both device/UI/backend/artifact jobs.
-  Anonymous IPA/feed verification passes:6,521,671 bytes, SHA2561da7a066b27f70bfdb8d0e3862bd803a719b1112743ea829cb44a720551244b2.
-  Source https://raw.githubusercontent.com/Seifonyx/Lumen/main/ios/sidestore-source.json now lists0.3.0.
-  Task2 history passed one fresh review and one fix pass:68 Swift+16 Python checks, TypeScript and web
-  unit tests pass. Ordered metadata outbox IDs survive failed ACK/restart/new fields, with bounded
-  native/web marker cleanup. Archived view/search and group actions are ready for device CI.
-  Task2 is entering Native CI for0.3.1; publication pending. Task3 drafts/temporary and Task4 attachments
-  are implemented/reviewed on isolated worktrees (77/86 Core tests); Task5 paging/recovery is in progress.
-  Publish sequentially and verify every public feed update.
-  Preserve originals and group versions as one history item. Do not stop after the first release.
-  Develop later parts while CI runs, and publish sequentially after prior source update succeeds.
+- New report: ef9bd410 PR native run 42707163805 failed only regular/features (both phone sync shards, compact features, Ubuntu core, and Web Tests passed). The exact regular test log identifies XCTest's **default 120s execution limit** terminating testConnectedStopPersistsPartialReplyAfterRelaunch and testNativeScreensInLightAndDark. The latter completed Light/Dark screen navigation up to Settings before timing out; the former was interrupted during stop/relaunch and xcodebuild reported an app-termination error after the limit. Targeted per-test `executionTimeAllowance = 240` for both, preserving all assertions and screenshots. Do not change global timeout or drop tests.
+- Owner previously explicitly authorized SideStore release after clean PR CI. Current release-watch task was pinned to ef9bd410; update it to the new exact head before publishing. Keep draft PR pending fresh green web/native CI, verified IPA, and then safe merge to main for SideStore publication. Any failure blocks release.
 
-- Native Phase1 is shipped: **0.2.0, build26**, from main commit `732b4df1f543129242766d66e9e7257b9e5dca1c`.
-  [PR146](https://github.com/Seifonyx/Lumen/pull/146) is merged. Local branch `codex/phase1-shipping`
-  follows main; source-listing bot commit is `5fba2be`. Phase1 shipping is complete; Phase2 work is now active.
-- Release: https://github.com/Seifonyx/Lumen/releases/tag/native-ios-v0.2.0
-  SideStore: https://raw.githubusercontent.com/Seifonyx/Lumen/main/ios/sidestore-source.json
-  Anonymous download and canonical JSON verified; newest version, size and URL match the release/manifest.
-  IPA:6,477,724 bytes; SHA256 `d601591daa0dd8d5b8a4203a97419779d568119d3ad161540188afc7925292ba`.
-- [Final CI42576882912](https://github.com/Seifonyx/Lumen/actions/runs/42576882912) is fully green:
-  44 Swift tests,16 Python packaging/artifact checks,9 UI journeys on each of2 iPhone sizes (18 total).
-  Real Firebase Auth/Firestore SDK emulator roundtrips, deletion cleanup, unknown metadata/message fields,
-  web ordering and4 provider requests per phone pass. Paired IPA/source/version/hash verification and
-  publishing pass. Inspected final compact keyboard/Stop and regular dark/web-history screenshots.
-- Phase1 now uses real Google/Firebase auth; account-scoped protected cache, durable outbox and Keychain;
-  safe web chat reads/appends/deletion; Groq/Gemini/OpenAI/Anthropic transports, discovered models,
-  streamed replies and Stop. Chat is the main screen with sidebar navigation, no bottom tabs.
-- Firebase project `the-model-router` has the correct clients for `io.github.seifonyx.lumen` and
-  `io.github.seifonyx.lumen.M2WDSAZ2A5`; nickname Lumen is valid. Bundled configuration is public.
-  Native sync reuses the existing web schema. Further workspace/router/tool parity remains later phases.
-- Runtime details behind verified fixes: Firestore transaction callbacks are explicitly @Sendable because
-  the SDK executes updates off the main actor. SDK13.1.1 emulator setup explicitly disables local TLS only
-  in DEBUG simulator fixtures. CI waits for actual input readiness, targets the visible sidebar X and gives
-  the long history/relaunch/sign-out journey180s. Release excludes all fixture identity/key markers.
-- Next physical check: update through SideStore, sign in with the existing Lumen Google account, choose a
-  connected model, send/Stop, then reopen a web chat. Google's real chooser, SideStore signing and live
-  provider inference require the owner's iPhone; automation used local emulators/HTTP fixtures.
-- Local Swift6.2.3 is `/workspace/scratch/swift-6.2/usr/bin/swift`; no local Xcode. Native checks use the
-  committed `ios/scripts/build.sh` on GitHub macOS26/Xcode26.6. Current setup is in `ios/README.md`.
+- 2026-11-09 owner explicitly authorized: **fix current failure and publish latest 0.3.4 to SideStore**, but *only after* the updated draft PR passes all required web/native CI and exact-commit IPA verification. On passing checks, mark PR ready and merge to main; main native CI alone publishes the version. Never bypass failed checks.
+- Diagnosis: native run 42700477434 failed ONLY the compact/sync UI test `testHistoryRenamePinArchiveAndSearchCachedMessages` at line 427. Its captured accessibility hierarchy shows `Loading conversation…` still on screen (metadata loaded, message not yet). Regular sync and both feature shards, core, release archive and web passed.
+- Fix candidate: for a full one-page chat, don't issue a separate Firestore system-instruction query (the page already includes every system message). For a paginated chat, retain separate authoritative instruction hydration. Raise UI wait from 15s to 60s; xcodebuild retries failed UI methods once, not the whole suite, retaining hard failure on repeat. The new code must pass CI before publishing.
+
+- Owner request: make PR #147 native CI as fast as reasonably possible **without reducing release verification**. Keep `codex/phase2-completion-review` as an unmerged draft. Do not publish to SideStore or deploy web.
+- Baseline: successful Native iOS run 42690244621 at commit `3cb7b6c` lasted ~35 min. On both iPhone sizes, XCTest's 14 serial UI journeys alone took 12–13 min; fresh simulator preparation reported 8m50s on regular. Core Swift 107 tests and web tests had passed.
+- New workflow is designed for the standard GitHub-hosted **five simultaneous macOS job** limit: 4 independent, balanced UI/Firebase shards (compact + regular x sync + features), plus 1 separate concurrent unsigned device IPA archive. A required Ubuntu job runs all Python packaging/CI checks and all 107+ Swift core tests. Each size still executes **every one of the 14 UI tests**, with independently seeded real Firebase Auth/Firestore emulators.
+- `ios/scripts/test_simulators.py` uses explicit `-only-testing` method sets (6 sync and 8 features), checks each test's actual XCTest pass line so a zero-test run cannot pass, and records exact method names and count. `native_test_server.py` divides its original full verification into independently enforceable sync/feature assertions with `all` still supporting local full-suite runs.
+- `collect_artifacts.py` refuses any missing UI shard, lost Firebase assertion, omitted XCTest method count, screenshot/provenance mismatch, duplicate simulator UUID, or incorrect SHA-256, source SHA, app ID, OS or architecture. Only the fifth runner's independently packaged device IPA can be selected for release after both phones pass. The publishing job is still restricted to `main`.
+- On ephemeral GitHub CI runners only, `prepare_simulator.py` prefers a matching available preinstalled iPhone simulator (booted first) over fresh-device creation; it never reuses local developer simulators. Fallback remains a new dedicated simulator.
+- Tests added/updated to cover exact UI method partition, hosted reuse safety, every new artifact gate, and the existing packaging/security checks.
+- **Status: new workflow has not yet been run on GitHub; optimizations are candidates pending CI and measured wall-time.** Fix failures without dropping tests. Do not merge or publish before owner reviews simulator screenshots or device IPA.
+- Next: trigger PR checks, verify all four iPhone shards + archive + Ubuntu core + web CI, measure wall time versus the 35-minute baseline, and make any safe follow-up optimizations based on actual results.
 
 ## Next
 

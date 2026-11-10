@@ -5,10 +5,12 @@ public struct ChatSnapshot: Codable, Equatable, Sendable {
     public var selectedModel: AIModel?
     public var pendingMessages: [String: Set<String>]
     public var pendingDeletions: Set<String>
+    public var selectedConversationID: String?
     public var pendingMetadata: [String: [ChatMetadataPatch]]?
     public init(conversations: [Conversation] = [], selectedModel: AIModel? = nil,
                 pendingMessages: [String: Set<String>] = [:], pendingDeletions: Set<String> = [],
-                pendingMetadata: [String: [ChatMetadataPatch]] = [:]) {
+                pendingMetadata: [String: [ChatMetadataPatch]] = [:], selectedConversationID: String? = nil) {
+        self.selectedConversationID = selectedConversationID
         self.conversations = conversations
         self.selectedModel = selectedModel
         self.pendingMessages = pendingMessages

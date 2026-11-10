@@ -48,6 +48,7 @@ export const doc = ref;
 export const collection = ref;
 export const query = (base: Inert) => base;
 export const where = () => sentinel('where');
+export const limit = () => sentinel('limit');
 export const orderBy = () => sentinel('orderBy');
 export const serverTimestamp = () => sentinel('serverTimestamp');
 export const deleteField = () => sentinel('deleteField');

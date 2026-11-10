@@ -13,6 +13,14 @@
       "tintColor": "0b0b0c",
       "versions": [
         {
+          "version": "0.3.5",
+          "date": "2026-11-10",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.3.5/Lumen.ipa",
+          "size": 6768566,
+          "minOSVersion": "26.0",
+          "localizedDescription": "Refined native Light and Dark appearance, gesture-driven sidebar and more discoverable chat controls."
+        },
+        {
           "version": "0.3.4",
           "date": "2026-11-10",
           "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.3.4/Lumen.ipa",

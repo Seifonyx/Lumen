@@ -1,15 +1,17 @@
 # Lumen checkpoint
 
-Updated: 2026-11-10. Native 0.3.6 PR #149 is merged at `e248f23ed91adbe49286eb5a3f16c6ad3f86cd22`; its main-branch SideStore release workflow is still running. Owner requested Phase 3 work on iPhone sidebar swipes while that release is checked.
+Updated: 2026-11-11. Native 0.3.6 PR #149 is merged at `e248f23ed91adbe49286eb5a3f16c6ad3f86cd22`; its main-branch SideStore release workflow is still being checked. Owner requested Phase 3 work on iPhone sidebar swipes while that release is checked.
 
 ## Current work
 
 - Branch `codex/phase3-native-edge-drawer`, based on merged main commit `e248f23ed91adbe49286eb5a3f16c6ad3f86cd22`.
 - Scope is only the sidebar gesture interaction. With the sidebar closed, a deliberate rightward horizontal swipe anywhere on the chat screen opens it. With the sidebar open, a deliberate leftward horizontal swipe anywhere on the screen closes it. Both track the finger and settle smoothly after full, partial, or cancelled gestures.
 - Remove the visible edge tab and duplicate drag handlers. Keep the sidebar overlay, design, content and actions. Vertical chat scrolling and sidebar history scrolling must continue working; gesture recognition must require intentional horizontal direction.
-- Current stage: update the existing XCTest journey first to cover center-origin open, close starting on both the sidebar and dimmed area, repeated open/close cycles, partial gestures and vertical scrolling. The production gesture implementation has not been changed yet.
+- The test-first run is #42910696330 on test-only SHA `2663a9a5c1d14d6e96e804b18fc41f2faf33e6ad`. The compact features shard completed with `testNativeScreensInLightAndDark` among its failures, confirming the old code does not meet the new swipe journey; it also reported a separate failure in `testConnectedDeleteCleansTheCloudConversation`. The remaining shards are still running.
+- Phase 3 implementation is now in the worktree: one root-level simultaneous drag tracks the panel and scrim with the finger. It locks the gesture to horizontal only when horizontal movement is clearly dominant, and permanently yields a vertical drag to the chat or sidebar scroll view. Right swipes open from anywhere on the root chat; left swipes close from anywhere while open. The edge tab, sidebar handle and duplicate gesture handlers are removed. The gesture is disabled on pushed navigation screens to preserve the system back swipe.
+- The expanded XCTest journey also checks that a vertical chat swipe leaves the sidebar closed, alongside sidebar-history scrolling, center-origin opening, both close regions, repeated gestures and partial gestures. It must pass on compact and regular iPhones before merge or release.
 - Main release workflow #42904673100 completed with core, IPA archive, compact features/sync and regular features green. Regular sync failed before XCTest: the first Firestore emulator reset request timed out after 15 seconds. The exact failed job (#130140125331) has been retried; wait for it and the verifier/publisher before advancing the Development copy.
-- Once the gesture regression is demonstrated, implement using native UIKit gesture recognizers coordinated with SwiftUI. Preserve system back navigation on pushed screens and reduced-motion behavior. Run the iOS simulator matrix and artifact verifier on the final commit before merging/publishing.
+- Preserve reduced-motion behavior for settle animations. Run the iOS simulator matrix and artifact verifier on the final commit before merging/publishing.
 - No web work is in scope. iOS bundle `io.github.seifonyx.lumen`; SideStore feed `ios/sidestore-source.json`.
 
 ## Standing decisions

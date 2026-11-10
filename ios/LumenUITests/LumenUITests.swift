@@ -65,6 +65,9 @@ final class LumenUITests: XCTestCase {
 
         // Close the panel, then make sure a short horizontal movement returns to rest.
         closeSidebarByBackdrop()
+        app.swipeUp()
+        XCTAssertFalse(sidebarContent.exists,
+                       "A vertical chat scroll must not be recognized as a sidebar swipe")
         let chatCenter = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
         let shortOpen = app.coordinate(withNormalizedOffset: CGVector(dx: 0.57, dy: 0.5))
         chatCenter.press(forDuration: 0.2, thenDragTo: shortOpen)

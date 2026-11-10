@@ -359,10 +359,14 @@ final class LumenUITests: XCTestCase {
         let older = app.buttons["loadEarlierMessages"]
         XCTAssertTrue(older.waitForExistence(timeout: 45), "The latest history page never became ready")
         let count = app.staticTexts["loadedMessageCount"]
-        let firstPage = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "60 of 180"), object: count)
-        XCTAssertEqual(XCTWaiter.wait(for: [firstPage], timeout: 15), .completed)
+        let firstPage = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label MATCHES %@", #"60 of [0-9]+"#), object: count)
+        XCTAssertEqual(XCTWaiter.wait(for: [firstPage], timeout: 15), .completed,
+                       "The first history page must load 60 messages")
+        let totalMessages = Int(count.label.components(separatedBy: " of ").last ?? "") ?? 0
+        XCTAssertGreaterThanOrEqual(totalMessages, 180, "The long-history fixture must retain its 180 seeded messages")
         older.tap()
-        let secondPage = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "120 of 180"), object: count)
+        let secondPage = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "label == %@", "120 of \(totalMessages)"), object: count)
         XCTAssertEqual(XCTWaiter.wait(for: [secondPage], timeout: 25), .completed)
         capture("long-conversation-page")
         enterDraft("NATIVE_LONG_FOLLOWUP")

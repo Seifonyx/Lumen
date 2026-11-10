@@ -1,42 +1,26 @@
 # Lumen checkpoint
 
-Updated: 2026-11-10. Owner requested complete Phase 2 native visual polish, specific navigation changes and SideStore publication once verified.
+Updated: 2026-11-10. The complete native visual Phase 2 was merged and SideStore 0.3.5 is listed in the main feed. Owner requested a new composer layout patterned after compact native AI chat bars.
 
 ## Current work
 
-- Branch `codex/phase2-visual-polish-plan`, draft PR #148. Phase 2.1 visual foundation is already implemented; this update completes Phase 2.2–2.6 polishing for sidebar, chat, composer, message actions, attachments, search/history and settings.
-- Navigation: sidebar header Search replaces X; sidebar rows no longer contain Search, Archived chats or Temporary chat. Edge swipe/handle opens, swipe left or outside tap closes. Archived chats available in Search → Archived and Settings → Chats & data. Temporary chat resides beside New chat in the top-right chat toolbar. Models & providers renamed Router.
-- All 14 XCTest journeys remain; update old button paths, maintain fixtures, archive search, temporary privacy and screenshot assertions.
-- 0.3.5 is the planned native version. Release not yet published.
-- Early CI gate: Linux core job runs packaging/regression tests and Swift source syntax check before expensive iPhone jobs. If one simulator job transiently fails, retry only that job AFTER workflow completes. Source fixes create new SHA and necessarily require full required CI rerun.
-- 2026-11-10 CI triage: run #42805393513 on bbfef3 fails 3 iPhone shards (both compact + regular sync) in XCTest helper `closeSidebarBySwiping` at line 49; **same root cause**: the actual sidebar ScrollView didn't recognize the outer ZStack's horizontal close gesture. Fix attaches a simultaneous horizontal drag handler to the panel itself and makes XCTest drag explicitly inside `sidebarPanel`, still asserting the sidebar closes. No coverage removed. Verify next commit before release.
-- **Next concrete actions:** check PR head's core/Linux, all four real UI Firebase shards, macOS IPA, exact-commit artifact verification, web checks. Diagnose failure, fix/retry without dropping assertions. Once all pass, mark PR ready and merge to main; main CI must pass again to publish SideStore 0.3.5. Confirm release asset and source feed. Do not claim publication before verification.
-- Actual simulator screenshot artifacts from the new version should be made viewable on phone for owner.
+- New branch `codex/composer-collapse-0.3.6` based on main commit `f3f8d6b0210974f6e80dbb9609753046c92d5a16`.
+- Target native version **0.3.6**, not yet published. Existing production 0.3.5 is unchanged.
+- Compact composer when the message field is not focused: show **+**, one-line prompt field, and Send/Stop in one short rounded row. Opening/focusing the prompt reveals the model picker on a second row; closing the keyboard collapses it again. Long drafts and attachment chips remain preserved.
+- The + icon opens **photo and file** choices; no visible "Attach" label. Existing simulator fixture actions, fileImporter, PhotosPicker, 4-attachment limit, previews and import errors remain.
+- The selected model displays only the provider's familiar short name in the expanded composer: Gemini / Claude / OpenAI / Groq; full actual model names are retained inside `ModelSheet` and in the control's accessibility label.
+- Update existing native UI tests to account for focus-dependent picker visibility, plus-menu attachment behavior and compact/expanded screenshots in Light/Dark. Preserve all current assertions and journeys. `ios/project.yml` / release notes should prepare 0.3.6 on PR.
+- Latest native CI #42871052308 on `f1e96460f0d5e6d4bce66d7daba3061c86889c62`: core/packaging, IPA archive, regular sync and both feature shards passed. Compact sync failed only at the long-history assertion because it hard-coded `60 of 180` while the simulator reported `60 of 182`. The working fix derives the total from the loaded page label, requires at least 180 seeded messages, and checks that the next page is exactly 120 of the same total.
+- **Next:** commit and push this regression fix, then verify early Swift parse/core, all four compact+regular × sync+features Firebase UI shards, IPA archive and exact artifact verification on the new SHA. Keep PR draft until all pass; then merge and confirm SideStore 0.3.6 is published on main. No web work is in scope.
+- No changes to web/PWA code. iOS bundle `io.github.seifonyx.lumen`; SideStore feed `ios/sidestore-source.json`.
 
 ## Standing decisions
 
-- Native iOS features only; web receives fixes. Preserve conventional AI chat workflow plus a distinct restrained light-inspired Lumen appearance.
-- From Phase 3 onward every feature must ship with complete visual polish, dark/light and accessibility states. Phase 7 is not a deferred UI cleanup.
-- Bundle `io.github.seifonyx.lumen`, native SideStore feed `ios/sidestore-source.json`; legacy demo release remains separate.
-- Acceptance document `docs/ios/NATIVE_VISUAL_POLISH.md`. No release from a failing/draft/unverified build.
+- New native features should ship with finished design polish, accessibility, Light/Dark and functional XCTest coverage.
+- Last native release (0.3.5) incorporated sidebar search, swipe navigation, Router, archive in Settings/search and temporary chat toolbar action.
 
-## 2026-11-10 latest sidebar regression follow-up
+## 2026-11-10 test coverage and release preparation
 
-Run #42809180573 on `40b945702f76ea50c81eda61be013b156c83c668` failed all four UI shards at the *same* assertion in `closeSidebarBySwiping` (line 54). UIKit/SwiftUI nested scrolling still intercepts free-form drag. Next fix adds a visible and accessible trailing-edge drag/tap control that receives a high-priority leftward swipe, retains generic swipe-on-sidebar as a secondary option, and separates the UX swipe assertion inside the existing two-theme UI journey. All other journeys use the existing tap-outside/backdrop close mechanism, so a gesture failure is isolated to the feature shard; no UI tests are removed. Required exact-commit CI and owner review remain release gates. Do not publish until verified.
-
-## 2026-11-10 exact diagnosis of run #42815884967
-
-Latest commit `129a194f596892784348a4ee1a75ed61f9613d1f` on PR #148 failed all four iPhone UI shards at `LumenUITests.swift:53` after the backdrop test tapped `closeSidebar`. At that point `openSettings` still existed. The screen-wide backdrop was rendered as an invisible Text in a Button and its visual rectangle was only a `background`, which does not reliably expand the plain Button's hit-test area. Fix: use a filled Rectangle as the Button **label** so the entire scrim receives taps; tap the middle of the exposed region instead of the outer system edge; wait for the real sidebar-dismiss handle to *disappear* before treating navigation as complete. The existing separate swipe check also waits for handle disappearance. No tests or features removed; this must pass full new iPhone CI before merge/SideStore publication.
-
-## 2026-11-10 hosted simulator launch diagnosis (run #42819472343, attempt 2)
-
-- SHA `9efcbd85473f59828cffc89031e1804b59269b62` had five of six substantive jobs pass (core, archive, compact sync, regular sync, regular features). Compact/features failed before XCTest. First attempt: `simctl launch` returned FBSOpenApplicationServiceErrorDomain; second (single-job retry) timed out after **300 seconds** at the *same optional pre-XCTest simctl launch*. The script never reached `xcodebuild test-without-building`.
-- Fix in `ios/scripts/test_simulators.py`: **remove optional pre-XCTest `simctl launch` and termination altogether**. Still install the app before XCTest and run every selected XCTest method, validate each pass, Firebase roundtrip, screenshot artifacts and IPA as hard release requirements. Regression test verifies staging performs exactly one install and never a warm-up launch, and that installation errors still fail.
-- Fresh SHA requires all mandatory CI jobs to rerun; do not claim an unverified green result or publish to SideStore. No test coverage removed.
-
-## 2026-11-10 compact/features failure: run #42828636538
-
-- Exact PR HEAD `0f5b03a6a192b2b30a7e360d098a857b1add9010`: core, archive, regular/sync, regular/features and compact/sync **passed**. Only compact/features failed. Actual XCTest method `testEditRegenerateAndReturnToTheOriginalVersion` failed twice during Xcode's bounded retry.
-- First attempt: the test started model selection before Settings had been confirmed dismissed; account's fixture model was not yet available. Test now waits for Settings to disappear and the model picker to appear, and exercises the actual visible account-key refresh action in a bounded interval, asserting the model is eventually selected and the picker dismisses.
-- Second attempt: SwiftUI `Menu` version-selector exposed the options inconsistently to XCTest on the hosted compact iPhone. Replace with an explicit, accessible `Versions` sheet and selectable version rows, preserving edit/regenerate/original-version semantics. XCTest now verifies the sheet opens, Version 1 is actually selectable, then checks the original message and cloud sync. No test assertions removed.
-- Source changes require **new exact-head CI with all required checks**. Do not rerun the old failed job against the old SHA. Inspect the new run and publish 0.3.5 only after all 4 shards, core, archive and artifact verifier pass.
+- Updated the same 14 native XCTest methods (no deletions): collapsed default (+ / prompt / Send), expanded model row on focus, collapsed row after keyboard dismissal with draft retained, expanded screenshots in Light/Dark; all original chat, provider, file import and conversation tests remain.
+- Added helper `openModelPicker()` that first focuses the composer if collapsed, then opens the same full-name `ModelSheet`. This preserves all preexisting test paths and verifies intentional focus behavior.
+- Composer + menu still exposes simulator fixture text/photo actions and external Photos/Files UI. Version bumped to `0.3.6`, with updated release notes. Keep PR draft and unmerged until CI passes exact current SHA.

@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 import ImageIO
 import LumenCore
 
-struct ComposerAttachments: View {
+struct ComposerAttachments<Content: View>: View {
     @Bindable var composer: DraftState
     @Bindable var engine: ChatEngine
     @State private var photo: PhotosPickerItem?
@@ -12,6 +12,16 @@ struct ComposerAttachments: View {
     @Binding var importing: Bool
     @State private var error: String?
     @State private var preview: ChatAttachment?
+    let controls: Content
+
+    init(composer: DraftState, engine: ChatEngine, importing: Binding<Bool>,
+         @ViewBuilder controls: () -> Content) {
+        self.composer = composer
+        self.engine = engine
+        self._importing = importing
+        self.controls = controls()
+    }
+
     private var canAttach: Bool { !importing && !engine.isStreaming && composer.attachmentIDs.count < 4 }
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -37,7 +47,7 @@ struct ComposerAttachments: View {
                     }
                 }.scrollIndicators(.hidden)
             }
-            HStack(spacing: 14) {
+            HStack(alignment: .center, spacing: 8) {
                 Menu {
                     PhotosPicker(selection: $photo, matching: .images, photoLibrary: .shared()) {
                         Label("Choose photo", systemImage: "photo")
@@ -50,14 +60,20 @@ struct ComposerAttachments: View {
                     }
                     #endif
                 } label: {
-                    Label("Attach", systemImage: "plus.circle")
-                        .font(LumenType.control)
-                        .foregroundStyle(LumenPalette.accent)
-                        .frame(minHeight: 44)
+                    Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(canAttach ? LumenPalette.accent : LumenPalette.muted)
+                        .frame(width: 44, height: 44)
+                        .background(LumenPalette.elevated, in: Circle())
                 }
-                .disabled(!canAttach).accessibilityIdentifier("attachFile")
-                if importing { ProgressView(); Text("Preparing attachment…").font(.caption).foregroundStyle(.secondary) }
-                else if !composer.attachmentIDs.isEmpty { Text("\(composer.attachmentIDs.count) of 4 files").font(.caption).foregroundStyle(.secondary) }
+                .accessibilityLabel("Add photos or files")
+                .disabled(!canAttach)
+                .accessibilityIdentifier("attachFile")
+                controls
+            }
+            if importing {
+                Label("Preparing attachment…", systemImage: "arrow.down.doc")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             if let error {
                 HStack(alignment: .top) {

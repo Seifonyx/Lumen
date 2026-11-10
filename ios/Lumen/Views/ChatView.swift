@@ -9,6 +9,7 @@ struct ChatView: View {
     var focused: FocusState<Bool>.Binding
     var chooseModel: () -> Void
     var selectVersion: (Conversation) -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var attachmentImporting = false
     @State private var olderAnchor: String?
     @State private var followsReply = true
@@ -23,6 +24,18 @@ struct ChatView: View {
         composer.accountID == engine.accountID && composer.conversationID == engine.currentConversation.id && composer.isTemporary == engine.isTemporary
     }
     private var canSend: Bool { composerAligned && !attachmentImporting && composer.hasContent && connections.key(for: engine.selectedModel) != nil && engine.currentConversation.historyLoaded != false }
+    // The resting composer stays one row tall. Focusing the editor reveals model controls.
+    private var composerExpanded: Bool { focused.wrappedValue }
+    private var compactModelName: String {
+        guard let model = engine.selectedModel else { return "Choose model" }
+        switch model.providerId.lowercased() {
+        case "gemini": return "Gemini"
+        case "anthropic": return "Claude"
+        case "openai": return "OpenAI"
+        case "groq": return "Groq"
+        default: return "Model"
+        }
+    }
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -160,35 +173,25 @@ struct ChatView: View {
                     .lumenSurface(radius: LumenRadius.compact)
                     .accessibilityIdentifier("chatError")
                 }
-                VStack(alignment: .leading, spacing: 12) {
-                    ComposerAttachments(composer: composer, engine: engine, importing: $attachmentImporting)
-                    TextField("Message Lumen", text: Binding(get: { composerAligned ? composer.draft : "" }, set: { if composerAligned { composer.draft = $0 } }), axis: .vertical)
-                        .disabled(!composerAligned)
-                        .lineLimit(1...6)
-                        .font(.body)
-                        .focused(focused)
-                        .accessibilityLabel("Message Lumen")
-                        .accessibilityIdentifier("messageComposer")
-                        .padding(.horizontal, 4)
-                    HStack {
-                        Button(action: chooseModel) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "cpu")
-                                Text(engine.selectedModel?.name ?? "Choose model").lineLimit(1)
-                                Image(systemName: "chevron.down").font(.caption2.weight(.semibold))
-                            }
-                            .font(LumenType.control)
-                            .foregroundStyle(LumenPalette.accent)
-                            .padding(.vertical, 7)
+                VStack(alignment: .leading, spacing: 4) {
+                    // Compact: +, one-line prompt and Send. Attachments remain visible
+                    // so dismissing the keyboard never hides a selected file.
+                    ComposerAttachments(composer: composer, engine: engine, importing: $attachmentImporting) {
+                        TextField("Message Lumen", text: Binding(get: { composerAligned ? composer.draft : "" }, set: { if composerAligned { composer.draft = $0 } }), axis: .vertical)
+                            .disabled(!composerAligned)
+                            .lineLimit(composerExpanded ? 1...6 : 1...1)
+                            .font(.body)
+                            .focused(focused)
+                            .accessibilityLabel("Message Lumen")
+                            .accessibilityIdentifier("messageComposer")
                             .frame(minHeight: 44)
-                        }
-                        .accessibilityIdentifier("chooseModel")
-                        Spacer(minLength: 12)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .layoutPriority(1)
                         if engine.isStreaming {
                             Button("Stop", systemImage: "stop.circle.fill") { engine.stopStreaming() }
                                 .font(.system(size: 34)).labelStyle(.iconOnly)
                                 .foregroundStyle(LumenPalette.accent)
-                                .frame(minWidth: 44, minHeight: 44)
+                                .frame(width: 44, height: 44)
                                 .accessibilityIdentifier("stopStreaming")
                         } else {
                             Button("Send", systemImage: "arrow.up.circle.fill") {
@@ -197,15 +200,41 @@ struct ChatView: View {
                             }
                             .font(.system(size: 34)).labelStyle(.iconOnly)
                             .foregroundStyle(canSend ? LumenPalette.accent : LumenPalette.muted)
-                            .frame(minWidth: 44, minHeight: 44)
+                            .frame(width: 44, height: 44)
                             .disabled(!canSend)
                             .accessibilityHint(canSend ? "Send message" : "Choose a connected model before sending.")
                             .accessibilityIdentifier("sendMessage")
                         }
                     }
+                    if composerExpanded {
+                        HStack {
+                            Button(action: chooseModel) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "cpu")
+                                    Text(compactModelName)
+                                        .accessibilityIdentifier("compactModelLabel")
+                                    Image(systemName: "chevron.down")
+                                        .font(.caption2.weight(.semibold))
+                                }
+                                .font(LumenType.control)
+                                .foregroundStyle(LumenPalette.accent)
+                                .padding(.horizontal, 10)
+                                .frame(minHeight: 44)
+                                .background(LumenPalette.elevated, in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Model: " + (engine.selectedModel?.name ?? "Not selected"))
+                            .accessibilityHint("Opens the complete model list with full model names.")
+                            .accessibilityIdentifier("chooseModel")
+                            Spacer(minLength: 0)
+                        }
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
                 }
-                .padding(16)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
                 .lumenSurface(radius: LumenRadius.composer)
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: composerExpanded)
                 .shadow(color: .black.opacity(0.06), radius: 12, y: 3)
             }
             .padding(.horizontal, 16)

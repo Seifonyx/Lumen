@@ -1,10 +1,10 @@
 {
-  "title": "Compact chat composer · 0.3.6",
-  "description": "A simpler, focus-expanding chat bar with icon-only attachments and clearer model labels.",
+  "title": "Natural sidebar swipes · 0.3.7",
+  "description": "Open and close the chat sidebar with a smooth swipe from anywhere on the screen.",
   "notes": [
-    "The chat bar rests as a compact row with an attachment plus, message field and Send or Stop.",
-    "Tap the message field to expand the model picker; dismiss the keyboard to collapse the bar again without losing drafts.",
-    "The expanded bar displays short provider labels such as Gemini, Claude, OpenAI and Groq, while the picker shows full model names.",
-    "The plus menu retains Photos, Files, attachment previews and existing file safeguards."
+    "Swipe right horizontally anywhere in chat to open the sidebar.",
+    "Swipe left horizontally anywhere while the sidebar is open to close it.",
+    "The sidebar follows your finger and settles smoothly when you release.",
+    "Vertical swipes continue scrolling chat and conversation history."
   ]
 }

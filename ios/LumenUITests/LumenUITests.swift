@@ -256,21 +256,35 @@ final class LumenUITests: XCTestCase {
         signIn.tap()
         XCTAssertTrue(app.staticTexts["Native QA"].waitForExistence(timeout: 15))
         app.buttons["Done"].tap()
-        app.buttons["chooseModel"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForNonExistence(timeout: 10),
+                      "Account setup must close before opening the model picker")
+        let chooseModel = app.buttons["chooseModel"]
+        XCTAssertTrue(chooseModel.waitForExistence(timeout: 10))
+        chooseModel.tap()
+        XCTAssertTrue(app.navigationBars["Models"].waitForExistence(timeout: 10),
+                      "Model picker must be visible before checking imported account models")
         let model = app.buttons["model-groq-fixture-model"]
-        // A cold emulator connection can report unavailable once; exercise the visible recovery action.
         let reload = app.buttons["Load account providers"]
-        let deadline = Date().addingTimeInterval(25)
-        while !model.exists && !reload.exists && Date() < deadline {
-            if model.waitForExistence(timeout: 1) { break }
+        // Hosted Firestore/Auth emulators sometimes finish connecting just after login.
+        // Retry the real account-key recovery action in a bounded window, and still fail
+        // if the expected connected model never becomes available.
+        let deadline = Date().addingTimeInterval(45)
+        var reloads = 0
+        while !model.exists && Date() < deadline {
+            if reload.exists && reload.isEnabled && reloads < 2 {
+                reload.tap()
+                reloads += 1
+            }
+            if model.waitForExistence(timeout: 4) { break }
         }
-        if !model.exists && reload.exists { reload.tap() }
-        if !model.waitForExistence(timeout: 20) {
+        if !model.exists {
             capture("model-import-failure")
-            XCTFail("Connected model unavailable: " + app.debugDescription)
+            XCTFail("Connected model unavailable after account sync and \(reloads) explicit refresh(es): " + app.debugDescription)
             return
         }
         model.tap()
+        XCTAssertTrue(app.navigationBars["Models"].waitForNonExistence(timeout: 10),
+                      "Selecting a model must close the picker")
     }
 
     func testAttachmentsPreviewRestoreAndSendActualTextAndImageBytes() {
@@ -450,7 +464,15 @@ final class LumenUITests: XCTestCase {
         let done = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: versions)
         XCTAssertEqual(XCTWaiter.wait(for: [done], timeout: 20), .completed)
         versions.tap()
-        app.buttons["Version 1 · Original"].tap()
+        XCTAssertTrue(app.navigationBars["Versions"].waitForExistence(timeout: 10),
+                      "Version history must open a stable, accessible picker")
+        let originalVersion = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS %@", "Version 1 · Original")
+        ).firstMatch
+        XCTAssertTrue(originalVersion.waitForExistence(timeout: 10),
+                      "The original version must be selectable after edit and regeneration")
+        originalVersion.tap()
+        XCTAssertTrue(app.navigationBars["Versions"].waitForNonExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["Original revision question"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.staticTexts["Edited revision question"].exists)
         capture("message-versions-original")

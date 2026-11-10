@@ -14,6 +14,7 @@ struct ChatView: View {
     @State private var followsReply = true
     @State private var editingMessage: ChatMessage?
     @State private var previewAttachment: ChatAttachment?
+    @State private var versionPickerOpen = false
     @State private var editingAccount = ""
     @State private var editingConversation = ""
     private var versions: [Conversation] { engine.versions(for: engine.currentConversation.id) }
@@ -45,19 +46,18 @@ struct ChatView: View {
                 } else {
                     LazyVStack(alignment: .leading, spacing: 22) {
                         if versions.count > 1 {
-                            Menu {
-                                ForEach(Array(versions.enumerated()), id: \.element.id) { index, chat in
-                                    Button("Version \(index + 1) · \(chat.revisionLabel ?? "Original")") { selectVersion(chat) }
-                                        .accessibilityIdentifier("version-" + chat.id)
-                                }
+                            Button {
+                                versionPickerOpen = true
                             } label: {
                                 Label("Version \((versions.firstIndex { $0.id == engine.currentConversation.id } ?? 0) + 1) of \(versions.count)", systemImage: "clock.arrow.circlepath")
+                                    .font(.caption.weight(.medium))
+                                    .foregroundStyle(LumenPalette.accent)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 8)
+                                    .background(LumenPalette.elevated, in: Capsule())
                             }
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(LumenPalette.accent)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(LumenPalette.elevated, in: Capsule())
+                            .buttonStyle(.plain)
+                            .frame(minHeight: 44, alignment: .leading)
                             .disabled(engine.isStreaming)
                             .accessibilityIdentifier("conversationVersions")
                         }
@@ -220,7 +220,47 @@ struct ChatView: View {
             }
         }
         .sheet(item: $previewAttachment) { AttachmentPreview(file: $0) }
-        .onChange(of: engine.accountID) { _, _ in editingMessage = nil; previewAttachment = nil }
-        .onChange(of: engine.currentConversation.id) { _, _ in editingMessage = nil; previewAttachment = nil }
+        .sheet(isPresented: $versionPickerOpen) {
+            NavigationStack {
+                List {
+                    ForEach(Array(versions.enumerated()), id: \.element.id) { index, chat in
+                        Button {
+                            versionPickerOpen = false
+                            selectVersion(chat)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Label("Version \(index + 1) · \(chat.revisionLabel ?? "Original")", systemImage: "clock.arrow.circlepath")
+                                    .font(LumenType.row)
+                                Spacer()
+                                if chat.id == engine.currentConversation.id {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(LumenPalette.accent)
+                                        .accessibilityLabel("Selected version")
+                                }
+                            }
+                            .frame(minHeight: 44)
+                        }
+                        .accessibilityIdentifier("version-" + chat.id)
+                    }
+                }
+                .scrollContentBackground(.hidden)
+                .background(LumenPalette.canvas)
+                .navigationTitle("Versions")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { versionPickerOpen = false }
+                    }
+                }
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
+        .onChange(of: engine.accountID) { _, _ in
+            editingMessage = nil; previewAttachment = nil; versionPickerOpen = false
+        }
+        .onChange(of: engine.currentConversation.id) { _, _ in
+            editingMessage = nil; previewAttachment = nil
+        }
     }
 }

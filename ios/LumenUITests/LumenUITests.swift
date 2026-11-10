@@ -58,8 +58,19 @@ final class LumenUITests: XCTestCase {
         let sidebarContent = app.buttons["sidebarNewChat"]
         XCTAssertTrue(sidebarContent.exists)
 
-        // A vertical gesture that starts in the sidebar belongs to its history list.
-        app.scrollViews.firstMatch.swipeUp()
+        // The oldest fixture starts below the fold, so this checks that the
+        // sidebar's own vertical scroll view still receives the gesture.
+        let oldestHistory = app.buttons["history-sidebar-scroll-00"]
+        XCTAssertTrue(oldestHistory.waitForExistence(timeout: 10))
+        XCTAssertFalse(oldestHistory.isHittable,
+                       "Older sidebar history should begin below the visible list")
+        let historyScroll = app.scrollViews.firstMatch
+        for _ in 0..<3 {
+            if oldestHistory.isHittable { break }
+            historyScroll.swipeUp()
+        }
+        XCTAssertTrue(oldestHistory.isHittable,
+                      "A vertical gesture in the sidebar must scroll to older history")
         XCTAssertTrue(sidebarContent.exists,
                       "Scrolling the sidebar vertically must not dismiss it")
 
@@ -68,8 +79,13 @@ final class LumenUITests: XCTestCase {
         app.swipeUp()
         XCTAssertFalse(sidebarContent.exists,
                        "A vertical chat scroll must not be recognized as a sidebar swipe")
+        let diagonalVerticalDistance = app.frame.height * 0.12
+        let diagonalHorizontalDistance = diagonalVerticalDistance * 1.4
         let diagonalStart = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-        let diagonalEnd = app.coordinate(withNormalizedOffset: CGVector(dx: 0.78, dy: 0.7))
+        let diagonalEnd = app.coordinate(withNormalizedOffset: CGVector(
+            dx: 0.5 + diagonalHorizontalDistance / app.frame.width,
+            dy: 0.5 + diagonalVerticalDistance / app.frame.height
+        ))
         diagonalStart.press(forDuration: 0.2, thenDragTo: diagonalEnd)
         XCTAssertFalse(sidebarContent.exists,
                        "A diagonal scroll with only slightly dominant horizontal movement must not open the sidebar")
@@ -259,6 +275,16 @@ final class LumenUITests: XCTestCase {
             XCTAssertTrue(app.navigationBars["Models"].waitForExistence(timeout: 3))
             capture("models-\(theme.lowercased())")
             app.buttons["Done"].tap()
+            // Sign in so seeded cloud history can exercise real sidebar scrolling.
+            if theme == "Light" {
+                settings()
+                let signIn = app.buttons["googleSignIn"]
+                XCTAssertTrue(signIn.waitForExistence(timeout: 5))
+                signIn.tap()
+                XCTAssertTrue(app.staticTexts["Native QA"].waitForExistence(timeout: 15))
+                app.buttons["Done"].tap()
+                XCTAssertTrue(app.navigationBars["Settings"].waitForNonExistence(timeout: 10))
+            }
             app.buttons["openSidebar"].tap()
             XCTAssertTrue(app.buttons["sidebar-projects"].waitForExistence(timeout: 3))
             capture("sidebar-\(theme.lowercased())")

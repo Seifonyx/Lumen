@@ -106,6 +106,14 @@ def seed():
     document(f'modelRouter/{uid}/chats/shared-original-fixture/messages/shared-message', {
         'id': 'shared-message', 'role': 'user', 'text': 'Keep this attachment', 'index': 0,
         'createdAt': 1700000000000, 'files': [shared_file]})
+    for index in range(16):
+        chat_id = f'sidebar-scroll-{index:02d}'
+        updated_at = 1699990000000 + index * 1000
+        document(f'modelRouter/{uid}/chats/{chat_id}', {
+            'title': f'Sidebar scroll fixture {index + 1:02d}',
+            'createdAt': updated_at - 1000, 'updatedAt': updated_at,
+            'ids': [], 'count': 0, 'model': 'fixture-model', 'rev': updated_at,
+            'deleted': False})
     return uid
 
 

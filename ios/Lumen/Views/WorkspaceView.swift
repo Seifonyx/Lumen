@@ -10,7 +10,7 @@ enum WorkspaceRoute: String, CaseIterable, Identifiable, Hashable {
         case .archive: "Archived chats"
         case .projects: "Projects"
         case .library: "Library"
-        case .router: "Models & providers"
+        case .router: "Router"
         }
     }
     var icon: String {
@@ -19,7 +19,7 @@ enum WorkspaceRoute: String, CaseIterable, Identifiable, Hashable {
         case .archive: "archivebox"
         case .projects: "folder"
         case .library: "books.vertical"
-        case .router: "cpu"
+        case .router: "arrow.triangle.branch"
         }
     }
     var emptyTitle: String {

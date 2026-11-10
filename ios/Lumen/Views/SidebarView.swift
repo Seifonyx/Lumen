@@ -6,7 +6,7 @@ struct SidebarView: View {
     @Bindable var composer: DraftState
     @Bindable var auth: AuthEngine
     var newChat: () -> Void
-    var temporaryChat: () -> Void
+    var search: () -> Void
     var openDraft: (String) -> Void
     var open: (WorkspaceRoute) -> Void
     var selectConversation: (Conversation) -> Void
@@ -27,10 +27,12 @@ struct SidebarView: View {
                     .accessibilityAddTraits(.isHeader)
                     .accessibilityFocused($headingFocused)
                 Spacer()
-                Button("Close sidebar", systemImage: "xmark", action: close)
+                Button("Search chats", systemImage: "magnifyingglass", action: search)
                     .labelStyle(.iconOnly)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(LumenPalette.accent)
                     .frame(minWidth: 44, minHeight: 44)
-                    .accessibilityIdentifier("sidebarCloseButton")
+                    .accessibilityIdentifier("sidebarSearchButton")
             }
             .padding(.horizontal, LumenSpacing.screen)
             .padding(.top, 12)
@@ -40,14 +42,15 @@ struct SidebarView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     row("New chat", icon: "square.and.pencil", action: newChat)
                         .accessibilityIdentifier("sidebarNewChat")
-                    row("Temporary chat", icon: "bubble.left.and.text.bubble.right", action: temporaryChat)
-                        .accessibilityIdentifier("newTemporaryChat")
-                    ForEach(WorkspaceRoute.allCases) { route in
+                        .padding(.bottom, 10)
+                    LumenSectionHeader(title: "Workspace")
+                        .padding(.bottom, 3)
+                    ForEach([WorkspaceRoute.projects, .library, .router]) { route in
                         row(route.title, icon: route.icon) { open(route) }
                             .accessibilityIdentifier("sidebar-\(route.rawValue)")
                     }
 
-                    Divider().padding(.vertical, 18)
+                    Divider().padding(.vertical, 14)
 
                     if !composer.savedDrafts.isEmpty {
                         Text("Drafts").font(LumenType.section).foregroundStyle(LumenPalette.muted).accessibilityAddTraits(.isHeader)
@@ -65,12 +68,9 @@ struct SidebarView: View {
                         }
                         Divider().padding(.vertical, 12)
                     }
-                    Text("Conversations")
-                        .font(LumenType.section)
-                        .foregroundStyle(LumenPalette.muted)
-                        .accessibilityAddTraits(.isHeader)
+                    LumenSectionHeader(title: "Conversations")
 
-                    if engine.savedConversations.isEmpty {
+                    if engine.historyConversations.allSatisfy({ $0.archived == true }) {
                         Text("Your chats will appear here.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -94,6 +94,14 @@ struct SidebarView: View {
                                     .padding(.vertical, 8)
                                     .padding(.horizontal, 8)
                                     .background(engine.currentConversation.id == conv.id ? LumenPalette.selection : .clear, in: .rect(cornerRadius: LumenRadius.compact))
+                                    .overlay(alignment: .leading) {
+                                        if engine.currentConversation.id == conv.id {
+                                            RoundedRectangle(cornerRadius: 2)
+                                                .fill(LumenPalette.accent)
+                                                .frame(width: 3, height: 26)
+                                                .allowsHitTesting(false)
+                                        }
+                                    }
                                 }
                                 .buttonStyle(LumenRowButtonStyle())
                                 .accessibilityIdentifier("history-" + conv.id)
@@ -158,7 +166,7 @@ struct SidebarView: View {
                 Text(title)
                 Spacer(minLength: 0)
             }
-            .font(.body)
+            .font(LumenType.row)
         }
         .buttonStyle(LumenRowButtonStyle())
     }

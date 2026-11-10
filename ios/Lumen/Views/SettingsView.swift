@@ -9,6 +9,7 @@ struct SettingsView: View {
     @Bindable var sync: CloudChatSync
     @Environment(\.dismiss) private var dismiss
     @AppStorage("lumen.appearance") private var appearance = "system"
+    var openConversation: (Conversation) -> Void
 
     var body: some View {
         NavigationStack {
@@ -41,10 +42,21 @@ struct SettingsView: View {
                         Button("Retry cloud sync") { sync.retry() }
                     }
                 }
-                Section {
+                Section("AI services") {
                     NavigationLink { ProvidersView(connections: connections, sync: sync) } label: {
-                        Label("Models & providers", systemImage: "cpu")
+                        Label("Router", systemImage: "arrow.triangle.branch")
                     }.accessibilityIdentifier("providerSettings")
+                }
+                Section("Chats & data") {
+                    NavigationLink {
+                        HistorySearchView(engine: engine, initialScope: .archived) { chat in
+                            dismiss()
+                            openConversation(chat)
+                        }
+                    } label: {
+                        Label("Archived chats", systemImage: "archivebox")
+                    }
+                    .accessibilityIdentifier("archivedChatsEntry")
                 }
                 Section("Appearance") {
                     Picker("Appearance", selection: $appearance) {
@@ -81,7 +93,12 @@ struct ProvidersView: View {
                             Text(provider.name)
                             Spacer()
                             if connections.loading.contains(provider.rawValue) { ProgressView() }
-                            else if connections.connected.contains(provider.rawValue) { Image(systemName: "checkmark.circle.fill").foregroundStyle(.green).accessibilityLabel("Connected") }
+                            else if connections.connected.contains(provider.rawValue) {
+                                Label("Connected", systemImage: "checkmark.circle.fill")
+                                    .font(.caption).foregroundStyle(.green)
+                            } else {
+                                Text("Not connected").font(.caption).foregroundStyle(LumenPalette.muted)
+                            }
                         }
                     }.accessibilityIdentifier("provider-" + provider.rawValue)
                 }
@@ -97,7 +114,7 @@ struct ProvidersView: View {
         }
         .scrollContentBackground(.hidden)
         .background(LumenPalette.canvas)
-        .navigationTitle("Models & providers")
+        .navigationTitle("Router")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -127,6 +144,7 @@ private struct ProviderConnectionView: View {
                     }
                 }
                 .disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || connections.loading.contains(provider.rawValue))
+                .buttonStyle(.borderedProminent)
                 .accessibilityIdentifier("connectProvider")
                 if let error = connections.errors[provider.rawValue] { Text(error).font(.footnote).foregroundStyle(.red) }
             }

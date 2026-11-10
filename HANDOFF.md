@@ -1,18 +1,16 @@
 # Lumen checkpoint
 
-Updated: 2026-11-10. The complete native visual Phase 2 was merged and SideStore 0.3.5 is listed in the main feed. Owner requested a new composer layout patterned after compact native AI chat bars.
+Updated: 2026-11-10. Native 0.3.6 PR #149 is merged at `e248f23ed91adbe49286eb5a3f16c6ad3f86cd22`; its main-branch SideStore release workflow is still running. Owner requested Phase 3 work on iPhone sidebar swipes while that release is checked.
 
 ## Current work
 
-- New branch `codex/composer-collapse-0.3.6` based on main commit `f3f8d6b0210974f6e80dbb9609753046c92d5a16`.
-- Target native version **0.3.6**, not yet published. Existing production 0.3.5 is unchanged.
-- Compact composer when the message field is not focused: show **+**, one-line prompt field, and Send/Stop in one short rounded row. Opening/focusing the prompt reveals the model picker on a second row; closing the keyboard collapses it again. Long drafts and attachment chips remain preserved.
-- The + icon opens **photo and file** choices; no visible "Attach" label. Existing simulator fixture actions, fileImporter, PhotosPicker, 4-attachment limit, previews and import errors remain.
-- The selected model displays only the provider's familiar short name in the expanded composer: Gemini / Claude / OpenAI / Groq; full actual model names are retained inside `ModelSheet` and in the control's accessibility label.
-- Update existing native UI tests to account for focus-dependent picker visibility, plus-menu attachment behavior and compact/expanded screenshots in Light/Dark. Preserve all current assertions and journeys. `ios/project.yml` / release notes should prepare 0.3.6 on PR.
-- Latest native CI #42871052308 on `f1e96460f0d5e6d4bce66d7daba3061c86889c62`: core/packaging, IPA archive, regular sync and both feature shards passed. Compact sync failed only at the long-history assertion because it hard-coded `60 of 180` while the simulator reported `60 of 182`. The working fix derives the total from the loaded page label, requires at least 180 seeded messages, and checks that the next page is exactly 120 of the same total.
-- **Next:** commit and push this regression fix, then verify early Swift parse/core, all four compact+regular × sync+features Firebase UI shards, IPA archive and exact artifact verification on the new SHA. Keep PR draft until all pass; then merge and confirm SideStore 0.3.6 is published on main. No web work is in scope.
-- No changes to web/PWA code. iOS bundle `io.github.seifonyx.lumen`; SideStore feed `ios/sidestore-source.json`.
+- Branch `codex/phase3-native-edge-drawer`, based on merged main commit `e248f23ed91adbe49286eb5a3f16c6ad3f86cd22`.
+- Scope is only the sidebar gesture interaction. With the sidebar closed, a deliberate rightward horizontal swipe anywhere on the chat screen opens it. With the sidebar open, a deliberate leftward horizontal swipe anywhere on the screen closes it. Both track the finger and settle smoothly after full, partial, or cancelled gestures.
+- Remove the visible edge tab and duplicate drag handlers. Keep the sidebar overlay, design, content and actions. Vertical chat scrolling and sidebar history scrolling must continue working; gesture recognition must require intentional horizontal direction.
+- Current stage: update the existing XCTest journey first to cover center-origin open, close starting on both the sidebar and dimmed area, repeated open/close cycles, partial gestures and vertical scrolling. The production gesture implementation has not been changed yet.
+- Main release workflow #42904673100 completed with core, IPA archive, compact features/sync and regular features green. Regular sync failed before XCTest: the first Firestore emulator reset request timed out after 15 seconds. The exact failed job (#130140125331) has been retried; wait for it and the verifier/publisher before advancing the Development copy.
+- Once the gesture regression is demonstrated, implement using native UIKit gesture recognizers coordinated with SwiftUI. Preserve system back navigation on pushed screens and reduced-motion behavior. Run the iOS simulator matrix and artifact verifier on the final commit before merging/publishing.
+- No web work is in scope. iOS bundle `io.github.seifonyx.lumen`; SideStore feed `ios/sidestore-source.json`.
 
 ## Standing decisions
 

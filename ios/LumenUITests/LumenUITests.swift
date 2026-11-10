@@ -43,30 +43,61 @@ final class LumenUITests: XCTestCase {
     }
 
     private func closeSidebarByBackdrop() {
-        // Tap the center of the exposed scrim, not the system's outer edge.
-        // Wait for the actual sidebar content to disappear: the underlying
-        // openSidebar toolbar button may exist even while the overlay is open.
         let backdrop = app.buttons["closeSidebar"]
-        let handle = app.buttons["sidebarDismissHandle"]
+        let sidebarContent = app.buttons["sidebarNewChat"]
         XCTAssertTrue(backdrop.waitForExistence(timeout: 5))
-        XCTAssertTrue(handle.waitForExistence(timeout: 5))
+        XCTAssertTrue(sidebarContent.waitForExistence(timeout: 5))
         backdrop.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
-        XCTAssertTrue(handle.waitForNonExistence(timeout: 5),
+        XCTAssertTrue(sidebarContent.waitForNonExistence(timeout: 5),
                       "Tapping the exposed backdrop must remove the sidebar")
         XCTAssertTrue(app.buttons["openSidebar"].isHittable)
         XCTAssertFalse(app.buttons["openSettings"].exists)
     }
 
-    private func verifySidebarEdgeSwipe() {
-        let handle = app.buttons["sidebarDismissHandle"]
-        XCTAssertTrue(handle.waitForExistence(timeout: 5), "The sidebar must offer a drag-to-close edge")
-        let start = handle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.20, dy: 0.5))
-        start.press(forDuration: 0.2, thenDragTo: end)
-        XCTAssertTrue(handle.waitForNonExistence(timeout: 5),
-                      "Swiping left from the sidebar edge must remove the sidebar")
-        XCTAssertTrue(app.buttons["openSidebar"].isHittable)
-        XCTAssertFalse(app.buttons["openSettings"].exists)
+    private func verifySidebarSwipes() {
+        let sidebarContent = app.buttons["sidebarNewChat"]
+        XCTAssertTrue(sidebarContent.exists)
+
+        // A vertical gesture that starts in the sidebar belongs to its history list.
+        app.scrollViews.firstMatch.swipeUp()
+        XCTAssertTrue(sidebarContent.exists,
+                      "Scrolling the sidebar vertically must not dismiss it")
+
+        // Close the panel, then make sure a short horizontal movement returns to rest.
+        closeSidebarByBackdrop()
+        let chatCenter = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        let shortOpen = app.coordinate(withNormalizedOffset: CGVector(dx: 0.57, dy: 0.5))
+        chatCenter.press(forDuration: 0.2, thenDragTo: shortOpen)
+        XCTAssertTrue(sidebarContent.waitForNonExistence(timeout: 3),
+                      "A partial opening swipe must settle back to the chat")
+
+        // Repeatedly open from the middle of the chat (not a special edge target),
+        // partially close and release, then finish the closing swipe. Alternate
+        // between the white panel and dimmed area as the closing swipe's start.
+        for cycle in 0..<2 {
+            let openStart = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            let openEnd = app.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5))
+            openStart.press(forDuration: 0.15, thenDragTo: openEnd)
+            XCTAssertTrue(sidebarContent.waitForExistence(timeout: 5),
+                          "A right swipe from the chat should open the sidebar")
+
+            if cycle == 0 {
+                let partialCloseStart = app.coordinate(withNormalizedOffset: CGVector(dx: 0.55, dy: 0.5))
+                let partialCloseEnd = app.coordinate(withNormalizedOffset: CGVector(dx: 0.49, dy: 0.5))
+                partialCloseStart.press(forDuration: 0.2, thenDragTo: partialCloseEnd)
+                XCTAssertTrue(sidebarContent.exists,
+                              "A partial left swipe must settle back to the open sidebar")
+            }
+
+            let startX: CGFloat = cycle == 1 ? 0.94 : 0.55
+            let closeStart = app.coordinate(withNormalizedOffset: CGVector(dx: startX, dy: 0.5))
+            let closeEnd = app.coordinate(withNormalizedOffset: CGVector(dx: startX - 0.36, dy: 0.5))
+            closeStart.press(forDuration: 0.15, thenDragTo: closeEnd)
+            XCTAssertTrue(sidebarContent.waitForNonExistence(timeout: 5),
+                          "A left swipe from anywhere must close the sidebar")
+            XCTAssertFalse(app.buttons["sidebarEdgeHandle"].exists,
+                           "The closed sidebar must not show a swipe handle")
+        }
     }
 
     private func openModelPicker() {
@@ -223,8 +254,8 @@ final class LumenUITests: XCTestCase {
             app.buttons["openSidebar"].tap()
             XCTAssertTrue(app.buttons["sidebar-projects"].waitForExistence(timeout: 3))
             capture("sidebar-\(theme.lowercased())")
-            // Test the swipe once per theme, separately from startup and data journeys.
-            verifySidebarEdgeSwipe()
+            // Exercise repeated, partial, and scroll-safe swipes in both themes.
+            verifySidebarSwipes()
             app.buttons["openSidebar"].tap()
             XCTAssertTrue(app.buttons["sidebar-projects"].waitForExistence(timeout: 5))
             XCTAssertTrue(app.buttons["sidebarSearchButton"].exists)

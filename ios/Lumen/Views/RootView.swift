@@ -96,14 +96,15 @@ struct RootView: View {
                     )
                     .frame(width: min(geometry.size.width * 0.86, 350))
                     .frame(maxHeight: .infinity)
-                    .background(.background)
-                    .shadow(color: .black.opacity(0.12), radius: 24, x: 8)
+                    .background(LumenPalette.canvas)
+                    .shadow(color: .black.opacity(0.18), radius: 24, x: 8)
                     .transition(.move(edge: .leading))
                     .zIndex(1)
                 }
             }
             .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: sidebarOpen)
         }
+        .background(LumenPalette.canvas.ignoresSafeArea())
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { sync.retry() }
             else if phase == .background { engine.stopStreaming(); _ = composer.save(); _ = engine.checkpoint() }

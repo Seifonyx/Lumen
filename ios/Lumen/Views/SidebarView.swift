@@ -19,8 +19,11 @@ struct SidebarView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
+                Image("LumenMark")
+                    .resizable().scaledToFit().frame(width: 22, height: 30)
+                    .accessibilityHidden(true)
                 Text("Lumen")
-                    .font(.title2.weight(.semibold))
+                    .font(LumenType.brand)
                     .accessibilityAddTraits(.isHeader)
                     .accessibilityFocused($headingFocused)
                 Spacer()
@@ -29,8 +32,9 @@ struct SidebarView: View {
                     .frame(minWidth: 44, minHeight: 44)
                     .accessibilityIdentifier("sidebarCloseButton")
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
+            .padding(.horizontal, LumenSpacing.screen)
+            .padding(.top, 12)
+            .padding(.bottom, 8)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 6) {
@@ -46,7 +50,7 @@ struct SidebarView: View {
                     Divider().padding(.vertical, 18)
 
                     if !composer.savedDrafts.isEmpty {
-                        Text("Drafts").font(.subheadline.weight(.semibold)).accessibilityAddTraits(.isHeader)
+                        Text("Drafts").font(LumenType.section).foregroundStyle(LumenPalette.muted).accessibilityAddTraits(.isHeader)
                         ForEach(composer.savedDrafts) { draft in
                             row(draft.text.isEmpty ? "Attachment draft" : String(draft.text.prefix(48)), icon: "pencil.line") { openDraft(draft.conversationID) }
                                 .accessibilityIdentifier("draft-" + draft.conversationID)
@@ -62,7 +66,8 @@ struct SidebarView: View {
                         Divider().padding(.vertical, 12)
                     }
                     Text("Conversations")
-                        .font(.subheadline.weight(.semibold))
+                        .font(LumenType.section)
+                        .foregroundStyle(LumenPalette.muted)
                         .accessibilityAddTraits(.isHeader)
 
                     if engine.savedConversations.isEmpty {
@@ -83,14 +88,14 @@ struct SidebarView: View {
                                         if conv.pinned == true { Image(systemName: "pin.fill").font(.caption2).foregroundStyle(.secondary) }
                                         Text(conv.title)
                                             .lineLimit(1)
-                                            .font(.subheadline)
+                                            .font(LumenType.row)
                                         Spacer()
                                     }
                                     .padding(.vertical, 8)
                                     .padding(.horizontal, 8)
-                                    .background(engine.currentConversation.id == conv.id ? Color.primary.opacity(0.08) : .clear, in: .rect(cornerRadius: 8))
+                                    .background(engine.currentConversation.id == conv.id ? LumenPalette.selection : .clear, in: .rect(cornerRadius: LumenRadius.compact))
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(LumenRowButtonStyle())
                                 .accessibilityIdentifier("history-" + conv.id)
                                 .contextMenu {
                                     ConversationActions(chat: conv, engine: engine, rename: { renaming = conv }, delete: { pendingDeletion = conv })
@@ -121,10 +126,14 @@ struct SidebarView: View {
                     Spacer(minLength: 0)
                 }
             }
-            .buttonStyle(SidebarRowStyle())
+            .buttonStyle(LumenRowButtonStyle())
             .accessibilityIdentifier("openSettings")
-            .padding(16)
+            .padding(12)
+            .lumenSurface(radius: LumenRadius.card)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
         }
+        .background(LumenPalette.canvas)
         .accessibilityElement(children: .contain)
         .accessibilityAction(.escape, close)
         .onAppear { headingFocused = true }
@@ -151,16 +160,7 @@ struct SidebarView: View {
             }
             .font(.body)
         }
-        .buttonStyle(SidebarRowStyle())
+        .buttonStyle(LumenRowButtonStyle())
     }
 }
 
-private struct SidebarRowStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-            .background(configuration.isPressed ? Color.primary.opacity(0.08) : .clear,
-                        in: .rect(cornerRadius: 8))
-            .contentShape(.interaction, Rectangle())
-    }
-}

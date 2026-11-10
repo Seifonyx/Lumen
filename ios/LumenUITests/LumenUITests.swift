@@ -43,13 +43,17 @@ final class LumenUITests: XCTestCase {
     }
 
     private func closeSidebarByBackdrop() {
-        // Avoid coupling every unrelated feature journey to the swipe gesture.
-        // The exposed right-hand backdrop is a separate, supported close path.
+        // Tap the center of the exposed scrim, not the system's outer edge.
+        // Wait for the actual sidebar content to disappear: the underlying
+        // openSidebar toolbar button may exist even while the overlay is open.
         let backdrop = app.buttons["closeSidebar"]
+        let handle = app.buttons["sidebarDismissHandle"]
         XCTAssertTrue(backdrop.waitForExistence(timeout: 5))
-        backdrop.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.42)).tap()
-        XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 5),
-                      "Tapping outside the sidebar must dismiss it")
+        XCTAssertTrue(handle.waitForExistence(timeout: 5))
+        backdrop.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+        XCTAssertTrue(handle.waitForNonExistence(timeout: 5),
+                      "Tapping the exposed backdrop must remove the sidebar")
+        XCTAssertTrue(app.buttons["openSidebar"].isHittable)
         XCTAssertFalse(app.buttons["openSettings"].exists)
     }
 
@@ -59,8 +63,9 @@ final class LumenUITests: XCTestCase {
         let start = handle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
         let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.20, dy: 0.5))
         start.press(forDuration: 0.2, thenDragTo: end)
-        XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 5),
-                      "Swiping left from the sidebar edge must dismiss it")
+        XCTAssertTrue(handle.waitForNonExistence(timeout: 5),
+                      "Swiping left from the sidebar edge must remove the sidebar")
+        XCTAssertTrue(app.buttons["openSidebar"].isHittable)
         XCTAssertFalse(app.buttons["openSettings"].exists)
     }
 

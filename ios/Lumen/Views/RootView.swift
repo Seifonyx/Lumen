@@ -73,15 +73,21 @@ struct RootView: View {
                 .accessibilityHidden(sidebarOpen)
 
                 if sidebarOpen {
-                    Button("Close sidebar") { sidebarOpen = false }
-                        .font(.body)
-                        .foregroundStyle(.clear)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(.black.opacity(0.28))
-                        .ignoresSafeArea()
-                        .buttonStyle(.plain)
-                        .accessibilityIdentifier("closeSidebar")
-                        .transition(.opacity)
+                    // The scrim itself is the Button's visible hit-test shape.
+                    // An invisible Text label plus a background can leave most of
+                    // the exposed area untappable with a plain SwiftUI Button.
+                    Button {
+                        sidebarOpen = false
+                    } label: {
+                        Rectangle()
+                            .fill(.black.opacity(0.28))
+                            .contentShape(Rectangle())
+                            .ignoresSafeArea()
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Close sidebar")
+                    .accessibilityIdentifier("closeSidebar")
+                    .transition(.opacity)
 
                     SidebarView(
                         engine: engine,

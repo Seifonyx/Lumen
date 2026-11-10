@@ -36,6 +36,8 @@ struct RenameConversationSheet: View {
                 TextField("Conversation name", text: $title).accessibilityIdentifier("conversationName")
                 if let error { Text(error).foregroundStyle(.red) }
             }
+            .scrollContentBackground(.hidden)
+            .background(LumenPalette.canvas)
             .navigationTitle("Rename chat").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
@@ -76,17 +78,19 @@ struct HistorySearchView: View {
             Section {
                 ForEach(results) { result in
                     Button { select(result.conversation) } label: {
-                        VStack(alignment: .leading, spacing: 5) {
+                        VStack(alignment: .leading, spacing: 7) {
                             HStack {
                                 if result.conversation.pinned == true { Image(systemName: "pin.fill").font(.caption) }
-                                Text(result.conversation.title).foregroundStyle(.primary)
+                                Text(result.conversation.title)
+                                    .font(LumenType.row)
+                                    .foregroundStyle(.primary)
                             }
                             if let preview = result.preview, !preview.isEmpty {
                                 Text(preview).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
                             }
                             Text(result.conversation.updatedAt, style: .date).font(.caption).foregroundStyle(.secondary)
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 8)
                     }
                     .accessibilityIdentifier("search-chat-" + result.conversation.id)
                     .contextMenu {
@@ -109,9 +113,12 @@ struct HistorySearchView: View {
                     .allowsHitTesting(false)
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(LumenPalette.canvas)
         .searchable(text: $query, prompt: "Search conversations")
         .navigationTitle(scope == .archived ? "Archived chats" : "Search")
         .navigationBarTitleDisplayMode(.inline)
+        .listStyle(.insetGrouped)
         .sheet(item: $renaming) { RenameConversationSheet(chat: $0, engine: engine) }
         .alert("Delete chat?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } })) {
             Button("Delete", role: .destructive) { if let deleting { _ = engine.deleteConversation(id: deleting.id) }; deleting = nil }

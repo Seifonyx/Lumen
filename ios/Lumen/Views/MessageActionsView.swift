@@ -17,6 +17,18 @@ struct MessageRow: View {
             if isUser { Spacer(minLength: 40) }
             VStack(alignment: isUser ? .trailing : .leading, spacing: 10) {
                 VStack(alignment: .leading, spacing: 10) {
+                    if !isUser && message.role == .assistant {
+                        HStack(spacing: 6) {
+                            Image("LumenMark")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 11, height: 16)
+                                .accessibilityHidden(true)
+                            Text("Lumen")
+                                .font(LumenType.detail.weight(.semibold))
+                                .foregroundStyle(LumenPalette.muted)
+                        }
+                    }
                     if let files = message.attachments, !files.isEmpty {
                         ForEach(files) { file in
                             Button { openAttachment?(file) } label: { Label(file.name, systemImage: file.kind == .image ? "photo" : "doc").font(.footnote) }
@@ -31,7 +43,7 @@ struct MessageRow: View {
                     if message.status == .stopped { Text("Stopped").font(.caption).foregroundStyle(.secondary) }
                 }
                 .padding(isUser ? 14 : 0)
-                .background(isUser ? Color(uiColor: .secondarySystemBackground) : .clear, in: .rect(cornerRadius: 20))
+                .background(isUser ? LumenPalette.elevated : .clear, in: .rect(cornerRadius: LumenRadius.message))
                 if message.status != .streaming {
                     HStack(spacing: 18) {
                         if !message.content.isEmpty {
@@ -51,9 +63,9 @@ struct MessageRow: View {
                     }
                     .labelStyle(.iconOnly)
                     .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(LumenPalette.muted)
                     .buttonStyle(.borderless)
-                    .frame(minHeight: 32)
+                    .frame(minHeight: 44)
                     .padding(.horizontal, isUser ? 12 : 0)
                 }
             }

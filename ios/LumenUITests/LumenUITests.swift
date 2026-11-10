@@ -24,7 +24,7 @@ final class LumenUITests: XCTestCase {
                 if app.buttons["openSettings"].waitForExistence(timeout: 5) { break }
             }
             XCTAssertTrue(app.buttons["openSettings"].exists, "The simulator did not become interactive after boot")
-            app.buttons["sidebarCloseButton"].tap()
+            closeSidebarByBackdrop()
             XCTAssertTrue(app.buttons["openSettings"].waitForNonExistence(timeout: 5))
             XCTAssertTrue(app.buttons["openSidebar"].isHittable)
             Self.verifiedSimulatorInput = true
@@ -40,6 +40,33 @@ final class LumenUITests: XCTestCase {
             add(screenshot)
         }
         super.tearDown()
+    }
+
+    private func closeSidebarByBackdrop() {
+        // Tap the center of the exposed scrim, not the system's outer edge.
+        // Wait for the actual sidebar content to disappear: the underlying
+        // openSidebar toolbar button may exist even while the overlay is open.
+        let backdrop = app.buttons["closeSidebar"]
+        let handle = app.buttons["sidebarDismissHandle"]
+        XCTAssertTrue(backdrop.waitForExistence(timeout: 5))
+        XCTAssertTrue(handle.waitForExistence(timeout: 5))
+        backdrop.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+        XCTAssertTrue(handle.waitForNonExistence(timeout: 5),
+                      "Tapping the exposed backdrop must remove the sidebar")
+        XCTAssertTrue(app.buttons["openSidebar"].isHittable)
+        XCTAssertFalse(app.buttons["openSettings"].exists)
+    }
+
+    private func verifySidebarEdgeSwipe() {
+        let handle = app.buttons["sidebarDismissHandle"]
+        XCTAssertTrue(handle.waitForExistence(timeout: 5), "The sidebar must offer a drag-to-close edge")
+        let start = handle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.20, dy: 0.5))
+        start.press(forDuration: 0.2, thenDragTo: end)
+        XCTAssertTrue(handle.waitForNonExistence(timeout: 5),
+                      "Swiping left from the sidebar edge must remove the sidebar")
+        XCTAssertTrue(app.buttons["openSidebar"].isHittable)
+        XCTAssertFalse(app.buttons["openSettings"].exists)
     }
 
     private func newChat() {
@@ -117,7 +144,7 @@ final class LumenUITests: XCTestCase {
         launchCleanChat()
         defer { app.terminate() }
         signInAndChooseModel()
-        app.buttons["openSidebar"].tap()
+        XCTAssertTrue(app.buttons["newTemporaryChat"].exists)
         app.buttons["newTemporaryChat"].tap()
         XCTAssertTrue(app.staticTexts["temporaryChatIndicator"].waitForExistence(timeout: 5))
         enterDraft("LUMEN_TEMPORARY_SECRET")
@@ -135,7 +162,7 @@ final class LumenUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["temporaryChatIndicator"].exists)
         app.buttons["openSidebar"].tap()
         XCTAssertFalse(app.buttons["LUMEN_TEMPORARY_SECRET"].exists)
-        app.buttons["sidebarCloseButton"].tap()
+        closeSidebarByBackdrop()
         settings()
         XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 15))
     }
@@ -171,6 +198,15 @@ final class LumenUITests: XCTestCase {
             app.buttons["openSidebar"].tap()
             XCTAssertTrue(app.buttons["sidebar-projects"].waitForExistence(timeout: 3))
             capture("sidebar-\(theme.lowercased())")
+            // Test the swipe once per theme, separately from startup and data journeys.
+            verifySidebarEdgeSwipe()
+            app.buttons["openSidebar"].tap()
+            XCTAssertTrue(app.buttons["sidebar-projects"].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.buttons["sidebarSearchButton"].exists)
+            XCTAssertTrue(app.buttons["sidebar-router"].exists)
+            XCTAssertFalse(app.buttons["sidebarCloseButton"].exists)
+            XCTAssertFalse(app.buttons["sidebar-search"].exists)
+            XCTAssertFalse(app.buttons["sidebar-archive"].exists)
             let projects = app.buttons["sidebar-projects"]
             XCTAssertTrue(projects.isHittable)
             // The empty trailing part must work just like the icon and title.
@@ -201,7 +237,7 @@ final class LumenUITests: XCTestCase {
         }
         capture("direct-provider-connected")
         app.navigationBars["Groq"].buttons["BackButton"].tap()
-        app.navigationBars["Models & providers"].buttons["BackButton"].tap()
+        app.navigationBars["Router"].buttons["BackButton"].tap()
         app.navigationBars["Settings"].buttons["Done"].tap()
         app.buttons["chooseModel"].tap()
         let model = app.buttons["model-groq-fixture-model"]
@@ -220,21 +256,35 @@ final class LumenUITests: XCTestCase {
         signIn.tap()
         XCTAssertTrue(app.staticTexts["Native QA"].waitForExistence(timeout: 15))
         app.buttons["Done"].tap()
-        app.buttons["chooseModel"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForNonExistence(timeout: 10),
+                      "Account setup must close before opening the model picker")
+        let chooseModel = app.buttons["chooseModel"]
+        XCTAssertTrue(chooseModel.waitForExistence(timeout: 10))
+        chooseModel.tap()
+        XCTAssertTrue(app.navigationBars["Models"].waitForExistence(timeout: 10),
+                      "Model picker must be visible before checking imported account models")
         let model = app.buttons["model-groq-fixture-model"]
-        // A cold emulator connection can report unavailable once; exercise the visible recovery action.
         let reload = app.buttons["Load account providers"]
-        let deadline = Date().addingTimeInterval(25)
-        while !model.exists && !reload.exists && Date() < deadline {
-            if model.waitForExistence(timeout: 1) { break }
+        // Hosted Firestore/Auth emulators sometimes finish connecting just after login.
+        // Retry the real account-key recovery action in a bounded window, and still fail
+        // if the expected connected model never becomes available.
+        let deadline = Date().addingTimeInterval(45)
+        var reloads = 0
+        while !model.exists && Date() < deadline {
+            if reload.exists && reload.isEnabled && reloads < 2 {
+                reload.tap()
+                reloads += 1
+            }
+            if model.waitForExistence(timeout: 4) { break }
         }
-        if !model.exists && reload.exists { reload.tap() }
-        if !model.waitForExistence(timeout: 20) {
+        if !model.exists {
             capture("model-import-failure")
-            XCTFail("Connected model unavailable: " + app.debugDescription)
+            XCTFail("Connected model unavailable after account sync and \(reloads) explicit refresh(es): " + app.debugDescription)
             return
         }
         model.tap()
+        XCTAssertTrue(app.navigationBars["Models"].waitForNonExistence(timeout: 10),
+                      "Selecting a model must close the picker")
     }
 
     func testAttachmentsPreviewRestoreAndSendActualTextAndImageBytes() {
@@ -414,7 +464,15 @@ final class LumenUITests: XCTestCase {
         let done = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: versions)
         XCTAssertEqual(XCTWaiter.wait(for: [done], timeout: 20), .completed)
         versions.tap()
-        app.buttons["Version 1 · Original"].tap()
+        XCTAssertTrue(app.navigationBars["Versions"].waitForExistence(timeout: 10),
+                      "Version history must open a stable, accessible picker")
+        let originalVersion = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS %@", "Version 1 · Original")
+        ).firstMatch
+        XCTAssertTrue(originalVersion.waitForExistence(timeout: 10),
+                      "The original version must be selectable after edit and regeneration")
+        originalVersion.tap()
+        XCTAssertTrue(app.navigationBars["Versions"].waitForNonExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["Original revision question"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.staticTexts["Edited revision question"].exists)
         capture("message-versions-original")
@@ -451,7 +509,9 @@ final class LumenUITests: XCTestCase {
         row.press(forDuration: 1)
         app.buttons["Archive"].tap()
         XCTAssertTrue(row.waitForNonExistence(timeout: 5))
-        app.buttons["sidebar-archive"].tap()
+        app.buttons["sidebarSearchButton"].tap()
+        XCTAssertTrue(app.navigationBars["Search"].waitForExistence(timeout: 5))
+        app.segmentedControls.buttons["Archived"].tap()
         XCTAssertTrue(app.navigationBars["Archived chats"].waitForExistence(timeout: 5))
         let result = app.buttons["search-chat-metadata-fixture"]
         XCTAssertTrue(result.waitForExistence(timeout: 5))
@@ -485,7 +545,7 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Groq rejected the API key. Check it in Settings."].waitForExistence(timeout: 10))
         capture("provider-rejected-key")
         app.navigationBars["Groq"].buttons["BackButton"].tap()
-        app.navigationBars["Models & providers"].buttons["BackButton"].tap()
+        app.navigationBars["Router"].buttons["BackButton"].tap()
         app.navigationBars["Settings"].buttons["Done"].tap()
         XCTAssertEqual(composer.value as? String, "Keep my question")
         XCTAssertFalse(app.buttons["sendMessage"].isEnabled)

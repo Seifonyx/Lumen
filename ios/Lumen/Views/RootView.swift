@@ -43,7 +43,14 @@ struct RootView: View {
                             }
                             .accessibilityIdentifier("openSidebar")
                         }
-                        ToolbarItem(placement: .topBarTrailing) {
+                        ToolbarItemGroup(placement: .topBarTrailing) {
+                            Button(engine.isTemporary ? "Leave temporary chat" : "Temporary chat", systemImage: "eye.slash") {
+                                if engine.isTemporary { requestNewChat() }
+                                else { request(.temporary) }
+                            }
+                            .tint(engine.isTemporary ? LumenPalette.accent : LumenPalette.muted)
+                            .accessibilityIdentifier("newTemporaryChat")
+                            .accessibilityHint("Temporary chats are not added to your conversation history.")
                             Button("New chat", systemImage: "square.and.pencil", action: requestNewChat)
                                 .accessibilityIdentifier("newChat")
                                 .keyboardShortcut("n", modifiers: .command)
@@ -66,22 +73,31 @@ struct RootView: View {
                 .accessibilityHidden(sidebarOpen)
 
                 if sidebarOpen {
-                    Button("Close sidebar") { sidebarOpen = false }
-                        .font(.body)
-                        .foregroundStyle(.clear)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(.black.opacity(0.28))
-                        .ignoresSafeArea()
-                        .buttonStyle(.plain)
-                        .accessibilityIdentifier("closeSidebar")
-                        .transition(.opacity)
+                    // The scrim itself is the Button's visible hit-test shape.
+                    // An invisible Text label plus a background can leave most of
+                    // the exposed area untappable with a plain SwiftUI Button.
+                    Button {
+                        sidebarOpen = false
+                    } label: {
+                        Rectangle()
+                            .fill(.black.opacity(0.28))
+                            .contentShape(Rectangle())
+                            .ignoresSafeArea()
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Close sidebar")
+                    .accessibilityIdentifier("closeSidebar")
+                    .transition(.opacity)
 
                     SidebarView(
                         engine: engine,
                         composer: composer,
                         auth: auth,
                         newChat: requestNewChat,
-                        temporaryChat: { request(.temporary) },
+                        search: {
+                            sidebarOpen = false
+                            path.append(.search)
+                        },
                         openDraft: { request(.draft($0)) },
                         open: { route in
                             sidebarOpen = false
@@ -96,14 +112,46 @@ struct RootView: View {
                     )
                     .frame(width: min(geometry.size.width * 0.86, 350))
                     .frame(maxHeight: .infinity)
-                    .background(.background)
-                    .shadow(color: .black.opacity(0.12), radius: 24, x: 8)
+                    .background(LumenPalette.canvas)
+                    .shadow(color: .black.opacity(0.18), radius: 24, x: 8)
                     .transition(.move(edge: .leading))
+                    .accessibilityIdentifier("sidebarPanel")
                     .zIndex(1)
                 }
+                if !sidebarOpen && path.isEmpty {
+                    Button {
+                        composerFocused = false
+                        sidebarOpen = true
+                    } label: {
+                        Capsule()
+                            .fill(LumenPalette.accent.opacity(0.3))
+                            .frame(width: 3, height: 52)
+                            .frame(width: 18, height: 72)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Open sidebar from left edge")
+                    .accessibilityIdentifier("sidebarEdgeHandle")
+                    .frame(maxHeight: .infinity, alignment: .center)
+                    .transition(.opacity)
+                }
             }
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 24).onEnded { gesture in
+                    let horizontal = gesture.translation.width
+                    guard abs(horizontal) > abs(gesture.translation.height) * 1.3 else { return }
+                    if sidebarOpen && horizontal < -72 {
+                        sidebarOpen = false
+                    } else if !sidebarOpen && path.isEmpty
+                                && gesture.startLocation.x < 34 && horizontal > 72 {
+                        composerFocused = false
+                        sidebarOpen = true
+                    }
+                }
+            )
             .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: sidebarOpen)
         }
+        .background(LumenPalette.canvas.ignoresSafeArea())
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { sync.retry() }
             else if phase == .background { engine.stopStreaming(); _ = composer.save(); _ = engine.checkpoint() }
@@ -111,7 +159,13 @@ struct RootView: View {
         .onChange(of: engine.isStreaming) { _, streaming in
             if !streaming, engine.currentConversation.historyLoaded == false { Task { await sync.loadMessages(chatID: engine.currentConversation.id) } }
         }
-        .sheet(isPresented: $settingsOpen) { SettingsView(composer: composer, engine: engine, auth: auth, connections: connections, sync: sync) }
+        .sheet(isPresented: $settingsOpen) {
+            SettingsView(composer: composer, engine: engine, auth: auth, connections: connections, sync: sync,
+                         openConversation: { chat in
+                             settingsOpen = false
+                             requestOpenConversation(chat)
+                         })
+        }
         .sheet(isPresented: $modelsOpen) { ModelSheet(engine: engine, connections: connections, sync: sync) }
         .onAppear { _ = engine.checkpoint(); restoreComposer(); cleanupAttachments() }
         .onChange(of: inventory) { old, new in

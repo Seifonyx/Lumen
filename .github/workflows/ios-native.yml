@@ -32,10 +32,13 @@ jobs:
       - uses: swift-actions/setup-swift@v2
         with:
           swift-version: '6.2'
+      - name: Parse SwiftUI source before expensive simulators
+        run: find ios/Lumen ios/LumenUITests -name '*.swift' -print0 | xargs -0 swiftc -frontend -parse
       - name: Test native chat logic and recovery
         run: swift test --package-path ios/LumenCore
 
   build:
+    needs: core
     name: iPhone ${{ matrix.profile }} / ${{ matrix.shard }} UI and Firebase
     strategy:
       fail-fast: false
@@ -81,6 +84,7 @@ jobs:
           if-no-files-found: error
 
   package:
+    needs: core
     name: Archive one release IPA
     runs-on: macos-26
     timeout-minutes: 30

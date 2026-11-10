@@ -20,7 +20,7 @@ import GoogleSignIn
             RootView(composer: runtime.composer, engine: runtime.engine, auth: runtime.auth,
                      connections: runtime.connections, sync: runtime.sync)
                 .preferredColorScheme(preferredScheme)
-                .tint(.primary)
+                .tint(LumenPalette.accent)
                 .task { await runtime.start() }
                 .onChange(of: runtime.auth.currentUser?.id) { _, _ in runtime.accountChanged() }
                 .onChange(of: scenePhase) { _, phase in if phase == .active { runtime.sync.retry() } }

@@ -1,10 +1,10 @@
 {
-  "title": "Everyday chat \u00b7 Phase 2",
-  "description": "Per-chat drafts, temporary chats, attachments and long-chat recovery for native Lumen.",
+  "title": "Lumen visual refinement · Phase 2",
+  "description": "Refined native Light and Dark appearance, gesture-driven sidebar and more discoverable chat controls.",
   "notes": [
-    "Drafts follow each conversation. Temporary chats stay in memory and out of synced history.",
-    "Attach photos and supported files. Chat deletion preserves cloud originals that another conversation may need. Full account deletion removes those originals.",
-    "Open older pages in long chats, continue interrupted replies and sync independent chats with automatic retries.",
-    "Oversized turns keep their drafts, earlier unavailable attachments do not block replies, and refreshed history preserves pages and system instructions."
+    "Polished conversations, message actions, composer, attachment chips, history search and settings.",
+    "Open the sidebar with an edge swipe or handle; close with a left swipe or tap outside.",
+    "Search lives in the sidebar header. Archived chats live in the search filters and Settings → Chats & data.",
+    "The provider hub is now Router, and temporary chat lives beside New chat in the chat toolbar."
   ]
 }

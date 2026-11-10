@@ -1,76 +1,42 @@
 # Lumen checkpoint
 
-Updated: 2026-11-09. Read the user's current request; update this checkpoint after meaningful work.
+Updated: 2026-11-10. Owner requested complete Phase 2 native visual polish, specific navigation changes and SideStore publication once verified.
 
-## Now
+## Current work
 
-- New report: ef9bd410 PR native run 42707163805 failed only regular/features (both phone sync shards, compact features, Ubuntu core, and Web Tests passed). The exact regular test log identifies XCTest's **default 120s execution limit** terminating testConnectedStopPersistsPartialReplyAfterRelaunch and testNativeScreensInLightAndDark. The latter completed Light/Dark screen navigation up to Settings before timing out; the former was interrupted during stop/relaunch and xcodebuild reported an app-termination error after the limit. Targeted per-test `executionTimeAllowance = 240` for both, preserving all assertions and screenshots. Do not change global timeout or drop tests.
-- Owner previously explicitly authorized SideStore release after clean PR CI. Current release-watch task was pinned to ef9bd410; update it to the new exact head before publishing. Keep draft PR pending fresh green web/native CI, verified IPA, and then safe merge to main for SideStore publication. Any failure blocks release.
+- Branch `codex/phase2-visual-polish-plan`, draft PR #148. Phase 2.1 visual foundation is already implemented; this update completes Phase 2.2–2.6 polishing for sidebar, chat, composer, message actions, attachments, search/history and settings.
+- Navigation: sidebar header Search replaces X; sidebar rows no longer contain Search, Archived chats or Temporary chat. Edge swipe/handle opens, swipe left or outside tap closes. Archived chats available in Search → Archived and Settings → Chats & data. Temporary chat resides beside New chat in the top-right chat toolbar. Models & providers renamed Router.
+- All 14 XCTest journeys remain; update old button paths, maintain fixtures, archive search, temporary privacy and screenshot assertions.
+- 0.3.5 is the planned native version. Release not yet published.
+- Early CI gate: Linux core job runs packaging/regression tests and Swift source syntax check before expensive iPhone jobs. If one simulator job transiently fails, retry only that job AFTER workflow completes. Source fixes create new SHA and necessarily require full required CI rerun.
+- 2026-11-10 CI triage: run #42805393513 on bbfef3 fails 3 iPhone shards (both compact + regular sync) in XCTest helper `closeSidebarBySwiping` at line 49; **same root cause**: the actual sidebar ScrollView didn't recognize the outer ZStack's horizontal close gesture. Fix attaches a simultaneous horizontal drag handler to the panel itself and makes XCTest drag explicitly inside `sidebarPanel`, still asserting the sidebar closes. No coverage removed. Verify next commit before release.
+- **Next concrete actions:** check PR head's core/Linux, all four real UI Firebase shards, macOS IPA, exact-commit artifact verification, web checks. Diagnose failure, fix/retry without dropping assertions. Once all pass, mark PR ready and merge to main; main CI must pass again to publish SideStore 0.3.5. Confirm release asset and source feed. Do not claim publication before verification.
+- Actual simulator screenshot artifacts from the new version should be made viewable on phone for owner.
 
-- 2026-11-09 owner explicitly authorized: **fix current failure and publish latest 0.3.4 to SideStore**, but *only after* the updated draft PR passes all required web/native CI and exact-commit IPA verification. On passing checks, mark PR ready and merge to main; main native CI alone publishes the version. Never bypass failed checks.
-- Diagnosis: native run 42700477434 failed ONLY the compact/sync UI test `testHistoryRenamePinArchiveAndSearchCachedMessages` at line 427. Its captured accessibility hierarchy shows `Loading conversation…` still on screen (metadata loaded, message not yet). Regular sync and both feature shards, core, release archive and web passed.
-- Fix candidate: for a full one-page chat, don't issue a separate Firestore system-instruction query (the page already includes every system message). For a paginated chat, retain separate authoritative instruction hydration. Raise UI wait from 15s to 60s; xcodebuild retries failed UI methods once, not the whole suite, retaining hard failure on repeat. The new code must pass CI before publishing.
+## Standing decisions
 
-- Owner request: make PR #147 native CI as fast as reasonably possible **without reducing release verification**. Keep `codex/phase2-completion-review` as an unmerged draft. Do not publish to SideStore or deploy web.
-- Baseline: successful Native iOS run 42690244621 at commit `3cb7b6c` lasted ~35 min. On both iPhone sizes, XCTest's 14 serial UI journeys alone took 12–13 min; fresh simulator preparation reported 8m50s on regular. Core Swift 107 tests and web tests had passed.
-- New workflow is designed for the standard GitHub-hosted **five simultaneous macOS job** limit: 4 independent, balanced UI/Firebase shards (compact + regular x sync + features), plus 1 separate concurrent unsigned device IPA archive. A required Ubuntu job runs all Python packaging/CI checks and all 107+ Swift core tests. Each size still executes **every one of the 14 UI tests**, with independently seeded real Firebase Auth/Firestore emulators.
-- `ios/scripts/test_simulators.py` uses explicit `-only-testing` method sets (6 sync and 8 features), checks each test's actual XCTest pass line so a zero-test run cannot pass, and records exact method names and count. `native_test_server.py` divides its original full verification into independently enforceable sync/feature assertions with `all` still supporting local full-suite runs.
-- `collect_artifacts.py` refuses any missing UI shard, lost Firebase assertion, omitted XCTest method count, screenshot/provenance mismatch, duplicate simulator UUID, or incorrect SHA-256, source SHA, app ID, OS or architecture. Only the fifth runner's independently packaged device IPA can be selected for release after both phones pass. The publishing job is still restricted to `main`.
-- On ephemeral GitHub CI runners only, `prepare_simulator.py` prefers a matching available preinstalled iPhone simulator (booted first) over fresh-device creation; it never reuses local developer simulators. Fallback remains a new dedicated simulator.
-- Tests added/updated to cover exact UI method partition, hosted reuse safety, every new artifact gate, and the existing packaging/security checks.
-- **Status: new workflow has not yet been run on GitHub; optimizations are candidates pending CI and measured wall-time.** Fix failures without dropping tests. Do not merge or publish before owner reviews simulator screenshots or device IPA.
-- Next: trigger PR checks, verify all four iPhone shards + archive + Ubuntu core + web CI, measure wall time versus the 35-minute baseline, and make any safe follow-up optimizations based on actual results.
+- Native iOS features only; web receives fixes. Preserve conventional AI chat workflow plus a distinct restrained light-inspired Lumen appearance.
+- From Phase 3 onward every feature must ship with complete visual polish, dark/light and accessibility states. Phase 7 is not a deferred UI cleanup.
+- Bundle `io.github.seifonyx.lumen`, native SideStore feed `ios/sidestore-source.json`; legacy demo release remains separate.
+- Acceptance document `docs/ios/NATIVE_VISUAL_POLISH.md`. No release from a failing/draft/unverified build.
 
-## Next
+## 2026-11-10 latest sidebar regression follow-up
 
-The owner requested a fresh SwiftUI iOS 26 app in `ios/`, with GitHub macOS builds, simulator screenshots,
-unsigned IPA downloads and SideStore installation. Phases 0 and 1 are published; the next code phase is everyday chat. The owner performs the physical sign-in/install check.
+Run #42809180573 on `40b945702f76ea50c81eda61be013b156c83c668` failed all four UI shards at the *same* assertion in `closeSidebarBySwiping` (line 54). UIKit/SwiftUI nested scrolling still intercepts free-form drag. Next fix adds a visible and accessible trailing-edge drag/tap control that receives a high-priority leftward swipe, retains generic swipe-on-sidebar as a secondary option, and separates the UX swipe assertion inside the existing two-theme UI journey. All other journeys use the existing tap-outside/backdrop close mechanism, so a gesture failure is isolated to the feature shard; no UI tests are removed. Required exact-commit CI and owner review remain release gates. Do not publish until verified.
 
-Layout proposal: the conversation and composer are the main screen. A sidebar opens history, search,
-projects and Library; the model control opens model/provider options; the composer opens attachments/tools;
-settings live in the sidebar/profile. Use native navigation, sheets and system materials; no bottom tab bar.
+## 2026-11-10 exact diagnosis of run #42815884967
 
-Proposed build sequence:
-0. Published; physical install/open check pending. Fresh `ios/` SwiftUI iOS 26 shell: chat/composer/sidebar, native controls, Light/Dark and keyboard layout.
-   GitHub builds, simulator screenshots, versioned unsigned IPA and SideStore installation work end to end.
-1. Published0.2.0; automated checks pass. Native Google/Firebase sign-in, existing account data, provider
-   connections, streaming/Stop, saved messages and reopening the same chat. Physical SideStore check remains.
-2. Complete everyday chat: history/search, editing/retry, attachments, incognito, drafts, long chats and restoration.
-3. Router: provider/key setup, model discovery, manual/Auto selection, fallbacks, layouts, comparisons and usage.
-4. Workspace: projects, instructions, memory, Library/files, search and account-scoped offline/sync behavior.
-5. Documents/knowledge and AI tools: editing/import/export, citations, research, images, Study and assistants.
-6. Analysis and coding: sandboxed Python/JavaScript, charts/downloads, GitHub browsing/diffs/commits/PRs/reverts.
-7. Native finish and full parity: voice, settings, accessibility, supported iPhone integrations, performance,
-   reliability and native-app cutover. The owner confirmed: new features go into native iOS; the web app gets fixes only.
+Latest commit `129a194f596892784348a4ee1a75ed61f9613d1f` on PR #148 failed all four iPhone UI shards at `LumenUITests.swift:53` after the backdrop test tapped `closeSidebar`. At that point `openSettings` still existed. The screen-wide backdrop was rendered as an invisible Text in a Button and its visual rectangle was only a `background`, which does not reliably expand the plain Button's hit-test area. Fix: use a filled Rectangle as the Button **label** so the entire scrim receives taps; tap the middle of the exposed region instead of the outer system edge; wait for the real sidebar-dismiss handle to *disappear* before treating navigation as complete. The existing separate swipe check also waits for handle disappearance. No tests or features removed; this must pass full new iPhone CI before merge/SideStore publication.
 
-Check document editing/export and the code-execution runtime early to settle feasibility. Background/scheduled
-agents need their own execution and delivery design because iOS can suspend the app.
+## 2026-11-10 hosted simulator launch diagnosis (run #42819472343, attempt 2)
 
-Earlier ideas remain backlog: $0 background agents (free quotas/storage/delivery need investigation), save
-reply excerpts into projects (synced size undecided), unified search and native haptics/keyboard improvements.
+- SHA `9efcbd85473f59828cffc89031e1804b59269b62` had five of six substantive jobs pass (core, archive, compact sync, regular sync, regular features). Compact/features failed before XCTest. First attempt: `simctl launch` returned FBSOpenApplicationServiceErrorDomain; second (single-job retry) timed out after **300 seconds** at the *same optional pre-XCTest simctl launch*. The script never reached `xcodebuild test-without-building`.
+- Fix in `ios/scripts/test_simulators.py`: **remove optional pre-XCTest `simctl launch` and termination altogether**. Still install the app before XCTest and run every selected XCTest method, validate each pass, Firebase roundtrip, screenshot artifacts and IPA as hard release requirements. Regression test verifies staging performs exactly one install and never a warm-up launch, and that installation errors still fail.
+- Fresh SHA requires all mandatory CI jobs to rerun; do not claim an unverified green result or publish to SideStore. No test coverage removed.
 
-## Open
+## 2026-11-10 compact/features failure: run #42828636538
 
-- Legacy IPA work is in draft [PR #141](https://github.com/Seifonyx/Lumen/pull/141), branch
-  `experiment/ios-sideload`. It is superseded by the fresh native foundation in PR #145. Its physical sign-in/sync results are not established here.
-
-- Older web/PWA parity checks remain on physical iPhone: status-bar/launch color, quiet updates,
-  touch feedback, drawer/nested navigation, draft/attachment restoration, keyboard, VoiceOver and Dynamic Type.
-- Earlier reported web timing issues were not reproduced by the current green main CI.
-
-## Decisions
-
-- 2026-11-08: owner confirmed native development takes priority. Add new features to native iOS;
-  maintain the web app with fixes only.
-- Phase 0 is authorized. Fresh native bundle: `io.github.seifonyx.lumen`; legacy `.demo` stays separate.
-  New releases use `native-ios-v…` and `ios/sidestore-source.json`. No credentials or account integration in Phase 0.
-- 2026-11-08: the owner liked Setpoint's Swift/GitHub/SideStore development and delivery workflow, and rejected
-  copying its bottom-tab navigation into Lumen. Design for an AI chat app; detailed navigation is still a proposal.
-- 2026-11-08: the owner requested minimal project documentation and an automatically maintained handoff,
-  replacing the previous detailed agent workflow and design rules.
-- Canvas (`LUMEN_CANVAS=1`) is the production presentation; the ordinary build is the existing fallback.
-  Web deployment is separate from native releases.
-- Root `sidestore-source.json` and `ios-v…` releases belong to the legacy `.demo` app; see
-  [legacy release guide](docs/ios/SIDESTORE_RELEASES.md). Use `ios/README.md` for the fresh native app.
-- `npm run handoff` reports current branch, PR and deployment facts. Earlier shipped work and deleted
-  documents remain available in git history.
+- Exact PR HEAD `0f5b03a6a192b2b30a7e360d098a857b1add9010`: core, archive, regular/sync, regular/features and compact/sync **passed**. Only compact/features failed. Actual XCTest method `testEditRegenerateAndReturnToTheOriginalVersion` failed twice during Xcode's bounded retry.
+- First attempt: the test started model selection before Settings had been confirmed dismissed; account's fixture model was not yet available. Test now waits for Settings to disappear and the model picker to appear, and exercises the actual visible account-key refresh action in a bounded interval, asserting the model is eventually selected and the picker dismisses.
+- Second attempt: SwiftUI `Menu` version-selector exposed the options inconsistently to XCTest on the hosted compact iPhone. Replace with an explicit, accessible `Versions` sheet and selectable version rows, preserving edit/regenerate/original-version semantics. XCTest now verifies the sheet opens, Version 1 is actually selectable, then checks the original message and cloud sync. No test assertions removed.
+- Source changes require **new exact-head CI with all required checks**. Do not rerun the old failed job against the old SHA. Inspect the new run and publish 0.3.5 only after all 4 shards, core, archive and artifact verifier pass.

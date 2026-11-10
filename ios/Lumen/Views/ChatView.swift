@@ -14,6 +14,7 @@ struct ChatView: View {
     @State private var followsReply = true
     @State private var editingMessage: ChatMessage?
     @State private var previewAttachment: ChatAttachment?
+    @State private var versionPickerOpen = false
     @State private var editingAccount = ""
     @State private var editingConversation = ""
     private var versions: [Conversation] { engine.versions(for: engine.currentConversation.id) }
@@ -28,8 +29,13 @@ struct ChatView: View {
             ScrollView {
                 if engine.currentConversation.messages.isEmpty && engine.currentConversation.historyLoaded != false {
                     VStack(spacing: 18) {
-                        Image("LumenMark").resizable().scaledToFit().frame(width: 44, height: 62).accessibilityHidden(true)
-                        Text("Start a conversation").font(.title2.weight(.semibold))
+                        Image("LumenMark")
+                            .resizable().scaledToFit().frame(width: 44, height: 62)
+                            .frame(width: 118, height: 118)
+                            .background(LumenPalette.accent.opacity(0.07), in: Circle())
+                            .accessibilityHidden(true)
+                        Text("Start a conversation")
+                            .font(LumenType.brand)
                         Text(connections.key(for: engine.selectedModel) != nil ? "Ready with \(engine.selectedModel?.name ?? "your model")" : "Choose a connected model to begin.")
                             .foregroundStyle(.secondary)
                     }
@@ -38,17 +44,20 @@ struct ChatView: View {
                     .frame(maxWidth: .infinity)
                     .containerRelativeFrame(.vertical)
                 } else {
-                    LazyVStack(alignment: .leading, spacing: 24) {
+                    LazyVStack(alignment: .leading, spacing: 22) {
                         if versions.count > 1 {
-                            Menu {
-                                ForEach(Array(versions.enumerated()), id: \.element.id) { index, chat in
-                                    Button("Version \(index + 1) · \(chat.revisionLabel ?? "Original")") { selectVersion(chat) }
-                                        .accessibilityIdentifier("version-" + chat.id)
-                                }
+                            Button {
+                                versionPickerOpen = true
                             } label: {
                                 Label("Version \((versions.firstIndex { $0.id == engine.currentConversation.id } ?? 0) + 1) of \(versions.count)", systemImage: "clock.arrow.circlepath")
+                                    .font(.caption.weight(.medium))
+                                    .foregroundStyle(LumenPalette.accent)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 8)
+                                    .background(LumenPalette.elevated, in: Capsule())
                             }
-                            .font(.caption).foregroundStyle(.secondary)
+                            .buttonStyle(.plain)
+                            .frame(minHeight: 44, alignment: .leading)
                             .disabled(engine.isStreaming)
                             .accessibilityIdentifier("conversationVersions")
                         }
@@ -75,7 +84,7 @@ struct ChatView: View {
                 }
             }
             .scrollDismissesKeyboard(.interactively)
-            .background(Color(uiColor: .systemBackground))
+            .background(LumenPalette.canvas)
             .onScrollGeometryChange(for: Bool.self) { geometry in
                 geometry.contentSize.height - geometry.contentOffset.y - geometry.containerSize.height < 140
             } action: { _, nearBottom in followsReply = nearBottom }
@@ -91,13 +100,20 @@ struct ChatView: View {
                         if sync.isLoadingMessages(chatID: engine.currentConversation.id) { ProgressView() }
                         Text("\(engine.currentConversation.messages.count) of \(engine.currentConversation.remoteMessageIDs?.count ?? 0)")
                             .foregroundStyle(.secondary).accessibilityIdentifier("loadedMessageCount")
-                    }.font(.caption).padding(.horizontal, 20).padding(.vertical, 10).background(.bar)
+                    }
+                    .font(.caption)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(LumenPalette.surface)
                 }
             }
             .overlay(alignment: .bottomTrailing) {
                 if !followsReply {
                     Button("Latest", systemImage: "arrow.down") { followsReply = true; proxy.scrollTo("conversationBottom", anchor: .bottom) }
-                        .padding(10).glassEffect(.regular, in: .capsule).padding(12).accessibilityIdentifier("scrollToLatest")
+                        .padding(10)
+                        .lumenSurface(radius: LumenRadius.card)
+                        .padding(12)
+                        .accessibilityIdentifier("scrollToLatest")
                 }
             }
             .onChange(of: engine.currentConversation.messages.first?.id) { _, _ in
@@ -124,7 +140,12 @@ struct ChatView: View {
                 }
                 if engine.isTemporary {
                     Label("Temporary · Not saved to history", systemImage: "eye.slash")
-                        .font(.footnote).foregroundStyle(.secondary).accessibilityIdentifier("temporaryChatIndicator")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(LumenPalette.accent)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(LumenPalette.elevated, in: Capsule())
+                        .accessibilityIdentifier("temporaryChatIndicator")
                     Text("Your AI provider still receives these messages.").font(.caption2).foregroundStyle(.secondary)
                 }
                 if let error = composer.errorMessage ?? engine.errorMessage ?? sync.errorMessage {
@@ -136,7 +157,7 @@ struct ChatView: View {
                         else { Button("Dismiss", systemImage: "xmark") { engine.errorMessage = nil }.labelStyle(.iconOnly) }
                     }
                     .padding(12)
-                    .background(Color(uiColor: .secondarySystemBackground), in: .rect(cornerRadius: 14))
+                    .lumenSurface(radius: LumenRadius.compact)
                     .accessibilityIdentifier("chatError")
                 }
                 VStack(alignment: .leading, spacing: 12) {
@@ -156,7 +177,8 @@ struct ChatView: View {
                                 Text(engine.selectedModel?.name ?? "Choose model").lineLimit(1)
                                 Image(systemName: "chevron.down").font(.caption2.weight(.semibold))
                             }
-                            .font(.subheadline.weight(.medium))
+                            .font(LumenType.control)
+                            .foregroundStyle(LumenPalette.accent)
                             .padding(.vertical, 7)
                             .frame(minHeight: 44)
                         }
@@ -165,6 +187,7 @@ struct ChatView: View {
                         if engine.isStreaming {
                             Button("Stop", systemImage: "stop.circle.fill") { engine.stopStreaming() }
                                 .font(.system(size: 34)).labelStyle(.iconOnly)
+                                .foregroundStyle(LumenPalette.accent)
                                 .frame(minWidth: 44, minHeight: 44)
                                 .accessibilityIdentifier("stopStreaming")
                         } else {
@@ -173,6 +196,7 @@ struct ChatView: View {
                                 composer.discardDraft()
                             }
                             .font(.system(size: 34)).labelStyle(.iconOnly)
+                            .foregroundStyle(canSend ? LumenPalette.accent : LumenPalette.muted)
                             .frame(minWidth: 44, minHeight: 44)
                             .disabled(!canSend)
                             .accessibilityHint(canSend ? "Send message" : "Choose a connected model before sending.")
@@ -181,10 +205,12 @@ struct ChatView: View {
                     }
                 }
                 .padding(16)
-                .glassEffect(.regular, in: .rect(cornerRadius: 26))
+                .lumenSurface(radius: LumenRadius.composer)
+                .shadow(color: .black.opacity(0.06), radius: 12, y: 3)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.top, 8)
+            .padding(.bottom, 10)
         }
         .sheet(item: $editingMessage) { message in
             EditMessageSheet(message: message) { text in
@@ -194,7 +220,47 @@ struct ChatView: View {
             }
         }
         .sheet(item: $previewAttachment) { AttachmentPreview(file: $0) }
-        .onChange(of: engine.accountID) { _, _ in editingMessage = nil; previewAttachment = nil }
-        .onChange(of: engine.currentConversation.id) { _, _ in editingMessage = nil; previewAttachment = nil }
+        .sheet(isPresented: $versionPickerOpen) {
+            NavigationStack {
+                List {
+                    ForEach(Array(versions.enumerated()), id: \.element.id) { index, chat in
+                        Button {
+                            versionPickerOpen = false
+                            selectVersion(chat)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Label("Version \(index + 1) · \(chat.revisionLabel ?? "Original")", systemImage: "clock.arrow.circlepath")
+                                    .font(LumenType.row)
+                                Spacer()
+                                if chat.id == engine.currentConversation.id {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(LumenPalette.accent)
+                                        .accessibilityLabel("Selected version")
+                                }
+                            }
+                            .frame(minHeight: 44)
+                        }
+                        .accessibilityIdentifier("version-" + chat.id)
+                    }
+                }
+                .scrollContentBackground(.hidden)
+                .background(LumenPalette.canvas)
+                .navigationTitle("Versions")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { versionPickerOpen = false }
+                    }
+                }
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
+        .onChange(of: engine.accountID) { _, _ in
+            editingMessage = nil; previewAttachment = nil; versionPickerOpen = false
+        }
+        .onChange(of: engine.currentConversation.id) { _, _ in
+            editingMessage = nil; previewAttachment = nil
+        }
     }
 }

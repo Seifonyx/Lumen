@@ -16,16 +16,15 @@ def run(*args, timeout=300):
     subprocess.run(args, check=True, timeout=timeout)
 
 
-def stop_warmup_app(device):
-    """Best-effort cleanup before XCTest, which manages its own app lifecycle."""
-    try:
-        subprocess.run(['xcrun', 'simctl', 'terminate', device, 'io.github.seifonyx.lumen'],
-                       check=False, timeout=30)
-    except subprocess.TimeoutExpired:
-        # A cold/overloaded hosted simulator may hang in simctl even after a
-        # successful app launch. Do not skip the real XCTest suite because an
-        # optional warm-up cleanup failed; XCTest re-launches the app itself.
-        print('Warm-up app termination timed out; proceeding to XCTest', flush=True)
+def stage_app_for_xctest(device, app):
+    """Install the built app, but let XCTest own its launch and lifecycle.
+
+    An optional pre-test simctl launch has twice failed on hosted iPhone
+    simulators (service error and 300s timeout) before any UI tests could run.
+    App installation remains a real setup gate; XCTest is the mandatory gate
+    that must actually launch the app and pass each assigned UI journey.
+    """
+    run('xcrun', 'simctl', 'install', device, str(app))
 
 
 def prepared_device_is_live(prepared, inventory, profile, runtime, device_type):
@@ -116,11 +115,10 @@ def main():
                 '--dataNetwork', 'wifi', '--wifiMode', 'active', '--wifiBars', '3',
                 '--batteryState', 'charged', '--batteryLevel', '100')
             log = root / 'build' / 'logs' / f'{profile}-tests.log'
-            # Warm the app's dyld/SDK startup once before XCTest attaches to a fresh simulator.
+            # Do not pre-launch: a hung OPTIONAL simctl launch used to abort the
+            # whole shard before XCTest. XCTest launches and checks the actual app.
             app = root / 'build/DerivedData/Build/Products/Debug-iphonesimulator/Lumen.app'
-            run('xcrun', 'simctl', 'install', device, str(app))
-            run('xcrun', 'simctl', 'launch', device, 'io.github.seifonyx.lumen', '--lumen-integration', '--lumen-reset-qa', timeout=300)
-            stop_warmup_app(device)
+            stage_app_for_xctest(device, app)
             args = [
                 'xcodebuild', 'test-without-building', '-project', str(root / 'Lumen.xcodeproj'),
                 '-scheme', 'Lumen', '-destination', f'id={device}',

@@ -28,7 +28,11 @@ struct ComposerAttachments: View {
                                     composer.attachmentIDs.removeAll { $0 == id }
                                 }.labelStyle(.iconOnly).frame(minWidth: 44, minHeight: 44)
                                     .accessibilityIdentifier("removeAttachment-" + id)
-                            }.font(.footnote).padding(.leading, 10).background(.quaternary, in: .capsule)
+                            }
+                            .font(.footnote)
+                            .padding(.leading, 10)
+                            .background(LumenPalette.elevated, in: .capsule)
+                            .overlay(Capsule().strokeBorder(LumenPalette.stroke, lineWidth: 1))
                         }
                     }
                 }.scrollIndicators(.hidden)
@@ -45,7 +49,12 @@ struct ComposerAttachments: View {
                         Button("Add fixture photo") { importFixture(image: true) }.accessibilityIdentifier("attachFixturePhoto")
                     }
                     #endif
-                } label: { Label("Attach", systemImage: "plus.circle").font(.subheadline).frame(minHeight: 44) }
+                } label: {
+                    Label("Attach", systemImage: "plus.circle")
+                        .font(LumenType.control)
+                        .foregroundStyle(LumenPalette.accent)
+                        .frame(minHeight: 44)
+                }
                 .disabled(!canAttach).accessibilityIdentifier("attachFile")
                 if importing { ProgressView(); Text("Preparing attachment…").font(.caption).foregroundStyle(.secondary) }
                 else if !composer.attachmentIDs.isEmpty { Text("\(composer.attachmentIDs.count) of 4 files").font(.caption).foregroundStyle(.secondary) }

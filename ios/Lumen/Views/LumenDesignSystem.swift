@@ -109,3 +109,14 @@ struct LumenRowButtonStyle: ButtonStyle {
             .animation(reduceMotion ? nil : .easeOut(duration: 0.14), value: configuration.isPressed)
     }
 }
+
+struct LumenSectionHeader: View {
+    var title: String
+
+    var body: some View {
+        Text(title)
+            .font(LumenType.section)
+            .foregroundStyle(LumenPalette.muted)
+            .accessibilityAddTraits(.isHeader)
+    }
+}

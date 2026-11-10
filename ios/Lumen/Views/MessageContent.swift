@@ -17,6 +17,11 @@ struct MessageContent: View {
                     }
                     .padding(12)
                     .background(LumenPalette.elevated, in: .rect(cornerRadius: LumenRadius.compact))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: LumenRadius.compact)
+                            .strokeBorder(LumenPalette.stroke.opacity(0.5), lineWidth: 1)
+                            .allowsHitTesting(false)
+                    }
                 }
             }
         }

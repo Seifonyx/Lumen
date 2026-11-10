@@ -13,6 +13,14 @@
       "tintColor": "0b0b0c",
       "versions": [
         {
+          "version": "0.3.6",
+          "date": "2026-11-10",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.3.6/Lumen.ipa",
+          "size": 6778740,
+          "minOSVersion": "26.0",
+          "localizedDescription": "A simpler, focus-expanding chat bar with icon-only attachments and clearer model labels."
+        },
+        {
           "version": "0.3.5",
           "date": "2026-11-10",
           "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.3.5/Lumen.ipa",

@@ -80,7 +80,7 @@ struct HistorySearchView: View {
                     Button { select(result.conversation) } label: {
                         VStack(alignment: .leading, spacing: 7) {
                             HStack {
-                                if result.conversation.pinned == true { Image(systemName: "pin.fill").font(.caption) }
+                                if result.conversation.pinned == true { Image(systemName: "pin.fill").font(.caption).accessibilityLabel("Pinned") }
                                 Text(result.conversation.title)
                                     .font(LumenType.row)
                                     .foregroundStyle(.primary)

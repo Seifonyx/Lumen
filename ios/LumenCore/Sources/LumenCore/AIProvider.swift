@@ -44,8 +44,8 @@ public enum ProviderRequestError: Error, LocalizedError, Sendable {
         case .responseTooLarge: "The provider response exceeded the supported size."
         case .http(let code, let provider):
             switch code {
-            case 401, 403: "\(provider) rejected the API key. Check it in Settings."
-            case 404: "This model is no longer available. Refresh models in Settings."
+            case 401, 403: "\(provider) didn't accept this API key. Check that it's complete and still active."
+            case 404: "This model is no longer available. Choose another model."
             case 429: "\(provider)'s usage limit was reached. Try again later."
             case 500...599: "\(provider) is temporarily unavailable. Try again later."
             default: "\(provider) could not complete the request (\(code))."

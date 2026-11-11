@@ -304,7 +304,7 @@ public struct HistoryLoadTicket: Sendable {
         }
         guard let model = selectedModel else { errorMessage = "Choose a connected model first."; return nil }
         guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Connect \(model.providerId) in Settings before sending."
+            errorMessage = "Connect this model's provider in Settings › Router before sending."
             return nil
         }
         let before = currentConversation

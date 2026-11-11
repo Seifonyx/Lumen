@@ -1,10 +1,11 @@
 {
-  "title": "A sidebar that follows your finger · 0.4.1",
-  "description": "Swipe right anywhere and the chat slides aside to reveal the sidebar, following your finger; swipe left to close.",
+  "title": "Comfortable at every text size · 0.4.2",
+  "description": "Lumen now follows your text size everywhere, reads clearly with VoiceOver and explains errors in plain words.",
   "notes": [
-    "Swipe right anywhere on the chat and it slides aside to reveal your conversations, tracking your finger the whole way; swipe left anywhere to close.",
-    "Where you let go, and how fast you flick, decides whether it stays open; a swipe interrupted by scrolling settles cleanly.",
-    "Tap the dimmed strip of chat to close the sidebar. The blue edge tab and the drag handle are gone.",
-    "A light haptic when the sidebar opens or closes."
+    "Buttons and icons grow with your text size, up to the largest accessibility sizes, and stay tappable.",
+    "VoiceOver names every control, announces pinned and selected chats, and hints at touch-and-hold options.",
+    "Clearer messages: a refused API key says what to check, wherever it appears; a retired model asks you to choose another.",
+    "An empty chat explains how to connect a provider when none is set up.",
+    "Attachment chips show a photo icon for photos."
   ]
 }

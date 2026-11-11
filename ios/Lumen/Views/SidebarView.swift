@@ -29,7 +29,7 @@ struct SidebarView: View {
                 Spacer()
                 Button("Search chats", systemImage: "magnifyingglass", action: search)
                     .labelStyle(.iconOnly)
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.title3.weight(.medium))
                     .foregroundStyle(LumenPalette.accent)
                     .frame(minWidth: 44, minHeight: 44)
                     .accessibilityIdentifier("sidebarSearchButton")
@@ -77,7 +77,11 @@ struct SidebarView: View {
                                         Image(systemName: "bubble.left")
                                             .frame(width: 20)
                                             .foregroundStyle(.secondary)
-                                        if conv.pinned == true { Image(systemName: "pin.fill").font(.caption2).foregroundStyle(.secondary) }
+                                            .accessibilityHidden(true)
+                                        if conv.pinned == true {
+                                            Image(systemName: "pin.fill").font(.caption2).foregroundStyle(.secondary)
+                                                .accessibilityLabel("Pinned")
+                                        }
                                         Text(conv.title)
                                             .lineLimit(1)
                                             .font(LumenType.row)
@@ -96,6 +100,8 @@ struct SidebarView: View {
                                     }
                                 }
                                 .buttonStyle(LumenRowButtonStyle())
+                                .accessibilityAddTraits(engine.currentConversation.id == conv.id ? .isSelected : [])
+                                .accessibilityHint("Opens this chat. Touch and hold for more options.")
                                 .accessibilityIdentifier("history-" + conv.id)
                                 .contextMenu {
                                     ConversationActions(chat: conv, engine: engine, rename: { renaming = conv }, delete: { pendingDeletion = conv })

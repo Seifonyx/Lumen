@@ -8,9 +8,9 @@ final class LumenUITests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: "messageComposer").firstMatch
     }
 
-    private func launchCleanChat() {
+    private func launchCleanChat(_ extraArguments: [String] = []) {
         continueAfterFailure = false
-        app.launchArguments = ["--lumen-integration", "--lumen-reset-qa", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launchArguments = ["--lumen-integration", "--lumen-reset-qa", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"] + extraArguments
         app.launch()
         app.launchArguments.removeAll { $0 == "--lumen-reset-qa" }
         XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 10))
@@ -582,6 +582,62 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
     }
 
+    func testLargestTextSizeKeepsEveryChatControlUsable() {
+        // Accessibility text sizes: the chat bar, its buttons and the sidebar must stay on screen and tappable.
+        executionTimeAllowance = 240
+        launchCleanChat(["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXL"])
+        defer { app.terminate() }
+        for control in ["attachFile", "sendMessage", "chooseModel", "newChat", "openSidebar"] {
+            XCTAssertTrue(app.buttons[control].isHittable, control + " must stay tappable at the largest text size")
+        }
+        XCTAssertTrue(composer.isHittable)
+        capture("largest-text-chat")
+        enterDraft("A longer question that wraps across several lines at the largest text size")
+        let keyboard = app.keyboards.firstMatch
+        XCTAssertLessThanOrEqual(composer.frame.maxY, keyboard.frame.minY + 2, "The chat bar stays above the keyboard")
+        XCTAssertTrue(app.buttons["sendMessage"].isHittable)
+        capture("largest-text-composer")
+        dismissKeyboardByTappingTheConversation()
+        app.buttons["openSidebar"].tap()
+        XCTAssertTrue(app.buttons["sidebarNewChat"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["openSettings"].isHittable)
+        capture("largest-text-sidebar")
+        closeSidebarByBackdrop()
+    }
+
+    func testAccessibilityAuditOfTheMainScreens() throws {
+        // Apple's own audit: every control has a usable description and text follows the user's text size.
+        executionTimeAllowance = 240
+        launchCleanChat()
+        defer { app.terminate() }
+        let types: XCUIAccessibilityAuditType = [.sufficientElementDescription, .dynamicType]
+        func audit(_ screen: String) throws {
+            try app.performAccessibilityAudit(for: types) { issue in
+                // System-owned chrome (keyboard, status bar) is not Lumen's to label.
+                guard let element = issue.element else { return true }
+                if element.elementType == .keyboard || element.elementType == .statusBar { return true }
+                print("Accessibility issue on \(screen): \(issue.compactDescription) — \(element.debugDescription.prefix(200))")
+                return false
+            }
+        }
+        try audit("chat")
+        app.buttons["openSidebar"].tap()
+        XCTAssertTrue(app.buttons["sidebarNewChat"].waitForExistence(timeout: 5))
+        try audit("sidebar")
+        closeSidebarByBackdrop()
+        settings()
+        try audit("settings")
+        app.buttons["providerSettings"].tap()
+        XCTAssertTrue(app.navigationBars["Router"].waitForExistence(timeout: 5))
+        try audit("router")
+        app.navigationBars["Router"].buttons["BackButton"].tap()
+        app.navigationBars["Settings"].buttons["Done"].tap()
+        openModelPicker()
+        XCTAssertTrue(app.navigationBars["Models"].waitForExistence(timeout: 5))
+        try audit("models")
+        app.buttons["Done"].tap()
+    }
+
     func testRejectedProviderKeyShowsErrorAndKeepsTheDraft() {
         launchCleanChat()
         defer { app.terminate() }
@@ -594,7 +650,7 @@ final class LumenUITests: XCTestCase {
         key.tap()
         key.typeText("fixture-invalid-key")
         app.buttons["connectProvider"].tap()
-        XCTAssertTrue(app.staticTexts["Groq rejected the API key. Check it in Settings."].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Groq didn't accept this API key. Check that it's complete and still active."].waitForExistence(timeout: 10))
         capture("provider-rejected-key")
         app.navigationBars["Groq"].buttons["BackButton"].tap()
         app.navigationBars["Router"].buttons["BackButton"].tap()

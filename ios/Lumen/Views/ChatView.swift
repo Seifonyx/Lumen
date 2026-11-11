@@ -20,6 +20,7 @@ struct ChatView: View {
     @State private var viewportHeight: CGFloat = 0
     @State private var tailHeight: CGFloat = 0
     @State private var atBottom = true
+    @ScaledMetric(relativeTo: .body) private var sendSize: CGFloat = 34
     @State private var sends = 0
     @State private var stops = 0
     @State private var editingMessage: ChatMessage?
@@ -86,11 +87,11 @@ struct ChatView: View {
                         withAnimation(reduceMotion ? nil : .smooth(duration: 0.3)) { proxy.scrollTo("conversationBottom", anchor: .bottom) }
                     } label: {
                         Image(systemName: "arrow.down")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(LumenPalette.ink)
-                            .frame(width: 40, height: 40)
+                            .frame(width: sendSize + 6, height: sendSize + 6)
                             .glassEffect(.regular.interactive(), in: .circle)
-                            .frame(width: 44, height: 44)
+                            .frame(minWidth: 44, minHeight: 44)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Latest")
@@ -218,7 +219,10 @@ struct ChatView: View {
                 .font(.system(.title2, design: .default, weight: .semibold))
                 .foregroundStyle(LumenPalette.ink)
             if connections.key(for: engine.selectedModel) == nil {
-                Button("Choose a model to begin", action: chooseModel)
+                Text("Connect a provider in Settings › Router, then choose a model.")
+                    .font(.subheadline)
+                    .foregroundStyle(LumenPalette.muted)
+                Button("Choose a model", action: chooseModel)
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(LumenPalette.accent)
                     .frame(minHeight: 44)
@@ -320,11 +324,11 @@ struct ChatView: View {
                     engine.stopStreaming()
                 } label: {
                     Image(systemName: "stop.fill")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.caption.weight(.bold))
                         .foregroundStyle(LumenPalette.canvas)
-                        .frame(width: 34, height: 34)
+                        .frame(width: sendSize, height: sendSize)
                         .background(LumenPalette.ink, in: Circle())
-                        .frame(width: 44, height: 44)
+                        .frame(minWidth: 44, minHeight: 44)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Stop")
@@ -332,11 +336,11 @@ struct ChatView: View {
             } else {
                 Button(action: send) {
                     Image(systemName: "arrow.up")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.callout.weight(.semibold))
                         .foregroundStyle(canSend ? LumenPalette.canvas : LumenPalette.muted)
-                        .frame(width: 34, height: 34)
+                        .frame(width: sendSize, height: sendSize)
                         .background(canSend ? LumenPalette.ink : LumenPalette.elevated, in: Circle())
-                        .frame(width: 44, height: 44)
+                        .frame(minWidth: 44, minHeight: 44)
                 }
                 .buttonStyle(.plain)
                 .disabled(!canSend)

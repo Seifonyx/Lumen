@@ -55,6 +55,8 @@ SHARDS = {
         'testHistoryRenamePinArchiveAndSearchCachedMessages',
         'testDraftSurvivesWorkspaceNavigationAndRelaunch',
         'testComposerStaysAboveKeyboardAndDoesNotSubmitWithoutAModel',
+        'testLargestTextSizeKeepsEveryChatControlUsable',
+        'testAccessibilityAuditOfTheMainScreens',
     ),
     'features': (
         'testConnectedDeleteCleansTheCloudConversation',

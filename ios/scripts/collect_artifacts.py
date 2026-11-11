@@ -13,7 +13,11 @@ CHECKS_BY_SHARD = {
              'webOrderingPreserved', 'attachmentRoundtrip', 'longHistoryPreserved', 'metadataRoundtrip'),
     'features': ('deletedContentCleaned', 'revisionVersionsPreserved', 'temporaryContentAbsent'),
 }
-TEST_COUNTS = {'sync': 6, 'features': 8}
+# The same lists the shards run (scripts/test_simulators.py), so adding a UI test cannot desynchronise them.
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from test_simulators import SHARDS as UI_SHARDS
+TEST_COUNTS = {shard: len(names) for shard, names in UI_SHARDS.items()}
 
 
 def collect(source, destination, expected_commit):

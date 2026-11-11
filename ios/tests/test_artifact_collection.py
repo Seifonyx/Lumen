@@ -22,7 +22,7 @@ class ArtifactCollectionTests(unittest.TestCase):
                      'attachmentRoundtrip', 'longHistoryPreserved', 'metadataRoundtrip'),
             'features': ('deletedContentCleaned', 'revisionVersionsPreserved', 'temporaryContentAbsent'),
         }
-        self.counts = {'sync': 6, 'features': 8}
+        self.counts = {'sync': 8, 'features': 8}
         for profile in ('compact', 'regular'):
             for shard in ('sync', 'features'):
                 folder = self.source / f'native-ios-{self.sha}-{profile}-{shard}'

@@ -10,6 +10,7 @@ struct ChatView: View {
     var chooseModel: () -> Void
     var selectVersion: (Conversation) -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var attachmentImporting = false
     @State private var olderAnchor: String?
     @State private var loadingOlder = false
@@ -47,8 +48,9 @@ struct ChatView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 if messages.isEmpty && engine.currentConversation.historyLoaded != false {
+                    // At least the visible height (centred), and taller, scrolling, at large text sizes.
                     emptyState
-                        .containerRelativeFrame(.vertical)
+                        .frame(minHeight: max(0, viewportHeight - 1))
                         .contentShape(Rectangle())
                         .onTapGesture { focused.wrappedValue = false }
                 } else {
@@ -324,7 +326,9 @@ struct ChatView: View {
         ComposerAttachments(composer: composer, engine: engine, importing: $attachmentImporting) {
             TextField("Message Lumen", text: Binding(get: { composerAligned ? composer.draft : "" }, set: { if composerAligned { composer.draft = $0 } }), axis: .vertical)
                 .disabled(!composerAligned)
-                .lineLimit(1...8)
+                // At accessibility text sizes a few lines already fill the screen: the bar stops growing
+                // at three and scrolls inside, so the conversation stays visible.
+                .lineLimit(typeSize.isAccessibilitySize ? 1...3 : 1...8)
                 .font(.body)
                 .focused(focused)
                 .padding(.vertical, 11)

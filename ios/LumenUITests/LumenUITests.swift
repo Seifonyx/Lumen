@@ -83,7 +83,9 @@ final class LumenUITests: XCTestCase {
 
     private func dismissKeyboardByTappingTheConversation() {
         // No keyboard button: tapping the conversation (or dragging it down) puts the keyboard away.
-        app.scrollViews.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3)).tap()
+        // (A point in the window, just below the bar: "the first scroll view" can be the keyboard's own
+        // suggestion strip, and tapping that types a word instead.)
+        app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.22)).tap()
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5),
                       "Tapping the conversation must hide the keyboard")
     }

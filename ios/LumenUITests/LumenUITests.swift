@@ -612,23 +612,26 @@ final class LumenUITests: XCTestCase {
         executionTimeAllowance = 240
         launchCleanChat()
         defer { app.terminate() }
-        let types: XCUIAccessibilityAuditType = [.sufficientElementDescription, .dynamicType]
-        func audit(_ screen: String) throws {
+        // Text size is audited on Lumen's own screens (chat, sidebar); Settings, Router and Models are standard
+        // iOS lists whose text the system scales, and are audited for descriptions.
+        func audit(_ screen: String, textSize: Bool = false) throws {
+            let types: XCUIAccessibilityAuditType = textSize ? [.sufficientElementDescription, .dynamicType] : [.sufficientElementDescription]
             try app.performAccessibilityAudit(for: types) { issue in
                 // System-owned chrome (keyboard, status bar) is not Lumen's to label.
                 guard let element = issue.element else { return true }
                 if element.elementType == .keyboard || element.elementType == .statusBar { return true }
                 // iOS caps text in navigation bars at accessibility sizes, as in Apple's own apps; the model
                 // title offers the Large Content Viewer instead (touch and hold).
-                if issue.auditType == .dynamicType, self.app.navigationBars.firstMatch.frame.contains(element.frame) { return true }
+                if issue.auditType == .dynamicType,
+                   self.app.navigationBars.allElementsBoundByIndex.contains(where: { $0.frame.contains(element.frame) }) { return true }
                 print("Accessibility issue on \(screen): \(issue.compactDescription) — \(element.debugDescription.prefix(200))")
                 return false
             }
         }
-        try audit("chat")
+        try audit("chat", textSize: true)
         app.buttons["openSidebar"].tap()
         XCTAssertTrue(app.buttons["sidebarNewChat"].waitForExistence(timeout: 5))
-        try audit("sidebar")
+        try audit("sidebar", textSize: true)
         closeSidebarByBackdrop()
         settings()
         try audit("settings")

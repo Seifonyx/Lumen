@@ -29,16 +29,68 @@ jobs:
       - uses: actions/checkout@v5
       - name: Packaging and simulator selection regressions
         run: python3 -m unittest discover -s ios/tests -v
-      - uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: '6.2'
+      # Swift's official image: no installer and no key-server lookups (setup-swift failed on those twice
+      # on 2026-11-11).
       - name: Parse SwiftUI source before expensive simulators
-        run: find ios/Lumen ios/LumenUITests -name '*.swift' -print0 | xargs -0 swiftc -frontend -parse
+        run: |
+          docker run --rm -v "$PWD:/w" -w /w swift:6.2 bash -c             "find ios/Lumen ios/LumenUITests -name '*.swift' -print0 | xargs -0 swiftc -frontend -parse"
       - name: Test native chat logic and recovery
-        run: swift test --package-path ios/LumenCore
+        run: docker run --rm -v "$PWD:/w" -w /w swift:6.2 swift test --package-path ios/LumenCore
+
+  # The simulator app and its UI tests compile once per commit, here, from a warm build cache (Firebase
+  # and the other packages are rebuilt only when project.yml changes); every UI shard reuses the result.
+  # macOS jobs do not wait for the Linux checks: on a free public repo that costs nothing, and verify
+  # still requires every check before anything is published.
+  simulator:
+    name: Build the simulator app once
+    runs-on: macos-26
+    timeout-minutes: 40
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      IOS_BUILD_NUMBER: ${{ github.run_number }}
+      LUMEN_BUILD_ONLY: '1'
+    steps:
+      - uses: actions/checkout@v5
+      - id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ios/build/DerivedData
+          key: native-sim-dd-v1-${{ github.sha }}
+          restore-keys: native-sim-dd-v1-
+      - name: Project generator
+        run: |
+          if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
+          xcodegen --version
+      - name: Build for testing
+        run: bash ios/scripts/build.sh
+      - name: Pack the built app and tests (keeps executable permissions)
+        run: tar -C ios/build/DerivedData/Build -cf ios/build/simulator-products.tar Products
+      - uses: actions/upload-artifact@v6
+        with:
+          name: native-build-${{ github.sha }}
+          path: ios/build/simulator-products.tar
+          retention-days: 1
+          compression-level: 1
+          if-no-files-found: error
+      - name: Keep the build log
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: native-build-log-${{ github.sha }}
+          path: ios/build/logs/
+          retention-days: 7
+      # Saved from main (and whenever nothing was cached yet), so pull requests start warm without
+      # spending a minute uploading the cache on every run.
+      - if: always() && steps.cache.outputs.cache-hit != 'true' && (github.ref == 'refs/heads/main' || steps.cache.outputs.cache-matched-key == '')
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ios/build/DerivedData
+            !ios/build/DerivedData/Logs
+          key: native-sim-dd-v1-${{ github.sha }}
 
   build:
-    needs: core
+    needs: simulator
     name: iPhone ${{ matrix.profile }} / ${{ matrix.shard }} UI and Firebase
     strategy:
       fail-fast: false
@@ -46,14 +98,22 @@ jobs:
         profile: [compact, regular]
         shard: [sync, features]
     runs-on: macos-26
-    timeout-minutes: 40
+    timeout-minutes: 30
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
       IOS_BUILD_NUMBER: ${{ github.run_number }}
       LUMEN_QA_PROFILE: ${{ matrix.profile }}
       LUMEN_QA_SHARD: ${{ matrix.shard }}
+      LUMEN_SKIP_BUILD: '1'
     steps:
       - uses: actions/checkout@v5
+      - name: Start booting the simulator while the build downloads
+        run: |
+          mkdir -p ios/build/logs
+          rm -f "ios/build/prepared-$LUMEN_QA_PROFILE.json"
+          cd ios
+          nohup python3 scripts/prepare_simulator.py --profile "$LUMEN_QA_PROFILE" --output "build/prepared-$LUMEN_QA_PROFILE.json" > build/logs/simulator-preparation.log 2>&1 &
+          echo $! > build/prep.pid
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -63,8 +123,17 @@ jobs:
           java-version: '21'
       - uses: actions/cache@v4
         with:
-          path: ios/build/DerivedData/SourcePackages
-          key: native-packages-${{ runner.os }}-${{ hashFiles('ios/project.yml') }}
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-15.33.0
+      - uses: actions/download-artifact@v5
+        with:
+          name: native-build-${{ github.sha }}
+          path: ios/build
+      - name: Unpack the built app and tests
+        run: |
+          mkdir -p ios/build/DerivedData/Build
+          tar -C ios/build/DerivedData/Build -xf ios/build/simulator-products.tar
+          rm ios/build/simulator-products.tar
       - name: Project generator
         run: |
           if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
@@ -84,7 +153,6 @@ jobs:
           if-no-files-found: error
 
   package:
-    needs: core
     name: Archive one release IPA
     runs-on: macos-26
     timeout-minutes: 30
@@ -93,10 +161,12 @@ jobs:
       IOS_BUILD_NUMBER: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/cache@v4
+      - id: cache
+        uses: actions/cache/restore@v4
         with:
-          path: ios/build/DerivedData/SourcePackages
-          key: native-packages-${{ runner.os }}-${{ hashFiles('ios/project.yml') }}
+          path: ios/build/DerivedData
+          key: native-rel-dd-v1-${{ github.sha }}
+          restore-keys: native-rel-dd-v1-
       - name: Project generator
         run: |
           if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
@@ -113,6 +183,13 @@ jobs:
             ios/build/logs/
           retention-days: 7
           if-no-files-found: error
+      - if: always() && steps.cache.outputs.cache-hit != 'true' && (github.ref == 'refs/heads/main' || steps.cache.outputs.cache-matched-key == '')
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ios/build/DerivedData
+            !ios/build/DerivedData/Logs
+          key: native-rel-dd-v1-${{ github.sha }}
 
   verify:
     name: Verify all four iPhone shards and release IPA

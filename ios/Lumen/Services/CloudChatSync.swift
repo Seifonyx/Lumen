@@ -128,7 +128,7 @@ import LumenCore
             receiveKeys?(userID, keys)
         } catch {
             guard epoch == ticket else { return }
-            keyErrorMessage = "Account providers could not load. Try loading them again, or connect a provider in Settings."
+            keyErrorMessage = "Your account's providers could not load. Try again, or connect a provider with its API key."
             #if DEBUG && targetEnvironment(simulator)
             let failure = error as NSError
             DebugIntegration.record("cloud-key-failed", fields: ["domain": failure.domain, "code": String(failure.code)])

@@ -8,9 +8,9 @@ final class LumenUITests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: "messageComposer").firstMatch
     }
 
-    private func launchCleanChat() {
+    private func launchCleanChat(_ extraArguments: [String] = []) {
         continueAfterFailure = false
-        app.launchArguments = ["--lumen-integration", "--lumen-reset-qa", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launchArguments = ["--lumen-integration", "--lumen-reset-qa", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"] + extraArguments
         app.launch()
         app.launchArguments.removeAll { $0 == "--lumen-reset-qa" }
         XCTAssertTrue(app.buttons["openSidebar"].waitForExistence(timeout: 10))
@@ -43,30 +43,35 @@ final class LumenUITests: XCTestCase {
     }
 
     private func closeSidebarByBackdrop() {
-        // Tap the center of the exposed scrim, not the system's outer edge.
-        // Wait for the actual sidebar content to disappear: the underlying
-        // openSidebar toolbar button may exist even while the overlay is open.
+        // Tap the visible, dimmed part of the chat beside the sidebar. Wait for the sidebar's own
+        // content to go: the chat's openSidebar button exists underneath the whole time.
         let backdrop = app.buttons["closeSidebar"]
-        let handle = app.buttons["sidebarDismissHandle"]
+        let panel = app.buttons["sidebarNewChat"]
         XCTAssertTrue(backdrop.waitForExistence(timeout: 5))
-        XCTAssertTrue(handle.waitForExistence(timeout: 5))
-        backdrop.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
-        XCTAssertTrue(handle.waitForNonExistence(timeout: 5),
-                      "Tapping the exposed backdrop must remove the sidebar")
+        XCTAssertTrue(panel.waitForExistence(timeout: 5))
+        backdrop.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        XCTAssertTrue(panel.waitForNonExistence(timeout: 5),
+                      "Tapping the exposed chat must close the sidebar")
         XCTAssertTrue(app.buttons["openSidebar"].isHittable)
         XCTAssertFalse(app.buttons["openSettings"].exists)
     }
 
     private func verifySidebarEdgeSwipe() {
-        let handle = app.buttons["sidebarDismissHandle"]
-        XCTAssertTrue(handle.waitForExistence(timeout: 5), "The sidebar must offer a drag-to-close edge")
-        let start = handle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.20, dy: 0.5))
-        start.press(forDuration: 0.2, thenDragTo: end)
-        XCTAssertTrue(handle.waitForNonExistence(timeout: 5),
-                      "Swiping left from the sidebar edge must remove the sidebar")
+        // The sidebar follows the finger both ways, from anywhere on the screen (no handles).
+        let panel = app.buttons["sidebarNewChat"]
+        XCTAssertTrue(panel.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["sidebarDismissHandle"].exists, "No separate drag handle")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.55))
+            .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.55)))
+        XCTAssertTrue(panel.waitForNonExistence(timeout: 5), "Swiping left must close the sidebar")
         XCTAssertTrue(app.buttons["openSidebar"].isHittable)
         XCTAssertFalse(app.buttons["openSettings"].exists)
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.55))
+            .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.55)))
+        XCTAssertTrue(panel.waitForExistence(timeout: 5), "Swiping right on the chat must open the sidebar")
+        XCTAssertTrue(app.buttons["openSettings"].isHittable)
+        closeSidebarByBackdrop()
+        XCTAssertFalse(app.buttons["sidebarEdgeHandle"].exists, "No visible edge tab on the chat")
     }
 
     private func openModelPicker() {
@@ -78,7 +83,9 @@ final class LumenUITests: XCTestCase {
 
     private func dismissKeyboardByTappingTheConversation() {
         // No keyboard button: tapping the conversation (or dragging it down) puts the keyboard away.
-        app.scrollViews.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3)).tap()
+        // (A point in the window, just below the bar: "the first scroll view" can be the keyboard's own
+        // suggestion strip, and tapping that types a word instead.)
+        app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.22)).tap()
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5),
                       "Tapping the conversation must hide the keyboard")
     }
@@ -91,9 +98,30 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(composer.waitForExistence(timeout: 3))
     }
 
+    /// Opens the sidebar, tapping again if the first tap landed while a sheet was still closing.
+    private func openSidebar() {
+        for _ in 0..<3 {
+            app.buttons["openSidebar"].tap()
+            if app.buttons["openSettings"].waitForExistence(timeout: 3) { waitForSidebarToSettle(); return }
+        }
+        XCTFail("The sidebar did not open")
+    }
+
+    /// The sidebar slides in with a spring; a touch-and-hold that starts while rows are still moving is
+    /// cancelled by iOS and becomes a tap. Wait until the sidebar stops moving.
+    private func waitForSidebarToSettle() {
+        let row = app.buttons["openSettings"]
+        var last = row.frame
+        for _ in 0..<20 {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.15))
+            let now = row.frame
+            if now == last { return }
+            last = now
+        }
+    }
+
     private func settings() {
-        app.buttons["openSidebar"].tap()
-        XCTAssertTrue(app.buttons["openSettings"].waitForExistence(timeout: 3))
+        openSidebar()
         app.buttons["openSettings"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
     }
@@ -397,9 +425,9 @@ final class LumenUITests: XCTestCase {
         launchCleanChat()
         defer { app.terminate() }
         signInAndChooseModel()
-        app.buttons["openSidebar"].tap()
+        openSidebar()
         let target = app.buttons["history-delete-fixture"]
-        XCTAssertTrue(target.waitForExistence(timeout: 10))
+        XCTAssertTrue(target.waitForExistence(timeout: 30), "The cloud chat list must load")
         target.press(forDuration: 1)
         app.buttons["Delete chat"].tap()
         XCTAssertTrue(app.alerts["Delete chat?"].waitForExistence(timeout: 3))
@@ -577,6 +605,68 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
     }
 
+    func testLargestTextSizeKeepsEveryChatControlUsable() {
+        // Accessibility text sizes: the chat bar, its buttons and the sidebar must stay on screen and tappable.
+        executionTimeAllowance = 240
+        launchCleanChat(["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXL"])
+        defer { app.terminate() }
+        for control in ["attachFile", "sendMessage", "chooseModel", "newChat", "openSidebar"] {
+            XCTAssertTrue(app.buttons[control].isHittable, control + " must stay tappable at the largest text size")
+        }
+        XCTAssertTrue(composer.isHittable)
+        capture("largest-text-chat")
+        enterDraft("A longer question that wraps across several lines at the largest text size")
+        let keyboard = app.keyboards.firstMatch
+        XCTAssertLessThanOrEqual(composer.frame.maxY, keyboard.frame.minY + 2, "The chat bar stays above the keyboard")
+        XCTAssertTrue(app.buttons["sendMessage"].isHittable)
+        capture("largest-text-composer")
+        dismissKeyboardByTappingTheConversation()
+        app.buttons["openSidebar"].tap()
+        XCTAssertTrue(app.buttons["sidebarNewChat"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["openSettings"].isHittable)
+        capture("largest-text-sidebar")
+        closeSidebarByBackdrop()
+    }
+
+    func testAccessibilityAuditOfTheMainScreens() throws {
+        // Apple's own audit: every control has a usable description and text follows the user's text size.
+        executionTimeAllowance = 240
+        launchCleanChat()
+        defer { app.terminate() }
+        // Text size is audited on Lumen's own screens (chat, sidebar); Settings, Router and Models are standard
+        // iOS lists whose text the system scales, and are audited for descriptions.
+        func audit(_ screen: String, textSize: Bool = false) throws {
+            let types: XCUIAccessibilityAuditType = textSize ? [.sufficientElementDescription, .dynamicType] : [.sufficientElementDescription]
+            try app.performAccessibilityAudit(for: types) { issue in
+                // System-owned chrome (keyboard, status bar) is not Lumen's to label.
+                guard let element = issue.element else { return true }
+                if element.elementType == .keyboard || element.elementType == .statusBar { return true }
+                // iOS caps text in navigation bars at accessibility sizes, as in Apple's own apps; the model
+                // title offers the Large Content Viewer instead (touch and hold).
+                if issue.auditType == .dynamicType,
+                   self.app.navigationBars.allElementsBoundByIndex.contains(where: { $0.frame.contains(element.frame) }) { return true }
+                print("Accessibility issue on \(screen): \(issue.compactDescription) — \(element.debugDescription.prefix(200))")
+                return false
+            }
+        }
+        try audit("chat", textSize: true)
+        app.buttons["openSidebar"].tap()
+        XCTAssertTrue(app.buttons["sidebarNewChat"].waitForExistence(timeout: 5))
+        try audit("sidebar", textSize: true)
+        closeSidebarByBackdrop()
+        settings()
+        try audit("settings")
+        app.buttons["providerSettings"].tap()
+        XCTAssertTrue(app.navigationBars["Router"].waitForExistence(timeout: 5))
+        try audit("router")
+        app.navigationBars["Router"].buttons["BackButton"].tap()
+        app.navigationBars["Settings"].buttons["Done"].tap()
+        openModelPicker()
+        XCTAssertTrue(app.navigationBars["Models"].waitForExistence(timeout: 5))
+        try audit("models")
+        app.buttons["Done"].tap()
+    }
+
     func testRejectedProviderKeyShowsErrorAndKeepsTheDraft() {
         launchCleanChat()
         defer { app.terminate() }
@@ -589,7 +679,7 @@ final class LumenUITests: XCTestCase {
         key.tap()
         key.typeText("fixture-invalid-key")
         app.buttons["connectProvider"].tap()
-        XCTAssertTrue(app.staticTexts["Groq rejected the API key. Check it in Settings."].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Groq didn't accept this API key. Check that it's complete and still active."].waitForExistence(timeout: 10))
         capture("provider-rejected-key")
         app.navigationBars["Groq"].buttons["BackButton"].tap()
         app.navigationBars["Router"].buttons["BackButton"].tap()

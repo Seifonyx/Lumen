@@ -22,6 +22,7 @@ struct ComposerAttachments<Content: View>: View {
         self.controls = controls()
     }
 
+    @ScaledMetric(relativeTo: .body) private var control: CGFloat = 44
     private var canAttach: Bool { !importing && !engine.isStreaming && composer.attachmentIDs.count < 4 }
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -31,9 +32,12 @@ struct ComposerAttachments<Content: View>: View {
                         ForEach(composer.attachmentIDs, id: \.self) { id in
                             HStack(spacing: 4) {
                                 Button { do { preview = try engine.attachment(id: id) } catch { self.error = error.localizedDescription } } label: {
-                                    Label((try? engine.attachment(id: id).name) ?? "Unavailable file", systemImage: "doc")
-                                        .lineLimit(1).frame(maxWidth: 170)
-                                }.accessibilityIdentifier("previewAttachment-" + id)
+                                    let file = try? engine.attachment(id: id)
+                                    Label(file?.name ?? "Unavailable file", systemImage: file?.kind == .image ? "photo" : "doc")
+                                        .lineLimit(1).frame(maxWidth: 200)
+                                }
+                                .accessibilityHint("Shows a preview")
+                                .accessibilityIdentifier("previewAttachment-" + id)
                                 Button("Remove attachment", systemImage: "xmark.circle.fill") {
                                     composer.attachmentIDs.removeAll { $0 == id }
                                 }.labelStyle(.iconOnly).frame(minWidth: 44, minHeight: 44)
@@ -61,9 +65,9 @@ struct ComposerAttachments<Content: View>: View {
                     #endif
                 } label: {
                     Image(systemName: "plus")
-                        .font(.system(size: 20, weight: .regular))
+                        .font(.title3)
                         .foregroundStyle(canAttach ? LumenPalette.ink : LumenPalette.muted)
-                        .frame(width: 44, height: 44)
+                        .frame(width: max(44, control), height: max(44, control))
                         .contentShape(Circle())
                 }
                 .accessibilityLabel("Add photos or files")

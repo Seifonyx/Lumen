@@ -102,7 +102,7 @@ extension TransportURLProtocol: @unchecked Sendable {}
             for try await _ in stream {}
             Issue.record("Expected rejected key")
         } catch {
-            #expect(error.localizedDescription.contains("Settings"))
+            #expect(error.localizedDescription.contains("didn't accept this API key"))
             #expect(!error.localizedDescription.contains("fixture-denied-secret"))
         }
     }

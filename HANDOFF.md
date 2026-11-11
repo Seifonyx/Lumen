@@ -4,24 +4,40 @@ Updated: 2026-11-10. The complete native visual Phase 2 was merged and SideStore
 
 ## Current work
 
-- Branch `native/phase0-1-foundation`, PR #151 (draft): native **0.4.0**, Phase 0 plus the first part of Phase 1 of the native plan (https://claude.ai/artifact/GRPpkuK6yMvdAaeFsCpom9).
-- Owner decisions, 2026-11-11:
-  - **Streaming:** behave like Claude and ChatGPT. The sent question is pinned at the top, the reply writes below it with no auto-follow, and a Latest button shows when scrolled away.
-  - **Overall:** "the whole experience still feels uncomfortable". So Phase 1 rebuilds the visible shell on iOS 26 components.
-- **Done in #151:**
-  - LumenCore `MarkdownBlocks` parser with tests, and block Markdown replies.
-  - One glass composer.
-  - The model moves to the chat title.
-  - The hide-keyboard button is gone (tap or drag the conversation instead).
+- **Native plan** (owner-approved phases): https://claude.ai/artifact/GRPpkuK6yMvdAaeFsCpom9
+- **Owner, 2026-11-11:**
+  - Streaming should behave like Claude and ChatGPT: the question is pinned at the top, with no auto-follow.
+  - "the whole experience overall still feels uncomfortable".
+  - Full approval for agent-chosen native work.
+  - **Publish every update without asking, then report the next step.**
+- **#151 (0.4.0), merged to main 2026-11-11 12:53 UTC:**
+  - Pinned streaming.
+  - Block Markdown (LumenCore `MarkdownBlocks` and its tests).
+  - A glass composer; the model in the title; tap or drag to hide the keyboard.
   - Haptics.
-  - No Projects/Library placeholders; Router only in Settings.
-  - The sidebar footer shows the name only.
-  - QA runs display a placeholder email. The fixture must keep an invite-listed address; Firestore rules are unchanged.
-- **Unverified:** nothing has compiled yet (no Swift toolchain on the Windows machine); CI is the first build. Not seen on a physical iPhone.
-- **Next:** get #151 green on its exact head, then merge (SideStore 0.4.0 publishes from main) and run the owner's iPhone session.
-- **Then:** Phase 1 continues.
-  - The sidebar as a push drawer that tracks the finger. Draft #150 by Codex covers the gesture, with one compact features shard failing; reconcile it with #151 rather than duplicating it.
-  - Dynamic Type at accessibility sizes, VoiceOver labels, and error copy.
+  - No placeholder routes; Router in Settings.
+  - A placeholder email in QA screenshots.
+  - Both SideStore feeds list the SwiftUI app.
+  - **It merged before its PR CI ran**: there's no branch protection, and `gh pr merge --auto` merged at once. Repo auto-merge has been switched off again. Publishing still needs main's core, four UI shards and IPA jobs (`publish` needs `verify`). Check main run 43024198820; fix forward on failure.
+- **#152 (0.4.1, base main):** a push-style sidebar that tracks the finger, with no edge tab or handle. It replaces Codex's #150, which is closed. Merge it once its CI is green on the exact head.
+- **#153 (0.4.2), stacked on #152, finishes Phase 1:**
+  - Dynamic Type everywhere (`@ScaledMetric`, no fixed font sizes).
+  - VoiceOver traits and hints.
+  - Error copy that's accurate wherever it shows.
+  - Empty-chat guidance.
+  - Two new UI tests: Accessibility XXL text, and `performAccessibilityAudit` on five screens. Shards are now 8 + 8.
+- **Release order:**
+  1. main's 0.4.0 run publishes.
+  2. Merge #152 (0.4.1) when it's green on its head.
+  3. Retarget #153 to main, update it from main, and merge it when green (0.4.2).
+- **Owner, 2026-11-11:** "Publish any update from now on without waiting for me". Merge and publish each green release, then report the next step.
+- **Phase 2 next (daily-driver parity):**
+  - Auto routing.
+  - Real Projects and Library synced with web.
+  - Memory and personalization.
+  - Share and export.
+  - Sync conflict cases.
+- Not verified on a physical iPhone.
 
 ## Standing decisions
 

@@ -29,7 +29,7 @@ struct SidebarView: View {
                 Spacer()
                 Button("Search chats", systemImage: "magnifyingglass", action: search)
                     .labelStyle(.iconOnly)
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.title3.weight(.medium))
                     .foregroundStyle(LumenPalette.accent)
                     .frame(minWidth: 44, minHeight: 44)
                     .accessibilityIdentifier("sidebarSearchButton")
@@ -77,7 +77,11 @@ struct SidebarView: View {
                                         Image(systemName: "bubble.left")
                                             .frame(width: 20)
                                             .foregroundStyle(.secondary)
-                                        if conv.pinned == true { Image(systemName: "pin.fill").font(.caption2).foregroundStyle(.secondary) }
+                                            .accessibilityHidden(true)
+                                        if conv.pinned == true {
+                                            Image(systemName: "pin.fill").font(.caption2).foregroundStyle(.secondary)
+                                                .accessibilityLabel("Pinned")
+                                        }
                                         Text(conv.title)
                                             .lineLimit(1)
                                             .font(LumenType.row)
@@ -96,6 +100,8 @@ struct SidebarView: View {
                                     }
                                 }
                                 .buttonStyle(LumenRowButtonStyle())
+                                .accessibilityAddTraits(engine.currentConversation.id == conv.id ? .isSelected : [])
+                                .accessibilityHint("Opens this chat. Touch and hold for more options.")
                                 .accessibilityIdentifier("history-" + conv.id)
                                 .contextMenu {
                                     ConversationActions(chat: conv, engine: engine, rename: { renaming = conv }, delete: { pendingDeletion = conv })
@@ -136,42 +142,6 @@ struct SidebarView: View {
             .padding(.vertical, 8)
         }
         .background(LumenPalette.canvas)
-        // A dedicated trailing-edge affordance is a dependable gesture target
-        // above the nested ScrollView and its buttons. A tap also dismisses the
-        // panel for accessibility and when a drag is difficult to perform.
-        .overlay(alignment: .trailing) {
-            Button(action: close) {
-                Capsule()
-                    .fill(LumenPalette.accent.opacity(0.45))
-                    .frame(width: 4, height: 44)
-                    .frame(width: 28, height: 96)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Close sidebar")
-            .accessibilityHint("Tap or swipe left to dismiss the sidebar")
-            .accessibilityIdentifier("sidebarDismissHandle")
-            .highPriorityGesture(
-                DragGesture(minimumDistance: 10).onEnded { value in
-                    guard value.translation.width < -60,
-                          abs(value.translation.width) > abs(value.translation.height) else { return }
-                    close()
-                }
-            )
-        }
-        .contentShape(Rectangle())
-        // The ScrollView owns most touch events. Attach the horizontal dismiss
-        // gesture to the actual panel, not only to RootView's outer ZStack:
-        // UI tests and real drag touches start inside this content.
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 20)
-                .onEnded { gesture in
-                    let delta = gesture.translation
-                    guard delta.width < -70,
-                          abs(delta.width) > abs(delta.height) * 1.25 else { return }
-                    close()
-                }
-        )
         .accessibilityElement(children: .contain)
         .accessibilityAction(.escape, close)
         .onAppear { headingFocused = true }

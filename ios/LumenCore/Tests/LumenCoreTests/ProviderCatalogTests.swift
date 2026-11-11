@@ -48,7 +48,7 @@ extension CatalogURLProtocol: @unchecked Sendable {}
             _ = try await catalog().models(provider: .groq, apiKey: "fixture-rejected-secret-435")
             Issue.record("Rejected key was accepted")
         } catch {
-            #expect(error.localizedDescription.contains("Settings"))
+            #expect(error.localizedDescription.contains("didn't accept this API key"))
             #expect(!error.localizedDescription.contains("fixture-rejected-secret-435"))
         }
     }

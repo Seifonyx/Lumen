@@ -22,7 +22,7 @@ class ArtifactCollectionTests(unittest.TestCase):
                      'attachmentRoundtrip', 'longHistoryPreserved', 'metadataRoundtrip'),
             'features': ('deletedContentCleaned', 'revisionVersionsPreserved', 'temporaryContentAbsent'),
         }
-        self.counts = {'sync': 6, 'features': 8}
+        self.counts = {'sync': 8, 'features': 8}
         for profile in ('compact', 'regular'):
             for shard in ('sync', 'features'):
                 folder = self.source / f'native-ios-{self.sha}-{profile}-{shard}'
@@ -106,5 +106,16 @@ class ArtifactCollectionTests(unittest.TestCase):
         data = json.loads(path.read_text())
         data[0]['id'] = 'compact-sync'
         path.write_text(json.dumps(data))
-        with self.assertRaisesRegex(ValueError, 'distinct'):
+        with self.assertRaisesRegex(ValueError, 'its own simulator on its own runner'):
             self.collect()
+
+    def test_accepts_the_same_preinstalled_simulator_on_different_runners(self):
+        # Hosted Macs share one disk image, so the reused simulator UUID repeats across machines.
+        for index, folder in enumerate(sorted(self.source.glob(f'native-ios-{self.sha}-*-*'))):
+            path = folder / 'qa-devices.json'
+            if not path.exists(): continue
+            data = json.loads(path.read_text())
+            data[0]['id'] = 'image-simulator'
+            data[0]['runner'] = f'GitHub Actions {index}'
+            path.write_text(json.dumps(data))
+        self.collect()

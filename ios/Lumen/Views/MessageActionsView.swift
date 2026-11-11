@@ -51,7 +51,7 @@ struct MessageRow: View {
                 }
             } else if message.content.isEmpty && message.status == .streaming {
                 Image(systemName: "circle.fill")
-                    .font(.system(size: 12))
+                    .font(.caption)
                     .foregroundStyle(LumenPalette.ink)
                     .symbolEffect(.pulse, options: .repeating, isActive: !reduceMotion)
                     .frame(minHeight: 28)
@@ -98,7 +98,7 @@ struct MessageRow: View {
             }
         }
         .labelStyle(.iconOnly)
-        .font(.system(size: 15, weight: .regular))
+        .font(.subheadline)
         .foregroundStyle(LumenPalette.muted)
         .buttonStyle(MessageActionButtonStyle())
         .padding(.leading, isUser ? 0 : -12)
@@ -119,9 +119,11 @@ struct MessageRow: View {
 private struct MessageActionButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
 
+    @ScaledMetric(relativeTo: .subheadline) private var size: CGFloat = 44
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .frame(width: 44, height: 44)
+            .frame(width: max(44, size), height: max(44, size))
             .contentShape(Rectangle())
             .opacity(isEnabled ? (configuration.isPressed ? 0.45 : 1) : 0.35)
     }

@@ -10,6 +10,7 @@ struct ChatView: View {
     var chooseModel: () -> Void
     var selectVersion: (Conversation) -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var attachmentImporting = false
     @State private var olderAnchor: String?
     @State private var loadingOlder = false
@@ -20,6 +21,8 @@ struct ChatView: View {
     @State private var viewportHeight: CGFloat = 0
     @State private var tailHeight: CGFloat = 0
     @State private var atBottom = true
+    @State private var pinScrollPending = false
+    @ScaledMetric(relativeTo: .body) private var sendSize: CGFloat = 34
     @State private var sends = 0
     @State private var stops = 0
     @State private var editingMessage: ChatMessage?
@@ -45,8 +48,11 @@ struct ChatView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 if messages.isEmpty && engine.currentConversation.historyLoaded != false {
+                    // At least the visible height (centred), and taller, scrolling, at large text sizes.
                     emptyState
-                        .containerRelativeFrame(.vertical)
+                        .frame(minHeight: max(0, viewportHeight - 1))
+                        .contentShape(Rectangle())
+                        .onTapGesture { focused.wrappedValue = false }
                 } else {
                     LazyVStack(alignment: .leading, spacing: 26) {
                         if engine.currentConversation.historyLoaded == false {
@@ -61,24 +67,35 @@ struct ChatView: View {
                                     row(message).id(message.id)
                                 }
                             }
-                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { tailHeight = $0 }
+                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                                tailHeight = height
+                                // Once the room under the question is laid out, put the question at the top.
+                                if pinScrollPending, let id = pinnedID {
+                                    pinScrollPending = false
+                                    Task { @MainActor in
+                                        await Task.yield()
+                                        withAnimation(reduceMotion ? nil : .smooth(duration: 0.35)) { proxy.scrollTo(id, anchor: .top) }
+                                    }
+                                }
+                            }
                         }
+                        // The end of the last message: "Latest" shows only while this is off screen.
+                        Color.clear.frame(height: 1)
+                            .onScrollVisibilityChange(threshold: 0.01) { visible in atBottom = visible }
                         Color.clear.frame(height: max(1, pinSpace)).id("conversationBottom")
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 14)
                     .padding(.bottom, 8)
+                    .contentShape(Rectangle())
+                    .simultaneousGesture(TapGesture().onEnded { focused.wrappedValue = false })
                 }
             }
             .scrollDismissesKeyboard(.interactively)
-            .simultaneousGesture(TapGesture().onEnded { focused.wrappedValue = false })
             .background(LumenPalette.canvas)
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.containerSize.height - geometry.contentInsets.top - geometry.contentInsets.bottom
             } action: { _, height in viewportHeight = height }
-            .onScrollGeometryChange(for: Bool.self) { geometry in
-                geometry.contentSize.height + geometry.contentInsets.bottom - geometry.containerSize.height - geometry.contentOffset.y < 80
-            } action: { _, nearBottom in atBottom = nearBottom }
             .safeAreaInset(edge: .top, spacing: 0) { topBar }
             .overlay(alignment: .bottom) {
                 if !atBottom && !messages.isEmpty {
@@ -86,11 +103,11 @@ struct ChatView: View {
                         withAnimation(reduceMotion ? nil : .smooth(duration: 0.3)) { proxy.scrollTo("conversationBottom", anchor: .bottom) }
                     } label: {
                         Image(systemName: "arrow.down")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(LumenPalette.ink)
-                            .frame(width: 40, height: 40)
+                            .frame(width: sendSize + 6, height: sendSize + 6)
                             .glassEffect(.regular.interactive(), in: .circle)
-                            .frame(width: 44, height: 44)
+                            .frame(minWidth: 44, minHeight: 44)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Latest")
@@ -107,13 +124,14 @@ struct ChatView: View {
                 olderAnchor = nil; loadingOlder = false
             }
             .onChange(of: engine.currentConversation.id) { _, _ in
-                pinnedID = nil; olderAnchor = nil; loadingOlder = false
+                pinnedID = nil; pinScrollPending = false; olderAnchor = nil; loadingOlder = false; atBottom = true
                 scrollToEnd(proxy)
             }
             .onChange(of: engine.isStreaming) { _, streaming in
                 // Send, regenerate and edit all start a reply: put the question it answers at the top.
                 guard streaming, let question = messages.last(where: { $0.role == .user }) else { return }
                 pinnedID = question.id
+                pinScrollPending = true
                 Task { @MainActor in
                     try? await Task.sleep(for: .milliseconds(40))
                     withAnimation(reduceMotion ? nil : .smooth(duration: 0.35)) { proxy.scrollTo(question.id, anchor: .top) }
@@ -218,7 +236,10 @@ struct ChatView: View {
                 .font(.system(.title2, design: .default, weight: .semibold))
                 .foregroundStyle(LumenPalette.ink)
             if connections.key(for: engine.selectedModel) == nil {
-                Button("Choose a model to begin", action: chooseModel)
+                Text("Connect a provider in Settings › Router, then choose a model.")
+                    .font(.subheadline)
+                    .foregroundStyle(LumenPalette.muted)
+                Button("Choose a model", action: chooseModel)
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(LumenPalette.accent)
                     .frame(minHeight: 44)
@@ -305,7 +326,9 @@ struct ChatView: View {
         ComposerAttachments(composer: composer, engine: engine, importing: $attachmentImporting) {
             TextField("Message Lumen", text: Binding(get: { composerAligned ? composer.draft : "" }, set: { if composerAligned { composer.draft = $0 } }), axis: .vertical)
                 .disabled(!composerAligned)
-                .lineLimit(1...8)
+                // At accessibility text sizes a few lines already fill the screen: the bar stops growing
+                // at three and scrolls inside, so the conversation stays visible.
+                .lineLimit(typeSize.isAccessibilitySize ? 1...3 : 1...8)
                 .font(.body)
                 .focused(focused)
                 .padding(.vertical, 11)
@@ -320,11 +343,11 @@ struct ChatView: View {
                     engine.stopStreaming()
                 } label: {
                     Image(systemName: "stop.fill")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.caption.weight(.bold))
                         .foregroundStyle(LumenPalette.canvas)
-                        .frame(width: 34, height: 34)
+                        .frame(width: sendSize, height: sendSize)
                         .background(LumenPalette.ink, in: Circle())
-                        .frame(width: 44, height: 44)
+                        .frame(minWidth: 44, minHeight: 44)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Stop")
@@ -332,11 +355,11 @@ struct ChatView: View {
             } else {
                 Button(action: send) {
                     Image(systemName: "arrow.up")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.callout.weight(.semibold))
                         .foregroundStyle(canSend ? LumenPalette.canvas : LumenPalette.muted)
-                        .frame(width: 34, height: 34)
+                        .frame(width: sendSize, height: sendSize)
                         .background(canSend ? LumenPalette.ink : LumenPalette.elevated, in: Circle())
-                        .frame(width: 44, height: 44)
+                        .frame(minWidth: 44, minHeight: 44)
                 }
                 .buttonStyle(.plain)
                 .disabled(!canSend)

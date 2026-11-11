@@ -17,8 +17,19 @@ def json_request(url, body, method='POST', owner=False):
     if owner:
         headers['Authorization'] = 'Bearer owner'
     request = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers, method=method)
-    with urllib.request.urlopen(request, timeout=15) as response:
-        return json.load(response)
+    return retrying(lambda: json.load(urllib.request.urlopen(request, timeout=20)))
+
+
+def retrying(call, attempts=4):
+    # The local Firestore emulator sometimes stalls for a while on a busy hosted Mac (2026-11-11: seeding
+    # timed out in two shards before any test ran). Every write here is idempotent (PATCH, DELETE), so
+    # retrying after a pause cannot change the fixture.
+    for attempt in range(attempts):
+        try:
+            return call()
+        except (TimeoutError, urllib.error.URLError, ConnectionError):
+            if attempt == attempts - 1: raise
+            time.sleep(2 * (attempt + 1))
 
 
 def field(value):
@@ -40,7 +51,7 @@ def seed():
     # Each simulator profile gets a fresh, local-only database.
     assert PROJECT.startswith('demo-')
     reset = urllib.request.Request(f'http://127.0.0.1:18080/emulator/v1/projects/{PROJECT}/databases/(default)/documents', method='DELETE')
-    with urllib.request.urlopen(reset, timeout=15): pass
+    retrying(lambda: urllib.request.urlopen(reset, timeout=20).close())
     def b64(value): return base64.urlsafe_b64encode(json.dumps(value, separators=(',', ':')).encode()).decode().rstrip('=')
     token = b64({'alg': 'none', 'typ': 'JWT'}) + '.' + b64({
         'sub': 'fixture-native-user', 'email': 'seifeldingamal2021@gmail.com', 'email_verified': True,

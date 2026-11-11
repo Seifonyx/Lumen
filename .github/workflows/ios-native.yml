@@ -121,6 +121,10 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-15.33.0
       - uses: actions/download-artifact@v5
         with:
           name: native-build-${{ github.sha }}

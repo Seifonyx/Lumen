@@ -102,9 +102,22 @@ final class LumenUITests: XCTestCase {
     private func openSidebar() {
         for _ in 0..<3 {
             app.buttons["openSidebar"].tap()
-            if app.buttons["openSettings"].waitForExistence(timeout: 3) { return }
+            if app.buttons["openSettings"].waitForExistence(timeout: 3) { waitForSidebarToSettle(); return }
         }
         XCTFail("The sidebar did not open")
+    }
+
+    /// The sidebar slides in with a spring; a touch-and-hold that starts while rows are still moving is
+    /// cancelled by iOS and becomes a tap. Wait until the sidebar stops moving.
+    private func waitForSidebarToSettle() {
+        let row = app.buttons["openSettings"]
+        var last = row.frame
+        for _ in 0..<20 {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.15))
+            let now = row.frame
+            if now == last { return }
+            last = now
+        }
     }
 
     private func settings() {

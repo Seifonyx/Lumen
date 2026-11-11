@@ -98,9 +98,17 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(composer.waitForExistence(timeout: 3))
     }
 
+    /// Opens the sidebar, tapping again if the first tap landed while a sheet was still closing.
+    private func openSidebar() {
+        for _ in 0..<3 {
+            app.buttons["openSidebar"].tap()
+            if app.buttons["openSettings"].waitForExistence(timeout: 3) { return }
+        }
+        XCTFail("The sidebar did not open")
+    }
+
     private func settings() {
-        app.buttons["openSidebar"].tap()
-        XCTAssertTrue(app.buttons["openSettings"].waitForExistence(timeout: 3))
+        openSidebar()
         app.buttons["openSettings"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
     }
@@ -404,9 +412,9 @@ final class LumenUITests: XCTestCase {
         launchCleanChat()
         defer { app.terminate() }
         signInAndChooseModel()
-        app.buttons["openSidebar"].tap()
+        openSidebar()
         let target = app.buttons["history-delete-fixture"]
-        XCTAssertTrue(target.waitForExistence(timeout: 10))
+        XCTAssertTrue(target.waitForExistence(timeout: 30), "The cloud chat list must load")
         target.press(forDuration: 1)
         app.buttons["Delete chat"].tap()
         XCTAssertTrue(app.alerts["Delete chat?"].waitForExistence(timeout: 3))

@@ -616,6 +616,9 @@ final class LumenUITests: XCTestCase {
                 // System-owned chrome (keyboard, status bar) is not Lumen's to label.
                 guard let element = issue.element else { return true }
                 if element.elementType == .keyboard || element.elementType == .statusBar { return true }
+                // iOS caps text in navigation bars at accessibility sizes, as in Apple's own apps; the model
+                // title offers the Large Content Viewer instead (touch and hold).
+                if issue.auditType == .dynamicType, app.navigationBars.firstMatch.frame.contains(element.frame) { return true }
                 print("Accessibility issue on \(screen): \(issue.compactDescription) — \(element.debugDescription.prefix(200))")
                 return false
             }

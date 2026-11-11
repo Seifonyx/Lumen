@@ -20,6 +20,7 @@ struct ChatView: View {
     @State private var viewportHeight: CGFloat = 0
     @State private var tailHeight: CGFloat = 0
     @State private var atBottom = true
+    @State private var pinScrollPending = false
     @ScaledMetric(relativeTo: .body) private var sendSize: CGFloat = 34
     @State private var sends = 0
     @State private var stops = 0
@@ -48,6 +49,8 @@ struct ChatView: View {
                 if messages.isEmpty && engine.currentConversation.historyLoaded != false {
                     emptyState
                         .containerRelativeFrame(.vertical)
+                        .contentShape(Rectangle())
+                        .onTapGesture { focused.wrappedValue = false }
                 } else {
                     LazyVStack(alignment: .leading, spacing: 26) {
                         if engine.currentConversation.historyLoaded == false {
@@ -62,24 +65,35 @@ struct ChatView: View {
                                     row(message).id(message.id)
                                 }
                             }
-                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { tailHeight = $0 }
+                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                                tailHeight = height
+                                // Once the room under the question is laid out, put the question at the top.
+                                if pinScrollPending, let id = pinnedID {
+                                    pinScrollPending = false
+                                    Task { @MainActor in
+                                        await Task.yield()
+                                        withAnimation(reduceMotion ? nil : .smooth(duration: 0.35)) { proxy.scrollTo(id, anchor: .top) }
+                                    }
+                                }
+                            }
                         }
+                        // The end of the last message: "Latest" shows only while this is off screen.
+                        Color.clear.frame(height: 1)
+                            .onScrollVisibilityChange(threshold: 0.01) { visible in atBottom = visible }
                         Color.clear.frame(height: max(1, pinSpace)).id("conversationBottom")
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 14)
                     .padding(.bottom, 8)
+                    .contentShape(Rectangle())
+                    .simultaneousGesture(TapGesture().onEnded { focused.wrappedValue = false })
                 }
             }
             .scrollDismissesKeyboard(.interactively)
-            .simultaneousGesture(TapGesture().onEnded { focused.wrappedValue = false })
             .background(LumenPalette.canvas)
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.containerSize.height - geometry.contentInsets.top - geometry.contentInsets.bottom
             } action: { _, height in viewportHeight = height }
-            .onScrollGeometryChange(for: Bool.self) { geometry in
-                geometry.contentSize.height + geometry.contentInsets.bottom - geometry.containerSize.height - geometry.contentOffset.y < 80
-            } action: { _, nearBottom in atBottom = nearBottom }
             .safeAreaInset(edge: .top, spacing: 0) { topBar }
             .overlay(alignment: .bottom) {
                 if !atBottom && !messages.isEmpty {
@@ -108,13 +122,14 @@ struct ChatView: View {
                 olderAnchor = nil; loadingOlder = false
             }
             .onChange(of: engine.currentConversation.id) { _, _ in
-                pinnedID = nil; olderAnchor = nil; loadingOlder = false
+                pinnedID = nil; pinScrollPending = false; olderAnchor = nil; loadingOlder = false; atBottom = true
                 scrollToEnd(proxy)
             }
             .onChange(of: engine.isStreaming) { _, streaming in
                 // Send, regenerate and edit all start a reply: put the question it answers at the top.
                 guard streaming, let question = messages.last(where: { $0.role == .user }) else { return }
                 pinnedID = question.id
+                pinScrollPending = true
                 Task { @MainActor in
                     try? await Task.sleep(for: .milliseconds(40))
                     withAnimation(reduceMotion ? nil : .smooth(duration: 0.35)) { proxy.scrollTo(question.id, anchor: .top) }

@@ -108,6 +108,9 @@ struct RootView: View {
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
+                            .accessibilityShowsLargeContentViewer {
+                                Label(modelTitle, systemImage: "cpu")
+                            }
                             .accessibilityLabel("Model: " + (engine.selectedModel?.name ?? "Not selected"))
                             .accessibilityHint("Opens the complete model list with full model names.")
                             .accessibilityIdentifier("chooseModel")

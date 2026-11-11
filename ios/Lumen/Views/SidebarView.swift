@@ -42,15 +42,7 @@ struct SidebarView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     row("New chat", icon: "square.and.pencil", action: newChat)
                         .accessibilityIdentifier("sidebarNewChat")
-                        .padding(.bottom, 10)
-                    LumenSectionHeader(title: "Workspace")
-                        .padding(.bottom, 3)
-                    ForEach([WorkspaceRoute.projects, .library, .router]) { route in
-                        row(route.title, icon: route.icon) { open(route) }
-                            .accessibilityIdentifier("sidebar-\(route.rawValue)")
-                    }
-
-                    Divider().padding(.vertical, 14)
+                        .padding(.bottom, 14)
 
                     if !composer.savedDrafts.isEmpty {
                         Text("Drafts").font(LumenType.section).foregroundStyle(LumenPalette.muted).accessibilityAddTraits(.isHeader)
@@ -118,28 +110,30 @@ struct SidebarView: View {
 
             Divider()
             Button(action: settings) {
+                // Your name and Settings, as in the AI apps people know; the email address stays in Settings.
                 HStack(spacing: 12) {
-                    Image(systemName: "person.crop.circle")
-                        .frame(width: 24)
+                    Text(initial)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(LumenPalette.accentOnFill)
+                        .frame(width: 32, height: 32)
+                        .background(LumenPalette.accent, in: Circle())
                         .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(auth.currentUser?.displayName ?? "Settings")
-                            .font(.body)
-                        if let email = auth.currentUser?.email, !email.isEmpty {
-                            Text(email)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
+                    Text(auth.currentUser?.displayName ?? "Settings")
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(LumenPalette.ink)
+                        .lineLimit(1)
                     Spacer(minLength: 0)
+                    Image(systemName: "gearshape")
+                        .foregroundStyle(LumenPalette.muted)
+                        .accessibilityHidden(true)
                 }
+                .padding(.horizontal, 8)
             }
             .buttonStyle(LumenRowButtonStyle())
+            .accessibilityLabel((auth.currentUser?.displayName).map { "\($0), Settings" } ?? "Settings")
             .accessibilityIdentifier("openSettings")
-            .padding(12)
-            .lumenSurface(radius: LumenRadius.card)
             .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.vertical, 8)
         }
         .background(LumenPalette.canvas)
         // A dedicated trailing-edge affordance is a dependable gesture target
@@ -191,6 +185,11 @@ struct SidebarView: View {
             }
             Button("Cancel", role: .cancel) { pendingDeletion = nil }
         } message: { Text("This removes the conversation and its versions. Uploaded file originals stay in your account until you delete the account.") }
+    }
+
+    private var initial: String {
+        let name = auth.currentUser?.displayName.trimmingCharacters(in: .whitespaces) ?? ""
+        return name.first.map { String($0).uppercased() } ?? "L"
     }
 
     private func row(_ title: String, icon: String, action: @escaping () -> Void) -> some View {

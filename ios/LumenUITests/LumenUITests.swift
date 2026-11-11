@@ -70,15 +70,17 @@ final class LumenUITests: XCTestCase {
     }
 
     private func openModelPicker() {
+        // The chosen model is the title of the chat screen; tapping it opens the full list.
         let picker = app.buttons["chooseModel"]
-        if !picker.exists {
-            // The model row is intentionally hidden in the resting one-line composer.
-            // Focusing the message field expands it without losing any draft.
-            composer.tap()
-            XCTAssertTrue(picker.waitForExistence(timeout: 5),
-                          "Focusing the composer must reveal the model picker")
-        }
+        XCTAssertTrue(picker.waitForExistence(timeout: 5), "The chat title must offer the model list")
         picker.tap()
+    }
+
+    private func dismissKeyboardByTappingTheConversation() {
+        // No keyboard button: tapping the conversation (or dragging it down) puts the keyboard away.
+        app.scrollViews.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3)).tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5),
+                      "Tapping the conversation must hide the keyboard")
     }
 
     private func newChat() {
@@ -122,8 +124,8 @@ final class LumenUITests: XCTestCase {
         defer { app.terminate() }
         enterDraft("Keep this draft")
         app.buttons["openSidebar"].tap()
-        app.buttons["sidebar-library"].tap()
-        XCTAssertTrue(app.navigationBars["Library"].waitForExistence(timeout: 3))
+        app.buttons["sidebarSearchButton"].tap()
+        XCTAssertTrue(app.navigationBars["Search"].waitForExistence(timeout: 3))
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertEqual(composer.value as? String, "Keep this draft")
         app.terminate()
@@ -182,23 +184,20 @@ final class LumenUITests: XCTestCase {
     func testComposerStaysAboveKeyboardAndDoesNotSubmitWithoutAModel() {
         launchCleanChat()
         defer { app.terminate() }
-        XCTAssertTrue(app.buttons["attachFile"].exists, "The collapsed composer must show the plus button")
-        XCTAssertTrue(app.buttons["sendMessage"].exists, "The collapsed composer must show Send")
-        XCTAssertFalse(app.buttons["chooseModel"].exists, "The compact composer must hide its model row")
+        XCTAssertTrue(app.buttons["attachFile"].exists, "The composer must show the plus button")
+        XCTAssertTrue(app.buttons["sendMessage"].exists, "The composer must show Send")
+        XCTAssertTrue(app.buttons["chooseModel"].exists, "The chat title must show the model")
+        XCTAssertFalse(app.buttons["hideKeyboard"].exists, "No separate keyboard button above the keyboard")
         enterDraft("A draft above the keyboard")
         let keyboard = app.keyboards.firstMatch
         XCTAssertTrue(keyboard.waitForExistence(timeout: 3))
         XCTAssertTrue(composer.isHittable)
-        XCTAssertTrue(app.buttons["chooseModel"].waitForExistence(timeout: 5),
-                      "Focusing the composer must expand the model row")
         XCTAssertLessThanOrEqual(composer.frame.maxY, keyboard.frame.minY + 2)
         XCTAssertFalse(app.buttons["sendMessage"].isEnabled)
         XCTAssertEqual(app.tabBars.count, 0)
         capture("chat-keyboard")
-        app.buttons["hideKeyboard"].tap()
-        XCTAssertTrue(app.buttons["chooseModel"].waitForNonExistence(timeout: 5),
-                      "Hiding the keyboard must collapse the model row without clearing the draft")
-        XCTAssertEqual(composer.value as? String, "A draft above the keyboard")
+        dismissKeyboardByTappingTheConversation()
+        XCTAssertEqual(composer.value as? String, "A draft above the keyboard", "Hiding the keyboard keeps the draft")
     }
 
     func testNativeScreensInLightAndDark() {
@@ -211,34 +210,33 @@ final class LumenUITests: XCTestCase {
             appearance(theme)
             XCTAssertTrue(app.buttons["attachFile"].exists)
             XCTAssertTrue(app.buttons["sendMessage"].exists)
-            XCTAssertFalse(app.buttons["chooseModel"].exists)
+            XCTAssertTrue(app.buttons["chooseModel"].exists)
             capture("chat-\(theme.lowercased())")
             composer.tap()
-            XCTAssertTrue(app.buttons["chooseModel"].waitForExistence(timeout: 5))
-            capture("composer-expanded-\(theme.lowercased())")
+            XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10))
+            capture("composer-focused-\(theme.lowercased())")
+            dismissKeyboardByTappingTheConversation()
             openModelPicker()
             XCTAssertTrue(app.navigationBars["Models"].waitForExistence(timeout: 3))
             capture("models-\(theme.lowercased())")
             app.buttons["Done"].tap()
             app.buttons["openSidebar"].tap()
-            XCTAssertTrue(app.buttons["sidebar-projects"].waitForExistence(timeout: 3))
+            XCTAssertTrue(app.buttons["sidebarNewChat"].waitForExistence(timeout: 3))
             capture("sidebar-\(theme.lowercased())")
             // Test the swipe once per theme, separately from startup and data journeys.
             verifySidebarEdgeSwipe()
             app.buttons["openSidebar"].tap()
-            XCTAssertTrue(app.buttons["sidebar-projects"].waitForExistence(timeout: 5))
+            let newChatRow = app.buttons["sidebarNewChat"]
+            XCTAssertTrue(newChatRow.waitForExistence(timeout: 5))
             XCTAssertTrue(app.buttons["sidebarSearchButton"].exists)
-            XCTAssertTrue(app.buttons["sidebar-router"].exists)
+            // Nothing in the sidebar leads to a screen that isn't built yet; Router lives in Settings.
+            for placeholder in ["sidebar-projects", "sidebar-library", "sidebar-router", "sidebar-search", "sidebar-archive"] {
+                XCTAssertFalse(app.buttons[placeholder].exists, placeholder + " must not be offered")
+            }
+            XCTAssertFalse(app.staticTexts["Coming in a later native update. Your existing web content stays in your account."].exists)
             XCTAssertFalse(app.buttons["sidebarCloseButton"].exists)
-            XCTAssertFalse(app.buttons["sidebar-search"].exists)
-            XCTAssertFalse(app.buttons["sidebar-archive"].exists)
-            let projects = app.buttons["sidebar-projects"]
-            XCTAssertTrue(projects.isHittable)
-            // The empty trailing part must work just like the icon and title.
-            projects.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
-            XCTAssertTrue(app.navigationBars["Projects"].waitForExistence(timeout: 3))
-            capture("projects-\(theme.lowercased())")
-            app.navigationBars.buttons.element(boundBy: 0).tap()
+            XCTAssertTrue(newChatRow.isHittable)
+            closeSidebarByBackdrop()
             settings()
             capture("settings-\(theme.lowercased())")
             app.buttons["Done"].tap()
@@ -268,9 +266,24 @@ final class LumenUITests: XCTestCase {
         let model = app.buttons["model-groq-fixture-model"]
         XCTAssertTrue(model.waitForExistence(timeout: 5))
         model.tap()
+        XCTAssertNotEqual(app.buttons["chooseModel"].label, "Model: Not selected", "The title must name the chosen model")
         enterDraft("Manual provider check")
         app.buttons["sendMessage"].tap()
         XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 10))
+        // As in the AI apps people know, a new question moves to the top of the screen and its reply writes
+        // below it, instead of the screen following the end of the text.
+        enterDraft("Pinned follow-up question")
+        app.buttons["sendMessage"].tap()
+        let question = app.staticTexts["Pinned follow-up question"]
+        XCTAssertTrue(question.waitForExistence(timeout: 5))
+        let deadline = Date().addingTimeInterval(6)
+        while question.frame.minY >= app.frame.height * 0.35 && Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        XCTAssertLessThan(question.frame.minY, app.frame.height * 0.35,
+                          "The sent message must be pinned near the top (at \(question.frame.minY) of \(app.frame.height))")
+        XCTAssertTrue(app.buttons["Regenerate response"].firstMatch.waitForExistence(timeout: 15))
+        XCTAssertFalse(app.buttons["scrollToLatest"].exists, "A short reply needs no Latest button")
         capture("direct-provider-reply")
     }
 
@@ -492,7 +505,7 @@ final class LumenUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [synced], timeout: 20), .completed)
         regenerate.tap()
         XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
-        if app.buttons["hideKeyboard"].exists { app.buttons["hideKeyboard"].tap() }
+        if app.keyboards.firstMatch.exists { dismissKeyboardByTappingTheConversation() }
         let versions = app.buttons["conversationVersions"]
         XCTAssertTrue(versions.waitForExistence(timeout: 10))
         let done = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: versions)

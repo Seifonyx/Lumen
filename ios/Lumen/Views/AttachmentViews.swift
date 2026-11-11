@@ -47,7 +47,7 @@ struct ComposerAttachments<Content: View>: View {
                     }
                 }.scrollIndicators(.hidden)
             }
-            HStack(alignment: .center, spacing: 8) {
+            HStack(alignment: .bottom, spacing: 4) {
                 Menu {
                     PhotosPicker(selection: $photo, matching: .images, photoLibrary: .shared()) {
                         Label("Choose photo", systemImage: "photo")
@@ -61,10 +61,10 @@ struct ComposerAttachments<Content: View>: View {
                     #endif
                 } label: {
                     Image(systemName: "plus")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundStyle(canAttach ? LumenPalette.accent : LumenPalette.muted)
+                        .font(.system(size: 20, weight: .regular))
+                        .foregroundStyle(canAttach ? LumenPalette.ink : LumenPalette.muted)
                         .frame(width: 44, height: 44)
-                        .background(LumenPalette.elevated, in: Circle())
+                        .contentShape(Circle())
                 }
                 .accessibilityLabel("Add photos or files")
                 .disabled(!canAttach)

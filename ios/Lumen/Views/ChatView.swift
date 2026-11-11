@@ -12,7 +12,16 @@ struct ChatView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var attachmentImporting = false
     @State private var olderAnchor: String?
-    @State private var followsReply = true
+    @State private var loadingOlder = false
+    // Like the AI apps people know: sending puts your message at the top of the screen and the reply writes
+    // itself below it, without the screen chasing the text. Once the reply is longer than the screen, you
+    // scroll; "Latest" takes you to the end.
+    @State private var pinnedID: String?
+    @State private var viewportHeight: CGFloat = 0
+    @State private var tailHeight: CGFloat = 0
+    @State private var atBottom = true
+    @State private var sends = 0
+    @State private var stops = 0
     @State private var editingMessage: ChatMessage?
     @State private var previewAttachment: ChatAttachment?
     @State private var versionPickerOpen = false
@@ -24,223 +33,109 @@ struct ChatView: View {
         composer.accountID == engine.accountID && composer.conversationID == engine.currentConversation.id && composer.isTemporary == engine.isTemporary
     }
     private var canSend: Bool { composerAligned && !attachmentImporting && composer.hasContent && connections.key(for: engine.selectedModel) != nil && engine.currentConversation.historyLoaded != false }
-    // The resting composer stays one row tall. Focusing the editor reveals model controls.
-    private var composerExpanded: Bool { focused.wrappedValue }
-    private var compactModelName: String {
-        guard let model = engine.selectedModel else { return "Choose model" }
-        switch model.providerId.lowercased() {
-        case "gemini": return "Gemini"
-        case "anthropic": return "Claude"
-        case "openai": return "OpenAI"
-        case "groq": return "Groq"
-        default: return "Model"
-        }
+    private var messages: [ChatMessage] { engine.currentConversation.messages }
+    private var pinIndex: Int? { pinnedID.flatMap { id in messages.firstIndex { $0.id == id } } }
+    /// Room under the pinned exchange so your message can reach the top of the screen; none once the reply fills it.
+    private var pinSpace: CGFloat {
+        guard pinIndex != nil else { return 0 }
+        return max(0, viewportHeight - tailHeight - 44)
     }
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                if engine.currentConversation.messages.isEmpty && engine.currentConversation.historyLoaded != false {
-                    VStack(spacing: 18) {
-                        Image("LumenMark")
-                            .resizable().scaledToFit().frame(width: 44, height: 62)
-                            .frame(width: 118, height: 118)
-                            .background(LumenPalette.accent.opacity(0.07), in: Circle())
-                            .accessibilityHidden(true)
-                        Text("Start a conversation")
-                            .font(LumenType.brand)
-                        Text(connections.key(for: engine.selectedModel) != nil ? "Ready with \(engine.selectedModel?.name ?? "your model")" : "Choose a connected model to begin.")
-                            .foregroundStyle(.secondary)
-                    }
-                    .multilineTextAlignment(.center)
-                    .padding(32)
-                    .frame(maxWidth: .infinity)
-                    .containerRelativeFrame(.vertical)
+                if messages.isEmpty && engine.currentConversation.historyLoaded != false {
+                    emptyState
+                        .containerRelativeFrame(.vertical)
                 } else {
-                    LazyVStack(alignment: .leading, spacing: 22) {
-                        if versions.count > 1 {
-                            Button {
-                                versionPickerOpen = true
-                            } label: {
-                                Label("Version \((versions.firstIndex { $0.id == engine.currentConversation.id } ?? 0) + 1) of \(versions.count)", systemImage: "clock.arrow.circlepath")
-                                    .font(.caption.weight(.medium))
-                                    .foregroundStyle(LumenPalette.accent)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 8)
-                                    .background(LumenPalette.elevated, in: Capsule())
-                            }
-                            .buttonStyle(.plain)
-                            .frame(minHeight: 44, alignment: .leading)
-                            .disabled(engine.isStreaming)
-                            .accessibilityIdentifier("conversationVersions")
-                        }
+                    LazyVStack(alignment: .leading, spacing: 26) {
                         if engine.currentConversation.historyLoaded == false {
                             HStack { ProgressView(); Text("Loading conversation…").foregroundStyle(.secondary) }
                         }
-                        ForEach(engine.currentConversation.messages) { message in
-                            MessageRow(message: message, canRevise: canRevise, edit: {
-                                editingAccount = engine.accountID
-                                editingConversation = engine.currentConversation.id
-                                editingMessage = message
-                            }, regenerate: {
-                                guard let key = connections.key(for: engine.selectedModel) else { return }
-                                _ = engine.regenerate(messageID: message.id, apiKey: key)
-                            }, openAttachment: { file in
-                                if file.kind == .text { previewAttachment = file }
-                                else { do { previewAttachment = try engine.attachment(id: file.id) } catch { engine.errorMessage = error.localizedDescription } }
-                            }).id(message.id)
+                        ForEach(pinIndex.map { Array(messages[..<$0]) } ?? messages) { message in
+                            row(message).id(message.id)
                         }
-                        Color.clear.frame(height: 1).id("conversationBottom")
+                        if let index = pinIndex {
+                            VStack(alignment: .leading, spacing: 26) {
+                                ForEach(Array(messages[index...])) { message in
+                                    row(message).id(message.id)
+                                }
+                            }
+                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { tailHeight = $0 }
+                        }
+                        Color.clear.frame(height: max(1, pinSpace)).id("conversationBottom")
                     }
                     .padding(.horizontal, 20)
-                    .padding(.vertical, 18)
+                    .padding(.top, 14)
+                    .padding(.bottom, 8)
                 }
             }
             .scrollDismissesKeyboard(.interactively)
+            .simultaneousGesture(TapGesture().onEnded { focused.wrappedValue = false })
             .background(LumenPalette.canvas)
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.containerSize.height - geometry.contentInsets.top - geometry.contentInsets.bottom
+            } action: { _, height in viewportHeight = height }
             .onScrollGeometryChange(for: Bool.self) { geometry in
-                geometry.contentSize.height - geometry.contentOffset.y - geometry.containerSize.height < 140
-            } action: { _, nearBottom in followsReply = nearBottom }
-            .safeAreaInset(edge: .top, spacing: 0) {
-                if engine.currentConversation.historyLoaded == true && engine.hasOlderMessages(chatID: engine.currentConversation.id) {
-                    HStack {
-                        Button("Load earlier messages") {
-                            followsReply = false; olderAnchor = engine.currentConversation.messages.first?.id
-                            Task { await sync.loadMessages(chatID: engine.currentConversation.id, older: true) }
-                        }.disabled(engine.isStreaming || sync.isLoadingMessages(chatID: engine.currentConversation.id))
-                            .accessibilityIdentifier("loadEarlierMessages")
-                        Spacer()
-                        if sync.isLoadingMessages(chatID: engine.currentConversation.id) { ProgressView() }
-                        Text("\(engine.currentConversation.messages.count) of \(engine.currentConversation.remoteMessageIDs?.count ?? 0)")
-                            .foregroundStyle(.secondary).accessibilityIdentifier("loadedMessageCount")
+                geometry.contentSize.height + geometry.contentInsets.bottom - geometry.containerSize.height - geometry.contentOffset.y < 80
+            } action: { _, nearBottom in atBottom = nearBottom }
+            .safeAreaInset(edge: .top, spacing: 0) { topBar }
+            .overlay(alignment: .bottom) {
+                if !atBottom && !messages.isEmpty {
+                    Button {
+                        withAnimation(reduceMotion ? nil : .smooth(duration: 0.3)) { proxy.scrollTo("conversationBottom", anchor: .bottom) }
+                    } label: {
+                        Image(systemName: "arrow.down")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(LumenPalette.ink)
+                            .frame(width: 40, height: 40)
+                            .glassEffect(.regular.interactive(), in: .circle)
+                            .frame(width: 44, height: 44)
                     }
-                    .font(.caption)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                    .background(LumenPalette.surface)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Latest")
+                    .accessibilityHint("Scrolls to the end of the conversation")
+                    .accessibilityIdentifier("scrollToLatest")
+                    .padding(.bottom, 8)
+                    .transition(.opacity.combined(with: .scale(scale: 0.85)))
                 }
             }
-            .overlay(alignment: .bottomTrailing) {
-                if !followsReply {
-                    Button("Latest", systemImage: "arrow.down") { followsReply = true; proxy.scrollTo("conversationBottom", anchor: .bottom) }
-                        .padding(10)
-                        .lumenSurface(radius: LumenRadius.card)
-                        .padding(12)
-                        .accessibilityIdentifier("scrollToLatest")
+            .animation(reduceMotion ? nil : .snappy(duration: 0.2), value: atBottom)
+            .onAppear { scrollToEnd(proxy) }
+            .onChange(of: messages.first?.id) { _, _ in
+                if let anchor = olderAnchor { proxy.scrollTo(anchor, anchor: .top) }
+                olderAnchor = nil; loadingOlder = false
+            }
+            .onChange(of: engine.currentConversation.id) { _, _ in
+                pinnedID = nil; olderAnchor = nil; loadingOlder = false
+                scrollToEnd(proxy)
+            }
+            .onChange(of: engine.isStreaming) { _, streaming in
+                // Send, regenerate and edit all start a reply: put the question it answers at the top.
+                guard streaming, let question = messages.last(where: { $0.role == .user }) else { return }
+                pinnedID = question.id
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(40))
+                    withAnimation(reduceMotion ? nil : .smooth(duration: 0.35)) { proxy.scrollTo(question.id, anchor: .top) }
                 }
             }
-            .onChange(of: engine.currentConversation.messages.first?.id) { _, _ in
-                if let anchor = olderAnchor { proxy.scrollTo(anchor, anchor: .top); olderAnchor = nil }
-            }
-            .onChange(of: engine.currentConversation.id) { _, _ in followsReply = true; olderAnchor = nil }
-            .onChange(of: engine.currentConversation.messages.count) { _, _ in
-                if engine.currentConversation.messages.last?.role == .user || engine.isStreaming { followsReply = true }
-                if followsReply { proxy.scrollTo("conversationBottom", anchor: .bottom) }
-            }
-            .onChange(of: engine.currentConversation.messages.last?.content) { _, _ in
-                if followsReply { proxy.scrollTo("conversationBottom", anchor: .bottom) }
+            .onChange(of: messages.count) { _, _ in
+                // A conversation that opened or loaded its history starts at its end; a reply in progress stays put.
+                guard !loadingOlder, pinnedID == nil, !engine.isStreaming else { return }
+                scrollToEnd(proxy)
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            VStack(spacing: 10) {
-                if engine.contextOmittedMessageCount > 0 {
-                    Text("Reply context uses recent messages. Earlier messages stay in your history.")
-                        .font(.caption2).foregroundStyle(.secondary).accessibilityIdentifier("boundedContextNotice")
-                }
-                if engine.contextOmittedAttachmentCount > 0 {
-                    Text("\(engine.contextOmittedAttachmentCount) earlier file(s) unavailable or unsupported on this iPhone were omitted from the last reply. Message text was kept.")
-                        .font(.caption2).foregroundStyle(.secondary).accessibilityIdentifier("historicalAttachmentsOmittedNotice")
-                }
-                if engine.isTemporary {
-                    Label("Temporary · Not saved to history", systemImage: "eye.slash")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(LumenPalette.accent)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(LumenPalette.elevated, in: Capsule())
-                        .accessibilityIdentifier("temporaryChatIndicator")
-                    Text("Your AI provider still receives these messages.").font(.caption2).foregroundStyle(.secondary)
-                }
-                if let error = composer.errorMessage ?? engine.errorMessage ?? sync.errorMessage {
-                    HStack(alignment: .top, spacing: 10) {
-                        Image(systemName: "exclamationmark.circle")
-                        Text(error).font(.footnote).frame(maxWidth: .infinity, alignment: .leading)
-                        if composer.errorMessage != nil { Button("Retry") { _ = composer.save() }.font(.footnote.weight(.semibold)) }
-                        else if sync.errorMessage != nil { Button("Retry") { sync.retry() }.font(.footnote.weight(.semibold)) }
-                        else { Button("Dismiss", systemImage: "xmark") { engine.errorMessage = nil }.labelStyle(.iconOnly) }
-                    }
-                    .padding(12)
-                    .lumenSurface(radius: LumenRadius.compact)
-                    .accessibilityIdentifier("chatError")
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    // Compact: +, one-line prompt and Send. Attachments remain visible
-                    // so dismissing the keyboard never hides a selected file.
-                    ComposerAttachments(composer: composer, engine: engine, importing: $attachmentImporting) {
-                        TextField("Message Lumen", text: Binding(get: { composerAligned ? composer.draft : "" }, set: { if composerAligned { composer.draft = $0 } }), axis: .vertical)
-                            .disabled(!composerAligned)
-                            .lineLimit(composerExpanded ? 1...6 : 1...1)
-                            .font(.body)
-                            .focused(focused)
-                            .accessibilityLabel("Message Lumen")
-                            .accessibilityIdentifier("messageComposer")
-                            .frame(minHeight: 44)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .layoutPriority(1)
-                        if engine.isStreaming {
-                            Button("Stop", systemImage: "stop.circle.fill") { engine.stopStreaming() }
-                                .font(.system(size: 34)).labelStyle(.iconOnly)
-                                .foregroundStyle(LumenPalette.accent)
-                                .frame(width: 44, height: 44)
-                                .accessibilityIdentifier("stopStreaming")
-                        } else {
-                            Button("Send", systemImage: "arrow.up.circle.fill") {
-                                guard composerAligned, composer.save(), let key = connections.key(for: engine.selectedModel), engine.submit(prompt: composer.draft, attachmentIDs: composer.attachmentIDs, apiKey: key) != nil else { return }
-                                composer.discardDraft()
-                            }
-                            .font(.system(size: 34)).labelStyle(.iconOnly)
-                            .foregroundStyle(canSend ? LumenPalette.accent : LumenPalette.muted)
-                            .frame(width: 44, height: 44)
-                            .disabled(!canSend)
-                            .accessibilityHint(canSend ? "Send message" : "Choose a connected model before sending.")
-                            .accessibilityIdentifier("sendMessage")
-                        }
-                    }
-                    if composerExpanded {
-                        HStack {
-                            Button(action: chooseModel) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "cpu")
-                                    Text(compactModelName)
-                                        .accessibilityIdentifier("compactModelLabel")
-                                    Image(systemName: "chevron.down")
-                                        .font(.caption2.weight(.semibold))
-                                }
-                                .font(LumenType.control)
-                                .foregroundStyle(LumenPalette.accent)
-                                .padding(.horizontal, 10)
-                                .frame(minHeight: 44)
-                                .background(LumenPalette.elevated, in: Capsule())
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Model: " + (engine.selectedModel?.name ?? "Not selected"))
-                            .accessibilityHint("Opens the complete model list with full model names.")
-                            .accessibilityIdentifier("chooseModel")
-                            Spacer(minLength: 0)
-                        }
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                    }
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .lumenSurface(radius: LumenRadius.composer)
-                .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: composerExpanded)
-                .shadow(color: .black.opacity(0.06), radius: 12, y: 3)
+            VStack(spacing: 8) {
+                notices
+                composerBar
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 10)
+            .padding(.horizontal, 12)
+            .padding(.top, 6)
+            .padding(.bottom, 8)
         }
+        .sensoryFeedback(.impact(weight: .light), trigger: sends)
+        .sensoryFeedback(.impact(weight: .medium), trigger: stops)
         .sheet(item: $editingMessage) { message in
             EditMessageSheet(message: message) { text in
                 guard engine.accountID == editingAccount, engine.currentConversation.id == editingConversation,
@@ -291,5 +186,175 @@ struct ChatView: View {
         .onChange(of: engine.currentConversation.id) { _, _ in
             editingMessage = nil; previewAttachment = nil
         }
+    }
+
+    private func row(_ message: ChatMessage) -> some View {
+        MessageRow(message: message, canRevise: canRevise, edit: {
+            editingAccount = engine.accountID
+            editingConversation = engine.currentConversation.id
+            editingMessage = message
+        }, regenerate: {
+            guard let key = connections.key(for: engine.selectedModel) else { return }
+            _ = engine.regenerate(messageID: message.id, apiKey: key)
+        }, openAttachment: { file in
+            if file.kind == .text { previewAttachment = file }
+            else { do { previewAttachment = try engine.attachment(id: file.id) } catch { engine.errorMessage = error.localizedDescription } }
+        })
+    }
+
+    private func scrollToEnd(_ proxy: ScrollViewProxy) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(30))
+            proxy.scrollTo("conversationBottom", anchor: .bottom)
+        }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 14) {
+            Image("LumenMark")
+                .resizable().scaledToFit().frame(width: 30, height: 42)
+                .accessibilityHidden(true)
+            Text("How can I help?")
+                .font(.system(.title2, design: .default, weight: .semibold))
+                .foregroundStyle(LumenPalette.ink)
+            if connections.key(for: engine.selectedModel) == nil {
+                Button("Choose a model to begin", action: chooseModel)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(LumenPalette.accent)
+                    .frame(minHeight: 44)
+                    .accessibilityIdentifier("emptyChooseModel")
+            }
+        }
+        .multilineTextAlignment(.center)
+        .padding(32)
+        .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder private var topBar: some View {
+        let older = engine.currentConversation.historyLoaded == true && engine.hasOlderMessages(chatID: engine.currentConversation.id)
+        if versions.count > 1 || older {
+            HStack(spacing: 12) {
+                if older {
+                    Button("Load earlier messages") {
+                        loadingOlder = true; olderAnchor = messages.first?.id
+                        Task { await sync.loadMessages(chatID: engine.currentConversation.id, older: true) }
+                    }
+                    .disabled(engine.isStreaming || sync.isLoadingMessages(chatID: engine.currentConversation.id))
+                    .accessibilityIdentifier("loadEarlierMessages")
+                    if sync.isLoadingMessages(chatID: engine.currentConversation.id) { ProgressView() }
+                    Text("\(messages.count) of \(engine.currentConversation.remoteMessageIDs?.count ?? 0)")
+                        .foregroundStyle(.secondary).accessibilityIdentifier("loadedMessageCount")
+                }
+                Spacer(minLength: 0)
+                if versions.count > 1 {
+                    Button {
+                        versionPickerOpen = true
+                    } label: {
+                        Label("Version \((versions.firstIndex { $0.id == engine.currentConversation.id } ?? 0) + 1) of \(versions.count)", systemImage: "clock.arrow.circlepath")
+                            .foregroundStyle(LumenPalette.ink)
+                            .padding(.horizontal, 12)
+                            .frame(minHeight: 34)
+                            .glassEffect(.regular.interactive(), in: .capsule)
+                            .frame(minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(engine.isStreaming)
+                    .accessibilityIdentifier("conversationVersions")
+                }
+            }
+            .font(.caption.weight(.medium))
+            .padding(.horizontal, 16)
+        }
+    }
+
+    @ViewBuilder private var notices: some View {
+        if engine.contextOmittedMessageCount > 0 {
+            Text("Reply context uses recent messages. Earlier messages stay in your history.")
+                .font(.caption2).foregroundStyle(.secondary).accessibilityIdentifier("boundedContextNotice")
+        }
+        if engine.contextOmittedAttachmentCount > 0 {
+            Text("\(engine.contextOmittedAttachmentCount) earlier file(s) unavailable or unsupported on this iPhone were omitted from the last reply. Message text was kept.")
+                .font(.caption2).foregroundStyle(.secondary).accessibilityIdentifier("historicalAttachmentsOmittedNotice")
+        }
+        if engine.isTemporary {
+            VStack(spacing: 2) {
+                Label("Temporary · Not saved to history", systemImage: "eye.slash")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(LumenPalette.ink)
+                    .accessibilityIdentifier("temporaryChatIndicator")
+                Text("Your AI provider still receives these messages.").font(.caption2).foregroundStyle(.secondary)
+            }
+        }
+        if let error = composer.errorMessage ?? engine.errorMessage ?? sync.errorMessage {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "exclamationmark.circle").accessibilityHidden(true)
+                Text(error).font(.footnote).frame(maxWidth: .infinity, alignment: .leading)
+                if composer.errorMessage != nil { Button("Retry") { _ = composer.save() }.font(.footnote.weight(.semibold)) }
+                else if sync.errorMessage != nil { Button("Retry") { sync.retry() }.font(.footnote.weight(.semibold)) }
+                else { Button("Dismiss", systemImage: "xmark") { engine.errorMessage = nil }.labelStyle(.iconOnly).frame(minWidth: 44, minHeight: 44) }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .glassEffect(.regular, in: .rect(cornerRadius: LumenRadius.card, style: .continuous))
+            .accessibilityIdentifier("chatError")
+        }
+    }
+
+    private var composerBar: some View {
+        // One Liquid Glass control: + for photos and files, the message, and Send (Stop while a reply is written).
+        ComposerAttachments(composer: composer, engine: engine, importing: $attachmentImporting) {
+            TextField("Message Lumen", text: Binding(get: { composerAligned ? composer.draft : "" }, set: { if composerAligned { composer.draft = $0 } }), axis: .vertical)
+                .disabled(!composerAligned)
+                .lineLimit(1...8)
+                .font(.body)
+                .focused(focused)
+                .padding(.vertical, 11)
+                .accessibilityLabel("Message Lumen")
+                .accessibilityIdentifier("messageComposer")
+                .frame(minHeight: 44)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .layoutPriority(1)
+            if engine.isStreaming {
+                Button {
+                    stops += 1
+                    engine.stopStreaming()
+                } label: {
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(LumenPalette.canvas)
+                        .frame(width: 34, height: 34)
+                        .background(LumenPalette.ink, in: Circle())
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Stop")
+                .accessibilityIdentifier("stopStreaming")
+            } else {
+                Button(action: send) {
+                    Image(systemName: "arrow.up")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(canSend ? LumenPalette.canvas : LumenPalette.muted)
+                        .frame(width: 34, height: 34)
+                        .background(canSend ? LumenPalette.ink : LumenPalette.elevated, in: Circle())
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .disabled(!canSend)
+                .keyboardShortcut(.return, modifiers: .command)
+                .accessibilityLabel("Send")
+                .accessibilityHint(canSend ? "Send message" : "Choose a connected model before sending.")
+                .accessibilityIdentifier("sendMessage")
+            }
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
+        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 26, style: .continuous))
+    }
+
+    private func send() {
+        guard composerAligned, composer.save(), let key = connections.key(for: engine.selectedModel),
+              engine.submit(prompt: composer.draft, attachmentIDs: composer.attachmentIDs, apiKey: key) != nil else { return }
+        sends += 1
+        composer.discardDraft()
     }
 }

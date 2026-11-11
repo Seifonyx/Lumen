@@ -2,54 +2,14 @@ import SwiftUI
 import LumenCore
 
 enum WorkspaceRoute: String, CaseIterable, Identifiable, Hashable {
-    case search, archive, projects, library, router
+    case search, archive, router
     var id: Self { self }
     var title: String {
         switch self {
         case .search: "Search"
         case .archive: "Archived chats"
-        case .projects: "Projects"
-        case .library: "Library"
         case .router: "Router"
         }
-    }
-    var icon: String {
-        switch self {
-        case .search: "magnifyingglass"
-        case .archive: "archivebox"
-        case .projects: "folder"
-        case .library: "books.vertical"
-        case .router: "arrow.triangle.branch"
-        }
-    }
-    var emptyTitle: String {
-        switch self {
-        case .search: "No conversations to search"
-        case .archive: "No archived chats"
-        case .projects: "No projects yet"
-        case .library: "Your library is empty"
-        case .router: "No providers connected"
-        }
-    }
-    var detail: String {
-        switch self {
-        case .search: "Find messages and conversations here."
-        case .archive: "Archived conversations stay available here."
-        case .projects: "Keep related chats and files together."
-        case .library: "Documents and attachments will appear here."
-        case .router: "Your connected providers and models will appear here."
-        }
-    }
-}
-
-struct WorkspaceView: View {
-    let route: WorkspaceRoute
-    var body: some View {
-        ContentUnavailableView(route.title, systemImage: route.icon, description: Text("Coming in a later native update. Your existing web content stays in your account."))
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(LumenPalette.canvas)
-            .navigationTitle(route.title)
-            .navigationBarTitleDisplayMode(.inline)
     }
 }
 

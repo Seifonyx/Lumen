@@ -1,11 +1,13 @@
 {
-  "title": "Comfortable at every text size · 0.4.2",
-  "description": "Lumen now follows your text size everywhere, reads clearly with VoiceOver and explains errors in plain words.",
+  "title": "A native chat, rebuilt · 0.4.2",
+  "description": "Chat works like the AI apps you know: your question moves to the top, replies are formatted, one Liquid Glass chat bar, a sidebar that follows your finger, and comfortable at every text size.",
   "notes": [
-    "Buttons and icons grow with your text size, up to the largest accessibility sizes, and stay tappable.",
-    "VoiceOver names every control, announces pinned and selected chats, and hints at touch-and-hold options.",
-    "Clearer messages: a refused API key says what to check, wherever it appears; a retired model asks you to choose another.",
-    "An empty chat explains how to connect a provider when none is set up.",
-    "Attachment chips show a photo icon for photos."
+    "Sending puts your question at the top of the screen and the reply writes below it; a Latest button appears when the end is out of view.",
+    "Replies show headings, lists, quotes, tables and code blocks with Copy, all selectable.",
+    "One Liquid Glass chat bar with +, your message and Send or Stop; tap or drag the conversation to put the keyboard away.",
+    "The model is the chat's title; tap it to switch.",
+    "Swipe right anywhere and the chat slides aside to reveal the sidebar, following your finger; swipe left or tap the chat to close.",
+    "Buttons and icons grow with your text size up to the largest accessibility sizes; VoiceOver names every control.",
+    "Plain error messages, light haptics, and no placeholder screens in the sidebar."
   ]
 }

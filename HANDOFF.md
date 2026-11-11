@@ -4,40 +4,35 @@ Updated: 2026-11-10. The complete native visual Phase 2 was merged and SideStore
 
 ## Current work
 
-- **Native plan** (owner-approved phases): https://claude.ai/artifact/GRPpkuK6yMvdAaeFsCpom9
-- **Owner, 2026-11-11:**
-  - Streaming should behave like Claude and ChatGPT: the question is pinned at the top, with no auto-follow.
-  - "the whole experience overall still feels uncomfortable".
-  - Full approval for agent-chosen native work.
-  - **Publish every update without asking, then report the next step.**
-- **#151 (0.4.0), merged to main 2026-11-11 12:53 UTC:**
-  - Pinned streaming.
-  - Block Markdown (LumenCore `MarkdownBlocks` and its tests).
-  - A glass composer; the model in the title; tap or drag to hide the keyboard.
+- **Native 0.4.2 is published** (2026-11-11 23:20 UTC, main `50cb2c6`, release `native-ios-v0.4.2`, listed in both SideStore feeds). **Phase 1 is complete** in code and CI, but not yet verified on the owner's physical iPhone.
+- **What 0.4.2 contains (#151 and #153; #152 was folded into #153):**
+  - Pinned streaming, like Claude and ChatGPT, with a Latest button that shows only when the end is off screen.
+  - Block Markdown replies (LumenCore `MarkdownBlocks`).
+  - One glass composer; the model as the chat title.
+  - Tap or drag to hide the keyboard.
+  - A push sidebar that follows the finger.
   - Haptics.
-  - No placeholder routes; Router in Settings.
-  - A placeholder email in QA screenshots.
-  - Both SideStore feeds list the SwiftUI app.
-  - **It merged before its PR CI ran**: there's no branch protection, and `gh pr merge --auto` merged at once. Repo auto-merge has been switched off again. Publishing still needs main's core, four UI shards and IPA jobs (`publish` needs `verify`). Check main run 43024198820; fix forward on failure.
-- **#152 (0.4.1, base main):** a push-style sidebar that tracks the finger, with no edge tab or handle. It replaces Codex's #150, which is closed. Merge it once its CI is green on the exact head.
-- **#153 (0.4.2), stacked on #152, finishes Phase 1:**
-  - Dynamic Type everywhere (`@ScaledMetric`, no fixed font sizes).
-  - VoiceOver traits and hints.
-  - Error copy that's accurate wherever it shows.
-  - Empty-chat guidance.
-  - Two new UI tests: Accessibility XXL text, and `performAccessibilityAudit` on five screens. Shards are now 8 + 8.
-- **Release order:**
-  1. main's 0.4.0 run publishes.
-  2. Merge #152 (0.4.1) when it's green on its head.
-  3. Retarget #153 to main, update it from main, and merge it when green (0.4.2).
+  - Dynamic Type up to accessibility sizes. At those sizes the composer stops at 3 lines and the empty state scrolls.
+  - VoiceOver labels.
+  - Plain error copy.
+  - No placeholder routes.
+  - A QA placeholder email in screenshots.
+  - The root feed lists the SwiftUI app.
+- **Native CI is faster and steadier:**
+  - One simulator build per commit from a warm DerivedData cache. The shards download the tarred products, and the simulator boots during the download.
+  - The release IPA has its own cache.
+  - The Swift checks run in the `swift:6.2` Docker image (setup-swift kept failing on key servers).
+  - Emulator seeding retries.
+  - Verify counts tests from `SHARDS` and tells shards apart by runner and simulator.
+  - About 28 minutes in total; it was about 45.
+- **Next:**
+  - The owner tries 0.4.2 on the iPhone for a day.
+  - Then Phase 2: Auto routing, real Projects and Library synced with web, memory, share/export, sync conflict cases.
+  - CI time is now dominated by UI tests (18–23 minutes per shard). Next speedups:
+    - Trim waits in tests.
+    - Rebalance shards.
+    - Reuse a passed PR run when merging, instead of re-running everything on main.
 - **Owner, 2026-11-11:** "Publish any update from now on without waiting for me". Merge and publish each green release, then report the next step.
-- **Phase 2 next (daily-driver parity):**
-  - Auto routing.
-  - Real Projects and Library synced with web.
-  - Memory and personalization.
-  - Share and export.
-  - Sync conflict cases.
-- Not verified on a physical iPhone.
 
 ## Standing decisions
 

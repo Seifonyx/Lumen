@@ -1,12 +1,10 @@
 {
-  "title": "A calmer chat · 0.4.0",
-  "description": "Chat now works like the AI apps you know: your question moves to the top, replies are properly formatted, and the chat bar is one Liquid Glass control.",
+  "title": "A sidebar that follows your finger · 0.4.1",
+  "description": "Swipe right anywhere and the chat slides aside to reveal the sidebar, following your finger; swipe left to close.",
   "notes": [
-    "Sending puts your question at the top of the screen and the reply writes below it, without the screen chasing the text; a Latest button appears when you scroll away.",
-    "Replies show headings, lists, quotes, tables and code blocks with a Copy button, all selectable.",
-    "The chat bar is a single Liquid Glass control with +, your message and Send or Stop; tap the conversation or drag it down to put the keyboard away.",
-    "The model you're talking to is the title of the chat; tap it to change models.",
-    "Light haptics on send, stop, copy and model changes.",
-    "Placeholder Projects and Library entries are gone from the sidebar until they're real; Router stays in Settings."
+    "Swipe right anywhere on the chat and it slides aside to reveal your conversations, tracking your finger the whole way; swipe left anywhere to close.",
+    "Where you let go, and how fast you flick, decides whether it stays open; a swipe interrupted by scrolling settles cleanly.",
+    "Tap the dimmed strip of chat to close the sidebar. The blue edge tab and the drag handle are gone.",
+    "A light haptic when the sidebar opens or closes."
   ]
 }

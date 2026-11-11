@@ -5,21 +5,74 @@
   "apps": [
     {
       "name": "Lumen",
-      "bundleIdentifier": "io.github.seifonyx.lumen.demo",
+      "bundleIdentifier": "io.github.seifonyx.lumen",
       "developerName": "Lumen",
-      "subtitle": "An independent AI workspace for iPhone",
-      "localizedDescription": "A native iPhone experience for Lumen. Chat, projects, models, and your connected workspace.",
+      "subtitle": "Your native AI workspace",
+      "localizedDescription": "Native AI conversations with your Lumen account and your choice of provider.",
       "iconURL": "https://raw.githubusercontent.com/Seifonyx/Lumen/main/public-canvas/icon-512.png",
       "tintColor": "0b0b0c",
       "versions": [
         {
-          "version": "1.1.0",
+          "version": "0.3.6",
+          "date": "2026-11-10",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.3.6/Lumen.ipa",
+          "size": 6778740,
+          "minOSVersion": "26.0",
+          "localizedDescription": "A simpler, focus-expanding chat bar with icon-only attachments and clearer model labels."
+        },
+        {
+          "version": "0.3.5",
+          "date": "2026-11-10",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.3.5/Lumen.ipa",
+          "size": 6768566,
+          "minOSVersion": "26.0",
+          "localizedDescription": "Refined native Light and Dark appearance, gesture-driven sidebar and more discoverable chat controls."
+        },
+        {
+          "version": "0.3.4",
+          "date": "2026-11-10",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.3.4/Lumen.ipa",
+          "size": 6735075,
+          "minOSVersion": "26.0",
+          "localizedDescription": "Per-chat drafts, temporary chats, attachments and long-chat recovery for native Lumen."
+        },
+        {
+          "version": "0.3.1",
+          "date": "2026-11-09",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.3.1/Lumen.ipa",
+          "size": 6577285,
+          "minOSVersion": "26.0",
+          "localizedDescription": "Rename, pin and archive conversations, reopen archived chats, and search downloaded message text."
+        },
+        {
+          "version": "0.3.0",
+          "date": "2026-11-09",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.3.0/Lumen.ipa",
+          "size": 6521671,
+          "minOSVersion": "26.0",
+          "localizedDescription": "Edit and resend, regenerate and retry replies, switch conversation versions, and copy or share messages."
+        },
+        {
+          "version": "0.2.0",
+          "date": "2026-11-09",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.2.0/Lumen.ipa",
+          "size": 6477724,
+          "minOSVersion": "26.0",
+          "localizedDescription": "Google sign-in, existing Lumen history, secure provider connections, streamed replies and Stop."
+        },
+        {
+          "version": "0.1.0",
           "date": "2026-11-08",
-          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/ios-v1.1.0/Lumen.ipa",
-          "size": 4822046,
-          "localizedDescription": "Lumen 1.1.0 — Native foundation"
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.1.0/Lumen.ipa",
+          "size": 254212,
+          "minOSVersion": "26.0",
+          "localizedDescription": "Chat-first native foundation. Account and AI connections follow in Phase 1."
         }
-      ]
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {}
+      }
     }
   ]
 }

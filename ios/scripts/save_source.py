@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Save only the native source listing, recovering from concurrent main pushes."""
 import subprocess
+from pathlib import Path
 
-SOURCE = 'ios/sidestore-source.json'
+# The native feed, and the original root feed that lists the same app.
+SOURCES = ['ios/sidestore-source.json', 'sidestore-source.json']
 
 
 def git(*args, check=True):
@@ -10,11 +12,13 @@ def git(*args, check=True):
 
 
 def main():
-    if git('diff', '--quiet', '--', SOURCE, check=False).returncode == 0:
+    changed = [path for path in SOURCES
+               if Path(path).exists() and git('diff', '--quiet', '--', path, check=False).returncode != 0]
+    if not changed:
         print('Native SideStore listing is already current.')
         return
-    git('add', '--', SOURCE)
-    git('commit', '-m', 'Update native Lumen SideStore listing', '--only', '--', SOURCE)
+    git('add', '--', *changed)
+    git('commit', '-m', 'Update native Lumen SideStore listing', '--only', '--', *changed)
     for attempt in range(3):
         pushed = git('push', 'origin', 'HEAD:main', check=False)
         if pushed.returncode == 0:

@@ -72,6 +72,13 @@ def main():
         'appPermissions': {'entitlements': [], 'privacy': {}},
     }]
     source_path.write_text(json.dumps(source, indent=2) + '\n')
+    # The original feed (root sidestore-source.json, from the retired Capacitor line) lists the same native app,
+    # so people who added that source get the SwiftUI app and its updates too. Its own name and URL are kept.
+    legacy_path = Path('sidestore-source.json')
+    if legacy_path.exists():
+        legacy = json.loads(legacy_path.read_text())
+        legacy['apps'] = source['apps']
+        legacy_path.write_text(json.dumps(legacy, indent=2) + '\n')
     print(asset['browser_download_url'])
 
 

@@ -13,6 +13,9 @@ struct RootView: View {
     @State private var sidebarProgress: CGFloat = 0
     @State private var sidebarDragAxis: SidebarDragAxis = .undecided
     @State private var sidebarDragStartProgress: CGFloat = 0
+    @State private var sidebarDragStartedOpen = false
+    @State private var sidebarDragNeedsRecovery = false
+    @GestureState private var sidebarGestureActive = false
     @State private var settingsOpen = false
     @State private var modelsOpen = false
     @State private var discardConfirmation = false
@@ -127,6 +130,19 @@ struct RootView: View {
             if phase == .active { sync.retry() }
             else if phase == .background { engine.stopStreaming(); _ = composer.save(); _ = engine.checkpoint() }
         }
+        .onChange(of: sidebarGestureActive) { wasActive, isActive in
+            guard wasActive, !isActive else { return }
+            Task { @MainActor in
+                await Task.yield()
+                let needsRecovery = sidebarDragNeedsRecovery
+                let startedOpen = sidebarDragStartedOpen
+                sidebarDragNeedsRecovery = false
+                sidebarDragAxis = .undecided
+                guard needsRecovery else { return }
+                if startedOpen { presentSidebar() }
+                else { dismissSidebar() }
+            }
+        }
         .onChange(of: engine.isStreaming) { _, streaming in
             if !streaming, engine.currentConversation.historyLoaded == false { Task { await sync.loadMessages(chatID: engine.currentConversation.id) } }
         }
@@ -187,14 +203,16 @@ struct RootView: View {
     }
 
     private func sidebarPanGesture(width: CGFloat) -> some Gesture {
-        DragGesture(minimumDistance: 0).onChanged { gesture in
+        DragGesture(minimumDistance: 12)
+            .updating($sidebarGestureActive) { _, active, _ in active = true }
+            .onChanged { gesture in
             let delta = gesture.translation
             let horizontal = abs(delta.width)
             let vertical = abs(delta.height)
 
             if sidebarDragAxis == .undecided {
                 guard max(horizontal, vertical) >= 12 else { return }
-                guard horizontal > vertical * 1.3 else {
+                guard horizontal > vertical * 1.5 else {
                     sidebarDragAxis = .vertical
                     return
                 }
@@ -207,6 +225,8 @@ struct RootView: View {
                 }
 
                 sidebarDragAxis = .horizontal
+                sidebarDragStartedOpen = sidebarOpen
+                sidebarDragNeedsRecovery = true
                 sidebarDragStartProgress = sidebarProgress
                 if opening {
                     composerFocused = false
@@ -225,11 +245,13 @@ struct RootView: View {
         }.onEnded { gesture in
             guard sidebarDragAxis == .horizontal else {
                 sidebarDragAxis = .undecided
+                sidebarDragNeedsRecovery = false
                 return
             }
 
             let projectedProgress = sidebarDragStartProgress + gesture.predictedEndTranslation.width / max(width, 1)
             sidebarDragAxis = .undecided
+            sidebarDragNeedsRecovery = false
             if projectedProgress >= 0.5 { presentSidebar() }
             else { dismissSidebar() }
         }

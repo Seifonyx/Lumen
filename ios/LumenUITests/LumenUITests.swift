@@ -87,7 +87,7 @@ final class LumenUITests: XCTestCase {
             dy: 0.5 + diagonalVerticalDistance / app.frame.height
         ))
         diagonalStart.press(forDuration: 0.2, thenDragTo: diagonalEnd)
-        XCTAssertFalse(sidebarContent.exists,
+        XCTAssertFalse(sidebarContent.waitForExistence(timeout: 1),
                        "A diagonal scroll with only slightly dominant horizontal movement must not open the sidebar")
         let chatCenter = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
         let shortOpen = app.coordinate(withNormalizedOffset: CGVector(dx: 0.57, dy: 0.5))

@@ -1,5 +1,18 @@
 # Lumen — CURRENT execution checkpoint (PUBLIC-SAFE)
 
+> **Newest (2026-11-11), supersedes the 1.1.0 notes below:**
+> - **The native iPhone app is the SwiftUI app on `main` under `ios/`** (bundle `io.github.seifonyx.lumen`, feed `ios/sidestore-source.json`, releases `native-ios-v0.x`; 0.3.6 is published). The Capacitor/1.1.0 line on `experiment/ios-sideload` (PR141, root `sidestore-source.json`) is superseded; retiring its feed listing is pending owner confirmation.
+> - **The owner's phased plan:** https://claude.ai/artifact/GRPpkuK6yMvdAaeFsCpom9
+>   - Phase 0: one app, honest state.
+>   - Phase 1: rebuild the shell on iOS 26 components.
+>   - Phase 2: daily-driver parity.
+>   - Phase 3: iPhone-only features.
+>   - Phase 4: distribution decisions.
+> - **Owner, 2026-11-11:**
+>   - Streaming should behave like Claude and ChatGPT: the question is pinned at the top and the reply writes below it.
+>   - "the whole experience overall still feels uncomfortable".
+> - **In progress:** draft PR #151 (native 0.4.0: pinned streaming, block Markdown, a glass composer, the model in the title, haptics, no placeholder routes, no real email in QA screenshots). It has not yet compiled in CI. Draft #150 (Codex, the sidebar finger-tracking drawer) is open with one failing shard.
+
 > **Current iPhone release (2026-11-08):** Phase 0 **Lumen 1.1.0 (build 2)** is published as a reviewed unsigned SideStore-compatible [GitHub Release](https://github.com/Seifonyx/Lumen/releases/tag/ios-v1.1.0). The stable [SideStore source](https://raw.githubusercontent.com/Seifonyx/Lumen/main/sidestore-source.json) now contains the real Lumen app listing/version (not `apps: []`). Source commit `5ab84c3d` on `experiment/ios-sideload`; release workflow [42496202207](https://github.com/Seifonyx/Lumen/actions/runs/42496202207) passed real account-connected iPhoneOS build, Google/Firebase package verification, synthetic browser auth, fail-closed IPA content scan, public release, anonymous download and source update. PR142 and PR143 were merged to the experiment branch, not production main. **Owner's physical iPhone install/Google login of this NEW v1.1.0 is not yet verified** (only previous installed 1.0 was confirmed working); do not treat successful build as that physical test. Existing website remains unchanged. Physical test next: refresh SideStore source, install *over* Lumen without deleting app, open Workspace, verify Google login and retained data; report concrete differences. No new spending, signing identity change, auth rules or production deployment.
 
 **Deferred owner decision (2026-11-08 — public launch):** Once the main Lumen changes are completed, open Google registration to everyone without an invitation-only email list. Lumen is free to use; each user brings their **own free models/API keys**. Do not subsidize inference with the owner's credentials or activate paid fallback. Maintain per-user Firestore isolation, key secrecy, safe onboarding, quota and abuse safeguards. **Do not implement or deploy public access yet.** The current immediate work remains the repeated physical-iPhone Firebase sign-in failure and real-app usability; public release comes later as its own scoped change.

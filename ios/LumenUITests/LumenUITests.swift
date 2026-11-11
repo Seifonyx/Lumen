@@ -43,30 +43,35 @@ final class LumenUITests: XCTestCase {
     }
 
     private func closeSidebarByBackdrop() {
-        // Tap the center of the exposed scrim, not the system's outer edge.
-        // Wait for the actual sidebar content to disappear: the underlying
-        // openSidebar toolbar button may exist even while the overlay is open.
+        // Tap the visible, dimmed part of the chat beside the sidebar. Wait for the sidebar's own
+        // content to go: the chat's openSidebar button exists underneath the whole time.
         let backdrop = app.buttons["closeSidebar"]
-        let handle = app.buttons["sidebarDismissHandle"]
+        let panel = app.buttons["sidebarNewChat"]
         XCTAssertTrue(backdrop.waitForExistence(timeout: 5))
-        XCTAssertTrue(handle.waitForExistence(timeout: 5))
-        backdrop.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
-        XCTAssertTrue(handle.waitForNonExistence(timeout: 5),
-                      "Tapping the exposed backdrop must remove the sidebar")
+        XCTAssertTrue(panel.waitForExistence(timeout: 5))
+        backdrop.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        XCTAssertTrue(panel.waitForNonExistence(timeout: 5),
+                      "Tapping the exposed chat must close the sidebar")
         XCTAssertTrue(app.buttons["openSidebar"].isHittable)
         XCTAssertFalse(app.buttons["openSettings"].exists)
     }
 
     private func verifySidebarEdgeSwipe() {
-        let handle = app.buttons["sidebarDismissHandle"]
-        XCTAssertTrue(handle.waitForExistence(timeout: 5), "The sidebar must offer a drag-to-close edge")
-        let start = handle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.20, dy: 0.5))
-        start.press(forDuration: 0.2, thenDragTo: end)
-        XCTAssertTrue(handle.waitForNonExistence(timeout: 5),
-                      "Swiping left from the sidebar edge must remove the sidebar")
+        // The sidebar follows the finger both ways, from anywhere on the screen (no handles).
+        let panel = app.buttons["sidebarNewChat"]
+        XCTAssertTrue(panel.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["sidebarDismissHandle"].exists, "No separate drag handle")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.55))
+            .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.55)))
+        XCTAssertTrue(panel.waitForNonExistence(timeout: 5), "Swiping left must close the sidebar")
         XCTAssertTrue(app.buttons["openSidebar"].isHittable)
         XCTAssertFalse(app.buttons["openSettings"].exists)
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.55))
+            .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.55)))
+        XCTAssertTrue(panel.waitForExistence(timeout: 5), "Swiping right on the chat must open the sidebar")
+        XCTAssertTrue(app.buttons["openSettings"].isHittable)
+        closeSidebarByBackdrop()
+        XCTAssertFalse(app.buttons["sidebarEdgeHandle"].exists, "No visible edge tab on the chat")
     }
 
     private func openModelPicker() {

@@ -8,7 +8,14 @@ struct RootView: View {
     @Bindable var connections: ProviderConnections
     @Bindable var sync: CloudChatSync
     @State private var path: [WorkspaceRoute] = []
+    // The sidebar sits under the chat, which slides right to reveal it and follows your finger both ways
+    // (as in the AI apps people know). sidebarOpen is the settled state; sidebarProgress (0…1) is where it is.
     @State private var sidebarOpen = false
+    @State private var sidebarMounted = false
+    @State private var sidebarProgress: CGFloat = 0
+    @State private var dragStart: CGFloat?
+    @State private var dragDecided = false
+    @GestureState private var dragging = false
     @State private var settingsOpen = false
     @State private var modelsOpen = false
     @State private var discardConfirmation = false
@@ -22,7 +29,39 @@ struct RootView: View {
 
     var body: some View {
         GeometryReader { geometry in
+            let width = min(geometry.size.width * 0.82, 340)
             ZStack(alignment: .leading) {
+                if sidebarMounted {
+                    SidebarView(
+                        engine: engine,
+                        composer: composer,
+                        auth: auth,
+                        newChat: requestNewChat,
+                        search: {
+                            setSidebar(false)
+                            path.append(.search)
+                        },
+                        openDraft: { request(.draft($0)) },
+                        open: { route in
+                            setSidebar(false)
+                            path.append(route)
+                        },
+                        selectConversation: requestOpenConversation,
+                        settings: {
+                            setSidebar(false)
+                            settingsOpen = true
+                        },
+                        close: { setSidebar(false) }
+                    )
+                    .frame(width: width)
+                    .frame(maxHeight: .infinity)
+                    .background(LumenPalette.canvas)
+                    // A little parallax, so the sidebar seems to sit beneath the chat.
+                    .offset(x: -width * 0.3 * (1 - sidebarProgress))
+                    .allowsHitTesting(sidebarOpen)
+                    .accessibilityHidden(!sidebarOpen)
+                    .accessibilityIdentifier("sidebarPanel")
+                }
                 NavigationStack(path: $path) {
                     ChatView(
                         composer: composer,
@@ -37,10 +76,7 @@ struct RootView: View {
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         ToolbarItem(placement: .topBarLeading) {
-                            Button("Open sidebar", systemImage: "sidebar.left") {
-                                composerFocused = false
-                                sidebarOpen = true
-                            }
+                            Button("Open sidebar", systemImage: "sidebar.left") { setSidebar(true) }
                             .accessibilityIdentifier("openSidebar")
                         }
                         ToolbarItemGroup(placement: .topBarTrailing) {
@@ -86,85 +122,38 @@ struct RootView: View {
                 }
                 .allowsHitTesting(!sidebarOpen)
                 .accessibilityHidden(sidebarOpen)
+                .background(LumenPalette.canvas)
+                .shadow(color: .black.opacity(0.16 * sidebarProgress), radius: 18)
+                .offset(x: width * sidebarProgress)
 
-                if sidebarOpen {
-                    // The scrim itself is the Button's visible hit-test shape.
-                    // An invisible Text label plus a background can leave most of
-                    // the exposed area untappable with a plain SwiftUI Button.
-                    Button {
-                        sidebarOpen = false
-                    } label: {
+                if sidebarMounted {
+                    // The visible part of the chat dims, and tapping it closes the sidebar.
+                    Button { setSidebar(false) } label: {
                         Rectangle()
-                            .fill(.black.opacity(0.28))
+                            .fill(.black.opacity(0.22 * sidebarProgress))
                             .contentShape(Rectangle())
-                            .ignoresSafeArea()
                     }
                     .buttonStyle(.plain)
+                    .frame(width: max(0, geometry.size.width - width * sidebarProgress))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(sidebarOpen)
                     .accessibilityLabel("Close sidebar")
                     .accessibilityIdentifier("closeSidebar")
-                    .transition(.opacity)
-
-                    SidebarView(
-                        engine: engine,
-                        composer: composer,
-                        auth: auth,
-                        newChat: requestNewChat,
-                        search: {
-                            sidebarOpen = false
-                            path.append(.search)
-                        },
-                        openDraft: { request(.draft($0)) },
-                        open: { route in
-                            sidebarOpen = false
-                            path.append(route)
-                        },
-                        selectConversation: requestOpenConversation,
-                        settings: {
-                            sidebarOpen = false
-                            settingsOpen = true
-                        },
-                        close: { sidebarOpen = false }
-                    )
-                    .frame(width: min(geometry.size.width * 0.86, 350))
-                    .frame(maxHeight: .infinity)
-                    .background(LumenPalette.canvas)
-                    .shadow(color: .black.opacity(0.18), radius: 24, x: 8)
-                    .transition(.move(edge: .leading))
-                    .accessibilityIdentifier("sidebarPanel")
-                    .zIndex(1)
-                }
-                if !sidebarOpen && path.isEmpty {
-                    Button {
-                        composerFocused = false
-                        sidebarOpen = true
-                    } label: {
-                        Capsule()
-                            .fill(LumenPalette.accent.opacity(0.3))
-                            .frame(width: 3, height: 52)
-                            .frame(width: 18, height: 72)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Open sidebar from left edge")
-                    .accessibilityIdentifier("sidebarEdgeHandle")
-                    .frame(maxHeight: .infinity, alignment: .center)
-                    .transition(.opacity)
                 }
             }
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 24).onEnded { gesture in
-                    let horizontal = gesture.translation.width
-                    guard abs(horizontal) > abs(gesture.translation.height) * 1.3 else { return }
-                    if sidebarOpen && horizontal < -72 {
-                        sidebarOpen = false
-                    } else if !sidebarOpen && path.isEmpty
-                                && gesture.startLocation.x < 34 && horizontal > 72 {
-                        composerFocused = false
-                        sidebarOpen = true
-                    }
+            .simultaneousGesture(sidebarDrag(width: width), isEnabled: path.isEmpty || sidebarOpen)
+            .onChange(of: dragging) { _, active in
+                // A drag the system took over (a scroll, a sheet) never ends normally: settle where it is.
+                guard !active else { return }
+                Task { @MainActor in
+                    await Task.yield() // a drag that ended normally has settled in onEnded by now
+                    guard dragStart != nil else { return }
+                    dragStart = nil; dragDecided = false
+                    setSidebar(sidebarProgress > 0.5)
                 }
-            )
-            .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: sidebarOpen)
+            }
+            .sensoryFeedback(.impact(weight: .light), trigger: sidebarOpen)
         }
         .background(LumenPalette.canvas.ignoresSafeArea())
         .onChange(of: scenePhase) { _, phase in
@@ -214,6 +203,46 @@ struct RootView: View {
         }
     }
 
+    private func setSidebar(_ open: Bool) {
+        if open { composerFocused = false; sidebarMounted = true }
+        let animation: Animation? = reduceMotion ? nil : .interactiveSpring(response: 0.36, dampingFraction: 0.86)
+        withAnimation(animation, completionCriteria: .logicallyComplete) {
+            sidebarOpen = open
+            sidebarProgress = open ? 1 : 0
+        } completion: {
+            if !sidebarOpen { sidebarMounted = false }
+        }
+    }
+
+    /// A horizontal drag anywhere: right opens the sidebar, left closes it, following the finger; vertical
+    /// drags are left to the scroll views. Where it lets go (and how fast) decides open or closed.
+    private func sidebarDrag(width: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 10)
+            .updating($dragging) { _, active, _ in active = true }
+            .onChanged { gesture in
+                let dx = gesture.translation.width, dy = gesture.translation.height
+                if !dragDecided {
+                    guard max(abs(dx), abs(dy)) >= 10 else { return }
+                    dragDecided = true
+                    let horizontal = abs(dx) > abs(dy) * 1.4
+                    guard horizontal, (sidebarOpen && dx < 0) || (!sidebarOpen && dx > 0 && path.isEmpty) else { return }
+                    dragStart = sidebarProgress
+                    composerFocused = false
+                    var instant = Transaction(); instant.disablesAnimations = true
+                    withTransaction(instant) { sidebarMounted = true }
+                }
+                guard let start = dragStart else { return }
+                var instant = Transaction(); instant.disablesAnimations = true
+                withTransaction(instant) { sidebarProgress = min(1, max(0, start + dx / max(width, 1))) }
+            }
+            .onEnded { gesture in
+                defer { dragStart = nil; dragDecided = false }
+                guard let start = dragStart else { return }
+                let projected = start + gesture.predictedEndTranslation.width / max(width, 1)
+                setSidebar(projected > 0.5)
+            }
+    }
+
     private func cleanupAttachments() {
         guard composer.accountID == engine.accountID, composer.errorMessage == nil, composer.save() else { return }
         do { try engine.pruneAttachments(keepingDraftIDs: composer.attachmentReferences) }
@@ -250,7 +279,7 @@ struct RootView: View {
         }
         restoreComposer()
         guard changed else { return }
-        sidebarOpen = false; path.removeAll()
+        setSidebar(false); path.removeAll()
         let chat = engine.currentConversation
         if let model = connections.models.first(where: { $0.id == chat.selectedModelId && (chat.selectedProviderId == nil || $0.providerId == chat.selectedProviderId) }) {
             engine.selectModel(model)

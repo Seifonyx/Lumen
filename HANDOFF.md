@@ -20,11 +20,23 @@ Updated: 2026-11-10. The complete native visual Phase 2 was merged and SideStore
   - Both SideStore feeds list the SwiftUI app.
   - **It merged before its PR CI ran**: there's no branch protection, and `gh pr merge --auto` merged at once. Repo auto-merge has been switched off again. Publishing still needs main's core, four UI shards and IPA jobs (`publish` needs `verify`). Check main run 43024198820; fix forward on failure.
 - **#152 (0.4.1, base main):** a push-style sidebar that tracks the finger, with no edge tab or handle. It replaces Codex's #150, which is closed. Merge it once its CI is green on the exact head.
-- **Next in Phase 1:**
-  - Dynamic Type at accessibility sizes, and an audit of VoiceOver labels.
-  - Error copy (for example "Check it in Settings" shown while you're in Settings).
-  - Settings and Router screens on system list styles with glass toolbars.
-  - Attachment chips and a photo preview in the composer.
+- **#153 (0.4.2), stacked on #152, finishes Phase 1:**
+  - Dynamic Type everywhere (`@ScaledMetric`, no fixed font sizes).
+  - VoiceOver traits and hints.
+  - Error copy that's accurate wherever it shows.
+  - Empty-chat guidance.
+  - Two new UI tests: Accessibility XXL text, and `performAccessibilityAudit` on five screens. Shards are now 8 + 8.
+- **Release order:**
+  1. main's 0.4.0 run publishes.
+  2. Merge #152 (0.4.1) when it's green on its head.
+  3. Retarget #153 to main, update it from main, and merge it when green (0.4.2).
+- **Owner, 2026-11-11:** "Publish any update from now on without waiting for me". Merge and publish each green release, then report the next step.
+- **Phase 2 next (daily-driver parity):**
+  - Auto routing.
+  - Real Projects and Library synced with web.
+  - Memory and personalization.
+  - Share and export.
+  - Sync conflict cases.
 - Not verified on a physical iPhone.
 
 ## Standing decisions

@@ -169,7 +169,7 @@ private struct ProviderConnectionView: View {
 /// How an account's email address is shown. The simulator QA account has to use an address on the Firestore
 /// invite list (the rules are not changed for tests), so QA runs show a placeholder instead: the release
 /// screenshots are published, and must never carry a real person's address.
-enum AccountDisplay {
+@MainActor enum AccountDisplay {
     static func email(_ email: String) -> String {
         #if DEBUG && targetEnvironment(simulator)
         if DebugIntegration.enabled { return "native-qa@example.test" }

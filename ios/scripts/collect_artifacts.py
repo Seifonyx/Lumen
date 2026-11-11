@@ -40,9 +40,11 @@ def collect(source, destination, expected_commit):
             if len(inventory) != 1 or inventory[0]['profile'] != profile or inventory[0].get('shard') != shard:
                 raise ValueError(f'Simulator provenance does not match {profile}/{shard}')
             device_id = inventory[0].get('id')
-            if not device_id or device_id in seen_device_ids:
-                raise ValueError('Each isolated simulator shard needs a distinct physical simulator UUID')
-            seen_device_ids.add(device_id)
+            # A shard is one simulator on one machine: the same pair twice means a copied result.
+            placement = (inventory[0].get('runner', ''), device_id)
+            if not device_id or placement in seen_device_ids:
+                raise ValueError('Each isolated simulator shard needs its own simulator on its own runner')
+            seen_device_ids.add(placement)
             devices.extend(inventory)
             selected[profile, shard] = folder
 

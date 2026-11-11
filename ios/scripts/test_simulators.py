@@ -105,7 +105,10 @@ def main():
         else:
             device = output('xcrun', 'simctl', 'create', f'Lumen {profile}', device_type['identifier'], runtime['identifier']).strip()
         provenance.append({'profile': profile, 'shard': shard,
-                           'device': device_type['name'], 'runtime': runtime['version'], 'id': device})
+                           'device': device_type['name'], 'runtime': runtime['version'], 'id': device,
+                           # Hosted Macs come from one image, so a reused preinstalled simulator has the same
+                           # UUID on every machine; the runner tells the machines apart.
+                           'runner': os.environ.get('RUNNER_NAME', 'local')})
         (root / 'build' / 'qa-devices.json').write_text(json.dumps(provenance, indent=2) + '\n')
         result = root / 'build' / f'{profile}.xcresult'
         screenshots = root / 'build' / 'screenshots' / profile

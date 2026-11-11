@@ -9,88 +9,121 @@ struct MessageRow: View {
     let regenerate: () -> Void
     var openAttachment: ((ChatAttachment) -> Void)? = nil
     @State private var copied = false
+    @State private var copies = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private var isUser: Bool { message.role == .user }
     private var failed: Bool { if case .error = message.status { true } else { false } }
 
     var body: some View {
-        HStack(alignment: .top) {
-            if isUser { Spacer(minLength: 40) }
-            VStack(alignment: isUser ? .trailing : .leading, spacing: 10) {
-                VStack(alignment: .leading, spacing: 10) {
-                    if !isUser && message.role == .assistant {
-                        HStack(spacing: 6) {
-                            Image("LumenMark")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 11, height: 16)
-                                .accessibilityHidden(true)
-                            Text("Lumen")
-                                .font(LumenType.detail.weight(.semibold))
-                                .foregroundStyle(LumenPalette.muted)
-                        }
+        // Your messages sit in a bubble on the right; replies read as a page across the full width,
+        // with their actions underneath once they finish (as in the AI apps people already know).
+        VStack(alignment: isUser ? .trailing : .leading, spacing: 6) {
+            if let files = message.attachments, !files.isEmpty {
+                ForEach(files) { file in
+                    Button { openAttachment?(file) } label: {
+                        Label(file.name, systemImage: file.kind == .image ? "photo" : "doc")
+                            .font(.footnote.weight(.medium))
+                            .lineLimit(1)
+                            .padding(.horizontal, 12)
+                            .frame(minHeight: 44)
+                            .background(LumenPalette.elevated, in: Capsule())
                     }
-                    if let files = message.attachments, !files.isEmpty {
-                        ForEach(files) { file in
-                            Button { openAttachment?(file) } label: { Label(file.name, systemImage: file.kind == .image ? "photo" : "doc").font(.footnote) }
-                                .frame(minHeight: 44).accessibilityIdentifier("messageAttachment-" + file.id)
-                        }
-                    } else if let names = message.attachmentNames {
-                        ForEach(Array(names.enumerated()), id: \.offset) { _, name in Label(name, systemImage: "doc").font(.footnote).foregroundStyle(.secondary) }
-                    }
-                    if message.content.isEmpty && message.status == .streaming { ProgressView().accessibilityLabel("Writing a reply") }
-                    else { MessageContent(text: message.content) }
-                    if case .error(let error) = message.status { Label(error, systemImage: "exclamationmark.circle").font(.footnote).foregroundStyle(.secondary) }
-                    if message.status == .stopped { Text("Stopped").font(.caption).foregroundStyle(.secondary) }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("messageAttachment-" + file.id)
                 }
-                .padding(isUser ? 14 : 0)
-                .background(isUser ? LumenPalette.elevated : .clear, in: .rect(cornerRadius: LumenRadius.message))
-                if message.status != .streaming {
-                    HStack(spacing: 18) {
-                        if !message.content.isEmpty {
-                            Button(copied ? "Copied" : "Copy message", systemImage: copied ? "checkmark" : "doc.on.doc", action: copy)
-                                .frame(minWidth: 44, minHeight: 44)
-                                .accessibilityIdentifier("copy-" + message.id)
-                            ShareLink(item: message.content) { Label("Share message", systemImage: "square.and.arrow.up") }
-                                .frame(minWidth: 44, minHeight: 44)
-                        }
-                        if isUser {
-                            Button("Edit message", systemImage: "pencil", action: edit)
-                                .frame(minWidth: 44, minHeight: 44).disabled(!canRevise).accessibilityIdentifier("edit-" + message.id)
-                        } else if message.role == .assistant {
-                            Button(failed ? "Retry response" : "Regenerate response", systemImage: "arrow.clockwise", action: regenerate)
-                                .frame(minWidth: 44, minHeight: 44).disabled(!canRevise).accessibilityIdentifier("regenerate-" + message.id)
-                        }
-                    }
-                    .labelStyle(.iconOnly)
-                    .font(.system(size: 14))
-                    .foregroundStyle(LumenPalette.muted)
-                    .buttonStyle(.borderless)
-                    .frame(minHeight: 44)
-                    .padding(.horizontal, isUser ? 12 : 0)
+            } else if let names = message.attachmentNames {
+                ForEach(Array(names.enumerated()), id: \.offset) { _, name in
+                    Label(name, systemImage: "doc").font(.footnote).foregroundStyle(.secondary)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: isUser ? .trailing : .leading)
-            .contextMenu {
+            if isUser {
                 if !message.content.isEmpty {
-                    Button("Copy", systemImage: "doc.on.doc", action: copy)
-                    ShareLink(item: message.content)
+                    HStack(spacing: 0) {
+                        Spacer(minLength: 56)
+                        Text(message.content)
+                            .font(.body)
+                            .lineSpacing(2)
+                            .textSelection(.enabled)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 11)
+                            .background(LumenPalette.elevated, in: .rect(cornerRadius: LumenRadius.message, style: .continuous))
+                    }
                 }
-                if canRevise {
-                    if isUser { Button("Edit and resend", systemImage: "pencil", action: edit) }
-                    else if message.role == .assistant { Button(failed ? "Try again" : "Regenerate", systemImage: "arrow.clockwise", action: regenerate) }
-                }
+            } else if message.content.isEmpty && message.status == .streaming {
+                Image(systemName: "circle.fill")
+                    .font(.system(size: 12))
+                    .foregroundStyle(LumenPalette.ink)
+                    .symbolEffect(.pulse, options: .repeating, isActive: !reduceMotion)
+                    .frame(minHeight: 28)
+                    .accessibilityLabel("Writing a reply")
+            } else {
+                MessageContent(text: message.content)
             }
-            if !isUser { Spacer(minLength: 12) }
+            if case .error(let error) = message.status {
+                Label(error, systemImage: "exclamationmark.circle").font(.footnote).foregroundStyle(.secondary)
+            }
+            if message.status == .stopped { Text("Stopped").font(.caption).foregroundStyle(.secondary) }
+            if message.status != .streaming { actions }
         }
+        .frame(maxWidth: .infinity, alignment: isUser ? .trailing : .leading)
+        .contextMenu {
+            if !message.content.isEmpty {
+                Button("Copy", systemImage: "doc.on.doc", action: copy)
+                ShareLink(item: message.content)
+            }
+            if canRevise {
+                if isUser { Button("Edit and resend", systemImage: "pencil", action: edit) }
+                else if message.role == .assistant { Button(failed ? "Try again" : "Regenerate", systemImage: "arrow.clockwise", action: regenerate) }
+            }
+        }
+        .sensoryFeedback(.success, trigger: copies)
         .accessibilityIdentifier(message.role.rawValue + "Message")
     }
+
+    private var actions: some View {
+        HStack(spacing: 2) {
+            if !message.content.isEmpty {
+                Button(copied ? "Copied" : "Copy message", systemImage: copied ? "checkmark" : "doc.on.doc", action: copy)
+                    .accessibilityIdentifier("copy-" + message.id)
+            }
+            if isUser {
+                Button("Edit message", systemImage: "pencil", action: edit)
+                    .disabled(!canRevise).accessibilityIdentifier("edit-" + message.id)
+            } else if message.role == .assistant {
+                Button(failed ? "Retry response" : "Regenerate response", systemImage: "arrow.clockwise", action: regenerate)
+                    .disabled(!canRevise).accessibilityIdentifier("regenerate-" + message.id)
+                if !message.content.isEmpty {
+                    ShareLink(item: message.content) { Label("Share message", systemImage: "square.and.arrow.up") }
+                }
+            }
+        }
+        .labelStyle(.iconOnly)
+        .font(.system(size: 15, weight: .regular))
+        .foregroundStyle(LumenPalette.muted)
+        .buttonStyle(MessageActionButtonStyle())
+        .padding(.leading, isUser ? 0 : -12)
+    }
+
     private func copy() {
         UIPasteboard.general.string = message.content
         copied = true
+        copies += 1
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(2))
             copied = false
         }
+    }
+}
+
+/// Quiet icon actions under a message, each with a full 44 pt target.
+private struct MessageActionButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(width: 44, height: 44)
+            .contentShape(Rectangle())
+            .opacity(isEnabled ? (configuration.isPressed ? 0.45 : 1) : 0.35)
     }
 }
 

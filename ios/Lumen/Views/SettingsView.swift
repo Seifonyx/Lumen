@@ -19,7 +19,7 @@ struct SettingsView: View {
                         Label {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(user.displayName).font(.headline)
-                                Text(user.email).font(.subheadline).foregroundStyle(.secondary)
+                                Text(AccountDisplay.email(user.email)).font(.subheadline).foregroundStyle(.secondary)
                             }
                         } icon: { Image(systemName: "person.crop.circle.fill").font(.title) }
                         Text(sync.status).font(.footnote).foregroundStyle(.secondary)
@@ -163,5 +163,17 @@ private struct ProviderConnectionView: View {
         .confirmationDialog("Remove the \(provider.name) key from this iPhone?", isPresented: $removeConfirmation, titleVisibility: .visible) {
             Button("Remove key", role: .destructive) { connections.disconnect(provider: provider); key = "" }
         }
+    }
+}
+
+/// How an account's email address is shown. The simulator QA account has to use an address on the Firestore
+/// invite list (the rules are not changed for tests), so QA runs show a placeholder instead: the release
+/// screenshots are published, and must never carry a real person's address.
+enum AccountDisplay {
+    static func email(_ email: String) -> String {
+        #if DEBUG && targetEnvironment(simulator)
+        if DebugIntegration.enabled { return "native-qa@example.test" }
+        #endif
+        return email
     }
 }

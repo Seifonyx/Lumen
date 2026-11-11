@@ -55,18 +55,33 @@ struct RootView: View {
                                 .accessibilityIdentifier("newChat")
                                 .keyboardShortcut("n", modifiers: .command)
                         }
-                        ToolbarItemGroup(placement: .keyboard) {
-                            Spacer()
-                            Button("Hide keyboard", systemImage: "keyboard.chevron.compact.down") {
-                                composerFocused = false
+                        ToolbarItem(placement: .principal) {
+                            // The model you're talking to, as in the AI apps people know: tap to change it.
+                            Button { modelsOpen = true } label: {
+                                HStack(spacing: 4) {
+                                    Text(modelTitle)
+                                        .font(.headline)
+                                        .foregroundStyle(LumenPalette.ink)
+                                        .lineLimit(1)
+                                        .accessibilityIdentifier("compactModelLabel")
+                                    Image(systemName: "chevron.down")
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundStyle(LumenPalette.muted)
+                                }
+                                .frame(minHeight: 44)
+                                .contentShape(Rectangle())
                             }
-                            .accessibilityIdentifier("hideKeyboard")
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Model: " + (engine.selectedModel?.name ?? "Not selected"))
+                            .accessibilityHint("Opens the complete model list with full model names.")
+                            .accessibilityIdentifier("chooseModel")
                         }
                     }
                     .navigationDestination(for: WorkspaceRoute.self) { route in
-                        if route == .router { ProvidersView(connections: connections, sync: sync) }
-                        else if route == .search || route == .archive { HistorySearchView(engine: engine, initialScope: route == .archive ? .archived : .active, select: requestOpenConversation) }
-                        else { WorkspaceView(route: route) }
+                        switch route {
+                        case .router: ProvidersView(connections: connections, sync: sync)
+                        case .search, .archive: HistorySearchView(engine: engine, initialScope: route == .archive ? .archived : .active, select: requestOpenConversation)
+                        }
                     }
                 }
                 .allowsHitTesting(!sidebarOpen)
@@ -167,6 +182,7 @@ struct RootView: View {
                          })
         }
         .sheet(isPresented: $modelsOpen) { ModelSheet(engine: engine, connections: connections, sync: sync) }
+        .sensoryFeedback(.selection, trigger: engine.selectedModel?.id)
         .onAppear { _ = engine.checkpoint(); restoreComposer(); cleanupAttachments() }
         .onChange(of: inventory) { old, new in
             guard old.account == new.account, composer.accountID == new.account else { return }
@@ -184,6 +200,18 @@ struct RootView: View {
             }
             Button("Cancel", role: .cancel) { pendingDestination = nil }
         } message: { Text("This temporary conversation and its drafts will be cleared from this iPhone.") }
+    }
+
+    /// The provider's familiar name for the chosen model; the full model name is in the list and read by VoiceOver.
+    private var modelTitle: String {
+        guard let model = engine.selectedModel else { return "Choose model" }
+        switch model.providerId.lowercased() {
+        case "gemini": return "Gemini"
+        case "anthropic": return "Claude"
+        case "openai": return "OpenAI"
+        case "groq": return "Groq"
+        default: return model.name
+        }
     }
 
     private func cleanupAttachments() {

@@ -24,28 +24,18 @@ jobs:
   core:
     name: Core Swift and packaging tests
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - name: Packaging and simulator selection regressions
         run: python3 -m unittest discover -s ios/tests -v
-      # The installer verifies Swift's signature with a public key server, which is sometimes unreachable
-      # (2026-11-11). One retry after a pause avoids failing a release on that alone.
-      - id: swift
-        uses: swift-actions/setup-swift@v2
-        continue-on-error: true
-        with:
-          swift-version: '6.2'
-      - if: steps.swift.outcome == 'failure'
-        run: sleep 30
-      - if: steps.swift.outcome == 'failure'
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: '6.2'
+      # Swift's official image: no installer and no key-server lookups (setup-swift failed on those twice
+      # on 2026-11-11).
       - name: Parse SwiftUI source before expensive simulators
-        run: find ios/Lumen ios/LumenUITests -name '*.swift' -print0 | xargs -0 swiftc -frontend -parse
+        run: |
+          docker run --rm -v "$PWD:/w" -w /w swift:6.2 bash -c             "find ios/Lumen ios/LumenUITests -name '*.swift' -print0 | xargs -0 swiftc -frontend -parse"
       - name: Test native chat logic and recovery
-        run: swift test --package-path ios/LumenCore
+        run: docker run --rm -v "$PWD:/w" -w /w swift:6.2 swift test --package-path ios/LumenCore
 
   # The simulator app and its UI tests compile once per commit, here, from a warm build cache (Firebase
   # and the other packages are rebuilt only when project.yml changes); every UI shard reuses the result.

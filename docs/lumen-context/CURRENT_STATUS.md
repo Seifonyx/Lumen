@@ -15,6 +15,14 @@
 > - **Done under that approval:**
 >   - The root SideStore feed now lists the SwiftUI app; each native release updates both feeds. This is in #151.
 >   - Codex draft #150 is closed, superseded by #152 (stacked on #151): a push-style sidebar that tracks the finger, with no edge tab or handle.
+> - **Phase 2 is published** as 0.5.0 to 0.5.3 (#155 to #158), each green on PR and on main:
+>   - Projects synced with the web.
+>   - Auto routing, with fallbacks, and the model and reason shown under each reply.
+>   - Library.
+>   - Memory, About you and custom instructions, ported from the web.
+>   - Export as Markdown.
+>
+>   Not verified on the owner's iPhone. Next: the owner's iPhone check, then Phase 3 (iPhone-only features).
 > - **Native 0.4.2 is published** (2026-11-11, main `50cb2c6`, both SideStore feeds). **Phase 1 is complete** in code and CI: pinned streaming, Markdown replies, a glass composer, the model as the title, a finger-tracking push sidebar, haptics, Dynamic Type to accessibility sizes, VoiceOver, and plain errors. Not verified on the owner's iPhone. Native CI is down from about 45 to about 28 minutes (one cached build; Swift checks in Docker). Next: the owner's iPhone check, then Phase 2 (Auto routing, Projects and Library, memory, share/export).
 > - **Superseded detail:** draft PR #151 (native 0.4.0: pinned streaming, block Markdown, a glass composer, the model in the title, haptics, no placeholder routes, no real email in QA screenshots). It has not yet compiled in CI. Draft #150 (Codex, the sidebar finger-tracking drawer) is open with one failing shard.
 

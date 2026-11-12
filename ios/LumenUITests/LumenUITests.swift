@@ -81,6 +81,14 @@ final class LumenUITests: XCTestCase {
         picker.tap()
     }
 
+    /// Taps a model in the list, scrolling it into view first: in the half-height sheet a row can sit
+    /// beneath the floating search field.
+    private func tapModel(_ model: XCUIElement) {
+        XCTAssertTrue(model.waitForExistence(timeout: 10))
+        for _ in 0..<4 where !model.isHittable { app.collectionViews.firstMatch.swipeUp() }
+        model.tap()
+    }
+
     private func dismissKeyboardByTappingTheConversation() {
         // No keyboard button: tapping the conversation (or dragging it down) puts the keyboard away.
         // (A point in the window, just below the bar: "the first scroll view" can be the keyboard's own
@@ -291,9 +299,7 @@ final class LumenUITests: XCTestCase {
         app.navigationBars["Router"].buttons["BackButton"].tap()
         app.navigationBars["Settings"].buttons["Done"].tap()
         openModelPicker()
-        let model = app.buttons["model-groq-fixture-model"]
-        XCTAssertTrue(model.waitForExistence(timeout: 5))
-        model.tap()
+        tapModel(app.buttons["model-groq-fixture-model"])
         XCTAssertNotEqual(app.buttons["chooseModel"].label, "Model: Not selected", "The title must name the chosen model")
         enterDraft("Manual provider check")
         app.buttons["sendMessage"].tap()
@@ -346,7 +352,7 @@ final class LumenUITests: XCTestCase {
             XCTFail("Connected model unavailable after account sync and \(reloads) explicit refresh(es): " + app.debugDescription)
             return
         }
-        model.tap()
+        tapModel(model)
         XCTAssertTrue(app.navigationBars["Models"].waitForNonExistence(timeout: 10),
                       "Selecting a model must close the picker")
     }
@@ -377,8 +383,7 @@ final class LumenUITests: XCTestCase {
         let chips = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "previewAttachment-"))
         XCTAssertTrue(chips.element(boundBy: 1).waitForExistence(timeout: 10))
         openModelPicker()
-        let vision = app.buttons["model-groq-meta-llama/llama-4-scout-17b-16e-instruct"]
-        XCTAssertTrue(vision.waitForExistence(timeout: 10)); vision.tap()
+        tapModel(app.buttons["model-groq-meta-llama/llama-4-scout-17b-16e-instruct"])
         enterDraft("Review these native attachments")
         capture("attachment-composer")
         app.buttons["sendMessage"].tap()
@@ -721,7 +726,7 @@ final class LumenUITests: XCTestCase {
         enterDraft("NATIVE_AUTO_QUESTION")
         app.buttons["sendMessage"].tap()
         XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
-        let answeredBy = app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH 'replyModel-'")).firstMatch
+        let answeredBy = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Answered by '")).firstMatch
         XCTAssertTrue(answeredBy.waitForExistence(timeout: 5), "The reply must say which model answered")
         XCTAssertTrue(answeredBy.label.hasPrefix("Answered by "), answeredBy.label)
         XCTAssertTrue(answeredBy.label.contains(":"), "Auto's reason must be given: " + answeredBy.label)

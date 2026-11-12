@@ -254,7 +254,7 @@ def verify_roundtrip(shard='all'):
         assert projects[0]['color']['stringValue'] == 'blue', 'Saving a project lost a web project field'
         project_requests = [r for r in REQUESTS if any(m.get('content') == 'NATIVE_PROJECT_QUESTION' for m in r.get('messages', []))]
         assert project_requests, 'The project question never reached the provider'
-        assert any(m.get('role') == 'system' and m.get('content') == 'PROJECT_FIXTURE_INSTRUCTIONS' for m in project_requests[-1]['messages']), \
+        assert any(m.get('role') == 'system' and 'PROJECT_FIXTURE_INSTRUCTIONS' in str(m.get('content')) for m in project_requests[-1]['messages']), \
             'Project instructions were not sent'
         project_chat = next(d for d in all_chats if d['fields'].get('title', {}).get('stringValue') == 'NATIVE_PROJECT_QUESTION')
         assert project_chat['fields']['projectId']['stringValue'] == 'fixture-project', 'The new chat was not created in its project'

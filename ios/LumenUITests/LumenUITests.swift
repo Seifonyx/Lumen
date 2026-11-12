@@ -768,7 +768,10 @@ final class LumenUITests: XCTestCase {
         settings()
         app.buttons["personalizationSettings"].tap()
         XCTAssertTrue(app.navigationBars["Personalization"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Likes fixture tests"].waitForExistence(timeout: 15), "The saved memory is listed")
+        // Saved memories are at the end of the page; rows below the screen exist only once scrolled to.
+        let saved = app.staticTexts["Likes fixture tests"]
+        for _ in 0..<5 where !saved.exists { app.swipeUp() }
+        XCTAssertTrue(saved.waitForExistence(timeout: 15), "The saved memory is listed")
         XCTAssertTrue(app.staticTexts["Prefers metric units"].exists)
         capture("personalization")
         app.navigationBars["Personalization"].buttons.element(boundBy: 0).tap()

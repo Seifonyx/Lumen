@@ -430,10 +430,15 @@ final class LumenUITests: XCTestCase {
         launchCleanChat()
         defer { app.terminate() }
         signInAndChooseModel()
-        openSidebar()
         let target = app.buttons["history-delete-fixture"]
-        XCTAssertTrue(target.waitForExistence(timeout: 30), "The cloud chat list must load")
-        target.press(forDuration: 1)
+        // On the hosted compact simulator a touch-and-hold occasionally registers as a tap and opens the chat;
+        // reopen the sidebar and hold again (the menu itself is what this test checks).
+        for _ in 0..<3 {
+            openSidebar()
+            XCTAssertTrue(target.waitForExistence(timeout: 30), "The cloud chat list must load")
+            target.press(forDuration: 1.2)
+            if app.buttons["Delete chat"].waitForExistence(timeout: 3) { break }
+        }
         app.buttons["Delete chat"].tap()
         XCTAssertTrue(app.alerts["Delete chat?"].waitForExistence(timeout: 3))
         capture("delete-confirmation")

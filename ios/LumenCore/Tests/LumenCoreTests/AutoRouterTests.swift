@@ -49,7 +49,8 @@ private final class FlakyClient: AIStreamingClient, @unchecked Sendable {
     @Test func photosNeedAModelThatReadsImages() throws {
         let plan = try #require(AutoRouter.plan(text: "What is in this photo?", hasImage: true, conversationCharacters: 0, models: all))
         #expect(plan.model.supportsImages)
-        #expect(plan.fallbacks.allSatisfy(\.supportsImages))
+        let backupsReadImages = plan.fallbacks.allSatisfy { $0.supportsImages }
+        #expect(backupsReadImages)
         #expect(plan.reason == "reads images")
         #expect(AutoRouter.plan(text: "What is this?", hasImage: true, conversationCharacters: 0, models: [groq]) == nil)
     }

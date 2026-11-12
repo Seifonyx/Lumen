@@ -13,6 +13,14 @@
       "tintColor": "0b0b0c",
       "versions": [
         {
+          "version": "0.5.3",
+          "date": "2026-11-12",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.5.3/Lumen.ipa",
+          "size": 6981517,
+          "minOSVersion": "26.0",
+          "localizedDescription": "Share a whole chat as a Markdown file, in the same format as the web."
+        },
+        {
           "version": "0.5.2",
           "date": "2026-11-12",
           "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.5.2/Lumen.ipa",

@@ -752,6 +752,29 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
     }
 
+    func testMemoryIsUsedAndRepliesCanSaveToIt() {
+        // The account's memory and About you go with each message; a reply's hidden memory line is never shown,
+        // becomes a saved memory (checked in the emulator), and appears in Settings, where memories can be managed.
+        executionTimeAllowance = 240
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        enterDraft("Please REMEMBER_THIS_FIXTURE")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Noted for later.'")).firstMatch.waitForExistence(timeout: 15))
+        XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label CONTAINS '[['")).firstMatch.exists, "Memory lines are hidden")
+        XCTAssertTrue(app.descendants(matching: .any)["memoryUpdated"].waitForExistence(timeout: 5), "The chat says Memory updated")
+        capture("memory-updated")
+        settings()
+        app.buttons["personalizationSettings"].tap()
+        XCTAssertTrue(app.navigationBars["Personalization"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Likes fixture tests"].waitForExistence(timeout: 15), "The saved memory is listed")
+        XCTAssertTrue(app.staticTexts["Prefers metric units"].exists)
+        capture("personalization")
+        app.navigationBars["Personalization"].buttons.element(boundBy: 0).tap()
+        app.navigationBars["Settings"].buttons["Done"].tap()
+    }
+
     func testRejectedProviderKeyShowsErrorAndKeepsTheDraft() {
         launchCleanChat()
         defer { app.terminate() }

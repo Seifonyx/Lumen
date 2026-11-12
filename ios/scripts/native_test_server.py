@@ -59,7 +59,9 @@ def seed():
     result = json_request('http://127.0.0.1:19099/identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=fixture-api-key', {
         'requestUri': 'http://localhost', 'postBody': urllib.parse.urlencode({'id_token': token, 'providerId': 'google.com'}), 'returnSecureToken': True})
     uid = result['localId']
-    document(f'modelRouter/{uid}', {'groqKey': 'fixture-provider-key', 'settings': {'theme': 'dark', 'projects': [
+    document(f'modelRouter/{uid}/memory/all', {'items': {'seed-memory': {
+        'id': 'seed-memory', 'text': 'Prefers metric units', 'createdAt': 1700000000000, 'updatedAt': 1700000000000, 'source': 'manual'}}})
+    document(f'modelRouter/{uid}', {'groqKey': 'fixture-provider-key', 'settings': {'theme': 'dark', 'aboutMe': 'FIXTURE_ABOUT_ME', 'projects': [
         {'id': 'fixture-project', 'name': 'Fixture project', 'instructions': 'PROJECT_FIXTURE_INSTRUCTIONS',
          'color': 'blue', 'createdAt': 1700000000000, 'updatedAt': 1700000000000}]}})
     document(f'modelRouter/{uid}/chats/project-fixture-chat', {
@@ -154,6 +156,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Cache-Control', 'no-store')
         self.end_headers()
         tokens = ['A native ', 'streamed ', 'reply.'] if 'Stop' not in prompt else ['Partial reply. '] * 30
+        if 'REMEMBER_THIS_FIXTURE' in prompt:
+            # A reply that saves a memory, its hidden line split across tokens as a real stream would.
+            tokens = ['Noted', ' for later.', '\n[[reme', 'mber: Likes fixture ', 'tests]]']
         try:
             for token in tokens:
                 time.sleep(0.25)
@@ -221,7 +226,7 @@ def verify_roundtrip(shard='all'):
                 data = base64.b64decode(json.load(response)['fields']['data']['stringValue'])
             assert data, 'Attachment original missing'
         long_requests = [r for r in REQUESTS if any(m.get('content') == 'NATIVE_LONG_FOLLOWUP' for m in r.get('messages', []))]
-        assert long_requests and all(len(r['messages']) <= 40 for r in long_requests), 'Long context is not bounded'
+        assert long_requests and all(len([m for m in r['messages'] if m.get('role') != 'system']) <= 40 for r in long_requests), 'Long context is not bounded'
         assert any(m.get('content') == 'Long history message 179' for m in long_requests[-1]['messages']), 'Newest history missing from reply context'
         assert all(m.get('content') != 'Long history message 0' for m in long_requests[-1]['messages']), 'Oldest history was sent beyond context budget'
         with urllib.request.urlopen(urllib.request.Request(chats_url + 'long-fixture', headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
@@ -313,6 +318,19 @@ def verify_roundtrip(shard='all'):
         assert auto_reply['model']['stringValue'] == 'fixture-model', 'Auto reply lost its model'
         assert auto_reply['route']['stringValue'], 'Auto reply lost its reason'
         checks['autoRouteRecorded'] = True
+        # Memory: the request carried the saved memory and About you, and the reply's hidden line became a memory
+        # in the web's document, next to the one already there.
+        memory_requests = [r for r in REQUESTS if any('REMEMBER_THIS_FIXTURE' in str(m.get('content')) for m in r.get('messages', []))]
+        assert memory_requests, 'The memory question never reached the provider'
+        lead = memory_requests[-1]['messages'][0]
+        assert lead.get('role') == 'system' and 'Prefers metric units' in lead.get('content', '') and 'FIXTURE_ABOUT_ME' in lead.get('content', ''), \
+            'Memory and About you were not sent'
+        with urllib.request.urlopen(urllib.request.Request(url.split('/chats/')[0] + '/memory/all', headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+            saved = [v['mapValue']['fields'] for v in json.load(response)['fields']['items']['mapValue']['fields'].values()]
+        texts = [m['text']['stringValue'] for m in saved]
+        assert 'Likes fixture tests' in texts and 'Prefers metric units' in texts, texts
+        assert next(m for m in saved if m['text']['stringValue'] == 'Likes fixture tests')['source']['stringValue'] == 'chat'
+        checks['memoryRoundtrip'] = True
         checks.update({'deletedContentCleaned': True, 'revisionVersionsPreserved': True,
                        'temporaryContentAbsent': True})
     checks['providerRequests'] = len(REQUESTS)

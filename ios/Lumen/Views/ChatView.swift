@@ -173,7 +173,7 @@ struct ChatView: View {
     private func presentations(_ content: some View) -> some View {
         content
         .sensoryFeedback(.impact(weight: .light), trigger: sends)
-        .sensoryFeedback(.impact(weight: .soft), trigger: dictation.changes)
+        .sensoryFeedback(.impact(weight: .light, intensity: 0.6), trigger: dictation.changes)
         .onChange(of: handoff) { _, next in if next != nil { takeHandoff() } }
         .onAppear { takeHandoff() }
         .sensoryFeedback(.impact(weight: .medium), trigger: stops)

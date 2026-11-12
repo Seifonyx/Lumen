@@ -24,7 +24,13 @@ public struct RoutePlan: Equatable, Sendable {
 public enum AutoRouter {
     public static func analyze(text: String, hasImage: Bool, conversationCharacters: Int) -> RouteTask {
         let lower = text.lowercased()
-        func has(_ words: [String]) -> Bool { words.contains { lower.contains($0) } }
+        // Words match from the start of a word ("api" must not match "capital"), so stems such as "summar"
+        // still cover "summary" and "summarise".
+        func has(_ words: [String]) -> Bool {
+            words.contains { word in
+                lower.range(of: #"(^|[^\p{L}\p{N}])"# + NSRegularExpression.escapedPattern(for: word), options: .regularExpression) != nil
+            }
+        }
         var task = RouteTask()
         task.image = hasImage
         task.code = text.contains("```") || has(["code", "function", "bug", "error", "stack trace", "compile", "swift", "python",

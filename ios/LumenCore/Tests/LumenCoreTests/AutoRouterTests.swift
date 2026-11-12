@@ -27,6 +27,8 @@ private final class FlakyClient: AIStreamingClient, @unchecked Sendable {
     @Test func readsTheTask() {
         #expect(AutoRouter.analyze(text: "hi there", hasImage: false, conversationCharacters: 0).quick)
         #expect(AutoRouter.analyze(text: "Fix this Swift function", hasImage: false, conversationCharacters: 0).code)
+        #expect(!AutoRouter.analyze(text: "What's the capital of Peru?", hasImage: false, conversationCharacters: 0).code, "'api' inside 'capital' is not code")
+        #expect(AutoRouter.analyze(text: "Give me a summary of this", hasImage: false, conversationCharacters: 0).writing)
         #expect(AutoRouter.analyze(text: "Solve this equation step by step", hasImage: false, conversationCharacters: 0).reasoning)
         #expect(AutoRouter.analyze(text: "Write an email to my landlord", hasImage: false, conversationCharacters: 0).writing)
         #expect(AutoRouter.analyze(text: "مرحبا", hasImage: false, conversationCharacters: 0).arabic)

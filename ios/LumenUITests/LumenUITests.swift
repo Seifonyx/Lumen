@@ -835,6 +835,39 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
     }
 
+    func testAReplyKeepsGoingAfterLeavingAndNotifiesWhenDone() {
+        // As in the AI apps people know: leave Lumen while it writes, the reply finishes anyway, a notification
+        // says so, and tapping it opens the chat with the whole reply.
+        executionTimeAllowance = 300
+        launchCleanChat(["--lumen-notify-test"])
+        defer { app.terminate() }
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        signInAndChooseModel()
+        enterDraft("Stop by and notify me")
+        app.buttons["sendMessage"].tap()
+        // The first send asks permission to notify.
+        let allow = springboard.buttons["Allow"]
+        if allow.waitForExistence(timeout: 5) { allow.tap() }
+        let partial = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Partial reply.")).firstMatch
+        XCTAssertTrue(partial.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["stopStreaming"].exists, "Still writing when we leave")
+        XCUIDevice.shared.press(.home)
+        let banner = springboard.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS %@", "Partial reply.")).firstMatch
+        XCTAssertTrue(banner.waitForExistence(timeout: 30), "A notification says the reply is ready")
+        banner.tap()
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
+        XCTAssertTrue(app.buttons["Regenerate response"].firstMatch.waitForExistence(timeout: 10), "The reply finished while away")
+        XCTAssertFalse(app.staticTexts["Stopped"].exists, "Leaving did not stop the reply")
+        capture("reply-finished-in-background")
+        settings()
+        let toggle = app.switches["replyNotificationsToggle"]
+        for _ in 0..<3 where !toggle.exists { app.swipeUp() }
+        XCTAssertTrue(toggle.exists, "Notifications can be turned off in Settings")
+        for _ in 0..<3 where !app.staticTexts["Up to date"].exists { app.swipeDown() }
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
+    }
+
     func testRejectedProviderKeyShowsErrorAndKeepsTheDraft() {
         launchCleanChat()
         defer { app.terminate() }

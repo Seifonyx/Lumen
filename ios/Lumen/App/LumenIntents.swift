@@ -14,6 +14,13 @@ struct ComposerRequest: Equatable, Identifiable {
 @MainActor @Observable final class LumenRequests {
     static let shared = LumenRequests()
     var pending: ComposerRequest?
+    /// A reply notification you tapped: open that chat.
+    var openChat: ChatLink?
+}
+
+struct ChatLink: Equatable, Sendable {
+    let accountID: String
+    let chatID: String
 }
 
 struct AskLumenIntent: AppIntent {

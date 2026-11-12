@@ -35,6 +35,7 @@ import GoogleSignIn
                      connections: runtime.connections, sync: runtime.sync)
                 .environment(runtime.dictation)
                 .environment(runtime.readAloud)
+                .environment(runtime.notifier)
                 .environment(LumenRequests.shared)
                 .preferredColorScheme(preferredScheme)
                 .tint(LumenPalette.accent)

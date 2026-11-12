@@ -29,6 +29,8 @@ public struct HistoryLoadTicket: Sendable {
     /// The account's memories, newest first.
     public var memories: [Memory] = []
     /// Called when a finished reply remembers or forgets something; the cloud sync saves it.
+    /// A reply finished on its own (not stopped): the app tells you if you'd left it meanwhile.
+    @ObservationIgnored public var onReplyFinished: ((ReplyFinished) -> Void)?
     @ObservationIgnored public var onMemoryOperations: ((MemoryRules.Operations, _ chatID: String, _ projectID: String?) -> Void)?
     /// Counts replies that changed memory, so the chat can say "Memory updated".
     public private(set) var memoryUpdates = 0
@@ -523,6 +525,12 @@ public struct HistoryLoadTicket: Sendable {
             currentConversation.updatedAt = Date()
             if !isTemporary { pendingMessages[chatID, default: []].insert(replyID) }
             _ = saveCurrent()
+            if let reply = currentConversation.messages.first(where: { $0.id == replyID }) {
+                var failed = false
+                if case .error = reply.status { failed = true }
+                onReplyFinished?(ReplyFinished(accountID: account, chatID: chatID, title: currentConversation.title,
+                                               text: reply.content, failed: failed, temporary: isTemporary))
+            }
         }
         return streamingTask!
     }
@@ -751,4 +759,13 @@ public struct ReplyAttempt: Sendable, Equatable {
         if error is URLError { return true }
         return false
     }
+}
+
+public struct ReplyFinished: Equatable, Sendable {
+    public let accountID: String
+    public let chatID: String
+    public let title: String
+    public let text: String
+    public let failed: Bool
+    public let temporary: Bool
 }

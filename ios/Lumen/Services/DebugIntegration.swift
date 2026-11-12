@@ -28,6 +28,8 @@ import LumenCore
             try? Auth.auth().signOut()
             UserDefaults(suiteName: "lumen.integration")?.removePersistentDomain(forName: "lumen.integration")
             UserDefaults.standard.removeObject(forKey: "lumen.autoModel")
+            UserDefaults.standard.removeObject(forKey: "lumen.replyNotifications")
+            UserDefaults.standard.removeObject(forKey: "lumen.askedReplyNotifications")
             try? FileManager.default.removeItem(at: directory())
             let keys = KeychainProviderKeys(service: "io.github.seifonyx.lumen.integration-keys")
             for provider in AIProviderID.allCases {

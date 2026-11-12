@@ -10,6 +10,7 @@ import LumenCore
     let sync: CloudChatSync
     let dictation = Dictation()
     let readAloud = ReadAloud()
+    let notifier = ReplyNotifier()
     private var activeAccount: String?
 
     init() {
@@ -39,6 +40,7 @@ import LumenCore
         connections = ProviderConnections(keyStore: keys)
         #endif
         sync = CloudChatSync(engine: engine)
+        notifier.attach(to: engine)
         sync.receiveKeys = { [weak connections] uid, keys in
             Task { @MainActor [weak connections] in
                 #if DEBUG && targetEnvironment(simulator)

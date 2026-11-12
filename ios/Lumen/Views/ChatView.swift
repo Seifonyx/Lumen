@@ -9,6 +9,7 @@ struct ChatView: View {
     var focused: FocusState<Bool>.Binding
     @Binding var handoff: ComposerRequest?
     @Environment(Dictation.self) private var dictation
+    @Environment(ReplyNotifier.self) private var notifier
     var chooseModel: () -> Void
     var selectVersion: (Conversation) -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -481,6 +482,7 @@ struct ChatView: View {
 
     private func send() {
         dictation.stop()
+        notifier.askOnce()
         guard composerAligned, composer.save() else { return }
         if autoModel {
             // Auto: the best connected model for this message, with the next ones as fallbacks, as on the web.

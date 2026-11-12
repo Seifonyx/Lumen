@@ -71,6 +71,7 @@ SHARDS = {
         'testRejectedProviderKeyShowsErrorAndKeepsTheDraft',
         'testAutoPicksAModelForEachMessageAndSaysWhy',
         'testMemoryIsUsedAndRepliesCanSaveToIt',
+        'testAReplyKeepsGoingAfterLeavingAndNotifiesWhenDone',
     ),
 }
 

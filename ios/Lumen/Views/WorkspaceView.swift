@@ -95,7 +95,8 @@ struct ModelSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }
-        .presentationDetents([.medium, .large])
+        // Full height: on a small iPhone half a sheet showed only Auto and one model, under the search field.
+        .presentationDetents([.large])
         .presentationDragIndicator(.visible)
     }
 }

@@ -366,7 +366,7 @@ struct ChatView: View {
     private var composerBar: some View {
         // One Liquid Glass control: + for photos and files, the message, and Send (Stop while a reply is written).
         ComposerAttachments(composer: composer, engine: engine, importing: $attachmentImporting) {
-            TextField(dictation.state == .listening ? "Listening…" : "Message Lumen", text: Binding(get: { composerAligned ? composer.draft : "" }, set: { if composerAligned { composer.draft = $0 } }), axis: .vertical)
+            TextField(dictation.state == .listening ? "Listeningâ€¦" : "Message Lumen", text: Binding(get: { composerAligned ? composer.draft : "" }, set: { if composerAligned { composer.draft = $0 } }), axis: .vertical)
                 .disabled(!composerAligned)
                 // At accessibility text sizes a few lines already fill the screen: the bar stops growing
                 // at three and scrolls inside, so the conversation stays visible.

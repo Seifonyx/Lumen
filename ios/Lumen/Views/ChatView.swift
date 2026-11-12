@@ -185,48 +185,54 @@ struct ChatView: View {
             }
         }
         .sheet(item: $previewAttachment) { AttachmentPreview(file: $0) }
-        .sheet(isPresented: $versionPickerOpen) {
-            NavigationStack {
-                List {
-                    ForEach(Array(versions.enumerated()), id: \.element.id) { index, chat in
-                        Button {
-                            versionPickerOpen = false
-                            selectVersion(chat)
-                        } label: {
-                            HStack(spacing: 12) {
-                                Label("Version \(index + 1) · \(chat.revisionLabel ?? "Original")", systemImage: "clock.arrow.circlepath")
-                                    .font(LumenType.row)
-                                Spacer()
-                                if chat.id == engine.currentConversation.id {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(LumenPalette.accent)
-                                        .accessibilityLabel("Selected version")
-                                }
-                            }
-                            .frame(minHeight: 44)
-                        }
-                        .accessibilityIdentifier("version-" + chat.id)
-                    }
-                }
-                .scrollContentBackground(.hidden)
-                .background(LumenPalette.canvas)
-                .navigationTitle("Versions")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { versionPickerOpen = false }
-                    }
-                }
-            }
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
-        }
+        .sheet(isPresented: $versionPickerOpen) { versionPicker }
         .onChange(of: engine.accountID) { _, _ in
             editingMessage = nil; previewAttachment = nil; versionPickerOpen = false
         }
         .onChange(of: engine.currentConversation.id) { _, _ in
             editingMessage = nil; previewAttachment = nil
         }
+    }
+
+    private func versionName(_ index: Int, _ chat: Conversation) -> String {
+        "Version \(index + 1) · " + (chat.revisionLabel ?? "Original")
+    }
+
+    private var versionPicker: some View {
+        NavigationStack {
+            List {
+                ForEach(Array(versions.enumerated()), id: \.element.id) { index, chat in
+                    Button {
+                        versionPickerOpen = false
+                        selectVersion(chat)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Label(versionName(index, chat), systemImage: "clock.arrow.circlepath")
+                                .font(LumenType.row)
+                            Spacer()
+                            if chat.id == engine.currentConversation.id {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(LumenPalette.accent)
+                                    .accessibilityLabel("Selected version")
+                            }
+                        }
+                        .frame(minHeight: 44)
+                    }
+                    .accessibilityIdentifier("version-" + chat.id)
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(LumenPalette.canvas)
+            .navigationTitle("Versions")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { versionPickerOpen = false }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 
     private func row(_ message: ChatMessage) -> some View {

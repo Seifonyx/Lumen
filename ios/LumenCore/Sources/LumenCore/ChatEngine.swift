@@ -188,7 +188,8 @@ public struct HistoryLoadTicket: Sendable {
         let context: ReplyContext
         do { context = try prepareReply(for: revision, model: model) }
         catch { errorMessage = error.localizedDescription; return nil }
-        let reply = ChatMessage(role: .assistant, content: "", status: .streaming)
+        var reply = ChatMessage(role: .assistant, content: "", status: .streaming)
+        reply.modelID = model.id
         revision.messages.append(reply)
         currentConversation = revision
         if !isTemporary { pendingMessages[revision.id] = Set(prefix.map(\.id)) }
@@ -197,7 +198,7 @@ public struct HistoryLoadTicket: Sendable {
             return nil
         }
         errorMessage = nil
-        return startReply(model: model, apiKey: apiKey, replyID: reply.id, context: context, fallbacks: fallbacks)
+        return startReply(model: model, apiKey: apiKey, replyID: reply.id, context: context)
     }
 
     @discardableResult public func startNewConversation(id: String? = nil, projectID: String? = nil) -> Bool {
@@ -358,7 +359,7 @@ public struct HistoryLoadTicket: Sendable {
             return nil
         }
         errorMessage = nil
-        return startReply(model: model, apiKey: apiKey, replyID: reply.id, context: context)
+        return startReply(model: model, apiKey: apiKey, replyID: reply.id, context: context, fallbacks: fallbacks)
     }
 
     /// Include old instructions without displaying them in the paged transcript. Firestore

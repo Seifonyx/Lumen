@@ -667,6 +667,44 @@ final class LumenUITests: XCTestCase {
         app.buttons["Done"].tap()
     }
 
+    func testProjectsSyncWithTheWeb() {
+        // The web's projects appear here, a chat started in one carries its instructions to the provider, and a
+        // project made on this iPhone is saved where the web keeps them (checked in the emulator afterwards).
+        executionTimeAllowance = 240
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        openSidebar()
+        let project = app.buttons["project-fixture-project"]
+        XCTAssertTrue(project.waitForExistence(timeout: 30), "The web project must appear in the sidebar")
+        XCTAssertFalse(app.buttons["history-project-fixture-chat"].exists, "A project's chats are listed inside it")
+        capture("sidebar-projects")
+        project.tap()
+        XCTAssertTrue(app.navigationBars["Fixture project"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["history-project-fixture-chat"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["projectInstructions"].label.contains("PROJECT_FIXTURE_INSTRUCTIONS"))
+        capture("project")
+        app.buttons["projectNewChat"].tap()
+        XCTAssertTrue(composer.waitForExistence(timeout: 5))
+        enterDraft("NATIVE_PROJECT_QUESTION")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+
+        openSidebar()
+        app.buttons["sidebarNewProject"].tap()
+        let name = app.textFields["projectName"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        name.tap()
+        name.typeText("Native project")
+        app.buttons["saveProject"].tap()
+        XCTAssertTrue(app.navigationBars["Native project"].waitForExistence(timeout: 15), "A new project opens once saved")
+        XCTAssertTrue(app.buttons["projectNewChat"].waitForExistence(timeout: 10))
+        capture("project-created")
+        app.navigationBars["Native project"].buttons.element(boundBy: 0).tap()
+        settings()
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
+    }
+
     func testRejectedProviderKeyShowsErrorAndKeepsTheDraft() {
         launchCleanChat()
         defer { app.terminate() }

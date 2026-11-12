@@ -59,7 +59,16 @@ def seed():
     result = json_request('http://127.0.0.1:19099/identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=fixture-api-key', {
         'requestUri': 'http://localhost', 'postBody': urllib.parse.urlencode({'id_token': token, 'providerId': 'google.com'}), 'returnSecureToken': True})
     uid = result['localId']
-    document(f'modelRouter/{uid}', {'groqKey': 'fixture-provider-key', 'settings': {'theme': 'dark'}})
+    document(f'modelRouter/{uid}', {'groqKey': 'fixture-provider-key', 'settings': {'theme': 'dark', 'projects': [
+        {'id': 'fixture-project', 'name': 'Fixture project', 'instructions': 'PROJECT_FIXTURE_INSTRUCTIONS',
+         'color': 'blue', 'createdAt': 1700000000000, 'updatedAt': 1700000000000}]}})
+    document(f'modelRouter/{uid}/chats/project-fixture-chat', {
+        'title': 'Project fixture chat', 'createdAt': 1700000000000, 'updatedAt': 1700000001000,
+        'ids': ['project-user'], 'count': 1, 'model': 'fixture-model', 'rev': 1700000001000,
+        'deleted': False, 'projectId': 'fixture-project'})
+    document(f'modelRouter/{uid}/chats/project-fixture-chat/messages/project-user', {
+        'id': 'project-user', 'role': 'user', 'text': 'A question asked in the web project', 'index': 0,
+        'createdAt': 1700000000000, 'status': 'done'})
     document(f'modelRouter/{uid}/chats/web-fixture', {
         'title': 'Web history fixture', 'createdAt': 1700000000000, 'updatedAt': 1700000001000,
         'ids': ['web-user', 'web-assistant'], 'count': 2, 'model': 'fixture-model', 'rev': 1700000001000,
@@ -228,6 +237,23 @@ def verify_roundtrip(shard='all'):
         assert managed['projectId']['stringValue'] == 'preserve-metadata-project'
         assert managed['customFutureField']['stringValue'] == 'preserve-metadata-field'
         assert [v['stringValue'] for v in managed['ids']['arrayValue']['values']] == ['metadata-user']
+        # Projects: the web project and its instructions reached the provider, the native chat was created in
+        # it, and a project created on the iPhone was added to the web's settings with everything else kept.
+        account_url = url.split('/chats/')[0]
+        with urllib.request.urlopen(urllib.request.Request(account_url, headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+            settings = json.load(response)['fields']['settings']['mapValue']['fields']
+        assert settings['theme']['stringValue'] == 'dark', 'Saving a project lost other settings'
+        projects = [p['mapValue']['fields'] for p in settings['projects']['arrayValue']['values']]
+        names = [p['name']['stringValue'] for p in projects]
+        assert names[0] == 'Fixture project' and 'Native project' in names, names
+        assert projects[0]['color']['stringValue'] == 'blue', 'Saving a project lost a web project field'
+        project_requests = [r for r in REQUESTS if any(m.get('content') == 'NATIVE_PROJECT_QUESTION' for m in r.get('messages', []))]
+        assert project_requests, 'The project question never reached the provider'
+        assert any(m.get('role') == 'system' and m.get('content') == 'PROJECT_FIXTURE_INSTRUCTIONS' for m in project_requests[-1]['messages']), \
+            'Project instructions were not sent'
+        project_chat = next(d for d in all_chats if d['fields'].get('title', {}).get('stringValue') == 'NATIVE_PROJECT_QUESTION')
+        assert project_chat['fields']['projectId']['stringValue'] == 'fixture-project', 'The new chat was not created in its project'
+        checks['projectsRoundtrip'] = True
         checks.update({'firebaseSDKRoundtrip': True, 'unknownMetadataPreserved': True,
                        'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True,
                        'attachmentRoundtrip': True, 'longHistoryPreserved': True,

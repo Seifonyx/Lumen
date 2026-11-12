@@ -5,13 +5,15 @@ public struct ChatMetadataPatch: Codable, Sendable, Equatable {
     public var title: String?
     public var pinned: Bool?
     public var archived: Bool?
-    public init(title: String? = nil, pinned: Bool? = nil, archived: Bool? = nil) {
-        id = UUID().uuidString; self.title = title; self.pinned = pinned; self.archived = archived
+    public var project: ProjectAssignment?
+    public init(title: String? = nil, pinned: Bool? = nil, archived: Bool? = nil, project: ProjectAssignment? = nil) {
+        id = UUID().uuidString; self.title = title; self.pinned = pinned; self.archived = archived; self.project = project
     }
     public func apply(to chat: inout Conversation) {
         if let title { chat.title = title }
         if let pinned { chat.pinned = pinned }
         if let archived { chat.archived = archived }
+        if let project { chat.projectId = project.projectID }
     }
 }
 

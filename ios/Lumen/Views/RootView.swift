@@ -21,7 +21,9 @@ struct RootView: View {
     @State private var discardConfirmation = false
     private struct Inventory: Equatable { let account: String; let ids: Set<String> }
     private var inventory: Inventory { Inventory(account: engine.accountID, ids: Set(engine.savedConversations.map(\.id))) }
-    private enum Destination { case new, temporary, conversation(Conversation), draft(String) }
+    private enum Destination { case new, temporary, conversation(Conversation), draft(String), newInProject(String) }
+    @State private var openProjectID: String?
+    @State private var projectEditor: ProjectEditorTarget?
     @State private var pendingDestination: Destination?
     @FocusState private var composerFocused: Bool
     @Environment(\.scenePhase) private var scenePhase
@@ -51,7 +53,15 @@ struct RootView: View {
                             setSidebar(false)
                             settingsOpen = true
                         },
-                        close: { setSidebar(false) }
+                        close: { setSidebar(false) },
+                        projects: sync.projects,
+                        signedIn: auth.currentUser != nil,
+                        openProject: { id in
+                            setSidebar(false)
+                            path.removeAll()
+                            openProjectID = id
+                        },
+                        newProject: { projectEditor = .new() }
                     )
                     .frame(width: width)
                     .frame(maxHeight: .infinity)
@@ -116,6 +126,12 @@ struct RootView: View {
                             .accessibilityIdentifier("chooseModel")
                         }
                     }
+                    .navigationDestination(item: $openProjectID) { id in
+                        ProjectView(projectID: id, engine: engine, sync: sync,
+                                    newChat: { request(.newInProject($0)) },
+                                    openChat: requestOpenConversation,
+                                    edit: { projectEditor = .edit($0) })
+                    }
                     .navigationDestination(for: WorkspaceRoute.self) { route in
                         switch route {
                         case .router: ProvidersView(connections: connections, sync: sync)
@@ -174,6 +190,13 @@ struct RootView: View {
                          })
         }
         .sheet(isPresented: $modelsOpen) { ModelSheet(engine: engine, connections: connections, sync: sync) }
+        .sheet(item: $projectEditor) { target in
+            ProjectEditorSheet(target: target, sync: sync) { id in
+                setSidebar(false)
+                path.removeAll()
+                openProjectID = id
+            }
+        }
         .sensoryFeedback(.selection, trigger: engine.selectedModel?.id)
         .onAppear { _ = engine.checkpoint(); restoreComposer(); cleanupAttachments() }
         .onChange(of: inventory) { old, new in
@@ -184,7 +207,7 @@ struct RootView: View {
         }
         .onChange(of: composer.attachmentIDs) { _, _ in cleanupAttachments() }
         .onChange(of: engine.currentConversation.id) { _, _ in restoreComposer() }
-        .onChange(of: engine.accountID) { _, _ in pendingDestination = nil; discardConfirmation = false; restoreComposer() }
+        .onChange(of: engine.accountID) { _, _ in pendingDestination = nil; discardConfirmation = false; openProjectID = nil; projectEditor = nil; restoreComposer() }
         .alert("Leave temporary chat?", isPresented: $discardConfirmation) {
             Button("Leave and clear", role: .destructive) {
                 if let destination = pendingDestination { perform(destination) }
@@ -279,10 +302,11 @@ struct RootView: View {
         case .draft(let id):
             changed = engine.savedConversations.contains(where: { $0.id == id }) ? engine.selectConversation(id: id) : engine.startNewConversation(id: id)
         case .conversation(let chat): changed = engine.selectConversation(id: chat.id)
+        case .newInProject(let id): changed = engine.startNewConversation(projectID: id)
         }
         restoreComposer()
         guard changed else { return }
-        setSidebar(false); path.removeAll()
+        setSidebar(false); path.removeAll(); openProjectID = nil
         let chat = engine.currentConversation
         if let model = connections.models.first(where: { $0.id == chat.selectedModelId && (chat.selectedProviderId == nil || $0.providerId == chat.selectedProviderId) }) {
             engine.selectModel(model)

@@ -17,6 +17,8 @@ public struct Conversation: Identifiable, Codable, Sendable, Equatable {
     /// Authoritative system instructions outside the visible history page. Kept only in the protected local cache.
     public var hydratedSystemMessages: [ChatMessage]?
     public var revisionLabel: String?
+    /// The web project this chat belongs to (`projectId` on the chat document), if any.
+    public var projectId: String?
     public let createdAt: Date
     public var updatedAt: Date
 

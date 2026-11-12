@@ -44,6 +44,7 @@ public enum WebChatCodec {
         result.lineageRootID = documentID(fields["nativeRoot"])
         result.parentConversationID = documentID(fields["nativeParent"])
         result.revisionLabel = fields["nativeVersionLabel"] as? String
+        if let project = fields["projectId"] as? String, !project.isEmpty { result.projectId = project }
         return result
     }
     public static func message(id: String, fields: [String: Any]) throws -> ChatMessage {
@@ -69,6 +70,8 @@ public enum WebChatCodec {
         if let title = patch.title { fields["title"] = title }
         if let pinned = patch.pinned { fields["pinned"] = pinned }
         if let archived = patch.archived { fields["archived"] = archived }
+        // The web treats a missing or null projectId as "no project".
+        if let project = patch.project { fields["projectId"] = project.projectID ?? NSNull() }
         return fields
     }
     public static func append(chat: Conversation, messageIDs: Set<String>, remote: [String: Any]?,
@@ -124,6 +127,7 @@ public enum WebChatCodec {
             for key in ["projectId", "assistant", "documents", "context", "repo", "tags"] {
                 if let value = sourceMetadata?[key] { metadata[key] = value }
             }
+            if metadata["projectId"] == nil, let project = chat.projectId { metadata["projectId"] = project }
             metadata["title"] = chat.title
             metadata["createdAt"] = chat.createdAt.timeIntervalSince1970 * 1000
             metadata["pinned"] = chat.pinned ?? false

@@ -19,6 +19,8 @@ public struct HistoryLoadTicket: Sendable {
     @ObservationIgnored private var temporaryVersions: [Conversation] = []
     @ObservationIgnored private var regularSelectedID: String?
     public var errorMessage: String?
+    /// Each project's instructions, by project ID, sent ahead of every message in that project's chats.
+    public var projectInstructions: [String: String] = [:]
     public private(set) var accountID = "device"
     public private(set) var pendingMessages: [String: Set<String>] = [:]
     public private(set) var pendingDeletions: Set<String> = []
@@ -109,6 +111,11 @@ public struct HistoryLoadTicket: Sendable {
         updateMetadata(id: id, patch: ChatMetadataPatch(archived: archived))
     }
 
+    /// Moves a chat (all its versions) into a project, or out of any project with nil.
+    @discardableResult public func moveConversation(id: String, toProject projectID: String?) -> Bool {
+        updateMetadata(id: id, patch: ChatMetadataPatch(project: ProjectAssignment(projectID: projectID)))
+    }
+
     private func updateMetadata(id: String, patch: ChatMetadataPatch) -> Bool {
         guard let target = savedConversations.first(where: { $0.id == id }) else { return false }
         let root = target.lineageRootID ?? target.id
@@ -171,6 +178,7 @@ public struct HistoryLoadTicket: Sendable {
         revision.selectedProviderId = model.providerId
         revision.lineageRootID = original.lineageRootID ?? original.id
         revision.parentConversationID = original.id
+        revision.projectId = original.projectId
         revision.inheritedMessageIDs = Set(prefix.map(\.id))
         revision.revisionLabel = editedText == nil ? "New response" : "Edited message"
         revision.pinned = original.pinned
@@ -192,12 +200,13 @@ public struct HistoryLoadTicket: Sendable {
         return startReply(model: model, apiKey: apiKey, replyID: reply.id, context: context)
     }
 
-    @discardableResult public func startNewConversation(id: String? = nil) -> Bool {
+    @discardableResult public func startNewConversation(id: String? = nil, projectID: String? = nil) -> Bool {
         stopStreaming()
         guard saveCurrent() else { return false }
         isTemporary = false; temporaryVersions = []; volatileAttachments = [:]
         currentConversation = Conversation(id: id ?? UUID().uuidString, selectedModelId: selectedModel?.id)
         currentConversation.selectedProviderId = selectedModel?.providerId
+        currentConversation.projectId = projectID
         contextOmittedAttachmentCount = 0
         errorMessage = nil
         return write()
@@ -362,7 +371,13 @@ public struct HistoryLoadTicket: Sendable {
                 let left = order[lhs.element.id] ?? Int.max, right = order[rhs.element.id] ?? Int.max
                 return left == right ? lhs.offset < rhs.offset : left < right
             }.map(\.element)
-        return systems + chat.messages.filter { $0.role != .system }
+        // The project's instructions lead, as on the web; they are sent, never stored in the chat.
+        var lead: [ChatMessage] = []
+        if let project = chat.projectId,
+           let instructions = projectInstructions[project]?.trimmingCharacters(in: .whitespacesAndNewlines), !instructions.isEmpty {
+            lead = [ChatMessage(id: "project-instructions-" + project, role: .system, content: instructions)]
+        }
+        return lead + systems + chat.messages.filter { $0.role != .system }
     }
 
     private struct ReplyContext {

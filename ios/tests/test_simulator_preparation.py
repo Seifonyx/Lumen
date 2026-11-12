@@ -107,11 +107,11 @@ class SimulatorSelectionTests(unittest.TestCase):
         actual = re.findall(r'    func (test\w+)\(', ui)
         assigned = [name for names in SHARDS.values() for name in names]
         self.assertEqual(len(SHARDS), 2)
-        self.assertEqual(len(actual), 16)
+        self.assertEqual(len(actual), 17)
         self.assertEqual(len(assigned), len(set(assigned)), 'a UI method cannot run twice')
         self.assertEqual(set(assigned), set(actual), 'every UI method must run on both device sizes')
         self.assertEqual({name: len(names) for name, names in SHARDS.items()},
-                         {'sync': 8, 'features': 8})
+                         {'sync': 9, 'features': 8})
 
     def test_hosted_simulator_reuse_never_touches_local_or_wrong_devices(self):
         import os

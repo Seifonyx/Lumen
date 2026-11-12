@@ -12,6 +12,15 @@ struct SidebarView: View {
     var selectConversation: (Conversation) -> Void
     var settings: () -> Void
     var close: () -> Void
+    var projects: [LumenProject] = []
+    var signedIn = false
+    var openProject: (String) -> Void = { _ in }
+    var newProject: () -> Void = {}
+    private var projectIDs: Set<String> { Set(projects.map(\.id)) }
+    /// Chats in a project are listed inside it, as on the web; a chat whose project is gone shows here.
+    private var looseConversations: [Conversation] {
+        engine.historyConversations.filter { $0.archived != true && ($0.projectId == nil || !projectIDs.contains($0.projectId!)) }
+    }
     @AccessibilityFocusState private var headingFocused: Bool
     @State private var pendingDeletion: Conversation?
     @State private var renaming: Conversation?
@@ -44,6 +53,19 @@ struct SidebarView: View {
                         .accessibilityIdentifier("sidebarNewChat")
                         .padding(.bottom, 14)
 
+                    if signedIn {
+                        LumenSectionHeader(title: "Projects")
+                            .padding(.bottom, 3)
+                        ForEach(projects) { project in
+                            row(project.name, icon: "folder") { openProject(project.id) }
+                                .accessibilityIdentifier("project-" + project.id)
+                        }
+                        row("New project", icon: "folder.badge.plus", action: newProject)
+                            .foregroundStyle(LumenPalette.muted)
+                            .accessibilityIdentifier("sidebarNewProject")
+                        Divider().padding(.vertical, 12)
+                    }
+
                     if !composer.savedDrafts.isEmpty {
                         Text("Drafts").font(LumenType.section).foregroundStyle(LumenPalette.muted).accessibilityAddTraits(.isHeader)
                         ForEach(composer.savedDrafts) { draft in
@@ -62,14 +84,14 @@ struct SidebarView: View {
                     }
                     LumenSectionHeader(title: "Conversations")
 
-                    if engine.historyConversations.allSatisfy({ $0.archived == true }) {
+                    if looseConversations.isEmpty {
                         Text("Your chats will appear here.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .padding(.top, 8)
                     } else {
                         VStack(alignment: .leading, spacing: 4) {
-                            ForEach(engine.historyConversations.filter { $0.archived != true }) { conv in
+                            ForEach(looseConversations) { conv in
                                 Button {
                                     selectConversation(conv)
                                 } label: {
@@ -104,7 +126,7 @@ struct SidebarView: View {
                                 .accessibilityHint("Opens this chat. Touch and hold for more options.")
                                 .accessibilityIdentifier("history-" + conv.id)
                                 .contextMenu {
-                                    ConversationActions(chat: conv, engine: engine, rename: { renaming = conv }, delete: { pendingDeletion = conv })
+                                    ConversationActions(chat: conv, engine: engine, projects: projects, rename: { renaming = conv }, delete: { pendingDeletion = conv })
                                 }
                             }
                         }

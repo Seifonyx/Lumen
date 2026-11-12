@@ -13,6 +13,14 @@
       "tintColor": "0b0b0c",
       "versions": [
         {
+          "version": "0.5.2",
+          "date": "2026-11-12",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.5.2/Lumen.ipa",
+          "size": 6975358,
+          "minOSVersion": "26.0",
+          "localizedDescription": "Lumen remembers what matters to you, the same memories as on the web, and follows your About you and custom instructions."
+        },
+        {
           "version": "0.5.1",
           "date": "2026-11-12",
           "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.5.1/Lumen.ipa",

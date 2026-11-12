@@ -22,29 +22,6 @@ struct PersonalizationView: View {
                 Text("Lumen remembers what you ask it to, and lasting facts you share, and uses them in every chat on the web and on this iPhone. Temporary chats never use or change memory.")
             }
             Section {
-                TextEditor(text: $draft.aboutMe)
-                    .frame(minHeight: 96)
-                    .accessibilityLabel("About you")
-                    .accessibilityIdentifier("aboutMeField")
-            } header: { Text("About you") } footer: {
-                Text("\(draft.aboutMe.count) of \(MemoryRules.maximumAboutCharacters) characters")
-            }
-            Section("Custom instructions") {
-                TextEditor(text: $draft.customInstructions)
-                    .frame(minHeight: 96)
-                    .accessibilityLabel("Custom instructions")
-                    .accessibilityIdentifier("customInstructionsField")
-            }
-            Section {
-                Button {
-                    save()
-                } label: {
-                    HStack { Text("Save"); if saving { Spacer(); ProgressView() } }
-                }
-                .disabled(saving || draft == sync.personalization || draft.aboutMe.count > MemoryRules.maximumAboutCharacters)
-                .accessibilityIdentifier("savePersonalization")
-            }
-            Section {
                 HStack {
                     TextField("Add a memory", text: $newMemory)
                         .submitLabel(.done)
@@ -72,6 +49,20 @@ struct PersonalizationView: View {
             } footer: {
                 Text("Swipe a memory to delete it.")
             }
+            Section {
+                TextEditor(text: $draft.aboutMe)
+                    .frame(minHeight: 96)
+                    .accessibilityLabel("About you")
+                    .accessibilityIdentifier("aboutMeField")
+            } header: { Text("About you") } footer: {
+                Text("\(draft.aboutMe.count) of \(MemoryRules.maximumAboutCharacters) characters")
+            }
+            Section("Custom instructions") {
+                TextEditor(text: $draft.customInstructions)
+                    .frame(minHeight: 96)
+                    .accessibilityLabel("Custom instructions")
+                    .accessibilityIdentifier("customInstructionsField")
+            }
             if let error {
                 Section { Text(error).font(.footnote).foregroundStyle(.red) }
             }
@@ -80,6 +71,16 @@ struct PersonalizationView: View {
         .background(LumenPalette.canvas)
         .navigationTitle("Personalization")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                if saving { ProgressView() }
+                else {
+                    Button("Save", action: save)
+                        .disabled(draft == sync.personalization || draft.aboutMe.count > MemoryRules.maximumAboutCharacters)
+                        .accessibilityIdentifier("savePersonalization")
+                }
+            }
+        }
         .sensoryFeedback(.success, trigger: saves)
         .onAppear {
             if !loaded { draft = sync.personalization; loaded = true }

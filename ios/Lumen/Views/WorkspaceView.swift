@@ -2,13 +2,14 @@ import SwiftUI
 import LumenCore
 
 enum WorkspaceRoute: String, CaseIterable, Identifiable, Hashable {
-    case search, archive, router
+    case search, archive, router, library
     var id: Self { self }
     var title: String {
         switch self {
         case .search: "Search"
         case .archive: "Archived chats"
         case .router: "Router"
+        case .library: "Library"
         }
     }
 }

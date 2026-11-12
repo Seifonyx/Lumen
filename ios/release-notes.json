@@ -1,13 +1,8 @@
 {
-  "title": "Projects and Auto · 0.5.0",
-  "description": "Your Lumen projects on your iPhone, in sync with the web, and Auto, which picks the best of your models for each message and says why.",
+  "title": "Library · 0.5.1",
+  "description": "Every file and photo from your chats in one place, as on the web.",
   "notes": [
-    "Projects from the web appear in the sidebar; open one to see its chats and instructions.",
-    "Start a chat inside a project and its instructions go with every message, as on the web.",
-    "Create, rename or delete projects and edit their instructions; changes appear on the web too.",
-    "Touch and hold a chat to move it into a project or out of one.",
-    "Auto, first in the model list, picks the best connected model for each message: code, writing, photos, quick questions.",
-    "If the chosen provider is at its limit or down, Auto moves to the next model it picked.",
-    "Each reply shows which model answered, and with Auto, why."
+    "Library in the sidebar gathers the files and photos from your chats; filter by photos, files or replies, or search by name or chat.",
+    "Tap a file to preview it, or touch and hold to open the chat it came from."
   ]
 }

@@ -266,7 +266,8 @@ final class LumenUITests: XCTestCase {
             XCTAssertTrue(newChatRow.waitForExistence(timeout: 5))
             XCTAssertTrue(app.buttons["sidebarSearchButton"].exists)
             // Nothing in the sidebar leads to a screen that isn't built yet; Router lives in Settings.
-            for placeholder in ["sidebar-projects", "sidebar-library", "sidebar-router", "sidebar-search", "sidebar-archive"] {
+            XCTAssertTrue(app.buttons["sidebar-library"].exists, "Library is real now, and in the sidebar")
+            for placeholder in ["sidebar-projects", "sidebar-router", "sidebar-search", "sidebar-archive"] {
                 XCTAssertFalse(app.buttons[placeholder].exists, placeholder + " must not be offered")
             }
             XCTAssertFalse(app.staticTexts["Coming in a later native update. Your existing web content stays in your account."].exists)
@@ -388,6 +389,17 @@ final class LumenUITests: XCTestCase {
         capture("attachment-composer")
         app.buttons["sendMessage"].tap()
         XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        // The Library gathers the files and photos from the chats.
+        openSidebar()
+        app.buttons["sidebar-library"].tap()
+        XCTAssertTrue(app.navigationBars["Library"].waitForExistence(timeout: 5))
+        let items = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'library-item-'"))
+        XCTAssertTrue(items.firstMatch.waitForExistence(timeout: 5), "Sent files must appear in the Library")
+        XCTAssertGreaterThanOrEqual(items.count, 2, "Both the text file and the photo")
+        app.segmentedControls.buttons["Photos"].tap()
+        XCTAssertEqual(items.count, 1, "Photos shows only the photo")
+        capture("library")
+        app.navigationBars["Library"].buttons.element(boundBy: 0).tap()
         settings()
         XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
     }

@@ -137,6 +137,10 @@ struct RootView: View {
                         switch route {
                         case .router: ProvidersView(connections: connections, sync: sync)
                         case .search, .archive: HistorySearchView(engine: engine, initialScope: route == .archive ? .archived : .active, select: requestOpenConversation)
+                        case .library:
+                            LibraryView(engine: engine) { id in
+                                if let chat = engine.savedConversations.first(where: { $0.id == id }) { requestOpenConversation(chat) }
+                            }
                         }
                     }
                 }

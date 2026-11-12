@@ -12,7 +12,8 @@ CHECKS_BY_SHARD = {
     'sync': ('firebaseSDKRoundtrip', 'unknownMetadataPreserved', 'existingMessageFieldsPreserved',
              'webOrderingPreserved', 'attachmentRoundtrip', 'longHistoryPreserved', 'metadataRoundtrip',
              'projectsRoundtrip'),
-    'features': ('deletedContentCleaned', 'revisionVersionsPreserved', 'temporaryContentAbsent', 'autoRouteRecorded'),
+    'features': ('deletedContentCleaned', 'revisionVersionsPreserved', 'temporaryContentAbsent', 'autoRouteRecorded',
+                 'memoryRoundtrip'),
 }
 # The same lists the shards run (scripts/test_simulators.py), so adding a UI test cannot desynchronise them.
 import sys

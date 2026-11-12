@@ -13,6 +13,10 @@ import LumenCore
     /// The account's projects, live from the web's settings document.
     private(set) var projects: [LumenProject] = []
     private var accountListener: ListenerRegistration?
+    private var memoryListener: ListenerRegistration?
+    /// The account's personalization and memories, live from the web's documents.
+    private(set) var personalization = Personalization()
+    private(set) var memories: [Memory] = []
     private let db: Firestore
     private let engine: ChatEngine
     private var accountID: String?
@@ -49,6 +53,13 @@ import LumenCore
         listener = nil
         accountListener?.remove()
         accountListener = nil
+        memoryListener?.remove()
+        memoryListener = nil
+        memories = []
+        personalization = Personalization()
+        engine.memories = []
+        engine.projectNames = [:]
+        engine.personalization = { var off = Personalization(); off.memory = false; return off }()
         projects = []
         engine.projectInstructions = [:]
         retryTask?.cancel(); retryTask = nil; retryState.reset()
@@ -97,12 +108,30 @@ import LumenCore
         // Projects live in the account's settings, which the web app may change at any time.
         accountListener = db.collection("modelRouter").document(userID).addSnapshotListener { [weak self] snapshot, _ in
             guard let snapshot else { return }
-            let projects = ProjectSettings.projects(from: snapshot.data()?["settings"] as? [String: Any])
+            let settings = snapshot.data()?["settings"] as? [String: Any]
+            let projects = ProjectSettings.projects(from: settings)
+            let personalization = Personalization(settings: settings)
             Task { @MainActor [weak self] in
                 guard let self, self.epoch == ticket else { return }
                 self.projects = projects
+                self.personalization = personalization
+                self.engine.personalization = personalization
                 self.engine.projectInstructions = Dictionary(projects.map { ($0.id, $0.instructions) }, uniquingKeysWith: { first, _ in first })
+                self.engine.projectNames = Dictionary(projects.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
             }
+        }
+        // Memories: one document shared by every device, as on the web.
+        memoryListener = memoryDocument(userID).addSnapshotListener { [weak self] snapshot, _ in
+            guard let snapshot else { return }
+            let memories = MemoryRules.memories(from: snapshot.data())
+            Task { @MainActor [weak self] in
+                guard let self, self.epoch == ticket else { return }
+                self.memories = memories
+                self.engine.memories = memories
+            }
+        }
+        engine.onMemoryOperations = { [weak self] operations, chatID, projectID in
+            Task { @MainActor [weak self] in await self?.apply(operations, chatID: chatID, projectID: projectID) }
         }
         Task { [weak self] in await self?.refreshKeys(ticket: ticket, userID: userID) }
         schedule()
@@ -112,25 +141,8 @@ import LumenCore
     /// transaction on the current settings, so a change made meanwhile on the web is kept, and only `projects`
     /// changes. Needs a connection: the result is shown only once it is saved.
     func saveProject(_ edit: ProjectEdit) async throws {
-        guard let accountID else { throw ProjectSaveError.signedOut }
-        let reference = db.collection("modelRouter").document(accountID)
         let now = Date().timeIntervalSince1970 * 1000
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            db.runTransaction({ @Sendable transaction, errorPointer in
-                do {
-                    let current = try transaction.getDocument(reference).data()?["settings"] as? [String: Any]
-                    let settings = try ProjectSettings.apply(edit, to: current, now: now)
-                    transaction.setData(["settings": settings, "updatedAt": FieldValue.serverTimestamp()],
-                                        forDocument: reference, mergeFields: ["settings", "updatedAt"])
-                } catch {
-                    errorPointer?.pointee = NSError(domain: "LumenProject", code: 1,
-                                                    userInfo: [NSLocalizedDescriptionKey: error.localizedDescription])
-                }
-                return nil
-            }, completion: { @Sendable _, error in
-                if let error { continuation.resume(throwing: error) } else { continuation.resume() }
-            })
-        }
+        try await updateSettings { try ProjectSettings.apply(edit, to: $0, now: now) }
         if case .delete(let id) = edit {
             // As on the web: the project's chats stay, outside any project.
             for chat in engine.savedConversations where chat.projectId == id {
@@ -438,6 +450,94 @@ import LumenCore
 }
 
 private enum RemoteChatChange: Sendable { case deleted(String), metadata(Conversation) }
+
+extension CloudChatSync {
+    private func memoryDocument(_ uid: String) -> DocumentReference {
+        db.collection("modelRouter").document(uid).collection("memory").document("all")
+    }
+
+    /// Changes the account's settings in a transaction on the current snapshot, so a change made meanwhile on the
+    /// web is kept and only what `transform` changes is written (the web replaces `settings` the same way).
+    func updateSettings(_ transform: @escaping @Sendable ([String: Any]?) throws -> [String: Any]) async throws {
+        guard let accountID else { throw ProjectSaveError.signedOut }
+        let reference = db.collection("modelRouter").document(accountID)
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+            db.runTransaction({ @Sendable transaction, errorPointer in
+                do {
+                    let current = try transaction.getDocument(reference).data()?["settings"] as? [String: Any]
+                    transaction.setData(["settings": try transform(current), "updatedAt": FieldValue.serverTimestamp()],
+                                        forDocument: reference, mergeFields: ["settings", "updatedAt"])
+                } catch {
+                    errorPointer?.pointee = NSError(domain: "LumenSettings", code: 1,
+                                                    userInfo: [NSLocalizedDescriptionKey: error.localizedDescription])
+                }
+                return nil
+            }, completion: { @Sendable _, error in
+                if let error { continuation.resume(throwing: error) } else { continuation.resume() }
+            })
+        }
+    }
+
+    func savePersonalization(_ value: Personalization) async throws {
+        try await updateSettings { value.apply(to: $0) }
+    }
+
+    /// Adds a memory you write yourself (as "manual", like the web's Memory settings).
+    func addMemory(_ text: String) async throws {
+        let text = MemoryRules.clip(text)
+        guard !text.isEmpty else { return }
+        guard let accountID else { throw ProjectSaveError.signedOut }
+        guard !memories.contains(where: { MemoryRules.same($0.text, text) }) else { return }
+        guard memories.count < MemoryRules.maximumMemories else { throw MemoryError.full }
+        let now = Date().timeIntervalSince1970 * 1000
+        let memory = Memory(text: text, createdAt: now, updatedAt: now)
+        try await memoryDocument(accountID).setData(["items": [memory.id: memory.fields]], merge: true)
+    }
+
+    func deleteMemory(_ id: String) async throws {
+        guard let accountID else { throw ProjectSaveError.signedOut }
+        try await memoryDocument(accountID).updateData(["items.\(id)": FieldValue.delete()])
+    }
+
+    /// Saves what a reply remembered and forgot, skipping near-duplicates, as the web does.
+    func apply(_ operations: MemoryRules.Operations, chatID: String, projectID: String?) async {
+        guard let accountID else { return }
+        let now = Date().timeIntervalSince1970 * 1000
+        var current = memories
+        var added: [String: Any] = [:]
+        var removed: [String] = []
+        for text in operations.forget {
+            if let match = current.first(where: { MemoryRules.same($0.text, text) }) {
+                removed.append(match.id)
+                current.removeAll { $0.id == match.id }
+            }
+        }
+        let wanted = operations.remember.map { ($0, nil as String?) } + operations.project.map { ($0, projectID) }
+        for (text, project) in wanted where current.count < MemoryRules.maximumMemories {
+            let scope = current.filter { $0.projectID == nil || $0.projectID == project }
+            guard !scope.contains(where: { MemoryRules.same($0.text, text) }) else { continue }
+            let memory = Memory(text: text, createdAt: now, updatedAt: now, source: "chat", projectID: project, chatID: chatID)
+            added[memory.id] = memory.fields
+            current.insert(memory, at: 0)
+        }
+        guard !added.isEmpty || !removed.isEmpty else { return }
+        let reference = memoryDocument(accountID)
+        let batch = db.batch()
+        if !added.isEmpty { batch.setData(["items": added], forDocument: reference, merge: true) }
+        if !removed.isEmpty {
+            var deletions: [AnyHashable: Any] = [:]
+            for id in removed { deletions["items." + id] = FieldValue.delete() }
+            batch.updateData(deletions, forDocument: reference)
+        }
+        do { try await batch.commit() }
+        catch { errorMessage = "Memory could not be saved. It will be kept once you are back online." }
+    }
+}
+
+enum MemoryError: LocalizedError {
+    case full
+    var errorDescription: String? { "Memory is full (\(MemoryRules.maximumMemories) items). Delete some to add more." }
+}
 
 enum ProjectSaveError: LocalizedError {
     case signedOut

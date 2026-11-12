@@ -58,7 +58,8 @@ struct MessageRow: View {
                     .frame(minHeight: 28)
                     .accessibilityLabel("Writing a reply")
             } else {
-                MessageContent(text: message.content)
+                // A reply's memory lines are hidden even while they are being written.
+                MessageContent(text: message.status == .streaming ? MemoryRules.hidingLines(message.content) : message.content)
             }
             if case .error(let error) = message.status {
                 Label(error, systemImage: "exclamationmark.circle").font(.footnote).foregroundStyle(.secondary)

@@ -21,6 +21,17 @@ public struct HistoryLoadTicket: Sendable {
     public var errorMessage: String?
     /// Each project's instructions, by project ID, sent ahead of every message in that project's chats.
     public var projectInstructions: [String: String] = [:]
+    /// Project names by ID, for the memory note in a project's chats.
+    public var projectNames: [String: String] = [:]
+    /// The account's personalization. Memory is off until an account's settings arrive: a device without an
+    /// account has nowhere to keep memories.
+    public var personalization: Personalization = { var value = Personalization(); value.memory = false; return value }()
+    /// The account's memories, newest first.
+    public var memories: [Memory] = []
+    /// Called when a finished reply remembers or forgets something; the cloud sync saves it.
+    @ObservationIgnored public var onMemoryOperations: ((MemoryRules.Operations, _ chatID: String, _ projectID: String?) -> Void)?
+    /// Counts replies that changed memory, so the chat can say "Memory updated".
+    public private(set) var memoryUpdates = 0
     public private(set) var accountID = "device"
     public private(set) var pendingMessages: [String: Set<String>] = [:]
     public private(set) var pendingDeletions: Set<String> = []
@@ -362,6 +373,23 @@ public struct HistoryLoadTicket: Sendable {
         return startReply(model: model, apiKey: apiKey, replyID: reply.id, context: context, fallbacks: fallbacks)
     }
 
+    /// The user's custom instructions, the project's instructions and the memory section, in the web's order.
+    func leadInstructions(for chat: Conversation) -> ChatMessage? {
+        var parts: [String] = []
+        let custom = personalization.customInstructions.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !custom.isEmpty { parts.append(custom) }
+        if let project = chat.projectId,
+           let instructions = projectInstructions[project]?.trimmingCharacters(in: .whitespacesAndNewlines), !instructions.isEmpty {
+            parts.append(instructions)
+        }
+        if personalization.memory && !isTemporary {
+            parts.append(MemoryRules.instructions(memories: memories, autoSave: personalization.memoryAuto, projectID: chat.projectId,
+                                                  projectName: chat.projectId.flatMap { projectNames[$0] }, aboutMe: personalization.aboutMe))
+        }
+        guard !parts.isEmpty else { return nil }
+        return ChatMessage(id: "lumen-instructions", role: .system, content: parts.joined(separator: "\n\n"))
+    }
+
     /// Include old instructions without displaying them in the paged transcript. Firestore
     /// does not guarantee query order, so system instructions follow authoritative IDs.
     private func messagesForContext(_ chat: Conversation) -> [ChatMessage] {
@@ -377,13 +405,7 @@ public struct HistoryLoadTicket: Sendable {
                 let left = order[lhs.element.id] ?? Int.max, right = order[rhs.element.id] ?? Int.max
                 return left == right ? lhs.offset < rhs.offset : left < right
             }.map(\.element)
-        // The project's instructions lead, as on the web; they are sent, never stored in the chat.
-        var lead: [ChatMessage] = []
-        if let project = chat.projectId,
-           let instructions = projectInstructions[project]?.trimmingCharacters(in: .whitespacesAndNewlines), !instructions.isEmpty {
-            lead = [ChatMessage(id: "project-instructions-" + project, role: .system, content: instructions)]
-        }
-        return lead + systems + chat.messages.filter { $0.role != .system }
+        return systems + chat.messages.filter { $0.role != .system }
     }
 
     private struct ReplyContext {
@@ -427,7 +449,10 @@ public struct HistoryLoadTicket: Sendable {
         let window = try ContextWindow.select(messages: candidates)
         let loadedIDs = Set(chat.messages.map(\.id) + window.messages.map(\.id))
         let unloadedCount = chat.remoteMessageIDs?.filter { !loadedIDs.contains($0) }.count ?? 0
-        return ReplyContext(messages: window.messages, omittedMessages: messages.count - window.messages.count + unloadedCount,
+        // Instructions lead every request, as on the web: added after choosing the recent messages, so a long chat
+        // never pushes them out. They are sent, never stored in the chat.
+        let lead = leadInstructions(for: chat).map { [$0] } ?? []
+        return ReplyContext(messages: lead + window.messages, omittedMessages: messages.count - window.messages.count + unloadedCount,
                             omittedAttachments: window.messages.reduce(0) { $0 + (omittedByMessage[$1.id] ?? 0) })
     }
 
@@ -475,6 +500,15 @@ public struct HistoryLoadTicket: Sendable {
                 guard owns(ticket, chatID: chatID, account: account),
                       let i = currentConversation.messages.firstIndex(where: { $0.id == replyID }) else { return }
                 currentConversation.messages[i].status = .completed
+                // The reply's hidden memory lines become saved memories, as on the web.
+                if personalization.memory && !isTemporary {
+                    let operations = MemoryRules.operations(in: currentConversation.messages[i].content)
+                    if !operations.isEmpty {
+                        currentConversation.messages[i].content = operations.text
+                        memoryUpdates += 1
+                        onMemoryOperations?(operations, chatID, currentConversation.projectId)
+                    }
+                }
             } catch {
                 guard owns(ticket, chatID: chatID, account: account),
                       let i = currentConversation.messages.firstIndex(where: { $0.id == replyID }) else { return }

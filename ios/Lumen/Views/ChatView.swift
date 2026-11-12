@@ -24,6 +24,7 @@ struct ChatView: View {
     @State private var pinScrollPending = false
     @ScaledMetric(relativeTo: .body) private var sendSize: CGFloat = 34
     @State private var sends = 0
+    @State private var memoryNoticeVisible = false
     @AppStorage("lumen.autoModel") private var autoModel = false
     private var connectedModels: [AIModel] { connections.models.filter { connections.key(for: $0) != nil } }
     private var hasModel: Bool { autoModel ? !connectedModels.isEmpty : connections.key(for: engine.selectedModel) != nil }
@@ -154,6 +155,25 @@ struct ChatView: View {
             .padding(.horizontal, 12)
             .padding(.top, 6)
             .padding(.bottom, 8)
+        }
+        .overlay(alignment: .top) {
+            if memoryNoticeVisible {
+                Label("Memory updated", systemImage: "brain.head.profile")
+                    .font(.footnote.weight(.semibold))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .glassEffect(.regular, in: .capsule)
+                    .padding(.top, 8)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .accessibilityIdentifier("memoryUpdated")
+            }
+        }
+        .onChange(of: engine.memoryUpdates) { _, _ in
+            withAnimation(reduceMotion ? nil : .snappy) { memoryNoticeVisible = true }
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(3))
+                withAnimation(reduceMotion ? nil : .snappy) { memoryNoticeVisible = false }
+            }
         }
         .sensoryFeedback(.impact(weight: .light), trigger: sends)
         .sensoryFeedback(.impact(weight: .medium), trigger: stops)

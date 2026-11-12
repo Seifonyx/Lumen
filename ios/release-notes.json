@@ -1,8 +1,10 @@
 {
-  "title": "Library · 0.5.1",
-  "description": "Every file and photo from your chats in one place, as on the web.",
+  "title": "Memory · 0.5.2",
+  "description": "Lumen remembers what matters to you, the same memories as on the web, and follows your About you and custom instructions.",
   "notes": [
-    "Library in the sidebar gathers the files and photos from your chats; filter by photos, files or replies, or search by name or chat.",
-    "Tap a file to preview it, or touch and hold to open the chat it came from."
+    "Your saved memories, About you and custom instructions now go with every chat on your iPhone, as on the web.",
+    "When you ask Lumen to remember something, or share a lasting fact, it's saved to your memory; the chat shows Memory updated.",
+    "Settings › Memory and instructions: turn memory on or off, edit About you and custom instructions, add or swipe to delete memories.",
+    "Temporary chats never use or change memory."
   ]
 }

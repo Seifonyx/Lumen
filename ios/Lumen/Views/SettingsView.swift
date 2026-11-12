@@ -42,6 +42,14 @@ struct SettingsView: View {
                         Button("Retry cloud sync") { sync.retry() }
                     }
                 }
+                if auth.currentUser != nil {
+                    Section("Personalization") {
+                        NavigationLink { PersonalizationView(sync: sync) } label: {
+                            Label("Memory and instructions", systemImage: "brain.head.profile")
+                        }
+                        .accessibilityIdentifier("personalizationSettings")
+                    }
+                }
                 Section("AI services") {
                     NavigationLink { ProvidersView(connections: connections, sync: sync) } label: {
                         Label("Router", systemImage: "arrow.triangle.branch")

@@ -69,6 +69,7 @@ SHARDS = {
         'testNewChatKeepsAnIndependentDraftAndRestoresIt',
         'testRejectedProviderKeyShowsErrorAndKeepsTheDraft',
         'testAutoPicksAModelForEachMessageAndSaysWhy',
+        'testMemoryIsUsedAndRepliesCanSaveToIt',
     ),
 }
 

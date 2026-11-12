@@ -24,6 +24,7 @@ struct RootView: View {
     private enum Destination { case new, temporary, conversation(Conversation), draft(String), newInProject(String) }
     @State private var openProjectID: String?
     @State private var projectEditor: ProjectEditorTarget?
+    @AppStorage("lumen.autoModel") private var autoModel = false
     @State private var pendingDestination: Destination?
     @FocusState private var composerFocused: Bool
     @Environment(\.scenePhase) private var scenePhase
@@ -121,7 +122,7 @@ struct RootView: View {
                             .accessibilityShowsLargeContentViewer {
                                 Label(modelTitle, systemImage: "cpu")
                             }
-                            .accessibilityLabel("Model: " + (engine.selectedModel?.name ?? "Not selected"))
+                            .accessibilityLabel("Model: " + (autoModel ? "Auto" : engine.selectedModel?.name ?? "Not selected"))
                             .accessibilityHint("Opens the complete model list with full model names.")
                             .accessibilityIdentifier("chooseModel")
                         }
@@ -219,6 +220,7 @@ struct RootView: View {
 
     /// The provider's familiar name for the chosen model; the full model name is in the list and read by VoiceOver.
     private var modelTitle: String {
+        if autoModel { return "Auto" }
         guard let model = engine.selectedModel else { return "Choose model" }
         switch model.providerId.lowercased() {
         case "gemini": return "Gemini"

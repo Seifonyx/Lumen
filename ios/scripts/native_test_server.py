@@ -302,6 +302,17 @@ def verify_roundtrip(shard='all'):
         assert any(any(isinstance(m.get('content'), str) and m['content'].startswith('Edited revision question') for m in r.get('messages', [])) for r in REQUESTS), 'Provider never received the edited prompt'
         with urllib.request.urlopen(urllib.request.Request(deleted_url + '/nativeMetadataOps', headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
             assert not json.load(response).get('documents'), 'Deleted metadata operation markers remain'
+        # Auto: the question reached the provider, and its reply was saved with the model and Auto's reason, in the
+        # web's per-message fields.
+        assert any(any(m.get('content') == 'NATIVE_AUTO_QUESTION' for m in r.get('messages', [])) for r in REQUESTS), 'Auto never sent the question'
+        auto_chat = next(d for d in all_chats if d['fields'].get('title', {}).get('stringValue') == 'NATIVE_AUTO_QUESTION')
+        auto_ids = [v['stringValue'] for v in auto_chat['fields']['ids']['arrayValue']['values']]
+        with urllib.request.urlopen(urllib.request.Request(chats_url + auto_chat['name'].rsplit('/', 1)[-1] + '/messages/' + auto_ids[-1],
+                                                           headers={'Authorization': 'Bearer owner'}), timeout=15) as response:
+            auto_reply = json.load(response)['fields']
+        assert auto_reply['model']['stringValue'] == 'fixture-model', 'Auto reply lost its model'
+        assert auto_reply['route']['stringValue'], 'Auto reply lost its reason'
+        checks['autoRouteRecorded'] = True
         checks.update({'deletedContentCleaned': True, 'revisionVersionsPreserved': True,
                        'temporaryContentAbsent': True})
     checks['providerRequests'] = len(REQUESTS)

@@ -56,10 +56,15 @@ public enum WebChatCodec {
         case "error": status = .error(fields["error"] as? String ?? "The reply could not finish.")
         default: status = .completed
         }
-        return ChatMessage(id: id, role: role, content: fields["text"] as? String ?? "",
-                           timestamp: date(fields["createdAt"]),
-                           attachmentNames: (fields["files"] as? [[String: Any]])?.compactMap { $0["name"] as? String }, status: status,
-                           attachments: (fields["files"] as? [[String: Any]])?.compactMap(ChatAttachment.web))
+        var message = ChatMessage(id: id, role: role, content: fields["text"] as? String ?? "",
+                                  timestamp: date(fields["createdAt"]),
+                                  attachmentNames: (fields["files"] as? [[String: Any]])?.compactMap { $0["name"] as? String }, status: status,
+                                  attachments: (fields["files"] as? [[String: Any]])?.compactMap(ChatAttachment.web))
+        if role == .assistant {
+            message.modelID = fields["model"] as? String
+            message.route = fields["route"] as? String
+        }
+        return message
     }
     public static func metadataPatch(_ patch: ChatMetadataPatch, remote: [String: Any]?) throws -> [String: Any] {
         guard let remote else { throw WebSyncError.conflict }
@@ -112,7 +117,8 @@ public enum WebChatCodec {
             fields.merge(["id": message.id, "role": message.role.rawValue, "text": message.content,
                           "createdAt": message.timestamp.timeIntervalSince1970 * 1000,
                           "index": index, "status": status]) { _, new in new }
-            if let model = chat.selectedModelId, fields["model"] == nil || message.sourceMessageID != nil { fields["model"] = model }
+            if let model = message.modelID ?? chat.selectedModelId, fields["model"] == nil || message.sourceMessageID != nil { fields["model"] = model }
+            if let route = message.route { fields["route"] = route }
             if case .error = message.status {} else { fields.removeValue(forKey: "error") }
             if case .error(let error) = message.status { fields["error"] = error }
             if let attachments = message.attachments, !attachments.isEmpty, fields["files"] == nil {

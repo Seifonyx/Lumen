@@ -19,9 +19,30 @@ struct ModelSheet: View {
     @Bindable var sync: CloudChatSync
     @Environment(\.dismiss) private var dismiss
     @State private var query = ""
+    @AppStorage("lumen.autoModel") private var autoModel = false
     var body: some View {
         NavigationStack {
             List {
+                if query.isEmpty && !connections.models.isEmpty {
+                    Section {
+                        Button {
+                            autoModel = true
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "sparkles").foregroundStyle(LumenPalette.accent).accessibilityHidden(true)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Auto").foregroundStyle(.primary)
+                                    Text("Picks the best of your models for each message").font(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                if autoModel { Image(systemName: "checkmark").bold().accessibilityLabel("Selected") }
+                            }
+                            .padding(.vertical, 5)
+                        }
+                        .accessibilityIdentifier("model-auto")
+                    }
+                }
                 if sync.isLoadingKeys || !connections.loading.isEmpty {
                     HStack { ProgressView(); Text("Loading your models…").foregroundStyle(.secondary) }
                 }
@@ -31,6 +52,7 @@ struct ModelSheet: View {
                         Section(provider.name) {
                             ForEach(models) { model in
                                 Button {
+                                    autoModel = false
                                     engine.selectModel(model)
                                     dismiss()
                                 } label: {
@@ -38,7 +60,7 @@ struct ModelSheet: View {
                                         Text(model.name).foregroundStyle(.primary)
                                         if model.supportsImages { Label("Images", systemImage: "photo").font(.caption).foregroundStyle(.secondary) }
                                         Spacer()
-                                        if engine.selectedModel?.id == model.id && engine.selectedModel?.providerId == model.providerId { Image(systemName: "checkmark").bold() }
+                                        if !autoModel && engine.selectedModel?.id == model.id && engine.selectedModel?.providerId == model.providerId { Image(systemName: "checkmark").bold() }
                                     }
                                     .padding(.vertical, 5)
                                 }

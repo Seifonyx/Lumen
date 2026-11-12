@@ -68,6 +68,7 @@ SHARDS = {
         'testNativeScreensInLightAndDark',
         'testNewChatKeepsAnIndependentDraftAndRestoresIt',
         'testRejectedProviderKeyShowsErrorAndKeepsTheDraft',
+        'testAutoPicksAModelForEachMessageAndSaysWhy',
     ),
 }
 

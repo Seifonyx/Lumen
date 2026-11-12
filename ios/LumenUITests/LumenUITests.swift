@@ -705,6 +705,31 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
     }
 
+    func testAutoPicksAModelForEachMessageAndSaysWhy() {
+        // Auto is the first choice in the model list; the reply says which model answered and why (and the
+        // emulator check confirms it was saved in the web's per-message fields).
+        executionTimeAllowance = 240
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        openModelPicker()
+        let auto = app.buttons["model-auto"]
+        XCTAssertTrue(auto.waitForExistence(timeout: 5), "Auto must be offered once a provider is connected")
+        auto.tap()
+        XCTAssertTrue(app.navigationBars["Models"].waitForNonExistence(timeout: 5))
+        XCTAssertEqual(app.buttons["chooseModel"].label, "Model: Auto")
+        enterDraft("NATIVE_AUTO_QUESTION")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        let answeredBy = app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH 'replyModel-'")).firstMatch
+        XCTAssertTrue(answeredBy.waitForExistence(timeout: 5), "The reply must say which model answered")
+        XCTAssertTrue(answeredBy.label.hasPrefix("Answered by "), answeredBy.label)
+        XCTAssertTrue(answeredBy.label.contains(":"), "Auto's reason must be given: " + answeredBy.label)
+        capture("auto-reply")
+        settings()
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
+    }
+
     func testRejectedProviderKeyShowsErrorAndKeepsTheDraft() {
         launchCleanChat()
         defer { app.terminate() }

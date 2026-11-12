@@ -27,6 +27,7 @@ import LumenCore
             let previousUID = Auth.auth().currentUser?.uid
             try? Auth.auth().signOut()
             UserDefaults(suiteName: "lumen.integration")?.removePersistentDomain(forName: "lumen.integration")
+            UserDefaults.standard.removeObject(forKey: "lumen.autoModel")
             try? FileManager.default.removeItem(at: directory())
             let keys = KeychainProviderKeys(service: "io.github.seifonyx.lumen.integration-keys")
             for provider in AIProviderID.allCases {

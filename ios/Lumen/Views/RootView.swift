@@ -21,7 +21,12 @@ struct RootView: View {
     @State private var discardConfirmation = false
     private struct Inventory: Equatable { let account: String; let ids: Set<String> }
     private var inventory: Inventory { Inventory(account: engine.accountID, ids: Set(engine.savedConversations.map(\.id))) }
-    private enum Destination { case new, temporary, conversation(Conversation), draft(String), newInProject(String) }
+    private enum Destination { case new, temporary, conversation(Conversation), draft(String), newInProject(String), compose(ComposerRequest) }
+    @Environment(LumenRequests.self) private var requests
+    @Environment(Dictation.self) private var dictation
+    @Environment(ReadAloud.self) private var readAloud
+    /// Siri, a Shortcut or a link's message, handed to the new chat's composer.
+    @State private var handoff: ComposerRequest?
     @State private var openProjectID: String?
     @State private var projectEditor: ProjectEditorTarget?
     @AppStorage("lumen.autoModel") private var autoModel = false
@@ -80,6 +85,7 @@ struct RootView: View {
                         connections: connections,
                         sync: sync,
                         focused: $composerFocused,
+                        handoff: $handoff,
                         chooseModel: { modelsOpen = true },
                         selectVersion: requestOpenConversation
                     )
@@ -182,7 +188,7 @@ struct RootView: View {
         .background(LumenPalette.canvas.ignoresSafeArea())
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { sync.retry() }
-            else if phase == .background { engine.stopStreaming(); _ = composer.save(); _ = engine.checkpoint() }
+            else if phase == .background { dictation.stop(); readAloud.stop(); engine.stopStreaming(); _ = composer.save(); _ = engine.checkpoint() }
         }
         .onChange(of: engine.isStreaming) { _, streaming in
             if !streaming, engine.currentConversation.historyLoaded == false { Task { await sync.loadMessages(chatID: engine.currentConversation.id) } }
@@ -203,7 +209,9 @@ struct RootView: View {
             }
         }
         .sensoryFeedback(.selection, trigger: engine.selectedModel?.id)
-        .onAppear { _ = engine.checkpoint(); restoreComposer(); cleanupAttachments() }
+        .onAppear { _ = engine.checkpoint(); restoreComposer(); cleanupAttachments(); takeRequest() }
+        .onChange(of: requests.pending) { _, _ in takeRequest() }
+        .onChange(of: auth.hasRestored) { _, _ in takeRequest() }
         .onChange(of: inventory) { old, new in
             guard old.account == new.account, composer.accountID == new.account else { return }
             let removed = old.ids.subtracting(new.ids)
@@ -212,7 +220,8 @@ struct RootView: View {
         }
         .onChange(of: composer.attachmentIDs) { _, _ in cleanupAttachments() }
         .onChange(of: engine.currentConversation.id) { _, _ in restoreComposer() }
-        .onChange(of: engine.accountID) { _, _ in pendingDestination = nil; discardConfirmation = false; openProjectID = nil; projectEditor = nil; restoreComposer() }
+        .onChange(of: engine.accountID) { _, _ in pendingDestination = nil; discardConfirmation = false; openProjectID = nil; projectEditor = nil; handoff = nil; restoreComposer(); takeRequest() }
+        .onChange(of: engine.currentConversation.id) { _, _ in readAloud.stop() }
         .alert("Leave temporary chat?", isPresented: $discardConfirmation) {
             Button("Leave and clear", role: .destructive) {
                 if let destination = pendingDestination { perform(destination) }
@@ -293,6 +302,15 @@ struct RootView: View {
 
     private func requestNewChat() { request(.new) }
 
+    /// Carries out what Siri, a Shortcut or a link asked, once the account is known (so the message goes to
+    /// the right account's new chat): close whatever is open and start a new chat with it.
+    private func takeRequest() {
+        guard auth.hasRestored, engine.accountID == (auth.currentUser?.id ?? "device"), let next = requests.pending else { return }
+        requests.pending = nil
+        settingsOpen = false; modelsOpen = false; projectEditor = nil
+        request(.compose(next))
+    }
+
     private func request(_ destination: Destination) {
         if engine.isTemporary && (composer.hasContent || !engine.currentConversation.messages.isEmpty) {
             pendingDestination = destination; discardConfirmation = true
@@ -309,6 +327,9 @@ struct RootView: View {
             changed = engine.savedConversations.contains(where: { $0.id == id }) ? engine.selectConversation(id: id) : engine.startNewConversation(id: id)
         case .conversation(let chat): changed = engine.selectConversation(id: chat.id)
         case .newInProject(let id): changed = engine.startNewConversation(projectID: id)
+        case .compose(let next):
+            changed = engine.startNewConversation()
+            if changed { handoff = next }
         }
         restoreComposer()
         guard changed else { return }

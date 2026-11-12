@@ -13,6 +13,8 @@ import Observation
 @MainActor @Observable public final class AuthEngine {
     public private(set) var currentUser: UserProfile?
     public private(set) var isLoading = false
+    /// The saved session has been restored (or found missing): the account is known.
+    public private(set) var hasRestored = false
     public var errorMessage: String?
     public var isSignedIn: Bool { currentUser != nil }
     @ObservationIgnored private let client: any AuthClient
@@ -33,6 +35,7 @@ import Observation
             }
         }
         let ticket = operation
+        defer { hasRestored = true }
         do {
             let user = try await client.restoreSession()
             guard operation == ticket else { return }

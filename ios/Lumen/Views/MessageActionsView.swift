@@ -12,6 +12,8 @@ struct MessageRow: View {
     @State private var copied = false
     @State private var copies = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(ReadAloud.self) private var readAloud
+    private var reading: Bool { readAloud.speakingID == message.id }
     private var isUser: Bool { message.role == .user }
     private var failed: Bool { if case .error = message.status { true } else { false } }
 
@@ -82,6 +84,9 @@ struct MessageRow: View {
             if !message.content.isEmpty {
                 Button("Copy", systemImage: "doc.on.doc", action: copy)
                 ShareLink(item: message.content)
+                if message.role == .assistant {
+                    Button(reading ? "Stop reading" : "Read aloud", systemImage: reading ? "stop.circle" : "speaker.wave.2", action: toggleReading)
+                }
             }
             if canRevise {
                 if isUser { Button("Edit and resend", systemImage: "pencil", action: edit) }
@@ -105,6 +110,10 @@ struct MessageRow: View {
                 Button(failed ? "Retry response" : "Regenerate response", systemImage: "arrow.clockwise", action: regenerate)
                     .disabled(!canRevise).accessibilityIdentifier("regenerate-" + message.id)
                 if !message.content.isEmpty {
+                    Button(reading ? "Stop reading" : "Read aloud", systemImage: reading ? "stop.circle" : "speaker.wave.2", action: toggleReading)
+                        .symbolEffect(.variableColor.iterative, options: .repeating, isActive: reading && !reduceMotion)
+                        .foregroundStyle(reading ? LumenPalette.accent : LumenPalette.muted)
+                        .accessibilityIdentifier("readAloud-" + message.id)
                     ShareLink(item: message.content) { Label("Share message", systemImage: "square.and.arrow.up") }
                 }
             }
@@ -115,6 +124,8 @@ struct MessageRow: View {
         .buttonStyle(MessageActionButtonStyle())
         .padding(.leading, isUser ? 0 : -12)
     }
+
+    private func toggleReading() { readAloud.toggle(id: message.id, markdown: message.content) }
 
     private func copy() {
         UIPasteboard.general.string = message.content

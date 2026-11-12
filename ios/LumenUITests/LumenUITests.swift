@@ -778,6 +778,63 @@ final class LumenUITests: XCTestCase {
         app.navigationBars["Settings"].buttons["Done"].tap()
     }
 
+    /// Opens a lumen:// link, accepting the system's "Open in Lumen?" prompt if the simulator shows one.
+    private func openLink(_ link: String) {
+        app.open(URL(string: link)!)
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        if springboard.buttons["Open"].waitForExistence(timeout: 2) { springboard.buttons["Open"].tap() }
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
+    }
+
+    private func waitForComposerText(_ text: String, _ message: String) {
+        let deadline = Date().addingTimeInterval(8)
+        while (composer.value as? String) != text && Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.2)) }
+        XCTAssertEqual(composer.value as? String, text, message)
+    }
+
+    func testVoiceSiriAndLinksStartChats() {
+        // Talk instead of typing (the simulator has no microphone, so the recogniser is simulated), hear a reply
+        // read aloud, and start chats from a lumen:// link (fills in only) and Ask Lumen (sends; the emulator
+        // check confirms what reached the provider).
+        executionTimeAllowance = 300
+        launchCleanChat(["--lumen-fake-voice"])
+        defer { app.terminate() }
+        signInAndChooseModel()
+        let mic = app.buttons["dictate"]
+        XCTAssertTrue(mic.waitForExistence(timeout: 5), "The message box offers voice input")
+        XCTAssertEqual(mic.label, "Dictate")
+        mic.tap()
+        XCTAssertTrue(app.buttons["Stop dictation"].waitForExistence(timeout: 5), "Listening shows a stop control")
+        waitForComposerText("Dictated fixture question", "What you say appears in the message")
+        capture("dictation-listening")
+        app.buttons["Stop dictation"].tap()
+        XCTAssertTrue(app.buttons["Stop dictation"].waitForNonExistence(timeout: 5))
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["Dictated fixture question"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        let read = app.buttons["Read aloud"].firstMatch
+        XCTAssertTrue(read.waitForExistence(timeout: 10), "Replies can be read aloud")
+        read.tap()
+        let stop = app.buttons["Stop reading"].firstMatch
+        XCTAssertTrue(stop.waitForExistence(timeout: 5))
+        capture("read-aloud")
+        stop.tap()
+        XCTAssertTrue(app.buttons["Read aloud"].firstMatch.waitForExistence(timeout: 5))
+        // A link opens a new chat with its message filled in, and waits for you to send it.
+        openLink("lumen://new?prompt=From%20a%20link")
+        waitForComposerText("From a link", "A link fills in a new chat's message")
+        XCTAssertFalse(app.staticTexts["Dictated fixture question"].exists, "A link starts a new chat")
+        XCTAssertTrue(app.buttons["sendMessage"].isEnabled)
+        capture("link-new-chat")
+        // Ask Lumen (Siri and Shortcuts) starts a new chat and sends the question.
+        openLink("lumen://ask?prompt=Asked%20by%20Siri&send=1")
+        XCTAssertTrue(app.staticTexts["Asked by Siri"].waitForExistence(timeout: 10), "Ask Lumen sends its question")
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        XCTAssertFalse(app.staticTexts["From a link"].exists)
+        settings()
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
+    }
+
     func testRejectedProviderKeyShowsErrorAndKeepsTheDraft() {
         launchCleanChat()
         defer { app.terminate() }

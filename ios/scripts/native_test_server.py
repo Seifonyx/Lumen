@@ -259,6 +259,14 @@ def verify_roundtrip(shard='all'):
         project_chat = next(d for d in all_chats if d['fields'].get('title', {}).get('stringValue') == 'NATIVE_PROJECT_QUESTION')
         assert project_chat['fields']['projectId']['stringValue'] == 'fixture-project', 'The new chat was not created in its project'
         checks['projectsRoundtrip'] = True
+        # Voice and Siri: the dictated message and Ask Lumen's question were sent; a lumen:// link only filled in
+        # the message and never sent it.
+        def sent(text):
+            return any(any(m.get('content') == text for m in r.get('messages', [])) for r in REQUESTS)
+        assert sent('Dictated fixture question'), 'The dictated message was never sent'
+        assert sent('Asked by Siri'), 'Ask Lumen never sent its question'
+        assert not any('From a link' in str(m.get('content')) for r in REQUESTS for m in r.get('messages', [])), 'A link sent a message'
+        checks['voiceAndShortcutsSent'] = True
         checks.update({'firebaseSDKRoundtrip': True, 'unknownMetadataPreserved': True,
                        'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True,
                        'attachmentRoundtrip': True, 'longHistoryPreserved': True,

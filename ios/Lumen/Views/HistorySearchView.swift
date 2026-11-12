@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 import LumenCore
 
 struct ConversationActions: View {
@@ -31,8 +32,26 @@ struct ConversationActions: View {
         Button(chat.archived == true ? "Unarchive" : "Archive", systemImage: "archivebox") {
             _ = engine.setArchived(id: chat.id, archived: chat.archived != true)
         }
+        if !chat.messages.isEmpty && chat.historyLoaded != false {
+            // The whole chat as a Markdown file, in the web's export format.
+            ShareLink(item: MarkdownExport(chat: chat), preview: SharePreview(chat.title)) {
+                Label("Export as Markdown", systemImage: "square.and.arrow.up")
+            }
+        }
         Button("Delete chat", systemImage: "trash", role: .destructive, action: delete)
     }
+}
+
+/// A chat shared as a .md file named after it.
+struct MarkdownExport: Transferable {
+    let chat: Conversation
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: UTType(filenameExtension: "md") ?? .plainText) { export in
+            Data(ChatExport.markdown(export.chat).utf8)
+        }
+        .suggestedFileName { $0.chatFileName }
+    }
+    var chatFileName: String { ChatExport.fileName(for: chat) }
 }
 
 struct RenameConversationSheet: View {

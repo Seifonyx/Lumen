@@ -5,6 +5,7 @@ import LumenCore
 struct MessageRow: View {
     let message: ChatMessage
     let canRevise: Bool
+    var modelName: String? = nil
     let edit: () -> Void
     let regenerate: () -> Void
     var openAttachment: ((ChatAttachment) -> Void)? = nil
@@ -63,7 +64,17 @@ struct MessageRow: View {
                 Label(error, systemImage: "exclamationmark.circle").font(.footnote).foregroundStyle(.secondary)
             }
             if message.status == .stopped { Text("Stopped").font(.caption).foregroundStyle(.secondary) }
-            if message.status != .streaming { actions }
+            if message.status != .streaming {
+                if !isUser, let modelName {
+                    // Which model answered, and why Auto chose it.
+                    Text(message.route.map { modelName + " · " + $0 } ?? modelName)
+                        .font(.caption)
+                        .foregroundStyle(LumenPalette.muted)
+                        .accessibilityLabel(message.route.map { "Answered by \(modelName): \($0)" } ?? "Answered by \(modelName)")
+                        .accessibilityIdentifier("replyModel-" + message.id)
+                }
+                actions
+            }
         }
         .frame(maxWidth: .infinity, alignment: isUser ? .trailing : .leading)
         .contextMenu {

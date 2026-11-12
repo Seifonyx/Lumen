@@ -19,10 +19,10 @@ class ArtifactCollectionTests(unittest.TestCase):
         self.checks = {
             'sync': ('firebaseSDKRoundtrip', 'unknownMetadataPreserved',
                      'existingMessageFieldsPreserved', 'webOrderingPreserved',
-                     'attachmentRoundtrip', 'longHistoryPreserved', 'metadataRoundtrip'),
-            'features': ('deletedContentCleaned', 'revisionVersionsPreserved', 'temporaryContentAbsent'),
+                     'attachmentRoundtrip', 'longHistoryPreserved', 'metadataRoundtrip', 'projectsRoundtrip'),
+            'features': ('deletedContentCleaned', 'revisionVersionsPreserved', 'temporaryContentAbsent', 'autoRouteRecorded'),
         }
-        self.counts = {'sync': 8, 'features': 8}
+        self.counts = {'sync': 9, 'features': 9}
         for profile in ('compact', 'regular'):
             for shard in ('sync', 'features'):
                 folder = self.source / f'native-ios-{self.sha}-{profile}-{shard}'

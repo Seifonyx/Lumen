@@ -4,10 +4,27 @@ import LumenCore
 struct ConversationActions: View {
     let chat: Conversation
     let engine: ChatEngine
+    var projects: [LumenProject] = []
     let rename: () -> Void
     let delete: () -> Void
     var body: some View {
         Button("Rename", systemImage: "pencil", action: rename)
+        if !projects.isEmpty {
+            Menu("Move to project", systemImage: "folder") {
+                ForEach(projects) { project in
+                    Button(project.name, systemImage: chat.projectId == project.id ? "checkmark" : "folder") {
+                        _ = engine.moveConversation(id: chat.id, toProject: project.id)
+                    }
+                    .disabled(chat.projectId == project.id)
+                }
+                if chat.projectId != nil {
+                    Divider()
+                    Button("Remove from project", systemImage: "folder.badge.minus") {
+                        _ = engine.moveConversation(id: chat.id, toProject: nil)
+                    }
+                }
+            }
+        }
         Button(chat.pinned == true ? "Unpin" : "Pin", systemImage: chat.pinned == true ? "pin.slash" : "pin") {
             _ = engine.setPinned(id: chat.id, pinned: chat.pinned != true)
         }

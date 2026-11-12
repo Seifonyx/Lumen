@@ -10,6 +10,9 @@ import LumenCore
     private(set) var status = "Saved on this iPhone"
     private(set) var keyErrorMessage: String?
     private(set) var isLoadingKeys = false
+    /// The account's projects, live from the web's settings document.
+    private(set) var projects: [LumenProject] = []
+    private var accountListener: ListenerRegistration?
     private let db: Firestore
     private let engine: ChatEngine
     private var accountID: String?
@@ -44,6 +47,10 @@ import LumenCore
         #endif
         listener?.remove()
         listener = nil
+        accountListener?.remove()
+        accountListener = nil
+        projects = []
+        engine.projectInstructions = [:]
         retryTask?.cancel(); retryTask = nil; retryState.reset()
         draining?.cancel()
         draining = nil
@@ -87,8 +94,49 @@ import LumenCore
                 if !self.engine.isStreaming, current.historyLoaded == false { await self.loadMessages(chatID: current.id) }
             }
         }
+        // Projects live in the account's settings, which the web app may change at any time.
+        accountListener = db.collection("modelRouter").document(userID).addSnapshotListener { [weak self] snapshot, _ in
+            guard let snapshot else { return }
+            let projects = ProjectSettings.projects(from: snapshot.data()?["settings"] as? [String: Any])
+            Task { @MainActor [weak self] in
+                guard let self, self.epoch == ticket else { return }
+                self.projects = projects
+                self.engine.projectInstructions = Dictionary(projects.map { ($0.id, $0.instructions) }, uniquingKeysWith: { first, _ in first })
+            }
+        }
         Task { [weak self] in await self?.refreshKeys(ticket: ticket, userID: userID) }
         schedule()
+    }
+
+    /// Creates, edits or deletes a project in the account's settings, the same place the web keeps them. Done in a
+    /// transaction on the current settings, so a change made meanwhile on the web is kept, and only `projects`
+    /// changes. Needs a connection: the result is shown only once it is saved.
+    func saveProject(_ edit: ProjectEdit) async throws {
+        guard let accountID else { throw ProjectSaveError.signedOut }
+        let reference = db.collection("modelRouter").document(accountID)
+        let now = Date().timeIntervalSince1970 * 1000
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+            db.runTransaction({ @Sendable transaction, errorPointer in
+                do {
+                    let current = try transaction.getDocument(reference).data()?["settings"] as? [String: Any]
+                    let settings = try ProjectSettings.apply(edit, to: current, now: now)
+                    transaction.setData(["settings": settings, "updatedAt": FieldValue.serverTimestamp()],
+                                        forDocument: reference, mergeFields: ["settings", "updatedAt"])
+                } catch {
+                    errorPointer?.pointee = NSError(domain: "LumenProject", code: 1,
+                                                    userInfo: [NSLocalizedDescriptionKey: error.localizedDescription])
+                }
+                return nil
+            }, completion: { @Sendable _, error in
+                if let error { continuation.resume(throwing: error) } else { continuation.resume() }
+            })
+        }
+        if case .delete(let id) = edit {
+            // As on the web: the project's chats stay, outside any project.
+            for chat in engine.savedConversations where chat.projectId == id {
+                _ = engine.moveConversation(id: chat.id, toProject: nil)
+            }
+        }
     }
 
     func retry() {
@@ -390,3 +438,8 @@ import LumenCore
 }
 
 private enum RemoteChatChange: Sendable { case deleted(String), metadata(Conversation) }
+
+enum ProjectSaveError: LocalizedError {
+    case signedOut
+    var errorDescription: String? { "Sign in to use projects; they are saved in your Lumen account." }
+}

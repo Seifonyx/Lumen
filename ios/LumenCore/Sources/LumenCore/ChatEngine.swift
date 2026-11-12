@@ -19,6 +19,8 @@ public struct HistoryLoadTicket: Sendable {
     @ObservationIgnored private var temporaryVersions: [Conversation] = []
     @ObservationIgnored private var regularSelectedID: String?
     public var errorMessage: String?
+    /// Each project's instructions, by project ID, sent ahead of every message in that project's chats.
+    public var projectInstructions: [String: String] = [:]
     public private(set) var accountID = "device"
     public private(set) var pendingMessages: [String: Set<String>] = [:]
     public private(set) var pendingDeletions: Set<String> = []
@@ -109,6 +111,11 @@ public struct HistoryLoadTicket: Sendable {
         updateMetadata(id: id, patch: ChatMetadataPatch(archived: archived))
     }
 
+    /// Moves a chat (all its versions) into a project, or out of any project with nil.
+    @discardableResult public func moveConversation(id: String, toProject projectID: String?) -> Bool {
+        updateMetadata(id: id, patch: ChatMetadataPatch(project: ProjectAssignment(projectID: projectID)))
+    }
+
     private func updateMetadata(id: String, patch: ChatMetadataPatch) -> Bool {
         guard let target = savedConversations.first(where: { $0.id == id }) else { return false }
         let root = target.lineageRootID ?? target.id
@@ -171,6 +178,7 @@ public struct HistoryLoadTicket: Sendable {
         revision.selectedProviderId = model.providerId
         revision.lineageRootID = original.lineageRootID ?? original.id
         revision.parentConversationID = original.id
+        revision.projectId = original.projectId
         revision.inheritedMessageIDs = Set(prefix.map(\.id))
         revision.revisionLabel = editedText == nil ? "New response" : "Edited message"
         revision.pinned = original.pinned
@@ -180,7 +188,8 @@ public struct HistoryLoadTicket: Sendable {
         let context: ReplyContext
         do { context = try prepareReply(for: revision, model: model) }
         catch { errorMessage = error.localizedDescription; return nil }
-        let reply = ChatMessage(role: .assistant, content: "", status: .streaming)
+        var reply = ChatMessage(role: .assistant, content: "", status: .streaming)
+        reply.modelID = model.id
         revision.messages.append(reply)
         currentConversation = revision
         if !isTemporary { pendingMessages[revision.id] = Set(prefix.map(\.id)) }
@@ -192,12 +201,13 @@ public struct HistoryLoadTicket: Sendable {
         return startReply(model: model, apiKey: apiKey, replyID: reply.id, context: context)
     }
 
-    @discardableResult public func startNewConversation(id: String? = nil) -> Bool {
+    @discardableResult public func startNewConversation(id: String? = nil, projectID: String? = nil) -> Bool {
         stopStreaming()
         guard saveCurrent() else { return false }
         isTemporary = false; temporaryVersions = []; volatileAttachments = [:]
         currentConversation = Conversation(id: id ?? UUID().uuidString, selectedModelId: selectedModel?.id)
         currentConversation.selectedProviderId = selectedModel?.providerId
+        currentConversation.projectId = projectID
         contextOmittedAttachmentCount = 0
         errorMessage = nil
         return write()
@@ -294,7 +304,10 @@ public struct HistoryLoadTicket: Sendable {
     public func cacheAttachment(_ file: ChatAttachment) throws { try attachmentStore.save(file, accountID: accountID) }
 
     /// Returns a task only after the accepted turn and outbox are durable. The caller can then clear its draft.
-    @discardableResult public func submit(prompt: String, attachmentIDs: [String] = [], apiKey: String) -> Task<Void, Never>? {
+    /// Sends a message. With Auto, `route` says why `selectedModel` was chosen and `fallbacks` are tried in order
+    /// when the chosen provider fails before replying (a rate limit, an outage, a retired model).
+    @discardableResult public func submit(prompt: String, attachmentIDs: [String] = [], apiKey: String,
+                                          fallbacks: [ReplyAttempt] = [], route: String? = nil) -> Task<Void, Never>? {
         guard !isStreaming else { return nil }
         let text = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty || !attachmentIDs.isEmpty else { return nil }
@@ -333,7 +346,9 @@ public struct HistoryLoadTicket: Sendable {
         user.attachments = files.map(\.metadata)
         next.messages[next.messages.count - 1] = user
         if text.isEmpty, let first = files.first { next.title = String(first.name.prefix(32)) }
-        let reply = ChatMessage(role: .assistant, content: "", status: .streaming)
+        var reply = ChatMessage(role: .assistant, content: "", status: .streaming)
+        reply.modelID = model.id
+        reply.route = route
         next.messages.append(reply)
         currentConversation = next
         if !isTemporary { pendingMessages[currentConversation.id, default: []].insert(user.id) }
@@ -344,7 +359,7 @@ public struct HistoryLoadTicket: Sendable {
             return nil
         }
         errorMessage = nil
-        return startReply(model: model, apiKey: apiKey, replyID: reply.id, context: context)
+        return startReply(model: model, apiKey: apiKey, replyID: reply.id, context: context, fallbacks: fallbacks)
     }
 
     /// Include old instructions without displaying them in the paged transcript. Firestore
@@ -362,7 +377,13 @@ public struct HistoryLoadTicket: Sendable {
                 let left = order[lhs.element.id] ?? Int.max, right = order[rhs.element.id] ?? Int.max
                 return left == right ? lhs.offset < rhs.offset : left < right
             }.map(\.element)
-        return systems + chat.messages.filter { $0.role != .system }
+        // The project's instructions lead, as on the web; they are sent, never stored in the chat.
+        var lead: [ChatMessage] = []
+        if let project = chat.projectId,
+           let instructions = projectInstructions[project]?.trimmingCharacters(in: .whitespacesAndNewlines), !instructions.isEmpty {
+            lead = [ChatMessage(id: "project-instructions-" + project, role: .system, content: instructions)]
+        }
+        return lead + systems + chat.messages.filter { $0.role != .system }
     }
 
     private struct ReplyContext {
@@ -410,7 +431,8 @@ public struct HistoryLoadTicket: Sendable {
                             omittedAttachments: window.messages.reduce(0) { $0 + (omittedByMessage[$1.id] ?? 0) })
     }
 
-    private func startReply(model: AIModel, apiKey: String, replyID: String, context: ReplyContext) -> Task<Void, Never> {
+    private func startReply(model: AIModel, apiKey: String, replyID: String, context: ReplyContext,
+                            fallbacks: [ReplyAttempt] = []) -> Task<Void, Never> {
         let chatID = currentConversation.id
         let account = accountID
         contextOmittedMessageCount = context.omittedMessages
@@ -422,8 +444,23 @@ public struct HistoryLoadTicket: Sendable {
             guard let self else { return }
             var checkpoint = Date.distantPast
             var replyBytes = 0
+            let attempts = [ReplyAttempt(model: model, apiKey: apiKey)] + fallbacks
+            var attempt = 0
             do {
-                let stream = try await client.stream(messages: context.messages, model: model, apiKey: apiKey)
+                var opened: AsyncThrowingStream<String, Error>?
+                while opened == nil {
+                    do {
+                        opened = try await client.stream(messages: context.messages, model: attempts[attempt].model, apiKey: attempts[attempt].apiKey)
+                    } catch where attempt + 1 < attempts.count && ReplyAttempt.isWorthRetrying(error) {
+                        // The provider failed before replying: Auto moves to the next model it chose.
+                        attempt += 1
+                        guard owns(ticket, chatID: chatID, account: account),
+                              let i = currentConversation.messages.firstIndex(where: { $0.id == replyID }) else { return }
+                        currentConversation.messages[i].modelID = attempts[attempt].model.id
+                        currentConversation.messages[i].route = "the first choice was unavailable"
+                    }
+                }
+                guard let stream = opened else { return }
                 for try await token in stream {
                     guard owns(ticket, chatID: chatID, account: account),
                           let i = currentConversation.messages.firstIndex(where: { $0.id == replyID }) else { return }
@@ -665,4 +702,19 @@ public struct HistoryLoadTicket: Sendable {
     }
 
     deinit { streamingTask?.cancel() }
+}
+
+/// One model and its key, for Auto's fallbacks.
+public struct ReplyAttempt: Sendable, Equatable {
+    public let model: AIModel
+    public let apiKey: String
+    public init(model: AIModel, apiKey: String) { self.model = model; self.apiKey = apiKey }
+
+    /// Failures another model may not have: limits, outages, a retired model, the network. A refused key or a
+    /// request the provider rejects as invalid would fail the same way again, or is the user's to fix.
+    static func isWorthRetrying(_ error: Error) -> Bool {
+        if let error = error as? ProviderRequestError, case .http(let code, _) = error { return code == 404 || code == 429 || (500...599).contains(code) }
+        if error is URLError { return true }
+        return false
+    }
 }

@@ -44,6 +44,7 @@ public enum WebChatCodec {
         result.lineageRootID = documentID(fields["nativeRoot"])
         result.parentConversationID = documentID(fields["nativeParent"])
         result.revisionLabel = fields["nativeVersionLabel"] as? String
+        if let project = fields["projectId"] as? String, !project.isEmpty { result.projectId = project }
         return result
     }
     public static func message(id: String, fields: [String: Any]) throws -> ChatMessage {
@@ -55,10 +56,15 @@ public enum WebChatCodec {
         case "error": status = .error(fields["error"] as? String ?? "The reply could not finish.")
         default: status = .completed
         }
-        return ChatMessage(id: id, role: role, content: fields["text"] as? String ?? "",
-                           timestamp: date(fields["createdAt"]),
-                           attachmentNames: (fields["files"] as? [[String: Any]])?.compactMap { $0["name"] as? String }, status: status,
-                           attachments: (fields["files"] as? [[String: Any]])?.compactMap(ChatAttachment.web))
+        var message = ChatMessage(id: id, role: role, content: fields["text"] as? String ?? "",
+                                  timestamp: date(fields["createdAt"]),
+                                  attachmentNames: (fields["files"] as? [[String: Any]])?.compactMap { $0["name"] as? String }, status: status,
+                                  attachments: (fields["files"] as? [[String: Any]])?.compactMap(ChatAttachment.web))
+        if role == .assistant {
+            message.modelID = fields["model"] as? String
+            message.route = fields["route"] as? String
+        }
+        return message
     }
     public static func metadataPatch(_ patch: ChatMetadataPatch, remote: [String: Any]?) throws -> [String: Any] {
         guard let remote else { throw WebSyncError.conflict }
@@ -69,6 +75,8 @@ public enum WebChatCodec {
         if let title = patch.title { fields["title"] = title }
         if let pinned = patch.pinned { fields["pinned"] = pinned }
         if let archived = patch.archived { fields["archived"] = archived }
+        // The web treats a missing or null projectId as "no project".
+        if let project = patch.project { fields["projectId"] = project.projectID ?? NSNull() }
         return fields
     }
     public static func append(chat: Conversation, messageIDs: Set<String>, remote: [String: Any]?,
@@ -109,7 +117,8 @@ public enum WebChatCodec {
             fields.merge(["id": message.id, "role": message.role.rawValue, "text": message.content,
                           "createdAt": message.timestamp.timeIntervalSince1970 * 1000,
                           "index": index, "status": status]) { _, new in new }
-            if let model = chat.selectedModelId, fields["model"] == nil || message.sourceMessageID != nil { fields["model"] = model }
+            if let model = message.modelID ?? chat.selectedModelId, fields["model"] == nil || message.sourceMessageID != nil { fields["model"] = model }
+            if let route = message.route { fields["route"] = route }
             if case .error = message.status {} else { fields.removeValue(forKey: "error") }
             if case .error(let error) = message.status { fields["error"] = error }
             if let attachments = message.attachments, !attachments.isEmpty, fields["files"] == nil {
@@ -124,6 +133,7 @@ public enum WebChatCodec {
             for key in ["projectId", "assistant", "documents", "context", "repo", "tags"] {
                 if let value = sourceMetadata?[key] { metadata[key] = value }
             }
+            if metadata["projectId"] == nil, let project = chat.projectId { metadata["projectId"] = project }
             metadata["title"] = chat.title
             metadata["createdAt"] = chat.createdAt.timeIntervalSince1970 * 1000
             metadata["pinned"] = chat.pinned ?? false

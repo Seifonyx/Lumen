@@ -24,6 +24,9 @@ struct ChatView: View {
     @State private var pinScrollPending = false
     @ScaledMetric(relativeTo: .body) private var sendSize: CGFloat = 34
     @State private var sends = 0
+    @AppStorage("lumen.autoModel") private var autoModel = false
+    private var connectedModels: [AIModel] { connections.models.filter { connections.key(for: $0) != nil } }
+    private var hasModel: Bool { autoModel ? !connectedModels.isEmpty : connections.key(for: engine.selectedModel) != nil }
     @State private var stops = 0
     @State private var editingMessage: ChatMessage?
     @State private var previewAttachment: ChatAttachment?
@@ -35,7 +38,7 @@ struct ChatView: View {
     private var composerAligned: Bool {
         composer.accountID == engine.accountID && composer.conversationID == engine.currentConversation.id && composer.isTemporary == engine.isTemporary
     }
-    private var canSend: Bool { composerAligned && !attachmentImporting && composer.hasContent && connections.key(for: engine.selectedModel) != nil && engine.currentConversation.historyLoaded != false }
+    private var canSend: Bool { composerAligned && !attachmentImporting && composer.hasContent && hasModel && engine.currentConversation.historyLoaded != false }
     private var messages: [ChatMessage] { engine.currentConversation.messages }
     private var pinIndex: Int? { pinnedID.flatMap { id in messages.firstIndex { $0.id == id } } }
     /// Room under the pinned exchange so your message can reach the top of the screen; none once the reply fills it.
@@ -207,7 +210,8 @@ struct ChatView: View {
     }
 
     private func row(_ message: ChatMessage) -> some View {
-        MessageRow(message: message, canRevise: canRevise, edit: {
+        MessageRow(message: message, canRevise: canRevise,
+                   modelName: message.modelID.map { id in connections.models.first { $0.id == id }?.name ?? id }, edit: {
             editingAccount = engine.accountID
             editingConversation = engine.currentConversation.id
             editingMessage = message
@@ -235,7 +239,7 @@ struct ChatView: View {
             Text("How can I help?")
                 .font(.system(.title2, design: .default, weight: .semibold))
                 .foregroundStyle(LumenPalette.ink)
-            if connections.key(for: engine.selectedModel) == nil {
+            if !hasModel {
                 Text("Connect a provider in Settings › Router, then choose a model.")
                     .font(.subheadline)
                     .foregroundStyle(LumenPalette.muted)
@@ -375,8 +379,27 @@ struct ChatView: View {
     }
 
     private func send() {
-        guard composerAligned, composer.save(), let key = connections.key(for: engine.selectedModel),
-              engine.submit(prompt: composer.draft, attachmentIDs: composer.attachmentIDs, apiKey: key) != nil else { return }
+        guard composerAligned, composer.save() else { return }
+        if autoModel {
+            // Auto: the best connected model for this message, with the next ones as fallbacks, as on the web.
+            let hasImage = composer.attachmentIDs.contains { (try? engine.attachment(id: $0))?.kind == .image }
+            let size = engine.currentConversation.messages.reduce(0) { $0 + $1.content.count }
+            let previous = engine.currentConversation.messages.last { $0.role == .assistant }?.modelID
+            guard let plan = AutoRouter.plan(text: composer.draft, hasImage: hasImage, conversationCharacters: size,
+                                             models: connectedModels, previousModelID: previous),
+                  let key = connections.key(for: plan.model) else {
+                engine.errorMessage = hasImage ? "None of your connected models can read photos. Connect one that can, or choose a model."
+                                               : "Connect a provider in Settings › Router first."
+                return
+            }
+            engine.selectModel(plan.model)
+            let fallbacks = plan.fallbacks.compactMap { model in connections.key(for: model).map { ReplyAttempt(model: model, apiKey: $0) } }
+            guard engine.submit(prompt: composer.draft, attachmentIDs: composer.attachmentIDs, apiKey: key,
+                                fallbacks: fallbacks, route: plan.reason) != nil else { return }
+        } else {
+            guard let key = connections.key(for: engine.selectedModel),
+                  engine.submit(prompt: composer.draft, attachmentIDs: composer.attachmentIDs, apiKey: key) != nil else { return }
+        }
         sends += 1
         composer.discardDraft()
     }

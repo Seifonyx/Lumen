@@ -1,13 +1,13 @@
 {
-  "title": "A native chat, rebuilt · 0.4.2",
-  "description": "Chat works like the AI apps you know: your question moves to the top, replies are formatted, one Liquid Glass chat bar, a sidebar that follows your finger, and comfortable at every text size.",
+  "title": "Projects and Auto · 0.5.0",
+  "description": "Your Lumen projects on your iPhone, in sync with the web, and Auto, which picks the best of your models for each message and says why.",
   "notes": [
-    "Sending puts your question at the top of the screen and the reply writes below it; a Latest button appears when the end is out of view.",
-    "Replies show headings, lists, quotes, tables and code blocks with Copy, all selectable.",
-    "One Liquid Glass chat bar with +, your message and Send or Stop; tap or drag the conversation to put the keyboard away.",
-    "The model is the chat's title; tap it to switch.",
-    "Swipe right anywhere and the chat slides aside to reveal the sidebar, following your finger; swipe left or tap the chat to close.",
-    "Buttons and icons grow with your text size up to the largest accessibility sizes; VoiceOver names every control.",
-    "Plain error messages, light haptics, and no placeholder screens in the sidebar."
+    "Projects from the web appear in the sidebar; open one to see its chats and instructions.",
+    "Start a chat inside a project and its instructions go with every message, as on the web.",
+    "Create, rename or delete projects and edit their instructions; changes appear on the web too.",
+    "Touch and hold a chat to move it into a project or out of one.",
+    "Auto, first in the model list, picks the best connected model for each message: code, writing, photos, quick questions.",
+    "If the chosen provider is at its limit or down, Auto moves to the next model it picked.",
+    "Each reply shows which model answered, and with Auto, why."
   ]
 }

@@ -23,6 +23,9 @@ public struct ChatMessage: Identifiable, Codable, Sendable, Equatable {
     public var attachmentNames: [String]?
     public var status: MessageStatus
     public var sourceMessageID: String?
+    /// The model that wrote this reply (the web's per-message `model`), and why Auto chose it (`route`).
+    public var modelID: String?
+    public var route: String?
 
     public init(
         id: String = UUID().uuidString,

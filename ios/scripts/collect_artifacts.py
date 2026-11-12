@@ -10,8 +10,9 @@ PROFILES = ('compact', 'regular')
 SHARDS = ('sync', 'features')
 CHECKS_BY_SHARD = {
     'sync': ('firebaseSDKRoundtrip', 'unknownMetadataPreserved', 'existingMessageFieldsPreserved',
-             'webOrderingPreserved', 'attachmentRoundtrip', 'longHistoryPreserved', 'metadataRoundtrip'),
-    'features': ('deletedContentCleaned', 'revisionVersionsPreserved', 'temporaryContentAbsent'),
+             'webOrderingPreserved', 'attachmentRoundtrip', 'longHistoryPreserved', 'metadataRoundtrip',
+             'projectsRoundtrip'),
+    'features': ('deletedContentCleaned', 'revisionVersionsPreserved', 'temporaryContentAbsent', 'autoRouteRecorded'),
 }
 # The same lists the shards run (scripts/test_simulators.py), so adding a UI test cannot desynchronise them.
 import sys

@@ -57,6 +57,7 @@ SHARDS = {
         'testComposerStaysAboveKeyboardAndDoesNotSubmitWithoutAModel',
         'testLargestTextSizeKeepsEveryChatControlUsable',
         'testAccessibilityAuditOfTheMainScreens',
+        'testProjectsSyncWithTheWeb',
     ),
     'features': (
         'testConnectedDeleteCleansTheCloudConversation',
@@ -67,6 +68,7 @@ SHARDS = {
         'testNativeScreensInLightAndDark',
         'testNewChatKeepsAnIndependentDraftAndRestoresIt',
         'testRejectedProviderKeyShowsErrorAndKeepsTheDraft',
+        'testAutoPicksAModelForEachMessageAndSaysWhy',
     ),
 }
 

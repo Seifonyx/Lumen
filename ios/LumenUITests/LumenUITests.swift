@@ -81,6 +81,14 @@ final class LumenUITests: XCTestCase {
         picker.tap()
     }
 
+    /// Taps a model in the list, scrolling it into view first: in the half-height sheet a row can sit
+    /// beneath the floating search field.
+    private func tapModel(_ model: XCUIElement) {
+        XCTAssertTrue(model.waitForExistence(timeout: 10))
+        for _ in 0..<4 where !model.isHittable { app.collectionViews.firstMatch.swipeUp() }
+        model.tap()
+    }
+
     private func dismissKeyboardByTappingTheConversation() {
         // No keyboard button: tapping the conversation (or dragging it down) puts the keyboard away.
         // (A point in the window, just below the bar: "the first scroll view" can be the keyboard's own
@@ -291,9 +299,7 @@ final class LumenUITests: XCTestCase {
         app.navigationBars["Router"].buttons["BackButton"].tap()
         app.navigationBars["Settings"].buttons["Done"].tap()
         openModelPicker()
-        let model = app.buttons["model-groq-fixture-model"]
-        XCTAssertTrue(model.waitForExistence(timeout: 5))
-        model.tap()
+        tapModel(app.buttons["model-groq-fixture-model"])
         XCTAssertNotEqual(app.buttons["chooseModel"].label, "Model: Not selected", "The title must name the chosen model")
         enterDraft("Manual provider check")
         app.buttons["sendMessage"].tap()
@@ -346,7 +352,7 @@ final class LumenUITests: XCTestCase {
             XCTFail("Connected model unavailable after account sync and \(reloads) explicit refresh(es): " + app.debugDescription)
             return
         }
-        model.tap()
+        tapModel(model)
         XCTAssertTrue(app.navigationBars["Models"].waitForNonExistence(timeout: 10),
                       "Selecting a model must close the picker")
     }
@@ -377,8 +383,7 @@ final class LumenUITests: XCTestCase {
         let chips = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "previewAttachment-"))
         XCTAssertTrue(chips.element(boundBy: 1).waitForExistence(timeout: 10))
         openModelPicker()
-        let vision = app.buttons["model-groq-meta-llama/llama-4-scout-17b-16e-instruct"]
-        XCTAssertTrue(vision.waitForExistence(timeout: 10)); vision.tap()
+        tapModel(app.buttons["model-groq-meta-llama/llama-4-scout-17b-16e-instruct"])
         enterDraft("Review these native attachments")
         capture("attachment-composer")
         app.buttons["sendMessage"].tap()
@@ -425,10 +430,15 @@ final class LumenUITests: XCTestCase {
         launchCleanChat()
         defer { app.terminate() }
         signInAndChooseModel()
-        openSidebar()
         let target = app.buttons["history-delete-fixture"]
-        XCTAssertTrue(target.waitForExistence(timeout: 30), "The cloud chat list must load")
-        target.press(forDuration: 1)
+        // On the hosted compact simulator a touch-and-hold occasionally registers as a tap and opens the chat;
+        // reopen the sidebar and hold again (the menu itself is what this test checks).
+        for _ in 0..<3 {
+            openSidebar()
+            XCTAssertTrue(target.waitForExistence(timeout: 30), "The cloud chat list must load")
+            target.press(forDuration: 1.2)
+            if app.buttons["Delete chat"].waitForExistence(timeout: 3) { break }
+        }
         app.buttons["Delete chat"].tap()
         XCTAssertTrue(app.alerts["Delete chat?"].waitForExistence(timeout: 3))
         capture("delete-confirmation")
@@ -665,6 +675,69 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Models"].waitForExistence(timeout: 5))
         try audit("models")
         app.buttons["Done"].tap()
+    }
+
+    func testProjectsSyncWithTheWeb() {
+        // The web's projects appear here, a chat started in one carries its instructions to the provider, and a
+        // project made on this iPhone is saved where the web keeps them (checked in the emulator afterwards).
+        executionTimeAllowance = 240
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        openSidebar()
+        let project = app.buttons["project-fixture-project"]
+        XCTAssertTrue(project.waitForExistence(timeout: 30), "The web project must appear in the sidebar")
+        XCTAssertFalse(app.buttons["history-project-fixture-chat"].exists, "A project's chats are listed inside it")
+        capture("sidebar-projects")
+        project.tap()
+        XCTAssertTrue(app.navigationBars["Fixture project"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["history-project-fixture-chat"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["projectInstructions"].label.contains("PROJECT_FIXTURE_INSTRUCTIONS"))
+        capture("project")
+        app.buttons["projectNewChat"].tap()
+        XCTAssertTrue(composer.waitForExistence(timeout: 5))
+        enterDraft("NATIVE_PROJECT_QUESTION")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+
+        openSidebar()
+        app.buttons["sidebarNewProject"].tap()
+        let name = app.textFields["projectName"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        name.tap()
+        name.typeText("Native project")
+        app.buttons["saveProject"].tap()
+        XCTAssertTrue(app.navigationBars["Native project"].waitForExistence(timeout: 15), "A new project opens once saved")
+        XCTAssertTrue(app.buttons["projectNewChat"].waitForExistence(timeout: 10))
+        capture("project-created")
+        app.navigationBars["Native project"].buttons.element(boundBy: 0).tap()
+        settings()
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
+    }
+
+    func testAutoPicksAModelForEachMessageAndSaysWhy() {
+        // Auto is the first choice in the model list; the reply says which model answered and why (and the
+        // emulator check confirms it was saved in the web's per-message fields).
+        executionTimeAllowance = 240
+        launchCleanChat()
+        defer { app.terminate() }
+        signInAndChooseModel()
+        openModelPicker()
+        let auto = app.buttons["model-auto"]
+        XCTAssertTrue(auto.waitForExistence(timeout: 5), "Auto must be offered once a provider is connected")
+        auto.tap()
+        XCTAssertTrue(app.navigationBars["Models"].waitForNonExistence(timeout: 5))
+        XCTAssertEqual(app.buttons["chooseModel"].label, "Model: Auto")
+        enterDraft("NATIVE_AUTO_QUESTION")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 15))
+        let answeredBy = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Answered by '")).firstMatch
+        XCTAssertTrue(answeredBy.waitForExistence(timeout: 5), "The reply must say which model answered")
+        XCTAssertTrue(answeredBy.label.hasPrefix("Answered by "), answeredBy.label)
+        XCTAssertTrue(answeredBy.label.contains(":"), "Auto's reason must be given: " + answeredBy.label)
+        capture("auto-reply")
+        settings()
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
     }
 
     func testRejectedProviderKeyShowsErrorAndKeepsTheDraft() {

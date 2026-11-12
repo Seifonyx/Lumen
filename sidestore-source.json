@@ -13,6 +13,14 @@
       "tintColor": "0b0b0c",
       "versions": [
         {
+          "version": "0.5.0",
+          "date": "2026-11-12",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.5.0/Lumen.ipa",
+          "size": 6902347,
+          "minOSVersion": "26.0",
+          "localizedDescription": "Your Lumen projects on your iPhone, in sync with the web, and Auto, which picks the best of your models for each message and says why."
+        },
+        {
           "version": "0.4.2",
           "date": "2026-11-11",
           "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.4.2/Lumen.ipa",

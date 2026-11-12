@@ -50,7 +50,10 @@ struct ChatView: View {
         return max(0, viewportHeight - tailHeight - 44)
     }
 
-    var body: some View {
+    // Split in two so the compiler can type-check it in reasonable time.
+    var body: some View { presentations(conversation) }
+
+    private var conversation: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 if messages.isEmpty && engine.currentConversation.historyLoaded != false {
@@ -129,21 +132,8 @@ struct ChatView: View {
                 if let anchor = olderAnchor { proxy.scrollTo(anchor, anchor: .top) }
                 olderAnchor = nil; loadingOlder = false
             }
-            .onChange(of: engine.currentConversation.id) { _, _ in
-                dictation.stop()
-                pinnedID = nil; pinScrollPending = false; olderAnchor = nil; loadingOlder = false; atBottom = true
-                scrollToEnd(proxy)
-            }
-            .onChange(of: engine.isStreaming) { _, streaming in
-                // Send, regenerate and edit all start a reply: put the question it answers at the top.
-                guard streaming, let question = messages.last(where: { $0.role == .user }) else { return }
-                pinnedID = question.id
-                pinScrollPending = true
-                Task { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(40))
-                    withAnimation(reduceMotion ? nil : .smooth(duration: 0.35)) { proxy.scrollTo(question.id, anchor: .top) }
-                }
-            }
+            .onChange(of: engine.currentConversation.id) { _, _ in conversationChanged(proxy) }
+            .onChange(of: engine.isStreaming) { _, streaming in if streaming { pinQuestion(proxy) } }
             .onChange(of: messages.count) { _, _ in
                 // A conversation that opened or loaded its history starts at its end; a reply in progress stays put.
                 guard !loadingOlder, pinnedID == nil, !engine.isStreaming else { return }
@@ -178,6 +168,10 @@ struct ChatView: View {
                 withAnimation(reduceMotion ? nil : .snappy) { memoryNoticeVisible = false }
             }
         }
+    }
+
+    private func presentations(_ content: some View) -> some View {
+        content
         .sensoryFeedback(.impact(weight: .light), trigger: sends)
         .sensoryFeedback(.impact(weight: .soft), trigger: dictation.changes)
         .onChange(of: handoff) { _, next in if next != nil { takeHandoff() } }
@@ -248,6 +242,23 @@ struct ChatView: View {
             if file.kind == .text { previewAttachment = file }
             else { do { previewAttachment = try engine.attachment(id: file.id) } catch { engine.errorMessage = error.localizedDescription } }
         })
+    }
+
+    private func conversationChanged(_ proxy: ScrollViewProxy) {
+        dictation.stop()
+        pinnedID = nil; pinScrollPending = false; olderAnchor = nil; loadingOlder = false; atBottom = true
+        scrollToEnd(proxy)
+    }
+
+    /// Send, regenerate and edit all start a reply: put the question it answers at the top.
+    private func pinQuestion(_ proxy: ScrollViewProxy) {
+        guard let question = messages.last(where: { $0.role == .user }) else { return }
+        pinnedID = question.id
+        pinScrollPending = true
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(40))
+            withAnimation(reduceMotion ? nil : .smooth(duration: 0.35)) { proxy.scrollTo(question.id, anchor: .top) }
+        }
     }
 
     private func scrollToEnd(_ proxy: ScrollViewProxy) {

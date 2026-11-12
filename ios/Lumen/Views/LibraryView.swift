@@ -5,19 +5,19 @@ import LumenCore
 struct LibraryView: View {
     @Bindable var engine: ChatEngine
     var openChat: (String) -> Void
-    @State private var kind: LibraryItem.Kind = .all
+    @State private var kind: LibraryEntry.Kind = .all
     @State private var query = ""
     @State private var preview: ChatAttachment?
     @State private var error: String?
 
-    private var all: [LibraryItem] { LibraryIndex.items(in: engine.savedConversations) }
-    private var shown: [LibraryItem] { LibraryIndex.filter(all, kind: kind, query: query) }
+    private var all: [LibraryEntry] { LibraryIndex.items(in: engine.savedConversations) }
+    private var shown: [LibraryEntry] { LibraryIndex.filter(all, kind: kind, query: query) }
 
     var body: some View {
         List {
             Section {
                 Picker("Show", selection: $kind) {
-                    ForEach(LibraryItem.Kind.allCases) { Text($0.rawValue).tag($0) }
+                    ForEach(LibraryEntry.Kind.allCases) { Text($0.rawValue).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 .accessibilityIdentifier("libraryKind")
@@ -55,7 +55,7 @@ struct LibraryView: View {
         .sheet(item: $preview) { AttachmentPreview(file: $0) }
     }
 
-    private func row(_ item: LibraryItem) -> some View {
+    private func row(_ item: LibraryEntry) -> some View {
         HStack(spacing: 12) {
             Image(systemName: item.kind == .photos ? "photo" : item.kind == .generated ? "sparkles.rectangle.stack" : "doc.text")
                 .font(.title3)
@@ -75,7 +75,7 @@ struct LibraryView: View {
     }
 
     /// Text previews from the chat itself; photos from this iPhone's copy, or the chat when there is none.
-    private func open(_ item: LibraryItem) {
+    private func open(_ item: LibraryEntry) {
         error = nil
         if item.file.kind == .text, item.file.text != nil { preview = item.file; return }
         if let file = try? engine.attachment(id: item.file.id) { preview = file; return }

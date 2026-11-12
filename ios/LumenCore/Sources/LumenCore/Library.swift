@@ -1,7 +1,7 @@
 import Foundation
 
 /// One file or photo in the Library: a view of what is in the chats, never a second store (as on the web).
-public struct LibraryItem: Identifiable, Sendable, Equatable {
+public struct LibraryEntry: Identifiable, Sendable, Equatable {
     public enum Kind: String, CaseIterable, Sendable, Identifiable {
         case all = "All", photos = "Photos", files = "Files", generated = "From replies"
         public var id: Self { self }
@@ -18,15 +18,15 @@ public struct LibraryItem: Identifiable, Sendable, Equatable {
 public enum LibraryIndex {
     /// Every file and photo in these chats, once per chat, newest first. Versions of a chat share their files,
     /// so each file appears once for its conversation.
-    public static func items(in conversations: [Conversation]) -> [LibraryItem] {
-        var items: [LibraryItem] = []
+    public static func items(in conversations: [Conversation]) -> [LibraryEntry] {
+        var items: [LibraryEntry] = []
         var seen = Set<String>()
         for chat in conversations {
             let conversation = chat.lineageRootID ?? chat.id
             for message in chat.messages where message.role != .system {
                 for file in message.attachments ?? [] where seen.insert(conversation + "/" + file.id).inserted {
-                    let kind: LibraryItem.Kind = message.role == .assistant ? .generated : file.kind == .image ? .photos : .files
-                    items.append(LibraryItem(file: file, kind: kind, chatID: chat.id, chatTitle: chat.title,
+                    let kind: LibraryEntry.Kind = message.role == .assistant ? .generated : file.kind == .image ? .photos : .files
+                    items.append(LibraryEntry(file: file, kind: kind, chatID: chat.id, chatTitle: chat.title,
                                              projectID: chat.projectId, date: message.timestamp))
                 }
             }
@@ -35,7 +35,7 @@ public enum LibraryIndex {
     }
 
     /// Items of one kind whose name or chat title contains the query (ignoring case and accents).
-    public static func filter(_ items: [LibraryItem], kind: LibraryItem.Kind, query: String) -> [LibraryItem] {
+    public static func filter(_ items: [LibraryEntry], kind: LibraryEntry.Kind, query: String) -> [LibraryEntry] {
         let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
         return items.filter { item in
             (kind == .all || item.kind == kind) && (needle.isEmpty

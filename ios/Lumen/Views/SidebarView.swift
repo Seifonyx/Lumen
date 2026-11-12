@@ -51,6 +51,8 @@ struct SidebarView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     row("New chat", icon: "square.and.pencil", action: newChat)
                         .accessibilityIdentifier("sidebarNewChat")
+                    row("Library", icon: "books.vertical") { open(.library) }
+                        .accessibilityIdentifier("sidebar-library")
                         .padding(.bottom, 14)
 
                     if signedIn {

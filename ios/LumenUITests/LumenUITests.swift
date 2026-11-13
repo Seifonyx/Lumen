@@ -868,17 +868,10 @@ final class LumenUITests: XCTestCase {
         }
         if !notification.waitForExistence(timeout: 30) { openNotificationCenter() }
         XCTAssertTrue(notification.waitForExistence(timeout: 10), "A notification says the reply is ready")
-        notification.tap()
-        if !app.wait(for: .runningForeground, timeout: 5) {
-            openNotificationCenter()
-            if notification.waitForExistence(timeout: 10) { notification.tap() }
-        }
-        // The simulator often ignores a test's tap on a notification; what matters here is that the reply
-        // finished while away. (Opening the chat from the notification is checked on a real iPhone.)
-        // The simulator can also report Lumen as in front while the Home Screen still shows: check for Lumen's own screen.
-        if !app.wait(for: .runningForeground, timeout: 5) || !app.buttons["openSidebar"].waitForExistence(timeout: 5) {
-            app.activate()
-        }
+        // The notification carries the finished reply's words, so the reply finished while away. Come back the
+        // ordinary way: the simulator's handling of a test's tap on a notification is unreliable (it can leave
+        // Lumen relaunched and blank), so opening the chat from the notification is checked on a real iPhone.
+        app.activate()
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
         XCTAssertTrue(app.buttons["Regenerate response"].firstMatch.waitForExistence(timeout: 10), "The reply finished while away")
         XCTAssertFalse(app.staticTexts["Stopped"].exists, "Leaving did not stop the reply")

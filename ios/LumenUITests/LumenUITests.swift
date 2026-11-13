@@ -853,11 +853,21 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(partial.waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["stopStreaming"].exists, "Still writing when we leave")
         XCUIDevice.shared.press(.home)
-        let banner = springboard.descendants(matching: .any)
+        let notification = springboard.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS %@", "Partial reply.")).firstMatch
-        XCTAssertTrue(banner.waitForExistence(timeout: 30), "A notification says the reply is ready")
-        banner.tap()
-        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
+        // The banner shows for a few seconds; after that the notification waits in Notification Center.
+        func openNotificationCenter() {
+            springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.005))
+                .press(forDuration: 0.1, thenDragTo: springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.7)))
+        }
+        if !notification.waitForExistence(timeout: 30) { openNotificationCenter() }
+        XCTAssertTrue(notification.waitForExistence(timeout: 10), "A notification says the reply is ready")
+        notification.tap()
+        if !app.wait(for: .runningForeground, timeout: 5) {
+            openNotificationCenter()
+            if notification.waitForExistence(timeout: 10) { notification.tap() }
+        }
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10), "Tapping the notification opens Lumen")
         XCTAssertTrue(app.buttons["Regenerate response"].firstMatch.waitForExistence(timeout: 10), "The reply finished while away")
         XCTAssertFalse(app.staticTexts["Stopped"].exists, "Leaving did not stop the reply")
         capture("reply-finished-in-background")

@@ -25,6 +25,9 @@ struct ChatView: View {
     @State private var tailHeight: CGFloat = 0
     @State private var atBottom = true
     @State private var pinScrollPending = false
+    /// Sending puts the keyboard away, so the screen grows just after the question is pinned: keep it at the top
+    /// until that settles.
+    @State private var pinSettlesAt = Date.distantPast
     @ScaledMetric(relativeTo: .body) private var sendSize: CGFloat = 34
     @State private var sends = 0
     @State private var memoryNoticeVisible = false
@@ -105,7 +108,10 @@ struct ChatView: View {
             .background(LumenPalette.canvas)
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.containerSize.height - geometry.contentInsets.top - geometry.contentInsets.bottom
-            } action: { _, height in viewportHeight = height }
+            } action: { _, height in
+                viewportHeight = height
+                if let id = pinnedID, Date() < pinSettlesAt { proxy.scrollTo(id, anchor: .top) }
+            }
             .safeAreaInset(edge: .top, spacing: 0) { topBar }
             .overlay(alignment: .bottom) {
                 if !atBottom && !messages.isEmpty {
@@ -260,6 +266,7 @@ struct ChatView: View {
     /// Send, regenerate and edit all start a reply: put the question it answers at the top.
     private func pinQuestion(_ proxy: ScrollViewProxy) {
         guard let question = messages.last(where: { $0.role == .user }) else { return }
+        pinSettlesAt = Date().addingTimeInterval(0.8)
         pinnedID = question.id
         pinScrollPending = true
         Task { @MainActor in

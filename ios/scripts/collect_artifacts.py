@@ -11,7 +11,7 @@ SHARDS = ('sync', 'features')
 CHECKS_BY_SHARD = {
     'sync': ('firebaseSDKRoundtrip', 'unknownMetadataPreserved', 'existingMessageFieldsPreserved',
              'webOrderingPreserved', 'attachmentRoundtrip', 'longHistoryPreserved', 'metadataRoundtrip',
-             'projectsRoundtrip'),
+             'projectsRoundtrip', 'voiceAndShortcutsSent'),
     'features': ('deletedContentCleaned', 'revisionVersionsPreserved', 'temporaryContentAbsent', 'autoRouteRecorded',
                  'memoryRoundtrip'),
 }

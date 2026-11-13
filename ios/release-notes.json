@@ -1,9 +1,10 @@
 {
-  "title": "Export chats · 0.5.3",
-  "description": "Share a whole chat as a Markdown file, in the same format as the web.",
+  "title": "Voice and Siri · 0.6.0",
+  "description": "Talk to Lumen instead of typing, hear replies read aloud, and start chats from Siri and Shortcuts.",
   "notes": [
-    "Touch and hold a chat and choose Export as Markdown to share or save the whole conversation as a .md file.",
-    "Exports match the web: each reply says which model wrote it, attachments are listed and unfinished replies are marked.",
-    "Each reply still has its own Share button for sharing one answer."
+    "Tap the microphone in an empty message box and speak: your words appear as you talk. Tap it again to stop. Speech is turned into text on your iPhone.",
+    "Read aloud: the speaker button under a reply reads it in your iPhone's voice, without Markdown symbols. Tap it again to stop.",
+    "Siri and Shortcuts: say “Ask Lumen” to send a question in a new chat, “Talk to Lumen” to start a chat by voice, or “New Lumen chat”. They're also in the Shortcuts app.",
+    "Links that start with lumen://new?prompt= open a new chat with that message filled in, ready for you to send."
   ]
 }

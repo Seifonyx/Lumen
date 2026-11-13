@@ -8,6 +8,8 @@ import LumenCore
     let auth: AuthEngine
     let connections: ProviderConnections
     let sync: CloudChatSync
+    let dictation = Dictation()
+    let readAloud = ReadAloud()
     private var activeAccount: String?
 
     init() {

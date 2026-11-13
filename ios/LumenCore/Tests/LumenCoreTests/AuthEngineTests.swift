@@ -48,8 +48,11 @@ import Testing
         client.currentUser = client.authenticatedUser
         let auth = AuthEngine(client: client)
         #expect(!auth.isSignedIn)
+        #expect(!auth.hasRestored)
         await auth.start()
         #expect(auth.currentUser == client.authenticatedUser)
+        // Siri and links wait for this before filling in a chat, so it goes to the right account.
+        #expect(auth.hasRestored)
     }
 
     @Test func failedSignInDoesNotInventAUser() async {

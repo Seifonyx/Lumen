@@ -58,6 +58,7 @@ SHARDS = {
         'testLargestTextSizeKeepsEveryChatControlUsable',
         'testAccessibilityAuditOfTheMainScreens',
         'testProjectsSyncWithTheWeb',
+        'testVoiceSiriAndLinksStartChats',
     ),
     'features': (
         'testConnectedDeleteCleansTheCloudConversation',

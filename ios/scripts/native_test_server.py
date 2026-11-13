@@ -259,6 +259,14 @@ def verify_roundtrip(shard='all'):
         project_chat = next(d for d in all_chats if d['fields'].get('title', {}).get('stringValue') == 'NATIVE_PROJECT_QUESTION')
         assert project_chat['fields']['projectId']['stringValue'] == 'fixture-project', 'The new chat was not created in its project'
         checks['projectsRoundtrip'] = True
+        # Voice and Siri: the dictated message and Ask Lumen's question were sent; a lumen:// link only filled in
+        # the message and never sent it.
+        def sent(text):
+            return any(any(m.get('content') == text for m in r.get('messages', [])) for r in REQUESTS)
+        assert sent('Dictated fixture question'), 'The dictated message was never sent'
+        assert sent('Asked by Siri'), 'Ask Lumen never sent its question'
+        assert not any('From a link' in str(m.get('content')) for r in REQUESTS for m in r.get('messages', [])), 'A link sent a message'
+        checks['voiceAndShortcutsSent'] = True
         checks.update({'firebaseSDKRoundtrip': True, 'unknownMetadataPreserved': True,
                        'existingMessageFieldsPreserved': True, 'webOrderingPreserved': True,
                        'attachmentRoundtrip': True, 'longHistoryPreserved': True,
@@ -309,7 +317,7 @@ def verify_roundtrip(shard='all'):
             assert not json.load(response).get('documents'), 'Deleted metadata operation markers remain'
         # Auto: the question reached the provider, and its reply was saved with the model and Auto's reason, in the
         # web's per-message fields.
-        assert any(any(m.get('content') == 'NATIVE_AUTO_QUESTION' for m in r.get('messages', [])) for r in REQUESTS), 'Auto never sent the question'
+        assert any(any(m.get('content') == 'NATIVE_AUTO_QUESTION' for m in r.get('messages', [])) for r in REQUESTS),             'Auto never sent the question; user messages seen: ' + repr([m.get('content') for r in REQUESTS for m in r.get('messages', []) if m.get('role') == 'user'][-12:])
         auto_chat = next(d for d in all_chats if d['fields'].get('title', {}).get('stringValue') == 'NATIVE_AUTO_QUESTION')
         auto_ids = [v['stringValue'] for v in auto_chat['fields']['ids']['arrayValue']['values']]
         with urllib.request.urlopen(urllib.request.Request(chats_url + auto_chat['name'].rsplit('/', 1)[-1] + '/messages/' + auto_ids[-1],

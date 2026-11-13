@@ -13,6 +13,19 @@ def gh(*args):
     return subprocess.check_output(['gh', *args], text=True)
 
 
+def privacy_permissions(ipa):
+    """The app's privacy usage descriptions, as SideStore's listing must declare them: SideStore refuses an update
+    whose permissions differ from its source."""
+    import plistlib
+    import re
+    import zipfile
+    with zipfile.ZipFile(ipa) as archive:
+        name = next(n for n in archive.namelist() if re.fullmatch(r'Payload/[^/]+\.app/Info\.plist', n))
+        info = plistlib.loads(archive.read(name))
+    return {key: value for key, value in sorted(info.items())
+            if key.startswith('NS') and key.endswith('UsageDescription') and isinstance(value, str)}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--artifacts', type=Path, required=True)
@@ -69,7 +82,7 @@ def main():
         'localizedDescription': 'Native AI conversations with your Lumen account and your choice of provider.',
         'iconURL': f'https://raw.githubusercontent.com/{repository}/main/public-canvas/icon-512.png',
         'tintColor': '0b0b0c', 'versions': versions,
-        'appPermissions': {'entitlements': [], 'privacy': {}},
+        'appPermissions': {'entitlements': [], 'privacy': privacy_permissions(ipa)},
     }]
     source_path.write_text(json.dumps(source, indent=2) + '\n')
     # The original feed (root sidestore-source.json, from the retired Capacitor line) lists the same native app,

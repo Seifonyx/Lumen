@@ -7,6 +7,8 @@ struct ChatView: View {
     @Bindable var connections: ProviderConnections
     @Bindable var sync: CloudChatSync
     var focused: FocusState<Bool>.Binding
+    @Binding var handoff: ComposerRequest?
+    @Environment(Dictation.self) private var dictation
     var chooseModel: () -> Void
     var selectVersion: (Conversation) -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -48,7 +50,10 @@ struct ChatView: View {
         return max(0, viewportHeight - tailHeight - 44)
     }
 
-    var body: some View {
+    // Split in two so the compiler can type-check it in reasonable time.
+    var body: some View { presentations(conversation) }
+
+    private var conversation: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 if messages.isEmpty && engine.currentConversation.historyLoaded != false {
@@ -127,20 +132,8 @@ struct ChatView: View {
                 if let anchor = olderAnchor { proxy.scrollTo(anchor, anchor: .top) }
                 olderAnchor = nil; loadingOlder = false
             }
-            .onChange(of: engine.currentConversation.id) { _, _ in
-                pinnedID = nil; pinScrollPending = false; olderAnchor = nil; loadingOlder = false; atBottom = true
-                scrollToEnd(proxy)
-            }
-            .onChange(of: engine.isStreaming) { _, streaming in
-                // Send, regenerate and edit all start a reply: put the question it answers at the top.
-                guard streaming, let question = messages.last(where: { $0.role == .user }) else { return }
-                pinnedID = question.id
-                pinScrollPending = true
-                Task { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(40))
-                    withAnimation(reduceMotion ? nil : .smooth(duration: 0.35)) { proxy.scrollTo(question.id, anchor: .top) }
-                }
-            }
+            .onChange(of: engine.currentConversation.id) { _, _ in conversationChanged(proxy) }
+            .onChange(of: engine.isStreaming) { _, streaming in if streaming { pinQuestion(proxy) } }
             .onChange(of: messages.count) { _, _ in
                 // A conversation that opened or loaded its history starts at its end; a reply in progress stays put.
                 guard !loadingOlder, pinnedID == nil, !engine.isStreaming else { return }
@@ -175,7 +168,14 @@ struct ChatView: View {
                 withAnimation(reduceMotion ? nil : .snappy) { memoryNoticeVisible = false }
             }
         }
+    }
+
+    private func presentations(_ content: some View) -> some View {
+        content
         .sensoryFeedback(.impact(weight: .light), trigger: sends)
+        .sensoryFeedback(.impact(weight: .light, intensity: 0.6), trigger: dictation.changes)
+        .onChange(of: handoff) { _, next in if next != nil { takeHandoff() } }
+        .onAppear { takeHandoff() }
         .sensoryFeedback(.impact(weight: .medium), trigger: stops)
         .sheet(item: $editingMessage) { message in
             EditMessageSheet(message: message) { text in
@@ -185,48 +185,54 @@ struct ChatView: View {
             }
         }
         .sheet(item: $previewAttachment) { AttachmentPreview(file: $0) }
-        .sheet(isPresented: $versionPickerOpen) {
-            NavigationStack {
-                List {
-                    ForEach(Array(versions.enumerated()), id: \.element.id) { index, chat in
-                        Button {
-                            versionPickerOpen = false
-                            selectVersion(chat)
-                        } label: {
-                            HStack(spacing: 12) {
-                                Label("Version \(index + 1) · \(chat.revisionLabel ?? "Original")", systemImage: "clock.arrow.circlepath")
-                                    .font(LumenType.row)
-                                Spacer()
-                                if chat.id == engine.currentConversation.id {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(LumenPalette.accent)
-                                        .accessibilityLabel("Selected version")
-                                }
-                            }
-                            .frame(minHeight: 44)
-                        }
-                        .accessibilityIdentifier("version-" + chat.id)
-                    }
-                }
-                .scrollContentBackground(.hidden)
-                .background(LumenPalette.canvas)
-                .navigationTitle("Versions")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { versionPickerOpen = false }
-                    }
-                }
-            }
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
-        }
+        .sheet(isPresented: $versionPickerOpen) { versionPicker }
         .onChange(of: engine.accountID) { _, _ in
             editingMessage = nil; previewAttachment = nil; versionPickerOpen = false
         }
         .onChange(of: engine.currentConversation.id) { _, _ in
             editingMessage = nil; previewAttachment = nil
         }
+    }
+
+    private func versionName(_ index: Int, _ chat: Conversation) -> String {
+        "Version \(index + 1) · " + (chat.revisionLabel ?? "Original")
+    }
+
+    private var versionPicker: some View {
+        NavigationStack {
+            List {
+                ForEach(Array(versions.enumerated()), id: \.element.id) { index, chat in
+                    Button {
+                        versionPickerOpen = false
+                        selectVersion(chat)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Label(versionName(index, chat), systemImage: "clock.arrow.circlepath")
+                                .font(LumenType.row)
+                            Spacer()
+                            if chat.id == engine.currentConversation.id {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(LumenPalette.accent)
+                                    .accessibilityLabel("Selected version")
+                            }
+                        }
+                        .frame(minHeight: 44)
+                    }
+                    .accessibilityIdentifier("version-" + chat.id)
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(LumenPalette.canvas)
+            .navigationTitle("Versions")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { versionPickerOpen = false }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 
     private func row(_ message: ChatMessage) -> some View {
@@ -242,6 +248,23 @@ struct ChatView: View {
             if file.kind == .text { previewAttachment = file }
             else { do { previewAttachment = try engine.attachment(id: file.id) } catch { engine.errorMessage = error.localizedDescription } }
         })
+    }
+
+    private func conversationChanged(_ proxy: ScrollViewProxy) {
+        dictation.stop()
+        pinnedID = nil; pinScrollPending = false; olderAnchor = nil; loadingOlder = false; atBottom = true
+        scrollToEnd(proxy)
+    }
+
+    /// Send, regenerate and edit all start a reply: put the question it answers at the top.
+    private func pinQuestion(_ proxy: ScrollViewProxy) {
+        guard let question = messages.last(where: { $0.role == .user }) else { return }
+        pinnedID = question.id
+        pinScrollPending = true
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(40))
+            withAnimation(reduceMotion ? nil : .smooth(duration: 0.35)) { proxy.scrollTo(question.id, anchor: .top) }
+        }
     }
 
     private func scrollToEnd(_ proxy: ScrollViewProxy) {
@@ -330,6 +353,18 @@ struct ChatView: View {
                 Text("Your AI provider still receives these messages.").font(.caption2).foregroundStyle(.secondary)
             }
         }
+        if let error = dictation.errorMessage {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "mic.slash").accessibilityHidden(true)
+                Text(error).font(.footnote).frame(maxWidth: .infinity, alignment: .leading)
+                Button("Dismiss", systemImage: "xmark") { dictation.errorMessage = nil }
+                    .labelStyle(.iconOnly).frame(minWidth: 44, minHeight: 44)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .glassEffect(.regular, in: .rect(cornerRadius: LumenRadius.card, style: .continuous))
+            .accessibilityIdentifier("dictationError")
+        }
         if let error = composer.errorMessage ?? engine.errorMessage ?? sync.errorMessage {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: "exclamationmark.circle").accessibilityHidden(true)
@@ -348,7 +383,7 @@ struct ChatView: View {
     private var composerBar: some View {
         // One Liquid Glass control: + for photos and files, the message, and Send (Stop while a reply is written).
         ComposerAttachments(composer: composer, engine: engine, importing: $attachmentImporting) {
-            TextField("Message Lumen", text: Binding(get: { composerAligned ? composer.draft : "" }, set: { if composerAligned { composer.draft = $0 } }), axis: .vertical)
+            TextField(dictation.state == .listening ? "Listening…" : "Message Lumen", text: Binding(get: { composerAligned ? composer.draft : "" }, set: { if composerAligned { composer.draft = $0 } }), axis: .vertical)
                 .disabled(!composerAligned)
                 // At accessibility text sizes a few lines already fill the screen: the bar stops growing
                 // at three and scrolls inside, so the conversation stays visible.
@@ -361,6 +396,9 @@ struct ChatView: View {
                 .frame(minHeight: 44)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .layoutPriority(1)
+            // As in the AI apps people know: the microphone while the message is empty (or you're talking),
+            // and Send once there's something to send. This also keeps the message wide at large text sizes.
+            if !engine.isStreaming && (composer.draft.isEmpty || dictation.isActive) { microphone }
             if engine.isStreaming {
                 Button {
                     stops += 1
@@ -398,7 +436,60 @@ struct ChatView: View {
         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 26, style: .continuous))
     }
 
+    /// Tap to talk instead of typing; tap again to stop. The words appear in the message as you speak.
+    private var microphone: some View {
+        let listening = dictation.isActive
+        return Button {
+            if listening { dictation.stop() } else { startDictation() }
+        } label: {
+            Image(systemName: listening ? "waveform" : "mic")
+                .font(.body.weight(listening ? .semibold : .regular))
+                .foregroundStyle(listening ? LumenPalette.canvas : LumenPalette.muted)
+                .symbolEffect(.variableColor.iterative, options: .repeating, isActive: listening && !reduceMotion)
+                .frame(width: sendSize, height: sendSize)
+                .background(listening ? LumenPalette.accent : .clear, in: Circle())
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!composerAligned)
+        .accessibilityLabel(listening ? "Stop dictation" : "Dictate")
+        .accessibilityHint(listening ? "Keeps what you said in the message" : "Say your message instead of typing it")
+        .accessibilityIdentifier("dictate")
+    }
+
+    private func startDictation() {
+        guard composerAligned else { return }
+        let base = composer.draft, account = composer.accountID, chat = composer.conversationID
+        let draft = self.composer
+        dictation.start { words in
+            // Only into the chat it started in: switching chats or accounts stops listening.
+            guard draft.accountID == account, draft.conversationID == chat else { return }
+            draft.draft = DictationText.merge(draft: base, dictated: words)
+        }
+    }
+
+    /// Siri, a Shortcut or a link: put its message in the new chat, then send it, listen, or wait for typing.
+    private func takeHandoff() {
+        guard let next = handoff, composerAligned else { return }
+        handoff = nil
+        if let text = next.text { composer.draft = DictationText.merge(draft: composer.draft, dictated: text) }
+        if next.send {
+            // Siri opens Lumen first; the models may still be loading (a cold start, or a refresh on returning).
+            // Wait a few seconds for them, in this same chat, then send; otherwise leave the message ready.
+            let chat = engine.currentConversation.id, text = composer.draft
+            Task { @MainActor in
+                for _ in 0..<50 where !canSend { try? await Task.sleep(for: .milliseconds(100)) }
+                guard engine.currentConversation.id == chat, composer.draft == text else { return }
+                if canSend { send() } else { focused.wrappedValue = true }
+            }
+        }
+        else if next.dictate { startDictation() }
+        else { focused.wrappedValue = true }
+    }
+
     private func send() {
+        dictation.stop()
         guard composerAligned, composer.save() else { return }
         if autoModel {
             // Auto: the best connected model for this message, with the next ones as fallbacks, as on the web.

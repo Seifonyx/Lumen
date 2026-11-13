@@ -11,7 +11,7 @@ settings:
     IPHONEOS_DEPLOYMENT_TARGET: '26.0'
     CODE_SIGNING_ALLOWED: NO
     TARGETED_DEVICE_FAMILY: '1'
-    MARKETING_VERSION: '0.5.3'
+    MARKETING_VERSION: '0.6.0'
     CURRENT_PROJECT_VERSION: '1'
     OTHER_LDFLAGS: '$(inherited) -ObjC'
 packages:
@@ -50,9 +50,13 @@ targets:
         CFBundleDisplayName: Lumen
         CFBundleURLTypes:
           - CFBundleURLSchemes: ["com.googleusercontent.apps.318861546094-5lh19vnoqeq1th0ldakj7n630i9qutfa", "com.googleusercontent.apps.318861546094-0jij3rdis6efb09khejff2tuv6vn9k4f"]
+          - CFBundleURLName: io.github.seifonyx.lumen.link
+            CFBundleURLSchemes: ["lumen"]
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSRequiresIPhoneOS: true
+        NSMicrophoneUsageDescription: Lumen listens when you tap the microphone, so you can say your message instead of typing it.
+        NSSpeechRecognitionUsageDescription: Lumen turns what you say into text on this iPhone. Your voice isn't sent anywhere by Lumen.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         UIApplicationSupportsIndirectInputEvents: true

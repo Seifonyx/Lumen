@@ -317,7 +317,7 @@ def verify_roundtrip(shard='all'):
             assert not json.load(response).get('documents'), 'Deleted metadata operation markers remain'
         # Auto: the question reached the provider, and its reply was saved with the model and Auto's reason, in the
         # web's per-message fields.
-        assert any(any(m.get('content') == 'NATIVE_AUTO_QUESTION' for m in r.get('messages', [])) for r in REQUESTS), 'Auto never sent the question'
+        assert any(any(m.get('content') == 'NATIVE_AUTO_QUESTION' for m in r.get('messages', [])) for r in REQUESTS),             'Auto never sent the question; user messages seen: ' + repr([m.get('content') for r in REQUESTS for m in r.get('messages', []) if m.get('role') == 'user'][-12:])
         auto_chat = next(d for d in all_chats if d['fields'].get('title', {}).get('stringValue') == 'NATIVE_AUTO_QUESTION')
         auto_ids = [v['stringValue'] for v in auto_chat['fields']['ids']['arrayValue']['values']]
         with urllib.request.urlopen(urllib.request.Request(chats_url + auto_chat['name'].rsplit('/', 1)[-1] + '/messages/' + auto_ids[-1],

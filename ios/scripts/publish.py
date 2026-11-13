@@ -16,6 +16,9 @@ def gh(*args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--artifacts', type=Path, required=True)
+    # The main commit being published. A build reused from its pull request's run was made from that run's
+    # temporary merge commit, with the same iPhone code; the release is tagged on main's commit.
+    parser.add_argument('--commit')
     args = parser.parse_args()
     repository = os.environ['GITHUB_REPOSITORY']
     release_notes = json.loads(Path('ios/release-notes.json').read_text())
@@ -26,26 +29,28 @@ def main():
         raise SystemExit('Downloaded IPA does not match the verified build manifest')
     if manifest['bundleIdentifier'] != 'io.github.seifonyx.lumen' or manifest['platform'] != 'iPhoneOS':
         raise SystemExit('Not a native Lumen iPhone artifact')
+    commit = args.commit or manifest['sourceCommit']
     tag = 'native-ios-v' + manifest['version']
     existing = subprocess.run(['gh', 'release', 'view', tag, '--repo', repository],
                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if existing.returncode == 0:
         reference = json.loads(gh('api', f'repos/{repository}/git/ref/tags/{tag}'))
-        if reference['object']['sha'] != manifest['sourceCommit']:
+        if reference['object']['sha'] not in {commit, manifest['sourceCommit']}:
             raise SystemExit('This version was already published from another commit; bump MARKETING_VERSION')
     else:
         with tempfile.TemporaryDirectory() as temp:
             notes = Path(temp) / 'notes.md'
             notes.write_text(
                 '\n\n'.join(release_notes['notes']) + '\n\n' +
-                f'Source: `{manifest["sourceCommit"]}`\n'
+                f'Source: `{commit}`' +
+                (f' (tested as `{manifest["sourceCommit"]}`)' if commit != manifest['sourceCommit'] else '') + '\n' +
                 f'IPA SHA-256: `{manifest["sha256"]}`\n\n'
                 'Install Lumen.ipa with SideStore. Simulator captures are in native-screenshots.zip.\n')
             screenshots_zip = args.artifacts / 'native-screenshots.zip'
             import shutil
             shutil.make_archive(str(screenshots_zip.with_suffix('')), 'zip', args.artifacts / 'screenshots')
             gh('release', 'create', tag, str(ipa), str(manifest_file), str(screenshots_zip),
-               '--repo', repository, '--target', manifest['sourceCommit'],
+               '--repo', repository, '--target', commit,
                '--title', f'Lumen iOS {manifest["version"]} · {release_notes["title"]}',
                '--notes-file', str(notes), '--prerelease', '--latest=false')
     release = json.loads(gh('api', f'repos/{repository}/releases/tags/{tag}'))

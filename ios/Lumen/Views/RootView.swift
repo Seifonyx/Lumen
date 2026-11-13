@@ -349,7 +349,10 @@ struct RootView: View {
         guard changed else { return }
         setSidebar(false); path.removeAll(); openProjectID = nil
         let chat = engine.currentConversation
-        if let model = connections.models.first(where: { $0.id == chat.selectedModelId && (chat.selectedProviderId == nil || $0.providerId == chat.selectedProviderId) }) {
+        // A new chat keeps the model you're using, even while the model list is being refreshed.
+        if chat.messages.isEmpty, let current = engine.selectedModel, chat.selectedModelId == current.id,
+           chat.selectedProviderId == nil || chat.selectedProviderId == current.providerId {
+        } else if let model = connections.models.first(where: { $0.id == chat.selectedModelId && (chat.selectedProviderId == nil || $0.providerId == chat.selectedProviderId) }) {
             engine.selectModel(model)
         } else { engine.clearSelectedModel() }
         if !engine.isTemporary { Task { await sync.loadMessages(chatID: chat.id) } }

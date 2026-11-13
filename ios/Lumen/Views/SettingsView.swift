@@ -67,14 +67,6 @@ struct SettingsView: View {
                     }
                     .accessibilityIdentifier("archivedChatsEntry")
                 }
-                Section {
-                    Toggle(isOn: $replyNotifications) {
-                        Label("When a reply finishes", systemImage: "bell.badge")
-                    }
-                    .accessibilityIdentifier("replyNotificationsToggle")
-                } header: { Text("Notifications") } footer: {
-                    Text("If you leave Lumen while it's writing, the reply keeps going for as long as iOS allows (usually under a minute) and you get a notification when it's ready.")
-                }
                 Section("Appearance") {
                     Picker("Appearance", selection: $appearance) {
                         Text("System").tag("system")
@@ -83,6 +75,14 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.segmented)
                     .accessibilityIdentifier("appearancePicker")
+                }
+                Section {
+                    Toggle(isOn: $replyNotifications) {
+                        Label("When a reply finishes", systemImage: "bell.badge")
+                    }
+                    .accessibilityIdentifier("replyNotificationsToggle")
+                } header: { Text("Notifications") } footer: {
+                    Text("If you leave Lumen while it's writing, the reply keeps going for as long as iOS allows (usually under a minute) and you get a notification when it's ready.")
                 }
                 Section("About") {
                     LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")

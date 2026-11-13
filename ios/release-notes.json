@@ -1,10 +1,10 @@
 {
-  "title": "Voice and Siri · 0.6.0",
-  "description": "Talk to Lumen instead of typing, hear replies read aloud, and start chats from Siri and Shortcuts.",
+  "title": "Replies finish when you leave · 0.6.1",
+  "description": "Leave Lumen while it's writing and the reply keeps going; a notification tells you when it's ready.",
   "notes": [
-    "Tap the microphone in an empty message box and speak: your words appear as you talk. Tap it again to stop. Speech is turned into text on your iPhone.",
-    "Read aloud: the speaker button under a reply reads it in your iPhone's voice, without Markdown symbols. Tap it again to stop.",
-    "Siri and Shortcuts: say “Ask Lumen” to send a question in a new chat, “Talk to Lumen” to start a chat by voice, or “New Lumen chat”. They're also in the Shortcuts app.",
-    "Links that start with lumen://new?prompt= open a new chat with that message filled in, ready for you to send."
+    "Switch apps or lock your iPhone while a reply is being written: it keeps going for as long as iOS allows (usually under a minute) instead of stopping.",
+    "When it's done, a notification shows the start of the reply. Tap it to open that chat. Temporary chats don't show their words on the lock screen.",
+    "Lumen asks once, the first time you send, whether it may notify you. Turn it off any time in Settings › Notifications.",
+    "Also in 0.6.0: voice input, Read aloud, and Siri and Shortcuts (Ask Lumen, Talk to Lumen, New Lumen chat)."
   ]
 }

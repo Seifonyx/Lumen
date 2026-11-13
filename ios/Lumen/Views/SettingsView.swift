@@ -9,6 +9,7 @@ struct SettingsView: View {
     @Bindable var sync: CloudChatSync
     @Environment(\.dismiss) private var dismiss
     @AppStorage("lumen.appearance") private var appearance = "system"
+    @AppStorage(ReplyNotifier.enabledKey) private var replyNotifications = true
     var openConversation: (Conversation) -> Void
 
     var body: some View {
@@ -74,6 +75,14 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.segmented)
                     .accessibilityIdentifier("appearancePicker")
+                }
+                Section {
+                    Toggle(isOn: $replyNotifications) {
+                        Label("When a reply finishes", systemImage: "bell.badge")
+                    }
+                    .accessibilityIdentifier("replyNotificationsToggle")
+                } header: { Text("Notifications") } footer: {
+                    Text("If you leave Lumen while it's writing, the reply keeps going for as long as iOS allows (usually under a minute) and you get a notification when it's ready.")
                 }
                 Section("About") {
                     LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")

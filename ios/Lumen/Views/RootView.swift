@@ -25,6 +25,7 @@ struct RootView: View {
     @Environment(LumenRequests.self) private var requests
     @Environment(Dictation.self) private var dictation
     @Environment(ReadAloud.self) private var readAloud
+    @Environment(ReplyNotifier.self) private var notifier
     /// Siri, a Shortcut or a link's message, handed to the new chat's composer.
     @State private var handoff: ComposerRequest?
     @State private var openProjectID: String?
@@ -187,8 +188,9 @@ struct RootView: View {
         }
         .background(LumenPalette.canvas.ignoresSafeArea())
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { sync.retry() }
-            else if phase == .background { dictation.stop(); readAloud.stop(); engine.stopStreaming(); _ = composer.save(); _ = engine.checkpoint() }
+            if phase == .active { sync.retry(); notifier.becameActive() }
+            // A reply being written keeps going for a while after you leave, and Lumen tells you when it's done.
+            else if phase == .background { dictation.stop(); readAloud.stop(); notifier.enteredBackground(); _ = composer.save(); _ = engine.checkpoint() }
         }
         .onChange(of: engine.isStreaming) { _, streaming in
             if !streaming, engine.currentConversation.historyLoaded == false { Task { await sync.loadMessages(chatID: engine.currentConversation.id) } }
@@ -211,6 +213,8 @@ struct RootView: View {
         .sensoryFeedback(.selection, trigger: engine.selectedModel?.id)
         .onAppear { _ = engine.checkpoint(); restoreComposer(); cleanupAttachments(); takeRequest() }
         .onChange(of: requests.pending) { _, _ in takeRequest() }
+        .onChange(of: requests.openChat) { _, _ in openNotifiedChat() }
+        .onChange(of: inventory) { _, _ in openNotifiedChat() }
         .onChange(of: auth.hasRestored) { _, _ in takeRequest() }
         .onChange(of: inventory) { old, new in
             guard old.account == new.account, composer.accountID == new.account else { return }
@@ -304,6 +308,16 @@ struct RootView: View {
 
     /// Carries out what Siri, a Shortcut or a link asked, once the account is known (so the message goes to
     /// the right account's new chat): close whatever is open and start a new chat with it.
+    /// A tapped reply notification opens its chat (in the account it belongs to, once that account's chats are here).
+    private func openNotifiedChat() {
+        guard let link = requests.openChat, engine.accountID == link.accountID else { return }
+        if engine.currentConversation.id == link.chatID { requests.openChat = nil; return }
+        guard let chat = engine.savedConversations.first(where: { $0.id == link.chatID }) else { return }
+        requests.openChat = nil
+        settingsOpen = false; modelsOpen = false; projectEditor = nil
+        requestOpenConversation(chat)
+    }
+
     private func takeRequest() {
         guard auth.hasRestored, engine.accountID == (auth.currentUser?.id ?? "device"), let next = requests.pending else { return }
         requests.pending = nil

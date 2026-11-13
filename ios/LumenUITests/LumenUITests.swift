@@ -153,6 +153,12 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10),
                       "The software keyboard must be ready before typing")
         composer.typeText(text)
+        // The simulator can still be delivering keystrokes when typeText returns; sending then would split the
+        // message. Wait until the whole text is in the box.
+        let deadline = Date().addingTimeInterval(5)
+        while !((composer.value as? String) ?? "").hasSuffix(text) && Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
     }
 
     func testDraftSurvivesWorkspaceNavigationAndRelaunch() {
@@ -304,6 +310,7 @@ final class LumenUITests: XCTestCase {
         XCTAssertNotEqual(app.buttons["chooseModel"].label, "Model: Not selected", "The title must name the chosen model")
         enterDraft("Manual provider check")
         app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5), "Sending puts the keyboard away")
         XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 10))
         // As in the AI apps people know, a new question moves to the top of the screen and its reply writes
         // below it, instead of the screen following the end of the text.
@@ -835,7 +842,51 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
     }
 
+    func testAReplyKeepsGoingAfterLeavingAndNotifiesWhenDone() {
+        // As in the AI apps people know: leave Lumen while it writes, the reply finishes anyway, a notification
+        // says so, and tapping it opens the chat with the whole reply.
+        executionTimeAllowance = 300
+        launchCleanChat(["--lumen-notify-test"])
+        defer { app.terminate() }
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        signInAndChooseModel()
+        enterDraft("Stop by and notify me")
+        app.buttons["sendMessage"].tap()
+        // The first send asks permission to notify.
+        let allow = springboard.buttons["Allow"]
+        if allow.waitForExistence(timeout: 5) { allow.tap() }
+        let partial = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Partial reply.")).firstMatch
+        XCTAssertTrue(partial.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["stopStreaming"].exists, "Still writing when we leave")
+        XCUIDevice.shared.press(.home)
+        let notification = springboard.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS %@", "Partial reply.")).firstMatch
+        // The banner shows for a few seconds; after that the notification waits in Notification Center.
+        func openNotificationCenter() {
+            springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.005))
+                .press(forDuration: 0.1, thenDragTo: springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.7)))
+        }
+        if !notification.waitForExistence(timeout: 30) { openNotificationCenter() }
+        XCTAssertTrue(notification.waitForExistence(timeout: 10), "A notification says the reply is ready")
+        // The notification carries the finished reply's words, so the reply finished while away. Come back the
+        // ordinary way: the simulator's handling of a test's tap on a notification is unreliable (it can leave
+        // Lumen relaunched and blank), so opening the chat from the notification is checked on a real iPhone.
+        app.activate()
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
+        XCTAssertTrue(app.buttons["Regenerate response"].firstMatch.waitForExistence(timeout: 10), "The reply finished while away")
+        XCTAssertFalse(app.staticTexts["Stopped"].exists, "Leaving did not stop the reply")
+        capture("reply-finished-in-background")
+        settings()
+        let toggle = app.switches["replyNotificationsToggle"]
+        for _ in 0..<3 where !toggle.exists { app.swipeUp() }
+        XCTAssertTrue(toggle.exists, "Notifications can be turned off in Settings")
+        for _ in 0..<3 where !app.staticTexts["Up to date"].exists { app.swipeDown() }
+        XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 20))
+    }
+
     func testRejectedProviderKeyShowsErrorAndKeepsTheDraft() {
+        // Room for a simulator that stalls on an animation (it waits up to a minute before carrying on).
+        executionTimeAllowance = 240
         launchCleanChat()
         defer { app.terminate() }
         enterDraft("Keep my question")

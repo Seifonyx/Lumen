@@ -78,6 +78,28 @@ struct ChatEngineTests {
         }
     }
 
+    @Test func aFinishedReplyIsReportedButAStoppedOneIsNot() async {
+        await withDefaults { _ in
+            let engine = ChatEngine(client: MockStreamingClient(tokens: ["Done", " now."], delayNanoseconds: 0), store: MemoryConversationStore())
+            engine.selectModel(AIModel.defaults[0])
+            var finished: [ReplyFinished] = []
+            engine.onReplyFinished = { finished.append($0) }
+            await engine.send(prompt: "Notify me", apiKey: "test-key")
+            #expect(finished == [ReplyFinished(accountID: "device", chatID: engine.currentConversation.id, title: "Notify me",
+                                               text: "Done now.", failed: false, temporary: false)])
+
+            let slow = ChatEngine(client: MockStreamingClient(tokens: ["A", "B", "C"], delayNanoseconds: 50_000_000), store: MemoryConversationStore())
+            slow.selectModel(AIModel.defaults[0])
+            var stopped: [ReplyFinished] = []
+            slow.onReplyFinished = { stopped.append($0) }
+            let task = Task { await slow.send(prompt: "Hello", apiKey: "test-key") }
+            try? await Task.sleep(nanoseconds: 60_000_000)
+            slow.stopStreaming()
+            _ = await task.value
+            #expect(stopped.isEmpty)
+        }
+    }
+
     @Test func stopStreamingHaltsActiveGeneration() async {
         await withDefaults { defaults in
             let mock = MockStreamingClient(tokens: ["Word1", "Word2", "Word3", "Word4"], delayNanoseconds: 50_000_000)

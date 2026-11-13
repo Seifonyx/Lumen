@@ -9,6 +9,7 @@ struct ChatView: View {
     var focused: FocusState<Bool>.Binding
     @Binding var handoff: ComposerRequest?
     @Environment(Dictation.self) private var dictation
+    @Environment(ReplyNotifier.self) private var notifier
     var chooseModel: () -> Void
     var selectVersion: (Conversation) -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -21,9 +22,15 @@ struct ChatView: View {
     // scroll; "Latest" takes you to the end.
     @State private var pinnedID: String?
     @State private var viewportHeight: CGFloat = 0
+    /// The tallest the conversation has been on screen (with the keyboard away). The room under a pinned question
+    /// uses it, because sending happens while the keyboard is still open and the screen is short.
+    @State private var pinRoom: CGFloat = 0
     @State private var tailHeight: CGFloat = 0
     @State private var atBottom = true
     @State private var pinScrollPending = false
+    /// Keep the sent question at the top while the screen settles (the keyboard going away, the room under it being
+    /// laid out), until you scroll yourself. A fixed time limit missed slower devices.
+    @State private var pinHolds = false
     @ScaledMetric(relativeTo: .body) private var sendSize: CGFloat = 34
     @State private var sends = 0
     @State private var memoryNoticeVisible = false
@@ -47,7 +54,7 @@ struct ChatView: View {
     /// Room under the pinned exchange so your message can reach the top of the screen; none once the reply fills it.
     private var pinSpace: CGFloat {
         guard pinIndex != nil else { return 0 }
-        return max(0, viewportHeight - tailHeight - 44)
+        return max(0, max(pinRoom, viewportHeight) - tailHeight - 44)
     }
 
     // Split in two so the compiler can type-check it in reasonable time.
@@ -104,11 +111,19 @@ struct ChatView: View {
             .background(LumenPalette.canvas)
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.containerSize.height - geometry.contentInsets.top - geometry.contentInsets.bottom
-            } action: { _, height in viewportHeight = height }
+            } action: { _, height in
+                viewportHeight = height
+                pinRoom = max(pinRoom, height)
+                // The keyboard went away after sending: once the taller screen is laid out, re-pin.
+                repin(proxy)
+            }
+            .onChange(of: pinSpace) { _, _ in repin(proxy) }
+            .onScrollPhaseChange { _, phase in if phase == .interacting { pinHolds = false } }
             .safeAreaInset(edge: .top, spacing: 0) { topBar }
             .overlay(alignment: .bottom) {
                 if !atBottom && !messages.isEmpty {
                     Button {
+                        pinHolds = false
                         withAnimation(reduceMotion ? nil : .smooth(duration: 0.3)) { proxy.scrollTo("conversationBottom", anchor: .bottom) }
                     } label: {
                         Image(systemName: "arrow.down")
@@ -252,18 +267,33 @@ struct ChatView: View {
 
     private func conversationChanged(_ proxy: ScrollViewProxy) {
         dictation.stop()
-        pinnedID = nil; pinScrollPending = false; olderAnchor = nil; loadingOlder = false; atBottom = true
+        pinnedID = nil; pinHolds = false; pinScrollPending = false; olderAnchor = nil; loadingOlder = false; atBottom = true
         scrollToEnd(proxy)
     }
 
     /// Send, regenerate and edit all start a reply: put the question it answers at the top.
     private func pinQuestion(_ proxy: ScrollViewProxy) {
         guard let question = messages.last(where: { $0.role == .user }) else { return }
+        pinHolds = true
         pinnedID = question.id
         pinScrollPending = true
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(40))
             withAnimation(reduceMotion ? nil : .smooth(duration: 0.35)) { proxy.scrollTo(question.id, anchor: .top) }
+            // And again once the keyboard has finished going away (about a third of a second).
+            try? await Task.sleep(for: .milliseconds(450))
+            guard pinHolds, pinnedID == question.id else { return }
+            withAnimation(reduceMotion ? nil : .smooth(duration: 0.25)) { proxy.scrollTo(question.id, anchor: .top) }
+        }
+    }
+
+    /// After the layout settles, put the pinned question back at the top (no animation: it's already nearly there).
+    private func repin(_ proxy: ScrollViewProxy) {
+        guard pinHolds, let id = pinnedID else { return }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(60))
+            guard pinHolds, pinnedID == id else { return }
+            proxy.scrollTo(id, anchor: .top)
         }
     }
 
@@ -490,6 +520,7 @@ struct ChatView: View {
 
     private func send() {
         dictation.stop()
+        notifier.askOnce()
         guard composerAligned, composer.save() else { return }
         if autoModel {
             // Auto: the best connected model for this message, with the next ones as fallbacks, as on the web.
@@ -512,6 +543,8 @@ struct ChatView: View {
                   engine.submit(prompt: composer.draft, attachmentIDs: composer.attachmentIDs, apiKey: key) != nil else { return }
         }
         sends += 1
+        // As in the AI apps people know: once sent, the keyboard goes away and the reply gets the whole screen.
+        focused.wrappedValue = false
         composer.discardDraft()
     }
 }

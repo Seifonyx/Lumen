@@ -475,7 +475,16 @@ struct ChatView: View {
         guard let next = handoff, composerAligned else { return }
         handoff = nil
         if let text = next.text { composer.draft = DictationText.merge(draft: composer.draft, dictated: text) }
-        if next.send && canSend { send() }
+        if next.send {
+            // Siri opens Lumen first; the models may still be loading (a cold start, or a refresh on returning).
+            // Wait a few seconds for them, in this same chat, then send; otherwise leave the message ready.
+            let chat = engine.currentConversation.id, text = composer.draft
+            Task { @MainActor in
+                for _ in 0..<50 where !canSend { try? await Task.sleep(for: .milliseconds(100)) }
+                guard engine.currentConversation.id == chat, composer.draft == text else { return }
+                if canSend { send() } else { focused.wrappedValue = true }
+            }
+        }
         else if next.dictate { startDictation() }
         else { focused.wrappedValue = true }
     }

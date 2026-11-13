@@ -22,6 +22,9 @@ struct ChatView: View {
     // scroll; "Latest" takes you to the end.
     @State private var pinnedID: String?
     @State private var viewportHeight: CGFloat = 0
+    /// The tallest the conversation has been on screen (with the keyboard away). The room under a pinned question
+    /// uses it, because sending happens while the keyboard is still open and the screen is short.
+    @State private var pinRoom: CGFloat = 0
     @State private var tailHeight: CGFloat = 0
     @State private var atBottom = true
     @State private var pinScrollPending = false
@@ -51,7 +54,7 @@ struct ChatView: View {
     /// Room under the pinned exchange so your message can reach the top of the screen; none once the reply fills it.
     private var pinSpace: CGFloat {
         guard pinIndex != nil else { return 0 }
-        return max(0, viewportHeight - tailHeight - 44)
+        return max(0, max(pinRoom, viewportHeight) - tailHeight - 44)
     }
 
     // Split in two so the compiler can type-check it in reasonable time.
@@ -110,6 +113,7 @@ struct ChatView: View {
                 geometry.containerSize.height - geometry.contentInsets.top - geometry.contentInsets.bottom
             } action: { _, height in
                 viewportHeight = height
+                pinRoom = max(pinRoom, height)
                 // The keyboard went away after sending: once the taller screen is laid out, re-pin.
                 repin(proxy)
             }

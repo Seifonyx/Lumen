@@ -64,6 +64,30 @@ class PackagingTests(unittest.TestCase):
                 'NSMicrophoneUsageDescription': 'Talk instead of typing.',
                 'NSSpeechRecognitionUsageDescription': 'Speech becomes text on this iPhone.'})
 
+    def write_widgets(self, **overrides):
+        extension = self.app / 'PlugIns' / 'LumenWidgets.appex'
+        extension.mkdir(parents=True, exist_ok=True)
+        info = {'CFBundleIdentifier': 'io.github.seifonyx.lumen.widgets', 'CFBundleShortVersionString': '0.1.0',
+                'NSExtension': {'NSExtensionPointIdentifier': 'com.apple.widgetkit-extension'}}
+        info.update(overrides)
+        (extension / 'Info.plist').write_bytes(plistlib.dumps(info))
+
+    def test_accepts_lumens_own_widget_extension(self):
+        self.write_widgets()
+        result = self.package()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        with zipfile.ZipFile(self.root / 'output' / 'Lumen.ipa') as archive:
+            self.assertIn('Payload/Lumen.app/PlugIns/LumenWidgets.appex/Info.plist', archive.namelist())
+
+    def test_rejects_foreign_or_mismatched_extensions(self):
+        for overrides, message in [({'CFBundleIdentifier': 'com.example.widgets'}, 'not part of Lumen'),
+                                   ({'CFBundleShortVersionString': '0.0.9'}, 'version differs'),
+                                   ({'NSExtension': {'NSExtensionPointIdentifier': 'com.apple.share-services'}}, 'Unexpected kind')]:
+            self.write_widgets(**overrides)
+            result = self.package()
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn(message, result.stderr)
+
     def test_rejects_simulator_auth_fixtures_in_release_binary(self):
         executable = self.app / 'Lumen'
         executable.write_bytes(executable.read_bytes() + b'--lumen-integration')

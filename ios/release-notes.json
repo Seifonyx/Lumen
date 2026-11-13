@@ -1,10 +1,10 @@
 {
-  "title": "Replies finish when you leave · 0.6.1",
-  "description": "Leave Lumen while it's writing and the reply keeps going; a notification tells you when it's ready.",
+  "title": "Widgets and controls · 0.6.2",
+  "description": "Start a chat or talk to Lumen from your Home Screen, Lock Screen, Control Center or Action button.",
   "notes": [
-    "Switch apps or lock your iPhone while a reply is being written: it keeps going for as long as iOS allows (usually under a minute) instead of stopping.",
-    "When it's done, a notification shows the start of the reply. Tap it to open that chat. Temporary chats don't show their words on the lock screen.",
-    "Lumen asks once, the first time you send, whether it may notify you. Turn it off any time in Settings › Notifications.",
-    "Also in 0.6.0: voice input, Read aloud, and Siri and Shortcuts (Ask Lumen, Talk to Lumen, New Lumen chat)."
+    "Home Screen widget: tap it for a new chat, or tap its microphone to start talking. The medium size has an “Ask anything” box.",
+    "Lock Screen widgets open a new Lumen chat in one tap.",
+    "Control Center: add “New Lumen Chat” or “Talk to Lumen”. You can also put them on the Lock Screen or the Action button.",
+    "Also new in 0.6: voice input, Read aloud, Siri and Shortcuts, and replies that finish (with a notification) after you leave Lumen."
   ]
 }

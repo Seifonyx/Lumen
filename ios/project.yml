@@ -11,7 +11,7 @@ settings:
     IPHONEOS_DEPLOYMENT_TARGET: '26.0'
     CODE_SIGNING_ALLOWED: NO
     TARGETED_DEVICE_FAMILY: '1'
-    MARKETING_VERSION: '0.6.1'
+    MARKETING_VERSION: '0.6.2'
     CURRENT_PROJECT_VERSION: '1'
     OTHER_LDFLAGS: '$(inherited) -ObjC'
 packages:
@@ -27,8 +27,9 @@ targets:
   Lumen:
     type: application
     platform: iOS
-    sources: [Lumen]
+    sources: [Lumen, Shared]
     dependencies:
+      - target: LumenWidgets
       - package: LumenCore
       - package: Firebase
         product: FirebaseCore
@@ -64,6 +65,29 @@ targets:
           UIApplicationSupportsMultipleScenes: false
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+  # Home Screen and Lock Screen widgets, and Control Center controls. Their buttons run the shared intents in
+  # the app (each opens Lumen); the widgets keep no data of their own.
+  LumenWidgets:
+    type: app-extension
+    platform: iOS
+    sources: [LumenWidgets, Shared]
+    dependencies:
+      - package: LumenCore
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.seifonyx.lumen.widgets
+        GENERATE_INFOPLIST_FILE: NO
+        APPLICATION_EXTENSION_API_ONLY: YES
+    info:
+      path: build/Generated/Widgets-Info.plist
+      properties:
+        CFBundleDisplayName: Lumen
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
   LumenUITests:
     type: bundle.ui-testing
     platform: iOS

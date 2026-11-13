@@ -110,7 +110,13 @@ struct ChatView: View {
                 geometry.containerSize.height - geometry.contentInsets.top - geometry.contentInsets.bottom
             } action: { _, height in
                 viewportHeight = height
-                if let id = pinnedID, Date() < pinSettlesAt { proxy.scrollTo(id, anchor: .top) }
+                // The keyboard went away after sending: once the taller screen is laid out, re-pin.
+                if let id = pinnedID, Date() < pinSettlesAt {
+                    Task { @MainActor in
+                        await Task.yield()
+                        withAnimation(reduceMotion ? nil : .smooth(duration: 0.25)) { proxy.scrollTo(id, anchor: .top) }
+                    }
+                }
             }
             .safeAreaInset(edge: .top, spacing: 0) { topBar }
             .overlay(alignment: .bottom) {
@@ -272,6 +278,10 @@ struct ChatView: View {
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(40))
             withAnimation(reduceMotion ? nil : .smooth(duration: 0.35)) { proxy.scrollTo(question.id, anchor: .top) }
+            // And again once the keyboard has finished going away (about a third of a second).
+            try? await Task.sleep(for: .milliseconds(450))
+            guard pinnedID == question.id else { return }
+            withAnimation(reduceMotion ? nil : .smooth(duration: 0.25)) { proxy.scrollTo(question.id, anchor: .top) }
         }
     }
 

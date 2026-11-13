@@ -121,6 +121,8 @@ jobs:
 
   build:
     needs: simulator
+    # Explicit: a skipped reuse job (always, on pull requests) would otherwise skip every shard after it.
+    if: ${{ !cancelled() && needs.simulator.result == 'success' }}
     name: iPhone ${{ matrix.profile }} / ${{ matrix.shard }} UI and Firebase
     strategy:
       fail-fast: false
@@ -226,6 +228,7 @@ jobs:
   verify:
     name: Verify all four iPhone shards and release IPA
     needs: [core, build, package]
+    if: ${{ !cancelled() && needs.core.result == 'success' && needs.build.result == 'success' && needs.package.result == 'success' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

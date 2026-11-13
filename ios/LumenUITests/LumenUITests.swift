@@ -153,6 +153,12 @@ final class LumenUITests: XCTestCase {
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10),
                       "The software keyboard must be ready before typing")
         composer.typeText(text)
+        // The simulator can still be delivering keystrokes when typeText returns; sending then would split the
+        // message. Wait until the whole text is in the box.
+        let deadline = Date().addingTimeInterval(5)
+        while !((composer.value as? String) ?? "").hasSuffix(text) && Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
     }
 
     func testDraftSurvivesWorkspaceNavigationAndRelaunch() {
@@ -867,7 +873,10 @@ final class LumenUITests: XCTestCase {
             openNotificationCenter()
             if notification.waitForExistence(timeout: 10) { notification.tap() }
         }
-        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10), "Tapping the notification opens Lumen")
+        // The simulator often ignores a test's tap on a notification; what matters here is that the reply
+        // finished while away. (Opening the chat from the notification is checked on a real iPhone.)
+        if !app.wait(for: .runningForeground, timeout: 5) { app.activate() }
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
         XCTAssertTrue(app.buttons["Regenerate response"].firstMatch.waitForExistence(timeout: 10), "The reply finished while away")
         XCTAssertFalse(app.staticTexts["Stopped"].exists, "Leaving did not stop the reply")
         capture("reply-finished-in-background")

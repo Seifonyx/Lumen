@@ -514,6 +514,8 @@ struct ChatView: View {
                   engine.submit(prompt: composer.draft, attachmentIDs: composer.attachmentIDs, apiKey: key) != nil else { return }
         }
         sends += 1
+        // As in the AI apps people know: once sent, the keyboard goes away and the reply gets the whole screen.
+        focused.wrappedValue = false
         composer.discardDraft()
     }
 }

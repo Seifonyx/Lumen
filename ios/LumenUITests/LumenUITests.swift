@@ -304,6 +304,7 @@ final class LumenUITests: XCTestCase {
         XCTAssertNotEqual(app.buttons["chooseModel"].label, "Model: Not selected", "The title must name the chosen model")
         enterDraft("Manual provider check")
         app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5), "Sending puts the keyboard away")
         XCTAssertTrue(app.staticTexts["A native streamed reply."].waitForExistence(timeout: 10))
         // As in the AI apps people know, a new question moves to the top of the screen and its reply writes
         // below it, instead of the screen following the end of the text.

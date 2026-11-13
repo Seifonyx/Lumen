@@ -13,6 +13,14 @@
       "tintColor": "0b0b0c",
       "versions": [
         {
+          "version": "0.6.1",
+          "date": "2026-11-13",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.6.1/Lumen.ipa",
+          "size": 7051827,
+          "minOSVersion": "26.0",
+          "localizedDescription": "Leave Lumen while it's writing and the reply keeps going; a notification tells you when it's ready."
+        },
+        {
           "version": "0.5.3",
           "date": "2026-11-12",
           "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.5.3/Lumen.ipa",
@@ -111,7 +119,10 @@
       ],
       "appPermissions": {
         "entitlements": [],
-        "privacy": {}
+        "privacy": {
+          "NSMicrophoneUsageDescription": "Lumen listens when you tap the microphone, so you can say your message instead of typing it.",
+          "NSSpeechRecognitionUsageDescription": "Lumen turns what you say into text on this iPhone. Your voice isn't sent anywhere by Lumen."
+        }
       }
     }
   ]

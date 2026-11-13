@@ -48,6 +48,22 @@ class PackagingTests(unittest.TestCase):
             '--source-commit', 'a' * 40,
         ], capture_output=True, text=True)
 
+    def test_listing_declares_the_apps_privacy_permissions(self):
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+        from publish import privacy_permissions
+        with tempfile.TemporaryDirectory() as temp:
+            ipa = Path(temp) / 'Lumen.ipa'
+            with zipfile.ZipFile(ipa, 'w') as archive:
+                archive.writestr('Payload/Lumen.app/Info.plist', plistlib.dumps({
+                    'CFBundleIdentifier': 'io.github.seifonyx.lumen',
+                    'NSMicrophoneUsageDescription': 'Talk instead of typing.',
+                    'NSSpeechRecognitionUsageDescription': 'Speech becomes text on this iPhone.',
+                    'NSAppTransportSecurity': {'NSAllowsLocalNetworking': True}}))
+                archive.writestr('Payload/Lumen.app/Frameworks/X.framework/Info.plist', plistlib.dumps({'NSCameraUsageDescription': 'no'}))
+            self.assertEqual(privacy_permissions(ipa), {
+                'NSMicrophoneUsageDescription': 'Talk instead of typing.',
+                'NSSpeechRecognitionUsageDescription': 'Speech becomes text on this iPhone.'})
+
     def test_rejects_simulator_auth_fixtures_in_release_binary(self):
         executable = self.app / 'Lumen'
         executable.write_bytes(executable.read_bytes() + b'--lumen-integration')

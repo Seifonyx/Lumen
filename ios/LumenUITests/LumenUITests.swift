@@ -875,7 +875,10 @@ final class LumenUITests: XCTestCase {
         }
         // The simulator often ignores a test's tap on a notification; what matters here is that the reply
         // finished while away. (Opening the chat from the notification is checked on a real iPhone.)
-        if !app.wait(for: .runningForeground, timeout: 5) { app.activate() }
+        // The simulator can also report Lumen as in front while the Home Screen still shows: check for Lumen's own screen.
+        if !app.wait(for: .runningForeground, timeout: 5) || !app.buttons["openSidebar"].waitForExistence(timeout: 5) {
+            app.activate()
+        }
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
         XCTAssertTrue(app.buttons["Regenerate response"].firstMatch.waitForExistence(timeout: 10), "The reply finished while away")
         XCTAssertFalse(app.staticTexts["Stopped"].exists, "Leaving did not stop the reply")
@@ -889,6 +892,8 @@ final class LumenUITests: XCTestCase {
     }
 
     func testRejectedProviderKeyShowsErrorAndKeepsTheDraft() {
+        // Room for a simulator that stalls on an animation (it waits up to a minute before carrying on).
+        executionTimeAllowance = 240
         launchCleanChat()
         defer { app.terminate() }
         enterDraft("Keep my question")

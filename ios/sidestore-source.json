@@ -13,6 +13,14 @@
       "tintColor": "0b0b0c",
       "versions": [
         {
+          "version": "0.6.2",
+          "date": "2026-11-14",
+          "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.6.2/Lumen.ipa",
+          "size": 7416918,
+          "minOSVersion": "26.0",
+          "localizedDescription": "Start a chat or talk to Lumen from your Home Screen, Lock Screen, Control Center or Action button."
+        },
+        {
           "version": "0.6.1",
           "date": "2026-11-13",
           "downloadURL": "https://github.com/Seifonyx/Lumen/releases/download/native-ios-v0.6.1/Lumen.ipa",

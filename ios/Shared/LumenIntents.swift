@@ -2,6 +2,9 @@ import AppIntents
 import Observation
 import LumenCore
 
+// Compiled into the app and its widgets: Control Center buttons and widget buttons name these intents, and iOS
+// runs them in the app (each opens Lumen).
+
 /// Something Siri, a Shortcut or a link asked of Lumen; the chat screen carries it out once the account is known.
 struct ComposerRequest: Equatable, Identifiable {
     let id = UUID()
@@ -59,16 +62,4 @@ struct TalkToLumenIntent: AppIntent {
         LumenRequests.shared.pending = ComposerRequest(dictate: true)
         return .result()
     }
-}
-
-struct LumenShortcuts: AppShortcutsProvider {
-    static var appShortcuts: [AppShortcut] {
-        AppShortcut(intent: AskLumenIntent(), phrases: ["Ask \(.applicationName)", "Ask \(.applicationName) a question"],
-                    shortTitle: "Ask Lumen", systemImageName: "text.bubble")
-        AppShortcut(intent: TalkToLumenIntent(), phrases: ["Talk to \(.applicationName)", "Dictate to \(.applicationName)"],
-                    shortTitle: "Talk to Lumen", systemImageName: "mic")
-        AppShortcut(intent: NewLumenChatIntent(), phrases: ["New \(.applicationName) chat", "Start a chat in \(.applicationName)"],
-                    shortTitle: "New Chat", systemImageName: "square.and.pencil")
-    }
-    static let shortcutTileColor: ShortcutTileColor = .orange
 }

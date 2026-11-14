@@ -60,6 +60,15 @@ def validate_app(app):
         raise ValueError('Executable deployment target must be iOS 26 or newer')
     if any(marker in binary for marker in [b'--lumen-integration', b'fixture-native-user', b'fixture-provider-key', b'demo-lumen-native']):
         raise ValueError('Release executable contains a simulator test fixture')
+    # App extensions (the widgets) must be Lumen's own, for iPhone, and no older than the app.
+    for extension in sorted((app / 'PlugIns').glob('*.appex')) if (app / 'PlugIns').is_dir() else []:
+        extension_info = plistlib.loads((extension / 'Info.plist').read_bytes())
+        if not extension_info.get('CFBundleIdentifier', '').startswith(BUNDLE_ID + '.'):
+            raise ValueError('App extension is not part of Lumen')
+        if extension_info.get('CFBundleShortVersionString') != version:
+            raise ValueError('App extension version differs from the app')
+        if extension_info.get('NSExtension', {}).get('NSExtensionPointIdentifier') != 'com.apple.widgetkit-extension':
+            raise ValueError('Unexpected kind of app extension')
     for resource in app.rglob('*'):
         if resource.is_symlink():
             raise ValueError('Unexpected symlink inside the native app')

@@ -1,0 +1,234 @@
+diff --git a/.github/workflows/ios-demo.yml b/.github/workflows/ios-demo.yml
+index 4662cab..01eef0e 100644
+--- a/.github/workflows/ios-demo.yml
++++ b/.github/workflows/ios-demo.yml
+@@ -39,7 +39,9 @@ jobs:
+           node node_modules/typescript/bin/tsc --noEmit -p native/tsconfig.json
+           node native/scripts/verify.mjs
+       - name: Generate and sync native project
+-        run: node native/scripts/prepare-ios.mjs
++        run: |
++          swift --version
++          node native/scripts/prepare-ios.mjs
+       - name: Build and verify unsigned real-device IPA
+         run: bash native/scripts/build-ipa.sh
+       - name: Upload unsigned IPA and public metadata
+diff --git a/native/.gitignore b/native/.gitignore
+index 228126e..9fd72b1 100644
+--- a/native/.gitignore
++++ b/native/.gitignore
+@@ -3,3 +3,6 @@ www/
+ ios/
+ build/
+ artifacts/
++
++*.private.json
++service-qa/
+diff --git a/native/DemoViewController.swift b/native/DemoViewController.swift
+index 5f9ab3a..a48cb17 100644
+--- a/native/DemoViewController.swift
++++ b/native/DemoViewController.swift
+@@ -57,6 +57,7 @@ final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler
+     override func capacitorDidLoad() {
+         NSLog("LumenDemo custom controller loaded")
+         bridge?.registerPluginInstance(OfflineHttpPlugin())
++        bridge?.registerPluginInstance(LumenGoogleAuthPlugin())
+         guard let webView = webView else { return }
+         offlineDelegate.navigation = webView.navigationDelegate
+         offlineDelegate.ui = webView.uiDelegate
+@@ -83,7 +84,16 @@ final class DemoViewController: CAPBridgeViewController, WKScriptMessageHandler
+     }
+     // No document loads until WebKit has installed a default-deny network rule.
+     override func viewDidLoad() {
+-        let rules = #"[{"trigger":{"url-filter":"^https?://"},"action":{"type":"block"}},{"trigger":{"url-filter":"^wss?://"},"action":{"type":"block"}}]"#
++        var rules = #"[{"trigger":{"url-filter":"^https?://"},"action":{"type":"block"}},{"trigger":{"url-filter":"^wss?://"},"action":{"type":"block"}}]"#
++        if let c = Bundle.main.object(forInfoDictionaryKey: "LumenTestServices") as? [String: String], c["mode"] == "isolated-test" {
++            let hosts = ["identitytoolkit.googleapis.com", "securetoken.googleapis.com", "firestore.googleapis.com"]
++            var entries = (try? JSONSerialization.jsonObject(with: Data(rules.utf8))) as? [[String: Any]] ?? []
++            for host in hosts {
++                entries.append(["trigger": ["url-filter": "^https://" + NSRegularExpression.escapedPattern(for: host) + "/"], "action": ["type": "ignore-previous-rules"]])
++            }
++            guard let data = try? JSONSerialization.data(withJSONObject: entries), let text = String(data: data, encoding: .utf8) else { return }
++            rules = text
++        }
+         WKContentRuleListStore.default().compileContentRuleList(forIdentifier: "LumenOfflineDemo", encodedContentRuleList: rules) { [weak self] rule, _ in
+             guard let self = self else { return }
+             guard let rule = rule else {
+diff --git a/native/demo/smoke.ts b/native/demo/smoke.ts
+index 31e2bcb..d60409e 100644
+--- a/native/demo/smoke.ts
++++ b/native/demo/smoke.ts
+@@ -26,6 +26,11 @@ async function run() {
+       catch(error) { denied=(error as {code?:string}).code==='OFFLINE_DEMO'; }
+       if(!denied) throw new Error('Native HTTP bridge is not default-deny: '+method);
+     }
++    for(const method of ['signIn','restore']) {
++      let denied=false;
++      try {await capacitor.nativePromise('LumenGoogleAuth',method,{});}catch(error){denied=(error as {code?:string}).code==='OFFLINE_DEMO';}
++      if(!denied)throw new Error('Google SDK bridge escaped offline mode');
++    }
+     await until(()=>Boolean(document.querySelector('.composer textarea')));
+     await capture('chat');
+     const store=useStore.getState();
+diff --git a/native/scripts/prepare-ios.mjs b/native/scripts/prepare-ios.mjs
+index 9b3ed36..1fa3896 100644
+--- a/native/scripts/prepare-ios.mjs
++++ b/native/scripts/prepare-ios.mjs
+@@ -1,5 +1,6 @@
+ import { fileURLToPath } from 'node:url';
+ import { patchProject } from './project.mjs';
++import {patchServiceProject} from './service-project.mjs';
+ import { execFileSync } from 'node:child_process';
+ import { readFileSync, writeFileSync, copyFileSync, existsSync } from 'node:fs';
+ process.chdir(fileURLToPath(new URL('..', import.meta.url)));
+@@ -7,7 +8,15 @@ const cap='node_modules/@capacitor/cli/bin/capacitor';
+ if(!existsSync('ios/App')) execFileSync(process.execPath,[cap,'add','ios'],{stdio:'inherit'});
+ execFileSync(process.execPath,[cap,'sync','ios'],{stdio:'inherit'});
+ const app='ios/App/App/';
+-patchProject(app,readFileSync('DemoViewController.swift','utf8')+'\n'+readFileSync('NativeSessionVault.swift','utf8'));
++patchProject(app,readFileSync('DemoViewController.swift','utf8')+'\n'+readFileSync('NativeSessionVault.swift','utf8')+'\n'+readFileSync('GoogleAuthPlugin.swift','utf8'));
++// Generated package is rewritten by cap sync; pin the reviewed SDK after every sync.
++const packagePath='ios/App/CapApp-SPM/Package.swift';
++let manifest=readFileSync(packagePath,'utf8');
++manifest=manifest.replace('dependencies: [','dependencies: [\n        .package(url: "https://github.com/google/GoogleSignIn-iOS.git", exact: "10.1.0"),');
++manifest=manifest.replace('.product(name: "Capacitor",', '.product(name: "GoogleSignIn", package: "GoogleSignIn-iOS"),\n                .product(name: "Capacitor",');
++writeFileSync(packagePath,manifest);
++const built=JSON.parse(readFileSync('www/demo-build.json','utf8'));
++patchServiceProject(app,built.mode==='isolated-test'?built.serviceConfig:null);
+ const assets=app+'Assets.xcassets/';
+ if(process.platform==='darwin') {
+   execFileSync('sips',['-z','1024','1024','../public-canvas/icon-512.png','--out',assets+'AppIcon.appiconset/AppIcon-512@2x.png']);
+diff --git a/native/scripts/project.mjs b/native/scripts/project.mjs
+index 2d05fbc..7bea194 100644
+--- a/native/scripts/project.mjs
++++ b/native/scripts/project.mjs
+@@ -6,8 +6,12 @@ export function patchProject(app,swift) {
+  const read=name=>readFileSync(join(app,name),'utf8').replaceAll('\r\n','\n');
+  const write=(name,text)=>writeFileSync(join(app,name),text);
+  // Capacitor 8's SceneDelegate creates its controller directly; storyboard changes alone are ignored.
+- const scene=read('SceneDelegate.swift').replace('rootViewController = CAPBridgeViewController()', 'rootViewController = DemoViewController()');
++ let scene=read('SceneDelegate.swift').replace('rootViewController = CAPBridgeViewController()', 'rootViewController = DemoViewController()');
+  if(!scene.includes('rootViewController = DemoViewController()')) throw new Error('Unknown Capacitor scene template; native protection cannot be installed safely.');
++ if(!scene.includes('LumenHandleGoogleURL')) {
++  scene=scene.replace('SceneDelegateProxy.shared.scene(scene, openURLContexts: URLContexts)', 'let remaining = Set(URLContexts.filter { !LumenHandleGoogleURL($0.url) })\n        if !remaining.isEmpty { SceneDelegateProxy.shared.scene(scene, openURLContexts: remaining) }');
++  scene=scene.replace('SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)', 'if !connectionOptions.urlContexts.contains(where: { LumenHandleGoogleURL($0.url) }) {\n            SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)\n        }');
++ }
+  write('SceneDelegate.swift',scene);
+  const delegate=read('AppDelegate.swift');
+  const clean=delegate.split(marker)[0].split('\nimport UIKit\nimport WebKit\nimport Capacitor')[0].trimEnd();
+diff --git a/native/tests/project.test.mjs b/native/tests/project.test.mjs
+index 72c1b5a..6bf8112 100644
+--- a/native/tests/project.test.mjs
++++ b/native/tests/project.test.mjs
+@@ -10,10 +10,11 @@ test('real pinned Capacitor template uses custom scene controller and preparatio
+  const dir=mkdtempSync(join(tmpdir(),'lumen-ios-project-'));
+  try {
+   execFileSync('tar',['-xzf','native/node_modules/@capacitor/cli/assets/ios-spm-template.tar.gz','-C',dir]);
+-  const app=join(dir,'App/App'), swift=readFileSync('native/DemoViewController.swift','utf8')+'\n'+readFileSync('native/NativeSessionVault.swift','utf8');
++  const app=join(dir,'App/App'), swift=readFileSync('native/DemoViewController.swift','utf8')+'\n'+readFileSync('native/NativeSessionVault.swift','utf8')+'\n'+readFileSync('native/GoogleAuthPlugin.swift','utf8');
+   assert.match(readFileSync(join(app,'SceneDelegate.swift'),'utf8'),/rootViewController = CAPBridgeViewController\(\)/);
+   patchProject(app,swift);
+   const once=['AppDelegate.swift','SceneDelegate.swift','Info.plist','Base.lproj/Main.storyboard'].map(n=>readFileSync(join(app,n),'utf8'));
++  assert.match(once[1],/LumenHandleGoogleURL/);
+   assert.match(once[1],/rootViewController = DemoViewController\(\)/);
+   assert.doesNotMatch(once[1],/rootViewController = CAPBridgeViewController/);
+   assert.equal(once[0].match(/final class DemoViewController/g).length,1);
+diff --git a/native/tsconfig.json b/native/tsconfig.json
+index 6bfcbd5..06710c1 100644
+--- a/native/tsconfig.json
++++ b/native/tsconfig.json
+@@ -3,7 +3,8 @@
+   "include": [
+     "demo",
+     "vite.config.ts",
+-    "integration"
++    "integration",
++    "services"
+   ],
+   "exclude": [
+     "ios",
+diff --git a/native/vite.config.ts b/native/vite.config.ts
+index c5f8966..a75f3dc 100644
+--- a/native/vite.config.ts
++++ b/native/vite.config.ts
+@@ -3,6 +3,11 @@ import react from '@vitejs/plugin-react';
+ import { fileURLToPath } from 'node:url';
+ import { resolve } from 'node:path';
+ import { readFileSync } from 'node:fs';
++import {loadServiceConfig} from './services/build-config.mjs';
++import {patchFirebase} from './services/patches.mjs';
++const services=loadServiceConfig();
++const output=process.env.LUMEN_NATIVE_OUT_DIR||'native/www';
++if(!['native/www','native/service-qa'].includes(output))throw Error('Native build output must stay in its isolated workspace');
+ const root = resolve(fileURLToPath(new URL('..', import.meta.url))).replaceAll(String.fromCharCode(92), '/');
+ const at = (p: string) => resolve(root, p).replaceAll(String.fromCharCode(92), '/');
+ const replacements: Record<string,string> = {
+@@ -14,12 +19,22 @@ const replacements: Record<string,string> = {
+   [at('src/lib/canvas-presentation.ts')]: at('src/lib/canvas-presentation.on.ts'),
+   [at('src/components/Login.tsx')]: at('native/demo/Login.tsx'),
+ };
++if(services){delete replacements[at('src/lib/firebase.ts')];replacements[at('src/lib/sync.ts')]=at('native/services/sync.ts');replacements[at('src/components/Login.tsx')]=at('native/services/Login.tsx');}
+ const strip = (id: string) => id.split('?')[0].replaceAll(String.fromCharCode(92), '/');
+ function demoIsolation(): Plugin {
+   return {
+-    name:'lumen-native-offline-demo', enforce:'pre',
++    name:'lumen-native-isolation', enforce:'pre',
++    transformIndexHtml:{order:'pre',handler(html){
++      if(!services)return html;
++      return html.replace('./demo/main.ts','./services/main.ts').replace("connect-src 'self' data: blob:", "connect-src 'self' data: blob: https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com").replace('<title>Lumen Demo</title>','<title>Lumen Test</title>');
++    }},
+     async resolveId(source, importer, options) {
+-      if (/^(?:firebase|@firebase)(?:\/|$)/.test(source)) {
++      if(services){
++        if(source==='lumen:test-config'||source==='lumen:service-config')return '\0'+source;
++        if(source==='lumen:native-account')return at('native/services/account.ts');
++        if(source==='lumen:canonical-sync')return at('src/lib/sync.ts')+'?lumen-real';
++      }
++      if (!services && /^(?:firebase|@firebase)(?:\/|$)/.test(source)) {
+         if (['firebase/app','firebase/auth','firebase/firestore'].includes(source)) return at('qa/iphone/adapters/firebase-sdk.ts');
+         this.error('Unreviewed Firebase import in offline demo');
+       }
+@@ -28,33 +43,38 @@ function demoIsolation(): Plugin {
+       return found && replacements[strip(found.id)] || null;
+     },
+     load(id) {
++      if(services&&id==='\0lumen:test-config')return 'export default '+JSON.stringify({projectId:services.projectId,apiKey:services.apiKey,appId:services.appId,authDomain:services.authDomain});
++      if(services&&id==='\0lumen:service-config')return 'export default '+JSON.stringify(services);
++      if(services&&/\/node_modules\/(?:@firebase|firebase)\//.test(strip(id)))return null;
+       if (/\/(?:tests|server)\/|\/qa\/iphone\/(?:fixtures|main)|\/src\/firebase-config.json|\/node_modules\/(?:@firebase|firebase)\//.test(strip(id))) this.error('Forbidden native demo module '+id);
+     },
+     transform(code,id) {
+       if (!strip(id).startsWith(at('src/'))) return null;
++      const changedFirebase=Boolean(services&&strip(id)===at('src/lib/firebase.ts'));
++      if(changedFirebase)code=patchFirebase(code);
+       if (/\bnew\s+(?:XMLHttpRequest|WebSocket|EventSource|SharedWorker)\b|\.sendBeacon\s*\(/.test(code)) this.error('Unreviewed network primitive '+id);
+       let next=code.replace(/(?<![\w$.])fetch\s*\(/g,'__demoFetch(');
+       const imports=[];
+-      if(next!==code) imports.push('import { demoFetch as __demoFetch } from '+JSON.stringify(at('native/demo/transport.ts'))+';');
++      if(next!==code) imports.push('import { '+(services?'testFetch':'demoFetch')+' as __demoFetch } from '+JSON.stringify(at(services?'native/services/transport.ts':'native/demo/transport.ts'))+';');
+       if (/\bnew\s+Worker\s*\(/.test(next)) {
+         next=next.replace(/\bnew\s+Worker\s*\(\s*new\s+URL\s*\(\s*(['"`])[^'"`]+\1\s*,\s*import\.meta\.url\s*\)/g,'__demoWorker(null').replace(/\bnew\s+Worker\s*\(/g,'__demoWorker(');
+         imports.push('import { disabledWorker as __demoWorker } from '+JSON.stringify(at('qa/iphone/adapters/worker-disabled.ts'))+';');
+       }
+-      return imports.length ? {code:imports.join('\n')+'\n'+next,map:null}:null;
++      return imports.length||changedFirebase ? {code:imports.join('\n')+'\n'+next,map:null}:null;
+     },
+     generateBundle() {
+       const modules=[...this.getModuleIds()].map(strip);
+-      for(const target of Object.keys(replacements)) if(modules.includes(target)) this.error('Canonical module escaped replacement '+target);
++      for(const target of Object.keys(replacements)) if(modules.includes(target)&&!(services&&target===at('src/lib/sync.ts'))) this.error('Canonical module escaped replacement '+target);
+       // The Canvas mark (Logo renders /icon.svg). publicDir is off, so the one approved Crease file is packaged here;
+       // without it the demo's first screen showed a broken image in the Simulator.
+       this.emitFile({type:'asset',fileName:'icon.svg',source:readFileSync(at('public-canvas/icon.svg'))});
+-      this.emitFile({type:'asset',fileName:'demo-build.json',source:JSON.stringify({presentation:'canvas',mode:'offline-demo',modules:modules.filter(p=>p.startsWith(root)).map(p=>p.slice(root.length+1))},null,2)});
++      this.emitFile({type:'asset',fileName:'demo-build.json',source:JSON.stringify({presentation:'canvas',mode:services?'isolated-test':'offline-demo',serviceConfig:services||undefined,modules:modules.filter(p=>p.startsWith(root)).map(p=>p.slice(root.length+1))},null,2)});
+     }
+   };
+ }
+ export default defineConfig({
+   root:at('native'), base:'./', publicDir:false,
+   plugins:[demoIsolation(),react()],
+-  build:{outDir:at('native/www'),emptyOutDir:true,target:'es2020',sourcemap:false,assetsInlineLimit:0,modulePreload:{polyfill:false},chunkSizeWarningLimit:4000},
++  build:{outDir:at(output),emptyOutDir:true,target:'es2020',sourcemap:false,assetsInlineLimit:0,modulePreload:{polyfill:false},chunkSizeWarningLimit:4000},
+   server:{host:'127.0.0.1',port:5206,strictPort:true}
+ });
